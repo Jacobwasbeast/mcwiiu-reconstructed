@@ -246,7 +246,7 @@ public:
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        bool mFlag;
+        bool mDoorFlags[2];
         int mData;
     };
 

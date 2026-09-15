@@ -284,7 +284,8 @@ PlayerInfo* MG02ScoreboardLayout::CreatePlayerInfo()
 void MG02ScoreboardLayout::AddPlayer(unsigned char id)
 {
     PlayerInfo* info = CreatePlayerInfo();
-    info->smallId = id;
+    INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(id);
+    BuildPlayerInfo(networkPlayer, info);
     m_players.push_back(info);
 }
 

@@ -1,98 +1,38 @@
-#ifndef GAME_CORE_VERTEXFORMATELEMENT_HPP
-#define GAME_CORE_VERTEXFORMATELEMENT_HPP
+/* VertexFormatElement - generated reconstruction header. */
+#ifndef RECON_C_GAME_V_VERTEXFORMATELEMENT_HPP
+#define RECON_C_GAME_V_VERTEXFORMATELEMENT_HPP 1
 
-#include <string>
+#include "guest_ns.hpp"
 
-class VertexFormatElement
-{
-public:
-    class Type
-    {
-    public:
-        enum EType
-        {
-            eType_Float,
-            eType_UnsignedByte,
-            eType_Byte,
-            eType_UnsignedShort,
-            eType_Short,
-            eType_UnsignedInt,
-            eType_Int
-        };
+namespace recon {
+struct VertexFormatElement_Type;
+struct VertexFormatElement_Usage;
 
-        static const Type* FLOAT;
-        static const Type* UBYTE;
-        static const Type* BYTE;
-        static const Type* USHORT;
-        static const Type* SHORT;
-        static const Type* UINT;
-        static const Type* INT;
+#pragma pack(push, 1)
+struct VertexFormatElement {
+    be<int32_t> field_0x0;
+    be<int32_t> field_0x4;
+    be<int32_t> field_0x8;
+    be<int32_t> field_0xc;
 
-        Type(int size, std::wstring name, int glType, EType id);
-
-        int getSize() const;
-        std::wstring getName() const;
-        int getGlType() const;
-        EType getId() const;
-
-    private:
-        int size;
-        std::wstring name;
-        int glType;
-        EType id;
-    };
-
-    class Usage
-    {
-    public:
-        enum EUsage
-        {
-            eUsage_Position,
-            eUsage_Normal,
-            eUsage_Color,
-            eUsage_Uv,
-            eUsage_BoneMatrix,
-            eUsage_BlendWeight,
-            eUsage_Padding
-        };
-
-        static const Usage* POSITION;
-        static const Usage* NORMAL;
-        static const Usage* COLOR;
-        static const Usage* UV;
-        static const Usage* BONE_MATRIX;
-        static const Usage* BLEND_WEIGHT;
-        static const Usage* PADDING;
-
-        Usage(std::wstring name, EUsage id);
-
-        std::wstring getName() const;
-        EUsage getId() const;
-
-    private:
-        std::wstring name;
-        EUsage id;
-    };
-
-    VertexFormatElement(const VertexFormatElement& other);
-    VertexFormatElement(int index, const Type* type, const Usage* usage, int count);
-
-    const Type* getType() const;
-    const Usage* getUsage() const;
-    int getIndex() const;
-    int getCount() const;
-    int getByteSize() const;
-    bool isPosition() const;
-    bool equals(VertexFormatElement* other) const;
-    std::wstring toString() const;
-
-private:
-    bool supportsUsage(int index, const Usage* usage) const;
-
-    const Type* type;
-    const Usage* usage;
-    int index;
-    int count;
+    /* interface: 5 methods recovered, 4 without a recoverable signature;
+     * implementation: 5 reconstructed bodies, 0 lowered drafts, 4 closed */
+    VertexFormatElement(gptr<VertexFormatElement> a1);   /* reconstructed */
+    VertexFormatElement(int32_t a1, gptr<VertexFormatElement_Type> a2, gptr<VertexFormatElement_Usage> a3, int32_t a4);   /* reconstructed */
+    VertexFormatElement() {}   /* generated shell; the real ctor is dispatch-only */
+    bool isPosition();   /* closed */
+    uint32_t getUsage();   /* closed */
+    uint32_t getIndex();   /* closed */
+    int32_t getByteSize();
+    uint32_t supportsUsage(int32_t a1, gptr<VertexFormatElement_Usage> a2);   /* closed */
+    /* unrecovered: toString() const [0x00000000] */
+    /* unrecovered: getType() const [0x00000000] */
+    /* unrecovered: getCount() const [0x00000000] */
+    /* unrecovered: equals(VertexFormatElement*) const [0x00000000] */
 };
+static_assert(sizeof(VertexFormatElement) == 0x10, "layout");
+#pragma pack(pop)
+
+}  /* namespace recon */
 
 #endif

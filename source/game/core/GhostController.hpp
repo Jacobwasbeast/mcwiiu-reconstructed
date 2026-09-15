@@ -3,11 +3,12 @@
 #include <string>
 #include <vector>
 #include <deque>
-#include <map>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
 #include "game/util/Vec3.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
+#include "game/core/CriticalSection.hpp"
 class DataInputStream; class DataOutputStream; class Player; class GhostPlayer;
 class GhostController {
  friend class ClientMasterGameMode;
@@ -35,8 +36,6 @@ public:
   Vec3 startPos;
   int mElapsedHigh;
   unsigned int mElapsedLow;
-  int time;
-  int score;
   GhostRecord(Vec3*);
   ~GhostRecord();
   unsigned int GetPosAtIndex(unsigned int);
@@ -51,7 +50,7 @@ public:
   unsigned int GetRotAtIndex(unsigned int);
   double GetVelocityAtIndex(unsigned int);
  };
-  struct TrackHeader { unsigned int time; unsigned int rank; unsigned short score; bool completed; bool recorded; TrackHeader(); };
+  struct TrackHeader { unsigned int time; unsigned short score; bool completed; bool recorded; unsigned int rank; TrackHeader(); };
   struct GhostLoadSaveOperation { enum EOpType { LOAD_HEADER, LOAD_RECORD, SAVE_HEADER, SAVE_RECORD }; EOpType type; int track; GhostRecord* record; GhostLoadSaveOperation(EOpType, int, GhostRecord*); };
   GhostController(int, const std::wstring&, bool);
   ~GhostController();
@@ -89,7 +88,7 @@ public:
   unsigned int LoadGhostRecordOp(int);
   static int SaveGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int SaveGhostHeaderOp(int);
-  static void SaveGhostRecord_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
+  static int SaveGhostRecord_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int SaveGhostRecordOp(int, GhostRecord*);
   void ProcessLoadSaveQueue();
   void tick();
@@ -109,15 +108,22 @@ public:
   unsigned int mLastTickLow;
   int mPlaybackTimeHigh;
   unsigned int mPlaybackTimeLow;
+  unsigned int mPlaybackIndex;
+  int mLastRecordingChangeTimeHigh;
+  unsigned int mLastRecordingChangeTimeLow;
   GhostRecord* mRecording[4];
   GhostRecord* mLoaded[4];
  bool mRecordingActive[4];
  bool mRecordingSlotFlags1[4];
+ bool mAnyRecordingActive;
  bool mRecordingSlotFlags2[4];
   void* mSaveHeaderBuffer;
+  unsigned int mSaveHeaderLength;
   int mSaveHeaderStatus;
-  std::map<int, TrackHeader> mTrackHeaders[4];
+  boost::unordered_map<int, TrackHeader> mTrackHeaders[4];
+  bool mTrackHeaderEverSaved[4];
   std::deque<GhostLoadSaveOperation> mQueue;
-  std::vector<boost::shared_ptr<GhostPlayer> > mGhostPlayers;
+  OSFastMutex mQueueLock;
+  boost::shared_ptr<GhostPlayer> mGhostPlayers[4];
 };
 #endif

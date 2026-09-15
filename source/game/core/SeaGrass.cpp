@@ -29,8 +29,25 @@ SeaGrass::SeaGrass()
 }
 SeaGrass::~SeaGrass() {}
 bool SeaGrass::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool) { return true; }
-bool SeaGrass::isBonemealSuccess(Level* l, Random* r, const BlockPos& p, const BlockState* s) { return trySpawnSeaGrass(true, l, r, p, s); }
-void SeaGrass::performBonemeal(Level* l, Random* r, const BlockPos& p, const BlockState* s) { trySpawnSeaGrass(false, l, r, p, s); }
+bool SeaGrass::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
+{
+    return trySpawnSeaGrass(true, level, random, pos, state);
+}
+void SeaGrass::performBonemeal(Level* l, Random*, const BlockPos& p, const BlockState* s)
+{
+    if (s->getValue(SEAGRASS_TYPE) != 0)
+        return;
+
+    const BlockState* aboveState = l->getBlockState(p.above());
+    Block* aboveBlock = aboveState->getBlock();
+    if (!aboveBlock->isLiquidBlock() || aboveBlock->mMaterial != Material::WATER)
+        return;
+
+    const BlockState* topState = getBlockState(1);
+    const BlockState* bottomState = getBlockState(2);
+    l->setBlock(p.above(), topState, 3, false);
+    l->setBlock(p, bottomState, 3, false);
+}
 void SeaGrass::tick(Level* level, const BlockPos& pos, const BlockState*, Random*)
 {
     if (!level->mIsClientSide)
@@ -139,20 +156,102 @@ bool SeaGrass::trySpawnSeaGrass(bool check, Level* l, Random* r, const BlockPos&
     if (!l->isUnderWater(p.above(), 270, 0))
         return false;
 
-    BlockPos target = p.above();
-    for (int i = 0; i < 3 && l->getBlockState(target)->getBlock() == Blocks::sea_grass; ++i)
-        target = target.above();
-    if (!l->isEmptyWaterBlock(target))
-        return false;
-
+    bool growTallSeaGrass = false;
+    bool result = false;
     SeaGrass* seaGrass = static_cast<SeaGrass*>(Blocks::sea_grass);
-    const BlockState* state = seaGrass->getBlockState(1 + (r->nextInt(8) == 0 ? 1 : 0));
-    if (check)
-        return true;
+    const BlockState* tallTopState = seaGrass->getBlockState(1);
 
-    l->setBlockAndUpdate(target, state);
-    l->setBlockAndUpdate(target.above(), seaGrass->getBlockState(2));
-    return true;
+    for (int attempt = 16; attempt < 64; ++attempt)
+    {
+        BlockPos pos = p.above();
+        int stepCount = attempt >> 4;
+        bool foundGround = true;
+        if (stepCount < 1)
+        {
+            foundGround = (stepCount != 0);
+        }
+        else
+        {
+            for (int step = 0; step < stepCount; ++step)
+            {
+                int dx = r->nextInt(3);
+                int ya = r->nextInt(3);
+                int yb = r->nextInt(3);
+                int dz = r->nextInt(3);
+                pos = pos.offset(dx - 1, (ya - 1) * yb / 2, dz - 1);
+                Block* ground = l->getBlock(pos.below());
+                if ((ground != Blocks::dirt && ground != Blocks::sand && ground != Blocks::gravel && ground != Blocks::clay)
+                    || !l->isEmptyWaterBlock(pos))
+                {
+                    foundGround = false;
+                    break;
+                }
+            }
+        }
+
+        if (!foundGround)
+            continue;
+
+        if (!l->isUnderWater(pos.above(), 270, 0)
+            || l->getBlock(pos) == Blocks::sea_grass
+            || l->getBlock(pos) == Blocks::coral)
+            continue;
+
+        int roll = r->nextInt(8);
+        const BlockState* chosenState;
+        bool placed = false;
+        if (roll == 0)
+        {
+            growTallSeaGrass = true;
+            chosenState = seaGrass->getBlockState(2);
+            if (chosenState != NULL)
+            {
+                Block* chosenBlock = chosenState->getBlock();
+                if (chosenBlock->mayPlace(l, pos) && l->isEmptyWaterBlock(pos.above()))
+                    placed = true;
+            }
+        }
+        else
+        {
+            if (roll == 2)
+            {
+                r->nextInt(5);
+                chosenState = Blocks::coral->defaultBlockState();
+            }
+            else
+            {
+                chosenState = Blocks::sea_grass->defaultBlockState();
+            }
+
+            if (chosenState != NULL)
+            {
+                Block* chosenBlock = chosenState->getBlock();
+                if (growTallSeaGrass)
+                {
+                    if (chosenBlock->mayPlace(l, pos) && l->isEmptyWaterBlock(pos.above()))
+                        placed = true;
+                }
+                else
+                {
+                    if (chosenBlock->mayPlace(l, pos))
+                        placed = true;
+                }
+            }
+        }
+
+        if (placed)
+        {
+            result = true;
+            if (!check)
+            {
+                if (growTallSeaGrass)
+                    l->setBlockAndUpdate(pos.above(), tallTopState);
+                l->setBlockAndUpdate(pos, chosenState);
+            }
+        }
+    }
+
+    return result;
 }
 BlockStateDefinition* SeaGrass::createBlockStateDefinition()
 {

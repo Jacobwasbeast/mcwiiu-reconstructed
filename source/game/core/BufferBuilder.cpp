@@ -723,18 +723,6 @@ void BufferBuilder::packCompactQuad()
     }
 }
 
-void BufferBuilder::blockParticleQuad(float x0, float y0, float z0, float u0, float v0,
-                                      float x1, float y1, float z1, float u1, float v1,
-                                      float x2, float y2, float z2, float u2, float v2,
-                                      float x3, float y3, float z3, float u3, float v3,
-                                      float red, float green, float blue, float alpha)
-{
-    color(red, green, blue, alpha);
-    vertexUV(x0, y0, z0, u0, v0);
-    vertexUV(x1, y1, z1, u1, v1);
-    vertexUV(x2, y2, z2, u2, v2);
-    vertexUV(x3, y3, z3, u3, v3);
-}
 
 void BufferBuilder::Bounds::addVert(float x, float y, float z)
 {

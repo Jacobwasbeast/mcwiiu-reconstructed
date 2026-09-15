@@ -67,7 +67,7 @@ public:
     unsigned int GetBuildOffScoringVote(int playerIndex, int vote);
     void SetBuildOffThemeVote(int playerIndex, int vote, int value);
     unsigned int GetBuildOffThemeVote(int playerIndex);
-    void GetString(const int& id);
+    const wchar_t* GetString(const int& id);
     void GetCurrentThemeVotesText(std::vector<HtmlString>& text);
     std::wstring GetTransitionTextOverride();
     void SetPlayerReady(unsigned int playerIndex, bool ready);

@@ -20,7 +20,7 @@ public:
  unsigned int getOffset(int x,int z); unsigned int outOfBounds(int x,int z);
  DataInputStream* getChunkDataInputStream(int x,int z,bool* compressed);
  DataOutputStream* getChunkDataOutputStream(int x,int z,bool compressed);
- void GetThreadCompressedDataStorage();
+ void* GetThreadCompressedDataStorage();
  void write(int sector,unsigned char* data,int length,unsigned int offset,bool compressed,bool rle,bool deleteData);
  void zero(int sector,int length); void insertInitialSectors();
  void setOffset(int x,int z,int offset); void setTimestamp(int x,int z,int timestamp);
@@ -30,7 +30,7 @@ public:
  bool hasChunk(int x,int z); static void ReleaseThreadStorage();
 private:
  FileEntry* mFileEntry; File* mFile; ConsoleSaveFile* mSaveFile;
- unsigned int* mOffsets; unsigned int* mTimestamps; std::vector<unsigned int>* mUsedSectors;
+ unsigned int* mOffsets; unsigned int* mTimestamps; std::vector<bool>* mUsedSectors;
  int mSizeDelta; int mUnknown28; int mUnknown32; int mUnknown36; bool mNewFile; int mUnknown44;
 };
 #endif

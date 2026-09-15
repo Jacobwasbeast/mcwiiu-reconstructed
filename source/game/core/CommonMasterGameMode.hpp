@@ -69,6 +69,8 @@ public:
     const std::wstring& getChosenThemeWord();
     void clearBuildOffVotes();
     std::wstring getThemeWordEnglish(int id);
+    StringTable* getLocalizedStringTable() const { return mLocalizedStringTable; }
+    StringTable* getEnglishStringTable() const { return mEnglishStringTable; }
     LevelGenerationOptions* getCurrentLevelGenOptions() const;
     LevelGenerationOptions* getRoundLevelGenOptions() const;
     bool isUsingTrialContent();
@@ -81,7 +83,7 @@ public:
     void CheckCheckpoints(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckTargets(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckPowerups(const std::vector<boost::shared_ptr<Player> >& players);
-    template<class Rule> void CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, const std::vector<Rule*>& rules, unsigned int callback);
+    template<class Rule> void CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, const std::vector<Rule*>& rules, void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*));
 protected:
     LevelGenerationOptions* mCurrentLevelGenOptions;
 private:
@@ -93,6 +95,7 @@ protected:
 private:
     unsigned int mState;
     unsigned int mNextState;
+    long long mGeneratorSeed;
     float mGeneratorSeedScale;
 protected:
     MapGenerator* mMapGenerator;
@@ -126,4 +129,5 @@ private:
     unsigned char mFlag1;
     unsigned char mFlag2;
 };
+
 #endif

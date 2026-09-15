@@ -57,9 +57,7 @@ CoralFan::CoralFan()
                                             ->setBoxedValue(CoralFan_PROPERTY_2, &direction));
 }
 
-CoralFan::~CoralFan()
-{
-}
+CoralFan::~CoralFan() = default;
 
 int CoralFan::getColor(const BlockState* state)
 {

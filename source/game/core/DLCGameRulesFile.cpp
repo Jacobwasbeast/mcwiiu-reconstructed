@@ -8,9 +8,7 @@ DLCGameRulesFile::DLCGameRulesFile(const std::wstring& path)
 {
 }
 
-DLCGameRulesFile::~DLCGameRulesFile()
-{
-}
+DLCGameRulesFile::~DLCGameRulesFile() = default;
 
 void DLCGameRulesFile::addData(unsigned char* pData, unsigned int size)
 {

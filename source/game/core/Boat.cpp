@@ -20,6 +20,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/entity/mob/Animal.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -120,6 +121,7 @@ void Boat::_init()
     mDamage = 0.0f;
     mBubbleAngle = 0.0f;
     mBubbleAngleO = 0.0f;
+    mBubbleShakeRamp = 0.0f;
     mLerpX = 0.0;
     mLerpY = 0.0;
     mLerpZ = 0.0;
@@ -153,7 +155,12 @@ void Boat::defineSynchedData()
     getEntityData()->createDateItem(DATA_BUBBLE_TIME, 0);
     getEntityData()->createDateItem(DATA_SINKING, false);
 }
-AABB* Boat::getCollideAgainstBox(boost::shared_ptr<Entity> entity) { return entity.get() == this ? NULL : Entity::getCollideAgainstBox(entity); }
+AABB* Boat::getCollideAgainstBox(boost::shared_ptr<Entity> entity)
+{
+    if (!entity->isPushable(shared_from_this()))
+        return NULL;
+    return entity->mBoundingBox;
+}
 AABB* Boat::getCollideBox() { return mBoundingBox; }
 bool Boat::isPushable(boost::shared_ptr<Entity> entity) { return entity.get() != this; }
 double Boat::getRideHeight() { return 0.35; }
@@ -224,8 +231,25 @@ void Boat::onAboveBubbleCol(bool down)
                             0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }
-void Boat::push(boost::shared_ptr<Entity> entity) { Entity::push(entity); }
-void Boat::animateHurt() { mHurtTime = 10; mHurtDir = -mHurtDir; }
+void Boat::push(boost::shared_ptr<Entity> entity)
+{
+    if (entity->GetType() == ENTITY_TYPE_BOAT)
+    {
+        if (entity->mBoundingBox->mMinY < Entity::mBoundingBox->mMaxY)
+            Entity::push(entity);
+    }
+    else
+    {
+        if (entity->mBoundingBox->mMinY <= Entity::mBoundingBox->mMinY)
+            Entity::push(entity);
+    }
+}
+void Boat::animateHurt()
+{
+    setHurtDir(-getHurtDir());
+    setHurtTime(10);
+    setDamage(static_cast<float>(getDamage() * 11.0));
+}
 bool Boat::isPickable() { return !mRemoved; }
 void Boat::lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport)
 {
@@ -393,7 +417,20 @@ bool Boat::getIsSinking()
 {
     return getEntityData()->get(DATA_SINKING);
 }
-void Boat::tickLerp() { if (mLerpSteps > 0) --mLerpSteps; }
+void Boat::tickLerp()
+{
+    if (mLerpSteps > 0 && !isControlledByLocalInstance())
+    {
+        const double steps = static_cast<double>(mLerpSteps);
+        --mLerpSteps;
+
+        mYRot = mYRot + static_cast<float>(Mth::wrapDegrees(mLerpYRot - static_cast<double>(mYRot)) / steps);
+        mXRot = static_cast<float>(static_cast<double>(mXRot) + (mLerpXRot - static_cast<double>(mXRot)) / steps);
+
+        setPos(mX + (mLerpX - mX) / steps, mY + (mLerpY - mY) / steps, mZ + (mLerpZ - mZ) / steps);
+        setRot(mYRot, mXRot);
+    }
+}
 void Boat::setPaddleState(bool left, bool right)
 {
     getEntityData()->set(DATA_PADDLE_LEFT, left, true);
@@ -548,12 +585,49 @@ void Boat::controlBoat()
     }
     setPaddleState(mInputForward || mInputLeft, mInputForward || mInputRight);
 }
-bool Boat::getPaddleState(int paddle) { return paddle == 0 ? mPaddleLeft : mPaddleRight; }
+bool Boat::getPaddleState(int paddle)
+{
+    return getEntityData()->get(paddle == 0 ? DATA_PADDLE_LEFT : DATA_PADDLE_RIGHT) && getControllingPassenger();
+}
 void Boat::setIsSinking(bool sinking)
 {
     getEntityData()->set(DATA_SINKING, sinking, true);
 }
-void Boat::tickBubbleColumn() { if (mBubbleTime > 0) --mBubbleTime; }
+void Boat::tickBubbleColumn()
+{
+    if (!mLevel->mIsClientSide)
+    {
+        if (!mBubbleColumnActive)
+            setBubbleTime(0);
+
+        int time = getBubbleTime();
+        if (time > 0)
+        {
+            --time;
+            setBubbleTime(time);
+
+            if (time < 1 && mBubbleColumnDown)
+            {
+                setBubbleTime(0);
+                mZd -= 0.7;
+                mBubbleTime = 60;
+                setIsSinking(true);
+            }
+
+            mBubbleColumnActive = 0;
+        }
+
+        return;
+    }
+
+    if (getBubbleTime() > 0)
+        mBubbleShakeRamp = Mth::clamp(mBubbleShakeRamp + 0.05f, 0.0f, 1.0f);
+    else
+        mBubbleShakeRamp = Mth::clamp(mBubbleShakeRamp - 0.1f, 0.0f, 1.0f);
+
+    mBubbleAngleO = mBubbleAngle;
+    mBubbleAngle = static_cast<float>(Mth::sin(0.5f * static_cast<float>(mLevel->getGameTime()))) * 10.0f * mBubbleShakeRamp;
+}
 void Boat::tick()
 {
     mStatusO = mStatus;
@@ -685,7 +759,13 @@ void Boat::setType(Type type)
 }
 void Boat::readAdditionalSaveData(CompoundTag* tag)
 {
-    mType = (Type)Mth::clamp(tag->getInt(L"Type"), 0, 5);
+    if (tag->contains(L"Type", 3))
+        setType(static_cast<Type>(tag->getInt(L"Type")));
+
+    mLeashed = tag->getBoolean(L"Leashed");
+
+    if (mLeashed && tag->contains(L"Leash", 10))
+        mLeashInfoTag = tag->getCompound(L"Leash")->copy();
 }
 bool Boat::testInteract(boost::shared_ptr<Player> player) { return getPassengers()->size() < 2; }
 bool Boat::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -725,7 +805,22 @@ bool Boat::interact(const boost::shared_ptr<Player>& player, InteractionHand::EI
 }
 unsigned int Boat::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_bAllowedToInteract ? 0x3c2d9ad6U : 0xffffffffU;
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x1a4)
+    {
+        if (!isLeashed())
+            return 0xa1b34a96U;
+
+        if (isLeashedToPlayer(tooltipData.m_pPlayer))
+            return 0x551269b5U;
+    }
+
+    if (getPassengers()->size() < 2)
+    {
+        if (testInteract(tooltipData.m_pPlayer))
+            return 0xec8ece8aU;
+    }
+
+    return 0xffffffffU;
 }
 unsigned int Boat::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
@@ -795,7 +890,13 @@ int Boat::getHurtDir()
     return getEntityData()->get(sBoatDataHurtDir);
 }
 bool Boat::canAddPassenger(boost::shared_ptr<Entity> entity) { return getPassengers()->size() < 2; }
-boost::shared_ptr<Entity> Boat::getControllingPassenger() { return Entity::getControllingPassenger(); }
+boost::shared_ptr<Entity> Boat::getControllingPassenger()
+{
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+    if (passengers->empty())
+        return boost::shared_ptr<Entity>();
+    return passengers->at(0).lock();
+}
 void Boat::setInput(bool left, bool right, bool forward, bool backward) { mInputLeft = left; mInputRight = right; mInputForward = forward; mInputBackward = backward; }
 bool Boat::canBeLeashed(const boost::shared_ptr<Player>& player) { return !isLeashed(); }
 bool Boat::hasPlayerPassenger()

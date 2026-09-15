@@ -42,9 +42,7 @@ CoralFanHang::CoralFanHang()
                                             ->setBoxedValue(CoralFanHang_PROPERTY_3, &dead));
 }
 
-CoralFanHang::~CoralFanHang()
-{
-}
+CoralFanHang::~CoralFanHang() = default;
 
 Item* CoralFanHang::getResource(const BlockState* state, Random* random, int lootBonus)
 {

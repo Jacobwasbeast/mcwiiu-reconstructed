@@ -9,13 +9,12 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 
 SuperflatConfig::SuperflatConfig()
+    : mDisplayname(), mVersion(255), layers(), mOptions()
 {
     clear();
 }
 
-SuperflatConfig::~SuperflatConfig()
-{
-}
+SuperflatConfig::~SuperflatConfig() = default;
 
 bool SuperflatConfig::hasParam(unsigned char parameter)
 {
@@ -84,7 +83,7 @@ void SuperflatConfig::clear()
 
 std::wstring SuperflatConfig::getDisplayname()
 {
-    return mDisplayname;
+    return std::wstring(mDisplayname);
 }
 
 void SuperflatConfig::setVersion(unsigned char version)

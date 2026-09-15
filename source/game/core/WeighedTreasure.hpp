@@ -1,32 +1,37 @@
-#ifndef GAME_CORE_WEIGHTEDTREASURE_HPP
-#define GAME_CORE_WEIGHTEDTREASURE_HPP
+/* WeighedTreasure - generated reconstruction header. */
+#ifndef RECON_C_GAME_W_WEIGHEDTREASURE_HPP
+#define RECON_C_GAME_W_WEIGHEDTREASURE_HPP 1
 
-#include <boost/shared_ptr.hpp>
+#include "guest_ns.hpp"
 
-#include "game/item/not_null_ptr.hpp"
-#include "game/world/biome/arrayWithLength.hpp"
+namespace recon {
+struct Item;
+struct Random;
+struct not_null_ptr_ItemInstance;
+struct sp_Container;
 
-class Container;
-class Item;
-class ItemInstance;
-class Random;
+#pragma pack(push, 1)
+struct WeighedTreasure {
+    be<int32_t> field_0x0;
+    be<int32_t> vfptr;
+    be<int32_t> field_0x8;
+    be<uint32_t> field_0xc;   /* ptr */
+    be<int32_t> field_0x10;
+    be<int32_t> field_0x14;
 
-class WeighedTreasure
-{
-public:
-    WeighedTreasure(Item* item, int auxValue, int minCount, int maxCount, int weight);
-    WeighedTreasure(not_null_ptr<ItemInstance> item, int minCount, int maxCount, int weight);
-    virtual ~WeighedTreasure();
-    not_null_ptr<ItemInstance> getItem();
-    static void addChestItems(Random* random, arrayWithLength<WeighedTreasure*> treasures,
-                              boost::shared_ptr<Container> container, int count, bool allowEmpty);
-    static void addToTreasure(arrayWithLength<WeighedTreasure*> treasures, WeighedTreasure* treasure);
-
-private:
-    int mWeight;
-    not_null_ptr<ItemInstance> mItem;
-    int mMinCount;
-    int mMaxCount;
+    /* interface: 2 methods recovered, 1 without a recoverable signature;
+     * implementation: 0 reconstructed bodies, 2 lowered drafts, 0 closed */
+    WeighedTreasure(gptr<Item> a1, int32_t a2, int32_t a3, int32_t a4, int32_t a5);   /* LOWERED-DRAFT; not reconstructed */
+    WeighedTreasure(gptr<not_null_ptr_ItemInstance> a1, int32_t a2, int32_t a3, int32_t a4);   /* LOWERED-DRAFT; not reconstructed */
+    ~WeighedTreasure();   /* LOWERED-DRAFT; not reconstructed */
+    WeighedTreasure() {}   /* generated shell; the real ctor is dispatch-only */
+    void getItem();   /* LOWERED-DRAFT; not reconstructed */
+    static void addChestItems(gptr<Random> a1, uint32_t a2, gptr<sp_Container> a3, int32_t a4, bool a5);   /* LOWERED-DRAFT; not reconstructed */
+    /* unrecovered: addToTreasure(arrayWithLength<WeighedTreasure*>, WeighedTreasure*) [static] [0x00000000] */
 };
+static_assert(sizeof(WeighedTreasure) == 0x18, "layout");
+#pragma pack(pop)
+
+}  /* namespace recon */
 
 #endif

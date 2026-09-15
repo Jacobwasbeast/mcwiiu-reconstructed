@@ -136,9 +136,12 @@ uint32_t CensoredString::checkParentalFilter()
 
 std::wstring CensoredString::raw()
 {
-    if (m_useLocalization && (m_flags & 1) != 0)
-        return m_censored;
-    return m_pending;
+    const bool useCensored = m_useLocalization && (m_flags & 1) != 0;
+    if (useCensored)
+    {
+        return std::wstring(m_censored);
+    }
+    return std::wstring(m_pending);
 }
 
 void CensoredString::saveToTag(CompoundTag* tag)

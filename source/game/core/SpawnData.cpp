@@ -29,6 +29,7 @@ SpawnData::SpawnData(int weight, CompoundTag* entityTag)
 SpawnData::~SpawnData()
 {
     delete mTag;
+    mTag = NULL;
 }
 
 CompoundTag* SpawnData::save()

@@ -75,7 +75,7 @@ bool NetherBridgePieces::NetherBridgePiece::isOkBox(BoundingBox* box, StartPiece
 {
     if (box == NULL)
         return false;
-    Level* level = *reinterpret_cast<Level**>(reinterpret_cast<char*>(start) + 0x20);
+    Level* level = start->mLevel;
     LevelData* levelData = level->getLevelData();
     int half = (levelData->getXZSize() / levelData->getHellScale() << 4) >> 1;
     int lower = 1 - half;
@@ -101,34 +101,33 @@ StructurePiece* NetherBridgePieces::NetherBridgePiece::generatePiece(
     StartPiece* start, std::list<PieceWeight*>* weights, std::vector<StructurePiece*>* pieces,
     Random& random, int x, int y, int z, const Direction* direction, int depth)
 {
-    if (!start || !weights || depth >= 31)
-        return BridgeEndFiller::createPiece(pieces, random, x, y, z, direction, depth);
     const int total = updatePieceWeight(weights);
-    if (total < 0)
-        return BridgeEndFiller::createPiece(pieces, random, x, y, z, direction, depth);
-    for (int attempt = 0; attempt < 5; ++attempt)
+    if (total > 0 && depth < 31)
     {
-        int pick = random.nextInt(total);
-        for (std::list<PieceWeight*>::iterator it = weights->begin(); it != weights->end(); ++it)
+        for (int attempt = 0; attempt < 5; ++attempt)
         {
-            PieceWeight* weight = *it;
-            if (!weight || !weight->isValid() || (weight->mWeight <= 0))
-                continue;
-            pick -= weight->mWeight;
-            if (pick >= 0)
-                continue;
-            if (!weight->doPlace(depth))
-                break;
-            StructurePiece* piece = findAndCreateBridgePieceFactory(weight, pieces, random,
-                                                                       x, y, z, direction, depth);
-            if (piece)
+            int pick = random.nextInt(total);
+            for (std::list<PieceWeight*>::iterator it = weights->begin(); it != weights->end(); ++it)
             {
-                start->mPreviousPieceWeight = weight->mPieceClass;
-                if (!weight->isValid())
-                    weights->erase(it);
-                return piece;
+                PieceWeight* weight = *it;
+                pick -= weight->mWeight;
+                if (pick >= 0)
+                    continue;
+                if (!weight->doPlace(depth) ||
+                    (weight == start->mPreviousPieceWeight && !weight->mIsValid))
+                    break;
+                StructurePiece* piece = findAndCreateBridgePieceFactory(weight, pieces, random,
+                                                                           x, y, z, direction, depth);
+                if (piece)
+                {
+                    ++weight->mPlaceCount;
+                    start->mPreviousPieceWeight = weight;
+                    if (!weight->isValid())
+                        weights->remove(weight);
+                    return piece;
+                }
+                break;
             }
-            break;
         }
     }
     return BridgeEndFiller::createPiece(pieces, random, x, y, z, direction, depth);
@@ -137,21 +136,20 @@ StructurePiece* NetherBridgePieces::NetherBridgePiece::generateAndAddPiece(
     StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
     int x, int y, int z, const Direction* direction, int depth, bool allowBelow)
 {
-    if (!start || !pieces || !direction || depth >= 31 || (!allowBelow && y < 0))
-        return BridgeEndFiller::createPiece(pieces, random, x, y, z, direction, depth);
     BoundingBox* startBox = start->getBoundingBox();
-    if (!startBox || std::abs(x - startBox->x0) >= 113 || std::abs(z - startBox->z0) >= 113)
-        return BridgeEndFiller::createPiece(pieces, random, x, y, z, direction, depth);
-    StructurePiece* piece = generatePiece(start, &start->mAvailablePieces, pieces,
-                                           random, x, y, z, direction, depth + 1);
-    if (piece && isOkBox(piece->getBoundingBox(), start))
+    if (std::abs(x - startBox->x0) < 113 && std::abs(z - startBox->z0) < 113)
     {
-        pieces->push_back(piece);
-        start->mPendingChildren.push_back(piece);
-        return piece;
+        std::list<PieceWeight*>* weights = allowBelow ? &start->mPendingPieces : &start->mAvailablePieces;
+        StructurePiece* piece = generatePiece(start, weights, pieces,
+                                               random, x, y, z, direction, depth + 1);
+        if (piece)
+        {
+            pieces->push_back(piece);
+            start->mPendingChildren.push_back(piece);
+            return piece;
+        }
     }
-    delete piece;
-    return NULL;
+    return BridgeEndFiller::createPiece(pieces, random, x, y, z, direction, depth);
 }
 StructurePiece* NetherBridgePieces::NetherBridgePiece::generateChildForward(StartPiece* s,std::vector<StructurePiece*>* p,Random& r,int x,int y,bool a)
 {
@@ -185,8 +183,11 @@ void NetherBridgePieces::NetherBridgePiece::generateLightPost(Level* level,Rando
     const BlockState* fence = netherBrickFence();
     const BlockState* glowstone = Blocks::glowstone->defaultBlockState();
     for (int i = 0; i < 4; ++i)
-        if (level->getBlock(pos.above(i)) != Blocks::AIR)
+    {
+        const BlockState* state = level->getBlockState(pos.above(i));
+        if (state->getBlock() != Blocks::AIR)
             return;
+    }
     for (int i = 0; i < 4; ++i)
         level->setBlock(pos.above(i), fence, 2, false);
     placeBlock(level, fence, x + xOffset, y + 3, z + zOffset, box);
@@ -1123,13 +1124,26 @@ void NetherBridgePieces::MonsterThrone::readAdditionalSaveData(DataInputStream* 
 void NetherBridgePieces::MonsterThrone::addAdditionalSaveData(DataOutputStream* o){NetherBridgePiece::addAdditionalSaveData(o);}
 void NetherBridgePieces::BridgeEndFiller::readAdditionalSaveData(DataInputStream* input, StructureManager*)
 {
-    *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x1c) = input->readInt();
+    mUnknown1c = input->readInt();
 }
 void NetherBridgePieces::BridgeEndFiller::addAdditionalSaveData(DataOutputStream* o){NetherBridgePiece::addAdditionalSaveData(o);}
 NetherBridgePieces::StartPiece::StartPiece(Random& random,int x,int z,Level* level):BridgeCrossing(random,x,z)
 {
     mLevel = level;
     mPreviousPieceWeight = 0;
+    mAvailablePieces.push_back(new PieceWeight(ePieceClass_BridgeStraight, 30, 0, true));
+    mAvailablePieces.push_back(new PieceWeight(ePieceClass_BridgeCrossing, 10, 4));
+    mAvailablePieces.push_back(new PieceWeight(ePieceClass_MonsterThrone, 15, 2));
+    mAvailablePieces.push_back(new PieceWeight(ePieceClass_CastleEntrance, 15, 1));
+    mAvailablePieces.push_back(new PieceWeight(ePieceClass_RoomCrossing, 10, 4));
+    mAvailablePieces.push_back(new PieceWeight(ePieceClass_StairsRoom, 10, 3));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleStalkRoom, 30, 2));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleSmallCorridorPiece, 25, 1, true));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleSmallCorridorCrossingPiece, 15, 5));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleSmallCorridorRightTurnPiece, 5, 10));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleSmallCorridorLeftTurnPiece, 5, 10));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleCorridorStairsPiece, 10, 3, true));
+    mPendingPieces.push_back(new PieceWeight(ePieceClass_CastleCorridorTBalconyPiece, 7, 2));
 }
 NetherBridgePieces::StartPiece::~StartPiece(){}
 EStructurePiece NetherBridgePieces::StartPiece::GetType(){return eStructurePiece_NetherBridgeStartPiece;}

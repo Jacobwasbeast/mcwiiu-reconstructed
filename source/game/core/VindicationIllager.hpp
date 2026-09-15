@@ -1,72 +1,54 @@
-#ifndef GAME_CORE_VINDICATIONILLAGER_HPP
-#define GAME_CORE_VINDICATIONILLAGER_HPP
+/* VindicationIllager - generated reconstruction header. */
+#ifndef RECON_C_GAME_V_VINDICATIONILLAGER_HPP
+#define RECON_C_GAME_V_VINDICATIONILLAGER_HPP 1
 
-#include <string>
-#include <typeinfo>
-#include <boost/shared_ptr.hpp>
+#include "guest_ns.hpp"
+#include "game/A/AbstractIllager.hpp"
 
-#include "game/core/AbstractIllager.hpp"
-#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
-#include "game/world/block/Predicate.hpp"
+namespace recon {
+struct CompoundTag;
+struct DamageSource;
+struct DifficultyInstance;
+struct Level;
+struct MobGroupData;
+struct sp_Entity;
+struct wstring;
 
-class CompoundTag;
-class DamageSource;
-class DifficultyInstance;
-class DataFixerUpper;
-class Level;
-class MobGroupData;
-class SoundEvent;
-class Entity;
+#pragma pack(push, 1)
+struct VindicationIllager : AbstractIllager {
+    be<uint8_t> field_0x730;
+    uint8_t pad_0x731[7];
 
-class VindicationIllager : public AbstractIllager
-{
-public:
-    class LIVING_ENTITY_SELECTOR : public Predicate<boost::shared_ptr<Entity> >
-    {
-    public:
-        virtual bool apply(boost::shared_ptr<Entity> entity) const;
-        virtual ~LIVING_ENTITY_SELECTOR();
-    };
-
-    class VindicatorJohnnyAttackGoal : public NearestAttackableTargetGoal
-    {
-    public:
-        explicit VindicatorJohnnyAttackGoal(VindicationIllager* illager);
-        virtual ~VindicatorJohnnyAttackGoal();
-        virtual bool canUse();
-    };
-
-    explicit VindicationIllager(Level* level);
-    virtual ~VindicationIllager();
-
-    static void create(Level* level);
-    static void addDataWalkers(DataFixerUpper* fixer);
-
-    virtual void registerGoals();
-    virtual void registerAttributes();
-    virtual void defineSynchedData();
-    virtual EMobType getMobType();
-    virtual ResourceLocation* getDefaultLootTable();
-    virtual ResourceLocation* getDefaultGearTable();
-    bool isAgressive();
-    void setAggressive(bool aggressive);
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual int getArmPose();
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                           MobGroupData* data,
-                                           const std::wstring& dataString);
-    virtual void customServerAiStep();
-    virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);
-    virtual void setCustomName(const std::wstring& name, const std::wstring& ownerUUID,
-                               bool namedByRestrictedPlayer);
-    virtual const SoundEvent* getAmbientSound();
-    virtual const SoundEvent* getDeathSound();
-    virtual const SoundEvent* getHurtSound(const DamageSource* source);
-    virtual unsigned long long GetType();
-
-private:
-    bool mJohnny;
+    /* interface: 21 methods recovered, 0 without a recoverable signature, 1 ABI artifacts;
+     * implementation: 11 reconstructed bodies, 8 lowered drafts, 7 closed */
+    VindicationIllager(gptr<Level> a1);   /* LOWERED-DRAFT; not reconstructed */
+    ~VindicationIllager();   /* boundary stub */
+    VindicationIllager() {}   /* generated shell; the real ctor is dispatch-only */
+    static void create(gptr<Level> a1);   /* LOWERED-DRAFT; not reconstructed */
+    static void addDataWalkers(uint32_t a1, uint32_t a2);
+    void registerGoals();   /* boundary stub */
+    void registerAttributes();   /* LOWERED-DRAFT; not reconstructed */
+    void defineSynchedData();
+    uint32_t getMobType();   /* closed */
+    uint32_t getDefaultLootTable();   /* closed */
+    uint32_t getDefaultGearTable();   /* closed */
+    void isAgressive();
+    void setAggressive(bool a1);
+    void addAdditonalSaveData(gptr<CompoundTag> a1);   /* LOWERED-DRAFT; not reconstructed */
+    void getArmPose();   /* LOWERED-DRAFT; not reconstructed */
+    void readAdditionalSaveData(gptr<CompoundTag> a1);   /* LOWERED-DRAFT; not reconstructed */
+    gptr<MobGroupData> finalizeMobSpawn(gptr<DifficultyInstance> a1, gptr<MobGroupData> a2, gptr<wstring> a3);   /* LOWERED-DRAFT; not reconstructed */
+    void customServerAiStep();   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t isAlliedTo(gptr<sp_Entity> a1);   /* LOWERED-DRAFT; not reconstructed */
+    void setCustomName(gptr<wstring> a1, gptr<wstring> a2, bool a3);   /* boundary stub */
+    uint32_t getAmbientSound();   /* closed */
+    uint32_t getDeathSound();   /* closed */
+    uint32_t getHurtSound(gptr<DamageSource> a1);   /* closed */
+    uint64_t GetType();   /* closed */
 };
+static_assert(sizeof(VindicationIllager) == 0x738, "layout");
+#pragma pack(pop)
+
+}  /* namespace recon */
 
 #endif

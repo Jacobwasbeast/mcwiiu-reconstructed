@@ -5,9 +5,6 @@ BorderStatus::BorderStatus(int color)
 {
 }
 
-BorderStatus::~BorderStatus()
-{
-}
 
 int BorderStatus::getColor()
 {

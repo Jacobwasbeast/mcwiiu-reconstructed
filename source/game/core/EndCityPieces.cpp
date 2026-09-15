@@ -342,18 +342,22 @@ bool EndCityPieces::TowerSectionGenerator::generate(StructureManager* structureM
         BlockPos(4, -3, 4), static_cast<eMinecraftStructureTemplate>(0x24), rotation, true));
     piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 7, 0),
         static_cast<eMinecraftStructureTemplate>(0x26), rotation, true));
+    random.nextInt(3);
     int count = random.nextInt(3) + 1;
     int i;
-    for (i = 0; i < count; ++i)
+    for (i = 0; i <= count; ++i)
+    {
         piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 4, 0),
             static_cast<eMinecraftStructureTemplate>(0x26), rotation, true));
+        if (i < count)
+            random.nextInt(10);
+    }
     if (genDepth == 7)
+    {
         addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
             static_cast<eMinecraftStructureTemplate>(0x27), rotation, true));
-    else if (!recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1,
-        piece, BlockPos::ZERO, pieces, random))
-        return false;
-    addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
-        static_cast<eMinecraftStructureTemplate>(0x27), rotation, true));
-    return true;
+        return true;
+    }
+    return recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1,
+        piece, BlockPos::ZERO, pieces, random);
 }

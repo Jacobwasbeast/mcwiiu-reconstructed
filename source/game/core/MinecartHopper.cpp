@@ -100,13 +100,10 @@ bool MinecartHopper::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 AbstractContainerMenu* MinecartHopper::createMenu(boost::shared_ptr<Inventory> inventory,
                                                    boost::shared_ptr<Player> player)
 {
-    unpackLootTable(player);
-    boost::shared_ptr<Container> playerInventory = boost::dynamic_pointer_cast<Container>(inventory);
-    boost::shared_ptr<Entity> entity = shared_from_this();
     boost::shared_ptr<MinecartHopper> hopper =
-        boost::static_pointer_cast<MinecartHopper>(entity);
+        boost::static_pointer_cast<MinecartHopper>(shared_from_this());
     boost::shared_ptr<Container> container = boost::static_pointer_cast<Container>(hopper);
-    return new HopperMenu(playerInventory, container, player);
+    return new HopperMenu(inventory, container, player);
 }
 
 int MinecartHopper::getTypeId(bool large)

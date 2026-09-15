@@ -87,28 +87,30 @@ void CameraController::CalculateCurveLengths()
     mCurveLengths.clear();
     int count = (int)mNodes.size();
     int segment;
+    Vec3* previous = NULL;
     for (segment = 0; segment + 3 < count; segment += 3)
     {
-        std::vector<double> lengths;
         double total = 0.0;
-        Vec3* previous = CalculateBezierPoint(0.0f, mNodes[segment].position,
-                                               mNodes[segment + 1].position,
-                                               mNodes[segment + 2].position,
-                                               mNodes[segment + 3].position);
-        lengths.push_back(0.0);
+        mCurveLengths.push_back(std::vector<double>());
+        std::vector<double>& lengths = mCurveLengths.back();
+        lengths.push_back(total);
+        Vec3* p0 = mNodes[segment].position;
+        Vec3* p1 = mNodes[segment + 1].position;
+        Vec3* p2 = mNodes[segment + 2].position;
+        Vec3* p3 = mNodes[segment + 3].position;
+        if (segment == 0)
+        {
+            previous = CalculateBezierPoint(0.0f, p0, p1, p2, p3);
+        }
         int sample;
         for (sample = 1; sample <= 100; ++sample)
         {
             float t = (float)sample / 100.0f;
-            Vec3* point = CalculateBezierPoint(t, mNodes[segment].position,
-                                                mNodes[segment + 1].position,
-                                                mNodes[segment + 2].position,
-                                                mNodes[segment + 3].position);
+            Vec3* point = CalculateBezierPoint(t, p0, p1, p2, p3);
             total += previous->vectorTo(point)->length();
             lengths.push_back(total);
             previous = point;
         }
-        mCurveLengths.push_back(lengths);
     }
 }
 

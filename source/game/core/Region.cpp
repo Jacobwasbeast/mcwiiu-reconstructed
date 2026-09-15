@@ -1,5 +1,6 @@
 #include "game/core/Region.hpp"
 
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/block/Block.hpp"
@@ -128,7 +129,10 @@ float Region::getBrightness(const BlockPos& pos, int lightValue)
 
 int Region::getBrightnessPropagate(LightLayer::variety layer, const BlockPos& pos, int lightValue)
 {
-    return getBrightness(layer, pos);
+    int brightness = getBrightness(layer, pos);
+    if (brightness < lightValue)
+        brightness = lightValue;
+    return brightness;
 }
 
 int Region::getLightColor(const BlockPos& pos, int lightValue, int cacheIndex)
@@ -167,10 +171,47 @@ int Region::getBlockId(EntityTickCache& cache, int x, int y, int z) { unsigned s
 void Region::getBlockAndExtraBlockId(int x, int y, int z, int* blockId, int* extraBlockId) { *blockId = getBlockId(x, y, z); *extraBlockId = getExtraBlockId(x, y, z); }
 unsigned short Region::getElement(EntityTickCache& cache, int x, int y, int z) { unsigned short e = cache.getElement(x, y, z); return e == 0xffff ? getElement(x, y, z) : e; }
 unsigned short Region::getElement(int x, int y, int z) { LevelChunk* c = getChunk(x >> 4, z >> 4); return y < 0 || y >= 256 || c == NULL ? 0 : c->getElement(x & 15, y, z & 15); }
-int Region::getBlockData(int x, int y, int z) { return getElement(x, y, z) & 15; }
+int Region::getBlockData(int x, int y, int z)
+{
+    if (y >= 0 && y < 256)
+    {
+        if (mCachedStates != NULL && x >> 4 == mCachedX && z >> 4 == mCachedZ)
+        {
+            int yBase = mCachedY * 16 - 1;
+            if (y >= yBase && y < yBase + 17)
+            {
+                const BlockState* state = mCachedStates[((y - yBase) << 8) | ((z & 15) << 4) | (x & 15)];
+                Block* block = state->getBlock();
+                return block->convertBlockStateToLegacyData(state);
+            }
+        }
+        LevelChunk* chunk = getChunk(x >> 4, z >> 4);
+        if (chunk != NULL)
+            return chunk->getData(x & 15, y, z & 15);
+    }
+    return 0;
+}
 unsigned short Region::getExtraElement(int x, int y, int z) { LevelChunk* c = getChunk(x >> 4, z >> 4); return y < 0 || y >= 256 || c == NULL ? 0 : c->getExtraElement(x & 15, y, z & 15); }
 void Region::getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement) { *element = getElement(x, y, z); *extraElement = getExtraElement(x, y, z); }
-Block* Region::getBlock(const BlockPos& pos) { return Block::byId(getBlockId(pos.x, pos.y, pos.z)); }
+Block* Region::getBlock(const BlockPos& pos)
+{
+    if (pos.y >= 0 && pos.y < 256)
+    {
+        if (mCachedStates != NULL && pos.x >> 4 == mCachedX && pos.z >> 4 == mCachedZ)
+        {
+            int yBase = mCachedY * 16 - 1;
+            if (pos.y >= yBase && pos.y < yBase + 17)
+            {
+                const BlockState* state = mCachedStates[((pos.y - yBase) << 8) | ((pos.z & 15) << 4) | (pos.x & 15)];
+                return state->getBlock();
+            }
+        }
+        LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+        if (chunk != NULL)
+            return chunk->getBlock(pos);
+    }
+    return Block::byId(0);
+}
 void Region::getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock) { *block = getBlock(pos); *extraBlock = getExtraBlock(pos); }
 bool Region::isSolidRender(const BlockPos& pos)
 {
@@ -212,11 +253,84 @@ int Region::getExtraBlockId(int x, int y, int z) { return getExtraElement(x, y, 
 int Region::getExtraBlockData(int x, int y, int z) { return getExtraElement(x, y, z) & 15; }
 Block* Region::getExtraBlock(const BlockPos& pos) { return Block::byId(getExtraBlockId(pos.x, pos.y, pos.z)); }
 Block* Region::getLiquidBlock(const BlockPos& pos) { Block* block = getBlock(pos); return block->isLiquidBlock() ? block : getExtraBlock(pos); }
-const BlockState* Region::getLiquidBlockState(const BlockPos& pos) { return getLiquidBlock(pos)->defaultBlockState(); }
-const BlockState* Region::getExtraBlockState(const BlockPos& pos) { return getExtraBlock(pos)->defaultBlockState(); }
+const BlockState* Region::getLiquidBlockState(const BlockPos& pos)
+{
+    const BlockState* extra = getExtraBlockState(pos);
+    if (extra != NULL && extra != emptyState())
+        return extra;
+    return getBlockState(pos);
+}
+const BlockState* Region::getExtraBlockState(const BlockPos& pos)
+{
+    if (pos.y >= 0 && pos.y < 256)
+    {
+        LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+        if (chunk != NULL)
+            return chunk->getExtraBlockState(pos);
+    }
+    return emptyState();
+}
 bool Region::isEmptyBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 0; }
 bool Region::isEmptyWaterBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 9; }
 int Region::getBrightness(LightLayer::variety layer, const BlockPos& pos) { if (pos.y < 0 || pos.y >= 256) return layer; LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? layer : c->getBrightness(layer, pos); }
-void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states) { mCachedX = x; mCachedY = y; mCachedZ = z; mCachedStates = states; }
+void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states)
+{
+    mCachedX = x;
+    mCachedY = y;
+    mCachedZ = z;
+    mCachedStates = states;
+
+    PIXBeginNamedEvent(0.0f, "Region::setCachedBlocksAndData");
+
+    const BlockState* airState = emptyState();
+    int lastBlockId = 0xffff;
+    int lastData = -1;
+    const BlockState* lastState = NULL;
+    int yBase = y * 16 - 1;
+
+    int yi;
+    for (yi = 0; yi < 18; ++yi)
+    {
+        int worldY = yi + yBase;
+        int xi;
+        for (xi = 0; xi < 16; ++xi)
+        {
+            int zi;
+            for (zi = 0; zi < 16; ++zi)
+            {
+                const BlockState* state;
+                if (worldY >= 0 && worldY < 256)
+                {
+                    int index = ((worldY & 0x80) << 8) | (xi << 11) | (zi << 7) | (worldY & 0x7f);
+                    unsigned short element = elements[index];
+                    int blockId = elementToBlockId(element);
+                    int data = elementToData(element);
+                    if (blockId == 0)
+                    {
+                        state = airState;
+                    }
+                    else
+                    {
+                        if (blockId != lastBlockId || data != lastData)
+                        {
+                            Block* block = Block::byId(blockId);
+                            lastState = block->getBlockState(data);
+                            lastBlockId = blockId;
+                            lastData = data;
+                        }
+                        state = lastState;
+                    }
+                }
+                else
+                {
+                    state = airState;
+                }
+                states[(yi << 8) | (zi << 4) | xi] = state;
+            }
+        }
+    }
+
+    PIXEndNamedEvent();
+}
 unsigned int Region::elementToBlockId(unsigned short element) { return (element >> 4) & 0xffff; }
 unsigned int Region::elementToData(unsigned short element) { return element & 15; }

@@ -119,6 +119,7 @@ private:
     float mDamage;
     float mBubbleAngle;
     float mBubbleAngleO;
+    float mBubbleShakeRamp;
     double mLerpX;
     double mLerpY;
     double mLerpZ;

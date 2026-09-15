@@ -1,4 +1,5 @@
 #include "game/core/EvocationIllager.hpp"
+#include <cmath>
 #include <typeinfo>
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/DamageSource.hpp"
@@ -18,6 +19,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 
 extern SpellcasterIllager::IllagerSpell* gSpell1;
@@ -62,11 +64,21 @@ void EvocationIllager::customServerAiStep() { SpellcasterIllager::customServerAi
 void EvocationIllager::tick() { SpellcasterIllager::tick(); }
 bool EvocationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
+    if (!entity) return false;
+    if (entity.get() == this) return true;
     if (Entity::isAlliedTo(entity)) return true;
-    if (entity && entity->GetType() == 0x5D540048ULL)
+    if (entity->GetType() == 0x5D540048ULL)
     {
         boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
-        return vex->getOwner() == getTarget();
+        return isAlliedTo(vex->getOwner());
+    }
+    if ((entity->GetType() & 0xC000000ULL) == 0xC000000ULL)
+    {
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
+        if (living->getMobType() == 3)
+        {
+            return !getTeam() && !entity->getTeam();
+        }
     }
     return false;
 }
@@ -88,16 +100,85 @@ const SoundEvent* EvocationIllager::EvokerAttackSpellGoal::getSpellPrepareSound(
 SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerAttackSpellGoal::getSpell() { return gSpell2; }
 void EvocationIllager::EvokerAttackSpellGoal::createSpellEntity(double x, double y, double z, double yRot, float xRot, int warmupDelay)
 {
-    EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
-    if (evoker->mLevel != NULL) evoker->mLevel->addEntity(boost::shared_ptr<Entity>(new EvocationFangs(evoker->mLevel, x, y, z, static_cast<float>(yRot), warmupDelay, evoker->getTarget())));
+    BlockPos pos(x, yRot, y);
+    double searchY = yRot;
+    double minSearchY = std::floor(z) - 1.0;
+    for (;;)
+    {
+        if (!mSpellcaster->mLevel->isSolidBlockingBlockInLoadedChunk(pos, true))
+        {
+            BlockPos ground = pos.below();
+            if (mSpellcaster->mLevel->isSolidBlockingBlockInLoadedChunk(ground, true))
+            {
+                if (!mSpellcaster->mLevel->isEmptyBlock(pos))
+                {
+                    mSpellcaster->mLevel->getBlockState(pos);
+                }
+                boost::shared_ptr<LivingEntity> owner =
+                    boost::static_pointer_cast<LivingEntity>(mSpellcaster->shared_from_this());
+                mSpellcaster->mLevel->addEntity(boost::shared_ptr<Entity>(new EvocationFangs(
+                    mSpellcaster->mLevel, x, searchY, y, static_cast<float>(xRot), warmupDelay, owner)));
+                return;
+            }
+        }
+        pos = pos.below();
+        searchY -= 1.0;
+        if (searchY < minSearchY) return;
+    }
 }
 void EvocationIllager::EvokerAttackSpellGoal::performSpellCasting()
 {
-    EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
-    boost::shared_ptr<LivingEntity> target = evoker->getTarget();
-    if (target)
+    boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
+    double minY = (target->mY < mSpellcaster->mY) ? target->mY : mSpellcaster->mY;
+    double maxY = (target->mY < mSpellcaster->mY) ? mSpellcaster->mY : target->mY;
+    maxY += 1.0;
+    float angle = static_cast<float>(std::atan2(target->mZ - mSpellcaster->mZ, target->mX - mSpellcaster->mX));
+    double distSqr = mSpellcaster->distanceToSqr(target);
+    if (distSqr >= 9.0)
     {
-        createSpellEntity(target->mX, target->mY, target->mZ, target->mYRot, target->mXRot, 0);
+        for (int i = 0; i < 16; ++i)
+        {
+            double radius = 1.25 * static_cast<double>(i + 1);
+            float cosAngle = cosf(angle);
+            float sinAngle = sinf(angle);
+            createSpellEntity(cosAngle * radius + mSpellcaster->mX, sinAngle * radius + mSpellcaster->mZ, minY, maxY, angle, i);
+        }
+    }
+    else
+    {
+        float cosAngle = cosf(angle);
+        float sinAngle = sinf(angle);
+        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle, 0);
+
+        float angle1 = static_cast<float>(angle + 1.2566370964050293);
+        cosAngle = cosf(angle1);
+        sinAngle = sinf(angle1);
+        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle1, 0);
+
+        float angle2 = static_cast<float>(angle + 2.5132741928100586);
+        cosAngle = cosf(angle2);
+        sinAngle = sinf(angle2);
+        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle2, 0);
+
+        float angle3 = static_cast<float>(angle + 3.769911289215088);
+        cosAngle = cosf(angle3);
+        sinAngle = sinf(angle3);
+        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle3, 0);
+
+        float angle4 = static_cast<float>(angle + 5.026548385620117);
+        cosAngle = cosf(angle4);
+        sinAngle = sinf(angle4);
+        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle4, 0);
+
+        for (int i = 0; i < 8; ++i)
+        {
+            float t1 = static_cast<float>(static_cast<double>(i) * 3.1415927f);
+            float t2 = static_cast<float>(static_cast<double>(t1 + t1) * 0.125 + angle);
+            float ringAngle = static_cast<float>(static_cast<double>(t2) + 1.2566370964050293);
+            cosAngle = cosf(ringAngle);
+            sinAngle = sinf(ringAngle);
+            createSpellEntity(cosAngle * 2.5 + mSpellcaster->mX, sinAngle * 2.5 + mSpellcaster->mZ, minY, maxY, ringAngle, 3);
+        }
     }
 }
 
@@ -123,13 +204,19 @@ int EvocationIllager::EvokerSummonSpellGoal::getCastingTime() { return 100; }
 int EvocationIllager::EvokerSummonSpellGoal::getCastingInterval() { return 340; }
 void EvocationIllager::EvokerSummonSpellGoal::performSpellCasting()
 {
-    EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
-    if (evoker->mLevel == NULL) return;
     for (int i = 0; i < 3; ++i)
     {
-        Vex* vex = new Vex(evoker->mLevel);
-        vex->setPos(evoker->mX + i - 1, evoker->mY + 1.0, evoker->mZ + i - 1);
-        evoker->mLevel->addEntity(boost::shared_ptr<Entity>(vex));
+        BlockPos pos(mSpellcaster);
+        int dx = mSpellcaster->mRandom->nextInt(5) - 2;
+        int dz = mSpellcaster->mRandom->nextInt(5) - 2;
+        BlockPos* spawnPos = new BlockPos(pos.offset(dx, 1, dz));
+        Vex* vex = new Vex(mSpellcaster->mLevel);
+        vex->moveTo(*spawnPos, 0.0f, 0.0f);
+        vex->finalizeMobSpawn(mSpellcaster->mLevel->getCurrentDifficultyAt(*spawnPos), NULL, std::wstring());
+        vex->setOwner(boost::static_pointer_cast<Mob>(mSpellcaster->shared_from_this()));
+        vex->setBoundOrigin(spawnPos);
+        vex->setLimitedLife(mSpellcaster->mRandom->nextInt(90) * 20 + 600);
+        mSpellcaster->mLevel->addEntity(boost::shared_ptr<Entity>(vex));
     }
 }
 const SoundEvent* EvocationIllager::EvokerSummonSpellGoal::getSpellPrepareSound() { return SoundEvents::EVOCATION_ILLAGER_PREPARE_SUMMON; }
@@ -142,7 +229,7 @@ void EvocationIllager::EvokerWololoSpellGoal::tick()
     SpellcasterUseSpellGoal::tick();
     boost::shared_ptr<Sheep> target = static_cast<EvocationIllager*>(mSpellcaster)->getWololoTarget();
     if (target)
-        static_cast<LookControl*>(mSpellcaster->getLookControl())->setLookAt(target, 30.0f, 30.0f);
+        mSpellcaster->getLookControl()->setLookAt(target, static_cast<float>(mSpellcaster->getMaxHeadYRot()), static_cast<float>(mSpellcaster->getMaxHeadXRot()));
 }
 bool EvocationIllager::EvokerWololoSpellGoal::canUse()
 {
@@ -171,7 +258,7 @@ bool EvocationIllager::EvokerWololoSpellGoal::canUse()
 }
 bool EvocationIllager::EvokerWololoSpellGoal::canContinueToUse() { return static_cast<EvocationIllager*>(mSpellcaster)->getWololoTarget() && static_cast<EvocationIllager*>(mSpellcaster)->isCastingSpell(); }
 void EvocationIllager::EvokerWololoSpellGoal::stop() { SpellcasterUseSpellGoal::stop(); static_cast<EvocationIllager*>(mSpellcaster)->setWololoTarget(boost::shared_ptr<Sheep>()); }
-std::wstring EvocationIllager::EvokerWololoSpellGoal::getName() { return L"Wololo Spell"; }
+std::wstring EvocationIllager::EvokerWololoSpellGoal::getName() { return L"Wololo!"; }
 void EvocationIllager::EvokerWololoSpellGoal::performSpellCasting()
 {
     boost::shared_ptr<Sheep> sheep = static_cast<EvocationIllager*>(mSpellcaster)->getWololoTarget();

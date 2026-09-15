@@ -7,6 +7,7 @@
 #include "game/entity/mob/AgableWaterAnimal.hpp"
 #include "game/core/InteractionHand.hpp"
 
+class PathNavigation;
 class CompoundTag;
 class DamageSource;
 class DataFixerUpper;
@@ -14,6 +15,7 @@ class DifficultyInstance;
 class Entity;
 class EntityTooltipDataHolder;
 class FindUnderwaterTreasureGoal;
+class ItemEntity;
 class Level;
 class MobGroupData;
 class SoundEvent;
@@ -41,7 +43,7 @@ public:
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
-    virtual void drop(const not_null_ptr<ItemInstance>& item);
+    virtual boost::shared_ptr<ItemEntity> drop(const not_null_ptr<ItemInstance>& item);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);
     bool isItemABribingFish(not_null_ptr<ItemInstance> item);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
@@ -49,7 +51,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual WaterBoundPathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual bool canHoldItem(not_null_ptr<ItemInstance> item);
     virtual bool canRide(boost::shared_ptr<Entity> entity);

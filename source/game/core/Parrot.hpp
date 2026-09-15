@@ -10,6 +10,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/client/audio/SoundSource.hpp"
 
+class PathNavigation;
 class AgableMob;
 class Animal;
 class Block;
@@ -54,7 +55,7 @@ public:
                                            const std::wstring& entityData);
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual FlyingPathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual double getEyeHeight();
     void calculateFlapping();
     virtual void aiStep();

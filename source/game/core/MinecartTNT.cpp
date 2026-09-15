@@ -9,6 +9,7 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BaseRailBlock.hpp"
@@ -113,10 +114,10 @@ void MinecartTNT::destroy(const DamageSource* source)
     }
 
     Minecart::destroy(source);
-    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0 && !source->isExplosion() &&
-        mLevel->getGameRules()->getBoolean(6))
+    if (g_pApp->GetGameHostOption(eGameHostOption_13) == 0 ||
+        (!source->isExplosion() && mLevel->getGameRules()->getBoolean(6)))
     {
-        spawnAtLocation(Item::byBlock(Blocks::tnt), 1);
+        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tnt, 1)), 4.5f);
     }
 }
 

@@ -134,8 +134,17 @@ Item* SeaPickle::getResource(const BlockState*, Random*, int)
 
 void SeaPickle::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float, int)
 {
-    int count = state->getValue(SeaPickle_PICKLES);
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle), count, 0)));
+    if (!state->getValue(SEA_PICKLE_WATERLOGGED))
+    {
+        int count = state->getValue(SeaPickle_PICKLES);
+        if (count < 4)
+            ++count;
+
+        Block::popResource(level, pos,
+                           not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle),
+                                                                         count,
+                                                                         getSpawnResourcesAuxValue(state))));
+    }
 }
 
 int SeaPickle::getLightEmission(const BlockState* state)
@@ -148,8 +157,8 @@ int SeaPickle::getLightEmission(const BlockState* state)
 
 void SeaPickle::playerDestroy(Level* level, boost::shared_ptr<Player>, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>)
 {
-    spawnResources(level, pos, state, 1.0f, 0);
-    level->setBlockAndData(pos.x, pos.y, pos.z, 0, 0, 3);
+    int count = state->getValue(SeaPickle_PICKLES);
+    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle), count, getSpawnResourcesAuxValue(state))));
 }
 
 bool SeaPickle::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -247,7 +256,8 @@ void SeaPickle::checkAlive(Level* level, const BlockPos& pos, const BlockState* 
 {
     if (canSurvive(level, pos, state))
         return;
-    spawnResources(level, pos, state, 0.0f, 0);
+    int count = level->getBlockState(pos)->getValue(SeaPickle_PICKLES);
+    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle), count, getSpawnResourcesAuxValue(state))));
     level->setBlockAndData(pos.x, pos.y, pos.z, 0, 0, 3);
 }
 

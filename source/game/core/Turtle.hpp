@@ -8,6 +8,7 @@
 #include "game/world/block/EntityDataAccessor.hpp"
 #include "game/world/block/Predicate.hpp"
 
+class PathNavigation;
 class Block;
 class BlockPos;
 class CompoundTag;
@@ -50,7 +51,7 @@ public:
     virtual void registerAttributes();
     virtual void grewUp();
     virtual void defineSynchedData();
-    virtual TurtlePathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual bool generatesBubbles();
     virtual void tick();
     virtual void travel(float xxa, float yya, float zza);

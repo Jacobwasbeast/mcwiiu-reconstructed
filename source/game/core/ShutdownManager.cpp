@@ -94,15 +94,6 @@ void ShutdownManager::MainThreadHandleShutdown()
     WaitForSignalledToComplete();
 }
 
-void ShutdownManager::StartShutdown()
-{
-}
-
-bool ShutdownManager::IsShuttingDown()
-{
-    return false;
-}
-
 void ShutdownManager::StorageManagerCompleteFn()
 {
     HasFinished(eThreadId_Storage);

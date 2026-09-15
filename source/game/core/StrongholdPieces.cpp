@@ -1,8 +1,10 @@
 #include "game/core/StrongholdPieces.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <list>
 
+#include "game/world/LevelData.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -31,13 +33,13 @@ StrongholdPieces::PieceWeight::~PieceWeight() { }
 
 bool StrongholdPieces::PieceWeight::isValid()
 {
-    return frequency != 0 && count < frequency;
+    return frequency == 0 || count < frequency;
 }
 
 bool StrongholdPieces::PieceWeight::doPlace(int depth)
 {
     (void)depth;
-    return frequency != 0 && count < frequency;
+    return frequency == 0 || count < frequency;
 }
 
 StrongholdPieces::PieceWeight_Library::~PieceWeight_Library() { }
@@ -64,13 +66,24 @@ StrongholdPieces::StrongholdPiece::StrongholdPiece()
 {
 }
 
-StrongholdPieces::StrongholdPiece::~StrongholdPiece() { }
+StrongholdPieces::StrongholdPiece::~StrongholdPiece() = default;
 
 bool StrongholdPieces::StrongholdPiece::isOkBox(BoundingBox* box, StartPiece* start)
 {
-    if (box == NULL) return false;
-    if (start == NULL) return true;
-    return box->getYSpan() <= 50;
+    if (box == NULL)
+        return false;
+    bool result = box->y0 > 10;
+    if (start == NULL)
+        return result;
+    if (start->mLevel->getOriginalSaveVersion() <= 4)
+        return result;
+    int halfSize = start->mLevel->getLevelData()->getXZSize() * 8;
+    int minBound = 1 - halfSize;
+    int maxBound = halfSize - 1;
+    result = box->x1 < maxBound && minBound < box->z0 && minBound < box->x0 && result;
+    if (maxBound <= box->z1)
+        result = false;
+    return result;
 }
 
 unsigned char StrongholdPieces::StrongholdPiece::randomSmallDoor(Random& random)
@@ -146,8 +159,32 @@ void StrongholdPieces::StrongholdPiece::generateSmallDoor(Level* level, Random&,
 StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int z)
 {
     const Direction* direction = getOrientation();
-    if (direction == NULL) return NULL;
-    return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 + x, mBoundingBox->y0, mBoundingBox->z0 + z, direction, getGenDepth());
+    if (direction == NULL)
+        return NULL;
+    unsigned int axis = direction->get3DDataValue();
+    if (axis <= 1)
+        return NULL;
+    if (axis == 2)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            mBoundingBox->x0 + x, mBoundingBox->y0 + z, mBoundingBox->z0 - 1, direction, getGenDepth());
+    }
+    if (axis < 4)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            mBoundingBox->x0 + x, mBoundingBox->y0 + z, mBoundingBox->z1 + 1, direction, getGenDepth());
+    }
+    if (axis == 4)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            mBoundingBox->x0 - 1, mBoundingBox->y0 + z, mBoundingBox->z0 + x, direction, getGenDepth());
+    }
+    if (axis == 5)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            mBoundingBox->x1 + 1, mBoundingBox->y0 + z, mBoundingBox->z0 + x, direction, getGenDepth());
+    }
+    return NULL;
 }
 
 StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int z)
@@ -324,14 +361,42 @@ StructurePiece* StrongholdPieces::generatePieceFromSmallDoor(StartPiece* start, 
 
 StructurePiece* StrongholdPieces::generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
 {
-    if (start == NULL || pieces == NULL || depth > 50) return NULL;
-    StructurePiece* piece = generatePieceFromSmallDoor(start, pieces, random, x, y, z, direction, depth + 1);
-    if (piece != NULL)
+    if (depth > 50)
+        return NULL;
+    if (std::abs(x - start->getBoundingBox()->x0) < 49 && std::abs(z - start->getBoundingBox()->z0) < 49)
     {
-        pieces->push_back(piece);
-        start->mPendingChildren.push_back(piece);
+        StructurePiece* piece = generatePieceFromSmallDoor(start, pieces, random, x, y, z, direction, depth + 1);
+        if (piece != NULL)
+        {
+            pieces->push_back(piece);
+            start->mPendingChildren.push_back(piece);
+        }
+        return piece;
     }
-    return piece;
+    if (start->mLevel->getOriginalSaveVersion() <= 4)
+        return NULL;
+    if (start->mLevel->getLevelData()->getHasStrongholdEndPortal())
+        return NULL;
+    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end(); ++it)
+    {
+        PieceWeight* weight = *it;
+        if (weight->pieceClass == ePieceClass_PortalRoom)
+        {
+            StructurePiece* piece = PortalRoom::createPiece(pieces, random, x, y, z, direction, depth);
+            if (piece != NULL)
+            {
+                start->mLastPieceWeight = weight;
+                weight->count++;
+                if (!weight->isValid())
+                {
+                    delete weight;
+                    sStrongholdPieceWeights.remove(weight);
+                }
+                return piece;
+            }
+        }
+    }
+    return NULL;
 }
 
 template<class T>
@@ -360,7 +425,7 @@ StrongholdPieces::ChestCorridor::ChestCorridor(
     setOrientation(direction);
     setBoundingBox(box);
 }
-StrongholdPieces::ChestCorridor::~ChestCorridor() { }
+StrongholdPieces::ChestCorridor::~ChestCorridor() = default;
 
 StrongholdPieces::FillerCorridor::FillerCorridor()
     : StrongholdPiece(), mData(0) { }
@@ -371,7 +436,7 @@ StrongholdPieces::FillerCorridor::FillerCorridor(
     setOrientation(direction);
     setBoundingBox(box);
 }
-StrongholdPieces::FillerCorridor::~FillerCorridor() { }
+StrongholdPieces::FillerCorridor::~FillerCorridor() = default;
 
 StrongholdPieces::FiveCrossing::FiveCrossing()
     : StrongholdPiece(), mDoorFlags(), mData(0) { }
@@ -451,11 +516,17 @@ StrongholdPieces::StairsDown::StairsDown(
 StrongholdPieces::StairsDown::~StairsDown() { }
 
 StrongholdPieces::Straight::Straight()
-    : StrongholdPiece(), mFlag(false), mData(0) { }
+    : StrongholdPiece(), mData(0)
+{
+    mDoorFlags[0] = false;
+    mDoorFlags[1] = false;
+}
 StrongholdPieces::Straight::Straight(
     int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mFlag(false), mData(random.nextInt(4))
+    : StrongholdPiece(depth), mData(random.nextInt(4))
 {
+    mDoorFlags[0] = false;
+    mDoorFlags[1] = false;
     setOrientation(direction);
     setBoundingBox(box);
 }
@@ -725,8 +796,15 @@ bool StrongholdPieces::ChestCorridor::postProcess(Level* level, Random& random, 
 }
 StructurePiece* StrongholdPieces::ChestCorridor::Create() { return new StrongholdPieces::ChestCorridor(); }
 EStructurePiece StrongholdPieces::ChestCorridor::GetType() { return eStructurePiece_ChestCorridor; }
-void StrongholdPieces::FiveCrossing::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
-void StrongholdPieces::FiveCrossing::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::FiveCrossing::addAdditionalSaveData(DataOutputStream* output)
+{
+    StrongholdPiece::addAdditionalSaveData(output);
+    output->writeBoolean(mDoorFlags[0]);
+    output->writeBoolean(mDoorFlags[1]);
+    output->writeBoolean(mDoorFlags[2]);
+    output->writeBoolean(mDoorFlags[3]);
+}
+void StrongholdPieces::FiveCrossing::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mDoorFlags[0] = input->readBoolean(); mDoorFlags[1] = input->readBoolean(); mDoorFlags[2] = input->readBoolean(); mDoorFlags[3] = input->readBoolean(); }
 void StrongholdPieces::FiveCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
 {
     int leftOffset = 3;
@@ -800,7 +878,25 @@ void StrongholdPieces::LeftTurn::addChildren(StructurePiece* start, std::vector<
     else
         generateSmallDoorChildRight(startPiece, pieces, random, 1, 1);
 }
-bool StrongholdPieces::LeftTurn::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::LeftTurn::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 4, 4, 4, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 1, 0);
+    const Direction* orientation = getOrientation();
+    if (orientation == Direction::NORTH || orientation == Direction::EAST)
+    {
+        generateBox(level, box, 0, 1, 1, 0, 3, 3,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    }
+    else
+    {
+        generateBox(level, box, 4, 1, 1, 4, 3, 3,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    }
+    return true;
+}
 StructurePiece* StrongholdPieces::LeftTurn::Create() { return new StrongholdPieces::LeftTurn(); }
 EStructurePiece StrongholdPieces::LeftTurn::GetType() { return eStructurePiece_LeftTurn; }
 void StrongholdPieces::Library::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -1228,13 +1324,31 @@ void StrongholdPieces::Straight::addChildren(StructurePiece* start, std::vector<
 {
     StartPiece* startPiece = static_cast<StartPiece*>(start);
     generateSmallDoorChildForward(startPiece, pieces, random, 1, 1);
-    unsigned char* doorFlags = reinterpret_cast<unsigned char*>(this) + 0x20;
-    if (doorFlags[0] != 0)
+    if (mDoorFlags[0])
         generateSmallDoorChildLeft(startPiece, pieces, random, 1, 2);
-    if (doorFlags[1] != 0)
+    if (mDoorFlags[1])
         generateSmallDoorChildRight(startPiece, pieces, random, 1, 2);
 }
-bool StrongholdPieces::Straight::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::Straight::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 4, 4, 6, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 1, 0);
+    generateSmallDoor(level, random, box, OPENING, 1, 1, 6);
+
+    if (mDoorFlags[0])
+    {
+        generateBox(level, box, 0, 1, 2, 0, 3, 4,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    }
+    if (mDoorFlags[1])
+    {
+        generateBox(level, box, 4, 1, 2, 4, 3, 4,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    }
+    return true;
+}
 StructurePiece* StrongholdPieces::Straight::Create() { return new StrongholdPieces::Straight(); }
 EStructurePiece StrongholdPieces::Straight::GetType() { return eStructurePiece_Straight; }
 void StrongholdPieces::StraightStairsDown::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -1445,7 +1559,7 @@ EStructurePiece StrongholdPieces::FillerCorridor::GetType()
 }
 
 StrongholdPieces::RightTurn::RightTurn() : LeftTurn() { }
-StrongholdPieces::RightTurn::~RightTurn() { }
+StrongholdPieces::RightTurn::~RightTurn() = default;
 void StrongholdPieces::RightTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
 {
     const Direction* orientation = getOrientation();
@@ -1454,12 +1568,30 @@ void StrongholdPieces::RightTurn::addChildren(StructurePiece* start, std::vector
     else
         generateSmallDoorChildLeft(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
-bool StrongholdPieces::RightTurn::postProcess(Level* level, Random& random, BoundingBox* box) { return LeftTurn::postProcess(level, random, box); }
+bool StrongholdPieces::RightTurn::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 4, 4, 4, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 1, 0);
+    const Direction* orientation = getOrientation();
+    if (orientation == Direction::NORTH || orientation == Direction::EAST)
+    {
+        generateBox(level, box, 4, 1, 1, 4, 3, 3,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    }
+    else
+    {
+        generateBox(level, box, 0, 1, 1, 0, 3, 3,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    }
+    return true;
+}
 StructurePiece* StrongholdPieces::RightTurn::Create() { return new RightTurn(); }
 EStructurePiece StrongholdPieces::RightTurn::GetType() { return eStructurePiece_RightTurn; }
 
 StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level) : StairsDown(depth, random, BoundingBox::orientBox(x, 0, z, 0, 0, 0, 5, 5, 7, NULL), NULL), mPortalRoom(NULL), mLevel(level), mLastPieceWeight(NULL) { }
-StrongholdPieces::StartPiece::~StartPiece() { }
+StrongholdPieces::StartPiece::~StartPiece() = default;
 BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
 {
     if (mPortalRoom != NULL)
@@ -1468,7 +1600,7 @@ BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
 }
 EStructurePiece StrongholdPieces::StartPiece::GetType() { return eStructurePiece_StrongholdStartPiece; }
 
-StrongholdPieces::SmoothStoneSelector::~SmoothStoneSelector() { }
+StrongholdPieces::SmoothStoneSelector::~SmoothStoneSelector() = default;
 void StrongholdPieces::SmoothStoneSelector::next(Random& random, int, int, int, bool edge)
 {
     if (!edge) { mNext = Blocks::stone->defaultBlockState(); return; }

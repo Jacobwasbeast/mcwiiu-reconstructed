@@ -234,6 +234,7 @@ public:
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+        int mUnknown1c;
     };
 
     class CastleSmallCorridorLeftTurnPiece : public NetherBridgePiece
@@ -290,9 +291,10 @@ public:
         StartPiece();
         virtual ~StartPiece();
         virtual EStructurePiece GetType();
-        int mPreviousPieceWeight;
+        PieceWeight* mPreviousPieceWeight;
         Level* mLevel;
         std::list<PieceWeight*> mAvailablePieces;
+        std::list<PieceWeight*> mPendingPieces;
         std::vector<StructurePiece*> mPendingChildren;
     };
 };

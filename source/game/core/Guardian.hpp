@@ -79,7 +79,7 @@ public:
 
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual void createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual void defineSynchedData();
     virtual unsigned int getAttackDuration();
     void setActiveAttackTarget(int targetId);

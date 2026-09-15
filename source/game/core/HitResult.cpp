@@ -8,11 +8,11 @@ HitResult::HitResult(Vec3* location, const Direction* direction, const BlockPos&
     x = blockPos.x;
     y = blockPos.y;
     z = blockPos.z;
-    mLocation = Vec3::newTemp(location);
+    mLocation = Vec3::newTemp(location->x, location->y, location->z);
 }
 
 HitResult::HitResult(Vec3* location, const Direction* direction)
-    : BlockPos(), mType(BLOCK), mDirection(direction), mLocation(Vec3::newTemp(location)), mEntity()
+    : BlockPos(), mType(BLOCK), mDirection(direction), mLocation(Vec3::newTemp(location->x, location->y, location->z)), mEntity()
 {
 }
 
@@ -29,7 +29,7 @@ HitResult::HitResult(Type type, Vec3* location, const Direction* direction, cons
     x = blockPos.x;
     y = blockPos.y;
     z = blockPos.z;
-    mLocation = Vec3::newTemp(location);
+    mLocation = Vec3::newTemp(location->x, location->y, location->z);
 }
 
 HitResult::HitResult(boost::shared_ptr<Entity> entity, Vec3* location)

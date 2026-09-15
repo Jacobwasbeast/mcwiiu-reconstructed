@@ -4,6 +4,5 @@
 #include "game/core/CTelemetryManager.hpp"
 
 extern CTelemetryManager* telemetryManagerInstance;
-extern CTelemetryManager& gTelemetryManager;
 
 #endif

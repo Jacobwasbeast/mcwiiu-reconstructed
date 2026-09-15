@@ -15,7 +15,7 @@ private:
     unsigned char m_mipmapDisabled;
 
 public:
-    BufferedImage(int mipLevels, int width, int height);
+    BufferedImage(int width, int height, int mipLevels);
     BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path);
     BufferedImage(DLCPack* pack, const std::wstring& name, bool mipmapDisabled);
     BufferedImage(unsigned char* data, unsigned int length);

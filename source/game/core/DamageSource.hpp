@@ -29,6 +29,7 @@ public:
 
     static const DamageSource* IN_FIRE;
     static const DamageSource* ON_FIRE;
+    static const DamageSource* FIREWORKS;
     static const DamageSource* OUT_OF_WORLD;
     static const DamageSource* IN_WALL;
     static const DamageSource* LAVA;
@@ -52,23 +53,23 @@ public:
     virtual ~DamageSource();
     bool equals(const DamageSource* source) const;
     static EntityDamageSource* CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
-    DamageSource* setProjectile();
+    void setProjectile();
     static boost::shared_ptr<DamageSource> CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
     static EntityDamageSource* CreatePlayerAttack(boost::shared_ptr<Player> player);
     void setIsFireProjectile();
     static boost::shared_ptr<DamageSource> CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fire);
     static boost::shared_ptr<DamageSource> CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner);
-    DamageSource* setIsFire();
+    void setIsFire();
     static boost::shared_ptr<DamageSource> CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner);
     static DamageSource* CreateThrown(boost::shared_ptr<Entity> projectile, boost::shared_ptr<Entity> owner);
     void setMagic();
-    DamageSource* bypassArmor();
+    void bypassArmor();
     static boost::shared_ptr<DamageSource> CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource);
     static boost::shared_ptr<EntityDamageSource> CreateThorns(boost::shared_ptr<Entity> entity);
     void setExplosion();
     void setScalesWithDifficulty();
-    static boost::shared_ptr<EntityDamageSource> CreateExplosion(Explosion* explosion);
-    static boost::shared_ptr<EntityDamageSource> CreateExplosion(const boost::shared_ptr<LivingEntity>& entity);
+    static boost::shared_ptr<DamageSource> CreateExplosion(Explosion* explosion);
+    static boost::shared_ptr<DamageSource> CreateExplosion(const boost::shared_ptr<LivingEntity>& entity);
     virtual boost::shared_ptr<Entity> getDirectEntity() const;
     virtual boost::shared_ptr<Entity> getEntity() const;
     bool isProjectile() const;

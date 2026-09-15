@@ -507,7 +507,11 @@ unsigned int ArmorStand::GetHitTooltip(const EntityTooltipDataHolder& tooltipDat
 {
     return tooltipData.m_bAllowedToHurt ? 0x5fb7a25aU : 0xffffffffU;
 }
-void ArmorStand::playBrokenSound() { playSound(SoundEvents::ARMORSTAND_BREAK, 1.0f, 1.0f); }
+void ArmorStand::playBrokenSound()
+{
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ARMORSTAND_BREAK,
+                      getSoundSource(), 1.0f, 1.0f, 16.0f);
+}
 void ArmorStand::brokenByAnything()
 {
     playBrokenSound();

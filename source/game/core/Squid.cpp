@@ -27,9 +27,7 @@ Squid::Squid(Level* level) : WaterAnimal(level)
     mTentacleSpeed = 1.0f / (mRandom->nextFloat() + 1.0f) * 0.2f;
 }
 
-Squid::~Squid()
-{
-}
+Squid::~Squid() = default;
 
 void Squid::create(Level* level)
 {
@@ -211,12 +209,26 @@ Vec3* Squid::randomInkDir()
 
 void Squid::spawnInkParticles()
 {
-    unsigned int count = mLevel->mIsClientSide ? 8 : 15;
+    unsigned int count = isBaby() ? 8 : 15;
+    int inkValue = isBaby() ? 300 : 500;
     for (unsigned int i = 0; i < count; ++i)
     {
         Vec3* direction = randomInkDir();
         direction->multiply(0.1, 0.1, 0.1);
-        mLevel->addParticle(PARTICLE_INK, mX, mY, mZ, direction->x, direction->y, direction->z, arrayWithLength<int>());
+        arrayWithLength<int> inkData(1, false);
+        inkData.data[0] = inkValue;
+        mLevel->addParticle(PARTICLE_INK, mX, mY, mZ, direction->x, direction->y, direction->z, inkData);
+    }
+
+    for (int i = 0; i < 5; ++i)
+    {
+        Vec3* direction = randomInkDir();
+        arrayWithLength<int> bubbleData(4, false);
+        bubbleData.data[0] = 0;
+        bubbleData.data[1] = 1;
+        bubbleData.data[2] = 244;
+        bubbleData.data[3] = 1;
+        mLevel->addParticle(PARTICLE_BUBBLE, mX, mY, mZ, direction->x, direction->y, direction->z, bubbleData);
     }
 }
 

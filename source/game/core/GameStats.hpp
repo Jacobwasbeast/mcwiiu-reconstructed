@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -135,9 +136,9 @@ private:
     unsigned int mRoundTime;
     StatsMap mPlayerStats;
     boost::shared_ptr<ServerPlayer> mRoundWinner;
-    boost::shared_ptr<ServerPlayer> mFirstPlace;
-    boost::shared_ptr<ServerPlayer> mSecondPlace;
-    boost::shared_ptr<ServerPlayer> mThirdPlace;
+    boost::weak_ptr<ServerPlayer> mFirstPlace;
+    boost::weak_ptr<ServerPlayer> mSecondPlace;
+    boost::weak_ptr<ServerPlayer> mThirdPlace;
     unsigned int mFarthestCheckpointReached;
     bool mLandingRecorded;
     std::wstring mWinningThemeChoice;

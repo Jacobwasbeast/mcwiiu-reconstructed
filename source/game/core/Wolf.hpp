@@ -1,106 +1,88 @@
-#ifndef GAME_CORE_WOLF_HPP
-#define GAME_CORE_WOLF_HPP
+/* Wolf - generated reconstruction header. */
+#ifndef RECON_C_GAME_W_WOLF_HPP
+#define RECON_C_GAME_W_WOLF_HPP 1
 
-#include <boost/shared_ptr.hpp>
-#include <typeinfo>
+#include "guest_ns.hpp"
+#include "game/T/TamableAnimal.hpp"
 
-#include "game/entity/ai/AvoidEntityGoal.hpp"
-#include "game/entity/mob/TamableAnimal.hpp"
-#include "game/core/InteractionHand.hpp"
+namespace recon {
+struct Block;
+struct BlockPos;
+struct CompoundTag;
+struct DamageSource;
+struct DyeColor;
+struct Level;
+struct not_null_ptr_ItemInstance;
+struct sp_Entity;
+struct sp_LivingEntity;
+struct sp_Player;
 
-class AgableMob;
-class Block;
-class BlockPos;
-class CompoundTag;
-class DamageSource;
-class DataFixerUpper;
-class DyeColor;
-class Entity;
-class EntityTooltipDataHolder;
-class Level;
-class Llama;
-class LivingEntity;
-class Player;
-class SoundEvent;
-template <class T> class EntityDataAccessor;
+#pragma pack(push, 1)
+struct Wolf : TamableAnimal {
+    be<float> field_0x788;
+    be<float> field_0x78c;
+    be<uint8_t> field_0x790;
+    be<uint8_t> field_0x791;
+    uint8_t pad_0x792[2];
+    be<float> field_0x794;
+    be<float> field_0x798;
+    uint8_t pad_0x79c[4];
 
-class Wolf : public TamableAnimal
-{
-public:
-    class WolfAvoidEntityGoal : public AvoidEntityGoal
-    {
-    public:
-        WolfAvoidEntityGoal(Wolf* wolf, const std::type_info& avoidType, float maxDistance,
-                            double walkSpeedModifier, double sprintSpeedModifier);
-        virtual ~WolfAvoidEntityGoal();
-        bool avoidLlama(const boost::shared_ptr<Llama>& llama);
-        virtual bool canUse();
-        virtual void start();
-        virtual void tick();
-
-    private:
-        Wolf* mWolf;
-    };
-
-    Wolf(Level* level);
-    virtual ~Wolf();
-    static void create(Level* level);
-    static void addDataWalkers(DataFixerUpper* fixer);
-    static void staticCtor();
-    virtual void registerGoals();
-    virtual void registerAttributes();
-    void setAngry(bool angry);
-    virtual void setTarget(boost::shared_ptr<LivingEntity> target);
-    virtual void customServerAiStep();
-    virtual void defineSynchedData();
-    virtual void playStepSound(const BlockPos& pos, Block* block);
-    bool isAngry();
-    const DyeColor* getCollarColor();
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    void setCollarColor(const DyeColor* color);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual const SoundEvent* getAmbientSound();
-    virtual const SoundEvent* getHurtSound(const DamageSource* source);
-    virtual const SoundEvent* getDeathSound();
-    virtual float getSoundVolume();
-    virtual ResourceLocation* getDefaultLootTable();
-    virtual void aiStep();
-    bool isInterested();
-    virtual void tick();
-    double getBodyRollAngle(float partialTick, float offset);
-    double getHeadRollAngle(float partialTick);
-    virtual double getEyeHeight();
-    virtual int getMaxHeadXRot();
-    virtual bool hurt(const DamageSource* source, float amount);
-    virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
-    virtual void setTame(bool tame);
-    void tame(boost::shared_ptr<Player> player, bool showParticles, bool flag);
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
-    virtual void handleEntityEvent(unsigned char event, int data);
-    double getTailAngle();
-    virtual bool isFood(const not_null_ptr<ItemInstance>& item);
-    virtual int getMaxSpawnClusterSize();
-    int GetSynchedHealth();
-    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
-    virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
-    void setIsInterested(bool interested);
-    virtual bool canMate(const boost::shared_ptr<Animal>& other);
-    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner);
-    virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
-    virtual unsigned long long GetType();
-    bool isWet();
-    float getWetShade(float partialTick);
-
-private:
-    static const EntityDataAccessor<float>* DATA_HEALTH;
-    static const EntityDataAccessor<bool>* DATA_INTERESTED;
-    static const EntityDataAccessor<int>* DATA_COLLAR_COLOR;
-    float mInterestedAngle;
-    float mInterestedAngleO;
-    bool mIsWet;
-    bool mIsShaking;
-    float mShakeAnim;
-    float mShakeAnimO;
+    /* interface: 44 methods recovered, 2 without a recoverable signature, 2 ABI artifacts;
+     * implementation: 13 reconstructed bodies, 20 lowered drafts, 9 closed */
+    Wolf(gptr<Level> a1);   /* LOWERED-DRAFT; not reconstructed */
+    ~Wolf();   /* reconstructed */
+    Wolf() {}   /* generated shell; the real ctor is dispatch-only */
+    static void create(gptr<Level> a1);   /* LOWERED-DRAFT; not reconstructed */
+    static void addDataWalkers(uint32_t a1, uint32_t a2);
+    static void staticCtor();   /* LOWERED-DRAFT; not reconstructed */
+    void registerGoals();   /* boundary stub */
+    void registerAttributes();   /* LOWERED-DRAFT; not reconstructed */
+    void setAngry(bool a1);   /* LOWERED-DRAFT; not reconstructed */
+    void setTarget(gptr<sp_LivingEntity> a1);   /* LOWERED-DRAFT; not reconstructed */
+    void customServerAiStep();   /* boundary stub */
+    void defineSynchedData();   /* boundary stub */
+    void playStepSound(gptr<BlockPos> a1, gptr<Block> a2);   /* LOWERED-DRAFT; not reconstructed */
+    uint8_t isAngry();   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t getCollarColor();   /* LOWERED-DRAFT; not reconstructed */
+    void addAdditonalSaveData(gptr<CompoundTag> a1);   /* boundary stub */
+    void setCollarColor(gptr<DyeColor> a1);
+    void readAdditionalSaveData(gptr<CompoundTag> a1);   /* boundary stub */
+    uint32_t getAmbientSound();   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t getHurtSound(gptr<DamageSource> a1);   /* closed */
+    uint32_t getDeathSound();   /* closed */
+    double getSoundVolume();   /* closed */
+    uint32_t getDefaultLootTable();   /* closed */
+    void aiStep();   /* LOWERED-DRAFT; not reconstructed */
+    uint8_t isInterested();   /* LOWERED-DRAFT; not reconstructed */
+    void tick();   /* boundary stub */
+    double getBodyRollAngle(float a1, float a2);
+    double getHeadRollAngle(float a1);   /* closed */
+    double getEyeHeight();   /* closed */
+    uint32_t getMaxHeadXRot();   /* closed */
+    uint32_t hurt(double a1, float a2);   /* boundary stub */
+    int32_t doHurtTarget(gptr<sp_Entity> a1);   /* LOWERED-DRAFT; not reconstructed */
+    void setTame(bool a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t tame(gptr<sp_Player> a1, bool a2, bool a3);   /* boundary stub */
+    uint32_t mobInteract(gptr<sp_Player> a1, uint32_t a2);   /* boundary stub */
+    void handleEntityEvent(uint8_t a1, int32_t a2);   /* boundary stub */
+    double getTailAngle();   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t isFood(gptr<not_null_ptr_ItemInstance> a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t getMaxSpawnClusterSize();   /* closed */
+    int32_t GetSynchedHealth();   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t GetInteractTooltip(uint32_t a1, uint32_t a2);   /* boundary stub */
+    uint64_t getBreedOffspring(uint32_t a1);   /* LOWERED-DRAFT; not reconstructed */
+    void setIsInterested(bool a1);
+    uint32_t canMate(uint32_t a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t wantsToAttack(gptr<sp_LivingEntity> a1, gptr<sp_LivingEntity> a2);   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t canBeLeashed(gptr<sp_Player> a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t GetType();   /* closed */
+    /* unrecovered: isWet() [0x00000000] */
+    /* unrecovered: getWetShade(float) [0x00000000] */
 };
+static_assert(sizeof(Wolf) == 0x7a0, "layout");
+#pragma pack(pop)
+
+}  /* namespace recon */
 
 #endif

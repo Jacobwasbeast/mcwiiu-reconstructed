@@ -175,7 +175,18 @@ arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
 
 void IllusionIllager::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
+    if (target == NULL)
+        return;
+
     boost::shared_ptr<TippableArrow> arrow = getArrow(distanceFactor);
+    double dx = target->mX - mX;
+    double dz = target->mZ - mZ;
+    double horizontal = std::sqrt(dx * dx + dz * dz);
+    double dy = target->mY + target->mBbHeight * 0.5 - arrow->mY;
+    float inaccuracy = 14.0f - static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f;
+    arrow->shoot(dx, dy + horizontal * 0.2, dz, 1.6f, inaccuracy);
+    playSound(SoundEvents::ILLUSION_ILLAGER_CAST_SPELL, 0.5f,
+              0.5f / (mRandom->nextFloat() * 0.25f + 0.75f));
     mLevel->addEntity(boost::static_pointer_cast<Entity>(arrow));
 }
 

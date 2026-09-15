@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/DamageSource.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -64,7 +65,7 @@ void ShulkerBullet::init()
     fjDerivedCtorCalls();
     mOwner.reset();
     mTarget.reset();
-    mMoveDirection = NULL;
+    mMoveDirection = Direction::UP;
     mSteps = 0;
     mPowerX = 0.0;
     mPowerY = 0.0;
@@ -116,26 +117,41 @@ void ShulkerBullet::selectNextMoveDirection(const Direction::Axis* axis)
 
 void ShulkerBullet::onHit(const HitResult* result)
 {
-    if (result->mType == HitResult::ENTITY && result->mEntity)
+    if (result->mEntity)
     {
-        result->mEntity->hurt(DamageSource::CreateIndirectMobAttack(shared_from_this(), mOwner, false).get(), 4.0f);
+        boost::shared_ptr<DamageSource> damageSource = DamageSource::CreateIndirectMobAttack(shared_from_this(), mOwner, true);
+        if (result->mEntity->hurt(damageSource.get(), 4.0f))
+        {
+            doEnchantDamageEffects(mOwner, result->mEntity);
+        }
     }
     remove();
 }
 
 void ShulkerBullet::tick()
 {
+    if (!mLevel->mIsClientSide && mLevel->getDifficulty() == Difficulty::PEACEFUL)
+    {
+        remove();
+        return;
+    }
     Entity::tick();
     if (mRemoved)
         return;
-    if (mSteps-- <= 0)
-        selectNextMoveDirection(mMoveDirection ? mMoveDirection->getAxis() : NULL);
-    mXd += (mPowerX - mXd) * 0.2;
-    mYd += (mPowerY - mYd) * 0.2;
-    mZd += (mPowerZ - mZd) * 0.2;
-    move(eMoverType_Self, mXd, mYd, mZd, false);
+    if (!mLevel->mIsClientSide)
+    {
+        mXd += (mPowerX - mXd) * 0.2;
+        mYd += (mPowerY - mYd) * 0.2;
+        mZd += (mPowerZ - mZd) * 0.2;
+    }
+    setPos(mX + mXd, mY + mYd, mZ + mZd);
     if (mMoveDirection != NULL)
         ProjectileUtil::rotateTowardsMovement(shared_from_this(), 0.5f);
+    if (!mLevel->mIsClientSide)
+    {
+        if (mSteps-- <= 0)
+            selectNextMoveDirection(mMoveDirection ? mMoveDirection->getAxis() : NULL);
+    }
 }
 
 SoundSource::ESoundSource ShulkerBullet::getSoundSource()

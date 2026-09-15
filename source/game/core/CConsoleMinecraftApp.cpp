@@ -127,7 +127,7 @@ uint32_t CConsoleMinecraftApp::ReadProductCodes()
         return 0;
 
     unsigned int fileSize = 0;
-    if (GetFileSize(handle, &fileSize) != 0)
+    if (GetFileSize(handle, &fileSize) != 0xffffffffU)
     {
         if (ReadFile(handle, m_productCode, 9, &bytesRead, 0) == 0)
             return 0;

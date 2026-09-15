@@ -58,7 +58,7 @@ bool ThrownEgg::onHit(const HitResult* result)
             if (mRandom->nextInt(32) == 0)
                 count = 4;
 
-            if (count <= 0)
+            if (count == 0)
                 count = 1;
 
             for (int i = 0; i < count; ++i)

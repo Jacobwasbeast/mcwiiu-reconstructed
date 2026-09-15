@@ -1,124 +1,73 @@
-#ifndef GAME_CORE_VEX_HPP
-#define GAME_CORE_VEX_HPP
+/* Vex - generated reconstruction header. */
+#ifndef RECON_C_GAME_V_VEX_HPP
+#define RECON_C_GAME_V_VEX_HPP 1
 
-#include <string>
+#include "guest_ns.hpp"
+#include "game/M/Monster.hpp"
 
-#include <boost/shared_ptr.hpp>
+namespace recon {
+struct BlockPos;
+struct CompoundTag;
+struct DamageSource;
+struct DifficultyInstance;
+struct Level;
+struct MobGroupData;
+struct sp_Entity;
+struct wstring;
 
-#include "game/entity/ai/Goal.hpp"
-#include "game/entity/ai/MoveControl.hpp"
-#include "game/entity/ai/TargetGoal.hpp"
-#include "game/entity/mob/Monster.hpp"
+#pragma pack(push, 1)
+struct Vex : Monster {
+    be<int32_t> field_0x730;
+    be<int32_t> field_0x734;
+    gptr<BlockPos> field_0x738;
+    be<uint8_t> field_0x73c;
+    uint8_t pad_0x73d[3];
+    be<int32_t> field_0x740;
+    uint8_t pad_0x744[4];
 
-class BlockPos;
-class CompoundTag;
-class DamageSource;
-class DataFixerUpper;
-class DifficultyInstance;
-class Level;
-class MobGroupData;
-class SoundEvent;
-template <class T> class EntityDataAccessor;
+    /* interface: 29 methods recovered, 0 without a recoverable signature, 1 ABI artifacts;
+     * implementation: 13 reconstructed bodies, 13 lowered drafts, 10 closed */
+    Vex(gptr<Level> a1);   /* LOWERED-DRAFT; not reconstructed */
+    ~Vex();   /* LOWERED-DRAFT; not reconstructed */
+    Vex() {}   /* generated shell; the real ctor is dispatch-only */
+    static void create(gptr<Level> a1);   /* LOWERED-DRAFT; not reconstructed */
+    static uint64_t staticCtor();   /* boundary stub */
+    void move(uint32_t a1, double a2, double a3, double a4, bool a5);   /* LOWERED-DRAFT; not reconstructed */
+    void tick();   /* LOWERED-DRAFT; not reconstructed */
+    void registerGoals();   /* LOWERED-DRAFT; not reconstructed */
+    void registerAttributes();   /* LOWERED-DRAFT; not reconstructed */
+    void defineSynchedData();
+    static void addDataWalkers(uint32_t a1, uint32_t a2);
+    void setLimitedLife(int32_t a1);   /* closed */
+    void readAdditionalSaveData(gptr<CompoundTag> a1);   /* boundary stub */
+    void addAdditonalSaveData(gptr<CompoundTag> a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t getOwner();   /* boundary stub */
+    gptr<BlockPos> getBoundOrigin();   /* closed */
+    void setBoundOrigin(gptr<BlockPos> a1);
+    bool getVexFlag(int32_t a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t setVexFlag(int32_t a1, bool a2);   /* LOWERED-DRAFT; not reconstructed */
+    bool isCharging();   /* LOWERED-DRAFT; not reconstructed */
+    void setIsCharging(bool a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t setOwner(uint32_t a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint32_t getAmbientSound();   /* closed */
+    uint32_t getDeathSound();   /* closed */
+    uint32_t getHurtSound(gptr<DamageSource> a1);   /* closed */
+    uint32_t getDefaultLootTable();   /* closed */
+    uint32_t getDefaultGearTable();   /* closed */
+    uint32_t getLightColor();   /* closed */
+    double getBrightness();   /* closed */
+    uint32_t finalizeMobSpawn(gptr<DifficultyInstance> a1, gptr<MobGroupData> a2, gptr<wstring> a3);   /* LOWERED-DRAFT; not reconstructed */
+    void populateDefaultEquipmentSlots(gptr<DifficultyInstance> a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t GetType();   /* closed */
 
-class Vex : public Monster
-{
-public:
-    class VexChargeAttackGoal : public Goal
-    {
-    public:
-        explicit VexChargeAttackGoal(Vex* vex);
-        virtual ~VexChargeAttackGoal();
-
-        virtual bool canUse();
-        virtual bool canContinueToUse();
-        virtual void start();
-        virtual void stop();
-        virtual void tick();
-        virtual std::wstring getName();
-
-    private:
-        Vex* mVex;
-    };
-
-    class VexCopyOwnerTargetGoal : public TargetGoal
-    {
-    public:
-        explicit VexCopyOwnerTargetGoal(PathfinderMob* mob);
-        virtual ~VexCopyOwnerTargetGoal();
-
-        virtual bool canUse();
-        virtual void start();
-        virtual std::wstring getName();
-    };
-
-    class VexMoveControl : public MoveControl
-    {
-    public:
-        explicit VexMoveControl(Vex* vex);
-        virtual ~VexMoveControl();
-
-        virtual void tick();
-    };
-
-    class VexRandomMoveGoal : public Goal
-    {
-    public:
-        explicit VexRandomMoveGoal(Vex* vex);
-        virtual ~VexRandomMoveGoal();
-
-        virtual bool canUse();
-        virtual bool canContinueToUse();
-        virtual void tick();
-        virtual std::wstring getName();
-
-    private:
-        Vex* mVex;
-    };
-
-    explicit Vex(Level* level);
-    virtual ~Vex();
-
-    static void create(Level* level);
-    static void staticCtor();
-    static void addDataWalkers(DataFixerUpper* fixer);
-
-    virtual unsigned long long GetType();
-    virtual void defineSynchedData();
-    virtual void tick();
-    virtual void move(MoverType type, double x, double y, double z, bool pushedByPiston);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual int getLightColor();
-    virtual float getBrightness();
-    virtual const SoundEvent* getHurtSound(const DamageSource* source);
-    virtual const SoundEvent* getDeathSound();
-    virtual void registerGoals();
-    virtual const SoundEvent* getAmbientSound();
-    virtual ResourceLocation* getDefaultLootTable();
-    virtual ResourceLocation* getDefaultGearTable();
-    virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                           MobGroupData* data,
-                                           const std::wstring& dataString);
-    virtual void registerAttributes();
-
-    void setLimitedLife(int lifeTicks);
-    boost::shared_ptr<Mob> getOwner();
-    BlockPos* getBoundOrigin();
-    void setBoundOrigin(BlockPos* origin);
-    bool getVexFlag(int flag);
-    void setVexFlag(int flag, bool value);
-    bool isCharging();
-    void setIsCharging(bool charging);
-    void setOwner(const boost::shared_ptr<Mob>& owner);
-
-private:
-    static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
-
-    boost::shared_ptr<Mob> mOwner;
-    BlockPos* mBoundOrigin;
-    bool mLimitedLife;
-    int mLifeTicks;
+    /* virtual slot +0xae4: 1 possible targets, 0 native */
+    int32_t virt_doHurtTarget(gptr<sp_Entity> a1) {
+        return (int32_t)(guest::vdispatch(LD32(LD32(gaddr(this) + 0x348) + 0xae4), gaddr(this), (uint32_t)a1) >> 32);
+    }
 };
+static_assert(sizeof(Vex) == 0x748, "layout");
+#pragma pack(pop)
+
+}  /* namespace recon */
 
 #endif

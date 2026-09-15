@@ -20,8 +20,10 @@
 #include "game/world/generation/PlayerTeam.hpp"
 
 Scoreboard::Scoreboard()
+    : boost::unordered_map<std::wstring, PlayerTeam*>(11),
+      mTeamsByPlayer(11),
+      mNextTeamIndex(0)
 {
-    mNextTeamIndex = 0;
 }
 
 Scoreboard::~Scoreboard()

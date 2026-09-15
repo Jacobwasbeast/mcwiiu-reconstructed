@@ -505,6 +505,7 @@ void ConsoleUIController::setupRenderPosition(int x, int y)
 {
     m_renderOffsetX = x;
     m_renderOffsetY = y;
+    gFui->setOrigin((float)x, (float)y);
 }
 
 void ConsoleUIController::updateViewportTouchOffset(int x, int y)
@@ -1057,8 +1058,8 @@ void ConsoleUIController::RefreshTooltips(unsigned int playerId)
 
 void ConsoleUIController::DisplayGamertag(unsigned int playerId, bool show)
 {
-    UIScene_HUD* hud = static_cast<UIScene_HUD*>(
-        groupForPlayer((int)playerId, false)->m_componentQuaternary);
+    UIGroup* group = m_groups[playerId + 2];
+    UIScene_HUD* hud = static_cast<UIScene_HUD*>(group->m_componentQuaternary);
     if (hud != 0)
         hud->ShowDisplayName(show);
 }
@@ -1168,7 +1169,7 @@ void ConsoleUIController::HandleInventoryUpdated(int playerId)
 void ConsoleUIController::HandleGameTick()
 {
     tickInput();
-    if (!IsReloadingSkin()) {
+    if (!IsExpectingOrReloadingSkin()) {
         for (int i = 0; i < 6; ++i) {
             UIScene_HUD* hud = static_cast<UIScene_HUD*>(m_groups[i]->m_componentQuaternary);
             if (hud != 0)
@@ -1593,19 +1594,37 @@ void ConsoleUIController::StartReloadSkinThread()
 
 bool ConsoleUIController::IsReloadingSkin()
 {
-    return m_skinThreadExpected || m_skinThread != 0;
+    EnterCriticalSection(&m_skinThreadMutex);
+    bool result = m_skinThreadExpected || m_skinThread != 0;
+    LeaveCriticalSection(&m_skinThreadMutex);
+    return result;
 }
 
 bool ConsoleUIController::IsExpectingOrReloadingSkin()
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mTexturePackRepository->needsUIUpdate())
+        return true;
     return IsReloadingSkin() || PendingFontChange();
 }
 
 void ConsoleUIController::CleanUpSkinReload()
 {
+    EnterCriticalSection(&m_skinThreadMutex);
     m_skinThread = 0;
-    m_skinThreadExpected = false;
-    m_fontChangePending = false;
+    LeaveCriticalSection(&m_skinThreadMutex);
+
+    EnterCriticalSection(&m_touchMutex);
+    for (std::vector<_QueuedMessageBoxData*>::iterator it = m_queuedMessageBoxes.begin();
+         it != m_queuedMessageBoxes.end(); ++it)
+    {
+        _QueuedMessageBoxData* queued = *it;
+        NavigateToScene(queued->queuedUserIndex, (EUIScene)0x4b, queued,
+                        (EUILayer)queued->type, (EUIGroup)1);
+        delete queued;
+    }
+    m_queuedMessageBoxes.clear();
+    LeaveCriticalSection(&m_touchMutex);
 }
 
 void ConsoleUIController::tickInput()

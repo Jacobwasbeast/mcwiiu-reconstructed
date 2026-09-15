@@ -14,10 +14,6 @@ PostPass::PostPass(ResourceManager* resourceManager, std::wstring name, RenderTa
 {
 }
 
-PostPass::~PostPass()
-{
-    delete mEffect;
-}
 
 void PostPass::destroy()
 {
@@ -37,10 +33,6 @@ void PostPass::prepareState()
     GlStateManager::bindTexture(0);
 }
 
-void PostPass::setOrthoMatrix(Matrix4f* matrix)
-{
-    mOrthoMatrix = matrix;
-}
 
 std::wstring PostPass::getName()
 {

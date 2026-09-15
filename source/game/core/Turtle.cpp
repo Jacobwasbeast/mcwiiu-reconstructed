@@ -50,13 +50,13 @@ void Turtle::staticCtor()
 {
     if (BABY_ON_LAND_SELECTOR == 0)
         BABY_ON_LAND_SELECTOR = new BabyOnLandSelector();
-    DATA_HOME_POS = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BLOCK_POS);
-    DATA_HAS_EGG = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_IS_LAYING_EGG = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_TRAVEL_POS = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BLOCK_POS);
-    DATA_GOING_HOME = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_TRAVELLING = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_HOME_POS = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BLOCK_POS);
+    DATA_HAS_EGG = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_IS_LAYING_EGG = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_TRAVEL_POS = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BLOCK_POS);
+    DATA_GOING_HOME = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_TRAVELLING = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
 }
 
 Turtle::Turtle(Level* level) : Animal(level), mLayEggTime(0)
@@ -196,7 +196,7 @@ void Turtle::defineSynchedData()
     }
 }
 
-TurtlePathNavigation* Turtle::createNavigation(Level* level)
+PathNavigation* Turtle::createNavigation(Level* level)
 {
     return new TurtlePathNavigation(this, level);
 }
@@ -242,7 +242,7 @@ void Turtle::travel(float xxa, float yya, float zza)
 boost::shared_ptr<AgableMob> Turtle::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<Turtle> child(new Turtle(mLevel));
-    child->setHomePos(BlockPos(getPos(1.0f)));
+    child->setHomePos(BlockPos(getPos(0.0f)));
     return child;
 }
 
@@ -344,7 +344,7 @@ void Turtle::die(const DamageSource* source)
     LivingEntity::die(source);
     if (source == DamageSource::LIGHTNING_BOLT)
     {
-        spawnAtLocation(Items::bowl, 1);
+        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::bowl, 1)), 0.0f);
     }
 }
 

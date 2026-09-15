@@ -44,9 +44,7 @@ Coral::Coral()
     }
 }
 
-Coral::~Coral()
-{
-}
+Coral::~Coral() = default;
 
 int Coral::getColor(const BlockState* state)
 {

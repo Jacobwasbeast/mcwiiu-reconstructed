@@ -1,50 +1,59 @@
-#ifndef GAME_CORE_XMLOBJECT_HPP
-#define GAME_CORE_XMLOBJECT_HPP
+/* XmlObject - generated reconstruction header. */
+#ifndef RECON_C_GAME_X_XMLOBJECT_HPP
+#define RECON_C_GAME_X_XMLOBJECT_HPP 1
 
-#include <string>
-#include <utility>
-#include <vector>
+#include "guest_ns.hpp"
+#include "_thirdparty/std__vector_XmlChild__std__allocator_XmlChild__.hpp"
+#include "_thirdparty/std__vector_std__pair_std__basic_string_wchar_t__std__char_traits_wchar_t___std__allocator_wchar_t____std__basic_string_.hpp"
 
-#include "game/core/WstringLookup.hpp"
-#include "game/core/XmlChild.hpp"
-#include "game/core/XmlConstruct.hpp"
-#include "game/core/XmlValue.hpp"
+namespace recon {
+struct XmlChild;
+struct wstring;
 
-class XmlObject : public XmlConstruct
-{
-public:
-    XmlObject(const std::wstring& name);
-    virtual ~XmlObject();
+#pragma pack(push, 1)
+struct XmlObject {
+    uint8_t pad_0x0[2];
+    be<int16_t> field_0x2;
+    be<int32_t> field_0x4;
+    be<int16_t> field_0x8;
+    uint8_t pad_0xa[14];
+    be<int32_t> field_0x18;
+    be<int32_t> field_0x1c;
+    be<int32_t> field_0x20;
+    vector_XmlChild m_0x24;
+    vector_pair_wstring_wstring m_0x34;
 
-    XmlObject* child(const std::wstring& name);
-    const XmlObject* child(const std::wstring& name) const;
-    void addChildRaw(const XmlChild& child);
-    void addAttr(const std::wstring& name, const std::wstring& value);
-    int size() const;
-    XmlValue operator[](const std::wstring& name) const;
-    XmlChild operator[](int index) const;
-    virtual std::wstring asString() const;
-    virtual bool isString() const;
-    std::wstring toString(int indentation, bool formatted) const;
-
-    void addChild(XmlObject* child);
-    XmlValue getAttr(const std::wstring& name) const;
-    std::wstring getText() const;
-    void _getLookup(WstringLookup* lookup);
-    WstringLookup* getLookup();
-    std::vector<XmlChild> getChildren();
-    void _getValues(const std::wstring& name, const std::wstring& value, std::vector<std::wstring>* values);
-    std::vector<std::wstring> getAllValues(const std::wstring& name);
-    std::vector<std::wstring> getValues(const std::wstring& name, const std::wstring& value);
-    std::vector<XmlObject*> getChildren(const std::wstring& name);
-    const std::vector<XmlChild>& getChildrenRaw() const;
-    std::vector<std::pair<std::wstring, std::wstring> >& getAttrs();
-
-    std::wstring mName;
-
-private:
-    std::vector<XmlChild> mChildren;
-    std::vector<std::pair<std::wstring, std::wstring> > mAttrs;
+    /* interface: 8 methods recovered, 14 without a recoverable signature;
+     * implementation: 0 reconstructed bodies, 7 lowered drafts, 0 closed */
+    XmlObject(gptr<wstring> a1);   /* LOWERED-DRAFT; not reconstructed */
+    ~XmlObject();   /* LOWERED-DRAFT; not reconstructed */
+    XmlObject() {}   /* generated shell; the real ctor is dispatch-only */
+    uint32_t child(gptr<wstring> a1);   /* LOWERED-DRAFT; not reconstructed */
+    void addChildRaw(gptr<XmlChild> a1);   /* boundary stub */
+    void addAttr(gptr<wstring> a1, gptr<wstring> a2);   /* LOWERED-DRAFT; not reconstructed */
+    int32_t size();   /* LOWERED-DRAFT; not reconstructed */
+    int32_t operator[](int32_t a1);   /* LOWERED-DRAFT; not reconstructed */
+    uint64_t asString();   /* LOWERED-DRAFT; not reconstructed */
+    bool isString();   /* LOWERED-DRAFT; not reconstructed */
+    gresult<wstring> toString(int32_t a1, bool a2);   /* LOWERED-DRAFT; not reconstructed */
+    /* unrecovered: addChild(XmlObject*) [0x00000000] */
+    /* unrecovered: getAttr(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) const [0x00000000] */
+    /* unrecovered: getText() const [0x00000000] */
+    /* unrecovered: _getLookup(WstringLookup*) [0x00000000] */
+    /* unrecovered: getLookup() [0x00000000] */
+    /* unrecovered: getChildren() [0x00000000] */
+    /* unrecovered: _getValues(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&, const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&, std::vector<std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>, std::allocator<std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>>>*) [0x00000000] */
+    /* unrecovered: getAllValues(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) [0x00000000] */
+    /* unrecovered: getValues(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&, const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) [0x00000000] */
+    /* unrecovered: getChildren(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) [0x00000000] */
+    /* unrecovered: getChildrenRaw() const [0x00000000] */
+    /* unrecovered: getAttrs() [0x00000000] */
+    /* unrecovered: child(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) const [0x02F3BDA8] */
+    /* unrecovered: operator[](const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) const [0x02F3D06C] */
 };
+static_assert(sizeof(XmlObject) == 0x44, "layout");
+#pragma pack(pop)
+
+}  /* namespace recon */
 
 #endif

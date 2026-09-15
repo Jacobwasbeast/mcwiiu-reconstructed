@@ -64,6 +64,11 @@ GlStateManager::BooleanState::BooleanState(int capability)
 
 void GlStateManager::BooleanState::setEnabled(bool enabled)
 {
+    if (state == enabled)
+    {
+        return;
+    }
+
     state = enabled;
 
     if (enabled)
@@ -233,6 +238,7 @@ void GlStateManager::enableState(int capability)
     case STATE_NONE:
         break;
     case STATE_TEXTURE_2D:
+        gRenderer->TextureBind(textures[activeTextureUnit]->textureName);
         break;
     case STATE_BLEND:
         gRenderer->StateSetBlendEnable(true);
@@ -257,6 +263,24 @@ void GlStateManager::enableState(int capability)
         break;
     case STATE_LIGHT1:
         gRenderer->StateSetLightEnable(1, true);
+        break;
+    case STATE_LIGHT0 + 2:
+        gRenderer->StateSetLightEnable(2, true);
+        break;
+    case STATE_LIGHT0 + 3:
+        gRenderer->StateSetLightEnable(3, true);
+        break;
+    case STATE_LIGHT0 + 4:
+        gRenderer->StateSetLightEnable(4, true);
+        break;
+    case STATE_LIGHT0 + 5:
+        gRenderer->StateSetLightEnable(5, true);
+        break;
+    case STATE_LIGHT0 + 6:
+        gRenderer->StateSetLightEnable(6, true);
+        break;
+    case STATE_LIGHT0 + 7:
+        gRenderer->StateSetLightEnable(7, true);
         break;
     default:
         break;
@@ -295,6 +319,24 @@ void GlStateManager::disableState(int capability)
         break;
     case STATE_LIGHT1:
         gRenderer->StateSetLightEnable(1, false);
+        break;
+    case STATE_LIGHT0 + 2:
+        gRenderer->StateSetLightEnable(2, false);
+        break;
+    case STATE_LIGHT0 + 3:
+        gRenderer->StateSetLightEnable(3, false);
+        break;
+    case STATE_LIGHT0 + 4:
+        gRenderer->StateSetLightEnable(4, false);
+        break;
+    case STATE_LIGHT0 + 5:
+        gRenderer->StateSetLightEnable(5, false);
+        break;
+    case STATE_LIGHT0 + 6:
+        gRenderer->StateSetLightEnable(6, false);
+        break;
+    case STATE_LIGHT0 + 7:
+        gRenderer->StateSetLightEnable(7, false);
         break;
     default:
         break;
@@ -370,19 +412,15 @@ void GlStateManager::viewport(int x, int y, int width, int height)
 void GlStateManager::getMatrix(int mode, FloatBuffer* buffer)
 {
     float* matrix = gRenderer->MatrixGet(mode);
-    for (int index = 0; index < 16; ++index)
-    {
-        buffer->put(index, matrix[index]);
-    }
+    arrayWithLength<float> values(matrix, 16);
+    buffer->put(values);
 }
 
 void GlStateManager::multMatrix(FloatBuffer* buffer)
 {
     float matrix[16];
-    for (int index = 0; index < 16; ++index)
-    {
-        matrix[index] = buffer->get(index);
-    }
+    arrayWithLength<float> values(matrix, 16);
+    buffer->get(&values);
     gRenderer->MatrixMult(matrix);
 }
 
@@ -900,189 +938,4 @@ void GlStateManager::setProfile()
 
 void GlStateManager::unsetProfile()
 {
-}
-
-GlStateManager::AlphaState::~AlphaState()
-{
-}
-
-GlStateManager::BlendState::~BlendState()
-{
-}
-
-GlStateManager::ClearState::~ClearState()
-{
-}
-
-GlStateManager::ColorLogicState::~ColorLogicState()
-{
-}
-
-GlStateManager::ColorMaterialState::~ColorMaterialState()
-{
-}
-
-GlStateManager::CullState::~CullState()
-{
-}
-
-GlStateManager::DepthState::~DepthState()
-{
-}
-
-GlStateManager::FogState::~FogState()
-{
-}
-
-GlStateManager::PolygonOffsetState::~PolygonOffsetState()
-{
-}
-
-GlStateManager::StencilState::~StencilState()
-{
-}
-
-GlStateManager::TexGenCoord::~TexGenCoord()
-{
-}
-
-GlStateManager::TexGenState::~TexGenState()
-{
-}
-
-GlStateManager::TextureState::~TextureState()
-{
-}
-
-void GlStateManager::pushLightingAttributes()
-{
-    pushMatrix();
-}
-
-void GlStateManager::popAttributes()
-{
-    popMatrix();
-}
-
-void GlStateManager::enableLineOffset()
-{
-    polygonOffsetState->polyOffsetLine->enable();
-}
-
-void GlStateManager::disableLineOffset()
-{
-    polygonOffsetState->polyOffsetLine->disable();
-}
-
-void GlStateManager::enableColorLogicOp()
-{
-    colorLogicState->colorLogicOp->enable();
-}
-
-void GlStateManager::disableColorLogicOp()
-{
-    colorLogicState->colorLogicOp->disable();
-}
-
-void GlStateManager::glActiveTexture(int texture)
-{
-    activeTexture(texture);
-}
-
-void GlStateManager::texParameterf(int target, int parameter, float value)
-{
-    gRenderer->TextureSetParam(parameter, (int)value);
-}
-
-void GlStateManager::clearCurrentColor()
-{
-    gRenderer->StateSetColour(color->red, color->green, color->blue, color->alpha);
-}
-
-void GlStateManager::drawArrays(int mode, int first, int count)
-{
-    gRenderer->CBuffCall(first, true, (unsigned char)count);
-}
-
-void GlStateManager::glReadPixels(int x, int y, int width, int height, int format, int type, ByteBuffer* pixels)
-{
-    pixels->put(0, 0);
-}
-
-void GlStateManager::glTexCoordPointer(int size, int type, int stride, int pointer)
-{
-    gRenderer->CBuffCall(pointer, true, (unsigned char)stride);
-}
-
-void GlStateManager::glTexCoordPointer(int size, int type, FloatBuffer* buffer)
-{
-    gRenderer->CBuffCall(size, true, (unsigned char)type);
-}
-
-void GlStateManager::glNormalPointer(int type, int stride, int pointer)
-{
-    gRenderer->CBuffCall(pointer, true, (unsigned char)stride);
-}
-
-void GlStateManager::glNormalPointer(int type, ByteBuffer* buffer)
-{
-    gRenderer->CBuffCall(type, true, 0);
-}
-
-void GlStateManager::glEnableClientState(int capability)
-{
-    enableState(capability);
-}
-
-void GlStateManager::glColorPointer(int size, bool normalized, int stride, ByteBuffer* buffer)
-{
-    gRenderer->CBuffCall(size, normalized, (unsigned char)stride);
-}
-
-void GlStateManager::glColorPointer(int size, int type, int stride, int pointer)
-{
-    gRenderer->CBuffCall(pointer, true, (unsigned char)stride);
-}
-
-void GlStateManager::glVertexPointer(int size, int type, int stride, int pointer)
-{
-    gRenderer->CBuffCall(pointer, true, (unsigned char)stride);
-}
-
-void GlStateManager::glVertexPointer(int size, int type, FloatBuffer* buffer)
-{
-    gRenderer->CBuffCall(size, true, (unsigned char)type);
-}
-
-void GlStateManager::glGenQueriesARB(IntBuffer* buffer)
-{
-    for (unsigned int index = 0; index < buffer->limit(); ++index)
-    {
-        buffer->put(0);
-    }
-}
-
-void GlStateManager::glBeginQueryARB(int target, int query)
-{
-    newList(query, target);
-}
-
-void GlStateManager::glEndQueryARB(int target)
-{
-    endList(target);
-}
-
-void GlStateManager::glGetQueryObjectuARB(int query, int parameter, IntBuffer* buffer)
-{
-    buffer->put(0, query);
-}
-
-void GlStateManager::glShadeModel(int mode)
-{
-    shadeModel(mode);
-}
-
-void GlStateManager::glClientActiveTexture(int texture)
-{
-    activeTexture(texture);
 }

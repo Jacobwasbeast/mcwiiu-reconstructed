@@ -52,8 +52,11 @@ bool MagmaCube::checkSpawnObstruction()
 {
     if (!mLevel->isUnobstructed(mBoundingBox, shared_from_this()))
         return false;
-    return mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
-           !mLevel->containsAnyLiquid(mBoundingBox);
+    std::vector<AABB*>* collisions =
+        mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false);
+    const bool clear = collisions->empty();
+    delete collisions;
+    return clear && !mLevel->containsAnyLiquid(mBoundingBox);
 }
 
 void MagmaCube::setSize(int size, bool reset)

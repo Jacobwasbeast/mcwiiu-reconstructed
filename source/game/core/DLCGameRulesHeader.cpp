@@ -15,9 +15,7 @@ DLCGameRulesHeader::DLCGameRulesHeader(const std::wstring& path)
     m_gameRulesSource.setGrfPath(grfPath);
 }
 
-DLCGameRulesHeader::~DLCGameRulesHeader()
-{
-}
+DLCGameRulesHeader::~DLCGameRulesHeader() = default;
 
 bool DLCGameRulesHeader::requiresTexturePack()
 {

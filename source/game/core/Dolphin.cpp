@@ -1,16 +1,28 @@
 #include "game/core/Dolphin.hpp"
 
 #include <cmath>
+#include <typeinfo>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/BreathAirGoal.hpp"
 #include "game/entity/ai/FindUnderwaterTreasureGoal.hpp"
+#include "game/entity/ai/FollowBoatGoal.hpp"
+#include "game/entity/ai/FollowFlockLeaderGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/JumpGoal.hpp"
+#include "game/entity/ai/MeleeAttackGoal.hpp"
+#include "game/entity/ai/MoveToWaterGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/RandomSwimmingGoal.hpp"
+#include "game/entity/ai/SwimWithMobGoal.hpp"
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
@@ -25,6 +37,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/entity/ai/WaterBoundPathNavigation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
 Dolphin::Dolphin(Level* level)
@@ -134,9 +147,13 @@ void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
                       mZ + std::cos(angle) * 0.4);
 }
 
-void Dolphin::drop(const not_null_ptr<ItemInstance>& item)
+boost::shared_ptr<ItemEntity> Dolphin::drop(const not_null_ptr<ItemInstance>& item)
 {
-    if (!item->isEmpty()) spawnAtLocation(item, 0.0f);
+    if (item->isEmpty()) return boost::shared_ptr<ItemEntity>();
+    boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY - 0.3 + getEyeHeight(), mZ, item));
+    itemEntity->setPickUpDelay(40);
+    itemEntity->setThrower(getUUID());
+    return itemEntity;
 }
 
 boost::shared_ptr<AgableMob> Dolphin::getBreedOffspring(boost::shared_ptr<AgableMob>)
@@ -173,9 +190,27 @@ void Dolphin::readAdditionalSaveData(CompoundTag* tag)
 
 void Dolphin::registerGoals()
 {
-    Mob::registerGoals();
-    mTreasureGoal = new FindUnderwaterTreasureGoal(this, 1.0f, 30, 50);
+    unsigned long long* swimWithMobTypes = new unsigned long long[1];
+    swimWithMobTypes[0] = 0x0C800000ULL;
+    unsigned long long* hurtByTargetTypes = new unsigned long long[2];
+    hurtByTargetTypes[0] = 0x5D544000ULL;
+    hurtByTargetTypes[1] = 0x5D544001ULL;
+
+    mGoalSelector.addGoal(0, new BreathAirGoal(this), true);
+    mGoalSelector.addGoal(0, new MoveToWaterGoal(this, 1.0, 15, 5, 0.5), true);
+    mTreasureGoal = new FindUnderwaterTreasureGoal(this, 2.0f, 30, 50);
     mGoalSelector.addGoal(2, mTreasureGoal, true);
+    mGoalSelector.addGoal(2, new SwimWithMobGoal(this, 1.2f, 16.0f, 20,
+        arrayWithLength<unsigned long long>(swimWithMobTypes, 1)), true);
+    mGoalSelector.addGoal(3, new FollowFlockLeaderGoal(this, true), true);
+    mGoalSelector.addGoal(4, new RandomSwimmingGoal(this, 1.0, 10, 10, 7), true);
+    mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
+    mGoalSelector.addGoal(5, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
+    mGoalSelector.addGoal(5, new JumpGoal(this, 10), true);
+    mGoalSelector.addGoal(6, new MeleeAttackGoal(this, 1.2, true), true);
+    mGoalSelector.addGoal(8, new FollowBoatGoal(this), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
+        arrayWithLength<unsigned long long>(hurtByTargetTypes, 2)), true);
 }
 
 void Dolphin::registerAttributes()
@@ -187,7 +222,7 @@ void Dolphin::registerAttributes()
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(3.0);
 }
 
-WaterBoundPathNavigation* Dolphin::createNavigation(Level* level)
+PathNavigation* Dolphin::createNavigation(Level* level)
 {
     return new WaterBoundPathNavigation(this, level, true, true);
 }
@@ -195,13 +230,11 @@ WaterBoundPathNavigation* Dolphin::createNavigation(Level* level)
 bool Dolphin::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (isItemABribingFish(item))
-    {
-        if (!mLevel->mIsClientSide && mTreasureGoal != NULL) mTreasureGoal->setBribed();
-        item->shrink(1);
-        return true;
-    }
-    return AgableMob::mobInteract(player, hand);
+    if (item->isEmpty() || !isItemABribingFish(item))
+        return AgableMob::mobInteract(player, hand);
+    if (!mLevel->mIsClientSide) mTreasureGoal->setBribed();
+    if (!player->isCreative()) item->shrink(1);
+    return true;
 }
 
 bool Dolphin::canHoldItem(not_null_ptr<ItemInstance> item)

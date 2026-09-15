@@ -101,10 +101,10 @@ NonNullList<not_null_ptr<ItemInstance> > ShulkerBoxColoring::getRemainingItems(b
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     unsigned int slot;
-    for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
+    for (slot = 0; slot < result.size(); ++slot)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
-        if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
+        if (item->getItem()->hasCraftingRemainingItem())
         {
             result[slot] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
         }

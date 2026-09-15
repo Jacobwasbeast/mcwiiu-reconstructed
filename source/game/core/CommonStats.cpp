@@ -464,11 +464,6 @@ arrayWithLength<unsigned char> CommonStats::getParam_itemsSmelted(int itemId, in
     return makeParam(count);
 }
 
-arrayWithLength<unsigned char> CommonStats::getParam_itemsUsed(int itemId, int auxValue, int count)
-{
-    return makeParam(count);
-}
-
 arrayWithLength<unsigned char> CommonStats::getParam_itemsBought(int itemId, int auxValue, int count)
 {
     return makeParam(count);

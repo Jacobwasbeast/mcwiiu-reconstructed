@@ -7,9 +7,7 @@ DLCCapeFile::DLCCapeFile(const std::wstring& path)
 {
 }
 
-DLCCapeFile::~DLCCapeFile()
-{
-}
+DLCCapeFile::~DLCCapeFile() = default;
 
 void DLCCapeFile::addData(unsigned char* data, unsigned int size)
 {

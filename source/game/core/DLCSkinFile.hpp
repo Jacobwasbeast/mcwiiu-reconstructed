@@ -28,12 +28,13 @@ public:
     bool isFree();
 
 private:
-    std::wstring mHead;
-    std::wstring mBody;
-    std::wstring mArm;
-    std::wstring mLeg;
-    std::wstring mCape;
-    std::wstring mElytra;
+    std::wstring mDisplayName;
+    std::wstring mThemeName;
+    bool mLocKeySet;
+    std::wstring mLocKey;
+    std::wstring mDisplayNameID;
+    std::wstring mThemeNameID;
+    std::wstring mCapePath;
     _SkinAdjustments mSkinAdjustments;
     bool mFree;
     std::vector<SKIN_BOX*> mAdditionalBoxes;

@@ -47,7 +47,7 @@ private:
     PuffedState mNextPuffState;
     int mPuffTransitionTime;
     int mPoisonDuration;
-    float mDamage;
+    int mDamage;
     float mSmallPuffRadius;
     float mLargePuffRadius;
     float mPuffSoundPitch;

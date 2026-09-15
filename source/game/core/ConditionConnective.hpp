@@ -20,6 +20,7 @@ public:
     static GameCondition* parseCondition(const XmlObject& object);
 
     GameCondition* FirstConditionWithValue(bool value, MasterGameMode* gameMode) const;
+    const std::vector<GameCondition*>& GetConditions() const { return m_conditions; }
     virtual bool IsSatisfied(MasterGameMode* gameMode) const;
     virtual unsigned char GetMessage() const;
     virtual void AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const;

@@ -52,9 +52,10 @@ void PrimedTnt::_init()
 {
     fjDerivedCtorCalls();
     mLife = 80;
-    mFirstTick = true;
+    mFireImmune = true;
     mBlocksBuilding = true;
     setSize(0.98f, 0.98f);
+    mOwner.reset();
 }
 
 void PrimedTnt::setFuse(int fuse)

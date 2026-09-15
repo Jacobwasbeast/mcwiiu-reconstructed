@@ -5,6 +5,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Options.hpp"
+#include "game/core/StatsCounter.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
@@ -106,7 +107,12 @@ extern "C" void DefineActions()
 
 static GameSettings* settings(int profile)
 {
-    if (profile == 255) profile = 0;
+    if (profile == 255)
+    {
+        profile = gProfile != NULL ? gProfile->GetPrimaryPad() : 0;
+        if (profile < 0)
+            profile = 0;
+    }
     if (profile < 0 || profile >= 4) return 0;
     return gGameSettings[profile];
 }
@@ -444,8 +450,14 @@ uint64_t GameSettings::updateToLatestVersionFrom(unsigned short version, int pro
 
 uint32_t GameSettings::OldProfileVersionCallback(void*, unsigned char* data, unsigned short version, int profile)
 {
-    GameSettings* settings = ::settings(profile);
-    if (settings != NULL) settings->updateToLatestVersionFrom(version, profile);
+    if (version < 15)
+    {
+        StatsCounter* stats = Minecraft::GetInstance()->mStats[profile];
+        stats->clear();
+        stats->parseOld(version, data);
+        stats->save(profile, true, data);
+    }
+    reinterpret_cast<GameSettings*>(data)->updateToLatestVersionFrom(version, profile);
     return 0;
 }
 void GameSettings::SetDefaultControls(C4JStorage::PROFILESETTINGS* values, int profile, bool changed)
@@ -612,13 +624,15 @@ void GameSettings::CheckGameSettingsChanged(bool changed, int profile)
 }
 uint64_t GameSettings::GetInputButton(int profile, bool secondary, EControllerActions action)
 {
-    return GetInputButton(GetActionMapping(profile, (int)action + (secondary ? 0 : 0x20)));
+    const unsigned char mapping = GetActionMapping(profile, static_cast<int>(action) - 0x20);
+    return GetInputButton(secondary ? (mapping >> 4) : (mapping & 0x0f));
 }
 
 void GameSettings::SetPlayerCape(int profile, unsigned int id, bool changed)
 {
-    GameSettings* s = settings(profile);
-    if (s)
+    const int resolvedProfile = profile == 255 ? (gProfile != NULL ? gProfile->GetPrimaryPad() : 0) : profile;
+    GameSettings* s = settings(resolvedProfile);
+    if (s && resolvedProfile >= 0 && resolvedProfile < 4)
     {
         unsigned int old = s->mCapeId;
         s->mCapeId = id;
@@ -626,16 +640,27 @@ void GameSettings::SetPlayerCape(int profile, unsigned int id, bool changed)
         {
             s->mChanged = 1;
         }
-        else
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != NULL && minecraft->mLocalPlayers[resolvedProfile])
+        {
+            minecraft->mLocalPlayers[resolvedProfile]->setCustomCape(id);
+            if (!changed)
+                minecraft->mLocalPlayers[resolvedProfile]->setCustomCape(old);
+        }
+        if (!changed)
         {
             s->mCapeId = old;
         }
     }
 }
-void GameSettings::SetPlayerCape(int profile, const std::wstring&) { SetPlayerCape(profile, 0, true); }
+void GameSettings::SetPlayerCape(int profile, const std::wstring& path)
+{
+    SetPlayerCape(profile, Player::getCapeIdFromPath(path), true);
+}
 std::wstring GameSettings::GetPlayerCapeName(int profile)
 {
-    return Player::getCapePathFromId(gGameSettings[profile]->mCapeId);
+    GameSettings* s = settings(profile);
+    return s ? Player::getCapePathFromId(s->mCapeId) : std::wstring();
 }
 uint32_t GameSettings::IsAllowedSkin(int profile)
 {
@@ -663,15 +688,17 @@ uint32_t GameSettings::IsAllowedSkin(int profile)
 }
 uint32_t GameSettings::GetPlayerCapeId(int profile)
 {
-    if (IsAllowedSkin(profile))
-        return gGameSettings[profile]->mCapeId;
+    GameSettings* s = settings(profile);
+    if (s && IsAllowedSkin(profile))
+        return s->mCapeId;
     return 0;
 }
 
 void GameSettings::SetPlayerSkin(int profile, unsigned int id, bool changed)
 {
-    GameSettings* s = settings(profile);
-    if (s)
+    const int resolvedProfile = profile == 255 ? (gProfile != NULL ? gProfile->GetPrimaryPad() : 0) : profile;
+    GameSettings* s = settings(resolvedProfile);
+    if (s && resolvedProfile >= 0 && resolvedProfile < 4)
     {
         unsigned int old = s->mSkinId;
         s->mSkinId = id;
@@ -679,16 +706,27 @@ void GameSettings::SetPlayerSkin(int profile, unsigned int id, bool changed)
         {
             s->mChanged = 1;
         }
-        else
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != NULL && minecraft->mLocalPlayers[resolvedProfile])
+        {
+            minecraft->mLocalPlayers[resolvedProfile]->setCustomSkin(id);
+            if (!changed)
+                minecraft->mLocalPlayers[resolvedProfile]->setCustomSkin(old);
+        }
+        if (!changed)
         {
             s->mSkinId = old;
         }
     }
 }
-void GameSettings::SetPlayerSkin(int profile, const std::wstring&) { SetPlayerSkin(profile, 0, true); }
+void GameSettings::SetPlayerSkin(int profile, const std::wstring& path)
+{
+    SetPlayerSkin(profile, CMinecraftApp::getSkinIdFromPath(path), true);
+}
 std::wstring GameSettings::GetPlayerSkinName(int profile)
 {
-    return CMinecraftApp::getSkinPathFromId(gGameSettings[profile]->mSkinId);
+    GameSettings* s = settings(profile);
+    return s ? CMinecraftApp::getSkinPathFromId(s->mSkinId) : std::wstring();
 }
 uint32_t GameSettings::GetPlayerSkinId(int profile)
 {
@@ -766,9 +804,23 @@ void GameSettings::ValidateFavoriteSkins(int profile)
     {
         return;
     }
-    int count = GetPlayerFavoriteSkinsCount(profile);
-    int i;
-    for (i = count; i < 10; ++i)
+    uint32_t count = GetPlayerFavoriteSkinsCount(profile);
+    uint32_t validCount = 0;
+    uint32_t i;
+    for (i = 0; i < count; ++i)
+    {
+        uint32_t skinId = GetPlayerFavoriteSkin(profile, (int)i);
+        bool isDefaultSkin = false;
+        bool hasPurchasedPack = false;
+        DLCFile* skinFile = g_pApp->mDLCManager.getSkinFile((int)skinId, isDefaultSkin, hasPurchasedPack);
+        if (isDefaultSkin ||
+            (skinFile != NULL && (hasPurchasedPack || static_cast<DLCSkinFile*>(skinFile)->isFree())))
+        {
+            s->mFavoriteSkins[validCount] = skinId;
+            ++validCount;
+        }
+    }
+    for (i = validCount; i < 10; ++i)
     {
         s->mFavoriteSkins[i] = 0xffffffffu;
     }
@@ -809,7 +861,10 @@ uint64_t GameSettings::SetGameSettings(int profile, eCustomGameModeHostOption op
     }
     return (uint64_t)(uint32_t)profile << 32;
 }
-uint64_t GameSettings::GetGameSettings(eGameSetting setting) { return (uint64_t)GetGameSettings(0, setting) << 32; }
+uint64_t GameSettings::GetGameSettings(eGameSetting setting)
+{
+    return static_cast<uint64_t>(GetGameSettings(gProfile->GetPrimaryPad(), setting)) << 32;
+}
 uint32_t GameSettings::GetGameSettingsDebugMask(int, bool) { return 0; }
 uint32_t GameSettings::IsDebugSettingEnabled(eDebugSetting, int) { return 0; }
 void GameSettings::SetGameSettingsDebugMask(int, unsigned int) { }

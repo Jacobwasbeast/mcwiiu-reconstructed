@@ -3,6 +3,7 @@
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/GameRenderer.hpp"
 #include "game/client/render/ProgressRenderer.hpp"
 #include "game/core/CameraController.hpp"
 #include "game/core/ClientScoreboard.hpp"
@@ -128,7 +129,22 @@ void ClientMasterGameMode::PlaySound(const SoundEvent* sound, float volume, floa
 
 void ClientMasterGameMode::OnRoundWaitingToStart()
 {
+    mLocalChunksLoaded = false;
     mPlayerProgress.clear();
+
+    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+            if (localPlayer != NULL)
+            {
+                localPlayer->SetWaitingForScoreboard(true);
+                localPlayer->ResetThermalVariables();
+            }
+        }
+    }
 }
 
 void ClientMasterGameMode::OnRoundStart()
@@ -399,7 +415,11 @@ void ClientMasterGameMode::OnExitedGame()
     OnStateChange(EGameModeStateDefault);
 }
 
-void ClientMasterGameMode::ClearPlaylist() { mPlaylist.clear(); }
+void ClientMasterGameMode::ClearPlaylist()
+{
+    mPlaylist.clear();
+    mVoteables->getVoteable(0)->clearVotes();
+}
 
 void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& name, int mapSize)
 {
@@ -413,13 +433,15 @@ void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& na
 void ClientMasterGameMode::SetMapVote(int playerIndex, int vote, bool remove)
 {
     Voteable* voteable = mVoteables->getVoteable(0);
-    if (voteable != NULL) voteable->setVoteAndSync(playerIndex, vote, remove ? -1 : 1);
+    voteable->setVoteAndSync(playerIndex, vote, remove ? -1 : 1);
 }
 
 unsigned int ClientMasterGameMode::GetMapVote(int playerIndex, int vote)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
     Voteable* voteable = mVoteables->getVoteable(0);
-    return voteable == NULL ? 0U : static_cast<unsigned int>(voteable->getVote(playerIndex, vote));
+    return static_cast<unsigned int>(voteable->getVote(localPlayer, vote) >= 0);
 }
 
 void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlist)
@@ -460,21 +482,31 @@ void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& t
 
 void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bool vote)
 {
-    Voteable* voteable = mVoteables->getVoteable(1);
-    if (voteable == NULL) return;
-    voteable->setVoteAndSync(playerIndex, colour, vote ? 1 : -1);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+    if (!localPlayer)
+        return;
+
+    if (CGameNetworkManager::sInstance.GetPlayerBySmallId(colour) != NULL)
+    {
+        const unsigned int voteableId = g_pApp->GetPlayerColour(colour);
+        Voteable* voteable = mVoteables->getVoteable(1);
+        voteable->setVoteAndSync(playerIndex, voteableId, vote);
+    }
 }
 
 unsigned int ClientMasterGameMode::GetKickVote(int playerIndex, unsigned char colour)
 {
+    const unsigned int voteableId = g_pApp->GetPlayerColour(colour);
     Voteable* voteable = mVoteables->getVoteable(1);
-    return voteable == NULL ? 0U : static_cast<unsigned int>(voteable->getVote(playerIndex, colour));
+    return static_cast<unsigned int>(voteable->getVote(playerIndex, voteableId) >= 0);
 }
 
 void ClientMasterGameMode::SetBuildOffScoringVote(int playerIndex, int vote, int value)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
     Voteable* voteable = mVoteables->getVoteable(2);
-    if (voteable == NULL) return;
     voteable->setVoteAndSync(playerIndex, vote, static_cast<char>(value));
 }
 
@@ -494,30 +526,49 @@ unsigned int ClientMasterGameMode::GetBuildOffTeamIndexToScore(int playerIndex)
 
 unsigned int ClientMasterGameMode::GetBuildOffScoringVote(int playerIndex, int vote)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
     Voteable* voteable = mVoteables->getVoteable(2);
-    return voteable == NULL ? 0U : static_cast<unsigned int>(voteable->getVote(playerIndex, vote));
+    return static_cast<unsigned int>(voteable->getVote(localPlayer, vote));
 }
 
 void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int value)
 {
     Voteable* voteable = mVoteables->getVoteable(3);
-    if (voteable != NULL) voteable->setVoteAndSync(playerIndex, vote, static_cast<char>(value));
+    voteable->setVoteAndSync(playerIndex, vote, 1);
 }
 
 unsigned int ClientMasterGameMode::GetBuildOffThemeVote(int playerIndex)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
     Voteable* voteable = mVoteables->getVoteable(3);
-    return voteable == NULL ? 0U : static_cast<unsigned int>(voteable->getVote(playerIndex, 0));
+    return static_cast<unsigned int>(voteable->getVote(localPlayer, 0));
 }
 
-void ClientMasterGameMode::GetString(const int& id) { mStringTable.getString(id); }
+const wchar_t* ClientMasterGameMode::GetString(const int& id) { return mStringTable.getString(id); }
 void ClientMasterGameMode::GetCurrentThemeVotesText(std::vector<HtmlString>& text) { text.clear(); }
 
 std::wstring ClientMasterGameMode::GetTransitionTextOverride()
 {
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    if (miniGame == NULL) return std::wstring();
-    return miniGame->GetLootSetText();
+    const unsigned int id = miniGame->GetId();
+
+    if (id == 2)
+    {
+        if (miniGame->IsCustomGame())
+            return miniGame->GetLootSetText(miniGame->GetLootSetId());
+        return miniGame->GetLootSetText(miniGame->GetGameVariant());
+    }
+
+    if (id == 1 || id == 3)
+    {
+        if (mCurrentLevelGenOptions != NULL)
+            return std::wstring(mCurrentLevelGenOptions->getWorldName());
+        return std::wstring();
+    }
+
+    return std::wstring();
 }
 
 void ClientMasterGameMode::SetPlayerReady(unsigned int playerIndex, bool ready)
@@ -959,7 +1010,23 @@ GameModeTransitionParams* ClientMasterGameMode::popTransition()
 
 void ClientMasterGameMode::queueTransition(GameModeTransitionParams* transition)
 {
-    if (transition != NULL) mTransitions.push_back(transition);
+    Minecraft* minecraft = Minecraft::GetInstance();
+
+    if (transition->mReturningToLobby)
+    {
+        for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+            if (localPlayer != NULL)
+                localPlayer->clientSideCloseContainer();
+        }
+    }
+
+    minecraft->mGameRenderer->DisableUpdateThread(1);
+    minecraft->mLevel->DropChunksOutsideArea(transition->mMinChunkX, transition->mMinChunkZ,
+                                              transition->mMaxChunkX, transition->mMaxChunkZ, true);
+    minecraft->mGameRenderer->EnableUpdateThread(1);
+    mTransitions.push_back(transition);
 }
 
 void ClientMasterGameMode::dropAllTransitions()

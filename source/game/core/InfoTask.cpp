@@ -3,9 +3,10 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/InputConstraint.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/UnityClient6.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-extern CTelemetryManager gTelemetryManager;
 extern ConsoleUIController gConsoleUIController;
 
 InfoTask::InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint,
@@ -38,10 +39,9 @@ void InfoTask::sendTelemetry()
             tutorial->setCompleted(388);
         }
 
-        gTelemetryManager.RecordPlayerDiedOrFailed(tutorial->playerId, 0, 0, 0, 0, 0, 0,
-                                                    telemetryChallenge);
+        telemetryManagerInstance->RecordEnemyKilledOrOvercome(
+            minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0, telemetryChallenge);
     }
-    (void)minecraft;
 }
 
 bool InfoTask::isCompleted()

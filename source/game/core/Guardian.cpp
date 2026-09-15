@@ -3,11 +3,15 @@
 #include "game/core/BuiltInLootTables.hpp"
 
 #include <cmath>
+#include <typeinfo>
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/LookControl.hpp"
+#include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
 #include "game/entity/ai/WaterBoundPathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -22,6 +26,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
 
 const EntityDataAccessor<int>* Guardian::DATA_ID_ATTACK_TARGET = NULL;
 
@@ -51,7 +57,7 @@ Guardian::~Guardian()
 
 void Guardian::staticCtor()
 {
-    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(0x5D544000ULL, 0, EntityDataSerializers::INT);
+    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(0x5D544000ULL, 0x4D540000ULL, EntityDataSerializers::INT);
 }
 
 void Guardian::addDataWalkers(DataFixerUpper* fixer)
@@ -66,9 +72,17 @@ void Guardian::create(Level* level)
 
 void Guardian::registerGoals()
 {
+    MoveTowardsRestrictionGoal* restriction = new MoveTowardsRestrictionGoal(this, 1.0);
     mRandomStrollGoal = new RandomStrollGoal(this, 1.0, 80);
-    mGoalSelector.addGoal(7, new GuardianAttackGoal(this), true);
+    mGoalSelector.addGoal(4, new GuardianAttackGoal(this), true);
+    mGoalSelector.addGoal(5, restriction, true);
+    mGoalSelector.addGoal(7, mRandomStrollGoal, true);
+    mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Mob), 3.0f, 1.0f), true);
+    mGoalSelector.addGoal(9, new RandomLookAroundGoal(this), true);
     Mob::registerGoals();
+    mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(
+        this, typeid(Player), 10, true, false, new GuardianAttackSelector(this), false, false), true);
 }
 
 void Guardian::registerAttributes()
@@ -80,9 +94,9 @@ void Guardian::registerAttributes()
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(30.0);
 }
 
-void Guardian::createNavigation(Level* level)
+PathNavigation* Guardian::createNavigation(Level* level)
 {
-    mNavigation = new WaterBoundPathNavigation(this, level, true, false);
+    return new WaterBoundPathNavigation(this, level, true, false);
 }
 
 void Guardian::defineSynchedData()
@@ -191,20 +205,137 @@ double Guardian::getAttackAnimationScale(float partialTicks)
 
 void Guardian::aiStep()
 {
-    mTailAnimationOld = mTailAnimation;
-    mTailAnimation += (mRandom->nextFloat() - 0.5f) * 0.1f;
-
-    if (hasActiveAttackTarget())
+    if (mLevel->mIsClientSide)
     {
-        if (mAttackTime < (int)getAttackDuration())
+        mTailAnimationOld = mTailAnimation;
+        if (!isInWater())
         {
-            ++mAttackTime;
+            bool touchedSurface = mYd > 0.0 && mTouchedGround;
+            mTailAnimationSpeed = 2.0f;
+            if (touchedSurface && !isSilent())
+            {
+                mLevel->playLocalSound(mX, mY, mZ, getFlopSound(), getSoundSource(),
+                                       1.0f, 1.0f, false, 16.0f);
+            }
+            if (mYd < 0.0)
+            {
+                BlockPos pos(shared_from_this());
+                mTouchedGround = mLevel->isSolidBlockingBlockInLoadedChunk(pos.below(), false);
+            }
+            else
+            {
+                mTouchedGround = false;
+            }
+            mSpikesAnimationOld = mSpikesAnimation;
+            mTailAnimation += mTailAnimationSpeed;
         }
-        boost::shared_ptr<Entity> target = getActiveAttackTarget();
-        if (target != NULL)
+        else
         {
-            getLookControl()->setLookAt(target, 90.0f, 90.0f);
+            float speed = mTailAnimationSpeed;
+            if (!isMoving())
+            {
+                speed = (0.125f - speed) * 0.2f + speed;
+                mTailAnimationSpeed = speed;
+                mSpikesAnimationOld = mSpikesAnimation;
+                mTailAnimation += speed;
+            }
+            else if (speed >= 0.5f)
+            {
+                speed = (0.5f - speed) * 0.1f + speed;
+                mTailAnimationSpeed = speed;
+                mSpikesAnimationOld = mSpikesAnimation;
+                mTailAnimation += speed;
+            }
+            else
+            {
+                mTailAnimationSpeed = 4.0f;
+                mSpikesAnimationOld = mSpikesAnimation;
+                mTailAnimation += 4.0f;
+            }
         }
+
+        if (isInWaterOrBubble())
+        {
+            if (isMoving())
+            {
+                mSpikesAnimation -= mSpikesAnimation * 0.25f;
+            }
+            else
+            {
+                mSpikesAnimation += (1.0f - mSpikesAnimation) * 0.06f;
+            }
+        }
+        else
+        {
+            mSpikesAnimation = mRandom->nextFloat();
+        }
+
+        if (isMoving() && isInWater())
+        {
+            Vec3* view = getViewVector(0.0f);
+            for (int i = 0; i < 2; ++i)
+            {
+                double rx = mRandom->nextDouble() - 0.5;
+                double ry = mRandom->nextDouble();
+                double rz = mRandom->nextDouble() - 0.5;
+                mLevel->addParticle(PARTICLE_BUBBLE,
+                    mX + rx * mBbWidth - view->x * 1.5,
+                    mY + ry * mBbHeight - view->y * 1.5,
+                    mZ + rz * mBbWidth - view->z * 1.5,
+                    0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
+        }
+
+        if (hasActiveAttackTarget())
+        {
+            if (mAttackTime < (int)getAttackDuration())
+            {
+                ++mAttackTime;
+            }
+            boost::shared_ptr<Entity> target = getActiveAttackTarget();
+            if (target != NULL)
+            {
+                getLookControl()->setLookAt(target, 90.0f, 90.0f);
+
+                double scale = getAttackAnimationScale(0.0f);
+                double dx = target->mX - mX;
+                double dy = (target->mY + target->mBbHeight * 0.5f) - (mY + getEyeHeight());
+                double dz = target->mZ - mZ;
+                double distance = sqrt(dx * dx + dy * dy + dz * dz);
+                double t = mRandom->nextDouble();
+                if (t < distance)
+                {
+                    double step = 1.7 - scale;
+                    double offset = 1.8 - scale;
+                    do
+                    {
+                        t = t + mRandom->nextDouble() * step + offset;
+                        mLevel->addParticle(PARTICLE_BUBBLE,
+                            (dx / distance) * t + mX,
+                            (dy / distance) * t + mY + getEyeHeight(),
+                            (dz / distance) * t + mZ,
+                            0.0, 0.0, 0.0, arrayWithLength<int>());
+                    } while (t < distance);
+                }
+            }
+        }
+    }
+
+    if (!isInWaterOrBubble())
+    {
+        if (mOnGround)
+        {
+            mYd += 0.5;
+            mXd += (double)((mRandom->nextFloat() * 2.0f) - 1.0f) * 0.4;
+            mZd += (double)((mRandom->nextFloat() * 2.0f) - 1.0f) * 0.4;
+            mHasImpulse = true;
+            mOnGround = false;
+            mYRot = mRandom->nextFloat() * 360.0f;
+        }
+    }
+    else
+    {
+        setAirSupply(300);
     }
 
     Monster::aiStep();

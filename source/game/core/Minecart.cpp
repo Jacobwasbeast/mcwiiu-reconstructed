@@ -1,6 +1,7 @@
 #include "game/core/Minecart.hpp"
 
 #include <cmath>
+#include <algorithm>
 
 #include "game/core/MinecartChest.hpp"
 #include "game/core/MinecartFurnace.hpp"
@@ -23,10 +24,12 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/BaseRailBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
-const EntityDataAccessor<int>* Minecart::DATA_ID_DAMAGE = NULL;
+const EntityDataAccessor<float>* Minecart::DATA_ID_DAMAGE = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_DISPLAY_BLOCK = NULL;
-const EntityDataAccessor<float>* Minecart::DATA_ID_DISPLAY_OFFSET = NULL;
+const EntityDataAccessor<int>* Minecart::DATA_ID_DISPLAY_OFFSET = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_TIME = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_DIR = NULL;
 const EntityDataAccessor<bool>* Minecart::DATA_ID_CUSTOM_DISPLAY = NULL;
@@ -82,9 +85,9 @@ Minecart::~Minecart()
 
 void Minecart::staticCtor()
 {
-    DATA_ID_DAMAGE = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
     DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
-    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<float>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
     DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
     DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
     DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
@@ -145,9 +148,9 @@ bool Minecart::makeStepSound()
 
 void Minecart::defineSynchedData()
 {
-    mEntityData->createDateItem(DATA_ID_DAMAGE, 0);
+    mEntityData->createDateItem(DATA_ID_DAMAGE, 0.0f);
     mEntityData->createDateItem(DATA_ID_DISPLAY_BLOCK, 0);
-    mEntityData->createDateItem(DATA_ID_DISPLAY_OFFSET, 0.0f);
+    mEntityData->createDateItem(DATA_ID_DISPLAY_OFFSET, 0);
     mEntityData->createDateItem(DATA_ID_HURT_TIME, 0);
     mEntityData->createDateItem(DATA_ID_HURT_DIR, 6);
     mEntityData->createDateItem(DATA_ID_CUSTOM_DISPLAY, false);
@@ -225,8 +228,9 @@ void Minecart::destroy(const DamageSource* source)
 
 void Minecart::animateHurt()
 {
-    mHurtMarked = true;
+    setHurtDir(-getHurtDir());
     setHurtTime(10);
+    setDamage(getDamage() * 10.0f + getDamage());
 }
 
 bool Minecart::isPickable()
@@ -249,6 +253,10 @@ void Minecart::onAboveBubbleCol(bool down)
     if (down)
     {
         mYd += 0.007;
+    }
+    else
+    {
+        mYd -= 0.007;
     }
 }
 
@@ -274,6 +282,37 @@ void Minecart::tick()
         mY += (mLerpY - mY) / mLerpSteps;
         mZ += (mLerpZ - mZ) / mLerpSteps;
         --mLerpSteps;
+        mYRot = mLerpYRot;
+        mXRot = mLerpXRot;
+        lerpMotion(mLerpXd, mLerpYd, mLerpZd);
+        return;
+    }
+
+    BlockPos pos(shared_from_this());
+    const BlockState* state = mLevel->getBlockState(pos);
+    if (!BaseRailBlock::isRail(state))
+    {
+        state = mLevel->getBlockState(pos.below());
+        if (BaseRailBlock::isRail(state))
+            pos = pos.below();
+    }
+    if (BaseRailBlock::isRail(state))
+    {
+        moveAlongTrack(pos, state);
+        applyNaturalSlowdown();
+    }
+    else
+    {
+        comeOffTrack();
+        move(eMoverType_Self, mXd, mYd, mZd, false);
+        mYd -= 0.03999999910593033;
+    }
+
+    if (mXd * mXd + mZd * mZd > 0.0001)
+    {
+        float angle = static_cast<float>(std::atan2(mZd, mXd) * 57.29577951308232);
+        mYRot = angle;
+        mXRot = 0.0f;
     }
 }
 
@@ -306,10 +345,57 @@ void Minecart::comeOffTrack()
 
 void Minecart::moveAlongTrack(const BlockPos& pos, const BlockState* state)
 {
-    if (state != NULL)
+    if (state == NULL)
+        return;
+
+    mNoPhysics = false;
+    BaseRailBlock* rail = static_cast<BaseRailBlock*>(state->getBlock());
+    BaseRailBlock::RailShape* shape = static_cast<TypedBoxed<BaseRailBlock::RailShape*>*>(
+        state->getBoxedValue(rail->getShapeProperty()))->getValue();
+    if (shape == NULL)
+        return;
+
+    const int data = shape->getData();
+    double dx = 0.0;
+    double dz = 0.0;
+    double slope = 0.0;
+    switch (data)
     {
-        mNoPhysics = false;
+    case 0: dx = 0.0; dz = 1.0; break;
+    case 1: dx = 1.0; dz = 0.0; break;
+    case 2: dx = 1.0; dz = 0.0; slope = 1.0; break;
+    case 3: dx = 1.0; dz = 0.0; slope = -1.0; break;
+    case 4: dx = 0.0; dz = 1.0; slope = -1.0; break;
+    case 5: dx = 0.0; dz = 1.0; slope = 1.0; break;
+    case 6: dx = 1.0; dz = 1.0; break;
+    case 7: dx = -1.0; dz = 1.0; break;
+    case 8: dx = -1.0; dz = -1.0; break;
+    case 9: dx = 1.0; dz = -1.0; break;
+    default: return;
     }
+
+    const double length = std::sqrt(dx * dx + dz * dz);
+    dx /= length;
+    dz /= length;
+    const double along = mXd * dx + mZd * dz;
+    mXd = dx * along;
+    mZd = dz * along;
+    mYd += slope * along * 0.4;
+
+    const double maxSpeed = getMaxSpeed();
+    mXd = Mth::clamp(mXd, -maxSpeed, maxSpeed);
+    mZd = Mth::clamp(mZd, -maxSpeed, maxSpeed);
+    double y = static_cast<double>(pos.y);
+    if (shape->isAscending())
+    {
+        if (data == 2 || data == 5)
+            y += (mX - pos.x);
+        else if (data == 3 || data == 4)
+            y += (pos.x + 1.0 - mX);
+        y = std::max(y, static_cast<double>(pos.y));
+    }
+    setPos(mX, y, mZ);
+    move(eMoverType_Self, mXd, mYd, mZd, false);
 }
 
 void Minecart::applyNaturalSlowdown()
@@ -432,12 +518,12 @@ void Minecart::lerpMotion(double xd, double yd, double zd)
 
 void Minecart::setDamage(float damage)
 {
-    mDamageDirection = static_cast<unsigned char>(damage);
+    getEntityData()->set(DATA_ID_DAMAGE, damage, true);
 }
 
 float Minecart::getDamage()
 {
-    return mDamageDirection;
+    return getEntityData()->get(DATA_ID_DAMAGE);
 }
 
 void Minecart::setHurtTime(int hurtTime)
@@ -462,7 +548,11 @@ int Minecart::getHurtDir()
 
 const BlockState* Minecart::getDisplayBlockState()
 {
-    return hasCustomDisplay() ? Block::stateByIdWithData(mDisplayState) : getDefaultDisplayBlockState();
+    if (!hasCustomDisplay())
+    {
+        return getDefaultDisplayBlockState();
+    }
+    return Block::stateByIdWithData(getEntityData()->get(DATA_ID_DISPLAY_BLOCK));
 }
 
 const BlockState* Minecart::getDefaultDisplayBlockState()
@@ -472,7 +562,11 @@ const BlockState* Minecart::getDefaultDisplayBlockState()
 
 int Minecart::getDisplayOffset()
 {
-    return hasCustomDisplay() ? mDisplayOffset : getDefaultDisplayOffset();
+    if (!hasCustomDisplay())
+    {
+        return getDefaultDisplayOffset();
+    }
+    return getEntityData()->get(DATA_ID_DISPLAY_OFFSET);
 }
 
 int Minecart::getDefaultDisplayOffset()
@@ -482,13 +576,13 @@ int Minecart::getDefaultDisplayOffset()
 
 void Minecart::setDisplayBlockState(const BlockState* state)
 {
-    mDisplayState = static_cast<unsigned char>(Block::getIdWithData(state));
+    getEntityData()->set(DATA_ID_DISPLAY_BLOCK, Block::getIdWithData(state), true);
     setCustomDisplay(true);
 }
 
 void Minecart::setDisplayOffset(int offset)
 {
-    mDisplayOffset = offset;
+    getEntityData()->set(DATA_ID_DISPLAY_OFFSET, offset, true);
     setCustomDisplay(true);
 }
 

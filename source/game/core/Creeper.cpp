@@ -52,9 +52,7 @@ Creeper::Creeper(Level* level) : Monster(level)
     setSize(0.6f, 1.7f);
 }
 
-Creeper::~Creeper()
-{
-}
+Creeper::~Creeper() = default;
 
 void Creeper::staticCtor()
 {

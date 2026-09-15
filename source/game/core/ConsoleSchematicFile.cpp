@@ -15,6 +15,7 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/core/Painting.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/data/DoubleTag.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
@@ -27,6 +28,11 @@
 #include "game/world/chunk/LevelChunk.hpp"
 
 ConsoleSchematicFile::PasteData::PasteData()
+    : mLevel(NULL), mArea(NULL), mRotation(eSchematicRotation_0), mMirror(eSchematicMirror_None),
+      mMinChunkX(0), mMaxChunkX(0), mMinChunkZ(0), mMaxChunkZ(0),
+      mCurrentChunkX(0), mCurrentChunkZ(0), mChunkCount(0), mWidth(0), mHeight(0), mDepth(0),
+      mElements(), mExtraElements(), mData(), mExtraData(), mBlockEntities(), mEntities(),
+      mNamedPositions(), mUpdatedNames(), mIncludeAir(false), mIncludeSpecial(false)
 {
 }
 
@@ -242,8 +248,15 @@ int ConsoleSchematicFile::calculateFullElementSize(int x, int y, int z) { return
 
 std::wstring ConsoleSchematicFile::formatFilenameWithExt(const std::wstring& filename)
 {
-    if (filename.size() >= 4 && filename.compare(filename.size() - 4, 4, L".sch") == 0) return filename;
-    return filename + L".sch";
+    if (filename.size() != 0)
+    {
+        std::wstring extension(filename, filename.size() - 4);
+        if (extension.compare(L".sch") != 0)
+        {
+            return filename + L".sch";
+        }
+    }
+    return filename;
 }
 
 void ConsoleSchematicFile::save(DataOutputStream* output)
@@ -1439,6 +1452,13 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
+        if (entity == NULL)
+            continue;
+
+        unsigned long long type = entity->GetType();
+        if (!mMobs && (type & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+            continue;
+
         CompoundTag* tag = new CompoundTag();
         if (entity->save(tag))
         {
@@ -1446,7 +1466,26 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
             {
                 tag->remove(L"UUID");
             }
+
+            ListTag* position = tag->getList(L"Pos", 6);
+            if (position != NULL && position->size() >= 3)
+            {
+                position->set(0, new DoubleTag(entity->mX - x0));
+                position->set(1, new DoubleTag(entity->mY - y0));
+                position->set(2, new DoubleTag(entity->mZ - z0));
+            }
+
+            if (type == 0x000000000A080001ULL || type == 0x000000000A080002ULL)
+            {
+                tag->putInt(L"TileX", (int)(entity->mX - x0));
+                tag->putInt(L"TileY", (int)(entity->mY - y0));
+                tag->putInt(L"TileZ", (int)(entity->mZ - z0));
+            }
             result.push_back(std::make_pair(Vec3::newPermanent(entity->mX - x0, entity->mY - y0, entity->mZ - z0), tag));
+        }
+        else
+        {
+            delete tag;
         }
     }
 }

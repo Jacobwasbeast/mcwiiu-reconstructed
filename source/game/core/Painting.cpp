@@ -141,7 +141,7 @@ void Painting::dropItem(boost::shared_ptr<Entity> breaker)
         return;
     if (breaker && breaker->isCreative())
         return;
-    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::painting, 1, 0)), 0.0f);
+    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::painting)), 0.0f);
 }
 
 void Painting::playPlacementSound()

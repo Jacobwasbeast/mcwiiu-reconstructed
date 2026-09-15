@@ -81,10 +81,10 @@ void MG04ScoreboardLayout::Init(int value)
     m_userIndex = value;
     ClearPlayersInfo();
 
+    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
         Minecraft::GetInstance()->mLocalPlayers[value];
 
-    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     for (int index = 0; index < playerCount; ++index)
     {
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
@@ -258,7 +258,8 @@ PlayerInfo* MG04ScoreboardLayout::CreatePlayerInfo()
 void MG04ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
     PlayerInfo* info = CreatePlayerInfo();
-    info->smallId = smallId;
+    INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
+    BuildPlayerInfo(player, info);
     m_players.push_back(info);
 }
 

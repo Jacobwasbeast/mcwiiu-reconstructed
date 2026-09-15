@@ -269,7 +269,7 @@ unsigned int IScoreboardLayout::getTitleIcon(int, const EScoreboardType&)
 
 std::wstring IScoreboardLayout::GetRowLabel(int, const StatsUID&, const EScoreboardType&)
 {
-    return std::wstring(L"");
+    return std::wstring(L"Culler");
 }
 
 unsigned int IScoreboardLayout::getNumberOfColumns()

@@ -7,6 +7,7 @@
 #include "game/entity/mob/RangedAttackMob.hpp"
 #include "game/item/not_null_ptr.hpp"
 
+class PathNavigation;
 class DataFixerUpper;
 class DamageSource;
 class DifficultyInstance;
@@ -43,7 +44,7 @@ public:
     virtual ResourceLocation* getDefaultLootTable();
     virtual ResourceLocation* getDefaultGearTable();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
-    virtual DrownedPathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual unsigned long long GetType();
 
 private:

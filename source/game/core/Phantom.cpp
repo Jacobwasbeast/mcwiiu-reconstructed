@@ -135,7 +135,7 @@ void Phantom::registerAttributes()
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(64.0);
 }
 
-FlyingPathNavigation* Phantom::createNavigation(Level* level)
+PathNavigation* Phantom::createNavigation(Level* level)
 {
     FlyingPathNavigation* navigation = new FlyingPathNavigation(this, level);
     navigation->setCanOpenDoors(false);

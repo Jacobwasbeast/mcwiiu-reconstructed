@@ -170,11 +170,12 @@ void Chicken::readAdditionalSaveData(CompoundTag* tag)
 
 bool Chicken::canBeControlledByRider()
 {
-    boost::shared_ptr<Entity> passenger = getControllingPassenger();
-    if (passenger == NULL || Entity::instanceof(passenger, ENTITY_TYPE_ZOMBIE) == 0)
-        return false;
-    boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(passenger);
-    return zombie->isJockey();
+    if (Entity::instanceof(getControllingPassenger(), ENTITY_TYPE_ZOMBIE))
+    {
+        boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(getControllingPassenger());
+        return zombie->isJockey();
+    }
+    return false;
 }
 
 void Chicken::addAdditonalSaveData(CompoundTag* tag)

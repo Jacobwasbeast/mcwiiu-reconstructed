@@ -24,9 +24,7 @@ SpellcasterIllager::SpellcasterIllager(Level* level)
 {
 }
 
-SpellcasterIllager::~SpellcasterIllager()
-{
-}
+SpellcasterIllager::~SpellcasterIllager() = default;
 
 void SpellcasterIllager::staticCtor()
 {

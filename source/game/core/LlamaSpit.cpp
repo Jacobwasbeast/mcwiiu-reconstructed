@@ -6,6 +6,7 @@
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/HitResult.hpp"
+#include "game/core/Llama.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -15,23 +16,23 @@
 LlamaSpit::LlamaSpit(Level* level, const boost::shared_ptr<Llama>& owner)
     : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
 {
+    Entity::fjDerivedCtorCalls();
     _init();
     mLlamaOwner = owner;
-    if (owner)
-    {
-        setSize(0.25f, 0.25f);
-    }
+    setSize(0.25f, 0.25f);
 }
 
 LlamaSpit::LlamaSpit(Level* level)
     : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
 {
+    Entity::fjDerivedCtorCalls();
     _init();
 }
 
 LlamaSpit::LlamaSpit(Level* level, double x, double y, double z, double xd, double yd, double zd)
     : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
 {
+    Entity::fjDerivedCtorCalls();
     _init();
     setPos(x, y, z);
     mXd = xd;
@@ -89,7 +90,7 @@ void LlamaSpit::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, 
 
 boost::shared_ptr<Llama> LlamaSpit::getOwner()
 {
-    return mLlamaOwner;
+    return mLlamaOwner.lock();
 }
 
 bool LlamaSpit::onHit(const HitResult* result)
@@ -120,6 +121,21 @@ void LlamaSpit::restoreOwnerFromSave()
         return;
     }
 
+    const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
+    AABB* searchBox = mBoundingBox->grow(2.0);
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+         it != entities->end(); ++it)
+    {
+        boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(*it);
+        if (llama->getStringUUID() == ownerUuid)
+        {
+            mLlamaOwner = llama;
+            break;
+        }
+    }
+    delete entities;
     mOwnerTag = NULL;
 }
 

@@ -1,1298 +1,2437 @@
-#include "game/core/WitherBoss.hpp"
+#include "game/W/WitherBoss.hpp"
+#include "game/A/AABB.hpp"
+#include "game/B/Block.hpp"
+#include "game/C/CompoundTag.hpp"
+#include "game/D/DamageSource.hpp"
+#include "game/D/DifficultyInstance.hpp"
+#include "game/E/Entity.hpp"
+#include "game/F/FlyingPathNavigation.hpp"
+#include "game/G/GroundPathNavigation.hpp"
+#include "game/L/L10N.hpp"
+#include "game/L/Level.hpp"
+#include "game/L/LivingEntity.hpp"
+#include "game/M/Mob.hpp"
+#include "game/M/MobEffectInstance.hpp"
+#include "game/M/MobGroupData.hpp"
+#include "game/M/Monster.hpp"
+#include "game/M/Mth.hpp"
+#include "game/S/ServerBossEvent.hpp"
+#include "game/S/SynchedEntityData.hpp"
+#include "_thirdparty/boost.hpp"
+#include "_thirdparty/boost__shared_ptr_Entity_.hpp"
+#include "_thirdparty/boost__shared_ptr_LivingEntity_.hpp"
+#include "_thirdparty/boost__shared_ptr_ServerPlayer_.hpp"
+#include "_thirdparty/std__basic_string_wchar_t__std__char_traits_wchar_t___std__allocator_wchar_t__.hpp"
+#include "functions.hpp"
 
-#include <algorithm>
-#include <cmath>
+namespace recon {
 
-#include "game/client/audio/SoundEvents.hpp"
-#include "game/client/render/ParticleType.hpp"
-#include "game/core/AttributeInstance.hpp"
-#include "game/core/BaseAttributeMap.hpp"
-#include "game/core/BossEvent.hpp"
-#include "game/core/DamageSource.hpp"
-#include "game/core/Difficulty.hpp"
-#include "game/core/DifficultyInstance.hpp"
-#include "game/core/ExperienceOrb.hpp"
-#include "game/core/GameRules.hpp"
-#include "game/core/GenericStats.hpp"
-#include "game/core/L10N.hpp"
-#include "game/core/Mth.hpp"
-#include "game/core/WitherSkull.hpp"
-#include "game/core/WitherTargetHighestDamage.hpp"
-#include "game/data/CompoundTag.hpp"
-#include "game/entity/ai/FloatGoal.hpp"
-#include "game/entity/ai/FlyingPathNavigation.hpp"
-#include "game/entity/ai/GroundPathNavigation.hpp"
-#include "game/entity/ai/HurtByTargetGoal.hpp"
-#include "game/entity/ai/LivingEntitySelector.hpp"
-#include "game/entity/ai/MoveControl.hpp"
-#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
-#include "game/entity/ai/PathNavigation.hpp"
-#include "game/entity/ai/RandomLookAroundGoal.hpp"
-#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
-#include "game/entity/ai/WitherRandomAttackPosGoal.hpp"
-#include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/EntityCategory.hpp"
-#include "game/entity/mob/EntityDamageSource.hpp"
-#include "game/entity/mob/EntityDataSerializers.hpp"
-#include "game/entity/mob/EntityIO.hpp"
-#include "game/entity/mob/ItemEntity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
-#include "game/entity/mob/Mob.hpp"
-#include "game/entity/mob/MobEffectInstance.hpp"
-#include "game/entity/mob/MobGroupData.hpp"
-#include "game/entity/mob/SharedMonsterAttributes.hpp"
-#include "game/entity/mob/SynchedEntityData.hpp"
-#include "game/entity/mob/WitherSkeleton.hpp"
-#include "game/item/Items.hpp"
-#include "game/item/SpawnEggItem.hpp"
-#include "game/server/ServerBossEvent.hpp"
-#include "game/server/ServerPlayer.hpp"
-#include "game/util/AABB.hpp"
-#include "game/util/Random.hpp"
-#include "game/util/ResourceLocation.hpp"
-#include "game/util/Vec3.hpp"
-#include "game/world/Level.hpp"
-#include "game/world/block/Block.hpp"
-#include "game/world/block/BlockPos.hpp"
-#include "game/world/block/BlockState.hpp"
-#include "game/world/block/Blocks.hpp"
-#include "game/world/block/Material.hpp"
-#include "game/world/generation/LookAtPlayerGoal.hpp"
-#include "game/world/generation/Player.hpp"
-
-const EntityDataAccessor<int>* WitherBoss::DATA_TARGET_A = NULL;
-const EntityDataAccessor<int>* WitherBoss::DATA_TARGET_B = NULL;
-const EntityDataAccessor<int>* WitherBoss::DATA_TARGET_C = NULL;
-const EntityDataAccessor<int>* WitherBoss::DATA_TARGETS[3] = { NULL, NULL, NULL };
-const EntityDataAccessor<int>* WitherBoss::DATA_INVULNERABLE_TICKS = NULL;
-const EntityDataAccessor<bool>* WitherBoss::DATA_AERIAL_ATTACK = NULL;
-const EntityDataAccessor<bool>* WitherBoss::DATA_CHARGE_ATTACKING = NULL;
-
-Predicate<boost::shared_ptr<Entity> >* LIVING_ENTITY_SELECTOR = new LivingEntitySelector();
-
-WitherBoss::WitherDoNothingGoal::WitherDoNothingGoal(WitherBoss* wither)
-    : mWither(wither)
+/* {ctor}(Level*) [0x02AACBD0] - LOWERED-DRAFT; not reconstructed; allocating shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+WitherBoss::WitherBoss(gptr<Level> a1)
 {
-    setRequiredControlFlags(7);
+    guest::stub(0x02AACBD0u, gaddr(this), (uint32_t)a1);
 }
-
-WitherBoss::WitherDoNothingGoal::~WitherDoNothingGoal()
+#else
+WitherBoss::WitherBoss(gptr<Level> a1)
 {
+    uint32_t _frame = native_frame_open(80);
+    uint32_t uVar1 = 0;
+    float fVar2 = 0;
+    uint32_t pcVar3 = 0;
+    uint32_t sVar4 = 0;
+    uint32_t uVar5 = 0;
+    uint32_t uVar6 = 0;
+    double dVar7 = 0;
+    double dVar8 = 0;
+    double dVar9 = 0;
+    guest::Monster_ct((uint32_t)(gaddr(this)), (uint32_t)(a1));
+    fVar2 = global_0x102B5164;
+    dVar9 = (double)(global_0x102B1E18);
+    dVar8 = (double)(global_0x102B5164);
+    this->field_0x774 = global_0x102B1E18;
+    ST32((uint32_t)((gaddr(this) + 0x730)), 0x102C422Cu);
+    ST32((uint32_t)((gaddr(this) + 0x734)), 0x102C4254u);
+    this->field_0x738 = 0x28;
+    this->field_0x760 = 1;
+    this->field_0x764 = 0;
+    this->field_0x768 = 0;
+    this->field_0x76c = 0;
+    this->field_0x770 = 0xf;
+    this->field_0x784 = 0;
+    this->field_0x780 = 0;
+    this->field_0x79c = 0;
+    this->field_0x788 = 3;
+    this->field_0x78c = 0x14;
+    this->field_0x778 = fVar2;
+    this->field_0x790 = 0x14;
+    this->field_0x798 = 200;
+    uVar5 = global_0x102B628C;
+    this->field_0x77c = fVar2;
+    ST32((uint32_t)((gaddr(this) + 0x794)), uVar5);
+    uVar5 = global_0x102B728C;
+    this->field_0x7a8 = 0;
+    this->field_0x7c0 = 0;
+    this->field_0x7ec = 0;
+    this->field_0x7a0 = 0;
+    this->field_0x7a4 = 0;
+    this->field_0x7ac = 0;
+    this->field_0x7b0 = 0;
+    this->field_0x7b4 = 0x28;
+    this->field_0x7b8 = 0;
+    this->field_0x7bc = 0x28;
+    this->field_0x7c8 = 0xffffffff;
+    this->field_0x7e0 = 5;
+    ST32((uint32_t)((gaddr(this) + 0x7cc)), uVar5);
+    ST32((uint32_t)((gaddr(this) + 8)), 0x102D5DFCu);
+    ST32((uint32_t)((gaddr(this) + 0x348)), GSTR(L"", 0x102D4FA4));
+    this->defineSynchedData();
+    this->registerAttributes();
+    this->Mob::fjDerivedCtorCalls();
+    ST32((_frame + 28), 7);
+    ST32((_frame + 24), 0);
+    ST16((_frame + 4), 0);
+    sVar4 = ::recon::wcslen((uint32_t)(GSTR(L"", 0x102C0D64)));
+    ((wstring *)gmem(_frame))->assign(GSTR(L"", 0x102C0D64), (uint32_t)(sVar4));
+    uVar5 = guest::ServerBossEvent_ct((uint32_t)(0), (uint32_t)(0xb6a67881), (uint32_t)(_frame), (uint32_t)(5), (uint32_t)(0));
+    uVar5 = ((ServerBossEvent *)gmem(uVar5))->setDarkenScreen((bool)(1));
+    this->field_0x7f0 = uVar5;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    this->field_0x73c = fVar2;
+    ST32((_frame + 24), 0);
+    ST32((_frame + 28), 7);
+    this->field_0x7d0 = 0;
+    this->field_0x7d8 = 0;
+    this->field_0x7d4 = 0;
+    this->field_0x7dc = 0;
+    this->field_0x744 = fVar2;
+    this->field_0x74c = fVar2;
+    this->field_0x754 = fVar2;
+    this->field_0x740 = fVar2;
+    this->field_0x748 = fVar2;
+    this->field_0x750 = fVar2;
+    this->field_0x758 = fVar2;
+    this->field_0x1f5 = 1;
+    ST16((_frame + 4), 0);
+    uVar5 = this->Mob::getNavigation();
+    ((GroundPathNavigation *)gmem(uVar5))->setCanFloat((bool)(1));
+    dVar7 = (double)(global_0x102C0D60);
+    this->field_0x5f4 = 0x32;
+    this->field_0x190 = (this->field_0x190 | 0x4004);
+    this->Entity::setSize((float)(dVar9), (float)(dVar7));
+    this->setAerialAttack((bool)(1));
+    dVar7 = (double)(this->LivingEntity::getMaxHealth());
+    this->field_0x7c4 = (int32_t)(dVar7);
+    this->LivingEntity::setHealth((float)(dVar9));
+    (uint32_t)(guest::indirect(LD32((LD32((uint32_t)((this->field_0x7f0 + 0x54))) + 0x24)), (double)(dVar8)) >> 32);
+    dVar8 = (double)(this->LivingEntity::getMaxHealth());
+    this->field_0x7c8 = (int32_t)(dVar8);
+    dVar8 = (double)(this->LivingEntity::getMaxHealth());
+    uVar1 = (uint32_t)(dVar8);
+    this->field_0x7e4 = (((int32_t)(uVar1) >> 1) + (uint32_t)((((int32_t)(uVar1) < 0) && ((uVar1 & 1) != 0))));
+    dVar8 = (double)(this->LivingEntity::getMaxHealth());
+    pcVar3 = LD32((uint32_t)((LD32((uint32_t)((global_0x104DAC48 + 0x18))) + 0x44)));
+    this->field_0x7e8 = ((int32_t)(dVar8) / 6);
+    uVar6 = (uint32_t)(guest::indirect((uint32_t)(pcVar3)) >> 32);
+    uVar5 = global_0x102B6BB0;
+    this->field_0x75c = uVar6;
+    this->field_0x3f0 = uVar5;
+    native_frame_close(_frame, 80);
 }
+#endif
 
-bool WitherBoss::WitherDoNothingGoal::canUse()
-{
-    return mWither->getInvulnerableTicks() > 0;
-}
-
-std::wstring WitherBoss::WitherDoNothingGoal::getName()
-{
-    return L"WitherDoNothing";
-}
-
-WitherBoss::WitherBoss(Level* level)
-    : Monster(level),
-      mMaxShieldHealth(40),
-      mLastDamageSource(NULL),
-      mPhase(1),
-      mShotDelay(0),
-      mStunTicks(0),
-      mDyingFrames(0),
-      mDeathFlapInterval(15),
-      mOverlayAlpha(1.0f),
-      mSwellAmount(0.0f),
-      mOldSwellAmount(0.0f),
-      mChargeWindupTicks(0),
-      mCharging(false),
-      mAttackCooldown(3),
-      mFirerate(20),
-      mAttackDelay(20),
-      mAttackRange(30.0f),
-      mSpawningFrames(200),
-      mDiving(false),
-      mReloadTicks(0),
-      mChargeDirection(NULL),
-      mWantsToMove(false),
-      mChargeTicks(0),
-      mTargetTrackingTicks(0),
-      mShieldHealth(40),
-      mShotCount(0),
-      mReloadDuration(40),
-      mSkipReload(false),
-      mMaxHealth(0),
-      mLastHealthInterval(-1),
-      mSpawnSpin(10.0f),
-      mDestroyBlocksTick(5),
-      mHalfHealth(0),
-      mHealthInterval(0),
-      mIsPathing(false),
-      mBossEvent(NULL)
-{
-    mXRotHeads[0] = 0.0f;
-    mXRotHeads[1] = 0.0f;
-    mYRotHeads[0] = 0.0f;
-    mYRotHeads[1] = 0.0f;
-    mXRotOHeads[0] = 0.0f;
-    mXRotOHeads[1] = 0.0f;
-    mYRotOHeads[0] = 0.0f;
-    mYRotOHeads[1] = 0.0f;
-    mNextHeadUpdate[0] = 0;
-    mNextHeadUpdate[1] = 0;
-    mIdleHeadUpdates[0] = 0;
-    mIdleHeadUpdates[1] = 0;
-
-    defineSynchedData();
-    registerAttributes();
-    fjDerivedCtorCalls();
-
-    mBossEvent = new ServerBossEvent(0xB6A67881, L"", BossEvent::PURPLE, BossEvent::PROGRESS);
-    mBossEvent->setDarkenScreen(true);
-
-    mFireImmune = true;
-    static_cast<GroundPathNavigation*>(getNavigation())->setCanFloat(true);
-    mExperienceReward = 50;
-    mCategories |= 0x4004;
-    setSize(1.0f, 3.5f);
-    setAerialAttack(true);
-    mMaxHealth = (int)getMaxHealth();
-    setHealth(1.0f);
-    mBossEvent->setPercent(0.0f);
-    mLastHealthInterval = (int)getMaxHealth();
-    mHalfHealth = (int)getMaxHealth() / 2;
-    mHealthInterval = (int)getMaxHealth() / 6;
-    mLastDamageSource = DamageSource::OUT_OF_WORLD->copy();
-    mFlyingSpeed = 0.05f;
-}
-
+/* {dtor}() [0x02A1D840] - LOWERED-DRAFT; not reconstructed; destructor shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
 WitherBoss::~WitherBoss()
 {
-    if (mLastDamageSource != NULL)
-        delete mLastDamageSource;
+    guest::stub(0x02A1D840u, gaddr(this), 0u);
 }
-
-void WitherBoss::create(Level* level)
+#else
+WitherBoss::~WitherBoss()
 {
-    new WitherBoss(level);
+    gptr<DamageSource> source = 0u;
+    source = this->field_0x75c;
+    if ((source != 0))
+    {
+        ST32((uint32_t)((gaddr(this) + 8)), 0x102D5DFCu);
+        source->virt_0xc((uint32_t)(3));
+    }
 }
+#endif
 
-std::wstring WitherBoss::getDisplayName()
+/* create(Level*) [static] [0x023E65F4] - LOWERED-DRAFT; not reconstructed (1 open edges) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::create(gptr<Level> a1)
 {
-    if (hasCustomName())
-        return getCustomName();
-    return L10N::GetString(0xB6A67881);
+    guest::stub(0x023E65F4u, (uint32_t)a1);
 }
-
-void WitherBoss::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
+#else
+void WitherBoss::create(gptr<Level> a1)
 {
-    performRangedAttack(0, target);
+    guest::WitherBoss_ct((uint32_t)(0), (uint32_t)(a1));
+    return;
 }
+#endif
 
-bool WitherBoss::isAggressive()
+/* getDisplayName() [0x02A1D91C] - LOWERED-DRAFT; not reconstructed (3 open edges, 3 raw IR ops, 3 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+gresult<wstring> WitherBoss::getDisplayName()
 {
-    return false;
+    gresult<wstring> result;
+    guest::stub(0x02A1D91Cu, gaddr(this), (uint32_t)result);
+    return result;
 }
-
-void WitherBoss::setAggressive(bool)
+#else
+gresult<wstring> WitherBoss::getDisplayName(int32_t a1)
 {
+    int32_t iVar1 = 0;
+    uint32_t __s = 0;
+    uint32_t sVar2 = 0;
+    iVar1 = this->virt_hasCustomName();
+    if ((iVar1 != 0))
+    {
+        this->virt_getCustomName((uint32_t)(a1));
+        return;
+    }
+    __s = (uint32_t)(L10N::GetString((int32_t)(0xb6a67881)));
+    if (((a1 != 0) || (a1 = guest::guest_new((uint32_t)(0x20)), (a1 != 0))))
+    {
+        ST32((uint32_t)((a1 + 0x18)), 0);
+        ST16((uint32_t)((a1 + 4)), 0);
+        ST32((uint32_t)((a1 + 0x1c)), 7);
+        sVar2 = ::recon::wcslen(__s);
+        ((wstring *)gmem(a1))->assign(__s, (uint32_t)(sVar2));
+    }
+    return;
 }
+#endif
 
-bool WitherBoss::canDestroy(Block* block)
+/* performRangedAttack(boost::shared_ptr<LivingEntity>, float) [0x02A1DA44] - LOWERED-DRAFT; not reconstructed (3 open edges, 25 raw IR ops, 7 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint64_t WitherBoss::performRangedAttack(uint32_t a1)
 {
-    return block != Blocks::bedrock
-        && block != Blocks::end_portal
-        && block != Blocks::end_portal_frame
-        && block != Blocks::command_block
-        && block != Blocks::BARRIER
-        && block != Blocks::STRUCTURE_BLOCK
-        && block != Blocks::structure_void
-        && block != Blocks::piston_extension
-        && block != Blocks::end_gateway;
+    return (uint64_t)guest::stub(0x02A1DA44u, gaddr(this), (uint32_t)a1);
 }
-
-void WitherBoss::addDataWalkers(DataFixerUpper* fixer)
+#else
+uint64_t WitherBoss::performRangedAttack(uint32_t a1)
 {
-    Mob::addDataWalkers(fixer, 0x000000005D540047ULL);
+    uint32_t _frame = native_frame_open(8);
+    uint8_t bVar1 = 0;
+    int32_t iVar2 = 0;
+    uint32_t piVar3 = 0;
+    int32_t iVar4 = 0;
+    uint32_t piVar5 = 0;
+    uint8_t bVar6 = 0;
+    iVar4 = this->field_0x348;
+    ST32(_frame, gelem<uint32_t>((uint32_t)(a1), 0));
+    ST32((_frame + 4), (uint32_t)(gelem<uint32_t>((uint32_t)(a1) + 1u, 0)));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    while (!(bVar1))
+    {
+        if (('\x01' != '\0'))
+        {
+            iVar2 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), (LD32(LD32((_frame + 4))) + 1)), 1);
+            ST32(LD32((_frame + 4)), iVar2);
+            bVar1 = 1;
+        }
+    }
+    (uint32_t)(guest::indirect(LD32((iVar4 + 0xe1c)), (uint32_t)(gaddr(this)), (uint32_t)(0), (uint32_t)(_frame)) >> 32);
+    piVar3 = LD32((_frame + 4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    if (!(bVar1))
+    {
+        ((void)0 /* sync dropped */);
+        do
+        {
+            iVar4 = (LD32(LD32((_frame + 4))) + -(1));
+            if (('\x01' != '\0'))
+            {
+                iVar2 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar4), 1);
+                ST32(LD32((_frame + 4)), iVar2);
+                bVar1 = 1;
+            }
+        }
+        while (!(bVar1));
+        ((void)0 /* instructionSynchronize dropped */);
+        bVar6 = ((iVar4 == 0) << 1);
+        if ((iVar4 == 0))
+        {
+            (uint32_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))) >> 32);
+            piVar5 = (piVar3 + (1) * 4);
+            ((void)0 /* sync dropped */);
+            do
+            {
+                iVar4 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                if (('\x01' != '\0'))
+                {
+                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar4 + -(1))), 1);
+                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
+                    bVar6 = 2;
+                }
+            }
+            while (!((uint8_t)(((bVar6 >> 1) & 1))));
+            ((void)0 /* instructionSynchronize dropped */);
+            if (((iVar4 + -(1)) == 0))
+            {
+                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar3) + 2u, 0) + 0x1c)), (uint32_t)(piVar3)) >> 32);
+            }
+        }
+    }
+    { uint64_t t1 = ((uint64_t)(uint32_t)(gaddr(this)) << 32);
+    native_frame_close(_frame, 8);
+    return t1; }
+    native_frame_close(_frame, 8);
 }
+#endif
 
-void WitherBoss::staticCtor()
+/* isAggressive() [0x02A1DB48] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A1DB48
+uint32_t WitherBoss::isAggressive()
 {
-    DATA_TARGET_A = SynchedEntityData::defineId<int>(0x000000005D540047ULL, 0x000000004D540000ULL, EntityDataSerializers::INT);
-    DATA_TARGET_B = SynchedEntityData::defineId<int>(0x000000005D540047ULL, 0x000000004D540000ULL, EntityDataSerializers::INT);
-    DATA_TARGET_C = SynchedEntityData::defineId<int>(0x000000005D540047ULL, 0x000000004D540000ULL, EntityDataSerializers::INT);
-    DATA_TARGETS[0] = DATA_TARGET_A;
-    DATA_TARGETS[1] = DATA_TARGET_B;
-    DATA_TARGETS[2] = DATA_TARGET_C;
-    DATA_INVULNERABLE_TICKS = SynchedEntityData::defineId<int>(0x000000005D540047ULL, 0x000000004D540000ULL, EntityDataSerializers::INT);
-    DATA_AERIAL_ATTACK = SynchedEntityData::defineId<bool>(0x000000005D540047ULL, 0x000000004D540000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_CHARGE_ATTACKING = SynchedEntityData::defineId<bool>(0x000000005D540047ULL, 0x000000004D540000ULL, EntityDataSerializers::BOOLEAN);
+    return 0;
+}
+#else
+uint32_t WitherBoss::isAggressive()
+{
+    return (uint32_t)(guest::stub(0x02A1DB48u, gaddr(this)) >> 32);
+}
+#endif
+
+/* setAggressive(bool) [0x02A1DB64] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A1DB64
+void WitherBoss::setAggressive(bool a1)
+{
+    return;
+}
+#else
+void WitherBoss::setAggressive(bool a1)
+{
+    guest::stub(0x02A1DB64u, gaddr(this), (uint32_t)a1);
+}
+#endif
+
+/* canDestroy(Block*) [static] [0x02AA2B30] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AA2B30
+uint32_t WitherBoss::canDestroy(gptr<Block> a1)
+{
+    uint32_t uVar1 = 0;
+    uVar1 = 0;
+    if (((((((a1 != global_0x104C190C) && (a1 != global_0x104C1B10)) && (a1 != global_0x104C1B14)) && ((a1 != global_0x104C1B58) && (a1 != global_0x104C1BB8))) && ((a1 != global_0x104C1CE8) && ((a1 != global_0x104C1C58) && (a1 != global_0x104C1988)))) && (a1 != global_0x104C1C38)))
+    {
+        uVar1 = 1;
+    }
+    return uVar1;
+}
+#else
+uint32_t WitherBoss::canDestroy(gptr<Block> a1)
+{
+    return (uint32_t)(guest::stub(0x02AA2B30u, (uint32_t)a1) >> 32);
+}
+#endif
+
+/* addDataWalkers(DataFixerUpper*) [static] [0x02AABFF0] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AABFF0
+void WitherBoss::addDataWalkers(uint32_t a1, uint32_t a2)
+{
+    Mob::addDataWalkers((a1), (a2), 0, 0x5d540047);
+    return;
+}
+#else
+void WitherBoss::addDataWalkers(uint32_t a1, uint32_t a2)
+{
+    guest::stub(0x02AABFF0u, (uint32_t)a1, (uint32_t)a2);
+}
+#endif
+
+/* staticCtor() [static] [0x02AAC00C] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::staticCtor()
+{
+    return (uint64_t)guest::stub(0x02AAC00Cu);
 }
 
+/* defineSynchedData() [0x02AAC5CC] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AAC5CC
 void WitherBoss::defineSynchedData()
 {
-    Mob::defineSynchedData();
-    mEntityData->createDateItem(DATA_TARGET_A, getId());
-    mEntityData->createDateItem(DATA_TARGET_B, getId());
-    mEntityData->createDateItem(DATA_TARGET_C, getId());
-    mEntityData->createDateItem(DATA_INVULNERABLE_TICKS, 0);
-    mEntityData->createDateItem(DATA_AERIAL_ATTACK, false);
-    mEntityData->createDateItem(DATA_CHARGE_ATTACKING, false);
+    uint32_t uVar1 = 0;
+    uint32_t uVar2 = 0;
+    int32_t iVar3 = 0;
+    this->Mob::defineSynchedData();
+    iVar3 = this->field_0x1f8;
+    if ((iVar3 == 0))
+    {
+        iVar3 = this->field_0x1f8;
+    }
+    uVar1 = global_0x104C522C;
+    uVar2 = this->Entity::getId();
+    ((SynchedEntityData *)gmem(iVar3))->createDateItem__tm__2_i(uVar1, (uVar2));
+    iVar3 = this->field_0x1f8;
+    if ((iVar3 == 0))
+    {
+        iVar3 = this->field_0x1f8;
+    }
+    uVar1 = global_0x104C5230;
+    uVar2 = this->Entity::getId();
+    ((SynchedEntityData *)gmem(iVar3))->createDateItem__tm__2_i(uVar1, (uVar2));
+    iVar3 = this->field_0x1f8;
+    if ((iVar3 == 0))
+    {
+        iVar3 = this->field_0x1f8;
+    }
+    uVar1 = global_0x104C5234;
+    uVar2 = this->Entity::getId();
+    ((SynchedEntityData *)gmem(iVar3))->createDateItem__tm__2_i(uVar1, (uVar2));
+    iVar3 = this->field_0x1f8;
+    if ((iVar3 == 0))
+    {
+        iVar3 = this->field_0x1f8;
+    }
+    ((SynchedEntityData *)gmem(iVar3))->createDateItem__tm__2_i(global_0x104C5238, 0);
+    iVar3 = this->field_0x1f8;
+    if ((iVar3 == 0))
+    {
+        iVar3 = this->field_0x1f8;
+    }
+    ((SynchedEntityData *)gmem(iVar3))->createDateItem__tm__2_b(global_0x104C523C, 0);
+    iVar3 = this->field_0x1f8;
+    if ((iVar3 == 0))
+    {
+        iVar3 = this->field_0x1f8;
+    }
+    ((SynchedEntityData *)gmem(iVar3))->createDateItem__tm__2_b(global_0x104C5240, 0);
+    return;
 }
+#else
+void WitherBoss::defineSynchedData()
+{
+    guest::stub(0x02AAC5CCu, gaddr(this));
+}
+#endif
 
+/* registerAttributes() [0x02AAC838] - LOWERED-DRAFT; not reconstructed (11 open edges, 12 raw IR ops, 6 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
 void WitherBoss::registerAttributes()
 {
-    Monster::registerAttributes();
-    getAttributes()->registerAttribute(SharedMonsterAttributes::FLYING_SPEED);
-    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(600.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.6000000238418579);
-    if (mLevel->getDifficulty() == Difficulty::EASY)
+    guest::stub(0x02AAC838u, gaddr(this));
+}
+#else
+void WitherBoss::registerAttributes()
+{
+    uint32_t _frame = native_frame_open(32);
+    int32_t iVar1 = 0;
+    uint32_t piVar2 = 0;
+    uint32_t uVar3 = 0;
+    uint32_t pcVar4 = 0;
+    double dVar5 = 0;
+    double dVar6 = 0;
+    guest::Monster_registerAttributes(gaddr(this));
+    iVar1 = this->virt_getAttributes();
+    (uint32_t)(guest::indirect(LD32((LD32((uint32_t)((iVar1 + 0x24))) + 0x24)), (uint32_t)(iVar1), (uint32_t)(global_0x104EFE20)) >> 32);
+    piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE10)));
+    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102C0C88)) >> 32);
+    piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE1C)));
+    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102C0C90)) >> 32);
+    iVar1 = (uint32_t)((this->field_0xf8->getDifficulty()) >> 32);
+    if ((iVar1 == global_0x104DCB24))
     {
-        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue((float)(getMaxHealth() * 0.5f));
-        mMaxShieldHealth /= 2;
+        piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE10)));
+        pcVar4 = LD32((uint32_t)((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)));
+        dVar5 = (double)(this->virt_getMaxHealth());
+        (uint32_t)(guest::indirect((uint32_t)(pcVar4), (double)((double)((float)((dVar5 * (double)(global_0x102B435C))))), (uint32_t)(piVar2)) >> 32);
+        uVar3 = this->field_0x738;
+        pcVar4 = LD32((uint32_t)((this->field_0x348 + 0xa24)));
+        this->field_0x738 = (((int32_t)(uVar3) >> 1) + (uint32_t)((((int32_t)(uVar3) < 0) && ((uVar3 & 1) != 0))));
+        piVar2 = (uint32_t)((uint32_t)(guest::indirect((uint32_t)(pcVar4), (uint32_t)(gaddr(this)), (uint32_t)(global_0x104EFE14)) >> 32));
+        (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102C0C98)) >> 32);
+        piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE2C)));
+        (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102B77A8)) >> 32);
     }
-    else if (mLevel->getDifficulty() == Difficulty::NORMAL)
-    {
-        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue((float)(getMaxHealth() * 0.75f));
-        mMaxShieldHealth = (int)((float)mMaxShieldHealth * 0.75f);
-    }
-    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(70.0);
-    getAttribute(SharedMonsterAttributes::ARMOR)->setBaseValue(4.0);
-}
-
-void WitherBoss::setAerialAttack(bool aerialAttack)
-{
-    mEntityData->set(DATA_AERIAL_ATTACK, aerialAttack, true);
-}
-
-void WitherBoss::setCustomName(const std::wstring& name, const std::wstring& displayName, bool visible)
-{
-    Entity::setCustomName(name, displayName, visible);
-    mBossEvent->setName(getDisplayName());
-}
-
-bool WitherBoss::getAerialAttack() const
-{
-    return mEntityData->get(DATA_AERIAL_ATTACK);
-}
-
-void WitherBoss::addAdditonalSaveData(CompoundTag* tag)
-{
-    Mob::addAdditonalSaveData(tag);
-    tag->putBoolean(L"AirAttack", getAerialAttack());
-    tag->putInt(L"ShieldHealth", mShieldHealth);
-    tag->putInt(L"Phase", mPhase);
-    tag->putInt(L"SpawningFrames", mSpawningFrames);
-    tag->putInt(L"maxHealth", mMaxHealth);
-    tag->putInt(L"lastHealthInterval", mLastHealthInterval);
-    tag->putInt(L"dyingFrames", mDyingFrames);
-    tag->putFloat(L"overlayAlpha", mOverlayAlpha);
-    tag->putFloat(L"swellAmount", mSwellAmount);
-    tag->putFloat(L"oldSwellAmount", mOldSwellAmount);
-    tag->putInt(L"firerate", mFirerate);
-}
-
-int WitherBoss::getInvulnerableTicks()
-{
-    return mEntityData->get(DATA_INVULNERABLE_TICKS);
-}
-
-void WitherBoss::setInvulnerableTicks(int ticks)
-{
-    mEntityData->set(DATA_INVULNERABLE_TICKS, ticks, true);
-}
-
-void WitherBoss::readAdditionalSaveData(CompoundTag* tag)
-{
-    Mob::readAdditionalSaveData(tag);
-    setInvulnerableTicks(tag->getInt(L"Invul"));
-    if (hasCustomName())
-        mBossEvent->setName(getDisplayName());
-
-    bool recomputeThresholds = true;
-    if (tag->contains(L"Phase"))
-    {
-        mPhase = tag->getInt(L"Phase");
-        recomputeThresholds = false;
-    }
-    if (tag->contains(L"AirAttack"))
-        setAerialAttack(tag->getBoolean(L"AirAttack"));
-    if (tag->contains(L"ShieldHealth"))
-        mShieldHealth = tag->getInt(L"ShieldHealth");
-    if (tag->contains(L"maxHealth"))
-        mMaxHealth = tag->getInt(L"maxHealth");
-    if (tag->contains(L"lastHealthInterval"))
-        mLastHealthInterval = tag->getInt(L"lastHealthInterval");
-    if (tag->contains(L"dyingFrames"))
-        mDyingFrames = tag->getInt(L"dyingFrames");
-    if (tag->contains(L"swellAmount"))
-        mSwellAmount = tag->getFloat(L"swellAmount");
-    if (tag->contains(L"oldSwellAmount"))
-        mOldSwellAmount = tag->getFloat(L"oldSwellAmount");
-    if (tag->contains(L"firerate"))
-        mFirerate = tag->getInt(L"firerate");
-    if (tag->contains(L"SpawningFrames"))
-        mSpawningFrames = tag->getInt(L"SpawningFrames");
-    else if (getInvulnerableTicks() <= 0)
-        mSpawningFrames = 0;
-    if (tag->contains(L"overlayAlpha"))
-        mOverlayAlpha = tag->getFloat(L"overlayAlpha");
     else
-        mOverlayAlpha = mSpawningFrames < 1 ? 0.0f : 1.0f;
-
-    if (recomputeThresholds)
     {
-        int maxHealth = (int)getMaxHealth();
-        int health = (int)getHealth();
-        mLastHealthInterval = health;
-        mHalfHealth = maxHealth / 2;
-        mHealthInterval = maxHealth / 6;
-        if (health <= mHalfHealth)
-            mPhase = 0;
+        iVar1 = (uint32_t)((this->field_0xf8->getDifficulty()) >> 32);
+        if ((iVar1 == global_0x104DCB28))
+        {
+            piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE10)));
+            dVar6 = (double)(global_0x102B1E14);
+            pcVar4 = LD32((uint32_t)((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)));
+            dVar5 = (double)(this->virt_getMaxHealth());
+            (uint32_t)(guest::indirect((uint32_t)(pcVar4), (double)((double)((float)((dVar5 * dVar6)))), (uint32_t)(piVar2)) >> 32);
+            this->field_0x738 = (int32_t)(((double)((float)(((double)(int32_t)(this->field_0x738)))) * dVar6));
+        }
+        piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE14)));
+        (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102C0C98)) >> 32);
+        piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE2C)));
+        (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102B77A8)) >> 32);
     }
+    native_frame_close(_frame, 32);
+    return;
+    native_frame_close(_frame, 32);
 }
+#endif
 
-void WitherBoss::readAdditionContructionTag(CompoundTag* tag)
+/* setAerialAttack(bool) [0x02AACB40] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AACB40
+void WitherBoss::setAerialAttack(bool a1)
 {
-    setAerialAttack(tag->getBoolean(L"AirAttack"));
-    mShieldHealth = tag->getInt(L"ShieldHealth");
-    mPhase = tag->getInt(L"Phase");
-    mSpawningFrames = tag->getInt(L"SpawningFrames");
-    mMaxHealth = tag->getInt(L"maxHealth");
-    mLastHealthInterval = tag->getInt(L"lastHealthInterval");
-    mDyingFrames = tag->getInt(L"dyingFrames");
-    mOverlayAlpha = tag->getFloat(L"overlayAlpha");
-    mSwellAmount = tag->getFloat(L"swellAmount");
-    mOldSwellAmount = tag->getFloat(L"oldSwellAmount");
-    mFirerate = tag->getInt(L"firerate");
+    int32_t iVar1 = 0;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
+    {
+        iVar1 = this->field_0x1f8;
+    }
+    ((SynchedEntityData *)gmem(iVar1))->set__tm__2_b(global_0x104C523C, (a1), 1);
+    return;
 }
-
-CompoundTag* WitherBoss::getAdditionContructionTag()
+#else
+void WitherBoss::setAerialAttack(bool a1)
 {
-    CompoundTag* tag = Entity::getAdditionContructionTag();
-    if (tag == NULL)
-        tag = new CompoundTag();
-
-    tag->putBoolean(L"AirAttack", getAerialAttack());
-    tag->putInt(L"ShieldHealth", mShieldHealth);
-    tag->putInt(L"Phase", mPhase);
-    tag->putInt(L"SpawningFrames", mSpawningFrames);
-    tag->putInt(L"maxHealth", mMaxHealth);
-    tag->putInt(L"lastHealthInterval", mLastHealthInterval);
-    tag->putInt(L"dyingFrames", mDyingFrames);
-    tag->putFloat(L"overlayAlpha", mOverlayAlpha);
-    tag->putFloat(L"swellAmount", mSwellAmount);
-    tag->putFloat(L"oldSwellAmount", mOldSwellAmount);
-    tag->putInt(L"firerate", mFirerate);
-    return tag;
+    guest::stub(0x02AACB40u, gaddr(this), (uint32_t)a1);
 }
+#endif
 
-int WitherBoss::getAlternativeTarget(int head)
+/* setCustomName(const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&, const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&, bool) [0x02AAD018] - LOWERED-DRAFT; not reconstructed (2 open edges, 5 raw IR ops, 2 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::setCustomName(gptr<wstring> a1, gptr<wstring> a2, bool a3)
 {
-    return mEntityData->get(DATA_TARGETS[head]);
+    guest::stub(0x02AAD018u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3);
+}
+#else
+void WitherBoss::setCustomName(gptr<wstring> a1, gptr<wstring> a2, bool a3)
+{
+    uint32_t _frame = native_frame_open(32);
+    int32_t iVar1 = 0;
+    guest::Entity_setCustomName(gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3);
+    iVar1 = LD32((uint32_t)((this->field_0x7f0 + 0x54)));
+    this->virt_getDisplayName((int32_t)(_frame));
+    (uint32_t)(guest::indirect(LD32((iVar1 + 0x14)), (uint32_t)(this->field_0x7f0), (uint32_t)(_frame)) >> 32);
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    native_frame_close(_frame, 32);
+    return;
+    native_frame_close(_frame, 32);
+}
+#endif
+
+/* getAerialAttack() const [0x02AAD0AC] - LOWERED-DRAFT; not reconstructed (4 raw IR ops, 3 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint8_t WitherBoss::getAerialAttack()
+{
+    return (uint8_t)(guest::stub(0x02AAD0ACu, gaddr(this)) >> 32);
+}
+#else
+uint8_t WitherBoss::getAerialAttack()
+{
+    int32_t iVar1 = 0;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
+    {
+        iVar1 = this->field_0x1f8;
+    }
+    return LD8((uint32_t)((LD32((uint32_t)(((iVar1 + (LD32(LD32(0x104C523Cu)) * 4)) + 4))) + 0xc)));
+}
+#endif
+
+/* addAdditonalSaveData(CompoundTag*) [0x02AAD12C] - boundary stub; body not reconstructed */
+void WitherBoss::addAdditonalSaveData(gptr<CompoundTag> a1)
+{
+    guest::stub(0x02AAD12Cu, gaddr(this), (uint32_t)a1);
 }
 
+/* getInvulnerableTicks() [0x02AAD740] - LOWERED-DRAFT; not reconstructed (4 raw IR ops, 3 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint32_t WitherBoss::getInvulnerableTicks()
+{
+    return (uint32_t)(guest::stub(0x02AAD740u, gaddr(this)) >> 32);
+}
+#else
+uint32_t WitherBoss::getInvulnerableTicks()
+{
+    int32_t iVar1 = 0;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
+    {
+        iVar1 = this->field_0x1f8;
+    }
+    return LD32((uint32_t)((LD32((uint32_t)(((iVar1 + (LD32(LD32(0x104C5238u)) * 4)) + 4))) + 0xc)));
+}
+#endif
+
+/* setInvulnerableTicks(int) [0x02AAD7C0] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AAD7C0
+void WitherBoss::setInvulnerableTicks(int32_t a1)
+{
+    int32_t iVar1 = 0;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
+    {
+        iVar1 = this->field_0x1f8;
+    }
+    ((SynchedEntityData *)gmem(iVar1))->set__tm__2_i(global_0x104C5238, (a1), 1);
+    return;
+}
+#else
+void WitherBoss::setInvulnerableTicks(int32_t a1)
+{
+    guest::stub(0x02AAD7C0u, gaddr(this), (uint32_t)a1);
+}
+#endif
+
+/* readAdditionalSaveData(CompoundTag*) [0x02AAD850] - LOWERED-DRAFT; not reconstructed (48 open edges, 190 raw IR ops, 4 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::readAdditionalSaveData(gptr<CompoundTag> a1)
+{
+    guest::stub(0x02AAD850u, gaddr(this), (uint32_t)a1);
+}
+#else
+void WitherBoss::readAdditionalSaveData(gptr<CompoundTag> a1)
+{
+    uint32_t _frame = native_frame_open(424);
+    uint8_t bVar1 = 0;
+    uint32_t sVar2 = 0;
+    uint32_t uVar3 = 0;
+    int32_t iVar4 = 0;
+    uint32_t uVar5 = 0;
+    double dVar6 = 0;
+    guest::Mob_readAdditionalSaveData(gaddr(this), (uint32_t)a1);
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("Invul", 0x102C10F0));
+    ((wstring *)gmem(_frame))->assign(GSTR("Invul", 0x102C10F0), (uint32_t)(sVar2));
+    uVar3 = a1->getInt((gptr<wstring>)(_frame));
+    this->setInvulnerableTicks((int32_t)(uVar3));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    iVar4 = this->virt_hasCustomName();
+    if ((iVar4 != 0))
+    {
+        iVar4 = LD32((uint32_t)((this->field_0x7f0 + 0x54)));
+        this->virt_getDisplayName((int32_t)((_frame + 360)));
+        (uint32_t)(guest::indirect(LD32((iVar4 + 0x14)), (uint32_t)(this->field_0x7f0), (uint32_t)((_frame + 360))) >> 32);
+        if ((7 < LD32((_frame + 388))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 380))));
+        }
+        ST32((_frame + 384), 0);
+        ST16((_frame + 364), 0);
+        ST32((_frame + 388), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    bVar1 = 1;
+    sVar2 = ::recon::wcslen(GSTR("Phase", 0x102C10FC));
+    ((wstring *)gmem(_frame))->assign(GSTR("Phase", 0x102C10FC), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 24), 0);
+        ST32((_frame + 64), 0);
+        ST16((_frame + 44), 0);
+        ST32((_frame + 68), 7);
+        sVar2 = ::recon::wcslen(GSTR("Phase", 0x102C10FC));
+        ((wstring *)gmem((_frame + 40)))->assign(GSTR("Phase", 0x102C10FC), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 40)));
+        this->field_0x760 = uVar3;
+        if ((7 < LD32((_frame + 68))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 60))));
+        }
+        ST32((_frame + 64), 0);
+        ST32((_frame + 68), 7);
+        bVar1 = 0;
+        ST16((_frame + 44), 0);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("AirAttack", 0x102C1108));
+    ((wstring *)gmem(_frame))->assign(GSTR("AirAttack", 0x102C1108), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 96), 0);
+        ST16((_frame + 76), 0);
+        ST32((_frame + 100), 7);
+        sVar2 = ::recon::wcslen(GSTR("AirAttack", 0x102C1108));
+        ((wstring *)gmem((_frame + 72)))->assign(GSTR("AirAttack", 0x102C1108), (uint32_t)(sVar2));
+        uVar3 = a1->getBoolean((gptr<wstring>)((_frame + 72)));
+        this->setAerialAttack((bool)(uVar3));
+        if ((7 < LD32((_frame + 100))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 92))));
+        }
+        ST32((_frame + 96), 0);
+        ST16((_frame + 76), 0);
+        ST32((_frame + 100), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("ShieldHealth", 0x102C1130));
+    ((wstring *)gmem(_frame))->assign(GSTR("ShieldHealth", 0x102C1130), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 24), 0);
+        ST32((_frame + 132), 7);
+        ST32((_frame + 128), 0);
+        ST16((_frame + 108), 0);
+        sVar2 = ::recon::wcslen(GSTR("ShieldHealth", 0x102C1130));
+        ((wstring *)gmem((_frame + 104)))->assign(GSTR("ShieldHealth", 0x102C1130), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 104)));
+        this->field_0x7b4 = uVar3;
+        if ((7 < LD32((_frame + 132))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 124))));
+        }
+        ST32((_frame + 128), 0);
+        ST16((_frame + 108), 0);
+        ST32((_frame + 132), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("maxHealth", 0x102C111C));
+    ((wstring *)gmem(_frame))->assign(GSTR("maxHealth", 0x102C111C), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 160), 0);
+        ST16((_frame + 140), 0);
+        ST32((_frame + 164), 7);
+        sVar2 = ::recon::wcslen(GSTR("maxHealth", 0x102C111C));
+        ((wstring *)gmem((_frame + 136)))->assign(GSTR("maxHealth", 0x102C111C), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 136)));
+        this->field_0x7c4 = uVar3;
+        if ((7 < LD32((_frame + 164))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 156))));
+        }
+        ST32((_frame + 160), 0);
+        ST16((_frame + 140), 0);
+        ST32((_frame + 164), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("lastHealthInterval", 0x102C114C));
+    ((wstring *)gmem(_frame))->assign(GSTR("lastHealthInterval", 0x102C114C), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 192), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 196), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 172), 0);
+        sVar2 = ::recon::wcslen(GSTR("lastHealthInterval", 0x102C114C));
+        ((wstring *)gmem((_frame + 168)))->assign(GSTR("lastHealthInterval", 0x102C114C), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 168)));
+        this->field_0x7c8 = uVar3;
+        if ((7 < LD32((_frame + 196))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 188))));
+        }
+        ST32((_frame + 192), 0);
+        ST16((_frame + 172), 0);
+        ST32((_frame + 196), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("dyingFrames", 0x102C10C0));
+    ((wstring *)gmem(_frame))->assign(GSTR("dyingFrames", 0x102C10C0), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 224), 0);
+        ST16((_frame + 204), 0);
+        ST32((_frame + 228), 7);
+        sVar2 = ::recon::wcslen(GSTR("dyingFrames", 0x102C10C0));
+        ((wstring *)gmem((_frame + 200)))->assign(GSTR("dyingFrames", 0x102C10C0), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 200)));
+        this->field_0x76c = uVar3;
+        if ((7 < LD32((_frame + 228))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 220))));
+        }
+        ST32((_frame + 224), 0);
+        ST16((_frame + 204), 0);
+        ST32((_frame + 228), 7);
+    }
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    ST32((_frame + 28), 7);
+    sVar2 = ::recon::wcslen(GSTR("swellAmount", 0x102C10D8));
+    ((wstring *)gmem(_frame))->assign(GSTR("swellAmount", 0x102C10D8), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 256), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 260), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 236), 0);
+        sVar2 = ::recon::wcslen(GSTR("swellAmount", 0x102C10D8));
+        ((wstring *)gmem((_frame + 232)))->assign(GSTR("swellAmount", 0x102C10D8), (uint32_t)(sVar2));
+        dVar6 = (double)(a1->getFloat((gptr<wstring>)((_frame + 232))));
+        this->field_0x778 = (float)(dVar6);
+        if ((7 < LD32((_frame + 260))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 252))));
+        }
+        ST32((_frame + 256), 0);
+        ST16((_frame + 236), 0);
+        ST32((_frame + 260), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("oldSwellAmount", 0x102C1174));
+    ((wstring *)gmem(_frame))->assign(GSTR("oldSwellAmount", 0x102C1174), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 292), 7);
+        ST32((_frame + 288), 0);
+        ST16((_frame + 268), 0);
+        sVar2 = ::recon::wcslen(GSTR("oldSwellAmount", 0x102C1174));
+        ((wstring *)gmem((_frame + 264)))->assign(GSTR("oldSwellAmount", 0x102C1174), (uint32_t)(sVar2));
+        dVar6 = (double)(a1->getFloat((gptr<wstring>)((_frame + 264))));
+        this->field_0x77c = (float)(dVar6);
+        if ((7 < LD32((_frame + 292))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 284))));
+        }
+        ST32((_frame + 288), 0);
+        ST16((_frame + 268), 0);
+        ST32((_frame + 292), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("firerate", 0x102C1194));
+    ((wstring *)gmem(_frame))->assign(GSTR("firerate", 0x102C1194), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 24), 0);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 28), 7);
+    if ((iVar4 != 0))
+    {
+        ST32((_frame + 324), 7);
+        ST16((_frame + 300), 0);
+        ST32((_frame + 320), 0);
+        sVar2 = ::recon::wcslen(GSTR("firerate", 0x102C1194));
+        ((wstring *)gmem((_frame + 296)))->assign(GSTR("firerate", 0x102C1194), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 296)));
+        this->field_0x78c = uVar3;
+        if ((7 < LD32((_frame + 324))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 316))));
+        }
+        ST32((_frame + 320), 0);
+        ST16((_frame + 300), 0);
+        ST32((_frame + 324), 7);
+    }
+    uVar5 = this->getInvulnerableTicks();
+    ST16((_frame + 4), 0);
+    ST32((_frame + 28), 7);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("SpawningFrames", 0x102C11A8));
+    ((wstring *)gmem(_frame))->assign(GSTR("SpawningFrames", 0x102C11A8), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    if ((iVar4 == 0))
+    {
+        if (((int32_t)((uVar5 | (uVar5 - 1))) < 0))
+        {
+            this->field_0x798 = 0;
+        }
+    }
+    else
+    {
+        ST32((_frame + 28), 7);
+        ST32((_frame + 352), 0);
+        ST16((_frame + 4), 0);
+        ST32((_frame + 356), 7);
+        ST32((_frame + 24), 0);
+        ST16((_frame + 332), 0);
+        sVar2 = ::recon::wcslen(GSTR("SpawningFrames", 0x102C11A8));
+        ((wstring *)gmem((_frame + 328)))->assign(GSTR("SpawningFrames", 0x102C11A8), (uint32_t)(sVar2));
+        uVar3 = a1->getInt((gptr<wstring>)((_frame + 328)));
+        this->field_0x798 = uVar3;
+        if ((7 < LD32((_frame + 356))))
+        {
+            ::recon::guest_delete((int32_t)(LD32((_frame + 348))));
+        }
+        ST32((_frame + 352), 0);
+        ST16((_frame + 332), 0);
+        ST32((_frame + 356), 7);
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar2 = ::recon::wcslen(GSTR("overlayAlpha", 0x102C11C8));
+    ((wstring *)gmem(_frame))->assign(GSTR("overlayAlpha", 0x102C11C8), (uint32_t)(sVar2));
+    iVar4 = a1->contains((gptr<wstring>)(_frame));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 24), 0);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 28), 7);
+    if ((iVar4 == 0))
+    {
+        if ((this->field_0x798 < 1))
+        {
+            ST32((uint32_t)((gaddr(this) + 0x774)), global_0x102B5164);
+        }
+        else
+        {
+            ST32((uint32_t)((gaddr(this) + 0x774)), global_0x102B1E18);
+        }
+    }
+    else
+    {
+        ST32((_frame + 416), 0);
+        ST16((_frame + 396), 0);
+        ST32((_frame + 420), 7);
+        sVar2 = ::recon::wcslen(GSTR("overlayAlpha", 0x102C11C8));
+        ((wstring *)gmem((_frame + 392)))->assign(GSTR("overlayAlpha", 0x102C11C8), (uint32_t)(sVar2));
+        dVar6 = (double)(a1->getFloat((gptr<wstring>)((_frame + 392))));
+        this->field_0x774 = (float)(dVar6);
+        ((wstring *)gmem((_frame + 392)))->_Tidy((bool)(1), (uint32_t)(0));
+    }
+    if (bVar1)
+    {
+        dVar6 = (double)(this->virt_getMaxHealth());
+        uVar5 = (uint32_t)(dVar6);
+        ST32((_frame + 32), uVar5);
+        dVar6 = (double)(this->virt_getHealth());
+        this->field_0x7c8 = (int32_t)(dVar6);
+        iVar4 = (((int32_t)(uVar5) >> 1) + (uint32_t)((((int32_t)(uVar5) < 0) && ((uVar5 & 1) != 0))));
+        this->field_0x7e4 = iVar4;
+        this->field_0x7e8 = ((int32_t)(uVar5) / 6);
+        if (((int32_t)(dVar6) <= iVar4))
+        {
+            this->field_0x760 = 0;
+        }
+    }
+    native_frame_close(_frame, 424);
+    return;
+    native_frame_close(_frame, 424);
+}
+#endif
+
+/* readAdditionContructionTag(CompoundTag*) [0x02AAE814] - LOWERED-DRAFT; not reconstructed (22 open edges, 56 raw IR ops, 1 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::readAdditionContructionTag(gptr<CompoundTag> a1)
+{
+    guest::stub(0x02AAE814u, gaddr(this), (uint32_t)a1);
+}
+#else
+void WitherBoss::readAdditionContructionTag(gptr<CompoundTag> a1)
+{
+    uint32_t _frame = native_frame_open(32);
+    uint32_t sVar1 = 0;
+    uint32_t uVar2 = 0;
+    double dVar3 = 0;
+    ST32((_frame + 24), 0);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 28), 7);
+    sVar1 = ::recon::wcslen(GSTR("AirAttack", 0x102C1214));
+    ((wstring *)gmem(_frame))->assign(GSTR("AirAttack", 0x102C1214), (uint32_t)(sVar1));
+    uVar2 = a1->getBoolean((gptr<wstring>)(_frame));
+    this->setAerialAttack((bool)(uVar2));
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("ShieldHealth", 0x102C1248));
+    ((wstring *)gmem(_frame))->assign(GSTR("ShieldHealth", 0x102C1248), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x7b4 = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("Phase", 0x102C1228));
+    ((wstring *)gmem(_frame))->assign(GSTR("Phase", 0x102C1228), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x760 = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("SpawningFrames", 0x102C1264));
+    ((wstring *)gmem(_frame))->assign(GSTR("SpawningFrames", 0x102C1264), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x798 = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("maxHealth", 0x102C1234));
+    ((wstring *)gmem(_frame))->assign(GSTR("maxHealth", 0x102C1234), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x7c4 = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("lastHealthInterval", 0x102C1284));
+    ((wstring *)gmem(_frame))->assign(GSTR("lastHealthInterval", 0x102C1284), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x7c8 = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    ST32((_frame + 28), 7);
+    sVar1 = ::recon::wcslen(GSTR("dyingFrames", 0x102C11E4));
+    ((wstring *)gmem(_frame))->assign(GSTR("dyingFrames", 0x102C11E4), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x76c = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("overlayAlpha", 0x102C12AC));
+    ((wstring *)gmem(_frame))->assign(GSTR("overlayAlpha", 0x102C12AC), (uint32_t)(sVar1));
+    dVar3 = (double)(a1->getFloat((gptr<wstring>)(_frame)));
+    this->field_0x774 = (float)(dVar3);
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 28), 7);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    sVar1 = ::recon::wcslen(GSTR("swellAmount", 0x102C11FC));
+    ((wstring *)gmem(_frame))->assign(GSTR("swellAmount", 0x102C11FC), (uint32_t)(sVar1));
+    dVar3 = (double)(a1->getFloat((gptr<wstring>)(_frame)));
+    this->field_0x778 = (float)(dVar3);
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST16((_frame + 4), 0);
+    ST32((_frame + 24), 0);
+    ST32((_frame + 28), 7);
+    sVar1 = ::recon::wcslen(GSTR("oldSwellAmount", 0x102C12C8));
+    ((wstring *)gmem(_frame))->assign(GSTR("oldSwellAmount", 0x102C12C8), (uint32_t)(sVar1));
+    dVar3 = (double)(a1->getFloat((gptr<wstring>)(_frame)));
+    this->field_0x77c = (float)(dVar3);
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    ST32((_frame + 24), 0);
+    ST16((_frame + 4), 0);
+    ST32((_frame + 28), 7);
+    sVar1 = ::recon::wcslen(GSTR("firerate", 0x102C12E8));
+    ((wstring *)gmem(_frame))->assign(GSTR("firerate", 0x102C12E8), (uint32_t)(sVar1));
+    uVar2 = a1->getInt((gptr<wstring>)(_frame));
+    this->field_0x78c = uVar2;
+    if ((7 < LD32((_frame + 28))))
+    {
+        ::recon::guest_delete((int32_t)(LD32((_frame + 20))));
+    }
+    native_frame_close(_frame, 32);
+    return;
+    native_frame_close(_frame, 32);
+}
+#endif
+
+/* getAdditionContructionTag() [0x02AAEE18] - boundary stub; body not reconstructed */
+uint32_t WitherBoss::getAdditionContructionTag()
+{
+    return (uint32_t)(guest::stub(0x02AAEE18u, gaddr(this)) >> 32);
+}
+
+/* getAlternativeTarget(int) [0x02AAF468] - LOWERED-DRAFT; not reconstructed (4 raw IR ops, 4 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint32_t WitherBoss::getAlternativeTarget(int32_t a1)
+{
+    return (uint32_t)(guest::stub(0x02AAF468u, gaddr(this), (uint32_t)a1) >> 32);
+}
+#else
+uint32_t WitherBoss::getAlternativeTarget(int32_t a1)
+{
+    int32_t iVar1 = 0;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
+    {
+        iVar1 = this->field_0x1f8;
+    }
+    return LD32((uint32_t)((LD32((uint32_t)(((iVar1 + (LD32(LD32((uint32_t)((0x104C527Cu + (a1 * 4))))) * 4)) + 4))) + 0xc)));
+}
+#endif
+
+/* isPowered() [0x02AAF4F8] - LOWERED-DRAFT; not reconstructed (2 open edges, 3 raw IR ops, 1 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
 bool WitherBoss::isPowered()
 {
-    return getHealth() <= (float)(getMaxHealth() * 0.5f);
+    return (bool)(guest::stub(0x02AAF4F8u, gaddr(this)) >> 32);
 }
-
-void WitherBoss::generateParticles()
+#else
+bool WitherBoss::isPowered()
 {
-    if (!mLevel->mIsClientSide)
-        return;
-
-    if (getInvulnerableTicks() > 0)
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            mLevel->addParticle(PARTICLE_MOB_SPELL,
-                                mX + mRandom->nextGaussian() * 1.0,
-                                mY + (double)(float)(mRandom->nextFloat() * 3.3f),
-                                mZ + mRandom->nextGaussian() * 1.0,
-                                0.7f, 0.7f, 0.9f, arrayWithLength<int>());
-        }
-    }
-
-    bool powered = isPowered();
-    for (int head = 0; head < 3; ++head)
-    {
-        double headX = getHeadX(head);
-        double headY = getHeadY(head);
-        double headZ = getHeadZ(head);
-        mLevel->addParticle(PARTICLE_SMOKE,
-                            headX + mRandom->nextGaussian() * 0.3f,
-                            headY + mRandom->nextGaussian() * 0.3f,
-                            headZ + mRandom->nextGaussian() * 0.3f,
-                            0.0, 0.0, 0.0, arrayWithLength<int>());
-        if (powered && mLevel->mRandom->nextInt(4) == 0)
-        {
-            mLevel->addParticle(PARTICLE_MOB_SPELL,
-                                headX + mRandom->nextGaussian() * 0.3f,
-                                headY + mRandom->nextGaussian() * 0.3f,
-                                headZ + mRandom->nextGaussian() * 0.3f,
-                                0.7f, 0.7f, 0.5f, arrayWithLength<int>());
-        }
-    }
+    uint32_t _frame = native_frame_open(32);
+    int32_t iVar1 = 0;
+    double dVar2 = 0;
+    double dVar3 = 0;
+    iVar1 = this->field_0x348;
+    dVar2 = (double)((uint32_t)(guest::indirect(LD32((iVar1 + 0x92c))) >> 32));
+    dVar3 = (double)((uint32_t)(guest::indirect(LD32((iVar1 + 0x9fc)), (uint32_t)(gaddr(this))) >> 32));
+    { int32_t t1 = (dVar2 <= (double)((float)((dVar3 * (double)(global_0x102B435C)))));
+    native_frame_close(_frame, 32);
+    return t1; }
+    native_frame_close(_frame, 32);
 }
+#endif
 
-bool WitherBoss::IsChargeAttacking()
+/* generateParticles() [0x02AAF580] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::generateParticles()
 {
-    return mEntityData->get(DATA_CHARGE_ATTACKING);
+    return (uint64_t)guest::stub(0x02AAF580u, gaddr(this));
 }
 
-bool WitherBoss::canShoot()
+/* IsChargeAttacking() [0x02AAFDC8] - LOWERED-DRAFT; not reconstructed (4 raw IR ops, 3 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint8_t WitherBoss::IsChargeAttacking()
 {
-    return mReloadTicks == 0 && !mWantsToMove && !mCharging && mChargeWindupTicks == 0 && mShotDelay < 1;
+    return (uint8_t)(guest::stub(0x02AAFDC8u, gaddr(this)) >> 32);
 }
-
-void WitherBoss::aiStep()
+#else
+uint8_t WitherBoss::IsChargeAttacking()
 {
-    generateParticles();
-    if (mShotDelay > 0)
-        --mShotDelay;
-    --mStunTicks;
-    if (mStunTicks > 0)
-        return;
-
-    mYd *= 0.6000000238418579;
-
-    if (mDyingFrames > 0)
+    int32_t iVar1 = 0;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
     {
-        mDeathTime = -1;
-        if (mDyingFrames == 200)
-            mOverlayAlpha = 0.0f;
-        --mDyingFrames;
-        if (mDyingFrames == 0)
-        {
-            if (!mLevel->mIsClientSide)
-            {
-                mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
-                                mLevel->getGameRules()->getBoolean(1), false, false, false, -1.0f);
-                LivingEntity::die(mLastDamageSource);
-                if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(4))
-                {
-                    int reward = getExperienceReward(mLastHurtByPlayer);
-                    while (reward > 0)
-                    {
-                        int value = ExperienceOrb::getExperienceValue(reward);
-                        reward -= value;
-                        mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(
-                            new ExperienceOrb(mLevel, mX, mY, mZ, value)));
-                    }
-                }
-            }
-            remove();
-            return;
-        }
-        else if (mDyingFrames % mDeathFlapInterval == 0)
-        {
-            setAerialAttack(!getAerialAttack());
-            if (mDeathFlapInterval > 1)
-                --mDeathFlapInterval;
-        }
-        if (mDyingFrames == 120)
-            playSound(SoundEvents::WITHER_DEATH, 1.0f, 1.0f);
-        else if (mDyingFrames == 60)
-            playSound(SoundEvents::WITHER_DEATH, 0.75f, 1.0f);
-        setInvulnerableTicks(mDyingFrames);
-        mOverlayAlpha += 0.004999999888241291f;
-        mOldSwellAmount = mSwellAmount;
-        mSwellAmount += 1.0f;
-        return;
+        iVar1 = this->field_0x1f8;
     }
-
-    if (mSpawningFrames > 0 && (int)getHealth() > 0)
-    {
-        --mSpawningFrames;
-        if (mSpawningFrames == 0)
-        {
-            if (!mLevel->mIsClientSide)
-            {
-                setAerialAttack(true);
-                mShieldHealth = mMaxShieldHealth;
-                mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
-                                mLevel->getGameRules()->getBoolean(1), false, false, false, -1.0f);
-            }
-            playSoundToAllPlayers(SoundEvents::WITHER_SPAWN, 1.0f, 1.0f);
-        }
-        setInvulnerableTicks(mSpawningFrames);
-        heal(ceilf(getMaxHealth() / 200.0f));
-        float oldYBodyRot = mYBodyRot;
-        mSpawnSpin += 0.20000000298023224f;
-        float spunYRot = Mth::wrapDegrees((float)(oldYBodyRot - mSpawnSpin));
-        mYBodyRot = spunYRot;
-        mYHeadRot = spunYRot;
-        mYRot = spunYRot;
-        if ((oldYBodyRot < 0.0f && spunYRot >= 0.0f) || mSpawningFrames == 199)
-            playSound(SoundEvents::WITHER_SPAWN, 1.0f, 1.0f);
-        mYRotHeads[0] = Mth::wrapDegrees((float)(mYRotHeads[0] + mSpawnSpin));
-        mYRotHeads[1] = Mth::wrapDegrees((float)(mYRotHeads[1] + mSpawnSpin));
-        Monster::aiStep();
-        return;
-    }
-
-    if (!mLevel->mIsClientSide)
-    {
-        if (getAlternativeTarget(0) != getId())
-        {
-            boost::shared_ptr<Entity> alternative = mLevel->getEntity(getAlternativeTarget(0));
-            if (alternative)
-            {
-                if (!mIsPathing)
-                {
-                    if ((alternative->mY > mY && !mDiving)
-                        || (!isPowered() && mY < alternative->mY + 5.0))
-                    {
-                        double yd = mYd < 0.0 ? 0.0 : mYd;
-                        mYd = (0.5 - yd) * 0.6 + yd;
-                    }
-                    else if (mDiving)
-                    {
-                        mYd -= 1.0;
-                    }
-                }
-                else if (getMoveControl() != NULL)
-                {
-                    mYd = getMoveControl()->getWantedY() - mY;
-                }
-            }
-        }
-    }
-
-    if (mChargeTicks > 0 && mChargeDirection != NULL)
-    {
-        double chargeX = mChargeDirection->x;
-        double chargeZ = mChargeDirection->z;
-        --mChargeTicks;
-        if (mChargeTicks == 0)
-        {
-            mChargeDirection->x = 0.0;
-            mXd = 0.0;
-            mZd = 0.0;
-            mShotDelay = 20;
-            mCharging = false;
-        }
-        else
-        {
-            mZd = chargeZ + chargeZ;
-            mXd = chargeX + chargeX;
-        }
-    }
-
-    boost::shared_ptr<LivingEntity> target = getTarget();
-    if (target)
-    {
-        Vec3* delta = target->getAttachPos(Entity::ENTITY_LOCATION_MOUNT, 0.0f)
-                            ->subtract(getAttachPos(Entity::ENTITY_LOCATION_MOUNT, 0.0f));
-        mYHeadRot = Mth::clampRotateDegrees(
-            mYHeadRot,
-            (float)((double)Mth::atan2((int)delta->z, (int)delta->x) * 57.2957763671875 - 90.0),
-            10.0f);
-        if (IsChargeAttacking())
-            mYBodyRot = mYHeadRot;
-    }
-    Monster::aiStep();
-
-    if (!mLevel->mIsClientSide)
-        mXRot = IsChargeAttacking() ? 90.0f : 0.0f;
-
-    mYRotOHeads[0] = mYRotHeads[0];
-    mYRotOHeads[1] = mYRotHeads[1];
-    mXRotOHeads[0] = mXRotHeads[0];
-    mXRotOHeads[1] = mXRotHeads[1];
-    for (int head = 0; head < 2; ++head)
-    {
-        int targetId = getAlternativeTarget(head + 1);
-        boost::shared_ptr<Entity> headTarget;
-        if (targetId != getId())
-            headTarget = mLevel->getEntity(targetId);
-        if (!headTarget)
-        {
-            mYRotHeads[head] = rotlerp(mYRotHeads[head], mYBodyRot, 10.0f);
-            mXRotHeads[head] = rotlerp(mXRotHeads[head], mXRot, 40.0f);
-        }
-        else
-        {
-            double headX = getHeadX(head + 1);
-            double headY = getHeadY(head + 1);
-            double headZ = getHeadZ(head + 1);
-            double dx = headTarget->mX - headX;
-            double dy = headTarget->mY + headTarget->getEyeHeight() - headY;
-            double dz = headTarget->mZ - headZ;
-            double horizontal = Mth::sqrt(dx * dx + dz * dz);
-            float yRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
-            float xRot = (float)(atan2(dy, horizontal) * 57.2957763671875);
-            mXRotHeads[head] = rotlerp(mXRotHeads[head], -xRot, 40.0f);
-            mYRotHeads[head] = rotlerp(mYRotHeads[head], yRot, 10.0f);
-        }
-    }
-
-    if (canShoot() && getTarget() && ++mTargetTrackingTicks > 100)
-    {
-        mReloadTicks = 1;
-        mTargetTrackingTicks = 0;
-    }
+    return LD8((uint32_t)((LD32((uint32_t)(((iVar1 + (LD32(LD32(0x104C5240u)) * 4)) + 4))) + 0xc)));
 }
+#endif
 
-void WitherBoss::makeInvulnerable()
+/* canShoot() [0x02AAFE48] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AAFE48
+uint32_t WitherBoss::canShoot()
 {
-    mInvulnerableTime = 200;
-    setInvulnerableTicks(200);
+    uint32_t uVar1 = 0;
+    uVar1 = 0;
+    if (((((this->field_0x7a0 == 0) && !(this->field_0x7a8)) && ((uint8_t)this->field_0x784 == '\0')) && ((this->field_0x780 == 0) && (this->field_0x764 < 1))))
+    {
+        uVar1 = 1;
+    }
+    return uVar1;
+}
+#else
+uint32_t WitherBoss::canShoot()
+{
+    return (uint32_t)(guest::stub(0x02AAFE48u, gaddr(this)) >> 32);
+}
+#endif
+
+/* aiStep() [0x02AAFE94] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::aiStep()
+{
+    return (uint64_t)guest::stub(0x02AAFE94u, gaddr(this));
 }
 
+/* makeInvulnerable() [0x02AB1960] - LOWERED-DRAFT; not reconstructed */
+#if defined(RECON_RUNTIME_BUILD)
+uint32_t WitherBoss::makeInvulnerable()
+{
+    return (uint32_t)(guest::stub(0x02AB1960u, gaddr(this)) >> 32);
+}
+#else
+uint32_t WitherBoss::makeInvulnerable()
+{
+    int32_t iVar1 = 0;
+    this->field_0x1f0 = 200;
+    iVar1 = this->field_0x1f8;
+    if ((iVar1 == 0))
+    {
+        iVar1 = this->field_0x1f8;
+    }
+    ((SynchedEntityData *)gmem(iVar1))->set__tm__2_i(global_0x104C5238, (int32_t)(200), (bool)(1));
+    return;
+}
+#endif
+
+/* makeStuckInWeb() [0x02AB1978] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB1978
 void WitherBoss::makeStuckInWeb()
 {
+    return;
 }
-
-void WitherBoss::startSeenByPlayer(boost::shared_ptr<ServerPlayer> player)
+#else
+void WitherBoss::makeStuckInWeb()
 {
-    Entity::startSeenByPlayer(player);
-    mBossEvent->addPlayer(player, 0);
+    guest::stub(0x02AB1978u, gaddr(this));
 }
+#endif
 
-void WitherBoss::stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player)
+/* startSeenByPlayer(boost::shared_ptr<ServerPlayer>) [0x02AB197C] - LOWERED-DRAFT; not reconstructed (4 open edges, 47 raw IR ops, 13 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::startSeenByPlayer(gptr<sp_ServerPlayer> a1)
 {
-    Entity::stopSeenByPlayer(player);
-    mBossEvent->removePlayer(player);
+    guest::stub(0x02AB197Cu, gaddr(this), (uint32_t)a1);
 }
-
-std::map<boost::shared_ptr<ServerPlayer>, int>& WitherBoss::getPlayerParty()
+#else
+void WitherBoss::startSeenByPlayer(gptr<sp_ServerPlayer> a1)
 {
-    return mBossEvent->getPartyPlayers();
+    uint32_t _frame = native_frame_open(8);
+    uint8_t bVar1 = 0;
+    int32_t iVar2 = 0;
+    uint32_t piVar3 = 0;
+    int32_t iVar4 = 0;
+    uint32_t piVar5 = 0;
+    uint8_t bVar6 = 0;
+    ST32(_frame, a1->field_0x0);
+    ST32((_frame + 4), (uint32_t)(a1->field_0x4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    while (!(bVar1))
+    {
+        if (('\x01' != '\0'))
+        {
+            iVar4 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), (LD32(LD32((_frame + 4))) + 1)), 1);
+            ST32(LD32((_frame + 4)), iVar4);
+            bVar1 = 1;
+        }
+    }
+    this->Entity::startSeenByPlayer((gptr<sp_ServerPlayer>)(_frame));
+    piVar3 = LD32((_frame + 4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    if (!(bVar1))
+    {
+        ((void)0 /* sync dropped */);
+        do
+        {
+            iVar4 = (LD32(LD32((_frame + 4))) + -(1));
+            if (('\x01' != '\0'))
+            {
+                iVar2 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar4), 1);
+                ST32(LD32((_frame + 4)), iVar2);
+                bVar1 = 1;
+            }
+        }
+        while (!(bVar1));
+        ((void)0 /* instructionSynchronize dropped */);
+        bVar6 = ((iVar4 == 0) << 1);
+        if ((iVar4 == 0))
+        {
+            (uint32_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))) >> 32);
+            piVar5 = (piVar3 + (1) * 4);
+            ((void)0 /* sync dropped */);
+            do
+            {
+                iVar4 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                if (('\x01' != '\0'))
+                {
+                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar4 + -(1))), 1);
+                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
+                    bVar6 = 2;
+                }
+            }
+            while (!((uint8_t)(((bVar6 >> 1) & 1))));
+            ((void)0 /* instructionSynchronize dropped */);
+            if (((iVar4 + -(1)) == 0))
+            {
+                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar3) + 2u, 0) + 0x1c)), (uint32_t)(piVar3)) >> 32);
+            }
+        }
+    }
+    ST32(_frame, a1->field_0x0);
+    ST32((_frame + 4), (uint32_t)(a1->field_0x4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    while (!(bVar1))
+    {
+        if (('\x01' != '\0'))
+        {
+            iVar4 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), (LD32(LD32((_frame + 4))) + 1)), 1);
+            ST32(LD32((_frame + 4)), iVar4);
+            bVar1 = 1;
+        }
+    }
+    this->field_0x7f0->addPlayer((gptr<sp_ServerPlayer>)(_frame), (int32_t)(0));
+    piVar3 = LD32((_frame + 4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    if (!(bVar1))
+    {
+        ((void)0 /* sync dropped */);
+        do
+        {
+            iVar4 = (LD32(LD32((_frame + 4))) + -(1));
+            if (('\x01' != '\0'))
+            {
+                iVar2 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar4), 1);
+                ST32(LD32((_frame + 4)), iVar2);
+                bVar1 = 1;
+            }
+        }
+        while (!(bVar1));
+        ((void)0 /* instructionSynchronize dropped */);
+        bVar6 = ((iVar4 == 0) << 1);
+        if ((iVar4 == 0))
+        {
+            (uint32_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))) >> 32);
+            piVar5 = (piVar3 + (1) * 4);
+            ((void)0 /* sync dropped */);
+            do
+            {
+                iVar4 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                if (('\x01' != '\0'))
+                {
+                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar4 + -(1))), 1);
+                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
+                    bVar6 = 2;
+                }
+            }
+            while (!((uint8_t)(((bVar6 >> 1) & 1))));
+            ((void)0 /* instructionSynchronize dropped */);
+            if (((iVar4 + -(1)) == 0))
+            {
+                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar3) + 2u, 0) + 0x1c)), (uint32_t)(piVar3)) >> 32);
+            }
+        }
+    }
+    native_frame_close(_frame, 8);
+    return;
+    native_frame_close(_frame, 8);
 }
+#endif
 
-int WitherBoss::getArmorValue()
+/* stopSeenByPlayer(boost::shared_ptr<ServerPlayer>) [0x02AB1B4C] - LOWERED-DRAFT; not reconstructed (4 open edges, 47 raw IR ops, 13 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::stopSeenByPlayer(gptr<sp_ServerPlayer> a1)
+{
+    guest::stub(0x02AB1B4Cu, gaddr(this), (uint32_t)a1);
+}
+#else
+void WitherBoss::stopSeenByPlayer(gptr<sp_ServerPlayer> a1)
+{
+    uint32_t _frame = native_frame_open(8);
+    uint8_t bVar1 = 0;
+    int32_t iVar2 = 0;
+    uint32_t piVar3 = 0;
+    int32_t iVar4 = 0;
+    uint32_t piVar5 = 0;
+    uint8_t bVar6 = 0;
+    ST32(_frame, a1->field_0x0);
+    ST32((_frame + 4), (uint32_t)(a1->field_0x4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    while (!(bVar1))
+    {
+        if (('\x01' != '\0'))
+        {
+            iVar4 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), (LD32(LD32((_frame + 4))) + 1)), 1);
+            ST32(LD32((_frame + 4)), iVar4);
+            bVar1 = 1;
+        }
+    }
+    this->Entity::stopSeenByPlayer((gptr<sp_ServerPlayer>)(_frame));
+    piVar3 = LD32((_frame + 4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    if (!(bVar1))
+    {
+        ((void)0 /* sync dropped */);
+        do
+        {
+            iVar4 = (LD32(LD32((_frame + 4))) + -(1));
+            if (('\x01' != '\0'))
+            {
+                iVar2 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar4), 1);
+                ST32(LD32((_frame + 4)), iVar2);
+                bVar1 = 1;
+            }
+        }
+        while (!(bVar1));
+        ((void)0 /* instructionSynchronize dropped */);
+        bVar6 = ((iVar4 == 0) << 1);
+        if ((iVar4 == 0))
+        {
+            (uint32_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))) >> 32);
+            piVar5 = (piVar3 + (1) * 4);
+            ((void)0 /* sync dropped */);
+            do
+            {
+                iVar4 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                if (('\x01' != '\0'))
+                {
+                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar4 + -(1))), 1);
+                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
+                    bVar6 = 2;
+                }
+            }
+            while (!((uint8_t)(((bVar6 >> 1) & 1))));
+            ((void)0 /* instructionSynchronize dropped */);
+            if (((iVar4 + -(1)) == 0))
+            {
+                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar3) + 2u, 0) + 0x1c)), (uint32_t)(piVar3)) >> 32);
+            }
+        }
+    }
+    ST32(_frame, a1->field_0x0);
+    ST32((_frame + 4), (uint32_t)(a1->field_0x4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    while (!(bVar1))
+    {
+        if (('\x01' != '\0'))
+        {
+            iVar4 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), (LD32(LD32((_frame + 4))) + 1)), 1);
+            ST32(LD32((_frame + 4)), iVar4);
+            bVar1 = 1;
+        }
+    }
+    this->field_0x7f0->removePlayer((gptr<sp_ServerPlayer>)(_frame));
+    piVar3 = LD32((_frame + 4));
+    bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+    if (!(bVar1))
+    {
+        ((void)0 /* sync dropped */);
+        do
+        {
+            iVar4 = (LD32(LD32((_frame + 4))) + -(1));
+            if (('\x01' != '\0'))
+            {
+                iVar2 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar4), 1);
+                ST32(LD32((_frame + 4)), iVar2);
+                bVar1 = 1;
+            }
+        }
+        while (!(bVar1));
+        ((void)0 /* instructionSynchronize dropped */);
+        bVar6 = ((iVar4 == 0) << 1);
+        if ((iVar4 == 0))
+        {
+            (uint32_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))) >> 32);
+            piVar5 = (piVar3 + (1) * 4);
+            ((void)0 /* sync dropped */);
+            do
+            {
+                iVar4 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                if (('\x01' != '\0'))
+                {
+                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar4 + -(1))), 1);
+                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
+                    bVar6 = 2;
+                }
+            }
+            while (!((uint8_t)(((bVar6 >> 1) & 1))));
+            ((void)0 /* instructionSynchronize dropped */);
+            if (((iVar4 + -(1)) == 0))
+            {
+                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar3) + 2u, 0) + 0x1c)), (uint32_t)(piVar3)) >> 32);
+            }
+        }
+    }
+    native_frame_close(_frame, 8);
+    return;
+    native_frame_close(_frame, 8);
+}
+#endif
+
+/* getPlayerParty() [0x02AB1D18] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB1D18
+void WitherBoss::getPlayerParty()
+{
+    this->field_0x7f0->getPartyPlayers();
+    return;
+}
+#else
+void WitherBoss::getPlayerParty()
+{
+    guest::stub(0x02AB1D18u, gaddr(this));
+}
+#endif
+
+/* getArmorValue() [0x02AB1D2C] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB1D2C
+uint32_t WitherBoss::getArmorValue()
 {
     return 4;
 }
+#else
+uint32_t WitherBoss::getArmorValue()
+{
+    return (uint32_t)(guest::stub(0x02AB1D2Cu, gaddr(this)) >> 32);
+}
+#endif
 
+/* changePhase() [0x02AB1D34] - LOWERED-DRAFT; not reconstructed (1 open edges, 1 raw IR ops, 1 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
 void WitherBoss::changePhase()
 {
-    --mPhase;
-    mMaxHealth -= (int)getMaxHealth() - mHalfHealth;
-    setAerialAttack(false);
-    mDiving = true;
-    mFirerate = 20;
-    mWantsToMove = false;
-    mReloadDuration <<= 1;
+    guest::stub(0x02AB1D34u, gaddr(this));
+}
+#else
+void WitherBoss::changePhase()
+{
+    uint32_t pcVar1 = 0;
+    double dVar2 = 0;
+    pcVar1 = LD32((uint32_t)((this->field_0x348 + 0x9fc)));
+    this->field_0x760 = (this->field_0x760 + -(1));
+    dVar2 = (double)((uint32_t)(guest::indirect((uint32_t)(pcVar1)) >> 32));
+    this->field_0x7c4 = (this->field_0x7c4 - ((int32_t)(dVar2) - this->field_0x7e4));
+    this->setAerialAttack((bool)(0));
+    this->field_0x79c = 1;
+    this->field_0x78c = 0x14;
+    this->field_0x7a8 = 0;
+    this->field_0x7bc = (this->field_0x7bc << 1);
+    return;
+}
+#endif
+
+/* hurt(const DamageSource*, float) [0x02AB1DD8] - boundary stub; body not reconstructed */
+uint32_t WitherBoss::hurt(double a1, float a2)
+{
+    return (uint32_t)(guest::stub(0x02AB1DD8u, gaddr(this), (uint32_t)a2, (double)a1) >> 32);
 }
 
-bool WitherBoss::hurt(const DamageSource* source, float damage)
+/* getLightColor() [0x02AB3274] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3274
+uint32_t WitherBoss::getLightColor()
 {
-    if (isInvulnerableTo(source))
-        return false;
+    return 0xf000f0;
+}
+#else
+uint32_t WitherBoss::getLightColor()
+{
+    return (uint32_t)(guest::stub(0x02AB3274u, gaddr(this)) >> 32);
+}
+#endif
 
-    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    if (directEntity && directEntity->GetType() == 0x000000008A400002ULL)
-        mStunTicks = 80;
+/* isPickable() [0x02AB3280] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3280
+uint8_t WitherBoss::isPickable()
+{
+    return ((uint8_t)this->field_0x197 ^ 1);
+}
+#else
+uint8_t WitherBoss::isPickable()
+{
+    return (uint8_t)(guest::stub(0x02AB3280u, gaddr(this)) >> 32);
+}
+#endif
 
-    if (source == DamageSource::DROWN
-        || (source->getEntity() && source->getEntity()->GetType() == 0x000000005D540047ULL))
-        return false;
+/* causeFallDamage(float, float) [0x02AB3290] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3290
+void WitherBoss::causeFallDamage(float a1, float a2)
+{
+    return;
+}
+#else
+void WitherBoss::causeFallDamage(float a1, float a2)
+{
+    guest::stub(0x02AB3290u, gaddr(this), (double)a1, (double)a2);
+}
+#endif
 
-    if (mSpawningFrames > 0 && source->getEntity()
-        && (source->getEntity()->GetType() & 0x000000000D000000ULL) == 0x000000000D000000ULL)
+/* addEffect(MobEffectInstance*, const boost::shared_ptr<Entity>&) [0x02AB3294] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3294
+void WitherBoss::addEffect(gptr<MobEffectInstance> a1, gptr<sp_Entity> a2)
+{
+    return;
+}
+#else
+void WitherBoss::addEffect(gptr<MobEffectInstance> a1, gptr<sp_Entity> a2)
+{
+    guest::stub(0x02AB3294u, gaddr(this), (uint32_t)a1, (uint32_t)a2);
+}
+#endif
+
+/* setAlternativeTarget(int, int) [0x02AB3298] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::setAlternativeTarget(int32_t a1, int32_t a2)
+{
+    return (uint64_t)guest::stub(0x02AB3298u, gaddr(this), (uint32_t)a1, (uint32_t)a2);
+}
+
+/* getHeadYRot(int) [0x02AB3490] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3490
+double WitherBoss::getHeadYRot(int32_t a1)
+{
+    return (double)(gelem<float>(gaddr(&this->field_0x744), a1));
+}
+#else
+double WitherBoss::getHeadYRot(int32_t a1)
+{
+    guest::stub(0x02AB3490u, gaddr(this), (uint32_t)a1);
+    return native_fret();
+}
+#endif
+
+/* getHeadXRot(int) [0x02AB34A0] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB34A0
+double WitherBoss::getHeadXRot(int32_t a1)
+{
+    return (double)(gelem<float>(gaddr(&this->field_0x73c), a1));
+}
+#else
+double WitherBoss::getHeadXRot(int32_t a1)
+{
+    guest::stub(0x02AB34A0u, gaddr(this), (uint32_t)a1);
+    return native_fret();
+}
+#endif
+
+/* getMobType() [0x02AB34B0] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB34B0
+uint32_t WitherBoss::getMobType()
+{
+    return 1;
+}
+#else
+uint32_t WitherBoss::getMobType()
+{
+    return (uint32_t)(guest::stub(0x02AB34B0u, gaddr(this)) >> 32);
+}
+#endif
+
+/* die(const DamageSource*) [0x02AB34B8] - LOWERED-DRAFT; not reconstructed (4 open edges, 8 raw IR ops, 4 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::die(gptr<DamageSource> a1)
+{
+    guest::stub(0x02AB34B8u, gaddr(this), (uint32_t)a1);
+}
+#else
+void WitherBoss::die(gptr<DamageSource> a1)
+{
+    uint32_t _frame = native_frame_open(16);
+    uint8_t bVar1 = 0;
+    int32_t iVar3 = 0;
+    uint32_t uVar4 = 0;
+    uint32_t pcVar5 = 0;
+    int32_t iVar8 = 0;
+    pcVar5 = LD32((uint32_t)((a1->field_0x18 + 0x44)));
+    this->field_0x76c = 200;
+    iVar3 = (uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(a1)) >> 32);
+    iVar8 = this->field_0x348;
+    pcVar5 = LD32((uint32_t)((iVar8 + 0x98c)));
+    this->field_0x780 = 0;
+    this->field_0x75c = iVar3;
+    this->field_0x784 = 0;
+    this->field_0x768 = 0;
+    uVar4 = (uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this))) >> 32);
+    (uint32_t)(guest::indirect(LD32((iVar8 + 0xf4)), (double)((double)(global_0x102B435C)), (double)((double)(global_0x102B1E18)), (uint32_t)(gaddr(this)), (uint32_t)(uVar4)) >> 32);
+    iVar3 = LD32((uint32_t)(this->field_0xf8));
+    ST32((_frame + 4), this->field_0x0);
+    if (((uint32_t)(LD32((_frame + 4))) != gaddr(this)))
     {
-        boost::shared_ptr<Mob> pushed = boost::static_pointer_cast<Mob>(
-            mLevel->getEntity(source->getEntity()->getId()));
-        pushed->knockback(shared_from_this(), damage, mX - pushed->mX, mY - pushed->mY);
     }
-
-    if ((getInvulnerableTicks() > 0 && source != DamageSource::OUT_OF_WORLD) || mDyingFrames > 0)
-        return false;
-
-    if (isPowered() && directEntity
-        && ((directEntity->GetType() & 0x000000008A020000ULL) == 0x000000008A020000ULL
-            || directEntity->GetType() == 0x000000008A200006ULL))
-        return false;
-
-    boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && (attacker->GetType() & 0x000000000C800000ULL) != 0x000000000C800000ULL
-        && (attacker->GetType() & 0x000000000C000000ULL) == 0x000000000C000000ULL
-        && boost::static_pointer_cast<LivingEntity>(attacker)->getMobType() == MOB_TYPE_UNDEAD)
-        return false;
-
-    if (mDestroyBlocksTick < 1)
-        mDestroyBlocksTick = 20;
-    mIdleHeadUpdates[0] += 3;
-    mIdleHeadUpdates[1] += 3;
-
-    bool hurt = Monster::hurt(source, damage);
-    if (hurt)
+    if (!(bVar1))
     {
-        int health = (int)getHealth();
-        if (mLevel->getDifficulty() != Difficulty::EASY
-            && health < mLastHealthInterval - mHealthInterval)
+        do
         {
-            mFirerate /= 2;
-            mLastHealthInterval -= mHealthInterval;
+            if (('\x01' != '\0'))
+            {
+                bVar1 = 1;
+            }
         }
-        if (health <= mHalfHealth && mPhase > 0)
-            changePhase();
-
-        if (attacker)
+        while (!(bVar1));
+        if (!(bVar1))
         {
-            bool visible = canSee(attacker);
-            double distanceSqr = getPos(1.0f)
-                ->subtract(attacker->mX, attacker->mY, attacker->mZ)->lengthSqr();
-            if (attacker == getTarget()
-                && (!visible || (float)distanceSqr > mAttackRange * mAttackRange))
-                mReloadTicks = 1;
+            do
+            {
+                if (('\x01' != '\0'))
+                {
+                    bVar1 = 1;
+                }
+            }
+            while (!(bVar1));
         }
-
-        if (mBossEvent != NULL && attacker && attacker->GetType() == 0x000000000C800001ULL)
-            mBossEvent->addPlayer(boost::static_pointer_cast<ServerPlayer>(attacker), (int)damage);
     }
-    return hurt;
-}
-
-int WitherBoss::getLightColor()
-{
-    return 0xF000F0;
-}
-
-bool WitherBoss::isPickable()
-{
-    return !mRemoved;
-}
-
-void WitherBoss::causeFallDamage(float, float)
-{
-}
-
-void WitherBoss::addEffect(MobEffectInstance*, const boost::shared_ptr<Entity>&)
-{
-}
-
-void WitherBoss::setAlternativeTarget(int head, int target)
-{
-    if (head == 0)
+    (uint32_t)(guest::indirect(LD32((iVar3 + 0x2c4)), (uint32_t)(this->field_0xf8), (uint32_t)((_frame + 4)), (uint32_t)(3), (uint32_t)(0)) >> 32);
+    if (!(bVar1))
     {
-        if (target != getId() && getAlternativeTarget(1) == target)
-            setAlternativeTarget(1, getId());
-        if (target != getId() && getAlternativeTarget(2) == target)
-            setAlternativeTarget(2, getId());
+        do
+        {
+            if (('\x01' != '\0'))
+            {
+                bVar1 = 1;
+            }
+        }
+        while (!(bVar1));
     }
-    else if (target != getId())
-    {
-        if (getAlternativeTarget(0) == target)
-            return;
-        if (getAlternativeTarget(1) == target)
-            return;
-        if (getAlternativeTarget(2) == target)
-            return;
-    }
-    mEntityData->set(DATA_TARGETS[head], target, true);
+    native_frame_close(_frame, 16);
+    return;
+    native_frame_close(_frame, 16);
 }
+#endif
 
-double WitherBoss::getHeadYRot(int head)
+/* handleEntityEvent(unsigned char, int) [0x02AB3708] - boundary stub; body not reconstructed */
+void WitherBoss::handleEntityEvent(uint8_t a1, int32_t a2)
 {
-    return mYRotHeads[head];
+    guest::stub(0x02AB3708u, gaddr(this), (uint32_t)a1, (uint32_t)a2);
 }
 
-double WitherBoss::getHeadXRot(int head)
-{
-    return mXRotHeads[head];
-}
-
-EMobType WitherBoss::getMobType()
-{
-    return MOB_TYPE_UNDEAD;
-}
-
-void WitherBoss::die(const DamageSource* source)
-{
-    mDyingFrames = 200;
-    mLastDamageSource = source->copy();
-    mChargeWindupTicks = 0;
-    mCharging = false;
-    mStunTicks = 0;
-    playSound(getDeathSound(), 0.5f, 1.0f);
-    mLevel->broadcastEntityEvent(shared_from_this(), 3, 0);
-}
-
-void WitherBoss::handleEntityEvent(unsigned char event, int data)
-{
-    if (event == 3)
-    {
-        mDyingFrames = 200;
-        return;
-    }
-    Mob::handleEntityEvent(event, data);
-}
-
+/* getOverlayAlpha() [0x02AB372C] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB372C
 double WitherBoss::getOverlayAlpha()
 {
-    return mOverlayAlpha;
+    return (double)(this->field_0x774);
 }
-
-double WitherBoss::getSwellAmount(float partialTicks) const
+#else
+double WitherBoss::getOverlayAlpha()
 {
-    return ((mSwellAmount - mOldSwellAmount) * partialTicks + mOldSwellAmount) / 28.0f;
+    guest::stub(0x02AB372Cu, gaddr(this));
+    return native_fret();
 }
+#endif
 
-bool WitherBoss::wantsToMove()
+/* getSwellAmount(float) const [0x02AB3734] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3734
+double WitherBoss::getSwellAmount(float a1)
 {
-    return mWantsToMove;
+    return (double)(((float)((((double)((float)(((double)(this->field_0x778) - (double)(this->field_0x77c)))) * a1) + (double)(this->field_0x77c))) / 28.0f));
 }
-
-void WitherBoss::setWantsToMove(bool wantsToMove)
+#else
+double WitherBoss::getSwellAmount(float a1)
 {
-    mWantsToMove = wantsToMove;
+    guest::stub(0x02AB3734u, gaddr(this), (double)a1);
+    return native_fret();
 }
+#endif
 
-void WitherBoss::setIsPathing(bool pathing)
+/* wantsToMove() [0x02AB3754] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3754
+uint8_t WitherBoss::wantsToMove()
 {
-    mIsPathing = pathing;
+    return (uint8_t)this->field_0x7a8;
 }
-
-void WitherBoss::setShotDelay(int delay)
+#else
+uint8_t WitherBoss::wantsToMove()
 {
-    mShotDelay = delay;
+    return (uint8_t)(guest::stub(0x02AB3754u, gaddr(this)) >> 32);
 }
+#endif
 
-void WitherBoss::heal(float amount)
+/* setWantsToMove(bool) [0x02AB375C] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB375C
+void WitherBoss::setWantsToMove(bool a1)
 {
-    if (getHealth() > 0.0f && !mLevel->mIsClientSide)
-        LivingEntity::heal(amount);
+    this->field_0x7a8 = a1;
+    return;
 }
-
-bool WitherBoss::canFly()
+#else
+void WitherBoss::setWantsToMove(bool a1)
 {
-    return true;
+    guest::stub(0x02AB375Cu, gaddr(this), (uint32_t)a1);
 }
+#endif
 
-boost::shared_ptr<LivingEntity> WitherBoss::getTarget()
+/* setIsPathing(bool) [0x02AB3764] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3764
+void WitherBoss::setIsPathing(bool a1)
 {
-    if (mLevel->mIsClientSide && getAlternativeTarget(0) != getId())
+    this->field_0x7ec = a1;
+    return;
+}
+#else
+void WitherBoss::setIsPathing(bool a1)
+{
+    guest::stub(0x02AB3764u, gaddr(this), (uint32_t)a1);
+}
+#endif
+
+/* setShotDelay(int) [0x02AB376C] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB376C
+void WitherBoss::setShotDelay(int32_t a1)
+{
+    this->field_0x764 = a1;
+    return;
+}
+#else
+void WitherBoss::setShotDelay(int32_t a1)
+{
+    guest::stub(0x02AB376Cu, gaddr(this), (uint32_t)a1);
+}
+#endif
+
+/* heal(float) [0x02AB3774] - LOWERED-DRAFT; not reconstructed (2 raw IR ops, 2 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+void WitherBoss::heal(float a1)
+{
+    guest::stub(0x02AB3774u, gaddr(this), (double)a1);
+}
+#else
+void WitherBoss::heal(float a1)
+{
+    uint32_t _frame = native_frame_open(32);
+    double dVar1 = 0;
+    dVar1 = (double)(this->virt_getHealth());
+    if ((((double)(global_0x102B5164) < dVar1) && (LD8((uint32_t)((this->field_0xf8 + 0x168))) == '\0')))
     {
-        boost::shared_ptr<Entity> alternative = mLevel->getEntity(getAlternativeTarget(0));
-        if (alternative
-            && (alternative->GetType() & 0x000000000C000000ULL) == 0x000000000C000000ULL)
-            return boost::static_pointer_cast<LivingEntity>(alternative);
+        this->LivingEntity::heal((float)(a1));
     }
-    return Mob::getTarget();
+    native_frame_close(_frame, 32);
+    return;
+    native_frame_close(_frame, 32);
 }
+#endif
 
-bool WitherBoss::IsSpawning() const
+/* canFly() [0x02AB3800] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3800
+uint32_t WitherBoss::canFly()
 {
-    return mSpawningFrames > 0;
+    return 1;
 }
-
-MobGroupData* WitherBoss::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
+#else
+uint32_t WitherBoss::canFly()
 {
-    MobGroupData* groupData = Mob::finalizeMobSpawn(difficulty, data, dataString);
-    setSize(1.0f, 3.5f);
-    setAerialAttack(true);
-    mSpawningFrames = 200;
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.6000000238418579);
-    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(70.0);
-    makeInvulnerable();
-    if (mLevel->getDifficulty() == Difficulty::EASY)
+    return (uint32_t)(guest::stub(0x02AB3800u, gaddr(this)) >> 32);
+}
+#endif
+
+/* getTarget() [0x02AB3808] - LOWERED-DRAFT; not reconstructed (7 open edges, 43 raw IR ops, 14 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint32_t WitherBoss::getTarget()
+{
+    return (uint32_t)(guest::stub(0x02AB3808u, gaddr(this)) >> 32);
+}
+#else
+uint32_t WitherBoss::getTarget(uint32_t a1)
+{
+    uint32_t _frame = native_frame_open(8);
+    uint8_t bVar1 = 0;
+    int32_t iVar2 = 0;
+    int32_t iVar3 = 0;
+    uint32_t uVar4 = 0;
+    uint32_t piVar5 = 0;
+    uint32_t pcVar6 = 0;
+    uint8_t bVar7 = 0;
+    uint64_t __pair = 0;
+    if ((LD8((uint32_t)((this->field_0xf8 + 0x168))) != '\0'))
     {
-        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(getMaxHealth() * 0.5);
-        mMaxShieldHealth /= 2;
+        iVar2 = this->getAlternativeTarget((int32_t)(0));
+        iVar3 = this->Entity::getId();
+        if ((iVar2 != iVar3))
+        {
+            piVar5 = LD32((uint32_t)((gaddr(this) + 0xf8)));
+            pcVar6 = LD32((uint32_t)((gelem<int32_t>((uint32_t)(piVar5), 0) + 0x29c)));
+            uVar4 = this->getAlternativeTarget((int32_t)(0));
+            (uint32_t)((__pair = (uint64_t)(guest::indirect((uint32_t)(pcVar6), (uint32_t)(piVar5), (uint32_t)(_frame), (uint32_t)(uVar4)))) >> 32);
+            if (((LD32(_frame) != 0) && ((uint32_t)((__pair = (uint64_t)(guest::indirect(LD32((LD32((uint32_t)((LD32(_frame) + 0x348))) + 0xc)), (uint32_t)(LD32(_frame))))) >> 32), ((((uint32_t)__pair) & 0xc000000) == 0xc000000))))
+            {
+                ((boost *)gmem(_frame))->static_pointer_cast__tm__22_12LivingEntity6Entity(a1);
+                if ((LD32((_frame + 4)) == (uint32_t)(0x0)))
+                {
+                    { uint64_t t1 = ((uint64_t)(uint32_t)(gaddr(this)) << 32);
+                    native_frame_close(_frame, 8);
+                    return t1; }
+                }
+                ((void)0 /* sync dropped */);
+                bVar1 = 0;
+                do
+                {
+                    iVar2 = (LD32(LD32((_frame + 4))) + -(1));
+                    if (('\x01' != '\0'))
+                    {
+                        iVar3 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar2), 1);
+                        ST32(LD32((_frame + 4)), iVar3);
+                        bVar1 = 1;
+                    }
+                }
+                while (!(bVar1));
+                ((void)0 /* instructionSynchronize dropped */);
+                bVar7 = ((iVar2 == 0) << 1);
+                if ((iVar2 != 0))
+                {
+                    { uint64_t t2 = ((uint64_t)(uint32_t)(gaddr(this)) << 32);
+                    native_frame_close(_frame, 8);
+                    return t2; }
+                }
+                (uint32_t)((__pair = (uint64_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))))) >> 32);
+                piVar5 = (LD32((_frame + 4)) + (1) * 4);
+                ((void)0 /* sync dropped */);
+                do
+                {
+                    iVar2 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                    if (('\x01' != '\0'))
+                    {
+                        iVar3 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar2 + -(1))), 1);
+                        gelem<int32_t>((uint32_t)(piVar5), 0) = iVar3;
+                        bVar7 = 2;
+                    }
+                }
+                while (!((uint8_t)(((bVar7 >> 1) & 1))));
+                ((void)0 /* instructionSynchronize dropped */);
+                if (((iVar2 + -(1)) != 0))
+                {
+                    { uint64_t t3 = ((uint64_t)(uint32_t)(gaddr(this)) << 32);
+                    native_frame_close(_frame, 8);
+                    return t3; }
+                }
+                { uint64_t t4 = ((uint64_t)(uint32_t)((uint32_t)((__pair = (uint64_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x1c)), (uint32_t)(LD32((_frame + 4)))))) >> 32)) << 32);
+                native_frame_close(_frame, 8);
+                return t4; }
+            }
+            bVar1 = (LD32((_frame + 4)) == (uint32_t)(0x0));
+            if (!(bVar1))
+            {
+                ((void)0 /* sync dropped */);
+                do
+                {
+                    iVar2 = (LD32(LD32((_frame + 4))) + -(1));
+                    if (('\x01' != '\0'))
+                    {
+                        iVar3 = (ST32((uint32_t)(LD32((_frame + 4))) + (uint32_t)(0), iVar2), 1);
+                        ST32(LD32((_frame + 4)), iVar3);
+                        bVar1 = 1;
+                    }
+                }
+                while (!(bVar1));
+                ((void)0 /* instructionSynchronize dropped */);
+                bVar7 = ((iVar2 == 0) << 1);
+                if ((iVar2 == 0))
+                {
+                    (uint32_t)((__pair = (uint64_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x14)), (uint32_t)(LD32((_frame + 4)))))) >> 32);
+                    piVar5 = (LD32((_frame + 4)) + (1) * 4);
+                    ((void)0 /* sync dropped */);
+                    do
+                    {
+                        iVar2 = gelem<int32_t>((uint32_t)(piVar5), 0);
+                        if (('\x01' != '\0'))
+                        {
+                            iVar3 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), (iVar2 + -(1))), 1);
+                            gelem<int32_t>((uint32_t)(piVar5), 0) = iVar3;
+                            bVar7 = 2;
+                        }
+                    }
+                    while (!((uint8_t)(((bVar7 >> 1) & 1))));
+                    ((void)0 /* instructionSynchronize dropped */);
+                    if (((iVar2 + -(1)) == 0))
+                    {
+                        (uint32_t)((__pair = (uint64_t)(guest::indirect(LD32((LD32(LD32((_frame + 4)) + (2) * 4) + 0x1c)), (uint32_t)(LD32((_frame + 4)))))) >> 32);
+                    }
+                }
+            }
+        }
     }
-    else if (mLevel->getDifficulty() == Difficulty::NORMAL)
-    {
-        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(getMaxHealth() * 0.75);
-        mMaxShieldHealth = (int)((float)mMaxShieldHealth * 0.75f);
-    }
-    mMaxHealth = (int)getMaxHealth();
-    setHealth(1.0f);
-    mLastHealthInterval = (int)getMaxHealth();
-    mHalfHealth = (int)getMaxHealth() / 2;
-    mHealthInterval = (int)getMaxHealth() / 6;
-    return groupData;
+    { uint64_t t5 = (__pair = (uint64_t)(this->Mob::getTarget(a1)));
+    native_frame_close(_frame, 8);
+    return t5; }
+    native_frame_close(_frame, 8);
 }
+#endif
 
-FlyingPathNavigation* WitherBoss::createNavigation(Level* level)
+/* IsSpawning() const [0x02AB3A54] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB3A54
+uint32_t WitherBoss::IsSpawning()
 {
-    FlyingPathNavigation* navigation = new FlyingPathNavigation(this, level);
-    navigation->setCanOpenDoors(false);
-    navigation->setCanFloat(true);
-    navigation->setCanPassDoors(true);
+    return ((-(this->field_0x798) & ~(this->field_0x798)) >> 0x1f);
+}
+#else
+uint32_t WitherBoss::IsSpawning()
+{
+    return (uint32_t)(guest::stub(0x02AB3A54u, gaddr(this)) >> 32);
+}
+#endif
+
+/* finalizeMobSpawn(const DifficultyInstance&, MobGroupData*, const std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>&) [0x02AB3A68] - LOWERED-DRAFT; not reconstructed (15 open edges, 15 raw IR ops, 12 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+gptr<MobGroupData> WitherBoss::finalizeMobSpawn(gptr<DifficultyInstance> a1, gptr<MobGroupData> a2, gptr<wstring> a3)
+{
+    return (gptr<MobGroupData>)(guest::stub(0x02AB3A68u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3) >> 32);
+}
+#else
+gptr<MobGroupData> WitherBoss::finalizeMobSpawn(gptr<DifficultyInstance> a1, gptr<MobGroupData> a2, gptr<wstring> a3)
+{
+    uint32_t _frame = native_frame_open(32);
+    gptr<MobGroupData> data = 0u;
+    uint32_t piVar2 = 0;
+    int32_t iVar3 = 0;
+    uint32_t uVar4 = 0;
+    uint32_t pcVar5 = 0;
+    double dVar6 = 0;
+    double dVar7 = 0;
+    data = guest::Mob_finalizeMobSpawn(gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3);
+    dVar7 = (double)(global_0x102B1E18);
+    (uint32_t)(guest::indirect(LD32((this->field_0x348 + 0x4c)), (double)(dVar7), (double)((double)(global_0x102C0D60)), (uint32_t)(gaddr(this))) >> 32);
+    this->setAerialAttack((bool)(1));
+    pcVar5 = LD32((uint32_t)((this->field_0x348 + 0xa24)));
+    this->field_0x798 = 200;
+    piVar2 = (uint32_t)((uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this)), (uint32_t)(global_0x104EFE1C)) >> 32));
+    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102C0C90)) >> 32);
+    piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE14)));
+    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)), (uint32_t)(global_0x102C0C98)) >> 32);
+    (uint32_t)(guest::indirect(LD32((this->field_0x348 + 0xe0c)), (uint32_t)(gaddr(this))) >> 32);
+    iVar3 = (uint32_t)((this->field_0xf8->getDifficulty()) >> 32);
+    if ((iVar3 == global_0x104DCB24))
+    {
+        piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE10)));
+        pcVar5 = LD32((uint32_t)((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)));
+        dVar6 = (double)(this->virt_getMaxHealth());
+        (uint32_t)(guest::indirect((uint32_t)(pcVar5), (double)((dVar6 * 0.5)), (uint32_t)(piVar2)) >> 32);
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x9fc)));
+        uVar4 = this->field_0x738;
+        this->field_0x738 = (((int32_t)(uVar4) >> 1) + (uint32_t)((((int32_t)(uVar4) < 0) && ((uVar4 & 1) != 0))));
+        dVar6 = (double)((uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this))) >> 32));
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x934)));
+        this->field_0x7c4 = (int32_t)(dVar6);
+        (uint32_t)(guest::indirect((uint32_t)(pcVar5), (double)(dVar7), (uint32_t)(gaddr(this))) >> 32);
+        dVar7 = (double)(this->virt_getMaxHealth());
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x9fc)));
+        this->field_0x7c8 = (int32_t)(dVar7);
+        dVar7 = (double)((uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this))) >> 32));
+        uVar4 = (uint32_t)(dVar7);
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x9fc)));
+        this->field_0x7e4 = (((int32_t)(uVar4) >> 1) + (uint32_t)((((int32_t)(uVar4) < 0) && ((uVar4 & 1) != 0))));
+        dVar7 = (double)((uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this))) >> 32));
+        this->field_0x7e8 = ((int32_t)(dVar7) / 6);
+    }
+    else
+    {
+        iVar3 = (uint32_t)((this->field_0xf8->getDifficulty()) >> 32);
+        if ((iVar3 == global_0x104DCB28))
+        {
+            piVar2 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE10)));
+            pcVar5 = LD32((uint32_t)((gelem<int32_t>((uint32_t)(piVar2), 0) + 0x24)));
+            dVar6 = (double)(this->virt_getMaxHealth());
+            (uint32_t)(guest::indirect((uint32_t)(pcVar5), (double)((dVar6 * 0.75)), (uint32_t)(piVar2)) >> 32);
+            this->field_0x738 = (int32_t)(((float)(((double)(int32_t)(this->field_0x738))) * 0.75f));
+        }
+        dVar6 = (double)(this->virt_getMaxHealth());
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x934)));
+        this->field_0x7c4 = (int32_t)(dVar6);
+        (uint32_t)(guest::indirect((uint32_t)(pcVar5), (double)(dVar7), (uint32_t)(gaddr(this))) >> 32);
+        dVar7 = (double)(this->virt_getMaxHealth());
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x9fc)));
+        this->field_0x7c8 = (int32_t)(dVar7);
+        dVar7 = (double)((uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this))) >> 32));
+        uVar4 = (uint32_t)(dVar7);
+        pcVar5 = LD32((uint32_t)((this->field_0x348 + 0x9fc)));
+        this->field_0x7e4 = (((int32_t)(uVar4) >> 1) + (uint32_t)((((int32_t)(uVar4) < 0) && ((uVar4 & 1) != 0))));
+        dVar7 = (double)((uint32_t)(guest::indirect((uint32_t)(pcVar5), (uint32_t)(gaddr(this))) >> 32));
+        this->field_0x7e8 = ((int32_t)(dVar7) / 6);
+    }
+    { uint32_t t1 = data;
+    native_frame_close(_frame, 32);
+    return t1; }
+    native_frame_close(_frame, 32);
+}
+#endif
+
+/* createNavigation(Level*) [0x02AB3E8C] - LOWERED-DRAFT; not reconstructed (1 open edges) */
+#if defined(RECON_RUNTIME_BUILD)
+gptr<FlyingPathNavigation> WitherBoss::createNavigation(gptr<Level> a1)
+{
+    return (gptr<FlyingPathNavigation>)(guest::stub(0x02AB3E8Cu, gaddr(this), (uint32_t)a1) >> 32);
+}
+#else
+gptr<FlyingPathNavigation> WitherBoss::createNavigation(gptr<Level> a1)
+{
+    gptr<FlyingPathNavigation> navigation = 0u;
+    navigation = guest::FlyingPathNavigation_ct((uint32_t)(0), (uint32_t)(gaddr(this)), (uint32_t)(a1));
+    navigation->setCanOpenDoors((bool)(0));
+    navigation->setCanFloat((bool)(1));
+    navigation->setCanPassDoors((bool)(1));
     return navigation;
 }
+#endif
 
+/* registerGoals() [0x02AB4114] - boundary stub; body not reconstructed */
 void WitherBoss::registerGoals()
 {
-    mGoalSelector.addGoal(0, new WitherDoNothingGoal(this), true);
-    mGoalSelector.addGoal(1, new FloatGoal(this), true);
-    mGoalSelector.addGoal(2, new WitherRandomAttackPosGoal(this, 1.0f, 40, 10, 7), true);
-    mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
-    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
-    mGoalSelector.addGoal(7, new RandomLookAroundGoal(this), true);
-    mTargetSelector.addGoal(1, new WitherTargetHighestDamage(this), true);
-    mTargetSelector.addGoal(2, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, false,
-                                                               LIVING_ENTITY_SELECTOR, true, false), true);
+    guest::stub(0x02AB4114u, gaddr(this));
 }
 
-const SoundEvent* WitherBoss::getAmbientSound()
+/* getAmbientSound() [0x02AB43AC] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB43AC
+uint32_t WitherBoss::getAmbientSound()
 {
-    return SoundEvents::WITHER_AMBIENT;
+    return global_0x104C46F4;
 }
-
-const SoundEvent* WitherBoss::getHurtSound(const DamageSource*)
+#else
+uint32_t WitherBoss::getAmbientSound()
 {
-    return SoundEvents::WITHER_HURT;
+    return (uint32_t)(guest::stub(0x02AB43ACu, gaddr(this)) >> 32);
 }
+#endif
 
-const SoundEvent* WitherBoss::getDeathSound()
+/* getHurtSound(const DamageSource*) [0x02AB43B8] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB43B8
+uint32_t WitherBoss::getHurtSound(gptr<DamageSource> a1)
 {
-    return SoundEvents::WITHER_DEATH;
+    return global_0x104C4700;
 }
-
-void WitherBoss::destroyBlocks(Level* level, const AABB* box, int expansion)
+#else
+uint32_t WitherBoss::getHurtSound(gptr<DamageSource> a1)
 {
-    if (!level->getGameRules()->getBoolean(1))
-        return;
+    return (uint32_t)(guest::stub(0x02AB43B8u, gaddr(this), (uint32_t)a1) >> 32);
+}
+#endif
 
-    bool destroyed = false;
-    for (int x = (int)box->mMinX - expansion; x <= (int)box->mMaxX + expansion; ++x)
-    {
-        for (int z = (int)box->mMinZ - expansion; z <= (int)box->mMaxZ + expansion; ++z)
-        {
-            for (int y = (int)box->mMinY - expansion; y <= (int)box->mMaxY + expansion; ++y)
-            {
-                const BlockPos pos(x, y, z);
-                const BlockState* state = level->getBlockState(pos);
-                if (state->getMaterial() != Material::AIR && canDestroy(state->getBlock()))
-                {
-                    destroyed = level->removeBlock(pos) || destroyed;
-                    state->getBlock()->spawnResources(level, pos, state, 1);
-                }
-            }
-        }
-    }
-    if (destroyed)
-        playSound(SoundEvents::WITHER_BREAK_BLOCK, 1.0f, 1.0f);
+/* getDeathSound() [0x02AB43C4] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB43C4
+uint32_t WitherBoss::getDeathSound()
+{
+    return global_0x104C46FC;
+}
+#else
+uint32_t WitherBoss::getDeathSound()
+{
+    return (uint32_t)(guest::stub(0x02AB43C4u, gaddr(this)) >> 32);
+}
+#endif
+
+/* destroyBlocks(Level*, const AABB*, int) [0x02AB4518] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::destroyBlocks(gptr<Level> a1, gptr<AABB> a2, int32_t a3)
+{
+    return (uint64_t)guest::stub(0x02AB4518u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3);
 }
 
+/* customServerAiStep() [0x02AB47B8] - boundary stub; body not reconstructed */
 void WitherBoss::customServerAiStep()
 {
-    if (mBossEvent != NULL)
-        mBossEvent->setPercent((float)(getHealth() / getMaxHealth()));
-    if (mSpawningFrames > 0)
-        return;
-
-    if ((mOnGround || isInWater()) && mDiving)
-    {
-        mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
-                        mLevel->getGameRules()->getBoolean(1), false, false, false, -1.0f);
-        mDiving = false;
-        mStunTicks = 80;
-        if (mLevel->getDifficulty() != Difficulty::EASY)
-        {
-            for (int i = 0; i < 3; ++i)
-            {
-                int error = 0;
-                boost::shared_ptr<Mob> spawned = SpawnEggItem::spawnMobAt(
-                    mLevel, EntityIO::getKey(0x000000005D540442ULL), mX, mY, mZ, &error, L"");
-                if (spawned)
-                {
-                    boost::shared_ptr<WitherSkeleton> skeleton =
-                        boost::static_pointer_cast<WitherSkeleton>(spawned);
-                    if (error == 0)
-                    {
-                        skeleton->setWitherParent(
-                            boost::static_pointer_cast<WitherBoss>(shared_from_this()));
-                        skeleton->mInvulnerableTime = 60;
-                    }
-                }
-            }
-        }
-    }
-
-    Mob::customServerAiStep();
-    if (mAttackCooldown > 0)
-        --mAttackCooldown;
-
-    if (getTarget() && getTarget()->getId() != getAlternativeTarget(0))
-        setAlternativeTarget(0, getTarget()->getId());
-    else
-        setAlternativeTarget(0, getId());
-
-    if (mAttackDelay > 0 && --mAttackDelay == 0)
-    {
-        if (canShoot() && getTarget())
-        {
-            if (getNavigation() != NULL)
-                getNavigation()->stop();
-            performRangedAttack(0, getTarget());
-        }
-        mAttackDelay = mFirerate;
-    }
-
-    for (int head = 1; head < 3; ++head)
-    {
-        if (mTickCount >= mNextHeadUpdate[head - 1] && canShoot())
-        {
-            mAttackCooldown = mFirerate;
-            mNextHeadUpdate[head - 1] = mTickCount + 10 + mRandom->nextInt(10);
-            const Difficulty* difficulty = mLevel->getDifficulty();
-            if ((difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)
-                && ++mIdleHeadUpdates[head - 1] > 15)
-            {
-                float x = mRandom->nextFloat((float)mX - 10.0f, (float)mX + 10.0f);
-                float y = mRandom->nextFloat((float)mY - 5.0f, (float)mY + 5.0f);
-                float z = mRandom->nextFloat((float)mZ - 10.0f, (float)mZ + 10.0f);
-                if (head == 1)
-                    performRangedAttack(head, x, y, z, true);
-                mIdleHeadUpdates[head - 1] = 0;
-            }
-
-            int headTargetId = getAlternativeTarget(head);
-            if (headTargetId == getId())
-            {
-                std::vector<boost::shared_ptr<Entity> >* candidates =
-                    mLevel->getEntitiesOfClass(typeid(Player),
-                                               mBoundingBox->grow(mAttackRange, 8.0, mAttackRange));
-                while (!candidates->empty())
-                {
-                    boost::shared_ptr<Player> candidate = boost::static_pointer_cast<Player>(
-                        candidates->at(mRandom->nextInt((int)candidates->size())));
-                    if (candidate->hasCategory(EntityCategory::eEntityCategory_Undead)
-                        && !candidate->mAbilities.mInstabuild
-                        && getTarget() != candidate)
-                    {
-                        setAlternativeTarget(head, candidate->getId());
-                        break;
-                    }
-                    candidates->erase(std::remove(candidates->begin(), candidates->end(), candidate),
-                                      candidates->end());
-                }
-                delete candidates;
-            }
-            else
-            {
-                boost::shared_ptr<Entity> headTarget = mLevel->getEntity(headTargetId);
-                bool clearTarget = true;
-                if (headTarget && headTarget->isAlive()
-                    && distanceToSqr(headTarget) <= (double)(mAttackRange * mAttackRange)
-                    && canSee(headTarget))
-                    clearTarget = false;
-
-                if (clearTarget)
-                {
-                    setAlternativeTarget(head, getId());
-                }
-                else if ((headTarget->GetType() & 0x000000000C800000ULL) == 0x000000000C800000ULL
-                         && boost::static_pointer_cast<Player>(headTarget)->mAbilities.mInvulnerable)
-                {
-                    setAlternativeTarget(head, getId());
-                }
-                else if ((headTarget->GetType() & 0x000000000C000000ULL) == 0x000000000C000000ULL
-                         && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD))
-                {
-                    performRangedAttack(head, boost::static_pointer_cast<LivingEntity>(headTarget));
-                    mNextHeadUpdate[head - 1] = mTickCount + 40 + mRandom->nextInt(20);
-                    mIdleHeadUpdates[head - 1] = 0;
-                }
-            }
-        }
-
-        if (getTarget())
-            setAlternativeTarget(0, getTarget()->getId());
-        else
-            setAlternativeTarget(0, getId());
-
-        if (mDestroyBlocksTick > 0 && --mDestroyBlocksTick == 0)
-            destroyBlocks(mLevel, mBoundingBox, 1);
-    }
-
-    if (mReloadTicks > 0 && --mReloadTicks == 0)
-    {
-        if (!isPowered())
-        {
-            mWantsToMove = true;
-        }
-        else
-        {
-            mChargeWindupTicks = 20;
-            if (getTarget())
-            {
-                delete mChargeDirection;
-                mChargeDirection = Vec3::newPermanent(
-                    getTarget()->getPos(1.0f)->subtract(getPos(1.0f))->normalize());
-            }
-        }
-    }
-
-    if (mCharging)
-    {
-        destroyBlocks(mLevel, mBoundingBox, 2);
-        std::vector<boost::shared_ptr<Entity> >* hitMobs =
-            mLevel->getEntitiesOfClass(typeid(Mob), mBoundingBox->grow(1.0, 4.0, 1.0));
-        for (unsigned int i = 0; i < hitMobs->size(); ++i)
-        {
-            boost::shared_ptr<Mob> hit = boost::static_pointer_cast<Mob>(hitMobs->at(i));
-            if (hit != shared_from_this())
-            {
-                DamageSource* attack = DamageSource::CreateMobAttack(
-                    boost::static_pointer_cast<LivingEntity>(shared_from_this()));
-                hit->hurt(attack, 15.0f);
-                delete attack;
-            }
-        }
-        delete hitMobs;
-    }
-
-    if (mChargeWindupTicks > 0 && --mChargeWindupTicks == 0)
-    {
-        if (getTarget())
-        {
-            mChargeTicks = 10;
-            mCharging = true;
-        }
-    }
-
-    if (mTickCount % 20 == 0)
-    {
-        std::vector<boost::shared_ptr<Entity> >* nearby =
-            mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(50.0, 50.0, 50.0));
-        delete nearby;
-    }
-
-    mEntityData->set(DATA_CHARGE_ATTACKING, mChargeWindupTicks != 0 || mCharging, true);
+    guest::stub(0x02AB47B8u, gaddr(this));
 }
 
-void WitherBoss::dropDeathLoot(bool, int)
+/* dropDeathLoot(bool, int) [0x02AB6DCC] - boundary stub; body not reconstructed */
+void WitherBoss::dropDeathLoot(bool a1, int32_t a2)
 {
-    boost::shared_ptr<ItemEntity> dropped = spawnAtLocation(Items::netherStar, 1);
-    if (dropped)
-        dropped->setExtendedLifetime();
-
-    if (!mLevel->mIsClientSide)
-    {
-        std::vector<boost::shared_ptr<Entity> >* players =
-            mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(50.0, 100.0, 50.0));
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin();
-             it != players->end(); ++it)
-        {
-            boost::static_pointer_cast<Player>(*it)->awardStat(GenericStats::killWither(),
-                                                               GenericStats::param_killWither());
-        }
-        delete players;
-    }
+    guest::stub(0x02AB6DCCu, gaddr(this), (uint32_t)a1, (uint32_t)a2);
 }
 
+/* checkDespawn() [0x02AB70A0] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB70A0
 void WitherBoss::checkDespawn()
 {
-    mNoActionTime = 0;
+    this->field_0x484 = 0;
+    return;
+}
+#else
+void WitherBoss::checkDespawn()
+{
+    guest::stub(0x02AB70A0u, gaddr(this));
+}
+#endif
+
+/* canRide(boost::shared_ptr<Entity>) [0x02AB70AC] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB70AC
+uint32_t WitherBoss::canRide(gptr<sp_Entity> a1)
+{
+    return 0;
+}
+#else
+uint32_t WitherBoss::canRide(gptr<sp_Entity> a1)
+{
+    return (uint32_t)(guest::stub(0x02AB70ACu, gaddr(this), (uint32_t)a1) >> 32);
+}
+#endif
+
+/* canChangeDimensions() [0x02AB70B4] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB70B4
+uint32_t WitherBoss::canChangeDimensions()
+{
+    return 0;
+}
+#else
+uint32_t WitherBoss::canChangeDimensions()
+{
+    return (uint32_t)(guest::stub(0x02AB70B4u, gaddr(this)) >> 32);
+}
+#endif
+
+/* getHeadX(int) [0x02AB70BC] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB70BC
+double WitherBoss::getHeadX(int32_t a1)
+{
+    double dVar1 = 0;
+    if ((a1 < 1))
+    {
+        return this->field_0x118;
+    }
+    dVar1 = (double)(Mth::cos(((double)(((this->field_0x3e0 + (float)(((double)(int32_t)(((a1 * 0xb4) - 0xb4U))))) * gref<float>(0x101A464Cu))))));
+    return ((dVar1 * 1.3) + this->field_0x118);
+}
+#else
+double WitherBoss::getHeadX(int32_t a1)
+{
+    guest::stub(0x02AB70BCu, gaddr(this), (uint32_t)a1);
+    return native_fret();
+}
+#endif
+
+/* getHeadY(int) [0x02AB7164] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB7164
+double WitherBoss::getHeadY(int32_t a1)
+{
+    if ((a1 < 1))
+    {
+        return (this->field_0x120 + 3.0);
+    }
+    return (this->field_0x120 + 2.2);
+}
+#else
+double WitherBoss::getHeadY(int32_t a1)
+{
+    guest::stub(0x02AB7164u, gaddr(this), (uint32_t)a1);
+    return native_fret();
+}
+#endif
+
+/* getHeadZ(int) [0x02AB7190] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB7190
+double WitherBoss::getHeadZ(int32_t a1)
+{
+    double dVar1 = 0;
+    if ((a1 < 1))
+    {
+        return this->field_0x128;
+    }
+    dVar1 = (double)(Mth::sin(((double)(((this->field_0x3e0 + (float)(((double)(int32_t)(((a1 * 0xb4) - 0xb4U))))) * gref<float>(0x101A464Cu))))));
+    return ((dVar1 * 1.3) + this->field_0x128);
+}
+#else
+double WitherBoss::getHeadZ(int32_t a1)
+{
+    guest::stub(0x02AB7190u, gaddr(this), (uint32_t)a1);
+    return native_fret();
+}
+#endif
+
+/* rotlerp(float, float, float) [0x02AB7238] - boundary stub; body not reconstructed */
+double WitherBoss::rotlerp(float a1, float a2, float a3)
+{
+    guest::stub(0x02AB7238u, gaddr(this), (double)a1, (double)a2, (double)a3);
+    return native_fret();
 }
 
-bool WitherBoss::canRide(boost::shared_ptr<Entity>)
+/* performRangedAttack(int, boost::shared_ptr<LivingEntity>) [0x02AB72EC] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::performRangedAttack(int32_t a1, gptr<sp_LivingEntity> a2)
 {
-    return false;
+    return (uint64_t)guest::stub(0x02AB72ECu, gaddr(this), (uint32_t)a1, (uint32_t)a2);
 }
 
-bool WitherBoss::canChangeDimensions()
+/* performRangedAttack(int, double, double, double, bool) [0x02AB7600] - boundary stub; body not reconstructed */
+uint64_t WitherBoss::performRangedAttack(int32_t a1, double a2, double a3, double a4, bool a5)
 {
-    return false;
+    return (uint64_t)guest::stub(0x02AB7600u, gaddr(this), (uint32_t)a4, (uint32_t)a5, (double)a1, (double)a2, (double)a3);
 }
 
-double WitherBoss::getHeadX(int head)
+/* getMaxHealth() [0x02ACDC00] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02ACDC00
+void WitherBoss::getMaxHealth()
 {
-    if (head < 1)
-        return mX;
-    return mX + (double)Mth::cos((float)((mYBodyRot + (float)(head * 180 - 180))
-                                         * 0.01745329238474369f)) * 1.3;
+    this->LivingEntity::getMaxHealth();
+    return;
 }
-
-double WitherBoss::getHeadY(int head)
+#else
+void WitherBoss::getMaxHealth()
 {
-    if (head < 1)
-        return mY + 3.0;
-    return mY + 2.2;
+    guest::stub(0x02ACDC00u, gaddr(this));
 }
+#endif
 
-double WitherBoss::getHeadZ(int head)
+/* getHealth() [0x02ACDC10] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02ACDC10
+void WitherBoss::getHealth()
 {
-    if (head < 1)
-        return mZ;
-    return mZ + (double)Mth::sin((float)((mYBodyRot + (float)(head * 180 - 180))
-                                         * 0.01745329238474369f)) * 1.3;
+    this->LivingEntity::getHealth();
+    return;
 }
-
-float WitherBoss::rotlerp(float from, float to, float maxDelta)
+#else
+void WitherBoss::getHealth()
 {
-    float delta = Mth::wrapDegrees((float)(to - from));
-    if (delta > maxDelta)
-        delta = maxDelta;
-    if (delta < -maxDelta)
-        delta = -maxDelta;
+    guest::stub(0x02ACDC10u, gaddr(this));
+}
+#endif
 
-    float result = (float)(from + delta);
-    if (result >= 180.0f)
-        result = (float)(result - 360.0f);
-    if (result < -180.0f)
-        result = (float)(result + 360.0f);
+/* getDimension() [0x02ACDC20] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02ACDC20
+uint32_t WitherBoss::getDimension()
+{
+    return this->field_0x240;
+}
+#else
+uint32_t WitherBoss::getDimension()
+{
+    return (uint32_t)(guest::stub(0x02ACDC20u, gaddr(this)) >> 32);
+}
+#endif
+
+/* GetType() [0x02AD1D98] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AD1D98
+uint64_t WitherBoss::GetType()
+{
+    return 0x5d54004700000000;
+}
+#else
+uint64_t WitherBoss::GetType()
+{
+    return (uint64_t)guest::stub(0x02AD1D98u, gaddr(this));
+}
+#endif
+
+}  /* namespace recon */
+\n#include "game/W/WitherBoss__WitherDoNothingGoal.hpp"
+#include "game/G/Goal.hpp"
+#include "game/W/WitherBoss.hpp"
+#include "_thirdparty/std__basic_string_wchar_t__std__char_traits_wchar_t___std__allocator_wchar_t__.hpp"
+#include "functions.hpp"
+
+namespace recon {
+
+/* {ctor}(WitherBoss*) [0x02AB3F18] - reconstructed; allocating shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+WitherBoss_WitherDoNothingGoal::WitherBoss_WitherDoNothingGoal(gptr<WitherBoss> a1)
+{
+    guest::stub(0x02AB3F18u, gaddr(this), (uint32_t)a1);
+}
+#else
+WitherBoss_WitherDoNothingGoal::WitherBoss_WitherDoNothingGoal(gptr<WitherBoss> a1) : Goal()
+{
+    this->field_0x8 = a1;
+    this->Goal::setRequiredControlFlags(7);
+}
+#endif
+
+/* {dtor}() [0x02AD1E40] - reconstructed; destructor shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+WitherBoss_WitherDoNothingGoal::~WitherBoss_WitherDoNothingGoal()
+{
+    guest::stub(0x02AD1E40u, gaddr(this), 0u);
+}
+#else
+WitherBoss_WitherDoNothingGoal::~WitherBoss_WitherDoNothingGoal()
+{
+    if ((gaddr(this) == 0))
+    {
+        return;
+    }
+}
+#endif
+
+/* canUse() [0x02AB7F44] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02AB7F44
+uint32_t WitherBoss_WitherDoNothingGoal::canUse()
+{
+    uint32_t uVar1 = 0;
+    uVar1 = this->field_0x8->getInvulnerableTicks();
+    return ((-(uVar1) & ~(uVar1)) >> 0x1f);
+}
+#else
+uint32_t WitherBoss_WitherDoNothingGoal::canUse()
+{
+    return (uint32_t)(guest::stub(0x02AB7F44u, gaddr(this)) >> 32);
+}
+#endif
+
+/* getName() [0x02AD1DA8] - LOWERED-DRAFT; not reconstructed (3 open edges, 3 raw IR ops, 3 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+gresult<wstring> WitherBoss_WitherDoNothingGoal::getName()
+{
+    gresult<wstring> result;
+    guest::stub(0x02AD1DA8u, gaddr(this), (uint32_t)result);
     return result;
 }
-
-void WitherBoss::performRangedAttack(int head, boost::shared_ptr<LivingEntity> target)
+#else
+gresult<wstring> WitherBoss_WitherDoNothingGoal::getName(int32_t a1)
 {
-    if (head == 0)
+    uint32_t sVar1 = 0;
+    if (((a1 != 0) || (a1 = guest::guest_new((uint32_t)(0x20)), (a1 != 0))))
     {
-        mTargetTrackingTicks = 0;
-        ++mShotCount;
-        performRangedAttack(0, target->mX, target->mY + target->getEyeHeight() * 0.5,
-                            target->mZ, (mShotCount & 3) == 0);
-        if ((mShotCount & 3) == 0)
-        {
-            mReloadTicks = mReloadDuration;
-            if (!getAerialAttack())
-            {
-                mSkipReload = !mSkipReload;
-                if (!mSkipReload)
-                {
-                    mReloadTicks = 0;
-                    mShotDelay = 60;
-                }
-            }
-        }
+        ST32((uint32_t)((a1 + 0x1c)), 7);
+        ST32((uint32_t)((a1 + 0x18)), 0);
+        ST16((uint32_t)((a1 + 4)), 0);
+        sVar1 = ::recon::wcslen(GSTR("WitherDoNothing", 0x102ABAF4));
+        ((wstring *)gmem(a1))->assign(GSTR("WitherDoNothing", 0x102ABAF4), (uint32_t)(sVar1));
     }
-    else
-    {
-        performRangedAttack(head, target->mX, target->mY + target->getEyeHeight() * 0.5,
-                            target->mZ, false);
-    }
+    return;
 }
+#endif
 
-void WitherBoss::performRangedAttack(int head, double x, double y, double z, bool charged)
-{
-    mLevel->levelEvent(boost::shared_ptr<Player>(), 1024, BlockPos(mX, mY, mZ), 0);
-    double headX = getHeadX(head);
-    double headY = getHeadY(head);
-    double headZ = getHeadZ(head);
-    boost::shared_ptr<WitherSkull> skull(new WitherSkull(
-        mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-        x - headX, y - headY, z - headZ));
-    if (charged)
-        skull->setDangerous(true);
-    skull->mY = headY;
-    skull->mX = headX;
-    skull->mZ = headZ;
-    mLevel->addEntity(skull);
-}
-
-float WitherBoss::getMaxHealth()
-{
-    return LivingEntity::getMaxHealth();
-}
-
-float WitherBoss::getHealth()
-{
-    return LivingEntity::getHealth();
-}
-
-int WitherBoss::getDimension()
-{
-    return mDimension;
-}
-
-unsigned long long WitherBoss::GetType()
-{
-    return 0x000000005D540047ULL;
-}
+}  /* namespace recon */

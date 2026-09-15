@@ -25,7 +25,7 @@ Pufferfish::Pufferfish(Level* level)
       mNextPuffState(PUFFED_STATE_SMALL),
       mPuffTransitionTime(0),
       mPoisonDuration(200),
-      mDamage(2.0f),
+      mDamage(2),
       mSmallPuffRadius(1.5f),
       mLargePuffRadius(10.0f),
       mPuffSoundPitch(0.2f),
@@ -62,19 +62,15 @@ void Pufferfish::damageNearbyMobs()
         mLevel->getEntities(shared_from_this(), mBoundingBox->grow((double)mPuffSoundPitch,
                                                                     (double)mPuffSoundPitch,
                                                                     (double)mPuffSoundPitch), NULL);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    for (unsigned int i = 0; i < entities->size(); ++i)
     {
-        boost::shared_ptr<Entity> entity = *it;
-        if (entity == NULL)
-            continue;
-        unsigned long long type = entity->GetType();
-        if (type == ENTITY_TYPE_PLAYER || type == ENTITY_TYPE_LOCAL_PLAYER ||
-            (type & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER)
+        boost::shared_ptr<Entity> entity = entities->at(i);
+        if (entity->GetType() == ENTITY_TYPE_SERVER_PLAYER ||
+            (entity->GetType() & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER)
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-            if (living->hurt(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this())), mDamage))
-                living->addEffect(new MobEffectInstance(MobEffects::POISON, mPoisonDuration), shared_from_this());
+            living->hurt(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this())), mDamage);
+            living->addEffect(new MobEffectInstance(MobEffects::POISON, mPoisonDuration), boost::shared_ptr<Entity>());
         }
     }
 }
@@ -96,27 +92,27 @@ void Pufferfish::checkForDangerousMobs()
     double radius = mPuffState == PUFFED_STATE_SMALL ? (double)mSmallPuffRadius : (double)mLargePuffRadius;
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntities(shared_from_this(), mBoundingBox->grow(radius, radius, radius), NULL);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    for (unsigned int i = 0; i < entities->size(); ++i)
     {
-        boost::shared_ptr<Entity> entity = *it;
-        if (validatePuffedTypes(entity))
+        boost::shared_ptr<Entity> entity = entities->at(i);
+        if (!validatePuffedTypes(entity))
+            continue;
+
+        bool isSpectatingPlayer = false;
+        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
         {
-            boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-            if (player == NULL || !player->isSpectator())
-                foundDangerousMob = true;
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+            if (player->isSpectator())
+                isSpectatingPlayer = true;
         }
-        else if (entity != NULL && (entity->GetType() & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER)
+        if (!isSpectatingPlayer && mPuffState == PUFFED_STATE_SMALL)
         {
             foundDangerousMob = true;
+            setNextPuffedState(PUFFED_STATE_MEDIUM, 1);
         }
-        if (foundDangerousMob)
-            break;
     }
     if (!foundDangerousMob && mPuffState == PUFFED_STATE_LARGE && mNextPuffState != PUFFED_STATE_MEDIUM)
         setNextPuffedState(PUFFED_STATE_MEDIUM, 200);
-    else if (foundDangerousMob && mPuffState == PUFFED_STATE_SMALL)
-        setNextPuffedState(PUFFED_STATE_MEDIUM, 1);
 }
 
 void Pufferfish::baseTick()

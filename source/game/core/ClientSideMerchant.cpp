@@ -9,8 +9,10 @@
 #include "game/world/generation/Villager.hpp"
 
 ClientSideMerchant::ClientSideMerchant(boost::shared_ptr<Player> player, const std::wstring& name)
-    : mPosition(), mContainer(NULL), mTradingPlayer(player), mOffers(new MerchantRecipeList()), mName(name), mVillager()
+    : mContainer(NULL), mOffers(NULL)
 {
+    mTradingPlayer = player;
+    mName = name;
 }
 
 ClientSideMerchant::~ClientSideMerchant()
@@ -21,7 +23,7 @@ ClientSideMerchant::~ClientSideMerchant()
 
 MerchantContainer* ClientSideMerchant::createContainer()
 {
-    mContainer = new MerchantContainer(mTradingPlayer, boost::shared_ptr<Merchant>(this));
+    mContainer = new MerchantContainer(mTradingPlayer, shared_from_this());
     return mContainer;
 }
 
@@ -69,7 +71,8 @@ void ClientSideMerchant::setVillager(boost::shared_ptr<Villager> villager)
 
 bool ClientSideMerchant::isAvailableToTrade()
 {
-    return !mVillager || mVillager->isAvailableToTrade();
+    boost::shared_ptr<Villager> villager = mVillager.lock();
+    return !villager || villager->isAvailableToTrade();
 }
 
 Level* ClientSideMerchant::getLevel()
@@ -79,7 +82,7 @@ Level* ClientSideMerchant::getLevel()
 
 BlockPos ClientSideMerchant::getPosition()
 {
-    return mPosition;
+    return BlockPos(mTradingPlayer);
 }
 
 MerchantContainer* ClientSideMerchant::getContainer()

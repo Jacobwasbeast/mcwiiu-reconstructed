@@ -12,7 +12,7 @@ static bool gLocalMutexesInitialised;
 static Socket::SocketInputStreamLocal* gLocalInputStreams[2];
 static Socket::SocketOutputStreamLocal* gLocalOutputStreams[2];
 Socket::SocketInputStreamLocal::SocketInputStreamLocal(int i):mIndex(i),mOpen(true){}
-Socket::SocketInputStreamLocal::~SocketInputStreamLocal(){}
+Socket::SocketInputStreamLocal::~SocketInputStreamLocal() = default;
 int Socket::SocketInputStreamLocal::read()
 {
     while (mOpen && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead))
@@ -61,9 +61,9 @@ void Socket::SocketInputStreamLocal::close()
     LeaveCriticalSection(&gLocalMutexes[mIndex]);
 }
 long long Socket::SocketInputStreamLocal::skip(long long n){return n;}
-void Socket::SocketInputStreamLocal::flush(){}
+void Socket::SocketInputStreamLocal::flush(){ return; }
 Socket::SocketInputStreamNetwork::SocketInputStreamNetwork(Socket* s,int i):mIndex(i),mOpen(true),mSocket(s){}
-Socket::SocketInputStreamNetwork::~SocketInputStreamNetwork(){}
+Socket::SocketInputStreamNetwork::~SocketInputStreamNetwork() = default;
 int Socket::SocketInputStreamNetwork::read()
 {
     if (!mOpen || !mSocket || mSocket->mQueues[mIndex].empty()) return -1;
@@ -83,8 +83,8 @@ int Socket::SocketInputStreamNetwork::read(arrayWithLength<unsigned char> d,unsi
 }
 void Socket::SocketInputStreamNetwork::close(){mOpen=false;}
 long long Socket::SocketInputStreamNetwork::skip(long long n){return n;}
-void Socket::SocketInputStreamNetwork::flush(){}
-Socket::SocketOutputStream::~SocketOutputStream(){}
+void Socket::SocketInputStreamNetwork::flush(){ return; }
+Socket::SocketOutputStream::~SocketOutputStream() = default;
 void Socket::SocketOutputStream::writeWithFlags(arrayWithLength<unsigned char> data,
                                                 unsigned int,
                                                 unsigned int,
@@ -93,7 +93,7 @@ void Socket::SocketOutputStream::writeWithFlags(arrayWithLength<unsigned char> d
     write(data);
 }
 Socket::SocketOutputStreamLocal::SocketOutputStreamLocal(int i):mIndex(i),mOpen(true){}
-Socket::SocketOutputStreamLocal::~SocketOutputStreamLocal(){}
+Socket::SocketOutputStreamLocal::~SocketOutputStreamLocal() = default;
 void Socket::SocketOutputStreamLocal::write(unsigned int v)
 {
     EnterCriticalSection(&gLocalMutexes[mIndex]);
@@ -115,9 +115,9 @@ void Socket::SocketOutputStreamLocal::close()
     EnterCriticalSection(&gLocalMutexes[mIndex]);
     LeaveCriticalSection(&gLocalMutexes[mIndex]);
 }
-void Socket::SocketOutputStreamLocal::flush(){}
+void Socket::SocketOutputStreamLocal::flush(){ return; }
 Socket::SocketOutputStreamNetwork::SocketOutputStreamNetwork(Socket* s,int i):mIndex(i),mOpen(true),mSocket(s){}
-Socket::SocketOutputStreamNetwork::~SocketOutputStreamNetwork(){}
+Socket::SocketOutputStreamNetwork::~SocketOutputStreamNetwork() = default;
 void Socket::SocketOutputStreamNetwork::write(unsigned int v){unsigned char b=(unsigned char)v;arrayWithLength<unsigned char> d;d.data=&b;d.length=1;writeWithFlags(d,0,1,0);}
 void Socket::SocketOutputStreamNetwork::write(arrayWithLength<unsigned char> d){write(d,0,d.length);}
 void Socket::SocketOutputStreamNetwork::write(arrayWithLength<unsigned char> d,unsigned int o,unsigned int n){writeWithFlags(d,o,n,0);}
@@ -127,7 +127,7 @@ void Socket::SocketOutputStreamNetwork::writeWithFlags(arrayWithLength<unsigned 
         mSocket->pushDataToQueue(d.data+o,n,mIndex!=0);
 }
 void Socket::SocketOutputStreamNetwork::close(){mOpen=false;}
-void Socket::SocketOutputStreamNetwork::flush(){}
+void Socket::SocketOutputStreamNetwork::flush(){ return; }
 Socket::Socket(bool b)
     : mLocal(true),mNetwork(true),mIndex(b?1:0),mPlayerId(0),mEvent(NULL),mOpen(true)
 {
@@ -195,8 +195,8 @@ InputStream* Socket::getInputStream(bool b)
         return gLocalInputStreams[mIndex];
     return mInputStreams[mNetwork ? (b ? 1 : 0) : mIndex];
 }
-void Socket::setSoTimeout(int){}
-void Socket::setTrafficClass(int){}
+void Socket::setSoTimeout(int timeout){ (void)timeout; return; }
+void Socket::setTrafficClass(int trafficClass){ (void)trafficClass; return; }
 OutputStream* Socket::getOutputStream(bool b)
 {
     if (mLocal)

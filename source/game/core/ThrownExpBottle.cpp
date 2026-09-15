@@ -40,8 +40,8 @@ bool ThrownExpBottle::onHit(const HitResult* result)
     Projectile::onHit(result);
     if (!mLevel->mIsClientSide)
     {
-        BlockPos pos(this);
-        mLevel->levelEvent(2002, pos, PotionUtils::getColor(Potions::EMPTY));
+        BlockPos pos(shared_from_this());
+        mLevel->levelEvent(2002, pos, PotionUtils::getColor(Potions::WATER));
         int experience = mRandom->nextInt(5) + mRandom->nextInt(5) + 3;
         while (experience > 0)
         {

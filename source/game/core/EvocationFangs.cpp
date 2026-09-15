@@ -50,7 +50,7 @@ void EvocationFangs::setOwner(const boost::shared_ptr<LivingEntity>& owner)
 
 boost::shared_ptr<LivingEntity> EvocationFangs::getOwner()
 {
-    return mOwner;
+    return mOwner.lock();
 }
 
 void EvocationFangs::defineSynchedData()
@@ -73,16 +73,25 @@ void EvocationFangs::addAdditonalSaveData(CompoundTag* tag)
 
 void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
 {
-    if (target == NULL || !((Entity*)target.get())->isAttackable()) return;
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    boost::shared_ptr<Entity> ownerEntity(owner, (Entity*)owner.get());
-    if (owner != NULL && (target.get() == owner.get() || ((Entity*)target.get())->isAlliedTo(ownerEntity))) return;
-
-    boost::shared_ptr<Entity> direct = shared_from_this();
-    boost::shared_ptr<Entity> attacker;
-    if (owner != NULL) attacker = ownerEntity;
-    boost::shared_ptr<DamageSource> damage = DamageSource::CreateIndirectMagic(direct, attacker, NULL);
-    ((Entity*)target.get())->hurt(damage.get(), 6.0f);
+    if (((Entity*)target.get())->isAlive() && !((Entity*)target.get())->isInvulnerable() && target.get() != owner.get())
+    {
+        if (owner == NULL)
+        {
+            ((Entity*)target.get())->hurt(NULL, 6.0f);
+        }
+        else
+        {
+            boost::shared_ptr<Entity> ownerEntity(owner, (Entity*)owner.get());
+            boost::shared_ptr<Entity> targetEntity(target, (Entity*)target.get());
+            if (!((Entity*)owner.get())->isAlliedTo(targetEntity))
+            {
+                boost::shared_ptr<Entity> direct = shared_from_this();
+                boost::shared_ptr<DamageSource> damage = DamageSource::CreateIndirectMagic(direct, ownerEntity, NULL);
+                ((Entity*)target.get())->hurt(damage.get(), 6.0f);
+            }
+        }
+    }
 }
 
 void EvocationFangs::tick()

@@ -70,7 +70,7 @@ PlayerStats* GameStats::GetPlayerStats(const StatsUID& uid)
 
 boost::shared_ptr<ServerPlayer> GameStats::GetFirstPlace()
 {
-    return mFirstPlace;
+    return mFirstPlace.lock();
 }
 
 unsigned int GameStats::GetShortestLifespan(unsigned int round) const
@@ -300,11 +300,12 @@ boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vect
     if (stats.empty() || index >= stats.size())
         return boost::shared_ptr<ServerPlayer>();
 
-    PlayerStats* playerStats = stats[index];
-    if (playerStats == 0 || gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
-        return boost::shared_ptr<ServerPlayer>();
+    PlayerList* players = 0;
+    if (gMinecraftServer != 0)
+        players = gMinecraftServer->getPlayers();
 
-    return gMinecraftServer->getPlayers()->getPlayerFromStatsUID(*reinterpret_cast<StatsUID*>(playerStats));
+    PlayerStats* playerStats = stats.at(index);
+    return players->getPlayerFromStatsUID(*reinterpret_cast<StatsUID*>(playerStats));
 }
 
 void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
@@ -472,7 +473,7 @@ void GameStats::AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer
     mFirstPlace = getPlayerFromStatsVec(statsVec, 0);
     mSecondPlace = getPlayerFromStatsVec(statsVec, 1);
     mThirdPlace = getPlayerFromStatsVec(statsVec, 2);
-    mRoundWinner = mFirstPlace;
+    mRoundWinner = mFirstPlace.lock();
 
     PlayerStats::RoundStats* winnerRound = statsVec[0]->getRoundStats(mCurrentRound);
     if (winnerRound != 0)
@@ -830,7 +831,18 @@ void GameStats::AddPlayers(const std::vector<boost::shared_ptr<ServerPlayer> >* 
         for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
             AddPlayerStats(*it);
 }
-void GameStats::RemovePlayerStats(const boost::shared_ptr<ServerPlayer>&) { if (mPlayerCount != 0) --mPlayerCount; }
+void GameStats::RemovePlayerStats(const boost::shared_ptr<ServerPlayer>& player)
+{
+    StatsMap::iterator it = mPlayerStats.find(player->getSUID());
+    if (it != mPlayerStats.end())
+    {
+        delete it->second;
+        mPlayerStats.erase(it);
+        const StatsUID uid = player->getSUID();
+        const std::wstring name = player->getNetworkName();
+        player->getLevel()->GetServerScoreboard()->OnPlayerStatsRemoved(uid, name);
+    }
+}
 void GameStats::Clear()
 {
     for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
@@ -1247,8 +1259,26 @@ void GameStats::RecordBlockDestroyed(const StatsUID& uid, const BlockPos&, int s
         ++round->mBlocksDestroyed.mItems[state];
     }
 }
-unsigned int GameStats::RecordLastCheckpoint(const StatsUID&, int checkpoint, int, bool)
+unsigned int GameStats::RecordLastCheckpoint(const StatsUID& uid, int checkpoint, int sequence, bool banked)
 {
+    PlayerStats* stats = GetPlayerStats(uid);
+    if (stats != NULL)
+    {
+        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
+        if (round->mLastCheckpointId != checkpoint || round->mLastCheckpointSequenceId != sequence)
+        {
+            round->mLastCheckpointId = checkpoint;
+            round->mLastCheckpointSequenceId = sequence;
+            if (banked)
+            {
+                const unsigned int elapsed = static_cast<unsigned int>(
+                    (static_cast<unsigned long long>(System::processTimeInMilliSecs()) - mRoundStartTime) / 1000ULL);
+                if (round->mCheckpointTimes.size() <= static_cast<unsigned int>(checkpoint))
+                    round->mCheckpointTimes.resize(static_cast<unsigned int>(checkpoint) + 1U, 0U);
+                round->mCheckpointTimes[static_cast<unsigned int>(checkpoint)] = elapsed;
+            }
+        }
+    }
     if (static_cast<unsigned int>(checkpoint) > mFarthestCheckpointReached)
         mFarthestCheckpointReached = checkpoint;
     return static_cast<unsigned int>(checkpoint);
@@ -1464,8 +1494,8 @@ void GameStats::increasePlayerRoundStartTimeMs(long long milliseconds)
 }
 long long GameStats::GetStartTime() { return mRoundStartTime; }
 boost::shared_ptr<ServerPlayer> GameStats::GetRoundWinner() { return mRoundWinner; }
-boost::shared_ptr<ServerPlayer> GameStats::GetSecondPlace() { return mSecondPlace; }
-boost::shared_ptr<ServerPlayer> GameStats::GetThirdPlace() { return mThirdPlace; }
+boost::shared_ptr<ServerPlayer> GameStats::GetSecondPlace() { return mSecondPlace.lock(); }
+boost::shared_ptr<ServerPlayer> GameStats::GetThirdPlace() { return mThirdPlace.lock(); }
 std::wstring GameStats::GetWinningThemeChoice() const { return mWinningThemeChoice; }
 unsigned int GameStats::GetRoundsWon(const StatsUID& uid)
 {

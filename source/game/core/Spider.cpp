@@ -4,16 +4,22 @@
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/Stray.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/entity/ai/LeapAtTargetGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/Skeleton.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/WitherSkeleton.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/entity/ai/WallClimberNavigation.hpp"
 #include "game/util/Random.hpp"
@@ -35,9 +41,7 @@ Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
     mBlocksBuilding = true;
 }
 
-Spider::~Spider()
-{
-}
+Spider::~Spider() = default;
 
 void Spider::create(Level* level)
 {
@@ -135,7 +139,46 @@ void Spider::setClimbing(bool climbing)
 MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                        const std::wstring&)
 {
-    return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
+    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
+
+    if (mLevel->mRandom->nextInt(100) == 0)
+    {
+        boost::shared_ptr<AbstractSkeleton> rider;
+
+        if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay()
+            && mLevel->mRandom->rollPercentageChance(80)
+            && (mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_MOUNTAINS
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS_SPIKES
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_RIVER
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::COLD_BEACH
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_OCEAN
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::DEEP_FROZEN_OCEAN))
+        {
+            rider.reset(new Stray(mLevel));
+        }
+        else if (mLevel->mRandom->rollPercentageChance(80)
+                 && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
+        {
+            rider.reset(new WitherSkeleton(mLevel));
+        }
+        else
+        {
+            rider.reset(new Skeleton(mLevel));
+        }
+
+        rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
+        rider->finalizeMobSpawn(difficulty, NULL, L"");
+        mLevel->addEntity(rider);
+        rider->Entity::startRiding(shared_from_this());
+    }
+
+    if (result == NULL)
+    {
+        result = new SpiderEffectsGroupData();
+    }
+
+    return result;
 }
 
 double Spider::getEyeHeight() { return 0.65; }
@@ -146,7 +189,7 @@ Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
 {
 }
 
-Spider::SpiderAttackGoal::~SpiderAttackGoal() { }
+Spider::SpiderAttackGoal::~SpiderAttackGoal() = default;
 
 bool Spider::SpiderAttackGoal::canContinueToUse()
 {
@@ -175,7 +218,7 @@ Spider::SpiderTargetGoal::SpiderTargetGoal(Spider* spider, const std::type_info&
 {
 }
 
-Spider::SpiderTargetGoal::~SpiderTargetGoal() { }
+Spider::SpiderTargetGoal::~SpiderTargetGoal() = default;
 
 bool Spider::SpiderTargetGoal::canUse()
 {

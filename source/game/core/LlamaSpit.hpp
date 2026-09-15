@@ -2,6 +2,7 @@
 #define GAME_CORE_LLAMASPIT_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/projectile/Projectile.hpp"
@@ -39,7 +40,7 @@ public:
     virtual bool shouldTick();
 
 private:
-    boost::shared_ptr<Llama> mLlamaOwner;
+    boost::weak_ptr<Llama> mLlamaOwner;
     CompoundTag* mOwnerTag;
 };
 

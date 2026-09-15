@@ -1,6 +1,7 @@
 #include "game/core/MG03ScoreboardLayout.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
@@ -9,6 +10,9 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/StatsUID.hpp"
 #include "game/core/System.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/ui/UIScene_HUD.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/minigame/MiniGameDef.hpp"
@@ -31,6 +35,23 @@ MG03ScoreboardLayout::~MG03ScoreboardLayout()
 
 namespace
 {
+std::wstring formatProgressTime(int milliseconds)
+{
+    std::wstringstream text;
+    text << (milliseconds / 60000) << L":";
+    const int seconds = (milliseconds / 1000) % 60;
+    const int millis = milliseconds % 1000;
+    if (seconds < 10)
+        text << L"0";
+    text << seconds << L":";
+    if (millis < 100)
+        text << L"0";
+    if (millis < 10)
+        text << L"0";
+    text << millis;
+    return text.str();
+}
+
 int playerInfoInt(const PlayerInfo* info, unsigned int offset)
 {
     return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
@@ -156,9 +177,24 @@ unsigned int MG03ScoreboardLayout::getNumberOfColumns()
     return miniGame->ArePointsActive() ? 5 : 3;
 }
 
-std::wstring MG03ScoreboardLayout::getStatForRound(const StatsUID&, int)
+std::wstring MG03ScoreboardLayout::getStatForRound(const StatsUID& uid, int round)
 {
-    return std::wstring(L"---");
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex];
+    ClientScoreboard* scoreboard = localPlayer->GetLevel()->GetClientScoreboard();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+
+    if (miniGame->ArePointsActive())
+    {
+        return _toString<int>(scoreboard->GetPoints(uid, round));
+    }
+
+    if (scoreboard->HasStats(uid))
+    {
+        return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, round), false);
+    }
+
+    return L10N::GetString(0xf62114b0);
 }
 
 UIString MG03ScoreboardLayout::getLabel2(const StatsUID& uid)
@@ -262,13 +298,39 @@ unsigned int MG03ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
 
 std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type)
 {
-    if (type != EScoreboardType_Scoreboard)
+    if (type != EScoreboardType_Scoreboard || (column != 0 && column != 2))
         return std::wstring();
+
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+    const bool best = gameMode->IsWaitingToStart() || gameMode->IsRoundStarting();
+    int round = -1;
+
+    if (miniGame->ArePointsActive())
+    {
+        if (column == 0)
+        {
+            const int points = best ? scoreboard->GetBestPoints(uid, &round)
+                                    : scoreboard->GetPoints(uid, -1);
+            return scoreboard->HasStats(uid) ? _toString<int>(points) : L"---";
+        }
+
+        if (best)
+            scoreboard->GetBestPoints(uid, &round);
+        return scoreboard->HasStats(uid) ?
+            UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, best ? round : -1), false) : L"---";
+    }
+
     if (column == 0)
-        return getStatForRound(uid, 0);
-    if (column == 2)
-        return getStatForRound(uid, 2);
-    return std::wstring(L"---");
+    {
+        const int life = best ? scoreboard->GetBestLifeSpan(uid, &round)
+                              : scoreboard->GetLifeSpan(uid, -1);
+        return scoreboard->HasStats(uid) ? UIScene_HUD::formatTime(life, false) : L"---";
+    }
+
+    return L"---";
 }
 
 boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
@@ -431,10 +493,37 @@ void MG03ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newI
     info->name = newInfo->name;
 }
 
-std::wstring MG03ScoreboardLayout::GetCustomProgressDetails(const StatsUID&, int& value)
+std::wstring MG03ScoreboardLayout::GetCustomProgressDetails(const StatsUID& uid, int& value)
 {
-    value = 0;
-    return std::wstring(L"---");
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    int round = -1;
+    int personal;
+    int total;
+    std::wstring details;
+
+    if (miniGame->ArePointsActive())
+    {
+        personal = scoreboard->GetBestPoints(uid, &round);
+        total = scoreboard->GetBestPoints();
+        value = total == 0 ? 100 : static_cast<int>((static_cast<float>(personal) / total) * 100.0f);
+        details = _toString<int>(personal == total ? personal : personal - total);
+    }
+    else
+    {
+        personal = scoreboard->GetBestLifeSpan(uid, &round);
+        total = scoreboard->GetBestLifeSpan();
+        value = total == 0 ? 100 : static_cast<int>((static_cast<float>(personal) / total) * 100.0f);
+        details = formatProgressTime(personal == total ? personal : total - personal);
+    }
+
+    if (!scoreboard->HasStats(uid))
+    {
+        value = 0;
+        return L10N::GetString(0xf62114b0);
+    }
+    return details;
 }
 
 bool MG03ScoreboardLayout::showLifeSpanProgress()

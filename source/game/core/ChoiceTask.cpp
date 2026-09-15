@@ -3,11 +3,10 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/InputConstraint.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
-
-extern CTelemetryManager gTelemetryManager;
 
 ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled,
                        int firstInput, int secondInput,
@@ -51,7 +50,7 @@ void ChoiceTask::sendTelemetry()
         tutorial->setCompleted(387);
     }
 
-    gTelemetryManager.RecordEnemyKilledOrOvercome(minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0,
+    telemetryManagerInstance->RecordEnemyKilledOrOvercome(minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0,
                                                   telemetryChallenge);
 }
 

@@ -19,7 +19,7 @@ void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
 static const unsigned long long ENTITY_TYPE_TROPICAL_FISH = 0x000000000D502005ULL;
-static const unsigned long long ENTITY_TYPE_FISH = 0x0D50200200000000ULL;
+static const unsigned long long ENTITY_TYPE_FISH = 0x000000000D502000ULL;
 
 const EntityDataAccessor<int>* TropicalFish::DATA_VARIANT = NULL;
 const EntityDataAccessor<int>* TropicalFish::DATA_COLOR = NULL;
@@ -28,11 +28,11 @@ static const int TROPICAL_FISH_BASE_VARIANTS[22] = { 1,1,1,1,1,1,1,7,1,1,1,1,1,1
 static const int TROPICAL_FISH_MARK_VARIANTS[22] = { 1,1,1,1,1,1,7,1,1,1,1,1,1,7,1,1,1,1,1,1,1,1 };
 static const int TROPICAL_FISH_COLOR1_VARIANTS[22] = { 1,1,7,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 static const int TROPICAL_FISH_COLOR2_VARIANTS[22] = { 7,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,7 };
-static const int TROPICAL_FISH_BASE_TEXTURES[2][2] = { { 0xD6, 0xDD }, { 0xDE, 0xDF } };
+static const int TROPICAL_FISH_BASE_TEXTURES[2] = { 0xD6, 0xDD };
 static const int TROPICAL_FISH_MARK_TEXTURES[2][6] = { { 0xD7,0xD8,0xD9,0xDA,0xDB,0xDC }, { 0xDE,0xDF,0xE0,0xE1,0xE2,0xE3 } };
 
 TropicalFish::TropicalFish(Level* level)
-    : Fish(level, true), mLayeredTextureHashName(L"fish_"),
+    : Fish(level, true), mLayeredTextureHashName(),
       mLayeredTextureLayers(2, true)
 {
     mLayeredTextureLayers.data[0] = -1;
@@ -55,7 +55,7 @@ void TropicalFish::staticCtor()
 
 void TropicalFish::clearLayeredTextureInfo()
 {
-    mLayeredTextureHashName.erase(mLayeredTextureHashName.begin() + 5, mLayeredTextureHashName.end());
+    mLayeredTextureHashName.clear();
 }
 
 void TropicalFish::tick()
@@ -87,15 +87,23 @@ void TropicalFish::setColor(int color) { getEntityData()->set(DATA_COLOR, color,
 
 void TropicalFish::rebuildLayeredTextureInfo()
 {
+    mLayeredTextureHashName = L"fish_";
+
+    for (unsigned int i = 0; i < mLayeredTextureLayers.length; i++)
+    {
+        mLayeredTextureLayers.data[i] = -1;
+    }
+
     int baseVariant = getBaseVariant();
     int markVariant = getMarkVariant();
-    mLayeredTextureHashName = L"fish_";
-    mLayeredTextureLayers.data[0] = TROPICAL_FISH_BASE_TEXTURES[baseVariant][0];
+    mLayeredTextureLayers.data[0] = TROPICAL_FISH_BASE_TEXTURES[baseVariant];
     mLayeredTextureLayers.data[1] = baseVariant == 0 ? TROPICAL_FISH_MARK_TEXTURES[0][markVariant] : TROPICAL_FISH_MARK_TEXTURES[1][markVariant];
-    mLayeredTextureHashName += baseVariant == 0 ? L"0" : L"1";
-    mLayeredTextureHashName += L"_";
+
     static const wchar_t* markNames[6] = { L"0", L"1", L"2", L"3", L"4", L"5" };
-    mLayeredTextureHashName += markNames[markVariant];
+    std::wstring hashName = L"fish_";
+    hashName += baseVariant == 0 ? L"0" : L"1";
+    hashName += markNames[markVariant];
+    mLayeredTextureHashName = hashName;
 }
 
 std::wstring TropicalFish::getLayeredTextureHashName()

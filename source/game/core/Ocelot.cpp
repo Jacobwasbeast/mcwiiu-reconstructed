@@ -67,6 +67,7 @@ Ocelot::Ocelot(Level* level) : TamableAnimal(level), mAvoidPlayersGoal(NULL)
 
 Ocelot::~Ocelot()
 {
+    delete mAvoidPlayersGoal;
     delete mTemptGoal;
 }
 

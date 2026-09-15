@@ -2,19 +2,20 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/client/render/TextureUtil.hpp"
 #include "game/core/StringConversion.hpp"
+#include "game/core/DLCPack.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
 
 extern char* wstringtofilename(const std::wstring& value, char (&result)[256]);
 
-BufferedImage::BufferedImage(int mipLevels, int width, int height)
+BufferedImage::BufferedImage(int width, int height, int mipLevels)
     : m_width((unsigned int)width), m_height((unsigned int)height), m_mipmapDisabled(0)
 {
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
     m_data[0] = (int*)std::malloc((size_t)width * (size_t)height * 4u);
-    if (m_data[0] != NULL) std::memset(m_data[0], 0, (size_t)width * (size_t)height * 4u);
+    if (m_data[0] != NULL) std::memset(m_data[0], 0, (size_t)width * (size_t)height);
 }
 
 BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path)
@@ -76,9 +77,32 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
 {
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    m_mipmapDisabled = mipmapDisabled ? 1 : 0;
-    (void)pack;
-    (void)name;
+
+    const int levels = mipmapDisabled ? 1 : 10;
+    int level;
+    for (level = 0; level < levels; ++level)
+    {
+        std::wstring suffix;
+        if (level != 0)
+        {
+            suffix = std::wstring(L"MipMapLevel") + _toString(level + 1);
+        }
+
+        std::wstring file;
+        if (mipmapDisabled)
+        {
+            file = L"res" + name;
+        }
+        else
+        {
+            file = L"res" + name + suffix;
+        }
+
+        if (!pack->doesPackContainFile(DLCManager::eDLCType_All, file, true, true))
+        {
+            return;
+        }
+    }
 }
 
 BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
@@ -86,13 +110,11 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
 {
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    int* pixels = NULL;
     int width = 0;
     int height = 0;
-    TextureUtil::LoadTextureData(data, length, &width, &height, &pixels);
-    if (pixels != NULL)
+    TextureUtil::LoadTextureData(data, length, &width, &height, &m_data[0]);
+    if (m_data[0] != NULL)
     {
-        m_data[0] = pixels;
         m_width = (unsigned int)width;
         m_height = (unsigned int)height;
     }
@@ -129,7 +151,7 @@ void* BufferedImage::getGraphics() { return NULL; }
 
 BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
 {
-    BufferedImage* image = new BufferedImage(0, width, height);
+    BufferedImage* image = new BufferedImage(width, height, 0);
     arrayWithLength<int> pixels((unsigned int)width * (unsigned int)height, false);
     getRGB(x, y, (unsigned int)width, height, pixels, 0, width, 0);
     if (image->m_data[0] != NULL && pixels.data != NULL)

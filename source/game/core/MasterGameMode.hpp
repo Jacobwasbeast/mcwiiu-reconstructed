@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <cstddef>
+#include <cstdint>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -19,11 +21,13 @@
 #include "game/util/Random.hpp"
 #include "game/world/LevelRules.hpp"
 #include "game/world/chunk/ActiveChunkBoundsChecker.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class AABB;
 class Abilities;
 class BlockPos;
 class BlockRemover;
+class BlockChangeListener;
 class CheckpointRuleDefinition;
 class Entity;
 class GameType;
@@ -98,17 +102,12 @@ public:
         float distance;
         float weight;
         int x;
-        short y;
+        int y;
         int z;
-        short itemSet;
+        std::wstring itemSet;
         int minimumPlayers;
-        int maximumPlayers;
-        short refillCount;
-        int refillInterval;
-        int nextRefill;
-        short region;
-        int chestIndex;
-        int lootGroup;
+        std::wstring lootGroup;
+        int unknownTail;
     };
 
     class CountdownInfo
@@ -279,7 +278,21 @@ public:
     static std::wstring GetOptionName(EMiniGameId miniGame, eCustomGameModeHostOption option);
     bool IsPlayerReady(unsigned int playerIndex);
 
+    int& MinChunkXStorage();
+    int& MaxChunkXStorage();
+    int& MinChunkZStorage();
+    int& MaxChunkZStorage();
+    arrayWithLength<unsigned char>& SpawnDistributionStorage();
+    arrayWithLength<unsigned char>& AlternateSpawnDistributionStorage();
+    unsigned int& LoadingPlayerCountStorage();
+    unsigned int& BroadcastStateWord0();
+    unsigned int& BroadcastStateWord1();
+    unsigned int& BroadcastStateWord2();
+    arrayWithLength<unsigned char>& PlaylistSyncStorage();
+    bool& PlayerReadyStorage(int index);
+
 private:
+    friend struct MasterGameModeLayoutAssertions;
     friend class CheckpointCommand;
     friend class GameMedal;
     friend class PlayersEnteredVolumeCondition;
@@ -305,7 +318,12 @@ private:
     unsigned int mRequiredPlayers;
     int mMinimumPlayers;
     int mMaximumPlayers;
-    bool mPlayerReady[8];
+    int mMinChunkX;
+    int mMaxChunkX;
+    int mMinChunkZ;
+    int mMaxChunkZ;
+    arrayWithLength<unsigned char> mSpawnDistribution;
+    arrayWithLength<unsigned char> mAlternateSpawnDistribution;
     std::vector<ChestRefillInfo> mChestRefills;
     std::vector<KillboxRuleDefinition*> mKillboxes;
     std::vector<AABB*> mKillboxAreas;
@@ -325,13 +343,50 @@ private:
     int mRoundWinner;
     int mActiveTeamCount;
     int mShowdownReduction;
-    int mChosenThemeWordId;
+    bool mPlayerReady[8];
+    Vec3* mLastKnownPositions[8];
+    unsigned int mUnknown2D0;
+    unsigned char mUnknown2D4;
+    unsigned int mUnknown2D8;
+    unsigned int mUnknown2E0;
+    unsigned int mUnknown2E4;
+    unsigned int mUnknown2E8;
+    unsigned int mUnknown2EC;
+    unsigned int mUnknown2F0;
+    unsigned char mUnknown2F4;
+    unsigned char mUnknown2F4Padding[3];
+    unsigned int mUnknown2F8;
     GameModePacket::TutorialGameModeData mTutorialData;
-    ServerLevel* mRoundLevel;
+    BlockChangeListener* mBlockChangeListener;
+    unsigned int mUnknown308;
+    unsigned int mUnknown30C;
+    unsigned int mUnknown310;
+    unsigned int mUnknown318;
     BlockRemover* mBlockRemover;
     std::vector<StatsUID> mLastKnownPositionPlayers;
-    Vec3* mLastKnownPositions[8];
-    Scoreboard* mScoreboard;
+    unsigned int mUnknown32C;
+
 };
+
+#if UINTPTR_MAX == 0xffffffffU
+static_assert(offsetof(MasterGameMode::ChestRefillInfo, lootGroup) == 0x34,
+              "MasterGameMode ChestRefillInfo loot-group ABI offset");
+static_assert(offsetof(MasterGameMode::ChestRefillInfo, itemSet) == 0x14,
+              "MasterGameMode ChestRefillInfo item-set ABI offset");
+static_assert(sizeof(MasterGameMode::ChestRefillInfo) == 0x54,
+              "MasterGameMode ChestRefillInfo ABI size");
+
+struct MasterGameModeLayoutAssertions
+{
+    static_assert(offsetof(MasterGameMode, mPlayerReady) == 0x2a8, "MasterGameMode player-ready ABI offset");
+    static_assert(offsetof(MasterGameMode, mLastKnownPositions) == 0x2b0, "MasterGameMode last-position ABI offset");
+    static_assert(offsetof(MasterGameMode, mUnknown2D0) == 0x2d0, "MasterGameMode scalar ABI offset");
+    static_assert(offsetof(MasterGameMode, mTutorialData) == 0x2fc, "MasterGameMode tutorial ABI offset");
+    static_assert(offsetof(MasterGameMode, mBlockChangeListener) == 0x304, "MasterGameMode listener ABI offset");
+    static_assert(offsetof(MasterGameMode, mBlockRemover) == 0x31c, "MasterGameMode remover ABI offset");
+    static_assert(offsetof(MasterGameMode, mLastKnownPositionPlayers) == 0x320, "MasterGameMode stats ABI offset");
+    static_assert(sizeof(MasterGameMode) == 0x330, "MasterGameMode ABI size");
+};
+#endif
 
 #endif

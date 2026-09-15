@@ -3,10 +3,12 @@
 #include "game/core/Stat.hpp"
 #include "game/core/Stats.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
 
 #include <cstring>
 
 extern CProfile* gProfile;
+extern CStorage* gStorage;
 
 namespace
 {
@@ -159,28 +161,98 @@ int StatsCounter::getTotalValue(Stat* stat)
     return total;
 }
 
-unsigned long long StatsCounter::save(int, bool, unsigned char* data)
+unsigned long long StatsCounter::save(int profile, bool force, unsigned char* data)
 {
-    if (data != NULL)
+    if (!gProfile->IsFullVersion())
     {
-        std::memset(data + 0xcc, 0, 0x6cc);
+        return 0;
     }
-    if (data != NULL && Stat::stats != NULL)
+
+    bool ownBuffer = data == NULL;
+    if (ownBuffer)
     {
+        data = gStorage->GetGameDefinedProfileData(profile);
+    }
+
+    std::memset(data + 0xcc, 0, 0x6cc);
+
+    if (Stat::stats != NULL)
+    {
+        unsigned long long woolBits = 0;
+        unsigned int woolIndex = 0;
+        unsigned long long biomeBits = 0;
+        unsigned int biomeIndex = 0;
+        unsigned char armourBits = 0;
+        unsigned int armourIndex = 0;
         unsigned char* cursor = data + 0xdd;
+
         std::vector<Stat*>::const_iterator it;
         for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
         {
-            boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::const_iterator statIt = find(*it);
-            bool large = isLargeStat(*it) != 0;
-            if (statIt != end())
+            Stat* stat = *it;
+            boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::const_iterator statIt = find(stat);
+
+            if (stat->isAchievement())
             {
-                copyValues(statIt->second, cursor, large);
+                continue;
             }
-            cursor += large ? 16 : 8;
+            else if (stat->isWoolStat())
+            {
+                if (statIt != end())
+                {
+                    boost::unordered_map<unsigned int, unsigned int>::const_iterator valueIt = statIt->second.find(0);
+                    if (valueIt != statIt->second.end() && (valueIt->second & 1) != 0)
+                    {
+                        woolBits |= (1ULL << woolIndex);
+                    }
+                }
+                ++woolIndex;
+            }
+            else if (stat->isBiomeStat())
+            {
+                if (statIt != end())
+                {
+                    boost::unordered_map<unsigned int, unsigned int>::const_iterator valueIt = statIt->second.find(0);
+                    if (valueIt != statIt->second.end() && (valueIt->second & 1) != 0)
+                    {
+                        biomeBits |= (1ULL << biomeIndex);
+                    }
+                }
+                ++biomeIndex;
+            }
+            else if (stat->isArmourStat())
+            {
+                if (statIt != end())
+                {
+                    boost::unordered_map<unsigned int, unsigned int>::const_iterator valueIt = statIt->second.find(0);
+                    if (valueIt != statIt->second.end() && (valueIt->second & 1) != 0)
+                    {
+                        armourBits |= static_cast<unsigned char>(1u << armourIndex);
+                    }
+                }
+                ++armourIndex;
+            }
+            else
+            {
+                bool large = isLargeStat(stat) != 0;
+                if (statIt != end())
+                {
+                    copyValues(statIt->second, cursor, large);
+                }
+                cursor += large ? 16 : 8;
+            }
         }
+
+        std::memcpy(data + 0xcc, &woolBits, sizeof(woolBits));
+        std::memcpy(data + 0xd4, &biomeBits, sizeof(biomeBits));
+        data[0xdc] = armourBits;
     }
-    mSavePending = 0;
+
+    if (ownBuffer)
+    {
+        gStorage->WriteToProfile(profile, true, force);
+    }
+
     mSaveDelay = 0x708;
     return 0;
 }

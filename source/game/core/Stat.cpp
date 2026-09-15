@@ -31,9 +31,7 @@ Stat::Stat(int id, const std::wstring& name)
     _init();
 }
 
-Stat::~Stat()
-{
-}
+Stat::~Stat() = default;
 
 void Stat::_init()
 {

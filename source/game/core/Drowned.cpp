@@ -68,11 +68,11 @@ void Drowned::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
     double dx = target->mX - mX;
     double dz = target->mZ - mZ;
     double distance = std::sqrt(dx * dx + dz * dz);
-    boost::shared_ptr<ThrownTrident> trident(new ThrownTrident(
-        mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-        not_null_ptr<ItemInstance>(new ItemInstance(Items::trident))));
-    trident->shoot(dx, target->mY + target->getEyeHeight() * 0.5 - (mY + getEyeHeight()), dz,
-                   1.6f, 14.0f);
+    boost::shared_ptr<ThrownTrident> trident(new ThrownTrident(mLevel, mX, mY + getEyeHeight(), mZ));
+    float difficultyFactor = 14.0f - (float)mLevel->getDifficulty()->getId() * 4.0f;
+    trident->shoot(dx,
+                   distance * 0.2f + (target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - trident->mY),
+                   dz, 1.6f, difficultyFactor);
     mLevel->addEntity(trident);
 }
 
@@ -254,7 +254,7 @@ void Drowned::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty
     Mob::populateDefaultEquipmentSlots(difficulty);
 }
 
-DrownedPathNavigation* Drowned::createNavigation(Level* level)
+PathNavigation* Drowned::createNavigation(Level* level)
 {
     return new DrownedPathNavigation(this, level);
 }

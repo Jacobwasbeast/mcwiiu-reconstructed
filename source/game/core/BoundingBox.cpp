@@ -158,13 +158,6 @@ BlockPos BoundingBox::getCenter()
     return BlockPos(x0 + getXSpan() / 2, y0 + getYSpan() / 2, z0 + getZSpan() / 2);
 }
 
-std::wstring BoundingBox::toString()
-{
-    wchar_t text[256];
-    swprintf(text, 256, L"BoundingBox{minX=%d, minY=%d, minZ=%d, maxX=%d, maxY=%d, maxZ=%d}",
-             x0, y0, z0, x1, y1, z1);
-    return std::wstring(text);
-}
 
 IntArrayTag* BoundingBox::createTag(const std::wstring& name)
 {

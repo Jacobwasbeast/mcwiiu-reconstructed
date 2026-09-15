@@ -11,6 +11,7 @@
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
@@ -93,29 +94,34 @@ bool Husk::doHurtTarget(boost::shared_ptr<Entity> target)
 
 not_null_ptr<ItemInstance> Husk::getSkull()
 {
-    return ItemInstance::EMPTY;
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0));
 }
 
 void Husk::finishConversion()
 {
     boost::shared_ptr<Zombie> zombie(new Zombie(mLevel));
-    if (!zombie)
-        return;
-    BlockPos pos(this);
+    zombie->copyPosition(shared_from_this());
+
+    BlockPos pos(zombie);
     DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(pos);
-    Zombie::ZombieGroupData* group =
-        new Zombie::ZombieGroupData(false, isBaby(), isBaby() ? isJockey() : false);
-    zombie->finalizeMobSpawn(difficulty, group, std::wstring());
-    zombie->moveTo(mX, mY, mZ, mYRot, mXRot);
+    if (isBaby())
+    {
+        Zombie::ZombieGroupData* group = new Zombie::ZombieGroupData(true, isJockey(), false);
+        zombie->finalizeMobSpawn(difficulty, group, std::wstring());
+    }
+    else
+    {
+        Zombie::ZombieGroupData* group = new Zombie::ZombieGroupData(false, false, false);
+        zombie->finalizeMobSpawn(difficulty, group, std::wstring());
+    }
+
+    playSound(SoundEvents::HUSK_CONVERTED_TO_ZOMBIE, 1.0f, 1.0f);
+    mLevel->removeEntity(shared_from_this());
+    dropEquipment(true, 0);
     zombie->setNoAi(isNoAi());
     zombie->setCanPickUpLoot(canPickUpLoot());
-    zombie->setPersistenceRequired(true);
-    zombie->setTarget(getTarget());
-    zombie->setLastHurtByMob(getLastHurtByMob());
-    zombie->setLastHurtMob(getLastHurtMob());
+    zombie->setCanBreakDoors(canBreakDoors());
     mLevel->addEntity(zombie);
-    playSound(SoundEvents::HUSK_CONVERTED_TO_ZOMBIE, 1.0f, 1.0f);
-    remove();
 }
 
 unsigned long long Husk::GetType()

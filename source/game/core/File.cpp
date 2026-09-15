@@ -294,22 +294,6 @@ bool File::eq_test(const File& first, const File& second)
     return first.getPath() == second.getPath();
 }
 
-bool File::mkdirs() const
-{
-    if (exists())
-    {
-        return false;
-    }
-
-    File parent = const_cast<File*>(this)->parentDir();
-    if (!parent.getPath().empty() && !parent.exists() && !parent.mkdirs())
-    {
-        return false;
-    }
-
-    return mkdir();
-}
-
 bool File::renameTo(File destination)
 {
     char sourceName[256];

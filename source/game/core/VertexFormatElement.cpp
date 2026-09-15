@@ -1,154 +1,198 @@
-#include "game/core/VertexFormatElement.hpp"
+#include "game/V/VertexFormatElement.hpp"
+#include "game/V/VertexFormatElement__Type.hpp"
+#include "game/V/VertexFormatElement__Usage.hpp"
+#include "functions.hpp"
 
-#include <sstream>
+namespace recon {
 
-const VertexFormatElement::Usage* VertexFormatElement::Usage::POSITION =
-    new VertexFormatElement::Usage(L"Position", VertexFormatElement::Usage::eUsage_Position);
-const VertexFormatElement::Usage* VertexFormatElement::Usage::NORMAL =
-    new VertexFormatElement::Usage(L"Normal", VertexFormatElement::Usage::eUsage_Normal);
-const VertexFormatElement::Usage* VertexFormatElement::Usage::COLOR =
-    new VertexFormatElement::Usage(L"Vertex Color", VertexFormatElement::Usage::eUsage_Color);
-const VertexFormatElement::Usage* VertexFormatElement::Usage::UV =
-    new VertexFormatElement::Usage(L"UV", VertexFormatElement::Usage::eUsage_Uv);
-const VertexFormatElement::Usage* VertexFormatElement::Usage::BONE_MATRIX =
-    new VertexFormatElement::Usage(L"Bone Matrix", VertexFormatElement::Usage::eUsage_BoneMatrix);
-const VertexFormatElement::Usage* VertexFormatElement::Usage::BLEND_WEIGHT =
-    new VertexFormatElement::Usage(L"Blend Weight", VertexFormatElement::Usage::eUsage_BlendWeight);
-const VertexFormatElement::Usage* VertexFormatElement::Usage::PADDING =
-    new VertexFormatElement::Usage(L"Padding", VertexFormatElement::Usage::eUsage_Padding);
-
-const VertexFormatElement::Type* VertexFormatElement::Type::FLOAT =
-    new VertexFormatElement::Type(4, L"Float", 0, VertexFormatElement::Type::eType_Float);
-const VertexFormatElement::Type* VertexFormatElement::Type::UBYTE =
-    new VertexFormatElement::Type(1, L"Unsigned Byte", 0, VertexFormatElement::Type::eType_UnsignedByte);
-const VertexFormatElement::Type* VertexFormatElement::Type::BYTE =
-    new VertexFormatElement::Type(1, L"Byte", 0, VertexFormatElement::Type::eType_Byte);
-const VertexFormatElement::Type* VertexFormatElement::Type::USHORT =
-    new VertexFormatElement::Type(2, L"Unsigned Short", 0, VertexFormatElement::Type::eType_UnsignedShort);
-const VertexFormatElement::Type* VertexFormatElement::Type::SHORT =
-    new VertexFormatElement::Type(2, L"Short", 0, VertexFormatElement::Type::eType_Short);
-const VertexFormatElement::Type* VertexFormatElement::Type::UINT =
-    new VertexFormatElement::Type(4, L"Unsigned Int", 0, VertexFormatElement::Type::eType_UnsignedInt);
-const VertexFormatElement::Type* VertexFormatElement::Type::INT =
-    new VertexFormatElement::Type(4, L"Int", 0, VertexFormatElement::Type::eType_Int);
-
-VertexFormatElement::Type::Type(int size, std::wstring name, int glType, EType id)
-    : size(size),
-      name(name),
-      glType(glType),
-      id(id)
+/* {ctor}(const VertexFormatElement&) [0x0339D58C] - reconstructed; allocating shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+VertexFormatElement::VertexFormatElement(gptr<VertexFormatElement> a1)
 {
+    guest::stub(0x0339D58Cu, gaddr(this), (uint32_t)a1);
 }
-
-int VertexFormatElement::Type::getSize() const
+#else
+VertexFormatElement::VertexFormatElement(gptr<VertexFormatElement> a1)
 {
-    return size;
+    uint32_t uVar1 = 0;
+    uint32_t uVar2 = 0;
+    uVar2 = a1->field_0x0;
+    this->field_0x8 = a1->field_0x8;
+    uVar1 = a1->field_0xc;
+    this->field_0x0 = uVar2;
+    uVar2 = a1->field_0x4;
+    this->field_0xc = uVar1;
+    this->field_0x4 = uVar2;
 }
+#endif
 
-std::wstring VertexFormatElement::Type::getName() const
+/* {ctor}(int, const VertexFormatElement::Type*, const VertexFormatElement::Usage*, int) [0x033A1370] - reconstructed; allocating shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+VertexFormatElement::VertexFormatElement(int32_t a1, gptr<VertexFormatElement_Type> a2, gptr<VertexFormatElement_Usage> a3, int32_t a4)
 {
-    return name;
+    guest::stub(0x033A1370u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (uint32_t)a4);
 }
-
-int VertexFormatElement::Type::getGlType() const
+#else
+VertexFormatElement::VertexFormatElement(int32_t a1, gptr<VertexFormatElement_Type> a2, gptr<VertexFormatElement_Usage> a3, int32_t a4)
 {
-    return glType;
-}
-
-VertexFormatElement::Type::EType VertexFormatElement::Type::getId() const
-{
-    return id;
-}
-
-VertexFormatElement::Usage::Usage(std::wstring name, EUsage id)
-    : name(name),
-      id(id)
-{
-}
-
-VertexFormatElement::Usage::EUsage VertexFormatElement::Usage::getId() const
-{
-    return id;
-}
-
-std::wstring VertexFormatElement::Usage::getName() const
-{
-    return name;
-}
-
-VertexFormatElement::VertexFormatElement(const VertexFormatElement& other)
-    : type(other.type),
-      usage(other.usage),
-      index(other.index),
-      count(other.count)
-{
-}
-
-VertexFormatElement::VertexFormatElement(int index, const Type* type, const Usage* usage, int count)
-{
-    if (!supportsUsage(index, usage))
+    if (((this->supportsUsage((a1), (gptr<VertexFormatElement_Usage>)(a3))) == 0))
     {
-        usage = Usage::UV;
+        a3 = global_0x10588164;
     }
-
-    this->type = type;
-    this->usage = usage;
-    this->index = index;
-    this->count = count;
+    this->field_0x0 = a2;
+    this->field_0x8 = a1;
+    this->field_0x4 = a3;
+    this->field_0xc = a4;
 }
+#endif
 
-const VertexFormatElement::Type* VertexFormatElement::getType() const
+/* isPosition() const [0x0339D5F8] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_0339D5F8
+bool VertexFormatElement::isPosition()
 {
-    return type;
+    return (this->field_0x4 == global_0x10588158);
 }
-
-const VertexFormatElement::Usage* VertexFormatElement::getUsage() const
+#else
+bool VertexFormatElement::isPosition()
 {
-    return usage;
+    return (bool)(guest::stub(0x0339D5F8u, gaddr(this)) >> 32);
 }
+#endif
 
-int VertexFormatElement::getIndex() const
+/* getUsage() const [0x0339DDB8] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_0339DDB8
+uint32_t VertexFormatElement::getUsage()
 {
-    return index;
+    return this->field_0x4;
 }
-
-int VertexFormatElement::getCount() const
+#else
+uint32_t VertexFormatElement::getUsage()
 {
-    return count;
+    return (uint32_t)(guest::stub(0x0339DDB8u, gaddr(this)) >> 32);
 }
+#endif
 
-int VertexFormatElement::getByteSize() const
+/* getIndex() const [0x0339DDC0] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_0339DDC0
+uint32_t VertexFormatElement::getIndex()
 {
-    return type->getSize() * count;
+    return this->field_0x8;
 }
-
-bool VertexFormatElement::isPosition() const
+#else
+uint32_t VertexFormatElement::getIndex()
 {
-    return usage == Usage::POSITION;
+    return (uint32_t)(guest::stub(0x0339DDC0u, gaddr(this)) >> 32);
 }
+#endif
 
-bool VertexFormatElement::supportsUsage(int index, const Usage* usage) const
+/* getByteSize() const [0x0339DDD0] - reconstructed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_0339DDD0
+int32_t VertexFormatElement::getByteSize()
 {
-    return index == 0 || usage == Usage::UV;
+    int32_t iVar1 = 0;
+    iVar1 = ((VertexFormatElement_Type *)gmem(this->field_0x0))->getSize();
+    return (iVar1 * this->field_0xc);
 }
-
-bool VertexFormatElement::equals(VertexFormatElement* other) const
+#else
+int32_t VertexFormatElement::getByteSize()
 {
-    if (this == other) {
-        return true;
+    return (int32_t)(guest::stub(0x0339DDD0u, gaddr(this)) >> 32);
+}
+#endif
+
+/* supportsUsage(int, const VertexFormatElement::Usage*) const [0x033A1348] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_033A1348
+uint32_t VertexFormatElement::supportsUsage(int32_t a1, gptr<VertexFormatElement_Usage> a2)
+{
+    uint32_t uVar1 = 0;
+    uVar1 = 1;
+    if (((a1 != 0) && (a2 != global_0x10588164)))
+    {
+        uVar1 = 0;
     }
-
-    return type == other->type && usage == other->usage && index == other->index && count == other->count;
+    return uVar1;
 }
-
-std::wstring VertexFormatElement::toString() const
+#else
+uint32_t VertexFormatElement::supportsUsage(int32_t a1, gptr<VertexFormatElement_Usage> a2)
 {
-    std::wostringstream stream;
-    stream << L"VertexFormatElement{";
-    stream << L"usage=" << usage->getName();
-    stream << L", index=" << index;
-    stream << L", type=" << type->getName();
-    stream << L", count=" << count;
-    stream << L'}';
-    return stream.str();
+    return (uint32_t)(guest::stub(0x033A1348u, gaddr(this), (uint32_t)a1, (uint32_t)a2) >> 32);
 }
+#endif
+
+}  /* namespace recon */
+\n#include "game/V/VertexFormatElement__Type.hpp"
+#include "_thirdparty/std__basic_string_wchar_t__std__char_traits_wchar_t___std__allocator_wchar_t__.hpp"
+#include "functions.hpp"
+
+namespace recon {
+
+/* {ctor}(int, std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>, int, VertexFormatElement::Type::EType) [0x033A14A0] - LOWERED-DRAFT; not reconstructed; allocating shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+VertexFormatElement_Type::VertexFormatElement_Type(int32_t a1, gptr<wstring> a2, int32_t a3, uint32_t a4)
+{
+    guest::stub(0x033A14A0u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (uint32_t)a4);
+}
+#else
+VertexFormatElement_Type::VertexFormatElement_Type(int32_t a1, gptr<wstring> a2, int32_t a3, uint32_t a4)
+{
+    this->field_0x20 = 7;
+    ST32(gaddr(this), a1);
+    this->field_0x8 = 0;
+    this->field_0x1c = 0;
+    ((wstring *)gmem((gaddr(this) + (1) * 4)))->assign((int32_t)(a2), (uint32_t)(0), (uint32_t)(0xffffffff));
+    this->field_0x28 = a4;
+    this->field_0x24 = a3;
+}
+#endif
+
+/* getSize() const [0x0339DDC8] - LOWERED-DRAFT; not reconstructed (1 raw IR ops, 1 raise misses) */
+#if defined(RECON_RUNTIME_BUILD)
+uint32_t VertexFormatElement_Type::getSize()
+{
+    return (uint32_t)(guest::stub(0x0339DDC8u, gaddr(this)) >> 32);
+}
+#else
+uint32_t VertexFormatElement_Type::getSize()
+{
+    return LD32(gaddr(this));
+}
+#endif
+
+}  /* namespace recon */
+\n#include "game/V/VertexFormatElement__Usage.hpp"
+#include "_thirdparty/std__basic_string_wchar_t__std__char_traits_wchar_t___std__allocator_wchar_t__.hpp"
+#include "functions.hpp"
+
+namespace recon {
+
+/* {ctor}(std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>>, VertexFormatElement::Usage::EUsage) [0x033A1408] - reconstructed; allocating shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
+VertexFormatElement_Usage::VertexFormatElement_Usage(gptr<wstring> a1, uint32_t a2)
+{
+    guest::stub(0x033A1408u, gaddr(this), (uint32_t)a1, (uint32_t)a2);
+}
+#else
+VertexFormatElement_Usage::VertexFormatElement_Usage(gptr<wstring> a1, uint32_t a2)
+{
+    this->field_0x1c = 7;
+    this->field_0x4 = 0;
+    this->field_0x18 = 0;
+    ((wstring *)gmem(gaddr(this)))->assign((a1), 0, 0xffffffff);
+    this->field_0x20 = a2;
+}
+#endif
+
+/* getId() const [0x0339DDB0] - closed */
+#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_0339DDB0
+uint32_t VertexFormatElement_Usage::getId()
+{
+    return this->field_0x20;
+}
+#else
+uint32_t VertexFormatElement_Usage::getId()
+{
+    return (uint32_t)(guest::stub(0x0339DDB0u, gaddr(this)) >> 32);
+}
+#endif
+
+}  /* namespace recon */

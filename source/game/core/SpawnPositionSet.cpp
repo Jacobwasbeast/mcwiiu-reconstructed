@@ -6,9 +6,7 @@ SpawnPositionSet::SpawnPositionSet()
     addUnsignedCharAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(51), &mType);
 }
 
-SpawnPositionSet::~SpawnPositionSet()
-{
-}
+SpawnPositionSet::~SpawnPositionSet() = default;
 
 ConsoleGameRules::EGameRuleType SpawnPositionSet::getActionType()
 {

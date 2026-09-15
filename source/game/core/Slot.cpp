@@ -2,6 +2,8 @@
 
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/CraftingContainer.hpp"
+#include "game/item/Recipes.hpp"
 
 Slot::Slot(boost::shared_ptr<Container> container, int index, int x, int y)
     : mSlot(index),
@@ -129,48 +131,39 @@ bool Slot::mayCombine(not_null_ptr<ItemInstance> item)
 
 not_null_ptr<ItemInstance> Slot::combine(not_null_ptr<ItemInstance> item)
 {
-    return getItem();
+    boost::shared_ptr<CraftingContainer> craftingContainer(
+        new CraftingContainer(NULL, 2, 2));
+    craftingContainer->setItem(0, getItem());
+    craftingContainer->setItem(1, item);
+
+    return Recipes::getInstance()->getItemFor(
+        craftingContainer, NULL, NULL, Recipes::eRecipeCategory_Crafting);
 }
 
 void Slot::swap(Slot* other)
 {
     not_null_ptr<ItemInstance> current = getItem();
     not_null_ptr<ItemInstance> incoming = other->getItem();
-    if (current->isEmpty())
+
+    if (!current->isEmpty() && other->getMaxStackSize(current) < current->getCount())
     {
         if (!incoming->isEmpty())
         {
-            set(incoming);
-            other->set(current);
-        }
-        return;
-    }
-    if (incoming->isEmpty())
-    {
-        other->set(current);
-        set(incoming);
-        return;
-    }
-    if (mayCombine(incoming) && other->mayCombine(current))
-    {
-        int capacity = other->getMaxStackSize(current) - incoming->getCount();
-        if (capacity > 0)
-        {
-            int amount = current->getCount() < capacity ? current->getCount() : capacity;
-            current->split(amount);
-            incoming->grow(amount);
-            other->set(incoming);
-            if (current->isEmpty())
-            {
-                set(current);
-            }
-            else
-            {
-                set(current);
-            }
             return;
         }
+        incoming = current->split(current->getCount() - other->getMaxStackSize(current));
     }
-    set(incoming);
-    other->set(current);
+
+    if (!incoming->isEmpty() && getMaxStackSize(incoming) < incoming->getCount())
+    {
+        if (!current->isEmpty())
+        {
+            return;
+        }
+        current = incoming->split(incoming->getCount() - getMaxStackSize(incoming));
+    }
+
+    other->mContainer->setItem(other->mSlot, current);
+    mContainer->setItem(mSlot, incoming);
+    setChanged();
 }

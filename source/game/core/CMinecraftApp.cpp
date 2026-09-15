@@ -47,7 +47,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/core/Achievement.hpp"
-#include "game/core/CTelemetryManager.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/IUIScene_DLCUpsell.hpp"
 #include "game/core/MOJJANG_DATA.hpp"
@@ -87,8 +87,6 @@ CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
 static Random sTipRandom;
 static bool s_pendingDlcInstallTip;
-
-extern CTelemetryManager gTelemetryManager;
 
 namespace
 {
@@ -930,7 +928,7 @@ uint64_t CMinecraftApp::UpsellReturnedCallback(void* context, eUpsellType type, 
         outcome = static_cast<ESen_UpsellOutcome>(2);
 
     const int playerId = gProfile->GetPrimaryPad();
-    gTelemetryManager.RecordUpsellResponded(playerId, static_cast<ESen_UpsellID>(1), 1, outcome);
+    telemetryManagerInstance->RecordUpsellResponded(playerId, static_cast<ESen_UpsellID>(1), 1, outcome);
     return 0;
 }
 int CMinecraftApp::TipsSortFunction(const void* firstTip, const void* secondTip)
@@ -1027,7 +1025,7 @@ uint32_t CMinecraftApp::UnlockFullSaveReturned(void* context, int button, C4JSto
     }
     else
     {
-        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
                                               static_cast<ESen_UpsellOutcome>(2));
     }
     return 0;
@@ -1062,7 +1060,7 @@ uint32_t CMinecraftApp::UnlockFullExitReturned(void* context, int button, C4JSto
     }
     else
     {
-        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
                                               static_cast<ESen_UpsellOutcome>(2));
         app->SetAction(userIndex, static_cast<eXuiAction>(5), NULL);
     }
@@ -1166,7 +1164,7 @@ uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage:
     }
     else
     {
-        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
                                               static_cast<ESen_UpsellOutcome>(2));
         app->SetAction(userIndex, static_cast<eXuiAction>(0xe), NULL);
     }
@@ -1181,7 +1179,7 @@ uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JS
     }
     else
     {
-        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
                                               static_cast<ESen_UpsellOutcome>(2));
     }
     return 0;
@@ -2609,7 +2607,7 @@ uint64_t CMinecraftApp::RemoveLevelFromBannedLevelList(int player, PlayerUID uid
             continue;
         }
 
-        gTelemetryManager.RecordUnBanLevel(player);
+        telemetryManagerInstance->RecordUnBanLevel(player);
         it = bannedList.erase(it);
     }
 

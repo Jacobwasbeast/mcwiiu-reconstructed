@@ -99,9 +99,9 @@ public:
     virtual unsigned long long GetType();
     static void addDataWalkers(DataFixerUpper* dataFixerUpper, unsigned long long gameTime);
 
-    static const EntityDataAccessor<int>* DATA_ID_DAMAGE;
+    static const EntityDataAccessor<float>* DATA_ID_DAMAGE;
     static const EntityDataAccessor<int>* DATA_ID_DISPLAY_BLOCK;
-    static const EntityDataAccessor<float>* DATA_ID_DISPLAY_OFFSET;
+    static const EntityDataAccessor<int>* DATA_ID_DISPLAY_OFFSET;
     static const EntityDataAccessor<int>* DATA_ID_HURT_TIME;
     static const EntityDataAccessor<int>* DATA_ID_HURT_DIR;
     static const EntityDataAccessor<bool>* DATA_ID_CUSTOM_DISPLAY;

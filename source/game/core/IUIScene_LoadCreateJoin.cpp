@@ -10,7 +10,7 @@
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
-#include "game/core/CTelemetryManager.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCManager.hpp"
 #include "game/core/File.hpp"
@@ -44,7 +44,6 @@ extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 extern CStorage* gStorage;
-extern CTelemetryManager gTelemetryManager;
 
 namespace
 {
@@ -306,8 +305,17 @@ std::vector<File*>& IUIScene_LoadCreateJoin::GetLoadFileList()
 
 uint64_t IUIScene_LoadCreateJoin::AddMatchmakingButton(std::wstring label, int id, std::wstring description)
 {
+    AddCreateListButton(label, id);
     m_buttonIds.push_back(id);
-    return m_buttonIds.size();
+    std::wstring path = formatwstr(L"Graphics\\%ls.png", description.c_str());
+    if (g_pApp->hasArchiveFile(path, false))
+    {
+        arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(path, false);
+        if (file.data != 0 && file.length != 0)
+            SetCreateListIcon(m_state24, file.data, file.length, description);
+    }
+    ++m_state24;
+    return static_cast<uint64_t>(m_buttonIds.size());
 }
 
 uint64_t IUIScene_LoadCreateJoin::AddGameModeButton(std::wstring label, int id, std::wstring description)
@@ -417,7 +425,7 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
 int IUIScene_LoadCreateJoin::HandleTelemetrySavesReturned(void* context, SAVE_DETAILS* details, bool complete)
 {
     (void)complete;
-    gTelemetryManager.RecordSavesInformation(gProfile->GetPrimaryPad(), details, 0);
+    telemetryManagerInstance->RecordSavesInformation(gProfile->GetPrimaryPad(), details, 0);
     (void)context;
     return 0;
 }

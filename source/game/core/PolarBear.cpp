@@ -1,6 +1,7 @@
 #include "game/core/PolarBear.hpp"
 
 #include <typeinfo>
+#include <vector>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -17,6 +18,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
@@ -45,7 +47,7 @@ void PolarBear::create(Level* level)
 
 void PolarBear::staticCtor()
 {
-    DATA_STANDING = SynchedEntityData::defineId<bool>(ENTITY_TYPE_POLAR_BEAR, 0,
+    DATA_STANDING = SynchedEntityData::defineId<bool>(ENTITY_TYPE_POLAR_BEAR, 0xd680000ULL,
                                                        EntityDataSerializers::BOOLEAN);
 }
 
@@ -217,8 +219,28 @@ PolarBear::PolarBearAttackPlayersGoal::~PolarBearAttackPlayersGoal()
 
 bool PolarBear::PolarBearAttackPlayersGoal::canUse()
 {
-    if (mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL || mMob->isBaby()) return false;
-    return NearestAttackableTargetGoal::canUse();
+    if (mMob->mLevel->getDifficulty() != Difficulty::PEACEFUL && !mMob->isBaby() &&
+        NearestAttackableTargetGoal::canUse())
+    {
+        AABB* box = mMob->mBoundingBox->grow(8.0, 4.0, 8.0);
+        std::vector<boost::shared_ptr<Entity> >* entities =
+            mMob->mLevel->getEntitiesOfClass(typeid(PolarBear), box);
+
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+             it != entities->end(); ++it)
+        {
+            boost::shared_ptr<PolarBear> bear = boost::static_pointer_cast<PolarBear>(*it);
+            if (bear->isBaby())
+            {
+                delete entities;
+                return true;
+            }
+        }
+
+        delete entities;
+        mMob->setTarget(boost::shared_ptr<LivingEntity>());
+    }
+    return false;
 }
 
 double PolarBear::PolarBearAttackPlayersGoal::getFollowDistance()
@@ -248,8 +270,14 @@ void PolarBear::PolarBearHurtByTargetGoal::start()
 void PolarBear::PolarBearHurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
                                                        boost::shared_ptr<LivingEntity> target)
 {
-    if (mob && mob->GetType() == ENTITY_TYPE_POLAR_BEAR && mob->isBaby() == false)
-        HurtByTargetGoal::alertOther(mob, target);
+    if (mob->GetType() == ENTITY_TYPE_POLAR_BEAR)
+    {
+        boost::shared_ptr<PolarBear> bear = boost::static_pointer_cast<PolarBear>(mob);
+        if (!bear->isBaby())
+        {
+            HurtByTargetGoal::alertOther(mob, target);
+        }
+    }
 }
 
 PolarBear::PolarBearMeleeAttackGoal::PolarBearMeleeAttackGoal(PolarBear* polarBear)

@@ -6,6 +6,7 @@
 #include "game/entity/mob/Monster.hpp"
 #include "game/world/block/Predicate.hpp"
 
+class PathNavigation;
 class DamageSource;
 class FlyingPathNavigation;
 class Level;
@@ -36,7 +37,7 @@ public:
     virtual bool canFly();
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual FlyingPathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();

@@ -1,5 +1,8 @@
 #include "game/core/DLCSkinFile.hpp"
 
+#include <cstdio>
+#include <cwchar>
+
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ChinaDlcFilter.hpp"
@@ -10,14 +13,14 @@
 extern CConsoleMinecraftApp gApp;
 
 DLCSkinFile::DLCSkinFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Skin, path), mSkinAdjustments(), mFree(false), mAdditionalBoxes()
+    : DLCFile(DLCManager::eDLCType_Skin, path), mLocKeySet(false), mSkinAdjustments(), mFree(false), mAdditionalBoxes()
 {
-    mHead = L"buckets_";
-    mBody = L"buckets_";
-    mArm = L"buckets_";
-    mLeg = L"buckets_";
-    mCape = L"buckets_";
-    mElytra = L"buckets_";
+    mDisplayName = L"buckets_";
+    mThemeName = L"buckets_";
+    mLocKey = L"buckets_";
+    mDisplayNameID = L"buckets_";
+    mThemeNameID = L"buckets_";
+    mCapePath = L"buckets_";
 }
 
 DLCSkinFile::~DLCSkinFile()
@@ -40,18 +43,84 @@ void DLCSkinFile::addParameter(DLCManager::EDLCParameterType parameter, const st
 {
     switch (parameter)
     {
-    case (DLCManager::EDLCParameterType)0: mHead = value; break;
-    case (DLCManager::EDLCParameterType)1: mBody = value; break;
-    case (DLCManager::EDLCParameterType)2: mArm = value; break;
-    case (DLCManager::EDLCParameterType)3: mFree = true; break;
-    case (DLCManager::EDLCParameterType)5: mLeg = value; break;
-    default: break;
+    case DLCManager::eDLCParameterType_DisplayName:
+        mDisplayName = value;
+        break;
+    case DLCManager::eDLCParameterType_ThemeName:
+        mThemeName = value;
+        break;
+    case DLCManager::eDLCParameterType_LocKey:
+        mLocKey = value;
+        mLocKeySet = true;
+        break;
+    case DLCManager::eDLCParameterType_Free:
+        mFree = true;
+        break;
+    case DLCManager::eDLCParameterType_Credit:
+        break;
+    case DLCManager::eDLCParameterType_CapePath:
+        mCapePath = value;
+        break;
+    case DLCManager::eDLCParameterType_PackID:
+        break;
+    case DLCManager::eDLCParameterType_NetherParticleColour:
+        break;
+    case DLCManager::eDLCParameterType_EnchantTextColour:
+        break;
+    case DLCManager::eDLCParameterType_EnchantTextFocusColour:
+        break;
+    case DLCManager::eDLCParameterType_DataPath:
+        break;
+    case DLCManager::eDLCParameterType_PackVersion:
+        break;
+    case DLCManager::eDLCParameterType_DisplayNameID:
+        mDisplayNameID = value;
+        break;
+    case DLCManager::eDLCParameterType_ThemeNameID:
+        mThemeNameID = value;
+        break;
+    case DLCManager::eDLCParameterType_CloudHeight:
+        break;
+    case DLCManager::eDLCParameterType_CreditID:
+        m_pPack->AddCreditID(value);
+        break;
+    case DLCManager::eDLCParameterType_DisableMipMap:
+        break;
+    case DLCManager::eDLCParameterType_XMLVersion:
+        {
+            int xmlVersion = 0;
+            swscanf(value.c_str(), L"%i", &xmlVersion);
+            mSkinAdjustments.mXMLVersion = xmlVersion;
+        }
+        break;
+    default:
+        break;
     }
 }
 
-std::wstring DLCSkinFile::getParameterAsString(DLCManager::EDLCParameterType, const std::wstring& name)
+std::wstring DLCSkinFile::getParameterAsString(DLCManager::EDLCParameterType parameter, const std::wstring&)
 {
-    return lookupString(name, L"");
+    switch (parameter)
+    {
+    case DLCManager::eDLCParameterType_DisplayName:
+        if (!mLocKeySet)
+            return lookupString(mDisplayNameID, mDisplayName);
+        break;
+    case DLCManager::eDLCParameterType_ThemeName:
+        if (mLocKeySet)
+        {
+            std::wstring themeKey = lookupString(mLocKey, mThemeName);
+            if (themeKey.find(L"-") == std::wstring::npos)
+                return lookupString(mThemeNameID, mThemeName);
+            break;
+        }
+        return lookupString(mThemeNameID, mThemeName);
+    case DLCManager::eDLCParameterType_CapePath:
+        return mCapePath;
+    default:
+        break;
+    }
+    return L"";
 }
 
 bool DLCSkinFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)

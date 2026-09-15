@@ -8,10 +8,12 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/ShulkerBullet.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
@@ -19,6 +21,7 @@
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
@@ -49,7 +52,10 @@ Shulker::ShulkerAttackGoal::~ShulkerAttackGoal()
 
 bool Shulker::ShulkerAttackGoal::canUse()
 {
-    return mShulker != NULL && mShulker->getTarget() && !mShulker->isClosed();
+    boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
+    if (target == NULL || !target->isAlive())
+        return false;
+    return mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL;
 }
 
 void Shulker::ShulkerAttackGoal::start()
@@ -65,8 +71,30 @@ void Shulker::ShulkerAttackGoal::stop()
 
 void Shulker::ShulkerAttackGoal::tick()
 {
-    if (mAttackTime > 0)
-        --mAttackTime;
+    if (mShulker->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        return;
+
+    --mAttackTime;
+    boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
+    mShulker->getLookControl()->setLookAt(target, 180.0f, 180.0f);
+
+    if (mShulker->distanceToSqr(target) >= 400.0)
+    {
+        mShulker->setTarget(boost::shared_ptr<LivingEntity>());
+    }
+    else if (mAttackTime <= 0)
+    {
+        mAttackTime = mShulker->mRandom->nextInt(10) * 10 + 20;
+        const Direction* attachFace = mShulker->getAttachFace();
+        Direction::Axis* axis = attachFace->getAxis();
+        boost::shared_ptr<Entity> bullet(new ShulkerBullet(mShulker->mLevel,
+            boost::static_pointer_cast<LivingEntity>(mShulker->shared_from_this()), target, axis));
+        mShulker->mLevel->addEntity(bullet);
+        float pitch = (mShulker->mRandom->nextFloat() - mShulker->mRandom->nextFloat()) * 0.2f + 1.0f;
+        mShulker->playSound(SoundEvents::SHULKER_SHOOT, 2.0f, pitch);
+    }
+
+    Goal::tick();
 }
 
 std::wstring Shulker::ShulkerAttackGoal::getName()
@@ -190,7 +218,7 @@ void Shulker::ShulkerPeekGoal::tick()
 
 std::wstring Shulker::ShulkerPeekGoal::getName()
 {
-    return std::wstring(L"ShulkerPeek");
+    return std::wstring(L"ShulkerPeak");
 }
 
 Shulker::Shulker(Level* level)
@@ -213,10 +241,10 @@ void Shulker::create(Level* level)
 
 void Shulker::staticCtor()
 {
-    DATA_ATTACH_FACE = SynchedEntityData::defineId<const Direction*>(ENTITY_TYPE_SHULKER, ENTITY_TYPE_SHULKER, EntityDataSerializers::DIRECTION);
-    DATA_ATTACH_POSITION = SynchedEntityData::defineId<BlockPos>(ENTITY_TYPE_SHULKER, ENTITY_TYPE_SHULKER, EntityDataSerializers::BLOCK_POS);
-    DATA_PEEK = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_SHULKER, ENTITY_TYPE_SHULKER, EntityDataSerializers::BYTE);
-    DATA_COLOR = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_SHULKER, ENTITY_TYPE_SHULKER, EntityDataSerializers::BYTE);
+    DATA_ATTACH_FACE = SynchedEntityData::defineId<const Direction*>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::DIRECTION);
+    DATA_ATTACH_POSITION = SynchedEntityData::defineId<BlockPos>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::BLOCK_POS);
+    DATA_PEEK = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::BYTE);
+    DATA_COLOR = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::BYTE);
 }
 
 MobGroupData* Shulker::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
@@ -637,23 +665,45 @@ double Shulker::getRidingHeight()
 
 bool Shulker::teleportSomewhere()
 {
-    if (mLevel == NULL || isPassenger())
+    if (isNoAi() || !isAlive())
         return true;
+
     BlockPos origin(this);
     for (int attempt = 0; attempt < 5; ++attempt)
     {
-        int x = origin.x + mRandom->nextInt(17) - 8;
-        int y = origin.y + mRandom->nextInt(17) - 8;
-        int z = origin.z + mRandom->nextInt(17) - 8;
-        BlockPos candidate(x, y, z);
-        if (!mLevel->isEmptyBlock(candidate) || !mLevel->isEmptyBlock(candidate.above()))
-            continue;
-        if (!randomTeleport(x + 0.5, y, z + 0.5))
-            continue;
-        setAttachPosition(&candidate);
-        if (SoundEvents::SHULKER_TELEPORT != NULL)
-            playSound(SoundEvents::SHULKER_TELEPORT, 1.0f, 1.0f);
-        return true;
+        int rx = mRandom->nextInt(17);
+        int ry = mRandom->nextInt(17);
+        int rz = mRandom->nextInt(17);
+        BlockPos candidate = origin.offset(8 - rx, 8 - ry, 8 - rz);
+
+        bool foundSpot = false;
+        if (candidate.y > 0 && mLevel->isEmptyBlock(candidate))
+        {
+            if (mLevel->isInsideWorldBorder(shared_from_this()))
+            {
+                std::vector<AABB*>* boxes = mLevel->getCollisionAABBs(shared_from_this(), AABB::newTemp(candidate), false, false, false);
+                if (boxes->empty())
+                    foundSpot = true;
+            }
+        }
+
+        if (foundSpot)
+        {
+            for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
+            {
+                const Direction* direction = Direction::VALUES[i];
+                BlockPos adjacent = candidate.relative(direction);
+                if (mLevel->isSolidBlockingBlockInLoadedChunk(adjacent, false))
+                {
+                    mEntityData->set(DATA_ATTACH_FACE, direction, true);
+                    playSound(SoundEvents::SHULKER_TELEPORT, 1.0f, 1.0f);
+                    mEntityData->set(DATA_ATTACH_POSITION, candidate, true);
+                    mEntityData->set(DATA_PEEK, (unsigned char)0, true);
+                    setTarget(boost::shared_ptr<LivingEntity>());
+                    return true;
+                }
+            }
+        }
     }
     return false;
 }
@@ -710,9 +760,20 @@ void Shulker::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 
 bool Shulker::hurt(const DamageSource* source, float damage)
 {
-    if (isInvulnerableTo(source))
+    if (isClosed())
+    {
+        boost::shared_ptr<Entity> attacker = source->getDirectEntity();
+        if (attacker != NULL && (attacker->GetType() & 0x8000000000000000ULL) != 0)
+            return false;
+    }
+
+    if (!LivingEntity::hurt(source, damage))
         return false;
-    return LivingEntity::hurt(source, damage);
+
+    if (getHealth() < getMaxHealth() * 0.5f && mRandom->nextInt(4) == 0)
+        teleportSomewhere();
+
+    return true;
 }
 
 AABB* Shulker::getCollideBox()
@@ -751,8 +812,7 @@ unsigned char Shulker::getRawPeekAmount()
 
 void Shulker::setRawPeekAmount(int amount)
 {
-    if (mEntityData != NULL)
-        mEntityData->set(DATA_PEEK, (unsigned char)amount, true);
+    mEntityData->set(DATA_PEEK, (unsigned char)amount, true);
 }
 
 double Shulker::getClientPeekAmount(float partialTick)

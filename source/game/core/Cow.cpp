@@ -31,9 +31,7 @@ Cow::Cow(Level* level, bool callDerivedCtor)
     setSize(0.9f, 1.4f);
 }
 
-Cow::~Cow()
-{
-}
+Cow::~Cow() = default;
 
 void Cow::addDataWalkers(DataFixerUpper* fixer)
 {

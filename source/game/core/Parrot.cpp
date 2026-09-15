@@ -124,7 +124,7 @@ bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
 
 const SoundEvent* Parrot::getAmbient(Random* random)
 {
-    if (random == NULL || random->nextInt(1000) != 0 || gImitatedSounds.empty())
+    if (random->nextInt(1000) != 0)
         return NULL;
     boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
         gImitatedSounds.begin();
@@ -154,7 +154,7 @@ void Parrot::_init()
 
 void Parrot::staticCtor()
 {
-    DATA_VARIANT = SynchedEntityData::defineId<int>(0x2d6c0003ULL, 0x2d6c0000ULL,
+    DATA_VARIANT = SynchedEntityData::defineId<int>(0x2d6c0003ULL, 0x0d6c0000ULL,
                                                     EntityDataSerializers::INT);
 }
 
@@ -194,7 +194,7 @@ void Parrot::registerAttributes()
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(12.0);
 }
 
-FlyingPathNavigation* Parrot::createNavigation(Level* level)
+PathNavigation* Parrot::createNavigation(Level* level)
 {
     mFlyingNavigation = new FlyingPathNavigation(this, level);
     mFlyingNavigation->setCanOpenDoors(false);
@@ -223,6 +223,13 @@ void Parrot::calculateFlapping()
 
 void Parrot::aiStep()
 {
+    imitateNearbyMobs(mLevel, this);
+    if (mRecordPosition == NULL || mRecordPosition->distSqr(mX, mY, mZ) > 12.0 ||
+        mLevel->getBlockState(*mRecordPosition)->getBlock() != Blocks::jukebox)
+    {
+        mRecordPosition = NULL;
+        mRecordPlayingNearby = false;
+    }
     Animal::aiStep();
     calculateFlapping();
 }
@@ -332,7 +339,9 @@ void Parrot::causeFallDamage(float, float)
 
 bool Parrot::isTameFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    return itemInstance->getItem() != NULL;
+    Item* item = itemInstance->getItem();
+    return item == Items::wheatSeeds || item == Items::melonSeeds ||
+           item == Items::pumpkinSeeds || item == Items::beetrootSeeds;
 }
 
 unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
@@ -408,7 +417,12 @@ boost::shared_ptr<AgableMob> Parrot::getBreedOffspring(boost::shared_ptr<AgableM
 
 bool Parrot::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    return LivingEntity::doHurtTarget(target);
+    boost::shared_ptr<LivingEntity> self =
+        boost::static_pointer_cast<LivingEntity>(shared_from_this());
+    EntityDamageSource* damageSource = DamageSource::CreateMobAttack(self);
+    bool result = target->hurt(damageSource, 3.0f);
+    delete damageSource;
+    return result;
 }
 
 const SoundEvent* Parrot::getAmbientSound()
@@ -464,6 +478,8 @@ void Parrot::doPush(boost::shared_ptr<Entity> entity)
 bool Parrot::hurt(const DamageSource* source, float damage)
 {
     if (isInvulnerableTo(source)) return false;
+    if (getSitGoal() != NULL)
+        getSitGoal()->wantToSit(false);
     return Animal::hurt(source, damage);
 }
 
@@ -503,7 +519,7 @@ unsigned long long Parrot::GetType()
 
 bool Parrot::NotParrotPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity && entity->GetType() != 0x2d6c000300000000ULL;
+    return entity != NULL && Parrot::getImitatedSound(entity->GetType()) != NULL;
 }
 
 Parrot::NotParrotPredicate::~NotParrotPredicate()

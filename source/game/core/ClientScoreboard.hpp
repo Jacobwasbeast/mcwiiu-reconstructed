@@ -22,8 +22,8 @@ public:
     virtual ~ClientScoreboard();
 
     void SyncPlayerStats(const StatsUID& suid, PlayerStats* stats, int round);
-    unsigned long long UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats,
-                                         int round, int life, unsigned long long changed);
+    void UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats,
+                           int round, int life, unsigned long long changed);
     PlayerStats* GetPlayerStats(const StatsUID& suid);
     PlayerStats::_RoundStats* GetPlayerRoundStats(const StatsUID& suid, int round);
     int GetLastBankedCheckpointID(const StatsUID& suid, int round);

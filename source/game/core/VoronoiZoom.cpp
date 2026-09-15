@@ -1,123 +1,80 @@
-#include "game/core/VoronoiZoom.hpp"
+#include "game/V/VoronoiZoom.hpp"
+#include "functions.hpp"
 
-#include "game/core/IntCache.hpp"
+namespace recon {
 
-#include <algorithm>
-
-VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+/* {ctor}(long long, boost::shared_ptr<Layer>) [0x02AA4E38] - boundary stub */
+VoronoiZoom::VoronoiZoom(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
-    this->parent = parent;
+    guest::stub(0x02AA4E38u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (uint32_t)a4);
 }
 
+/* {dtor}() [0x02AD1324] - LOWERED-DRAFT; not reconstructed; destructor shell stripped */
+#if defined(RECON_RUNTIME_BUILD)
 VoronoiZoom::~VoronoiZoom()
 {
+    guest::stub(0x02AD1324u, gaddr(this), 0u);
 }
-
-arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
+#else
+VoronoiZoom::~VoronoiZoom()
 {
-    x -= 2;
-    z -= 2;
-
-    int parentX = x >> 2;
-    int parentZ = z >> 2;
-    int parentWidth = (width >> 2) + 2;
-    int parentHeight = (height >> 2) + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
-
-    int zoomedWidth = (parentWidth - 1) * 4;
-
-    arrayWithLength<int> zoomedArea = IntCache::allocate(zoomedWidth * ((parentHeight - 1) * 4));
-
-    for (int i = 0; i < parentHeight - 1; i++)
+    uint8_t bVar1 = 0;
+    int32_t iVar2 = 0;
+    int32_t iVar3 = 0;
+    uint32_t piVar4 = 0;
+    uint32_t piVar5 = 0;
+    uint8_t bVar6 = 0;
+    if (((uint32_t)((gaddr(this) + 0xc)) != (uint32_t)(0x0)))
     {
-        int rowIndex = i * zoomedWidth * 4;
-
-        int upperLeft = parentArea.data[i * parentWidth];
-        int lowerLeft = parentArea.data[(i + 1) * parentWidth];
-
-        for (int j = 0; j < parentWidth - 1; j++)
+        piVar5 = LD32((uint32_t)((gaddr(this) + 0xc)));
+        bVar1 = (piVar5 == (uint32_t)(0x0));
+        if (!(bVar1))
         {
-            initRandom((long long)((j + parentX) * 4), (long long)((i + parentZ) * 4));
-            double upperLeftX = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6;
-            double upperLeftZ = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6;
-
-            initRandom((long long)((j + parentX + 1) * 4), (long long)((i + parentZ) * 4));
-            double upperRightX = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6 + 4.0;
-            double upperRightZ = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6;
-
-            initRandom((long long)((j + parentX) * 4), (long long)((i + parentZ + 1) * 4));
-            double lowerLeftX = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6;
-            double lowerLeftZ = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6 + 4.0;
-
-            initRandom((long long)((j + parentX + 1) * 4), (long long)((i + parentZ + 1) * 4));
-            double lowerRightX = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6 + 4.0;
-            double lowerRightZ = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6 + 4.0;
-
-            int upperRight = parentArea.data[i * parentWidth + j + 1] & 255;
-            int lowerRight = parentArea.data[(i + 1) * parentWidth + j + 1] & 255;
-
-            for (int localZ = 0; localZ < 4; localZ++)
+            ((void)0 /* sync dropped */);
+            do
             {
-                int destIndex = rowIndex + localZ * zoomedWidth + j * 4;
-
-                double upperLeftDeltaZ = (double)localZ - upperLeftZ;
-                double upperRightDeltaZ = (double)localZ - upperRightZ;
-                double lowerLeftDeltaZ = (double)localZ - lowerLeftZ;
-                double lowerRightDeltaZ = (double)localZ - lowerRightZ;
-
-                for (int localX = 0; localX < 4; localX++)
+                iVar3 = (gelem<int32_t>((uint32_t)(piVar5), 0) + -(1));
+                if (('\x01' != '\0'))
                 {
-                    double upperLeftDistance = upperLeftDeltaZ * upperLeftDeltaZ +
-                                               ((double)localX - upperLeftX) * ((double)localX - upperLeftX);
-                    double upperRightDistance = upperRightDeltaZ * upperRightDeltaZ +
-                                                ((double)localX - upperRightX) * ((double)localX - upperRightX);
-                    double lowerLeftDistance = lowerLeftDeltaZ * lowerLeftDeltaZ +
-                                               ((double)localX - lowerLeftX) * ((double)localX - lowerLeftX);
-                    double lowerRightDistance = lowerRightDeltaZ * lowerRightDeltaZ +
-                                                ((double)localX - lowerRightX) * ((double)localX - lowerRightX);
-
-                    if (upperLeftDistance < upperRightDistance &&
-                        upperLeftDistance < lowerLeftDistance &&
-                        upperLeftDistance < lowerRightDistance)
-                    {
-                        zoomedArea.data[destIndex] = upperLeft;
-                    }
-                    else if (upperRightDistance < upperLeftDistance &&
-                             upperRightDistance < lowerLeftDistance &&
-                             upperRightDistance < lowerRightDistance)
-                    {
-                        zoomedArea.data[destIndex] = upperRight;
-                    }
-                    else if (lowerLeftDistance < upperLeftDistance &&
-                             lowerLeftDistance < upperRightDistance &&
-                             lowerLeftDistance < lowerRightDistance)
-                    {
-                        zoomedArea.data[destIndex] = lowerLeft;
-                    }
-                    else
-                    {
-                        zoomedArea.data[destIndex] = lowerRight;
-                    }
-
-                    destIndex++;
+                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), iVar3), 1);
+                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
+                    bVar1 = 1;
                 }
             }
-
-            upperLeft = upperRight;
-            lowerLeft = lowerRight;
+            while (!(bVar1));
+            ((void)0 /* instructionSynchronize dropped */);
+            bVar6 = ((iVar3 == 0) << 1);
+            if ((iVar3 == 0))
+            {
+                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar5) + 2u, 0) + 0x14)), (uint32_t)(piVar5)) >> 32);
+                piVar4 = (piVar5 + (1) * 4);
+                ((void)0 /* sync dropped */);
+                do
+                {
+                    iVar3 = gelem<int32_t>((uint32_t)(piVar4), 0);
+                    if (('\x01' != '\0'))
+                    {
+                        iVar2 = (ST32((uint32_t)(piVar4) + (uint32_t)(0), (iVar3 + -(1))), 1);
+                        gelem<int32_t>((uint32_t)(piVar4), 0) = iVar2;
+                        bVar6 = 2;
+                    }
+                }
+                while (!((uint8_t)(((bVar6 >> 1) & 1))));
+                ((void)0 /* instructionSynchronize dropped */);
+                if (((iVar3 + -(1)) == 0))
+                {
+                    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar5) + 2u, 0) + 0x1c)), (uint32_t)(piVar5)) >> 32);
+                }
+            }
         }
     }
-
-    arrayWithLength<int> area = IntCache::allocate(width * height);
-
-    for (int i = 0; i < height; i++)
-    {
-        std::copy(zoomedArea.data + (i + (z & 3)) * zoomedWidth + (x & 3),
-                  zoomedArea.data + (i + (z & 3)) * zoomedWidth + (x & 3) + width,
-                  area.data + i * width);
-    }
-
-    return area;
 }
+#endif
+
+/* getArea(int, int, int, int) [0x02AA4FA4] - boundary stub; body not reconstructed */
+uint64_t VoronoiZoom::getArea(int32_t a1, int32_t a2, int32_t a3, int32_t a4)
+{
+    return (uint64_t)guest::stub(0x02AA4FA4u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (uint32_t)a4);
+}
+
+}  /* namespace recon */

@@ -2,6 +2,7 @@
 #include "game/core/Node.hpp"
 #undef private
 #include "game/core/Path.hpp"
+#include "game/entity/mob/Entity.hpp"
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -224,10 +225,10 @@ Vec3* Path::getPos(boost::shared_ptr<Entity> entity, int index)
 {
     Node* node = nodes.data[index];
 
-    (void)entity;
-    return Vec3::newTemp(node->x + 0.5,
+    double offset = (int)(entity->mBbWidth + 1.0f) * 0.5f;
+    return Vec3::newTemp(node->x + offset,
                          node->y,
-                         node->z + 0.5);
+                         node->z + offset);
 }
 
 Vec3* Path::currentPos(boost::shared_ptr<Entity> entity)
