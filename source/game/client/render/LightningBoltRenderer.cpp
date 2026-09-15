@@ -3,17 +3,16 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/LightningBolt.hpp"
 #include "game/util/Random.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <cstring>
 
-static long long getLightningBoltSeed(const void* entity)
+static long long getLightningBoltSeed(const boost::shared_ptr<Entity>& entity)
 {
-    long long seed;
-    std::memcpy(&seed, static_cast<const char*>(static_cast<const void*>(entity)) + 0x368,
-                sizeof(seed));
-    return seed;
+    const LightningBolt* lightningBolt = static_cast<const LightningBolt*>(entity.get());
+    return lightningBolt->mSeed;
 }
 
 LightningBoltRenderer::LightningBoltRenderer(EntityRenderDispatcher* dispatcher)
@@ -36,7 +35,7 @@ void LightningBoltRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 1);
 
-    Random random(getLightningBoltSeed(entity.get()));
+    Random random(getLightningBoltSeed(entity));
     double xOffsets[8];
     double zOffsets[8];
     double xOffset = 0.0;

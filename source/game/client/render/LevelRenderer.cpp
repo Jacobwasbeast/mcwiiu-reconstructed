@@ -78,65 +78,6 @@ LevelRenderer* gLevelRenderer;
 static boost::unordered_map<int, int> gDisplayListLengths;
 
 extern void instructionSynchronize();
-
-extern const SoundEvent* gLevelEventSound_104c4084;
-extern const SoundEvent* gLevelEventSound_104c4088;
-extern const SoundEvent* gLevelEventSound_104c408c;
-extern const SoundEvent* gLevelEventSound_104c40f4;
-extern const SoundEvent* gLevelEventSound_104c4178;
-extern const SoundEvent* gLevelEventSound_104c42c8;
-extern const SoundEvent* gLevelEventSound_104c4744;
-extern const SoundEvent* gLevelEventSound_104c474c;
-extern const SoundEvent* gLevelEventSound_104c415c;
-extern const SoundEvent* gLevelEventSound_104c4188;
-extern const SoundEvent* gLevelEventSound_104c42c4;
-extern const SoundEvent* gLevelEventSound_104c4740;
-extern const SoundEvent* gLevelEventSound_104c4748;
-extern const SoundEvent* gLevelEventSound_104c4158;
-extern const SoundEvent* gLevelEventSound_104c41d4;
-extern const SoundEvent* gLevelEventSound_104c41d0;
-extern const SoundEvent* gLevelEventSound_104c3fd4;
-extern const SoundEvent* gLevelEventSound_104c48d4;
-extern const SoundEvent* gLevelEventSound_104c48d8;
-extern const SoundEvent* gLevelEventSound_104c48dc;
-extern const SoundEvent* gLevelEventSound_104c48e0;
-extern const SoundEvent* gLevelEventSound_104c48e4;
-extern const SoundEvent* gLevelEventSound_104c48e8;
-extern const SoundEvent* gLevelEventSound_104c48ec;
-extern const SoundEvent* gLevelEventSound_104c48f0;
-extern const SoundEvent* gLevelEventSound_104c48f4;
-extern const ParticleType* gLevelEventParticle_104c4084;
-extern const ParticleType* gLevelEventParticle_104c4088;
-extern const ParticleType* gLevelEventParticle_104c408c;
-extern const ParticleType* gLevelEventParticle_104c40f4;
-extern const ParticleType* gLevelEventParticle_104c4178;
-extern const ParticleType* gLevelEventParticle_104c42c8;
-extern const ParticleType* gLevelEventParticle_104c4744;
-extern const ParticleType* gLevelEventParticle_104c474c;
-extern const ParticleType* gLevelEventParticle_104c415c;
-extern const ParticleType* gLevelEventParticle_104c4188;
-extern const ParticleType* gLevelEventParticle_104c42c4;
-extern const ParticleType* gLevelEventParticle_104c4740;
-extern const ParticleType* gLevelEventParticle_104c4748;
-extern const ParticleType* gLevelEventParticle_104c4158;
-extern const ParticleType* gLevelEventParticle_104c41d4;
-extern const ParticleType* gLevelEventParticle_104c41d0;
-extern const ParticleType* gLevelEventParticle_104c3fd4;
-extern const ParticleType* gLevelEventParticle_104c4718;
-extern const ParticleType* gLevelEventParticle_104c48b0;
-extern const ParticleType* gLevelEventParticle_104c40dc;
-extern const ParticleType* gLevelEventParticle_104c48d4;
-extern const ParticleType* gLevelEventParticle_104c48d8;
-extern const ParticleType* gLevelEventParticle_104c48dc;
-extern const ParticleType* gLevelEventParticle_104c48e0;
-extern const ParticleType* gLevelEventParticle_104c48e4;
-extern const ParticleType* gLevelEventParticle_104c48e8;
-extern const ParticleType* gLevelEventParticle_104c48ec;
-extern const ParticleType* gLevelEventParticle_104c48f0;
-extern const ParticleType* gLevelEventParticle_104c48f4;
-extern const BlockState* gLevelCheckBlockState_104c190c;
-extern const BlockState* gLevelCheckBlockState_104c18fc;
-
 int getChunkIndex(int dimension, int x, int y, int z)
 {
     if ((unsigned int)dimension < 2)
@@ -346,10 +287,7 @@ LevelRenderer::LevelRenderer(Minecraft* minecraft, Textures* textures)
     mCountEntitiesTotal = 0;
     mCountEntitiesRendered = 0;
     mCountEntitiesHidden = 0;
-    mField0x128 = 0;
-    mField0x180 = 0;
-    mField0x184 = MemoryTracker::genLists(1);
-
+    mAuxiliaryDisplayList = MemoryTracker::genLists(1);
     for (int counter = 0; counter < 5; ++counter)
     {
         mRenderCounters[counter] = 0;
@@ -1013,7 +951,7 @@ bool LevelRenderer::shouldEntityGlow(boost::shared_ptr<Entity> entity, boost::sh
     }
 
     if (entity != camera
-        || *reinterpret_cast<int*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0xdc) != 0
+        || mMinecraft->mOptions->mThirdPersonView != 0
         || cameraIsSleeping)
     {
         if (entity->isGlowing())
@@ -3217,8 +3155,9 @@ int LevelRenderer::checkAllPresentChunks(bool* present)
                     {
                         BlockPos neighbor(clip.mX + x, 0, clip.mZ + z + dx);
                         const BlockState* state = level == NULL ? NULL : level->getBlockState(neighbor);
-                        if (state != gLevelCheckBlockState_104c190c &&
-                            state != gLevelCheckBlockState_104c18fc)
+                        const BlockState* dirtState = Blocks::dirt->defaultBlockState();
+                        const BlockState* bedrockState = Blocks::bedrock->defaultBlockState();
+                        if (state != bedrockState && state != dirtState)
                             *present = true;
                     }
                 }
@@ -3311,19 +3250,19 @@ void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)
 
     if (type == 1023)
     {
-        addParticle(level, gLevelEventParticle_104c4718, camera->mX + x,
+        addParticle(level, PARTICLE_HUGE_EXPLOSION, camera->mX + x,
                     camera->mY + y, camera->mZ + z, 0.0078125, 0.0, 0.0,
                     arrayWithLength<int>());
     }
     else if (type == 1038)
     {
-        addParticle(level, gLevelEventParticle_104c48b0, camera->mX + x,
+        addParticle(level, PARTICLE_WINNING_INSTANT_SPELL, camera->mX + x,
                     camera->mY + y, camera->mZ + z, 0.0078125, 0.0, 0.0,
                     arrayWithLength<int>());
     }
     else if (type == 1028)
     {
-        addParticle(level, gLevelEventParticle_104c40dc, camera->mX + x,
+        addParticle(level, PARTICLE_ENDER, camera->mX + x,
                     camera->mY + y, camera->mZ + z, 0.0078125, -4.0, 16.0,
                     arrayWithLength<int>());
     }
@@ -3373,17 +3312,17 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
 
     switch (type)
     {
-    case 1000: playLevelEventParticle(gLevelEventParticle_104c4084, 0.0, 0.0, 0.0, 0.0); break;
-    case 1001: playLevelEventParticle(gLevelEventParticle_104c4088, 0.0, 0.0, 0.0, 0.0); break;
-    case 1002: playLevelEventParticle(gLevelEventParticle_104c408c, 0.0, 0.0, 0.0, 0.0); break;
-    case 1003: playLevelEventParticle(gLevelEventParticle_104c40f4, 0.0, 0.0, 0.0, 0.0); break;
-    case 1004: playLevelEventParticle(gLevelEventParticle_104c4178, 0.0, 0.0, 0.0, 0.0); break;
-    case 1005: playLevelEventParticle(gLevelEventParticle_104c42c8, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1006: playLevelEventParticle(gLevelEventParticle_104c4744, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1007: playLevelEventParticle(gLevelEventParticle_104c474c, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1008: playLevelEventParticle(gLevelEventParticle_104c415c, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1000: playLevelEventParticle(PARTICLE_SMOKE, 0.0, 0.0, 0.0, 0.0); break;
+    case 1001: playLevelEventParticle(PARTICLE_SMOKE, 0.0, 0.0, 0.0, 0.0); break;
+    case 1002: playLevelEventParticle(PARTICLE_SMOKE, 0.0, 0.0, 0.0, 0.0); break;
+    case 1003: playLevelEventParticle(PARTICLE_SMOKE, 0.0, 0.0, 0.0, 0.0); break;
+    case 1004: playLevelEventParticle(PARTICLE_FIREWORKS_SPARK, 0.0, 0.0, 0.0, 0.0); break;
+    case 1005: playLevelEventParticle(PARTICLE_SMOKE, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1006: playLevelEventParticle(PARTICLE_SMOKE, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1007: playLevelEventParticle(PARTICLE_SMOKE, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1008: playLevelEventParticle(PARTICLE_SMOKE, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
     case 1009:
-        playLevelEventParticle(gLevelEventParticle_104c4188,
+        playLevelEventParticle(PARTICLE_SMOKE,
                                random != NULL ? random->nextFloat() : 0.0,
                                random != NULL ? random->nextFloat() : 0.0,
                                random != NULL ? random->nextFloat() : 0.0, 1.0);
@@ -3407,14 +3346,14 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
         }
         break;
     }
-    case 1011: playLevelEventParticle(gLevelEventParticle_104c42c4, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1012: playLevelEventParticle(gLevelEventParticle_104c4740, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1013: playLevelEventParticle(gLevelEventParticle_104c4748, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1014: playLevelEventParticle(gLevelEventParticle_104c4158, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
-    case 1015: playLevelEventParticle(gLevelEventParticle_104c41d4, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
-    case 1016: playLevelEventParticle(gLevelEventParticle_104c41d0, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
+    case 1011: playLevelEventParticle(PARTICLE_HUGE_EXPLOSION, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1012: playLevelEventParticle(PARTICLE_LARGE_SMOKE, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1013: playLevelEventParticle(PARTICLE_FLAME, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1014: playLevelEventParticle(PARTICLE_SMOKE, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1015: playLevelEventParticle(PARTICLE_LARGE_EXPLODE, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
+    case 1016: playLevelEventParticle(PARTICLE_END_PORTAL, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
     case 1017: break;
-    case 1018: playLevelEventParticle(gLevelEventParticle_104c3fd4, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
+    case 1018: playLevelEventParticle(PARTICLE_BLOCK_DUST, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
     case 1019: playBlockEventSound(SoundEvents::ANVIL_BREAK, 1.0f, 1.0f, 16.0f); break;
     case 1020: playBlockEventSound(SoundEvents::ANVIL_USE, 1.0f, 1.0f, 16.0f); break;
     case 1021: playBlockEventSound(SoundEvents::ANVIL_LAND, 1.0f, 1.0f, 16.0f); break;
@@ -3561,50 +3500,50 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
     case 2007:
         break;
     case 3501:
-        playLevelEventParticle(gLevelEventParticle_104c48d4, 0.0,
+        playLevelEventParticle(PARTICLE_EXPLODE, 0.0,
                                random != NULL ? random->nextGaussian() * 0.2 + 1.0 : 1.0,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnExplosionParticles(level, pos.x, pos.y, pos.z, random, data, 10);
         break;
     case 3502:
-        playLevelEventParticle(gLevelEventParticle_104c48d8, 0.0,
+        playLevelEventParticle(PARTICLE_SPLASH, 0.0,
                                random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnSplashParticles(level, pos.x, pos.y, pos.z, random, data, 2);
         break;
     case 3503:
-        playLevelEventParticle(gLevelEventParticle_104c48dc, 0.0,
+        playLevelEventParticle(PARTICLE_BUBBLE, 0.0,
                                random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
         break;
     case 3504:
     case 3505:
-        playLevelEventParticle(type == 3504 ? gLevelEventParticle_104c48e4 : gLevelEventParticle_104c48e8,
+        playLevelEventParticle(type == 3504 ? PARTICLE_INSTANT_SPELL : PARTICLE_WINNING_INSTANT_SPELL,
                                0.0, random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnPotionParticles(level, pos.x, pos.y, pos.z, random, data, 2);
         break;
     case 3506:
-        playLevelEventParticle(gLevelEventParticle_104c48ec, 0.0,
+        playLevelEventParticle(PARTICLE_BUBBLE_POP, 0.0,
                                random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
         break;
     case 3507:
-        playLevelEventParticle(gLevelEventParticle_104c48f0, 0.0,
+        playLevelEventParticle(PARTICLE_SPLASH, 0.0,
                                random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnSplashParticles(level, pos.x, pos.y, pos.z, random, data, 2);
         break;
     case 3508:
-        playLevelEventParticle(gLevelEventParticle_104c48f4, 0.0,
+        playLevelEventParticle(PARTICLE_BUBBLE, 0.0,
                                random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
         break;
     case 3509:
-        playLevelEventParticle(gLevelEventParticle_104c48e0, 0.0,
+        playLevelEventParticle(PARTICLE_CURRENT_DOWN, 0.0,
                                random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
                                0.0, 0.0);
         if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);

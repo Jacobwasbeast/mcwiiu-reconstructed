@@ -3295,7 +3295,7 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
 
     EntityRenderDispatcher* dispatcher = mMinecraft->getEntityRenderDispatcher();
     PlayerRenderer* playerRenderer =
-        dispatcher->getPlayerRenderer(static_cast<EPlayerModelType>(1));
+        dispatcher->getPlayerRenderer(EPLAYER_MODEL_SLIM);
     if (playerRenderer == NULL)
     {
         return;

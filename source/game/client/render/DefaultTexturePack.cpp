@@ -45,7 +45,7 @@ void DefaultTexturePack::loadName()
 
 void DefaultTexturePack::loadDescription()
 {
-    m_desc1 = L"LOCALISE ME: The default look of";
+    m_desc1 = L10N::GetString(0x8b1d2c06);
 }
 
 void DefaultTexturePack::loadCustomModels()

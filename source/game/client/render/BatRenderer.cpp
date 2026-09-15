@@ -9,6 +9,7 @@
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation BAT_LOCATION;
+static const unsigned long long ENTITY_TYPE_BAT = 0x1D000101ULL;
 
 BatRenderer::BatRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new BatModel(ModelDefinition()), 0.25F)
@@ -38,8 +39,11 @@ void BatRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float 
                                  float rotationYaw, float partialTicks)
 {
     bool resting = false;
-    if (entity->GetType() == 0x1D000101ULL)
-        resting = boost::static_pointer_cast<Bat>(entity)->isResting();
+    boost::shared_ptr<Bat> bat;
+    if (entity->GetType() == ENTITY_TYPE_BAT)
+        bat = boost::static_pointer_cast<Bat>(entity);
+    if (bat)
+        resting = bat->isResting();
 
     if (resting)
         GlStateManager::translatef(0.0F, -0.1F, 0.0F);

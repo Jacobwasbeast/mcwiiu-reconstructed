@@ -13,7 +13,7 @@ BlockRenderDispatcher::BlockRenderDispatcher(BlockColors* blockColors)
 void BlockRenderDispatcher::renderSingleBlock(const BlockState* state, float x, float y, bool color)
 {
     int renderShape = state->getRenderShape();
-    if (renderShape != -1 && (BlockRenderer::canRender(renderShape) || renderShape == 1))
+    if (renderShape != -1 && (BlockRenderer::canRender(renderShape) || renderShape == BLOCK_RENDER_ENTITY))
     {
         mBlockRenderer->renderBlock(state, x, y, color, true);
     }

@@ -1,5 +1,6 @@
 #include "game/client/render/AbstractTexturePack.hpp"
 
+
 #include <string>
 
 #include <boost/unordered_map.hpp>

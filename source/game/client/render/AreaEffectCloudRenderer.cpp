@@ -9,7 +9,7 @@ AreaEffectCloudRenderer::~AreaEffectCloudRenderer()
 {
 }
 
-const ResourceLocation* AreaEffectCloudRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+const ResourceLocation* AreaEffectCloudRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
     return NULL;
 }

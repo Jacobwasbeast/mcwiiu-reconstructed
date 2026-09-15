@@ -1,5 +1,6 @@
 #include "game/client/render/BlockRenderer.hpp"
 
+
 #include <cstring>
 
 #include "game/client/render/TextureAtlasSprite.hpp"

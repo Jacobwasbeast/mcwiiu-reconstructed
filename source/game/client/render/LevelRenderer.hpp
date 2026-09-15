@@ -193,12 +193,12 @@ private:
     int mCountEntitiesTotal;
     int mCountEntitiesRendered;
     int mCountEntitiesHidden;
-    int mField0x128;
+    unsigned char mAlignmentPadding[4];
     std::vector<Chunk*> mChunks;
     OSFastMutex mRenderableBlockEntityMutex;
     boost::unordered_set<boost::shared_ptr<BlockEntity> > mRenderableBlockEntities;
-    int mField0x180;
-    int mField0x184;
+    unsigned char mRenderableBlockEntityPadding[4];
+    int mAuxiliaryDisplayList;
     double mLastSortX[4];
     double mLastSortY[4];
     double mLastSortZ[4];
@@ -207,7 +207,7 @@ private:
     TextureAtlasSprite* mDestroyStages[10];
     std::vector<AABB*> mCameraInsideAreas;
     OSFastMutex mChunkMutex;
-    int mField0x278;
+    unsigned char mChunkStatePadding[4];
     DestroyedBlockManager* mDestroyedBlocks;
     float mCloudOffset;
     unsigned char* mGlobalChunkFlags;

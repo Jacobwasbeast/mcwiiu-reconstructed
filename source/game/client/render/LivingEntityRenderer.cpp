@@ -79,6 +79,7 @@ float LivingEntityRenderer::rotlerp(float from, float to, float delta)
 
 void LivingEntityRenderer::translateWeaponItem()
 {
+    return;
 }
 
 float LivingEntityRenderer::setupScale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
@@ -406,6 +407,7 @@ int LivingEntityRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>&, floa
 
 void LivingEntityRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
 {
+    return;
 }
 
 void LivingEntityRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)

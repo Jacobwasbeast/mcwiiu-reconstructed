@@ -90,10 +90,6 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
     else
     {
         GlStateManager::pushMatrix();
-        GlStateManager::translatef(0.0f, mScale * scale, mHeadYOffset * scale);
-        GlStateManager::popMatrix();
-
-        GlStateManager::pushMatrix();
         GlStateManager::scalef(0.71428573f, 0.64935064f, 0.79365081f);
         GlStateManager::translatef(0.0f, 21.0f * scale, 0.22f);
         mHead->render(scale, useDisplayList, false);
