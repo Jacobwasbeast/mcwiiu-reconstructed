@@ -499,10 +499,10 @@ bool AbstractContainerMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance>, Sl
 void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player> player, Level* level, boost::shared_ptr<Container> container)
 {
     boost::shared_ptr<ServerPlayer> serverPlayer;
-    if (player->GetType() == 0x000000000C800001ULL)
+    if (player->GetType() == ENTITY_TYPE_SERVER_PLAYER)
         serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
     if (!player->isAlive()
-        || (player->GetType() == 0x000000000C800001ULL && serverPlayer->hasDisconnected()))
+        || (player->GetType() == ENTITY_TYPE_SERVER_PLAYER && serverPlayer->hasDisconnected()))
     {
         unsigned int i;
         for (i = 0; i < container->getContainerSize(); ++i)
@@ -663,7 +663,7 @@ int AbstractContainerMenu::getRedstoneSignalFromContainer(boost::shared_ptr<Cont
 
 int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
-    if ((entity->GetType() & 0x01800200ULL) == 0x01800200ULL)
+    if ((entity->GetType() & ENTITY_TYPE_ENTITY) == ENTITY_TYPE_ENTITY)
         return getRedstoneSignalFromContainer(boost::dynamic_pointer_cast<Container>(entity));
     return 0;
 }
@@ -719,7 +719,7 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
 }
 bool AbstractContainerMenu::IsSmallInventory()
 {
-    if (gApp.GetGameHostOption(static_cast<eGameHostOption>(0x1f))
+    if (gApp.GetGameHostOption(eGameHostOption_32)
         && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
     {
         return true;

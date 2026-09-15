@@ -143,10 +143,10 @@ UIString::~UIString()
 unsigned int UIString::setCurrentLanguage()
 {
     unsigned int language = XGetLanguage();
-    unsigned int locale = static_cast<unsigned int>(XGetLocale());
-    if (language == gCurrentLanguage && locale == gCurrentLocale)
+    unsigned int localeId = static_cast<unsigned int>(XGetLocale());
+    if (language == gCurrentLanguage && localeId == gCurrentLocale)
         return 0;
-    gCurrentLocale = locale;
+    gCurrentLocale = localeId;
     gCurrentLanguage = language;
     return 1;
 }

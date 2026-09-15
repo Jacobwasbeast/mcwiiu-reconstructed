@@ -7,6 +7,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -37,7 +38,7 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int sceneType, void*, UIL
         if (m_playerId != Minecraft::GetInstance()->mLocalPlayerIdx)
             removeControl(&m_button6, false);
     }
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && !g_pApp->DebugArtToolsOn())
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !g_pApp->DebugArtToolsOn())
         removeControl(&m_button1, false);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -95,7 +96,7 @@ void UIScene_HelpAndOptionsMenu::handleReload()
     }
     gProfile->IsFullVersion();
     bool keepButton1 = gProfile->IsFullVersion() &&
-        Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) &&
+        Minecraft::InMiniGame(eMiniGameId_Any, true) &&
         minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY;
     if (!keepButton1)
         removeControl(&m_button1, false);

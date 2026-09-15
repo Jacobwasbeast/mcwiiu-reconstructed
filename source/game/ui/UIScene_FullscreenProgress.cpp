@@ -9,6 +9,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/FJ_FullScreenProgress.hpp"
@@ -52,7 +53,7 @@ UIScene_FullscreenProgress::UIScene_FullscreenProgress(int type, void* data, UIL
     : UIScene(type, layer), m_thread(NULL), m_threadStarted(false), m_progressData(NULL),
       m_confirmationVisible(false), m_destroyCallback(NULL), m_cancelCallback(NULL),
       m_destroyCallbackData(0), m_cancelCallbackData(0), m_threadReady(false),
-      m_miniGameId(static_cast<EMiniGameId>(0)), m_miniGame(false), m_titleText(),
+      m_miniGameId(eMiniGameId_Lobby), m_miniGame(false), m_titleText(),
       m_statusText(), m_progress(0), m_cancelTooltip(0), m_wasCancelled(false),
       m_confirmationButtonHidden(false)
 {
@@ -172,14 +173,14 @@ void UIScene_FullscreenProgress::ShowConfirmationButton(bool show)
 void UIScene_FullscreenProgress::SetTipText(bool initial)
 {
     unsigned int tip;
-    if (m_miniGameId == static_cast<EMiniGameId>(15))
+    if (m_miniGameId == eMiniGameId_Any)
     {
-        tip = gApp.GetNextTip(false, static_cast<EMiniGameId>(0));
+        tip = gApp.GetNextTip(false, eMiniGameId_Lobby);
     }
     else
     {
         EMiniGameId id = m_miniGameId;
-        if (id == static_cast<EMiniGameId>(0)) id = gApp.GetFirstMiniGameType();
+        if (id == eMiniGameId_Lobby) id = gApp.GetFirstMiniGameType();
         tip = gApp.GetNextTip(true, id);
     }
     std::wstring text = gApp.FormatHTMLString(
@@ -365,8 +366,7 @@ void UIScene_FullscreenProgress::tick()
     if (!m_miniGame && m_movie != NULL)
     {
         EMiniGameId miniGameId = Minecraft::GetMiniGameId();
-        if (miniGameId != static_cast<EMiniGameId>(15) &&
-            miniGameId != static_cast<EMiniGameId>(0))
+        if (miniGameId != eMiniGameId_Any && miniGameId != eMiniGameId_Lobby)
         {
             SetLoadingScreenType(1);
             setMiniGameLogoTexture();

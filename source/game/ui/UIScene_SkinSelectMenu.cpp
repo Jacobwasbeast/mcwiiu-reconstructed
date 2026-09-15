@@ -23,7 +23,7 @@ extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_SkinSelectMenu::UIScene_SkinSelectMenu(int player, void* data, UILayer* layer)
-    : UIScene(player, layer), m_dlcScene(static_cast<eDLCContentType>(1)), m_activePackId(0),
+    : UIScene(player, layer), m_dlcScene(static_cast<eDLCContentType>(eDLCContentType_Unknown + 1)), m_activePackId(0),
       m_packTypeId(0), m_skinIndex(0), m_selectedSkinId(0), m_skinBoxes(0),
       m_characterFacing(false), m_skinChanging(false), m_favouriteChanged(false),
       m_focusChanged(false), m_packChanged(true), m_dlcChanged(false),

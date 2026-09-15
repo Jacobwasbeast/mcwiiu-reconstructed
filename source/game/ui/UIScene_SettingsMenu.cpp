@@ -33,7 +33,7 @@ UIScene_SettingsMenu::UIScene_SettingsMenu(int type, void*, UILayer* layer)
     if (gProfile->GetPrimaryPad() != m_playerId)
     {
         removeControl(&m_buttons[1], destroyControls);
-        if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ||
+        if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) ||
             Minecraft::GetInstance()->GetMiniGame()->GetHostOption(
                 static_cast<eCustomGameModeHostOption>(14)) == 0)
             removeControl(&m_buttons[4], destroyControls);
@@ -100,7 +100,7 @@ void UIScene_SettingsMenu::handleReload()
     if (gProfile->GetPrimaryPad() != m_playerId)
     {
         removeControl(&m_buttons[1], destroyControls);
-        if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ||
+        if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) ||
             Minecraft::GetInstance()->GetMiniGame()->GetHostOption(
                 static_cast<eCustomGameModeHostOption>(14)) == 0)
             removeControl(&m_buttons[4], destroyControls);

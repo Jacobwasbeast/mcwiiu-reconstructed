@@ -153,7 +153,7 @@ void UIScene_SettingsListMenu::Init()
             addSlider(m_multiList, playerId, 0xab5a4f89, 17, 0, 100, 2, true, true);
         }
         bool showOnlineOptions = !m_gameStarted;
-        if (m_gameStarted && Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+        if (m_gameStarted && Minecraft::InMiniGame(eMiniGameId_Glide, true))
             showOnlineOptions = minecraft->GetMiniGame()->GetHostOption(
                 static_cast<eCustomGameModeHostOption>(0xe)) != 0;
         if (showOnlineOptions)
@@ -176,7 +176,7 @@ void UIScene_SettingsListMenu::Init()
         addCheckbox(m_multiList, playerId, 0x3a3fcf71, 26, 0x1d, false);
         addSlider(m_multiList, playerId, 0xd51ff648, 27, 0, 200, 5, true, true);
         if ((!m_gameStarted || (m_host && !Minecraft::InMiniGame(
-                 static_cast<EMiniGameId>(0xf), true))) && m_primaryPlayer)
+                 eMiniGameId_Any, true))) && m_primaryPlayer)
             addCheckbox(m_multiList, playerId, 0x2c94b968, 28, 0xc, false);
         if (m_primaryPlayer)
             addCheckbox(m_multiList, playerId, 0x7eb016e, 29, 0xe, false);

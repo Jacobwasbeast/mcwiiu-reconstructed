@@ -12,6 +12,7 @@
 #include "platform/wiiu/CStorage.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/ui/FJ_ControlsMenu.hpp"
 #include "game/ui/UIControl_List.hpp"
 #include "game/ui/UIString.hpp"
@@ -76,7 +77,7 @@ void UIScene_ControlsMenu::Init(int player)
 
     wchar_t versionText[128];
     std::swprintf(versionText, 128, L"%ls %ls %ls", L"1.12.2177.0",
-                  MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(1), true)
+                  MiniGameDef::GetCustomGameModeById(eMiniGameId_Battle, true)
                       ->getVersionString().c_str(),
                   L"");
     m_version.init(UIString(versionText));

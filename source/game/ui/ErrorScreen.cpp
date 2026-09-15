@@ -16,8 +16,11 @@ void ErrorScreen::render(int x, int y, float partialTick)
 
 void ErrorScreen::keyPressed(wchar_t key, int action)
 {
+    (void)key;
+    (void)action;
 }
 
 void ErrorScreen::init()
 {
+    (void)mButtons;
 }

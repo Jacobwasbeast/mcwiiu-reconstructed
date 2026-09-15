@@ -283,6 +283,12 @@
 typedef FJ_FuiNode* (*FJ_FactoryFunction)(fuiRenderNode*);
 typedef boost::unordered_map<std::string, FJ_FactoryFunction> FJ_FactoryMap;
 
+template <typename Node>
+static FJ_FuiNode* createFactoryNode(fuiRenderNode* parent)
+{
+    return Node::Create(parent);
+}
+
 static FJ_FactoryMap g_fuiNodeFactories;
 static unsigned int g_factoryNodeId;
 
@@ -291,559 +297,559 @@ void FJ_Factory::initialise()
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FuiNode"),
         &FJ_FuiNode::Create));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_MenuButton_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MenuButton_Normal::Create)));
+        &createFactoryNode<FJ_MenuButton_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_MenuButton_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MenuButton_Small::Create)));
+        &createFactoryNode<FJ_MenuButton_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButton_Medium"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButton_Medium::Create)));
+        &createFactoryNode<FJ_ListButton_Medium>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButton_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButton_Normal::Create)));
+        &createFactoryNode<FJ_ListButton_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButton_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButton_Small::Create)));
+        &createFactoryNode<FJ_ListButton_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_UpsellButton_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_UpsellButton_Normal::Create)));
+        &createFactoryNode<FJ_UpsellButton_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_UpsellButton_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_UpsellButton_Small::Create)));
+        &createFactoryNode<FJ_UpsellButton_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonIconLeft_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonIconLeft_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonIconLeft_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonIconLeft_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonIconLeft_Small::Create)));
+        &createFactoryNode<FJ_ListButtonIconLeft_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonIconX2Left_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonIconX2Left_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonIconX2Left_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonIconX2Left_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonIconX2Left_Small::Create)));
+        &createFactoryNode<FJ_ListButtonIconX2Left_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonIconLeft"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonIconLeft::Create)));
+        &createFactoryNode<FJ_List_ListButtonIconLeft>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButton"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButton::Create)));
+        &createFactoryNode<FJ_List_ListButton>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonCheckbox"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonCheckbox::Create)));
+        &createFactoryNode<FJ_List_ListButtonCheckbox>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonDLC"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonDLC::Create)));
+        &createFactoryNode<FJ_List_ListButtonDLC>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonLayerIcon"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonLayerIcon::Create)));
+        &createFactoryNode<FJ_List_ListButtonLayerIcon>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonLobby"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonLobby::Create)));
+        &createFactoryNode<FJ_List_ListButtonLobby>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonPlayerList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonPlayerList::Create)));
+        &createFactoryNode<FJ_List_ListButtonPlayerList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonScoreBoard"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonScoreBoard::Create)));
+        &createFactoryNode<FJ_List_ListButtonScoreBoard>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_ListButtonAchievement"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_ListButtonAchievement::Create)));
+        &createFactoryNode<FJ_List_ListButtonAchievement>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_CheckpointMarker"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CheckpointMarker::Create)));
+        &createFactoryNode<FJ_CheckpointMarker>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_MenuButton"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_MenuButton::Create)));
+        &createFactoryNode<FJ_List_MenuButton>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BeaconEffectButton_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BeaconEffectButton_Normal::Create)));
+        &createFactoryNode<FJ_BeaconEffectButton_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BeaconEffectButton_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BeaconEffectButton_Small::Create)));
+        &createFactoryNode<FJ_BeaconEffectButton_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_EnchantingButton_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_EnchantingButton_Normal::Create)));
+        &createFactoryNode<FJ_EnchantingButton_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_EnchantingButton_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_EnchantingButton_Small::Create)));
+        &createFactoryNode<FJ_EnchantingButton_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KeyboardButtons_Controls_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KeyboardButtons_Controls_Normal::Create)));
+        &createFactoryNode<FJ_KeyboardButtons_Controls_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KeyboardButtons_Controls_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KeyboardButtons_Controls_Small::Create)));
+        &createFactoryNode<FJ_KeyboardButtons_Controls_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KeyboardButtons_Keys_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KeyboardButtons_Keys_Normal::Create)));
+        &createFactoryNode<FJ_KeyboardButtons_Keys_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KeyboardButtons_Keys_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KeyboardButtons_Keys_Small::Create)));
+        &createFactoryNode<FJ_KeyboardButtons_Keys_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KeyboardButtons_Controls_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KeyboardButtons_Controls_Normal::Create)));
+        &createFactoryNode<FJ_KeyboardButtons_Controls_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LayoutButton"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LayoutButton::Create)));
+        &createFactoryNode<FJ_LayoutButton>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LayoutButton_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LayoutButton_Small::Create)));
+        &createFactoryNode<FJ_LayoutButton_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonAchievement_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonAchievement_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonAchievement_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonAchievement_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonAchievement_Small::Create)));
+        &createFactoryNode<FJ_ListButtonAchievement_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonCheckbox_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonCheckbox_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonCheckbox_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonCheckbox_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonCheckbox_Small::Create)));
+        &createFactoryNode<FJ_ListButtonCheckbox_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonDLC_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonDLC_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonDLC_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonDLC_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonDLC_Small::Create)));
+        &createFactoryNode<FJ_ListButtonDLC_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonLayerIcon_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonLayerIcon_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonLayerIcon_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonLayerIcon_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonLayerIcon_Small::Create)));
+        &createFactoryNode<FJ_ListButtonLayerIcon_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonLobby_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonLobby_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonLobby_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonLobby_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonLobby_Small::Create)));
+        &createFactoryNode<FJ_ListButtonLobby_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonPlayerList_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonPlayerList_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonPlayerList_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonPlayerList_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonPlayerList_Small::Create)));
+        &createFactoryNode<FJ_ListButtonPlayerList_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonScoreBoard_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonScoreBoard_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonScoreBoard_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonScoreBoard_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonScoreBoard_Small::Create)));
+        &createFactoryNode<FJ_ListButtonScoreBoard_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonController_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonController_Normal::Create)));
+        &createFactoryNode<FJ_ListButtonController_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListButtonController_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListButtonController_Small::Create)));
+        &createFactoryNode<FJ_ListButtonController_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LeaderboardList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardList::Create)));
+        &createFactoryNode<FJ_LeaderboardList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LeaderboardEntryNormal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardEntryNormal::Create)));
+        &createFactoryNode<FJ_LeaderboardEntryNormal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LeaderboardEntrySmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardEntrySmall::Create)));
+        &createFactoryNode<FJ_LeaderboardEntrySmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LeaderboardHeaderNormal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardHeaderNormal::Create)));
+        &createFactoryNode<FJ_LeaderboardHeaderNormal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LeaderboardHeaderSmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardHeaderSmall::Create)));
+        &createFactoryNode<FJ_LeaderboardHeaderSmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_LeaderboardList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardList::Create)));
+        &createFactoryNode<FJ_LeaderboardList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_IconSlot"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_IconSlot::Create)));
+        &createFactoryNode<FJ_IconSlot>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ToolTip_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ToolTip_Normal::Create)));
+        &createFactoryNode<FJ_ToolTip_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ToolTip_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ToolTip_Small::Create)));
+        &createFactoryNode<FJ_ToolTip_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label::Create)));
+        &createFactoryNode<FJ_Label>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Blink_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Blink_Normal::Create)));
+        &createFactoryNode<FJ_Label_Blink_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Blink_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Blink_Small::Create)));
+        &createFactoryNode<FJ_Label_Blink_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ScrollArrow"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ScrollArrow::Create)));
+        &createFactoryNode<FJ_ScrollArrow>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ScrollArrowH"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ScrollArrowH::Create)));
+        &createFactoryNode<FJ_ScrollArrowH>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Slider_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Slider_Normal::Create)));
+        &createFactoryNode<FJ_Slider_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Slider_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Slider_Small::Create)));
+        &createFactoryNode<FJ_Slider_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TexturePackList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TexturePackList::Create)));
+        &createFactoryNode<FJ_TexturePackList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TexturePackList_Slot"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TexturePackList_Slot::Create)));
+        &createFactoryNode<FJ_TexturePackList_Slot>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_SlotList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SlotList::Create)));
+        &createFactoryNode<FJ_SlotList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_SlotList_Slot"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SlotList_Slot::Create)));
+        &createFactoryNode<FJ_SlotList_Slot>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_CheckBox_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CheckBox_Normal::Create)));
+        &createFactoryNode<FJ_CheckBox_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_CheckBox_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CheckBox_Small::Create)));
+        &createFactoryNode<FJ_CheckBox_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_SlotList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SlotList::Create)));
+        &createFactoryNode<FJ_SlotList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_SlotList_Slot"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SlotList_Slot::Create)));
+        &createFactoryNode<FJ_SlotList_Slot>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ExlamationMark"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ExlamationMark::Create)));
+        &createFactoryNode<FJ_ExlamationMark>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Cursor_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Cursor_Normal::Create)));
+        &createFactoryNode<FJ_Cursor_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Cursor_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Cursor_Small::Create)));
+        &createFactoryNode<FJ_Cursor_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_MobEffect_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MobEffect_Small::Create)));
+        &createFactoryNode<FJ_MobEffect_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_MobEffect_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MobEffect_Normal::Create)));
+        &createFactoryNode<FJ_MobEffect_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TouchControl"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TouchControl::Create)));
+        &createFactoryNode<FJ_TouchControl>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TouchControlFrontend"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TouchControlFrontend::Create)));
+        &createFactoryNode<FJ_TouchControlFrontend>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BitmapIcon"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BitmapIcon::Create)));
+        &createFactoryNode<FJ_BitmapIcon>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_List_MultiList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_List_MultiList::Create)));
+        &createFactoryNode<FJ_List_MultiList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("CreditsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CreditsMenu::Create)));
+        &createFactoryNode<FJ_CreditsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("EndPoem"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_EndPoem::Create)));
+        &createFactoryNode<FJ_EndPoem>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("MainMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MainMenu::Create)));
+        &createFactoryNode<FJ_MainMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("LoadMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LoadMenu::Create)));
+        &createFactoryNode<FJ_LoadMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SaveMessage"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SaveMessage::Create)));
+        &createFactoryNode<FJ_SaveMessage>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("ComponentLogo"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ComponentLogo::Create)));
+        &createFactoryNode<FJ_ComponentLogo>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("Panorama"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Panorama::Create)));
+        &createFactoryNode<FJ_Panorama>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("ToolTips"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ToolTips::Create)));
+        &createFactoryNode<FJ_ToolTips>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("Intro"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Intro::Create)));
+        &createFactoryNode<FJ_Intro>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("LoadCreateJoinMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LoadCreateJoinMenu::Create)));
+        &createFactoryNode<FJ_LoadCreateJoinMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("Hud"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Hud::Create)));
+        &createFactoryNode<FJ_Hud>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("HowToPlayMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HowToPlayMenu::Create)));
+        &createFactoryNode<FJ_HowToPlayMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("HowToPlay"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HowToPlay::Create)));
+        &createFactoryNode<FJ_HowToPlay>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("CreativeMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CreativeMenu::Create)));
+        &createFactoryNode<FJ_CreativeMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("CraftingMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CraftingMenu::Create)));
+        &createFactoryNode<FJ_CraftingMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("InventoryMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_InventoryMenu::Create)));
+        &createFactoryNode<FJ_InventoryMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FullscreenProgress"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_FullScreenProgress::Create)));
+        &createFactoryNode<FJ_FullScreenProgress>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("Eula"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Eula::Create)));
+        &createFactoryNode<FJ_Eula>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("MessageBox"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MessageBox::Create)));
+        &createFactoryNode<FJ_MessageBox>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("PauseMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_PauseMenu::Create)));
+        &createFactoryNode<FJ_PauseMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("HelpAndOptionsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HelpAndOptionsMenu::Create)));
+        &createFactoryNode<FJ_HelpAndOptionsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SettingsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SettingsMenu::Create)));
+        &createFactoryNode<FJ_SettingsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("AnvilMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_AnvilMenu::Create)));
+        &createFactoryNode<FJ_AnvilMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("BeaconMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BeaconMenu::Create)));
+        &createFactoryNode<FJ_BeaconMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("BrewingStandMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingStandMenu::Create)));
+        &createFactoryNode<FJ_BrewingStandMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("ClassicCraftingMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ClassicCraftingMenu::Create)));
+        &createFactoryNode<FJ_ClassicCraftingMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("ChestMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ChestMenu::Create)));
+        &createFactoryNode<FJ_ChestMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DispenserMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DispenserMenu::Create)));
+        &createFactoryNode<FJ_DispenserMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("EnchantingMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_EnchantingMenu::Create)));
+        &createFactoryNode<FJ_EnchantingMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FurnaceMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_FurnaceMenu::Create)));
+        &createFactoryNode<FJ_FurnaceMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("HopperMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HopperMenu::Create)));
+        &createFactoryNode<FJ_HopperMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("HorseInventoryMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HorseInventoryMenu::Create)));
+        &createFactoryNode<FJ_HorseInventoryMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("BookAndQuillMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BookAndQuillMenu::Create)));
+        &createFactoryNode<FJ_BookAndQuillMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("ControlsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ControlsMenu::Create)));
+        &createFactoryNode<FJ_ControlsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("PressStartToPlay"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_PressStartToPlay::Create)));
+        &createFactoryNode<FJ_PressStartToPlay>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SuperFlatMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SuperFlatMenu::Create)));
+        &createFactoryNode<FJ_SuperFlatMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SuperFlatPresets"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SuperFlatPresets::Create)));
+        &createFactoryNode<FJ_SuperFlatPresets>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SuperFlatEditLayerMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SuperFlatEditLayerMenu::Create)));
+        &createFactoryNode<FJ_SuperFlatEditLayerMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("QuadrantSignin"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_QuadrantSignin::Create)));
+        &createFactoryNode<FJ_QuadrantSignin>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("LeaderboardMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LeaderboardMenu::Create)));
+        &createFactoryNode<FJ_LeaderboardMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("TradingMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TradingMenu::Create)));
+        &createFactoryNode<FJ_TradingMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("GameModeScoreboard"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_GameModeScoreboard::Create)));
+        &createFactoryNode<FJ_GameModeScoreboard>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("BiomeSelectMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BiomeSelectMenu::Create)));
+        &createFactoryNode<FJ_BiomeSelectMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("ComponentChat"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ComponentChat::Create)));
+        &createFactoryNode<FJ_ComponentChat>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DeathMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DeathMenu::Create)));
+        &createFactoryNode<FJ_DeathMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugBuildTools"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugBuildTools::Create)));
+        &createFactoryNode<FJ_DebugBuildTools>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugCreateSchematic"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugCreateSchematic::Create)));
+        &createFactoryNode<FJ_DebugCreateSchematic>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugFillArea"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugFillArea::Create)));
+        &createFactoryNode<FJ_DebugFillArea>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugMarketingGuide"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugMarketingGuide::Create)));
+        &createFactoryNode<FJ_DebugMarketingGuide>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugMenu::Create)));
+        &createFactoryNode<FJ_DebugMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugOptions"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugOptions::Create)));
+        &createFactoryNode<FJ_DebugOptions>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugPuppeteer"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugPuppeteer::Create)));
+        &createFactoryNode<FJ_DebugPuppeteer>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DebugSetCamera"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DebugSetCamera::Create)));
+        &createFactoryNode<FJ_DebugSetCamera>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DLCMainMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DLCMainMenu::Create)));
+        &createFactoryNode<FJ_DLCMainMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("DLCOffersMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DLCOffersMenu::Create)));
+        &createFactoryNode<FJ_DLCOffersMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("GameModeSelection"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_GameModeSelection::Create)));
+        &createFactoryNode<FJ_GameModeSelection>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("Gamertag"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Gamertag::Create)));
+        &createFactoryNode<FJ_Gamertag>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("JoinGameFilterList"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_JoinGameFilterList::Create)));
+        &createFactoryNode<FJ_JoinGameFilterList>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("JoinMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_JoinMenu::Create)));
+        &createFactoryNode<FJ_JoinMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("LoadOrJoinMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LoadOrJoinMenu::Create)));
+        &createFactoryNode<FJ_LoadOrJoinMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SaveMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SaveMenu::Create)));
+        &createFactoryNode<FJ_SaveMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SettingsAudioMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SettingsAudioMenu::Create)));
+        &createFactoryNode<FJ_SettingsAudioMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SettingsControlMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SettingsControlMenu::Create)));
+        &createFactoryNode<FJ_SettingsControlMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SettingsGraphicsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SettingsGraphicsMenu::Create)));
+        &createFactoryNode<FJ_SettingsGraphicsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SettingsOptionsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SettingsOptionsMenu::Create)));
+        &createFactoryNode<FJ_SettingsOptionsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SettingsUIMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SettingsUIMenu::Create)));
+        &createFactoryNode<FJ_SettingsUIMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SignEntryMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SignEntryMenu::Create)));
+        &createFactoryNode<FJ_SignEntryMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SocialPost"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SocialPost::Create)));
+        &createFactoryNode<FJ_SocialPost>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("AchievementsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_AchievementsMenu::Create)));
+        &createFactoryNode<FJ_AchievementsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("AvatarSelectMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_AvatarSelectMenu::Create)));
+        &createFactoryNode<FJ_AvatarSelectMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("CreateWorldMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_CreateWorldMenu::Create)));
+        &createFactoryNode<FJ_CreateWorldMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("LaunchMoreOptionsMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_LaunchMoreOptionsMenu::Create)));
+        &createFactoryNode<FJ_LaunchMoreOptionsMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("TutorialPopup"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TutorialPopup::Create)));
+        &createFactoryNode<FJ_TutorialPopup>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("MultilistMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MultilistMenu::Create)));
+        &createFactoryNode<FJ_MultilistMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("SkinSelect"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SkinSelect::Create)));
+        &createFactoryNode<FJ_SkinSelect>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("InGamePlayerOptions"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_InGamePlayerOptions::Create)));
+        &createFactoryNode<FJ_InGamePlayerOptions>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("InGameHostOptions"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_InGameHostOptions::Create)));
+        &createFactoryNode<FJ_InGameHostOptions>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("InGameInfoMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_InGameInfoMenu::Create)));
+        &createFactoryNode<FJ_InGameInfoMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("InGameTeleportMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_InGameTeleportMenu::Create)));
+        &createFactoryNode<FJ_InGameTeleportMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("MapSelectMenu"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_MapSelectMenu::Create)));
+        &createFactoryNode<FJ_MapSelectMenu>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DragonHealth_01"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DragonHealth_01::Create)));
+        &createFactoryNode<FJ_DragonHealth_01>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DragonHealth_02"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DragonHealth_02::Create)));
+        &createFactoryNode<FJ_DragonHealth_02>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DragonHealth_03"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DragonHealth_03::Create)));
+        &createFactoryNode<FJ_DragonHealth_03>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DragonHealth_04"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DragonHealth_04::Create)));
+        &createFactoryNode<FJ_DragonHealth_04>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DragonHealth_05"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DragonHealth_05::Create)));
+        &createFactoryNode<FJ_DragonHealth_05>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HorseJumpBar"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HorseJumpBar::Create)));
+        &createFactoryNode<FJ_HorseJumpBar>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ExperienceBar"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ExperienceBar::Create)));
+        &createFactoryNode<FJ_ExperienceBar>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BrewingArrow"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingArrow::Create)));
+        &createFactoryNode<FJ_BrewingArrow>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BrewingArrow_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingArrow_Small::Create)));
+        &createFactoryNode<FJ_BrewingArrow_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BrewingBubbles"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingBubbles::Create)));
+        &createFactoryNode<FJ_BrewingBubbles>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BrewingBubbles_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingBubbles_Small::Create)));
+        &createFactoryNode<FJ_BrewingBubbles_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BrewingPlate"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingPlate::Create)));
+        &createFactoryNode<FJ_BrewingPlate>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_BrewingPlate_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_BrewingPlate_Small::Create)));
+        &createFactoryNode<FJ_BrewingPlate_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FurnaceArrow"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_FurnaceArrow::Create)));
+        &createFactoryNode<FJ_FurnaceArrow>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FurnaceArrow_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_FurnaceArrow_Small::Create)));
+        &createFactoryNode<FJ_FurnaceArrow_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FurnaceFlame"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_FurnaceFlame::Create)));
+        &createFactoryNode<FJ_FurnaceFlame>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FurnaceFlame_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_FurnaceFlame_Small::Create)));
+        &createFactoryNode<FJ_FurnaceFlame_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KillBar"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KillBar::Create)));
+        &createFactoryNode<FJ_KillBar>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_KillBarSmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_KillBarSmall::Create)));
+        &createFactoryNode<FJ_KillBarSmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ProgressBar_Loading"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ProgressBar_Loading::Create)));
+        &createFactoryNode<FJ_ProgressBar_Loading>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_AttackIndicatorCrosshair"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_AttackIndicatorCrosshair::Create)));
+        &createFactoryNode<FJ_AttackIndicatorCrosshair>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_AttackIndicatorHotbar"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_AttackIndicatorHotbar::Create)));
+        &createFactoryNode<FJ_AttackIndicatorHotbar>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_SpaceIndicatorBar"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SpaceIndicatorBar::Create)));
+        &createFactoryNode<FJ_SpaceIndicatorBar>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TextInput"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TextInput::Create)));
+        &createFactoryNode<FJ_TextInput>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TextInput_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TextInput_Small::Create)));
+        &createFactoryNode<FJ_TextInput_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TextInput_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TextInput_Normal::Create)));
+        &createFactoryNode<FJ_TextInput_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_TextInput_Vita"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_TextInput_Vita::Create)));
+        &createFactoryNode<FJ_TextInput_Vita>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlTextPanel"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlTextPanel::Create)));
+        &createFactoryNode<FJ_HtmlTextPanel>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlTextPanelLarge"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlTextPanelLarge::Create)));
+        &createFactoryNode<FJ_HtmlTextPanelLarge>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_BigBlack"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_BigBlack::Create)));
+        &createFactoryNode<FJ_Label_BigBlack>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_BigGrey"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_BigGrey::Create)));
+        &createFactoryNode<FJ_Label_BigGrey>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_BigWhite"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_BigWhite::Create)));
+        &createFactoryNode<FJ_Label_BigWhite>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Black"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Black::Create)));
+        &createFactoryNode<FJ_Label_Black>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Black_Centered"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Black_Centered::Create)));
+        &createFactoryNode<FJ_Label_Black_Centered>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Black_Centered_HUD"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Black_Centered_HUD::Create)));
+        &createFactoryNode<FJ_Label_Black_Centered_HUD>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Black_Small_Centered"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Black_Small_Centered::Create)));
+        &createFactoryNode<FJ_Label_Black_Small_Centered>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Black_Small_Centered_HUD"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Black_Small_Centered_HUD::Create)));
+        &createFactoryNode<FJ_Label_Black_Small_Centered_HUD>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Black_VerySmall_Centered"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Black_VerySmall_Centered::Create)));
+        &createFactoryNode<FJ_Label_Black_VerySmall_Centered>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Blink_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Blink_Normal::Create)));
+        &createFactoryNode<FJ_Label_Blink_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Blink_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Blink_Small::Create)));
+        &createFactoryNode<FJ_Label_Blink_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Book_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Book_Normal::Create)));
+        &createFactoryNode<FJ_Label_Book_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Book_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Book_Small::Create)));
+        &createFactoryNode<FJ_Label_Book_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Book_VerySmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Book_VerySmall::Create)));
+        &createFactoryNode<FJ_Label_Book_VerySmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Credits_10"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Credits_10::Create)));
+        &createFactoryNode<FJ_Label_Credits_10>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Credits_10_Yellow"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Credits_10_Yellow::Create)));
+        &createFactoryNode<FJ_Label_Credits_10_Yellow>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Credits_20"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Credits_20::Create)));
+        &createFactoryNode<FJ_Label_Credits_20>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Credits_20_Yellow"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Credits_20_Yellow::Create)));
+        &createFactoryNode<FJ_Label_Credits_20_Yellow>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Credits_30"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Credits_30::Create)));
+        &createFactoryNode<FJ_Label_Credits_30>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_DragonHealth"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_DragonHealth::Create)));
+        &createFactoryNode<FJ_Label_DragonHealth>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_DragonHealthBig"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_DragonHealthBig::Create)));
+        &createFactoryNode<FJ_Label_DragonHealthBig>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_DragonHealthSmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_DragonHealthSmall::Create)));
+        &createFactoryNode<FJ_Label_DragonHealthSmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_DragonHealthVerySmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_DragonHealthVerySmall::Create)));
+        &createFactoryNode<FJ_Label_DragonHealthVerySmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Green"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Green::Create)));
+        &createFactoryNode<FJ_Label_Green>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Grey"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Grey::Create)));
+        &createFactoryNode<FJ_Label_Grey>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Html"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Html::Create)));
+        &createFactoryNode<FJ_Label_Html>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HtmlEndPoem"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HtmlEndPoem::Create)));
+        &createFactoryNode<FJ_Label_HtmlEndPoem>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HtmlEndPoemHD"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HtmlEndPoemHD::Create)));
+        &createFactoryNode<FJ_Label_HtmlEndPoemHD>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HtmlSmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HtmlSmall::Create)));
+        &createFactoryNode<FJ_Label_HtmlSmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_Level_01"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_Level_01::Create)));
+        &createFactoryNode<FJ_Label_HUD_Level_01>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_Level_02"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_Level_02::Create)));
+        &createFactoryNode<FJ_Label_HUD_Level_02>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_Level_03"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_Level_03::Create)));
+        &createFactoryNode<FJ_Label_HUD_Level_03>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_Level_04"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_Level_04::Create)));
+        &createFactoryNode<FJ_Label_HUD_Level_04>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_Level_05"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_Level_05::Create)));
+        &createFactoryNode<FJ_Label_HUD_Level_05>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_SmallWhite"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_SmallWhite::Create)));
+        &createFactoryNode<FJ_Label_HUD_SmallWhite>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_BigWhite"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_BigWhite::Create)));
+        &createFactoryNode<FJ_Label_HUD_BigWhite>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_Splash"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_Splash::Create)));
+        &createFactoryNode<FJ_Label_HUD_Splash>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_SplashBig"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_SplashBig::Create)));
+        &createFactoryNode<FJ_Label_HUD_SplashBig>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_SplashVita"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_SplashVita::Create)));
+        &createFactoryNode<FJ_Label_HUD_SplashVita>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_VerySmallWhite"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_VerySmallWhite::Create)));
+        &createFactoryNode<FJ_Label_HUD_VerySmallWhite>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_HUD_White"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_HUD_White::Create)));
+        &createFactoryNode<FJ_Label_HUD_White>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_OutlineLevel"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_OutlineLevel::Create)));
+        &createFactoryNode<FJ_Label_OutlineLevel>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_OutlineLevel_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_OutlineLevel_Small::Create)));
+        &createFactoryNode<FJ_Label_OutlineLevel_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_OutlineTitle"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_OutlineTitle::Create)));
+        &createFactoryNode<FJ_Label_OutlineTitle>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_OutlineTitle_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_OutlineTitle_Small::Create)));
+        &createFactoryNode<FJ_Label_OutlineTitle_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_Red"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_Red::Create)));
+        &createFactoryNode<FJ_Label_Red>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelect"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelect::Create)));
+        &createFactoryNode<FJ_Label_SkinSelect>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelectCenter"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelectCenter::Create)));
+        &createFactoryNode<FJ_Label_SkinSelectCenter>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelectCenter_Off"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelectCenter_Off::Create)));
+        &createFactoryNode<FJ_Label_SkinSelectCenter_Off>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelectCenter_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelectCenter_Small::Create)));
+        &createFactoryNode<FJ_Label_SkinSelectCenter_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelectCenter_Small_Off"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelectCenter_Small_Off::Create)));
+        &createFactoryNode<FJ_Label_SkinSelectCenter_Small_Off>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelect_Off"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelect_Off::Create)));
+        &createFactoryNode<FJ_Label_SkinSelect_Off>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelect_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelect_Small::Create)));
+        &createFactoryNode<FJ_Label_SkinSelect_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SkinSelect_Small_Off"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SkinSelect_Small_Off::Create)));
+        &createFactoryNode<FJ_Label_SkinSelect_Small_Off>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SmallBlack"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SmallBlack::Create)));
+        &createFactoryNode<FJ_Label_SmallBlack>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SmallGreen"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SmallGreen::Create)));
+        &createFactoryNode<FJ_Label_SmallGreen>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SmallGrey"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SmallGrey::Create)));
+        &createFactoryNode<FJ_Label_SmallGrey>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SmallRed"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SmallRed::Create)));
+        &createFactoryNode<FJ_Label_SmallRed>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_SmallWhite"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_SmallWhite::Create)));
+        &createFactoryNode<FJ_Label_SmallWhite>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_VerySmallBlack"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_VerySmallBlack::Create)));
+        &createFactoryNode<FJ_Label_VerySmallBlack>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_VerySmallGrey"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_VerySmallGrey::Create)));
+        &createFactoryNode<FJ_Label_VerySmallGrey>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_VerySmallWhite"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_VerySmallWhite::Create)));
+        &createFactoryNode<FJ_Label_VerySmallWhite>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_White"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_White::Create)));
+        &createFactoryNode<FJ_Label_White>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_WhiteHtml"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_WhiteHtml::Create)));
+        &createFactoryNode<FJ_Label_WhiteHtml>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_WhiteHtmlSmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_WhiteHtmlSmall::Create)));
+        &createFactoryNode<FJ_Label_WhiteHtmlSmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_White_Centered"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_White_Centered::Create)));
+        &createFactoryNode<FJ_Label_White_Centered>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_White_Small_Centered"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_White_Small_Centered::Create)));
+        &createFactoryNode<FJ_Label_White_Small_Centered>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Label_White_VerySmall_Centered"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Label_White_VerySmall_Centered::Create)));
+        &createFactoryNode<FJ_Label_White_VerySmall_Centered>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListLabel_Black"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListLabel_Black::Create)));
+        &createFactoryNode<FJ_ListLabel_Black>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_ListLabel_SmallBlack"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_ListLabel_SmallBlack::Create)));
+        &createFactoryNode<FJ_ListLabel_SmallBlack>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlText_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlText_Normal::Create)));
+        &createFactoryNode<FJ_HtmlText_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlText_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlText_Small::Create)));
+        &createFactoryNode<FJ_HtmlText_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlText_WhiteNormal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlText_WhiteNormal::Create)));
+        &createFactoryNode<FJ_HtmlText_WhiteNormal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlText_WhiteSmall"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlText_WhiteSmall::Create)));
+        &createFactoryNode<FJ_HtmlText_WhiteSmall>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlText_WithPanel_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlText_WithPanel_Normal::Create)));
+        &createFactoryNode<FJ_HtmlText_WithPanel_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_HtmlText_WithPanel_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_HtmlText_WithPanel_Small::Create)));
+        &createFactoryNode<FJ_HtmlText_WithPanel_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DynamicHtmlText"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DynamicHtmlText::Create)));
+        &createFactoryNode<FJ_DynamicHtmlText>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DynamicHtmlText_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DynamicHtmlText_Normal::Create)));
+        &createFactoryNode<FJ_DynamicHtmlText_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DynamicHtmlText_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DynamicHtmlText_Small::Create)));
+        &createFactoryNode<FJ_DynamicHtmlText_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DynamicHtmlText_WithPanel_Normal"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DynamicHtmlText_WithPanel_Normal::Create)));
+        &createFactoryNode<FJ_DynamicHtmlText_WithPanel_Normal>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_DynamicHtmlText_WithPanel_Small"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_DynamicHtmlText_WithPanel_Small::Create)));
+        &createFactoryNode<FJ_DynamicHtmlText_WithPanel_Small>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_SignInput"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_SignInput::Create)));
+        &createFactoryNode<FJ_SignInput>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_panel9Grid_16Fade"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_panel9Grid_16Fade::Create)));
+        &createFactoryNode<FJ_panel9Grid_16Fade>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_Panel9GridFade"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_Panel9GridFade::Create)));
+        &createFactoryNode<FJ_Panel9GridFade>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_PanelRecessFade"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_PanelRecessFade::Create)));
+        &createFactoryNode<FJ_PanelRecessFade>));
     g_fuiNodeFactories.insert(std::make_pair(std::string("WiiUDRC"),
-        reinterpret_cast<FJ_FactoryFunction>(&FJ_WiiUDRC::Create)));
+        &createFactoryNode<FJ_WiiUDRC>));
 }
 
 FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNode,

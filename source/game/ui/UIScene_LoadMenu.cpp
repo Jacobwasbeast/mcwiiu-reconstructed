@@ -74,7 +74,7 @@ void UIScene_LoadMenu::UpdateIfPublicGamesAllowed()
     LaunchMoreOptionsMenuInitData* initData = getLoadMenuInitData(this);
     if (!m_customGame && !m_battleGame)
         return;
-    MiniGameDef* game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(0), true);
+    MiniGameDef* game = MiniGameDef::GetCustomGameModeById(eMiniGameId_Lobby, true);
     if (!game->IsCRCValid())
     {
         m_publicGamesAllowed = false;
@@ -697,5 +697,4 @@ int UIScene_LoadMenu::getSceneType()
 {
     return 0x23;
 }
-
 

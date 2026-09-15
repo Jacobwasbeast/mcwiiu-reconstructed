@@ -114,9 +114,9 @@ void FJ_SkinSelect::SetCharacterBlocked(bool blocked)
 
 void FJ_SkinSelect::keyDownHandler(FJ_Event* event)
 {
-    if (event->m_eType == static_cast<eFJEventType>(5))
+    if (event->m_eType == eFJEventType_FocusChangeInit)
         CycleLeft();
-    else if (event->m_eType == static_cast<eFJEventType>(6))
+    else if (event->m_eType == eFJEventType_FocusChangeUser)
         CycleRight();
     FJ_Document::keyDownHandler(event);
 }

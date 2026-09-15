@@ -227,15 +227,15 @@ UIControl* UIScene_SuperFlatMenu::GetMainPanel()
 
 void UIScene_SuperFlatMenu::updateTooltips()
 {
-    int uVar3 = -1;
-    int uVar4 = -1;
-    int uVar5 = -1;
-    int uVar6 = -1;
+    int tooltipIdForPrimaryAction = -1;
+    int tooltipIdForSecondaryAction = -1;
+    int tooltipIdForLayerAction = -1;
+    int tooltipIdForDisabledAction = -1;
     if (!m_editingLayer)
     {
-        uVar6 = -2;
-        uVar5 = 0x399b9963;
-        uVar4 = 0x7512b413;
+        tooltipIdForDisabledAction = -2;
+        tooltipIdForLayerAction = 0x399b9963;
+        tooltipIdForSecondaryAction = 0x7512b413;
     }
     if (m_activeTab == eTabLayers)
     {
@@ -245,15 +245,15 @@ void UIScene_SuperFlatMenu::updateTooltips()
             unsigned int count = m_layersList.getItemCount();
             if (m_editingLayer)
             {
-                gConsoleUIController.SetTooltips(0, 0x4c36cd96, 0x4f6bcf5e, -1, uVar4, 0x503363b4,
-                    0xa03cd8b, uVar6, uVar5, -1, -1, -1, -1, -1, -1, -1, 0x4eb3a99c, false, false);
+                gConsoleUIController.SetTooltips(0, 0x4c36cd96, 0x4f6bcf5e, -1, tooltipIdForSecondaryAction, 0x503363b4,
+                    0xa03cd8b, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1, -1, -1, -1, -1, -1, 0x4eb3a99c, false, false);
                 return;
             }
-            uVar3 = 0x984506e8;
+            tooltipIdForPrimaryAction = 0x984506e8;
             if (selection != count - 1)
             {
-                gConsoleUIController.SetTooltips(0, 0xabda3c31, 0x4f6bcf5e, 0x98ed6af8, uVar4, -1, -1,
-                    uVar6, uVar5, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+                gConsoleUIController.SetTooltips(0, 0xabda3c31, 0x4f6bcf5e, 0x98ed6af8, tooltipIdForSecondaryAction, -1, -1,
+                    tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
                 return;
             }
         }
@@ -262,13 +262,13 @@ void UIScene_SuperFlatMenu::updateTooltips()
     {
         if (m_activeTab > eTabProperties)
         {
-            gConsoleUIController.SetTooltips(0, -1, 0x4f6bcf5e, -1, uVar4, -1, -1, uVar6, uVar5, -1,
+            gConsoleUIController.SetTooltips(0, -1, 0x4f6bcf5e, -1, tooltipIdForSecondaryAction, -1, -1, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1,
                 -1, -1, -1, -1, -1, -1, -1, false, false);
             return;
         }
-        uVar3 = 0x8d6323ed;
+        tooltipIdForPrimaryAction = 0x8d6323ed;
     }
-    gConsoleUIController.SetTooltips(0, uVar3, 0x4f6bcf5e, -1, uVar4, -1, -1, uVar6, uVar5, -1, -1,
+    gConsoleUIController.SetTooltips(0, tooltipIdForPrimaryAction, 0x4f6bcf5e, -1, tooltipIdForSecondaryAction, -1, -1, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1,
         -1, -1, -1, -1, -1, -1, false, false);
 }
 

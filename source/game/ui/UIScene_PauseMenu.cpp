@@ -177,7 +177,7 @@ unsigned int UIScene_PauseMenu::IsBanEnabled()
 {
     bool host = gGameNetworkManager.IsHost() && m_playerId == g_pApp->GetPrimaryUserIndex();
     return !gGameNetworkManager.IsLocalGame() && !host &&
-           (Minecraft::GetInstance() == NULL || !Minecraft::InMiniGame(static_cast<EMiniGameId>(0xf), true)) ? 1U : 0U;
+           (Minecraft::GetInstance() == NULL || !Minecraft::InMiniGame(eMiniGameId_Any, true)) ? 1U : 0U;
 }
 
 unsigned int UIScene_PauseMenu::mapElementsAndNames()

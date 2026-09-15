@@ -9,6 +9,7 @@
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/UnityClient6.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/ui/UIString.hpp"
@@ -38,16 +39,16 @@ UIScene_DeathMenu::UIScene_DeathMenu(int sceneType, void*, UILayer* layer)
         m_deathMenuActive = true;
         m_exitButton.setVisible(false);
         m_respawnButton.setVisible(false);
-        addTimer(0, Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ? 1000 : 2000);
+        addTimer(0, Minecraft::InMiniGame(eMiniGameId_Glide, true) ? 1000 : 2000);
     }
 
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
         m_titleLabel.setLabel(UIString(L10N::GetString(0x69c7eda4)), false, false);
     else
         m_titleLabel.setLabel(UIString(L10N::GetString(0x7b5878dc)), false, false);
 
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(2), true) &&
-        !Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Tumble, true) &&
+        !Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
         m_deathMessageLabel.setLabel(UIString(L""), false, false);
         m_unknownStateA = false;

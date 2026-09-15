@@ -8,7 +8,7 @@
 #include "game/network/ClientPacketListener.hpp"
 #include "game/ui/TitleScreen.hpp"
 
-ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring& address, int port)
+ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring&, int)
     : Screen(), mConnection(NULL), mFinished(false)
 {
     mMinecraft = minecraft;
@@ -27,6 +27,8 @@ void ConnectScreen::tick()
 
 void ConnectScreen::keyPressed(wchar_t key, int action)
 {
+    (void)key;
+    (void)action;
 }
 
 void ConnectScreen::init()

@@ -16,6 +16,7 @@
 #include "game/core/ColourTable.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/minigame/GameMedal.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
@@ -60,11 +61,11 @@ UIScene_GameModeScoreboardMenu::UIScene_GameModeScoreboardMenu(int type, void* d
     m_canVoteToKick = 0;
     if (m_slotDrawCount == 1 && !GetScoreboard()->HasStats())
         m_slotDrawCount = 0;
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(2), true))
+    if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
         m_scoreboardLayout = new MG02ScoreboardLayout();
-    else if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+    else if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
         m_scoreboardLayout = new MG03ScoreboardLayout(static_cast<EScoreboardType>(m_slotDrawCount));
-    else if (Minecraft::InMiniGame(static_cast<EMiniGameId>(4), true))
+    else if (Minecraft::InMiniGame(eMiniGameId_Build, true))
         m_scoreboardLayout = new MG04ScoreboardLayout();
     else
         m_scoreboardLayout = new MG01ScoreboardLayout(static_cast<EScoreboardType>(m_slotDrawCount));
@@ -496,7 +497,7 @@ void UIScene_GameModeScoreboardMenu::handlePress(int first, int second)
         return;
     unsigned char* smallId = new unsigned char(m_scoreboardLayout->getSmallIDOfPlayerAt(index));
     int parameters[2] = { static_cast<int>(0xb9a1bf4d), static_cast<int>(0x4fcbc7e7) };
-    int message = Minecraft::InMiniGame(static_cast<EMiniGameId>(0xf), true)
+    int message = Minecraft::InMiniGame(eMiniGameId_Any, true)
                       ? static_cast<int>(0x2cf43e54)
                       : static_cast<int>(0x0b5f4b25);
     gConsoleUIController.RequestAlertMessage(

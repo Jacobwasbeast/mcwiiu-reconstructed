@@ -328,7 +328,7 @@ void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
             return;
         }
         gProfile->QuerySigninStatus();
-        telemetryManagerInstance->RecordUpsellPresented(playerId, static_cast<ESen_UpsellID>(1), 1);
+        telemetryManagerInstance->RecordUpsellPresented(playerId, eSen_UpsellID_FullGame, 1);
         gProfile->DisplayFullVersionPurchase(false, playerId, 1);
         return;
     }
@@ -436,7 +436,7 @@ void UIScene_MainMenu::LoadTrial()
     gApp.SetGameHostOption(static_cast<eGameHostOption>(6), GameType::SURVIVAL->getId());
     gStorage->SetSaveTitle(L"Tutorial");
     gApp.SetAutosaveTimerTime();
-    CGameNetworkManager::sInstance.HostGame(0, false, true, 0, static_cast<EMiniGameId>(0xf), 0, 0);
+    CGameNetworkManager::sInstance.HostGame(0, false, true, 0, eMiniGameId_Any, 0, 0);
     CGameNetworkManager::sInstance.FakeLocalPlayerJoined();
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
