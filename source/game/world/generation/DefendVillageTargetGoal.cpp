@@ -4,6 +4,7 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/core/Creeper.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
@@ -31,7 +32,7 @@ bool DefendVillageTargetGoal::canUse()
         boost::static_pointer_cast<LivingEntity>(mGolem->shared_from_this()));
 
     boost::shared_ptr<LivingEntity> aggressor = mVillageAggressorTarget.lock();
-    if (aggressor && aggressor->GetType() == 0x000000005D540041ULL)
+    if (aggressor && boost::dynamic_pointer_cast<Creeper>(aggressor))
     {
         return false;
     }
