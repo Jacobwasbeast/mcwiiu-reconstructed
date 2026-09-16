@@ -1,80 +1,88 @@
-#include "game/V/VoronoiZoom.hpp"
-#include "functions.hpp"
+#include "game/core/VoronoiZoom.hpp"
+#include "game/core/System.hpp"
+#include "game/core/IntCache.hpp"
 
-namespace recon {
+#include <boost/assert.hpp>
 
-/* {ctor}(long long, boost::shared_ptr<Layer>) [0x02AA4E38] - boundary stub */
-VoronoiZoom::VoronoiZoom(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+extern void instructionSynchronize();
+
+VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer)
+    : Layer(seed)
 {
-    guest::stub(0x02AA4E38u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (uint32_t)a4);
+    parent = parentLayer;
 }
 
-/* {dtor}() [0x02AD1324] - LOWERED-DRAFT; not reconstructed; destructor shell stripped */
-#if defined(RECON_RUNTIME_BUILD)
 VoronoiZoom::~VoronoiZoom()
 {
-    guest::stub(0x02AD1324u, gaddr(this), 0u);
+    parent.reset();
 }
-#else
-VoronoiZoom::~VoronoiZoom()
+
+arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
 {
-    uint8_t bVar1 = 0;
-    int32_t iVar2 = 0;
-    int32_t iVar3 = 0;
-    uint32_t piVar4 = 0;
-    uint32_t piVar5 = 0;
-    uint8_t bVar6 = 0;
-    if (((uint32_t)((gaddr(this) + 0xc)) != (uint32_t)(0x0)))
+    const int parentX = (x - 2) >> 2;
+    const int parentZ = (z - 2) >> 2;
+    const int parentWidth = (width >> 2) + 2;
+    const int parentHeight = (height >> 2) + 2;
+    if (!parent)
+        boost::assertion_failed("px != 0", "boost::detail::sp_member_access<T>::type boost::shared_ptr<T>::operator->", "..\\..\\..\\Libraries\\Boost\\boost_1_53_0\\boost/smart_ptr/shared_ptr", 0x28d);
+    arrayWithLength<int> source = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
+    const int gridWidth = parentWidth * 4 - 4;
+    const int gridHeight = parentHeight * 4 - 4;
+    PIXBeginNamedEvent(1.65f, "VoronoiZoom::getArea");
+    arrayWithLength<int> grid = IntCache::allocate(gridWidth * gridHeight);
+    for (int row = 0; row < parentHeight - 1; ++row)
     {
-        piVar5 = LD32((uint32_t)((gaddr(this) + 0xc)));
-        bVar1 = (piVar5 == (uint32_t)(0x0));
-        if (!(bVar1))
+        for (int column = 0; column < parentWidth - 1; ++column)
         {
-            ((void)0 /* sync dropped */);
-            do
+            const int upperLeft = source.data[row * parentWidth + column];
+            const int upperRight = source.data[row * parentWidth + column + 1];
+            const int lowerLeft = source.data[(row + 1) * parentWidth + column];
+            const int lowerRight = source.data[(row + 1) * parentWidth + column + 1];
+            initRandom((parentX + column) * 4, (parentZ + row) * 4);
+            const double x0 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8;
+            const double z0 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8;
+            initRandom((parentX + column + 1) * 4, (parentZ + row) * 4);
+            const double x1 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8 + 4.0;
+            const double z1 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8;
+            initRandom((parentX + column) * 4, (parentZ + row + 1) * 4);
+            const double x2 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8;
+            const double z2 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8 + 4.0;
+            initRandom((parentX + column + 1) * 4, (parentZ + row + 1) * 4);
+            const double x3 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8 + 4.0;
+            const double z3 = static_cast<double>(nextRandom(1024)) * 3.6 / 1024.0 - 1.8 + 4.0;
+            for (int localZ = 0; localZ < 4; ++localZ)
             {
-                iVar3 = (gelem<int32_t>((uint32_t)(piVar5), 0) + -(1));
-                if (('\x01' != '\0'))
+                for (int localX = 0; localX < 4; ++localX)
                 {
-                    iVar2 = (ST32((uint32_t)(piVar5) + (uint32_t)(0), iVar3), 1);
-                    gelem<int32_t>((uint32_t)(piVar5), 0) = iVar2;
-                    bVar1 = 1;
-                }
-            }
-            while (!(bVar1));
-            ((void)0 /* instructionSynchronize dropped */);
-            bVar6 = ((iVar3 == 0) << 1);
-            if ((iVar3 == 0))
-            {
-                (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar5) + 2u, 0) + 0x14)), (uint32_t)(piVar5)) >> 32);
-                piVar4 = (piVar5 + (1) * 4);
-                ((void)0 /* sync dropped */);
-                do
-                {
-                    iVar3 = gelem<int32_t>((uint32_t)(piVar4), 0);
-                    if (('\x01' != '\0'))
-                    {
-                        iVar2 = (ST32((uint32_t)(piVar4) + (uint32_t)(0), (iVar3 + -(1))), 1);
-                        gelem<int32_t>((uint32_t)(piVar4), 0) = iVar2;
-                        bVar6 = 2;
-                    }
-                }
-                while (!((uint8_t)(((bVar6 >> 1) & 1))));
-                ((void)0 /* instructionSynchronize dropped */);
-                if (((iVar3 + -(1)) == 0))
-                {
-                    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar5) + 2u, 0) + 0x1c)), (uint32_t)(piVar5)) >> 32);
+                    const double px = static_cast<double>(localX);
+                    const double pz = static_cast<double>(localZ);
+                    const double d0 = (px - x0) * (px - x0) + (pz - z0) * (pz - z0);
+                    const double d1 = (px - x1) * (px - x1) + (pz - z1) * (pz - z1);
+                    const double d2 = (px - x2) * (px - x2) + (pz - z2) * (pz - z2);
+                    const double d3 = (px - x3) * (px - x3) + (pz - z3) * (pz - z3);
+                    int value;
+                    if (d0 < d1 && d0 < d2 && d0 < d3)
+                        value = upperLeft;
+                    else if (d1 < d0 && d1 < d2 && d1 < d3)
+                        value = upperRight;
+                    else if (d2 < d0 && d2 < d1 && d2 < d3)
+                        value = lowerLeft;
+                    else
+                        value = lowerRight;
+                    grid[(row * 4 + localZ) * gridWidth + column * 4 + localX] = value;
                 }
             }
         }
     }
+    arrayWithLength<int> result = IntCache::allocate(width * height);
+    const int sourceOffset = ((z - 2) & 3) * gridWidth + ((x - 2) & 3);
+    for (int row = 0; row < height; ++row)
+        System::arraycopy(grid, static_cast<unsigned int>(sourceOffset + row * gridWidth),
+                          &result, static_cast<unsigned int>(row * width),
+                          static_cast<unsigned int>(width));
+    PIXEndNamedEvent();
+    instructionSynchronize();
+    return result;
 }
-#endif
-
-/* getArea(int, int, int, int) [0x02AA4FA4] - boundary stub; body not reconstructed */
-uint64_t VoronoiZoom::getArea(int32_t a1, int32_t a2, int32_t a3, int32_t a4)
-{
-    return (uint64_t)guest::stub(0x02AA4FA4u, gaddr(this), (uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (uint32_t)a4);
-}
-
-}  /* namespace recon */

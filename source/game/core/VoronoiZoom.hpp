@@ -1,25 +1,16 @@
-/* VoronoiZoom - generated reconstruction header. */
-#ifndef RECON_C_GAME_V_VORONOIZOOM_HPP
-#define RECON_C_GAME_V_VORONOIZOOM_HPP 1
+#ifndef GAME_CORE_VORONOI_ZOOM_HPP
+#define GAME_CORE_VORONOI_ZOOM_HPP
 
-#include "guest_ns.hpp"
-#include "game/L/Layer.hpp"
+#include <boost/shared_ptr.hpp>
 
-namespace recon {
-#pragma pack(push, 1)
-struct VoronoiZoom : Layer {
-    /* no fields witnessed beyond the base */
+#include "game/world/generation/Layer.hpp"
 
-    /* interface: 1 methods recovered, 0 without a recoverable signature;
-     * implementation: 0 reconstructed bodies, 0 lowered drafts, 0 closed */
-    VoronoiZoom(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4);   /* boundary stub */
-    ~VoronoiZoom();   /* LOWERED-DRAFT; not reconstructed */
-    VoronoiZoom() {}   /* generated shell; the real ctor is dispatch-only */
-    uint64_t getArea(int32_t a1, int32_t a2, int32_t a3, int32_t a4);   /* boundary stub */
+class VoronoiZoom : public Layer
+{
+public:
+    VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer);
+    virtual ~VoronoiZoom();
+    virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };
-static_assert(sizeof(VoronoiZoom) == 0x28, "layout");
-#pragma pack(pop)
-
-}  /* namespace recon */
 
 #endif

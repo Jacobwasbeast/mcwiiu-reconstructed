@@ -1,408 +1,191 @@
-#include "game/W/Witch.hpp"
-#include "game/D/DamageSource.hpp"
-#include "game/E/Entity.hpp"
-#include "game/L/Level.hpp"
-#include "game/L/LivingEntity.hpp"
-#include "game/M/Mob.hpp"
-#include "game/M/Monster.hpp"
-#include "game/S/SynchedEntityData.hpp"
-#include "functions.hpp"
+#include "game/core/Witch.hpp"
+#include <cmath>
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/AttributeInstance.hpp"
+#include "game/core/AttributeModifier.hpp"
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/RangedAttackGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/item/ThrownPotion.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/PotionUtils.hpp"
+#include "game/item/Potions.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/core/EquipmentSlot.hpp"
 
-namespace recon {
-
-/* {ctor}(Level*) [0x02A420B4] - reconstructed; allocating shell stripped */
-#if defined(RECON_RUNTIME_BUILD)
-Witch::Witch(gptr<Level> a1)
+const EntityDataAccessor<bool>* Witch::DATA_USING_ITEM = NULL;
+Witch::Witch(Level* level) : Monster(level) { fjDerivedCtorCalls(); setSize(0.6f, 1.95f); }
+Witch::~Witch() {}
+void Witch::create(Level* level) { new Witch(level); }
+void Witch::staticCtor() { DATA_USING_ITEM = SynchedEntityData::defineId<bool>(TYPE_ID, ENTITY_TYPE_MONSTER, EntityDataSerializers::BOOLEAN); }
+void Witch::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, TYPE_ID); }
+void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
-    guest::stub(0x02A420B4u, gaddr(this), (uint32_t)a1);
+    if (isDrinkingPotion())
+        return;
+    Potion* potion = target->isInvertedHealAndHarm() ? Potions::HEALING : Potions::HARMING;
+    double dx = target->mX + target->mXd - mX;
+    double dz = target->mZ + target->mZd - mZ;
+    double horizontal = std::sqrt(dx * dx + dz * dz);
+    double dy = target->mY + target->getEyeHeight() - 1.1 - mY;
+    const double aimHeight = dy + horizontal * 0.2;
+    if (!target->isInvertedHealAndHarm()) {
+        if (horizontal >= 8.0 && !target->hasEffect(MobEffects::MOVEMENT_SLOWDOWN)) {
+            potion = Potions::SLOWNESS;
+        } else if (target->getHealth() >= 8.0f &&
+                   !target->hasEffect(MobEffects::MOVEMENT_SPEED)) {
+            potion = Potions::SWIFTNESS;
+        } else if (horizontal <= 3.0 && target->getHealth() >= 8.0f &&
+                   !target->hasEffect(MobEffects::WEAKNESS) &&
+                   getRandom()->nextFloat() < 0.25f) {
+            potion = Potions::WEAKNESS;
+        } else if (target->getHealth() <= 3.0f &&
+                   !target->hasEffect(MobEffects::POISON)) {
+            potion = Potions::POISON;
+        }
+    }
+    boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+    not_null_ptr<ItemInstance> item = PotionUtils::setPotion(
+        not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion)), potion);
+    boost::shared_ptr<ThrownPotion> projectile(new ThrownPotion(mLevel, owner, item));
+    projectile->shoot(dx, aimHeight, dz, 0.75f, 8.0f);
+    const float pitch = 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f);
+    playSound(SoundEvents::WITCH_THROW, 1.0f, pitch);
+    mLevel->addEntity(boost::static_pointer_cast<Entity>(projectile));
+    setAggressive(true);
 }
-#else
-Witch::Witch(gptr<Level> a1) : Monster(a1)
-{
-    this->Mob::fjDerivedCtorCalls();
-    this->Entity::setSize((float)(gref<double>(0x102B4358u)), (float)(gref<double>(0x102B5E9Cu)));
-    this->field_0x734 = 0;
-    this->field_0x190 = (this->field_0x190 | 0xc);
-}
-#endif
-
-/* {dtor}() [0x02ACD25C] - reconstructed; destructor shell stripped */
-#if defined(RECON_RUNTIME_BUILD)
-Witch::~Witch()
-{
-    guest::stub(0x02ACD25Cu, gaddr(this), 0u);
-}
-#else
-Witch::~Witch()
-{
-}
-#endif
-
-/* create(Level*) [static] [0x023E6624] - LOWERED-DRAFT; not reconstructed (1 open edges) */
-#if defined(RECON_RUNTIME_BUILD)
-void Witch::create(gptr<Level> a1)
-{
-    guest::stub(0x023E6624u, (uint32_t)a1);
-}
-#else
-void Witch::create(gptr<Level> a1)
-{
-    guest::Witch_ct((uint32_t)(0), (uint32_t)(a1));
-    return;
-}
-#endif
-
-/* performRangedAttack(boost::shared_ptr<LivingEntity>, float) [0x02A1A67C] - boundary stub; body not reconstructed */
-uint64_t Witch::performRangedAttack(uint32_t a1)
-{
-    return (uint64_t)guest::stub(0x02A1A67Cu, gaddr(this), (uint32_t)a1);
-}
-
-/* isAggressive() [0x02A1B710] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A1B710
-uint32_t Witch::isAggressive()
-{
-    return 0;
-}
-#else
-uint32_t Witch::isAggressive()
-{
-    return (uint32_t)(guest::stub(0x02A1B710u, gaddr(this)) >> 32);
-}
-#endif
-
-/* setAggressive(bool) [0x02A1B72C] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A1B72C
-void Witch::setAggressive(bool a1)
-{
-    return;
-}
-#else
-void Witch::setAggressive(bool a1)
-{
-    guest::stub(0x02A1B72Cu, gaddr(this), (uint32_t)a1);
-}
-#endif
-
-/* staticCtor() [static] [0x02A41FF0] - boundary stub; body not reconstructed */
-uint64_t Witch::staticCtor()
-{
-    return (uint64_t)guest::stub(0x02A41FF0u);
-}
-
-/* addDataWalkers(DataFixerUpper*) [static] [0x02A42194] - reconstructed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A42194
-void Witch::addDataWalkers(uint32_t a1, uint32_t a2)
-{
-    Mob::addDataWalkers((a1), (a2), 0, 0x5d540046);
-    return;
-}
-#else
-void Witch::addDataWalkers(uint32_t a1, uint32_t a2)
-{
-    guest::stub(0x02A42194u, (uint32_t)a1, (uint32_t)a2);
-}
-#endif
-
-/* registerGoals() [0x02A42258] - boundary stub; body not reconstructed */
+bool Witch::isAggressive() { return false; }
+void Witch::setAggressive(bool) {}
 void Witch::registerGoals()
 {
-    guest::stub(0x02A42258u, gaddr(this));
+    mGoalSelector.addGoal(1, new FloatGoal(this), true);
+    mGoalSelector.addGoal(2, new RangedAttackGoal(this, this, 1.0, 60, 10.0f), true);
+    mGoalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(3, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(3, new RandomLookAroundGoal(this), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false,
+                                                     arrayWithLength<unsigned long long>()), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
 }
-
-/* defineSynchedData() [0x02A42490] - LOWERED-DRAFT; not reconstructed (2 open edges, 3 raw IR ops, 1 raise misses) */
-#if defined(RECON_RUNTIME_BUILD)
 void Witch::defineSynchedData()
 {
-    guest::stub(0x02A42490u, gaddr(this));
+    Monster::defineSynchedData();
+    getEntityData()->createDateItem(DATA_USING_ITEM, false);
 }
-#else
-uint64_t Witch::defineSynchedData()
-{
-    uint32_t _frame = native_frame_open(8);
-    uint8_t bVar1 = 0;
-    guest::Mob_defineSynchedData(gaddr(this));
-    this->Entity::getEntityData(_frame);
-    if ((LD32(_frame) == 0))
-    {
-    }
-    ((SynchedEntityData *)gmem(LD32(_frame)))->createDateItem__tm__2_b(global_0x104C51D4, (uint8_t)(0));
-    if (!(bVar1))
-    {
-        do
-        {
-            if (('\x01' != '\0'))
-            {
-                bVar1 = 1;
-            }
-        }
-        while (!(bVar1));
-    }
-    { uint64_t t1 = ((uint64_t)(uint32_t)(gaddr(this)) << 32);
-    native_frame_close(_frame, 8);
-    return t1; }
-    native_frame_close(_frame, 8);
-}
-#endif
-
-/* getAmbientSound() [0x02A425BC] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A425BC
-uint32_t Witch::getAmbientSound()
-{
-    return global_0x104C46E0;
-}
-#else
-uint32_t Witch::getAmbientSound()
-{
-    return (uint32_t)(guest::stub(0x02A425BCu, gaddr(this)) >> 32);
-}
-#endif
-
-/* getHurtSound(const DamageSource*) [0x02A425C8] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A425C8
-uint32_t Witch::getHurtSound(gptr<DamageSource> a1)
-{
-    return global_0x104C46EC;
-}
-#else
-uint32_t Witch::getHurtSound(gptr<DamageSource> a1)
-{
-    return (uint32_t)(guest::stub(0x02A425C8u, gaddr(this), (uint32_t)a1) >> 32);
-}
-#endif
-
-/* getDeathSound() [0x02A425D4] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A425D4
-uint32_t Witch::getDeathSound()
-{
-    return global_0x104C46E4;
-}
-#else
-uint32_t Witch::getDeathSound()
-{
-    return (uint32_t)(guest::stub(0x02A425D4u, gaddr(this)) >> 32);
-}
-#endif
-
-/* setUsingItem(bool) [0x02A425E0] - LOWERED-DRAFT; not reconstructed (3 raw IR ops, 1 raise misses) */
-#if defined(RECON_RUNTIME_BUILD)
-uint64_t Witch::setUsingItem(bool a1)
-{
-    return (uint64_t)guest::stub(0x02A425E0u, gaddr(this), (uint32_t)a1);
-}
-#else
-uint64_t Witch::setUsingItem(bool a1)
-{
-    uint32_t _frame = native_frame_open(8);
-    uint8_t bVar1 = 0;
-    this->Entity::getEntityData(_frame);
-    if ((LD32(_frame) == 0))
-    {
-    }
-    ((SynchedEntityData *)gmem(LD32(_frame)))->set__tm__2_b(global_0x104C51D4, (uint32_t)(a1), (bool)(1));
-    if (!(bVar1))
-    {
-        do
-        {
-            if (('\x01' != '\0'))
-            {
-                bVar1 = 1;
-            }
-        }
-        while (!(bVar1));
-    }
-    { uint64_t t1 = ((uint64_t)(uint32_t)(gaddr(this)) << 32);
-    native_frame_close(_frame, 8);
-    return t1; }
-    native_frame_close(_frame, 8);
-}
-#endif
-
-/* isDrinkingPotion() [0x02A426FC] - LOWERED-DRAFT; not reconstructed (7 raw IR ops, 4 raise misses) */
-#if defined(RECON_RUNTIME_BUILD)
-uint8_t Witch::isDrinkingPotion()
-{
-    return (uint8_t)(guest::stub(0x02A426FCu, gaddr(this)) >> 32);
-}
-#else
-uint8_t Witch::isDrinkingPotion()
-{
-    uint32_t _frame = native_frame_open(8);
-    uint8_t bVar1 = 0;
-    uint8_t uVar2 = 0;
-    this->Entity::getEntityData(_frame);
-    if ((LD32(_frame) == 0))
-    {
-    }
-    uVar2 = LD8((uint32_t)((LD32((uint32_t)(((LD32(_frame) + (LD32(LD32(0x104C51D4u)) * 4)) + 4))) + 0xc)));
-    if (!(bVar1))
-    {
-        do
-        {
-            if (('\x01' != '\0'))
-            {
-                bVar1 = 1;
-            }
-        }
-        while (!(bVar1));
-    }
-    { uint8_t t1 = uVar2;
-    native_frame_close(_frame, 8);
-    return t1; }
-    native_frame_close(_frame, 8);
-}
-#endif
-
-/* registerAttributes() [0x02A4281C] - LOWERED-DRAFT; not reconstructed (5 open edges, 2 raw IR ops) */
-#if defined(RECON_RUNTIME_BUILD)
+const SoundEvent* Witch::getAmbientSound() { return SoundEvents::WITCH_AMBIENT; }
+const SoundEvent* Witch::getHurtSound(const DamageSource*) { return SoundEvents::WITCH_HURT; }
+const SoundEvent* Witch::getDeathSound() { return SoundEvents::WITCH_DEATH; }
+void Witch::setUsingItem(bool usingItem) { getEntityData()->set(DATA_USING_ITEM, usingItem, true); }
+bool Witch::isDrinkingPotion() { return getEntityData()->get(DATA_USING_ITEM); }
 void Witch::registerAttributes()
 {
-    guest::stub(0x02A4281Cu, gaddr(this));
+    Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(26.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.25);
 }
-#else
-uint64_t Witch::registerAttributes()
-{
-    uint32_t piVar1 = 0;
-    guest::Monster_registerAttributes(gaddr(this));
-    piVar1 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE10)));
-    (uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar1), 0) + 0x24)), (uint32_t)(global_0x102B74D0)) >> 32);
-    piVar1 = (uint32_t)(this->virt_getAttribute((uint32_t)(global_0x104EFE1C)));
-    return ((uint64_t)(uint32_t)((uint32_t)(guest::indirect(LD32((gelem<int32_t>((uint32_t)(piVar1), 0) + 0x24)), (uint32_t)(global_0x102B6BB8)) >> 32)) << 32);
-}
-#endif
-
-/* aiStep() [0x02A428BC] - boundary stub; body not reconstructed */
 void Witch::aiStep()
 {
-    guest::stub(0x02A428BCu, gaddr(this));
-}
-
-/* handleEntityEvent(unsigned char, int) [0x02A43EF8] - boundary stub; body not reconstructed */
-uint64_t Witch::handleEntityEvent(uint8_t a1, int32_t a2)
-{
-    return (uint64_t)guest::stub(0x02A43EF8u, gaddr(this), (uint32_t)a1, (uint32_t)a2);
-}
-
-/* getDamageAfterMagicAbsorb(const DamageSource*, float) [0x02A44118] - LOWERED-DRAFT; not reconstructed (2 open edges, 7 raw IR ops, 3 raise misses) */
-#if defined(RECON_RUNTIME_BUILD)
-double Witch::getDamageAfterMagicAbsorb(int32_t a1)
-{
-    guest::stub(0x02A44118u, gaddr(this), (uint32_t)a1);
-    return native_fret();
-}
-#else
-double Witch::getDamageAfterMagicAbsorb(int32_t a1)
-{
-    uint32_t _frame = native_frame_open(56);
-    uint8_t bVar1 = 0;
-    uint8_t bVar3 = 0;
-    int32_t iVar4 = 0;
-    double dVar8 = 0;
-    dVar8 = (double)(guest::LivingEntity_getDamageAfterMagicAbsorb(gaddr(this), (uint32_t)a1));
-    (uint32_t)(guest::indirect(LD32((LD32((uint32_t)((a1 + 0x18))) + 0x1c)), (uint32_t)(a1), (uint32_t)((_frame + 12))) >> 32);
-    ST32((_frame + 4), this->field_0x0);
-    if (((uint32_t)(LD32((_frame + 4))) != gaddr(this)))
-    {
-    }
-    if (!(bVar1))
-    {
-        do
-        {
-            if (('\x01' != '\0'))
-            {
-                bVar1 = 1;
-            }
-        }
-        while (!(bVar1));
-        if (!(bVar1))
-        {
-            do
-            {
-                if (('\x01' != '\0'))
-                {
-                    bVar1 = 1;
+    if (!mLevel->mIsClientSide) {
+        if (isDrinkingPotion()) {
+            --mUseItemRemaining;
+            if (mUseItemRemaining <= 0) {
+                setUsingItem(false);
+                not_null_ptr<ItemInstance> item = getItemInHand(getUsedItemHand());
+                if (item->getItem() == Items::potion) {
+                    std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
+                    if (effects != NULL) {
+                        for (std::vector<MobEffectInstance*>::iterator it = effects->begin();
+                             it != effects->end(); ++it)
+                            addEffect(new MobEffectInstance(*it), shared_from_this());
+                        delete effects;
+                    }
                 }
+                setItemInHand(getUsedItemHand(), ItemInstance::EMPTY);
+                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->removeModifier(
+                    eMODIFIER_ID_WitchDrinkingSpeedPenalty);
             }
-            while (!(bVar1));
+        } else if (isAlive()) {
+            Potion* potion = NULL;
+            if (getRandom()->nextFloat() < 0.15f &&
+                isUnderLiquid(Material::WATER) &&
+                !hasEffect(MobEffects::WATER_BREATHING)) {
+                potion = Potions::WATER_BREATHING;
+            } else if (getRandom()->nextFloat() < 0.15f) {
+                const DamageSource* lastDamage = getLastDamageSource();
+                if ((isOnFire() || (lastDamage != NULL && lastDamage->isFire())) &&
+                    !hasEffect(MobEffects::FIRE_RESISTANCE))
+                    potion = Potions::FIRE_RESISTANCE;
+            } else if (getRandom()->nextFloat() < 0.05f &&
+                       getHealth() < getMaxHealth()) {
+                potion = Potions::HEALING;
+            } else if (getRandom()->nextFloat() < 0.25f) {
+                boost::shared_ptr<LivingEntity> target = getTarget();
+                if (target != NULL &&
+                    !target->hasEffect(MobEffects::MOVEMENT_SPEED) &&
+                    target->distanceToSqr(boost::static_pointer_cast<Entity>(shared_from_this())) > 121.0)
+                    potion = Potions::SWIFTNESS;
+            }
+            if (potion != NULL) {
+                not_null_ptr<ItemInstance> item = PotionUtils::setPotion(
+                    not_null_ptr<ItemInstance>(new ItemInstance(Items::potion)), potion);
+                setItemSlot(EquipmentSlot::MAINHAND, item);
+                startUsingItem(InteractionHand::eInteractionHand_MainHand);
+                setUsingItem(true);
+                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->addModifier(
+                    new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0, false));
+                mLevel->broadcastEntityEvent(shared_from_this(), 15, 0);
+            }
         }
     }
-    bVar3 = (LD32((_frame + 12)) == LD32((_frame + 4)));
-    if (!(bVar1))
-    {
-        do
-        {
-            if (('\x01' != '\0'))
-            {
-                bVar1 = 1;
-            }
+    Monster::aiStep();
+}
+
+void Witch::handleEntityEvent(unsigned char event, int data)
+{
+    if (event == 15) {
+        for (int i = 0; i < 10 + getRandom()->nextInt(35); ++i) {
+            const double spread = 0.13;
+            mLevel->addParticle(PARTICLE_WITCH_MAGIC,
+                                mX + getRandom()->nextGaussian() * spread,
+                                mY + mBbHeight + 0.5 + getRandom()->nextGaussian() * spread,
+                                mZ + getRandom()->nextGaussian() * spread,
+                                0.0001, 0.0001, 0.0001,
+                                arrayWithLength<int>());
         }
-        while (!(bVar1));
+    } else {
+        Monster::handleEntityEvent(event, data);
     }
-    if (!(bVar1))
-    {
-        do
-        {
-            if (('\x01' != '\0'))
-            {
-                bVar1 = 1;
-            }
-        }
-        while (!(bVar1));
-    }
-    if (bVar3)
-    {
-        dVar8 = (double)(global_0x102B5164);
-    }
-    iVar4 = ((DamageSource *)gmem(a1))->isMagic();
-    if ((iVar4 != 0))
-    {
-        dVar8 = (double)((float)((dVar8 * (double)(global_0x102B6538))));
-    }
-    { double t1 = dVar8;
-    native_frame_close(_frame, 56);
-    return t1; }
-    native_frame_close(_frame, 56);
 }
-#endif
 
-/* getDefaultLootTable() [0x02A443F4] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A443F4
-uint32_t Witch::getDefaultLootTable()
+float Witch::getDamageAfterMagicAbsorb(const DamageSource* source, float damage)
 {
-    return 0x104D6FE0u;
+    float result = LivingEntity::getDamageAfterMagicAbsorb(source, damage);
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    boost::shared_ptr<Entity> self = shared_from_this();
+    if (attacker == self)
+        result = 1.65f;
+    if (source->isMagic())
+        result *= 0.15f;
+    return result;
 }
-#else
-uint32_t Witch::getDefaultLootTable()
-{
-    return (uint32_t)(guest::stub(0x02A443F4u, gaddr(this)) >> 32);
-}
-#endif
-
-/* getEyeHeight() [0x02A44400] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02A44400
-double Witch::getEyeHeight()
-{
-    return gref<double>(0x102B779Cu);
-}
-#else
-double Witch::getEyeHeight()
-{
-    guest::stub(0x02A44400u, gaddr(this));
-    return native_fret();
-}
-#endif
-
-/* GetType() [0x02ACE664] - closed */
-#if !defined(RECON_RUNTIME_BUILD) || RECON_NATIVE_02ACE664
-uint64_t Witch::GetType()
-{
-    return 0x5d54004600000000;
-}
-#else
-uint64_t Witch::GetType()
-{
-    return (uint64_t)guest::stub(0x02ACE664u, gaddr(this));
-}
-#endif
-
-}  /* namespace recon */
+ResourceLocation* Witch::getDefaultLootTable() { return &BuiltInLootTables::WITCH; }
+double Witch::getEyeHeight() { return 1.62; }
+unsigned long long Witch::GetType() { return TYPE_ID; }
