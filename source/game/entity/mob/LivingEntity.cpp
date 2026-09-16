@@ -102,8 +102,6 @@
 #include "game/world/generation/PlayerTeam.hpp"
 
 void MemSect(int section);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 const unsigned long long ENTITY_TYPE_EXPERIENCE_ORB = 0x0000000008000003ULL;
 const unsigned long long ENTITY_TYPE_ITEM_ENTITY = 0x000000000800000AULL;
@@ -159,7 +157,7 @@ LivingEntity::~LivingEntity()
     delete mAttributes;
     delete mCombatTracker;
 
-    if (mLastDamageSource != NULL)
+    if (mLastDamageSource)
     {
         delete mLastDamageSource;
         mLastDamageSource = NULL;
@@ -246,19 +244,19 @@ void LivingEntity::_init()
     mAttackStrengthCooldown = 60;
     mNoJumpDelay = 0;
     mUseItem = ItemInstance::EMPTY;
-    mField0x504 = 0.0f;
+    mUnresolvedFloat = 0.0f;
     mUseItemRemaining = 0;
     mFallFlyTicks = 0;
-    mField0x510 = 0;
+    mUnresolvedState = 0;
     mAbsorptionAmount = 0.0f;
-    mField0x518 = 0;
+    mUnresolvedInt0 = 0;
     mLastDamageSource = NULL;
     mLastDamageStamp = 0LL;
     mLastPos = BlockPos(0, 0, 0);
     mFallFlyingStateDisabled = false;
-    mField0x538 = 0;
-    mField0x53c = 0;
-    mField0x540 = 0;
+    mUnresolvedInt1 = 0;
+    mUnresolvedInt2 = 0;
+    mUnresolvedByteState = 0;
     mLightCacheTicks = 5;
     mLightSampleMinX = 0;
     mLightSampleMinY = 0;
@@ -2753,8 +2751,6 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     float friction = getFrictionForTravel();
     float acceleration = 0.16277135908603668f / (friction * friction * friction);
 
-    PIXBeginNamedEvent(0.0f, "Update speed");
-
     float speed;
 
     if (mOnGround)
@@ -2773,10 +2769,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         speed = (float)(getSpeed() * (double)acceleration);
     }
 
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "moveRelative");
     moveRelative(xxa, yya, zza, speed);
-    PIXEndNamedEvent();
 
     friction = getFrictionForTravel();
 
@@ -2797,16 +2790,12 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         }
     }
 
-    PIXBeginNamedEvent(0.0f, "move");
     move(eMoverType_Self, mXd, mYd, mZd, false);
-    PIXEndNamedEvent();
 
     if (mHorizontalCollision && onLadder())
     {
         mYd = 0.20000000298023224;
     }
-
-    PIXBeginNamedEvent(0.0f, "Update y delta");
 
     bool levitating = hasEffect(MobEffects::LEVITATION);
     bool loadedChunk = true;
@@ -2859,7 +2848,6 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     mXd = mXd * (double)friction;
     mZd = mZd * (double)friction;
 
-    PIXEndNamedEvent();
 }
 
 void LivingEntity::updateModelAnimation()
@@ -3182,8 +3170,6 @@ void LivingEntity::updateEquipmentSlots()
 
 void LivingEntity::tick()
 {
-    PIXBeginNamedEvent(0.0f, "Living entity tick");
-
     mTickCache.buildCache(mLevel, AABB::newTemp(mBoundingBox));
 
     Entity::tick();
@@ -3213,9 +3199,7 @@ void LivingEntity::tick()
 
         if (mTickCount % 20 == 0)
         {
-            PIXBeginNamedEvent(0.0f, "Recheck combat tracker status");
             getCombatTracker()->recheckStatus();
-            PIXEndNamedEvent();
         }
 
         if (!mGlowing)
@@ -3260,9 +3244,7 @@ void LivingEntity::tick()
         mSwimSoundPlayed = false;
     }
 
-    PIXBeginNamedEvent(0.0f, "aiStep");
     aiStep();
-    PIXEndNamedEvent();
 
     double dx = mX - mXo;
     double dz = mZ - mZo;
@@ -3358,7 +3340,6 @@ void LivingEntity::tick()
         mFallFlyTicks = 0;
     }
 
-    PIXEndNamedEvent();
 }
 
 float LivingEntity::tickHeadTurn(float yBodyRot, float headTurnDelta)
@@ -3491,7 +3472,6 @@ void LivingEntity::aiStep()
         mZd = 0.0;
     }
 
-    PIXBeginNamedEvent(0.0f, "ai");
 
     if (isImmobile())
     {
@@ -3505,8 +3485,6 @@ void LivingEntity::aiStep()
         serverAiStep();
     }
 
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "jump");
 
     if (mJumping)
     {
@@ -3529,29 +3507,24 @@ void LivingEntity::aiStep()
         mNoJumpDelay = 0;
     }
 
-    PIXEndNamedEvent();
 
     mXxa = mXxa * 0.9800000190734863f;
     mZza = mZza * 0.9800000190734863f;
     mYRota = mYRota * 0.8999999761581421f;
 
-    PIXBeginNamedEvent(0.0f, "travel");
     travel(mXxa, mYya, mZza);
-    PIXEndNamedEvent();
 
     if (!g_pApp->IsAppPaused())
     {
         updateFallFlying();
     }
 
-    PIXBeginNamedEvent(0.0f, "push entities");
 
     if (!Minecraft::InMiniGame(eMiniGameId_Glide, false))
     {
         pushEntities();
     }
 
-    PIXEndNamedEvent();
 }
 
 void LivingEntity::serverAiStep()
