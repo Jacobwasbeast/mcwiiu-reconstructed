@@ -4,6 +4,7 @@
 
 #include "game/core/EnderCrystal.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
+#include "game/entity/mob/MobCategory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -13,6 +14,11 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
+
+namespace
+{
+const int MESSAGE_END_CRYSTAL_LIMIT = static_cast<int>(0xC952E8B9U);
+}
 
 EndCrystalItem::EndCrystalItem()
     : Item()
@@ -75,9 +81,9 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
 
     if (!level->mIsClientSide)
     {
-        if (!level->canCreateMore(0x000000000800000EULL, 0))
+        if (!level->canCreateMore(MobCategory::ENDER_CRYSTAL->getEnumBaseClass(), 0))
         {
-            player->displayClientMessage(static_cast<int32_t>(0xC952E8B9), true);
+            player->displayClientMessage(MESSAGE_END_CRYSTAL_LIMIT, true);
             return InteractionResult::eInteractionResult_Fail;
         }
 
