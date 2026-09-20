@@ -102,7 +102,7 @@ public:
     virtual void spawnAnim();
     void handleEntityEvent(unsigned char event, int data);
     void setLeader(bool leader);
-    const SoundEvent* getAmbientSound();
+    virtual const SoundEvent* getAmbientSound();
     Item* getDeathLoot();
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType);
     bool isLeftHanded();
@@ -119,7 +119,7 @@ public:
     void pickUpItem(boost::shared_ptr<ItemEntity> item);
     bool canHoldItem(not_null_ptr<ItemInstance> item);
     bool removeWhenFarAway();
-    void checkDespawn();
+    virtual void checkDespawn();
     virtual void customServerAiStep();
     virtual int getMaxHeadXRot();
     virtual int getMaxHeadYRot();
