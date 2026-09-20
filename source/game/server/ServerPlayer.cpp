@@ -10,7 +10,7 @@
 #include "game/network/ClientboundContainerSetSlotPacket.hpp"
 #include "game/network/ClientboundContainerSetDataPacket.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
-#include "game/network/ClientboundSetCameraPacket.hpp"
+#include "game/network/GameModePacket.hpp"
 #include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
 #include "game/network/ClientboundRemoveEntitiesPacket.hpp"
 #include "game/network/ClientboundRemoveMobEffectPacket.hpp"
@@ -652,8 +652,12 @@ uint64_t ServerPlayer::SpectatePlayerChange(uint32_t parameterOne, int32_t param
 
 void ServerPlayer::updateClientsCameras()
 {
-    if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetCameraPacket(mCamera)));
+    boost::shared_ptr<Entity> camera = GetCamera();
+    GameModePacket::SetCameraData data;
+    data.camera = mPlayerIndex;
+    data.target = camera ? camera->getId() : -1;
+    gMinecraftServer->getPlayers()->broadcastAll(
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(2), data));
 }
 
 uint64_t ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* parameterOne, boost::shared_ptr<ServerPlayer>* parameterTwo)
