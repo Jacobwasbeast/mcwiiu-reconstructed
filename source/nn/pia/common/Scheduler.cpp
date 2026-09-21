@@ -1,4 +1,5 @@
 #include "nn/pia/common/Scheduler.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
 
 #include "nn/pia/common/BackgroundScheduler.hpp"
 #include "nn/pia/common/Job.hpp"
@@ -19,6 +20,11 @@ ListNode* GetNode(Job* job, int nodeOffset)
 }
 
 Scheduler* g_piaJobScheduler = 0;
+
+void Scheduler::SetMonitoringData()
+{
+    g_sessionStateMonitoringContent.m_schedulerDispatchCount = m_dispatchCount;
+}
 
 void Scheduler::EntryJob(Job* job, bool isBackground)
 {

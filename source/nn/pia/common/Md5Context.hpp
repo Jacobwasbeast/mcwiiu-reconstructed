@@ -6,21 +6,17 @@ namespace nn { namespace pia { namespace common {
 class Md5Context
 {
 public:
-    virtual ~Md5Context();
-    void ProcessBlock();
-    void Initialize();
-    void Update(const void* data, unsigned int size);
-    void GetHash(void* hash);
-    unsigned int GetHashSize() const;
-    unsigned int GetBlockSize() const;
+    virtual void Initialize();
+    virtual void Update(const void* data, unsigned int size);
+    virtual unsigned int GetHashSize() const;
+    virtual unsigned int GetBlockSize() const;
+    virtual void GetHash(void* hash);
+    virtual void ProcessBlock();
 
 private:
     unsigned int m_state[4];
-    unsigned char m_blockSize;
-    unsigned char m_padding[3];
+    unsigned int m_totalBytes;
     unsigned char m_block[64];
-    unsigned int m_blockCount;
-    unsigned int m_blockCountHigh;
 };
 
 }}}

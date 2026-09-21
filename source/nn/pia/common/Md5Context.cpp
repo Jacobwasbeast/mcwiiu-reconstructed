@@ -13,42 +13,40 @@ unsigned int RotateLeft(unsigned int value, unsigned int count)
 
 }
 
-Md5Context::~Md5Context()
-{
-}
-
 void Md5Context::Initialize()
 {
-    memset(m_block, 0, sizeof(m_block));
-    m_blockSize = 0;
-    m_blockCount = 0;
-    m_blockCountHigh = 0;
     m_state[0] = 0x67452301;
     m_state[1] = 0xefcdab89;
     m_state[2] = 0x98badcfe;
     m_state[3] = 0x10325476;
+    m_totalBytes = 0;
 }
 
 void Md5Context::Update(const void* data, unsigned int size)
 {
     const unsigned char* bytes = static_cast<const unsigned char*>(data);
-    while (size != 0)
+    const unsigned int offset = m_totalBytes & 0x3f;
+    const unsigned int available = sizeof(m_block) - offset;
+    m_totalBytes += size;
+    if (size < available)
     {
-        const unsigned int available = sizeof(m_block) - m_blockSize;
-        const unsigned int copied = size < available ? size : available;
-        memcpy(m_block + m_blockSize, bytes, copied);
-        m_blockSize = static_cast<unsigned char>(m_blockSize + copied);
-        bytes += copied;
-        size -= copied;
-        if (m_blockSize == sizeof(m_block))
-        {
-            ProcessBlock();
-            m_blockSize = 0;
-            ++m_blockCount;
-            if (m_blockCount == 0)
-                ++m_blockCountHigh;
-        }
+        if (size != 0)
+            memcpy(m_block + offset, bytes, size);
+        return;
     }
+    memcpy(m_block + offset, bytes, available);
+    ProcessBlock();
+    bytes += available;
+    size -= available;
+    while (size >= sizeof(m_block))
+    {
+        memcpy(m_block, bytes, sizeof(m_block));
+        ProcessBlock();
+        bytes += sizeof(m_block);
+        size -= sizeof(m_block);
+    }
+    if (size != 0)
+        memcpy(m_block, bytes, size);
 }
 
 void Md5Context::ProcessBlock()
@@ -71,10 +69,10 @@ void Md5Context::ProcessBlock()
     };
     unsigned int word[16];
     for (unsigned int i = 0; i < 16; ++i)
-        word[i] = (static_cast<unsigned int>(m_block[i * 4]) << 24) |
-                  (static_cast<unsigned int>(m_block[i * 4 + 1]) << 16) |
-                  (static_cast<unsigned int>(m_block[i * 4 + 2]) << 8) |
-                  static_cast<unsigned int>(m_block[i * 4 + 3]);
+        word[i] = static_cast<unsigned int>(m_block[i * 4]) |
+                  (static_cast<unsigned int>(m_block[i * 4 + 1]) << 8) |
+                  (static_cast<unsigned int>(m_block[i * 4 + 2]) << 16) |
+                  (static_cast<unsigned int>(m_block[i * 4 + 3]) << 24);
     unsigned int a = m_state[0], b = m_state[1], c = m_state[2], d = m_state[3];
     for (unsigned int i = 0; i < 64; ++i)
     {
@@ -98,28 +96,30 @@ void Md5Context::ProcessBlock()
 
 void Md5Context::GetHash(void* hash)
 {
-    const unsigned int bitCountHigh = (m_blockCountHigh << 9) | (m_blockCount >> 23);
-    const unsigned int bitCountLow = (m_blockCount << 9) | (m_blockSize << 3);
-    m_block[m_blockSize++] = 0x80;
-    while (m_blockSize != 56)
+    const unsigned int totalBytes = m_totalBytes;
+    static const unsigned char padding = 0x80;
+    Update(&padding, 1);
+    unsigned int offset = m_totalBytes & 0x3f;
+    unsigned int available = sizeof(m_block) - offset;
+    if (available < 8)
     {
-        if (m_blockSize == 64)
-        {
-            ProcessBlock();
-            m_blockSize = 0;
-        }
-        m_block[m_blockSize++] = 0;
+        memset(m_block + offset, 0, available);
+        ProcessBlock();
+        offset = 0;
+        available = sizeof(m_block);
     }
-    m_block[56] = static_cast<unsigned char>(bitCountHigh >> 24);
-    m_block[57] = static_cast<unsigned char>(bitCountHigh >> 16);
-    m_block[58] = static_cast<unsigned char>(bitCountHigh >> 8);
-    m_block[59] = static_cast<unsigned char>(bitCountHigh);
-    m_block[60] = static_cast<unsigned char>(bitCountLow >> 24);
-    m_block[61] = static_cast<unsigned char>(bitCountLow >> 16);
-    m_block[62] = static_cast<unsigned char>(bitCountLow >> 8);
-    m_block[63] = static_cast<unsigned char>(bitCountLow);
+    if (available > 8)
+        memset(m_block + offset, 0, available - 8);
+    const unsigned int bitCount = totalBytes << 3;
+    m_block[56] = static_cast<unsigned char>(bitCount);
+    m_block[57] = static_cast<unsigned char>(bitCount >> 8);
+    m_block[58] = static_cast<unsigned char>(bitCount >> 16);
+    m_block[59] = static_cast<unsigned char>(bitCount >> 24);
+    m_block[60] = 0;
+    m_block[61] = 0;
+    m_block[62] = 0;
+    m_block[63] = 0;
     ProcessBlock();
-    m_blockSize = 0;
     unsigned char* output = static_cast<unsigned char*>(hash);
     for (unsigned int i = 0; i < 4; ++i)
     {
