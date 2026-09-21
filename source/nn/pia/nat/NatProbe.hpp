@@ -24,6 +24,9 @@ public:
     virtual void Trace(unsigned long long value) const;
 
 private:
+    NatProbe();
+    friend class NatProbeList;
+
     unsigned int m_startTick;
     unsigned int m_startTickHigh;
     unsigned int m_deadlineTick;

@@ -10,6 +10,11 @@ namespace
 unsigned short s_targetAddressUpdateCount = 0xffff;
 }
 
+NatProbe::NatProbe()
+    : transport::StationLocation()
+{
+}
+
 NatProbe::NatProbe(const transport::StationLocation& location, const common::Time& start,
                    const common::TimeSpan& duration, unsigned char timeout,
                    unsigned char sprayCount, unsigned char sprayRange)
