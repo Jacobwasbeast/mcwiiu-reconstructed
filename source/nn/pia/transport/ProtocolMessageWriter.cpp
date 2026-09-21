@@ -1,4 +1,5 @@
 #include "nn/pia/transport/ProtocolMessageWriter.hpp"
+#include "nn/pia/common/Packet.hpp"
 
 #include <string.h>
 
@@ -41,6 +42,53 @@ void ProtocolMessageWriter::AddMessageBuffer(common::Packet* packet, void* buffe
     messageBuffer.m_field10 = field10;
     messageBuffer.m_field11 = field11;
     ++m_messageBufferNum;
+}
+
+void ProtocolMessageWriter::Commit()
+{
+    const unsigned short messageSize = static_cast<unsigned short>(m_messageSize);
+    const unsigned long long source = m_source;
+    const unsigned short protocolId = m_protocolId;
+    unsigned char headerFields[3];
+    memcpy(headerFields, m_field12, sizeof(headerFields));
+
+    const auto writeHeader = [&](MessageBuffer& messageBuffer)
+    {
+        unsigned char* buffer = static_cast<unsigned char*>(messageBuffer.m_buffer);
+        if (buffer == 0)
+            return;
+        buffer[0] = static_cast<unsigned char>(messageBuffer.m_field10 |
+            (messageBuffer.m_field11 ? 2 : 0) | (m_isReliable ? 4 : 0) |
+            (m_isPriority ? 8 : 0));
+        buffer[1] = static_cast<unsigned char>(messageSize >> 8);
+        buffer[2] = static_cast<unsigned char>(messageSize);
+        for (unsigned int index = 0; index < 8; ++index)
+        {
+            buffer[3 + index] = static_cast<unsigned char>(
+                messageBuffer.m_destinationStationId >> (56 - index * 8));
+            buffer[11 + index] = static_cast<unsigned char>(source >> (56 - index * 8));
+        }
+        buffer[19] = static_cast<unsigned char>(protocolId >> 8);
+        buffer[20] = static_cast<unsigned char>(protocolId);
+        memcpy(buffer + 21, headerFields, sizeof(headerFields));
+    };
+
+    writeHeader(m_messageBuffers[0]);
+    const unsigned int copySize = ((m_messageSize + 23U) & ~3U) + 4U;
+    for (unsigned int index = 1; index < m_messageBufferNum; ++index)
+    {
+        memmove(m_messageBuffers[index].m_buffer, m_messageBuffers[0].m_buffer, copySize);
+        writeHeader(m_messageBuffers[index]);
+    }
+    if (m_priority != 0)
+    {
+        for (unsigned int index = 0; index < m_messageBufferNum; ++index)
+        {
+            common::Packet* packet = m_messageBuffers[index].m_packet;
+            if (packet->m_field600 < m_priority)
+                packet->m_field600 = m_priority;
+        }
+    }
 }
 
 void ProtocolMessageWriter::SetPayload(const void* payload)

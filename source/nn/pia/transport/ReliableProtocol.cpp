@@ -8,7 +8,6 @@
 
 namespace nn { namespace pia { namespace transport {
 
-common::WatermarkManager* g_piaWatermarkManager = 0;
 
 static int g_reliableProtocolSendFailCount = 0;
 static unsigned int g_reliableProtocolResendParam1 = 0;
@@ -60,12 +59,12 @@ void ReliableProtocol::Finalize()
     m_field18 = 0;
     if (array != 0)
     {
-        unsigned int count = pead::getArraySize(array) >> 7;
-        unsigned char* p = array;
+        unsigned int count = pead::getArraySize(array) / sizeof(ReliableSlidingWindow);
+        ReliableSlidingWindow* p = reinterpret_cast<ReliableSlidingWindow*>(array);
         for (; count != 0; --count)
         {
-            reinterpret_cast<ReliableSlidingWindow*>(p)->~ReliableSlidingWindow();
-            p = p + 0x80;
+            p->~ReliableSlidingWindow();
+            ++p;
         }
         pead::freeToSeadHeap(array);
         m_field24 = 0;
@@ -86,35 +85,35 @@ Result ReliableProtocol::Initialize(unsigned int a1, unsigned int a2)
 
     pead::Heap* heap = common::HeapManager::GetHeap();
     unsigned char* array = static_cast<unsigned char*>(
-        pead::allocateFromSeadHeap(static_cast<unsigned int>(count) * 0x80, heap));
+        pead::allocateFromSeadHeap(static_cast<unsigned int>(count) * sizeof(ReliableSlidingWindow), heap));
     if (array == 0)
     {
         m_field24 = 0;
     }
     else
     {
-        unsigned char* p = array;
+        ReliableSlidingWindow* p = reinterpret_cast<ReliableSlidingWindow*>(array);
         for (int i = count; i != 0; --i)
         {
             new (p) ReliableSlidingWindow();
-            p = p + 0x80;
+            ++p;
         }
         m_field24 = array;
     }
 
     if (count != 0)
     {
-        int offset = 0;
+        int windowIndex = 0;
         for (;;)
         {
-            Result r = reinterpret_cast<ReliableSlidingWindow*>(array + offset)->Initialize(a1, a2);
+            Result r = (reinterpret_cast<ReliableSlidingWindow*>(array) + windowIndex)->Initialize(a1, a2);
             if (r != 0)
             {
                 Finalize();
                 return r;
             }
             --count;
-            offset += 0x80;
+            ++windowIndex;
             if (count == 0)
                 break;
             array = m_field24;
@@ -166,15 +165,15 @@ void ReliableProtocol::CleanupWithStationAddress()
         m_field18 = 0;
         if (count != 0)
         {
-            int offset = 0;
+            int windowIndex = 0;
             do
             {
                 ReliableSlidingWindow* window =
-                    reinterpret_cast<ReliableSlidingWindow*>(m_field24 + offset);
+                    (reinterpret_cast<ReliableSlidingWindow*>(m_field24) + windowIndex);
                 if (window->IsInCommunication())
                     window->Cleanup();
                 --count;
-                offset += 0x80;
+                ++windowIndex;
             } while (count != 0);
         }
     }
@@ -224,7 +223,7 @@ ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIn
     int index = stationIndex;
     if (m_field14 <= index)
         index = index - 1;
-    return reinterpret_cast<ReliableSlidingWindow*>(m_field24 + index * 0x80);
+    return reinterpret_cast<ReliableSlidingWindow*>(m_field24) + index;
 }
 
 const ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIndex) const
@@ -232,7 +231,7 @@ const ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex sta
     int index = stationIndex;
     if (m_field14 <= index)
         index = index - 1;
-    return reinterpret_cast<const ReliableSlidingWindow*>(m_field24 + index * 0x80);
+    return reinterpret_cast<const ReliableSlidingWindow*>(m_field24) + index;
 }
 
 Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsigned int size)
@@ -250,12 +249,12 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
         int count = static_cast<int>(m_field20) - 1;
         if (count != 0)
         {
-            int offset = 0;
+            int windowIndex = 0;
             int iterationsLeft = count;
             for (;;)
             {
                 ReliableSlidingWindow* window =
-                    reinterpret_cast<ReliableSlidingWindow*>(array + offset);
+                    (reinterpret_cast<ReliableSlidingWindow*>(array) + windowIndex);
                 if (window->IsInCommunication() && window->CanPushData(size) == 0)
                 {
                     if (g_reliableProtocolSendFailCount != -1)
@@ -263,7 +262,7 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
                     return 0x4c0d;
                 }
                 --iterationsLeft;
-                offset += 0x80;
+                ++windowIndex;
                 if (iterationsLeft == 0)
                     break;
                 array = m_field24;
@@ -272,11 +271,11 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
 
         if (count != 0)
         {
-            int offset = 0;
+            int windowIndex = 0;
             do
             {
                 ReliableSlidingWindow* window =
-                    reinterpret_cast<ReliableSlidingWindow*>(m_field24 + offset);
+                    (reinterpret_cast<ReliableSlidingWindow*>(m_field24) + windowIndex);
                 if (window->IsInCommunication())
                 {
                     Result r = window->PushData(data, size);
@@ -284,13 +283,12 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
                         return r;
                     if (g_piaWatermarkManager != 0)
                     {
-                        unsigned int trackedValue = *reinterpret_cast<const unsigned int*>(
-                            reinterpret_cast<const unsigned char*>(window) + 0x28);
+                        unsigned int trackedValue = window->m_sendBuffer.m_count;
                         g_piaWatermarkManager->GetWatermark(3)->Update(trackedValue);
                     }
                 }
                 --count;
-                offset += 0x80;
+                ++windowIndex;
             } while (count != 0);
         }
         return 0;
@@ -308,8 +306,7 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
     {
         if (g_piaWatermarkManager != 0)
         {
-            unsigned int trackedValue = *reinterpret_cast<const unsigned int*>(
-                reinterpret_cast<const unsigned char*>(window) + 0x28);
+            unsigned int trackedValue = window->m_sendBuffer.m_count;
             g_piaWatermarkManager->GetWatermark(3)->Update(trackedValue);
         }
     }
@@ -345,17 +342,15 @@ Result ReliableProtocol::Receive(unsigned long long* stationId, void* buffer, un
     int count = static_cast<int>(m_field20) - 1;
     if (count != 0)
     {
-        int offset = 0;
+        int windowIndex = 0;
         do
         {
             ReliableSlidingWindow* window =
-                reinterpret_cast<ReliableSlidingWindow*>(m_field24 + offset);
+                (reinterpret_cast<ReliableSlidingWindow*>(m_field24) + windowIndex);
             if (window->IsInCommunication())
             {
-                const unsigned char* raw = reinterpret_cast<const unsigned char*>(window);
                 unsigned long long windowStationId =
-                    (static_cast<unsigned long long>(*reinterpret_cast<const unsigned int*>(raw + 0x10)) << 32) |
-                    *reinterpret_cast<const unsigned int*>(raw + 0x14);
+                    window->m_remoteStationId;
                 if (g_piaTransport->m_stationIdTable->IsJoinEventNotifiedByStationId(windowStationId))
                 {
                     Result popResult = window->PopData(buffer, size, bufferSize);
@@ -364,7 +359,7 @@ Result ReliableProtocol::Receive(unsigned long long* stationId, void* buffer, un
                         if (g_piaWatermarkManager != 0)
                         {
                             unsigned int trackedValue =
-                                *reinterpret_cast<const unsigned int*>(raw + 0x3c);
+                                window->m_receiveBuffer.m_count;
                             g_piaWatermarkManager->GetWatermark(4)->Update(trackedValue);
                         }
                         *stationId = windowStationId;
@@ -375,7 +370,7 @@ Result ReliableProtocol::Receive(unsigned long long* stationId, void* buffer, un
                 }
             }
             --count;
-            offset += 0x80;
+            ++windowIndex;
         } while (count != 0);
     }
     return 0x2c09;

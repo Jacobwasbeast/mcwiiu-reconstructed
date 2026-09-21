@@ -1,5 +1,6 @@
 #include "nn/pia/transport/RttCalculator.hpp"
 #include <algorithm>
+#include "nn/pia/Transport.hpp"
 namespace nn { namespace pia { namespace transport {
 int RttCalculator::s_initialPulseInterval = 2000;
 
@@ -63,6 +64,7 @@ void RttCalculator::Startup()
 {
     m_started = 1;
     m_lastRtt = -1;
+    m_lastRequestedTime.m_tick = 0;
     m_latestMedian.m_count = 0;
     m_latestMedian.m_index = 0;
     ResetRttMinMax();
@@ -82,14 +84,13 @@ void RttCalculator::Cleanup()
 
 bool RttCalculator::IsTimeOut() const
 {
-    common::Time now;
-    now.SetNow();
-    const unsigned long long elapsedTicks = now.m_tick - m_lastRequestedTime.m_tick;
-    const unsigned long long ticksPerMillisecond =
-        static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick);
-    const unsigned long long elapsedMilliseconds = elapsedTicks / ticksPerMillisecond;
+    const unsigned long long elapsedTicks =
+        g_piaTransport->m_time.m_tick - m_lastRequestedTime.m_tick;
+    const long long elapsedMilliseconds = static_cast<long long>(elapsedTicks) /
+        common::TimeSpan::GetTicksPerMSec().m_tick;
+    const int elapsedLow = static_cast<int>(static_cast<unsigned int>(elapsedMilliseconds));
     const int timeoutMilliseconds = m_latestMedian.m_count == 9 ? 2000 : s_initialPulseInterval;
-    return elapsedMilliseconds >= static_cast<unsigned long long>(timeoutMilliseconds);
+    return elapsedLow >= timeoutMilliseconds;
 }
 
 void RttCalculator::SetLastRequestedTime(const common::Time& time)

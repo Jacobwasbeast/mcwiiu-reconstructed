@@ -22,6 +22,14 @@ void ThreadStreamManager::Cleanup()
         m_sendThreadStream->TransportThreadStream::Cleanup();
 }
 
+void ThreadStreamManager::SetMonitoringData()
+{
+    if (m_sendThreadStream != 0)
+        m_sendThreadStream->SetMonitoringData();
+    if (m_receiveThreadStream != 0)
+        m_receiveThreadStream->SetMonitoringData();
+}
+
 void ThreadStreamManager::SetSendThreadPriority(int priority)
 {
     m_sendThreadStream->m_thread->setPriority(priority);

@@ -1,12 +1,14 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_STATION_PACKET_HANDLER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_STATION_PACKET_HANDLER_HPP
 
-#include "nn/pia.h"
 #include "nn/pia/transport/PacketHandler.hpp"
+#include "nn/pia/transport/KeepAliveSender.hpp"
+#include "nn/pia/transport/KeepAliveReceiver.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
 class StationConnectionInfoTable;
+class StationManager;
 
 class StationPacketHandler : public PacketHandler
 {
@@ -25,30 +27,57 @@ public:
     virtual unsigned int IsBroadcastSupported() const;
     virtual Result Initialize(unsigned int stationNum, bool isStarConnection,
                               unsigned int maxProtocolNum);
-    virtual unsigned int AssignSingle(const ProtocolId& protocolId,
-                                      ::nn::pia::StationIndex stationIndex,
-                                      unsigned int size, bool isReliable,
-                                      bool isPriority, bool isBroadcast);
-    virtual unsigned int AssignAll(const ProtocolId& protocolId, unsigned int size,
-                                   bool isReliable, bool isPriority, bool isBroadcast);
-    virtual void AssignMulti(const ProtocolId& protocolId, unsigned int size,
-                             unsigned int stationBitmap, bool isReliable,
-                             bool isPriority, bool isBroadcast);
-    void AssignMulti(const ProtocolId& protocolId, unsigned int size,
-                     unsigned int stationBitmap, bool isReliable, bool isPriority,
-                     unsigned long long destinationStationIds, bool isBroadcast);
+    virtual ProtocolMessageWriter* AssignSingle(const ProtocolId& protocolId,
+                                                ::nn::pia::StationIndex stationIndex,
+                                                unsigned int size, bool isPriority,
+                                                bool field602, bool field604);
+    virtual ProtocolMessageWriter* AssignAll(const ProtocolId& protocolId, unsigned int size,
+                                             bool isPriority, bool field602, bool field604);
+    virtual ProtocolMessageWriter* AssignMulti(const ProtocolId& protocolId,
+                                               unsigned int stationBitmap, unsigned int size,
+                                               bool isPriority, bool field602, bool field604);
+    ProtocolMessageWriter* AssignMulti(const ProtocolId& protocolId,
+                                       unsigned int stationBitmap, unsigned int size,
+                                       bool isPriority, bool field602,
+                                       unsigned long long sourceId, bool field604);
+    common::Packet* AssignPacket(::nn::pia::StationIndex stationIndex,
+                                 unsigned int stationBitmap,
+                                 const common::StationAddress& address,
+                                 bool isPriority, bool field602, bool field604);
+    bool AssignHostMessage(unsigned int size, unsigned int sizeLimit,
+                           bool isPriority, bool field602, bool field604);
+    bool AssignDirectMessage(unsigned int stationBitmap, unsigned int size,
+                             unsigned int sizeLimit, bool isPriority,
+                             bool field602, bool field604);
+    bool AssignAllMessage(unsigned int stationBitmap, unsigned int size,
+                          unsigned int sizeLimit, bool isPriority,
+                          bool field602, bool field604);
 
     Result Startup(PacketStream::Writer* writer, PacketStream::Reader* reader,
                    common::IPacketInput* packetInput, common::IPacketOutput* packetOutput,
                    unsigned long long* stationId,
                    const common::CryptoSetting* cryptoSetting);
 
+    ProtocolMessageWriter* AssignByStationIndex(const ProtocolId& protocolId,
+                                                ::nn::pia::StationIndex stationIndex,
+                                                unsigned int size, bool isReliable,
+                                                bool isPriority, bool isBroadcast);
+    StationManager* GetStationManager();
+    void UpdateLocalStation();
+    ProtocolMessageWriter* AssignByStationBitmap(const ProtocolId& protocolId,
+                                                unsigned int stationBitmap, unsigned int size,
+                                                bool isReliable, bool isPriority, bool isBroadcast);
+    static unsigned int GetParticipatingStationBitmap(const StationManager* manager);
     static StationConnectionInfoTable* GetStationConnectionInfoTable();
 
     unsigned int m_localStationIndex;
     unsigned long long m_localStationId;
     unsigned int m_localStationBitmap;
     unsigned int m_keepAliveStationBitmap;
+    KeepAliveSender m_keepAliveSender;
+    KeepAliveReceiver m_keepAliveReceiver;
+    unsigned int m_stationNum;
+    bool m_isStarConnection;
 };
 
 }}}

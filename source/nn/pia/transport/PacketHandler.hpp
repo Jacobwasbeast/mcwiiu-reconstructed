@@ -23,6 +23,16 @@ class PacketHandler
 public:
     enum { cPacketHeaderSize = 36, cPayloadSizeMax = 1436 };
 
+    class Iterator
+    {
+    public:
+        explicit Iterator(PacketHandler* handler) : m_handler(handler) {}
+        ProtocolMessageReader* GetMessageReader() const;
+
+    private:
+        PacketHandler* m_handler;
+    };
+
     PacketHandler();
     virtual ~PacketHandler();
     virtual void Finalize();
@@ -41,11 +51,27 @@ public:
     virtual bool CheckFiltering(const common::StationAddress& stationAddress) const;
     virtual unsigned int IsBroadcastSupported() const;
 
+    Iterator& GetIterator(const ProtocolId& protocolId);
+    Iterator& GetIterator(unsigned char protocolType);
+    Result Initialize(unsigned int maxProtocolNum);
     Result Startup(PacketStream::Writer* writer, PacketStream::Reader* reader,
                    common::IPacketInput* packetInput, common::IPacketOutput* packetOutput,
                    unsigned long long* stationId,
                    const common::CryptoSetting* cryptoSetting);
     Result UpdateSetting(const common::CryptoSetting* cryptoSetting);
+    int GetPayloadSizeLimit() const;
+
+    ProtocolMessageWriter* AssignByStationAddress(const ProtocolId& protocolId,
+                                                 const common::StationAddress& address,
+                                                 unsigned int size, bool isPriority,
+                                                 bool field602);
+    common::Packet* AssignPacket(const common::StationAddress& address, bool isPriority,
+                                  bool field602);
+    unsigned char* AssignPacketPayload(common::Packet* packet, unsigned int size);
+    bool IsBundleCandidate(const common::Packet* packet, bool field602,
+                           unsigned int sizeLimit, bool field604);
+    Result Commit();
+    ProtocolMessageWriter* ReserveMessageWriter();
 
     PacketStream::Writer* m_writer;
     PacketStream::Reader* m_reader;
@@ -53,12 +79,12 @@ public:
     ProtocolMessageReader m_protocolMessageReader;
     unsigned int m_payloadSize;
     unsigned int m_packetSize;
-    unsigned int m_field358;
+    ProtocolMessageWriter* m_pendingWriter;
     unsigned short m_field35c;
     unsigned short m_field35e;
     unsigned int m_field360;
     unsigned int m_field364;
-    PacketHandler* m_self;
+    Iterator m_iterator;
     PacketAnalyzer* m_sendPacketAnalyzer;
     PacketAnalyzer* m_sendUnicastPacketAnalyzer;
     PacketAnalyzer* m_sendBroadcastPacketAnalyzer;

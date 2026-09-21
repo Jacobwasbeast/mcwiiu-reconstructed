@@ -1,6 +1,8 @@
 #include "nn/pia/transport/TransportThreadStream.hpp"
 
 #include "nn/pia/transport/LatencyEmulator.hpp"
+#include "nn/pia/HeapManager.hpp"
+#include <new>
 
 namespace nn { namespace pia { namespace transport {
 
@@ -15,6 +17,65 @@ TransportThreadStream::TransportThreadStream()
 
 TransportThreadStream::~TransportThreadStream()
 {
+}
+
+Result TransportThreadStream::InitializeCore(const char* name, int priority,
+                                             unsigned int packetNum,
+                                             unsigned int latencyEntryNum,
+                                             bool isPacketLossEnabled,
+                                             unsigned int streamIndex)
+{
+    if (m_threadState != cThreadStateQuit)
+        return static_cast<Result>(0x10c08);
+
+    m_latencyEmulator = 0;
+    if (latencyEntryNum != 0)
+    {
+        void* storage = pead::allocateFromSeadHeap(sizeof(LatencyEmulator),
+                                                  common::HeapManager::GetHeap());
+        if (storage != 0)
+            m_latencyEmulator = new (storage) LatencyEmulator(latencyEntryNum);
+    }
+    m_isPacketLossEnabled = isPacketLossEnabled;
+    pead::Heap* heap = common::HeapManager::GetHeap();
+    void* storage = pead::allocateFromSeadHeap(sizeof(pead::DelegateThread),
+                                              common::HeapManager::GetHeap());
+    m_thread = storage != 0 ? new (storage) pead::DelegateThread(
+        pead::SafeStringBase<char>(name), &m_threadDelegate, heap, priority,
+        pead::MessageQueue::cNoBlock, 0x7fffffff, 0x2000, 0x20) : 0;
+    const unsigned int coreId = pead::CoreInfo::getCurrentCoreId().value();
+    const pead::CoreIdMask affinity((coreId & 32) != 0 ? 0 : 1u << (coreId & 31));
+    m_thread->setAffinity(affinity);
+    PacketStream::Initialize(packetNum, streamIndex);
+    m_threadState = cThreadStateStop;
+    m_lastResult = 0;
+    m_thread->start();
+    return 0;
+}
+
+void TransportThreadStream::FinalizeCore()
+{
+    if (m_thread != 0)
+    {
+        ChangeState(cThreadStateQuit);
+        m_thread->waitDone();
+        if (m_thread != 0)
+        {
+            pead::Thread* thread = m_thread;
+            thread->~Thread();
+            pead::freeToSeadHeap(thread);
+        }
+        m_thread = 0;
+    }
+    PacketStream::Finalize();
+    m_lastResult = 0;
+    if (m_latencyEmulator != 0)
+    {
+        LatencyEmulator* latencyEmulator = m_latencyEmulator;
+        latencyEmulator->~LatencyEmulator();
+        pead::freeToSeadHeap(latencyEmulator);
+        m_latencyEmulator = 0;
+    }
 }
 
 void TransportThreadStream::ChangeState(ThreadState threadState)

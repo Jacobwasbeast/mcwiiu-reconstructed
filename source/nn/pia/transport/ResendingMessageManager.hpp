@@ -38,15 +38,15 @@ public:
     void StopResending(unsigned int ackId);
     void Trace(unsigned long long value) const;
 
-    unsigned long long* m_stationIds;
+    unsigned long long* m_nextSendTimes;
     unsigned long long* m_timeouts;
     unsigned int* m_ackIds;
     unsigned char** m_messages;
     unsigned int* m_messageSizes;
     unsigned int* m_field14;
-    unsigned char* m_field18;
-    unsigned short* m_field1c;
-    unsigned int* m_field20;
+    common::StationAddress* m_field18;
+    ProtocolId* m_field1c;
+    unsigned char* m_field20;
     PacketHandler* m_packetHandler;
     bool m_isRelay;
     unsigned int m_field2c;

@@ -12,13 +12,14 @@ namespace nn { namespace pia { namespace transport {
 class PacketStream
 {
 public:
-    class Writer
+    class Accessor
     {
     public:
-        Writer(PacketStream* packetStream)
+        Accessor(PacketStream* packetStream)
             : m_packetStream(packetStream), m_field04(-1), m_field08(-1), m_field0c(0)
         {
         }
+        common::Packet* Get(int index);
 
         PacketStream* m_packetStream;
         int m_field04;
@@ -26,18 +27,25 @@ public:
         unsigned int m_field0c;
     };
 
-    class Reader
+    class Writer : public Accessor
     {
     public:
-        Reader(PacketStream* packetStream)
-            : m_packetStream(packetStream), m_field04(-1), m_field08(-1), m_field0c(0)
+        Writer(PacketStream* packetStream) : Accessor(packetStream)
         {
         }
+        int AssignableNum() const;
+        common::Packet* Assign();
+        void Push();
+    };
 
-        PacketStream* m_packetStream;
-        int m_field04;
-        int m_field08;
-        unsigned int m_field0c;
+    class Reader : public Accessor
+    {
+    public:
+        Reader(PacketStream* packetStream) : Accessor(packetStream)
+        {
+        }
+        void PullAll();
+        void Release();
     };
 
     PacketStream();

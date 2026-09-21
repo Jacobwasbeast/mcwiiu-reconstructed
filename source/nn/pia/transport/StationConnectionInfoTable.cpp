@@ -16,8 +16,8 @@ void* g_stationConnectionInfoTableStorage = 0;
 
 unsigned long long PrincipalId(const StationConnectionInfo& info)
 {
-    return (static_cast<unsigned long long>(static_cast<unsigned int>(info.m_field14)) << 32) |
-           static_cast<unsigned int>(info.m_field10);
+    return (static_cast<unsigned long long>(static_cast<unsigned int>(info.m_field10)) << 32) |
+           static_cast<unsigned int>(info.m_field14);
 }
 }
 
@@ -148,8 +148,8 @@ Result StationConnectionInfoTable::GetStationConnectionInfo(
     const unsigned int high = static_cast<unsigned int>(principalId >> 32);
     m_criticalSection.Lock();
     for (unsigned int i = 0; i < m_count; ++i)
-        if (static_cast<unsigned int>(m_infos[i].m_field10) == low &&
-            static_cast<unsigned int>(m_infos[i].m_field14) == high)
+        if (static_cast<unsigned int>(m_infos[i].m_field10) == high &&
+            static_cast<unsigned int>(m_infos[i].m_field14) == low)
         {
             *info = m_infos[i];
             m_criticalSection.Unlock();
@@ -246,9 +246,9 @@ unsigned int StationConnectionInfoTable::GetStationIndexByPrincipalID(
     for (unsigned int i = 0; i < m_count; ++i)
     {
         Station* station = m_stations[i];
-        if (static_cast<unsigned int>(m_infos[i].m_field10) == low &&
-            static_cast<unsigned int>(m_infos[i].m_field14) == high && station != 0 &&
-            station->m_field10 < 0x20)
+        if (static_cast<unsigned int>(m_infos[i].m_field10) == high &&
+            static_cast<unsigned int>(m_infos[i].m_field14) == low && station != 0 &&
+            static_cast<int>(station->m_field10) < 0x20)
         {
             const unsigned int result = static_cast<unsigned int>(station->m_field10);
             m_criticalSection.Unlock();

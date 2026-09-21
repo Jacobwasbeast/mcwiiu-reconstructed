@@ -11,9 +11,11 @@ namespace nn { namespace pia { namespace transport {
 
 static common::Time getTime()
 {
-    static common::Time cachedTime;
-    cachedTime = g_piaTransport->m_time;
-    return cachedTime;
+    if (g_piaTransport != 0)
+        return g_piaTransport->m_time;
+    common::Time time;
+    time.SetNow();
+    return time;
 }
 
 PacketAnalyzer::PacketAnalyzer(const char* name, unsigned int headerSize)

@@ -21,14 +21,14 @@ public:
     virtual unsigned int CheckReceive(const ProtocolMessageReader& reader);
     virtual Result Initialize(unsigned int stationNum, bool isStarConnection,
                               unsigned int maxProtocolNum);
-    virtual unsigned int AssignSingle(const ProtocolId& protocolId,
+    virtual ProtocolMessageWriter* AssignSingle(const ProtocolId& protocolId,
                                       ::nn::pia::StationIndex stationIndex,
                                       unsigned int size, bool isReliable,
                                       bool isPriority, bool isBroadcast);
-    virtual unsigned int AssignAll(const ProtocolId& protocolId, unsigned int size,
+    virtual ProtocolMessageWriter* AssignAll(const ProtocolId& protocolId, unsigned int size,
                                    bool isReliable, bool isPriority, bool isBroadcast);
-    virtual void AssignMulti(const ProtocolId& protocolId, unsigned int size,
-                             unsigned int stationBitmap, bool isReliable,
+    virtual ProtocolMessageWriter* AssignMulti(const ProtocolId& protocolId, unsigned int stationBitmap,
+                             unsigned int size, bool isReliable,
                              bool isPriority, bool isBroadcast);
 
     Result Startup(PacketStream::Writer* writer, PacketStream::Reader* reader,
