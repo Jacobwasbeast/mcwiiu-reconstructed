@@ -11,6 +11,17 @@
 
 namespace nn { namespace nex {
 
+class BadEvents
+{
+public:
+    enum Event
+    {
+        SYSTEM_CHECK_FAILURE = 0
+    };
+
+    static void Signal(Event event);
+};
+
 bool g_jobProcessProtocolEventCloseGuard = false;
 
 namespace
@@ -84,6 +95,11 @@ void JobProcessProtocolMessage::Execute()
 
 void JobProcessProtocolMessage::Trace(std::uint64_t)
 {
+}
+
+void BadEvents::Signal(Event event)
+{
+    (void)event;
 }
 
 }}

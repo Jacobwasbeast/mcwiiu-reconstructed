@@ -3,6 +3,7 @@
 #include "nn/pia/chat/AudioStream.hpp"
 #include "nn/pia/chat/Decoder.hpp"
 #include "vendor/VCTDropRecovery.hpp"
+#include "vendor/VCTQuality.hpp"
 #include "vendor/VCTQueue.hpp"
 #include "vendor/__N_14_chat_Adpcm_cpp_f2b530af.hpp"
 
@@ -47,6 +48,8 @@ VCTCodec g_vctCodec = VCT_CODEC_4;
 unsigned int g_vctAudioFrameLength = 0x90;
 unsigned int g_vctAudioDataSize = 0x900;
 unsigned char g_vctVadResetPending = 0;
+unsigned char g_vctVadEnabled = 1;
+unsigned char g_vctVadDisableState = 0;
 unsigned char g_vctSendPending = 0;
 unsigned char g_vctAudioScaleSpecified = 0;
 unsigned int g_vctTotalPlayTime = 0;
@@ -111,6 +114,16 @@ unsigned int VCT_GetAudioFrameLength()
 unsigned int VCT_GetAudioDataSize()
 {
     return VCTi_GetAudioDataSize();
+}
+
+void VCT_EnableVAD(bool bEnabled)
+{
+    g_vctVadEnabled = bEnabled ? 1 : 0;
+    VCT_ResetVAD();
+    if (!bEnabled)
+    {
+        g_vctVadDisableState = 1;
+    }
 }
 
 bool vct_is_adpcm(VCTCodec codec)
@@ -303,6 +316,176 @@ nn::pia::chat::AudioStream* VCTi_GetStreamFromCid(unsigned short usCid)
         }
     }
     return 0;
+}
+
+namespace
+{
+    unsigned short read_be16(const unsigned char* pData)
+    {
+        return static_cast<unsigned short>(
+            (static_cast<unsigned short>(pData[0]) << 8) |
+            static_cast<unsigned short>(pData[1]));
+    }
+
+    unsigned int read_be32(const unsigned char* pData)
+    {
+        return (static_cast<unsigned int>(pData[0]) << 24) |
+               (static_cast<unsigned int>(pData[1]) << 16) |
+               (static_cast<unsigned int>(pData[2]) << 8) |
+               static_cast<unsigned int>(pData[3]);
+    }
+}
+
+unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
+                               unsigned int uiDataSize, long long llReceiveTick)
+{
+    if (g_vctStreamingSessionCount == 0)
+    {
+        return 0;
+    }
+
+    nn::pia::chat::AudioStream* pStream = VCTi_GetStreamFromCid(usCid);
+    if (pStream == 0)
+    {
+        return 0;
+    }
+
+    if (g_vctVadEnabled == 0)
+    {
+        pStream->UpdateSkew(llReceiveTick);
+    }
+
+    const unsigned char ucType = pData[4];
+    if (ucType == 0x41)
+    {
+        pStream->m_SequenceUninitialized = 1;
+        pStream->m_audioState = read_be16(pData + 6);
+        pStream->m_BaseSendTick = 0;
+        return 0;
+    }
+    if (ucType != 0x40)
+    {
+        return 0;
+    }
+
+    const unsigned char ucInitialFlags = pData[5];
+    const unsigned char ucCodec = static_cast<unsigned char>(ucInitialFlags & 0x0f);
+    if (!VCT_IsValidCodec(static_cast<VCTCodec>(ucCodec)))
+    {
+        return 0;
+    }
+
+    pStream->m_Info.m_Unknown00 = ucCodec;
+
+    const unsigned int uiMainSize = vct_get_packet_size(ucCodec);
+    const bool bHasSpare = (ucInitialFlags & VCT_PACKET_FLAG_SPARE) != 0;
+    const unsigned char* pSpare = 0;
+    unsigned int uiSpareSize = 0;
+    unsigned int uiPacketSize = uiMainSize;
+    const unsigned int uiMainPayload = uiMainSize - 12;
+
+    if (bHasSpare)
+    {
+        pSpare = pData + uiMainSize;
+        const unsigned char ucSpareCodec = static_cast<unsigned char>(pSpare[5] & 0x0f);
+        pData[uiMainSize + 5] = ucSpareCodec;
+        if (!VCT_IsValidSpareCodec(static_cast<VCTCodec>(ucSpareCodec)))
+        {
+            return 0;
+        }
+        uiSpareSize = vct_get_packet_size(ucSpareCodec);
+        uiPacketSize += uiSpareSize;
+    }
+
+    if (uiDataSize != uiPacketSize)
+    {
+        return 0;
+    }
+
+    if ((ucInitialFlags & 0x20) != 0)
+    {
+        VCTi_SetQualityAlertStatus(1);
+    }
+    else if (VCTi_GetQualityAlertStatus() == 1)
+    {
+        VCTi_SetQualityAlertClearStartTick(OSGetTime());
+        VCTi_SetQualityAlertStatus(2);
+    }
+
+    unsigned int uiConferenceCid = 0;
+    while (uiConferenceCid < VCT_CONFERENCE_CID_MAX &&
+           g_vctConferenceCids[uiConferenceCid] != usCid)
+    {
+        ++uiConferenceCid;
+    }
+    if (uiConferenceCid == VCT_CONFERENCE_CID_MAX)
+    {
+        return 0;
+    }
+
+    _udp_packet* pPacket = vct_alloc_packet_buffer();
+    if (pPacket == 0)
+    {
+        vct_flush_audio_queue(pStream->m_StreamIndex);
+        nn::pia::chat::Decoder::Flush(pStream->m_StreamIndex);
+        pPacket = vct_alloc_packet_buffer();
+        if (pPacket == 0)
+        {
+            vct_flush_all_audio_queue();
+            nn::pia::chat::Decoder::FlushAll();
+            pPacket = vct_alloc_packet_buffer();
+            if (pPacket == 0)
+            {
+                vct_trace_packet_buffer(0x4000000000ULL);
+                return 0;
+            }
+        }
+    }
+
+    unsigned char* pBufferEnd = pPacket->m_Datagram +
+                                VCT_AUDIO_FRAME_SAMPLE_MAX * sizeof(short);
+    unsigned char* pFrameData = pBufferEnd - uiMainPayload;
+    memcpy(pFrameData, pData + 12, uiDataSize - 12);
+    pPacket->m_Codec = ucCodec;
+    pPacket->m_StreamIndex = static_cast<unsigned char>(pStream->m_StreamIndex);
+    pPacket->m_pFrame = reinterpret_cast<VCTAudioFrame*>(pFrameData);
+    const unsigned char ucStoredFlags = pData[5];
+    pPacket->m_Flags = ucStoredFlags;
+    pPacket->m_Unknown28 = uiMainPayload;
+    if ((ucStoredFlags & VCT_PACKET_FLAG_SPARE) != 0)
+    {
+        memcpy(pBufferEnd, pSpare, uiSpareSize);
+    }
+
+    pPacket->m_ReceiveTick = llReceiveTick;
+    pPacket->m_Cid = usCid;
+    pPacket->m_IsSpare = pData[5] & 0x80;
+    pPacket->m_SendTick = static_cast<long long>(read_be32(pData + 8));
+    pPacket->m_Sequence = read_be16(pData + 6);
+
+    ++pStream->m_Info.m_Unknown4C;
+    const unsigned int uiSamplingPacketNum = VCT_GetQualityAlertSamplingPacketNum();
+    if (uiSamplingPacketNum != 0)
+    {
+        const unsigned int uiSamplingCompare = VCT_GetQualityAlertSamplingPacketNum();
+        if (uiSamplingCompare <= pStream->m_Info.m_Unknown4C)
+        {
+            const unsigned int uiExpiredCount = pStream->m_Info.m_ExpiredCount;
+            const unsigned int uiSamplingDivisor = VCT_GetQualityAlertSamplingPacketNum();
+            pStream->m_Info.m_ExpiredCount = 0;
+            pStream->m_Info.m_Unknown4C = 0;
+            pStream->m_Info.m_Unknown50 = (uiExpiredCount * 100U) / uiSamplingDivisor;
+        }
+    }
+
+    if (pStream->CalcJitterAndSkew(pPacket) == 0)
+    {
+        vct_free_packet_buffer(pPacket);
+        return 0;
+    }
+
+    nn::pia::chat::Decoder::Insert(pPacket);
+    return 1;
 }
 
 unsigned int VCT_GetDropCount(unsigned short usCid)

@@ -76,6 +76,7 @@ unsigned int VCT_GetAudioFrameLength();
 unsigned int VCT_GetAudioDataSize();
 
 void VCT_ResetVAD();
+void VCT_EnableVAD(bool bEnabled);
 unsigned int VCT_GetVADReleaseTime();
 unsigned char VCT_GetVADActivity();
 unsigned int VCTi_GetVADStatus(unsigned int energy, unsigned int threshold, unsigned char* pStatus);
@@ -94,6 +95,8 @@ unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize);
 unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize);
 
 int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale);
+unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
+                              unsigned int uiDataSize, long long llReceiveTick);
 int VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids);
 int VCTi_ReceiveAudioData(void* pData, unsigned int uiSize, unsigned int uiStreamIndex,
                           unsigned short* pCid);

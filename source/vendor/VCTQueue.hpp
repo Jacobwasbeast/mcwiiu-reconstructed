@@ -32,7 +32,8 @@ struct _udp_packet
     long long m_SendTick;
     unsigned int m_Unknown28;
     unsigned int m_Sequence;
-    unsigned char m_Datagram[3476];
+    unsigned char m_Datagram[3472];
+    unsigned int m_Codec;
     unsigned short m_Cid;
     unsigned char m_StreamIndex;
     unsigned char m_Flags;
