@@ -68,7 +68,7 @@ public:
     virtual arrayWithLength<unsigned char> getParam_itemsCollected(int itemId, int auxValue, int count);
     virtual arrayWithLength<unsigned char> getParam_itemsCrafted(int itemId, int auxValue, int count);
     virtual arrayWithLength<unsigned char> getParam_itemsSmelted(int itemId, int auxValue, int count);
-    virtual arrayWithLength<unsigned char> getParam_itemsUsed(int itemId, int auxValue, int count);
+    arrayWithLength<unsigned char> getParam_itemsUsed(int itemId, int auxValue, int count);
     virtual arrayWithLength<unsigned char> getParam_itemsBought(int itemId, int auxValue, int count);
     virtual arrayWithLength<unsigned char> getParam_time(int value);
     virtual arrayWithLength<unsigned char> getParam_noArgs();

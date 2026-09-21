@@ -9,10 +9,6 @@
 
 template<typename T> std::wstring _toString(T value);
 
-PostPass::PostPass(ResourceManager* resourceManager, std::wstring name, RenderTarget* input, RenderTarget* output)
-    : mInput(input), mOutput(output), mEffect(new Effect(resourceManager, name)), mOrthoMatrix(0)
-{
-}
 
 
 void PostPass::destroy()
@@ -34,10 +30,6 @@ void PostPass::prepareState()
 }
 
 
-std::wstring PostPass::getName()
-{
-    return mEffect->getName();
-}
 
 void PostPass::addAuxAsset(std::wstring name, RenderTarget* target, int width, int height)
 {

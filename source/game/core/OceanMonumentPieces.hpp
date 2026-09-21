@@ -157,7 +157,6 @@ virtual EStructurePiece GetType();
 OceanMonumentWingRoom(const Direction*, BoundingBox*, int);
 virtual ~OceanMonumentWingRoom();
 virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
 virtual EStructurePiece GetType();
 private: int mWingType;
 };

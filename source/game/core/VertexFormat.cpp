@@ -1,6 +1,5 @@
 #include "game/core/VertexFormat.hpp"
 #include "game/core/VertexFormatElement.hpp"
-#include <sstream>
 
 VertexFormat::VertexFormat()
 {
@@ -75,22 +74,6 @@ int VertexFormat::getUvOffset(int index)
     return uvOffsets[index];
 }
 
-std::wstring VertexFormat::toString()
-{
-    std::wostringstream stream;
-    stream << L"VertexFormat[";
-    for (int i = 0; i < getElementCount(); ++i)
-    {
-        if (i != 0)
-        {
-            stream << L", ";
-        }
-        stream << elements[i]->toString();
-    }
-    stream << L']';
-    return stream.str();
-}
-
 int VertexFormat::getIntegerSize()
 {
     return vertexSize / 4;
@@ -104,26 +87,6 @@ std::vector<const VertexFormatElement*>& VertexFormat::getElements()
 int VertexFormat::getOffset(int index)
 {
     return offsets[index];
-}
-
-bool VertexFormat::equals(VertexFormat* other)
-{
-    if (this == other)
-    {
-        return true;
-    }
-    if (getElementCount() != other->getElementCount())
-    {
-        return false;
-    }
-    for (int i = 0; i < getElementCount(); ++i)
-    {
-        if (!elements[i]->equals(const_cast<VertexFormatElement*>(other->getElement(i))))
-        {
-            return false;
-        }
-    }
-    return true;
 }
 
 bool VertexFormat::hasPositionElement()

@@ -9,7 +9,7 @@ SampleNotificationEventHandler::~SampleNotificationEventHandler()
 void SampleNotificationEventHandler::ProcessNotificationEvent(const nn::nex::NotificationEvent& oEvent)
 {
     nn::nex::StringStream ssEvent;
-    nn::nex::__ls(ssEvent, oEvent);
+    ssEvent << oEvent;
 
     if (oEvent.GetType() / 1000 == 4)
     {

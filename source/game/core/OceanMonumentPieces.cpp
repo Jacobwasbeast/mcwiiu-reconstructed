@@ -28,7 +28,6 @@ void OceanMonumentPieces::loadStatic()
     StructureFeatureIO::setPieceId(eStructurePiece_OceanMonumentPenthouse, &OceanMonumentPenthouse::Create, L"OMPenthouse");
     StructureFeatureIO::setPieceId(eStructurePiece_OceanMonumentSimpleRoom, &OceanMonumentSimpleRoom::Create, L"OMSimple");
     StructureFeatureIO::setPieceId(eStructurePiece_OceanMonumentSimpleTopRoom, &OceanMonumentSimpleTopRoom::Create, L"OMSimpleT");
-    StructureFeatureIO::setPieceId(eStructurePiece_OceanMonumentWingRoom, &OceanMonumentWingRoom::Create, L"OMWR");
 }
 OceanMonumentPieces::RoomDefinition::RoomDefinition(int index) : mIndex(index), mClaimed(false), mSource(-1) { int i; for (i = 0; i < 6; ++i) { mConnections[i].reset(); mOpenings[i] = false; } }
 void OceanMonumentPieces::RoomDefinition::setConnection(const Direction* direction, const boost::shared_ptr<RoomDefinition>& connection)
@@ -1105,10 +1104,6 @@ bool OceanMonumentPieces::OceanMonumentWingRoom::postProcess(Level* l, Random& r
         spawnElder(l, b, 11, 5, 13);
     }
     return true;
-}
-StructurePiece* OceanMonumentPieces::OceanMonumentWingRoom::Create()
-{
-    return new OceanMonumentWingRoom();
 }
 EStructurePiece OceanMonumentPieces::OceanMonumentWingRoom::GetType()
 {
