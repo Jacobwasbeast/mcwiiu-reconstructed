@@ -2,10 +2,15 @@
 #define LEGACY_CONSOLE_WIIU_NEX_H
 
 #include <stdint.h>
+#include "nn/nex/CallbackRoot.hpp"
 #include "nn/nex/Core.hpp"
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/Job.hpp"
+#include "nn/nex/JobConnectEndPoint.hpp"
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/NotificationEvent.hpp"
+#include "nn/nex/NotificationEventHandler.hpp"
+#include "nn/nex/StringStream.hpp"
 #include "nn/nex/Scheduler.hpp"
 #include "nn/nex/UserContext.hpp"
 #include "vendor/__N_19_OnlineCore_Blob_cpp_9428d484.hpp"
@@ -50,59 +55,6 @@ private:
     unsigned char m_data[16];
 };
 
-class JobConnectEndPoint : public Job
-{
-public:
-    void ReportConnectResult(qResult result);
-};
-
-class CallbackRoot
-{
-public:
-    virtual ~CallbackRoot();
-    virtual void Call();
-};
-
-class NotificationEvent
-{
-public:
-    unsigned int GetType() const;
-    unsigned int GetParam2() const;
-};
-
-class NotificationEventHandler
-{
-public:
-    virtual ~NotificationEventHandler();
-    virtual void ProcessNotificationEvent(const NotificationEvent& event);
-};
-
-class StringStream
-{
-public:
-    StringStream();
-    virtual ~StringStream();
-    int GetLength() const;
-    void FreeBuffer(wchar_t* buffer);
-    void ResizeBuffer(unsigned int size);
-    void TestFreeRoom(unsigned int size);
-    int __ls(const wchar_t* value);
-    void AddBaseIfRequired();
-    StringStream* StreamNumber(int value);
-    void FreeBuffer();
-    void __ls(bool value);
-    StringStream* StreamNumber(unsigned int value);
-    StringStream* StreamNumber(unsigned char value);
-    void __ls(const void* value);
-    void Clear();
-    StringStream* __ls(long long value);
-    StringStream* __ls(unsigned long long value);
-    StringStream* __ls(const StringStream& value);
-    StringStream* __ls(double value);
-    StringStream* __ls(float value);
-    void BytesDump(const unsigned char* data, unsigned int size);
-};
-
 class InetAddress;
 class Time;
 class Socket;
@@ -126,14 +78,12 @@ StringStream& __ls(StringStream& stream, const DateTime& value);
 StringStream& __ls(StringStream& stream, const Variant& value);
 StringStream& __ls(StringStream& stream, const HTTPURL& value);
 StringStream& __ls(StringStream& stream, const StationURL& value);
-StringStream& __ls(StringStream& stream, const NotificationEvent& event);
 StringStream& __ls(StringStream& stream, const UserMessage& value);
 StringStream& __ls(StringStream& stream, const MessageRecipient& value);
 StringStream& __ls(StringStream& stream, const StringStream& value);
 StringStream& hex(StringStream& stream);
 StringStream& dec(StringStream& stream);
 StringStream& showbase(StringStream& stream);
-StringStream& zerohex(StringStream& stream);
 StringStream& noshowbase(StringStream& stream);
 StringStream& endl(StringStream& stream);
 StringStream& boolalpha(StringStream& stream);
