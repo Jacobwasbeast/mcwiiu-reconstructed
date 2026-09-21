@@ -3,6 +3,7 @@
 #include <cwchar>
 
 #include "nn/nex/Message.hpp"
+#include "nn/nex/EndPoint.hpp"
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
 #include "nn/nex/CallContext.hpp"
 #include "nn/nex/CallContextRegister.hpp"
@@ -101,10 +102,8 @@ void Protocol::SetIncomingConnection(EndPoint* pEndPoint)
         return;
     }
 
-    m_uiCallerPID = *reinterpret_cast<const unsigned int*>(
-        reinterpret_cast<const unsigned char*>(pEndPoint) + 0x4C);
-    m_uiCallerCID = *reinterpret_cast<const unsigned int*>(
-        reinterpret_cast<const unsigned char*>(pEndPoint) + 0x48);
+    m_uiCallerPID = pEndPoint->m_uiPrincipalID;
+    m_uiCallerCID = pEndPoint->m_uiConnectionID;
 }
 
 EndPoint* Protocol::GetOutgoingConnection() const
@@ -258,13 +257,9 @@ bool Protocol::IsOldRVDDLVersion(EndPoint* pEndPoint)
 {
     if (pEndPoint == 0)
         return false;
-    const unsigned int principalId = *reinterpret_cast<const unsigned int*>(
-        reinterpret_cast<const unsigned char*>(pEndPoint) + 0x4C);
-    typedef unsigned long long (*GetSupportedFunctionsFlagsMethod)(const EndPoint*);
-    void** pVTable = *reinterpret_cast<void***>(pEndPoint);
-    const unsigned long long flags = reinterpret_cast<GetSupportedFunctionsFlagsMethod>(
-        pVTable[63])(pEndPoint);
-    return (principalId - 0x6E < 10) || (flags & 0x08000000u) == 0;
+    if (pEndPoint->m_uiPrincipalID - 0x6E < 10)
+        return true;
+    return (pEndPoint->GetSupportedFunctionsFlags() & 0x08000000u) == 0;
 }
 
 unsigned int Protocol::ExtractMethodID(Message* pMessage)

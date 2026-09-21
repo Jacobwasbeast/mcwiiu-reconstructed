@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/GlobalVariables.hpp"
 #include "nn/nex/MemoryManager.hpp"
 #include "nn/nex/PacketBufferMultiUnitHeap.hpp"
 
@@ -24,6 +25,30 @@ const unsigned int PACKET_MANAGEMENT_OBJECT_MARGIN = 4;
 
 const unsigned int PACKET_BUFFER_HEADER_MARGIN = 0x50;
 
+}
+
+bool PacketBufferManager::IsEnablePacketBufferPool()
+{
+    s_criticalSection.Enter();
+    const bool enabled = g_globalVariables->m_packetBufferPoolEnabled;
+    s_criticalSection.Leave();
+    return enabled;
+}
+
+void PacketBufferManager::GetUnitHeapParam(qVector<UnitHeapParam>& rParams)
+{
+    s_criticalSection.Enter();
+    if (!g_globalVariables->m_packetBufferParams.empty())
+    {
+        rParams = g_globalVariables->m_packetBufferParams;
+    }
+    else
+    {
+        qVector<UnitHeapParam> aParams;
+        GetSimpleUnitHeapParam(0x4b000, 0x554, aParams);
+        rParams = aParams;
+    }
+    s_criticalSection.Leave();
 }
 
 bool PacketBufferManager::IsActiveNonStatic()
@@ -343,6 +368,39 @@ void PacketBufferManager::Dump(unsigned long long)
 
         m_pManagementObjectHeap->GetDebugInfo(aDebugInfo);
     }
+}
+
+void PacketBufferManager::Initialize()
+{
+    s_criticalSection.Enter();
+    if (m_iInitializeCount == 0 && IsEnablePacketBufferPool() && !IsActive())
+    {
+        qVector<UnitHeapParam> aParams;
+        GetUnitHeapParam(aParams);
+        const unsigned int uiMemorySize = GetRequiredMemorySize(aParams);
+        m_pMemory = MemoryManager::Allocate(uiMemorySize);
+        m_uiMemorySize = uiMemorySize;
+
+        PacketBufferMultiUnitHeap* pPacketHeap = new PacketBufferMultiUnitHeap();
+        const unsigned int uiPacketMemorySize = GetRequiredMemorySizeImpl(aParams);
+        pPacketHeap->Initialize(m_pMemory, uiPacketMemorySize, aParams);
+        m_pPacketBufferHeap = pPacketHeap;
+
+        {
+            qVector<UnitHeapParam> aManagementParams;
+            GetPacketManagementUnitHeapParam(aManagementParams, aParams);
+            PacketBufferMultiUnitHeap* pManagementHeap = new PacketBufferMultiUnitHeap();
+            const unsigned int uiManagementMemorySize = GetRequiredMemorySizeImpl(aManagementParams);
+            pManagementHeap->Initialize(static_cast<unsigned char*>(m_pMemory) + uiPacketMemorySize,
+                                       uiManagementMemorySize, aManagementParams);
+            m_pManagementObjectHeap = pManagementHeap;
+        }
+        m_bActive = true;
+        m_pfnAllocate = PacketBufferAllocate;
+        m_pfnAllocateManagementObject = PacketManagementObjectAllocate;
+    }
+    m_iInitializeCount = static_cast<int>(static_cast<unsigned int>(m_iInitializeCount) + 1u);
+    s_criticalSection.Leave();
 }
 
 void PacketBufferManager::Finalize()

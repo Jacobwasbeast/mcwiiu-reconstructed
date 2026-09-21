@@ -10,6 +10,8 @@ namespace nn
 namespace nex
 {
 
+class StringStream;
+
 class NotificationEvent : public _DDL_NotificationEvent
 {
 public:
@@ -22,6 +24,8 @@ public:
     std::uint32_t GetParam2() const;
     std::uint32_t GetParam3() const;
 };
+
+StringStream& operator<<(StringStream& stream, const NotificationEvent& event);
 
 }
 }

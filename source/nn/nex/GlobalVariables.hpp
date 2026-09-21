@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "nn/nex/MemAllocator.hpp"
+#include "nn/nex/PacketBufferManager.hpp"
 #include "nn/nex/RefCountedObject.hpp"
 #include "nn/nex/String.hpp"
 #include "nn/nex/ThreadVariable.hpp"
@@ -73,6 +74,8 @@ public:
     }
 
 private:
+    friend class PacketBufferManager;
+
     String m_broadcastAddress;
     ThreadVariable<unsigned int> m_errorCode;
     ThreadVariable<unsigned int> m_errorDetail;
@@ -82,7 +85,8 @@ private:
     StringMap m_methodNameMap;
     StringMap m_errorNameMap;
     VersionMap m_protocolVersionMap;
-    bool m_initialized;
+    qVector<PacketBufferManager::UnitHeapParam> m_packetBufferParams;
+    bool m_packetBufferPoolEnabled;
 };
 
 }

@@ -16,6 +16,7 @@ namespace nex
 {
 
 class CallContextRegister;
+class ClientProtocol;
 
 class CallbackRoot : public RootObject
 {
@@ -98,6 +99,7 @@ protected:
 
 private:
     friend class CallContextRegister;
+    friend class ClientProtocol;
 
     class InternalData
     {

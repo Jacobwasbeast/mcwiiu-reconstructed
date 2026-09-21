@@ -20,6 +20,7 @@ class EndPointInfo;
 class FirstErrorHolder;
 class Key;
 class UserContext;
+class Protocol;
 
 class EndPoint : public RootObject
 {
@@ -102,6 +103,8 @@ public:
     }
 
 protected:
+    friend class Protocol;
+
     ConnectionOrientedStream* m_pStream;
     StationURL m_stationURL;
     EndPointEventHandler* m_pEventHandler;

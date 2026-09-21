@@ -12,6 +12,7 @@ namespace nex
 {
 
 class InstanceControl;
+class StepSequenceJob;
 
 class InstanceTable : public RootObject
 {
@@ -66,6 +67,8 @@ public:
     }
 
 private:
+    friend class StepSequenceJob;
+
     InstantiationContext m_defaultContext;
     ContextVector* m_extraContexts;
 };

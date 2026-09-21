@@ -25,7 +25,7 @@ public:
     explicit Stream(Type type);
     virtual ~Stream();
 
-    virtual void ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
         Packet* pPacket) = 0;
     virtual void DoWork() = 0;
     virtual bool IsDuplicateReorderingPacket(Packet* pPacket);

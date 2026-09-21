@@ -24,9 +24,10 @@ GlobalVariables::GlobalVariables()
     , m_methodNameMap()
     , m_errorNameMap()
     , m_protocolVersionMap()
+    , m_packetBufferParams()
 {
     g_criticalSectionDisabled = false;
-    m_initialized = true;
+    m_packetBufferPoolEnabled = true;
     m_broadcastAddress = L"255.255.255.255";
 }
 

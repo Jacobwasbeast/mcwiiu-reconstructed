@@ -10,6 +10,7 @@ namespace nex
 {
 
 class EndPoint;
+class ClientProtocol;
 
 class Message : public ByteStream
 {
@@ -40,6 +41,8 @@ public:
     }
 
 protected:
+    friend class ClientProtocol;
+
     qResult m_Result;
     unsigned int m_uiBufferStateA;
     unsigned int m_uiBufferStateB;

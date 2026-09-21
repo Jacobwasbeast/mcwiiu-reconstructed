@@ -2,8 +2,11 @@
 
 #include <cwchar>
 
+#include "nn/nex/CallContext.hpp"
 #include "nn/nex/Credentials.hpp"
+#include "nn/nex/Message.hpp"
 #include "nn/nex/Platform.hpp"
+#include "nn/nex/ProtocolCallContext.hpp"
 
 namespace nn
 {
@@ -60,6 +63,40 @@ void ClientProtocol::SetDefaultCredentials(Credentials* pCredentials)
 void ClientProtocol::SetCallError(qResult)
 {
     Platform::Breakpoint();
+}
+
+void ClientProtocol::ProcessResponse(Message* pMessage, EndPoint* pEndPoint)
+{
+    SetIncomingConnection(pEndPoint);
+    if (IsOldRVDDLVersion(pEndPoint))
+        pMessage->m_bCompactFormat = 1;
+
+    qResult result;
+    ExtractCallOutcome(pMessage, &result);
+    ProtocolCallContext* pCallContext = RetrieveCallContext(pMessage);
+    if (pCallContext == 0)
+        return;
+
+    if (pMessage->HasError())
+    {
+        pCallContext->SignalFailure(qResult(static_cast<int>(0x8001000F)));
+        return;
+    }
+
+    if (!static_cast<bool>(result))
+    {
+        pCallContext->SignalFailure(result);
+        return;
+    }
+
+    ExtractCallSpecificResults(pMessage, pCallContext);
+    if (pMessage->HasError())
+    {
+        pCallContext->SignalFailure(qResult(static_cast<int>(0x8001000F)));
+        return;
+    }
+
+    pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(0x10001), true);
 }
 
 }
