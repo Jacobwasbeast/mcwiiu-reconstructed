@@ -1,4 +1,5 @@
 #include "game/client/audio/EventSystem.hpp"
+#include "vendor/MilesEventError.hpp"
 
 #include "game/client/audio/SoundInstance.hpp"
 #include "game/core/Handle.hpp"
@@ -24,20 +25,9 @@ struct EventSystemVariable
     char m_name[1];
 };
 
-enum ErrorType
-{
-    ERROR_TYPE_OUT_OF_MEMORY = 0,
-    ERROR_TYPE_OUT_OF_EVENT_SYSTEM_MEMORY = 1,
-    ERROR_TYPE_BAD_STRING_PASSED_TO_SET_LIMITS = 3,
-    ERROR_TYPE_COMMAND_BUFFER_FULL = 4,
-    ERROR_TYPE_MISSING_VARIABLE = 5
-};
-
 extern int AIL_stricmp(const char* first, const char* second);
 extern int AIL_find_marker_in_list(int markerList, const char* markerName, int* markerType);
 extern void* Handle_Get(Handle handle);
-extern void ErrorHandler__F9ErrorTypeULPCc(ErrorType type, unsigned long long context,
-                                            const char* text);
 extern int strtoi__FPCcPPCc(const char* value, const char** end);
 extern int Var_LookupWithContext__FP11EventSystem6HandlePCciPv(EventSystem* eventSystem,
                                                                 EventSystem::Handle* handle,
