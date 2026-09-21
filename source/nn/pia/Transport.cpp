@@ -1,4 +1,10 @@
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/transport/StationConnectionInfoTable.hpp"
+#include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/NetworkRttManager.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/IPacketOutput.hpp"
 #include "nn/pia/PayloadSizeManager.hpp"
 #include "nn/pia/common/Job.hpp"
 #include "nn/pia/transport/RelayStationPacketHandler.hpp"
@@ -8,6 +14,86 @@
 #include "nn/pia/transport/TransportSupport.hpp"
 namespace nn { namespace pia { namespace transport {
 Transport* g_piaTransport = 0;
+
+common::IPacketOutput* Transport::GetOutputStream()
+{
+    return g_piaThreadStreamManager ? g_piaThreadStreamManager->m_packetOutput : 0;
+}
+
+void Transport::OutputStreamUpdateEvent()
+{
+    common::IPacketOutput* output = GetOutputStream();
+    if (output)
+        output->OnStationConnectionEvent();
+}
+
+void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
+{
+    NetworkRttManager* rttManager = NetworkRttManager::sInstance;
+    StationManager* stationManager = g_piaStationManager;
+    if (!rttManager || !stationManager)
+        return;
+
+    unsigned int minimum = 0xffff;
+    unsigned int maximum = 0;
+    Station* minimumStation = 0;
+    Station* maximumStation = 0;
+    for (unsigned int index = 0; index < stationManager->m_stations.size; ++index)
+    {
+        Station* station = stationManager->m_stations.data[index];
+        if (station->m_field20 != 5 || !station->m_stationAddress.IsValid())
+            continue;
+        unsigned int average = rttManager->GetAverage(station->m_stationAddress);
+        if (average == 0)
+            continue;
+        if (average < minimum)
+        {
+            minimum = average;
+            minimumStation = station;
+        }
+        if (maximum < average)
+        {
+            maximum = average;
+            maximumStation = station;
+        }
+    }
+
+    StationConnectionInfoTable* table = g_stationConnectionInfoTable;
+    unsigned long long principal = table->GetPrincipalIdByStation(minimumStation);
+    common::SessionStateMonitoringContent& state = common::g_sessionStateMonitoringContent;
+    common::SessionBeginMonitoringContent& begin = common::g_sessionBeginMonitoringContent;
+    unsigned int minimumHash = minimum < 0xffff && principal != 0
+        ? common::hashWithMd5(principal) : 0xffffffff;
+    unsigned int previousHash = state.m_metric163;
+    state.m_metric163 = minimumHash;
+    unsigned short minimumRtt = minimum < 0xffff
+        ? static_cast<unsigned short>(minimum) : 0xffff;
+    if (isSessionBegin)
+    {
+        begin.m_metric37 = minimumRtt;
+        begin.m_metric38 = state.m_metric163;
+        state.m_metric163 = previousHash;
+    }
+    else
+        state.m_metric162 = minimumRtt;
+
+    principal = table->GetPrincipalIdByStation(maximumStation);
+    unsigned int maximumHash = maximum != 0 && principal != 0
+        ? common::hashWithMd5(principal) : 0xffffffff;
+    unsigned short maximumRtt = maximum != 0
+        ? static_cast<unsigned short>(maximum) : 0xffff;
+    if (isSessionBegin)
+    {
+        begin.m_metric40 = maximumHash;
+        begin.m_metric39 = maximumRtt;
+    }
+    else
+    {
+        state.m_metric165 = maximumHash;
+        state.m_metric164 = maximumRtt;
+    }
+}
+
 Transport::Transport()
     : m_networkFactory(0), m_packetHandler(0), m_stationNum(0),
       m_startedUp(false), m_field2f(false), m_connectionError(0), m_dispatchJob(0),
@@ -97,6 +183,11 @@ Result Transport::ConvertToStationIndex(StationIndex* index,
     *index = entry.stationIndex;
     return 0;
 }
+StationIndex Transport::ConvertToStationIndexUnsafe(std::uint64_t stationId) const
+{
+    return m_stationIdTable->FindUnsafe(stationId);
+}
+
 StationIndex Conv2StationIndex(std::uint64_t stationId)
 {
     StationIndex index;

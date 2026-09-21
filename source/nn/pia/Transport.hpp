@@ -7,6 +7,7 @@
 #include "nn/pia/common/Time.hpp"
 namespace nn { namespace pia { namespace common {
 class Job;
+class IPacketOutput;
 }}}
 namespace nn { namespace pia { namespace transport {
 class RelayRouteManager;
@@ -16,6 +17,8 @@ public:
     ~Transport();
     Result Startup(unsigned int payloadSize, const common::CryptoSetting* cryptoSetting);
     Result UpdateSetting(const common::CryptoSetting* cryptoSetting);
+    common::IPacketOutput* GetOutputStream();
+    void OutputStreamUpdateEvent();
     void Cleanup();
     Result Restartup(const common::CryptoSetting* cryptoSetting);
     void SetKeepAliveInterval(int interval);
@@ -25,7 +28,7 @@ public:
     bool IsKeepAliveEnabled() const;
     Result GetLocalStationConnectionInfo(StationConnectionInfo* stationConnectionInfo);
     Result GetHostStationConnectionInfo(StationConnectionInfo* stationConnectionInfo);
-    Result SetMonitoringNetworkRtt(bool isEnabled);
+    void SetMonitoringNetworkRtt(bool isSessionBegin);
     Result ConvertToStationIndex(StationIndex*, std::uint64_t) const;
     StationIndex ConvertToStationIndexUnsafe(std::uint64_t stationId) const;
     Result ConvertToStationId(std::uint64_t* stationId, StationIndex stationIndex) const;

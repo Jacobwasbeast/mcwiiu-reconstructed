@@ -30,6 +30,7 @@ public:
     Result FindByStationIndex(Entry*, StationIndex) const;
     Result FindByUniqueId(Entry*, std::uint64_t) const;
     void RemoveByStationId(std::uint64_t);
+    StationIndex FindUnsafe(std::uint64_t stationId) const;
     void SetJoinEventNotifiedByStationId(std::uint64_t, bool);
     void SetJoinEventNotifiedByStationIndex(StationIndex, bool);
     bool IsJoinEventNotifiedByStationIndex(StationIndex) const;

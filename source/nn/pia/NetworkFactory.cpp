@@ -1,4 +1,9 @@
 #include "nn/pia/NetworkFactory.hpp"
+#include "nn/pia/HeapManager.hpp"
+#include "nn/pia/transport/ConnectStationJob.hpp"
+#include "nn/pia/transport/DisconnectStationJob.hpp"
+#include "platform/wiiu/pead.hpp"
+#include <new>
 
 namespace nn
 {
@@ -13,6 +18,36 @@ NetworkFactory::NetworkFactory()
 
 NetworkFactory::~NetworkFactory()
 {
+}
+
+ConnectStationJob* NetworkFactory::CreateConnectStationJob()
+{
+    void* storage = pead::allocateFromSeadHeap(sizeof(ConnectStationJob), common::HeapManager::GetHeap());
+    return storage != 0 ? new (storage) ConnectStationJob() : 0;
+}
+
+DisconnectStationJob* NetworkFactory::CreateDisconnectStationJob()
+{
+    void* storage = pead::allocateFromSeadHeap(sizeof(DisconnectStationJob), common::HeapManager::GetHeap());
+    return storage != 0 ? new (storage) DisconnectStationJob() : 0;
+}
+
+void NetworkFactory::DeleteConnectStationJob(ConnectStationJob* job)
+{
+    if (job != 0)
+    {
+        job->~ConnectStationJob();
+        pead::freeToSeadHeap(job);
+    }
+}
+
+void NetworkFactory::DeleteDisconnectStationJob(DisconnectStationJob* job)
+{
+    if (job != 0)
+    {
+        job->~DisconnectStationJob();
+        pead::freeToSeadHeap(job);
+    }
 }
 
 bool NetworkFactory::IsClientRelayConnectionPermitted() const

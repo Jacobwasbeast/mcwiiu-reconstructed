@@ -8,6 +8,9 @@ namespace pia
 namespace transport
 {
 
+class ConnectStationJob;
+class DisconnectStationJob;
+
 class NetworkFactory
 {
 public:
@@ -22,6 +25,10 @@ public:
     virtual bool IsStarConnection() const;
     virtual unsigned int IsSupportedProtocol(unsigned char protocolType) const;
     virtual bool IsBitRateCheckPermitted() const;
+    virtual ConnectStationJob* CreateConnectStationJob();
+    virtual DisconnectStationJob* CreateDisconnectStationJob();
+    virtual void DeleteConnectStationJob(ConnectStationJob* job);
+    virtual void DeleteDisconnectStationJob(DisconnectStationJob* job);
 };
 
 }

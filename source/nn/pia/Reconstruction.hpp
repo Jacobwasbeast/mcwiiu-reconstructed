@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_RECONSTRUCTION_HPP
 
 #include <stdint.h>
+#include "nn/pia/common/WatermarkManager.hpp"
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/ProtocolMessageFilteringManager.hpp"
 #include "nn/pia/NetworkFactory.hpp"
@@ -15,35 +16,6 @@ namespace common {
 
 class StationAddress;
 
-class Watermark
-{
-public:
-    enum { cNameLengthMax = 63 };
-
-    Watermark();
-    void SetName(const char* name);
-    void Reset();
-    void Update(long long value);
-
-private:
-    long long m_minimum;
-    long long m_maximum;
-    long long m_current;
-    unsigned long long m_updateCount;
-    bool m_enabled;
-    char m_name[cNameLengthMax + 1];
-};
-
-class WatermarkManager
-{
-public:
-    enum { cWatermarkNum = 10 };
-
-    Watermark* GetWatermark(int index);
-
-private:
-    Watermark m_watermarks[cWatermarkNum];
-};
 
 }
 
@@ -107,7 +79,6 @@ private:
 class ReliableSlidingWindow;
 class StationManager;
 
-extern common::WatermarkManager* g_piaWatermarkManager;
 extern StationManager* g_piaStationManager;
 
 class ReliableProtocol : public Protocol

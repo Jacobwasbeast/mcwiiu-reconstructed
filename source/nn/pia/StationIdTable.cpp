@@ -212,4 +212,11 @@ void StationIdTable::Trace(std::uint64_t) const
 {
 }
 
+StationIndex StationIdTable::FindUnsafe(std::uint64_t stationId) const
+{
+    Entry* entry = FindByStationIdCore(stationId);
+    return entry != 0 ? static_cast<StationIndex>(entry->stationIndex)
+                      : static_cast<StationIndex>(0xfd);
+}
+
 }}}
