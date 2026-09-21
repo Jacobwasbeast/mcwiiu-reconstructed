@@ -229,8 +229,6 @@ void LocalPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> sign)
 
 void LocalPlayer::openCommandBlock(boost::shared_ptr<CommandBlockEntity> block)
 {
-    if (block && g_pApp->LoadCommandBlockMenu(mPlayerIndex, block) != 0)
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
 }
 
 int LocalPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int level)

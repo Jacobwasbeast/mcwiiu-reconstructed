@@ -5,6 +5,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/GameStats.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/XmlConstruct.hpp"
@@ -49,7 +51,7 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
 
         if (!m_useTargetAreas.isSet() || !m_useTargetAreas.get())
         {
-            LevelGenerationOptions* options = CommonMasterGameMode::GetMasterOrClient()->getCurrentLevelGenOptions();
+            LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
             const std::wstring volumeName = m_volumeName.isSet() ? m_volumeName.get() : std::wstring();
             AABB* area = options->getRequiredGameRules()->getNamedArea(volumeName);
             if (area != NULL && (*it)->getBoundingBoxForCulling()->intersects(area->mMinX, area->mMinY, area->mMinZ,
@@ -59,7 +61,7 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
         else
         {
             std::vector<TargetAreaRuleDefinition*> areas;
-            LevelGenerationOptions* options = CommonMasterGameMode::GetMasterOrClient()->getCurrentLevelGenOptions();
+            LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
             options->getRequiredGameRules()->getTargetAreas(&areas);
             for (std::vector<TargetAreaRuleDefinition*>::const_iterator area = areas.begin(); area != areas.end(); ++area)
             {
