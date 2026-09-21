@@ -414,10 +414,3 @@ unsigned char* ElementStorage::getTempData()
         return storage->mTempData;
     return HierarchicalElementStorage::getTempData();
 }
-unsigned char* ElementStorage::getAllocatedRawData()
-{
-    getReadLock(0x6d);
-    unsigned char* value = HierarchicalElementStorage::getAllocatedRawData();
-    releaseReadLock();
-    return value;
-}

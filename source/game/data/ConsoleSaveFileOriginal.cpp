@@ -8,8 +8,12 @@
 #include "game/core/FileHeader.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
+#ifdef RECON_NATIVE
+#include "win32_memory.hpp"
+#else
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
 int VirtualFree(void* address, unsigned long size, unsigned int freeType);
+#endif
 #if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
 void __debugbreak()
 {

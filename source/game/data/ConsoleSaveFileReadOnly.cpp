@@ -6,8 +6,12 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
+#ifdef RECON_NATIVE
+#include "win32_memory.hpp"
+#else
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
 int VirtualFree(void* address, unsigned long size, unsigned int freeType);
+#endif
 void __debugbreak();
 
 static void* sSaveData = NULL;
