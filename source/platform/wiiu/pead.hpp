@@ -661,6 +661,7 @@ class CoreInfo
 public:
     static void configure();
     static int getPlatformMask(CoreId);
+    static CoreId getCurrentCoreId();
     static void dump();
 };
 

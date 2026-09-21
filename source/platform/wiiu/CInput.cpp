@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <new>
 
 #include <coreinit/filesystem.h>
 #include <coreinit/messagequeue.h>
@@ -259,8 +260,7 @@ static void SetTimeValue(CInput::TIME_VALUE& value, unsigned long long time)
     value.low = static_cast<unsigned int>(time);
 }
 
-static CInput s_bootInput;
-CInput* g_pInput = &s_bootInput;
+CInput* g_pInput = new (std::nothrow) CInput;
 
 CInput::CInput()
 {

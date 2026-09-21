@@ -73,12 +73,62 @@ void GX2InitTexture(
     GX2InitTextureRegs(texture);
 }
 
+static uint32_t GFDReadWord(const void* data, unsigned int offset)
+{
+    const uint8_t* bytes = static_cast<const uint8_t*>(data) + offset;
+    return (static_cast<uint32_t>(bytes[0]) << 24) |
+           (static_cast<uint32_t>(bytes[1]) << 16) |
+           (static_cast<uint32_t>(bytes[2]) << 8) | bytes[3];
+}
+
+#ifdef RECON_NATIVE
+static bool GFDNativeShaderHeader(void* data, unsigned int size)
+{
+    if (size < 0x28 || (size & 3) != 0)
+        return false;
+    uint8_t* bytes = static_cast<uint8_t*>(data);
+    const unsigned int descriptor = size - 0x28;
+    if (GFDReadWord(bytes, descriptor) != 0x7d424c4b ||
+        GFDReadWord(bytes, descriptor + 4) != 0x28)
+        return false;
+    const unsigned int textSize = GFDReadWord(bytes, descriptor + 0x14);
+    const unsigned int textBegin = GFDCleanTag(GFDReadWord(bytes, descriptor + 0x18));
+    const unsigned int patchCount = GFDReadWord(bytes, descriptor + 0x20);
+    const unsigned int patchBegin = GFDCleanTag(GFDReadWord(bytes, descriptor + 0x24));
+    if ((textBegin & 3) != 0 || (textSize & 3) != 0 ||
+        textBegin > descriptor || textSize > descriptor - textBegin ||
+        (patchBegin & 3) != 0 || patchBegin > descriptor ||
+        patchCount > (descriptor - patchBegin) / 4 ||
+        (patchBegin < textBegin + textSize && patchBegin + patchCount * 4 > textBegin))
+        return false;
+    for (unsigned int index = 0; index < patchCount; ++index)
+    {
+        const uint32_t patch = GFDReadWord(bytes, patchBegin + index * 4);
+        if (patch == 0)
+            continue;
+        const unsigned int target = GFDCleanTag(patch);
+        if ((target & 3) != 0 || target >= descriptor ||
+            (target >= textBegin && target < textBegin + textSize) ||
+            GFDCleanTag(GFDReadWord(bytes, target)) >= descriptor)
+            return false;
+    }
+    for (unsigned int offset = 0; offset < size; offset += 4)
+    {
+        if (offset >= textBegin && offset < textBegin + textSize)
+            continue;
+        const uint32_t value = GFDReadWord(bytes, offset);
+        std::memcpy(bytes + offset, &value, sizeof(value));
+    }
+    return true;
+}
+#endif
+
 int _GFDCheckBlockHeaderMagicVersions(const void* data)
 {
     const uint32_t* block = static_cast<const uint32_t*>(data);
-    if (block == 0 || block[0] != 0x424C4B7B)
+    if (block == 0 || GFDReadWord(block, 0) != 0x424C4B7B)
         return 0;
-    return block[2] == 1 ? 1 : 0;
+    return GFDReadWord(block, 8) == 1 ? 1 : 0;
 }
 
 int _GFDCheckHeaderVersions(const void* data)
@@ -86,9 +136,9 @@ int _GFDCheckHeaderVersions(const void* data)
     if (data == 0)
         return 0;
     const uint32_t* header = static_cast<const uint32_t*>(data);
-    if (header[0] != 0x47667832 || header[2] != 7 || header[3] > 1)
+    if (GFDReadWord(header, 0) != 0x47667832 || GFDReadWord(header, 8) != 7 || GFDReadWord(header, 12) > 1)
         return 0;
-    return header[4] == GX2TempGetGPUVersion() ? 1 : 0;
+    return GFDReadWord(header, 16) == GX2TempGetGPUVersion() ? 1 : 0;
 }
 
 int _GFDRelocateBlockEx(void* descriptor, unsigned int unused,
@@ -203,13 +253,13 @@ unsigned int _GFDGetBlockCount(unsigned int type, const void* data)
         return 0;
 
     const uint8_t* block = static_cast<const uint8_t*>(data) +
-                           *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(data) + 4);
+                           GFDReadWord(data, 4);
     unsigned int count = 0;
     while (_GFDCheckBlockHeaderMagicVersions(block) != 0)
     {
-        const uint32_t blockType = *reinterpret_cast<const uint32_t*>(block + 0x10);
-        const uint32_t blockHeaderSize = *reinterpret_cast<const uint32_t*>(block + 4);
-        const uint32_t blockDataSize = *reinterpret_cast<const uint32_t*>(block + 0x14);
+        const uint32_t blockType = GFDReadWord(block, 0x10);
+        const uint32_t blockHeaderSize = GFDReadWord(block, 4);
+        const uint32_t blockDataSize = GFDReadWord(block, 0x14);
         if (blockType == type)
             ++count;
         if (blockType == 1)
@@ -225,13 +275,13 @@ unsigned int _GFDGetBlockDataSize(unsigned int type, unsigned int index, const v
         return 0;
 
     const uint8_t* block = static_cast<const uint8_t*>(data) +
-                           *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(data) + 4);
+                           GFDReadWord(data, 4);
     unsigned int current = 0;
     while (_GFDCheckBlockHeaderMagicVersions(block) != 0)
     {
-        const uint32_t blockType = *reinterpret_cast<const uint32_t*>(block + 0x10);
-        const uint32_t blockHeaderSize = *reinterpret_cast<const uint32_t*>(block + 4);
-        const uint32_t blockDataSize = *reinterpret_cast<const uint32_t*>(block + 0x14);
+        const uint32_t blockType = GFDReadWord(block, 0x10);
+        const uint32_t blockHeaderSize = GFDReadWord(block, 4);
+        const uint32_t blockDataSize = GFDReadWord(block, 0x14);
         if (blockType == type)
         {
             if (current == index)
@@ -288,20 +338,24 @@ static int GFDGetShader(void* shader, void* program, unsigned int index, const v
     if ((reinterpret_cast<uintptr_t>(program) & 0xffU) != 0)
         return 0;
 
-    const uint8_t* block = static_cast<const uint8_t*>(data) + *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(data) + 4);
+    const uint8_t* block = static_cast<const uint8_t*>(data) + GFDReadWord(data, 4);
     int valid = _GFDCheckBlockHeaderMagicVersions(block);
     unsigned int shaderIndex = 0;
     unsigned int programIndex = 0;
     while (valid)
     {
-        const uint8_t* next = block + *reinterpret_cast<const uint32_t*>(block + 4);
-        unsigned int type = *reinterpret_cast<const uint32_t*>(block + 0x10);
-        unsigned int size = *reinterpret_cast<const uint32_t*>(block + 0x14);
+        const uint8_t* next = block + GFDReadWord(block, 4);
+        unsigned int type = GFDReadWord(block, 0x10);
+        unsigned int size = GFDReadWord(block, 0x14);
         if (type == shaderType)
         {
             if (index == shaderIndex)
             {
                 std::memcpy(shader, next, size);
+#ifdef RECON_NATIVE
+                if (!GFDNativeShaderHeader(shader, size))
+                    return 0;
+#endif
                 if (!_GFDRelocateBlock(size, shader))
                     return 0;
             }

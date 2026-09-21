@@ -848,16 +848,27 @@ unsigned int BitFlagUtil::countOnBit(unsigned int value)
     return (((value + (value >> 4)) & 0x0f0f0f0fu) * 0x01010101u) >> 24;
 }
 
-int BitFlagUtil::findOnBitFromRight(unsigned int value, int start)
+int BitFlagUtil::findOnBitFromRight(unsigned int value, int ordinal)
 {
-    for (int bit = start; bit < 32; ++bit) if (value & (1u << bit)) return bit;
+    while (value != 0)
+    {
+        ordinal = static_cast<int>(static_cast<unsigned int>(ordinal) - 1u);
+        if (ordinal <= 0)
+            return countOnBit((value & (0u - value)) - 1u);
+        value &= value - 1u;
+    }
     return -1;
 }
 
-CoreId::CoreId() : mId(OSGetCoreId()) {}
+CoreId::CoreId() : mId(0) {}
 static unsigned int sCoreCount;
 static unsigned int sCoreIdMap[3];
 static unsigned int sCoreIndexTable[3];
+
+CoreId CoreInfo::getCurrentCoreId()
+{
+    return CoreId(sCoreIndexTable[OSGetCoreId()]);
+}
 
 void CoreInfo::configure()
 {
