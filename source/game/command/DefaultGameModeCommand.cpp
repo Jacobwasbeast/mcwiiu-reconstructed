@@ -14,6 +14,12 @@
 
 extern MinecraftServer* gMinecraftServer;
 
+static const eGameHostOption eGameHostOption_DefaultGameMode =
+    static_cast<eGameHostOption>(6);
+static const int eChatPacketMessage_DefaultGameModeAdminActionId = 101;
+static const ClientboundChatPacket::EChatPacketMessage eChatPacketMessage_AdminAction =
+    static_cast<ClientboundChatPacket::EChatPacketMessage>(eChatPacketMessage_DefaultGameModeAdminActionId);
+
 DefaultGameModeCommand::~DefaultGameModeCommand()
 {
 }
@@ -41,7 +47,8 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
             boost::shared_ptr<Packet> info(new PlayerInfoPacket(*it));
             gMinecraftServer->getPlayers()->broadcastAll(info);
 
-            (*it)->sendMessage(111, NULL, 0, NULL, 0);
+            (*it)->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeChanged,
+                               NULL, 0, NULL, 0);
         }
     }
 }
@@ -54,10 +61,10 @@ void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
 
     unsigned char gameType = stream.readByte();
     doSetGameType(GameType::byId(gameType));
-    g_pApp->SetGameHostOption(static_cast<eGameHostOption>(6), gameType);
+    g_pApp->SetGameHostOption(eGameHostOption_DefaultGameMode, gameType);
 
     int intParams[1] = { gameType };
-    logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)101,
+    logAdminAction(sender, eChatPacketMessage_AdminAction,
                    intParams, 1, NULL, 0);
     byteStream.mBuffer.data = NULL;
     byteStream.mBuffer.length = 0;

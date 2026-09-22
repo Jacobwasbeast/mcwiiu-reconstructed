@@ -62,6 +62,8 @@ boost::shared_ptr<ServerPlayer> Command::convertSourceToPlayer(boost::shared_ptr
 
 boost::shared_ptr<ServerPlayer> Command::convertToPlayer(boost::shared_ptr<CommandSender> sender, std::wstring playerName)
 {
+    (void)sender;
+    (void)playerName;
     return boost::shared_ptr<ServerPlayer>();
 }
 
@@ -75,32 +77,6 @@ std::wstring Command::convertToEntityName(boost::shared_ptr<CommandSender> sende
     boost::shared_ptr<ServerPlayer> entity = convertToPlayer(sender, entityName);
 
     return entity->getName();
-}
-
-boost::shared_ptr<Entity> Command::convertToEntity(boost::shared_ptr<CommandSender> sender, std::wstring entityName)
-{
-    if (sender.get() != NULL && entityName.empty())
-    {
-        return sender->getCommandSenderEntity();
-    }
-
-    return boost::shared_ptr<Entity>();
-}
-
-std::vector<boost::shared_ptr<Entity> > Command::convertToEntityList(boost::shared_ptr<CommandSender> sender, std::wstring entityName)
-{
-    std::vector<boost::shared_ptr<Entity> > entities;
-
-    if (sender.get() != NULL || !entityName.empty())
-    {
-        boost::shared_ptr<Entity> entity = convertToEntity(sender, entityName);
-        if (entity.get() != NULL)
-        {
-            entities.push_back(entity);
-        }
-    }
-
-    return entities;
 }
 
 boost::shared_ptr<ServerPlayer> Command::getPlayer(PlayerUID uid)
