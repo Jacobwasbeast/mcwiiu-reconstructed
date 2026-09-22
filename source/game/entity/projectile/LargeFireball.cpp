@@ -16,16 +16,19 @@ const unsigned long long LargeFireball::ENTITY_TYPE = 0x8A400003ULL;
 LargeFireball::LargeFireball(Level* level)
     : Fireball(level), mExplosionPower(1)
 {
+    Entity::fjDerivedCtorCalls();
 }
 
 LargeFireball::LargeFireball(Level* level, double x, double y, double z, double xd, double yd, double zd)
     : Fireball(level, x, y, z, xd, yd, zd), mExplosionPower(1)
 {
+    Entity::fjDerivedCtorCalls();
 }
 
 LargeFireball::LargeFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd)
     : Fireball(level, owner, xd, yd, zd), mExplosionPower(1)
 {
+    Entity::fjDerivedCtorCalls();
 }
 
 LargeFireball::~LargeFireball()
