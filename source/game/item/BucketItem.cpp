@@ -341,8 +341,6 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
         }
     }
 
-    delete entities;
-
     HitResult* output = const_cast<HitResult*>(result);
     if (closestEntity != NULL && closestClipHit != NULL)
     {
