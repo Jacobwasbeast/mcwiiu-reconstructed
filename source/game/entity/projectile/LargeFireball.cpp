@@ -10,6 +10,9 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
 
+const unsigned long long LargeFireball::DATA_WALKER_TYPE = 0x8A400000ULL;
+const unsigned long long LargeFireball::ENTITY_TYPE = 0x8A400003ULL;
+
 LargeFireball::LargeFireball(Level* level)
     : Fireball(level), mExplosionPower(1)
 {
@@ -36,7 +39,7 @@ void LargeFireball::create(Level* level)
 
 void LargeFireball::addDataWalkers(DataFixerUpper* fixer)
 {
-    Fireball::addDataWalkers(fixer, 0x8a400000ULL);
+    Fireball::addDataWalkers(fixer, LargeFireball::DATA_WALKER_TYPE);
 }
 
 void LargeFireball::onHit(const HitResult* result)
@@ -79,5 +82,5 @@ void LargeFireball::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned long long LargeFireball::GetType()
 {
-    return 0x000000008A400003ULL;
+    return LargeFireball::ENTITY_TYPE;
 }

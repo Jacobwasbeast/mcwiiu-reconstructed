@@ -197,11 +197,6 @@ const SoundEvent* AbstractRotatedItemProjectile::getOnHitSound() const
     return SoundEvents::ARROW_HIT;
 }
 
-void AbstractRotatedItemProjectile::doPostHurtEffects(
-    const boost::shared_ptr<LivingEntity>& entity)
-{
-}
-
 boost::shared_ptr<Entity> AbstractRotatedItemProjectile::findHitEntity(Vec3* from, Vec3* to)
 {
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(),

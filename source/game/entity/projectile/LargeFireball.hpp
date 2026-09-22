@@ -12,6 +12,9 @@ class Level;
 class LargeFireball : public Fireball
 {
 public:
+    static const unsigned long long DATA_WALKER_TYPE;
+    static const unsigned long long ENTITY_TYPE;
+
     LargeFireball(Level* level);
     LargeFireball(Level* level, double x, double y, double z, double xd, double yd, double zd);
     LargeFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd);

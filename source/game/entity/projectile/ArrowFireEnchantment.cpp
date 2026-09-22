@@ -2,10 +2,15 @@
 
 #include "game/item/EnchantmentCategory.hpp"
 
+namespace
+{
+const int ARROW_FIRE_DESCRIPTION_ID = 0x0EA75E04;
+}
+
 ArrowFireEnchantment::ArrowFireEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BOW, slots)
 {
-    setDescriptionId(0x0EA75E04);
+    setDescriptionId(ARROW_FIRE_DESCRIPTION_ID);
 }
 
 int ArrowFireEnchantment::getMinCost(int level)
