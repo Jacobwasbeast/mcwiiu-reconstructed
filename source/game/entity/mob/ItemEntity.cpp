@@ -22,20 +22,20 @@
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ItemEntity::DATA_ITEM = NULL;
 
 ItemEntity::ItemEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f), mItem()
+    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f)
 {
     _init(level, x, y, z);
     setItem(item);
 }
 
 ItemEntity::ItemEntity(Level* level, double x, double y, double z)
-    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f), mItem()
+    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f)
 {
     _init(level, x, y, z);
 }
 
 ItemEntity::ItemEntity(Level* level)
-    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f), mItem()
+    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f)
 {
     _init();
     setItem(ItemInstance::EMPTY);
@@ -267,8 +267,8 @@ void ItemEntity::addAdditonalSaveData(CompoundTag* tag)
         tag->putString(L"Thrower", mThrower);
     if (!mOwner.empty())
         tag->putString(L"Owner", mOwner);
-    if (!mItem->isEmpty())
-        tag->put(L"Item", mItem->save(new CompoundTag()));
+    if (!getItem()->isEmpty())
+        tag->put(L"Item", getItem()->save(new CompoundTag()));
 }
 
 void ItemEntity::readAdditionalSaveData(CompoundTag* tag)
@@ -283,7 +283,7 @@ void ItemEntity::readAdditionalSaveData(CompoundTag* tag)
         mThrower = tag->getString(L"Thrower");
     if (tag->contains(L"Item"))
         setItem(not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"Item"))));
-    if (mItem->isEmpty())
+    if (getItem()->isEmpty())
         remove();
 }
 

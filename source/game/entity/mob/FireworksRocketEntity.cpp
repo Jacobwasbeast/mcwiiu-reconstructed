@@ -52,7 +52,7 @@ FireworksRocketEntity::FireworksRocketEntity(Level* level, const not_null_ptr<It
     {
         Entity* attachedEntity = (Entity*)entity.get();
         _init(attachedEntity->mX, attachedEntity->mY, attachedEntity->mZ, item);
-        mEntityData->set(DATA_SHARED_FLAGS_ID, attachedEntity->getId(), true);
+        mEntityData->set(DATA_ATTACHED_TO_ENTITY, attachedEntity->getId(), true);
     }
 }
 
@@ -114,10 +114,10 @@ void FireworksRocketEntity::_init(double x, double y, double z, const not_null_p
 
 void FireworksRocketEntity::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
-        0x88000005ULL, 0x08000000ULL, NULL);
     DATA_ATTACHED_TO_ENTITY = SynchedEntityData::defineId<int>(
-        0x88000005ULL, 0x08000000ULL, NULL);
+        0x88000005ULL, 0x08000000ULL, EntityDataSerializers::INT);
+    DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
+        0x88000005ULL, 0x08000000ULL, EntityDataSerializers::ITEM_INSTANCE);
 }
 
 bool FireworksRocketEntity::isAttachedToEntity()

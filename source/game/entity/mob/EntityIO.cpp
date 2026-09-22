@@ -1,5 +1,9 @@
 #include "game/entity/mob/EntityIO.hpp"
 
+#if defined(RECON_NATIVE)
+#include <cstdio>
+#endif
+
 #include <vector>
 
 #include <boost/unordered_map.hpp>
@@ -268,6 +272,9 @@ boost::shared_ptr<Entity> EntityIO::newEntity(CompoundTag* tag, Level* level)
     boost::shared_ptr<Entity> entity = newEntity(location, level);
     if (entity)
     {
+#if defined(RECON_NATIVE)
+        std::fprintf(stderr, "[native-world] loading entity type=%llx\n", entity->GetType());
+#endif
         entity->load(tag);
     }
     return entity;
