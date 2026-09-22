@@ -19,7 +19,7 @@ class Material;
 class MaterialColor;
 class Random;
 
-class EndPortalBlock : public BaseEntityBlock, public EntityBlock
+class EndPortalBlock : public BaseEntityBlock
 {
 public:
     EndPortalBlock(Material* material);

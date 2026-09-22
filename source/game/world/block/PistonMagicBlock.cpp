@@ -29,7 +29,7 @@ AbstractProperty<const Direction*>* PistonMagicBlock::FACING = NULL;
 AbstractProperty<PistonHeadBlock::PistonType*>* PistonMagicBlock::TYPE = NULL;
 
 PistonMagicBlock::PistonMagicBlock()
-    : BaseEntityBlock(Material::PISTON), EntityBlock()
+    : BaseEntityBlock(Material::PISTON)
 {
     DerivedInit();
     const BlockState* state = mStateDefinition->any();

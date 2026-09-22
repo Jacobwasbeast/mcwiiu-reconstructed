@@ -68,7 +68,9 @@ Boxed* AbstractProperty<T>::getValue(const std::wstring& name) const
 template <class T>
 std::wstring AbstractProperty<T>::toString() const
 {
-    return L"";
+    std::wstring value;
+    value.assign(mName);
+    return value;
 }
 
 template <class T>

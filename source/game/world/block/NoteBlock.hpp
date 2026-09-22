@@ -15,7 +15,7 @@ class Level;
 class Player;
 class SoundEvent;
 
-class NoteBlock : public BaseEntityBlock, public EntityBlock
+class NoteBlock : public BaseEntityBlock
 {
 public:
     NoteBlock();

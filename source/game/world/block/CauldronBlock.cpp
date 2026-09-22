@@ -52,7 +52,11 @@ void CauldronBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos&
     static const AABB south(0.0, 0.0, 0.875, 1.0, 1.0, 1.0);
     static const AABB west(0.0, 0.0, 0.125, 0.125, 1.0, 0.875);
     static const AABB east(0.875, 0.0, 0.125, 1.0, 1.0, 0.875);
-    addCollisionAABB(pos, box, boxes, &inner); addCollisionAABB(pos, box, boxes, &north); addCollisionAABB(pos, box, boxes, &south); addCollisionAABB(pos, box, boxes, &west); addCollisionAABB(pos, box, boxes, &east);
+    addCollisionAABB(pos, box, boxes, &inner);
+    addCollisionAABB(pos, box, boxes, &north);
+    addCollisionAABB(pos, box, boxes, &south);
+    addCollisionAABB(pos, box, boxes, &west);
+    addCollisionAABB(pos, box, boxes, &east);
 }
 const AABB* CauldronBlock::getShape(const BlockState* state, LevelSource* levelSource,
                                     const BlockPos& pos)
@@ -232,8 +236,17 @@ TextureAtlasSprite* CauldronBlock::getTexture(const std::wstring& name)
     if (name == L"cauldron_water") return cauldron->mWaterIcon;
     return NULL;
 }
-EBlockRenderShape CauldronBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)24; }
-void CauldronBlock::spawnPotionParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2000, BlockPos((int)x, (int)y, (int)z), color); }
+EBlockRenderShape CauldronBlock::getRenderShape(const BlockState*)
+{
+    return static_cast<EBlockRenderShape>(24);
+}
+
+void CauldronBlock::spawnPotionParticles(Level* level, double x, double y, double z,
+                                         Random*, int color, int count)
+{
+    if (level != NULL)
+        level->levelEvent(count + 2000, BlockPos(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z)), color);
+}
 void CauldronBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
@@ -248,8 +261,25 @@ void CauldronBlock::animateTick(const BlockState* state, Level* level, const Blo
         }
     }
 }
-void CauldronBlock::spawnSplashParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2001, BlockPos((int)x, (int)y, (int)z), color); }
-void CauldronBlock::spawnBubbleParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2002, BlockPos((int)x, (int)y, (int)z), color); }
-void CauldronBlock::spawnExplosionParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2003, BlockPos((int)x, (int)y, (int)z), color); }
+void CauldronBlock::spawnSplashParticles(Level* level, double x, double y, double z,
+                                         Random*, int color, int count)
+{
+    if (level != NULL)
+        level->levelEvent(count + 2001, BlockPos(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z)), color);
+}
+
+void CauldronBlock::spawnBubbleParticles(Level* level, double x, double y, double z,
+                                         Random*, int color, int count)
+{
+    if (level != NULL)
+        level->levelEvent(count + 2002, BlockPos(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z)), color);
+}
+
+void CauldronBlock::spawnExplosionParticles(Level* level, double x, double y, double z,
+                                            Random*, int color, int count)
+{
+    if (level != NULL)
+        level->levelEvent(count + 2003, BlockPos(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z)), color);
+}
 EPistonPushReaction CauldronBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_NORMAL; }
 bool CauldronBlock::ParticlesSurviveWithin() { return true; }

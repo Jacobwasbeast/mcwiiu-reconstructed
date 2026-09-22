@@ -20,7 +20,7 @@ class Material;
 class MaterialColor;
 class Random;
 
-class EndGatewayBlock : public BaseEntityBlock, public EntityBlock
+class EndGatewayBlock : public BaseEntityBlock
 {
 public:
     EndGatewayBlock(Material* material);

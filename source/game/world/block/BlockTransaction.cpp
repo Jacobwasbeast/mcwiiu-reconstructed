@@ -4,12 +4,12 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 
+BlockTransaction::Element g_emptyBlockElement;
+
 BlockTransaction::BlockTransaction(const BlockPos& min, const BlockPos& max, const Vec3i& size,
                                    Element* elements, unsigned int elementCount)
-    : mSize(size), mElementCount(elementCount), mMin(size), mMax(0, 0, 0), mElements(elements)
+    : mSize(size), mElementCount(elementCount), mMin(min), mMax(0, 0, 0), mElements(elements)
 {
-    (void)min;
-    (void)max;
 }
 
 BlockTransaction::~BlockTransaction()
@@ -38,9 +38,8 @@ void BlockTransaction::updateMinMax(const Vec3i& position)
 BlockTransaction::Element* BlockTransaction::at(const Vec3i& position) const
 {
     unsigned int index = position.y + mSize.y * position.x + mSize.y * mSize.x * position.z;
-    static Element empty = 0;
     if (index >= mElementCount)
-        return &empty;
+        return &g_emptyBlockElement;
     return mElements + index;
 }
 

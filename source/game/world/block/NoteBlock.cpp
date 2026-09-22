@@ -18,7 +18,7 @@
 static std::vector<const SoundEvent*> noteBlockInstruments;
 
 NoteBlock::NoteBlock()
-    : BaseEntityBlock(Material::WOOD), EntityBlock()
+    : BaseEntityBlock(Material::WOOD)
 {
     DerivedInit();
 }

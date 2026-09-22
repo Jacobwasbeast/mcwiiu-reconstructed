@@ -9,6 +9,7 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
@@ -20,6 +21,8 @@
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/Level.hpp"
@@ -96,21 +99,16 @@ const MaterialColor* BedBlock::getMapColor(const BlockState* state, LevelSource*
 
 bool BedBlock::TestUse(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
 {
-    if (level == NULL || !player)
-        return false;
-    if (state->getValue(OCCUPIED))
-    {
-        boost::shared_ptr<Player> sleeper = getSleepingPlayerAt(level, pos);
-        if (sleeper)
-            return true;
-    }
-    return player->startSleepInBed(pos, false) == 0;
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    const BlockPos adjacent = pos.relative(facing);
+    if (state->getValue(PART) != &gBedHead &&
+        level->getBlockState(adjacent)->getBlock() != this)
+        return true;
+    return player->bedInRange(const_cast<BlockPos*>(&pos), const_cast<Direction*>(facing)) == 0;
 }
 
 boost::shared_ptr<Player> BedBlock::getSleepingPlayerAt(Level* level, const BlockPos& pos)
 {
-    if (level == NULL)
-        return boost::shared_ptr<Player>();
     for (std::vector<boost::shared_ptr<Player> >::iterator it = level->mPlayers.begin();
          it != level->mPlayers.end(); ++it)
     {
@@ -127,7 +125,52 @@ boost::shared_ptr<Player> BedBlock::getSleepingPlayerAt(Level* level, const Bloc
 
 bool BedBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
 {
-    return TestUse(level, pos, state, player);
+    if (clientSide)
+        return false;
+
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    const BlockPos adjacent = pos.relative(facing->getOpposite());
+    if (state->getValue(PART) != &gBedHead &&
+        level->getBlockState(adjacent)->getBlock() != this)
+        return true;
+
+    if (state->getValue(OCCUPIED))
+    {
+        boost::shared_ptr<Player> sleeper = getSleepingPlayerAt(level, pos);
+        if (sleeper)
+        {
+            player->displayClientMessage(0xd08616d9, true);
+            return true;
+        }
+    }
+
+    const BlockPos forward = pos.relative(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY));
+    if (level->getBlockState(forward)->getBlock() == this)
+        level->removeBlock(forward);
+
+    const BlockState* current = level->getBlockState(pos);
+    if (current->getBlock() == this && !current->getValue(OCCUPIED))
+    {
+        TypedBoxed<bool> occupied(true);
+        level->setBlock(pos, current->setBoxedValue(OCCUPIED, &occupied), 4, false);
+    }
+    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
+        level->addParticle(PARTICLE_BLOCK_DUST, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
+            0.0, 0.0, 0.0, arrayWithLength<int>());
+
+    const uint32_t result = player->startSleepInBed(pos, false);
+    if (result == 0)
+    {
+        if (!player->isSleeping())
+            player->displayClientMessage(0x56c64197, true);
+    }
+    else if (result == 2)
+        player->displayClientMessage(0xfa2a57fa, true);
+    else if (result == 5)
+        player->displayClientMessage(0x16c81b7f, true);
+    else if (result == 3)
+        player->displayClientMessage(0xf084ec0c, true);
+    return true;
 }
 
 bool BedBlock::isCubeShaped(const BlockState* state)
@@ -142,22 +185,35 @@ bool BedBlock::isSolidRender(const BlockState* state) const
 
 void BedBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance)
 {
-    Block::fallOn(level, pos, entity, fallDistance);
+    Block::fallOn(level, pos, entity, fallDistance * 0.5f);
 }
 
 void BedBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> entity)
 {
+    if (!entity->mOnGround)
+    {
+        if (entity->mYd < 0.0)
+            entity->mYd = -entity->mYd * 0.66;
+        entity->lerpMotion(entity->mXd, entity->mYd, entity->mZd);
+        if (!entity->mOnGround)
+            entity->mYd *= 0.8;
+    }
     Block::updateEntityAfterFallOn(level, entity);
 }
 
 void BedBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
-    Block::neighborChanged(state, level, pos, block, fromPos);
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    const BlockPos adjacent = state->getValue(PART) == &gBedHead
+        ? pos.relative(facing)
+        : pos.relative(facing->getOpposite());
+    if (fromPos.equals(adjacent) && level->getBlockState(adjacent)->getBlock() != this)
+        level->removeBlock(pos);
 }
 
 Item* BedBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
-    return Block::getResource(state, random, lootBonus);
+    return state->getValue(PART) == &gBedHead ? Items::bed : Items::air;
 }
 
 const AABB* BedBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -172,7 +228,13 @@ bool BedBlock::hasCustomBreakingProgress(const BlockState* state)
 
 bool BedBlock::BlockIsDoor(const Block* block)
 {
-    return block == NULL;
+    return block == Blocks::wooden_door ||
+           block == Blocks::spruce_door ||
+           block == Blocks::birch_door ||
+           block == Blocks::jungle_door ||
+           block == Blocks::acacia_door ||
+           block == Blocks::dark_oak_door ||
+           block == Blocks::iron_door;
 }
 
 bool BedBlock::hasSolidGroundAndTwoBlocksSpaceAt(Level* level, const BlockPos& pos)
@@ -273,12 +335,21 @@ not_null_ptr<ItemInstance> BedBlock::getCloneItemInstance(Level* level, const Bl
 
 bool BedBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
 {
-    return Block::playerWillDestroy(level, pos, state, player);
+    if (player->mAbilities.mInstabuild && state->getValue(PART) == &gBedHead)
+    {
+        const BlockPos footPos = pos.relative(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY));
+        if (level->getBlockState(footPos)->getBlock() == this)
+        {
+            level->removeBlock(footPos);
+            return true;
+        }
+    }
+    return false;
 }
 
 void BedBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
 {
-    if (state->getValue(PART) == &gBedHead && blockEntity.get() != NULL && blockEntity->GetType() == 0x01000210ULL)
+    if (!level->mIsClientSide && blockEntity.get() != NULL && blockEntity->GetType() == 0x01000210ULL)
     {
         boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
         Block::popResource(level, pos, bedEntity->getItem());

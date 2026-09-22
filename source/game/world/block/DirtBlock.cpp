@@ -22,6 +22,16 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+namespace
+{
+const int kFirstHoeItemId = 0x122;
+const int kLastHoeItemId = 0x126;
+const int kDyeItemId = 0x15f;
+const int kWaterDepth = 0x10e;
+const unsigned int kHoeTooltip = 0x70889480u;
+const unsigned int kDyeTooltip = 0x9f5fdc40u;
+}
+
 DirtBlock::Variant* gVariants[3] = { NULL, NULL, NULL };
 EnumProperty<DirtBlock::Variant*>* gVariantProperty = NULL;
 static AbstractProperty<bool>* gSnowyProperty =
@@ -202,23 +212,23 @@ int DirtBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if (itemId > 0x121 && itemId < 0x127)
+    if (itemId >= kFirstHoeItemId && itemId <= kLastHoeItemId)
     {
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
             && tooltipData.m_bIsInside
             && tooltipData.m_pBlockState->getValue(gVariantProperty) != gVariants[2])
         {
-            return 0x70889480u;
+            return kHoeTooltip;
         }
     }
-    else if (itemId == 0x15F)
+    else if (itemId == kDyeItemId)
     {
         BlockPos above = tooltipData.m_blockPos.above();
-        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 0x10E, 0)
+        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, kWaterDepth, 0)
             && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            return 0x9F5FDC40u;
+            return kDyeTooltip;
         }
     }
     return Block::GetInteractTooltip(tooltipData);

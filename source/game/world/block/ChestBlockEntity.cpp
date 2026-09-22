@@ -66,7 +66,7 @@ BlockEntity* ChestBlockEntity::create()
 void ChestBlockEntity::_init(bool large)
 {
     mLarge = large;
-    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, not_null_ptr<ItemInstance>());
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
     mRefilledAnimationTicks = -1;
     mOpen = 0.0F;
     mOpenOld = 0.0F;

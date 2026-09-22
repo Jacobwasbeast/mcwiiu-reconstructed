@@ -19,7 +19,7 @@ static const AABB* END_GATEWAY_CLIP_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.
 static Property* END_GATEWAY_DATA = IntegerProperty::create(L"age", 0, 3);
 
 EndGatewayBlock::EndGatewayBlock(Material* material)
-    : BaseEntityBlock(material), EntityBlock()
+    : BaseEntityBlock(material)
 {
     DerivedInit();
     setLightEmission(1.0f);
@@ -69,7 +69,7 @@ void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPo
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (blockEntity.get() == NULL
-        || blockEntity->GetType() != BlockEntityRenderDispatcher::kEndGatewayBlockEntityType)
+        || blockEntity->GetType() != static_cast<unsigned long long>(BlockEntityRendererType::EndGateway))
         return;
 
     boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);

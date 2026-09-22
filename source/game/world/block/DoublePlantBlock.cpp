@@ -30,6 +30,19 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
+namespace
+{
+std::wstring sVariantTextures[6][4] = {
+    {L"double_plant_sunflower_top", L"double_plant_sunflower_bottom",
+     L"double_plant_sunflower_front", L"double_plant_sunflower_back"},
+    {L"double_plant_syringa_top", L"double_plant_syringa_bottom", L"", L""},
+    {L"double_plant_grass_top", L"double_plant_grass_bottom", L"", L""},
+    {L"double_plant_fern_top", L"double_plant_fern_bottom", L"", L""},
+    {L"double_plant_rose_top", L"double_plant_rose_bottom", L"", L""},
+    {L"double_plant_paeonia_top", L"double_plant_paeonia_bottom", L"", L""},
+};
+}
+
 AbstractProperty<DoublePlantBlock::Variant*>* DoublePlantBlock::VARIANT = NULL;
 AbstractProperty<DoublePlantBlock::Half*>* DoublePlantBlock::HALF = NULL;
 AbstractProperty<const Direction*>* DoublePlantBlock::FACING = NULL;
@@ -49,7 +62,7 @@ DoublePlantBlock::Variant::Variant(int data, const std::wstring& name, int nameI
 {
     mIcons[0] = NULL; mIcons[1] = NULL; mIcons[2] = NULL; mIcons[3] = NULL;
 }
-DoublePlantBlock::Variant::~Variant() { delete [] mTextures; }
+DoublePlantBlock::Variant::~Variant() {}
 int DoublePlantBlock::Variant::getData() { return mData; }
 DoublePlantBlock::Variant* DoublePlantBlock::Variant::byData(int data)
 {
@@ -98,12 +111,18 @@ void DoublePlantBlock::blockStaticCtor()
     {
         HALVES[0] = new Half(Half::LOWER);
         HALVES[1] = new Half(Half::UPPER);
-        VARIANTS[0] = new Variant(0, L"sunflower", 175, 175, NULL);
-        VARIANTS[1] = new Variant(1, L"syringa", 176, 176, NULL);
-        VARIANTS[2] = new Variant(2, L"grass", 177, 177, NULL);
-        VARIANTS[3] = new Variant(3, L"fern", 178, 178, NULL);
-        VARIANTS[4] = new Variant(4, L"rose", 179, 179, NULL);
-        VARIANTS[5] = new Variant(5, L"paeonia", 180, 180, NULL);
+        VARIANTS[0] = new Variant(0, L"sunflower", static_cast<int>(0xfb6416aa),
+                                  static_cast<int>(0xb200bb7f), sVariantTextures[0]);
+        VARIANTS[1] = new Variant(1, L"syringa", static_cast<int>(0xdf183664),
+                                  static_cast<int>(0x6a2ec061), sVariantTextures[1]);
+        VARIANTS[2] = new Variant(2, L"double_grass", static_cast<int>(0x0d46268b),
+                                  static_cast<int>(0xf8386cce), sVariantTextures[2]);
+        VARIANTS[3] = new Variant(3, L"double_fern", static_cast<int>(0x6fd6b722),
+                                  static_cast<int>(0xf5dafd9f), sVariantTextures[3]);
+        VARIANTS[4] = new Variant(4, L"double_rose", static_cast<int>(0x44477db7),
+                                  static_cast<int>(0xb6fac4d2), sVariantTextures[4]);
+        VARIANTS[5] = new Variant(5, L"paeonia", static_cast<int>(0x6209364a),
+                                  static_cast<int>(0x6a49a77f), sVariantTextures[5]);
         gDoublePlantGrass = VARIANTS[2];
         gDoublePlantFern = VARIANTS[3];
 

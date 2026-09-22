@@ -1,4 +1,5 @@
 #include "game/world/block/AbstractProperty.hpp"
+
 #include <string>
 
 int javaStringHashCode(const std::wstring& value)

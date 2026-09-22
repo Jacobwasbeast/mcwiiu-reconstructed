@@ -2,6 +2,7 @@
 #define GAME_WORLD_BLOCK_BASEENTITYBLOCK_HPP
 
 #include "game/world/block/Block.hpp"
+#include "game/world/block/EntityBlock.hpp"
 
 class BlockPos;
 class BlockState;
@@ -12,7 +13,7 @@ class MaterialColor;
 class BlockEntity;
 class Player;
 
-class BaseEntityBlock : public Block
+class BaseEntityBlock : public Block, public EntityBlock
 {
 public:
     BaseEntityBlock(Material* material);

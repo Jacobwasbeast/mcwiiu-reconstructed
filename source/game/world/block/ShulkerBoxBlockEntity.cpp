@@ -63,8 +63,7 @@ BlockEntity* ShulkerBoxBlockEntity::create()
 
 void ShulkerBoxBlockEntity::_init(const DyeColor* color)
 {
-    not_null_ptr<ItemInstance> empty;
-    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, empty);
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
     mColor = color;
     mCleared = false;
     mOpenCount = 0;

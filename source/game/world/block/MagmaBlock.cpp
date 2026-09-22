@@ -19,7 +19,7 @@
 #include "game/world/block/MaterialColor.hpp"
 
 MagmaBlock::MagmaBlock()
-    : Block(Material::LAVA)
+    : Block(Material::STONE)
 {
     DerivedInit();
     setLightEmission(0.2f);

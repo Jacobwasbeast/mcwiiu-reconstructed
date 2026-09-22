@@ -22,7 +22,7 @@ class Player;
 class Random;
 class TextureAtlasSprite;
 
-class EnchantmentTableBlock : public BaseEntityBlock, public EntityBlock
+class EnchantmentTableBlock : public BaseEntityBlock
 {
 public:
     EnchantmentTableBlock();

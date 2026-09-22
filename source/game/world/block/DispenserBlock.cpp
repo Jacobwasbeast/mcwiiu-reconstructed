@@ -34,6 +34,11 @@
 #include "game/world/generation/Player.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
 
+namespace
+{
+const unsigned int DISPENSER_INTERACT_TOOLTIP = 0xea4e897eU;
+}
+
 AbstractProperty<bool>* DispenserBlock::TRIGGERED = NULL;
 BehaviorRegistry DispenserBlock::DISPENSER_REGISTRY(new DefaultDispenseItemBehavior());
 DirectionProperty* DispenserBlock::FACING = NULL;
@@ -126,7 +131,7 @@ bool DispenserBlock::use(Level* level, const BlockPos& pos, const BlockState*,
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if ((entity->GetType() & 0x0000000003C00200ULL) == 0x0000000003C00200ULL)
+        if ((entity->GetType() & DispenserBlockEntity::TYPE_ID) == DispenserBlockEntity::TYPE_ID)
         {
             player->openContainer(boost::static_pointer_cast<Container>(
                 boost::static_pointer_cast<DispenserBlockEntity>(entity)));
@@ -211,7 +216,7 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if ((entity->GetType() & 0x0000000003C00200ULL) == 0x0000000003C00200ULL)
+        if ((entity->GetType() & DispenserBlockEntity::TYPE_ID) == DispenserBlockEntity::TYPE_ID)
         {
             boost::shared_ptr<DispenserBlockEntity> dispenser =
                 boost::static_pointer_cast<DispenserBlockEntity>(entity);
@@ -224,7 +229,7 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
 void DispenserBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if ((entity->GetType() & 0x0000000003C00200ULL) == 0x0000000003C00200ULL)
+    if ((entity->GetType() & DispenserBlockEntity::TYPE_ID) == DispenserBlockEntity::TYPE_ID)
     {
         Containers::dropContents(level, pos, boost::static_pointer_cast<Container>(
             boost::static_pointer_cast<DispenserBlockEntity>(entity)));
@@ -266,7 +271,7 @@ unsigned int DispenserBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
     {
-        return 0xea4e897eU;
+        return DISPENSER_INTERACT_TOOLTIP;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

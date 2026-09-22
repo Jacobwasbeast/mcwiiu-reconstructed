@@ -102,7 +102,10 @@ void CauldronBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> 
     BlockEntity::setChanged();
 }
 
-int CauldronBlockEntity::getMaxStackSize() { return 64; }
+int CauldronBlockEntity::getMaxStackSize()
+{
+    return 64;
+}
 
 bool CauldronBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
@@ -113,12 +116,32 @@ bool CauldronBlockEntity::stillValid(boost::shared_ptr<Player> player)
     return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
 }
 
-void CauldronBlockEntity::startOpen(boost::shared_ptr<Player> player) {}
-void CauldronBlockEntity::stopOpen(boost::shared_ptr<Player> player) {}
-bool CauldronBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item) { return false; }
-int CauldronBlockEntity::getContainerData(int id) { return 0; }
-void CauldronBlockEntity::setContainerData(int id, int value) {}
-int CauldronBlockEntity::getContainerDataCount() { return 0; }
+void CauldronBlockEntity::startOpen(boost::shared_ptr<Player>)
+{
+}
+
+void CauldronBlockEntity::stopOpen(boost::shared_ptr<Player>)
+{
+}
+
+bool CauldronBlockEntity::canPlaceItem(int, not_null_ptr<ItemInstance>)
+{
+    return false;
+}
+
+int CauldronBlockEntity::getContainerData(int)
+{
+    return 0;
+}
+
+void CauldronBlockEntity::setContainerData(int, int)
+{
+}
+
+int CauldronBlockEntity::getContainerDataCount()
+{
+    return 0;
+}
 
 void CauldronBlockEntity::clearContent()
 {
@@ -278,4 +301,7 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
 }
 
 void CauldronBlockEntity::setChanged() { BlockEntity::setChanged(); }
-unsigned long long CauldronBlockEntity::GetType() { return 0x0000000001000211ULL; }
+unsigned long long CauldronBlockEntity::GetType()
+{
+    return 0x0000000001000211ULL;
+}

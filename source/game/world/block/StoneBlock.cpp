@@ -31,7 +31,7 @@ StoneBlock::Variant* StoneBlock::Variant::byData(int data) { return data > 6 ? g
 TextureAtlasSprite* StoneBlock::Variant::getTexture() { return mTexture; }
 void StoneBlock::Variant::registerIcons(IconRegister* iconRegister) { mTexture = iconRegister->registerIcon(mSerializedName); }
 std::wstring StoneBlock::Variant::toString() const { return mName; }
-std::wstring StoneBlock::Variant::getSerializedName() const { return mName; }
+std::wstring StoneBlock::Variant::getSerializedName() const { return mSerializedName; }
 int StoneBlock::Variant::getNameId() { return mNameId; }
 int StoneBlock::Variant::getDescriptionId() { return mDescriptionId; }
 bool StoneBlock::Variant::isNatural() const { return mNatural; }

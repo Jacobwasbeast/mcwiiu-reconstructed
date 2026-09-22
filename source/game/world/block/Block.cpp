@@ -1637,13 +1637,13 @@ TextureAtlasSprite* Block::getTexture(LevelSource* levelSource, const BlockPos& 
         }
     }
 
-    LeafBlock::mOldLeaves->setFancy(false);
-    LeafBlock::mNewLeaves->setFancy(false);
+    static_cast<LeafBlock*>(Blocks::leaves)->setFancy(false);
+    static_cast<LeafBlock*>(Blocks::leaves2)->setFancy(false);
 
     TextureAtlasSprite* texture = getTexture(direction, state);
 
-    LeafBlock::mOldLeaves->setFancy(true);
-    LeafBlock::mNewLeaves->setFancy(true);
+    static_cast<LeafBlock*>(Blocks::leaves)->setFancy(true);
+    static_cast<LeafBlock*>(Blocks::leaves2)->setFancy(true);
 
     return texture;
 }

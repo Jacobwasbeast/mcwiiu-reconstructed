@@ -14,6 +14,8 @@ class DataOutputStream;
 class CommandBlockEntity : public BlockEntity
 {
 public:
+    static constexpr unsigned long long BLOCK_ENTITY_TYPE = 0x1000209ULL;
+
     class AnonymousCommandBlock : public BaseCommandBlock
     {
     public:

@@ -17,7 +17,7 @@
 #include "game/world/block/MaterialColor.hpp"
 
 EnchantmentTableBlock::EnchantmentTableBlock()
-    : BaseEntityBlock(Material::STONE, MaterialColor::STONE), EntityBlock()
+    : BaseEntityBlock(Material::STONE, MaterialColor::STONE)
 {
     DerivedInit();
     setLightBlock(0);

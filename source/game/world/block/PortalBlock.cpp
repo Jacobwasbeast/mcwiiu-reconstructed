@@ -156,7 +156,7 @@ void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
             int error = 0;
             std::wstring customName;
             boost::shared_ptr<Mob> mob =
-                SpawnEggItem::spawnMobAt(level, EntityIO::getKey(0x000000005D550041ULL),
+                SpawnEggItem::spawnMobAt(level, EntityIO::getKey(ENTITY_TYPE_PIG_ZOMBIE),
                                          (double)ground.x + 0.5, (double)ground.y + 1.1,
                                          (double)ground.z + 0.5, &error, customName);
             if (mob)

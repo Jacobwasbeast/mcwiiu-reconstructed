@@ -134,15 +134,12 @@ const AABB* ButtonBlock::getShape(const BlockState* state, LevelSource*, const B
 {
     const Direction* direction = state->getValue(FACING);
     bool powered = state->getValue(POWERED);
-    switch (direction->get3DDataValue())
-    {
-    case 0: return powered ? AABB_DOWN_ON : AABB_DOWN_OFF;
-    case 1: return powered ? AABB_UP_ON : AABB_UP_OFF;
-    case 3: return powered ? AABB_SOUTH_ON : AABB_SOUTH_OFF;
-    case 4: return powered ? AABB_WEST_ON : AABB_WEST_OFF;
-    case 5: return powered ? AABB_EAST_ON : AABB_EAST_OFF;
-    default: return powered ? AABB_NORTH_ON : AABB_NORTH_OFF;
-    }
+    if (direction == Direction::DOWN) return powered ? AABB_DOWN_ON : AABB_DOWN_OFF;
+    if (direction == Direction::UP) return powered ? AABB_UP_ON : AABB_UP_OFF;
+    if (direction == Direction::SOUTH) return powered ? AABB_SOUTH_ON : AABB_SOUTH_OFF;
+    if (direction == Direction::WEST) return powered ? AABB_WEST_ON : AABB_WEST_OFF;
+    if (direction == Direction::EAST) return powered ? AABB_EAST_ON : AABB_EAST_OFF;
+    return powered ? AABB_NORTH_ON : AABB_NORTH_OFF;
 }
 bool ButtonBlock::TestUse() { return true; }
 
@@ -244,16 +241,12 @@ void ButtonBlock::entityInside(Level* level, const BlockPos& pos, const BlockSta
 
 const BlockState* ButtonBlock::getBlockState(int data)
 {
-    const Direction* direction;
-    switch (data & 7)
-    {
-    case 0: direction = Direction::DOWN; break;
-    case 1: direction = Direction::EAST; break;
-    case 2: direction = Direction::WEST; break;
-    case 3: direction = Direction::SOUTH; break;
-    case 4: direction = Direction::NORTH; break;
-    default: direction = Direction::UP; break;
-    }
+    static const Direction* const legacyFacing[] = {
+        Direction::DOWN, Direction::EAST, Direction::WEST,
+        Direction::SOUTH, Direction::NORTH, Direction::UP
+    };
+    unsigned int facingIndex = static_cast<unsigned int>(data) & 7u;
+    const Direction* direction = facingIndex < 6u ? legacyFacing[facingIndex] : Direction::UP;
     TypedBoxed<const Direction*> facing(direction);
     TypedBoxed<bool> powered((data & 8) != 0);
     return defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(POWERED, &powered);
@@ -262,9 +255,13 @@ const BlockState* ButtonBlock::getBlockState(int data)
 int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     const Direction* direction = state->getValue(FACING);
-    static const int legacyDirections[] = { 0, 5, 4, 3, 2, 1 };
-    int directionValue = direction->get3DDataValue();
-    int data = directionValue >= 0 && directionValue < 6 ? legacyDirections[directionValue] : 5;
+    int data;
+    if (direction == Direction::DOWN) data = 0;
+    else if (direction == Direction::UP) data = 5;
+    else if (direction == Direction::NORTH) data = 4;
+    else if (direction == Direction::SOUTH) data = 3;
+    else if (direction == Direction::WEST) data = 2;
+    else data = 1;
     return data | (state->getValue(POWERED) ? 8 : 0);
 }
 

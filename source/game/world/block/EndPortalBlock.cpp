@@ -28,7 +28,7 @@ const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE =
 }
 
 EndPortalBlock::EndPortalBlock(Material* material)
-    : BaseEntityBlock(material), EntityBlock()
+    : BaseEntityBlock(material)
 {
     DerivedInit();
     setLightEmission(1.0f);

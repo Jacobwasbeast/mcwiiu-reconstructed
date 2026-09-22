@@ -17,7 +17,7 @@
 
 FurnaceBlockEntity::FurnaceBlockEntity()
     : LockableContainerBlockEntity(), WorldlyContainer(),
-      mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, not_null_ptr<ItemInstance>())),
+      mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY)),
       mOpeners(), mOpenersThisTick(), mLitTime(0), mLitDuration(0),
       mCookingProgress(0), mCookingTotalTime(0),
       mName(new CensoredString()), mCharcoalUsed(false)
@@ -199,7 +199,7 @@ int FurnaceBlockEntity::getContainerDataCount()
 
 void FurnaceBlockEntity::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i) mItems[i] = not_null_ptr<ItemInstance>();
+    for (unsigned int i = 0; i < mItems.size(); ++i) mItems[i] = ItemInstance::EMPTY;
 }
 
 AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
@@ -266,6 +266,7 @@ void FurnaceBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 void FurnaceBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mLitTime = tag->getShort(L"BurnTime");
     mCookingProgress = tag->getShort(L"CookTime");
@@ -366,7 +367,7 @@ void FurnaceBlockEntity::tick()
             if (mItems[1]->isEmpty())
             {
                 Item* remainder = fuelItem->getCraftingRemainingItem();
-                mItems[1] = (remainder != NULL) ? not_null_ptr<ItemInstance>(new ItemInstance(remainder)) : not_null_ptr<ItemInstance>();
+                mItems[1] = (remainder != NULL) ? not_null_ptr<ItemInstance>(new ItemInstance(remainder)) : ItemInstance::EMPTY;
             }
             mOpenersThisTick = mOpeners;
         }

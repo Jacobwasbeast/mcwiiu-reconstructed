@@ -52,7 +52,6 @@ EnumProperty<T>::EnumProperty(const std::wstring& name, const std::type_info& va
     {
         std::wstring valueName = getName(*it);
 
-        mValuesByName.find(valueName);
         mValuesByName[valueName] = *it;
 
         mPossibleValues.push_back(new TypedBoxed<T>(*it));
@@ -153,11 +152,16 @@ Boxed* EnumProperty<T>::getValueAtIndex(unsigned int index) const
 template <class T>
 unsigned int EnumProperty<T>::getIndexForValue(Boxed* value) const
 {
+    if (value == NULL || !value->isA(typeid(T)))
+    {
+        return 0;
+    }
+
     unsigned int index = 0;
 
     for (std::vector<Boxed*>::const_iterator it = mPossibleValues.begin(); it != mPossibleValues.end(); ++it)
     {
-        if (*value == *it)
+        if (*it != NULL && (*value == *it))
         {
             return index;
         }

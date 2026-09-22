@@ -26,7 +26,7 @@ class Rotation;
 class Vec3;
 class Player;
 
-class PistonMagicBlock : public BaseEntityBlock, public EntityBlock
+class PistonMagicBlock : public BaseEntityBlock
 {
 public:
     static AbstractProperty<const Direction*>* FACING;

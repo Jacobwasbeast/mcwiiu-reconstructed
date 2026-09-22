@@ -13,7 +13,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
 
-static const AABB* gDiodeShape = NULL;
+static const AABB* gDiodeShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
 
 DiodeBlock::DiodeBlock(bool on) : HorizontalDirectionalBlock(Material::DECORATION), mOn(on) {}
 DiodeBlock::~DiodeBlock() {}

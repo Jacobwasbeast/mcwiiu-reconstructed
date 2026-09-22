@@ -16,9 +16,6 @@ class TextureAtlasSprite;
 class LeafBlock : public TransparentBlock
 {
 public:
-    static LeafBlock* mOldLeaves;
-    static LeafBlock* mNewLeaves;
-
     LeafBlock();
     virtual ~LeafBlock();
 

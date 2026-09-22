@@ -47,6 +47,7 @@ static const AABB* gStairBottomSouthWestAABB = AABB::newPermanent(0.0, 0.0, 0.5,
 static const AABB* gStairBottomSouthEastAABB = AABB::newPermanent(0.5, 0.0, 0.5, 1.0, 0.5, 1.0);
 static StairBlock::Half* gStairTop = new StairBlock::Half(L"top");
 static StairBlock::Half* gStairBottom = new StairBlock::Half(L"bottom");
+static const int STAIR_OPAQUE_LIGHT_BLOCK = 0xff;
 static StairBlock::Half* gStairHalfValues[2] = { gStairTop, gStairBottom };
 static StairBlock::Shape* gStairStraight = new StairBlock::Shape(L"straight", 0);
 static StairBlock::Shape* gStairInnerLeft = new StairBlock::Shape(L"inner_left", 1);
@@ -120,7 +121,7 @@ void StairBlock::blockStaticCtor()
 StairBlock::StairBlock(const BlockState* modelState)
     : Block(modelState->getBlock()->getCraftingMaterial())
 {
-    mBlockType = static_cast<EBlockType>(7);
+    mBlockType = static_cast<EBlockType>(EBLOCK_TYPE_NONE + 7);
     DerivedInit();
 
     const BlockState* state = mStateDefinition->any();
@@ -139,7 +140,7 @@ StairBlock::StairBlock(const BlockState* modelState)
     setDestroyTime(mModelBlock->mDestroyTime);
     setExplodeable(mModelBlock->mExplosionResistance / 3.0f);
     setSoundType(mModelBlock->mSoundType);
-    setLightBlock(255);
+    setLightBlock(STAIR_OPAQUE_LIGHT_BLOCK);
 }
 
 StairBlock::~StairBlock()
@@ -341,39 +342,41 @@ void StairBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
     mModelBlock->tick(level, pos, state, random);
 }
 
-const arrayWithLength<const AABB*>* StairBlock::getShapes(const BlockState* state, LevelSource*, const BlockPos&)
+const arrayWithLength<const AABB*>* StairBlock::getShapes(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    Block::ThreadStorage* storage = (Block::ThreadStorage*)TlsGetValue(THREAD_STORAGE_INDEX);
+    const arrayWithLength<const AABB*>* shapes = Block::getShapes(state, levelSource, pos);
+    const AABB** shapeData = const_cast<const AABB**>(shapes->data);
 
     if (state->getValue(HALF) == gStairTop)
     {
-        storage->mShapes.data[0] = gStairTopSlabAABB;
+        shapeData[0] = gStairTopSlabAABB;
     }
     else
     {
-        storage->mShapes.data[0] = gStairBottomSlabAABB;
+        shapeData[0] = gStairBottomSlabAABB;
     }
 
     const Shape* shape = state->getValue(SHAPE);
+
     if (shape == gStairStraight || shape == gStairInnerLeft || shape == gStairInnerRight)
     {
-        storage->mShapes.data[1] = getStepAABB(state);
+        shapeData[1] = getStepAABB(state);
     }
     else
     {
-        storage->mShapes.data[1] = NULL;
+        shapeData[1] = NULL;
     }
 
     if (shape == gStairStraight)
     {
-        storage->mShapes.data[2] = NULL;
+        shapeData[2] = NULL;
     }
     else
     {
-        storage->mShapes.data[2] = getCornerAABB(state);
+        shapeData[2] = getCornerAABB(state);
     }
 
-    return &((Block::ThreadStorage*)TlsGetValue(THREAD_STORAGE_INDEX))->mShapes;
+    return shapes;
 }
 
 void StairBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
