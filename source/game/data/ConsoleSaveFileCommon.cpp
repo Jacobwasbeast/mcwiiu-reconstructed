@@ -172,12 +172,21 @@ void ConsoleSaveFileCommon::PrepareForWrite(FileEntry* entry, unsigned int size)
 
 bool ConsoleSaveFileCommon::_writeFile(FileEntry* entry, const void* buffer, unsigned int size, unsigned int* written)
 {
-    if (mData == NULL)
+    if (mData == NULL || entry == NULL)
         return false;
     LockSaveAccess();
     PrepareForWrite(entry, size);
-    std::memcpy(static_cast<unsigned char*>(mData) + entry->m_filePointer, buffer, size);
-    *written = size;
+    if (size != 0)
+    {
+        if (buffer == NULL)
+        {
+            ReleaseSaveAccess();
+            return false;
+        }
+        std::memcpy(static_cast<unsigned char*>(mData) + entry->m_filePointer, buffer, size);
+    }
+    if (written != NULL)
+        *written = size;
     entry->m_filePointer += size;
     entry->m_timestamp = System::currentRealTimeMillis();
     ReleaseSaveAccess();

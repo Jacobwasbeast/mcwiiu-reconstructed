@@ -13,7 +13,8 @@ public:
     class Array256_1Bit
     {
     public:
-        unsigned char bytes[36];
+        unsigned char indices[32];
+        unsigned char palette[4];
         void init();
         unsigned int set(unsigned char index, unsigned char value);
         unsigned char get(unsigned char index);
@@ -22,7 +23,8 @@ public:
     class Array256_2Bit
     {
     public:
-        unsigned char bytes[68];
+        unsigned char indices[64];
+        unsigned char palette[4];
         void init();
         unsigned int set(unsigned char index, unsigned char value);
         unsigned char get(unsigned char index);
@@ -32,6 +34,7 @@ public:
     {
     public:
         unsigned short offsets[128];
+        unsigned char payload[0x3f80];
         void initPlane(int plane, void* data);
         unsigned int setData(int plane, int index, int value);
         unsigned char getDataSizeFromType(int type);
@@ -41,6 +44,10 @@ public:
         void setDataOffset(int plane, unsigned short offset);
         unsigned short getDataOffset(int plane);
         unsigned int getData(int plane, char (&values)[256]);
+
+    private:
+        unsigned char* planeBytes(int plane);
+        const unsigned char* planeBytes(int plane) const;
     };
 
     SparseDataStorage();
@@ -73,7 +80,16 @@ public:
     bool isCompressed();
 
 private:
-    long long dataAndCount;
+    union DataAndCountValue
+    {
+        long long bits;
+        struct
+        {
+            unsigned int size;
+            PlaneOffsets* offsets;
+        } value;
+    };
+    DataAndCountValue dataAndCount;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "platform/wiiu/PlatformTiming.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "game/data/ConsoleSaveFileOriginal.hpp"
 
 #include <cstring>
@@ -24,18 +25,19 @@ void PIXEndNamedEvent();
 
 static void* s_saveData;
 static unsigned int s_saveDataSize;
+extern CStorage* gStorage;
 
 ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, void* data, unsigned int dataSize,
     bool resetData, ESavePlatform platform)
     : ConsoleSaveFileCommon()
 {
-    static unsigned int quota;
-    static void* quotaBase;
     bool deleteBaseData = false;
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
 
-    if (quotaBase == NULL)
-        quotaBase = VirtualAlloc(NULL, 0x4000000, 0x2000, 4);
+    if (s_saveData == NULL)
+        s_saveData = VirtualAlloc(NULL, 0x4000000, 0x2000, 4);
+
+    mData = s_saveData;
 
     if (dataSize == 0 && options != NULL && options->requiresBaseSave())
     {
@@ -44,13 +46,15 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, v
             deleteBaseData = true;
     }
     else if (dataSize != 0 && data == NULL)
-        data = s_saveData;
+    {
+        unsigned int loadedSize = 0;
+        data = reinterpret_cast<void*>(gStorage->GetSaveData(NULL, &loadedSize));
+    }
 
     if (resetData)
         data = NULL;
 
     _initSaveFromData(filename, dataSize, data, platform);
-    quota = dataSize;
     if (deleteBaseData)
         options->deleteBaseSaveData();
 }
@@ -58,7 +62,6 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, v
 ConsoleSaveFileOriginal::~ConsoleSaveFileOriginal()
 {
     VirtualFree(s_saveData, 0x4000000, 0x4000);
-    s_saveData = NULL;
     s_saveDataSize = 0;
 }
 
@@ -77,7 +80,6 @@ void ConsoleSaveFileOriginal::refreshFromLevelgen()
         if (data != NULL)
         {
             VirtualFree(s_saveData, 0x4000000, 0x4000);
-            s_saveData = NULL;
             s_saveDataSize = 0;
             mFileHeader.Reset();
             _initSaveFromData(mFilename, dataSize, data, mFileHeader.m_savePlatform);
@@ -90,9 +92,8 @@ void ConsoleSaveFileOriginal::AllocInitialQuota(unsigned int size)
 {
     if (size < 0x200000)
         size = 0x200000;
-    s_saveData = VirtualAlloc(s_saveData, (size + 0xffff) & 0xffff0000, 0x1000, 4);
+    VirtualAlloc(s_saveData, (size + 0xffff) & 0xffff0000, 0x1000, 4);
     s_saveDataSize = (size + 0xffff) >> 16;
-    mData = s_saveData;
 }
 
 void ConsoleSaveFileOriginal::ReAlloc(unsigned int size)
@@ -103,14 +104,13 @@ void ConsoleSaveFileOriginal::ReAlloc(unsigned int size)
         if (VirtualAlloc(s_saveData, (size + 0xffff) & 0xffff0000, 0x1000, 4) == NULL)
             __debugbreak();
     }
-    mData = s_saveData;
 }
 
 FileEntry* ConsoleSaveFileOriginal::createFile(const ConsoleSavePath& path)
 {
     LockSaveAccess();
     FileEntry* entry = mFileHeader.AddFile(path.getPath(), 0);
-    AllocInitialQuota(mFileHeader.GetFileSize());
+    ReAlloc(mFileHeader.GetFileSize());
     finalizeWrite();
     ReleaseSaveAccess();
     return entry;
@@ -152,14 +152,52 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
     finalizeWrite();
     unsigned int fileSize = mFileHeader.GetFileSize();
     unsigned int compressedSize = fileSize + 8;
-    unsigned char* compressedData = new unsigned char[compressedSize];
+    unsigned char* compressedData = reinterpret_cast<unsigned char*>(
+        gStorage->AllocateSaveData(compressedSize));
     Compression* compression = Compression::getCompression();
-    compression->Compress(compressedData + 8, &compressedSize, mData, fileSize);
-    std::memset(compressedData, 0, 8);
-    unsigned char thumbnail[0x200];
-    g_pApp->GetSaveThumbnail(NULL, NULL);
-    fjGetSaveThumbnailData(thumbnail, sizeof(thumbnail));
-    delete[] compressedData;
+
+    if (compressedData == NULL)
+    {
+        PIXBeginNamedEvent(0.0f, "Pre-calc save compression");
+        _LARGE_INTEGER frequency;
+        _LARGE_INTEGER counter;
+        QueryPerformanceFrequency(&frequency);
+        QueryPerformanceCounter(&counter);
+        compressedSize = 0;
+        compression->Compress(NULL, &compressedSize, mData, fileSize);
+        QueryPerformanceCounter(&counter);
+        PIXEndNamedEvent();
+        compressedSize += 8;
+        compressedData = reinterpret_cast<unsigned char*>(
+            gStorage->AllocateSaveData(compressedSize));
+    }
+
+    if (compressedData != NULL)
+    {
+        PIXBeginNamedEvent(0.0f, "Actual save compression");
+        _LARGE_INTEGER frequency;
+        _LARGE_INTEGER counter;
+        QueryPerformanceFrequency(&frequency);
+        QueryPerformanceCounter(&counter);
+        compression->Compress(compressedData + 8, &compressedSize, mData, fileSize);
+        QueryPerformanceCounter(&counter);
+        PIXEndNamedEvent();
+
+        unsigned int zero = 0;
+        std::memset(compressedData, 0, 8);
+        std::memcpy(compressedData, &zero, sizeof(zero));
+        std::memcpy(compressedData + 4, &fileSize, sizeof(fileSize));
+
+        unsigned char* image = NULL;
+        unsigned int imageSize = 0;
+        g_pApp->GetSaveThumbnail(&image, &imageSize);
+        unsigned char thumbnail[0x200];
+        unsigned int thumbnailSize = fjGetSaveThumbnailData(thumbnail, sizeof(thumbnail));
+        gStorage->SetSaveImages(image, imageSize, NULL, 0, thumbnail, thumbnailSize);
+        delete[] image;
+        gStorage->SetSaveDataSize(compressedSize + 8);
+        gStorage->SaveSaveData(SaveSaveDataCallback, this);
+    }
     ReleaseSaveAccess();
 }
 

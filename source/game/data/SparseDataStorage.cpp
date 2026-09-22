@@ -17,22 +17,24 @@ static int sAllocatedBytes;
 
 void SparseDataStorage::Array256_1Bit::init()
 {
-    bytes[32] = 255; bytes[33] = 255; bytes[34] = 0; bytes[35] = 0;
+    palette[0] = 255; palette[1] = 255; palette[2] = 0; palette[3] = 0;
 }
 
 unsigned int SparseDataStorage::Array256_1Bit::set(unsigned char index, unsigned char value)
 {
     const unsigned int shift = index & 7;
     const unsigned int mask = 1u << shift;
-    unsigned char& packed = bytes[index >> 3];
-    for (unsigned int paletteIndex = 0; paletteIndex < 2; ++paletteIndex)
+    unsigned char& packed = indices[index >> 3];
+    if (value == palette[0] || palette[0] == 255)
     {
-        unsigned char& paletteValue = bytes[32 + paletteIndex];
-        if (value != static_cast<signed char>(paletteValue) && paletteValue != 255)
-            continue;
-        if (paletteValue == 255)
-            paletteValue = value;
-        packed = static_cast<unsigned char>((packed & ~mask) | (paletteIndex << shift));
+        if (palette[0] == 255) palette[0] = value;
+        packed = static_cast<unsigned char>(packed & ~mask);
+        return 1;
+    }
+    if (value == palette[1] || palette[1] == 255)
+    {
+        if (palette[1] == 255) palette[1] = value;
+        packed = static_cast<unsigned char>((packed & ~mask) | (1u << shift));
         return 1;
     }
     return 0;
@@ -40,27 +42,41 @@ unsigned int SparseDataStorage::Array256_1Bit::set(unsigned char index, unsigned
 
 unsigned char SparseDataStorage::Array256_1Bit::get(unsigned char index)
 {
-    return bytes[32 + ((bytes[index >> 3] >> (index & 7)) & 1)];
+    return palette[(indices[index >> 3] >> (index & 7)) & 1];
 }
 
 void SparseDataStorage::Array256_2Bit::init()
 {
-    bytes[64] = 255; bytes[65] = 255; bytes[66] = 255; bytes[67] = 255;
+    palette[0] = 255; palette[1] = 255; palette[2] = 255; palette[3] = 255;
 }
 
 unsigned int SparseDataStorage::Array256_2Bit::set(unsigned char index, unsigned char value)
 {
     const unsigned int shift = (index & 3) * 2;
     const unsigned int mask = 3u << shift;
-    unsigned char& packed = bytes[index >> 2];
-    for (unsigned int paletteIndex = 0; paletteIndex < 4; ++paletteIndex)
+    unsigned char& packed = indices[index >> 2];
+    if (value == palette[0] || palette[0] == 255)
     {
-        unsigned char& paletteValue = bytes[64 + paletteIndex];
-        if (value != static_cast<signed char>(paletteValue) && paletteValue != 255)
-            continue;
-        if (paletteValue == 255)
-            paletteValue = value;
-        packed = static_cast<unsigned char>((packed & ~mask) | (paletteIndex << shift));
+        if (palette[0] == 255) palette[0] = value;
+        packed = static_cast<unsigned char>(packed & ~mask);
+        return 1;
+    }
+    if (value == palette[1] || palette[1] == 255)
+    {
+        if (palette[1] == 255) palette[1] = value;
+        packed = static_cast<unsigned char>((packed & ~mask) | (1u << shift));
+        return 1;
+    }
+    if (value == palette[2] || palette[2] == 255)
+    {
+        if (palette[2] == 255) palette[2] = value;
+        packed = static_cast<unsigned char>((packed & ~mask) | (2u << shift));
+        return 1;
+    }
+    if (value == palette[3] || palette[3] == 255)
+    {
+        if (palette[3] == 255) palette[3] = value;
+        packed = static_cast<unsigned char>((packed & ~mask) | (3u << shift));
         return 1;
     }
     return 0;
@@ -68,29 +84,69 @@ unsigned int SparseDataStorage::Array256_2Bit::set(unsigned char index, unsigned
 
 unsigned char SparseDataStorage::Array256_2Bit::get(unsigned char index)
 {
-    return bytes[64 + ((bytes[index >> 2] >> ((index & 3) << 1)) & 3)];
+    return palette[(indices[index >> 2] >> ((index & 3) << 1)) & 3];
 }
 
 void SparseDataStorage::PlaneOffsets::initPlane(int plane, void* data)
 {
-    unsigned short old = offsets[plane]; unsigned int type = old >> 14;
-    if (type) offsets[plane] = (unsigned short)(((static_cast<unsigned char*>(data) - (unsigned char*)this) >> 2 & 0x3fff) | (old & 0xc000));
-    if (type == 1) static_cast<Array256_1Bit*>(data)->init();
-    else if (type == 2) static_cast<Array256_2Bit*>(data)->init();
+    unsigned short old = offsets[plane];
+    unsigned int type = old >> 14;
+    if (type)
+    {
+        unsigned char* address = static_cast<unsigned char*>(data);
+        offsets[plane] = static_cast<unsigned short>((((address - payload + 0x100) >> 2) & 0x3fff) | (old & 0xc000));
+    }
+    if (type == 1)
+    {
+        Array256_1Bit values;
+        memcpy(&values, planeBytes(plane), sizeof values);
+        values.init();
+        memcpy(planeBytes(plane), &values, sizeof values);
+    }
+    else if (type == 2)
+    {
+        Array256_2Bit values;
+        memcpy(&values, planeBytes(plane), sizeof values);
+        values.init();
+        memcpy(planeBytes(plane), &values, sizeof values);
+    }
+}
+
+unsigned char* SparseDataStorage::PlaneOffsets::planeBytes(int plane)
+{
+    return payload + ((offsets[plane] & 0x3fff) - 0x40) * 4;
+}
+
+const unsigned char* SparseDataStorage::PlaneOffsets::planeBytes(int plane) const
+{
+    return payload + ((offsets[plane] & 0x3fff) - 0x40) * 4;
 }
 
 unsigned int SparseDataStorage::PlaneOffsets::setData(int plane, int index, int value)
 {
     unsigned short entry = offsets[plane]; unsigned int type = entry >> 14;
     if (!type) return value == (entry & 0x3fff);
-    unsigned char* p = (unsigned char*)this + (entry & 0x3fff) * 4;
-    if (type == 1) return static_cast<Array256_1Bit*>(static_cast<void*>(p))->set((unsigned char)index, (unsigned char)value);
-    if (type == 2) return static_cast<Array256_2Bit*>(static_cast<void*>(p))->set((unsigned char)index, (unsigned char)value);
+    if (type == 1)
+    {
+        Array256_1Bit values;
+        memcpy(&values, planeBytes(plane), sizeof values);
+        unsigned int changed = values.set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
+        memcpy(planeBytes(plane), &values, sizeof values);
+        return changed;
+    }
+    if (type == 2)
+    {
+        Array256_2Bit values;
+        memcpy(&values, planeBytes(plane), sizeof values);
+        unsigned int changed = values.set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
+        memcpy(planeBytes(plane), &values, sizeof values);
+        return changed;
+    }
     if (type == 3)
     {
         const unsigned char position = static_cast<unsigned char>(index);
         const unsigned int shift = (position & 1) * 4;
-        unsigned char& packed = p[position >> 1];
+        unsigned char& packed = planeBytes(plane)[position >> 1];
         packed = static_cast<unsigned char>((packed & ~(15u << shift)) |
                                             (static_cast<unsigned int>(value) << shift));
         return 1;
@@ -104,11 +160,20 @@ unsigned int SparseDataStorage::PlaneOffsets::getData(int plane, int index)
 {
     unsigned short entry = offsets[plane]; unsigned int type = entry >> 14;
     if (!type) return entry & 0x3fff;
-    unsigned char* p = (unsigned char*)this + (entry & 0x3fff) * 4;
-    if (type == 1) return static_cast<Array256_1Bit*>(static_cast<void*>(p))->get((unsigned char)index);
-    if (type == 2) return static_cast<Array256_2Bit*>(static_cast<void*>(p))->get((unsigned char)index);
+    if (type == 1)
+    {
+        Array256_1Bit values;
+        memcpy(&values, planeBytes(plane), sizeof values);
+        return values.get(static_cast<unsigned char>(index));
+    }
+    if (type == 2)
+    {
+        Array256_2Bit values;
+        memcpy(&values, planeBytes(plane), sizeof values);
+        return values.get(static_cast<unsigned char>(index));
+    }
     unsigned char position = (unsigned char)index;
-    return (p[position >> 1] >> ((position & 1) << 2)) & 15;
+    return (planeBytes(plane)[position >> 1] >> ((position & 1) << 2)) & 15;
 }
 
 unsigned int SparseDataStorage::PlaneOffsets::getValuesInPlane(int plane, char (&values)[16])
@@ -133,23 +198,6 @@ unsigned int SparseDataStorage::PlaneOffsets::getValuesInPlane(int plane, char (
     }
     return count;
 }
-void SparseDataStorage::PlaneOffsets::setDataOffset(int plane, unsigned short offset)
-{
-    offsets[plane] = offset;
-}
-unsigned short SparseDataStorage::PlaneOffsets::getDataOffset(int plane)
-{
-    return offsets[plane] & 0x3fff;
-}
-unsigned int SparseDataStorage::PlaneOffsets::getData(int plane, char (&values)[256])
-{
-    for (int i = 0; i < 256; ++i)
-    {
-        values[i] = (char)getData(plane, i);
-    }
-    return 256;
-}
-
 SparseDataStorage::PlaneOffsets* SparseDataStorage::allocatePlaneOffsets(unsigned int size)
 {
     sAllocatedBytes += size;
@@ -162,13 +210,15 @@ void SparseDataStorage::freePlaneOffsets(PlaneOffsets* offsets, int size)
 }
 long long SparseDataStorage::createDataAndCount(PlaneOffsets* offsets, int size)
 {
-    return static_cast<long long>((static_cast<unsigned long long>(static_cast<unsigned int>(size)) << 48) |
-                                  static_cast<unsigned int>(reinterpret_cast<uintptr_t>(offsets)));
+    DataAndCountValue value = {};
+    value.value.size = static_cast<unsigned int>(size);
+    value.value.offsets = offsets;
+    return value.bits;
 }
 SparseDataStorage::SparseDataStorage()
 {
     PlaneOffsets* offsets = allocatePlaneOffsets(0x4080);
-    unsigned char* payload = reinterpret_cast<unsigned char*>(offsets) + 0x100;
+    unsigned char* payload = offsets->payload;
     offsets->offsets[0] = 0;
     for (int plane = 1; plane < 128; ++plane)
     {
@@ -176,8 +226,8 @@ SparseDataStorage::SparseDataStorage()
         offsets->initPlane(plane, payload);
         payload += 0x80;
     }
-    XMemSet(reinterpret_cast<unsigned char*>(offsets) + 0x100, 0, 0x3f80);
-    dataAndCount = createDataAndCount(offsets, 0x4080);
+    XMemSet(offsets->payload, 0, 0x3f80);
+    dataAndCount.bits = createDataAndCount(offsets, 0x4080);
 }
 SparseDataStorage::~SparseDataStorage()
 {
@@ -186,27 +236,28 @@ SparseDataStorage::~SparseDataStorage()
 }
 SparseDataStorage::PlaneOffsets* SparseDataStorage::getPlaneOffsets()
 {
-    return reinterpret_cast<PlaneOffsets*>(static_cast<uintptr_t>(static_cast<unsigned int>(dataAndCount)));
+    return dataAndCount.value.offsets;
 }
 unsigned int SparseDataStorage::getPlaneOffsetsDataSize()
 {
-    return static_cast<unsigned long long>(dataAndCount) >> 48;
+    return dataAndCount.value.size;
 }
 void SparseDataStorage::queueForDelete(unsigned char* data, int)
 {
+    EnterCriticalSection(&sCompressLock);
     sPendingDeleteLists[sPendingDeleteList].Push(data);
+    LeaveCriticalSection(&sCompressLock);
 }
 void SparseDataStorage::updateDataAndCount(PlaneOffsets* offsets, int size)
 {
     const long long replacement = createDataAndCount(offsets, size);
     const int oldSize = getPlaneOffsetsDataSize();
     long long previous;
-    do
-    {
-        previous = dataAndCount;
-    }
-    while (InterlockedCompareExchangeRelease64(&dataAndCount, replacement, previous) != previous);
-    queueForDelete(reinterpret_cast<unsigned char*>(static_cast<uintptr_t>(static_cast<unsigned int>(previous))), oldSize);
+    do { previous = dataAndCount.bits; }
+    while (InterlockedCompareExchangeRelease64(&dataAndCount.bits, replacement, previous) != previous);
+    DataAndCountValue oldValue = {};
+    oldValue.bits = previous;
+    queueForDelete(reinterpret_cast<unsigned char*>(oldValue.value.offsets), oldSize);
 }
 unsigned int SparseDataStorage::get(int x, int y, int z)
 {
@@ -214,13 +265,14 @@ unsigned int SparseDataStorage::get(int x, int y, int z)
 }
 unsigned int SparseDataStorage::tryUpdateDataAndCount(PlaneOffsets* offsets, int size)
 {
-    PlaneOffsets* oldOffsets = getPlaneOffsets();
     const int oldSize = getPlaneOffsetsDataSize();
-    const long long previous = dataAndCount;
+    const long long previous = dataAndCount.bits;
     const long long replacement = createDataAndCount(offsets, size);
-    if (InterlockedCompareExchangeRelease64(&dataAndCount, replacement, previous) != previous)
+    if (InterlockedCompareExchangeRelease64(&dataAndCount.bits, replacement, previous) != previous)
         return 0;
-    queueForDelete(reinterpret_cast<unsigned char*>(oldOffsets), oldSize);
+    DataAndCountValue oldValue = {};
+    oldValue.bits = previous;
+    queueForDelete(reinterpret_cast<unsigned char*>(oldValue.value.offsets), oldSize);
     return 1;
 }
 void SparseDataStorage::staticCtor()
@@ -272,7 +324,7 @@ unsigned int SparseDataStorage::compress()
     if (newSize != currentSize)
     {
         PlaneOffsets* destination = allocatePlaneOffsets(newSize);
-        unsigned char* dataCursor = reinterpret_cast<unsigned char*>(destination) + 0x100;
+        unsigned char* dataCursor = destination->payload;
         XMemCpy(destination, localOffsets, 0x100);
         for (int plane = 0; plane < 128; ++plane)
         {
@@ -301,7 +353,7 @@ void SparseDataStorage::tick()
     {
         data = pending.Pop();
         if (data != NULL)
-            freePlaneOffsets(reinterpret_cast<PlaneOffsets*>(data), 0);
+            freePlaneOffsets(static_cast<PlaneOffsets*>(static_cast<void*>(data)), 0);
     }
     while (data != NULL);
     sPendingDeleteList = (sPendingDeleteList + 1) % 3;
@@ -372,7 +424,7 @@ void SparseDataStorage::read(DataInputStream* stream)
             destination->offsets[plane] = 0;
             continue;
         }
-        destination->offsets[plane] = (unsigned short)(0xc000 | ((payload >> 2) & 0x3fff));
+        destination->offsets[plane] = static_cast<unsigned short>(0xc000 | ((payload >> 2) & 0x3fff));
         const unsigned char* source = &encoded[0x80 + directory * 0x80];
         for (int group = 0; group < 16; ++group)
             for (int pair = 0; pair < 8; ++pair)

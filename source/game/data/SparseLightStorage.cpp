@@ -1,5 +1,6 @@
 #include "game/data/SparseLightStorage.hpp"
 
+
 #include <cstdlib>
 #include <cstring>
 
@@ -43,7 +44,8 @@ SparseLightStorage::SparseLightStorage(bool allBright)
 
     XMemSet(newData + PLANE_COUNT, 0, planeCount * PLANE_BYTES);
 
-    mPlaneCountAndData = ((long long)planeCount << 48) | (unsigned int)newData;
+    mDataAndCount.data = newData;
+    mDataAndCount.planeCount = (unsigned int)planeCount;
 }
 
 SparseLightStorage::SparseLightStorage(bool allBright, bool compressed)
@@ -57,39 +59,40 @@ SparseLightStorage::SparseLightStorage(bool allBright, bool compressed)
         newData[plane] = (unsigned char)(allBright ? PLANE_ALL_BRIGHT : PLANE_ALL_DARK);
     }
 
-    mPlaneCountAndData = (unsigned int)newData;
+    mDataAndCount.data = newData;
+    mDataAndCount.planeCount = 0;
 }
 
-int SparseLightStorage::getDataSize(long long countAndData)
+int SparseLightStorage::getDataSize(unsigned int planeCount)
 {
-    return (int)((countAndData >> 48) & 0xffff) * PLANE_BYTES + PLANE_BYTES;
+    return (int)planeCount * PLANE_BYTES + PLANE_BYTES;
 }
 
 SparseLightStorage::SparseLightStorage(SparseLightStorage* other)
 {
-    long long countAndData = other->mPlaneCountAndData;
+    unsigned char* sourceData = other->mDataAndCount.data;
+    unsigned int planeCount = other->mDataAndCount.planeCount;
 
-    unsigned char* sourceData = (unsigned char*)(unsigned int)countAndData;
-    unsigned int planeCount = (unsigned int)(countAndData >> 48) & 0xffff;
-
-    int size = getDataSize(countAndData);
+    int size = getDataSize(planeCount);
 
     unsigned char* newData = (unsigned char*)malloc(size);
 
     sAllocatedBytes += size;
 
-    mPlaneCountAndData = ((long long)planeCount << 48) | (unsigned int)newData;
+    mDataAndCount.data = newData;
+    mDataAndCount.planeCount = planeCount;
 
     XMemCpy(newData, sourceData, size);
 }
 
 SparseLightStorage::~SparseLightStorage()
 {
-    unsigned char* data = (unsigned char*)(unsigned int)mPlaneCountAndData;
+    unsigned char* data = mDataAndCount.data;
 
-    int size = getDataSize(mPlaneCountAndData);
+    int size = getDataSize(mDataAndCount.planeCount);
 
-    mPlaneCountAndData = 0;
+    mDataAndCount.data = NULL;
+    mDataAndCount.planeCount = 0;
 
     free(data);
 
@@ -101,19 +104,12 @@ void SparseLightStorage::queueForDelete(unsigned char* data, int size)
     sPendingDeleteLists[sPendingDeleteList].Push(data);
 }
 
-void SparseLightStorage::updateDataAndCount(long long countAndData)
+void SparseLightStorage::updateDataAndCount(unsigned char* data, unsigned int planeCount)
 {
-    long long oldCountAndData;
-    unsigned char* oldData;
-    int oldSize;
-
-    do
-    {
-        oldCountAndData = mPlaneCountAndData;
-        oldData = (unsigned char*)(unsigned int)oldCountAndData;
-        oldSize = getDataSize(oldCountAndData);
-    }
-    while (InterlockedCompareExchangeRelease64(&mPlaneCountAndData, countAndData, oldCountAndData) != oldCountAndData);
+    unsigned char* oldData = mDataAndCount.data;
+    int oldSize = getDataSize(mDataAndCount.planeCount);
+    mDataAndCount.data = data;
+    mDataAndCount.planeCount = planeCount;
 
     queueForDelete(oldData, oldSize);
 }
@@ -195,12 +191,12 @@ void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned i
         }
     }
 
-    updateDataAndCount(((long long)planeCount << 48) | (unsigned int)newData);
+    updateDataAndCount(newData, (unsigned int)planeCount);
 }
 
 void SparseLightStorage::getPlaneIndicesAndData(unsigned char** planeIndices, unsigned char** planeData)
 {
-    unsigned char* data = (unsigned char*)(unsigned int)mPlaneCountAndData;
+    unsigned char* data = mDataAndCount.data;
 
     *planeIndices = data;
     *planeData = data + PLANE_COUNT;
@@ -277,12 +273,9 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
 {
     for (;;)
     {
-        long long oldCountAndData = mPlaneCountAndData;
-
-        unsigned char* oldData = (unsigned char*)(unsigned int)oldCountAndData;
-        unsigned int oldPlaneCount = (unsigned int)(oldCountAndData >> 48) & 0xffff;
-
-        int oldSize = getDataSize(oldCountAndData);
+        unsigned char* oldData = mDataAndCount.data;
+        unsigned int oldPlaneCount = mDataAndCount.planeCount;
+        int oldSize = getDataSize(oldPlaneCount);
 
         unsigned int planeCount = oldPlaneCount;
 
@@ -331,15 +324,10 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
             }
         }
 
-        long long newCountAndData = ((long long)planeCount << 48) | (unsigned int)newData;
-
-        if (InterlockedCompareExchangeRelease64(&mPlaneCountAndData, newCountAndData, oldCountAndData) == oldCountAndData)
-        {
-            queueForDelete(oldData, oldSize);
-            return;
-        }
-
-        free(newData);
+        mDataAndCount.data = newData;
+        mDataAndCount.planeCount = planeCount;
+        queueForDelete(oldData, oldSize);
+        return;
     }
 }
 
@@ -396,7 +384,7 @@ void SparseLightStorage::setAllBright()
         newData[plane] = (unsigned char)PLANE_ALL_BRIGHT;
     }
 
-    updateDataAndCount((unsigned int)newData);
+    updateDataAndCount(newData, 0);
 }
 
 int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
@@ -472,12 +460,9 @@ void SparseLightStorage::staticCtor()
 
 unsigned int SparseLightStorage::compress()
 {
-    long long oldCountAndData = mPlaneCountAndData;
-
-    unsigned char* oldData = (unsigned char*)(unsigned int)oldCountAndData;
-    unsigned int oldPlaneCount = (unsigned int)(oldCountAndData >> 48) & 0xffff;
-
-    int oldSize = getDataSize(oldCountAndData);
+    unsigned char* oldData = mDataAndCount.data;
+    unsigned int oldPlaneCount = mDataAndCount.planeCount;
+    int oldSize = getDataSize(oldPlaneCount);
 
     const unsigned char* oldPlaneData = oldData + PLANE_COUNT;
 
@@ -565,15 +550,8 @@ unsigned int SparseLightStorage::compress()
         }
     }
 
-    long long newCountAndData = ((long long)planeCount << 48) | (unsigned int)newData;
-
-    if (InterlockedCompareExchangeRelease64(&mPlaneCountAndData, newCountAndData, oldCountAndData) != oldCountAndData)
-    {
-        queueForDelete(newData, size);
-
-        return planeCount;
-    }
-
+    mDataAndCount.data = newData;
+    mDataAndCount.planeCount = planeCount;
     queueForDelete(oldData, oldSize);
 
     return planeCount;
@@ -581,7 +559,7 @@ unsigned int SparseLightStorage::compress()
 
 bool SparseLightStorage::isCompressed()
 {
-    return (int)((mPlaneCountAndData >> 48) & 0xffff) < PLANE_COUNT - 1;
+    return mDataAndCount.planeCount < PLANE_COUNT - 1;
 }
 
 int SparseLightStorage::getAllocatedBytes()
@@ -596,9 +574,9 @@ unsigned int SparseLightStorage::getRawDataMaxBytes()
 
 unsigned int SparseLightStorage::getRawData(unsigned char* buffer)
 {
-    unsigned int size = getDataSize(mPlaneCountAndData);
+    unsigned int size = getDataSize(mDataAndCount.planeCount);
 
-    memcpy(buffer, (unsigned char*)(unsigned int)mPlaneCountAndData, size);
+    memcpy(buffer, mDataAndCount.data, size);
 
     return size;
 }
@@ -611,7 +589,7 @@ void SparseLightStorage::setFromRawData(unsigned char* rawData, unsigned int siz
 
     memcpy(newData, rawData, size);
 
-    updateDataAndCount(((long long)((size - PLANE_BYTES) / PLANE_BYTES) << 48) | (unsigned int)newData);
+    updateDataAndCount(newData, (size - PLANE_BYTES) / PLANE_BYTES);
 }
 
 void SparseLightStorage::tick()
@@ -633,14 +611,12 @@ void SparseLightStorage::tick()
 
 void SparseLightStorage::write(DataOutputStream* out)
 {
-    long long countAndData = mPlaneCountAndData;
-
-    out->writeInt((int)((countAndData >> 48) & 0xffff));
+    out->writeInt((int)mDataAndCount.planeCount);
 
     arrayWithLength<unsigned char> data;
 
-    data.data = (unsigned char*)(unsigned int)countAndData;
-    data.length = getDataSize(countAndData);
+    data.data = mDataAndCount.data;
+    data.length = getDataSize(mDataAndCount.planeCount);
 
     out->write(data);
 }
@@ -739,7 +715,7 @@ void SparseLightStorage::read(DataInputStream* in, unsigned char* buffer)
         }
     }
 
-    updateDataAndCount(((long long)planeCount << 48) | (unsigned int)newData);
+    updateDataAndCount(newData, (unsigned int)planeCount);
 
     if (buffer == NULL)
     {

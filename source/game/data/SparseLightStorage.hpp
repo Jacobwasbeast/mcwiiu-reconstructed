@@ -5,6 +5,7 @@
 
 #include "game/world/biome/arrayWithLength.hpp"
 
+
 class DataInputStream;
 class DataOutputStream;
 
@@ -42,13 +43,17 @@ public:
     static void tick();
 
 private:
-    int getDataSize(long long countAndData);
+    int getDataSize(unsigned int planeCount);
     void queueForDelete(unsigned char* data, int size);
-    void updateDataAndCount(long long countAndData);
+    void updateDataAndCount(unsigned char* data, unsigned int planeCount);
     void getPlaneIndicesAndData(unsigned char** planeIndices, unsigned char** planeData);
     void addNewPlane(std::vector<int>& planes);
 
-    long long mPlaneCountAndData;
+    struct DataAndCount
+    {
+        unsigned char* data;
+        unsigned int planeCount;
+    } mDataAndCount;
 };
 
 #endif
