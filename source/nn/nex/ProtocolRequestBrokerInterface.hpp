@@ -33,26 +33,26 @@ class ProtocolRequestBrokerInterface : public RootObject
 {
 public:
     ProtocolRequestBrokerInterface();
-    ~ProtocolRequestBrokerInterface();
+    virtual ~ProtocolRequestBrokerInterface();
 
-    void ProcessMessage(CallProtocolMethodOperation* operation, EndPoint* endPoint,
-                        Buffer* buffer);
-    void ProcessCallRequest(unsigned short protocolId, Message* request, Message* response,
-                            bool* responseRequired, EndPoint* endPoint);
-    void ProcessCallResponse(unsigned short protocolId, Message* response, EndPoint* endPoint);
-    bool RegisterProtocol(Protocol* protocol);
-    void UnregisterProtocol(Protocol* protocol);
-    Protocol* GetProtocol(unsigned short protocolId, Protocol::_Type type);
-    bool CloneProtocols();
-    bool RegisterServerProtocol(unsigned short protocolId, ServerProtocol* protocol);
-    bool UnregisterServerProtocol(unsigned short protocolId);
-    ServerProtocol* GetServerProtocol(unsigned short protocolId);
-    qResult DispatchLocalRMC(Message* message, ClientProtocol* client,
-                             ServerProtocol* server, EndPoint* endPoint);
-    qResult DispatchBlockingLocalRMC(Message* message, ClientProtocol* client,
-                                     ServerProtocol* server, EndPoint* endPoint);
-    qResult DispatchThreadSafeLocalRMC(Message* message, ClientProtocol* client,
-                                       ServerProtocol* server, EndPoint* endPoint);
+    virtual void ProcessMessage(CallProtocolMethodOperation* operation, EndPoint* endPoint,
+                        Buffer* buffer) = 0;
+    virtual void ProcessCallRequest(unsigned short protocolId, Message* request, Message* response,
+                            bool* responseRequired, EndPoint* endPoint) = 0;
+    virtual void ProcessCallResponse(unsigned short protocolId, Message* response, EndPoint* endPoint) = 0;
+    virtual bool RegisterProtocol(Protocol* protocol) = 0;
+    virtual void UnregisterProtocol(Protocol* protocol) = 0;
+    virtual Protocol* GetProtocol(unsigned short protocolId, Protocol::_Type type) = 0;
+    virtual bool CloneProtocols() = 0;
+    virtual bool RegisterServerProtocol(unsigned short protocolId, ServerProtocol* protocol) = 0;
+    virtual bool UnregisterServerProtocol(unsigned short protocolId) = 0;
+    virtual ServerProtocol* GetServerProtocol(unsigned short protocolId) = 0;
+    virtual qResult DispatchLocalRMC(Message* message, ClientProtocol* client,
+                             ServerProtocol* server, EndPoint* endPoint) = 0;
+    virtual qResult DispatchBlockingLocalRMC(Message* message, ClientProtocol* client,
+                                     ServerProtocol* server, EndPoint* endPoint) = 0;
+    virtual qResult DispatchThreadSafeLocalRMC(Message* message, ClientProtocol* client,
+                                       ServerProtocol* server, EndPoint* endPoint) = 0;
 
     static void InitMessage(Message* message, unsigned short protocolId, Protocol::_Command command);
     void Receive(EndPoint* endPoint, Buffer* buffer);

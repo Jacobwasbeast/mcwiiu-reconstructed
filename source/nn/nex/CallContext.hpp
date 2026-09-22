@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_NEX_CALLCONTEXT_HPP
 
 #include <list>
+#include "nn/nex/CallbackRoot.hpp"
 
 #include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/RefCountedObject.hpp"
@@ -17,15 +18,6 @@ namespace nex
 
 class CallContextRegister;
 class ClientProtocol;
-
-class CallbackRoot : public RootObject
-{
-public:
-    virtual ~CallbackRoot();
-
-    virtual void Call();
-    virtual void CallObjectMethod() = 0;
-};
 
 class CallContext : public RefCountedObject
 {

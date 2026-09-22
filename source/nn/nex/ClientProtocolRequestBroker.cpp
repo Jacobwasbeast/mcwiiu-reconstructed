@@ -1,4 +1,5 @@
 #include "nn/nex/ClientProtocolRequestBroker.hpp"
+#include "nn/nex/ProtocolRegistry.hpp"
 
 #include "nn/nex/CallProtocolMethodOperation.hpp"
 #include "nn/nex/ClientProtocol.hpp"
@@ -86,7 +87,7 @@ void ClientProtocolRequestBroker::ProcessMessageCore(CallProtocolMethodOperation
     bool responseRequired = true;
     ProcessCallRequest(protocolId, &message, &response, &responseRequired, endPoint);
     (void)operation;
-    if (endPoint != 0 && responseRequired && *responseRequired)
+    if (endPoint != 0 && responseRequired)
     {
         Buffer* out = response.GetBuffer();
         m_bandwidthCounters[endPoint->GetConnectionID()]->m_outgoing += out->GetLength();

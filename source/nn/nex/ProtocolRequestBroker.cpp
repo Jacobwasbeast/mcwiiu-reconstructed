@@ -87,7 +87,7 @@ void ProtocolRequestBroker::ProcessMessageCore(CallProtocolMethodOperation* oper
     Message response;
     bool responseRequired = true;
     ProcessCallRequest(protocolId, &message, &response, &responseRequired, endPoint);
-    if (endPoint != 0 && responseRequired && *responseRequired)
+    if (endPoint != 0 && responseRequired)
     {
         Buffer* out = response.GetBuffer();
         m_bandwidthCounters[endPoint->GetConnectionID()]->m_outgoing += out->GetLength();

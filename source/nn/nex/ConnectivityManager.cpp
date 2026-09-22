@@ -2,6 +2,13 @@
 
 #include "nn/nex/InstanceTable.hpp"
 
+#if defined(RECON_NATIVE)
+#include "nn/nex/CallContext.hpp"
+#include "nn/nex/CallContextRegister.hpp"
+#include "nn/nex/Core.hpp"
+#include "nn/nex/Scheduler.hpp"
+#endif
+
 namespace nn
 {
 namespace nex
@@ -38,6 +45,38 @@ bool ConnectivityManager::UnregisterConnectivityTester()
     m_connectivityTester = 0;
     return true;
 }
+
+#if defined(RECON_NATIVE)
+void ConnectivityManager::OnStartNATSession(CallContext* callContext)
+{
+    m_natSessionStarted = false;
+
+    Core* core = Core::GetInstance();
+    if (core == 0 || core->GetScheduler() == 0 || core->GetCallContextRegister() == 0)
+    {
+        return;
+    }
+
+    CriticalSection& criticalSection = core->GetScheduler()->GetCriticalSection();
+    criticalSection.Enter();
+
+    CallContext* pendingContext = core->GetCallContextRegister()->GetCallContext(m_callContextId);
+    m_callContextId = 0;
+    if (pendingContext != 0 && pendingContext->GetState() == CallContext::CallInProgress)
+    {
+        if (callContext != 0 && callContext->GetState() == CallContext::CallFailed)
+        {
+            pendingContext->SignalFailure(callContext->GetResult());
+        }
+        else
+        {
+            pendingContext->SignalFailure(qResult(static_cast<int>(0x80010001u)));
+        }
+    }
+
+    criticalSection.Leave();
+}
+#endif
 
 }
 }
