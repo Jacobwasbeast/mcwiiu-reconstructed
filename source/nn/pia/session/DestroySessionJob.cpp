@@ -20,9 +20,8 @@ DestroySessionJob::~DestroySessionJob()
 
 void DestroySessionJob::setStep(unsigned int (DestroySessionJob::*function)(), const char* name)
 {
-    m_currentStep.m_function = reinterpret_cast<unsigned int (common::StepSequenceJob::*)()>(function);
+    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(function);
     m_currentStep.m_name = name;
-    m_field38 = 0xffff;
 }
 
 Result DestroySessionJob::Startup(common::CallContext* callerContext)

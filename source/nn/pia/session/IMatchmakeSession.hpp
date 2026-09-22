@@ -56,6 +56,8 @@ public:
     virtual void UpdateStationInfoList() = 0;
     virtual const ISessionInfo* GetSessionInfo() const = 0;
     virtual ISessionInfo* GetSessionInfo() = 0;
+    virtual Result GenerateMatchmakeSystemPassword(common::CallContext* callContext,
+                                                   unsigned int sessionId) = 0;
 };
 
 }}}

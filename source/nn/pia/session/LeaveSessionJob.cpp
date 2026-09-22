@@ -34,9 +34,8 @@ LeaveSessionJob::~LeaveSessionJob()
 
 void LeaveSessionJob::setStep(unsigned int (LeaveSessionJob::*function)(), const char* name)
 {
-    m_currentStep.m_function = reinterpret_cast<unsigned int (common::StepSequenceJob::*)()>(function);
+    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(function);
     m_currentStep.m_name = name;
-    m_field38 = 0xffff;
 }
 
 Result LeaveSessionJob::Startup(common::CallContext* callerContext)

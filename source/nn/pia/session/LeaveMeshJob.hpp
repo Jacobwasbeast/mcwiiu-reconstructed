@@ -13,8 +13,12 @@ public:
     unsigned int LeaveSuccess(); void Cleanup();
     unsigned int RegisterExtraCallback(common::CallContext*);
     virtual void Trace(unsigned long long) const;
-    common::CallContext* m_callerContext; common::CallContext m_callContext;
-    unsigned int m_step; unsigned int m_timeout; bool m_disconnectStarted;
+    unsigned int m_deadlineHigh;
+    unsigned int m_deadlineLow;
+    unsigned int m_timeout;
+    common::CallContext* m_callerContext;
+    common::CallContext* m_extraContext;
+    bool m_disconnectStarted;
 };
 }}}
 #endif

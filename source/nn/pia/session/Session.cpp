@@ -1,6 +1,8 @@
 #include "nn/pia/session/Session.hpp"
 
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/JoinSessionJob.hpp"
 #include "nn/pia/session/Mesh.hpp"
@@ -125,6 +127,38 @@ void Session::SetBufferSessionOpenStatus(SessionOpenStatus status)
 {
     const unsigned int bufferIndex = m_currentSessionIndex == 0 ? 1 : 0;
     m_sessionOpenStatus[bufferIndex] = static_cast<unsigned int>(status);
+}
+
+bool Session::UpdateStationIdToBecomeHost()
+{
+    if (m_sessionId[0] == 0)
+        return false;
+    g_piaMesh->GetLocalStationIndex();
+    const unsigned long long principalId =
+        transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+            transport::g_piaStationManager->m_localStation);
+    if (principalId == 0)
+        return false;
+    m_localStationId = principalId;
+    m_hostStationId = principalId;
+    return m_matchmakeStatus == 2;
+}
+
+void Session::CheckStatusAtChangeMeshState()
+{
+    const unsigned int result = m_sessionStatusCheckJob->CheckSessionStatus4JointSession();
+    if ((result >> 24) != 5)
+        m_sessionStatusCheckJob->Reset(false);
+}
+
+void Session::ChangeStatusToDisconnectedSession()
+{
+    m_disconnectStatus = 2;
+    m_hostStationId = 0;
+    m_jointSessionHostStationId = 0;
+    CheckStatusAtChangeMeshState();
+    if (m_sessionDisconnectReason == 0)
+        m_sessionDisconnectReason = 6;
 }
 
 bool Session::UpdateStationIdToBecomeClient()

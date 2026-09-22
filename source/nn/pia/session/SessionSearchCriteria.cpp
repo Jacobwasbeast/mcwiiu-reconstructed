@@ -53,4 +53,9 @@ int SessionSearchCriteria::GetKeyType() const
     return m_keyType;
 }
 
+void SessionSearchCriteria::SetKeyType(int keyType)
+{
+    m_keyType = keyType;
+}
+
 }}}

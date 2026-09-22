@@ -1,7 +1,9 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_SESSION_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_SESSION_HPP
 
-#include "nn/pia.h"
+#include <cstddef>
+
+#include "nn/pia/Common.hpp"
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/transport/Station.hpp"
@@ -22,6 +24,20 @@ class UpdateSessionSettingJob;
 class Session
 {
 public:
+    enum MatchmakeStatus
+    {
+        cMatchmakeStatusNone = 0,
+        cMatchmakeStatusSearching = 1,
+        cMatchmakeStatusMatched = 2
+    };
+
+    enum ConnectionStatus
+    {
+        cConnectionStatusNone = 0,
+        cConnectionStatusConnecting = 1,
+        cConnectionStatusConnected = 2
+    };
+
     typedef unsigned int ProcessType;
 
     enum EventType : unsigned int
@@ -76,6 +92,9 @@ public:
     void SetCurrentSessionOpenStatus(SessionOpenStatus status);
     void SetBufferSessionOpenStatus(SessionOpenStatus status);
     bool UpdateStationIdToBecomeClient();
+    bool UpdateStationIdToBecomeHost();
+    void ChangeStatusToDisconnectedSession();
+    void CheckStatusAtChangeMeshState();
     void ChangeStatusToDisconnectedNetwork();
     transport::Station::IdentificationToken* GetMatchmakeAnalysisToken();
     static bool SessionJoiningApprovalCallback(

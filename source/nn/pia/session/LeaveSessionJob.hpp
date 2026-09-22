@@ -30,6 +30,7 @@ public:
     virtual void SetNextStepAtMeshCleanup();
     virtual void SetNextStepAtWaitLeaveCurrentMatchmakeSession();
     virtual void SetNextStepAtLeaveCurrentMatchmakeSessionFailure();
+    virtual bool IsNeedSkipLeaveCurrentMatchmakeSession() = 0;
     virtual void SetNextStepAtWaitHostMigratedTimeout();
     virtual void SetNextStepAtWaitLeaveBufferMatchmakeSession();
     virtual void Cleanup();
@@ -48,12 +49,13 @@ protected:
     unsigned int m_field64;
     int m_migrationStartTick;
     int m_migrationEndTick;
-    virtual void SetNextStepAtWaitLeaveMeshWithHostMigration() = 0;
     void setStep(unsigned int (LeaveSessionJob::*function)(), const char* name);
 };
 
 }}} 
 
+#if !defined(RECON_NATIVE)
 static_assert(sizeof(nn::pia::session::LeaveSessionJob) == 0x70, "LeaveSessionJob ABI");
+#endif
 
 #endif

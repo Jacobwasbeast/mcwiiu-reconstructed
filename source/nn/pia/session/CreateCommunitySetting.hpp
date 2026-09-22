@@ -1,7 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATE_COMMUNITY_SETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATE_COMMUNITY_SETTING_HPP
 
-#include "nn/pia.h"
 
 namespace nn { namespace pia { namespace session {
 

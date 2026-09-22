@@ -1,0 +1,28 @@
+#ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_MESH_EVENT_LISTENER_HPP
+#define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_MESH_EVENT_LISTENER_HPP
+
+#include "nn/pia.h"
+
+namespace nn { namespace pia { namespace session {
+
+class MeshEventListener
+{
+public:
+    struct MeshEvent
+    {
+        unsigned int type;
+        unsigned long long stationId;
+        StationIndex stationIndex;
+    };
+
+    MeshEventListener();
+    virtual ~MeshEventListener();
+    unsigned long long RemoveStationId(unsigned long long stationId);
+    unsigned long long RemoveStationIndex(StationIndex stationIndex);
+    virtual void NoticeEvent(const MeshEvent& event);
+    void Trace(unsigned long long value) const;
+};
+
+}}}
+
+#endif

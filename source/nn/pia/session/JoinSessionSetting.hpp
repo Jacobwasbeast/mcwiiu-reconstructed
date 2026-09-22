@@ -1,8 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_SESSION_SETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_SESSION_SETTING_HPP
 
-#include "nn/pia.h"
-#include "nn/pia/session/SessionInfo.hpp"
+#include "nn/pia/session/ISessionInfo.hpp"
 
 namespace nn { namespace pia { namespace session {
 

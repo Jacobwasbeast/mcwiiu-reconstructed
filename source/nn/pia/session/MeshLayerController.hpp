@@ -1,7 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_MESH_LAYER_CONTROLLER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_MESH_LAYER_CONTROLLER_HPP
 
-#include "nn/pia.h"
 #include "nn/pia/common/Job.hpp"
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/Station.hpp"
