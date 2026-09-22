@@ -18,7 +18,8 @@ EnchantmentTableParticle::EnchantmentTableParticle(Level* level, double x, doubl
     this->x = x + xa;
     this->y = y + ya;
     this->z = z + za;
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)247);
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_Particle_EnchantmentTable);
     float colourScale = random.nextFloat() * 0.6f + 0.4f;
     rCol = (float)((colour >> 16) & 255) / 255.0f * colourScale;
     gCol = (float)((colour >> 8) & 255) / 255.0f * colourScale;

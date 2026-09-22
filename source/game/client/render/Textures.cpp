@@ -73,39 +73,67 @@ Textures::Textures(TexturePackRepository* texturePackRepository, Options* option
 {
     InitializeCriticalSection(&mMutex);
     mMissingImage = new BufferedImage(16, 16, 3);
-    mBlocks = new TextureAtlas(0, L"terrain", L"textures_blocks_", mMissingImage, true);
-    mItems = new TextureAtlas(1, L"items", L"textures_items_", mMissingImage, true);
+    mBlocks = new TextureAtlas(0, L"terrain", L"textures/blocks/", mMissingImage, true);
+    mItems = new TextureAtlas(1, L"items", L"textures/items/", mMissingImage, true);
     loadIndexedTextures();
 }
 
 bool Textures::IsTUImage(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    static const int names[] = { 0x2f, 0x33, 0x34, 0x20 };
-    unsigned int i;
-    for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i)
+    static const int textureIds[] = {
+        47, 51, 52, 32, 16, 57, 58, 59, 62, 63, 64, 65,
+        66, 67, 71, 72, 73, 75, 74, 70, 240, 241, 14, 82,
+        56, 4, 27, 83, 20, 84, 85, 86, 87, 88, 89, 90,
+        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102,
+        103, 104, 105, 106, 107, 108, 109, 110, 111, 37, 112, 113,
+        114, 115, 116, 117, 118, 119, 120, 122, 121, 124, 125, 126,
+        127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+        139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150,
+        151, 152, 153, 154, 34, 155, 156, 157, 158, 159, 160, 161,
+        162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173,
+        174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185,
+        186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
+        198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
+        210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221,
+        222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233,
+        234, 235, 236, 237, 238, 239,
+    };
+    for (unsigned int i = 0; i < sizeof(textureIds) / sizeof(textureIds[0]); ++i)
     {
-        if ((int)textureName == names[i]) return true;
+        if (static_cast<int>(textureName) == textureIds[i]) return true;
     }
-    static const wchar_t* const suffixes[] = { L"terrain", L"items" };
-    for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i)
+    static const wchar_t* const textureNames[] = {
+        L"font/Default",
+        L"font/Mojangles_7",
+        L"font/Mojangles_11",
+        L"armor/cloth_1",
+        L"armor/cloth_1_b",
+        L"armor/cloth_2",
+        L"armor/cloth_2_b",
+        L"armor/turtle_1",
+    };
+    for (unsigned int i = 0; i < sizeof(textureNames) / sizeof(textureNames[0]); ++i)
     {
-        if (name == suffixes[i]) return true;
+        if (name == textureNames[i]) return true;
     }
     return false;
 }
 
 bool Textures::IsOriginalImage(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    static const int names[] = { 0x26, 0x27, 0x28, 0x29 };
-    unsigned int i;
-    for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i)
+    static const int textureIds[] = {
+        38, 39, 40, 41, 42, 43, 44, 13, 0, 1,
+    };
+    for (unsigned int i = 0; i < sizeof(textureIds) / sizeof(textureIds[0]); ++i)
     {
-        if ((int)textureName == names[i]) return true;
+        if (static_cast<int>(textureName) == textureIds[i]) return true;
     }
-    static const wchar_t* const suffixes[] = { L"gui_gui", L"gui_icons", L"misc_footprint" };
-    for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i)
+    static const wchar_t* const textureNames[] = {
+        L"misc/watercolor.png",
+    };
+    for (unsigned int i = 0; i < sizeof(textureNames) / sizeof(textureNames[0]); ++i)
     {
-        if (name == suffixes[i]) return true;
+        if (name == textureNames[i]) return true;
     }
     return false;
 }
@@ -148,16 +176,16 @@ void Textures::setTextureFormat(const std::wstring& name)
 {
     mTextureFormat = false;
     sTextureMipmap = true;
-    if (name == L"environment_clouds" || name == L"misc_shadow" ||
-        name == L"misc_pumpkinblur" || name == L"gui_icons" ||
-        name == L"gui_gui" || name == L"misc_footprint" ||
-        name == L"mob_shulker_endergolem" || name == L"item_bed" ||
-        name == L"font_Default")
+    if (name == L"environment/clouds" || name == L"%clamp%misc/shadow" ||
+        name == L"%blur%misc/pumpkinblur" || name == L"gui/icons" ||
+        name == L"gui/gui" || name == L"misc/footprint" ||
+        name == L"mob/shulker/endergolem" || name == L"item/bed" ||
+        name == L"font/Default")
     {
         sTextureMipmap = false;
     }
-    if (name.size() >= 6 && name.compare(0, 6, L"armor_") == 0 &&
-        name != L"armor_power")
+    if (name.size() >= 6 && name.compare(0, 6, L"armor/") == 0 &&
+        name != L"armor/power")
     {
         sTextureMipmap = false;
     }
@@ -305,9 +333,9 @@ int Textures::loadTexture(_TEXTURE_NAME textureName, const std::wstring& name)
     if (found != end()) return found->second;
     setTextureFormat(name);
     int texture = MemoryTracker::genTextures();
-    bool blur = name.compare(0, 6, L"_blur_") == 0;
+    bool blur = name.compare(0, 6, L"%blur%") == 0;
     std::wstring workingName = blur ? name.substr(6) : name;
-    bool clamp = name.compare(0, 7, L"_clamp_") == 0;
+    bool clamp = name.compare(0, 7, L"%clamp%") == 0;
     if (clamp) workingName = name.substr(7);
     BufferedImage* image = readImage(textureName, workingName);
     if (image->isMipmapDisabled()) sTextureMipmap = false;
@@ -322,11 +350,251 @@ int Textures::loadTexture(_TEXTURE_NAME textureName, const std::wstring& name)
 
 void Textures::loadIndexedTextures()
 {
-    int i;
-    for (i = 0; i < 120; i += 2)
+    static const wchar_t* const textureNames[] = {
+        L"misc/grasscolor",
+        L"misc/foliagecolor",
+        L"%blur%misc/pumpkinblur",
+        L"%clamp%misc/shadow",
+        L"art/kz",
+        L"environment/clouds",
+        L"environment/rain",
+        L"environment/snow",
+        L"gui/gui",
+        L"gui/icons",
+        L"item/arrows",
+        L"item/cart",
+        L"item/sign",
+        L"misc/mapbg",
+        L"misc/mapicons",
+        L"misc/water",
+        L"misc/footprint",
+        L"mob/saddle",
+        L"mob/sheep_fur",
+        L"mob/spider_eyes",
+        L"particles",
+        L"mob/chicken",
+        L"mob/cow",
+        L"mob/pig",
+        L"mob/sheep",
+        L"mob/squid",
+        L"mob/wolf",
+        L"mob/wolf_tame",
+        L"mob/wolf_angry",
+        L"mob/creeper",
+        L"mob/ghast",
+        L"mob/ghast_fire",
+        L"mob/zombie",
+        L"mob/pigzombie",
+        L"mob/skeleton",
+        L"mob/slime",
+        L"mob/spider",
+        L"mob/steve",
+        L"mob/char1",
+        L"mob/char2",
+        L"mob/char3",
+        L"mob/char4",
+        L"mob/char5",
+        L"mob/char6",
+        L"mob/char7",
+        L"terrain/moon",
+        L"terrain/sun",
+        L"armor/power",
+        L"mob/cavespider",
+        L"mob/enderman",
+        L"mob/silverfish",
+        L"mob/enderman_eyes",
+        L"misc/explosion",
+        L"item/xporb",
+        L"item/chest",
+        L"item/largechest",
+        L"item/enderchest",
+        L"mob/redcow",
+        L"mob/snowman",
+        L"mob/enderdragon/ender",
+        L"mob/fire",
+        L"mob/lava",
+        L"mob/villager/villager",
+        L"mob/villager/farmer",
+        L"mob/villager/librarian",
+        L"mob/villager/priest",
+        L"mob/villager/smith",
+        L"mob/villager/butcher",
+        L"mob/enderdragon/crystal",
+        L"mob/enderdragon/shuffle",
+        L"mob/enderdragon/beam",
+        L"mob/enderdragon/ender_eyes",
+        L"%blur%misc/glint",
+        L"item/book",
+        L"misc/tunnel",
+        L"misc/particlefield",
+        L"terrain/moon_phases",
+        L"mob/ozelot",
+        L"mob/cat_black",
+        L"mob/cat_red",
+        L"mob/cat_siamese",
+        L"mob/villager_golem",
+        L"mob/skeleton_wither",
+        L"mob/wolf_collar",
+        L"mob/zombie_villager/zombie_villager",
+        L"item/lead_knot",
+        L"misc/beacon_beam",
+        L"mob/bat",
+        L"mob/horse/donkey",
+        L"mob/horse/horse_black",
+        L"mob/horse/horse_brown",
+        L"mob/horse/horse_chestnut",
+        L"mob/horse/horse_creamy",
+        L"mob/horse/horse_darkbrown",
+        L"mob/horse/horse_gray",
+        L"mob/horse/horse_markings_blackdots",
+        L"mob/horse/horse_markings_white",
+        L"mob/horse/horse_markings_whitedots",
+        L"mob/horse/horse_markings_whitefield",
+        L"mob/horse/horse_skeleton",
+        L"mob/horse/horse_white",
+        L"mob/horse/horse_zombie",
+        L"mob/horse/mule",
+        L"mob/horse/armor/horse_armor_diamond",
+        L"mob/horse/armor/horse_armor_gold",
+        L"mob/horse/armor/horse_armor_iron",
+        L"mob/witch",
+        L"mob/wither/wither",
+        L"mob/wither/wither_armor",
+        L"mob/wither/wither_invulnerable",
+        L"item/trapped",
+        L"item/trapped_double",
+        L"mob/alex",
+        L"mob/alex1",
+        L"mob/alex2",
+        L"mob/alex3",
+        L"mob/alex4",
+        L"mob/alex5",
+        L"mob/alex6",
+        L"mob/alex7",
+        L"misc/additionalmapicons",
+        L"item/armorstand/wood",
+        L"font/Default",
+        L"font/alternate",
+        L"mob/endermite",
+        L"mob/guardian",
+        L"mob/guardian_elder",
+        L"mob/guardian_beam",
+        L"mob/rabbit/brown",
+        L"mob/rabbit/white",
+        L"mob/rabbit/black",
+        L"mob/rabbit/gold",
+        L"mob/rabbit/salt",
+        L"mob/rabbit/white_splotched",
+        L"mob/rabbit/toast",
+        L"mob/rabbit/caerbannog",
+        L"textures/destroy_stage_0",
+        L"textures/destroy_stage_1",
+        L"textures/destroy_stage_2",
+        L"textures/destroy_stage_3",
+        L"textures/destroy_stage_4",
+        L"textures/destroy_stage_5",
+        L"textures/destroy_stage_6",
+        L"textures/destroy_stage_7",
+        L"textures/destroy_stage_8",
+        L"textures/destroy_stage_9",
+        L"item/banner/banner_base",
+        L"item/banner/Banner_Atlas",
+        L"mob/bear/polarbear",
+        L"item/boat/boat_oak",
+        L"item/boat/boat_spruce",
+        L"item/boat/boat_birch",
+        L"item/boat/boat_jungle",
+        L"item/boat/boat_acacia",
+        L"item/boat/boat_darkoak",
+        L"mob/skeleton/stray",
+        L"mob/skeleton/stray_overlay",
+        L"mob/zombie_villager/zombie_farmer",
+        L"mob/zombie_villager/zombie_librarian",
+        L"mob/zombie_villager/zombie_priest",
+        L"mob/zombie_villager/zombie_smith",
+        L"mob/zombie_villager/zombie_butcher",
+        L"mob/zombie/husk",
+        L"mob/enderdragon/dragon_fireball",
+        L"mob/shulker/endergolem",
+        L"mob/shulker/spark",
+        L"item/spectral_arrow",
+        L"item/tipped_arrow",
+        L"item/elytra",
+        L"mob/DevSteve",
+        L"mob/DevAlex",
+        L"environment/Thermal_1",
+        L"environment/Thermal_2",
+        L"environment/BoostArrow",
+        L"mob/Glide_Ghost",
+        L"mob/llama/decor/decor_white",
+        L"mob/llama/decor/decor_orange",
+        L"mob/llama/decor/decor_magenta",
+        L"mob/llama/decor/decor_light_blue",
+        L"mob/llama/decor/decor_yellow",
+        L"mob/llama/decor/decor_lime",
+        L"mob/llama/decor/decor_pink",
+        L"mob/llama/decor/decor_gray",
+        L"mob/llama/decor/decor_silver",
+        L"mob/llama/decor/decor_cyan",
+        L"mob/llama/decor/decor_purple",
+        L"mob/llama/decor/decor_blue",
+        L"mob/llama/decor/decor_brown",
+        L"mob/llama/decor/decor_green",
+        L"mob/llama/decor/decor_red",
+        L"mob/llama/decor/decor_black",
+        L"mob/llama/llama_creamy",
+        L"mob/llama/llama_white",
+        L"mob/llama/llama_brown",
+        L"mob/llama/llama_gray",
+        L"mob/llama/spit",
+        L"mob/illager/evoker",
+        L"mob/illager/fangs",
+        L"mob/illager/vindicator",
+        L"mob/illager/vex",
+        L"mob/illager/vex_charging",
+        L"mob/illager/illusionist",
+        L"mob/parrot/parrot_red_blue",
+        L"mob/parrot/parrot_blue",
+        L"mob/parrot/parrot_green",
+        L"mob/parrot/parrot_yellow_blue",
+        L"mob/parrot/parrot_grey",
+        L"item/bed",
+        L"item/firework",
+        L"mob/horse/armor/horse_armor_leather_1",
+        L"mob/horse/armor/horse_armor_leather_1_b",
+        L"mob/fish/cod",
+        L"mob/fish/pufferfish",
+        L"mob/fish/salmon",
+        L"mob/fish/tropical_a",
+        L"mob/fish/tropical_a_pattern_1",
+        L"mob/fish/tropical_a_pattern_2",
+        L"mob/fish/tropical_a_pattern_3",
+        L"mob/fish/tropical_a_pattern_4",
+        L"mob/fish/tropical_a_pattern_5",
+        L"mob/fish/tropical_a_pattern_6",
+        L"mob/fish/tropical_b",
+        L"mob/fish/tropical_b_pattern_1",
+        L"mob/fish/tropical_b_pattern_2",
+        L"mob/fish/tropical_b_pattern_3",
+        L"mob/fish/tropical_b_pattern_4",
+        L"mob/fish/tropical_b_pattern_5",
+        L"mob/fish/tropical_b_pattern_6",
+        L"mob/sea_turtle",
+        L"mob/dolphin",
+        L"item/trident",
+        L"mob/zombie/drowned",
+        L"item/trident_riptide",
+        L"item/conduit/conduit_base",
+        L"item/conduit/conduit_cage",
+        L"item/conduit/conduit_wind_horizontal",
+        L"item/conduit/conduit_wind_vertical",
+        L"item/conduit/conduit_closed",
+        L"item/conduit/conduit_open",
+        L"mob/phantom",
+    };
+    for (unsigned int i = 0; i < sizeof(textureNames) / sizeof(textureNames[0]); ++i)
     {
-        sIndexedTextures[i] = loadTexture((_TEXTURE_NAME)i, L"terrain");
-        sIndexedTextures[i + 1] = loadTexture((_TEXTURE_NAME)(i + 1), L"items");
+        sIndexedTextures[i] = loadTexture(static_cast<_TEXTURE_NAME>(i), textureNames[i]);
     }
 }
 

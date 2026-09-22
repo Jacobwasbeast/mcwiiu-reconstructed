@@ -6,8 +6,8 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation DONKEY_LOCATION((_TEXTURE_NAME)88);
-static ResourceLocation MULE_LOCATION((_TEXTURE_NAME)102);
+static ResourceLocation DONKEY_LOCATION(static_cast<_TEXTURE_NAME>(88));
+static ResourceLocation MULE_LOCATION(static_cast<_TEXTURE_NAME>(102));
 
 ChestedHorseRenderer::ChestedHorseRenderer(EntityRenderDispatcher* dispatcher, float shadowRadius)
     : AbstractHorseRenderer(dispatcher, new ChestedHorseModel(ModelDefinition()), shadowRadius)

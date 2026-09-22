@@ -34,7 +34,9 @@ Font::Font(Options*, const std::wstring& name, Textures* textures, bool,
     const unsigned int imageWidth = image->getWidth();
     const unsigned int imageHeight = image->getHeight();
     std::vector<int> pixels(imageWidth * imageHeight);
-    image->getRGB(0, 0, imageWidth, static_cast<int>(imageHeight), arrayWithLength<int>(pixels), 0, imageWidth, 0);
+    image->getRGB(0, 0, imageWidth, static_cast<int>(imageHeight),
+                  arrayWithLength<int>(pixels.data(), static_cast<unsigned int>(pixels.size())),
+                  0, imageWidth, 0);
     for (int i = 0; i < mCharacterCount; ++i)
     {
         const int row = i / mCharacterWidth;
@@ -43,9 +45,27 @@ Font::Font(Options*, const std::wstring& name, Textures* textures, bool,
         if (mTextureWidth > 0)
         {
             bool found = false;
+#if defined(RECON_NATIVE)
+            const int glyphX = col * mTextureWidth;
+            const int glyphY = row * mTextureHeight;
+            const int availableWidth = glyphX < static_cast<int>(imageWidth)
+                                           ? std::min(mTextureWidth, static_cast<int>(imageWidth) - glyphX)
+                                           : 0;
+            const int availableHeight = glyphY < static_cast<int>(imageHeight)
+                                            ? std::min(mTextureHeight, static_cast<int>(imageHeight) - glyphY)
+                                            : 0;
+            for (int x = availableWidth - 1; x >= 0 && !found; --x)
+#else
             for (int x = mTextureWidth - 1; x >= 0 && !found; --x)
+#endif
             {
-                for (int y = 0; y < mTextureHeight; ++y)
+                for (int y = 0;
+#if defined(RECON_NATIVE)
+                     y < availableHeight;
+#else
+                     y < mTextureHeight;
+#endif
+                     ++y)
                 {
                     const int pixelIndex = (row * mTextureHeight + y) * static_cast<int>(imageWidth) +
                                             (col * mTextureWidth + x);
@@ -152,7 +172,8 @@ unsigned int Font::draw(const std::wstring& text, bool shadow, bool unicode)
     bindTexture();
     const std::wstring value = sanitize(text, false);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
+    if (unicode)
+        builder->begin();
     unsigned int color = 0;
     for (std::wstring::size_type i = 0; i < value.size(); ++i)
     {
@@ -170,10 +191,10 @@ unsigned int Font::draw(const std::wstring& text, bool shadow, bool unicode)
             }
             continue;
         }
-        if (CharacterExists(character))
-            renderCharacter(static_cast<wchar_t>(MapCharacter(character)), builder);
+        renderCharacter(character, builder);
     }
-    builder->end();
+    if (unicode)
+        builder->end();
     return 1;
 }
 
@@ -200,12 +221,16 @@ void Font::cacheCharacter(int character)
     const int column = character % columns;
     const int row = character / columns;
     Character& glyph = mCharacters[character];
-    glyph.width = mWidths[character];
-    glyph.height = std::min(7.99f, static_cast<float>(rows));
+    const float textureGlyphWidth = mWidths[character] - 0.01f;
+    const float textureGlyphHeight = static_cast<float>(mTextureHeight) - 0.01f;
+    if (mTextureWidth > 8)
+        mWidths[character] *= 0.5f;
+    glyph.width = mWidths[character] - 0.01f;
+    glyph.height = std::min(7.99f, textureGlyphHeight);
     glyph.u0 = static_cast<float>(column * mTextureWidth) / (columns * mTextureWidth);
-    glyph.u1 = (static_cast<float>(column * mTextureWidth) + glyph.width) / (columns * mTextureWidth);
+    glyph.u1 = (static_cast<float>(column * mTextureWidth) + textureGlyphWidth) / (columns * mTextureWidth);
     glyph.v0 = static_cast<float>(row * mTextureHeight) / (rows * mTextureHeight);
-    glyph.v1 = (static_cast<float>(row * mTextureHeight) + glyph.height) / (rows * mTextureHeight);
+    glyph.v1 = (static_cast<float>(row * mTextureHeight) + textureGlyphHeight) / (rows * mTextureHeight);
     glyph.advance = mWidths[character];
 }
 

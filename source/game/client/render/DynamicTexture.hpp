@@ -1,12 +1,13 @@
 #ifndef GAME_CLIENT_RENDER_DYNAMICTEXTURE_HPP
 #define GAME_CLIENT_RENDER_DYNAMICTEXTURE_HPP
 
+#include "game/client/render/AbstractTexture.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class BufferedImage;
 class ResourceManager;
 
-class DynamicTexture
+class DynamicTexture : public AbstractTexture
 {
 public:
     DynamicTexture(BufferedImage* image);
@@ -20,11 +21,6 @@ public:
 private:
     void _init(int width, int height);
 
-    int textureId;
-    bool blur;
-    bool mipmap;
-    bool oldBlur;
-    bool oldMipmap;
     arrayWithLength<int> pixels;
     int width;
     int height;

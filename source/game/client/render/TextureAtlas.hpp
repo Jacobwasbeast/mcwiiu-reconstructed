@@ -6,12 +6,13 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/core/BufferedImage.hpp"
+#include "game/core/IconRegister.hpp"
 #include "game/client/render/Texture.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/client/render/TextureManager.hpp"
 #include "game/client/render/TexturePack.hpp"
 
-class TextureAtlas
+class TextureAtlas : public IconRegister
 {
 public:
     TextureAtlas(int iconType, const std::wstring& name, const std::wstring& path,

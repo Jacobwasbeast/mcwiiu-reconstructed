@@ -11,6 +11,8 @@
 #include "game/core/InputStream.hpp"
 #include "game/core/L10N.hpp"
 
+extern "C" void OSReport(const char*, ...);
+
 DefaultTexturePack::DefaultTexturePack()
     : AbstractTexturePack(0, NULL, L10N::GetString(0x3a2a406), NULL)
 {
@@ -56,7 +58,12 @@ void DefaultTexturePack::loadCustomModels()
 
     if (!file.exists())
     {
+#if defined(RECON_NATIVE)
+        OSReport("[native] optional default texture-pack models.bin unavailable; continuing without custom models\n");
+        return;
+#else
         gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed ", 191);
+#endif
     }
     else
     {

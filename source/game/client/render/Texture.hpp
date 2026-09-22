@@ -11,19 +11,19 @@ class ByteBuffer;
 class Texture
 {
 public:
-    Texture(const std::wstring& name, int type, int width, int height, int format, int filter,
-            int wrap, int target, BufferedImage* image, bool mipmap);
-    Texture(const std::wstring& name, int type, int width, int height, int format, int filter,
-            int wrap, int target, int mipLevels, BufferedImage* image, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int filter, int format,
+            int minFilter, int magFilter, BufferedImage* image, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int depth, int filter,
+            int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
     ~Texture();
 
-    void _init(const std::wstring& name, int type, int width, int height, int format, int filter,
-               int wrap, int target, bool mipmap);
+    void _init(const std::wstring& name, int type, int width, int height, int filter, int format,
+               int minFilter, int magFilter, bool mipmap);
     void updateOnGPU();
     static unsigned int crispBlend(int first, int second);
     void transferFromImage(BufferedImage* image);
-    void _init(const std::wstring& name, int type, int width, int height, int format, int filter,
-               int wrap, int target, int mipLevels, BufferedImage* image, bool mipmap);
+    void _init(const std::wstring& name, int type, int width, int height, int depth, int filter,
+               int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
     unsigned int getData(unsigned int mipLevel);
     unsigned int getHeight();
     unsigned int getWidth();
@@ -31,8 +31,8 @@ public:
     unsigned int getManagerId();
     unsigned int getGlId();
     void bind(int textureUnit);
-    Texture(const std::wstring& name, int type, int width, int height, int format, int filter,
-            int wrap, int target, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int filter, int format,
+            int minFilter, int magFilter, bool mipmap);
     Rect2i* getRect();
     void fill(const Rect2i* rect, int color);
     void writeAsBMP(const std::wstring& fileName);
@@ -43,6 +43,7 @@ public:
     void setImmediateUpdate(bool immediate);
 
 private:
+    friend class TextureAtlasSprite;
     unsigned int m_glId;
     unsigned int m_managerId;
     int m_type;
@@ -50,7 +51,9 @@ private:
     int m_height;
     int m_format;
     int m_filter;
-    int m_wrap;
+    int m_depth;
+    int m_minFilter;
+    int m_magFilter;
     int m_target;
     bool m_mipmap;
     bool m_hasMipmaps;
@@ -60,6 +63,8 @@ private:
     unsigned int m_mipLevels;
     ByteBuffer* m_data[10];
     bool m_dirty;
+    bool m_gpuSynced;
+    bool m_gpuAllocated;
 };
 
 #endif

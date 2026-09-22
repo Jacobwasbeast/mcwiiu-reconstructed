@@ -6,6 +6,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/BufferedImage.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/Options.hpp"
 #include "game/core/GameType.hpp"
@@ -104,6 +105,7 @@
 #include "game/ui/Screen.hpp"
 #include "game/ui/ScreenSizeCalculator.hpp"
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 #include <cmath>
 #include <cstring>
@@ -120,8 +122,8 @@ struct ElementStorageWithTick
 };
 
 C4JEventArrayImpl* sRenderUpdateEvents = NULL;
+C4JThreadImpl* sRenderUpdateThread = NULL;
 OSFastMutex sDeleteMutex;
-bool sDeleteMutexInitialized = false;
 bool sRenderUpdateThreadActive = false;
 
 std::vector<LevelChunk*> sPendingChunkDeletes[2];
@@ -233,31 +235,21 @@ static const BlockPos sOverworldFogOffsets[] = {
     BlockPos(-2, 1, 2),
 };
 
-void EnsureRenderUpdateStatics()
-{
-    if (sRenderUpdateEvents == NULL)
-        sRenderUpdateEvents = new C4JEventArrayImpl(2, C4JEventArray::Mode0);
-    if (!sDeleteMutexInitialized)
-    {
-        InitializeCriticalSection(&sDeleteMutex);
-        sDeleteMutexInitialized = true;
-    }
-}
 }
 
 void MemSect(int section);
 
 GameRenderer::GameRenderer(Minecraft* minecraft, ResourceManager* resourceManager)
-    : mMinecraft(minecraft), mResourceManager(resourceManager),
+    : mUpdateThreadDisableMask(0), mMinecraft(minecraft), mResourceManager(resourceManager),
+      mRandom(), mFogDistance(0.0f), mItemInHandRenderer(minecraft->getItemInHandRenderer()),
       mMapRenderer(new MapRenderer(minecraft->mFont, minecraft->mOptions, minecraft->mTextures)),
-      mRandom(), mFov(), mFog(), mCamera(), mZoom(), mView(), mLight(), mBuffer(NULL), mRenderBlockOutline(true)
+      mTickCount(0), mPointedEntity(), mFov(), mFog(), mCamera(), mZoom(), mView(), mLight(), mBuffer(NULL), mRenderBlockOutline(true)
 {
-    std::memset(mPrefix, 0, sizeof(mPrefix));
-    std::memset(mRandomTail, 0, sizeof(mRandomTail));
     std::memset(mData, 0, sizeof(mData));
+    std::memset(mDataAfterLight, 0, sizeof(mDataAfterLight));
     std::memset(mDataTail, 0, sizeof(mDataTail));
 
-    InitializeCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+    InitializeCriticalSection(&mUpdateThreadMutex);
 
     mActivationItems[0] = ItemInstance::EMPTY;
     mActivationItems[1] = ItemInstance::EMPTY;
@@ -270,6 +262,29 @@ GameRenderer::GameRenderer(Minecraft* minecraft, ResourceManager* resourceManage
     *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x22b0) = 0x18;
 
     mBuffer = MemoryTracker::createFloatBuffer(16);
+
+    GlStateManager::enableLighting();
+    mMinecraft->mLocalItemInHandRenderers[0] = new ItemInHandRenderer(minecraft);
+    mMinecraft->mLocalItemInHandRenderers[1] = new ItemInHandRenderer(minecraft);
+    mMinecraft->mLocalItemInHandRenderers[2] = new ItemInHandRenderer(minecraft);
+    mMinecraft->mLocalItemInHandRenderers[3] = new ItemInHandRenderer(minecraft);
+    GlStateManager::disableLighting();
+
+    BufferedImage* lightImage = new BufferedImage(16, 16, 1);
+    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+        mLightTextures[playerIndex] =
+            mMinecraft->mTextures->getTexture(lightImage, C4JRender::eTextureFormat_RGBA8, true);
+    delete lightImage;
+
+    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+        mLightPixels[playerIndex] = arrayWithLength<int>(256, true);
+
+    sRenderUpdateEvents = new C4JEventArrayImpl(2, C4JEventArray::Mode0);
+    sRenderUpdateEvents->Set(1);
+    InitializeCriticalSection(&sDeleteMutex);
+    sRenderUpdateThread = new C4JThreadImpl(runUpdate, NULL, "Chunk update", 0);
+    sRenderUpdateThread->SetProcessor(2);
+    sRenderUpdateThread->Run();
 }
 
 GameRenderer::~GameRenderer()
@@ -284,11 +299,9 @@ GameRenderer::~GameRenderer()
     if (extraArrayB != NULL)
         delete[] extraArrayB;
 
-    DeleteCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+    DeleteCriticalSection(&mUpdateThreadMutex);
 
-    boost::shared_ptr<Entity>* pointedEntity =
-        reinterpret_cast<boost::shared_ptr<Entity>*>(reinterpret_cast<char*>(this) + 0x64);
-    pointedEntity->reset();
+    mPointedEntity.reset();
 }
 
 void GameRenderer::renderNameTagInWorld(Font* font, const std::wstring& text, float x, float y, float z,
@@ -433,24 +446,20 @@ void GameRenderer::renderNameTagInWorld(Font* font, const std::wstring& text, fl
     GlStateManager::popMatrix();
 }
 
-unsigned int GameRenderer::getLightTexture(int index, Level* level)
+unsigned int GameRenderer::getLightTexture(int index, Level*)
 {
-    unsigned int texture = 0;
-    std::memcpy(&texture, reinterpret_cast<const char*>(level) + 0x128 + index * 4,
-                sizeof(texture));
-    return texture;
+    return mLightTextures[index];
 }
 
-void GameRenderer::runUpdate(void*)
+int GameRenderer::runUpdate(void*)
 {
-    EnsureRenderUpdateStatics();
-
     Minecraft* minecraft = Minecraft::GetInstance();
     Vec3::CreateNewThreadStorage();
     AABB::CreateNewThreadStorage();
     IntCache::CreateNewThreadStorage();
     Tesselator::CreateNewThreadStorage(0x100000);
     Compression::UseDefaultThreadStorage();
+    gRenderer->InitialiseContext();
     ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_Renderer);
     Block::CreateNewThreadStorage();
 
@@ -461,17 +470,18 @@ void GameRenderer::runUpdate(void*)
 
     while (ShutdownManager::ShouldRun(ShutdownManager::eThreadId_RenderUpdate))
     {
-        sRenderUpdateEvents->WaitForAny(0xffffffff);
+        sRenderUpdateEvents->WaitForAll(0xffffffff);
         if (!ShutdownManager::ShouldRun(ShutdownManager::eThreadId_RenderUpdate))
             break;
 
-        sRenderUpdateEvents->Clear(0);
+        sRenderUpdateEvents->Set(0);
 
         int passCount = 0;
         while (passCount < 10
                && minecraft->mLevelRenderer->updateDirtyChunks(dirtyChunkBuffer) != 0)
             ++passCount;
 
+        gRenderer->CBuffDeferredModeEnd();
         minecraft->mLevelRenderer->fullyFlagRenderableBlockEntitiesToBeRemoved();
 
         EnterCriticalSection(&sDeleteMutex);
@@ -533,13 +543,12 @@ void GameRenderer::runUpdate(void*)
     }
 
     ShutdownManager::HasFinished(ShutdownManager::eThreadId_RenderUpdate);
+    return 0;
 }
 
 unsigned int GameRenderer::getTickCount()
 {
-    unsigned int value;
-    std::memcpy(&value, mData + 200, sizeof(value));
-    return value;
+    return mTickCount;
 }
 
 unsigned int GameRenderer::postEffectActive()
@@ -681,8 +690,7 @@ void GameRenderer::tickRain()
     const unsigned char activePlayerCount = mMinecraft->mLevelRenderer->activePlayers();
     const float rainIntensity = rainLevel / static_cast<float>(activePlayerCount + 1);
 
-    int rainTime;
-    std::memcpy(&rainTime, reinterpret_cast<char*>(this) + 0x5C, sizeof(rainTime));
+    const int rainTime = static_cast<int>(mTickCount);
     mRandom.setSeed(static_cast<long long>(0x12a7ce5f) * static_cast<long long>(rainTime));
 
     AbstractClientPlayer* camera = getCamera();
@@ -901,7 +909,7 @@ void GameRenderer::tick(bool tickWorld)
     *blurCurrent = ((blockBrightness * kHalf + kOne) - *blurCurrent) * kBlurLerp + *blurCurrent;
 
     ItemInHandRenderer* itemRenderer =
-        *reinterpret_cast<ItemInHandRenderer**>(reinterpret_cast<char*>(this) + 0x54);
+        mItemInHandRenderer;
     if (itemRenderer != NULL)
         itemRenderer->tick();
 
@@ -947,8 +955,7 @@ void GameRenderer::tick(bool tickWorld)
     if (lockedProfile >= 0 && lockedProfile < 4
         && mMinecraft->mPlayer.get() == mMinecraft->mLocalPlayers[lockedProfile].get())
     {
-        int* frameTickCounter = reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x5c);
-        ++(*frameTickCounter);
+        ++mTickCount;
     }
 }
 
@@ -1001,17 +1008,10 @@ void GameRenderer::pick(float partialTick)
         return;
     }
 
-    int& pointedEntityId = *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 96);
-    boost::shared_ptr<Entity>& pointedEntity =
-        *reinterpret_cast<boost::shared_ptr<Entity>*>(reinterpret_cast<char*>(this) + 100);
-    Entity** minecraftPointedEntity =
-        reinterpret_cast<Entity**>(reinterpret_cast<char*>(mMinecraft) + 200);
-    boost::shared_ptr<Entity>& minecraftPointedEntityShared =
-        *reinterpret_cast<boost::shared_ptr<Entity>*>(reinterpret_cast<char*>(mMinecraft) + 204);
+    boost::shared_ptr<Entity>& pointedEntity = mPointedEntity;
+    boost::shared_ptr<Entity>& minecraftPointedEntityShared = mMinecraft->mSpectateEntity;
 
-    pointedEntityId = 0;
     pointedEntity.reset();
-    *minecraftPointedEntity = NULL;
     minecraftPointedEntityShared.reset();
 
     const double pickRange = mMinecraft->mGameMode->getPickRange();
@@ -1055,7 +1055,6 @@ void GameRenderer::pick(float partialTick)
         entityReach = eyePosition->distanceTo(mMinecraft->mHitResult->mLocation);
     }
 
-    pointedEntityId = 0;
     pointedEntity.reset();
 
     const Predicate<boost::shared_ptr<Entity> >* entityPredicate = getPickEntityPredicate();
@@ -1149,7 +1148,6 @@ void GameRenderer::pick(float partialTick)
         if (closestEntity != NULL &&
             (closestDistance < entityReach || mMinecraft->mHitResult == NULL))
         {
-            pointedEntityId = reinterpret_cast<int>(closestEntity);
             pointedEntity = closestEntityShared;
 
             deleteHitResult(mMinecraft->mHitResult);
@@ -1159,7 +1157,6 @@ void GameRenderer::pick(float partialTick)
             if ((entityType & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY ||
                 entityType == 0x000000000A080002ULL)
             {
-                *minecraftPointedEntity = closestEntity;
                 minecraftPointedEntityShared = closestEntityShared;
             }
         }
@@ -1616,7 +1613,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     static const float kRotate180 = 180.0f;
 
     char* self = reinterpret_cast<char*>(this);
-    float* fogDistance = reinterpret_cast<float*>(self + 0x50);
+    float* fogDistance = &mFogDistance;
     *fogDistance = kDefaultFog;
 
     Level* level = mMinecraft->mLevel;
@@ -1696,7 +1693,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
                         -(rotLerp * kSpectatorZoomScale
                           - (kSpectatorZoomDenom
                              / (rotLerp * rotLerp + kSpectatorZoomDenom)));
-                    const float frame = static_cast<float>(*reinterpret_cast<int*>(self + 0x5c))
+                    const float frame = static_cast<float>(mTickCount)
                         + partialTick;
                     GlStateManager::rotatef(frame * rotateAmount, kZero, kOne, kOne);
                     const float scale = kOne / (zoom * zoom);
@@ -1807,7 +1804,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
         GlStateManager::scaled(*handScale, *handScale, kHandScaleFactor);
     }
 
-    const float farPlane = *reinterpret_cast<float*>(self + 0x50) + *reinterpret_cast<float*>(self + 0x50);
+    const float farPlane = mFogDistance + mFogDistance;
     GlStateManager::perspective(fov, aspect, kNearPlane, farPlane);
 
     GlStateManager::matrixMode(0);
@@ -1853,7 +1850,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
         (*renderHandFlag == 0 && !holdingMap) || thirdPerson != 0 || spectatorHandEffect;
 
     ItemInHandRenderer* itemRenderer =
-        *reinterpret_cast<ItemInHandRenderer**>(self + 0x54);
+        mItemInHandRenderer;
 
     if (skipFirstPersonHand)
     {
@@ -2020,10 +2017,7 @@ void GameRenderer::updateLightTexture(float partialTick)
         if (level == NULL)
             continue;
 
-        int* pixelBuffer =
-            reinterpret_cast<int*>(*reinterpret_cast<uint32_t*>(self + 0x138 + playerIndex * 8));
-        if (pixelBuffer == NULL)
-            continue;
+        int* pixelBuffer = mLightPixels[playerIndex].data;
 
         Dimension* dimension = level->mDimension;
         float* brightnessRamp = dimension->getBrightnessRamp();
@@ -2051,13 +2045,13 @@ void GameRenderer::updateLightTexture(float partialTick)
             const unsigned int skyLight = lightIndex & 0xfu;
 
             float blockBrightness =
-                brightnessRamp[blockLight * 4]
+                brightnessRamp[blockLight]
                 * (skyDarken * kSkyDarkenScale + kSkyDarkenAdd);
             if (level->getSkyFlashTime() > 0)
-                blockBrightness = brightnessRamp[blockLight * 4];
+                blockBrightness = brightnessRamp[blockLight];
 
             const float skyBrightness =
-                brightnessRamp[skyLight * 4] * (*gamma * kGammaSlope + kGammaBase);
+                brightnessRamp[skyLight] * (*gamma * kGammaSlope + kGammaBase);
 
             float redComponent = blockBrightness;
             float greenBase =
@@ -2165,11 +2159,8 @@ void GameRenderer::updateLightTexture(float partialTick)
                 | 0xff;
         }
 
-        arrayWithLength<int> pixels;
-        pixels.data = pixelBuffer;
-        pixels.length = *reinterpret_cast<unsigned int*>(self + 0x13c + playerIndex * 8);
         const unsigned int texture = getLightTexture(playerIndex, level);
-        mMinecraft->mTextures->replaceTextureDirect(pixels, 16, 16, texture);
+        mMinecraft->mTextures->replaceTextureDirect(mLightPixels[playerIndex], 16, 16, texture);
     }
 }
 
@@ -2669,7 +2660,7 @@ void GameRenderer::setupFog(int, float partialTick)
         float fogEnd = kBlindnessFogEnd;
         MobEffectInstance* effect = living->getEffect(MobEffects::BLINDNESS);
         const int duration = effect->getDuration();
-        const float farPlane = *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x50);
+        const float farPlane = mFogDistance;
         if (duration < 20)
         {
             const float t = kOne - (static_cast<float>(duration) - kBlindnessInterpBase) / kBlindnessInterpRange;
@@ -2713,7 +2704,7 @@ void GameRenderer::setupFog(int, float partialTick)
         return;
     }
 
-    float fogEnd = *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x50);
+    float fogEnd = mFogDistance;
     GlStateManager::fogMode(1);
     float fogStart = fogEnd * kFogStartScale;
     GlStateManager::fogStart(fogStart);
@@ -2869,8 +2860,7 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
     float thermalInnerZ[16];
     double edgeLengths[16];
 
-    int rainTime;
-    std::memcpy(&rainTime, reinterpret_cast<char*>(this) + 0x5C, sizeof(rainTime));
+    const int rainTime = static_cast<int>(mTickCount);
     const float rainPhaseBase = static_cast<float>(rainTime) + partialTick;
 
     for (std::vector<ThermalAreaRuleDefinition*>::iterator areaIt = thermalAreas.begin();
@@ -3555,8 +3545,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     const float cameraY = static_cast<float>((camera->mY - cameraOldY) * partialTick + cameraOldY);
     const float cameraZ = static_cast<float>((camera->mZ - cameraOldZ) * partialTick + cameraOldZ);
 
-    int rainTime;
-    std::memcpy(&rainTime, reinterpret_cast<char*>(this) + 0x5C, sizeof(rainTime));
+    const int rainTime = static_cast<int>(mTickCount);
     const float rainAnim = static_cast<float>(rainTime) + partialTick;
 
     float* rainOffsetX = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x164);
@@ -4183,6 +4172,11 @@ MapRenderer* GameRenderer::getMapRenderer()
     return mMapRenderer;
 }
 
+void GameRenderer::setItemInHandRenderer(ItemInHandRenderer* renderer)
+{
+    mItemInHandRenderer = renderer;
+}
+
 void GameRenderer::AddForDelete(SparseLightStorage* storage)
 {
     EnterCriticalSection(&sDeleteMutex);
@@ -4206,55 +4200,49 @@ void GameRenderer::AddForDelete(ElementStorage* storage)
 
 void GameRenderer::FinishedReassigning()
 {
-    return;
+    LeaveCriticalSection(&sDeleteMutex);
 }
 
 void GameRenderer::EnableUpdateThread(int reason)
 {
-    EnterCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+    EnterCriticalSection(&mUpdateThreadMutex);
 
-    unsigned int mask;
-    std::memcpy(&mask, reinterpret_cast<char*>(this) + 0x2c, sizeof(mask));
-    mask &= ~(1u << (reason & 0x3f));
-    std::memcpy(reinterpret_cast<char*>(this) + 0x2c, &mask, sizeof(mask));
+    mUpdateThreadDisableMask &= ~(1u << (reason & 0x3f));
 
-    if (mask == 0 && !sRenderUpdateThreadActive)
+    if (mUpdateThreadDisableMask == 0 && !sRenderUpdateThreadActive)
     {
         sRenderUpdateThreadActive = true;
         sRenderUpdateEvents->Set(0);
         sRenderUpdateEvents->Set(1);
     }
 
-    LeaveCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+    LeaveCriticalSection(&mUpdateThreadMutex);
 }
 
 void GameRenderer::DisableUpdateThread(int reason)
 {
-    EnterCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+    EnterCriticalSection(&mUpdateThreadMutex);
 
-    unsigned int mask;
-    std::memcpy(&mask, reinterpret_cast<char*>(this) + 0x2c, sizeof(mask));
-    mask |= (1u << (reason & 0x3f));
-    std::memcpy(reinterpret_cast<char*>(this) + 0x2c, &mask, sizeof(mask));
+    mUpdateThreadDisableMask |= (1u << (reason & 0x3f));
 
-    if (mask != 0 && sRenderUpdateThreadActive)
+    if (mUpdateThreadDisableMask != 0 && sRenderUpdateThreadActive)
     {
         sRenderUpdateThreadActive = false;
         sRenderUpdateEvents->Clear(0);
         sRenderUpdateEvents->WaitForSingle(1, 0xffffffff);
     }
 
-    LeaveCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+    LeaveCriticalSection(&mUpdateThreadMutex);
 }
 
 void GameRenderer::EnterDeleteThreadCS()
 {
-    return;
+    EnterCriticalSection(&sDeleteMutex);
 }
 
 void GameRenderer::LeaveDeleteThreadCS()
 {
-    return;
+    LeaveCriticalSection(&sDeleteMutex);
 }
 
 unsigned long long GameRenderer::displayItemActivation(not_null_ptr<ItemInstance> item, int playerIndex)

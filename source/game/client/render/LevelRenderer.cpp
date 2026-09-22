@@ -791,8 +791,8 @@ void LevelRenderer::allChanged(int dimension)
 
     Minecraft::GetInstance()->mGameRenderer->DisableUpdateThread(4);
 
-    LeafBlock::mOldLeaves->setFancy(mMinecraft->mOptions->mFancyGraphics);
-    LeafBlock::mNewLeaves->setFancy(mMinecraft->mOptions->mFancyGraphics);
+    static_cast<LeafBlock*>(Blocks::leaves)->setFancy(mMinecraft->mOptions->mFancyGraphics);
+    static_cast<LeafBlock*>(Blocks::leaves2)->setFancy(mMinecraft->mOptions->mFancyGraphics);
 
     mLastViewDistance = mMinecraft->mOptions->mViewDistance;
 

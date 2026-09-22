@@ -4,9 +4,13 @@
 #include "game/core/ByteBuffer.hpp"
 #include <sstream>
 #include <cstdlib>
+#include "game/core/ClockAtlasSprite.hpp"
+#include "game/core/CompassAtlasSprite.hpp"
+#include "game/core/StringUtils.hpp"
+#include "game/client/render/TextureManager.hpp"
 
-TextureAtlasSprite::TextureAtlasSprite(const std::wstring& name,const std::wstring& parent,float u0,float u1,float v0,float v1,float du,float dv)
- : mName(name),mParent(parent),mSource(0),mFrames(0),mOwnTexture(0),mAnimationFrames(0),mFlags(0),mInterpolated(false),mRotated(false),mX(0),mY(0),mWidth(0),mHeight(0),mU0(u0),mU1(u1),mV0(v0),mV1(v1),mUOffset(du),mVOffset(dv),mUScale(1.0f),mVScale(1.0f),mFrame(0),mFrameTime(0) {}
+TextureAtlasSprite::TextureAtlasSprite(const std::wstring& name,const std::wstring& parent,float u0,float v0,float u1,float v1,float du,float dv)
+ : mName(name),mParent(parent),mSource(0),mFrames(0),mOwnTexture(0),mAnimationFrames(0),mFlags(0),mInterpolated(false),mRotated(false),mX(0),mY(0),mWidth(0),mHeight(0),mU0(u0),mU1(u1),mV0(v0),mV1(v1),mUOffset(0.0625f / du),mVOffset(0.0625f / dv),mUScale(0.0f),mVScale(0.0f),mFrame(0),mFrameTime(0) {}
 
 TextureAtlasSprite::~TextureAtlasSprite() {
  if (mFrames) {
@@ -16,12 +20,12 @@ TextureAtlasSprite::~TextureAtlasSprite() {
 }
 
 TextureAtlasSprite* TextureAtlasSprite::create(const std::wstring& name) {
- if (name==L"clock") return new TextureAtlasSprite(name,L"",0,0,0,0,256,256);
- if (name==L"compass") return new TextureAtlasSprite(name,L"",0,0,0,0,256,256);
- return new TextureAtlasSprite(name,L"",0,0,0,0,256,256);
+ if (name==L"clock") return new ClockAtlasSprite();
+ if (name==L"compass") return new CompassAtlasSprite();
+ return new TextureAtlasSprite(name,name,0,0,0,0,256,256);
 }
 
-void TextureAtlasSprite::initUVs(float u0,float u1,float v0,float v1) { mU0=u0; mU1=u1; mV0=v0; mV1=v1; }
+void TextureAtlasSprite::initUVs(float u0,float v0,float u1,float v1) { mU0=u0; mU1=u1; mV0=v0; mV1=v1; }
 
 void TextureAtlasSprite::init(Texture* source,std::vector<Texture*>* frames,int x,int y,int width,int height,bool rotated) {
  mSource=source; mFrames=frames; mX=x; mY=y; mWidth=width; mHeight=height; mRotated=rotated; mFrame=-1;
@@ -29,7 +33,7 @@ void TextureAtlasSprite::init(Texture* source,std::vector<Texture*>* frames,int 
  mV0=(float)y/(float)source->getHeight(); mV1=(float)(y+height)/(float)source->getHeight();
  mUScale=(float)width*0.0625f; mVScale=(float)height*0.0625f;
  delete mOwnTexture; mOwnTexture=0;
- mOwnTexture=new Texture(mName,2,width,height,source->getWidth(),source->getHeight(),0,0,0,0,false);
+ mOwnTexture=new Texture(source->m_name,2,width,height,source->m_depth,source->m_filter,source->m_format,source->m_minFilter,source->m_magFilter,0,source->m_hasMipmaps);
 }
 
 void TextureAtlasSprite::replaceWith(TextureAtlasSprite* sprite) {
@@ -120,12 +124,14 @@ int TextureAtlasSprite::getFrames() { return mFrames ? (int)mFrames->size() : 0;
 
 void TextureAtlasSprite::loadAnimationFrames(const std::wstring& text) {
  delete mAnimationFrames; mAnimationFrames=0; mFrame=0; mFrameTime=0; mInterpolated=false;
- std::wstring value=text; if(!value.empty()&&value[0]==L'#'){value=value.substr(1);mInterpolated=true;}
+ std::wstring value=trimString(text); if(!value.empty()&&value[0]==L'#'){value=value.substr(1);mInterpolated=true;}
  mAnimationFrames=new std::vector<std::pair<int,int> >(); std::wstring::size_type start=0;
  while (start <= value.size()) {
   std::wstring::size_type end = value.find(L',', start);
   std::wstring token = value.substr(start,
    end == std::wstring::npos ? value.size() - start : end - start);
+  token = trimString(token);
+  if (token.empty()) { if (end == std::wstring::npos) break; start = end + 1; continue; }
   std::wstring::size_type star = token.find(L'*');
   if (star == std::wstring::npos) {
    mAnimationFrames->push_back(std::make_pair(
@@ -139,10 +145,10 @@ void TextureAtlasSprite::loadAnimationFrames(const std::wstring& text) {
    break;
   start = end + 1;
  }
- if(mAnimationFrames->empty()||mAnimationFrames->size()>600){delete mAnimationFrames;mAnimationFrames=0;}
+ if(mAnimationFrames->empty()||mAnimationFrames->size()>=600){delete mAnimationFrames;mAnimationFrames=0;}
 }
 void TextureAtlasSprite::loadAnimationFrames(BufferedReader* reader) { if(!reader)return; std::wstring all,line; while(!(line=reader->readLine()).empty()){if(!all.empty())all+=L",";all+=line;} loadAnimationFrames(all); }
 unsigned int TextureAtlasSprite::getFlags() const { return mFlags; }
 void TextureAtlasSprite::setFlags(int flags) { mFlags=flags; }
-void TextureAtlasSprite::freeFrameTextures() { if(mFrames){for(std::vector<Texture*>::iterator i=mFrames->begin();i!=mFrames->end();++i) delete *i;delete mFrames;mFrames=0;} delete mOwnTexture;mOwnTexture=0; }
+void TextureAtlasSprite::freeFrameTextures() { if(mFrames){for(std::vector<Texture*>::iterator i=mFrames->begin();i!=mFrames->end();++i) { TextureManager::getInstance()->unregisterTexture(L"", *i); delete *i; }delete mFrames;mFrames=0;} delete mOwnTexture;mOwnTexture=0; }
 unsigned int TextureAtlasSprite::hasOwnData() { return 1; }

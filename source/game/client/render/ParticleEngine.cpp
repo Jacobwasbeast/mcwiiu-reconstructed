@@ -17,18 +17,25 @@ template <typename T>
 std::wstring _toString(T value);
 
 ParticleEngine::ParticleList::ParticleList()
-    : particles(new Particle*[65536]), particleCount(0)
+    : particles(new Particle*[16384]), particleCount(0)
 {
 }
 
+#if defined(RECON_NATIVE)
+ParticleEngine::ParticleList::~ParticleList()
+{
+    ClearParticles();
+    delete[] particles;
+}
+#endif
+
 void ParticleEngine::ParticleList::ClearParticles()
 {
-    unsigned int count = particleCount;
-    for (unsigned int i = 0; i < count; ++i)
+    for (unsigned int i = 0; i < particleCount; ++i)
     {
         if (particles[i] != NULL)
         {
-            particles[i]->remove();
+            delete particles[i];
         }
     }
     particleCount = 0;

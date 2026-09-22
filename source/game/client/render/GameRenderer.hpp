@@ -6,7 +6,9 @@
 
 #include "game/util/Random.hpp"
 #include "game/core/SmoothFloat.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class Minecraft;
 class ResourceManager;
@@ -46,7 +48,7 @@ public:
 
     static void renderNameTagInWorld(Font*, const std::wstring&, float, float, float, int, float, float, bool, bool, int, float);
     unsigned int getLightTexture(int, Level*);
-    static void runUpdate(void*);
+    static int runUpdate(void*);
     unsigned int getTickCount();
     unsigned int postEffectActive();
     void shutdownEffect();
@@ -98,6 +100,7 @@ public:
     int shouldRenderBlockOutline();
     void resetData();
     MapRenderer* getMapRenderer();
+    void setItemInHandRenderer(ItemInHandRenderer* renderer);
     static void AddForDelete(SparseLightStorage*);
     static void AddForDelete(LevelChunk*);
     static void AddForDelete(ElementStorage*);
@@ -128,19 +131,26 @@ public:
     bool IsUpdateThreadEnabled();
 
 private:
-    unsigned char mPrefix[48];
+    OSFastMutex mUpdateThreadMutex;
+    unsigned int mUpdateThreadDisableMask;
     Minecraft* mMinecraft;
     ResourceManager* mResourceManager;
-    MapRenderer* mMapRenderer;
     Random mRandom;
-    unsigned char mRandomTail[24];
+    float mFogDistance;
+    ItemInHandRenderer* mItemInHandRenderer;
+    MapRenderer* mMapRenderer;
+    unsigned int mTickCount;
+    boost::shared_ptr<Entity> mPointedEntity;
     SmoothFloat mFov;
     SmoothFloat mFog;
     SmoothFloat mCamera;
     SmoothFloat mZoom;
     SmoothFloat mView;
     SmoothFloat mLight;
-    unsigned char mData[8612];
+    unsigned char mData[120];
+    unsigned int mLightTextures[4];
+    arrayWithLength<int> mLightPixels[4];
+    unsigned char mDataAfterLight[8452];
     not_null_ptr<ItemInstance> mActivationItems[4];
     unsigned char mDataTail[108];
     FloatBuffer* mBuffer;
