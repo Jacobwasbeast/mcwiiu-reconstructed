@@ -1,0 +1,4 @@
+#ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_INETOUTPUTSTREAM_HPP
+#define LEGACY_CONSOLE_WIIU_NN_PIA_INET_INETOUTPUTSTREAM_HPP
+namespace nn { namespace pia { namespace common { class Packet; class InetAddress; struct SockAddrIn; } namespace inet { class InetOutputStream { public: InetOutputStream(); virtual ~InetOutputStream(); void OnStationConnectionEvent(); int CalculateCryptoParameter(unsigned char*, unsigned int, common::Packet*); int CreateMulticastAddressArray(common::SockAddrIn*, unsigned int); int SendTo(const void*, unsigned int, const common::InetAddress&, unsigned char); int SendToRelay(const void*, unsigned int, const common::InetAddress&, unsigned char); int SendToMulti(const void*, unsigned int, const common::SockAddrIn*, int); int Write(const common::Packet&); unsigned int GetMulticastDestinationNum() const; bool IsBroadcastSupported() const; }; }}}
+#endif

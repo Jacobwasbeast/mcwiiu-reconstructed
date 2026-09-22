@@ -4,14 +4,9 @@
 #include "nn/pia.h"
 #include "nn/pia/String.hpp"
 #include "nn/pia/session/UpdateSessionSetting.hpp"
+#include "nn/pia/inet/SessionType.hpp"
 
 namespace nn { namespace pia { namespace inet {
-
-enum SessionType
-{
-    cSessionType_Normal = 0,
-    cSessionType_Ranked = 1
-};
 
 class NexUpdateSessionSetting : public session::UpdateSessionSetting
 {

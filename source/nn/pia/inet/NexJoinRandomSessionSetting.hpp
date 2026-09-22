@@ -1,0 +1,41 @@
+#ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXJOINRANDOMSESSIONSETTING_HPP
+#define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXJOINRANDOMSESSIONSETTING_HPP
+
+#include "nn/pia/inet/NexCreateSessionSetting.hpp"
+#include "nn/pia/inet/NexSessionSearchCriteria.hpp"
+
+namespace nn { namespace pia { namespace inet {
+
+class NexJoinRandomSessionSetting
+{
+public:
+    NexJoinRandomSessionSetting();
+    virtual ~NexJoinRandomSessionSetting();
+    NexCreateSessionSetting* GetCreateSessionSetting();
+    const NexCreateSessionSetting* GetCreateSessionSetting() const;
+    NexSessionSearchCriteria* GetSessionSearchCriteria(unsigned char index);
+    const NexSessionSearchCriteria* GetSessionSearchCriteria(unsigned char index) const;
+    unsigned int GetSessionSearchCriteriaSize();
+    unsigned int GetSessionSearchCriteriaSize() const;
+    void Reset();
+    void SetCreateSessionSetting(const NexCreateSessionSetting* setting);
+    void SetSessionSearchCriteria(const NexSessionSearchCriteria* criteria, unsigned int count);
+    void Trace(unsigned long long p0) const;
+    void SetBlockListOption(bool useMyBlockList, bool useOthersBlockList);
+    void SetMatchmakeUniqueKeyword(bool enabled);
+    bool IsMyBlockListUsed() const;
+    bool IsOthersBlockListUsed() const;
+    bool IsMatchmakeUniqueKeywordEnabled() const;
+
+private:
+    NexCreateSessionSetting m_createSessionSetting;
+    NexSessionSearchCriteria m_sessionSearchCriteria[2];
+    unsigned int m_sessionSearchCriteriaSize;
+    bool m_matchmakeUniqueKeyword;
+    bool m_myBlockListUsed;
+    bool m_othersBlockListUsed;
+};
+
+}}}
+
+#endif
