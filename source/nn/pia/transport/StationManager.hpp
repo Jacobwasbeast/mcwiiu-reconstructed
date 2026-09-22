@@ -3,12 +3,10 @@
 
 #include "nn/pia.h"
 #include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/SimpleContainer.hpp"
 #include <cstddef>
 
 namespace nn { namespace pia {
-namespace common {
-template <class T, int N> struct SimpleContainer { unsigned int size; T data[N]; unsigned int reserved; };
-}
 namespace transport {
 class StationManager {
 public:

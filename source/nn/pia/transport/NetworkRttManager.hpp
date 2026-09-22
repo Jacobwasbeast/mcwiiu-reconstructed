@@ -1,0 +1,139 @@
+#ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_NETWORKRTTMANAGER_HPP
+#define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_NETWORKRTTMANAGER_HPP
+
+#include <cmath>
+#include <new>
+
+#include "nn/pia.h"
+#include "nn/pia/common/Packet.hpp"
+#include "nn/pia/common/StationAddress.hpp"
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "platform/wiiu/pead.hpp"
+
+namespace pead { class Heap; }
+
+namespace nn { namespace pia { namespace transport {
+
+class NetworkRttManager
+{
+public:
+    struct StatValues
+    {
+        unsigned int average;
+        unsigned int standardDeviation;
+        unsigned int count;
+        unsigned int latest;
+    };
+
+    struct StatUnit
+    {
+        unsigned int latest;
+        unsigned int total;
+        unsigned int squares;
+        unsigned int count;
+
+        StatUnit();
+        void Clear();
+        void AddValue(unsigned int value);
+    };
+
+    struct MeasurementData
+    {
+        common::StationAddress address;
+        StatUnit values[16];
+        unsigned int time;
+
+        void Clear();
+        unsigned int UpdateTime(unsigned int now);
+        void AddValue(unsigned int now, unsigned int value);
+        unsigned int GetAverage() const;
+        int GetStdDev() const;
+        int GetCount() const;
+        unsigned int GetLatest() const;
+        void GetValues(StatValues* output) const;
+    };
+
+    struct ResponseData
+    {
+        common::StationAddress address;
+        unsigned int time;
+        unsigned short sequence;
+
+    };
+
+    template <class T>
+    class DataBuffer
+    {
+    public:
+        DataBuffer();
+        void Initialize(unsigned int capacity, pead::Heap* heap);
+        void Finalize();
+        T* Get(const common::StationAddress& address);
+        T* Assign(const common::StationAddress& address, unsigned int now);
+        void Lock() { mCritical.Lock(); }
+        void Unlock() { mCritical.Unlock(); }
+        bool IsInitialized() const { return mData != 0; }
+    private:
+        static const common::StationAddress& AddressOf(const T& value) { return value.address; }
+        static unsigned int EntryTime(const T& value) { return value.time; }
+        static void SetTime(T& value, unsigned int now) { value.time = now; }
+        static void Refresh(MeasurementData& value, unsigned int now) { value.UpdateTime(now); }
+        static void Refresh(ResponseData& value, unsigned int now) { value.time = now; }
+        static void InitializeValue(MeasurementData& value, const common::StationAddress& address, unsigned int)
+        {
+            value.address = address;
+            value.Clear();
+        }
+        static void InitializeValue(ResponseData& value, const common::StationAddress& address, unsigned int now)
+        {
+            value.address = address;
+            value.time = now;
+            value.sequence = 0;
+        }
+        static void Reset(MeasurementData& value) { value.Clear(); }
+        static void Reset(ResponseData& value)
+        {
+            value.address.Clear();
+            value.time = 0;
+            value.sequence = 0;
+        }
+        static int Compare(const void* lhs, const void* rhs)
+        {
+            const common::StationAddress& address = *static_cast<const common::StationAddress*>(lhs);
+            const T& value = *static_cast<const T*>(rhs);
+            return common::StationAddress::Compare(address, AddressOf(value));
+        }
+        pead::PtrArrayImpl mValues;
+        T* mData;
+        common::CriticalSection mCritical;
+    };
+
+    NetworkRttManager();
+    ~NetworkRttManager();
+    static Result CreateInstance();
+    void Finalize();
+    static void DestroyInstance();
+    Result InitializeImpl(unsigned int measurementCapacity, unsigned int responseCapacity);
+    Result WriteToPacket(common::Packet* packet);
+    Result ReadFromPacket(const common::Packet* packet);
+    unsigned int GetAverage(const common::StationAddress& address);
+    int GetStdDev(const common::StationAddress& address);
+    int GetCount(const common::StationAddress& address);
+    unsigned int GetLatest(const common::StationAddress& address);
+    void GetValues(StatValues* values, const common::StationAddress& address);
+    static int CompareFunc(const ResponseData* value, const common::StationAddress* address);
+    static int CompareFunc(const MeasurementData* value, const common::StationAddress* address);
+    void Trace(unsigned long long value) const;
+
+private:
+    friend class Transport;
+    DataBuffer<ResponseData> mResponses;
+    DataBuffer<MeasurementData> mMeasurements;
+    common::Time mStartTime;
+    static NetworkRttManager* sInstance;
+};
+
+}}}
+
+#endif

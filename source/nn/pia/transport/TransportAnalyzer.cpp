@@ -96,6 +96,24 @@ void TransportAnalyzer::Cleanup()
     m_startedUp = false;
 }
 
+Result TransportAnalyzer::Update()
+{
+    if (!m_startedUp || g_piaThreadStreamManager == 0)
+        return static_cast<Result>(0x10c08);
+    Result result = UpdateConnectionAnalysisData();
+    if (result != 0)
+        return result;
+    PacketHandler* handler = g_piaTransport->m_packetHandler;
+    result = handler->GetPacketAnalysisData(&m_packetAnalysisData[0],
+        &m_packetAnalysisData[1], &m_packetAnalysisData[2], &m_packetAnalysisData[3]);
+    if (result != 0)
+        return result;
+    handler->ClearPacketAnalysisData();
+    m_field110c = g_piaTransport->m_dispatchCount;
+    g_piaTransport->m_dispatchCount = 0;
+    return 0;
+}
+
 Result TransportAnalyzer::UpdateConnectionAnalysisData()
 {
     if (!m_startedUp || g_piaStationManager == 0)

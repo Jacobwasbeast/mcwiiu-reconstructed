@@ -3,26 +3,10 @@
 
 #include "nn/pia.h"
 #include "nn/pia/common/Packet.hpp"
+#include "nn/pia/common/IPacketInput.hpp"
+#include "nn/pia/common/IPacketOutput.hpp"
 #include "nn/pia/common/Time.hpp"
 #include "platform/wiiu/pead.hpp"
-
-namespace nn { namespace pia { namespace common {
-class IPacketInput
-{
-public:
-    virtual ~IPacketInput() {}
-    virtual Result Read(Packet* packet) = 0;
-};
-
-class IPacketOutput
-{
-public:
-    virtual ~IPacketOutput() {}
-    virtual unsigned int GetMulticastDestinationNum() const { return 0; }
-    virtual bool IsBroadcastSupported() const { return false; }
-    virtual Result Write(const Packet& packet) = 0;
-};
-}}}
 
 namespace nn { namespace pia { namespace transport {
 

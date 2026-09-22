@@ -17,6 +17,7 @@ class IPacketOutput;
 namespace nn { namespace pia { namespace transport {
 
 class PacketAnalyzer;
+class PacketAnalysisData;
 
 class PacketHandler
 {
@@ -60,7 +61,9 @@ public:
                    const common::CryptoSetting* cryptoSetting);
     Result UpdateSetting(const common::CryptoSetting* cryptoSetting);
     int GetPayloadSizeLimit() const;
-
+    Result GetPacketAnalysisData(PacketAnalysisData* send, PacketAnalysisData* unicast,
+                                 PacketAnalysisData* broadcast, PacketAnalysisData* receive) const;
+    void ClearPacketAnalysisData();
     ProtocolMessageWriter* AssignByStationAddress(const ProtocolId& protocolId,
                                                  const common::StationAddress& address,
                                                  unsigned int size, bool isPriority,

@@ -1,7 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_TRANSPORT_THREAD_STREAM_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_TRANSPORT_THREAD_STREAM_HPP
 
-#include "nn/pia.h"
 #include "nn/pia/transport/PacketStream.hpp"
 #include "platform/wiiu/pead.hpp"
 

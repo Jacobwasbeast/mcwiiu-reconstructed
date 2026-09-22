@@ -35,7 +35,7 @@ public:
     bool CheckNowResending(unsigned int ackId) const;
     unsigned int ExtractAckIdFromMessage(const unsigned char* message,
                                          unsigned int messageSize) const;
-    void StopResending(unsigned int ackId);
+    bool StopResending(unsigned int ackId);
     void Trace(unsigned long long value) const;
 
     unsigned long long* m_nextSendTimes;

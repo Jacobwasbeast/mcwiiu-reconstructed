@@ -198,4 +198,21 @@ bool ResendingMessageManager::CheckNowResending(unsigned int ackId) const
     return false;
 }
 
+bool ResendingMessageManager::StopResending(unsigned int ackId)
+{
+    if (ackId == 0)
+        return false;
+    for (unsigned int index = 0; index < m_entryNum; ++index)
+    {
+        if (m_ackIds[index] == ackId)
+        {
+            m_ackIds[index] = 0;
+            m_timeouts[index] = 0;
+            m_nextSendTimes[index] = 0;
+            return true;
+        }
+    }
+    return false;
+}
+
 }}}

@@ -16,13 +16,6 @@
 
 namespace nn { namespace pia { namespace transport {
 
-int PacketHandler::GetPayloadSizeLimit() const
-{
-    return static_cast<int>(m_payloadSize) - 24;
-}
-
-
-
 namespace
 {
 unsigned int nextPacketIndex(const PacketStream::Accessor& accessor, unsigned int index)
@@ -141,7 +134,7 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
 
     if (writer == 0 || reader == 0 || packetInput == 0 || packetOutput == 0 || stationId == 0)
         return static_cast<Result>(0x10c07);
-    if (cryptoSetting != 0 && cryptoSetting->m_field00 > 1)
+    if (cryptoSetting != 0 && cryptoSetting->m_mode > 1)
         return static_cast<Result>(0x10c07);
     if (m_writer != 0 || m_reader != 0)
         return static_cast<Result>(0x10c08);
@@ -161,11 +154,11 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
     else
         m_cryptoSetting = *cryptoSetting;
 
-    if (m_cryptoSetting.m_field00 == 0)
+    if (m_cryptoSetting.m_mode == 0)
     {
         m_packetSize = packetSize;
     }
-    else if (m_cryptoSetting.m_field00 == 1)
+    else if (m_cryptoSetting.m_mode == 1)
     {
         const unsigned int blockSize = common::Crypto::GetBlockSize(1);
         m_packetSize =
@@ -184,6 +177,46 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
 
     m_stationId = stationId;
     return 0;
+}
+
+int PacketHandler::GetPayloadSizeLimit() const
+{
+    return static_cast<int>(m_payloadSize) - 24;
+}
+
+Result PacketHandler::GetPacketAnalysisData(PacketAnalysisData* send,
+                                             PacketAnalysisData* unicast,
+                                             PacketAnalysisData* broadcast,
+                                             PacketAnalysisData* receive) const
+{
+    if (send == 0 && receive == 0)
+        return static_cast<Result>(0x10c07);
+    PacketAnalysisData* outputs[] = { send, unicast, broadcast, receive };
+    PacketAnalyzer* analyzers[] = { m_sendPacketAnalyzer, m_sendUnicastPacketAnalyzer,
+                                   m_sendBroadcastPacketAnalyzer, m_receivePacketAnalyzer };
+    for (unsigned int index = 0; index < 4; ++index)
+    {
+        if (outputs[index] == 0)
+            continue;
+        if (analyzers[index] == 0)
+            return static_cast<Result>(0x10c08);
+        const Result result = analyzers[index]->GetPacketAnalysisData(outputs[index]);
+        if (result != 0)
+            return result;
+    }
+    return 0;
+}
+
+void PacketHandler::ClearPacketAnalysisData()
+{
+    if (m_sendPacketAnalyzer != 0)
+        m_sendPacketAnalyzer->ClearPacketAnalysisData();
+    if (m_sendUnicastPacketAnalyzer != 0)
+        m_sendUnicastPacketAnalyzer->ClearPacketAnalysisData();
+    if (m_sendBroadcastPacketAnalyzer != 0)
+        m_sendBroadcastPacketAnalyzer->ClearPacketAnalysisData();
+    if (m_receivePacketAnalyzer != 0)
+        m_receivePacketAnalyzer->ClearPacketAnalysisData();
 }
 
 unsigned char* PacketHandler::AssignPacketPayload(common::Packet* packet, unsigned int size)

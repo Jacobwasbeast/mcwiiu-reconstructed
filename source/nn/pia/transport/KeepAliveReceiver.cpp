@@ -21,7 +21,7 @@ void KeepAliveReceiver::Update(unsigned int stationBitmap, const common::Time& t
     {
         if ((stationBitmap & (1u << index)) == 0)
             continue;
-        Station* station = g_piaStationManager->GetStation(index);
+        Station* station = g_piaStationManager->GetStation(static_cast<StationIndex>(index));
         if (station != 0)
         {
             station->m_field60 = static_cast<int>(time.m_tick >> 32);
