@@ -58,8 +58,8 @@ void ItemFrame::addDataWalkers(DataFixerUpper* fixer)
 
 unsigned long long ItemFrame::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId(0x0a080002ULL, 0x0000000008000000ULL, EntityDataSerializers::ITEM_INSTANCE);
-    DATA_ROTATION = SynchedEntityData::defineId(0x0a080002ULL, 0x0000000008000000ULL, EntityDataSerializers::INT);
+    DATA_ITEM = SynchedEntityData::defineId(0x0a080002ULL, 0x0a080000ULL, EntityDataSerializers::ITEM_INSTANCE);
+    DATA_ROTATION = SynchedEntityData::defineId(0x0a080002ULL, 0x0a080000ULL, EntityDataSerializers::INT);
     return 0;
 }
 
