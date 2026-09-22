@@ -121,7 +121,7 @@ public:
     static void handleBlockEntityDataInternal(boost::shared_ptr<ClientboundBlockEntityDataPacket> packet, Level* level);
     uint8_t isStarted();
     uint8_t isClosed();
-    uint32_t getSocket();
+    Socket* getSocket();
     uint8_t getAndSetClosed();
     void tick();
     INetworkPlayer* getNetworkPlayer();
@@ -242,7 +242,7 @@ public:
     std::wstring mRemoteAddress;
 
 private:
-    bool m_socketOpen;
+    bool m_suppressStartOnPosition;
     Minecraft* m_minecraft;
     Level* m_level;
     bool m_started;

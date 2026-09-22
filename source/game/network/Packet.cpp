@@ -367,7 +367,7 @@ void Packet::writeUtf(const std::wstring& text, DataOutputStream* output)
 
 std::wstring Packet::readUtf(DataInputStream* input, int maxLength)
 {
-    int length = input->readUnsignedShort();
+    int length = input->readShort();
     if (length > maxLength)
     {
         std::wstringstream message;
@@ -377,7 +377,7 @@ std::wstring Packet::readUtf(DataInputStream* input, int maxLength)
     std::wstring text = L"";
     for (int i = 0; i < length; ++i)
     {
-        text.insert(text.end(), input->readUTFChar());
+        text.insert(text.end(), input->readChar());
     }
 
     return text;

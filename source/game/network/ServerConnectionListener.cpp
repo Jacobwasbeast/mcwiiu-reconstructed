@@ -1,3 +1,6 @@
+#ifdef RECON_NATIVE
+#include <cstdio>
+#endif
 #include "game/network/ServerConnectionListener.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/Connection.hpp"
@@ -36,6 +39,9 @@ ServerConnectionListener::~ServerConnectionListener()
 
 void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
+#ifdef RECON_NATIVE
+    std::fprintf(stderr, "[handshake] server login rejected reason=%d\n", reason);
+#endif
     boost::shared_ptr<Packet> packet(new DisconnectPacket(reason));
     m_connection->send(packet);
     m_connection->sendAndQuit();
@@ -149,6 +155,9 @@ void ServerConnectionListener::sendPreLoginResponse()
 
 void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket> packet)
 {
+ #ifdef RECON_NATIVE
+    std::fprintf(stderr, "[handshake] prelogin protocol=%x nameLength=%u\n", packet->protocolVersion, unsigned(packet->name.size()));
+#endif
     if (packet->protocolVersion != 0x881)
     {
         disconnect(static_cast<DisconnectPacket::eDisconnectReason>(
@@ -162,6 +171,9 @@ void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLo
 
 void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet)
 {
+ #ifdef RECON_NATIVE
+    std::fprintf(stderr, "[handshake] login version=%x comparison=%d expected=%d\n", packet->mEntityId, packet->mViewDistance, m_server->mLoginComparisonValue);
+#endif
     if (packet->mEntityId != 0x13C)
     {
         disconnect(static_cast<DisconnectPacket::eDisconnectReason>(
@@ -191,12 +203,16 @@ void ServerConnectionListener::handleAcceptedLogin(boost::shared_ptr<Clientbound
         uid = packet->mPlayerUID2;
 
     boost::shared_ptr<ServerPlayer> player = m_server->getPlayers()->getPlayerForLogin(
-        this, packet->mLevelName, uid, packet->mPlayerUID2);
-    if (!player)
-        return;
-
-    player->setMainArm(packet->mPlayerFlags == 0 ? HumanoidArm::RIGHT : HumanoidArm::LEFT);
-    m_server->getPlayers()->placeNewPlayer(m_connection, player, packet);
+        this, m_name, uid, packet->mPlayerUID2);
+    if (player)
+    {
+        player->setMainArm(packet->mHasAchievements ? HumanoidArm::LEFT : HumanoidArm::RIGHT);
+        m_server->getPlayers()->placeNewPlayer(m_connection, player, packet);
+        m_connection = 0;
+    }
+    if (packet->mDifficulty != -1)
+        g_pApp->SetFirstMiniGameType(static_cast<EMiniGameId>(packet->mDifficulty));
+    m_disconnected = true;
 }
 
 void ServerConnectionListener::onDisconnect(DisconnectPacket::eDisconnectReason, void*)

@@ -47,7 +47,7 @@ void ClientboundBossEventPacket::decodeProperties(int properties)
 {
     darkenScreen = (properties & 1) != 0;
     playMusic = (properties & 2) != 0;
-    createWorldFog = (properties & 2) != 0;
+    createWorldFog = (properties & 4) != 0;
 }
 
 unsigned char ClientboundBossEventPacket::encodeProperties()
@@ -61,7 +61,7 @@ unsigned char ClientboundBossEventPacket::encodeProperties()
 
     if (playMusic)
     {
-        properties |= 2;
+        properties |= 4;
     }
 
     if (createWorldFog)

@@ -1,3 +1,9 @@
+#include "game/network/ServerSettingsChangedPacket.hpp"
+#include "game/network/ServerboundPreLoginPacket.hpp"
+#include "game/network/ServerboundPlayerAbilitiesPacket.hpp"
+#include "game/network/ServerboundChatAutoCompletePacket.hpp"
+#include "game/network/ServerboundChatPacket.hpp"
+#include "game/network/ServerboundSwingPacket.hpp"
 #include "game/network/PacketListener.hpp"
 
 #include "game/network/BlockRegionUpdatePacket.hpp"

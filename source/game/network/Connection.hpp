@@ -24,9 +24,9 @@ public:
     uint8_t getAndSetRunning(bool);
     void _init();
     uint32_t readTick();
-    static uint32_t runRead(int32_t);
+    static int runRead(void*);
     uint32_t writeTick();
-    static uint32_t runWrite(int32_t);
+    static int runWrite(void*);
     void setListener(PacketListener*);
     void send(boost::shared_ptr<Packet>);
     uint64_t queueSend(boost::shared_ptr<Packet>);
@@ -36,10 +36,12 @@ public:
     void sendAndQuit();
     uint32_t countDelayedPackets();
     void* getRemoteAddress();
-    static uint32_t runClose(int32_t);
-    static uint32_t runSendAndQuit(int32_t);
+    static int runClose(void*);
+    static int runSendAndQuit(void*);
 private:
     friend class ServerGamePacketListenerImpl;
+    friend class ClientPacketListener;
+    friend class PlayerList;
 
     Socket* m_socket;
     unsigned int m_remoteAddress;
@@ -48,14 +50,14 @@ private:
     DataOutputStream* m_packetOutput;
     ByteArrayOutputStream* m_packetBuffer;
     OutputStream* m_rawOutput;
-    void* m_readThread;
-    void* m_writeThread;
+    C4JThreadImpl* m_readThread;
+    C4JThreadImpl* m_writeThread;
     bool m_running;
     OSFastMutex m_runningMutex;
-    unsigned int m_unknown48;
+    unsigned int m_reserved98;
     std::deque<boost::shared_ptr<Packet> > m_receivedPackets;
     OSFastMutex m_readMutex;
-    unsigned int m_unknown88;
+    unsigned int m_reserved9C;
     std::deque<boost::shared_ptr<Packet> > m_sendQueue;
     std::deque<boost::shared_ptr<Packet> > m_delayedQueue;
     unsigned int m_delayedPackets;
@@ -69,7 +71,7 @@ private:
     unsigned int m_packetsRead;
     unsigned int m_packetsWritten;
     unsigned char m_closing;
-    unsigned char m_unknownD5;
+    unsigned char m_reservedD5;
     unsigned int m_disconnectReason;
     unsigned int m_disconnectData;
     unsigned int m_idleTicks;
@@ -77,7 +79,7 @@ private:
     unsigned int m_bytesRead;
     unsigned int m_writeDelay;
     OSFastMutex m_threadMutex;
-    unsigned int m_unknown11C;
+    unsigned int m_reservedE0;
     OSFastMutex m_queueMutex;
     uint64_t m_lastSendTime;
 };

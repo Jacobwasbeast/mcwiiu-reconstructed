@@ -52,6 +52,11 @@
 #include "platform/wiiu/NQRNetworkManager.hpp"
 #include "vendor/_NetworkGameInitData.hpp"
 #include "vendor/_LoadingInputParams.hpp"
+#if defined(RECON_NATIVE)
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#endif
 
 #include <sysapp/args.h>
 
@@ -255,7 +260,7 @@ int CGameNetworkManager::ServerThreadProc(void* data)
     if (initData != 0)
     {
         seed = initData->m_seed;
-        gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), initData->m_value3);
+        gApp.SetGameHostOption(eGameHostOption_32, initData->m_value3);
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         miniGame->SetHostOption(static_cast<eCustomGameModeHostOption>(10), initData->m_value4);
         if (initData->m_value5 != 0 &&
@@ -318,6 +323,19 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
         {
             Random random(System::processTimeInNanoSecs());
             initData->m_seed = random.nextLong();
+#if defined(RECON_NATIVE)
+            const char* fixture = std::getenv("MC_WORLD_SEED");
+            if (fixture != NULL && *fixture != '\0')
+            {
+                char* end = NULL;
+                errno = 0;
+                const long long fixtureSeed = std::strtoll(fixture, &end, 10);
+                if (errno == 0 && end != fixture && *end == '\0')
+                    initData->m_seed = fixtureSeed;
+                else
+                    std::fprintf(stderr, "[native-world] invalid MC_WORLD_SEED: %s\n", fixture);
+            }
+#endif
         }
         else
         {
@@ -447,19 +465,18 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
 
     while (true)
     {
-        do
+        primaryListener->tick();
+        CompressedBlockStorage::tick();
+        SparseLightStorage::tick();
+        SparseDataStorage::tick();
+        C4JThread::Sleep(50);
+        if (IsInSession() && !primaryListener->isStarted() && !primaryListener->isClosed() &&
+            !IsLeavingGame())
         {
-            primaryListener->tick();
-            CompressedBlockStorage::tick();
-            SparseLightStorage::tick();
-            SparseDataStorage::tick();
-            C4JThread::Sleep(50);
-            if (IsInSession() && !primaryListener->isStarted() && !primaryListener->isClosed() &&
-                !IsLeavingGame())
-            {
-                continue;
-            }
-        } while (selectedTexturePack->isLoadingData());
+            continue;
+        }
+        if (selectedTexturePack->isLoadingData())
+            continue;
 
         if (!minecraft->mTexturePackRepository->needsUIUpdate() &&
             !gConsoleUIController.IsReloadingSkin())
@@ -751,7 +768,10 @@ bool CGameNetworkManager::FindAndJoinGame(int userIndexMask, EMiniGameId miniGam
     return m_platform && m_platform->FindAndJoinGame(userIndexMask | localMask, lockedProfile, miniGameId,
                                                        attributeCount, attributeValues, attributeIds);
 }
-void CGameNetworkManager::CancelJoinGame(void*) {}
+void CGameNetworkManager::CancelJoinGame(void*)
+{
+    return;
+}
 bool CGameNetworkManager::LeaveGame(bool e) { Minecraft::GetInstance()->mGui->clearMessages(-1); return m_platform->LeaveGame(e); }
 void CGameNetworkManager::UpdateAndSetGameSessionData(INetworkPlayer* p) { if (m_platform) m_platform->UpdateAndSetGameSessionData(p); }
 void CGameNetworkManager::SendInviteGUI(int i) { if (m_platform) m_platform->SendInviteGUI(i); }
@@ -788,7 +808,7 @@ void* CGameNetworkManager::RunNetworkGameThreadProc(void* data)
                     if (gApp.GetDisconnectReason() == 0)
                     {
                         gApp.SetDisconnectReason(
-                            static_cast<DisconnectPacket::eDisconnectReason>(0x11));
+                            DisconnectPacket::eDisconnectReason_Banned);
                     }
                     if (gMinecraftServer == 0)
                     {
@@ -956,7 +976,10 @@ bool CGameNetworkManager::setLanMode(bool v) { return m_platform && m_platform->
 bool CGameNetworkManager::isLanConnected() { return m_platform && m_platform->isLanConnected(); }
 bool CGameNetworkManager::isLanModeChangeInProgress() { return m_platform && m_platform->isLanModeChangeInProgress(); }
 std::wstring CGameNetworkManager::GatherStats() { return m_platform ? m_platform->GatherStats() : std::wstring(); }
-void CGameNetworkManager::renderQueueMeter() {}
+void CGameNetworkManager::renderQueueMeter()
+{
+    return;
+}
 std::wstring CGameNetworkManager::GatherRTTStats() { return m_platform ? m_platform->GatherRTTStats() : std::wstring(); }
 void CGameNetworkManager::SetSessionGameModeId(int id) { m_platform->SetSessionGameModeId(id); }
 void CGameNetworkManager::StateChange_AnyToHosting() { gApp.SetRichPresenceContext(0, 0); }

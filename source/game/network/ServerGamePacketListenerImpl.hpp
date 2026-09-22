@@ -143,10 +143,12 @@ public:
     void handleCommand(const std::wstring& command);
 
 private:
+    friend class PlayerList;
     Connection* mConnection;
     bool mDisconnected;
     PlayerUID mPlayerUID;
     PlayerUID mOldPlayerUID;
+    bool mFriendsOnly = false;
     MinecraftServer* mServer;
     boost::shared_ptr<ServerPlayer> mPlayer;
     int mTickCount;

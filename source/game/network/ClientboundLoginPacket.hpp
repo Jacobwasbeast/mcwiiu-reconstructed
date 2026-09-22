@@ -18,6 +18,7 @@ class ClientboundLoginPacket : public Packet, public boost::enable_shared_from_t
 {
     friend class ClientPacketListener;
     friend class ServerConnectionListener;
+    friend class PlayerList;
 public:
 
     ClientboundLoginPacket();
