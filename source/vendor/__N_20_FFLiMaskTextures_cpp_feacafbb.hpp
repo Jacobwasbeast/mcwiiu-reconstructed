@@ -3,12 +3,10 @@
 
 #include <stdint.h>
 #include "platform/wiiu/FFLiTypes.hpp"
+#include "platform/wiiu/FFLiCharModelCreator.hpp"
 #include "vendor/__N_12_FFLiIcon_cpp_65029ad9.hpp"
 
 class FFLiBufferAllocator;
-struct FFLiMaskTexturesTempObject;
-struct FFLiCharInfo;
-struct FFLiRenderTexture;
 
 class __N_20_FFLiMaskTextures_cpp_feacafbb
 {
@@ -20,7 +18,7 @@ public:
     static bool CanUseExpression(uint32_t expressionMask, FFLExpression expression);
     static void InitRawMask(FFLiMaskTexturesTempObject* object, uint32_t expressionMask,
                             FFLiBufferAllocator* allocator);
-    static int* GetCorrectParam(FFLExpression expression);
+    static const int* GetCorrectParam(FFLExpression expression);
     static void SetupExpressionCharInfo(FFLiCharInfo* destination,
                                         const FFLiCharInfo* source, FFLExpression expression);
 };

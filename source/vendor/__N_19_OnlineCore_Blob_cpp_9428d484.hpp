@@ -2,13 +2,13 @@
 #define SOURCE_VENDOR_N_19_ONLINECORE_BLOB_CPP_9428D484_HPP
 
 #include <stdint.h>
+#include "nn/nex/qResult.hpp"
 
 namespace nn { namespace nex {
 class ByteStream;
 class EndPoint;
 class Packet;
 class UserContext;
-class qResult { public: uint32_t returnCode; uint32_t errorFile; uint32_t errorLine; };
 class SocketDriver { public: typedef int _Result; class InetAddress {}; };
 namespace Stream { enum Type { TypeUnknown = 0 }; }
 }}

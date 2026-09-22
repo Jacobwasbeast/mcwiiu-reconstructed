@@ -3,13 +3,6 @@
 
 #include "vendor/TmcHandsFree.hpp"
 
-enum TMC_HF_EC_MODE
-{
-    TMC_HF_EC_MODE_0 = 0,
-    TMC_HF_EC_MODE_1 = 1,
-    TMC_HF_EC_MODE_2 = 2
-};
-
 class __N_18_chat_HandsFree_cpp_120265b3
 {
 public:

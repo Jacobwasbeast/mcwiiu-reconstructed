@@ -3,7 +3,7 @@
 
 #include "nn/pia/chat/Adpcm.hpp"
 
-class __N_14_chat_Adpcm_cpp_f2b530af
+class AdpcmCodec
 {
 public:
     static void vct_decode_adpcm_16(const unsigned char*, short*, unsigned int, nn::pia::chat::Adpcm::State*);
