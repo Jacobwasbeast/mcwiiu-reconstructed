@@ -674,7 +674,7 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
         {
             boost::shared_ptr<LivingEntity> sourceEntity =
                 boost::static_pointer_cast<LivingEntity>(player);
-            boost::shared_ptr<EntityDamageSource> explosion =
+            boost::shared_ptr<DamageSource> explosion =
                 DamageSource::CreateExplosion(sourceEntity);
             hurt(explosion.get(), 10.0f);
         }
@@ -702,6 +702,7 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
 
 void EnderDragon::_init()
 {
+    fjDerivedCtorCalls();
     for (int i = 0; i < 64; ++i)
         for (int j = 0; j < 3; ++j)
             mPosHistory[i][j] = 0.0;

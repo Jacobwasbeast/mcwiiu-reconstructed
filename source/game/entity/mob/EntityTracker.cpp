@@ -44,7 +44,7 @@ void EntityTracker::addEntity(boost::shared_ptr<Entity> entity, int range, int u
 void EntityTracker::addEntity(boost::shared_ptr<Entity> entity)
 {
     unsigned long long type = entity->GetType();
-    if (type == 0x000000000C800001ULL)
+    if (type == ENTITY_TYPE_SERVER_PLAYER)
     {
         addEntity(entity, 512, 2);
     }

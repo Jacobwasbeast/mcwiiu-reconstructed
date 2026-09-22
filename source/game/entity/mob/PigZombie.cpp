@@ -46,7 +46,7 @@ void PigZombie::_init()
 {
     mRemainingPersistentAngerTime = 0;
     mAngerSoundDelay = 0;
-    mCategories |= 0x4004;
+    mCategories |= PigZombieCategoryMask;
 }
 
 void PigZombie::setLastHurtByMob(boost::shared_ptr<LivingEntity> entity)

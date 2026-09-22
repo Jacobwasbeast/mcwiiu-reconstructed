@@ -6,6 +6,7 @@
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/not_null_ptr.hpp"
 
+
 class CompoundTag;
 class EntityDataAccessor_Base;
 class EntityTooltipDataHolder;

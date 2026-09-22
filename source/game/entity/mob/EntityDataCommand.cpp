@@ -23,22 +23,16 @@ void EntityDataCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
-}
-
-bool EntityDataCommand::isValidWildcardPlayerArgument(std::wstring argument, int argumentIndex)
-{
-    return argumentIndex == 0;
+    static_cast<void>(sender);
+    static_cast<void>(stream);
 }
 
 boost::shared_ptr<GameCommandPacket> EntityDataCommand::preparePacket(unsigned char mode)
 {
+    static_cast<void>(mode);
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
-
-    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket());
+    static_cast<void>(stream);
+    return boost::shared_ptr<GameCommandPacket>(
+        new GameCommandPacket(eGameCommand_EntityData, arrayWithLength<unsigned char>()));
 }

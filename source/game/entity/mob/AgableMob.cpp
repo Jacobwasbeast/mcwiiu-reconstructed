@@ -1,5 +1,6 @@
 #include "game/entity/mob/AgableMob.hpp"
 
+
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -18,6 +19,7 @@
 
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID = NULL;
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID_2 = NULL;
+static const unsigned long long ENTITY_TYPE_AGABLE_MOB = 0x000000000D600000ULL;
 
 AgableMob::AgableMob(Level* level)
     : PathfinderMob(level), mAge(0), mForcedAge(0), mForcedAgeTimer(0),
@@ -31,9 +33,9 @@ AgableMob::~AgableMob()
 
 void AgableMob::staticCtor()
 {
-    DATA_BABY_ID = SynchedEntityData::defineId(0x000000000D600000ULL, 0x000000000D400000ULL,
+    DATA_BABY_ID = SynchedEntityData::defineId(ENTITY_TYPE_AGABLE_MOB, ENTITY_TYPE_MOB,
                                                EntityDataSerializers::BOOLEAN);
-    DATA_BABY_ID_2 = SynchedEntityData::defineId(0x000000000D600000ULL, 0x000000000D400000ULL,
+    DATA_BABY_ID_2 = SynchedEntityData::defineId(ENTITY_TYPE_AGABLE_MOB, ENTITY_TYPE_MOB,
                                                  EntityDataSerializers::BOOLEAN);
 }
 

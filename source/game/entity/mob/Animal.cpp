@@ -2,12 +2,14 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/MobCategory.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -20,6 +22,12 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
+
+namespace
+{
+}
+
+const unsigned long long ENTITY_TYPE_ANIMAL = Animal::ENTITY_TYPE_ANIMAL;
 
 const EntityDataAccessor<int>* Animal::DATA_IN_LOVE = NULL;
 const EntityDataAccessor<int>* Animal::DATA_IN_LOVE_TIME = NULL;
@@ -37,9 +45,9 @@ Animal::~Animal()
 
 void Animal::staticCtor()
 {
-    DATA_IN_LOVE = SynchedEntityData::defineId(0x000000000D680000ULL, 0x000000000D600000ULL,
+    DATA_IN_LOVE = SynchedEntityData::defineId(ENTITY_TYPE_ANIMAL, ENTITY_TYPE_MOB,
                                                EntityDataSerializers::INT);
-    DATA_IN_LOVE_TIME = SynchedEntityData::defineId(0x000000000D680000ULL, 0x000000000D600000ULL,
+    DATA_IN_LOVE_TIME = SynchedEntityData::defineId(ENTITY_TYPE_ANIMAL, ENTITY_TYPE_MOB,
                                                     EntityDataSerializers::INT);
 }
 
@@ -303,35 +311,35 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
                 return false;
             }
 
-            if (GetType() == 0x000000002D6A0001ULL)
+            if (GetType() == MobCategory::MUSHROOM_COW->getEnumBaseClass())
             {
-                if (!mLevel->canCreateMore(0x000000002D6A0001ULL, 1))
+                if (!mLevel->canCreateMore(MobCategory::MUSHROOM_COW->getEnumBaseClass(), 1))
                 {
-                    player->displayClientMessage(0x00FE5875, true);
+                    player->displayClientMessage(MESSAGE_ANIMAL_LIMIT, true);
                     return false;
                 }
             }
-            else if (GetType() == 0x000000000D6C0002ULL)
+            else if (GetType() == MobCategory::WOLF->getEnumBaseClass())
             {
-                if (!mLevel->canCreateMore(0x000000000D6C0002ULL, 1))
+                if (!mLevel->canCreateMore(MobCategory::WOLF->getEnumBaseClass(), 1))
                 {
-                    player->displayClientMessage(0xEC344E3D, true);
+                    player->displayClientMessage(MESSAGE_WOLF_LIMIT, true);
                     return false;
                 }
             }
-            else if (GetType() == 0x000000000D680004ULL)
+            else if (GetType() == MobCategory::CHICKEN->getEnumBaseClass())
             {
-                if (!mLevel->canCreateMore(0x000000000D680004ULL, 1))
+                if (!mLevel->canCreateMore(MobCategory::CHICKEN->getEnumBaseClass(), 1))
                 {
-                    player->displayClientMessage(0x99326383, true);
+                    player->displayClientMessage(MESSAGE_CHICKEN_LIMIT, true);
                     return false;
                 }
             }
-            else if ((GetType() & 0x0000000020000000ULL) != 0)
+            else if ((GetType() & ENTITY_TYPE_MOB) != 0)
             {
                 if (!mLevel->canCreateMore(GetType(), 1))
                 {
-                    player->displayClientMessage(0xB399BD15, true);
+                    player->displayClientMessage(MESSAGE_MOB_LIMIT, true);
                     return false;
                 }
             }
@@ -432,18 +440,18 @@ unsigned int Animal::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     {
         if (isBaby())
         {
-            return 0x82F8D90FU;
+            return Wolf::TOOLTIP_FEED_BABY;
         }
 
         if (!isInLove() && !isBreedCoolingDown() && !isBaby())
         {
-            return 0xB47A2AB6U;
+            return Wolf::TOOLTIP_FEED;
         }
     }
 
     if (Item::getId(holder.m_pItemInstance->getItem()) == 0x1A4 && !isLeashed())
     {
-        return 0xA1B34A96U;
+        return Wolf::TOOLTIP_LEASH;
     }
 
     return AgableMob::GetInteractTooltip(holder);
@@ -464,7 +472,7 @@ boost::shared_ptr<Entity> Animal::changeDimension(int dimension)
 {
     boost::shared_ptr<Entity> entity = Entity::changeDimension(dimension);
 
-    if (Entity::instanceof(entity, 0x000000000D680000ULL))
+    if (Entity::instanceof(entity, ENTITY_TYPE_ANIMAL))
     {
         boost::static_pointer_cast<Animal>(entity)->setDespawnProtected();
     }

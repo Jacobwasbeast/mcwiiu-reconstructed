@@ -16,9 +16,20 @@ class ItemInstance;
 class Level;
 template <class T> class EntityDataAccessor;
 
+extern const unsigned long long ENTITY_TYPE_ANIMAL;
+
 class Animal : public AgableMob
 {
 public:
+    // Entity and UI identities used by the Wii U animal interaction paths.
+    static const unsigned long long ENTITY_TYPE_ANIMAL = 0x000000000D680000ULL;
+    static const unsigned long long ENTITY_TYPE_MUSHROOM_COW = 0x000000002D6A0001ULL;
+    static const unsigned long long ENTITY_TYPE_WOLF = 0x000000000D6C0002ULL;
+    static const unsigned long long ENTITY_TYPE_CHICKEN = 0x000000000D680004ULL;
+    static const unsigned int MESSAGE_ANIMAL_LIMIT = 0x00FE5875U;
+    static const unsigned int MESSAGE_WOLF_LIMIT = 0xEC344E3DU;
+    static const unsigned int MESSAGE_CHICKEN_LIMIT = 0x99326383U;
+    static const unsigned int MESSAGE_MOB_LIMIT = 0xB399BD15U;
     Animal(Level* level);
     virtual ~Animal();
     static void staticCtor();

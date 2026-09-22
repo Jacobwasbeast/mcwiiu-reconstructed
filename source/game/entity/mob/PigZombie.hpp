@@ -19,6 +19,8 @@ class Entity;
 class PigZombie : public Zombie
 {
 public:
+    static const int PigZombieCategoryMask = 0x4004;
+
     class PigZombieHurtByOtherGoal : public HurtByTargetGoal
     {
     public:

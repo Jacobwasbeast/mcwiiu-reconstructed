@@ -197,7 +197,7 @@ void FireworksRocketEntity::dealExplosionDamage()
     }
 
     boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
-    boost::shared_ptr<EntityDamageSource> explosionSource = DamageSource::CreateExplosion(attached);
+    boost::shared_ptr<DamageSource> explosionSource = DamageSource::CreateExplosion(attached);
     if (attached)
     {
         attached->hurt(explosionSource.get(), power);

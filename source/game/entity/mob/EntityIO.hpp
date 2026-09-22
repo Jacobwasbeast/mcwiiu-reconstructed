@@ -25,16 +25,16 @@ public:
     {
     public:
         SpawnableMobInfo(int id, const ResourceLocation& location,
-                         eMinecraftColour colour, eMinecraftIconOverride icon,
-                         int type = 0);
+                         eMinecraftColour colour, eMinecraftColour secondaryColour,
+                         eMinecraftIconOverride icon);
         SpawnableMobInfo(const SpawnableMobInfo& other);
 
         int id;
         ResourceLocation location;
         eMinecraftColour colour;
+        eMinecraftColour secondaryColour;
         eMinecraftIconOverride icon;
         int type;
-        int nameDisplayId;
         int flags;
     };
 
@@ -53,12 +53,12 @@ public:
     static boost::shared_ptr<Entity> newEntity(CompoundTag* tag, Level* level);
     static bool isEntityOfType(boost::shared_ptr<Entity> entity, const ResourceLocation& location);
     static int getNameDisplayId(const std::wstring& name);
-    void addSpawnInfo(int id, std::wstring name, eMinecraftColour colour,
-                      eMinecraftIconOverride icon);
-    void Register(Creator creator, int id, const std::wstring& name,
-                  unsigned long long entityType = 0,
-                  unsigned long long parentType = 0,
-                  const std::wstring& translationName = std::wstring());
+    static SpawnableMobInfo addSpawnInfo(int id, std::wstring name, eMinecraftColour colour,
+                                        eMinecraftColour secondaryColour,
+                                        eMinecraftIconOverride icon);
+    static void Register(Creator creator, int id, const std::wstring& name,
+                         unsigned long long entityType,
+                         const std::wstring& translationName);
     static void bootStrap();
     static std::wstring getTranslationName(const ResourceLocation& location);
     static int eTypeToIoid(unsigned long long entityType);

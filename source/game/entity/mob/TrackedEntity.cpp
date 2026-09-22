@@ -5,6 +5,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/ExperienceOrb.hpp"
+#include "game/core/EnderCrystal.hpp"
+#include "game/core/EvocationFangs.hpp"
+#include "game/core/EyeOfEnderSignal.hpp"
+#include "game/core/ShulkerBullet.hpp"
+#include "game/core/ThrownEgg.hpp"
+#include "game/core/ThrownEnderpearl.hpp"
+#include "game/core/ThrownExpBottle.hpp"
+#include "game/core/WitherSkull.hpp"
 #include "game/core/Minecart.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Painting.hpp"
@@ -17,6 +25,7 @@
 #include "game/entity/mob/FireworksRocketEntity.hpp"
 #include "game/entity/projectile/Arrow.hpp"
 #include "game/entity/projectile/Fireball.hpp"
+#include "game/entity/projectile/DragonFireball.hpp"
 #include "game/entity/projectile/FishingHook.hpp"
 #include "game/entity/projectile/SpectralArrow.hpp"
 #include "game/item/AreaEffectCloud.hpp"
@@ -125,13 +134,13 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
                                         mYLoc, mZLoc, yHeadRot, mEntity->getAdditionContructionTag()));
     }
 
-    if (entityType == 0x000000000A080001ULL)
+    if (boost::dynamic_pointer_cast<Painting>(mEntity))
     {
         return boost::shared_ptr<Packet>(
             new ClientboundAddPaintingPacket(boost::static_pointer_cast<Painting>(mEntity)));
     }
 
-    if (entityType == 0x000000000800000AULL)
+    if (entityType == 0x0800000aULL)
     {
         return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 2, 1));
     }
@@ -219,25 +228,25 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
             new ClientboundAddEntityPacket(mEntity, 0x49, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
     }
 
-    if (entityType == 0x000000008A200005ULL)
+    if (boost::dynamic_pointer_cast<ThrownExpBottle>(mEntity))
     {
         return boost::shared_ptr<Packet>(
             new ClientboundAddEntityPacket(mEntity, 0x4b, yRot, xRot, mXLoc, mYLoc, mZLoc));
     }
 
-    if (entityType == 0x000000008A200003ULL)
+    if (boost::dynamic_pointer_cast<ThrownEnderpearl>(mEntity))
     {
         return boost::shared_ptr<Packet>(
             new ClientboundAddEntityPacket(mEntity, 0x41, yRot, xRot, mXLoc, mYLoc, mZLoc));
     }
 
-    if (entityType == 0x0000000088000004ULL)
+    if (boost::dynamic_pointer_cast<EyeOfEnderSignal>(mEntity))
     {
         return boost::shared_ptr<Packet>(
             new ClientboundAddEntityPacket(mEntity, 0x48, yRot, xRot, mXLoc, mYLoc, mZLoc));
     }
 
-    if (entityType == 0x0000000088000005ULL)
+    if (boost::dynamic_pointer_cast<FireworksRocketEntity>(mEntity))
     {
         boost::shared_ptr<FireworksRocketEntity> rocket =
             boost::static_pointer_cast<FireworksRocketEntity>(mEntity);
@@ -247,21 +256,21 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
             new ClientboundAddEntityPacket(mEntity, 0x4c, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
     }
 
-    if ((entityType & 0x000000008A400000ULL) != 0x000000008A400000ULL)
+    if (!boost::dynamic_pointer_cast<Fireball>(mEntity))
     {
-        if (entityType == 0x0000000008000010ULL)
+        if (boost::dynamic_pointer_cast<ShulkerBullet>(mEntity))
         {
             return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(
                 mEntity, 0x43, 0, yRot, xRot, (int)mEntity->mX, (int)mEntity->mY, (int)mEntity->mZ));
         }
 
-        if (entityType == 0x000000008A200002ULL)
+        if (boost::dynamic_pointer_cast<ThrownEgg>(mEntity))
         {
             return boost::shared_ptr<Packet>(
                 new ClientboundAddEntityPacket(mEntity, 0x3e, yRot, xRot, mXLoc, mYLoc, mZLoc));
         }
 
-        if (entityType == 0x0000000008000011ULL)
+        if (boost::dynamic_pointer_cast<EvocationFangs>(mEntity))
         {
             return boost::shared_ptr<Packet>(
                 new ClientboundAddEntityPacket(mEntity, 0x4f, yRot, xRot, mXLoc, mYLoc, mZLoc));
@@ -273,7 +282,7 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
                 new ClientboundAddEntityPacket(mEntity, 0x32, yRot, xRot, mXLoc, mYLoc, mZLoc));
         }
 
-        if (entityType == 0x000000000800000EULL)
+        if (boost::dynamic_pointer_cast<EnderCrystal>(mEntity))
         {
             return boost::shared_ptr<Packet>(
                 new ClientboundAddEntityPacket(mEntity, 0x33, yRot, xRot, mXLoc, mYLoc, mZLoc));
@@ -294,7 +303,7 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
                 new ClientboundAddEntityPacket(mEntity, 0x4e, yRot, xRot, mXLoc, mYLoc, mZLoc));
         }
 
-        if (entityType == 0x000000000A080002ULL)
+        if (boost::dynamic_pointer_cast<ItemFrame>(mEntity))
         {
             boost::shared_ptr<ItemFrame> frame = boost::static_pointer_cast<ItemFrame>(mEntity);
             int data = frame->getDirection()->get2DDataValue();
@@ -302,7 +311,7 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
                 new ClientboundAddEntityPacket(mEntity, 0x47, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
         }
 
-        if (entityType == 0x000000000A080003ULL)
+        if (boost::dynamic_pointer_cast<LeashFenceKnotEntity>(mEntity))
         {
             boost::shared_ptr<LeashFenceKnotEntity> knot =
                 boost::static_pointer_cast<LeashFenceKnotEntity>(mEntity);
@@ -311,7 +320,7 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
                 new ClientboundAddEntityPacket(mEntity, 0x4d, 0, pos, yRot, xRot, mXLoc, mYLoc, mZLoc));
         }
 
-        if (entityType == 0x000000000800000FULL)
+        if (boost::dynamic_pointer_cast<AreaEffectCloud>(mEntity))
         {
             boost::shared_ptr<AreaEffectCloud> cloud = boost::static_pointer_cast<AreaEffectCloud>(mEntity);
             boost::shared_ptr<LivingEntity> owner = cloud->getOwner();
@@ -325,15 +334,15 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
 
     boost::shared_ptr<Fireball> fireball = boost::static_pointer_cast<Fireball>(mEntity);
     int packetType = 0x3f;
-    if (entityType == 0x000000008A400004ULL)
+    if (boost::dynamic_pointer_cast<Fireball>(mEntity))
     {
         packetType = 0x40;
     }
-    else if (entityType == 0x000000008A400001ULL)
+    else if (boost::dynamic_pointer_cast<DragonFireball>(mEntity))
     {
         packetType = 0x5d;
     }
-    else if (entityType == 0x000000008A400002ULL)
+    else if (boost::dynamic_pointer_cast<WitherSkull>(mEntity))
     {
         packetType = 0x42;
     }

@@ -14,10 +14,12 @@
 #include "game/util/NbtUtils.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/TheEndPortalBlockEntity.hpp"
 #include "game/world/generation/EndGatewayFeature.hpp"
 #include "game/world/generation/EndPodiumFeature.hpp"
 #include "game/world/generation/SpikeFeature.hpp"
@@ -191,9 +193,19 @@ void EndDragonFight::fjFindCrystals(std::vector<boost::shared_ptr<EnderCrystal> 
 
 void EndDragonFight::respawnDragon(const std::vector<boost::shared_ptr<EnderCrystal> >& result)
 {
-    resetSpikeCrystals();
-    spawnExitPortal(true);
-    respawnTime = 1;
+    if (!dragonKilled || respawnStage != 0)
+        return;
+
+    if (!level->getLevelData()->getModernEnd())
+        return;
+
+    if (findExitPortal())
+        return;
+
+    respawnStage = 0;
+    respawnTime = 0;
+    spawnExitPortal(false);
+    crystals = result;
 }
 
 bool EndDragonFight::tryRespawn()
@@ -252,8 +264,6 @@ BlockPos EndDragonFight::getGatewayPosition(int index)
 
 bool EndDragonFight::hasExitPortal()
 {
-    static const unsigned long long END_PORTAL_BLOCK_ENTITY_TYPE = 0x01300200ULL;
-
     for (int chunkX = -8; chunkX < 9; ++chunkX)
     {
         for (int chunkZ = -8; chunkZ < 9; ++chunkZ)
@@ -267,7 +277,7 @@ bool EndDragonFight::hasExitPortal()
                  it != blockEntities->end(); ++it)
             {
                 boost::shared_ptr<BlockEntity> blockEntity = it->second;
-                if ((blockEntity->GetType() & END_PORTAL_BLOCK_ENTITY_TYPE) == END_PORTAL_BLOCK_ENTITY_TYPE)
+                if (boost::dynamic_pointer_cast<TheEndPortalBlockEntity>(blockEntity))
                 {
                     return true;
                 }

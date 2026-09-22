@@ -60,6 +60,13 @@ bool BaseMobSpawner::hasMob()
 
 void BaseMobSpawner::tick()
 {
+    if (!isNearPlayer())
+    {
+        moSpin = mSpin;
+        return;
+    }
+    if (!hasMob())
+        return;
     Level* level = getLevel();
     if (level == NULL)
         return;
@@ -72,11 +79,6 @@ void BaseMobSpawner::tick()
             --mDelay;
         moSpin = mSpin;
         mSpin = static_cast<double>(static_cast<int>(mSpin + 1000.0 / (mDelay + 200.0)) % 360);
-        return;
-    }
-    if (!hasMob())
-    {
-        moSpin = mSpin;
         return;
     }
     if (mDelay == -1)
