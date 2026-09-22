@@ -1,6 +1,7 @@
 #include "game/minigame/AnyCombinationOfRuleDefinition.hpp"
 
 #include "game/minigame/CombinationVariationsRuleDefinition.hpp"
+#include "game/core/IGameRuleAttribute.hpp"
 #include "game/world/generation/LayerGenerationRuleDefinition.hpp"
 #include "game/world/generation/LayerMetadata.hpp"
 #include "game/world/generation/LayerThemeRuleDefinition.hpp"
@@ -16,8 +17,8 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(LayerGenerationRu
     , mShapes(new LayerShapeRuleDefinition())
     , mFills(new LayerFillRuleDefinition())
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), &mName);
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(59), &mFilter);
+    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"name")), &mName);
+    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"type")), &mFilter);
 }
 
 AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
@@ -31,12 +32,21 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
     , mShapes(new LayerShapeRuleDefinition())
     , mFills(new LayerFillRuleDefinition())
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), &mName);
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(59), &mFilter);
+    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"name")), &mName);
+    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"type")), &mFilter);
 }
 
 AnyCombinationOfRuleDefinition::~AnyCombinationOfRuleDefinition()
 {
+    delete mCombinationVariations;
+    delete mSizes;
+    delete mShapes;
+    delete mFills;
+    for (std::vector<LayerThemeRuleDefinition*>::iterator it = mThemes.begin();
+         it != mThemes.end(); ++it)
+    {
+        delete *it;
+    }
 }
 
 AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChild(
@@ -158,28 +168,31 @@ void AnyCombinationOfRuleDefinition::getChildren(std::vector<GameRuleDefinition*
 
 GameRuleDefinition* AnyCombinationOfRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(42))
+    static CombinationVariationsRuleDefinition variationsActionType(NULL, NULL);
+    static LayerThemeRuleDefinition themeActionType;
+
+    if (type == variationsActionType.getActionType())
     {
         mCombinationVariations = new CombinationVariationsRuleDefinition(mParent, this);
         return mCombinationVariations;
     }
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(44))
+    if (type == mSizes->getActionType())
     {
         return mSizes;
     }
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(48))
+    if (type == mShapes->getActionType())
     {
         return mShapes;
     }
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(54))
+    if (type == mFills->getActionType())
     {
         return mFills;
     }
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(58))
+    if (type == themeActionType.getActionType())
     {
         LayerThemeRuleDefinition* theme = new LayerThemeRuleDefinition();
         mThemes.push_back(theme);

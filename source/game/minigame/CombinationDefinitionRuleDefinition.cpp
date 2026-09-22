@@ -6,5 +6,6 @@ CombinationDefinitionRuleDefinition::~CombinationDefinitionRuleDefinition()
 
 ConsoleGameRules::EGameRuleType CombinationDefinitionRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(41);
+    return static_cast<ConsoleGameRules::EGameRuleType>(
+        AnyCombinationOfRuleDefinition::getActionType() + 1);
 }

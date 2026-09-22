@@ -19,7 +19,7 @@ public:
 
 private:
     bool mEnabledForPlayer;
-    bool mTutorialStarted;
+    char mTutorialStarted;
     unsigned char mStateCompleted[44];
 };
 

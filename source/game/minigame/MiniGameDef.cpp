@@ -17,7 +17,9 @@
 #include "game/core/StringUtils.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
+#include "game/core/XmlChild.hpp"
 #include "game/core/XmlObject.hpp"
+#include "game/core/XmlValue.hpp"
 #include "game/core/XmlParser.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/item/Enchantment.hpp"
@@ -918,7 +920,7 @@ MiniGameDef* MiniGameDef::parseMiniGameDef(arrayWithLength<unsigned char> data)
 
 MiniGameDef* MiniGameDef::parseMiniGameDef(std::wstring fileName)
 {
-    fileName = std::wstring(L"Common/res/TitleUpdate/GameRules") + fileName;
+    fileName = std::wstring(L"Common/res/TitleUpdate/GameRules/") + fileName;
     File file(fileName);
     FileInputStream stream(file);
     unsigned int size = stream.filesize();
@@ -1700,7 +1702,7 @@ bool MiniGameDef::HasMultipleMaps() const
     if (id == eMiniGameId_Lobby)
     {
         CommonMasterGameMode* mode = CommonMasterGameMode::GetMasterOrClient();
-        if (mode != NULL) id = mode->GetNextGameMode();
+        if (mode != NULL) id = static_cast<EMiniGameId>(mode->GetNextGameMode());
         if (id == 0) return false;
     }
     if (id == eMiniGameId_Tumble) return false;
@@ -1719,7 +1721,7 @@ bool MiniGameDef::HasMultipleVariants() const
     {
         CommonMasterGameMode* mode = CommonMasterGameMode::GetMasterOrClient();
         if (mode != NULL)
-            id = mode->GetNextGameMode();
+            id = static_cast<EMiniGameId>(mode->GetNextGameMode());
         if (id == eMiniGameId_Lobby)
             return false;
     }

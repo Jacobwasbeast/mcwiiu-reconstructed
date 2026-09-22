@@ -32,6 +32,110 @@
 #include "game/world/block/UseBlockTask.hpp"
 #include "game/util/Vec3.hpp"
 
+namespace TutorialIds {
+static const unsigned int AdditionalPlanksCraft = 0x61c2f830;
+static const unsigned int AxeSetCraft = 0xfac53756;
+static const unsigned int BoatArea = 0xb11a0f6b;
+static const unsigned int ChallengeIntroInfo = 0x3f434d73;
+static const unsigned int CoalCraft = 0xf485454f;
+static const unsigned int CoalCraftCreative = 0xb9ad8818;
+static const unsigned int CobblestonePickup = 0x8b96afee;
+static const unsigned int ControllerAction = 0xe21ad07f;
+static const unsigned int ControllerActionSecondary = 0xfa88ce3a;
+static const unsigned int ControllerInventory = 0xb5fcd4e7;
+static const unsigned int ControllerJump = 0x69b79ddf;
+static const unsigned int ControllerLook = 0xd50ac0c8;
+static const unsigned int ControllerLookMove = 0xd6b36624;
+static const unsigned int ControllerMove = 0x68129f42;
+static const unsigned int CraftingBasicsInfo = 0xeae5d55e;
+static const unsigned int CraftingChoice = 0x28c71b69;
+static const unsigned int CraftingChoiceFollowup = 0x791088b0;
+static const unsigned int CraftingInfo = 0x59983743;
+static const unsigned int CraftingInfoAdvanced = 0x79452ef8;
+static const unsigned int CraftingTableCraft = 0x2e35e925;
+static const unsigned int CraftingTableInfo = 0x441c0545;
+static const unsigned int CraftingTableInfoAdvanced = 0xacd522e4;
+static const unsigned int CraftingTableUi = 0xc8a27304;
+static const unsigned int CraftingTableUse = 0x7de96d85;
+static const unsigned int CraftingTableUseInfo = 0x88ac7bfd;
+static const unsigned int CraftingTableUseItem = 0xe42098c2;
+static const unsigned int CreativeController = 0xbeac2f00;
+static const unsigned int CreativeExitArea = 0xe4341f71;
+static const unsigned int CreativeExitInfo = 0xa77b2ab0;
+static const unsigned int CreativeInfo = 0x6064ebd6;
+static const unsigned int CreativeInventoryInfo = 0xc93a06c2;
+static const unsigned int CreativeModeChoice = 0x4a0984b8;
+static const unsigned int CreativeModeChoiceFollowup = 0xd1ebba23;
+static const unsigned int DefaultMessageGroup = 0x3f9463f;
+static const unsigned int DoorSetCraft = 0x74135c27;
+static const unsigned int DoorUse = 0xf39f40bf;
+static const unsigned int ElytraArea = 0x6fcb60c3;
+static const unsigned int FishingArea = 0x7f2df94f;
+static const unsigned int FoodUse = 0x355eb7d9;
+static const unsigned int FurnaceCraftCreative = 0x7513d4c3;
+static const unsigned int FurnaceCraft = 0xe7cad766;
+static const unsigned int FurnaceUse = 0xf1d4d67e;
+static const unsigned int GlassCraft = 0x5f29384c;
+static const unsigned int GlassCraftCreative = 0xa9ca4693;
+static const unsigned int InventoryInfo = 0x642c1bb4;
+static const unsigned int LogPickup = 0xc76706b5;
+static const unsigned int MinecartArea = 0x7842d528;
+static const unsigned int MovementForwardInfo = 0xd756c6a6;
+static const unsigned int MovementInfo = 0x24614e1f;
+static const unsigned int MovementLookInfo = 0x67613737;
+static const unsigned int PickaxeSetCraft = 0x19cdd9a4;
+static const unsigned int PistonBridgeArea = 0xf258c0ad;
+static const unsigned int PlanksCraft = 0x4d449d7d;
+static const unsigned int ShovelSetCraft = 0xf9cc6772;
+static const unsigned int SmeltingBasicsInfo = 0x5fce503f;
+static const unsigned int SmeltingInfo = 0x4c729fc4;
+static const unsigned int StickCraft = 0x56bee93b;
+static const unsigned int StructuresUi = 0xe4451189;
+static const unsigned int SurvivalBasicsInfo = 0x12eeee51;
+static const unsigned int ToolBasicsInfo = 0x63c8c01a;
+static const unsigned int ToolsUi = 0xb2a0ad4c;
+static const unsigned int TorchCraft = 0xd15ac;
+static const unsigned int TutorialArea = 0x53717f71;
+static const unsigned int TutorialStartChoice = 0xdf59fc3f;
+static const unsigned int TutorialStartTask = 0x989a3f76;
+static const unsigned int WelcomeMessage = 0x857669aa;
+static const unsigned int WoodenShovelUi = 0x76c32bbb;
+}
+
+namespace TutorialState {
+static const eTutorial_State Initial = static_cast<eTutorial_State>(0);
+static const eTutorial_State Controller = static_cast<eTutorial_State>(1);
+static const eTutorial_State Crafting = static_cast<eTutorial_State>(2);
+static const eTutorial_State Tools = static_cast<eTutorial_State>(3);
+static const eTutorial_State Furnace = static_cast<eTutorial_State>(4);
+static const eTutorial_State Minecart = static_cast<eTutorial_State>(5);
+static const eTutorial_State Boat = static_cast<eTutorial_State>(6);
+static const eTutorial_State Fishing = static_cast<eTutorial_State>(7);
+static const eTutorial_State Nether = static_cast<eTutorial_State>(0xc);
+static const eTutorial_State End = static_cast<eTutorial_State>(0xd);
+static const eTutorial_State Creative = static_cast<eTutorial_State>(0x10);
+static const eTutorial_State AreaState11 = static_cast<eTutorial_State>(0x11);
+static const eTutorial_State AreaState13 = static_cast<eTutorial_State>(0x13);
+static const eTutorial_State AreaState15 = static_cast<eTutorial_State>(0x15);
+static const eTutorial_State AreaState16 = static_cast<eTutorial_State>(0x16);
+static const eTutorial_State AreaState17 = static_cast<eTutorial_State>(0x17);
+static const eTutorial_State AreaState18 = static_cast<eTutorial_State>(0x18);
+static const eTutorial_State AreaState1A = static_cast<eTutorial_State>(0x1a);
+static const eTutorial_State AreaState1C = static_cast<eTutorial_State>(0x1c);
+static const eTutorial_State AreaState1F = static_cast<eTutorial_State>(0x1f);
+static const eTutorial_State AreaState21 = static_cast<eTutorial_State>(0x21);
+static const eTutorial_State AreaState23 = static_cast<eTutorial_State>(0x23);
+static const eTutorial_State SurvivalCrafting = static_cast<eTutorial_State>(0x25);
+static const eTutorial_State AreaState26 = static_cast<eTutorial_State>(0x26);
+static const eTutorial_State AreaState27 = static_cast<eTutorial_State>(0x27);
+static const eTutorial_State AreaState28 = static_cast<eTutorial_State>(0x28);
+static const eTutorial_State AreaState2A = static_cast<eTutorial_State>(0x2a);
+static const eTutorial_State AreaState2B = static_cast<eTutorial_State>(0x2b);
+static const eTutorial_State CreativeCompletion = static_cast<eTutorial_State>(0xe);
+static const eTutorial_State Invalid = static_cast<eTutorial_State>(-1);
+static const eTutorial_State Completed = static_cast<eTutorial_State>(-2);
+}
+
 FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool enabled)
     : Tutorial(playerId, constraints, true, false), mEnabledForPlayer(enabled),
       mTutorialStarted(false)
@@ -42,18 +146,18 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         mStateCompleted[i] = 0;
     }
     overridesGameHostOptions = true;
-    addMessage(0x857669aa, false, 3);
+    addMessage(TutorialIds::WelcomeMessage, false, 3);
 
     if (!mEnabledForPlayer && getCompleted(0x183) == 0)
     {
-        addTask(static_cast<eTutorial_State>(0),
-                new InfoTask(this, 0x989a3f76, 0x3f9463f, true, 0,
+        addTask(TutorialState::Initial,
+                new InfoTask(this, TutorialIds::TutorialStartTask, TutorialIds::DefaultMessageGroup, true, 0,
                              static_cast<ETelemetryChallenges>(0)));
     }
     else
     {
-        addTask(static_cast<eTutorial_State>(0),
-                new ChoiceTask(this, 0x989a3f76, 0xdf59fc3f, true, 0, 1,
+        addTask(TutorialState::Initial,
+                new ChoiceTask(this, TutorialIds::TutorialStartTask, TutorialIds::TutorialStartChoice, true, 0, 1,
                                static_cast<eTutorial_CompletionAction>(3),
                                static_cast<ETelemetryChallenges>(1)));
     }
@@ -62,23 +166,23 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
     int controllerCompletionIdsA[4] = { 10, 9, 6, 5 };
     int controllerMappingsB[4] = { 24, 25, 26, 27 };
 
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0x68129f42, false, false, controllerMappingsA, 4,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerMove, false, false, controllerMappingsA, 4,
                                 controllerCompletionIdsA, 4, controllerMappingsB, 4));
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0xd6b36624, false, false, controllerMappingsB, 4,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerLookMove, false, false, controllerMappingsB, 4,
                                 controllerCompletionIdsA, 4, controllerMappingsA, 4));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0x24614e1f, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::MovementInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
 
     int mappingSingle32[1] = { 32 };
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0xe21ad07f, false, true, mappingSingle32, 1, NULL, 0, NULL,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerAction, false, true, mappingSingle32, 1, NULL, 0, NULL,
                                 0));
     int mappingSingle34[1] = { 34 };
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0xfa88ce3a, false, true, mappingSingle34, 1, NULL, 0, NULL,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerActionSecondary, false, true, mappingSingle34, 1, NULL, 0, NULL,
                                 0));
 
     Item* logPickupItems[8] = {
@@ -87,32 +191,32 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         Item::byBlock(Blocks::stripped_log_birch), Item::byBlock(Blocks::stripped_log_jungle),
         Item::byBlock(Blocks::stripped_log_oak), Item::byBlock(Blocks::stripped_log_spruce)
     };
-    addTask(static_cast<eTutorial_State>(0),
-            new PickupTask(logPickupItems, 8, 4, -1, this, 0xc76706b5, true, NULL, false, true,
+    addTask(TutorialState::Initial,
+            new PickupTask(logPickupItems, 8, 4, -1, this, TutorialIds::LogPickup, true, NULL, false, true,
                             true, NULL));
 
     int mappingsPair1[2] = { 35, 36 };
     int completionPair1[2] = { 2, 1 };
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0xd50ac0c8, false, false, mappingsPair1, 2, completionPair1,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerLook, false, false, mappingsPair1, 2, completionPair1,
                                 2, NULL, 0));
     int mappingSingle37[1] = { 37 };
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0x69b79ddf, false, false, mappingSingle37, 1, NULL, 0, NULL,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerJump, false, false, mappingSingle37, 1, NULL, 0, NULL,
                                 0));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new StateChangeTask(static_cast<eTutorial_State>(1), this, -1, false, NULL, false,
+    addTask(TutorialState::Initial,
+            new StateChangeTask(TutorialState::Controller, this, -1, false, NULL, false,
                                  true, true));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0x67613737, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::MovementLookInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0xd756c6a6, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::MovementForwardInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0x642c1bb4, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::InventoryInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
 
     Item* completeUsingFoodItems[15] = {
@@ -121,115 +225,115 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         Items::cookie,       Items::cookedBeef,  Items::beef,          Items::cookedChicken,
         Items::chicken,      Items::melon,        Items::rottenFlesh
     };
-    addTask(static_cast<eTutorial_State>(0),
-            new CompleteUsingItemTask(this, 0x355eb7d9, completeUsingFoodItems, 15, true));
+    addTask(TutorialState::Initial,
+            new CompleteUsingItemTask(this, TutorialIds::FoodUse, completeUsingFoodItems, 15, true));
 
     int mappingSingle40[1] = { 40 };
-    addTask(static_cast<eTutorial_State>(0),
-            new ControllerTask(this, 0xb5fcd4e7, false, false, mappingSingle40, 1, NULL, 0, NULL,
+    addTask(TutorialState::Initial,
+            new ControllerTask(this, TutorialIds::ControllerInventory, false, false, mappingSingle40, 1, NULL, 0, NULL,
                                 0));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 1,
+    addTask(TutorialState::Initial,
+            new ProgressFlagTask(this, &mTutorialStarted, 1,
                                   ProgressFlagTask::eProgressFlagAction_Set));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Item::byBlock(Blocks::planks), -1, 1, this, 0x4d449d7d, true, NULL,
+    addTask(TutorialState::Initial,
+            new CraftTask(Item::byBlock(Blocks::planks), -1, 1, this, TutorialIds::PlanksCraft, true, NULL,
                            false, true, true));
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Item::byBlock(Blocks::crafting_table), -1, 1, this, 0x2e35e925, true,
+    addTask(TutorialState::Initial,
+            new CraftTask(Item::byBlock(Blocks::crafting_table), -1, 1, this, TutorialIds::CraftingTableCraft, true,
                            NULL, false, true, true));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0xeae5d55e, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::CraftingBasicsInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0),
-            new UseItemTask(Item::byBlock(Blocks::crafting_table), this, 0xe42098c2, true, NULL,
+    addTask(TutorialState::Initial,
+            new UseItemTask(Item::byBlock(Blocks::crafting_table), this, TutorialIds::CraftingTableUseItem, true, NULL,
                              false, true, true));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0x88ac7bfd, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::CraftingTableUseInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0x79452ef8, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::CraftingInfoAdvanced, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0),
-            new InfoTask(this, 0x441c0545, 0x3f9463f, true, 0,
+    addTask(TutorialState::Initial,
+            new InfoTask(this, TutorialIds::CraftingTableInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0),
-            new ChoiceTask(this, 0x28c71b69, 0x791088b0, true, 0, 1,
+    addTask(TutorialState::Initial,
+            new ChoiceTask(this, TutorialIds::CraftingChoice, TutorialIds::CraftingChoiceFollowup, true, 0, 1,
                            static_cast<eTutorial_CompletionAction>(3),
                            static_cast<ETelemetryChallenges>(2)));
-    addTask(static_cast<eTutorial_State>(0),
-            new UseBlockTask(Blocks::crafting_table, this, 0x7de96d85, false, NULL, false, true,
+    addTask(TutorialState::Initial,
+            new UseBlockTask(Blocks::crafting_table, this, TutorialIds::CraftingTableUse, false, NULL, false, true,
                               true));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 2,
+    addTask(TutorialState::Initial,
+            new ProgressFlagTask(this, &mTutorialStarted, 2,
                                   ProgressFlagTask::eProgressFlagAction_Set));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Items::stick, -1, 1, this, 0x56bee93b, true, NULL, false, true, true));
+    addTask(TutorialState::Initial,
+            new CraftTask(Items::stick, -1, 1, this, TutorialIds::StickCraft, true, NULL, false, true, true));
 
     Item* shovelSetItems[5] = { Items::woodenShovel, Items::stoneShovel, Items::ironShovel,
                                  Items::goldenHorseArmor, Items::diamondShovel };
     int shovelSetAux[5] = { -1, -1, -1, -1, -1 };
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(shovelSetItems, shovelSetAux, 5, 1, this, 0xf9cc6772, true, NULL, false,
+    addTask(TutorialState::Initial,
+            new CraftTask(shovelSetItems, shovelSetAux, 5, 1, this, TutorialIds::ShovelSetCraft, true, NULL, false,
                            true, true));
 
     Item* axeSetItems[5] = { Items::woodenAxe, Items::stoneAxe, Items::ironAxe, Items::goldenAxe,
                               Items::diamondAxe };
     int axeSetAux[5] = { -1, -1, -1, -1, -1 };
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(axeSetItems, axeSetAux, 5, 1, this, 0xfac53756, true, NULL, false, true,
+    addTask(TutorialState::Initial,
+            new CraftTask(axeSetItems, axeSetAux, 5, 1, this, TutorialIds::AxeSetCraft, true, NULL, false, true,
                            true));
 
     Item* pickaxeSetItems[5] = { Items::woodenPickaxe, Items::stonePickaxe, Items::ironPickaxe,
                                   Items::goldenPickaxe, Items::diamondPickaxe };
     int pickaxeSetAux[5] = { -1, -1, -1, -1, -1 };
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(pickaxeSetItems, pickaxeSetAux, 5, 1, this, 0x19cdd9a4, true, NULL,
+    addTask(TutorialState::Initial,
+            new CraftTask(pickaxeSetItems, pickaxeSetAux, 5, 1, this, TutorialIds::PickaxeSetCraft, true, NULL,
                            false, true, true));
 
     Item* cobblestonePickupItems[1] = { Item::byBlock(Blocks::cobblestone) };
-    addTask(static_cast<eTutorial_State>(0),
-            new PickupTask(cobblestonePickupItems, 1, 8, -1, this, 0x8b96afee, true, NULL, false,
+    addTask(TutorialState::Initial,
+            new PickupTask(cobblestonePickupItems, 1, 8, -1, this, TutorialIds::CobblestonePickup, true, NULL, false,
                             true, true, NULL));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 4,
+    addTask(TutorialState::Initial,
+            new ProgressFlagTask(this, &mTutorialStarted, 4,
                                   ProgressFlagTask::eProgressFlagAction_Set));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Item::byBlock(Blocks::furnace), -1, 1, this, 0xe7cad766, true, NULL,
+    addTask(TutorialState::Initial,
+            new CraftTask(Item::byBlock(Blocks::furnace), -1, 1, this, TutorialIds::FurnaceCraft, true, NULL,
                            false, true, true));
-    addTask(static_cast<eTutorial_State>(0),
-            new UseBlockTask(Blocks::furnace, this, 0xf1d4d67e, false, NULL, false, true, true));
+    addTask(TutorialState::Initial,
+            new UseBlockTask(Blocks::furnace, this, TutorialIds::FurnaceUse, false, NULL, false, true, true));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 8,
+    addTask(TutorialState::Initial,
+            new ProgressFlagTask(this, &mTutorialStarted, 8,
                                   ProgressFlagTask::eProgressFlagAction_Set));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new StateChangeTask(static_cast<eTutorial_State>(4), this, -1, false, NULL, false,
+    addTask(TutorialState::Initial,
+            new StateChangeTask(TutorialState::Furnace, this, -1, false, NULL, false,
                                  true, true));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Items::coal, -1, 1, this, 0xf485454f, true, NULL, false, true, true));
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Item::byBlock(Blocks::glass), -1, 1, this, 0x5f29384c, true, NULL,
+    addTask(TutorialState::Initial,
+            new CraftTask(Items::coal, -1, 1, this, TutorialIds::CoalCraft, true, NULL, false, true, true));
+    addTask(TutorialState::Initial,
+            new CraftTask(Item::byBlock(Blocks::glass), -1, 1, this, TutorialIds::GlassCraft, true, NULL,
                            false, true, true));
 
     Item* doorSetItems[6] = { Items::woodenDoor, Items::acaciaDoor, Items::birchDoor,
                                Items::darkOakDoor, Items::jungleDoor, Items::spruceDoor };
     int doorSetAux[6] = { -1, -1, -1, -1, -1, -1 };
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(doorSetItems, doorSetAux, 6, 1, this, 0x74135c27, true, NULL, false,
+    addTask(TutorialState::Initial,
+            new CraftTask(doorSetItems, doorSetAux, 6, 1, this, TutorialIds::DoorSetCraft, true, NULL, false,
                            true, true));
-    addTask(static_cast<eTutorial_State>(0),
-            new UseItemTask(doorSetItems, 6, this, 0xf39f40bf, false, NULL, false, true, true));
+    addTask(TutorialState::Initial,
+            new UseItemTask(doorSetItems, 6, this, TutorialIds::DoorUse, false, NULL, false, true, true));
 
-    addTask(static_cast<eTutorial_State>(0),
-            new CraftTask(Item::byBlock(Blocks::torch), -1, 1, this, 0xd15ac, true, NULL, false,
+    addTask(TutorialState::Initial,
+            new CraftTask(Item::byBlock(Blocks::torch), -1, 1, this, TutorialIds::TorchCraft, true, NULL, false,
                            true, true));
 
     if (gApp.getGameRuleDefinitions() != NULL)
@@ -240,137 +344,137 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
             std::vector<TutorialConstraint*>* tutorialAreaConstraints =
                 new std::vector<TutorialConstraint*>();
             tutorialAreaConstraints->push_back(new AreaConstraint(
-                0x53717f71, areaTutorial->mMinX, areaTutorial->mMinY, areaTutorial->mMinZ,
+                TutorialIds::TutorialArea, areaTutorial->mMinX, areaTutorial->mMinY, areaTutorial->mMinZ,
                 areaTutorial->mMaxX, areaTutorial->mMaxY, areaTutorial->mMaxZ, true, true, false,
                 2));
-            addTask(static_cast<eTutorial_State>(0),
-                    new AreaTask(static_cast<eTutorial_State>(0), this, tutorialAreaConstraints,
+            addTask(TutorialState::Initial,
+                    new AreaTask(TutorialState::Initial, this, tutorialAreaConstraints,
                                  -1, AreaTask::CompletionStateOnStateChange));
         }
     }
 
     ProcedureCompoundTask* compound0 = new ProcedureCompoundTask(this);
-    compound0->AddTask(new InfoTask(this, 0x857669aa, 0x3f9463f, true, 0,
+    compound0->AddTask(new InfoTask(this, TutorialIds::WelcomeMessage, TutorialIds::DefaultMessageGroup, true, 0,
                                      static_cast<ETelemetryChallenges>(3)));
-    compound0->AddTask(new InfoTask(this, 0x59983743, 0x3f9463f, true, 0,
+    compound0->AddTask(new InfoTask(this, TutorialIds::CraftingInfo, TutorialIds::DefaultMessageGroup, true, 0,
                                      static_cast<ETelemetryChallenges>(0)));
-    compound0->AddTask(new InfoTask(this, 0xacd522e4, 0x3f9463f, true, 0,
+    compound0->AddTask(new InfoTask(this, TutorialIds::CraftingTableInfoAdvanced, TutorialIds::DefaultMessageGroup, true, 0,
                                      static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0), compound0);
+    addTask(TutorialState::Initial, compound0);
 
-    addTask(static_cast<eTutorial_State>(1),
+    addTask(TutorialState::Controller,
             new FullTutorialActiveTask(this, static_cast<eTutorial_CompletionAction>(1)));
-    addTask(static_cast<eTutorial_State>(1),
-            new InfoTask(this, 0x3f434d73, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
+    addTask(TutorialState::Controller,
+            new InfoTask(this, TutorialIds::ChallengeIntroInfo, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
 
-    addTask(static_cast<eTutorial_State>(2),
+    addTask(TutorialState::Crafting,
             new FullTutorialActiveTask(this, static_cast<eTutorial_CompletionAction>(1)));
-    addTask(static_cast<eTutorial_State>(2),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 1,
+    addTask(TutorialState::Crafting,
+            new ProgressFlagTask(this, &mTutorialStarted, 1,
                                   ProgressFlagTask::eProgressFlagAction_Check));
-    addTask(static_cast<eTutorial_State>(2),
+    addTask(TutorialState::Crafting,
             new FullTutorialActiveTask(this, static_cast<eTutorial_CompletionAction>(1)));
-    addTask(static_cast<eTutorial_State>(2),
-            new CraftTask(Item::byBlock(Blocks::planks), -1, 1, this, 0x61c2f830, true, NULL,
+    addTask(TutorialState::Crafting,
+            new CraftTask(Item::byBlock(Blocks::planks), -1, 1, this, TutorialIds::AdditionalPlanksCraft, true, NULL,
                            false, true, true));
 
     ProcedureCompoundTask* compound1 = new ProcedureCompoundTask(this);
-    compound1->AddTask(new UICraftingTask(this, 0xe4451189, Recipe::eGroupType_Structures, false,
+    compound1->AddTask(new UICraftingTask(this, TutorialIds::StructuresUi, Recipe::eGroupType_Structures, false,
                                            NULL, false, true, true));
-    compound1->AddTask(new UICraftingTask(this, 0xc8a27304, Item::byBlock(Blocks::crafting_table),
+    compound1->AddTask(new UICraftingTask(this, TutorialIds::CraftingTableUi, Item::byBlock(Blocks::crafting_table),
                                            false, NULL, false, true, true));
     compound1->AddTask(new CraftTask(Item::byBlock(Blocks::crafting_table), -1, 1, this,
-                                      0x2e35e925, true, NULL, false, true, true));
-    addTask(static_cast<eTutorial_State>(2), compound1);
+                                      TutorialIds::CraftingTableCraft, true, NULL, false, true, true));
+    addTask(TutorialState::Crafting, compound1);
 
-    addTask(static_cast<eTutorial_State>(2),
-            new InfoTask(this, 0x12eeee51, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
+    addTask(TutorialState::Crafting,
+            new InfoTask(this, TutorialIds::SurvivalBasicsInfo, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
 
-    addTask(static_cast<eTutorial_State>(3),
+    addTask(TutorialState::Tools,
             new FullTutorialActiveTask(this, static_cast<eTutorial_CompletionAction>(1)));
-    addTask(static_cast<eTutorial_State>(3),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 2,
+    addTask(TutorialState::Tools,
+            new ProgressFlagTask(this, &mTutorialStarted, 2,
                                   ProgressFlagTask::eProgressFlagAction_Check));
-    addTask(static_cast<eTutorial_State>(3),
-            new CraftTask(Items::stick, -1, 1, this, 0x56bee93b, true, NULL, false, true, true));
+    addTask(TutorialState::Tools,
+            new CraftTask(Items::stick, -1, 1, this, TutorialIds::StickCraft, true, NULL, false, true, true));
 
     ProcedureCompoundTask* compound2 = new ProcedureCompoundTask(this);
-    compound2->AddTask(new UICraftingTask(this, 0xb2a0ad4c, Recipe::eGroupType_Tools, true, NULL,
+    compound2->AddTask(new UICraftingTask(this, TutorialIds::ToolsUi, Recipe::eGroupType_Tools, true, NULL,
                                            false, true, true));
-    compound2->AddTask(new UICraftingTask(this, 0x76c32bbb, Items::woodenShovel, false, NULL,
+    compound2->AddTask(new UICraftingTask(this, TutorialIds::WoodenShovelUi, Items::woodenShovel, false, NULL,
                                            false, true, true));
-    compound2->AddTask(new CraftTask(shovelSetItems, shovelSetAux, 5, 1, this, 0xf9cc6772, true,
+    compound2->AddTask(new CraftTask(shovelSetItems, shovelSetAux, 5, 1, this, TutorialIds::ShovelSetCraft, true,
                                       NULL, false, true, true));
-    addTask(static_cast<eTutorial_State>(3), compound2);
+    addTask(TutorialState::Tools, compound2);
 
-    addTask(static_cast<eTutorial_State>(3),
-            new CraftTask(axeSetItems, axeSetAux, 5, 1, this, 0xfac53756, true, NULL, false, true,
+    addTask(TutorialState::Tools,
+            new CraftTask(axeSetItems, axeSetAux, 5, 1, this, TutorialIds::AxeSetCraft, true, NULL, false, true,
                            true));
-    addTask(static_cast<eTutorial_State>(3),
-            new CraftTask(pickaxeSetItems, pickaxeSetAux, 5, 1, this, 0x19cdd9a4, true, NULL,
+    addTask(TutorialState::Tools,
+            new CraftTask(pickaxeSetItems, pickaxeSetAux, 5, 1, this, TutorialIds::PickaxeSetCraft, true, NULL,
                            false, true, true));
-    addTask(static_cast<eTutorial_State>(3),
-            new InfoTask(this, 0x63c8c01a, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(3),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 4,
+    addTask(TutorialState::Tools,
+            new InfoTask(this, TutorialIds::ToolBasicsInfo, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
+    addTask(TutorialState::Tools,
+            new ProgressFlagTask(this, &mTutorialStarted, 4,
                                   ProgressFlagTask::eProgressFlagAction_Check));
-    addTask(static_cast<eTutorial_State>(3),
-            new CraftTask(Item::byBlock(Blocks::furnace), -1, 1, this, 0x7513d4c3, true, NULL,
+    addTask(TutorialState::Tools,
+            new CraftTask(Item::byBlock(Blocks::furnace), -1, 1, this, TutorialIds::FurnaceCraftCreative, true, NULL,
                            false, true, true));
-    addTask(static_cast<eTutorial_State>(3),
-            new InfoTask(this, 0x5fce503f, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(3),
-            new CraftTask(doorSetItems, doorSetAux, 6, 1, this, 0x74135c27, true, NULL, false,
+    addTask(TutorialState::Tools,
+            new InfoTask(this, TutorialIds::SmeltingBasicsInfo, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
+    addTask(TutorialState::Tools,
+            new CraftTask(doorSetItems, doorSetAux, 6, 1, this, TutorialIds::DoorSetCraft, true, NULL, false,
                            true, true));
-    addTask(static_cast<eTutorial_State>(3),
-            new CraftTask(Item::byBlock(Blocks::torch), -1, 1, this, 0xd15ac, true, NULL, false,
+    addTask(TutorialState::Tools,
+            new CraftTask(Item::byBlock(Blocks::torch), -1, 1, this, TutorialIds::TorchCraft, true, NULL, false,
                            true, true));
 
-    addTask(static_cast<eTutorial_State>(0x25),
+    addTask(TutorialState::SurvivalCrafting,
             new FullTutorialActiveTask(this, static_cast<eTutorial_CompletionAction>(1)));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 2,
+    addTask(TutorialState::SurvivalCrafting,
+            new ProgressFlagTask(this, &mTutorialStarted, 2,
                                   ProgressFlagTask::eProgressFlagAction_Check));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(Items::stick, -1, 1, this, 0x56bee93b, true, NULL, false, true, true));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(shovelSetItems, shovelSetAux, 5, 1, this, 0xf9cc6772, true, NULL, false,
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(Items::stick, -1, 1, this, TutorialIds::StickCraft, true, NULL, false, true, true));
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(shovelSetItems, shovelSetAux, 5, 1, this, TutorialIds::ShovelSetCraft, true, NULL, false,
                            true, true));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(axeSetItems, axeSetAux, 5, 1, this, 0xfac53756, true, NULL, false, true,
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(axeSetItems, axeSetAux, 5, 1, this, TutorialIds::AxeSetCraft, true, NULL, false, true,
                            true));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(pickaxeSetItems, pickaxeSetAux, 5, 1, this, 0x19cdd9a4, true, NULL,
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(pickaxeSetItems, pickaxeSetAux, 5, 1, this, TutorialIds::PickaxeSetCraft, true, NULL,
                            false, true, true));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new InfoTask(this, 0x63c8c01a, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 4,
+    addTask(TutorialState::SurvivalCrafting,
+            new InfoTask(this, TutorialIds::ToolBasicsInfo, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
+    addTask(TutorialState::SurvivalCrafting,
+            new ProgressFlagTask(this, &mTutorialStarted, 4,
                                   ProgressFlagTask::eProgressFlagAction_Check));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(Item::byBlock(Blocks::furnace), -1, 1, this, 0x7513d4c3, true, NULL,
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(Item::byBlock(Blocks::furnace), -1, 1, this, TutorialIds::FurnaceCraftCreative, true, NULL,
                            false, true, true));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new InfoTask(this, 0x5fce503f, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(doorSetItems, doorSetAux, 6, 1, this, 0x74135c27, true, NULL, false,
+    addTask(TutorialState::SurvivalCrafting,
+            new InfoTask(this, TutorialIds::SmeltingBasicsInfo, -1, false, 1, static_cast<ETelemetryChallenges>(0)));
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(doorSetItems, doorSetAux, 6, 1, this, TutorialIds::DoorSetCraft, true, NULL, false,
                            true, true));
-    addTask(static_cast<eTutorial_State>(0x25),
-            new CraftTask(Item::byBlock(Blocks::torch), -1, 1, this, 0xd15ac, true, NULL, false,
+    addTask(TutorialState::SurvivalCrafting,
+            new CraftTask(Item::byBlock(Blocks::torch), -1, 1, this, TutorialIds::TorchCraft, true, NULL, false,
                            true, true));
 
-    addTask(static_cast<eTutorial_State>(4),
+    addTask(TutorialState::Furnace,
             new FullTutorialActiveTask(this, static_cast<eTutorial_CompletionAction>(1)));
-    addTask(static_cast<eTutorial_State>(4),
-            new ProgressFlagTask(this, reinterpret_cast<char*>(&mTutorialStarted), 8,
+    addTask(TutorialState::Furnace,
+            new ProgressFlagTask(this, &mTutorialStarted, 8,
                                   ProgressFlagTask::eProgressFlagAction_Check));
-    addTask(static_cast<eTutorial_State>(4),
-            new CraftTask(Items::coal, -1, 1, this, 0xb9ad8818, true, NULL, false, true, true));
-    addTask(static_cast<eTutorial_State>(4),
-            new InfoTask(this, 0x4c729fc4, 0x3f9463f, true, 0,
+    addTask(TutorialState::Furnace,
+            new CraftTask(Items::coal, -1, 1, this, TutorialIds::CoalCraftCreative, true, NULL, false, true, true));
+    addTask(TutorialState::Furnace,
+            new InfoTask(this, TutorialIds::SmeltingInfo, TutorialIds::DefaultMessageGroup, true, 0,
                          static_cast<ETelemetryChallenges>(0)));
-    addTask(static_cast<eTutorial_State>(4),
-            new CraftTask(Item::byBlock(Blocks::glass), -1, 1, this, 0xa9ca4693, true, NULL,
+    addTask(TutorialState::Furnace,
+            new CraftTask(Item::byBlock(Blocks::glass), -1, 1, this, TutorialIds::GlassCraftCreative, true, NULL,
                            false, true, true));
 
     if (gApp.getGameRuleDefinitions() != NULL)
@@ -378,10 +482,10 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         AABB* areaMinecart = gApp.getGameRuleDefinitions()->getNamedArea(L"minecartArea");
         if (areaMinecart != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(5), 0x7842d528, areaMinecart->mMinX,
+                                 TutorialState::Initial,
+                                 TutorialState::Minecart, TutorialIds::MinecartArea, areaMinecart->mMinX,
                                  areaMinecart->mMinY, areaMinecart->mMinZ, areaMinecart->mMaxX,
                                  areaMinecart->mMaxY, areaMinecart->mMaxZ, true, true));
         }
@@ -392,10 +496,10 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         AABB* areaBoat = gApp.getGameRuleDefinitions()->getNamedArea(L"boatArea");
         if (areaBoat != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(6), 0xb11a0f6b, areaBoat->mMinX,
+                                 TutorialState::Initial,
+                                 TutorialState::Boat, TutorialIds::BoatArea, areaBoat->mMinX,
                                  areaBoat->mMinY, areaBoat->mMinZ, areaBoat->mMaxX,
                                  areaBoat->mMaxY, areaBoat->mMaxZ, true, true));
         }
@@ -406,10 +510,10 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         AABB* areaFishing = gApp.getGameRuleDefinitions()->getNamedArea(L"fishingArea");
         if (areaFishing != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(7), 0x7f2df94f, areaFishing->mMinX,
+                                 TutorialState::Initial,
+                                 TutorialState::Fishing, TutorialIds::FishingArea, areaFishing->mMinX,
                                  areaFishing->mMinY, areaFishing->mMinZ, areaFishing->mMaxX,
                                  areaFishing->mMaxY, areaFishing->mMaxZ, true, true));
         }
@@ -421,10 +525,10 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
             gApp.getGameRuleDefinitions()->getNamedArea(L"pistonBridgeArea");
         if (areaPistonBridge != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(-1), 0xf258c0ad,
+                                 TutorialState::Initial,
+                                 TutorialState::Invalid, TutorialIds::PistonBridgeArea,
                                  areaPistonBridge->mMinX, areaPistonBridge->mMinY,
                                  areaPistonBridge->mMinZ, areaPistonBridge->mMaxX,
                                  areaPistonBridge->mMaxY, areaPistonBridge->mMaxZ, true, true));
@@ -441,30 +545,30 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
 
         if (areaEmeraldElytra != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(-1), 0x6fcb60c3,
+                                 TutorialState::Initial,
+                                 TutorialState::Invalid, TutorialIds::ElytraArea,
                                  areaEmeraldElytra->mMinX, areaEmeraldElytra->mMinY,
                                  areaEmeraldElytra->mMinZ, areaEmeraldElytra->mMaxX,
                                  areaEmeraldElytra->mMaxY, areaEmeraldElytra->mMaxZ, true, true));
         }
         if (areaGoldElytra != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(-1), 0x6fcb60c3,
+                                 TutorialState::Initial,
+                                 TutorialState::Invalid, TutorialIds::ElytraArea,
                                  areaGoldElytra->mMinX, areaGoldElytra->mMinY,
                                  areaGoldElytra->mMinZ, areaGoldElytra->mMaxX,
                                  areaGoldElytra->mMaxY, areaGoldElytra->mMaxZ, true, true));
         }
         if (areaDiamondElytra != NULL)
         {
-            addHint(static_cast<eTutorial_State>(0),
+            addHint(TutorialState::Initial,
                     new AreaHint(static_cast<eTutorial_Hint>(0x2c), this,
-                                 static_cast<eTutorial_State>(0),
-                                 static_cast<eTutorial_State>(-1), 0x6fcb60c3,
+                                 TutorialState::Initial,
+                                 TutorialState::Invalid, TutorialIds::ElytraArea,
                                  areaDiamondElytra->mMinX, areaDiamondElytra->mMinY,
                                  areaDiamondElytra->mMinZ, areaDiamondElytra->mMaxX,
                                  areaDiamondElytra->mMaxY, areaDiamondElytra->mMaxZ, true, true));
@@ -476,31 +580,31 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
         AABB* areaCreative = gApp.getGameRuleDefinitions()->getNamedArea(L"creativeArea");
         if (areaCreative != NULL)
         {
-            eTutorial_State creativeExitStates[1] = { static_cast<eTutorial_State>(0) };
+            eTutorial_State creativeExitStates[1] = { TutorialState::Initial };
             gameModeConstraints->AddGlobalConstraint(new ChangeStateConstraint(
-                this, static_cast<eTutorial_State>(0x10), creativeExitStates, 1,
+                this, TutorialState::Creative, creativeExitStates, 1,
                 areaCreative->mMinX, areaCreative->mMinY, areaCreative->mMinZ,
                 areaCreative->mMaxX, areaCreative->mMaxY, areaCreative->mMaxZ, true, true,
                 GameType::CREATIVE));
 
-            addTask(static_cast<eTutorial_State>(0x10),
-                    new ChoiceTask(this, 0x4a0984b8, 0xd1ebba23, true, 0, 1,
+            addTask(TutorialState::Creative,
+                    new ChoiceTask(this, TutorialIds::CreativeModeChoice, TutorialIds::CreativeModeChoiceFollowup, true, 0, 1,
                                    static_cast<eTutorial_CompletionAction>(3),
                                    static_cast<ETelemetryChallenges>(0xe)));
-            addTask(static_cast<eTutorial_State>(0x10),
-                    new InfoTask(this, 0xc93a06c2, 0x3f9463f, true, 0,
+            addTask(TutorialState::Creative,
+                    new InfoTask(this, TutorialIds::CreativeInventoryInfo, TutorialIds::DefaultMessageGroup, true, 0,
                                  static_cast<ETelemetryChallenges>(0)));
-            addTask(static_cast<eTutorial_State>(0x10),
-                    new InfoTask(this, 0x6064ebd6, 0x3f9463f, true, 0,
+            addTask(TutorialState::Creative,
+                    new InfoTask(this, TutorialIds::CreativeInfo, TutorialIds::DefaultMessageGroup, true, 0,
                                  static_cast<ETelemetryChallenges>(0)));
 
             int creativeMapping[1] = { 40 };
-            addTask(static_cast<eTutorial_State>(0x10),
-                    new ControllerTask(this, 0xbeac2f00, false, false, creativeMapping, 1, NULL,
+            addTask(TutorialState::Creative,
+                    new ControllerTask(this, TutorialIds::CreativeController, false, false, creativeMapping, 1, NULL,
                                         0, NULL, 0));
 
-            addTask(static_cast<eTutorial_State>(0x10),
-                    new StateChangeTask(static_cast<eTutorial_State>(0xe), this, -1, false, NULL,
+            addTask(TutorialState::Creative,
+                    new StateChangeTask(TutorialState::CreativeCompletion, this, -1, false, NULL,
                                          false, true, true));
 
             ProcedureCompoundTask* compound3 = new ProcedureCompoundTask(this);
@@ -515,46 +619,46 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
                     -1, areaCreativeExit->mMinX, areaCreativeExit->mMinY,
                     areaCreativeExit->mMinZ, areaCreativeExit->mMaxX, areaCreativeExit->mMaxY,
                     areaCreativeExit->mMaxZ, true, false, false, 2));
-                compound3->AddTask(new AreaTask(static_cast<eTutorial_State>(0x10), this,
-                                                 creativeExitConstraints, 0xe4341f71,
+                compound3->AddTask(new AreaTask(TutorialState::Creative, this,
+                                                 creativeExitConstraints, TutorialIds::CreativeExitArea,
                                                  AreaTask::CompletionStateOnConstraints));
             }
 
             std::vector<TutorialConstraint*>* creativeAreaConstraints =
                 new std::vector<TutorialConstraint*>();
             creativeAreaConstraints->push_back(new AreaConstraint(
-                0x53717f71, areaCreative->mMinX, areaCreative->mMinY, areaCreative->mMinZ,
+                TutorialIds::TutorialArea, areaCreative->mMinX, areaCreative->mMinY, areaCreative->mMinZ,
                 areaCreative->mMaxX, areaCreative->mMaxY, areaCreative->mMaxZ, true, true, false,
                 2));
-            compound3->AddTask(new AreaTask(static_cast<eTutorial_State>(0x10), this,
+            compound3->AddTask(new AreaTask(TutorialState::Creative, this,
                                              creativeAreaConstraints, -1,
                                              AreaTask::CompletionStateOnStateChange));
 
-            compound3->AddTask(new InfoTask(this, 0xa77b2ab0, 0x3f9463f, true, 0,
+            compound3->AddTask(new InfoTask(this, TutorialIds::CreativeExitInfo, TutorialIds::DefaultMessageGroup, true, 0,
                                              static_cast<ETelemetryChallenges>(0)));
 
-            addTask(static_cast<eTutorial_State>(0x10), compound3);
+            addTask(TutorialState::Creative, compound3);
         }
     }
 
-    AddTutorialArea(static_cast<eTutorial_State>(0xc));
-    AddTutorialArea(static_cast<eTutorial_State>(0xd));
-    AddTutorialArea(static_cast<eTutorial_State>(0x11));
-    AddTutorialArea(static_cast<eTutorial_State>(0x13));
-    AddTutorialArea(static_cast<eTutorial_State>(0x1a));
-    AddTutorialArea(static_cast<eTutorial_State>(0x18));
-    AddTutorialArea(static_cast<eTutorial_State>(0x23));
-    AddTutorialArea(static_cast<eTutorial_State>(0x21));
-    AddTutorialArea(static_cast<eTutorial_State>(0x1f));
-    AddTutorialArea(static_cast<eTutorial_State>(0x1c));
-    AddTutorialArea(static_cast<eTutorial_State>(0x15));
-    AddTutorialArea(static_cast<eTutorial_State>(0x16));
-    AddTutorialArea(static_cast<eTutorial_State>(0x17));
-    AddTutorialArea(static_cast<eTutorial_State>(0x26));
-    AddTutorialArea(static_cast<eTutorial_State>(0x27));
-    AddTutorialArea(static_cast<eTutorial_State>(0x28));
-    AddTutorialArea(static_cast<eTutorial_State>(0x2a));
-    AddTutorialArea(static_cast<eTutorial_State>(0x2b));
+    AddTutorialArea(TutorialState::Nether);
+    AddTutorialArea(TutorialState::End);
+    AddTutorialArea(TutorialState::AreaState11);
+    AddTutorialArea(TutorialState::AreaState13);
+    AddTutorialArea(TutorialState::AreaState1A);
+    AddTutorialArea(TutorialState::AreaState18);
+    AddTutorialArea(TutorialState::AreaState23);
+    AddTutorialArea(TutorialState::AreaState21);
+    AddTutorialArea(TutorialState::AreaState1F);
+    AddTutorialArea(TutorialState::AreaState1C);
+    AddTutorialArea(TutorialState::AreaState15);
+    AddTutorialArea(TutorialState::AreaState16);
+    AddTutorialArea(TutorialState::AreaState17);
+    AddTutorialArea(TutorialState::AreaState26);
+    AddTutorialArea(TutorialState::AreaState27);
+    AddTutorialArea(TutorialState::AreaState28);
+    AddTutorialArea(TutorialState::AreaState2A);
+    AddTutorialArea(TutorialState::AreaState2B);
 }
 
 FullTutorial::~FullTutorial()
@@ -604,7 +708,7 @@ void FullTutorial::PopulateChest(eTutorial_State state)
         int z;
         container->GetPos(x, y, z);
 
-        if (state == static_cast<eTutorial_State>(-2) ||
+        if (state == TutorialState::Completed ||
             gameModeConstraints->InConstraintArea(Vec3::newTemp(x, y, z),
                                                   static_cast<int>(state)))
         {
