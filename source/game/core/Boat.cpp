@@ -20,6 +20,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/entity/mob/Animal.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
@@ -90,23 +91,23 @@ Boat::~Boat()
 
 void Boat::staticCtor()
 {
-    DATA_STATUS = SynchedEntityData::defineId<int>(0x8000008ULL, 0x8000000ULL,
+    DATA_STATUS = SynchedEntityData::defineId<int>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                     EntityDataSerializers::INT);
-    DATA_HURT_TIME = SynchedEntityData::defineId<int>(0x8000008ULL, 0x8000000ULL,
+    DATA_HURT_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                       EntityDataSerializers::INT);
-    sBoatDataHurtDir = SynchedEntityData::defineId<int>(0x8000008ULL, 0x8000000ULL,
+    sBoatDataHurtDir = SynchedEntityData::defineId<int>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                          EntityDataSerializers::INT);
-    DATA_DAMAGE = SynchedEntityData::defineId<float>(0x8000008ULL, 0x8000000ULL,
+    DATA_DAMAGE = SynchedEntityData::defineId<float>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                       EntityDataSerializers::FLOAT);
-    DATA_TYPE = SynchedEntityData::defineId<int>(0x8000008ULL, 0x8000000ULL,
+    DATA_TYPE = SynchedEntityData::defineId<int>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                   EntityDataSerializers::INT);
-    DATA_PADDLE_LEFT = SynchedEntityData::defineId<bool>(0x8000008ULL, 0x8000000ULL,
+    DATA_PADDLE_LEFT = SynchedEntityData::defineId<bool>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                           EntityDataSerializers::BOOLEAN);
-    DATA_PADDLE_RIGHT = SynchedEntityData::defineId<bool>(0x8000008ULL, 0x8000000ULL,
+    DATA_PADDLE_RIGHT = SynchedEntityData::defineId<bool>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                            EntityDataSerializers::BOOLEAN);
-    DATA_BUBBLE_TIME = SynchedEntityData::defineId<int>(0x8000008ULL, 0x8000000ULL,
+    DATA_BUBBLE_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                          EntityDataSerializers::INT);
-    DATA_SINKING = SynchedEntityData::defineId<bool>(0x8000008ULL, 0x8000000ULL,
+    DATA_SINKING = SynchedEntityData::defineId<bool>(ENTITY_TYPE_BOAT, ENTITY_TYPE_ENTITY,
                                                       EntityDataSerializers::BOOLEAN);
 }
 
@@ -385,8 +386,7 @@ int Boat::getStatus()
     int status = isUnderwater();
     if (status != 3)
     {
-        mWaterLevel =
-            *reinterpret_cast<double*>(reinterpret_cast<char*>(mLevel) + 0x20);
+        mWaterLevel = static_cast<double>(mLevel->getSeaLevel());
         return status;
     }
     if (checkInWater())
@@ -705,7 +705,7 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
     {
         if (indexOf(*passengers, passenger) != 0)
             lateralOffset = -0.6000000238418579;
-        if ((passenger->GetType() & 0x000000000D680000ULL) == 0x000000000D680000ULL)
+        if ((passenger->GetType() & Animal::ENTITY_TYPE_ANIMAL) == Animal::ENTITY_TYPE_ANIMAL)
             lateralOffset += 0.20000000298023224;
     }
 
@@ -720,18 +720,11 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
 
     clampRotation(passenger);
 
-    if ((passenger->GetType() & 0x000000000D680000ULL) == 0x000000000D680000ULL
+    if ((passenger->GetType() & Animal::ENTITY_TYPE_ANIMAL) == Animal::ENTITY_TYPE_ANIMAL
         && !passengers->empty() && passengers->size() > 1)
     {
         const unsigned int bodyRotAngle = (passenger->getId() & 1) ? 270u : 90u;
-        union
-        {
-            unsigned long long u;
-            double d;
-        } bodyRotPair;
-        bodyRotPair.u = (static_cast<unsigned long long>(0x43300000u) << 32)
-                      | static_cast<unsigned int>(bodyRotAngle ^ 0x80000000u);
-        const float bodyRotOffset = static_cast<float>(bodyRotPair.d - 176.0);
+        const float bodyRotOffset = static_cast<float>(bodyRotAngle) - 176.0f;
 
         boost::shared_ptr<Animal> animal = boost::static_pointer_cast<Animal>(passenger);
         animal->setYBodyRot(animal->mYBodyRot + bodyRotOffset);
@@ -805,26 +798,26 @@ bool Boat::interact(const boost::shared_ptr<Player>& player, InteractionHand::EI
 }
 unsigned int Boat::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x1a4)
+    if (tooltipData.m_pItemInstance->getItem() == Items::lead)
     {
         if (!isLeashed())
-            return 0xa1b34a96U;
+            return Wolf::TOOLTIP_LEASH;
 
         if (isLeashedToPlayer(tooltipData.m_pPlayer))
-            return 0x551269b5U;
+            return Wolf::TOOLTIP_UNLEASH;
     }
 
     if (getPassengers()->size() < 2)
     {
         if (testInteract(tooltipData.m_pPlayer))
-            return 0xec8ece8aU;
+            return static_cast<unsigned int>(TOOLTIP_BOARD);
     }
 
     return 0xffffffffU;
 }
 unsigned int Boat::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_bAllowedToInteract ? 0x5fb7a25aU : 0xffffffffU;
+    return tooltipData.m_bAllowedToInteract ? TOOLTIP_HIT_ALLOWED : 0xffffffffU;
 }
 void Boat::checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos)
 {

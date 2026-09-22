@@ -25,7 +25,7 @@ void Giant::create(Level* level)
 
 void Giant::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, 0x5D540042ULL);
 }
 
 double Giant::getEyeHeight()

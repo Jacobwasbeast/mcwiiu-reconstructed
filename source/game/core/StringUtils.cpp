@@ -95,3 +95,15 @@ void makeReplacements(const boost::unordered_map<std::wstring, std::wstring>& re
 void toUtf8(const std::wstring& text, char** output, unsigned int& length)
 {
 }
+
+bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second)
+{
+    return toLower(first) == toLower(second);
+}
+
+std::wstring escapeXML(const std::wstring& text)
+{
+    std::wstring result = replaceAll(text, L"&", L"&amp;");
+    result = replaceAll(result, L"<", L"&lt;");
+    return replaceAll(result, L">", L"&gt;");
+}

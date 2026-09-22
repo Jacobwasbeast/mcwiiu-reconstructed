@@ -6,6 +6,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockSource.hpp"
 #include "game/world/block/DispenserBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/PumpkinBlock.hpp"
 

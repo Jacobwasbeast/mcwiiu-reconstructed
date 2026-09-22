@@ -28,52 +28,43 @@ MG04ScoreboardLayout::~MG04ScoreboardLayout()
 
 namespace
 {
-int playerInfoInt(const PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
-}
-
-int& playerInfoIntMut(PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(info) + offset);
-}
 }
 
 bool MG04ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
     int firstScore =
-        playerInfoInt(first, 0x34) + playerInfoInt(first, 0x3c) + playerInfoInt(first, 0x40) * 2;
+        first->damageReceived + first->totalJumps + first->deaths * 2;
     int secondScore =
-        playerInfoInt(second, 0x34) + playerInfoInt(second, 0x3c) + playerInfoInt(second, 0x40) * 2;
+        second->damageReceived + second->totalJumps + second->deaths * 2;
     if (firstScore != secondScore)
     {
         return secondScore < firstScore;
     }
-    if (playerInfoInt(first, 0x40) != playerInfoInt(second, 0x40))
+    if (first->deaths != second->deaths)
     {
-        return playerInfoInt(second, 0x40) < playerInfoInt(first, 0x40);
+        return second->deaths < first->deaths;
     }
-    if (playerInfoInt(first, 0x3c) != playerInfoInt(second, 0x3c))
+    if (first->totalJumps != second->totalJumps)
     {
-        return playerInfoInt(second, 0x3c) < playerInfoInt(first, 0x3c);
+        return second->totalJumps < first->totalJumps;
     }
     int firstValue =
-        playerInfoInt(first, 0x24) + playerInfoInt(first, 0x2c) + playerInfoInt(first, 0x30) * 2;
+        first->roundsWon + first->totalLifeSpan + first->damageDealt * 2;
     int secondValue =
-        playerInfoInt(second, 0x24) + playerInfoInt(second, 0x2c) + playerInfoInt(second, 0x30) * 2;
+        second->roundsWon + second->totalLifeSpan + second->damageDealt * 2;
     if (firstValue != secondValue)
     {
         return secondValue < firstValue;
     }
-    if (playerInfoInt(first, 0x30) != playerInfoInt(second, 0x30))
+    if (first->damageDealt != second->damageDealt)
     {
-        return playerInfoInt(second, 0x30) < playerInfoInt(first, 0x30);
+        return second->damageDealt < first->damageDealt;
     }
-    if (playerInfoInt(first, 0x2c) == playerInfoInt(second, 0x2c))
+    if (first->totalLifeSpan == second->totalLifeSpan)
     {
         return false;
     }
-    return playerInfoInt(second, 0x2c) < playerInfoInt(first, 0x2c);
+    return second->totalLifeSpan < first->totalLifeSpan;
 }
 
 void MG04ScoreboardLayout::Init(int value)
@@ -239,10 +230,10 @@ void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
 
-    memcpy(reinterpret_cast<char*>(info) + 0x24, scoreboard->GetVotesGiven(uid, -1), 16);
-    memcpy(reinterpret_cast<char*>(info) + 0x34, scoreboard->GetVotesReceived(uid, -1), 16);
-    playerInfoIntMut(info, 0x44) = scoreboard->GetBlocksPlaced(uid, -1);
-    playerInfoIntMut(info, 0x48) = scoreboard->GetBlocksDestroyed(uid, -1);
+    memcpy(info->votesReceived, scoreboard->GetVotesReceived(uid, -1), sizeof(info->votesReceived));
+    memcpy(info->votesGiven, scoreboard->GetVotesGiven(uid, -1), sizeof(info->votesGiven));
+    info->blocksPlaced = scoreboard->GetBlocksPlaced(uid, -1);
+    info->blocksDestroyed = scoreboard->GetBlocksDestroyed(uid, -1);
 }
 
 PlayerInfo* MG04ScoreboardLayout::CreatePlayerInfo()
@@ -265,10 +256,6 @@ void MG04ScoreboardLayout::AddPlayer(unsigned char smallId)
 
 void MG04ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
-    if (index < 0 || index >= static_cast<int>(m_players.size()) || newInfo == 0)
-    {
-        return;
-    }
     PlayerInfo* info = m_players[index];
     info->smallId = newInfo->smallId;
     info->voiceStatus = newInfo->voiceStatus;

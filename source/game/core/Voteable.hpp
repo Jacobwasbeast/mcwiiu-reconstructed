@@ -39,6 +39,7 @@ public:
     void setVoteAndSync(int, char);
 
 private:
+    friend class Voteables;
     int mVoteableId;
     bool mAllowMultipleVotes;
     bool mIncluded;

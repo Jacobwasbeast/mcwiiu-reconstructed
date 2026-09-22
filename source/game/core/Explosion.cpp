@@ -343,7 +343,7 @@ void Explosion::explode()
 
         if (inBlast)
         {
-            boost::shared_ptr<EntityDamageSource> damageSource = DamageSource::CreateExplosion(this);
+            boost::shared_ptr<DamageSource> damageSource = DamageSource::CreateExplosion(this);
 
             float damage = (float)((falloff * falloff + falloff) * 0.5 * 7.0 * (double)mDamageRadius + 1.0);
 

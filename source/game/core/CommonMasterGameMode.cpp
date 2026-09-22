@@ -1,4 +1,5 @@
 #include "game/core/CommonMasterGameMode.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
 #include <algorithm>
 #include <cmath>
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -35,7 +36,7 @@
 CommonMasterGameMode* CommonMasterGameMode::GetMasterOrClient()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    return NULL;
+    return minecraft == NULL ? NULL : minecraft->GetClientMasterGameMode();
 }
 CommonMasterGameMode::CommonMasterGameMode()
     : mCurrentLevelGenOptions(NULL), mNextLevelGenOptions(NULL), mLocalizedStringTable(new StringTable()), mEnglishStringTable(new StringTable()), mRoundInfo(), mState(0), mNextState(0), mGeneratorSeed(-1), mGeneratorSeedScale(1.0f), mMapGenerator(NULL), mChosenThemeWordId(0xffffffffU), mCheckpointCount(0), mCurrentCheckpoint(0), mDistancesCached(false), mPrimaryTargetActive(false), mUsingTrialContent(false), mBuildOffVotes(false)
@@ -68,7 +69,8 @@ void CommonMasterGameMode::Setup(EMiniGameId miniGameId)
 void CommonMasterGameMode::Tick()
 {
     EnterCriticalSection(&mGeneratorMutex);
-    if (mMapGenerator != NULL && mState > 3 && (mState < 8 || mState == 10)) mState = mState;
+    if (mMapGenerator != NULL && mState > 3 && (mState < 8 || mState == 10))
+        mMapGenerator->ContinueGeneration();
     LeaveCriticalSection(&mGeneratorMutex);
 }
 const MiniGameDef* CommonMasterGameMode::GetMiniGame()
@@ -238,10 +240,6 @@ std::wstring CommonMasterGameMode::getThemeWordEnglish(int id)
 {
     const wchar_t* value = mEnglishStringTable == NULL ? NULL : mEnglishStringTable->getString(id);
     return value == NULL ? std::wstring() : std::wstring(value);
-}
-LevelGenerationOptions* CommonMasterGameMode::getCurrentLevelGenOptions() const
-{
-    return mCurrentLevelGenOptions;
 }
 LevelGenerationOptions* CommonMasterGameMode::getRoundLevelGenOptions() const
 {
@@ -558,7 +556,7 @@ void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player
 
     if (miniGame != NULL)
     {
-        GameCondition* endConditions = reinterpret_cast<GameCondition*>(static_cast<uintptr_t>(miniGame->GetEndConditions()));
+        GameCondition* endConditions = reinterpret_cast<GameCondition*>(miniGame->GetEndConditions());
         if (endConditions != NULL)
         {
             ConditionConnective* connective = dynamic_cast<ConditionConnective*>(endConditions);
@@ -602,9 +600,21 @@ void CommonMasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& playe
 {
     rule->GiveRandomPowerup(player);
 }
-void CommonMasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { }
-void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { }
-void CommonMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>&, double) { }
+void CommonMasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule)
+{
+    (void)player;
+    (void)rule;
+}
+void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule)
+{
+    (void)player;
+    (void)rule;
+}
+void CommonMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>& player, double progress)
+{
+    (void)player;
+    (void)progress;
+}
 void CommonMasterGameMode::setChosenThemeWordId(int id) { mChosenThemeWordId = static_cast<unsigned int>(id); }
 template<class Rule> void CommonMasterGameMode::CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, const std::vector<Rule*>& rules, void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*))
 {

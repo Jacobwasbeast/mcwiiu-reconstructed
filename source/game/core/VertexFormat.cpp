@@ -119,10 +119,6 @@ VertexFormat* VertexFormat::addElement(const VertexFormatElement* element)
         colorOffset = vertexSize;
         break;
     case VertexFormatElement::Usage::eUsage_Uv:
-        if (newElement->getIndex() >= (int)uvOffsets.size())
-        {
-            uvOffsets.resize(newElement->getIndex() + 1, -1);
-        }
         uvOffsets.insert(uvOffsets.begin() + newElement->getIndex(), vertexSize);
         break;
     default:

@@ -50,8 +50,8 @@ namespace
 struct FullscreenProgressState
 {
     bool showConfirmation;
-    bool unknownState1;
-    bool unknownState2;
+    bool reservedFlag1;
+    bool reservedFlag2;
     bool showTip;
     int closeMode;
     int playerId;
@@ -72,14 +72,9 @@ std::vector<File*>& loadFileList(IUIScene_LoadCreateJoin* scene)
     return scene->GetLoadFileList();
 }
 
-char*& saveDataBase(IUIScene_LoadCreateJoin* scene)
-{
-    return *reinterpret_cast<char**>(reinterpret_cast<char*>(scene) + 12);
-}
-
 int& selectedCustomGameModeId(IUIScene_LoadCreateJoin* scene)
 {
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(scene) + 120);
+    return scene->GetSelectedCustomGameModeId();
 }
 
 UIScene_LoadCreateJoinMenu* asMenu(IUIScene_LoadCreateJoin* scene)
@@ -101,7 +96,7 @@ IUIScene_LoadCreateJoin::IUIScene_LoadCreateJoin()
       m_state28(0), m_state2c(0), m_state30(0), m_state34(0), m_state38(0), m_state3c(0),
       m_state40(0), m_state44(0), m_state5c(0), m_saveListDetails(0), m_saveDetailsCount(0),
       m_state70(1), m_state71(0), m_state72(0),
-      m_state73(0), m_state74(0), m_state78(0), m_state79(0), m_state7a(0), m_state7b(0),
+      m_state73(0), m_state74(0), m_selectedCustomGameModeId(0), m_state79(0), m_state7a(0), m_state7b(0),
       m_state7c(0), m_state7d(0), m_state7e(0), m_state7f(0)
 {
     InitializeCriticalSection(&m_lock);
@@ -266,6 +261,16 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
     updateTooltips();
 }
 
+char* IUIScene_LoadCreateJoin::GetSaveDataBase()
+{
+    return static_cast<char*>(static_cast<void*>(m_joinSceneData));
+}
+
+int& IUIScene_LoadCreateJoin::GetSelectedCustomGameModeId()
+{
+    return m_selectedCustomGameModeId;
+}
+
 void IUIScene_LoadCreateJoin::UpdateGamesListCallback(void* context)
 {
     if (context != 0)
@@ -305,14 +310,14 @@ std::vector<File*>& IUIScene_LoadCreateJoin::GetLoadFileList()
 
 uint64_t IUIScene_LoadCreateJoin::AddMatchmakingButton(std::wstring label, int id, std::wstring description)
 {
-    AddCreateListButton(label, id);
+    AddLoadListButton(label, id);
     m_buttonIds.push_back(id);
     std::wstring path = formatwstr(L"Graphics\\%ls.png", description.c_str());
     if (g_pApp->hasArchiveFile(path, false))
     {
         arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(path, false);
         if (file.data != 0 && file.length != 0)
-            SetCreateListIcon(m_state24, file.data, file.length, description);
+            SetLoadListIcon(m_state24, file.data, file.length, description);
     }
     ++m_state24;
     return static_cast<uint64_t>(m_buttonIds.size());
@@ -588,7 +593,8 @@ uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int key, int action, bool repeat
         return 0;
     if (action == 1 || action == 21)
     {
-        gConsoleUIController.NavigateBack(GetPad(), false, static_cast<EUIScene>(0x53), static_cast<EUILayer>(8));
+        gConsoleUIController.NavigateBack(GetPad(), false, EUIScene_None,
+                                          static_cast<EUILayer>(8));
         return 1;
     }
     if (action == 3)
@@ -649,7 +655,7 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
         gApp.GetGameHostOption(hostOption, static_cast<eGameHostOption>(6));
     CGameNetworkManager::sInstance.HostGame(0, false, false,
                                              static_cast<unsigned char>(hostOption6),
-                                             static_cast<EMiniGameId>(15), 0, 0);
+                                             eMiniGameId_Any, 0, 0);
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
     initData->m_value2 = 0;
@@ -671,14 +677,14 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
 
     FullscreenProgressState* progressState = new FullscreenProgressState();
     progressState->showConfirmation = false;
-    progressState->unknownState1 = true;
-    progressState->unknownState2 = true;
+    progressState->reservedFlag1 = true;
+    progressState->reservedFlag2 = true;
     progressState->showTip = true;
     progressState->closeMode = 3;
     progressState->playerId = 0;
-    progressState->backScene = static_cast<EUIScene>(0x53);
+    progressState->backScene = EUIScene_None;
     params->m_thirdParameter = progressState;
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(4),
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
                                          params, static_cast<EUILayer>(6),
                                          static_cast<EUIGroup>(7));
 }
@@ -709,7 +715,7 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
     unsigned char gameType =
         static_cast<unsigned char>(g_pApp->GetGameHostOption(static_cast<eGameHostOption>(6)));
     CGameNetworkManager::sInstance.HostGame(0, hostOnline, false, gameType,
-                                            static_cast<EMiniGameId>(15), 0, 0);
+                                            eMiniGameId_Any, 0, 0);
 
     DiskSaveBuffer* saveBuffer = new DiskSaveBuffer();
     saveBuffer->data = fileData.data;
@@ -733,15 +739,15 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
 
     FullscreenProgressState* progressState = new FullscreenProgressState();
     progressState->showConfirmation = false;
-    progressState->unknownState1 = true;
-    progressState->unknownState2 = true;
+    progressState->reservedFlag1 = true;
+    progressState->reservedFlag2 = true;
     progressState->showTip = true;
     progressState->closeMode = 3;
     progressState->playerId = 0;
-    progressState->backScene = static_cast<EUIScene>(0x53);
+    progressState->backScene = EUIScene_None;
     params->m_thirdParameter = progressState;
 
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(4),
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
                                            params, static_cast<EUILayer>(6),
                                            static_cast<EUIGroup>(7));
 }
@@ -767,7 +773,7 @@ void IUIScene_LoadCreateJoin::LoadGameMode(EMiniGameId gameMode)
     sceneData->reserved = 0;
     sceneData->gameMode = gameMode;
 
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x23),
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
                                        sceneData, static_cast<EUILayer>(6),
                                        static_cast<EUIGroup>(7));
 }
@@ -777,7 +783,7 @@ void IUIScene_LoadCreateJoin::HandleLoadListPress(int index)
     m_state1a = 1;
     if (m_customGame != 0)
     {
-        int* gameModeIds = reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 100);
+        int* gameModeIds = m_buttonIds.empty() ? NULL : &m_buttonIds[0];
         int gameMode = gameModeIds[index];
         if (gameMode > 4)
             gameMode = 4;
@@ -802,11 +808,11 @@ void IUIScene_LoadCreateJoin::HandleLoadListPress(int index)
     LoadMenuSceneData* sceneData = new LoadMenuSceneData();
     sceneData->playerId = GetPad();
     sceneData->saveIndex = index;
-    sceneData->saveData = saveDataBase(this) + index * 300;
+        sceneData->saveData = GetSaveDataBase() + index * 300;
     sceneData->reserved = 0;
-    sceneData->gameMode = static_cast<EMiniGameId>(15);
+    sceneData->gameMode = eMiniGameId_Any;
 
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x23),
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
                                        sceneData, static_cast<EUILayer>(6),
                                        static_cast<EUIGroup>(7));
 }
@@ -828,7 +834,7 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
         sceneData->saveIndex = -1;
         sceneData->saveData = 0;
         sceneData->reserved = 0;
-        sceneData->gameMode = static_cast<EMiniGameId>(15);
+        sceneData->gameMode = eMiniGameId_Any;
         gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x1a),
                                              sceneData, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
@@ -853,8 +859,8 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
     sceneData->saveIndex = -1;
     sceneData->saveData = options;
     sceneData->reserved = 0;
-    sceneData->gameMode = static_cast<EMiniGameId>(15);
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x23),
+    sceneData->gameMode = eMiniGameId_Any;
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
                                          sceneData, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return;
 }

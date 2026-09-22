@@ -1,6 +1,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/GameType.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/core/System.hpp"
 #include "game/core/Voteable.hpp"
 #include "game/core/Voteables.hpp"
@@ -155,8 +156,8 @@ static void SendGameModePacket(boost::shared_ptr<ServerPlayer> player,
     player->mConnection->send(GameModePacket::Create(message, data));
 }
 
-static unsigned char g_0x104C3EA1 = 0;
-static unsigned char g_0x104C3EA2 = 0;
+static unsigned char sPrimaryRoundState = 0;
+static unsigned char sSecondaryRoundState = 0;
 
 static arrayWithLength<unsigned char>& WiiUSpawnDistributionData(MasterGameMode* gameMode)
 {
@@ -171,18 +172,6 @@ static arrayWithLength<unsigned char>& WiiUAlternateSpawnDistributionData(Master
 static unsigned int& WiiULoadingPlayerCount(MasterGameMode* gameMode)
 {
     return gameMode->LoadingPlayerCountStorage();
-}
-
-struct MasterGameModeWiiUBroadcastChatState
-{
-    unsigned long long lastBroadcastTime;
-    int lastChatMessage;
-};
-
-static MasterGameModeWiiUBroadcastChatState& WiiUBroadcastChatState(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<MasterGameModeWiiUBroadcastChatState*>(
-        reinterpret_cast<char*>(gameMode) + 0x308);
 }
 
 static std::vector<int>& WiiUBuildOffThemeIds(MasterGameMode* gameMode)
@@ -385,9 +374,14 @@ static unsigned int& GhostControllerPlaybackTimeLow(GhostController* controller)
     return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(controller) + 0x74);
 }
 
-static std::map<MasterGameMode::EInternalGameModeState, EGameModeState> g_0x104F5CC0;
+static std::map<MasterGameMode::EInternalGameModeState, EGameModeState> sGameModeStateMap;
 
-static bool g_0x104C6DBD = true;
+static bool sRoundTransitionPending = true;
+
+
+
+
+
 
 static bool& WiiUPlayerRoundEligible(MasterGameMode* gameMode, int playerIndex)
 {
@@ -403,9 +397,9 @@ int& MasterGameMode::MaxChunkZStorage() { return mMaxChunkZ; }
 arrayWithLength<unsigned char>& MasterGameMode::SpawnDistributionStorage() { return mSpawnDistribution; }
 arrayWithLength<unsigned char>& MasterGameMode::AlternateSpawnDistributionStorage() { return mAlternateSpawnDistribution; }
 unsigned int& MasterGameMode::LoadingPlayerCountStorage() { return mUnknown2D8; }
-unsigned int& MasterGameMode::BroadcastStateWord0() { return mUnknown308; }
-unsigned int& MasterGameMode::BroadcastStateWord1() { return mUnknown30C; }
-unsigned int& MasterGameMode::BroadcastStateWord2() { return mUnknown310; }
+unsigned int& MasterGameMode::BroadcastStateWord0() { return reinterpret_cast<unsigned int&>(mLastBroadcastTime); }
+unsigned int& MasterGameMode::BroadcastStateWord1() { return reinterpret_cast<unsigned int*>( &mLastBroadcastTime)[1]; }
+unsigned int& MasterGameMode::BroadcastStateWord2() { return reinterpret_cast<unsigned int&>(mLastChatMessage); }
 arrayWithLength<unsigned char>& MasterGameMode::PlaylistSyncStorage()
 {
     return *reinterpret_cast<arrayWithLength<unsigned char>*>(reinterpret_cast<char*>(this) + 0x1f0);
@@ -419,7 +413,7 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
         WiiUVoteables(this) = new ServerVoteables();
         WiiUVoteables(this)->addVoteable(new Voteable(0, true, true));
         WiiUVoteables(this)->addVoteable(new Voteable(1, true, false));
-        if (firstMiniGame == static_cast<EMiniGameId>(4))
+        if (firstMiniGame == eMiniGameId_Build)
         {
             WiiUVoteables(this)->addVoteable(new Voteable(2, true, false));
             WiiUVoteables(this)->addVoteable(new Voteable(3, true, true));
@@ -437,7 +431,7 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
         }
 
         MiniGameDef* initialMiniGame = MiniGameDef::GetCustomGameModeById(
-            static_cast<EMiniGameId>(1), true);
+            eMiniGameId_Battle, true);
         if (initialMiniGame != 0)
             Minecraft::GetInstance()->SetupMiniGameInstance(*initialMiniGame, 0);
 
@@ -454,9 +448,8 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
               mLastKnownPositions[index] = 0;
 
           mBlockChangeListener = 0;
-          mUnknown308 = 0;
-          mUnknown30C = 0;
-          mUnknown310 = 0;
+          mLastBroadcastTime = 0;
+          mLastChatMessage = 0;
           mUnknown318 = 0;
           mUnknown2D0 = 0;
           mUnknown2D4 = 0;
@@ -546,21 +539,21 @@ void MasterGameMode::ResetRoundTime()
 
 void MasterGameMode::StaticCtor()
 {
-    g_0x104F5CC0[eInternalGameModeState_Lobby] = static_cast<EGameModeState>(1);
-    g_0x104F5CC0[eInternalGameModeState_WaitingToStart] = static_cast<EGameModeState>(1);
-    g_0x104F5CC0[eInternalGameModeState_RoundStarting] = static_cast<EGameModeState>(2);
-    g_0x104F5CC0[eInternalGameModeState_RoundPlaying] = static_cast<EGameModeState>(3);
-    g_0x104F5CC0[eInternalGameModeState_Showdown] = static_cast<EGameModeState>(3);
-    g_0x104F5CC0[eInternalGameModeState_RoundEnding] = static_cast<EGameModeState>(4);
-    g_0x104F5CC0[eInternalGameModeState_PostGame] = static_cast<EGameModeState>(10);
-    g_0x104F5CC0[eInternalGameModeState_ReturningToLobby] = static_cast<EGameModeState>(4);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(8)] = static_cast<EGameModeState>(5);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(9)] = static_cast<EGameModeState>(6);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(10)] = static_cast<EGameModeState>(7);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(11)] = static_cast<EGameModeState>(8);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(12)] = static_cast<EGameModeState>(9);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(13)] = static_cast<EGameModeState>(9);
-    g_0x104F5CC0[static_cast<EInternalGameModeState>(14)] = static_cast<EGameModeState>(10);
+    sGameModeStateMap[eInternalGameModeState_Lobby] = static_cast<EGameModeState>(1);
+    sGameModeStateMap[eInternalGameModeState_WaitingToStart] = static_cast<EGameModeState>(1);
+    sGameModeStateMap[eInternalGameModeState_RoundStarting] = static_cast<EGameModeState>(2);
+    sGameModeStateMap[eInternalGameModeState_RoundPlaying] = static_cast<EGameModeState>(3);
+    sGameModeStateMap[eInternalGameModeState_Showdown] = static_cast<EGameModeState>(3);
+    sGameModeStateMap[eInternalGameModeState_RoundEnding] = static_cast<EGameModeState>(4);
+    sGameModeStateMap[eInternalGameModeState_PostGame] = static_cast<EGameModeState>(10);
+    sGameModeStateMap[eInternalGameModeState_ReturningToLobby] = static_cast<EGameModeState>(4);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(8)] = static_cast<EGameModeState>(5);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(9)] = static_cast<EGameModeState>(6);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(10)] = static_cast<EGameModeState>(7);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(11)] = static_cast<EGameModeState>(8);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(12)] = static_cast<EGameModeState>(9);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(13)] = static_cast<EGameModeState>(9);
+    sGameModeStateMap[static_cast<EInternalGameModeState>(14)] = static_cast<EGameModeState>(10);
 }
 
 void MasterGameMode::GeneratePlaylistSyncInfo()
@@ -681,10 +674,10 @@ void MasterGameMode::RestartTimer(ETimerID timer, int duration)
 
 void MasterGameMode::TickTimers()
 {
-    if (g_0x104C6DBD)
+    if (sRoundTransitionPending)
     {
         RestartTimer(eTimerID_GameEnd, GetMiniGame()->getTimerSpec(eTimerID_GameEnd).TotalDurationMs());
-        g_0x104C6DBD = false;
+        sRoundTransitionPending = false;
     }
 
     for (TimerMap::iterator entry = mTimers.begin(); entry != mTimers.end(); ++entry)
@@ -960,7 +953,7 @@ void MasterGameMode::SetState(EInternalGameModeState state)
     const EInternalGameModeState previousInternalState = static_cast<EInternalGameModeState>(mInternalState);
     mInternalState = state;
 
-    if (g_0x104F5CC0[previousInternalState] != g_0x104F5CC0[state])
+    if (sGameModeStateMap[previousInternalState] != sGameModeStateMap[state])
     {
         boost::shared_ptr<ServerPlayer> player;
         UpdateClientState(player);
@@ -978,10 +971,9 @@ void MasterGameMode::BroadcastChat(int message, std::vector<int>& arguments)
         return;
 
     const unsigned long long now = System::processTimeInMilliSecs();
-    MasterGameModeWiiUBroadcastChatState& chatState = WiiUBroadcastChatState(this);
-    if (message == chatState.lastChatMessage)
+    if (message == mLastChatMessage)
     {
-        const unsigned long long elapsed = now - chatState.lastBroadcastTime;
+        const unsigned long long elapsed = now - mLastBroadcastTime;
         if (elapsed < 501ULL)
             return;
     }
@@ -1003,8 +995,8 @@ void MasterGameMode::BroadcastChat(int message, std::vector<int>& arguments)
     if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
         gMinecraftServer->getPlayers()->broadcastAll(chatPacket);
 
-    chatState.lastBroadcastTime = now;
-    chatState.lastChatMessage = message;
+    mLastBroadcastTime = now;
+    mLastChatMessage = message;
 }
 
 void MasterGameMode::CompleteTimer(ETimerID timer)
@@ -2368,7 +2360,7 @@ void MasterGameMode::Tick_Round_Playing()
 
 bool MasterGameMode::CanRoundEnd()
 {
-    MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
+    const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
     GameCondition* conditions =
         miniGame == 0 ? 0 : reinterpret_cast<GameCondition*>(miniGame->GetEndConditions());
     if (conditions == 0)
@@ -2384,7 +2376,7 @@ bool MasterGameMode::CanStartShowdown()
     if (mShowdownStarted)
         return false;
 
-    MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
+    const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
     if (miniGame == 0 || !miniGame->IsShowdownEnabled())
         return false;
 
@@ -2547,7 +2539,7 @@ std::vector<PlayerTeam*> MasterGameMode::GetActiveTeams()
 
 bool MasterGameMode::CanEndPostGame()
 {
-    MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
+    const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
     GameCondition* conditions =
         miniGame == 0 ? 0 : reinterpret_cast<GameCondition*>(miniGame->GetPostGameConditions());
     if (conditions == 0)
@@ -2615,7 +2607,7 @@ void MasterGameMode::ReturnPlayersToLobby()
     mCurrentRuleIndex = mCurrentPlaylistEntry;
 
     const MiniGameDef* lobbyDefinition =
-        MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(0), true);
+        MiniGameDef::GetCustomGameModeById(eMiniGameId_Lobby, true);
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0 && lobbyDefinition != 0)
         minecraft->SetupMiniGameInstance(*lobbyDefinition, 0);
@@ -2719,14 +2711,12 @@ void MasterGameMode::ReturnPlayersToLobby()
     if (serverLevel != 0)
     {
         serverLevel->invalidateChunksOutsideArea(
-            chunkBounds.mMinChunkX, chunkBounds.mMinChunkZ,
-            chunkBounds.mMaxChunkX, chunkBounds.mMaxChunkZ);
+            mMinChunkX, mMinChunkZ, mMaxChunkX, mMaxChunkZ);
     }
     if (playerList != 0)
     {
         playerList->resetAllChunkFlagsOutsideArea(
-            chunkBounds.mMinChunkX, chunkBounds.mMinChunkZ,
-            chunkBounds.mMaxChunkX, chunkBounds.mMaxChunkZ, 0);
+            mMinChunkX, mMinChunkZ, mMaxChunkX, mMaxChunkZ, 0);
     }
 
     if (serverLevel != 0 && serverLevel->getChunkSource() != 0)
@@ -2749,8 +2739,7 @@ void MasterGameMode::ReturnPlayersToLobby()
     if (chunkMap != 0)
     {
         chunkMap->reloadAllPlayers(
-            chunkBounds.mMinChunkX, chunkBounds.mMinChunkZ,
-            chunkBounds.mMaxChunkX, chunkBounds.mMaxChunkZ);
+            mMinChunkX, mMinChunkZ, mMaxChunkX, mMaxChunkZ);
     }
 
     ResetReadyStates(false);
@@ -2930,11 +2919,11 @@ void MasterGameMode::PlaceSpectators(std::vector<boost::shared_ptr<ServerPlayer>
         player->mField0x82c = 1;
 
         bool useBlockSkull = false;
-        if (g_0x104C3EA1 != 0)
+        if (sPrimaryRoundState != 0)
         {
             useBlockSkull = true;
         }
-        else if (g_0x104C3EA2 != 0 && ruleset != 0)
+        else if (sSecondaryRoundState != 0 && ruleset != 0)
         {
             LevelGenerationOptions* generationOptions = ruleset->getGenerationOptions();
             if (generationOptions != 0 &&
@@ -3214,7 +3203,7 @@ void MasterGameMode::OnJoin(boost::shared_ptr<ServerPlayer> player)
             (*checkpointIt)->processBeacons(serverLevel);
     }
 
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(1), true))
+    if (Minecraft::InMiniGame(eMiniGameId_Battle, true))
     {
         const unsigned int networkPlayerCount =
             static_cast<unsigned int>(CGameNetworkManager::sInstance.GetPlayerCount());
@@ -3556,7 +3545,7 @@ void MasterGameMode::PlayerFinishedLoadingLocally()
 
 void MasterGameMode::ResetLobbyTimerAfterSuspend()
 {
-    g_0x104C6DBD = true;
+    sRoundTransitionPending = true;
 }
 
 void MasterGameMode::OnLevelLoad(ServerLevel* level)

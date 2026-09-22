@@ -7,39 +7,27 @@
 #include "game/world/generation/Player.hpp"
 
 #include <algorithm>
-#include <cstring>
 #include <limits>
 
 static const unsigned short NO_VOTES_GIVEN[4] = { 0, 0, 0, 0 };
 static const unsigned short NO_VOTES_RECEIVED[4] = { 0, 0, 0, 0 };
+static const double ACTIVE_POSITION_ORDER = 100.0;
 
 static int getEvidencedTrapsSetOff(const Scoreboard::PlayerStats::_RoundStats& stats)
 {
-    return *reinterpret_cast<const int*>(reinterpret_cast<const unsigned char*>(&stats) + 0x44);
+    return stats.mMobKills;
 }
 
 static int getEvidencedJumps(const Scoreboard::PlayerStats::_RoundStats& stats)
 {
-    return *reinterpret_cast<const int*>(reinterpret_cast<const unsigned char*>(&stats) + 0x48);
-}
-
-static int getEvidencedLastPointsAdded(const Scoreboard::PlayerStats::_RoundStats& stats)
-{
-    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(&stats);
-    const int secondary = *reinterpret_cast<const int*>(bytes + 0xa4);
-    return secondary != 0 ? secondary : *reinterpret_cast<const int*>(bytes + 0xa0);
-}
-
-static int getCurrentRound(const ClientScoreboard* scoreboard)
-{
-    return *reinterpret_cast<const int*>(reinterpret_cast<const unsigned char*>(scoreboard) + 0x30);
+    return stats.mCheckpointsPassed;
 }
 
 static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints,
                               StatsUID* winner, int* winnerRound)
 {
     bool found = false;
-    int best = usePoints ? 0 : -1;
+    unsigned int best = usePoints ? 0u : 0xffffffffu;
     ClientScoreboard::PlayerStatsMap::const_iterator player = scoreboard->mPlayerStats.begin();
     for (; player != scoreboard->mPlayerStats.end(); ++player)
     {
@@ -55,8 +43,10 @@ static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints
             {
                 continue;
             }
-            const int value = usePoints ? stats.mScore + stats.mPlacement : stats.mTimeAlive;
-            if ((usePoints && value > best) || (!usePoints && value < best))
+            const unsigned int value = usePoints
+                ? static_cast<unsigned int>(stats.mScore + stats.mPlacement)
+                : static_cast<unsigned int>(stats.mTimeAlive);
+            if ((usePoints && best < value) || (!usePoints && value < best))
             {
                 found = true;
                 best = value;
@@ -69,7 +59,7 @@ static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints
 }
 
 ClientScoreboard::ClientScoreboard()
-    : Scoreboard(), mPlayerStats()
+    : Scoreboard(), mCurrentRound(0), mPlayerStats()
 {
 }
 
@@ -107,7 +97,7 @@ void ClientScoreboard::UpdatePlayerStats(const StatsUID& suid, PlayerStats* stat
         current->updateFromOtherStats(stats, round, life, changed);
         if ((changed & 1) != 0)
         {
-            std::memcpy(current, stats, sizeof(unsigned int) * 5);
+            current->setRecordSUID(stats->getRecordSUID());
         }
     }
 }
@@ -123,7 +113,7 @@ Scoreboard::PlayerStats::_RoundStats* ClientScoreboard::GetPlayerRoundStats(cons
 {
     if (round == -1)
     {
-        round = getCurrentRound(this);
+        round = mCurrentRound;
     }
     PlayerStats* stats = GetPlayerStats(suid);
     if (stats == NULL)
@@ -167,7 +157,7 @@ int ClientScoreboard::GetActivePlayerCount(EMiniGameId miniGameId)
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         if (miniGame != NULL)
         {
-            miniGameId = miniGame->GetId();
+            miniGameId = static_cast<EMiniGameId>(miniGame->GetId());
         }
     }
 
@@ -186,7 +176,7 @@ int ClientScoreboard::GetActivePlayerCount(EMiniGameId miniGameId)
         std::vector<boost::shared_ptr<Player> >::iterator it = level->mPlayers.begin();
         for (; it != level->mPlayers.end(); ++it)
         {
-            if (*it != NULL && !(*it)->isRemoved())
+            if (*it != NULL && !(*it)->isSpectator())
             {
                 ++count;
             }
@@ -330,32 +320,32 @@ int ClientScoreboard::GetLifeSpan(const StatsUID& suid, int round)
 int ClientScoreboard::GetBestLifeSpan(const StatsUID& suid, int* round)
 {
     PlayerStats* player = GetPlayerStats(suid);
-    int best = -1;
+    unsigned int best = 0xffffffffu;
     if (player != NULL)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
         for (; it != player->mRoundStats.end(); ++it)
         {
-            if (it->second.mActive && it->second.mTimeAlive < best)
+            if (it->second.mActive && static_cast<unsigned int>(it->second.mTimeAlive) < best)
             {
-                best = it->second.mTimeAlive;
+                best = static_cast<unsigned int>(it->second.mTimeAlive);
                 if (round != NULL) *round = it->first;
             }
         }
     }
-    return best;
+    return static_cast<int>(best);
 }
 
 int ClientScoreboard::GetBestLifeSpan()
 {
-    int best = -1;
+    unsigned int best = 0xffffffffu;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
         int value = GetBestLifeSpan(it->first, NULL);
-        if (value < best) best = value;
+        if (static_cast<unsigned int>(value) < best) best = static_cast<unsigned int>(value);
     }
-    return best;
+    return static_cast<int>(best);
 }
 
 int ClientScoreboard::GetTotalLifeSpan(const StatsUID& suid)
@@ -424,7 +414,12 @@ int ClientScoreboard::GetLastPointsAdded(const StatsUID& suid, int round)
     {
         return 0;
     }
-    return getEvidencedLastPointsAdded(*stats);
+    int points = stats->mPlacement;
+    if (points == 0)
+    {
+        points = stats->mScore;
+    }
+    return points;
 }
 
 int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
@@ -574,20 +569,63 @@ int ClientScoreboard::GetRoundLength(unsigned int round)
 
 void ClientScoreboard::GetPlayersSortedByPoints(std::list<std::pair<std::wstring, int> >& players, int round)
 {
+    if (round == -1)
+    {
+        round = mCurrentRound;
+    }
     PlayerStatsMap::iterator it = mPlayerStats.begin();
-    for (; it != mPlayerStats.end(); ++it) players.push_back(std::make_pair(GetDisplayName(it->first), GetPoints(it->first, round)));
-    players.sort();
+    for (; it != mPlayerStats.end(); ++it)
+    {
+        std::pair<std::wstring, int> entry(GetDisplayName(it->first), GetPoints(it->first, round));
+        std::list<std::pair<std::wstring, int> >::iterator insert = players.begin();
+        while (insert != players.end() && insert->second >= entry.second)
+        {
+            ++insert;
+        }
+        players.insert(insert, entry);
+    }
 }
 
 void ClientScoreboard::GetPlayersSortedByPosition(std::list<std::pair<std::wstring, int> >& players, int round)
 {
+    if (round == -1)
+    {
+        round = mCurrentRound;
+    }
+    struct PositionEntry
+    {
+        std::wstring name;
+        int placement;
+        double order;
+        unsigned int tie;
+    };
+    std::list<PositionEntry> entries;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
         PlayerStats::_RoundStats* stats = GetPlayerRoundStats(it->first, round);
-        if (stats != NULL) players.push_back(std::make_pair(GetDisplayName(it->first), stats->mPlacement));
+        if (stats != NULL)
+        {
+            PositionEntry entry;
+            entry.name = GetDisplayName(it->first);
+            entry.placement = stats->mActive ? stats->mPlacement : 0;
+            entry.order = stats->mActive ? ACTIVE_POSITION_ORDER : stats->mBestTime;
+            entry.tie = stats->mActive ? (unsigned int)stats->mPlacement : 0;
+            std::list<PositionEntry>::iterator insert = entries.begin();
+            while (insert != entries.end() &&
+                   (insert->order < entry.order ||
+                    (insert->order == entry.order && insert->tie <= entry.tie)))
+            {
+                ++insert;
+            }
+            entries.insert(insert, entry);
+        }
     }
-    players.sort();
+    for (std::list<PositionEntry>::const_iterator entry = entries.begin();
+         entry != entries.end(); ++entry)
+    {
+        players.push_back(std::make_pair(entry->name, entry->placement));
+    }
 }
 
 bool ClientScoreboard::HasStats()
@@ -617,17 +655,25 @@ std::wstring ClientScoreboard::GetWinnerName(int round)
 bool ClientScoreboard::IsOverallWinner(const StatsUID& suid)
 {
     if (mPlayerStats.empty())
+    {
         return suid == StatsUID::EMPTY_SUID();
-
+    }
     StatsUID winner = StatsUID::EMPTY_SUID();
     int bestWins = 0;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
-        if (it->second == NULL || it->second->mRoundStats.empty())
+        if (it->second == NULL)
             continue;
-
-        const int wins = GetRoundsWon(it->first);
+        int wins = 0;
+        PlayerStats::RoundStatsMap::iterator round = it->second->mRoundStats.begin();
+        for (; round != it->second->mRoundStats.end(); ++round)
+        {
+            if (round->second.mWinner)
+            {
+                ++wins;
+            }
+        }
         if (wins < bestWins)
             continue;
         if (wins <= bestWins)
@@ -661,9 +707,30 @@ bool ClientScoreboard::GlideHasOverallWinner()
 
 std::wstring ClientScoreboard::GetGlideOverallWinner(bool usePoints)
 {
-    StatsUID winner = StatsUID::EMPTY_SUID();
-    selectGlideWinner(this, usePoints, &winner, NULL);
-    return winner == StatsUID::EMPTY_SUID() ? L"" : GetDisplayName(winner);
+    std::wstring result = L"clock";
+    unsigned int best = usePoints ? 0u : 0xffffffffu;
+    PlayerStatsMap::iterator player = mPlayerStats.begin();
+    for (; player != mPlayerStats.end(); ++player)
+    {
+        if (player->second == NULL)
+            continue;
+        PlayerStats::RoundStatsMap::iterator round = player->second->mRoundStats.begin();
+        for (; round != player->second->mRoundStats.end(); ++round)
+        {
+            const PlayerStats::_RoundStats& stats = round->second;
+            if (!stats.mEndZoneEntered)
+                continue;
+            const unsigned int value = usePoints
+                ? static_cast<unsigned int>(stats.mScore + stats.mPlacement)
+                : static_cast<unsigned int>(stats.mTimeAlive);
+            if ((usePoints && best < value) || (!usePoints && value < best))
+            {
+                best = value;
+                result = player->second->mName;
+            }
+        }
+    }
+    return result;
 }
 
 bool ClientScoreboard::IsOverallGlideWinner(const StatsUID& suid, bool usePoints)

@@ -57,6 +57,7 @@ public:
 private:
     static const DyeColor* BY_BLOCK_DATA[16];
     static const DyeColor* BY_ITEM_DATA[16];
+    static const std::wstring TEXTURE_NAMES[16];
 
     int blockData;
     int itemData;

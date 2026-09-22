@@ -139,7 +139,7 @@ void EnderMan::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 
 void EnderMan::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, 0x5D540043ULL);
 }
 
 const BlockState* EnderMan::getCarryingBlock()

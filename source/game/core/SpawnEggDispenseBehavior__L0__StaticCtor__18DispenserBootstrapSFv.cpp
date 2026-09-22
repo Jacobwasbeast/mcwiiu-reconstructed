@@ -1,3 +1,4 @@
+#include "game/core/WitherBoss.hpp"
 #include "game/core/SpawnEggDispenseBehavior__L0__StaticCtor__18DispenserBootstrapSFv.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -36,7 +37,7 @@ not_null_ptr<ItemInstance> SpawnEggDispenseBehavior__L0__StaticCtor__18Dispenser
     {
         mob->absMoveTo(mob->mX, mob->mY + 1.0, mob->mZ);
     }
-    else if (mob->GetType() == ENTITY_TYPE_WITHER_BOSS)
+    else if (mob->GetType() == WitherBoss::ENTITY_TYPE)
     {
         mob->absMoveTo(mob->mX, mob->mY - std::ceil(static_cast<double>(mob->mBbHeight)), mob->mZ);
     }

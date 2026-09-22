@@ -578,7 +578,7 @@ bool OceanMonumentPieces::OceanMonumentDoubleYRoom::postProcess(Level* l, Random
             generateBox(l, b, k, i+1, 0, k, i+1, 7, prismarineState, prismarineState, false);
         }
 
-        cur = upRoom;
+        cur = upRoom.get();
     }
     return true;
 }

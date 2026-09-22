@@ -42,7 +42,7 @@ void DLCFile::addParameter(DLCManager::EDLCParameterType parameter, const std::w
 
 std::wstring DLCFile::getParameterAsString(DLCManager::EDLCParameterType parameter, const std::wstring& name)
 {
-    return L"";
+    return L"char1";
 }
 
 bool DLCFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)

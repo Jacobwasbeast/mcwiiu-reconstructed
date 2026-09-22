@@ -41,24 +41,24 @@ void GhostController::GhostRecordSample::write(DataOutputStream* stream) {
 }
 
 GhostController::GhostRecord::GhostRecord(Vec3* pos) : hasRecording(false), startPos(), mElapsedHigh(0), mElapsedLow(0) { startPos = Vec3::newPermanent(pos); samples.reserve(1200); }
-GhostController::GhostRecord::~GhostRecord() {}
+GhostController::GhostRecord::~GhostRecord() { delete startPos; }
 unsigned int GhostController::GhostRecord::GetPosAtIndex(unsigned int index)
 {
     if (index >= samples.size())
         return 0;
     const GhostRecordSample& sample = samples[index];
-    Vec3* position = Vec3::newTemp(startPos.x + (double)sample.x / 10.0,
-                                    startPos.y + (double)sample.y / 10.0,
-                                    startPos.z + (double)sample.z / 10.0);
+    Vec3* position = Vec3::newTemp(startPos->x + (double)sample.x / 10.0,
+                                    startPos->y + (double)sample.y / 10.0,
+                                    startPos->z + (double)sample.z / 10.0);
     return (unsigned int)(uintptr_t)position;
 }
 bool GhostController::GhostRecord::HasRecording() const { return hasRecording; }
 void GhostController::GhostRecord::ResetHasRecording() { hasRecording=false; }
 void GhostController::GhostRecord::AddSample(double a, double b, double c, float d, float e, float f) {
     const long long timestamp = (static_cast<long long>(mElapsedHigh) << 32) | mElapsedLow;
-    GhostRecordSample sample((short)GhostController::Double1DPAsInt16(a - startPos.x),
-                             (short)GhostController::Double1DPAsInt16(b - startPos.y),
-                             (short)GhostController::Double1DPAsInt16(c - startPos.z),
+    GhostRecordSample sample((short)GhostController::Double1DPAsInt16(a - startPos->x),
+                             (short)GhostController::Double1DPAsInt16(b - startPos->y),
+                             (short)GhostController::Double1DPAsInt16(c - startPos->z),
                              (short)GhostController::Double1DPAsInt16(d),
                              (short)GhostController::Double1DPAsInt16(e),
                              (short)GhostController::Double1DPAsInt16(f), timestamp);
@@ -71,7 +71,7 @@ long long GhostController::GhostRecord::GetTimestampAtIndex(unsigned int index)
     return index < samples.size() ? samples[index].timestamp : -1;
 }
 void GhostController::GhostRecord::AddSample(const GhostRecordSample& sample) { samples.push_back(sample); hasRecording=true; }
-void GhostController::GhostRecord::WriteStartPos(DataOutputStream* stream) { stream->writeFloat((float)startPos.x); stream->writeFloat((float)startPos.y); stream->writeFloat((float)startPos.z); }
+void GhostController::GhostRecord::WriteStartPos(DataOutputStream* stream) { stream->writeFloat((float)startPos->x); stream->writeFloat((float)startPos->y); stream->writeFloat((float)startPos->z); }
 void GhostController::GhostRecord::WriteSampleAtIndex(unsigned int index, DataOutputStream* stream) { if (index < samples.size()) samples[index].write(stream); }
 unsigned int GhostController::GhostRecord::GetRotAtIndex(unsigned int index)
 {
@@ -376,11 +376,11 @@ void GhostController::LoadGhostHeader(int track, void* data, unsigned int length
     input.mMark = 0;
     input.mPosition = 0;
 }
-void GhostController::LoadGhostHeader_Callback(void* context,int track,C4JStorage::eGeneralData_Callback_Status status,int)
+int GhostController::LoadGhostHeader_Callback(void* context,int track,C4JStorage::eGeneralData_Callback_Status status,int)
 {
     GhostController* controller = static_cast<GhostController*>(context);
     if (controller == NULL)
-        return;
+        return 0;
     if (controller->mSaveHeaderStatus == 0 && status == C4JStorage::eGeneralData_Callback_Status(0) && controller->mSaveHeaderBuffer != NULL)
         controller->LoadGhostHeader(track, controller->mSaveHeaderBuffer, controller->mSaveHeaderLength);
     if (controller->mSaveHeaderBuffer != NULL) {
@@ -388,6 +388,7 @@ void GhostController::LoadGhostHeader_Callback(void* context,int track,C4JStorag
         controller->mSaveHeaderBuffer = NULL;
     }
     controller->mSaveHeaderStatus = 6;
+    return 0;
 }
 unsigned int GhostController::LoadGhostHeaderOp(int track)
 {
@@ -432,7 +433,7 @@ void GhostController::AddLoadedGhostRecord(int track, void* data, unsigned int l
     input.mMark = 0;
     input.mPosition = 0;
 }
-void GhostController::LoadGhostRecord_Callback(void* context,int track,C4JStorage::eGeneralData_Callback_Status status,int)
+int GhostController::LoadGhostRecord_Callback(void* context,int track,C4JStorage::eGeneralData_Callback_Status status,int)
 {
     GhostController* controller = static_cast<GhostController*>(context);
     if (controller != NULL && !controller->mDone && status == C4JStorage::eGeneralData_Callback_Status(0) && controller->mSaveHeaderBuffer != NULL) {
@@ -442,6 +443,7 @@ void GhostController::LoadGhostRecord_Callback(void* context,int track,C4JStorag
     }
     if (controller != NULL)
         controller->mSaveHeaderStatus = 6;
+    return 0;
 }
 unsigned int GhostController::LoadGhostRecordOp(int track)
 {

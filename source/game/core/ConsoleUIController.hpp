@@ -287,7 +287,7 @@ private:
     UIScene* playerComponent(unsigned int playerId, EUIScene scene);
 
     UIScene* m_debugConsole;
-    int m_unknown08;
+    int m_layoutWord;
     OSFastMutex m_renderMutex;
     OSFastMutex m_touchMutex;
     OSFastMutex m_skinMutex;
@@ -295,7 +295,7 @@ private:
     float m_screenWidth;
     float m_screenHeight;
     bool m_initialized;
-    unsigned char m_unknown3F9[3];
+    unsigned char m_paddingA[3];
     int m_renderOffsetX;
     int m_renderOffsetY;
     int m_lastViewport;
@@ -306,7 +306,7 @@ private:
     bool m_cleanupOnReload;
     bool m_autoCleanupOnReload;
     bool m_fontChangePending;
-    unsigned char m_unknown43B;
+    unsigned char m_layoutFlags;
     UITTFFont* m_font;
     UITTFFont* m_oldFont;
     fuiBitmapFont* m_bitmapFont;
@@ -314,11 +314,11 @@ private:
     std::vector<UIELEMENT*> m_touchBoxes[6][8][0x53];
     int m_touchHoldPad;
     bool m_touchHeld;
-    unsigned char m_unknownFD55[3];
+    unsigned char m_paddingB[3];
     int m_touchX;
     int m_touchY;
     bool m_rebuildingTouchBoxes;
-    unsigned char m_unknownFD61[3];
+    unsigned char m_paddingC[3];
     int m_skinScenes[11];
     int m_resolution;
     int m_requestedResolution;
@@ -333,12 +333,12 @@ private:
     bool m_menuDisplayPending[4];
     int m_menuDisplayDelay[4];
     bool m_playerFlags[6];
-    unsigned char m_unknownFDAE[2];
+    unsigned char m_paddingD[2];
     int m_selectedPlayer;
     int m_selectedX;
     int m_selectedY;
     bool m_selectedItemVisible;
-    unsigned char m_unknownFDBD[3];
+    unsigned char m_paddingE[3];
     std::wstring m_selectedItemName;
     std::wstring m_selectedItemDescription;
     boost::unordered_map<std::wstring, _TextureDetail> m_substitutionTextures;
@@ -346,7 +346,7 @@ private:
     std::vector<_QueuedMessageBoxData*> m_queuedMessageBoxes;
     unsigned int m_winUserIndex;
     bool m_skinThreadExpected;
-    unsigned char m_unknownFE05[3];
+    unsigned char m_paddingF[3];
     C4JThread* m_skinThread;
     OSFastMutex m_skinThreadMutex;
     boost::unordered_map<unsigned int, UIScene*> m_callbackScenes;

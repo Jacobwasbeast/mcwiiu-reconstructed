@@ -124,7 +124,7 @@ void LlamaSpit::restoreOwnerFromSave()
     const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
     AABB* searchBox = mBoundingBox->grow(2.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
+        Entity::mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {

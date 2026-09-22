@@ -1,48 +1,22 @@
 #include "game/core/Compression.hpp"
+#include "game/core/XMem.hpp"
 
 #include <string.h>
 #include <zlib.h>
 
-enum _XMEMCODEC_TYPE
-{
-    XMEMCODEC_DEFAULT = 0,
-    XMEMCODEC_LZX = 1
-};
-
-struct XMEMCODEC_PARAMETERS_LZX
-{
-    unsigned int Flags;
-    unsigned int WindowSize;
-    unsigned int CompressionPartitionSize;
-};
-
-int XMemCreateCompressionContext(_XMEMCODEC_TYPE codecType, const void* pCodecParams, unsigned int flags, void** ppContext);
-int XMemCreateDecompressionContext(_XMEMCODEC_TYPE codecType, const void* pCodecParams, unsigned int flags, void** ppContext);
-void XMemDestroyCompressionContext(void* pContext);
-void XMemDestroyDecompressionContext(void* pContext);
-
-unsigned int TlsAlloc();
-int TlsSetValue(unsigned int index, void* pValue);
-void* TlsGetValue(unsigned int index);
-
-void PIXBeginNamedEvent(float colour, const char* pName, ...);
-void PIXEndNamedEvent();
+extern unsigned int TlsAlloc();
+extern void* TlsGetValue(unsigned int index);
+extern int TlsSetValue(unsigned int index, void* value);
 
 static unsigned int g_compressionTlsIndex = 0;
 static Compression::ThreadStorage* g_pDefaultThreadStorage = NULL;
 
 Compression::Compression()
 {
-    XMEMCODEC_PARAMETERS_LZX codecParams;
-
-    codecParams.Flags = 0;
-    codecParams.WindowSize = 128 * 1024;
-    codecParams.CompressionPartitionSize = 128 * 1024;
-
+    unsigned int contextSize = 0x20000;
+    XMemCreateCompressionContext(XMEMCODEC_LZX, &contextSize, 0, &m_pCompressionContext);
+    XMemCreateDecompressionContext(XMEMCODEC_LZX, &contextSize, 0, &m_pDecompressionContext);
     m_pDecompressBuffer = NULL;
-
-    XMemCreateCompressionContext(XMEMCODEC_LZX, &codecParams, 0, &m_pCompressionContext);
-    XMemCreateDecompressionContext(XMEMCODEC_LZX, &codecParams, 0, &m_pDecompressionContext);
 
     m_compressionType = eCompressionTypes_Zlib;
     m_decompressionType = eCompressionTypes_Zlib;
@@ -55,7 +29,6 @@ Compression::~Compression()
 {
     XMemDestroyCompressionContext(m_pCompressionContext);
     XMemDestroyDecompressionContext(m_pDecompressionContext);
-
     DeleteCriticalSection(&m_compressLock);
     DeleteCriticalSection(&m_decompressLock);
 
@@ -92,17 +65,18 @@ void Compression::UseDefaultThreadStorage()
 
 void Compression::ReleaseThreadStorage()
 {
-    ThreadStorage* pStorage = (ThreadStorage*)TlsGetValue(g_compressionTlsIndex);
+    ThreadStorage* pStorage = static_cast<ThreadStorage*>(TlsGetValue(g_compressionTlsIndex));
 
     if (pStorage != g_pDefaultThreadStorage)
     {
         delete pStorage;
     }
+
 }
 
 Compression* Compression::getCompression()
 {
-    ThreadStorage* pStorage = (ThreadStorage*)TlsGetValue(g_compressionTlsIndex);
+    ThreadStorage* pStorage = static_cast<ThreadStorage*>(TlsGetValue(g_compressionTlsIndex));
 
     return pStorage->m_pCompression;
 }
@@ -113,8 +87,6 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
     unsigned char* pOutputLimit = (unsigned char*)pDest + *pDestSize - 3;
     unsigned char* pInput = (unsigned char*)pSource;
     unsigned char* pInputEnd = (unsigned char*)pSource + sourceSize;
-
-    PIXBeginNamedEvent(0.0f, "RLE compression");
 
     do
     {
@@ -152,8 +124,6 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
         }
     }
     while (pInput != pInputEnd && pOutput < pOutputLimit);
-
-    PIXEndNamedEvent();
 
     *pDestSize = (unsigned int)(pOutput - (unsigned char*)pDest);
 
@@ -236,10 +206,8 @@ int Compression::DecompressWithType(void* pDest, unsigned int* pDestSize, void* 
     {
         memcpy(pDest, pSource, sourceSize);
         *pDestSize = sourceSize;
-
         return 0;
     }
-
     return -1;
 }
 
@@ -283,9 +251,7 @@ int Compression::CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSou
 
     if (result == 0)
     {
-        PIXBeginNamedEvent(0.0f, "Secondary compression");
         result = Compress(pDest, pDestSize, m_rleBuffer, rleSize);
-        PIXEndNamedEvent();
     }
 
     LeaveCriticalSection(&m_compressLock);

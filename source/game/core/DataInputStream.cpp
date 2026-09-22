@@ -447,7 +447,7 @@ CompoundTag* DataInputStream::readCompressedNbt()
 
 not_null_ptr<ItemInstance> DataInputStream::readItem()
 {
-    not_null_ptr<ItemInstance> itemInstance;
+    not_null_ptr<ItemInstance> itemInstance = ItemInstance::EMPTY;
 
     int id = readShort();
 

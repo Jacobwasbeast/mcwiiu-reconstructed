@@ -133,7 +133,7 @@ void Voteable::setIncludedVotesAndSync(int playerId, char vote)
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
         if (it->first.first == playerId) keys.push_back(it->first);
     }
-    for (std::vector<std::pair<int, int> >::const_iterator it = keys.begin(); it != keys.end(); ++it) setVoteAndSync(it->first.first, it->first.second, vote);
+    for (std::vector<std::pair<int, int> >::const_iterator it = keys.begin(); it != keys.end(); ++it) setVoteAndSync(it->first, it->second, vote);
 }
 
 void Voteable::setIncludedVotesAndSync(int playerId, int voteableId, char vote)
@@ -142,7 +142,7 @@ void Voteable::setIncludedVotesAndSync(int playerId, int voteableId, char vote)
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
         if (it->first.first == playerId || it->first.second == voteableId) keys.push_back(it->first);
     }
-    for (std::vector<std::pair<int, int> >::const_iterator it = keys.begin(); it != keys.end(); ++it) setVoteAndSync(it->first.first, it->first.second, vote);
+    for (std::vector<std::pair<int, int> >::const_iterator it = keys.begin(); it != keys.end(); ++it) setVoteAndSync(it->first, it->second, vote);
 }
 
 void Voteable::syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player) const

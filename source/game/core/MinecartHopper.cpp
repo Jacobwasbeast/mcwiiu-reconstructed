@@ -77,6 +77,7 @@ int MinecartHopper::getMaxStackSize()
 
 void MinecartHopper::setChanged()
 {
+    (void)mItems;
 }
 
 bool MinecartHopper::stillValid(boost::shared_ptr<Player> player)
@@ -86,10 +87,12 @@ bool MinecartHopper::stillValid(boost::shared_ptr<Player> player)
 
 void MinecartHopper::startOpen(boost::shared_ptr<Player> player)
 {
+    (void)player;
 }
 
 void MinecartHopper::stopOpen(boost::shared_ptr<Player> player)
 {
+    (void)player;
 }
 
 bool MinecartHopper::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
@@ -108,7 +111,8 @@ AbstractContainerMenu* MinecartHopper::createMenu(boost::shared_ptr<Inventory> i
 
 int MinecartHopper::getTypeId(bool large)
 {
-    return 0;
+    (void)large;
+    return 9;
 }
 
 Level* MinecartHopper::getLevel()

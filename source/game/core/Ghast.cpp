@@ -117,7 +117,7 @@ int Ghast::getMaxSpawnClusterSize() { return 1; }
 
 void Ghast::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, 0x5D0000C1ULL);
 }
 
 void Ghast::addAdditonalSaveData(CompoundTag* tag)

@@ -94,7 +94,7 @@ void CompassAtlasSprite::freeFrameTextures()
     TextureAtlasSprite::freeFrameTextures();
 }
 
-bool CompassAtlasSprite::hasOwnData()
+unsigned int CompassAtlasSprite::hasOwnData()
 {
     return mParent == 0;
 }

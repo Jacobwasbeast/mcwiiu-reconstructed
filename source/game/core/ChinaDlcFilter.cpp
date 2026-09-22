@@ -19,7 +19,8 @@ bool ChinaDlcFilter::isSkinFiltered(const std::wstring& skinName)
     return valueInTable(*this, skinName);
 }
 
-bool ChinaDlcFilter::valueInTable(const boost::unordered_set<std::wstring>& table, const std::wstring& value)
+bool ChinaDlcFilter::valueInTable(const boost::unordered_set<std::wstring>& table,
+                                  const std::wstring& value)
 {
     return false;
 }

@@ -6,6 +6,7 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -45,7 +46,7 @@ void EvocationFangs::_init()
 void EvocationFangs::setOwner(const boost::shared_ptr<LivingEntity>& owner)
 {
     mOwner = owner;
-    mOwnerUUID = owner ? ((Entity*)owner.get())->getUUID() : std::wstring();
+    mOwnerUUID = owner ? owner->getUUID() : std::wstring();
 }
 
 boost::shared_ptr<LivingEntity> EvocationFangs::getOwner()
@@ -74,21 +75,21 @@ void EvocationFangs::addAdditonalSaveData(CompoundTag* tag)
 void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
 {
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    if (((Entity*)target.get())->isAlive() && !((Entity*)target.get())->isInvulnerable() && target.get() != owner.get())
+    if (target->isAlive() && !target->isInvulnerable() && target.get() != owner.get())
     {
         if (owner == NULL)
         {
-            ((Entity*)target.get())->hurt(NULL, 6.0f);
+            target->hurt(NULL, 6.0f);
         }
         else
         {
-            boost::shared_ptr<Entity> ownerEntity(owner, (Entity*)owner.get());
-            boost::shared_ptr<Entity> targetEntity(target, (Entity*)target.get());
-            if (!((Entity*)owner.get())->isAlliedTo(targetEntity))
+            boost::shared_ptr<Entity> ownerEntity = boost::static_pointer_cast<Entity>(owner);
+            boost::shared_ptr<Entity> targetEntity = boost::static_pointer_cast<Entity>(target);
+            if (!owner->isAlliedTo(targetEntity))
             {
                 boost::shared_ptr<Entity> direct = shared_from_this();
                 boost::shared_ptr<DamageSource> damage = DamageSource::CreateIndirectMagic(direct, ownerEntity, NULL);
-                ((Entity*)target.get())->hurt(damage.get(), 6.0f);
+                target->hurt(damage.get(), 6.0f);
             }
         }
     }
@@ -112,8 +113,9 @@ void EvocationFangs::tick()
                 {
                     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
                     {
-                        boost::shared_ptr<LivingEntity> living(*it, (LivingEntity*)(*it).get());
-                        dealDamageTo(living);
+                        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(*it);
+                        if (living)
+                            dealDamageTo(living);
                     }
                     delete entities;
                 }

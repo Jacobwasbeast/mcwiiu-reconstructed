@@ -8,6 +8,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DispenserBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TntBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"

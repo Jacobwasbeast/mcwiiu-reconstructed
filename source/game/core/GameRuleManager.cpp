@@ -327,9 +327,9 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
 void GameRuleManager::loadGameRules(DLCPack* pack)
 {
     StringTable* table = NULL;
-    if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages_loc"), true, true))
+    if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages.loc"), true, true))
     {
-        DLCLocalisationFile* localisation = static_cast<DLCLocalisationFile*>(pack->getFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages_loc"), true, true));
+        DLCLocalisationFile* localisation = static_cast<DLCLocalisationFile*>(pack->getFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages.loc"), true, true));
         table = localisation->getStringTable();
     }
     int count = pack->getDLCItemsCount(DLCManager::eDLCType_GameRulesHeader);

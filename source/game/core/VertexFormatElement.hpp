@@ -9,7 +9,18 @@ public:
     class Type
     {
     public:
-        enum EType : int;
+        enum EType : int
+        {
+            eType_Float, eType_UnsignedByte, eType_Byte, eType_UnsignedShort,
+            eType_Short, eType_UnsignedInt, eType_Int
+        };
+        static const Type* FLOAT;
+        static const Type* UBYTE;
+        static const Type* BYTE;
+        static const Type* USHORT;
+        static const Type* SHORT;
+        static const Type* UINT;
+        static const Type* INT;
         Type(int size, const std::wstring& name, int glType, EType type);
         int getSize() const;
         std::wstring getName() const;
@@ -25,7 +36,18 @@ public:
     class Usage
     {
     public:
-        enum EUsage : int;
+        enum EUsage : int
+        {
+            eUsage_Position, eUsage_Normal, eUsage_Color, eUsage_Uv,
+            eUsage_BoneMatrix, eUsage_BlendWeight, eUsage_Padding
+        };
+        static const Usage* POSITION;
+        static const Usage* NORMAL;
+        static const Usage* COLOR;
+        static const Usage* UV;
+        static const Usage* BONE_MATRIX;
+        static const Usage* BLEND_WEIGHT;
+        static const Usage* PADDING;
         Usage(const std::wstring& name, EUsage usage);
         int getId() const;
         std::wstring getName() const;

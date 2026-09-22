@@ -1,5 +1,10 @@
 #include "game/core/ConsoleUIController.hpp"
 
+static const EUIGroup kGlobalUiGroup = static_cast<EUIGroup>(EUIGroup_Unknown + 1);
+static const EUIGroup kPlayerUiGroupBase = static_cast<EUIGroup>(EUIGroup_Unknown + 2);
+static const EUILayer kMenuUiLayer = static_cast<EUILayer>(EUILayer_Unknown + 4);
+static const EUILayer kSceneUiLayer = static_cast<EUILayer>(EUILayer_Unknown + 6);
+
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -48,16 +53,15 @@
 #include "platform/wiiu/C4JThread.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/NQRNetworkManager.hpp"
+#include "platform/wiiu/WiiU_FileSystem.hpp"
 #include "platform/wiiu/UIComponent_WiiUDRC.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
 
 extern "C" void OSReport(const char*, ...);
-#define UI_TRACE(step) OSReport("[boot][ui] %s\n", step)
 
-unsigned int XGetLanguage();
+
 unsigned int GetTickCount();
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 OSFastMutex g_uiCriticalSection;
 ConsoleUIController gConsoleUIController;
@@ -71,11 +75,11 @@ void PopupToast(void* context, int playerId, int achievementId, int imageId, int
 }
 
 ConsoleUIController::ConsoleUIController()
-    : m_debugConsole(0), m_unknown08(0), m_screenWidth(0.0f), m_screenHeight(0.0f),
+    : m_debugConsole(0), m_layoutWord(0), m_screenWidth(0.0f), m_screenHeight(0.0f),
       m_initialized(false), m_renderOffsetX(0), m_renderOffsetY(0), m_lastViewport(-1),
       m_viewportPositionDirty(true), m_currentFont(0),
       m_pendingFont(EFont_None), m_cleanupOnReload(false), m_autoCleanupOnReload(true),
-      m_fontChangePending(false), m_unknown43B(0), m_font(0), m_oldFont(0),
+      m_fontChangePending(false), m_layoutFlags(0), m_font(0), m_oldFont(0),
       m_bitmapFont(0), m_bitmapFontAlt(0), m_touchHoldPad(0), m_touchHeld(false), m_touchX(0), m_touchY(0),
       m_rebuildingTouchBoxes(false), m_skinScenes(), m_resolution(0), m_requestedResolution(0),
       m_resolutionDisableFlags(0), m_homeMenuPending(false), m_lastInputTime(0), m_trialTimerLimit(0),
@@ -143,31 +147,23 @@ void ConsoleUIController::preInit(int width, int height)
 
 void ConsoleUIController::postInit()
 {
-    UI_TRACE("postInit: entered");
     gFui->setCustomTextureFn(TextureSubstitutionCreateCallbackFui,
                              TextureSubstitutionDestroyCallbackFui, this);
-    UI_TRACE("postInit: customTextureFn set");
     SetupFont();
-    UI_TRACE("postInit: SetupFont done");
     loadSkins();
-    UI_TRACE("postInit: loadSkins DONE");
-    m_groups[0] = new UIGroup((EUIGroup)0, -1);
-    m_groups[1] = new UIGroup((EUIGroup)1, -1);
-    m_groups[2] = new UIGroup((EUIGroup)2, 0);
-    m_groups[3] = new UIGroup((EUIGroup)3, 1);
-    m_groups[4] = new UIGroup((EUIGroup)4, 2);
-    m_groups[5] = new UIGroup((EUIGroup)5, 3);
-    UI_TRACE("postInit: groups built");
-    NavigateToScene(0, (EUIScene)1, 0, (EUILayer)6, (EUIGroup)7);
+    m_groups[0] = new UIGroup(EUIGroup_Unknown, -1);
+    m_groups[1] = new UIGroup(kGlobalUiGroup, -1);
+    m_groups[2] = new UIGroup(static_cast<EUIGroup>(kPlayerUiGroupBase), 0);
+    m_groups[3] = new UIGroup(static_cast<EUIGroup>(kPlayerUiGroupBase + 1), 1);
+    m_groups[4] = new UIGroup(static_cast<EUIGroup>(kPlayerUiGroupBase + 2), 2);
+    m_groups[5] = new UIGroup(static_cast<EUIGroup>(kPlayerUiGroupBase + 3), 3);
+    NavigateToScene(0, EUIScene_Intro, 0, kSceneUiLayer, static_cast<EUIGroup>(kGlobalUiGroup + 6));
 }
 
 void ConsoleUIController::init(int width, int height)
 {
-    UI_TRACE("init: entered");
     gFui->setScreenSize((float)width, (float)height);
-    UI_TRACE("init: screen size set");
     preInit(width, height);
-    UI_TRACE("init: preInit done");
     postInit();
 }
 
@@ -180,8 +176,10 @@ int ConsoleUIController::TextureSubstitutionCreateCallbackFui(void* context,
     ConsoleUIController* controller = static_cast<ConsoleUIController*>(context);
     boost::unordered_map<std::wstring, _TextureDetail>::iterator found =
         controller->m_substitutionTextures.find(name);
-    if (found == controller->m_substitutionTextures.end())
+    if (found == controller->m_substitutionTextures.end()) {
+        OSReport("[fui-subst] NOT_FOUND name=%ls\n", name.c_str());
         return -1;
+    }
     _TextureDetail& detail = found->second;
     *width = 64;
     *height = 64;
@@ -192,8 +190,10 @@ int ConsoleUIController::TextureSubstitutionCreateCallbackFui(void* context,
         return (int)detail.size;
     }
     BufferedImage image(detail.data, detail.size);
-    if (image.getData() == 0)
+    if (image.getData() == 0) {
+        OSReport("[fui-subst] DECODE_FAIL name=%ls size=%u\n", name.c_str(), detail.size);
         return -1;
+    }
     image.preMultiplyAlpha();
     int texture = Minecraft::GetInstance()->getTextureManager()->getTexture(
         &image, (C4JRender::eTextureFormat)0, false);
@@ -204,7 +204,8 @@ int ConsoleUIController::TextureSubstitutionCreateCallbackFui(void* context,
 
 void ConsoleUIController::TextureSubstitutionDestroyCallbackFui(int texture)
 {
-    Minecraft::GetInstance()->getTextureManager()->releaseTexture(texture);
+    if (texture >= 0)
+        Minecraft::GetInstance()->getTextureManager()->releaseTexture(texture);
 }
 
 ConsoleUIController::EFont ConsoleUIController::getFontForLanguage(int language)
@@ -348,13 +349,9 @@ void ConsoleUIController::loadSkins()
 
 void ConsoleUIController::renderScenes()
 {
-    PIXBeginNamedEvent(0.0f, "Rendering FUI scenes");
     if (!gApp.GetGameStarted())
     {
-        PIXBeginNamedEvent(0.0f, "Rendering fullscreen scenes");
         m_groups[1]->render();
-        PIXEndNamedEvent();
-        PIXBeginNamedEvent(0.0f, "Rendering DRC scenes");
         gRenderer->StartDRCFrame(GetDRCEnabled());
         gFui->setScreenSize(854.0f, 480.0f);
         if (!GetDRCEnabled())
@@ -368,23 +365,12 @@ void ConsoleUIController::renderScenes()
     {
         if (!m_groups[1]->hidesLowerScenes())
         {
-            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 2);
             m_groups[2]->render();
-            PIXEndNamedEvent();
-            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 3);
             m_groups[3]->render();
-            PIXEndNamedEvent();
-            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 4);
             m_groups[4]->render();
-            PIXEndNamedEvent();
-            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 5);
             m_groups[5]->render();
-            PIXEndNamedEvent();
         }
-        PIXBeginNamedEvent(0.0f, "Rendering fullscreen scenes");
         m_groups[1]->render();
-        PIXEndNamedEvent();
-        PIXBeginNamedEvent(0.0f, "Rendering DRC scenes");
         gRenderer->StartDRCFrame(GetDRCEnabled());
         gFui->setScreenSize(854.0f, 480.0f);
         if (!GetDRCEnabled())
@@ -396,8 +382,6 @@ void ConsoleUIController::renderScenes()
     }
     m_groups[0]->render();
     gFui->setScreenSize(1280.0f, 720.0f);
-    PIXEndNamedEvent();
-    PIXEndNamedEvent();
 }
 
 void ConsoleUIController::render()
@@ -419,7 +403,7 @@ void ConsoleUIController::setCleanupOnReload(bool cleanupOnReload)
 
 bool ConsoleUIController::PendingFontChange()
 {
-    return getFontForLanguage((int)XGetLanguage()) != m_currentFont;
+    return getFontForLanguage((int)g_pInput->GetLanguageType()) != m_currentFont;
 }
 
 bool ConsoleUIController::UsingBitmapFont()
@@ -637,7 +621,6 @@ void ConsoleUIController::setupCustomDrawGameState()
     m_customDrawTop = 0x7fffffff;
     m_customDrawRight = -0x7fffffff;
     m_customDrawBottom = -0x7fffffff;
-    PIXBeginNamedEvent(0.0f, "Final setup");
     GlStateManager::matrixMode(1);
     GlStateManager::loadIdentity();
     GlStateManager::ortho(0.0, m_screenWidth, m_screenHeight, 0.0, 1000.0, 3000.0);
@@ -647,7 +630,6 @@ void ConsoleUIController::setupCustomDrawGameState()
     GlStateManager::enableDepthTest();
     GlStateManager::depthFunc(3);
     GlStateManager::depthMask(true);
-    PIXEndNamedEvent();
 }
 
 void ConsoleUIController::endCustomDrawGameState()
@@ -691,10 +673,10 @@ void ConsoleUIController::SetMenuDisplayed(int playerId, bool displayed)
 void ConsoleUIController::setFullscreenMenuDisplayed(bool displayed)
 {
     if (m_groups[1] != 0)
-        m_groups[1]->showComponent((int)m_winUserIndex, (EUIScene)0x46, (EUILayer)0, displayed);
+        m_groups[1]->showComponent((int)m_winUserIndex, EUIScene_Tooltips, EUILayer_Unknown, displayed);
     for (int i = 2; i < 6; ++i)
         if (m_groups[i] != 0)
-            m_groups[i]->showComponent(i - 2, (EUIScene)0x46, (EUILayer)0, !displayed);
+            m_groups[i]->showComponent(i - 2, EUIScene_Tooltips, EUILayer_Unknown, !displayed);
 }
 
 bool ConsoleUIController::NavigateToScene(int playerId, EUIScene scene, void* sceneData,
@@ -733,39 +715,39 @@ bool ConsoleUIController::NavigateToScene(int playerId, EUIScene scene, void* sc
     bool navigated;
     if ((int)scene == 4)
     {
-        groupId = (EUIGroup)1;
-        layer = (EUILayer)4;
+        groupId = kGlobalUiGroup;
+        layer = kMenuUiLayer;
         EnterCriticalSection(&m_renderMutex);
         SetMenuDisplayed(menuPlayer, true);
         navigated = m_groups[1]->NavigateToScene(playerId, scene, sceneData, layer);
     }
     else if ((int)scene == 0x30)
     {
-        groupId = (EUIGroup)1;
+        groupId = kGlobalUiGroup;
         EnterCriticalSection(&m_renderMutex);
         SetMenuDisplayed(menuPlayer, true);
-        navigated = m_groups[1]->NavigateToScene(playerId, scene, sceneData, (EUILayer)6);
+        navigated = m_groups[1]->NavigateToScene(playerId, scene, sceneData, kSceneUiLayer);
     }
     else
     {
         if ((int)scene == 0x1f)
-            layer = (EUILayer)4;
+            layer = kMenuUiLayer;
         if ((int)groupId == 7)
         {
             if (gApp.GetGameStarted())
             {
                 if (playerId == 0xff || (unsigned int)playerId > 3)
-                    groupId = (EUIGroup)1;
+                    groupId = kGlobalUiGroup;
                 else
                 {
-                    groupId = (EUIGroup)(playerId + 2);
+                    groupId = static_cast<EUIGroup>(kPlayerUiGroupBase + playerId);
                     menuPlayer = playerId;
                 }
             }
             else
             {
-                groupId = (EUIGroup)1;
-                layer = (EUILayer)4;
+                groupId = kGlobalUiGroup;
+                layer = kMenuUiLayer;
             }
         }
         EnterCriticalSection(&m_renderMutex);
@@ -815,8 +797,8 @@ UIScene* ConsoleUIController::GetTopScene(int playerId, EUILayer layer, EUIGroup
             groupId = (EUIGroup)GetGroup(playerId);
             return m_groups[(int)groupId]->GetTopScene(layer);
         }
-        groupId = (EUIGroup)1;
-        layer = (EUILayer)4;
+        groupId = kGlobalUiGroup;
+        layer = kMenuUiLayer;
     }
     return m_groups[(int)groupId]->GetTopScene(layer);
 }
@@ -1197,9 +1179,9 @@ void ConsoleUIController::UpdatePlayerBasePositions()
         boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[player];
         C4JRender::eViewportType viewport = localPlayer != 0
                                                  ? static_cast<C4JRender::eViewportType>(localPlayer->mViewport)
-                                                 : static_cast<C4JRender::eViewportType>(0);
+                                                 : C4JRender::eViewportType_FullScreen;
         m_groups[player + 2]->SetViewportType(viewport);
-        SetMenuDisplayed(player, viewport != (C4JRender::eViewportType)0);
+        SetMenuDisplayed(player, viewport != C4JRender::eViewportType_FullScreen);
     }
 }
 
@@ -1252,8 +1234,9 @@ void ConsoleUIController::UpdateTrialTimer(unsigned int playerId)
         }
     }
     if (elapsed == m_trialTimerLimit && !GetMenuDisplayed((int)playerId)) {
-        NavigateToScene((int)playerId, (EUIScene)5, 0, (EUILayer)6, (EUIGroup)7);
-        gApp.SetAction((int)playerId, (eXuiAction)0xd, 0);
+        NavigateToScene((int)playerId, EUIScene_PauseMenu, 0, kSceneUiLayer,
+                        static_cast<EUIGroup>(kGlobalUiGroup + 6));
+        gApp.SetAction((int)playerId, static_cast<eXuiAction>(eXuiAction_0 + 13), 0);
     }
 }
 
@@ -1293,7 +1276,7 @@ void ConsoleUIController::ShowSavingMessage(unsigned int playerId,
 
 void ConsoleUIController::ShowChestRefillAnimation(bool show)
 {
-    if (m_groups[1]->IsSceneInStack((EUIScene)0x4b))
+    if (m_groups[1]->IsSceneInStack(EUIScene_MessageBox))
         return;
     UIComponent_PressStartToPlay* component = GetPressStart(m_groups[1]->m_componentTertiary);
     if (component != 0) {
@@ -1412,7 +1395,8 @@ int ConsoleUIController::RequestProfileSignInMenu(int titleId, int messageId,
     ProfileSignInMenuData data = { titleId, messageId, messageParameters, parameterCount,
                                    userIndex, callback, callbackData, overrideText,
                                    controllerIndex };
-    return NavigateToScene((int)userIndex, (EUIScene)0x50, &data, (EUILayer)3, (EUIGroup)1)
+    return NavigateToScene((int)userIndex, EUIScene_AvatarSelectMenu, &data,
+                           static_cast<EUILayer>(EUILayer_Unknown + 3), kGlobalUiGroup)
                ? 2 : 1;
 }
 
@@ -1486,12 +1470,12 @@ void ConsoleUIController::RequestUGCMessageBox(
 
 bool ConsoleUIController::IsShowingErrorMessage(int playerId)
 {
-    return groupForPlayer(playerId, false)->GetTopScene((EUILayer)2) != 0;
+    return groupForPlayer(playerId, false)->GetTopScene(static_cast<EUILayer>(EUILayer_Unknown + 2)) != 0;
 }
 
 bool ConsoleUIController::IsShowingAlertMessage(int playerId)
 {
-    return groupForPlayer(playerId, false)->GetTopScene((EUILayer)3) != 0;
+    return groupForPlayer(playerId, false)->GetTopScene(static_cast<EUILayer>(EUILayer_Unknown + 3)) != 0;
 }
 
 void ConsoleUIController::SetWinUserIndex(unsigned int userIndex)
@@ -1507,9 +1491,9 @@ unsigned int ConsoleUIController::GetWinUserIndex()
 void ConsoleUIController::ShowUIDebugConsole(bool show)
 {
     if (show)
-        m_debugConsole = m_groups[1]->addComponent(0, (EUIScene)0x44, (EUILayer)0);
+        m_debugConsole = m_groups[1]->addComponent(0, EUIScene_DebugUIConsole, EUILayer_Unknown);
     else {
-        m_groups[1]->removeComponent((EUIScene)0x44, (EUILayer)0);
+        m_groups[1]->removeComponent(EUIScene_DebugUIConsole, EUILayer_Unknown);
         m_debugConsole = 0;
     }
 }
@@ -1583,7 +1567,8 @@ void ConsoleUIController::ReloadSkin()
             m_skinScenes[i] = 0;
         }
     }
-    NavigateToScene(0, (EUIScene)0x4c, 0, (EUILayer)1, (EUIGroup)1);
+    NavigateToScene(0, EUIScene_Timer, 0,
+                   static_cast<EUILayer>(EUILayer_Unknown + 1), kGlobalUiGroup);
 }
 
 void ConsoleUIController::StartReloadSkinThread()
@@ -1619,8 +1604,8 @@ void ConsoleUIController::CleanUpSkinReload()
          it != m_queuedMessageBoxes.end(); ++it)
     {
         _QueuedMessageBoxData* queued = *it;
-        NavigateToScene(queued->queuedUserIndex, (EUIScene)0x4b, queued,
-                        (EUILayer)queued->type, (EUIGroup)1);
+        NavigateToScene(queued->queuedUserIndex, EUIScene_MessageBox, queued,
+                        static_cast<EUILayer>(queued->type), kGlobalUiGroup);
         delete queued;
     }
     m_queuedMessageBoxes.clear();
@@ -1749,7 +1734,7 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
         {
             m_actionTimer[key][character] = now + 100;
             repeatFired = true;
-            buttonReleased = true;
+            buttonPressed = true;
         }
     }
 
@@ -1760,11 +1745,11 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
         static_cast<UIComponent_PressStartToPlay*>(m_groups[1]->m_componentTertiary);
     unsigned int toastShowing = pressStart->GetAchievementToastShowing((int)key);
     if ((toastShowing != 0 || pressStart->GetHoldToShowAchievementsActive(false)) &&
-        !IsSceneInStack((int)key, (EUIScene)5) &&
+        !IsSceneInStack((int)key, EUIScene_PauseMenu) &&
         !pressStart->handleHold((int)key, (int)character, repeatFired, buttonReleased, buttonPressed,
                                 handled))
     {
-        buttonReleased = true;
+        buttonPressed = true;
     }
 
     if (!handled)
@@ -1818,7 +1803,7 @@ void ConsoleUIController::tick()
                 CloseAllPlayersScenes(false);
         } else if (g_introRunning != 0) {
             NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(3), 0,
-                            static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                            kSceneUiLayer, static_cast<EUIGroup>(kGlobalUiGroup + 6));
             updateCurrentFont();
             m_autoCleanupOnReload = true;
             m_homeMenuPending = false;
@@ -2152,7 +2137,8 @@ void ConsoleUIController::NavigateToHomeMenu(bool immediate)
         m_homeMenuPending = true;
         return;
     }
-    NavigateToScene(gProfile->GetPrimaryPad(), (EUIScene)3, 0, (EUILayer)6, (EUIGroup)7);
+    NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_MainMenu, 0, kSceneUiLayer,
+                    static_cast<EUIGroup>(kGlobalUiGroup + 6));
 }
 
 UIScene* ConsoleUIController::FindScene(EUIScene scene)

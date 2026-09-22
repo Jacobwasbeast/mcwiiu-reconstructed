@@ -41,7 +41,6 @@ const EntityDataAccessor<bool>* Pig::DATA_SADDLE = NULL;
 const EntityDataAccessor<int>* Pig::DATA_BOOST_TIME = NULL;
 
 static const unsigned long long ENTITY_TYPE_PIG = 0x000000002D680003ULL;
-static const unsigned long long ENTITY_TYPE_ANIMAL = 0x000000000D680000ULL;
 
 Pig::Pig(Level* level)
     : Animal(level), mBoosting(false), mBoostTime(0), mBoostTotalTime(0), mBoostStartTime(0)

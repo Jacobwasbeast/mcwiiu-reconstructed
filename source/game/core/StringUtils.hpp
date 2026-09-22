@@ -7,6 +7,8 @@
 
 bool BothAreSpaces(wchar_t first, wchar_t second);
 std::wstring toLower(const std::wstring& text);
+bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
+std::wstring escapeXML(const std::wstring& text);
 std::wstring trimString(const std::wstring& text);
 void stripWhitespaceForHtml(std::wstring& text, bool collapse);
 void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement);

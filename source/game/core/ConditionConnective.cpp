@@ -6,6 +6,7 @@
 #include "game/core/RoundTimeCondition.hpp"
 #include "game/core/ShowdownTimeCondition.hpp"
 #include "game/core/TeamsCondition.hpp"
+#include "game/core/XmlChild.hpp"
 #include "game/core/XmlObject.hpp"
 #include "game/world/generation/PercentagePlayersVotedCondition.hpp"
 #include "game/world/generation/PlayersCondition.hpp"

@@ -12,9 +12,12 @@ Vertex::Vertex(Vec3* source, float u, float v)
 {
 }
 
-void Vertex::remap(float u, float v)
+Vertex::Vertex(Vertex* source, float u, float v)
+    : position(source->position), textureU(u), textureV(v)
 {
-    position = Vec3::newPermanent(position);
-    textureU = u;
-    textureV = v;
+}
+
+Vertex* Vertex::remap(float u, float v)
+{
+    return new Vertex(this, u, v);
 }

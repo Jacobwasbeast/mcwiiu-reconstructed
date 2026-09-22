@@ -18,7 +18,7 @@ public:
     virtual unsigned int getSourceHeight() const;
     virtual int getFrames();
     virtual void freeFrameTextures();
-    virtual bool hasOwnData();
+    virtual unsigned int hasOwnData();
 
 private:
     int mFrameCount;

@@ -20,6 +20,11 @@ const DyeColor* DyeColor::BLACK;
 std::vector<const DyeColor*> DyeColor::COLORS;
 const DyeColor* DyeColor::BY_BLOCK_DATA[16];
 const DyeColor* DyeColor::BY_ITEM_DATA[16];
+const std::wstring DyeColor::TEXTURE_NAMES[16] =
+{
+    L"black", L"red", L"green", L"brown", L"blue", L"purple", L"cyan", L"silver",
+    L"gray", L"pink", L"lime", L"yellow", L"light_blue", L"magenta", L"orange", L"white"
+};
 
 DyeColor::DyeColor(int blockData, int itemData, const std::wstring& serializedName,
                    int name, int useName, int textureDiffuseColor,
@@ -168,4 +173,9 @@ std::wstring DyeColor::toString() const
 std::wstring DyeColor::getSerializedName() const
 {
     return serializedName;
+}
+
+std::wstring DyeColor::getTexture() const
+{
+    return TEXTURE_NAMES[getItemData()];
 }

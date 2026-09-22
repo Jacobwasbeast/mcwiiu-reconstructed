@@ -103,8 +103,9 @@ private:
     OSFastMutex mGeneratorMutex;
 protected:
     std::vector<AABB*> mTeamAreas;
-private:
+protected:
     std::vector<int> mLayerIds;
+private:
     unsigned int mChosenThemeWordId;
 protected:
     friend class ClientPacketListener;

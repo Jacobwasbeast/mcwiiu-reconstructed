@@ -17,6 +17,9 @@ class SoundEvent;
 class Boat : public Entity
 {
 public:
+    static const unsigned int TOOLTIP_BOARD = 0xEC8ECE8AU;
+    static const unsigned int TOOLTIP_HIT_ALLOWED = 0x5FB7A25AU;
+
     enum Type
     {
         OAK,

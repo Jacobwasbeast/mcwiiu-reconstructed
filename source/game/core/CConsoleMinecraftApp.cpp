@@ -12,6 +12,9 @@
 #include <string.h>
 #include <sysapp/launch.h>
 
+extern "C" void OSReport(const char*, ...);
+
+
 extern void altMain();
 extern void Sleep(unsigned int);
 extern unsigned int GetLastFileErrorCodeForViewer();
@@ -43,21 +46,16 @@ void setAltMainOKToRun()
 
 extern "C" void RegisterAwardsWithProfileManager()
 {
-    struct AchievementInfo
+    for (int i = 0; i < UIScene_AchievementsMenu::GetAchievementCount(); ++i)
     {
-        int id;
-        const wchar_t* icon;
-        int registrationId;
-        int callbackValue;
-        int callbackContext;
-    };
-
-    for (int achievement = 0; achievement < 31; ++achievement)
-    {
+        int id = UIScene_AchievementsMenu::GetAchievementId(i);
         AchievementInfo* info = reinterpret_cast<AchievementInfo*>(
-            static_cast<uintptr_t>(static_cast<unsigned int>(UIScene_AchievementsMenu::GetInfo(achievement))));
-        gProfile->RegisterAward(info->id, info->registrationId, eAwardType_None, info->callbackValue,
-                                info->callbackContext);
+            static_cast<uintptr_t>(static_cast<unsigned int>(UIScene_AchievementsMenu::GetInfo(id))));
+        if (info != NULL)
+        {
+            gProfile->RegisterAward(info->id, info->registrationId, eAwardType_None, info->title,
+                                    info->description);
+        }
     }
 
     gProfile->RichPresenceInit(-1, -1);
@@ -106,6 +104,11 @@ uint8_t CConsoleMinecraftApp::GetDRCOutputEnabled() { return m_drcOutputEnabled;
 uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled() { return m_drcCheckPlayerCountEnabled; }
 void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {
+#if defined(RECON_NATIVE)
+    (void)message;
+    OSReport("[native-fatal-load] CConsoleMinecraftApp::FatalLoadError caller=%p\n",
+             __builtin_return_address(0));
+#endif
     gRenderer->BeginConditionalSurvey((int)message);
     g_pInput->RequestErrorViewer(1, GetLastFileErrorCodeForViewer(), NULL, NULL);
     altMain();
@@ -267,7 +270,9 @@ void CConsoleMinecraftApp::ReleaseSaveThumbnail()
         m_saveThumbnail.mData = NULL;
     }
 }
-void CConsoleMinecraftApp::StoreLaunchData() { }
+void CConsoleMinecraftApp::StoreLaunchData()
+{
+}
 void CConsoleMinecraftApp::CaptureSaveThumbnail() { gRenderer->CaptureThumbnail(&m_saveThumbnail); }
 void CConsoleMinecraftApp::GetSaveThumbnail(unsigned char** data, unsigned int* size)
 {
@@ -292,12 +297,18 @@ void CConsoleMinecraftApp::GetSaveThumbnail(unsigned char** data, unsigned int* 
         memcpy(*data, thumbnail, thumbnailSize);
     }
 }
-void CConsoleMinecraftApp::GetScreenshot(int, unsigned char**, unsigned int*) { }
+void CConsoleMinecraftApp::GetScreenshot(int, unsigned char**, unsigned int*)
+{
+}
 uint32_t CConsoleMinecraftApp::LoadLocalTMSFile(wchar_t*) { return 0xffffffffU; }
 uint32_t CConsoleMinecraftApp::LoadLocalTMSFile(wchar_t*, eFileExtensionType) { return 0xffffffffU; }
-void CConsoleMinecraftApp::FreeLocalTMSFiles(eTMSFileType) { }
+void CConsoleMinecraftApp::FreeLocalTMSFiles(eTMSFileType)
+{
+}
 uint32_t CConsoleMinecraftApp::GetLocalTMSFileIndex(wchar_t*, bool, eFileExtensionType) { return 0xffffffffU; }
-void CConsoleMinecraftApp::TemporaryCreateGameStart() { }
+void CConsoleMinecraftApp::TemporaryCreateGameStart()
+{
+}
 uint32_t CConsoleMinecraftApp::UpgradeTrial()
 {
     if (m_commerceState == 1)
@@ -327,8 +338,13 @@ void CConsoleMinecraftApp::RequestSignInUIWiiUReturnedSelected(MiiDataEntry* mii
     }
     m_signInResult = 0;
 }
-uint8_t CConsoleMinecraftApp::IsDrcPreventingSplitscreen() { return m_drcOutputEnabled; }
+uint8_t CConsoleMinecraftApp::IsDrcPreventingSplitscreen()
+{
+    return m_drcOutputEnabled;
+}
 void CConsoleMinecraftApp::setIgnoreMainMenuInputDuringInvite(bool value) { m_ignoreMainMenuInputDuringInvite = value; }
 void CConsoleMinecraftApp::LoadLocalDLCImages() { m_dlcInfo->LoadLocalDLCImages(); }
 void CConsoleMinecraftApp::FreeLocalDLCImages() { m_dlcInfo->FreeLocalDLCImages(); }
-void CConsoleMinecraftApp::ReadBannedList(int, eTMSAction, bool) { }
+void CConsoleMinecraftApp::ReadBannedList(int, eTMSAction, bool)
+{
+}

@@ -120,6 +120,12 @@ inline int Mth::floor(double value)
     return value < (double)truncated ? truncated - 1 : truncated;
 }
 
+inline int Mth::absFloor(double value)
+{
+    int truncated = static_cast<int>(value);
+    return value < static_cast<double>(truncated) ? truncated - 1 : truncated;
+}
+
 inline int Mth::ceil(float value)
 {
     int truncated = (int)value;

@@ -778,6 +778,9 @@ int GlStateManager::genTexture()
 
 void GlStateManager::deleteTexture(int texture)
 {
+    if (texture <= 0)
+        return;
+
     gRenderer->TextureFree(texture);
 
     for (int unit = 0; unit < MAX_TEXTURE_UNITS; ++unit)
@@ -801,7 +804,9 @@ void GlStateManager::deleteTextures(IntBuffer* buffer)
 {
     for (unsigned int index = 0; index < buffer->limit(); ++index)
     {
-        gRenderer->TextureFree(buffer->get(index));
+        int tex = buffer->get(index);
+        if (tex > 0)
+            gRenderer->TextureFree(tex);
     }
 }
 

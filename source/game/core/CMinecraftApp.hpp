@@ -335,7 +335,7 @@ public:
     static unsigned int getSkinIdFromPath(const std::wstring& path);
     static std::wstring getSkinPathFromId(unsigned int id);
     void SetRequiredTexturePackID(uint32_t firstArgument);
-    void getLocale(std::vector<std::wstring>& locale);
+    void getLocale(std::vector<std::wstring>& localeNames);
     void SetFirstMiniGameType(EMiniGameId type);
     EMiniGameId GetFirstMiniGameType();
     void ProcessFakePadValueA();

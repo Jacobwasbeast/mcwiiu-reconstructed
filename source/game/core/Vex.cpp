@@ -10,6 +10,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"

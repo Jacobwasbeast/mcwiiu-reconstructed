@@ -33,7 +33,7 @@ public:
  struct GhostRecord {
   std::vector<GhostRecordSample> samples;
   bool hasRecording;
-  Vec3 startPos;
+  Vec3* startPos;
   int mElapsedHigh;
   unsigned int mElapsedLow;
   GhostRecord(Vec3*);
@@ -78,13 +78,13 @@ public:
   void SaveGhostHeader(int);
   void SetTrackHeader(int, int, unsigned int, unsigned short, bool, bool, bool);
   void LoadGhostHeader(int, void*, unsigned int);
-  static void LoadGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
+  static int LoadGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int LoadGhostHeaderOp(int);
   unsigned int GetTrackHeader(int, int) const;
   void SaveGhostRecord(int, GhostRecord*);
   void AddGhostRecord(int, GhostRecord*, bool);
   void AddLoadedGhostRecord(int, void*, unsigned int);
-  static void LoadGhostRecord_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
+  static int LoadGhostRecord_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int LoadGhostRecordOp(int);
   static int SaveGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int SaveGhostHeaderOp(int);

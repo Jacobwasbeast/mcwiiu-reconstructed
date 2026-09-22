@@ -52,98 +52,66 @@ std::wstring formatProgressTime(int milliseconds)
     return text.str();
 }
 
-int playerInfoInt(const PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
-}
-
-unsigned int playerInfoUint(const PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(info) + offset);
-}
-
-double playerInfoDouble(const PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<const double*>(reinterpret_cast<const char*>(info) + offset);
-}
-
-void setPlayerInfoByte(PlayerInfo* info, unsigned int offset, unsigned char value)
-{
-    reinterpret_cast<unsigned char*>(info)[offset] = value;
-}
-
-void setPlayerInfoInt(PlayerInfo* info, unsigned int offset, int value)
-{
-    *reinterpret_cast<int*>(reinterpret_cast<char*>(info) + offset) = value;
-}
-
-void setPlayerInfoDouble(PlayerInfo* info, unsigned int offset, double value)
-{
-    *reinterpret_cast<double*>(reinterpret_cast<char*>(info) + offset) = value;
-}
 }
 
 unsigned int MG03ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    const char* firstBytes = reinterpret_cast<const char*>(first);
-    const char* secondBytes = reinterpret_cast<const char*>(second);
-
-    if (firstBytes[0x38] == 0)
+    if (first->highlight == 0)
     {
-        if (secondBytes[0x38] != 0)
+        if (second->highlight != 0)
         {
             return 1;
         }
     }
-    else if (secondBytes[0x38] == 0)
+    else if (second->highlight == 0)
     {
         return 0;
     }
 
-    int secondScore = playerInfoInt(second, 0x28);
-    int firstScore = playerInfoInt(first, 0x28);
+    int secondScore = second->points;
+    int firstScore = first->points;
     if (secondScore < firstScore)
     {
         return 1;
     }
     if (secondScore <= firstScore)
     {
-        if (firstBytes[0x39] == 0)
+        if (first->endZoneEntered == 0)
         {
-            if (secondBytes[0x39] != 0)
+            if (second->endZoneEntered != 0)
             {
                 return 0;
             }
         }
-        else if (secondBytes[0x39] == 0)
+        else if (second->endZoneEntered == 0)
         {
             return 1;
         }
 
-        int firstValue = playerInfoInt(first, 0x30);
-        int secondValue = playerInfoInt(second, 0x30);
+        int firstValue = first->lifeSpan;
+        int secondValue = second->lifeSpan;
         if (firstValue <= secondValue)
         {
             if (firstValue < secondValue)
             {
                 return 1;
             }
-            if (playerInfoUint(first, 0x34) < playerInfoUint(second, 0x34))
+            if (first->damageDealt < second->damageDealt)
             {
                 return 1;
             }
         }
         if (firstValue < secondValue ||
-            (firstValue <= secondValue && playerInfoUint(first, 0x34) <= playerInfoUint(second, 0x34)))
+            (firstValue <= secondValue && first->damageDealt <= second->damageDealt))
         {
-            secondScore = playerInfoInt(second, 0x24);
-            firstScore = playerInfoInt(first, 0x24);
+            secondScore = second->secondaryTargets;
+            firstScore = first->secondaryTargets;
             if (secondScore < firstScore)
             {
                 return 1;
             }
             if (secondScore <= firstScore &&
-                playerInfoDouble(second, 0x40) < playerInfoDouble(first, 0x40))
+                second->mapTraversed < first->mapTraversed)
             {
                 return 1;
             }
@@ -358,7 +326,7 @@ boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, in
 
 unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
-    return info != 0 && info->voiceStatus != 0 ? 2 : 0;
+    return info->teamInvite != 0 ? 2 : 0;
 }
 
 void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
@@ -451,16 +419,16 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     }
 
     const unsigned char highlight = (isLocalPlayerActive && !endZoneEntered) ? 1 : 0;
-    setPlayerInfoByte(info, 0x38, highlight);
-    setPlayerInfoByte(info, 0x39, static_cast<unsigned char>(endZoneEntered));
-    setPlayerInfoInt(info, 0x30, lifespan >> 31);
-    setPlayerInfoInt(info, 0x28, points);
-    setPlayerInfoInt(info, 0x24, secondaryTargets);
-    setPlayerInfoDouble(info, 0x40, mapTraversed);
-    setPlayerInfoInt(info, 0x34, lifespan);
+    info->highlight = highlight;
+    info->endZoneEntered = static_cast<unsigned char>(endZoneEntered);
+    info->damageDealt = lifespan >> 31;
+    info->points = points;
+    info->secondaryTargets = secondaryTargets;
+    info->mapTraversed = mapTraversed;
+    info->lifeSpan = lifespan;
 
     MultiPlayerGameMode* localGameMode = minecraft->mLocalPlayers[m_userIndex]->GetLocalGameMode();
-    setPlayerInfoByte(info, 0x3a, static_cast<unsigned char>(localGameMode->IsTeamInvite(playerName)));
+    info->teamInvite = static_cast<unsigned char>(localGameMode->IsTeamInvite(playerName));
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
 }
 
@@ -484,8 +452,6 @@ void MG03ScoreboardLayout::AddPlayer(unsigned char smallId)
 
 void MG03ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
-    if (index < 0 || index >= static_cast<int>(m_players.size()) || newInfo == 0)
-        return;
     PlayerInfo* info = m_players[index];
     info->smallId = newInfo->smallId;
     info->voiceStatus = newInfo->voiceStatus;

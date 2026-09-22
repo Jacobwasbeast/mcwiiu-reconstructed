@@ -75,5 +75,5 @@ long long ByteArrayInputStream::skip(long long count)
         newPosition = mCount;
     }
     mPosition = newPosition;
-    return (int)((int)(newPosition - position) >> 31);
+    return static_cast<long long>(newPosition - position);
 }

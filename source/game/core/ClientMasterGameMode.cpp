@@ -35,6 +35,7 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRules.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/generation/GhostPlayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
@@ -44,11 +45,40 @@
 
 namespace
 {
+enum ClientMasterGameModeUILayerValue
+{
+    ClientMasterGameModeUILayer_Fullscreen = 6
+};
+
+enum ClientMasterGameModeUIGroupValue
+{
+    ClientMasterGameModeUIGroup_AllPlayers = 7
+};
+
+EMiniGameId ClientMasterGameModeMiniGameId(unsigned int value)
+{
+    switch (value)
+    {
+    case eMiniGameId_Lobby:
+        return eMiniGameId_Lobby;
+    case eMiniGameId_Battle:
+        return eMiniGameId_Battle;
+    case eMiniGameId_Tumble:
+        return eMiniGameId_Tumble;
+    case eMiniGameId_Glide:
+        return eMiniGameId_Glide;
+    case eMiniGameId_Build:
+        return eMiniGameId_Build;
+    default:
+        return eMiniGameId_Any;
+    }
+}
+
 struct FullscreenProgressState
 {
     bool showConfirmation;
-    bool unknownState1;
-    bool unknownState2;
+    bool showProgress;
+    bool showLoading;
     bool showTip;
     int closeMode;
     int playerId;
@@ -132,7 +162,7 @@ void ClientMasterGameMode::OnRoundWaitingToStart()
     mLocalChunksLoaded = false;
     mPlayerProgress.clear();
 
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
         Minecraft* minecraft = Minecraft::GetInstance();
         for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
@@ -290,10 +320,10 @@ void ClientMasterGameMode::OnRoundEnding()
         if (!scoreboard->IsWinner(suid, -1))
         {
             gConsoleUIController.CloseUIScenes(playerIndex, true);
-            if (Minecraft::InMiniGame(static_cast<EMiniGameId>(eMiniGameId_Battle), true))
+            if (Minecraft::InMiniGame(eMiniGameId_Battle, true))
                 ++mStrings[player->getDisplayName()];
         }
-        else if (Minecraft::InMiniGame(static_cast<EMiniGameId>(eMiniGameId_Battle), true) &&
+        else if (Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
                  CGameNetworkManager::sInstance.IsInPublicJoinableGame())
         {
             player->awardStat(GenericStats::theStudent(), GenericStats::param_theStudent());
@@ -337,7 +367,7 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
         Minecraft* minecraft = Minecraft::GetInstance();
         minecraft->SetGhostController(NULL);
         MiniGameDef* definition =
-            MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(eMiniGameId_Any), true);
+            MiniGameDef::GetCustomGameModeById(eMiniGameId_Any, true);
         if (definition != NULL)
             minecraft->SetupMiniGameInstance(*definition, 0);
         mStrings.clear();
@@ -385,17 +415,17 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
 
         FullscreenProgressState* progressState = new FullscreenProgressState();
         progressState->showConfirmation = false;
-        progressState->unknownState1 = true;
-        progressState->unknownState2 = true;
+        progressState->showProgress = true;
+        progressState->showLoading = true;
         progressState->showTip = true;
         progressState->closeMode = 3;
         progressState->playerId = 0;
-        progressState->backScene = static_cast<EUIScene>(0x53);
+        progressState->backScene = EUIScene_None;
         params->m_thirdParameter = progressState;
 
-        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(4),
-                                             params, static_cast<EUILayer>(6),
-                                             static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
+                                             params, static_cast<EUILayer>(ClientMasterGameModeUILayer_Fullscreen),
+                                             static_cast<EUIGroup>(ClientMasterGameModeUIGroup_AllPlayers));
 
         const long long now = System::processTimeInMilliSecs();
         mLoadedChunkCount = static_cast<int>(now >> 32);
@@ -456,14 +486,47 @@ void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlis
     }
 }
 
-void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text) { text.clear(); }
+void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text)
+{
+    Voteable* voteable = mVoteables->getVoteable(0);
+    boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
+    std::vector<MapSelectInfo> playlist;
+    GetUniquePlaylist(playlist);
+
+    const unsigned int miniGameId = static_cast<unsigned int>(Minecraft::GetMiniGameId());
+    const LevelRules::ELevelRuleType ruleType =
+        static_cast<LevelRules::ELevelRuleType>(miniGameId <= eMiniGameId_Build ? miniGameId : 0);
+
+    for (std::vector<MapSelectInfo>::const_iterator it = playlist.begin(); it != playlist.end(); ++it)
+    {
+        const int uniqueId = it->uniqueId;
+        LevelRules* levelRules = g_pApp->getLevelRules();
+        LevelGenerationOptions* options = levelRules->getLevelGenFromUniqueId(ruleType, uniqueId);
+        const wchar_t* worldName = options != NULL ? options->getWorldName() : L"Unknown";
+        boost::unordered_map<int, int>::const_iterator vote = totals.find(uniqueId);
+        if (g_pApp->DebugArtToolsOn())
+        {
+            const std::wstring label = vote == totals.end()
+                                           ? formatwstr(L"%ls : 0", worldName)
+                                           : formatwstr(L"%ls : %d", worldName, vote->second);
+            text.push_back(HtmlString(label, eMinecraftColour_NOTSET, false, false, 0));
+        }
+
+        const unsigned int themeId = LevelGenerationOptions::GetThemeFromUniqueId(uniqueId);
+        const unsigned int themeUniqueId = LevelGenerationOptions::CreateUniqueId(themeId, -1);
+        vote = totals.find(static_cast<int>(themeUniqueId));
+        const std::wstring themeLabel = vote == totals.end()
+                                            ? formatwstr(L"%ls : 0", worldName)
+                                            : formatwstr(L"%ls : %d", worldName, vote->second);
+        text.push_back(HtmlString(themeLabel, eMinecraftColour_NOTSET, false, false, 0));
+    }
+}
 void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& text)
 {
-    text.clear();
     Voteable* voteable = mVoteables->getVoteable(0);
     boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
     MiniGameDef* definition =
-        MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(GetNextGameMode()), true);
+        MiniGameDef::GetCustomGameModeById(ClientMasterGameModeMiniGameId(GetNextGameMode()), true);
     int count = static_cast<int>(definition->GetGameVariantCount()) - 2;
     if (definition->IsCustomGame())
         count = definition->GetLootSetCount();
@@ -473,10 +536,10 @@ void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& t
         boost::unordered_map<int, int>::const_iterator it = totals.find(i);
         if (it == totals.end())
             text.push_back(HtmlString(formatwstr(L"%ls : 0", label.c_str()),
-                                      static_cast<eMinecraftColour>(0), false, false, 0));
+                                      eMinecraftColour_NOTSET, false, false, 0));
         else
             text.push_back(HtmlString(formatwstr(L"%ls : %d", label.c_str(), it->second),
-                                      static_cast<eMinecraftColour>(0), false, false, 0));
+                                      eMinecraftColour_NOTSET, false, false, 0));
     }
 }
 
@@ -547,7 +610,19 @@ unsigned int ClientMasterGameMode::GetBuildOffThemeVote(int playerIndex)
 }
 
 const wchar_t* ClientMasterGameMode::GetString(const int& id) { return mStringTable.getString(id); }
-void ClientMasterGameMode::GetCurrentThemeVotesText(std::vector<HtmlString>& text) { text.clear(); }
+void ClientMasterGameMode::GetCurrentThemeVotesText(std::vector<HtmlString>& text)
+{
+    Voteable* voteable = mVoteables->getVoteable(3);
+    boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
+    for (unsigned int index = 0; index < mLayerIds.size(); ++index)
+    {
+        const int themeId = mLayerIds[index];
+        const wchar_t* name = GetString(themeId);
+        const int voteCount = totals[themeId];
+        const std::wstring label = formatwstr(L"%ls : %d", name, voteCount);
+        text.push_back(HtmlString(label, eMinecraftColour_NOTSET, false, false, 0));
+    }
+}
 
 std::wstring ClientMasterGameMode::GetTransitionTextOverride()
 {
@@ -641,7 +716,7 @@ void ClientMasterGameMode::OnDeath(const Vec3* position)
 
     const float pitchStep =
         static_cast<float>(8 - Minecraft::GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(
-                                   static_cast<EMiniGameId>(15))) *
+                                   eMiniGameId_Any)) *
         0.125f * 0.25f;
     const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnDeath);
 
@@ -694,12 +769,12 @@ void ClientMasterGameMode::DoRoundStartTickSound(int tick, const MiniGameDef::So
 
 void ClientMasterGameMode::OnRoundStartTimerTick(int tick)
 {
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) || tick != 3)
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) || tick != 3)
         return;
 
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
     {
-        if (gConsoleUIController.IsSceneInStack(playerIndex, static_cast<EUIScene>(60)))
+        if (gConsoleUIController.IsSceneInStack(playerIndex, EUIScene_GameModeScoreboardMenu))
             gConsoleUIController.CloseUIScenes(playerIndex, true);
     }
 }
@@ -770,7 +845,10 @@ bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const
 }
 bool ClientMasterGameMode::IsRoundEnding() const { return GetGameModeState() == 9; }
 bool ClientMasterGameMode::IsRoundPlaying() const { return GetGameModeState() == 7; }
-bool ClientMasterGameMode::IsInScoringState() const { return Minecraft::InMiniGame(static_cast<EMiniGameId>(4), true) && GetGameModeState() == 8; }
+bool ClientMasterGameMode::IsInScoringState() const
+{
+    return Minecraft::InMiniGame(eMiniGameId_Build, true) && GetGameModeState() == 8;
+}
 bool ClientMasterGameMode::IsInLobbyState() { return GetGameModeState() <= 4; }
 bool ClientMasterGameMode::IsInActiveRoundState() { return GetGameModeState() >= 6 && GetGameModeState() <= 10; }
 bool ClientMasterGameMode::IsInTrasitionFromLobby()
@@ -832,7 +910,7 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
 }
 void ClientMasterGameMode::FireGameRoundStats()
 {
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
         return;
     LevelGenerationOptions* options = g_pApp != NULL ? g_pApp->getLevelGenerationOptions() : NULL;
     if (options == NULL)
@@ -841,7 +919,7 @@ void ClientMasterGameMode::FireGameRoundStats()
     if (current == NULL)
         return;
     MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(
-        static_cast<EMiniGameId>(current->GetId()), true);
+        ClientMasterGameModeMiniGameId(current->GetId()), true);
     if (definition == NULL || !definition->IsCRCValid() || options == NULL || !options->isCRCValid())
         return;
 

@@ -358,9 +358,8 @@ private:
     unsigned int mUnknown2F8;
     GameModePacket::TutorialGameModeData mTutorialData;
     BlockChangeListener* mBlockChangeListener;
-    unsigned int mUnknown308;
-    unsigned int mUnknown30C;
-    unsigned int mUnknown310;
+    unsigned long long mLastBroadcastTime;
+    int mLastChatMessage;
     unsigned int mUnknown318;
     BlockRemover* mBlockRemover;
     std::vector<StatsUID> mLastKnownPositionPlayers;
@@ -368,7 +367,7 @@ private:
 
 };
 
-#if UINTPTR_MAX == 0xffffffffU
+#if UINTPTR_MAX == 0xffffffffU && !defined(RECON_NATIVE)
 static_assert(offsetof(MasterGameMode::ChestRefillInfo, lootGroup) == 0x34,
               "MasterGameMode ChestRefillInfo loot-group ABI offset");
 static_assert(offsetof(MasterGameMode::ChestRefillInfo, itemSet) == 0x14,

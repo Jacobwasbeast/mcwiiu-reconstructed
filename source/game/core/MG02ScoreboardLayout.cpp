@@ -28,81 +28,59 @@ MG02ScoreboardLayout::~MG02ScoreboardLayout()
 
 namespace
 {
-int playerInfoInt(const PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
-}
-
-unsigned int playerInfoUint(const PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(info) + offset);
-}
-
-unsigned char& playerInfoByte(PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(info) + offset);
-}
-
-int& playerInfoIntMut(PlayerInfo* info, unsigned int offset)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(info) + offset);
-}
 }
 
 bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    const char* firstBytes = reinterpret_cast<const char*>(first);
-    const char* secondBytes = reinterpret_cast<const char*>(second);
-
-    if (firstBytes[0x28] == 0)
+    if (first->priority == 0)
     {
-        if (secondBytes[0x28] != 0)
+        if (second->priority != 0)
         {
             return false;
         }
     }
-    else if (secondBytes[0x28] == 0)
+    else if (second->priority == 0)
     {
         return true;
     }
 
-    if (playerInfoInt(second, 0x40) < playerInfoInt(first, 0x40))
+    if (second->deaths < first->deaths)
     {
         return true;
     }
-    if (playerInfoInt(second, 0x40) > playerInfoInt(first, 0x40))
+    if (second->deaths > first->deaths)
     {
         return false;
     }
 
-    if (playerInfoUint(first, 0x2c) > playerInfoUint(second, 0x2c))
+    if (first->roundsWon > second->roundsWon)
     {
         return true;
     }
-    if (playerInfoUint(first, 0x2c) < playerInfoUint(second, 0x2c))
+    if (first->roundsWon < second->roundsWon)
     {
         return false;
     }
 
-    if (playerInfoUint(first, 0x30) > playerInfoUint(second, 0x30))
+    if (first->totalBlocksDestroyed > second->totalBlocksDestroyed)
     {
         return true;
     }
-    if (playerInfoUint(first, 0x30) < playerInfoUint(second, 0x30))
+    if (first->totalBlocksDestroyed < second->totalBlocksDestroyed)
     {
         return false;
     }
 
-    if (playerInfoUint(second, 0x34) < playerInfoUint(first, 0x34))
+    if (second->totalDistanceTravelled < first->totalDistanceTravelled)
     {
         return true;
     }
-    if (playerInfoUint(second, 0x34) > playerInfoUint(first, 0x34))
+    if (second->totalDistanceTravelled > first->totalDistanceTravelled)
     {
         return false;
     }
 
-    return playerInfoInt(first, 0x24) > playerInfoInt(second, 0x24);
+    return first->totalLifeSpan > second->totalLifeSpan;
 }
 
 void MG02ScoreboardLayout::Init(int value)
@@ -244,7 +222,7 @@ boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column,
 
 unsigned char MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
-    return info == 0 ? 0x6e : (unsigned int)(info->voiceStatus ^ 1);
+    return info == 0 ? 0x6e : (unsigned int)(info->priority ^ 1);
 }
 
 void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
@@ -260,20 +238,20 @@ void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     {
         priorityFlag = 1;
     }
-    playerInfoByte(info, 0x28) = priorityFlag;
+    info->priority = priorityFlag;
 
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
-    playerInfoIntMut(info, 0x30) = scoreboard->GetTotalBlocksDestroyed(uid);
-    playerInfoByte(info, 0x29) = scoreboard->GetSurvived(uid, -1);
-    playerInfoIntMut(info, 0x34) = scoreboard->GetTotalDistanceTravelled(uid);
-    playerInfoIntMut(info, 0x24) = scoreboard->GetTotalLifeSpan(uid);
-    playerInfoIntMut(info, 0x3c) = scoreboard->GetTotalJumps(uid);
-    playerInfoIntMut(info, 0x38) = scoreboard->GetTotalTrapsSetOff(uid);
-    playerInfoIntMut(info, 0x2c) = scoreboard->GetRoundsWon(uid);
-    playerInfoIntMut(info, 0x40) = scoreboard->GetDeaths(uid, -1);
+    info->totalBlocksDestroyed = scoreboard->GetTotalBlocksDestroyed(uid);
+    info->survived = scoreboard->GetSurvived(uid, -1);
+    info->totalDistanceTravelled = scoreboard->GetTotalDistanceTravelled(uid);
+    info->totalLifeSpan = scoreboard->GetTotalLifeSpan(uid);
+    info->totalJumps = scoreboard->GetTotalJumps(uid);
+    info->totalTrapsSetOff = scoreboard->GetTotalTrapsSetOff(uid);
+    info->roundsWon = scoreboard->GetRoundsWon(uid);
+    info->deaths = scoreboard->GetDeaths(uid, -1);
 }
 
 PlayerInfo* MG02ScoreboardLayout::CreatePlayerInfo()

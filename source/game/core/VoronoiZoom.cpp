@@ -25,8 +25,6 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
     const int parentZ = (z - 2) >> 2;
     const int parentWidth = (width >> 2) + 2;
     const int parentHeight = (height >> 2) + 2;
-    if (!parent)
-        boost::assertion_failed("px != 0", "boost::detail::sp_member_access<T>::type boost::shared_ptr<T>::operator->", "..\\..\\..\\Libraries\\Boost\\boost_1_53_0\\boost/smart_ptr/shared_ptr", 0x28d);
     arrayWithLength<int> source = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
     const int gridWidth = parentWidth * 4 - 4;
     const int gridHeight = parentHeight * 4 - 4;
@@ -71,7 +69,7 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
                         value = lowerLeft;
                     else
                         value = lowerRight;
-                    grid[(row * 4 + localZ) * gridWidth + column * 4 + localX] = value;
+                    grid.data[(row * 4 + localZ) * gridWidth + column * 4 + localX] = value;
                 }
             }
         }

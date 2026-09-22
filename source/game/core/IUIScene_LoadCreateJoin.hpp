@@ -44,6 +44,8 @@ public:
     void LoadGameMode(EMiniGameId);
     void HandleLoadListPress(int);
     std::vector<File*>& GetLoadFileList();
+    char* GetSaveDataBase();
+    int& GetSelectedCustomGameModeId();
     void HandleNewListPress(int, int);
     static int TexturePackDialogReturned(void*, int, C4JStorage::EMessageResult);
     void CheckAndJoinGame(int);
@@ -56,6 +58,8 @@ public:
     virtual bool DoesLoadListHaveFocus() = 0;
     virtual void ClearLoadList() = 0;
     virtual void AddLoadListButton(const std::wstring& label, int id) = 0;
+    virtual void SetLoadListIcon(int index, unsigned char* data, unsigned int size,
+                                   const std::wstring& name) = 0;
     virtual void ScrollLoadListToSelection(unsigned int selection) = 0;
     virtual unsigned int GetLoadListSize() = 0;
     virtual bool DoesMashUpWorldHaveFocus() = 0;
@@ -114,7 +118,7 @@ protected:
     unsigned char m_state72;
     unsigned char m_state73;
     int m_state74;
-    unsigned char m_state78;
+    int m_selectedCustomGameModeId;
     unsigned char m_state79;
     unsigned char m_state7a;
     unsigned char m_state7b;

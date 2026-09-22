@@ -14,8 +14,9 @@ BufferedImage::BufferedImage(int width, int height, int mipLevels)
 {
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    m_data[0] = (int*)std::malloc((size_t)width * (size_t)height * 4u);
-    if (m_data[0] != NULL) std::memset(m_data[0], 0, (size_t)width * (size_t)height);
+    const size_t pixelCount = (size_t)width * (size_t)height;
+    m_data[0] = (int*)std::malloc(pixelCount * sizeof(int));
+    if (m_data[0] != NULL) std::memset(m_data[0], 0, pixelCount * sizeof(int));
 }
 
 BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path)
@@ -144,8 +145,7 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
     int width = 0;
     int height = 0;
-    TextureUtil::LoadTextureData(data, length, &width, &height, &m_data[0]);
-    if (m_data[0] != NULL)
+    if (TextureUtil::LoadTextureData(data, length, &width, &height, &m_data[0]) == 0)
     {
         m_width = (unsigned int)width;
         m_height = (unsigned int)height;
@@ -167,6 +167,7 @@ unsigned int BufferedImage::getHeight() { return m_height; }
 
 void BufferedImage::getRGB(int x, int y, unsigned int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize, unsigned int mipLevel)
 {
+    if (mipLevel >= 10) return;
     int sourceWidth = (int)(m_width >> mipLevel);
     int* source = m_data[mipLevel];
     if (source == NULL || rgbArray.data == NULL) return;
@@ -178,7 +179,7 @@ void BufferedImage::getRGB(int x, int y, unsigned int width, int height, arrayWi
 }
 
 int* BufferedImage::getData() { return m_data[0]; }
-int* BufferedImage::getData(int mipLevel) { return m_data[mipLevel]; }
+int* BufferedImage::getData(int mipLevel) { return mipLevel < 10 ? m_data[mipLevel] : NULL; }
 void* BufferedImage::getGraphics() { return NULL; }
 
 BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)

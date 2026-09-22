@@ -1,7 +1,7 @@
-#include "platform/wiiu/PlatformTiming.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/PlatformTiming.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "platform/wiiu/cCommerceNintendoWiiU.hpp"
 #include "game/core/ArchiveFile.hpp"
@@ -16,7 +16,6 @@
 #include "game/server/MinecraftServer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "platform/wiiu/CStorage.hpp"
-#include "vendor/SKIN_BOX.hpp"
 #include <sstream>
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
@@ -44,6 +43,22 @@
 #include "game/util/phys__Vec2.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+
+struct SKIN_BOX
+{
+    int id;
+    float x;
+    float y;
+    float z;
+    float width;
+    float height;
+    float depth;
+    float xTexOffs;
+    float yTexOffs;
+    float delta;
+    unsigned int armourFlags;
+    unsigned int mirror;
+};
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/core/Achievement.hpp"
@@ -195,10 +210,10 @@ struct WritingBookMenuInitData
     bool signing;
 };
 
-std::vector<BANNEDLISTDATA*>& BannedLevelListAt(CMinecraftApp* app, int player)
+std::vector<BANNEDLISTDATA*>& BannedLevelListAt(CMinecraftApp* minecraftApp, int player)
 {
     std::vector<BANNEDLISTDATA*>** lists =
-        reinterpret_cast<std::vector<BANNEDLISTDATA*>**>(reinterpret_cast<char*>(app) + 0x1ac);
+        reinterpret_cast<std::vector<BANNEDLISTDATA*>**>(reinterpret_cast<char*>(minecraftApp) + 0x1ac);
     return *lists[player];
 }
 
@@ -331,7 +346,7 @@ CMinecraftApp::CMinecraftApp()
       mDLCInstallIndex(0), mAutosaveTime(0),
       mNewDLCAvailable(false), mDLCOffersRetrievedValue(0), mExtraGameData(0),
       mCorruptSaveDeleted(false), mResetNether(false), mResetEnd(false),
-      mRequiredTexturePackID(0), mFirstMiniGameType(static_cast<EMiniGameId>(0)),
+      mRequiredTexturePackID(0), mFirstMiniGameType(eMiniGameId_Lobby),
       mMediaArchive(NULL), mSaveNotificationCount(0), mDLCDownloadQueueResetFlag(false)
 {
     InitializeCriticalSection(&mPendingActionsMutex);
@@ -928,7 +943,7 @@ uint64_t CMinecraftApp::UpsellReturnedCallback(void* context, eUpsellType type, 
         outcome = static_cast<ESen_UpsellOutcome>(2);
 
     const int playerId = gProfile->GetPrimaryPad();
-    telemetryManagerInstance->RecordUpsellResponded(playerId, static_cast<ESen_UpsellID>(1), 1, outcome);
+    telemetryManagerInstance->RecordUpsellResponded(playerId, eSen_UpsellID_FullGame, 1, outcome);
     return 0;
 }
 int CMinecraftApp::TipsSortFunction(const void* firstTip, const void* secondTip)
@@ -1025,7 +1040,7 @@ uint32_t CMinecraftApp::UnlockFullSaveReturned(void* context, int button, C4JSto
     }
     else
     {
-        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, eSen_UpsellID_FullGame, 1,
                                               static_cast<ESen_UpsellOutcome>(2));
     }
     return 0;
@@ -1060,7 +1075,7 @@ uint32_t CMinecraftApp::UnlockFullExitReturned(void* context, int button, C4JSto
     }
     else
     {
-        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, eSen_UpsellID_FullGame, 1,
                                               static_cast<ESen_UpsellOutcome>(2));
         app->SetAction(userIndex, static_cast<eXuiAction>(5), NULL);
     }
@@ -1164,7 +1179,7 @@ uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage:
     }
     else
     {
-        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, eSen_UpsellID_FullGame, 1,
                                               static_cast<ESen_UpsellOutcome>(2));
         app->SetAction(userIndex, static_cast<eXuiAction>(0xe), NULL);
     }
@@ -1179,7 +1194,7 @@ uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JS
     }
     else
     {
-        telemetryManagerInstance->RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+        telemetryManagerInstance->RecordUpsellResponded(button, eSen_UpsellID_FullGame, 1,
                                               static_cast<ESen_UpsellOutcome>(2));
     }
     return 0;
@@ -1616,7 +1631,7 @@ uint32_t CMinecraftApp::GameModeTransitionThreadProc(void* context)
                 gConsoleUIController.IsExpectingOrReloadingSkin();
                 CGameNetworkManager::sInstance.IsInSession();
                 minecraft->tickAllConnections();
-                if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+                if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
                 {
                     GhostController* ghostController = minecraft->GetGhostController();
                     if (ghostController != NULL)
@@ -1663,7 +1678,7 @@ uint32_t CMinecraftApp::GameModeTransitionThreadProc(void* context)
         gConsoleUIController.IsExpectingOrReloadingSkin();
         CGameNetworkManager::sInstance.IsInSession();
         minecraft->tickAllConnections();
-        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
         {
             GhostController* ghostController = minecraft->GetGhostController();
             if (ghostController != NULL)
@@ -2011,7 +2026,7 @@ void CMinecraftApp::ClearTerrainFeaturePosition()
 }
 void CMinecraftApp::LocaleAndLanguageInit()
 {
-    static const struct { int id; const wchar_t* tag; } locales[] = {
+    static const struct { int id; const wchar_t* tag; } languageEntries[] = {
         {28, L"zh-CHT"},
         {27, L"cs-CS"},
         {29, L"la-LAS"},
@@ -2075,10 +2090,10 @@ void CMinecraftApp::LocaleAndLanguageInit()
         {60, L"zh-HANS"},
         {61, L"zh-HANT"}
     };
-    for (const auto& locale : locales)
+    for (const auto& languageEntry : languageEntries)
     {
-        mLocaleToString[locale.id] = locale.tag;
-        mStringToLocale[locale.tag] = locale.id;
+        mLocaleToString[languageEntry.id] = languageEntry.tag;
+        mStringToLocale[languageEntry.tag] = languageEntry.id;
     }
 }
 void CMinecraftApp::HandleButtonPresses()
@@ -2687,26 +2702,26 @@ uint32_t CMinecraftApp::tipFiltered(int32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::GetNextTip(bool firstArgument, EMiniGameId secondArgument)
+uint32_t CMinecraftApp::GetNextTip(bool firstTipRequest, EMiniGameId secondArgument)
 {
     if (s_pendingDlcInstallTip && gProfile->GetSignedInUsersMask() != 0)
     {
         s_pendingDlcInstallTip = false;
         if (DLCInstallProcessCompleted() == 0 ||
-            mDLCManager.getPackCount(static_cast<DLCManager::EDLCType>(0)) == 0)
+            mDLCManager.getPackCount(DLCManager::eDLCType_Skin) == 0)
         {
             return 0x64a70fa4U;
         }
     }
 
-    if (!firstArgument)
+    if (!firstTipRequest)
     {
         mTipRotationIndex = (mTipRotationIndex + 1) % 3;
         return mTipData[mTipRotationIndex == 2 ? 3 : mTipRotationIndex].getNextTip();
     }
-    if (secondArgument == static_cast<EMiniGameId>(1))
+    if (secondArgument == eMiniGameId_Battle)
         return mTipData[2].getNextTip();
-    if (secondArgument == static_cast<EMiniGameId>(2))
+    if (secondArgument == eMiniGameId_Tumble)
         return mTipData[3].getNextTip();
     return mTipData[4].getNextTip();
 }
@@ -2754,7 +2769,7 @@ std::wstring CMinecraftApp::GetSingleActionReplacement(int32_t firstArgument, ui
              action, controller, size, imageSize, imageSize);
     return std::wstring(image);
 }
-std::wstring CMinecraftApp::GetActionReplacement(int32_t firstArgument, uint8_t secondArgument)
+std::wstring CMinecraftApp::GetActionReplacement(int32_t controllerIndex, uint8_t actionMask)
 {
     return 0;
 }
@@ -3231,7 +3246,7 @@ uint8_t CMinecraftApp::GetPlayerGameType(uint8_t firstArgument)
         if (mPlayerIds[i] == firstArgument) return mPlayerGameTypes[i];
     return 0;
 }
-std::wstring CMinecraftApp::getEntityName(uint64_t firstArgument, int32_t secondArgument)
+std::wstring CMinecraftApp::getEntityName(uint64_t entityIdentifier, int32_t nameMode)
 {
     return 0;
 }
@@ -3419,7 +3434,7 @@ void CMinecraftApp::GetFileFromTPD(eTPDFileType type, unsigned char* source, uns
     *data = 0;
     *size = 0;
 }
-void CMinecraftApp::getLocale(std::vector<std::wstring>& locale)
+void CMinecraftApp::getLocale(std::vector<std::wstring>& localeNames)
 {
     extern unsigned int XGetLanguage();
     extern int XGetLocale();
@@ -3621,7 +3636,7 @@ void CMinecraftApp::getLocale(std::vector<std::wstring>& locale)
 
     for (size_t index = 0; index < localeIds.size(); ++index)
     {
-        locale.push_back(mLocaleToString[localeIds[index]]);
+        localeNames.push_back(mLocaleToString[localeIds[index]]);
     }
 }
 void CMinecraftApp::SetFirstMiniGameType(EMiniGameId type)
@@ -3659,11 +3674,13 @@ uint32_t CMinecraftApp::IsVoiceChatEnabled()
     return GetGameStarted() != 0 &&
         GameSettings::GetGameSettings(GetPrimaryUserIndex(), static_cast<eGameSetting>(0x22)) != 0;
 }
-void CMinecraftApp::CaptureScreenshot(int32_t firstArgument)
+void CMinecraftApp::CaptureScreenshot(int32_t playerNumber)
 {
+    (void)playerNumber;
 }
 void CMinecraftApp::RunFrame()
 {
+    /* The Wii U symbol is an intentional no-op in this build. */
 }
 void CMinecraftApp::HandleXuiActions()
 {

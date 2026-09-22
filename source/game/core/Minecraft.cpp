@@ -775,6 +775,12 @@ void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_p
     boost::shared_ptr<MultiplayerLocalPlayer> newPlayer =
         boost::static_pointer_cast<MultiplayerLocalPlayer>(player);
     const DimensionType* type = level->mDimension->getType();
+    if (type == DimensionType::NETHER)
+        mLevels[1] = level;
+    else if (type == DimensionType::THE_END)
+        mLevels[2] = level;
+    else
+        mLevels[0] = level;
     if (type != DimensionType::NETHER && type != DimensionType::THE_END && !newPlayer)
     {
         int userIndex = gProfile->GetPrimaryPad();
@@ -1214,6 +1220,7 @@ bool Minecraft::setLocalPlayerIdx(int playerIdx)
     mGameMode = mGameModes[playerIdx];
     mPlayer = mLocalPlayers[playerIdx];
     mCameraEntity = mLocalPlayers[playerIdx]->GetCamera();
+    mGameRenderer->setItemInHandRenderer(mLocalItemInHandRenderers[playerIdx]);
     mLevel = getLevel(mLocalPlayers[playerIdx]->mDimension);
     mParticleEngine->setLevel(mLevel);
     return true;
