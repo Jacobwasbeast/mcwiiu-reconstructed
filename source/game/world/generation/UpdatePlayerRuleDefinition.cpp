@@ -15,6 +15,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/minigame/EMiniGameId.hpp"
@@ -73,14 +74,14 @@ double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z,
     double testY = y;
     const BlockState* state = level->getBlockState(BlockPos(x, y + halfHeight, z));
 
-    while (state->isSolidRender())
+    while (state->getMaterial() != Material::AIR)
     {
         testY -= 0.1;
         state = level->getBlockState(BlockPos(x, testY + halfHeight, z));
     }
 
     state = level->getBlockState(BlockPos(x, testY - halfHeight, z));
-    while (!state->isSolidRender())
+    while (state->getMaterial() != Material::AIR)
     {
         testY += 0.1;
         state = level->getBlockState(BlockPos(x, testY - halfHeight, z));
