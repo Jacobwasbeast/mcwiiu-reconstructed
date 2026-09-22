@@ -18,9 +18,6 @@
 #include "game/world/biome/FjFeatureBiomeRequirements.hpp"
 #include "game/world/generation/Layer.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-void MemSect(int section);
 unsigned int GetTickCount();
 
 template <typename T>
@@ -352,29 +349,18 @@ float BiomeSource::scaleTemp(float temperature, int height) const
 
 void BiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const
 {
-    PIXBeginNamedEvent(0.0f, "Setup");
-
     IntCache::releaseAll();
 
     int count = width * height;
     biomes.resize(count);
 
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Getting area");
-
     arrayWithLength<int> area = mRawBiomeLayer->getArea(x, z, width, height);
-
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Copying values");
 
     for (int i = 0; i < count; i++)
     {
         biomes.data[i] = Biome::getBiome(area.data[i], Biome::DEFAULT);
     }
 
-    PIXEndNamedEvent();
 }
 
 void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, int z, int width, int height) const
@@ -391,41 +377,27 @@ void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, 
 
 void BiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height, bool useCache) const
 {
-    PIXBeginNamedEvent(0.0f, "Setup");
-
     IntCache::releaseAll();
 
     int count = width * height;
     biomes.resize(count);
 
-    PIXEndNamedEvent();
-
     if (useCache && width == 16 && height == 16 && ((x | z) & 15) == 0)
     {
-        PIXBeginNamedEvent(0.0f, "Copying cache");
-
         arrayWithLength<Biome*> cached = mBiomeCache->getBiomeBlockAt(x, z);
         System::arraycopy(cached, 0, &biomes, 0, 256);
         delete cached.data;
 
-        PIXEndNamedEvent();
         return;
     }
 
-    PIXBeginNamedEvent(0.0f, "Getting area");
-
     arrayWithLength<int> area = mBiomeLayer->getArea(x, z, width, height);
-
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Copying values");
 
     for (int i = 0; i < count; i++)
     {
         biomes.data[i] = Biome::getBiome(area.data[i], Biome::DEFAULT);
     }
 
-    PIXEndNamedEvent();
 }
 
 unsigned char* BiomeSource::getBiomeIndexBlock(int x, int z, int width, int height) const
@@ -456,29 +428,19 @@ void BiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndice
 
     if (useCache && width == 16 && height == 16 && ((x | z) & 15) == 0)
     {
-        PIXBeginNamedEvent(0.0f, "Copying cached block");
-
         arrayWithLength<unsigned char> cached = mBiomeCache->getBiomeIndexBlockAt(x, z);
         System::arraycopy(cached, 0, &biomeIndices, 0, 256);
 
-        PIXEndNamedEvent();
         return;
     }
 
-    PIXBeginNamedEvent(0.0f, "Getting area");
-
     arrayWithLength<int> area = mBiomeLayer->getArea(x, z, width, height);
-
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Copying values");
 
     for (int i = 0; i < count; i++)
     {
         biomeIndices.data[i] = (unsigned char)area.data[i];
     }
 
-    PIXEndNamedEvent();
 }
 
 bool BiomeSource::containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes)
@@ -514,8 +476,6 @@ BlockPos* BiomeSource::findBiome(int x, int z, int radius, std::vector<Biome*> b
     unsigned int width = (unsigned int)((((x + radius) >> 2) - minX) + 1);
     unsigned int height = (unsigned int)((((z + radius) >> 2) - minZ) + 1);
 
-    MemSect(50);
-
     arrayWithLength<int> area = mRawBiomeLayer->getArea(minX, minZ, (int)width, (int)height);
 
     BlockPos* found = NULL;
@@ -536,8 +496,6 @@ BlockPos* BiomeSource::findBiome(int x, int z, int radius, std::vector<Biome*> b
             foundCount++;
         }
     }
-
-    MemSect(0);
 
     return found;
 }

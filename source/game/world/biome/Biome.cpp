@@ -6,6 +6,7 @@
 #include "game/core/Mth.hpp"
 #include "game/core/PerlinSimplexNoise.hpp"
 #include "game/entity/mob/MobCategory.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/Random.hpp"
@@ -277,16 +278,16 @@ Biome::Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties
 
     mDecorator = createDecorator();
 
-    mCreatures.push_back(new MobSpawnerData(12, 0x2D680002ULL, 4, 4));
+    mCreatures.push_back(new MobSpawnerData(12, ENTITY_TYPE_SHEEP, 4, 4));
     mCreatures.push_back(new MobSpawnerData(10, 0x2D680003ULL, 4, 4));
     mChickens.push_back(new MobSpawnerData(10, 0x0D680004ULL, 4, 4));
     mCreatures.push_back(new MobSpawnerData(8, 0x2D6A0000ULL, 4, 4));
 
     mMonsters.push_back(new MobSpawnerData(100, 0x5D560040ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(95, 0x5D550040ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(5, 0x5D550042ULL, 1, 1));
+    mMonsters.push_back(new MobSpawnerData(95, ENTITY_TYPE_ZOMBIE, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(5, ENTITY_TYPE_ZOMBIE_VILLAGER, 1, 1));
     mMonsters.push_back(new MobSpawnerData(100, 0x5D540441ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(100, 0x5D540041ULL, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(100, ENTITY_TYPE_PIG_ZOMBIE, 4, 4));
     mMonsters.push_back(new MobSpawnerData(100, 0x5D540049ULL, 1, 1));
 
     if (biomeId != eBiomeIDs_Hell && biomeId != eBiomeIDs_TheEnd)
@@ -943,7 +944,7 @@ Biome* Biome::setSnowAccumulation(float minAccumulation, float maxAccumulation)
 
     if (minAccumulation > 0.0F && getBiomeType() != eBiomeType_Ocean)
     {
-        mCreatures.push_back(new MobSpawnerData(4, 0x2D680005ULL, 2, 3));
+        mCreatures.push_back(new MobSpawnerData(4, ENTITY_TYPE_RABBIT, 2, 3));
     }
 
     return this;
