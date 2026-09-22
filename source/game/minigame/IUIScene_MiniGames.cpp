@@ -11,9 +11,6 @@ IUIScene_MiniGames::Variant::Variant()
 }
 
 IUIScene_MiniGames::IUIScene_MiniGames()
-    : mVariantLabel(L"")
-    , mOnlineRestricted(NULL)
-    , mVariantName(L"X")
 {
 }
 
@@ -29,7 +26,7 @@ unsigned int IUIScene_MiniGames::GetVariantDesc(int index, bool alternate)
 
 void IUIScene_MiniGames::SetUpVariants()
 {
-    MiniGameDef* miniGame = mOnlineRestricted->GetMiniGame();
+    MiniGameDef* miniGame = GetMiniGame();
     int optionsCount = miniGame->GetOptionsCount(eCustomGameModeHostOption_ModeVariant);
     unsigned int id = miniGame->GetId();
     if (id != 0)

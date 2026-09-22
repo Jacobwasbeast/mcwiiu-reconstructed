@@ -416,8 +416,7 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     , mCanTntDestroyBlocks(false), mMaxPlayersForSmallMaps(0), mFoodBalances(), mChestRefill(), mBlockData(), mLootSets()
     , mTextureName(), mCanCraft(true), mAllowsUGC(true), mHostOptions()
 {
-    mVersionMajor = object[L"versionMajor"].asUInt(0);
-    mVersionMinor = object[L"versionMinor"].asUInt(0);
+    getVersionNumber(object, &mVersionMajor, &mVersionMinor);
     mCanAutoStart = object[L"canAutoStart"].asBool(false);
     mLoadOnlyActiveAreaChunks = object[L"loadOnlyActiveAreaChunks"].asBool(false);
     mShowInvulnerableEffect = object[L"showInvulnerableEffect"].asBool(false);
@@ -450,8 +449,11 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     }
     parsePermissions(object);
     parseChestRefill(object);
-    parseHostOptionSettings(object);
-    parseMatchmakingFilter(object);
+    const XmlObject* hostOptions = object.child(L"HostOptions");
+    maybe<unsigned int> hostOptionVersion = (*hostOptions)[L"version"].maybeUInt();
+    mHostOptionVersion = hostOptionVersion.isSet() ? hostOptionVersion.get() : 0;
+    parseHostOptionSettings(*hostOptions);
+    mHostOptions.Set(eCustomGameModeHostOption_All, GetOptionsDefault(eCustomGameModeHostOption_All));
 }
 
 MiniGameDef::MiniGameDef(EMiniGameId id)
@@ -830,29 +832,74 @@ void MiniGameDef::parseItemOverrideMap(int itemId, const XmlObject& object)
 
 void MiniGameDef::parseMatchmakingFilter(const XmlObject& object)
 {
-    int filterId = object[L"filterId"].asInt(-1);
-    if (filterId >= 0)
+    mMatchmakingFilterIds.push_back(object[L"default"].asInt());
+
+    boost::unordered_map<int, boost::unordered_map<int, int> > filter;
+    const std::vector<XmlChild>& variants = object.getChildrenRaw();
+    int variantIndex = 0;
+    for (std::vector<XmlChild>::const_iterator variant = variants.begin(); variant != variants.end(); ++variant, ++variantIndex)
     {
-        boost::unordered_map<int, boost::unordered_map<int, int> > filter;
-        boost::unordered_map<int, int> values;
-        values[object[L"value"].asInt(0)] = object[L"match"].asInt(0);
-        filter[object[L"option"].asInt(0)] = values;
-        mMatchmakingFilterIds.push_back(filterId);
-        mMatchmakingFilters.push_back(filter);
+        const std::vector<XmlChild>& options = variant->xml()->getChildrenRaw();
+        for (std::vector<XmlChild>::const_iterator option = options.begin(); option != options.end(); ++option)
+        {
+            const XmlObject* optionObject = option->xml();
+            std::pair<bool, eCustomGameModeHostOption> parsed = GameModeOptions::parse(optionObject->mName);
+            if (parsed.first)
+                filter[variantIndex][parsed.second] = (*optionObject)[L"value"].asInt();
+        }
     }
+
+    mMatchmakingFilters.push_back(filter);
 }
 
 void MiniGameDef::parseHostOptionSettings(const XmlObject& object)
 {
-    for (int option = eCustomGameModeHostOption_NoSmallSkins; option < eCustomGameModeHostOption_Nothing; ++option)
+    mMatchmakingFilters.clear();
+    mMatchmakingFilterIds.clear();
+
+    for (int option = eCustomGameModeHostOption_NoSmallSkins; option < eCustomGameModeHostOption_All; ++option)
     {
-        std::wstringstream key;
-        key << L"option" << option;
-        maybe<unsigned int> value = object[key.str()].maybeUInt();
-        if (value.isSet())
+        mOptionDefaults[option] = 0;
+        mOptionLists[option].clear();
+    }
+
+    const std::vector<XmlChild>& children = object.getChildrenRaw();
+    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+    {
+        const XmlObject* childObject = child->xml();
+
+        if (childObject->mName == L"MatchmakingFilter")
         {
-            mOptionDefaults[option] = value.get();
-            mHostOptions.Set((eCustomGameModeHostOption)option, value.get());
+            parseMatchmakingFilter(*childObject);
+            continue;
+        }
+
+        std::pair<bool, eCustomGameModeHostOption> parsed = GameModeOptions::parse(childObject->mName);
+        if (!parsed.first)
+            continue;
+
+        eCustomGameModeHostOption option = parsed.second;
+        unsigned int type = GetOptionType(option);
+        unsigned int defaultValue = (*childObject)[L"default"].asInt();
+        mOptionDefaults[option] = static_cast<unsigned int>(-1);
+        std::vector<int>& values = mOptionLists[option];
+
+        if (type == 0)
+        {
+            values.push_back(0);
+            values.push_back(1);
+            mOptionDefaults[option] = defaultValue;
+        }
+        else if (type < 3)
+        {
+            std::vector<std::wstring> splitValues = stringSplit(childObject->asString(), L' ');
+            for (unsigned int index = 0; index < splitValues.size(); ++index)
+            {
+                int value = _fromString<int>(splitValues[index]);
+                values.push_back(value);
+                if (value == static_cast<int>(defaultValue))
+                    mOptionDefaults[option] = index;
+            }
         }
     }
 }
@@ -881,8 +928,15 @@ unsigned int MiniGameDef::GetOptionsDefault(eCustomGameModeHostOption option) co
 
 MiniGameDef* MiniGameDef::parseMiniGameDef(XmlObject* object)
 {
-    if (object == NULL) return NULL;
-    return new MiniGameDef(*object);
+    if (object != NULL)
+    {
+        const XmlObject* mode = object->child(L"");
+        unsigned short major, minor;
+        getVersionNumber(*mode, &major, &minor);
+        if (major == 7)
+            return new MiniGameDef(*mode);
+    }
+    return new MiniGameDef(eMiniGameId_Lobby);
 }
 
 void MiniGameDef::MakeCRCTable()
@@ -1489,16 +1543,19 @@ unsigned int MiniGameDef::GetHostOptionIndexFromValue(eCustomGameModeHostOption 
 
 unsigned int MiniGameDef::GetOptionMin(eCustomGameModeHostOption option, bool includeRandom) const
 {
-    const std::vector<int>& values = GetOptionsList(option);
-    if (values.empty()) return 0;
-    unsigned int minimum = includeRandom ? 0 : 1;
-    return minimum < values.size() ? minimum : 0;
+    if (includeRandom && option > eCustomGameModeHostOption_All &&
+        option < eCustomGameModeHostOption_GameVariant)
+        return 1;
+    return 0;
 }
 
 int MiniGameDef::GetOptionMax(eCustomGameModeHostOption option) const
 {
     int count = GetOptionsCount(option);
-    return count == 0 ? 0 : count - 1;
+    if (option > eCustomGameModeHostOption_All &&
+        option < eCustomGameModeHostOption_GameVariant)
+        return count;
+    return count - 1;
 }
 
 unsigned int MiniGameDef::AllowSmallSkins() const { return !HostOption_Bool(eCustomGameModeHostOption_NoSmallSkins); }
@@ -1629,10 +1686,10 @@ void MiniGameDef::SetDefaultMatchmakingSearchData(bool joining, LaunchMoreOption
         data->mValue60 = 0;
         data->mValue64 = 0;
     }
-    else if (!mMatchmakingFilters.empty())
+    else
     {
-        data->mValue60 = mMatchmakingFilters[0].empty() ? 0 : mMatchmakingFilters[0].begin()->first + 1;
-        data->mValue64 = mMatchmakingFilters.size() < 2 || mMatchmakingFilters[1].empty() ? 0 : mMatchmakingFilters[1].begin()->first + 1;
+        data->mValue60 = mMatchmakingFilterIds[0];
+        data->mValue64 = mMatchmakingFilterIds[1];
     }
 }
 

@@ -1,9 +1,9 @@
 #ifndef GAME_MINIGAME_IUISCENE_MINIGAMES_HPP
 #define GAME_MINIGAME_IUISCENE_MINIGAMES_HPP
 
-class IUIPartial_OnlineRestricted;
+#include "game/core/IUIPartial_OnlineRestricted.hpp"
 
-class IUIScene_MiniGames
+class IUIScene_MiniGames : public virtual IUIPartial_OnlineRestricted
 {
 public:
     class Variant
@@ -18,15 +18,13 @@ public:
     };
 
     IUIScene_MiniGames();
+    virtual void AddVariantButtons(bool alternate) = 0;
     unsigned int GetVariantPlayLabel(int index, bool alternate);
     unsigned int GetVariantDesc(int index, bool alternate);
     void SetUpVariants();
 
 private:
     Variant mVariants[5];
-    const wchar_t* mVariantLabel;
-    IUIPartial_OnlineRestricted* mOnlineRestricted;
-    const wchar_t* mVariantName;
 };
 
 #endif
