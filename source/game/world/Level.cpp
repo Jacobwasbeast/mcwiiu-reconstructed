@@ -769,6 +769,8 @@ int Level::getExpectedLight(unsigned int* cache, const BlockPos& pos, LightLayer
 
             return 0;
         }
+
+        blocking = 1;
     }
     else if (blocking < 1)
     {

@@ -518,8 +518,10 @@ private:
     std::vector<AABB*> mCollisionBoxes;
     unsigned int* mLightUpdateQueue;
     std::vector<boost::shared_ptr<Entity> > mEntityQueryResult;
+protected:
     LevelChunk** mChunkCache;
     int mChunkCacheSize;
+private:
     OSFastMutex mLightMutex;
     int mAmbientTickCountdown;
     int mFogDistance;
