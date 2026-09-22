@@ -88,6 +88,7 @@ LevelChunk::LevelChunk(Level* level, int x, int z, LevelChunk* source)
     delete[] mBiomes.data;
     mBiomes = source->mBiomes;
     mOwnsBiomes = true;
+    mServerChunkFlags = &source->mChunkFlags;
 }
 LevelChunk::~LevelChunk()
 {
@@ -563,7 +564,7 @@ void LevelChunk::init(Level* level, int x, int z)
         mEntitySections[i] = new std::vector<boost::shared_ptr<Entity>>();
     mChunkFlags = 0;
     mChunkFlagsPadding = 0;
-    mPostProcessIndex = 0;
+    mServerChunkFlags = NULL;
     mPostProcess = false;
     mLightPopulated = false;
     mUnsaved = false;
@@ -589,6 +590,14 @@ void LevelChunk::init(Level* level, int x, int z)
 bool LevelChunk::isAt(int x, int z)
 {
     return x == this->x && z == this->z;
+}
+bool LevelChunk::isLoaded()
+{
+    return mLoaded;
+}
+void LevelChunk::setLoaded(bool loaded)
+{
+    mLoaded = loaded;
 }
 int LevelChunk::getHeightmap(const BlockPos& pos)
 {
@@ -654,15 +663,15 @@ void LevelChunk::recalcHeightmapOnly()
                 int lightBlock;
                 do
                 {
-                    --height;
-                    int index = ((height & 0x80) << 8) | (localX << 11) | (localZ << 7) | (height & 0x7f);
+                    int blockY = height - 1;
+                    int index = ((blockY & 0x80) << 8) | (localX << 11) | (localZ << 7) | (blockY & 0x7f);
                     Block* block = Block::byId(elements[index] >> 4);
                     Block* extraBlock = Block::byId(extraElements[index] >> 4);
                     lightBlock = block->defaultBlockState()->getLightBlock();
                     int extraLightBlock = extraBlock->defaultBlockState()->getLightBlock();
                     if (extraLightBlock > lightBlock)
                         lightBlock = extraLightBlock;
-                } while (lightBlock == 0 && height > 0);
+                } while (lightBlock == 0 && --height > 0);
             }
             mHeightmap.data[(localZ << 4) | localX] = (unsigned char)height;
             if (height < runningMin)
@@ -1386,6 +1395,8 @@ void LevelChunk::getNeighbourBrightnesses(int* brightnesses, LightLayer::variety
     brightnesses[1] = getBrightness(layer, BlockPos(x + 1, y, z));
     brightnesses[2] = getBrightness(layer, BlockPos(x, y - 1, z));
     brightnesses[3] = getBrightness(layer, BlockPos(x, y + 1, z));
+    brightnesses[4] = getBrightness(layer, BlockPos(x, y, z - 1));
+    brightnesses[5] = getBrightness(layer, BlockPos(x, y, z + 1));
 }
 bool LevelChunk::setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness)
 {

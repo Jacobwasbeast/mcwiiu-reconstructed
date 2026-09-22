@@ -33,7 +33,7 @@ void ChunkSource::saveAllEntities()
 {
 }
 
-unsigned int ChunkSource::getCache()
+LevelChunk** ChunkSource::getCache()
 {
     return 0;
 }

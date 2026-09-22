@@ -8,6 +8,7 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 
 MinigamePlayerChunkMap::MinigamePlayerChunkMap(ServerLevel* level, int viewDistance, int radius)
     : PlayerChunkMap(level, viewDistance, radius)
@@ -35,31 +36,24 @@ void MinigamePlayerChunkMap::remove(boost::shared_ptr<ServerPlayer> player)
 
 void MinigamePlayerChunkMap::move(boost::shared_ptr<ServerPlayer> player)
 {
-    if (player)
-    {
-        player->mLastSentX = player->mX;
-        player->mLastSentZ = player->mZ;
-    }
+    player->mLastSentX = player->mX;
+    player->mLastSentZ = player->mZ;
 }
 
 void MinigamePlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ,
                                                               int maxX, int maxZ)
 {
-    PlayerChunkMap::removeOutsideAreaForAllPlayers(minX, minZ, maxX, maxZ);
 }
 
 void MinigamePlayerChunkMap::loadPlayerInActiveArea(boost::shared_ptr<ServerPlayer> player)
 {
-    if (!player || gMinecraftServer == NULL || gMinecraftServer->mMasterGameMode == NULL)
-        return;
-
     int minX;
     int minZ;
     int maxX;
     int maxZ;
     gMinecraftServer->mMasterGameMode->GetMaxActiveBounds(minX, minZ, maxX, maxZ);
 
-    if (!Minecraft::InMiniGame((EMiniGameId)3, false))
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, false))
     {
         minX -= 5;
         minZ -= 5;
@@ -74,10 +68,10 @@ void MinigamePlayerChunkMap::loadPlayerInActiveArea(boost::shared_ptr<ServerPlay
     }
 
     PlayerList* players = gMinecraftServer->getPlayers();
-    if (players != NULL && players->canReceiveAllPackets(player) && player->mConnection != NULL)
+    if (players->canReceiveAllPackets(player))
     {
         boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false));
+            minX, minZ, maxX, maxZ, true, shouldActuallyDropChunks(), false));
         player->mConnection->send(packet);
     }
 }

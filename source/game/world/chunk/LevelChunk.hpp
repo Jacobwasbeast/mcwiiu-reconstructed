@@ -270,7 +270,7 @@ private:
     std::vector<boost::shared_ptr<Entity> >** mEntitySections;
     unsigned short mChunkFlags;
     unsigned short mChunkFlagsPadding;
-    unsigned int mPostProcessIndex;
+    unsigned short* mServerChunkFlags;
     bool mPostProcess;
     bool mLightPopulated;
     bool mUnsaved;

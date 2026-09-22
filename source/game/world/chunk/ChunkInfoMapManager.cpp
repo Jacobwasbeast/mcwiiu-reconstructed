@@ -4,7 +4,7 @@
 
 #include "game/client/render/LevelRenderer.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/core/Tesselator.hpp"
+#include "game/client/render/Tesselator.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/server/MinecraftServer.hpp"

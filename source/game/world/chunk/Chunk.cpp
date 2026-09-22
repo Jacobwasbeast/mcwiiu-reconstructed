@@ -8,10 +8,11 @@
 #include "game/util/AABB.hpp"
 
 void PIXSetMarkerDeprecated(float colour, const char* name, ...);
+extern LevelRenderer* gLevelRenderer;
 
 static LevelRenderer* chunkLevelRenderer()
 {
-    return NULL;
+    return gLevelRenderer;
 }
 
 Chunk::Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mutex, int x, int z, int dimension, ClipChunk* clipChunk)
@@ -183,7 +184,7 @@ void Chunk::_delete()
 unsigned long long Chunk::cull(Culler* culler)
 {
     mClipChunk->mVisible = culler->isVisible(mBoundingBox);
-    return (unsigned long long)(unsigned long)this;
+    return static_cast<unsigned long long>(reinterpret_cast<unsigned long>(this));
 }
 
 void Chunk::clearDirty()

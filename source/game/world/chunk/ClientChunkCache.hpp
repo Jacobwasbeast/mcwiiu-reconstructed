@@ -73,7 +73,7 @@ public:
     void queueBlockEntityDataPacket(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet);
     void queueForReLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes, bool replace);
     bool mustQueueBlockEntityDataPackets();
-    virtual unsigned int getCache();
+    virtual LevelChunk** getCache();
 
 private:
     LevelChunk* m_emptyChunk;
@@ -89,7 +89,6 @@ private:
     std::vector<LevelChunk*> m_chunks;
     std::vector<unsigned char> m_received;
     std::deque<LevelChunk*> m_unloadQueue;
-    unsigned int m_cache;
     C4JThreadImpl* m_storageThread;
     OSFastMutex m_threadCriticalSection;
     OSFastMutex m_saveDataCriticalSection;

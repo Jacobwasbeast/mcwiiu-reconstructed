@@ -35,7 +35,7 @@ McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
     const std::wstring& directory, DataFixerUpper* fixer)
     : mFixer(fixer), mDirectory(directory), mSaveFile(saveFile), mRegionData()
 {
-    if (directory.empty())
+    if (directory == L"DIM-1r")
     {
         const wchar_t* paths[] = {
             L"DIM-1r.-1.-1.mcr", L"DIM-1r.0.-1.mcr", L"DIM-1r.0.0.mcr",
@@ -126,8 +126,7 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
         return NULL;
     MemSect(8);
     CompoundTag* tag = NbtIo::read(stream);
-    if (mFixer != NULL && tag != NULL)
-        tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, tag);
+    tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, tag);
     MemSect(0);
     stream->deleteChildStream();
     stream->close();
@@ -138,7 +137,11 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
     {
         CompoundTag* levelTag = tag->getCompound(L"Level");
         if (levelTag != NULL && levelTag->contains(L"Blocks", 7))
-            result = OldChunkStorage::load(level, tag, chunk);
+        {
+            MemSect(9);
+            result = OldChunkStorage::load(level, levelTag, chunk);
+            MemSect(0);
+        }
     }
     delete tag;
     if (result != NULL && !result->isAt(x, z))
