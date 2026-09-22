@@ -11,14 +11,18 @@
 #include "game/network/ServerboundClientCommandPacket.hpp"
 #include "game/network/ServerboundPlayerCommandPacket.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 
 MultiplayerLocalPlayer::MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener)
-    : LocalPlayer(minecraft, level, user, 0),
+    : LocalPlayer(minecraft, level, user, level->mDimension->getType()->getId()),
       m_hurt(false), m_scoreboardWait(-1), m_hasSentOpenInventory(false),
       m_hasSentRidingJump(false), m_receivedRespawn(false), m_lastSentStat(0),
       m_bounceHeight(0), m_bounceTicks(0)
 {
-    (void)packetListener;
+    LivingEntity::fjDerivedCtorCalls();
+    mPacketListener = packetListener;
 }
 
 MultiplayerLocalPlayer::~MultiplayerLocalPlayer()

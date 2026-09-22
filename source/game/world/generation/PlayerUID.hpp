@@ -9,6 +9,17 @@ struct FFLCreateID;
 
 struct PlayerUID
 {
+    enum Flag
+    {
+        FlagOnlineAccount = 0x40000000u,
+        FlagDrcController = 0x10000000u,
+        FlagMiiPrincipal = 0x20000000u,
+        FlagUuid = 0x80000000u,
+        FlagPayloadMask = 0x0fffffffu,
+        FlagMiiMask = 0x5fffffffu,
+        FlagUuidMask = 0xdfffffffu
+    };
+
     union
     {
         ACTUuid uuid;
@@ -24,7 +35,7 @@ struct PlayerUID
     };
     unsigned int flags;
 
-    PlayerUID(int uid = 0);
+    PlayerUID(int = 0);
     PlayerUID(ACTUuid uuid, bool onlineAccount, bool drcController);
     PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool drcController);
     PlayerUID(std::wstring uidString);

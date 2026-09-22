@@ -13,6 +13,7 @@
 
 class BlockPos;
 class Connection;
+class CompoundTag;
 class Dimension;
 class Entity;
 class GameType;
@@ -50,7 +51,7 @@ public:
     void saveAll(ProgressListener* listener, bool announce);
     void remove(boost::shared_ptr<ServerPlayer> player);
     void removeAll();
-    uint32_t load(boost::shared_ptr<ServerPlayer> player);
+    CompoundTag* load(boost::shared_ptr<ServerPlayer> player);
     void validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> player);
     void updatePlayerGameMode(boost::shared_ptr<ServerPlayer> oldPlayer,
                               boost::shared_ptr<ServerPlayer> newPlayer, Level* level);

@@ -1,11 +1,21 @@
 #include "game/world/generation/BasicLayerFillRuleDefinition.hpp"
 
+#include "game/core/IGameRuleAttribute.hpp"
 #include "game/world/generation/FunctionLayerFill.hpp"
+
+namespace BasicLayerFillRuleDefinitionConstants {
+const ConsoleGameRules::EGameRuleAttr LayerFillTypeAttribute =
+    static_cast<ConsoleGameRules::EGameRuleAttr>(
+        IGameRuleAttribute::attributeIdFromName(L"type"));
+const ConsoleGameRules::EGameRuleType BasicLayerFillActionType =
+    static_cast<ConsoleGameRules::EGameRuleType>(55);
+LayerFill* const NoGeneratedLayerFill = NULL;
+}
 
 BasicLayerFillRuleDefinition::BasicLayerFillRuleDefinition()
     : mType(L"")
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(59), &mType);
+    addStringAttribute(BasicLayerFillRuleDefinitionConstants::LayerFillTypeAttribute, &mType);
 }
 
 BasicLayerFillRuleDefinition::~BasicLayerFillRuleDefinition()
@@ -14,7 +24,7 @@ BasicLayerFillRuleDefinition::~BasicLayerFillRuleDefinition()
 
 ConsoleGameRules::EGameRuleType BasicLayerFillRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(55);
+    return BasicLayerFillRuleDefinitionConstants::BasicLayerFillActionType;
 }
 
 LayerFill* BasicLayerFillRuleDefinition::Generate() const
@@ -29,5 +39,5 @@ LayerFill* BasicLayerFillRuleDefinition::Generate() const
         return new FunctionLayerFill(FunctionLayerFill::UNIFORM);
     }
 
-    return NULL;
+    return BasicLayerFillRuleDefinitionConstants::NoGeneratedLayerFill;
 }

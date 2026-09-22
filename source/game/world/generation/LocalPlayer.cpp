@@ -1,3 +1,4 @@
+#include "game/core/UnityClient6.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
 #include "game/network/ClientPacketListener.hpp"
@@ -826,7 +827,7 @@ void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 
     if (health <= 0.0f)
     {
-        gTelemetryManager.RecordPlayerDiedOrFailed(mUserIndex, (int)mX, (int)mY, (int)mZ, 0,
+        telemetryManagerInstance->RecordPlayerDiedOrFailed(mUserIndex, (int)mX, (int)mY, (int)mZ, 0,
                                                     source.playerWeaponId, source.causeOfDeathId,
                                                     source.challenges);
         if (gConsoleUIController.GetMenuDisplayed(mUserIndex))

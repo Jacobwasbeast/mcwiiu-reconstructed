@@ -21,6 +21,7 @@
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/network/DisconnectPacket.hpp"
 #include "game/world/DimensionType.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/LevelSettings.hpp"
 #include "game/world/block/Block.hpp"
@@ -146,9 +147,12 @@ void MultiPlayerLevel::MultiPlayerLevelInit(ClientPacketListener* connection, Le
                                              const Difficulty* difficulty, int seaLevel)
 {
     mMinecraft = Minecraft::GetInstance();
+    mDimension->init(this);
     if (seaLevel != -1)
         setSeaLevel(seaLevel);
-    createChunkSource();
+    mChunkSource = createChunkSource();
+    mChunkCache = mChunkSource->getCache();
+    mChunkCacheSize = mChunkSource->mLevelSize;
     if (connection != NULL)
         mConnections.push_back(connection);
     getLevelData()->setDifficulty(difficulty);

@@ -35,8 +35,11 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
     while (factorCount < 128)
     {
         const float factor = tunnelRandom.nextFloat() * tunnelRandom.nextFloat() + 1.0F;
-        widthFactors[factorCount++] = factor * factor;
-        if (factorCount >= 128 || tunnelRandom.nextInt(3) == 0) break;
+        do
+        {
+            widthFactors[factorCount++] = factor * factor;
+        }
+        while (factorCount < 128 && tunnelRandom.nextInt(3) != 0);
     }
     float yawChange = 0.0F;
     float pitchChange = 0.0F;
@@ -53,12 +56,6 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
         pitch = pitch * 0.7F + pitchChange * 0.05F;
         yawChange = yawChange * 0.8F + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.2F;
         pitchChange = pitchChange * 0.5F + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.125F;
-        if (!room && step == start && width > 1.0F)
-        {
-            addTunnel(level, tunnelRandom.nextLong(), chunkX, chunkZ, primer, x, y, z, tunnelRandom.nextFloat() * 6.0F + 6.0F, yaw - 1.5707964F, pitch / 3.0F, step, end, 1.0);
-            addTunnel(level, tunnelRandom.nextLong(), chunkX, chunkZ, primer, x, y, z, tunnelRandom.nextFloat() * 6.0F + 6.0F, yaw + 1.5707964F, pitch / 3.0F, step, end, 1.0);
-            return;
-        }
         if (!room && tunnelRandom.nextInt(4) != 0) continue;
         const double distance = step - start;
         if (radius * radius < distance * distance - ((x - originX) * (x - originX) + (z - originZ) * (z - originZ))) break;

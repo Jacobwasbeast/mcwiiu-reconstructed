@@ -1,4 +1,5 @@
 #include "game/world/generation/Player.hpp"
+
 #include "game/world/Level.hpp"
 #include "game/core/FoodData.hpp"
 #include "game/core/FoodConstants.hpp"
@@ -21,6 +22,8 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/InsomniaComponent.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/MemSect.hpp"
+#include "game/ui/InventoryMenu.hpp"
 #include "game/core/MOJJANG_DATA.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/CameraController.hpp"
@@ -87,8 +90,29 @@ bool Player::PreventsMeFromSleeping::apply(boost::shared_ptr<Entity> entity) con
 
 Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mAbilities(), mField0x738(NULL), mXuid(0), m_0x798(0), mSuid(StatsUID::EMPTY_SUID())
 {
+    _init();
     mName = name;
+    MemSect(11);
+    mInventoryMenu = new InventoryMenu(mInventory, !level->mIsClientSide, this);
+    MemSect(0);
+    mContainerMenu = mInventoryMenu;
+    BlockPos spawn = level->getSharedSpawnPos();
+    moveTo(spawn.x + 0.5, spawn.y + 1.0, spawn.z + 0.5, 0.0f, 0.0f);
+    mField0x7d8 = 1;
+    mField0x7dc = 0;
+    mField0x7e0 = 0;
+    mPlayerIndex = 0;
+    mField0x7ec = 0;
+    mField0x7f0 = 0;
+    mField0x7f4 = 0;
+    mField0x7f8 = 0;
+    mRotOffs = 180.0f;
+    SetPowerupTicks(0, 0);
+    SetPowerupTicks(1, 0);
+    SetPowerupTicks(2, 0);
+    mShowOnMaps = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(4)) != 0;
     mIsGuest = false;
+    setUUID(name);
 }
 
 StatsUID Player::getSUID()
@@ -99,6 +123,20 @@ StatsUID Player::getSUID()
 
 Player::~Player()
 {
+    delete mInventoryMenu;
+    mInventoryMenu = NULL;
+    if (mField0x6c4 == mField0x6e0)
+        mField0x6e0 = NULL;
+    delete mField0x6c4;
+    mField0x6c4 = NULL;
+    delete mField0x6e0;
+    mField0x6e0 = NULL;
+    if (mField0x780)
+        delete mField0x77c;
+    if (mField0x7c8.size() != 0)
+        delete[] &mField0x7c8[0];
+    if (mField0x76c.size() != 0)
+        delete[] &mField0x76c[0];
     delete mField0x738;
 }
 
@@ -318,7 +356,7 @@ uint32_t Player::isAllowedToAttackPlayers()
 {
     return !hasInvisiblePrivilege()
         && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0b)) != 0
-        && (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0 || getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(3)) == 0);
+        && (g_pApp->GetGameHostOption(eGameHostOption_12) != 0 || getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(3)) == 0);
 }
 
 uint32_t Player::isAllowedToIgnoreExhaustion()
@@ -331,13 +369,13 @@ void Player::causeFoodExhaustion(float exhaustion)
     if (isAllowedToIgnoreExhaustion()) return;
     if (isAllowedToFly() && mAbilities.mFlying) return;
     if (mAbilities.mInvulnerable || hasInvulnerablePrivilege()) return;
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) == 0 && getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) != 0) return;
+    if (g_pApp->GetGameHostOption(eGameHostOption_12) == 0 && getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) != 0) return;
     if (mLevel != NULL && !mLevel->mIsClientSide) getFoodData()->addExhaustion(exhaustion);
 }
 
 uint32_t Player::isAllowedToMine()
 {
-    return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0 || getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(0)) == 0;
+    return g_pApp->GetGameHostOption(eGameHostOption_12) != 0 || getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(0)) == 0;
 }
 
 uint32_t Player::isAllowedToAttackAnimals()
@@ -1685,10 +1723,14 @@ void Player::_init()
     mDisplayName = L"";
     mReducedDebugInfo = 0;
     mEnderChestInventory.reset(new PlayerEnderChestContainer());
+    mField0x7c8 = NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY);
+    mField0x76c = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
+    mField0x764 = ItemInstance::EMPTY;
     mField0x77c = NULL;
     mField0x780 = true;
     mField0x7c0 = 0;
     mField0x781 = 0;
+    mField0x782 = 0;
     mDebugOptions = 0;
     mField0x7fc = 0;
     mAdditionalModelParts = NULL;
@@ -1701,6 +1743,8 @@ void Player::_init()
     mField0x818 = 1.0;
     mField0x820 = mY;
     mField0x82c = 0;
+    mField0x828 = 0;
+    mField0x83c = 0;
     mFlap = 0.0f;
     mFlapSpeed = 0.0f;
     mOFlapSpeed = 0.0f;
@@ -1713,6 +1757,8 @@ void Player::_init()
     mField0x85e = 0;
     mTimerAchievementTicks[0] = 0;
     mTimerAchievementTicks[1] = 0;
+    mCategories |= 1;
+    mInsomniaComponent = NULL;
 }
 
 void Player::tick()

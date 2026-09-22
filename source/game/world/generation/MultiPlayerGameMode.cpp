@@ -51,7 +51,7 @@ MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* con
       mSpectateSoundTime(System::processTimeInMilliSecs()), mCarriedItemSlot(0)
 {
     mGameType = GameType::SURVIVAL;
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && !splitScreen)
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !splitScreen)
     {
         if (primaryPlayer)
         {
@@ -298,7 +298,7 @@ bool MultiPlayerGameMode::isInputAllowed(int mapping)
         break;
 
     case 0x21:
-        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true)
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true)
             && mMinecraft->mPlayer->PositionLocked())
             positionOk = false;
         break;
@@ -307,7 +307,7 @@ bool MultiPlayerGameMode::isInputAllowed(int mapping)
         break;
 
     case 0x23: case 0x24: case 0x25: case 0x26: case 0x28:
-        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
             const bool positionLocked = mMinecraft->mPlayer->PositionLocked();
             const bool lockedInventory = Minecraft::GetInstance()->GetMiniGame()->LockedInventory();
@@ -468,7 +468,7 @@ boost::shared_ptr<Player> MultiPlayerGameMode::GetLocalPlayer()
 }
 bool MultiPlayerGameMode::SpectateSoundEnabled()
 {
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
         return false;
     boost::shared_ptr<Player> player = GetLocalPlayer();
     if (!player || !player->SpectateAsOtherEntity())
@@ -512,12 +512,16 @@ void MultiPlayerGameMode::MakeSpectateSound()
         sound, SoundSource::eSoundSource_Master, player->mX, player->mY, player->mZ, 0.5f, 0.0f)));
 }
 bool MultiPlayerGameMode::isCutScene() { return false; }
+
+
+
+
 void MultiPlayerGameMode::Follow(bool follow, bool immediate)
 {
     if (!mConnection)
         return;
     GameModePacket::FollowData data(follow, immediate);
-    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(0), data));
+    mConnection->send(GameModePacket::Create(GameModePacket::MessageUnknown, data));
 }
 void MultiPlayerGameMode::StartSpectating()
 {
@@ -525,6 +529,8 @@ void MultiPlayerGameMode::StartSpectating()
         return;
     GameModePacket::EmptyData data;
     mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(1), data));
+
+
 }
 bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction*) { mDestroyBlockPos = pos; mDestroying = true; return true; }
 bool MultiPlayerGameMode::canHurtPlayer() { return true; }
@@ -742,7 +748,7 @@ void MultiPlayerGameMode::SendTeamInvite(std::wstring playerName)
         return;
     GameModePacket::SendTeamInviteData data;
     data.playerName = playerName;
-    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(8), data));
+        mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(8), data));
 }
 std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteTo(std::wstring playerName)
 {

@@ -63,7 +63,7 @@ int ZombieVillager::getProfession()
 
 void ZombieVillager::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D550042ULL);
+    Mob::addDataWalkers(fixer, ENTITY_TYPE_ZOMBIE_VILLAGER);
 }
 
 bool ZombieVillager::isConverting()
@@ -200,7 +200,7 @@ void ZombieVillager::finishConversion()
     }
     mLevel->addEntity(villager);
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(mConversionPlayer);
-    if (player && player->GetType() == 0x0C800001ULL)
+    if (player && player->GetType() == ENTITY_TYPE_SERVER_PLAYER)
         player->awardStat(GenericStats::zombieDoctor(), GenericStats::param_zombieDoctor());
     villager->addEffect(new MobEffectInstance(MobEffects::CONFUSION, 200, 0), boost::shared_ptr<Entity>());
     mLevel->levelEvent(boost::shared_ptr<Player>(), 0x403, BlockPos(mX, mY, mZ), 0);
@@ -249,5 +249,5 @@ not_null_ptr<ItemInstance> ZombieVillager::getSkull()
 
 unsigned long long ZombieVillager::GetType()
 {
-    return 0x5D550042ULL;
+    return ENTITY_TYPE_ZOMBIE_VILLAGER;
 }

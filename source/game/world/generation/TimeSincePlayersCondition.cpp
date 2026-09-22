@@ -3,6 +3,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
+#include "game/core/XmlValue.hpp"
 
 TimeSincePlayersCondition::TimeSincePlayersCondition(const XmlObject& object)
     : TimerBasedCondition(object)

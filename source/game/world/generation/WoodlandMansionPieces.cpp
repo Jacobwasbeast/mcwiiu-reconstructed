@@ -118,9 +118,9 @@ void WoodlandMansionPieces::MansionGrid::recursiveCorridor(SimpleGrid* g, int x,
     g->setIf(x + normal.x, y + normal.z, 0, 1);
     for (int attempt = 0; attempt < 4; ++attempt)
     {
-        const Direction* next = Direction::from2DDataValue(mRandom.nextInt(4));
+        const Direction* next = Direction::from2DDataValue(nextInt(4));
         if (next == d->getOpposite() ||
-            (next == Direction::EAST && !mRandom.nextBoolean())) continue;
+            (next == Direction::EAST && !nextBoolean())) continue;
         const Vec3i step = next->getNormal();
         const int nextX = x + normal.x + step.x;
         const int nextY = y + normal.z + step.z;
@@ -190,7 +190,7 @@ void WoodlandMansionPieces::MansionGrid::identifyRooms(SimpleGrid* floor, Simple
         if (rooms->get(x + 1, y) == 0 && rooms->get(x, y + 1) == 0 &&
             rooms->get(x + 1, y + 1) == 0 && floor->get(x + 1, y) == 2 &&
             floor->get(x, y + 1) == 2 && floor->get(x + 1, y + 1) == 2 &&
-            mRandom.nextBoolean())
+            nextBoolean())
         { width = height = 2; type = 0x40000; }
         else if (rooms->get(x + 1, y) == 0 && floor->get(x + 1, y) == 2)
         { width = 2; type = 0x20000; }
@@ -242,7 +242,7 @@ void WoodlandMansionPieces::MansionGrid::setupThirdFloor()
                               mSecondFloorGrid->mHeight - 1, 5);
         return;
     }
-    const std::pair<int, int>& selected = candidates.at(mRandom.nextInt((int)candidates.size()));
+    const std::pair<int, int>& selected = candidates.at(nextInt((int)candidates.size()));
     const int x = selected.first;
     const int y = selected.second;
     const int value = mSecondFloorGrid->get(x, y);
@@ -287,7 +287,7 @@ void WoodlandMansionPieces::MansionGrid::setupThirdFloor()
     }
     else
     {
-        const Direction* corridor = faces.at(mRandom.nextInt((int)faces.size()));
+        const Direction* corridor = faces.at(nextInt((int)faces.size()));
         const Vec3i normal = corridor->getNormal();
         recursiveCorridor(mSecondFloorGrid, endX + normal.x, endY + normal.z, corridor, 4);
         while (cleanEdges(mSecondFloorGrid)) { }

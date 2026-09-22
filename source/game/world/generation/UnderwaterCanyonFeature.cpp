@@ -49,10 +49,12 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
     int widthIndex = 0;
     while (widthIndex < 128)
     {
-        widthScale[widthIndex] = static_cast<float>(tunnelRandom.nextFloat() * tunnelRandom.nextFloat() + 1.0F);
-        ++widthIndex;
-        if (widthIndex >= 128 || tunnelRandom.nextInt(3) == 0)
-            break;
+        const float factor = tunnelRandom.nextFloat() * tunnelRandom.nextFloat() + 1.0F;
+        do
+        {
+            widthScale[widthIndex++] = factor * factor;
+        }
+        while (widthIndex < 128 && tunnelRandom.nextInt(3) != 0);
     }
 
     for (int step = start; step < length; ++step)
@@ -66,16 +68,6 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
         yaw += (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.5F;
         pitch = pitch * 0.7F + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.25F;
 
-        if (!room && step == start && width > 1.0F)
-        {
-            addTunnel(level, tunnelRandom.nextLong(), chunkX, chunkZ, primer, x, y, z,
-                      tunnelRandom.nextFloat() * 6.0F + 6.0F, yaw - 1.5707964F, pitch / 3.0F,
-                      step, length, 1.0);
-            addTunnel(level, tunnelRandom.nextLong(), chunkX, chunkZ, primer, x, y, z,
-                      tunnelRandom.nextFloat() * 6.0F + 6.0F, yaw + 1.5707964F, pitch / 3.0F,
-                      step, length, 1.0);
-            return;
-        }
         if (!room && tunnelRandom.nextInt(4) != 0)
             continue;
 

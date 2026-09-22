@@ -11,6 +11,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
+#include "game/core/XmlValue.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"

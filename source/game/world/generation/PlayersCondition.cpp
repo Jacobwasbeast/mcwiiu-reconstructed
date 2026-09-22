@@ -4,6 +4,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/XmlObject.hpp"
+#include "game/core/XmlValue.hpp"
 
 PlayersCondition::PlayersCondition(const XmlObject& object)
     : IntegerCondition(object), m_activeOnly(object[L"activeOnly"].asBool()), m_readyOnly(object[L"readyOnly"].asBool())

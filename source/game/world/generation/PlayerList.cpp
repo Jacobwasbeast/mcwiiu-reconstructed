@@ -8,13 +8,22 @@
 #include <limits>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CTelemetryManager.hpp"
+#include "game/core/UnityClient6.hpp"
+#include "game/core/Settings.hpp"
+#include "game/core/Socket.hpp"
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/PortalForcer.hpp"
 #include "game/data/LevelStorage.hpp"
 #include "game/world/generation/PlayerIO.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
+#include "game/network/ClientboundLoginPacket.hpp"
+#include "game/network/TexturePacket.hpp"
+#include "game/network/TextureAndGeometryPacket.hpp"
 #include "game/network/ClientboundGameEventPacket.hpp"
 #include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
 #include "game/network/ClientboundRespawnPacket.hpp"
@@ -31,6 +40,7 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
+#include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/server/ServerPlayerGameMode.hpp"
 #include "game/server/ServerScoreboard.hpp"
@@ -43,6 +53,8 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 #include "game/world/LevelData.hpp"
+#include "game/world/LevelRuleset.hpp"
+#include "game/world/LevelSettings.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/Level.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -124,7 +136,7 @@ PlayerList::PlayerList(MinecraftServer* server, MasterGameMode* gameMode)
       mMaxRange(0), mAllowCheatsForAllPlayers(false), mOverrideGameMode(NULL),
       mUnknownState(0)
 {
-    mMaxPlayers = 0;
+    mMaxPlayers = server->mSettings->getInt(static_cast<EServerSetting>(10), 20);
 }
 
 PlayerList::~PlayerList()
@@ -299,7 +311,7 @@ void PlayerList::removeAll()
         mReceivingPlayers[group].clear();
 }
 
-uint32_t PlayerList::load(boost::shared_ptr<ServerPlayer> player)
+CompoundTag* PlayerList::load(boost::shared_ptr<ServerPlayer> player)
 {
     if (!player || !mLevelStorage)
         return 0;
@@ -307,7 +319,7 @@ uint32_t PlayerList::load(boost::shared_ptr<ServerPlayer> player)
     if (!playerIO)
         return 0;
     CompoundTag* tag = playerIO->load(boost::static_pointer_cast<Player>(player));
-    return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tag));
+    return tag;
 }
 
 void PlayerList::validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> player)
@@ -434,19 +446,77 @@ void PlayerList::add(boost::shared_ptr<ServerPlayer> player)
 }
 
 void PlayerList::placeNewPlayer(Connection* connection, boost::shared_ptr<ServerPlayer> player,
-                                boost::shared_ptr<ClientboundLoginPacket>)
+                                boost::shared_ptr<ClientboundLoginPacket> loginPacket)
 {
+    CompoundTag* playerTag = NULL;
     if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)) == 0)
-        load(player);
+        playerTag = load(player);
 
     ServerLevel* level = mServer->getLevel(player->mDimension);
     player->setLevel(level);
     player->mGameMode->setLevel(level);
 
+    INetworkPlayer* networkPlayer = connection->m_socket->getPlayer();
+    if (networkPlayer != NULL && networkPlayer->IsHost())
+    {
+        player->enableAllPlayerPrivileges(true);
+        player->setPlayerGamePrivilege(static_cast<Player::EPlayerGamePrivileges>(34), 1);
+    }
+
     validatePlayerSpawnPosition(player);
+    level = mServer->getLevel(player->mDimension);
+
+    bool occupiedSlots[8] = {};
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = mPlayers.begin();
+         it != mPlayers.end(); ++it)
+        occupiedSlots[(*it)->mPlayerIndex] = true;
+    unsigned char playerSlot = 0;
+    for (unsigned char slot = 0; slot < 8; ++slot)
+    {
+        if (!occupiedSlots[slot])
+        {
+            playerSlot = slot;
+            break;
+        }
+    }
+    player->mPlayerIndex = playerSlot;
+    player->setCustomSkin(loginPacket->mWorldHeight);
+    player->setCustomCape(loginPacket->mSeaLevel);
 
     boost::shared_ptr<ServerGamePacketListenerImpl> connectionListener(
         new ServerGamePacketListenerImpl(mServer, connection, player));
+
+    if (playerTag == NULL)
+    {
+        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)) == 0)
+        {
+            int mapId = level->getAuxValueForMap(player->mXuid, 0, BlockPos(player), 3);
+            player->mInventory->setItem(9, not_null_ptr<ItemInstance>(
+                new ItemInstance(Items::map, 1, mapId)));
+        }
+        if (g_pApp->getGameRuleDefinitions() != NULL)
+            g_pApp->getGameRuleDefinitions()->postProcessPlayer(player);
+    }
+
+    if (!player->mSkinLocation.empty() && player->mSkinLocation.compare(0, 3, L"def") != 0 &&
+        !g_pApp->IsFileInMemoryTextures(player->mSkinLocation))
+    {
+        if (mServer->getConnection()->addPendingTextureRequest(player->mSkinLocation))
+            connectionListener->send(boost::shared_ptr<Packet>(
+                new TextureAndGeometryPacket(player->mSkinLocation, NULL, 0)));
+    }
+    else if (!player->mSkinLocation.empty() && g_pApp->IsFileInMemoryTextures(player->mSkinLocation))
+        g_pApp->AddMemoryTextureFile(player->mSkinLocation, NULL, 0);
+
+    if (!player->mCapeLocation.empty() && player->mCapeLocation.compare(0, 3, L"def") != 0 &&
+        !g_pApp->IsFileInMemoryTextures(player->mCapeLocation))
+    {
+        if (mServer->getConnection()->addPendingTextureRequest(player->mCapeLocation))
+            connectionListener->send(boost::shared_ptr<Packet>(
+                new TexturePacket(player->mCapeLocation, NULL, 0)));
+    }
+
+    player->mIsGuest = loginPacket->mAllowCommands;
 
     if (!mGameMode)
         updatePlayerGameMode(player, boost::shared_ptr<ServerPlayer>(), level);
@@ -454,8 +524,37 @@ void PlayerList::placeNewPlayer(Connection* connection, boost::shared_ptr<Server
         player->mGameMode->updateGameMode(mGameMode->InitialGameType(player));
     player->UpdateSize();
 
+    unsigned int privileges = player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All);
+    const GameType* privilegeGameType = LevelSettings::validateGameType(
+        (Player::getPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_9) ?
+            GameType::CREATIVE : GameType::SURVIVAL)->getId());
+    if (player->mGameMode->isAdventure())
+        player->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_9, 0);
+    else if (player->mGameMode->GetGameType() != privilegeGameType)
+        player->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_9,
+                                       player->mGameMode->GetGameType()->getId());
+
     player->mConnection = connectionListener;
+    connectionListener->mFriendsOnly = loginPacket->mHardcore;
+    connectionListener->mPlayerUID = loginPacket->mPlayerUID;
+    connectionListener->mOldPlayerUID = loginPacket->mPlayerUID2;
+    if (loginPacket->mHardcore)
+        ++mServer->statusMessageCapacity;
     addPlayerToReceiving(player, false);
+
+    LevelData* levelData = level->getLevelData();
+    connectionListener->send(boost::shared_ptr<Packet>(new ClientboundLoginPacket(
+        L"", player->getId(), levelData->getGeneratorType(), level->getSeed(),
+        player->mGameMode->GetGameType()->getId(),
+        g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)),
+        g_pApp->GetFirstMiniGameType(), static_cast<char>(level->mDimension->getType()->getId()),
+        static_cast<unsigned char>(level->getMaxBuildHeight()),
+        static_cast<unsigned char>(getMaxPlayers()), static_cast<char>(level->getDifficulty()->getId()),
+        telemetryManagerInstance->GetMultiplayerInstanceID(), playerSlot, level->useNewSeaLevel(),
+        player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All), levelData->getXZSize(),
+        levelData->getHellScale(), levelData->getCloudHeight(), levelData->getModernEnd(),
+        levelData->getBiomeScale(), levelData->getBiomeCentreXChunk(), levelData->getBiomeCentreZChunk(),
+        level->useNewSeaLevel() ? level->getSeaLevel() : -1)));
 
     connectionListener->send(boost::shared_ptr<Packet>(
         new ClientboundPlayerAbilitiesPacket(&player->mAbilities, player->getId())));
@@ -485,9 +584,70 @@ void PlayerList::placeNewPlayer(Connection* connection, boost::shared_ptr<Server
         for (it = effects->begin(); it != effects->end(); ++it)
             connectionListener->send(boost::shared_ptr<Packet>(
                 new ClientboundUpdateMobEffectPacket(player->getId(), *it)));
+        delete effects;
     }
 
     player->initMenu();
+    if (playerTag != NULL && playerTag->contains(L"RootVehicle", 10))
+    {
+        CompoundTag* rootVehicle = playerTag->getCompound(L"RootVehicle");
+        boost::shared_ptr<Entity> vehicle = EntityIO::newEntity(rootVehicle->getCompound(L"Entity"), level);
+        if (vehicle)
+        {
+            if (vehicle->mDimension != player->mDimension)
+            {
+                vehicle->setLevel(player->mLevel);
+                vehicle->mDimension = player->mDimension;
+                vehicle->setPos(player->mX, player->mY, player->mZ);
+            }
+            vehicle->mForcedLoading = true;
+            bool added = level->addEntity(vehicle);
+            vehicle->mForcedLoading = false;
+            if (added)
+            {
+                const std::wstring attach = rootVehicle->getString(L"Attach");
+                if (vehicle->getUUID() == attach)
+                    player->startRiding(vehicle);
+                else
+                {
+                    std::set<boost::shared_ptr<Entity> >* passengers = vehicle->getIndirectPassengers();
+                    for (std::set<boost::shared_ptr<Entity> >::const_iterator it = passengers->begin();
+                         it != passengers->end(); ++it)
+                    {
+                        if ((*it)->getUUID() == attach)
+                            player->startRiding(*it);
+                    }
+                    delete passengers;
+                }
+                if (!player->isPassenger())
+                {
+                    level->removeEntityImmediately(vehicle);
+                    std::set<boost::shared_ptr<Entity> >* passengers = vehicle->getIndirectPassengers();
+                    for (std::set<boost::shared_ptr<Entity> >::const_iterator it = passengers->begin();
+                         it != passengers->end(); ++it)
+                        level->removeEntityImmediately(*it);
+                    delete passengers;
+                }
+            }
+        }
+    }
+    delete playerTag;
+
+    networkPlayer = player->mConnection->getNetworkPlayer();
+    if (networkPlayer != NULL)
+    {
+        for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = mPlayers.begin();
+             it != mPlayers.end(); ++it)
+        {
+            INetworkPlayer* other = (*it)->mConnection->getNetworkPlayer();
+            if (other != networkPlayer && other != NULL && networkPlayer->IsSameSystem(other) &&
+                (*it)->mRespawnState)
+            {
+                player->mRespawnState = true;
+                break;
+            }
+        }
+    }
 }
 
 void PlayerList::setLevel(arrayWithLength<ServerLevel*> levels)
