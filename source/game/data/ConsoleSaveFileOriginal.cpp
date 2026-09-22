@@ -186,7 +186,10 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
         unsigned int zero = 0;
         std::memset(compressedData, 0, 8);
         std::memcpy(compressedData, &zero, sizeof(zero));
-        std::memcpy(compressedData + 4, &fileSize, sizeof(fileSize));
+        compressedData[4] = static_cast<unsigned char>(fileSize >> 24);
+        compressedData[5] = static_cast<unsigned char>(fileSize >> 16);
+        compressedData[6] = static_cast<unsigned char>(fileSize >> 8);
+        compressedData[7] = static_cast<unsigned char>(fileSize);
 
         unsigned char* image = NULL;
         unsigned int imageSize = 0;

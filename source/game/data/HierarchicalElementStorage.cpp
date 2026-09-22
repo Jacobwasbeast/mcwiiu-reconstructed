@@ -5,6 +5,7 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/FileHeader.hpp"
 #include "game/data/SparseDataStorage.hpp"
 #include "game/world/block/CompressedBlockStorage.hpp"
 
@@ -24,6 +25,8 @@ static const unsigned int sSectionTypeSizesTwoIndices[8] =
 
 unsigned short HierarchicalElementStorage::swapBytes(unsigned short value)
 {
+    if (FileHeader::getNativeEndian() == eByteOrder_LittleEndian)
+        return value;
     return (unsigned short)((value << 8) | (value >> 8));
 }
 
