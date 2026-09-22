@@ -8,6 +8,7 @@
 class Entity;
 class Level;
 class Mob;
+class AttributeInstance;
 struct Node;
 class Path;
 class PathFinder;
@@ -20,15 +21,13 @@ public:
     Level* mLevel;
     int mTick;
     double mSpeedModifier;
+    AttributeInstance* mFollowRange;
     BlockPos* mTargetPos;
-    int mMaxDistance;
     int mLastStuckCheck;
     Vec3* mLastStuckCheckPos;
     Vec3* mLastTargetPos;
-    int mStuckTime;
-    int mLastStuckCheckTime;
-    int mLastStuckCheckTimeHigh;
-    int mTimeoutCachedNode;
+    long long mStuckTime;
+    long long mLastStuckCheckTime;
     double mTimeoutLimit;
     bool mIsRiverFollowing;
     float mMaxDistanceToWaypoint;

@@ -9,6 +9,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/ai/MoveControl.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -16,7 +17,7 @@
 #include <cmath>
 
 PathNavigation::PathNavigation(Mob* mob, Level* level)
-    : mPath(0), mMob(mob), mLevel(level), mTick(0), mSpeedModifier(1.0), mTargetPos(0), mMaxDistance(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mLastStuckCheckTimeHigh(0), mTimeoutCachedNode(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPath(0), mPathFinder(0)
+    : mPath(0), mMob(mob), mLevel(level), mTick(0), mSpeedModifier(1.0), mFollowRange(mob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)), mTargetPos(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPath(0), mPathFinder(0)
 {
 }
 
@@ -45,7 +46,7 @@ PathFinder* PathNavigation::getPathFinder() { return mPathFinder; }
 void PathNavigation::setSpeedModifier(double speed) { mSpeedModifier = speed; }
 double PathNavigation::getMaxDist()
 {
-    return (double)(float)reinterpret_cast<AttributeInstance*>(mTargetPos)->getValue();
+    return (double)(float)mFollowRange->getValue();
 }
 bool PathNavigation::hasDelayedRecomputation() { return mHasDelayedRecomputation; }
 
@@ -116,7 +117,16 @@ bool PathNavigation::moveTo(boost::shared_ptr<Entity> entity, double speed)
 bool PathNavigation::moveTo(Path* path, double speed)
 {
     if (path == 0) { stop(); return false; }
-    if (mPath != path) { delete mPath; mPath = path; updatePath(); }
+    if (!path->sameAs(mPath))
+    {
+        delete mPath;
+        mPath = path;
+    }
+    else if (path != mPath)
+    {
+        delete path;
+    }
+    trimPath();
     if (mPath->getSize() <= 0) return false;
     mSpeedModifier = speed;
     mLastTargetPos->set(mPath->currentPos());
@@ -178,9 +188,19 @@ void PathNavigation::doStuckDetection(Vec3* pos)
             mLastTargetPos->set(current);
             double distance = pos->distanceTo(mLastTargetPos);
             double speed = mMob->getSpeed();
-            mTimeoutLimit = speed <= 0.0 ? 0.0 : distance / speed * 1000.0;
+            mTimeoutLimit = speed <= 0.0 ? 1.0 : distance / speed * 1000.0;
         }
-        else if (System::processTimeInMilliSecs() - mLastStuckCheckTime > (unsigned int)mTimeoutLimit * 3) stop();
+        else
+        {
+            mStuckTime += System::processTimeInMilliSecs() - mLastStuckCheckTime;
+        }
+        if (mTimeoutLimit > 1.0 && (double)mStuckTime > mTimeoutLimit * 3.0)
+        {
+            mLastTargetPos->set(0.0, 0.0, 0.0);
+            mStuckTime = 0;
+            mTimeoutLimit = 1.0;
+            stop();
+        }
         mLastStuckCheckTime = System::processTimeInMilliSecs();
     }
 }
