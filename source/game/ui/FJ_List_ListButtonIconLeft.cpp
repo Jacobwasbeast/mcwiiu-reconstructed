@@ -47,7 +47,7 @@ void FJ_List_ListButtonIconLeft::SetTextureName(int index,
 {
     FJ_ListButtonIconLeft* item = static_cast<FJ_ListButtonIconLeft*>(ReturnItem(index));
     if (item != NULL)
-        item->SetTextureName(textureName, L"fourj.Button");
+        item->SetTextureName(textureName, L"");
 }
 
 FJ_List* FJ_List_ListButtonIconLeft::Create(fuiRenderNode* renderNode)

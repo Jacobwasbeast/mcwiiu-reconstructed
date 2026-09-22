@@ -123,19 +123,19 @@ uint64_t FJ_Label::setAction(unsigned char action, char* value)
 typedef std::vector<FJ_Label*> FJ_LabelVector;
 typedef FJ_LabelVector::iterator FJ_LabelIterator;
 
-void __CPR217___Insert_n__Q2_3std62vector__tm__48_P8FJJ_LabelQ2_3std28allocator__tm__11_PJ36JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyQ4_3stdJ127JJ154J9size_typeRCZ1Z_v(
+void FJ_Label_InsertRepeated(
     FJ_LabelVector& vector, FJ_LabelIterator position, FJ_LabelVector::size_type count, FJ_Label* const& value)
 {
     vector.insert(position, count, value);
 }
 
-FJ_LabelIterator __CPR240__insert__Q2_3std62vector__tm__48_P8FJJ_LabelQ2_3std28allocator__tm__11_PJ33JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyRCZ1Z_Q2_3stdJ87J(
+FJ_LabelIterator FJ_Label_Insert(
     FJ_LabelVector& vector, FJ_LabelIterator position, FJ_Label* const& value)
 {
     return vector.insert(position, value);
 }
 
-FJ_LabelIterator __CPR234__erase__Q2_3std62vector__tm__48_P8FJJ_LabelQ2_3std28allocator__tm__11_PJ32JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_Alty_Q2_3stdJ86J(
+FJ_LabelIterator FJ_Label_Erase(
     FJ_LabelVector& vector, FJ_LabelIterator position)
 {
     return vector.erase(position);

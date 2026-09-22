@@ -356,7 +356,7 @@ uint32_t fui::getCustomTexture(const std::wstring& name, unsigned int* width, un
 
 void fui::releaseCustomTexture(int textureId)
 {
-    if (m_releaseCustomTextureFunction != NULL)
+    if (textureId >= 0 && m_releaseCustomTextureFunction != NULL)
         m_releaseCustomTextureFunction(textureId);
 }
 

@@ -11,6 +11,10 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
+#if defined(RECON_NATIVE)
+extern "C" void OSReport(const char*, ...);
+#endif
+
 FJ_Document::FJ_Document(fuiRenderNode* renderNode)
     : FJ_FuiNode(renderNode), m_safeZoneTop(0), m_safeZoneBottom(0), m_safeZoneLeft(0), m_safeZoneRight(0),
       m_root(this), m_focus(NULL), m_horizontalResize(0), m_horizontalOffset(0), m_focusChange(true)
@@ -131,6 +135,12 @@ void FJ_Document::handlePress(FJ_Event* event)
     FJ_Base* base = event->m_pTarget->asFJ_Base();
     FJ_Button* button = event->m_pTarget->asFJ_Button();
 
+#if defined(RECON_NATIVE)
+    if (base != NULL && m_pCallbackScene != NULL)
+        OSReport("[native-ui] press scene=%d node=%s id=%u\n",
+                 m_pCallbackScene->getSceneType(), base->getName(), base->getId());
+#endif
+
     FJ_FuiNode* parent = base->getObjListParent();
     if (button == NULL || parent == NULL)
     {
@@ -236,6 +246,14 @@ void FJ_Document::OnFocusChange(bool focused)
     FJ_Base* base = getStage()->getFocus()->asFJ_Base();
     if (m_pCallbackScene == NULL || base == NULL)
         return;
+
+#if defined(RECON_NATIVE)
+    if (changed)
+        OSReport("[native-ui] focus scene=%d node=%s id=%u tab=%d up=%s down=%s left=%s right=%s\n",
+                 m_pCallbackScene->getSceneType(), base->getName(), base->getId(), base->getTabIndex(),
+                 base->m_navLinkName[0].c_str(), base->m_navLinkName[1].c_str(),
+                 base->m_navLinkName[2].c_str(), base->m_navLinkName[3].c_str());
+#endif
 
     FJ_FuiNode* parent = base->getObjListParent();
     if (parent == NULL)

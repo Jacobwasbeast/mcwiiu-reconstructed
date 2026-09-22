@@ -16,6 +16,11 @@
 
 extern Renderer* gRenderer;
 
+unsigned int setRGBAOrder(unsigned int colour)
+{
+    return colour;
+}
+
 fuiRenderNodeEditText::RenderStringStateData::RenderStringStateData()
 {
 }
@@ -589,7 +594,7 @@ bool fuiRenderNodeEditText::renderWord(std::wstring& word, RenderStringStateData
         {
             unsigned int colour = state.colour;
             if (state.shadow)
-                colour = setRGBAOrder__FUi(m_color);
+                colour = setRGBAOrder(m_color);
             float lineHeight = m_lineHeights[static_cast<std::vector<float>::size_type>(state.lineNumber)];
             float glyphHeight = getRenderedGlyphHeight(character);
             float advance = renderGlyph(static_cast<unsigned short>(character), state.x,
@@ -1040,13 +1045,14 @@ void fuiRenderNodeEditText::setAutoSize(int autoSize)
     }
 }
 
-std::pair<float, float> fuiRenderNodeEditText::getCharBoundaries(int index)
+fuiRect fuiRenderNodeEditText::getCharBoundaries(int index)
 {
     EnterCriticalSection(&m_lock);
     if (m_text.size() == 0)
     {
         LeaveCriticalSection(&m_lock);
-        return std::pair<float, float>(0.0f, 0.0f);
+        fuiRect emptyRect = { 0.0f, 0.0f, 0.0f, 0.0f };
+        return emptyRect;
     }
 
     fuiEdittext* editText = static_cast<fuiEdittext*>(m_object);
@@ -1055,7 +1061,9 @@ std::pair<float, float> fuiRenderNodeEditText::getCharBoundaries(int index)
     m_renderState.font = m_font;
     m_renderState.fontSize = size;
 
-    float glyphHeight = getRenderedGlyphHeight(m_text[static_cast<std::wstring::size_type>(index)]);
+    wchar_t sampleChar = static_cast<std::wstring::size_type>(index) < m_text.size() ?
+        m_text[static_cast<std::wstring::size_type>(index)] : m_text[0];
+    float glyphHeight = getRenderedGlyphHeight(sampleChar);
     m_renderState.firstLineHeight = glyphHeight;
     m_renderState.lineHeight = glyphHeight;
     m_renderState.measure = true;
@@ -1066,11 +1074,14 @@ std::pair<float, float> fuiRenderNodeEditText::getCharBoundaries(int index)
     renderString(m_text, m_renderState);
     newLine(m_renderState);
 
-    float left = m_renderState.boundaryXMin;
-    float right = m_renderState.boundaryXMax;
+    fuiRect result;
+    result.xMin = m_renderState.boundaryXMin;
+    result.xMax = m_renderState.boundaryXMax;
+    result.yMin = m_renderState.boundaryYMin;
+    result.yMax = m_renderState.boundaryYMax;
     m_numLines = static_cast<unsigned int>(m_lineWidths.size());
     LeaveCriticalSection(&m_lock);
-    return std::pair<float, float>(left, right);
+    return result;
 }
 
 std::wstring fuiRenderNodeEditText::createWordWrappedString(std::wstring text, fuiFontSet* font, float size, float width)

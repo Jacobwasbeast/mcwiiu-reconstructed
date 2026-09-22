@@ -125,7 +125,8 @@ UIScene* UILayer::addComponent(int player, EUIScene scene, void* data)
         return NULL;
     }
 
-    m_componentStates[scene] = std::make_pair(1, true);
+    const bool visible = scene != EUIScene_TutorialPopup && scene != EUIScene_HUD;
+    m_componentStates[scene] = std::make_pair(1, visible);
 
     if (created != NULL)
     {

@@ -12,12 +12,23 @@
 class UILayer;
 class HtmlString;
 
+struct AchievementInfo
+{
+    int id;
+    const wchar_t* icon;
+    int registrationId;
+    int title;
+    int description;
+};
+
 class UIScene_AchievementsMenu : public UIScene
 {
 public:
     UIScene_AchievementsMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_AchievementsMenu();
     static int GetInfo(int achievement);
+    static int GetAchievementId(int index);
+    static int GetAchievementCount();
     void registerTexture(int achievement);
     virtual void updateTooltips();
     void SetAchievementDescription(std::vector<HtmlString>* lines);
@@ -39,8 +50,8 @@ private:
     unsigned char m_unknownCE[2];
     UIControl m_mainPanel;
     UIControl_AchievementsList m_achievementsList;
+    UIControl_Label m_titleLabel;
     UIControl_Label m_achievementName;
-    UIControl_Label m_achievementDescription;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #include "game/ui/CreateWorldScreen.hpp"
 
 #include <string>
+#include <sstream>
 
 #include "game/core/Button.hpp"
 #include "game/core/EditBox.hpp"
@@ -38,9 +39,10 @@ void CreateWorldScreen::tick()
     }
 }
 
-std::wstring CreateWorldScreen::findAvailableFolderName(LevelStorageSource*,
+std::wstring CreateWorldScreen::findAvailableFolderName(LevelStorageSource* levelSource,
                                                           const std::wstring& folderName)
 {
+    static_cast<void>(levelSource);
     return folderName;
 }
 

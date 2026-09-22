@@ -4,6 +4,7 @@
 #include <string>
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_ListButtonAchievement.hpp"
@@ -17,8 +18,10 @@ FJ_List2D::FJ_List2D(fuiRenderNode* renderNode)
       m_activeColumn(0), m_firstVisibleRow(0), m_listHeight(0), m_touchY(0), m_touchX(0),
       m_touchRow(0), m_touchFocus(false), m_scrollDelegateNode(0), m_scrollDelegate(0)
 {
-    m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_ScrollArrow::Create(renderNode));
-    m_downArrow = static_cast<FJ_ScrollArrow*>(FJ_ScrollArrow::Create(renderNode));
+    m_upArrow = static_cast<FJ_ScrollArrow*>(
+        FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
+    m_downArrow = static_cast<FJ_ScrollArrow*>(
+        FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
     if (m_upArrow != 0)
         m_listHeight = static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.3f);
     FJ_FuiNode* background = getChildByName(std::string("ButtonListBackground"));

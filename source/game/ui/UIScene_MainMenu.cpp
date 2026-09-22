@@ -240,7 +240,7 @@ void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool r
             if (action > 5) {
                 if (action != 0x14)
                     return;
-                if (!released)
+                if (!pressed)
                     return;
                 gProfile->SetPrimaryPad(playerId);
                 gProfile->SetLockedProfile(-1);

@@ -31,7 +31,7 @@ FJ_List::FJ_List(fuiRenderNode* renderNode)
     if (background != 0)
         m_background = background->asMovieClip();
     if (m_background != 0)
-        m_background->gotoAndPlay(std::string("ButtonListBackground"));
+        m_background->setVisible(false);
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
     m_touchSize = m_upArrow == 0 ? static_cast<int>(getHeight()) :

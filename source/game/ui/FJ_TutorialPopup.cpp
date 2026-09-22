@@ -9,7 +9,7 @@
 #include "game/util/Math.hpp"
 
 FJ_TutorialPopup::FJ_TutorialPopup(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+    : FJ_FuiNode(pRenderNode), m_backgroundPanel(NULL), m_iconHolder(NULL), m_bitmap(NULL)
 {
     m_titleY = (int)getChildByName(std::string("Title"))->getY();
     m_exitScreenShotY = (int)getChildByName(std::string("ExitScreenShot"))->getY();
@@ -63,8 +63,8 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
     if (reposition)
     {
         double stageHeight = getStage()->getStageHeight();
-        if (stageHeight != 360.0 && stageHeight != 540.0)
-            setHeight((float)Math::round((float)(m_titleHeight - 176) * 0.075f));
+        if (stageHeight == 360.0 || stageHeight == 540.0)
+            setY((float)Math::round((float)m_titleHeight * 1.4f));
     }
 
     FJ_FuiNode* title = getChildByName(std::string("Title"));
@@ -73,8 +73,7 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
     if (title->isVisible())
     {
         y = (unsigned int)m_titleY;
-        int availableTitleHeight = m_titleHeight - 176;
-        height = (unsigned int)(title->getHeight() < (float)availableTitleHeight ? title->getHeight() : (float)availableTitleHeight);
+        height = (unsigned int)(title->getHeight() < (float)m_titleHeight ? (float)m_titleHeight : title->getHeight());
     }
 
     FJ_FuiNode* exitScreenShot = getChildByName(std::string("ExitScreenShot"));
@@ -104,7 +103,8 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
         height += (unsigned int)iconHolder->getHeight();
     }
 
-    m_backgroundPanel->setHeight((float)(2 * ((int)y - (int)m_backgroundPanel->getY() + (int)height)));
+    FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"));
+    m_backgroundPanel->setHeight(2.0f * ((float)y - background->getY()) + (float)height);
 }
 
 fuiRenderNode* FJ_TutorialPopup::GetBitmapData(int type)
@@ -148,12 +148,13 @@ void FJ_TutorialPopup::SetupIconHolder(int type)
     {
         fuiRect rect;
         rect.xMin = (float)width;
-        rect.xMax = rect.xMin + slotControl->getWidth() - (float)(width * 2);
+        rect.xMax = rect.xMin + holder->getWidth() - (float)(width * 2);
         rect.yMin = (float)width;
-        rect.yMax = rect.yMin + slotControl->getHeight() - (float)(width * 2);
+        rect.yMax = rect.yMin + holder->getHeight() - (float)(width * 2);
         fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "iggy_slot_IconHolder");
         renderNode->setAlpha(0.25f);
         m_iconHolder = new FJ_FuiNode(renderNode);
+        renderNode->setFuiNode(m_iconHolder);
         holder->addChildAt(m_iconHolder, holder->getNumChildren());
         slotControl->setVisible(false);
         return;
@@ -162,8 +163,8 @@ void FJ_TutorialPopup::SetupIconHolder(int type)
     m_bitmap = GetBitmapData(type);
     m_bitmap->setX((float)width);
     m_bitmap->setY((float)width);
-    m_bitmap->setWidth(slotControl->getWidth() - (float)(width * 2));
-    m_bitmap->setHeight(slotControl->getHeight() - (float)(width * 2));
+    m_bitmap->setWidth(holder->getWidth() - (float)(width * 2));
+    m_bitmap->setHeight(holder->getHeight() - (float)(width * 2));
     holder->addChildAt(m_bitmap, holder->getNumChildren());
     slotControl->setVisible(false);
 }

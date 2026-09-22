@@ -40,7 +40,7 @@ UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callba
     m_showTitleTimer = false;
     m_showExitScreenshot = false;
     m_iconHolder = EIcons_None;
-    m_titleLabel.init(UIString(L"Title"));
+    m_titleLabel.init(UIString(L""));
 }
 
 UIComponent_TutorialPopup::~UIComponent_TutorialPopup()

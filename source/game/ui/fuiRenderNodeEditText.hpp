@@ -28,6 +28,8 @@ public:
     friend class FJ_Base;
     friend class FJ_Slider;
     friend class FJ_TextInput;
+    friend class FJ_HtmlTextPanel;
+    friend class FJ_HtmlTextPanelLarge;
 
     struct HtmlImageDrawData
     {
@@ -119,7 +121,8 @@ public:
     void appendText(const std::wstring&);
     void setHTMLText(const std::wstring&);
     void setAutoSize(int);
-    std::pair<float, float> getCharBoundaries(int);
+    fuiRect getCharBoundaries(int);
+    float getTextHeight() const { return m_textHeight; }
     std::wstring createWordWrappedString(std::wstring, fuiFontSet*, float, float);
     virtual void setWidth(float);
     virtual void setHeight(float);

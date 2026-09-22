@@ -496,7 +496,12 @@ void FJ_Hud::SetArmour(int armour)
     }
     hudInt(this, 0x358) = armour;
 }
-void FJ_Hud::SetRegenerationEffect(bool enabled) { ShowHealth(enabled); }
+void FJ_Hud::SetRegenerationEffect(bool enabled)
+{
+    hudByte(this, 0x378) = enabled;
+    if (enabled)
+        hudInt(this, 0x374) = -1;
+}
 void FJ_Hud::SetJukeBoxLabelPos()
 {
     FJ_FuiNode* jukebox = getChildByName("Jukebox");

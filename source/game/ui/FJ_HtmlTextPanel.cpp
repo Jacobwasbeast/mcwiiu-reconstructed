@@ -38,22 +38,29 @@ void FJ_HtmlTextPanel::SetLabel(const std::wstring& label)
     else
     {
         m_textField->setAutoSize(TextFieldAutoSizeCenter);
-        m_textField->setWidth((float)m_fixedWidth);
-        m_textField->setHeight(m_textField->getHeight() + 5.0f);
+        m_textField->m_wordWrap = true;
+        m_textField->setWidth(static_cast<float>(m_fixedWidth));
+    }
+
+    if (m_fixedWidthEnabled)
+    {
+        m_textField->setHeight(m_textField->getTextHeight() + 5.0f);
     }
 
     m_pointerTextPanel->setVisible(!label.empty());
     if (m_pointerTextPanel->isVisible())
     {
-        std::pair<float, float> boundaries = m_textField->getCharBoundaries(0);
-        float textWidth = boundaries.second - boundaries.first;
+        fuiRect charBounds = m_textField->getCharBoundaries(0);
+        int charHeight = static_cast<int>(charBounds.yMax - charBounds.yMin);
+        float fCharHeight = static_cast<float>(charHeight);
+
         m_textField->setX(m_pointerTextPanel->getX() + 4.0f);
 
         FJ_FuiNode* panelContents = m_pointerTextPanel->getChildAt(0);
-        panelContents->setWidth((float)Math::round(textWidth * 0.8f + m_textField->getWidth()));
-        panelContents->setHeight(m_textField->getHeight() + textWidth);
-        m_textField->setX((float)Math::round(textWidth * 0.35f + m_pointerTextPanel->getX()));
-        m_textField->setY((float)Math::round(m_pointerTextPanel->getY() + textWidth * 0.5f));
+        panelContents->setWidth(static_cast<float>(Math::round(fCharHeight * 0.8f + m_textField->getWidth())));
+        panelContents->setHeight(m_textField->getHeight() + fCharHeight);
+        m_textField->setX(static_cast<float>(Math::round(fCharHeight * 0.35f + m_pointerTextPanel->getX())));
+        m_textField->setY(static_cast<float>(Math::round(m_pointerTextPanel->getY() + static_cast<float>(charHeight / 2))));
     }
 }
 

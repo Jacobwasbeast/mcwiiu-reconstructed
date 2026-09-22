@@ -16,7 +16,19 @@ fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphCha
     BufferedImage image(fontData.textureFileName, true, true, L"");
 
     m_textureIndex = static_cast<unsigned int>(gRenderer->TextureCreate());
+#ifdef RECON_NATIVE
+    for (unsigned int i = 0; i < image.getWidth() * image.getHeight(); ++i)
+    {
+        const unsigned int argb = static_cast<unsigned int>(image.getData()[i]);
+        unsigned char* rgba = reinterpret_cast<unsigned char*>(&image.getData()[i]);
+        rgba[0] = static_cast<unsigned char>(argb >> 16);
+        rgba[1] = static_cast<unsigned char>(argb >> 8);
+        rgba[2] = static_cast<unsigned char>(argb);
+        rgba[3] = static_cast<unsigned char>(argb >> 24);
+    }
+#else
     fui::EndianSwapImageData(image.getData(), image.getWidth() * image.getHeight());
+#endif
     gRenderer->TextureBind(static_cast<int>(m_textureIndex));
     gRenderer->TextureSetTextureLevels(1);
     gRenderer->TextureData(static_cast<int>(image.getWidth()), static_cast<int>(image.getHeight()), image.getData(), 0,

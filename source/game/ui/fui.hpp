@@ -37,6 +37,7 @@ class fui
 {
     friend class fuiRenderNode;
     friend class fuiRenderNodeEditText;
+    friend class fuiRenderNodeShape;
 
 private:
     struct ColorState

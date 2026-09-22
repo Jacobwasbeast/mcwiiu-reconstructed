@@ -38,15 +38,6 @@ struct AvatarRequest
     int player;
 };
 
-struct AchievementInfo
-{
-    int id;
-    const wchar_t* icon;
-    int description;
-    int title;
-    int reserved;
-};
-
 FJ_PressStartToPlay* GetDocument(fuiRenderNode* root)
 {
     return static_cast<FJ_PressStartToPlay*>(root->getFuiNode()->asFJ_Document());
@@ -202,7 +193,7 @@ void UIComponent_PressStartToPlay::registerTexture(int achievement)
 {
     AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(achievement);
     wchar_t path[64];
-    std::swprintf(path, 64, L"Graphics_Achievements_%ls.png", info->icon);
+    std::swprintf(path, 64, L"Graphics\\Achievements\\%ls.png", info->icon);
     std::wstring name(path);
     if (g_pApp->hasArchiveFile(name, false))
     {

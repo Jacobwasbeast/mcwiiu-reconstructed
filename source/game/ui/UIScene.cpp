@@ -495,10 +495,10 @@ unsigned int UIScene::convertGameActionToFuiKeycode(int action)
     return action;
 }
 
-void UIScene::sendInputToMovie(int action, bool, bool released, bool)
+void UIScene::sendInputToMovie(int action, bool, bool, bool pressed)
 {
     if (m_movie != 0)
-        gFui->dispatchKeyboardEvent(m_movie, !released, convertGameActionToFuiKeycode(action));
+        gFui->dispatchKeyboardEvent(m_movie, !pressed, convertGameActionToFuiKeycode(action));
 }
 
 unsigned int UIScene::GetCallbackUniqueId()

@@ -22,7 +22,7 @@ void fuiTextureManager::removeManagedTexture(fuiFile*, fuiBitmap* bitmap)
 {
     if (!initialised)
         initialise();
-    if (bitmap->textureId != -1) {
+    if (bitmap->textureId > 0 && bitmap->textureId < (int)textureCount) {
         TextureEntry& entry = textures[bitmap->textureId];
         if (entry.bitmap != 0) {
             EnterCriticalSection(&mutex);
@@ -41,7 +41,7 @@ void fuiTextureManager::manageTexture(fuiFile* file, fuiBitmap* bitmap)
 {
     if (!initialised)
         initialise();
-    if (bitmap->textureId != -1) {
+    if (bitmap->textureId > 0 && bitmap->textureId < (int)textureCount) {
         TextureEntry& entry = textures[bitmap->textureId];
         if (entry.bitmap == 0) {
             EnterCriticalSection(&mutex);
@@ -71,12 +71,13 @@ void fuiTextureManager::tick()
         unsigned int now = System::processTimeInMilliSecs();
         EnterCriticalSection(&mutex);
         int count = (int)textureCount;
-        int index = 0;
+        int index = 1;
         while (index < count) {
             TextureEntry& entry = textures[index];
-            if (entry.lastUsed != 0) {
+            if (entry.lastUsed != 0 && entry.bitmap != 0) {
                 if ((uint64_t)now > entry.lastUsed && (uint64_t)now - entry.lastUsed > 1000) {
-                    gRenderer->TextureFree(entry.bitmap->textureId);
+                    if (entry.bitmap->textureId > 0)
+                        gRenderer->TextureFree(entry.bitmap->textureId);
                     removeManagedTexture(entry.file, entry.bitmap);
                     count = (int)textureCount;
                 }

@@ -56,7 +56,8 @@ void FJ_AchievementsMenu::PositionAchievementDescription()
         fuiRect itemRect = m_achievementsList->getActiveItem()->getRect(m_achievementsList->getActiveItem());
         description->setX(static_cast<float>(Math::round(
             listContainer->getX() + m_achievementsList->getActiveItem()->getX() +
-            m_achievementsList->getActiveItem()->getWidth() + itemRect.xMin)));
+            m_achievementsList->getActiveItem()->getWidth() + itemRect.xMin +
+            static_cast<float>(m_achievementsList->m_itemSpacing))));
         description->setY(static_cast<float>(Math::round(
             listContainer->getY() + m_achievementsList->getActiveItem()->getY() +
             m_achievementsList->getActiveItem()->getHeight() * 0.5f -
@@ -66,7 +67,8 @@ void FJ_AchievementsMenu::PositionAchievementDescription()
     {
         description->setX(static_cast<float>(Math::round(
             listContainer->getX() + m_achievementsList->getActiveItem()->getX() -
-            description->getWidth())));
+            description->getWidth() -
+            2.0f * static_cast<float>(m_achievementsList->m_itemSpacing))));
         description->setY(static_cast<float>(Math::round(
             listContainer->getY() + m_achievementsList->getActiveItem()->getY() +
             m_achievementsList->getActiveItem()->getHeight() * 0.5f -

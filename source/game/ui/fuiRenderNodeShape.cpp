@@ -2,6 +2,7 @@
 
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiBitmap.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiMatrix.hpp"
@@ -46,6 +47,8 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
     pushColor();
     pushFilterFlags();
 
+    const fui::ColorState& colour = gFui->m_colorStack[gFui->m_colorDepth];
+
     fuiShape* shape = static_cast<fuiShape*>(m_object);
     fuiShapeComponent* component = m_file->shapeComponentData + shape->shapeComponentIndex;
     unsigned int i;
@@ -61,11 +64,11 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
             {
                 unsigned int rgba = component->color.rgba;
                 gRenderer->TextureBind(-1);
-                gRenderer->StateSetColour(((rgba >> 24) & 0xff) / 255.0f * m_redMultiply,
-                                          ((rgba >> 16) & 0xff) / 255.0f * m_greenMultiply,
-                                          ((rgba >> 8) & 0xff) / 255.0f * m_blueMultiply,
-                                          (rgba & 0xff) / 255.0f * m_alpha);
-                gRenderer->StateSetColourAdd(m_redAdd, m_greenAdd, m_blueAdd, m_alphaAdd);
+                gRenderer->StateSetColour(((rgba >> 24) & 0xff) / 255.0f * colour.redMultiply,
+                                          ((rgba >> 16) & 0xff) / 255.0f * colour.greenMultiply,
+                                          ((rgba >> 8) & 0xff) / 255.0f * colour.blueMultiply,
+                                          (rgba & 0xff) / 255.0f * colour.alphaMultiply);
+                gRenderer->StateSetColourAdd(colour.redAdd, colour.greenAdd, colour.blueAdd, colour.alphaAdd);
             }
             else
             {
@@ -84,7 +87,6 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
                                                       1.0f / textureMatrix.scaleY,
                                                       -textureMatrix.translateX / textureMatrix.scaleX,
                                                       -textureMatrix.translateY / textureMatrix.scaleY);
-                    vertexType = C4JRender::eVertexType_TiledUI;
                     pixelShaderType = C4JRender::ePixelShaderType_UIAlphaTest;
                 }
                 else
@@ -95,9 +97,8 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
                                                       -component->bitmapMatrix.translateX / width,
                                                       -component->bitmapMatrix.translateY / height);
                 }
-                gRenderer->TextureSetParam(2, m_renderFlags & 1);
-                gRenderer->StateSetColour(m_redMultiply, m_greenMultiply, m_blueMultiply, m_alpha);
-                gRenderer->StateSetColourAdd(m_redAdd, m_greenAdd, m_blueAdd, m_alphaAdd);
+                gRenderer->TextureSetParam(2, getCurrentFilterFlags() & 1);
+                setRendererColour();
             }
             if (bounds != NULL)
             {
@@ -105,7 +106,9 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
                                                  shape->bounds.xMax, shape->bounds.yMin, bounds->yMin,
                                                  bounds->yMax, shape->bounds.yMax,
                                                  matrix->scaleX, matrix->scaleY);
-                vertexType = C4JRender::eVertexType_ScalingGridUI;
+                vertexType = component->fillType == (eFuiFillType)3
+                    ? C4JRender::eVertexType_TiledUI
+                    : C4JRender::eVertexType_ScalingGridUI;
             }
             gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, vertexCount,
                                     m_file->vertexData + vertexOffset, vertexType,

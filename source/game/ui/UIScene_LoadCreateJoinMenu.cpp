@@ -406,7 +406,7 @@ void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repe
     if (m_customGame == 0 && m_state1b == 0)
         return;
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (!released)
+    if (!pressed)
         return;
     if (action == 4 || action == 5 || action == 8 || action == 9 || action == 0x14)
     {
@@ -542,10 +542,11 @@ void UIScene_LoadCreateJoinMenu::AddLoadListButton(const std::wstring& label, in
     m_loadList.addItem(label);
 }
 
-void UIScene_LoadCreateJoinMenu::SetLoadListIcon(int, unsigned char* data, unsigned int size,
+void UIScene_LoadCreateJoinMenu::SetLoadListIcon(int index, unsigned char* data, unsigned int size,
                                                  const std::wstring& name)
 {
     registerSubstitutionTexture(name, data, size, false);
+    m_loadList.setTextureName(index, name);
 }
 
 void UIScene_LoadCreateJoinMenu::ScrollLoadListToSelection(unsigned int selection)
@@ -584,10 +585,11 @@ bool UIScene_LoadCreateJoinMenu::DoesCreateListHaveFocus()
     return m_createList.hasFocus();
 }
 
-void UIScene_LoadCreateJoinMenu::SetCreateListIcon(int, unsigned char* data, unsigned int size,
+void UIScene_LoadCreateJoinMenu::SetCreateListIcon(int index, unsigned char* data, unsigned int size,
                                                    const std::wstring& name)
 {
     registerSubstitutionTexture(name, data, size, false);
+    m_createList.setTextureName(index, name);
 }
 
 void UIScene_LoadCreateJoinMenu::ScrollCreateListToSelection(unsigned int selection)
@@ -708,18 +710,20 @@ void UIScene_LoadCreateJoinMenu::Initialise()
     {
         AddDefaultButtons();
         m_ignoreInput = 0;
+        gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
     }
     else
     {
         if (gStorage->GetSaveDisabled() == 0)
         {
             gStorage->EnoughSpaceForAMinSaveGame();
+            m_state28 = 1;
             gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
         }
         else
         {
             m_state28 = 1;
-            gApp.mDLCManager.checkForCorruptDLCAndAlert(false);
+            gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
         }
     }
 }

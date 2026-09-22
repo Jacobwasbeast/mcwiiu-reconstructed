@@ -21,7 +21,7 @@ FJ_ListButtonAchievement::~FJ_ListButtonAchievement()
 
 void FJ_ListButtonAchievement::EnableButton(bool enabled)
 {
-    gotoAndStop(enabled ? "Enabled" : "Disabled");
+    gotoAndStop(enabled ? "Button_Enabled" : "Button_Disabled");
     m_bitmapIcon->setVisible(enabled);
     m_enabled = enabled;
 }

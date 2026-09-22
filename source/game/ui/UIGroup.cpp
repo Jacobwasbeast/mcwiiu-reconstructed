@@ -7,6 +7,7 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/minigame/Tutorial.hpp"
 
+
 UIGroup::UIGroup(EUIGroup group, int player)
     : m_component(0), m_componentSecondary(0), m_componentTertiary(0),
       m_componentQuaternary(0), m_drcComponent(0), m_viewportType(0),

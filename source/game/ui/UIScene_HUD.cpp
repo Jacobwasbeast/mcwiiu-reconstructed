@@ -1106,8 +1106,8 @@ void UIScene_HUD::updateFrameTick()
                         int comparisonDelta = 0;
                         if (sortedPlayers.size() <= 1 || !hasLifeSpan)
                         {
-                            comparisonDelta = static_cast<int>(elapsedMs) - ghostRecord->time;
-                            m_comparisonScore = static_cast<unsigned int>(ghostRecord->time);
+                            comparisonDelta = static_cast<int>(static_cast<unsigned int>(elapsedMs) - ghostRecord->mElapsedLow);
+                            m_comparisonScore = ghostRecord->mElapsedLow;
                         }
                         else if (!sortedPlayers.empty())
                         {
