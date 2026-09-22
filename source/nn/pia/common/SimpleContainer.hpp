@@ -14,6 +14,7 @@ struct SimpleContainer<nn::pia::transport::Station*, 32>
 {
     virtual ~SimpleContainer();
     virtual void Trace(unsigned long long value) const;
+    unsigned int size;
     nn::pia::transport::Station* data[32];
 };
 
@@ -22,6 +23,7 @@ struct SimpleContainer<InetAddress, 4>
 {
     virtual ~SimpleContainer();
     virtual void Trace(unsigned long long value) const;
+    unsigned int size;
     InetAddress data[4];
 };
 

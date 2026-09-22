@@ -30,8 +30,8 @@ public:
 
     Step m_currentStep;
     bool m_cancelRequested;
-    unsigned int m_field38;
-    unsigned int m_field3c;
+    unsigned int m_state;
+    unsigned int m_result;
 };
 
 }}}

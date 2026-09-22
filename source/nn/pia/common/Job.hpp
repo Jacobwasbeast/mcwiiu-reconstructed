@@ -1,7 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_JOB_HPP
 
-#include "nn/pia.h"
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/common/Time.hpp"
 

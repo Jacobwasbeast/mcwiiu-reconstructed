@@ -25,7 +25,6 @@ public:
     pead::Event m_event;
     bool m_finalize;
     ListBase m_jobList;
-    int m_jobNodeOffset;
 };
 
 }}}

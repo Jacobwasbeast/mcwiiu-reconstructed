@@ -1,5 +1,7 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 
+void Sleep(unsigned int milliseconds);
+
 namespace nn { namespace pia { namespace common {
 
 StepSequenceJob::Step::~Step()
@@ -11,7 +13,7 @@ void StepSequenceJob::Step::Trace(unsigned long long value) const
 }
 
 StepSequenceJob::StepSequenceJob()
-    : Job(), m_currentStep(), m_cancelRequested(false), m_field38(0), m_field3c(0)
+    : Job(), m_currentStep(), m_cancelRequested(false), m_state(0), m_result(0)
 {
 }
 
@@ -41,8 +43,15 @@ unsigned int StepSequenceJob::ExecuteCore()
     }
 }
 
+void StepSequenceJob::WaitForCompletion(unsigned int intervalMsec)
+{
+    while (IsRunning())
+        Sleep(intervalMsec);
+}
+
 void StepSequenceJob::CancelCleanup()
 {
+
 }
 
 void StepSequenceJob::Trace(unsigned long long value) const

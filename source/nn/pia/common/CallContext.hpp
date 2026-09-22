@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_CALL_CONTEXT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_CALL_CONTEXT_HPP
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 
 namespace nn { namespace pia { namespace common {
 

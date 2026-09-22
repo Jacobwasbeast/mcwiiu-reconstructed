@@ -53,10 +53,5 @@ void Watermark::Update(long long value)
     ++m_updateCount;
 }
 
-Watermark* WatermarkManager::GetWatermark(int index)
-{
-    if (static_cast<unsigned int>(index) >= cWatermarkNum) return 0;
-    return &m_watermarks[index];
-}
 
 }}}

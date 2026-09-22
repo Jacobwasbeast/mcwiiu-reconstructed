@@ -17,8 +17,11 @@ public:
 
     ~MonitoringDataSender();
 
-    void RequestSendReport(DataType dataType);
+    virtual void RequestSendReport(DataType dataType);
     static Result GetMonitoringServerURL(char* buffer, int size);
+
+protected:
+    virtual void RequestSendReportImpl(DataType dataType) = 0;
 };
 
 }}}
