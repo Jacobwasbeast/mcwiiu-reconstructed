@@ -51,7 +51,7 @@ unsigned long long Slime::GetType()
 
 void Slime::staticCtor()
 {
-    DATA_ID_SIZE = SynchedEntityData::defineId<int>(0, 0x5D108000ULL,
+    DATA_ID_SIZE = SynchedEntityData::defineId<int>(0x5D108000ULL, 0x0D000000ULL,
                                                      EntityDataSerializers::INT);
 }
 

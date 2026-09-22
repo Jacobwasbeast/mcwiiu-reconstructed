@@ -40,8 +40,8 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/core/Mth.hpp"
 
+const EntityDataAccessor<float>* Wolf::DATA_HEALTH_ID = NULL;
 const EntityDataAccessor<bool>* Wolf::DATA_INTERESTED = NULL;
-const EntityDataAccessor<bool>* Wolf::DATA_ANGRY = NULL;
 const EntityDataAccessor<int>* Wolf::DATA_COLLAR_COLOR = NULL;
 Wolf::Wolf(Level* level)
     : TamableAnimal(level),
@@ -57,7 +57,18 @@ Wolf::Wolf(Level* level)
 }
 Wolf::~Wolf() {}
 void Wolf::create(Level* level) { new Wolf(level); }
-void Wolf::staticCtor() { DATA_INTERESTED = SynchedEntityData::defineId<bool>(ENTITY_TYPE_WOLF, ENTITY_TYPE_MOB, EntityDataSerializers::BOOLEAN); DATA_ANGRY = SynchedEntityData::defineId<bool>(ENTITY_TYPE_WOLF, ENTITY_TYPE_MOB, EntityDataSerializers::BOOLEAN); DATA_COLLAR_COLOR = SynchedEntityData::defineId<int>(ENTITY_TYPE_WOLF, ENTITY_TYPE_MOB, EntityDataSerializers::INT); }
+void Wolf::staticCtor()
+{
+    DATA_HEALTH_ID = SynchedEntityData::defineId<float>(ENTITY_TYPE_WOLF,
+                                                        0x000000000D6C0000ULL,
+                                                        EntityDataSerializers::FLOAT);
+    DATA_INTERESTED = SynchedEntityData::defineId<bool>(ENTITY_TYPE_WOLF,
+                                                        0x000000000D6C0000ULL,
+                                                        EntityDataSerializers::BOOLEAN);
+    DATA_COLLAR_COLOR = SynchedEntityData::defineId<int>(ENTITY_TYPE_WOLF,
+                                                         0x000000000D6C0000ULL,
+                                                         EntityDataSerializers::INT);
+}
 void Wolf::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, ENTITY_TYPE_WOLF); }
 void Wolf::registerGoals()
 {
@@ -82,8 +93,19 @@ void Wolf::registerGoals()
     mTargetSelector.addGoal(4, new NonTameRandomTargetGoal(this, typeid(Animal), false, NULL, false), true);
     mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
 }
-void Wolf::registerAttributes() { Mob::registerAttributes(); getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(8.0); getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3); getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(2.0); }
-void Wolf::setAngry(bool angry) { getEntityData()->set(DATA_ANGRY, angry, true); }
+void Wolf::registerAttributes()
+{
+    Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3f);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(isTame() ? 20.0 : 8.0);
+    getAttributes()->registerAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(2.0);
+}
+void Wolf::setAngry(bool angry)
+{
+    unsigned char flags = getEntityData()->get(DATA_FLAGS);
+    getEntityData()->set(DATA_FLAGS, angry ? static_cast<unsigned char>(flags | 2)
+                                           : static_cast<unsigned char>(flags & 0xfd), true);
+}
 void Wolf::setTarget(boost::shared_ptr<LivingEntity> target)
 {
     Mob::setTarget(target);
@@ -97,9 +119,15 @@ void Wolf::customServerAiStep()
     TamableAnimal::customServerAiStep();
     getEntityData()->set(DATA_HEALTH_ID, getHealth(), true);
 }
-void Wolf::defineSynchedData() { TamableAnimal::defineSynchedData(); getEntityData()->createDateItem(DATA_INTERESTED, false); getEntityData()->createDateItem(DATA_ANGRY, false); getEntityData()->createDateItem(DATA_COLLAR_COLOR, 14); }
+void Wolf::defineSynchedData()
+{
+    TamableAnimal::defineSynchedData();
+    getEntityData()->createDateItem(DATA_HEALTH_ID, 1.0f);
+    getEntityData()->createDateItem(DATA_INTERESTED, false);
+    getEntityData()->createDateItem(DATA_COLLAR_COLOR, DyeColor::RED->getItemData());
+}
 void Wolf::playStepSound(const BlockPos&, Block*) { playSound(SoundEvents::WOLF_STEP, 0.15f, 1.0f); }
-bool Wolf::isAngry() { return getEntityData()->get(DATA_ANGRY); }
+bool Wolf::isAngry() { return (getEntityData()->get(DATA_FLAGS) & 2) != 0; }
 const DyeColor* Wolf::getCollarColor() { return DyeColor::byItemData(getEntityData()->get(DATA_COLLAR_COLOR)); }
 void Wolf::addAdditonalSaveData(CompoundTag* tag)
 {

@@ -821,48 +821,83 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
 {
     m_ignoreInput = 1;
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-    ShowJoinListTimer(false);
-    if (m_customGame != 0)
-        return;
-    if (index == 0)
+    if (m_customGame == 0)
     {
+        if (index == 0)
+        {
+            ShowJoinListTimer(false);
+            boost::shared_ptr<Player> player;
+            g_pApp->SetTutorialMode(false, player);
+            g_pApp->SetCorruptSaveDeleted(false);
+            LoadMenuSceneData* sceneData = new LoadMenuSceneData();
+            sceneData->playerId = GetPad();
+            sceneData->saveIndex = -1;
+            sceneData->saveData = 0;
+            sceneData->reserved = 0;
+            sceneData->gameMode = eMiniGameId_Any;
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x1a),
+                                                 sceneData, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            return;
+        }
+        if (variant < 0 || static_cast<unsigned int>(variant) >= m_levelGenerationOptions.size())
+            return;
+        LevelGenerationOptions* options = m_levelGenerationOptions.at(static_cast<unsigned int>(variant));
+        g_pApp->SetBaseSaveName(options->getBaseSavePath());
         boost::shared_ptr<Player> player;
-        g_pApp->SetTutorialMode(false, player);
-        g_pApp->SetCorruptSaveDeleted(false);
+        g_pApp->SetTutorialMode(options->isTutorial(), player);
+        g_pApp->SetAutosaveTimerTime();
+        if (options->isTutorial())
+        {
+            g_pApp->SetGameHostOption(static_cast<eGameHostOption>(4),
+                                      GameSettings::GetGameSettings(gProfile->GetPrimaryPad(),
+                                                                    static_cast<eGameSetting>(0xc)));
+            LoadLevelGen(options);
+            return;
+        }
         LoadMenuSceneData* sceneData = new LoadMenuSceneData();
         sceneData->playerId = GetPad();
         sceneData->saveIndex = -1;
-        sceneData->saveData = 0;
+        sceneData->saveData = options;
         sceneData->reserved = 0;
         sceneData->gameMode = eMiniGameId_Any;
-        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x1a),
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
                                              sceneData, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
     }
-    if (variant < 0 || static_cast<unsigned int>(variant) >= m_levelGenerationOptions.size())
-        return;
-    LevelGenerationOptions* options = m_levelGenerationOptions.at(static_cast<unsigned int>(variant));
-    g_pApp->SetBaseSaveName(options->getBaseSavePath());
-    boost::shared_ptr<Player> player;
-    g_pApp->SetTutorialMode(options->isTutorial(), player);
-    g_pApp->SetAutosaveTimerTime();
-    if (options->isTutorial())
+
+    const int primaryPad = gProfile->GetPrimaryPad();
+    if (!gProfile->IsSignedInLive(primaryPad))
     {
-        g_pApp->SetGameHostOption(static_cast<eGameHostOption>(4),
-                                  GameSettings::GetGameSettings(gProfile->GetPrimaryPad(),
-                                                                static_cast<eGameSetting>(0xc)));
-        LoadLevelGen(options);
+        int parameter = 0xb9a1bf4d;
+        gConsoleUIController.RequestAlertMessage(0x456f1349, 0x2cd8b529, &parameter, 1,
+                                                 primaryPad, 0, 0, 0, true);
+        m_ignoreInput = 0;
         return;
     }
+
+    static bool settingsPromptShown = false;
+    int promptCount = GameSettings::GetGameSettings(primaryPad, static_cast<eGameSetting>(0x24));
+    if (!settingsPromptShown && promptCount > 0)
+    {
+        GameSettings::SetGameSettings(primaryPad, static_cast<eGameSetting>(0x24),
+                                      static_cast<unsigned char>(promptCount - 1));
+        GameSettings::CheckGameSettingsChanged(true, primaryPad);
+        int parameter = 0xb9a1bf4d;
+        gConsoleUIController.RequestAlertMessage(0x5642f776, 0x67db357b, &parameter, 1,
+                                                 primaryPad, 0, 0, 0, true);
+        m_ignoreInput = 0;
+        settingsPromptShown = true;
+        return;
+    }
+
     LoadMenuSceneData* sceneData = new LoadMenuSceneData();
     sceneData->playerId = GetPad();
     sceneData->saveIndex = -1;
-    sceneData->saveData = options;
+    sceneData->saveData = 0;
     sceneData->reserved = 0;
-    sceneData->gameMode = eMiniGameId_Any;
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
+    sceneData->gameMode = static_cast<EMiniGameId>(m_buttonIds[index]);
+    gConsoleUIController.NavigateToScene(primaryPad, static_cast<EUIScene>(0x23),
                                          sceneData, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-    return;
 }
 
 int IUIScene_LoadCreateJoin::TexturePackDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result)

@@ -2773,7 +2773,7 @@ void MinecraftWorld_RunStaticCtors()
     WitherSkull::staticCtor();
     SynchedEntityData::defineId<int>(0x000000008A200000ULL, 0x0000000008000000ULL, NULL);
     ThrownPotion::staticCtor();
-    SynchedEntityData::defineId<int>(0x00000000A0800000ULL, 0x0000000008000000ULL, NULL);
+    SynchedEntityData::defineId<int>(0x000000000A080000ULL, 0x0000000008000000ULL, NULL);
     ItemFrame::staticCtor();
     PrimedTnt::staticCtor();
     FireworksRocketEntity::staticCtor();

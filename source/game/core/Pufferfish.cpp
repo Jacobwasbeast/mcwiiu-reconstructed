@@ -20,7 +20,7 @@
 #include "game/util/AABB.hpp"
 
 Pufferfish::Pufferfish(Level* level)
-    : Fish(level, false),
+    : Fish(level, true),
       mPuffState(PUFFED_STATE_SMALL),
       mNextPuffState(PUFFED_STATE_SMALL),
       mPuffTransitionTime(0),

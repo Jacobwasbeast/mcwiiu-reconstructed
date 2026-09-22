@@ -21,10 +21,10 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-Fish::Fish(Level* level, bool callDerivedCtor)
+Fish::Fish(Level* level, bool deferredInit)
     : WaterAnimal(level)
 {
-    if (callDerivedCtor)
+    if (!deferredInit)
     {
         fjDerivedCtorCalls();
         setSize(0.6f, 0.2f);

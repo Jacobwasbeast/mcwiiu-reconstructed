@@ -9,6 +9,8 @@
 #include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/BreathAirGoal.hpp"
+#include "game/entity/ai/DolphinLookControl.hpp"
+#include "game/entity/ai/DolphinMoveControl.hpp"
 #include "game/entity/ai/FindUnderwaterTreasureGoal.hpp"
 #include "game/entity/ai/FollowBoatGoal.hpp"
 #include "game/entity/ai/FollowFlockLeaderGoal.hpp"
@@ -45,6 +47,10 @@ Dolphin::Dolphin(Level* level)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 0.6f);
+    delete mMoveControl;
+    mMoveControl = new DolphinMoveControl(this);
+    delete mLookControl;
+    mLookControl = new DolphinLookControl(this, 10);
     setCanPickUpLoot(false);
     mAirSupply = mRandom->nextInt(2, 5);
 }

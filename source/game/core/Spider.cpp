@@ -50,7 +50,7 @@ void Spider::create(Level* level)
 
 void Spider::staticCtor()
 {
-    SPIDER_DATA_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_SPIDER, 0,
+    SPIDER_DATA_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_SPIDER, 0x4D540000ULL,
                                                      EntityDataSerializers::BYTE);
 }
 

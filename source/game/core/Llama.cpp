@@ -102,7 +102,12 @@ bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 }
 
 Llama::Llama(Level* level)
-    : AbstractChestedHorse(level), mDidSpit(false), mStrength(1), mVariant(0), mCaravanHead(), mCaravanTail() { }
+    : AbstractChestedHorse(level), mDidSpit(false), mStrength(1), mVariant(0), mCaravanHead(), mCaravanTail()
+{
+    AbstractHorse::fjDerivedCtorCalls();
+    setSize(0.9f, 1.87f);
+    internalSetSize(1.0f);
+}
 Llama::~Llama() { }
 void Llama::create(Level* level) { new Llama(level); }
 const DyeColor* Llama::getSwag()

@@ -544,9 +544,10 @@ StrongholdPieces::StraightStairsDown::StraightStairsDown(
 StrongholdPieces::StraightStairsDown::~StraightStairsDown() { }
 
 StrongholdPieces::StairsDown::StairsDown(int depth, Random& random, int x, int z)
-    : StrongholdPiece(depth), mFlag(false), mData(random.nextInt(4))
+    : StrongholdPiece(depth), mFlag(true), mData(0)
 {
-    setBoundingBox(BoundingBox::orientBox(x, 0, z, 0, 0, 0, 5, 5, 7, NULL));
+    setOrientation(Direction::Plane::HORIZONTAL->getRandomDirection(random));
+    setBoundingBox(new BoundingBox(x, 64, z, x + 4, 74, z + 4));
 }
 
 BoundingBox* StrongholdPieces::FillerCorridor::findPieceBox(
@@ -1590,7 +1591,7 @@ bool StrongholdPieces::RightTurn::postProcess(Level* level, Random& random, Boun
 StructurePiece* StrongholdPieces::RightTurn::Create() { return new RightTurn(); }
 EStructurePiece StrongholdPieces::RightTurn::GetType() { return eStructurePiece_RightTurn; }
 
-StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level) : StairsDown(depth, random, BoundingBox::orientBox(x, 0, z, 0, 0, 0, 5, 5, 7, NULL), NULL), mPortalRoom(NULL), mLevel(level), mLastPieceWeight(NULL) { }
+StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level) : StairsDown(depth, random, x, z), mPortalRoom(NULL), mLevel(level), mLastPieceWeight(NULL) { }
 StrongholdPieces::StartPiece::~StartPiece() = default;
 BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
 {

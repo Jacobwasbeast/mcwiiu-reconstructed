@@ -6,6 +6,30 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/FileInputStream.hpp"
 
+struct _OVERLAPPED
+{
+    unsigned int Internal;
+    unsigned int InternalHigh;
+    unsigned int Offset;
+    unsigned int OffsetHigh;
+    int hEvent;
+};
+
+char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
+int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
+                void* securityAttributes, unsigned int creationDisposition,
+                unsigned int flagsAndAttributes, int templateFile);
+unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
+                      unsigned int* bytesRead, _OVERLAPPED* overlapped);
+int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh,
+                   unsigned int moveMethod);
+void CloseHandle(int handle);
+
+static const int INVALID_HANDLE_VALUE = -1;
+static const unsigned int GENERIC_READ = 0x80000000;
+static const unsigned int OPEN_EXISTING = 3;
+static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
+
 ArchiveFile::ArchiveFile(File file)
 {
     m_data = NULL;
@@ -91,28 +115,30 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
     }
     else
     {
-        FileInputStream input(*this);
-        unsigned int remaining = metadata->offset;
-        while (remaining != 0)
+        char filename[256];
+        int file = CreateFileA(wstringtofilename(getPath(), filename), GENERIC_READ, 0, NULL,
+                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        if (file == INVALID_HANDLE_VALUE)
         {
-            unsigned char buffer[256];
-            unsigned int step = remaining < sizeof(buffer) ? remaining : sizeof(buffer);
-            if (input.read(arrayWithLength<unsigned char>(buffer, step)) != static_cast<int>(step))
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load ", 0xFD, name.c_str(),
+                                getPath().c_str());
+        }
+        else if (SetFilePointer(file, metadata->offset, NULL, 0) == 0)
+        {
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
+            CloseHandle(file);
+        }
+        else
+        {
+            result = arrayWithLength<unsigned char>(metadata->size, true);
+            unsigned int bytesRead = 0;
+            if (ReadFile(file, result.data, metadata->size, &bytesRead, NULL) == 0)
             {
-                gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
-                return result;
+                gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to read ", 0xEE, name.c_str(),
+                                    getPath().c_str());
             }
-            remaining -= step;
+            CloseHandle(file);
         }
-        result = arrayWithLength<unsigned char>(metadata->size, true);
-        if (input.read(result) != static_cast<int>(metadata->size))
-        {
-            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to read ", 0xEE, name.c_str(), getPath().c_str());
-            delete[] result.data;
-            result.data = NULL;
-            result.length = 0;
-        }
-        input.close();
     }
     if (metadata->compressed && result.data != NULL)
     {

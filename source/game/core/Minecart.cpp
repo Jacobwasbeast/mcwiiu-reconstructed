@@ -85,12 +85,12 @@ Minecart::~Minecart()
 
 void Minecart::staticCtor()
 {
-    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
-    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
-    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
-    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
-    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
-    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
+    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
+    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::FLOAT);
+    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
+    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
+    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::BOOLEAN);
 }
 
 void Minecart::_init()

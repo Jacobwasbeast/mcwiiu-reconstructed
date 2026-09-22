@@ -46,6 +46,7 @@ public:
     std::vector<FileEntry*>* getFilesWithPrefix(const std::wstring& prefix);
 
     static ByteOrder getEndian(ESavePlatform platform);
+    static ByteOrder getNativeEndian();
 
     std::vector<FileEntry*> m_fileEntries;
     ESavePlatform m_savePlatform;

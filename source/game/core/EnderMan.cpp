@@ -52,8 +52,8 @@ EnderMan::~EnderMan()
 
 void EnderMan::staticCtor()
 {
-    DATA_CARRIED_BLOCK = SynchedEntityData::defineId<const BlockState*>(0x5D540043ULL, ENTITY_TYPE_MOB, EntityDataSerializers::BLOCK_STATE);
-    DATA_CREEPY = SynchedEntityData::defineId<bool>(0x5D540043ULL, ENTITY_TYPE_MOB, EntityDataSerializers::BOOLEAN);
+    DATA_CARRIED_BLOCK = SynchedEntityData::defineId<const BlockState*>(0x5D540043ULL, 0x4D540000ULL, EntityDataSerializers::BLOCK_STATE);
+    DATA_CREEPY = SynchedEntityData::defineId<bool>(0x5D540043ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
     sCarriableBlocks.insert(Blocks::grass);
     sCarriableBlocks.insert(Blocks::dirt);
     sCarriableBlocks.insert(Blocks::sand);

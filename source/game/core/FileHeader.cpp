@@ -58,6 +58,13 @@ static const unsigned int FILE_ENTRY_DATA_SIZE_V1 = 136;
 static const short CURRENT_SAVE_VERSION = 11;
 static const short MAX_SUPPORTED_SAVE_VERSION = 12;
 
+ByteOrder FileHeader::getNativeEndian()
+{
+    const unsigned int value = 1;
+    return *reinterpret_cast<const unsigned char*>(&value) == 1
+        ? eByteOrder_LittleEndian : eByteOrder_BigEndian;
+}
+
 FileHeader::FileHeader()
 {
     m_savePlatform = eSavePlatform_WIIU;
@@ -182,11 +189,26 @@ void FileHeader::WriteHeader(void* pData)
     pVersions[0] = m_originalSaveVersion;
     pVersions[1] = CURRENT_SAVE_VERSION;
 
+    if (getNativeEndian() != eByteOrder_BigEndian)
+    {
+        reverseUnsignedInt(&pOffsets[0]);
+        reverseUnsignedInt(&pOffsets[1]);
+        reverseShort(&pVersions[0]);
+        reverseShort(&pVersions[1]);
+    }
+
     unsigned char* pEntryData = (unsigned char*)pData + indexOffset;
 
     for (unsigned int i = 0; i < m_fileEntries.size(); i++)
     {
         memcpy(pEntryData, m_fileEntries[i], FILE_ENTRY_DATA_SIZE);
+        if (getNativeEndian() != eByteOrder_BigEndian)
+        {
+            reverseChar16Array(reinterpret_cast<wchar_t*>(pEntryData), 64);
+            reverseUnsignedInt(reinterpret_cast<unsigned int*>(pEntryData + 128));
+            reverseUnsignedInt(reinterpret_cast<unsigned int*>(pEntryData + 132));
+            reverseLongLong(reinterpret_cast<long long*>(pEntryData + 136));
+        }
         pEntryData += FILE_ENTRY_DATA_SIZE;
     }
 }
@@ -221,19 +243,19 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
     short* pVersions = (short*)(pOffsets + 2);
 
     unsigned int indexOffset = pOffsets[0];
-    if (m_saveEndian != eByteOrder_BigEndian)
+    if (m_saveEndian != getNativeEndian())
         reverseUnsignedInt(&indexOffset);
 
     unsigned int fileCount = pOffsets[1];
-    if (m_saveEndian != eByteOrder_BigEndian)
+    if (m_saveEndian != getNativeEndian())
         reverseUnsignedInt(&fileCount);
 
     m_originalSaveVersion = pVersions[0];
-    if (m_saveEndian != eByteOrder_BigEndian)
+    if (m_saveEndian != getNativeEndian())
         reverseShort(&m_originalSaveVersion);
 
     m_saveVersion = pVersions[1];
-    if (m_saveEndian != eByteOrder_BigEndian)
+    if (m_saveEndian != getNativeEndian())
         reverseShort(&m_saveVersion);
 
     unsigned char* pEntryData = (unsigned char*)pData + indexOffset;
@@ -267,7 +289,7 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
 
             memcpy(pEntry, pEntryData, FILE_ENTRY_DATA_SIZE);
 
-            if (m_saveEndian != eByteOrder_BigEndian)
+            if (m_saveEndian != getNativeEndian())
             {
                 reverseChar16Array(pEntry->m_name, 64);
                 reverseUnsignedInt(&pEntry->m_fileSize);

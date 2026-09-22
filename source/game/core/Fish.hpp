@@ -17,7 +17,7 @@ class FishModel;
 class Fish : public WaterAnimal
 {
 public:
-    Fish(Level* level, bool callDerivedCtor);
+    Fish(Level* level, bool deferredInit);
     virtual ~Fish();
 
     void _init();

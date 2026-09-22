@@ -16,7 +16,7 @@
 #include "game/world/block/BlockPos.hpp"
 
 Husk::Husk(Level* level)
-    : Zombie(level)
+    : Zombie(level, false)
 {
     fjDerivedCtorCalls();
 }

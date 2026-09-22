@@ -21,6 +21,7 @@
 
 Squid::Squid(Level* level) : WaterAnimal(level)
 {
+    Mob::fjDerivedCtorCalls();
     _init();
     setSize(0.8f, 0.8f);
     mRandom->setSeed((long long)getId());

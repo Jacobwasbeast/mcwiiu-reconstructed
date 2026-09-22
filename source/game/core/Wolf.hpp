@@ -63,8 +63,8 @@ public:
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player); virtual unsigned long long GetType();
     bool isWet(); double getWetShade(float partialTick); virtual int getMaxSpawnClusterSize();
 private:
+    static const EntityDataAccessor<float>* DATA_HEALTH_ID;
     static const EntityDataAccessor<bool>* DATA_INTERESTED;
-    static const EntityDataAccessor<bool>* DATA_ANGRY;
     static const EntityDataAccessor<int>* DATA_COLLAR_COLOR;
     float mInterestedAngle;
     float mInterestedAngleO;

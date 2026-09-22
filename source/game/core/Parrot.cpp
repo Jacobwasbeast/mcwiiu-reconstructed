@@ -8,6 +8,7 @@
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/FlyingPathNavigation.hpp"
+#include "game/entity/ai/FlyingMoveControl.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/util/Random.hpp"
 #include "game/client/audio/SoundEvents.hpp"
@@ -64,6 +65,8 @@ Parrot::Parrot(Level* level)
     fjDerivedCtorCalls();
     _init();
     setSize(0.5f, 0.9f);
+    delete mMoveControl;
+    mMoveControl = new FlyingMoveControl(this);
 }
 
 Parrot::~Parrot()

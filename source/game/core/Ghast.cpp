@@ -24,9 +24,13 @@ static const EntityDataAccessor<bool>* DATA_CHARGING = NULL;
 
 Ghast::Ghast(Level* level) : FlyingMob(level), mExplosionPower(1), mUnused(0)
 {
-    mYRot = 0.0f;
+    Mob::fjDerivedCtorCalls();
+    _init();
     setSize(4.0f, 4.0f);
-    registerGoals();
+    mFireImmune = true;
+    mExperienceReward = 5;
+    delete mMoveControl;
+    mMoveControl = new GhastMoveControl(this);
 }
 
 Ghast::~Ghast()
@@ -40,7 +44,8 @@ void Ghast::create(Level* level)
 
 void Ghast::staticCtor()
 {
-    DATA_CHARGING = SynchedEntityData::defineId<bool>(0, 0x5D0000C1ULL, EntityDataSerializers::BOOLEAN);
+    DATA_CHARGING = SynchedEntityData::defineId<bool>(0x5D0000C1ULL, 0x0D000080ULL,
+                                                   EntityDataSerializers::BOOLEAN);
 }
 
 void Ghast::_init()

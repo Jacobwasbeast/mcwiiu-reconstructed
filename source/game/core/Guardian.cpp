@@ -42,11 +42,14 @@ Guardian::Guardian(Level* level, bool createEntityData)
     mAttackTime = 0;
     mTouchedGround = false;
     mRandomStrollGoal = NULL;
-    setSize(0.85f, 0.85f);
     if (createEntityData)
     {
         fjDerivedCtorCalls();
     }
+    mExperienceReward = 10;
+    setSize(0.85f, 0.85f);
+    delete mMoveControl;
+    mMoveControl = new GuardianMoveControl(this);
     mTailAnimation = mRandom->nextFloat();
     mTailAnimationOld = mTailAnimation;
 }

@@ -14,7 +14,38 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static Painting::Motive* paintingMotives[36] = { NULL };
+static Painting::Motive* paintingMotives[30] = {
+    new Painting::Motive(L"Kebab", 16, 16, 0, 0),
+    new Painting::Motive(L"Aztec", 16, 16, 16, 0),
+    new Painting::Motive(L"Alban", 16, 16, 32, 0),
+    new Painting::Motive(L"Aztec2", 16, 16, 48, 0),
+    new Painting::Motive(L"Bomb", 16, 16, 64, 0),
+    new Painting::Motive(L"Plant", 16, 16, 80, 0),
+    new Painting::Motive(L"Wasteland", 16, 16, 96, 0),
+    new Painting::Motive(L"Pool", 32, 16, 0, 32),
+    new Painting::Motive(L"Courbet", 32, 16, 32, 32),
+    new Painting::Motive(L"Sea", 32, 16, 64, 32),
+    new Painting::Motive(L"Sunset", 32, 16, 96, 32),
+    new Painting::Motive(L"Creebet", 32, 16, 128, 32),
+    new Painting::Motive(L"Wanderer", 16, 32, 0, 64),
+    new Painting::Motive(L"Graham", 16, 32, 16, 64),
+    new Painting::Motive(L"Match", 32, 32, 0, 128),
+    new Painting::Motive(L"Bust", 32, 32, 32, 128),
+    new Painting::Motive(L"Stage", 32, 32, 64, 128),
+    new Painting::Motive(L"Void", 32, 32, 96, 128),
+    new Painting::Motive(L"SkullAndRoses", 32, 32, 128, 128),
+    new Painting::Motive(L"Wither", 32, 32, 160, 128),
+    new Painting::Motive(L"Fighters", 64, 32, 0, 96),
+    new Painting::Motive(L"Pointer", 64, 64, 0, 192),
+    new Painting::Motive(L"Pigscene", 64, 64, 64, 192),
+    new Painting::Motive(L"BurningSkull", 64, 64, 128, 192),
+    new Painting::Motive(L"Skeleton", 64, 48, 192, 64),
+    new Painting::Motive(L"DonkeyKong", 64, 48, 192, 112),
+    new Painting::Motive(L"1x1E1", 16, 16, 0, 16),
+    new Painting::Motive(L"1x1E2", 16, 16, 16, 16),
+    new Painting::Motive(L"1x1E3", 16, 16, 32, 16),
+    new Painting::Motive(L"1x1E4", 16, 16, 48, 16)
+};
 
 Painting::Motive::Motive(std::wstring motiveName, int motiveWidth, int motiveHeight,
                          int motiveTextureX, int motiveTextureY)
@@ -44,7 +75,7 @@ Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction
     Entity::fjDerivedCtorCalls();
     _init(level);
 
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 5; ++i)
     {
         for (int j = 0; j < 6; ++j)
         {
@@ -79,7 +110,7 @@ void Painting::PaintingPostConstructor(const Direction* direction, int unused)
     std::vector<Motive*> validMotives;
     int largestArea = 0;
 
-    for (int i = 0; i < 36; ++i)
+    for (int i = 0; i < 30; ++i)
     {
         motive = paintingMotives[i];
         if (motive != NULL && survives())
@@ -115,7 +146,7 @@ void Painting::readAdditionalSaveData(CompoundTag* tag)
 {
     std::wstring motiveName = tag->getString(L"Motive");
     motive = NULL;
-    for (int i = 0; i < 36; ++i)
+    for (int i = 0; i < 30; ++i)
     {
         if (paintingMotives[i] != NULL && paintingMotives[i]->name == motiveName)
             motive = paintingMotives[i];

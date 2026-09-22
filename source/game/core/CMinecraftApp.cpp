@@ -34,6 +34,7 @@
 #include "game/core/GameModeTransitionParams.hpp"
 #include "game/core/GhostController.hpp"
 #include "game/util/Random.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/client/render/GameRenderer.hpp"
 #include "game/client/render/ProgressRenderer.hpp"
 #include "game/data/ElementStorage.hpp"
@@ -1795,51 +1796,51 @@ std::wstring CMinecraftApp::getDLCFolderName(unsigned int dlcId)
 {
     switch (dlcId)
     {
-    case 4: return L"Tutorial_World";
-    case 0x200: return L"Skin_Pack_1";
-    case 0x201: return L"Skin_Pack_2";
-    case 0x400: return L"Mass_Effect";
+    case 4: return L"Tutorial World";
+    case 0x200: return L"Skin Pack 1";
+    case 0x201: return L"Skin Pack 2";
+    case 0x400: return L"Mass Effect";
     case 0x401: return L"Skyrim";
     case 0x402: return L"Halo";
     case 0x405: return L"Festive";
     case 0x406: return L"LittleBigPlanet";
-    case 0x407: return L"Greek_Mythology";
-    case 0x408: return L"Norse_Mythology";
-    case 0x409: return L"Halloween_2015";
+    case 0x407: return L"Greek Mythology";
+    case 0x408: return L"Norse Mythology";
+    case 0x409: return L"Halloween 2015";
     case 0x40a: return L"Mario";
-    case 0x40c: return L"Adventure_Time";
-    case 0x40e: return L"Pirates_Of_The_Caribbean";
-    case 0x40f: return L"Egyptian_Mythology";
-    case 0x4f4: return L"Chinese_Mythology";
+    case 0x40c: return L"Adventure Time";
+    case 0x40e: return L"Pirates Of The Caribbean";
+    case 0x40f: return L"Egyptian Mythology";
+    case 0x4f4: return L"Chinese Mythology";
     case 0x4f5: return L"Fallout";
-    case 0x4f9: return L"The_Nightmare_Before_Christmas";
+    case 0x4f9: return L"The Nightmare Before Christmas";
     case 0x801: case 0x1000801: return L"Plastic";
     case 0x802: return L"Candy";
     case 0x803: return L"Fantasy";
-    case 0x804: return L"Halloween_Texture_Pack";
+    case 0x804: return L"Halloween Texture Pack";
     case 0x805: return L"Natural";
     case 0x806: case 0x1000806: return L"City";
     case 0x807: return L"Cartoon";
     case 0x808: case 0x1000808: return L"Steampunk";
     case 0x809: return L"Pattern";
-    case 0x812: return L"Super_Cute_Texture_Pack";
-    case 0x1001: return L"Battle_Map_Pack_0";
-    case 0x1002: return L"Battle_Map_Pack_1";
-    case 0x1003: return L"Battle_Map_Pack_2";
-    case 0x1004: return L"Battle_Map_Pack_3";
-    case 0x1005: return L"Battle_Map_Pack_4";
-    case 0x1007: return L"MG02_Map_Pack_0";
-    case 0x1009: return L"MG02_Map_Pack_1";
+    case 0x812: return L"Super Cute Texture Pack";
+    case 0x1001: return L"Battle Map Pack 0";
+    case 0x1002: return L"Battle Map Pack 1";
+    case 0x1003: return L"Battle Map Pack 2";
+    case 0x1004: return L"Battle Map Pack 3";
+    case 0x1005: return L"Battle Map Pack 4";
+    case 0x1007: return L"MG02 Map Pack 0";
+    case 0x1009: return L"MG02 Map Pack 1";
     case 0x100a: return L"MG04_TestWorldPack";
-    case 0x100b: return L"Halloween_Battle_Map";
-    case 0x100c: return L"Festive_Battle_Map";
-    case 0x100e: return L"Fallout_Battle_Map_Pack";
-    case 0x100f: return L"Glide_Map_Pack_0";
-    case 0x1011: return L"Glide_Beasts_Track_Pack";
-    case 0x1012: return L"Glide_Giants_Track_Pack";
-    case 0x1013: return L"Glide_Myths_Track_Pack";
-    case 0x1014: return L"MG02_Map_Pack_2";
-    case 0x1015: return L"MG02_Map_Pack_3";
+    case 0x100b: return L"Halloween Battle Map";
+    case 0x100c: return L"Festive Battle Map";
+    case 0x100e: return L"Fallout Battle Map Pack";
+    case 0x100f: return L"Glide Map Pack 0";
+    case 0x1011: return L"Glide Beasts Track Pack";
+    case 0x1012: return L"Glide Giants Track Pack";
+    case 0x1013: return L"Glide Myths Track Pack";
+    case 0x1014: return L"MG02 Map Pack 2";
+    case 0x1015: return L"MG02 Map Pack 3";
     default: return std::wstring();
     }
 }
@@ -1879,7 +1880,15 @@ std::wstring CMinecraftApp::getRootPath(unsigned int contentType, bool create, b
         }
 
         if (useDLCFolder)
-            path = getDLCFolderName(contentType);
+        {
+            const std::wstring name = getDLCFolderName(contentType);
+            if (contentType == 0x207 || contentType == 0x216 || contentType == 0x804 ||
+                (contentType >= 0x222 && contentType < 0x227) || contentType == 0x22c || contentType == 0x230 ||
+                contentType == 0x233)
+                path = std::wstring(L"WiiU\\CU\\DLC\\") + name;
+            else
+                path = std::wstring(L"WiiU\\DLC\\") + name;
+        }
 
         File candidateFile(path);
         if (!candidateFile.exists())
@@ -2771,19 +2780,180 @@ std::wstring CMinecraftApp::GetSingleActionReplacement(int32_t firstArgument, ui
 }
 std::wstring CMinecraftApp::GetActionReplacement(int32_t controllerIndex, uint8_t actionMask)
 {
-    return 0;
+    uint32_t primaryButton = g_pInput->GetGameJoypadMaps(controllerIndex, actionMask);
+    if (actionMask >= 0x20 && actionMask < 0x39)
+    {
+        primaryButton = static_cast<uint32_t>(GameSettings::GetInputButton(
+            controllerIndex, false, static_cast<EControllerActions>(actionMask)));
+        const uint32_t secondaryButton = static_cast<uint32_t>(GameSettings::GetInputButton(
+            controllerIndex, true, static_cast<EControllerActions>(actionMask)));
+        if (secondaryButton != 0)
+        {
+            const std::wstring secondary =
+                GetSingleActionReplacement(controllerIndex, secondaryButton);
+            const std::wstring primary = GetSingleActionReplacement(controllerIndex, primaryButton);
+            wchar_t replacement[256];
+            swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), L"%ls+%ls",
+                     secondary.c_str(), primary.c_str());
+            return std::wstring(replacement);
+        }
+    }
+
+    const std::wstring primary = GetSingleActionReplacement(controllerIndex, primaryButton);
+    wchar_t replacement[256];
+    swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), L"%ls", primary.c_str());
+    return std::wstring(replacement);
 }
-std::wstring CMinecraftApp::GetVKReplacement(int32_t firstArgument, uint32_t secondArgument, bool thirdArgument)
+std::wstring CMinecraftApp::GetVKReplacement(int32_t player, uint32_t key, bool fullSize)
 {
-    return 0;
+    const wchar_t* action = NULL;
+    if (key >= 0x5820 && key <= 0x5827)
+        action = L"LeftStickNavigate";
+    else if (key >= 0x5830 && key <= 0x5837)
+        action = L"RightStickButton";
+    else
+    {
+        switch (key)
+        {
+        case 0x5800: action = g_pInput->IsCircleCrossSwapped() ? L"ActionRight" : L"ActionBottom"; break;
+        case 0x5801: action = g_pInput->IsCircleCrossSwapped() ? L"ActionBottom" : L"ActionRight"; break;
+        case 0x5802: action = L"ActionLeft"; break;
+        case 0x5803: action = L"ActionTop"; break;
+        case 0x5804: action = L"ShoulderR"; break;
+        case 0x5805: action = L"ShoulderL"; break;
+        case 0x5806: action = L"TriggerL"; break;
+        case 0x5807: action = L"TriggerR"; break;
+        }
+    }
+    if (action == NULL)
+        return std::wstring(L" ") + L10N::GetString(0x211cd1ad);
+
+    const bool small = !fullSize && gApp.GetLocalPlayerCount() > 1;
+    const wchar_t* controller = L"";
+    if (g_pInput->IsPadDRCController(player) || player == 4)
+        controller = L"_CTRL_1";
+    else if (g_pInput->IsPadClassicController(player))
+        controller = L"_CTRL_2";
+    const int imageSize = small ? 20 : 30;
+    wchar_t replacement[128];
+    swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]),
+             L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>",
+             action, controller, small ? L"_Small" : L"", imageSize, imageSize);
+    return std::wstring(replacement);
 }
 std::wstring CMinecraftApp::GetIconReplacement(uint32_t firstArgument)
 {
-    return 0;
+    if (firstArgument != 1 && firstArgument != 3 && firstArgument != 4)
+        return std::wstring();
+    const wchar_t* format = firstArgument == 4
+        ? L"<img src=\"Icon_Armor\" align=\"middle\" height=\"%d\" width=\"%d\"/>"
+        : L"<img src=\"Icon_Shank\" align=\"middle\" height=\"%d\" width=\"%d\"/>";
+    wchar_t replacement[128];
+    int screenWidth, screenHeight;
+    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen, screenWidth, screenHeight);
+    const int size = screenWidth < 1920 ? 22 : 33;
+    swprintf(replacement, sizeof(replacement) / sizeof(replacement[0]), format, size, size);
+    if (firstArgument == 3)
+        return std::wstring(replacement) + replacement + replacement;
+    return std::wstring(replacement);
 }
-std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& value, int flags)
+std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& value, int shadowColour)
 {
-    return value;
+    std::wstring result = replaceAll(value, L"{*B*}", L"<br />");
+    const wchar_t* titleTokens[] = { L"{*T1*}", L"{*T2*}", L"{*T3*}", L"{*ETB*}", L"{*ETW*}" };
+    wchar_t colour[64];
+    for (int i = 0; i < 5; ++i)
+    {
+        swprintf(colour, sizeof(colour) / sizeof(colour[0]),
+                 i < 3 ? L"<font color=\"#%08x\">" : L"</font><font color=\"#%08x\">",
+                 GetHTMLColour(static_cast<eMinecraftColour>(0x1b1 + i)));
+        result = replaceAll(result, titleTokens[i], colour);
+    }
+    result = replaceAll(result, L"{*EF*}", L"</font>");
+
+    const wchar_t* colourTokens[] = {
+        L"{*C0*}", L"{*C1*}", L"{*C2*}", L"{*C3*}",
+        L"{*C4*}", L"{*C5*}", L"{*C6*}", L"{*C7*}",
+        L"{*C8*}", L"{*C9*}", L"{*CA*}", L"{*CB*}",
+        L"{*CC*}", L"{*CD*}", L"{*CE*}", L"{*CF*}"
+    };
+    for (int i = 0; i < 16; ++i)
+    {
+        swprintf(colour, sizeof(colour) / sizeof(colour[0]),
+                 L"<font color=\"#%08x\" shadowcolor=\"#%08x\">",
+                 GetHTMLColour(static_cast<eMinecraftColour>(0x191 + i)),
+                 static_cast<unsigned int>(shadowColour));
+        result = replaceAll(result, colourTokens[i], colour);
+    }
+
+    const bool swapSticks = GameSettings::GetGameSettings(player, static_cast<eGameSetting>(9)) != 0;
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_MOVE*}", GetActionReplacement(player, swapSticks ? 0x1d : 0x1b));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_LOOK*}", GetActionReplacement(player, swapSticks ? 0x1b : 0x1d));
+
+    struct ControllerToken
+    {
+        const wchar_t* token;
+        unsigned int action;
+        bool virtualKey;
+    };
+    const ControllerToken controllerTokens[] = {
+        { L"{*CONTROLLER_MENU_NAVIGATE*}", 0x5823, true },
+        { L"{*CONTROLLER_VK_A*}", 0x5800, true },
+        { L"{*CONTROLLER_VK_B*}", 0x5801, true },
+        { L"{*CONTROLLER_VK_X*}", 0x5802, true },
+        { L"{*CONTROLLER_VK_Y*}", 0x5803, true },
+        { L"{*CONTROLLER_VK_LB*}", 0x5805, true },
+        { L"{*CONTROLLER_VK_RB*}", 0x5804, true },
+        { L"{*CONTROLLER_VK_LS*}", 0x5820, true },
+        { L"{*CONTROLLER_VK_RS*}", 0x5830, true },
+        { L"{*CONTROLLER_VK_LT*}", 0x5806, true },
+        { L"{*CONTROLLER_VK_RT*}", 0x5807, true },
+        { L"{*CONTROLLER_ACTION_JUMP*}", 0x20, false },
+        { L"{*CONTROLLER_ACTION_SNEAK*}", 0x27, false },
+        { L"{*CONTROLLER_ACTION_USE*}", 0x21, false },
+        { L"{*CONTROLLER_ACTION_ACTION*}", 0x22, false },
+        { L"{*CONTROLLER_ACTION_LEFT_SCROLL*}", 0x23, false },
+        { L"{*CONTROLLER_ACTION_RIGHT_SCROLL*}", 0x24, false },
+        { L"{*CONTROLLER_ACTION_INVENTORY*}", 0x25, false },
+        { L"{*CONTROLLER_ACTION_CRAFTING*}", 0x28, false },
+        { L"{*CONTROLLER_ACTION_DROP*}", 0x26, false },
+        { L"{*CONTROLLER_ACTION_CAMERA*}", 0x29, false },
+        { L"{*CONTROLLER_ACTION_MENU_PAGEDOWN*}", 9, false },
+        { L"{*CONTROLLER_ACTION_DISMOUNT*}", 0x27, false },
+        { L"{*CONTROLLER_ACTION_DPAD_UP*}", 0x2c, false },
+        { L"{*CONTROLLER_ACTION_DPAD_DOWN*}", 0x2d, false },
+        { L"{*CONTROLLER_ACTION_DPAD_RIGHT*}", 0x2b, false },
+        { L"{*CONTROLLER_ACTION_DPAD_LEFT*}", 0x2a, false },
+        { L"{*CONTROLLER_ACTION_PICKBLOCK*}", 0x2f, false },
+        { L"{*CONTROLLER_ACTION_SPECTATE_PREV*}", 0x30, false },
+        { L"{*CONTROLLER_ACTION_SPECTATE_NEXT*}", 0x31, false },
+        { L"{*CONTROLLER_ACTION_SPECTATE_NOISE*}", 0x32, false },
+        { L"{*CONTROLLER_ACTION_SPECTATE_CANCEL*}", 0x33, false },
+        { L"{*CONTROLLER_ACTION_READY*}", 0x34, false },
+        { L"{*CONTROLLER_ACTION_VOTESELECT*}", 0x35, false },
+        { L"{*CONTROLLER_ACTION_RESTART_SECTION*}", 0x36, false },
+        { L"{*CONTROLLER_ACTION_RESTART_RACE*}", 0x37, false },
+        { L"{*CONTROLLER_ACTION_LOOK_BEHIND*}", 0x38, false },
+        { L"{*CONTROLLER_VK_START*}", 0x5814, true },
+    };
+    for (const ControllerToken& token : controllerTokens)
+    {
+        const std::wstring replacement = token.virtualKey
+            ? GetVKReplacement(player, token.action, false)
+            : GetActionReplacement(player, static_cast<unsigned char>(token.action));
+        result = replaceAll(result, token.token, replacement);
+    }
+
+    result = replaceAll(result, L"{*ICON_SHANK_01*}", GetIconReplacement(1));
+    result = replaceAll(result, L"{*ICON_SHANK_03*}", GetIconReplacement(3));
+    result = replaceAll(result, L"{*ICON_ARMOR_01*}", GetIconReplacement(4));
+    result = replaceAll(result, L"{*CONTROLLER_VK_BACK*}", L10N::GetString(0x3d497286));
+    result = replaceAll(result, L"{*PLATFORM_NAME*}", L10N::GetString(0xed3c4bfb));
+    extern unsigned int XGetLanguage();
+    const unsigned int language = XGetLanguage();
+    if (language == 2 || language == 7 || language == 8)
+        result = replaceAll(result, L"&nbsp;", L"");
+    return result;
 }
 double CMinecraftApp::getAppTime()
 {

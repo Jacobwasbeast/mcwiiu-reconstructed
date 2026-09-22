@@ -8,6 +8,7 @@
 #include "game/core/Settings.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/util/GameModeUtilities.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
@@ -3735,33 +3736,25 @@ void MasterGameMode::ReduceShowdownTime(int amount, int minimum)
 
 void MasterGameMode::SetDefaults(LaunchMoreOptionsMenuInitData& data)
 {
-    unsigned char* raw = reinterpret_cast<unsigned char*>(&data);
-    raw[8] = 1;
-    raw[0x15] = 0;
-    raw[0x48] = 1;
-    raw[0xa] = 0;
+    data.mFlag8 = true;
+    data.mFlag15 = false;
+    data.mFlag48 = true;
+    data.mFlagA = false;
 
-    const EMiniGameId miniGameId =
-        *reinterpret_cast<EMiniGameId*>(raw + 0x5c);
+    const EMiniGameId miniGameId = static_cast<EMiniGameId>(data.mValue5C);
     MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(miniGameId, true);
-    MiniGamePlayerSettings settings = miniGame->GetDefaultPlayerSettings();
-    std::memcpy(raw + 0x68, &settings, sizeof(settings));
+    data.mPlayerSettings = miniGame->GetDefaultPlayerSettings();
 }
 
 void MasterGameMode::SaveDefaults(const LaunchMoreOptionsMenuInitData& data)
 {
-    const unsigned char* raw = reinterpret_cast<const unsigned char*>(&data);
     const eCustomGameModeHostOption option =
         static_cast<eCustomGameModeHostOption>(10);
-    const GameModeOptions* options =
-        reinterpret_cast<const GameModeOptions*>(raw + 0x6c);
-    const unsigned int value = options->Get(option);
-    const EMiniGameId miniGameId =
-        *reinterpret_cast<const EMiniGameId*>(raw + 0x5c);
+    const unsigned int value = data.mPlayerSettings.Get(option);
+    const EMiniGameId miniGameId = static_cast<EMiniGameId>(data.mValue5C);
     MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(miniGameId, true);
     miniGame->SetHostOption(option, value);
-    GameSettings::SetGameSettings(
-        *reinterpret_cast<const int*>(raw + 0x18), option, value);
+    GameSettings::SetGameSettings(data.mValue18, option, value);
 }
 
 const std::vector<int>& MasterGameMode::GetOptionsList(EMiniGameId miniGame, eCustomGameModeHostOption option)

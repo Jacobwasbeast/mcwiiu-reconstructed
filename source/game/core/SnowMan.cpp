@@ -89,7 +89,7 @@ void SnowMan::setAggressive(bool)
 
 void SnowMan::staticCtor()
 {
-    DATA_PUMPKIN = SynchedEntityData::defineId<unsigned char>(0x2d580001ULL, 0, EntityDataSerializers::BYTE);
+    DATA_PUMPKIN = SynchedEntityData::defineId<unsigned char>(0x2d580001ULL, 0x0d580000ULL, EntityDataSerializers::BYTE);
 }
 
 void SnowMan::addDataWalkers(DataFixerUpper* fixer)
