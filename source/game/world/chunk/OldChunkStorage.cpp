@@ -308,7 +308,7 @@ bool OldChunkStorage::saveEntities(LevelChunk* chunk, Level* level, CompoundTag*
 
 void OldChunkStorage::save(LevelChunk* chunk, Level* level, DataOutputStream* stream)
 {
-    stream->writeByte(12);
+    stream->writeShort(12);
     stream->writeInt(chunk->x);
     stream->writeInt(chunk->z);
     stream->writeLong(level->getGameTime());
@@ -447,7 +447,7 @@ void OldChunkStorage::fixCauldronData(LevelChunk* chunk)
 
 LevelChunk* OldChunkStorage::load(Level* level, DataInputStream* stream, DataFixerUpper* fixer, LevelChunk* chunk)
 {
-    int version = stream->readUnsignedByte();
+    int version = stream->readShort();
     int x = stream->readInt();
     int z = stream->readInt();
     stream->readLong();

@@ -79,7 +79,7 @@ void McRegionChunkStorage::runSaveThreadProc(void*)
                 stream->flush();
                 stream->deleteChildStream();
                 PIXEndNamedEvent();
-                stream->close();
+                delete stream;
             }
             EnterCriticalSection(&sSaveMutex);
             --sActiveSaves;
@@ -119,7 +119,7 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
         LevelChunk* result = OldChunkStorage::load(level, stream, mFixer, chunk);
         MemSect(0);
         stream->deleteChildStream();
-        stream->close();
+        delete stream;
         return result;
     }
     if (stream == NULL)
@@ -129,7 +129,7 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
     tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, tag);
     MemSect(0);
     stream->deleteChildStream();
-    stream->close();
+    delete stream;
     if (tag == NULL)
         return NULL;
     LevelChunk* result = NULL;

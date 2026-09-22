@@ -411,11 +411,15 @@ void LevelChunk::writeCompressedSkyLightData(DataOutputStream* stream)
 {
     if (mSkyLight != NULL)
         mSkyLight->write(stream);
+    if (mSkyLightUpper != NULL)
+        mSkyLightUpper->write(stream);
 }
 void LevelChunk::writeCompressedBlockLightData(DataOutputStream* stream)
 {
     if (mBlockLight != NULL)
         mBlockLight->write(stream);
+    if (mBlockLightUpper != NULL)
+        mBlockLightUpper->write(stream);
 }
 unsigned char* LevelChunk::GetTempLightingStorage()
 {
@@ -426,13 +430,21 @@ void LevelChunk::readCompressedSkyLightData(DataInputStream* stream)
 {
     if (mSkyLight == NULL)
         mSkyLight = new SparseLightStorage(true);
-    mSkyLight->read(stream, GetTempLightingStorage());
+    if (mSkyLightUpper == NULL)
+        mSkyLightUpper = new SparseLightStorage(true, true);
+    unsigned char* buffer = GetTempLightingStorage();
+    mSkyLight->read(stream, buffer);
+    mSkyLightUpper->read(stream, buffer);
 }
 void LevelChunk::readCompressedBlockLightData(DataInputStream* stream)
 {
     if (mBlockLight == NULL)
         mBlockLight = new SparseLightStorage(false);
-    mBlockLight->read(stream, GetTempLightingStorage());
+    if (mBlockLightUpper == NULL)
+        mBlockLightUpper = new SparseLightStorage(false, true);
+    unsigned char* buffer = GetTempLightingStorage();
+    mBlockLight->read(stream, buffer);
+    mBlockLightUpper->read(stream, buffer);
 }
 unsigned int LevelChunk::getSparseBlockAndDataMemoryAllocated()
 {
