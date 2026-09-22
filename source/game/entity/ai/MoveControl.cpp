@@ -41,6 +41,16 @@ bool MoveControl::hasWanted()
     return mOperation == MOVE_TO;
 }
 
+MoveControl::Operation MoveControl::getOperation() const
+{
+    return mOperation;
+}
+
+void MoveControl::setOperation(Operation operation)
+{
+    mOperation = operation;
+}
+
 double MoveControl::getSpeedModifier()
 {
     return mSpeedModifier;
@@ -165,4 +175,3 @@ double MoveControl::getWantedZ()
 {
     return mWantedZ;
 }
-
