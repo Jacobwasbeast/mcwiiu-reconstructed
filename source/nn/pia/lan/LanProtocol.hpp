@@ -9,7 +9,11 @@ namespace nn { namespace pia { namespace lan {
 class LanProtocol : public transport::Protocol
 {
 public:
+    enum { cProtocolId = 0x4400 };
     Result Bind(const LanFacade::LanNetworkSetting& setting);
+
+    unsigned int GetProtocolIdentifier() const { return m_field18; }
+    bool IsRelayEnabled() const { return m_field24 != 0; }
 
 private:
     unsigned int m_field18;

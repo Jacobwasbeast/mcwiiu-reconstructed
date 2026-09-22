@@ -1,5 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LAN_UPDATE_SESSION_SETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LAN_UPDATE_SESSION_SETTING_HPP
+#include "nn/pia/Common.hpp"
 #include "nn/pia/session/UpdateSessionSetting.hpp"
 #include "nn/pia/lan/LanCreateSessionSetting.hpp"
 namespace nn { namespace pia { namespace lan {
