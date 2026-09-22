@@ -1,3 +1,5 @@
+#include "nn/nex/NotificationEvent.hpp"
+#include "nn/pia/inet/InetProcessHostMigrationJob.hpp"
 #include "platform/wiiu/__N_36_inet_InetProcessHostMigrationJob_cpp_6bed3c84__NexNotificationEventHandler4Pia.hpp"
 
 namespace __N_36_inet_InetProcessHostMigrationJob_cpp_6bed3c84

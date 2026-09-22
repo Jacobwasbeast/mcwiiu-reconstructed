@@ -6,6 +6,7 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -872,7 +873,13 @@ void CStorage::CreateSaveUniqueName()
 unsigned long long CStorage::SetSaveTitle(const wchar_t* title)
 {
     CreateSaveUniqueName();
+#if defined(RECON_NATIVE)
+    std::memset(m_saveTitle, 0, sizeof(m_saveTitle));
+    const size_t titleLength = std::min(std::wcslen(title), sizeof(m_saveTitle) / sizeof(wchar_t) - 1);
+    std::memcpy(m_saveTitle, title, titleLength * sizeof(wchar_t));
+#else
     std::memcpy(m_saveTitle, title, 0x100);
+#endif
     return 0;
 }
 unsigned long long CStorage::AllocateSaveData(unsigned int size)

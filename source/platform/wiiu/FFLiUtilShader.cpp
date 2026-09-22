@@ -38,7 +38,7 @@ extern "C" void GX2SetPixelUniformReg(unsigned int, unsigned int, const void*);
 extern "C" void GX2SetVertexUniformReg(unsigned int, unsigned int, const void*);
 extern "C" void OSPanic(const char*, unsigned int, const char*, ...);
 extern unsigned char ModulateModeToValue(unsigned int);
-unsigned int setRGBAOrder__FUi(unsigned int value) { return value; }
+unsigned int SetRGBAOrder(unsigned int value) { return value; }
 
 int InitDefaultShader__Fv()
 {
@@ -192,15 +192,16 @@ void SetMatrixPlainShader__FPC11PlainShaderPC6_Mat44(const PlainShader* shader, 
     SetMatrix__FPvPC6_Mat44((void*)shader, matrix);
 }
 
-unsigned int FFLiUtilShader::GetProgramBufferSizeForFetch(unsigned int n)
+unsigned int FFLiUtilShader::GetProgramBufferSizeForFetch(unsigned int attributeCount)
 {
-    return FFLiRoundUp(GX2CalcFetchShaderSizeEx(n, 0, 0), 0x100);
+    return FFLiRoundUp(GX2CalcFetchShaderSizeEx(attributeCount, 0, 0), 0x100);
 }
-int FFLiUtilShader::GetProgramBufferSize(unsigned int n,const void* d,unsigned int i)
+
+int FFLiUtilShader::GetProgramBufferSize(unsigned int attributeCount, const void* shaderData, unsigned int shaderIndex)
 {
-    return GetProgramBufferSizeForFetch(n)
-        + FFLiRoundUp(GFDGetPixelShaderProgramSize(i, d), 0x100)
-        + FFLiRoundUp(GFDGetVertexShaderProgramSize(i, d), 0x100);
+    return GetProgramBufferSizeForFetch(attributeCount)
+        + FFLiRoundUp(GFDGetPixelShaderProgramSize(shaderIndex, shaderData), 0x100)
+        + FFLiRoundUp(GFDGetVertexShaderProgramSize(shaderIndex, shaderData), 0x100);
 }
 unsigned int FFLiUtilShader::GetHeaderBufferSizeForFetch(unsigned int n)
 {
@@ -260,32 +261,38 @@ bool FFLiUtilShader::BuildShader(FetchShader* fetchShader, const _GX2VertexShade
     return true;
 }
 
-bool FFLiUtilShader::BuildShaderImpl(_GX2PixelShader** o,FFLiUtilShaderAllocator* a,const void* d,unsigned int i,bool v)
+bool FFLiUtilShader::BuildShaderImpl(_GX2PixelShader** output, FFLiUtilShaderAllocator* allocator,
+                                     const void* shaderData, unsigned int shaderIndex, bool invalidate)
 {
-    if(i>=GFDGetPixelShaderCount(d)) return false;
-    unsigned int h=GFDGetPixelShaderHeaderSize(i,d),p=GFDGetPixelShaderProgramSize(i,d);
-    if(!h||!p) return false;
-    _GX2PixelShader* s=(_GX2PixelShader*)a->mHeaderAllocator.Allocate(h,4);
-    void* q=(void*)a->mProgramAllocator.Allocate(p,0x100);
-    if(!GFDGetPixelShader(s,q,i,d)) return false;
-    FFLiBugEndianSwap(q,p); *o=s;
-    if(v) FFLiInvalidateShader__FPvUi(s->program,s->size);
+    if (shaderIndex >= GFDGetPixelShaderCount(shaderData)) return false;
+    unsigned int headerSize = GFDGetPixelShaderHeaderSize(shaderIndex, shaderData);
+    unsigned int programSize = GFDGetPixelShaderProgramSize(shaderIndex, shaderData);
+    if (!headerSize || !programSize) return false;
+    _GX2PixelShader* shader = (_GX2PixelShader*)allocator->mHeaderAllocator.Allocate(headerSize, 4);
+    void* program = (void*)allocator->mProgramAllocator.Allocate(programSize, 0x100);
+    if (!GFDGetPixelShader(shader, program, shaderIndex, shaderData)) return false;
+    FFLiBugEndianSwap(program, programSize);
+    *output = shader;
+    if (invalidate) FFLiInvalidateShader__FPvUi(shader->program, shader->size);
     return true;
 }
 bool FFLiUtilShader::BuildShader(_GX2PixelShader** o, FFLiUtilShaderAllocator* a, const void* d, unsigned int i, bool v)
 {
     return BuildShaderImpl(o, a, d, i, v);
 }
-bool FFLiUtilShader::BuildShaderImpl(_GX2VertexShader** o,FFLiUtilShaderAllocator* a,const void* d,unsigned int i,bool v)
+bool FFLiUtilShader::BuildShaderImpl(_GX2VertexShader** output, FFLiUtilShaderAllocator* allocator,
+                                     const void* shaderData, unsigned int shaderIndex, bool invalidate)
 {
-    if(i>=GFDGetVertexShaderCount(d)) return false;
-    unsigned int h=GFDGetVertexShaderHeaderSize(i,d),p=GFDGetVertexShaderProgramSize(i,d);
-    if(!h||!p) return false;
-    _GX2VertexShader* s=(_GX2VertexShader*)a->mHeaderAllocator.Allocate(h,4);
-    void* q=(void*)a->mProgramAllocator.Allocate(p,0x100);
-    if(!GFDGetVertexShader(s,q,i,d)) return false;
-    FFLiBugEndianSwap(q,p); *o=s;
-    if(v) FFLiInvalidateShader__FPvUi(s->program,s->size);
+    if (shaderIndex >= GFDGetVertexShaderCount(shaderData)) return false;
+    unsigned int headerSize = GFDGetVertexShaderHeaderSize(shaderIndex, shaderData);
+    unsigned int programSize = GFDGetVertexShaderProgramSize(shaderIndex, shaderData);
+    if (!headerSize || !programSize) return false;
+    _GX2VertexShader* shader = (_GX2VertexShader*)allocator->mHeaderAllocator.Allocate(headerSize, 4);
+    void* program = (void*)allocator->mProgramAllocator.Allocate(programSize, 0x100);
+    if (!GFDGetVertexShader(shader, program, shaderIndex, shaderData)) return false;
+    FFLiBugEndianSwap(program, programSize);
+    *output = shader;
+    if (invalidate) FFLiInvalidateShader__FPvUi(shader->program, shader->size);
     return true;
 }
 bool FFLiUtilShader::BuildShader(_GX2VertexShader** o, FFLiUtilShaderAllocator* a, const void* d, unsigned int i, bool v)
@@ -323,14 +330,14 @@ bool FFLiUtilShader::GetUniformLocation(unsigned int* o, const _GX2VertexShader*
     }
     return false;
 }
-bool FFLiUtilShader::GetUniformBlockLocation(unsigned int* o, const _GX2PixelShader* s, const char* n)
+bool FFLiUtilShader::GetUniformBlockLocation(unsigned int* output, const _GX2PixelShader* shader, const char* blockName)
 {
     unsigned int i;
-    for (i = 0; i < s->uniformBlockCount; ++i)
+    for (i = 0; i < shader->uniformBlockCount; ++i)
     {
-        if (std::strcmp(s->uniformBlocks[i].name, n) == 0)
+        if (std::strcmp(shader->uniformBlocks[i].name, blockName) == 0)
         {
-            *o = s->uniformBlocks[i].offset;
+            *output = shader->uniformBlocks[i].offset;
             return true;
         }
     }

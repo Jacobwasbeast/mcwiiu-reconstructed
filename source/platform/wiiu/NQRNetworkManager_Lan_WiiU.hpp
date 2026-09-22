@@ -2,6 +2,7 @@
 #define PLATFORM_WIIU_NQRNETWORKMANAGER_LAN_WIIU_HPP
 
 #include <deque>
+#include <cstring>
 #include <map>
 #include <string>
 #include <vector>
@@ -292,6 +293,23 @@ public:
 private:
     typedef std::map<std::wstring, std::wstring> PlayerNameMap;
 
+    struct SaveTransferDescriptor
+    {
+        unsigned short kind;
+        unsigned short version;
+        unsigned int dataSize;
+        unsigned int metadataSize;
+        long long saveId;
+        unsigned int worldId;
+        unsigned int titleVersion;
+        wchar_t name[64];
+
+        SaveTransferDescriptor() : kind(0), version(0), dataSize(0), metadataSize(0), saveId(0), worldId(0), titleVersion(0)
+        {
+            std::memset(name, 0, sizeof(name));
+        }
+    };
+
     bool m_friendPresenceUpdated;
     eNQRNetworkManagerFriendSearchState m_friendSearchState;
     C4JThreadImpl* m_connectThread;
@@ -351,6 +369,11 @@ private:
     unsigned int m_saveTransferOffset;
     bool m_saveTransferPacketPending;
     unsigned int m_saveTransferSessionId;
+    SaveTransferDescriptor m_saveTransferDescriptor;
+    unsigned int m_saveTransferGeneration;
+    unsigned int m_saveTransferFlags;
+    unsigned int m_saveTransferPacketSize;
+    unsigned char m_saveTransferMode;
 
 };
 

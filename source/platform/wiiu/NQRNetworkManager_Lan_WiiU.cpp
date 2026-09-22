@@ -194,12 +194,11 @@ NQRNetworkManager_Lan_WiiU::NQRNetworkManager_Lan_WiiU(INQRNetworkManagerListene
       m_joinRequested(false), m_browseRequested(false), m_randomJoinRequested(false),
       m_updateRequested(false), m_lastRateControlledEvent(0), m_saveTransferState(0),
       m_saveTransferData(NULL), m_saveTransferSize(0), m_saveTransferOffset(0),
-      m_saveTransferPacketPending(false), m_saveTransferSessionId(0)
+      m_saveTransferPacketPending(false), m_saveTransferSessionId(0),
+      m_saveTransferDescriptor(), m_saveTransferGeneration(0), m_saveTransferFlags(0),
+      m_saveTransferPacketSize(0), m_saveTransferMode(0)
 {
     std::memset(&m_presenceInfo, 0, sizeof(m_presenceInfo));
-    unsigned char* object = reinterpret_cast<unsigned char*>(this);
-    *reinterpret_cast<unsigned char**>(object + 0x1400) = new unsigned char[160];
-    std::memset(*reinterpret_cast<unsigned char**>(object + 0x1400), 0, 160);
     InitializeCriticalSection(&m_playerMutex);
     InitializeCriticalSection(&m_sendQueueMutex);
     InitializeCriticalSection(&m_friendSearchMutex);
@@ -1446,60 +1445,32 @@ void NQRNetworkManager_Lan_WiiU::Pia_ShutdownForOnline()
 
 void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long saveId, unsigned int worldId, unsigned int titleVersion, wchar_t* name)
 {
-    unsigned char* object = reinterpret_cast<unsigned char*>(this);
-    const auto store32 = [](unsigned char* address, unsigned int value)
-    {
-        *reinterpret_cast<unsigned int*>(address) = value;
-    };
     const unsigned int totalSize = static_cast<unsigned int>(dataSize) + static_cast<unsigned int>(metadataSize);
-    store32(object + 0x1398, totalSize);
-    void* transfer = std::malloc(totalSize);
-    store32(object + 0x139c, reinterpret_cast<unsigned int>(transfer));
-    std::memcpy(transfer, data, dataSize);
-    std::memcpy(static_cast<unsigned char*>(transfer) + dataSize, metadata, metadataSize);
-    store32(object + 0x13a0, 0);
-    unsigned char* descriptor = *reinterpret_cast<unsigned char**>(object + 0x1400);
-    std::memset(descriptor, 0, 40);
-    *reinterpret_cast<unsigned short*>(descriptor + 0) = 11;
-    *reinterpret_cast<unsigned short*>(descriptor + 2) = 2;
-    store32(descriptor + 4, static_cast<unsigned int>(dataSize));
-    store32(descriptor + 8, static_cast<unsigned int>(metadataSize));
-    store32(descriptor + 12, static_cast<unsigned int>(saveId));
-    store32(descriptor + 16, static_cast<unsigned int>(static_cast<unsigned long long>(saveId) >> 32));
-    store32(descriptor + 20, worldId);
-    store32(descriptor + 24, titleVersion);
-    std::memset(descriptor + 32, 0, 32);
-    wchar_t* descriptorName = reinterpret_cast<wchar_t*>(descriptor + 30);
-    unsigned int nameLength = 0;
+    delete[] m_saveTransferData;
+    m_saveTransferData = static_cast<unsigned char*>(std::malloc(totalSize));
+    m_saveTransferSize = totalSize;
+    m_saveTransferOffset = 0;
+    if (dataSize != 0)
+        std::memcpy(m_saveTransferData, data, static_cast<unsigned int>(dataSize));
+    if (metadataSize != 0)
+        std::memcpy(m_saveTransferData + dataSize, metadata, static_cast<unsigned int>(metadataSize));
+
+    m_saveTransferDescriptor = SaveTransferDescriptor();
+    m_saveTransferDescriptor.kind = 11;
+    m_saveTransferDescriptor.version = 2;
+    m_saveTransferDescriptor.dataSize = static_cast<unsigned int>(dataSize);
+    m_saveTransferDescriptor.metadataSize = static_cast<unsigned int>(metadataSize);
+    m_saveTransferDescriptor.saveId = saveId;
+    m_saveTransferDescriptor.worldId = worldId;
+    m_saveTransferDescriptor.titleVersion = titleVersion;
     if (name != NULL)
-    {
-        while (nameLength < 64 && name[nameLength] != L'\0')
-            ++nameLength;
-    }
-    for (unsigned int index = 0; index < nameLength; ++index)
-        descriptorName[index] = name[index];
-    descriptorName[nameLength] = L'\0';
-    std::wcscpy(reinterpret_cast<wchar_t*>(object + 0xef6), reinterpret_cast<wchar_t*>(descriptor + 30));
-    std::wcstombs(reinterpret_cast<char*>(object + 0xee0), reinterpret_cast<wchar_t*>(object + 0xef6), 20);
-    store32(object + 0xf8, ((*reinterpret_cast<unsigned int*>(object + 0xf0c) >> 16) & 0xf) + 1);
-    store32(object + 0xdc8, 0);
-    store32(object + 0xdd8, 0);
-    store32(object + 0x1150, 0);
-    object[0xe84] = 1;
-    object[0xe2] = 0;
-    store32(object + 0x1140, reinterpret_cast<unsigned int>(descriptor));
-    store32(object + 0x1154, 0);
-    store32(object + 0xddc, 0);
-    store32(object + 0x1144, 0xa0);
-    object[0xe1] = 1;
-    object[0x1bd4] = 0x4e;
-    object[0xdd4] = 0;
-    std::memset(object + 0xec0, 0, 0xa0);
-    object[0xf0d] = 0;
-    object[0xf0c] = object[0xdcc];
-    object[0xdcc] = static_cast<unsigned char>(object[0xdcc] + 1);
+        std::wcsncpy(m_saveTransferDescriptor.name, name, 63);
+    m_saveTransferDescriptor.name[63] = L'\0';
+    m_saveTransferGeneration = 1;
+    m_saveTransferFlags = 0;
+    m_saveTransferPacketSize = 0xa0;
+    m_saveTransferMode = 0x4e;
     Pia_SignalCreateSession();
-    store32(object + 0x13fc, 1);
 }
 
 unsigned int NQRNetworkManager_Lan_WiiU::FindSessionForSaveTransfer()

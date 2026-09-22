@@ -55,5 +55,5 @@ uint32_t FFLiResourceCache::IsAttached() const
 
 uint32_t FFLiResourceCache::Header(FFLResourceType type) const
 {
-    return (uint32_t)resources[static_cast<uint32_t>(type)].header;
+    return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(resources[static_cast<uint32_t>(type)].header));
 }

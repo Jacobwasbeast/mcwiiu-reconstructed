@@ -9,14 +9,18 @@ namespace CafeThreadLocal {
 
 inline OSMutex& mutex()
 {
-    static OSMutex value;
-    static bool initialized = false;
-    if (!initialized)
+    struct Mutex
     {
-        OSInitMutex(&value);
-        initialized = true;
-    }
-    return value;
+        Mutex()
+        {
+            OSInitMutex(&value);
+        }
+
+        OSMutex value;
+    };
+
+    static Mutex mutex;
+    return mutex.value;
 }
 
 template<typename T>

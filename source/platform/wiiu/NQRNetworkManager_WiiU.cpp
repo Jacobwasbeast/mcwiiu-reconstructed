@@ -1,5 +1,6 @@
 #include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
 
+
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
@@ -21,12 +22,15 @@
 #include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/nex/Reconstruction.hpp"
 #include "nn/nex/qResult.hpp"
+#include "nn/nex/MemoryManager.hpp"
 #include "nn/pia/String.hpp"
 #include "nn/pia/inet/NexSessionStartupSetting.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/SessionSupport.hpp"
 #include "nn/pia/transport/Station.hpp"
+#include <coreinit/memdefaultheap.h>
+#include <coreinit/memexpheap.h>
 #include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
 
 static NQRNetworkManager_WiiU* s_networkManager;
@@ -68,7 +72,7 @@ static bool s_piaSessionStarted;
 
 unsigned int GetTickCount();
 
-nn::pia::Result NQRNetworkManager_WiiU_Pia_StartupSession__FPQ5_2nn3pia9transport7Station19IdentificationTokenPc(
+nn::pia::Result StartPiaSession(
     nn::pia::transport::Station::IdentificationToken* token, char* name)
 {
     nn::pia::inet::NexSessionStartupSetting setting;
@@ -89,7 +93,7 @@ nn::pia::Result NQRNetworkManager_WiiU_Pia_StartupSession__FPQ5_2nn3pia9transpor
     return nn::pia::session::g_piaSession->Startup(setting);
 }
 
-unsigned int Nex_FinalizeDataStore__Fv()
+unsigned int NexFinalizeDataStore()
 {
     if (s_dataStoreClient != NULL)
     {
@@ -98,13 +102,13 @@ unsigned int Nex_FinalizeDataStore__Fv()
     return 0;
 }
 
-void Nex_InitializeErrorHandling__Fv()
+void NexInitializeErrorHandling()
 {
     s_errorHandlingState = 0;
     s_errorHandlingResult = 0;
 }
 
-unsigned int Nex_FinalizeMatchmake__Fv()
+unsigned int NexFinalizeMatchmake()
 {
     if (s_matchmakeClient != NULL)
     {
@@ -119,39 +123,39 @@ unsigned int Nex_FinalizeMatchmake__Fv()
     return 0;
 }
 
-void Nex_FinalizeErrorHandling__Fv()
+void NexFinalizeErrorHandling()
 {
     s_errorHandlingState = 0;
     s_errorHandlingResult = 0;
 }
 
-void Nex_FinalizeNex__Fv()
+void NexFinalize()
 {
     checkPiaCoreToUse();
     if (s_nexInitialised)
     {
         s_ngsFacade = NULL;
         nn::nex::GlobalVariables::ReleaseInstance();
-        Nex_FinalizeErrorHandling__Fv();
+        NexFinalizeErrorHandling();
         __N_20_Shared_Nex_Setup_cpp_392f2b82::FinalizeRuntimeMemory();
         s_nexInitialised = false;
     }
 }
 
-void* Nex_GetMatchmakeClient__Fv()
+void* NexGetMatchmakeClient()
 {
     return s_matchmakeClient;
 }
 
-void* Nex_GetNgsFacadeInstance__Fv()
+void* NexGetNgsFacadeInstance()
 {
     return s_ngsFacade;
 }
 
-unsigned int Nex_InitializeMatchmake__Fv()
+unsigned int NexInitializeMatchmake()
 {
     s_matchmakeClient = new nn::nex::MatchmakeExtensionClient();
-    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance__Fv());
+    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(NexGetNgsFacadeInstance());
     if (s_matchmakeClient == NULL || s_ngsFacade == NULL ||
         s_matchmakeClient->Bind(s_ngsFacade->GetCredentials()) == 0)
         return 0;
@@ -160,18 +164,18 @@ unsigned int Nex_InitializeMatchmake__Fv()
     return 1;
 }
 
-unsigned int Nex_InitializeNex__FUiT1Q4_2nn3nex4Core10ThreadMode(unsigned int runtimeSize, unsigned int reservedSize, unsigned int)
+unsigned int NexInitialize(unsigned int runtimeSize, unsigned int reservedSize, unsigned int)
 {
     checkPiaCoreToUse();
     __N_20_Shared_Nex_Setup_cpp_392f2b82::InitializeRuntimeMemory(runtimeSize, reservedSize);
     nn::nex::GlobalVariables::AcquireInstance();
-    Nex_InitializeErrorHandling__Fv();
-    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance__Fv());
+    NexInitializeErrorHandling();
+    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(NexGetNgsFacadeInstance());
     s_nexInitialised = true;
     return 0;
 }
 
-unsigned int Nex_SearchObject__Fv()
+unsigned int NexSearchObject()
 {
     nn::nex::ProtocolCallContext callContext(NULL);
     nn::nex::DataStoreSearchParam searchParam;
@@ -189,7 +193,7 @@ unsigned int Nex_SearchObject__Fv()
     return 0;
 }
 
-void StartNATSessionCallback__FPQ3_2nn3nex11CallContextPCQ3_2nn3nex11UserContext(nn::nex::CallContext* context, const void* userContext)
+void StartNatSessionCallback(nn::nex::CallContext* context, const void* userContext)
 {
     nn::nex::ConnectivityManager* manager = nn::nex::ConnectivityManager::GetInstanceWithoutNetworkCheck();
     if (userContext != NULL && *static_cast<void* const*>(userContext) == manager)
@@ -273,7 +277,6 @@ NQRNetworkManager_WiiU::NQRNetworkManager_WiiU(INQRNetworkManagerListener* liste
 {
     std::memset(m_roomSlotPlayers, 0, sizeof(m_roomSlotPlayers));
     std::memset(&m_presenceInfo, 0, sizeof(m_presenceInfo));
-    m_ghsVTable = 0x10466F18u;
     InitializeCriticalSection(&m_playerMutex);
     InitializeCriticalSection(&m_connectedPlayerMutex);
     InitializeCriticalSection(&m_playerConnectionMutex);
@@ -758,9 +761,9 @@ void NQRNetworkManager_WiiU::Pia_SessionCallback(nn::pia::session::Session::Even
 {
     if (s_networkManager == NULL)
         return;
-    if (eventType == static_cast<nn::pia::session::Session::EventType>(0))
+    if (eventType == nn::pia::session::Session::cEventTypeJoin)
         s_networkManager->AddConnectedStation(stationId);
-    else if (eventType == static_cast<nn::pia::session::Session::EventType>(1))
+    else if (eventType == nn::pia::session::Session::cEventTypeLeave)
     {
         s_networkManager->RemoveRemotePlayersAndSync(stationId, 15);
         s_networkManager->RemoveConnectedStation(stationId);
@@ -946,7 +949,7 @@ bool NQRNetworkManager_WiiU::Pia_StartupSession()
     static const nn::pia::transport::Station::IdentificationToken s_friendToken = { "Friend" };
     nn::pia::transport::Station::IdentificationToken token = s_friendToken;
     char* name = gProfile->GetNetworkAccountID();
-    nn::pia::Result result = NQRNetworkManager_WiiU_Pia_StartupSession__FPQ5_2nn3pia9transport7Station19IdentificationTokenPc(&token, name);
+    nn::pia::Result result = StartPiaSession(&token, name);
     if (result != 0)
     {
         SetLastNetworkError(result);
@@ -1635,7 +1638,53 @@ void NQRNetworkManager_WiiU::Pia_SignalBrowseSession()
 unsigned int NQRNetworkManager_WiiU::GetFriendsFromPresence()
 {
     EnterCriticalSection(&m_friendSearchMutex);
-    m_friendPresenceCount = static_cast<unsigned int>(m_friendSearchResults.size());
+    m_friendSearchResults.clear();
+    m_friendPresenceCount = 0;
+
+    unsigned int friendIds[100];
+    unsigned int friendCount = 0;
+    const unsigned int principalId = nn::act::GetPrincipalId();
+    nn::Result result = nn::fp::GetFriendList(friendIds, &friendCount, 0, 100);
+    if (result.IsSuccess())
+    {
+        nn::fp::FriendPresence presences[100];
+        char accountIds[100][17];
+        result = nn::fp::GetFriendPresence(presences, friendIds, friendCount);
+        if (result.IsSuccess())
+        {
+            result = nn::fp::GetFriendAccountId(&accountIds[0][0], friendIds, friendCount);
+            if (result.IsSuccess())
+            {
+                for (unsigned int index = 0; index < friendCount; ++index)
+                {
+                    ++m_friendPresenceCount;
+                    const nn::fp::FriendPresence& presence = presences[index];
+                    if (!presence.isValid || !presence.isOnline ||
+                        presence.gameMode.ownerPrincipalId == principalId)
+                        continue;
+
+                    FriendSearchResult friendResult;
+                    friendResult.ownerPrincipalId = friendIds[index];
+                    friendResult.ownerLocalFriendIndex = index;
+                    unsigned char accountData[0x22];
+                    std::memcpy(accountData, accountIds[index], sizeof(accountData));
+                    std::memcpy(friendResult.ownerName, accountData, sizeof(friendResult.ownerName));
+                    if (presence.gameMode.applicationArg[4] == 0x08 &&
+                        presence.gameMode.applicationArg[5] == 0x81 &&
+                        presence.gameMode.applicationArg[9] == 0)
+                    {
+                        friendResult.presence.m_uiWorldId = presence.gameMode.ownerPrincipalId;
+                        friendResult.presence.m_uiHostAttributes = presence.gameMode.joinGroupId;
+                        friendResult.presence.m_bJoinable = true;
+                        friendResult.sessionId = presence.gameMode.joinGameId;
+                        friendResult.joinable = true;
+                        MallocAndSetExtDataFromNQRPresenceInfo(&friendResult.extData, &friendResult.presence);
+                        m_friendSearchResults.push_back(friendResult);
+                    }
+                }
+            }
+        }
+    }
     m_friendPresenceUpdated = false;
     LeaveCriticalSection(&m_friendSearchMutex);
     return 0;
@@ -1672,6 +1721,7 @@ void NQRNetworkManager_WiiU::LeaveRoom(bool error)
 
 void NQRNetworkManager_WiiU::EndGame()
 {
+    return;
 }
 
 bool NQRNetworkManager_WiiU::SessionHasSpace(int extraPlayers)

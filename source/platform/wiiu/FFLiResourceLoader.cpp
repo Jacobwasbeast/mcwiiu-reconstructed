@@ -1,6 +1,7 @@
 #include "platform/wiiu/FFLiResourceLoader.hpp"
 #include "platform/wiiu/FFLiFsCommand.hpp"
 #include "platform/wiiu/FFLiResourceUncompressBuffer.hpp"
+#include "platform/wiiu/FFLiResourcePartsInfo.hpp"
 #include <string.h>
 
 extern unsigned int FFLiRoundUp(unsigned int value, unsigned int alignment);

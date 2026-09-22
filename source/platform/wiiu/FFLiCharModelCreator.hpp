@@ -6,7 +6,7 @@
 #include "platform/wiiu/FFLiCoordinate.hpp"
 #include "platform/wiiu/FFLiResourceManager.hpp"
 #include "platform/wiiu/FFLiTypes.hpp"
-#include "vendor/__N_17_FFLiCharModel_cpp_08c41fd9.hpp"
+#include "platform/wiiu/FFLModelType.hpp"
 
 class FFLiCharModelCreateParam;
 class FFLiManager;
@@ -203,7 +203,7 @@ struct FFLiCharModel
     int GetFavoriteColorIndex() const;
 };
 
-class __N_24_FFLiCharModelCreator_cpp_1f5483f2
+class FFLiCharModelCreatorSupport
 {
 public:
     static unsigned int ModelFlagToModelType(unsigned int flags);

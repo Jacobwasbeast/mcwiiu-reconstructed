@@ -69,6 +69,7 @@ namespace
 {
 NQRNetworkManager_Lan_WiiU* s_lanNetworkManager;
 CPlatformNetworkManagerNintendo* s_platformNetworkManager;
+const eGameHostOption kGameHostOption3 = static_cast<eGameHostOption>(3);
 
 const nn::fp::FriendPresence* getNintendoPresence(const FriendPresence* presence)
 {
@@ -450,7 +451,12 @@ bool CPlatformNetworkManagerNintendo::RemoveLocalPlayerByUserIndex(int userIndex
     return true;
 }
 
-bool CPlatformNetworkManagerNintendo::AddLocalPlayerByPlayerUID(PlayerUID) { return false; }
+bool CPlatformNetworkManagerNintendo::AddLocalPlayerByPlayerUID(PlayerUID playerUid)
+{
+    (void)playerUid;
+    const bool result = false;
+    return result;
+}
 INetworkPlayer* CPlatformNetworkManagerNintendo::GetLocalPlayerByUserIndex(int userIndex) { return getNetworkPlayer(m_networkManager->GetLocalPlayerByUserIndex(userIndex)); }
 INetworkPlayer* CPlatformNetworkManagerNintendo::GetPlayerByIndex(int index) { return getNetworkPlayer(m_networkManager->GetPlayerByIndex(index)); }
 INetworkPlayer* CPlatformNetworkManagerNintendo::GetPlayerByXuid(PlayerUID uid) { return getNetworkPlayer(m_networkManager->GetPlayerByXuid(uid)); }
@@ -578,7 +584,10 @@ void CPlatformNetworkManagerNintendo::UnRegisterPlayerChangedCallback(int userIn
     }
 }
 
-void CPlatformNetworkManagerNintendo::HandleSignInChange() {}
+void CPlatformNetworkManagerNintendo::HandleSignInChange()
+{
+    return;
+}
 
 bool CPlatformNetworkManagerNintendo::_RunNetworkGame()
 {
@@ -609,7 +618,7 @@ void CPlatformNetworkManagerNintendo::_HostGame(int userIndexMask, unsigned char
     m_sessionData.m_bPublicGame = !IsPrivateGame();
     m_sessionData.m_bGameStarted = false;
     m_sessionData.m_numPlayers = (unsigned char)countLocalPlayers(userIndexMask);
-    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption((eGameHostOption)0x20);
+    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption(eGameHostOption_32);
     m_sessionData.m_customGameModeHostOptions = Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_All);
     m_sessionData.m_gameModeId = gameMode;
     m_sessionData.m_miniGameId = miniGameId;
@@ -641,7 +650,7 @@ void CPlatformNetworkManagerNintendo::UpdateAndSetGameSessionData(INetworkPlayer
     INetworkPlayer* host = GetHostPlayer();
     if (host != 0)
         wcstombs(m_sessionData.m_hostGamertag.m_name, host->GetOnlineName(), GameSessionData::MAX_GAMERTAG_LENGTH);
-    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption((eGameHostOption)0x20);
+    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption(eGameHostOption_32);
     if (player == 0)
     {
         UpdateMatchMakingData();
@@ -686,7 +695,8 @@ bool CPlatformNetworkManagerNintendo::SystemFlagGet(INetworkPlayer* player, int 
     for (std::vector<PlayerFlags*>::iterator it = m_playerFlags.begin(); it != m_playerFlags.end(); ++it)
         if ((*it)->m_player == player)
             return ((*it)->m_flags[flag >> 3] & (0x80 >> (flag & 7))) != 0;
-    return false;
+    const bool result = false;
+    return result;
 }
 
 void CPlatformNetworkManagerNintendo::SystemFlagClearAll(INetworkPlayer* player)
@@ -745,7 +755,14 @@ std::vector<FriendSessionInfo*>* CPlatformNetworkManagerNintendo::GetSessionList
     return sessions;
 }
 
-bool CPlatformNetworkManagerNintendo::GetGameSessionInfo(int, unsigned int, FriendSessionInfo*) { return false; }
+bool CPlatformNetworkManagerNintendo::GetGameSessionInfo(int userIndex, unsigned int sessionId,
+                                                         FriendSessionInfo* sessionInfo)
+{
+    (void)userIndex;
+    (void)sessionId;
+    (void)sessionInfo;
+    return false;
+}
 
 void CPlatformNetworkManagerNintendo::SetSessionsUpdatedCallback(void (*callback)(void*), void* callbackData)
 {
@@ -825,7 +842,10 @@ bool CPlatformNetworkManagerNintendo::isLanConnected() { return m_networkManager
 bool CPlatformNetworkManagerNintendo::isLanModeChangeInProgress() { return m_enteringLanMode || m_leavingLanMode; }
 bool CPlatformNetworkManagerNintendo::checkValidInviteData(const FriendPresence*) { return true; }
 void CPlatformNetworkManagerNintendo::SetExitAndJoinFromInviteInProgress(bool) {}
-void CPlatformNetworkManagerNintendo::CancelDisconnectFromExitAndJoin() {}
+void CPlatformNetworkManagerNintendo::CancelDisconnectFromExitAndJoin()
+{
+    return;
+}
 int CPlatformNetworkManagerNintendo::GetOutstandingAckCount(INetworkPlayer*) { return 0; }
 
 void CPlatformNetworkManagerNintendo::TryToConnectOnline(int (*callback)(void*, bool, int), void* callbackData, bool showProgress)
@@ -835,14 +855,19 @@ void CPlatformNetworkManagerNintendo::TryToConnectOnline(int (*callback)(void*, 
 
 void CPlatformNetworkManagerNintendo::AttemptPSNSignIn(int (*)(void*, bool, int), void*, bool, int) {}
 void CPlatformNetworkManagerNintendo::RecvInviteGUI() {}
-bool CPlatformNetworkManagerNintendo::UpdateInviteData(void*) { return false; }
+bool CPlatformNetworkManagerNintendo::UpdateInviteData(void* inviteData)
+{
+    (void)inviteData;
+    const bool result = false;
+    return result;
+}
 
 void CPlatformNetworkManagerNintendo::CheckFriendsCanPlay(int userIndex, int& friendCount, boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion, int& canPlayCount, int& cannotPlayCount, int& blockedCount, int& unknownCount)
 {
     if (!m_gameNetworkManager->IsLocalGame())
         friendCount = !m_gameNetworkManager->IsUGCRestrictedMode(userIndex == 0 ? 0xff : userIndex, packet->mMiniGameId);
 
-    if (friendCount != 0 && titleVersion == 0 && !m_gameNetworkManager->IsHost() && g_pApp->GetGameHostOption((eGameHostOption)3) == 0 && userIndex == 0)
+    if (friendCount != 0 && titleVersion == 0 && !m_gameNetworkManager->IsHost() && g_pApp->GetGameHostOption(kGameHostOption3) == 0 && userIndex == 0)
     {
         unsigned int friendIds[100];
         unsigned int count = 0;

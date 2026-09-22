@@ -1,15 +1,11 @@
+#include "game/core/XMem.hpp"
+
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
 extern "C" void OSFastMutex_Lock();
 extern "C" void OSFastMutex_Unlock();
-
-enum _XMEMCODEC_TYPE
-{
-    XMEMCODEC_DEFAULT = 0,
-    XMEMCODEC_LZX = 1
-};
 
 int XMemCreateCompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, void**)
 {

@@ -752,7 +752,10 @@ void SndMicDevice::InitializeMicSndCommon(SND_PARAM* pParam)
         m_pMicSndThread = OSGetDefaultThread(0);
     }
 
-    if (OSRunThread(m_pMicSndThread, MicSndFrameThread, 0, this) == 0)
+    if (OSRunThread(m_pMicSndThread,
+                    [](int argc, const char** argv) {
+                        return MicSndFrameThread(argc, static_cast<void*>(argv));
+                    }, 0, reinterpret_cast<const char**>(this)) == 0)
     {
         OSPanic(__FILE__, __LINE__, "Can't run micsnd thread\n");
     }

@@ -8,7 +8,6 @@
 #include "platform/wiiu/FFLiResourceLoaderBuffer.hpp"
 #include "platform/wiiu/FFLiShaderCallback.hpp"
 #include "platform/wiiu/FFLiTypes.hpp"
-#include "vendor/__N_17_FFLiCharModel_cpp_08c41fd9.hpp"
 
 #include <cstring>
 
@@ -46,47 +45,47 @@ void FFLiInitModulateShapeMask(FFLModulateParam*, const _GX2Texture&);
 void FFLiInitModulateShapeNoseline(FFLModulateParam*, const _GX2Texture&);
 void FFLiInitModulateShapeGlass(FFLModulateParam*, int, const _GX2Texture&);
 
-unsigned int __N_24_FFLiCharModelCreator_cpp_1f5483f2::ModelFlagToModelType(unsigned int flags)
+unsigned int FFLiCharModelCreatorSupport::ModelFlagToModelType(unsigned int flags)
 {
-    for (unsigned int index = 0; index < 3; ++index)
+    for (unsigned int flagIndex = 0; flagIndex < 3; ++flagIndex)
     {
-        if ((flags & (1U << index)) != 0)
+        if ((flags & (1U << flagIndex)) != 0)
         {
-            return index;
+            return flagIndex;
         }
     }
 
     return 0;
 }
 
-unsigned char __N_24_FFLiCharModelCreator_cpp_1f5483f2::ConvertShapePartsTypeToShapeType(FFLiShapePartsType parts)
+unsigned char FFLiCharModelCreatorSupport::ConvertShapePartsTypeToShapeType(FFLiShapePartsType parts)
 {
     static const unsigned char types[12] = { 0, 7, 11, 1, 8, 4, 5, 6, 2, 9, 3, 10 };
     return parts < 12 ? types[parts] : 12;
 }
 
-void __N_24_FFLiCharModelCreator_cpp_1f5483f2::UpdateBoundingBox(FFLBoundingBox* destination, const FFLBoundingBox* source)
+void FFLiCharModelCreatorSupport::UpdateBoundingBox(FFLBoundingBox* destination, const FFLBoundingBox* sourceBounds)
 {
-    if (source->minX != source->minX)
+    if (sourceBounds->minX != sourceBounds->minX)
     {
         return;
     }
 
     if (destination->minX != destination->minX)
     {
-        *destination = *source;
+        *destination = *sourceBounds;
         return;
     }
 
-    destination->minX = destination->minX < source->minX ? destination->minX : source->minX;
-    destination->minY = destination->minY < source->minY ? destination->minY : source->minY;
-    destination->minZ = destination->minZ < source->minZ ? destination->minZ : source->minZ;
-    destination->maxX = destination->maxX > source->maxX ? destination->maxX : source->maxX;
-    destination->maxY = destination->maxY > source->maxY ? destination->maxY : source->maxY;
-    destination->maxZ = destination->maxZ > source->maxZ ? destination->maxZ : source->maxZ;
+    destination->minX = destination->minX < sourceBounds->minX ? destination->minX : sourceBounds->minX;
+    destination->minY = destination->minY < sourceBounds->minY ? destination->minY : sourceBounds->minY;
+    destination->minZ = destination->minZ < sourceBounds->minZ ? destination->minZ : sourceBounds->minZ;
+    destination->maxX = destination->maxX > sourceBounds->maxX ? destination->maxX : sourceBounds->maxX;
+    destination->maxY = destination->maxY > sourceBounds->maxY ? destination->maxY : sourceBounds->maxY;
+    destination->maxZ = destination->maxZ > sourceBounds->maxZ ? destination->maxZ : sourceBounds->maxZ;
 }
 
-void __N_24_FFLiCharModelCreator_cpp_1f5483f2::CalcluateBoundingBox(FFLBoundingBox* destination, const FFLBoundingBox* source, FFLiShapePartsType parts)
+void FFLiCharModelCreatorSupport::CalcluateBoundingBox(FFLBoundingBox* destination, const FFLBoundingBox* source, FFLiShapePartsType parts)
 {
     static const unsigned char enabled[36] = {
         1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1,
@@ -94,16 +93,16 @@ void __N_24_FFLiCharModelCreator_cpp_1f5483f2::CalcluateBoundingBox(FFLBoundingB
         1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0
     };
 
-    for (unsigned int index = 0; index < 3; ++index)
+    for (unsigned int boundsIndex = 0; boundsIndex < 3; ++boundsIndex)
     {
-        if (enabled[parts * 3 + index] != 0)
+        if (enabled[parts * 3 + boundsIndex] != 0)
         {
-            UpdateBoundingBox(destination + index, source);
+            UpdateBoundingBox(destination + boundsIndex, source);
         }
     }
 }
 
-int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShape(FFLiCharModel* model, FFLiShapePartsType parts, unsigned int index, float scaleX, float scaleY, const FFLVec3* offset, bool flip, FFLiResourceLoader* loader, FFLiBufferAllocator* allocator, const FFLiCoordinate* coordinate)
+int FFLiCharModelCreatorSupport::InitShape(FFLiCharModel* model, FFLiShapePartsType parts, unsigned int index, float scaleX, float scaleY, const FFLVec3* offset, bool flip, FFLiResourceLoader* loader, FFLiBufferAllocator* allocator, const FFLiCoordinate* coordinate)
 {
     FFLDrawParam* drawParam = &model->shapes[ConvertShapePartsTypeToShapeType(parts)];
     FFLBoundingBox boundingBox;
@@ -118,9 +117,9 @@ int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShape(FFLiCharModel* model, FF
     return result;
 }
 
-int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShapes(FFLiCharModel* model, FFLiResourceLoader* loader, FFLiBufferAllocator* allocator, const FFLiCoordinate* coordinate)
+int FFLiCharModelCreatorSupport::InitShapes(FFLiCharModel* model, FFLiResourceLoader* loader, FFLiBufferAllocator* allocator, const FFLiCoordinate* coordinate)
 {
-    int result = InitShape(model, static_cast<FFLiShapePartsType>(3), model->charInfo.facelineType, 1.0f, 1.0f, 0, false, loader, allocator, coordinate);
+    int result = InitShape(model, static_cast<FFLiShapePartsType>(FFLiShapePartsType_0 + 3), model->charInfo.facelineType, 1.0f, 1.0f, 0, false, loader, allocator, coordinate);
     if (result != 0)
     {
         return result;
@@ -147,7 +146,7 @@ int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShapes(FFLiCharModel* model, F
 
     if (model->charInfo.beardType < 4)
     {
-        result = InitShape(model, static_cast<FFLiShapePartsType>(0), model->charInfo.beardType,
+        result = InitShape(model, static_cast<FFLiShapePartsType>(FFLiShapePartsType_0), model->charInfo.beardType,
                            1.0f, 1.0f, &model->faceOffset, false, loader, allocator, coordinate);
         if (result != 0)
         {
@@ -158,21 +157,21 @@ int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShapes(FFLiCharModel* model, F
     FFLVec3 offset = model->transformedParts[0];
     float scale = static_cast<int>(model->charInfo.noseScale) * 0.175f + 0.4f;
     offset.y += (static_cast<int>(model->charInfo.noseY) - 8) * -1.5f;
-    result = InitShape(model, static_cast<FFLiShapePartsType>(7), model->charInfo.noseType,
+    result = InitShape(model, static_cast<FFLiShapePartsType>(FFLiShapePartsType_0 + 7), model->charInfo.noseType,
                        scale, scale, &offset, false, loader, allocator, coordinate);
     if (result != 0)
     {
         return result;
     }
 
-    result = InitShape(model, static_cast<FFLiShapePartsType>(6), model->charInfo.noseType,
+    result = InitShape(model, static_cast<FFLiShapePartsType>(FFLiShapePartsType_0 + 6), model->charInfo.noseType,
                        scale, scale, &offset, false, loader, allocator, coordinate);
     if (result != 0)
     {
         return result;
     }
 
-    result = InitShape(model, static_cast<FFLiShapePartsType>(5), model->charInfo.facelineType,
+    result = InitShape(model, static_cast<FFLiShapePartsType>(FFLiShapePartsType_0 + 5), model->charInfo.facelineType,
                        1.0f, 1.0f, 0, false, loader, allocator, coordinate);
     if (result != 0)
     {
@@ -185,20 +184,20 @@ int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShapes(FFLiCharModel* model, F
         scale = static_cast<int>(model->charInfo.glassScale) * 0.15f + 0.4f;
         offset.y += (static_cast<int>(model->charInfo.glassY) - 11) * -1.5f + 5.0f;
         offset.z += 2.0f;
-        result = InitShape(model, static_cast<FFLiShapePartsType>(4), 0, scale, scale, &offset,
+        result = InitShape(model, static_cast<FFLiShapePartsType>(FFLiShapePartsType_0 + 4), 0, scale, scale, &offset,
                            false, loader, allocator, coordinate);
     }
 
     return result;
 }
 
-int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitTextures(FFLiCharModel* model, FFLiResourceLoader* loader, FFLiBufferAllocator* allocator)
+int FFLiCharModelCreatorSupport::InitTextures(FFLiCharModel* model, FFLiResourceLoader* loader, FFLiBufferAllocator* allocator)
 {
     int result = 0;
     if (FFLiCanDrawShape(&model->shapes[7]) || FFLiCanDrawShape(&model->shapes[11]))
     {
         result = FFLiLoadTextureWithAllocate(&model->facelineShapeTexture,
-                                             static_cast<FFLiTexturePartsType>(1),
+                                             static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 1),
                                              model->charInfo.hairType, loader, allocator);
     }
     if (result != 0)
@@ -209,27 +208,27 @@ int __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitTextures(FFLiCharModel* model,
     if (FFLiCanDrawShape(&model->shapes[5]))
     {
         result = FFLiLoadTextureWithAllocate(&model->noselineTexture,
-                                             static_cast<FFLiTexturePartsType>(10),
+                                             static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 10),
                                              model->charInfo.noseType, loader, allocator);
     }
     if (result == 0 && model->charInfo.glassType != 0)
     {
         result = FFLiLoadTextureWithAllocate(&model->capTexture,
-                                             static_cast<FFLiTexturePartsType>(6),
+                                             static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 6),
                                              model->charInfo.glassType, loader, allocator);
     }
 
     return result;
 }
 
-void __N_24_FFLiCharModelCreator_cpp_1f5483f2::AddVec3(FFLVec3* destination, FFLVec3 value)
+void FFLiCharModelCreatorSupport::AddVec3(FFLVec3* destination, FFLVec3 value)
 {
     destination->x += value.x;
     destination->y += value.y;
     destination->z += value.z;
 }
 
-void __N_24_FFLiCharModelCreator_cpp_1f5483f2::AdjustPartsTransform(FFLiCharModel* model, const FFLiCoordinate* coordinate)
+void FFLiCharModelCreatorSupport::AdjustPartsTransform(FFLiCharModel* model, const FFLiCoordinate* coordinate)
 {
     AddVec3(&model->transformedParts[3], model->commonOffset);
     AddVec3(&model->transformedParts[5], model->commonOffset);
@@ -243,14 +242,14 @@ void __N_24_FFLiCharModelCreator_cpp_1f5483f2::AdjustPartsTransform(FFLiCharMode
     coordinate->Transform(&model->transformedParts[7]);
 }
 
-const unsigned int* __N_24_FFLiCharModelCreator_cpp_1f5483f2::GetShapeTypeInfo(FFLModelType type)
+const unsigned int* FFLiCharModelCreatorSupport::GetShapeTypeInfo(FFLModelType type)
 {
     static const unsigned int normal[4] = { 2, 3, 7, 9 };
     static const unsigned int special[4] = { 9, 10, 11, 0 };
     return type == FFLModelTypeSpecial ? special : normal;
 }
 
-void __N_24_FFLiCharModelCreator_cpp_1f5483f2::SetupDrawParam(FFLiCharModel* model)
+void FFLiCharModelCreatorSupport::SetupDrawParam(FFLiCharModel* model)
 {
     model->shapes[1].flags = 1;
     FFLiInitModulateShapeFaceline(&model->shapes[1].modulate, model->facelineTexture.texture);
@@ -299,7 +298,7 @@ void __N_24_FFLiCharModelCreator_cpp_1f5483f2::SetupDrawParam(FFLiCharModel* mod
     }
 }
 
-void __N_24_FFLiCharModelCreator_cpp_1f5483f2::InvalidateTextures(FFLiCharModel* model)
+void FFLiCharModelCreatorSupport::InvalidateTextures(FFLiCharModel* model)
 {
     if (model->facelineShapeTexture != 0)
     {
@@ -346,7 +345,7 @@ int FFLiCharModelCreator::ExecuteCPUStep(FFLiCharModel* model, const FFLCharMode
     model->modelBuffer = buffer->modelBuffer;
     model->modelBufferSize = buffer->modelBufferSize;
     model->modelType = static_cast<FFLModelType>(
-        __N_24_FFLiCharModelCreator_cpp_1f5483f2::ModelFlagToModelType(description->modelFlag));
+        FFLiCharModelCreatorSupport::ModelFlagToModelType(description->modelFlag));
 
     int result = m_createParam->m_databaseManager->PickupCharInfo(
         &model->info, source->source, source->data, source->index);
@@ -427,23 +426,23 @@ int FFLiCharModelCreator::ExecuteCPUStep(FFLiCharModel* model, const FFLCharMode
         return result;
     }
 
-    result = __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitShapes(
+    result = FFLiCharModelCreatorSupport::InitShapes(
         model, &resourceLoader, &modelAllocator, &m_createParam->m_coordinate);
     if (result != 0)
     {
         return result;
     }
 
-    result = __N_24_FFLiCharModelCreator_cpp_1f5483f2::InitTextures(
+    result = FFLiCharModelCreatorSupport::InitTextures(
         model, &resourceLoader, &modelAllocator);
     if (result != 0)
     {
         return result;
     }
 
-    __N_24_FFLiCharModelCreator_cpp_1f5483f2::AdjustPartsTransform(
+    FFLiCharModelCreatorSupport::AdjustPartsTransform(
         model, &m_createParam->m_coordinate);
-    __N_24_FFLiCharModelCreator_cpp_1f5483f2::SetupDrawParam(model);
+    FFLiCharModelCreatorSupport::SetupDrawParam(model);
     return 0;
 }
 
@@ -458,7 +457,7 @@ void FFLiCharModelCreator::InvalidateShapes(FFLiCharModel* model)
 void FFLiCharModelCreator::AfterExecuteGPUStep(FFLiCharModel* model)
 {
     InvalidateShapes(model);
-    __N_24_FFLiCharModelCreator_cpp_1f5483f2::InvalidateTextures(model);
+    FFLiCharModelCreatorSupport::InvalidateTextures(model);
     FFLiTempSetContextState(0);
 }
 

@@ -2702,7 +2702,7 @@ int Renderer::GetMaxTextures()
 
 int Renderer::TextureCreate()
 {
-    for (int texture = 0; texture < 512; ++texture)
+    for (int texture = 1; texture < 512; ++texture)
     {
         if (!mTextures[texture].mUsed)
         {
@@ -2721,6 +2721,11 @@ int Renderer::TextureCreate()
 
 void Renderer::TextureFree(int texture)
 {
+    if (texture <= 0 || texture >= 512 || texture == mDefaultTexture)
+    {
+        return;
+    }
+
     if (mTextures[texture].mTexture.surface.imagePtr != NULL)
     {
         MemoryFreeMEM2(mTextures[texture].mTexture.surface.imagePtr);
@@ -2852,6 +2857,11 @@ void Renderer::TextureData(int width, int height, void* data, int level, C4JRend
 
         texture.mTexture.surface.mipPtr = mipImage;
 
+        if (image == NULL || data == NULL)
+        {
+            return;
+        }
+
         unsigned int sourcePitch = texture.mTexture.surface.width * 4;
         unsigned int destinationPitch = texture.mTexture.surface.pitch * 4;
         unsigned char* destination = (unsigned char*)image;
@@ -2868,6 +2878,11 @@ void Renderer::TextureData(int width, int height, void* data, int level, C4JRend
     }
     else
     {
+        if (texture.mTexture.surface.mipPtr == NULL || data == NULL)
+        {
+            return;
+        }
+
         unsigned int mipOffset = 0;
         if (level != 1)
         {
@@ -2897,7 +2912,7 @@ void Renderer::TextureDataUpdate(int x, int y, int width, int height, void* data
     Context& context = getContext();
     Texture& texture = mTextures[context.mBoundTexture[0]];
 
-    if (x != 0 || y != 0)
+    if (x != 0 || y != 0 || data == NULL)
     {
         return;
     }
@@ -2921,6 +2936,11 @@ void Renderer::TextureDataUpdate(int x, int y, int width, int height, void* data
         unsigned char* destination = (unsigned char*)texture.mTexture.surface.imagePtr;
         unsigned char* source = (unsigned char*)data;
 
+        if (destination == NULL)
+        {
+            return;
+        }
+
         if (sourcePitch == destinationPitch)
         {
             GX2Invalidate(0x40, destination, texture.mTexture.surface.imageSize);
@@ -2940,6 +2960,11 @@ void Renderer::TextureDataUpdate(int x, int y, int width, int height, void* data
         }
 
         GX2Invalidate(0x40, texture.mTexture.surface.imagePtr, texture.mTexture.surface.imageSize);
+        return;
+    }
+
+    if (texture.mTexture.surface.mipPtr == NULL)
+    {
         return;
     }
 

@@ -24,6 +24,7 @@ struct FFLColor
     };
 };
 typedef unsigned int FFLModulateMode;
+
 struct FFLModulateParam;
 class FFLiUtilShaderAllocator;
 class FFLiUtilShader
@@ -87,7 +88,7 @@ struct PlainShader {
 };
 extern PlainShader sIconExtShader;
 
-unsigned int setRGBAOrder__FUi(unsigned int);
+unsigned int SetRGBAOrder(unsigned int value);
 int InitDefaultShader__Fv();
 void InitExtShader__Fv();
 void InitFetchShader__FP11FetchShaderPC16_GX2VertexShader(FFLiUtilShader::FetchShader*, const _GX2VertexShader*);

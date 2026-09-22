@@ -6,7 +6,16 @@
 #include <map>
 
 static unsigned int s_tlsAllocated[64];
-static std::map<OSThread*, void*> s_threadValues[64];
+namespace
+{
+
+std::map<OSThread*, void*>& threadValues(unsigned int index)
+{
+    static std::map<OSThread*, void*> values[64];
+    return values[index];
+}
+
+}
 
 TLSStorageCafe* TLSStorageCafe::m_instance = 0;
 
@@ -56,7 +65,7 @@ unsigned int TLSStorageCafe::GetValue(unsigned int index)
     {
         return 0;
     }
-    return (unsigned int)CafeThreadLocal::slot(s_threadValues[index]);
+    return (unsigned int)CafeThreadLocal::slot(threadValues(index));
 }
 
 unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
@@ -65,7 +74,7 @@ unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
     {
         return 0;
     }
-    CafeThreadLocal::slot(s_threadValues[index]) = value;
+    CafeThreadLocal::slot(threadValues(index)) = value;
     return 1;
 }
 

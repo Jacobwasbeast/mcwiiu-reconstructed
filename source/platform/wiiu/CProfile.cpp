@@ -773,6 +773,13 @@ void CProfile::LoadAllMiiData()
         if (it->mUuid == mAccountUuid)
             accountMii = &*it;
     }
+    if (accountMii == NULL)
+    {
+        if (!mLoadedMiiData->mSysUserMiis.empty())
+            accountMii = &mLoadedMiiData->mSysUserMiis.front();
+        else
+            return;
+    }
     std::memcpy(mAccountState, accountMii->mCreatorId, sizeof(accountMii->mCreatorId));
     SignInUser(accountMii, -1);
 }

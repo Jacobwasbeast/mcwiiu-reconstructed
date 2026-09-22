@@ -12,6 +12,11 @@ FFLiZlibInflator::FFLiZlibInflator(FFLiAllocatorInterface& allocator, int window
     inflateInit2_(&mStream, windowBits, ZLIB_VERSION, sizeof(mStream));
 }
 
+FFLiZlibInflator::FFLiZlibInflator(FFLiAllocatorInterface& allocator)
+    : FFLiZlibInflator(allocator, 15)
+{
+}
+
 FFLiZlibInflator::~FFLiZlibInflator()
 {
     inflateEnd(&mStream);

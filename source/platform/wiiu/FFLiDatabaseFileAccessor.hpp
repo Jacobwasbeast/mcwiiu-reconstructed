@@ -21,11 +21,11 @@ typedef FFLiDatabaseFileOfficial FFLiDatabaseFile;
 class FFLiDatabaseFileAccessor
 {
 private:
-    FFLiFsClient *m_client;
+    FFLiFsClient* m_client;
     FFLiFsCommand m_command;
-    FFLiDatabaseFileOfficial *m_database;
-    FFLiFileWriteBuffer *m_writeBuffer;
-    FFLiAllocator *m_allocator;
+    FFLiDatabaseFileOfficial* m_database;
+    FFLiFileWriteBuffer* m_writeBuffer;
+    FFLiAllocator* m_allocator;
     unsigned int m_databaseState;
     char m_pathOfficial[256];
     char m_pathBackup[256];

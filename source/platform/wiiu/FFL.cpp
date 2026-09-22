@@ -1,4 +1,9 @@
 #include "platform/wiiu/FFL.hpp"
+#if defined(RECON_NATIVE)
+#include "ffl_shape.hpp"
+#include "ffl_texture.hpp"
+#include "gx2_tiling.hpp"
+#endif
 #include "platform/wiiu/WiiU_GX2.hpp"
 #include "platform/wiiu/FFLiDatabaseManager.hpp"
 #define private public
@@ -1570,6 +1575,11 @@ int FFLiLoadShape__FP12FFLDrawParamP14FFLBoundingBoxP13FFLiCharModel18FFLiShapeP
         return result;
     }
 
+#if defined(RECON_NATIVE)
+    if (!host::decodeFFLShape(resource, size, parts))
+        return 3;
+#endif
+
     for (uint32_t i = 0; i < 5; ++i) {
         FFLAttributeBuffer& attribute = drawParam->attributes.attributes[i];
         uint8_t elementType = __N_13_FFLiShape_cpp_fe662c08::GetElementType(static_cast<FFLAttributeBufferType>(i));
@@ -1703,8 +1713,16 @@ int FFLiLoadTextureWithAllocate__FPP11_GX2Texture20FFLiTexturePartsTypeUiP18FFLi
         FFLiResourceTextureFooter::GetFooterImpl(resource, resourceSize));
     uint16_t width;
     uint16_t height;
+#if defined(RECON_NATIVE)
+    host::FFLTextureDimensions dimensions;
+    if (!host::decodeFFLTextureDimensions(resource, resourceSize, dimensions))
+        return 3;
+    width = dimensions.width;
+    height = dimensions.height;
+#else
     memcpy(&width, footer->imageSize, sizeof(width));
     memcpy(&height, footer->imageSize + 2, sizeof(height));
+#endif
     (*texture)->surface.aaMode = 0;
     (*texture)->surface.tileMode = 0;
     (*texture)->surface.swizzle = 0;
@@ -1721,9 +1739,28 @@ int FFLiLoadTextureWithAllocate__FPP11_GX2Texture20FFLiTexturePartsTypeUiP18FFLi
     (*texture)->surface.use = 1;
     (*texture)->compMap = compMaps[(*texture)->surface.format & 0x3f];
     GX2CalcSurfaceSizeAndAlignment(&(*texture)->surface);
+#if defined(RECON_NATIVE)
+    if (footer->textureFormat > 2)
+        return 3;
+    const uint32_t pixelBytes = 1U << footer->textureFormat;
+    const uint32_t tileMode = host::fflTextureTileMode(width, height, pixelBytes);
+    const uint32_t pitch = host::fflTexturePitch(width, pixelBytes, tileMode);
+    const uint32_t imageBytes = host::fflTextureBytes(pitch, height, pixelBytes, tileMode);
+    const uint32_t available = dimensions.mipOffset ? dimensions.mipOffset : resourceSize - 12;
+    if (imageBytes > available)
+        return 3;
+    (*texture)->surface.tileMode = tileMode;
+    (*texture)->surface.pitch = pitch;
+    (*texture)->surface.imageSize = imageBytes;
+#endif
     GX2InitTextureRegs(*texture);
     (*texture)->surface.imagePtr = footer->GetImagePtrImpl(resourceSize);
+#if defined(RECON_NATIVE)
+    (*texture)->surface.mipPtr = dimensions.mipOffset ?
+        static_cast<uint8_t*>(resource) + dimensions.mipOffset : 0;
+#else
     (*texture)->surface.mipPtr = footer->GetMipPtrImpl(resourceSize);
+#endif
     if ((*texture)->surface.numMips > 1 && (*texture)->surface.mipPtr == 0)
         (*texture)->surface.mipPtr = static_cast<uint8_t*>((*texture)->surface.imagePtr) +
                                       (*texture)->surface.mipOffset[0];
