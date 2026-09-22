@@ -331,6 +331,13 @@ bool MinecraftServer::loadLevel(LevelStorageSource*, const std::wstring& name,
     boost::shared_ptr<LevelStorage> storage(new McRegionLevelStorage(
         saveFile, File(L"."), name, true, Minecraft::GetInstance()->getFixerUpper()));
     LevelData* levelData = storage->prepareLevel();
+#if defined(RECON_NATIVE)
+    if (levelData != 0)
+        std::fprintf(stderr, "[native-world] loaded save seed %lld spawn %d %d %d\n",
+            levelData->getSeed(), levelData->getXSpawn(), levelData->getYSpawn(), levelData->getZSpawn());
+    else
+        std::fprintf(stderr, "[native-world] no saved level data; generating world\n");
+#endif
     LevelSettings* levelSettings = 0;
 
     if (levelData == 0)
