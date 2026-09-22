@@ -1,6 +1,7 @@
 #ifndef NN_PIA_NAT_NATPROBEREQUEST_HPP
 #define NN_PIA_NAT_NATPROBEREQUEST_HPP
 
+#include "nn/pia/transport/StationConnectionInfo.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/StationLocation.hpp"

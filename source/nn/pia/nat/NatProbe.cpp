@@ -76,15 +76,15 @@ bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
     else if (thisPrivate && targetPrivate)
     {
         if ((m_startTick != 0 || m_startTickHigh != 0) &&
-             !(static_cast<const transport::StationAddress&>(*this).operator==(
-                 static_cast<const transport::StationAddress&>(location))))
+             !(static_cast<const common::StationAddress&>(*this).operator==(
+                 static_cast<const common::StationAddress&>(location))))
             return false;
     }
     else if (!thisPrivate && !targetPrivate)
     {
         if ((m_startTick != 0 || m_startTickHigh != 0) &&
-             !(static_cast<const transport::StationAddress&>(*this).operator==(
-                 static_cast<const transport::StationAddress&>(location))))
+             !(static_cast<const common::StationAddress&>(*this).operator==(
+                 static_cast<const common::StationAddress&>(location))))
             return false;
     }
     else if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())

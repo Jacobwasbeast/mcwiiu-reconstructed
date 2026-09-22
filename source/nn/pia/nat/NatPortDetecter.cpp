@@ -1,0 +1,114 @@
+#include "nn/pia/nat/NatPortDetecter.hpp"
+
+namespace nn { namespace pia { namespace nat {
+
+NatPortDetecter::NatPortDetecter()
+    : NatDetecter(), m_portTraverser(0), m_primaryStation(), m_secondaryStation(), m_relay(false),
+      m_padding(), m_startTime()
+{
+}
+
+NatPortDetecter::~NatPortDetecter()
+{
+}
+
+Result NatPortDetecter::Startup(NatTraverser* traverser, common::CallContext* context,
+                                const common::InetAddress& address)
+{
+    m_portTraverser = traverser;
+    m_startTime.SetNow();
+    return NatDetecter::Startup(traverser, context, address);
+}
+
+Result NatPortDetecter::Startup(NatTraverser* traverser, common::CallContext* context,
+                                const common::InetAddress& address,
+                                const transport::StationLocation& primary,
+                                const transport::StationLocation& secondary, bool relay)
+{
+    m_portTraverser = traverser;
+    m_primaryStation = primary;
+    m_secondaryStation = secondary;
+    m_relay = relay;
+    Result result = NatDetecter::Startup(traverser, context, address);
+    if (result != 0)
+        return result;
+    StartDetectionJob();
+    return 0;
+}
+
+void NatPortDetecter::Cleanup()
+{
+    NatDetecter::Cleanup();
+}
+
+void NatPortDetecter::SendNatPortDetectionProbes()
+{
+    common::InetAddress* secondary = GetPrimaryServerSecondaryPortAddress();
+    NatCheckProbe probe = {};
+    common::InetAddress* primary = GetPrimaryServerPrimaryPortAddress();
+    if (secondary == 0 || primary == 0)
+        return;
+
+    probe.destination = *primary;
+    probe.payload[0] = 0x65;
+    AddNatCheckProbe(probe, 5);
+}
+
+void NatPortDetecter::StartSendingNatCheckProbe()
+{
+    SendDummyProbe();
+    SendNatPortDetectionProbes();
+}
+
+bool NatPortDetecter::IsReceivedAllMessage()
+{
+    return GetNatCheckReply(0)->count != 0 ||
+           GetNatCheckReply(1)->count != 0 ||
+           GetNatCheckReply(2)->count != 0;
+}
+
+unsigned int NatPortDetecter::HandleResult()
+{
+    TraceNatCheckReplyArray(0x1000);
+    PredictPort(&m_secondaryStation.m_inetAddress);
+    if (m_secondaryStation.m_inetAddress.IsValid() == 0)
+        return 0;
+
+    m_startTime.SetNow();
+    if (m_portTraverser == 0)
+        return 0;
+
+    if (!m_relay)
+    {
+        m_portTraverser->SetLocalPublicLocation(m_secondaryStation);
+    }
+    else
+    {
+        m_portTraverser->RelayProbeRequest(m_primaryStation, m_secondaryStation,
+                                           m_relay, GetPerceivedPort());
+    }
+    return 1;
+}
+
+unsigned int NatPortDetecter::CheckRetry()
+{
+    const unsigned int perceivedPort = GetPerceivedPort();
+    if (perceivedPort != 0 || m_relay)
+    {
+        if (NatDetecter::GetCurrentPort() <= perceivedPort || m_relay)
+        {
+            NatDetecter::SetCurrentPort(static_cast<unsigned short>(perceivedPort));
+            return 0;
+        }
+        if (NatDetecter::RetryBind() != 0)
+            return 0;
+    }
+    return 1;
+}
+
+unsigned int NatPortDetecter::GetDetectionTimeout() const
+{
+    return 2000;
+}
+
+}}}
