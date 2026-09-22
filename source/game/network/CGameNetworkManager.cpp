@@ -668,7 +668,7 @@ bool CGameNetworkManager::_RunNetworkGame(void* data)
 
     if (isHost)
     {
-        result = m_platform->_StartGame();
+        result = m_platform->_RunNetworkGame();
         if (!result)
         {
             gApp.SetAction(GetPrimaryPad(), static_cast<eXuiAction>(3), reinterpret_cast<void*>(1));
@@ -716,7 +716,12 @@ bool CGameNetworkManager::ShouldMessageForFullSession() { return m_platform && m
 bool CGameNetworkManager::IsInGameplay() { return m_platform && m_platform->IsInGameplay(); }
 void CGameNetworkManager::SetPrivateGame(bool value) { m_platform->SetPrivateGame(value); }
 bool CGameNetworkManager::IsPrivateGame() { return m_platform->IsPrivateGame(); }
-void CGameNetworkManager::HostGame(int a, bool b, bool c, unsigned char d, EMiniGameId e, unsigned int f, unsigned int* g) { if (m_platform) m_platform->HostGame(a,b,c,d,e,f,g); }
+void CGameNetworkManager::HostGame(int a, bool b, bool c, unsigned char d, EMiniGameId e, unsigned int f, unsigned int* g)
+{
+    Minecraft::GetInstance()->clearConnectionFailed();
+    if (m_platform)
+        m_platform->HostGame(a, b, c, d, e, f, g);
+}
 bool CGameNetworkManager::IsInStatsEnabledSession() { return m_platform && m_platform->IsInStatsEnabledSession(); }
 bool CGameNetworkManager::IsMatchmakingEnabled() { return m_platform && m_platform->IsMatchmakingEnabled(); }
 bool CGameNetworkManager::IsInPublicJoinableGame() { return (m_publicJoinable || IsMatchmakingEnabled()) && !IsLocalGame(); }
