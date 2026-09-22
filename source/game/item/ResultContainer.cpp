@@ -1,10 +1,11 @@
 #include "game/item/ResultContainer.hpp"
 
 #include "game/item/ContainerHelper.hpp"
+#include "game/item/ItemInstance.hpp"
 
 ResultContainer::ResultContainer()
 {
-    items = NonNullList<not_null_ptr<ItemInstance> >::withSize(1, not_null_ptr<ItemInstance>());
+    items = NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY);
 }
 
 ResultContainer::~ResultContainer()
@@ -86,7 +87,7 @@ void ResultContainer::clearContent()
 {
     for (unsigned int slot = 0; slot < items.size(); ++slot)
     {
-        items[slot] = not_null_ptr<ItemInstance>();
+        items[slot] = ItemInstance::EMPTY;
     }
 }
 

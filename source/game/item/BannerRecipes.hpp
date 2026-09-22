@@ -16,7 +16,7 @@ class BannerRecipes
 {
 public:
     BannerRecipes();
-    ~BannerRecipes();
+    ~BannerRecipes() = default;
 
     ItemInstance* createOutputItem(int color, const std::wstring& pattern);
     void addRecipes(Recipes* recipes);

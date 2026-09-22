@@ -41,20 +41,20 @@ const unsigned long long kWaterSensitiveTypeThree = 0x2D580001ULL;
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ThrownPotion::DATA_ITEM = NULL;
 
 ThrownPotion::ThrownPotion(Level* level)
-    : ThrowableProjectile(level), mItem()
+    : ThrowableProjectile(level), mItem(new ItemInstance(Items::splashPotion))
 {
     _init();
 }
 
 ThrownPotion::ThrownPotion(Level* level, boost::shared_ptr<LivingEntity> owner, not_null_ptr<ItemInstance> item)
-    : ThrowableProjectile(level, owner), mItem()
+    : ThrowableProjectile(level, owner), mItem(item)
 {
     _init();
     mEntityData->set(DATA_ITEM, item, false);
 }
 
 ThrownPotion::ThrownPotion(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : ThrowableProjectile(level, x, y, z), mItem()
+    : ThrowableProjectile(level, x, y, z), mItem(item)
 {
     _init();
     if (!item->isEmpty())
@@ -63,6 +63,7 @@ ThrownPotion::ThrownPotion(Level* level, double x, double y, double z, not_null_
 
 ThrownPotion::~ThrownPotion()
 {
+    mItem.reset();
 }
 
 void ThrownPotion::create(Level* level)
@@ -72,10 +73,7 @@ void ThrownPotion::create(Level* level)
 
 not_null_ptr<ItemInstance> ThrownPotion::getItem()
 {
-    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ITEM);
-    if (item->getItem() != Items::splashPotion && item->getItem() != Items::lingeringPotion)
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion));
-    return item;
+    return mItem;
 }
 
 void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
@@ -112,7 +110,7 @@ void ThrownPotion::applyWater()
 
 bool ThrownPotion::isLingering()
 {
-    return getItem()->getItem() != NULL && Item::getId(getItem()->getItem()) == 0;
+    return getItem()->getItem() == Items::lingeringPotion;
 }
 
 void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item, Potion* potion)
@@ -251,6 +249,7 @@ void ThrownPotion::_init()
 
 void ThrownPotion::setItem(not_null_ptr<ItemInstance> item)
 {
+    mItem = item;
     mEntityData->set(DATA_ITEM, item, true);
 }
 
@@ -300,4 +299,5 @@ bool ThrownPotion::WATER_SENSITIVE::apply(boost::shared_ptr<Entity> entity) cons
 
 ThrownPotion::WATER_SENSITIVE::~WATER_SENSITIVE()
 {
+    (void)0;
 }

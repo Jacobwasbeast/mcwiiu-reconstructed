@@ -24,6 +24,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include <cwchar>
 #include <sstream>
@@ -31,7 +32,7 @@
 #include "game/core/AttributeModifier.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GenericStats.hpp"
-not_null_ptr<ItemInstance> ItemInstance::EMPTY;
+not_null_ptr<ItemInstance> ItemInstance::EMPTY(new ItemInstance(static_cast<Item*>(NULL)));
 ItemInstance::ItemInstance()
     : mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
@@ -61,18 +62,14 @@ ItemInstance::ItemInstance(Block* block, int count, int auxValue)
 _init(Item::byBlock(block), count, auxValue);
 }
 ItemInstance::ItemInstance(Item* item)
-    : mCount(1), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
-      mAuxValue(0), mUnknown(0), mFrame(),
-      mCensorshipInfo(new CensoredString(static_cast<int>(0xAD36B773u), 0x62950B66)), mBreakBlock(0),
-      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
+    : mFrame(), mCensorshipInfo()
 {
+    _init(item, 1, 0);
 }
 ItemInstance::ItemInstance(Item* item, int count)
-    : mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
-      mAuxValue(0), mUnknown(0), mFrame(),
-      mCensorshipInfo(new CensoredString(static_cast<int>(0xAD36B773u), 0x62950B66)), mBreakBlock(0),
-      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
+    : mFrame(), mCensorshipInfo()
 {
+    _init(item, count, 0);
 }
 ItemInstance::ItemInstance(Item* item, int count, int auxValue)
     : mFrame(), mCensorshipInfo()

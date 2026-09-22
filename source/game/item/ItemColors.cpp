@@ -3,11 +3,18 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/item/FireworkChargeItem.hpp"
+#include "game/data/IntArrayTag.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockColors.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/BlockItem.hpp"
 #include "game/core/GrassColor.hpp"
 #include "game/core/DyeColor.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/item/MapItem.hpp"
+#include "game/item/SpawnEggItem.hpp"
 
 template <typename T>
 static arrayWithLength<T> makeColorArray(T* values, unsigned int count)
@@ -16,13 +23,13 @@ static arrayWithLength<T> makeColorArray(T* values, unsigned int count)
     return arrayWithLength<T>(result);
 }
 
-ItemColors::ItemColors() : mItemColorIds(new IdMapper<ItemColor*>()) {}
+ItemColors::ItemColors() : mItemColorIds() {}
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Item*> items)
 {
     for (unsigned int i = 0; i < items.length; ++i)
     {
-        mItemColorIds->addMapping(color, Item::getId(items.data[i]));
+        mItemColorIds.addMapping(color, Item::getId(items.data[i]));
     }
 }
 
@@ -30,7 +37,7 @@ void ItemColors::registerColor(ItemColor* color, arrayWithLength<Block*> blocks)
 {
     for (unsigned int i = 0; i < blocks.length; ++i)
     {
-        mItemColorIds->addMapping(color, Item::getId(Item::byBlock(blocks.data[i])));
+        mItemColorIds.addMapping(color, Item::getId(Item::byBlock(blocks.data[i])));
     }
 }
 
@@ -39,7 +46,7 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     class Armor_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int layer)
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
             return layer < 1 ? item->getItem()->getColor(item, 0) : -1;
         }
@@ -47,50 +54,84 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     class Bed_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int layer)
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
-            if (layer != 0) return -1;
             const DyeColor* dye = DyeColor::byBlockData(item->getAuxValue());
-            return dye == NULL ? -1 : dye->getTextureDiffuseColor();
+            if (layer == 0)
+                return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(dye->getBedColor()));
+            return -1;
         }
     };
     class DoublePlant_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int)
+        int getColor(const not_null_ptr<ItemInstance>& item, int)
         {
-            int data = item->getAuxValue() & 7;
-            return (data == 2 || data == 3) ? (int)GrassColor::get(0.5, 1.0) : -1;
+            DoublePlantBlock::Variant* variant =
+                DoublePlantBlock::Variant::byData(item->getAuxValue());
+            return (variant == gDoublePlantGrass || variant == gDoublePlantFern)
+                ? static_cast<int>(GrassColor::get(0.5, 1.0)) : -1;
         }
     };
     class FilledMap_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance>, int) { return -1; }
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
+        {
+            return layer == 0 ? -1 : MapItem::getColor(item);
+        }
     };
     class FireworkCharge_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance>, int layer)
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
-            return layer == 1 ? 0x8a8a8a : -1;
+            if (layer != 1)
+                return -1;
+            Tag* tag = FireworkChargeItem::getExplosionTagField(item, L"Colors");
+            IntArrayTag* colors = dynamic_cast<IntArrayTag*>(tag);
+            if (colors == NULL)
+                return 0x8a8a8a;
+            arrayWithLength<int> values = colors->getAsIntArray();
+            if (values.length == 1)
+                return values.data[0];
+            if (values.length == 0)
+                return 0x8a8a8a;
+            unsigned int red = 0;
+            unsigned int green = 0;
+            unsigned int blue = 0;
+            for (unsigned int i = 0; i < values.length; ++i)
+            {
+                unsigned int color = static_cast<unsigned int>(values.data[i]);
+                red += (color >> 16) & 0xff;
+                green += (color >> 8) & 0xff;
+                blue += color & 0xff;
+            }
+            return static_cast<int>(((red / values.length) << 16)
+                | ((green / values.length) << 8)
+                | (blue / values.length));
         }
     };
     class Grass_ItemColor : public ItemColor {
         BlockColors* colors;
     public:
         explicit Grass_ItemColor(BlockColors* value) : colors(value) {}
-        int getColor(not_null_ptr<ItemInstance>, int layer) { return colors->getColor(Blocks::grass->defaultBlockState(), NULL, NULL, layer); }
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
+        {
+            BlockItem* blockItem = static_cast<BlockItem*>(item->getItem());
+            const BlockState* state = blockItem->getBlock()->getBlockState(item->getAuxValue());
+            return colors->getColor(state, NULL, NULL, layer);
+        }
     };
     class LeatherHorseArmor_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int layer) { return item->getItem()->getColor(item, layer); }
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer) { return item->getItem()->getColor(item, layer); }
     };
     class Potion_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int layer)
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
             return layer < 1 ? PotionUtils::getColor(PotionUtils::getMobEffects(item)) : -1;
         }
@@ -98,17 +139,17 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     class SpawnEgg_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int layer) { return item->getItem()->getColor(item, layer); }
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer) { return item->getItem()->getColor(item, layer); }
     };
     class TallGrass_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance>, int) { return (int)GrassColor::get(0.5, 1.0); }
+        int getColor(const not_null_ptr<ItemInstance>&, int) { return (int)GrassColor::get(0.5, 1.0); }
     };
     class TippedArrow_ItemColor : public ItemColor
     {
     public:
-        int getColor(not_null_ptr<ItemInstance> item, int layer)
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
             return layer == 0 ? PotionUtils::getColor(PotionUtils::getMobEffects(item)) : -1;
         }
@@ -142,6 +183,6 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
 
 int ItemColors::getColor(not_null_ptr<ItemInstance> item, int layer)
 {
-    ItemColor* color = mItemColorIds->byId(Item::getId(item->getItem()));
+    ItemColor* color = mItemColorIds.byId(Item::getId(item->getItem()));
     return color == NULL ? -1 : color->getColor(item, layer);
 }

@@ -6,13 +6,13 @@
 class Block; class BlockColors; class Item; class ItemInstance;
 class ItemColors {
 public:
- class ItemColor { public: virtual ~ItemColor() {} virtual int getColor(not_null_ptr<ItemInstance> item, int layer) = 0; };
+ class ItemColor { public: virtual ~ItemColor() {} virtual int getColor(const not_null_ptr<ItemInstance>& item, int layer) = 0; };
  ItemColors();
  void registerColor(ItemColor* color,arrayWithLength<Item*> items);
  void registerColor(ItemColor* color,arrayWithLength<Block*> blocks);
  static ItemColors* createDefault(BlockColors* blockColors);
  int getColor(not_null_ptr<ItemInstance> item,int layer);
 private:
-    IdMapper<ItemColor*>* mItemColorIds;
+    IdMapper<ItemColor*> mItemColorIds;
 };
 #endif

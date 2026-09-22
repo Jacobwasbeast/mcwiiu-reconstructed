@@ -4,12 +4,6 @@
 #include "game/core/ProgramManager.hpp"
 #include "game/core/Uniform.hpp"
 
-Effect::Effect(ResourceManager* resourceManager, const std::wstring& name)
-    : mName(name), mDirty(true)
-{
-    (void)resourceManager;
-}
-
 void Effect::destroy()
 {
     ProgramManager* manager = (ProgramManager*)ProgramManager::getInstance();
@@ -33,6 +27,7 @@ uint64_t Effect::clear()
 
 void Effect::apply()
 {
+    static_cast<void>(this);
 }
 
 void Effect::markDirty()
@@ -53,8 +48,7 @@ Uniform* Effect::safeGetUniform(const std::wstring& name)
     Uniform* uniform = getUniform(name);
     if (uniform != 0)
         return uniform;
-    static char sDefaultUniform[sizeof(Uniform)] = {};
-    return reinterpret_cast<Uniform*>(sDefaultUniform);
+    return Uniform::safeFallback();
 }
 
 void Effect::setSampler(std::wstring name, RenderTarget* target)
