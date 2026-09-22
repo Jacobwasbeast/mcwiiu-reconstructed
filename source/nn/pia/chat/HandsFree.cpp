@@ -6,6 +6,16 @@
 
 namespace nn { namespace pia { namespace chat {
 
+namespace
+{
+    const int kAlreadyInitializedResult = 0x10c02;
+    const int kInvalidParameterResult = 0x10c07;
+    const int kAllocationFailureResult = 0x10c01;
+    const int kNotInitializedResult = 0x10c0c;
+    const int kProcessingFailureResult = 0xc0b;
+
+}
+
 HandsFree::HandsFree()
     : m_handle(0), m_ecMode(1), m_noiseSuppressorLevel(1),
       m_agcLevel(1), m_workspace(0), m_config()
@@ -36,16 +46,16 @@ int HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
                           int noiseSuppressorLevel, int agcLevel)
 {
     if (m_handle != 0)
-        return 0x10c02;
+        return kAlreadyInitializedResult;
     if (static_cast<unsigned int>(ecMode) >= 3u ||
         static_cast<unsigned int>(noiseSuppressorLevel) >= 3u ||
         static_cast<unsigned int>(agcLevel) >= 5u)
-        return 0x10c07;
+        return kInvalidParameterResult;
 
     void* workspace = pead::allocateFromSeadHeap(
         0x251c0, common::HeapManager::GetHeap());
     if (workspace == 0)
-        return 0x10c01;
+        return kAllocationFailureResult;
     std::memset(workspace, 0, 0x251c0);
     m_ecMode = static_cast<int32_t>(ecMode);
     m_noiseSuppressorLevel = noiseSuppressorLevel;
@@ -66,7 +76,8 @@ int HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
     m_config.error = 0;
     m_handle = TMC_HF_Init(&m_config);
     if (m_config.error != 0)
-        return 0xc0b;
+        return kProcessingFailureResult;
+
     return 0;
 }
 
@@ -74,10 +85,10 @@ int HandsFree::Process(short* output, const short* inputLeft,
                        const short* inputRight, const short* inputReference)
 {
     if (m_handle == 0)
-        return 0x10c0c;
+        return kNotInitializedResult;
     if (output == 0 || inputLeft == 0 || inputRight == 0 ||
         inputReference == 0)
-        return 0x10c07;
+        return kInvalidParameterResult;
 
     uint32_t frames = VCT_GetAudioFrameLength() >> 3;
     uint32_t outputOffset = 0;
@@ -88,7 +99,7 @@ int HandsFree::Process(short* output, const short* inputLeft,
             m_handle, inputLeft + outputOffset, inputRight + inputOffset,
             inputReference + inputOffset, output + outputOffset);
         if (result != 0)
-            return 0xc0b;
+            return kProcessingFailureResult;
         outputOffset += 64;
         inputOffset += 256;
     }

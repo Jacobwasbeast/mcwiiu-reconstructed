@@ -7,6 +7,11 @@
 
 namespace
 {
+    const unsigned int kSequenceNumberRange = 0x10000;
+    const unsigned int kSequenceForwardWindow = 3000;
+    const unsigned int kSequenceBackwardWindow = 0xff9d;
+    const unsigned int kSequenceLateThreshold = 0xff9c;
+
     long long s_skewCheckInterval = 0;
     int s_skewCheckInitialized = 0;
     long long s_skewLimit = 0;
@@ -28,12 +33,12 @@ AudioStream::AudioStream()
     m_PreviousArrivalDelay = 0;
     m_SmoothedArrivalDelay = 0;
     m_StreamIndex = 0;
-    m_Unknown6C = 0;
+    m_audioState = 0;
     m_Cid = 0;
     m_PreviousPacket = 0;
     m_BaseReceiveTick = 0;
     m_BaseSendTick = 0;
-    m_Unknown88 = 0;
+    m_timingState = 0;
     m_LastQueuedSequence = 0;
     m_LastSequence = 0;
     m_SequenceBase = 0;
@@ -80,11 +85,11 @@ void AudioStream::InitEx()
     m_Info.m_Unknown50 = 0;
     m_PreviousArrivalDelay = 0;
     m_SmoothedArrivalDelay = 0;
-    m_Unknown6C = 0;
+    m_audioState = 0;
     m_PreviousPacket = 0;
     m_BaseReceiveTick = 0;
     m_BaseSendTick = 0;
-    m_Unknown88 = 0;
+    m_timingState = 0;
     m_LastQueuedSequence = 0;
     m_LastSequence = 0;
     m_SequenceUninitialized = 1;
@@ -132,7 +137,7 @@ int AudioStream::SavePreviousBuffer(_udp_packet* pPacket)
 void AudioStream::InitSequence(unsigned short usSequence)
 {
     m_PreviousRawSequence = usSequence;
-    m_ExpectedRawSequence = 0x10001;
+    m_ExpectedRawSequence = kSequenceNumberRange + 1;
     m_SequenceUninitialized = 0;
     m_SequenceBase = 0;
 }
@@ -142,16 +147,16 @@ int AudioStream::UpdateSequence(_udp_packet* pPacket, unsigned short usSequence)
     unsigned int uiDistance = (usSequence - m_PreviousRawSequence) & 0xffff;
     unsigned int uiExtended;
 
-    if (uiDistance < 3000)
+    if (uiDistance < kSequenceForwardWindow)
     {
         if (usSequence < m_PreviousRawSequence)
         {
-            m_SequenceBase = m_SequenceBase + 0x10000;
+            m_SequenceBase = m_SequenceBase + kSequenceNumberRange;
         }
         uiExtended = usSequence + m_SequenceBase;
         m_PreviousRawSequence = usSequence;
     }
-    else if (uiDistance < 0xff9d)
+    else if (uiDistance < kSequenceBackwardWindow)
     {
         if (usSequence != m_ExpectedRawSequence)
         {
@@ -165,14 +170,53 @@ int AudioStream::UpdateSequence(_udp_packet* pPacket, unsigned short usSequence)
     else
     {
         uiExtended = usSequence + m_SequenceBase;
-        if (m_LastQueuedSequence + 0xff9c < uiExtended)
+        if (m_LastQueuedSequence + kSequenceLateThreshold < uiExtended)
         {
-            pPacket->m_Sequence = uiExtended - 0x10000;
+            pPacket->m_Sequence = uiExtended - kSequenceNumberRange;
             return 1;
         }
     }
 
     pPacket->m_Sequence = uiExtended;
+    return 1;
+}
+
+int AudioStream::CalcJitterAndSkew(_udp_packet* pPacket)
+{
+    if (pPacket == 0)
+        return 0;
+
+    const unsigned short rawSequence =
+        static_cast<unsigned short>(pPacket->m_Sequence & 0xffff);
+    if (m_SequenceUninitialized != 0)
+    {
+        InitSequence(rawSequence);
+        pPacket->m_Sequence = rawSequence;
+    }
+    else if (UpdateSequence(pPacket, rawSequence) == 0)
+    {
+        ++m_Info.m_OutOfOrderCount;
+        return 0;
+    }
+
+    const long long arrivalTick = pPacket->m_ReceiveTick;
+    if (m_PreviousArrivalTick != 0)
+    {
+        const long long arrivalDelta = arrivalTick - m_PreviousArrivalTick;
+        const long long frameTicks = VCTi_GetAudioFrameTicks();
+        const long long jitterDelta = arrivalDelta - frameTicks;
+        const long long absoluteJitter = jitterDelta < 0 ? -jitterDelta : jitterDelta;
+        m_JitterAverage = (m_JitterAverage * m_JitterSampleCount + absoluteJitter) /
+                          (m_JitterSampleCount + 1);
+        ++m_JitterSampleCount;
+        m_Info.m_JitterAverage = m_JitterAverage;
+        m_Info.m_JitterOffset = jitterDelta;
+    }
+
+    m_PreviousArrivalTick = arrivalTick;
+    m_LastSequence = pPacket->m_Sequence;
+    m_Info.m_LastSequence = m_LastSequence;
+    m_Info.m_QueuedPacketCount = vct_count_audio_queue(m_StreamIndex);
     return 1;
 }
 

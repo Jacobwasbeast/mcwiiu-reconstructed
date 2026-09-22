@@ -2,7 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_CHAT_HANDSFREE_HPP
 
 #include <stdint.h>
-#include "vendor/__N_18_chat_HandsFree_cpp_120265b3.hpp"
+#include "vendor/TmcHandsFree.hpp"
 
 namespace nn { namespace pia { namespace chat {
 
@@ -17,6 +17,17 @@ public:
                    int agcLevel);
     int Process(short* output, const short* inputLeft,
                 const short* inputRight, const short* inputReference);
+
+    void EnableEchoCanceller(bool enabled);
+    bool IsEnableEchoCanceller() const;
+    void SetEchoCancellerMode(TMC_HF_EC_MODE mode);
+    void EnableNoiseSuppressor(bool enabled);
+    bool IsEnableNoiseSuppressor() const;
+    void SetNoiseSuppressorLevel(int level);
+    void EnableAgc(bool enabled);
+    bool IsEnableAgc() const;
+    void SetAGCLevel(int level);
+    void Trace(unsigned long long value) const;
 
 private:
     struct TmcConfig
