@@ -22,6 +22,7 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -199,6 +200,10 @@ Rabbit::Rabbit(Level* level)
 {
     fjDerivedCtorCalls();
     setSize(0.4f, 0.5f);
+    delete mJumpControl;
+    mJumpControl = new RabbitJumpControl(this);
+    delete mMoveControl;
+    mMoveControl = new RabbitMoveControl(this);
     setSpeedModifier(0.0);
 }
 
@@ -299,6 +304,7 @@ bool Rabbit::checkSpawnRules()
 void Rabbit::defineSynchedData()
 {
     Animal::defineSynchedData();
+    mEntityData->createDateItem(DATA_RABBIT_TYPE, 0);
 }
 
 void Rabbit::setLandingDelay()
@@ -358,6 +364,8 @@ void Rabbit::aiStep()
 void Rabbit::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(3.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3f);
 }
 
 void Rabbit::addDataWalkers(DataFixerUpper* fixer)
