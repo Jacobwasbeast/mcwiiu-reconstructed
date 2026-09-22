@@ -5,6 +5,7 @@
 
 namespace nn { namespace pia { namespace common {
 
+
 struct ListNode
 {
     ListNode* prev;
@@ -24,6 +25,8 @@ public:
     ListNode* PopBackNode();
     ListNode* Sentinel();
     const ListNode* Sentinel() const;
+    void ClearNode();
+    void RotateNode(ListNode* node);
 
 private:
     ListNode mSentinel;

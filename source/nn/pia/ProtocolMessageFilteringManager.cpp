@@ -3,11 +3,11 @@
 #include "platform/wiiu/pead.hpp"
 
 #include <new>
+#include "nn/pia/transport/TransportSupport.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
-extern unsigned char IsInitialized();
-extern unsigned char IsInSetupMode();
+
 
 ProtocolMessageFilteringManager* g_piaProtocolMessageFilteringManager = 0;
 
@@ -100,8 +100,5 @@ unsigned int ProtocolMessageFilteringManager::RemoveNoFilteringProtocolType(
     return 1;
 }
 
-void ProtocolMessageFilteringManager::Trace(unsigned long long) const
-{
-}
 
 }}}

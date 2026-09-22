@@ -5,6 +5,7 @@
 
 namespace nn { namespace pia { namespace transport {
 
+
 class ProtocolMessageFilteringManager
 {
 public:

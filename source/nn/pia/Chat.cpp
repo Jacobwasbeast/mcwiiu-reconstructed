@@ -86,9 +86,6 @@ unsigned char IsInSetupMode()
 
 }
 
-void Assert(const char*, const char*, unsigned int, const char*, ...)
-{
-}
 
 }
 }

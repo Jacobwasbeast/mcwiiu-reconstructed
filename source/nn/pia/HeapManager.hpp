@@ -8,6 +8,7 @@
 
 namespace nn { namespace pia { namespace common {
 
+
 class HeapManager
 {
 public:
@@ -18,6 +19,8 @@ public:
     static void Setup(ModuleType moduleType, unsigned int size,
                       const pead::SafeStringBase<char>& name);
     static void Cleanup(ModuleType moduleType);
+    static void Initialize(void* memory, unsigned int size);
+    static void Finalize();
 
 private:
     static unsigned int convert(ModuleType moduleType);

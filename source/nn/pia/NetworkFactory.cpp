@@ -6,6 +6,7 @@
 #include <new>
 
 namespace nn
+
 {
 namespace pia
 {

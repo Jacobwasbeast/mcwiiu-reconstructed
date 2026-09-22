@@ -4,6 +4,7 @@
 #include "nn/pia/Common.hpp"
 
 namespace nn
+
 {
 namespace pia
 {
@@ -24,7 +25,7 @@ public:
     unsigned int m_mtuSize;
     unsigned int m_minMtuSize;
     unsigned int m_maxMtuSize;
-    unsigned int m_field0c;
+    unsigned int m_payloadSizeLimit;
     unsigned int m_signatureSize;
 };
 

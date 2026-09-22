@@ -2,6 +2,7 @@
 
 namespace nn { namespace pia { namespace common {
 
+
 namespace
 {
 pead::Heap* g_heaps[21] = {};
@@ -57,6 +58,16 @@ void HeapManager::Cleanup(ModuleType moduleType)
         return;
     heap->destroy();
     g_heaps[heapIndex] = 0;
+}
+
+void HeapManager::Initialize(void* memory, unsigned int size)
+{
+    (void)memory;
+    (void)size;
+}
+
+void HeapManager::Finalize()
+{
 }
 
 }}}

@@ -130,15 +130,3 @@ unsigned int deserializeU32(const unsigned char* buffer)
 }
 }
 
-namespace nn
-{
-namespace pia
-{
-
-void EmbedMiddlewareInfo()
-{
-    SetModuleId("[SDK+Nintendo:PIA_5_9_0]");
-}
-
-}
-}

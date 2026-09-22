@@ -2,15 +2,15 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_RECONSTRUCTION_HPP
 
 #include <stdint.h>
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/WatermarkManager.hpp"
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/ProtocolMessageFilteringManager.hpp"
 #include "nn/pia/NetworkFactory.hpp"
+#include "nn/pia/session/SessionSearchCriteria.hpp"
 
 namespace nn { namespace pia {
 
-typedef int Result;
-typedef short StationIndex;
 
 namespace common {
 
@@ -127,6 +127,7 @@ public:
     void Initialize(NetworkFactory* networkFactory);
     Result Startup(PacketHandler* packetHandler);
     Result StartupProtocols();
+    Result Dispatch();
     void CleanupProtocols();
     UnreliableProtocol* AllocProtocol(unsigned int size);
     ProtocolId CreateProtocolImpl(Protocol* protocol, ProtocolId id);
@@ -143,22 +144,6 @@ extern ProtocolManager* g_piaProtocolManager;
 }
 
 namespace session {
-
-class SessionSearchCriteria
-{
-public:
-    SessionSearchCriteria();
-    virtual ~SessionSearchCriteria();
-    virtual Result SetResultRange(unsigned int offset, unsigned int size);
-    virtual void Reset();
-    unsigned int GetResultRangeOffset() const;
-    unsigned int GetResultRangeSize() const;
-    int GetKeyType() const;
-
-    unsigned int m_resultRangeOffset;
-    unsigned int m_resultRangeSize;
-    int m_keyType;
-};
 
 class SessionStationInfo
 {

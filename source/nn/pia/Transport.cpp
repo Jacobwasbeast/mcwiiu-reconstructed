@@ -1,18 +1,21 @@
 #include "nn/pia/Transport.hpp"
-#include "nn/pia/transport/StationConnectionInfoTable.hpp"
-#include "nn/pia/transport/StationManager.hpp"
-#include "nn/pia/transport/NetworkRttManager.hpp"
-#include "nn/pia/common/SessionStateMonitoringContent.hpp"
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
+#include "nn/pia/transport/NetworkRttManager.hpp"
+#include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/common/IPacketOutput.hpp"
 #include "nn/pia/PayloadSizeManager.hpp"
 #include "nn/pia/common/Job.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/transport/TransportAnalysisData.hpp"
 #include "nn/pia/transport/RelayStationPacketHandler.hpp"
 #include "nn/pia/transport/ResendingMessageManager.hpp"
 #include "nn/pia/transport/ThreadStreamManager.hpp"
 #include "nn/pia/transport/TransportAnalyzer.hpp"
 #include "nn/pia/transport/TransportSupport.hpp"
 namespace nn { namespace pia { namespace transport {
+
 Transport* g_piaTransport = 0;
 
 common::IPacketOutput* Transport::GetOutputStream()
@@ -96,9 +99,9 @@ void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
 
 Transport::Transport()
     : m_networkFactory(0), m_packetHandler(0), m_stationNum(0),
-      m_startedUp(false), m_field2f(false), m_connectionError(0), m_dispatchJob(0),
-      m_field38(0), m_relayRouteManager(0), m_field40(0), m_field50(false), m_field51(false),
-      m_field54(0), m_field58(0), m_stationIdTable(0),
+      m_startedUp(false), m_connectionRouteRelay(false), m_connectionError(0), m_dispatchJob(0),
+      m_connectionState(0), m_relayRouteManager(0), m_analysisInterval(0), m_keepAliveEnabled(false), m_monitoringEnabled(false),
+      m_dispatchCount(0), m_lastConnectionResult(0), m_stationIdTable(0),
       m_transportStatus(static_cast<Result>(0x10c08)), m_localStationId(0)
 {
     m_time.SetNow();
@@ -113,7 +116,7 @@ Result Transport::Startup(unsigned int payloadSize,
         return static_cast<Result>(0x10c08);
 
     Result result = common::g_payloadSizeManager->SetMtuSize(
-        payloadSize - common::g_payloadSizeManager->m_field0c);
+        payloadSize - common::g_payloadSizeManager->m_payloadSizeLimit);
     if (result != 0)
         return result;
 
@@ -152,14 +155,59 @@ Result Transport::Startup(unsigned int payloadSize,
 
     m_connectionError = 0;
     m_startedUp = true;
-    m_startupTime = m_time;
-    m_field54 = 0;
-    m_field2f = false;
+    m_lastAnalysisTime = m_time;
+    m_dispatchCount = 0;
+    m_connectionRouteRelay = false;
 
     const Result protocolResult = m_protocolManager.StartupProtocols();
     if (protocolResult != 0)
         return protocolResult;
     return 0;
+}
+
+Result Transport::dispatch()
+{
+    m_time.SetNow();
+    ++m_dispatchCount;
+    if (g_piaThreadStreamManager == 0)
+        return static_cast<Result>(0x10c08);
+
+    Result result = g_piaThreadStreamManager->m_sendThreadStream->GetLastResult();
+    if (result != 0)
+        m_connectionError = result;
+    result = g_piaThreadStreamManager->m_receiveThreadStream->GetLastResult();
+    if (result != 0)
+        m_connectionError = result;
+
+    m_packetHandler->BeginDispatch(m_time);
+    result = m_protocolManager.Dispatch();
+    if (result == 0)
+        result = g_piaResendingMessageManager->Dispatch();
+    m_packetHandler->EndDispatch(m_time);
+    if (result == 0)
+        updateTransportAnalyzer();
+    return result;
+}
+
+void Transport::updateTransportAnalyzer()
+{
+    if (!m_startedUp || m_analysisInterval == 0 || g_piaTransportAnalyzer == 0)
+        return;
+    const int elapsedSeconds = static_cast<int>(
+        static_cast<long long>(m_time.m_tick - m_lastAnalysisTime.m_tick) /
+        common::TimeSpan::GetTicksPerSec().m_tick);
+    if (elapsedSeconds < m_analysisInterval || g_piaTransportAnalyzer->Update() != 0)
+        return;
+
+    m_lastAnalysisTime = m_time;
+    TransportAnalysisData data;
+    data.m_packetAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[0];
+    data.m_receivedPacketAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[1];
+    data.m_sentPacketAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[2];
+    data.m_retransmittedPacketAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[3];
+    data.m_connectionAnalysisData = g_piaTransportAnalyzer->m_connectionAnalysisData;
+    data.m_dispatchCount = g_piaTransportAnalyzer->m_field110c;
+    data.Print(m_keepAliveEnabled, m_monitoringEnabled);
 }
 
 Result Transport::ConvertToStationIndex(StationIndex* index,

@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_NETWORKFACTORY_HPP
 
 namespace nn
+
 {
 namespace pia
 {

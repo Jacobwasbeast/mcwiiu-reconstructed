@@ -5,6 +5,7 @@
 #include <new>
 
 namespace nn
+
 {
 namespace pia
 {
@@ -22,7 +23,7 @@ PayloadSizeManager::PayloadSizeManager()
     : m_mtuSize(0x5c0),
       m_minMtuSize(0xffffffffU),
       m_maxMtuSize(0),
-      m_field0c(0),
+      m_payloadSizeLimit(0),
       m_signatureSize(0)
 {
 }

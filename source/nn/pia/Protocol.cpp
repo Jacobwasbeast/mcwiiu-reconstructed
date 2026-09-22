@@ -8,6 +8,7 @@
 
 namespace nn { namespace pia { namespace transport {
 
+
 unsigned char g_piaTransportInitialized = 0;
 unsigned char g_piaTransportInSetupMode = 0;
 unsigned short g_piaProtocolDefaultType = 0;

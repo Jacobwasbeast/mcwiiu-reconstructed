@@ -2,6 +2,7 @@
 
 namespace nn { namespace pia {
 
+
 namespace
 {
 unsigned int g_stackTop;

@@ -6,17 +6,29 @@
 #include "nn/pia/common/CryptoSetting.hpp"
 #include "nn/pia/common/Time.hpp"
 namespace nn { namespace pia { namespace common {
+
 class Job;
 class IPacketOutput;
 }}}
 namespace nn { namespace pia { namespace transport {
+class NetworkFactory;
+class ProtocolManager;
+class PacketHandler;
 class RelayRouteManager;
 class Transport {
 public:
+    class Setting
+    {
+    public:
+        Setting(NetworkFactory*, unsigned short, unsigned int, unsigned int,
+                int, bool, bool);
+    };
     Transport();
     ~Transport();
     Result Startup(unsigned int payloadSize, const common::CryptoSetting* cryptoSetting);
     Result UpdateSetting(const common::CryptoSetting* cryptoSetting);
+    Result dispatch();
+    void updateTransportAnalyzer();
     common::IPacketOutput* GetOutputStream();
     void OutputStreamUpdateEvent();
     void Cleanup();
@@ -42,19 +54,19 @@ public:
     PacketHandler* m_packetHandler;
     unsigned short m_stationNum;
     bool m_startedUp;
-    bool m_field2f;
+    bool m_connectionRouteRelay;
     Result m_connectionError;
     common::Job* m_dispatchJob;
-    unsigned int m_field38;
+    unsigned int m_connectionState;
     RelayRouteManager* m_relayRouteManager;
-    unsigned int m_field40;
-    common::Time m_startupTime;
-    bool m_field50;
-    bool m_field51;
-    unsigned int m_field54;
-    unsigned int m_field58;
+    int m_analysisInterval;
+    common::Time m_lastAnalysisTime;
+    bool m_keepAliveEnabled;
+    bool m_monitoringEnabled;
+    unsigned int m_dispatchCount;
+    unsigned int m_lastConnectionResult;
     StationIdTable* m_stationIdTable;
-    unsigned int m_field60;
+    unsigned int m_stationConnectionState;
     Result m_transportStatus;
     std::uint64_t m_localStationId;
 };

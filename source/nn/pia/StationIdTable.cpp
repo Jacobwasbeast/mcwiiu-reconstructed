@@ -6,6 +6,7 @@
 
 namespace nn { namespace pia { namespace transport {
 
+
 StationIdTable::StationIdTable()
     : m_entryOffset(0), m_entryNum(0), m_maxEntryNum(0), m_storage(0),
       m_availableEntryNum(0)
@@ -208,9 +209,6 @@ void StationIdTable::SetAvailableEntryNum(unsigned int count)
         m_availableEntryNum = count;
 }
 
-void StationIdTable::Trace(std::uint64_t) const
-{
-}
 
 StationIndex StationIdTable::FindUnsafe(std::uint64_t stationId) const
 {

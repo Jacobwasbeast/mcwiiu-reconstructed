@@ -7,10 +7,13 @@ namespace nn
 {
 namespace pia
 {
+typedef int Result;
+typedef short StationIndex;
+
 namespace common
 {
 
-typedef int Result;
+typedef ::nn::pia::Result Result;
 
 Result Initialize(void* workMemory, unsigned int workMemorySize);
 Result BeginSetup();

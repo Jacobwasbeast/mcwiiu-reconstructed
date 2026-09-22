@@ -1,11 +1,15 @@
 #include "nn/pia/Reconstruction.hpp"
+#include "vendor/__N_29_transport_ProtocolManager_cpp_70a76ebe.hpp"
 #include "nn/pia/HeapManager.hpp"
 #include "platform/wiiu/pead.hpp"
-#include "vendor/__N_29_transport_ProtocolManager_cpp_70a76ebe.hpp"
 
 #include <string.h>
 
 namespace nn { namespace pia { namespace transport {
+
+unsigned int g_piaProtocolTypeMask = 0;
+
+
 
 namespace
 {
@@ -71,6 +75,22 @@ Result ProtocolManager::StartupProtocols()
     return 0;
 }
 
+Result ProtocolManager::Dispatch()
+{
+    if (m_started == 0)
+        return static_cast<Result>(0x10c08);
+
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        Protocol* protocol = static_cast<Protocol*>(node);
+        const Result result = protocol->Dispatch();
+        if (result != 0)
+            return result;
+    }
+    return 0;
+}
+
 void ProtocolManager::CleanupProtocols()
 {
     common::ListNode* sentinel = m_protocols.Sentinel();
@@ -114,8 +134,7 @@ ProtocolId ProtocolManager::CreateProtocolImpl(Protocol* protocol, ProtocolId id
     {
         g_piaProtocolMessageFilteringManager->AddNoFilteringProtocolType(type);
     }
-    g_piaProtocolTypeMask &=
-        ~__N_29_transport_ProtocolManager_cpp_70a76ebe::getProtocolTypeBit(type);
+    g_piaProtocolTypeMask &= ~__N_29_transport_ProtocolManager_cpp_70a76ebe::getProtocolTypeBit(type);
     return ProtocolId(value);
 }
 

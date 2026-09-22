@@ -3,10 +3,11 @@
 
 #include <cstdint>
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/ListBase.hpp"
 
 namespace nn { namespace pia { namespace transport {
+
 
 class StationIdTable
 {
@@ -30,6 +31,9 @@ public:
     Result FindByStationIndex(Entry*, StationIndex) const;
     Result FindByUniqueId(Entry*, std::uint64_t) const;
     void RemoveByStationId(std::uint64_t);
+    void RemoveByStationIndex(StationIndex);
+    void RemoveByUniqueId(std::uint64_t);
+    Entry* FindUnsafe(StationIndex) const;
     StationIndex FindUnsafe(std::uint64_t stationId) const;
     void SetJoinEventNotifiedByStationId(std::uint64_t, bool);
     void SetJoinEventNotifiedByStationIndex(StationIndex, bool);
