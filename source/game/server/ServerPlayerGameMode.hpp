@@ -89,7 +89,7 @@ public:
 
 private:
     Level* mLevel;
-    boost::shared_ptr<Player> mPlayer;
+    ServerPlayer* mPlayer;
     bool mDestroying;
     int mDestroyProgress;
     BlockPos mDestroyPos;

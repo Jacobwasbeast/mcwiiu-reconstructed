@@ -31,6 +31,7 @@ class ServerGamePacketListenerImpl;
 class ServerLevel;
 class ServerPlayerGameMode;
 class Stat;
+class Biome;
 class BlockEntity;
 class Container;
 
@@ -63,48 +64,43 @@ public:
     std::list<ChunkPos> mLoadedChunks;
     std::vector<int32_t> mSentEntityIds;
     boost::unordered_set<ChunkPos, ChunkPosKeyHash, ChunkPosKeyEq> mTrackedChunks;   
-    float mViewDistance;
-    int32_t mChunkX;
-    int32_t mChunkZ;
-    int32_t mChunkRadius;
-    int32_t mChunkIndex;
-    int32_t mChunkFlags;
-    float mLastActionTime;
-    int32_t mDimensionChangeDelay;
-    uint8_t mSpectatorState;
-    uint8_t mPadding3[4];
-    int32_t mExperienceLevel;
-    int32_t mExperienceTotal;
-    int64_t mLastTick;
-    int32_t mRemoveEntityCount;
-    int32_t mRespawnDimension;
-    uint32_t mEntitiesToRemove;   
+    int32_t mState;
+    Biome* mLastBiome;
+    int64_t mChunkRequestTime;
     double* mLevitationSourceY;
-    uint8_t mChangingDimension;
-    uint8_t mPadding4[4];
+    float mLastRecordedHealth;
+    int32_t mLastRecordedFood;
+    int32_t mLastRecordedAir;
+    int32_t mLastRecordedArmor;
+    int32_t mLastRecordedExperienceLevel;
+    int32_t mLastRecordedTotalExperience;
+    float mLastSentHealth;
+    int32_t mLastSentFood;
+    bool mLastSentSaturationWasZero;
+    int32_t mLastSentTotalExperience;
     int32_t mSpawnInvulnerableTime;
-    uint8_t mPvpState;
-    uint8_t mPadding5[4];
-    int32_t mViewDistanceModifier;
+    int64_t mLastActionTime;
+    int32_t mLastChunkSendingTick;
+    boost::shared_ptr<void> mSharedState;
+    uint8_t mChangingDimension;
+    BlockPos* mFallStartPosition;
+    bool mDisconnected;
+    int32_t mContainerCounter;
     bool mIsChangingQuantityOnly;
-    uint8_t mPadding6[4];
     int32_t latency;
     bool mRespawnState;
     uint8_t mFallFlying;
     uint8_t mChangedDimension;
-    uint8_t mPadding7[4];
-    int32_t mTeleportPending;
-    int32_t mCameraEntity;
-    int32_t mType;
-    bool mDisconnected;
-    uint8_t mPadding8[3];
-    int32_t mContainerCounter;
+    int32_t mPvpState;
+    int32_t mCauseOfDeathId;
+    int32_t mPlayerWeaponId;
+    int32_t mChunkRadius;
 
     
     ServerPlayer(MinecraftServer* parameterOne, ServerLevel* parameterTwo, const std::wstring& parameterThree, ServerPlayerGameMode* parameterFour);   
     ~ServerPlayer();   
        
-    void sendMessage(uint32_t parameterOne, int32_t* parameterTwo, uint32_t parameterThree, std::wstring* parameterFour, uint32_t parameterFive);   
+    void sendMessage(uint32_t parameterOne, int32_t* parameterTwo, uint32_t parameterThree, std::wstring* parameterFour, uint32_t parameterFive);
     uint32_t hasPermission(uint32_t parameterOne);   
     BlockPos getCommandSenderBlockPosition();   
     virtual void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);
@@ -150,7 +146,7 @@ public:
     uint64_t take(boost::shared_ptr<Entity>* parameterOne, int32_t parameterTwo);   
     int32_t startSleepInBed(BlockPos* parameterOne, bool parameterTwo);   
     uint64_t stopSleepInBed(bool parameterOne, bool parameterTwo, bool parameterThree);   
-    uint32_t startRiding(boost::shared_ptr<Entity>* parameterOne);   
+    virtual bool startRiding(boost::shared_ptr<Entity> vehicle);
     void stopRiding();   
     void stopRidingBeforeTeleport();   
     uint8_t isChangingDimension();
@@ -209,7 +205,7 @@ public:
     void getLastActionTime();
 };
 
-#if UINTPTR_MAX == 0xffffffffu
+#if UINTPTR_MAX == 0xffffffffu && !defined(RECON_NATIVE)
 static_assert(offsetof(ServerPlayer, mRespawnState) == 0x934,
               "ServerPlayer respawn state must retain the Wii U +0x934 byte");
 static_assert(offsetof(ServerPlayer, mFallFlying) == 0x935,

@@ -3,6 +3,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#if defined(RECON_NATIVE)
+#include <cerrno>
+#include <cstdio>
+#endif
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -81,7 +85,7 @@ extern void PIXAddNamedCounter(float colour, const char* name, ...);
 MinecraftServer* gMinecraftServer = 0;
 
 static bool sHaltForceFlag = false;
-static bool sHaltRequested = false;
+bool sHaltRequested = false;
 extern CStorage* gStorage;
 
 MinecraftServer::MinecraftServer()
@@ -500,8 +504,14 @@ bool MinecraftServer::initServer(long long seed, _NetworkGameInitData* initData,
     }
     std::wstring levelTypeName = mSettings->getString(eServerSetting_LevelType, levelTypeDefault);
 
-    LevelType* resolvedLevelType = LevelType::getLevelType(levelTypeName);
+    LevelType* resolvedLevelType =
+        LevelType::getLevelType(levelTypeName);
+
+
     LevelType* seedLevelType = 0;
+
+
+
     if (initData != 0)
         seedLevelType = reinterpret_cast<LevelType*>(initData->m_value13);
     if (seedLevelType == 0)
@@ -516,7 +526,22 @@ bool MinecraftServer::initServer(long long seed, _NetworkGameInitData* initData,
         progressRenderer->progressStage(static_cast<int>(0xf990f518u));
 
     if (dedicated)
-        BiomeSource::findSeed(seedLevelType);
+    {
+        seed = BiomeSource::findSeed(seedLevelType);
+#if defined(RECON_NATIVE)
+        const char* fixture = std::getenv("MC_WORLD_SEED");
+        if (fixture != NULL && *fixture != '\0')
+        {
+            char* end = NULL;
+            errno = 0;
+            const long long fixtureSeed = std::strtoll(fixture, &end, 10);
+            if (errno == 0 && end != fixture && *end == '\0')
+                seed = fixtureSeed;
+            else
+                std::fprintf(stderr, "[native-world] invalid MC_WORLD_SEED: %s\n", fixture);
+        }
+#endif
+    }
 
     int buildHeight = mSettings->getInt(eServerSetting_MaxBuildHeight, 0x100);
     setMaxBuildHeight(buildHeight);
@@ -546,6 +571,10 @@ bool MinecraftServer::initServer(long long seed, _NetworkGameInitData* initData,
     }
 
     levelType = resolvedLevelType;
+#if defined(RECON_NATIVE)
+    std::fprintf(stderr, "[native-world] selected seed %lld\n", seed);
+    std::fflush(stderr);
+#endif
     levelLoaded = loadLevel(0, levelName, seed, levelType, initData);
 
     if (initData != 0 && initData->m_value2 != 0)
@@ -811,7 +840,8 @@ void MinecraftServer::run(long long seed, void* argument)
         {
             int x = 0;
             int z = 0;
-            if (gApp.GetTerrainFeaturePosition(static_cast<_eTerrainFeatureType>(1), &x, &z))
+            const _eTerrainFeatureType spawnFeatureType = static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 1);
+            if (gApp.GetTerrainFeaturePosition(spawnFeatureType, &x, &z))
             {
                 levelData->setXSpawn(x);
                 levelData->setZSpawn(z);

@@ -124,6 +124,7 @@ public:
     int getGameModeId() const { return gameModeId; }
 
 private:
+    friend class PlayerList;
     ConsoleSchematicFile* schematicFiles[8];
     FillTool* fillTools[8];
     Random random;

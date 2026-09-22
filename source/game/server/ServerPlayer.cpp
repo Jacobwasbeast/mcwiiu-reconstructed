@@ -60,6 +60,11 @@
 #include "game/core/GameType.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayerGameMode.hpp"
+#include "game/server/ServerItemCooldowns.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/world/WorldBorder.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/util/Random.hpp"
 #include "game/core/GameRule.hpp"
 #include "game/core/GameRulesInstance.hpp"
 #include "game/network/INetworkPlayer.hpp"
@@ -282,17 +287,74 @@ static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
     : Player((Level*)level, name), mConnection(), mServer(server), mGameMode(gameMode),
-      mLoadedChunks(), mSentEntityIds(), mTrackedChunks(), mViewDistance(0.0f), mChunkX(0), mChunkZ(0), mChunkRadius(0),
-      mChunkIndex(0), mChunkFlags(0), mLastActionTime(0.0f), mDimensionChangeDelay(0), mSpectatorState(0), mExperienceLevel(0),
-      mExperienceTotal(0), mLastTick(0), mRemoveEntityCount(0), mRespawnDimension(0), mEntitiesToRemove(0), mLevitationSourceY(NULL), mChangingDimension(0),
-      mSpawnInvulnerableTime(0), mPvpState(0), mViewDistanceModifier(0), mIsChangingQuantityOnly(false), latency(0),
-      mRespawnState(false), mFallFlying(0), mChangedDimension(0), mTeleportPending(0), mCameraEntity(0), mType(0), mContainerCounter(0)
+      mLoadedChunks(), mSentEntityIds(), mTrackedChunks(), mState(0), mChunkRequestTime(0),
+      mLevitationSourceY(NULL), mLastRecordedHealth(std::numeric_limits<float>::min()),
+      mLastRecordedFood(std::numeric_limits<int>::min()), mLastRecordedAir(std::numeric_limits<int>::min()),
+      mLastRecordedArmor(std::numeric_limits<int>::min()), mLastRecordedExperienceLevel(std::numeric_limits<int>::min()),
+      mLastRecordedTotalExperience(std::numeric_limits<int>::min()), mLastSentHealth(-100000000.0f),
+      mLastSentFood(-99999999), mLastSentSaturationWasZero(true), mLastSentTotalExperience(-99999999),
+      mSpawnInvulnerableTime(0), mLastActionTime(0), mLastChunkSendingTick(0), mSharedState(),
+      mChangingDimension(0), mFallStartPosition(NULL), mDisconnected(false), mContainerCounter(0),
+      mIsChangingQuantityOnly(false), latency(0), mRespawnState(false), mFallFlying(0),
+      mChangedDimension(0), mCauseOfDeathId(-1), mPlayerWeaponId(-1), mChunkRadius(0)
 {
+    LivingEntity::fjDerivedCtorCalls();
+    mGameMode->mPlayer = this;
     mDisconnected = false;
+    mLastSentX = 0.0;
+    mLastSentZ = 0.0;
+    mSpawnInvulnerableTime = Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ? 0 : 60;
+
+    BlockPos spawn = level->getSharedSpawnPos();
+    if (!level->mDimension->isHasCeiling() &&
+        level->getLevelData()->getGameType() != GameType::ADVENTURE)
+    {
+        level->setFindingSpawn(true);
+        int radius = std::max(0, server->getSpawnRadius(level));
+        int borderDistance = static_cast<int>(std::floor(
+            level->getWorldBorder()->getDistanceToBorder(spawn.x, spawn.z)));
+        radius = std::min(radius, borderDistance);
+        if (borderDistance < 2)
+            radius = 1;
+        int minCoordinate = (-level->mDimension->getXZSize() * 16) >> 1;
+        int maxCoordinate = (level->mDimension->getXZSize() * 16 >> 1) - 1;
+        double originalX = spawn.x + 0.5;
+        double originalY = spawn.y;
+        double originalZ = spawn.z + 0.5;
+        int attempts = 0;
+        int waterDepth;
+        boost::shared_ptr<Player> nearbyPlayer;
+        do
+        {
+            do
+            {
+                int dx = mRandom->nextInt(radius * 2 + 1) - radius;
+                int dz = mRandom->nextInt(radius * 2 + 1) - radius;
+                spawn = level->getTopSolidBlockPos(spawn.offset(dx, 0, dz));
+            } while (spawn.x < minCoordinate || spawn.x > maxCoordinate ||
+                     spawn.z < minCoordinate || spawn.z > maxCoordinate);
+            waterDepth = 0;
+            while (waterDepth < 128)
+            {
+                Block* block = level->getBlockState(BlockPos(spawn.x, waterDepth, spawn.z))->getBlock();
+                if (block != Blocks::FLOWING_WATER && block != Blocks::WATER)
+                    break;
+                ++waterDepth;
+            }
+            ++attempts;
+            nearbyPlayer = level->getNearestPlayer(originalX, originalY, originalZ, 3.0, false, -1.0);
+        } while (waterDepth > 1 && !nearbyPlayer && attempts < 20);
+        level->setFindingSpawn(false);
+    }
+    mMaxUpStep = 1.0f;
+    moveTo(spawn, 0.0f, 0.0f);
+    mField0x738 = new ServerItemCooldowns(this);
 }
 
 ServerPlayer::~ServerPlayer()
 {
+    delete mFallStartPosition;
+    delete mGameMode;
     delete mLevitationSourceY;
 }
 
@@ -424,7 +486,7 @@ void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
     for (std::list<ChunkPos>::iterator it = mLoadedChunks.begin(); it != mLoadedChunks.end();)
     {
         const ChunkPos chunkPos = *it;
-        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
             MasterGameMode* gameMode = mServer->mMasterGameMode;
             if (mShowOnMaps && gameMode != NULL &&
@@ -441,14 +503,14 @@ void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
             continue;
         }
 
-        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && mServer->mMasterGameMode != NULL &&
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mServer->mMasterGameMode != NULL &&
             mServer->mMasterGameMode->IsChunkWithinLobbyRegionOfRoundLevel(chunkPos.x, chunkPos.z))
         {
             ++it;
             continue;
         }
 
-        if (parameterTwo && Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) &&
+        if (parameterTwo && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
             mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() == 0)
         {
             ++it;
@@ -468,7 +530,7 @@ void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
     if (!foundClosest)
         return;
 
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && mServer->mMasterGameMode != NULL)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mServer->mMasterGameMode != NULL)
     {
         if (mServer->mMasterGameMode->GetChunkHistory() == 0)
             forceImmediateResend = true;
@@ -521,7 +583,7 @@ void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
         mLoadedChunks.remove(closestChunk);
 
     boost::shared_ptr<Packet> packet;
-    if (parameterTwo && Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) &&
+    if (parameterTwo && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
         mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() != 0)
     {
         packet.reset(new BlockRegionUpdatePacket(
@@ -811,7 +873,7 @@ void ServerPlayer::addAdditonalSaveData(CompoundTag* parameterOne)
 void ServerPlayer::giveExperienceLevels(int32_t parameterOne)
 {
     Player::giveExperienceLevels(parameterOne);
-    mExperienceLevel = -1;
+    mLastSentTotalExperience = -1;
 }
 
 void ServerPlayer::onEnchantmentPerformed(int32_t parameterOne)
@@ -846,6 +908,9 @@ void ServerPlayer::tick()
 
 uint64_t ServerPlayer::die(DamageSource* parameterOne)
 {
+
+
+
     Player::die(parameterOne);
     return 0;
 }
@@ -855,7 +920,7 @@ int32_t ServerPlayer::hurt(uint64_t parameterOne, float parameterTwo)
     const DamageSource* source = reinterpret_cast<const DamageSource*>(static_cast<uintptr_t>(parameterOne));
 
     if (isInvulnerableTo(source) ||
-        ((!mServer->isPvpAllowed() || Minecraft::InMiniGame(static_cast<EMiniGameId>(1), false)) &&
+        ((!mServer->isPvpAllowed() || Minecraft::InMiniGame(eMiniGameId_Battle, false)) &&
          mSpawnInvulnerableTime > 0 &&
          source != DamageSource::OUT_OF_WORLD && source != DamageSource::CREATIVE_PLAYER))
         return 0;
@@ -1061,18 +1126,18 @@ uint64_t ServerPlayer::stopSleepInBed(bool parameterOne, bool parameterTwo, bool
     return 0;
 }
 
-uint32_t ServerPlayer::startRiding(boost::shared_ptr<Entity>* parameterOne)
+bool ServerPlayer::startRiding(boost::shared_ptr<Entity> vehicle)
 {
     boost::shared_ptr<Entity> vehicleBefore = getVehicle();
 
-    if (!Player::startRiding(*parameterOne))
-        return 0;
+    if (!Player::startRiding(vehicle))
+        return false;
 
     boost::shared_ptr<Entity> vehicleAfter = getVehicle();
     if (vehicleAfter.get() != vehicleBefore.get() && mConnection != NULL)
         mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
 
-    return 1;
+    return true;
 }
 
 void ServerPlayer::stopRiding()
@@ -1099,7 +1164,7 @@ uint8_t ServerPlayer::isChangingDimension()
 
 bool ServerPlayer::isInvulnerableTo(const DamageSource* parameterOne)
 {
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) &&
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
         ((parameterOne->isFire() && !Entity::isInLava()) || !TakeGlideCollisionDamage()))
     {
         return true;
@@ -1505,6 +1570,8 @@ uint64_t ServerPlayer::restoreFrom(boost::shared_ptr<Player>* parameterOne, bool
     }
 
     mEnchantmentSeed = oldPlayer->mEnchantmentSeed;
+
+
     mEnderChestInventory = oldPlayer->mEnderChestInventory;
 
     if (mEntityData != NULL && oldPlayer->mEntityData != NULL)
@@ -1603,7 +1670,7 @@ void ServerPlayer::setGameMode(GameType* parameterOne)
 
 bool ServerPlayer::isSpectator()
 {
-    return mSpectatorState != 0;
+    return mGameMode != NULL && mGameMode->GetGameType() == GameType::SPECTATOR;
 }
 
 bool ServerPlayer::isCreative()
@@ -1614,7 +1681,7 @@ bool ServerPlayer::isCreative()
 
 void ServerPlayer::resetLastActionTime()
 {
-    mLastTick = System::processTimeInMilliSecs();
+    mLastActionTime = System::processTimeInMilliSecs();
 }
 
 uint64_t ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity>* parameterOne)
@@ -1647,9 +1714,9 @@ void ServerPlayer::updateInvisibilityStatus()
 
 void ServerPlayer::processDimensionDelay()
 {
-    if (mDimensionChangeDelay < 1 || mChangingDimension != 0)
+    if (mPortalCooldown < 1 || mChangingDimension != 0)
         return;
-    --mDimensionChangeDelay;
+    --mPortalCooldown;
 }
 
 uint64_t ServerPlayer::attack(boost::shared_ptr<Entity> parameterOne)

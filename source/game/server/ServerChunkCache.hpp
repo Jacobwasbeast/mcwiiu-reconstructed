@@ -60,7 +60,7 @@ public:
     static unsigned int runSaveThreadProc(void* data);
     virtual int getLoadedChunks();
     void setOverrideBoundFunction(bool (*function)(void*, int, int), void* data);
-    virtual unsigned int getCache();
+    virtual LevelChunk** getCache();
 
 private:
     OSFastMutex m_mutex;

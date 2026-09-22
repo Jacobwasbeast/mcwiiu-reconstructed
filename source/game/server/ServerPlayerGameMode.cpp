@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "game/core/GameRulesInstance.hpp"
+#include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/InteractionResultHolder.hpp"
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
@@ -49,7 +50,9 @@ void ServerPlayerGameMode::setLevel(ServerLevel* level) { mLevel = level; }
 void ServerPlayerGameMode::updateGameMode(const GameType* gameType)
 {
     if (mGameType == GameType::NOT_SET)
-        SetGameType(gameType);
+        mGameType = gameType;
+
+    SetGameType(gameType);
 }
 void ServerPlayerGameMode::setGameRules(GameRulesInstance* gameRules) { mGameRules = gameRules; }
 void ServerPlayerGameMode::nullifyGameRules() { mGameRules = NULL; }
@@ -62,6 +65,9 @@ void ServerPlayerGameMode::RestoreFromOld(ServerPlayerGameMode* oldMode)
 }
 boost::shared_ptr<ServerPlayer> ServerPlayerGameMode::getServerPlayer() const
 {
+    if (mPlayer == NULL)
+        return boost::shared_ptr<ServerPlayer>();
+
     return boost::static_pointer_cast<ServerPlayer>(mPlayer->shared_from_this());
 }
 int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
@@ -87,7 +93,7 @@ int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
 }
 int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
 {
-    boost::shared_ptr<Player> player = mPlayer;
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(mPlayer->shared_from_this());
 
     if (isCreative())
     {
@@ -680,6 +686,12 @@ void ServerPlayerGameMode::RecordLanding(const BlockPos& pos)
         }
     }
 }
-const MiniGameDef* ServerPlayerGameMode::GetMiniGame() { return NULL; }
-boost::shared_ptr<Player> ServerPlayerGameMode::GetPlayer() { return boost::static_pointer_cast<Player>(mPlayer->shared_from_this()); }
+const MiniGameDef* ServerPlayerGameMode::GetMiniGame() { return CommonMasterGameMode::GetMiniGame(); }
+boost::shared_ptr<Player> ServerPlayerGameMode::GetPlayer()
+{
+    if (mPlayer == NULL)
+        return boost::shared_ptr<Player>();
+
+    return boost::static_pointer_cast<Player>(mPlayer->shared_from_this());
+}
 Level* ServerPlayerGameMode::GetLevel() { return mLevel; }

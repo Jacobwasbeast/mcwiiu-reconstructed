@@ -42,6 +42,11 @@
 #include "game/world/chunk/PlayerChunkMap.hpp"
 #include "game/world/chunk/MinigamePlayerChunkMap.hpp"
 #include "game/entity/mob/NaturalMobSpawner.hpp"
+static const unsigned long long kServerItemEntityType = 0x0800000aULL;
+
+
+
+
 #include "game/world/generation/VillageSiege.hpp"
 #include "game/core/PortalForcer.hpp"
 #include "game/network/ServerLevelListener.hpp"
@@ -97,7 +102,7 @@ bool queueBlockTick(ServerLevel* level, int x, int y, int z,
     if (block == 0 || !block->isTicking())
         return false;
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
         && (miniGame == 0 || !miniGame->shouldTickBlock(id)))
         return false;
     const BlockState* state = block->getBlockState(data);
@@ -123,12 +128,14 @@ ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage
     InitializeCriticalSection(&entityLimitMutex);
     mDimension->init(this);
     mChunkSource = createChunkSource();
+    mChunkCache = mChunkSource->getCache();
+    mChunkCacheSize = mChunkSource->mLevelSize;
     server->setLevel(dimension, this);
     addListener(new ServerLevelListener(server, this));
     tracker = new EntityTracker(this);
 
     const int viewDistance = server->getPlayers()->getViewDistance();
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         chunkMap = new MinigamePlayerChunkMap(this, dimension, viewDistance);
     else
         chunkMap = new PlayerChunkMap(this, dimension, viewDistance);
@@ -215,7 +222,7 @@ int ServerLevel::runUpdate(void* first)
             if (!ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ServerLevelUpdate))
                 break;
             const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-            if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true)
+            if (Minecraft::InMiniGame(eMiniGameId_Any, true)
                 && (miniGame == 0 || !miniGame->shouldTickBlocks()))
             {
                 PIXEndNamedEvent();
@@ -1104,7 +1111,9 @@ void ServerLevel::entityAddedExtra(boost::shared_ptr<Entity> entity)
     const unsigned long long type = entity->GetType();
     std::list<boost::shared_ptr<Entity> >* category = NULL;
     if (type == 0x0800000aULL)
+    {
         category = &itemEntities;
+    }
     else if ((type & 0x0a080000ULL) == 0x0a080000ULL)
         category = &hangingEntities;
     else if ((type & 0x8a020000ULL) == 0x8a020000ULL)

@@ -1,6 +1,7 @@
 #include "game/server/ServerChunkCache.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/network/ProgressListener.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
 #include "game/world/chunk/ChunkStorage.hpp"
@@ -35,6 +36,7 @@ ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, Ch
       m_loadedChunks(), m_toSave(), m_xCenter(0), m_zCenter(0), m_width(generator->mLevelSize), m_halfWidth(generator->mLevelSize / 2), m_saveAll(false),
       m_boundFunction(0), m_boundData(0)
 {
+    mLevelSize = generator->mLevelSize;
     InitializeCriticalSectionAndSpinCount(&m_mutex, 4000);
     m_chunks.resize(m_width * m_width, 0);
     m_unloadedChunks.resize(m_width * m_width, 0);
@@ -593,7 +595,7 @@ void ServerChunkCache::setOverrideBoundFunction(bool (*function)(void*, int, int
     m_boundData = data;
 }
 
-unsigned int ServerChunkCache::getCache()
+LevelChunk** ServerChunkCache::getCache()
 {
-    return static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(m_chunks.data()));
+    return m_chunks.data();
 }
