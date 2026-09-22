@@ -171,7 +171,12 @@ void FJ_List::Init(int id)
 {
     InitBase(std::wstring(L"ButtonList"), id);
     FJ_FuiNode* parent = getParent();
-    if (parent != 0) m_background = parent->getChildByName(m_action)->asMovieClip();
+    if (parent != 0)
+    {
+        FJ_FuiNode* background = parent->getChildByName(m_action);
+        if (background != 0)
+            m_background = background->asMovieClip();
+    }
     if (m_upArrow != 0)
         m_touchSize = static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.5f);
     else
@@ -194,9 +199,13 @@ void FJ_List::setX(float x)
     UpdateScrollListArrows();
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        m_items[i]->setX(m_items[i]->getX() + x - old);
-        for (int j = 0; j < m_items[i]->getNumChildren(); ++j)
-            m_items[i]->getChildAt(j)->setX(m_items[i]->getChildAt(j)->getX() + x - old);
+        FJ_Base* item = static_cast<FJ_Base*>(m_items[i]);
+        item->setX(item->getX() + x - old);
+        for (std::vector<FJ_FuiNode*>::iterator child = item->m_objects.begin();
+             child != item->m_objects.end(); ++child)
+        {
+            (*child)->setX((*child)->getX() + x - old);
+        }
     }
 }
 
@@ -207,9 +216,13 @@ void FJ_List::setY(float y)
     UpdateScrollListArrows();
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        m_items[i]->incY(y - old);
-        for (int j = 0; j < m_items[i]->getNumChildren(); ++j)
-            m_items[i]->getChildAt(j)->incY(y - old);
+        FJ_Base* item = static_cast<FJ_Base*>(m_items[i]);
+        item->incY(y - old);
+        for (std::vector<FJ_FuiNode*>::iterator child = item->m_objects.begin();
+             child != item->m_objects.end(); ++child)
+        {
+            (*child)->setY((*child)->getY() + y - old);
+        }
     }
 }
 

@@ -5,6 +5,7 @@
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
@@ -85,6 +86,7 @@ void UIScene_ControlsMenu::Init(int player)
     m_flags[0] = isFlying;
 
     bool mapped;
+    std::wstring controlString;
     m_controls.AddNewButton(L10N::GetString(0x337d5132), 0, true);
 
     m_controls.AddNewLabel(L" ", 0x1e);
@@ -95,80 +97,80 @@ void UIScene_ControlsMenu::Init(int player)
     m_controls.AddNewCheckbox(L10N::GetString(0xfd098a4f), 2,
                               GameSettings::GetGameSettings(player, (eGameSetting)9) != 0);
 
-    m_controls.AddNewControllerButton(L10N::GetString(0x1c7a7950),
-                                      GetControlsString((EControl)3, mapped), mapped, 3);
-    m_controls.AddNewControllerButton(L10N::GetString(0x1eda7c36),
-                                      GetControlsString((EControl)4, mapped), mapped, 4);
+    controlString = GetControlsString((EControl)3, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x1c7a7950), controlString, mapped, 3);
+    controlString = GetControlsString((EControl)4, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x1eda7c36), controlString, mapped, 4);
 
     m_controls.AddNewLabel(L" ", 0x1e);
     m_controls.AddNewLabel(L10N::GetString(0x19988bba), 0x1e);
 
-    m_controls.AddNewControllerButton(L10N::GetString(0x5617db3c),
-                                      GetControlsString((EControl)5, mapped), mapped, 5);
-    m_controls.AddNewControllerButton(L10N::GetString(0xe90d9e49),
-                                      GetControlsString((EControl)6, mapped), mapped, 6);
-    m_controls.AddNewControllerButton(L10N::GetString(isFlying ? 0x774c60ee : 0x3fef334d),
-                                      GetControlsString((EControl)7, mapped), mapped, 7);
-    m_controls.AddNewControllerButton(L10N::GetString(0x7a6ead8e),
-                                      GetControlsString((EControl)8, mapped), mapped, 8);
-    m_controls.AddNewControllerButton(L10N::GetString(0xc2695d1d),
-                                      GetControlsString((EControl)9, mapped), mapped, 9);
-    m_controls.AddNewControllerButton(L10N::GetString(0x4ef5d075),
-                                      GetControlsString((EControl)0xa, mapped), mapped, 0xa);
-    m_controls.AddNewControllerButton(L10N::GetString(0xc513139b),
-                                      GetControlsString((EControl)0xb, mapped), mapped, 0xb);
-    m_controls.AddNewControllerButton(L10N::GetString(0x72ab6b50),
-                                      GetControlsString((EControl)0xc, mapped), mapped, 0xc);
-    m_controls.AddNewControllerButton(L10N::GetString(isFlying ? 0x8efa4866 : 0x464be825),
-                                      GetControlsString((EControl)0xd, mapped), mapped, 0xd);
-    m_controls.AddNewControllerButton(L10N::GetString(0x75549fcd),
-                                      GetControlsString((EControl)0xe, mapped), mapped, 0xe);
-    m_controls.AddNewControllerButton(L10N::GetString(0x50c103af),
-                                      GetControlsString((EControl)0xf, mapped), mapped, 0xf);
-    m_controls.AddNewControllerButton(L10N::GetString(0x88874831),
-                                      GetControlsString((EControl)0x10, mapped), mapped, 0x10);
+    controlString = GetControlsString((EControl)5, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x5617db3c), controlString, mapped, 5);
+    controlString = GetControlsString((EControl)6, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xe90d9e49), controlString, mapped, 6);
+    controlString = GetControlsString((EControl)7, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(isFlying ? 0x774c60ee : 0x3fef334d), controlString, mapped, 7);
+    controlString = GetControlsString((EControl)8, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x7a6ead8e), controlString, mapped, 8);
+    controlString = GetControlsString((EControl)9, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xc2695d1d), controlString, mapped, 9);
+    controlString = GetControlsString((EControl)0xa, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x4ef5d075), controlString, mapped, 0xa);
+    controlString = GetControlsString((EControl)0xb, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xc513139b), controlString, mapped, 0xb);
+    controlString = GetControlsString((EControl)0xc, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x72ab6b50), controlString, mapped, 0xc);
+    controlString = GetControlsString((EControl)0xd, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(isFlying ? 0x8efa4866 : 0x464be825), controlString, mapped, 0xd);
+    controlString = GetControlsString((EControl)0xe, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x75549fcd), controlString, mapped, 0xe);
+    controlString = GetControlsString((EControl)0xf, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x50c103af), controlString, mapped, 0xf);
+    controlString = GetControlsString((EControl)0x10, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x88874831), controlString, mapped, 0x10);
 
     m_controls.AddNewLabel(L" ", 0x1e);
     m_controls.AddNewLabel(L10N::GetString(0x4aebca1a), 0x1e);
 
-    m_controls.AddNewControllerButton(L10N::GetString(0x880870a4),
-                                      GetControlsString((EControl)0x11, mapped), mapped, 0x11);
-    m_controls.AddNewControllerButton(L10N::GetString(0xdb0d0c07),
-                                      GetControlsString((EControl)0x12, mapped), mapped, 0x12);
-    m_controls.AddNewControllerButton(L10N::GetString(0xbfc2db62),
-                                      GetControlsString((EControl)0x13, mapped), mapped, 0x13);
-    m_controls.AddNewControllerButton(L10N::GetString(0x48a6649d),
-                                      GetControlsString((EControl)0x14, mapped), mapped, 0x14);
+    controlString = GetControlsString((EControl)0x11, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x880870a4), controlString, mapped, 0x11);
+    controlString = GetControlsString((EControl)0x12, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xdb0d0c07), controlString, mapped, 0x12);
+    controlString = GetControlsString((EControl)0x13, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xbfc2db62), controlString, mapped, 0x13);
+    controlString = GetControlsString((EControl)0x14, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x48a6649d), controlString, mapped, 0x14);
 
     m_controls.AddNewLabel(L" ", 0x1e);
     m_controls.AddNewLabel(L10N::GetString(0xd62470c6), 0x1e);
 
-    m_controls.AddNewControllerButton(L10N::GetString(0x2edff749),
-                                      GetControlsString((EControl)0x19, mapped), mapped, 0x19);
-    m_controls.AddNewControllerButton(L10N::GetString(0xc9f98a25),
-                                      GetControlsString((EControl)0x1a, mapped), mapped, 0x1a);
+    controlString = GetControlsString((EControl)0x19, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x2edff749), controlString, mapped, 0x19);
+    controlString = GetControlsString((EControl)0x1a, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xc9f98a25), controlString, mapped, 0x1a);
 
     m_controls.AddNewLabel(L" ", 0x1e);
     m_controls.AddNewLabel(L10N::GetString(0x1fd34dbd), 0x1e);
 
-    m_controls.AddNewControllerButton(L10N::GetString(0xbc932ff8),
-                                      GetControlsString((EControl)0x15, mapped), mapped, 0x15);
-    m_controls.AddNewControllerButton(L10N::GetString(0xea6bb036),
-                                      GetControlsString((EControl)0x16, mapped), mapped, 0x16);
-    m_controls.AddNewControllerButton(L10N::GetString(0xf4a1c60f),
-                                      GetControlsString((EControl)0x17, mapped), mapped, 0x17);
-    m_controls.AddNewControllerButton(L10N::GetString(0x6a023a0f),
-                                      GetControlsString((EControl)0x18, mapped), mapped, 0x18);
+    controlString = GetControlsString((EControl)0x15, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xbc932ff8), controlString, mapped, 0x15);
+    controlString = GetControlsString((EControl)0x16, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xea6bb036), controlString, mapped, 0x16);
+    controlString = GetControlsString((EControl)0x17, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xf4a1c60f), controlString, mapped, 0x17);
+    controlString = GetControlsString((EControl)0x18, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x6a023a0f), controlString, mapped, 0x18);
 
     m_controls.AddNewLabel(L" ", 0x1e);
     m_controls.AddNewLabel(L10N::GetString(0x48a5d3ba), 0x1e);
 
-    m_controls.AddNewControllerButton(L10N::GetString(0x7a8e2667),
-                                      GetControlsString((EControl)0x1b, mapped), mapped, 0x1b);
-    m_controls.AddNewControllerButton(L10N::GetString(0xec79c513),
-                                      GetControlsString((EControl)0x1c, mapped), mapped, 0x1c);
-    m_controls.AddNewControllerButton(L10N::GetString(0x78d551aa),
-                                      GetControlsString((EControl)0x1d, mapped), mapped, 0x1d);
+    controlString = GetControlsString((EControl)0x1b, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x7a8e2667), controlString, mapped, 0x1b);
+    controlString = GetControlsString((EControl)0x1c, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0xec79c513), controlString, mapped, 0x1c);
+    controlString = GetControlsString((EControl)0x1d, mapped);
+    m_controls.AddNewControllerButton(L10N::GetString(0x78d551aa), controlString, mapped, 0x1d);
 
     m_controls.EnableItem(3, false, true);
     m_controls.EnableItem(4, false, true);
@@ -228,8 +230,12 @@ unsigned char UIScene_ControlsMenu::GetControlsAction(EControl control)
         return GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) ? 0x1b : 0x1d;
     if (id == 4)
         return GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) ? 0x1d : 0x1b;
-    static const unsigned char actions[] = "ControlsMultiList";
-    return actions[id + 0xf];
+    static const unsigned char actions[] = {
+        0x21, 0x22, 0x20, 0x26, 0x25, 0x28, 0x23, 0x24, 0x27,
+        0x2e, 0x2f, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x30, 0x31,
+        0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+    };
+    return actions[id - 5];
 }
 
 std::wstring UIScene_ControlsMenu::GetControlsString(EControl control, bool& mapped)
@@ -246,8 +252,12 @@ void UIScene_ControlsMenu::UpdateControls(int player)
     m_controls.SetCheckboxValue(1, GameSettings::GetGameSettings(player, (eGameSetting)8) != 0, false);
     m_controls.SetCheckboxValue(2, GameSettings::GetGameSettings(player, (eGameSetting)9) != 0, false);
     bool mapped;
+    std::wstring controlString;
     for (int i = 3; i <= 0x1d; ++i)
-        m_controls.SetSecondaryLabel(i, UIString(GetControlsString((EControl)i, mapped)), true, mapped, false);
+    {
+        controlString = GetControlsString((EControl)i, mapped);
+        m_controls.SetSecondaryLabel(i, UIString(controlString), true, mapped, false);
+    }
     m_flags[1] = 0;
 }
 
@@ -440,8 +450,8 @@ void UIScene_ControlsMenu::HandleButtonEdit(int player, int action, bool repeat,
         {
             bool mapped = true;
             int selection = m_controls.getCurrentSelection();
-            m_controls.SetSecondaryLabel(selection, UIString(GetControlsString((EControl)selection, mapped)),
-                                         true, mapped, false);
+            std::wstring controlString = GetControlsString((EControl)selection, mapped);
+            m_controls.SetSecondaryLabel(selection, UIString(controlString), true, mapped, false);
             m_flags[5] = 0;
             updateTooltips();
             m_unknownD4 = 0;
@@ -473,8 +483,8 @@ void UIScene_ControlsMenu::HandleButtonEdit(int player, int action, bool repeat,
         m_flags[2] = 1;
 
         bool mapped = true;
-        m_controls.SetSecondaryLabel(selection, UIString(GetControlsString((EControl)selection, mapped)),
-                                     true, mapped, false);
+        std::wstring controlString = GetControlsString((EControl)selection, mapped);
+        m_controls.SetSecondaryLabel(selection, UIString(controlString), true, mapped, false);
         updateTooltips();
         m_flags[5] = 0;
         m_flags[6] = 0;
@@ -599,11 +609,14 @@ void UIScene_ControlsMenu::handleInput(int player, int action, bool repeat, bool
         return;
     if (action == 0x14)
     {
-        if (!released)
-            sendInputToMovie(action, repeat, released, pressed);
+        if (released)
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+        if (repeat)
+            return;
+        sendInputToMovie(action, false, released, pressed);
         return;
     }
-    if (action == 0x15 && pressed)
+    if (action == 0x15 && released)
     {
         if (!CheckControlsOnExit(player))
         {

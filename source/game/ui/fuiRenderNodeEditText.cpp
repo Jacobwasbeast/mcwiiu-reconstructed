@@ -340,8 +340,10 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
     std::wstring widthAttribute = getHtmlTagAttribute(tag, L"width");
     std::wstring heightAttribute = getHtmlTagAttribute(tag, L"height");
     std::wstring srcAttribute = getHtmlTagAttribute(tag, L"src");
-    float width = widthAttribute.empty() ? 0.0f : static_cast<float>(std::wcstod(widthAttribute.c_str(), NULL));
-    float height = heightAttribute.empty() ? 0.0f : static_cast<float>(std::wcstod(heightAttribute.c_str(), NULL));
+    float width = widthAttribute.empty() ? 0.0f :
+        static_cast<float>(std::wcstol(widthAttribute.c_str(), NULL, 10));
+    float height = heightAttribute.empty() ? 0.0f :
+        static_cast<float>(std::wcstol(heightAttribute.c_str(), NULL, 10));
     char symbolName[128];
     std::wcstombs(symbolName, srcAttribute.c_str(), sizeof(symbolName) - 1);
     symbolName[sizeof(symbolName) - 1] = '\0';
@@ -349,45 +351,69 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
     int bitmap = gFui->findBitmapFromSymbol(symbolName, &file);
     if (bitmap != 0)
     {
-        float left = state.x + 8.0f;
-        float top = state.y;
-        float right = left + width;
-        float bottom = top + height;
-        HtmlImageDrawData image;
-        image.symbolName.assign(symbolName);
-        image.quad[0].x = left;
-        image.quad[0].y = top;
-        image.quad[0].u = 0.0f;
-        image.quad[0].v = 0.0f;
-        image.quad[0].colour = 0xffffffff;
-        image.quad[1].x = right;
-        image.quad[1].y = bottom;
-        image.quad[1].u = 1.0f;
-        image.quad[1].v = 1.0f;
-        image.quad[1].colour = 0xffffffff;
-        image.quad[2].x = left;
-        image.quad[2].y = bottom;
-        image.quad[2].u = 0.0f;
-        image.quad[2].v = 1.0f;
-        image.quad[2].colour = 0xffffffff;
-        image.quad[3].x = right;
-        image.quad[3].y = top;
-        image.quad[3].u = 1.0f;
-        image.quad[3].v = 0.0f;
-        image.quad[3].colour = 0xffffffff;
-        image.quad[4].x = left;
-        image.quad[4].y = top;
-        image.quad[4].u = 0.0f;
-        image.quad[4].v = 0.0f;
-        image.quad[4].colour = 0xffffffff;
-        image.quad[5].x = right;
-        image.quad[5].y = bottom;
-        image.quad[5].u = 1.0f;
-        image.quad[5].v = 1.0f;
-        image.quad[5].colour = 0xffffffff;
-        state.activeImageData->push_back(image);
+        fuiBitmap* bitmapObject = reinterpret_cast<fuiBitmap*>(bitmap);
+        if (width == 0.0f)
+        {
+            width = static_cast<float>(bitmapObject->width) * height /
+                    static_cast<float>(bitmapObject->height);
+        }
+        if (height == 0.0f)
+        {
+            height = static_cast<float>(bitmapObject->height) * width /
+                     static_cast<float>(bitmapObject->width);
+        }
+        state.x += 8.0f;
+        float left = state.x;
+        if (m_wordWrap && m_fieldWidth < (left - state.lineStartX) + width)
+        {
+            newLine(state);
+            left = state.x;
+        }
+        if (!state.measure && !state.shadow)
+        {
+            float top = (m_lineHeights[static_cast<std::vector<float>::size_type>(state.lineNumber)] - height) *
+                            0.5f + state.y;
+            float right = left + width;
+            float bottom = top + height;
+            file->initialiseRenderTexture(bitmapObject, false);
+            HtmlImageDrawData image;
+            image.symbolName.assign(symbolName);
+            image.quad[0].x = left;
+            image.quad[0].y = top;
+            image.quad[0].u = 0.0f;
+            image.quad[0].v = 0.0f;
+            image.quad[0].colour = 0xffffffff;
+            image.quad[1].x = right;
+            image.quad[1].y = bottom;
+            image.quad[1].u = 1.0f;
+            image.quad[1].v = 1.0f;
+            image.quad[1].colour = 0xffffffff;
+            image.quad[2].x = left;
+            image.quad[2].y = bottom;
+            image.quad[2].u = 0.0f;
+            image.quad[2].v = 1.0f;
+            image.quad[2].colour = 0xffffffff;
+            image.quad[3].x = right;
+            image.quad[3].y = top;
+            image.quad[3].u = 1.0f;
+            image.quad[3].v = 0.0f;
+            image.quad[3].colour = 0xffffffff;
+            image.quad[4].x = left;
+            image.quad[4].y = top;
+            image.quad[4].u = 0.0f;
+            image.quad[4].v = 0.0f;
+            image.quad[4].colour = 0xffffffff;
+            image.quad[5].x = right;
+            image.quad[5].y = bottom;
+            image.quad[5].u = 1.0f;
+            image.quad[5].v = 1.0f;
+            image.quad[5].colour = 0xffffffff;
+            state.activeImageData->push_back(image);
+        }
+        state.x = left + width + 8.0f;
+        if (state.lineHeight < height + 16.0f)
+            state.lineHeight = height + 16.0f;
     }
-    state.x += width + 16.0f;
     return true;
 }
 

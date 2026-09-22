@@ -60,8 +60,8 @@ void FJ_MultilistMenu::SetSafeZone(int top, int bottom, int left, int right)
 void FJ_MultilistMenu::DoVerticalResizeCheck()
 {
     FJ_FuiNode* multiList = getChildByName("MultiList");
-    FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel.List");
-    FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel.Text");
+    FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel_List");
+    FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel_Text");
     FJ_FuiNode* description = getChildByName("Description");
 
     float listHeight = static_cast<float>(multiList->asFJ_List_MultiList()->GetListHeight());
@@ -124,8 +124,8 @@ void FJ_MultilistMenu::DoVerticalResizeCheck()
 void FJ_MultilistMenu::DoHorizontalResizeCheck()
 {
     FJ_FuiNode* multiList = getChildByName("MultiList");
-    FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel.List");
-    FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel.Text");
+    FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel_List");
+    FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel_Text");
     FJ_FuiNode* description = getChildByName("Description");
 
     FJ_List_MultiList* list = multiList->asFJ_List_MultiList();
@@ -166,8 +166,8 @@ void FJ_MultilistMenu::DoHorizontalResizeCheck()
 void FJ_MultilistMenu::HideDescription()
 {
     FJ_FuiNode* multiList = getChildByName("MultiList");
-    FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel.List");
-    FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel.Text");
+    FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel_List");
+    FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel_Text");
     FJ_FuiNode* description = getChildByName("Description");
 
     if (description != NULL)

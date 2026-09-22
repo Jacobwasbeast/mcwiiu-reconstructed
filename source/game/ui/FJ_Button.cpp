@@ -6,6 +6,7 @@
 #include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
+#include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/util/Math.hpp"
 
 static std::string s_buttonStates[8] =
@@ -171,11 +172,12 @@ fuiRenderNodeEditText* FJ_Button::GetSecondaryTextField()
     FJ_FuiNode* child = movieClip->getChildAt(0);
     if (child == 0 || child->m_pRenderNode == 0)
         return 0;
-    fuiRenderNode* timeline = child->m_pRenderNode->asTimeline();
-    if (timeline == 0)
+    fuiRenderNode* timelineNode = child->m_pRenderNode->asTimeline();
+    if (timelineNode == 0)
         return 0;
+    fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
     m_hasSecondaryText = true;
-    return static_cast<fuiRenderNodeEditText*>(timeline->asEditText());
+    return static_cast<fuiRenderNodeEditText*>(timeline->getChildAt(0)->asEditText());
 }
 
 void FJ_Button::SetSecondaryText(const std::wstring& text, bool html, bool autoSize)

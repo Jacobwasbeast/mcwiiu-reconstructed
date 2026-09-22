@@ -351,26 +351,28 @@ void UIScene_HowToPlay::handleReload()
     StartPage(static_cast<EHowToPlayPage>(m_page));
 }
 
-void UIScene_HowToPlay::handleInput(int, int action, bool, bool released, bool pressed, bool& handled)
+void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_controlFocus, action, false, released, pressed);
-    if (action == 0 && pressed && m_page != 0x23)
+    gConsoleUIController.AnimateKeyPress(m_controlFocus, action, repeat, released, pressed);
+    if (action == 0 && released)
     {
-        StartPage(static_cast<EHowToPlayPage>(m_page + 1));
+        if (m_page != 0x23)
+            StartPage(static_cast<EHowToPlayPage>(m_page + 1));
         handled = true;
     }
-    else if (action == 2 && pressed && m_pageCount <= m_page - 1)
+    else if (action == 2 && released)
     {
-        StartPage(static_cast<EHowToPlayPage>(m_page - 1));
+        if (m_pageCount <= m_page - 1)
+            StartPage(static_cast<EHowToPlayPage>(m_page - 1));
         handled = true;
     }
-    else if (action == 0x15 && pressed)
+    else if (action == 0x15 && released)
     {
         navigateBack();
         handled = true;
     }
-    else if (action < 4 || action > 5 && action < 8 || action > 9)
-        sendInputToMovie(action, false, released, pressed);
+    else if (action == 4 || action == 5 || action == 8 || action == 9)
+        sendInputToMovie(action, repeat, released, pressed);
 }
 
 void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)

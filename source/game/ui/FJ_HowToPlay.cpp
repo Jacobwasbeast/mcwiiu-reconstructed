@@ -44,6 +44,16 @@ namespace
             item->setVisible(visible);
     }
 
+    bool setLabelVisible(FJ_FuiNode* node, int label, int page, bool visible)
+    {
+        FJ_FuiNode* item = child(node, "Label%d_%d", label, page);
+        FJ_Label* labelNode = item == NULL ? NULL : item->asFJ_Label();
+        if (labelNode == NULL)
+            return false;
+        labelNode->setVisible(visible);
+        return true;
+    }
+
     void setEditText(FJ_FuiNode* node, const char* name, const std::wstring& text)
     {
         FJ_FuiNode* item = node->getChildByName(name);
@@ -73,120 +83,49 @@ bool LoadHowToPlayPage(FJ_HowToPlay* pNode, int iPage, std::vector<std::wstring>
         {
             setVisible(pNode, "HowToPlayText_%d", i, false);
             setVisible(pNode, "HowToPlayImage_%d", i, false);
+            setVisible(pNode, "HowToPlayContainer_%d", i, false);
+
+            for (int label = 1; label <= 4; ++label)
+            {
+                if (!setLabelVisible(pNode, label, i, false))
+                    break;
+            }
+
+            FJ_FuiNode* pageContainer = child(pNode, "HowToPlayContainer_%d", i);
+            FJ_FuiNode* slotParent = pageContainer == NULL ? pNode : pageContainer;
+            for (int list = 0; list < 7; ++list)
+            {
+                FJ_FuiNode* slotNode = child(slotParent, "HowToPlaySlotList_%d_%d", list, i);
+                FJ_SlotList* slots = slotNode == NULL ? NULL : slotNode->asFJ_SlotList();
+                if (slots == NULL)
+                    break;
+                slots->setVisible(false);
+            }
         }
-        setVisible(pNode, "HowToPlayContainer_%d", 13, false);
-        for (int i = 0; i < 2; ++i)
-        {
-            setVisible(pNode, "Label_%d_%d", iPage, i, false);
-        }
-        for (int i = 0; i < 4; ++i)
-            setVisible(pNode, "HowToPlaySlotList_%d_%d", iPage, i, false);
     }
     else
     {
-        setVisible(pNode, "HowToPlayImage_%d", iPage, false);
-        setVisible(pNode, "HowToPlayContainer_%d", 13, false);
-        for (int i = 0; i < 2; ++i)
-            setVisible(pNode, "Label_%d_%d", iPage, i, false);
-        for (int i = 0; i < 4; ++i)
+        setVisible(pNode, "HowToPlayImage_%d", pNode->m_page, false);
+        setVisible(pNode, "HowToPlayContainer_%d", pNode->m_page, false);
+        for (int label = 1; label <= 4; ++label)
         {
-            FJ_FuiNode* slotNode = child(pNode, "HowToPlaySlotList_%d_%d", iPage, i);
+            if (!setLabelVisible(pNode, label, pNode->m_page, false))
+                break;
+        }
+
+        FJ_FuiNode* oldContainer = child(pNode, "HowToPlayContainer_%d", pNode->m_page);
+        FJ_FuiNode* oldSlotParent = oldContainer == NULL ? pNode : oldContainer;
+        for (int list = 0; list < 7; ++list)
+        {
+            FJ_FuiNode* slotNode = child(oldSlotParent, "HowToPlaySlotList_%d_%d", list, pNode->m_page);
             FJ_SlotList* slots = slotNode == NULL ? NULL : slotNode->asFJ_SlotList();
-            if (slots != NULL)
-                slots->Clear();
+            if (slots == NULL)
+                break;
+            slots->Clear();
+            slots->setVisible(false);
         }
     }
 
-    FJ_FuiNode* image = child(pNode, "HowToPlayImage_%d", iPage);
-    if (image != NULL)
-        image->setVisible(true);
-    FJ_FuiNode* container = child(pNode, "HowToPlayContainer_%d", 13);
-    if (container != NULL)
-        container->setVisible(true);
-
-    for (int i = 0; i < 2; ++i)
-    {
-        setVisible(pNode, "Label_%d_%d", iPage, i, true);
-    }
-
-    int slot = 0;
-    for (int list = 0; list < 3; ++list)
-    {
-        FJ_FuiNode* slotNode = child(container == NULL ? pNode : container,
-                                     "HowToPlaySlotList_%d_%d", iPage, list);
-        FJ_SlotList* slots = slotNode == NULL ? NULL : slotNode->asFJ_SlotList();
-        if (slots == NULL)
-            continue;
-        slots->setVisible(true);
-        slots->Init();
-        int count = slots->getRows() * slots->getColumns();
-        for (int i = 0; i < count; ++i)
-            slots->addSlot(slot++, false, false);
-    }
-
-    if (iPage == 3)
-    {
-        FJ_FuiNode* level = pNode->getChildByName("PlayerLevel");
-        FJ_LabelOutline* outline = level == NULL ? NULL : level->asFJ_LabelOutline();
-        if (outline != NULL)
-            outline->SetLabel(L"3");
-        FJ_FuiNode* experienceNode = pNode->getChildByName("ExpBar");
-        FJ_ExperienceBar* experience = experienceNode == NULL ? NULL : experienceNode->asFJ_ExperienceBar();
-        if (experience != NULL)
-            experience->setProgress(0.75f);
-        pNode->m_page = iPage;
-        return true;
-    }
-    if (iPage == 10)
-    {
-        FJ_ProgressBar* fire = pNode->getChildByName("FurnaceFire") == NULL
-            ? NULL : pNode->getChildByName("FurnaceFire")->asFJ_ProgressBar();
-        if (fire != NULL)
-        {
-            fire->setProgress(0.5f);
-            fire->setProgress(0.5f);
-        }
-        pNode->m_page = iPage;
-        return true;
-    }
-    if (iPage == 12)
-    {
-        FJ_ProgressBar* bubbles = pNode->getChildByName("BrewingBubbles") == NULL
-            ? NULL : pNode->getChildByName("BrewingBubbles")->asFJ_ProgressBar();
-        FJ_ProgressBar* arrow = pNode->getChildByName("BrewingArrow") == NULL
-            ? NULL : pNode->getChildByName("BrewingArrow")->asFJ_ProgressBar();
-        FJ_ProgressBar* plate = pNode->getChildByName("BrewingPlateBar") == NULL
-            ? NULL : pNode->getChildByName("BrewingPlateBar")->asFJ_ProgressBar();
-        if (bubbles != NULL)
-            bubbles->setProgress(0.5f);
-        if (arrow != NULL)
-            arrow->setProgress(0.5f);
-        if (plate != NULL)
-            plate->setProgress(0.7f);
-        pNode->m_page = iPage;
-        return true;
-    }
-    if (iPage == 13)
-    {
-        setEditText(pNode, "EnchantmentLabel01", L"3");
-        setEditText(pNode, "EnchantmentLabel02", L"5");
-        setEditText(pNode, "EnchantmentLabel03", L"8");
-    }
-    else if (iPage == 0x15)
-        setEditText(pNode, "AnvilTextInput", L"Excalibur");
-    else if (iPage == 0x16)
-    {
-        FJ_FuiNode* item = pNode->getChildByName("HowToPlaySlotList_22_0");
-        FJ_SlotList* slots = item == NULL ? NULL : item->asFJ_SlotList();
-        if (slots != NULL)
-        {
-            slots->SetSlotRedBox(0, true);
-            slots->SetSlotRedBox(1, true);
-            slots->SetSlotRedBox(4, true);
-        }
-    }
-
-    pNode->m_page = iPage;
     FJ_FuiNode* textNode = child(pNode, "HowToPlayText_%d", iPage);
     FJ_DynamicHtmlText* dynamicText = pNode->m_dynamicHtmlText == NULL
         ? NULL : pNode->m_dynamicHtmlText->asFJ_DynamicHtmlText();
@@ -205,8 +144,97 @@ bool LoadHowToPlayPage(FJ_HowToPlay* pNode, int iPage, std::vector<std::wstring>
             stage->setFocus(dynamicText);
     }
 
-    for (int i = 0; i < 2; ++i)
-        setVisible(pNode, "Label_%d_%d", iPage, i, true);
+    FJ_FuiNode* image = child(pNode, "HowToPlayImage_%d", iPage);
+    if (image != NULL)
+        image->setVisible(true);
+    FJ_FuiNode* container = child(pNode, "HowToPlayContainer_%d", iPage);
+    if (container != NULL)
+        container->setVisible(true);
+    FJ_FuiNode* pageParent = container == NULL ? pNode : container;
+
+    for (int label = 1; label <= 4; ++label)
+    {
+        if (!setLabelVisible(pNode, label, iPage, true))
+            break;
+    }
+
+    int slot = 0;
+    for (int list = 0; list < 7; ++list)
+    {
+        FJ_FuiNode* slotNode = child(pageParent, "HowToPlaySlotList_%d_%d", list, iPage);
+        FJ_SlotList* slots = slotNode == NULL ? NULL : slotNode->asFJ_SlotList();
+        if (slots == NULL)
+            break;
+        slots->setVisible(true);
+        slots->Init();
+        int count = slots->getRows() * slots->getColumns();
+        for (int i = 0; i < count; ++i)
+            slots->addSlot(slot++, false, false);
+    }
+
+    if (iPage == 3)
+    {
+        FJ_FuiNode* level = pageParent->getChildByName("PlayerLevel");
+        FJ_LabelOutline* outline = level == NULL ? NULL : level->asFJ_LabelOutline();
+        if (outline != NULL)
+            outline->SetLabel(L"3");
+        FJ_FuiNode* experienceNode = pageParent->getChildByName("ExpBar");
+        FJ_ExperienceBar* experience = experienceNode == NULL ? NULL : experienceNode->asFJ_ExperienceBar();
+        if (experience != NULL)
+            experience->setProgress(0.75f);
+        pNode->m_page = iPage;
+        return true;
+    }
+    if (iPage == 10)
+    {
+        FJ_FuiNode* fireNode = pageParent->getChildByName("FurnaceFire");
+        FJ_ProgressBar* fire = fireNode == NULL ? NULL : fireNode->asFJ_ProgressBar();
+        if (fire != NULL)
+        {
+            fire->setProgress(0.5f);
+            fire->setProgress(0.5f);
+        }
+        pNode->m_page = iPage;
+        return true;
+    }
+    if (iPage == 12)
+    {
+        FJ_FuiNode* bubblesNode = pageParent->getChildByName("BrewingBubbles");
+        FJ_FuiNode* arrowNode = pageParent->getChildByName("BrewingArrow");
+        FJ_FuiNode* plateNode = pageParent->getChildByName("BrewingPlateBar");
+        FJ_ProgressBar* bubbles = bubblesNode == NULL ? NULL : bubblesNode->asFJ_ProgressBar();
+        FJ_ProgressBar* arrow = arrowNode == NULL ? NULL : arrowNode->asFJ_ProgressBar();
+        FJ_ProgressBar* plate = plateNode == NULL ? NULL : plateNode->asFJ_ProgressBar();
+        if (bubbles != NULL)
+            bubbles->setProgress(0.5f);
+        if (arrow != NULL)
+            arrow->setProgress(0.5f);
+        if (plate != NULL)
+            plate->setProgress(0.7f);
+        pNode->m_page = iPage;
+        return true;
+    }
+    if (iPage == 13)
+    {
+        setEditText(pageParent, "EnchantmentLabel01", L"3");
+        setEditText(pageParent, "EnchantmentLabel02", L"5");
+        setEditText(pageParent, "EnchantmentLabel03", L"8");
+    }
+    else if (iPage == 0x15)
+        setEditText(pageParent, "AnvilTextInput", L"Excalibur");
+    else if (iPage == 0x16)
+    {
+        FJ_FuiNode* item = child(pageParent, "HowToPlaySlotList_%d_%d", 2, 22);
+        FJ_SlotList* slots = item == NULL ? NULL : item->asFJ_SlotList();
+        if (slots != NULL)
+        {
+            slots->SetSlotRedBox(0, true);
+            slots->SetSlotRedBox(1, true);
+            slots->SetSlotRedBox(4, true);
+        }
+    }
+
+    pNode->m_page = iPage;
     return true;
 }
 

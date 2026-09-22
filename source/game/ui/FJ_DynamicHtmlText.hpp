@@ -15,16 +15,17 @@ class FJ_DynamicHtmlText : public FJ_FuiNode
 {
 public:
     int m_iTopMargin;
-    int m_iScrollPosition;
+    int m_iLabelSpacing;
     float m_fScrollSpeed;
     FJ_FuiNode* m_pLabels[20];
-    FJ_FuiNode* m_pBackground;
+    FJ_FuiNode* m_pContentContainer;
     std::vector<std::wstring> m_text;
     std::vector<FJ_Label*> m_labels;
     std::vector<int> m_labelTextIndices;
     int m_iUnknown;
     int m_iCharacterHeight;
     int m_iContentHeight;
+    int m_iTargetScrollPosition;
     fuiRect m_scrollRect;
     FJ_ScrollArrow* m_pUpArrow;
     FJ_ScrollArrow* m_pDownArrow;

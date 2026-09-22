@@ -10,6 +10,8 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 
+#include <stdint.h>
+
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
 
@@ -45,7 +47,7 @@ UIScene_HowToPlayMenu::~UIScene_HowToPlayMenu()
 
 void UIScene_HowToPlayMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -121,20 +123,11 @@ void UIScene_HowToPlayMenu::handlePress(int first, int second)
         return;
     m_buttonList.setCurrentSelection(second, false, true);
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    static const EUIScene scenes[33] = {
-        static_cast<EUIScene>(0), static_cast<EUIScene>(1), static_cast<EUIScene>(2),
-        static_cast<EUIScene>(3), static_cast<EUIScene>(4), static_cast<EUIScene>(5),
-        static_cast<EUIScene>(6), static_cast<EUIScene>(7), static_cast<EUIScene>(8),
-        static_cast<EUIScene>(9), static_cast<EUIScene>(10), static_cast<EUIScene>(11),
-        static_cast<EUIScene>(12), static_cast<EUIScene>(13), static_cast<EUIScene>(14),
-        static_cast<EUIScene>(15), static_cast<EUIScene>(16), static_cast<EUIScene>(17),
-        static_cast<EUIScene>(18), static_cast<EUIScene>(19), static_cast<EUIScene>(20),
-        static_cast<EUIScene>(21), static_cast<EUIScene>(22), static_cast<EUIScene>(23),
-        static_cast<EUIScene>(24), static_cast<EUIScene>(25), static_cast<EUIScene>(26),
-        static_cast<EUIScene>(27), static_cast<EUIScene>(28), static_cast<EUIScene>(29),
-        static_cast<EUIScene>(30), static_cast<EUIScene>(31), static_cast<EUIScene>(32)
-    };
-    gConsoleUIController.NavigateToScene(m_playerId, scenes[second], 0,
+    const uint32_t sceneData = 0x80000000u |
+        (static_cast<uint32_t>(second) << 16) |
+        static_cast<uint32_t>(static_cast<uint16_t>(m_playerId));
+    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HowToPlay,
+                                         reinterpret_cast<void*>(static_cast<uintptr_t>(sceneData)),
                                          static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
 

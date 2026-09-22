@@ -31,11 +31,11 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int sceneType, void*, UIL
     removeControl(&m_buttonUpsell, false);
     removeControl(&m_button6, false);
     removeControl(&m_button7, false);
-    if (m_playerId != Minecraft::GetInstance()->mLocalPlayerIdx || !m_unknownFlag)
+    if (m_playerId != gProfile->GetPrimaryPad() || !m_unknownFlag)
         removeControl(&m_button6, false);
     if (g_pApp->GetLocalPlayerCount() > 1) {
         removeControl(&m_button5, false);
-        if (m_playerId != Minecraft::GetInstance()->mLocalPlayerIdx)
+        if (m_playerId != gProfile->GetPrimaryPad())
             removeControl(&m_button6, false);
     }
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !g_pApp->DebugArtToolsOn())
@@ -60,7 +60,7 @@ unsigned int UIScene_HelpAndOptionsMenu::mapElementsAndNames()
 
 void UIScene_HelpAndOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -116,7 +116,7 @@ void UIScene_HelpAndOptionsMenu::handleInput(int, int action, bool repeat, bool 
             navigateBack();
             return;
         }
-        sendInputToMovie(action, released, pressed, handled);
+        sendInputToMovie(action, repeat, released, pressed);
     }
 }
 

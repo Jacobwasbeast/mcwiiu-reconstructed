@@ -80,10 +80,10 @@ void UIControl_MultiList::AddNewTextInput(const std::wstring& label, int id, int
     addElement((UIControl::eUIControlType)17, id);
 }
 
-uint64_t UIControl_MultiList::GetSliderValue(int id)
+uint32_t UIControl_MultiList::GetSliderValue(int id)
 {
-    return (uint64_t)m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->GetSliderValue(
-        getListIndex(id)) << 32;
+    return m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->GetSliderValue(
+        getListIndex(id));
 }
 
 void UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)

@@ -14,12 +14,14 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "vendor/_LoadingInputParams.hpp"
 #include "vendor/_SaveListDetails.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
+extern CInput* g_pInput;
 
 namespace
 {
@@ -421,7 +423,7 @@ void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repe
 
 void UIScene_LoadCreateJoinMenu::handleDestroy()
 {
-    destroyMovie();
+    g_pInput->DestroyKeyboard();
 }
 
 void UIScene_LoadCreateJoinMenu::handleReload()
@@ -529,6 +531,9 @@ void UIScene_LoadCreateJoinMenu::SetMatchesAvailable(bool available)
 
 void UIScene_LoadCreateJoinMenu::SetHideLoadTab()
 {
+    FJ_LoadCreateJoinMenu* menu = static_cast<FJ_LoadCreateJoinMenu*>(
+        m_movie->getRootNode()->getFuiNode());
+    menu->HideLoadTab();
     m_hideLoadTab = 1;
 }
 

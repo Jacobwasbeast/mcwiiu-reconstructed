@@ -15,6 +15,7 @@ FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode)
     : FJ_Base(renderNode)
 {
     m_pText = NULL;
+    m_fScrollSpeed = 1.0f;
     m_bScrollingEnabled = 1;
     m_bScrollingDown = false;
     m_bTouchScrolling = false;

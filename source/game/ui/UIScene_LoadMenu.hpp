@@ -15,13 +15,13 @@
 
 class UILayer;
 
-class UIScene_LoadMenu : public IUIScene_StartGame
+class UIScene_LoadMenu : public IUIScene_StartGame, public virtual IUIScene_MiniGames
 {
 public:
     UIScene_LoadMenu(int sceneType, void* data, UILayer* layer);
     virtual ~UIScene_LoadMenu();
 
-    void AddVariantButtons(bool alternate);
+    virtual void AddVariantButtons(bool alternate);
     void UpdateIfPublicGamesAllowed();
     void UpdateDescriptionText();
     void _initCustom();
@@ -61,39 +61,27 @@ private:
     SliderLogic m_difficultyLogic;
     UIControl m_mainPanel;
     UIControl_Label m_gameName;
-    UIControl_Label m_createdMode;
     UIControl_Label m_description;
-    UIControl_Button m_texturePackButton;
+    UIControl_Label m_createdMode;
     UIControl_Button m_playButton;
+    UIControl_Button m_loadSettings;
     UIControl_BitmapIcon m_levelIcon;
     UIControl_MultiList m_list;
     bool m_thumbnailPending;
     bool m_thumbnailLoaded;
-    bool m_thumbnailFailed;
-    bool m_customGame;
-    bool m_battleGame;
-    bool m_publicGamesAllowed;
-    bool m_allowPublicGames;
-    bool m_hasVariants;
-    bool m_resetNether;
-    bool m_updateEnd;
-    bool m_onlineGame;
-    bool m_customOptions;
-    bool m_hasGameData;
     bool m_loadRequested;
+    bool m_thumbnailStateUnknown;
+    bool m_thumbnailFailed;
+    bool m_updateInProgress;
+    bool m_publicGamesAllowed;
     double m_focus;
     double m_childFocus;
     bool m_resetNetherPending;
     bool m_updateEndPending;
-    bool m_loaded;
-    int m_gameMode;
-    int m_seedValue;
-    int m_sizeValue;
-    short m_selectedItem;
-    std::wstring m_thumbnailName;
+    bool m_hasGameData;
     unsigned char* m_thumbnailData;
     unsigned int m_thumbnailSize;
-    IUIScene_MiniGames m_miniGames;
+    std::wstring m_thumbnailName;
 };
 
 #endif

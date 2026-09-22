@@ -40,8 +40,7 @@ void FJ_LoadMenu::handleCheckboxToggled(FJ_Event* event)
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();
     if (checkBox != NULL)
     {
-        m_pCallbackScene->handleCheckboxElementToggled(static_cast<FJ_Base*>(checkBox)->getId(),
-                                                        checkBox->getChecked(), false);
+        m_pCallbackScene->handleCheckboxToggled(checkBox->getId(), checkBox->getChecked());
     }
 }
 
@@ -91,17 +90,17 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
     FJ_HtmlText* description = static_cast<FJ_HtmlText*>(descriptionNode->asFJ_HtmlText());
     int listHeight = multiList->GetListHeight();
     int availableHeight = m_listHeight - listHeight;
-    float halfAvailable = static_cast<float>(availableHeight) * 0.5f;
-    int quarterAvailable = Math::round(halfAvailable * 0.5f);
-    int descriptionOffset = static_cast<int>(comparisonPic->getY()) - quarterAvailable - m_iconY - listHeight - m_iconY;
+    float reclaimedHeight = static_cast<float>(availableHeight);
+    float listOffset = reclaimedHeight * 0.5f;
+    int halfOffset = Math::round(listOffset);
+    int descriptionOffset = static_cast<int>(comparisonPic->getY() - halfOffset - (m_iconY + halfOffset) - m_iconY);
     float descriptionHeight = static_cast<float>(description->GetRealHeight());
     float descriptionY = descriptionNode->getY();
     float comparisonY = comparisonPic->getY();
-    descriptionHeight += descriptionY - (comparisonY + descriptionHeight);
-    descriptionHeight = static_cast<float>(descriptionHeight) + levelIcon->getHeight() - halfAvailable;
+    descriptionHeight = static_cast<float>(static_cast<int>(descriptionHeight + comparisonY - (descriptionY + descriptionHeight)));
+    descriptionHeight += levelIcon->getHeight() - reclaimedHeight;
     descriptionNode->setHeight(descriptionHeight);
 
-    float listOffset = halfAvailable * 0.5f;
     if (description->GetNumberOfLines() < 3)
     {
         float textY = comparisonPic->getY();
@@ -109,7 +108,8 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
         float listY = levelIcon->getY();
         int optimalHeight = description->GetOptimalHeight(-1);
         float textBottom = static_cast<float>(optimalHeight) + comparisonPic->getHeight();
-        float adjustment = static_cast<float>(static_cast<int>(textY + textHeight) - static_cast<int>(listY) - static_cast<int>(textBottom));
+        float adjustment = static_cast<float>(static_cast<int>(textY + textHeight - listY) - static_cast<int>(textBottom));
+        reclaimedHeight = adjustment;
         child(mainPanel, "MultiList")->incY(static_cast<float>(m_listHeight - listHeight) - adjustment);
         listOffset = adjustment * 0.5f;
     }
@@ -119,20 +119,21 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
         if (descriptionOffset < optimalHeight)
         {
             availableHeight -= optimalHeight - descriptionOffset;
+            reclaimedHeight = static_cast<float>(availableHeight);
             child(mainPanel, "MultiList")->incY(static_cast<float>(m_listHeight - listHeight) - static_cast<float>(availableHeight));
             listOffset = static_cast<float>(availableHeight) * 0.5f;
         }
     }
 
-    child(mainPanel, "TexturePackDescription")->getChildAt(0)->decHeight(halfAvailable);
+    child(mainPanel, "Background")->getChildAt(0)->decHeight(reclaimedHeight);
     int roundedOffset = Math::round(listOffset);
-    child(mainPanel, "TexturePackDescription")->incY(static_cast<float>(roundedOffset));
+    child(mainPanel, "Background")->incY(static_cast<float>(roundedOffset));
     child(mainPanel, "GameName")->incY(static_cast<float>(roundedOffset));
     child(mainPanel, "CreatedMode")->incY(static_cast<float>(roundedOffset));
     child(mainPanel, "LevelIcon")->incY(static_cast<float>(roundedOffset));
     child(mainPanel, "LevelIconSlot")->incY(static_cast<float>(roundedOffset));
     child(mainPanel, "MultiList")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "TextPanel")->getChildAt(0)->decHeight(halfAvailable);
+    child(mainPanel, "TextPanel")->getChildAt(0)->decHeight(reclaimedHeight);
     child(mainPanel, "TextPanel")->incY(static_cast<float>(roundedOffset));
     descriptionNode->setY(static_cast<float>(m_iconY + roundedOffset));
 
