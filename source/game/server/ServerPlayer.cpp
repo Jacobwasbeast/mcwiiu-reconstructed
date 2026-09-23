@@ -579,26 +579,42 @@ void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
     if (chunk != NULL && chunk->getHasGapsToCheck() && serverLevel->mDimension->isHasSkyLight())
         chunk->recheckGaps(false);
 
-    if (!mConnection->isLocal())
+    if (mConnection->isLocal())
+    {
+        MultiPlayerLevel* clientLevel = Minecraft::GetInstance()->getLevel(
+            serverLevel->mDimension->getType()->getId());
+        if (clientLevel == NULL)
+            return;
+        LevelChunk* clientChunk = clientLevel->getChunk(closestChunk.x, closestChunk.z);
+        mLoadedChunks.remove(closestChunk);
+        if (clientChunk != NULL)
+        {
+            clientChunk->reSyncLighting();
+            clientChunk->recalcHeightmapOnly();
+        }
+    }
+    else
+    {
         mLoadedChunks.remove(closestChunk);
 
-    boost::shared_ptr<Packet> packet;
-    if (parameterTwo && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() != 0)
-    {
-        packet.reset(new BlockRegionUpdatePacket(
-            closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, true, NULL));
-    }
-    else
-    {
-        packet.reset(new BlockRegionUpdatePacket(
-            closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, false, NULL));
-    }
+        boost::shared_ptr<Packet> packet;
+        if (parameterTwo && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
+            mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() != 0)
+        {
+            packet.reset(new BlockRegionUpdatePacket(
+                closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, true, NULL));
+        }
+        else
+        {
+            packet.reset(new BlockRegionUpdatePacket(
+                closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, false, NULL));
+        }
 
-    if (parameterOne || !packet->isAync())
-        mConnection->send(packet);
-    else
-        mConnection->queueSend(packet);
+        if (parameterOne || !packet->isAync())
+            mConnection->send(packet);
+        else
+            mConnection->queueSend(packet);
+    }
 
     if (networkPlayer != NULL)
         CGameNetworkManager::sInstance.SystemFlagSet(networkPlayer, flagIndex);

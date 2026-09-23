@@ -420,6 +420,7 @@ void ServerLevel::tick()
 {
     tickWeather(true);
     tickBlocks();
+    chunkMap->tick();
     tickEntities();
 }
 
