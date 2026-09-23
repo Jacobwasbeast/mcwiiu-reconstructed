@@ -30,7 +30,7 @@ PlayerChunkContainer::PlayerChunkContainer(PlayerChunkMap* map, int x, int z)
       mUpdateCounter(0), mPrioritiseBlockChanges(false),
       mLastUpdate(0), mHasSentToPlayers(false)
 {
-    mChunk = mMap->getLevel()->getChunkSource()->getChunk(x, z);
+    mChunk = mMap->getLevel()->getChunkSource()->getOrCreateChunk(x, z, false);
 }
 
 PlayerChunkContainer::~PlayerChunkContainer()

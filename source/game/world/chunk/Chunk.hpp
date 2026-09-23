@@ -74,7 +74,7 @@ public:
     void translateToPos();
     unsigned int elementToBlockId(unsigned short element);
     void makeCopyForRebuild(Chunk* source);
-    unsigned long long rebuild(unsigned int* count);
+    void rebuild(unsigned int* count);
     double distanceToSqr(boost::shared_ptr<Entity> entity) const;
     void _delete();
     unsigned long long cull(Culler* culler);
