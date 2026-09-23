@@ -81,16 +81,17 @@ void TamableAnimal::addAdditonalSaveData(CompoundTag* tag)
 void TamableAnimal::readAdditionalSaveData(CompoundTag* tag)
 {
     Animal::readAdditionalSaveData(tag);
-    if (tag->contains(L"OwnerUUID"))
+    std::wstring ownerUuid = tag->getString(tag->contains(L"OwnerUUID") ? L"OwnerUUID" : L"Owner");
+    if (!ownerUuid.empty())
     {
-        setOwnerUUID(tag->getString(L"OwnerUUID"));
-    }
-    else if (tag->contains(L"Owner"))
-    {
-        setOwnerUUID(tag->getString(L"Owner"));
+        setOwnerUUID(ownerUuid);
+        setTame(true);
     }
 
-    setTame(!getOwnerUUID().empty());
+    if (mSitGoal != NULL)
+    {
+        mSitGoal->wantToSit(tag->getBoolean(L"Sitting"));
+    }
     setSitting(tag->getBoolean(L"Sitting"));
 }
 

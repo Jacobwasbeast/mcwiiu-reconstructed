@@ -5,6 +5,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/TrackedEntity.hpp"
+#include "game/network/ClientboundSetEntityLinkPacket.hpp"
+#include "game/network/ClientboundSetPassengersPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -142,16 +144,26 @@ void EntityTracker::clear(boost::shared_ptr<ServerPlayer> player)
 
 void EntityTracker::playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, LevelChunk* chunk)
 {
-    std::vector<boost::shared_ptr<Entity> > entities;
-    chunk->getEntities(boost::shared_ptr<Entity>(), NULL, entities, NULL);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    std::vector<boost::shared_ptr<Entity> > leashedEntities;
+    std::vector<boost::shared_ptr<Entity> > vehicles;
+    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
+         it != mTrackedEntities.end(); ++it)
     {
-        boost::shared_ptr<TrackedEntity> tracker = getTracker(*it);
-        if (tracker)
+        boost::shared_ptr<Entity> entity = (*it)->getEntity();
+        if (entity != player && entity->mChunkX == chunk->x && entity->mChunkZ == chunk->z)
         {
-            tracker->updatePlayer(this, player);
+            (*it)->updatePlayer(this, player);
+            unsigned long long type = entity->GetType();
+            if (((type & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB || type == ENTITY_TYPE_BOAT) && entity->getLeashHolder())
+                leashedEntities.push_back(entity);
+            if (!entity->getPassengers()->empty())
+                vehicles.push_back(entity);
         }
     }
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = leashedEntities.begin(); it != leashedEntities.end(); ++it)
+        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetEntityLinkPacket(*it, (*it)->getLeashHolder())));
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = vehicles.begin(); it != vehicles.end(); ++it)
+        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(*it)));
 }
 
 void EntityTracker::setViewDistance(int distance)
