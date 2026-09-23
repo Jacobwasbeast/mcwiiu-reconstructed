@@ -622,6 +622,10 @@ bool UIScene_LoadCreateJoinMenu::AddJoinListButton(const std::wstring& label, in
     if (data1 != 0 && size1 != 0)
         registerSubstitutionTexture(textureName1, data1, size1, false);
     m_gamesList.AddNewItem(label, id, textureName1, textureName);
+#if defined(RECON_NATIVE)
+    if (m_activeTab == 2 && m_gamesList.getItemCount() == 1)
+        m_gamesList.setCurrentSelection(0, false, true);
+#endif
     return true;
 }
 

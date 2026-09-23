@@ -137,6 +137,10 @@ void FJ_LoadCreateJoinMenu::SetActiveTab(int tab)
     int focusId = tab == 0 ? m_loadTabFocus :
                   (tab == 1 ? m_newTabFocus : m_joinTabFocus);
     SetFocus(focusId);
+#if defined(RECON_NATIVE)
+    if (tab == 2 && focusId < 0 && joinList->asFJ_List() != NULL)
+        getStage()->setFocus(joinList);
+#endif
     if (focusId >= 0)
         setVisible(true);
 

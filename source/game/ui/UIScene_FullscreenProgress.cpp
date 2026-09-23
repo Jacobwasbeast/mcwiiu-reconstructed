@@ -373,7 +373,7 @@ void UIScene_FullscreenProgress::tick()
             m_miniGame = true;
             m_miniGameId = miniGameId;
             gApp.SetFirstMiniGameType(miniGameId);
-            SetTipText(true);
+            handleTimerComplete(1);
             killTimer(1);
             addTimer(1, 7000);
         }

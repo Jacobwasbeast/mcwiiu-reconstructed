@@ -33,6 +33,7 @@
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/FJ_Hud.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
@@ -1513,7 +1514,66 @@ void UIScene_HUD::handleGameTick()
         m_layer->showComponent(playerId, static_cast<EUIScene>(0x31), false);
     }
 }
-void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewport) { UIScene::render(width, height, viewport); }
+void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewport)
+{
+    if (!m_splitScreen)
+    {
+        UIScene::render(width, height, viewport);
+        return;
+    }
+
+    int screenWidth;
+    int screenHeight;
+    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
+                                             screenWidth, screenHeight);
+
+    int renderWidth = width;
+    int renderHeight = height;
+    int movieY = 0;
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_TopHalf:
+        gConsoleUIController.setupRenderPosition(0, 0);
+        renderWidth = screenWidth;
+        movieY = m_stageHeight / 2;
+        break;
+    case C4JRender::eViewportType_BottomHalf:
+        gConsoleUIController.setupRenderPosition(0, screenHeight / 2);
+        renderWidth = screenWidth;
+        movieY = m_stageHeight / 2;
+        break;
+    case C4JRender::eViewportType_LeftHalf:
+        gConsoleUIController.setupRenderPosition(0, 0);
+        renderHeight = screenHeight;
+        break;
+    case C4JRender::eViewportType_RightHalf:
+        gConsoleUIController.setupRenderPosition(screenWidth / 2, 0);
+        renderHeight = screenHeight;
+        break;
+    case C4JRender::eViewportType_TopLeftQuarter:
+        gConsoleUIController.setupRenderPosition(0, 0);
+        movieY = m_stageHeight / 2;
+        break;
+    case C4JRender::eViewportType_TopRightQuarter:
+        gConsoleUIController.setupRenderPosition(screenWidth / 2, 0);
+        movieY = m_stageHeight / 2;
+        break;
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        gConsoleUIController.setupRenderPosition(0, screenHeight / 2);
+        movieY = m_stageHeight / 2;
+        break;
+    case C4JRender::eViewportType_BottomRightQuarter:
+        gConsoleUIController.setupRenderPosition(screenWidth / 2, screenHeight / 2);
+        movieY = m_stageHeight / 2;
+        break;
+    default:
+        gConsoleUIController.setupRenderPosition(0, 0);
+        break;
+    }
+
+    gFui->render(m_movie, 0.0f, static_cast<float>(movieY),
+                 static_cast<float>(renderWidth), static_cast<float>(renderHeight));
+}
 void UIScene_HUD::updateViewportTouchOffset() { UIScene::updateViewportTouchOffset(); }
 void UIScene_HUD::handleTimerComplete(int timerId) { UIScene::handleTimerComplete(timerId); }
 int UIScene_HUD::getSceneType() { return 0x31; }
