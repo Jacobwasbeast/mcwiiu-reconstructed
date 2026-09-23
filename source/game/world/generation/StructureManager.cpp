@@ -80,7 +80,7 @@ const StructureTemplate* StructureManager::get(eMinecraftStructureTemplate type)
             return it->second;
         }
     }
-    return 0;
+    return new StructureTemplate();
 }
 
 const StructureTemplate* StructureManager::getOrCreate(eMinecraftStructureTemplate type)

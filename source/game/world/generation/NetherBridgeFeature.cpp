@@ -132,7 +132,7 @@ NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random
         std::advance(it, random.nextInt((int)startPiece->mPendingChildren.size()));
         StructurePiece* piece = *it;
         startPiece->mPendingChildren.erase(it);
-        piece->addChildren(piece, this, random);
+        piece->addChildren(startPiece, this, random);
     }
 
     calculateBoundingBox();

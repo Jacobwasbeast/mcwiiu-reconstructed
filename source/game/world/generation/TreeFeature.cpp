@@ -12,15 +12,18 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/CocoaBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/VineBlock.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -32,12 +35,6 @@ extern Property* OldLeafBlock_DECAYABLE;
 
 static const BlockState* treeTrunkState = NULL;
 static const BlockState* treeLeafState = NULL;
-static Property* treeCocoaAge = NULL;
-static Property* treeCocoaFacing = NULL;
-static const BooleanProperty* treeVineWest = NULL;
-static const BooleanProperty* treeVineNorth = NULL;
-static const BooleanProperty* treeVineSouth = NULL;
-static const BooleanProperty* treeVineEast = NULL;
 
 TreeFeature::TreeFeature(bool doBlockNotify)
     : AbstractTreeFeature(doBlockNotify, 4, treeTrunkState, treeLeafState, false)
@@ -140,9 +137,9 @@ void TreeFeature::placeCocoa(Level* level, int age, const BlockPos& pos,
 {
     TypedBoxed<int> ageValue(age);
     const BlockState* state = Blocks::cocoa->defaultBlockState();
-    state = state->setBoxedValue(treeCocoaAge, &ageValue);
+    state = state->setBoxedValue(CocoaBlock::AGE, &ageValue);
     TypedBoxed<const Direction*> directionValue(direction);
-    state = state->setBoxedValue(treeCocoaFacing, &directionValue);
+    state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &directionValue);
     setBlock(level, pos, state, 0);
 }
 
@@ -194,16 +191,16 @@ bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)
                     {
                         BlockPos west = vinePos.west();
                         if (random.nextInt(4) == 0 && level->getBlock(west) == Blocks::AIR)
-                            addHangingVine(level, west, treeVineEast);
+                            addHangingVine(level, west, VineBlock::EAST);
                         BlockPos east = vinePos.east();
                         if (random.nextInt(4) == 0 && level->getBlock(east) == Blocks::AIR)
-                            addHangingVine(level, east, treeVineWest);
+                            addHangingVine(level, east, VineBlock::WEST);
                         BlockPos north = vinePos.north();
                         if (random.nextInt(4) == 0 && level->getBlock(north) == Blocks::AIR)
-                            addHangingVine(level, north, treeVineSouth);
+                            addHangingVine(level, north, VineBlock::SOUTH);
                         BlockPos south = vinePos.south();
                         if (random.nextInt(4) == 0 && level->getBlock(south) == Blocks::AIR)
-                            addHangingVine(level, south, treeVineNorth);
+                            addHangingVine(level, south, VineBlock::NORTH);
                     }
                 }
             }

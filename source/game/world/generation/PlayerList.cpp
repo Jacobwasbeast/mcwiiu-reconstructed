@@ -6,6 +6,7 @@
 #include <boost/unordered_set.hpp>
 #include <cmath>
 #include <limits>
+#include <set>
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CTelemetryManager.hpp"
@@ -47,6 +48,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/chunk/PlayerChunkMap.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
@@ -283,6 +285,36 @@ void PlayerList::remove(boost::shared_ptr<ServerPlayer> player)
         mServer->mMasterGameMode->OnLeave(player);
     else
         save(player);
+
+    ServerLevel* level = player->getLevel();
+    if (player->isPassenger())
+    {
+        boost::shared_ptr<Entity> rootVehicle = player->getRootVehicle();
+        if (rootVehicle)
+        {
+            std::set<boost::shared_ptr<Entity> >* players =
+                rootVehicle->getIndirectPassengers(0xC800001ULL);
+            const bool onlyPassenger = players->size() == 1;
+            delete players;
+
+            if (onlyPassenger)
+            {
+                player->stopRiding();
+                level->removeEntityImmediately(rootVehicle);
+                std::set<boost::shared_ptr<Entity> >* passengers =
+                    rootVehicle->getIndirectPassengers();
+                for (std::set<boost::shared_ptr<Entity> >::const_iterator it =
+                         passengers->begin(); it != passengers->end(); ++it)
+                    level->removeEntityImmediately(*it);
+                delete passengers;
+                level->getChunk(player->mChunkX, player->mChunkZ)->markUnsaved();
+            }
+        }
+    }
+
+    level->removeEntity(player);
+    level->getChunkMap()->remove(player);
+    level->getChunkMap()->onPlayerLeave(player);
 
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
     while (it != mPlayers.end())
