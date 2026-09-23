@@ -2368,11 +2368,24 @@ uint32_t CMinecraftApp::IsUUIDLocal(const std::wstring& uuid)
 }
 uint8_t CMinecraftApp::GetTutorialMode(PlayerUID uid)
 {
-    return 0;
+    if (mTutorialModes.find(uid) != mTutorialModes.end())
+        return mTutorialModes[uid];
+    return mTutorialModes[PlayerUID(0)];
 }
 uint8_t CMinecraftApp::GetTutorialMode(const boost::shared_ptr<Player>& player)
 {
-    return 0;
+    uint8_t tutorial;
+    if (player)
+    {
+        PlayerUID uid = GetTutorialPlayerUid(player.get());
+        if (mTutorialModes.find(uid) != mTutorialModes.end())
+        {
+            tutorial = mTutorialModes[uid];
+            return tutorial;
+        }
+    }
+    tutorial = mTutorialModes[PlayerUID(0)];
+    return tutorial;
 }
 void CMinecraftApp::SetGameMode(eGameMode mode)
 {

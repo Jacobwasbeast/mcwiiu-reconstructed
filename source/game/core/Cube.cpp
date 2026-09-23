@@ -1,6 +1,7 @@
 #include "game/core/Cube.hpp"
 
 #include "game/core/BufferBuilder.hpp"
+#include "game/client/render/ModelPart.hpp"
 #include "game/core/Mth.hpp"
 #include "vendor/_Polygon.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -74,18 +75,18 @@ void Cube::_init(ModelPart* parent, int texU, int texV, float x, float y, float 
     float w = (float)width;
     float h = (float)height;
     float d = (float)depth;
-    if (faceMask & 1) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[5], mVertices[1], mVertices[2], mVertices[6]), (int)(u + d + w), (int)(v + d), (int)(u + d + w + w), (int)(v + d + h), w, h);
-    if (faceMask & 2) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[0], mVertices[4], mVertices[7], mVertices[3]), (int)u, (int)(v + d), (int)(u + d), (int)(v + d + h), w, h);
-    if (faceMask & 4) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[5], mVertices[4], mVertices[0], mVertices[1]), (int)(u + d), (int)v, (int)(u + d + w), (int)(v + d), d, h);
+    if (faceMask & 1) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[5], mVertices[1], mVertices[2], mVertices[6]), (int)(u + d + w), (int)(v + d), (int)(u + d + w + d), (int)(v + d + h), parent->mTexWidth, parent->mTexHeight);
+    if (faceMask & 2) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[0], mVertices[4], mVertices[7], mVertices[3]), (int)u, (int)(v + d), (int)(u + d), (int)(v + d + h), parent->mTexWidth, parent->mTexHeight);
+    if (faceMask & 4) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[5], mVertices[4], mVertices[0], mVertices[1]), (int)(u + d), (int)v, (int)(u + d + w), (int)(v + d), parent->mTexWidth, parent->mTexHeight);
     if (faceMask & 8)
     {
         if (!flip)
-            mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[2], mVertices[3], mVertices[7], mVertices[6]), (int)(u + d + w), (int)(v + d), (int)(u + d + w + w), (int)v, d, h);
+            mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[2], mVertices[3], mVertices[7], mVertices[6]), (int)(u + d + w), (int)(v + d), (int)(u + d + w + w), (int)v, parent->mTexWidth, parent->mTexHeight);
         else
-            mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[2], mVertices[3], mVertices[7], mVertices[6]), (int)(u + d + w), (int)v, (int)(u + d + w + w), (int)(v + d), d, h);
+            mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[2], mVertices[3], mVertices[7], mVertices[6]), (int)(u + d + w), (int)v, (int)(u + d + w + w), (int)(v + d), parent->mTexWidth, parent->mTexHeight);
     }
-    if (faceMask & 16) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[1], mVertices[0], mVertices[3], mVertices[2]), (int)(u + d), (int)(v + d), (int)(u + d + w), (int)(v + d + h), w, h);
-    if (faceMask & 32) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[4], mVertices[5], mVertices[6], mVertices[7]), (int)(u + d + w), (int)(v + d), (int)(u + d + w + w), (int)(v + d + h), w, h);
+    if (faceMask & 16) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[1], mVertices[0], mVertices[3], mVertices[2]), (int)(u + d), (int)(v + d), (int)(u + d + w), (int)(v + d + h), parent->mTexWidth, parent->mTexHeight);
+    if (faceMask & 32) mPolygons[mPolygonCount++] = new _Polygon(VertexArray4(mVertices[4], mVertices[5], mVertices[6], mVertices[7]), (int)(u + d + d + w), (int)(v + d), (int)(u + d + d + w + w), (int)(v + d + h), parent->mTexWidth, parent->mTexHeight);
     if (mirror)
     {
         for (int i = 0; i < mPolygonCount; ++i) mPolygons[i]->mirror();

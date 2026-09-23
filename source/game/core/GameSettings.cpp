@@ -183,10 +183,12 @@ void GameSettings::UpdateActionMapping(int profile, int group, bool secondary)
 
 uint32_t GameSettings::GetInputButton(unsigned int value)
 {
+    if (value < 3)
+        return value;
     static const unsigned int buttons[15] =
     {
-        0, 1, 2, 0x100, 0x200, 0x400, 0x800, 0x1000,
-        0x2000, 0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000
+        0, 0, 0, 4, 8, 0x1000, 0x2000, 0x400,
+        0x800, 0x40, 0x80, 0x400000, 0x800000, 0x100, 0x200
     };
     return value < 15 ? buttons[value] : 0;
 }
