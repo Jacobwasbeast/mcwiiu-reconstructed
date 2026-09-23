@@ -69,6 +69,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int pla
       mLastSentZ(0.0), mLastSentYRot(0.0f), mLastSentXRot(0.0f),
       mPositionSendCounter(0), mPreviousOnGround(false), mHealthInitialized(false), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
       mSprinting(false), mThirdPersonViewTimer(0),
+      mViewYRot(0.0f), mViewXRot(0.0f), mViewYRotO(0.0f), mViewXRotO(0.0f),
       mFallFlyYaw(0.0f), mFallFlyYawOld(0.0f),
       mHandsBusy(false), mItemUsePending(false),
       mUsedItemHand(InteractionHand::eInteractionHand_MainHand),
@@ -314,6 +315,13 @@ void LocalPlayer::magicCrit(boost::shared_ptr<Entity> entity)
 void LocalPlayer::serverAiStep()
 {
     Player::serverAiStep();
+    if (isControlledCamera())
+    {
+        mViewYRotO = mViewYRot;
+        mViewXRotO = mViewXRot;
+        mViewYRot += (mYRot - mViewYRot) * 0.5f;
+        mViewXRot += (mXRot - mViewXRot) * 0.5f;
+    }
 }
 
 float LocalPlayer::tickHeadTurn(float yRot, float xRot)

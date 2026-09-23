@@ -163,6 +163,7 @@ public:
 private:
     friend class Minecraft;
     friend class PlayerRenderer;
+    friend class ItemInHandRenderer;
 
     unsigned char mReserved0x850[0x28];
 
@@ -188,7 +189,11 @@ private:
     unsigned char mReserved0x8c8[4];
     int mSprinting;
     int mThirdPersonViewTimer;
-    unsigned char mReserved0x8d0[0x18];
+    float mViewYRot;
+    float mViewXRot;
+    float mViewYRotO;
+    float mViewXRotO;
+    unsigned char mReserved0x8e0[0x08];
     float mFallFlyYaw;
     float mFallFlyYawOld;
     unsigned char mReserved0x8f0[0x08];

@@ -184,7 +184,9 @@ bool MultiPlayerGameMode::_useItemOn(boost::shared_ptr<Player> player, Level* le
 
 bool MultiPlayerGameMode::GetTutorialsEnabled()
 {
-    return mTutorialsEnabled;
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return GetMiniGame()->GetTutorialsEnabled();
+    return true;
 }
 InteractionResult::EInteractionResult MultiPlayerGameMode::useItemOn(
     boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, const Direction* direction,
@@ -534,7 +536,13 @@ void MultiPlayerGameMode::StartSpectating()
 }
 bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction*) { mDestroyBlockPos = pos; mDestroying = true; return true; }
 bool MultiPlayerGameMode::canHurtPlayer() { return true; }
-void MultiPlayerGameMode::tick() { if (mMissTime > 0.0f) mMissTime -= 1.0f; }
+void MultiPlayerGameMode::tick()
+{
+    ensureHasSentCarriedItem();
+    mGameModeConstraints->tick();
+    if (!mTutorial->tasksChecked && GetTutorialsEnabled())
+        mTutorial->tick();
+}
 InteractionResult::EInteractionResult MultiPlayerGameMode::useItem(
     boost::shared_ptr<Player> player, Level* level, InteractionHand::EInteractionHand hand, bool simulate)
 {
