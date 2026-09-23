@@ -13,12 +13,12 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/SkullBlockEntity.hpp"
 
-static ResourceLocation SKULL_TEXTURE_0;
-static ResourceLocation SKULL_TEXTURE_1;
-static ResourceLocation SKULL_TEXTURE_2;
-static ResourceLocation SKULL_TEXTURE_3;
-static ResourceLocation SKULL_TEXTURE_4;
-static ResourceLocation SKULL_TEXTURE_5;
+static ResourceLocation SKULL_TEXTURE_0((_TEXTURE_NAME)34);
+static ResourceLocation SKULL_TEXTURE_1((_TEXTURE_NAME)82);
+static ResourceLocation SKULL_TEXTURE_2((_TEXTURE_NAME)32);
+static ResourceLocation SKULL_TEXTURE_3((_TEXTURE_NAME)37);
+static ResourceLocation SKULL_TEXTURE_4((_TEXTURE_NAME)29);
+static ResourceLocation SKULL_TEXTURE_5((_TEXTURE_NAME)59);
 
 namespace
 {

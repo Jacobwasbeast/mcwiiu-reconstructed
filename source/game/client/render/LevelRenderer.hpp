@@ -161,6 +161,7 @@ public:
 
 private:
     friend class Minecraft;
+    friend class Chunk;
 
     ChunkBlockEntityMap mBlockEntities;
     OSFastMutex mBlockEntityMutex;

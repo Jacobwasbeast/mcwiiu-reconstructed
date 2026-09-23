@@ -259,6 +259,7 @@ GameRenderer::GameRenderer(Minecraft* minecraft, ResourceManager* resourceManage
     *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x11d) = 1;
     *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x11e) = 1;
     *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x110) = 70.0f;
+    *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x2250) = 1.0f;
     *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x22b0) = 0x18;
 
     mBuffer = MemoryTracker::createFloatBuffer(16);
@@ -846,6 +847,7 @@ void GameRenderer::tickRain()
 
 void GameRenderer::tick(bool tickWorld)
 {
+    static const float kZero = 0.0f;
     static const float kHalf = 0.5f;
     static const float kOne = 1.0f;
     static const float kBlurLerp = 0.10000000149011612f;
@@ -879,8 +881,8 @@ void GameRenderer::tick(bool tickWorld)
 
     if (level->getSkyDarken() == 0)
     {
-        *cameraSmoothA = kHalf;
-        *cameraSmoothB = kHalf;
+        *cameraSmoothA = kZero;
+        *cameraSmoothB = kZero;
     }
     else
     {
@@ -891,9 +893,9 @@ void GameRenderer::tick(bool tickWorld)
             kSmoothDeltaScale * (levelBrightness * levelBrightness * levelBrightness * kLevelBrightnessWeight);
         *cameraSmoothA = mFov.getNewDeltaValue(*cameraSmoothSource, smoothDelta);
         *cameraSmoothB = mFog.getNewDeltaValue(*fogSmoothSource, smoothDelta);
-        *cameraSmoothC = kHalf;
-        *fogSmoothSource = kHalf;
-        *cameraSmoothSource = kHalf;
+        *cameraSmoothC = kZero;
+        *fogSmoothSource = kZero;
+        *cameraSmoothSource = kZero;
     }
 
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
@@ -906,7 +908,7 @@ void GameRenderer::tick(bool tickWorld)
     *viewRot = static_cast<float>((viewPitch - static_cast<double>(*viewRot)) * kHalf + static_cast<double>(*viewRot));
 
     const float blockBrightness = level->getBrightness(BlockPos(cameraEntity));
-    *blurCurrent = ((blockBrightness * kHalf + kOne) - *blurCurrent) * kBlurLerp + *blurCurrent;
+    *blurCurrent = ((blockBrightness * kZero + kOne) - *blurCurrent) * kBlurLerp + *blurCurrent;
 
     ItemInHandRenderer* itemRenderer =
         mItemInHandRenderer;
@@ -1127,8 +1129,6 @@ void GameRenderer::pick(float partialTick)
         }
     }
 
-    delete entities;
-
     if (closestEntity != NULL)
     {
         if (mMinecraft->mHitResult == NULL && pickRange > kPickDistanceCompare)
@@ -1198,7 +1198,7 @@ double GameRenderer::getFov(float amount, bool useSmoothing)
         const float smoothNew = *reinterpret_cast<float*>(self + 0xf0 + indexOffset);
         const float optionFov =
             mMinecraft->mOptions != NULL
-                ? *reinterpret_cast<float*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x120)
+                ? mMinecraft->mOptions->mFov
                 : kZero;
         const float smooth = (smoothOld - smoothNew) * amount + smoothNew;
         fov = (fov + optionFov) * smooth;
@@ -1294,8 +1294,8 @@ void GameRenderer::bobView(float partialTick)
     const float walkDistO = entity->mWalkDistO;
     const float walkDist = entity->mWalkDist;
     const float walk = (walkDistO - walkDist) * partialTick + walkDist;
-    const float bobDist = (entity->mBob - entity->mOBob) * partialTick + entity->mOBob;
-    const float roll = (entity->mRotA - entity->mTimeOffs) * partialTick + entity->mTimeOffs;
+    const float bobDist = (entity->mCameraYaw - entity->mPrevCameraYaw) * partialTick + entity->mPrevCameraYaw;
+    const float roll = (entity->mBob - entity->mOBob) * partialTick + entity->mOBob;
     const float angle = -walk * kPi;
     const float dist = bobDist;
 
@@ -1352,7 +1352,8 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     LivingEntity* entity = living.get();
 
     const unsigned int thirdPerson = getCameraThirdPerson();
-    const double eyeHeight = entity->getEyeHeight();
+    const double eyeHeight = static_cast<double>(
+        (entity->mEyeHeightO - entity->mEyeHeight) * partialTick + entity->mEyeHeight);
     double x = (entity->mX - entity->mXOld) * partialTick + entity->mXOld;
     double y = (entity->mY - entity->mYOld) * partialTick + entity->mYOld;
     double z = (entity->mZ - entity->mZOld) * partialTick + entity->mZOld;
@@ -1559,7 +1560,7 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
         }
     }
 
-    GlStateManager::translatef(kZero, -static_cast<float>(yEye), kZero);
+    GlStateManager::translatef(kZero, -static_cast<float>(eyeHeight), kZero);
 
     const bool inCloud = mMinecraft->mLevelRenderer->isInCloud(x, yEye, z, partialTick);
     *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x11c) = inCloud ? 1 : 0;
@@ -1731,7 +1732,7 @@ void GameRenderer::turnOnLightLayer(double)
 
     const unsigned int texture = getLightTexture(
         *reinterpret_cast<int*>(reinterpret_cast<char*>(player) + 0x960), mMinecraft->mLevel);
-    mMinecraft->mTextures->bind(static_cast<int>(texture));
+    gRenderer->TextureBindVertex(static_cast<int>(texture));
     GlStateManager::texParameteri(1, 1, 1);
     GlStateManager::texParameteri(1, 2, 1);
     GlStateManager::texParameteri(1, 3, 0);
@@ -1740,7 +1741,7 @@ void GameRenderer::turnOnLightLayer(double)
 
 void GameRenderer::turnOffLightLayer(double)
 {
-    return;
+    gRenderer->TextureBindVertex(-1);
 }
 
 void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
@@ -2022,16 +2023,14 @@ void GameRenderer::updateLightTexture(float partialTick)
         Dimension* dimension = level->mDimension;
         float* brightnessRamp = dimension->getBrightnessRamp();
         const float skyDarken = level->getSkyDarken(kOne);
-        Biome* biome = level->getBiome(BlockPos(0, 64, 0));
-        const unsigned int waterColor =
-            biome != NULL ? biome->getWaterColor() : 0u;
+        const unsigned int blockLightColor = dimension->getBlockLightColour();
 
-        const float waterRed =
-            static_cast<float>(((waterColor >> 16) & 0xff) - 176.0f) / k255;
-        const float waterBlue =
-            static_cast<float>((waterColor & 0xff) - 176.0f) / k255;
-        const float waterGreen =
-            static_cast<float>(((waterColor >> 8) & 0xff) - 176.0f) / k255;
+        const float lightRed =
+            static_cast<float>(((blockLightColor >> 16) & 0xff) - 176.0f) / k255;
+        const float lightGreen =
+            static_cast<float>(((blockLightColor >> 8) & 0xff) - 176.0f) / k255;
+        const float lightBlue =
+            static_cast<float>((blockLightColor & 0xff) - 176.0f) / k255;
 
         const bool isNether = dimension->getType() == DimensionType::NETHER;
         boost::shared_ptr<LivingEntity> living =
@@ -2056,20 +2055,22 @@ void GameRenderer::updateLightTexture(float partialTick)
             float redComponent = blockBrightness;
             float greenBase =
                 blockBrightness * (skyDarken * kSecondarySkyScale + kSecondarySkyAdd);
-            const float redWater = skyBrightness * waterRed;
-            const float greenWater =
+            const float redLight = skyBrightness * lightRed;
+            const float blueLight =
                 skyBrightness
-                * (static_cast<float>(skyBrightness * skyBrightness) * kWaterMixC + kWaterMixA);
-            const float blueWater =
+                * (static_cast<float>(skyBrightness * skyBrightness) * kWaterMixC + kWaterMixA)
+                * lightBlue;
+            const float greenLight =
                 skyBrightness
                 * (static_cast<float>(skyBrightness * kWaterMixC + kWaterMixA) * kWaterMixC
-                   + kWaterMixA);
+                   + kWaterMixA)
+                * lightGreen;
 
-            double red = static_cast<double>((redComponent + greenWater) * kLightScale + kLightBase);
+            double red = static_cast<double>((greenBase + redLight) * kLightScale + kLightBase);
             double green =
-                static_cast<double>((greenBase + redWater) * kLightScale + kLightBase);
+                static_cast<double>((greenBase + greenLight) * kLightScale + kLightBase);
             double blue =
-                static_cast<double>((greenBase + blueWater) * kLightScale + kLightBase);
+                static_cast<double>((redComponent + blueLight) * kLightScale + kLightBase);
 
             if (*damageFlash > kHalf)
             {
@@ -2083,9 +2084,9 @@ void GameRenderer::updateLightTexture(float partialTick)
 
             if (isNether)
             {
-                red = static_cast<double>(greenWater * kNetherRed + kNetherGreen);
-                green = static_cast<double>(redWater * kNetherRed + kNetherBlueScale);
-                blue = static_cast<double>(blueWater * kNetherRed + kNetherBlueAdd);
+                red = static_cast<double>(redLight * kNetherRed + kNetherBlueAdd);
+                green = static_cast<double>(greenLight * kNetherRed + kNetherBlueScale);
+                blue = static_cast<double>(blueLight * kNetherRed + kNetherGreen);
             }
 
             if (living->hasEffect(MobEffects::NIGHT_VISION)
@@ -2131,12 +2132,12 @@ void GameRenderer::updateLightTexture(float partialTick)
             const double redCurve = kOne - red;
             const double greenCurve = kOne - green;
             const double blueCurve = kOne - blue;
-            red = (-(redCurve * redCurve * redCurve - kOne) * kHalf + red) * kLightScale + kLightBase;
+            red = (-(redCurve * redCurve * redCurve * redCurve - kOne) * kHalf + red) * kLightScale + kLightBase;
             green =
-                (-(greenCurve * greenCurve * greenCurve - kOne) * kHalf + green) * kLightScale
+                (-(greenCurve * greenCurve * greenCurve * greenCurve - kOne) * kHalf + green) * kLightScale
                 + kLightBase;
             blue =
-                (-(blueCurve * blueCurve * blueCurve - kOne) * kHalf + blue) * kLightScale
+                (-(blueCurve * blueCurve * blueCurve * blueCurve - kOne) * kHalf + blue) * kLightScale
                 + kLightBase;
 
             if (red > kOne)
@@ -2538,11 +2539,14 @@ void GameRenderer::setupClearColor(float partialTick)
             brightness *= kOne - static_cast<float>((20 - effect->getDuration()) / 20.0f);
     }
     if (brightness < kMinBrightness)
-        brightness = kMinBrightness;
-    brightness *= brightness;
-    *fogRed = static_cast<float>(*fogRed * brightness);
-    *fogGreen = static_cast<float>(*fogGreen * brightness);
-    *fogBlue = static_cast<float>(*fogBlue * brightness);
+    {
+        if (brightness < 0.0)
+            brightness = 0.0;
+        brightness *= brightness;
+        *fogRed = static_cast<float>(*fogRed * brightness);
+        *fogGreen = static_cast<float>(*fogGreen * brightness);
+        *fogBlue = static_cast<float>(*fogBlue * brightness);
+    }
 
     float* damageFlash = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x114);
     float* damageFlashO = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x118);

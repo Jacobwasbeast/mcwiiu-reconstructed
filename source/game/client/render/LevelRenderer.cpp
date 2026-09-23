@@ -67,7 +67,7 @@
 
 static const unsigned int gChunkDimensionSizes[2] = { 80, 20 };
 
-int gChunkDimensionBases[4];
+int gChunkDimensionBases[4] = { 0, 0x19000, 0x1a900, 0x1c640 };
 int gEndInnerChunkX;
 int gEndInnerChunkZ;
 int gEndOuterChunkX;
@@ -1461,7 +1461,7 @@ void LevelRenderer::renderSky(float partialTick)
         Lighting::turnOff();
         GlStateManager::depthMask(false);
 
-        static ResourceLocation sEndSkyLocation;
+        static ResourceLocation sEndSkyLocation((_TEXTURE_NAME)0x4a);
         mTextures->bindTexture(&sEndSkyLocation);
 
         BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -1621,8 +1621,8 @@ void LevelRenderer::renderSky(float partialTick)
     GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(level->getTimeOfDay(partialTick) * 360.0f, 1.0f, 0.0f, 0.0f);
 
-    static ResourceLocation sSunLocation;
-    static ResourceLocation sMoonPhasesLocation;
+    static ResourceLocation sSunLocation((_TEXTURE_NAME)0x2e);
+    static ResourceLocation sMoonPhasesLocation((_TEXTURE_NAME)0x4c);
 
     if (sunAngleDegrees <= 125.0f || 235.0f <= sunAngleDegrees)
     {
@@ -1748,7 +1748,7 @@ void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, 
     static float sCloudDriftAccum = 0.0f;
     static float sCloudPrevTime = -1.0f;
     static bool sCloudDriftLatched = false;
-    static ResourceLocation sAdvancedCloudsLocation;
+    static ResourceLocation sAdvancedCloudsLocation((_TEXTURE_NAME)5);
 
     GlStateManager::multiTexCoord2f(0.0f, 0.0f);
     gRenderer->StateSetEnableViewportClipPlanes(true);
@@ -1998,7 +1998,7 @@ void LevelRenderer::renderClouds(float partialTick, int pass, double x, double y
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
-    static ResourceLocation sCloudsLocation;
+    static ResourceLocation sCloudsLocation((_TEXTURE_NAME)5);
     mTextures->bindTexture(&sCloudsLocation);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
@@ -2290,7 +2290,7 @@ unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
     return 0;
 }
 
-static ResourceLocation sHitOverlayLocation;
+static ResourceLocation sHitOverlayLocation((_TEXTURE_NAME)0xf1);
 
 void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult* hit, int pass, not_null_ptr<ItemInstance> item, float partialTick)
 {
