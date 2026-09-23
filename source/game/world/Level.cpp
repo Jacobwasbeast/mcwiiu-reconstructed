@@ -3979,12 +3979,13 @@ void Level::tickEntities()
         tick(*entity, false);
         ++entity;
     }
-    entity = mEntities.begin();
-    while (entity != mEntities.end())
+    EnterCriticalSection(&mEntityMutex);
+    for (size_t index = 0; index < mEntities.size(); ++index)
     {
-        tick(*entity, true);
-        ++entity;
+        boost::shared_ptr<Entity> tickingEntity = mEntities.at(index);
+        tick(tickingEntity, true);
     }
+    LeaveCriticalSection(&mEntityMutex);
     mProcessingBlockEntities = true;
     std::vector<boost::shared_ptr<BlockEntity> >::iterator blockEntity = mBlockEntities.begin();
     while (blockEntity != mBlockEntities.end())
@@ -3996,7 +3997,25 @@ void Level::tickEntities()
         ++blockEntity;
     }
     mProcessingBlockEntities = false;
-    addAllPendingBlockEntities(mPendingBlockEntities);
+
+    std::vector<boost::shared_ptr<BlockEntity> > pending;
+    pending.swap(mPendingBlockEntities);
+    for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = pending.begin();
+         it != pending.end(); ++it)
+    {
+        boost::shared_ptr<BlockEntity> entity = *it;
+        if (entity == NULL || entity->isRemoved())
+        {
+            continue;
+        }
+
+        AddToBlockEntityList(entity);
+        const BlockPos pos = entity->getBlockPos();
+        if (hasChunkAt(pos))
+        {
+            getChunkAt(pos)->setBlockEntity(pos, entity);
+        }
+    }
 }
 
 void Level::addEntities(std::vector<boost::shared_ptr<Entity> >* entities)
@@ -4628,11 +4647,9 @@ bool Level::isUnobstructed(const AABB* box, boost::shared_ptr<Entity> excluded)
         if (!(*it)->mRemoved && (*it)->mBlocksBuilding && *it != excluded
             && (excluded == NULL || (*it)->isPassengerOfSameVehicle(excluded)))
         {
-            delete entities;
             return false;
         }
     }
-    delete entities;
     return true;
 }
 

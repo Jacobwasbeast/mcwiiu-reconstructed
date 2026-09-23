@@ -354,7 +354,7 @@ LevelChunk* NetherLevelSource::createChunk(int chunkX, int chunkZ)
     mCaves->apply(mLevel, chunkX, chunkZ, &primer);
     if (mGenerateStructures)
     {
-        mNetherBridgeFeature->addFeature(mLevel, chunkX, chunkZ, chunkX, chunkZ, &primer);
+        mNetherBridgeFeature->apply(mLevel, chunkX, chunkZ, &primer);
     }
     LevelChunk* chunk = new LevelChunk(mLevel, &primer, chunkX, chunkZ);
     chunk->setCheckAllLight();
