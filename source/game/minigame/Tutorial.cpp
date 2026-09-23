@@ -16,9 +16,11 @@
 #include "game/minigame/TutorialTask.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/L10N.hpp"
 #include "game/world/block/LookAtBlockHint.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "vendor/_TutorialPopupInfo.hpp"
 
 unsigned int GetTickCount();
 
@@ -27,6 +29,7 @@ extern ConsoleUIController gConsoleUIController;
 namespace
 {
     unsigned int gTutorialVisibleTime = 7000;
+    unsigned int gTutorialMinimumDisplayTime = 2000;
     std::vector<int> gTutorialCompletionIds;
     static const int gTutorialCompletionIdValues[] = { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70, 72, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 101, 102, 103, 104, 105, 107, 106, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 32, 188, 190, 191, 192, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 34, 36, 29, 31, 33, 35, 189, 8, 193, 194, 195, 309, 310, 311, 312, 313, 308, 196, 100, 64, 314, 315, 316, 317, 318, 319, 149, 150, 151, 152, 153, 197, 198, 199, 200, 38, 39, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 383, 384 };
 }
@@ -451,14 +454,72 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
 {
     if (details == NULL)
     {
+        if (currentMessage != NULL && currentMessage->titleId != -1 &&
+            currentMessage->titleId != -2)
+        {
+            _TutorialPopupInfo info;
+            info.scene = currentScene;
+            gConsoleUIController.SetTutorialDescription(playerId, &info);
+        }
+        delete currentMessage;
         currentMessage = NULL;
         popupPending = false;
         return 0;
     }
-    if (currentMessage != NULL && currentMessage->isSameContent(details) != 0)
+    if (!details->allowFade && messageState == currentState && currentMessage != NULL &&
+        details->isSameContent(currentMessage) != 0 &&
+        (!details->unknown || GetTickCount() <
+             static_cast<unsigned int>(visibleTime) + gTutorialVisibleTime))
     {
+        delete details;
         return 0;
     }
+
+    messageState = currentState;
+    if (!details->displayed)
+        visibleTime = static_cast<int>(GetTickCount());
+
+    if ((details->titleId != -1 && details->titleId != -2) || !details->title.empty())
+    {
+        std::wstring title;
+        if (!details->title.empty())
+            title = details->title;
+        else
+        {
+            boost::unordered_map<int, TutorialMessage*>::iterator found = messages.find(details->titleId);
+            title = found != messages.end() && !details->force
+                ? found->second->getMessageForDisplay()
+                : L10N::GetString(details->titleId);
+        }
+
+        if (!details->message.empty())
+            title += details->message;
+        else if (details->messageId != -1)
+        {
+            boost::unordered_map<int, TutorialMessage*>::iterator found = messages.find(details->messageId);
+            if (found != messages.end())
+                title += found->second->getMessageForDisplay();
+        }
+
+        std::wstring description;
+        if (!details->itemDescription.empty())
+            description = details->itemDescription;
+        else if (details->promptId != -1 && details->promptId != -2)
+            description = L10N::GetString(details->promptId);
+
+        _TutorialPopupInfo info;
+        info.scene = currentScene;
+        info.title = title.c_str();
+        info.description = description.c_str();
+        info.icon = details->itemInstance;
+        info.iconItemId = details->itemId;
+        info.showTitle = details->repeat;
+        info.showExitScreenshot = details->unknown;
+        info.descriptionId = details->state;
+        gConsoleUIController.SetTutorialDescription(playerId, &info);
+    }
+
+    delete currentMessage;
     currentMessage = details;
     popupPending = true;
     return 1;
@@ -551,6 +612,71 @@ void Tutorial::tick()
             return;
         }
         started = true;
+    }
+
+    if (!popupVisible)
+    {
+        gConsoleUIController.SetTutorialVisible(playerId, false);
+        return;
+    }
+
+    if (!uiControllerSet)
+    {
+        gConsoleUIController.SetTutorial(playerId, this);
+        uiControllerSet = true;
+    }
+
+    if (gConsoleUIController.IsPauseMenuDisplayed(playerId))
+        return;
+
+    if (tutorialHidden)
+    {
+        if (!gameModeConstraints->HasFailedConstraint(currentState) &&
+            currentTask[currentState] != NULL)
+        {
+            gConsoleUIController.SetTutorialVisible(playerId, true);
+            visibleTime = static_cast<int>(GetTickCount());
+        }
+        tutorialHidden = false;
+    }
+
+    if (currentTask[currentState] == NULL && !stateTasks[currentState].empty())
+    {
+        currentTask[currentState] = stateTasks[currentState].front();
+        currentTask[currentState]->setAsCurrentTask(true);
+        stateChanged = true;
+    }
+
+    TutorialTask* task = currentTask[currentState];
+    if (task == NULL || gameModeConstraints->HasFailedConstraint(currentState))
+    {
+        gConsoleUIController.SetTutorialVisible(playerId, false);
+        return;
+    }
+
+    if (stateChanged)
+    {
+        PopupMessageDetails* details = new PopupMessageDetails();
+        details->titleId = task->getDescriptionId();
+        details->messageId = task->getPromptId();
+        details->repeat = task->AllowFade();
+        setMessage(details);
+        stateChanged = false;
+    }
+
+    if (task->ShowMinimumTime() &&
+        GetTickCount() > static_cast<unsigned int>(visibleTime) + gTutorialMinimumDisplayTime)
+    {
+        task->setShownForMinimumTime();
+        if (currentMessage != NULL && currentMessage->messageId != task->getPromptId())
+        {
+            PopupMessageDetails* details = new PopupMessageDetails();
+            details->titleId = task->getDescriptionId();
+            details->messageId = task->getPromptId();
+            details->repeat = task->AllowFade();
+            details->displayed = true;
+            setMessage(details);
+        }
     }
 }
 
