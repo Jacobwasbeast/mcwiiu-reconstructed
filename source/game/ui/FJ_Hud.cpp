@@ -180,6 +180,7 @@ FJ_FuiNode* splashTextPanelChild(FJ_FuiNode* splashClip)
     FJ_FuiNode* panel = splashClip->getChildByName("TextPanel");
     return panel != NULL ? panel->getChildAt(0) : NULL;
 }
+
 } // namespace
 
 
@@ -710,7 +711,12 @@ void FJ_Hud::ShowQuickSelect(bool visible)
 
     hudByte(this, 0x4a) = visible;
 }
-void FJ_Hud::ShowCrosshair(bool visible) { FJ_FuiNode* node = getChildByName("crosshair"); if (node != NULL) node->setVisible(visible); }
+void FJ_Hud::ShowCrosshair(bool visible)
+{
+    FJ_FuiNode* crosshair = hudNode(this, 0x50);
+    crosshair->setVisible(visible);
+    hudByte(this, 0x4b) = visible;
+}
 void FJ_Hud::UpdateBossBarPositions()
 {
     int count = hudInt(this, 0x3a4);
@@ -1071,17 +1077,16 @@ void FJ_Hud::SetAlpha(float alpha)
 }
 void FJ_Hud::InitDamageIndicators()
 {
-    FJ_FuiNode* root = getChildAt(0);
-    FJ_FuiNode* indicators = root == NULL ? NULL : root->getChildByName("DamageIndicators");
-    if (indicators == NULL)
-        return;
-    for (int i = 0; i < 4; ++i)
+    FJ_FuiNode* root = hudNode(this, 0x50)->getChildAt(0);
+    FJ_FuiNode* indicators = root->getChildByName("DamageIndicators");
+    char name[32];
+    for (int i = 0; i < 8; ++i)
     {
-        std::string name = std::string("Damage_") + static_cast<char>('0' + i);
-        m_damageIndicators[i] = indicators->getChildByName(name);
-        m_damageIndicatorAlpha[i] = 0.0f;
-        if (m_damageIndicators[i] != NULL)
-            m_damageIndicators[i]->setAlpha(0.0f);
+        std::snprintf(name, sizeof(name), "Damage_0%d", i);
+        FJ_FuiNode* indicator = indicators->getChildByName(name);
+        hudNode(this, 0x260 + static_cast<size_t>(i) * 4) = indicator;
+        hudFloat(this, 0x280 + static_cast<size_t>(i) * 4) = 0.0f;
+        indicator->setAlpha(0.0f);
     }
 }
 int FJ_Hud::GetHotBarX()
@@ -1295,14 +1300,17 @@ void FJ_Hud::UpdateOffsets(FJ_Event*)
 
     hudInt(this, 0x380) = (hudInt(this, 0x380) < 0x7fffffff) ? hudInt(this, 0x380) + 1 : 0;
 
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 8; ++i)
     {
-        if (m_damageIndicatorAlpha[i] > 0.0f)
+        FJ_FuiNode* indicator = hudNode(this, 0x260 + static_cast<size_t>(i) * 4);
+        float& alpha = hudFloat(this, 0x280 + static_cast<size_t>(i) * 4);
+        if (alpha > 0.0f)
         {
-            if (m_damageIndicators[i] != NULL)
-                m_damageIndicators[i]->setAlpha(m_damageIndicatorAlpha[i] / 30.0f);
-            m_damageIndicatorAlpha[i] -= 1.0f;
+            indicator->setAlpha(alpha / 30.0f);
+            alpha -= 1.0f;
         }
+        else
+            indicator->setAlpha(0.0f);
     }
 
     if (hudByte(this, 0x4d8) != 0)
@@ -1333,7 +1341,10 @@ void FJ_Hud::UpdateOffsets(FJ_Event*)
         hudInt(this, 0x4b4) = hudInt(this, 0x4b4) - 1;
     }
 }
-void FJ_Hud::_UpdateOffsets(FJ_FuiNode*, FJ_Event*) { }
+void FJ_Hud::_UpdateOffsets(FJ_FuiNode* node, FJ_Event* event)
+{
+    static_cast<FJ_Hud*>(node)->UpdateOffsets(event);
+}
 void FJ_Hud::InitHud(FJ_Event* event)
 {
     (void)event;
@@ -1438,7 +1449,7 @@ void FJ_Hud::InitHud(FJ_Event* event)
 
     char buffer[64];
     FJ_FuiNode** iconCursor = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x60);
-    for (int slot = 10; slot > 0; --slot)
+    for (int slot = 0; slot < 10; ++slot)
     {
         std::snprintf(buffer, sizeof(buffer), "FJ_Health_0%d", slot);
         FJ_FuiNode* healthBar = hudNode(this, 0x104);
@@ -1711,7 +1722,10 @@ void FJ_Hud::init(FJ_Event* event)
     hudField<std::wstring>(this, 0x468) = L"";
     LoadHud(1);
 }
-void FJ_Hud::_init(FJ_FuiNode*, FJ_Event*) { }
+void FJ_Hud::_init(FJ_FuiNode* node, FJ_Event* event)
+{
+    static_cast<FJ_Hud*>(node)->init(event);
+}
 int FJ_Hud::GetHotBarHeight()
 {
     if (hudNode(this, 0x58) == NULL || hudNode(this, 0x244) == NULL)
@@ -1809,11 +1823,16 @@ void FJ_Hud::SetPulserText(const std::wstring& text)
 }
 void FJ_Hud::SetTooltipsEnabled(bool enabled)
 {
-    FJ_FuiNode* node = getChildByName("tooltips");
-    if (node != NULL)
-        node->setVisible(enabled);
-    SetupOffhandSlot();
-    RepositionHud(static_cast<int>(getWidth()), static_cast<int>(getHeight()));
+    hudByte(this, 0x4b0) = enabled;
+    SetSafeZone(hudInt(this, 0x30), hudInt(this, 0x34),
+                hudInt(this, 0x38), hudInt(this, 0x3c));
+    if (hudByte(this, 0x4ec) == 0)
+    {
+        SetSelectedLabel(std::wstring(), false);
+        SetPlayerLevel(hudInt(this, 0x39c));
+        if (hudInt(this, 0x460) != -1 && hudInt(this, 0x464) != -1)
+            RepositionHud(hudInt(this, 0x460), hudInt(this, 0x464));
+    }
 }
 void FJ_Hud::ShowOffhandSlot(bool visible) { FJ_FuiNode* node = getChildByName("offhandSlot"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::SetIsRightHanded(bool rightHanded)
@@ -2460,8 +2479,28 @@ void FJ_Hud::SetGlideHealth(int health)
         icon->gotoAndStop(kGlideHealthFrame[state]);
     }
 }
-void FJ_Hud::ShowHealth(bool visible) { FJ_FuiNode* node = getChildByName("health"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::ShowHorseHealth(bool visible) { FJ_FuiNode* node = getChildByName("horseHealth"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::ShowFood(bool visible) { FJ_FuiNode* node = getChildByName("food"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::ShowAir(bool visible) { FJ_FuiNode* node = getChildByName("air"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::ShowArmour(bool visible) { FJ_FuiNode* node = getChildByName("armour"); if (node != NULL) node->setVisible(visible); }
+void FJ_Hud::ShowHealth(bool visible)
+{
+    hudNode(this, 0x104)->setVisible(visible);
+    hudByte(this, 0x41) = visible;
+}
+void FJ_Hud::ShowHorseHealth(bool visible)
+{
+    hudNode(this, 0x88)->setVisible(visible);
+    hudByte(this, 0x42) = visible;
+}
+void FJ_Hud::ShowFood(bool visible)
+{
+    hudNode(this, 0x130)->setVisible(visible);
+    hudByte(this, 0x44) = visible;
+}
+void FJ_Hud::ShowAir(bool visible)
+{
+    hudNode(this, 0x15c)->setVisible(visible);
+    hudByte(this, 0x390) = visible;
+}
+void FJ_Hud::ShowArmour(bool visible)
+{
+    hudNode(this, 0x188)->setVisible(visible);
+    hudByte(this, 0x46) = visible;
+}

@@ -93,6 +93,11 @@ UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
       m_wrongWayTicks(0), m_wrongWayVisible(false), m_levelGenerationId(-1),
       m_previousHealth(0), m_comparisonScore(0), m_personalBestTime(0)
 {
+    initialiseMovie();
+    SetSelectedLabel(std::wstring());
+    for (int i = 0; i < 10; ++i)
+        m_messageLabels[i].init(UIString(L""));
+    m_selectedLabel.init(UIString(L""));
     for (int i = 0; i < 4; ++i)
         m_previousArmorIcons[i] = m_armorIcons[i] = !HideMainHUD();
     m_healthVisible = !HideMainHUD();
@@ -102,6 +107,7 @@ UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
     m_quickSelectVisible = !HideMainHUD();
     for (int i = 0; i < 4; ++i)
         m_lastCheckpointIds[i] = 0;
+    addTimer(0, 100);
 }
 
 UIScene_HUD::~UIScene_HUD()
@@ -372,7 +378,30 @@ void UIScene_HUD::SetDisplayName(const std::wstring& name)
 
 void UIScene_HUD::repositionHud()
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->RepositionHud(0, 0);
+    if (!m_splitScreen)
+        return;
+
+    int width = 0;
+    int height = 0;
+    m_layer->getRenderDimensions(width, height);
+    const C4JRender::eViewportType viewport = m_layer->getViewport();
+    if (viewport == C4JRender::eViewportType_TopHalf ||
+        viewport == C4JRender::eViewportType_BottomHalf)
+    {
+        int fullHeight;
+        gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
+                                                 width, fullHeight);
+    }
+    else if (viewport == C4JRender::eViewportType_LeftHalf ||
+             viewport == C4JRender::eViewportType_RightHalf)
+    {
+        int fullWidth;
+        gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
+                                                 fullWidth, height);
+    }
+
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->RepositionHud(width, height);
 }
 
 void UIScene_HUD::ShowGameModePlayers(bool visible)
@@ -1575,7 +1604,37 @@ void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewpor
                  static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 }
 void UIScene_HUD::updateViewportTouchOffset() { UIScene::updateViewportTouchOffset(); }
-void UIScene_HUD::handleTimerComplete(int timerId) { UIScene::handleTimerComplete(timerId); }
+void UIScene_HUD::handleTimerComplete(int)
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    const int playerId = m_playerId;
+    Gui* gui = minecraft->mGui;
+    if (minecraft->mLocalPlayers[playerId] == 0 || gui == 0)
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            m_messageControls[i].setOpacity(0.0f);
+            m_messageLabels[i].setOpacity(0.0f);
+            m_messageLabels[i].setLabel(UIString(L""), false, false);
+        }
+        m_selectedLabel.setOpacity(0.0f);
+        return;
+    }
+
+    for (int i = 0; i < 10; ++i)
+    {
+        const float opacity = static_cast<float>(gui->getOpacity(playerId, static_cast<unsigned int>(i)));
+        m_messageControls[i].setOpacity(opacity);
+        m_messageLabels[i].setOpacity(opacity);
+        if (opacity > 0.0f && static_cast<size_t>(i) < gui->mMessages[playerId].size())
+            m_messageLabels[i].setLabel(UIString(escapeXML(gui->mMessages[playerId][i].message)), false, false);
+        else
+            m_messageLabels[i].setLabel(UIString(L""), false, false);
+    }
+
+    m_selectedLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(playerId)));
+    m_selectedLabel.setLabel(UIString(gui->mNowPlaying[playerId]), false, false);
+}
 int UIScene_HUD::getSceneType() { return 0x31; }
 bool UIScene_HUD::stealsFocus() { return false; }
 bool UIScene_HUD::hasFocus(int) { return false; }

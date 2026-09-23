@@ -11,6 +11,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/FJ_TutorialPopup.hpp"
+#include "game/ui/FJ_Label.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fui.hpp"
@@ -281,6 +282,11 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     std::wstring coloredTitle(colorTag);
     coloredTitle += titleText;
 
+#if defined(RECON_NATIVE)
+    FJ_FuiNode* titleNode = m_movie->getRootNode()->getFuiNode()->getChildByName("Title");
+    if (titleNode != 0 && titleNode->isFJ_Label())
+        titleNode->asFJ_Label()->setUseHtmlText(true);
+#endif
     m_descriptionLabel.setLabel(UIString(coloredTitle), true, false);
     m_titleLabel.setLabel(UIString(description), true, false);
     m_titleLabel.setVisible(!description.empty());
@@ -300,10 +306,11 @@ void UIComponent_TutorialPopup::SetTutorialDescription(_TutorialPopupInfo* info)
     std::wstring title(info->title == 0 ? L"" : info->title);
     std::wstring description(info->description == 0 ? L"" : info->description);
     _SetIcon(not_null_ptr<ItemInstance>(info->icon.get()), info->iconItemId,
-             info->descriptionId, info->showIcon, L"");
-    description = _SetImage(description);
-    ParseDescription(info->descriptionId, description);
-    _SetDescription(info->scene, title, description, info->showTitle,
+             info->descriptionId, info->showIcon, title.c_str());
+    title = _SetImage(title);
+    ParseDescription(info->descriptionId, title);
+    std::wstring formattedTitle = gApp.FormatHTMLString(m_playerId, m_title, -1);
+    _SetDescription(info->scene, formattedTitle, description, info->showTitle,
                     info->showExitScreenshot, info->descriptionId);
 }
 

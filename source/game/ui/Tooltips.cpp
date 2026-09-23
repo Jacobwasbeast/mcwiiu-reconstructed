@@ -1,6 +1,11 @@
 #include "game/ui/Tooltips.hpp"
 
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/EMiniGameId.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 namespace
 {
@@ -22,7 +27,7 @@ void Tooltips::staticCtor()
 
 void Tooltips::OverwriteTooltip(int playerId, EControllerActions action, int tooltip)
 {
-    int actionIndex = (int)action;
+    int actionIndex = (int)action - 0x20;
     if (gTooltips[playerId][actionIndex] == tooltip)
         return;
 
@@ -32,7 +37,7 @@ void Tooltips::OverwriteTooltip(int playerId, EControllerActions action, int too
 
 void Tooltips::ResetTooltip(int playerId, EControllerActions action)
 {
-    int actionIndex = (int)action;
+    int actionIndex = (int)action - 0x20;
     if (gTooltips[playerId][actionIndex] != -1) {
         gTooltips[playerId][actionIndex] = -1;
         gTooltipsDirty[playerId] = 1;
@@ -43,22 +48,32 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
                                    MultiPlayerLevel* level, const HitResult* hitResult,
                                    InteractionResult::EInteractionResult interactionResult)
 {
-    int playerId = 0;
-
     if (!player)
         return;
+
+    const int playerId = player->mUserIndex;
+
+    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+        OverwriteTooltip(playerId, static_cast<EControllerActions>(0x28),
+                         player->mAbilities.mInstabuild ? 0x43f3dee6 : 0x4ef5d075);
+    else
+        ResetTooltip(playerId, static_cast<EControllerActions>(0x28));
+
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
+        !Minecraft::GetInstance()->GetMiniGame()->LockedInventory())
+        OverwriteTooltip(playerId, static_cast<EControllerActions>(0x25), static_cast<int>(0xc2695d1d));
+    else
+        ResetTooltip(playerId, static_cast<EControllerActions>(0x25));
 
     ResetTooltip(playerId, (EControllerActions)0x20);
     ResetTooltip(playerId, (EControllerActions)0x21);
     ResetTooltip(playerId, (EControllerActions)0x22);
-    ResetTooltip(playerId, (EControllerActions)0x25);
     ResetTooltip(playerId, (EControllerActions)0x27);
-    ResetTooltip(playerId, (EControllerActions)0x28);
     ResetTooltip(playerId, (EControllerActions)0x2f);
 
-    if (level == 0 && hitResult == 0 &&
-        interactionResult == InteractionResult::eInteractionResult_Fail)
-        return;
+    (void)level;
+    (void)hitResult;
+    (void)interactionResult;
 }
 
 void Tooltips::ResetAllTooltips(int playerId)

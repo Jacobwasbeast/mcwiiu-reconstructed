@@ -160,8 +160,20 @@ void FJ_ToolTip::Init(const std::wstring& label, int id, bool visible, int type,
 
 void FJ_ToolTip::UpdateControllerType(int controllerType)
 {
+#if defined(RECON_NATIVE)
+    const int primaryType = m_primaryType;
+    const int secondaryType = m_secondaryType;
+    if (m_controllerType != controllerType)
+    {
+        m_primaryType = -1;
+        m_secondaryType = -1;
+    }
+    m_controllerType = controllerType;
+    SetType(primaryType, secondaryType);
+#else
     m_controllerType = controllerType;
     SetType(m_primaryType, m_secondaryType);
+#endif
 }
 
 uint8_t FJ_ToolTip::IsSingleButtonToolTip()

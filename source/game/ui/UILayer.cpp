@@ -91,8 +91,7 @@ UILayer::UILayer(UIGroup* group)
 
 void UILayer::getRenderDimensions(int& width, int& height)
 {
-    width = 0;
-    height = 0;
+    gConsoleUIController.getRenderDimensions(getViewport(), width, height);
 }
 
 UIScene* UILayer::addComponent(int player, EUIScene scene, void* data)
