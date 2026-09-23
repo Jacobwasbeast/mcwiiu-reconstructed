@@ -25,10 +25,18 @@ void ChunkVisibilityAreaPacket::read(DataInputStream* input)
     unsigned int second = static_cast<unsigned int>(input->readInt());
     minX = static_cast<int>((first >> 15) & 0x7fff);
     maxX = static_cast<int>(first & 0x7fff);
+    if (minX & 0x4000)
+        minX -= 0x8000;
+    if (maxX & 0x4000)
+        maxX -= 0x8000;
     visible = (first & 0x40000000u) != 0;
     loaded = (first & 0x80000000u) != 0;
     minZ = static_cast<int>((second >> 15) & 0x7fff);
     maxZ = static_cast<int>(second & 0x7fff);
+    if (minZ & 0x4000)
+        minZ -= 0x8000;
+    if (maxZ & 0x4000)
+        maxZ -= 0x8000;
     outside = (second & 0x40000000u) != 0;
 }
 

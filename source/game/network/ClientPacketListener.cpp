@@ -122,6 +122,9 @@
 #include "game/core/Socket.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRules.hpp"
+#include "game/world/LevelRuleset.hpp"
+#include "game/world/generation/LevelGenerators.hpp"
 #include "game/world/generation/RemotePlayer.hpp"
 #include "game/world/generation/AbstractClientPlayer.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -216,6 +219,7 @@
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/AreaConstraint.hpp"
+#include "game/core/RegionFileCache.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/ui/UIScene_InGameSettingsListMenu.hpp"
 #include "game/core/Painting.hpp"
@@ -240,6 +244,7 @@
 #include <cmath>
 
 extern unsigned int GetTickCount();
+extern void instructionSynchronize();
 
 namespace
 {
@@ -622,10 +627,10 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
                     options->setBaseSaveData(savePath);
                     gApp.setLevelGenerationOptions(options);
                 }
-                ConsoleSaveFileReadOnly saveFile(L"", 0, 0, false, eSavePlatform_WIIU);
+                ConsoleSaveFileReadOnly* saveFile = new ConsoleSaveFileReadOnly(L"", 0, 0, false, eSavePlatform_WIIU);
                 File worldFolder(L"world");
                 boost::shared_ptr<McRegionLevelStorage> storage(new McRegionLevelStorage(
-                    &saveFile, worldFolder, packet->mLevelName, true, m_minecraft->getFixerUpper()));
+                    saveFile, worldFolder, packet->mLevelName, true, m_minecraft->getFixerUpper()));
                 level = new MultiPlayerLevel(storage, this, &settings, packet->mGameMode, difficulty,
                                              packet->mUnknownValue3);
             }
@@ -1154,7 +1159,8 @@ void ClientPacketListener::handleChunkVisibilityArea(boost::shared_ptr<ChunkVisi
     {
         for (int z = -radius; z <= radius; ++z)
         {
-            if (x < packet->minX || z < packet->minZ || x > packet->maxX || z > packet->maxZ)
+            if (x >= packet->minX && z >= packet->minZ &&
+                x <= packet->maxX && z <= packet->maxZ)
                 continue;
             if (level->hasChunk(x, z, false))
                 level->setChunkVisible(x, z, packet->visible, packet->loaded);
@@ -1226,11 +1232,65 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
 
 void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegionUpdatePacket> packet)
 {
-    if (packet == 0 || m_level == 0 || packet->GetChanges() == 0)
+    if (packet == 0)
         return;
-    const std::vector<LevelChunk::BlockChange>& changes = *packet->GetChanges();
-    for (std::vector<LevelChunk::BlockChange>::const_iterator it = changes.begin(); it != changes.end(); ++it)
-        m_level->setBlock(it->GetPos(), it->GetState(), 3, false);
+
+    MultiPlayerLevel* level = m_minecraft->getLevel(packet->mDimension);
+    if (level != 0)
+    {
+        const int chunkX = packet->mX >> 4;
+        const int chunkZ = packet->mZ >> 4;
+        if (packet->mHasBlockChanges)
+        {
+            std::vector<LevelChunk::BlockChange>* changes = packet->GetChanges();
+            packet->SetChanges(NULL);
+            level->ReloadChunk(chunkX, chunkZ, changes, true);
+            instructionSynchronize();
+            return;
+        }
+
+        PIXBeginNamedEvent(90.0f, "Handle block region update");
+        level->StopReloadChunk(chunkX, chunkZ);
+
+        int maxY = packet->mY + packet->mHeight;
+        if (packet->mFullChunk && m_level != NULL)
+        {
+            maxY = 256;
+            if (m_level->getChunk(chunkX, chunkZ)->isEmpty())
+                static_cast<MultiPlayerLevel*>(m_level)->setChunkVisible(chunkX, chunkZ, true, false);
+        }
+
+        PIXBeginNamedEvent(90.0f, "Clear rest region");
+        level->clearResetRegion(packet->mX, packet->mY, packet->mZ,
+                                packet->mX + packet->mWidth - 1, maxY - 1,
+                                packet->mZ + packet->mDepth - 1);
+        PIXEndNamedEvent();
+
+        PIXBeginNamedEvent(90.0f, "setBlocksAndData");
+        if (packet->mFullChunk)
+            level->setFromRawData(packet->mX / 16, packet->mZ / 16, packet->mData);
+        else
+            level->setBlocksAndData(packet->mX, packet->mY, packet->mZ,
+                                    packet->mWidth, packet->mHeight, packet->mDepth,
+                                    packet->mData, false);
+        PIXEndNamedEvent();
+
+        PIXBeginNamedEvent(90.0f, "removeUnusedBlockEntitiesInRegion");
+        level->removeUnusedBlockEntitiesInRegion(packet->mX, packet->mY, packet->mZ,
+                                                  packet->mX + packet->mWidth, maxY,
+                                                  packet->mZ + packet->mDepth);
+        PIXEndNamedEvent();
+
+        if (packet->mFullChunk)
+        {
+            PIXBeginNamedEvent(90.0f, "dataReceivedForChunk");
+            level->dataReceivedForChunk(chunkX, chunkZ);
+            PIXEndNamedEvent();
+        }
+        PIXEndNamedEvent();
+        Minecraft::GetInstance()->GetClientMasterGameMode()->RecievedBRUP();
+    }
+    instructionSynchronize();
 }
 
 void ClientPacketListener::handleBlockUpdate(boost::shared_ptr<ClientboundBlockUpdatePacket> packet)
@@ -1894,8 +1954,7 @@ void ClientPacketListener::handleEntityEvent(boost::shared_ptr<ClientboundEntity
     if (eventId == 0x15)
     {
         boost::shared_ptr<Guardian> guardian = boost::static_pointer_cast<Guardian>(entity);
-        boost::shared_ptr<GuardianAttackSoundInstance> sound(new GuardianAttackSoundInstance(guardian));
-        m_minecraft->mSoundEngine->ConsoleSoundEngine::play(sound.get());
+        m_minecraft->mSoundEngine->ConsoleSoundEngine::play(new GuardianAttackSoundInstance(guardian));
         return;
     }
     if (eventId != 0x23)
@@ -2524,11 +2583,10 @@ void ClientPacketListener::handleSoundEvent(boost::shared_ptr<ClientboundSoundPa
     boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
     if (player == 0 || m_minecraft->mSoundEngine == 0)
         return;
-    boost::shared_ptr<FollowPlayerSoundInstance> sound(new FollowPlayerSoundInstance(
+    m_minecraft->mSoundEngine->ConsoleSoundEngine::play(new FollowPlayerSoundInstance(
         player, packet->getSound(),
         static_cast<float>(packet->getVolume()), static_cast<float>(packet->getPitch()),
         packet->getLooping()));
-    m_minecraft->mSoundEngine->ConsoleSoundEngine::play(sound.get());
 }
 
 void ClientPacketListener::handleMoveVehicle(boost::shared_ptr<ClientboundMoveVehiclePacket> packet)
@@ -3119,17 +3177,62 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         packet->ReadPacket(data);
         if (master != 0)
         {
+            unsigned int previousUniqueId = master->GetCurrentUniqueId();
             master->SetCurrentUniqueId(data.customGameMode);
             m_minecraft->SetupMiniGameInstance(
-                *MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(data.gameMode), false), 0);
-            MultiPlayerLevel* level = m_minecraft->getLevel(0);
-            if (level != 0)
+                *MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(data.gameMode), true), 0);
+
+            if (previousUniqueId != static_cast<unsigned int>(data.customGameMode))
             {
-                level->BlockUntilSafeToChangeSaveData(true);
-                level->refreshFromLevelGen();
+                if (data.customGameMode == -1)
+                {
+                    std::vector<LevelGenerationOptions*>* generators =
+                        gApp.getLevelGenerators()->getLevelGenerators();
+                    for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
+                         it != generators->end(); ++it)
+                    {
+                        LevelGenerationOptions* options = *it;
+                        if (options->isGameModeLobby())
+                        {
+                            std::wstring savePath = options->getBaseSaveRoot();
+                            savePath += options->getBaseSavePath();
+                            options->setBaseSaveData(File(savePath));
+                            gApp.setLevelGenerationOptions(options);
+                            break;
+                        }
+                    }
+
+                    MultiPlayerLevel* level = m_minecraft->getLevel(0);
+                    level->BlockUntilSafeToChangeSaveData(true);
+                    level->refreshFromLevelGen();
+                    gRegionFileCache._clear();
+                    gApp.setLevelGenerationOptions(NULL);
+                }
+                else
+                {
+                    std::vector<LevelRuleset*> rules;
+                    gApp.getLevelRules()->getRulesByType(
+                        static_cast<LevelRules::ELevelRuleType>(data.gameMode), &rules, false);
+                    for (std::vector<LevelRuleset*>::iterator it = rules.begin();
+                         it != rules.end(); ++it)
+                    {
+                        LevelGenerationOptions* options = (*it)->getGenerationOptions();
+                        if (options->getUniqueId() == static_cast<unsigned int>(data.customGameMode))
+                        {
+                            m_minecraft->getLevel(0)->BlockUntilSafeToChangeSaveData(true);
+                            gApp.setLevelGenerationOptions(options);
+                            master->SetNextLevelGenerationOptions(options, true);
+                            break;
+                        }
+                    }
+                }
+
+                if (m_minecraft->IsJoiningFromFriendsTabOrInvite())
+                {
+                    CMinecraftApp::SetupMiniGameMusic();
+                    m_minecraft->SetJoiningFromFriendsTabOrInvite(false);
+                }
             }
-            master->SetNextLevelGenerationOptions(gApp.getLevelGenerationOptions(), false);
-            CMinecraftApp::SetupMiniGameMusic();
             master->onChangeCustomGameMode();
         }
         break;
@@ -3139,7 +3242,20 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         GameModePacket::ChangeCustomGameMode data;
         packet->ReadPacket(data);
         if (IsPrimaryPlayer() && master != 0)
-            master->SetNextLevelGenerationOptions(gApp.getLevelGenerationOptions(), false);
+        {
+            std::vector<LevelRuleset*> rules;
+            gApp.getLevelRules()->getRulesByType(
+                static_cast<LevelRules::ELevelRuleType>(data.gameMode), &rules, false);
+            for (std::vector<LevelRuleset*>::iterator it = rules.begin(); it != rules.end(); ++it)
+            {
+                LevelGenerationOptions* options = (*it)->getGenerationOptions();
+                if (options->getUniqueId() == static_cast<unsigned int>(data.customGameMode))
+                {
+                    master->SetNextLevelGenerationOptions(options, false);
+                    break;
+                }
+            }
+        }
         break;
     }
     case 0x13:

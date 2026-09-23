@@ -4,6 +4,7 @@
 #include "game/network/ServerConnectionListener.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include <cwchar>
 
 ServerConnection::ServerConnection(MinecraftServer* server)
@@ -138,6 +139,11 @@ void ServerConnection::tick()
 
     std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >::iterator playerIterator;
     for (playerIterator = mPlayers.begin(); playerIterator != mPlayers.end(); ++playerIterator) {
+        boost::shared_ptr<ServerPlayer> player = (*playerIterator)->mPlayer;
+        if (player && player->mConnection) {
+            player->updateFrameTick();
+            player->doChunkSendingTick(false, false);
+        }
         (*playerIterator)->tick();
         Connection* connection = (*playerIterator)->getConnection();
         connection->flush();

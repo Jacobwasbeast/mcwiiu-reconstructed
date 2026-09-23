@@ -10,6 +10,7 @@
 
 class DataInputStream;
 class DataOutputStream;
+class ClientPacketListener;
 class Level;
 class PacketListener;
 
@@ -34,6 +35,8 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ClientPacketListener;
+
     int mX;
     int mY;
     int mZ;

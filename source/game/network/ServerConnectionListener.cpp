@@ -20,6 +20,7 @@
 #include "game/network/ServerboundPreLoginPacket.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/world/LevelData.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include <cstring>
 #include <vector>
 
@@ -109,10 +110,16 @@ void ServerConnectionListener::sendPreLoginResponse()
             hostPlayerIndex = playerIndex;
     }
 
-    std::wstring worldName;
-    ServerLevel* level = m_server->getLevel(0);
-    if (level != NULL && level->getLevelData() != NULL)
-        worldName = level->getLevelData()->getLevelName();
+    std::wstring accountName;
+    if (gProfile != NULL)
+    {
+        const char* accountId = gProfile->GetNetworkAccountID();
+        if (accountId != NULL)
+        {
+            while (*accountId != 0)
+                accountName.push_back(static_cast<unsigned char>(*accountId++));
+        }
+    }
 
     char uniqueMapName[16];
     std::memset(uniqueMapName, 0, sizeof(uniqueMapName));
@@ -138,7 +145,7 @@ void ServerConnectionListener::sendPreLoginResponse()
         ? static_cast<EMiniGameId>(miniGame->GetId()) : eMiniGameId_Any;
 
     ClientboundPreLoginPacket* packet = new ClientboundPreLoginPacket(
-        worldName,
+        accountName,
         playerUidArray,
         static_cast<unsigned int>(onlinePlayers.size()),
         guestFlags,

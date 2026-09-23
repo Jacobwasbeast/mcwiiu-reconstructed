@@ -1004,10 +1004,28 @@ void CGameNetworkManager::StateChange_AnyToStarting()
     {
         return;
     }
+    struct FullscreenProgressState
+    {
+        bool showConfirmation;
+        bool reservedFlag1;
+        bool reservedFlag2;
+        bool showTip;
+        int closeMode;
+        int playerId;
+        EUIScene backScene;
+    };
     _LoadingInputParams* params = new _LoadingInputParams();
     params->m_firstParameter = &CGameNetworkManager::RunNetworkGameThreadProc;
     params->m_secondParameter = 0;
-    params->m_thirdParameter = 0;
+    FullscreenProgressState* progressState = new FullscreenProgressState();
+    progressState->showConfirmation = false;
+    progressState->reservedFlag1 = true;
+    progressState->reservedFlag2 = true;
+    progressState->showTip = true;
+    progressState->closeMode = 3;
+    progressState->playerId = gProfile->GetPrimaryPad();
+    progressState->backScene = static_cast<EUIScene>(0x53);
+    params->m_thirdParameter = progressState;
     if (gApp.GetGameHostOption(static_cast<eGameHostOption>(0x1f)))
     {
         params->m_timeout = gApp.GetFirstMiniGameType();

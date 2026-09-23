@@ -23,24 +23,13 @@ MapSelectInfoPacket::~MapSelectInfoPacket()
 void MapSelectInfoPacket::read(DataInputStream* input)
 {
     unsigned int length = static_cast<unsigned int>(input->readUnsignedShort());
-    if (length == 0)
+    mSize = length;
+    if (length - 1 < 0x7ffe)
     {
-        if (mOwnsData)
+        if (mData != NULL)
             delete[] mData;
-        mData = NULL;
-        mLength = 0;
-        mSize = 0;
-        mOwnsData = false;
-        return;
-    }
-    if (length > 0 && length < 0x7fff)
-    {
-        if (mOwnsData)
-            delete[] mData;
-        mData = new unsigned char[length];
+        mData = new unsigned char[length]();
         mLength = length;
-        mSize = length;
-        mOwnsData = true;
         arrayWithLength<unsigned char> data;
         data.data = mData;
         data.length = mLength;

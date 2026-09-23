@@ -144,6 +144,7 @@ public:
 
 private:
     friend class PlayerList;
+    friend class ServerConnection;
     Connection* mConnection;
     bool mDisconnected;
     PlayerUID mPlayerUID;
