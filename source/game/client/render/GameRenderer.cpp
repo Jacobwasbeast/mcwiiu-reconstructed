@@ -1394,7 +1394,7 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     {
         if (thirdPerson == 0)
         {
-            GlStateManager::translatef(kZero, kZero, -kFirstPersonNudge);
+            GlStateManager::translatef(kZero, kZero, kFirstPersonNudge);
         }
         else
         {
@@ -1568,14 +1568,12 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
 
 void GameRenderer::getFovAndAspect(float& fov, float& aspect, float partialTick, bool useSmoothing)
 {
-    static const float kAspectBase = 176.0f;
     static const float kSplitFovScale = 0.699999988079071f;
     static const float kQuadAspectScale = 0.5f;
     static const float kQuadFovScale = 1.100000023841858f;
 
-    aspect = static_cast<float>(
-        (static_cast<double>(mMinecraft->mWidth) - kAspectBase)
-        / (static_cast<double>(mMinecraft->mHeight) - kAspectBase));
+    aspect = static_cast<float>(mMinecraft->mWidth)
+             / static_cast<float>(mMinecraft->mHeight);
     fov = static_cast<float>(getFov(partialTick, useSmoothing));
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
@@ -1603,7 +1601,6 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     static const float kHalf = 0.5f;
     static const float kOne = 1.0f;
     static const float kDefaultFog = 256.0f;
-    static const float kStereoBase = 176.0f;
     static const float kProjectionEyeOffset = 0.07000000029802322f;
     static const float kModelEyeOffset = 0.10000000149011612f;
     static const float kNearPlane = 0.05000000074505806f;
@@ -1627,7 +1624,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>((eyeIndex * 2 - 1) * -1);
-        GlStateManager::translatef((eyeOffset - kStereoBase) * kProjectionEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kHalf, kHalf);
     }
 
     float fov = partialTick;
@@ -1652,7 +1649,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>(eyeIndex * 2 - 1);
-        GlStateManager::translatef((eyeOffset - kStereoBase) * kModelEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kModelEyeOffset, kHalf, kHalf);
     }
 
     bobHurt(partialTick);
@@ -1749,7 +1746,6 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     static const float kZero = 0.0f;
     static const float kHalf = 0.5f;
     static const float kOne = 1.0f;
-    static const float kStereoBase = 176.0f;
     static const float kProjectionEyeOffset = 0.07000000029802322f;
     static const float kModelEyeOffset = 0.10000000149011612f;
     static const float kNearPlane = 0.05000000074505806f;
@@ -1757,7 +1753,9 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
 
     char* self = reinterpret_cast<char*>(this);
     if (*reinterpret_cast<unsigned char*>(self + 0x224c) != 0)
+    {
         return;
+    }
 
     unsigned char* renderHandFlag = reinterpret_cast<unsigned char*>(self + 0x11d);
     *renderHandFlag = 1;
@@ -1779,17 +1777,17 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
                 holdingMap = true;
         }
 
-        if (GameSettings::GetGameSettings(player->mUserIndex, static_cast<eGameSetting>(0x18)) != 0)
+        if (GameSettings::GetGameSettings(player->mUserIndex, static_cast<eGameSetting>(0x18)) == 0)
             *renderHandFlag = 0;
     }
 
+    GlStateManager::matrixMode(1);
+    GlStateManager::loadIdentity();
     if (mMinecraft->mOptions != NULL
         && mMinecraft->mOptions->mAnaglyph3d)
     {
-        GlStateManager::matrixMode(1);
-        GlStateManager::loadIdentity();
         const float eyeOffset = static_cast<float>((eyeIndex * 2 - 1) * -1);
-        GlStateManager::translatef((eyeOffset - kStereoBase) * kProjectionEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kHalf, kHalf);
     }
 
     float fov = partialTick;
@@ -1814,7 +1812,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>(eyeIndex * 2 - 1);
-        GlStateManager::translatef((eyeOffset - kStereoBase) * kModelEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kModelEyeOffset, kHalf, kHalf);
     }
 
     GlStateManager::pushMatrix();
@@ -1895,7 +1893,6 @@ double GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living,
 {
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
-    static const float kDurationBase = 176.0f;
     static const float kVisionMix = 0.699999988079071f;
     static const float kSinScale = 0.05000000074505806f;
     static const float kPi = 3.1415927410125732f;
@@ -1925,7 +1922,7 @@ double GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living,
         if (maxDuration > 200U)
             return static_cast<double>(kOne);
 
-        float elapsed = static_cast<float>(maxDuration) - kDurationBase - partialTick;
+        float elapsed = static_cast<float>(maxDuration) - partialTick;
         if (elapsed < kZero)
             elapsed = kZero;
         scale = static_cast<double>(
@@ -2025,12 +2022,9 @@ void GameRenderer::updateLightTexture(float partialTick)
         const float skyDarken = level->getSkyDarken(kOne);
         const unsigned int blockLightColor = dimension->getBlockLightColour();
 
-        const float lightRed =
-            static_cast<float>(((blockLightColor >> 16) & 0xff) - 176.0f) / k255;
-        const float lightGreen =
-            static_cast<float>(((blockLightColor >> 8) & 0xff) - 176.0f) / k255;
-        const float lightBlue =
-            static_cast<float>((blockLightColor & 0xff) - 176.0f) / k255;
+        const float lightRed = static_cast<float>((blockLightColor >> 16) & 0xff) / k255;
+        const float lightGreen = static_cast<float>((blockLightColor >> 8) & 0xff) / k255;
+        const float lightBlue = static_cast<float>(blockLightColor & 0xff) / k255;
 
         const bool isNether = dimension->getType() == DimensionType::NETHER;
         boost::shared_ptr<LivingEntity> living =
@@ -2297,7 +2291,6 @@ void GameRenderer::setupClearColor(float partialTick)
     static const float kFogDensity = 0.05000000074505806f;
     static const float kRainGreyScale = 0.4000000059604645f;
     static const float kDamageBlend = 0.6000000238418579f;
-    static const float kColorNormalize = 176.0f;
     static const float kColorScale = 0.00390625f;
     static const float kColorBlindDivisor = 100.0f;
     static const float kNightVisionCap = 30.0f;
@@ -2408,9 +2401,9 @@ void GameRenderer::setupClearColor(float partialTick)
             float* blurO = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x21f4);
             float* blur = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x21f8);
             const float blurScale = (*blur - *blurO) * partialTick + *blurO;
-            *fogRed = static_cast<float>(((damageColor >> 16) & 255) - kColorNormalize) * kColorScale * blurScale;
-            *fogGreen = static_cast<float>(((damageColor >> 8) & 255) - kColorNormalize) * kColorScale * blurScale;
-            *fogBlue = static_cast<float>((damageColor & 255) - kColorNormalize) * kColorScale * blurScale;
+            *fogRed = static_cast<float>((damageColor >> 16) & 255) * kColorScale * blurScale;
+            *fogGreen = static_cast<float>((damageColor >> 8) & 255) * kColorScale * blurScale;
+            *fogBlue = static_cast<float>(damageColor & 255) * kColorScale * blurScale;
         }
     }
     else
@@ -2638,7 +2631,6 @@ void GameRenderer::setupFog(int, float partialTick)
     static const float kExpFogDensity = 0.10000000149011612f;
     static const float kLavaFogDensity = 2.0f;
     static const float kBlindnessFogEnd = 15.0f;
-    static const float kBlindnessInterpBase = 176.0f;
     static const float kBlindnessInterpRange = 500.0f;
 
     getCamera();
@@ -2667,7 +2659,7 @@ void GameRenderer::setupFog(int, float partialTick)
         const float farPlane = mFogDistance;
         if (duration < 20)
         {
-            const float t = kOne - (static_cast<float>(duration) - kBlindnessInterpBase) / kBlindnessInterpRange;
+            const float t = kOne - static_cast<float>(duration) / kBlindnessInterpRange;
             fogEnd = (farPlane - kBlindnessFogEnd) * t + kBlindnessFogEnd;
         }
         const float fogStart = fogEnd * kFogStartScale;
@@ -2800,9 +2792,9 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
         clipPlane += 4;
     }
 
-    static ResourceLocation sThermalDefault(L"terrain");
-    static ResourceLocation sThermalTinted(L"terrain");
-    static ResourceLocation sThermalBoost(L"terrain");
+    static ResourceLocation sThermalDefault(static_cast<_TEXTURE_NAME>(0xab));
+    static ResourceLocation sThermalTinted(static_cast<_TEXTURE_NAME>(0xac));
+    static ResourceLocation sThermalBoost(static_cast<_TEXTURE_NAME>(0xad));
     const ResourceLocation* boundThermalTexture = &sThermalDefault;
 
     mMinecraft->mTextures->bindTexture(&sThermalDefault);
@@ -3192,7 +3184,6 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
     static const float kNeg90 = -90.0f;
     static const float kNegOne = -1.0f;
     static const float kPowBase = 1.5f;
-    static const float kColourBase = 176.0f;
     static const float kColourDivisor = 255.0f;
     static const float kPolygonOffset = -0.30000001192092896f;
 
@@ -3317,13 +3308,13 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
                               static_cast<float>(renderRot->x), kModelScale);
 
     const float red =
-        static_cast<float>((static_cast<double>((blendedColour >> 16) & 0xFF) - kColourBase) /
+        static_cast<float>(static_cast<double>((blendedColour >> 16) & 0xFF) /
                          kColourDivisor);
     const float green =
-        static_cast<float>((static_cast<double>((blendedColour >> 8) & 0xFF) - kColourBase) /
+        static_cast<float>(static_cast<double>((blendedColour >> 8) & 0xFF) /
                          kColourDivisor);
     const float blue =
-        static_cast<float>((static_cast<double>((blendedColour >> 0) & 0xFF) - kColourBase) /
+        static_cast<float>(static_cast<double>((blendedColour >> 0) & 0xFF) /
                          kColourDivisor);
     const float alpha = distanceAlpha * kHalf;
     GlStateManager::color4f(red, green, blue, alpha);
@@ -3538,8 +3529,11 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     const float alphaRef = 0.01f;
     GlStateManager::alphaFunc(4, alphaRef);
 
+    static ResourceLocation snowLocation(static_cast<_TEXTURE_NAME>(6));
+    static ResourceLocation rainLocation(static_cast<_TEXTURE_NAME>(7));
+
     MemSect(0x1f);
-    mMinecraft->mTextures->bindTexture(L"terrain");
+    mMinecraft->mTextures->bindTexture(&rainLocation);
     MemSect(0);
 
     const double cameraOldX = camera->mXo;
@@ -3569,9 +3563,6 @@ void GameRenderer::renderSnowAndRain(float partialTick)
         static const unsigned char sRadiusByPlayerCount[5] = {0, 0, 7, 5, 5};
         renderRadius = sRadiusByPlayerCount[activePlayerCount];
     }
-
-    static ResourceLocation snowLocation(L"environment_snow");
-    static ResourceLocation rainLocation(L"environment_rain");
 
     int precipitationMode = -1;
     const int startBlockX = cameraBlockX - renderRadius;
@@ -3807,7 +3798,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     setupFog(0, partialTick);
     GlStateManager::enableFog();
 
-    static ResourceLocation sTerrainTexture(L"terrain");
+    static ResourceLocation sTerrainTexture(static_cast<_TEXTURE_NAME>(0xf1));
     MemSect(0x1f);
     mMinecraft->mTextures->bindTexture(&sTerrainTexture);
     MemSect(0);

@@ -1,6 +1,7 @@
 #include "game/client/render/Textures.hpp"
 
 #include <cstring>
+#include <vector>
 
 #include "game/core/BufferedImage.hpp"
 #include "game/core/ByteBuffer.hpp"
@@ -12,6 +13,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/client/render/MemTextureProcessor.hpp"
 #include "game/client/render/MemTexture.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/client/render/Texture.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/client/render/TextureAtlas.hpp"
@@ -724,22 +726,18 @@ void Textures::replaceTextureDirect(arrayWithLength<int> pixels, int width, int 
     GlStateManager::texParameteri(2, 0);
     GlStateManager::texParameteri(3, 1);
     GlStateManager::texParameteri(4, 1);
-    ByteBuffer* buffer = MemoryTracker::createByteBuffer(width * height * 4);
-    arrayWithLength<unsigned char> bytes((unsigned int)(width * height * 4), true);
-    unsigned int i;
-    for (i = 0; i < pixels.length && i * 4 + 3 < bytes.length; ++i)
+#ifdef RECON_NATIVE
+    std::vector<unsigned int> nativePixels(pixels.length);
+    for (unsigned int i = 0; i < pixels.length; ++i)
     {
-        unsigned int value = (unsigned int)pixels.data[i];
-        bytes.data[i * 4] = (unsigned char)(value >> 16);
-        bytes.data[i * 4 + 1] = (unsigned char)(value >> 8);
-        bytes.data[i * 4 + 2] = (unsigned char)value;
-        bytes.data[i * 4 + 3] = (unsigned char)(value >> 24);
+        unsigned int value = static_cast<unsigned int>(pixels.data[i]);
+        nativePixels[i] = (value >> 24) | ((value >> 8) & 0x0000ff00u)
+            | ((value << 8) & 0x00ff0000u) | (value << 24);
     }
-    buffer->put(bytes);
-    buffer->position(0);
-    buffer->limit(bytes.length);
-    GlStateManager::texImage2D(0, 0, 0, width, height, 0, 0, 0, buffer);
-    delete buffer;
+    gRenderer->TextureDataUpdate(0, 0, width, height, nativePixels.data(), 0);
+#else
+    gRenderer->TextureDataUpdate(0, 0, width, height, pixels.data, 0);
+#endif
 }
 
 void Textures::replaceTextureDirect(arrayWithLength<short> pixels, int width, int height, int texture)

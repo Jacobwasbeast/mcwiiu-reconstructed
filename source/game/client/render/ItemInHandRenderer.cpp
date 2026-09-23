@@ -5,6 +5,7 @@
 #include "game/client/render/ItemRenderer.hpp"
 #include "game/client/render/MapRenderer.hpp"
 #include "game/client/render/PlayerRenderer.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -53,9 +54,9 @@ PlayerRenderer* getPlayerRenderer(EntityRenderDispatcher* dispatcher, boost::sha
 
 void bindPlayerSkin(Textures* textures, boost::shared_ptr<LocalPlayer> player)
 {
-    int skinIndex = player->mPlayerIndex;
-    textures->loadMemTexture(player->mSkinLocation, skinIndex);
-    GlStateManager::bindTexture(0);
+    int skinIndex = player->getTexture();
+    int texture = textures->loadMemTexture(player->mSkinLocation, skinIndex);
+    GlStateManager::bindTexture(texture);
     textures->clearLastBoundId();
 }
 
@@ -446,9 +447,8 @@ void ItemInHandRenderer::setPlayerBob(boost::shared_ptr<LocalPlayer> player, flo
 {
     float xRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTick;
     float yRot = player->mYRotO + (player->mYRot - player->mYRotO) * partialTick;
-    const float* viewBob = reinterpret_cast<const float*>(reinterpret_cast<const char*>(player.get()) + 0x8D0);
-    float bobX = viewBob[1] + (viewBob[3] - viewBob[1]) * partialTick;
-    float bobY = viewBob[0] + (viewBob[2] - viewBob[0]) * partialTick;
+    float bobX = player->mViewXRotO + (player->mViewXRot - player->mViewXRotO) * partialTick;
+    float bobY = player->mViewYRotO + (player->mViewYRot - player->mViewYRotO) * partialTick;
     GlStateManager::rotatef((xRot - bobX) * 0.1f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef((yRot - bobY) * 0.1f, 0.0f, 1.0f, 0.0f);
 }
@@ -508,17 +508,17 @@ void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const Humanoi
     float swingDrop = 0.4000000059604645f * swingSin2;
     float swingRoll = Mth::sin(swing * 3.1415927f);
     GlStateManager::translatef(side * (swingBob + 0.64000004529953f),
-                               equip * (-0.6000000238418579f + swingDrop + 0.64000004529953f),
-                               -0.7199999690055847f * swingRoll + 70.0f);
-    GlStateManager::rotatef(side * 45.0f, 1.0f, 0.0f, 0.0f);
+                               equip * -0.6000000238418579f + swingDrop - 0.6000000238418579f,
+                               -0.4000000059604645f * swingRoll - 0.7199999690055847f);
+    GlStateManager::rotatef(side * 45.0f, 0.0f, 1.0f, 0.0f);
     float swingRootSin = Mth::sin(swingRoot * 3.1415927f);
-    GlStateManager::rotatef(side * swingRootSin * 70.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(side * swingRootSin * 70.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(side * Mth::sin(swing * swing * 3.1415927f) * -20.0f, 0.0f, 0.0f, 1.0f);
     boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
     bindPlayerSkin(mMinecraft->mTextures, player);
     GlStateManager::translatef(-side, 3.5999999046325684f, 3.5f);
-    GlStateManager::rotatef(side * 200.0f, 1.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(5.599999904632568f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(side * 120.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(200.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(side * -135.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::translatef(side * 5.599999904632568f, 0.0f, 0.0f);
     PlayerRenderer* renderer = getPlayerRenderer(mEntityRenderDispatcher, player);
@@ -661,9 +661,9 @@ void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player
         }
         else if (player->mViewport != 1)
         {
-            if (player->mViewport != 3 && player->mViewport != 4)
+            if (player->mViewport != 3 && player->mViewport != 4 && gRenderer->IsWidescreen())
             {
-                side = -0.30000001192092896f;
+                side = 0.0f;
             }
             else if (arm != HumanoidArm::LEFT)
             {
