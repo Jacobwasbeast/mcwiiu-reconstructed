@@ -115,7 +115,7 @@ void ConsoleSaveFileReadOnly::deleteFile(FileEntry* entry)
 void ConsoleSaveFileReadOnly::setFilePointer(FileEntry* entry, long distanceToMove, int*, unsigned int moveMethod)
 {
     LockSaveAccess();
-    long filePointer = static_cast<long>(entry->m_filePointer) + distanceToMove;
+    long filePointer = static_cast<long>(entry->m_startOffset) + distanceToMove;
     if (moveMethod == 2)
         filePointer += entry->m_fileSize;
     entry->m_filePointer = static_cast<unsigned int>(filePointer);
