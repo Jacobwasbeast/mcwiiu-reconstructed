@@ -42,7 +42,7 @@ void __T7()
         gCocoaIconNames[i].~basic_string();
 }
 
-static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 2));
+AbstractProperty<int>* CocoaBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 2));
 
 static const AABB* COCOA_EAST_SHAPES[3] =
 {

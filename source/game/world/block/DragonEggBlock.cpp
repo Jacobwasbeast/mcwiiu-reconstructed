@@ -2,6 +2,7 @@
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/FallingBlock.hpp"
@@ -10,7 +11,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-static const AABB* gDragonEggShape = NULL;
+static const AABB* gDragonEggShape = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 1.0, 0.9375);
 
 DragonEggBlock::DragonEggBlock() : Block(Material::EGG, MaterialColor::COLOR_BLACK)
 {

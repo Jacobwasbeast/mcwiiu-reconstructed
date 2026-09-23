@@ -23,10 +23,10 @@ AbstractProperty<bool>* TripWireHookBlock::ATTACHED = NULL;
 AbstractProperty<bool>* TripWireHookBlock::DISARMED = NULL;
 const AABB* TripWireHookBlock::AABB_DOWN = AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 0.125, 0.625);
 const AABB* TripWireHookBlock::AABB_UP = AABB::newPermanent(0.0, 0.875, 0.375, 1.0, 1.0, 0.625);
-const AABB* TripWireHookBlock::AABB_NORTH = AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 0.125);
-const AABB* TripWireHookBlock::AABB_SOUTH = AABB::newPermanent(0.375, 0.0, 0.875, 0.625, 1.0, 1.0);
-const AABB* TripWireHookBlock::AABB_WEST = AABB::newPermanent(0.875, 0.375, 0.0, 1.0, 0.625, 1.0);
-const AABB* TripWireHookBlock::AABB_EAST = AABB::newPermanent(0.0, 0.375, 0.0, 0.125, 0.625, 1.0);
+const AABB* TripWireHookBlock::AABB_NORTH = AABB::newPermanent(0.3125, 0.0, 0.625, 0.6875, 0.625, 1.0);
+const AABB* TripWireHookBlock::AABB_SOUTH = AABB::newPermanent(0.3125, 0.0, 0.0, 0.6875, 0.625, 0.375);
+const AABB* TripWireHookBlock::AABB_WEST = AABB::newPermanent(0.625, 0.0, 0.3125, 1.0, 0.625, 0.6875);
+const AABB* TripWireHookBlock::AABB_EAST = AABB::newPermanent(0.0, 0.0, 0.3125, 0.375, 0.625, 0.6875);
 
 TripWireHookBlock::TripWireHookBlock() : Block(Material::DECORATION)
 {

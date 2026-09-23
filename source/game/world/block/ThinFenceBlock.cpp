@@ -16,10 +16,10 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<bool>* THIN_FENCE_NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
-static AbstractProperty<bool>* THIN_FENCE_EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
-static AbstractProperty<bool>* THIN_FENCE_SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
-static AbstractProperty<bool>* THIN_FENCE_WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
+AbstractProperty<bool>* THIN_FENCE_NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
+AbstractProperty<bool>* THIN_FENCE_EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
+AbstractProperty<bool>* THIN_FENCE_SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
+AbstractProperty<bool>* THIN_FENCE_WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
 
 static const AABB* thinFenceShape(int index)
 {
@@ -106,13 +106,13 @@ bool ThinFenceBlock::attachsTo(LevelSource* levelSource, const BlockState* state
 const BlockState* ThinFenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     TypedBoxed<bool> north(attachsTo(levelSource, levelSource->getBlockState(pos.north()), pos.north(), Direction::SOUTH));
-    TypedBoxed<bool> east(attachsTo(levelSource, levelSource->getBlockState(pos.east()), pos.east(), Direction::WEST));
     TypedBoxed<bool> south(attachsTo(levelSource, levelSource->getBlockState(pos.south()), pos.south(), Direction::NORTH));
     TypedBoxed<bool> west(attachsTo(levelSource, levelSource->getBlockState(pos.west()), pos.west(), Direction::EAST));
+    TypedBoxed<bool> east(attachsTo(levelSource, levelSource->getBlockState(pos.east()), pos.east(), Direction::WEST));
     const BlockState* result = state->setBoxedValue(THIN_FENCE_NORTH, &north);
-    result = result->setBoxedValue(THIN_FENCE_EAST, &east);
     result = result->setBoxedValue(THIN_FENCE_SOUTH, &south);
-    return result->setBoxedValue(THIN_FENCE_WEST, &west);
+    result = result->setBoxedValue(THIN_FENCE_WEST, &west);
+    return result->setBoxedValue(THIN_FENCE_EAST, &east);
 }
 
 Item* ThinFenceBlock::getResource(const BlockState* state, Random* random, int lootBonus)

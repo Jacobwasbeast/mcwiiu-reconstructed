@@ -52,7 +52,7 @@ TextureAtlasSprite* CraftingTableBlock::getTexture(const Direction* direction, c
     }
     if (direction == Direction::DOWN)
     {
-        return Blocks::planks->getTexture(direction, state);
+        return Blocks::planks->getTexture(direction);
     }
     if (direction == Direction::NORTH || direction == Direction::WEST)
     {

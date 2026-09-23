@@ -5,6 +5,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -15,6 +16,8 @@
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/HugeMushroomFeature.hpp"
+
+static const AABB* MUSHROOM_SHAPE = AABB::newPermanent(0.3f, 0.0, 0.3f, 0.7f, 0.4f, 0.7f);
 
 MushroomBlock::MushroomBlock()
     : Bush()
@@ -65,7 +68,7 @@ void MushroomBlock::performBonemeal(Level* level, Random* random, const BlockPos
 
 const AABB* MushroomBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return MUSHROOM_SHAPE;
 }
 
 void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)

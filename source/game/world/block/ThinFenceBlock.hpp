@@ -16,6 +16,12 @@ class Material;
 class Mirror;
 class Random;
 class TextureAtlasSprite;
+template<typename T> class AbstractProperty;
+
+extern AbstractProperty<bool>* THIN_FENCE_NORTH;
+extern AbstractProperty<bool>* THIN_FENCE_EAST;
+extern AbstractProperty<bool>* THIN_FENCE_SOUTH;
+extern AbstractProperty<bool>* THIN_FENCE_WEST;
 
 class ThinFenceBlock : public Block
 {

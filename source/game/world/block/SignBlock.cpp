@@ -18,6 +18,7 @@
 #include "game/world/block/SignBlockEntity.hpp"
 
 static const unsigned long long SIGN_BLOCK_ENTITY_TYPE = 0x01000202ULL;
+static const AABB* gSignShape = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
 
 SignBlock::SignBlock()
     : BaseEntityBlock(Material::WOOD)
@@ -37,7 +38,7 @@ boost::shared_ptr<BlockEntity> SignBlock::newBlockEntity(Level* level, int)
 
 const AABB* SignBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gSignShape;
 }
 
 const AABB* SignBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -120,7 +121,7 @@ unsigned int SignBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 TextureAtlasSprite* SignBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    return Blocks::planks->getTexture(direction, state);
+    return Blocks::planks->getTexture(direction);
 }
 
 void SignBlock::registerIcons(IconRegister*)

@@ -5,6 +5,7 @@
 #include "game/entity/mob/EnchantmentTableEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -15,6 +16,8 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
+
+static const AABB* gEnchantmentTableShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
 
 EnchantmentTableBlock::EnchantmentTableBlock()
     : BaseEntityBlock(Material::STONE, MaterialColor::STONE)
@@ -36,7 +39,7 @@ boost::shared_ptr<BlockEntity> EnchantmentTableBlock::newBlockEntity(Level*, int
 
 const AABB* EnchantmentTableBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gEnchantmentTableShape;
 }
 
 bool EnchantmentTableBlock::isCubeShaped(const BlockState*)

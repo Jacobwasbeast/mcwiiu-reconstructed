@@ -24,7 +24,17 @@
 
 #include <string>
 
-static const AABB* STEM_SHAPES[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static const AABB* STEM_SHAPES[8] =
+{
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.125, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.25, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.375, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.5, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.625, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.75, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.875, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625)
+};
 AbstractProperty<int>* StemBlock::AGE = NULL;
 DirectionProperty* StemBlock::FACING = NULL;
 

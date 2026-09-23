@@ -2,6 +2,7 @@
 
 #include "game/core/GenericStats.hpp"
 #include "game/core/Stats.hpp"
+#include "game/util/AABB.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -14,7 +15,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const AABB* gDeadBushShape = NULL;
+static const AABB* gDeadBushShape = AABB::newPermanent(0.1, 0.0, 0.1, 0.9, 0.8, 0.9);
 
 DeadBushBlock::DeadBushBlock()
     : Bush(Material::REPLACEABLE_PLANT)

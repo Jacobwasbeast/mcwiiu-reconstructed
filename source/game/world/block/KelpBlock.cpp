@@ -8,6 +8,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -21,6 +22,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 static AbstractProperty<int>* KELP_AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
+static const AABB* KELP_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
 
 KelpBlock::KelpBlock()
     : Block(Material::PLANT)
@@ -106,7 +108,7 @@ void KelpBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, cons
 
 const AABB* KelpBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return KELP_SHAPE;
 }
 
 bool KelpBlock::isSolidRender(const BlockState*) const

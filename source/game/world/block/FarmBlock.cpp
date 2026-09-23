@@ -153,7 +153,7 @@ EBlockFaceShape FarmBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
 
 TextureAtlasSprite* FarmBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction != Direction::UP) return Blocks::dirt->getTexture(direction, state);
+    if (direction != Direction::UP) return Blocks::dirt->getTexture(direction);
     return state->getValue(gMoistureProperty) > 0 ? mWetIcon : mDryIcon;
 }
 

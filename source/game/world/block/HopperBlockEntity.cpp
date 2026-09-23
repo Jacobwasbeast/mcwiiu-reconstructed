@@ -208,7 +208,6 @@ boost::shared_ptr<Container> HopperBlockEntity::getContainerAt(Level* level, dou
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(boost::shared_ptr<Entity>(), box, NULL);
     if (entities != NULL && !entities->empty())
         container = boost::dynamic_pointer_cast<Container>(entities->at(level->mRandom->nextInt(static_cast<int>(entities->size()))));
-    delete entities;
     return container;
 }
 

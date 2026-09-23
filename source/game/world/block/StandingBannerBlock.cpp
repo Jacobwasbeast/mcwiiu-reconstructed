@@ -2,6 +2,7 @@
 
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/Block.hpp"
@@ -13,6 +14,7 @@
 
 static AbstractProperty<int>* gStandingBannerRotation =
     static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"rotation", 0, 15));
+static const AABB* gStandingBannerShape = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
 
 StandingBannerBlock::StandingBannerBlock()
     : BannerBlock()
@@ -28,7 +30,7 @@ StandingBannerBlock::~StandingBannerBlock()
 
 const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gStandingBannerShape;
 }
 
 const BlockState* StandingBannerBlock::rotate(const BlockState* state, Rotation* rotation)

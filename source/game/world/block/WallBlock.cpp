@@ -166,6 +166,11 @@ EBlockFaceShape WallBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
     return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER : BLOCK_FACE_MIDDLE_POLE_THICK;
 }
 
-TextureAtlasSprite* WallBlock::getTexture(const Direction*, const BlockState*) { return Block::getTexture(Direction::NORTH); }
+TextureAtlasSprite* WallBlock::getTexture(const Direction* direction, const BlockState* state)
+{
+    Block* textureBlock = state->getValue(VARIANT) == Variant::MOSSY
+        ? Blocks::mossy_cobblestone : Blocks::cobblestone;
+    return textureBlock->getTexture(direction);
+}
 void WallBlock::registerIcons(IconRegister*) {}
 EBlockRenderShape WallBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)32; }

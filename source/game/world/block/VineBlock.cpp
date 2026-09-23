@@ -25,6 +25,7 @@ BooleanProperty* VineBlock::SOUTH = static_cast<BooleanProperty*>(BooleanPropert
 BooleanProperty* VineBlock::WEST = static_cast<BooleanProperty*>(BooleanProperty::create(L"west"));
 BooleanProperty* VineBlock::EAST = static_cast<BooleanProperty*>(BooleanProperty::create(L"east"));
 
+static const AABB* VINE_DEFAULT = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 static const AABB* VINE_UP = AABB::newPermanent(0.0, 0.9375, 0.0, 1.0, 1.0, 1.0);
 static const AABB* VINE_NORTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.0625);
 static const AABB* VINE_SOUTH = AABB::newPermanent(0.0, 0.0, 0.9375, 1.0, 1.0, 1.0);
@@ -52,7 +53,7 @@ const AABB* VineBlock::getClipAABB(const BlockState*, LevelSource*, const BlockP
 
 const AABB* VineBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    if (countFaces(state) != 1) return NULL;
+    if (countFaces(state) != 1) return VINE_DEFAULT;
     if (state->getValue(UP)) return VINE_UP;
     if (state->getValue(NORTH)) return VINE_NORTH;
     if (state->getValue(SOUTH)) return VINE_SOUTH;

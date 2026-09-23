@@ -284,6 +284,7 @@ void Block::_init(Material* material, const MaterialColor* materialColor)
     mLightEmission = 0;
     mMaterial = material;
     mCollectStatistics = true;
+    mBlockEntity = false;
     mExplosionResistance = 0.0f;
     mDestroyTime = 0.0f;
     mTicking = false;

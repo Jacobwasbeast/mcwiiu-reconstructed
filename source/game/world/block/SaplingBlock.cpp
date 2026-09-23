@@ -9,6 +9,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -29,6 +30,7 @@
 
 static EnumProperty<PlanksBlock::Variant*>* gSaplingVariant = NULL;
 static AbstractProperty<bool>* gSaplingStage = NULL;
+static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 0.09999999403953552, 0.8999999761581421, 0.800000011920929, 0.8999999761581421);
 static const unsigned int SAPLING_DESCRIPTION_IDS[4] = { 0xE020DDDBu, 0xF9DC3BECu, 0xC8AE199Cu, 0x6793A4E9u };
 
 class SaplingVariantPredicate : public Predicate<PlanksBlock::Variant*>
@@ -200,7 +202,7 @@ void SaplingBlock::blockStaticCtor()
 }
 
 std::wstring SaplingBlock::getName() { return std::wstring(L10N::GetString(0x6F4DDFC1)); }
-const AABB* SaplingBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
+const AABB* SaplingBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return SAPLING_SHAPE; }
 
 void SaplingBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {

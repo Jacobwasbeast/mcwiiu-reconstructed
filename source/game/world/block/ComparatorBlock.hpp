@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/world/block/DiodeBlock.hpp"
+#include "game/world/block/EntityBlock.hpp"
 #include "game/world/block/Predicate.hpp"
 #include "game/core/Direction.hpp"
 
@@ -30,7 +31,7 @@ class TextureAtlasSprite;
 template <typename T> class EnumProperty;
 template <typename T> class not_null_ptr;
 
-class ComparatorBlock : public DiodeBlock
+class ComparatorBlock : public DiodeBlock, public EntityBlock
 {
 public:
     class ComparatorMode : public StringRepresentable

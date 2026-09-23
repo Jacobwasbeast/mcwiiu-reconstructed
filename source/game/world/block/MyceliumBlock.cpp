@@ -123,7 +123,7 @@ TextureAtlasSprite* MyceliumBlock::getTexture(const Direction* direction, const 
     }
     if (direction == Direction::DOWN)
     {
-        return Blocks::dirt->getTexture(direction, state);
+        return Blocks::dirt->getTexture(direction);
     }
     return mIcon;
 }
@@ -136,7 +136,7 @@ TextureAtlasSprite* MyceliumBlock::getTexture(LevelSource* levelSource, const Bl
     }
     if (direction == Direction::DOWN)
     {
-        return Blocks::dirt->getTexture(levelSource, pos, direction, state);
+        return Blocks::dirt->getTexture(direction);
     }
     const Block* above = levelSource->getBlockState(pos.above())->getBlock();
     if (above != Blocks::snow && above != Blocks::snow_layer)

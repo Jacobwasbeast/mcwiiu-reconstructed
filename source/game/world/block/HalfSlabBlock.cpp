@@ -1,5 +1,6 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
+#include "game/util/AABB.hpp"
 
 #include <typeinfo>
 
@@ -16,7 +17,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Blocks.hpp"
 
-class AABB;
 Block* gHalfSlabStone = NULL;
 Block* gHalfSlabWood = NULL;
 Block* gHalfSlabStone2 = NULL;
@@ -28,9 +28,9 @@ Block* gDoubleSlabStone2 = NULL;
 Block* gDoubleSlabStone = NULL;
 Block* gDoubleSlabPrismarine = NULL;
 
-static const AABB* FULL_BLOCK_SHAPE = NULL;
-static const AABB* BOTTOM_AABB = NULL;
-static const AABB* TOP_AABB = NULL;
+static const AABB* FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
+static const AABB* BOTTOM_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
+static const AABB* TOP_AABB = AABB::newPermanent(0.0, 0.5, 0.0, 1.0, 1.0, 1.0);
 
 AbstractProperty<HalfSlabBlock::Half*>* HalfSlabBlock::TYPE = NULL;
 HalfSlabBlock::Half* HalfSlabBlock::TOP = new HalfSlabBlock::Half(L"top");

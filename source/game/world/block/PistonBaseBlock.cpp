@@ -28,6 +28,12 @@
 
 AbstractProperty<const Direction*>* PistonBaseBlock::FACING = NULL;
 AbstractProperty<bool>* PistonBaseBlock::EXTENDED = NULL;
+static const AABB* PISTON_EXTENDED_DOWN = AABB::newPermanent(0.0, 0.25, 0.0, 1.0, 1.0, 1.0);
+static const AABB* PISTON_EXTENDED_UP = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
+static const AABB* PISTON_EXTENDED_NORTH = AABB::newPermanent(0.0, 0.0, 0.25, 1.0, 1.0, 1.0);
+static const AABB* PISTON_EXTENDED_SOUTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.75);
+static const AABB* PISTON_EXTENDED_WEST = AABB::newPermanent(0.25, 0.0, 0.0, 1.0, 1.0, 1.0);
+static const AABB* PISTON_EXTENDED_EAST = AABB::newPermanent(0.0, 0.0, 0.0, 0.75, 1.0, 1.0);
 
 PistonBaseBlock::PistonBaseBlock(bool sticky)
     : DirectionalBlock(Material::PISTON), mSticky(sticky), mSideIcon(NULL), mTopIcon(NULL), mBottomIcon(NULL)
@@ -65,11 +71,21 @@ bool PistonBaseBlock::isViewBlocking(const BlockState* state)
 
 int PistonBaseBlock::getSpawnResourcesAuxValue(const BlockState*) { return 5; }
 
-const AABB* PistonBaseBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
+const AABB* PistonBaseBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    if (state->getValue(EXTENDED))
-        return NULL;
-    return NULL;
+    if (!state->getValue(EXTENDED))
+        return Block::getShape(state, levelSource, pos);
+
+    switch (state->getValue(FACING)->get3DDataValue())
+    {
+    case Direction::eDirection_Down: return PISTON_EXTENDED_DOWN;
+    case Direction::eDirection_Up: return PISTON_EXTENDED_UP;
+    case Direction::eDirection_North: return PISTON_EXTENDED_NORTH;
+    case Direction::eDirection_South: return PISTON_EXTENDED_SOUTH;
+    case Direction::eDirection_West: return PISTON_EXTENDED_WEST;
+    case Direction::eDirection_East: return PISTON_EXTENDED_EAST;
+    default: return PISTON_EXTENDED_UP;
+    }
 }
 
 bool PistonBaseBlock::isTopSolidBlocking(const BlockState* state)

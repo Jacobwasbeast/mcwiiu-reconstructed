@@ -27,6 +27,8 @@ const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE =
     static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 6);
 }
 
+static const AABB* gEndPortalShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
+
 EndPortalBlock::EndPortalBlock(Material* material)
     : BaseEntityBlock(material)
 {
@@ -47,7 +49,7 @@ boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int data)
 
 const AABB* EndPortalBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gEndPortalShape;
 }
 
 bool EndPortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,

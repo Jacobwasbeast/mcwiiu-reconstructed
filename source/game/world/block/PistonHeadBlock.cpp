@@ -31,8 +31,30 @@ AbstractProperty<bool>* PistonHeadBlock::SHORT = NULL;
 
 PistonHeadBlock::PistonType* pistonTypeNormal = NULL;
 PistonHeadBlock::PistonType* pistonTypeSticky = NULL;
-static const AABB* pistonHeadShapes[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-static const AABB* pistonArmShapes[12] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static const AABB* pistonHeadShapes[6] =
+{
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
+    AABB::newPermanent(0.0, 0.75, 0.0, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.25),
+    AABB::newPermanent(0.0, 0.0, 0.75, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 0.25, 1.0, 1.0),
+    AABB::newPermanent(0.75, 0.0, 0.0, 1.0, 1.0, 1.0)
+};
+static const AABB* pistonArmShapes[12] =
+{
+    AABB::newPermanent(0.375, -0.25, 0.375, 0.625, 0.75, 0.625),
+    AABB::newPermanent(0.375, 0.25, 0.375, 0.625, 1.25, 0.625),
+    AABB::newPermanent(0.375, 0.375, -0.25, 0.625, 0.625, 0.75),
+    AABB::newPermanent(0.375, 0.375, 0.25, 0.625, 0.625, 1.25),
+    AABB::newPermanent(0.25, 0.375, 0.375, 1.25, 0.625, 0.625),
+    AABB::newPermanent(-0.25, 0.375, 0.375, 0.75, 0.625, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.75, 0.625),
+    AABB::newPermanent(0.375, 0.25, 0.375, 0.625, 1.0, 0.625),
+    AABB::newPermanent(0.375, 0.375, 0.0, 0.625, 0.625, 0.75),
+    AABB::newPermanent(0.375, 0.375, 0.25, 0.625, 0.625, 1.0),
+    AABB::newPermanent(0.0, 0.375, 0.375, 0.75, 0.625, 0.625),
+    AABB::newPermanent(0.25, 0.375, 0.375, 1.0, 0.625, 0.625)
+};
 
 PistonHeadBlock::PistonType::PistonType(const std::wstring& name)
     : mName(name)

@@ -19,6 +19,7 @@
 #include "game/core/DyeColor.hpp"
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
+static const AABB* REEDS_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
 
 ReedsBlock::ReedsBlock()
     : Block(Material::PLANT)
@@ -93,7 +94,7 @@ void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, con
 
 const AABB* ReedsBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return REEDS_SHAPE;
 }
 
 void ReedsBlock::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)

@@ -59,9 +59,9 @@ bool DiodeBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPo
 
 bool DiodeBlock::isOn(const BlockState*) { return mOn; }
 
-int DiodeBlock::getDirectSignal(const BlockState*, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+int DiodeBlock::getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    return levelSource->getDirectSignal(pos, direction);
+    return state->getSignal(levelSource, pos, direction);
 }
 
 int DiodeBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)

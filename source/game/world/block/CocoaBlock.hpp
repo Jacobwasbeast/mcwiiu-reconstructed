@@ -19,10 +19,12 @@ class Rotation;
 class TextureAtlasSprite;
 class ItemInstance;
 class LivingEntity;
+template <typename T> class AbstractProperty;
 
 class CocoaBlock : public HorizontalDirectionalBlock, public BonemealableBlock
 {
 public:
+    static AbstractProperty<int>* AGE;
     CocoaBlock();
     virtual ~CocoaBlock();
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
