@@ -496,13 +496,13 @@ void ASM_MTXRotRad(double angle, _Mat34* matrix, unsigned int axis)
 
 void C_MTXPerspective(float (*matrix)[4], float fieldOfView, float aspect, float nearDistance, float farDistance)
 {
-    const float cotangent = 1.0f / tanf(fieldOfView * 0.5f);
+    const float cotangent = 1.0f / tanf(fieldOfView * 0.5f * 0.01745329238474369f);
     const float reciprocalDepth = 1.0f / (farDistance - nearDistance);
     memset(matrix, 0, sizeof(float) * 16);
     matrix[0][0] = cotangent / aspect;
     matrix[1][1] = cotangent;
-    matrix[2][2] = -farDistance * reciprocalDepth;
-    matrix[2][3] = -(farDistance * nearDistance) * reciprocalDepth;
+    matrix[2][2] = -(farDistance + nearDistance) * reciprocalDepth;
+    matrix[2][3] = -(farDistance + farDistance) * nearDistance * reciprocalDepth;
     matrix[3][2] = -1.0f;
     matrix[3][3] = 0.0f;
 }
@@ -518,8 +518,8 @@ void C_MTXOrtho(float (*matrix)[4], float top, float bottom, float left, float r
     matrix[0][3] = -(right + left) * reciprocalWidth;
     matrix[1][1] = 2.0f * reciprocalHeight;
     matrix[1][3] = -(top + bottom) * reciprocalHeight;
-    matrix[2][2] = -reciprocalDepth;
-    matrix[2][3] = -farDistance * reciprocalDepth;
+    matrix[2][2] = -2.0f * reciprocalDepth;
+    matrix[2][3] = -(farDistance + nearDistance) * reciprocalDepth;
     matrix[3][3] = 1.0f;
 }
 
@@ -2702,7 +2702,7 @@ int Renderer::GetMaxTextures()
 
 int Renderer::TextureCreate()
 {
-    for (int texture = 1; texture < 512; ++texture)
+    for (int texture = 0; texture < 512; ++texture)
     {
         if (!mTextures[texture].mUsed)
         {
@@ -2721,11 +2721,6 @@ int Renderer::TextureCreate()
 
 void Renderer::TextureFree(int texture)
 {
-    if (texture <= 0 || texture >= 512 || texture == mDefaultTexture)
-    {
-        return;
-    }
-
     if (mTextures[texture].mTexture.surface.imagePtr != NULL)
     {
         MemoryFreeMEM2(mTextures[texture].mTexture.surface.imagePtr);
