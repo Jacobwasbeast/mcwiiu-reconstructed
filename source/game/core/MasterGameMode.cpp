@@ -421,14 +421,20 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
         }
 
         Setup(firstMiniGame);
-        mNextLevelGenerationOptions = gApp.getLevelGenerationOptions();
-        LevelRuleset* rules = mNextLevelGenerationOptions == 0 ? 0 :
-            mNextLevelGenerationOptions->getRequiredGameRules();
+        mCurrentLevelGenOptions = gApp.getLevelGenerationOptions();
+        LevelRuleset* rules = mCurrentLevelGenOptions == 0 ? 0 :
+            mCurrentLevelGenOptions->getRequiredGameRules();
         if (rules != 0)
         {
-              AABB* activeArea = rules->getNamedArea(L"ActiveArea");
-              if (activeArea != 0)
-                  mTeamAreas.push_back(activeArea);
+            AABB* activeArea = rules->getNamedArea(L"ActiveArea");
+            if (activeArea != 0)
+            {
+                mMinChunkX = static_cast<int>(activeArea->mMinX);
+                mMaxChunkX = static_cast<int>(activeArea->mMaxX);
+                mMinChunkZ = static_cast<int>(activeArea->mMinZ);
+                mMaxChunkZ = static_cast<int>(activeArea->mMaxZ);
+                mTeamAreas.push_back(activeArea);
+            }
         }
 
         MiniGameDef* initialMiniGame = MiniGameDef::GetCustomGameModeById(
@@ -1377,7 +1383,10 @@ void MasterGameMode::ResetPlayers()
 bool MasterGameMode::IsChunkWithinActiveBounds(void* context, int chunkX, int chunkZ)
 {
     MasterGameMode* gameMode = static_cast<MasterGameMode*>(context);
-    return gameMode != 0 && gameMode->IsChunkWithinLobbyRegionOfRoundLevel(chunkX, chunkZ);
+    if (gameMode->mMinChunkX <= chunkX && chunkX <= gameMode->mMaxChunkX &&
+        gameMode->mMinChunkZ <= chunkZ && chunkZ <= gameMode->mMaxChunkZ)
+        return true;
+    return gameMode->mActiveChunkBounds.IsChunkWithinActiveArea(chunkX, chunkZ, gameMode->mTeamAreas);
 }
 
 void MasterGameMode::GenerateChestRefillInfo()
@@ -3801,7 +3810,10 @@ void MasterGameMode::SetPlayerReady(unsigned int playerIndex, bool ready)
 
 bool MasterGameMode::IsChunkWithinLobbyRegionOfRoundLevel(int chunkX, int chunkZ)
 {
-    return mRoundStarted || mRoundEnding;
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    return options != mCurrentLevelGenOptions
+        && mMinChunkX <= chunkX && chunkX <= mMaxChunkX
+        && mMinChunkZ <= chunkZ && chunkZ <= mMaxChunkZ;
 }
 
 void MasterGameMode::GetMaxActiveBounds(int& minimumX, int& minimumZ, int& maximumX, int& maximumZ)

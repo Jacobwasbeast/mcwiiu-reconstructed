@@ -910,7 +910,7 @@ int IUIScene_LoadCreateJoin::TexturePackDialogReturned(void* context, int userIn
 void IUIScene_LoadCreateJoin::CheckAndJoinGame(int index)
 {
     UIScene_LoadCreateJoinMenu* menu = asMenu(this);
-    if (GetPad() == 0)
+    if (GetJoinListSize() == 0)
         return;
     if (m_friendSessions.empty())
         return;

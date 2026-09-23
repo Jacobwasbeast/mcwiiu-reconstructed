@@ -38,7 +38,9 @@ namespace
         L"coral_fan_purple"
     };
 
-    const AABB* CORAL_FAN_SHAPE = NULL;
+    const AABB* CORAL_FAN_SHAPE = AABB::newPermanent(
+        0.19999998807907104, 0.0, 0.19999998807907104,
+        0.8f, 0.4f, 0.8f);
 }
 
 CoralFan::CoralFan()

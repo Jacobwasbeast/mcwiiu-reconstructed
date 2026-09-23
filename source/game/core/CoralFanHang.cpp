@@ -25,7 +25,9 @@ AbstractProperty<bool>* CoralFanHang_PROPERTY_3 = static_cast<AbstractProperty<b
 
 namespace
 {
-    const AABB* CORAL_FAN_HANG_SHAPE = NULL;
+    const AABB* CORAL_FAN_HANG_SHAPE = AABB::newPermanent(
+        0.19999998807907104, 0.25, 0.19999998807907104,
+        0.8f, 0.85f, 0.8f);
 }
 
 CoralFanHang::CoralFanHang()

@@ -30,7 +30,7 @@ namespace
         L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple"
     };
 
-    const AABB* CORAL_SHAPE = NULL;
+    const AABB* CORAL_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
 }
 
 Coral::Coral()

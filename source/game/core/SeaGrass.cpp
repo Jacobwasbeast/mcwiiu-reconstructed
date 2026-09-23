@@ -5,6 +5,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -18,6 +19,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 static AbstractProperty<int>* SEAGRASS_TYPE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"type", 0, 2));
+static const AABB* SEAGRASS_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
 
 SeaGrass::SeaGrass()
     : Bush(Material::PLANT), mCarriedIcon(NULL), mDoubleTallTopIcon(NULL), mDoubleTallBottomIcon(NULL)
@@ -92,7 +94,7 @@ unsigned int SeaGrass::GetInteractTooltip(const BlockTooltipDataHolder& tooltipD
     return Block::GetInteractTooltip(tooltipData);
 }
 EBlockOffsetType SeaGrass::getOffsetType() { return BLOCK_OFFSET_XZ; }
-const AABB* SeaGrass::getShape(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
+const AABB* SeaGrass::getShape(const BlockState*, LevelSource*, const BlockPos&) { return SEAGRASS_SHAPE; }
 void SeaGrass::neighborChanged(const BlockState* s, Level* l, const BlockPos& p, Block*, const BlockPos&)
 {
     if (!l->mIsClientSide && !canSurvive(l, p, s))

@@ -7,6 +7,12 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
+LootTable* LootTable::getEmpty()
+{
+    static LootTable* empty = new LootTable(NULL);
+    return empty;
+}
+
 LootTable::LootTable(std::vector<LootPool*>* pools)
     : mPools(pools)
 {

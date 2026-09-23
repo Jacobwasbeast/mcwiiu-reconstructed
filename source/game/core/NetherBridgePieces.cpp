@@ -207,7 +207,12 @@ bool NetherBridgePieces::PieceWeight::isValid()
 }
 
 NetherBridgePieces::BridgeCrossing::BridgeCrossing():NetherBridgePiece() {}
-NetherBridgePieces::BridgeCrossing::BridgeCrossing(Random&,int,int):NetherBridgePiece() {}
+NetherBridgePieces::BridgeCrossing::BridgeCrossing(Random& random, int x, int z)
+    : NetherBridgePiece(0)
+{
+    setOrientation(Direction::Plane::HORIZONTAL->getRandomDirection(random));
+    setBoundingBox(new BoundingBox(x, 64, z, x + 18, 73, z + 18));
+}
 NetherBridgePieces::BridgeCrossing::BridgeCrossing(int d,Random&,BoundingBox* b,const Direction* o):NetherBridgePiece(d){setBoundingBox(b);setOrientation(o);}
 StructurePiece* NetherBridgePieces::BridgeCrossing::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)

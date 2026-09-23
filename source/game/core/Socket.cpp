@@ -66,20 +66,45 @@ Socket::SocketInputStreamNetwork::SocketInputStreamNetwork(Socket* s,int i):mInd
 Socket::SocketInputStreamNetwork::~SocketInputStreamNetwork() = default;
 int Socket::SocketInputStreamNetwork::read()
 {
-    if (!mOpen || !mSocket || mSocket->mQueues[mIndex].empty()) return -1;
-    int value = mSocket->mQueues[mIndex].front();
-    mSocket->mQueues[mIndex].pop_front();
-    return value;
+    while (mOpen && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead))
+    {
+        if (TryEnterCriticalSection(&mSocket->mMutexes[mIndex]))
+        {
+            if (!mSocket->mQueues[mIndex].empty())
+            {
+                int value = mSocket->mQueues[mIndex].front();
+                mSocket->mQueues[mIndex].pop_front();
+                LeaveCriticalSection(&mSocket->mMutexes[mIndex]);
+                return value;
+            }
+            LeaveCriticalSection(&mSocket->mMutexes[mIndex]);
+        }
+        Sleep(1);
+    }
+    return -1;
 }
 int Socket::SocketInputStreamNetwork::read(arrayWithLength<unsigned char> d){return read(d,0,d.length);}
 int Socket::SocketInputStreamNetwork::read(arrayWithLength<unsigned char> d,unsigned int o,unsigned int n)
 {
-    if (!mOpen || !mSocket || n > mSocket->mQueues[mIndex].size()) return -1;
-    for (unsigned int i=0; i<n; ++i) {
-        d.data[o+i] = mSocket->mQueues[mIndex].front();
-        mSocket->mQueues[mIndex].pop_front();
+    while (mOpen)
+    {
+        if (TryEnterCriticalSection(&mSocket->mMutexes[mIndex]))
+        {
+            if (n <= mSocket->mQueues[mIndex].size())
+            {
+                for (unsigned int i=0; i<n; ++i)
+                {
+                    d.data[o+i] = mSocket->mQueues[mIndex].front();
+                    mSocket->mQueues[mIndex].pop_front();
+                }
+                LeaveCriticalSection(&mSocket->mMutexes[mIndex]);
+                return n;
+            }
+            LeaveCriticalSection(&mSocket->mMutexes[mIndex]);
+        }
+        Sleep(1);
     }
-    return n;
+    return -1;
 }
 void Socket::SocketInputStreamNetwork::close(){mOpen=false;}
 long long Socket::SocketInputStreamNetwork::skip(long long n){return n;}
@@ -121,10 +146,26 @@ Socket::SocketOutputStreamNetwork::~SocketOutputStreamNetwork() = default;
 void Socket::SocketOutputStreamNetwork::write(unsigned int v){unsigned char b=(unsigned char)v;arrayWithLength<unsigned char> d;d.data=&b;d.length=1;writeWithFlags(d,0,1,0);}
 void Socket::SocketOutputStreamNetwork::write(arrayWithLength<unsigned char> d){write(d,0,d.length);}
 void Socket::SocketOutputStreamNetwork::write(arrayWithLength<unsigned char> d,unsigned int o,unsigned int n){writeWithFlags(d,o,n,0);}
-void Socket::SocketOutputStreamNetwork::writeWithFlags(arrayWithLength<unsigned char> d,unsigned int o,unsigned int n,int)
+void Socket::SocketOutputStreamNetwork::writeWithFlags(arrayWithLength<unsigned char> d,unsigned int o,unsigned int n,int flags)
 {
-    if (mOpen && mSocket && d.data && n)
-        mSocket->pushDataToQueue(d.data+o,n,mIndex!=0);
+    if (!mOpen || !n || !mSocket || !d.data) return;
+    if (mSocket->mNetwork)
+    {
+        const unsigned int index = mIndex == 0 ? 1 : 0;
+        EnterCriticalSection(&mSocket->mMutexes[index]);
+        for (unsigned int i=0; i<n; ++i)
+            mSocket->mQueues[index].push_back(d.data[o+i]);
+        LeaveCriticalSection(&mSocket->mMutexes[index]);
+        return;
+    }
+
+    INetworkPlayer* host = CGameNetworkManager::sInstance.GetHostPlayer();
+    INetworkPlayer* player = mSocket->getPlayer();
+    if (!host || !player) return;
+    if (mIndex == 1)
+        host->SendData(player, d.data+o, n, false, (flags & 1) != 0);
+    else
+        player->SendData(host, d.data+o, n, false, (flags & 1) != 0);
 }
 void Socket::SocketOutputStreamNetwork::close(){mOpen=false;}
 void Socket::SocketOutputStreamNetwork::flush(){ return; }
@@ -144,6 +185,8 @@ Socket::Socket(bool b)
 Socket::Socket(INetworkPlayer* p,bool a,bool b)
     : mLocal(false),mNetwork(b),mIndex(a?1:0),mPlayerId(0),mEvent(NULL),mOpen(true)
 {
+    InitializeCriticalSection(&mMutexes[0]);
+    InitializeCriticalSection(&mMutexes[1]);
     mInputStreams[0]=new SocketInputStreamNetwork(this,0);
     mInputStreams[1]=new SocketInputStreamNetwork(this,1);
     mOutputStreams[0]=new SocketOutputStreamNetwork(this,0);
@@ -185,8 +228,11 @@ unsigned int Socket::getRemoteSocketAddress(){return 0;}
 void Socket::pushDataToQueue(const unsigned char* d,unsigned int n,bool b)
 {
     if (!d) return;
-    unsigned int i=b?1:0;
+    unsigned int i=b?0:1;
+    if (i != static_cast<unsigned int>(mIndex) && !mNetwork) return;
+    EnterCriticalSection(&mMutexes[i]);
     for (unsigned int j=0;j<n;++j) mQueues[i].push_back(d[j]);
+    LeaveCriticalSection(&mMutexes[i]);
 }
 void Socket::addIncomingSocket(Socket* s){if(sConnection)sConnection->NewIncomingSocket(s);}
 InputStream* Socket::getInputStream(bool b)

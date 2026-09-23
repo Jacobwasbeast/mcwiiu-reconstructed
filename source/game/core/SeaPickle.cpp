@@ -7,6 +7,7 @@
 #include "game/item/Items.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -25,6 +26,7 @@
 
 AbstractProperty<int>* SeaPickle_PICKLES = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"pickles", 1, 4));
 static AbstractProperty<bool>* SEA_PICKLE_WATERLOGGED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"waterlogged"));
+static const AABB* SEA_PICKLE_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
 
 SeaPickle::SeaPickle()
     : Bush(Material::PLANT)
@@ -169,7 +171,7 @@ bool SeaPickle::canSurvive(Level* level, const BlockPos& pos, const BlockState* 
 
 const AABB* SeaPickle::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return SEA_PICKLE_SHAPE;
 }
 
 bool SeaPickle::mayReplaceWithPlace(LevelSource*, const BlockPos&)

@@ -10,7 +10,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-static const AABB* BUSH_SHAPE = NULL;
+static const AABB* BUSH_SHAPE = AABB::newPermanent(0.3, 0.0, 0.3, 0.7, 0.6, 0.7);
 
 Bush::Bush()
     : Block(Material::PLANT)

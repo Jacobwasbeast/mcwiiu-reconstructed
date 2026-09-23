@@ -336,7 +336,7 @@ bool DamageSource::isCreativePlayer() const
     return player && player->mAbilities.mInstabuild;
 }
 Vec3* DamageSource::getSourcePosition() const { return 0; }
-const DamageSource* DamageSource::GetBaseDamageSource() const { return 0; }
+const DamageSource* DamageSource::GetBaseDamageSource() const { return this; }
 DamageSource* DamageSource::copy() const { return new DamageSource(*this); }
 void DamageSource::bypassInvul() { bypassInvulFlag = true; }
 void DamageSource::bypassGraceInvul() { bypassGraceInvulFlag = true; }

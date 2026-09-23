@@ -7,6 +7,7 @@
 class FloatBuffer : public Buffer
 {
     friend class Camera;
+    friend class GlStateManager;
 public:
     FloatBuffer(unsigned int capacity);
     FloatBuffer(unsigned int capacity, float* data);

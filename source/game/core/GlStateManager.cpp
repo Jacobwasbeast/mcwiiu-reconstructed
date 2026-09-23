@@ -64,11 +64,6 @@ GlStateManager::BooleanState::BooleanState(int capability)
 
 void GlStateManager::BooleanState::setEnabled(bool enabled)
 {
-    if (state == enabled)
-    {
-        return;
-    }
-
     state = enabled;
 
     if (enabled)
@@ -412,8 +407,7 @@ void GlStateManager::viewport(int x, int y, int width, int height)
 void GlStateManager::getMatrix(int mode, FloatBuffer* buffer)
 {
     float* matrix = gRenderer->MatrixGet(mode);
-    arrayWithLength<float> values(matrix, 16);
-    buffer->put(values);
+    memcpy(buffer->mBuffer, matrix, 16 * sizeof(float));
 }
 
 void GlStateManager::multMatrix(FloatBuffer* buffer)
