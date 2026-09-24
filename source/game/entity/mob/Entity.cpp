@@ -1341,7 +1341,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                     break;
                 }
 
-                y = mBoundingBox->clipYCollide(cubes->at(i), y);
+                y = cubes->at(i)->clipYCollide(mBoundingBox, y);
             }
 
             PIXEndNamedEvent();
@@ -1361,7 +1361,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                     break;
                 }
 
-                x = mBoundingBox->clipXCollide(cubes->at(i), x);
+                x = cubes->at(i)->clipXCollide(mBoundingBox, x);
             }
         }
 
@@ -1380,7 +1380,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                     break;
                 }
 
-                z = mBoundingBox->clipZCollide(cubes->at(i), z);
+                z = cubes->at(i)->clipZCollide(mBoundingBox, z);
             }
         }
 
@@ -1420,7 +1420,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                     break;
                 }
 
-                stepY = stepBox->clipYCollide(*it, stepY);
+                stepY = (*it)->clipYCollide(stepBox, stepY);
             }
         }
 
@@ -1434,7 +1434,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 break;
             }
 
-            steppedX = stepped->clipXCollide(*it, steppedX);
+            steppedX = (*it)->clipXCollide(stepped, steppedX);
         }
 
         double steppedZ = z;
@@ -1447,7 +1447,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 break;
             }
 
-            steppedZ = stepped->clipZCollide(*it, steppedZ);
+            steppedZ = (*it)->clipZCollide(stepped, steppedZ);
         }
 
         AABB* raised = AABB::newTemp(mBoundingBox);
@@ -1464,7 +1464,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                     break;
                 }
 
-                raisedY = raised->clipYCollide(*it, raisedY);
+                raisedY = (*it)->clipYCollide(raised, raisedY);
             }
         }
 
@@ -1478,7 +1478,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 break;
             }
 
-            raisedX = raised->clipXCollide(*it, raisedX);
+            raisedX = (*it)->clipXCollide(raised, raisedX);
         }
 
         double raisedZ = z;
@@ -1491,7 +1491,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 break;
             }
 
-            raisedZ = raised->clipZCollide(*it, raisedZ);
+            raisedZ = (*it)->clipZCollide(raised, raisedZ);
         }
 
         if (steppedX * steppedX + steppedZ * steppedZ <= raisedX * raisedX + raisedZ * raisedZ)
@@ -1519,7 +1519,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 break;
             }
 
-            y = mBoundingBox->clipYCollide(*it, y);
+            y = (*it)->clipYCollide(mBoundingBox, y);
         }
 
         if (x * x + z * z <= clippedX * clippedX + clippedZ * clippedZ)

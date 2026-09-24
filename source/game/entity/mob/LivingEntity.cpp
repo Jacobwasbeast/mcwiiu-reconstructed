@@ -2753,7 +2753,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
     float speed;
 
-    if (mOnGround)
+    if (!mOnGround)
     {
         if (GetType() == ENTITY_TYPE_WITHER_BOSS)
         {
@@ -2827,20 +2827,20 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     {
         mYd = mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd) * 0.2;
     }
-    else if (isNoGravity())
+    else if (!isNoGravity())
     {
         if (mYd >= 0.0)
         {
-            mYd = mYd + 0.0;
+            mYd = mYd - 0.07999999821186066;
         }
         else if (hasEffect(MobEffects::SLOW_FALLING))
         {
-            mYd = mYd + 0.0;
+            mYd = mYd - 0.009999999776482582;
+            mFallDistance = 0.0f;
         }
         else
         {
-            mYd = mYd - 0.0784000015258789;
-            mFallDistance = 0.0f;
+            mYd = mYd - 0.07999999821186066;
         }
     }
 
