@@ -65,22 +65,27 @@ Chunk::~Chunk()
 
 void Chunk::reset()
 {
-    if (mNonStack && mMutex != NULL)
+    if (mNonStack)
     {
-        EnterCriticalSection(mMutex);
         LevelRenderer* renderer = chunkLevelRenderer();
         if (renderer != NULL)
         {
+            EnterCriticalSection(&renderer->mChunkMutex);
             unsigned char references = renderer->decGlobalChunkRefCount(mX, mZ, mDimension, mLevel);
             mNonStack = false;
             if (references == 0)
             {
-                unsigned long long index = LevelRenderer::getGlobalIndexForChunk(mX, mZ, mDimension, mLevel);
-                if ((long long)index >= 0)
+                int index = LevelRenderer::getGlobalIndexForChunk(mX, mZ, mDimension, mLevel);
+                if (index >= 0)
+                {
+                    gRenderer->CBuffClear(renderer->mDisplayList + index * 3);
+                    gRenderer->CBuffClear(renderer->mDisplayList + index * 3 + 1);
+                    gRenderer->CBuffClear(renderer->mDisplayList + index * 3 + 2);
                     renderer->setGlobalChunkFlags(mX, mZ, mDimension, mLevel, 0);
+                }
             }
+            LeaveCriticalSection(&renderer->mChunkMutex);
         }
-        LeaveCriticalSection(mMutex);
     }
     mClipChunk->mVisible = false;
 }
@@ -119,12 +124,12 @@ void Chunk::setPos(int x, int z, int dimension)
         mClipChunk->mMaxZ = (float)(mBoundingBox->mMaxZ + dimension);
         mNonStack = true;
         LevelRenderer* renderer = chunkLevelRenderer();
-        if (renderer != NULL && mMutex != NULL)
+        if (renderer != NULL)
         {
-            EnterCriticalSection(mMutex);
+            EnterCriticalSection(&renderer->mChunkMutex);
             if (renderer->incGlobalChunkRefCount(x, z, dimension, mLevel) == 1)
                 renderer->setGlobalChunkFlag(x, z, dimension, mLevel, 2, 0);
-            LeaveCriticalSection(mMutex);
+            LeaveCriticalSection(&renderer->mChunkMutex);
         }
     }
 }

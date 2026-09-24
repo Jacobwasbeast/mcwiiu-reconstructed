@@ -23,7 +23,9 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/core/TickNextTickData.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
 #include "game/client/render/GameRenderer.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/server/MinecraftServer.hpp"
@@ -62,6 +64,7 @@ LevelChunk::LevelChunk(Level* level, ChunkPrimer* primer, int x, int z)
 {
     init(level, x, z);
     arrayWithLength<unsigned short> elements = primer->getElementIds();
+    mEmissiveMaxHeight = primer->getEmissiveMaxHeight();
     if (elements.data != NULL)
     {
         mElements = new ElementStorage(level->mIsClientSide, elements, 4);
@@ -244,8 +247,14 @@ bool LevelChunk::isTerrainPopulated()
 }
 bool LevelChunk::isRenderChunkEmpty(int section)
 {
-    int highest = 0;
-    return mElements->isRenderChunkEmpty(section, &highest);
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return false;
+
+    bool renderChunkEmpty = true;
+    if (!isEmpty())
+        renderChunkEmpty = mElements->isRenderChunkEmpty(section, NULL);
+
+    return renderChunkEmpty;
 }
 void LevelChunk::getBlockData(arrayWithLength<unsigned char> data)
 {
@@ -614,6 +623,29 @@ void LevelChunk::init(Level* level, int x, int z)
     mPendingBlockEntitiesChanged = false;
     mLightingDropped = false;
     mOwnsBiomes = false;
+
+    unsigned int xSquared = static_cast<unsigned int>(x) * static_cast<unsigned int>(x);
+    unsigned int zSquared = static_cast<unsigned int>(z) * static_cast<unsigned int>(z);
+    unsigned int xSquareTerm = xSquared * 0x4c1906U;
+    unsigned int xLinearTerm = static_cast<unsigned int>(x) * 0x5ac0dbU;
+    unsigned int zSquareTerm = zSquared * 0x4307a7U;
+    unsigned int zLinearTerm = static_cast<unsigned int>(z) * 0x5f24fU;
+    const auto signExtend = [](unsigned int value) -> long long {
+        return value < 0x80000000U ? static_cast<long long>(value)
+                                  : static_cast<long long>(value) - 0x100000000LL;
+    };
+    const unsigned long long chunkSeedBits = static_cast<unsigned long long>(level->getSeed())
+                                             + static_cast<unsigned long long>(signExtend(xSquareTerm))
+                                             + static_cast<unsigned long long>(signExtend(xLinearTerm))
+                                             + static_cast<unsigned long long>(signExtend(zSquareTerm))
+                                             + static_cast<unsigned long long>(signExtend(zLinearTerm));
+    const unsigned long long randomSeedBits = chunkSeedBits ^ 0x3ad8025fULL;
+    long long randomSeed;
+    static_assert(sizeof(randomSeed) == sizeof(randomSeedBits));
+    std::memcpy(&randomSeed, &randomSeedBits, sizeof(randomSeed));
+    Random random(randomSeed);
+    if (random.nextInt(10) == 0)
+        mBiomePresent |= 4;
 }
 bool LevelChunk::isAt(int x, int z)
 {
@@ -1203,7 +1235,7 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
             }
             else
             {
-                oldBlock->onRemove(level, pos, state);
+                oldBlock->onRemove(level, pos, oldState);
             }
         }
         PIXBeginNamedEvent(0.0f, "Updating lighting");
@@ -1411,35 +1443,99 @@ void LevelChunk::getElementAndExtraElement(int x, int y, int z, unsigned short* 
 }
 int LevelChunk::getBrightness(LightLayer::variety layer, const BlockPos& pos)
 {
-    SparseLightStorage* storage = layer == LightLayer::SKY ? (pos.y < 128 ? mSkyLight : mSkyLightUpper)
-                                                           : (pos.y < 128 ? mBlockLight : mBlockLightUpper);
-    return storage == NULL ? 0 : storage->get(pos.x & 15, pos.y & 127, pos.z & 15);
+    if (layer == LightLayer::SKY)
+    {
+        if (!level->mDimension->isHasSkyLight())
+            return 0;
+
+        SparseLightStorage* storage = pos.y < 128 ? mSkyLight : mSkyLightUpper;
+        return storage == NULL ? 0 : storage->get(pos.x & 15, pos.y & 127, pos.z & 15);
+    }
+
+    if (layer == LightLayer::BLOCK)
+    {
+        SparseLightStorage* storage = pos.y < 128 ? mBlockLight : mBlockLightUpper;
+        return storage == NULL ? 0 : storage->get(pos.x & 15, pos.y & 127, pos.z & 15);
+    }
+
+    return 0;
 }
 void LevelChunk::getNeighbourBrightnesses(int* brightnesses, LightLayer::variety layer, int x, int y, int z)
 {
-    if (brightnesses == NULL)
-        return;
-    brightnesses[0] = getBrightness(layer, BlockPos(x - 1, y, z));
-    brightnesses[1] = getBrightness(layer, BlockPos(x + 1, y, z));
-    brightnesses[2] = getBrightness(layer, BlockPos(x, y - 1, z));
-    brightnesses[3] = getBrightness(layer, BlockPos(x, y + 1, z));
-    brightnesses[4] = getBrightness(layer, BlockPos(x, y, z - 1));
-    brightnesses[5] = getBrightness(layer, BlockPos(x, y, z + 1));
+    SparseLightStorage* storage;
+    if (layer == LightLayer::SKY)
+        storage = y < 128 ? mSkyLight : mSkyLightUpper;
+    else
+        storage = y < 128 ? mBlockLight : mBlockLightUpper;
+
+    if (storage != NULL)
+    {
+        int localY = y - (((y >> 31) & 0x7F) + y & ~0x7F);
+        brightnesses[0] = storage->get(x - 1, localY, z);
+        brightnesses[1] = storage->get(x + 1, localY, z);
+        brightnesses[4] = storage->get(x, localY, z - 1);
+        brightnesses[5] = storage->get(x, localY, z + 1);
+    }
+
+    int belowY = y - 1;
+    if (layer == LightLayer::SKY)
+        storage = belowY < 128 ? mSkyLight : mSkyLightUpper;
+    else
+        storage = belowY < 128 ? mBlockLight : mBlockLightUpper;
+
+    if (storage != NULL)
+    {
+        int localY = belowY - (((belowY >> 31) & 0x7F) + belowY & ~0x7F);
+        brightnesses[2] = storage->get(x, localY, z);
+    }
+
+    int aboveY = y + 1;
+    if (layer == LightLayer::SKY)
+        storage = aboveY < 128 ? mSkyLight : mSkyLightUpper;
+    else
+        storage = aboveY < 128 ? mBlockLight : mBlockLightUpper;
+
+    if (storage != NULL)
+    {
+        int localY = aboveY - (((aboveY >> 31) & 0x7F) + aboveY & ~0x7F);
+        brightnesses[3] = storage->get(x, localY, z);
+    }
 }
 bool LevelChunk::setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness)
 {
-    SparseLightStorage*& storage = layer == LightLayer::SKY ? (pos.y < 128 ? mSkyLight : mSkyLightUpper)
-                                                            : (pos.y < 128 ? mBlockLight : mBlockLightUpper);
-    if (storage == NULL)
-        storage = new SparseLightStorage(layer == LightLayer::SKY);
-    storage->set(pos.x & 15, pos.y & 127, pos.z & 15, brightness);
-    mUnsaved = true;
+    setUnsaved(true);
+
+    if (layer == LightLayer::SKY)
+    {
+        if (level->mDimension->isHasSkyLight())
+        {
+            SparseLightStorage* storage = pos.y < 128 ? mSkyLight : mSkyLightUpper;
+            storage->set(pos.x & 15, pos.y & 127, pos.z & 15, brightness);
+        }
+    }
+    else if (layer == LightLayer::BLOCK)
+    {
+        SparseLightStorage* storage = pos.y < 128 ? mBlockLight : mBlockLightUpper;
+        storage->set(pos.x & 15, pos.y & 127, pos.z & 15, brightness);
+    }
+
     return true;
 }
 int LevelChunk::getRawBrightness(const BlockPos& pos, int skyDarken)
 {
-    int brightness = getBrightness(LightLayer::SKY, pos) - skyDarken;
-    int block = getBrightness(LightLayer::BLOCK, pos);
+    int brightness;
+    if (!level->mDimension->isHasSkyLight())
+    {
+        brightness = -skyDarken;
+    }
+    else
+    {
+        SparseLightStorage* skyStorage = pos.y < 128 ? mSkyLight : mSkyLightUpper;
+        brightness = skyStorage->get(pos.x & 15, pos.y & 127, pos.z & 15) - skyDarken;
+    }
+
+    SparseLightStorage* blockStorage = pos.y < 128 ? mBlockLight : mBlockLightUpper;
+    int block = blockStorage->get(pos.x & 15, pos.y & 127, pos.z & 15);
     return brightness > block ? brightness : block;
 }
 void LevelChunk::addEntity(boost::shared_ptr<Entity> entity)

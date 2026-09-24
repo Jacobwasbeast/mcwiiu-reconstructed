@@ -3,10 +3,14 @@
 #include <algorithm>
 #include "game/client/render/GameRenderer.hpp"
 #include "game/core/Compression.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/data/ElementStorage.hpp"
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/network/CGameNetworkManager.hpp"
+#include "game/network/ClientPacketListener.hpp"
 #include "game/network/ProgressListener.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -20,6 +24,7 @@
 #include "game/world/chunk/ChunkStorage.hpp"
 #include "game/world/chunk/EmptyLevelChunk.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
 extern bool sHaltRequested;
@@ -101,9 +106,12 @@ LevelChunk* ClientChunkCache::load(int x, int z, LevelChunk* chunk)
 
 void ClientChunkCache::reLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes)
 {
+    if (!m_dimension->containsChunk(x, z))
+        return;
     const unsigned int index = static_cast<unsigned int>((x + m_chunkRadius) * mLevelSize + z + m_chunkRadius);
     if (index >= m_chunks.size())
         return;
+    LevelChunk* old = m_chunks[index];
     EnterCriticalSection(&m_saveDataCriticalSection);
     LevelChunk* replacement = load(x, z, 0);
     if (!replacement)
@@ -111,38 +119,44 @@ void ClientChunkCache::reLoad(int x, int z, const std::vector<LevelChunk::BlockC
         LeaveCriticalSection(&m_saveDataCriticalSection);
         return;
     }
-    LevelChunk* old = m_chunks[index];
-    m_chunks[index] = replacement;
-    if (old)
+    const long previous = InterlockedCompareExchangeRelease(
+        reinterpret_cast<volatile long*>(&m_chunks[index]), reinterpret_cast<long>(replacement),
+        reinterpret_cast<long>(old));
+    if (previous == reinterpret_cast<long>(old))
     {
-        old->unload(true, false);
-        replacement->swapEntities(old);
-        for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
+        if (old)
         {
-            if (*it == old)
+            old->unload(true, false);
+            replacement->swapEntities(old);
+            for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
             {
-                m_loadedChunks.erase(it);
-                break;
+                if (*it == old)
+                {
+                    m_loadedChunks.erase(it);
+                    break;
+                }
+            }
+            GameRenderer::AddForDelete(old);
+            GameRenderer::FinishedReassigning();
+        }
+        replacement->load(true);
+        replacement->recalcHeightmapOnly();
+        if (m_level)
+            m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
+        if (index < m_received.size())
+            m_received[index] = 1;
+        if (changes)
+        {
+            for (std::vector<LevelChunk::BlockChange>::const_iterator it = changes->begin(); it != changes->end(); ++it)
+            {
+                replacement->setBlock(it->GetPos(), it->GetState());
+                replacement->setExtraBlock(it->GetPos(), it->GetExtraState());
             }
         }
-        GameRenderer::AddForDelete(old);
-        GameRenderer::FinishedReassigning();
+        m_loadedChunks.push_back(replacement);
     }
-    replacement->load(true);
-    replacement->recalcHeightmapOnly();
-    if (m_level)
-        m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
-    if (index < m_received.size())
-        m_received[index] = 1;
-    if (changes)
-    {
-        for (std::vector<LevelChunk::BlockChange>::const_iterator it = changes->begin(); it != changes->end(); ++it)
-        {
-            replacement->setBlock(it->GetPos(), it->GetState());
-            replacement->setExtraBlock(it->GetPos(), it->GetExtraState());
-        }
-    }
-    m_loadedChunks.push_back(replacement);
+    else
+        delete replacement;
     LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
@@ -211,17 +225,28 @@ uint64_t ClientChunkCache::BlockUntilSafeToChangeSaveData(bool block)
 {
     if (!m_storage)
         return 0;
-    while (!m_queuedActions.empty())
+    for (;;)
     {
-        QueuedAction action = m_queuedActions.front();
-        m_queuedActions.erase(m_queuedActions.begin());
-        if (action.action == 0)
-        {
-            reLoad(action.x, action.z, action.changes);
-            delete action.changes;
-        }
-        if (!block)
+        EnterCriticalSection(&m_threadCriticalSection);
+        const bool reloadPending = m_reloadPending;
+        LeaveCriticalSection(&m_threadCriticalSection);
+        if (!reloadPending)
             break;
+    }
+    if (block)
+    {
+        while (!m_queuedActions.empty())
+        {
+            QueuedAction action = m_queuedActions.front();
+            if (action.action == 0)
+            {
+                reLoad(action.x, action.z, action.changes);
+                delete action.changes;
+            }
+            else
+                ClientPacketListener::handleBlockEntityDataInternal(action.packet, m_level);
+            m_queuedActions.erase(m_queuedActions.begin());
+        }
     }
     return static_cast<uint64_t>(m_queuedActions.size());
 }
@@ -240,14 +265,10 @@ LevelChunk* ClientChunkCache::getChunkIfLoaded(int x, int z)
     return chunk && chunk->isAt(x, z) ? chunk : 0;
 }
 
-LevelChunk* ClientChunkCache::getOrCreateChunk(int x, int z, bool allowEmpty)
+LevelChunk* ClientChunkCache::getOrCreateChunk(int x, int z, bool)
 {
     LevelChunk* chunk = getChunkIfLoaded(x, z);
-    if (chunk)
-        return chunk;
-    if (allowEmpty && m_emptyChunk)
-        return m_emptyChunk;
-    return create(x, z);
+    return chunk ? chunk : m_emptyChunk;
 }
 
 int ClientChunkCache::getLoadedChunksCount()
@@ -301,13 +322,30 @@ void ClientChunkCache::drop(int x, int z, bool force)
     if (pending != m_pendingHostChunks.end())
         m_pendingHostChunks.erase(pending);
     LeaveCriticalSection(&m_saveDataCriticalSection);
-    LevelChunk* chunk = getChunkIfLoaded(x, z);
+    LevelChunk* chunk = getOrCreateChunk(x, z, false);
     if (!chunk)
         return;
     if (!force)
     {
-        m_loadedChunks.push_back(chunk);
+        if (!chunk->isEmpty())
+        {
+            chunk->unload(false, true);
+            if (CGameNetworkManager::sInstance.IsHost())
+                chunk->dropLighting();
+            chunk->setLoaded(true);
+        }
+        m_unloadQueue.push_back(chunk);
         return;
+    }
+    if (!m_dimension->containsChunk(x, z))
+        return;
+    unqueueForReLoad(x, z);
+    if (!chunk->isEmpty())
+    {
+        chunk->unload(force, true);
+        if (CGameNetworkManager::sInstance.IsHost())
+            chunk->dropLighting();
+        chunk->setLoaded(true);
     }
     const int diameter = mLevelSize;
     const int localX = x + m_chunkRadius;
@@ -315,17 +353,28 @@ void ClientChunkCache::drop(int x, int z, bool force)
     if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
         return;
     const unsigned int index = static_cast<unsigned int>(localX * diameter + localZ);
-    if (index < m_chunks.size())
-        m_chunks[index] = 0;
-    for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
+    EnterCriticalSection(&m_saveDataCriticalSection);
+    const long previous = InterlockedCompareExchangeRelease(
+        reinterpret_cast<volatile long*>(&m_chunks[index]), 0, reinterpret_cast<long>(chunk));
+    if (previous == reinterpret_cast<long>(chunk))
     {
-        if (*it == chunk)
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
         {
-            m_loadedChunks.erase(it);
-            break;
+            if (*it == chunk)
+            {
+                m_loadedChunks.erase(it);
+                break;
+            }
         }
+        GameRenderer::AddForDelete(chunk);
+        GameRenderer::FinishedReassigning();
+        LeaveCriticalSection(&m_saveDataCriticalSection);
+        m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
+        if (index < m_received.size())
+            m_received[index] = 0;
+        return;
     }
-    delete chunk;
+    LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
 uint64_t ClientChunkCache::dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force)
@@ -423,6 +472,66 @@ void ClientChunkCache::save(bool, ProgressListener*)
 void ClientChunkCache::tick()
 {
     EnterCriticalSection(&m_saveDataCriticalSection);
+    if (m_storage)
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
+        if (!gameMode->isNewLevelDataPending())
+        {
+            while (!m_queuedActions.empty())
+            {
+                int closestDistance = 0x7fffffff;
+                std::size_t selectedIndex = 0;
+                for (std::size_t i = 0; i < m_queuedActions.size(); ++i)
+                {
+                    const QueuedAction& action = m_queuedActions[i];
+                    int actionDistance = 0x7fffffff;
+                    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+                    {
+                        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerIndex];
+                        if (player)
+                        {
+                            const int playerX = Mth::floor(player->mX);
+                            const int playerZ = Mth::floor(player->mZ);
+                            const int distance = Mth::abs(playerX - action.x * 16) +
+                                                 Mth::abs(playerZ - action.z * 16);
+                            if (distance < actionDistance)
+                                actionDistance = distance;
+                        }
+                    }
+                    if (actionDistance < closestDistance)
+                    {
+                        closestDistance = actionDistance;
+                        selectedIndex = i;
+                    }
+                }
+
+                std::vector<QueuedAction>::iterator selected = m_queuedActions.begin() + selectedIndex;
+                if (selected->action != 0)
+                {
+                    QueuedAction action = *selected;
+                    ClientPacketListener::handleBlockEntityDataInternal(action.packet, m_level);
+                    m_queuedActions.erase(selected);
+                    continue;
+                }
+
+                EnterCriticalSection(&m_threadCriticalSection);
+                bool reloadScheduled = false;
+                if (!m_reloadPending)
+                {
+                    m_reloadPending = true;
+                    m_reloadX = selected->x;
+                    m_reloadZ = selected->z;
+                    m_reloadChanges = selected->changes;
+                    reloadScheduled = true;
+                }
+                LeaveCriticalSection(&m_threadCriticalSection);
+                if (reloadScheduled)
+                    m_queuedActions.erase(selected);
+                break;
+            }
+        }
+    }
     for (int processed = 0; processed < 100 && !m_unloadQueue.empty(); ++processed)
     {
         LevelChunk* chunk = m_unloadQueue.front();
@@ -494,6 +603,8 @@ void ClientChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int)
 
 void ClientChunkCache::dataReceived(int x, int z)
 {
+    if (!m_dimension->containsChunk(x, z))
+        return;
     const int diameter = mLevelSize;
     const int localX = x + m_chunkRadius;
     const int localZ = z + m_chunkRadius;
@@ -507,14 +618,33 @@ void ClientChunkCache::dataReceived(int x, int z)
 
 void ClientChunkCache::queueBlockEntityDataPacket(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet)
 {
+    EnterCriticalSection(&m_saveDataCriticalSection);
     m_queuedActions.push_back(QueuedAction(packet));
+    LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
 void ClientChunkCache::queueForReLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes, bool replace)
 {
+    if (!m_dimension->containsChunk(x, z))
+        return;
+    EnterCriticalSection(&m_saveDataCriticalSection);
     if (replace)
-        unqueueForReLoad(x, z);
+    {
+        for (std::vector<QueuedAction>::iterator it = m_queuedActions.begin(); it != m_queuedActions.end(); ++it)
+        {
+            if (it->action == 0 && it->x == x && it->z == z)
+            {
+                const std::vector<LevelChunk::BlockChange>* previous = it->changes;
+                it->changes = changes;
+                if (previous)
+                    delete previous;
+                LeaveCriticalSection(&m_saveDataCriticalSection);
+                return;
+            }
+        }
+    }
     m_queuedActions.push_back(QueuedAction(x, z, changes));
+    LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
 bool ClientChunkCache::mustQueueBlockEntityDataPackets()
