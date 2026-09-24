@@ -3,6 +3,7 @@
 #define GAME_SERVER_SERVERPLAYER_HPP
 
 #include "game/world/generation/Player.hpp"
+#include "game/server/ServerPlayerGameMode.hpp"
 #include <cstdint>
 #include <cstddef>
 #include <list>
@@ -100,8 +101,8 @@ public:
     ServerPlayer(MinecraftServer* parameterOne, ServerLevel* parameterTwo, const std::wstring& parameterThree, ServerPlayerGameMode* parameterFour);   
     ~ServerPlayer();   
        
-    void sendMessage(uint32_t parameterOne, int32_t* parameterTwo, uint32_t parameterThree, std::wstring* parameterFour, uint32_t parameterFive);
-    uint32_t hasPermission(uint32_t parameterOne);   
+    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams) override;
+    bool hasPermission(EGameCommand command) override;
     BlockPos getCommandSenderBlockPosition();   
     virtual void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);
     virtual void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);
@@ -129,33 +130,33 @@ public:
     void readAdditionalSaveData(CompoundTag* parameterOne);   
     static void addWalkers(DataFixerUpper* parameterOne);   
     void addAdditonalSaveData(CompoundTag* parameterOne);   
-    void giveExperienceLevels(int32_t parameterOne);   
-    void onEnchantmentPerformed(int32_t parameterOne);   
+    void giveExperienceLevels(int32_t parameterOne) override;
+    void onEnchantmentPerformed(int32_t parameterOne) override;
     void onEnterCombat();   
     void onLeaveCombat();   
     void ResetSpawnInvulnerableTime();   
     void tick();   
-    uint64_t die(DamageSource* parameterOne);   
-    int32_t hurt(uint64_t parameterOne, float parameterTwo);   
-    void isPvpAllowed();
-    uint32_t canHarmPlayer(boost::shared_ptr<Player> parameterOne);
-    int32_t canHarmPlayer(std::wstring parameterOne);
+    void die(const DamageSource* source) override;
+    bool hurt(const DamageSource* source, float damage) override;
+    bool isPvpAllowed();
+    uint32_t canHarmPlayer(boost::shared_ptr<Player> parameterOne) override;
+    bool canHarmPlayer(std::wstring parameterOne) override;
     virtual void addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo);   
     virtual boost::shared_ptr<Entity> changeDimension(int dimension) override;
-    uint32_t broadcastToPlayer(boost::shared_ptr<ServerPlayer>* parameterOne);   
-    uint64_t take(boost::shared_ptr<Entity>* parameterOne, int32_t parameterTwo);   
-    int32_t startSleepInBed(BlockPos* parameterOne, bool parameterTwo);   
-    uint64_t stopSleepInBed(bool parameterOne, bool parameterTwo, bool parameterThree);   
+    bool broadcastToPlayer(boost::shared_ptr<ServerPlayer> player) override;
+    void take(boost::shared_ptr<Entity> entity, int32_t count) override;
+    uint32_t startSleepInBed(const BlockPos& position, bool force) override;
+    void stopSleepInBed(bool parameterOne, bool parameterTwo, bool parameterThree) override;
     virtual bool startRiding(boost::shared_ptr<Entity> vehicle);
     void stopRiding();   
     void stopRidingBeforeTeleport();   
     uint8_t isChangingDimension();
     bool hasChangedDimensionState() const { return mChangedDimension != 0; }
     virtual bool isInvulnerableTo(const DamageSource* parameterOne);
-    void checkFallDamage(double parameterOne, bool parameterTwo, Block* parameterThree, BlockPos* parameterFour);   
+    void checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos) override;
     uint64_t doCheckFallDamage(double parameterOne, bool parameterTwo);   
     void nextContainerCounter();   
-    void openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne);
+    void openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne) override;
     virtual int startBlockInteraction(InteractionObject& interaction);
     virtual int openFireworks(int32_t x, int32_t y, int32_t z);
     virtual int openContainer(boost::shared_ptr<Container> container);
@@ -171,16 +172,16 @@ public:
     uint8_t hasDisconnected();   
     void displayClientMessage(int32_t parameterOne, bool parameterTwo);   
     void completeUsingItem();   
-    uint64_t restoreFrom(boost::shared_ptr<Player>* parameterOne, bool parameterTwo);   
+    void restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEverything);
     void onEffectAdded(MobEffectInstance* parameterOne);   
     void onEffectUpdated(MobEffectInstance* parameterOne, bool parameterTwo);   
     void onEffectRemoved(MobEffectInstance* parameterOne);   
     void teleportTo(double parameterOne, double parameterTwo, double parameterThree);   
-    void teleportTo(double parameterOne, double parameterTwo, double parameterThree, float parameterFour, float parameterFive);   
-    uint64_t crit(boost::shared_ptr<Entity>* parameterOne);   
-    uint64_t magicCrit(boost::shared_ptr<Entity>* parameterOne);   
-    void onUpdateAbilities();   
-    void setGameMode(GameType* parameterOne);   
+    virtual void teleportTo(double parameterOne, double parameterTwo, double parameterThree, float parameterFour, float parameterFive);
+    void crit(boost::shared_ptr<Entity> entity) override;
+    void magicCrit(boost::shared_ptr<Entity> entity) override;
+    void onUpdateAbilities() override;
+    void setGameMode(const GameType* gameType) override;
     bool isSpectator();   
     bool isCreative();   
     void resetLastActionTime();   
@@ -188,18 +189,18 @@ public:
     uint64_t cancelRemoveEntity(boost::shared_ptr<Entity>* parameterOne);   
     void updateInvisibilityStatus();   
     void processDimensionDelay();   
-    uint64_t attack(boost::shared_ptr<Entity> parameterOne);
+    uint64_t attack(boost::shared_ptr<Entity> parameterOne) override;
     virtual bool swing(InteractionHand::EInteractionHand parameterOne);   
     void hasChangedDimension();   
     void startFallFlying();
     void stopFallFlying();
     uint32_t getPlayerViewDistanceModifier();   
-    void handleCollectItem(not_null_ptr<ItemInstance> parameterOne);
-    void SetCamera(boost::shared_ptr<Entity> parameterOne);   
+    void handleCollectItem(not_null_ptr<ItemInstance> parameterOne) override;
+    void SetCamera(boost::shared_ptr<Entity> parameterOne) override;
     const GameType* GetGameType();
-    ServerPlayerGameMode* GetGameMode();   
-    void OnEquipArmor(not_null_ptr<ItemInstance> item);
-    int32_t checkTotemDeathProtection(DamageSource* parameterOne);   
+    ServerPlayerGameMode* GetGameMode() override;
+    void OnEquipArmor(not_null_ptr<ItemInstance> item) override;
+    bool checkTotemDeathProtection(const DamageSource* source) override;
     uint64_t GetType();   
     void getStats();
     void getLastActionTime();

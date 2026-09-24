@@ -3,6 +3,7 @@
 #include "game/server/MinecraftServer.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
+#include "game/world/biome/BiomeSource.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/server/ServerChunkCache.hpp"
 #include "game/server/ServerPlayer.hpp"
@@ -57,6 +58,7 @@ static const unsigned long long kServerItemEntityType = 0x0800000aULL;
 #include "game/data/SavedDataStorage.hpp"
 #include "game/core/LootTables.hpp"
 #include "game/network/ClientboundLevelParticlesPacket.hpp"
+#include "game/network/ClientboundBlockEventPacket.hpp"
 #include "game/network/ClientboundEntityEventPacket.hpp"
 #include "game/world/generation/Villages.hpp"
 #include "game/world/generation/BonusChestFeature.hpp"
@@ -65,6 +67,7 @@ static const unsigned long long kServerItemEntityType = 0x0800000aULL;
 #include "game/entity/mob/EntityTracker.hpp"
 
 #include <cstring>
+#include <cmath>
 #include <typeinfo>
 
 extern void instructionSynchronize();
@@ -122,16 +125,18 @@ bool queueBlockTick(ServerLevel* level, int x, int y, int z,
 }
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
-    : Level(storage, data, DimensionType::getById(dimension)->create(), false), server(server), tracker(0), chunkMap(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), naturalMobSpawner(0), villageSiege(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0), primedTntCount(0), fallingBlockCount(0), fireworksRocketCount(0), beaconCount(0)
+    : Level(storage, data, DimensionType::getById(dimension)->create(), false), server(server), tracker(0), chunkMap(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), naturalMobSpawner(0), villageSiege(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0), primedTntCount(0), fallingBlockCount(0), fireworksRocketCount(0), beaconCount(0), mPrimedTntCheckDelay(0), serverLevelListener(0)
 {
     InitializeCriticalSection(&tickNextTickMutex);
     InitializeCriticalSection(&entityLimitMutex);
+    InitializeCriticalSection(&queuedBlockUpdateMutex);
     mDimension->init(this);
     mChunkSource = createChunkSource();
     mChunkCache = mChunkSource->getCache();
     mChunkCacheSize = mChunkSource->mLevelSize;
     server->setLevel(dimension, this);
-    addListener(new ServerLevelListener(server, this));
+    serverLevelListener = new ServerLevelListener(server, this);
+    addListener(serverLevelListener);
     tracker = new EntityTracker(this);
 
     const int viewDistance = server->getPlayers()->getViewDistance();
@@ -140,7 +145,7 @@ ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage
     else
         chunkMap = new PlayerChunkMap(this, dimension, viewDistance);
 
-    naturalMobSpawner = 0;
+    naturalMobSpawner = new NaturalMobSpawner(mChunkCacheSize, this);
     portalForcer = new PortalForcer(this);
     villageSiege = new VillageSiege(this);
     updateSkyBrightness();
@@ -152,9 +157,19 @@ ServerLevel::~ServerLevel()
     delete portalForcer;
     delete naturalMobSpawner;
     delete villageSiege;
-    delete serverScoreboard;
+    EnterCriticalSection(&queuedBlockUpdateMutex);
+    for (std::vector<QueuedSendBlockData*>::iterator it = queuedBlockUpdates.begin();
+         it != queuedBlockUpdates.end(); ++it)
+        delete *it;
+    queuedBlockUpdates.clear();
+    delete serverLevelListener;
     delete tracker;
     delete chunkMap;
+    LeaveCriticalSection(&queuedBlockUpdateMutex);
+    DeleteCriticalSection(&queuedBlockUpdateMutex);
+    DeleteCriticalSection(&entityLimitMutex);
+    DeleteCriticalSection(&tickNextTickMutex);
+    delete serverScoreboard;
 }
 
 bool ServerLevel::AllPlayersAreSleeping()
@@ -380,7 +395,7 @@ void ServerLevel::save(bool first, ProgressListener* second, bool third)
     if (second != NULL)
         second->progressStage(third ? static_cast<int>(0x5015737c) : static_cast<int>(0xf5938f13u));
 
-    PIXBeginNamedEvent(1.035f, "Saving level data");
+    PIXBeginNamedEvent(0.0f, "Saving level data");
     ServerLevel* dispatchLevel = this;
     dispatchLevel->saveLevelData();
     PIXEndNamedEvent();
@@ -393,41 +408,117 @@ void ServerLevel::save(bool first, ProgressListener* second, bool third)
 
 uint32_t ServerLevel::doBlockEvent(BlockEventData* first)
 {
-    if (!first)
-        return 0;
-    Block* block = first->getBlock();
-    if (!block)
-        return 0;
     const BlockPos position = first->getPos();
     const BlockState* state = getBlockState(position);
-    return state && block->triggerEvent(state, this, position, first->getParamA(), first->getParamB()) ? 1U : 0U;
+    Block* block = state->getBlock();
+    if (block != first->getBlock())
+        return 0;
+    return block->triggerEvent(state, this, position, first->getParamA(), first->getParamB()) ? 1U : 0U;
 }
 
-uint64_t ServerLevel::runBlockEvents()
+void ServerLevel::runBlockEvents()
 {
-    blockEventCount = 0;
-    return 1;
+    for (;;)
+    {
+        const int currentBuffer = blockEventCount;
+        std::vector<BlockEventData>& events = blockEvents[currentBuffer];
+        if (events.empty())
+            return;
+
+        blockEventCount = currentBuffer ^ 1;
+        for (std::vector<BlockEventData>::iterator it = events.begin(); it != events.end(); ++it)
+        {
+            BlockEventData* event = &*it;
+            if (!doBlockEvent(event))
+                continue;
+
+            BlockPos position = event->getPos();
+            boost::shared_ptr<Packet> packet(new ClientboundBlockEventPacket(
+                position, event->getBlock(), event->getParamA(), event->getParamB()));
+            server->getPlayers()->broadcast(position.x, position.y, position.z, 64.0,
+                                             mDimension->getType()->getId(), packet);
+        }
+        events.clear();
+    }
 }
 
 void ServerLevel::runQueuedSendBlockUpdates()
 {
-    for (std::vector<QueuedSendBlockData*>::iterator it = queuedBlockUpdates.begin(); it != queuedBlockUpdates.end(); ++it)
-        delete *it;
+    EnterCriticalSection(&queuedBlockUpdateMutex);
+    for (std::vector<QueuedSendBlockData*>::iterator it = queuedBlockUpdates.begin();
+         it != queuedBlockUpdates.end(); ++it)
+    {
+        QueuedSendBlockData* update = *it;
+        BlockPos position(update->x, update->y, update->z);
+        sendBlockUpdated(position, update->oldState, update->newState, 3, true);
+        delete update;
+    }
     queuedBlockUpdates.clear();
+    LeaveCriticalSection(&queuedBlockUpdateMutex);
 }
 
 void ServerLevel::tick()
 {
-    tickWeather(true);
+    Level::tick();
+
+    if (mLevelData->isHardcore() && getDifficulty() != Difficulty::HARD)
+        mLevelData->setDifficulty(Difficulty::HARD);
+
+    mDimension->getBiomeSource()->update();
+
+    if (allPlayersAreSleeping())
+    {
+        if (getGameRules()->getBoolean(8))
+        {
+            const long long currentDayTime = getDayTime();
+            const long long nextDayTime = currentDayTime + 24000;
+            const long long adjustedDayTime = nextDayTime - nextDayTime % 24000;
+            setDayTime(adjustedDayTime);
+            const int elapsed = static_cast<int>(adjustedDayTime - currentDayTime);
+            for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
+                 it != mPlayers.end(); ++it)
+            {
+                (*it)->AdvanceTimerAchievement(0, elapsed);
+            }
+        }
+        awakenAllPlayers();
+    }
+
+    if (getGameRules()->getBoolean(3))
+    {
+        const long long gameTime = getGameTime();
+        const bool spawnFriendly = mSpawnPeacefulMobs && (gameTime & 1) == 0;
+        const bool spawnEnemies = mSpawnHostileMobs && gameTime % 40 == 0;
+        const bool spawnPersistent = spawnEnemies && gameTime % 80 == 0;
+        naturalMobSpawner->tick(this, spawnFriendly, spawnEnemies, spawnPersistent);
+    }
+
+    getChunkSource()->tick();
+
     int skyDarken = getOldSkyDarken(1.0f);
     if (skyDarken != getSkyDarken())
         setSkyDarken(skyDarken);
+
+    const long long nextGameTime = getGameTime() + 1;
+    const int dimensionId = mDimension->getType()->getId();
+    if (nextGameTime % 40 == dimensionId * dimensionId * 20)
+        save(false, NULL, false);
+
     setGameTime(getGameTime() + 1);
     if (getGameRules()->getBoolean(8))
         setDayTime(getDayTime() + 1);
+    tickPendingTicks(false);
     tickBlocks();
     chunkMap->tick();
-    tickEntities();
+    mVillages->tick();
+    villageSiege->tick();
+    portalForcer->tick(getGameTime());
+    runBlockEvents();
+    runQueuedSendBlockUpdates();
+    EnterCriticalSection(&entityLimitMutex);
+    enderCrystalCount = 0;
+    LeaveCriticalSection(&entityLimitMutex);
+    --mPrimedTntCheckDelay;
 }
 
 uint32_t ServerLevel::getRandomMobSpawnAt(MobCategory* first, BlockPos* second)
@@ -753,7 +844,7 @@ bool ServerLevel::tickPendingTicks(bool runAll)
         toBeTicked.push_back(data);
     }
 
-    PIXBeginNamedEvent(1.035f, "Tick toBeTicked ticks (length=%i)", (int)toBeTicked.size());
+    PIXBeginNamedEvent(0.0f, "Tick toBeTicked ticks (length=%i)", (int)toBeTicked.size());
 
     std::vector<TickNextTickData>::iterator it = toBeTicked.begin();
     while (it != toBeTicked.end())
@@ -773,14 +864,14 @@ bool ServerLevel::tickPendingTicks(bool runAll)
             if (block->getCraftingMaterial() != Material::AIR
                 && Block::isMatching(block, data.getBlock()))
             {
-                PIXBeginNamedEvent(1.035f, "Tick block '%i'", Block::getId(block));
+                PIXBeginNamedEvent(0.0f, "Tick block '%i'", Block::getId(block));
                 block->tick(this, data.pos, state, mRandom);
                 PIXEndNamedEvent();
             }
             else if (extraBlock->getCraftingMaterial() != Material::AIR
                      && Block::isMatching(extraBlock, data.getBlock()))
             {
-                PIXBeginNamedEvent(1.035f, "Tick Extra block '%i'", Block::getId(block));
+                PIXBeginNamedEvent(0.0f, "Tick Extra block '%i'", Block::getId(block));
                 extraBlock->tick(this, data.pos, extraState, mRandom);
                 PIXEndNamedEvent();
             }
@@ -1282,13 +1373,16 @@ boost::shared_ptr<Explosion> ServerLevel::explode(boost::shared_ptr<Entity> enti
     return explosion;
 }
 
-uint64_t ServerLevel::blockEvent(BlockPos* first, Block* second, int32_t third, int32_t fourth)
+void ServerLevel::blockEvent(const BlockPos& pos, Block* block, int eventId, int eventParam)
 {
-    if (!first || !second)
-        return 0;
-    ++blockEventCount;
-    blockEvents.push_back(new BlockEventData(*first, second, third, fourth));
-    return 1;
+    BlockEventData event(pos, block, eventId, eventParam);
+    std::vector<BlockEventData>& events = blockEvents[blockEventCount];
+    for (std::vector<BlockEventData>::iterator it = events.begin(); it != events.end(); ++it)
+    {
+        if (it->equals(event))
+            return;
+    }
+    events.push_back(event);
 }
 
 uint64_t ServerLevel::closeLevelStorage()
@@ -1436,12 +1530,15 @@ boost::shared_ptr<ServerPlayer> ServerLevel::getPlayer(const PlayerUID& playerUI
     return server->getPlayers()->getPlayer(playerUID);
 }
 
-void ServerLevel::queueSendBlockUpdate(int32_t first, int32_t second, int32_t third, BlockState* fourth, BlockState* fifth)
+void ServerLevel::queueSendBlockUpdate(int32_t first, int32_t second, int32_t third,
+                                       const BlockState* fourth, const BlockState* fifth)
 {
+    EnterCriticalSection(&queuedBlockUpdateMutex);
     QueuedSendBlockData* update = new QueuedSendBlockData;
     update->x = first; update->y = second; update->z = third;
     update->oldState = fourth; update->newState = fifth;
     queuedBlockUpdates.push_back(update);
+    LeaveCriticalSection(&queuedBlockUpdateMutex);
 }
 
 bool ServerLevel::atBlockEntityLimit(Block* first)
@@ -1572,13 +1669,33 @@ bool ServerLevel::newPrimedTntAllowed()
 {
     EnterCriticalSection(&entityLimitMutex);
     bool allowed = primedTntCount < 20;
+    if (!allowed && mPrimedTntCheckDelay < 0)
+    {
+        mPrimedTntCheckDelay = 20;
+        std::vector<boost::shared_ptr<Entity> > entities = mEntities;
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+        {
+            Entity* entity = it->get();
+            if (entity->GetType() != ENTITY_TYPE_PRIMED_TNT || entity->mRemoved)
+                continue;
+
+            const int x = static_cast<int>(std::floor(entity->mX));
+            const int z = static_cast<int>(std::floor(entity->mZ));
+            if (!hasChunksAt(x - 32, 0, z - 32, x + 32, 0, z + 32, true))
+                Level::removeEntityImmediately(*it);
+        }
+        allowed = primedTntCount < 20;
+    }
     LeaveCriticalSection(&entityLimitMutex);
     return allowed;
 }
 
 bool ServerLevel::newFallingBlockAllowed()
 {
-    return static_cast<uint32_t>(villageSiegeTick) < 20U;
+    EnterCriticalSection(&entityLimitMutex);
+    const bool allowed = fallingBlockCount < 20;
+    LeaveCriticalSection(&entityLimitMutex);
+    return allowed;
 }
 
 bool ServerLevel::explodeNextEnderCrystal()

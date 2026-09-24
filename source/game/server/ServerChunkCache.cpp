@@ -311,7 +311,7 @@ LevelChunk* ServerChunkCache::getOrCreateChunk(int x, int z, bool allowEmpty)
     if (chunk == 0)
     {
         EnterCriticalSection(&m_mutex);
-        const float pixColour = 1.035f;
+        const float pixColour = 0.0f;
         PIXBeginNamedEvent(pixColour, "Creating chunk");
         chunk = m_generator->createChunk(x, z);
         PIXEndNamedEvent();
@@ -480,22 +480,43 @@ void ServerChunkCache::tick()
 {
     if (!shouldSave())
         return;
-    for (int i = 0; i < 50 && !m_toSave.empty(); ++i)
+    for (int i = 0; i < 50; ++i)
     {
-        LevelChunk* chunk = m_toSave.front();
-        if (chunk != 0 && !chunk->containsPlayer())
+        if (!m_toSave.empty())
         {
-            save(chunk);
-            saveEntities(chunk);
-            chunk->unload(true, true);
-            std::vector<LevelChunk*>::iterator loaded = std::find(m_loadedChunks.begin(), m_loadedChunks.end(), chunk);
-            if (loaded != m_loadedChunks.end())
-                m_loadedChunks.erase(loaded);
-            const int index = computeIdx(chunk->x, chunk->z);
-            m_unloadedChunks[index] = chunk;
-            m_chunks[index] = 0;
+            LevelChunk* chunk = m_toSave.front();
+            if (!chunk->isUnloaded() && !chunk->containsPlayer())
+            {
+                save(chunk);
+                saveEntities(chunk);
+                chunk->unload(true, true);
+                std::vector<LevelChunk*>::iterator loaded = std::find(m_loadedChunks.begin(), m_loadedChunks.end(), chunk);
+                if (loaded != m_loadedChunks.end())
+                    m_loadedChunks.erase(loaded);
+                const int index = computeIdx(chunk->x, chunk->z);
+                m_unloadedChunks[index] = chunk;
+                m_chunks[index] = 0;
+            }
+            m_toSave.pop_front();
+
+            if (!m_toSave.empty())
+            {
+                chunk = m_toSave.front();
+                if (!chunk->isUnloaded() && !chunk->containsPlayer())
+                {
+                    save(chunk);
+                    saveEntities(chunk);
+                    chunk->unload(true, true);
+                    std::vector<LevelChunk*>::iterator loaded = std::find(m_loadedChunks.begin(), m_loadedChunks.end(), chunk);
+                    if (loaded != m_loadedChunks.end())
+                        m_loadedChunks.erase(loaded);
+                    const int index = computeIdx(chunk->x, chunk->z);
+                    m_unloadedChunks[index] = chunk;
+                    m_chunks[index] = 0;
+                }
+                m_toSave.pop_front();
+            }
         }
-        m_toSave.pop_front();
     }
     if (m_storage)
         m_storage->tick();
@@ -503,7 +524,7 @@ void ServerChunkCache::tick()
 
 bool ServerChunkCache::shouldSave()
 {
-    return !m_saveAll;
+    return !m_level->saving;
 }
 
 std::wstring ServerChunkCache::gatherStats()
@@ -552,7 +573,7 @@ unsigned int ServerChunkCache::runSaveThreadProc(void* data)
 
     if (context->chunk != 0)
     {
-        const float pixColour = 1.035f;
+        const float pixColour = 0.0f;
         do
         {
             if (context->saveEntities)

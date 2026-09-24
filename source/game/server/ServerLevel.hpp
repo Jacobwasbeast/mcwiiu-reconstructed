@@ -11,10 +11,11 @@
 #include "game/core/CriticalSection.hpp"
 #include "game/world/Level.hpp"
 #include "game/core/TickNextTickData.hpp"
+#include "game/world/block/BlockEventData.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/biome/Biome.hpp"
-class MinecraftServer; class PlayerChunkMap; class PortalForcer; class NaturalMobSpawner; class VillageSiege; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard; class Explosion;
+class MinecraftServer; class PlayerChunkMap; class PortalForcer; class NaturalMobSpawner; class VillageSiege; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ServerLevelListener; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard; class Explosion;
 
 #ifndef GAME_SERVER_SERVERLEVEL_HPP
 #define GAME_SERVER_SERVERLEVEL_HPP
@@ -79,7 +80,8 @@ public:
  boost::unordered_set<TickNextTickData, TickNextTickDataKeyHash, TickNextTickDataKeyEq> tickNextTickSet;
  boost::unordered_map<std::wstring, boost::shared_ptr<Entity> > entitiesByUuid;
  std::vector<QueuedSendBlockData*> queuedBlockUpdates;
- std::vector<BlockEventData*> blockEvents;
+ OSFastMutex queuedBlockUpdateMutex;
+ std::vector<BlockEventData> blockEvents[2];
  int32_t blockEventCount;
  bool allPlayersSleeping;
  bool updatingBlocks;
@@ -104,6 +106,8 @@ public:
  std::list<boost::shared_ptr<Entity> > arrowEntities;
  std::list<boost::shared_ptr<Entity> > experienceOrbEntities;
  std::list<boost::shared_ptr<Entity> > areaEffectCloudEntities;
+ int32_t mPrimedTntCheckDelay;
+ ServerLevelListener* serverLevelListener;
 
  
  ServerLevel(MinecraftServer* first, boost::shared_ptr<LevelStorage> second, LevelData* third, int32_t fourth); 
@@ -124,7 +128,7 @@ public:
  uint64_t awakenAllPlayers(); 
  void save(bool first, ProgressListener* second, bool third); 
  uint32_t doBlockEvent(BlockEventData* first); 
- uint64_t runBlockEvents(); 
+ void runBlockEvents();
  void runQueuedSendBlockUpdates(); 
  void tick(); 
  uint32_t getRandomMobSpawnAt(MobCategory* first, BlockPos* second); 
@@ -168,7 +172,7 @@ public:
  bool addGlobalEntity(boost::shared_ptr<Entity> first); 
  void broadcastEntityEvent(boost::shared_ptr<Entity> first, uint8_t second, int32_t third); 
  boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius, bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damageMultiplier);
- uint64_t blockEvent(BlockPos* first, Block* second, int32_t third, int32_t fourth); 
+ void blockEvent(const BlockPos& pos, Block* block, int event, int data);
  uint64_t closeLevelStorage(); 
  void tickWeather(bool first); 
  int getChunkPollRange(); 
@@ -182,7 +186,7 @@ public:
  void getEntityByUUID(uint32_t first, uint32_t second); 
  uint64_t findNearestMapFeature(std::wstring* first, BlockPos* second, bool third); 
  boost::shared_ptr<ServerPlayer> getPlayer(const PlayerUID& playerUID) const; 
- void queueSendBlockUpdate(int32_t first, int32_t second, int32_t third, BlockState* fourth, BlockState* fifth); 
+ void queueSendBlockUpdate(int32_t first, int32_t second, int32_t third, const BlockState* fourth, const BlockState* fifth);
  bool atBlockEntityLimit(Block* first);
  uint32_t setBlock(BlockPos* first, BlockState* second, int32_t third, bool fourth); 
  bool addEntity(boost::shared_ptr<Entity> first); 

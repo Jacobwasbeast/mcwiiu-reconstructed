@@ -27,18 +27,22 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/ChestBlock.hpp"
+#include "game/world/block/CommandBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/item/Container.hpp"
+#include "game/item/LockableContainer.hpp"
+#include "game/world/block/BlockItem.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/DimensionType.hpp"
 
 ServerPlayerGameMode::ServerPlayerGameMode(Level* level, MasterGameMode* masterGameMode)
-    : GameMode(), mLevel(level), mPlayer(NULL), mDestroying(false), mDestroyProgress(0),
-      mDestroyPos(), mLastSentState(0), mIsDestroying(false), mPreviousDestroyPos(),
-      mLastSentState2(0), mGameModeTicks(0), mGameRules(NULL),
-      mMasterGameMode(masterGameMode), mDeaths(0), mKills(0), mUnknown58(0),
-      mLastCheckpoint(0)
+    : GameMode(), mLevel(level), mPlayer(NULL), mDestroying(false), mDestroyStartTick(0),
+      mDestroyPos(), mGameModeTicks(0), mIsDestroying(false), mPreviousDestroyPos(),
+      mSecondaryDestroyStartTick(0), mLastSentProgress(-1), mGameRules(NULL),
+      mMasterGameMode(masterGameMode), mLayerTimeMs(0), mDeaths(0), mLastCheckpoint(0)
 {
     mGameType = GameType::NOT_SET;
 }
@@ -193,18 +197,162 @@ void ServerPlayerGameMode::abortDestroyBlock()
     mDestroying = false;
     mLevel->destroyBlockProgress(mPlayer->getId(), mDestroyPos, -1);
 }
-bool ServerPlayerGameMode::useItemOn(boost::shared_ptr<Player> player, Level* level,
-                                     not_null_ptr<ItemInstance> item,
-                                     InteractionHand::EInteractionHand hand, const BlockPos& pos,
-                                     const Direction* direction, float hitX, float hitY, float hitZ,
-                                     bool unknown, bool* result)
+InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(
+    boost::shared_ptr<Player> player, Level* level, not_null_ptr<ItemInstance> item,
+    InteractionHand::EInteractionHand hand, const BlockPos& pos, const Direction* direction,
+    float hitX, float hitY, float hitZ, bool simulate, bool* result)
 {
-    mPreviousDestroyPos = pos;
-    return false;
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = state->getBlock();
+
+    if (isSpectator())
+    {
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        if (blockEntity)
+        {
+            if (dynamic_cast<ChestBlock*>(block) != NULL &&
+                boost::dynamic_pointer_cast<LockableContainer>(blockEntity))
+            {
+                boost::shared_ptr<LockableContainer> container =
+                    static_cast<ChestBlock*>(block)->getContainer(level, pos);
+                if (container)
+                {
+                    player->openContainer(container);
+                    return InteractionResult::eInteractionResult_Success;
+                }
+            }
+
+            boost::shared_ptr<Container> container =
+                boost::dynamic_pointer_cast<Container>(blockEntity);
+            if (container)
+            {
+                player->openContainer(container);
+                return InteractionResult::eInteractionResult_Success;
+            }
+        }
+        return InteractionResult::eInteractionResult_Pass;
+    }
+
+    if (player->isAllowedToUse(block))
+    {
+        bool usedBlock = result == NULL
+            ? block->use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, simulate)
+            : block->TestUse();
+        if (usedBlock)
+        {
+            if (result == NULL && mGameRules != NULL)
+                mGameRules->onUseBlock(Block::getId(block), pos.x, pos.y, pos.z);
+            return InteractionResult::eInteractionResult_Success;
+        }
+    }
+
+    if (item->isEmpty() || !player->isAllowedToUse(item))
+        return InteractionResult::eInteractionResult_Pass;
+
+    BlockItem* blockItem = dynamic_cast<BlockItem*>(item->getItem());
+    if (blockItem != NULL && dynamic_cast<CommandBlock*>(blockItem->getBlock()) != NULL &&
+        !player->canUseCommandBlocks())
+        return InteractionResult::eInteractionResult_Fail;
+
+    const bool restoreCreativeItem = isCreative() && !isLobby();
+    const int savedCount = restoreCreativeItem ? item->getCount() : 0;
+    const int savedAuxValue = restoreCreativeItem ? item->getAuxValue() : 0;
+    const InteractionResult::EInteractionResult itemResult =
+        item->useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+
+    if (itemResult == InteractionResult::eInteractionResult_Success && blockItem != NULL)
+        RecordBlockPlaced(pos, Block::getId(blockItem->getBlock()));
+
+    if (restoreCreativeItem)
+    {
+        const int dimensionId = level->mDimension->getType()->getId();
+        gMinecraftServer->getPlayers()->prioritiseBlockChanges(pos, dimensionId);
+        item->setAuxValue(savedAuxValue);
+        item->setCount(savedCount);
+    }
+
+    return itemResult;
 }
 bool ServerPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction* direction)
 {
-    mDestroyPos = pos; mDestroying = true; return true;
+    if (!mPlayer->isAllowedToMine() || !MayDestroy(pos))
+    {
+        if (Minecraft::InMiniGame(eMiniGameId_Lobby, true))
+        {
+            const BlockState* state = mLevel->getBlockState(pos);
+            if (state->getMaterial() != Material::AIR)
+                state->getBlock()->attack(mLevel, pos, getServerPlayer());
+        }
+        return false;
+    }
+
+    const BlockState* state = mLevel->getBlockState(pos);
+    Block* block = state->getBlock();
+
+    if (!isCreative())
+    {
+        bool spectatorParticipation = false;
+        if (isSpectator())
+        {
+            const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+            spectatorParticipation = miniGame != NULL && miniGame->HasSpectatorParticipation();
+        }
+
+        if (mGameType->isBlockPlacingRestricted())
+        {
+            if (!spectatorParticipation)
+            {
+                if (isSpectator())
+                    return false;
+                if (!mPlayer->mayBuild())
+                {
+                    not_null_ptr<ItemInstance> heldItem = mPlayer->getMainHandItem();
+                    if (!heldItem->isEmpty())
+                    {
+                        if (!heldItem->hasAdventureModeBreakTagForBlock(block))
+                            return false;
+                    }
+                    else if (!block->mMaterial->isDestroyedByHand())
+                        return false;
+                }
+            }
+        }
+
+        boost::shared_ptr<Player> player =
+            boost::static_pointer_cast<Player>(mPlayer->shared_from_this());
+        mLevel->extinguishFire(player, pos, direction);
+        mDestroyStartTick = mGameModeTicks;
+
+        if (state->getMaterial() != Material::AIR)
+            block->attack(mLevel, pos, getServerPlayer());
+
+        float destroyProgress =
+            block->getDestroyProgress(state, getServerPlayer(), mLevel, pos);
+        if (spectatorParticipation)
+            destroyProgress = 0.0f;
+        if (Block::getId(block) == 0 || destroyProgress < 1.0f)
+        {
+            mDestroying = true;
+            mDestroyPos = pos;
+            const int sentProgress = static_cast<int>(destroyProgress * 10.0f);
+            mLevel->destroyBlockProgress(mPlayer->getId(), pos, sentProgress);
+            mLastSentProgress = sentProgress;
+        }
+        return true;
+    }
+
+    if (isLobby())
+    {
+        if (Block::getId(block) != 0)
+            block->attack(mLevel, pos, getServerPlayer());
+        boost::shared_ptr<Player> player =
+            boost::static_pointer_cast<Player>(mPlayer->shared_from_this());
+        if (mLevel->extinguishFire(player, pos, direction))
+            return true;
+    }
+
+    destroyBlock(pos);
+    return true;
 }
 InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::shared_ptr<Player> player,
     Level* level, InteractionHand::EInteractionHand hand, bool simulate)
@@ -311,62 +459,57 @@ void ServerPlayerGameMode::tick()
 
     const float destroyProgressScale = 10.0f;
 
-    if (!mDestroying)
+    if (!mIsDestroying)
     {
-        if (mIsDestroying)
+        if (mDestroying)
         {
-            const BlockState* state = mLevel->getBlockState(mPreviousDestroyPos);
+            const BlockState* state = mLevel->getBlockState(mDestroyPos);
             if (Block::getId(state->getBlock()) == 0)
             {
-                const int entityId = mPlayer->getId();
-                mLevel->destroyBlockProgress(entityId, mPreviousDestroyPos, -1);
-                mIsDestroying = false;
-                mLastSentState2 = -1;
+                mLevel->destroyBlockProgress(mPlayer->getId(), mDestroyPos, -1);
+                mDestroying = false;
+                mLastSentProgress = -1;
                 return;
             }
 
             boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
-            const int elapsedTicks = (mGameModeTicks - mDestroyProgress) + 1;
-            const float destroyRate =
-                state->getBlock()->getDestroyProgress(state, serverPlayer, mLevel, mDestroyPos);
+            const int elapsedTicks = (mGameModeTicks - mDestroyStartTick) + 1;
+            const float destroyRate = state->getBlock()->getDestroyProgress(
+                state, serverPlayer, mLevel, mPreviousDestroyPos);
             const float fractionalProgress = destroyRate * static_cast<float>(elapsedTicks);
             const int sentProgress = static_cast<int>(fractionalProgress * destroyProgressScale);
-            if (sentProgress != mLastSentState2)
+            if (sentProgress != mLastSentProgress)
             {
-                const int entityId = mPlayer->getId();
-                mLevel->destroyBlockProgress(entityId, mPreviousDestroyPos, sentProgress);
-                mLastSentState2 = sentProgress;
+                mLevel->destroyBlockProgress(mPlayer->getId(), mDestroyPos, sentProgress);
+                mLastSentProgress = sentProgress;
             }
         }
+        return;
     }
-    else
+
+    const BlockState* state = mLevel->getBlockState(mPreviousDestroyPos);
+    if (Block::getId(state->getBlock()) == 0)
     {
-        int& destroyStartTick = *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x3c);
-        const BlockState* state = mLevel->getBlockState(mDestroyPos);
-        if (Block::getId(state->getBlock()) == 0)
-        {
-            mDestroying = false;
-            return;
-        }
+        mIsDestroying = false;
+        return;
+    }
 
-        boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
-        const int elapsedTicks = (mGameModeTicks - destroyStartTick) + 1;
-        const float destroyRate =
-            state->getBlock()->getDestroyProgress(state, serverPlayer, mLevel, mDestroyPos);
-        const float fractionalProgress = destroyRate * static_cast<float>(elapsedTicks);
-        const int sentProgress = static_cast<int>(fractionalProgress * destroyProgressScale);
-        if (sentProgress != mLastSentState2)
-        {
-            const int entityId = mPlayer->getId();
-            mLevel->destroyBlockProgress(entityId, mDestroyPos, sentProgress);
-            mLastSentState2 = sentProgress;
-        }
+    boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
+    const int elapsedTicks = (mGameModeTicks - mSecondaryDestroyStartTick) + 1;
+    const float destroyRate = state->getBlock()->getDestroyProgress(
+        state, serverPlayer, mLevel, mPreviousDestroyPos);
+    const float fractionalProgress = destroyRate * static_cast<float>(elapsedTicks);
+    const int sentProgress = static_cast<int>(fractionalProgress * destroyProgressScale);
+    if (sentProgress != mLastSentProgress)
+    {
+        mLevel->destroyBlockProgress(mPlayer->getId(), mPreviousDestroyPos, sentProgress);
+        mLastSentProgress = sentProgress;
+    }
 
-        if (fractionalProgress >= 1.0f)
-        {
-            mDestroying = false;
-            destroyBlock(mDestroyPos);
-        }
+    if (fractionalProgress >= 1.0f)
+    {
+        mIsDestroying = false;
+        destroyBlock(mPreviousDestroyPos);
     }
 }
 void ServerPlayerGameMode::OnDeath(boost::shared_ptr<ServerPlayer> player)
@@ -625,8 +768,7 @@ void ServerPlayerGameMode::RecordLayerTime()
     if (isLobby())
         return;
 
-    unsigned long long& layerTimeMs =
-        *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(this) + 0x50);
+    unsigned long long& layerTimeMs = mLayerTimeMs;
     const unsigned long long now = System::processTimeInMilliSecs();
     const unsigned long long elapsedMs = now - layerTimeMs;
     const int elapsedSeconds =

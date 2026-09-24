@@ -21,6 +21,7 @@ class ServerPlayer;
 
 class ServerPlayerGameMode : public GameMode
 {
+    friend class PlayerList;
     friend class ServerPlayer;
 public:
     ServerPlayerGameMode(Level* level, MasterGameMode* masterGameMode);
@@ -38,11 +39,13 @@ public:
     int destroyBlock(const BlockPos& pos);
     void stopDestroyBlock(const BlockPos& pos);
     void abortDestroyBlock();
-    bool useItemOn(boost::shared_ptr<Player> player, Level* level,
-                   not_null_ptr<ItemInstance> item,
-                   InteractionHand::EInteractionHand hand, const BlockPos& pos,
-                   const Direction* direction, float hitX, float hitY, float hitZ,
-                   bool unknown, bool* result);
+    InteractionResult::EInteractionResult useItemOn(boost::shared_ptr<Player> player, Level* level,
+                                                    not_null_ptr<ItemInstance> item,
+                                                    InteractionHand::EInteractionHand hand,
+                                                    const BlockPos& pos,
+                                                    const Direction* direction, float hitX,
+                                                    float hitY, float hitZ, bool simulate,
+                                                    bool* result);
     virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction);
     virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player,
                                                            Level* level,
@@ -91,18 +94,18 @@ private:
     Level* mLevel;
     ServerPlayer* mPlayer;
     bool mDestroying;
-    int mDestroyProgress;
+    int mDestroyStartTick;
     BlockPos mDestroyPos;
-    int mLastSentState;
+    int mGameModeTicks;
     bool mIsDestroying;
     BlockPos mPreviousDestroyPos;
-    int mLastSentState2;
-    int mGameModeTicks;
+    int mSecondaryDestroyStartTick;
+    int mLastSentProgress;
     GameRulesInstance* mGameRules;
     MasterGameMode* mMasterGameMode;
+    int mUnknown4C;
+    unsigned long long mLayerTimeMs;
     int mDeaths;
-    int mKills;
-    int mUnknown58;
     int mLastCheckpoint;
 };
 
