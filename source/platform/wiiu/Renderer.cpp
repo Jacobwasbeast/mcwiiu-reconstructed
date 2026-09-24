@@ -2343,30 +2343,30 @@ void Renderer::StateSetViewport(C4JRender::eViewportType viewport)
     case C4JRender::eViewportType_FullScreen:
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
-        context.mViewportScale[2] = 1.0f / screenWidth;
-        context.mViewportScale[3] = 1.0f / screenHeight;
+        context.mViewportScale[2] = x / screenWidth;
+        context.mViewportScale[3] = y / screenHeight;
         break;
     case C4JRender::eViewportType_TopHalf:
         height = screenHeight * 0.5f;
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
-        context.mViewportScale[2] = 1.0f / screenWidth;
-        context.mViewportScale[3] = 1.0f / screenHeight;
+        context.mViewportScale[2] = x / screenWidth;
+        context.mViewportScale[3] = y / screenHeight;
         break;
     case C4JRender::eViewportType_BottomHalf:
         height = screenHeight * 0.5f;
         y = height;
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
-        context.mViewportScale[2] = 1.0f / screenWidth;
+        context.mViewportScale[2] = x / screenWidth;
         context.mViewportScale[3] = height / screenHeight;
         break;
     case C4JRender::eViewportType_LeftHalf:
         width = screenWidth * 0.5f;
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
-        context.mViewportScale[2] = 1.0f / screenWidth;
-        context.mViewportScale[3] = 1.0f / screenHeight;
+        context.mViewportScale[2] = x / screenWidth;
+        context.mViewportScale[3] = y / screenHeight;
         break;
     case C4JRender::eViewportType_RightHalf:
         width = screenWidth * 0.5f;
@@ -2374,15 +2374,15 @@ void Renderer::StateSetViewport(C4JRender::eViewportType viewport)
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
         context.mViewportScale[2] = width / screenWidth;
-        context.mViewportScale[3] = 1.0f / screenHeight;
+        context.mViewportScale[3] = y / screenHeight;
         break;
     case C4JRender::eViewportType_TopLeftQuarter:
         width = screenWidth * 0.5f;
         height = screenHeight * 0.5f;
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
-        context.mViewportScale[2] = 1.0f / screenWidth;
-        context.mViewportScale[3] = 1.0f / screenHeight;
+        context.mViewportScale[2] = x / screenWidth;
+        context.mViewportScale[3] = y / screenHeight;
         break;
     case C4JRender::eViewportType_TopRightQuarter:
         width = screenWidth * 0.5f;
@@ -2391,7 +2391,7 @@ void Renderer::StateSetViewport(C4JRender::eViewportType viewport)
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
         context.mViewportScale[2] = width / screenWidth;
-        context.mViewportScale[3] = 1.0f / screenHeight;
+        context.mViewportScale[3] = y / screenHeight;
         break;
     case C4JRender::eViewportType_BottomLeftQuarter:
         width = screenWidth * 0.5f;
@@ -2399,7 +2399,7 @@ void Renderer::StateSetViewport(C4JRender::eViewportType viewport)
         y = height;
         context.mViewportScale[0] = width / screenWidth;
         context.mViewportScale[1] = height / screenHeight;
-        context.mViewportScale[2] = 1.0f / screenWidth;
+        context.mViewportScale[2] = x / screenWidth;
         context.mViewportScale[3] = height / screenHeight;
         break;
     case C4JRender::eViewportType_BottomRightQuarter:
