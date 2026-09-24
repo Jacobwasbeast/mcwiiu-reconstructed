@@ -77,8 +77,8 @@ void _Polygon::mirror()
 
 void _Polygon::render(BufferBuilder* buffer, float scale)
 {
-    Vec3* edge0 = mVertices[0]->position->vectorTo(mVertices[1]->position);
-    Vec3* edge1 = mVertices[2]->position->vectorTo(mVertices[3]->position);
+    Vec3* edge0 = mVertices[1]->position->vectorTo(mVertices[0]->position);
+    Vec3* edge1 = mVertices[1]->position->vectorTo(mVertices[2]->position);
     Vec3* normalVector = edge1->cross(edge0)->normalize();
     if (mFlipNormal)
     {
@@ -100,8 +100,8 @@ void _Polygon::render(BufferBuilder* buffer, float scale)
 
 void _Polygon::renderSkinned(BufferBuilder* buffer, float scale, int boneIndex)
 {
-    Vec3* edge0 = mVertices[0]->position->vectorTo(mVertices[1]->position);
-    Vec3* edge1 = mVertices[2]->position->vectorTo(mVertices[3]->position);
+    Vec3* edge0 = mVertices[1]->position->vectorTo(mVertices[0]->position);
+    Vec3* edge1 = mVertices[1]->position->vectorTo(mVertices[2]->position);
     Vec3* normalVector = edge1->cross(edge0)->normalize();
     if (mFlipNormal)
     {
