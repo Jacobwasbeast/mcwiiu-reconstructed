@@ -49,7 +49,7 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
         const double ySize = random.nextDouble() * 4.0 + 2.0;
         const double zSize = random.nextDouble() * 6.0 + 5.0;
         const double xCenter = random.nextDouble() * (14.0 - xSize) + 1.0 + xSize * 0.5;
-        const double yCenter = random.nextDouble() * (2.0 - ySize) + 1.0 + ySize * 0.5;
+        const double yCenter = random.nextDouble() * (4.0 - ySize) + 2.0 + ySize * 0.5;
         const double zCenter = random.nextDouble() * (14.0 - zSize) + 1.0 + zSize * 0.5;
 
         for (int x = 1; x < 15; ++x)
@@ -70,13 +70,28 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
         }
     }
 
+    const auto isBoundaryCell = [&mask](int x, int y, int z) -> bool
+    {
+        if (mask[(x * 8 + y) * 16 + z] != 0)
+        {
+            return false;
+        }
+
+        return (x > 0 && mask[((x - 1) * 8 + y) * 16 + z] != 0) ||
+            (x < 15 && mask[((x + 1) * 8 + y) * 16 + z] != 0) ||
+            (y > 0 && mask[(x * 8 + y - 1) * 16 + z] != 0) ||
+            (y < 7 && mask[(x * 8 + y + 1) * 16 + z] != 0) ||
+            (z > 0 && mask[(x * 8 + y) * 16 + z - 1] != 0) ||
+            (z < 15 && mask[(x * 8 + y) * 16 + z + 1] != 0);
+    };
+
     for (int x = 0; x < 16; ++x)
     {
-        for (int y = 0; y < 8; ++y)
+        for (int z = 0; z < 16; ++z)
         {
-            for (int z = 0; z < 16; ++z)
+            for (int y = 0; y < 8; ++y)
             {
-                if (mask[(x * 8 + y) * 16 + z] == 0)
+                if (!isBoundaryCell(x, y, z))
                 {
                     continue;
                 }
@@ -84,12 +99,12 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
                 const BlockState* state = level->getBlockState(pos);
                 if (y < 4)
                 {
-                    if (!state->getMaterial()->isLiquid() && level->getBlock(pos) != mBlock)
+                    if (!state->getMaterial()->isSolid() && level->getBlock(pos) != mBlock)
                     {
                         return false;
                     }
                 }
-                else if (state->getMaterial()->isSolid())
+                else if (state->getMaterial()->isLiquid())
                 {
                     return false;
                 }
@@ -113,6 +128,29 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
         }
     }
 
+    if (mBlock->defaultBlockState()->getMaterial() == Material::LAVA)
+    {
+        for (int x = 0; x < 16; ++x)
+        {
+            for (int z = 0; z < 16; ++z)
+            {
+                for (int y = 0; y < 8; ++y)
+                {
+                    if (!isBoundaryCell(x, y, z) || (y >= 4 && random.nextInt(2) == 0))
+                    {
+                        continue;
+                    }
+
+                    const BlockPos pos = lakeOrigin.offset(x, y, z);
+                    if (level->getBlockState(pos)->getMaterial()->isSolid())
+                    {
+                        level->setBlock(pos, Blocks::stone->defaultBlockState(), 2, false);
+                    }
+                }
+            }
+        }
+    }
+
     if (mBlock->defaultBlockState()->getMaterial() == Material::WATER)
     {
         for (int x = 0; x < 16; ++x)
@@ -120,7 +158,7 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
             for (int z = 0; z < 16; ++z)
             {
                 const BlockPos pos = lakeOrigin.offset(x, 4, z);
-                if (mask[(x * 8 + 4) * 16 + z] != 0 && level->shouldFreezeIgnoreNeighbors(pos))
+                if (level->shouldFreezeIgnoreNeighbors(pos))
                 {
                     level->setBlock(pos, Blocks::ice->defaultBlockState(), 2, false);
                 }

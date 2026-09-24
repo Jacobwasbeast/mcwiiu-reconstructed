@@ -677,7 +677,7 @@ uint32_t Player::getEnchantmentSeed()
     return static_cast<uint32_t>(mEnchantmentSeed);
 }
 
-uint32_t Player::isLocalPlayer()
+bool Player::isLocalPlayer()
 {
     return 0;
 }
@@ -810,11 +810,11 @@ void Player::openTextEdit(boost::shared_ptr<SignBlockEntity>)
 {
 }
 
-void Player::openMinecartCommandBlock(uint32_t)
+void Player::openMinecartCommandBlock(boost::shared_ptr<BaseCommandBlock>)
 {
 }
 
-void Player::openCommandBlock(uint32_t)
+void Player::openCommandBlock(boost::shared_ptr<CommandBlockEntity>)
 {
 }
 
@@ -860,7 +860,7 @@ void Player::onUpdateAbilities()
 {
 }
 
-void Player::setGameMode(GameType*)
+void Player::setGameMode(const GameType*)
 {
 }
 
@@ -1101,7 +1101,7 @@ bool Player::IsCreativeFlying()
 
 uint32_t Player::IsSpectatingOtherPlayer()
 {
-    if ((mCamera || mField0x808 != -1) && isSpectator()) {
+    if ((mCamera || mField0x808 != -1) && isAlive()) {
         return 1;
     }
     return 0;
@@ -1427,7 +1427,7 @@ void Player::setBedOffset(Direction* direction)
     mField0x6d8 = -1.8f * static_cast<float>(normal.z);
 }
 
-void Player::sendMessage(uint32_t, int32_t*, uint32_t, std::wstring*, uint32_t)
+void Player::sendMessage(ClientboundChatPacket::EChatPacketMessage, int32_t*, uint32_t, std::wstring*, uint32_t)
 {
 }
 
@@ -1978,7 +1978,8 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
         dropped->mYd = 0.20000000298023224;
     }
 
-    return reallyDrop(dropped);
+    not_null_ptr<ItemInstance> droppedItem = reallyDrop(dropped);
+    return dropped;
 }
 
 boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool randomThrow)
@@ -1996,13 +1997,13 @@ boost::shared_ptr<ItemEntity> Player::drop(bool dropAll)
     return drop(dropped, false, true);
 }
 
-boost::shared_ptr<ItemEntity> Player::reallyDrop(boost::shared_ptr<ItemEntity> item)
+not_null_ptr<ItemInstance> Player::reallyDrop(boost::shared_ptr<ItemEntity> item)
 {
-    if (item) {
-        item->setThrower(getName());
-        if (mLevel != NULL) mLevel->addEntity(item);
-    }
-    return item;
+    mLevel->addEntity(item);
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
+        SoundEvents::ITEM_COLLECT, SoundSource::eSoundSource_Players,
+        0.30000001192092896f, 1.0f, 0.0f);
+    return item->getItem();
 }
 
 void Player::die(const DamageSource* source)
@@ -2044,7 +2045,6 @@ bool Player::hurt(const DamageSource* source, float damage)
     if (isSpectator()) return false;
     if (source == DamageSource::FALL && isAllowedToFly() && mAbilities.mFlying) return false;
 
-    mDeathScore = 0;
     if (getHealth() > 0.0f) {
         if (isSleeping() && !mLevel->mIsClientSide) stopSleepInBed(true, true, false);
         removeEntitiesOnShoulder();

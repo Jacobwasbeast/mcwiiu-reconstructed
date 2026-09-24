@@ -8,7 +8,7 @@
 #include "game/world/block/Blocks.hpp"
 
 IcePatchFeature::IcePatchFeature(int radius)
-    : Feature(false), mBlock(Blocks::ice), mRadius(radius)
+    : Feature(false), mBlock(Blocks::packed_ice), mRadius(radius)
 {
 }
 

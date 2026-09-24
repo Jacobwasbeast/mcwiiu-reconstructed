@@ -3,15 +3,17 @@
 
 #include <string>
 
+#include "game/world/generation/Feature.hpp"
+
 class BlockPos;
 class Level;
 class Random;
 
-class MonsterRoomFeature
+class MonsterRoomFeature : public Feature
 {
 public:
     virtual ~MonsterRoomFeature();
-    virtual bool place(Level* level, Random& random, const BlockPos& origin);
+    virtual bool place(Level* level, Random& random, const BlockPos& origin) override;
 
     std::wstring randomEntityId(Random& random);
 };

@@ -16,7 +16,7 @@ RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
     mMaxUpStep = 1.0f;
     setViewScale(10.0);
     mField0x878 = 0;
-    mField0x880 = 1.034999966621399f;
+    mField0x880 = 0.0f;
 }
 
 RemotePlayer::~RemotePlayer()

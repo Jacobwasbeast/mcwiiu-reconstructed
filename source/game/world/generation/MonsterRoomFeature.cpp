@@ -12,6 +12,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/MobSpawnerBlockEntity.hpp"
 
 MonsterRoomFeature::~MonsterRoomFeature()
 {
@@ -130,5 +131,13 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
     }
 
     level->setBlock(origin, Blocks::mob_spawner->defaultBlockState(), 2, false);
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(origin);
+    if (blockEntity->GetType() == 0x0000000001200201ULL)
+    {
+        boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity =
+            boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
+        ResourceLocation entityId(randomEntityId(random));
+        spawnerBlockEntity->getSpawner()->setEntityId(entityId);
+    }
     return true;
 }

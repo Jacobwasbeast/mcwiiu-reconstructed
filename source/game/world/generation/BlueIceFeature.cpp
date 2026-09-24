@@ -29,20 +29,25 @@ bool BlueIceFeature::place(Level* level, Random& random, const BlockPos& origin)
 
                 for (int i = 0; i < 200; ++i)
                 {
-                    const int verticalOffset =
-                        random.nextInt(5) - random.nextInt(6);
+                    const int verticalOffsetStart = random.nextInt(5);
+                    const int verticalOffsetEnd = random.nextInt(6);
+                    const int verticalOffset = verticalOffsetStart - verticalOffsetEnd;
                     int spread = 3;
-                    if (1 < verticalOffset)
+                    if (verticalOffset <= 1)
                     {
                         spread = verticalOffset / 2 + 3;
                     }
 
                     if (spread > 0)
                     {
+                        const int xOffsetStart = random.nextInt(spread);
+                        const int xOffsetEnd = random.nextInt(spread);
+                        const int zOffsetStart = random.nextInt(spread);
+                        const int zOffsetEnd = random.nextInt(spread);
                         const BlockPos position = origin.offset(
-                            random.nextInt(spread) - random.nextInt(spread),
+                            xOffsetStart - xOffsetEnd,
                             verticalOffset,
-                            random.nextInt(spread) - random.nextInt(spread));
+                            zOffsetStart - zOffsetEnd);
                         const BlockState* state = level->getBlockState(position);
                         if (state->getMaterial() == Material::WATER
                             || state->getBlock() == Blocks::ice
@@ -64,7 +69,7 @@ bool BlueIceFeature::place(Level* level, Random& random, const BlockPos& origin)
                                 }
                             }
 
-                            if (blueIceCount <= 4)
+                            if (blueIceCount > 0 && blueIceCount <= 4)
                             {
                                 level->setBlock(position, Blocks::blue_ice->defaultBlockState(), 2, false);
                             }

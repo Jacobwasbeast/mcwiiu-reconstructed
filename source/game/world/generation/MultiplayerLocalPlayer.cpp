@@ -1,5 +1,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
+#include "game/item/ItemInstance.hpp"
+
 #include "game/core/Minecraft.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/CTelemetryManager.hpp"
@@ -77,10 +79,9 @@ boost::shared_ptr<ItemEntity> MultiplayerLocalPlayer::drop()
     return LocalPlayer::drop(false);
 }
 
-void MultiplayerLocalPlayer::reallyDrop(boost::shared_ptr<ItemEntity> item)
+not_null_ptr<ItemInstance> MultiplayerLocalPlayer::reallyDrop(boost::shared_ptr<ItemEntity> item)
 {
-    if (item)
-        LocalPlayer::reallyDrop(item);
+    return ItemInstance::EMPTY;
 }
 
 void MultiplayerLocalPlayer::respawn()

@@ -59,13 +59,15 @@ void ItemInHandLayer::renderArmWithItem(boost::shared_ptr<LivingEntity> entity, 
         return;
 
     GlStateManager::pushMatrix();
-    mLivingEntityRenderer->translateWeaponItem();
+    translateToHand(arm);
 
     bool leftHand = arm == HumanoidArm::LEFT;
-    if (entity->isFallFlying())
+    bool suppressSneakingTransform = (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        && entity->getFallFlyingTicks() > 4;
+    if (entity->isSneaking() && !suppressSneakingTransform)
     {
-        GlStateManager::translatef(0.0f, -0.175f, 0.0f);
-        GlStateManager::rotatef(6.0f, 12.0f, 0.0f, 0.0f);
+        GlStateManager::translatef(0.0f, 0.175f, 0.0f);
+        GlStateManager::rotatef(6.0f, 1.0f, 0.0f, 0.0f);
     }
 
     GlStateManager::rotatef(-90.0f, 1.0f, 0.0f, 0.0f);

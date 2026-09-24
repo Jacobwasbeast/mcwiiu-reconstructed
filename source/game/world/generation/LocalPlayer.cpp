@@ -1,29 +1,39 @@
 #include "game/core/UnityClient6.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/PlayerRideableJumping.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ServerboundChatPacket.hpp"
 #include "game/network/ServerboundMovePlayerPacket.hpp"
 #include "game/network/ServerboundPlayerAbilitiesPacket.hpp"
+#include "game/network/ServerboundUseItemPacket.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/User.hpp"
 #include "game/core/Input.hpp"
+#include "platform/wiiu/CInput.hpp"
+#include "game/core/FoodConstants.hpp"
+#include "game/core/EquipmentSlot.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Gui.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundEngine.hpp"
 #include "game/ui/Tooltips.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/ElytraItem.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/ItemFrame.hpp"
+#include "game/item/SpawnEggItem.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/CTelemetryManager.hpp"
@@ -31,22 +41,35 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/client/render/ParticleEngine.hpp"
+#include "game/client/render/GameRenderer.hpp"
+#include "game/client/render/ItemInHandRenderer.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/Tutorial.hpp"
+#include "game/item/PowerupItems.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/block/BeaconBlockEntity.hpp"
 #include "game/world/block/BrewingStandBlockEntity.hpp"
 #include "game/world/block/DispenserBlockEntity.hpp"
 #include "game/world/block/DropperBlockEntity.hpp"
+#include "game/world/block/FlowerPotBlockEntity.hpp"
 #include "game/world/block/FurnaceBlockEntity.hpp"
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
 #include "game/core/MinecartChest.hpp"
 #include "game/core/MinecartHopper.hpp"
+#include "game/core/Minecart.hpp"
+#include "game/core/Boat.hpp"
+#include "game/core/ArmorStand.hpp"
+#include "game/core/EnderCrystal.hpp"
+#include "game/core/Painting.hpp"
+#include "game/entity/mob/LeashFenceKnotEntity.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ServerboundPlayerCommandPacket.hpp"
 #include "game/network/ServerboundClientCommandPacket.hpp"
@@ -61,23 +84,32 @@
 #include "game/util/Vec3.hpp"
 
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 
 LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int playerIndex)
     : AbstractClientPlayer(level, user != 0 ? user->name : std::wstring()),
       mPacketListener(0), mPermissionLevel(0), mLastSentX(0.0), mLastSentY(0.0),
       mLastSentZ(0.0), mLastSentYRot(0.0f), mLastSentXRot(0.0f),
-      mPositionSendCounter(0), mPreviousOnGround(false), mHealthInitialized(false), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
+      mPositionSendCounter(0), mPreviousOnGround(false), mHealthInitialized(false), mInput(0),
+      mMinecraft(minecraft), mSprintDelay(0), mSprintPending(false), mFlyTogglePending(false),
+      mIdleTicks(0),
       mSprinting(false), mThirdPersonViewTimer(0),
       mViewYRot(0.0f), mViewXRot(0.0f), mViewYRotO(0.0f), mViewXRotO(0.0f),
+      mPortalEffectIntensity(0.0f), mPortalEffectIntensityO(0.0f),
       mFallFlyYaw(0.0f), mFallFlyYawOld(0.0f),
+      mFallFlyingAlignment(0.0f), mFallFlyingAlignmentO(0.0f),
       mHandsBusy(false), mItemUsePending(false),
       mUsedItemHand(InteractionHand::eInteractionHand_MainHand),
       mAutoJumpEnabled(true), mAutoJumpTime(0), mViewport(0), mButtonsDown(0),
       mButtonsPressed(0), mMoveInputX(0), mMoveInputY(0), mLookInputX(0), mLookInputY(0),
       mReserved0x928(0), mReserved0x92c(0), mDestroyTicks(0), mLastAttackTick(0),
-      mLastUseTick(0), mThirdPersonView(0), mGameMode(0), mDRCTouching(false), mUserIndex(-1),
-      mViewBob(), mViewBobPrev(), mViewBobAmount(), mCreativeRepeatState(0), mDamageTaken(0.0f),
+      mLastUseTick(0), mThirdPersonView(0), mGameMode(0), mDRCTouching(false),
+      mRideJumpTicks(0), mRideJumpScale(0.0f), mUserIndex(-1), mPresenceIdleSent(false),
+      mViewBob(), mViewBobPrev(), mViewBobAmount(), mCreativeMouseStartX(0.0f),
+      mCreativeMouseStartY(0.0f), mCreativeMouseStartZ(0.0f), mCreativeMouseDeltaX(0.0f),
+      mCreativeMouseDeltaY(0.0f), mCreativeMouseDeltaZ(0.0f), mCreativeMouseRepeatDelay(0.0f),
+      mCreativeRepeatState(0), mDamageTaken(0.0f),
       mHasOpenedInventory(true), mWaitingForScoreboard(false),
       mSessionTimer(0.0), mAdditionalModelParts(), mWaterVisionClarity(0.0f),
       mWaterVisionClarityO(0.0f), mWaterVisionClarityTarget(0.0f), mPercentageTraversed(0.0),
@@ -218,9 +250,9 @@ boost::shared_ptr<ItemEntity> LocalPlayer::drop(bool dropAll)
     return Player::drop(dropAll);
 }
 
-void LocalPlayer::reallyDrop(boost::shared_ptr<ItemEntity> item)
+not_null_ptr<ItemInstance> LocalPlayer::reallyDrop(boost::shared_ptr<ItemEntity> item)
 {
-    Player::reallyDrop(item);
+    return ItemInstance::EMPTY;
 }
 
 void LocalPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> sign)
@@ -354,26 +386,406 @@ void LocalPlayer::aiStep()
     if (isSprinting() && --mSprinting < 1)
         mSprinting = 1;
 
-    if (mInput != NULL)
-    {
-        mInput->tick(this);
+    if (mSprintDelay > 0)
+        --mSprintDelay;
 
-        if (mInput->mMoveStrafe > -0.8f && mInput->mMoveStrafe < 0.8f &&
-            mInput->mMoveForward > -0.8f && mInput->mMoveForward < 0.8f)
+    mPortalEffectIntensityO = mPortalEffectIntensity;
+    if (!mIsInsidePortal)
+    {
+        bool confusionIsLong = false;
+        if (hasEffect(MobEffects::CONFUSION))
         {
-            mThirdPersonViewTimer = 0;
+            MobEffectInstance* confusion = getEffect(MobEffects::CONFUSION);
+            confusionIsLong = confusion->getDuration() > 60;
+        }
+        if (confusionIsLong)
+            mPortalEffectIntensity = std::min(mPortalEffectIntensity + 0.0066666668f, 1.0f);
+        else
+            mPortalEffectIntensity = std::max(mPortalEffectIntensity - 0.05f, 0.0f);
+    }
+    else
+    {
+        if (!mLevel->mIsClientSide && isPassenger())
+            stopRiding();
+        if (mMinecraft->mScreen != NULL)
+            mMinecraft->setScreen(NULL);
+        if (mPortalEffectIntensity == 0.0f)
+            mMinecraft->mSoundEngine->playUI(SoundEvents::PORTAL_TRIGGER, 1.0f,
+                                             mRandom->nextFloat() * 0.4f + 0.8f);
+        mPortalEffectIntensity = std::min(mPortalEffectIntensity + 0.0125f, 1.0f);
+        mIsInsidePortal = false;
+    }
+
+    if (mPortalTime > 0)
+        --mPortalTime;
+
+    const bool wasJumping = mInput->mJumping;
+    const bool wasSneaking = mInput->mSneaking;
+    const float previousForward = mInput->mMoveForward;
+    mInput->tick(this);
+
+    if (mInput->mMoveStrafe > -0.8f && mInput->mMoveStrafe < 0.8f &&
+        mInput->mMoveForward > -0.8f && mInput->mMoveForward < 0.8f)
+    {
+        mThirdPersonViewTimer = 0;
+    }
+    else
+    {
+        ++mThirdPersonViewTimer;
+    }
+
+    if (isUsingItem() && !isPassenger())
+    {
+        mSprintDelay = 0;
+        mInput->mMoveStrafe *= 0.2f;
+        mInput->mMoveForward *= 0.2f;
+    }
+
+    const int autoJumpTime = mAutoJumpTime;
+    if (mAutoJumpTime > 0)
+    {
+        --mAutoJumpTime;
+        mInput->mJumping = true;
+    }
+
+    const double edgeOffset = static_cast<double>(mBbWidth) * 0.35;
+    const double edgeY = mBoundingBox->mMinY + 1.75;
+    checkInBlock(mX - edgeOffset, edgeY, mZ + edgeOffset);
+    checkInBlock(mX - edgeOffset, edgeY, mZ - edgeOffset);
+    checkInBlock(mX + edgeOffset, edgeY, mZ - edgeOffset);
+    checkInBlock(mX + edgeOffset, edgeY, mZ + edgeOffset);
+
+    const bool canFly = mAbilities.mMayfly || isAllowedToFly();
+    const bool foodAllowsSprinting = mFoodData.getFoodLevel() > FoodConstants::SprintLevel() || canFly;
+    bool canStartSprinting = foodAllowsSprinting && !isUsingItem() &&
+        !hasEffect(MobEffects::BLINDNESS) && !isPassenger();
+
+    if ((!mOnGround && !isInWater()) || isSprinting())
+        canStartSprinting = false;
+
+    bool forwardSprintInput = false;
+    if (canStartSprinting)
+    {
+        forwardSprintInput = g_pInput->ButtonDown(mUserIndex, 0x2e);
+        const float forward = mInput->mMoveForward;
+        if (!forwardSprintInput || forward < 0.8f)
+        {
+            if (wasSneaking || previousForward >= 0.8f || forward < 0.8f)
+            {
+                if (mSprintDelay > 0 && forward == 0.0f)
+                    mSprintPending = true;
+            }
+            else if (mSprintDelay == 0)
+            {
+                mSprintDelay = 9;
+                mSprintPending = false;
+            }
+            else if (mSprintPending)
+            {
+                setSprinting(true);
+                mSprintDelay = 0;
+                mSprintPending = false;
+            }
         }
         else
         {
-            ++mThirdPersonViewTimer;
+            setSprinting(true);
+            mSprintDelay = 0;
+            mSprintPending = false;
         }
     }
 
+    bool stopForDirection = true;
+    if (mInput->mMoveForward >= 0.8f &&
+        std::fabs(mInput->mMoveStrafe) <= 0.8f && foodAllowsSprinting)
+        stopForDirection = false;
+
+    bool keepSprintForInput = mInput->mMoveForward >= 0.8f && foodAllowsSprinting;
+    if (isSprinting() && mOnGround && stopForDirection)
+        setSprinting(false);
+
+    Vec3* position = getPos(0.0f);
+    const BlockPos currentBlock(position);
+    const BlockPos aboveBlock(position->x, position->y + 1.0, position->z);
+    const BlockPos belowBlock(position->x, position->y - 1.1, position->z);
+    Material* currentMaterial = mLevel->getBlockState(currentBlock)->getMaterial();
+    Material* aboveMaterial = mLevel->getBlockState(aboveBlock)->getMaterial();
+    Material* belowMaterial = mLevel->getBlockState(belowBlock)->getMaterial();
+    Vec3* viewVector = getViewVector(0.0f);
+    const float viewAngle = std::acos(static_cast<float>(viewVector->x * viewVector->x +
+                                                          viewVector->z * viewVector->z)) *
+                            57.29578f;
+
+    if (isInWater() && !mAbilities.mFlying && !isSwimming() &&
+        ((belowMaterial != Material::AIR && aboveMaterial != Material::AIR) ||
+         viewVector->y < -0.15) &&
+        mLevel->mIsClientSide && isSprinting() && !stopForDirection && !isPassenger())
+    {
+        startSwimming();
+    }
+
+    const bool stopSwimmingForBlocks = !keepSprintForInput &&
+        !aboveMaterial->blocksMotion() && !currentMaterial->blocksMotion();
+    const bool stopSwimmingForView = belowMaterial == Material::AIR && viewAngle > 45.0f;
+    if ((!isInWater() || stopSwimmingForBlocks || stopSwimmingForView) &&
+        mLevel->mIsClientSide && isSwimming())
+    {
+        stopSwimming();
+    }
+
+    if (isSprinting() && (stopForDirection || !foodAllowsSprinting) && !isSwimming())
+    {
+        setSprinting(false);
+    }
+
+    if (!isSleeping() && (mAbilities.mMayfly || isAllowedToFly()))
+    {
+        if (!mInput->mJumping)
+        {
+            if (mField0x61c > 0 && mFlyTogglePending && !isSpectator())
+            {
+                mAbilities.mFlying = !mAbilities.mFlying;
+                onUpdateAbilities();
+                mField0x61c = 0;
+                mFlyTogglePending = false;
+                if (mAbilities.mFlying)
+                    mInput->mSneaking = false;
+            }
+        }
+        else if (!wasJumping && autoJumpTime <= 0)
+        {
+            if (mField0x61c == 0)
+            {
+                mFlyTogglePending = false;
+                mField0x61c = 10;
+            }
+            else
+            {
+                mFlyTogglePending = true;
+            }
+        }
+    }
+    else if (mAbilities.mFlying)
+    {
+        mAbilities.mFlying = false;
+        onUpdateAbilities();
+    }
+
+    bool autoElytraRequested = true;
+    if (!mInput->mJumping)
+    {
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        autoElytraRequested = miniGame->HasFeatureAutoElytraFly() && mFallDistance > 1.25f;
+    }
+    if (!isSleeping() && autoElytraRequested && !wasJumping && !mOnGround &&
+        mYd < 0.0 &&
+        !isFallFlying() && !mAbilities.mFlying)
+    {
+        not_null_ptr<ItemInstance> chestItem = getItemSlot(EquipmentSlot::CHEST);
+        if (chestItem->getItem() == Items::elytra && ElytraItem::isFlyEnabled(chestItem))
+        {
+            boost::shared_ptr<Entity> self = shared_from_this();
+            boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
+                self, ServerboundPlayerCommandPacket::ACTION_8));
+            mPacketListener->send(packet);
+        }
+    }
+
+    const bool inWaterForInput = isInWater();
+    const bool waterControlHeld = (mButtonsDown & 0x80) != 0;
+    if (inWaterForInput && waterControlHeld && mInput->mSwimming && !mOnGround)
+    {
+        goDownInWater();
+    }
+    else if (inWaterForInput && !mInput->mSwimming && !mOnGround)
+    {
+        mInput->mSwimming = false;
+        mInput->mDown = false;
+    }
+
+    if (mAbilities.mFlying && isControlledCamera())
+    {
+        if ((mButtonsDown & 0x80) != 0)
+            mYd -= 0.15;
+        if (mInput->mJumping)
+        {
+            mYd += 0.15;
+            mNoJumpDelay = 0;
+        }
+
+        const float yawQuadrant = std::floor(mYRot / 90.0f + 0.5f);
+        if ((mReserved0x928 & 0x800) != 0)
+        {
+            const float radians = yawQuadrant * 90.0f * 3.1415927410125732f / 180.0f;
+            mXd = -0.15 * std::cos(radians);
+            mZd = -0.15 * std::sin(radians);
+        }
+        else if ((mReserved0x928 & 0x400) != 0)
+        {
+            const float radians = yawQuadrant * 90.0f * 3.1415927410125732f / 180.0f;
+            mXd = 0.15 * std::cos(radians);
+            mZd = 0.15 * std::sin(radians);
+        }
+    }
+
+    if (!isFallFlying() || !isCreative() || !mInput->mJumping)
+    {
+        mGlideDistance = 0.0;
+    }
+    else
+    {
+        mGlideDistance = 0.5699999928474426;
+        mNoJumpDelay = 0;
+    }
+
+    if (isRidingJumpable())
+    {
+        boost::shared_ptr<Entity> vehicle = getVehicle();
+        boost::shared_ptr<PlayerRideableJumping> rideable =
+            boost::dynamic_pointer_cast<PlayerRideableJumping>(vehicle);
+
+        if (mRideJumpTicks < 0 && ++mRideJumpTicks == 0)
+            mRideJumpScale = 0.0f;
+
+        if (wasJumping)
+        {
+            if (!mInput->mJumping)
+            {
+                mRideJumpTicks = -10;
+                rideable->onPlayerJump(static_cast<int>(std::floor(getJumpRidingScale() * 100.0)));
+                sendRidingJump();
+            }
+            else
+            {
+                ++mRideJumpTicks;
+                if (mRideJumpTicks > 9)
+                    mRideJumpScale = 0.2f / static_cast<float>(mRideJumpTicks - 8) + 0.8f;
+                else
+                    mRideJumpScale = static_cast<float>(mRideJumpTicks) * 0.1f;
+            }
+        }
+        else if (mInput->mJumping)
+        {
+            mRideJumpTicks = 0;
+            mRideJumpScale = 0.0f;
+        }
+    }
+    else
+    {
+        mRideJumpScale = 0.0f;
+    }
+
     Player::aiStep();
+
+    if (mAbilities.mMayfly || isAllowedToFly() || !mOnGround)
+    {
+        if (mAbilities.mFlying)
+        {
+            Vec3* look = getViewVector(0.0f);
+            if (!isSprinting() && !isSpectator())
+            {
+                mXd = 0.0;
+                mZd = 0.0;
+                double verticalSpeed = 0.0;
+                if ((mReserved0x928 & 0x1000) != 0)
+                    verticalSpeed = static_cast<double>(0.1f);
+                if ((mReserved0x928 & 0x2000) != 0)
+                    verticalSpeed = static_cast<double>(-0.1f);
+                mYd = verticalSpeed;
+                move(eMoverType_Self, 0.0, verticalSpeed, 0.0, false);
+                mYd = 0.0;
+            }
+            else
+            {
+                double speed = static_cast<double>(600 - mSprinting) / 10.0;
+                if (!isSpectator())
+                {
+                    speed *= speed;
+                    if (speed > 1.0)
+                        speed = 1.0;
+                }
+                else if (speed > 0.3)
+                {
+                    speed = 0.3;
+                }
+                const float forward = mInput->mMoveForward;
+                mXd = look->x * forward * speed;
+                mYd = look->y * forward * speed;
+                mZd = look->z * forward * speed;
+                move(eMoverType_Self, mXd, mYd, mZd, false);
+                mYd = 0.0;
+            }
+
+            mFallDistance = 0.0f;
+            mYo = mY;
+            mOnGround = true;
+        }
+    }
+    else if (mAbilities.mFlying)
+    {
+        mAbilities.mFlying = false;
+    }
+
+    if (!mPresenceIdleSent)
+    {
+        if (g_pInput->GetIdleSeconds(mUserIndex) > 300.0)
+        {
+            g_pApp->SetRichPresenceContext(mUserIndex, 0);
+            mPresenceIdleSent = true;
+        }
+    }
+    else if (g_pInput->GetIdleSeconds(mUserIndex) < 300.0)
+    {
+        const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+        const bool localGame = CGameNetworkManager::sInstance.IsLocalGame();
+        if (playerCount < 2)
+            g_pApp->SetRichPresenceContext(mUserIndex, localGame ? 5 : 4);
+        else
+            g_pApp->SetRichPresenceContext(mUserIndex, localGame ? 3 : 2);
+        updateRichPresence();
+        mPresenceIdleSent = false;
+    }
+
+    mFallFlyYawOld = mFallFlyYaw;
+    mFallFlyingAlignmentO = mFallFlyingAlignment;
+    if (isFallFlying())
+    {
+        Vec3* look = getViewVector(0.0f);
+        const double horizontalMotion = mXd * mXd + mZd * mZd;
+        const double horizontalLook = look->x * look->x + look->z * look->z;
+        if (horizontalMotion > 0.01 && horizontalLook > 0.01)
+        {
+            const double motionLength = Mth::sqrt(horizontalMotion);
+            const double lookLength = Mth::sqrt(horizontalLook);
+            const double lengthProduct = static_cast<double>(
+                static_cast<float>(motionLength * lookLength));
+            const double dot = (mXd * look->x + mZd * look->z) / lengthProduct;
+            const double aligned = Mth::clamp(dot, 0.0, 1.0);
+            const double cosine = Mth::clamp(dot, -1.0, 1.0);
+            const double cross = mXd * look->z - mZd * look->x;
+            const double sign = (0.0 < cross) - (cross < 0.0);
+            mFallFlyingAlignment = static_cast<float>(aligned);
+            const float signedAngle = static_cast<float>(sign * std::acos(cosine));
+            mFallFlyYaw = signedAngle * 180.0f / 3.141592741f;
+        }
+        else
+        {
+            mFallFlyYaw = 0.0f;
+        }
+    }
+    else
+    {
+        mFallFlyYaw = 0.0f;
+    }
 }
 
 MobEffectInstance* LocalPlayer::removeEffectNoUpdate(MobEffect* effect)
 {
+    if (effect == MobEffects::CONFUSION)
+    {
+        mPortalEffectIntensity = 0.0f;
+        mPortalEffectIntensityO = 0.0f;
+    }
     return LivingEntity::removeEffectNoUpdate(effect);
 }
 
@@ -403,7 +815,13 @@ void LocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
 
 unsigned int LocalPlayer::GetThirdPersonView(bool firstPerson)
 {
-    return (unsigned int)mThirdPersonView;
+    if (IsSpectatingOtherPlayer() && !firstPerson) {
+        return 1;
+    }
+    if (mDRCTouching && isAlive()) {
+        return 2;
+    }
+    return static_cast<unsigned int>(mThirdPersonView);
 }
 
 void LocalPlayer::SetThirdPersonView(int view)
@@ -492,17 +910,411 @@ bool LocalPlayer::doesLevelAllowBlockToBreak(const BlockPos& pos)
 
 unsigned int LocalPlayer::pickBlock(bool select)
 {
-    return select ? 1U : 0U;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mHitResult == NULL)
+        return 0;
+
+    HitResult* hitResult = minecraft->mHitResult;
+    not_null_ptr<ItemInstance> pickedItem(new ItemInstance());
+    boost::shared_ptr<BlockEntity> blockEntity;
+
+    if (hitResult->mType == HitResult::BLOCK)
+    {
+        const BlockPos pos = hitResult->getBlockPos();
+        const BlockState* state = mLevel->getBlockState(pos);
+        if (state->getMaterial() == Material::AIR)
+            return 0;
+
+        Block* block = state->getBlock();
+        pickedItem = block->getCloneItemInstance(mLevel, pos, state);
+        blockEntity = mLevel->getBlockEntity(pos);
+    }
+    else if (hitResult->mType == HitResult::ENTITY)
+    {
+        const unsigned long long entityType = hitResult->mEntity->GetType();
+        if (entityType == 0x000000000A080001ULL)
+        {
+            pickedItem.reset(new ItemInstance(Items::painting));
+        }
+        else if (entityType == 0x000000000A080003ULL)
+        {
+            pickedItem.reset(new ItemInstance(Items::lead));
+        }
+        else if (entityType == 0x000000000A080002ULL)
+        {
+            boost::shared_ptr<ItemFrame> itemFrame =
+                boost::static_pointer_cast<ItemFrame>(hitResult->mEntity);
+            not_null_ptr<ItemInstance> frameItem = itemFrame->getItem();
+            if (!frameItem->isEmpty())
+                pickedItem = frameItem->copy();
+        }
+        else if ((entityType & 0x000000000A800000ULL) == 0x000000000A800000ULL)
+        {
+            boost::shared_ptr<Minecart> minecart =
+                boost::static_pointer_cast<Minecart>(hitResult->mEntity);
+            const int type = minecart->getType()->mId;
+            Item* item = Items::minecart;
+            if (type == 1)
+                item = Items::chestMinecart;
+            else if (type == 2)
+                item = Items::furnaceMinecart;
+            else if (type == 3)
+                item = Items::tntMinecart;
+            else if (type == 5)
+                item = Items::hopperMinecart;
+            else if (type == 6)
+                item = Items::commandBlockMinecart;
+            pickedItem.reset(new ItemInstance(item));
+        }
+        else if (eTYPE_DERIVED_FROM__FULT1(0, static_cast<unsigned int>(ENTITY_TYPE_BOAT),
+                                            static_cast<unsigned int>(entityType >> 32),
+                                            static_cast<unsigned int>(entityType)))
+        {
+            boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(hitResult->mEntity);
+            pickedItem.reset(new ItemInstance(boat->getDropItem()));
+        }
+        else if (eTYPE_DERIVED_FROM__FULT1(0, static_cast<unsigned int>(ENTITY_TYPE_ARMOR_STAND),
+                                            static_cast<unsigned int>(entityType >> 32),
+                                            static_cast<unsigned int>(entityType)))
+        {
+            pickedItem.reset(new ItemInstance(Items::armorStand));
+        }
+        else if (eTYPE_DERIVED_FROM__FULT1(0, 0x0800000EU,
+                                            static_cast<unsigned int>(entityType >> 32),
+                                            static_cast<unsigned int>(entityType)))
+        {
+            pickedItem.reset(new ItemInstance(Items::endCrystal));
+        }
+        else
+        {
+            const ResourceLocation key = EntityIO::getKey(hitResult->mEntity);
+            if (EntityIO::sSpawnInfo.find(key) == EntityIO::sSpawnInfo.end())
+                return 0;
+            pickedItem.reset(new ItemInstance(Items::spawnEgg));
+            SpawnEggItem::addSpawnEntity(pickedItem, key);
+        }
+    }
+    else
+    {
+        return 0;
+    }
+
+    if (blockEntity && boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity))
+        blockEntity.reset();
+    if (blockEntity)
+        pickedItem = Minecraft::addCustomNbtData(pickedItem, blockEntity);
+
+    if (pickedItem->isEmpty())
+        return 0;
+
+    Inventory* inventory = mInventory.get();
+    if (!select)
+    {
+        inventory->setPickedItem(pickedItem);
+        minecraft->mGameMode->handlePickItem(pickedItem);
+        return 1;
+    }
+
+    if (!mAbilities.mInstabuild)
+        return inventory->findSlotMatchingItem(pickedItem, false) != -1;
+    return 1;
 }
 
 unsigned char LocalPlayer::handleMouseClick(int button)
 {
-    return (unsigned char)(button != 0);
+    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
+    HitResult* hitResult = mMinecraft->mHitResult;
+    const InteractionHand::EInteractionHand hand = InteractionHand::eInteractionHand_MainHand;
+
+    if (isUsingItem())
+        return 0;
+
+    if (button == 0)
+    {
+        if (mLastAttackTick > 0)
+            return 0;
+
+        if (hitResult == NULL)
+        {
+            if (gameMode->hasMissTime())
+                mLastAttackTick = 10;
+            resetAttackStrengthTicker();
+            if (swing(hand))
+                playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
+            return 0;
+        }
+
+        if (hitResult->mType == HitResult::BLOCK)
+        {
+            const BlockPos pos = hitResult->getBlockPos();
+            if (!doesLevelAllowBlockToBreak(pos))
+            {
+                if (gameMode->hasMissTime())
+                    mLastAttackTick = 10;
+                resetAttackStrengthTicker();
+            }
+            else
+            {
+                gameMode->startDestroyBlock(pos, hitResult->mDirection);
+            }
+            swing(hand);
+        }
+        else if (hitResult->mType == HitResult::ENTITY)
+        {
+            gameMode->attack(player, hitResult->mEntity);
+            swing(hand);
+        }
+        return 0;
+    }
+
+    if (button == 1)
+    {
+        mIdleTicks = 4;
+        if (isHandsBusy())
+            return 0;
+
+        if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
+        {
+            if (mCreativeRepeatState == 4)
+                return 0;
+            MultiplayerLocalPlayer* multiplayerPlayer =
+                dynamic_cast<MultiplayerLocalPlayer*>(this);
+            if (multiplayerPlayer != NULL && mPacketListener != NULL)
+                multiplayerPlayer->StopSleeping();
+            return 0;
+        }
+
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
+        {
+            const MiniGameDef* miniGame = mMinecraft->GetMiniGame();
+            if (miniGame->ArePowerupsActive())
+            {
+                not_null_ptr<ItemInstance> item = getItemInHand(hand);
+                if (!item->isEmpty())
+                {
+                    boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
+                        boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(player);
+                    if (multiplayerPlayer)
+                    {
+                        PowerupItems::UsePowerupItem(player, Item::getId(item->getItem()));
+                        multiplayerPlayer->mPacketListener->send(
+                            boost::shared_ptr<Packet>(new ServerboundUseItemPacket(hand)));
+                        item->shrink(1);
+                        if (item->getCount() == 0)
+                            setItemInHand(hand, ItemInstance::EMPTY);
+                        return 1;
+                    }
+                }
+            }
+            return 0;
+        }
+
+        if (hitResult != NULL && hitResult->mType == HitResult::BLOCK)
+        {
+            const BlockPos pos = hitResult->getBlockPos();
+            if (mLevel->getBlockState(pos)->getMaterial() != Material::AIR)
+            {
+                not_null_ptr<ItemInstance> item = getItemInHand(hand);
+                const int oldCount = item->isEmpty() ? 0 : item->getCount();
+                bool used = false;
+                const InteractionResult::EInteractionResult result = gameMode->useItemOn(
+                    player, mLevel, pos, hitResult->mDirection, hitResult->mLocation,
+                    hand, false, &used);
+                if (result == InteractionResult::eInteractionResult_Success)
+                {
+                    swing(hand);
+                    if (!item->isEmpty())
+                    {
+                        const int newCount = item->getCount();
+                        if (newCount == 0)
+                            setItemInHand(hand, ItemInstance::EMPTY);
+                        else if (newCount != oldCount || gameMode->hasInfiniteItems())
+                            mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(hand);
+                    }
+                    return used;
+                }
+            }
+        }
+
+        if (hitResult != NULL && hitResult->mType == HitResult::ENTITY)
+        {
+            not_null_ptr<ItemInstance> item = getItemInHand(hand);
+            if (gameMode->interact(player, hitResult->mEntity, item, hand) ==
+                InteractionResult::eInteractionResult_Success)
+                return 0;
+            if (gameMode->interactAt(player, hitResult->mEntity, hitResult, item, hand) ==
+                InteractionResult::eInteractionResult_Success)
+                return 0;
+        }
+
+        not_null_ptr<ItemInstance> item = getItemInHand(hand);
+        if (!item->isEmpty())
+        {
+            const InteractionResult::EInteractionResult result =
+                gameMode->useItem(player, mLevel, hand, false);
+            if (result == InteractionResult::eInteractionResult_Success)
+            {
+                mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(hand);
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+
+    if (button == 2 && !Minecraft::InMiniGame(eMiniGameId_Any, true))
+        pickBlock(false);
+    return 0;
 }
 
 unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
 {
-    return (unsigned int)(button >= 0 && pressed);
+    if (!pressed)
+    {
+        mCreativeRepeatState = 0;
+        return 0;
+    }
+
+    if (mCreativeRepeatState == 4 || mCreativeRepeatState == 5)
+        return 0;
+
+    if (mCreativeRepeatState == 0)
+    {
+        mCreativeMouseStartX = static_cast<float>(mX);
+        mCreativeMouseStartY = static_cast<float>(mY);
+        mCreativeMouseStartZ = static_cast<float>(mZ);
+
+        const unsigned char handled = handleMouseClick(button);
+        if (isSprinting() || isPassenger() || isSleeping())
+        {
+            mCreativeRepeatState = 5;
+            return 1;
+        }
+
+        if (handled == 0)
+        {
+            mCreativeRepeatState = 4;
+            return 1;
+        }
+
+        mCreativeMouseRepeatDelay = 0.0f;
+        mCreativeRepeatState = 1;
+        return 1;
+    }
+
+    if (isSprinting())
+    {
+        mCreativeRepeatState = 5;
+        return 0;
+    }
+
+    const float deltaX = static_cast<float>(mX) - mCreativeMouseStartX;
+    const float deltaY = static_cast<float>(mY) - mCreativeMouseStartY;
+    const float deltaZ = static_cast<float>(mZ) - mCreativeMouseStartZ;
+    const float changeX = deltaX - mCreativeMouseDeltaX;
+    const float changeY = deltaY - mCreativeMouseDeltaY;
+    const float changeZ = deltaZ - mCreativeMouseDeltaZ;
+    const float changeLength = std::sqrt(changeX * changeX + changeY * changeY + changeZ * changeZ);
+
+    if (mCreativeRepeatState == 2)
+    {
+        if (changeLength < 0.01f)
+        {
+            mCreativeMouseRepeatDelay = 0.0f;
+            mCreativeRepeatState = 3;
+        }
+    }
+    else if (mCreativeRepeatState == 3)
+    {
+        if (changeLength >= 0.01f)
+        {
+            mCreativeMouseRepeatDelay = 0.0f;
+            mCreativeRepeatState = 2;
+        }
+        else
+        {
+            mCreativeMouseRepeatDelay += 0.1f;
+            if (mCreativeMouseRepeatDelay > 0.7f)
+            {
+                mCreativeMouseRepeatDelay = 0.0f;
+                mCreativeRepeatState = 1;
+            }
+        }
+    }
+
+    mCreativeMouseDeltaX = deltaX;
+    mCreativeMouseDeltaY = deltaY;
+    mCreativeMouseDeltaZ = deltaZ;
+
+    const float movement[3] = {deltaX, deltaY, deltaZ};
+    int axis = -1;
+    bool delayedRepeat = false;
+
+    for (int candidate = 0; candidate < 3; ++candidate)
+    {
+        if (std::fabs(movement[candidate]) >= 1.0f)
+        {
+            axis = candidate;
+            break;
+        }
+    }
+
+    if (axis < 0)
+    {
+        if (mCreativeMouseRepeatDelay <= 0.0f)
+            return 0;
+
+        const float remaining = 1.0f - mCreativeMouseRepeatDelay;
+        if (std::fabs(deltaX) < remaining && std::fabs(deltaY) < remaining &&
+            std::fabs(deltaZ) < remaining)
+            return 0;
+        delayedRepeat = true;
+        for (int candidate = 0; candidate < 3; ++candidate)
+        {
+            if (std::fabs(movement[candidate]) >= remaining)
+            {
+                axis = candidate;
+                break;
+            }
+        }
+    }
+
+    if (axis < 0)
+        return 0;
+
+    const double savedX = mX;
+    const double savedY = mY;
+    const double savedZ = mZ;
+    float rayX = mCreativeMouseStartX + deltaX;
+    float rayY = mCreativeMouseStartY + deltaY;
+    float rayZ = mCreativeMouseStartZ + deltaZ;
+    if (!delayedRepeat)
+    {
+        const float snapped = movement[axis] < 0.0f ? std::ceil(movement[axis]) :
+                                                       std::floor(movement[axis]);
+        if (axis == 0)
+            rayX = mCreativeMouseStartX + snapped;
+        else if (axis == 1)
+            rayY = mCreativeMouseStartY + snapped;
+        else
+            rayZ = mCreativeMouseStartZ + snapped;
+    }
+    mCreativeMouseStartX = rayX;
+    mCreativeMouseStartY = rayY;
+    mCreativeMouseStartZ = rayZ;
+    mX = rayX;
+    mY = rayY;
+    mZ = rayZ;
+    mMinecraft->mGameRenderer->pick(1.0f);
+    mX = savedX;
+    mY = savedY;
+    mZ = savedZ;
+    handleMouseClick(button);
+    mCreativeMouseRepeatDelay = 0.0f;
+
+    mCreativeRepeatState = mCreativeRepeatState == 3 ? 1 : 2;
+    return 0;
 }
 
 unsigned long long LocalPlayer::handleMouseDown(int button, bool pressed)
@@ -886,7 +1698,7 @@ void LocalPlayer::updateDamageIndicator(float amount, float previous, bool criti
 
 double LocalPlayer::getJumpRidingScale()
 {
-    return 0.0;
+    return mRideJumpScale;
 }
 
 unsigned long long LocalPlayer::sendRidingJump()
@@ -923,12 +1735,32 @@ void LocalPlayer::setPermissionLevel(int level)
 
 unsigned int LocalPlayer::freeAtAndAbove(const BlockPos& pos)
 {
-    return freeAt(pos) && !mLevel->getBlockState(pos.above())->isSolidRender();
+    const BlockState* state = mLevel->getBlockState(pos);
+    const BlockState* aboveState = mLevel->getBlockState(pos.above());
+    bool freeAtPos = !state->isSolidRender();
+    bool freeAbove = !aboveState->isSolidRender();
+
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        if (!freeAtPos)
+            freeAtPos = !g_pApp->ShouldCollideWith(state->getBlock());
+        if (!freeAbove)
+            freeAbove = !g_pApp->ShouldCollideWith(aboveState->getBlock());
+    }
+
+    return freeAtPos && freeAbove;
 }
 
 unsigned int LocalPlayer::freeAt(const BlockPos& pos)
 {
-    return !mLevel->getBlockState(pos)->isSolidRender();
+    const BlockState* state = mLevel->getBlockState(pos);
+    if (!state->isSolidRender())
+        return true;
+
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return false;
+
+    return !g_pApp->ShouldCollideWith(state->getBlock());
 }
 
 bool LocalPlayer::checkInBlock(double x, double y, double z)
@@ -1030,8 +1862,9 @@ bool LocalPlayer::isRidingJumpable()
     boost::shared_ptr<Entity> vehicle = getVehicle();
     if (!isPassenger() || !vehicle)
         return false;
-    boost::shared_ptr<AbstractHorse> horse = boost::dynamic_pointer_cast<AbstractHorse>(vehicle);
-    return horse && horse->canJump();
+    boost::shared_ptr<PlayerRideableJumping> rideable =
+        boost::dynamic_pointer_cast<PlayerRideableJumping>(vehicle);
+    return rideable && rideable->canJump();
 }
 
 bool LocalPlayer::isAutoJumpEnabled()

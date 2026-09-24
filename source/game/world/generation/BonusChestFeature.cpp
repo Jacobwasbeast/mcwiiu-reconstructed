@@ -1,11 +1,15 @@
 #include "game/world/generation/BonusChestFeature.hpp"
 
+#include <boost/pointer_cast.hpp>
+
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/ChestBlockEntity.hpp"
 #include "game/world/block/Material.hpp"
 
 BonusChestFeature::~BonusChestFeature()
@@ -48,9 +52,15 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
         BlockPos candidate(0, 0, 0);
         if (!useOrigin)
         {
-            candidate = position.offset(random.nextInt(4) - random.nextInt(4),
-                                        random.nextInt(3) - random.nextInt(3),
-                                        random.nextInt(4) - random.nextInt(4));
+            const int xOffsetStart = random.nextInt(4);
+            const int xOffsetEnd = random.nextInt(4);
+            const int yOffsetStart = random.nextInt(3);
+            const int yOffsetEnd = random.nextInt(3);
+            const int zOffsetStart = random.nextInt(4);
+            const int zOffsetEnd = random.nextInt(4);
+            candidate = position.offset(xOffsetStart - xOffsetEnd,
+                                        yOffsetStart - yOffsetEnd,
+                                        zOffsetStart - zOffsetEnd);
         }
         else
         {
@@ -68,6 +78,18 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
         }
 
         level->setBlock(candidate, Blocks::chest->defaultBlockState(), 2, false);
+
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(candidate);
+        if (blockEntity->GetType() == 0x01e00201ULL)
+        {
+            boost::shared_ptr<ChestBlockEntity> chest =
+                boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
+            if (chest)
+            {
+                chest->setLootTable(&BuiltInLootTables::SPAWN_BONUS_CHEST, random.nextLong());
+                chest->mLarge = true;
+            }
+        }
 
         const BlockPos east = candidate.east();
         const BlockPos west = candidate.west();

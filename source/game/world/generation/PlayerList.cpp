@@ -14,6 +14,7 @@
 #include "game/core/Settings.hpp"
 #include "game/core/Socket.hpp"
 #include "game/core/MasterGameMode.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/PortalForcer.hpp"
 #include "game/data/LevelStorage.hpp"
 #include "game/world/generation/PlayerIO.hpp"
@@ -28,6 +29,7 @@
 #include "game/network/ClientboundGameEventPacket.hpp"
 #include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
 #include "game/network/ClientboundRespawnPacket.hpp"
+#include "game/network/ClientboundSetExperiencePacket.hpp"
 #include "game/network/DisconnectPacket.hpp"
 #include "game/network/ClientboundSetCarriedItemPacket.hpp"
 #include "game/network/ClientboundSetPlayerTeamPacket.hpp"
@@ -41,6 +43,7 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/server/ServerPlayerGameMode.hpp"
@@ -53,9 +56,11 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/world/LevelSettings.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/Level.hpp"
@@ -735,117 +740,176 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
                                                     int dimension, bool conqueredEnd)
 {
     BOOST_ASSERT(player);
-    if (!player || !mServer)
-        return boost::shared_ptr<ServerPlayer>();
 
     const int oldDimension = player->mDimension;
     ServerLevel* oldLevel = mServer->getLevel(oldDimension);
     ServerLevel* newLevel = mServer->getLevel(dimension);
-    if (!newLevel)
-        return player;
-
     const bool receivingAllPackets = canReceiveAllPackets(player);
-    if (oldLevel && oldLevel->getTracker())
-    {
-        if (receivingAllPackets)
-            oldLevel->getTracker()->clear(player);
-        else
-            oldLevel->getTracker()->removeEntity(player);
-    }
-    removePlayerFromReceiving(player, true, -1);
-    if (oldLevel)
-        oldLevel->removeEntityImmediately(player);
+    if (receivingAllPackets)
+        oldLevel->getTracker()->clear(player);
+    else
+        oldLevel->getTracker()->removeEntity(player);
 
-    ServerPlayerGameMode* gameMode = new ServerPlayerGameMode(newLevel, mGameMode);
-    if (player->mGameMode)
-        gameMode->RestoreFromOld(player->mGameMode);
-    boost::shared_ptr<ServerPlayer> replacement(
-        new ServerPlayer(mServer, newLevel, player->getName(), gameMode));
-    replacement->mDimension = dimension;
+    const bool wasReceiving = removePlayerFromReceiving(player, true, 0) != 0;
+    oldLevel->getChunkMap()->remove(player);
+
+    std::vector<boost::shared_ptr<ServerPlayer> >::iterator oldPlayer =
+        std::find(mPlayers.begin(), mPlayers.end(), player);
+    if (oldPlayer != mPlayers.end())
+        mPlayers.erase(oldPlayer);
+
+    oldLevel->removeEntityImmediately(player);
+    player->mDimension = dimension;
+
+    ServerPlayerGameMode* newGameMode = new ServerPlayerGameMode(newLevel, mGameMode);
+    boost::shared_ptr<ServerPlayer> replacement(new ServerPlayer(
+        mServer, newLevel, player->getName(), newGameMode));
+    replacement->mConnection = player->mConnection;
+    replacement->restoreFrom(player, conqueredEnd);
+
+    replacement->setMainArm(player->getMainArm());
+    if (conqueredEnd)
+        replacement->mInventory->m_selected = player->mInventory->m_selected;
+    replacement->mIsGuest = player->mIsGuest;
     replacement->setXuid(player->mXuid);
     replacement->m_0x798 = player->m_0x798;
     replacement->mSuid = player->mSuid;
-    replacement->setMainArm(player->getMainArm());
+    replacement->setPlayerDefaultSkin(player->mField0x7d8);
+    replacement->mPlayerIndex = player->mPlayerIndex;
+    replacement->setCustomSkin(player->mField0x7dc);
+    replacement->setCustomCape(player->mField0x7e0);
     replacement->setPlayerGamePrivilege(
         Player::ePlayerGamePrivilege_All,
         player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All));
-    replacement->mConnection = player->mConnection;
-    replacement->mGameMode->setLevel(newLevel);
+    replacement->mGameMode->setGameRules(player->mGameMode->mGameRules);
+    player->mGameMode->nullifyGameRules();
+    replacement->mDimension = dimension;
 
-    BlockPos spawn = newLevel->getSharedSpawnPos();
-    if (!conqueredEnd)
+    addPlayerToReceiving(replacement, wasReceiving && oldDimension == dimension);
+    updatePlayerGameMode(replacement, player, oldLevel);
+
+    BlockPos* respawnPosition = player->getRespawnPosition();
+    const bool respawnForced = player->isRespawnForced() != 0;
+    const bool useSavedRespawn = !player->mRespawnState || dimension != oldDimension
+        || player->getHealth() <= 0.0f;
+    if (useSavedRespawn)
     {
-        BlockPos* respawnPos = player->getRespawnPosition();
-        if (respawnPos != NULL)
+        if (respawnPosition != NULL)
         {
-            BlockPos* validPos = Player::checkBedValidRespawnPosition(
-                newLevel, *respawnPos, player->isRespawnForced() != 0);
-            if (validPos != NULL)
+            BlockPos* validPosition = Player::checkBedValidRespawnPosition(
+                oldLevel, *respawnPosition, respawnForced);
+            if (validPosition == NULL)
             {
-                spawn = *validPos;
-                delete validPos;
+                replacement->mConnection->send(boost::shared_ptr<Packet>(
+                    new ClientboundChatPacket(
+                        ClientboundChatPacket::eChatPacketMessage_BedNotValid, -1)));
+            }
+            else
+            {
+                replacement->moveTo(validPosition->x + 0.5, validPosition->y + 0.1,
+                                    validPosition->z + 0.5, 0.0f, 0.0f);
+                replacement->setRespawnPosition(new BlockPos(*respawnPosition), respawnForced);
+                delete validPosition;
             }
         }
     }
-    replacement->moveTo(spawn.x + 0.5, spawn.y, spawn.z + 0.5,
-                        player->mYRot, player->mXRot);
-
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-         it != mPlayers.end(); ++it)
+    else
     {
-        if (*it == player)
-        {
-            *it = replacement;
-            break;
-        }
+        replacement->moveTo(player->mX, player->mY, player->mZ,
+                            player->mYRot, player->mXRot);
+        if (respawnPosition != NULL)
+            replacement->setRespawnPosition(new BlockPos(*respawnPosition), respawnForced);
     }
-    newLevel->addEntity(replacement);
-    addPlayerToReceiving(replacement, false);
-    newLevel->getChunkMap()->add(replacement);
+
     newLevel->getChunkSource()->create(static_cast<int>(replacement->mX) >> 4,
                                        static_cast<int>(replacement->mZ) >> 4);
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        std::vector<AABB*>* collisions = newLevel->getCollisionAABBs(
+            replacement, replacement->mBoundingBox, false, false, false);
+        while (!collisions->empty())
+        {
+            replacement->moveTo(replacement->mX, replacement->mY + 1.0,
+                                replacement->mZ, replacement->mYRot, replacement->mXRot);
+            collisions = newLevel->getCollisionAABBs(
+                replacement, replacement->mBoundingBox, false, false, false);
+        }
+    }
 
-    if (replacement->mConnection)
+    if (mGameMode != NULL)
+        mGameMode->OnSpawn(replacement, player, true);
+
+    LevelData* levelData = newLevel->getLevelData();
+    const int packetXZSize = levelData->getXZSize();
+    const int packetHellScale = levelData->getHellScale();
+    const int packetCloudHeight = levelData->getCloudHeight();
+    const bool packetModernEnd = levelData->getModernEnd();
+    const unsigned char packetBiomeScale =
+        static_cast<unsigned char>(levelData->getBiomeScale());
+    const int packetBiomeCentreX = levelData->getBiomeCentreXChunk();
+    const int packetBiomeCentreZ = levelData->getBiomeCentreZChunk();
+    const bool seaLevelEnabled = newLevel->useNewSeaLevel();
+    const int seaLevel = seaLevelEnabled ? newLevel->getSeaLevel() : -1;
+    const long long seed = newLevel->getSeed();
+    const GameType* gameType = replacement->mGameMode->GetGameType();
+    const Difficulty* difficulty = newLevel->getDifficulty();
+    LevelType* levelType = levelData->getGeneratorType();
+    const bool packetSeaLevelEnabled = newLevel->useNewSeaLevel();
+    replacement->mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundRespawnPacket(
+            replacement->mX, replacement->mY, replacement->mZ, replacement->mYRot,
+            replacement->mXRot, static_cast<char>(replacement->mDimension),
+            seed, gameType, difficulty, levelType,
+            packetSeaLevelEnabled, replacement->getId(), packetXZSize, packetHellScale,
+            packetCloudHeight, packetModernEnd, packetBiomeScale,
+            packetBiomeCentreX, packetBiomeCentreZ,
+            conqueredEnd, seaLevel)));
+    replacement->mConnection->teleport(replacement->mX, replacement->mY, replacement->mZ,
+                                       replacement->mYRot, replacement->mXRot, true, true);
+    replacement->mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundSetExperiencePacket(replacement->mExperienceProgress,
+                                           replacement->mTotalExperience,
+                                           replacement->mExperienceLevel)));
+
+    if (conqueredEnd)
     {
-        const GameType* gameType = replacement->mGameMode->GetGameType();
-        const Difficulty* difficulty = newLevel->getDifficulty();
-        LevelData* levelData = newLevel->getLevelData();
-        LevelType* levelType = levelData ? levelData->getGeneratorType() : NULL;
-        const bool keepData = newLevel->useNewSeaLevel();
-        const int seaLevel = keepData ? newLevel->getSeaLevel() : -1;
-        replacement->mConnection->send(boost::shared_ptr<Packet>(
-            new ClientboundRespawnPacket(replacement->mX, replacement->mY,
-                replacement->mZ, replacement->mYRot, replacement->mXRot,
-                static_cast<char>(dimension), newLevel->getSeed(), gameType, difficulty,
-                levelType, keepData, replacement->getId(), gameType ? gameType->getId() : 0,
-                difficulty ? difficulty->getId() : 0, dimension,
-                levelData != NULL && levelData->isHardcore(), 0, mViewDistance,
-                mViewDistance, true, seaLevel)));
-        replacement->mConnection->teleport(replacement->mX, replacement->mY,
-                                            replacement->mZ, replacement->mYRot,
-                                            replacement->mXRot, true, true);
-    }
-    replacement->markAttributesDirty();
-    sendLevelInfo(replacement, newLevel);
-    sendAllPlayerInfo(replacement);
-    if (mServer->mMasterGameMode)
-    {
-        mServer->mMasterGameMode->OnSpawn(replacement, player, false);
-        mServer->mMasterGameMode->OnSpawned(replacement, false);
-    }
-    std::vector<MobEffectInstance*>* effects = replacement->getActiveEffects();
-    if (replacement->mConnection && effects)
-    {
+        std::vector<MobEffectInstance*>* effects = player->getActiveEffects();
         for (std::vector<MobEffectInstance*>::iterator it = effects->begin();
              it != effects->end(); ++it)
-            if (*it)
-                replacement->mConnection->send(boost::shared_ptr<Packet>(
-                    new ClientboundUpdateMobEffectPacket(replacement->getId(), *it)));
+            replacement->addEffect(new MobEffectInstance(*it), boost::shared_ptr<Entity>());
+        delete effects;
+
+        boost::shared_ptr<SynchedEntityData> entityData = replacement->getEntityData();
+        entityData->set(Entity::DATA_SHARED_FLAGS_ID,
+                        entityData->get(Entity::DATA_SHARED_FLAGS_ID), true);
     }
+
+    sendLevelInfo(replacement, newLevel);
+    newLevel->getChunkMap()->add(replacement);
+    newLevel->addEntity(replacement);
+    mPlayers.push_back(replacement);
+    replacement->initMenu();
+
+    replacement->setHealth(conqueredEnd ? player->getHealth() : replacement->getHealth());
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->isTutorial())
+    {
+        Tutorial* tutorial = minecraft->mGameMode->getTutorial();
+        if (tutorial != NULL
+            && !tutorial->isStateCompleted(static_cast<eTutorial_State>(0xf)))
+            g_pApp->getGameRuleDefinitions()->postProcessPlayer(replacement);
+    }
+    if (oldDimension == 1 && replacement->mDimension != 1)
+        replacement->displayClientMessage(0x6e3a65e3, true);
+    if (mGameMode != NULL)
+        mGameMode->OnSpawned(replacement, true);
+
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
          it != mPlayers.end(); ++it)
-        if (*it && *it != replacement)
+        if (*it)
             (*it)->notifyPlayerRespawn(&player, &replacement);
+
     return replacement;
 }
 

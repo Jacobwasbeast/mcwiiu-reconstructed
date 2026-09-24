@@ -40,6 +40,9 @@ class PlayerRenderer;
 
 class LocalPlayer : public AbstractClientPlayer
 {
+    friend class GameRenderer;
+    friend class Gui;
+
 public:
     LocalPlayer(Minecraft* minecraft, Level* level, User* user, int playerIndex);
     virtual ~LocalPlayer();
@@ -60,17 +63,17 @@ public:
     virtual boost::shared_ptr<Entity> changeDimension(int dimension);
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     virtual void closeContainer();
-    virtual boost::shared_ptr<ItemEntity> drop(bool dropAll);
-    virtual void reallyDrop(boost::shared_ptr<ItemEntity> item);
-    virtual void openTextEdit(boost::shared_ptr<SignBlockEntity> sign);
-    virtual void openCommandBlock(boost::shared_ptr<CommandBlockEntity> block);
+    virtual boost::shared_ptr<ItemEntity> drop(bool dropAll) override;
+    not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item) override;
+    virtual void openTextEdit(boost::shared_ptr<SignBlockEntity> sign) override;
+    virtual void openCommandBlock(boost::shared_ptr<CommandBlockEntity> block) override;
     virtual int openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int level);
     virtual int openContainer(boost::shared_ptr<Container> container);
     virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container);
     virtual int startBlockInteraction(InteractionObject& interaction);
     virtual void openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand);
-    virtual void crit(boost::shared_ptr<Entity> entity);
-    virtual void magicCrit(boost::shared_ptr<Entity> entity);
+    virtual void crit(boost::shared_ptr<Entity> entity) override;
+    virtual void magicCrit(boost::shared_ptr<Entity> entity) override;
     virtual void serverAiStep();
     virtual float tickHeadTurn(float yRot, float xRot);
     virtual void aiStep();
@@ -79,14 +82,14 @@ public:
     virtual int openFireworks(int slot, int x, int y);
     virtual void displayClientMessage(int message, bool force);
     virtual void awardStat(Stat* stat, arrayWithLength<unsigned char> params);
-    virtual unsigned int GetThirdPersonView(bool);
-    virtual void SetThirdPersonView(int);
-    virtual unsigned int CanChangeThirdPersonView();
-    virtual void onCrafted(not_null_ptr<ItemInstance> item);
-    virtual void handleCollectItem(not_null_ptr<ItemInstance> item);
-    virtual void SpectatePlayerNext();
-    virtual void SpectatePlayerPrev();
-    virtual void StopSpectatingPlayer();
+    virtual unsigned int GetThirdPersonView(bool) override;
+    virtual void SetThirdPersonView(int) override;
+    virtual unsigned int CanChangeThirdPersonView() override;
+    virtual void onCrafted(not_null_ptr<ItemInstance> item) override;
+    virtual void handleCollectItem(not_null_ptr<ItemInstance> item) override;
+    virtual void SpectatePlayerNext() override;
+    virtual void SpectatePlayerPrev() override;
+    virtual void StopSpectatingPlayer() override;
     virtual const GameType* GetGameType();
     virtual void SetGameType(const GameType* gameType);
     virtual unsigned long long GetType();
@@ -111,18 +114,18 @@ public:
     virtual unsigned long long sendPosition();
     unsigned long long chat(const std::wstring&);
     bool swing(InteractionHand::EInteractionHand);
-    void respawn();
+    void respawn() override;
     void actuallyHurt(const DamageSource*, float);
     void clientSideCloseContainer();
     void hurtTo(float, TelemetryDamageSource);
-    void onUpdateAbilities();
+    void onUpdateAbilities() override;
     bool isLocalPlayer();
     void updateDamageIndicator(float, float, bool);
     double getJumpRidingScale();
     unsigned long long sendRidingJump();
     unsigned long long sendOpenInventory();
-    unsigned int getPermissionLevel();
-    void setPermissionLevel(int);
+    virtual unsigned int getPermissionLevel();
+    virtual void setPermissionLevel(int);
     unsigned int freeAtAndAbove(const BlockPos&);
     unsigned int freeAt(const BlockPos&);
     bool checkInBlock(double, double, double);
@@ -139,20 +142,20 @@ public:
     void mapPlayerChunk(unsigned int targetBlockId);
     double getDamageTaken();
     bool isSolidBlock(int x, int y, int z);
-    not_null_ptr<ItemInstance> getCarriedItem();
+    virtual not_null_ptr<ItemInstance> getCarriedItem();
     MultiPlayerGameMode* GetLocalGameMode();
-    GameMode* GetGameMode();
-    void StartSpectating();
-    void OnEquipArmor(not_null_ptr<ItemInstance> item);
-    void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);
+    GameMode* GetGameMode() override;
+    virtual void StartSpectating();
+    void OnEquipArmor(not_null_ptr<ItemInstance> item) override;
+    void OnTakeFromAnvil(not_null_ptr<ItemInstance> item) override;
     double getUnderwaterVisionClarity();
     void DoAutoAttackOnTouch(boost::shared_ptr<Entity>);
     double GetPercentageTraversed() const;
     void SetPercentageTraversed(double);
     void setDamageNearbyMobs(bool);
     bool getDamageNearbyMobs();
-    void setAndBroadcastCustomSkin(unsigned int);
-    void setAndBroadcastCustomCape(unsigned int);
+    virtual void setAndBroadcastCustomSkin(unsigned int);
+    virtual void setAndBroadcastCustomCape(unsigned int);
 
     void setHandsBusy(bool);
     unsigned long long getSessionTimer();
@@ -184,7 +187,10 @@ private:
     unsigned char mReserved0x8ad[3];
     Input* mInput;
     Minecraft* mMinecraft;
-    unsigned char mReserved0x8b8[0xc];
+    int mSprintDelay;
+    bool mSprintPending;
+    bool mFlyTogglePending;
+    unsigned char mReserved0x8be[6];
     unsigned int mIdleTicks;
     unsigned char mReserved0x8c8[4];
     int mSprinting;
@@ -193,10 +199,12 @@ private:
     float mViewXRot;
     float mViewYRotO;
     float mViewXRotO;
-    unsigned char mReserved0x8e0[0x08];
+    float mPortalEffectIntensity;
+    float mPortalEffectIntensityO;
     float mFallFlyYaw;
     float mFallFlyYawOld;
-    unsigned char mReserved0x8f0[0x08];
+    float mFallFlyingAlignment;
+    float mFallFlyingAlignmentO;
     bool mItemUsePending;
     unsigned char mReserved0x8f9[3];
     InteractionHand::EInteractionHand mUsedItemHand;
@@ -228,17 +236,26 @@ private:
     int mThirdPersonView;
     int mGameMode;
     bool mDRCTouching;
-    unsigned char mReserved0x949[0x17];
+    unsigned char mReserved0x949[0xf];
+    int mRideJumpTicks;
+    float mRideJumpScale;
 
 public:
     int mUserIndex;
 
 private:
-    unsigned char mReserved0x964[4];
+    bool mPresenceIdleSent;
+    unsigned char mReserved0x965[3];
     SmoothFloat mViewBob;
     SmoothFloat mViewBobPrev;
     SmoothFloat mViewBobAmount;
-    unsigned char mReserved0x98c[0x1c];
+    float mCreativeMouseStartX;
+    float mCreativeMouseStartY;
+    float mCreativeMouseStartZ;
+    float mCreativeMouseDeltaX;
+    float mCreativeMouseDeltaY;
+    float mCreativeMouseDeltaZ;
+    float mCreativeMouseRepeatDelay;
     int mCreativeRepeatState;
     unsigned char mReserved0x9ac[0xc];
     float mDamageTaken;

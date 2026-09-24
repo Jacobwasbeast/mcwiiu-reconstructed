@@ -26,7 +26,7 @@ public:
     virtual void heal(float amount);
     virtual void tick();
     virtual boost::shared_ptr<ItemEntity> drop();
-    virtual void reallyDrop(boost::shared_ptr<ItemEntity> item);
+    not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item) override;
     virtual void respawn();
     virtual void actuallyHurt(const DamageSource* source, float damage);
     virtual void completeUsingItem();

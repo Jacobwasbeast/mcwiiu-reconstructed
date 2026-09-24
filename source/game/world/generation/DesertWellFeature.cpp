@@ -47,8 +47,8 @@ bool DesertWellFeature::place(Level* level, Random& random, const BlockPos& orig
     {
         for (int x = -2; x <= 2; ++x)
         {
-            if (!level->isEmptyBlock(position.offset(x, -1, z))
-                && !level->isEmptyBlock(position.offset(-2, -1, z)))
+            if (level->isEmptyBlock(position.offset(x, -1, z))
+                && level->isEmptyBlock(position.offset(x, -2, z)))
             {
                 return false;
             }

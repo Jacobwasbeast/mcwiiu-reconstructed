@@ -1,5 +1,6 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 
+#include "game/client/render/LevelRenderer.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/Minecraft.hpp"
@@ -17,6 +18,8 @@
 #include "game/core/TeamInvite.hpp"
 #include "game/core/System.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundEngine.hpp"
+#include "game/client/audio/SoundType.hpp"
 #include "game/network/ClientboundSoundPacket.hpp"
 #include "game/network/CraftItemPacket.hpp"
 #include "game/network/DebugOptionsPacket.hpp"
@@ -360,7 +363,11 @@ bool MultiPlayerGameMode::destroyBlock(const BlockPos& pos)
 
     return result;
 }
-void MultiPlayerGameMode::creativeDestroyBlock(Minecraft*, MultiPlayerGameMode* mode, const BlockPos& pos, const Direction*) { if (mode != 0) mode->_destroyBlock(pos); }
+void MultiPlayerGameMode::creativeDestroyBlock(Minecraft* minecraft, MultiPlayerGameMode*,
+                                               const BlockPos& pos, const Direction* direction)
+{
+    minecraft->mLevel->extinguishFire(minecraft->mPlayer, pos, direction);
+}
 bool MultiPlayerGameMode::sameDestroyTarget(const BlockPos& pos)
 {
     not_null_ptr<ItemInstance> heldItem = mMinecraft->mPlayer->getMainHandItem();
@@ -412,6 +419,16 @@ bool MultiPlayerGameMode::continueDestroyBlock(const BlockPos& pos, const Direct
         mDestroyProgress += 0.02f;
     else
         mDestroyProgress += state->getDestroyProgress(mMinecraft->mPlayer, mMinecraft->mPlayer->mLevel, pos);
+
+    if ((mDestroyTicks & 3) == 0)
+    {
+        const SoundType* soundType = state->getBlock()->getSoundType();
+        const float volume = (soundType->getVolume() + 1.0f) * 0.125f;
+        const float pitch = soundType->getPitch() * 0.5f;
+        mMinecraft->mSoundEngine->play(soundType->getHitSound(),
+            static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f,
+            static_cast<float>(pos.z) + 0.5f, volume, pitch, 0);
+    }
     ++mDestroyTicks;
 
     if (mDestroyProgress >= 1.0f)
@@ -534,7 +551,71 @@ void MultiPlayerGameMode::StartSpectating()
 
 
 }
-bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction*) { mDestroyBlockPos = pos; mDestroying = true; return true; }
+bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction* direction)
+{
+    if (!mTutorial->tasksChecked && GetTutorialsEnabled())
+    {
+        const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+        mTutorial->startDestroyBlock(mMinecraft->mPlayer->getMainHandItem(), state);
+    }
+
+    if (Minecraft::InMiniGame(eMiniGameId_Lobby, true))
+    {
+        mConnection->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
+            ServerboundPlayerActionPacket::START_DESTROY_BLOCK, pos, direction, 0)));
+        stopDestroyBlock();
+        return false;
+    }
+
+    if (!mMinecraft->mPlayer->isAllowedToMine() || !MayDestroy(pos)
+        || !mMinecraft->mLevel->getWorldBorder()->isWithinBounds(pos))
+    {
+        stopDestroyBlock();
+        return false;
+    }
+
+    if (isCreative())
+    {
+        mConnection->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
+            ServerboundPlayerActionPacket::START_DESTROY_BLOCK, pos, direction, 0)));
+        creativeDestroyBlock(mMinecraft, this, pos, direction);
+        mDestroyDelay = 5;
+        return true;
+    }
+
+    if (mDestroying && sameDestroyTarget(pos))
+        return true;
+
+    if (mDestroying)
+    {
+        mConnection->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
+            ServerboundPlayerActionPacket::ABORT_DESTROY_BLOCK, mDestroyBlockPos, direction, 0)));
+    }
+
+    mConnection->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
+        ServerboundPlayerActionPacket::START_DESTROY_BLOCK, pos, direction, 0)));
+
+    const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+    bool spectatorMining = false;
+    if (isSpectator())
+        spectatorMining = Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation();
+
+    if (state->getMaterial() != Material::AIR && !spectatorMining
+        && state->getDestroyProgress(mMinecraft->mPlayer, mMinecraft->mPlayer->mLevel, pos) >= 1.0f)
+    {
+        destroyBlock(pos);
+        return true;
+    }
+
+    mDestroying = true;
+    mDestroyBlockPos = pos;
+    mDestroyItem = mMinecraft->mPlayer->getMainHandItem();
+    mDestroyTicks = 0;
+    mDestroyProgress = 0.0f;
+    mMinecraft->mLevel->destroyBlockProgress(mMinecraft->mPlayer->getId(), pos,
+        static_cast<int>(mDestroyProgress * 10.0f) - 1);
+    return true;
+}
 bool MultiPlayerGameMode::canHurtPlayer() { return isSurvival(); }
 void MultiPlayerGameMode::tick()
 {
@@ -615,6 +696,7 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
     bool handled = block->playerWillDestroy(level, pos, state, player);
     if (!handled)
     {
+        mMinecraft->mLevelRenderer->mDestroyedBlocks->destroyingBlockAt(level, pos);
         handled = level->setBlock(pos, Blocks::AIR->defaultBlockState(), 11, false);
         if (handled)
             block->destroy(level, pos, state);

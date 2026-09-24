@@ -4,8 +4,7 @@
 #include <string>
 
 #include "game/world/generation/RemotePlayer.hpp"
-
-class GhostGameMode;
+#include "game/core/GhostGameMode.hpp"
 
 class GhostPlayer : public RemotePlayer
 {
@@ -18,7 +17,7 @@ public:
     void setLapsCompleted(int lapsCompleted);
     double getProgress();
     void setProgress(double progress);
-    GhostGameMode* GetGameMode();
+    GhostGameMode* GetGameMode() override;
     virtual unsigned long long GetType();
 
 private:
