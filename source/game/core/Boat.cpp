@@ -696,7 +696,7 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!hasPassenger(passenger))
         return;
 
-    const double rideHeight = mOutOfControl ? 1.034999966621399 : getRideHeight();
+    const double rideHeight = mOutOfControl ? 0.009999999776482582 : getRideHeight();
     const double riderHeight = passenger->getRidingHeight();
 
     double lateralOffset = 0.0;

@@ -97,21 +97,24 @@ void GuiComponent::blit(int x, int y, int u, int v, int width, int height)
     BufferBuilder* builder = tesselator->getBuilder();
     builder->begin();
     float scale = 0.75f;
+    float screenScale = gGuiScreenScale;
     Minecraft* minecraft = Minecraft::GetInstance();
-    float xOffset = scale * static_cast<float>(minecraft->mWidth) /
-                    static_cast<float>(minecraft->mHeight);
-    float yOffset = scale;
-    float x0 = floorf(static_cast<float>(x)) - xOffset;
-    float y0 = floorf(static_cast<float>(y)) + floorf(static_cast<float>(height)) - yOffset;
-    float x1 = floorf(static_cast<float>(x)) + floorf(static_cast<float>(width)) - xOffset;
-    float y1 = floorf(static_cast<float>(y)) - yOffset;
+    float xOffset = (scale * static_cast<float>(minecraft->mWidth) /
+                     static_cast<float>(minecraft->mHeight)) / screenScale;
+    float yOffset = scale / screenScale;
+    float x0 = floorf(static_cast<float>(x) * screenScale) / screenScale;
+    float y0 = floorf(static_cast<float>(y) * screenScale) / screenScale;
+    float scaledWidth = floorf(static_cast<float>(width) * screenScale) / screenScale;
+    float scaledHeight = floorf(static_cast<float>(height) * screenScale) / screenScale;
+    float x1 = x0 + scaledWidth;
+    float y1 = y0 + scaledHeight;
     float u0 = static_cast<float>(u) * 0.00390625f;
     float v0 = static_cast<float>(v + height) * 0.00390625f;
     float u1 = static_cast<float>(u + width) * 0.00390625f;
     float v1 = static_cast<float>(v) * 0.00390625f;
-    builder->vertexUV(x0, y0, zLevel, u0, v0);
-    builder->vertexUV(x1, y0, zLevel, u1, v0);
-    builder->vertexUV(x1, y1, zLevel, u1, v1);
-    builder->vertexUV(x0, y1, zLevel, u0, v1);
+    builder->vertexUV(x0 - xOffset, y0 - yOffset, zLevel, u0, v0);
+    builder->vertexUV(x1 - xOffset, y0 - yOffset, zLevel, u1, v0);
+    builder->vertexUV(x1 - xOffset, y1 - yOffset, zLevel, u1, v1);
+    builder->vertexUV(x0 - xOffset, y1 - yOffset, zLevel, u0, v1);
     builder->end();
 }

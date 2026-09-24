@@ -70,14 +70,8 @@ private:
     BossHealthOverlay* mBossOverlays[4];
     float mJukeboxTime;
     float mUnknown19C;
-    int mUnknown1A0;
-    int mUnknown1A4;
-    int mUnknown1A8;
-    int mUnknown1AC;
-    int mUnknown1B0;
-    int mUnknown1B4;
-    int mUnknown1B8;
-    int mUnknown1BC;
+    ThermalAreaRuleDefinition* mThermalOverlayRules[4];
+    int mThermalOverlayFade[4];
     int mCharacterDisplayTime[4];
     int mUnknown1D0;
     float mVignetteBrightness;

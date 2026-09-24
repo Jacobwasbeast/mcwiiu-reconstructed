@@ -2,6 +2,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 
 #include <wchar.h>
+#include <cmath>
 
 Textures* Minecraft::getTextureManager()
 {
@@ -1967,41 +1968,72 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         mGameRenderer->tick(handleInput);
     PIXEndNamedEvent();
 
-    SparseLightStorage::tick();
-    CompressedBlockStorage::tick();
-    SparseDataStorage::tick();
-    mClientMasterGameMode->Tick();
+    static unsigned int levelTickMask = 0;
+    if (handleInput)
+    {
+        levelTickMask = 0;
+        SparseLightStorage::tick();
+        CompressedBlockStorage::tick();
+        SparseDataStorage::tick();
+        mClientMasterGameMode->Tick();
+    }
 
     for (int i = 0; i < mLevelCount; ++i)
     {
-        if (mLevels[i] == NULL)
+        MultiPlayerLevel* level = mLevels[i];
+        if (level != mPlayer->mLevel)
             continue;
+
+        if (level != NULL && !mAppPaused)
+            level->animateTick(static_cast<int>(std::floor(mPlayer->mX)),
+                               static_cast<int>(std::floor(mPlayer->mY)),
+                               static_cast<int>(std::floor(mPlayer->mZ)));
+
+        unsigned int levelMask = 1u << (i & 31);
+        if ((levelTickMask & levelMask) != 0)
+            continue;
+        levelTickMask |= levelMask;
 
         PIXBeginNamedEvent(0.0f, "Level renderer tick");
         if (!mAppPaused)
             mLevelRenderer->tick();
         PIXEndNamedEvent();
 
-        if (mGameRenderer->postEffectActive())
-            mGameRenderer->shutdownEffect();
-
-        if (!mAppPaused)
+        if (level == NULL)
         {
-            PIXBeginNamedEvent(0.0f, "Level entity tick");
-            mLevels[i]->tickEntities();
-            PIXEndNamedEvent();
+            if (mGameRenderer->postEffectActive())
+                mGameRenderer->shutdownEffect();
+        }
+        else
+        {
+            if (!mAppPaused)
+            {
+                int skyFlashTime = level->getSkyFlashTime();
+                if (skyFlashTime > 0)
+                    level->setSkyFlashTime(skyFlashTime - 1);
 
-            mLevels[i]->setSpawnSettings(mLevel->getDifficulty() != Difficulty::PEACEFUL, true);
-            PIXBeginNamedEvent(0.0f, "Level tick");
-            mLevels[i]->tick();
-            PIXEndNamedEvent();
+                PIXBeginNamedEvent(0.0f, "Level entity tick");
+                level->tickEntities();
+                PIXEndNamedEvent();
+            }
+
+            if (!mAppPaused)
+            {
+                level->setSpawnSettings(mLevel->getDifficulty() != Difficulty::PEACEFUL, true);
+                PIXBeginNamedEvent(0.0f, "Level tick");
+                level->tick();
+                PIXEndNamedEvent();
+            }
         }
     }
 
-    PIXBeginNamedEvent(0.0f, "Particle tick");
-    if (!mAppPaused)
-        mParticleEngine->tick();
-    PIXEndNamedEvent();
+    if (handleInput)
+    {
+        PIXBeginNamedEvent(0.0f, "Particle tick");
+        if (!mAppPaused)
+            mParticleEngine->tick();
+        PIXEndNamedEvent();
+    }
 
     if (mAppPaused)
         tickAllConnections();

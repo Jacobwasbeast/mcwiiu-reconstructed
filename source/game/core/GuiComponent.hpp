@@ -5,6 +5,8 @@
 
 class Font;
 
+extern float gGuiScreenScale;
+
 class GuiComponent
 {
 public:

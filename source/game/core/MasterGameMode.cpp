@@ -3318,7 +3318,8 @@ void MasterGameMode::OnDeath(boost::shared_ptr<ServerPlayer> player)
             player->setGameMode(const_cast<GameType*>(GameType::SPECTATOR));
         }
         else
-            player->sendMessage(0x79, &remainingLives, 1, 0, 0);
+            player->sendMessage(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x79),
+                                &remainingLives, 1, 0, 0);
     }
 
     if (miniGame != 0 && miniGame->GetId() == eMiniGameId_Glide)

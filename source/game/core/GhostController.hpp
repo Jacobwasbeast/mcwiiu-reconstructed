@@ -12,6 +12,7 @@
 class DataInputStream; class DataOutputStream; class Player; class GhostPlayer;
 class GhostController {
  friend class ClientMasterGameMode;
+ friend class GameRenderer;
 public:
  struct GhostRecordSample {
   short x;

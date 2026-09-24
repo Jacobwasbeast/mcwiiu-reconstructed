@@ -10,7 +10,7 @@ PostChain::PostChain(TextureManager* textureManager, ResourceManager* resourceMa
                      RenderTarget* screenTarget, ResourceLocation* name)
     : mScreenTarget(screenTarget), mResourceManager(resourceManager),
       mWidth(screenTarget->width), mHeight(screenTarget->height),
-      mTime(0.0f), mLastStamp(1.034999966621399f)
+      mTime(0.0f), mLastStamp(0.0f)
 {
     (void)textureManager;
     mName = name->toString();

@@ -12,6 +12,12 @@ class LivingEntity;
 class Player;
 class Vec3;
 
+extern float gCameraXOff;
+extern float gCameraYOff;
+extern float gCameraZOff;
+extern float gCameraYOff2;
+extern float gCameraXOff2;
+
 class Camera
 {
 public:

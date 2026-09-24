@@ -19,6 +19,7 @@
 #include <sstream>
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/MinecartHopper.hpp"
 #include "game/core/L10N.hpp"
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
@@ -85,6 +86,7 @@ struct SKIN_BOX
 #include "platform/wiiu/PlayerUID.hpp"
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include <algorithm>
+#include <boost/pointer_cast.hpp>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
@@ -2307,11 +2309,26 @@ uint32_t CMinecraftApp::LoadShulkerBoxMenu(int player, boost::shared_ptr<Invento
 }
 uint64_t CMinecraftApp::LoadHopperMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
 {
+    InventoryContainerMenuInitData* data = new InventoryContainerMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x35), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint32_t CMinecraftApp::LoadHopperMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<MinecartHopper> hopper)
 {
-    return 0;
+    InventoryContainerMenuInitData* data = new InventoryContainerMenuInitData();
+    data->inventory = inventory;
+    data->container = boost::dynamic_pointer_cast<Container>(hopper);
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    return static_cast<uint32_t>(gConsoleUIController.NavigateToScene(
+        player, static_cast<EUIScene>(0x35), data, static_cast<EUILayer>(6), static_cast<EUIGroup>(7)));
 }
 uint64_t CMinecraftApp::LoadHorseMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container, boost::shared_ptr<AbstractHorse> horse)
 {

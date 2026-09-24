@@ -4,10 +4,10 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/GameMode.hpp"
-#include "game/world/generation/GhostPlayer.hpp"
 
 class BlockPos;
 class Direction;
+class GhostPlayer;
 class GameType;
 class Level;
 class MiniGameDef;

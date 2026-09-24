@@ -3,6 +3,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Minecraft.hpp"
+#include "game/world/generation/GhostPlayer.hpp"
 
 GhostGameMode::GhostGameMode(GhostPlayer* player)
     : GameMode(), mGhostPlayer(player)
