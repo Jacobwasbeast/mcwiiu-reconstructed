@@ -21,6 +21,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/BiomeSource.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -57,6 +58,8 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
@@ -601,9 +604,9 @@ void GameRenderer::onResourceManagerReload(ResourceManager*)
 
 double GameRenderer::GetFovVal()
 {
-    double value;
+    float value;
     std::memcpy(&value, reinterpret_cast<const char*>(this) + 0x110, sizeof(value));
-    return value;
+    return static_cast<double>(value);
 }
 
 void GameRenderer::UpdateElementStorageDeleteTicks()
@@ -662,10 +665,9 @@ void GameRenderer::tickLightTexture()
     *lightBrightness = *lightBrightness + (newValue - *lightBrightness);
 }
 
-AbstractClientPlayer* GameRenderer::getCamera()
+boost::shared_ptr<Entity> GameRenderer::getCamera()
 {
-    boost::shared_ptr<Entity> camera = Minecraft::GetInstance()->getCameraEntity();
-    return dynamic_cast<AbstractClientPlayer*>(camera.get());
+    return Minecraft::GetInstance()->getCameraEntity();
 }
 
 void GameRenderer::tickRain()
@@ -694,11 +696,7 @@ void GameRenderer::tickRain()
     const int rainTime = static_cast<int>(mTickCount);
     mRandom.setSeed(static_cast<long long>(0x12a7ce5f) * static_cast<long long>(rainTime));
 
-    AbstractClientPlayer* camera = getCamera();
-    if (camera == NULL)
-    {
-        return;
-    }
+    boost::shared_ptr<Entity> camera = getCamera();
 
     const BlockPos cameraPos(camera);
     const int cameraBlockY = cameraPos.y;
@@ -722,10 +720,10 @@ void GameRenderer::tickRain()
     }
 
     static const float kRainYOffset = 0.1f;
-    static const float kDropletYOffset = 1.875f;
+    static const double kDropletYOffset = 1.0;
     static const float kMinBrightness = 0.15f;
     static const float kBelowRainSoundVolume = 0.2f;
-    static const float kAboveRainSoundVolume = 0.125f;
+    static const float kAboveRainSoundVolume = 0.1f;
     static const float kBelowRainSoundPitch = 1.0f;
     static const float kAboveRainSoundPitch = 0.5f;
     static const float kRainSoundRange = 16.0f;
@@ -852,9 +850,10 @@ void GameRenderer::tick(bool tickWorld)
     static const float kOne = 1.0f;
     static const float kBlurLerp = 0.10000000149011612f;
     static const float kDamageDecay = 0.012500000186264515f;
-    static const float kDamageMax = 1.75f;
-    static const float kLevelBrightnessScale = 0.012500000186264515f;
-    static const float kLevelBrightnessBase = 0.9200000166893005f;
+    static const float kDamageIncrement = 0.05000000074505806f;
+    static const float kDamageMaximum = 1.0f;
+    static const float kSensitivityScale = 0.6000000238418579f;
+    static const float kSensitivityBase = 0.20000000298023224f;
     static const float kLevelBrightnessWeight = 8.0f;
     static const float kSmoothDeltaScale = 0.05000000074505806f;
 
@@ -872,47 +871,51 @@ void GameRenderer::tick(bool tickWorld)
     float* lightCurrent = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb4);
     *lightCurrent = *lightPrevious;
 
-    Level* level = mMinecraft->mLevel;
     float* cameraSmoothA = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xd0);
     float* cameraSmoothB = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xd4);
     float* cameraSmoothC = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xd8);
     float* fogSmoothSource = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xcc);
     float* cameraSmoothSource = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 200);
 
-    if (level->getSkyDarken() == 0)
     {
-        *cameraSmoothA = kZero;
-        *cameraSmoothB = kZero;
-    }
-    else
-    {
-        const float levelBrightness =
-            *reinterpret_cast<float*>(reinterpret_cast<char*>(level) + 8) * kLevelBrightnessScale
-            + kLevelBrightnessBase;
-        const float smoothDelta =
-            kSmoothDeltaScale * (levelBrightness * levelBrightness * levelBrightness * kLevelBrightnessWeight);
-        *cameraSmoothA = mFov.getNewDeltaValue(*cameraSmoothSource, smoothDelta);
-        *cameraSmoothB = mFog.getNewDeltaValue(*fogSmoothSource, smoothDelta);
-        *cameraSmoothC = kZero;
-        *fogSmoothSource = kZero;
-        *cameraSmoothSource = kZero;
+        boost::shared_ptr<Entity> cameraEntity;
+        if (!mMinecraft->mOptions->mUnknownFlag4)
+        {
+            *cameraSmoothA = kZero;
+            *cameraSmoothB = kZero;
+            cameraEntity = mMinecraft->getCameraEntity();
+        }
+        else
+        {
+            const float sensitivityBrightness =
+                mMinecraft->mOptions->mSensitivity * kSensitivityScale + kSensitivityBase;
+            const float smoothDelta =
+                kSmoothDeltaScale
+                * (sensitivityBrightness * sensitivityBrightness * sensitivityBrightness * kLevelBrightnessWeight);
+            *cameraSmoothA = mFov.getNewDeltaValue(*cameraSmoothSource, smoothDelta);
+            *cameraSmoothB = mFog.getNewDeltaValue(*fogSmoothSource, smoothDelta);
+            *cameraSmoothC = kZero;
+            *fogSmoothSource = kZero;
+            *cameraSmoothSource = kZero;
+            cameraEntity = mMinecraft->getCameraEntity();
+        }
+
+        cameraEntity->mEyeHeightO = cameraEntity->mEyeHeight;
+        const double eyeHeight = mMinecraft->getCameraEntity()->getEyeHeight();
+        const float eyeHeightDelta = static_cast<float>(
+            eyeHeight - static_cast<double>(cameraEntity->mEyeHeight));
+        cameraEntity->mEyeHeight = static_cast<float>(
+            static_cast<double>(eyeHeightDelta) * kHalf + static_cast<double>(cameraEntity->mEyeHeight));
     }
 
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-    Entity* cameraRaw = cameraEntity.get();
-    cameraRaw->mEyeHeightO = cameraRaw->mEyeHeight;
-    const double eyeHeight = cameraRaw->getEyeHeight();
-    cameraRaw->mEyeHeight = static_cast<float>(
-        (eyeHeight - static_cast<double>(cameraRaw->mEyeHeight)) * kHalf
-        + static_cast<double>(cameraRaw->mEyeHeight));
-
-    const float blockBrightness = level->getBrightness(BlockPos(cameraEntity));
+    float blockBrightness;
+    {
+        boost::shared_ptr<Entity> cameraForBlockPosition = mMinecraft->getCameraEntity();
+        blockBrightness = mMinecraft->mLevel->getBrightness(BlockPos(cameraForBlockPosition));
+    }
     *blurCurrent = ((blockBrightness * kZero + kOne) - *blurCurrent) * kBlurLerp + *blurCurrent;
 
-    ItemInHandRenderer* itemRenderer =
-        mItemInHandRenderer;
-    if (itemRenderer != NULL)
-        itemRenderer->tick();
+    mItemInHandRenderer->tick();
 
     tickRain();
 
@@ -920,23 +923,22 @@ void GameRenderer::tick(bool tickWorld)
     float* damageFlashPrevious = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x118);
     *damageFlashPrevious = *damageFlash;
 
-    Player* player = dynamic_cast<Player*>(mMinecraft->mPlayer.get());
-    BossHealthOverlay* bossOverlay = mMinecraft->mGui->getBossOverlay(player->mPlayerIndex);
+    BossHealthOverlay* bossOverlay = mMinecraft->mGui->getBossOverlay(mMinecraft->mPlayer->mUserIndex);
     if (!bossOverlay->shouldDarkenScreen())
     {
-        if (kHalf < static_cast<double>(*damageFlash))
+        if (kZero < static_cast<double>(*damageFlash))
             *damageFlash = static_cast<float>(static_cast<double>(*damageFlash) - kDamageDecay);
     }
     else
     {
-        const float increased = static_cast<float>(static_cast<double>(*damageFlash) + kOne);
-        if (static_cast<double>(increased) < kDamageMax)
-            *damageFlash = increased;
+        const float increased = static_cast<float>(static_cast<double>(*damageFlash) + kDamageIncrement);
+        if (static_cast<double>(kDamageMaximum) < static_cast<double>(increased))
+            *damageFlash = kDamageMaximum;
         else
-            *damageFlash = kOne;
+            *damageFlash = increased;
     }
 
-    const int playerIndex = player->mPlayerIndex;
+    const int playerIndex = mMinecraft->mPlayer->mUserIndex;
     int* deleteTicks =
         reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x227c) + playerIndex;
     if (*deleteTicks > 0)
@@ -952,9 +954,8 @@ void GameRenderer::tick(bool tickWorld)
         }
     }
 
-    const int lockedProfile = gProfile->GetLockedProfile();
-    if (lockedProfile >= 0 && lockedProfile < 4
-        && mMinecraft->mPlayer.get() == mMinecraft->mLocalPlayers[lockedProfile].get())
+    const int primaryPad = gProfile->GetPrimaryPad();
+    if (mMinecraft->mPlayer.get() == mMinecraft->mLocalPlayers[primaryPad].get())
     {
         ++mTickCount;
     }
@@ -997,8 +998,8 @@ void GameRenderer::pick(float partialTick)
     static const double kCreativePickRange = 6.0;
     static const double kNoHitDistance = 0.0;
 
-    AbstractClientPlayer* camera = getCamera();
-    if (camera == NULL)
+    boost::shared_ptr<Entity> camera = getCamera();
+    if (camera.get() == NULL)
     {
         return;
     }
@@ -1024,20 +1025,31 @@ void GameRenderer::pick(float partialTick)
     mMinecraft->mHitResult = camera->pick(pickRange, partialTick);
     MemSect(0);
 
-    if (mMinecraft->mHitResult != NULL && mMinecraft->mHitResult->mType == HitResult::BLOCK)
+    Dimension* dimension = level->mDimension;
+    if (mMinecraft->mHitResult != NULL && dimension->getType() != DimensionType::THE_END)
     {
         BlockPos blockPos = mMinecraft->mHitResult->getBlockPos();
-        LevelChunk* chunk = level->getChunkAt(blockPos);
-        if (chunk != NULL)
+        int adjustedX = blockPos.x;
+        int adjustedZ = blockPos.z;
+        const int stepX = mMinecraft->mHitResult->mDirection->getStepX();
+        const int stepZ = mMinecraft->mHitResult->mDirection->getStepZ();
+        if ((adjustedX < 0) == (stepX < 0))
         {
-            ChunkPos chunkPos = chunk->getPos();
-            const int localX = blockPos.x - chunkPos.getMinBlockX();
-            const int localZ = blockPos.z - chunkPos.getMinBlockZ();
-            if (localX < 1 || localX > 14 || localZ < 1 || localZ > 14)
-            {
-                deleteHitResult(mMinecraft->mHitResult);
-                mMinecraft->mHitResult = NULL;
-            }
+            adjustedX += stepX;
+        }
+        if ((adjustedZ < 0) == (stepZ < 0))
+        {
+            adjustedZ += stepZ;
+        }
+
+        const AABB* bounds = dimension->getPlayerConstraints(blockPos);
+        if (adjustedX < static_cast<int>(bounds->mMinX) + 1 ||
+            static_cast<int>(bounds->mMaxX) - 2 < adjustedX ||
+            adjustedZ < static_cast<int>(bounds->mMinZ) + 1 ||
+            static_cast<int>(bounds->mMaxZ) - 2 < adjustedZ)
+        {
+            deleteHitResult(mMinecraft->mHitResult);
+            mMinecraft->mHitResult = NULL;
         }
     }
 
@@ -1059,13 +1071,12 @@ void GameRenderer::pick(float partialTick)
     pointedEntity.reset();
 
     const Predicate<boost::shared_ptr<Entity> >* entityPredicate = getPickEntityPredicate();
-    if (mMinecraft->mPlayer.get() != NULL &&
-        *reinterpret_cast<int*>(reinterpret_cast<char*>(mMinecraft->mPlayer.get()) + 0xE0) != 0)
+    if (mMinecraft->mOptions->mRenderDebug != 0)
     {
         entityPredicate = NULL;
     }
 
-    if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
+    if (Minecraft::InMiniGame(eMiniGameId_Tumble, false))
     {
         return;
     }
@@ -1082,7 +1093,7 @@ void GameRenderer::pick(float partialTick)
     Entity* closestEntity = NULL;
     boost::shared_ptr<Entity> closestEntityShared;
     Vec3* closestHitLocation = NULL;
-    double closestDistance = kNoHitDistance;
+    double closestDistance = entityReach;
 
     Vec3* rayEnd = Vec3::newTemp(eyePosition->x + viewVector->x * entityReach,
                                  eyePosition->y + viewVector->y * entityReach,
@@ -1100,29 +1111,30 @@ void GameRenderer::pick(float partialTick)
 
         AABB* grownBox = candidateRaw->mBoundingBox->grow(candidateRaw->getPickRadius());
         HitResult* clipHit = grownBox->clip(eyePosition, rayEnd);
-        if (clipHit == NULL)
+        const bool eyeInside = grownBox->contains(eyePosition);
+        if (!eyeInside && clipHit != NULL)
         {
-            continue;
-        }
-
-        const double hitDistance = eyePosition->distanceTo(clipHit->mLocation);
-        const bool closerHit = hitDistance < closestDistance || closestDistance == kNoHitDistance;
-        const bool sameDistancePreferLowerId =
-            hitDistance == closestDistance && closestEntity != NULL &&
-            candidateRaw->getId() < closestEntity->getId();
-
-        if (closerHit || sameDistancePreferLowerId)
-        {
-            if (closestHitLocation != NULL)
+            const double hitDistance = eyePosition->distanceTo(clipHit->mLocation);
+            if (hitDistance < closestDistance || closestDistance == kNoHitDistance)
             {
-                delete closestHitLocation;
+                boost::shared_ptr<Entity> candidateRoot = candidateRaw->getRootVehicle();
+                boost::shared_ptr<Entity> cameraRoot = cameraRaw->getRootVehicle();
+                if (candidateRoot.get() != cameraRoot.get())
+                {
+                    closestEntity = candidateRaw;
+                    closestEntityShared = candidate;
+                    closestHitLocation = clipHit->mLocation;
+                    closestDistance = hitDistance;
+                }
+                else if (closestDistance == kNoHitDistance)
+                {
+                    closestEntity = candidateRaw;
+                    closestEntityShared = candidate;
+                    closestHitLocation = clipHit->mLocation;
+                }
             }
-            closestEntity = candidateRaw;
-            closestEntityShared = candidate;
-            closestHitLocation = clipHit->mLocation;
-            closestDistance = hitDistance;
         }
-        else
+        if (clipHit != NULL)
         {
             delete clipHit;
         }
@@ -1159,14 +1171,6 @@ void GameRenderer::pick(float partialTick)
                 minecraftPointedEntityShared = closestEntityShared;
             }
         }
-        else if (closestHitLocation != NULL)
-        {
-            delete closestHitLocation;
-        }
-    }
-    else if (closestHitLocation != NULL)
-    {
-        delete closestHitLocation;
     }
 }
 
@@ -1256,16 +1260,13 @@ void GameRenderer::bobHurt(float partialTick)
     if (prevHurt >= kZero)
     {
         const float divisor = static_cast<float>(entity->mHurtDuration);
-        if (divisor > kZero)
-        {
-            float ratio = prevHurt / divisor;
-            const float shake =
-                static_cast<float>(Mth::sin(ratio * ratio * ratio * ratio * kPi));
-            const float hurtDir = entity->mHurtDir;
-            GlStateManager::rotatef(-hurtDir, kZero, kOne, kZero);
-            GlStateManager::rotatef(-shake * kHurtBobScale, kZero, kZero, kOne);
-            GlStateManager::rotatef(hurtDir, kZero, kOne, kZero);
-        }
+        float ratio = prevHurt / divisor;
+        const float shake =
+            static_cast<float>(Mth::sin(ratio * ratio * ratio * ratio * kPi));
+        const float hurtDir = entity->mHurtDir;
+        GlStateManager::rotatef(-hurtDir, kZero, kOne, kZero);
+        GlStateManager::rotatef(-shake * kHurtBobScale, kZero, kZero, kOne);
+        GlStateManager::rotatef(hurtDir, kZero, kOne, kZero);
     }
 }
 
@@ -1277,7 +1278,7 @@ void GameRenderer::bobView(float partialTick)
     static const float kWalkScale = 3.0f;
     static const float kRollScale = 5.0f;
     static const float kPi = 3.1415927410125732f;
-    static const float kRollOffset = 0.9200000166893005f;
+    static const float kRollOffset = 0.2f;
 
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
     if ((cameraEntity->GetType() & 0x0C800000ULL) != 0x0C800000ULL)
@@ -1307,10 +1308,7 @@ unsigned int GameRenderer::getCameraThirdPerson()
 {
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
         boost::static_pointer_cast<MultiplayerLocalPlayer>(mMinecraft->mPlayer);
-    MultiplayerLocalPlayer* player = localPlayer.get();
-    if (player == NULL)
-        return 0;
-    return player->GetThirdPersonView(false);
+    return localPlayer->GetThirdPersonView(false);
 }
 
 double GameRenderer::getCameraYRot(float amount)
@@ -1335,19 +1333,21 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     static const float kDegToRad = 0.01745329238474369f;
     static const float k180 = 180.0f;
     static const float kFirstPersonNudge = 0.05f;
-    static const float kRidingYOffset = 0.30000001192092896f;
-    static const float kRidingHeightAdd = 1.0f;
+    static const float kSleepingYOffset = 0.30000001192092896f;
+    static const float kSleepingHeightAdd = 1.0f;
+    static const float kBedFacingRotation = 90.0f;
     static const float kCollisionProbe = 0.10000000149011612f;
-    static const float kViewBobScale1 = 0.5f;
-    static const float kViewBobScale2 = 2.0f;
+    static const float kFallFlightYawScale = 0.5f;
+    static const float kFallFlightAlignmentScale = 0.25f;
 
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
     boost::shared_ptr<LivingEntity> living =
         boost::static_pointer_cast<LivingEntity>(cameraEntity);
     LivingEntity* entity = living.get();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
 
     const unsigned int thirdPerson = getCameraThirdPerson();
-    const double eyeHeight = static_cast<double>(
+    double eyeHeight = static_cast<double>(
         (entity->mEyeHeight - entity->mEyeHeightO) * partialTick + entity->mEyeHeightO);
     double x = (entity->mX - entity->mXo) * partialTick + entity->mXo;
     double y = (entity->mY - entity->mYo) * partialTick + entity->mYo;
@@ -1356,18 +1356,16 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
 
     char sleepingFlag = 0;
     if (mMinecraft->mOptions != NULL)
-        sleepingFlag = *reinterpret_cast<char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x10e);
+        sleepingFlag = mMinecraft->mOptions->mUnknownFlag5;
 
     if (thirdPerson == 3)
     {
-        boost::shared_ptr<Player> localPlayer =
-            boost::static_pointer_cast<Player>(mMinecraft->mLocalPlayers[0]);
         CameraController* controller = localPlayer->GetCameraController();
         if (controller != NULL && controller->getCameraMode() == 0)
         {
             localPlayer->SetThirdPersonView(1);
             sleepingFlag = mMinecraft->mOptions != NULL
-                ? *reinterpret_cast<char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x10e)
+                ? mMinecraft->mOptions->mUnknownFlag5
                 : 0;
         }
         else if (controller != NULL)
@@ -1381,11 +1379,11 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
             GlStateManager::rotatef(static_cast<float>(rot->y), kZero, kOne, kZero);
             GlStateManager::rotatef(static_cast<float>(rot->z), kZero, kZero, kOne);
             sleepingFlag = mMinecraft->mOptions != NULL
-                ? *reinterpret_cast<char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x10e)
+                ? mMinecraft->mOptions->mUnknownFlag5
                 : 0;
         }
     }
-    else if (!entity->isPassenger())
+    else if (!entity->isSleeping())
     {
         if (thirdPerson == 0)
         {
@@ -1393,9 +1391,9 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
         }
         else
         {
-            float* zoomCurrent = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb4);
-            float* zoomPrevious = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb0);
-            float distance = (*zoomCurrent - *zoomPrevious) * partialTick + *zoomPrevious;
+            float* zoomAtB0 = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb0);
+            float* zoomAtB4 = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb4);
+            float distance = (*zoomAtB0 - *zoomAtB4) * partialTick + *zoomAtB4;
 
             if (sleepingFlag == 0)
             {
@@ -1502,17 +1500,19 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     }
     else
     {
-        yEye += kRidingHeightAdd;
-        GlStateManager::translatef(kZero, kRidingYOffset, kZero);
+        eyeHeight = static_cast<double>(static_cast<float>(eyeHeight + kSleepingHeightAdd));
+        GlStateManager::translatef(kZero, kSleepingYOffset, kZero);
         if (sleepingFlag == 0)
         {
-            Player* ridingPlayer = dynamic_cast<Player*>(entity);
-            if (ridingPlayer != NULL)
+            const BlockPos cameraBlockPos(cameraEntity);
+            const BlockState* bedState = mMinecraft->mLevel->getBlockState(cameraBlockPos);
+            if (bedState != NULL && bedState->getBlock() == Blocks::bed)
             {
-                const BlockState* bedState = mMinecraft->mLevel->getBlockState(BlockPos(cameraEntity));
-                if (bedState != NULL && bedState->getBlock() == Blocks::bed)
-                    GlStateManager::rotatef(static_cast<float>(ridingPlayer->getSleepRotation()),
-                                          kZero, kOne, kZero);
+                const Direction* facing =
+                    bedState->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
+                const float bedFacingAngle =
+                    static_cast<float>(facing->get2DDataValue()) * kBedFacingRotation;
+                GlStateManager::rotatef(bedFacingAngle, kZero, kOne, kZero);
             }
             const float yaw = static_cast<float>(getCameraYRot(partialTick) + k180);
             GlStateManager::rotatef(yaw, kZero, kNegOne, kZero);
@@ -1521,21 +1521,23 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
         }
     }
 
-    LocalPlayer* localBobPlayer = dynamic_cast<LocalPlayer*>(entity);
-    if (localBobPlayer != NULL && entity->isPassenger())
+    if (entity->isFallFlying())
     {
-        const int playerIndex = localBobPlayer->mUserIndex;
-        if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(0x28)) == 0)
+        if (GameSettings::GetGameSettings(localPlayer->mUserIndex,
+                                          static_cast<eGameSetting>(0x28)) == 0)
         {
-            const int indexOffset = playerIndex * static_cast<int>(sizeof(float));
-            const float bobO = *reinterpret_cast<float*>(reinterpret_cast<char*>(localBobPlayer) + 0x8ec + indexOffset);
-            const float bob = *reinterpret_cast<float*>(reinterpret_cast<char*>(localBobPlayer) + 0x8e8 + indexOffset);
-            const float bob2O = *reinterpret_cast<float*>(reinterpret_cast<char*>(localBobPlayer) + 0x8f4 + indexOffset);
-            const float bob2 = *reinterpret_cast<float*>(reinterpret_cast<char*>(localBobPlayer) + 0x8f0 + indexOffset);
-            const float hurtBob = ((bob - bobO) * partialTick + bobO)
-                * ((bob2 - bob2O) * partialTick + bob2O);
-            GlStateManager::rotatef(hurtBob * kViewBobScale1, kZero, kZero, kOne);
-            GlStateManager::rotatef(hurtBob * kViewBobScale2, kOne, kZero, kZero);
+            const float fallFlyYaw =
+                (localPlayer->mFallFlyYaw - localPlayer->mFallFlyYawOld) * partialTick
+                + localPlayer->mFallFlyYawOld;
+            const float fallFlyingAlignment =
+                (localPlayer->mFallFlyingAlignment - localPlayer->mFallFlyingAlignmentO)
+                    * partialTick
+                + localPlayer->mFallFlyingAlignmentO;
+            const float fallFlightRotation = fallFlyYaw * fallFlyingAlignment;
+            GlStateManager::rotatef(fallFlightRotation * kFallFlightYawScale,
+                                    kZero, kZero, kOne);
+            GlStateManager::rotatef(fallFlightRotation * kFallFlightAlignmentScale,
+                                    kZero, kOne, kZero);
         }
     }
 
@@ -1557,7 +1559,8 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
 
     GlStateManager::translatef(kZero, -static_cast<float>(eyeHeight), kZero);
 
-    const bool inCloud = mMinecraft->mLevelRenderer->isInCloud(x, yEye, z, partialTick);
+    const bool inCloud = mMinecraft->mLevelRenderer->isInCloud(
+        x, y + eyeHeight, z, partialTick);
     *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x11c) = inCloud ? 1 : 0;
 }
 
@@ -1572,11 +1575,7 @@ void GameRenderer::getFovAndAspect(float& fov, float& aspect, float partialTick,
     fov = static_cast<float>(getFov(partialTick, useSmoothing));
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
-    MultiplayerLocalPlayer* player = localPlayer.get();
-    if (player == NULL)
-        return;
-
-    const int splitMode = *reinterpret_cast<int*>(reinterpret_cast<char*>(player) + 0x908);
+    const int splitMode = localPlayer->mViewport;
     if (splitMode == 1 || splitMode == 2)
     {
         aspect = aspect + aspect;
@@ -1599,7 +1598,6 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     static const float kProjectionEyeOffset = 0.07000000029802322f;
     static const float kModelEyeOffset = 0.10000000149011612f;
     static const float kNearPlane = 0.05000000074505806f;
-    static const float kHandScaleFactor = 1.875f;
     static const float kSpectatorZoomScale = 0.03999999910593033f;
     static const float kSpectatorZoomDenom = 5.0f;
     static const float kRotate90 = 90.0f;
@@ -1619,7 +1617,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>((eyeIndex * 2 - 1) * -1);
-        GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kZero, kZero);
     }
 
     float fov = partialTick;
@@ -1631,8 +1629,8 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     {
         float* handTransX = reinterpret_cast<float*>(self + 0x2254);
         float* handTransY = reinterpret_cast<float*>(self + 0x2258);
-        GlStateManager::translatef(*handTransX, -*handTransY, kHalf);
-        GlStateManager::scaled(*handScale, *handScale, kHandScaleFactor);
+        GlStateManager::translatef(*handTransX, -*handTransY, kZero);
+        GlStateManager::scaled(*handScale, *handScale, kOne);
     }
 
     const float farPlane = *fogDistance + *fogDistance;
@@ -1644,57 +1642,46 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>(eyeIndex * 2 - 1);
-        GlStateManager::translatef(eyeOffset * kModelEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kModelEyeOffset, kZero, kZero);
     }
 
     bobHurt(partialTick);
 
-    AbstractClientPlayer* camera = getCamera();
-    if (camera != NULL)
-    {
-        _SkinAdjustments skinAdjustments = camera->getSkinAdjustments();
-        const unsigned int skinFlags = skinAdjustments.mGameFlags;
-        const unsigned int skinMask = skinFlags & 0x204u;
-        const unsigned int skinAlt = (skinMask - 1u) + (skinMask == 0u ? 1u : 0u);
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
+    _SkinAdjustments skinAdjustments = localPlayer->getSkinAdjustments();
+    const unsigned int skinFlags = skinAdjustments.mGameFlags;
+    const unsigned int skinMask = skinFlags & 0x204u;
+    const unsigned int skinAlt = (skinMask - 1u) + (skinMask == 0u ? 1u : 0u);
 
-        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mPlayer;
-        MultiplayerLocalPlayer* player = localPlayer.get();
-        if (player != NULL
-            && GameSettings::GetGameSettings(player->mUserIndex, static_cast<eGameSetting>(6)) != 0)
+    if (GameSettings::GetGameSettings(localPlayer->mUserIndex,
+                                      static_cast<eGameSetting>(6)) != 0)
+    {
+        if (!localPlayer->mAbilities.mFlying && skinMask == skinAlt)
         {
-            if (*reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(camera) + 0x70d) == 0
-                && skinMask == skinAlt)
-            {
-                if (!camera->isUsingItem())
-                    bobView(partialTick);
-            }
-            else
-            {
-                const int playerIndex = player->mUserIndex;
-                const int indexOffset = playerIndex * static_cast<int>(sizeof(float));
-                const float rotOld =
-                    *reinterpret_cast<float*>(reinterpret_cast<char*>(player) + 0x8e0 + indexOffset);
-                const float rot =
-                    *reinterpret_cast<float*>(reinterpret_cast<char*>(player) + 0x8e4 + indexOffset);
-                const float rotLerp = (rotOld - rot) * partialTick + rot;
-                if (rotLerp > kZero)
-                {
-                    float rotateAmount = 20.0f;
-                    if (camera->hasEffect(MobEffects::CONFUSION))
-                        rotateAmount = 7.0f;
-                    const float zoom =
-                        -(rotLerp * kSpectatorZoomScale
-                          - (kSpectatorZoomDenom
-                             / (rotLerp * rotLerp + kSpectatorZoomDenom)));
-                    const float frame = static_cast<float>(mTickCount)
-                        + partialTick;
-                    GlStateManager::rotatef(frame * rotateAmount, kZero, kOne, kOne);
-                    const float scale = kOne / (zoom * zoom);
-                    GlStateManager::scalef(scale, scale, scale);
-                    GlStateManager::rotatef(-frame * rotateAmount, kZero, kOne, kOne);
-                }
-            }
+            if (!localPlayer->isUsingItem())
+                bobView(partialTick);
         }
+    }
+
+    const float portalIntensity = localPlayer->mPortalEffectIntensity;
+    const float previousPortalIntensity = localPlayer->mPortalEffectIntensityO;
+    const float interpolatedPortalIntensity =
+        (portalIntensity - previousPortalIntensity) * partialTick + previousPortalIntensity;
+    if (interpolatedPortalIntensity > kZero)
+    {
+        float rotateAmount = 20.0f;
+        if (localPlayer->hasEffect(MobEffects::CONFUSION))
+            rotateAmount = 7.0f;
+        const float zoom =
+            -(interpolatedPortalIntensity * kSpectatorZoomScale
+              - (kSpectatorZoomDenom
+                 / (interpolatedPortalIntensity * interpolatedPortalIntensity
+                    + kSpectatorZoomDenom)));
+        const float frame = static_cast<float>(mTickCount) + partialTick;
+        GlStateManager::rotatef(frame * rotateAmount, kZero, kOne, kOne);
+        const float scale = kOne / (zoom * zoom);
+        GlStateManager::scalef(scale, scale, scale);
+        GlStateManager::rotatef(-frame * rotateAmount, kZero, kOne, kOne);
     }
 
     moveCameraToPlayer(partialTick);
@@ -1723,7 +1710,7 @@ void GameRenderer::turnOnLightLayer(double)
         return;
 
     const unsigned int texture = getLightTexture(
-        *reinterpret_cast<int*>(reinterpret_cast<char*>(player) + 0x960), mMinecraft->mLevel);
+        player->mUserIndex, mMinecraft->mLevel);
     gRenderer->TextureBindVertex(static_cast<int>(texture));
     GlStateManager::texParameteri(1, 1, 1);
     GlStateManager::texParameteri(1, 2, 1);
@@ -1744,7 +1731,6 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     static const float kProjectionEyeOffset = 0.07000000029802322f;
     static const float kModelEyeOffset = 0.10000000149011612f;
     static const float kNearPlane = 0.05000000074505806f;
-    static const float kHandScaleFactor = 1.875f;
 
     char* self = reinterpret_cast<char*>(this);
     if (*reinterpret_cast<unsigned char*>(self + 0x224c) != 0)
@@ -1757,22 +1743,21 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mPlayer;
     MultiplayerLocalPlayer* player = localPlayer.get();
-    AbstractClientPlayer* camera = getCamera();
-    if (camera == NULL)
-        return;
+    boost::shared_ptr<Entity> camera = Minecraft::GetInstance()->getCameraEntity();
 
     bool holdingMap = false;
-    if (camera->GetType() == ENTITY_TYPE_LOCAL_PLAYER && player != NULL)
+    if (camera->GetType() == ENTITY_TYPE_LOCAL_PLAYER)
     {
-        if (player->mInventory != NULL)
+        if (localPlayer->mInventory != NULL)
         {
-            not_null_ptr<ItemInstance> selected = player->mInventory->getSelected();
+            not_null_ptr<ItemInstance> selected = localPlayer->mInventory->getSelected();
             ItemInstance* item = selected.get();
             if (item != NULL && item->getItem() == Items::map)
                 holdingMap = true;
         }
 
-        if (GameSettings::GetGameSettings(player->mUserIndex, static_cast<eGameSetting>(0x18)) == 0)
+        if (GameSettings::GetGameSettings(localPlayer->mUserIndex,
+                                          static_cast<eGameSetting>(0x18)) == 0)
             *renderHandFlag = 0;
     }
 
@@ -1782,7 +1767,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>((eyeIndex * 2 - 1) * -1);
-        GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kZero, kZero);
     }
 
     float fov = partialTick;
@@ -1794,8 +1779,8 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     {
         float* handTransX = reinterpret_cast<float*>(self + 0x2254);
         float* handTransY = reinterpret_cast<float*>(self + 0x2258);
-        GlStateManager::translatef(*handTransX, -*handTransY, kHalf);
-        GlStateManager::scaled(*handScale, *handScale, kHandScaleFactor);
+        GlStateManager::translatef(*handTransX, -*handTransY, kZero);
+        GlStateManager::scaled(*handScale, *handScale, kOne);
     }
 
     const float farPlane = mFogDistance + mFogDistance;
@@ -1807,24 +1792,23 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
         && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>(eyeIndex * 2 - 1);
-        GlStateManager::translatef(eyeOffset * kModelEyeOffset, kHalf, kHalf);
+        GlStateManager::translatef(eyeOffset * kModelEyeOffset, kZero, kZero);
     }
 
     GlStateManager::pushMatrix();
     bobHurt(partialTick);
 
-    _SkinAdjustments skinAdjustments = camera->getSkinAdjustments();
+    _SkinAdjustments skinAdjustments = localPlayer->getSkinAdjustments();
     const unsigned int skinFlags = skinAdjustments.mGameFlags;
     const unsigned int skinMask = skinFlags & 0x204u;
     const unsigned int skinAlt = (skinMask - 1u) + (skinMask == 0u ? 1u : 0u);
 
-    if (player != NULL
-        && GameSettings::GetGameSettings(player->mUserIndex, static_cast<eGameSetting>(6)) != 0)
+    if (GameSettings::GetGameSettings(localPlayer->mUserIndex,
+                                      static_cast<eGameSetting>(6)) != 0)
     {
-        if (*reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(camera) + 0x70d) == 0
-            && skinMask == skinAlt)
+        if (!localPlayer->mAbilities.mFlying && skinMask == skinAlt)
         {
-            if (!camera->isUsingItem())
+            if (!localPlayer->isUsingItem())
                 bobView(partialTick);
         }
     }
@@ -1858,7 +1842,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     }
     else
     {
-        if (player != NULL && !camera->isPassenger()
+        if (player != NULL && !localPlayer->isPassenger()
             && (mMinecraft->mOptions == NULL
                 || !mMinecraft->mOptions->mHideGui)
             && mMinecraft->mGameMode != NULL
@@ -1872,13 +1856,12 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
         GlStateManager::popMatrix();
     }
 
-    if (player != NULL
-        && GameSettings::GetGameSettings(player->mUserIndex, static_cast<eGameSetting>(6)) != 0)
+    if (GameSettings::GetGameSettings(localPlayer->mUserIndex,
+                                      static_cast<eGameSetting>(6)) != 0)
     {
-        if (*reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(camera) + 0x70d) == 0
-            && skinMask == skinAlt)
+        if (!localPlayer->mAbilities.mFlying && skinMask == skinAlt)
         {
-            if (!camera->isUsingItem())
+            if (!localPlayer->isUsingItem())
                 bobView(partialTick);
         }
     }
@@ -2159,26 +2142,22 @@ unsigned int GameRenderer::fjGetFpsCap(int value)
     return value < 0 ? 0 : static_cast<unsigned int>(value);
 }
 
-unsigned int GameRenderer::getFogOffsets()
+const BlockPos* GameRenderer::getFogOffsets()
 {
     Level* level = mMinecraft->mLevel;
-    if (level == NULL || level->mDimension == NULL)
-        return reinterpret_cast<unsigned int>(sOverworldFogOffsets);
-
-    const DimensionType* dimensionType = level->mDimension->getType();
-    if (dimensionType == DimensionType::THE_END)
-        return reinterpret_cast<unsigned int>(sEndFogOffsets);
-    if (dimensionType == DimensionType::NETHER)
-        return reinterpret_cast<unsigned int>(sNetherFogOffsets);
-    return reinterpret_cast<unsigned int>(sOverworldFogOffsets);
+    const unsigned char biomeScale = level->getLevelData()->getBiomeScale();
+    if (biomeScale == 1)
+        return sEndFogOffsets;
+    if (biomeScale == 2)
+        return sNetherFogOffsets;
+    return sOverworldFogOffsets;
 }
 
 double GameRenderer::getTargetFogDistance(const BlockPos& pos)
 {
     static const float kUnitWeight = 1.0f;
 
-    const BlockPos* table = reinterpret_cast<const BlockPos*>(getFogOffsets());
-    const BlockPos* groups = table - 4;
+    const BlockPos* table = getFogOffsets();
     Level* level = mMinecraft->mLevel;
 
     float weightSum = 0.0f;
@@ -2186,10 +2165,9 @@ double GameRenderer::getTargetFogDistance(const BlockPos& pos)
 
     for (int group = 0; group < 6; ++group)
     {
-        const BlockPos* slot = groups + group * 4;
         for (int sample = 0; sample < 4; ++sample)
         {
-            const BlockPos& delta = slot[4 + sample];
+            const BlockPos& delta = table[group * 4 + sample];
             BlockPos samplePos = pos.offset(delta.x, delta.y, delta.z);
             Biome* biome = level->getBiome(samplePos);
             distanceSum += biome->getFogDistance();
@@ -2197,11 +2175,9 @@ double GameRenderer::getTargetFogDistance(const BlockPos& pos)
         weightSum += kUnitWeight + kUnitWeight + kUnitWeight + kUnitWeight;
     }
 
-    const BlockPos* tail =
-        reinterpret_cast<const BlockPos*>(reinterpret_cast<const char*>(table) + 0x114);
     for (int i = 0; i < 3; ++i)
     {
-        const BlockPos& delta = tail[i + 1];
+        const BlockPos& delta = table[24 + i];
         BlockPos samplePos = pos.offset(delta.x, delta.y, delta.z);
         Biome* biome = level->getBiome(samplePos);
         distanceSum += biome->getFogDistance();
@@ -2214,8 +2190,7 @@ double GameRenderer::getTargetFogDistance(const BlockPos& pos)
 void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& green, float& blue)
 {
     static const float kByteScale = 0.00390625f;
-    const BlockPos* table = reinterpret_cast<const BlockPos*>(getFogOffsets());
-    const BlockPos* groups = table - 12;
+    const BlockPos* table = getFogOffsets();
     Level* level = mMinecraft->mLevel;
 
     float redSum = 0.0f;
@@ -2223,33 +2198,32 @@ void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& gre
     float blueSum = 0.0f;
     float weight = 0.0f;
 
-    for (int group = 0; group < 6; ++group)
+    for (int pair = 0; pair < 13; ++pair)
     {
-        const BlockPos* slot = groups + group * 12;
-        for (int sample = 0; sample < 4; ++sample)
-        {
-            const BlockPos& delta = slot[12 + sample * 3];
-            Biome* biome = level->getBiome(pos.offset(delta.x, delta.y, delta.z));
-            const unsigned int colour = biome->getUnderWaterFogColor();
-            redSum += static_cast<float>((colour >> 16) & 255u) * kByteScale;
-            greenSum += static_cast<float>((colour >> 8) & 255u) * kByteScale;
-            blueSum += static_cast<float>(colour & 255u) * kByteScale;
-            weight += 1.0f;
-        }
+        const BlockPos& firstDelta = table[pair * 2];
+        Biome* firstBiome = level->getBiome(pos.offset(firstDelta.x, firstDelta.y, firstDelta.z));
+        const unsigned int firstColour = firstBiome->getUnderWaterFogColor();
+
+        const BlockPos& secondDelta = table[pair * 2 + 1];
+        Biome* secondBiome = level->getBiome(pos.offset(secondDelta.x, secondDelta.y, secondDelta.z));
+        const unsigned int secondColour = secondBiome->getUnderWaterFogColor();
+
+        redSum = static_cast<float>((secondColour >> 16) & 255u) * kByteScale
+            + static_cast<float>((firstColour >> 16) & 255u) * kByteScale + redSum;
+        greenSum = static_cast<float>((secondColour >> 8) & 255u) * kByteScale
+            + static_cast<float>((firstColour >> 8) & 255u) * kByteScale + greenSum;
+        blueSum = static_cast<float>(secondColour & 255u) * kByteScale
+            + static_cast<float>(firstColour & 255u) * kByteScale + blueSum;
+        weight += 1.0f + 1.0f;
     }
 
-    const BlockPos* tail =
-        reinterpret_cast<const BlockPos*>(reinterpret_cast<const char*>(table) + 0x114);
-    for (int sample = 0; sample < 3; ++sample)
-    {
-        const BlockPos& delta = tail[sample + 1];
-        Biome* biome = level->getBiome(pos.offset(delta.x, delta.y, delta.z));
-        const unsigned int colour = biome->getUnderWaterFogColor();
-        redSum += static_cast<float>((colour >> 16) & 255u) * kByteScale;
-        greenSum += static_cast<float>((colour >> 8) & 255u) * kByteScale;
-        blueSum += static_cast<float>(colour & 255u) * kByteScale;
-        weight += 1.0f;
-    }
+    const BlockPos& finalDelta = table[26];
+    Biome* finalBiome = level->getBiome(pos.offset(finalDelta.x, finalDelta.y, finalDelta.z));
+    const unsigned int finalColour = finalBiome->getUnderWaterFogColor();
+    redSum = static_cast<float>((finalColour >> 16) & 255u) * kByteScale + redSum;
+    greenSum = static_cast<float>((finalColour >> 8) & 255u) * kByteScale + greenSum;
+    blueSum = static_cast<float>(finalColour & 255u) * kByteScale + blueSum;
+    weight += 1.0f;
 
     red = redSum / weight;
     green = greenSum / weight;
@@ -2276,6 +2250,7 @@ double GameRenderer::modifyFogDistance(const BlockPos& pos, float distance, floa
 
 void GameRenderer::setupClearColor(float partialTick)
 {
+    static const float kZero = 0.0f;
     static const float kOne = 1.0f;
     static const float kHalf = 0.5f;
     static const float kBlindnessBase = 0.25f;
@@ -2318,14 +2293,14 @@ void GameRenderer::setupClearColor(float partialTick)
 
     level->getSunAngle(partialTick);
     const float sunSin = Mth::sin(level->getTimeOfDay(partialTick) * 6.2831855f);
-    Vec3* sunVector = sunSin > kHalf
+    Vec3* sunVector = sunSin > kZero
         ? Vec3::newTemp(-1.0, 0.0, 0.0)
         : Vec3::newTemp(1.0, 0.0, 0.0);
     const float sunDot = static_cast<float>(
         living->getViewVector(partialTick)->dot(sunVector));
 
     float* sunrise = NULL;
-    if (sunDot > kHalf)
+    if (sunDot > kZero)
         sunrise = level->mDimension->getSunriseColor(level->getTimeOfDay(partialTick), partialTick);
 
     if (sunrise != NULL)
@@ -2347,7 +2322,7 @@ void GameRenderer::setupClearColor(float partialTick)
     }
 
     const float rainLevel = level->getRainLevel(partialTick);
-    if (rainLevel > kHalf)
+    if (rainLevel > kZero)
     {
         const float rainScale = -(rainLevel * kHalf - kOne);
         *fogRed *= rainScale;
@@ -2356,7 +2331,7 @@ void GameRenderer::setupClearColor(float partialTick)
     }
 
     const float thunderLevel = level->getThunderLevel(partialTick);
-    if (thunderLevel > kHalf)
+    if (thunderLevel > kZero)
     {
         const float thunderScale = -(thunderLevel * kHalf - kOne);
         *fogRed *= thunderScale;
@@ -2405,9 +2380,8 @@ void GameRenderer::setupClearColor(float partialTick)
     }
     else
     {
-        MultiplayerLocalPlayer* localPlayer =
-            dynamic_cast<MultiplayerLocalPlayer*>(getCamera());
-        const int playerIndex = localPlayer != NULL ? localPlayer->mUserIndex : 0;
+        const boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = mMinecraft->mPlayer;
+        const int playerIndex = localPlayer.get() != NULL ? localPlayer->mUserIndex : 0;
         const int playerOffset = playerIndex * 4;
 
         float targetRed = 0.0f;
@@ -2540,7 +2514,7 @@ void GameRenderer::setupClearColor(float partialTick)
 
     float* damageFlash = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x114);
     float* damageFlashO = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x118);
-    if (*damageFlash > kHalf)
+    if (*damageFlash > kZero)
     {
         const float damageAmount =
             (*damageFlash - *damageFlashO) * partialTick + *damageFlashO;
@@ -2560,11 +2534,11 @@ void GameRenderer::setupClearColor(float partialTick)
         const double nightVision =
             getNightVisionScale(living, partialTick);
         float minScale = kNightVisionCap;
-        if (red > kHalf && kOne / red < minScale)
+        if (red > kZero && kOne / red < minScale)
             minScale = kOne / red;
-        if (green > kHalf && kOne / green < minScale)
+        if (green > kZero && kOne / green < minScale)
             minScale = kOne / green;
-        if (blue > kHalf && kOne / blue < minScale)
+        if (blue > kZero && kOne / blue < minScale)
             minScale = kOne / blue;
         const float keep = kOne - static_cast<float>(nightVision);
         red = static_cast<float>(red * keep + red * minScale * nightVision);
@@ -2630,12 +2604,11 @@ void GameRenderer::setupFog(int, float partialTick)
     static const float kBlindnessFogEnd = 5.0f;
     static const float kBlindnessInterpRange = 20.0f;
 
-    getCamera();
     resetFogColor(false);
     GlStateManager::color4f(kOne, kOne, kOne, kOne);
 
     Level* level = mMinecraft->mLevel;
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
+    boost::shared_ptr<Entity> cameraEntity = getCamera();
     const BlockState* blockState = Camera::getBlockAt(level, cameraEntity, partialTick);
     Material* material = blockState->getMaterial();
 
@@ -2708,14 +2681,10 @@ void GameRenderer::setupFog(int, float partialTick)
     bool tightenFog = biome->isFoggy();
     if (!tightenFog)
     {
-        AbstractClientPlayer* player = getCamera();
-        if (player != NULL)
-        {
-            BossHealthOverlay* overlay =
-                mMinecraft->mGui->getBossOverlay(player->mPlayerIndex);
-            if (overlay != NULL && overlay->shouldCreateWorldFog())
-                tightenFog = true;
-        }
+        const int playerIndex = mMinecraft->mPlayer->mUserIndex;
+        BossHealthOverlay* overlay = mMinecraft->mGui->getBossOverlay(playerIndex);
+        if (overlay != NULL && overlay->shouldCreateWorldFog())
+            tightenFog = true;
     }
     if (tightenFog)
     {
@@ -2805,11 +2774,7 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
 
-    AbstractClientPlayer* camera = getCamera();
-    if (camera == NULL)
-    {
-        return;
-    }
+    boost::shared_ptr<Entity> camera = getCamera();
 
     const float cameraX =
         static_cast<float>((camera->mX - camera->mXo) * partialTick + camera->mXo);
@@ -2830,11 +2795,10 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
     static const float kPerimeterDivisor = 2.0f;
     static const float kPhaseScale = 0.125f;
     static const float kAngleStepScale = 2.132499933242798f;
-    static const float kAlphaReference = 1.875f;
-    static const float kDepthStepNeg = -0.0078125f;
-    static const float kDepthStepPos = 0.00390625f;
+    static const double kAlphaReference = 1.0;
+    static const float kThermalPhaseStepNegative = -1.0f;
+    static const float kThermalPhaseStepPositive = 1.0f;
     static const float kWidthExpand = 4.0f;
-    static const float kHeightPad = 8.0f;
     static const float kDepthPad = 5.0f;
     static const float kCornerScale = 1.5f;
     static const float kCornerScaleAlt = -2.5f;
@@ -3118,21 +3082,10 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
                     const int next = (edge + 1) % 4;
                     for (int slice = 0; slice < 3; ++slice)
                     {
-                        float depthStep = kDepthStepPos;
-                        if (slice == 0 || slice == 2)
-                        {
-                            depthStep = kDepthStepNeg;
-                            if (boostDirection == 1 || boostDirection == 5)
-                            {
-                                depthStep = kHeightPad;
-                            }
-                        }
-                        else if (boostDirection == 5)
-                        {
-                            depthStep = kHeightPad;
-                        }
-
-                        const float phaseTop = rowPhase + depthStep;
+                        const float phaseStep = (boostDirection & 1U) != 0
+                                                     ? kThermalPhaseStepPositive
+                                                     : kThermalPhaseStepNegative;
+                        const float phaseTop = rowPhase + phaseStep;
                         if (boostDirection == 0)
                         {
                             builder->blockRainQuad(
@@ -3196,19 +3149,16 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
         return;
     }
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    const int trackIndex =
-        *reinterpret_cast<int*>(reinterpret_cast<char*>(player.get()) + 0x960);
+    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
+    const int trackIndex = player->mUserIndex;
 
-    char* ghostBytes = reinterpret_cast<char*>(ghostController);
-    GhostController::GhostRecord* record = *reinterpret_cast<GhostController::GhostRecord**>(
-        ghostBytes + 0xD4 + trackIndex * 4);
-    if (record == NULL || !record->HasRecording() || !ghostController->HasFinished(record))
+    GhostController::GhostRecord* record = ghostController->mLoaded[trackIndex];
+    if (record == NULL || !record->HasRecording() || ghostController->HasFinished(record))
     {
         return;
     }
 
-    if (ghostBytes[0x81 + trackIndex] == 0)
+    if (!ghostController->mRecordingSlotFlags2[trackIndex])
     {
         return;
     }
@@ -3247,31 +3197,16 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
         }
     }
 
-    const double cameraX =
-        (*reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x118) -
-         *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C0)) *
-            partialTick +
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C0);
-    const double cameraY =
-        (*reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x120) -
-         *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C8)) *
-            partialTick +
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C8);
-    const double cameraZ =
-        (*reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x128) -
-         *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1D0)) *
-            partialTick +
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1D0);
+    const double cameraX = (player->mX - player->mXOld) * partialTick + player->mXOld;
+    const double cameraY = (player->mY - player->mYOld) * partialTick + player->mYOld;
+    const double cameraZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
 
     const float velocityAlpha =
         Mth::clamp(static_cast<float>(sampleVelocity * kDepthOffset), kZero, kOne);
     const unsigned int blendedColour =
         ColourTable::LinearBlend(startColour, middleColour, endColour, velocityAlpha);
 
-    Vec3* playerPos = Vec3::newTemp(
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x118),
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x120),
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x128));
+    Vec3* playerPos = Vec3::newTemp(player->mX, player->mY, player->mZ);
     const float distanceAlpha = Mth::clamp(
         static_cast<float>(playerPos->distanceTo(renderPos) * kHalf), kZero, kOne);
 
@@ -3370,23 +3305,15 @@ void GameRenderer::renderGhostPath(float partialTick, boost::shared_ptr<Entity> 
         return;
     }
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    if (player.get() == NULL)
-    {
-        return;
-    }
-
-    const int trackIndex =
-        *reinterpret_cast<int*>(reinterpret_cast<char*>(player.get()) + 0x960);
-    char* ghostBytes = reinterpret_cast<char*>(ghostController);
-    GhostController::GhostRecord* record = *reinterpret_cast<GhostController::GhostRecord**>(
-        ghostBytes + 0xD4 + trackIndex * 4);
+    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
+    const int trackIndex = player->mUserIndex;
+    GhostController::GhostRecord* record = ghostController->mLoaded[trackIndex];
     if (record == NULL || !record->HasRecording())
     {
         return;
     }
 
-    if (ghostBytes[0x81 + trackIndex] == 0)
+    if (!ghostController->mRecordingSlotFlags2[trackIndex])
     {
         return;
     }
@@ -3404,30 +3331,15 @@ void GameRenderer::renderGhostPath(float partialTick, boost::shared_ptr<Entity> 
     colors.reserve(sampleCount);
     alphas.reserve(sampleCount);
 
-    const double cameraX =
-        (*reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x118) -
-         *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C0)) *
-            partialTick +
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C0);
-    const double cameraY =
-        (*reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x120) -
-         *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C8)) *
-            partialTick +
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1C8);
-    const double cameraZ =
-        (*reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x128) -
-         *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1D0)) *
-            partialTick +
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x1D0);
+    const double cameraX = (player->mX - player->mXOld) * partialTick + player->mXOld;
+    const double cameraY = (player->mY - player->mYOld) * partialTick + player->mYOld;
+    const double cameraZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef(static_cast<float>(-cameraX), static_cast<float>(-cameraY),
                                static_cast<float>(-cameraZ));
 
-    Vec3* playerPos = Vec3::newTemp(
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x118),
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x120),
-        *reinterpret_cast<double*>(reinterpret_cast<char*>(player.get()) + 0x128));
+    Vec3* playerPos = Vec3::newTemp(player->mX, player->mY, player->mZ);
 
     for (unsigned int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex)
     {
@@ -3503,15 +3415,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     }
 
     turnOnLightLayer(0.0);
-    AbstractClientPlayer* camera = getCamera();
-    if (camera == NULL)
-    {
-        if (gRenderer != NULL)
-        {
-            gRenderer->StateSetForceLOD(0);
-        }
-        return;
-    }
+    boost::shared_ptr<Entity> camera = getCamera();
 
     const int cameraBlockX = Mth::floor(camera->mX);
     const int cameraBlockY = Mth::floor(camera->mY);
@@ -3541,8 +3445,6 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     const float cameraZ = static_cast<float>((camera->mZ - cameraOldZ) * partialTick + cameraOldZ);
 
     const int rainTime = static_cast<int>(mTickCount);
-    const float rainAnim = static_cast<float>(rainTime) + partialTick;
-
     float* rainOffsetX = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x164);
     float* rainOffsetZ = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x1164);
 
@@ -3640,9 +3542,9 @@ void GameRenderer::renderSnowAndRain(float partialTick)
 
                     const int dropSeed =
                         (rainTime + xInnerSeed + xSeedAccumulator + zInnerSeed + zSeedAccumulator) & 31;
-                    const float dropPhase =
-                        (static_cast<float>(dropSeed) + partialTick) * 1.25f *
-                        static_cast<float>(mRandom.nextDouble() + 6.0);
+                    const double dropPhase =
+                        (static_cast<double>(dropSeed) + static_cast<double>(partialTick)) * 0.03125 *
+                        (mRandom.nextDouble() + 3.0);
 
                     const float dx = static_cast<float>((blockX - 0.5f) - cameraBlockX);
                     const float dz = static_cast<float>((blockZ - 0.5f) - cameraBlockZ);
@@ -3658,17 +3560,23 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                     const float zBase = static_cast<float>(blockZ - cameraBlockZ) + 0.5f;
                     const float yMin = static_cast<float>(minY);
                     const float yMax = static_cast<float>(maxY);
-                    const float vTop = static_cast<float>(minY) * 2.0f + dropPhase;
-                    const float vBottom = vTop;
-                    const float uLeft = xBase - offsetX + 1.75f;
-                    const float uRight = xBase + offsetX + 1.75f;
-                    const float vFront = zBase - offsetZ + 1.75f;
-                    const float vBack = zBase + offsetZ + 1.75f;
+                    const float minYPhaseBase = static_cast<float>(
+                        static_cast<double>(static_cast<float>(minY)) * 0.25);
+                    const float maxYPhaseBase = static_cast<float>(
+                        static_cast<double>(static_cast<float>(maxY)) * 0.25);
+                    const float vTop = static_cast<float>(
+                        static_cast<double>(minYPhaseBase) + dropPhase);
+                    const float vBottom = static_cast<float>(
+                        static_cast<double>(maxYPhaseBase) + dropPhase);
+                    const float uLeft = xBase - offsetX;
+                    const float uRight = xBase + offsetX;
+                    const float vFront = zBase - offsetZ;
+                    const float vBack = zBase + offsetZ;
 
                     builder->vertexUV(uLeft, yMin, vFront, 0.0f, vTop);
-                    builder->vertexUV(uRight, yMin, vBack, 1.0f, vBottom);
+                    builder->vertexUV(uRight, yMin, vBack, 1.0f, vTop);
                     builder->color(1.0f, 1.0f, 1.0f, 1.0f);
-                    builder->vertexUV(uRight, yMax, vBack, 1.0f, vTop);
+                    builder->vertexUV(uRight, yMax, vBack, 1.0f, vBottom);
                     builder->vertexUV(uLeft, yMax, vFront, 0.0f, vBottom);
                     continue;
                 }
@@ -3685,11 +3593,20 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                 builder->begin();
             }
 
-            const float rainPhase =
-                static_cast<float>(rainAnim * 0.001953125f + mRandom.nextDouble());
-            const float rainOffsetA = static_cast<float>(mRandom.nextGaussian() * -0.5f);
-            const float rainOffsetB =
-                static_cast<float>(rainAnim * (mRandom.nextGaussian() * 0.01f));
+            const float rainTickPhase =
+                static_cast<float>(static_cast<double>(static_cast<float>(rainTime)) +
+                                   static_cast<double>(partialTick));
+            const float rainScroll =
+                (static_cast<float>(rainTime & 0x1ff) + partialTick) * 0.001953125f;
+            const float rainGaussianScale = rainTickPhase * 0.01f;
+            const double rainRandomA = mRandom.nextDouble();
+            const double rainGaussianA = mRandom.nextGaussian();
+            const double rainRandomB = mRandom.nextDouble();
+            const double rainGaussianB = mRandom.nextGaussian();
+            const double rainOffsetA =
+                rainRandomA + static_cast<double>(rainGaussianScale * static_cast<float>(rainGaussianA));
+            const double rainOffsetB = rainRandomB +
+                static_cast<double>(rainTickPhase * static_cast<float>(rainGaussianB) * 0.001f);
 
             const float dx = static_cast<float>((blockX - 0.5f) - cameraBlockX);
             const float dz = static_cast<float>((blockZ - 0.5f) - cameraBlockZ);
@@ -3699,24 +3616,28 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             BlockPos lightPos(blockX, renderY, blockZ);
             builder->tex2(level->getLightColor(lightPos, 0, -1));
             const float alpha =
-                (-(dist * dist - 1.875f) * 0.3f + 0.5f) * rainLevel * rainLevel;
+                (-(dist * dist - 1.0f) * 0.3f + 0.5f) * rainLevel * rainLevel;
             builder->color(1.0f, 1.0f, 1.0f, alpha);
 
             const float xBase = static_cast<float>(blockX - cameraBlockX) + 0.5f;
             const float zBase = static_cast<float>(blockZ - cameraBlockZ) + 0.5f;
             const float yMin = static_cast<float>(minY);
             const float yMax = static_cast<float>(maxY);
-            const float vFront = zBase - offsetZ + 1.75f;
-            const float vBack = zBase + offsetZ + 1.75f;
-            const float uCoord = rainPhase + rainOffsetB;
-            const float vTop = static_cast<float>(maxY) * 2.0f + rainOffsetA + uCoord;
-            const float vBottom = vTop;
+            const float vFront = zBase - offsetZ;
+            const float vBack = zBase + offsetZ;
+            const float minYPhaseBase = static_cast<float>(
+                static_cast<double>(static_cast<float>(minY)) * 0.25);
+            const float maxYPhaseBase = static_cast<float>(
+                static_cast<double>(static_cast<float>(maxY)) * 0.25);
+            const float vTop = static_cast<float>(
+                static_cast<double>(minYPhaseBase) + static_cast<double>(rainScroll) + rainOffsetB);
+            const float vBottom = static_cast<float>(
+                static_cast<double>(maxYPhaseBase) + static_cast<double>(rainScroll) + rainOffsetB);
 
-            builder->vertexUV(xBase - offsetX + 1.75f, yMin, vFront, 1.875f, vTop);
-            builder->vertexUV(xBase + offsetX + 1.75f, yMin, vBack, 1.875f + 1.0f, vBottom);
-            const float vLower = static_cast<float>(minY) * 2.0f + rainOffsetA + uCoord;
-            builder->vertexUV(xBase + offsetX + 1.75f, yMax, vBack, 1.875f + 1.0f, vLower);
-            builder->vertexUV(xBase - offsetX + 1.75f, yMax, vFront, 1.875f, vLower);
+            builder->vertexUV(xBase - offsetX, yMin, vFront, static_cast<float>(rainOffsetA), vTop);
+            builder->vertexUV(xBase + offsetX, yMin, vBack, static_cast<float>(1.0 + rainOffsetA), vTop);
+            builder->vertexUV(xBase + offsetX, yMax, vBack, static_cast<float>(1.0 + rainOffsetA), vBottom);
+            builder->vertexUV(xBase - offsetX, yMax, vFront, static_cast<float>(rainOffsetA), vBottom);
             builder->offset(1.0f, 1.0f, 1.0f);
 
             zSeedAccumulator += columnStep * 0x35c1;
@@ -4017,8 +3938,10 @@ void GameRenderer::renderItemActivationAnimation(int width, int height, float pa
 
     const float widthHalf = static_cast<float>(width >> 1);
     const float heightHalf = static_cast<float>(height >> 1);
-    const float* offsetX = reinterpret_cast<float*>(self + 0x228c + playerIndex * 0x10);
-    const float* offsetY = reinterpret_cast<float*>(self + 0x229c + playerIndex * 0x10);
+    const float* offsetX =
+        reinterpret_cast<float*>(self + 0x228c + playerIndex * sizeof(float));
+    const float* offsetY =
+        reinterpret_cast<float*>(self + 0x229c + playerIndex * sizeof(float));
 
     GlStateManager::enableAlphaTest();
     GlStateManager::pushMatrix();
@@ -4066,7 +3989,7 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
     const long long nowMs = System::processTimeInMilliSecs();
     *reinterpret_cast<long long*>(self + 0x120) = nowMs;
 
-    if (*reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(mMinecraft) + 0x148) == 0)
+    if (mMinecraft->mNoRender)
         return;
 
     static char sStereo3dFlag = 0;
@@ -4257,8 +4180,8 @@ unsigned long long GameRenderer::displayItemActivation(not_null_ptr<ItemInstance
     int* deleteTicks = reinterpret_cast<int*>(self + 0x227c) + playerIndex;
     *deleteTicks = kActivationTicks;
 
-    float* offsetX = reinterpret_cast<float*>(self + 0x228c + playerIndex * 0x10);
-    float* offsetY = reinterpret_cast<float*>(self + 0x229c + playerIndex * 0x10);
+    float* offsetX = reinterpret_cast<float*>(self + 0x228c + playerIndex * sizeof(float));
+    float* offsetY = reinterpret_cast<float*>(self + 0x229c + playerIndex * sizeof(float));
     *offsetX = mRandom.nextFloat() + mRandom.nextFloat() - kOne;
     *offsetY = mRandom.nextFloat() + mRandom.nextFloat() - kOne;
 

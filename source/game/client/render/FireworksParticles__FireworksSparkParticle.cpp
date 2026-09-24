@@ -15,6 +15,7 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
     size *= 0.75f;
     setAlpha(0.9900000095367432f);
     lifetime = random.nextInt(12) + 48;
+    hasPhysics = false;
 }
 
 FireworksParticles::FireworksSparkParticle::~FireworksSparkParticle()

@@ -818,7 +818,7 @@ void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player
 void ItemInHandRenderer::render(float partialTick)
 {
     boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
-    player->getAttackAnim(partialTick);
+    float attackProgress = player->getAttackAnim(partialTick);
     float mainHandHeight =
         mMainHandHeightOld + (mMainHandHeight - mMainHandHeightOld) * partialTick;
     float offHandHeight = mOffHandHeightOld + (mOffHandHeight - mOffHandHeightOld) * partialTick;
@@ -829,11 +829,16 @@ void ItemInHandRenderer::render(float partialTick)
         not_null_ptr<ItemInstance> useItem = player->getUseItem();
         if (!useItem->isEmpty() && useItem->getItem() == Items::bow)
         {
-            renderMainHand = player->getUsedItemHand() != InteractionHand::eInteractionHand_MainHand;
-            renderOffHand = !renderMainHand;
+            InteractionHand::EInteractionHand usedHand = player->getUsedItemHand();
+            renderMainHand = usedHand == InteractionHand::eInteractionHand_MainHand;
+            renderOffHand = usedHand != InteractionHand::eInteractionHand_MainHand;
         }
     }
-    enableLight(mainHandHeight, offHandHeight);
+    float pitchDelta = player->mXRot - player->mXRotO;
+    float pitch = pitchDelta * partialTick + player->mXRotO;
+    float yawDelta = player->mYRot - player->mYRotO;
+    float yaw = yawDelta * partialTick + player->mYRotO;
+    enableLight(pitch, yaw);
     setLightValue(player);
     setPlayerBob(player, partialTick);
     GlStateManager::enableRescaleNormal();
@@ -853,7 +858,9 @@ void ItemInHandRenderer::render(float partialTick)
             GlStateManager::color4f(white, white, white, white);
         }
         float mainEquip = 1.0f - mainHandHeight;
-        float mainSwing = 1.0f - mainHandHeight;
+        float mainSwing = player->mSwingingArm == InteractionHand::eInteractionHand_MainHand
+                              ? attackProgress
+                              : 0.0f;
         renderArmWithItem(player, partialTick, InteractionHand::eInteractionHand_MainHand, mainEquip,
                           mMainHandItem, mainSwing);
     }
@@ -871,7 +878,9 @@ void ItemInHandRenderer::render(float partialTick)
             GlStateManager::color4f(white, white, white, white);
         }
         float offEquip = 1.0f - offHandHeight;
-        float offSwing = 1.0f - offHandHeight;
+        float offSwing = player->mSwingingArm == InteractionHand::eInteractionHand_OffHand
+                             ? attackProgress
+                             : 0.0f;
         renderArmWithItem(player, partialTick, InteractionHand::eInteractionHand_OffHand, offEquip,
                           mOffHandItem, offSwing);
     }

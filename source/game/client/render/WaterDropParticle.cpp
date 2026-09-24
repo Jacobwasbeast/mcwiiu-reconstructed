@@ -9,7 +9,7 @@
 #include "game/world/block/Material.hpp"
 
 WaterDropParticle::WaterDropParticle(Level* level, double x, double y, double z)
-    : Particle(level, x, y, z, 1000.0, 1000.0, 1000.0)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     xd *= 0.3;
     yd = random.nextDouble() * 0.2 + 0.1;
@@ -17,8 +17,9 @@ WaterDropParticle::WaterDropParticle(Level* level, double x, double y, double z)
     rCol = 1.0f;
     gCol = 1.0f;
     bCol = 1.0f;
-    setMiscTex(19);
+    setMiscTex(random.nextInt(4) + 0x13);
     setSize(0.01f, 0.01f);
+    hasPhysics = false;
     gravity = 0.06f;
     lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2));
 }

@@ -17,7 +17,7 @@ FallingDustParticle::FallingDustParticle(Level* level,
                                          float red,
                                          float green,
                                          float blue)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0), m_gravity(0.0f)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0), m_size(0.0f), m_gravity(0.0f)
 {
     xd = 0.0;
     yd = 0.0;
@@ -26,8 +26,8 @@ FallingDustParticle::FallingDustParticle(Level* level,
     rCol = red;
     gCol = green;
     bCol = blue;
-    alpha *= 0.75f * 0.9f;
-    size = alpha;
+    m_size = Particle::size * 0.75f * 0.9f;
+    Particle::size = m_size;
     lifetime = (int)std::floor(32.0f / (random.nextFloat() * 0.8f + 0.2f) * 0.9f);
     uo = random.nextFloat() * 6.2831855f;
 }
@@ -47,7 +47,7 @@ void FallingDustParticle::render(BufferBuilder* buffer,
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     float alphaScale = Mth::clamp(progress * 32.0f, 0.0f, 1.75f);
-    alpha = size * alphaScale;
+    Particle::size = m_size * alphaScale;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 

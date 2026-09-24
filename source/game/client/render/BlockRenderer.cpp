@@ -8,6 +8,7 @@
 #include "game/client/render/Textures.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/ColourTable.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
@@ -22,6 +23,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/BrewingStandBlock.hpp"
 #include "game/world/block/ChorusFlowerBlock.hpp"
 #include "game/world/block/ChorusPlantBlock.hpp"
 #include "game/world/block/CommandBlock.hpp"
@@ -37,8 +39,11 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/PistonBaseBlock.hpp"
 #include "game/world/block/RotatedPillarBlock.hpp"
+#include "game/world/block/RedStoneWireBlock.hpp"
 #include "game/world/block/StemBlock.hpp"
 #include "game/world/block/ThinFenceBlock.hpp"
+#include "game/world/block/TrapDoorBlock.hpp"
+#include "game/world/block/TorchBlock.hpp"
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 #include "game/world/block/WallBlock.hpp"
 #include "game/util/Random.hpp"
@@ -1111,7 +1116,8 @@ int BlockRenderer::getLightColor(Block* block, LevelSource* levelSource, const B
                                             (pos.y - mCacheMinY) * 0x20 +
                                             pos.z - mCacheMinZ);
         if ((index & 0xffff8000) == 0 && block != Blocks::FLOWING_WATER && block != Blocks::WATER &&
-            block != Blocks::flowing_lava && block != Blocks::lava)
+            block != Blocks::flowing_lava && block != Blocks::lava &&
+            block != Blocks::magma && block != Blocks::blue_ice)
         {
             unsigned int cached = mCache[index];
             if ((cached & 0x80000000) != 0)
@@ -1720,6 +1726,7 @@ void BlockRenderer::tesselateRowTexture(const BlockState* state, float x, float 
 
 void BlockRenderer::tesselateTorch(const BlockState* state, float x, float y, float z, float xTilt, float zTilt)
 {
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     TextureAtlasSprite* texture = getTexture(state, Direction::DOWN);
     if (hasFixedTexture())
         texture = mFixedTexture;
@@ -1729,19 +1736,17 @@ void BlockRenderer::tesselateTorch(const BlockState* state, float x, float y, fl
     float u1 = (float)texture->getU1(true);
     float v1 = (float)texture->getV1(true);
 
-    float headU0 = (float)texture->getU(2.4375);
-    float headV0 = (float)texture->getV(2.375);
-    float headU1 = (float)texture->getU(2.53125);
-    float headV1 = (float)texture->getV(2.5);
+    float headU0 = (float)texture->getU(7.0);
+    float headV0 = (float)texture->getV(6.0);
+    float headU1 = (float)texture->getU(9.0);
+    float headV1 = (float)texture->getV(8.0);
     texture->adjustUVs(headU0, headU1, headV0, headV1);
 
-    float capU0 = (float)texture->getU(2.4375);
-    float capV0 = (float)texture->getV(2.65625);
-    float capU1 = (float)texture->getU(2.53125);
-    float capV1 = (float)texture->getV(2.71875);
+    float capU0 = (float)texture->getU(7.0);
+    float capV0 = (float)texture->getV(13.0);
+    float capU1 = (float)texture->getU(9.0);
+    float capV1 = (float)texture->getV(15.0);
     texture->adjustUVs(capU0, capU1, capV0, capV1);
-
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
     float top = y + 0.625f;
     float xc = x + 0.5f + xTilt * 0.375f;
@@ -1913,9 +1918,188 @@ void BlockRenderer::renderBlock(const BlockState* state, float brightness, float
 
 bool BlockRenderer::tesselateTrapDoorInWorld(const BlockState* state, const BlockPos& pos)
 {
+    for (int i = 0; i < 6; ++i)
+    {
+        (&mFaceRotation0)[i] = 0;
+        (&mFaceTransform0)[i] = 0;
+    }
+
+    const int direction = state->getValue(TrapDoorBlock::FACING)->get3DDataValue();
+    const bool open = state->getValue(TrapDoorBlock::OPEN);
+    const bool bottom = state->getValue(TrapDoorBlock::HALF) == TrapDoorBlock::BOTTOM;
+
+    if (!open && bottom)
+    {
+        if (direction < 3)
+        {
+            mFaceRotation3 = 3;
+            mFaceRotation2 = 3;
+            mFaceRotation4 = 3;
+            mFaceRotation1 = 3;
+            mFaceRotation5 = 3;
+            mFaceTransform0 = 1;
+            mFaceTransform2 = 1;
+            mFaceTransform1 = 1;
+            mFaceTransform3 = 1;
+        }
+        else if (direction == 3)
+        {
+            mFaceRotation3 = 3;
+            mFaceTransform2 = 1;
+            mFaceRotation0 = 3;
+            mFaceTransform3 = 1;
+            mFaceRotation2 = 3;
+            mFaceTransform1 = 1;
+            mFaceTransform0 = 1;
+        }
+        else if (direction == 4)
+        {
+            mFaceRotation2 = 3;
+            mFaceTransform2 = 1;
+            mFaceRotation4 = 1;
+            mFaceRotation1 = 3;
+            mFaceRotation0 = 3;
+            mFaceTransform3 = 1;
+            mFaceRotation5 = 2;
+            mFaceTransform1 = 1;
+            mFaceTransform0 = 1;
+        }
+        else if (direction == 5)
+        {
+            mFaceRotation1 = 3;
+            mFaceTransform3 = 1;
+            mFaceRotation5 = 1;
+            mFaceTransform2 = 1;
+            mFaceRotation3 = 3;
+            mFaceRotation0 = 3;
+            mFaceTransform0 = 1;
+            mFaceRotation4 = 2;
+            mFaceTransform1 = 1;
+        }
+    }
+    else if (!open)
+    {
+        if (direction == 2)
+        {
+            mFaceRotation0 = 3;
+            mFaceRotation4 = 3;
+            mFaceRotation5 = 3;
+        }
+        else if (direction == 3)
+        {
+            mFaceRotation1 = 3;
+        }
+        else if (direction == 4)
+        {
+            mFaceRotation3 = 3;
+            mFaceRotation4 = 1;
+            mFaceRotation5 = 2;
+        }
+        else if (direction == 5)
+        {
+            mFaceRotation2 = 3;
+            mFaceRotation4 = 2;
+            mFaceRotation5 = 1;
+        }
+    }
+    else if (bottom)
+    {
+        if (direction == 2)
+        {
+            mFaceRotation0 = 3;
+            mFaceRotation3 = 1;
+            mFaceRotation2 = 2;
+            mFaceTransform0 = 2;
+            mFaceRotation1 = 3;
+            mFaceRotation5 = 3;
+        }
+        else if (direction == 3)
+        {
+            mFaceRotation3 = 2;
+            mFaceTransform1 = 2;
+            mFaceRotation4 = 3;
+            mFaceRotation1 = 3;
+            mFaceRotation2 = 1;
+            mFaceRotation0 = 3;
+        }
+        else if (direction == 4)
+        {
+            mFaceRotation0 = 2;
+            mFaceRotation1 = 1;
+            mFaceRotation2 = 3;
+            mFaceRotation3 = 3;
+            mFaceRotation4 = 2;
+            mFaceRotation5 = 2;
+            mFaceTransform3 = 2;
+            mFaceTransform4 = 1;
+        }
+        else if (direction == 5)
+        {
+            mFaceRotation0 = 1;
+            mFaceRotation1 = 2;
+            mFaceRotation2 = 3;
+            mFaceRotation3 = 3;
+            mFaceRotation4 = 1;
+            mFaceRotation5 = 1;
+            mFaceTransform0 = 1;
+            mFaceTransform2 = 2;
+        }
+    }
+    else
+    {
+        if (direction == 2)
+        {
+            mFaceTransform2 = 1;
+            mFaceRotation1 = 3;
+            mFaceRotation4 = 3;
+            mFaceRotation2 = 2;
+            mFaceTransform1 = 1;
+            mFaceTransform4 = 1;
+            mFaceRotation3 = 1;
+            mFaceTransform3 = 1;
+        }
+        else if (direction == 3)
+        {
+            mFaceRotation2 = 1;
+            mFaceTransform2 = 1;
+            mFaceRotation5 = 3;
+            mFaceRotation3 = 2;
+            mFaceTransform0 = 2;
+            mFaceTransform3 = 1;
+            mFaceTransform5 = 1;
+            mFaceTransform4 = 1;
+        }
+        else if (direction == 4)
+        {
+            mFaceRotation4 = 1;
+            mFaceTransform2 = 2;
+            mFaceTransform4 = 1;
+        }
+        else if (direction == 5)
+        {
+            mFaceRotation0 = 1;
+            mFaceRotation1 = 2;
+            mFaceRotation4 = 2;
+            mFaceRotation5 = 1;
+            mFaceTransform5 = 1;
+            mFaceTransform1 = 1;
+            mFaceTransform4 = 1;
+            mFaceTransform3 = 2;
+        }
+    }
+
+    int faces = state->getBlock()->getFaceFlags(state, mLevelSource, pos, mRenderAllFaces);
+    if (faces == 0)
+        return false;
+
     setShape(state->getShape(mLevelSource, pos));
-    bool rendered = tesselateBlockInWorld(state, pos);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, faces);
+
+    for (int i = 0; i < 6; ++i)
+    {
+        (&mFaceRotation0)[i] = 0;
+        (&mFaceTransform0)[i] = 0;
+    }
     return rendered;
 }
 
@@ -2591,10 +2775,24 @@ bool BlockRenderer::tesselateLilypadInWorld(const BlockState* state, const Block
 
 bool BlockRenderer::tesselateTorchInWorld(const BlockState* state, const BlockPos& pos)
 {
+    const Direction* facing = state->getValue(TorchBlock::FACING);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
     builder->color(1.0f, 1.0f, 1.0f);
-    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y, (float)pos.z + 0.5f, 0.0f, 0.0f);
+    const float x = (float)pos.x;
+    const float y = (float)pos.y;
+    const float z = (float)pos.z;
+    const float offset = 0.09999999403953552f;
+    if (facing == Direction::EAST)
+        tesselateTorch(state, x - offset, y + 0.2f, z, -0.4f, 0.0f);
+    else if (facing == Direction::WEST)
+        tesselateTorch(state, x + offset, y + 0.2f, z, 0.4f, 0.0f);
+    else if (facing == Direction::SOUTH)
+        tesselateTorch(state, x, y + 0.2f, z - offset, 0.0f, -0.4f);
+    else if (facing == Direction::NORTH)
+        tesselateTorch(state, x, y + 0.2f, z + offset, 0.0f, 0.4f);
+    else
+        tesselateTorch(state, x, y, z, 0.0f, 0.0f);
     return true;
 }
 
@@ -2607,10 +2805,152 @@ bool BlockRenderer::tesselateFireInWorld(const BlockState* state, const BlockPos
 
 bool BlockRenderer::tesselateDustInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.03125f, 1.0f);
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    const BlockState* wireState = static_cast<RedStoneWireBlock*>(state->getBlock())
+        ->fillVirtualBlockStateProperties(state, mLevelSource, pos);
+    TextureAtlasSprite* cross = RedStoneWireBlock::getTexture(L"_cross");
+    TextureAtlasSprite* line = RedStoneWireBlock::getTexture(L"_line");
+    TextureAtlasSprite* crossOverlay = RedStoneWireBlock::getTexture(L"_cross_overlay");
+    TextureAtlasSprite* lineOverlay = RedStoneWireBlock::getTexture(L"_line_overlay");
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+
+    const int power = wireState->getValue(RedStoneWireBlock::POWER);
+    const unsigned int rgb = power == 0
+        ? Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_RedstoneDustUnlit)
+        : ColourTable::LinearBlend(
+            Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_RedstoneDustLitMin),
+            Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_RedstoneDustLitMax),
+            (float)(power - 1) / 14.0f);
+    builder->color((float)(rgb >> 16 & 0xff) / 255.0f,
+                   (float)(rgb >> 8 & 0xff) / 255.0f,
+                   (float)(rgb & 0xff) / 255.0f);
+
+    const auto isConnected = [wireState](AbstractProperty<RedStoneWireBlock::ConnectingSide*>* property)
+    {
+        RedStoneWireBlock::ConnectingSide* side = wireState->getValue(property);
+        return side == RedStoneWireBlock::UP || side == RedStoneWireBlock::SIDE;
+    };
+    const bool west = isConnected(RedStoneWireBlock::WEST);
+    const bool east = isConnected(RedStoneWireBlock::EAST);
+    const bool north = isConnected(RedStoneWireBlock::NORTH);
+    const bool south = isConnected(RedStoneWireBlock::SOUTH);
+    const bool westUp = wireState->getValue(RedStoneWireBlock::WEST) == RedStoneWireBlock::UP;
+    const bool eastUp = wireState->getValue(RedStoneWireBlock::EAST) == RedStoneWireBlock::UP;
+    const bool northUp = wireState->getValue(RedStoneWireBlock::NORTH) == RedStoneWireBlock::UP;
+    const bool southUp = wireState->getValue(RedStoneWireBlock::SOUTH) == RedStoneWireBlock::UP;
+
+    const bool lineMode = north && !east && !west || !north && !east && !west && south;
+    TextureAtlasSprite* top = lineMode ? line : cross;
+    TextureAtlasSprite* overlay = lineMode ? lineOverlay : crossOverlay;
+    const float x = (float)pos.x;
+    const float z = (float)pos.z;
+    float x0 = x;
+    float x1 = x + 1.0f;
+    float z0 = z;
+    float z1 = z + 1.0f;
+    float u0 = lineMode ? (float)top->getU0(true) : (float)top->getU(0.0);
+    float u1 = lineMode ? (float)top->getU1(true) : (float)top->getU(16.0);
+    float v0 = lineMode ? (float)top->getV0(true) : (float)top->getV(0.0);
+    float v1 = lineMode ? (float)top->getV1(true) : (float)top->getV(16.0);
+
+    if (!lineMode)
+    {
+        if (!west) { x0 += 0.3125f; u0 = (float)top->getU(5.0); }
+        if (!east) { x1 -= 0.3125f; u1 = (float)top->getU(11.0); }
+        if (!north) { z0 += 0.3125f; v0 = (float)top->getV(5.0); }
+        if (!south) { z1 -= 0.3125f; v1 = (float)top->getV(11.0); }
+    }
+    if (!lineMode)
+        top->adjustUVs(u0, u1, v0, v1);
+    const float y = (float)pos.y + 0.015625f;
+    builder->vertexUV(x1, y, z1, u1, v1);
+    builder->vertexUV(x1, y, z0, u1, v0);
+    builder->vertexUV(x0, y, z0, u0, v0);
+    builder->vertexUV(x0, y, z1, u0, v1);
+
+    float overlayU0 = lineMode ? (float)overlay->getU0(true) : (float)overlay->getU(0.0);
+    float overlayU1 = lineMode ? (float)overlay->getU1(true) : (float)overlay->getU(16.0);
+    float overlayV0 = lineMode ? (float)overlay->getV0(true) : (float)overlay->getV(0.0);
+    float overlayV1 = lineMode ? (float)overlay->getV1(true) : (float)overlay->getV(16.0);
+    if (!lineMode)
+    {
+        if (!west) overlayU0 = (float)overlay->getU(5.0);
+        if (!east) overlayU1 = (float)overlay->getU(11.0);
+        if (!north) overlayV0 = (float)overlay->getV(5.0);
+        if (!south) overlayV1 = (float)overlay->getV(11.0);
+    }
+    if (!lineMode)
+        overlay->adjustUVs(overlayU0, overlayU1, overlayV0, overlayV1);
+    builder->color(1.0f, 1.0f, 1.0f);
+    builder->vertexUV(x1, y, z1, overlayU1, overlayV1);
+    builder->vertexUV(x1, y, z0, overlayU1, overlayV0);
+    builder->vertexUV(x0, y, z0, overlayU0, overlayV0);
+    builder->vertexUV(x0, y, z1, overlayU0, overlayV1);
+
+    struct SideVertex
+    {
+        float x;
+        float y;
+        float z;
+    };
+    const auto emitUpSide = [builder, rgb](TextureAtlasSprite* base, TextureAtlasSprite* sideOverlay,
+                                           const SideVertex (&vertices)[4],
+                                           const int (&baseCorners)[4][2],
+                                           const int (&overlayCorners)[4][2])
+    {
+        builder->color((float)(rgb >> 16 & 0xff) / 255.0f,
+                       (float)(rgb >> 8 & 0xff) / 255.0f,
+                       (float)(rgb & 0xff) / 255.0f);
+        const float baseU[2] = { (float)base->getU0(true), (float)base->getU1(true) };
+        const float baseV[2] = { (float)base->getV0(true), (float)base->getV1(true) };
+        for (int i = 0; i < 4; ++i)
+            builder->vertexUV(vertices[i].x, vertices[i].y, vertices[i].z,
+                              baseU[baseCorners[i][0]], baseV[baseCorners[i][1]]);
+
+        builder->color(1.0f, 1.0f, 1.0f);
+        const float overlayU[2] = { (float)sideOverlay->getU0(true), (float)sideOverlay->getU1(true) };
+        const float overlayV[2] = { (float)sideOverlay->getV0(true), (float)sideOverlay->getV1(true) };
+        for (int i = 0; i < 4; ++i)
+            builder->vertexUV(vertices[i].x, vertices[i].y, vertices[i].z,
+                              overlayU[overlayCorners[i][0]], overlayV[overlayCorners[i][1]]);
+    };
+
+    const float sideBottom = (float)pos.y;
+    const float sideTop = (float)pos.y + 1.0f + 0.021875f;
+    const int westEastBase[4][2] = { {1,1}, {0,1}, {0,0}, {1,0} };
+    const int westEastOverlay[4][2] = { {1,1}, {0,1}, {0,0}, {1,0} };
+    const int northBase[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+    const SideVertex westVertices[4] =
+    {
+        { x + 0.015625f, sideTop, z + 1.0f }, { x + 0.015625f, sideBottom, z + 1.0f },
+        { x + 0.015625f, sideBottom, z }, { x + 0.015625f, sideTop, z }
+    };
+    const SideVertex eastVertices[4] =
+    {
+        { x + 0.984375f, sideBottom, z + 1.0f }, { x + 0.984375f, sideTop, z + 1.0f },
+        { x + 0.984375f, sideTop, z }, { x + 0.984375f, sideBottom, z }
+    };
+    const SideVertex northVertices[4] =
+    {
+        { x + 1.0f, sideBottom, z + 0.015625f }, { x + 1.0f, sideTop, z + 0.015625f },
+        { x, sideTop, z + 0.015625f }, { x, sideBottom, z + 0.015625f }
+    };
+    const SideVertex southVertices[4] =
+    {
+        { x + 1.0f, sideTop, z + 0.984375f }, { x + 1.0f, sideBottom, z + 0.984375f },
+        { x, sideBottom, z + 0.984375f }, { x, sideTop, z + 0.984375f }
+    };
+    if (westUp)
+        emitUpSide(line, lineOverlay, westVertices, westEastBase, westEastOverlay);
+    if (eastUp)
+        emitUpSide(line, lineOverlay, eastVertices, northBase, northBase);
+    if (northUp)
+        emitUpSide(line, lineOverlay, northVertices, northBase, northBase);
+    if (southUp)
+        emitUpSide(line, lineOverlay, southVertices, westEastBase, westEastOverlay);
+
+    return true;
 }
 
 bool BlockRenderer::tesselateLadderInWorld(const BlockState* state, const BlockPos& pos)
@@ -3364,12 +3704,74 @@ bool BlockRenderer::tesselateAnvilInWorld(const BlockState* state, const BlockPo
 
 bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(0.125f, 0.0f, 0.125f, 0.875f, 0.125f, 0.875f);
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.4375f, 0.125f, 0.4375f, 0.5625f, 0.875f, 0.5625f);
-    rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    BrewingStandBlock* block = static_cast<BrewingStandBlock*>(state->getBlock());
+    const float bottom = 0.0f;
+    const float postEdge = 0.4375f;
+    const float postOtherEdge = 0.5625f;
+
+    setShape(postEdge, bottom, postEdge, postOtherEdge, 0.875f, 0.875f);
+    tesselateBlockInWorld(state, pos);
+
+    setFixedTexture(block->getBaseTexture());
+    mRenderAllFaces = true;
+    setShape(postOtherEdge, bottom, 0.3125f, 0.9375f, 0.125f, 0.6875f);
+    tesselateBlockInWorld(state, pos);
+    setShape(0.125f, bottom, 0.0625f, 0.5f, 0.125f, 0.4375f);
+    tesselateBlockInWorld(state, pos);
+    setShape(0.125f, bottom, 0.5625f, 0.5f, 0.125f, 0.9375f);
+    tesselateBlockInWorld(state, pos);
+    mRenderAllFaces = false;
+    clearFixedTexture();
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    builder->color((float)(color >> 16 & 255) / 255.0f,
+                   (float)(color >> 8 & 255) / 255.0f,
+                   (float)(color & 255) / 255.0f);
+
+    TextureAtlasSprite* texture = getTexture(state, Direction::UP);
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+
+    const double vTop = texture->getV0(true);
+    const double vBottom = texture->getV1(true);
+    const float origin = 0.3125f;
+    const float pi = 3.1415927410125732f;
+    const bool hasBottle[3] =
+    {
+        state->getValue(BrewingStandBlock::HAS_BOTTLE_0),
+        state->getValue(BrewingStandBlock::HAS_BOTTLE_1),
+        state->getValue(BrewingStandBlock::HAS_BOTTLE_2)
+    };
+
+    for (int i = 0; i < 3; ++i)
+    {
+        float u0 = (float)texture->getU(2.5);
+        float u1 = (float)texture->getU1(false);
+        if (hasBottle[i])
+            u1 = (float)texture->getU0(false);
+        texture->adjustU(u0, u1);
+
+        float angle = (float)i * pi;
+        angle = (angle + angle) / 3.0f + pi * 0.5f;
+        float x0 = (float)pos.x + origin;
+        float z0 = (float)pos.z + origin;
+        float x1 = x0 + std::sin(angle) * 8.0f * 0.5f;
+        float z1 = z0 + std::cos(angle) * 8.0f * 0.5f;
+        float y0 = (float)pos.y;
+        float y1 = y0 + 1.0f;
+
+        builder->vertexUV(x0, y1, z0, u0, (float)vTop);
+        builder->vertexUV(x0, y0, z0, u0, (float)vBottom);
+        builder->vertexUV(x1, y0, z1, u1, (float)vBottom);
+        builder->vertexUV(x1, y1, z1, u1, (float)vTop);
+        builder->vertexUV(x1, y1, z1, u1, (float)vTop);
+        builder->vertexUV(x1, y0, z1, u1, (float)vBottom);
+        builder->vertexUV(x0, y0, z0, u0, (float)vBottom);
+        builder->vertexUV(x0, y1, z0, u0, (float)vTop);
+    }
+    return true;
 }
 
 bool BlockRenderer::tesselateAirPortalFrameInWorld(const BlockState* state, const BlockPos& pos)

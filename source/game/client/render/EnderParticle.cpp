@@ -15,9 +15,9 @@ EnderParticle::EnderParticle(Level* level, double x, double y, double z, double 
     bCol = (float)(colour & 255) / 255.0f;
     float colourScale = (float)(random.nextFloat() * 0.6f + 0.4f);
     rCol *= colourScale; gCol *= colourScale; bCol *= colourScale;
-    alpha = scale = (float)(random.nextFloat() * 0.2f + 0.5f);
+    size = scale = (float)(random.nextFloat() * 0.2f + 0.5f);
     lifetime = (int)(Math::random() * 10.0) + 40;
-    onGround = false;
+    hasPhysics = false;
     setMiscTex((int)(Math::random() * 8.0));
 }
 EnderParticle::~EnderParticle() {}
@@ -25,7 +25,7 @@ void EnderParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     float inverseProgress = 1.0f - progress;
-    alpha = scale * -(inverseProgress * inverseProgress - 1.0f);
+    size = scale * -(inverseProgress * inverseProgress - 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 int EnderParticle::getLightColor(float partialTicks)

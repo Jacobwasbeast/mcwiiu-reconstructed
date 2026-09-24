@@ -130,7 +130,7 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     if (!mYoung)
     {
         GlStateManager::pushMatrix();
-        GlStateManager::scalef(1.035f, 1.035f, 1.035f);
+        GlStateManager::scalef(0.6f, 0.6f, 0.6f);
         GlStateManager::translatef(0.0f, 16.0f * scale, 0.0f);
         mRearFootLeft->render(scale, useDisplayList, false);
         mRearFootRight->render(scale, useDisplayList, false);

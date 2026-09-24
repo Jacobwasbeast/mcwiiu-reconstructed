@@ -25,8 +25,9 @@ void RedDustParticle::init(Level* level, double x, double y, double z,
     rCol = (random.nextFloat() * 0.2f + 0.8f) * red * scale;
     gCol = (random.nextFloat() * 0.2f + 0.8f) * green * scale;
     bCol = (random.nextFloat() * 0.2f + 0.8f) * blue * scale;
-    this->alpha *= 0.75f * alpha;
-    size = this->alpha;
+    const float particleSize = Particle::size * 0.75f * alpha;
+    Particle::size = particleSize;
+    size = particleSize;
     lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2) * alpha);
     setMiscTex(7 - (age << 3) / lifetime);
 }
@@ -38,7 +39,7 @@ void RedDustParticle::render(BufferBuilder* buffer,
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     float alphaScale = Mth::clamp(progress * 32.0f, 0.0f, 1.0f);
-    alpha = size * alphaScale;
+    Particle::size = size * alphaScale;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 

@@ -32,6 +32,7 @@ class MultiPlayerLevel;
 class Player;
 class ItemInstance;
 class ParticleType;
+class Particle;
 class Textures;
 class TextureAtlasSprite;
 class Entity;
@@ -128,8 +129,8 @@ public:
     void playSound(boost::shared_ptr<Player> player, const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch, float range);
     void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     int calculateParticleLevel(Level* level, bool overrideLimiter);
-    void addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    void addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    Particle* addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    Particle* addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     void addParticle(Level* level, const ParticleType* particle, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     void entityAdded(boost::shared_ptr<Entity> entity);
@@ -162,6 +163,7 @@ public:
 private:
     friend class Minecraft;
     friend class Chunk;
+    friend class MultiPlayerGameMode;
 
     ChunkBlockEntityMap mBlockEntities;
     OSFastMutex mBlockEntityMutex;

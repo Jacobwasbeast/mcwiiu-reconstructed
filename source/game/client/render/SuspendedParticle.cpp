@@ -9,7 +9,7 @@
 
 SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z,
                                      double xa, double ya, double za)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
+    : Particle(level, x, y - 0.125, z, xa, ya, za)
 {
     int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)250);
     rCol = (float)((colour >> 16) & 0xff) / 255.0f;
@@ -17,10 +17,10 @@ SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z,
     bCol = (float)(colour & 0xff) / 255.0f;
     setMiscTex(0);
     setSize(0.01f, 0.01f);
-    float velocityScale = random.nextFloat() * 0.6f + 0.2f;
-    xd = xa * velocityScale;
-    yd = ya * velocityScale;
-    zd = za * velocityScale;
+    size *= random.nextFloat() * 0.6f + 0.2f;
+    xd = xa * 0.0;
+    yd = ya * 0.0;
+    zd = za * 0.0;
     lifetime = (int)(16.0f / (random.nextDouble() * 0.8 + 0.2));
 }
 

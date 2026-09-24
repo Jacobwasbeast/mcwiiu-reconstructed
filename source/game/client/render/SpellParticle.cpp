@@ -5,19 +5,30 @@
 
 SpellParticle::SpellParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
-    : Particle(level, x, y, z,
-               (0.5 - Math::random()) * 128.0,
-               Math::random() * 0.2,
-               (0.5 - Math::random()) * 128.0),
+    : SpellParticle(level, x, y, z, xa, ya, za, makeInitialVelocity())
+{
+}
+
+SpellParticle::InitialVelocity SpellParticle::makeInitialVelocity()
+{
+    double x = (0.5 - Math::random()) * 128.0;
+    double y = Math::random() * 255.0;
+    double z = (0.5 - Math::random()) * 128.0;
+    return {x, y, z};
+}
+
+SpellParticle::SpellParticle(Level* level, double x, double y, double z,
+                             double xa, double ya, double za, InitialVelocity velocity)
+    : Particle(level, x, y, z, velocity.x, velocity.y, velocity.z),
       baseTex(0)
 {
-    yd *= 0.2;
+    yd *= static_cast<double>(0.2f);
     if (xa == 0.0 && za == 0.0)
     {
-        xd *= 0.1;
-        zd *= 0.1;
+        xd *= static_cast<double>(0.1f);
+        zd *= static_cast<double>(0.1f);
     }
-    alpha *= 0.75f;
+    size *= 0.75f;
     lifetime = (int)(8.0 / (Math::random() * 0.8 + 0.2));
     baseTex = 0x80;
     setMiscTex(0x87 - (age << 3) / lifetime);

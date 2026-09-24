@@ -12,6 +12,7 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/HumanoidArm.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -29,7 +30,10 @@
 #include "game/world/generation/HumanoidArmorLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
 #include "game/world/generation/SpinAttackLayer.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 
 PlayerRenderer::PlayerRenderer(EntityRenderDispatcher* dispatcher, bool slimArms, bool is64x64)
     : LivingEntityRenderer(dispatcher, new PlayerModel(0.0f, slimArms, is64x64), 0.5f),
@@ -258,6 +262,12 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
         return;
     }
 
+    double renderY = y;
+    if (player->isSneaking() && player->getFallFlyingTicks() <= 4)
+    {
+        renderY -= 1.5;
+    }
+
     setModelProperties(player, partialTick);
 
     if (player->isSpectator())
@@ -277,7 +287,34 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     }
     GlStateManager::setProfile();
 
-    LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
+    bool suppressSpecialRender = false;
+    if ((player->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    {
+        boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
+        if (localPlayer->GetThirdPersonView(false) != 0
+            && (localPlayer.get() == player.get() || player->IsSpectatingOtherPlayer()))
+        {
+            suppressSpecialRender = true;
+        }
+    }
+
+    mSpecialRenderActive = player->isFallFlying() && Minecraft::InMiniGame(eMiniGameId_Glide, true)
+        && !mDispatcher->mRenderName && !suppressSpecialRender;
+    if (mSpecialRenderActive)
+    {
+        mSpecialRenderAlpha = Mth::clamp((float)((x * x + y * y + z * z) * 0.5), 0.0f, 1.0f);
+        GlStateManager::pushMatrix();
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
+        GlStateManager::color4f(1.0f, 1.0f, 1.0f, mSpecialRenderAlpha);
+    }
+
+    LivingEntityRenderer::render(entity, x, renderY, z, yaw, partialTick);
+
+    if (mSpecialRenderActive)
+    {
+        GlStateManager::popMatrix();
+    }
 
     GlStateManager::unsetProfile();
     hideAdditionalModelParts(player);
@@ -383,12 +420,66 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
                                     float partialTicks)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    if (player->isAlive() && player->isSleeping())
+    if (!mDispatcher->mRenderLeash && player->isAlive() && player->isSleeping())
     {
         GlStateManager::rotatef(player->getSleepRotation(), 0.0f, 1.0f, 0.0f);
         GlStateManager::rotatef(getFlipDegrees(entity), 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(270.0f, 0.0f, 1.0f, 0.0f);
         return;
     }
+
+    if (!mDispatcher->mRenderLeash && player->isFallFlying())
+    {
+        LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
+
+        float fallFlyingTicks = (float)player->getFallFlyingTicks() + partialTicks;
+        float fallFlyingProgress = Mth::clamp((fallFlyingTicks * fallFlyingTicks) / 100.0f, 0.0f, 1.0f);
+        float interpolatedXRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTicks;
+        GlStateManager::rotatef(fallFlyingProgress * (-90.0f - interpolatedXRot), 1.0f, 0.0f, 0.0f);
+
+        if (player->isLocalPlayer())
+        {
+            LocalPlayer* localPlayer = static_cast<LocalPlayer*>(player.get());
+            float fallFlyYaw = localPlayer->mFallFlyYawOld
+                + (localPlayer->mFallFlyYaw - localPlayer->mFallFlyYawOld) * partialTicks;
+            GlStateManager::rotatef(fallFlyYaw, 0.0f, 1.0f, 0.0f);
+        }
+        else
+        {
+            Vec3* viewVector = player->getViewVector(partialTicks);
+            double motionX = player->mXd;
+            double motionZ = player->mZd;
+            double horizontalMotionLengthSqr = motionX * motionX + motionZ * motionZ;
+            double horizontalViewLengthSqr = viewVector->x * viewVector->x + viewVector->z * viewVector->z;
+            if (horizontalMotionLengthSqr > 0.0 && horizontalViewLengthSqr > 0.0)
+            {
+                double cosine = Mth::clamp((motionX * viewVector->x + motionZ * viewVector->z)
+                                                / (Mth::sqrt(horizontalMotionLengthSqr)
+                                                   * Mth::sqrt(horizontalViewLengthSqr)),
+                                            -1.0, 1.0);
+                double angle = std::acos(cosine);
+                double cross = motionX * viewVector->z - motionZ * viewVector->x;
+                if (cross < 0.0)
+                {
+                    angle = -angle;
+                }
+                GlStateManager::rotatef((float)angle * 180.0f / 3.1415927f,
+                                        0.0f, 1.0f, 0.0f);
+            }
+        }
+        return;
+    }
+
+    if (player->getDamageNearbyMobs())
+    {
+        LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
+        GlStateManager::rotatef(-90.0f - player->mXRot, 1.0f, 0.0f, 0.0f);
+        GlStateManager::translatef(0.0f, -1.0f, 0.5f);
+        GlStateManager::rotatef((player->mAutoSpinAttackTicks + partialTicks) * -75.0f,
+                                0.0f, 1.0f, 0.0f);
+        return;
+    }
+
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
 }
 

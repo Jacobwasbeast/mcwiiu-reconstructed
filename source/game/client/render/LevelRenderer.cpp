@@ -75,8 +75,6 @@ int gEndOuterChunkZ;
 
 LevelRenderer* gLevelRenderer;
 
-static boost::unordered_map<int, int> gDisplayListLengths;
-
 extern void instructionSynchronize();
 int getChunkIndex(int dimension, int x, int y, int z)
 {
@@ -778,8 +776,8 @@ void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
     if (newReferences == 1)
         level->addListener(this);
 
-    LeaveCriticalSection(&mLevelMutex);
     allChanged(dimension);
+    LeaveCriticalSection(&mLevelMutex);
 }
 
 void LevelRenderer::allChanged(int dimension)
@@ -900,13 +898,7 @@ void LevelRenderer::tick()
 
 void LevelRenderer::clear()
 {
-    boost::unordered_map<int, int>::iterator entry = gDisplayListLengths.find(mDisplayList);
-
-    if (entry != gDisplayListLengths.end())
-    {
-        GlStateManager::deleteLists(mDisplayList, entry->second);
-        gDisplayListLengths.erase(entry);
-    }
+    MemoryTracker::releaseLists(mDisplayList);
 }
 
 void LevelRenderer::allChanged()
@@ -1000,7 +992,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
 
     boost::shared_ptr<Entity> entityDispatcherCamera = mMinecraft->getCameraEntity();
     mEntityRenderDispatcher->prepare(mLevels[userIndex], mMinecraft->mFont, entityDispatcherCamera,
-        mMinecraft->mCameraEntity, mMinecraft->mOptions, partialTick);
+        mMinecraft->mSpectateEntity, mMinecraft->mOptions, partialTick);
 
     PIXEndNamedEvent();
 
@@ -2888,8 +2880,7 @@ void LevelRenderer::notifyNearbyEntities(Level* level, const BlockPos& pos, bool
 
 void LevelRenderer::cull(Culler* culler, float partialTick)
 {
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-    int userIndex = boost::static_pointer_cast<LocalPlayer>(cameraEntity)->mUserIndex;
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
 
     FrustumCuller* frustumCuller = reinterpret_cast<FrustumCuller*>(culler);
     double xOffset = -frustumCuller->xOffset;
@@ -2962,9 +2953,9 @@ int LevelRenderer::calculateParticleLevel(Level* level, bool overrideLimiter)
     return level->mRandom->nextInt(3) == 0 ? 2 : 1;
 }
 
-void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
+Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
-    addParticleInternal(level, type, overrideLimiter, false, x, y, z, xa, ya, za, params);
+    return addParticleInternal(level, type, overrideLimiter, false, x, y, z, xa, ya, za, params);
 }
 
 void LevelRenderer::addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
@@ -3125,45 +3116,39 @@ void LevelRenderer::playerRemoved(boost::shared_ptr<Entity> player)
 
 int LevelRenderer::checkAllPresentChunks(bool* present)
 {
-    if (present == NULL || mMinecraft == NULL)
-        return 0;
+    const int userIndex = mMinecraft->mPlayer->mUserIndex;
+    ClipChunk* clips = mClipChunks[userIndex].data;
+    const unsigned int clipCount = mClipChunks[userIndex].length;
+    int count = 0;
 
-    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    if (camera == NULL)
-        return 0;
-
-    int userIndex = boost::static_pointer_cast<LocalPlayer>(camera)->mUserIndex;
-    Level* level = mLevels[userIndex];
-    ClipChunk* chunks = mClipChunks[userIndex].data;
-    unsigned int count = mClipChunks[userIndex].length;
-    int missing = 0;
-    *present = false;
-
-    for (unsigned int i = 0; i < count; ++i)
+    for (unsigned int i = 0; i < clipCount; ++i)
     {
-        ClipChunk& clip = chunks[i];
-        if (clip.mChunk != NULL && (level == NULL ||
-                                    !level->reallyHasChunk(clip.mChunk->mX >> 4, clip.mChunk->mZ >> 4)))
+        Chunk* chunk = clips[i].mChunk;
+        if (chunk->mZ == 0 &&
+            mLevels[0]->reallyHasChunk(chunk->mX >> 4, chunk->mDimension >> 4))
         {
-            ++missing;
+            ++count;
             for (int x = 4; x < 13; ++x)
             {
-                for (int z = 4; z <= 12; z += 4)
+                for (int zBase = 4; zBase < 12; zBase += 4)
                 {
-                    for (int dx = 0; dx < 4; ++dx)
+                    for (int zOffset = 0; zOffset < 4; ++zOffset)
                     {
-                        BlockPos neighbor(clip.mX + x, 0, clip.mZ + z + dx);
-                        const BlockState* state = level == NULL ? NULL : level->getBlockState(neighbor);
-                        const BlockState* dirtState = Blocks::dirt->defaultBlockState();
-                        const BlockState* bedrockState = Blocks::bedrock->defaultBlockState();
-                        if (state != bedrockState && state != dirtState)
+                        const BlockPos pos(x, 0, zBase + zOffset);
+                        Block* block = mMinecraft->mLevel->getBlockState(pos)->getBlock();
+                        if (block != Blocks::bedrock && block != Blocks::dirt)
                             *present = true;
                     }
                 }
+
+                const BlockPos pos(x, 0, 12);
+                Block* block = mMinecraft->mLevel->getBlockState(pos)->getBlock();
+                if (block != Blocks::bedrock && block != Blocks::dirt)
+                    *present = true;
             }
         }
     }
-    return missing;
+    return count;
 }
 
 void LevelRenderer::playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing)
@@ -3182,19 +3167,55 @@ void LevelRenderer::playStreamingMusic(const SoundEvent* sound, const BlockPos& 
     }
 }
 
-void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
+Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
-    if (mMinecraft == NULL || level == NULL) return;
+    if (mMinecraft == NULL)
+        return NULL;
+
     boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    if (!camera || mMinecraft->mParticleEngine == NULL) return;
-    int particleSetting = calculateParticleLevel(level, overrideLimiter);
-    if (particleSetting > 1) return;
-    double maxDist = force ? (1024.0 * 1024.0) : (32.0 * 32.0);
-    double dx = camera->mX - x;
-    double dy = camera->mY - y;
-    double dz = camera->mZ - z;
-    if (dx * dx + dy * dy + dz * dz > maxDist) return;
-    mMinecraft->mParticleEngine->createParticle(type, x, y, z, xa, ya, za, params, level);
+    if (camera == NULL || mMinecraft->mParticleEngine == NULL)
+        return NULL;
+
+    if (level == NULL)
+        level = mLevels[mMinecraft->mPlayer->mUserIndex];
+
+    int particleSetting = calculateParticleLevel(level, force);
+    bool exemptFromPlayerRange =
+        type == ePARTICLE_HUGE_EXPLOSION ||
+        type == ePARTICLE_LARGE_EXPLODE ||
+        type == ePARTICLE_DRAGON_BREATH ||
+        type == ePARTICLE_CHEST_REFILL;
+
+    if (mMinecraft->mLastTextureRequestTick == 0 && !exemptFromPlayerRange)
+    {
+        bool nearLocalPlayer = false;
+        for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> player =
+                mMinecraft->mLocalPlayers[playerIndex];
+            if (!player)
+                continue;
+            if (mLevels[playerIndex] != level)
+                continue;
+
+            double dy = player->mY - y;
+            double dx = player->mX - x;
+            double dz = player->mZ - z;
+            if (dz * dz + dx * dx + dy * dy <= 256.0)
+            {
+                nearLocalPlayer = true;
+                break;
+            }
+        }
+
+        if (!nearLocalPlayer)
+            return NULL;
+    }
+
+    if (particleSetting < 2)
+        return mMinecraft->mParticleEngine->createParticle(type, x, y, z, xa, ya, za, params, level);
+
+    return NULL;
 }
 
 void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)

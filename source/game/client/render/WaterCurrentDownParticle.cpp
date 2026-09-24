@@ -1,6 +1,7 @@
 #include "game/client/render/WaterCurrentDownParticle.hpp"
 
 #include "game/core/Mth.hpp"
+#include "game/util/Math.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -13,7 +14,7 @@ WaterCurrentDownParticle::WaterCurrentDownParticle(Level* level, double x, doubl
       rotation(0.0f)
 {
     setMiscTex(32);
-    lifetime = (int)(random.nextFloat() * 60.0f) + 30;
+    lifetime = (int)(Math::random() * 60.0) + 30;
     setSize(0.02f, 0.02f);
     size *= random.nextFloat() * 0.6f + 0.2f;
     gravity = 0.002f;

@@ -18,7 +18,7 @@ LavaParticle::LavaParticle(Level* level, double x, double y, double z)
     bCol = 1.0f;
     yd = random.nextDouble() * 0.4 + 0.05;
     mOriginalSize = size *= random.nextFloat() * 2.0f + 0.2f;
-    lifetime = (int)std::floor(16.0 / (random.nextDouble() * 0.2 + 0.2));
+    lifetime = (int)std::floor(16.0 / (random.nextDouble() * 0.8 + 0.2));
     setMiscTex(0x31);
 }
 

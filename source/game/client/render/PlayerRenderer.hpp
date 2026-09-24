@@ -51,7 +51,8 @@ public:
                               bool overlay);
 
 private:
-    unsigned int mUnknown;
+    bool mSpecialRenderActive;
+    float mSpecialRenderAlpha;
     bool mSlimArms;
     bool mIs64x64;
     ElytraLayer* mElytraLayer;

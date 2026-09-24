@@ -43,6 +43,7 @@ public:
     virtual uint64_t GetType();
 
 private:
+    float m_size;
     float m_gravity;
 };
 

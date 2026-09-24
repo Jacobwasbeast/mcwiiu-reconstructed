@@ -4,7 +4,7 @@
 
 WakeParticle::WakeParticle(Level* level, double x, double y, double z,
                            double xa, double ya, double za)
-    : Particle(level, x, y, z, 1000.0, 1000.0, 1000.0)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     xd *= 0.3;
     yd = random.nextFloat() * 0.2 + 0.1;
@@ -15,6 +15,9 @@ WakeParticle::WakeParticle(Level* level, double x, double y, double z,
     setMiscTex(19);
     setSize(0.01f, 0.01f);
     lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2));
+    xd = xa;
+    yd = ya;
+    zd = za;
 }
 
 WakeParticle::~WakeParticle()

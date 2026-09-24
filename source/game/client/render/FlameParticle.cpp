@@ -9,9 +9,9 @@ FlameParticle::FlameParticle(Level* level, double x, double y, double z,
     : Particle(level, x, y, z, xa, ya, za)
     , mOriginalSize(0.0f)
 {
-    xd = xd * 1.035 + xa;
-    yd = yd * 1.035 + ya;
-    zd = zd * 1.035 + za;
+    xd = xd * 0.01f + xa;
+    yd = yd * 0.01f + ya;
+    zd = zd * 0.01f + za;
     xd += (random.nextFloat() - random.nextFloat()) * 0.05f;
     yd += (random.nextFloat() - random.nextFloat()) * 0.05f;
     zd += (random.nextFloat() - random.nextFloat()) * 0.05f;
@@ -70,13 +70,13 @@ void FlameParticle::tick()
     if (lifetime <= currentAge)
         remove();
     move(xd, yd, zd);
-    xd *= 0.96;
-    yd *= 0.96;
-    zd *= 0.96;
+    xd *= 0.96f;
+    yd *= 0.96f;
+    zd *= 0.96f;
     if (!onGround)
         return;
-    xd *= 0.7;
-    zd *= 0.7;
+    xd *= 0.7f;
+    zd *= 0.7f;
 }
 
 uint64_t FlameParticle::GetType()

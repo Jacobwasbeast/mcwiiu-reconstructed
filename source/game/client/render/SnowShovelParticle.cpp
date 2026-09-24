@@ -6,7 +6,7 @@
 
 SnowShovelParticle::SnowShovelParticle(Level* level, double x, double y, double z,
                                        double xa, double ya, double za)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
+    : Particle(level, x, y, z, xa, ya, za)
 {
     init(level, x, y, z, xa, ya, za, 1.0f);
 }
@@ -28,7 +28,7 @@ void SnowShovelParticle::render(BufferBuilder* buffer,
                                       (float)lifetime * 32.0f,
                                       0.0f,
                                       1.0f);
-    alpha = size * progress;
+    Particle::size = size * progress;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
@@ -69,8 +69,9 @@ void SnowShovelParticle::init(Level* level, double x, double y, double z,
     rCol = color;
     gCol = color;
     bCol = color;
-    alpha = alpha * 0.75f * scale;
-    size = alpha;
+    const float particleSize = Particle::size * 0.75f * scale;
+    Particle::size = particleSize;
+    size = particleSize;
     lifetime = (int)((double)(int)floor(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
 }
 

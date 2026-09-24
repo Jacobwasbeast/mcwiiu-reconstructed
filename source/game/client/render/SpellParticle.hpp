@@ -70,6 +70,17 @@ public:
     };
 
 private:
+    struct InitialVelocity
+    {
+        double x;
+        double y;
+        double z;
+    };
+
+    static InitialVelocity makeInitialVelocity();
+    SpellParticle(Level* level, double x, double y, double z,
+                  double xa, double ya, double za, InitialVelocity velocity);
+
     int baseTex;
 };
 

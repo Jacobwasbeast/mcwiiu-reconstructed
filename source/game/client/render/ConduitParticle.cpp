@@ -1,4 +1,5 @@
 #include "game/client/render/ConduitParticle.hpp"
+#include "game/world/Level.hpp"
 
 ConduitParticle::ConduitParticle(Level* level,
                                  double x,
@@ -8,7 +9,8 @@ ConduitParticle::ConduitParticle(Level* level,
                                  double ya,
                                  double za,
                                  arrayWithLength<int> params)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0),
+    : Particle(level, x, y, z, xa, ya, za),
+      m_conduitParticleValue(0.0f),
       m_startX(x),
       m_startY(y),
       m_startZ(z)
@@ -18,17 +20,21 @@ ConduitParticle::ConduitParticle(Level* level,
     zd = za;
     setPos(x + xa, y + ya, z + za);
 
-    float colour = random.nextFloat(0.4f, 1.0f);
-    float greenBlue = random.nextFloat(0.2f, 0.7f);
+    Random* levelRandom = level->mRandom;
+    float colour = levelRandom->nextFloat(0.4f, 1.0f);
+    float greenBlue = levelRandom->nextFloat(0.2f, 0.7f);
+    size = greenBlue;
+    m_conduitParticleValue = greenBlue;
     rCol = colour * 0.9f;
     gCol = colour * 0.9f;
     bCol = colour;
-    alpha = greenBlue;
-    size = greenBlue;
-    lifetime = (int)(random.nextFloat(0.5f, 2.5f) * 20.0f);
+    float lifetimeScale = levelRandom->nextFloat(0.5f, 2.5f);
+    float lifetimeValue = lifetimeScale * 20.0f;
+    hasPhysics = false;
+    lifetime = (int)lifetimeValue;
 
-    int texture = random.nextInt(4);
-    int variant = random.nextInt(0, 3);
+    int texture = levelRandom->nextInt(4);
+    int variant = levelRandom->nextInt(0, 3);
     uvs = TextureUVCoordinateSet::fromOldSystem(texture * 3 + 0xd0 + variant);
 }
 
@@ -42,8 +48,8 @@ void ConduitParticle::tick()
     yo = y;
     zo = z;
 
-    double progress = (double)age / (double)lifetime;
-    double inverseProgress = 1.0 - progress;
+    double inverseProgress = 1.0 - (double)age / (double)lifetime;
+    double progress = 1.0 - inverseProgress;
     x = xd * inverseProgress + m_startX;
     y = -(progress * progress * progress * 1.2 - (yd * inverseProgress + m_startY));
     z = zd * inverseProgress + m_startZ;

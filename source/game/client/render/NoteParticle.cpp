@@ -9,7 +9,7 @@
 
 NoteParticle::NoteParticle(Level* level, double x, double y, double z,
                            double xa, double ya, double za)
-    : Particle(level, x, y, z, xa, ya, za)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     init(level, x, y, z, xa, ya, za, 2.0f);
 }

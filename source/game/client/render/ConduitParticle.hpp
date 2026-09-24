@@ -36,6 +36,7 @@ public:
     virtual uint64_t GetType();
 
 private:
+    float m_conduitParticleValue;
     double m_startX;
     double m_startY;
     double m_startZ;

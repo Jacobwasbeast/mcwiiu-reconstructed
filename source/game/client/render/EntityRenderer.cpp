@@ -381,7 +381,7 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     bool renderSneaking = sneaking && !Minecraft::InMiniGame(eMiniGameId_Any, true);
     GameRenderer::renderNameTagInWorld(getFont(), displayName, (float)x, (float)y + yOffset, (float)z,
                                        nameOffset, mDispatcher->mCameraYRot, mDispatcher->mCameraXRot,
-                                       boost::static_pointer_cast<Player>(mDispatcher->mPlayer)->GetThirdPersonView(false) == 2,
+                                       mDispatcher->mOptions->mThirdPersonView == 2,
                                        renderSneaking, color, alpha);
 }
 

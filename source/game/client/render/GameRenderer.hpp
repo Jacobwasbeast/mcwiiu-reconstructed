@@ -59,7 +59,7 @@ public:
     static void UpdateElementStorageDeleteTicks();
     void tickFov();
     void tickLightTexture();
-    AbstractClientPlayer* getCamera();
+    boost::shared_ptr<Entity> getCamera();
     void tickRain();
     void tick(bool);
     void pick(float);
@@ -79,7 +79,7 @@ public:
     double getUnderWaterVisionScale(const boost::shared_ptr<Player>&, float);
     void updateLightTexture(float);
     static unsigned int fjGetFpsCap(int);
-    unsigned int getFogOffsets();
+    const BlockPos* getFogOffsets();
     double getTargetFogDistance(const BlockPos&);
     void getTargetFogColor(const BlockPos&, float&, float&, float&);
     double modifyFogDistance(const BlockPos&, float, float);
