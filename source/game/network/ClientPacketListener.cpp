@@ -1662,7 +1662,9 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     }
 
     const int singleMessageDuration = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(38));
-    if (singleMessageDuration >= 0)
+    if (message == 0x87 && singleMessageDuration != 0)
+        m_minecraft->mGui->setSingleMessage(text, m_playerId, 0);
+    else if (singleMessageDuration >= 0 && message != 0x87)
         m_minecraft->mGui->setSingleMessage(text, m_playerId, singleMessageDuration);
     else
         m_minecraft->mGui->addMessage(text, m_playerId, message == 13 || message == 14 || message == 15,
