@@ -48,7 +48,7 @@ void Dimension::updateLightRamp()
 {
     const float base = 1.0f;
     const float scale = 15.0f;
-    const float ambient = 0.4f;
+    const float ambient = 3.0f;
     for (int i = 0; i < 16; ++i)
     {
         float light = base - (float)i / scale;
