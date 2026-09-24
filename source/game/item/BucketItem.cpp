@@ -16,7 +16,10 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/LiquidBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameMode.hpp"
@@ -362,7 +365,6 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
                 closestClipHit->mLocation = NULL;
                 delete closestClipHit;
                 output = new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos(closestHitLocation));
-                delete closestHitLocation;
                 closestClipHit = NULL;
             }
         }
@@ -372,7 +374,6 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
             closestClipHit->mLocation = NULL;
             delete closestClipHit;
             output = new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos(closestHitLocation));
-            delete closestHitLocation;
             closestClipHit = NULL;
         }
     }
@@ -402,12 +403,127 @@ HitResult* BucketItem::GetPlayerHitResult(boost::shared_ptr<Player> player, Leve
 bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    HitResult* result = GetPlayerHitResult(player, level, mFillType != EMPTY);
+    bool useLiquids = mBlock == Blocks::AIR || isFishBucket();
+    HitResult* result = GetPlayerHitResult(player, level, useLiquids);
     if (result == NULL)
     {
         return false;
     }
-    return itemInstance->TestUse(level, player, hand);
+
+    BlockPos constraintPos(result->mLocation);
+    if (!level->mDimension->inPlayerConstraints(constraintPos))
+    {
+        return false;
+    }
+
+    BlockPos pos = result->getBlockPos();
+    if (pos.y >= level->getMaxBuildHeight() - 1)
+    {
+        if (result->mDirection == Direction::UP)
+        {
+            delete result;
+            return false;
+        }
+        if (pos.y >= level->getMaxBuildHeight())
+        {
+            delete result;
+            return false;
+        }
+    }
+
+    if (result->mType == HitResult::ENTITY)
+    {
+        boost::shared_ptr<Entity> entity = result->mEntity;
+        int variant = 0;
+        unsigned long long type = entity->GetType();
+        if (supportsEntityType(type, variant) && entity->isInWater()
+            && (mFillType == EMPTY || mFillType == WATER))
+        {
+            return true;
+        }
+
+    }
+    if (result->mType != HitResult::BLOCK)
+    {
+        if (mBlock == NULL && result->mEntity->GetType() == 0x2d6a0000ULL)
+        {
+            delete result;
+            return true;
+        }
+        delete result;
+        return false;
+    }
+
+    Block* block = level->getBlock(pos);
+    Block* liquidBlock = level->getLiquidBlock(pos);
+    const BlockState* blockState = block->defaultBlockState();
+    const BlockState* liquidState = liquidBlock->defaultBlockState();
+    const AABB* clipBox = block->getClipAABB(blockState, level, pos);
+    bool hasLiquidMaterial = blockState->getMaterial()->isLiquid()
+                          || liquidState->getMaterial()->isLiquid();
+    if (clipBox == NULL && !hasLiquidMaterial && !mBlock->canContainLiquid(blockState))
+    {
+        delete result;
+        return false;
+    }
+
+    if (!level->mayInteract(player, pos, mBlock))
+    {
+        delete result;
+        return false;
+    }
+
+    Block* cauldronPositionBlock = level->getBlock(pos);
+    if (cauldronPositionBlock == Blocks::cauldron && mFillType != EMPTY && mFillType != WATER)
+    {
+        delete result;
+        return false;
+    }
+
+    BlockPos placePos = pos.relative(result->mDirection);
+    if (player->mayUseItemAt(placePos, result->mDirection, itemInstance) != 1)
+    {
+        delete result;
+        return false;
+    }
+
+    GameMode* gameMode = player->GetGameMode();
+    if (!gameMode->MayPlace(placePos, mBlock))
+    {
+        delete result;
+        return false;
+    }
+
+    const BlockState* placeState = level->getBlockState(placePos);
+    Block* placeBlock = placeState->getBlock();
+    bool canUseAtPlace = level->isEmptyBlock(placePos) || !placeBlock->isWaterBlocking()
+                      || placeBlock == Blocks::FLOWING_WATER || placeBlock == Blocks::WATER
+                      || placeBlock == Blocks::flowing_lava || placeBlock == Blocks::lava;
+    if (!canUseAtPlace)
+    {
+        const BlockState* hitState = level->getBlockState(pos);
+        const BlockState* extraHitState = level->getExtraBlockState(pos);
+        Material* hitMaterial = hitState->getMaterial();
+        Material* extraHitMaterial = extraHitState->getMaterial();
+        if (hitMaterial == Material::WATER || hitMaterial == Material::LAVA)
+        {
+            canUseAtPlace = hitState->getValue(LiquidBlock::LEVEL) == 0;
+        }
+        if (!canUseAtPlace
+            && (extraHitMaterial == Material::WATER || extraHitMaterial == Material::LAVA))
+        {
+            canUseAtPlace = extraHitState->getValue(LiquidBlock::LEVEL) == 0;
+        }
+    }
+
+    if (canUseAtPlace)
+    {
+        delete result;
+        return true;
+    }
+
+    delete result;
+    return false;
 }
 
 bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::wstring& owner, bool restricted, bool host)

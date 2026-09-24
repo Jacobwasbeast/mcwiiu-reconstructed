@@ -12,9 +12,11 @@
 #include "game/item/Items.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/item/Potions.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
@@ -67,26 +69,34 @@ InteractionResultHolder BottleItem::use(Level* level,
         player->awardStat(GenericStats::youNeedAMint(), GenericStats::param_youNeedAMint());
         not_null_ptr<ItemInstance> result(new ItemInstance(Items::dragonBreath));
         PotionUtils::setPotion(result, Potions::WATER);
-        turnBottleIntoItem(itemInstance, player, result);
+        not_null_ptr<ItemInstance> usedItem = turnBottleIntoItem(itemInstance, player, result);
         delete entities;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, usedItem);
     }
 
     delete entities;
 
     HitResult* hit = getPlayerPOVHitResult(level, player, true);
-    if (hit != NULL && hit->mType == HitResult::BLOCK)
+    if (hit != NULL)
     {
-        BlockPos pos = hit->getBlockPos();
-        if (level->mayInteract(player, pos, NULL)
-            && player->mayUseItemAt(pos, hit->mDirection, itemInstance) == 1
-            && level->getBlockState(pos)->getMaterial() == Material::WATER)
+        BlockPos constraintPos(hit->mLocation);
+        if (level->mDimension->inPlayerConstraints(constraintPos) && hit->mType == HitResult::BLOCK)
         {
-            not_null_ptr<ItemInstance> result(new ItemInstance(Items::potion));
-            PotionUtils::setPotion(result, Potions::WATER);
-            turnBottleIntoItem(itemInstance, player, result);
-            return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+            BlockPos pos = hit->getBlockPos();
+            if (level->mayInteract(player, pos, NULL)
+                && player->mayUseItemAt(pos, hit->mDirection, itemInstance) == 1
+                && level->getBlockState(pos)->getMaterial() == Material::WATER)
+            {
+                level->playSound(player, player->mX, player->mY, player->mZ, SoundEvents::BOTTLE_FILL,
+                                 SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
+                delete hit;
+                not_null_ptr<ItemInstance> result(new ItemInstance(Items::potion));
+                PotionUtils::setPotion(result, Potions::WATER);
+                not_null_ptr<ItemInstance> usedItem = turnBottleIntoItem(itemInstance, player, result);
+                return InteractionResultHolder(InteractionResult::eInteractionResult_Success, usedItem);
+            }
         }
+        delete hit;
     }
 
     return Item::use(level, player, hand);
@@ -105,22 +115,36 @@ bool BottleItem::TestUse(Level* level,
     not_null_ptr<ItemInstance> itemInHand = player->getItemInHand(hand);
 
     HitResult* hit = getPlayerPOVHitResult(level, player, true);
-    if (hit == NULL || hit->mType != HitResult::BLOCK)
+    if (hit == NULL)
     {
         return false;
     }
 
+    BlockPos constraintPos(hit->mLocation);
+    if (!level->mDimension->inPlayerConstraints(constraintPos))
+    {
+        return false;
+    }
+    if (hit->mType != HitResult::BLOCK)
+    {
+        delete hit;
+        return false;
+    }
     BlockPos pos = hit->getBlockPos();
     if (!level->mayInteract(player, pos, NULL))
     {
+        delete hit;
         return false;
     }
     if (player->mayUseItemAt(pos, hit->mDirection, itemInHand) != 1)
     {
+        delete hit;
         return false;
     }
 
-    return level->getBlockState(pos)->getMaterial() == Material::WATER;
+    bool isWater = level->getBlockState(pos)->getMaterial() == Material::WATER;
+    delete hit;
+    return isWater;
 }
 
 unsigned int BottleItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
