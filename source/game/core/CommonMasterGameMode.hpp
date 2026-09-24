@@ -95,9 +95,9 @@ protected:
 private:
     unsigned int mState;
     unsigned int mNextState;
+protected:
     long long mGeneratorSeed;
     float mGeneratorSeedScale;
-protected:
     MapGenerator* mMapGenerator;
 private:
     OSFastMutex mGeneratorMutex;

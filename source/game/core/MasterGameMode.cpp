@@ -44,6 +44,7 @@
 #include "game/core/ConditionConnective.hpp"
 #include "game/world/generation/PlayersCondition.hpp"
 #include "game/world/generation/MapGenerator.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 #include "game/world/generation/PlayerList.hpp"
@@ -105,21 +106,6 @@ static const std::wstring& ChestLootGroup(const MasterGameMode::ChestRefillInfo&
     return info.lootGroup;
 }
 
-struct WorldPositionWiiULayout
-{
-    char prefix[0x64];
-    int x;
-    int y;
-    int z;
-};
-
-static BlockPos WorldPositionFromRule(const WorldPositionRuleDefinition* position)
-{
-    const WorldPositionWiiULayout& layout =
-        reinterpret_cast<const WorldPositionWiiULayout&>(*position);
-    return BlockPos(layout.x, layout.y, layout.z);
-}
-
 static const std::wstring kSpectatorTeamName;
 
 static bool StringsEqualIgnoreCase(const std::wstring& first, const std::wstring& second)
@@ -160,39 +146,9 @@ static void SendGameModePacket(boost::shared_ptr<ServerPlayer> player,
 static unsigned char sPrimaryRoundState = 0;
 static unsigned char sSecondaryRoundState = 0;
 
-static arrayWithLength<unsigned char>& WiiUSpawnDistributionData(MasterGameMode* gameMode)
-{
-    return gameMode->SpawnDistributionStorage();
-}
-
-static arrayWithLength<unsigned char>& WiiUAlternateSpawnDistributionData(MasterGameMode* gameMode)
-{
-    return gameMode->AlternateSpawnDistributionStorage();
-}
-
-static unsigned int& WiiULoadingPlayerCount(MasterGameMode* gameMode)
-{
-    return gameMode->LoadingPlayerCountStorage();
-}
-
-static std::vector<int>& WiiUBuildOffThemeIds(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<std::vector<int>*>(reinterpret_cast<char*>(gameMode) + 0xac);
-}
-
-static arrayWithLength<unsigned char>& WiiUPlaylistSyncData(MasterGameMode* gameMode)
-{
-    return gameMode->PlaylistSyncStorage();
-}
-
 static unsigned int GameStatsCurrentRound(GameStats& gameStats)
 {
     return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(&gameStats) + 8);
-}
-
-static StringTable*& WiiUEnglishStringTable(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<StringTable**>(reinterpret_cast<char*>(gameMode) + 0xc);
 }
 
 static EGameModeState TranslateInternalGameModeState(MasterGameMode::EInternalGameModeState state)
@@ -310,51 +266,6 @@ static void BroadcastGameModePacket(GameModePacket::EMessage message,
       gMinecraftServer->getPlayers()->broadcastAll(GameModePacket::Create(message, data));
   }
 
-static long long& WiiUGeneratorSeed(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<long long*>(reinterpret_cast<char*>(gameMode) + 0x60);
-}
-
-static float& WiiUGeneratorSeedScale(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<float*>(reinterpret_cast<char*>(gameMode) + 0x68);
-}
-
-static Voteables*& WiiUVoteables(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<Voteables**>(reinterpret_cast<char*>(gameMode) + 0xc0);
-}
-
-static bool& WiiUBattleLootSetChosen(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(gameMode) + 0x168);
-}
-
-static bool& WiiUPlayersInvulnerable(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(gameMode) + 0x161);
-}
-
-static bool& WiiUAchievementExploitStopped(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(gameMode) + 0x174);
-}
-
-static int& WiiUTutorialLastPlayerCount(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(gameMode) + 0x2f8);
-}
-
-static int& WiiULayerBlocksDestroyed(MasterGameMode* gameMode)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(gameMode) + 0x2ec);
-}
-
-static std::vector<GameCondition*>& ConditionConnectiveConditions(ConditionConnective* connective)
-{
-    return *reinterpret_cast<std::vector<GameCondition*>*>(reinterpret_cast<char*>(connective) + 8);
-}
-
 static int& GhostControllerLastTickHigh(GhostController* controller)
 {
     return *reinterpret_cast<int*>(reinterpret_cast<char*>(controller) + 0x68);
@@ -384,40 +295,19 @@ static bool sRoundTransitionPending = true;
 
 
 
-static bool& WiiUPlayerRoundEligible(MasterGameMode* gameMode, int playerIndex)
-{
-    return gameMode->PlayerReadyStorage(playerIndex);
-}
-
 } // namespace
 
-int& MasterGameMode::MinChunkXStorage() { return mMinChunkX; }
-int& MasterGameMode::MaxChunkXStorage() { return mMaxChunkX; }
-int& MasterGameMode::MinChunkZStorage() { return mMinChunkZ; }
-int& MasterGameMode::MaxChunkZStorage() { return mMaxChunkZ; }
-arrayWithLength<unsigned char>& MasterGameMode::SpawnDistributionStorage() { return mSpawnDistribution; }
-arrayWithLength<unsigned char>& MasterGameMode::AlternateSpawnDistributionStorage() { return mAlternateSpawnDistribution; }
-unsigned int& MasterGameMode::LoadingPlayerCountStorage() { return mUnknown2D8; }
-unsigned int& MasterGameMode::BroadcastStateWord0() { return reinterpret_cast<unsigned int&>(mLastBroadcastTime); }
-unsigned int& MasterGameMode::BroadcastStateWord1() { return reinterpret_cast<unsigned int*>( &mLastBroadcastTime)[1]; }
-unsigned int& MasterGameMode::BroadcastStateWord2() { return reinterpret_cast<unsigned int&>(mLastChatMessage); }
-arrayWithLength<unsigned char>& MasterGameMode::PlaylistSyncStorage()
-{
-    return *reinterpret_cast<arrayWithLength<unsigned char>*>(reinterpret_cast<char*>(this) + 0x1f0);
-}
-bool& MasterGameMode::PlayerReadyStorage(int index) { return mPlayerReady[index]; }
-
 MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* playlist)
-    : mRoundStartTime(0), mRoundTimeOffset(0), mPausedRoundTime(0), mShowdownTime(0), mPostGameTime(0), mTimers(0xb), mNextLevelGenerationOptions(0), mGameStats(), mInternalState(eInternalGameModeState_Lobby), mPreviousState(eInternalGameModeState_Lobby), mPlaylist(), mCurrentPlaylistEntry(0), mCurrentRuleIndex(0), mReadyPlayers(0), mRequiredPlayers(0), mMinimumPlayers(0), mMaximumPlayers(8), mChestRefills(), mKillboxes(), mKillboxAreas(), mActiveChunkBounds(), mRandom(), mLockPlayerPositions(false), mRoundStarted(false), mRoundEnding(false), mShowdownStarted(false), mPlaylistDirty(false), mTutorialDirty(false), mPlayersPrepared(false), mReturningToLobby(false), mGeneratorSpawn(0), mSpawnLayerIndex(0), mChunkHistory(0), mRoundWinner(-1), mActiveTeamCount(0), mShowdownReduction(0), mTutorialData(), mBlockRemover(0), mLastKnownPositionPlayers()
+    : mRoundStartTime(0), mRoundTimeOffset(0), mPausedRoundTime(0), mShowdownTime(0), mPostGameTime(0), mTimers(0xb), mNextLevelGenerationOptions(0), mGameStats(), mPlaylistSyncData(), mInternalState(eInternalGameModeState_Lobby), mPreviousState(eInternalGameModeState_Lobby), mPlaylist(), mCurrentPlaylistEntry(0), mCurrentRuleIndex(0), mReadyPlayers(0), mRequiredPlayers(0), mMinimumPlayers(0), mMaximumPlayers(8), mChestRefills(), mKillboxes(), mKillboxAreas(), mActiveChunkBounds(), mRandom(), mLockPlayerPositions(false), mRoundStarted(false), mRoundEnding(false), mShowdownStarted(false), mPlaylistDirty(false), mTutorialDirty(false), mPlayersPrepared(false), mReturningToLobby(false), mPlayersInvulnerable(false), mBattleLootSetChosen(false), mAchievementExploitStopped(false), mGeneratorSpawn(0), mSpawnLayerIndex(0), mChunkHistory(0), mRoundWinner(-1), mActiveTeamCount(0), mShowdownReduction(0), mTutorialData(), mBlockRemover(0), mLastKnownPositionPlayers()
     {
         const EMiniGameId firstMiniGame = gApp.GetFirstMiniGameType();
-        WiiUVoteables(this) = new ServerVoteables();
-        WiiUVoteables(this)->addVoteable(new Voteable(0, true, true));
-        WiiUVoteables(this)->addVoteable(new Voteable(1, true, false));
+        mVoteables = new ServerVoteables();
+        mVoteables->addVoteable(new Voteable(0, true, true));
+        mVoteables->addVoteable(new Voteable(1, true, false));
         if (firstMiniGame == eMiniGameId_Build)
         {
-            WiiUVoteables(this)->addVoteable(new Voteable(2, true, false));
-            WiiUVoteables(this)->addVoteable(new Voteable(3, true, true));
+            mVoteables->addVoteable(new Voteable(2, true, false));
+            mVoteables->addVoteable(new Voteable(3, true, true));
         }
 
         Setup(firstMiniGame);
@@ -438,7 +328,7 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
         }
 
         MiniGameDef* initialMiniGame = MiniGameDef::GetCustomGameModeById(
-            eMiniGameId_Battle, true);
+            eMiniGameId_Lobby, true);
         if (initialMiniGame != 0)
             Minecraft::GetInstance()->SetupMiniGameInstance(*initialMiniGame, 0);
 
@@ -464,15 +354,14 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
           mUnknown2E0 = 0;
           mUnknown2E4 = 0;
           mUnknown2E8 = 0;
-          mUnknown2EC = 0;
+          mLayerBlocksDestroyed = 0;
           mUnknown2F0 = 0;
           mUnknown2F4 = 0;
-        mUnknown2F8 = 0;
+        mLastTutorialPlayerCount = 0;
         mTutorialData.tutorial = 9;
         mUnknown32C = 0;
-          arrayWithLength<unsigned char>& spawnDistribution = WiiUSpawnDistributionData(this);
-        arrayWithLength<unsigned char>& alternateDistribution =
-            WiiUAlternateSpawnDistributionData(this);
+          arrayWithLength<unsigned char>& spawnDistribution = mSpawnDistribution;
+        arrayWithLength<unsigned char>& alternateDistribution = mAlternateSpawnDistribution;
         spawnDistribution.data = new unsigned char[0x20];
         spawnDistribution.length = 0x20;
         alternateDistribution.data = new unsigned char[0x20];
@@ -483,13 +372,13 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
 
 MasterGameMode::~MasterGameMode()
   {
-        delete WiiUVoteables(this);
+        delete mVoteables;
         delete mBlockChangeListener;
       for (int index = 0; index < 8; ++index)
           ResetLastKnownPosition(index);
   }
 
-std::vector<boost::shared_ptr<ServerPlayer> > MasterGameMode::GetPlayers(bool includeSpectators, bool includeDead)
+std::vector<boost::shared_ptr<ServerPlayer> > MasterGameMode::GetPlayers(bool excludeSpectators, bool readyOnly)
 {
     std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = gMinecraftServer->getPlayers()->getPlayers();
     std::vector<boost::shared_ptr<ServerPlayer> > players;
@@ -499,10 +388,10 @@ std::vector<boost::shared_ptr<ServerPlayer> > MasterGameMode::GetPlayers(bool in
     {
         boost::shared_ptr<ServerPlayer> player = *playerIt;
 
-        if (!includeSpectators && player->isSpectator())
+        if (excludeSpectators && player->isSpectator())
             continue;
 
-        if (!includeDead && !WiiUPlayerRoundEligible(this, player->mPlayerIndex))
+        if (readyOnly && !mPlayerReady[player->mPlayerIndex])
             continue;
 
         players.push_back(player);
@@ -511,9 +400,9 @@ std::vector<boost::shared_ptr<ServerPlayer> > MasterGameMode::GetPlayers(bool in
     return players;
 }
 
-int MasterGameMode::GetPlayerCount(bool includeSpectators, bool includeDead)
+int MasterGameMode::GetPlayerCount(bool excludeSpectators, bool readyOnly)
 {
-    return static_cast<int>(GetPlayers(includeSpectators, includeDead).size());
+    return static_cast<int>(GetPlayers(excludeSpectators, readyOnly).size());
 }
 
 unsigned long long MasterGameMode::GetCurrentTimeMillis()
@@ -573,14 +462,14 @@ void MasterGameMode::GeneratePlaylistSyncInfo()
     {
         StringTable localTable;
         int totalRulesetCount = 0;
-        for (std::deque<LevelRules::LevelRulesetGroup*>::iterator groupIt = mRuleGroups.begin();
-             groupIt != mRuleGroups.end(); ++groupIt)
+        for (std::vector<LevelRules::LevelRulesetGroup*>::iterator groupIt = mPlaylist.begin();
+             groupIt != mPlaylist.end(); ++groupIt)
             totalRulesetCount += static_cast<int>((*groupIt)->rulesets.size());
         stream.writeInt(totalRulesetCount);
 
         std::wstring worldNameKey(L"Active");
-        for (std::deque<LevelRules::LevelRulesetGroup*>::iterator groupIt = mRuleGroups.begin();
-             groupIt != mRuleGroups.end(); ++groupIt)
+        for (std::vector<LevelRules::LevelRulesetGroup*>::iterator groupIt = mPlaylist.begin();
+             groupIt != mPlaylist.end(); ++groupIt)
         {
             LevelRules::LevelRulesetGroup* group = *groupIt;
             for (std::vector<LevelRuleset*>::iterator rulesetIt = group->rulesets.begin();
@@ -602,14 +491,14 @@ void MasterGameMode::GeneratePlaylistSyncInfo()
     else if (miniGameType == eMiniGameId_Build)
     {
         Random random;
-        std::vector<int> themeIds = WiiUEnglishStringTable(this)->getRandomStringIds(5, &random);
+        std::vector<int> themeIds = getEnglishStringTable()->getRandomStringIds(5, &random);
         stream.writeInt(static_cast<int>(themeIds.size()));
         for (std::vector<int>::iterator idIt = themeIds.begin(); idIt != themeIds.end(); ++idIt)
             stream.writeInt(*idIt);
-        WiiUBuildOffThemeIds(this) = themeIds;
+        mLayerIds = themeIds;
     }
 
-    WiiUPlaylistSyncData(this) = byteStream.toByteArray();
+    mPlaylistSyncData = byteStream.toByteArray();
 }
 
 void MasterGameMode::ResetReadyStates(bool allPlayers)
@@ -647,15 +536,14 @@ int MasterGameMode::GetMinimumPlayersToStart()
     {
         const MiniGameDef* customMode =
             MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(miniGameId), true);
-        GameCondition* startConditions =
-            reinterpret_cast<GameCondition*>(customMode->GetStartConditions());
+        GameCondition* startConditions = customMode->GetStartConditions();
         ConditionConnective* connective = dynamic_cast<ConditionConnective*>(startConditions);
-        if (connective != 0 && ConditionConnectiveConditions(connective).size() == 1)
+        if (connective != 0 && connective->GetConditions().size() == 1)
         {
             PlayersCondition* playersCondition =
-                dynamic_cast<PlayersCondition*>(ConditionConnectiveConditions(connective)[0]);
+                dynamic_cast<PlayersCondition*>(connective->GetConditions()[0]);
             if (playersCondition != 0)
-                result = playersCondition->GetValue(this);
+                result = playersCondition->GetThreshold(this);
         }
     }
 
@@ -736,12 +624,12 @@ void MasterGameMode::CheckTutorialUpdate()
 
     if (!mTutorialDirty)
     {
-        if (static_cast<int>(players->size()) == WiiUTutorialLastPlayerCount(this))
+        if (players->size() == mLastTutorialPlayerCount)
             return;
     }
 
-    WiiUTutorialLastPlayerCount(this) = static_cast<int>(players->size());
-    if (WiiUTutorialLastPlayerCount(this) > 0)
+    mLastTutorialPlayerCount = static_cast<unsigned int>(players->size());
+    if (mLastTutorialPlayerCount > 0)
     {
         SyncNextLevelGen();
         players = playerList->getPlayers();
@@ -763,7 +651,25 @@ bool MasterGameMode::IsInKillBox(boost::shared_ptr<Entity> entity)
 
 bool MasterGameMode::AreLevelChunksLoaded()
 {
-    return mRoundStarted || mRoundEnding;
+    for (std::vector<AABB*>::const_iterator area = mTeamAreas.begin();
+         area != mTeamAreas.end(); ++area)
+    {
+        ChunkSource* chunks = gMinecraftServer->getLevel(0)->getChunkSource();
+        for (int x = static_cast<int>((*area)->mMinX);
+             x <= static_cast<int>((*area)->mMaxX); ++x)
+        {
+            for (int z = static_cast<int>((*area)->mMinZ);
+                 z <= static_cast<int>((*area)->mMaxZ); ++z)
+            {
+                if (!chunks->hasChunk(x, z))
+                {
+                    chunks->create(x, z);
+                    return false;
+                }
+            }
+        }
+    }
+    return mMapGenerator == 0 || mMapGenerator->FinishedGeneration();
 }
 
 void MasterGameMode::ChooseNextGameRules(bool advancePlaylist)
@@ -969,7 +875,10 @@ void MasterGameMode::SetState(EInternalGameModeState state)
 
 void MasterGameMode::sendTutorialUpdate(eTutorial_GameMode tutorial)
 {
-    mPlaylistDirty = true;
+    if (mTutorialData.tutorial == static_cast<int>(tutorial))
+        return;
+    mTutorialData.tutorial = static_cast<int>(tutorial);
+    mTutorialDirty = true;
 }
 
 void MasterGameMode::BroadcastChat(int message, std::vector<int>& arguments)
@@ -1224,10 +1133,10 @@ int MasterGameMode::ChooseItemSet(const MiniGameDef& definition, bool central)
     else if (definition.GetId() == eMiniGameId_Battle)
     {
         const int lootSetId = definition.GetLootSetId();
-        if (!WiiUBattleLootSetChosen(this) && lootSetId != 5)
+        if (!mBattleLootSetChosen && lootSetId != 5)
             return lootSetId;
 
-        WiiUBattleLootSetChosen(this) = true;
+        mBattleLootSetChosen = true;
         Random random;
         return random.nextInt(5);
     }
@@ -1310,7 +1219,7 @@ void MasterGameMode::SelectNewGameRules()
     Voteable* voteable = mVoteables->getVoteable(3);
     if (voteable->getWinningVote(selectedTheme) == -1)
     {
-        std::vector<int>& themeIds = WiiUBuildOffThemeIds(this);
+    std::vector<int>& themeIds = mLayerIds;
         const int themeCount = static_cast<int>(themeIds.size());
         if (themeCount == 1)
             selectedTheme = themeIds.front();
@@ -1325,7 +1234,7 @@ void MasterGameMode::SelectNewGameRules()
     if (gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
         return;
 
-    arrayWithLength<unsigned char> syncData = WiiUPlaylistSyncData(this);
+    arrayWithLength<unsigned char> syncData = mPlaylistSyncData;
     boost::shared_ptr<Packet> mapPacket(
         new MapSelectInfoPacket(syncData, false));
     gMinecraftServer->getPlayers()->broadcastAll(mapPacket);
@@ -1374,9 +1283,8 @@ void MasterGameMode::ResetPlayers()
         player->getFoodData()->setSaturation(static_cast<float>(saturation));
     }
 
-    memset(WiiUSpawnDistributionData(this).data, 0xff, WiiUSpawnDistributionData(this).length);
-    memset(WiiUAlternateSpawnDistributionData(this).data, 0xff,
-           WiiUAlternateSpawnDistributionData(this).length);
+    memset(mSpawnDistribution.data, 0xff, mSpawnDistribution.length);
+    memset(mAlternateSpawnDistribution.data, 0xff, mAlternateSpawnDistribution.length);
     instructionSynchronize();
 }
 
@@ -1448,13 +1356,12 @@ void MasterGameMode::GenerateChestRefillInfo()
             if (positionRule == 0)
                 continue;
 
-            const BlockPos position = WorldPositionFromRule(positionRule);
             ChestRefillInfo info;
             info.distance = -1.0f;
             info.weight = 0.0f;
-            info.x = position.x;
-            info.y = static_cast<short>(position.y);
-            info.z = position.z;
+            info.x = positionRule->mX;
+            info.y = static_cast<short>(positionRule->mY);
+            info.z = positionRule->mZ;
             ChestLootGroup(info) = *assignedLootGroup;
             mChestRefills.push_back(info);
         }
@@ -1656,6 +1563,12 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
         }
 
         SpawnPositionSet* primarySpawnSet = spawnPositions->getSpawnSet(spawnType ^ 1);
+        if (primarySpawnSet == 0)
+        {
+            std::vector<GameRuleDefinition*> spawnSets;
+            spawnPositions->getChildren(&spawnSets);
+            primarySpawnSet = static_cast<SpawnPositionSet*>(spawnSets.front());
+        }
         SpawnPositionSet* winnerSpawnSet = spawnPositions->getSpawnSet(2);
         std::vector<GameRuleDefinition*> primaryRules;
         if (primarySpawnSet != 0)
@@ -1664,7 +1577,7 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
         if (winnerSpawnSet == 0)
         {
             GameModeUtilities::DistributePlayers(
-                players, &primaryRules, &WiiUSpawnDistributionData(this));
+                players, &primaryRules, &mSpawnDistribution);
             return;
         }
 
@@ -1693,7 +1606,7 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
         winnerSpawnSet->getChildren(&winnerRules);
         GameModeUtilities::DistributePlayers(&winnerPlayers, &winnerRules, 0);
         GameModeUtilities::DistributePlayers(
-            &otherPlayers, &primaryRules, &WiiUSpawnDistributionData(this));
+            &otherPlayers, &primaryRules, &mSpawnDistribution);
         return;
     }
 
@@ -2011,7 +1924,7 @@ void MasterGameMode::SetPlayerInvulnerable(boost::shared_ptr<ServerPlayer> playe
 
 void MasterGameMode::SetPlayersInvulnerable(bool invulnerable)
 {
-    WiiUPlayersInvulnerable(this) = invulnerable;
+    mPlayersInvulnerable = invulnerable;
 
     PlayerList* playerList = gMinecraftServer != 0 ? gMinecraftServer->getPlayers() : 0;
     std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
@@ -2371,8 +2284,7 @@ void MasterGameMode::Tick_Round_Playing()
 bool MasterGameMode::CanRoundEnd()
 {
     const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
-    GameCondition* conditions =
-        miniGame == 0 ? 0 : reinterpret_cast<GameCondition*>(miniGame->GetEndConditions());
+    GameCondition* conditions = miniGame == 0 ? 0 : miniGame->GetEndConditions();
     if (conditions == 0)
         return false;
     const bool satisfied = conditions->IsSatisfied(this);
@@ -2390,8 +2302,7 @@ bool MasterGameMode::CanStartShowdown()
     if (miniGame == 0 || !miniGame->IsShowdownEnabled())
         return false;
 
-    GameCondition* conditions =
-        reinterpret_cast<GameCondition*>(miniGame->GetShowdownConditions());
+    GameCondition* conditions = miniGame->GetShowdownConditions();
     if (conditions == 0)
         return false;
     const bool satisfied = conditions->IsSatisfied(this);
@@ -2550,8 +2461,7 @@ std::vector<PlayerTeam*> MasterGameMode::GetActiveTeams()
 bool MasterGameMode::CanEndPostGame()
 {
     const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
-    GameCondition* conditions =
-        miniGame == 0 ? 0 : reinterpret_cast<GameCondition*>(miniGame->GetPostGameConditions());
+    GameCondition* conditions = miniGame == 0 ? 0 : miniGame->GetPostGameConditions();
     if (conditions == 0)
         return true;
     const bool satisfied = conditions->IsSatisfied(this);
@@ -2613,7 +2523,7 @@ void MasterGameMode::ReturnPlayersToLobby()
     if (serverLevel != 0)
         chunkMap = dynamic_cast<MinigamePlayerChunkMap*>(serverLevel->getChunkMap());
 
-    *reinterpret_cast<int*>(reinterpret_cast<char*>(gMinecraftServer) + 0xf0) = 0;
+    gMinecraftServer->gameModeId = 0;
     mCurrentRuleIndex = mCurrentPlaylistEntry;
 
     const MiniGameDef* lobbyDefinition =
@@ -2622,7 +2532,7 @@ void MasterGameMode::ReturnPlayersToLobby()
     if (minecraft != 0 && lobbyDefinition != 0)
         minecraft->SetupMiniGameInstance(*lobbyDefinition, 0);
 
-    arrayWithLength<unsigned char>& spawnDistribution = WiiUSpawnDistributionData(this);
+    arrayWithLength<unsigned char>& spawnDistribution = mSpawnDistribution;
     arrayWithLength<unsigned char>& alternateDistribution =
         mAlternateSpawnDistribution;
     if (spawnDistribution.data != 0 && spawnDistribution.length != 0)
@@ -2711,8 +2621,7 @@ void MasterGameMode::ReturnPlayersToLobby()
                     }
                 }
 
-                *reinterpret_cast<unsigned char*>(
-                    reinterpret_cast<char*>(player.get()) + 0x936) = 1;
+                player->mChangedDimension = 1;
                 playerList->respawn(player, 0, false);
             }
         }
@@ -2765,8 +2674,7 @@ void MasterGameMode::Tick()
 {
     CommonMasterGameMode::Tick();
     TickTimers();
-    if (mTutorialDirty)
-        CheckTutorialUpdate();
+    CheckTutorialUpdate();
       ServerLevel* roundLevel = gMinecraftServer == 0 ? 0 : gMinecraftServer->getLevel(0);
       if (roundLevel != 0 && roundLevel->getServer() != 0 &&
           roundLevel->getServer()->getPlayers() != 0)
@@ -2800,8 +2708,54 @@ void MasterGameMode::Tick()
         mShuffledRuleGroups.insert(mShuffledRuleGroups.end(), mRuleGroups.begin(), mRuleGroups.end());
         std::random_shuffle(mShuffledRuleGroups.begin(), mShuffledRuleGroups.end());
         ChooseNextGameRules(true);
+        mPlayersPrepared = false;
         SetState(static_cast<EInternalGameModeState>(2));
         sendTutorialUpdate(static_cast<eTutorial_GameMode>(0));
+        ++mUnknown318;
+    }
+    else if (mInternalState == 1)
+    {
+        CheckReadyStates();
+        if (!HasTimer(eTimerID_WaitingToStart))
+        {
+            CountdownInfo* countdown = new CountdownInfo();
+            countdown->message = 0x80;
+            countdown->completeCallback = &MasterGameMode::OnGameChange;
+            AddTimer(eTimerID_WaitingToStart, &MasterGameMode::OnTimerCountdown,
+                     countdown, GetMiniGame()->getTimerSpec(eTimerID_WaitingToStart));
+        }
+        else if (GetMiniGame()->CanAutoStart() &&
+                 GetPlayerCount(false, false) < GetMinimumPlayersToStart())
+        {
+            KillTimer(eTimerID_WaitingToStart);
+            SetState(static_cast<EInternalGameModeState>(2));
+            mPlayersPrepared = true;
+        }
+        ++mUnknown318;
+    }
+    else if (mInternalState == 2)
+    {
+        if (!AreLevelChunksLoaded() && !mPlayersPrepared)
+        {
+            PopulateChests();
+            mPlayersPrepared = true;
+        }
+        if (GetMiniGame()->CanAutoStart())
+        {
+            const unsigned int minimumPlayers = GetMinimumPlayersToStart();
+            const unsigned int playerCount = GetPlayerCount(false, false);
+            if (playerCount < minimumPlayers)
+            {
+                std::vector<int> arguments;
+                arguments.push_back(static_cast<int>(minimumPlayers - playerCount));
+                BroadcastChat(0x87, arguments);
+            }
+            else
+            {
+                SetState(static_cast<EInternalGameModeState>(1));
+            }
+        }
+        ++mUnknown318;
     }
 }
 
@@ -3051,7 +3005,7 @@ void MasterGameMode::OnSpawned(boost::shared_ptr<ServerPlayer> player, bool join
 
 void MasterGameMode::SendPlaylistInfo(boost::shared_ptr<ServerPlayer> player)
 {
-    arrayWithLength<unsigned char> syncData = WiiUPlaylistSyncData(this);
+    arrayWithLength<unsigned char> syncData = mPlaylistSyncData;
     boost::shared_ptr<Packet> mapPacket(new MapSelectInfoPacket(syncData, false));
     player->mConnection->send(mapPacket);
 }
@@ -3191,7 +3145,6 @@ void MasterGameMode::OnJoin(boost::shared_ptr<ServerPlayer> player)
         joiningPlayers.push_back(player);
         PlacePlayers(&joiningPlayers, false, false);
     }
-
     const int themeId = static_cast<int>(mRoundInfo.getThemeId());
     const int themeSubId = static_cast<int>(mRoundInfo.getThemeSubId());
     if (themeId >= 0 && themeSubId >= 0)
@@ -3265,10 +3218,10 @@ void MasterGameMode::OnLeave(boost::shared_ptr<ServerPlayer> player)
         return;
 
     const unsigned char playerIndex = static_cast<unsigned char>(player->mPlayerIndex);
-    ClearSpawnDistributionSlot(WiiUSpawnDistributionData(this), playerIndex);
-    ClearSpawnDistributionSlot(WiiUAlternateSpawnDistributionData(this), playerIndex);
+    ClearSpawnDistributionSlot(mSpawnDistribution, playerIndex);
+    ClearSpawnDistributionSlot(mAlternateSpawnDistribution, playerIndex);
 
-    unsigned int& loadingPlayerCount = WiiULoadingPlayerCount(this);
+    unsigned int& loadingPlayerCount = mUnknown2D8;
     if (loadingPlayerCount > 0)
         --loadingPlayerCount;
 
@@ -3422,7 +3375,7 @@ void MasterGameMode::StopAchievementExploit(const std::wstring& playerName)
     }
 
     if (matchedExploiterName && validPlayerCount == 2)
-        WiiUAchievementExploitStopped(this) = true;
+        mAchievementExploitStopped = true;
 }
 
 void MasterGameMode::OnKickReqested(int playerIndex, int reason)
@@ -3850,15 +3803,15 @@ void MasterGameMode::BlockDestroyedAt(const BlockPos& position)
     if (layerArea == 0 || !layerArea->contains(position))
         return;
 
-    const int destroyedCount = WiiULayerBlocksDestroyed(this);
-    WiiULayerBlocksDestroyed(this) = destroyedCount + 1;
+    const int destroyedCount = mLayerBlocksDestroyed;
+    mLayerBlocksDestroyed = destroyedCount + 1;
 
     const int blockLimit = static_cast<int>(
         mMapGenerator->GetBlockCountOnLayer(static_cast<unsigned int>(mSpawnLayerIndex)));
     if (blockLimit < destroyedCount + 11)
     {
         ++mSpawnLayerIndex;
-        WiiULayerBlocksDestroyed(this) = 0;
+        mLayerBlocksDestroyed = 0;
 
         const unsigned int layerCount = static_cast<unsigned int>(mMapGenerator->GetNumberOfLayers());
         if (layerCount <= static_cast<unsigned int>(mSpawnLayerIndex))
@@ -3882,8 +3835,8 @@ void MasterGameMode::RestartMapGenerator()
     ResetSpawnLayers();
     CommonMasterGameMode::RestartMapGenerator();
 
-    const long long seed = WiiUGeneratorSeed(this);
-    const float scale = WiiUGeneratorSeedScale(this);
+    const long long seed = mGeneratorSeed;
+    const float scale = mGeneratorSeedScale;
     GameModePacket::UpdateSeedGameModeData data(seed, scale);
     BroadcastGameModePacket(static_cast<GameModePacket::EMessage>(0x19), data);
 }

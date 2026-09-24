@@ -79,9 +79,9 @@ void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
 Vec3* Camera::getCameraPos(boost::shared_ptr<Entity> entity, double partialTick)
 {
     return Vec3::newTemp(
-        (entity->mX - entity->mXOld) * partialTick + entity->mXOld + gCameraPositionX,
-        (entity->mY - entity->mYOld) * partialTick + entity->mYOld + gCameraPositionY,
-        (entity->mZ - entity->mZOld) * partialTick + entity->mZOld + gCameraPositionZ);
+        (entity->mX - entity->mXo) * partialTick + entity->mXo + gCameraPositionX,
+        (entity->mY - entity->mYo) * partialTick + entity->mYo + gCameraPositionY,
+        (entity->mZ - entity->mZo) * partialTick + entity->mZo + gCameraPositionZ);
 }
 
 BlockPos Camera::getCameraBlockPos(boost::shared_ptr<LivingEntity> entity, double partialTick)

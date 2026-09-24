@@ -1844,7 +1844,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
 
             if ((mPlayer->mButtonsDown & 0x100000) != 0 &&
                 mGameMode->isInputAllowed((EControllerActions)0x34) &&
-                mPlayer->GetGameType() == GameType::ADVENTURE)
+                mPlayer->GetGameType() == GameType::LOBBY)
             {
                 mPlayer->mPacketListener->send(boost::shared_ptr<Packet>(
                     new PlayerReadyPacket(mPlayer->mPlayerIndex,
@@ -1859,7 +1859,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
                 GetClientMasterGameMode()->GetUniquePlaylist(playlist);
 
-                bool canVote = mPlayer->GetGameType() == GameType::ADVENTURE;
+                bool canVote = mPlayer->GetGameType() == GameType::LOBBY;
                 if (canVote && (playlist.empty() || playlist.size() < 2))
                     canVote = !InMiniGame(eMiniGameId_Battle, true) && GetMiniGame()->HasMultipleVariants();
 
@@ -1869,7 +1869,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     {
                         if (gProfile->GetPrimaryPad() == playerIdx &&
                             CGameNetworkManager::sInstance.IsHost() &&
-                            GetInstance()->mLocalPlayers[playerIdx]->GetGameType() == GameType::ADVENTURE &&
+                            GetInstance()->mLocalPlayers[playerIdx]->GetGameType() == GameType::LOBBY &&
                             GetMiniGame()->HostOption_Bool((eCustomGameModeHostOption)7))
                         {
                             gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3e, (void*)1,

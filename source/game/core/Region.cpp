@@ -96,7 +96,7 @@ int Region::getRawBrightness(const BlockPos& pos, bool useNeighbourBrightness)
 {
     if (!mLevel->isWithinLevelBounds(pos.x, pos.z))
         return 15;
-    if (useNeighbourBrightness && getBlock(pos)->getLightColor(getBlockState(pos), this, pos, 0) != 0)
+    if (useNeighbourBrightness && getBlockState(pos)->doesPropagate())
     {
         int brightest = 0;
         const Direction* directions[6] = { Direction::DOWN, Direction::UP, Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
@@ -124,15 +124,35 @@ float Region::getBrightness(const BlockPos& pos, int lightValue)
 {
     int value = getRawBrightness(pos);
     if (value < lightValue) value = lightValue;
-    return mLevel->getBrightness(pos, value);
+    return mLevel->mDimension->getBrightnessRamp()[value];
 }
 
 int Region::getBrightnessPropagate(LightLayer::variety layer, const BlockPos& pos, int lightValue)
 {
-    int brightness = getBrightness(layer, pos);
-    if (brightness < lightValue)
-        brightness = lightValue;
-    return brightness;
+    if (layer == LightLayer::SKY && !mLevel->mDimension->isHasSkyLight())
+        return 0;
+
+    BlockPos target = pos.y < 0 ? BlockPos(pos.x, 0, pos.z) : pos;
+    if (!mLevel->reallyHasChunkAt(target))
+        return layer;
+
+    if (!getBlockState(target)->doesPropagate())
+        return getChunk(target.x >> 4, target.z >> 4)->getBrightness(layer, target);
+
+    int brightest = 0;
+    const Direction* directions[6] = { Direction::DOWN, Direction::UP, Direction::NORTH,
+                                       Direction::SOUTH, Direction::WEST, Direction::EAST };
+    for (int i = 0; i < 6; ++i)
+    {
+        int value = getBrightness(layer, target.relative(directions[i]));
+        if (value > brightest)
+        {
+            brightest = value;
+            if (brightest > 14)
+                return brightest;
+        }
+    }
+    return brightest;
 }
 
 int Region::getLightColor(const BlockPos& pos, int lightValue, int cacheIndex)
@@ -143,7 +163,7 @@ int Region::getLightColor(const BlockPos& pos, int lightValue, int cacheIndex)
     return (sky << 20) | (block << 4);
 }
 
-float Region::getBrightness(const BlockPos& pos) { return mLevel->getBrightness(pos); }
+float Region::getBrightness(const BlockPos& pos) { return mLevel->mDimension->getBrightnessRamp()[getRawBrightness(pos)]; }
 
 const BlockState* Region::getBlockState(const BlockPos& pos)
 {

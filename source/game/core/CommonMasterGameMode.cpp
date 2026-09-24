@@ -86,7 +86,9 @@ void CommonMasterGameMode::SetupMiniGameInstance(const MiniGameDef& definition, 
 void CommonMasterGameMode::OnExitedGame() { mRoundInfo.reset(); }
 unsigned int CommonMasterGameMode::GetNextGameMode() const
 {
-    return mCurrentLevelGenOptions == NULL ? 0 : mNextState;
+    if (mCurrentLevelGenOptions == NULL)
+        return 0;
+    return mCurrentLevelGenOptions->getRequiredGameRules()->getRuleType();
 }
 AABB* CommonMasterGameMode::GetTeamArea(Team*) const { return mTeamAreas.empty() ? NULL : mTeamAreas.front(); }
 Team* CommonMasterGameMode::GetTeamAtPosition(double x, double y, double z, double radius) const
@@ -556,7 +558,7 @@ void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player
 
     if (miniGame != NULL)
     {
-        GameCondition* endConditions = reinterpret_cast<GameCondition*>(miniGame->GetEndConditions());
+        GameCondition* endConditions = miniGame->GetEndConditions();
         if (endConditions != NULL)
         {
             ConditionConnective* connective = dynamic_cast<ConditionConnective*>(endConditions);

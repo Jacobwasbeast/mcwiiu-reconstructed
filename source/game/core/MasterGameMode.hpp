@@ -124,8 +124,8 @@ public:
     MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* playlist);
     virtual ~MasterGameMode();
 
-    std::vector<boost::shared_ptr<ServerPlayer> > GetPlayers(bool includeSpectators, bool includeDead);
-    int GetPlayerCount(bool includeSpectators, bool includeDead);
+    std::vector<boost::shared_ptr<ServerPlayer> > GetPlayers(bool excludeSpectators, bool readyOnly);
+    int GetPlayerCount(bool excludeSpectators, bool readyOnly);
     unsigned long long GetCurrentTimeMillis();
     bool HasTimer(ETimerID timer);
     void KillTimer(ETimerID timer);
@@ -278,19 +278,6 @@ public:
     static std::wstring GetOptionName(EMiniGameId miniGame, eCustomGameModeHostOption option);
     bool IsPlayerReady(unsigned int playerIndex);
 
-    int& MinChunkXStorage();
-    int& MaxChunkXStorage();
-    int& MinChunkZStorage();
-    int& MaxChunkZStorage();
-    arrayWithLength<unsigned char>& SpawnDistributionStorage();
-    arrayWithLength<unsigned char>& AlternateSpawnDistributionStorage();
-    unsigned int& LoadingPlayerCountStorage();
-    unsigned int& BroadcastStateWord0();
-    unsigned int& BroadcastStateWord1();
-    unsigned int& BroadcastStateWord2();
-    arrayWithLength<unsigned char>& PlaylistSyncStorage();
-    bool& PlayerReadyStorage(int index);
-
 private:
     friend struct MasterGameModeLayoutAssertions;
     friend class CheckpointCommand;
@@ -307,6 +294,7 @@ private:
     boost::unordered_map<ETimerID, _TimerInfo> mTimers;
     LevelGenerationOptions* mNextLevelGenerationOptions;
     GameStats mGameStats;
+    arrayWithLength<unsigned char> mPlaylistSyncData;
     int mInternalState;
     int mPreviousState;
     std::vector<LevelRules::LevelRulesetGroup*> mPlaylist;
@@ -337,6 +325,9 @@ private:
     bool mTutorialDirty;
     bool mPlayersPrepared;
     bool mReturningToLobby;
+    bool mPlayersInvulnerable;
+    bool mBattleLootSetChosen;
+    bool mAchievementExploitStopped;
     int mGeneratorSpawn;
     int mSpawnLayerIndex;
     int mChunkHistory;
@@ -351,11 +342,11 @@ private:
     unsigned int mUnknown2E0;
     unsigned int mUnknown2E4;
     unsigned int mUnknown2E8;
-    unsigned int mUnknown2EC;
+    unsigned int mLayerBlocksDestroyed;
     unsigned int mUnknown2F0;
     unsigned char mUnknown2F4;
     unsigned char mUnknown2F4Padding[3];
-    unsigned int mUnknown2F8;
+    unsigned int mLastTutorialPlayerCount;
     GameModePacket::TutorialGameModeData mTutorialData;
     BlockChangeListener* mBlockChangeListener;
     unsigned long long mLastBroadcastTime;
