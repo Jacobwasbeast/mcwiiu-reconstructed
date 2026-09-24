@@ -35,6 +35,7 @@
 #include "game/core/LlamaSpit.hpp"
 #include "game/world/block/FallingBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/item/ItemFrame.hpp"
 #include "game/item/ThrownPotion.hpp"
 #include "game/core/Direction.hpp"
@@ -1207,6 +1208,7 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
         const int blockId = static_cast<int>((element & 0xffff) >> 4);
         const int data = static_cast<int>(element & 0xf);
         const unsigned short extra = static_cast<unsigned short>(element >> 16);
+        Block* incoming = Block::byId(blockId);
         minLocalX = std::min(minLocalX, localX);
         minY = std::min(minY, y);
         minLocalZ = std::min(minLocalZ, localZ);
@@ -1219,7 +1221,15 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
         level->checkLight(worldPos, false, false);
         level->clearResetRegion(worldPos.x, worldPos.y, worldPos.z,
                                 worldPos.x, worldPos.y, worldPos.z);
-        level->setBlocksDirty(worldPos, worldPos);
+        Block* actual = chunk->getBlock(worldPos);
+        const bool skipDirty =
+            (actual == Blocks::FLOWING_WATER && incoming == Blocks::WATER) ||
+            (actual == Blocks::WATER && incoming == Blocks::FLOWING_WATER) ||
+            (actual == Blocks::flowing_lava && incoming == Blocks::lava) ||
+            (actual == Blocks::lava && incoming == Blocks::lava) ||
+            (actual == Blocks::lava && incoming == Blocks::flowing_lava);
+        if (!skipDirty)
+            level->setBlocksDirty(worldPos, worldPos);
     }
     if (packet->count != 0)
     {
