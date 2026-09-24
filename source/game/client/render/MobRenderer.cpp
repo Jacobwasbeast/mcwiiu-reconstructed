@@ -52,8 +52,7 @@ void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
     if ((entity->GetType() & ENTITY_TYPE_MOB) != ENTITY_TYPE_MOB)
         return;
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    setLightColor(entity);
-    mModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, false);
+    renderLeash(mob, x, y, z, yaw, partialTick);
 }
 
 void MobRenderer::setLightColor(boost::shared_ptr<Entity>& entity)

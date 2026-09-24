@@ -900,12 +900,11 @@ void GameRenderer::tick(bool tickWorld)
 
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
     Entity* cameraRaw = cameraEntity.get();
-    float* viewRotOld = reinterpret_cast<float*>(reinterpret_cast<char*>(cameraRaw) + 0x168);
-    float* viewRot = reinterpret_cast<float*>(reinterpret_cast<char*>(cameraRaw) + 0x16c);
-    *viewRotOld = *viewRot;
-    LivingEntity* livingCamera = dynamic_cast<LivingEntity*>(cameraRaw);
-    const double viewPitch = static_cast<double>(livingCamera->getViewVector(1.0f)->y);
-    *viewRot = static_cast<float>((viewPitch - static_cast<double>(*viewRot)) * kHalf + static_cast<double>(*viewRot));
+    cameraRaw->mEyeHeightO = cameraRaw->mEyeHeight;
+    const double eyeHeight = cameraRaw->getEyeHeight();
+    cameraRaw->mEyeHeight = static_cast<float>(
+        (eyeHeight - static_cast<double>(cameraRaw->mEyeHeight)) * kHalf
+        + static_cast<double>(cameraRaw->mEyeHeight));
 
     const float blockBrightness = level->getBrightness(BlockPos(cameraEntity));
     *blurCurrent = ((blockBrightness * kZero + kOne) - *blurCurrent) * kBlurLerp + *blurCurrent;
@@ -1206,13 +1205,12 @@ double GameRenderer::getFov(float amount, bool useSmoothing)
 
     if (player != NULL)
     {
-        const double noActionTime = static_cast<double>(player->getNoActionTime());
-        if (noActionTime <= kZero)
+        if (player->getHealth() <= kZero)
         {
-            float hurtTime = static_cast<float>(player->mHurtDuration) + amount;
-            if (hurtTime > kNauseaMax)
-                hurtTime = kNauseaMax;
-            const float divisor = kOne - kNauseaDenom / (hurtTime + kNauseaAdd);
+            float deathTime = static_cast<float>(player->mDeathTime) + amount;
+            if (deathTime > kNauseaMax)
+                deathTime = kNauseaMax;
+            const float divisor = kOne - kNauseaDenom / (deathTime + kNauseaAdd);
             fov = fov / (divisor + divisor + kOne);
         }
     }
@@ -1245,22 +1243,19 @@ void GameRenderer::bobHurt(float partialTick)
         boost::static_pointer_cast<LivingEntity>(cameraEntity);
     LivingEntity* entity = living.get();
 
-    const float prevHurt = static_cast<float>(entity->mHurtDuration) - partialTick;
-    if (prevHurt > kZero)
+    const float prevHurt = static_cast<float>(entity->mHurtTime) - partialTick;
+    if (entity->getHealth() <= kZero)
     {
-        if (entity->getNoActionTime() <= 0)
-        {
-            float hurtTime = static_cast<float>(entity->mHurtDuration) + partialTick;
-            if (hurtTime > kNauseaMax)
-                hurtTime = kNauseaMax;
-            GlStateManager::rotatef(kNauseaBase - kNauseaDiv / (hurtTime + kNauseaAdd), kZero, kZero,
-                                    kOne);
-        }
+        float deathTime = static_cast<float>(entity->mDeathTime) + partialTick;
+        if (deathTime > kNauseaMax)
+            deathTime = kNauseaMax;
+        GlStateManager::rotatef(kNauseaBase - kNauseaDiv / (deathTime + kNauseaAdd), kZero, kZero,
+                                kOne);
     }
 
     if (prevHurt >= kZero)
     {
-        const float divisor = static_cast<float>(entity->mHurtTime);
+        const float divisor = static_cast<float>(entity->mHurtDuration);
         if (divisor > kZero)
         {
             float ratio = prevHurt / divisor;
@@ -1293,7 +1288,7 @@ void GameRenderer::bobView(float partialTick)
 
     const float walkDistO = entity->mWalkDistO;
     const float walkDist = entity->mWalkDist;
-    const float walk = (walkDistO - walkDist) * partialTick + walkDist;
+    const float walk = (walkDist - walkDistO) * partialTick + walkDist;
     const float bobDist = (entity->mCameraYaw - entity->mPrevCameraYaw) * partialTick + entity->mPrevCameraYaw;
     const float roll = (entity->mBob - entity->mOBob) * partialTick + entity->mOBob;
     const float angle = -walk * kPi;
@@ -1353,11 +1348,11 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
 
     const unsigned int thirdPerson = getCameraThirdPerson();
     const double eyeHeight = static_cast<double>(
-        (entity->mEyeHeightO - entity->mEyeHeight) * partialTick + entity->mEyeHeight);
-    double x = (entity->mX - entity->mXOld) * partialTick + entity->mXOld;
-    double y = (entity->mY - entity->mYOld) * partialTick + entity->mYOld;
-    double z = (entity->mZ - entity->mZOld) * partialTick + entity->mZOld;
-    double yEye = y + eyeHeight;
+        (entity->mEyeHeight - entity->mEyeHeightO) * partialTick + entity->mEyeHeightO);
+    double x = (entity->mX - entity->mXo) * partialTick + entity->mXo;
+    double y = (entity->mY - entity->mYo) * partialTick + entity->mYo;
+    double z = (entity->mZ - entity->mZo) * partialTick + entity->mZo;
+    double yEye = y + entity->getEyeHeight();
 
     char sleepingFlag = 0;
     if (mMinecraft->mOptions != NULL)
@@ -1977,7 +1972,7 @@ void GameRenderer::updateLightTexture(float partialTick)
 {
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
-    static const float kHalf = 0.5f;
+    static const float kLightmapGamma = 0.0f;
     static const float kGreyBoost = 0.699999988079071f;
     static const float kLightBase = 0.029999999329447746f;
     static const float kLightScale = 0.9599999785423279f;
@@ -2066,7 +2061,7 @@ void GameRenderer::updateLightTexture(float partialTick)
             double blue =
                 static_cast<double>((redComponent + blueLight) * kLightScale + kLightBase);
 
-            if (*damageFlash > kHalf)
+            if (*damageFlash > kZero)
             {
                 const float flashAmount =
                     (*damageFlash - *damageFlashO) * partialTick + *damageFlashO;
@@ -2089,9 +2084,9 @@ void GameRenderer::updateLightTexture(float partialTick)
                 const double nightVision =
                     getNightVisionScale(living, partialTick);
                 double minScale = kOne / red;
-                if (green > kHalf && kOne / green < minScale)
+                if (kOne / green < minScale)
                     minScale = kOne / green;
-                if (blue > kHalf && kOne / blue < minScale)
+                if (kOne / blue < minScale)
                     minScale = kOne / blue;
                 const double keep = kOne - nightVision;
                 red = red * keep + red * minScale * nightVision;
@@ -2106,9 +2101,9 @@ void GameRenderer::updateLightTexture(float partialTick)
                 const double underwaterScale =
                     getUnderWaterVisionScale(visionPlayer, partialTick);
                 double minScale = kOne / red;
-                if (green > kHalf && kOne / green < minScale)
+                if (kOne / green < minScale)
                     minScale = kOne / green;
-                if (blue > kHalf && kOne / blue < minScale)
+                if (kOne / blue < minScale)
                     minScale = kOne / blue;
                 const double keep = kOne - underwaterScale;
                 red = red * keep + red * minScale * underwaterScale;
@@ -2126,12 +2121,12 @@ void GameRenderer::updateLightTexture(float partialTick)
             const double redCurve = kOne - red;
             const double greenCurve = kOne - green;
             const double blueCurve = kOne - blue;
-            red = (-(redCurve * redCurve * redCurve * redCurve - kOne) * kHalf + red) * kLightScale + kLightBase;
+            red = (-(redCurve * redCurve * redCurve * redCurve - kOne) * kLightmapGamma + red) * kLightScale + kLightBase;
             green =
-                (-(greenCurve * greenCurve * greenCurve * greenCurve - kOne) * kHalf + green) * kLightScale
+                (-(greenCurve * greenCurve * greenCurve * greenCurve - kOne) * kLightmapGamma + green) * kLightScale
                 + kLightBase;
             blue =
-                (-(blueCurve * blueCurve * blueCurve * blueCurve - kOne) * kHalf + blue) * kLightScale
+                (-(blueCurve * blueCurve * blueCurve * blueCurve - kOne) * kLightmapGamma + blue) * kLightScale
                 + kLightBase;
 
             if (red > kOne)
@@ -2141,11 +2136,11 @@ void GameRenderer::updateLightTexture(float partialTick)
             if (blue > kOne)
                 blue = kOne;
             if (red < kZero)
-                red = kHalf;
+                red = kZero;
             if (green < kZero)
-                green = kHalf;
+                green = kZero;
             if (blue < kZero)
-                blue = kHalf;
+                blue = kZero;
 
             pixelBuffer[lightIndex] =
                 static_cast<int>(red * k255) << 24
@@ -2329,10 +2324,12 @@ void GameRenderer::setupClearColor(float partialTick)
     const float sunDot = static_cast<float>(
         living->getViewVector(partialTick)->dot(sunVector));
 
+    float* sunrise = NULL;
     if (sunDot > kHalf)
+        sunrise = level->mDimension->getSunriseColor(level->getTimeOfDay(partialTick), partialTick);
+
+    if (sunrise != NULL)
     {
-        const float timeOfDay = level->getTimeOfDay(partialTick);
-        float* sunrise = level->mDimension->getSunriseColor(timeOfDay, partialTick);
         const float blend = sunDot * sunrise[3];
         const float keep = kOne - blend;
         const float red = *fogRed * keep + sunrise[0] * blend;
@@ -2627,11 +2624,11 @@ void GameRenderer::setupFog(int, float partialTick)
     static const float kFogStartScale = 0.25f;
     static const float kFogStartTightScale = 0.05000000074505806f;
     static const float kFogEndCap = 192.0f;
-    static const float kFogEndScale = 0.699999988079071f;
+    static const float kFogEndScale = 0.5f;
     static const float kExpFogDensity = 0.10000000149011612f;
     static const float kLavaFogDensity = 2.0f;
-    static const float kBlindnessFogEnd = 15.0f;
-    static const float kBlindnessInterpRange = 500.0f;
+    static const float kBlindnessFogEnd = 5.0f;
+    static const float kBlindnessInterpRange = 20.0f;
 
     getCamera();
     resetFogColor(false);
@@ -2667,7 +2664,7 @@ void GameRenderer::setupFog(int, float partialTick)
         GlStateManager::fogStart(fogStart);
         GlStateManager::fogEnd(fogEnd);
         if (gRenderer != NULL)
-            gRenderer->StateSetFogNearDistance(fogStart);
+            gRenderer->StateSetVertexAlphaDistance(fogStart);
         GlStateManager::enableColorMaterial();
         GlStateManager::colorMaterial(0, 2);
         return;
@@ -2708,7 +2705,7 @@ void GameRenderer::setupFog(int, float partialTick)
 
     BlockPos cameraPos(cameraEntity);
     Biome* biome = level->getBiome(cameraPos);
-    bool tightenFog = biome->getFogDistance() != 0.0f;
+    bool tightenFog = biome->isFoggy();
     if (!tightenFog)
     {
         AbstractClientPlayer* player = getCamera();
@@ -2732,7 +2729,7 @@ void GameRenderer::setupFog(int, float partialTick)
     }
 
     if (gRenderer != NULL)
-        gRenderer->StateSetFogNearDistance(fogStart);
+        gRenderer->StateSetVertexAlphaDistance(fogStart);
 
     GlStateManager::enableColorMaterial();
     GlStateManager::colorMaterial(0, 2);
@@ -3858,6 +3855,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     mMinecraft->mLevelRenderer->render(cameraEntity, 2, partialTick, sortTransparent);
     GlStateManager::blendFunc(4, 5);
     mMinecraft->mLevelRenderer->render(cameraEntity, 2, partialTick, sortTransparent);
+    gRenderer->BeginOrderIndependentAlpha();
     mMinecraft->mLevelRenderer->render(cameraEntity, 1, partialTick, sortTransparent);
     InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_TerrainTransparent);
 
@@ -3874,11 +3872,17 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     }
     turnOffLightLayer(0.0);
 
+    gRenderer->EndOrderIndependentAlpha();
+    GlStateManager::depthMask(true);
+    GlStateManager::enableCull();
+    GlStateManager::disableBlend();
     if (mMinecraft->mHitResult != NULL)
     {
         boost::shared_ptr<Player> outlinePlayer = boost::static_pointer_cast<Player>(cameraEntity);
+        GlStateManager::disableAlphaTest();
         mMinecraft->mLevelRenderer->renderHitOutline(outlinePlayer, mMinecraft->mHitResult, 0,
                                                      partialTick);
+        GlStateManager::enableAlphaTest();
     }
 
     renderThermal(culler, partialTick);
@@ -3910,7 +3914,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     mMinecraft->mLevelRenderer->renderDestroyAnimation(Tesselator::getInstance(), destroyPlayer,
                                                          partialTick);
 
-    if (headY < static_cast<double>(mMinecraft->mLevel->getCloudHeight()))
+    if (headY >= static_cast<double>(mMinecraft->mLevel->getCloudHeight()))
     {
         prepareAndRenderClouds(mMinecraft->mLevelRenderer, partialTick, eyeIndex, cameraX, cameraY,
                                cameraZ);

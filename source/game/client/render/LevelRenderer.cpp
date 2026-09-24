@@ -1385,7 +1385,6 @@ int LevelRenderer::renderChunks(int first, int count, int layer, double partialT
     for (unsigned int index = 0; index < mClipChunks[userIndex].length; ++index)
     {
         ClipChunk* chunk = &chunks[index];
-
         if (chunk->mVisible && chunk->mGlobalIndex != -1 &&
             (mask & mGlobalChunkFlags[chunk->mGlobalIndex]) != mask &&
             clippedByCameraInsideAreas(chunk) == 0)
@@ -1400,7 +1399,6 @@ int LevelRenderer::renderChunks(int first, int count, int layer, double partialT
     {
         int displayList = (int)(*entry & 0xffffff) * 3 + layer + mDisplayList;
         unsigned char layerMask = (unsigned char)(*entry >> 24);
-
         if (gRenderer->CBuffCall(displayList, running, layerMask))
         {
             running = false;
@@ -1551,6 +1549,7 @@ void LevelRenderer::renderSky(float partialTick)
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
+    GlStateManager::disableTexture();
     GlStateManager::depthMask(false);
     GlStateManager::enableFog();
     GlStateManager::color3f(red, green, blue);
@@ -1559,6 +1558,7 @@ void LevelRenderer::renderSky(float partialTick)
     GlStateManager::disableAlphaTest();
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
+    Lighting::turnOff();
 
     Dimension* dimension = level->mDimension;
     float* sunriseColors = dimension->getSunriseColor((float)level->getTimeOfDay(partialTick), partialTick);
@@ -1777,7 +1777,7 @@ void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, 
         }
 
         cellZ = z / 12.0 + 0.33000001311302185;
-        cellX = (((double)currentTime - driftAccum) * 1.2399998903274536 + x) / 12.0;
+        cellX = (((double)currentTime - driftAccum) * 0.029999999329447746 + x) / 12.0;
     }
     else
     {
@@ -1787,7 +1787,7 @@ void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, 
         }
 
         cellZ = z / 12.0 + 0.33000001311302185;
-        cellX = (((double)sCloudPrevTime - driftAccum) * 1.2399998903274536 + x) / 12.0;
+        cellX = (((double)sCloudPrevTime - driftAccum) * 0.029999999329447746 + x) / 12.0;
     }
 
     double cloudRelativeY = level->mDimension->getCloudHeight();
@@ -2021,12 +2021,12 @@ void LevelRenderer::renderClouds(float partialTick, int pass, double x, double y
         blue = newBlue;
     }
 
-    x = ((float)mRenderTick + partialTick) * 1.2399999f + x;
+    x = (double)((float)mRenderTick + partialTick) * 0.029999999329447746 + x;
 
-    int gridX = Mth::lfloor(x * 0.75);
-    int gridZ = Mth::lfloor(z * 0.75);
-    float localX = (float)((x - (double)(gridX << 11)) * 0.75);
-    float localZ = (float)((z - (double)(gridZ << 11)) * 0.75);
+    int gridX = Mth::lfloor(x * 0.00048828125);
+    int gridZ = Mth::lfloor(z * 0.00048828125);
+    float localX = (float)((x - (double)(gridX << 11)) * 0.00048828125);
+    float localZ = (float)((z - (double)(gridZ << 11)) * 0.00048828125);
     float cloudY = (float)(level->mDimension->getCloudHeight() - (double)(float)y + 0.33f);
 
     builder->begin();
@@ -2182,7 +2182,6 @@ unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
                         }
 
                         unsigned char flags = mGlobalChunkFlags[globalIndex];
-
                         if ((flags & 2) == 0)
                         {
                             continue;

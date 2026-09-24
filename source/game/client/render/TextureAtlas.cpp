@@ -1,6 +1,8 @@
 #include "game/client/render/TextureAtlas.hpp"
 
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include "game/core/ClockAtlasSprite.hpp"
 #include "game/core/CompassAtlasSprite.hpp"
 #include "game/core/Minecraft.hpp"
@@ -991,10 +993,10 @@ void TextureAtlas::stitch()
     for (auto& entry : mSprites)
     {
         TextureAtlasSprite* sprite = entry.second;
-        const int x = static_cast<int>(sprite->getU0(false) * mStitchedTexture->getWidth());
-        const int y = static_cast<int>(sprite->getV0(false) * mStitchedTexture->getHeight());
-        const int width = static_cast<int>(sprite->getU1(false) * mStitchedTexture->getWidth()) - x;
-        const int height = static_cast<int>(sprite->getV1(false) * mStitchedTexture->getHeight()) - y;
+        const int x = static_cast<int>(std::lround(sprite->getU0(false) * mStitchedTexture->getWidth()));
+        const int y = static_cast<int>(std::lround(sprite->getV0(false) * mStitchedTexture->getHeight()));
+        const int width = static_cast<int>(std::lround(sprite->getU1(false) * mStitchedTexture->getWidth())) - x;
+        const int height = static_cast<int>(std::lround(sprite->getV1(false) * mStitchedTexture->getHeight())) - y;
         sprite->init(mStitchedTexture, 0, x, y, width, height, false);
     }
     MemSect(52);

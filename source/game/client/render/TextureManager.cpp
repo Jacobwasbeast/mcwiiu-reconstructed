@@ -155,5 +155,5 @@ std::vector<Texture*>* TextureManager::createTextures(const std::wstring& path, 
 Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height,
                                        int format, bool mipmap)
 {
-    return createTexture(name, type, width, height, format, 0, 0, 0, mipmap, NULL);
+    return createTexture(name, type, width, height, 1, format, 0, 0, mipmap, NULL);
 }
