@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "game/client/render/C4JRender.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -84,6 +85,8 @@ std::wstring UIComponent_Tooltips::getMoviePath()
 
 double UIComponent_Tooltips::getSafeZoneHalfWidth()
 {
+    if (gRenderer->IsWidescreen())
+        return UIScene::getSafeZoneHalfWidth();
     return (double)m_stageWidth * 0.075;
 }
 

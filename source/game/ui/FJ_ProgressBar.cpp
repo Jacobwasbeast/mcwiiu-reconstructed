@@ -40,6 +40,7 @@ void FJ_ProgressBar::initFiller()
         getStage()->m_pRenderNode, &rect, "fillerMask");
     m_pBarFiller = new FJ_FuiNode(renderNode);
     m_pFiller->addMask(m_pBarFiller);
+    setProgress(0.0f);
 }
 
 void FJ_ProgressBar::GetBarFiller()
@@ -72,7 +73,7 @@ float FJ_ProgressBar::getProgress()
 void FJ_ProgressBar::setProgress(float progress)
 {
     if (progress > 1.0f)
-        m_progress = 0.0f;
+        m_progress = 1.0f;
     else if (progress < 0.0f)
         m_progress = 0.0f;
     else

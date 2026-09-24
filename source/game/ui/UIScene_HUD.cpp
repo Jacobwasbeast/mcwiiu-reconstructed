@@ -14,6 +14,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/FoodData.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/GameType.hpp"
 #include "game/core/GhostController.hpp"
 #include "game/core/Gui.hpp"
 #include "game/core/HumanoidArm.hpp"
@@ -43,6 +44,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "platform/wiiu/CProfile.hpp"
+
 
 namespace {
 
@@ -537,7 +539,7 @@ void UIScene_HUD::handleReload()
 
 unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_playerId); }
 void UIScene_HUD::SetOpacity(float opacity) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAlpha(opacity); }
-void UIScene_HUD::SetVisible(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowHealth(visible); }
+void UIScene_HUD::SetVisible(bool visible) { setVisible(visible); }
 unsigned char UIScene_HUD::GetHudLoading() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHudLoading(); }
 void UIScene_HUD::SetExpBarProgress(float progress, int) { if (getFJ_Hud() != 0) getFJ_Hud()->SetExpBarProgress(progress); }
 void UIScene_HUD::SetExpLevel(int level) { if (getFJ_Hud() != 0) getFJ_Hud()->SetPlayerLevel(level); }
@@ -693,12 +695,8 @@ void UIScene_HUD::updateGameModePlayers()
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[pad];
     bool showNumPlayers = true;
-    if (localPlayer != 0)
-    {
-        LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-        if (options != 0 && options->getUniqueId() != 0)
-            showNumPlayers = false;
-    }
+    if (localPlayer != 0 && localPlayer->GetGameType() != GameType::LOBBY)
+        showNumPlayers = false;
 
     bool glideLayout = false;
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && showNumPlayers)
@@ -1633,7 +1631,7 @@ void UIScene_HUD::handleTimerComplete(int)
     }
 
     m_selectedLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(playerId)));
-    m_selectedLabel.setLabel(UIString(gui->mNowPlaying[playerId]), false, false);
+    m_selectedLabel.setLabel(UIString(gui->mSingleMessages[playerId]), false, false);
 }
 int UIScene_HUD::getSceneType() { return 0x31; }
 bool UIScene_HUD::stealsFocus() { return false; }

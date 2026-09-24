@@ -2,10 +2,14 @@
 
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/GameType.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 namespace
 {
@@ -70,6 +74,45 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     ResetTooltip(playerId, (EControllerActions)0x22);
     ResetTooltip(playerId, (EControllerActions)0x27);
     ResetTooltip(playerId, (EControllerActions)0x2f);
+
+    ResetTooltip(playerId, static_cast<EControllerActions>(0x34));
+    ResetTooltip(playerId, static_cast<EControllerActions>(0x35));
+    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) != 0 &&
+        player->GetGameType() == GameType::LOBBY)
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
+        const int readyLabel = gameMode->IsPlayerReady(player->mPlayerIndex)
+            ? static_cast<int>(0x3b3c69ff) : static_cast<int>(0x87c65ed5);
+        OverwriteTooltip(playerId, static_cast<EControllerActions>(0x34), readyLabel);
+
+        std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
+        gameMode->GetUniquePlaylist(playlist);
+        const bool publicGame = CGameNetworkManager::sInstance.IsInPublicJoinableGame();
+        if (playlist.size() >= 2)
+        {
+            if (publicGame)
+                OverwriteTooltip(playerId, static_cast<EControllerActions>(0x35),
+                                 static_cast<int>(0x1a66548e));
+            else if (gProfile->GetPrimaryPad() == playerId &&
+                     CGameNetworkManager::sInstance.IsHost())
+                OverwriteTooltip(playerId, static_cast<EControllerActions>(0x35),
+                                 static_cast<int>(0x0f7ae41a));
+        }
+        else if (!Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
+                 minecraft->GetMiniGame()->HasMultipleVariants() &&
+                 minecraft->GetMiniGame()->HostOption_Bool(
+                     static_cast<eCustomGameModeHostOption>(7)))
+        {
+            if (publicGame)
+                OverwriteTooltip(playerId, static_cast<EControllerActions>(0x35),
+                                 static_cast<int>(0x44c3150d));
+            else if (gProfile->GetPrimaryPad() == playerId &&
+                     CGameNetworkManager::sInstance.IsHost())
+                OverwriteTooltip(playerId, static_cast<EControllerActions>(0x35),
+                                 static_cast<int>(0x66f20471));
+        }
+    }
 
     (void)level;
     (void)hitResult;

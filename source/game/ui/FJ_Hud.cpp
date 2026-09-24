@@ -441,7 +441,7 @@ void FJ_Hud::SetHealth(int health, bool highlight, bool hardcore, bool hide)
 }
 void FJ_Hud::SetFood(int food, bool highlight)
 {
-    static const int kFoodFrame[4] = { 1, 1, 3, 5 };
+    static const int kFoodFrame[6] = { 1, 1, 3, 5, 2, 4 };
     FJ_FuiNode** foodIcons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x134);
 
     for (int i = 0; i < 10; ++i)
@@ -456,8 +456,6 @@ void FJ_Hud::SetFood(int food, bool highlight)
             state = 2;
 
         int index = state * 2 + (highlight ? 1 : 0);
-        if (index > 3)
-            index = 3;
 
         foodIcons[i]->gotoAndStop(kFoodFrame[index]);
     }
@@ -596,7 +594,11 @@ void FJ_Hud::SetHealthAbsorb(bool visible, int health)
     SetSelectedLabel(std::wstring(), false);
 }
 void FJ_Hud::SetFoodSaturationLevel(int level) { m_iTabIndex = level; }
-void FJ_Hud::ShowExpBar(bool visible) { FJ_FuiNode* node = getChildByName("expBar"); if (node != NULL) node->setVisible(visible); }
+void FJ_Hud::ShowExpBar(bool visible)
+{
+    hudNode(this, 0x1b4)->setVisible(visible);
+    hudNode(this, 0x240)->setVisible(hudInt(this, 0x39c) != 0 && visible);
+}
 void FJ_Hud::SetRidingHorse(bool riding, bool showJump, int health)
 {
     if (riding)
@@ -683,7 +685,11 @@ void FJ_Hud::SetHorseHealth(int health, bool highlight)
         hudInt(this, 0x38c) = health;
     }
 }
-void FJ_Hud::SetExpBarProgress(float progress) { FJ_FuiNode* node = getChildByName("expBar"); if (node != NULL) node->setAlpha(progress); }
+void FJ_Hud::SetExpBarProgress(float progress)
+{
+    hudNode(this, 0x1b4)->asFJ_ExperienceBar()->setProgress(progress);
+    hudFloat(this, 0x394) = progress;
+}
 void FJ_Hud::SetHorseJumpBarProgress(float progress) { FJ_FuiNode* node = getChildByName("horseJumpBar"); if (node != NULL) node->setAlpha(progress); }
 void FJ_Hud::ShowQuickSelect(bool visible)
 {
@@ -1775,7 +1781,7 @@ void FJ_Hud::SetSafeZone(int left, int top, int right, int bottom)
         armourIcons->setY(static_cast<float>(Math::round(
             stageHeight - armourHeight * 0.5f - static_cast<float>(hudInt(this, 0x464)) * 0.5f)));
 
-    getChildByName("Jukebox")->setY(static_cast<float>(hudInt(this, 0x488) - hudInt(this, 0x4a8)));
+    getChildByName("Label1")->setY(static_cast<float>(hudInt(this, 0x488) - hudInt(this, 0x4a8)));
 
     static const char* const kLabelNames[10] =
     {
@@ -1860,6 +1866,7 @@ void FJ_Hud::ShowDirectionalDamage(int direction, int, float alpha)
 void FJ_Hud::SetHudGameMode(int gameMode)
 {
     m_gameMode = gameMode;
+    hudInt(this, 0x49c) = gameMode;
     SetJukeBoxLabelPos();
 
     setHudNodeVisible(this, 0x58, gameMode != 2);
