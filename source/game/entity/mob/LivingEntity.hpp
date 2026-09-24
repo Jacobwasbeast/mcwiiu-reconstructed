@@ -370,6 +370,8 @@ public:
     bool mLightCacheValid;
     int mLastLightColor;
     bool mSwimSoundPlayed;
+    float mWaterTravelSpeedFactor;
+    int mWaterTravelCheckTicks;
 };
 
 #endif

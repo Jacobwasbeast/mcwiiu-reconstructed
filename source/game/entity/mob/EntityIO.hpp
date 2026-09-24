@@ -4,6 +4,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
 #include "game/core/ColourTable.hpp"
@@ -39,6 +40,8 @@ public:
     };
 
     typedef Entity* (*Creator)(Level*);
+    typedef boost::unordered_map<ResourceLocation, SpawnableMobInfo*> SpawnInfo;
+    static SpawnInfo sSpawnInfo;
 
     static ResourceLocation getKey(unsigned long long entityType);
     static boost::shared_ptr<Entity> newEntity(unsigned long long entityType, Level* level);

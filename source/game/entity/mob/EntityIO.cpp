@@ -102,18 +102,18 @@
 #include "game/world/generation/Villager.hpp"
 #include "game/core/EnderCrystal.hpp"
 
+EntityIO::SpawnInfo EntityIO::sSpawnInfo;
+
 namespace
 {
     typedef boost::unordered_map<unsigned long long, ResourceLocation> TypeKeys;
     typedef boost::unordered_map<ResourceLocation, unsigned long long> KeysByType;
     typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
-    typedef boost::unordered_map<ResourceLocation, EntityIO::SpawnableMobInfo*> SpawnInfo;
     typedef boost::unordered_map<unsigned long long, int> TypeIds;
 
     TypeKeys sTypeKeys;
     KeysByType sKeysByType;
     Creators sCreators;
-    SpawnInfo sSpawnInfo;
     boost::unordered_set<ResourceLocation> sEntityTypes;
     std::vector<std::wstring> sTranslationNames;
     std::vector<unsigned long long> sTypesById;

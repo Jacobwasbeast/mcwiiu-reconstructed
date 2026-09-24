@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/OwnableEntity.hpp"
+#include "game/entity/mob/PlayerRideableJumping.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/item/SimpleContainer.hpp"
@@ -29,7 +30,8 @@ template <class T> class EntityDataAccessor;
 
 extern const unsigned long long ENTITY_TYPE_ABSTRACT_HORSE;
 
-class AbstractHorse : public Animal, public net_minecraft_world::ContainerListener, public OwnableEntity
+class AbstractHorse : public Animal, public net_minecraft_world::ContainerListener, public PlayerRideableJumping,
+                      public OwnableEntity
 {
 public:
     AbstractHorse(Level* level);

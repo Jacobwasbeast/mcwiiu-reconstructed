@@ -20,6 +20,7 @@
 #include "game/core/ModifiableAttributeMap.hpp"
 #include "game/core/CombatRules.hpp"
 #include "game/core/CombatTracker.hpp"
+#include "game/core/Drowned.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
@@ -64,6 +65,7 @@
 #include "game/item/Items.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/NonNullList.hpp"
+#include "game/item/PowerupItems.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/minigame/ThermalAreaRuleDefinition.hpp"
@@ -121,6 +123,10 @@ const EntityDataAccessor<int>* LivingEntity::DATA_ARROW_COUNT_ID;
 
 void LivingEntity::staticCtor()
 {
+    SPEED_MODIFIER_SPRINTING =
+        (new AttributeModifier(eMODIFIER_ID_SprintingSpeedBoost, 0.30000001192092896, 2))
+            ->setSerialize(false);
+
     DATA_LIVING_ENTITY_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BYTE);
     DATA_HEALTH_ID = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::FLOAT);
     DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
@@ -267,6 +273,8 @@ void LivingEntity::_init()
     mLightCacheValid = false;
     mLastLightColor = 0;
     mSwimSoundPlayed = false;
+    mWaterTravelSpeedFactor = 1.0f;
+    mWaterTravelCheckTicks = 60;
 }
 
 void LivingEntity::fjDerivedCtorCalls()
@@ -2708,16 +2716,15 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
 void LivingEntity::travel(float xxa, float yya, float zza)
 {
     boost::shared_ptr<Player> player;
+    bool skeletonHorseWithPlayerPassenger = false;
 
     if ((GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
         player = boost::static_pointer_cast<Player>(shared_from_this());
     }
 
-    if (GetType() == ENTITY_TYPE_SKELETON_HORSE && hasPassenger(ENTITY_TYPE_PLAYER))
-    {
-        return;
-    }
+    skeletonHorseWithPlayerPassenger = GetType() == ENTITY_TYPE_SKELETON_HORSE
+                                       && hasPassenger(ENTITY_TYPE_PLAYER);
 
     if (PositionLocked())
     {
@@ -2732,17 +2739,153 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
     if (!isEffectiveAi() && !isControlledByLocalInstance())
     {
+        updateModelAnimation();
         return;
     }
 
-    if ((isInWater() && (!player || !player->mAbilities.mFlying))
-        || (isInLava() && (!player || !player->mAbilities.mFlying)))
+    bool flyingPlayer = player && player->mAbilities.mFlying;
+
+    if (isFallFlying() && !PositionLocked() && !g_pApp->IsAppPaused()
+        && (flyingPlayer || (!isInWater() && !isInLava())))
     {
+        CheckThermalAreas();
+
+        double horizontalSpeed = 0.0;
+        Vec3* lookAngle = getLookAngle();
+        fallFlyingTravel(mXd, mYd, mZd, lookAngle, mXRot, mFallDistance, horizontalSpeed,
+                         GetLiftForceModifier());
+
+        if (g_pApp->GetFirstMiniGameType() == eMiniGameId_Glide && player
+            && player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_0) && mYd < 0.0)
+        {
+            move(eMoverType_Self, mXd, mYd * 0.2, mZd, false);
+            updateModelAnimation();
+            return;
+        }
+
+        double glideLift = mGlideDistance + mThermalLiftSpeed;
+        if (glideLift == 0.0)
+        {
+            move(eMoverType_Self, mXd, mYd, mZd, false);
+            updateModelAnimation();
+            return;
+        }
+
+        move(eMoverType_Self, mXd, glideLift, mZd, false);
+        if (mThermalLiftSpeed != 0.0)
+        {
+            mYd = 0.0;
+        }
+        updateModelAnimation();
         return;
     }
 
-    if (isFallFlying() && !PositionLocked() && !g_pApp->IsAppPaused())
+    if (isInLava() && !isInWater() && !flyingPlayer)
     {
+        double oldY = mY;
+        moveRelative(xxa, yya, zza, 0.02f);
+        move(eMoverType_Self, mXd, mYd, mZd, false);
+
+        mXd *= 0.5;
+        mYd *= 0.5;
+        mZd *= 0.5;
+
+        if (!isNoGravity())
+        {
+            mYd -= 0.02;
+        }
+
+        if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - (mY - oldY), mZd))
+        {
+            mYd = 0.3;
+        }
+
+        updateModelAnimation();
+        return;
+    }
+
+    if (isInWater() && !flyingPlayer)
+    {
+        double oldY = mY;
+        float waterSlowdown = isSprinting() ? 0.9f : getWaterSlowDown();
+        float moveSpeed = GetType() == ENTITY_TYPE_DOLPHIN ? (float)getSpeed() : 0.02f;
+        int depthStrider = EnchantmentHelper::getDepthStrider(
+            boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+
+        if (depthStrider > 3)
+        {
+            depthStrider = 3;
+        }
+
+        if (depthStrider > 0)
+        {
+            float depthFactor = (float)depthStrider / 3.0f;
+            waterSlowdown += (0.546000063419342f - waterSlowdown) * depthFactor;
+            moveSpeed += ((float)(getSpeed() * 1.75) - moveSpeed) * depthFactor;
+        }
+
+        if (skeletonHorseWithPlayerPassenger)
+        {
+            float friction = getFrictionForTravel();
+            float acceleration = 0.16277135908603668f / (friction * friction * friction);
+            if (mOnGround)
+            {
+                moveSpeed = (float)(getSpeed() * (double)acceleration);
+            }
+        }
+
+        if (!isSwimming())
+        {
+            mWaterTravelSpeedFactor = 1.0f;
+            moveRelative(xxa, yya, zza, moveSpeed);
+            move(eMoverType_Self, mXd, mYd, mZd, false);
+        }
+        else if (mWaterTravelCheckTicks <= 1)
+        {
+            mWaterTravelCheckTicks = 60;
+            AABB* searchBox = mBoundingBox->grow(5.0);
+            std::vector<boost::shared_ptr<Entity> >* drownedEntities =
+                mLevel->getEntitiesOfClass(typeid(Drowned), searchBox);
+            mWaterTravelSpeedFactor = drownedEntities->empty() ? 1.0f : 2.0f;
+            delete drownedEntities;
+
+            moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
+            move(eMoverType_Self, mXd, mYd, mZd, false);
+        }
+        else
+        {
+            --mWaterTravelCheckTicks;
+            moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
+            move(eMoverType_Self, mXd, mYd, mZd, false);
+        }
+
+        if (skeletonHorseWithPlayerPassenger)
+        {
+            waterSlowdown = getFrictionForTravel();
+        }
+
+        mXd *= (double)waterSlowdown;
+        mYd *= 0.8;
+        mZd *= (double)waterSlowdown;
+
+        if (!player)
+        {
+            if (shouldApplyWaterGravity())
+            {
+                mYd -= 0.02;
+            }
+        }
+        else if (!isNoGravity() && !isSwimming())
+        {
+            mYd -= 0.005;
+        }
+
+        if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - (mY - oldY), mZd))
+        {
+            mYd = 0.3;
+        }
+
+        updateModelAnimation();
         return;
     }
 
@@ -2847,7 +2990,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     mYd = mYd * 0.9800000190734863;
     mXd = mXd * (double)friction;
     mZd = mZd * (double)friction;
-
+    updateModelAnimation();
 }
 
 void LivingEntity::updateModelAnimation()
