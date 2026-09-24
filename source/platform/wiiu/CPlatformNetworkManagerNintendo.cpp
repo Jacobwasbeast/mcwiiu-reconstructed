@@ -663,8 +663,8 @@ void CPlatformNetworkManagerNintendo::_HostGame(int userIndexMask, unsigned char
         return;
     }
 
-    for (int index = 0; index < 5; ++index)
-        m_matchMakingData[index] = attributes[index];
+    for (unsigned int index = 0; index < worldId; ++index)
+        m_matchMakingData[index + 2] = attributes[index];
     m_sessionMode = (unsigned char)miniGameId;
     UpdateMatchMakingData();
     m_networkManager->CreateAndJoinRoom(primaryPad, userIndexMask, &m_sessionData, sizeof(m_sessionData), (int*)m_matchMakingData, 5, IsLocalGame(), (unsigned char)miniGameId);
