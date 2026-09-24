@@ -49,10 +49,10 @@ private:
     void getPlaneIndicesAndData(unsigned char** planeIndices, unsigned char** planeData);
     void addNewPlane(std::vector<int>& planes);
 
-    struct DataAndCount
+    struct alignas(8) DataAndCount
     {
-        unsigned char* data;
         unsigned int planeCount;
+        unsigned char* data;
     } mDataAndCount;
 };
 

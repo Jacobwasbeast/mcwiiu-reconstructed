@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cstddef>
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -106,12 +107,36 @@ void SparseLightStorage::queueForDelete(unsigned char* data, int size)
 
 void SparseLightStorage::updateDataAndCount(unsigned char* data, unsigned int planeCount)
 {
-    unsigned char* oldData = mDataAndCount.data;
-    int oldSize = getDataSize(mDataAndCount.planeCount);
-    mDataAndCount.data = data;
-    mDataAndCount.planeCount = planeCount;
+    static_assert(sizeof(void*) == sizeof(unsigned int), "SparseLightStorage requires the target 32-bit pointer ABI");
+    static_assert(sizeof(DataAndCount) == sizeof(long long), "SparseLightStorage data/count pair must be 64 bits");
+    static_assert(offsetof(DataAndCount, planeCount) == 0, "plane count must lead the published pair");
+    static_assert(offsetof(DataAndCount, data) == sizeof(unsigned int), "data pointer must follow plane count");
 
-    queueForDelete(oldData, oldSize);
+    DataAndCount replacement;
+    replacement.planeCount = planeCount;
+    replacement.data = data;
+
+    long long expected;
+    long long exchange;
+    memcpy(&exchange, &replacement, sizeof(exchange));
+
+    for (;;)
+    {
+        DataAndCount observed;
+        memcpy(&observed, &mDataAndCount, sizeof(observed));
+        memcpy(&expected, &observed, sizeof(expected));
+
+        unsigned char* oldData = observed.data;
+        int oldSize = getDataSize(observed.planeCount);
+        long long previous = InterlockedCompareExchangeRelease64(
+            reinterpret_cast<volatile long long*>(&mDataAndCount), exchange, expected);
+
+        if (previous == expected)
+        {
+            queueForDelete(oldData, oldSize);
+            return;
+        }
+    }
 }
 
 void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned int offset)
@@ -273,8 +298,10 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
 {
     for (;;)
     {
-        unsigned char* oldData = mDataAndCount.data;
-        unsigned int oldPlaneCount = mDataAndCount.planeCount;
+        DataAndCount observed;
+        memcpy(&observed, &mDataAndCount, sizeof(observed));
+        unsigned char* oldData = observed.data;
+        unsigned int oldPlaneCount = observed.planeCount;
         int oldSize = getDataSize(oldPlaneCount);
 
         unsigned int planeCount = oldPlaneCount;
@@ -324,10 +351,24 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
             }
         }
 
-        mDataAndCount.data = newData;
-        mDataAndCount.planeCount = planeCount;
-        queueForDelete(oldData, oldSize);
-        return;
+        DataAndCount replacement;
+        replacement.planeCount = planeCount;
+        replacement.data = newData;
+
+        long long expected;
+        long long exchange;
+        memcpy(&expected, &observed, sizeof(expected));
+        memcpy(&exchange, &replacement, sizeof(exchange));
+
+        long long previous = InterlockedCompareExchangeRelease64(
+            reinterpret_cast<volatile long long*>(&mDataAndCount), exchange, expected);
+        if (previous == expected)
+        {
+            queueForDelete(oldData, oldSize);
+            return;
+        }
+
+        free(newData);
     }
 }
 
@@ -460,8 +501,10 @@ void SparseLightStorage::staticCtor()
 
 unsigned int SparseLightStorage::compress()
 {
-    unsigned char* oldData = mDataAndCount.data;
-    unsigned int oldPlaneCount = mDataAndCount.planeCount;
+    DataAndCount observed;
+    memcpy(&observed, &mDataAndCount, sizeof(observed));
+    unsigned char* oldData = observed.data;
+    unsigned int oldPlaneCount = observed.planeCount;
     int oldSize = getDataSize(oldPlaneCount);
 
     const unsigned char* oldPlaneData = oldData + PLANE_COUNT;
@@ -550,10 +593,24 @@ unsigned int SparseLightStorage::compress()
         }
     }
 
-    mDataAndCount.data = newData;
-    mDataAndCount.planeCount = planeCount;
-    queueForDelete(oldData, oldSize);
+    DataAndCount replacement;
+    replacement.planeCount = planeCount;
+    replacement.data = newData;
 
+    long long expected;
+    long long exchange;
+    memcpy(&expected, &observed, sizeof(expected));
+    memcpy(&exchange, &replacement, sizeof(exchange));
+
+    long long previous = InterlockedCompareExchangeRelease64(
+        reinterpret_cast<volatile long long*>(&mDataAndCount), exchange, expected);
+    if (previous != expected)
+    {
+        queueForDelete(newData, size);
+        return planeCount;
+    }
+
+    queueForDelete(oldData, oldSize);
     return planeCount;
 }
 
