@@ -12,8 +12,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 AbstractProperty<bool>* THIN_FENCE_NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
@@ -93,7 +96,15 @@ const AABB* ThinFenceBlock::getShape(const BlockState* state, LevelSource* level
 
 bool ThinFenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 {
-    return block == NULL || Block::isExceptionBlockForAttachingPlusPiston(block);
+    return block == NULL || dynamic_cast<ShulkerBoxBlock*>(block) != NULL
+        || dynamic_cast<LeafBlock*>(block) != NULL
+        || block == Blocks::beacon || block == Blocks::cauldron
+        || block == Blocks::glowstone || block == Blocks::ice
+        || block == Blocks::sea_lantern || block == Blocks::piston
+        || block == Blocks::sticky_piston || block == Blocks::piston_head
+        || block == Blocks::melon_block || block == Blocks::pumpkin
+        || block == Blocks::carved_pumpkin || block == Blocks::lit_pumpkin
+        || block == Blocks::BARRIER || block == Blocks::turtle_egg;
 }
 
 bool ThinFenceBlock::attachsTo(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)

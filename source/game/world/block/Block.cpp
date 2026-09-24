@@ -2038,7 +2038,7 @@ void Block::staticCtor()
         (new MobSpawnerBlock())->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setIconName(L"mob_spawner")->setNotCollectStatistics()->setNameAndDescriptionId(1689012380, 4403401));
 
     registerBlock(53, L"oak_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<const PlanksBlock::Variant*>(PlanksBlock::Variant::OAK))))->setIconName(L"stairsWood")->sendBlockData(15)->setNameAndDescriptionId(-779521723, 1962448236)->setBaseItemTypeAndMaterial(16, 1));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::OAK))))->setIconName(L"stairsWood")->sendBlockData(15)->setNameAndDescriptionId(-779521723, 1962448236)->setBaseItemTypeAndMaterial(16, 1));
 
     registerBlock(54, L"chest",
         (new ChestBlock(ChestBlock::TYPE_SINGLE))->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"chest")->sendBlockData(15)->setNameAndDescriptionId(1888250110, -1487670933)->setBaseItemTypeAndMaterial(36, 1));
@@ -2058,8 +2058,8 @@ void Block::staticCtor()
     registerBlock(59, L"wheat",
         (new CropBlock(0))->setIconName(L"wheat")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1565208526, -355421273)->disableMipmap());
 
-    registerBlock(60, L"farmland",
-        (new FarmBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"farmland")->sendBlockData(15)->setNameAndDescriptionId(934190936, 635505253));
+    Block* farmland = (new FarmBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"farmland")->sendBlockData(15)->setNameAndDescriptionId(934190936, 635505253);
+    registerBlock(60, L"farmland", farmland);
 
     registerBlock(61, L"furnace",
         (new FurnaceBlock(false))->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"furnace")->sendBlockData(15)->setNameAndDescriptionId(-2146068145, 339052362)->setBaseItemTypeAndMaterial(30, 2));
@@ -2185,10 +2185,10 @@ void Block::staticCtor()
         (new HugeMushroomBlock(Material::WOOD, MaterialColor::COLOR_RED, byId(40)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(302163038, 1445448480)->sendBlockData(15));
 
     registerBlock(101, L"iron_bars",
-        (new ThinFenceBlock())->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(-88007431, -318588764)->setBaseItemTypeAndMaterial(29, 3));
+        (new ThinFenceBlock(L"iron_bars", L"iron_bars", Material::METAL, true))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(-88007431, -318588764)->setBaseItemTypeAndMaterial(29, 3));
 
     registerBlock(102, L"glass_pane",
-        (new ThinFenceBlock())->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(1607245545, 736707028)->setBaseItemTypeAndMaterial(42, 34));
+        (new ThinFenceBlock(L"glass", L"glass_pane_top", Material::GLASS, false))->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(1607245545, 736707028)->setBaseItemTypeAndMaterial(42, 34));
 
     registerBlock(103, L"melon_block",
         (new MelonBlock())->setIconName(L"melon")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-591549446, -34103255));
@@ -2209,7 +2209,7 @@ void Block::staticCtor()
         (new StairBlock(brickBlock->defaultBlockState()))->setIconName(L"stairsBrick")->sendBlockData(15)->setNameAndDescriptionId(-1097401796, 1962448236)->setBaseItemTypeAndMaterial(16, 14));
 
     registerBlock(109, L"stone_brick_stairs",
-        (new StairBlock(stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, new TypedBoxed<const StoneBrickBlock::Variant*>(StoneBrickBlock::Variant::DEFAULT))))->setIconName(L"stairsStoneBrickSmooth")->sendBlockData(15)->setNameAndDescriptionId(-251417459, 1962448236)->setBaseItemTypeAndMaterial(16, 31));
+        (new StairBlock(stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, new TypedBoxed<StoneBrickBlock::Variant*>(StoneBrickBlock::Variant::DEFAULT))))->setIconName(L"stairsStoneBrickSmooth")->sendBlockData(15)->setNameAndDescriptionId(-251417459, 1962448236)->setBaseItemTypeAndMaterial(16, 31));
 
     registerBlock(110, L"mycelium",
         (new MyceliumBlock())->setIconName(L"mycelium")->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(1212229689, 1645782764));
@@ -2266,7 +2266,7 @@ void Block::staticCtor()
         (new CocoaBlock())->setIconName(L"cocoa")->setDestroyTime(0.2f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-344420786, -1677943605));
 
     registerBlock(128, L"sandstone_stairs",
-        (new StairBlock(sandstone->defaultBlockState()->setBoxedValue(SandStoneBlock::TYPE, new TypedBoxed<const SandStoneBlock::Type*>(SandStoneBlock::SMOOTH))))->setIconName(L"stairsSandstone")->sendBlockData(15)->setNameAndDescriptionId(-1842581131, 1962448236)->setBaseItemTypeAndMaterial(16, 13));
+        (new StairBlock(sandstone->defaultBlockState()->setBoxedValue(SandStoneBlock::TYPE, new TypedBoxed<SandStoneBlock::Type*>(SandStoneBlock::SMOOTH))))->setIconName(L"stairsSandstone")->sendBlockData(15)->setNameAndDescriptionId(-1842581131, 1962448236)->setBaseItemTypeAndMaterial(16, 13));
 
     registerBlock(129, L"emerald_ore",
         (new OreBlock())->setIconName(L"emerald_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1525740761, 1075886516));
@@ -2284,13 +2284,13 @@ void Block::staticCtor()
         (new BlockImpl(Material::METAL, MaterialColor::EMERALD))->setIconName(L"emerald_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(1707855608, 1799850453)->setBaseItemTypeAndMaterial(32, 44));
 
     registerBlock(134, L"spruce_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<const PlanksBlock::Variant*>(PlanksBlock::Variant::SPRUCE))))->setIconName(L"stairsWoodSpruce")->sendBlockData(15)->setNameAndDescriptionId(666001927, 1962448236)->setBaseItemTypeAndMaterial(16, 39));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::SPRUCE))))->setIconName(L"stairsWoodSpruce")->sendBlockData(15)->setNameAndDescriptionId(666001927, 1962448236)->setBaseItemTypeAndMaterial(16, 39));
 
     registerBlock(135, L"birch_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<const PlanksBlock::Variant*>(PlanksBlock::Variant::BIRCH))))->setIconName(L"stairsWoodBirch")->sendBlockData(15)->setNameAndDescriptionId(2140340631, 1962448236)->setBaseItemTypeAndMaterial(16, 40));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::BIRCH))))->setIconName(L"stairsWoodBirch")->sendBlockData(15)->setNameAndDescriptionId(2140340631, 1962448236)->setBaseItemTypeAndMaterial(16, 40));
 
     registerBlock(136, L"jungle_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<const PlanksBlock::Variant*>(PlanksBlock::Variant::JUNGLE))))->setIconName(L"stairsWoodJungle")->sendBlockData(15)->setNameAndDescriptionId(1700333602, 1962448236)->setBaseItemTypeAndMaterial(16, 41));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::JUNGLE))))->setIconName(L"stairsWoodJungle")->sendBlockData(15)->setNameAndDescriptionId(1700333602, 1962448236)->setBaseItemTypeAndMaterial(16, 41));
 
     registerBlock(137, L"command_block",
         (new CommandBlock(MaterialColor::COLOR_BROWN, CommandBlock::IMPULSE))->setIconName(L"command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(1574311038, -79610325));
@@ -2350,7 +2350,7 @@ void Block::staticCtor()
     registerBlock(155, L"quartz_block", quartzBlock);
 
     registerBlock(156, L"quartz_stairs",
-        (new StairBlock(quartzBlock->defaultBlockState()->setBoxedValue(QuartzBlock::VARIANT, new TypedBoxed<const QuartzBlock::Variant*>(QuartzBlock::Variant::DEFAULT))))->setIconName(L"stairsQuartz")->setNameAndDescriptionId(2021542239, 1962448236)->setBaseItemTypeAndMaterial(16, 45));
+        (new StairBlock(quartzBlock->defaultBlockState()->setBoxedValue(QuartzBlock::VARIANT, new TypedBoxed<QuartzBlock::Variant*>(QuartzBlock::Variant::DEFAULT))))->setIconName(L"stairsQuartz")->setNameAndDescriptionId(2021542239, 1962448236)->setBaseItemTypeAndMaterial(16, 45));
 
     registerBlock(157, L"activator_rail",
         (new PoweredRailBlock())->setIconName(L"rail_activator")->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(-8062537, 238648458)->setBaseItemTypeAndMaterial(12, 9));
@@ -2368,13 +2368,13 @@ void Block::staticCtor()
         (new NewLeafBlock())->setIconName(L"leaves2")->sendBlockData(3)->setNameAndDescriptionId(-806242921, -636152246));
 
     registerBlock(162, L"log2",
-        (new NewLogBlock())->setIconName(L"log2")->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new NewLogBlock())->setIconName(L"log")->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
 
     registerBlock(163, L"acacia_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<const PlanksBlock::Variant*>(PlanksBlock::Variant::ACACIA))))->setIconName(L"stairsWoodAcacia")->sendBlockData(15)->setNameAndDescriptionId(-2082414187, 1962448236)->setBaseItemTypeAndMaterial(16, 42));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::ACACIA))))->setIconName(L"stairsWoodAcacia")->sendBlockData(15)->setNameAndDescriptionId(-2082414187, 1962448236)->setBaseItemTypeAndMaterial(16, 42));
 
     registerBlock(164, L"dark_oak_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<const PlanksBlock::Variant*>(PlanksBlock::Variant::DARK_OAK))))->setIconName(L"stairsWoodDarkOak")->sendBlockData(15)->setNameAndDescriptionId(1820864892, 1962448236)->setBaseItemTypeAndMaterial(16, 43));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::DARK_OAK))))->setIconName(L"stairsWoodDarkOak")->sendBlockData(15)->setNameAndDescriptionId(1820864892, 1962448236)->setBaseItemTypeAndMaterial(16, 43));
 
     registerBlock(165, L"slime",
         (new SlimeBlock())->setSoundType(SoundType::SLIME)->setNameAndDescriptionId(1273472087, 208588370)->setBaseItemTypeAndMaterial(32, 57)->setSemiTransparent());
@@ -2422,7 +2422,7 @@ void Block::staticCtor()
     registerBlock(179, L"red_sandstone", redSandstone);
 
     registerBlock(180, L"red_sandstone_stairs",
-        (new StairBlock(redSandstone->defaultBlockState()->setBoxedValue(RedSandStoneBlock::TYPE, new TypedBoxed<const RedSandStoneBlock::Type*>(RedSandStoneBlock::Type::SMOOTH))))->setIconName(L"red_sandstone")->setNameAndDescriptionId(1845194718, 786142283)->setBaseItemTypeAndMaterial(16, 48));
+        (new StairBlock(redSandstone->defaultBlockState()->setBoxedValue(RedSandStoneBlock::TYPE, new TypedBoxed<RedSandStoneBlock::Type*>(RedSandStoneBlock::Type::SMOOTH))))->setIconName(L"red_sandstone")->setNameAndDescriptionId(1845194718, 786142283)->setBaseItemTypeAndMaterial(16, 48));
 
     registerBlock(181, L"double_stone_slab2",
         (new FullNewStoneSlabBlock())->setIconName(L"double_stone_slab2")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1316829447, 406008282)->setBaseItemTypeAndMaterial(21, 48));
@@ -2505,8 +2505,8 @@ void Block::staticCtor()
     registerBlock(207, L"beetroots",
         (new BeetrootBlock())->setIconName(L"beetroots")->disableMipmap()->setNameAndDescriptionId(-185865156, 2110888562));
 
-    registerBlock(208, L"grass_path",
-        (new GrassPathBlock())->setDestroyTime(0.65f)->setSoundType(SoundType::GRASS)->setIconName(L"grass_path")->setNotCollectStatistics()->setNameAndDescriptionId(2077997905, 388250431));
+    Block* grassPath = (new GrassPathBlock())->setDestroyTime(0.65f)->setSoundType(SoundType::GRASS)->setIconName(L"grass_path")->setNotCollectStatistics()->setNameAndDescriptionId(2077997905, 388250431);
+    registerBlock(208, L"grass_path", grassPath);
 
     registerBlock(209, L"end_gateway",
         (new EndGatewayBlock(Material::PORTAL))->setIconName(L"stone")->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(929597140, -308337414));
@@ -2704,13 +2704,13 @@ void Block::staticCtor()
         (new TurtleEggBlock())->setSoundType(SoundType::STONE)->setIconName(L"turtle_egg_hatch_0")->setDestroyTime(0.4f)->setNameAndDescriptionId(912101067, -46237355));
 
     registerBlock(291, L"prismarine_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<const PrismarineBlock::Variant*>(PrismarineBlock::Variant::ROUGH))))->setIconName(L"prismarine_stairs")->setNameAndDescriptionId(-587055318, 1258585647)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::ROUGH))))->setIconName(L"prismarine_stairs")->setNameAndDescriptionId(-587055318, 1258585647)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(292, L"prismarine_bricks_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<const PrismarineBlock::Variant*>(PrismarineBlock::Variant::BRICKS))))->setIconName(L"prismarine_bricks")->setNameAndDescriptionId(240124639, 103047266)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::BRICKS))))->setIconName(L"prismarine_bricks")->setNameAndDescriptionId(240124639, 103047266)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(293, L"dark_prismarine_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<const PrismarineBlock::Variant*>(PrismarineBlock::Variant::DARK))))->setIconName(L"dark_prismarine")->setNameAndDescriptionId(-891724559, -1052410340)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::DARK))))->setIconName(L"dark_prismarine")->setNameAndDescriptionId(-891724559, -1052410340)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(295, L"stripped_log_spruce",
         (new StrippedLogBlock())->setIconTopName(L"stripped_log_spruce_top")->setIconName(L"stripped_log_spruce")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(875624916, -1597509807));
@@ -2790,10 +2790,16 @@ void Block::staticCtor()
     {
         Block* block = it->first;
 
-        if (dynamic_cast<StairBlock*>(block) != NULL || dynamic_cast<HalfSlabBlock*>(block) != NULL)
+        if (block->mMaterial == Material::AIR)
         {
+            block->mUseNeighbourBrightness = false;
             continue;
         }
+
+        block->mUseNeighbourBrightness = dynamic_cast<StairBlock*>(block) != NULL ||
+                                         dynamic_cast<HalfSlabBlock*>(block) != NULL ||
+                                         block == farmland || block == grassPath ||
+                                         block->mTranslucent || block->mLightBlock == 0;
 
         for (int data = 0; data < 8; data++)
         {

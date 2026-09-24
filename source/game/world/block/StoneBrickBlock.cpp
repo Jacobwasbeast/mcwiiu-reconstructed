@@ -116,10 +116,10 @@ TextureAtlasSprite* StoneBrickBlock::getTexture(const Direction* direction, cons
 void StoneBrickBlock::registerIcons(IconRegister* iconRegister)
 {
     std::wstring base = getIconName();
-    for (int i = 0; i < 4; ++i)
-    {
-        mTextures[i] = iconRegister->registerIcon(base + L"_" + gStoneBrickVariants[i]->getSerializedName());
-    }
+    mTextures[0] = iconRegister->registerIcon(base);
+    mTextures[1] = iconRegister->registerIcon(base + L"_mossy");
+    mTextures[2] = iconRegister->registerIcon(base + L"_cracked");
+    mTextures[3] = iconRegister->registerIcon(base + L"_carved");
 }
 
 int StoneBrickBlock::getDescriptionId(int auxValue)

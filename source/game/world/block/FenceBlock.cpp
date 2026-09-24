@@ -13,6 +13,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/FenceGateBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -89,10 +90,12 @@ bool FenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 
 bool FenceBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    Block* block = levelSource->getBlock(pos.relative(direction));
-    if (block == this) return true;
-    if (block != NULL && block->mBlockType == EBLOCK_TYPE_FENCE) return true;
-    return block != NULL && !isExceptionBlockForAttachingPlusPiston(block) && block->getRenderLayer() == 5;
+    const BlockState* state = levelSource->getBlockState(pos);
+    EBlockFaceShape faceShape = state->getBlockFaceShape(levelSource, pos, direction);
+    Block* block = state->getBlock();
+    bool fenceFace = faceShape == BLOCK_FACE_MIDDLE_POLE_THICK
+        && (block == this || dynamic_cast<FenceGateBlock*>(block) != NULL);
+    return (!isExceptionBlockForAttachingPlusPiston(block) && faceShape == BLOCK_FACE_SOLID) || fenceFace;
 }
 
 bool FenceBlock::canProvideSupport(const BlockState*, const Direction* direction, EBlockSupportType supportType)
@@ -109,10 +112,10 @@ bool FenceBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost
 
 const BlockState* FenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    TypedBoxed<bool> north(connectsTo(levelSource, pos, Direction::NORTH));
-    TypedBoxed<bool> east(connectsTo(levelSource, pos, Direction::EAST));
-    TypedBoxed<bool> south(connectsTo(levelSource, pos, Direction::SOUTH));
-    TypedBoxed<bool> west(connectsTo(levelSource, pos, Direction::WEST));
+    TypedBoxed<bool> north(connectsTo(levelSource, pos.north(), Direction::NORTH));
+    TypedBoxed<bool> east(connectsTo(levelSource, pos.east(), Direction::EAST));
+    TypedBoxed<bool> south(connectsTo(levelSource, pos.south(), Direction::SOUTH));
+    TypedBoxed<bool> west(connectsTo(levelSource, pos.west(), Direction::WEST));
     const BlockState* result = state->setBoxedValue(FENCE_NORTH, &north);
     result = result->setBoxedValue(FENCE_EAST, &east);
     result = result->setBoxedValue(FENCE_SOUTH, &south);

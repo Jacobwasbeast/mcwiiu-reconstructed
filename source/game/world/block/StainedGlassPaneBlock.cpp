@@ -161,9 +161,9 @@ void StainedGlassPaneBlock::registerIcons(IconRegister* iconRegister)
     {
         const DyeColor* color = DyeColor::byBlockData(data);
         std::wstring name = getIconName() + L"_" + color->getTexture();
-        gStainedGlassPaneIcons[color->getItemData()] = iconRegister->registerIcon(name);
+        gStainedGlassPaneIcons[data] = iconRegister->registerIcon(name);
         name = getIconName() + L"_pane_top_" + color->getTexture();
-        gStainedGlassPaneEdges[color->getItemData()] = iconRegister->registerIcon(name);
+        gStainedGlassPaneEdges[data] = iconRegister->registerIcon(name);
     }
 }
 

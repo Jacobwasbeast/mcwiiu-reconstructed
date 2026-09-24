@@ -219,7 +219,7 @@ TextureAtlasSprite* GrassBlock::getTexture(const Direction* direction, const Blo
     if (direction == Direction::UP)
         return mTopIcon;
     if (direction == Direction::DOWN)
-        return Blocks::dirt->getTexture(direction, NULL);
+        return Blocks::dirt->getTexture(direction);
     return mSideIcon;
 }
 

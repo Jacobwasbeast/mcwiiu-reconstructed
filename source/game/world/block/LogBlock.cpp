@@ -170,12 +170,12 @@ unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipD
 
 TextureAtlasSprite* LogBlock::getTypeTexture(const BlockState* state)
 {
-    return mTypeTextures[state->getValue(AXIS)->getId()];
+    return mTypeTextures[getWoodType(state)];
 }
 
 TextureAtlasSprite* LogBlock::getTopTexture(const BlockState* state)
 {
-    return mTopTextures[state->getValue(AXIS)->getId()];
+    return mTopTextures[getWoodType(state)];
 }
 
 void LogBlock::registerIcons(IconRegister* iconRegister)
@@ -183,7 +183,7 @@ void LogBlock::registerIcons(IconRegister* iconRegister)
     int i;
     for (i = 0; i < 6; ++i)
     {
-        std::wstring name = getIconName() + L"_" + (i == 0 ? L"oak" : i == 1 ? L"spruce" : i == 2 ? L"birch" : i == 3 ? L"jungle" : i == 4 ? L"acacia" : L"dark_oak");
+        std::wstring name = getIconName() + L"_" + (i == 0 ? L"oak" : i == 1 ? L"spruce" : i == 2 ? L"birch" : i == 3 ? L"jungle" : i == 4 ? L"acacia" : L"big_oak");
         mTypeTextures[i] = iconRegister->registerIcon(name);
         mTopTextures[i] = iconRegister->registerIcon(name + L"_top");
     }

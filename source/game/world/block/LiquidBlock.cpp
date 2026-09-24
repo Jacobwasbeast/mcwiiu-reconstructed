@@ -415,7 +415,7 @@ unsigned int LiquidBlock::getStaticLiquidElementId(unsigned short elementId)
 
 void LiquidBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water_still" : L"lava_still");
+    mIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water" : L"lava");
     mFlowIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water_flow" : L"lava_flow");
     mUseSharedIcon = false;
 }

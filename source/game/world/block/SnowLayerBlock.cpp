@@ -38,7 +38,7 @@ const AABB* SnowLayerBlock::getShape(const BlockState* state, LevelSource*, cons
 bool SnowLayerBlock::isPathfindable(LevelSource* levelSource, const BlockPos& pos)
 {
     const BlockState* state = levelSource->getBlockState(pos);
-    if (state->getBlock()->isLiquidBlock()) return state->getValue(LAYERS) < 5;
+    if (state->getBlock() == Blocks::snow_layer) return state->getValue(LAYERS) < 5;
     return state->getBlock()->isPathfindable(levelSource, pos);
 }
 
