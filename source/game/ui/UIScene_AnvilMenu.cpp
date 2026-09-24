@@ -8,14 +8,19 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/Items.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/AnvilMenu.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/FJ_AnvilMenu.hpp"
+#include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 #include <wchar.h>
@@ -24,14 +29,83 @@ extern CInput* g_pInput;
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 
-UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void*, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_anvilMenu(0),
-      m_itemName(0), m_pendingName(0), m_editingName(false), m_crossVisible(false)
+struct RepairingMenuInitData
 {
+    boost::shared_ptr<Inventory> inventory;
+    Level* level;
+    int x;
+    int y;
+    int z;
+    int player;
+    bool splitscreen;
+};
+
+UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
+    : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_anvilMenu(0),
+      m_nameUpdateAction(this, &UIScene_AnvilMenu::updateItemName), m_itemName(0),
+      m_pendingName(0), m_editingName(false),
+      m_crossVisible(false)
+{
+    RepairingMenuInitData* sceneData = static_cast<RepairingMenuInitData*>(data);
+    m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(
+        static_cast<UIScene_AbstractContainerMenu*>(this));
+    m_itemName = new CensoredString(&m_nameUpdateAction, 0xad36b773, 0x62950b66);
+    initialiseMovie();
+    m_editName.init(UIString(m_itemName->get()), 0);
+    m_editName.SetCharLimit(0x1e);
+    m_anvilLabel.init(UIString(L10N::GetString(0xc60bb915)));
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[type];
+    if (gameMode != 0)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x1b), this);
+        }
+    }
+
+    m_anvilMenu = new AnvilMenu(sceneData->inventory, sceneData->level,
+                                BlockPos(sceneData->x, sceneData->y, sceneData->z),
+                                minecraft->mLocalPlayers[type]);
+    m_anvilMenu->addSlotListener(this);
+
+    m_sceneInterface->Initialize(false, type, m_anvilMenu, true, 3,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x31),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x37), false);
+    m_ingredientSlot.addSlots(0, 1);
+    m_ingredientSlot2.addSlots(1, 1);
+    m_resultSlot.addSlots(2, 1);
+    std::wstring costLabel;
+    bool costLabelSafe = false;
+    if (m_anvilMenu->mRepairCost > 0)
+    {
+        boost::shared_ptr<LocalPlayer> player = minecraft->mLocalPlayers[type];
+        Slot* resultSlot = m_anvilMenu->getSlot(2);
+        if (m_anvilMenu->mRepairCost >= 40 && !resultSlot->mayPickup(player))
+        {
+            costLabel = L10N::GetString(0xdb7b95e9);
+            costLabelSafe = true;
+        }
+        else if (resultSlot->hasItem())
+        {
+            wchar_t label[256];
+            swprintf(label, 0x100, L10N::GetString(0xf3a668fd));
+            costLabel = label;
+            costLabelSafe = false;
+        }
+    }
+    setCostLabel(costLabel, costLabelSafe);
+
+    delete sceneData;
+    g_pApp->SetRichPresenceContext(type, 0xc);
 }
 
 UIScene_AnvilMenu::~UIScene_AnvilMenu()
 {
+    delete m_itemName;
     delete m_pendingName;
 }
 
@@ -360,7 +434,7 @@ std::wstring UIScene_AnvilMenu::getMoviePath()
 void UIScene_AnvilMenu::handleReload()
 {
     if (m_sceneInterface != 0)
-        m_sceneInterface->Initialize(true, m_containerId, 0,
+        m_sceneInterface->Initialize(true, m_playerId, m_menu,
                                      true, 3, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x31),
                                      static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x37), false);
     m_ingredientSlot.addSlots(0, 1);

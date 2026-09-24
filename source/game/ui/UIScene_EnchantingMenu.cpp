@@ -8,8 +8,10 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/Enchantment.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/ui/EnchantmentMenu.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -17,7 +19,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
-#include "game/core/Minecraft.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -38,28 +39,37 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int type, void* data, UILayer* la
       m_enchantLabel(), m_enchantmentButtons(), m_enchantmentBook()
 {
     UIScene_EnchantingMenuData* sceneData = static_cast<UIScene_EnchantingMenuData*>(data);
+    IUIScene_AbstractContainerMenu* sceneInterface =
+        static_cast<IUIScene_AbstractContainerMenu*>(this);
+    initialiseMovie();
     m_enchantmentButtons[0].init(0);
     m_enchantmentButtons[1].init(1);
     m_enchantmentButtons[2].init(2);
     m_enchantmentButtons[0].SetEnchantmentLevel(1);
     m_enchantmentButtons[1].SetEnchantmentLevel(2);
     m_enchantmentButtons[2].SetEnchantmentLevel(3);
-    initialiseMovie();
-    if (sceneData != 0 && !sceneData->name.empty())
+    if (!sceneData->name.empty())
         m_enchantLabel.init(UIString(sceneData->name));
     else
         m_enchantLabel.init(UIString(L10N::GetString(0xf4bd500f)));
-    if (sceneData != 0)
+    if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
     {
-        EnchantmentMenu* menu = new EnchantmentMenu(sceneData->inventory, sceneData->level,
-                                                      BlockPos(sceneData->x, sceneData->y, sceneData->z));
-        static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(false, sceneData->playerIndex, menu, true, 2,
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21),
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x28), false);
-        m_ingredientSlot.addSlots(0, 1);
-        m_lapisSlot.addSlots(1, 1);
-        g_pApp->SetRichPresenceContext(m_playerId, 10);
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
+        if (tutorial != 0)
+        {
+            sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x14), this);
+        }
     }
+    EnchantmentMenu* menu = new EnchantmentMenu(sceneData->inventory, sceneData->level,
+                                                  BlockPos(sceneData->x, sceneData->y, sceneData->z));
+    static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(false, sceneData->playerIndex, menu, true, 2,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x28), false);
+    m_ingredientSlot.addSlots(0, 1);
+    m_lapisSlot.addSlots(1, 1);
+    g_pApp->SetRichPresenceContext(m_playerId, 10);
+    delete sceneData;
 }
 
 UIScene_EnchantingMenu::~UIScene_EnchantingMenu()
@@ -239,7 +249,7 @@ void UIScene_EnchantingMenu::handleOtherClicked(int button,
     const int enchantment = getSectionStartOffset(section);
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft == 0 || minecraft->mGameModes[m_playerId] == 0) return;
-    minecraft->mGameModes[m_playerId]->handleInventoryButtonClick(m_containerId, enchantment + button);
+    minecraft->mGameModes[m_playerId]->handleInventoryButtonClick(m_menu->m_containerId, enchantment + button);
 }
 
 int UIScene_EnchantingMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -329,7 +339,7 @@ std::wstring UIScene_EnchantingMenu::getMoviePath()
 
 void UIScene_EnchantingMenu::handleReload()
 {
-    static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(true, m_containerId, m_menu, true, 2,
+    static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(true, m_playerId, m_menu, true, 2,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x28), false);
     m_enchantmentButtons[0].SetEnchantmentLevel(1);

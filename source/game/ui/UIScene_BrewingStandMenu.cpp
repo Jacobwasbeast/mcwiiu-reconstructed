@@ -2,11 +2,14 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/Container.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/ui/BrewingStandMenu.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -17,6 +20,7 @@ struct UIScene_BrewingStandMenuData
     boost::shared_ptr<Inventory> inventory;
     boost::shared_ptr<Container> container;
     int playerIndex;
+    bool splitscreen;
 };
 
 UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer* layer)
@@ -27,30 +31,40 @@ UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer
     UIScene_BrewingStandMenuData* sceneData = static_cast<UIScene_BrewingStandMenuData*>(data);
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(
         static_cast<UIScene_AbstractContainerMenu*>(this));
-    if (sceneData != 0)
-    {
-        m_container = sceneData->container;
-        m_sceneInterface->Initialize(false, sceneData->playerIndex,
-                                     new BrewingStandMenu(sceneData->inventory, sceneData->container),
-                                     true, 5,
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29),
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x30), false);
-    }
     initialiseMovie();
     m_brewingArrow.init(UIString(L""), 0, 0, 400, 0);
     m_brewingBubbles.init(UIString(L""), 0, 0, 30, 0);
     m_brewingPlateBar.init(UIString(L""), 0, 0, 20, 0);
-    if (m_container != 0 && m_container->hasCustomName())
+
+    m_container = sceneData->container;
+    if (m_container->hasCustomName())
         m_brewingStandLabel.init(UIString(m_container->getCustomName()));
     else
         m_brewingStandLabel.init(UIString(L10N::GetString(0x20259a79)));
+
+    if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x12), this);
+        }
+    }
+
+    BrewingStandMenu* menu = new BrewingStandMenu(sceneData->inventory, sceneData->container);
+    m_sceneInterface->Initialize(false, sceneData->playerIndex, menu, true, 5,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x30), false);
     m_bottleSlots[0].addSlots(0, 1);
     m_bottleSlots[1].addSlots(1, 1);
     m_bottleSlots[2].addSlots(2, 1);
     m_ingredientSlot.addSlots(3, 1);
     m_brewingPlate.addSlots(4, 1);
-    if (sceneData != 0)
-        g_pApp->SetRichPresenceContext(sceneData->playerIndex, 0xb);
+
+    const int playerIndex = sceneData->playerIndex;
+    delete sceneData;
+    g_pApp->SetRichPresenceContext(playerIndex, 0xb);
 }
 
 UIScene_BrewingStandMenu::~UIScene_BrewingStandMenu()
@@ -298,7 +312,7 @@ std::wstring UIScene_BrewingStandMenu::getMoviePath()
 
 void UIScene_BrewingStandMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_containerId, m_menu, true, 5,
+    m_sceneInterface->Initialize(true, m_playerId, m_menu, true, 5,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x30), false);
     m_ingredientSlot.addSlots(3, 1);

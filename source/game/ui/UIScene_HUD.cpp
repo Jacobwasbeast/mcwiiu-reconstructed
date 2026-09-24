@@ -623,11 +623,18 @@ void UIScene_HUD::renderPlayerHealth()
 
     SetRegenerationEffect(player->hasEffect(MobEffects::REGENERATION));
 
+    const int blinkCycleTime = player->mInvulnerableTime;
+    const int blinkActiveTime = player->mInvulnerableTime;
     const int health = (int)std::ceil(player->getHealth());
+    const bool poisoned = player->hasEffect(MobEffects::POISON);
+    const bool withered = player->hasEffect(MobEffects::WITHER);
+    const int absorption = (int)player->getAbsorptionAmount();
     const int armour = player->getArmorValue();
-    SetHealth(health, m_previousHealth, health < m_previousHealth, false, armour == 0 && health == 0);
+    SetHealth(health, m_previousHealth,
+              blinkActiveTime > 9 && (blinkCycleTime / 3) % 2 == 1,
+              poisoned || withered, withered);
     m_previousHealth = health;
-    SetHealthAbsorb((int)player->getAbsorptionAmount());
+    SetHealthAbsorb(absorption);
     ShowArmour(armour > 0);
     if (armour > 0)
         SetArmour(armour);
@@ -639,8 +646,12 @@ void UIScene_HUD::renderPlayerHealth()
         ShowFood(true);
         ShowHorseHealth(false);
         FoodData* food = player->getFoodData();
-        SetFood(food->getFoodLevel(), food->getLastFoodLevel(), false);
-        SetFoodSaturationLevel((int)food->getSaturationLevel());
+        const int foodLevel = food->getFoodLevel();
+        const int lastFoodLevel = food->getLastFoodLevel();
+        const bool hungry = player->hasEffect(MobEffects::HUNGER);
+        const int saturation = (int)food->getSaturationLevel();
+        SetFood(foodLevel, lastFoodLevel, hungry);
+        SetFoodSaturationLevel(saturation);
     }
 }
 void UIScene_HUD::renderVehicleHealth()

@@ -2057,7 +2057,10 @@ unsigned int FJ_Hud::GetStatusEffectsYOffset() { return hudInt(this, 0x42c); }
 void FJ_Hud::HideSelectedLabel() { getChildByName("SelectedLabel")->gotoAndPlay(std::string("Fade")); }
 void FJ_Hud::UpdateStatusEffectTile(int activeCount, int slot, int effect, bool ambient, float alpha)
 {
-    static const int kEffectRemap[4] = { -1, 12, 9, 2 };
+    static const int kEffectRemap[28] = {
+        -1, 12, 9, 2, 14, 11, 5, 3, 6, 13, 16, 7, 8, 1,
+        0, 4, 10, 15, 17, 18, 19, 20, 21, 22, 23, -1, 25, 24
+    };
 
     if (activeCount < 27)
     {

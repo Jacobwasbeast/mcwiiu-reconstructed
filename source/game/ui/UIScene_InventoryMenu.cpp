@@ -4,9 +4,11 @@
 #include <vector>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/L10N.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffect.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
@@ -14,26 +16,70 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/ui/FJ_InventoryMenu.hpp"
 #include "game/ui/UIControl.hpp"
+#include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 extern CMinecraftApp* g_pApp;
+
+namespace
+{
+struct InventoryMenuSceneData
+{
+    boost::shared_ptr<LocalPlayer> localPlayer;
+    bool creative;
+    int player;
+    bool splitscreen;
+};
+}
 
 UIScene_InventoryMenu::UIScene_InventoryMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_effectDurations(0),
       m_armorList(), m_craftingList(), m_resultList(), m_shieldList(), m_playerControl(), m_craftingLabel(),
       m_classicCrafting(false)
 {
+    InventoryMenuSceneData* sceneData = static_cast<InventoryMenuSceneData*>(data);
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
     m_effectDurations = new int[MobEffect::GetEffectCount() + 1];
     m_classicCrafting = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x20)) != 0 &&
         g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0;
     SetClassicCrafting(m_classicCrafting);
-    handleReload();
+
+    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[sceneData->player];
+    if (gameMode != 0)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(1), this);
+        }
+    }
+
+    sceneData->localPlayer->awardStat(GenericStats::openInventory(), GenericStats::param_openInventory());
+    m_sceneInterface->Initialize(false, sceneData->player, sceneData->localPlayer->mInventoryMenu,
+                                 false, 9,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(10),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(
+                                     m_classicCrafting ? 16 : 14),
+                                 sceneData->creative);
+    m_armorList.addSlots(5, 4);
+    m_shieldList.addSlots(45, 1);
+    if (m_classicCrafting)
+    {
+        m_craftingList.addSlots(1, 4);
+        m_resultList.addSlots(0, 1);
+        m_craftingLabel.setLabel(UIString(L10N::GetString(0x4ef5d075)), false, false);
+    }
+    delete sceneData;
+
+    for (unsigned int i = 0; i <= MobEffect::GetEffectCount(); ++i)
+        m_effectDurations[i] = 0;
     updateEffectsDisplay();
     addTimer(10, 1000);
-    (void)data;
 }
 
 UIScene_InventoryMenu::~UIScene_InventoryMenu()
@@ -205,7 +251,7 @@ void UIScene_InventoryMenu::updateEffectsDisplay()
 
 unsigned int UIScene_InventoryMenu::getSubSceneType() const
 {
-    return m_sceneInterface->m_inventorySmall;
+    return m_classicCrafting;
 }
 
 unsigned int UIScene_InventoryMenu::mapElementsAndNames()
@@ -229,8 +275,10 @@ std::wstring UIScene_InventoryMenu::getMoviePath()
 void UIScene_InventoryMenu::handleReload()
 {
     SetClassicCrafting(getSubSceneType() != 0);
-    m_sceneInterface->Initialize(true, m_sceneInterface->m_containerId, m_sceneInterface->m_menu, false, m_playerId,
-        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(10), static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(getSubSceneType() ? 16 : 14), m_sceneInterface->m_inventorySmall != 0);
+    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, false, 9,
+        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(10),
+        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(getSubSceneType() ? 16 : 14),
+        m_sceneInterface->m_canNavigateBack != 0);
     m_armorList.addSlots(5, 4); m_shieldList.addSlots(45, 1);
     if (getSubSceneType()) { m_craftingList.addSlots(1, 4); m_resultList.addSlots(0, 1); }
     for (unsigned int i = 0; i <= MobEffect::GetEffectCount(); ++i) m_effectDurations[i] = 0;

@@ -2,12 +2,15 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/ui/FurnaceMenu.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -16,6 +19,7 @@ struct FurnaceMenuData
     boost::shared_ptr<Inventory> inventory;
     boost::shared_ptr<Container> container;
     int player;
+    bool splitscreen;
 };
 
 UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
@@ -26,28 +30,38 @@ UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
     FurnaceMenuData* input = static_cast<FurnaceMenuData*>(data);
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(this);
     initialiseMovie();
-    if (input != 0)
-    {
-        m_container = input->container;
-        FurnaceMenu* menu = new FurnaceMenu(input->inventory, input->container);
-        m_sceneInterface->Initialize(false, input->player, menu, true, 3,
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(4),
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(9), false);
-        if (m_container.get() != 0)
-        {
-            const std::wstring name = m_container->getName();
-            m_furnaceLabel.init(UIString(name));
-            if (name == L10N::GetString(0x8015994f))
-                m_furnaceLabel.init(UIString(L10N::GetString(0x8015994f)));
-        }
-    }
+
+    m_container = input->container;
+    const std::wstring name = m_container->getName();
+    if (name.empty())
+        m_furnaceLabel.init(UIString(L10N::GetString(0x8015994f)));
+    else
+        m_furnaceLabel.init(UIString(name));
+
     m_ingredientLabel.init(UIString(L10N::GetString(0x7d7816a1)));
     m_fuelLabel.init(UIString(L10N::GetString(0x9f31c0ee)));
     m_furnaceFire.init(UIString(L""), 0, 0, 0, 0);
     m_furnaceArrow.init(UIString(L""), 0, 0, 0, 0);
+
+    if (Minecraft::GetInstance()->mGameModes[input->player] != 0)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[input->player]->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(4), this);
+        }
+    }
+
+    FurnaceMenu* menu = new FurnaceMenu(input->inventory, input->container);
+    m_sceneInterface->Initialize(false, input->player, menu, true, 3,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(4),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(9), false);
     m_fuelSlot.addSlots(1, 1);
     m_ingredientSlot.addSlots(0, 1);
     m_resultSlot.addSlots(2, 1);
+    g_pApp->SetRichPresenceContext(m_playerId, 6);
+    delete input;
 }
 
 UIScene_FurnaceMenu::~UIScene_FurnaceMenu()
@@ -234,7 +248,7 @@ std::wstring UIScene_FurnaceMenu::getMoviePath()
 
 void UIScene_FurnaceMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_containerId, m_sceneInterface->m_menu, true, 3,
+    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true, 3,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(4),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(9), false);
     m_fuelSlot.addSlots(1, 1);

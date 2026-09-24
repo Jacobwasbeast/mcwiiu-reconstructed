@@ -2,14 +2,72 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
+#include "game/ui/CraftingMenu.hpp"
+#include "game/ui/FireworksMenu.hpp"
 #include "game/ui/UIString.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void*, UILayer* layer)
+extern CMinecraftApp* g_pApp;
+
+struct ClassicCraftingMenuInitData
+{
+    boost::shared_ptr<LocalPlayer> localPlayer;
+    bool splitscreen;
+    int player;
+    int x;
+    int y;
+    int z;
+    unsigned char fireworks;
+};
+
+UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_resultSlot(), m_craftingSlots(), m_titleLabel()
 {
     initialiseMovie();
+
+    ClassicCraftingMenuInitData* sceneData = static_cast<ClassicCraftingMenuInitData*>(data);
+    const bool fireworks = sceneData->fireworks != 0;
+    const int player = sceneData->player;
+    if (fireworks)
+        m_titleLabel.init(UIString(L10N::GetString(0xb9c0e92)));
+    else
+        m_titleLabel.init(UIString(L10N::GetString(0x4ef5d075)));
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    const BlockPos position(sceneData->x, sceneData->y, sceneData->z);
+    AbstractContainerMenu* menu = fireworks
+        ? static_cast<AbstractContainerMenu*>(new FireworksMenu(
+              sceneData->localPlayer->mInventory, minecraft->mLevel, position))
+        : static_cast<AbstractContainerMenu*>(new CraftingMenu(
+              sceneData->localPlayer->mInventory, minecraft->mLevel, position));
+
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[player];
+    if (gameMode != 0)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+        {
+            m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(
+                static_cast<eTutorial_State>(fireworks ? 0x24 : 0x25), this);
+        }
+    }
+
+    Initialize(false, player, menu, true, 10,
+               static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4e),
+               static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x52), false);
+    m_resultSlot.addSlots(0, 1);
+    m_craftingSlots.addSlots(1, 9);
+
+    delete sceneData;
+    g_pApp->SetRichPresenceContext(type, 5);
 }
 
 UIScene_ClassicCraftingMenu::~UIScene_ClassicCraftingMenu()
@@ -147,7 +205,7 @@ unsigned int UIScene_ClassicCraftingMenu::mapElementsAndNames()
 
 void UIScene_ClassicCraftingMenu::handleReload()
 {
-    Initialize(true, m_containerId, m_menu, true, 10,
+    Initialize(true, m_playerId, m_menu, true, 10,
                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4e),
                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x52), false);
     m_resultSlot.addSlots(0, 1);

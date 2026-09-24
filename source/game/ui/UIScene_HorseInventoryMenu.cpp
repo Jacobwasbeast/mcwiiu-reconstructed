@@ -4,23 +4,60 @@
 #include "game/entity/mob/AbstractHorse.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/ui/HorseInventoryMenu.hpp"
 #include "game/ui/FJ_HorseInventoryMenu.hpp"
 #include "game/ui/UIControl.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 extern CMinecraftApp* g_pApp;
+
+namespace
+{
+struct HorseMenuArgs
+{
+    boost::shared_ptr<Inventory> inventory;
+    boost::shared_ptr<Container> container;
+    boost::shared_ptr<AbstractHorse> horse;
+    int player;
+    bool splitscreen;
+};
+}
 
 UIScene_HorseInventoryMenu::UIScene_HorseInventoryMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_container(),
       m_playerInventory(), m_horse(), m_saddleSlot(), m_armorSlot(), m_inventoryList(),
       m_horseLabel(), m_horseControl()
 {
-    (void)data;
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(
         static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
+
+    HorseMenuArgs* args = static_cast<HorseMenuArgs*>(data);
+    m_playerId = args->player;
+    m_playerInventory = boost::dynamic_pointer_cast<Container>(args->inventory);
+    m_container = args->container;
+    m_horse = args->horse;
+    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+    m_sceneInterface->m_menu = new HorseInventoryMenu(
+        m_playerInventory, m_container, m_horse, player);
+
+    if (Minecraft::GetInstance()->mGameModes[m_playerId] != 0)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_playerId]->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x1e), this);
+        }
+    }
     setUp(false);
+    delete args;
 }
 
 UIScene_HorseInventoryMenu::~UIScene_HorseInventoryMenu()
@@ -250,7 +287,7 @@ void UIScene_HorseInventoryMenu::setUp(bool enabled)
     const int sectionCount = hasChest
         ? boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns() * 3 + 2
         : 2;
-    m_sceneInterface->Initialize(enabled, m_sceneInterface->m_containerId,
+    m_sceneInterface->Initialize(enabled, m_playerId,
                                  m_sceneInterface->m_menu, true, sectionCount,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x48),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4d), false);

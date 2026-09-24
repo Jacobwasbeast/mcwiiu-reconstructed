@@ -1,20 +1,69 @@
 #include "game/ui/UIScene_DispenserMenu.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/InteractionObject.hpp"
+#include "game/item/Container.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/ui/TrapMenu.hpp"
 #include "game/ui/UIControl.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 extern CMinecraftApp* g_pApp;
 
-UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void*, UILayer* layer)
+namespace
+{
+struct DispenserMenuArgs
+{
+    boost::shared_ptr<Container> inventory;
+    boost::shared_ptr<Container> container;
+    int player;
+    bool splitscreen;
+};
+}
+
+UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_dispenserSlot(), m_dispenserLabel(), m_sceneInterface(0)
 {
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(
         static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
+
+    DispenserMenuArgs* args = static_cast<DispenserMenuArgs*>(data);
+    const std::wstring name = args->container->getName();
+    if (name.empty())
+    {
+        boost::shared_ptr<InteractionObject> interaction =
+            boost::dynamic_pointer_cast<InteractionObject>(args->container);
+        m_dispenserLabel.init(UIString(L10N::GetString(
+            interaction && interaction->getTypeId(false) == 10 ? 0x0f46e4b2 : 0xe398f425)));
+    }
+    else
+    {
+        m_dispenserLabel.init(UIString(name));
+    }
+
+    m_sceneInterface->m_menu = new TrapMenu(args->inventory, args->container);
+    m_slotIndex = static_cast<int>(args->container->getContainerSize());
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mGameModes[args->player] != 0)
+    {
+        Tutorial* tutorial = minecraft->mGameModes[args->player]->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0xb), this);
+        }
+    }
+    m_sceneInterface->Initialize(false, args->player, m_sceneInterface->m_menu, true,
+                                m_slotIndex, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x11),
+                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x14), false);
     m_dispenserSlot.addSlots(0, 9);
+    delete args;
 }
 
 UIScene_DispenserMenu::~UIScene_DispenserMenu()
@@ -183,7 +232,7 @@ std::wstring UIScene_DispenserMenu::getMoviePath()
 
 void UIScene_DispenserMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_containerId, m_sceneInterface->m_menu, true,
+    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true,
                                 m_slotIndex, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x11),
                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x14), false);
     m_dispenserSlot.addSlots(0, 9);

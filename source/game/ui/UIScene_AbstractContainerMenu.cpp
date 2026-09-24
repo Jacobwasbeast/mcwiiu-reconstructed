@@ -12,6 +12,9 @@
 #include "game/ui/fui.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -134,6 +137,19 @@ unsigned int UIScene_AbstractContainerMenu::mapElementsAndNames()
 
 void UIScene_AbstractContainerMenu::handleDestroy()
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[m_playerId];
+    if (gameMode != NULL)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != NULL)
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(m_previousTutorialState), NULL);
+    }
+
+    const boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[m_playerId];
+    if (player && player->mContainerMenu->m_containerId == m_menu->m_containerId)
+        player->closeContainer();
+
     gConsoleUIController.OverrideSFX(m_playerId, 0, false);
     gConsoleUIController.OverrideSFX(m_playerId, 20, false);
     gConsoleUIController.OverrideSFX(m_playerId, 2, false);

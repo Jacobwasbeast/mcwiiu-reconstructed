@@ -20,13 +20,26 @@
 #include "game/ui/MenuBuilder.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Block.hpp"
 
 extern ConsoleUIController gConsoleUIController;
+
+namespace
+{
+struct CreativeMenuSceneData
+{
+    boost::shared_ptr<LocalPlayer> localPlayer;
+    bool creative;
+    int playerIndex;
+    bool splitscreen;
+};
+}
 
 UIScene_CreativeMenu::TabSpec* UIScene_CreativeMenu::s_tabSpecs[8] = {};
 std::vector<const UIScene_CreativeMenu::ItemBuilder*> UIScene_CreativeMenu::s_groupItems[12];
@@ -158,12 +171,43 @@ bool UIScene_CreativeMenu::ItemPickerMenu::doQuickMoveLoop()
     return false;
 }
 
-UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void*, UILayer* layer)
+UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_currentTab(8), m_containerMenu(0),
       m_sceneInterface(this)
 {
     std::fill(m_tabPages, m_tabPages + 8, 0);
     std::fill(m_tabCurrentPages, m_tabCurrentPages + 8, 0);
+    initialiseMovie();
+
+    CreativeMenuSceneData* sceneData = static_cast<CreativeMenuSceneData*>(data);
+    boost::shared_ptr<SimpleContainer> container(
+        new SimpleContainer(0, std::wstring(L""), false, 50));
+    m_containerMenu = new ItemPickerMenu(container, sceneData->localPlayer->mInventory);
+    m_sceneInterface->Initialize(false, sceneData->playerIndex, m_containerMenu, true, -1,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20),
+                                 sceneData->creative);
+    m_inventoryLabel.setLabel(UIString(L""), false, false);
+
+    for (int i = 0; i < 50; ++i)
+        m_hotbarList.addSlot(i);
+    for (int i = 50; i < 59; ++i)
+        UIScene_AbstractContainerMenu::m_hotbarList.addSlot(i);
+
+    if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
+    {
+        MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[type];
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0xe), this);
+        }
+    }
+
+    delete sceneData;
+    m_currentTab = 8;
+    switchTab(ECreativeInventoryTabs_Building);
     for (int i = 0; i < 9; ++i)
         m_touchPanels[i].init(i);
 }
@@ -725,7 +769,7 @@ void UIScene_CreativeMenu::handleReload()
     m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, false, -1,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20),
-                                 m_sceneInterface->m_touchEnabled != 0);
+                                 m_sceneInterface->m_canNavigateBack != 0);
 
     for (int i = 0; i < 50; ++i)
         m_hotbarList.addSlot(i);

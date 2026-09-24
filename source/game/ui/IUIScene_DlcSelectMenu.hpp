@@ -7,6 +7,7 @@
 
 class DLCPack;
 class UIScene_SkinSelectMenu;
+class UIScene_MapSelectMenu;
 
 enum eDLCContentType
 {
@@ -29,6 +30,8 @@ public:
     void tryPurchaseDlc(int userIndex, bool& handled, eDLCContentType contentType);
 
 private:
+    friend class UIScene_MapSelectMenu;
+
     bool m_purchasePending;
     DLCPack* m_pack;
     eDLCContentType m_contentType;

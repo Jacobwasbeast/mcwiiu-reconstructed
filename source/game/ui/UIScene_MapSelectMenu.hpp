@@ -14,6 +14,7 @@
 #include "game/world/LevelRules.hpp"
 
 class LevelGenerationOptions;
+class LaunchMoreOptionsMenuInitData;
 
 class UIScene_MapSelectMenu : public UIScene, public IUIScene_DlcSelectMenu
 {
@@ -38,11 +39,12 @@ public:
 
 private:
     std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
-    LevelGenerationOptions* m_generationOptions;
     unsigned int m_texturePackSelection;
+    LaunchMoreOptionsMenuInitData* m_initData;
+    LevelGenerationOptions* m_generationOptions;
     unsigned char m_mapInfoPending;
-    int m_miniGameType;
     unsigned int m_mapSelection;
+    int m_miniGameType;
     UIControl_CheckboxButtonList m_mapList;
     UIControl_Label m_mapListTitle;
     UIControl_Label m_mapTitle;

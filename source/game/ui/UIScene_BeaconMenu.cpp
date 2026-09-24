@@ -10,6 +10,7 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/Packet.hpp"
 #include "game/network/ServerboundCustomPayloadPacket.hpp"
@@ -18,6 +19,7 @@
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 #include <cstdio>
 
@@ -28,6 +30,7 @@ struct BeaconMenuData
     boost::shared_ptr<Container> inventory;
     boost::shared_ptr<Container> beacon;
     int playerIndex;
+    bool splitscreen;
 };
 
 UIScene_BeaconMenu::UIScene_BeaconMenu(int type, void* data, UILayer* layer)
@@ -44,6 +47,16 @@ UIScene_BeaconMenu::UIScene_BeaconMenu(int type, void* data, UILayer* layer)
         m_powerButtons[index].setVisible(false);
     if (sceneData != 0)
     {
+        if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
+        {
+            Tutorial* tutorial =
+                Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
+            if (tutorial != 0)
+            {
+                m_previousTutorialState = tutorial->currentState;
+                tutorial->changeTutorialState(static_cast<eTutorial_State>(0x22), this);
+            }
+        }
         m_beaconContainer = sceneData->beacon;
         Initialize(false, sceneData->playerIndex,
                    new BeaconMenu(sceneData->inventory, sceneData->beacon), true, 1,
@@ -482,7 +495,7 @@ std::wstring UIScene_BeaconMenu::getMoviePath()
 
 void UIScene_BeaconMenu::handleReload()
 {
-    Initialize(true, m_containerId, m_menu, true, 1,
+    Initialize(true, m_playerId, m_menu, true, 1,
                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38),
                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x43), false);
     m_activatorSlot.addSlots(0, 1);

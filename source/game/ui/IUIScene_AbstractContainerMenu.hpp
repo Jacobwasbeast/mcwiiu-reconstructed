@@ -48,7 +48,7 @@ public:
     unsigned char m_smallInventoryRequested;
     unsigned char m_takeAllEnabled;
     unsigned char m_quickCraftDisabled;
-    int m_containerId;
+    int m_previousTutorialState;
     float m_touchX;
     float m_touchY;
     int m_sectionStart;
@@ -138,9 +138,9 @@ public:
     unsigned int GetTapInputType(float x, float y);
     void UpdateTooltips();
     void SetToolTip(EToolTipButton button, EToolTipItem item);
-    void Initialize(bool takeAll, int containerId, AbstractContainerMenu* menu,
+    void Initialize(bool takeAll, int playerIndex, AbstractContainerMenu* menu,
                     bool smallInventory, int slotIndex, ESceneSection firstSection,
-                    ESceneSection lastSection, bool touchEnabled);
+                    ESceneSection lastSection, bool canNavigateBack);
     std::vector<HtmlString>* GetItemDescription(Slot* slot);
     unsigned int IsSameItemAs(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
     int GetEmptyStackSpace(Slot* slot);

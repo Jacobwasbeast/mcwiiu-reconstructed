@@ -1,18 +1,78 @@
 #include "game/ui/UIScene_HopperMenu.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/InteractionObject.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/item/Container.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/ui/HopperMenu.hpp"
 #include "game/ui/UIControl.hpp"
+#include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 extern CMinecraftApp* g_pApp;
 
-UIScene_HopperMenu::UIScene_HopperMenu(int type, void*, UILayer* layer)
+namespace
+{
+struct HopperMenuSceneData
+{
+    boost::shared_ptr<Inventory> inventory;
+    boost::shared_ptr<Container> container;
+    int playerIndex;
+    bool splitscreen;
+};
+}
+
+UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_hopperSlot(), m_hopperLabel(), m_sceneInterface(0)
 {
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(this);
     initialiseMovie();
+
+    HopperMenuSceneData* sceneData = static_cast<HopperMenuSceneData*>(data);
+    const std::wstring containerName = sceneData->container->getDisplayName();
+    if (containerName.empty())
+    {
+        boost::shared_ptr<InteractionObject> interaction =
+            boost::dynamic_pointer_cast<InteractionObject>(sceneData->container);
+        if (interaction == 0 || interaction->getTypeId(false) != 0x11)
+            m_hopperLabel.init(UIString(L10N::GetString(0xade7383c)));
+        else
+            m_hopperLabel.init(UIString(L10N::GetString(0x917ea687)));
+    }
+    else
+    {
+        m_hopperLabel.init(UIString(containerName));
+    }
+
+    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex];
+    if (gameMode != 0)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x20), this);
+        }
+    }
+
+    boost::shared_ptr<Container> playerInventory =
+        boost::dynamic_pointer_cast<Container>(sceneData->inventory);
+    boost::shared_ptr<Player> player =
+        Minecraft::GetInstance()->mLocalPlayers[sceneData->playerIndex];
+    HopperMenu* menu = new HopperMenu(playerInventory, sceneData->container, player);
+    const int containerSlotCount = static_cast<int>(sceneData->container->getContainerSize());
+    m_sceneInterface->Initialize(false, sceneData->playerIndex, menu, true, containerSlotCount,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x47), false);
     m_hopperSlot.addSlots(0, 9);
+    delete sceneData;
 }
 
 UIScene_HopperMenu::~UIScene_HopperMenu()
@@ -166,7 +226,7 @@ std::wstring UIScene_HopperMenu::getMoviePath()
 
 void UIScene_HopperMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_containerId, m_sceneInterface->m_menu, true,
+    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true,
                                  m_slotIndex, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x47), false);
     m_hopperSlot.addSlots(0, 9);

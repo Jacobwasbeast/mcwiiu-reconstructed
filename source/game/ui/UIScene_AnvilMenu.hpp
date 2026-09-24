@@ -11,6 +11,8 @@
 #include "game/ui/UIControl_Label.hpp"
 #include "game/ui/UIControl_TextInput.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
+#include "game/core/TickAction.hpp"
 
 class AbstractContainerMenu;
 class AnvilMenu;
@@ -18,8 +20,21 @@ class CensoredString;
 class Container;
 class ItemInstance;
 class UILayer;
-class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu
+class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu,
+                          public net_minecraft_world_inventory::ContainerListener
 {
+    class NameUpdateAction : public TickAction
+    {
+    public:
+        typedef void (UIScene_AnvilMenu::*Func)();
+        NameUpdateAction(UIScene_AnvilMenu* scene, Func function)
+            : m_scene(scene), m_function(function) {}
+        virtual void Execute() { (m_scene->*m_function)(); }
+    private:
+        UIScene_AnvilMenu* m_scene;
+        Func m_function;
+    };
+
 public:
     struct PendingNameInfo
     {
@@ -59,11 +74,11 @@ public:
     void addPendingNameChange(const PendingNameInfo& info);
     static int KeyboardCompleteCallback(void* data, bool accepted);
     void handleEditNamePressed();
-    void refreshContainer(AbstractContainerMenu* menu,
-                          std::vector<not_null_ptr<ItemInstance> >* items);
-    void slotChanged(AbstractContainerMenu* menu, int slot, not_null_ptr<ItemInstance> item);
-    void setContainerData(AbstractContainerMenu* menu, int id, int value);
-    void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
+    virtual void refreshContainer(AbstractContainerMenu* menu,
+                                  std::vector<not_null_ptr<ItemInstance> >* items);
+    virtual void slotChanged(AbstractContainerMenu* menu, int slot, not_null_ptr<ItemInstance> item);
+    virtual void setContainerData(AbstractContainerMenu* menu, int id, int value);
+    virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
     void setCostLabel(const std::wstring& label, bool safe);
     void showCross(bool show);
     void handleTick();
@@ -79,6 +94,7 @@ private:
     UIControl_TextInput m_editName;
     IUIScene_AbstractContainerMenu* m_sceneInterface;
     AnvilMenu* m_anvilMenu;
+    NameUpdateAction m_nameUpdateAction;
     CensoredString* m_itemName;
     PendingNameInfo* m_pendingName;
     bool m_editingName;

@@ -22,7 +22,7 @@
 
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
     : m_menu(0), m_smallInventoryRequested(0), m_takeAllEnabled(0), m_quickCraftDisabled(0),
-      m_containerId(0), m_touchX(0.0f), m_touchY(0.0f), m_sectionStart(0),
+      m_previousTutorialState(0), m_touchX(0.0f), m_touchY(0.0f), m_sectionStart(0),
       m_sectionSize(0), m_sectionRows(0), m_sectionColumns(0), m_selectedSlot(0),
       m_activeTooltip(0), m_slotIndex(0), m_slotCount(0), m_currentIndex(0), m_dragStart(0),
       m_dragEnd(0), m_quickCraftRemaining(0), m_quickCraftSlots(0),
@@ -140,10 +140,10 @@ void IUIScene_AbstractContainerMenu::SetToolTip(EToolTipButton button, EToolTipI
     UpdateTooltips();
 }
 
-void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, AbstractContainerMenu* menu,
+void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int playerIndex, AbstractContainerMenu* menu,
                                                  bool smallInventory, int slotIndex,
                                                  ESceneSection firstSection, ESceneSection lastSection,
-                                                 bool touchEnabled)
+                                                 bool canNavigateBack)
 {
     m_smallInventoryRequested = smallInventory ? 1 : 0;
     m_menu = menu;
@@ -153,6 +153,7 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
         effectiveSmallInventory = true;
     m_inventorySmall = effectiveSmallInventory ? 1 : 0;
 
+    Minecraft::GetInstance()->mLocalPlayers[playerIndex]->mContainerMenu = menu;
     menu->m_changed = false;
     menu->m_remoteSlots.clear();
 
@@ -177,7 +178,7 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
     SetToolTip(EToolTipButton_Third, EToolTipItem_None);
     SetToolTip(EToolTipButton_Fourth, EToolTipItem_None);
 
-    m_touchEnabled = touchEnabled ? 1 : 0;
+    m_canNavigateBack = canNavigateBack ? 1 : 0;
     m_currentIndex = 0;
     m_dragEnd = (int)firstSection;
     m_firstSection = (int)firstSection;
@@ -186,7 +187,7 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
     m_lastSection = (int)lastSection;
     m_quickCraftRemaining = 0;
 
-    PlatformInitialize(takeAll, containerId, slotIndex);
+    PlatformInitialize(takeAll, playerIndex, slotIndex);
 }
 
 std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot* slot)

@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_MapSelectMenu.hpp"
+#include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 
 #include <algorithm>
 #include <stdio.h>
@@ -25,18 +26,28 @@ extern ConsoleUIController gConsoleUIController;
 
 UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer), IUIScene_DlcSelectMenu((eDLCContentType)0),
-      m_levelRuleGroups(), m_generationOptions(NULL), m_texturePackSelection(0),
-      m_mapInfoPending(0), m_miniGameType(0), m_mapSelection(0), m_mapList(),
-      m_mapListTitle(), m_mapTitle(), m_mapDescription(), m_mapIcon()
+      m_levelRuleGroups(), m_texturePackSelection(0),
+      m_initData(static_cast<LaunchMoreOptionsMenuInitData*>(data)), m_generationOptions(NULL),
+      m_mapInfoPending(0), m_mapSelection(0), m_miniGameType(0), m_mapList(), m_mapListTitle(),
+      m_mapTitle(), m_mapDescription(), m_mapIcon()
 {
     initialiseMovie();
-    m_miniGameType = 0;
-    if (gApp.getLevelRules() != NULL)
-        gApp.getLevelRules()->getRulesByType((LevelRules::ELevelRuleType)0,
-                                               &m_levelRuleGroups, true);
+    m_playerId = m_initData->mValue18;
+    m_miniGameType = m_initData->mValue5C;
+    LevelRules::ELevelRuleType ruleType = static_cast<LevelRules::ELevelRuleType>(0);
+    if (m_miniGameType >= 0 && m_miniGameType <= 4)
+        ruleType = static_cast<LevelRules::ELevelRuleType>(m_miniGameType);
+    if (m_initData->mFlag58 && !m_initData->mFlag68 &&
+        !Minecraft::GetInstance()->GetMiniGame()->HasFeatureSeasonalMaps())
+        gApp.getLevelRules()->getRulesByType(ruleType, &m_initData->mLevelRulesetGroups, true);
+    gApp.getLevelRules()->getRulesByType(ruleType, &m_levelRuleGroups, false);
     std::sort(m_levelRuleGroups.begin(), m_levelRuleGroups.end(),
               LevelRules::LevelRulesetGroup::SortMapRules);
-    if (m_miniGameType != 1 && m_miniGameType != 3)
+    if (m_miniGameType == 1)
+        m_mapSelection = GameSettings::GetBattleMiniGameMapSelection(m_playerId);
+    else if (m_miniGameType == 3)
+        m_mapSelection = GameSettings::GetGlideMiniGameMapSelection(m_playerId);
+    else
         m_mapSelection = 0;
     _init();
 }
@@ -68,25 +79,63 @@ void UIScene_MapSelectMenu::_init()
     m_mapListTitle.init(UIString(0x88c46bf1));
     m_mapTitle.init(UIString(L" "));
     m_mapDescription.init(UIString(L" "));
-    bool anyPurchased = false;
+    bool anySelected = false;
+    const bool useContextSelection = m_initData->mFlag58 && !m_initData->mFlag68;
     unsigned int i;
     for (i = 0; i < m_levelRuleGroups.size(); ++i)
     {
         LevelRules::LevelRulesetGroup* group = m_levelRuleGroups[i];
         LevelRuleset* ruleset = group->rulesets.at(0);
         LevelGenerationOptions* options = ruleset->getGenerationOptions();
-        bool purchased = checkHasPurchased((int)i, false) != 0;
-        anyPurchased = anyPurchased || purchased;
+
+        const unsigned int texturePackId = options->getTexturePackId();
+        TexturePack* texturePack =
+            Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(texturePackId);
+        std::wstring textureName(L"default");
+        if (texturePack != NULL)
+        {
+            unsigned int iconSize = 0;
+            const void* iconData = texturePack->getPackIcon(iconSize);
+            if (iconData != NULL && iconSize != 0)
+            {
+                texturePack->loadUI();
+                wchar_t iconName[64];
+                std::swprintf(iconName, 64, L"tpack%08x", texturePackId);
+                textureName.assign(iconName);
+                if (!hasRegisteredSubstitutionTexture(textureName))
+                    registerSubstitutionTexture(
+                        textureName,
+                        reinterpret_cast<unsigned char*>(const_cast<void*>(iconData)), iconSize,
+                        false);
+            }
+        }
+
+        const unsigned int themeId = options->getThemeId();
+        const unsigned int themeBit =
+            (themeId & 0x20) != 0 ? 0U : (1U << (themeId & 0x1f));
+        bool selected = (m_mapSelection & themeBit) != 0;
+        if (selected && !checkHasPurchased((int)i, false))
+            selected = false;
+        if (useContextSelection &&
+            std::find(m_initData->mLevelRulesetGroups.begin(),
+                      m_initData->mLevelRulesetGroups.end(), group) !=
+                m_initData->mLevelRulesetGroups.end())
+        {
+            selected = true;
+            anySelected = true;
+        }
+        else if (selected)
+            anySelected = true;
+
         std::wstring worldName(options->getWorldName());
-        std::wstring textureName(L" ");
-        m_mapList.AddNewItem(worldName, (int)i, purchased, textureName);
-        if (m_miniGameType != 0)
+        m_mapList.AddNewItem(worldName, (int)i, selected, textureName);
+        if (useContextSelection)
         {
             m_mapList.EnableItem((int)i, false, true);
-            m_mapList.SetCheckbox((int)i, purchased);
+            m_mapList.SetCheckbox((int)i, selected);
         }
     }
-    if (!anyPurchased && m_mapList.getItemCount() > 3)
+    if (!anySelected && m_mapList.getItemCount() > 3)
     {
         unsigned int count = m_mapList.getItemCount();
         m_mapList.SetCheckbox((int)count - 4, true);
@@ -129,10 +178,7 @@ void UIScene_MapSelectMenu::UpdateMapInfo()
     DLCFile* file = pack->getFile(DLCManager::eDLCType_Texture, std::wstring(previewImage), true, true);
 
     if (file == NULL)
-    {
-        m_mapIcon.setTextureName(std::wstring(L"MapSelect"), true);
         return;
-    }
 
     unsigned int imageSize = 0;
     unsigned char* imageData = file->getData(imageSize);
@@ -188,6 +234,8 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
 void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                         bool& handled)
 {
+    if (m_purchasePending)
+        return;
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action < 14)
     {
@@ -195,6 +243,8 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
             return;
         if (action == 2)
         {
+            if (m_initData->mFlag58 && !m_initData->mFlag68)
+                return;
             if (!released || repeat)
                 return;
             unsigned int i;
@@ -212,6 +262,8 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
             return;
         }
         if (!released || repeat)
+            return;
+        if (m_initData->mFlag58 && !m_initData->mFlag68)
             return;
         unsigned int i;
         for (i = 0; i < m_mapList.getItemCount(); ++i)
@@ -237,17 +289,38 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
         if (!released)
             return;
         unsigned int selection = 0;
+        m_initData->mLevelRulesetGroups.clear();
         unsigned int i;
         for (i = 0; i < m_mapList.getItemCount(); ++i)
             if (m_mapList.GetCheckbox((int)i) != 0)
-                selection |= 1U << (m_levelRuleGroups.at(i)->rulesets.at(0)->getGenerationOptions()->getThemeId() & 0x3f);
-        m_mapSelection = selection;
-        if (m_miniGameType == 1)
-            GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
-        else if (m_miniGameType == 3)
-            GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
-        GameSettings::CheckGameSettingsChanged(true, m_playerId);
-        navigateBack();
+            {
+                const unsigned int themeId = m_levelRuleGroups.at(i)
+                                                 ->rulesets.at(0)
+                                                 ->getGenerationOptions()
+                                                 ->getThemeId();
+                selection |= (themeId & 0x20) != 0 ? 0U : (1U << (themeId & 0x1f));
+                m_initData->mLevelRulesetGroups.push_back(m_levelRuleGroups.at(i));
+            }
+        if (!m_initData->mLevelRulesetGroups.empty())
+        {
+            if (selection != m_mapSelection)
+            {
+                if (m_miniGameType == 1)
+                    GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
+                else if (m_miniGameType == 3)
+                    GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
+                m_mapSelection = selection;
+            }
+            GameSettings::CheckGameSettingsChanged(true, m_playerId);
+            navigateBack();
+            handled = true;
+            return;
+        }
+
+        int messageParameter = (int)0xb9a1bf4d;
+        m_mapSelection = 0;
+        gConsoleUIController.RequestAlertMessage(0xac598f61, 0xb9bf8844, &messageParameter, 1,
+                                                 m_playerId, NULL, NULL, NULL, true);
         handled = true;
         return;
     }
@@ -260,6 +333,7 @@ void UIScene_MapSelectMenu::handleFocusChange(int, int childFocus)
     m_mapInfoPending = 1;
     unsigned int selection = m_mapList.getCurrentSelection();
     m_generationOptions = m_levelRuleGroups.at(selection)->rulesets.at(0)->getGenerationOptions();
+    m_pack = m_generationOptions->getPack();
     m_texturePackSelection = m_generationOptions->getUniqueId();
 }
 

@@ -3,6 +3,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/item/Container.hpp"
 #include "game/ui/ChestMenu.hpp"
 #include "game/ui/ShulkerBoxMenu.hpp"
@@ -10,6 +11,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 namespace
 {
@@ -17,7 +19,8 @@ struct _ContainerMenuArgs
 {
     boost::shared_ptr<Container> first;
     boost::shared_ptr<Container> second;
-    int containerId;
+    int player;
+    bool splitscreen;
 };
 }
 
@@ -37,7 +40,7 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void* data, UILayer* laye
 
     const int openedSize = static_cast<int>(args->second->getContainerSize());
     const std::wstring openedName = args->second->getName();
-    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[type];
+    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[args->player];
     AbstractContainerMenu* menu = 0;
 
     if (openedName.empty())
@@ -74,6 +77,22 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void* data, UILayer* laye
 
     if (menu == 0)
         menu = new ChestMenu(args->first, args->second, player);
+
+    m_sceneInterface->m_menu = menu;
+    if (Minecraft::GetInstance()->mGameModes[args->player] != 0)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[args->player]->getTutorial();
+        if (tutorial != 0)
+        {
+            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(10), this);
+        }
+    }
+    const int containerSlots = openedSize == 0x15 ? 27 : (openedSize / 9) * 9;
+    m_sceneInterface->Initialize(false, args->player, menu, true, containerSlots,
+                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0),
+                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(3), false);
+    m_containerList.addSlots(0, containerSlots);
 
     delete args;
 }
@@ -251,7 +270,7 @@ std::wstring UIScene_ContainerMenu::getMoviePath()
 void UIScene_ContainerMenu::handleReload()
 {
     const int count = GetBaseSlotCount();
-    m_sceneInterface->Initialize(true, m_containerId, m_menu, true, count - 36,
+    m_sceneInterface->Initialize(true, m_playerId, m_menu, true, count - 36,
                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0),
                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(3), false);
     m_containerList.addSlots(0, count - 36);
