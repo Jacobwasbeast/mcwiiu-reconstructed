@@ -107,7 +107,7 @@ public:
     virtual int getHellScale();
     virtual void setModernEnd();
     virtual bool getModernEnd();
-    virtual bool getBiomeScale();
+    virtual unsigned char getBiomeScale();
     virtual int getBiomeCentreXChunk();
     virtual int getBiomeCentreZChunk();
 
@@ -150,7 +150,7 @@ private:
     int mXZSize;
     int mHellScale;
     bool mModernEnd;
-    int mBiomeScale;
+    unsigned char mBiomeScale;
     int mBiomeCentreXChunk;
     int mBiomeCentreZChunk;
     CompoundTag* mLoadedPlayerTag;

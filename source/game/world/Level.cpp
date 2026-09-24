@@ -3295,15 +3295,38 @@ int Level::getDirectSignal(const BlockPos& pos, const Direction* direction)
 int Level::getDirectSignalTo(const BlockPos& pos)
 {
     int signal = 0;
-    static const Direction* directions[6] = {Direction::DOWN, Direction::UP, Direction::NORTH,
-                                             Direction::SOUTH, Direction::WEST, Direction::EAST};
-    for (int i = 0; i < 6; ++i)
+    int value = getDirectSignal(pos.below(), Direction::DOWN);
+    if (value > signal)
+        signal = value;
+    if (signal < 15)
     {
-        int value = getDirectSignal(pos.relative(directions[i]), directions[i]);
+        value = getDirectSignal(pos.above(), Direction::UP);
         if (value > signal)
-        {
             signal = value;
-        }
+    }
+    if (signal < 15)
+    {
+        int value = getDirectSignal(pos.north(), Direction::NORTH);
+        if (value > signal)
+            signal = value;
+    }
+    if (signal < 15)
+    {
+        int value = getDirectSignal(pos.south(), Direction::SOUTH);
+        if (value > signal)
+            signal = value;
+    }
+    if (signal < 15)
+    {
+        int value = getDirectSignal(pos.west(), Direction::WEST);
+        if (value > signal)
+            signal = value;
+    }
+    if (signal < 15)
+    {
+        int value = getDirectSignal(pos.east(), Direction::EAST);
+        if (value > signal)
+            signal = value;
     }
     return signal;
 }
@@ -3311,6 +3334,10 @@ int Level::getDirectSignalTo(const BlockPos& pos)
 int Level::getSignal(const BlockPos& pos, const Direction* direction)
 {
     const BlockState* state = getBlockState(pos);
+    if (state->getBlock()->isSolidBlockingCube(state))
+    {
+        return getDirectSignalTo(pos);
+    }
     return state->getBlock()->getSignal(state, this, pos, direction);
 }
 

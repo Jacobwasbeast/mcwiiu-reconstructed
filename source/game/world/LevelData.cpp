@@ -482,6 +482,6 @@ int LevelData::getXZSize() { return mXZSize; }
 int LevelData::getHellScale() { return mHellScale; }
 void LevelData::setModernEnd() { mModernEnd = true; }
 bool LevelData::getModernEnd() { return mModernEnd; }
-bool LevelData::getBiomeScale() { return mBiomeScale != 0; }
+unsigned char LevelData::getBiomeScale() { return mBiomeScale; }
 int LevelData::getBiomeCentreXChunk() { return mBiomeCentreXChunk; }
 int LevelData::getBiomeCentreZChunk() { return mBiomeCentreZChunk; }
