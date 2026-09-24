@@ -5,8 +5,13 @@
 #include "game/core/Path.hpp"
 #include "game/core/PathFinder.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 
 GroundPathNavigation::GroundPathNavigation(Mob* mob, Level* level, bool createPathFinder)
@@ -64,24 +69,25 @@ int GroundPathNavigation::getSurfaceY()
 {
     if (mMob->isInWater() && canFloat())
     {
-        int y = static_cast<int>(mMob->mY);
+        int y = static_cast<int>(mMob->mBoundingBox->mMinY);
         MutableBlockPos pos(static_cast<int>(std::floor(mMob->mX)), y,
                              static_cast<int>(std::floor(mMob->mZ)));
         int checks = 0;
-        while (mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), pos) == BlockPathTypes::WATER ||
-               mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), pos) == BlockPathTypes::WATER_BORDER)
+        Block* block = mLevel->getBlock(pos);
+        while (block == Blocks::WATER || block == Blocks::FLOWING_WATER)
         {
             ++y;
             pos.setY(y);
+            block = mLevel->getBlock(pos);
             ++checks;
             if (checks > 16)
             {
-                return static_cast<int>(mMob->mY);
+                return static_cast<int>(mMob->mBoundingBox->mMinY);
             }
         }
         return y;
     }
-    return static_cast<int>(mMob->mY + 0.5);
+    return static_cast<int>(mMob->mBoundingBox->mMinY + 0.5);
 }
 
 Vec3* GroundPathNavigation::getTempMobPos()
@@ -92,10 +98,10 @@ Vec3* GroundPathNavigation::getTempMobPos()
 Path* GroundPathNavigation::createPath(const BlockPos& pos)
 {
     BlockPos target(pos);
-    const BlockPathTypes* type = mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target);
-    if (type == BlockPathTypes::WATER && !mMob->isInWater() && !canSinkInWaterWalk())
+    Material* material = mLevel->getBlockState(target)->getMaterial();
+    if (material == Material::WATER && !mMob->isInWater() && !canSinkInWaterWalk())
     {
-        while (target.y > 0 && mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target) == type)
+        while (target.y > 0 && mLevel->getBlockState(target)->getMaterial() == material)
         {
             target = target.below();
         }
@@ -104,19 +110,18 @@ Path* GroundPathNavigation::createPath(const BlockPos& pos)
             return PathNavigation::createPath(target.above());
         }
     }
-    if (type == BlockPathTypes::LAVA && static_cast<Mob*>(mMob)->getPathfindingMalus(type) >= 0.0F)
+    if (material == Material::LAVA && static_cast<Mob*>(mMob)->getPathfindingMalus(BlockPathTypes::LAVA) >= 0.0F)
     {
         while (target.y < mLevel->getMaxBuildHeight() &&
-               static_cast<Mob*>(mMob)->getPathfindingMalus(
-                   mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target.above())) >= 0.0F)
+               mLevel->getBlockState(target.above())->getMaterial() == material)
         {
             target = target.above();
         }
         return PathNavigation::createPath(target);
     }
-    if (type == BlockPathTypes::WATER && canSinkInWaterWalk())
+    if (material == Material::WATER && canSinkInWaterWalk())
     {
-        while (target.y > 0 && mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target) == type)
+        while (target.y > 0 && mLevel->getBlockState(target)->getMaterial() == material)
         {
             target = target.below();
         }
@@ -181,8 +186,7 @@ bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int size
             {
                 blockPos.setZ(iz);
                 if ((xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z)) >= 0.0 &&
-                    static_cast<Mob*>(mMob)->getPathfindingMalus(
-                        mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), blockPos)) < 0.0F)
+                    !mLevel->getBlockState(mMob->mTickCache, blockPos)->getBlock()->isPathfindable(mLevel, blockPos))
                 {
                     return false;
                 }

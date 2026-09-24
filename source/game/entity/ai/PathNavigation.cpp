@@ -56,6 +56,7 @@ void PathNavigation::recomputePath()
     else if (mTargetPos != 0)
     {
         delete mPath;
+        mPath = 0;
         mPath = createPath(*mTargetPos);
         mHasDelayedRecomputation = false;
         mLastRecomputeTime = mLevel->getGameTime();
@@ -74,7 +75,13 @@ Path* PathNavigation::createPath(const BlockPos& pos)
     if (mPath != 0 && !mPath->isDone() && mTargetPos != 0 && pos.equals(*mTargetPos)) return mPath->clone();
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
-    return mPathFinder->findPath(mLevel, mMob, pos, (float)getMaxDist());
+    double maxDist = getMaxDist();
+    BlockPos mobPos(mMob);
+    int radius = (int)(maxDist + 8.0);
+    BlockPos min = mobPos.offset(-radius, -radius, -radius);
+    BlockPos max = mobPos.offset(radius, radius, radius);
+    Region region(mLevel, min, max, 0);
+    return mPathFinder->findPath(&region, mMob, *mTargetPos, (float)maxDist);
 }
 
 Path* PathNavigation::createPath(boost::shared_ptr<Entity> entity)
@@ -84,7 +91,14 @@ Path* PathNavigation::createPath(boost::shared_ptr<Entity> entity)
     if (mPath != 0 && !mPath->isDone() && mTargetPos != 0 && pos.equals(*mTargetPos)) return mPath->clone();
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
-    return mPathFinder->findPath(mLevel, mMob, entity.get(), (float)getMaxDist());
+    double maxDist = getMaxDist();
+    BlockPos mobPos(mMob);
+    BlockPos center = mobPos.above();
+    int radius = (int)(maxDist + 16.0);
+    BlockPos min = center.offset(-radius, -radius, -radius);
+    BlockPos max = center.offset(radius, radius, radius);
+    Region region(mLevel, min, max, 0);
+    return mPathFinder->findPath(&region, mMob, entity.get(), (float)maxDist);
 }
 
 Path* PathNavigation::createDirectPath(const BlockPos& pos)
@@ -117,7 +131,7 @@ bool PathNavigation::moveTo(boost::shared_ptr<Entity> entity, double speed)
 bool PathNavigation::moveTo(Path* path, double speed)
 {
     if (path == 0) { stop(); return false; }
-    if (!path->sameAs(mPath))
+    if ((mPath != 0 && mPath != path && mPath->isDone()) || !path->sameAs(mPath))
     {
         delete mPath;
         mPath = path;
@@ -129,6 +143,7 @@ bool PathNavigation::moveTo(Path* path, double speed)
     trimPath();
     if (mPath->getSize() <= 0) return false;
     mSpeedModifier = speed;
+    mLastStuckCheck = mTick;
     mLastTargetPos->set(mPath->currentPos());
     return true;
 }
