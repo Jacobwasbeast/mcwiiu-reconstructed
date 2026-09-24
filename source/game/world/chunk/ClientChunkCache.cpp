@@ -1,5 +1,6 @@
 #include "game/world/chunk/ClientChunkCache.hpp"
 
+#include <algorithm>
 #include "game/client/render/GameRenderer.hpp"
 #include "game/core/Compression.hpp"
 #include "game/core/System.hpp"
@@ -63,7 +64,7 @@ ClientChunkCache::QueuedAction& ClientChunkCache::QueuedAction::operator=(const 
 ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
     : m_emptyChunk(0), m_fallbackChunk(0), m_storage(storage), m_level(level),
       m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
-      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(),
+      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_pendingHostChunks(),
       m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
 {
     MultiPlayerChunkCacheInit(level, storage);
@@ -72,7 +73,7 @@ ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
 ClientChunkCache::ClientChunkCache(Level* level)
     : m_emptyChunk(0), m_fallbackChunk(0), m_storage(0), m_level(level),
       m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
-      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(),
+      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_pendingHostChunks(),
       m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
 {
     MultiPlayerChunkCacheInit(level, 0);
@@ -294,6 +295,12 @@ void ClientChunkCache::unqueueForReLoad(int x, int z)
 
 void ClientChunkCache::drop(int x, int z, bool force)
 {
+    EnterCriticalSection(&m_saveDataCriticalSection);
+    std::deque<ChunkPos>::iterator pending = std::find(m_pendingHostChunks.begin(),
+                                                        m_pendingHostChunks.end(), ChunkPos(x, z));
+    if (pending != m_pendingHostChunks.end())
+        m_pendingHostChunks.erase(pending);
+    LeaveCriticalSection(&m_saveDataCriticalSection);
     LevelChunk* chunk = getChunkIfLoaded(x, z);
     if (!chunk)
         return;
@@ -357,6 +364,9 @@ LevelChunk* ClientChunkCache::create(int x, int z)
             LevelChunk* serverChunk = serverLevel->getChunkSource()->getChunkLoadedOrUnloaded(x, z);
             if (serverChunk->isEmpty())
             {
+                if (std::find(m_pendingHostChunks.begin(), m_pendingHostChunks.end(), ChunkPos(x, z)) ==
+                    m_pendingHostChunks.end())
+                    m_pendingHostChunks.push_back(ChunkPos(x, z));
                 LeaveCriticalSection(&m_saveDataCriticalSection);
                 return m_emptyChunk;
             }
@@ -437,6 +447,20 @@ void ClientChunkCache::tick()
     for (; it != m_loadedChunks.end(); ++it)
         (*it)->tick(true);
     LeaveCriticalSection(&m_saveDataCriticalSection);
+
+    if (CGameNetworkManager::sInstance.IsHost())
+    {
+        std::vector<ChunkPos> retry;
+        EnterCriticalSection(&m_saveDataCriticalSection);
+        for (int count = 0; count < 4 && !m_pendingHostChunks.empty(); ++count)
+        {
+            retry.push_back(m_pendingHostChunks.front());
+            m_pendingHostChunks.pop_front();
+        }
+        LeaveCriticalSection(&m_saveDataCriticalSection);
+        for (std::vector<ChunkPos>::const_iterator pos = retry.begin(); pos != retry.end(); ++pos)
+            create(pos->x, pos->z);
+    }
 }
 
 bool ClientChunkCache::shouldSave()

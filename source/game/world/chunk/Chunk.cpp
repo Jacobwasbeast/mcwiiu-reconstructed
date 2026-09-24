@@ -192,7 +192,6 @@ void Chunk::rebuild(unsigned int* count)
     int lastSlice = std::min(64, ((mZ + 16) >> 2) + 1);
     LevelChunk* levelChunk = mLevel->getChunkAt(BlockPos(mX, mZ, mDimension));
     levelChunk->getElementRange(elements, extraElements, firstSlice, lastSlice);
-
     Region region(mLevel, BlockPos(mX - 1, mZ - 1, mDimension - 1),
                   BlockPos(mX + 17, mZ + 17, mDimension + 17), 1);
     region.setCachedBlocksAndData(cachedElements, mX >> 4, mZ >> 4, mDimension >> 4, cachedStates);

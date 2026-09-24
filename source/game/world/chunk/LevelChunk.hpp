@@ -292,6 +292,7 @@ private:
     std::deque<BlockPos> mPendingBlockEntities;
     unsigned char mPostProcessFlags;
     bool mPendingBlockEntitiesChanged;
+    bool mLightingDropped;
     bool mOwnsBiomes;
 };
 

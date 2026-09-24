@@ -486,6 +486,7 @@ void LevelChunk::reSyncLighting()
             GameRenderer::FinishedReassigning();
             level->setBlocksDirty(BlockPos(x * 16 - 1, 0, z * 16 - 1), BlockPos(x * 16 + 16, 256, z * 16 + 16));
             LeaveCriticalSection(&sLevelChunkLightingMutex);
+            mLightingDropped = false;
             return;
         }
     }
@@ -509,14 +510,28 @@ bool LevelChunk::reSyncLightingNearby()
 }
 void LevelChunk::dropLighting()
 {
-    delete mSkyLight;
-    delete mSkyLightUpper;
-    delete mBlockLight;
-    delete mBlockLightUpper;
-    mSkyLight = NULL;
-    mSkyLightUpper = NULL;
-    mBlockLight = NULL;
-    mBlockLightUpper = NULL;
+    EnterCriticalSection(&sLevelChunkLightingMutex);
+    if (isEmpty())
+    {
+        LeaveCriticalSection(&sLevelChunkLightingMutex);
+        return;
+    }
+
+    GameRenderer::AddForDelete(mSkyLight);
+    mSkyLight = new SparseLightStorage(true, true);
+    GameRenderer::FinishedReassigning();
+    GameRenderer::AddForDelete(mBlockLight);
+    mBlockLight = new SparseLightStorage(false, true);
+    GameRenderer::FinishedReassigning();
+    GameRenderer::AddForDelete(mSkyLightUpper);
+    mSkyLightUpper = new SparseLightStorage(true, true);
+    GameRenderer::FinishedReassigning();
+    GameRenderer::AddForDelete(mBlockLightUpper);
+    mBlockLightUpper = new SparseLightStorage(false, true);
+    GameRenderer::FinishedReassigning();
+
+    LeaveCriticalSection(&sLevelChunkLightingMutex);
+    mLightingDropped = true;
 }
 void LevelChunk::SetInvalid(bool invalid)
 {
@@ -551,7 +566,7 @@ void LevelChunk::releaseEntityReadLock()
 }
 bool LevelChunk::hasLightingBeenDropped()
 {
-    return mSkyLight == NULL && mBlockLight == NULL;
+    return mLightingDropped;
 }
 void LevelChunk::init(Level* level, int x, int z)
 {
@@ -597,6 +612,7 @@ void LevelChunk::init(Level* level, int x, int z)
     mChunkVersion = 0;
     mPostProcessFlags = 0;
     mPendingBlockEntitiesChanged = false;
+    mLightingDropped = false;
     mOwnsBiomes = false;
 }
 bool LevelChunk::isAt(int x, int z)

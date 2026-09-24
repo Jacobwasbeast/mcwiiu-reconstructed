@@ -89,6 +89,7 @@ private:
     std::vector<LevelChunk*> m_chunks;
     std::vector<unsigned char> m_received;
     std::deque<LevelChunk*> m_unloadQueue;
+    std::deque<ChunkPos> m_pendingHostChunks;
     C4JThreadImpl* m_storageThread;
     OSFastMutex m_threadCriticalSection;
     OSFastMutex m_saveDataCriticalSection;
