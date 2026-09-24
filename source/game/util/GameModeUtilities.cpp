@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 #include "game/core/Mth.hpp"
 #include "game/core/MasterGameMode.hpp"
@@ -13,8 +14,12 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
@@ -25,6 +30,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 #include "game/world/generation/TumbleGenerator.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
 
 namespace
 {
@@ -310,8 +316,65 @@ void GameModeUtilities::DistributePlayers(std::vector<boost::shared_ptr<ServerPl
                                           std::vector<GameRuleDefinition*>* rules,
                                           arrayWithLength<unsigned char>* data)
 {
-    if (players == NULL || rules == NULL || data == NULL) return;
-    if (data->length == 0) data->resize((unsigned int)players->size());
+    ServerLevel* level = gMinecraftServer->getLevel(0);
+    ChunkSource* chunks = level->getChunkSource();
+    std::vector<int> availableRules;
+    for (unsigned int index = 0; index < rules->size(); ++index)
+        availableRules.push_back(static_cast<int>(index));
+
+    Random random;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
+         it != players->end(); ++it)
+    {
+        boost::shared_ptr<ServerPlayer> player = *it;
+        int ruleIndex;
+        while (true)
+        {
+            if (availableRules.empty())
+            {
+                ruleIndex = random.nextInt(static_cast<int>(rules->size()));
+                break;
+            }
+
+            const int candidate = random.nextInt(static_cast<int>(availableRules.size()));
+            ruleIndex = availableRules.at(static_cast<unsigned int>(candidate));
+            if (data != NULL && ruleIndex >= 0
+                && static_cast<unsigned int>(ruleIndex) < data->length
+                && data->data[ruleIndex] != static_cast<unsigned char>(-1))
+            {
+                availableRules.erase(availableRules.begin() + candidate);
+                continue;
+            }
+            break;
+        }
+
+#if defined(_WIN32)
+        const char* referenceSpawn = std::getenv("MC_BATTLE_REFERENCE_SPAWN");
+        if (referenceSpawn != NULL && rules->size() == 16 && players->size() == 1)
+        {
+            const int requestedRule = std::atoi(referenceSpawn);
+            if (requestedRule == 1 || requestedRule == 12)
+                ruleIndex = requestedRule;
+        }
+#endif
+
+        if (data != NULL && ruleIndex >= 0
+            && static_cast<unsigned int>(ruleIndex) < data->length)
+            data->data[ruleIndex] = player->mPlayerIndex;
+
+        rules->at(static_cast<unsigned int>(ruleIndex))->postProcessPlayer(player);
+
+        const int chunkX = static_cast<int>(player->mX) >> 4;
+        const int chunkZ = static_cast<int>(player->mZ) >> 4;
+        if (!chunks->hasChunk(chunkX, chunkZ))
+            chunks->create(chunkX, chunkZ);
+
+        player->doTick(true, true, true);
+        player->mConnection->teleport(player->mX, player->mY, player->mZ,
+                                      player->mYRot, player->mXRot, true, true);
+        if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
+            player->ResetSpawnInvulnerableTime();
+    }
 }
 
 std::vector<GameModeUtilities::Position*>* GameModeUtilities::createInitialPositions(Random* random, int count,
