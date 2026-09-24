@@ -125,6 +125,7 @@ public:
 
 private:
     friend class PlayerList;
+    friend class MasterGameMode;
     ConsoleSchematicFile* schematicFiles[8];
     FillTool* fillTools[8];
     Random random;

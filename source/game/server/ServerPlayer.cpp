@@ -14,6 +14,8 @@
 #include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
 #include "game/network/ClientboundRemoveEntitiesPacket.hpp"
 #include "game/network/ClientboundRemoveMobEffectPacket.hpp"
+#include "game/network/ClientboundSetExperiencePacket.hpp"
+#include "game/network/ClientboundSetHealthPacket.hpp"
 #include "game/network/ClientboundUpdateMobEffectPacket.hpp"
 #include "game/network/ClientboundContainerClosePacket.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
@@ -642,6 +644,37 @@ void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
 uint64_t ServerPlayer::doTickB()
 {
     processDimensionDelay();
+
+    const float health = getHealth();
+    const int food = mFoodData.getFoodLevel();
+    const float saturation = mFoodData.getSaturationLevel();
+    const bool saturationIsZero = saturation == 0.0f;
+    if (health != mLastSentHealth || food != mLastSentFood ||
+        saturationIsZero != mLastSentSaturationWasZero)
+    {
+        TelemetryDamageSource damageSource = {
+            static_cast<ETelemetryChallenges>(mPvpState), mCauseOfDeathId, mPlayerWeaponId
+        };
+        mConnection->send(boost::shared_ptr<Packet>(
+            new ClientboundSetHealthPacket(health, food, saturation, damageSource)));
+        mLastSentHealth = health;
+        mLastSentFood = food;
+        mLastSentSaturationWasZero = saturationIsZero;
+    }
+
+    mLastRecordedHealth = health + getAbsorptionAmount();
+    mLastRecordedFood = food;
+    mLastRecordedAir = getAirSupply();
+    mLastRecordedArmor = getArmorValue();
+    mLastRecordedTotalExperience = mTotalExperience;
+    mLastRecordedExperienceLevel = mExperienceLevel;
+
+    if (mTotalExperience != mLastSentTotalExperience)
+    {
+        mLastSentTotalExperience = mTotalExperience;
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetExperiencePacket(
+            mExperienceProgress, mTotalExperience, mExperienceLevel)));
+    }
     return 0;
 }
 

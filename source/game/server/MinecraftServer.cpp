@@ -300,6 +300,9 @@ bool MinecraftServer::loadLevel(LevelStorageSource*, const std::wstring& name,
     ProgressRenderer* progressRenderer = Minecraft::GetInstance()->mProgressRenderer;
     mLevels.resize(3);
     mLevels.data[0] = 0;
+    const int requestedGameType = initData != 0 ? initData->m_value9 : defaultGameType->getId();
+    defaultGameType = LevelSettings::validateGameType(
+        mSettings->getInt(static_cast<EServerSetting>(4), requestedGameType));
 
     std::wstring saveName;
     void* saveData = 0;
@@ -342,10 +345,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource*, const std::wstring& name,
 
     if (levelData == 0)
     {
-        const int requestedGameType = initData == 0
-            ? static_cast<int>(defaultGameType->getId()) : initData->m_value9;
-        const GameType* gameType = LevelSettings::validateGameType(requestedGameType);
-        levelSettings = new LevelSettings(seed, gameType,
+        levelSettings = new LevelSettings(seed, defaultGameType,
             gApp.GetGameHostOption(static_cast<eGameHostOption>(8)) != 0,
             isHardcore(), true, type,
             initData == 0 ? 0 : initData->m_value7,
@@ -392,7 +392,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource*, const std::wstring& name,
     level->postConstruct();
     setLevel(0, level);
     level->initializeLevel(levelSettings);
-    levelData->setGameType(levelSettings->getGameType());
+    levelData->setGameType(defaultGameType);
     DerivedServerLevel* nether = new DerivedServerLevel(this, storage, -1, level);
     nether->postConstruct();
     setLevel(-1, nether);

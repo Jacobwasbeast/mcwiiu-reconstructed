@@ -419,6 +419,12 @@ void ServerLevel::runQueuedSendBlockUpdates()
 void ServerLevel::tick()
 {
     tickWeather(true);
+    int skyDarken = getOldSkyDarken(1.0f);
+    if (skyDarken != getSkyDarken())
+        setSkyDarken(skyDarken);
+    setGameTime(getGameTime() + 1);
+    if (getGameRules()->getBoolean(8))
+        setDayTime(getDayTime() + 1);
     tickBlocks();
     chunkMap->tick();
     tickEntities();

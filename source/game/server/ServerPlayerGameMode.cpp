@@ -40,6 +40,7 @@ ServerPlayerGameMode::ServerPlayerGameMode(Level* level, MasterGameMode* masterG
       mMasterGameMode(masterGameMode), mDeaths(0), mKills(0), mUnknown58(0),
       mLastCheckpoint(0)
 {
+    mGameType = GameType::NOT_SET;
 }
 
 ServerPlayerGameMode::~ServerPlayerGameMode()
