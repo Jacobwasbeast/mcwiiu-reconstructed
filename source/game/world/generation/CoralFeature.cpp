@@ -7,6 +7,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/CoralBlock.hpp"
+#include "game/world/block/CoralBlock.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -35,7 +36,7 @@ const Direction* CoralFeature::_randomDirectionExcept(Random& random, const Dire
 bool CoralFeature::_canOverwrite(Level* level, const BlockPos& pos, int data)
 {
     const BlockState* state = level->getBlockState(pos);
-    return state == NULL || level->isEmptyWaterBlock(pos) || Block::getElementId(state) == data;
+    return state->getBlock() != Blocks::coral_block || state->getValue(CoralBlock_PROPERTY_1) == data;
 }
 
 bool CoralFeature::_setBlock(Level* level, const BlockPos& pos, const BlockState* state, int data)
@@ -54,8 +55,7 @@ void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& 
                                   const BlockState* state, float chance, int distance,
                                   bool inverted)
 {
-    const int data =
-        state->getValue(static_cast<AbstractProperty<int>*>(CoralBlock_PROPERTY_1));
+    const int data = state->getValue(CoralBlock_PROPERTY_1);
     if (!_setBlock(level, pos, state, data))
     {
         return;
@@ -82,8 +82,7 @@ void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& po
                                 const BlockState* state, float chance, int distance,
                                 bool inverted)
 {
-    const int data =
-        state->getValue(static_cast<AbstractProperty<int>*>(CoralBlock_PROPERTY_1));
+    const int data = state->getValue(CoralBlock_PROPERTY_1);
     const BlockPos corners[4] = { BlockPos(pos.x + distance, pos.y, pos.z + distance),
                                   BlockPos(pos.x - distance, pos.y, pos.z + distance),
                                   BlockPos(pos.x - distance, pos.y, pos.z + distance),
@@ -143,7 +142,9 @@ void CoralFeature::_buildSmallClump(Level* level, const BlockPos& pos, Random& r
 
 void CoralFeature::_placeCoral(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions, std::vector<std::pair<BlockPos, const Direction*> >& sides, int type)
 {
-    const BlockState* state = Blocks::coral->defaultBlockState();
+    TypedBoxed<int> variant(type);
+    const BlockState* state = Blocks::coral_block->defaultBlockState()->setBoxedValue(
+        CoralBlock_PROPERTY_1, &variant);
     if (type == 0) _buildPlantLike(level, pos, random, positions, sides, state); else if (type == 1) _buildSpire(level, pos, random, positions, sides, state); else if (type == 2) _buildHand(level, pos, random, positions, sides, state); else _buildSmallClump(level, pos, random, positions, sides, state);
 }
 
@@ -182,8 +183,37 @@ void CoralFeature::_placeSideDecorations(Level* level, const BlockPos& pos, Rand
 
 bool CoralFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (level->mIsClientSide) return true; BlockPos pos = origin; while (!level->isSolidBlockingBlock(pos) && pos.y > 58) pos = pos.below(); if (!level->isSolidBlockingBlock(pos)) return false;
-    std::vector<BlockPos> positions; std::vector<std::pair<BlockPos, const Direction*> > sides; _placeCoral(level, pos, random, positions, sides, random.nextInt(5));
-    std::vector<BlockPos>::iterator i; for (i = positions.begin(); i != positions.end(); ++i) _placeTopDecorations(level, *i, random);
-    std::vector<std::pair<BlockPos, const Direction*> >::iterator j; for (j = sides.begin(); j != sides.end(); ++j) _placeSideDecorations(level, j->first, random, j->second); return true;
+    if (level->mIsClientSide)
+    {
+        return true;
+    }
+
+    BlockPos pos = origin;
+    while (pos.y <= 58 && !level->isEmptyWaterBlock(pos))
+    {
+        pos = pos.above();
+    }
+    if (pos.y > 58 || !level->isSolidBlockingBlock(pos.below()))
+    {
+        return false;
+    }
+
+    const BlockState* below = level->getBlockState(pos.below());
+    if (below->getBlock() == Blocks::coral_block && !below->getValue(CoralBlock_PROPERTY_2))
+    {
+        return false;
+    }
+
+    std::vector<BlockPos> positions;
+    std::vector<std::pair<BlockPos, const Direction*> > sides;
+    _placeCoral(level, pos, random, positions, sides, random.nextInt(5));
+    for (std::vector<BlockPos>::iterator i = positions.begin(); i != positions.end(); ++i)
+    {
+        _placeTopDecorations(level, *i, random);
+    }
+    for (std::vector<std::pair<BlockPos, const Direction*> >::iterator j = sides.begin(); j != sides.end(); ++j)
+    {
+        _placeSideDecorations(level, j->first, random, j->second);
+    }
+    return true;
 }

@@ -115,7 +115,7 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
             std::advance(it, random.nextInt((int)startPiece->mPendingPieces.size()));
             StructurePiece* piece = *it;
             startPiece->mPendingPieces.erase(it);
-            piece->addChildren(piece, this, random);
+            piece->addChildren(startPiece, this, random);
         }
         else
         {
@@ -123,7 +123,7 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
             std::advance(it, random.nextInt((int)startPiece->mRoadPieces.size()));
             StructurePiece* piece = *it;
             startPiece->mRoadPieces.erase(it);
-            piece->addChildren(piece, this, random);
+            piece->addChildren(startPiece, this, random);
         }
     }
 

@@ -107,6 +107,7 @@ bool LocalPlayer::hurt(const DamageSource* source, float damage)
 void LocalPlayer::tick()
 {
     AbstractClientPlayer::tick();
+    sendPosition();
 }
 
 Vec3* LocalPlayer::getViewVector(float partialTick)
@@ -188,12 +189,13 @@ bool LocalPlayer::isSneaking()
 
 bool LocalPlayer::isSprinting()
 {
-    return mSprinting;
+    return mSprinting != 0;
 }
 
 void LocalPlayer::setSprinting(bool sprinting)
 {
-    mSprinting = sprinting; Entity::setSprinting(sprinting);
+    LivingEntity::setSprinting(sprinting);
+    mSprinting = sprinting ? 600 : 0;
 }
 
 boost::shared_ptr<Entity> LocalPlayer::changeDimension(int dimension)
@@ -317,6 +319,24 @@ void LocalPlayer::serverAiStep()
     Player::serverAiStep();
     if (isControlledCamera())
     {
+        const float strafe = mInput->mMoveStrafe;
+        const float forward = mInput->mMoveForward;
+        const float movement = std::sqrt(strafe * strafe + forward * forward);
+        if (mAbilities.mFlying && mAbilities.mMayfly && movement >= 0.1f)
+        {
+            const float angle = std::atan2(forward, strafe) * 57.2957763671875f;
+            const float wrapped = angle + (std::floor((angle + mYRot) / 360.0f + 0.5f)
+                                           * 360.0f - (angle + mYRot));
+            const float radians = wrapped * 0.01745329238474369f;
+            mXxa = std::cos(radians) * movement;
+            mZza = std::sin(radians) * movement;
+        }
+        else
+        {
+            mXxa = strafe;
+            mZza = forward;
+        }
+        mJumping = mInput->mJumping;
         mViewYRotO = mViewYRot;
         mViewXRotO = mViewXRot;
         mViewYRot += (mYRot - mViewYRot) * 0.5f;
@@ -331,6 +351,9 @@ float LocalPlayer::tickHeadTurn(float yRot, float xRot)
 
 void LocalPlayer::aiStep()
 {
+    if (isSprinting() && --mSprinting < 1)
+        mSprinting = 1;
+
     if (mInput != NULL)
     {
         mInput->tick(this);

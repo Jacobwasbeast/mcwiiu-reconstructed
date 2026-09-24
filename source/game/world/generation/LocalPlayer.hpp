@@ -108,7 +108,7 @@ public:
     int getIndicatorSegment(float, float);
     void updateProximityIndicator();
     bool isControlledCamera();
-    unsigned long long sendPosition();
+    virtual unsigned long long sendPosition();
     unsigned long long chat(const std::wstring&);
     bool swing(InteractionHand::EInteractionHand);
     void respawn();

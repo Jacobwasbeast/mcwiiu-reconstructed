@@ -1572,6 +1572,7 @@ void Player::setCustomSkin(uint32_t skin)
         ? skin & 0x1f : static_cast<uint32_t>(mPlayerIndex + 1);
     setPlayerDefaultSkin(defaultSkin);
     mField0x7dc = skin;
+    mSkinLocation = CMinecraftApp::getSkinPathFromId(skin);
     mField0x804 = 0;
     mField0x805 = 0;
     SetAdditionalModelParts(NULL);
@@ -1815,14 +1816,21 @@ void Player::aiStep()
         getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(mAbilities.getWalkingSpeed());
     }
 
+    mFlyingSpeed = mField0x734;
+    if (isSprinting()) {
+        mFlyingSpeed += mField0x734 * 0.30000001192092896f;
+    }
+
     mPrevCameraYaw = mCameraYaw;
     double horizontalSpeedSq = mXd * mXd + mZd * mZd;
     float horizontalSpeed = static_cast<float>(std::sqrt(horizontalSpeedSq));
     if (horizontalSpeedSq < 9.999999747378752e-06) horizontalSpeed = 0.0f;
     float verticalAngle = static_cast<float>(std::atan(-mYd * 0.20000000298023224)) * 15.0f;
-    if (verticalAngle > 0.10000000149011612f) verticalAngle = 0.10000000149011612f;
+    if (horizontalSpeed > 0.10000000149011612f) horizontalSpeed = 0.10000000149011612f;
+    if (!mOnGround || getHealth() <= 0.0f) horizontalSpeed = 0.0f;
+    if (mOnGround || getHealth() <= 0.0f) verticalAngle = 0.0f;
     mCameraYaw = (horizontalSpeed - mCameraYaw) * 0.4000000059604645f + mCameraYaw;
-    mYBodyRotO = (verticalAngle - mYBodyRotO) * 0.800000011920929f + mYBodyRotO;
+    mBob = (verticalAngle - mBob) * 0.800000011920929f + mBob;
 
     if (getHealth() > 0.0f && !isSpectator() && !isPassenger()) {
         AABB* touchBox = mBoundingBox->grow(1.0, 0.5, 1.0);
@@ -1875,6 +1883,7 @@ void Player::readAdditionalSaveData(CompoundTag* tag)
     mField0x6c0 = tag->getBoolean(L"Sleeping");
     mField0x6c8 = tag->getShort(L"SleepTimer");
 
+    mExperienceProgress = tag->getFloat(L"XpP");
     mExperienceLevel = tag->getInt(L"XpLevel");
     mTotalExperience = tag->getInt(L"XpTotal");
     mEnchantmentSeed = tag->getInt(L"XpSeed");
@@ -1913,6 +1922,7 @@ void Player::addAdditonalSaveData(CompoundTag* tag)
     tag->putBoolean(L"Sleeping", mField0x6c0 != 0);
     tag->putShort(L"SleepTimer", static_cast<short>(mField0x6c8));
 
+    tag->putFloat(L"XpP", mExperienceProgress);
     tag->putInt(L"XpLevel", mExperienceLevel);
     tag->putInt(L"XpTotal", mTotalExperience);
     tag->putInt(L"XpSeed", mEnchantmentSeed);

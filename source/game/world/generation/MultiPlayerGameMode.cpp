@@ -535,7 +535,7 @@ void MultiPlayerGameMode::StartSpectating()
 
 }
 bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction*) { mDestroyBlockPos = pos; mDestroying = true; return true; }
-bool MultiPlayerGameMode::canHurtPlayer() { return true; }
+bool MultiPlayerGameMode::canHurtPlayer() { return isSurvival(); }
 void MultiPlayerGameMode::tick()
 {
     ensureHasSentCarriedItem();
@@ -679,7 +679,7 @@ void MultiPlayerGameMode::handleCreativeModeItemDrop(not_null_ptr<ItemInstance> 
     mConnection->send(boost::shared_ptr<Packet>(
         new ServerboundSetCreativeModeSlotPacket(-1, item)));
 }
-bool MultiPlayerGameMode::hasExperience() { return false; }
+bool MultiPlayerGameMode::hasExperience() { return isSurvival(); }
 bool MultiPlayerGameMode::hasFarPickRange() { return isCreative(); }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleCraftItem(
     int category, int recipe, boost::shared_ptr<Player> player)

@@ -93,7 +93,7 @@ void resolveSpawnCollisions(Level* level, boost::shared_ptr<ServerPlayer> player
     if (!level || !player)
         return;
     const double maxY = 512.0;
-    const double collisionHeight = 1.875;
+    const double collisionHeight = 1.0;
     const double x = player->mX;
     const double z = player->mZ;
     while (hasSpawnCollisions(level, player) && player->mY < maxY)
@@ -367,8 +367,15 @@ void PlayerList::validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> pla
     const double x = snapHorizontal(player->mX);
     const double y = snapVertical(player->mY, hasCeiling);
     const double z = snapHorizontal(player->mZ);
+    const bool collidedAtStart = hasSpawnCollisions(level, player);
+    const double originalX = player->mX;
+    const double originalY = player->mY;
+    const double originalZ = player->mZ;
     player->moveTo(x, y, z, player->mYRot, player->mXRot);
-    resolveSpawnCollisions(level, player);
+    if (collidedAtStart)
+        resolveSpawnCollisions(level, player);
+    else if (hasSpawnCollisions(level, player))
+        player->moveTo(originalX, originalY, originalZ, player->mYRot, player->mXRot);
     const int dimensionId = level->mDimension->getType()->getId();
     const int netherId = DimensionType::NETHER->getId();
     const int endId = DimensionType::THE_END->getId();

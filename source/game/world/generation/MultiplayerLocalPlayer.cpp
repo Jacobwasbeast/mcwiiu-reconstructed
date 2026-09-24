@@ -134,7 +134,10 @@ void MultiplayerLocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
     if (m_hurt)
         LocalPlayer::hurtTo(amount, source);
     else
+    {
+        setHealth(amount);
         m_hurt = true;
+    }
 }
 
 void MultiplayerLocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
