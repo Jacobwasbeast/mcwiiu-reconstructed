@@ -262,7 +262,7 @@ void ShulkerBoxBlockEntity::moveCollidedEntities()
         const AABB* entityBox = entity->mBoundingBox;
         if (entityBox == NULL)
             continue;
-        const double offset = 1.0349999666;
+        const double offset = 0.01;
         if (axis->getId() == Direction::Axis::eAxis_X)
             dx = step > 0 ? box->mMaxX - entityBox->mMinX + offset : entityBox->mMaxX - box->mMinX + offset;
         else if (axis->getId() == Direction::Axis::eAxis_Y)

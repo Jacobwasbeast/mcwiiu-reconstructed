@@ -752,7 +752,7 @@ unsigned int Block::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 
     if (getId(tooltipData.m_pBlockState->getBlock()) == 7)
     {
-        if (!tooltipData.m_pPlayer->Player::GetGameMode()->isCreative())
+        if (!tooltipData.m_pPlayer->GetGameMode()->isCreative())
         {
             return 0xFFFFFFFFu;
         }

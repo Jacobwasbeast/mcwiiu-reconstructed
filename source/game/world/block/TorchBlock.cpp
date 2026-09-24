@@ -11,7 +11,9 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/FenceBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -67,11 +69,14 @@ bool TorchBlock::canStandOn(Level* level, const BlockPos& pos)
 {
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
-    if (!state->isSolidBlockingBlock())
-    {
-        return block != NULL && !Block::isExceptionBlockForAttachingPlusPiston(block);
-    }
-    return block != NULL;
+    bool notEndGateway = block != Blocks::end_gateway;
+    if (state->isSolidBlockingBlock()) return notEndGateway;
+
+    bool canStand = dynamic_cast<FenceBlock*>(block) != NULL || block == Blocks::sea_lantern ||
+                    block == Blocks::glowstone || block == Blocks::ice || block == Blocks::beacon ||
+                    block == Blocks::glass || block == Blocks::cobblestone_wall ||
+                    block == Blocks::stained_glass;
+    return canStand && notEndGateway;
 }
 
 bool TorchBlock::canBePlacedOn(Level* level, const BlockPos& pos, const Direction* direction)
@@ -87,12 +92,19 @@ bool TorchBlock::canBePlacedOn(Level* level, const BlockPos& pos, const Directio
 
 bool TorchBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    const BlockState* state = level->getBlockState(pos);
-    const BlockState* above = level->getBlockState(pos.above());
-    if (state->getBlock() == Block::byId(0) && above->getBlock() == Block::byId(0))
-        return false;
-    for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
-        if (Direction::VALUES[i] != Direction::DOWN && canBePlacedOn(level, pos, Direction::VALUES[i])) return true;
+    Material* material = level->getBlockState(pos)->getMaterial();
+    Material* aboveMaterial = level->getBlockState(pos.above())->getMaterial();
+    if (material != Material::WATER && material != Material::LAVA && material != Material::BUBBLE_COLUMN &&
+        aboveMaterial != Material::WATER)
+    {
+        boost::unordered_set<const Direction*> possibleValues(11);
+        FACING->getUnboxedPossibleValues(possibleValues);
+        for (boost::unordered_set<const Direction*>::const_iterator it = possibleValues.begin();
+             it != possibleValues.end(); ++it)
+        {
+            if (canBePlacedOn(level, pos, *it)) return true;
+        }
+    }
     return false;
 }
 
@@ -103,11 +115,12 @@ const BlockState* TorchBlock::getStateForPlacement(Level* level, const BlockPos&
         TypedBoxed<const Direction*> facing(direction);
         return defaultBlockState()->setBoxedValue(FACING, &facing);
     }
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
-        if (canBePlacedOn(level, pos, *it))
+        if (canBePlacedOn(level, pos, directions.data[i]))
         {
-            TypedBoxed<const Direction*> facing(*it);
+            TypedBoxed<const Direction*> facing(directions.data[i]);
             return defaultBlockState()->setBoxedValue(FACING, &facing);
         }
     }
@@ -123,11 +136,13 @@ void TorchBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 
 bool TorchBlock::checkDoPop(Level* level, const BlockPos& pos, const BlockState* state)
 {
+    if (!checkCanSurvive(level, pos, state)) return true;
+
     const Direction* direction = state->getValue(FACING);
     BlockPos supportPos = pos.relative(direction->getOpposite());
-    if (direction->getAxis()->isHorizontal() && level->getBlockState(supportPos)->canProvideSupport(direction, BLOCK_SUPPORT_CENTER))
-        return false;
-    if (!direction->getAxis()->isVertical() || !canStandOn(level, supportPos)) return false;
+    bool horizontalSupport = direction->getAxis()->isHorizontal() &&
+                             level->getBlockState(supportPos)->canProvideSupport(direction, BLOCK_SUPPORT_CENTER);
+    if (!horizontalSupport && (!direction->getAxis()->isVertical() || canStandOn(level, supportPos))) return false;
     spawnResources(level, pos, state, 0);
     level->removeBlock(pos);
     return true;

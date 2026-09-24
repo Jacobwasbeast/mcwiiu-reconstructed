@@ -69,6 +69,8 @@ public:
     void startRefilledAnimation();
 
 private:
+    friend class BonusChestFeature;
+
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     bool mLarge;
     int mRefilledAnimationTicks;

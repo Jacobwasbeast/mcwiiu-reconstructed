@@ -36,6 +36,14 @@ public:
         std::wstring mName;
     };
 
+    static AbstractProperty<ConnectingSide*>* NORTH;
+    static AbstractProperty<ConnectingSide*>* EAST;
+    static AbstractProperty<ConnectingSide*>* SOUTH;
+    static AbstractProperty<ConnectingSide*>* WEST;
+    static ConnectingSide* UP;
+    static ConnectingSide* SIDE;
+    static ConnectingSide* NONE;
+
     RedStoneWireBlock();
     virtual ~RedStoneWireBlock();
     static void blockStaticCtor();

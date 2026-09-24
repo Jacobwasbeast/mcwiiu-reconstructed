@@ -27,11 +27,11 @@
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
-static AbstractProperty<bool>* gBrewingStandBottle0 =
+AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_0 =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_bottle_0"));
-static AbstractProperty<bool>* gBrewingStandBottle1 =
+AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_1 =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_bottle_1"));
-static AbstractProperty<bool>* gBrewingStandBottle2 =
+AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_2 =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_bottle_2"));
 
 static const AABB* gBrewingStandShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0);
@@ -159,17 +159,17 @@ const BlockState* BrewingStandBlock::getBlockState(int data)
     TypedBoxed<bool> bottle0((data & 1) != 0);
     TypedBoxed<bool> bottle1((data & 2) != 0);
     TypedBoxed<bool> bottle2((data & 4) != 0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(gBrewingStandBottle0, &bottle0);
-    state = state->setBoxedValue(gBrewingStandBottle1, &bottle1);
-    return state->setBoxedValue(gBrewingStandBottle2, &bottle2);
+    const BlockState* state = defaultBlockState()->setBoxedValue(HAS_BOTTLE_0, &bottle0);
+    state = state->setBoxedValue(HAS_BOTTLE_1, &bottle1);
+    return state->setBoxedValue(HAS_BOTTLE_2, &bottle2);
 }
 
 int BrewingStandBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(gBrewingStandBottle0) ? 1 : 0;
-    if (state->getValue(gBrewingStandBottle1))
+    int data = state->getValue(HAS_BOTTLE_0) ? 1 : 0;
+    if (state->getValue(HAS_BOTTLE_1))
         data |= 2;
-    if (state->getValue(gBrewingStandBottle2))
+    if (state->getValue(HAS_BOTTLE_2))
         data |= 4;
     return data;
 }
@@ -184,9 +184,9 @@ unsigned int BrewingStandBlock::GetInteractTooltip(const BlockTooltipDataHolder&
 BlockStateDefinition* BrewingStandBlock::createBlockStateDefinition()
 {
     const Property* properties[3];
-    properties[0] = gBrewingStandBottle0;
-    properties[1] = gBrewingStandBottle1;
-    properties[2] = gBrewingStandBottle2;
+    properties[0] = HAS_BOTTLE_0;
+    properties[1] = HAS_BOTTLE_1;
+    properties[2] = HAS_BOTTLE_2;
     return new BlockStateDefinition(this, properties, 3);
 }
 

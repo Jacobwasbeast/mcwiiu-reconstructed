@@ -102,16 +102,22 @@ void BasePressurePlateBlock::randomTick(Level*, const BlockPos&, const BlockStat
 
 void BasePressurePlateBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    int signal = getSignalForState(state);
-    if (!level->mIsClientSide && signal > 0)
-        checkPressed(level, pos, state, signal);
+    if (!level->mIsClientSide)
+    {
+        int signal = getSignalForState(state);
+        if (signal > 0)
+            checkPressed(level, pos, state, signal);
+    }
 }
 
 void BasePressurePlateBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
 {
-    int signal = getSignalForState(state);
-    if (!level->mIsClientSide && signal == 0)
-        checkPressed(level, pos, state, signal);
+    if (!level->mIsClientSide)
+    {
+        int signal = getSignalForState(state);
+        if (signal == 0)
+            checkPressed(level, pos, state, signal);
+    }
 }
 
 void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, const BlockState* state, int signal)

@@ -29,6 +29,10 @@ class TextureAtlasSprite;
 class BrewingStandBlock : public BaseEntityBlock
 {
 public:
+    static AbstractProperty<bool>* HAS_BOTTLE_0;
+    static AbstractProperty<bool>* HAS_BOTTLE_1;
+    static AbstractProperty<bool>* HAS_BOTTLE_2;
+
     BrewingStandBlock();
     virtual ~BrewingStandBlock();
 

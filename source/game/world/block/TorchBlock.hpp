@@ -39,7 +39,6 @@ public:
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
-private:
     static DirectionProperty* FACING;
 };
 

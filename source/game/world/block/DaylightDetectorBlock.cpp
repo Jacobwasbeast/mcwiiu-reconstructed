@@ -163,7 +163,7 @@ unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHol
 {
     if (tooltipData.m_bUseItem || tooltipData.m_bCanPlace)
     {
-        if (!tooltipData.m_pPlayer->Player::GetGameMode()->isAdventure())
+        if (!tooltipData.m_pPlayer->GetGameMode()->isAdventure())
         {
             return DAYLIGHT_DETECTOR_ADVENTURE_TOOLTIP;
         }

@@ -62,19 +62,19 @@ static const std::wstring gRedStoneWireLineOverlaySuffix = L"_line_overlay";
 AbstractProperty<int>* RedStoneWireBlock::POWER =
     static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
 
-static RedStoneWireBlock::ConnectingSide* gRedStoneWireUp =
+RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::UP =
     new RedStoneWireBlock::ConnectingSide(L"up");
-static RedStoneWireBlock::ConnectingSide* gRedStoneWireSide =
+RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::SIDE =
     new RedStoneWireBlock::ConnectingSide(L"side");
-static RedStoneWireBlock::ConnectingSide* gRedStoneWireNone =
+RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::NONE =
     new RedStoneWireBlock::ConnectingSide(L"none");
 static RedStoneWireBlock::ConnectingSide* gRedStoneWireConnectingSides[] =
-    { gRedStoneWireUp, gRedStoneWireSide, gRedStoneWireNone };
+    { RedStoneWireBlock::UP, RedStoneWireBlock::SIDE, RedStoneWireBlock::NONE };
 
-static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gNorthProperty = NULL;
-static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gEastProperty = NULL;
-static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gSouthProperty = NULL;
-static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gWestProperty = NULL;
+AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::NORTH = NULL;
+AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::EAST = NULL;
+AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::SOUTH = NULL;
+AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::WEST = NULL;
 
 RedStoneWireBlock::ConnectingSide::ConnectingSide(const std::wstring& name)
     : mName(name)
@@ -96,12 +96,12 @@ RedStoneWireBlock::RedStoneWireBlock()
 {
     Block::DerivedInit();
     mSignalSource = true;
-    TypedBoxed<ConnectingSide*> none(gRedStoneWireNone);
+    TypedBoxed<ConnectingSide*> none(RedStoneWireBlock::NONE);
     TypedBoxed<int> power(0);
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(gNorthProperty, &none);
-    state = state->setBoxedValue(gEastProperty, &none);
-    state = state->setBoxedValue(gSouthProperty, &none);
-    state = state->setBoxedValue(gWestProperty, &none);
+    const BlockState* state = mStateDefinition->any()->setBoxedValue(NORTH, &none);
+    state = state->setBoxedValue(EAST, &none);
+    state = state->setBoxedValue(SOUTH, &none);
+    state = state->setBoxedValue(WEST, &none);
     registerDefaultState(state->setBoxedValue(POWER, &power));
 }
 
@@ -113,23 +113,23 @@ void RedStoneWireBlock::blockStaticCtor()
 {
     boost::unordered_set<ConnectingSide*> values;
     for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
-    gNorthProperty = EnumProperty<ConnectingSide*>::create(
+    NORTH = EnumProperty<ConnectingSide*>::create(
         L"north", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
-    gEastProperty = EnumProperty<ConnectingSide*>::create(
+    EAST = EnumProperty<ConnectingSide*>::create(
         L"east", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
-    gSouthProperty = EnumProperty<ConnectingSide*>::create(
+    SOUTH = EnumProperty<ConnectingSide*>::create(
         L"south", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
-    gWestProperty = EnumProperty<ConnectingSide*>::create(
+    WEST = EnumProperty<ConnectingSide*>::create(
         L"west", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
 }
 
 int RedStoneWireBlock::getAABBIndex(const BlockState* state)
 {
     int index = 0;
-    bool north = state->getValue(gNorthProperty) != gRedStoneWireNone;
-    bool east = state->getValue(gEastProperty) != gRedStoneWireNone;
-    bool south = state->getValue(gSouthProperty) != gRedStoneWireNone;
-    bool west = state->getValue(gWestProperty) != gRedStoneWireNone;
+    bool north = state->getValue(NORTH) != RedStoneWireBlock::NONE;
+    bool east = state->getValue(EAST) != RedStoneWireBlock::NONE;
+    bool south = state->getValue(SOUTH) != RedStoneWireBlock::NONE;
+    bool west = state->getValue(WEST) != RedStoneWireBlock::NONE;
 
     if (north || (south && !north && !east && !west))
     {
@@ -184,38 +184,38 @@ RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::getConnectingSide(LevelSou
     const BlockState* neighbour = levelSource->getBlockState(pos.relative(direction));
     if (shouldConnectTo(levelSource->getBlockState(neighbourPos), direction))
     {
-        return gRedStoneWireSide;
+        return RedStoneWireBlock::SIDE;
     }
     if (!neighbour->isSolidBlockingCubeAndNotSignalSource()
         && shouldConnectTo(levelSource, neighbourPos.below()))
     {
-        return gRedStoneWireSide;
+        return RedStoneWireBlock::SIDE;
     }
     if (!levelSource->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource())
     {
         if (!levelSource->getBlockState(neighbourPos)->isTopSolidBlocking()
             && levelSource->getBlockState(neighbourPos)->getBlock() != Blocks::glowstone)
         {
-            return gRedStoneWireNone;
+            return RedStoneWireBlock::NONE;
         }
         if (shouldConnectTo(levelSource, neighbourPos.above()))
         {
-            return neighbour->isSolidBlockingCube() ? gRedStoneWireUp : gRedStoneWireSide;
+            return neighbour->isSolidBlockingCube() ? RedStoneWireBlock::UP : RedStoneWireBlock::SIDE;
         }
     }
-    return gRedStoneWireNone;
+    return RedStoneWireBlock::NONE;
 }
 
 const BlockState* RedStoneWireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     TypedBoxed<ConnectingSide*> west(getConnectingSide(levelSource, pos, Direction::WEST));
-    state = state->setBoxedValue(gWestProperty, &west);
+    state = state->setBoxedValue(WEST, &west);
     TypedBoxed<ConnectingSide*> east(getConnectingSide(levelSource, pos, Direction::EAST));
-    state = state->setBoxedValue(gEastProperty, &east);
+    state = state->setBoxedValue(EAST, &east);
     TypedBoxed<ConnectingSide*> north(getConnectingSide(levelSource, pos, Direction::NORTH));
-    state = state->setBoxedValue(gNorthProperty, &north);
+    state = state->setBoxedValue(NORTH, &north);
     TypedBoxed<ConnectingSide*> south(getConnectingSide(levelSource, pos, Direction::SOUTH));
-    return state->setBoxedValue(gSouthProperty, &south);
+    return state->setBoxedValue(SOUTH, &south);
 }
 
 const AABB* RedStoneWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -611,21 +611,21 @@ int RedStoneWireBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* RedStoneWireBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<ConnectingSide*> north(state->getValue(gNorthProperty));
-    TypedBoxed<ConnectingSide*> east(state->getValue(gEastProperty));
-    TypedBoxed<ConnectingSide*> south(state->getValue(gSouthProperty));
-    TypedBoxed<ConnectingSide*> west(state->getValue(gWestProperty));
+    TypedBoxed<ConnectingSide*> north(state->getValue(NORTH));
+    TypedBoxed<ConnectingSide*> east(state->getValue(EAST));
+    TypedBoxed<ConnectingSide*> south(state->getValue(SOUTH));
+    TypedBoxed<ConnectingSide*> west(state->getValue(WEST));
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise90:
-        return state->setBoxedValue(gNorthProperty, &west)->setBoxedValue(gEastProperty, &north)
-            ->setBoxedValue(gSouthProperty, &east)->setBoxedValue(gWestProperty, &south);
+        return state->setBoxedValue(NORTH, &west)->setBoxedValue(EAST, &north)
+            ->setBoxedValue(SOUTH, &east)->setBoxedValue(WEST, &south);
     case Rotation::eTYPE_Clockwise180:
-        return state->setBoxedValue(gNorthProperty, &south)->setBoxedValue(gEastProperty, &west)
-            ->setBoxedValue(gSouthProperty, &north)->setBoxedValue(gWestProperty, &east);
+        return state->setBoxedValue(NORTH, &south)->setBoxedValue(EAST, &west)
+            ->setBoxedValue(SOUTH, &north)->setBoxedValue(WEST, &east);
     case Rotation::eTYPE_CounterClockwise90:
-        return state->setBoxedValue(gNorthProperty, &east)->setBoxedValue(gEastProperty, &south)
-            ->setBoxedValue(gSouthProperty, &west)->setBoxedValue(gWestProperty, &north);
+        return state->setBoxedValue(NORTH, &east)->setBoxedValue(EAST, &south)
+            ->setBoxedValue(SOUTH, &west)->setBoxedValue(WEST, &north);
     default:
         return state;
     }
@@ -637,15 +637,15 @@ const BlockState* RedStoneWireBlock::mirror(const BlockState* state, Mirror* mir
     {
     case Mirror::eTYPE_LeftRight:
     {
-        TypedBoxed<ConnectingSide*> north(state->getValue(gSouthProperty));
-        TypedBoxed<ConnectingSide*> south(state->getValue(gNorthProperty));
-        return state->setBoxedValue(gNorthProperty, &north)->setBoxedValue(gSouthProperty, &south);
+        TypedBoxed<ConnectingSide*> north(state->getValue(SOUTH));
+        TypedBoxed<ConnectingSide*> south(state->getValue(NORTH));
+        return state->setBoxedValue(NORTH, &north)->setBoxedValue(SOUTH, &south);
     }
     case Mirror::eTYPE_FrontBack:
     {
-        TypedBoxed<ConnectingSide*> east(state->getValue(gWestProperty));
-        TypedBoxed<ConnectingSide*> west(state->getValue(gEastProperty));
-        return state->setBoxedValue(gEastProperty, &east)->setBoxedValue(gWestProperty, &west);
+        TypedBoxed<ConnectingSide*> east(state->getValue(WEST));
+        TypedBoxed<ConnectingSide*> west(state->getValue(EAST));
+        return state->setBoxedValue(EAST, &east)->setBoxedValue(WEST, &west);
     }
     default:
         return Block::mirror(state, mirror);
@@ -654,7 +654,7 @@ const BlockState* RedStoneWireBlock::mirror(const BlockState* state, Mirror* mir
 
 BlockStateDefinition* RedStoneWireBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { gNorthProperty, gEastProperty, gSouthProperty, gWestProperty, POWER };
+    static const Property* properties[] = { NORTH, EAST, SOUTH, WEST, POWER };
     return new BlockStateDefinition(this, properties, 5);
 }
 
