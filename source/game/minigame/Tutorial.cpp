@@ -678,6 +678,52 @@ void Tutorial::tick()
             setMessage(details);
         }
     }
+
+    std::vector<TutorialTask*>& activeTasks = stateTasks[currentState];
+    for (std::vector<TutorialTask*>::iterator it = activeTasks.begin(); it != activeTasks.end();)
+    {
+        TutorialTask* candidate = *it;
+        if (candidate != task && !candidate->isPreCompletionEnabled())
+        {
+            ++it;
+            continue;
+        }
+        if (candidate->ShowMinimumTime()
+            && (!candidate->hasBeenActivated()
+                || GetTickCount() <= static_cast<unsigned int>(visibleTime)
+                                     + gTutorialMinimumDisplayTime))
+        {
+            ++it;
+            continue;
+        }
+        if (!candidate->isCompleted())
+        {
+            ++it;
+            continue;
+        }
+
+        const eTutorial_CompletionAction action = candidate->getCompletionAction();
+        candidate->taskCompleted();
+        it = activeTasks.erase(it);
+        delete candidate;
+        if (action == static_cast<eTutorial_CompletionAction>(2))
+            gameModeConstraints->MoveDelayedConstraints(currentState, 0);
+        if (action == static_cast<eTutorial_CompletionAction>(1)
+            || action == static_cast<eTutorial_CompletionAction>(2))
+        {
+            for (std::vector<TutorialTask*>::iterator rest = activeTasks.begin();
+                 rest != activeTasks.end(); ++rest)
+                delete *rest;
+            activeTasks.clear();
+        }
+        currentTask[currentState] = activeTasks.empty() ? NULL : activeTasks.front();
+        if (currentTask[currentState] != NULL)
+            currentTask[currentState]->setAsCurrentTask(true);
+        else
+            setMessage(static_cast<PopupMessageDetails*>(NULL));
+        stateChanged = true;
+        break;
+    }
 }
 
 unsigned char Tutorial::isStateCompleted(eTutorial_State state)

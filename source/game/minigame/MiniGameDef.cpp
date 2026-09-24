@@ -8,6 +8,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CommonMasterGameMode.hpp"
+#include "game/core/ConditionConnective.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/File.hpp"
 #include "game/core/FileInputStream.hpp"
@@ -407,7 +408,7 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     , mMatchmakingFilterIds(), mOptionDefaults(), mPlayerSettings(), mSaturationModifiers(), mLingeringDurations()
     , mItemOverrides(), mTimers(), mSounds(), mId((EMiniGameId)object[L"id"].asInt(0)), mStartConditions(0)
     , mEndConditions(0), mPostGameConditions(0), mShowdownConditions(0), mVersionMajor(0), mVersionMinor(0), mCrc(0)
-    , mCanAutoStart(false), mLoadOnlyActiveAreaChunks(false), mDisableBuilding(false), mDifficultySet(false), mDifficulty(0)
+    , mCanAutoStart(true), mLoadOnlyActiveAreaChunks(false), mDisableBuilding(false), mDifficultySet(false), mDifficulty(0)
     , mPlayerGameTypeSet(false), mPlayerGameType(0), mSpectateMode(-1), mSpectateEntity(0), mSpectateEntitySet(false)
     , mPlayerAbilitiesSet(false), mPlayerAbilities(), mShowInvulnerableEffect(false), mLockedInventory(false)
     , mShowdownAnnouncements(false), mAllowPvP(false), mTutorialsEnabled(false), mDamageIndicatorDelay(0.0f)
@@ -417,7 +418,6 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     , mTextureName(), mCanCraft(true), mAllowsUGC(true), mHostOptions()
 {
     getVersionNumber(object, &mVersionMajor, &mVersionMinor);
-    mCanAutoStart = object[L"canAutoStart"].asBool(false);
     mLoadOnlyActiveAreaChunks = object[L"loadOnlyActiveAreaChunks"].asBool(false);
     mShowInvulnerableEffect = object[L"showInvulnerableEffect"].asBool(false);
     mLockedInventory = object[L"lockedInventory"].asBool(false);
@@ -449,6 +449,10 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     }
     parsePermissions(object);
     parseChestRefill(object);
+    mStartConditions = ConditionConnective::parseCondition(*object.child(L"StartConditions")->child(L""));
+    mEndConditions = ConditionConnective::parseCondition(*object.child(L"EndConditions")->child(L""));
+    mPostGameConditions = ConditionConnective::parseCondition(*object.child(L"PostGameConditions")->child(L""));
+    mShowdownConditions = ConditionConnective::parseCondition(*object.child(L"ShowdownConditions")->child(L""));
     const XmlObject* hostOptions = object.child(L"HostOptions");
     maybe<unsigned int> hostOptionVersion = (*hostOptions)[L"version"].maybeUInt();
     mHostOptionVersion = hostOptionVersion.isSet() ? hostOptionVersion.get() : 0;
@@ -1000,6 +1004,14 @@ unsigned int MiniGameDef::GetId() const { return mId; }
 
 void MiniGameDef::cleanUp()
 {
+    delete mStartConditions;
+    delete mEndConditions;
+    delete mPostGameConditions;
+    delete mShowdownConditions;
+    mStartConditions = 0;
+    mEndConditions = 0;
+    mPostGameConditions = 0;
+    mShowdownConditions = 0;
     for (boost::unordered_map<int, FoodBalance*>::iterator it = mFoodBalances.begin(); it != mFoodBalances.end(); ++it)
         delete it->second;
     mFoodBalances.clear();
@@ -1268,10 +1280,10 @@ not_null_ptr<ItemInstance> MiniGameDef::getEquipmentForSlot(EquipmentSlot::EInde
     return ItemInstance::EMPTY;
 }
 
-unsigned int MiniGameDef::GetStartConditions() const { return mStartConditions; }
-unsigned int MiniGameDef::GetEndConditions() const { return mEndConditions; }
-unsigned int MiniGameDef::GetPostGameConditions() const { return mPostGameConditions; }
-unsigned int MiniGameDef::GetShowdownConditions() const { return mShowdownConditions; }
+GameCondition* MiniGameDef::GetStartConditions() const { return mStartConditions; }
+GameCondition* MiniGameDef::GetEndConditions() const { return mEndConditions; }
+GameCondition* MiniGameDef::GetPostGameConditions() const { return mPostGameConditions; }
+GameCondition* MiniGameDef::GetShowdownConditions() const { return mShowdownConditions; }
 
 const std::vector<int>& MiniGameDef::GetOptionsList(eCustomGameModeHostOption option) const
 {

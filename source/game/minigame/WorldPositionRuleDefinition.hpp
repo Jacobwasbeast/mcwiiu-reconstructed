@@ -5,6 +5,7 @@
 
 class WorldPositionRuleDefinition : public GameRuleDefinition
 {
+    friend class MasterGameMode;
 public:
     WorldPositionRuleDefinition();
 

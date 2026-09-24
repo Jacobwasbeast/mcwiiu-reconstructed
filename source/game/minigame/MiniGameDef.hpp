@@ -16,6 +16,7 @@
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 
 class XmlObject;
+class GameCondition;
 class LaunchMoreOptionsMenuInitData;
 class ItemInstance;
 class HtmlString;
@@ -320,10 +321,10 @@ public:
     std::wstring getOuterLootGroup() const;
     std::wstring getHVLootGroup() const;
     not_null_ptr<ItemInstance> getEquipmentForSlot(EquipmentSlot::EIndex slot) const;
-    unsigned int GetStartConditions() const;
-    unsigned int GetEndConditions() const;
-    unsigned int GetPostGameConditions() const;
-    unsigned int GetShowdownConditions() const;
+    GameCondition* GetStartConditions() const;
+    GameCondition* GetEndConditions() const;
+    GameCondition* GetPostGameConditions() const;
+    GameCondition* GetShowdownConditions() const;
     const std::vector<int>& GetOptionsList(eCustomGameModeHostOption option) const;
     unsigned int HostOption_Category(eCustomGameModeHostOption option, unsigned int index) const;
     unsigned int HostOption_Category(eCustomGameModeHostOption option) const;
@@ -471,10 +472,10 @@ private:
     boost::unordered_map<int, TimerSpec> mTimers;
     boost::unordered_map<int, SoundSpec> mSounds;
     EMiniGameId mId;
-    unsigned int mStartConditions;
-    unsigned int mEndConditions;
-    unsigned int mPostGameConditions;
-    unsigned int mShowdownConditions;
+    GameCondition* mStartConditions;
+    GameCondition* mEndConditions;
+    GameCondition* mPostGameConditions;
+    GameCondition* mShowdownConditions;
     unsigned short mVersionMajor;
     unsigned short mVersionMinor;
     unsigned int mCrc;
