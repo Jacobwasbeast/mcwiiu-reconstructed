@@ -134,10 +134,10 @@ public:
     std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
     std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
     static not_null_ptr<ItemInstance> getEquipmentForSlot(const EquipmentSlot* slot, int level);
-    void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
-    void populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty);
-    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
-    void finalizeSpawnEggSpawn(int type);
+    virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
+    virtual void populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual void finalizeSpawnEggSpawn(int type);
     virtual bool canBeControlledByRider();
     void setDropChance(const EquipmentSlot* slot, float chance);
     bool canBeLeashed(const boost::shared_ptr<Player>& player);

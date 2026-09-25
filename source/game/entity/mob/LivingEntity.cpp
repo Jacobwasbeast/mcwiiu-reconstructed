@@ -2393,17 +2393,17 @@ void LivingEntity::jumpFromGround()
 
 void LivingEntity::jumpInWater()
 {
-    mYd = mYd + 0.03999999910593033;
+    mYd = mYd + 0.07999999821186066;
 }
 
 void LivingEntity::goDownInWater()
 {
-    mYd = mYd - 0.0030468758195638657;
+    mYd = mYd - 0.03999999910593033;
 }
 
 void LivingEntity::jumpInLava()
 {
-    mYd = mYd + 0.0030468758195638657;
+    mYd = mYd + 0.03999999910593033;
 }
 
 float LivingEntity::getWaterSlowDown()
@@ -3592,6 +3592,33 @@ void LivingEntity::aiStep()
 
         setPos(lerpX, lerpY, lerpZ);
         setRot(mYRot, mXRot);
+
+        if (!mNoPhysics)
+        {
+            AABB* checkBox = mBoundingBox->shrink(0.1, 0.0, 0.1);
+            checkBox->mMaxY = checkBox->mMinY + 0.1;
+
+            std::vector<AABB*>* collisions =
+                mLevel->getCollisionAABBs(shared_from_this(), checkBox, false, false, false);
+
+            if (!collisions->empty())
+            {
+                double minY = mBoundingBox->mMinY;
+                double pushY = minY;
+
+                for (std::vector<AABB*>::iterator it = collisions->begin(); it != collisions->end(); ++it)
+                {
+                    double aabbMaxY = (*it)->mMaxY;
+
+                    if ((aabbMaxY - minY < 0.699999988079071) && (pushY < aabbMaxY))
+                    {
+                        pushY = aabbMaxY;
+                    }
+                }
+
+                setPos(lerpX, lerpY + (pushY - minY), lerpZ);
+            }
+        }
     }
     else if (!isEffectiveAi())
     {
@@ -3600,17 +3627,17 @@ void LivingEntity::aiStep()
         mZd = mZd * 0.9800000190734863;
     }
 
-    if (Mth::abs((float)mXd) < 0.003000000026077032f)
+    if (Mth::abs(mXd) < 5e-05)
     {
         mXd = 0.0;
     }
 
-    if (Mth::abs((float)mYd) < 0.003000000026077032f)
+    if (Mth::abs(mYd) < 5e-05)
     {
         mYd = 0.0;
     }
 
-    if (Mth::abs((float)mZd) < 0.003000000026077032f)
+    if (Mth::abs(mZd) < 5e-05)
     {
         mZd = 0.0;
     }

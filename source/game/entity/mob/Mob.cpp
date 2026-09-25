@@ -1162,9 +1162,9 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
 MobGroupData* Mob::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&)
 {
     if (mRandom->nextFloat() < 0.05f)
-        setPersistenceRequired(true);
+        setLeftHanded(true);
     else
-        setPersistenceRequired(false);
+        setLeftHanded(false);
     return data;
 }
 
