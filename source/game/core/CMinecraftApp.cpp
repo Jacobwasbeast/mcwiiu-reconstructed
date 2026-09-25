@@ -80,6 +80,16 @@ struct SKIN_BOX
 #include "game/item/Inventory.hpp"
 #include "game/core/Merchant.hpp"
 #include "game/ui/UIScene_PauseMenu.hpp"
+#include "game/core/LeaderboardManager.hpp"
+#include "game/core/MasterGameMode.hpp"
+#include "game/core/StatsCounter.hpp"
+#include "game/core/User.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/network/ClientPacketListener.hpp"
+#include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "vendor/_ConnectionProgressParams.hpp"
+#include "vendor/_LoadingInputParams.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
@@ -96,6 +106,9 @@ struct SKIN_BOX
 #include <vector>
 
 void Sleep(unsigned int milliseconds);
+
+extern bool sHaltRequested;
+extern bool sSaveOnExitAnswered;
 
 unsigned int GetTickCount();
 
@@ -212,6 +225,39 @@ struct WritingBookMenuInitData
     int player;
     bool signing;
 };
+
+struct FullscreenProgressState
+{
+    bool showConfirmation;
+    bool showProgress;
+    bool showLoading;
+    bool showTip;
+    int closeMode;
+    int playerId;
+    EUIScene backScene;
+};
+
+struct InviteJoinData
+{
+    int userIndex;
+    unsigned int userIndexMask;
+    const FriendPresence* presence;
+};
+
+bool sRetryDisconnectAction = false;
+
+FullscreenProgressState* NewFullscreenProgressState(bool showTip, int closeMode, int playerId)
+{
+    FullscreenProgressState* state = new FullscreenProgressState();
+    state->showConfirmation = false;
+    state->showProgress = true;
+    state->showLoading = true;
+    state->showTip = showTip;
+    state->closeMode = closeMode;
+    state->playerId = playerId;
+    state->backScene = EUIScene_None;
+    return state;
+}
 
 std::vector<BANNEDLISTDATA*>& BannedLevelListAt(CMinecraftApp* minecraftApp, int player)
 {
@@ -983,7 +1029,7 @@ uint32_t CMinecraftApp::GetTMSAction(int32_t firstArgument)
 {
     return mTMSActions[firstArgument];
 }
-uint32_t CMinecraftApp::EthernetDisconnectReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::EthernetDisconnectReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mPlayer == NULL)
@@ -1009,7 +1055,7 @@ uint32_t CMinecraftApp::EthernetDisconnectReturned(void* context, int button, C4
         gameMode->OnExitedGame();
     return 0;
 }
-uint32_t CMinecraftApp::BannedLevelDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::BannedLevelDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result != static_cast<C4JStorage::EMessageResult>(4))
     {
@@ -1032,7 +1078,7 @@ uint8_t CMinecraftApp::GetChangingSessionType()
 {
     return mChangingSessionType;
 }
-uint32_t CMinecraftApp::UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     if (result == static_cast<C4JStorage::EMessageResult>(4))
@@ -1062,7 +1108,7 @@ uint32_t CMinecraftApp::GetXuiServerAction(int32_t firstArgument)
 {
     return mXuiServerActions[firstArgument];
 }
-uint32_t CMinecraftApp::UnlockFullExitReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::UnlockFullExitReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     int userIndex = minecraft->mPlayer->mUserIndex;
@@ -1167,7 +1213,7 @@ waitForSessionEnd:
     gApp.mGameRuleManager.unloadCurrentGameRules();
     return 0;
 }
-uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     int userIndex = minecraft->mPlayer->mUserIndex;
@@ -1188,7 +1234,7 @@ uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage:
     }
     return 0;
 }
-uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(4))
     {
@@ -1202,7 +1248,7 @@ uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JS
     }
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
@@ -1247,7 +1293,7 @@ int CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int b
     }
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
@@ -1386,7 +1432,7 @@ uint64_t CMinecraftApp::ExitGameFromRemoteSave(void* context)
                                               NULL, true);
     return 0;
 }
-uint32_t CMinecraftApp::TexturePackDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::TexturePackDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -3884,19 +3930,723 @@ void CMinecraftApp::RunFrame()
 }
 void CMinecraftApp::HandleXuiActions()
 {
-    static unsigned int actionTicks = 0;
-    ++actionTicks;
-    if (GetGameStarted() != 0)
+    Minecraft* minecraft = Minecraft::GetInstance();
+
+    if (GetGlobalXuiAction() == static_cast<eXuiAction>(0x21))
     {
-        if (IsAppPaused() != 0)
-            actionTicks = 0;
-        else if (actionTicks > 0x7fffffffU)
-            actionTicks = 1;
+        int parameters[1] = { static_cast<int>(0xb9a1bf4dU) };
+        if (gConsoleUIController.RequestErrorMessage(0x3856a24c, static_cast<int>(0xbf12dc51U), parameters, 1,
+                                                     0xff, NULL, NULL, NULL, true) != 1)
+            SetGlobalXuiAction(static_cast<eXuiAction>(0));
     }
-    else
+
+    EnterCriticalSection(&mActionMutex);
+    for (int pad = 0; pad < 4; ++pad)
     {
-        actionTicks = 0;
+        unsigned int action = mXuiActions[pad].action;
+        void* param = mXuiActions[pad].param;
+        if (action == 0)
+        {
+            ClientMasterGameMode* masterGameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+            if (pad == gProfile->GetPrimaryPad() && masterGameMode != NULL &&
+                masterGameMode->isWaitingToTransition())
+            {
+                action = 0x28;
+                param = masterGameMode->popTransition();
+            }
+        }
+        else if (action == 0x29 || action == 0x11 || action > 0x2a)
+        {
+            action = 0;
+        }
+
+        switch (action)
+        {
+        case 1:
+            if (GetChangingSessionType())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            }
+            else if (!gProfile->IsFullVersion())
+            {
+                int parameters[2] = { static_cast<int>(0xb9a1bf4dU), 0x4fcbc7e7 };
+                gConsoleUIController.RequestErrorMessage(static_cast<int>(0xc6058d6bU),
+                                                         static_cast<int>(0xc75616c3U), parameters, 2,
+                                                         pad, UnlockFullSaveReturned, this, NULL, true);
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            }
+            else
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(2), NULL);
+            }
+            break;
+        case 2:
+        {
+            gApp.SetAutosaveTimerTime();
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            gConsoleUIController.HideAllGameUIElements();
+            gConsoleUIController.ShowOtherPlayersBaseScene(gProfile->GetPrimaryPad(), false);
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_secondParameter = NULL;
+            params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&UIScene_PauseMenu::SaveWorldThreadProc);
+            params->m_isEnabled = true;
+            FullscreenProgressState* state = NewFullscreenProgressState(true, 6, gProfile->GetPrimaryPad());
+            state->backScene = gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x30))
+                ? static_cast<EUIScene>(0x30)
+                : static_cast<EUIScene>(5);
+            params->m_thirdParameter = state;
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(4), static_cast<EUIGroup>(1));
+            break;
+        }
+        case 3:
+        {
+            if (CGameNetworkManager::sInstance.IsLeavingGame())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                break;
+            }
+            minecraft->mGui->clearMessages(-1);
+            minecraft->mGui->clearSingleMessages();
+            gConsoleUIController.HideAllGameUIElements();
+            gConsoleUIController.ShowAutosaveCountdownTimer(false);
+            gConsoleUIController.HideAllGameUIElements();
+            for (int player = 0; player < 4; ++player)
+                gConsoleUIController.SetTutorialVisible(player, false);
+            gStorage->ForceQueuedProfileWrites(-1);
+            if (g_pLeaderboardManager->OpenSession())
+            {
+                for (int player = 0; player < 4; ++player)
+                {
+                    if (gProfile->IsSignedIn(player))
+                        Minecraft::GetInstance()->forceStatsSave(player);
+                }
+                g_pLeaderboardManager->CloseSession();
+            }
+
+            ClientMasterGameMode* masterGameMode;
+            if (!gProfile->IsFullVersion())
+            {
+                int parameters[2] = { static_cast<int>(0xb9a1bf4dU), 0x4fcbc7e7 };
+                gConsoleUIController.RequestErrorMessage(static_cast<int>(0xc6058d6bU),
+                                                         static_cast<int>(0xc75616c3U), parameters, 2,
+                                                         pad, UnlockFullExitReturned, this, NULL, true);
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                masterGameMode = minecraft->GetClientMasterGameMode();
+            }
+            else
+            {
+                if (pad != gProfile->GetPrimaryPad())
+                {
+                    minecraft->setLocalPlayerIdx(gProfile->GetPrimaryPad());
+                    minecraft->removeLocalPlayerIdx(pad);
+                    gProfile->SignOutUser(pad);
+                    SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                    LeaveCriticalSection(&mActionMutex);
+                    return;
+                }
+                SetActionInternal(pad, static_cast<eXuiAction>(4), param);
+                masterGameMode = minecraft->GetClientMasterGameMode();
+            }
+            if (masterGameMode != NULL)
+                masterGameMode->OnExitedGame();
+            if (gMinecraftServer != NULL && gMinecraftServer->mMasterGameMode != NULL)
+                gMinecraftServer->mMasterGameMode->KillTimers();
+            Minecraft::GetInstance()->mSoundEngine->RemoveMusicVolumeLimit();
+
+            if (CGameNetworkManager::sInstance.GetPlayerCount() < 2)
+            {
+                gApp.SetRichPresenceContext(pad, 0);
+                gProfile->SetCurrentGameActivity(pad, CGameNetworkManager::sInstance.IsLocalGame() ? 5 : 4, false);
+                telemetryManagerInstance->RecordLevelExit(pad, eSen_LevelExitStatus_Completed);
+            }
+            else
+            {
+                for (int player = 0; player < 4; ++player)
+                {
+                    if (minecraft->mLocalPlayers[player] == NULL)
+                        continue;
+                    const bool localGame = CGameNetworkManager::sInstance.IsLocalGame();
+                    gApp.SetRichPresenceContext(player, 0);
+                    gProfile->SetCurrentGameActivity(player, localGame ? 3 : 2, false);
+                    telemetryManagerInstance->RecordLevelExit(player, eSen_LevelExitStatus_Completed);
+                }
+            }
+            break;
+        }
+        case 4:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            SetGameStarted(false);
+            SetChangingSessionType(true);
+            gConsoleUIController.CloseAllPlayersScenes(false);
+            gConsoleUIController.HideAllGameUIElements();
+            for (int player = 0; player < 4; ++player)
+                minecraft->playerLeftTutorial(player);
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_secondParameter = param;
+            params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&UIScene_PauseMenu::ExitWorldThreadProc);
+            params->m_thirdParameter = NewFullscreenProgressState(param == NULL, 4, 0);
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            break;
+        }
+        case 5:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            minecraft->mGui->clearMessages(-1);
+            minecraft->mGui->clearSingleMessages();
+            gConsoleUIController.HideAllGameUIElements();
+            for (int player = 0; player < 4; ++player)
+                gConsoleUIController.SetTutorialVisible(player, false);
+            SetGameStarted(false);
+            gConsoleUIController.CloseAllPlayersScenes(false);
+            for (int player = 0; player < 4; ++player)
+                minecraft->playerLeftTutorial(player);
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_secondParameter = param;
+            params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&UIScene_PauseMenu::ExitWorldThreadProc);
+            params->m_thirdParameter = NewFullscreenProgressState(true, 4, 0);
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            break;
+        }
+        case 6:
+        {
+            _ConnectionProgressParams* params = new _ConnectionProgressParams();
+            params->m_connectionId = pad;
+            params->m_isLocal = false;
+            params->m_isJoining = false;
+            params->m_userIndex = static_cast<int32_t>(0xf5ba56aaU);
+            gConsoleUIController.DisplayGamertag(pad, false);
+            gConsoleUIController.NavigateToScene(pad, static_cast<EUIScene>(0x1f), params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            minecraft->mLocalPlayers[pad]->mHasOpenedInventory = false;
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            minecraft->mLocalPlayers[pad]->respawn();
+            break;
+        }
+        case 7:
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[pad];
+            if (player == NULL || player->mHasOpenedInventory)
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                break;
+            }
+            _ConnectionProgressParams* params = new _ConnectionProgressParams();
+            params->m_connectionId = pad;
+            params->m_isLocal = false;
+            params->m_isJoining = false;
+            params->m_userIndex = static_cast<int32_t>(0xf5ba56aaU);
+            gConsoleUIController.DisplayGamertag(pad, false);
+            gConsoleUIController.NavigateToScene(pad, static_cast<EUIScene>(0x1f), params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        }
+        case 8:
+        case 0x20:
+        {
+            if (action == 8)
+                gConsoleUIController.ShowAutosaveCountdownTimer(false);
+            if (!gApp.GetGameStarted())
+                MinecraftServer::HaltServer(true);
+            if (action == 8)
+            {
+                gStorage->SetSaveDeviceSelected(pad, false);
+                Minecraft::GetInstance()->mStats[pad]->clear();
+            }
+            if (!CGameNetworkManager::sInstance.IsInSession())
+            {
+                gApp.SetActionInternal(pad, static_cast<eXuiAction>(10), NULL);
+                sHaltRequested = false;
+                sSaveOnExitAnswered = false;
+            }
+            else
+            {
+                gApp.SetActionInternal(pad, static_cast<eXuiAction>(9), NULL);
+            }
+            break;
+        }
+        case 10:
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            gProfile->ResetProfileProcessState();
+            gStorage->SetSaveDeviceSelected(pad, false);
+            gConsoleUIController.UpdatePlayerBasePositions();
+            gConsoleUIController.NavigateToHomeMenu(false);
+            break;
+        case 0xb:
+        case 0xc:
+        {
+            const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+            gStorage->ForceQueuedProfileWrites(pad);
+            if (action == 0xb && g_pLeaderboardManager->OpenSession())
+            {
+                for (int player = 0; player < 4; ++player)
+                {
+                    if (gProfile->IsSignedIn(player))
+                        Minecraft::GetInstance()->forceStatsSave(player);
+                }
+                g_pLeaderboardManager->CloseSession();
+            }
+            minecraft->mGui->clearMessages(pad);
+            minecraft->setLocalPlayerIdx(gProfile->GetPrimaryPad());
+            minecraft->removeLocalPlayerIdx(pad);
+            gConsoleUIController.SetTooltips(pad, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                             false, false);
+            const int activity = playerCount < 3
+                ? (CGameNetworkManager::sInstance.IsLocalGame() ? 5 : 4)
+                : (CGameNetworkManager::sInstance.IsLocalGame() ? 3 : 2);
+            for (int player = 0; player < 4; ++player)
+            {
+                if (player != pad && minecraft->mLocalPlayers[player] != NULL)
+                    gProfile->SetCurrentGameActivity(player, activity, false);
+            }
+            gProfile->SignOutUser(pad);
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        }
+        case 0xd:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            int parameters[2] = { static_cast<int>(0xc6058d6bU), static_cast<int>(0x2686c8e5U) };
+            gConsoleUIController.RequestErrorMessage(0x383ba45f, static_cast<int>(0x91a0515aU), parameters, 2,
+                                                     pad, TrialOverReturned, this, NULL, true);
+            break;
+        }
+        case 0xe:
+            ExitGame();
+            break;
+        case 0xf:
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[pad];
+            if (player != NULL && player->mPacketListener != NULL && player->mPacketListener->isStarted())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                gConsoleUIController.CloseUIScenes(pad, false);
+            }
+            else if (!CGameNetworkManager::sInstance.IsInGameplay())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            }
+            break;
+        }
+        case 0x10:
+        {
+            CGameNetworkManager::CancelJoinGame(&CGameNetworkManager::sInstance);
+            if (CGameNetworkManager::sInstance.IsLeavingGame())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            }
+            else if (!CGameNetworkManager::sInstance.IsHost())
+            {
+                if (sRetryDisconnectAction)
+                {
+                    SetActionInternal(pad, static_cast<eXuiAction>(0x10), NULL);
+                    break;
+                }
+                SetActionInternal(pad, static_cast<eXuiAction>(CGameNetworkManager::sInstance.IsInSession() ? 0x11 : 0),
+                                  NULL);
+                int parameters[1] = { static_cast<int>(0xb9a1bf4dU) };
+                if (gConsoleUIController.RequestErrorMessage(
+                        CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(0xf1c0f3d9U)),
+                        CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(0x9d363c70U)),
+                        parameters, 1, 0xff, EthernetDisconnectReturned, reinterpret_cast<void*>(pad), NULL,
+                        true) == 1)
+                    SetActionInternal(pad, static_cast<eXuiAction>(0x10), NULL);
+                Minecraft::GetInstance()->mStats[pad]->clear();
+            }
+            else if (!CGameNetworkManager::sInstance.IsLocalGame() && CGameNetworkManager::sInstance.IsInGameplay())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0x18), NULL);
+            }
+            else if (CGameNetworkManager::sInstance.IsLocalGame() || CGameNetworkManager::sInstance.IsInGameplay())
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            }
+            else
+            {
+                bool levelLoaded = false;
+                for (int level = 0; level < minecraft->mLevelCount; ++level)
+                {
+                    if (minecraft->mLevels[level] != NULL)
+                    {
+                        levelLoaded = true;
+                        break;
+                    }
+                }
+                if (levelLoaded)
+                {
+                    SetActionInternal(pad, static_cast<eXuiAction>(0x18), NULL);
+                    break;
+                }
+                SetActionInternal(pad, static_cast<eXuiAction>(0x11), NULL);
+                int parameters[1] = { static_cast<int>(0xb9a1bf4dU) };
+                gConsoleUIController.RequestErrorMessage(
+                    CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(0xf1c0f3d9U)),
+                    CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(0x9d363c70U)),
+                    parameters, 1, 0xff, EthernetDisconnectReturned, reinterpret_cast<void*>(pad), NULL, true);
+                MinecraftServer::HaltServer(false);
+                CGameNetworkManager::sInstance.LeaveGame(false);
+                Minecraft::GetInstance()->mStats[pad]->clear();
+            }
+            break;
+        }
+        case 9:
+        case 0x12:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            ClientMasterGameMode* masterGameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+            if (masterGameMode != NULL && pad == gProfile->GetPrimaryPad())
+                masterGameMode->dropAllTransitions();
+            minecraft->mGui->clearMessages(-1);
+            minecraft->mGui->clearSingleMessages();
+            gConsoleUIController.HideAllGameUIElements();
+            gProfile->ResetProfileProcessState();
+            if (!CGameNetworkManager::sInstance.IsLeavingGame())
+            {
+                for (int player = 0; player < 4; ++player)
+                    gConsoleUIController.SetTutorialVisible(player, false);
+                SetGameStarted(false);
+                gConsoleUIController.HideAllGameUIElements();
+                gConsoleUIController.CloseAllPlayersScenes(false);
+                for (int player = 0; player < 4; ++player)
+                    minecraft->playerLeftTutorial(player);
+                _LoadingInputParams* params = new _LoadingInputParams();
+                params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&SignoutExitWorldThreadProc);
+                params->m_thirdParameter = NewFullscreenProgressState(true, 4, 0);
+                gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                     static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            }
+            else
+            {
+                minecraft->mProgressRenderer->progressStartNoAbort(0x3e0b4895);
+                minecraft->mProgressRenderer->progressStage(-1);
+                MinecraftServer::HaltServer(true);
+            }
+            break;
+        }
+        case 0x13:
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            gProfile->ResetProfileProcessState();
+            gConsoleUIController.UpdatePlayerBasePositions();
+            gConsoleUIController.NavigateToHomeMenu(false);
+            break;
+        case 0x14:
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            if (!gProfile->IsFullVersion())
+            {
+                int parameters[2] = { static_cast<int>(0xb9a1bf4dU), 0x4fcbc7e7 };
+                gConsoleUIController.RequestErrorMessage(static_cast<int>(0xc6058d6bU),
+                                                         static_cast<int>(0xadece1fdU), parameters, 2,
+                                                         pad, UnlockFullInviteReturned, this, NULL, true);
+                telemetryManagerInstance->RecordUpsellPresented(pad, eSen_UpsellID_FullGame, 1);
+            }
+            else
+            {
+                UIScene_PauseMenu::OpenExitGameDialog(gProfile->GetPrimaryPad(), this, ExitAndJoinFromInvite,
+                                                      ExitAndJoinFromInviteSaveDialogReturned,
+                                                      UIScene_PauseMenu::EOpenExitGameDialog_1);
+            }
+            break;
+        case 0x15:
+        {
+            telemetryManagerInstance->RecordUpsellPresented(pad, eSen_UpsellID_FullGame, 1);
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            int parameters[2] = { static_cast<int>(0xb9a1bf4dU), 0x4fcbc7e7 };
+            gConsoleUIController.RequestErrorMessage(static_cast<int>(0xc6058d6bU), static_cast<int>(0xadece1fdU),
+                                                     parameters, 2, pad, UnlockFullInviteReturned, this, NULL,
+                                                     true);
+            break;
+        }
+        case 0x16:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
+            if (masterGameMode != NULL)
+                masterGameMode->OnExitedGame();
+            minecraft->mGui->clearMessages(-1);
+            minecraft->mGui->clearSingleMessages();
+            gConsoleUIController.HideAllGameUIElements();
+            for (int player = 0; player < 4; ++player)
+                gConsoleUIController.SetTutorialVisible(player, false);
+            SetGameStarted(false);
+            gConsoleUIController.CloseAllPlayersScenes(false);
+            for (int player = 0; player < 4; ++player)
+                minecraft->playerLeftTutorial(player);
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_secondParameter = &CGameNetworkManager::sInstance.m_pendingInviteUserIndex;
+            params->m_firstParameter = &CGameNetworkManager::ExitAndJoinFromInviteThreadProc;
+            params->m_thirdParameter = NewFullscreenProgressState(true, 0, 0);
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            break;
+        }
+        case 0x17:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            SetTutorialMode(false, boost::shared_ptr<Player>());
+            CGameNetworkManager::sInstance.SetLocalGame(false);
+            Minecraft::GetInstance()->clearConnectionFailed();
+            const InviteJoinData* invite = static_cast<const InviteJoinData*>(param);
+            gProfile->SetLockedProfile(invite->userIndex);
+            gProfile->SetPrimaryPad(invite->userIndex);
+            for (int player = 0; player < 4; ++player)
+            {
+                if (player == invite->userIndex)
+                    continue;
+                if (gProfile->IsSignedIn(player) &&
+                    (CGameNetworkManager::sInstance.m_pendingInviteUserMask &
+                     CGameNetworkManager::GetLocalPlayerMask(player)) == 0)
+                    gProfile->SignOutUser(player);
+            }
+            Minecraft::GetInstance()->mUser->name =
+                convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
+            if (!CGameNetworkManager::sInstance.JoinGameFromInviteInfo(invite->userIndex, invite->userIndexMask,
+                                                                      invite->presence))
+            {
+                int parameters[1] = { static_cast<int>(0xb9a1bf4dU) };
+                gConsoleUIController.RequestErrorMessage(0x4bb9d6ae, 0x665e892b, parameters, 1,
+                                                         gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+                gConsoleUIController.NavigateToHomeMenu(false);
+                gConsoleUIController.UpdatePlayerBasePositions();
+            }
+            break;
+        }
+        case 0x18:
+        {
+            if (!CGameNetworkManager::sInstance.IsInGameplay() || gConsoleUIController.IsExpectingOrReloadingSkin())
+            {
+                if (CGameNetworkManager::sInstance.IsLeavingGame())
+                    SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                break;
+            }
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            if (GetChangingSessionType() || CGameNetworkManager::sInstance.IsLocalGame())
+                break;
+            SetGameStarted(false);
+            SetChangingSessionType(true);
+            SetReallyChangingSessionType(true);
+            gConsoleUIController.HideAllGameUIElements();
+            if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x30)))
+                gConsoleUIController.CloseAllPlayersScenes(false);
+            gConsoleUIController.ShowOtherPlayersBaseScene(gProfile->GetPrimaryPad(), true);
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_firstParameter = &CGameNetworkManager::ChangeSessionTypeThreadProc;
+            params->m_secondParameter = NULL;
+            FullscreenProgressState* state = NewFullscreenProgressState(true, 3, 0);
+            state->showConfirmation = true;
+            if (gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x30)))
+            {
+                state->closeMode = 6;
+                state->backScene = static_cast<EUIScene>(0x30);
+            }
+            params->m_thirdParameter = state;
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            break;
+        }
+        case 0x19:
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            GameSettings::SetDefaultGameOptions(static_cast<C4JStorage::PROFILESETTINGS*>(param), pad, true);
+            GameSettings::CheckGameSettingsChanged(true, pad);
+            gConsoleUIController.SetupFont();
+            break;
+        case 0x1b:
+        {
+            if (GetGameStarted())
+            {
+                SetActionInternal(gProfile->GetPrimaryPad(), static_cast<eXuiAction>(0), NULL);
+                break;
+            }
+            SetActionInternal(pad, static_cast<eXuiAction>(0x1c), NULL);
+            for (int player = 0; player < 4; ++player)
+                gConsoleUIController.CloseUIScenes(player, true);
+            gConsoleUIController.HideAllGameUIElements();
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&RemoteSaveThreadProc);
+            params->m_secondParameter = NULL;
+            FullscreenProgressState* state = NewFullscreenProgressState(true, 1, 0);
+            if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x1f)))
+            {
+                if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x30)))
+                {
+                    state->closeMode = 3;
+                }
+                else
+                {
+                    state->closeMode = 6;
+                    state->backScene = static_cast<EUIScene>(0x30);
+                }
+            }
+            params->m_fifthParameter = reinterpret_cast<int32_t>(&ExitGameFromRemoteSave);
+            params->m_selectedIndex = static_cast<int32_t>(0xded2ef45U);
+            params->m_thirdParameter = state;
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            break;
+        }
+        case 0x1d:
+        {
+            int parameters[1] = { static_cast<int>(0xb9a1bf4dU) };
+            if (gConsoleUIController.RequestErrorMessage(0x252ab13f, static_cast<int>(0xcc5a590fU), parameters, 1,
+                                                         gProfile->GetPrimaryPad(), NULL, NULL, NULL, true) != 1)
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        }
+        case 0x1e:
+        {
+            bool saveExists;
+            gStorage->DoesSaveExist(&saveExists);
+            SetActionInternal(pad, static_cast<eXuiAction>(GetChangingSessionType() ? 0 : 0x1f), NULL);
+            break;
+        }
+        case 0x1f:
+        {
+            gApp.SetAutosaveTimerTime();
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            gConsoleUIController.HideAllGameUIElements();
+            gConsoleUIController.ShowOtherPlayersBaseScene(gProfile->GetPrimaryPad(), false);
+            if (minecraft->mGameModes[gProfile->GetPrimaryPad()] != NULL)
+            {
+                Tutorial* tutorial = minecraft->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
+                if (tutorial != NULL)
+                    tutorial->showTutorialPopup(false);
+            }
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&UIScene_PauseMenu::SaveWorldThreadProc);
+            params->m_secondParameter = reinterpret_cast<void*>(1);
+            params->m_thirdParameter = NewFullscreenProgressState(true, 5, gProfile->GetPrimaryPad());
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(4), static_cast<EUIGroup>(1));
+            break;
+        }
+        case 0x22:
+            if (!CGameNetworkManager::sInstance.IsInGameplay() || CGameNetworkManager::sInstance.IsLeavingGame())
+                break;
+            telemetryManagerInstance->RecordBanLevel(pad);
+            if (gProfile->GetPrimaryPad() == pad)
+                SetActionInternal(pad, static_cast<eXuiAction>(3), NULL);
+            else
+                SetActionInternal(pad, static_cast<eXuiAction>(0xb), NULL);
+            break;
+        case 0x23:
+        {
+            int parameters[2] = { static_cast<int>(0xdccbba45U), static_cast<int>(0x2686c8e5U) };
+            INetworkPlayer* player = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(pad);
+            if (player == NULL)
+            {
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+                break;
+            }
+            wchar_t message[40];
+            swprintf(message, 40, L"%ls\n\n%%ls", player->GetOnlineName());
+            if (gConsoleUIController.RequestErrorMessage(static_cast<int>(0x853479b8U),
+                                                         static_cast<int>(0xa7acaebbU), parameters, 2, pad,
+                                                         BannedLevelDialogReturned, this, message, true) != 1)
+                SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        }
+        case 0x24:
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            Minecraft::GetInstance()->fjReloadTexturePack();
+            break;
+        case 0x25:
+            SetActionInternal(pad, static_cast<eXuiAction>(0x29), NULL);
+            Minecraft::GetInstance()->fjReloadTexturePack();
+            break;
+        case 0x26:
+            gConsoleUIController.SetTooltips(pad, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                             false, false);
+            gConsoleUIController.ReloadSkin();
+            gConsoleUIController.StartReloadSkinThread();
+            gConsoleUIController.setCleanupOnReload(true);
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        case 0x27:
+        {
+            int parameters[2] = { static_cast<int>(0xeac05ed4U), 0x4424ed62 };
+            gConsoleUIController.RequestErrorMessage(0x1e8ee39f, 0x5ab46118, parameters, 2,
+                                                     gProfile->GetPrimaryPad(), TexturePackDialogReturned, this,
+                                                     NULL, true);
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        }
+        case 0x28:
+        {
+            SetActionInternal(pad, static_cast<eXuiAction>(0x29), NULL);
+            gConsoleUIController.CloseAllPlayersScenes(true);
+            for (int player = 0; player < 4; ++player)
+            {
+                if (minecraft->mGameModes[player] != NULL && minecraft->mGameModes[player]->getTutorial() != NULL)
+                    minecraft->mGameModes[player]->getTutorial()->setMessage(std::wstring(L""), -1, 0);
+            }
+            gConsoleUIController.HideAllGameUIElements();
+            gConsoleUIController.ShowOtherPlayersBaseScene(gProfile->GetPrimaryPad(), false);
+            _LoadingInputParams* params = new _LoadingInputParams();
+            params->m_secondParameter = param;
+            params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&GameModeTransitionThreadProc);
+            params->m_timeout = static_cast<int32_t>(Minecraft::GetInstance()->GetMiniGame()->GetId());
+            params->m_thirdParameter = NewFullscreenProgressState(true, 3, gProfile->GetPrimaryPad());
+            params->m_sixthParameter = reinterpret_cast<int32_t>(&GameModeTransitionComplete);
+            params->m_eighthParameter = static_cast<GameModeTransitionParams*>(param)->mReturningToLobby;
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            break;
+        }
+        case 0x2a:
+            SetActionInternal(pad, static_cast<eXuiAction>(0), NULL);
+            break;
+        default:
+            break;
+        }
+
+        switch (GetTMSAction(pad))
+        {
+        case 1:
+            SetTMSAction(pad, 0);
+            break;
+        case 2:
+        case 3:
+            SetTMSAction(pad, 6);
+            break;
+        case 4:
+        case 5:
+            SetTMSAction(pad, 0x13);
+            break;
+        case 6:
+            SetTMSAction(pad, 8);
+            break;
+        case 8:
+            SetTMSAction(pad, 10);
+            break;
+        case 10:
+            SetTMSAction(pad, 0xc);
+            break;
+        case 0xc:
+            SetTMSAction(pad, 0xe);
+            break;
+        case 0xe:
+            SetTMSAction(pad, 0x10);
+            break;
+        case 0x10:
+            SetTMSAction(pad, 1);
+            break;
+        case 0x12:
+            SetTMSAction(pad, 0);
+            break;
+        case 0x13:
+            SetTMSAction(pad, 0x12);
+            break;
+        case 0x14:
+            SetTMSAction(pad, 0x13);
+            break;
+        default:
+            break;
+        }
     }
+    LeaveCriticalSection(&mActionMutex);
 }
 void CMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {

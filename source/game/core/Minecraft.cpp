@@ -470,7 +470,7 @@ void Minecraft::setScreen(Screen* screen)
     {
         if (mPlayer->getHealth() <= 0.0f)
         {
-            if (mLastClickTick == 0)
+            if (mTicks == 0)
                 mPlayer->respawn();
             else
                 gConsoleUIController.NavigateToScene(mPlayer->mUserIndex, (EUIScene)0x18, NULL, (EUILayer)6,
@@ -2586,6 +2586,8 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
     if (oldPlayer->IsSpectatingOtherPlayer())
         newPlayer->SetCamera(oldPlayer->GetCamera());
 
+    newPlayer->mUserIndex = oldPlayer->mUserIndex;
+
     newPlayer->setCustomSkin(oldPlayer->mField0x7dc);
     newPlayer->setPlayerDefaultSkin(oldPlayer->mField0x7d8);
     newPlayer->setCustomCape(oldPlayer->mField0x7e0);
@@ -2605,8 +2607,8 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
         storeExtraLocalPlayer(playerIdx);
     }
 
-    oldPlayer->resetPos();
-    mLevel->addEntity(oldPlayer);
+    newPlayer->resetPos();
+    mLevel->addEntity(newPlayer);
 
     mGameModes[playerIdx]->initPlayer(newPlayer);
 
@@ -2631,8 +2633,10 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
         }
     }
 
-    mGameModes[playerIdx]->adjustPlayer(newPlayer);
+    delete newPlayer->mInput;
+    newPlayer->mInput = new Input();
     newPlayer->setId(entityId);
+    mGameModes[playerIdx]->adjustPlayer(newPlayer);
 
     if (!mLevel->mIsClientSide)
         prepareLevel((int)0xf5ba56aa);

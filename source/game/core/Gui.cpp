@@ -40,8 +40,10 @@
 #include "game/util/Random.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/client/render/Renderer.hpp"
 
 float gGuiScreenScale = 1.0f;
+unsigned int XGetLanguage();
 void MemSect(int section);
 void instructionSynchronize();
 
@@ -535,28 +537,69 @@ void Gui::clearMessages(int playerIndex)
 void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay, bool filtered,
                      bool append, bool force)
 {
+    std::wstring text = message;
+
+    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
+    BOOST_ASSERT(player.get() != 0);
+    const unsigned int language = XGetLanguage();
+    const bool narrowGlyphs = language != 2 && (language < 7 || language > 8);
+    unsigned int maxLength;
+    if (static_cast<unsigned int>(player->mViewport) < 3) {
+        if (narrowGlyphs) {
+            maxLength = gRenderer->IsHiDef() ? 0x69 : 0x37;
+        } else {
+            maxLength = gRenderer->IsHiDef() ? 0x46 : 0x23;
+        }
+    } else {
+        maxLength = narrowGlyphs ? 0x37 : 0x23;
+    }
+
+    bool wrapped = false;
+    while (text.length() > maxLength) {
+        const unsigned int searchEnd = std::min<unsigned int>(text.length(), maxLength);
+        unsigned int split = static_cast<unsigned int>(text.find_last_of(L" ", searchEnd));
+        if (!narrowGlyphs) {
+            split = maxLength;
+        }
+        if (split != searchEnd) {
+            ++split;
+        }
+        addMessage(text.substr(0, split), playerIndex, overlay, filtered, true, false);
+        text = text.substr(split);
+        wrapped = true;
+    }
+
     if (playerIndex == -1) {
         int i;
         for (i = 0; i < 4; ++i) {
-            addMessage(message, i, overlay, filtered, append, force);
+            if (mMinecraft->mLocalPlayers[i] == NULL) {
+                continue;
+            }
+            if (GameSettings::GetGameSettings(i, static_cast<eGameSetting>(overlay ? 0x1a : 0x26)) != 0 ||
+                force) {
+                mMessages[i].insert(mMessages[i].begin(), GuiMessage(text));
+                while (mMessages[i].size() > 50) {
+                    mMessages[i].pop_back();
+                }
+            }
         }
         return;
     }
-    if (playerIndex < 0 || playerIndex >= 4) {
-        return;
-    }
+
     if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(overlay ? 0x1a : 0x26)) != 0 ||
         force) {
-        mMessages[playerIndex].push_back(GuiMessage(message));
-        if (mMessages[playerIndex].size() > 50) {
-            mMessages[playerIndex].erase(mMessages[playerIndex].begin());
+        mMessages[playerIndex].insert(mMessages[playerIndex].begin(), GuiMessage(text));
+        while (mMessages[playerIndex].size() > 50) {
+            mMessages[playerIndex].pop_back();
         }
     }
     if (overlay && filtered) {
         if (append) {
-            mNowPlaying[playerIndex] += message;
+            mNowPlaying[playerIndex] = text + L"\n";
+        } else if (wrapped) {
+            mNowPlaying[playerIndex] += text;
         } else {
-            mNowPlaying[playerIndex] = message;
+            mNowPlaying[playerIndex] = text;
         }
     }
 }

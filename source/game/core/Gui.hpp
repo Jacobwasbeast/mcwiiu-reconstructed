@@ -19,6 +19,7 @@ class UIScene_HUD;
 class Gui : public GuiComponent
 {
     friend class UIComponent_Chat;
+    friend class UIScene_DeathMenu;
     friend class UIScene_HUD;
 
 public:

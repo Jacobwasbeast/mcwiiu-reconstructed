@@ -11,6 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sysapp/launch.h>
+#if defined(RECON_NATIVE)
+#include <stdarg.h>
+#include <wchar.h>
+#endif
 
 extern "C" void OSReport(const char*, ...);
 
@@ -105,9 +109,15 @@ uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled() { return m_drcChec
 void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {
 #if defined(RECON_NATIVE)
-    (void)message;
-    OSReport("[native-fatal-load] CConsoleMinecraftApp::FatalLoadError caller=%p\n",
-             __builtin_return_address(0));
+    {
+        wchar_t text[512];
+        va_list args;
+        va_start(args, message);
+        vswprintf(text, sizeof(text) / sizeof(text[0]), message, args);
+        va_end(args);
+        OSReport("[native-fatal-load] CConsoleMinecraftApp::FatalLoadError caller=%p %ls\n",
+                 __builtin_return_address(0), text);
+    }
 #endif
     gRenderer->BeginConditionalSurvey((int)message);
     g_pInput->RequestErrorViewer(1, GetLastFileErrorCodeForViewer(), NULL, NULL);
