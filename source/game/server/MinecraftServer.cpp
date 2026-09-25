@@ -86,6 +86,7 @@ MinecraftServer* gMinecraftServer = 0;
 
 static bool sHaltForceFlag = false;
 bool sHaltRequested = false;
+bool sSaveOnExitAnswered = false;
 extern CStorage* gStorage;
 
 MinecraftServer::MinecraftServer()

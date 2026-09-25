@@ -951,8 +951,61 @@ void ServerPlayer::ResetSpawnInvulnerableTime()
 
 void ServerPlayer::tick()
 {
-    Player::tick();
-    processDimensionDelay();
+    mGameMode->tick();
+    --mSpawnInvulnerableTime;
+    if (mInvulnerableTime > 0)
+    {
+        --mInvulnerableTime;
+    }
+    mContainerMenu->broadcastChanges();
+
+    Biome* biome = mLevel->getBiome(BlockPos(shared_from_this()));
+    if (biome->id > 127)
+    {
+        biome = Biome::getBiome(biome->id - 128);
+    }
+    if (biome != mLastBiome)
+    {
+        awardStat(gStats->get_enteredBiome(biome->id), GenericStats::param_enteredBiome(biome->id));
+        mLastBiome = biome;
+    }
+
+    if (!mLevel->mIsClientSide
+        && !mContainerMenu->stillValid(boost::dynamic_pointer_cast<Player>(shared_from_this())))
+    {
+        closeContainer();
+        mContainerMenu = mInventoryMenu;
+    }
+
+    flushEntitiesToRemove();
+
+    if (mCamera)
+    {
+        boost::shared_ptr<Player> target = boost::dynamic_pointer_cast<Player>(mCamera);
+        if (target && target->isSpectator())
+        {
+            SpectatePlayerChange(0, 0);
+        }
+    }
+
+    if (IsSpectatingOtherPlayer() && mTickCount % 20 == 0)
+    {
+        boost::shared_ptr<Entity> camera = GetCamera();
+        teleportTo(camera->mX, camera->mY + camera->mBbHeight, camera->mZ);
+    }
+
+    if (!hasEffect(MobEffects::LEVITATION))
+    {
+        if (mLevitationSourceY != NULL)
+        {
+            delete mLevitationSourceY;
+            mLevitationSourceY = NULL;
+        }
+    }
+    else if (mLevitationSourceY != NULL && (int)(mY - *mLevitationSourceY) > 49)
+    {
+        awardStat(GenericStats::greatViewFromUpHere(), GenericStats::param_greatViewFromUpHere(0));
+    }
 }
 
 void ServerPlayer::die(const DamageSource* source)
