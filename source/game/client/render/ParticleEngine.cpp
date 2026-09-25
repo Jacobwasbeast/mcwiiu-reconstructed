@@ -379,9 +379,9 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
     const float cameraYOff = gCameraYOff2;
     const float cameraXOff = gCameraXOff2;
 
-    Particle::setXOffset((entity->mXo - entity->mX) * partialTick + entity->mX);
-    Particle::setYOffset((entity->mYo - entity->mY) * partialTick + entity->mY);
-    Particle::setZOffset((entity->mZo - entity->mZ) * partialTick + entity->mZ);
+    Particle::setXOffset((entity->mX - entity->mXOld) * partialTick + entity->mXOld);
+    Particle::setYOffset((entity->mY - entity->mYOld) * partialTick + entity->mYOld);
+    Particle::setZOffset((entity->mZ - entity->mZOld) * partialTick + entity->mZOld);
     Particle::setCamerViewDirection(entity->getViewVector(partialTick));
 
     const DimensionType* dimensionType = level->mDimension->getType();
@@ -463,9 +463,9 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
     const float cameraYOff = -sinYaw * sinPitchY;
     const float cameraXOff = cosYaw * sinPitchX;
 
-    Particle::setXOffset((entity->mXo - entity->mX) * partialTick + entity->mX);
-    Particle::setYOffset((entity->mYo - entity->mY) * partialTick + entity->mY);
-    Particle::setZOffset((entity->mZo - entity->mZ) * partialTick + entity->mZ);
+    Particle::setXOffset((entity->mX - entity->mXOld) * partialTick + entity->mXOld);
+    Particle::setYOffset((entity->mY - entity->mYOld) * partialTick + entity->mYOld);
+    Particle::setZOffset((entity->mZ - entity->mZOld) * partialTick + entity->mZOld);
 
     Vec3* viewDirection = entity->getViewVector(partialTick);
     Particle::setCamerViewDirection(viewDirection);

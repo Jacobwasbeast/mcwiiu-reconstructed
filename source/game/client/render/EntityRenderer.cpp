@@ -31,7 +31,7 @@
 #include "game/world/block/Iterator.hpp"
 #include "game/world/generation/Player.hpp"
 
-static ResourceLocation sShadowTexture(L"textures/misc/shadow.png");
+static ResourceLocation sShadowTexture(static_cast<_TEXTURE_NAME>(3));
 
 EntityRenderer::EntityRenderer(EntityRenderDispatcher* dispatcher)
     : mDispatcher(dispatcher), mShadowRadius(0.0F), mShadowStrength(1.0F), mSolidRender(false), mModel(NULL), mOriginalModel(NULL)

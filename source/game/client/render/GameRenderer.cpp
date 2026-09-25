@@ -623,17 +623,17 @@ void GameRenderer::UpdateElementStorageDeleteTicks()
 
 void GameRenderer::tickFov()
 {
-    boost::shared_ptr<Entity> camera = Minecraft::GetInstance()->getCameraEntity();
-    AbstractClientPlayer* player = dynamic_cast<AbstractClientPlayer*>(camera.get());
-    const int playerIndex = player->mPlayerIndex;
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mPlayer;
+    const int playerIndex = player != NULL ? player->mUserIndex : 0;
     const int indexOffset = playerIndex * static_cast<int>(sizeof(float));
+
+    const double targetFov = player->getFieldOfViewModifier();
 
     float currentFov;
     std::memcpy(&currentFov, mData + 48 + indexOffset, sizeof(currentFov));
     std::memcpy(mData + 64 + indexOffset, &currentFov, sizeof(currentFov));
 
-    const float targetFov = static_cast<float>(player->getFieldOfViewModifier());
-    float interpolatedFov = (targetFov - currentFov) * 0.5f + currentFov;
+    float interpolatedFov = (float)((float)(targetFov - currentFov) * 0.5 + currentFov);
 
     float clampedFov = interpolatedFov;
     if (interpolatedFov > 1.5f)

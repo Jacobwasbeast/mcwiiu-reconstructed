@@ -178,6 +178,16 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
         }
     }
 
+    if (chest->mWestNeighbour.lock())
+    {
+        float neighbourOpenness = chest->mWestNeighbour.lock()->mOpenOld
+            + (chest->mWestNeighbour.lock()->mOpen - chest->mWestNeighbour.lock()->mOpenOld) * a;
+        if (neighbourOpenness > openness)
+        {
+            openness = neighbourOpenness;
+        }
+    }
+
     openness = 1.0F - openness;
     openness = 1.0F - openness * openness * openness;
 

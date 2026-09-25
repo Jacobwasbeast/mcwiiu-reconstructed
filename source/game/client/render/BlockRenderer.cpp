@@ -2031,7 +2031,6 @@ bool BlockRenderer::tesselateTrapDoorInWorld(const BlockState* state, const Bloc
             mFaceRotation4 = 2;
             mFaceRotation5 = 2;
             mFaceTransform3 = 2;
-            mFaceTransform4 = 1;
         }
         else if (direction == 5)
         {
@@ -2088,11 +2087,12 @@ bool BlockRenderer::tesselateTrapDoorInWorld(const BlockState* state, const Bloc
         }
     }
 
-    int faces = state->getBlock()->getFaceFlags(state, mLevelSource, pos, mRenderAllFaces);
+    Block* block = state->getBlock();
+    int faces = block->getFaceFlags(state, mLevelSource, pos, mRenderAllFaces);
     if (faces == 0)
         return false;
 
-    setShape(state->getShape(mLevelSource, pos));
+    setShape(block->getShape(state, mLevelSource, pos));
     bool rendered = tesselateBlockInWorld(state, pos, faces);
 
     for (int i = 0; i < 6; ++i)
@@ -2805,151 +2805,218 @@ bool BlockRenderer::tesselateFireInWorld(const BlockState* state, const BlockPos
 
 bool BlockRenderer::tesselateDustInWorld(const BlockState* state, const BlockPos& pos)
 {
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     const BlockState* wireState = static_cast<RedStoneWireBlock*>(state->getBlock())
         ->fillVirtualBlockStateProperties(state, mLevelSource, pos);
     TextureAtlasSprite* cross = RedStoneWireBlock::getTexture(L"_cross");
     TextureAtlasSprite* line = RedStoneWireBlock::getTexture(L"_line");
     TextureAtlasSprite* crossOverlay = RedStoneWireBlock::getTexture(L"_cross_overlay");
     TextureAtlasSprite* lineOverlay = RedStoneWireBlock::getTexture(L"_line_overlay");
-
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    builder->tex2(getLightColor(wireState->getBlock(), mLevelSource, pos));
 
     const int power = wireState->getValue(RedStoneWireBlock::POWER);
-    const unsigned int rgb = power == 0
-        ? Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_RedstoneDustUnlit)
-        : ColourTable::LinearBlend(
-            Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_RedstoneDustLitMin),
-            Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_RedstoneDustLitMax),
-            (float)(power - 1) / 14.0f);
-    builder->color((float)(rgb >> 16 & 0xff) / 255.0f,
-                   (float)(rgb >> 8 & 0xff) / 255.0f,
-                   (float)(rgb & 0xff) / 255.0f);
-
-    const auto isConnected = [wireState](AbstractProperty<RedStoneWireBlock::ConnectingSide*>* property)
+    float red;
+    float green;
+    float blue;
+    if (power == 0)
     {
-        RedStoneWireBlock::ConnectingSide* side = wireState->getValue(property);
-        return side == RedStoneWireBlock::UP || side == RedStoneWireBlock::SIDE;
-    };
-    const bool west = isConnected(RedStoneWireBlock::WEST);
-    const bool east = isConnected(RedStoneWireBlock::EAST);
-    const bool north = isConnected(RedStoneWireBlock::NORTH);
-    const bool south = isConnected(RedStoneWireBlock::SOUTH);
-    const bool westUp = wireState->getValue(RedStoneWireBlock::WEST) == RedStoneWireBlock::UP;
-    const bool eastUp = wireState->getValue(RedStoneWireBlock::EAST) == RedStoneWireBlock::UP;
-    const bool northUp = wireState->getValue(RedStoneWireBlock::NORTH) == RedStoneWireBlock::UP;
-    const bool southUp = wireState->getValue(RedStoneWireBlock::SOUTH) == RedStoneWireBlock::UP;
-
-    const bool lineMode = north && !east && !west || !north && !east && !west && south;
-    TextureAtlasSprite* top = lineMode ? line : cross;
-    TextureAtlasSprite* overlay = lineMode ? lineOverlay : crossOverlay;
-    const float x = (float)pos.x;
-    const float z = (float)pos.z;
-    float x0 = x;
-    float x1 = x + 1.0f;
-    float z0 = z;
-    float z1 = z + 1.0f;
-    float u0 = lineMode ? (float)top->getU0(true) : (float)top->getU(0.0);
-    float u1 = lineMode ? (float)top->getU1(true) : (float)top->getU(16.0);
-    float v0 = lineMode ? (float)top->getV0(true) : (float)top->getV(0.0);
-    float v1 = lineMode ? (float)top->getV1(true) : (float)top->getV(16.0);
-
-    if (!lineMode)
-    {
-        if (!west) { x0 += 0.3125f; u0 = (float)top->getU(5.0); }
-        if (!east) { x1 -= 0.3125f; u1 = (float)top->getU(11.0); }
-        if (!north) { z0 += 0.3125f; v0 = (float)top->getV(5.0); }
-        if (!south) { z1 -= 0.3125f; v1 = (float)top->getV(11.0); }
+        const unsigned int colour = Minecraft::GetInstance()->getColourTable()
+            ->getColour(eMinecraftColour_Tile_RedstoneDustUnlit);
+        red = (float)(colour >> 16 & 0xff) / 255.0f;
+        green = (float)(colour >> 8 & 0xff) / 255.0f;
+        blue = (float)(colour & 0xff) / 255.0f;
     }
-    if (!lineMode)
-        top->adjustUVs(u0, u1, v0, v1);
-    const float y = (float)pos.y + 0.015625f;
-    builder->vertexUV(x1, y, z1, u1, v1);
-    builder->vertexUV(x1, y, z0, u1, v0);
-    builder->vertexUV(x0, y, z0, u0, v0);
-    builder->vertexUV(x0, y, z1, u0, v1);
-
-    float overlayU0 = lineMode ? (float)overlay->getU0(true) : (float)overlay->getU(0.0);
-    float overlayU1 = lineMode ? (float)overlay->getU1(true) : (float)overlay->getU(16.0);
-    float overlayV0 = lineMode ? (float)overlay->getV0(true) : (float)overlay->getV(0.0);
-    float overlayV1 = lineMode ? (float)overlay->getV1(true) : (float)overlay->getV(16.0);
-    if (!lineMode)
+    else
     {
-        if (!west) overlayU0 = (float)overlay->getU(5.0);
-        if (!east) overlayU1 = (float)overlay->getU(11.0);
-        if (!north) overlayV0 = (float)overlay->getV(5.0);
-        if (!south) overlayV1 = (float)overlay->getV(11.0);
+        const unsigned int minColour = Minecraft::GetInstance()->getColourTable()
+            ->getColour(eMinecraftColour_Tile_RedstoneDustLitMin);
+        const unsigned int maxColour = Minecraft::GetInstance()->getColourTable()
+            ->getColour(eMinecraftColour_Tile_RedstoneDustLitMax);
+        const float fraction = (float)(power - 1) / 14.0f;
+        red = (float)((int)((float)((maxColour >> 16) & 0xff - (minColour >> 16) & 0xff) * fraction
+                            + (float)(minColour >> 16 & 0xff)) & 0xff) / 255.0f;
+        green = (float)((int)((float)((maxColour >> 8) & 0xff - (minColour >> 8) & 0xff) * fraction
+                              + (float)(minColour >> 8 & 0xff)) & 0xff) / 255.0f;
+        blue = (float)((int)((float)(maxColour & 0xff - minColour & 0xff) * fraction
+                             + (float)(minColour & 0xff)) & 0xff) / 255.0f;
     }
-    if (!lineMode)
-        overlay->adjustUVs(overlayU0, overlayU1, overlayV0, overlayV1);
-    builder->color(1.0f, 1.0f, 1.0f);
-    builder->vertexUV(x1, y, z1, overlayU1, overlayV1);
-    builder->vertexUV(x1, y, z0, overlayU1, overlayV0);
-    builder->vertexUV(x0, y, z0, overlayU0, overlayV0);
-    builder->vertexUV(x0, y, z1, overlayU0, overlayV1);
+    builder->color(red, green, blue);
 
-    struct SideVertex
-    {
-        float x;
-        float y;
-        float z;
-    };
-    const auto emitUpSide = [builder, rgb](TextureAtlasSprite* base, TextureAtlasSprite* sideOverlay,
-                                           const SideVertex (&vertices)[4],
-                                           const int (&baseCorners)[4][2],
-                                           const int (&overlayCorners)[4][2])
-    {
-        builder->color((float)(rgb >> 16 & 0xff) / 255.0f,
-                       (float)(rgb >> 8 & 0xff) / 255.0f,
-                       (float)(rgb & 0xff) / 255.0f);
-        const float baseU[2] = { (float)base->getU0(true), (float)base->getU1(true) };
-        const float baseV[2] = { (float)base->getV0(true), (float)base->getV1(true) };
-        for (int i = 0; i < 4; ++i)
-            builder->vertexUV(vertices[i].x, vertices[i].y, vertices[i].z,
-                              baseU[baseCorners[i][0]], baseV[baseCorners[i][1]]);
+    RedStoneWireBlock::ConnectingSide* westSide = wireState->getValue(RedStoneWireBlock::WEST);
+    const bool westUp = westSide == RedStoneWireBlock::UP;
+    const bool west = westSide == RedStoneWireBlock::SIDE || westUp;
+    RedStoneWireBlock::ConnectingSide* eastSide = wireState->getValue(RedStoneWireBlock::EAST);
+    const bool eastUp = eastSide == RedStoneWireBlock::UP;
+    const bool east = eastSide == RedStoneWireBlock::SIDE || eastUp;
+    RedStoneWireBlock::ConnectingSide* northSide = wireState->getValue(RedStoneWireBlock::NORTH);
+    const bool northUp = northSide == RedStoneWireBlock::UP;
+    const bool north = northSide == RedStoneWireBlock::SIDE || northUp;
+    RedStoneWireBlock::ConnectingSide* southSide = wireState->getValue(RedStoneWireBlock::SOUTH);
+    const bool southUp = southSide == RedStoneWireBlock::UP;
+    const bool south = southSide == RedStoneWireBlock::SIDE || southUp;
 
+    const float wallOffset = 0.015625f;
+    float x0 = (float)pos.x;
+    float z0 = (float)pos.z;
+    float x1 = x0 + 1.0f;
+    float z1 = z0 + 1.0f;
+
+    int mode = 0;
+    if (north)
+    {
+        if (!east && !west)
+            mode = 2;
+    }
+    else if (!west && !east)
+    {
+        if (south)
+            mode = 2;
+    }
+    else if (!south)
+    {
+        mode = 1;
+    }
+
+    const float y = (float)pos.y;
+    const float top = y + wallOffset;
+    if (mode == 0)
+    {
+        int u0Texel = 0;
+        int u1Texel = 16;
+        int v0Texel = 0;
+        int v1Texel = 16;
+        if (!west)
+        {
+            x0 += 0.3125f;
+            u0Texel = 5;
+        }
+        if (!east)
+        {
+            x1 -= 0.3125f;
+            u1Texel = 11;
+        }
+        if (!north)
+        {
+            z0 += 0.3125f;
+            v0Texel = 5;
+        }
+        if (!south)
+        {
+            z1 -= 0.3125f;
+            v1Texel = 11;
+        }
+
+        float u0 = (float)cross->getU((double)u0Texel);
+        float u1 = (float)cross->getU((double)u1Texel);
+        float v0 = (float)cross->getV((double)v0Texel);
+        float v1 = (float)cross->getV((double)v1Texel);
+        cross->adjustUVs(u0, u1, v0, v1);
+        builder->vertexUV(x1, top, z1, u1, v1);
+        builder->vertexUV(x1, top, z0, u1, v0);
+        builder->vertexUV(x0, top, z0, u0, v0);
+        builder->vertexUV(x0, top, z1, u0, v1);
+
+        float overlayU0 = (float)crossOverlay->getU((double)u0Texel);
+        float overlayU1 = (float)crossOverlay->getU((double)u1Texel);
+        float overlayV0 = (float)crossOverlay->getV((double)v0Texel);
+        float overlayV1 = (float)crossOverlay->getV((double)v1Texel);
+        crossOverlay->adjustUVs(overlayU0, overlayU1, overlayV0, overlayV1);
         builder->color(1.0f, 1.0f, 1.0f);
-        const float overlayU[2] = { (float)sideOverlay->getU0(true), (float)sideOverlay->getU1(true) };
-        const float overlayV[2] = { (float)sideOverlay->getV0(true), (float)sideOverlay->getV1(true) };
-        for (int i = 0; i < 4; ++i)
-            builder->vertexUV(vertices[i].x, vertices[i].y, vertices[i].z,
-                              overlayU[overlayCorners[i][0]], overlayV[overlayCorners[i][1]]);
-    };
+        builder->vertexUV(x1, top, z1, overlayU1, overlayV1);
+        builder->vertexUV(x1, top, z0, overlayU1, overlayV0);
+        builder->vertexUV(x0, top, z0, overlayU0, overlayV0);
+        builder->vertexUV(x0, top, z1, overlayU0, overlayV1);
+    }
+    else if (mode == 1)
+    {
+        builder->vertexUV(x1, top, z1, (float)line->getU1(true), (float)line->getV1(true));
+        builder->vertexUV(x1, top, z0, (float)line->getU1(true), (float)line->getV0(true));
+        builder->vertexUV(x0, top, z0, (float)line->getU0(true), (float)line->getV0(true));
+        builder->vertexUV(x0, top, z1, (float)line->getU0(true), (float)line->getV1(true));
+        builder->color(1.0f, 1.0f, 1.0f);
+        builder->vertexUV(x1, top, z1, (float)lineOverlay->getU1(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(x1, top, z0, (float)lineOverlay->getU1(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(x0, top, z0, (float)lineOverlay->getU0(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(x0, top, z1, (float)lineOverlay->getU0(true), (float)lineOverlay->getV1(true));
+    }
+    else
+    {
+        builder->vertexUV(x1, top, z1, (float)line->getU1(true), (float)line->getV1(true));
+        builder->vertexUV(x1, top, z0, (float)line->getU0(true), (float)line->getV1(true));
+        builder->vertexUV(x0, top, z0, (float)line->getU0(true), (float)line->getV0(true));
+        builder->vertexUV(x0, top, z1, (float)line->getU1(true), (float)line->getV0(true));
+        builder->color(1.0f, 1.0f, 1.0f);
+        builder->vertexUV(x1, top, z1, (float)lineOverlay->getU1(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(x1, top, z0, (float)lineOverlay->getU0(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(x0, top, z0, (float)lineOverlay->getU0(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(x0, top, z1, (float)lineOverlay->getU1(true), (float)lineOverlay->getV0(true));
+    }
 
-    const float sideBottom = (float)pos.y;
-    const float sideTop = (float)pos.y + 1.0f + 0.021875f;
-    const int westEastBase[4][2] = { {1,1}, {0,1}, {0,0}, {1,0} };
-    const int westEastOverlay[4][2] = { {1,1}, {0,1}, {0,0}, {1,0} };
-    const int northBase[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-    const SideVertex westVertices[4] =
-    {
-        { x + 0.015625f, sideTop, z + 1.0f }, { x + 0.015625f, sideBottom, z + 1.0f },
-        { x + 0.015625f, sideBottom, z }, { x + 0.015625f, sideTop, z }
-    };
-    const SideVertex eastVertices[4] =
-    {
-        { x + 0.984375f, sideBottom, z + 1.0f }, { x + 0.984375f, sideTop, z + 1.0f },
-        { x + 0.984375f, sideTop, z }, { x + 0.984375f, sideBottom, z }
-    };
-    const SideVertex northVertices[4] =
-    {
-        { x + 1.0f, sideBottom, z + 0.015625f }, { x + 1.0f, sideTop, z + 0.015625f },
-        { x, sideTop, z + 0.015625f }, { x, sideBottom, z + 0.015625f }
-    };
-    const SideVertex southVertices[4] =
-    {
-        { x + 1.0f, sideTop, z + 0.984375f }, { x + 1.0f, sideBottom, z + 0.984375f },
-        { x, sideBottom, z + 0.984375f }, { x, sideTop, z + 0.984375f }
-    };
+    const float wallTop = (float)(pos.y + 1) + 0.021875f;
     if (westUp)
-        emitUpSide(line, lineOverlay, westVertices, westEastBase, westEastOverlay);
+    {
+        const float wallX = (float)pos.x + wallOffset;
+        const float wallZ0 = (float)pos.z;
+        const float wallZ1 = (float)(pos.z + 1);
+        builder->color(red, green, blue);
+        builder->vertexUV(wallX, wallTop, wallZ1, (float)line->getU1(true), (float)line->getV0(true));
+        builder->vertexUV(wallX, y, wallZ1, (float)line->getU0(true), (float)line->getV0(true));
+        builder->vertexUV(wallX, y, wallZ0, (float)line->getU0(true), (float)line->getV1(true));
+        builder->vertexUV(wallX, wallTop, wallZ0, (float)line->getU1(true), (float)line->getV1(true));
+        builder->color(1.0f, 1.0f, 1.0f);
+        builder->vertexUV(wallX, wallTop, wallZ1, (float)lineOverlay->getU1(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(wallX, y, wallZ1, (float)lineOverlay->getU0(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(wallX, y, wallZ0, (float)lineOverlay->getU0(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(wallX, wallTop, wallZ0, (float)lineOverlay->getU1(true), (float)lineOverlay->getV1(true));
+    }
     if (eastUp)
-        emitUpSide(line, lineOverlay, eastVertices, northBase, northBase);
+    {
+        const float wallX = (float)(pos.x + 1) - wallOffset;
+        const float wallZ0 = (float)pos.z;
+        const float wallZ1 = (float)(pos.z + 1);
+        builder->color(red, green, blue);
+        builder->vertexUV(wallX, y, wallZ1, (float)line->getU0(true), (float)line->getV1(true));
+        builder->vertexUV(wallX, wallTop, wallZ1, (float)line->getU1(true), (float)line->getV1(true));
+        builder->vertexUV(wallX, wallTop, wallZ0, (float)line->getU1(true), (float)line->getV0(true));
+        builder->vertexUV(wallX, y, wallZ0, (float)line->getU0(true), (float)line->getV0(true));
+        builder->color(1.0f, 1.0f, 1.0f);
+        builder->vertexUV(wallX, y, wallZ1, (float)lineOverlay->getU0(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(wallX, wallTop, wallZ1, (float)lineOverlay->getU1(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(wallX, wallTop, wallZ0, (float)lineOverlay->getU1(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(wallX, y, wallZ0, (float)lineOverlay->getU0(true), (float)lineOverlay->getV0(true));
+    }
     if (northUp)
-        emitUpSide(line, lineOverlay, northVertices, northBase, northBase);
+    {
+        const float wallX0 = (float)pos.x;
+        const float wallX1 = (float)(pos.x + 1);
+        const float wallZ = (float)pos.z + wallOffset;
+        builder->color(red, green, blue);
+        builder->vertexUV(wallX1, y, wallZ, (float)line->getU0(true), (float)line->getV1(true));
+        builder->vertexUV(wallX1, wallTop, wallZ, (float)line->getU1(true), (float)line->getV1(true));
+        builder->vertexUV(wallX0, wallTop, wallZ, (float)line->getU1(true), (float)line->getV0(true));
+        builder->vertexUV(wallX0, y, wallZ, (float)line->getU0(true), (float)line->getV0(true));
+        builder->color(1.0f, 1.0f, 1.0f);
+        builder->vertexUV(wallX1, y, wallZ, (float)lineOverlay->getU0(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(wallX1, wallTop, wallZ, (float)lineOverlay->getU1(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(wallX0, wallTop, wallZ, (float)lineOverlay->getU1(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(wallX0, y, wallZ, (float)lineOverlay->getU0(true), (float)lineOverlay->getV0(true));
+    }
     if (southUp)
-        emitUpSide(line, lineOverlay, southVertices, westEastBase, westEastOverlay);
-
+    {
+        const float wallX0 = (float)pos.x;
+        const float wallX1 = (float)(pos.x + 1);
+        const float wallZ = (float)(pos.z + 1) - wallOffset;
+        builder->color(red, green, blue);
+        builder->vertexUV(wallX1, wallTop, wallZ, (float)line->getU1(true), (float)line->getV0(true));
+        builder->vertexUV(wallX1, y, wallZ, (float)line->getU0(true), (float)line->getV0(true));
+        builder->vertexUV(wallX0, y, wallZ, (float)line->getU0(true), (float)line->getV1(true));
+        builder->vertexUV(wallX0, wallTop, wallZ, (float)line->getU1(true), (float)line->getV1(true));
+        builder->color(1.0f, 1.0f, 1.0f);
+        builder->vertexUV(wallX1, wallTop, wallZ, (float)lineOverlay->getU1(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(wallX1, y, wallZ, (float)lineOverlay->getU0(true), (float)lineOverlay->getV0(true));
+        builder->vertexUV(wallX0, y, wallZ, (float)lineOverlay->getU0(true), (float)lineOverlay->getV1(true));
+        builder->vertexUV(wallX0, wallTop, wallZ, (float)lineOverlay->getU1(true), (float)lineOverlay->getV1(true));
+    }
     return true;
 }
 
@@ -3709,7 +3776,7 @@ bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const 
     const float postEdge = 0.4375f;
     const float postOtherEdge = 0.5625f;
 
-    setShape(postEdge, bottom, postEdge, postOtherEdge, 0.875f, 0.875f);
+    setShape(postEdge, bottom, postEdge, postOtherEdge, 0.875f, postOtherEdge);
     tesselateBlockInWorld(state, pos);
 
     setFixedTexture(block->getBaseTexture());
@@ -3736,7 +3803,7 @@ bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const 
 
     const double vTop = texture->getV0(true);
     const double vBottom = texture->getV1(true);
-    const float origin = 0.3125f;
+    const float origin = 0.5f;
     const float pi = 3.1415927410125732f;
     const bool hasBottle[3] =
     {
@@ -3747,7 +3814,7 @@ bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const 
 
     for (int i = 0; i < 3; ++i)
     {
-        float u0 = (float)texture->getU(2.5);
+        float u0 = (float)texture->getU(8.0);
         float u1 = (float)texture->getU1(false);
         if (hasBottle[i])
             u1 = (float)texture->getU0(false);
@@ -3757,8 +3824,8 @@ bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const 
         angle = (angle + angle) / 3.0f + pi * 0.5f;
         float x0 = (float)pos.x + origin;
         float z0 = (float)pos.z + origin;
-        float x1 = x0 + std::sin(angle) * 8.0f * 0.5f;
-        float z1 = z0 + std::cos(angle) * 8.0f * 0.5f;
+        float x1 = x0 + std::sin(angle) * 8.0f * 0.0625f;
+        float z1 = z0 + std::cos(angle) * 8.0f * 0.0625f;
         float y0 = (float)pos.y;
         float y1 = y0 + 1.0f;
 
