@@ -1436,249 +1436,757 @@ std::wstring ClientPacketListener::GetDisplayNameByGamertag(std::wstring gamerta
 }
 void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> packet)
 {
+    bool replacePlayer = false;
+    bool replaceSource = false;
+    bool replaceItem = false;
+    bool showMessage = true;
+    bool singleMessage = false;
+    int singleMessageDuration = 0;
+    boost::unordered_map<std::wstring, std::wstring> replacements;
+    std::wstring playerName(L"");
+    std::wstring sourceName(L"");
+    std::wstring text;
+
     if (Minecraft::InMiniGame(eMiniGameId_Any, true) && IsPrimaryPlayer())
     {
         m_minecraft->GetClientMasterGameMode()->OnChatPacket(packet);
     }
 
-    const int message = static_cast<int>(packet->getMessage());
-    if (message == 12)
+    if (packet->strings.size() > 0)
+        playerName = GetDisplayNameByGamertag(packet->strings[0]);
+    if (packet->strings.size() > 1)
+        sourceName = GetDisplayNameByGamertag(packet->strings[1]);
+
+    switch (static_cast<int>(packet->message))
     {
+    case 1:
+        text = L10N::GetString(0xd08616d9);
+        break;
+    case 2:
+        text = L10N::GetString(0xfa2a57fa);
+        break;
+    case 3:
+        text = L10N::GetString(0xe08b6a47);
+        break;
+    case 4:
+        text = L10N::GetString(0x16c81b7f);
+        break;
+    case 5:
+        text = L10N::GetString(0xf084ec0c);
+        break;
+    case 6:
+        text = L10N::GetString(0x56c64197);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case 7:
+        text = L10N::GetString(0xfab38114);
+        break;
+    case 8:
+        text = L10N::GetString(0x095fce8b);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case 9:
+        text = L10N::GetString(0x941d21c3);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case 10:
+        text = L10N::GetString(0x3677fa23);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case 11:
+        text = L10N::GetString(0x49b6297d);
+        replacements[L"{*PLAYER*}"] = playerName;
+        replacements[L"{*PLAYER2*}"] = sourceName;
+        replacements[L"{*COUNT*}"] = toString(packet->ints[0]);
+        replacements[L"{*MAX_COUNT*}"] = toString(packet->ints[1]);
+        break;
+    case 12:
+        showMessage = false;
         g_pApp->SetGlobalXuiAction(static_cast<eXuiAction>(0x21));
-        return;
-    }
-
-    std::wstring text;
-    if ((message == 0 || message == 18 || message == 38 || message == 41 || message == 75) &&
-        !packet->strings.empty())
-    {
-        text = packet->strings[0];
-    }
-    else
-    {
-        int stringId = 0;
-        switch (message)
+        break;
+    case 13:
+        text = L10N::GetString(0xefc9fef0);
+        replacePlayer = true;
+        break;
+    case 14:
+    case 53:
+        text = L10N::GetString(0xf4980932);
+        replacePlayer = true;
+        break;
+    case 15:
+        text = L10N::GetString(0xd711d936);
+        replacePlayer = true;
+        break;
+    case 16:
+        text = L10N::GetString(0x5eff1005);
+        replacePlayer = true;
+        break;
+    case 17:
+        text = L10N::GetString(0x6ae921b6);
+        replacePlayer = true;
+        break;
+    case 19:
+        text = L10N::GetString(0x576593ef);
+        replacePlayer = true;
+        break;
+    case 20:
+        text = L10N::GetString(0xf244df30);
+        replacePlayer = true;
+        break;
+    case 21:
+        text = L10N::GetString(0x2bf5a7dc);
+        replacePlayer = true;
+        break;
+    case 22:
+        text = L10N::GetString(0xd63d2190);
+        replacePlayer = true;
+        break;
+    case 23:
+        text = L10N::GetString(0x15c8f4ae);
+        replacePlayer = true;
+        break;
+    case 24:
+        text = L10N::GetString(0x6f2c7352);
+        replacePlayer = true;
+        break;
+    case 25:
+        if (packet->ints[0] == 0)
         {
-        case 1: stringId = 0xD08616D9; break;
-        case 2: stringId = 0xFA2A57FA; break;
-        case 3: stringId = 0xE08B6A47; break;
-        case 4: stringId = 0x16C81B7F; break;
-        case 5: stringId = 0xF084EC0C; break;
-        case 6: stringId = 0x56C64197; break;
-        case 7: stringId = 0xFAB38114; break;
-        case 8: stringId = 0x095FCE8B; break;
-        case 9: stringId = 0x941D21C3; break;
-        case 10: stringId = 0x3677FA23; break;
-        case 11: stringId = 0x49B6297D; break;
-        case 13: stringId = 0xEFC9FEF0; break;
-        case 14: stringId = 0xF4980932; break;
-        case 15: stringId = 0xD711D936; break;
-        case 16: stringId = 0x5EFF1005; break;
-        case 17: stringId = 0x6AE921B6; break;
-        case 19: stringId = 0x576593EF; break;
-        case 20: stringId = 0xF244DF30; break;
-        case 21: stringId = 0x2BF5A7DC; break;
-        case 22: stringId = 0xD63D2190; break;
-        case 23: stringId = 0x15C8F4AE; break;
-        case 24: stringId = 0x6F2C7352; break;
-        case 25: if (!packet->ints.empty()) stringId = packet->ints[0]; break;
-        case 26: stringId = 0xD98E2236; break;
-        case 27: stringId = 0xB04CAD6A; break;
-        case 28: stringId = 0x189C795E; break;
-        case 29: stringId = 0x4BEC30BF; break;
-        case 30: stringId = 0x3C5DA2B4; break;
-        case 31: stringId = 0x7A2A89AE; break;
-        case 32: stringId = 0x0242D45C; break;
-        case 33: stringId = 0xB3FB4F7F; break;
-        case 34: stringId = 0x3FC22003; break;
-        case 35: stringId = 0x2DCF5941; break;
-        case 36: stringId = 0x0D235D4B; break;
-        case 37: stringId = 0xA1216033; break;
-        case 39: stringId = 0x5AC8AFBB; break;
-        case 40: stringId = 0xB04CAD6A; break;
-        case 42: stringId = 0x80D4C2E3; break;
-        case 43: stringId = 0x62F8280D; break;
-        case 44: stringId = 0x461BA4E8; break;
-        case 45: stringId = 0xC130636A; break;
-        case 46: stringId = 0x44E2DD06; break;
-        case 47: stringId = 0x8BC1A50E; break;
-        case 48: stringId = 0x1ECE8CFC; break;
-        case 49: stringId = 0xD871BB46; break;
-        case 50: stringId = 0x7BA47E90; break;
-        case 51: stringId = 0x3EC0C74A; break;
-        case 52: stringId = 0xC30A962C; break;
-        case 53: stringId = 0xF4980932; break;
-        case 54: stringId = 0x48FFBD9A; break;
-        case 55: stringId = 0xE2B2D991; break;
-        case 56: stringId = 0xCF30BEFB; break;
-        case 57: stringId = 0x7AD1A880; break;
-        case 58: stringId = 0xAF29A206; break;
-        case 59: stringId = 0x516DB1A2; break;
-        case 60: stringId = 0x31C3794E; break;
-        case 61: stringId = 0xF0EBA2E4; break;
-        case 62: stringId = 0x31B789A6; break;
-        case 63: stringId = 0xE3BE8E0D; break;
-        case 64: stringId = 0x1A3B16DB; break;
-        case 65: stringId = 0x9EEFF8CF; break;
-        case 66: stringId = 0x64400F01; break;
-        case 67: stringId = 0x06046121; break;
-        case 68: stringId = 0xD3560061; break;
-        case 69: stringId = 0x6E3A65E3; break;
-        case 70: stringId = 0x9F8BFFAE; break;
-        case 71: stringId = 0x82460728; break;
-        case 72: stringId = 0x1E0D17D0; break;
-        case 73: stringId = 0x3E35B6E8; break;
-        case 74: stringId = 0x70EDC806; break;
-        case 76: stringId = 0xA82B5A66; break;
-        case 77: stringId = 0x16972FBF; break;
-        case 78: stringId = 0x1EE681BA; break;
-        case 79: stringId = 0x8ECD701E; break;
-        case 80: stringId = 0xD97FDBA2; break;
-        case 82: stringId = 0xB399BD15; break;
-        case 83: stringId = 0x99326383; break;
-        case 84: stringId = 0x00FE5875; break;
-        case 85: stringId = 0xEC344E3D; break;
-        case 86: stringId = 0x3221ECE8; break;
-        case 87: stringId = 0xB2145884; break;
-        case 88: stringId = 0xB604AAFF; break;
-        case 89: stringId = 0xFAB1DEB6; break;
-        case 90: stringId = 0xFDF65C18; break;
-        case 91: stringId = 0xC952E8B9; break;
-        case 92: stringId = 0xEF12CC40; break;
-        case 93: stringId = 0xB714E0E2; break;
-        case 94: stringId = 0x3DCD926B; break;
-        case 95: stringId = 0x60A3835D; break;
-        case 96: stringId = 0xCE88D7B9; break;
-        case 97: stringId = 0x5C19FA7A; break;
-        case 98: stringId = 0x186485A6; break;
-        case 100: stringId = 0xE34B099B; break;
-        case 101: stringId = 0xA816EC2E; break;
-        case 102: stringId = 0x590236FB; break;
-        case 103: stringId = 0x334E4F83; break;
-        case 104: stringId = 0xC5814157; break;
-        case 105: stringId = 0xA7D52E1F; break;
-        case 106: stringId = 0xB5F2B622; break;
-        case 107: stringId = 0x3CED883F; break;
-        case 108: stringId = 0x0A09D437; break;
-        case 109: stringId = 0xDA993CC6; break;
-        case 110: stringId = 0x5EEB14CE; break;
-        case 111: stringId = 0xDD05C6B4; break;
-        case 112: stringId = 0xD2BD3683; break;
-        case 113: stringId = 0xCFEB0335; break;
-        case 114: stringId = 0x06E12057; break;
-        case 115: stringId = 0x9760A9E7; break;
-        case 116: stringId = 0x52F1EF84; break;
-        case 117: stringId = 0x7CCCD9D4; break;
-        case 118: stringId = 0x69E5CA0B; break;
-        case 119: stringId = 0xC4219DE3; break;
-        case 120: stringId = 0xB0B23BCD; break;
-        case 122: stringId = 0x2E19C8B8; break;
-        case 123: stringId = 0x464A6890; break;
-        case 124: stringId = 0xF53F833A; break;
-        case 125: stringId = 0x0E73497D; break;
-        case 126: stringId = 0xD5566021; break;
-        case 128: stringId = 0xAF2E63A6; break;
-        case 129: stringId = 0xE028E842; break;
-        case 130: stringId = 0x2FB55D20; break;
-        case 131: stringId = 0xB8AF706D; break;
-        case 132: stringId = 0xA19C12DB; break;
-        case 133: stringId = 0x431EEECE; break;
-        case 134: stringId = 0x1B75FFCC; break;
-        case 135: stringId = 0xAAE0D4FF; break;
-        case 136: stringId = 0x6ACB714A; break;
-        case 137: stringId = 0xA292A825; break;
-        case 138: stringId = 0x3041D7AC; break;
-        case 139: stringId = 0x90C46BBB; break;
-        case 140: stringId = 0xB7FC5190; break;
-        case 141: stringId = 0x40BC050C; break;
-        case 142: stringId = 0x09988B49; break;
-        case 143: stringId = 0xC08F5C90; break;
-        case 144: stringId = 0x05F0B230; break;
-        case 145: stringId = 0xADC5F08E; break;
-        case 146: stringId = 0x87C37625; break;
-        case 147: stringId = 0xE9D46798; break;
-        case 148: stringId = 0x5BDBD6D3; break;
-        case 149: stringId = 0x39B60856; break;
-        case 151: stringId = 0x056D9F12; break;
-        case 152: stringId = 0xBC3B07CD; break;
-        case 153: stringId = 0xD296C94C; break;
-        case 154: stringId = 0xDB4972F1; break;
-        case 155: stringId = 0x6A14E1E7; break;
-        default: break;
+            if (packet->strings[1].compare(L"") != 0)
+            {
+                const wchar_t* rulesText = g_pApp->GetGameRulesString(packet->strings[1]);
+                if (rulesText != NULL)
+                    text = std::wstring(rulesText);
+            }
         }
-        if (stringId != 0)
-            text = L10N::GetString(stringId);
-    }
-
-    if (message == 99 && !packet->ints.empty())
-    {
-        const int dynamicStringId = packet->ints[0] == 1000 ? 0xD982F837 :
-                                    packet->ints[0] == 14000 ? 0x0087FB07 : 0x24A5EDDC;
-        text = L10N::GetString(dynamicStringId);
-        replaceAll(text, text, L"%d", toString(packet->ints[0]));
-    }
-    else if (message == 6 || message == 8 || message == 9 || message == 10 || message == 68 || message == 69)
-    {
-        if (packet->strings.size() > 1 && (message == 6 || message == 8 || message == 9 || message == 10))
-            replaceAll(text, text, L"%s", packet->strings[1]);
-        else if (!packet->strings.empty())
-            replaceAll(text, text, L"%s", packet->strings[0]);
-    }
-    else if (message == 11 && packet->strings.size() > 2)
-    {
-        replaceAll(text, text, L"{*PLAYER*}", packet->strings[1]);
-        replaceAll(text, text, L"{*PLAYER2*}", packet->strings[2]);
-    }
-
-    switch (message)
-    {
-    case 122: case 125: case 126: case 128: case 129: case 154:
-        if (!packet->ints.empty()) replaceAll(text, text, L"%d", toString(packet->ints[0]));
+        else
+        {
+            text = L10N::GetString(packet->ints[0]);
+        }
+        replacePlayer = true;
         break;
-    case 130: case 131: case 132: case 133:
-        if (packet->ints.size() > 1) replaceAll(text, text, L"{*QUANTITY*}", toString(packet->ints[1]));
+    case 26:
+        text = L10N::GetString(0xd98e2236);
+        replacePlayer = true;
         break;
-    case 134: case 135: case 136:
-        if (!packet->ints.empty()) replaceAll(text, text, L"{*QUANTITY*}", toString(packet->ints[0]));
+    case 27:
+    case 40:
+        text = L10N::GetString(0xb04cad6a);
+        replacePlayer = true;
+        break;
+    case 28:
+        text = L10N::GetString(0x189c795e);
+        replacePlayer = true;
+        break;
+    case 29:
+        text = L10N::GetString(0x4bec30bf);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 30:
+        text = L10N::GetString(0x3c5da2b4);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 31:
+        text = L10N::GetString(0x7a2a89ae);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 32:
+        text = L10N::GetString(0x0242d45c);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 33:
+        text = L10N::GetString(0xb3fb4f7f);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 34:
+        text = L10N::GetString(0x3fc22003);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 35:
+        text = L10N::GetString(0x2dcf5941);
+        replacePlayer = true;
+        break;
+    case 36:
+        text = L10N::GetString(0x0d235d4b);
+        replacePlayer = true;
+        break;
+    case 37:
+        text = L10N::GetString(0xa1216033);
+        replacePlayer = true;
+        break;
+    case 39:
+        text = L10N::GetString(0x5ac8afbb);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 42:
+        text = L10N::GetString(0x80d4c2e3);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 43:
+        text = L10N::GetString(0x62f8280d);
+        replacePlayer = true;
+        break;
+    case 44:
+        text = L10N::GetString(0x461ba4e8);
+        replacePlayer = true;
+        break;
+    case 45:
+        text = L10N::GetString(0xc130636a);
+        replacePlayer = true;
+        break;
+    case 46:
+        text = L10N::GetString(0x44e2dd06);
+        replacePlayer = true;
+        break;
+    case 47:
+        text = L10N::GetString(0x8bc1a50e);
+        replacePlayer = true;
+        break;
+    case 48:
+        text = L10N::GetString(0x1ece8cfc);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 49:
+        text = L10N::GetString(0xd871bb46);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 50:
+        text = L10N::GetString(0x7ba47e90);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 51:
+        text = L10N::GetString(0x3ec0c74a);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 52:
+        text = L10N::GetString(0xc30a962c);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 54:
+        text = L10N::GetString(0x48ffbd9a);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 55:
+        text = L10N::GetString(0xe2b2d991);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 56:
+        text = L10N::GetString(0xcf30befb);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 57:
+        text = L10N::GetString(0x7ad1a880);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 58:
+        text = L10N::GetString(0xaf29a206);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 59:
+        text = L10N::GetString(0x516db1a2);
+        replacePlayer = true;
+        break;
+    case 60:
+        text = L10N::GetString(0x31c3794e);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 61:
+        text = L10N::GetString(0xf0eba2e4);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 62:
+        text = L10N::GetString(0x31b789a6);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 63:
+        text = L10N::GetString(0xe3be8e0d);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 64:
+        text = L10N::GetString(0x1a3b16db);
+        replacePlayer = true;
+        break;
+    case 65:
+        text = L10N::GetString(0x9eeff8cf);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case 66:
+        text = L10N::GetString(0x64400f01);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 67:
+        text = L10N::GetString(0x06046121);
+        replacePlayer = true;
+        replaceSource = true;
+        replaceItem = true;
+        break;
+    case 68:
+        text = L10N::GetString(0xd3560061);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case 69:
+        text = L10N::GetString(0x6e3a65e3);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case 70:
+        text = L10N::GetString(0x9f8bffae);
+        break;
+    case 71:
+        text = L10N::GetString(0x82460728);
+        break;
+    case 72:
+        text = L10N::GetString(0x1e0d17d0);
+        break;
+    case 73:
+        text = L10N::GetString(0x3e35b6e8);
+        break;
+    case 74:
+        text = L10N::GetString(0x70edc806);
+        break;
+    case 76:
+        text = L10N::GetString(0xa82b5a66);
+        break;
+    case 77:
+        text = L10N::GetString(0x16972fbf);
+        break;
+    case 78:
+        text = L10N::GetString(0x1ee681ba);
+        break;
+    case 79:
+        text = L10N::GetString(0x8ecd701e);
+        break;
+    case 80:
+        text = L10N::GetString(0xd97fdba2);
+        break;
+    case 82:
+        text = L10N::GetString(0xb399bd15);
+        break;
+    case 83:
+        text = L10N::GetString(0x99326383);
+        break;
+    case 84:
+        text = L10N::GetString(0x00fe5875);
+        break;
+    case 85:
+        text = L10N::GetString(0xec344e3d);
+        break;
+    case 86:
+        text = L10N::GetString(0x3221ece8);
+        break;
+    case 87:
+        text = L10N::GetString(0xb2145884);
+        break;
+    case 88:
+        text = L10N::GetString(0xb604aaff);
+        break;
+    case 89:
+        text = L10N::GetString(0xfab1deb6);
+        break;
+    case 90:
+        text = L10N::GetString(0xfdf65c18);
+        break;
+    case 91:
+        text = L10N::GetString(0xc952e8b9);
+        break;
+    case 92:
+        text = L10N::GetString(0xef12cc40);
+        break;
+    case 93:
+        text = L10N::GetString(0xb714e0e2);
+        break;
+    case 94:
+        text = L10N::GetString(0x3dcd926b);
+        break;
+    case 95:
+        text = L10N::GetString(0x60a3835d);
+        break;
+    case 96:
+        text = L10N::GetString(0xce88d7b9);
+        replacePlayer = true;
+        if (packet->ints[0] == 0xc800001)
+        {
+            replacements[L"{*DESTINATION*}"] = sourceName;
+        }
+        else
+        {
+            int auxValue = -1;
+            if (packet->ints.size() > 1)
+                auxValue = packet->ints[1];
+            replacements[L"{*DESTINATION*}"] =
+                g_pApp->getEntityName(static_cast<uint64_t>(static_cast<int64_t>(packet->ints[0])), auxValue);
+        }
+        break;
+    case 97:
+        text = L10N::GetString(0x5c19fa7a);
+        replacePlayer = true;
+        break;
+    case 98:
+        text = L10N::GetString(0x186485a6);
+        replacePlayer = true;
+        break;
+    case 99:
+    {
+        const int time = packet->ints[0];
+        if (time == 1000)
+        {
+            text = L10N::GetString(0xd982f837);
+        }
+        else if (time == 14000)
+        {
+            text = L10N::GetString(0x0087fb07);
+        }
+        else
+        {
+            text = L10N::GetString(0x24a5eddc);
+            text.replace(text.find(L"%d"), 2, toString(time));
+        }
+        break;
+    }
+    case 100:
+        text = L10N::GetString(0xe34b099b);
+        replacements[L"{*DIFFICULTY*}"] = L10N::GetString(Difficulty::byId(packet->ints[0])->getKey());
+        break;
+    case 101:
+        text = L10N::GetString(0xa816ec2e);
+        replacements[L"{*MODE*}"] = L10N::GetString(GameType::byId(packet->ints[0])->getLabel());
+        break;
+    case 102:
+        text = L10N::GetString(0x590236fb);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[1]));
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[2]));
+        break;
+    case 103:
+        text = L10N::GetString(0x334e4f83);
+        break;
+    case 104:
+        text = L10N::GetString(0xc5814157);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[1]));
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[2]));
+        replacePlayer = true;
+        break;
+    case 105:
+        text = L10N::GetString(0xa7d52e1f);
+        replacePlayer = true;
+        break;
+    case 106:
+        text = L10N::GetString(0xb5f2b622);
+        break;
+    case 107:
+        text = L10N::GetString(0x3ced883f);
+        break;
+    case 108:
+        text = L10N::GetString(0x0a09d437);
+        break;
+    case 109:
+        text = L10N::GetString(0xda993cc6);
+        replacements[L"{*MODE*}"] = L10N::GetString(GameType::byId(packet->ints[0])->getLabel());
+        break;
+    case 110:
+        text = L10N::GetString(0x5eeb14ce);
+        replacements[L"{*MODE*}"] = L10N::GetString(GameType::byId(packet->ints[0])->getLabel());
+        replacePlayer = true;
+        break;
+    case 111:
+        text = L10N::GetString(0xdd05c6b4);
+        break;
+    case 112:
+        text = L10N::GetString(0xd2bd3683);
+        replacePlayer = true;
+        break;
+    case 113:
+        singleMessage = true;
+        text = L10N::GetString(0xcfeb0335);
+        break;
+    case 114:
+        text = L10N::GetString(0x06e12057);
+        singleMessage = true;
+        break;
+    case 115:
+        text = L10N::GetString(0x9760a9e7);
+        singleMessage = true;
+        break;
+    case 116:
+        text = L10N::GetString(0x52f1ef84);
+        singleMessage = true;
+        break;
+    case 117:
+        text = L10N::GetString(0x7cccd9d4);
+        singleMessage = true;
+        break;
+    case 118:
+        text = L10N::GetString(0x69e5ca0b);
+        singleMessage = true;
+        break;
+    case 119:
+        text = L10N::GetString(0xc4219de3);
+        singleMessage = true;
+        break;
+    case 120:
+        text = L10N::GetString(0xb0b23bcd);
+        singleMessage = true;
+        break;
+    case 121:
+        if (packet->ints[0] != 1)
+        {
+            text = L10N::GetString(0x5819df6f);
+            text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        }
+        else
+        {
+            text = L10N::GetString(0x989f7641);
+        }
+        singleMessage = true;
+        break;
+    case 122:
+        singleMessage = true;
+        text = L10N::GetString(0x2e19c8b8);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        break;
+    case 123:
+        singleMessageDuration = 60;
+        text = L10N::GetString(0x464a6890);
+        singleMessage = true;
+        break;
+    case 124:
+        text = L10N::GetString(0xf53f833a);
+        singleMessage = true;
+        break;
+    case 125:
+        singleMessage = true;
+        text = L10N::GetString(0x0e73497d);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        break;
+    case 126:
+        singleMessage = true;
+        text = L10N::GetString(0xd5566021);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        break;
+    case 127:
+    {
+        const int value = packet->ints[0];
+        text = L10N::GetString(0xc1a090d6);
+        text.replace(text.find(L"%d"), 2, toString(value));
+        singleMessage = true;
+        break;
+    }
+    case 128:
+        text = L10N::GetString(0xaf2e63a6);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        singleMessage = true;
+        break;
+    case 129:
+        text = L10N::GetString(0xe028e842);
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        singleMessage = true;
+        break;
+    case 130:
+        singleMessage = true;
+        text = L10N::GetString(0x2fb55d20);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[1]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 131:
+        singleMessage = true;
+        text = L10N::GetString(0xb8af706d);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[1]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 132:
+        singleMessage = true;
+        text = L10N::GetString(0xa19c12db);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[1]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 133:
+        singleMessage = true;
+        text = L10N::GetString(0x431eeece);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[1]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 134:
+        singleMessage = true;
+        text = L10N::GetString(0x1b75ffcc);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[0]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 135:
+        singleMessage = true;
+        text = L10N::GetString(0xaae0d4ff);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[0]);
+        break;
+    case 136:
+        singleMessage = true;
+        text = L10N::GetString(0x6acb714a);
+        replacements[L"{*QUANTITY*}"] = toString(packet->ints[0]);
+        break;
+    case 137:
+        text = L10N::GetString(0xa292a825);
+        break;
+    case 138:
+        text = L10N::GetString(0x3041d7ac);
+        break;
+    case 139:
+        text = L10N::GetString(0x90c46bbb);
+        break;
+    case 140:
+        text = L10N::GetString(0xb7fc5190);
         break;
     case 141:
-        if (!packet->ints.empty()) replaceAll(text, text, L"{*SIZE*}", toString(packet->ints[0]));
+        text = L10N::GetString(0x40bc050c);
+        replacements[L"{*SIZE*}"] = toString(packet->ints[0]);
         break;
-    case 100:
-        if (!packet->ints.empty() && Difficulty::byId(packet->ints[0]) != 0)
-            replaceAll(text, text, L"{*DIFFICULTY*}", L10N::GetString(Difficulty::byId(packet->ints[0])->getKey()));
+    case 142:
+        text = L10N::GetString(0x09988b49);
         break;
-    case 101: case 109: case 110:
-        if (!packet->ints.empty() && GameType::byId(packet->ints[0]) != 0)
-            replaceAll(text, text, L"{*MODE*}", L10N::GetString(GameType::byId(packet->ints[0])->getLabel()));
+    case 143:
+        text = L10N::GetString(0xc08f5c90);
+        replacements[L"{*PLAYER*}"] = packet->strings[0];
+        replacements[L"{*TEAM*}"] = packet->strings[1];
         break;
-    case 102: case 104:
-        if (packet->ints.size() > 2)
-        {
-            replaceFirst(text, L"%d", toString(packet->ints[0]));
-            replaceFirst(text, L"%d", toString(packet->ints[1]));
-            replaceFirst(text, L"%d", toString(packet->ints[2]));
-        }
+    case 144:
+        text = L10N::GetString(0x05f0b230);
+        replacements[L"{*PLAYER*}"] = packet->strings[0];
         break;
-    case 143: case 144: case 145: case 147:
-        if (!packet->strings.empty()) replaceAll(text, text, L"{*PLAYER*}", packet->strings[0]);
+    case 145:
+        text = L10N::GetString(0xadc5f08e);
+        replacements[L"{*PLAYER*}"] = packet->strings[0];
+        replacements[L"{*TEAM*}"] = packet->strings[1];
         break;
-    case 146: case 148: case 149:
-        if (!packet->strings.empty()) replaceAll(text, text, L"{*TEAM*}", packet->strings[0]);
+    case 146:
+        text = L10N::GetString(0x87c37625);
+        replacements[L"{*TEAM*}"] = packet->strings[0];
+        break;
+    case 147:
+        text = L10N::GetString(0xe9d46798);
+        replacements[L"{*PLAYER*}"] = packet->strings[0];
+        replacements[L"{*TEAM*}"] = packet->strings[1];
+        break;
+    case 148:
+        text = L10N::GetString(0x5bdbd6d3);
+        replacements[L"{*TEAM*}"] = packet->strings[0];
+        break;
+    case 149:
+        text = L10N::GetString(0x39b60856);
+        replacements[L"{*TEAM*}"] = packet->strings[0];
+        break;
+    case 150:
         break;
     case 151:
-        if (!packet->ints.empty()) replaceAll(text, text, L"{*NUMBER*}", toString(packet->ints[0]));
+        text = L10N::GetString(0x056d9f12);
+        replacements[L"{*NUMBER*}"] = toString(packet->ints[0]);
+        break;
+    case 152:
+        text = L10N::GetString(0xbc3b07cd);
+        break;
+    case 153:
+        text = L10N::GetString(0xd296c94c);
+        break;
+    case 154:
+        singleMessage = true;
+        text = L10N::GetString(0xdb4972f1);
+        replacePlayer = true;
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
+        text.replace(text.find(L"%d"), 2, toString(packet->ints[1]));
+        break;
+    case 155:
+        text = L10N::GetString(0x6a14e1e7);
+        break;
+    default:
+        text = playerName;
         break;
     }
 
-    const int singleMessageDuration = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(38));
-    if (message == 0x87 && singleMessageDuration != 0)
-        m_minecraft->mGui->setSingleMessage(text, m_playerId, 0);
-    else if (singleMessageDuration >= 0 && message != 0x87)
-        m_minecraft->mGui->setSingleMessage(text, m_playerId, singleMessageDuration);
-    else
-        m_minecraft->mGui->addMessage(text, m_playerId, message == 13 || message == 14 || message == 15,
-                                      !g_pApp->IsConsoleChatCensored(), false, false);
+    if (g_pApp->IsConsoleChatCensored() && !g_pApp->IsUUIDLocal(sourceName) && replaceItem)
+    {
+        replaceItem = false;
+        switch (static_cast<int>(packet->message))
+        {
+        case 49:
+        case 51:
+            text = L10N::GetString(0x7ba47e90);
+            break;
+        case 60:
+            text = L10N::GetString(0x3c5da2b4);
+            break;
+        case 61:
+            text = L10N::GetString(0x7a2a89ae);
+            break;
+        case 62:
+            text = L10N::GetString(0x0242d45c);
+            break;
+        case 63:
+            text = L10N::GetString(0xb3fb4f7f);
+            break;
+        case 67:
+            text = L10N::GetString(0x3fc22003);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (replacePlayer)
+        replacements[L"{*PLAYER*}"] = playerName;
+
+    if (replaceSource)
+    {
+        if (packet->ints[0] == 0xc800001)
+            replacements[L"{*SOURCE*}"] = sourceName;
+        else
+            replacements[L"{*SOURCE*}"] = packet->getMobCustomName(m_level);
+    }
+
+    if (replaceItem)
+        replacements[L"{*ITEM*}"] = packet->strings[2];
+
+    const bool deathMessage = packet->message > 12 && packet->message < 68;
+    const bool aboutThisPlayer = playerName.compare(gProfile->GetMiiName(m_playerId)) == 0;
+    if (showMessage)
+    {
+        makeReplacements(replacements, text);
+        if (singleMessage && GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x26)) != 0)
+            m_minecraft->mGui->setSingleMessage(text, m_playerId, singleMessageDuration);
+        else
+            m_minecraft->mGui->addMessage(text, m_playerId, deathMessage, aboutThisPlayer, false, false);
+    }
 }
 
 uint32_t ClientPacketListener::isLocalPlayer(int entityId)

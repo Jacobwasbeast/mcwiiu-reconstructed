@@ -155,6 +155,8 @@ public:
     std::wstring GetOnlineName(int userIndex);
 
 private:
+    friend class CMinecraftApp;
+
     unsigned char m_unknown00[4];
     C4JEventImpl* m_serverReadyEvent;
     bool m_initialised;
