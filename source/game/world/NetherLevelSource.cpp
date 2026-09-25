@@ -377,67 +377,69 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
 
     for (int i = 0; i < 8; ++i)
     {
-        mLavaSpringOpen->place(mLevel, mPopulationRandom,
-                               origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                             mPopulationRandom.nextInt(120) + 4,
-                                             mPopulationRandom.nextInt(16) + 8));
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(120) + 4;
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        mLavaSpringOpen->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
-    for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1; ++i)
+    const int fireCount = mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1;
+    for (int i = 0; i < fireCount; ++i)
     {
-        mFireFeature->place(mLevel, mPopulationRandom,
-                            origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                          mPopulationRandom.nextInt(120) + 4,
-                                          mPopulationRandom.nextInt(16) + 8));
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(120) + 4;
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        mFireFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
-    for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1); ++i)
+    const int lightGemCount = mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1);
+    for (int i = 0; i < lightGemCount; ++i)
     {
-        mLightGemFeature->place(mLevel, mPopulationRandom,
-                                origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                              mPopulationRandom.nextInt(120) + 4,
-                                              mPopulationRandom.nextInt(16) + 8));
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(120) + 4;
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        mLightGemFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     for (int i = 0; i < 10; ++i)
     {
-        mHellPortalFeature->place(mLevel, mPopulationRandom,
-                                  origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                                mPopulationRandom.nextInt(128),
-                                                mPopulationRandom.nextInt(16) + 8));
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(128);
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        mHellPortalFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     if (mPopulationRandom.nextBoolean())
     {
-        mBrownMushroom->place(mLevel, mPopulationRandom,
-                              origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                            mPopulationRandom.nextInt(128),
-                                            mPopulationRandom.nextInt(16) + 8));
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(128);
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        mBrownMushroom->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     if (mPopulationRandom.nextBoolean())
     {
-        mRedMushroom->place(mLevel, mPopulationRandom,
-                            origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                          mPopulationRandom.nextInt(128),
-                                          mPopulationRandom.nextInt(16) + 8));
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(128);
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        mRedMushroom->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     for (int i = 0; i < 16; ++i)
     {
-        mQuartzOre->place(mLevel, mPopulationRandom,
-                          origin.offset(mPopulationRandom.nextInt(16),
-                                        mPopulationRandom.nextInt(108) + 10,
-                                        mPopulationRandom.nextInt(16)));
+        const int x = mPopulationRandom.nextInt(16);
+        const int y = mPopulationRandom.nextInt(108) + 10;
+        const int z = mPopulationRandom.nextInt(16);
+        mQuartzOre->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     const int magmaHeight = mLevel->getSeaLevel() / 2 - 4;
     for (int i = 0; i < 4; ++i)
     {
-        mMagmaOre->place(mLevel, mPopulationRandom,
-                         origin.offset(mPopulationRandom.nextInt(16),
-                                       magmaHeight + mPopulationRandom.nextInt(10),
-                                       mPopulationRandom.nextInt(16)));
+        const int x = mPopulationRandom.nextInt(16);
+        const int y = magmaHeight + mPopulationRandom.nextInt(10);
+        const int z = mPopulationRandom.nextInt(16);
+        mMagmaOre->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     for (int i = 0; i < 16; ++i)
     {
-        mLavaSpring->place(mLevel, mPopulationRandom,
-                           origin.offset(mPopulationRandom.nextInt(16),
-                                         mPopulationRandom.nextInt(108) + 10,
-                                         mPopulationRandom.nextInt(16)));
+        const int x = mPopulationRandom.nextInt(16);
+        const int y = mPopulationRandom.nextInt(108) + 10;
+        const int z = mPopulationRandom.nextInt(16);
+        mLavaSpring->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
 
     biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX << 4, 0, chunkZ << 4));

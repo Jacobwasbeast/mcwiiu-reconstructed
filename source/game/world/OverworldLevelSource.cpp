@@ -254,11 +254,11 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
                 }
                 double low = minLimitNoise.data[noiseIndex] / mSettings->upperLimitScale;
                 double high = maxLimitNoise.data[noiseIndex] / mSettings->lowerLimitScale;
-                double blend = (mainNoise.data[noiseIndex] / mSettings->coordinateScale + 1.0) / 2.0;
+                double blend = (mainNoise.data[noiseIndex] / 10.0 + 1.0) / 2.0;
                 double density = Mth::clampedLerp(low, high, blend) - vertical;
                 if (sampleY > 13)
                 {
-                    double topBlend = (sampleY - 13) / 3.0;
+                    double topBlend = (float)(sampleY - 13) / 3.0f;
                     density = density * (1.0 - topBlend) - 10.0 * topBlend;
                 }
                 heights.data[noiseIndex++] = density;
@@ -305,8 +305,8 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
 
                     for (int subX = 0; subX < 4; ++subX)
                     {
-                        double density = left;
                         double densityStep = (right - left) * 0.25;
+                        double density = left - densityStep;
                         int blockX = cellX * 4 + subX;
                         for (int subZ = 0; subZ < 4; ++subZ)
                         {
@@ -315,6 +315,7 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
                             double falloff = getHeightFalloff(chunkX * 16 + blockX,
                                                               chunkZ * 16 + blockZ, &edgeDistance);
                             int blockId = 0;
+                            density += densityStep;
                             if (density > falloff)
                             {
                                 blockId = 1;
@@ -335,7 +336,6 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
                                 }
                             }
                             primer->setBlockAndData((blockX << 11) | (blockZ << 7) | blockY, blockId, 0);
-                            density += densityStep;
                         }
                         left += leftStep;
                         right += rightStep;
@@ -357,7 +357,7 @@ void OverworldLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* pr
 {
     arrayWithLength<double> surfaceDepths(256, true);
     mSurfaceNoise->getRegion(surfaceDepths, chunkX * 16, chunkZ * 16, 16, 16,
-                             0.0625, 0.0625, 0.5);
+                             0.0625, 0.0625, 1.0);
     for (int x = 0; x < 16; ++x)
     {
         for (int z = 0; z < 16; ++z)
@@ -535,16 +535,19 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
     if (biome != Biome::DESERT && biome != Biome::DESERT_HILLS && mSettings->useWaterLakes
         && !villageGenerated && mPopulationRandom.nextInt(mSettings->waterLakeChance) == 0)
     {
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(128);
+        const int z = mPopulationRandom.nextInt(16) + 8;
         LakeFeature(Blocks::WATER).place(mLevel, mPopulationRandom,
-            origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
-                          mPopulationRandom.nextInt(16) + 8));
+            origin.offset(x, y, z));
     }
     if (!villageGenerated && mPopulationRandom.nextInt(mSettings->lavaLakeChance / 10) == 0
         && mSettings->useLavaLakes)
     {
-        BlockPos pos = origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                     mPopulationRandom.nextInt(mPopulationRandom.nextInt(120) + 8),
-                                     mPopulationRandom.nextInt(16) + 8);
+        const int x = mPopulationRandom.nextInt(16) + 8;
+        const int y = mPopulationRandom.nextInt(mPopulationRandom.nextInt(120) + 8);
+        const int z = mPopulationRandom.nextInt(16) + 8;
+        BlockPos pos = origin.offset(x, y, z);
         if (pos.y < mLevel->getSeaLevel() || mPopulationRandom.nextInt(mSettings->lavaLakeChance / 8) == 0)
         {
             LakeFeature(Blocks::lava).place(mLevel, mPopulationRandom, pos);
@@ -554,9 +557,11 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
     {
         for (int i = 0; i < mSettings->dungeonChance; ++i)
         {
+            const int x = mPopulationRandom.nextInt(16) + 8;
+            const int y = mPopulationRandom.nextInt(128);
+            const int z = mPopulationRandom.nextInt(16) + 8;
             MonsterRoomFeature().place(mLevel, mPopulationRandom,
-                origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
-                              mPopulationRandom.nextInt(16) + 8));
+                origin.offset(x, y, z));
         }
     }
     biome->decorate(mLevel, mPopulationRandom, origin);
