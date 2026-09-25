@@ -227,10 +227,10 @@ public:
     virtual double GetJoypadStick_Menu_RY(int value);
     virtual unsigned char GetJoypadLTrigger_Menu(int value);
     virtual unsigned char GetJoypadRTrigger_Menu(int value);
-    virtual double GetJoypadStick_LX(int pad, bool raw);
-    virtual double GetJoypadStick_LY(int pad, bool raw);
-    virtual double GetJoypadStick_RX(int pad, bool raw);
-    virtual double GetJoypadStick_RY(int pad, bool raw);
+    virtual double GetJoypadStick_LX(int pad, bool checkMenu);
+    virtual double GetJoypadStick_LY(int pad, bool checkMenu);
+    virtual double GetJoypadStick_RX(int pad, bool checkMenu);
+    virtual double GetJoypadStick_RY(int pad, bool checkMenu);
     virtual unsigned char GetJoypadLTrigger(int pad, bool raw);
     virtual unsigned char GetJoypadRTrigger(int pad, bool raw);
     virtual unsigned short* GetTouchPadData(int pad, C_4JInput::ETouchType touchType, bool previous);

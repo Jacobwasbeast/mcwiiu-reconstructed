@@ -442,10 +442,10 @@ void CInput::ClearJoypadValues(JOYPAD* joypad)
     joypad->leftStickY = 0;
     joypad->rightStickX = 0;
     joypad->rightStickY = 0;
-    joypad->leftX = -1.0f;
-    joypad->leftY = -1.0f;
-    joypad->rightX = -1.0f;
-    joypad->rightY = -1.0f;
+    joypad->leftX = 0.0f;
+    joypad->leftY = 0.0f;
+    joypad->rightX = 0.0f;
+    joypad->rightY = 0.0f;
     joypad->hasTouch = 0;
     joypad->touchPressed = 0;
 }
@@ -1075,53 +1075,61 @@ void CInput::MapTouchInput(int pad, unsigned int mask)
 {
     joypads[pad].fakeValue = joypads[pad].fakeValue & 0xff3fc300u | mask;
 }
-double CInput::GetJoypadStick_LX(int pad, bool raw)
+double CInput::GetJoypadStick_LX(int pad, bool checkMenu)
 {
-    if (pad < 4 && raw && menuDisplayed[pad])
+    bool menuShown = false;
+    if (pad < 4)
     {
-        return -1.0;
+        menuShown = menuDisplayed[pad];
     }
-    if (RemapIpad(pad) && joypads[pad].leftXSource != 0)
+    int mappedPad = pad;
+    if (RemapIpad(mappedPad) && (!checkMenu || !menuShown))
     {
-        return *joypads[pad].leftXSource * joypads[pad].sensitivity;
+        return *joypads[mappedPad].leftXSource * joypads[mappedPad].sensitivity;
     }
-    return -1.0;
+    return 0.0;
 }
-double CInput::GetJoypadStick_LY(int pad, bool raw)
+double CInput::GetJoypadStick_LY(int pad, bool checkMenu)
 {
-    if (pad < 4 && raw && menuDisplayed[pad])
+    bool menuShown = false;
+    if (pad < 4)
     {
-        return -1.0;
+        menuShown = menuDisplayed[pad];
     }
-    if (RemapIpad(pad) && joypads[pad].leftYSource != 0)
+    int mappedPad = pad;
+    if (RemapIpad(mappedPad) && (!checkMenu || !menuShown))
     {
-        return *joypads[pad].leftYSource * joypads[pad].sensitivity;
+        return *joypads[mappedPad].leftYSource * joypads[mappedPad].sensitivity;
     }
-    return -1.0;
+    return 0.0;
 }
-double CInput::GetJoypadStick_RX(int pad, bool raw)
+double CInput::GetJoypadStick_RX(int pad, bool checkMenu)
 {
-    if (pad < 4 && raw && menuDisplayed[pad])
+    bool menuShown = false;
+    if (pad < 4)
     {
-        return -1.0;
+        menuShown = menuDisplayed[pad];
     }
-    if (RemapIpad(pad) && joypads[pad].rightXSource != 0)
+    int mappedPad = pad;
+    if (RemapIpad(mappedPad) && (!checkMenu || !menuShown))
     {
-        return *joypads[pad].rightXSource * joypads[pad].sensitivity;
+        return *joypads[mappedPad].rightXSource * joypads[mappedPad].sensitivity;
     }
-    return -1.0;
+    return 0.0;
 }
-double CInput::GetJoypadStick_RY(int pad, bool raw)
+double CInput::GetJoypadStick_RY(int pad, bool checkMenu)
 {
-    if (pad < 4 && raw && menuDisplayed[pad])
+    bool menuShown = false;
+    if (pad < 4)
     {
-        return -1.0;
+        menuShown = menuDisplayed[pad];
     }
-    if (RemapIpad(pad) && joypads[pad].rightYSource != 0)
+    int mappedPad = pad;
+    if (RemapIpad(mappedPad) && (!checkMenu || !menuShown))
     {
-        return *joypads[pad].rightYSource * joypads[pad].sensitivity;
+        return *joypads[mappedPad].rightYSource * joypads[mappedPad].sensitivity;
     }
-    return -1.0;
+    return 0.0;
 }
 unsigned char CInput::GetJoypadLTrigger(int pad, bool raw)
 {
@@ -1288,22 +1296,22 @@ bool CInput::IsSet(int pad, unsigned char map)
 double CInput::GetJoypadStick_Menu_LX(int pad)
 {
     int mappedPad = pad;
-    return RemapIpad(mappedPad) ? joypads[mappedPad].rightX : -1.0;
+    return RemapIpad(mappedPad) ? joypads[mappedPad].rightX : 0.0;
 }
 double CInput::GetJoypadStick_Menu_LY(int pad)
 {
     int mappedPad = pad;
-    return RemapIpad(mappedPad) ? joypads[mappedPad].rightY : -1.0;
+    return RemapIpad(mappedPad) ? joypads[mappedPad].rightY : 0.0;
 }
 double CInput::GetJoypadStick_Menu_RX(int pad)
 {
     int mappedPad = pad;
-    return RemapIpad(mappedPad) ? joypads[mappedPad].leftX : -1.0;
+    return RemapIpad(mappedPad) ? joypads[mappedPad].leftX : 0.0;
 }
 double CInput::GetJoypadStick_Menu_RY(int pad)
 {
     int mappedPad = pad;
-    return RemapIpad(mappedPad) ? joypads[mappedPad].leftY : -1.0;
+    return RemapIpad(mappedPad) ? joypads[mappedPad].leftY : 0.0;
 }
 unsigned char CInput::GetJoypadLTrigger_Menu(int pad)
 {
