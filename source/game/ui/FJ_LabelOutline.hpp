@@ -18,12 +18,12 @@ public:
     void Init(const std::wstring& label);
 
 private:
-    bool m_outlineEnabled;
+    bool m_centreLabel;
     fuiRenderNodeEditText* m_labelText;
     std::vector<fuiRenderNodeEditText*> m_outlineText;
     std::vector<float> m_outlineX;
     int m_labelX;
-    int m_outlineWidth;
+    int m_halfWidth;
 };
 
 #endif

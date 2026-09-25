@@ -38,6 +38,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/GhostPlayer.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
@@ -554,7 +555,15 @@ void UIScene_HUD::SetHealth(int health, int minimumHealth, bool highlight, bool 
         getFJ_Hud()->SetHealth(health, highlight, hardcore, hide);
 }
 void UIScene_HUD::SetFood(int food, int, bool highlight) { if (getFJ_Hud() != 0) getFJ_Hud()->SetFood(food, highlight); }
-void UIScene_HUD::SetAir(int air, int) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAir(air); }
+void UIScene_HUD::SetAir(int air, int)
+{
+    if (m_air != air)
+    {
+        m_air = air;
+        if (getFJ_Hud() != 0)
+            getFJ_Hud()->SetAir(air);
+    }
+}
 void UIScene_HUD::SetArmour(int armour) { if (getFJ_Hud() != 0) getFJ_Hud()->SetArmour(armour); }
 void UIScene_HUD::SetRoundNumber(unsigned int round, unsigned int total, bool visible)
 {
@@ -653,6 +662,18 @@ void UIScene_HUD::renderPlayerHealth()
         SetFood(foodLevel, lastFoodLevel, hungry);
         SetFoodSaturationLevel(saturation);
     }
+
+    if (!player->isUnderLiquid(Material::WATER) && !player->isUnderLiquid(Material::LAVA)
+        && player->getAirSupply() >= (int)player->getMaxAirSupply())
+    {
+        ShowAir(false);
+        return;
+    }
+
+    ShowAir(true);
+    const int air = (int)std::ceil((float)(player->getAirSupply() - 2) * 10.0f / 300.0f);
+    const int popping = (int)std::ceil((float)player->getAirSupply() * 10.0f / 300.0f) - air;
+    SetAir(air, popping);
 }
 void UIScene_HUD::renderVehicleHealth()
 {

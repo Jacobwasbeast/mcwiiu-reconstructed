@@ -6,6 +6,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/Gui.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/UnityClient6.hpp"
@@ -18,9 +19,10 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-UIScene_DeathMenu::UIScene_DeathMenu(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer), m_deathMenuActive(false), m_unknownStateA(false),
+UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
+    : UIScene(playerId, layer), m_deathMenuActive(false), m_unknownStateA(false),
       m_unknownStateB(false)
 {
     initialiseMovie();
@@ -46,27 +48,36 @@ UIScene_DeathMenu::UIScene_DeathMenu(int sceneType, void*, UILayer* layer)
         m_titleLabel.setLabel(UIString(L10N::GetString(0x69c7eda4)), false, false);
     else
         m_titleLabel.setLabel(UIString(L10N::GetString(0x7b5878dc)), false, false);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    Gui* gui = minecraft->mGui;
 
     if (!Minecraft::InMiniGame(eMiniGameId_Tumble, true) &&
         !Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
-        m_deathMessageLabel.setLabel(UIString(L""), false, false);
+        m_deathMessageLabel.setLabel(UIString(gui->mNowPlaying[playerId]), false, false);
         m_unknownStateA = false;
         m_unknownStateB = false;
     }
     else
     {
-        m_deathMessageLabel.setLabel(UIString(L""), false, false);
+        m_deathMessageLabel.setLabel(UIString(std::wstring(L"")), false, false);
         m_unknownStateB = false;
         m_unknownStateA = false;
     }
 
-    m_extraMessageLabel.setLabel(UIString(L""), false, false);
-
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft != NULL && minecraft->mGameModes[sceneType] != NULL)
+    std::wstring extraMessage(L"");
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
+        Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() != 0)
     {
-        Tutorial* tutorial = minecraft->mGameModes[sceneType]->getTutorial();
+        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerId];
+        if (!player->isSpectator())
+            extraMessage = gui->mSingleMessages[playerId];
+    }
+    m_extraMessageLabel.setLabel(UIString(extraMessage), false, false);
+
+    if (minecraft != NULL && Minecraft::GetInstance()->mGameModes[playerId] != NULL)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[playerId]->getTutorial();
         if (tutorial != NULL)
             tutorial->showTutorialPopup(false);
     }
