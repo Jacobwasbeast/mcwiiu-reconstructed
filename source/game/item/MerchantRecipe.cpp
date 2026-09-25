@@ -6,7 +6,7 @@
 #include "game/world/block/Block.hpp"
 
 MerchantRecipe::MerchantRecipe(CompoundTag* tag)
-    : mUses(0)
+    : mBuyA(ItemInstance::EMPTY), mBuyB(ItemInstance::EMPTY), mSell(ItemInstance::EMPTY), mUses(0)
 {
     load(tag);
 }
@@ -21,17 +21,17 @@ MerchantRecipe::MerchantRecipe(not_null_ptr<ItemInstance> buyA, not_null_ptr<Ite
 
 MerchantRecipe::MerchantRecipe(not_null_ptr<ItemInstance> buyA, not_null_ptr<ItemInstance> sell)
 {
-    _init(buyA, not_null_ptr<ItemInstance>(), sell);
+    _init(buyA, ItemInstance::EMPTY, sell);
 }
 
 MerchantRecipe::MerchantRecipe(not_null_ptr<ItemInstance> buyA, Item* sell)
 {
-    _init(buyA, not_null_ptr<ItemInstance>(), not_null_ptr<ItemInstance>(new ItemInstance(sell)));
+    _init(buyA, ItemInstance::EMPTY, not_null_ptr<ItemInstance>(new ItemInstance(sell)));
 }
 
 MerchantRecipe::MerchantRecipe(not_null_ptr<ItemInstance> buyA, Block* sell)
 {
-    _init(buyA, not_null_ptr<ItemInstance>(), not_null_ptr<ItemInstance>(new ItemInstance(sell)));
+    _init(buyA, ItemInstance::EMPTY, not_null_ptr<ItemInstance>(new ItemInstance(sell)));
 }
 
 void MerchantRecipe::_init(not_null_ptr<ItemInstance> buyA, not_null_ptr<ItemInstance> buyB, not_null_ptr<ItemInstance> sell)

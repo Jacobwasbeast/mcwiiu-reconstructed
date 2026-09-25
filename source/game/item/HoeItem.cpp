@@ -82,7 +82,7 @@ InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> p
         }
         else if (block == Blocks::dirt)
         {
-            int data = state->getValue(gVariantProperty)->getData();
+            int data = state->getValue(DirtBlock::VARIANT)->getData();
             if (data == 0)
             {
                 replacement = Blocks::farmland;
