@@ -782,6 +782,7 @@ void LevelChunk::recalcHeightmap()
     PIXEndNamedEvent();
     int runningMin = 255;
     int runningMax = 0;
+    mLowestHeightmap = 0x7fffffff;
     PIXBeginNamedEvent(0.0f, "LevelChunk::recalcHeightmap - RangedLoop");
     for (int localX = 0; localX < 16; ++localX)
     {
@@ -791,24 +792,27 @@ void LevelChunk::recalcHeightmap()
             int height = highestY;
             if (highestY > 0)
             {
+                int blockY = highestY;
                 int lightBlock;
                 do
                 {
-                    --height;
-                    int index = ((height & 0x80) << 8) | (localX << 11) | (localZ << 7) | (height & 0x7f);
+                    --blockY;
+                    int index = ((blockY & 0x80) << 8) | (localX << 11) | (localZ << 7) | (blockY & 0x7f);
                     Block* block = Block::byId(elements[index] >> 4);
                     Block* extraBlock = Block::byId(extraElements[index] >> 4);
                     lightBlock = block->defaultBlockState()->getLightBlock();
                     int extraLightBlock = extraBlock->defaultBlockState()->getLightBlock();
                     if (extraLightBlock > lightBlock)
                         lightBlock = extraLightBlock;
-                } while (lightBlock == 0 && height > 0);
+                } while (lightBlock == 0 && --height > 0);
             }
             mHeightmap.data[(localZ << 4) | localX] = (unsigned char)height;
             if (height < runningMin)
                 runningMin = height;
             if (runningMax < height)
                 runningMax = height;
+            if (height < (int)mLowestHeightmap)
+                mLowestHeightmap = height;
             PIXEndNamedEvent();
             PIXBeginNamedEvent(0.0f, "LevelChunk::recalcHeightmap - RangedLoop - setSkyLight");
             if (level->mDimension->isHasSkyLight())
@@ -1097,6 +1101,8 @@ void LevelChunk::recalcHeight(int localX, int y, int localZ)
     level->lightColumnChanged(worldX, worldZ, lightColumnLow, oldHeight);
     int lowY = height < oldHeight ? height : oldHeight;
     int highY = height < oldHeight ? oldHeight : height;
+    if (height < (int)mLowestHeightmap)
+        mLowestHeightmap = height;
     if (level->mDimension->isHasSkyLight())
     {
         PIXBeginNamedEvent(0.0f, "Light gaps");
