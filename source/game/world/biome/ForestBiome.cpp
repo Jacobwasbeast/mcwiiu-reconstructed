@@ -81,8 +81,9 @@ void ForestBiome::addMushrooms(Level* level, Random& random, const BlockPos& pos
     {
         for (int column = 0; column < 2; ++column)
         {
-            BlockPos origin = pos.offset(row * 4 + 9 + random.nextInt(3), 0,
-                                         column * 4 + 9 + random.nextInt(3));
+            const int x = row * 4 + 9 + random.nextInt(3);
+            const int z = column * 4 + 9 + random.nextInt(3);
+            BlockPos origin = pos.offset(x, 0, z);
             origin = level->getHeightmapPos(origin);
             if (random.nextInt(20) == 0)
             {

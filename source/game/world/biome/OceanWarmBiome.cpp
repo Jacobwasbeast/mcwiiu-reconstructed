@@ -60,33 +60,39 @@ void OceanWarmBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 
     for (int i = 0; i < 4; ++i)
     {
-        mDecorator->coralGen->place(
-            level, random, pos.offset(random.nextInt(16), 45, random.nextInt(16)));
+        const int x = random.nextInt(16);
+        const int z = random.nextInt(16);
+        mDecorator->coralGen->place(level, random, pos.offset(x, 45, z));
     }
 
     if (random.nextInt(3) == 0)
     {
-        mDecorator->coralCrustGen->place(
-            level, random, pos.offset(random.nextInt(10), 45, random.nextInt(10)));
+        const int x = random.nextInt(10);
+        const int z = random.nextInt(10);
+        mDecorator->coralCrustGen->place(level, random, pos.offset(x, 45, z));
     }
 
     for (int i = 0; i < 16; ++i)
     {
-        mDecorator->coralHangGen->place(
-            level, random, pos.offset(random.nextInt(16), 62, random.nextInt(16)));
+        const int x = random.nextInt(16);
+        const int z = random.nextInt(16);
+        mDecorator->coralHangGen->place(level, random, pos.offset(x, 62, z));
     }
 
     for (int i = 0; i < 20; ++i)
     {
-        mDecorator->seaAnemoneGen->place(
-            level, random, pos.offset(random.nextInt(16), 62, random.nextInt(16)));
+        const int x = random.nextInt(16);
+        const int z = random.nextInt(16);
+        mDecorator->seaAnemoneGen->place(level, random, pos.offset(x, 62, z));
     }
 
     if (random.nextInt(6) == 0)
     {
         for (int i = 0; i < mDecorator->seaGrassPerChunk; ++i)
         {
-            MutableBlockPos position(pos.offset(random.nextInt(24), 0, random.nextInt(24)));
+            const int x = random.nextInt(24);
+            const int z = random.nextInt(24);
+            MutableBlockPos position(pos.offset(x, 0, z));
             int depth = level->getHeightmap(position.x, position.z) * 2;
             position.setY(depth != 0 ? random.nextInt(depth) : 0);
             mDecorator->seaPickleGen->place(level, random, position);

@@ -65,16 +65,19 @@ void OceanFrozenBiome::decorate(Level* level, Random& random, const BlockPos& po
 
     if (random.nextInt(8) == 0)
     {
-        BlockPos icebergPos = pos.offset(random.nextInt(8) + 12, 0, random.nextInt(8) + 12);
+        const int x = random.nextInt(8) + 12;
+        const int z = random.nextInt(8) + 12;
+        BlockPos icebergPos = pos.offset(x, 0, z);
         mDecorator->icebergGen->place(level, random, level->getHeightmapPos(icebergPos));
     }
 
     int blueIceCount = random.nextInt(20);
     for (int i = 0; i < blueIceCount; ++i)
     {
-        mDecorator->blueIceGen->place(
-            level, random,
-            pos.offset(random.nextInt(16) + 8, random.nextInt(32) + 30, random.nextInt(16) + 8));
+        const int x = random.nextInt(16) + 8;
+        const int y = random.nextInt(32) + 30;
+        const int z = random.nextInt(16) + 8;
+        mDecorator->blueIceGen->place(level, random, pos.offset(x, y, z));
     }
 }
 

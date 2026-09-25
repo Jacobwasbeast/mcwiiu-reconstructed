@@ -119,17 +119,17 @@ void TaigaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
 
         if (noise > 1.75)
         {
-            TypedBoxed<DirtBlock::Variant*> variant(gVariants[1]);
+            TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::COARSE_DIRT);
             const BlockState* coarseDirt =
-                Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
+                Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
             mTopBlock.blockId = 3;
             mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(coarseDirt);
         }
         else if (noise > -0.95)
         {
-            TypedBoxed<DirtBlock::Variant*> variant(gVariants[2]);
+            TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::PODZOL);
             const BlockState* podzol =
-                Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
+                Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
             mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(podzol);
             mTopBlock.blockId = 3;
         }

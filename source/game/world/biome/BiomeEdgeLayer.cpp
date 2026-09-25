@@ -224,29 +224,6 @@ arrayWithLength<int> BiomeEdgeLayer::getArea(int x, int z, int width, int height
                     area.data[localX + localZ * width] = centre;
                 }
             }
-            else if (centre == Biome::JUNGLE->id)
-            {
-                if (north != Biome::JUNGLE->id)
-                {
-                    area.data[localX + localZ * width] = Biome::JUNGLE_EDGE->id;
-                }
-                else if (east != Biome::JUNGLE->id)
-                {
-                    area.data[localX + localZ * width] = Biome::JUNGLE_EDGE->id;
-                }
-                else if (west != Biome::JUNGLE->id)
-                {
-                    area.data[localX + localZ * width] = Biome::JUNGLE_EDGE->id;
-                }
-                else if (south != Biome::JUNGLE->id)
-                {
-                    area.data[localX + localZ * width] = Biome::JUNGLE_EDGE->id;
-                }
-                else
-                {
-                    area.data[localX + localZ * width] = centre;
-                }
-            }
             else
             {
                 area.data[localX + localZ * width] = centre;

@@ -1,5 +1,6 @@
 #include "game/world/biome/MesaBiome.hpp"
 #include "game/core/ColourTable.hpp"
+#include "game/core/DyeColor.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/PerlinSimplexNoise.hpp"
 #include "game/util/Math.hpp"
@@ -8,6 +9,12 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/ColoredBlock.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/SandBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/OreFeature.hpp"
 #include <cmath>
@@ -15,16 +22,17 @@
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
+static Biome::BlockPair sCoarseDirt(3, 1);
+static Biome::BlockPair sGrass(2, 0);
 static Biome::BlockPair sClay(172, 0);
+static Biome::BlockPair sStainedClay(159, 0);
 static Biome::BlockPair sOrange(159, 1);
-static Biome::BlockPair sYellow(159, 4);
-static Biome::BlockPair sBrown(159, 3);
-static Biome::BlockPair sWhite(159, 0);
+static Biome::BlockPair sRedSand(12, 1);
 
 MesaBiome::MesaBiome(EBiomeIDs id, bool brycePillars, bool hasForest, BiomeProperties* properties)
     : Biome(id, eBiomeType_Mesa, properties), mClayBands(NULL), mSeed(0),
       mPillarNoise(NULL), mPillarRoofNoise(NULL), mNoise(NULL),
-      mHasForest(hasForest), mBrycePillars(brycePillars)
+      mBrycePillars(brycePillars), mHasForest(hasForest)
 {
     mTopBlock = BlockPair(12, 1);
     mFillerBlock = BlockPair(172, 0);
@@ -47,11 +55,19 @@ MesaBiome::~MesaBiome()
 
 void MesaBiome::staticCtor()
 {
+    TypedBoxed<DirtBlock::Variant*> coarseDirt(DirtBlock::Variant::COARSE_DIRT);
+    sCoarseDirt = BlockPair(3, Blocks::dirt->convertBlockStateToLegacyData(
+        Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &coarseDirt)));
+    sGrass = BlockPair(2, Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState()));
     sClay = BlockPair(172, Blocks::hardened_clay->convertBlockStateToLegacyData(Blocks::hardened_clay->defaultBlockState()));
-    sOrange = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(1)->mElementId);
-    sYellow = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(4)->mElementId);
-    sBrown = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(12)->mElementId);
-    sWhite = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(0)->mElementId);
+    sStainedClay = BlockPair(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()));
+    TypedBoxed<const DyeColor*> orange(DyeColor::ORANGE);
+    sOrange = BlockPair(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &orange)));
+    TypedBoxed<SandBlock::Variant*> redSand(SandBlock::Variant::RED_SAND);
+    sRedSand = BlockPair(12, Blocks::sand->convertBlockStateToLegacyData(
+        Blocks::sand->defaultBlockState()->setBoxedValue(SandBlock::TYPE, &redSand)));
 }
 
 AbstractTreeFeature* MesaBiome::getTreeFeature(Random& random)
@@ -71,45 +87,96 @@ unsigned int MesaBiome::getGrassColor(const BlockPos& pos)
 
 Biome::BlockPair MesaBiome::getBand(int x, int y, int z)
 {
-    double value = mNoise->getValue((double)x * 0.001953125, (double)z * 0.001953125);
-    int index = y + (int)Math::round(value * 2.0) + 64;
-    index = (index - (((index >> 31) & 63) + index & ~63)) * 8;
-    return mClayBands[index / 8];
+    int offset = (int)Math::round(mNoise->getValue((double)x / 512.0, (double)x / 512.0) * 2.0);
+    return mClayBands[(y + offset + 64) % 64];
 }
 
 void MesaBiome::generateBands(long long seed)
 {
     delete[] mClayBands;
     mClayBands = new BlockPair[64];
-    int i;
-    for (i = 0; i < 64; ++i) mClayBands[i] = sClay;
+
+    for (int i = 0; i < 64; ++i)
+    {
+        mClayBands[i] = sClay;
+    }
+
     Random random(seed);
     mNoise = new PerlinSimplexNoise(&random, 1);
-    i = 0;
-    while (i < 64)
+
+    for (int i = 0; i < 64; ++i)
     {
         i += random.nextInt(5) + 1;
-        if (i < 64) mClayBands[i] = sOrange;
-        ++i;
+        if (i < 64)
+        {
+            mClayBands[i] = sOrange;
+        }
     }
-    int count = random.nextInt(4) + 2;
-    for (i = 0; i < count; ++i)
+
+    TypedBoxed<const DyeColor*> yellow(DyeColor::YELLOW);
+    BlockPair yellowBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &yellow)));
+    int yellowCount = random.nextInt(4) + 2;
+    for (int i = 0; i < yellowCount; ++i)
     {
         int length = random.nextInt(3) + 1;
         int start = random.nextInt(64);
-        int j;
-        for (j = 0; j < length && start + j < 64; ++j) mClayBands[start + j] = sYellow;
+        for (int j = 0; start + j < 64 && j < length; ++j)
+        {
+            mClayBands[start + j] = yellowBand;
+        }
     }
-    count = random.nextInt(3) + 3;
+
+    TypedBoxed<const DyeColor*> brown(DyeColor::BROWN);
+    BlockPair brownBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &brown)));
+    int brownCount = random.nextInt(4) + 2;
+    for (int i = 0; i < brownCount; ++i)
+    {
+        int length = random.nextInt(3) + 2;
+        int start = random.nextInt(64);
+        for (int j = 0; start + j < 64 && j < length; ++j)
+        {
+            mClayBands[start + j] = brownBand;
+        }
+    }
+
+    TypedBoxed<const DyeColor*> red(DyeColor::RED);
+    BlockPair redBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &red)));
+    int redCount = random.nextInt(4) + 2;
+    for (int i = 0; i < redCount; ++i)
+    {
+        int length = random.nextInt(3) + 1;
+        int start = random.nextInt(64);
+        for (int j = 0; start + j < 64 && j < length; ++j)
+        {
+            mClayBands[start + j] = redBand;
+        }
+    }
+
+    TypedBoxed<const DyeColor*> silver(DyeColor::SILVER);
+    BlockPair silverBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &silver)));
+    TypedBoxed<const DyeColor*> white(DyeColor::WHITE);
+    BlockPair whiteBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &white)));
+    int whiteCount = random.nextInt(3) + 3;
     int band = 0;
-    for (i = 0; i < count; ++i)
+    for (int i = 0; i < whiteCount; ++i)
     {
         band += random.nextInt(16) + 4;
-        if (band < 64)
+        for (int j = 0; band + j < 64 && j < 1; ++j)
         {
-            mClayBands[band] = sWhite;
-            if (band > 1 && random.nextBoolean()) mClayBands[band - 1] = sBrown;
-            if (band < 63 && random.nextBoolean()) mClayBands[band + 1] = sBrown;
+            mClayBands[band + j] = whiteBand;
+            if (band + j > 1 && random.nextBoolean())
+            {
+                mClayBands[band + j - 1] = silverBand;
+            }
+            if (band + j < 63 && random.nextBoolean())
+            {
+                mClayBands[band + j + 1] = silverBand;
+            }
         }
     }
 }
@@ -117,75 +184,148 @@ void MesaBiome::generateBands(long long seed)
 void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
 {
     PIXBeginNamedEvent(4.5F, "MesaBiome::buildSurfaceAtDefault");
-    long long seed = level->getSeed();
-    if (mClayBands == NULL || mSeed != seed) generateBands(seed);
-    if (mPillarNoise == NULL || mPillarRoofNoise == NULL)
+
+    if (mClayBands == NULL || mSeed != level->getSeed())
     {
-        Random pillarRandom(seed);
-        mPillarNoise = new PerlinSimplexNoise(&pillarRandom, 4);
-        mPillarRoofNoise = new PerlinSimplexNoise(&pillarRandom, 1);
+        generateBands(level->getSeed());
     }
-    mSeed = seed;
-    int localX = x & 15;
-    int localZ = z & 15;
-    double pillarHeight = 64.0;
+
+    if (mPillarNoise == NULL || mPillarRoofNoise == NULL || mSeed != level->getSeed())
+    {
+        Random* pillarRandom = new Random(mSeed);
+        mPillarNoise = new PerlinSimplexNoise(pillarRandom, 4);
+        mPillarRoofNoise = new PerlinSimplexNoise(pillarRandom, 1);
+    }
+
+    mSeed = level->getSeed();
+
+    double pillarHeight = 0.0;
     if (mBrycePillars)
     {
-        double pillar = mPillarNoise->getValue((double)(x & 0xfffffff0) * 0.25,
-                                                (double)(z & 0xfffffff0) * 0.25);
-        if (std::fabs(noise) - pillar < 0.0) pillar = std::fabs(noise);
-        if (pillar > 0.25)
+        int pillarX = (x & -16) + (z & 15);
+        int pillarZ = (z & -16) + (x & 15);
+        double pillar = std::min(std::fabs(noise),
+                                 mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25));
+
+        if (pillar > 0.0)
         {
-            double roof = mPillarRoofNoise->getValue((double)(x & 0xfffffff0) * 0.001953125,
-                                                      (double)(z & 0xfffffff0) * 0.001953125);
-            pillarHeight = pillar * pillar * 50.0;
-            double cap = std::ceil(std::fabs(roof) * 14.0);
-            if (cap + 4.0 < pillarHeight) pillarHeight = cap + 4.0;
-            pillarHeight += 2.5;
+            double roof = std::fabs(mPillarRoofNoise->getValue((double)pillarX * 0.001953125,
+                                                               (double)pillarZ * 0.001953125));
+            pillarHeight = pillar * pillar * 2.5;
+            double cap = std::ceil(roof * 50.0) + 14.0;
+            if (pillarHeight > cap)
+            {
+                pillarHeight = cap;
+            }
+            pillarHeight += 64.0;
         }
     }
+
+    int localX = x & 15;
+    int localZ = z & 15;
+    BlockPair filler = mFillerBlock;
     int depth = (int)(noise / 3.0 + 3.0 + random.nextDouble() * 0.25);
+    bool coarse = std::cos(noise / 3.0 * 3.1415927f) > 0.0;
     int runDepth = -1;
-    int y;
-    for (y = 127; y >= 0; --y)
+    bool orangeRun = false;
+    int surfaceBlocks = 0;
+
+    for (int y = 127; y >= 0; --y)
     {
         int index = localZ << 11 | localX << 7 | y;
+
+        if (primer->getState(localZ, y, localX)->getBlock()->mMaterial == Material::AIR && y < (int)pillarHeight)
+        {
+            primer->setBlockAndData(index, STONE_BLOCK.blockId, STONE_BLOCK.blockData);
+        }
+
         if (y <= random.nextInt(2) + 1)
         {
             primer->setBlockAndData(index, 7, 0);
-            continue;
         }
-        const BlockState* state = primer->getState(localX, y, localZ);
-        Block* block = state == NULL ? NULL : state->getBlock();
-        if (block != Blocks::stone)
+        else if (surfaceBlocks < 15 || mBrycePillars)
         {
-            runDepth = -1;
-            continue;
-        }
-        if (mBrycePillars && (double)y < pillarHeight)
-        {
-            primer->setBlockAndData(index, sClay.blockId, sClay.blockData);
-        }
-        if (runDepth == -1)
-        {
-            runDepth = depth;
-            if (y >= 62)
-                primer->setBlockAndData(index, mTopBlock.blockId, mTopBlock.blockData);
-            else
-                primer->setBlockAndData(index, mFillerBlock.blockId, mFillerBlock.blockData);
-        }
-        else if (runDepth > 0)
-        {
-            --runDepth;
-            if (y < 62)
+            const BlockState* state = primer->getState(localZ, y, localX);
+
+            if (state->getBlock()->mMaterial == Material::AIR)
             {
-                BlockPair band = getBand(x, y, z);
-                primer->setBlockAndData(index, band.blockId, band.blockData);
+                runDepth = -1;
             }
-            else
-                primer->setBlockAndData(index, mTopBlock.blockId, mTopBlock.blockData);
+            else if (state->getBlock() == Blocks::stone)
+            {
+                if (runDepth == -1)
+                {
+                    orangeRun = false;
+
+                    if (depth <= 0)
+                    {
+                        filler = STONE_BLOCK;
+                    }
+                    else if (y >= 59 && y <= 64)
+                    {
+                        filler = mFillerBlock;
+                    }
+
+                    runDepth = depth + std::max(0, y - 63);
+
+                    if (y >= 62)
+                    {
+                        if (mHasForest && y > 86 + depth * 2)
+                        {
+                            if (coarse)
+                            {
+                                primer->setBlockAndData(index, sCoarseDirt.blockId, sCoarseDirt.blockData);
+                            }
+                            else
+                            {
+                                primer->setBlockAndData(index, sGrass.blockId, sGrass.blockData);
+                            }
+                        }
+                        else if (y > 66 + depth)
+                        {
+                            BlockPair surface = sOrange;
+                            if (y >= 64 && y <= 127)
+                            {
+                                surface = coarse ? sClay : getBand(x, y, z);
+                            }
+                            primer->setBlockAndData(index, surface.blockId, surface.blockData);
+                        }
+                        else
+                        {
+                            primer->setBlockAndData(index, mTopBlock.blockId, mTopBlock.blockData);
+                            orangeRun = true;
+                        }
+                    }
+                    else
+                    {
+                        primer->setBlockAndData(index, filler.blockId, filler.blockData);
+
+                        if (filler.blockId == 159)
+                        {
+                            primer->setBlockAndData(index, sOrange.blockId, sOrange.blockData);
+                        }
+                    }
+                }
+                else if (runDepth > 0)
+                {
+                    --runDepth;
+
+                    if (orangeRun)
+                    {
+                        primer->setBlockAndData(index, sOrange.blockId, sOrange.blockData);
+                    }
+                    else
+                    {
+                        BlockPair band = getBand(x, y, z);
+                        primer->setBlockAndData(index, band.blockId, band.blockData);
+                    }
+                }
+
+                ++surfaceBlocks;
+            }
         }
     }
+
     PIXEndNamedEvent();
 }
 

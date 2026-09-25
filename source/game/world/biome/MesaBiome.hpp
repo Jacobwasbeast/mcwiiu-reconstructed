@@ -35,8 +35,8 @@ private:
     PerlinSimplexNoise* mPillarNoise;
     PerlinSimplexNoise* mPillarRoofNoise;
     PerlinSimplexNoise* mNoise;
-    bool mHasForest;
     bool mBrycePillars;
+    bool mHasForest;
 };
 
 #endif

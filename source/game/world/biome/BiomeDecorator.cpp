@@ -239,20 +239,23 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
     PIXBeginNamedEvent(0.0f, "Decorate sand clay gravel");
     for (int i = 0; i < sandPerChunk2; ++i)
     {
-        BlockPos pos = level->getTopSolidBlockPos(
-            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        const int x = random->nextInt(16);
+        const int z = random->nextInt(16);
+        BlockPos pos = level->getTopSolidBlockPos(position.offset(x + 8, 0, z + 8));
         placeFeature(sandGen, level, random, pos);
     }
     for (int i = 0; i < clayPerChunk; ++i)
     {
-        BlockPos pos = level->getTopSolidBlockPos(
-            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        const int x = random->nextInt(16);
+        const int z = random->nextInt(16);
+        BlockPos pos = level->getTopSolidBlockPos(position.offset(x + 8, 0, z + 8));
         placeFeature(clayGen, level, random, pos);
     }
     for (int i = 0; i < sandPerChunk; ++i)
     {
-        BlockPos pos = level->getTopSolidBlockPos(
-            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        const int x = random->nextInt(16);
+        const int z = random->nextInt(16);
+        BlockPos pos = level->getTopSolidBlockPos(position.offset(x + 8, 0, z + 8));
         placeFeature(gravelAsSandGen, level, random, pos);
     }
     PIXEndNamedEvent();
@@ -263,10 +266,11 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
         ++treeCount;
     for (int i = 0; i < treeCount; ++i)
     {
+        const int x = random->nextInt(16);
+        const int z = random->nextInt(16);
         AbstractTreeFeature* tree = biome->getTreeFeature(*random);
         tree->init();
-        BlockPos pos = level->getHeightmapPos(
-            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        BlockPos pos = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
         if (tree->place(level, *random, pos))
             tree->postPlaceTree(level, *random, pos);
         delete tree;
@@ -276,8 +280,9 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
     PIXBeginNamedEvent(0.0f, "Decorate mushrooms flowers grass");
     for (int i = 0; i < bigMushroomsPerChunk; ++i)
     {
-        BlockPos pos = level->getHeightmapPos(
-            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        const int x = random->nextInt(16);
+        const int z = random->nextInt(16);
+        BlockPos pos = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
         placeFeature(bigMushroomGen, level, random, pos);
     }
     for (int i = 0; i < flowersPerChunk; ++i)
@@ -314,7 +319,9 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
     }
     for (int i = 0; i < seagrassPerChunk; ++i)
     {
-        BlockPos pos = position.offset(random->nextInt(16), 54, random->nextInt(16));
+        const int x = random->nextInt(16);
+        const int z = random->nextInt(16);
+        BlockPos pos = position.offset(x, 54, z);
         placeFeature(seagrassGen, level, random, pos);
     }
     PIXEndNamedEvent();
@@ -352,8 +359,9 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
     {
         if (random->nextInt(4) == 0)
         {
-            BlockPos pos = level->getHeightmapPos(
-                position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+            const int x = random->nextInt(16);
+            const int z = random->nextInt(16);
+            BlockPos pos = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
             placeFeature(brownMushroomGen, level, random, pos);
         }
         if (random->nextInt(8) == 0)
@@ -388,7 +396,9 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
     {
         for (int i = 0; i < kelpPerChunk; ++i)
         {
-            BlockPos pos = position.offset(random->nextInt(35), 43, random->nextInt(35));
+            const int x = random->nextInt(35);
+            const int z = random->nextInt(35);
+            BlockPos pos = position.offset(x, 43, z);
             placeFeature(kelpGen, level, random, pos);
         }
     }
@@ -440,19 +450,24 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
         SpringFeature waterSpring(Blocks::FLOWING_WATER);
         for (int i = 0; i < 50; ++i)
         {
-            int y = random->nextInt(120) + 8;
-            placeFeature(&waterSpring, level, random,
-                         position.offset(random->nextInt(16) + 8, random->nextInt(y),
-                                         random->nextInt(16) + 8));
+            const int x = random->nextInt(16);
+            const int z = random->nextInt(16);
+            const int range = random->nextInt(120) + 8;
+            if (range > 0)
+            {
+                const int y = random->nextInt(range);
+                placeFeature(&waterSpring, level, random, position.offset(x + 8, y, z + 8));
+            }
         }
 
         SpringFeature lavaSpring(Blocks::flowing_lava);
         for (int i = 0; i < 20; ++i)
         {
-            int y = random->nextInt(random->nextInt(112) + 8) + 8;
-            placeFeature(&lavaSpring, level, random,
-                         position.offset(random->nextInt(16) + 8, random->nextInt(y),
-                                         random->nextInt(16) + 8));
+            const int x = random->nextInt(16);
+            const int z = random->nextInt(16);
+            const int range = random->nextInt(random->nextInt(112) + 8) + 8;
+            const int y = random->nextInt(range);
+            placeFeature(&lavaSpring, level, random, position.offset(x + 8, y, z + 8));
         }
     }
     PIXEndNamedEvent();
