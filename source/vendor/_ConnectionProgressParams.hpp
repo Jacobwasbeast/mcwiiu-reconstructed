@@ -10,6 +10,7 @@ public:
 
 private:
     friend class Minecraft;
+    friend class CMinecraftApp;
 
     int32_t m_connectionId;
     int32_t m_userIndex;
