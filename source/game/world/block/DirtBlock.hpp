@@ -33,6 +33,11 @@ public:
         const MaterialColor* getMaterialColor();
         int getData();
         static Variant* byData(int data);
+
+        static Variant* DIRT;
+        static Variant* COARSE_DIRT;
+        static Variant* PODZOL;
+
         TextureAtlasSprite* getTexture(const Direction* direction);
         void registerIcons(IconRegister* iconRegister);
         int getNameId();
@@ -63,6 +68,9 @@ public:
     virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos,
                                  const BlockState* state);
     static void blockStaticCtor();
+
+    static EnumProperty<Variant*>* VARIANT;
+
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource,
                                              const BlockPos& pos);
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state,
@@ -79,8 +87,5 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
     virtual ~DirtBlock();
 };
-
-extern DirtBlock::Variant* gVariants[3];
-extern EnumProperty<DirtBlock::Variant*>* gVariantProperty;
 
 #endif

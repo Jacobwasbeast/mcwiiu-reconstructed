@@ -75,7 +75,7 @@ void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, R
                 targetLightBlock = targetExtraLightBlock;
             }
             if (targetState->getBlock() == Blocks::dirt
-                && targetState->getValue(static_cast<AbstractProperty<DirtBlock::Variant*>*>(gVariantProperty)) == gVariants[0])
+                && targetState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::DIRT)
             {
                 if (level->getRawBrightness(target.above()) > 3 && targetLightBlock < 3)
                 {

@@ -6,12 +6,14 @@
 class BlockPos;
 class BlockState;
 class BlockStateDefinition;
+class DyeColor;
 class Direction;
 class IconRegister;
 class LevelSource;
 class Material;
 class MaterialColor;
 class TextureAtlasSprite;
+template <typename T> class EnumProperty;
 
 class ColoredBlock : public Block
 {
@@ -19,6 +21,9 @@ public:
     ColoredBlock(Material* material);
     virtual ~ColoredBlock();
     static void blockStaticCtor();
+
+    static EnumProperty<const DyeColor*>* COLOR;
+
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);

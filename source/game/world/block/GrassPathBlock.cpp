@@ -87,8 +87,8 @@ bool GrassPathBlock::isCubeShaped(const BlockState*)
 
 Item* GrassPathBlock::getResource(const BlockState*, Random* random, int lootBonus)
 {
-    TypedBoxed<DirtBlock::Variant*> variant(gVariants[0]);
-    const BlockState* state = Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
+    TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::DIRT);
+    const BlockState* state = Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
     return Blocks::dirt->getResource(state, random, lootBonus);
 }
 

@@ -133,7 +133,7 @@ bool MushroomBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSta
     if (belowBlock == Blocks::mycelium)
         return true;
 
-    if (belowBlock == Blocks::dirt && belowState->getValue(static_cast<AbstractProperty<DirtBlock::Variant*>*>(gVariantProperty)) == gVariants[2])
+    if (belowBlock == Blocks::dirt && belowState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::PODZOL)
         return true;
 
     return level->getDaytimeRawBrightness(pos) < 13

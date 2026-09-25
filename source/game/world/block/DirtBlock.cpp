@@ -32,8 +32,11 @@ const unsigned int kHoeTooltip = 0x70889480u;
 const unsigned int kDyeTooltip = 0x9f5fdc40u;
 }
 
-DirtBlock::Variant* gVariants[3] = { NULL, NULL, NULL };
-EnumProperty<DirtBlock::Variant*>* gVariantProperty = NULL;
+DirtBlock::Variant* DirtBlock::Variant::DIRT = NULL;
+DirtBlock::Variant* DirtBlock::Variant::COARSE_DIRT = NULL;
+DirtBlock::Variant* DirtBlock::Variant::PODZOL = NULL;
+EnumProperty<DirtBlock::Variant*>* DirtBlock::VARIANT = NULL;
+static DirtBlock::Variant* gVariantsByData[3] = { NULL, NULL, NULL };
 static AbstractProperty<bool>* gSnowyProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
@@ -58,12 +61,12 @@ int DirtBlock::Variant::getData()
 
 DirtBlock::Variant* DirtBlock::Variant::byData(int data)
 {
-    if (data < 0 || data > 2)
+    if (data > 2)
     {
         data = 0;
     }
 
-    return gVariants[data];
+    return gVariantsByData[data];
 }
 
 TextureAtlasSprite* DirtBlock::Variant::getTexture(const Direction* direction)
@@ -116,9 +119,9 @@ DirtBlock::DirtBlock()
     : Block(Material::DIRT)
 {
     DerivedInit();
-    TypedBoxed<Variant*> variant(gVariants[0]);
+    TypedBoxed<Variant*> variant(Variant::DIRT);
     TypedBoxed<bool> snowy(false);
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(gVariantProperty, &variant);
+    const BlockState* state = mStateDefinition->any()->setBoxedValue(VARIANT, &variant);
     registerDefaultState(state->setBoxedValue(gSnowyProperty, &snowy));
 }
 
@@ -141,37 +144,41 @@ void DirtBlock::performBonemeal(Level* level, Random* random, const BlockPos& po
 
 void DirtBlock::blockStaticCtor()
 {
-    if (gVariants[0] != NULL)
+    if (Variant::DIRT != NULL)
     {
         return;
     }
 
-    gVariants[0] = new Variant(0, L"dirt", 0x672CD46C, 0x5437FAF1, MaterialColor::DIRT,
-                               L"dirt", L"", L"");
-    gVariants[1] = new Variant(1, L"coarse_dirt", 0xC79DB172, 0x935970C7, MaterialColor::DIRT,
-                               L"coarse_dirt", L"", L"");
-    gVariants[2] = new Variant(2, L"podzol", 0x64186D51, 0x8FB42134, MaterialColor::PODZOL,
-                               L"dirt", L"dirt_podzol_top", L"dirt_podzol_side");
+    Variant::DIRT = new Variant(0, L"dirt", 0x672CD46C, 0x5437FAF1, MaterialColor::DIRT,
+                                L"dirt", L"", L"");
+    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", 0xC79DB172, 0x935970C7, MaterialColor::DIRT,
+                                       L"coarse_dirt", L"", L"");
+    Variant::PODZOL = new Variant(2, L"podzol", 0x64186D51, 0x8FB42134, MaterialColor::PODZOL,
+                                  L"dirt", L"dirt_podzol_top", L"dirt_podzol_side");
+
+    gVariantsByData[0] = Variant::DIRT;
+    gVariantsByData[1] = Variant::COARSE_DIRT;
+    gVariantsByData[2] = Variant::PODZOL;
 
     boost::unordered_set<Variant*> variants;
-    variants.insert(gVariants[0]);
-    variants.insert(gVariants[1]);
-    variants.insert(gVariants[2]);
-    gVariantProperty = EnumProperty<Variant*>::create(
+    variants.insert(Variant::DIRT);
+    variants.insert(Variant::COARSE_DIRT);
+    variants.insert(Variant::PODZOL);
+    VARIANT = EnumProperty<Variant*>::create(
         L"variant", typeid(Variant), variants, Predicates<Variant*>::alwaysTrue);
 }
 
 const MaterialColor* DirtBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
                                             const BlockPos& pos)
 {
-    return state->getValue(gVariantProperty)->getMaterialColor();
+    return state->getValue(VARIANT)->getMaterialColor();
 }
 
 const BlockState* DirtBlock::fillVirtualBlockStateProperties(const BlockState* state,
                                                               LevelSource* levelSource,
                                                               const BlockPos& pos)
 {
-    if (state->getValue(gVariantProperty) == gVariants[2])
+    if (state->getValue(VARIANT) == Variant::PODZOL)
     {
         Block* above = levelSource->getBlockState(pos.above())->getBlock();
         TypedBoxed<bool> snowy(above == Blocks::snow || above == Blocks::snow_layer);
@@ -198,7 +205,7 @@ const BlockState* DirtBlock::getBlockState(int data)
         for (int i = 0; i < 3; ++i)
         {
             TypedBoxed<Variant*> value(Variant::byData(i));
-            states[i] = defaultBlockState()->setBoxedValue(gVariantProperty, &value);
+            states[i] = defaultBlockState()->setBoxedValue(VARIANT, &value);
         }
     }
     return states[data];
@@ -206,7 +213,7 @@ const BlockState* DirtBlock::getBlockState(int data)
 
 int DirtBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -216,7 +223,7 @@ unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     {
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
             && tooltipData.m_bIsInside
-            && tooltipData.m_pBlockState->getValue(gVariantProperty) != gVariants[2])
+            && tooltipData.m_pBlockState->getValue(VARIANT) != Variant::PODZOL)
         {
             return kHoeTooltip;
         }
@@ -236,27 +243,27 @@ unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 BlockStateDefinition* DirtBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gVariantProperty, gSnowyProperty };
+    const Property* properties[] = { VARIANT, gSnowyProperty };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 int DirtBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    Variant* variant = state->getValue(gVariantProperty);
-    return (variant == gVariants[2] ? gVariants[1] : variant)->getData();
+    Variant* variant = state->getValue(VARIANT);
+    return (variant == Variant::PODZOL ? Variant::COARSE_DIRT : variant)->getData();
 }
 
 TextureAtlasSprite* DirtBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    return state->getValue(gVariantProperty)->getTexture(direction);
+    return state->getValue(VARIANT)->getTexture(direction);
 }
 
 void DirtBlock::registerIcons(IconRegister* iconRegister)
 {
     blockStaticCtor();
-    gVariants[0]->registerIcons(iconRegister);
-    gVariants[1]->registerIcons(iconRegister);
-    gVariants[2]->registerIcons(iconRegister);
+    Variant::DIRT->registerIcons(iconRegister);
+    Variant::COARSE_DIRT->registerIcons(iconRegister);
+    Variant::PODZOL->registerIcons(iconRegister);
 }
 
 DirtBlock::~DirtBlock()
