@@ -41,6 +41,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/WorldBorder.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockItem.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
@@ -53,6 +54,7 @@ MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* con
       mTutorial(0), mTeamInvites(), mMissTime(5.0f), mTutorialsEnabled(false), mDestroying(false),
       mSpectateSoundTime(System::processTimeInMilliSecs()), mCarriedItemSlot(0)
 {
+    mDestroyItem = ItemInstance::EMPTY;
     mGameType = GameType::SURVIVAL;
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !splitScreen)
     {
@@ -108,82 +110,116 @@ void MultiPlayerGameMode::ensureHasSentCarriedItem()
     mConnection->send(boost::shared_ptr<Packet>(new ServerboundSetCarriedItemPacket(slot)));
 }
 
-bool MultiPlayerGameMode::_useItemOn(boost::shared_ptr<Player> player, Level* level,
-                                    const BlockPos& pos, const Direction* direction,
-                                    Vec3* hit, InteractionHand::EInteractionHand hand,
-                                    bool simulate, bool* used)
+InteractionResult::EInteractionResult MultiPlayerGameMode::_useItemOn(boost::shared_ptr<Player> player,
+                                                                      Level* level, const BlockPos& pos,
+                                                                      const Direction* direction, Vec3* hit,
+                                                                      InteractionHand::EInteractionHand hand,
+                                                                      bool simulate, bool* used)
 {
-    if (used != 0)
+    const float hitX = static_cast<float>(hit->x - pos.x);
+    const float hitY = static_cast<float>(hit->y - pos.y);
+    const float hitZ = static_cast<float>(hit->z - pos.z);
+    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
+    if (used != NULL)
         *used = false;
 
     if (!simulate)
         ensureHasSentCarriedItem();
-    if (!level->getWorldBorder()->isWithinBounds(pos))
-        return false;
+    if (!mMinecraft->mLevel->getWorldBorder()->isWithinBounds(pos))
+        return InteractionResult::eInteractionResult_Fail;
 
-    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (isSpectator())
-        return false;
-
-    const BlockState* state = level->getBlockState(pos);
-    Block* block = state->getBlock();
-
-    if (simulate && player->isAllowedToUse(block))
+    InteractionResult::EInteractionResult result = InteractionResult::eInteractionResult_Pass;
+    bool useItem = true;
+    if (!isSpectator())
     {
-        const bool handled = block->use(
-            level, pos, state, player, hand, direction,
-            static_cast<float>(hit->x - pos.x), static_cast<float>(hit->y - pos.y),
-            static_cast<float>(hit->z - pos.z), true);
-        if (used != 0)
-            *used = handled;
-        return handled;
-    }
-
-    if (!simulate && player->isAllowedToUse(block))
-    {
-        const float hitX = static_cast<float>(hit->x - pos.x);
-        const float hitY = static_cast<float>(hit->y - pos.y);
-        const float hitZ = static_cast<float>(hit->z - pos.z);
-        const bool handled = block->use(level, pos, state, player, hand, direction,
-                                        hitX, hitY, hitZ, simulate);
-        if (handled)
+        const BlockState* state = level->getBlockState(pos);
+        bool tryBlock = true;
+        if (player->isSneaking())
         {
-            if (!simulate && mConnection != 0)
-                mConnection->send(boost::shared_ptr<Packet>(new ServerboundUseItemOnPacket(
-                    pos, direction, hand, hitX, hitY, hitZ)));
-            if (used != 0)
-                *used = true;
-            return true;
+            not_null_ptr<ItemInstance> mainHandItem = player->getMainHandItem();
+            if (!mainHandItem->isEmpty())
+            {
+                tryBlock = false;
+            }
+            else
+            {
+                not_null_ptr<ItemInstance> offhandItem = player->getOffhandItem();
+                if (!offhandItem->isEmpty())
+                    tryBlock = false;
+            }
+        }
+
+        if (tryBlock && player->isAllowedToUse(state->getBlock()))
+        {
+            if (simulate)
+            {
+                Block* block = state->getBlock();
+                if (block == Blocks::jukebox || block == Blocks::bed)
+                {
+                    if (block->TestUse(level, pos, state, player))
+                        return InteractionResult::eInteractionResult_Success;
+                    if (state->getBlock() == Blocks::bed)
+                        return InteractionResult::eInteractionResult_Fail;
+                }
+                else if (block->TestUse())
+                {
+                    return InteractionResult::eInteractionResult_Success;
+                }
+            }
+            else if (state->getBlock()->use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, false))
+            {
+                result = InteractionResult::eInteractionResult_Success;
+                useItem = false;
+            }
+        }
+
+        if (useItem)
+        {
+            BlockItem* blockItem = dynamic_cast<BlockItem*>(item->getItem());
+            if (blockItem != NULL)
+            {
+                if (!MayPlace(pos.relative(direction), blockItem)
+                    || !blockItem->mayPlace(level, pos, direction, player, item))
+                    return InteractionResult::eInteractionResult_Fail;
+            }
         }
     }
 
-    if (item->isEmpty() || !player->isAllowedToUse(item))
-        return false;
-    if (player->getCooldowns()->isOnCooldown(item->getItem()))
-        return false;
-
-    const int oldCount = item->getCount();
-    const int oldAux = item->getAuxValue();
-    const int itemResult = item->useOn(
-        player, level, pos, hand, direction,
-        static_cast<float>(hit->x - pos.x), static_cast<float>(hit->y - pos.y),
-        static_cast<float>(hit->z - pos.z), simulate);
-
-    if (isCreative())
+    if (useItem)
     {
-        item->setAuxValue(oldAux);
-        item->setCount(oldCount);
+        result = isSpectator() ? InteractionResult::eInteractionResult_Success
+                               : InteractionResult::eInteractionResult_Pass;
+        if (!isSpectator() && !item->isEmpty())
+        {
+            if (player->getCooldowns()->isOnCooldown(item->getItem()))
+                return InteractionResult::eInteractionResult_Pass;
+
+            if (player->isAllowedToUse(item))
+            {
+                if (!isCreative())
+                {
+                    result = item->useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+                }
+                else
+                {
+                    const int auxValue = item->getAuxValue();
+                    const int count = item->getCount();
+                    result = item->useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+                    item->setAuxValue(auxValue);
+                    item->setCount(count);
+                }
+                if (result == InteractionResult::eInteractionResult_Success && used != NULL)
+                    *used = true;
+            }
+        }
     }
-    if (!simulate && item->getCount() != oldCount)
-        player->setItemInHand(hand, item);
-    if (!simulate && itemResult != 1 && mConnection != 0)
-        mConnection->send(boost::shared_ptr<Packet>(new ServerboundUseItemOnPacket(
-            pos, direction, hand, static_cast<float>(hit->x - pos.x),
-            static_cast<float>(hit->y - pos.y), static_cast<float>(hit->z - pos.z))));
-    if (used != 0)
-        *used = itemResult == 0;
-    return itemResult == 0;
+
+    if (!simulate && result != InteractionResult::eInteractionResult_Pass)
+        mConnection->send(boost::shared_ptr<Packet>(
+            new ServerboundUseItemOnPacket(pos, direction, hand, hitX, hitY, hitZ)));
+    return result;
 }
+
 
 bool MultiPlayerGameMode::GetTutorialsEnabled()
 {
@@ -208,17 +244,18 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItemOn(
             startingCount = startingItem->getCount();
         }
     }
-    bool handled = _useItemOn(player, level, pos, direction, hit, hand, simulate, used);
+    const InteractionResult::EInteractionResult result =
+        _useItemOn(player, level, pos, direction, hit, hand, simulate, used);
     if (!simulate && !mTutorial->tasksChecked)
     {
-        if (GetTutorialsEnabled() && handled && trackStartingCount)
+        if (GetTutorialsEnabled() && result != InteractionResult::eInteractionResult_Success
+            && trackStartingCount)
         {
             if (startingItem->getCount() < startingCount)
                 mTutorial->useItemOn(startingItem, false);
         }
     }
-    return handled ? InteractionResult::eInteractionResult_Success
-                   : InteractionResult::eInteractionResult_Pass;
+    return result;
 }
 
 bool MultiPlayerGameMode::hasMissTime()
@@ -461,6 +498,7 @@ void MultiPlayerGameMode::stopDestroyBlock()
     mMinecraft->mPlayer->resetAttackStrengthTicker();
 }
 Tutorial* MultiPlayerGameMode::getTutorial() { return mTutorial; }
+bool MultiPlayerGameMode::isDestroying() { return mDestroying; }
 void MultiPlayerGameMode::releaseUsingItem(boost::shared_ptr<Player> player)
 {
     ensureHasSentCarriedItem();
@@ -596,6 +634,9 @@ bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction
         ServerboundPlayerActionPacket::START_DESTROY_BLOCK, pos, direction, 0)));
 
     const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+    if (state->getMaterial() != Material::AIR && mDestroyProgress == 0.0f)
+        state->getBlock()->attack(mMinecraft->mLevel, pos, mMinecraft->mPlayer);
+
     bool spectatorMining = false;
     if (isSpectator())
         spectatorMining = Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation();

@@ -20,9 +20,9 @@ bool ReedsFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int attempt = 0; attempt < 20; ++attempt)
     {
-        const BlockPos position = origin.offset(random.nextInt(4) - random.nextInt(4),
-                                                 0,
-                                                 random.nextInt(4) - random.nextInt(4));
+        const int dx = random.nextInt(4) - random.nextInt(4);
+        const int dz = random.nextInt(4) - random.nextInt(4);
+        const BlockPos position = origin.offset(dx, 0, dz);
         LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
         if (options != NULL && options->checkIntersects(position, position))
         {

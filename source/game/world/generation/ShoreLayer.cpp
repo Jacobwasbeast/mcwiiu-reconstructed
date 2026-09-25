@@ -1,10 +1,9 @@
 #include "game/world/generation/ShoreLayer.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/world/biome/MesaBiome.hpp"
 
 ShoreLayer::ShoreLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
     : Layer(seed)
@@ -18,14 +17,16 @@ ShoreLayer::~ShoreLayer()
 
 bool ShoreLayer::isJungleCompatible(int biomeId)
 {
-    Biome* biome = Biome::getBiome(biomeId);
-
-    if (biome != NULL && biome->getBiomeType() == Biome::eBiomeType_Jungle)
+    if (Biome::getBiome(biomeId) != NULL
+        && Biome::getBiome(biomeId)->getBaseClass() == Biome::eBiomeBaseClass_Jungle)
+    {
         return true;
+    }
 
-    if ((biomeId < 4 || (biomeId > 5 && (biomeId < 21 || biomeId > 23)))
-        && !Layer::isOcean(biomeId))
+    if ((biomeId < 4 || (biomeId > 5 && (biomeId < 21 || biomeId > 23))) && !isOcean(biomeId))
+    {
         return false;
+    }
 
     return true;
 }
@@ -34,17 +35,15 @@ void ShoreLayer::replaceIfNeighborOcean(arrayWithLength<int> parentArea,
                                         arrayWithLength<int> area, int x, int z,
                                         int width, int centre, int replacement)
 {
-    int parentWidth = width + 2;
-
-    if (!Layer::isOcean(centre))
+    if (!isOcean(centre))
     {
-        int north = parentArea.data[x + (z + 1) * parentWidth];
-        int south = parentArea.data[x + 1 + (z + 2) * parentWidth];
+        int parentWidth = width + 2;
+        int north = parentArea.data[x + 1 + z * parentWidth];
         int east = parentArea.data[x + 2 + (z + 1) * parentWidth];
-        int west = parentArea.data[x + 1 + z * parentWidth];
+        int west = parentArea.data[x + (z + 1) * parentWidth];
+        int south = parentArea.data[x + 1 + (z + 2) * parentWidth];
 
-        if (Layer::isOcean(north) || Layer::isOcean(south)
-            || Layer::isOcean(east) || Layer::isOcean(west))
+        if (isOcean(north) || isOcean(east) || isOcean(west) || isOcean(south))
         {
             area.data[x + z * width] = replacement;
             return;
@@ -57,7 +56,7 @@ void ShoreLayer::replaceIfNeighborOcean(arrayWithLength<int> parentArea,
 bool ShoreLayer::isMesa(int biomeId)
 {
     Biome* biome = Biome::getBiome(biomeId);
-    return biome != NULL && biome->getBiomeType() == Biome::eBiomeType_Mesa;
+    return biome != NULL && dynamic_cast<MesaBiome*>(biome) != NULL;
 }
 
 arrayWithLength<int> ShoreLayer::getArea(int x, int z, int width, int height)
@@ -78,115 +77,97 @@ arrayWithLength<int> ShoreLayer::getArea(int x, int z, int width, int height)
             int centre = parentArea.data[localX + 1 + (localZ + 1) * parentWidth];
             Biome* biome = Biome::getBiome(centre);
 
-            if (centre == Biome::eBiomeIDs_Ocean)
+            if (centre == Biome::MUSHROOM_ISLAND->id)
             {
                 int north = parentArea.data[localX + 1 + localZ * parentWidth];
-                int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
                 int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
                 int west = parentArea.data[localX + (localZ + 1) * parentWidth];
-
-                if (Layer::isShallowOcean(north) || Layer::isShallowOcean(south)
-                    || Layer::isShallowOcean(east) || Layer::isShallowOcean(west))
-                    area.data[localX + localZ * width] = Biome::eBiomeIDs_DeepOcean;
-                else
-                    area.data[localX + localZ * width] = centre;
-                continue;
-            }
-
-            if (biome != NULL && biome->getBiomeType() == Biome::eBiomeType_Jungle)
-            {
-                int north = parentArea.data[localX + 1 + localZ * parentWidth];
                 int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
-                int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
-                int west = parentArea.data[localX + (localZ + 1) * parentWidth];
 
-                if (!isJungleCompatible(north) || !isJungleCompatible(south)
-                    || !isJungleCompatible(east) || !isJungleCompatible(west))
-                    area.data[localX + localZ * width] = Biome::eBiomeIDs_JungleEdge;
-                else if (Layer::isOcean(north) || Layer::isOcean(south)
-                         || Layer::isOcean(east) || Layer::isOcean(west))
-                    area.data[localX + localZ * width] = Biome::eBiomeIDs_Beach;
-                else
-                    area.data[localX + localZ * width] = centre;
-                continue;
-            }
-
-            if (centre == Biome::eBiomeIDs_MushroomIsland
-                || centre == Biome::eBiomeIDs_MushroomIslandShore)
-            {
-                replaceIfNeighborOcean(parentArea, area, localX, localZ, width, centre,
-                                       Biome::eBiomeIDs_MushroomIslandShore);
-                continue;
-            }
-
-            if (biome != NULL && biome->isSnowCovered())
-            {
-                replaceIfNeighborOcean(parentArea, area, localX, localZ, width, centre,
-                                       Biome::eBiomeIDs_ColdBeach);
-                continue;
-            }
-
-            if (centre == Biome::eBiomeIDs_Desert || centre == Biome::eBiomeIDs_Taiga)
-            {
-                replaceIfNeighborOcean(parentArea, area, localX, localZ, width, centre,
-                                       Biome::eBiomeIDs_Beach);
-                continue;
-            }
-
-            if (centre == Biome::eBiomeIDs_ExtremeHills
-                || centre == Biome::eBiomeIDs_ExtremeHillsEdge)
-            {
-                int north = parentArea.data[localX + 1 + localZ * parentWidth];
-                int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
-                int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
-                int west = parentArea.data[localX + (localZ + 1) * parentWidth];
-
-                if (Layer::isOcean(north) || Layer::isOcean(south)
-                    || Layer::isOcean(east) || Layer::isOcean(west))
-                    area.data[localX + localZ * width] = Biome::eBiomeIDs_StoneBeach;
-                else
-                    area.data[localX + localZ * width] = centre;
-                continue;
-            }
-
-            if (centre == Biome::eBiomeIDs_Mesa || centre == Biome::eBiomeIDs_MesaRock)
-            {
-                int north = parentArea.data[localX + 1 + localZ * parentWidth];
-                int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
-                int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
-                int west = parentArea.data[localX + (localZ + 1) * parentWidth];
-
-                if (Layer::isOcean(north) || Layer::isOcean(south)
-                    || Layer::isOcean(east) || Layer::isOcean(west))
+                if (isShallowOcean(north) || isShallowOcean(east) || isShallowOcean(west) || isShallowOcean(south))
                 {
-                    area.data[localX + localZ * width] = Biome::eBiomeIDs_Beach;
-                }
-                else if (isMesa(north) && isMesa(south) && isMesa(east) && isMesa(west))
-                {
-                    area.data[localX + localZ * width] = centre;
+                    area.data[localX + localZ * width] = Biome::MUSHROOM_ISLAND_SHORE->id;
                 }
                 else
                 {
-                    area.data[localX + localZ * width] = Biome::eBiomeIDs_MesaClearRock;
+                    area.data[localX + localZ * width] = centre;
                 }
-                continue;
             }
+            else if (biome != NULL && biome->getBaseClass() == Biome::eBiomeBaseClass_Jungle)
+            {
+                int north = parentArea.data[localX + 1 + localZ * parentWidth];
+                int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
+                int west = parentArea.data[localX + (localZ + 1) * parentWidth];
+                int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
 
-            int north = parentArea.data[localX + 1 + localZ * parentWidth];
-            int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
-            int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
-            int west = parentArea.data[localX + (localZ + 1) * parentWidth];
+                if (isJungleCompatible(north) && isJungleCompatible(east)
+                    && isJungleCompatible(west) && isJungleCompatible(south))
+                {
+                    if (isOcean(north) || isOcean(east) || isOcean(west) || isOcean(south))
+                    {
+                        area.data[localX + localZ * width] = Biome::BEACH->id;
+                    }
+                    else
+                    {
+                        area.data[localX + localZ * width] = centre;
+                    }
+                }
+                else
+                {
+                    area.data[localX + localZ * width] = Biome::JUNGLE_EDGE->id;
+                }
+            }
+            else if (centre == Biome::EXTREME_HILLS->id
+                     || centre == Biome::EXTREME_HILLS_PLUS_TREES->id
+                     || centre == Biome::EXTREME_HILLS_EDGE->id)
+            {
+                replaceIfNeighborOcean(parentArea, area, localX, localZ, width, centre, Biome::STONE_BEACH->id);
+            }
+            else if (biome != NULL && biome->isSnowCovered())
+            {
+                replaceIfNeighborOcean(parentArea, area, localX, localZ, width, centre, Biome::COLD_BEACH->id);
+            }
+            else if (centre == Biome::MESA->id || centre == Biome::MESA_ROCK->id)
+            {
+                int north = parentArea.data[localX + 1 + localZ * parentWidth];
+                int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
+                int west = parentArea.data[localX + (localZ + 1) * parentWidth];
+                int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
 
-            if (Layer::isOcean(centre)
-                || centre == Biome::eBiomeIDs_DeepOcean
-                || Layer::isOcean(north) || Layer::isOcean(south)
-                || Layer::isOcean(east) || Layer::isOcean(west))
-                area.data[localX + localZ * width] = Biome::eBiomeIDs_Beach;
+                if (!isOcean(north) && !isOcean(east) && !isOcean(west) && !isOcean(south)
+                    && !(isMesa(north) && isMesa(east) && isMesa(west) && isMesa(south)))
+                {
+                    area.data[localX + localZ * width] = Biome::DESERT->id;
+                }
+                else
+                {
+                    area.data[localX + localZ * width] = centre;
+                }
+            }
+            else if (!isOcean(centre) && centre != Biome::RIVER->id && centre != Biome::SWAMPLAND->id)
+            {
+                int north = parentArea.data[localX + 1 + localZ * parentWidth];
+                int east = parentArea.data[localX + 2 + (localZ + 1) * parentWidth];
+                int west = parentArea.data[localX + (localZ + 1) * parentWidth];
+                int south = parentArea.data[localX + 1 + (localZ + 2) * parentWidth];
+
+                if (isOcean(north) || isOcean(east) || isOcean(west) || isOcean(south))
+                {
+                    area.data[localX + localZ * width] = Biome::BEACH->id;
+                }
+                else
+                {
+                    area.data[localX + localZ * width] = centre;
+                }
+            }
             else
+            {
                 area.data[localX + localZ * width] = centre;
+            }
         }
     }
 
     PIXEndNamedEvent();
+
     return area;
 }

@@ -20,9 +20,10 @@ bool BushFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int attempt = 0; attempt < 64; ++attempt)
     {
-        const BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                                random.nextInt(4) - random.nextInt(4),
-                                                random.nextInt(8) - random.nextInt(8));
+        const int dx = random.nextInt(8) - random.nextInt(8);
+        const int dy = random.nextInt(4) - random.nextInt(4);
+        const int dz = random.nextInt(8) - random.nextInt(8);
+        const BlockPos position = origin.offset(dx, dy, dz);
         if (level->isEmptyBlock(position)
             && (!level->mDimension->isHasCeiling() || position.y < 127)
             && mBush->canSurvive(level, position, mBush->defaultBlockState()))

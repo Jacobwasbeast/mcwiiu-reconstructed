@@ -35,12 +35,12 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
     mGenerating = true;
     BlockPos position = origin;
-    while (!level->isSolidBlockingBlock(position) && level->isWaterAt(position) && position.y > 0)
+    while (!level->isSolidBlockingBlock(position) && position.y > 0)
     {
         position = position.below();
     }
 
-    if (!level->isWaterAt(position) || !level->isSolidBlockingBlock(position))
+    if (!level->isSolidBlockingBlock(position))
     {
         return false;
     }
@@ -50,28 +50,34 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
     {
         for (int attempt = 0; attempt < 7; ++attempt)
         {
-            BlockPos target = position.offset(random.nextGaussianInt(8), 0, random.nextGaussianInt(8));
-            while (!level->isSolidBlockingBlock(target) && level->isWaterAt(target))
+            const int dz = random.nextGaussianInt(8);
+            const int dx = random.nextGaussianInt(8);
+            BlockPos target = position.offset(dx, 0, dz);
+            while (!level->isEmptyWaterBlock(target)
+                && level->getBlockId(target.x, target.y, target.z) != 0)
             {
                 target = target.above();
             }
 
-            if (level->isWaterAt(target)
-                && level->isSolidBlockingBlock(target)
+            if (level->getBlockId(target.x, target.y, target.z) != 0
+                && level->isEmptyWaterBlock(target)
                 && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target))
             {
                 level->setBlock(target, seagrassState, 0x12, false);
             }
 
-            target = position.offset(random.nextGaussianInt(8), 0, random.nextGaussianInt(8));
-            while (!level->isSolidBlockingBlock(target) && level->isWaterAt(target))
+            const int dz2 = random.nextGaussianInt(8);
+            const int dx2 = random.nextGaussianInt(8);
+            target = position.offset(dx2, 0, dz2);
+            while (!level->isEmptyWaterBlock(target)
+                && level->getBlockId(target.x, target.y, target.z) != 0)
             {
                 target = target.above();
             }
 
-            if (level->isWaterAt(target)
-                && level->isSolidBlockingBlock(target)
+            if (level->getBlockId(target.x, target.y, target.z) != 0
+                && level->isEmptyWaterBlock(target)
                 && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target))
             {
@@ -87,25 +93,28 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
         const Property* property = Blocks::sea_grass->getBlockStateDefinition()->getProperties()[0];
         for (int attempt = 0; attempt < 8; ++attempt)
         {
-            BlockPos target = position.offset(random.nextGaussianInt(8), 0, random.nextGaussianInt(8));
-            while (!level->isSolidBlockingBlock(target) && level->isWaterAt(target))
+            const int dz = random.nextGaussianInt(8);
+            const int dx = random.nextGaussianInt(8);
+            BlockPos target = position.offset(dx, 0, dz);
+            while (!level->isEmptyWaterBlock(target)
+                && level->getBlockId(target.x, target.y, target.z) != 0)
             {
                 target = target.above();
             }
 
-            if (!(level->isWaterAt(target)
-                && level->isSolidBlockingBlock(target)
+            if (!(level->getBlockId(target.x, target.y, target.z) != 0
+                && level->isEmptyWaterBlock(target)
                 && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target)))
             {
                 continue;
             }
 
-            if (!level->isSolidBlockingBlock(target.above(2)))
+            if (!level->isEmptyWaterBlock(target.above(2)))
             {
                 level->setBlock(target, seagrassState, 0x12, false);
             }
-            else if (!level->isSolidBlockingBlock(target.above()) || random.nextInt(9) == 0)
+            else if (!level->isEmptyWaterBlock(target.above()) || random.nextInt(9) == 0)
             {
                 level->setBlock(target, seagrassState, 0x12, false);
             }
@@ -125,27 +134,33 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
     for (int attempt = 0; attempt < 4; ++attempt)
     {
-        BlockPos target = position.offset(random.nextGaussianInt(8), 0, random.nextGaussianInt(8));
-        while (!level->isSolidBlockingBlock(target) && level->isWaterAt(target))
+        const int dz = random.nextGaussianInt(8);
+        const int dx = random.nextGaussianInt(8);
+        BlockPos target = position.offset(dx, 0, dz);
+        while (!level->isEmptyWaterBlock(target)
+            && level->getBlockId(target.x, target.y, target.z) != 0)
         {
             target = target.above();
         }
 
-        if (level->isWaterAt(target)
-            && level->isSolidBlockingBlock(target)
+        if (level->getBlockId(target.x, target.y, target.z) != 0
+            && level->isEmptyWaterBlock(target)
             && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true))
         {
             level->setBlock(target, seagrassState, 0x12, false);
         }
 
-        target = position.offset(random.nextGaussianInt(8), 0, random.nextGaussianInt(8));
-        while (!level->isSolidBlockingBlock(target) && level->isWaterAt(target))
+        const int dz2 = random.nextGaussianInt(8);
+        const int dx2 = random.nextGaussianInt(8);
+        target = position.offset(dx2, 0, dz2);
+        while (!level->isEmptyWaterBlock(target)
+            && level->getBlockId(target.x, target.y, target.z) != 0)
         {
             target = target.above();
         }
 
-        if (level->isWaterAt(target)
-            && level->isSolidBlockingBlock(target)
+        if (level->getBlockId(target.x, target.y, target.z) != 0
+            && level->isEmptyWaterBlock(target)
             && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true))
         {
             level->setBlock(target, seagrassState, 0x12, false);

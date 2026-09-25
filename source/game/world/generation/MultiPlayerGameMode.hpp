@@ -42,9 +42,10 @@ public:
     void initPlayer(boost::shared_ptr<Player> player);
     void adjustPlayer(boost::shared_ptr<Player> player);
     void ensureHasSentCarriedItem();
-    bool _useItemOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
-                    const Direction* direction, Vec3* hit, InteractionHand::EInteractionHand hand,
-                    bool simulate, bool* used);
+    InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
+                                                      const BlockPos& pos, const Direction* direction,
+                                                      Vec3* hit, InteractionHand::EInteractionHand hand,
+                                                      bool simulate, bool* used);
     bool GetTutorialsEnabled();
     InteractionResult::EInteractionResult useItemOn(boost::shared_ptr<Player> player, Level* level,
                                                      const BlockPos& pos, const Direction* direction,

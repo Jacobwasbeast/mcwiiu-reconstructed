@@ -1,5 +1,6 @@
 #include "game/world/generation/SmoothZoomLayer.hpp"
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 SmoothZoomLayer::SmoothZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
@@ -26,11 +27,14 @@ arrayWithLength<int> SmoothZoomLayer::getArea(int x, int z, int width, int heigh
 {
     int parentX = x >> 1;
     int parentZ = z >> 1;
-    int parentWidth = (width >> 1) + 2;
-    int parentHeight = (height >> 1) + 2;
+    int parentWidth = (width >> 1) + 3;
+    int parentHeight = (height >> 1) + 3;
     arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
-    int zoomedWidth = (parentWidth - 1) * 2;
-    arrayWithLength<int> zoomedArea = IntCache::allocate(zoomedWidth * ((parentHeight - 1) * 2));
+
+    PIXBeginNamedEvent(0.0f, "SmoothZoomLayer::getArea");
+
+    int zoomedWidth = parentWidth * 2;
+    arrayWithLength<int> zoomedArea = IntCache::allocate(zoomedWidth * (parentHeight * 2));
     for (int i = 0; i < parentHeight - 1; ++i)
     {
         int dest = i * zoomedWidth * 2;
@@ -41,15 +45,20 @@ arrayWithLength<int> SmoothZoomLayer::getArea(int x, int z, int width, int heigh
             initRandom((long long)((j + parentX) * 2), (long long)((i + parentZ) * 2));
             int upperRight = parentArea.data[i * parentWidth + j + 1];
             int lowerRight = parentArea.data[(i + 1) * parentWidth + j + 1];
+
             zoomedArea.data[dest] = upperLeft;
-            zoomedArea.data[dest + zoomedWidth] = random(upperLeft, lowerLeft);
-            zoomedArea.data[dest + 1] = random(upperLeft, upperRight);
-            zoomedArea.data[dest + 1 + zoomedWidth] = modeOrRandom(upperLeft, upperRight, lowerLeft, lowerRight);
+            zoomedArea.data[dest + zoomedWidth] = upperLeft + (lowerLeft - upperLeft) * nextRandom(256) / 256;
+            zoomedArea.data[dest + 1] = upperLeft + (upperRight - upperLeft) * nextRandom(256) / 256;
+            int upper = upperLeft + (upperRight - upperLeft) * nextRandom(256) / 256;
+            int lower = lowerLeft + (lowerRight - lowerLeft) * nextRandom(256) / 256;
+            zoomedArea.data[dest + 1 + zoomedWidth] = upper + (lower - upper) * nextRandom(256) / 256;
+
             dest += 2;
             upperLeft = upperRight;
             lowerLeft = lowerRight;
         }
     }
+
     arrayWithLength<int> area = IntCache::allocate(width * height);
     for (int i = 0; i < height; ++i)
     {
@@ -59,5 +68,8 @@ arrayWithLength<int> SmoothZoomLayer::getArea(int x, int z, int width, int heigh
             area.data[i * width + j] = zoomedArea.data[source + j];
         }
     }
+
+    PIXEndNamedEvent();
+
     return area;
 }

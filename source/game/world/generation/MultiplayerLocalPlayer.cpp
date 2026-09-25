@@ -95,8 +95,8 @@ void MultiplayerLocalPlayer::respawn()
 
 void MultiplayerLocalPlayer::actuallyHurt(const DamageSource* source, float damage)
 {
-    if (source == 0 || !isInvulnerableTo(source) || source->isBypassInvul())
-        LivingEntity::actuallyHurt(source, damage);
+    if (!isInvulnerableTo(source) || source->isBypassInvul())
+        setHealth(getHealth() - damage);
 }
 
 void MultiplayerLocalPlayer::completeUsingItem()

@@ -40,6 +40,7 @@ class PlayerRenderer;
 
 class LocalPlayer : public AbstractClientPlayer
 {
+    friend class CMinecraftApp;
     friend class GameRenderer;
     friend class Gui;
 

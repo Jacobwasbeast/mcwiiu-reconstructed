@@ -34,20 +34,12 @@ bool TallgrassFeature::place(Level* level, Random& random, const BlockPos& origi
         position = position.below();
     }
 
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 128; ++i)
     {
-        BlockPos candidate = position.offset(random.nextInt(8) - random.nextInt(8),
-                                              random.nextInt(4) - random.nextInt(4),
-                                              random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(candidate) &&
-            Blocks::tallgrass->canSurvive(level, candidate, mState))
-        {
-            level->setBlock(candidate, mState, 18, false);
-        }
-
-        candidate = position.offset(random.nextInt(8) - random.nextInt(8),
-                                    random.nextInt(4) - random.nextInt(4),
-                                    random.nextInt(8) - random.nextInt(8));
+        const int dx = random.nextInt(8) - random.nextInt(8);
+        const int dy = random.nextInt(4) - random.nextInt(4);
+        const int dz = random.nextInt(8) - random.nextInt(8);
+        const BlockPos candidate = position.offset(dx, dy, dz);
         if (level->isEmptyBlock(candidate) &&
             Blocks::tallgrass->canSurvive(level, candidate, mState))
         {

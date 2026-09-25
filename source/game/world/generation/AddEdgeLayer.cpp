@@ -33,6 +33,7 @@ arrayWithLength<int> AddEdgeLayer::coolWarm(int x, int z, int width, int height)
     {
         for (int column = 0; column < width; ++column)
         {
+            initRandom((long long)(x + column), (long long)(z + row));
             int north = source.data[column + 1 + row * parentWidth];
             int west = source.data[column + (row + 1) * parentWidth];
             int center = source.data[column + 1 + (row + 1) * parentWidth];
@@ -69,10 +70,13 @@ arrayWithLength<int> AddEdgeLayer::heatIce(int x, int z, int width, int height)
             int center = source.data[column + 1 + (row + 1) * parentWidth];
             int east = source.data[column + 2 + (row + 1) * parentWidth];
             int south = source.data[column + 1 + (row + 2) * parentWidth];
-            if (center == 4 && (north == 1 || west == 1 || east == 1 || south == 1
-                || (north != 2 && west != 2 && east != 2 && south != 2)))
+            if (center == 4)
             {
-                center = 3;
+                bool nearTemperate = north == 2 || east == 2 || west == 2 || south == 2;
+                if (north == 1 || east == 1 || west == 1 || south == 1 || nearTemperate)
+                {
+                    center = 3;
+                }
             }
             result.data[column + row * width] = center;
         }
@@ -93,7 +97,7 @@ arrayWithLength<int> AddEdgeLayer::introduceSpecial(int x, int z, int width, int
             int value = source.data[index];
             if (!isShallowOcean(value) && nextRandom(13) == 0)
             {
-                value |= (nextRandom(15) + 1) << 8;
+                value |= (nextRandom(15) + 1) << 8 & 0xf00;
             }
             result.data[index] = value;
         }

@@ -42,19 +42,21 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
             int attempt;
             for (attempt = 0; attempt < 10; ++attempt)
             {
-                BlockPos candidate = position.offset(random.nextGaussianInt(8), 0,
-                                                      random.nextGaussianInt(8));
-                while (!level->isEmptyBlock(candidate)
-                    && level->getBlockId(candidate.x, candidate.y, candidate.z) != 258)
+                const int dz = random.nextGaussianInt(8);
+                const int dx = random.nextGaussianInt(8);
+                BlockPos candidate = position.offset(dx, 0, dz);
+                while (!level->isEmptyWaterBlock(candidate)
+                    && level->getBlockId(candidate.x, candidate.y, candidate.z) != 0)
                 {
                     candidate = candidate.above();
                 }
 
-                if (level->getBlockId(candidate.x, candidate.y, candidate.z) != 258
-                    && !level->isEmptyBlock(candidate.below()))
+                if (level->getBlockId(candidate.x, candidate.y, candidate.z) != 0
+                    && !level->isEmptyWaterBlock(candidate.below())
+                    && level->getBlockId(candidate.x, candidate.y, candidate.z) != 258)
                 {
                     int height = 0;
-                    while (level->isEmptyBlock(candidate.above(height)))
+                    while (level->isEmptyWaterBlock(candidate.above(height)))
                     {
                         ++height;
                         if (height >= 16)
@@ -73,7 +75,7 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
                             for (y = 1; y < growth; ++y)
                             {
                                 BlockPos plantPosition = candidate.above(y);
-                                if (!level->isEmptyBlock(plantPosition)
+                                if (!level->isEmptyWaterBlock(plantPosition)
                                     || !Blocks::kelp->mayPlace(level, plantPosition))
                                 {
                                     break;

@@ -32,9 +32,9 @@ void MegaPineTreeFeature::staticCtor()
     megaPineLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
         OldLeafBlock::VARIANT, &leafVariant);
 
-    TypedBoxed<DirtBlock::Variant*> podzolVariant(gVariants[2]);
+    TypedBoxed<DirtBlock::Variant*> podzolVariant(DirtBlock::Variant::PODZOL);
     megaPinePodzolState = Blocks::dirt->defaultBlockState()->setBoxedValue(
-        gVariantProperty, &podzolVariant);
+        DirtBlock::VARIANT, &podzolVariant);
 }
 
 MegaPineTreeFeature::MegaPineTreeFeature(bool doBlockNotify, bool useHeight)

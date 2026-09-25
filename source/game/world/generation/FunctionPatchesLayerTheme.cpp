@@ -40,8 +40,8 @@ const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise,
     if (heightAboveSurface == 0)
     {
         const BlockState* state = Blocks::dirt->defaultBlockState();
-        TypedBoxed<DirtBlock::Variant*> variant(gVariants[2]);
-        return state->setBoxedValue(gVariantProperty, &variant);
+        TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::PODZOL);
+        return state->setBoxedValue(DirtBlock::VARIANT, &variant);
     }
 
     return NULL;

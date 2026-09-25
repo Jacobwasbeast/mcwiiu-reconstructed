@@ -32,16 +32,19 @@ bool SeaPickleFeature::place(Level* level, Random& random, const BlockPos& origi
         {
             for (int attempt = 0; attempt < 4; ++attempt)
             {
-                BlockPos target = position.offset(random.nextInt(6), 0, random.nextInt(6));
+                const int dz = random.nextInt(6);
+                const int dx = random.nextInt(6);
+                BlockPos target = position.offset(dx, 0, dz);
                 const int pickles = random.nextInt(0, 4);
-                while (level->isEmptyBlock(target)
-                    && level->getBlockId(target.x, target.y, target.z) != 271)
+                while (!level->isEmptyWaterBlock(target)
+                    && level->getBlockId(target.x, target.y, target.z) != 0)
                 {
                     target = target.above();
                 }
 
                 if (level->getBlockId(target.x, target.y, target.z) != 0
-                    && level->getBlockId(target.x, target.y, target.z) != 271)
+                    && level->getBlockId(target.x, target.y, target.z) != 271
+                    && Blocks::sea_pickle->canSurvive(level, target, Blocks::sea_pickle->defaultBlockState()))
                 {
                     const BlockState* state = Blocks::sea_pickle->defaultBlockState();
                     TypedBoxed<int> value(pickles);

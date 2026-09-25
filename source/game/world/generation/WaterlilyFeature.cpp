@@ -13,11 +13,12 @@ WaterlilyFeature::~WaterlilyFeature()
 
 bool WaterlilyFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    for (int attempt = 0; attempt < 5; ++attempt)
+    for (int attempt = 0; attempt < 10; ++attempt)
     {
-        const BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                                 random.nextInt(4) - random.nextInt(4),
-                                                 random.nextInt(8) - random.nextInt(8));
+        const int dx = random.nextInt(8) - random.nextInt(8);
+        const int dy = random.nextInt(4) - random.nextInt(4);
+        const int dz = random.nextInt(8) - random.nextInt(8);
+        const BlockPos position = origin.offset(dx, dy, dz);
         if (level->isEmptyBlock(position)
             && Blocks::waterlily->mayPlace(level, position))
         {

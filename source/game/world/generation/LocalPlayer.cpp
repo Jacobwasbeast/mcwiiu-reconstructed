@@ -6,6 +6,7 @@
 #include "game/network/ServerboundChatPacket.hpp"
 #include "game/network/ServerboundMovePlayerPacket.hpp"
 #include "game/network/ServerboundPlayerAbilitiesPacket.hpp"
+#include "game/network/ServerboundSwingPacket.hpp"
 #include "game/network/ServerboundUseItemPacket.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -1601,7 +1602,9 @@ unsigned long long LocalPlayer::chat(const std::wstring& message)
 
 bool LocalPlayer::swing(InteractionHand::EInteractionHand hand)
 {
-    return Player::swing(hand);
+    bool result = LivingEntity::swing(hand);
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundSwingPacket(hand)));
+    return result;
 }
 
 void LocalPlayer::respawn()
@@ -1649,8 +1652,7 @@ void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
         if (delta > 0.0f)
         {
             mLastHurt = delta;
-            getHealth();
-            setHealth(amount);
+            setHealth(getHealth());
             mInvulnerableTime = mInvulnerableDuration;
             actuallyHurt(DamageSource::GENERIC, delta);
             mHurtDuration = 10;

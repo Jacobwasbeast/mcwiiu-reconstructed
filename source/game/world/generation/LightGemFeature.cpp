@@ -26,37 +26,12 @@ bool LightGemFeature::place(Level* level, Random& random, const BlockPos& origin
 
     level->setBlock(origin, Blocks::glowstone->defaultBlockState(), 2, false);
 
-    for (int i = 0; i < 750; ++i)
+    for (int i = 0; i < 1500; ++i)
     {
-        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                          -random.nextInt(12),
-                                          random.nextInt(8) - random.nextInt(8));
-        if (level->getBlockState(position)->getBlock() == Blocks::AIR)
-        {
-            int glowstoneNeighbours = 0;
-            std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
-            while (it != Direction::VALUES.end())
-            {
-                if (level->getBlockState(position.relative(*it))->getBlock() == Blocks::glowstone)
-                {
-                    ++glowstoneNeighbours;
-                    if (glowstoneNeighbours > 1)
-                    {
-                        break;
-                    }
-                }
-                ++it;
-            }
-
-            if (glowstoneNeighbours == 1)
-            {
-                level->setBlock(position, Blocks::glowstone->defaultBlockState(), 2, false);
-            }
-        }
-
-        position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                 -random.nextInt(12),
-                                 random.nextInt(8) - random.nextInt(8));
+        const int dx = random.nextInt(8) - random.nextInt(8);
+        const int dy = -random.nextInt(12);
+        const int dz = random.nextInt(8) - random.nextInt(8);
+        const BlockPos position = origin.offset(dx, dy, dz);
         if (level->getBlockState(position)->getBlock() == Blocks::AIR)
         {
             int glowstoneNeighbours = 0;

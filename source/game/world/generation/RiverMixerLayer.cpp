@@ -27,9 +27,10 @@ arrayWithLength<int> RiverMixerLayer::getArea(int x, int z, int width, int heigh
 {
     arrayWithLength<int> biomes = biomeLayer->getArea(x, z, width, height);
     arrayWithLength<int> rivers = riverLayer->getArea(x, z, width, height);
-    arrayWithLength<int> result = IntCache::allocate(width * height);
 
     PIXBeginNamedEvent(0.0f, "RiverMixerLayer::getArea");
+
+    arrayWithLength<int> result = IntCache::allocate(width * height);
 
     for (int index = 0; index < width * height; ++index)
     {
@@ -51,7 +52,10 @@ arrayWithLength<int> RiverMixerLayer::getArea(int x, int z, int width, int heigh
                 result.data[index] = biome;
             }
         }
-        else result.data[index] = biome;
+        else
+        {
+            result.data[index] = biome;
+        }
     }
 
     PIXEndNamedEvent();

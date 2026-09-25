@@ -34,31 +34,17 @@ bool FlowerFeature::place(Level* level, Random& random, const BlockPos& origin)
         return false;
     }
 
-    for (int attempt = 0; attempt < 32; ++attempt)
+    for (int attempt = 0; attempt < 64; ++attempt)
     {
-        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                          random.nextInt(4) - random.nextInt(4),
-                                          random.nextInt(8) - random.nextInt(8));
+        const int dx = random.nextInt(8) - random.nextInt(8);
+        const int dy = random.nextInt(4) - random.nextInt(4);
+        const int dz = random.nextInt(8) - random.nextInt(8);
+        const BlockPos position = origin.offset(dx, dy, dz);
         if (level->isEmptyBlock(position)
             && (!level->mDimension->isHasCeiling() || position.y < 127)
             && mFlowerBlock->canSurvive(level, position, mState))
         {
             level->setBlock(position, mState, 2, false);
-        }
-
-        position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                 random.nextInt(4) - random.nextInt(4),
-                                 random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(position))
-        {
-            if (level->mDimension->isHasCeiling() && position.y >= 127)
-            {
-                continue;
-            }
-            if (mFlowerBlock->canSurvive(level, position, mState))
-            {
-                level->setBlock(position, mState, 2, false);
-            }
         }
     }
 
