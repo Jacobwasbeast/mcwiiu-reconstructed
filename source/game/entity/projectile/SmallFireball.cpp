@@ -1,4 +1,5 @@
 #include "game/entity/projectile/SmallFireball.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/GameRules.hpp"
@@ -43,7 +44,7 @@ void SmallFireball::create(Level* level)
 
 void SmallFireball::addDataWalkers(DataFixerUpper* fixer)
 {
-    Fireball::addDataWalkers(fixer, 0x8A400004ULL);
+    Fireball::addDataWalkers(fixer, EntityType::SMALL_FIREBALL);
 }
 
 void SmallFireball::onHit(const HitResult* result)
@@ -55,8 +56,8 @@ void SmallFireball::onHit(const HitResult* result)
 
     if (result->mEntity == NULL)
     {
-        if (mOwner && (mOwner->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB
-            && !mLevel->getGameRules()->getBoolean(1))
+        if (mOwner && (mOwner->GetType() & EntityType::MOB) == EntityType::MOB
+            && !mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
         {
             remove();
             return;
@@ -65,7 +66,7 @@ void SmallFireball::onHit(const HitResult* result)
         const BlockPos pos = result->getBlockPos().relative(result->mDirection);
         if (mLevel->isEmptyBlock(pos))
         {
-            mLevel->setBlock(pos, Blocks::FIRE->defaultBlockState(), 3, false);
+            mLevel->setBlock(pos, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL, false);
         }
     }
     else
@@ -104,5 +105,5 @@ bool SmallFireball::hurt(const DamageSource*, float)
 
 unsigned long long SmallFireball::GetType()
 {
-    return 0x8A400004ULL;
+    return EntityType::SMALL_FIREBALL;
 }

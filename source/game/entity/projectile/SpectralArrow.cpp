@@ -1,4 +1,5 @@
 #include "game/entity/projectile/SpectralArrow.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -54,7 +55,7 @@ void SpectralArrow::tick()
 
 void SpectralArrow::addDataWalkers(DataFixerUpper* fixer)
 {
-    Arrow::addDataWalkers(fixer, 0x8A020001ULL);
+    Arrow::addDataWalkers(fixer, EntityType::SPECTRAL_ARROW);
 }
 
 void SpectralArrow::readAdditionalSaveData(CompoundTag* tag)
@@ -84,5 +85,5 @@ void SpectralArrow::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& ent
 
 unsigned long long SpectralArrow::GetType()
 {
-    return 0x8A020001ULL;
+    return EntityType::SPECTRAL_ARROW;
 }

@@ -1,4 +1,6 @@
 #include "game/entity/projectile/FishingHook.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <vector>
@@ -86,8 +88,8 @@ int FishingHook::retrieve()
     if (mHookedIn)
     {
         bringInHookedEntity();
-        mLevel->broadcastEntityEvent(shared_from_this(), 31, 0);
-        result = mHookedIn->GetType() == 0x800000AULL ? 3 : 5;
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::FISHING_ROD_REEL_IN, 0);
+        result = mHookedIn->GetType() == EntityType::ITEM_ENTITY ? 3 : 5;
     }
     else if (mTicksCatchable > 0)
     {
@@ -150,7 +152,7 @@ void FishingHook::_init()
     mTicksCatchableDelay = 0;
     mHookedIn.reset();
     setSize(0.25f, 0.25f);
-    mAddedToChunk = true;
+    mNoCulling = true;
     mCurrentState = 0;
     mLuck = 0;
     mLureSpeed = 0;
@@ -159,7 +161,7 @@ void FishingHook::_init()
 void FishingHook::init(const boost::shared_ptr<Player>& owner)
 {
     setSize(0.25f, 0.25f);
-    mAddedToChunk = true;
+    mNoCulling = true;
     mOwner = owner;
 }
 
@@ -210,7 +212,7 @@ void FishingHook::setLuck(int luck)
 
 void FishingHook::staticCtor()
 {
-    DATA_HOOKED_ENTITY = SynchedEntityData::defineId<int>(0x88000006ULL, ENTITY_TYPE_ENTITY,
+    DATA_HOOKED_ENTITY = SynchedEntityData::defineId<int>(EntityType::FISHING_HOOK, EntityType::ENTITY,
                                                           EntityDataSerializers::INT);
 }
 
@@ -221,7 +223,7 @@ void FishingHook::defineSynchedData()
 
 bool FishingHook::canBeHooked(const boost::shared_ptr<Entity>& entity)
 {
-    return entity->isPickable() || entity->GetType() == 0x800000AULL;
+    return entity->isPickable() || entity->GetType() == EntityType::ITEM_ENTITY;
 }
 
 bool FishingHook::makeStepSound()
@@ -236,7 +238,7 @@ bool FishingHook::shouldRenderAtSqrDistance(double distanceSqr)
 
 void FishingHook::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 31 && mHookedIn && Entity::instanceof(mHookedIn, ENTITY_TYPE_PLAYER) &&
+    if (event == EntityEvent::FISHING_ROD_REEL_IN && mHookedIn && Entity::instanceof(mHookedIn, EntityType::PLAYER) &&
         boost::static_pointer_cast<Player>(mHookedIn)->isLocalPlayer())
     {
         bringInHookedEntity();
@@ -416,7 +418,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
             double z = mZ + (double)(cosAngle * (float)mTicksCatchableDelay) * 0.1;
             Block* block = serverLevel->getBlockState(BlockPos(x, y - 1.0, z))->getBlock();
 
-            if (block == Blocks::WATER || block == Blocks::FLOWING_WATER)
+            if (block == Blocks::water || block == Blocks::flowing_water)
             {
                 if (mRandom->nextFloat() < 0.15000000596046448f)
                 {
@@ -489,7 +491,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
             double z = mZ + (double)(Mth::cos(angle) * distance * 0.1f);
             Block* block = serverLevel->getBlockState(BlockPos((int)x, (int)y - 1, (int)z))->getBlock();
 
-            if (block == Blocks::WATER || block == Blocks::FLOWING_WATER)
+            if (block == Blocks::water || block == Blocks::flowing_water)
             {
                 serverLevel->sendParticles(PARTICLE_SPLASH,
                                            x, y, z,
@@ -702,7 +704,7 @@ void FishingHook::remove()
 
 unsigned long long FishingHook::GetType()
 {
-    return 0x88000006ULL;
+    return EntityType::FISHING_HOOK;
 }
 
 bool FishingHook::shouldTick()

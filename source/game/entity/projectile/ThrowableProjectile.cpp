@@ -1,4 +1,5 @@
 #include "game/entity/projectile/ThrowableProjectile.hpp"
+#include "game/core/EntityType.hpp"
 #include <cmath>
 #include <vector>
 #include <boost/unordered_set.hpp>
@@ -20,9 +21,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/world/generation/Player.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 ThrowableProjectile::ThrowableProjectile(Level* level)
     : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
@@ -101,7 +100,7 @@ void ThrowableProjectile::addDataWalkers(DataFixerUpper*, unsigned long long)
 void ThrowableProjectile::_throwableInit()
 {
     mZTile = -1;
-    mInTile = Blocks::AIR;
+    mInTile = Blocks::air;
     mInGround = false;
     mYTile = -1;
     mXTile = -1;
@@ -303,7 +302,7 @@ void ThrowableProjectile::addAdditonalSaveData(CompoundTag* tag)
     tag->putByte(L"shake", (unsigned char)mShake);
     tag->putByte(L"inGround", (unsigned char)mInGround);
     if (mOwnerName.empty() && mOwner
-        && (mOwner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         mOwnerName = mOwner->getName();
     tag->putString(L"ownerName", mOwnerName.empty() ? L"" : mOwnerName);
 }
@@ -313,7 +312,7 @@ void ThrowableProjectile::readAdditionalSaveData(CompoundTag* tag)
     mXTile = tag->getInt(L"xTile");
     mYTile = tag->getInt(L"yTile");
     mZTile = tag->getInt(L"zTile");
-    if (tag->contains(L"inTile", 8))
+    if (tag->contains(L"inTile", Tag::TAG_STRING))
         mInTile = Block::byString(tag->getString(L"inTile"));
     else
         mInTile = Block::byId(tag->getByte(L"inTile"));

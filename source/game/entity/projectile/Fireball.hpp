@@ -33,6 +33,7 @@ public:
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual void tick();
     virtual double getInertia();
+    virtual void onHit(const HitResult* result) = 0;
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual bool isPickable();
@@ -43,7 +44,6 @@ public:
     virtual const ParticleType* getTrailParticleType();
     virtual bool shouldBurn();
     virtual std::vector<unsigned long long>* getEntityTypesToIgnoreCollisionsWith();
-    virtual void onHit(const HitResult* result) = 0;
     virtual unsigned long long GetType();
 
 protected:

@@ -1,4 +1,5 @@
 #include "game/entity/projectile/Projectile.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/GameMode.hpp"
 #include "game/core/HitResult.hpp"
@@ -27,7 +28,7 @@ bool Projectile::onHit(const HitResult* result)
         && !mLevel->mIsClientSide
         && result->mType == HitResult::BLOCK
         && mOwner
-        && (mOwner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         BlockPos pos = result->getBlockPos();
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(mOwner);

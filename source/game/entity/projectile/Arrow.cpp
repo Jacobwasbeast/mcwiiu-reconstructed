@@ -1,4 +1,5 @@
 #include "game/entity/projectile/Arrow.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/HitResult.hpp"
@@ -56,9 +57,9 @@ void Arrow::addAdditonalSaveData(CompoundTag* tag)
 void Arrow::readAdditionalSaveData(CompoundTag* tag)
 {
     AbstractRotatedItemProjectile::readAdditionalSaveData(tag);
-    if (tag->contains(L"enchantPower", 99))
+    if (tag->contains(L"enchantPower", Tag::TAG_ANY_NUMERIC))
         mEnchantPower = tag->getInt(L"enchantPower");
-    if (tag->contains(L"knockback", 99))
+    if (tag->contains(L"knockback", Tag::TAG_ANY_NUMERIC))
         mKnockback = tag->getInt(L"knockback");
 }
 
@@ -119,7 +120,7 @@ void Arrow::onHitEntity(const HitResult* result)
     }
     else
     {
-        if ((result->mEntity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(result->mEntity);
             if (!mLevel->mIsClientSide)

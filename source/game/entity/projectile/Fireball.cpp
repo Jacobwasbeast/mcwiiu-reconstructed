@@ -1,4 +1,5 @@
 #include "game/entity/projectile/Fireball.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <string>
@@ -167,9 +168,9 @@ void Fireball::addAdditonalSaveData(CompoundTag* tag)
 
 void Fireball::readAdditionalSaveData(CompoundTag* tag)
 {
-    if (tag->contains(L"power", 9))
+    if (tag->contains(L"power", Tag::TAG_LIST))
     {
-        ListTag* power = tag->getList(L"power", 6);
+        ListTag* power = tag->getList(L"power", Tag::TAG_DOUBLE);
         if (power->size() == 3)
         {
             mPowerX = power->getDouble(0);
@@ -178,9 +179,9 @@ void Fireball::readAdditionalSaveData(CompoundTag* tag)
         }
     }
     mLife = tag->getInt(L"life");
-    if (tag->contains(L"direction", 9))
+    if (tag->contains(L"direction", Tag::TAG_LIST))
     {
-        ListTag* direction = tag->getList(L"direction", 6);
+        ListTag* direction = tag->getList(L"direction", Tag::TAG_DOUBLE);
         mXd = direction->getDouble(0);
         mYd = direction->getDouble(1);
         mZd = direction->getDouble(2);
@@ -258,5 +259,5 @@ std::vector<unsigned long long>* Fireball::getEntityTypesToIgnoreCollisionsWith(
 
 unsigned long long Fireball::GetType()
 {
-    return 0x000000008A400000ULL;
+    return EntityType::FIREBALL;
 }

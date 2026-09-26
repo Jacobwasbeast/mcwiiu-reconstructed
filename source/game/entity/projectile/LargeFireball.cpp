@@ -1,4 +1,5 @@
 #include "game/entity/projectile/LargeFireball.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -10,8 +11,6 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
 
-const unsigned long long LargeFireball::DATA_WALKER_TYPE = 0x8A400000ULL;
-const unsigned long long LargeFireball::ENTITY_TYPE = 0x8A400003ULL;
 
 LargeFireball::LargeFireball(Level* level)
     : Fireball(level), mExplosionPower(1)
@@ -42,7 +41,7 @@ void LargeFireball::create(Level* level)
 
 void LargeFireball::addDataWalkers(DataFixerUpper* fixer)
 {
-    Fireball::addDataWalkers(fixer, LargeFireball::DATA_WALKER_TYPE);
+    Fireball::addDataWalkers(fixer, EntityType::FIREBALL);
 }
 
 void LargeFireball::onHit(const HitResult* result)
@@ -62,7 +61,7 @@ void LargeFireball::onHit(const HitResult* result)
         }
     }
 
-    const bool mobGriefing = mLevel->getGameRules()->getBoolean(1);
+    const bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
     mLevel->explode(shared_from_this(), mX, mY, mZ, static_cast<float>(mExplosionPower),
                     false, mobGriefing, false, false, false, -1.0f);
     remove();
@@ -77,7 +76,7 @@ void LargeFireball::addAdditonalSaveData(CompoundTag* tag)
 void LargeFireball::readAdditionalSaveData(CompoundTag* tag)
 {
     Fireball::readAdditionalSaveData(tag);
-    if (tag->contains(L"ExplosionPower", 99))
+    if (tag->contains(L"ExplosionPower", Tag::TAG_ANY_NUMERIC))
     {
         mExplosionPower = tag->getInt(L"ExplosionPower");
     }
@@ -85,5 +84,5 @@ void LargeFireball::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned long long LargeFireball::GetType()
 {
-    return LargeFireball::ENTITY_TYPE;
+    return EntityType::LARGE_FIREBALL;
 }

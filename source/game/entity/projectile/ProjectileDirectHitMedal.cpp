@@ -8,5 +8,5 @@ ProjectileDirectHitMedal::~ProjectileDirectHitMedal()
 
 double ProjectileDirectHitMedal::GetScore(PlayerStats* playerStats) const
 {
-    return static_cast<float>(static_cast<unsigned int>(playerStats->mSnowballDirectHits));
+    return static_cast<float>(playerStats->mSnowballDirectHits);
 }

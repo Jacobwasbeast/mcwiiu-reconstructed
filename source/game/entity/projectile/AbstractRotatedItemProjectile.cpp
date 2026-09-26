@@ -1,4 +1,5 @@
 #include "game/entity/projectile/AbstractRotatedItemProjectile.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <vector>
@@ -66,7 +67,7 @@ AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level,
     _init();
     setPos(owner->mX, owner->mY + owner->getEyeHeight() - 0.10000000149011612, owner->mZ);
     mOwner = owner;
-    if ((owner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         mPickup = ePickup_Allowed;
 }
 
@@ -80,7 +81,7 @@ void AbstractRotatedItemProjectile::doPostHurtEffects(
 
 void AbstractRotatedItemProjectile::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId(0x000000008A020000ULL, 0x0000000008000000ULL,
+    DATA_FLAGS = SynchedEntityData::defineId(EntityType::ARROW, EntityType::ENTITY,
         EntityDataSerializers::BYTE);
 }
 
@@ -88,7 +89,7 @@ void AbstractRotatedItemProjectile::_init()
 {
     mYRotO = 0.0f;
     mYRot = 0.0f;
-    mInTile = Blocks::AIR;
+    mInTile = Blocks::air;
     mZTile = -1;
     mInData = 0;
     mYTile = -1;
@@ -324,8 +325,8 @@ void AbstractRotatedItemProjectile::tick()
     }
 
     if (hitResult != NULL && hitResult->mType == HitResult::ENTITY
-        && (hitResult->mEntity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
-        && mOwner && (mOwner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (hitResult->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && mOwner && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> hitPlayer = boost::static_pointer_cast<Player>(hitResult->mEntity);
         boost::shared_ptr<Player> ownerPlayer = boost::static_pointer_cast<Player>(mOwner);
@@ -464,16 +465,16 @@ void AbstractRotatedItemProjectile::readAdditionalSaveData(CompoundTag* tag)
     mYTile = tag->getInt(L"yTile");
     mZTile = tag->getInt(L"zTile");
     mLife = tag->getShort(L"life");
-    if (tag->contains(L"inTile", 8))
+    if (tag->contains(L"inTile", Tag::TAG_STRING))
         mInTile = Block::byString(tag->getString(L"inTile"));
     else
         mInTile = Block::byId(tag->getByte(L"inTile"));
     mInData = tag->getByte(L"inData");
     mShake = tag->getByte(L"shake");
     mInGround = tag->getByte(L"inGround") == 1;
-    if (tag->contains(L"pickup", 99))
+    if (tag->contains(L"pickup", Tag::TAG_ANY_NUMERIC))
         mPickup = static_cast<ePickup>(tag->getByte(L"pickup"));
-    else if (tag->contains(L"player", 99))
+    else if (tag->contains(L"player", Tag::TAG_ANY_NUMERIC))
         mPickup = tag->getBoolean(L"player") ? ePickup_Allowed : ePickup_Disallowed;
     setCritArrow(tag->getBoolean(L"crit"));
 }

@@ -1,4 +1,6 @@
 #include "game/entity/projectile/DragonFireball.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -44,7 +46,7 @@ DragonFireball::~DragonFireball() = default;
 
 void DragonFireball::addDataWalkers(DataFixerUpper* fixer)
 {
-    Fireball::addDataWalkers(fixer, 0x8a400001ULL);
+    Fireball::addDataWalkers(fixer, EntityType::DRAGON_FIREBALL);
 }
 
 void DragonFireball::onHit(const HitResult* result)
@@ -85,7 +87,7 @@ void DragonFireball::onHit(const HitResult* result)
             delete entities;
         }
 
-        mLevel->levelEvent(2006, BlockPos(mX, mY, mZ), 0);
+        mLevel->levelEvent(LevelEvent::PARTICLES_DRAGON_FIREBALL_SPLASH, BlockPos(mX, mY, mZ), 0);
         remove();
     }
 }
@@ -112,7 +114,7 @@ bool DragonFireball::shouldBurn()
 
 unsigned long long DragonFireball::GetType()
 {
-    return 0x000000008A400001ULL;
+    return EntityType::DRAGON_FIREBALL;
 }
 
 void DragonFireball::create(Level* level)

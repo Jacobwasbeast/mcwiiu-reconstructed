@@ -1,4 +1,5 @@
 #include "game/entity/projectile/AbstractProjectileDispenseBehavior.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -52,7 +53,7 @@ void AbstractProjectileDispenseBehavior::playSound(
 {
     if (outcome != DefaultDispenseItemBehavior::eOUTCOME_Failure)
     {
-        blockSource->getWorld()->levelEvent(1002, blockSource->getPos(), 0);
+        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_PROJECTILE_LAUNCH, blockSource->getPos(), 0);
     }
 }
 

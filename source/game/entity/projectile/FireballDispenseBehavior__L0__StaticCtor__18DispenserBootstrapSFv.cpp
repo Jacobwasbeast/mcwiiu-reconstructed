@@ -1,4 +1,5 @@
 #include "game/entity/projectile/FireballDispenseBehavior__L0__StaticCtor__18DispenserBootstrapSFv.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/Position.hpp"
@@ -48,7 +49,7 @@ void FireballDispenseBehavior__L0__StaticCtor__18DispenserBootstrapSFv::playSoun
     BlockSource* source, eOUTCOME outcome)
 {
     if (outcome == eOUTCOME_Success)
-        source->getWorld()->levelEvent(1018, source->getPos(), 0);
+        source->getWorld()->levelEvent(LevelEvent::SOUND_BLAZE_FIREBALL, source->getPos(), 0);
     else
         DefaultDispenseItemBehavior::playSound(source, outcome);
 }

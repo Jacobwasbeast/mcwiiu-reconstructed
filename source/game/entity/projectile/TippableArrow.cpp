@@ -1,4 +1,6 @@
 #include "game/entity/projectile/TippableArrow.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
@@ -13,6 +15,7 @@
 #include "game/item/Potion.hpp"
 #include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/world/Level.hpp"
 
@@ -47,8 +50,8 @@ void TippableArrow::create(Level* level)
 
 void TippableArrow::staticCtor()
 {
-    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(0x8A020002ULL,
-        0x8A020000ULL, EntityDataSerializers::INT);
+    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::TIPPABLE_ARROW,
+        EntityType::ARROW, EntityDataSerializers::INT);
 }
 
 void TippableArrow::init()
@@ -61,7 +64,7 @@ void TippableArrow::init()
 int TippableArrow::getCustomColor(const not_null_ptr<ItemInstance>& itemInstance)
 {
     CompoundTag* tag = itemInstance->getTag();
-    if (tag != NULL && tag->contains(L"CustomPotionColor", 99))
+    if (tag != NULL && tag->contains(L"CustomPotionColor", Tag::TAG_ANY_NUMERIC))
         return tag->getInt(L"CustomPotionColor");
     return -1;
 }
@@ -119,13 +122,13 @@ void TippableArrow::addEffect(MobEffectInstance* effect)
 {
     mEffects.push_back(effect);
     if (mPotion == Potions::EMPTY && mEffects.begin() == mEffects.end())
-        mEntityData->set(DATA_EFFECT_COLOR_ID, -1, true);
+        getEntityData()->set(DATA_EFFECT_COLOR_ID, -1, true);
     else
     {
         std::vector<MobEffectInstance*> effects;
         PotionUtils::getAllEffects(mPotion, &effects);
         effects.insert(effects.end(), mEffects.begin(), mEffects.end());
-        mEntityData->set(DATA_EFFECT_COLOR_ID, PotionUtils::getColor(&effects), true);
+        getEntityData()->set(DATA_EFFECT_COLOR_ID, PotionUtils::getColor(&effects), true);
     }
 }
 
@@ -179,18 +182,14 @@ void TippableArrow::tick()
 
 void TippableArrow::addDataWalkers(DataFixerUpper* fixer)
 {
-    Arrow::addDataWalkers(fixer, 0x8A020002ULL);
+    Arrow::addDataWalkers(fixer, EntityType::TIPPABLE_ARROW);
 }
 
 void TippableArrow::addAdditonalSaveData(CompoundTag* tag)
 {
     Arrow::addAdditonalSaveData(tag);
-    if (mPotion != Potions::EMPTY)
-    {
-        not_null_ptr<ItemInstance> item(new ItemInstance(Items::tippedArrow));
-        PotionUtils::setPotion(item, mPotion);
-        tag->putString(L"Potion", PotionUtils::getPotionID(item).toString());
-    }
+    if (mPotion != Potions::EMPTY && mPotion != NULL)
+        tag->putString(L"Potion", Potion::potionRegistry->getKey(mPotion).toString());
     if (mFixedColor)
         tag->putInt(L"Color", getColor());
     if (!mEffects.empty())
@@ -205,7 +204,7 @@ void TippableArrow::addAdditonalSaveData(CompoundTag* tag)
 void TippableArrow::readAdditionalSaveData(CompoundTag* tag)
 {
     Arrow::readAdditionalSaveData(tag);
-    if (tag->contains(L"Potion", 8))
+    if (tag->contains(L"Potion", Tag::TAG_STRING))
         mPotion = PotionUtils::getPotion(tag);
     std::vector<MobEffectInstance*>* effects = PotionUtils::getCustomEffects(tag);
     if (effects != NULL)
@@ -215,7 +214,7 @@ void TippableArrow::readAdditionalSaveData(CompoundTag* tag)
         delete effects;
     }
     updateColor();
-    if (tag->contains(L"Color", 99))
+    if (tag->contains(L"Color", Tag::TAG_ANY_NUMERIC))
         setFixedColor(tag->getInt(L"Color"));
 }
 
@@ -260,7 +259,7 @@ not_null_ptr<ItemInstance> TippableArrow::getPickupItem()
 
 void TippableArrow::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 0)
+    if (event == EntityEvent::TIPPED_ARROW_PARTICLES)
         makeParticle(20);
     else
         Entity::handleEntityEvent(event, data);
@@ -268,5 +267,5 @@ void TippableArrow::handleEntityEvent(unsigned char event, int data)
 
 unsigned long long TippableArrow::GetType()
 {
-    return 0x000000008A020002ULL;
+    return EntityType::TIPPABLE_ARROW;
 }

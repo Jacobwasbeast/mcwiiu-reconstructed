@@ -44,13 +44,13 @@ void TippedArrowItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 std::wstring TippedArrowItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
     Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getName(Potion::SPLASH);
+    return potion->getName(Potion::ARROW);
 }
 
 int TippedArrowItem::getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
     Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getUseDescriptionId(Potion::SPLASH);
+    return potion->getUseDescriptionId(Potion::ARROW);
 }
 
 bool TippedArrowItem::hasMultipleSpriteLayers()
