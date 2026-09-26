@@ -9,7 +9,7 @@
 ChunkPrimer::ChunkPrimer(bool ownsElementIds, arrayWithLength<unsigned short> elementIds)
 {
     mElementIds = elementIds;
-    mDefaultState = Blocks::AIR->defaultBlockState();
+    mDefaultState = Blocks::air->defaultBlockState();
     mOwnsElementIds = ownsElementIds;
     mEmissiveMaxHeight = 0;
 }
@@ -125,7 +125,7 @@ int ChunkPrimer::getHighestNonAirPos(int x, int z)
 
     for (int y = 127; y >= 0; y--)
     {
-        if (Block::byId(mElementIds.data[columnTop + y] >> 4) != Blocks::AIR)
+        if (Block::byId(mElementIds.data[columnTop + y] >> 4) != Blocks::air)
         {
             return y;
         }

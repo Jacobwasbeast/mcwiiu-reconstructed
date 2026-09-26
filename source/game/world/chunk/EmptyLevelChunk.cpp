@@ -43,12 +43,12 @@ int EmptyLevelChunk::getBlockLightBlock(const BlockPos&)
 
 Block* EmptyLevelChunk::getBlock(const BlockPos&)
 {
-    return Blocks::AIR;
+    return Blocks::air;
 }
 
 const BlockState* EmptyLevelChunk::getBlockState(const BlockPos&)
 {
-    return Blocks::AIR->defaultBlockState();
+    return Blocks::air->defaultBlockState();
 }
 
 int EmptyLevelChunk::getData(const BlockPos&)
@@ -188,7 +188,7 @@ bool EmptyLevelChunk::isEmpty()
 
 void EmptyLevelChunk::setBlock(const BlockPos&, const BlockState*)
 {
-    Blocks::AIR->defaultBlockState();
+    Blocks::air->defaultBlockState();
 }
 
 void EmptyLevelChunk::getElementRange(arrayWithLength<unsigned short> elements, int, int)

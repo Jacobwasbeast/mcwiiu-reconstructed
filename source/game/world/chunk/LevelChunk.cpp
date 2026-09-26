@@ -1,4 +1,6 @@
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
@@ -22,6 +24,18 @@
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
+#include "game/entity/mob/Animal.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/Monster.hpp"
+#include "game/entity/mob/Zombie.hpp"
+#include "game/entity/projectile/Arrow.hpp"
+#include "game/core/Minecart.hpp"
+#include "game/core/Mth.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/core/TickNextTickData.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/AABB.hpp"
@@ -31,15 +45,12 @@
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/XMem.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 #include <cstring>
 #include <cstdlib>
 
-unsigned int TlsAlloc();
-int TlsSetValue(unsigned int, void*);
-void* TlsGetValue(unsigned int);
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 extern MinecraftServer* gMinecraftServer;
 extern CMinecraftApp* g_pApp;
@@ -704,8 +715,8 @@ void LevelChunk::recalcHeightmapOnly()
         elements = new unsigned short[0x10000];
         extraElements = new unsigned short[0x10000];
     }
-    memset(elements, 0, 0x20000);
-    memset(extraElements, 0, 0x20000);
+    XMemSet(elements, 0, 0x20000);
+    XMemSet(extraElements, 0, 0x20000);
     getElementRange(arrayWithLength<unsigned short>(elements, 0x10000),
                      arrayWithLength<unsigned short>(extraElements, 0x10000), 0, rangeEnd);
     PIXEndNamedEvent();
@@ -775,8 +786,8 @@ void LevelChunk::recalcHeightmap()
         elements = new unsigned short[0x10000];
         extraElements = new unsigned short[0x10000];
     }
-    memset(elements, 0, 0x20000);
-    memset(extraElements, 0, 0x20000);
+    XMemSet(elements, 0, 0x20000);
+    XMemSet(extraElements, 0, 0x20000);
     getElementRange(arrayWithLength<unsigned short>(elements, 0x10000),
                      arrayWithLength<unsigned short>(extraElements, 0x10000), 0, rangeEnd);
     PIXEndNamedEvent();
@@ -1271,7 +1282,7 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     }
     else
     {
-        if (newBlockId == 0)
+        if (newBlockId == BlockId::AIR)
             mElements->setExtraElement(localX, pos.y, localZ, (unsigned short)(legacyData & 0xffff));
         PIXBeginNamedEvent(0.0f, "Updating lighting");
         newLightBlock = getBlockState(pos)->getLightBlock();
@@ -1311,7 +1322,7 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     {
         newBlock->onPlace(level, pos, state);
     }
-    else if (newBlock == Blocks::FIRE && !newBlock->mayPlace(level, pos))
+    else if (newBlock == Blocks::fire && !newBlock->mayPlace(level, pos))
     {
         mElements->set(localX, pos.y & 0xff, localZ, 0);
     }
@@ -1357,7 +1368,7 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
         oldLightBlock = oldExtraLightBlock;
     Block* newBlock = Block::byId(blockId);
     bool commandBlockChange = false;
-    if (oldBlockId != 0)
+    if (oldBlockId != BlockId::AIR)
     {
         if (level->mIsClientSide)
         {
@@ -1412,7 +1423,7 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
         PIXEndNamedEvent();
     }
     PIXEndNamedEvent();
-    if (blockId >= 0)
+    if (blockId >= BlockId::AIR)
     {
         if (blockId < 1)
         {
@@ -1560,7 +1571,7 @@ void LevelChunk::addEntity(boost::shared_ptr<Entity> entity)
         section = 0;
     if (section >= mEntitySectionCount)
         section = mEntitySectionCount - 1;
-    entity->mAddedToChunk = true;
+    entity->mInChunk = true;
     entity->mChunkX = x;
     entity->mChunkY = section;
     entity->mChunkZ = z;
@@ -1639,10 +1650,13 @@ boost::shared_ptr<BlockEntity> LevelChunk::getBlockEntity(const BlockPos& pos, E
 }
 void LevelChunk::addBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
-    if (entity.get() == NULL)
-        return;
-    entity->setLevel(level);
-    mBlockEntityMap[entity->getBlockPos()] = entity;
+    setBlockEntity(entity->getBlockPos(), entity);
+    if (mLoaded)
+    {
+        EnterCriticalSection(&level->mBlockEntityMutex);
+        level->addBlockEntity(entity);
+        LeaveCriticalSection(&level->mBlockEntityMutex);
+    }
 }
 void LevelChunk::setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity)
 {
@@ -1684,7 +1698,7 @@ void LevelChunk::load(bool blockEntitiesOnly)
     }
     if (mUnloaded && mPendingBlockEntityTag != NULL)
     {
-        ListTag* entities = mPendingBlockEntityTag->getList(L"Entities", 10);
+        ListTag* entities = mPendingBlockEntityTag->getList(L"Entities", Tag::TAG_COMPOUND);
         if (entities != NULL)
         {
             for (int i = 0; i < entities->size(); ++i)
@@ -1695,9 +1709,9 @@ void LevelChunk::load(bool blockEntitiesOnly)
                 {
                     entity->onLoadedFromSave();
                     addEntity(entity);
-                    if (tag->contains(L"Riding", 9))
+                    if (tag->contains(L"Riding", Tag::TAG_LIST))
                     {
-                        ListTag* riders = tag->getList(L"Riding", 10);
+                        ListTag* riders = tag->getList(L"Riding", Tag::TAG_COMPOUND);
                         for (int j = 0; j < riders->size(); ++j)
                         {
                             boost::shared_ptr<Entity> rider = EntityIO::newEntity(riders->getCompound(j), level);
@@ -1711,7 +1725,7 @@ void LevelChunk::load(bool blockEntitiesOnly)
                 }
             }
         }
-        ListTag* blockEntities = mPendingBlockEntityTag->getList(L"TileEntities", 10);
+        ListTag* blockEntities = mPendingBlockEntityTag->getList(L"TileEntities", Tag::TAG_COMPOUND);
         if (blockEntities != NULL)
         {
             for (int i = 0; i < blockEntities->size(); ++i)
@@ -1721,13 +1735,13 @@ void LevelChunk::load(bool blockEntitiesOnly)
                     addBlockEntity(entity);
             }
         }
-        ListTag* ticks = mPendingBlockEntityTag->getList(L"TileTicks", 10);
+        ListTag* ticks = mPendingBlockEntityTag->getList(L"TileTicks", Tag::TAG_COMPOUND);
         if (ticks != NULL)
         {
             for (int i = 0; i < ticks->size(); ++i)
             {
                 CompoundTag* tag = ticks->getCompound(i);
-                Block* block = tag->contains(L"i", 8) ? Block::byString(tag->getString(L"i")) : Block::byId(tag->getInt(L"i"));
+                Block* block = tag->contains(L"i", Tag::TAG_STRING) ? Block::byString(tag->getString(L"i")) : Block::byId(tag->getInt(L"i"));
                 const int tickX = tag->getInt(L"x");
                 const int tickY = tag->getInt(L"y");
                 const int tickZ = tag->getInt(L"z");
@@ -1840,7 +1854,7 @@ bool LevelChunk::containsPlayer()
     for (int section = 0; section < mEntitySectionCount; ++section)
         for (std::vector<boost::shared_ptr<Entity>>::const_iterator it = mEntitySections[section]->begin();
              it != mEntitySections[section]->end(); ++it)
-            if ((*it)->GetType() == 0x0c800001ULL)
+            if ((*it)->GetType() == EntityType::SERVER_PLAYER)
                 return true;
     return false;
 }
@@ -1897,7 +1911,7 @@ void LevelChunk::getEntities(boost::shared_ptr<Entity> except, const AABB* box,
 }
 void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
                                     std::vector<boost::shared_ptr<Entity>>& entities,
-                                    const Predicate<boost::shared_ptr<Entity>>* predicate, bool exact)
+                                    const Predicate<boost::shared_ptr<Entity>>* predicate, bool excludeInvisiblePlayers)
 {
     int first = (int)((box->mMinY - 2.0) * 0.0625);
     if ((box->mMinY - 2.0) * 0.0625 < first)
@@ -1905,10 +1919,35 @@ void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
     int last = (int)((box->mMaxY + 2.0) * 0.0625);
     if ((box->mMaxY + 2.0) * 0.0625 < last)
         --last;
-    if (first < 0)
-        first = 0;
-    if (last >= mEntitySectionCount)
-        last = mEntitySectionCount - 1;
+    first = Mth::clamp(first, 0, mEntitySectionCount - 1);
+    last = Mth::clamp(last, 0, mEntitySectionCount - 1);
+
+    unsigned int typeMask = 0;
+    if (type == typeid(Player))
+        typeMask = EntityType::PLAYER;
+    else if (type == typeid(Entity))
+        typeMask = EntityType::ENTITY;
+    else if (type == typeid(Mob))
+        typeMask = EntityType::MOB;
+    else if (type == typeid(LivingEntity))
+        typeMask = EntityType::LIVING_ENTITY;
+    else if (type == typeid(ItemEntity))
+        typeMask = EntityType::ITEM_ENTITY;
+    else if (type == typeid(Minecart))
+        typeMask = EntityType::MINECART;
+    else if (type == typeid(Monster))
+        typeMask = EntityType::MONSTER;
+    else if (type == typeid(Zombie))
+        typeMask = EntityType::ZOMBIE;
+    else if (type == typeid(Animal))
+        typeMask = EntityType::ANIMAL;
+    else if (type == typeid(Arrow))
+        typeMask = EntityType::ARROW;
+    else if (type == typeid(AbstractHorse))
+        typeMask = EntityType::ABSTRACT_HORSE;
+    else if (type == typeid(AbstractSkeleton))
+        typeMask = EntityType::ABSTRACT_SKELETON;
+
     for (int section = first; section <= last; ++section)
     {
         std::vector<boost::shared_ptr<Entity>>& sectionEntities = *mEntitySections[section];
@@ -1916,13 +1955,34 @@ void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
              ++it)
         {
             boost::shared_ptr<Entity> entity = *it;
-            bool matches = exact ? typeid(*entity) == type : typeid(*entity) == type;
-            if (matches &&
-                box->intersects(entity->mBoundingBox->mMinX, entity->mBoundingBox->mMinY, entity->mBoundingBox->mMinZ,
-                                entity->mBoundingBox->mMaxX, entity->mBoundingBox->mMaxY,
-                                entity->mBoundingBox->mMaxZ) &&
-                (predicate == NULL || predicate->apply(entity)))
+            bool matches;
+            if (typeMask == 0)
+            {
+                matches = entity != NULL && typeid(*entity) == type;
+            }
+            else
+            {
+                unsigned long long entityType = entity->GetType();
+                if ((typeMask & 0x3f) == 0)
+                    matches = (entityType & typeMask) == typeMask;
+                else
+                    matches = entityType == typeMask;
+            }
+            if (!matches || !entity->mBoundingBox->intersects(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX,
+                                                             box->mMaxY, box->mMaxZ))
+                continue;
+            if (predicate != NULL && !predicate->apply(entity))
+                continue;
+            if (type != typeid(Player) || !excludeInvisiblePlayers)
+            {
                 entities.push_back(entity);
+            }
+            else
+            {
+                boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+                if (!player->hasInvisiblePrivilege())
+                    entities.push_back(entity);
+            }
         }
     }
 }
@@ -2217,7 +2277,7 @@ arrayWithLength<unsigned char> LevelChunk::getBiomes()
 }
 void LevelChunk::updateBiomePresentFlags()
 {
-    if (mBiomes.data == NULL)
+    if (mBiomes.length == 0)
         return;
     for (unsigned int i = 0; i < mBiomes.length; ++i)
     {
@@ -2259,9 +2319,7 @@ bool LevelChunk::postProcessAt(int x, int z)
             for (int checkY = pos.y; checkY > 0; --checkY)
             {
                 pos.y = checkY;
-                Block* block = getBlock(pos);
-                const BlockState* state = block->defaultBlockState();
-                if (state->getBlock()->getLightEmission(state) > 0)
+                if (getBlock(pos)->defaultBlockState()->getLightEmission() > 0)
                     level->checkLight(pos, false, false);
             }
             PIXEndNamedEvent();

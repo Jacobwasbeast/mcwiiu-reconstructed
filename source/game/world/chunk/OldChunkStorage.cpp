@@ -1,4 +1,5 @@
 #include "game/world/chunk/OldChunkStorage.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -25,10 +26,7 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
-
-extern unsigned int TlsAlloc();
-extern int TlsSetValue(unsigned int key, void* value);
-extern void* TlsGetValue(unsigned int key);
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 static unsigned int gOldChunkStorageTlsKey = 0;
 static OldChunkStorage::ThreadStorage* gOldChunkStorageDefault = NULL;
@@ -144,9 +142,9 @@ boost::shared_ptr<Entity> OldChunkStorage::loadAndAddEntity(CompoundTag* tag, Le
     if (entity)
     {
         chunk->addEntity(entity);
-        if (tag->contains(L"Passengers", 9))
+        if (tag->contains(L"Riding", Tag::TAG_LIST))
         {
-            ListTag* passengers = tag->getList(L"Passengers", 10);
+            ListTag* passengers = tag->getList(L"Riding", Tag::TAG_COMPOUND);
             if (passengers != NULL)
             {
                 int i;
@@ -166,7 +164,7 @@ void OldChunkStorage::loadEntities(LevelChunk* chunk, Level* level, CompoundTag*
 {
     if (tag->contains(L"Entities"))
     {
-        ListTag* entities = tag->getList(L"Entities", 10);
+        ListTag* entities = tag->getList(L"Entities", Tag::TAG_COMPOUND);
         if (entities != NULL)
         {
             int i;
@@ -179,7 +177,7 @@ void OldChunkStorage::loadEntities(LevelChunk* chunk, Level* level, CompoundTag*
     }
     if (tag->contains(L"TileEntities"))
     {
-        ListTag* entities = tag->getList(L"TileEntities", 10);
+        ListTag* entities = tag->getList(L"TileEntities", Tag::TAG_COMPOUND);
         if (entities != NULL)
         {
             int i;
@@ -196,7 +194,7 @@ void OldChunkStorage::loadEntities(LevelChunk* chunk, Level* level, CompoundTag*
 LevelChunk* OldChunkStorage::load(Level* level, CompoundTag* tag, LevelChunk* chunk)
 {
     int version = 9;
-    if (tag->contains(L"version", 2))
+    if (tag->contains(L"version", Tag::TAG_SHORT))
         version = tag->getShort(L"version");
     int x = tag->getInt(L"xPos");
     int z = tag->getInt(L"zPos");
@@ -238,7 +236,7 @@ LevelChunk* OldChunkStorage::load(Level* level, CompoundTag* tag, LevelChunk* ch
     loadEntities(chunk, level, tag);
     if (tag->contains(L"TileTicks"))
     {
-        ListTag* ticks = tag->getList(L"TileTicks", 10);
+        ListTag* ticks = tag->getList(L"TileTicks", Tag::TAG_COMPOUND);
         int i;
         for (i = 0; ticks != NULL && i < ticks->size(); ++i)
         {
@@ -257,7 +255,7 @@ LevelChunk* OldChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
         return NULL;
     FileInputStream input(file);
     CompoundTag* root = NbtIo::readCompressed(&input);
-    if (root == NULL || !root->contains(L"Level", 10))
+    if (root == NULL || !root->contains(L"Level", Tag::TAG_COMPOUND))
         return NULL;
     CompoundTag* levelTag = root->getCompound(L"Level");
     if (!levelTag->contains(L"Blocks"))
@@ -365,9 +363,9 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
     if (addToWorld && !level->addEntity(entity))
         return boost::shared_ptr<Entity>();
 
-    if (tag->contains(L"Passengers", 9))
+    if (tag->contains(L"Riding", Tag::TAG_LIST))
     {
-        ListTag* passengers = tag->getList(L"Passengers", 10);
+        ListTag* passengers = tag->getList(L"Riding", Tag::TAG_COMPOUND);
         int i;
         for (i = 0; i < passengers->size(); ++i)
         {
@@ -403,9 +401,9 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
     if (addToWorld && !level->addEntity(entity))
         return boost::shared_ptr<Entity>();
 
-    if (tag->contains(L"Passengers", 9))
+    if (tag->contains(L"Riding", Tag::TAG_LIST))
     {
-        ListTag* passengers = tag->getList(L"Passengers", 10);
+        ListTag* passengers = tag->getList(L"Riding", Tag::TAG_COMPOUND);
         int i;
         for (i = 0; i < passengers->size(); ++i)
         {
@@ -421,7 +419,7 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
 static void fixCauldronBlock(LevelChunk* chunk, int x, int y, int z)
 {
     const BlockState* state = chunk->getBlockState(x, y, z);
-    if (Block::getId(state->getBlock()) == 0x76)
+    if (Block::getId(state->getBlock()) == BlockId::CAULDRON)
     {
         bool* changed = new bool(false);
         chunk->setData(x, y, z, Mth::clamp(chunk->getData(x, y, z) << 1, 0, 6), 0, changed);
@@ -480,7 +478,7 @@ LevelChunk* OldChunkStorage::load(Level* level, DataInputStream* stream, DataFix
     loadEntities(chunk, level, tag);
     if (tag->contains(L"TileTicks"))
     {
-        ListTag* ticks = tag->getList(L"TileTicks", 10);
+        ListTag* ticks = tag->getList(L"TileTicks", Tag::TAG_COMPOUND);
         int i;
         for (i = 0; ticks != NULL && i < ticks->size(); ++i)
         {

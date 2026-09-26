@@ -24,10 +24,14 @@
 #include "game/world/chunk/ChunkStorage.hpp"
 #include "game/world/chunk/EmptyLevelChunk.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
+#include "game/world/chunk/WaterLevelChunk.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/LevelType.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-extern bool sHaltRequested;
 extern long InterlockedCompareExchangeRelease(volatile long* destination, long exchange, long comparand);
 
 ClientChunkCache::QueuedAction::QueuedAction()
@@ -67,7 +71,7 @@ ClientChunkCache::QueuedAction& ClientChunkCache::QueuedAction::operator=(const 
 }
 
 ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
-    : m_emptyChunk(0), m_fallbackChunk(0), m_storage(storage), m_level(level),
+    : m_emptyChunk(0), m_waterChunk(0), m_storage(storage), m_level(level),
       m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
       m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_pendingHostChunks(),
       m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
@@ -76,7 +80,7 @@ ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
 }
 
 ClientChunkCache::ClientChunkCache(Level* level)
-    : m_emptyChunk(0), m_fallbackChunk(0), m_storage(0), m_level(level),
+    : m_emptyChunk(0), m_waterChunk(0), m_storage(0), m_level(level),
       m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
       m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_pendingHostChunks(),
       m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
@@ -92,6 +96,7 @@ ClientChunkCache::~ClientChunkCache()
             delete *it;
     }
     delete m_emptyChunk;
+    delete m_waterChunk;
 }
 
 LevelChunk* ClientChunkCache::load(int x, int z, LevelChunk* chunk)
@@ -216,6 +221,60 @@ void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* sto
         m_storageThread = new C4JThreadImpl(&StorageThreadProc, this, "MultiPlayerChunkCache", 0x100000);
         m_storageThread->SetProcessor(0);
         m_storageThread->Run();
+    }
+
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
+    {
+        static const int CHUNK_WIDTH = 16;
+        static const int CHUNK_HEIGHT = 128;
+        static const int FLAT_GRASS_Y = 3;
+        const bool flat = level->getLevelData()->getGeneratorType() == LevelType::FLAT;
+
+        unsigned short* elementIds = new unsigned short[CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT];
+        for (int x = 0; x < CHUNK_WIDTH; ++x)
+            for (int y = 0; y < CHUNK_HEIGHT; ++y)
+                for (int z = 0; z < CHUNK_WIDTH; ++z)
+                {
+                    unsigned short element = 0;
+                    if (flat)
+                    {
+                        if (y == FLAT_GRASS_Y)
+                            element = Block::getElementId(Blocks::grass);
+                        else if (y < FLAT_GRASS_Y)
+                            element = Block::getElementId(Blocks::dirt);
+                    }
+                    else
+                    {
+                        if (y <= level->getSeaLevel() - 10)
+                            element = Block::getElementId(Blocks::stone);
+                        else if (y < level->getSeaLevel())
+                            element = Block::getElementId(Blocks::water);
+                    }
+                    elementIds[x << 11 | z << 7 | y] = element;
+                }
+
+        ChunkPrimer primer(false, arrayWithLength<unsigned short>(elementIds, CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT));
+        WaterLevelChunk* waterChunk = new WaterLevelChunk(level, &primer, 0, 0);
+        m_waterChunk = waterChunk;
+        delete[] elementIds;
+
+        for (int x = 0; x < CHUNK_WIDTH; ++x)
+            for (int y = 0; y < CHUNK_HEIGHT; ++y)
+            {
+                if (flat && y < FLAT_GRASS_Y)
+                    continue;
+                for (int z = 0; z < CHUNK_WIDTH; ++z)
+                {
+                    int brightness = 15;
+                    if (!flat && y < level->getSeaLevel() - 1)
+                        brightness = 2;
+                    waterChunk->setLevelChunkBrightness(LightLayer::SKY, x, y, z, brightness);
+                }
+            }
+    }
+    else
+    {
+        m_waterChunk = 0;
     }
     InitializeCriticalSectionAndSpinCount(&m_saveDataCriticalSection, 4000);
     m_initialized = true;
@@ -377,19 +436,18 @@ void ClientChunkCache::drop(int x, int z, bool force)
     LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
-uint64_t ClientChunkCache::dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force)
+void ClientChunkCache::dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force)
 {
     for (int x = -m_chunkRadius; x < m_chunkRadius; ++x)
         for (int z = -m_chunkRadius; z < m_chunkRadius; ++z)
             if (x < minX || x > maxX || z < minZ || z > maxZ)
                 drop(x, z, force);
-    return 0;
 }
 
 LevelChunk* ClientChunkCache::create(int x, int z)
 {
     if (!m_dimension->containsChunk(x, z))
-        return m_fallbackChunk ? m_fallbackChunk : m_emptyChunk;
+        return m_waterChunk ? m_waterChunk : m_emptyChunk;
     const int diameter = mLevelSize;
     const int localX = x + m_chunkRadius;
     const int localZ = z + m_chunkRadius;
@@ -404,7 +462,7 @@ LevelChunk* ClientChunkCache::create(int x, int z)
         EnterCriticalSection(&m_saveDataCriticalSection);
         if (CGameNetworkManager::sInstance.IsHost())
         {
-            if (sHaltRequested)
+            if (MinecraftServer::s_haltRequested)
             {
                 LeaveCriticalSection(&m_saveDataCriticalSection);
                 return 0;
@@ -457,7 +515,7 @@ LevelChunk* ClientChunkCache::getChunk(int x, int z)
     LevelChunk* chunk = getChunkIfLoaded(x, z);
     if (chunk)
         return chunk;
-    return m_fallbackChunk ? m_fallbackChunk : m_emptyChunk;
+    return m_waterChunk ? m_waterChunk : m_emptyChunk;
 }
 
 LevelChunk* ClientChunkCache::getChunkAt(const BlockPos& pos)
@@ -582,9 +640,9 @@ std::wstring ClientChunkCache::gatherStats()
     return std::wstring(L"MultiplayerChunkCache_") + std::wstring();
 }
 
-std::vector<Biome::MobSpawnerData*> ClientChunkCache::getMobsAt(MobCategory*, const BlockPos&)
+std::vector<Biome::MobSpawnerData*>* ClientChunkCache::getMobsAt(MobCategory*, const BlockPos&)
 {
-    return std::vector<Biome::MobSpawnerData*>();
+    return NULL;
 }
 
 BlockPos* ClientChunkCache::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)

@@ -26,10 +26,10 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/GlideRingGenerator.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include <algorithm>
 
-void PIXSetMarkerDeprecated(float colour, const char* name, ...);
 extern LevelRenderer* gLevelRenderer;
 
 static LevelRenderer* chunkLevelRenderer()

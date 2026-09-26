@@ -186,7 +186,7 @@ public:
     virtual bool isUnloaded();
     virtual void markUnsaved();
     virtual void getEntities(boost::shared_ptr<Entity> except, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate);
-    virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate, bool exact);
+    virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers);
     virtual int countEntities();
     virtual bool shouldSave(bool force);
     virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height, int depth, int flags, bool extra);

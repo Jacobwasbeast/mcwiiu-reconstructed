@@ -10,5 +10,5 @@ ActiveChunkAreaRuleDefinition::~ActiveChunkAreaRuleDefinition()
 
 ConsoleGameRules::EGameRuleType ActiveChunkAreaRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(18);
+    return ConsoleGameRules::eGameRuleType_ActiveChunkArea;
 }

@@ -19,11 +19,9 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
+#include "game/core/MemSect.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
-void MemSect(int section);
-void Sleep(unsigned int milliseconds);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 void SetThreadName(unsigned int threadId, const char* name);
 
 static OSFastMutex sSaveMutex;
@@ -133,10 +131,10 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
     if (tag == NULL)
         return NULL;
     LevelChunk* result = NULL;
-    if (tag->contains(L"Level", 10))
+    if (tag->contains(L"Level", Tag::TAG_COMPOUND))
     {
         CompoundTag* levelTag = tag->getCompound(L"Level");
-        if (levelTag != NULL && levelTag->contains(L"Blocks", 7))
+        if (levelTag != NULL && levelTag->contains(L"Blocks", Tag::TAG_BYTE_ARRAY))
         {
             MemSect(9);
             result = OldChunkStorage::load(level, levelTag, chunk);

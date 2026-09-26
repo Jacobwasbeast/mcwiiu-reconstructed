@@ -56,7 +56,7 @@ public:
     virtual bool reallyHasChunk(int x, int z);
     void unqueueForReLoad(int x, int z);
     void drop(int x, int z, bool force);
-    uint64_t dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force);
+    void dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force);
     virtual LevelChunk* create(int x, int z);
     virtual LevelChunk* getChunk(int x, int z);
     virtual LevelChunk* getChunkAt(const BlockPos& pos);
@@ -64,7 +64,7 @@ public:
     virtual void tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
-    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
+    virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature,
                                              const BlockPos& pos, bool takeBlock);
     virtual int getLoadedChunks();
@@ -77,7 +77,7 @@ public:
 
 private:
     LevelChunk* m_emptyChunk;
-    LevelChunk* m_fallbackChunk;
+    LevelChunk* m_waterChunk;
     ChunkStorage* m_storage;
     Level* m_level;
     ChunkPos m_spawnPos;
