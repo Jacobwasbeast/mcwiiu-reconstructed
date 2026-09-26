@@ -1,19 +1,27 @@
 #include "game/world/biome/OceanColdBiome.hpp"
+#include "game/core/EntityType.hpp"
 
-OceanColdBiome::OceanColdBiome(EBiomeIDs id, bool deep, BiomeProperties* properties)
-    : Biome(id, eBiomeType_Ocean, properties)
+#include "game/world/biome/BiomeDecorator.hpp"
+
+OceanColdBiome::OceanColdBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties)
+    : Biome(biomeId, eBiomeType_Ocean, properties),
+      mDeep(deep)
 {
     clearDefaultFriendlies();
-    mCreatures.push_back(new MobSpawnerData(26, 0xd502004ULL, 3, 5));
-    mCreatures.push_back(new MobSpawnerData(75, 0xd502002ULL, 4, 7));
-    mWaterCreatures.push_back(new MobSpawnerData(10, 0xd502001ULL, 2, 4));
-    mCreatures.push_back(new MobSpawnerData(7, 0xd602001ULL, 3, 5));
-    mSquid.push_back(new MobSpawnerData(10, 0x5d550044ULL, 2, 4));
-    mRunDepth = 0;
-    mSnowAccumulation = 1.0f;
-    mSnowMeltRate = 0.1f;
-    mMinSnowAccumulation = deep ? 0.5f : 0.1f;
-    mMaxSnowAccumulation = deep ? 0.95f : 0.9f;
+
+    mWaterCreatures.push_back(new MobSpawnerData(26, EntityType::SALMON, 3, 5));
+    mWaterCreatures.push_back(new MobSpawnerData(75, EntityType::FISH, 4, 7));
+    mSquid.push_back(new MobSpawnerData(10, EntityType::SQUID, 2, 4));
+    mWaterCreatures.push_back(new MobSpawnerData(7, EntityType::DOLPHIN, 3, 5));
+    mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
+
+    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
+    mOceanRuinConfig.smallProbability = mDeep ? 0.5F : 0.3F;
+    mOceanRuinConfig.clusterProbability = mDeep ? 0.95F : 0.9F;
+    mOceanRuinConfig.enabled = true;
+
+    mDecorator->kelpPerChunk = 20;
+    mDecorator->seagrassPerChunk = 12;
 }
 
 OceanColdBiome::~OceanColdBiome()

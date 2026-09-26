@@ -5,7 +5,7 @@
 #include "game/world/generation/BirchFeature.hpp"
 
 MutatedForestBiome::MutatedForestBiome(EBiomeIDs biomeId, BiomeProperties* properties)
-    : ForestBiome(biomeId, eType_Roofed, properties)
+    : ForestBiome(biomeId, eType_Birch, properties)
 {
 }
 

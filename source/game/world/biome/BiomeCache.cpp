@@ -3,8 +3,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/BiomeSource.hpp"
-
-void MemSect(int section);
+#include "game/core/MemSect.hpp"
 
 BiomeCache::BiomeCache(BiomeSource* biomeSource)
     : mBiomeSource(biomeSource), mLastUpdate(0)

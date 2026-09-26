@@ -4,9 +4,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/biome/Biome.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 BiomeInitLayer::BiomeInitLayer(long long seed,
                                boost::shared_ptr<Layer> parent,

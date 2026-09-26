@@ -2,11 +2,10 @@
 
 #include <algorithm>
 
+#include "game/core/MemSect.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-void MemSect(int section);
 
 FixedBiomeSource::FixedBiomeSource(Biome* biome, float rainfall)
     : BiomeSource(),

@@ -1,4 +1,5 @@
 #include "game/world/biome/ExtremeHillsBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -13,22 +14,20 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/OreFeature.hpp"
 #include "game/world/generation/SpruceFeature.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 ExtremeHillsBiome::ExtremeHillsBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_ExtremeHills, properties),
-      mType(type)
+    : Biome(biomeId, eBiomeType_ExtremeHills, properties)
 {
     if (type == eType_ExtraTrees)
     {
         mDecorator->treesPerChunk = 3;
     }
 
-    mCreatures.push_back(new MobSpawnerData(5, 0x2D698003ULL, 4, 6));
+    mCreatures.push_back(new MobSpawnerData(5, EntityType::LLAMA, 4, 6));
+    mType = type;
 
-    TypedBoxed<MonsterEggBlock::Variant*> variant(MonsterEggBlock::Variant::byData(0));
+    TypedBoxed<MonsterEggBlock::Variant*> variant(MonsterEggBlock::Variant::STONE);
     mMonsterEggFeature = new OreFeature(
         Blocks::monster_egg->defaultBlockState()->setBoxedValue(MonsterEggBlock::VARIANT, &variant),
         9);
@@ -62,7 +61,7 @@ void ExtremeHillsBiome::decorate(Level* level, Random& random, const BlockPos& p
         BlockPos orePos = pos.offset(x, y, z);
         if (level->getBlockState(orePos)->getBlock() == Blocks::stone)
         {
-            level->setBlock(orePos, Blocks::emerald_ore->defaultBlockState(), 2, false);
+            level->setBlock(orePos, Blocks::emerald_ore->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
     }
 

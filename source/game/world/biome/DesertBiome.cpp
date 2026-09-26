@@ -1,4 +1,5 @@
 #include "game/world/biome/DesertBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
@@ -15,10 +16,9 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Desert, properties)
 {
     mCreatures.clear();
-    mChickens.clear();
+    mCreatures.push_back(new MobSpawnerData(4, EntityType::RABBIT, 2, 3));
     mWolves.clear();
-
-    mCreatures.push_back(new MobSpawnerData(4, 0x2D680005ULL, 2, 3));
+    mChickens.clear();
 
     mTopBlock.blockId = 12;
     mTopBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
@@ -34,16 +34,16 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
          iterator != mMonsters.end(); ++iterator)
     {
         MobSpawnerData* data = *iterator;
-        if (data->mEntityBaseClass == 0x5D550040ULL || data->mEntityBaseClass == 0x5D550042ULL)
+        if (data->mEntityBaseClass == EntityType::ZOMBIE || data->mEntityBaseClass == EntityType::ZOMBIE_VILLAGER)
         {
             iterator = mMonsters.erase(iterator);
             delete data;
         }
     }
 
-    mMonsters.push_back(new MobSpawnerData(19, 0x5D550040ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(1, 0x5D550042ULL, 1, 1));
-    mMonsters.push_back(new MobSpawnerData(80, 0x5D550043ULL, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(19, EntityType::ZOMBIE, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(1, EntityType::ZOMBIE_VILLAGER, 1, 1));
+    mMonsters.push_back(new MobSpawnerData(80, EntityType::HUSK, 4, 4));
 }
 
 DesertBiome::~DesertBiome()

@@ -13,9 +13,11 @@ class AbstractTreeFeature;
 class BiomeDecorator;
 class BlockPos;
 class ChunkPrimer;
+class DoublePlantFeature;
 class Feature;
 class Level;
 class MobCategory;
+class PerlinSimplexNoise;
 class Random;
 class Vec3;
 
@@ -216,6 +218,10 @@ public:
     };
 
     static const BlockPair STONE_BLOCK;
+
+    static PerlinSimplexNoise* TEMPERATURE_NOISE;
+    static PerlinSimplexNoise* BIOME_INFO_NOISE;
+    static DoublePlantFeature* DOUBLE_PLANT_FEATURE;
 
     static const BiomeHeight HEIGHT_DEFAULT;
     static const BiomeHeight HEIGHT_SHALLOW_WATERS;

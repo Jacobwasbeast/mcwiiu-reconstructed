@@ -1,4 +1,5 @@
 #include "game/world/biome/JungleBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/util/Random.hpp"
@@ -34,10 +35,10 @@ JungleBiome::JungleBiome(EBiomeIDs biomeId, bool isEdge, BiomeProperties* proper
 
     if (!isEdge)
     {
-        mMonsters.push_back(new MobSpawnerData(2, 0x2D6C0001ULL, 1, 1));
+        mMonsters.push_back(new MobSpawnerData(2, EntityType::OCELOT, 1, 1));
     }
-    mCreatures.push_back(new MobSpawnerData(40, 0x2D6C0003ULL, 1, 2));
-    mCreatures.push_back(new MobSpawnerData(10, 0x0D680004ULL, 4, 4));
+    mCreatures.push_back(new MobSpawnerData(40, EntityType::PARROT, 1, 2));
+    mCreatures.push_back(new MobSpawnerData(10, EntityType::CHICKEN, 4, 4));
 }
 
 JungleBiome::~JungleBiome()
@@ -54,13 +55,13 @@ void JungleBiome::staticCtor()
     TypedBoxed<bool> jungleLeafDecayable(false);
     sJungleLeafState = Blocks::leaves->defaultBlockState()
                            ->setBoxedValue(OldLeafBlock_VARIANT, &jungleLeafVariant)
-                           ->setBoxedValue(OldLeafBlock_DECAYABLE, &jungleLeafDecayable);
+                           ->setBoxedValue(LeafBlock::DECAYABLE, &jungleLeafDecayable);
 
     TypedBoxed<PlanksBlock::Variant*> oakLeafVariant(PlanksBlock::Variant::OAK);
     TypedBoxed<bool> oakLeafDecayable(false);
     sOakLeafState = Blocks::leaves->defaultBlockState()
                         ->setBoxedValue(OldLeafBlock_VARIANT, &oakLeafVariant)
-                        ->setBoxedValue(OldLeafBlock_DECAYABLE, &oakLeafDecayable);
+                        ->setBoxedValue(LeafBlock::DECAYABLE, &oakLeafDecayable);
 }
 
 AbstractTreeFeature* JungleBiome::getTreeFeature(Random& random)
@@ -88,10 +89,10 @@ Feature* JungleBiome::getGrassFeature(Random& random)
 {
     if (random.nextInt(4) == 0)
     {
-        return new TallgrassFeature(gFern);
+        return new TallgrassFeature(TallGrassBlock::Variant::FERN);
     }
 
-    return new TallgrassFeature(gTallGrass);
+    return new TallgrassFeature(TallGrassBlock::Variant::GRASS);
 }
 
 void JungleBiome::decorate(Level* level, Random& random, const BlockPos& pos)

@@ -1,4 +1,5 @@
 #include "game/world/biome/MushroomIslandBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
@@ -26,7 +27,7 @@ MushroomIslandBiome::MushroomIslandBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mChickens.clear();
     mWolves.clear();
 
-    mMushroomCows.push_back(new MobSpawnerData(8, 0x2d6a0001ULL, 4, 8));
+    mMushroomCows.push_back(new MobSpawnerData(8, EntityType::MUSHROOM_COW, 4, 8));
 }
 
 MushroomIslandBiome::~MushroomIslandBiome()

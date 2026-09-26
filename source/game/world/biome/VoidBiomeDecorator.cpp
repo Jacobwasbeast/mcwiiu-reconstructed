@@ -32,7 +32,7 @@ void VoidBiomeDecorator::decorate(Level* level, Random* random, Biome* biome, co
                 const BlockState* state = (spawn.x == x && spawn.z == z)
                     ? Blocks::cobblestone->defaultBlockState()
                     : Blocks::stone->defaultBlockState();
-                level->setBlock(position, state, 2, false);
+                level->setBlock(position, state, Block::UPDATE_CLIENTS, false);
             }
         }
     }

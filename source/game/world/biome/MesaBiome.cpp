@@ -1,4 +1,5 @@
 #include "game/world/biome/MesaBiome.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/Minecraft.hpp"
@@ -17,10 +18,9 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/OreFeature.hpp"
+#include "game/world/generation/TreeFeature.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include <cmath>
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 static Biome::BlockPair sCoarseDirt(3, 1);
 static Biome::BlockPair sGrass(2, 0);
@@ -34,15 +34,17 @@ MesaBiome::MesaBiome(EBiomeIDs id, bool brycePillars, bool hasForest, BiomePrope
       mPillarNoise(NULL), mPillarRoofNoise(NULL), mNoise(NULL),
       mBrycePillars(brycePillars), mHasForest(hasForest)
 {
-    mTopBlock = BlockPair(12, 1);
-    mFillerBlock = BlockPair(172, 0);
+    mCreatures.clear();
+    mTopBlock = sRedSand;
+    mFillerBlock = sStainedClay;
     delete mDecorator;
     mDecorator = new MesaDecorator();
-    mDecorator->cactiPerChunk = 20;
-    mDecorator->sandPerChunk2 = 3;
-    mDecorator->clayPerChunk = 5;
-    mDecorator->mushroomsPerChunk = 0;
-    mDecorator->grassPerChunk = hasForest ? 5 : -999;
+    mCreatures.clear();
+    mDecorator->reedsPerChunk = 3;
+    mDecorator->deadBushPerChunk = 20;
+    mDecorator->cactiPerChunk = 5;
+    mDecorator->flowersPerChunk = 0;
+    mDecorator->treesPerChunk = hasForest ? 5 : -999;
 }
 
 MesaBiome::~MesaBiome()
@@ -72,7 +74,7 @@ void MesaBiome::staticCtor()
 
 AbstractTreeFeature* MesaBiome::getTreeFeature(Random& random)
 {
-    return Biome::getTreeFeature(random);
+    return new TreeFeature(false);
 }
 
 unsigned int MesaBiome::getFoliageColor(const BlockPos& pos)
@@ -87,7 +89,7 @@ unsigned int MesaBiome::getGrassColor(const BlockPos& pos)
 
 Biome::BlockPair MesaBiome::getBand(int x, int y, int z)
 {
-    int offset = (int)Math::round(mNoise->getValue((double)x / 512.0, (double)x / 512.0) * 2.0);
+    int offset = (int)Math::round(mNoise->getValue(x * 0.001953125, x * 0.001953125) * 2.0);
     return mClayBands[(y + offset + 64) % 64];
 }
 
@@ -183,7 +185,7 @@ void MesaBiome::generateBands(long long seed)
 
 void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
 {
-    PIXBeginNamedEvent(4.5F, "MesaBiome::buildSurfaceAtDefault");
+    PIXBeginNamedEvent(0.0F, "MesaBiome::buildSurfaceAtDefault");
 
     if (mClayBands == NULL || mSeed != level->getSeed())
     {
@@ -224,7 +226,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
     int localX = x & 15;
     int localZ = z & 15;
     BlockPair filler = mFillerBlock;
-    int depth = (int)(noise / 3.0 + 3.0 + random.nextDouble() * 0.25);
+    int depth = (int)(random.nextDouble() * 0.25 + noise / 3.0 + 3.0);
     bool coarse = std::cos(noise / 3.0 * 3.1415927f) > 0.0;
     int runDepth = -1;
     bool orangeRun = false;
@@ -241,7 +243,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
 
         if (y <= random.nextInt(2) + 1)
         {
-            primer->setBlockAndData(index, 7, 0);
+            primer->setBlockAndData(index, BlockId::BEDROCK, 0);
         }
         else if (surfaceBlocks < 15 || mBrycePillars)
         {
@@ -300,7 +302,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
                     {
                         primer->setBlockAndData(index, filler.blockId, filler.blockData);
 
-                        if (filler.blockId == 159)
+                        if (filler.blockId == BlockId::STAINED_HARDENED_CLAY)
                         {
                             primer->setBlockAndData(index, sOrange.blockId, sOrange.blockData);
                         }
@@ -345,5 +347,5 @@ MesaBiome::MesaDecorator::~MesaDecorator()
 void MesaBiome::MesaDecorator::decorateOres(Level* level, Random* random)
 {
     BiomeDecorator::decorateOres(level, random);
-    decorateDepthSpan(level, random, 20, dirtGen, 32, 80);
+    decorateDepthSpan(level, random, 20, goldGen, 32, 80);
 }

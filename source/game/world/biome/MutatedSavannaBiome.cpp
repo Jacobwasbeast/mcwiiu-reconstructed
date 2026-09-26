@@ -49,5 +49,5 @@ void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrim
 
 void MutatedSavannaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
-    Biome::decorate(level, random, pos);
+    mDecorator->decorate(level, &random, this, pos);
 }

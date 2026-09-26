@@ -2,18 +2,19 @@
 
 #include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 
 static const int STONE_BLOCK_ID = 1;
 
 StoneBeachBiome::StoneBeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_StoneBeach, properties)
 {
-    Block* stone = Block::byId(STONE_BLOCK_ID);
+    mCreatures.clear();
 
     mTopBlock.blockId = STONE_BLOCK_ID;
-    mTopBlock.blockData = stone->convertBlockStateToLegacyData(stone->defaultBlockState());
+    mTopBlock.blockData = Blocks::stone->convertBlockStateToLegacyData(Blocks::stone->defaultBlockState());
     mFillerBlock.blockId = STONE_BLOCK_ID;
-    mFillerBlock.blockData = stone->convertBlockStateToLegacyData(stone->defaultBlockState());
+    mFillerBlock.blockData = Blocks::stone->convertBlockStateToLegacyData(Blocks::stone->defaultBlockState());
 
     mDecorator->treesPerChunk = -999;
     mDecorator->deadBushPerChunk = 0;

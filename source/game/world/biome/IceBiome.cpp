@@ -1,4 +1,5 @@
 #include "game/world/biome/IceBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -24,13 +25,13 @@ IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* proper
     }
 
     mCreatures.clear();
-    mCreatures.push_back(new MobSpawnerData(10, 0x2D680005ULL, 2, 3));
-    mCreatures.push_back(new MobSpawnerData(1, 0x2D680006ULL, 1, 2));
+    mCreatures.push_back(new MobSpawnerData(10, EntityType::RABBIT, 2, 3));
+    mCreatures.push_back(new MobSpawnerData(1, EntityType::POLAR_BEAR, 1, 2));
 
     std::vector<MobSpawnerData*>::iterator monster = mMonsters.begin();
     while (monster != mMonsters.end())
     {
-        if ((*monster)->mEntityBaseClass == 0x5D540441ULL)
+        if ((*monster)->mEntityBaseClass == EntityType::SKELETON)
         {
             monster = mMonsters.erase(monster);
         }
@@ -40,8 +41,8 @@ IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* proper
         }
     }
 
-    mMonsters.push_back(new MobSpawnerData(20, 0x5D540441ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(80, 0x5D540443ULL, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(20, EntityType::SKELETON, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(80, EntityType::STRAY, 4, 4));
 }
 
 IceBiome::~IceBiome()

@@ -1,4 +1,5 @@
 #include "game/world/biome/OceanWarmBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -14,9 +15,6 @@
 
 namespace
 {
-const unsigned long long ENTITY_TYPE_PUFFERFISH = 0x0D502003ULL;
-const unsigned long long ENTITY_TYPE_TROPICAL_FISH = 0x0D502005ULL;
-const unsigned long long ENTITY_TYPE_SQUID = 0x0D502001ULL;
 }
 
 OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties)
@@ -27,14 +25,14 @@ OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
 
     if (!mDeep)
     {
-        mWaterCreatures.push_back(new MobSpawnerData(25, ENTITY_TYPE_PUFFERFISH, 3, 5));
-        mWaterCreatures.push_back(new MobSpawnerData(75, ENTITY_TYPE_TROPICAL_FISH, 6, 10));
-        mWaterCreatures.push_back(new MobSpawnerData(25, ENTITY_TYPE_TROPICAL_FISH, 3, 5));
+        mWaterCreatures.push_back(new MobSpawnerData(25, EntityType::PUFFERFISH, 3, 5));
+        mWaterCreatures.push_back(new MobSpawnerData(75, EntityType::TROPICAL_FISH, 6, 10));
+        mWaterCreatures.push_back(new MobSpawnerData(25, EntityType::TROPICAL_FISH, 3, 5));
     }
 
-    mSquid.push_back(new MobSpawnerData(10, ENTITY_TYPE_SQUID, 2, 4));
-    mWaterCreatures.push_back(new MobSpawnerData(7, ENTITY_TYPE_DOLPHIN, 3, 5));
-    mMonsters.push_back(new MobSpawnerData(10, ENTITY_TYPE_DROWNED, 2, 4));
+    mSquid.push_back(new MobSpawnerData(10, EntityType::SQUID, 2, 4));
+    mWaterCreatures.push_back(new MobSpawnerData(7, EntityType::DOLPHIN, 3, 5));
+    mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
 
     mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Warm;
     mOceanRuinConfig.smallProbability = 0.3F;

@@ -11,5 +11,4 @@ public:
 
     virtual EBiomeBaseClass getBaseClass();
 };
-
 #endif

@@ -1,4 +1,5 @@
 #include "game/world/biome/HellBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
@@ -15,11 +16,11 @@ HellBiome::HellBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mWolves.clear();
     mAmbientCreatures.clear();
 
-    mMonsters.push_back(new MobSpawnerData(100, 0x5D0000C1ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(200, 0x5D550041ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(1, 0x5D540043ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(1, 0x5D540442ULL, 4, 4));
-    mSlimes.push_back(new MobSpawnerData(2, 0x5D108001ULL, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(100, EntityType::GHAST, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(200, EntityType::PIG_ZOMBIE, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(1, EntityType::ENDER_MAN, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(1, EntityType::WITHER_SKELETON, 4, 4));
+    mSlimes.push_back(new MobSpawnerData(2, EntityType::MAGMA_CUBE, 4, 4));
 
     delete mDecorator;
     mDecorator = new HellBiomeDecorator();

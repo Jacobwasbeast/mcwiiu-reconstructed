@@ -1,4 +1,5 @@
 #include "game/world/biome/TaigaBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/util/Random.hpp"
@@ -21,14 +22,12 @@
 #include "game/world/generation/SpruceFeature.hpp"
 #include "game/world/generation/TallgrassFeature.hpp"
 
-extern DoublePlantFeature* gDoublePlantFeature;
-
 TaigaBiome::TaigaBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Taiga, properties),
       mType(type)
 {
-    mWolves.push_back(new MobSpawnerData(8, 0x0D6C0002ULL, 4, 4));
-    mCreatures.push_back(new MobSpawnerData(4, 0x2D680005ULL, 2, 3));
+    mWolves.push_back(new MobSpawnerData(8, EntityType::WOLF, 4, 4));
+    mCreatures.push_back(new MobSpawnerData(4, EntityType::RABBIT, 2, 3));
 
     mDecorator->treesPerChunk = 10;
 
@@ -73,10 +72,10 @@ Feature* TaigaBiome::getGrassFeature(Random& random)
 {
     if (random.nextInt(5) > 0)
     {
-        return new TallgrassFeature(gFern);
+        return new TallgrassFeature(TallGrassBlock::Variant::FERN);
     }
 
-    return new TallgrassFeature(gTallGrass);
+    return new TallgrassFeature(TallGrassBlock::Variant::GRASS);
 }
 
 void TaigaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
@@ -94,14 +93,14 @@ void TaigaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
         }
     }
 
-    gDoublePlantFeature->setNextPlantType(DoublePlantBlock::VARIANTS[3]);
+    DOUBLE_PLANT_FEATURE->setNextPlantType(gDoublePlantFern);
 
     for (int i = 0; i < 7; ++i)
     {
         int x = random.nextInt(16) + 8;
         int z = random.nextInt(16) + 8;
         int y = random.nextInt(level->getHeightmapPos(pos.offset(x, 0, z)).y + 32);
-        gDoublePlantFeature->place(level, random, pos.offset(x, y, z));
+        DOUBLE_PLANT_FEATURE->place(level, random, pos.offset(x, y, z));
     }
 
     Biome::decorate(level, random, pos);

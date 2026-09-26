@@ -6,7 +6,10 @@
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/IntCache.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/System.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/client/render/ProgressRenderer.hpp"
@@ -17,11 +20,7 @@
 #include "game/world/biome/BiomeCache.hpp"
 #include "game/world/biome/FjFeatureBiomeRequirements.hpp"
 #include "game/world/generation/Layer.hpp"
-
-unsigned int GetTickCount();
-
-template <typename T>
-T _fromString(const std::wstring& text);
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 BiomeSource::BiomeSource()
 {
@@ -58,13 +57,13 @@ void BiomeSource::_init()
 
     mBiomeCache = new BiomeCache(this);
 
-    mPossibleBiomes.push_back(Biome::FOREST);
-    mPossibleBiomes.push_back(Biome::PLAINS);
-    mPossibleBiomes.push_back(Biome::TAIGA);
-    mPossibleBiomes.push_back(Biome::TAIGA_HILLS);
-    mPossibleBiomes.push_back(Biome::FOREST_HILLS);
-    mPossibleBiomes.push_back(Biome::JUNGLE);
-    mPossibleBiomes.push_back(Biome::JUNGLE_HILLS);
+    mPlayerSpawnBiomes.push_back(Biome::FOREST);
+    mPlayerSpawnBiomes.push_back(Biome::PLAINS);
+    mPlayerSpawnBiomes.push_back(Biome::TAIGA);
+    mPlayerSpawnBiomes.push_back(Biome::TAIGA_HILLS);
+    mPlayerSpawnBiomes.push_back(Biome::FOREST_HILLS);
+    mPlayerSpawnBiomes.push_back(Biome::JUNGLE);
+    mPlayerSpawnBiomes.push_back(Biome::JUNGLE_HILLS);
 }
 
 void BiomeSource::_init(long long seed,
@@ -349,18 +348,23 @@ float BiomeSource::scaleTemp(float temperature, int height) const
 
 void BiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const
 {
+    PIXBeginNamedEvent(0.0f, "Setup");
     IntCache::releaseAll();
 
     int count = width * height;
     biomes.resize(count);
+    PIXEndNamedEvent();
 
+    PIXBeginNamedEvent(0.0f, "Getting area");
     arrayWithLength<int> area = mRawBiomeLayer->getArea(x, z, width, height);
+    PIXEndNamedEvent();
 
+    PIXBeginNamedEvent(0.0f, "Copying values");
     for (int i = 0; i < count; i++)
     {
         biomes.data[i] = Biome::getBiome(area.data[i], Biome::DEFAULT);
     }
-
+    PIXEndNamedEvent();
 }
 
 void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, int z, int width, int height) const
@@ -377,27 +381,34 @@ void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, 
 
 void BiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height, bool useCache) const
 {
+    PIXBeginNamedEvent(0.0f, "Setup");
     IntCache::releaseAll();
 
     int count = width * height;
     biomes.resize(count);
+    PIXEndNamedEvent();
 
     if (useCache && width == 16 && height == 16 && ((x | z) & 15) == 0)
     {
+        PIXBeginNamedEvent(0.0f, "Copying cache");
         arrayWithLength<Biome*> cached = mBiomeCache->getBiomeBlockAt(x, z);
         System::arraycopy(cached, 0, &biomes, 0, 256);
         delete cached.data;
+        PIXEndNamedEvent();
 
         return;
     }
 
+    PIXBeginNamedEvent(0.0f, "Getting area");
     arrayWithLength<int> area = mBiomeLayer->getArea(x, z, width, height);
+    PIXEndNamedEvent();
 
+    PIXBeginNamedEvent(0.0f, "Copying values");
     for (int i = 0; i < count; i++)
     {
         biomes.data[i] = Biome::getBiome(area.data[i], Biome::DEFAULT);
     }
-
+    PIXEndNamedEvent();
 }
 
 unsigned char* BiomeSource::getBiomeIndexBlock(int x, int z, int width, int height) const
@@ -428,19 +439,24 @@ void BiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndice
 
     if (useCache && width == 16 && height == 16 && ((x | z) & 15) == 0)
     {
+        PIXBeginNamedEvent(0.0f, "Copying cached block");
         arrayWithLength<unsigned char> cached = mBiomeCache->getBiomeIndexBlockAt(x, z);
         System::arraycopy(cached, 0, &biomeIndices, 0, 256);
+        PIXEndNamedEvent();
 
         return;
     }
 
+    PIXBeginNamedEvent(0.0f, "Getting area");
     arrayWithLength<int> area = mBiomeLayer->getArea(x, z, width, height);
+    PIXEndNamedEvent();
 
+    PIXBeginNamedEvent(0.0f, "Copying values");
     for (int i = 0; i < count; i++)
     {
         biomeIndices.data[i] = (unsigned char)area.data[i];
     }
-
+    PIXEndNamedEvent();
 }
 
 bool BiomeSource::containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes)
@@ -476,6 +492,7 @@ BlockPos* BiomeSource::findBiome(int x, int z, int radius, std::vector<Biome*> b
     unsigned int width = (unsigned int)((((x + radius) >> 2) - minX) + 1);
     unsigned int height = (unsigned int)((((z + radius) >> 2) - minZ) + 1);
 
+    MemSect(50);
     arrayWithLength<int> area = mRawBiomeLayer->getArea(minX, minZ, (int)width, (int)height);
 
     BlockPos* found = NULL;
@@ -496,6 +513,8 @@ BlockPos* BiomeSource::findBiome(int x, int z, int radius, std::vector<Biome*> b
             foundCount++;
         }
     }
+
+    MemSect(0);
 
     return found;
 }
@@ -912,25 +931,22 @@ void BiomeSource::LayerOverrideSettings::RegenerateLeft(arrayWithLength<unsigned
 
     mCentreXChunk -= columns;
 
-    if (mImageWidth > 0)
+    for (int z = 0; z < mImageWidth; z++)
     {
+        int destination = getBiomeIndex(shiftCount, z);
+        int source = destination - shiftCount;
+
+        EnterCriticalSection(&mBiomesCriticalSection);
+
+        memmove(mBiomes.data + destination, mBiomes.data + source, keptCount * sizeof(Biome*));
+        memset(mBiomes.data + source, 0, shiftCount * sizeof(Biome*));
+
+        LeaveCriticalSection(&mBiomesCriticalSection);
+
         mLastGeneratedSection = -1;
 
-        for (int z = 0; z < mImageWidth; z++)
-        {
-            int destination = getBiomeIndex(shiftCount, z);
-            int source = destination - shiftCount;
-
-            EnterCriticalSection(&mBiomesCriticalSection);
-
-            memmove(mBiomes.data + destination, mBiomes.data + source, keptCount * sizeof(Biome*));
-            memset(mBiomes.data + source, 0, shiftCount * sizeof(Biome*));
-
-            LeaveCriticalSection(&mBiomesCriticalSection);
-
-            memmove(pixels.data + destination * 4, pixels.data + source * 4, keptCount * 4);
-            memset(pixels.data + source * 4, 0, shiftCount * 4);
-        }
+        memmove(pixels.data + destination * 4, pixels.data + source * 4, keptCount * 4);
+        memset(pixels.data + source * 4, 0, shiftCount * 4);
     }
 
     mLastGeneratedSection = -1;
@@ -954,26 +970,23 @@ void BiomeSource::LayerOverrideSettings::RegenerateRight(arrayWithLength<unsigne
 
     mCentreXChunk += columns;
 
-    if (mImageWidth > 0)
+    for (int z = 0; z < mImageWidth; z++)
     {
+        int destination = z * mImageWidth;
+        int source = destination + shiftCount;
+        int cleared = destination + keptCount;
+
+        EnterCriticalSection(&mBiomesCriticalSection);
+
+        memmove(mBiomes.data + destination, mBiomes.data + source, keptCount * sizeof(Biome*));
+        memset(mBiomes.data + cleared, 0, shiftCount * sizeof(Biome*));
+
+        LeaveCriticalSection(&mBiomesCriticalSection);
+
         mLastGeneratedSection = -1;
 
-        for (int z = 0; z < mImageWidth; z++)
-        {
-            int destination = z * mImageWidth;
-            int source = destination + shiftCount;
-            int cleared = destination + keptCount;
-
-            EnterCriticalSection(&mBiomesCriticalSection);
-
-            memmove(mBiomes.data + destination, mBiomes.data + source, keptCount * sizeof(Biome*));
-            memset(mBiomes.data + cleared, 0, shiftCount * sizeof(Biome*));
-
-            LeaveCriticalSection(&mBiomesCriticalSection);
-
-            memmove(pixels.data + destination * 4, pixels.data + source * 4, keptCount * 4);
-            memset(pixels.data + cleared * 4, 0, shiftCount * 4);
-        }
+        memmove(pixels.data + destination * 4, pixels.data + source * 4, keptCount * 4);
+        memset(pixels.data + cleared * 4, 0, shiftCount * 4);
     }
 
     mLastGeneratedSection = -1;

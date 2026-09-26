@@ -1,4 +1,7 @@
 #include "game/world/biome/Biome.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/FoliageColor.hpp"
 #include "game/core/GrassColor.hpp"
@@ -45,13 +48,12 @@
 #include "game/world/block/TallGrassBlock.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/BigTreeFeature.hpp"
+#include "game/world/generation/DoublePlantFeature.hpp"
 #include "game/world/generation/TallgrassFeature.hpp"
 #include "game/world/generation/TreeFeature.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include <boost/unordered_map.hpp>
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 typedef boost::unordered_map<std::wstring, Biome*> BiomeNameMap;
 
@@ -71,7 +73,9 @@ static const Biome::BlockPair WATER_BLOCK(9, 0);
 
 static Biome* sBiomes[MAX_BIOME_ID + 1];
 static BiomeNameMap sBiomesByName;
-static PerlinSimplexNoise* sTemperatureNoise = new PerlinSimplexNoise(new Random(1234LL), 1);
+PerlinSimplexNoise* Biome::TEMPERATURE_NOISE = new PerlinSimplexNoise(new Random(1234LL), 1);
+PerlinSimplexNoise* Biome::BIOME_INFO_NOISE = new PerlinSimplexNoise(new Random(2345LL), 1);
+DoublePlantFeature* Biome::DOUBLE_PLANT_FEATURE = new DoublePlantFeature();
 
 const Biome::BiomeHeight Biome::HEIGHT_DEFAULT(0.1F, 0.2F);
 const Biome::BiomeHeight Biome::HEIGHT_SHALLOW_WATERS(-0.5F, 0.0F);
@@ -235,6 +239,7 @@ Biome::MobSpawnerData::~MobSpawnerData()
 }
 
 Biome::Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties)
+    : mOceanRuinConfig()
 {
     id = biomeId;
 
@@ -278,27 +283,27 @@ Biome::Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties
 
     mDecorator = createDecorator();
 
-    mCreatures.push_back(new MobSpawnerData(12, ENTITY_TYPE_SHEEP, 4, 4));
-    mCreatures.push_back(new MobSpawnerData(10, 0x2D680003ULL, 4, 4));
-    mChickens.push_back(new MobSpawnerData(10, 0x0D680004ULL, 4, 4));
-    mCreatures.push_back(new MobSpawnerData(8, 0x2D6A0000ULL, 4, 4));
+    mCreatures.push_back(new MobSpawnerData(12, EntityType::SHEEP, 4, 4));
+    mCreatures.push_back(new MobSpawnerData(10, EntityType::PIG, 4, 4));
+    mChickens.push_back(new MobSpawnerData(10, EntityType::CHICKEN, 4, 4));
+    mCreatures.push_back(new MobSpawnerData(8, EntityType::COW, 4, 4));
 
-    mMonsters.push_back(new MobSpawnerData(100, 0x5D560040ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(95, ENTITY_TYPE_ZOMBIE, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(5, ENTITY_TYPE_ZOMBIE_VILLAGER, 1, 1));
-    mMonsters.push_back(new MobSpawnerData(100, 0x5D540441ULL, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(100, ENTITY_TYPE_PIG_ZOMBIE, 4, 4));
-    mMonsters.push_back(new MobSpawnerData(100, 0x5D540049ULL, 1, 1));
+    mMonsters.push_back(new MobSpawnerData(100, EntityType::SPIDER, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(95, EntityType::ZOMBIE, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(5, EntityType::ZOMBIE_VILLAGER, 1, 1));
+    mMonsters.push_back(new MobSpawnerData(100, EntityType::SKELETON, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(100, EntityType::CREEPER, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(100, EntityType::PHANTOM, 1, 1));
 
     if (biomeId != eBiomeIDs_Hell && biomeId != eBiomeIDs_TheEnd)
     {
-        mSlimes.push_back(new MobSpawnerData(100, 0x5D108000ULL, 4, 4));
+        mSlimes.push_back(new MobSpawnerData(100, EntityType::SLIME, 4, 4));
     }
 
-    mMonsters.push_back(new MobSpawnerData(10, 0x5D540043ULL, 1, 4));
-    mMonsters.push_back(new MobSpawnerData(5, 0x5D540046ULL, 1, 1));
+    mMonsters.push_back(new MobSpawnerData(10, EntityType::ENDER_MAN, 1, 4));
+    mMonsters.push_back(new MobSpawnerData(5, EntityType::WITCH, 1, 1));
 
-    mAmbientCreatures.push_back(new MobSpawnerData(10, 0x1D000101ULL, 8, 8));
+    mAmbientCreatures.push_back(new MobSpawnerData(10, EntityType::BAT, 8, 8));
 
     mNameId = -1;
 }
@@ -315,7 +320,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"ocean"))->setDepthAndScale(HEIGHT_OCEANS));
     OCEAN->setPreviewColor(eMinecraftColour_Preview_Ocean)
-        ->setNameAndDescription(-2131402551, -1269739217)
+        ->setNameAndDescription(IDS_BIOME_OCEAN, IDS_BIOME_DESC_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_Ocean, eMinecraftColour_Sky_Ocean);
 
     DEEP_OCEAN = new OceanBiome(
@@ -323,7 +328,7 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"deep_ocean"))->setDepthAndScale(HEIGHT_DEEP_OCEANS));
     DEEP_OCEAN->setPreviewColor(eMinecraftColour_Preview_DeepOcean)
-        ->setNameAndDescription(-2131402551, -1269739217)
+        ->setNameAndDescription(IDS_BIOME_OCEAN, IDS_BIOME_DESC_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_DeepOcean, eMinecraftColour_Sky_DeepOcean);
 
     WARM_OCEAN = new OceanWarmBiome(
@@ -332,7 +337,7 @@ void Biome::staticCtor()
         (new BiomeProperties(L"warm_ocean"))->setDepthAndScale(HEIGHT_OCEANS)->setTemperatureAndDownfall(0.5F, 0.5F));
     WARM_OCEAN->setRunDepthAndFloorBlock(3, 1, BlockPair(12, 0));
     WARM_OCEAN->setPreviewColor(eMinecraftColour_Preview_Ocean)
-        ->setNameAndDescription(108460679, -624110447)
+        ->setNameAndDescription(IDS_BIOME_WARM_OCEAN, IDS_BIOME_DESC_WARM_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_Ocean, eMinecraftColour_Sky_Ocean);
 
     DEEP_WARM_OCEAN = new OceanWarmBiome(
@@ -341,7 +346,7 @@ void Biome::staticCtor()
         (new BiomeProperties(L"deep_warm_ocean"))->setDepthAndScale(HEIGHT_DEEP_OCEANS)->setTemperatureAndDownfall(0.5F, 0.5F));
     DEEP_WARM_OCEAN->setRunDepthAndFloorBlock(3, 1, BlockPair(12, 0));
     DEEP_WARM_OCEAN->setPreviewColor(eMinecraftColour_Preview_DeepOcean)
-        ->setNameAndDescription(108460679, -624110447)
+        ->setNameAndDescription(IDS_BIOME_WARM_OCEAN, IDS_BIOME_DESC_WARM_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_DeepOcean, eMinecraftColour_Sky_DeepOcean);
 
     LUKEWARM_OCEAN = new OceanLukewarmBiome(
@@ -350,7 +355,7 @@ void Biome::staticCtor()
         (new BiomeProperties(L"lukewarm_ocean"))->setDepthAndScale(HEIGHT_OCEANS)->setTemperatureAndDownfall(0.5F, 0.5F));
     LUKEWARM_OCEAN->setRunDepthAndFloorBlock(3, 1, BlockPair(12, 0));
     LUKEWARM_OCEAN->setPreviewColor(eMinecraftColour_Preview_Ocean)
-        ->setNameAndDescription(1173995920, 1590607846)
+        ->setNameAndDescription(IDS_BIOME_LUKEWARM_OCEAN, 0x5ECEBFE6)
         ->setWaterSkyColor(eMinecraftColour_Water_Ocean, eMinecraftColour_Sky_Ocean);
 
     DEEP_LUKEWARM_OCEAN = new OceanLukewarmBiome(
@@ -359,7 +364,7 @@ void Biome::staticCtor()
         (new BiomeProperties(L"deep_lukewarm_ocean"))->setDepthAndScale(HEIGHT_DEEP_OCEANS)->setTemperatureAndDownfall(0.5F, 0.5F));
     DEEP_LUKEWARM_OCEAN->setRunDepthAndFloorBlock(7, 1, BlockPair(12, 0));
     DEEP_LUKEWARM_OCEAN->setPreviewColor(eMinecraftColour_Preview_DeepOcean)
-        ->setNameAndDescription(1173995920, 1590607846)
+        ->setNameAndDescription(IDS_BIOME_LUKEWARM_OCEAN, 0x5ECEBFE6)
         ->setWaterSkyColor(eMinecraftColour_Water_DeepOcean, eMinecraftColour_Sky_DeepOcean);
 
     COLD_OCEAN = new OceanColdBiome(
@@ -367,7 +372,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"cold_ocean"))->setDepthAndScale(HEIGHT_OCEANS)->setTemperatureAndDownfall(0.5F, 0.5F));
     COLD_OCEAN->setPreviewColor(eMinecraftColour_Preview_Ocean)
-        ->setNameAndDescription(-943651374, 1083276036)
+        ->setNameAndDescription(IDS_BIOME_COLD_OCEAN, IDS_BIOME_DESC_COLD_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_Ocean, eMinecraftColour_Sky_Ocean);
 
     DEEP_COLD_OCEAN = new OceanColdBiome(
@@ -375,7 +380,7 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"deep_cold_ocean"))->setDepthAndScale(HEIGHT_DEEP_OCEANS)->setTemperatureAndDownfall(0.5F, 0.5F));
     DEEP_COLD_OCEAN->setPreviewColor(eMinecraftColour_Preview_DeepOcean)
-        ->setNameAndDescription(-943651374, 1083276036)
+        ->setNameAndDescription(IDS_BIOME_COLD_OCEAN, IDS_BIOME_DESC_COLD_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_DeepOcean, eMinecraftColour_Sky_DeepOcean);
 
     FROZEN_OCEAN = new OceanFrozenBiome(
@@ -384,7 +389,7 @@ void Biome::staticCtor()
         (new BiomeProperties(L"frozen_ocean"))->setDepthAndScale(HEIGHT_OCEANS)->setTemperatureAndDownfall(0.0F, 0.5F));
     FROZEN_OCEAN->setSnowAccumulation(0.125F, 0.25F);
     FROZEN_OCEAN->setPreviewColor(eMinecraftColour_Preview_Ocean)
-        ->setNameAndDescription(-8129404, -2071947950)
+        ->setNameAndDescription(IDS_BIOME_FROZEN_OCEAN, 0x84809552)
         ->setWaterSkyColor(eMinecraftColour_Water_Ocean, eMinecraftColour_Sky_Ocean);
 
     DEEP_FROZEN_OCEAN = new OceanFrozenBiome(
@@ -393,7 +398,7 @@ void Biome::staticCtor()
         (new BiomeProperties(L"deep_frozen_ocean"))->setDepthAndScale(HEIGHT_DEEP_OCEANS)->setTemperatureAndDownfall(0.0F, 0.5F));
     DEEP_FROZEN_OCEAN->setSnowAccumulation(0.125F, 0.25F);
     DEEP_FROZEN_OCEAN->setPreviewColor(eMinecraftColour_Preview_DeepOcean)
-        ->setNameAndDescription(-8129404, -2071947950)
+        ->setNameAndDescription(IDS_BIOME_FROZEN_OCEAN, 0x84809552)
         ->setWaterSkyColor(eMinecraftColour_Water_DeepOcean, eMinecraftColour_Sky_DeepOcean);
 
     PLAINS = new PlainsBiome(
@@ -401,14 +406,14 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"plains"))->depth(0.125F)->scale(0.05F)->setTemperatureAndDownfall(0.8F, 0.4F));
     PLAINS->setPreviewColor(eMinecraftColour_Preview_Plains)
-        ->setNameAndDescription(1744032542, -510917432)
+        ->setNameAndDescription(IDS_BIOME_PLAINS, 0xE18C04C8)
         ->setWaterSkyColor(eMinecraftColour_Water_Plains, eMinecraftColour_Sky_Plains);
 
     DESERT = new DesertBiome(
         eBiomeIDs_Desert,
         (new BiomeProperties(L"desert"))->depth(0.125F)->scale(0.05F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     DESERT->setPreviewColor(eMinecraftColour_Preview_Desert)
-        ->setNameAndDescription(-636680762, -197082512)
+        ->setNameAndDescription(IDS_BIOME_DESERT, 0xF440C270)
         ->setWaterSkyColor(eMinecraftColour_Water_Desert, eMinecraftColour_Sky_Desert);
 
     EXTREME_HILLS = new ExtremeHillsBiome(
@@ -416,7 +421,7 @@ void Biome::staticCtor()
         ExtremeHillsBiome::eType_Normal,
         (new BiomeProperties(L"extreme_hills"))->depth(1.0F)->scale(0.5F)->setTemperatureAndDownfall(0.2F, 0.3F));
     EXTREME_HILLS->setPreviewColor(eMinecraftColour_Preview_ExtremeHills)
-        ->setNameAndDescription(280081252, -1256624926)
+        ->setNameAndDescription(IDS_BIOME_EXTREME_HILLS, 0xB5196CE2)
         ->setWaterSkyColor(eMinecraftColour_Water_ExtremeHills, eMinecraftColour_Sky_ExtremeHills);
 
     FOREST = new ForestBiome(
@@ -424,7 +429,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Normal,
         (new BiomeProperties(L"forest"))->setTemperatureAndDownfall(0.7F, 0.8F));
     FOREST->setPreviewColor(eMinecraftColour_Preview_Forest)
-        ->setNameAndDescription(-1645210162, -488092712)
+        ->setNameAndDescription(IDS_BIOME_FOREST, 0xE2E84BD8)
         ->setWaterSkyColor(eMinecraftColour_Water_Forest, eMinecraftColour_Sky_Forest);
 
     TAIGA = new TaigaBiome(
@@ -432,31 +437,31 @@ void Biome::staticCtor()
         TaigaBiome::eType_Normal,
         (new BiomeProperties(L"taiga"))->depth(0.2F)->scale(0.2F)->setTemperatureAndDownfall(0.25F, 0.8F));
     TAIGA->setPreviewColor(eMinecraftColour_Preview_Taiga)
-        ->setNameAndDescription(569313301, -1760909229)
+        ->setNameAndDescription(IDS_BIOME_TAIGA, 0x970AA853)
         ->setWaterSkyColor(eMinecraftColour_Water_Taiga, eMinecraftColour_Sky_Taiga);
 
     SWAMPLAND = new SwampBiome(
         eBiomeIDs_Swampland,
         (new BiomeProperties(L"swampland"))->depth(-0.2F)->scale(0.1F)->setTemperatureAndDownfall(0.8F, 0.9F)->waterColor(0xE0FFAE));
     SWAMPLAND->setPreviewColor(eMinecraftColour_Preview_Swampland)
-        ->setNameAndDescription(-1710075368, -590672802)
+        ->setNameAndDescription(IDS_BIOME_SWAMPLAND, 0xDCCB0C5E)
         ->setWaterSkyColor(eMinecraftColour_Water_Swampland, eMinecraftColour_Sky_Swampland);
 
     RIVER = new RiverBiome(eBiomeIDs_River, (new BiomeProperties(L"river"))->depth(-0.5F)->scale(0.0F));
     RIVER->setPreviewColor(eMinecraftColour_Preview_River)
-        ->setNameAndDescription(-1926868219, 738154083)
+        ->setNameAndDescription(IDS_BIOME_RIVER, 0x2BFF5663)
         ->setWaterSkyColor(eMinecraftColour_Water_River, eMinecraftColour_Sky_River);
 
     HELL = new HellBiome(
         eBiomeIDs_Hell,
         (new BiomeProperties(L"hell"))->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     HELL->setPreviewColor(eMinecraftColour_Preview_Hell)
-        ->setNameAndDescription(574734143, 920154537)
+        ->setNameAndDescription(IDS_BIOME_NETHER, 0x36D871A9)
         ->setWaterSkyColor(eMinecraftColour_Water_Hell, eMinecraftColour_Sky_Hell);
 
     THE_END = new TheEndBiome(eBiomeIDs_TheEnd, (new BiomeProperties(L"the_end"))->dry());
     THE_END->setPreviewColor(eMinecraftColour_Preview_Sky)
-        ->setNameAndDescription(-1862598056, -1820056354)
+        ->setNameAndDescription(IDS_BIOME_END, 0x938424DE)
         ->setWaterSkyColor(eMinecraftColour_Water_Sky, eMinecraftColour_Sky_Sky);
 
     LEGACY_FROZEN_OCEAN = new OceanBiome(
@@ -464,14 +469,14 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"legacy_frozen_ocean"))->depth(-1.0F)->scale(0.1F)->setTemperatureAndDownfall(0.0F, 0.5F)->snow());
     LEGACY_FROZEN_OCEAN->setPreviewColor(eMinecraftColour_Preview_FrozenOcean)
-        ->setNameAndDescription(-8129404, -1269739217)
+        ->setNameAndDescription(IDS_BIOME_FROZEN_OCEAN, IDS_BIOME_DESC_OCEAN)
         ->setWaterSkyColor(eMinecraftColour_Water_FrozenOcean, eMinecraftColour_Sky_FrozenOcean);
 
     FROZEN_RIVER = new RiverBiome(
         eBiomeIDs_FrozenRiver,
         (new BiomeProperties(L"frozen_river"))->depth(-0.5F)->scale(0.0F)->setTemperatureAndDownfall(0.0F, 0.5F)->snow());
     FROZEN_RIVER->setPreviewColor(eMinecraftColour_Preview_FrozenRiver)
-        ->setNameAndDescription(-202413368, 1949770174)
+        ->setNameAndDescription(IDS_BIOME_FROZEN_RIVER, 0x743721BE)
         ->setWaterSkyColor(eMinecraftColour_Water_FrozenRiver, eMinecraftColour_Sky_FrozenRiver);
 
     ICE_PLAINS = new IceBiome(
@@ -479,7 +484,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"ice_plains"))->depth(0.125F)->scale(0.05F)->setTemperatureAndDownfall(0.0F, 0.5F)->snow());
     ICE_PLAINS->setPreviewColor(eMinecraftColour_Preview_IcePlains)
-        ->setNameAndDescription(1476252691, -1016184235)
+        ->setNameAndDescription(IDS_BIOME_ICE_FLATS, 0xC36E4255)
         ->setWaterSkyColor(eMinecraftColour_Water_IcePlains, eMinecraftColour_Sky_IcePlains);
 
     ICE_MOUNTAINS = new IceBiome(
@@ -487,35 +492,35 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"ice_mountains"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(0.0F, 0.5F)->snow());
     ICE_MOUNTAINS->setPreviewColor(eMinecraftColour_Preview_IceMountains)
-        ->setNameAndDescription(-846465065, -1796298767)
+        ->setNameAndDescription(IDS_BIOME_ICE_MOUNTAINS, 0x94EEA7F1)
         ->setWaterSkyColor(eMinecraftColour_Water_IceMountains, eMinecraftColour_Sky_IceMountains);
 
     MUSHROOM_ISLAND = new MushroomIslandBiome(
         eBiomeIDs_MushroomIsland,
         (new BiomeProperties(L"mushroom_island"))->depth(0.2F)->scale(0.3F)->setTemperatureAndDownfall(0.9F, 1.0F));
     MUSHROOM_ISLAND->setPreviewColor(eMinecraftColour_Preview_MushroomIsland)
-        ->setNameAndDescription(-482281535, 1678998823)
+        ->setNameAndDescription(IDS_BIOME_MUSHROOM_ISLAND, 0x64137D27)
         ->setWaterSkyColor(eMinecraftColour_Water_MushroomIsland, eMinecraftColour_Sky_MushroomIsland);
 
     MUSHROOM_ISLAND_SHORE = new MushroomIslandBiome(
         eBiomeIDs_MushroomIslandShore,
         (new BiomeProperties(L"mushroom_island_shore"))->depth(0.0F)->scale(0.025F)->setTemperatureAndDownfall(0.9F, 1.0F));
     MUSHROOM_ISLAND_SHORE->setPreviewColor(eMinecraftColour_Preview_MushroomIslandShore)
-        ->setNameAndDescription(-482281535, 1678998823)
+        ->setNameAndDescription(IDS_BIOME_MUSHROOM_ISLAND, 0x64137D27)
         ->setWaterSkyColor(eMinecraftColour_Water_MushroomIslandShore, eMinecraftColour_Sky_MushroomIslandShore);
 
     BEACH = new BeachBiome(
         eBiomeIDs_Beach,
         (new BiomeProperties(L"beach"))->depth(0.0F)->scale(0.025F)->setTemperatureAndDownfall(0.8F, 0.4F));
     BEACH->setPreviewColor(eMinecraftColour_Preview_Beach)
-        ->setNameAndDescription(265384890, -2144336644)
+        ->setNameAndDescription(IDS_BIOME_BEACH, 0x803004FC)
         ->setWaterSkyColor(eMinecraftColour_Water_Beach, eMinecraftColour_Sky_Beach);
 
     DESERT_HILLS = new DesertBiome(
         eBiomeIDs_DesertHills,
         (new BiomeProperties(L"desert_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     DESERT_HILLS->setPreviewColor(eMinecraftColour_Preview_DesertHills)
-        ->setNameAndDescription(-636680762, -197082512)
+        ->setNameAndDescription(IDS_BIOME_DESERT, 0xF440C270)
         ->setWaterSkyColor(eMinecraftColour_Water_DesertHills, eMinecraftColour_Sky_DesertHills);
 
     FOREST_HILLS = new ForestBiome(
@@ -523,7 +528,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Normal,
         (new BiomeProperties(L"forest_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(0.7F, 0.8F));
     FOREST_HILLS->setPreviewColor(eMinecraftColour_Preview_ForestHills)
-        ->setNameAndDescription(-1645210162, -488092712)
+        ->setNameAndDescription(IDS_BIOME_FOREST, 0xE2E84BD8)
         ->setWaterSkyColor(eMinecraftColour_Water_ForestHills, eMinecraftColour_Sky_ForestHills);
 
     TAIGA_HILLS = new TaigaBiome(
@@ -531,7 +536,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_Normal,
         (new BiomeProperties(L"taiga_hills"))->setTemperatureAndDownfall(0.25F, 0.8F)->depth(0.45F)->scale(0.3F));
     TAIGA_HILLS->setPreviewColor(eMinecraftColour_Preview_TaigaHills)
-        ->setNameAndDescription(569313301, -1760909229)
+        ->setNameAndDescription(IDS_BIOME_TAIGA, 0x970AA853)
         ->setWaterSkyColor(eMinecraftColour_Water_TaigaHills, eMinecraftColour_Sky_TaigaHills);
 
     EXTREME_HILLS_EDGE = new ExtremeHillsBiome(
@@ -539,7 +544,7 @@ void Biome::staticCtor()
         ExtremeHillsBiome::eType_ExtraTrees,
         (new BiomeProperties(L"extreme_hills_edge"))->depth(0.8F)->scale(0.3F)->setTemperatureAndDownfall(0.2F, 0.3F));
     EXTREME_HILLS_EDGE->setPreviewColor(eMinecraftColour_Preview_ExtremeHillsEdge)
-        ->setNameAndDescription(280081252, -1256624926)
+        ->setNameAndDescription(IDS_BIOME_EXTREME_HILLS, 0xB5196CE2)
         ->setWaterSkyColor(eMinecraftColour_Water_ExtremeHillsEdge, eMinecraftColour_Sky_ExtremeHillsEdge);
 
     JUNGLE = new JungleBiome(
@@ -547,7 +552,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"jungle"))->setTemperatureAndDownfall(0.95F, 0.9F));
     JUNGLE->setPreviewColor(eMinecraftColour_Preview_Jungle)
-        ->setNameAndDescription(-12715120, -843018138)
+        ->setNameAndDescription(IDS_BIOME_JUNGLE, 0xCDC09066)
         ->setWaterSkyColor(eMinecraftColour_Water_Jungle, eMinecraftColour_Sky_Jungle);
 
     JUNGLE_HILLS = new JungleBiome(
@@ -555,7 +560,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"jungle_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(0.95F, 0.9F));
     JUNGLE_HILLS->setPreviewColor(eMinecraftColour_Preview_JungleHills)
-        ->setNameAndDescription(-12715120, -843018138)
+        ->setNameAndDescription(IDS_BIOME_JUNGLE, 0xCDC09066)
         ->setWaterSkyColor(eMinecraftColour_Water_JungleHills, eMinecraftColour_Sky_JungleHills);
 
     JUNGLE_EDGE = new JungleBiome(
@@ -563,21 +568,21 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"jungle_edge"))->setTemperatureAndDownfall(0.95F, 0.8F));
     JUNGLE_EDGE->setPreviewColor(eMinecraftColour_Preview_JungleEdge)
-        ->setNameAndDescription(-12715120, -843018138)
+        ->setNameAndDescription(IDS_BIOME_JUNGLE, 0xCDC09066)
         ->setWaterSkyColor(eMinecraftColour_Water_JungleEdge, eMinecraftColour_Sky_JungleEdge);
 
     STONE_BEACH = new StoneBeachBiome(
         eBiomeIDs_StoneBeach,
         (new BiomeProperties(L"stone_beach"))->depth(0.1F)->scale(0.8F)->setTemperatureAndDownfall(0.2F, 0.3F));
     STONE_BEACH->setPreviewColor(eMinecraftColour_Preview_StoneBeach)
-        ->setNameAndDescription(1410821918, 916928024)
+        ->setNameAndDescription(IDS_BIOME_STONE_BEACH, 0x36A73618)
         ->setWaterSkyColor(eMinecraftColour_Water_StoneBeach, eMinecraftColour_Sky_StoneBeach);
 
     COLD_BEACH = new BeachBiome(
         eBiomeIDs_ColdBeach,
         (new BiomeProperties(L"cold_beach"))->depth(0.0F)->scale(0.025F)->setTemperatureAndDownfall(0.05F, 0.3F)->snow());
     COLD_BEACH->setPreviewColor(eMinecraftColour_Preview_ColdBeach)
-        ->setNameAndDescription(-467694415, -16886649)
+        ->setNameAndDescription(IDS_BIOME_COLD_BEACH, 0xFEFE5487)
         ->setWaterSkyColor(eMinecraftColour_Water_ColdBeach, eMinecraftColour_Sky_ColdBeach);
 
     BIRCH_FOREST = new ForestBiome(
@@ -585,7 +590,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Birch,
         (new BiomeProperties(L"birch_forest"))->setTemperatureAndDownfall(0.6F, 0.6F));
     BIRCH_FOREST->setPreviewColor(eMinecraftColour_Preview_BirchForest)
-        ->setNameAndDescription(85819243, -1031442051)
+        ->setNameAndDescription(IDS_BIOME_BIRCH_FOREST, 0xC285717D)
         ->setWaterSkyColor(eMinecraftColour_Water_BirchForest, eMinecraftColour_Sky_BirchForest);
 
     BIRCH_FOREST_HILLS = new ForestBiome(
@@ -593,7 +598,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Birch,
         (new BiomeProperties(L"birch_forest_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(0.6F, 0.6F));
     BIRCH_FOREST_HILLS->setPreviewColor(eMinecraftColour_Preview_BirchForestHills)
-        ->setNameAndDescription(85819243, -1031442051)
+        ->setNameAndDescription(IDS_BIOME_BIRCH_FOREST, 0xC285717D)
         ->setWaterSkyColor(eMinecraftColour_Water_BirchForestHills, eMinecraftColour_Sky_BirchForestHills);
 
     ROOFED_FOREST = new ForestBiome(
@@ -601,7 +606,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Roofed,
         (new BiomeProperties(L"roofed_forest"))->setTemperatureAndDownfall(0.7F, 0.8F));
     ROOFED_FOREST->setPreviewColor(eMinecraftColour_Preview_RoofedForest)
-        ->setNameAndDescription(-831121740, -1511673614)
+        ->setNameAndDescription(IDS_BIOME_ROOFED_FOREST, 0xA5E5B0F2)
         ->setWaterSkyColor(eMinecraftColour_Water_RoofedForest, eMinecraftColour_Sky_RoofedForest);
 
     COLD_TAIGA = new TaigaBiome(
@@ -609,7 +614,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_Normal,
         (new BiomeProperties(L"cold_taiga"))->depth(0.2F)->scale(0.2F)->setTemperatureAndDownfall(-0.5F, 0.4F)->snow());
     COLD_TAIGA->setPreviewColor(eMinecraftColour_Preview_ColdTaiga)
-        ->setNameAndDescription(66004510, 1424066888)
+        ->setNameAndDescription(IDS_BIOME_COLD_TAIGA, 0x54E18948)
         ->setWaterSkyColor(eMinecraftColour_Water_ColdTaiga, eMinecraftColour_Sky_ColdTaiga);
 
     COLD_TAIGA_HILLS = new TaigaBiome(
@@ -617,7 +622,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_Normal,
         (new BiomeProperties(L"cold_taiga_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(-0.5F, 0.4F)->snow());
     COLD_TAIGA_HILLS->setPreviewColor(eMinecraftColour_Preview_ColdTaigaHills)
-        ->setNameAndDescription(66004510, 1424066888)
+        ->setNameAndDescription(IDS_BIOME_COLD_TAIGA, 0x54E18948)
         ->setWaterSkyColor(eMinecraftColour_Water_ColdTaigaHills, eMinecraftColour_Sky_ColdTaigaHills);
 
     MEGA_TAIGA = new TaigaBiome(
@@ -625,7 +630,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_MegaTaiga,
         (new BiomeProperties(L"mega_taiga"))->setTemperatureAndDownfall(0.3F, 0.8F)->depth(0.2F)->scale(0.2F));
     MEGA_TAIGA->setPreviewColor(eMinecraftColour_Preview_MegaTaiga)
-        ->setNameAndDescription(1300645842, -1326201740)
+        ->setNameAndDescription(IDS_BIOME_REDWOOD_TAIGA, 0xB0F3C474)
         ->setWaterSkyColor(eMinecraftColour_Water_MegaTaiga, eMinecraftColour_Sky_MegaTaiga);
 
     MEGA_TAIGA_HILLS = new TaigaBiome(
@@ -633,7 +638,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_MegaTaiga,
         (new BiomeProperties(L"mega_taiga_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(0.3F, 0.8F));
     MEGA_TAIGA_HILLS->setPreviewColor(eMinecraftColour_Preview_MegaTaigaHills)
-        ->setNameAndDescription(1300645842, -1326201740)
+        ->setNameAndDescription(IDS_BIOME_REDWOOD_TAIGA, 0xB0F3C474)
         ->setWaterSkyColor(eMinecraftColour_Water_MegaTaigaHills, eMinecraftColour_Sky_MegaTaigaHills);
 
     EXTREME_HILLS_PLUS_TREES = new ExtremeHillsBiome(
@@ -641,21 +646,21 @@ void Biome::staticCtor()
         ExtremeHillsBiome::eType_ExtraTrees,
         (new BiomeProperties(L"extreme_hills_plus_trees"))->depth(1.0F)->scale(0.5F)->setTemperatureAndDownfall(0.2F, 0.3F));
     EXTREME_HILLS_PLUS_TREES->setPreviewColor(eMinecraftColour_Preview_ExtremeHillsPlus)
-        ->setNameAndDescription(280081252, -1256624926)
+        ->setNameAndDescription(IDS_BIOME_EXTREME_HILLS, 0xB5196CE2)
         ->setWaterSkyColor(eMinecraftColour_Water_ExtremeHillsPlus, eMinecraftColour_Sky_ExtremeHillsPlus);
 
     SAVANNA = new SavannaBiome(
         eBiomeIDs_Savanna,
         (new BiomeProperties(L"savanna"))->depth(0.125F)->scale(0.05F)->setTemperatureAndDownfall(1.2F, 0.0F)->dry());
     SAVANNA->setPreviewColor(eMinecraftColour_Preview_Savanna)
-        ->setNameAndDescription(484145851, 1884900381)
+        ->setNameAndDescription(IDS_BIOME_SAVANNA, 0x70594C1D)
         ->setWaterSkyColor(eMinecraftColour_Water_Savanna, eMinecraftColour_Sky_Savanna);
 
     SAVANNA_PLATEAU = new SavannaBiome(
         eBiomeIDs_SavannaPlateau,
         (new BiomeProperties(L"savanna_plateau"))->depth(1.5F)->scale(0.025F)->setTemperatureAndDownfall(1.0F, 0.0F)->dry());
     SAVANNA_PLATEAU->setPreviewColor(eMinecraftColour_Preview_SavannaPlateau)
-        ->setNameAndDescription(484145851, 1884900381)
+        ->setNameAndDescription(IDS_BIOME_SAVANNA, 0x70594C1D)
         ->setWaterSkyColor(eMinecraftColour_Water_SavannaPlateau, eMinecraftColour_Sky_SavannaPlateau);
 
     MESA = new MesaBiome(
@@ -664,7 +669,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"mesa"))->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     MESA->setPreviewColor(eMinecraftColour_Preview_Mesa)
-        ->setNameAndDescription(-248746643, 1361920987)
+        ->setNameAndDescription(IDS_BIOME_MESA, 0x512D43DB)
         ->setWaterSkyColor(eMinecraftColour_Water_Mesa, eMinecraftColour_Sky_Mesa);
 
     MESA_ROCK = new MesaBiome(
@@ -673,7 +678,7 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"mesa_plateau_stone"))->depth(1.5F)->scale(0.025F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     MESA_ROCK->setPreviewColor(eMinecraftColour_Preview_MesaPlateauF)
-        ->setNameAndDescription(-248746643, 1361920987)
+        ->setNameAndDescription(IDS_BIOME_MESA, 0x512D43DB)
         ->setWaterSkyColor(eMinecraftColour_Water_MesaPlateauF, eMinecraftColour_Sky_MesaPlateauF);
 
     MESA_CLEAR_ROCK = new MesaBiome(
@@ -682,7 +687,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"mesa_plateau"))->depth(1.5F)->scale(0.025F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     MESA_CLEAR_ROCK->setPreviewColor(eMinecraftColour_Preview_MesaPlateau)
-        ->setNameAndDescription(-248746643, 1361920987)
+        ->setNameAndDescription(IDS_BIOME_MESA, 0x512D43DB)
         ->setWaterSkyColor(eMinecraftColour_Water_MesaPlateau, eMinecraftColour_Sky_MesaPlateau);
 
     THE_VOID = new VoidBiome(eBiomeIDs_TheVoid, (new BiomeProperties(L"the_void"))->dry());
@@ -692,14 +697,14 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"sunflower_plains"))->mutated(eBiomeIDs_Plains)->depth(0.125F)->scale(0.05F)->setTemperatureAndDownfall(0.8F, 0.4F));
     SUNFLOWER_PLAINS->setPreviewColor(eMinecraftColour_Preview_Plains_Mutated)
-        ->setNameAndDescription(1744032542, -510917432)
+        ->setNameAndDescription(IDS_BIOME_PLAINS, 0xE18C04C8)
         ->setWaterSkyColor(eMinecraftColour_Water_Plains, eMinecraftColour_Sky_Plains);
 
     DESERT_MUTATED = new DesertBiome(
         eBiomeIDs_DesertMutated,
         (new BiomeProperties(L"desert_mutated"))->mutated(eBiomeIDs_Desert)->depth(0.225F)->scale(0.25F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     DESERT_MUTATED->setPreviewColor(eMinecraftColour_Preview_Desert_Mutated)
-        ->setNameAndDescription(-636680762, -197082512)
+        ->setNameAndDescription(IDS_BIOME_DESERT, 0xF440C270)
         ->setWaterSkyColor(eMinecraftColour_Water_Desert, eMinecraftColour_Sky_Desert);
 
     EXTREME_HILLS_MUTATED = new ExtremeHillsBiome(
@@ -707,7 +712,7 @@ void Biome::staticCtor()
         ExtremeHillsBiome::eType_Mutated,
         (new BiomeProperties(L"extreme_hills_mutated"))->mutated(eBiomeIDs_ExtremeHills)->depth(1.0F)->scale(0.5F)->setTemperatureAndDownfall(0.2F, 0.3F));
     EXTREME_HILLS_MUTATED->setPreviewColor(eMinecraftColour_Preview_ExtremeHills_Mutated)
-        ->setNameAndDescription(280081252, -1256624926)
+        ->setNameAndDescription(IDS_BIOME_EXTREME_HILLS, 0xB5196CE2)
         ->setWaterSkyColor(eMinecraftColour_Water_ExtremeHills, eMinecraftColour_Sky_ExtremeHills);
 
     FLOWER_FOREST = new ForestBiome(
@@ -715,7 +720,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Flower,
         (new BiomeProperties(L"flower_forest"))->mutated(eBiomeIDs_Forest)->scale(0.4F)->setTemperatureAndDownfall(0.7F, 0.8F));
     FLOWER_FOREST->setPreviewColor(eMinecraftColour_Preview_Forest_Mutated)
-        ->setNameAndDescription(-1645210162, -488092712)
+        ->setNameAndDescription(IDS_BIOME_FOREST, 0xE2E84BD8)
         ->setWaterSkyColor(eMinecraftColour_Water_Forest, eMinecraftColour_Sky_Forest);
 
     TAIGA_MUTATED = new TaigaBiome(
@@ -723,22 +728,22 @@ void Biome::staticCtor()
         TaigaBiome::eType_Normal,
         (new BiomeProperties(L"taiga_mutated"))->mutated(eBiomeIDs_Taiga)->depth(0.3F)->scale(0.4F)->setTemperatureAndDownfall(0.25F, 0.8F));
     TAIGA_MUTATED->setPreviewColor(eMinecraftColour_Preview_Taiga_Mutated)
-        ->setNameAndDescription(569313301, -1760909229)
+        ->setNameAndDescription(IDS_BIOME_TAIGA, 0x970AA853)
         ->setWaterSkyColor(eMinecraftColour_Water_Taiga, eMinecraftColour_Sky_Taiga);
 
     SWAMPLAND_MUTATED = new SwampBiome(
         eBiomeIDs_SwamplandMutated,
         (new BiomeProperties(L"swampland_mutated"))->mutated(eBiomeIDs_Swampland)->depth(-0.1F)->scale(0.3F)->setTemperatureAndDownfall(0.8F, 0.9F)->waterColor(0xE0FFAE));
     SWAMPLAND_MUTATED->setPreviewColor(eMinecraftColour_Preview_Swampland_Mutated)
-        ->setNameAndDescription(-1710075368, -590672802)
+        ->setNameAndDescription(IDS_BIOME_SWAMPLAND, 0xDCCB0C5E)
         ->setWaterSkyColor(eMinecraftColour_Water_Swampland, eMinecraftColour_Sky_Swampland);
 
     ICE_PLAINS_SPIKES = new IceBiome(
         eBiomeIDs_IcePlainsSpikes,
         true,
-        (new BiomeProperties(L"ice_plains_spikes"))->mutated(eBiomeIDs_IcePlains)->depth(0.425F)->scale(0.45F)->setTemperatureAndDownfall(0.0F, 0.5F)->snow());
+        (new BiomeProperties(L"ice_plains_spikes"))->mutated(eBiomeIDs_IcePlains)->depth(0.425F)->scale(0.45000002F)->setTemperatureAndDownfall(0.0F, 0.5F)->snow());
     ICE_PLAINS_SPIKES->setPreviewColor(eMinecraftColour_Preview_IcePlains_Mutated)
-        ->setNameAndDescription(1476252691, -1016184235)
+        ->setNameAndDescription(IDS_BIOME_ICE_FLATS, 0xC36E4255)
         ->setWaterSkyColor(eMinecraftColour_Water_IcePlains, eMinecraftColour_Sky_IcePlains);
 
     JUNGLE_MUTATED = new JungleBiome(
@@ -746,7 +751,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"jungle_mutated"))->mutated(eBiomeIDs_Jungle)->depth(0.2F)->scale(0.4F)->setTemperatureAndDownfall(0.95F, 0.9F));
     JUNGLE_MUTATED->setPreviewColor(eMinecraftColour_Preview_Jungle_Mutated)
-        ->setNameAndDescription(-12715120, -843018138)
+        ->setNameAndDescription(IDS_BIOME_JUNGLE, 0xCDC09066)
         ->setWaterSkyColor(eMinecraftColour_Water_Jungle, eMinecraftColour_Sky_Jungle);
 
     JUNGLE_EDGE_MUTATED = new JungleBiome(
@@ -754,21 +759,21 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"jungle_edge_mutated"))->mutated(eBiomeIDs_JungleEdge)->depth(0.2F)->scale(0.4F)->setTemperatureAndDownfall(0.95F, 0.8F));
     JUNGLE_EDGE_MUTATED->setPreviewColor(eMinecraftColour_Preview_JungleEdge_Mutated)
-        ->setNameAndDescription(-12715120, -843018138)
+        ->setNameAndDescription(IDS_BIOME_JUNGLE, 0xCDC09066)
         ->setWaterSkyColor(eMinecraftColour_Water_JungleEdge, eMinecraftColour_Sky_JungleEdge);
 
     BIRCH_FOREST_MUTATED = new MutatedForestBiome(
         eBiomeIDs_BirchForestMutated,
         (new BiomeProperties(L"birch_forest_mutated"))->mutated(eBiomeIDs_BirchForest)->depth(0.2F)->scale(0.4F)->setTemperatureAndDownfall(0.6F, 0.6F));
     BIRCH_FOREST_MUTATED->setPreviewColor(eMinecraftColour_Preview_BirchForest_Mutated)
-        ->setNameAndDescription(85819243, -1031442051)
+        ->setNameAndDescription(IDS_BIOME_BIRCH_FOREST, 0xC285717D)
         ->setWaterSkyColor(eMinecraftColour_Water_BirchForest, eMinecraftColour_Sky_BirchForest);
 
     BIRCH_FOREST_HILLS_MUTATED = new MutatedForestBiome(
         eBiomeIDs_BirchForestHillsMutated,
         (new BiomeProperties(L"birch_forest_hills_mutated"))->mutated(eBiomeIDs_BirchForestHills)->depth(0.55F)->scale(0.5F)->setTemperatureAndDownfall(0.6F, 0.6F));
     BIRCH_FOREST_HILLS_MUTATED->setPreviewColor(eMinecraftColour_Preview_BirchForestHills_Mutated)
-        ->setNameAndDescription(85819243, -1031442051)
+        ->setNameAndDescription(IDS_BIOME_BIRCH_FOREST, 0xC285717D)
         ->setWaterSkyColor(eMinecraftColour_Water_BirchForestHills, eMinecraftColour_Sky_BirchForestHills);
 
     ROOFED_FOREST_MUTATED = new ForestBiome(
@@ -776,7 +781,7 @@ void Biome::staticCtor()
         ForestBiome::eType_Roofed,
         (new BiomeProperties(L"roofed_forest_mutated"))->mutated(eBiomeIDs_RoofedForest)->depth(0.2F)->scale(0.4F)->setTemperatureAndDownfall(0.7F, 0.8F));
     ROOFED_FOREST_MUTATED->setPreviewColor(eMinecraftColour_Preview_RoofedForest_Mutated)
-        ->setNameAndDescription(-831121740, -1511673614)
+        ->setNameAndDescription(IDS_BIOME_ROOFED_FOREST, 0xA5E5B0F2)
         ->setWaterSkyColor(eMinecraftColour_Water_RoofedForest, eMinecraftColour_Sky_RoofedForest);
 
     COLD_TAIGA_MUTATED = new TaigaBiome(
@@ -784,7 +789,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_Normal,
         (new BiomeProperties(L"cold_taiga_mutated"))->mutated(eBiomeIDs_ColdTaiga)->depth(0.3F)->scale(0.4F)->setTemperatureAndDownfall(-0.5F, 0.4F)->snow());
     COLD_TAIGA_MUTATED->setPreviewColor(eMinecraftColour_Preview_ColdTaiga_Mutated)
-        ->setNameAndDescription(66004510, 1424066888)
+        ->setNameAndDescription(IDS_BIOME_COLD_TAIGA, 0x54E18948)
         ->setWaterSkyColor(eMinecraftColour_Water_ColdTaiga, eMinecraftColour_Sky_ColdTaiga);
 
     MEGA_SPRUCE_TAIGA = new TaigaBiome(
@@ -792,7 +797,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_Mutated,
         (new BiomeProperties(L"mega_spruce_taiga"))->mutated(eBiomeIDs_MegaTaiga)->depth(0.2F)->scale(0.2F)->setTemperatureAndDownfall(0.25F, 0.8F));
     MEGA_SPRUCE_TAIGA->setPreviewColor(eMinecraftColour_Preview_MegaTaiga_Mutated)
-        ->setNameAndDescription(1300645842, -1326201740)
+        ->setNameAndDescription(IDS_BIOME_REDWOOD_TAIGA, 0xB0F3C474)
         ->setWaterSkyColor(eMinecraftColour_Water_MegaTaiga, eMinecraftColour_Sky_MegaTaiga);
 
     REDWOOD_TAIGA_HILLS_MUTATED = new TaigaBiome(
@@ -800,7 +805,7 @@ void Biome::staticCtor()
         TaigaBiome::eType_Mutated,
         (new BiomeProperties(L"redwood_taiga_hills_mutated"))->mutated(eBiomeIDs_MegaTaigaHills)->depth(0.2F)->scale(0.2F)->setTemperatureAndDownfall(0.25F, 0.8F));
     REDWOOD_TAIGA_HILLS_MUTATED->setPreviewColor(eMinecraftColour_Preview_MegaTaigaHills_Mutated)
-        ->setNameAndDescription(1300645842, -1326201740)
+        ->setNameAndDescription(IDS_BIOME_REDWOOD_TAIGA, 0xB0F3C474)
         ->setWaterSkyColor(eMinecraftColour_Water_MegaTaigaHills, eMinecraftColour_Sky_MegaTaigaHills);
 
     EXTREME_HILLS_PLUS_TREES_MUTATED = new ExtremeHillsBiome(
@@ -808,21 +813,21 @@ void Biome::staticCtor()
         ExtremeHillsBiome::eType_Mutated,
         (new BiomeProperties(L"extreme_hills_plus_trees_mutated"))->mutated(eBiomeIDs_ExtremeHillsPlusTrees)->depth(1.0F)->scale(0.5F)->setTemperatureAndDownfall(0.2F, 0.3F));
     EXTREME_HILLS_PLUS_TREES_MUTATED->setPreviewColor(eMinecraftColour_Preview_ExtremeHillsPlus_Mutated)
-        ->setNameAndDescription(280081252, -1256624926)
+        ->setNameAndDescription(IDS_BIOME_EXTREME_HILLS, 0xB5196CE2)
         ->setWaterSkyColor(eMinecraftColour_Water_ExtremeHillsPlus, eMinecraftColour_Sky_ExtremeHillsPlus);
 
     SAVANNA_MUTATED = new MutatedSavannaBiome(
         eBiomeIDs_SavannaMutated,
         (new BiomeProperties(L"savanna_mutated"))->mutated(eBiomeIDs_Savanna)->depth(0.3625F)->scale(1.225F)->setTemperatureAndDownfall(1.1F, 0.0F)->dry());
     SAVANNA_MUTATED->setPreviewColor(eMinecraftColour_Preview_Savanna_Mutated)
-        ->setNameAndDescription(484145851, 1884900381)
+        ->setNameAndDescription(IDS_BIOME_SAVANNA, 0x70594C1D)
         ->setWaterSkyColor(eMinecraftColour_Water_Savanna, eMinecraftColour_Sky_Savanna);
 
     SAVANNA_PLATEAU_MUTATED = new MutatedSavannaBiome(
         eBiomeIDs_SavannaPlateauMutated,
-        (new BiomeProperties(L"savanna_plateau_mutated"))->mutated(eBiomeIDs_SavannaPlateau)->depth(1.05F)->scale(1.2125F)->setTemperatureAndDownfall(1.0F, 0.0F)->dry());
+        (new BiomeProperties(L"savanna_plateau_mutated"))->mutated(eBiomeIDs_SavannaPlateau)->depth(1.05F)->scale(1.2125001F)->setTemperatureAndDownfall(1.0F, 0.0F)->dry());
     SAVANNA_PLATEAU_MUTATED->setPreviewColor(eMinecraftColour_Preview_SavannaPlateau_Mutated)
-        ->setNameAndDescription(484145851, 1884900381)
+        ->setNameAndDescription(IDS_BIOME_SAVANNA, 0x70594C1D)
         ->setWaterSkyColor(eMinecraftColour_Water_SavannaPlateau, eMinecraftColour_Sky_SavannaPlateau);
 
     MESA_BRYCE = new MesaBiome(
@@ -831,7 +836,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"mesa_bryce"))->mutated(eBiomeIDs_Mesa)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     MESA_BRYCE->setPreviewColor(eMinecraftColour_Preview_Mesa_Mutated)
-        ->setNameAndDescription(-248746643, 1361920987)
+        ->setNameAndDescription(IDS_BIOME_MESA, 0x512D43DB)
         ->setWaterSkyColor(eMinecraftColour_Water_Mesa, eMinecraftColour_Sky_Mesa);
 
     MESA_ROCK_MUTATED = new MesaBiome(
@@ -840,7 +845,7 @@ void Biome::staticCtor()
         true,
         (new BiomeProperties(L"mesa_plateau_stone_mutated"))->mutated(eBiomeIDs_MesaRock)->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     MESA_ROCK_MUTATED->setPreviewColor(eMinecraftColour_Preview_MesaPlateauF_Mutated)
-        ->setNameAndDescription(-248746643, 1361920987)
+        ->setNameAndDescription(IDS_BIOME_MESA, 0x512D43DB)
         ->setWaterSkyColor(eMinecraftColour_Water_MesaPlateauF, eMinecraftColour_Sky_MesaPlateauF);
 
     MESA_CLEAR_ROCK_MUTATED = new MesaBiome(
@@ -849,7 +854,7 @@ void Biome::staticCtor()
         false,
         (new BiomeProperties(L"mesa_plateau_mutated"))->mutated(eBiomeIDs_MesaClearRock)->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(2.0F, 0.0F)->dry());
     MESA_CLEAR_ROCK_MUTATED->setPreviewColor(eMinecraftColour_Preview_MesaPlateau_Mutated)
-        ->setNameAndDescription(-248746643, 1361920987)
+        ->setNameAndDescription(IDS_BIOME_MESA, 0x512D43DB)
         ->setWaterSkyColor(eMinecraftColour_Water_MesaPlateau, eMinecraftColour_Sky_MesaPlateau);
 
     DEFAULT = OCEAN;
@@ -944,7 +949,7 @@ Biome* Biome::setSnowAccumulation(float minAccumulation, float maxAccumulation)
 
     if (minAccumulation > 0.0F && getBiomeType() != eBiomeType_Ocean)
     {
-        mCreatures.push_back(new MobSpawnerData(4, ENTITY_TYPE_RABBIT, 2, 3));
+        mCreatures.push_back(new MobSpawnerData(4, EntityType::RABBIT, 2, 3));
     }
 
     return this;
@@ -1060,7 +1065,7 @@ std::wstring Biome::getName(bool useShortName)
 {
     if (mNameId == -1)
     {
-        return L"buckets_";
+        return L"";
     }
 
     return L10N::GetString(mNameId);
@@ -1149,7 +1154,7 @@ float Biome::getTemperature(const BlockPos& pos)
 {
     if (pos.y > 64)
     {
-        float noise = (float)(sTemperatureNoise->getValue(pos.x * 0.125F, pos.z * 0.125F) * 2.25);
+        float noise = (float)(TEMPERATURE_NOISE->getValue(pos.x * 0.125F, pos.z * 0.125F) * 2.25);
 
         return getTemperature() - (noise + pos.y - 64.0F) * 0.05F / 30.0F;
     }
@@ -1230,7 +1235,7 @@ void Biome::buildSurfaceAtDefault(Level* level, Random& random, ChunkPrimer* pri
 
         int blockId = primer->getBlockId(index);
 
-        if (blockId == 0)
+        if (blockId == BlockId::AIR)
         {
             runDepth = -1;
             continue;
@@ -1259,7 +1264,7 @@ void Biome::buildSurfaceAtDefault(Level* level, Random& random, ChunkPrimer* pri
                 }
             }
 
-            if (y < 63 && top.blockId == 0)
+            if (y < 63 && top.blockId == BlockId::AIR)
             {
                 pos.x = x;
                 pos.y = y;

@@ -1,4 +1,5 @@
 #include "game/world/biome/SwampBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
@@ -14,11 +15,8 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/FossilFeature.hpp"
 #include "game/world/generation/SwampTreeFeature.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
-static PerlinSimplexNoise* sTemperatureNoise = new PerlinSimplexNoise(new Random(1234LL), 1);
 static const Biome::BlockPair WATER_BLOCK(9, 0);
 static const Biome::BlockPair WATERLILY_BLOCK(111, 0);
 
@@ -36,8 +34,8 @@ SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator->sandPerChunk2 = 0;
     mDecorator->clayPerChunk = 1;
     mDecorator->seagrassPerChunk = 10;
-    mSlimes.push_back(new MobSpawnerData(1, 0x5D108000ULL, 1, 1));
-    mMonsters.push_back(new MobSpawnerData(5, 0x5D550044ULL, 2, 4));
+    mSlimes.push_back(new MobSpawnerData(1, EntityType::SLIME, 1, 1));
+    mMonsters.push_back(new MobSpawnerData(5, EntityType::DROWNED, 2, 4));
 }
 
 SwampBiome::~SwampBiome()
@@ -51,7 +49,7 @@ AbstractTreeFeature* SwampBiome::getTreeFeature(Random& random)
 
 unsigned int SwampBiome::getGrassColor(const BlockPos& pos)
 {
-    double noise = sTemperatureNoise->getValue((double)pos.x * 0.0225, (double)pos.z * 0.0225);
+    double noise = BIOME_INFO_NOISE->getValue((double)pos.x * 0.0225, (double)pos.z * 0.0225);
     ColourTable* colours = Minecraft::GetInstance()->getColourTable();
 
     if (noise < -0.1)
@@ -69,13 +67,13 @@ unsigned int SwampBiome::getFoliageColor(const BlockPos& pos)
 
 FlowerBlock::Flower* SwampBiome::getRandomFlower(Random& random, const BlockPos& pos)
 {
-    return FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_BLUE_ORCHID];
+    return FlowerBlock::Flower::BLUE_ORCHID;
 }
 
 void SwampBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
 {
     PIXBeginNamedEvent(0.0F, "SwampBiome::buildSurfaceAtDefault");
-    double value = sTemperatureNoise->getValue((double)x * 0.25, (double)z * 0.25);
+    double value = BIOME_INFO_NOISE->getValue((double)x * 0.25, (double)z * 0.25);
     if (value > 0.0)
     {
         const int localX = x & 15;
@@ -87,7 +85,7 @@ void SwampBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
             Block* block = state->getBlock();
             if (block->mMaterial != Material::AIR)
             {
-                if (y == 62 && block != Blocks::WATER)
+                if (y == 62 && block != Blocks::water)
                 {
                     int index = column | y;
                     primer->setBlockAndData(index, WATER_BLOCK.blockId, WATER_BLOCK.blockData);
@@ -100,7 +98,7 @@ void SwampBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
             }
         }
     }
-    Biome::buildSurfaceAtDefault(level, random, primer, x, z, noise);
+    buildSurfaceAtDefault(level, random, primer, x, z, noise);
     PIXEndNamedEvent();
 }
 

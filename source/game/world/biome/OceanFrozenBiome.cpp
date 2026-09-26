@@ -1,4 +1,5 @@
 #include "game/world/biome/OceanFrozenBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -15,7 +16,6 @@
 #include "game/world/generation/BlueIceFeature.hpp"
 #include "game/world/generation/IcebergFeature.hpp"
 
-static PerlinSimplexNoise* sTemperatureNoise = new PerlinSimplexNoise(new Random(1234LL), 1);
 static const Biome::BlockPair BEDROCK_BLOCK(7, 0);
 
 static const int PACKED_ICE_BLOCK_ID = 174;
@@ -32,12 +32,12 @@ OceanFrozenBiome::OceanFrozenBiome(EBiomeIDs id, bool deep, BiomeProperties* pro
 {
     clearDefaultFriendlies();
 
-    mWaterCreatures.push_back(new MobSpawnerData(26, 0x0D502004ULL, 3, 5));
-    mWaterCreatures.push_back(new MobSpawnerData(75, 0x0D502002ULL, 4, 7));
-    mSquid.push_back(new MobSpawnerData(10, 0x0D502001ULL, 2, 4));
-    mMonsters.push_back(new MobSpawnerData(10, 0x5D550044ULL, 2, 4));
-    mMonsters.push_back(new MobSpawnerData(120, 0x5D540443ULL, 1, 2));
-    mCreatures.push_back(new MobSpawnerData(5, 0x2D680006ULL, 1, 2));
+    mWaterCreatures.push_back(new MobSpawnerData(26, EntityType::SALMON, 3, 5));
+    mWaterCreatures.push_back(new MobSpawnerData(75, EntityType::FISH, 4, 7));
+    mSquid.push_back(new MobSpawnerData(10, EntityType::SQUID, 2, 4));
+    mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
+    mMonsters.push_back(new MobSpawnerData(120, EntityType::STRAY, 1, 2));
+    mCreatures.push_back(new MobSpawnerData(5, EntityType::POLAR_BEAR, 1, 2));
 
     clearDefaultFriendlies();
 
@@ -108,7 +108,7 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
     float icebergTop = 0.0F;
     float icebergBottom = 0.0F;
 
-    if (height > 0.7)
+    if (height > 0.7F)
     {
         double width = mIcebergsNoise2->getValue((double)x * 0.9765625, (double)z * 0.9765625);
         float thickness = (float)(height * height) * 0.8F;
@@ -149,9 +149,9 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
         {
             const BlockState* state = primer->getState(x & 15, y, z & 15);
 
-            if ((state->getMaterial() == Material::AIR && (float)y < icebergTop
+            if ((state->getMaterial() == Material::AIR && y < (int)icebergTop
                  && random.nextFloat() > 0.01F)
-                || (state->getMaterial() == Material::WATER && (float)y > icebergBottom
+                || (state->getMaterial() == Material::WATER && (int)icebergBottom < y
                     && y < seaLevel && icebergBottom != 0.0F && random.nextFloat() > 0.15F))
             {
                 primer->setBlockAndData(index, PACKED_ICE_BLOCK_ID, packedIceData);
@@ -174,11 +174,11 @@ float OceanFrozenBiome::getTemperature(const BlockPos& pos)
     float temperature = getDefaultBiomeTemperature();
 
     double icebergNoise = mIcebergNoise->getValue((double)pos.x * 0.05, (double)pos.z * 0.05);
-    double regionNoise = sTemperatureNoise->getValue((double)pos.x * 0.2, (double)pos.z * 0.2);
+    double regionNoise = BIOME_INFO_NOISE->getValue((double)pos.x * 0.2, (double)pos.z * 0.2);
 
     if ((float)icebergNoise + (float)regionNoise < 0.3F)
     {
-        double localNoise = sTemperatureNoise->getValue((double)pos.x * 0.09, (double)pos.z * 0.09);
+        double localNoise = BIOME_INFO_NOISE->getValue((double)pos.x * 0.09, (double)pos.z * 0.09);
 
         if ((float)localNoise < 0.8F)
         {
@@ -189,7 +189,7 @@ float OceanFrozenBiome::getTemperature(const BlockPos& pos)
     if (pos.y > 64)
     {
         float heightNoise =
-            (float)(sTemperatureNoise->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
+            (float)(TEMPERATURE_NOISE->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
 
         return temperature - (heightNoise + pos.y - 64.0F) * 0.05F / 30.0F;
     }

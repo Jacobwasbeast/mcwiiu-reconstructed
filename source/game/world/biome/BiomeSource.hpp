@@ -162,6 +162,7 @@ public:
     virtual void getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices, int x, int z, int width, int height, bool useCache) const;
     virtual bool containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes);
     virtual BlockPos* findBiome(int x, int z, int radius, std::vector<Biome*> biomes, Random* random);
+    std::vector<Biome*> getPlayerSpawnBiomes() { return mPlayerSpawnBiomes; }
     virtual bool isFixedBiome();
     virtual Biome* getFixedBiome();
 
@@ -184,7 +185,7 @@ protected:
     boost::shared_ptr<Layer> mRawBiomeLayer;
     boost::shared_ptr<Layer> mBiomeLayer;
     BiomeCache* mBiomeCache;
-    std::vector<Biome*> mPossibleBiomes;
+    std::vector<Biome*> mPlayerSpawnBiomes;
     OSFastMutex mCriticalSection;
     std::vector<CouldSpawnCache> mCouldSpawnCaches;
 };

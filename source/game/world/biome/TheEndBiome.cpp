@@ -1,4 +1,5 @@
 #include "game/world/biome/TheEndBiome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
@@ -16,7 +17,7 @@ TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mWolves.clear();
     mAmbientCreatures.clear();
 
-    mMonsters.push_back(new MobSpawnerData(10, 0x5D540043ULL, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(10, EntityType::ENDER_MAN, 4, 4));
 
     mTopBlock.blockId = 3;
     mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState());
@@ -45,7 +46,7 @@ Vec3* TheEndBiome::getFogColor(float celestialAngle, float partialTicks) const
     float red = (float)(fogColour >> 16 & 0xFF) / 255.0F;
     float green = (float)(fogColour >> 8 & 0xFF) / 255.0F;
     float blue = (float)(fogColour & 0xFF) / 255.0F;
-    float scale = brightness * 2.0F + 0.15F;
+    float scale = brightness * 0.0F + 0.15F;
 
     return Vec3::newTemp(red * scale, green * scale, blue * scale);
 }

@@ -1,17 +1,19 @@
 #include "game/world/biome/VoidBiome.hpp"
 
+#include "game/world/biome/VoidBiomeDecorator.hpp"
+
 VoidBiome::VoidBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Void, properties)
 {
     mMonsters.clear();
-    mCreatures.clear();
-    mChickens.clear();
-    mWolves.clear();
     mSlimes.clear();
+    mChickens.clear();
+    mWaterCreatures.clear();
+    mCreatures.clear();
     mAmbientCreatures.clear();
 
     delete mDecorator;
-    mDecorator = createDecorator();
+    mDecorator = new VoidBiomeDecorator();
 }
 
 VoidBiome::~VoidBiome()

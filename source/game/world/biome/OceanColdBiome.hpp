@@ -6,11 +6,14 @@
 class OceanColdBiome : public Biome
 {
 public:
-    OceanColdBiome(EBiomeIDs id, bool deep, BiomeProperties* properties);
+    OceanColdBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties);
     virtual ~OceanColdBiome();
     virtual float getCreatureProbability();
     virtual EBiomeBaseClass getBaseClass();
     virtual TemperatureCategory getTemperatureCategory() const;
+
+private:
+    bool mDeep;
 };
 
 #endif

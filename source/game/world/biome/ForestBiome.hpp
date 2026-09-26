@@ -14,9 +14,9 @@ public:
     enum EType
     {
         eType_Normal = 0,
-        eType_Birch = 1,
-        eType_Roofed = 2,
-        eType_Flower = 3
+        eType_Flower = 1,
+        eType_Birch = 2,
+        eType_Roofed = 3
     };
 
     ForestBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties);

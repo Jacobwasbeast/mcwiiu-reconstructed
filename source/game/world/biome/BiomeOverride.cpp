@@ -9,9 +9,9 @@ BiomeOverride::BiomeOverride()
       mTopBlock(0),
       mBiomeId(0)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(44), &mBiomeId);
-    addUnsignedCharAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mTopBlock);
-    addUnsignedCharAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(43), &mFillerBlock);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_biomeId, &mBiomeId);
+    addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mTopBlock);
+    addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_topblockId, &mFillerBlock);
 }
 
 BiomeOverride::~BiomeOverride()
@@ -20,7 +20,7 @@ BiomeOverride::~BiomeOverride()
 
 ConsoleGameRules::EGameRuleType BiomeOverride::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(8);
+    return ConsoleGameRules::eGameRuleType_BiomeOverride;
 }
 
 bool BiomeOverride::isBiome(int biomeId)
