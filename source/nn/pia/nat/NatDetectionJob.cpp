@@ -63,7 +63,7 @@ void NatDetectionJob::Startup(common::CallContext* context, NatDetecter* detecte
     m_detecter = detecter;
     m_waitTime = 0;
     m_firstSendTime = 0;
-    setStep(this, &NatDetectionJob::StepPreTest, "_0_NatDetectionJob__StepPreTest");
+    setStep(this, &NatDetectionJob::StepPreTest, "`0 NatDetectionJob::StepPreTest");
     m_traverser = traverser;
     Reset(true);
     m_context = context;
@@ -94,7 +94,7 @@ unsigned int NatDetectionJob::StepPreTest()
 {
     if (m_traverser->IsStartupCancelled())
     {
-        setStep(this, &NatDetectionJob::StepComplete, "NatDetectionJob__StepComplete");
+        setStep(this, &NatDetectionJob::StepComplete, "NatDetectionJob::StepComplete");
         return cExecuteResultEntryForeground;
     }
     const Result result = m_detecter->OpenSocket();
@@ -104,7 +104,7 @@ unsigned int NatDetectionJob::StepPreTest()
         Cleanup();
         return cExecuteResultFinished;
     }
-    setStep(this, &NatDetectionJob::StepStart, "NatDetectionJob__StepStart");
+    setStep(this, &NatDetectionJob::StepStart, "NatDetectionJob::StepStart");
     return cExecuteResultContinue;
 }
 
@@ -112,25 +112,25 @@ unsigned int NatDetectionJob::StepStart()
 {
     if (m_traverser->IsStartupCancelled())
     {
-        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob__StepEnd");
+        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob::StepEnd");
         return cExecuteResultContinue;
     }
     const unsigned int timeout = m_detecter->GetDetectionTimeout();
     m_endTime = now() + milliseconds(timeout);
     m_detecter->InitializeNatCheckReply();
     m_detecter->StartSendingNatCheckProbe();
-    setStep(this, &NatDetectionJob::StepSend, "NatDetectionJob__StepSend");
+    setStep(this, &NatDetectionJob::StepSend, "NatDetectionJob::StepSend");
     return cExecuteResultContinue;
 }
 
 void NatDetectionJob::StopReceivingMessage()
 {
     if (m_detecter->CheckRetry() == 0)
-        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob__StepEnd");
+        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob::StepEnd");
     else
     {
         m_detecter->Retry();
-        setStep(this, &NatDetectionJob::StepStart, "NatDetectionJob__StepStart");
+        setStep(this, &NatDetectionJob::StepStart, "NatDetectionJob::StepStart");
     }
 }
 
@@ -138,7 +138,7 @@ unsigned int NatDetectionJob::StepSend()
 {
     if (m_traverser->IsStartupCancelled())
     {
-        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob__StepEnd");
+        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob::StepEnd");
         return cExecuteResultContinue;
     }
     if (reached(now(), m_endTime))
@@ -154,13 +154,13 @@ unsigned int NatDetectionJob::StepSend()
     if (m_detecter->SendAllQueuedProbe() == 0)
     {
         m_waitTime = now() + milliseconds(20);
-        setStep(this, &NatDetectionJob::StepWait, "NatDetectionJob__StepWait");
+        setStep(this, &NatDetectionJob::StepWait, "NatDetectionJob::StepWait");
         return cExecuteResultContinue;
     }
     if (m_detecter->ReceiveNatCheckReply() == 0)
     {
         m_waitTime = now() + milliseconds(100);
-        setStep(this, &NatDetectionJob::StepWait, "NatDetectionJob__StepWait");
+        setStep(this, &NatDetectionJob::StepWait, "NatDetectionJob::StepWait");
         return cExecuteResultContinue;
     }
     if (!m_receivedFirstReply)
@@ -176,7 +176,7 @@ unsigned int NatDetectionJob::StepSend()
         return cExecuteResultContinue;
     }
     m_waitTime = now() + milliseconds(100);
-    setStep(this, &NatDetectionJob::StepWait, "NatDetectionJob__StepWait");
+    setStep(this, &NatDetectionJob::StepWait, "NatDetectionJob::StepWait");
     return cExecuteResultContinue;
 }
 
@@ -184,13 +184,13 @@ unsigned int NatDetectionJob::StepWait()
 {
     if (m_traverser->IsStartupCancelled())
     {
-        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob__StepEnd");
+        setStep(this, &NatDetectionJob::StepEnd, "NatDetectionJob::StepEnd");
         return cExecuteResultContinue;
     }
     const unsigned long long current = now();
     if (reached(current, m_waitTime))
     {
-        setStep(this, &NatDetectionJob::StepSend, "NatDetectionJob__StepSend");
+        setStep(this, &NatDetectionJob::StepSend, "NatDetectionJob::StepSend");
         return cExecuteResultContinue;
     }
     return cExecuteResultWait | 5;
@@ -199,7 +199,7 @@ unsigned int NatDetectionJob::StepWait()
 unsigned int NatDetectionJob::StepEnd()
 {
     m_success = (m_detecter->CloseSocket() == 0);
-    setStep(this, &NatDetectionJob::StepComplete, "NatDetectionJob__StepComplete");
+    setStep(this, &NatDetectionJob::StepComplete, "NatDetectionJob::StepComplete");
     return cExecuteResultEntryForeground;
 }
 

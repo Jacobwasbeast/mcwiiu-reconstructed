@@ -8,7 +8,12 @@
 #include "nn/pia/common/Memory.hpp"
 #include "nn/pia/nat/NatProbeRequest.hpp"
 
-namespace nn { namespace pia { namespace nat {
+namespace nn
+{
+namespace pia
+{
+namespace nat
+{
 
 class NatProbeRequestList
 {
@@ -22,10 +27,8 @@ private:
     struct PoolNode
     {
         common::ListNode node;
-        typename std::aligned_storage<sizeof(NatProbeRequest),
-                                      alignof(NatProbeRequest)>::type value;
+        typename std::aligned_storage<sizeof(NatProbeRequest), alignof(NatProbeRequest)>::type value;
     };
-
     common::ListBase m_active;
     common::ListBase m_free;
     int m_nodeOffset;
@@ -34,6 +37,8 @@ private:
     unsigned char* m_allocation;
 };
 
-}}}
+}
+}
+}
 
 #endif
