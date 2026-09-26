@@ -16,7 +16,7 @@ const int kThreadAffinity = 0x20;
 BackgroundScheduler::BackgroundScheduler(int threadPriority,
                                          CriticalSection* criticalSection)
     : m_delegate(this, &BackgroundScheduler::Dispatch),
-      m_thread("Tc_Pia_BackgroundScheduler", &m_delegate,
+      m_thread("Tc@Pia BackgroundScheduler", &m_delegate,
                common::HeapManager::GetHeap(), threadPriority,
                pead::MessageQueue::cNoBlock, kThreadQueueCapacity,
                kThreadStackSize, kThreadAffinity),

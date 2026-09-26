@@ -1,6 +1,5 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
-
-void Sleep(unsigned int milliseconds);
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 namespace nn { namespace pia { namespace common {
 
