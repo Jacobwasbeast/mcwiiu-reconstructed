@@ -4,7 +4,12 @@
 #include <cstdint>
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexSessionSearchCriteriaParticipant : public nn::pia::session::SessionSearchCriteria
 {
@@ -33,7 +38,8 @@ private:
     bool others_block_list_used_;
     bool application_data_enabled_;
 };
-
-}}}
+}
+}
+}
 
 #endif

@@ -6,7 +6,12 @@
 #include "nn/pia/common/DateTime.hpp"
 #include "nn/pia/inet/SessionType.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 class NexSessionInfo
 {
 public:
@@ -72,7 +77,8 @@ private:
     common::DateTime started_time_;
     uint32_t community_id_;
 };
-
-}}}
+}
+}
+}
 
 #endif

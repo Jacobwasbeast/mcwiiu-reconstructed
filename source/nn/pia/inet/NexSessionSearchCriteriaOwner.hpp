@@ -4,7 +4,12 @@
 #include <cstdint>
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexSessionSearchCriteriaOwner : public nn::pia::session::SessionSearchCriteria
 {
@@ -22,7 +27,8 @@ public:
 private:
     uint64_t owner_principal_id_;
 };
-
-}}}
+}
+}
+}
 
 #endif
