@@ -69,8 +69,14 @@ class Level : public LevelSource
 {
     friend class LevelChunk;
     friend class ServerLevel;
+    friend class DynamicLiquidBlock;
 public:
-    typedef int ESPAWN_TYPE;
+    enum ESPAWN_TYPE
+    {
+        eSpawnType_Egg,
+        eSpawnType_Breed,
+        eSpawnType_Portal
+    };
     class RangeModifier
     {
     public:
@@ -94,7 +100,7 @@ public:
     static bool getInstaTick();
     static void setInstaTick(bool instaTick);
     bool hasEntitiesToRemove();
-    virtual void postConstruct();
+    virtual Level* postConstruct();
     virtual ChunkSource* createChunkSource() = 0;
     LevelChunk* getChunk(int chunkX, int chunkZ);
     LevelChunk* getChunkAt(const BlockPos& pos);
@@ -232,15 +238,15 @@ public:
     void addListener(LevelListener* listener);
     void removeListener(LevelListener* listener);
     bool isInsideWorldBorder(boost::shared_ptr<Entity> entity);
-    bool internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box, bool includeEntities,
-        std::vector<AABB*>* collisions, bool includeBorder, bool includeUnloaded, bool includeExtraBlocks);
+    bool internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box, bool stopOnFirst,
+        std::vector<AABB*>* collisions, bool noEntities, bool includePlayerConstraints, bool forParticles);
     std::vector<boost::shared_ptr<Entity> >* getEntities(boost::shared_ptr<Entity> excluded, const AABB* box,
         const Predicate<boost::shared_ptr<Entity> >* predicate,
         std::vector<boost::shared_ptr<Entity> >* entities);
     std::vector<boost::shared_ptr<Entity> >* getEntities(boost::shared_ptr<Entity> excluded, const AABB* box,
         std::vector<boost::shared_ptr<Entity> >* entities);
     std::vector<AABB*>* getCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box,
-        bool includeEntities, bool includeBorder, bool includeExtraBlocks);
+        bool noEntities, bool includePlayerConstraints, bool forParticles);
     bool hasBlockCubes(const AABB* box);
     bool checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr<Entity> entity);
     float getTimeOfDay(float partialTick);
@@ -310,8 +316,9 @@ public:
     bool isConsideredSolidBlock(const BlockPos& pos);
     void updateSkyBrightness();
     virtual void tick();
-    virtual boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius,
-                 bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damage);
+    virtual boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> source, double x, double y, double z,
+                                                 float radius, bool fire, bool breaksBlocks, bool playersOnly,
+                                                 bool noBlockDrops, bool silent, float damageRadius);
     virtual void blockEntityAddedExtra(boost::shared_ptr<BlockEntity> entity);
     virtual void blockEntityRemovedExtra(boost::shared_ptr<BlockEntity> entity);
     void prepareWeather();
@@ -331,10 +338,10 @@ public:
     std::vector<boost::shared_ptr<Player> >* getPlayers(unsigned long long flags,
                                                         const Predicate<boost::shared_ptr<Player> >* predicate);
     std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type,
-        const AABB* box, const Predicate<boost::shared_ptr<Entity> >* predicate, bool includeRemoved);
+        const AABB* box, const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers);
     std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type, const AABB* box);
     bool hasEntitiesOfClass(const std::type_info& type, const AABB* box,
-                            const Predicate<boost::shared_ptr<Entity> >* predicate, bool includeRemoved);
+                            const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers);
     boost::shared_ptr<Entity> getClosestEntityOfClass(const std::type_info& type, const AABB* box,
                                                       boost::shared_ptr<Entity> excluded);
     virtual boost::shared_ptr<Entity> getEntity(int id);
@@ -420,7 +427,7 @@ public:
     void destroyBlockProgress(int breakerId, const BlockPos& pos, int progress);
     void setSeaLevel(int value);
     LevelType* getGeneratorType();
-    void setSpawnSettings(bool spawnPeaceful, bool spawnHostile);
+    void setSpawnSettings(bool spawnEnemies, bool spawnFriendlies);
     int getDirectSignal(const BlockPos& pos, const Direction* direction);
     int getDirectSignalTo(const BlockPos& pos);
     int getSignal(const BlockPos& pos, const Direction* direction);
@@ -467,7 +474,9 @@ public:
 
 private:
     std::vector<boost::shared_ptr<Entity> > mGlobalEntities;
+protected:
     boost::unordered_map<int, boost::shared_ptr<Entity>, IntKeyHash2, IntKeyEq> mEntityMap;
+private:
     int mCloudColour;
     int mSkyDarken;
     bool mForceTimeUpdate;
@@ -475,17 +484,16 @@ protected:
     int mRandValue;
     LootTables* mLootTables;
     int mAddend;
-private:
     float mOldRainLevel;
     float mRainLevel;
-    float mThunderLevel;
     float mOldThunderLevel;
+    float mThunderLevel;
+private:
     int mSkyFlashTime;
 public:
     Random* mRandom;
-private:
-    bool mRemovingBlockEntity;
 public:
+    bool mIsNew;
     Dimension* mDimension;
 private:
     PathNavigationListener* mPathListener;
@@ -504,8 +512,8 @@ public:
 protected:
     CustomSet mChunksToPoll;
 private:
-    bool mSpawnPeacefulMobs;
-    bool mSpawnHostileMobs;
+    bool mSpawnEnemies;
+    bool mSpawnFriendlies;
     bool mProcessingBlockEntities;
     WorldBorder* mWorldBorder;
     bool mHasDirtyRegion;

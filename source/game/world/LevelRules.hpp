@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "game/minigame/EMiniGameId.hpp"
+
 class LevelRuleset;
 class LevelGenerationOptions;
 
@@ -12,8 +14,29 @@ class LevelRules
 public:
     enum ELevelRuleType
     {
-        eLevelRuleType_Unknown = 0
+        eLevelRuleType_Unknown = eMiniGameId_Lobby,
+        eLevelRuleType_Battle = eMiniGameId_Battle,
+        eLevelRuleType_Tumble = eMiniGameId_Tumble,
+        eLevelRuleType_Glide = eMiniGameId_Glide,
+        eLevelRuleType_Build = eMiniGameId_Build
     };
+
+    static ELevelRuleType GetRuleTypeForMiniGame(EMiniGameId miniGameId)
+    {
+        switch (miniGameId)
+        {
+        case eMiniGameId_Battle:
+            return eLevelRuleType_Battle;
+        case eMiniGameId_Tumble:
+            return eLevelRuleType_Tumble;
+        case eMiniGameId_Glide:
+            return eLevelRuleType_Glide;
+        case eMiniGameId_Build:
+            return eLevelRuleType_Build;
+        default:
+            return eLevelRuleType_Unknown;
+        }
+    }
 
     class LevelRulesetGroup
     {

@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/util/Random.hpp"
@@ -11,24 +12,23 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/FallingBlock.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/HellFireFeature.hpp"
 #include "game/world/generation/LightGemFeature.hpp"
+#include "game/core/XMem.hpp"
 
-void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
-void XPhysicalFree(void* address);
-void* XMemSet128(void* destination, int value, unsigned int count);
 
 NetherFlatLevelSource::NetherFlatLevelSource(Level* level, bool generateStructures, long long seed)
-    : mRandom(new Random()),
-      mPopulationRandom(new Random(seed)),
-      mGenerateStructures(generateStructures),
-      mLevel(level)
 {
-    mLevelSize = static_cast<int>(std::ceil(
-        static_cast<float>(level->getLevelData()->getXZSize()) /
-        static_cast<float>(level->getLevelData()->getHellScale())));
+    int levelSize = static_cast<int>(std::ceil(static_cast<float>(level->getLevelData()->getXZSize()) /
+                                               static_cast<float>(level->getLevelData()->getHellScale())));
+    mLevel = level;
+    mGenerateStructures = generateStructures;
+    mLevelSize = levelSize;
+    mRandom = new Random(seed);
+    mPopulationRandom = new Random(seed);
 }
 
 NetherFlatLevelSource::~NetherFlatLevelSource()
@@ -45,8 +45,8 @@ void NetherFlatLevelSource::prepareHeights(int, int, ChunkPrimer* primer)
         {
             for (int y = 0; y < 16; ++y)
             {
-                const BlockState* state = Blocks::AIR->defaultBlockState();
-                if (y < 7)
+                const BlockState* state = Blocks::air->defaultBlockState();
+                if (y < 7 || y > 120)
                 {
                     state = Blocks::netherrack->defaultBlockState();
                 }
@@ -65,55 +65,52 @@ void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* p
             int blockIndex = (x << 11) | (z << 7) | 127;
             for (int y = 127; y >= 0; --y, --blockIndex)
             {
-                const int depth = mLevelSize / 2;
                 bool placed = false;
 
-                if (chunkX <= -depth)
+                if (chunkX <= -(mLevelSize / 2))
                 {
-                    if (x - mRandom->nextInt(4) <= 0 || chunkX < -depth)
+                    if (x - mRandom->nextInt(4) <= 0 || chunkX < -(mLevelSize / 2))
                     {
                         primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                         placed = true;
                     }
                 }
 
-                if (chunkZ <= -depth)
+                if (chunkZ <= -(mLevelSize / 2))
                 {
-                    if (z - mRandom->nextInt(4) <= 0 || chunkZ < -depth)
+                    if (z - mRandom->nextInt(4) <= 0 || chunkZ < -(mLevelSize / 2))
                     {
                         primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                         placed = true;
                     }
                 }
 
-                if (depth - 1 <= chunkX)
+                if (mLevelSize / 2 - 1 <= chunkX)
                 {
-                    if (x + mRandom->nextInt(4) >= 15 || depth < chunkX)
+                    if (x + mRandom->nextInt(4) >= 15 || mLevelSize / 2 < chunkX)
                     {
                         primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                         placed = true;
                     }
                 }
 
-                if (chunkZ < depth - 1)
+                if (chunkZ < mLevelSize / 2 - 1)
                 {
                     if (!placed)
                     {
-                        const int topDepth = mRandom->nextInt(5);
-                        if (y >= 127 - topDepth || y <= mRandom->nextInt(5))
+                        if (y >= 127 - mRandom->nextInt(5) || y <= mRandom->nextInt(5))
                         {
                             primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                         }
                     }
                 }
-                else if (z + mRandom->nextInt(4) >= 15 || depth < chunkZ)
+                else if (z + mRandom->nextInt(4) >= 15 || mLevelSize / 2 < chunkZ)
                 {
                     primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                 }
                 else if (!placed)
                 {
-                    const int topDepth = mRandom->nextInt(5);
-                    if (y >= 127 - topDepth || y <= mRandom->nextInt(5))
+                    if (y >= 127 - mRandom->nextInt(5) || y <= mRandom->nextInt(5))
                     {
                         primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                     }
@@ -146,48 +143,52 @@ void NetherFlatLevelSource::lightChunk(LevelChunk* chunk)
 
 void NetherFlatLevelSource::postProcess(int chunkX, int chunkZ)
 {
+    FallingBlock::fallInstantly = true;
     const int originX = chunkX * 16;
     const int originZ = chunkZ * 16;
-    const long long seed = mLevel->getSeed();
-    mPopulationRandom->setSeed(seed);
+    mPopulationRandom->setSeed(mLevel->getSeed());
     const long long xSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
     const long long zSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
-    mPopulationRandom->setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^ seed);
+    mPopulationRandom->setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^
+                               mLevel->getSeed());
 
-    int count = mPopulationRandom->nextInt(10);
-    count = mPopulationRandom->nextInt(count + 1) + 1;
+    int count = mPopulationRandom->nextInt(mPopulationRandom->nextInt(10) + 1) + 1;
     for (int i = 0; i < count; ++i)
     {
-        BlockPos pos(originX + mPopulationRandom->nextInt(16) + 8,
-                     mPopulationRandom->nextInt(120) + 4,
-                     originZ + mPopulationRandom->nextInt(16) + 8);
+        const int x = mPopulationRandom->nextInt(16);
+        const int y = mPopulationRandom->nextInt(120);
+        const int z = mPopulationRandom->nextInt(16);
         HellFireFeature feature;
-        feature.place(mLevel, *mPopulationRandom, pos);
+        feature.place(mLevel, *mPopulationRandom, BlockPos(originX + x + 8, y + 4, originZ + z + 8));
     }
 
-    count = mPopulationRandom->nextInt(10);
-    count = mPopulationRandom->nextInt(count + 1);
+    count = mPopulationRandom->nextInt(mPopulationRandom->nextInt(10) + 1);
     for (int i = 0; i < count; ++i)
     {
-        BlockPos pos(originX + mPopulationRandom->nextInt(16) + 8,
-                     mPopulationRandom->nextInt(120) + 4,
-                     originZ + mPopulationRandom->nextInt(16) + 8);
+        const int x = mPopulationRandom->nextInt(16);
+        const int y = mPopulationRandom->nextInt(120);
+        const int z = mPopulationRandom->nextInt(16);
         LightGemFeature feature;
-        feature.place(mLevel, *mPopulationRandom, pos);
+        feature.place(mLevel, *mPopulationRandom, BlockPos(originX + x + 8, y + 4, originZ + z + 8));
     }
 
-    g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
+    FallingBlock::fallInstantly = false;
+    gApp.processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
 bool NetherFlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
 {
-	return false;
+    return false;
 }
 
-std::vector<Biome::MobSpawnerData*> NetherFlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
+std::vector<Biome::MobSpawnerData*>* NetherFlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
     Biome* biome = mLevel->getBiome(pos);
-    return *biome->getMobs(category);
+    if (biome == NULL)
+    {
+        return NULL;
+    }
+    return biome->getMobs(category);
 }
 
 BlockPos* NetherFlatLevelSource::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)

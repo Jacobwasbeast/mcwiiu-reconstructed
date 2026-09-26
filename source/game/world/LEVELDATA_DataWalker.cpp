@@ -11,21 +11,21 @@ LEVELDATA_DataWalker::~LEVELDATA_DataWalker()
 
 CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (tag->contains(L"Level", 10))
+    if (tag->contains(L"Level", Tag::TAG_COMPOUND))
     {
         CompoundTag* level = tag->getCompound(L"Level");
 
-        if (level->contains(L"Entities", 9))
+        if (level->contains(L"Entities", Tag::TAG_LIST))
         {
-            ListTag* entities = level->getList(L"Entities", 10);
+            ListTag* entities = level->getList(L"Entities", Tag::TAG_COMPOUND);
 
             for (int i = 0; i < entities->size(); i++)
             {
                 CompoundTag* entity = (CompoundTag*)entities->get(i);
 
-                if (entity->contains(L"Passengers", 9))
+                if (entity->contains(L"Riding", Tag::TAG_LIST))
                 {
-                    ListTag* passengers = entity->getList(L"Passengers", 10);
+                    ListTag* passengers = entity->getList(L"Riding", Tag::TAG_COMPOUND);
 
                     for (int j = 0; j < passengers->size(); j++)
                     {
@@ -40,9 +40,9 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
             }
         }
 
-        if (level->contains(L"TileEntities", 9))
+        if (level->contains(L"TileEntities", Tag::TAG_LIST))
         {
-            ListTag* tileEntities = level->getList(L"TileEntities", 10);
+            ListTag* tileEntities = level->getList(L"TileEntities", Tag::TAG_COMPOUND);
 
             for (int i = 0; i < tileEntities->size(); i++)
             {

@@ -1,4 +1,5 @@
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <climits>
 
@@ -9,6 +10,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleSchematicFile.hpp"
+#include "game/core/DLCGameRulesHeader.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/GameRulesSource.hpp"
@@ -21,6 +23,10 @@
 #include "game/world/biome/BiomeOverride.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/ConsoleGenerateStructure.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 struct _OVERLAPPED;
 
@@ -30,15 +36,12 @@ std::wstring _toString(T value);
 template<typename T>
 T _fromString(const std::wstring& value);
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
                 void* securityAttributes, unsigned int creationDisposition,
                 unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* highSize);
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
-void CloseHandle(int file);
 
 LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
 {
@@ -209,7 +212,7 @@ const wchar_t* LevelGenerationOptions::getWorldName()
     case eSrc_Local:
         return getString(info()->getWorldName());
     case eSrc_Tutorial:
-        return L10N::GetString(0x4d3c7293);
+        return L10N::GetString(IDS_PLAY_TUTORIAL);
     default:
         return L"";
     }
@@ -374,30 +377,50 @@ void LevelGenerationOptions::reset_start()
 
 void LevelGenerationOptions::loadGameRulesHeaders(DLCPack* pack, StringTable* table, LevelGenerationOptions* options)
 {
-    if (pack == NULL || options == NULL)
+    int headerCount = pack->getDLCItemsCount(DLCManager::eDLCType_GameRulesHeader);
+    for (int i = 0; i < headerCount; ++i)
     {
-        return;
-    }
+        DLCGameRulesHeader* header =
+            static_cast<DLCGameRulesHeader*>(pack->getFile(DLCManager::eDLCType_GameRulesHeader, i, true, true));
+        if (header->m_levelGenerationOptions != options || header->getGrfPath().empty())
+            continue;
 
-    options->loadStringTable(table);
+        File grfFile(gApp.getFilePath(pack->GetPackId(), header->getGrfPath(), true, L"WPACK:"));
+        if (!grfFile.exists())
+            continue;
+
+        char fileName[256];
+        int handle = CreateFileA(wstringtofilename(grfFile.getPath(), fileName), 0x80000000, 0, NULL, 3, 0x8000000, 0);
+        if (handle != -1)
+        {
+            unsigned int size = static_cast<unsigned int>(grfFile.length());
+            unsigned char* data = new unsigned char[size];
+            unsigned int bytesRead;
+            if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
+            {
+                gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", __LINE__, fileName);
+            }
+            CloseHandle(handle);
+            header->setGrfData(data, size, table);
+            delete[] data;
+            gApp.mGameRuleManager.setLevelGenerationOptions(header->m_levelGenerationOptions);
+        }
+    }
 }
 
-unsigned int LevelGenerationOptions::packMounted(void* data, int mountIndex, unsigned int mounted, unsigned int flags)
+int LevelGenerationOptions::packMounted(void* data, int mountIndex, unsigned int mounted, unsigned int flags)
 {
     LevelGenerationOptions* options = static_cast<LevelGenerationOptions*>(data);
     options->mPackMountPending = false;
     if (mounted == 0)
     {
-        options->loadGameRulesHeaders(options->mPack, options->mStringTable, options);
-        if (options->requiresBaseSave())
+        loadGameRulesHeaders(options->mPack, options->mStringTable, options);
+        if (options->requiresBaseSave() && !options->getBaseSavePath().empty() && !options->hasBaseSaveData())
         {
-            std::wstring path = options->getBaseSavePath();
-            if (!path.empty() && !options->hasBaseSaveData())
-            {
-                std::wstring resolved = gApp.getFilePath(options->mPack->GetPackId(), path, true, L"WPACK");
-                options->setBaseSaveData(File(resolved));
-            }
+            options->setBaseSaveData(
+                File(gApp.getFilePath(options->mPack->GetPackId(), options->getBaseSavePath(), true, L"WPACK:")));
         }
+        gStorage->UnmountInstalledDLC("WPACK");
     }
     options->setLoadedData();
     return 0;
@@ -409,24 +432,26 @@ void LevelGenerationOptions::loadBaseSaveData()
     {
         loadGameRulesHeaders(NULL, mStringTable, this);
     }
-    else if (mPack->GetDLCMountIndex() == static_cast<unsigned int>(-1))
-    {
-        loadGameRulesHeaders(mPack, mStringTable, this);
-    }
     else
     {
-        setLoadedData();
-        return;
+        int mountIndex = static_cast<int>(mPack->GetDLCMountIndex());
+        if (mountIndex >= 0)
+        {
+            if (gStorage->MountInstalledDLC(gProfile->GetPrimaryPad(), mountIndex, packMounted, this, "WPACK")
+                == 0x3e5)
+            {
+                mPackMountPending = true;
+                return;
+            }
+            setLoadedData();
+            return;
+        }
+        loadGameRulesHeaders(mPack, mStringTable, this);
     }
 
-    if (requiresBaseSave())
+    if (requiresBaseSave() && !getBaseSavePath().empty())
     {
-        std::wstring path = getBaseSavePath();
-        if (!path.empty())
-        {
-            std::wstring resolved = gApp.getFilePath(mPack->GetPackId(), path, true, L"WPACK");
-            setBaseSaveData(File(resolved));
-        }
+        setBaseSaveData(File(gApp.getFilePath(mPack->GetPackId(), getBaseSavePath(), true, L"WPACK:")));
     }
     setLoadedData();
 }
@@ -465,7 +490,7 @@ void LevelGenerationOptions::setBaseSaveData(File file)
         unsigned int bytesRead;
         if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
         {
-            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Fail", __LINE__, fileName);
+            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", __LINE__, fileName);
         }
         CloseHandle(handle);
         setBaseSaveData(data, size);
@@ -529,20 +554,20 @@ void LevelGenerationOptions::writeAttributes(GameRuleSaveInterface* saveInterfac
 
     if (mSpawnPos != NULL)
     {
-        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(38), _toString(mSpawnPos->x));
-        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(39), _toString(mSpawnPos->y));
-        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(40), _toString(mSpawnPos->z));
+        saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString(mSpawnPos->x));
+        saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, _toString(mSpawnPos->y));
+        saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, _toString(mSpawnPos->z));
     }
     if (mHasLevelSeed)
     {
-        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(14), _toString(mLevelSeed));
+        saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_seed, _toString(mLevelSeed));
     }
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(15), _toString(mUseFlatWorld));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(52), _toString(mLevelHasBeenInCreative));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(53), _toString(mCloudHeight));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(54), _toString(mFogDistance));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(55), _toString(mDayTime));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_flatworld, _toString(mUseFlatWorld));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_hasBeenInCreative, _toString(mLevelHasBeenInCreative));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_cloudHeight, _toString(mCloudHeight));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_fogDistance, _toString(mFogDistance));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dayTime, _toString(mDayTime));
 }
 
 void LevelGenerationOptions::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -575,25 +600,25 @@ GameRuleDefinition* LevelGenerationOptions::addChild(ConsoleGameRules::EGameRule
 {
     GameRuleDefinition* child = NULL;
 
-    if (type == 2)
+    if (type == ConsoleGameRules::eGameRuleType_ApplySchematic)
     {
         ApplySchematicRuleDefinition* rule = new ApplySchematicRuleDefinition(this);
         mSchematicRules.push_back(rule);
         child = rule;
     }
-    else if (type == 3)
+    else if (type == ConsoleGameRules::eGameRuleType_GenerateStructure)
     {
         ConsoleGenerateStructure* structure = new ConsoleGenerateStructure();
         mStructures.push_back(structure);
         child = structure;
     }
-    else if (type == 8)
+    else if (type == ConsoleGameRules::eGameRuleType_BiomeOverride)
     {
         BiomeOverride* biomeOverride = new BiomeOverride();
         mBiomeOverrides.push_back(biomeOverride);
         child = biomeOverride;
     }
-    else if (type == 9)
+    else if (type == ConsoleGameRules::eGameRuleType_StartFeature)
     {
         StartFeature* feature = new StartFeature();
         mFeatures.push_back(feature);
@@ -984,5 +1009,5 @@ LevelGenerationOptions::SchematicFileMap* LevelGenerationOptions::getUnfinishedS
 
 ConsoleGameRules::EGameRuleType LevelGenerationOptions::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(1);
+    return ConsoleGameRules::eGameRuleType_MapOptions;
 }

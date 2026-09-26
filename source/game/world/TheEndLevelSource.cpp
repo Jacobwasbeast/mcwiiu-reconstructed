@@ -12,6 +12,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/ChorusFlowerBlock.hpp"
+#include "game/world/block/FallingBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
@@ -57,7 +58,7 @@ TheEndLevelSource::~TheEndLevelSource()
 double TheEndLevelSource::fjIslandProximity(int x, int z)
 {
     ChunkPos* area = TheEndDimension::closestAreaToPoint(x, z);
-    if (area->x == 0 && area->z == 0)
+    if (area == &TheEndDimension::AREAS[0])
     {
         return 12.0;
     }
@@ -75,34 +76,51 @@ bool TheEndLevelSource::fjIslandCheck(int x, int z)
 double TheEndLevelSource::getIslandHeightValue(int x, int z, int xOffset, int zOffset)
 {
     ChunkPos* area = TheEndDimension::closestAreaToPoint(x, z);
-    const float sampleX = static_cast<float>(x * 2 + xOffset);
-    const float sampleZ = static_cast<float>(z * 2 + zOffset);
 
-    if (area->x == 0 && area->z == 0)
+    if (area == &TheEndDimension::AREAS[0])
     {
-        return -static_cast<double>(std::sqrt(sampleX * sampleX + sampleZ * sampleZ) * 9.0f - 100.0f);
+        const float sampleX = x * 2.0f + xOffset;
+        const float sampleZ = z * 2.0f + zOffset;
+        return -(std::sqrt(sampleX * sampleX + sampleZ * sampleZ) * 9.0f - 100.0f);
     }
 
-    double height = Mth::clamp(
-        -static_cast<double>(std::sqrt(sampleX * sampleX + sampleZ * sampleZ) * 8.0f - 100.0f),
-        -100.0, 80.0);
-
-    for (int islandX = x - 4; islandX <= x + 4; ++islandX)
+    const int sampleX = x * 2 + xOffset;
+    const int sampleZ = z * 2 + zOffset;
+    double height = -(std::sqrt(static_cast<float>(sampleX * sampleX + sampleZ * sampleZ)) * 8.0f - 100.0f);
+    if (height > 80.0f)
     {
-        for (int islandZ = z - 4; islandZ <= z + 4; ++islandZ)
+        height = 80.0f;
+    }
+    else if (height < -100.0f)
+    {
+        height = -100.0f;
+    }
+
+    for (int offsetX = -4; offsetX <= 4; ++offsetX)
+    {
+        for (int offsetZ = -4; offsetZ <= 4; ++offsetZ)
         {
+            const double islandX = x + offsetX;
+            const double islandZ = z + offsetZ;
             if (fjIslandCheck(islandX, islandZ))
             {
-                const float scale = static_cast<float>(
-                    (static_cast<int>(std::fabs(static_cast<double>(islandX)) * 3439.0 +
-                                      std::fabs(static_cast<double>(islandZ)) * 147.0) % 6) + 18);
-                const float distanceX = static_cast<float>(xOffset + (x - islandX) * 2);
-                const float distanceZ = static_cast<float>(zOffset + (z - islandZ) * 2);
-                const double islandHeight = Mth::clamp(
-                    -static_cast<double>(std::sqrt(distanceX * distanceX + distanceZ * distanceZ) *
-                                         scale - 100.0f),
-                    -100.0, 80.0);
-                height = std::max(height, islandHeight);
+                const float scale = static_cast<int>(std::fabs(islandX) * 3439.0 + std::fabs(islandZ) * 147.0) % 6 + 18;
+                const int distanceX = xOffset - offsetX * 2;
+                const int distanceZ = zOffset - offsetZ * 2;
+                double islandHeight =
+                    -(std::sqrt(static_cast<float>(distanceX * distanceX + distanceZ * distanceZ)) * scale - 100.0f);
+                if (islandHeight > 80.0f)
+                {
+                    islandHeight = 80.0f;
+                }
+                else if (islandHeight < -100.0f)
+                {
+                    islandHeight = -100.0f;
+                }
+                if (height < islandHeight)
+                {
+                    height = islandHeight;
+                }
             }
         }
     }
@@ -113,39 +131,47 @@ double TheEndLevelSource::getIslandHeightValue(int x, int z, int xOffset, int zO
 arrayWithLength<double> TheEndLevelSource::getHeights(arrayWithLength<double> values, int x, int y,
                                                        int z, int xSize, int ySize, int zSize)
 {
-    const unsigned int count = static_cast<unsigned int>(xSize * ySize * zSize);
     if (values.data == NULL)
     {
-        values.data = new double[count]();
-        values.length = count;
+        values = arrayWithLength<double>(xSize * ySize * zSize, true);
     }
 
-    arrayWithLength<double> unusedDepth = mNoise4->getRegion(
-        arrayWithLength<double>(), x, z, xSize, zSize, 1.121, 1.121, 0.5);
-    arrayWithLength<double> unusedScale = mNoise5->getRegion(
-        arrayWithLength<double>(), x, z, xSize, zSize, 200.0, 200.0, 0.5);
-    arrayWithLength<double> blend = mNoise3->getRegion(
-        arrayWithLength<double>(), x, y, z, xSize, ySize, zSize,
-        17.110300000000002, 4.277575000000001, 17.110300000000002);
-    arrayWithLength<double> lower = mNoise1->getRegion(
-        arrayWithLength<double>(), x, y, z, xSize, ySize, zSize, 684.412, 1368.824, 684.412);
-    arrayWithLength<double> upper = mNoise2->getRegion(
-        arrayWithLength<double>(), x, y, z, xSize, ySize, zSize, 684.412, 1368.824, 684.412);
+    arrayWithLength<double> pnr;
+    arrayWithLength<double> ar;
+    arrayWithLength<double> br;
+    arrayWithLength<double> sr;
+    arrayWithLength<double> dr;
+    arrayWithLength<double> fi;
+    arrayWithLength<double> fis;
 
-    unsigned int index = 0;
+    sr = mNoise4->getRegion(sr, x, z, xSize, zSize, 1.121, 1.121, 0.5);
+    dr = mNoise5->getRegion(dr, x, z, xSize, zSize, 200.0, 200.0, 0.5);
+    pnr = mNoise3->getRegion(pnr, x, y, z, xSize, ySize, zSize, 17.110300000000002,
+                            4.277575000000001, 17.110300000000002);
+    ar = mNoise1->getRegion(ar, x, y, z, xSize, ySize, zSize, 1368.824, 684.412, 1368.824);
+    br = mNoise2->getRegion(br, x, y, z, xSize, ySize, zSize, 1368.824, 684.412, 1368.824);
+
+    int index = 0;
     const int middle = ySize / 2;
     for (int localX = 0; localX < xSize; ++localX)
     {
         for (int localZ = 0; localZ < zSize; ++localZ)
         {
             double islandHeight = getIslandHeightValue(x / 2, z / 2, localX, localZ);
-            islandHeight = Mth::clamp(islandHeight, -100.0, 80.0);
+            if (islandHeight > 80.0f)
+            {
+                islandHeight = 80.0f;
+            }
+            else if (islandHeight < -100.0f)
+            {
+                islandHeight = -100.0f;
+            }
 
             for (int localY = 0; localY < ySize; ++localY)
             {
-                const double selector = (blend.data[index] / 10.0 + 1.0) * 0.5;
-                const double low = lower.data[index] / 512.0;
-                const double high = upper.data[index] / 512.0;
+                const double selector = (pnr.data[index] / 10.0 + 1.0) / 2.0;
+                const double low = ar.data[index] / 512.0;
+                const double high = br.data[index] / 512.0;
                 double density;
                 if (selector < 0.0)
                 {
@@ -163,43 +189,45 @@ arrayWithLength<double> TheEndLevelSource::getHeights(arrayWithLength<double> va
                 density = density - 8.0 + islandHeight;
                 if (localY > middle - 2)
                 {
-                    const double fade = Mth::clamp(
-                        static_cast<double>(localY + 2 - middle) * 0.015625, 0.0, 1.0);
-                    density = density * (1.0 - fade) - 3000.0 * fade;
+                    const double fade =
+                        Mth::clamp(static_cast<double>(static_cast<float>(localY + 2 - middle) * 0.015625f), 0.0, 1.0);
+                    density = density * (1.0 - fade) + -3000.0 * fade;
                 }
                 if (localY < 8)
                 {
-                    const double fade = static_cast<double>(8 - localY) / 7.0;
-                    density = density * (1.0 - fade) - 30.0 * fade;
+                    const double fade = static_cast<float>(8 - localY) / 7.0f;
+                    density = density * (1.0 - fade) + -30.0 * fade;
                 }
 
-                const int worldX = (x + localX) * 8;
                 const int worldY = (y + localY) * 4;
-                const int worldZ = (z + localZ) * 8;
                 const double originFade = Mth::clamp(
-                    (19.0 - BlockPos::ZERO.dist(worldX, worldY, worldZ)) * 0.0625, 0.0, 1.0);
-                const double originDensity = BlockPos::ZERO.y < worldY + 1 ? -50.0 : 50.0;
-                values.data[index] = density * (1.0 - originFade) + originDensity * originFade;
+                    (19.0 - BlockPos::ZERO.dist((x + localX) * 8, worldY, (z + localZ) * 8)) / 16.0, 0.0, 1.0);
+                if (BlockPos::ZERO.y < worldY + 1)
+                {
+                    values.data[index] = originFade * -50.0 + (1.0 - originFade) * density;
+                }
+                else
+                {
+                    values.data[index] = originFade * 50.0 + (1.0 - originFade) * density;
+                }
                 ++index;
             }
         }
     }
 
-    delete[] blend.data;
-    delete[] lower.data;
-    delete[] upper.data;
-    delete[] unusedDepth.data;
-    delete[] unusedScale.data;
+    delete[] pnr.data;
+    delete[] ar.data;
+    delete[] br.data;
+    delete[] sr.data;
+    delete[] dr.data;
+    delete[] fi.data;
+    delete[] fis.data;
     return values;
 }
 
 void TheEndLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
-    arrayWithLength<double> heights = getHeights(
-        arrayWithLength<double>(), chunkX * 2, 0, chunkZ * 2, 3, 33, 3);
-    const BlockState* endStone = Blocks::end_stone->defaultBlockState();
-    const BlockState* air = Blocks::AIR->defaultBlockState();
-
+    arrayWithLength<double> heights = getHeights(arrayWithLength<double>(), chunkX * 2, 0, chunkZ * 2, 3, 33, 3);
     for (int cellX = 0; cellX < 2; ++cellX)
     {
         for (int cellZ = 0; cellZ < 2; ++cellZ)
@@ -232,9 +260,12 @@ void TheEndLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
                         const double densityStep = (far - near) * 0.125;
                         for (int subZ = 0; subZ < 8; ++subZ)
                         {
-                            primer->setState(cellX * 8 + subX, cellY * 4 + subY,
-                                             cellZ * 8 + subZ,
-                                             density > 0.0 ? endStone : air);
+                            const BlockState* state = Blocks::air->defaultBlockState();
+                            if (density > 0.0)
+                            {
+                                state = Blocks::end_stone->defaultBlockState();
+                            }
+                            primer->setState(cellX * 8 + subX, cellY * 4 + subY, cellZ * 8 + subZ, state);
                             density += densityStep;
                         }
                         near += nearStep;
@@ -255,22 +286,21 @@ void TheEndLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
 
 void TheEndLevelSource::buildSurfaces(ChunkPrimer* primer)
 {
-    const BlockState* top = Blocks::end_stone->defaultBlockState();
-    const BlockState* filler = Blocks::end_stone->defaultBlockState();
     for (int x = 0; x < 16; ++x)
     {
         for (int z = 0; z < 16; ++z)
         {
             int depth = -1;
+            const BlockState* top = Blocks::end_stone->defaultBlockState();
+            const BlockState* filler = Blocks::end_stone->defaultBlockState();
             for (int y = 127; y >= 0; --y)
             {
                 const BlockState* state = primer->getState(x, y, z);
-                Block* block = state->getBlock();
-                if (block->mMaterial == Material::AIR)
+                if (state->getBlock()->mMaterial == Material::AIR)
                 {
                     depth = -1;
                 }
-                else if (block == Blocks::stone)
+                else if (state->getBlock() == Blocks::stone)
                 {
                     if (depth == -1)
                     {
@@ -314,7 +344,7 @@ LevelChunk* TheEndLevelSource::createChunk(int chunkX, int chunkZ)
 
 void TheEndLevelSource::postProcess(int chunkX, int chunkZ)
 {
-    Level::setInstaTick(true);
+    FallingBlock::fallInstantly = true;
     const BlockPos origin(chunkX << 4, 0, chunkZ << 4);
     mPopulationRandom->setSeed(mLevel->getSeed());
     const long long xSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
@@ -332,25 +362,23 @@ void TheEndLevelSource::postProcess(int chunkX, int chunkZ)
 
     if (fjIslandCheck(chunkX, chunkZ))
     {
-        if (getIslandHeightValue(chunkX, chunkZ, 1, 1) < -20.0 &&
+        if (getIslandHeightValue(chunkX, chunkZ, 1, 1) < -20.0f &&
             mPopulationRandom->nextInt(14) == 0)
         {
-            mEndIslandFeature->place(
-                mLevel, *mPopulationRandom,
-                origin.offset(mPopulationRandom->nextInt(16) + 8,
-                              mPopulationRandom->nextInt(16) + 55,
-                              mPopulationRandom->nextInt(16) + 8));
+            int islandX = mPopulationRandom->nextInt(16) + 8;
+            int islandY = mPopulationRandom->nextInt(16) + 55;
+            int islandZ = mPopulationRandom->nextInt(16) + 8;
+            mEndIslandFeature->place(mLevel, *mPopulationRandom, origin.offset(islandX, islandY, islandZ));
             if (mPopulationRandom->nextInt(4) == 0)
             {
-                mEndIslandFeature->place(
-                    mLevel, *mPopulationRandom,
-                    origin.offset(mPopulationRandom->nextInt(16) + 8,
-                                  mPopulationRandom->nextInt(16) + 55,
-                                  mPopulationRandom->nextInt(16) + 8));
+                islandX = mPopulationRandom->nextInt(16) + 8;
+                islandY = mPopulationRandom->nextInt(16) + 55;
+                islandZ = mPopulationRandom->nextInt(16) + 8;
+                mEndIslandFeature->place(mLevel, *mPopulationRandom, origin.offset(islandX, islandY, islandZ));
             }
         }
 
-        if (getIslandHeightValue(chunkX, chunkZ, 1, 1) > 40.0)
+        if (getIslandHeightValue(chunkX, chunkZ, 1, 1) > 40.0f)
         {
             const int plants = mPopulationRandom->nextInt(5);
             for (int index = 0; index < plants; ++index)
@@ -367,7 +395,7 @@ void TheEndLevelSource::postProcess(int chunkX, int chunkZ)
             }
         }
     }
-    Level::setInstaTick(false);
+    FallingBlock::fallInstantly = false;
 }
 
 bool TheEndLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
@@ -375,10 +403,10 @@ bool TheEndLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
     return false;
 }
 
-std::vector<Biome::MobSpawnerData*> TheEndLevelSource::getMobsAt(
+std::vector<Biome::MobSpawnerData*>* TheEndLevelSource::getMobsAt(
     MobCategory* category, const BlockPos& pos)
 {
-    return *mLevel->getBiome(pos)->getMobs(category);
+    return mLevel->getBiome(pos)->getMobs(category);
 }
 
 BlockPos* TheEndLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,

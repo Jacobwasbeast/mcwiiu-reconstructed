@@ -27,6 +27,13 @@ class StringTable;
 class LevelGenerationOptions : public GameRuleDefinition
 {
 public:
+    enum EMapSize
+    {
+        eMapSize_Small,
+        eMapSize_Medium,
+        eMapSize_Large
+    };
+
     typedef boost::unordered_map<std::wstring, ConsoleSchematicFile*> SchematicFileMap;
 
     enum eSrc
@@ -125,7 +132,7 @@ public:
     void loadStringTable(StringTable* table);
     void copyStringToTable(const std::wstring& value, StringTable* table);
     SchematicFileMap* getUnfinishedSchematicFiles();
-    static unsigned int packMounted(void* data, int mountIndex, unsigned int mounted, unsigned int flags);
+    static int packMounted(void* data, int mountIndex, unsigned int mounted, unsigned int flags);
     void loadBaseSaveData();
     bool canUnload();
     void releaseSchematicFile(const std::wstring& name);

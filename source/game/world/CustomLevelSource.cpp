@@ -11,73 +11,52 @@ CustomLevelSource::~CustomLevelSource()
 {
 }
 
-void CustomLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
+void CustomLevelSource::prepareHeights(int, int, ChunkPrimer*)
 {
-    static_cast<void>(chunkX);
-    static_cast<void>(chunkZ);
-    static_cast<void>(primer);
 }
 
-LevelChunk* CustomLevelSource::createChunk(int chunkX, int chunkZ)
+LevelChunk* CustomLevelSource::createChunk(int, int)
 {
-    static_cast<void>(chunkX);
-    static_cast<void>(chunkZ);
     return NULL;
 }
 
-void CustomLevelSource::lightChunk(LevelChunk* chunk)
+void CustomLevelSource::lightChunk(LevelChunk*)
 {
-    static_cast<void>(chunk);
 }
 
-void CustomLevelSource::postProcess(int chunkX, int chunkZ)
+void CustomLevelSource::postProcess(int, int)
 {
-    static_cast<void>(chunkX);
-    static_cast<void>(chunkZ);
 }
 
-bool CustomLevelSource::postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ)
+bool CustomLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
 {
-    static_cast<void>(chunk);
-    static_cast<void>(chunkX);
-    static_cast<void>(chunkZ);
     return false;
 }
 
-std::vector<Biome::MobSpawnerData*> CustomLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
+std::vector<Biome::MobSpawnerData*>* CustomLevelSource::getMobsAt(MobCategory*, const BlockPos&)
 {
-    static_cast<void>(category);
-    static_cast<void>(pos);
-    return std::vector<Biome::MobSpawnerData*>();
+    return NULL;
 }
 
 bool CustomLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
     if (!mGenerateStructures) return false;
-    if (feature == L"Stronghold" && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
+    if (feature == L"StrongHold" && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
     if (feature == L"Shipwreck" && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
     if (feature == L"Mansion" && mMansion != NULL) return mMansion->isInsideFeature(pos);
     if (feature == L"Monument" && mMonument != NULL) return mMonument->isInsideFeature(pos);
     if (feature == L"Village" && mVillage != NULL) return mVillage->isInsideFeature(pos);
     if (feature == L"Mineshaft" && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
     if (feature == L"Temple" && mTemple != NULL) return mTemple->isInsideFeature(pos);
-    if (feature == L"Ocean_Ruin" && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+    if (feature == L"Ruin" && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
     return false;
 }
 
-BlockPos* CustomLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
-                                                   const BlockPos& pos, bool findUnexplored)
+BlockPos* CustomLevelSource::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)
 {
-    static_cast<void>(level);
-    static_cast<void>(feature);
-    static_cast<void>(pos);
-    static_cast<void>(findUnexplored);
     return NULL;
 }
 
-void CustomLevelSource::recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ)
+void CustomLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int, int)
 {
-    static_cast<void>(chunk);
-    static_cast<void>(chunkX);
-    static_cast<void>(chunkZ);
 }

@@ -2,20 +2,24 @@
 
 #include <cmath>
 
+#include "game/core/Bush.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/FallingBlock.hpp"
+#include "game/world/block/FjNetherrackBlockPred.hpp"
 #include "game/world/block/Material.hpp"
-#include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
+#include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
-#include "game/core/Bush.hpp"
-#include "game/world/biome/Biome.hpp"
 #include "game/world/generation/BushFeature.hpp"
 #include "game/world/generation/HellFireFeature.hpp"
 #include "game/world/generation/HellPortalFeature.hpp"
@@ -23,35 +27,42 @@
 #include "game/world/generation/LargeHellCaveFeature.hpp"
 #include "game/world/generation/LightGemFeature.hpp"
 #include "game/world/generation/OreFeature.hpp"
+#include "game/core/XMem.hpp"
+
+
+static FjNetherrackBlockPred sNetherrackPredicate;
 
 NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long long seed)
-    : mRandom(),
-      mPopulationRandom(seed),
-      mGenerateStructures(generateStructures),
-      mLevel(level),
-      mNoise1(new PerlinNoise(&mRandom, 16)),
-      mNoise2(new PerlinNoise(&mRandom, 16)),
-      mNoise3(new PerlinNoise(&mRandom, 8)),
-      mNoise4(new PerlinNoise(&mRandom, 4)),
-      mNoise5(new PerlinNoise(&mRandom, 4)),
-      mNoise6(new PerlinNoise(&mRandom, 10)),
-      mNoise7(new PerlinNoise(&mRandom, 16)),
-      mFireFeature(new HellFireFeature()),
-      mLightGemFeature(new LightGemFeature()),
-      mHellPortalFeature(new HellPortalFeature()),
-      mQuartzOre(new OreFeature(Blocks::quartz_ore->defaultBlockState(), 14)),
-      mMagmaOre(new OreFeature(Blocks::magma->defaultBlockState(), 33)),
-      mLavaSpring(new HellSpringFeature(Blocks::flowing_lava, true)),
-      mLavaSpringOpen(new HellSpringFeature(Blocks::flowing_lava, false)),
-      mBrownMushroom(new BushFeature(static_cast<Bush*>(Blocks::brown_mushroom))),
-      mRedMushroom(new BushFeature(static_cast<Bush*>(Blocks::red_mushroom))),
-      mNetherBridgeFeature(new NetherBridgeFeature()),
-      mCaves(new LargeHellCaveFeature())
 {
     mLevelSize = static_cast<int>(std::ceil(
         static_cast<float>(level->getLevelData()->getXZSize()) /
         static_cast<float>(level->getLevelData()->getHellScale())));
-    mLevel->setSeaLevel(63);
+    mGenerateStructures = generateStructures;
+    mLevel = level;
+    mRandom = Random(seed);
+    mPopulationRandom = Random(seed);
+
+    mNoise1 = new PerlinNoise(&mRandom, 16);
+    mNoise2 = new PerlinNoise(&mRandom, 16);
+    mNoise3 = new PerlinNoise(&mRandom, 8);
+    mNoise4 = new PerlinNoise(&mRandom, 4);
+    mNoise5 = new PerlinNoise(&mRandom, 4);
+    mNoise6 = new PerlinNoise(&mRandom, 10);
+    mNoise7 = new PerlinNoise(&mRandom, 16);
+
+    level->setSeaLevel(63);
+
+    mFireFeature = new HellFireFeature();
+    mLightGemFeature = new LightGemFeature();
+    mHellPortalFeature = new HellPortalFeature();
+    mQuartzOre = new OreFeature(Blocks::quartz_ore->defaultBlockState(), 14, &sNetherrackPredicate);
+    mMagmaOre = new OreFeature(Blocks::magma->defaultBlockState(), 33, &sNetherrackPredicate);
+    mLavaSpring = new HellSpringFeature(Blocks::flowing_lava, true);
+    mLavaSpringOpen = new HellSpringFeature(Blocks::flowing_lava, false);
+    mBrownMushroom = new BushFeature(static_cast<Bush*>(Blocks::brown_mushroom));
+    mRedMushroom = new BushFeature(static_cast<Bush*>(Blocks::red_mushroom));
+    mNetherBridgeFeature = new NetherBridgeFeature();
+    mCaves = new LargeHellCaveFeature();
 }
 
 NetherLevelSource::~NetherLevelSource()
@@ -76,257 +87,212 @@ NetherLevelSource::~NetherLevelSource()
     delete mCaves;
 }
 
-arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> values, int x, int y, int z,
-                                                       int xSize, int ySize, int zSize)
-{
-    const unsigned int count = static_cast<unsigned int>(xSize * ySize * zSize);
-    if (values.data == NULL || values.length != count)
-    {
-        delete[] values.data;
-        values.data = count == 0 ? NULL : new double[count]();
-        values.length = count;
-    }
-
-    arrayWithLength<double> lower = mNoise2->getRegion(arrayWithLength<double>(), x, y, z,
-                                                        xSize, ySize, zSize, 684.412, 2053.236, 0.5);
-    arrayWithLength<double> upper = mNoise1->getRegion(arrayWithLength<double>(), x, y, z,
-                                                        xSize, ySize, zSize, 684.412, 2053.236, 0.5);
-    arrayWithLength<double> depth = mNoise3->getRegion(arrayWithLength<double>(), x, y, z,
-                                                        xSize, ySize, zSize, 684.412, 2053.236, 0.5);
-    for (int ix = 0; ix < xSize; ++ix)
-    {
-        for (int iz = 0; iz < zSize; ++iz)
-        {
-            for (int iy = 0; iy < ySize; ++iy)
-            {
-                const int index = (ix * zSize + iz) * ySize + iy;
-                const double vertical = static_cast<double>(y + iy) / static_cast<double>(ySize);
-                double value = lower.data[index] * (1.0 - vertical) + upper.data[index] * vertical;
-                value -= depth.data[index] * 0.5;
-                value += static_cast<double>(mLevelSize - y) * 0.25;
-                values.data[index] = value;
-            }
-        }
-    }
-    delete[] lower.data;
-    delete[] upper.data;
-    delete[] depth.data;
-    return values;
-}
-
 void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
-    arrayWithLength<double> heights = getHeights(arrayWithLength<double>(), chunkX * 4, 0, chunkZ * 4, 5, 17, 5);
-    const int seaLevel = mLevel->getSeaLevel();
-    for (int sectionX = 0; sectionX < 4; ++sectionX)
+    const int lavaLevel = mLevel->getSeaLevel() / 2 + 1;
+    arrayWithLength<double> buffer = getHeights(arrayWithLength<double>(), chunkX * 4, 0, chunkZ * 4, 5, 17, 5);
+
+    for (int xc = 0; xc < 4; ++xc)
     {
-        for (int sectionZ = 0; sectionZ < 4; ++sectionZ)
+        for (int zc = 0; zc < 4; ++zc)
         {
-            const int index = sectionX * 5 + sectionZ;
-            for (int localX = 0; localX < 4; ++localX)
+            for (int yc = 0; yc < 16; ++yc)
             {
-                for (int localZ = 0; localZ < 4; ++localZ)
+                double s0 = buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 0];
+                double s1 = buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 0];
+                double s2 = buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 0];
+                double s3 = buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 0];
+                const double s0a = (buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 1] - s0) * 0.125;
+                const double s1a = (buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 1] - s1) * 0.125;
+                const double s2a = (buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 1] - s2) * 0.125;
+                const double s3a = (buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 1] - s3) * 0.125;
+
+                for (int y = 0; y < 8; ++y)
                 {
-                    for (int y = 0; y < 16; ++y)
+                    double x0 = s0;
+                    double x1 = s1;
+                    const double xStep0 = (s2 - s0) * 0.25;
+                    const double xStep1 = (s3 - s1) * 0.25;
+
+                    for (int x = 0; x < 4; ++x)
                     {
-                        const int height = y + 1;
-                        const double xValue = heights.data[index * 17 + height];
-                        const double zValue = heights.data[(index + 1) * 17 + height];
-                        const double nextX = heights.data[(index + 5) * 17 + height];
-                        const double nextZ = heights.data[(index + 6) * 17 + height];
-                        const double blend = static_cast<double>(localX) * 0.25;
-                        const double a = xValue + (nextX - xValue) * blend;
-                        const double b = zValue + (nextZ - zValue) * blend;
-                        const double value = a + (b - a) * static_cast<double>(localZ) * 0.25;
-                        for (int dy = 0; dy < 4; ++dy)
+                        const double zStep = (x1 - x0) * 0.25;
+                        double value = x0;
+
+                        for (int z = 0; z < 4; ++z)
                         {
-                            const int worldY = y * 4 + dy;
-                            const double adjusted = value + static_cast<double>(dy) * 0.25;
-                            const BlockState* state = adjusted > 0.0 ? Blocks::netherrack->defaultBlockState() : NULL;
-                            if (worldY < seaLevel && state == NULL)
+                            const BlockState* state = NULL;
+                            if (yc * 8 + y < lavaLevel)
                             {
                                 state = Blocks::lava->defaultBlockState();
                             }
-                            primer->setState(localX * 4 + sectionX * 4, worldY,
-                                             localZ * 4 + sectionZ * 4, state);
+                            if (value > 0.0)
+                            {
+                                state = Blocks::netherrack->defaultBlockState();
+                            }
+                            primer->setState(x + xc * 4, y + yc * 8, z + zc * 4, state);
+                            value += zStep;
                         }
+
+                        x0 += xStep0;
+                        x1 += xStep1;
                     }
+
+                    s0 += s0a;
+                    s1 += s1a;
+                    s2 += s2a;
+                    s3 += s3a;
                 }
             }
         }
     }
-    delete[] heights.data;
+
+    delete[] buffer.data;
 }
 
 void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     const int seaLevel = mLevel->getSeaLevel();
 
-    arrayWithLength<double> noise1 = mNoise4->getRegion(arrayWithLength<double>(256, true), chunkX * 16,
-                                                         chunkZ * 16, 0, 16, 16, 1, 0.03125, 0.03125, 1.0);
-    arrayWithLength<double> noise2 = mNoise4->getRegion(arrayWithLength<double>(256, true), chunkX * 16,
-                                                         109, chunkZ * 16, 16, 1, 16, 0.03125, 1.0, 0.03125);
-    arrayWithLength<double> noise3 = mNoise5->getRegion(arrayWithLength<double>(256, true), chunkX * 16,
-                                                         chunkZ * 16, 0, 16, 16, 1, 0.2, 0.2, 0.2);
+    arrayWithLength<double> sandBuffer(256, true);
+    arrayWithLength<double> gravelBuffer(256, true);
+    arrayWithLength<double> depthBuffer(256, true);
+
+    sandBuffer = mNoise4->getRegion(sandBuffer, chunkX * 16, chunkZ * 16, 0, 16, 16, 1, 0.03125, 0.03125, 1.0);
+    gravelBuffer = mNoise4->getRegion(gravelBuffer, chunkX * 16, 109, chunkZ * 16, 16, 1, 16, 0.03125, 1.0, 0.03125);
+    depthBuffer = mNoise5->getRegion(depthBuffer, chunkX * 16, chunkZ * 16, 0, 16, 16, 1, 0.0625, 0.0625, 0.0625);
 
     for (int x = 0; x < 16; ++x)
     {
         for (int z = 0; z < 16; ++z)
         {
-            const int bufIndex = z * 16 + x;
-            const int columnBase = (x << 11) | (z << 7);
+            const bool sand = mRandom.nextDouble() * 0.2 + sandBuffer.data[x + z * 16] > 0.0;
+            const bool gravel = mRandom.nextDouble() * 0.2 + gravelBuffer.data[x + z * 16] > 0.0;
+            const int runDepth = static_cast<int>(depthBuffer.data[x + z * 16] / 3.0 + 3.0 + mRandom.nextDouble() * 0.25);
 
-            const double randSoulSand = mRandom.nextDouble();
-            const bool useSoulSand = 0.0 < randSoulSand * 0.2 + noise1.data[bufIndex];
-            const double randGravel = mRandom.nextDouble();
-            const double noise2Value = noise2.data[bufIndex];
-            const double noise3Value = noise3.data[bufIndex];
-            const double randThickness = mRandom.nextDouble();
-            const int thickness = static_cast<int>(randThickness * 0.25 + noise3Value / 3.0 + 3.0);
-
-            int depth = -1;
+            int run = -1;
             const BlockState* top = Blocks::netherrack->defaultBlockState();
-            const BlockState* filler = Blocks::netherrack->defaultBlockState();
+            const BlockState* material = Blocks::netherrack->defaultBlockState();
 
-            for (int y = 127, remaining = 128; remaining > 0; --y, --remaining)
+            for (int y = 127; y >= 0; --y)
             {
-                const int cellIndex = columnBase + y;
-                bool wallPlaced = false;
-                const int halfSize = mLevelSize / 2;
+                const int offs = ((x << 11) | (z << 7)) + y;
+                bool edge = false;
 
-                if (chunkX <= -halfSize)
+                if (chunkX <= -mLevelSize / 2)
                 {
-                    const int jitter = mRandom.nextInt(4);
-                    if (!((0 < x - jitter) && (-halfSize <= chunkX)))
+                    if (x - mRandom.nextInt(4) <= 0 || chunkX < -mLevelSize / 2)
                     {
-                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
-                        wallPlaced = true;
+                        primer->setState(offs, Blocks::bedrock->defaultBlockState());
+                        edge = true;
+                    }
+                }
+                if (chunkZ <= -mLevelSize / 2)
+                {
+                    if (z - mRandom.nextInt(4) <= 0 || chunkZ < -mLevelSize / 2)
+                    {
+                        primer->setState(offs, Blocks::bedrock->defaultBlockState());
+                        edge = true;
+                    }
+                }
+                if (chunkX >= mLevelSize / 2 - 1)
+                {
+                    if (x + mRandom.nextInt(4) >= 15 || chunkX > mLevelSize / 2)
+                    {
+                        primer->setState(offs, Blocks::bedrock->defaultBlockState());
+                        edge = true;
+                    }
+                }
+                if (chunkZ >= mLevelSize / 2 - 1)
+                {
+                    if (z + mRandom.nextInt(4) >= 15 || chunkZ > mLevelSize / 2)
+                    {
+                        primer->setState(offs, Blocks::bedrock->defaultBlockState());
+                        edge = true;
                     }
                 }
 
-                if (chunkZ <= -halfSize)
+                if (edge)
                 {
-                    const int jitter = mRandom.nextInt(4);
-                    if (!((0 < z - jitter) && (-halfSize <= chunkZ)))
-                    {
-                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
-                        wallPlaced = true;
-                    }
+                    continue;
                 }
 
-                if (halfSize - 1 <= chunkX)
+                if (y >= 127 - mRandom.nextInt(5) || y <= mRandom.nextInt(5))
                 {
-                    const int jitter = mRandom.nextInt(4);
-                    if ((15 <= x + jitter) || (halfSize < chunkX))
-                    {
-                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
-                        wallPlaced = true;
-                    }
+                    primer->setState(offs, Blocks::bedrock->defaultBlockState());
+                    continue;
                 }
 
-                bool buildHere;
-                if (chunkZ < halfSize - 1)
+                const BlockState* old = primer->getState(offs);
+                if (old->getBlock() == NULL || old->getBlock()->mMaterial == Material::AIR)
                 {
-                    buildHere = true;
+                    run = -1;
                 }
-                else
+                else if (old->getBlock() == Blocks::netherrack)
                 {
-                    const int jitter = mRandom.nextInt(4);
-                    buildHere = (z + jitter < 15) && (chunkZ <= halfSize);
-                }
-
-                if (buildHere && !wallPlaced)
-                {
-                    int edge = mRandom.nextInt(5);
-                    bool nearCap = (127 - edge <= y);
-                    if (!nearCap)
+                    if (run == -1)
                     {
-                        edge = mRandom.nextInt(5);
-                        nearCap = (y <= edge);
-                    }
-
-                    if (nearCap)
-                    {
-                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
-                    }
-                    else
-                    {
-                        const BlockState* state = primer->getState(cellIndex);
-                        if (state == NULL || state->getBlock()->mMaterial == Material::AIR)
+                        if (runDepth <= 0)
                         {
-                            depth = -1;
+                            top = Blocks::air->defaultBlockState();
+                            material = Blocks::netherrack->defaultBlockState();
                         }
-                        else if (state->getBlock() == Blocks::netherrack)
+                        else if (y >= seaLevel - 3 && y <= seaLevel + 2)
                         {
-                            if (depth == -1)
+                            top = Blocks::netherrack->defaultBlockState();
+                            material = Blocks::netherrack->defaultBlockState();
+                            if (gravel)
                             {
-                                depth = thickness;
-                                if (thickness < 1)
+                                top = Blocks::gravel->defaultBlockState();
+                                material = Blocks::netherrack->defaultBlockState();
+                            }
+                            if (sand)
+                            {
+                                top = Blocks::soul_sand->defaultBlockState();
+                                material = Blocks::soul_sand->defaultBlockState();
+                                if (mRandom.nextInt(16) == 0)
                                 {
-                                    top = Blocks::AIR->defaultBlockState();
-                                    filler = Blocks::netherrack->defaultBlockState();
-                                }
-                                else if (seaLevel - 3 <= y && y <= seaLevel + 2)
-                                {
-                                    top = Blocks::netherrack->defaultBlockState();
-                                    filler = Blocks::netherrack->defaultBlockState();
-                                    if (0.0 < randGravel * 0.2 + noise2Value)
+                                    int wartY = y + 1;
+                                    if (wartY > 127)
                                     {
-                                        top = Blocks::gravel->defaultBlockState();
-                                        filler = Blocks::netherrack->defaultBlockState();
+                                        wartY = 127;
                                     }
-                                    if (useSoulSand)
+                                    const int wartOffs = ((x << 11) | (z << 7)) + wartY;
+                                    if (primer->getState(wartOffs)->getBlock() != Blocks::bedrock)
                                     {
-                                        top = Blocks::soul_sand->defaultBlockState();
-                                        filler = Blocks::soul_sand->defaultBlockState();
-                                        if (mRandom.nextInt(16) == 0)
-                                        {
-                                            int wartY = y + 1;
-                                            if (127 < wartY)
-                                            {
-                                                wartY = 127;
-                                            }
-                                            const BlockState* wartState = primer->getState(columnBase + wartY);
-                                            if (wartState->getBlock() != Blocks::bedrock)
-                                            {
-                                                primer->setState(columnBase + wartY,
-                                                                 Blocks::nether_wart->defaultBlockState());
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (y < seaLevel + 1 && (top == NULL || top->getBlock()->mMaterial == Material::AIR))
-                                {
-                                    top = Blocks::lava->defaultBlockState();
-                                }
-
-                                if (seaLevel <= y || useSoulSand)
-                                {
-                                    const BlockState* hereState = primer->getState(cellIndex);
-                                    if (hereState->getBlock() != Blocks::bedrock)
-                                    {
-                                        primer->setState(cellIndex, top);
-                                    }
-                                }
-                                else
-                                {
-                                    const BlockState* hereState = primer->getState(cellIndex);
-                                    if (hereState->getBlock() != Blocks::bedrock)
-                                    {
-                                        primer->setState(cellIndex, filler);
+                                        primer->setState(wartOffs, Blocks::nether_wart->defaultBlockState());
                                     }
                                 }
                             }
-                            else if (0 < depth)
+                        }
+
+                        if (y < seaLevel + 1 && (top == NULL || top->getMaterial() == Material::AIR))
+                        {
+                            top = Blocks::lava->defaultBlockState();
+                        }
+
+                        run = runDepth;
+                        if (y >= seaLevel || sand)
+                        {
+                            if (primer->getState(offs)->getBlock() != Blocks::bedrock)
                             {
-                                --depth;
-                                const BlockState* hereState = primer->getState(z, y, x);
-                                if (hereState->getBlock() != Blocks::bedrock)
-                                {
-                                    primer->setState(z, y, x, filler);
-                                }
+                                primer->setState(offs, top);
                             }
+                        }
+                        else
+                        {
+                            if (primer->getState(offs)->getBlock() != Blocks::bedrock)
+                            {
+                                primer->setState(offs, material);
+                            }
+                        }
+                    }
+                    else if (run > 0)
+                    {
+                        --run;
+                        if (primer->getState(z, y, x)->getBlock() != Blocks::bedrock)
+                        {
+                            primer->setState(z, y, x, material);
                         }
                     }
                 }
@@ -334,9 +300,9 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
         }
     }
 
-    delete[] noise1.data;
-    delete[] noise2.data;
-    delete[] noise3.data;
+    delete[] sandBuffer.data;
+    delete[] gravelBuffer.data;
+    delete[] depthBuffer.data;
 }
 
 void NetherLevelSource::lightChunk(LevelChunk* chunk)
@@ -344,11 +310,117 @@ void NetherLevelSource::lightChunk(LevelChunk* chunk)
     chunk->recalcHeightmap();
 }
 
+arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> buffer, int x, int y, int z,
+                                                       int xSize, int ySize, int zSize)
+{
+    if (buffer.data == NULL)
+    {
+        buffer = arrayWithLength<double>(xSize * ySize * zSize, true);
+    }
+
+    const double s = 684.412;
+    const double hs = 2053.236;
+
+    arrayWithLength<double> pnr;
+    arrayWithLength<double> ar;
+    arrayWithLength<double> br;
+    arrayWithLength<double> sr;
+    arrayWithLength<double> dr;
+    arrayWithLength<double> fi;
+    arrayWithLength<double> fis;
+
+    sr = mNoise6->getRegion(sr, x, y, z, xSize, 1, zSize, 1.0, 0.0, 1.0);
+    dr = mNoise7->getRegion(dr, x, y, z, xSize, 1, zSize, 100.0, 0.0, 100.0);
+    pnr = mNoise3->getRegion(pnr, x, y, z, xSize, ySize, zSize, s / 80.0, hs / 60.0, s / 80.0);
+    ar = mNoise1->getRegion(ar, x, y, z, xSize, ySize, zSize, s, hs, s);
+    br = mNoise2->getRegion(br, x, y, z, xSize, ySize, zSize, s, hs, s);
+
+    int p = 0;
+    arrayWithLength<double> yoffs(ySize, true);
+    for (int yy = 0; yy < ySize; ++yy)
+    {
+        yoffs.data[yy] = std::cos(static_cast<double>(yy * 3.1415927f * 6.0f) / static_cast<double>(ySize)) * 2.0;
+
+        double dd = yy;
+        if (yy > ySize / 2)
+        {
+            dd = ySize - 1 - yy;
+        }
+        if (dd < 4.0)
+        {
+            dd = 4.0 - dd;
+            yoffs.data[yy] -= dd * dd * dd * 10.0;
+        }
+    }
+
+    for (int xx = 0; xx < xSize; ++xx)
+    {
+        for (int zz = 0; zz < zSize; ++zz)
+        {
+            for (int yy = 0; yy < ySize; ++yy)
+            {
+                double val = 0.0;
+                const double yOffs = yoffs.data[yy];
+                const double bb = ar.data[p] / 512.0;
+                const double cc = br.data[p] / 512.0;
+                const double v = (pnr.data[p] / 10.0 + 1.0) / 2.0;
+
+                if (v < 0.0)
+                {
+                    val = bb;
+                }
+                else if (v > 1.0)
+                {
+                    val = cc;
+                }
+                else
+                {
+                    val = bb + (cc - bb) * v;
+                }
+                val -= yOffs;
+
+                if (yy > ySize - 4)
+                {
+                    const double slide = static_cast<float>(yy - (ySize - 4)) / 3.0f;
+                    val = val * (1.0 - slide) + -10.0 * slide;
+                }
+
+                if (static_cast<double>(yy) < 0.0)
+                {
+                    double slide = (0.0 - yy) / 4.0;
+                    slide = Mth::clamp(slide, 0.0, 1.0);
+                    val = val * (1.0 - slide) + -10.0 * slide;
+                }
+
+                buffer.data[p] = val;
+                ++p;
+            }
+        }
+    }
+
+    delete[] pnr.data;
+    delete[] ar.data;
+    delete[] br.data;
+    delete[] sr.data;
+    delete[] dr.data;
+    delete[] fi.data;
+    delete[] fis.data;
+    delete[] yoffs.data;
+
+    return buffer;
+}
+
 LevelChunk* NetherLevelSource::createChunk(int chunkX, int chunkZ)
 {
-    mRandom.setSeed(static_cast<long long>(chunkX) * -1722452168LL + static_cast<long long>(chunkZ) * -245973051LL);
-    arrayWithLength<unsigned short> elements(65536, true);
+    mRandom.setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
+
+    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(65536, 0xFFFFFFFF, 0x1000, 4));
+    XMemSet128(elementIds, 0, 65536);
+    arrayWithLength<unsigned short> elements;
+    elements.data = elementIds;
+    elements.length = 32768;
     ChunkPrimer primer(false, elements);
+
     prepareHeights(chunkX, chunkZ, &primer);
     buildSurfaces(chunkX, chunkZ, &primer);
     mCaves->apply(mLevel, chunkX, chunkZ, &primer);
@@ -356,22 +428,25 @@ LevelChunk* NetherLevelSource::createChunk(int chunkX, int chunkZ)
     {
         mNetherBridgeFeature->apply(mLevel, chunkX, chunkZ, &primer);
     }
+
     LevelChunk* chunk = new LevelChunk(mLevel, &primer, chunkX, chunkZ);
     chunk->setCheckAllLight();
+    XPhysicalFree(elementIds);
     return chunk;
 }
 
 void NetherLevelSource::postProcess(int chunkX, int chunkZ)
 {
-    Level::setInstaTick(true);
-    const BlockPos origin(chunkX << 4, 0, chunkZ << 4);
+    FallingBlock::fallInstantly = true;
+
+    const BlockPos origin(chunkX * 16, 0, chunkZ * 16);
     Biome* biome = mLevel->getBiome(origin.offset(16, 0, 16));
     ChunkPos chunkPos(chunkX, chunkZ);
+
     mPopulationRandom.setSeed(mLevel->getSeed());
-    const long long xSeed = mPopulationRandom.nextLong() / 2LL * 2LL + 1LL;
-    const long long zSeed = mPopulationRandom.nextLong() / 2LL * 2LL + 1LL;
-    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed +
-                               static_cast<long long>(chunkZ) * zSeed) ^ mLevel->getSeed());
+    const long long xScale = mPopulationRandom.nextLong() / 2 * 2 + 1;
+    const long long zScale = mPopulationRandom.nextLong() / 2 * 2 + 1;
+    mPopulationRandom.setSeed((static_cast<long long>(chunkZ) * xScale + static_cast<long long>(chunkZ) * zScale) ^ mLevel->getSeed());
 
     mNetherBridgeFeature->postProcess(mLevel, mPopulationRandom, &chunkPos);
 
@@ -382,22 +457,23 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
         const int z = mPopulationRandom.nextInt(16) + 8;
         mLavaSpringOpen->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
-    const int fireCount = mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1;
-    for (int i = 0; i < fireCount; ++i)
+
+    for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1; ++i)
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
         const int y = mPopulationRandom.nextInt(120) + 4;
         const int z = mPopulationRandom.nextInt(16) + 8;
         mFireFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
-    const int lightGemCount = mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1);
-    for (int i = 0; i < lightGemCount; ++i)
+
+    for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1); ++i)
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
         const int y = mPopulationRandom.nextInt(120) + 4;
         const int z = mPopulationRandom.nextInt(16) + 8;
         mLightGemFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
+
     for (int i = 0; i < 10; ++i)
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
@@ -405,6 +481,7 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
         const int z = mPopulationRandom.nextInt(16) + 8;
         mHellPortalFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
+
     if (mPopulationRandom.nextBoolean())
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
@@ -412,6 +489,7 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
         const int z = mPopulationRandom.nextInt(16) + 8;
         mBrownMushroom->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
+
     if (mPopulationRandom.nextBoolean())
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
@@ -419,6 +497,7 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
         const int z = mPopulationRandom.nextInt(16) + 8;
         mRedMushroom->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
+
     for (int i = 0; i < 16; ++i)
     {
         const int x = mPopulationRandom.nextInt(16);
@@ -426,14 +505,16 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
         const int z = mPopulationRandom.nextInt(16);
         mQuartzOre->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
-    const int magmaHeight = mLevel->getSeaLevel() / 2 - 4;
+
+    const int magmaLevel = mLevel->getSeaLevel() / 2 - 4;
     for (int i = 0; i < 4; ++i)
     {
         const int x = mPopulationRandom.nextInt(16);
-        const int y = magmaHeight + mPopulationRandom.nextInt(10);
+        const int y = magmaLevel + mPopulationRandom.nextInt(10);
         const int z = mPopulationRandom.nextInt(16);
         mMagmaOre->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
+
     for (int i = 0; i < 16; ++i)
     {
         const int x = mPopulationRandom.nextInt(16);
@@ -442,41 +523,57 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
         mLavaSpring->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
 
-    biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX << 4, 0, chunkZ << 4));
-    Level::setInstaTick(false);
-    g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
+    biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX * 16, 0, chunkZ * 16));
+
+    FallingBlock::fallInstantly = false;
+
+    gApp.processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
-bool NetherLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
+bool NetherLevelSource::postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ)
 {
     return false;
 }
 
-std::vector<Biome::MobSpawnerData*> NetherLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
+std::vector<Biome::MobSpawnerData*>* NetherLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
-    if (category == MobCategory::MONSTER && mNetherBridgeFeature->isInsideFeature(pos))
+    if (category == MobCategory::MONSTER)
     {
-        return *mNetherBridgeFeature->getBridgeEnemies();
+        if (mNetherBridgeFeature->isInsideFeature(pos))
+        {
+            return mNetherBridgeFeature->getBridgeEnemies();
+        }
+
+        if (mNetherBridgeFeature->isInsideBoundingFeature(mLevel, pos)
+            && mLevel->getBlockState(pos.below())->getBlock() == Blocks::nether_brick)
+        {
+            return mNetherBridgeFeature->getBridgeEnemies();
+        }
     }
-    return *mLevel->getBiome(pos)->getMobs(category);
+
+    return mLevel->getBiome(pos)->getMobs(category);
 }
 
 BlockPos* NetherLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
                                                     const BlockPos& pos, bool findUnexplored)
 {
-    if (feature == L"Fortress")
+    if (feature == L"Fortress" && mNetherBridgeFeature != NULL)
     {
         return mNetherBridgeFeature->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     return NULL;
 }
 
-bool NetherLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
-{
-    return feature == L"Fortress" && mNetherBridgeFeature->isInsideFeature(pos);
-}
-
-void NetherLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int chunkX, int chunkZ)
+void NetherLevelSource::recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ)
 {
     mNetherBridgeFeature->apply(mLevel, chunkX, chunkZ, NULL);
+}
+
+bool NetherLevelSource::isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos)
+{
+    if (feature == L"Fortress" && mNetherBridgeFeature != NULL)
+    {
+        return mNetherBridgeFeature->isInsideFeature(pos);
+    }
+    return false;
 }

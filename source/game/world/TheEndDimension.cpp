@@ -23,8 +23,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 
-static ChunkPos gTheEndCentralArea(0, 0);
-static ChunkPos gTheEndOuterArea(100, 0);
 static bool gTheEndSpawnPosInitialized = false;
 static bool gTheEndLegacySpawnPosInitialized = false;
 static BlockPos gTheEndSpawnPos(0, 0, 0);
@@ -38,6 +36,8 @@ int aaDistance(int x, int z, ChunkPos* pos)
     const int zDistance = Mth::abs(z - pos->z);
     return xDistance > zDistance ? xDistance : zDistance;
 }
+
+ChunkPos TheEndDimension::AREAS[2] = { ChunkPos(0, 0), ChunkPos(0, 25) };
 
 TheEndDimension::TheEndDimension()
     : Dimension(), mDragonFight(NULL), mChunkData(NULL), mModernEnd(true)
@@ -77,7 +77,7 @@ void TheEndDimension::init()
     {
         mDragonFight = NULL;
     }
-    gApp.SetExtraGameData(static_cast<eGameExtraData>(3), mModernEnd);
+    gApp.SetExtraGameData(eGameExtraData_ModernEnd, mModernEnd);
 }
 
 ChunkGenerator* TheEndDimension::createRandomLevelGenerator() const
@@ -161,9 +161,9 @@ void TheEndDimension::tick()
 
 ChunkPos* TheEndDimension::closestAreaToPoint(int x, int z)
 {
-    unsigned int centralDistance = aaDistance(x, z, &gTheEndCentralArea);
-    unsigned int outerDistance = aaDistance(x, z, &gTheEndOuterArea);
-    return outerDistance < centralDistance ? &gTheEndOuterArea : &gTheEndCentralArea;
+    unsigned int centralDistance = aaDistance(x, z, &AREAS[0]);
+    unsigned int outerDistance = aaDistance(x, z, &AREAS[1]);
+    return outerDistance < centralDistance ? &AREAS[1] : &AREAS[0];
 }
 
 AABB* TheEndDimension::getPlayerConstraints(const BlockPos& pos)

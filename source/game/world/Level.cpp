@@ -1,4 +1,7 @@
 #include "game/world/Level.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <cfloat>
@@ -36,6 +39,8 @@
 #include "game/network/LevelListener.hpp"
 #include "game/network/PathNavigationListener.hpp"
 #include "game/server/ObserverBlock.hpp"
+#include "game/client/render/LevelRenderer.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
@@ -46,6 +51,7 @@
 #include "game/world/LevelSettings.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/WorldBorder.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/biome/BiomeSource.hpp"
@@ -69,17 +75,10 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/core/XMem.hpp"
+#include "game/core/MemSect.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
-unsigned int TlsAlloc();
-void* TlsGetValue(unsigned int index);
-int TlsSetValue(unsigned int index, void* value);
-void* XPhysicalAlloc(unsigned long size, unsigned long affinity, unsigned long alignment, unsigned int flags);
-void XPhysicalFree(void* memory);
-void* XMemSet128(void* destination, int value, unsigned int size);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-void MemSect(int section);
-void instructionSynchronize();
 
 static unsigned int sInstaTickTlsIndex = TlsAlloc();
 static unsigned int sLightingCacheTlsIndex = TlsAlloc();
@@ -180,8 +179,8 @@ void Level::_init()
     mLevelData = NULL;
     mIsClientSide = false;
     mSavedDataStorage = NULL;
-    mSpawnPeacefulMobs = true;
-    mSpawnHostileMobs = true;
+    mSpawnEnemies = true;
+    mSpawnFriendlies = true;
     mFindingSpawn = false;
 
     InitializeCriticalSection(&mEntityMutex);
@@ -192,7 +191,7 @@ void Level::_init()
 
     InitializeCriticalSectionAndSpinCount(&mLightMutex, 0x1400);
 
-    mRemovingBlockEntity = false;
+    mIsNew = false;
     mAmbientTickCountdown = 0;
     mFogDistance = -1;
     mForceTimeUpdate = false;
@@ -224,7 +223,7 @@ bool Level::shouldFreeze(const BlockPos& pos, bool checkNeighbours)
     const BlockState* state = getBlockState(pos);
     Block* block = state->getBlock();
 
-    if (block != Blocks::WATER && block != Blocks::FLOWING_WATER)
+    if (block != Blocks::water && block != Blocks::flowing_water)
     {
         return false;
     }
@@ -263,7 +262,7 @@ bool Level::shouldFreezeIgnoreNeighbors(const BlockPos& pos)
     const BlockState* state = getBlockState(pos);
     Block* block = state->getBlock();
 
-    if (block != Blocks::WATER && block != Blocks::FLOWING_WATER)
+    if (block != Blocks::water && block != Blocks::flowing_water)
     {
         return false;
     }
@@ -356,8 +355,9 @@ bool Level::hasEntitiesToRemove()
     return !mEntitiesToRemove.empty();
 }
 
-void Level::postConstruct()
+Level* Level::postConstruct()
 {
+    return this;
 }
 
 LevelChunk* Level::getChunk(int chunkX, int chunkZ)
@@ -454,7 +454,7 @@ bool Level::isOutsideBuildHeight(const BlockPos& pos)
 
 bool Level::isEmptyBlock(const BlockPos& pos)
 {
-    return getBlockId(pos.x, pos.y, pos.z) == 0;
+    return getBlockId(pos.x, pos.y, pos.z) == BlockId::AIR;
 }
 
 bool Level::isEmptyWaterBlock(const BlockPos& pos)
@@ -764,7 +764,7 @@ int Level::getExpectedLight(unsigned int* cache, const BlockPos& pos, LightLayer
         {
             if (!ignoreEmission && layer != LightLayer::SKY)
             {
-                return getEmissionCached(cache, Blocks::AIR, pos);
+                return getEmissionCached(cache, Blocks::air, pos);
             }
 
             return 0;
@@ -1457,7 +1457,7 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
         sameLight = true;
     }
 
-    if ((flags & 32) == 0 || !sameLight)
+    if ((flags & Block::UPDATE_LIGHT_IF_CHANGED) == 0 || !sameLight)
     {
         PIXBeginNamedEvent(0.0f, "Checking light: %d, %d, %d", pos.x, pos.y, pos.z);
         checkLight(pos, false, false);
@@ -1466,11 +1466,11 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
 
     bool sendUpdate = forceUpdate;
 
-    if (!sendUpdate && (flags & 2) != 0)
+    if (!sendUpdate && (flags & Block::UPDATE_CLIENTS) != 0)
     {
         if (mIsClientSide)
         {
-            if ((flags & 4) != 0)
+            if ((flags & Block::UPDATE_INVISIBLE) != 0)
             {
                 return true;
             }
@@ -1493,9 +1493,9 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
         return true;
     }
 
-    if (!forceUpdate && (flags & 1) == 0)
+    if (!forceUpdate && (flags & Block::UPDATE_NEIGHBORS) == 0)
     {
-        if ((flags & 0x10) == 0)
+        if ((flags & Block::UPDATE_NO_OBSERVERS) == 0)
         {
             updateObservingBlocksAt(pos, block);
         }
@@ -1503,7 +1503,7 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
         return true;
     }
 
-    blockUpdated(pos, state->getBlock(), ((flags >> 4) & 1) == 0);
+    blockUpdated(pos, state->getBlock(), (flags & Block::UPDATE_NO_OBSERVERS) == 0);
 
     if (state->hasAnalogOutputSignal())
     {
@@ -1543,9 +1543,9 @@ bool Level::setData(int x, int y, int z, int data, int flags, bool forceUpdate)
     Block* block = chunk->getBlock(local);
     BlockPos pos(x, y, z);
 
-    if (forceUpdate || (flags & 2) != 0)
+    if (forceUpdate || (flags & Block::UPDATE_CLIENTS) != 0)
     {
-        if (forceUpdate || !mIsClientSide || (flags & 4) == 0)
+        if (forceUpdate || !mIsClientSide || (flags & Block::UPDATE_INVISIBLE) == 0)
         {
             sendBlockUpdated(pos, block->defaultBlockState(), block->defaultBlockState(), flags, true);
         }
@@ -1560,9 +1560,9 @@ bool Level::setData(int x, int y, int z, int data, int flags, bool forceUpdate)
         return changed;
     }
 
-    if (!forceUpdate && (flags & 1) == 0)
+    if (!forceUpdate && (flags & Block::UPDATE_NEIGHBORS) == 0)
     {
-        if ((flags & 0x10) == 0)
+        if ((flags & Block::UPDATE_NO_OBSERVERS) == 0)
         {
             updateObservingBlocksAt(pos, block);
         }
@@ -1589,7 +1589,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
 
     LevelChunk* chunk = getChunk(x >> 4, z >> 4);
 
-    if ((flags & 0x40) != 0)
+    if ((flags & Block::UPDATE_CHUNK_ONLY) != 0)
     {
         chunk->setBlockAndData(x & 0xF, y, z & 0xF, blockId, data, true, false);
         return true;
@@ -1599,7 +1599,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
     bool changed = chunk->setBlockAndData(x & 0xF, y, z & 0xF, blockId, data, true, false);
     BlockPos pos(x, y, z);
 
-    if ((flags & 0x20) == 0)
+    if ((flags & Block::UPDATE_LIGHT_IF_CHANGED) == 0)
     {
         checkLight(pos, false, false);
     }
@@ -1613,7 +1613,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
     Block* oldBlock = Block::byId(oldBlockId);
     bool immediate = false;
 
-    if ((flags & 2) != 0 && (!mIsClientSide || (flags & 4) == 0))
+    if ((flags & Block::UPDATE_CLIENTS) != 0 && (!mIsClientSide || (flags & Block::UPDATE_INVISIBLE) == 0))
     {
         immediate = true;
     }
@@ -1625,16 +1625,16 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
         return changed;
     }
 
-    if ((flags & 1) == 0)
+    if ((flags & Block::UPDATE_NEIGHBORS) == 0)
     {
-        if ((flags & 0x10) == 0)
+        if ((flags & Block::UPDATE_NO_OBSERVERS) == 0)
         {
             updateObservingBlocksAt(pos, block);
         }
     }
     else
     {
-        blockUpdated(pos, oldBlock, ((flags >> 4) & 1) == 0);
+        blockUpdated(pos, oldBlock, (flags & Block::UPDATE_NO_OBSERVERS) == 0);
 
         if (block != NULL && block->getBlockState(data)->hasAnalogOutputSignal())
         {
@@ -1647,7 +1647,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
 
 bool Level::removeBlock(const BlockPos& pos)
 {
-    return setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+    return setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
 }
 
 void Level::levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data)
@@ -1673,19 +1673,19 @@ bool Level::destroyBlock(const BlockPos& pos, bool dropResources)
         return false;
     }
 
-    levelEvent(2001, pos, Block::getIdWithData(state));
+    levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
 
     if (dropResources)
     {
         block->spawnResources(this, pos, state, 0);
     }
 
-    return setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+    return setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
 }
 
 bool Level::setBlockAndUpdate(const BlockPos& pos, const BlockState* state)
 {
-    return setBlock(pos, state, 3, false);
+    return setBlock(pos, state, Block::UPDATE_ALL, false);
 }
 
 void Level::sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState,
@@ -1729,7 +1729,6 @@ void Level::lightColumnChanged(int x, int z, int fromY, int toY)
     PIXEndNamedEvent();
 
     PIXEndNamedEvent();
-    instructionSynchronize();
 }
 
 void Level::updateNeighborsAtExceptFromFacing(const BlockPos& pos, Block* block, const Direction* skipSide)
@@ -2135,7 +2134,7 @@ const BlockState* Level::getBlockState(const BlockPos& pos)
 {
     if (isOutsideBuildHeight(pos))
     {
-        return Blocks::AIR->defaultBlockState();
+        return Blocks::air->defaultBlockState();
     }
 
     return getChunkAt(pos)->getBlockState(pos);
@@ -2164,7 +2163,7 @@ const BlockState* Level::getBlockState(LevelChunk* chunk, EntityTickCache& tickC
 
     if (isOutsideBuildHeight(pos))
     {
-        return Blocks::AIR->defaultBlockState();
+        return Blocks::air->defaultBlockState();
     }
 
     return chunk->getBlockState(pos);
@@ -2287,7 +2286,7 @@ Block* Level::getLiquidBlock(const BlockPos& pos)
 {
     Block* extraBlock = getExtraBlock(pos);
 
-    if (extraBlock == NULL || extraBlock == Blocks::AIR)
+    if (extraBlock == NULL || extraBlock == Blocks::air)
     {
         return getBlock(pos);
     }
@@ -2299,7 +2298,7 @@ const BlockState* Level::getLiquidBlockState(const BlockPos& pos)
 {
     const BlockState* extraState = getExtraBlockState(pos);
 
-    if (extraState != NULL && extraState != Blocks::AIR->defaultBlockState())
+    if (extraState != NULL && extraState != Blocks::air->defaultBlockState())
     {
         return extraState;
     }
@@ -2311,7 +2310,7 @@ const BlockState* Level::getExtraBlockState(const BlockPos& pos)
 {
     if (isOutsideBuildHeight(pos))
     {
-        return Blocks::AIR->defaultBlockState();
+        return Blocks::air->defaultBlockState();
     }
 
     return getChunkAt(pos)->getExtraBlockState(pos);
@@ -2695,7 +2694,7 @@ bool Level::addEntity(boost::shared_ptr<Entity> entity)
     int chunkZ = Mth::fastFloor(entity->mZ * 0.0625);
     bool forcedLoading = entity->mForcedLoading;
 
-    bool playerEntity = (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL;
+    bool playerEntity = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
     if (!playerEntity && !forcedLoading && !hasChunk(chunkX, chunkZ, false))
     {
         return false;
@@ -2773,7 +2772,7 @@ void Level::removeEntity(boost::shared_ptr<Entity> entity)
 
     entity->remove();
 
-    bool playerEntity = (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL;
+    bool playerEntity = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
     if (playerEntity)
     {
         std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
@@ -2795,7 +2794,7 @@ void Level::removeEntityImmediately(boost::shared_ptr<Entity> entity)
     entity->setDropContainerContent(false);
     entity->remove();
 
-    if ((entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         std::vector<boost::shared_ptr<Player> >::iterator playerIt = mPlayers.begin();
 
@@ -2813,7 +2812,7 @@ void Level::removeEntityImmediately(boost::shared_ptr<Entity> entity)
         playerRemoved(entity);
     }
 
-    if (entity->mAddedToChunk && hasChunk(entity->mChunkX, entity->mChunkZ, true))
+    if (entity->mInChunk && hasChunk(entity->mChunkX, entity->mChunkZ, true))
     {
         getChunk(entity->mChunkX, entity->mChunkZ)->removeEntity(entity);
     }
@@ -3280,10 +3279,10 @@ LevelType* Level::getGeneratorType()
     return mLevelData->getGeneratorType();
 }
 
-void Level::setSpawnSettings(bool spawnPeaceful, bool spawnHostile)
+void Level::setSpawnSettings(bool spawnEnemies, bool spawnFriendlies)
 {
-    mSpawnPeacefulMobs = spawnPeaceful;
-    mSpawnHostileMobs = spawnHostile;
+    mSpawnEnemies = spawnEnemies;
+    mSpawnFriendlies = spawnFriendlies;
 }
 
 int Level::getDirectSignal(const BlockPos& pos, const Direction* direction)
@@ -3846,7 +3845,7 @@ bool Level::addBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
     EnterCriticalSection(&mBlockEntityMutex);
     mBlockEntities.push_back(entity);
-    if ((entity->GetType() & 0x1200200ULL) == 0x1200200ULL)
+    if ((entity->GetType() & BlockEntityType::TICKABLE) == BlockEntityType::TICKABLE)
     {
         mTickingBlockEntities.push_back(entity);
     }
@@ -3903,11 +3902,11 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
     int chunkZ = Mth::fastFloor(entity->mZ * 0.0625);
     if (updateChunk)
     {
-        bool player = (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL;
+        bool player = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
         if (!player && !hasChunksAt(blockX - 32, 0, blockZ - 32,
                                     blockX + 32, 0, blockZ + 32, true))
         {
-            if (!mIsClientSide && (entity->GetType() & 0x0d000000ULL) == 0x0d000000ULL)
+            if (!mIsClientSide && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
             {
                 boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
                 mob->checkDespawn();
@@ -3920,7 +3919,7 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
     }
 
     if (updateChunk && (entity->mRemoved
-                        || (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL))
+                        || (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER))
     {
         ++entity->mTickCount;
         entity->stopCurrentLerp();
@@ -3941,7 +3940,7 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
 
     if (updateChunk && entity->mRemoved)
     {
-        if (entity->mAddedToChunk && hasChunk(entity->mChunkX, entity->mChunkZ, true))
+        if (entity->mInChunk && hasChunk(entity->mChunkX, entity->mChunkZ, true))
         {
             MemSect(0x27);
             getChunk(entity->mChunkX, entity->mChunkZ)->removeEntity(entity, entity->mChunkY);
@@ -3958,7 +3957,7 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
         {
             newChunkY = 0;
         }
-        if (entity->mAddedToChunk
+        if (entity->mInChunk
             && (oldChunkX != chunkX || oldChunkY != newChunkY || oldChunkZ != chunkZ))
         {
             if (hasChunk(oldChunkX, oldChunkZ, true))
@@ -3967,7 +3966,7 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
             }
             getChunk(chunkX, chunkZ)->addEntity(entity);
         }
-        else if (!entity->mAddedToChunk)
+        else if (!entity->mInChunk)
         {
             getChunk(chunkX, chunkZ)->addEntity(entity);
         }
@@ -4000,49 +3999,180 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
 
 void Level::tickEntities()
 {
-    std::vector<boost::shared_ptr<Entity> >::iterator entity = mGlobalEntities.begin();
-    while (entity != mGlobalEntities.end())
+    PIXBeginNamedEvent(0.0f, "Ticking global entities");
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mGlobalEntities.begin(); it != mGlobalEntities.end();)
     {
-        tick(*entity, false);
-        ++entity;
+        boost::shared_ptr<Entity> entity = *it;
+        ++entity->mTickCount;
+        entity->tick();
+        if (entity->mRemoved)
+            it = mGlobalEntities.erase(it);
+        else
+            ++it;
     }
-    EnterCriticalSection(&mEntityMutex);
-    for (size_t index = 0; index < mEntities.size(); ++index)
-    {
-        boost::shared_ptr<Entity> tickingEntity = mEntities.at(index);
-        tick(tickingEntity, true);
-    }
-    LeaveCriticalSection(&mEntityMutex);
-    mProcessingBlockEntities = true;
-    std::vector<boost::shared_ptr<BlockEntity> >::iterator blockEntity = mBlockEntities.begin();
-    while (blockEntity != mBlockEntities.end())
-    {
-        if (*blockEntity != NULL && !(*blockEntity)->isRemoved())
-        {
-            (*blockEntity)->tick();
-        }
-        ++blockEntity;
-    }
-    mProcessingBlockEntities = false;
+    PIXEndNamedEvent();
 
-    std::vector<boost::shared_ptr<BlockEntity> > pending;
-    pending.swap(mPendingBlockEntities);
-    for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = pending.begin();
-         it != pending.end(); ++it)
+    EnterCriticalSection(&mEntityMutex);
+    PIXBeginNamedEvent(0.0f, "Erasing removed entities");
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin(); it != mEntities.end();)
     {
-        boost::shared_ptr<BlockEntity> entity = *it;
-        if (entity == NULL || entity->isRemoved())
+        if (std::find(mEntitiesToRemove.begin(), mEntitiesToRemove.end(), *it) != mEntitiesToRemove.end())
+            it = mEntities.erase(it);
+        else
+            ++it;
+    }
+    PIXEndNamedEvent();
+    LeaveCriticalSection(&mEntityMutex);
+
+    PIXBeginNamedEvent(0.0f, "Removing entities");
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntitiesToRemove.begin(); it != mEntitiesToRemove.end(); ++it)
+    {
+        boost::shared_ptr<Entity> entity = *it;
+        int chunkX = entity->mChunkX;
+        int chunkZ = entity->mChunkZ;
+        if (entity->mInChunk && hasChunk(chunkX, chunkZ, true))
+            getChunk(chunkX, chunkZ)->removeEntity(entity);
+    }
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Entity removed handlers");
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntitiesToRemove.begin(); it != mEntitiesToRemove.end(); ++it)
+        entityRemoved(*it);
+    mEntitiesToRemove.clear();
+    PIXEndNamedEvent();
+
+    tickServerPlayers();
+
+    EnterCriticalSection(&mEntityMutex);
+    if (!mIsClientSide && mDimension->getType() == DimensionType::OVERWORLD)
+        PIXAddNamedCounter(static_cast<float>(mEntities.size()), "Entity count");
+
+    for (unsigned int i = 0; i < mEntities.size();)
+    {
+        boost::shared_ptr<Entity> entity = mEntities.at(i);
+        boost::shared_ptr<Entity> vehicle = entity->getVehicle();
+        if (vehicle != NULL)
         {
+            if (!vehicle->mRemoved && vehicle->hasPassenger(entity))
+            {
+                ++i;
+                continue;
+            }
+            entity->stopRiding();
+        }
+
+        if (!entity->shouldTick())
+        {
+            if (!mIsClientSide && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
+            {
+                boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+                mob->checkDespawn();
+                if (mob->mRemoved)
+                    removeEntity(mob);
+            }
+        }
+        else if (!entity->mRemoved && entity->GetType() != EntityType::SERVER_PLAYER)
+        {
+            PIXBeginNamedEvent(0.0f, "Ticking entity %s", entity->getName().c_str());
+            tick(entity);
+            PIXEndNamedEvent();
+        }
+
+        if (!entity->mRemoved)
+        {
+            ++i;
             continue;
         }
 
-        AddToBlockEntityList(entity);
-        const BlockPos pos = entity->getBlockPos();
-        if (hasChunkAt(pos))
-        {
-            getChunkAt(pos)->setBlockEntity(pos, entity);
-        }
+        int chunkX = entity->mChunkX;
+        int chunkZ = entity->mChunkZ;
+        if (entity->mInChunk && hasChunk(chunkX, chunkZ, true))
+            getChunk(chunkX, chunkZ)->removeEntity(entity);
+        std::vector<boost::shared_ptr<Entity> >::iterator found = std::find(mEntities.begin(), mEntities.end(), entity);
+        if (found != mEntities.end())
+            mEntities.erase(found);
+        entityRemoved(entity);
     }
+    LeaveCriticalSection(&mEntityMutex);
+
+    EnterCriticalSection(&mBlockEntityMutex);
+    PIXBeginNamedEvent(0.0f, "Ticking block entities");
+    mProcessingBlockEntities = true;
+    for (unsigned int i = 0; i < mTickingBlockEntities.size();)
+    {
+        boost::shared_ptr<BlockEntity> blockEntity = mTickingBlockEntities.at(i);
+        if (!blockEntity->isRemoved() && blockEntity->hasLevel())
+        {
+            BlockPos pos = blockEntity->getBlockPos();
+            if (hasChunkAt(pos) && mWorldBorder->isWithinBounds(pos))
+            {
+                LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+                if (!mIsClientSide || !chunk->isUnloaded())
+                {
+                    PIXBeginNamedEvent(0.0f, "Ticking block entity %I64d", blockEntity->GetType());
+                    blockEntity->tick();
+                    PIXEndNamedEvent();
+                }
+            }
+        }
+
+        if (!blockEntity->isRemoved())
+        {
+            ++i;
+            continue;
+        }
+
+        mTickingBlockEntities.erase(mTickingBlockEntities.begin() + i);
+        std::vector<boost::shared_ptr<BlockEntity> >::iterator found =
+            std::find(mBlockEntities.begin(), mBlockEntities.end(), blockEntity);
+        if (found != mBlockEntities.end())
+            mBlockEntities.erase(found);
+        if (hasChunkAt(blockEntity->getBlockPos()))
+            getChunkAt(blockEntity->getBlockPos())->removeBlockEntity(blockEntity->getBlockPos());
+    }
+    mProcessingBlockEntities = false;
+    PIXEndNamedEvent();
+
+    if (!mBlockEntitiesToRemove.empty())
+    {
+        PIXBeginNamedEvent(0.0f, "Unloading block entities");
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = mBlockEntitiesToRemove.begin();
+             it != mBlockEntitiesToRemove.end(); ++it)
+        {
+            std::vector<boost::shared_ptr<BlockEntity> >::iterator found =
+                std::find(mBlockEntities.begin(), mBlockEntities.end(), *it);
+            if (found != mBlockEntities.end())
+                mBlockEntities.erase(found);
+            found = std::find(mTickingBlockEntities.begin(), mTickingBlockEntities.end(), *it);
+            if (found != mTickingBlockEntities.end())
+                mTickingBlockEntities.erase(found);
+        }
+        mBlockEntitiesToRemove.clear();
+        PIXEndNamedEvent();
+    }
+
+    if (!mPendingBlockEntities.empty())
+    {
+        PIXBeginNamedEvent(0.0f, "Sending block entity updates");
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = mPendingBlockEntities.begin();
+             it != mPendingBlockEntities.end(); ++it)
+        {
+            boost::shared_ptr<BlockEntity> blockEntity = *it;
+            if (blockEntity->isRemoved())
+                continue;
+
+            AddToBlockEntityList(blockEntity);
+            if (hasChunkAt(blockEntity->getBlockPos()))
+            {
+                const BlockState* state = getChunkAt(blockEntity->getBlockPos())->getBlockState(blockEntity->getBlockPos());
+                getChunkAt(blockEntity->getBlockPos())->setBlockEntity(blockEntity->getBlockPos(), blockEntity);
+                sendBlockUpdated(blockEntity->getBlockPos(), state, state, 3, true);
+            }
+        }
+        mPendingBlockEntities.clear();
+        PIXEndNamedEvent();
+    }
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 void Level::addEntities(std::vector<boost::shared_ptr<Entity> >* entities)
@@ -4054,7 +4184,7 @@ void Level::addEntities(std::vector<boost::shared_ptr<Entity> >* entities)
     while (it != entities->end())
     {
         entityAdded(*it);
-        if ((*it)->GetType() == 0x0d000005ULL)
+        if ((*it)->GetType() == EntityType::ENDER_DRAGON)
         {
             checkDuplicates = true;
         }
@@ -4065,7 +4195,7 @@ void Level::addEntities(std::vector<boost::shared_ptr<Entity> >* entities)
         bool found = false;
         for (it = mEntities.begin(); it != mEntities.end(); ++it)
         {
-            if ((*it)->GetType() == 0x0d000005ULL)
+            if ((*it)->GetType() == EntityType::ENDER_DRAGON)
             {
                 if (found)
                 {
@@ -4105,7 +4235,6 @@ void Level::ensureAdded(boost::shared_ptr<Entity> entity)
         mEntities.push_back(entity);
     }
     LeaveCriticalSection(&mEntityMutex);
-    instructionSynchronize();
 }
 
 bool Level::mayInteract(boost::shared_ptr<Player>, const BlockPos&, Block*)
@@ -4367,7 +4496,7 @@ void Level::removeBlockEntity(const BlockPos& pos)
         {
             mBlockEntities.erase(it);
         }
-        if ((entity->GetType() & 0x1200200ULL) == 0x1200200ULL)
+        if ((entity->GetType() & BlockEntityType::TICKABLE) == BlockEntityType::TICKABLE)
         {
             it = std::find(mTickingBlockEntities.begin(), mTickingBlockEntities.end(), entity);
             if (it != mTickingBlockEntities.end())
@@ -4428,8 +4557,8 @@ void Level::tick()
 void Level::tickWeather(bool immediate)
 {
     if (!mDimension->isHasSkyLight() || mIsClientSide
-        || (!getGameRules()->getBoolean(18) && !immediate)
-        || g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)))
+        || (!getGameRules()->getBoolean(GameRules::RULE_WEATHER_CYCLE) && !immediate)
+        || g_pApp->GetGameHostOption(eGameHostOption_MiniGame))
     {
         return;
     }
@@ -4509,7 +4638,6 @@ void Level::buildAndPrepareChunksToPoll()
             }
         }
     }
-    instructionSynchronize();
 }
 
 std::vector<boost::shared_ptr<Entity> >* Level::getEntities(
@@ -4560,7 +4688,7 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntities(
 
 std::vector<boost::shared_ptr<Entity> >* Level::getEntitiesOfClass(
     const std::type_info& type, const AABB* box,
-    const Predicate<boost::shared_ptr<Entity> >* predicate, bool includeRemoved)
+    const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers)
 {
     int minChunkX = Mth::fastFloor((box->mMinX - 2.0) * 0.0625);
     double upperX = (box->mMaxX + 2.0) * 0.0625;
@@ -4585,7 +4713,7 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntitiesOfClass(
             LevelChunk* chunk = getChunkIfHasChunk(chunkX, chunkZ, true);
             if (chunk != NULL)
             {
-                chunk->getEntitiesOfClass(type, box, *result, predicate, includeRemoved);
+                chunk->getEntitiesOfClass(type, box, *result, predicate, excludeInvisiblePlayers);
             }
         }
     }
@@ -4601,7 +4729,7 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntitiesOfClass(const std::ty
 
 bool Level::hasEntitiesOfClass(const std::type_info& type, const AABB* box,
                                const Predicate<boost::shared_ptr<Entity> >* predicate,
-                               bool includeRemoved)
+                               bool excludeInvisiblePlayers)
 {
     int minChunkX = Mth::fastFloor((box->mMinX - 2.0) * 0.0625);
     double upperX = (box->mMaxX + 2.0) * 0.0625;
@@ -4628,7 +4756,7 @@ bool Level::hasEntitiesOfClass(const std::type_info& type, const AABB* box,
             {
                 continue;
             }
-            chunk->getEntitiesOfClass(type, box, *found, predicate, includeRemoved);
+            chunk->getEntitiesOfClass(type, box, *found, predicate, excludeInvisiblePlayers);
             if (!found->empty())
             {
                 delete found;
@@ -4685,81 +4813,187 @@ bool Level::isUnobstructed(const AABB* box)
     return isUnobstructed(box, boost::shared_ptr<Entity>());
 }
 
-bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box,
-                                      bool includeEntities, std::vector<AABB*>* collisions,
-                                      bool, bool includeUnloaded, bool includeExtraBlocks)
+bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box, bool stopOnFirst,
+                                      std::vector<AABB*>* collisions, bool, bool includePlayerConstraints,
+                                      bool forParticles)
 {
-    if (box == NULL || collisions == NULL)
+    PIXBeginNamedEvent(0.0f, "Level::getCubes");
+    PIXBeginNamedEvent(0.0f, "Setup");
+    const int expansion = forParticles ? 0 : 1;
+    const int minX = Mth::floor(box->mMinX) - expansion;
+    const int maxX = Mth::ceil(static_cast<float>(box->mMaxX)) + expansion;
+    const int minY = Mth::floor(box->mMinY) - expansion;
+    const int maxY = Mth::ceil(static_cast<float>(box->mMaxY)) + expansion;
+    const int minZ = Mth::floor(box->mMinZ) - expansion;
+    const int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ)) + expansion;
+
+    const bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
+    AABB* constraints = NULL;
+    bool outsideWorldBorder = false;
+    bool insideWorldBorder = false;
+    if (entity != NULL)
     {
-        return false;
+        constraints = mDimension->getPlayerConstraints(BlockPos(entity));
+        outsideWorldBorder = entity->mOutsideWorldBorder;
+        insideWorldBorder = isInsideWorldBorder(entity);
     }
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
+    PIXEndNamedEvent();
+
+    if (includePlayerConstraints && constraints != NULL)
+    {
+        collisions->push_back(getOuterWall(constraints, Direction::eDirection_North));
+        collisions->push_back(getOuterWall(constraints, Direction::eDirection_South));
+        collisions->push_back(getOuterWall(constraints, Direction::eDirection_East));
+        collisions->push_back(getOuterWall(constraints, Direction::eDirection_West));
+        collisions->push_back(getOuterWall(constraints, Direction::eDirection_Up));
+        collisions->push_back(getOuterWall(constraints, Direction::eDirection_Down));
+    }
+
+    const BlockState* stone = Blocks::stone->defaultBlockState();
+    LevelChunk* chunk = NULL;
+    int chunkX = -99999;
+    int chunkZ = -99999;
+    MutableBlockPos pos(0, 0, 0);
+    std::vector<int> emptySections;
     for (int x = minX; x < maxX; ++x)
     {
         for (int z = minZ; z < maxZ; ++z)
         {
-            for (int y = minY; y < maxY; ++y)
+            const bool edgeX = x == minX || x == maxX - 1;
+            const bool edgeZ = z == minZ || z == maxZ - 1;
+            if (edgeX && edgeZ)
             {
-                BlockPos pos(x, y, z);
-                if (!includeUnloaded && !hasChunkAt(pos))
+                continue;
+            }
+            if ((x >> 4) != chunkX || (z >> 4) != chunkZ)
+            {
+                chunkX = x >> 4;
+                chunkZ = z >> 4;
+                chunk = getChunk(chunkX, chunkZ);
+            }
+            pos.set(x, 64, z);
+            if (chunk == NULL || chunk->isEmpty())
+            {
+                continue;
+            }
+            for (int y = minY - 1; y < maxY; ++y)
+            {
+                if (((edgeX || edgeZ) && y == maxY - 1) || static_cast<unsigned int>(y) > 255)
                 {
                     continue;
                 }
-                const BlockState* state = getBlockState(pos);
-                if (state != NULL)
+                if (entity != NULL && outsideWorldBorder == insideWorldBorder)
                 {
-                    state->getBlock()->addCollisionAABBs(state, this, pos, box, collisions, entity, true);
+                    entity->setOutsideWorldBorder(!insideWorldBorder);
                 }
-                if (includeExtraBlocks)
+                pos.set(x, y, z);
+
+                const BlockState* state;
+                if (stopOnFirst || (constraints != NULL && constraints->contains(pos)) || !insideWorldBorder)
                 {
-                    const BlockState* extra = getExtraBlockState(pos);
-                    if (extra != NULL)
+                    if (entity != NULL)
                     {
-                        extra->getBlock()->addCollisionAABBs(extra, this, pos, box, collisions, entity, true);
+                        state = getBlockState(chunk, entity->mTickCache, pos);
+                    }
+                    else
+                    {
+                        const int section = HierarchicalElementStorage::GetSectionIDFromXYZ(x, y, z);
+                        if (std::find(emptySections.begin(), emptySections.end(), section) != emptySections.end())
+                        {
+                            continue;
+                        }
+                        bool sectionEmpty = false;
+                        const unsigned short element = chunk->getElement(x & 15, y, z & 15, &sectionEmpty);
+                        if (element == 0)
+                        {
+                            if (sectionEmpty)
+                            {
+                                emptySections.push_back(section);
+                            }
+                            continue;
+                        }
+                        const int blockId = element >> 4;
+                        if (blockId == BlockId::BUBBLE_COLUMN_SEGMENT || blockId == BlockId::WATER
+                            || blockId == BlockId::FLOWING_WATER)
+                        {
+                            continue;
+                        }
+                        state = Block::getStateByElementId(element);
                     }
                 }
+                else
+                {
+                    state = stone;
+                }
+                if (state == NULL)
+                {
+                    continue;
+                }
+
+                if (!inMiniGame || gApp.ShouldCollideWith(state->getBlock()))
+                {
+                    if (!forParticles || !state->getBlock()->ParticlesSurviveWithin())
+                    {
+                        state->addCollissionAABBs(this, pos, box, collisions, entity, false);
+                    }
+                }
+                if (stopOnFirst && !collisions->empty())
+                {
+                    PIXEndNamedEvent();
+                    return true;
+                }
             }
         }
     }
-    if (includeEntities)
-    {
-        std::vector<boost::shared_ptr<Entity> > entities;
-        getEntities(entity, box->grow(0.25), &entities);
-        std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin();
-        while (it != entities.end())
-        {
-            AABB* collision = (*it)->getCollideBox();
-            if (collision != NULL && collision->intersectsInner(box))
-            {
-                collisions->push_back(collision);
-            }
-            ++it;
-        }
-    }
-    return !collisions->empty();
+    PIXEndNamedEvent();
+    return false;
 }
 
-std::vector<AABB*>* Level::getCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box,
-                                              bool includeEntities, bool includeBorder,
-                                              bool includeExtraBlocks)
+std::vector<AABB*>* Level::getCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box, bool noEntities,
+                                              bool includePlayerConstraints, bool forParticles)
 {
     mCollisionBoxes.clear();
     mCollisionBoxes.reserve(8);
-    internalGetCollisionAABBs(entity, box, includeEntities, &mCollisionBoxes, includeBorder, false,
-                              includeExtraBlocks);
+    internalGetCollisionAABBs(entity, box, false, &mCollisionBoxes, noEntities, includePlayerConstraints,
+                              forParticles);
+    PIXBeginNamedEvent(0.0f, "Update level renderer");
+    Minecraft::GetInstance()->mLevelRenderer->mDestroyedBlocks->addAABBs(this, box, &mCollisionBoxes);
+    PIXEndNamedEvent();
+    if (!noEntities)
+    {
+        PIXBeginNamedEvent(0.0f, "Check entity boxes");
+        if (entity != NULL)
+        {
+            std::vector<boost::shared_ptr<Entity> >* entities = getEntities(entity, box->grow(0.25), NULL);
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            {
+                if (entity->isPassengerOfSameVehicle(*it))
+                {
+                    continue;
+                }
+                AABB* collideBox = (*it)->getCollideBox();
+                if (collideBox != NULL
+                    && collideBox->intersects(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX, box->mMaxY, box->mMaxZ))
+                {
+                    mCollisionBoxes.push_back(collideBox);
+                }
+                collideBox = entity->getCollideAgainstBox(*it);
+                if (collideBox != NULL
+                    && collideBox->intersects(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX, box->mMaxY, box->mMaxZ))
+                {
+                    mCollisionBoxes.push_back(collideBox);
+                }
+            }
+        }
+        PIXEndNamedEvent();
+    }
     return &mCollisionBoxes;
 }
 
 bool Level::hasBlockCubes(const AABB* box)
 {
-    mCollisionBoxes.clear();
-    internalGetCollisionAABBs(boost::shared_ptr<Entity>(), box, false, &mCollisionBoxes, false, false, true);
-    return !mCollisionBoxes.empty();
+    std::vector<AABB*> collisions;
+    return internalGetCollisionAABBs(boost::shared_ptr<Entity>(), box, true, &collisions, false, false, false);
 }
 
 bool Level::containsAnyBlocks(AABB* box)
@@ -4881,7 +5115,7 @@ bool Level::containsFireBlock(AABB* box)
             for (int z = minZ; z < maxZ; ++z)
             {
                 Block* block = getBlock(BlockPos(x, y, z));
-                if (block == Blocks::FIRE || block == Blocks::flowing_lava || block == Blocks::lava)
+                if (block == Blocks::fire || block == Blocks::flowing_lava || block == Blocks::lava)
                 {
                     return true;
                 }
@@ -4922,7 +5156,7 @@ bool Level::containsFireBlock(Entity* entity, AABB* box)
             for (int z = minZ; z < maxZ; ++z)
                 {
                     Block* block = Block::byId(getBlockId(entity->mTickCache, x, y, z));
-                    if (block == Blocks::FIRE || block == Blocks::flowing_lava || block == Blocks::lava)
+                    if (block == Blocks::fire || block == Blocks::flowing_lava || block == Blocks::lava)
                     {
                         entity->mFireCacheResult = true;
                         return true;
@@ -5119,15 +5353,14 @@ bool Level::mayPlace(Block* block, const BlockPos& pos, bool replaceable,
     return oldState->getMaterial()->isReplaceable() && block->mayPlace(this, pos, direction);
 }
 
-boost::shared_ptr<Explosion> Level::explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius,
-                                            bool fire, bool smoke, bool blockInteraction, bool particles,
-                                            bool sounds, float damage)
+boost::shared_ptr<Explosion> Level::explode(boost::shared_ptr<Entity> source, double x, double y, double z,
+                                            float radius, bool fire, bool breaksBlocks, bool playersOnly,
+                                            bool noBlockDrops, bool silent, float damageRadius)
 {
-    boost::shared_ptr<Explosion> explosion(new Explosion(this, entity, x, y, z, radius, fire,
-                                                          blockInteraction, false, !smoke, !sounds,
-                                                          damage, false));
+    boost::shared_ptr<Explosion> explosion(new Explosion(this, source, x, y, z, radius, fire, breaksBlocks,
+                                                          playersOnly, noBlockDrops, silent, damageRadius, false));
     explosion->explode();
-    explosion->finalizeExplosion(particles, NULL);
+    explosion->finalizeExplosion(true, NULL);
     return explosion;
 }
 
@@ -5162,12 +5395,12 @@ bool Level::extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos
                            const Direction* direction)
 {
     BlockPos target = pos.relative(direction);
-    if (getBlock(target) != Blocks::FIRE)
+    if (getBlock(target) != Blocks::fire)
     {
         return false;
     }
-    levelEvent(player, 1009, target, 0);
-    return setBlock(target, Blocks::AIR->defaultBlockState(), 11, false);
+    levelEvent(player, LevelEvent::SOUND_EXTINGUISH_FIRE, target, 0);
+    return removeBlock(target);
 }
 
 Vec3* Level::getSkyColor(boost::shared_ptr<Entity> entity, float partialTick)
@@ -5272,7 +5505,7 @@ bool Level::canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool all
         }
         return true;
     }
-    if (block != Blocks::AIR)
+    if (block != Blocks::air)
     {
         return false;
     }
@@ -5296,7 +5529,7 @@ bool Level::canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool all
     else
     {
         if (checkNeighbors && (below == Blocks::ice || below == Blocks::packed_ice
-                               || below == Blocks::frosted_ice))
+                               || below == Blocks::grass_path))
         {
             return false;
         }
@@ -5319,7 +5552,7 @@ bool Level::canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool all
 
 bool Level::tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool allowExisting)
 {
-    if (!getGameRules()->getBoolean(18))
+    if (!getGameRules()->getBoolean(GameRules::RULE_WEATHER_CYCLE))
     {
         return false;
     }
@@ -5348,7 +5581,7 @@ bool Level::tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool all
         }
         if (bestPos != pos)
         {
-            setBlock(bestPos, SnowLayerBlock::buildSnowBlock(this, bestPos, 1, 1), 2, false);
+            setBlock(bestPos, SnowLayerBlock::buildSnowBlock(this, bestPos, 1, 1), Block::UPDATE_CLIENTS, false);
             return true;
         }
     }
@@ -5356,7 +5589,7 @@ bool Level::tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool all
     {
         return false;
     }
-    setBlock(pos, SnowLayerBlock::buildSnowBlock(this, pos, 1, 1), 2, false);
+    setBlock(pos, SnowLayerBlock::buildSnowBlock(this, pos, 1, 1), Block::UPDATE_CLIENTS, false);
     return true;
 }
 
@@ -5468,7 +5701,7 @@ bool Level::canCreateMore(unsigned long long type, ESPAWN_TYPE spawnType)
 {
     int count = 0;
     int limit = 0;
-    if (spawnType == 0 || spawnType == 2)
+    if (spawnType == eSpawnType_Egg || spawnType == eSpawnType_Portal)
     {
         MobCategory* category = MobCategory::getCategory(type);
         if (category != NULL)
@@ -5476,19 +5709,19 @@ bool Level::canCreateMore(unsigned long long type, ESPAWN_TYPE spawnType)
             count = countInstanceOf(category->getEnumBaseClass(), category->isSingleType(), NULL, NULL);
             limit = category->getMaxInstancesPerLevelWithSpawnEgg();
         }
-        else if ((type & 0xa800000ULL) == 0xa800000ULL)
+        else if ((type & EntityType::MINECART) == EntityType::MINECART)
         {
-            return countInstanceOf(0xa800000ULL, false, NULL, NULL) < 250;
+            return countInstanceOf(EntityType::MINECART, false, NULL, NULL) < 250;
         }
-        else if (type == 0x8000008ULL)
+        else if (type == EntityType::BOAT)
         {
-            return countInstanceOf(0x8000008ULL, true, NULL, NULL) < 40;
+            return countInstanceOf(EntityType::BOAT, true, NULL, NULL) < 40;
         }
     }
-    else if (spawnType == 1)
+    else if (spawnType == eSpawnType_Breed)
     {
         MobCategory* category = MobCategory::getCategory(type);
-        if (category != NULL && (category->isSingleType() || category->getEnumBaseClass() == 0x20000000ULL))
+        if (category != NULL && (category->isSingleType() || category->getEnumBaseClass() == EntityType::CREATURE_CATEGORY))
         {
             count = countInstanceOf(type, category->isSingleType(), NULL, NULL);
             limit = category->getMaxInstancesPerLevelWithBreeding();
@@ -5542,17 +5775,17 @@ void Level::removeAllEntities(bool players, bool mobs, bool items, bool vehicles
         }
 
         unsigned long long type = entity->GetType();
-        bool isPlayer = (type & 0x0a080000ULL) == 0x0a080000ULL
-            || type == 0x0c000001ULL;
-        bool isMob = (type & 0x0d000000ULL) == 0x0d000000ULL;
-        bool isItem = (type & 0x0a800000ULL) == 0x0a800000ULL
-            || type == 0x08000008ULL;
-        bool isVehicle = (type & 0x0c800000ULL) == 0x0c800000ULL
-            || type == 0x0d000005ULL || type == 0x0800000eULL;
+        bool isPlayer = (type & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY
+            || type == EntityType::ARMOR_STAND;
+        bool isMob = (type & EntityType::MOB) == EntityType::MOB;
+        bool isItem = (type & EntityType::MINECART) == EntityType::MINECART
+            || type == EntityType::BOAT;
+        bool isVehicle = (type & EntityType::PLAYER) == EntityType::PLAYER
+            || type == EntityType::ENDER_DRAGON || type == EntityType::ENDER_CRYSTAL;
         if (isVehicle)
         {
             bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
-            if (inMiniGame && type != 0x0800000eULL)
+            if (inMiniGame && type != EntityType::ENDER_CRYSTAL)
             {
                 ++it;
                 continue;

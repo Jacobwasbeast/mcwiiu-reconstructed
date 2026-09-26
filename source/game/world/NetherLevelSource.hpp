@@ -33,22 +33,22 @@ public:
     void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
     void buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer);
     virtual void lightChunk(LevelChunk* chunk);
-    arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z,
+    virtual arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z,
                                        int xSize, int ySize, int zSize);
     virtual LevelChunk* createChunk(int chunkX, int chunkZ);
     virtual void postProcess(int chunkX, int chunkZ);
     virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
-    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
+    virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature,
                                              const BlockPos& pos, bool findUnexplored);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ);
     virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
 
 private:
+    Level* mLevel;
+    bool mGenerateStructures;
     Random mRandom;
     Random mPopulationRandom;
-    bool mGenerateStructures;
-    Level* mLevel;
     PerlinNoise* mNoise1;
     PerlinNoise* mNoise2;
     PerlinNoise* mNoise3;

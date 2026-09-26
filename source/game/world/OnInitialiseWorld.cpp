@@ -6,5 +6,5 @@ OnInitialiseWorld::~OnInitialiseWorld()
 
 ConsoleGameRules::EGameRuleType OnInitialiseWorld::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(30);
+    return ConsoleGameRules::eGameRuleType_OnInitialiseWorld;
 }

@@ -36,7 +36,7 @@ LevelData::LevelData(CompoundTag* tag)
 {
     mSeed = tag->getLong(L"RandomSeed");
 
-    if (tag->contains(L"generatorName", 8))
+    if (tag->contains(L"generatorName", Tag::TAG_STRING))
     {
         LevelType* generatorType = LevelType::getLevelType(tag->getString(L"generatorName"));
         if (generatorType == 0)
@@ -54,7 +54,7 @@ LevelData::LevelData(CompoundTag* tag)
         }
 
         bool isFlat = false;
-        if (tag->contains(L"generatorOptions", 7) && mGeneratorType->getGeneratorName() == L"flat")
+        if (tag->contains(L"generatorOptions", Tag::TAG_BYTE_ARRAY) && mGeneratorType->getGeneratorName() == L"flat")
         {
             isFlat = true;
         }
@@ -80,7 +80,7 @@ LevelData::LevelData(CompoundTag* tag)
 
     mGameType = GameType::byId(tag->getInt(L"GameType"));
 
-    if (!tag->contains(L"MapFeatures", 99))
+    if (!tag->contains(L"MapFeatures", Tag::TAG_ANY_NUMERIC))
     {
         mGenerateMapFeatures = true;
     }
@@ -95,7 +95,7 @@ LevelData::LevelData(CompoundTag* tag)
     mZSpawn = tag->getInt(L"SpawnZ");
     mGameTime = tag->getLong(L"Time");
 
-    if (!tag->contains(L"DayTime", 99))
+    if (!tag->contains(L"DayTime", Tag::TAG_ANY_NUMERIC))
     {
         mDayTime = mGameTime;
     }
@@ -115,7 +115,7 @@ LevelData::LevelData(CompoundTag* tag)
     mThundering = tag->getBoolean(L"thundering");
     mHardcore = tag->getBoolean(L"hardcore");
 
-    if (!tag->contains(L"initialized", 99))
+    if (!tag->contains(L"initialized", Tag::TAG_ANY_NUMERIC))
     {
         mInitialized = true;
     }
@@ -124,7 +124,7 @@ LevelData::LevelData(CompoundTag* tag)
         mInitialized = tag->getBoolean(L"initialized");
     }
 
-    if (!tag->contains(L"allowCommands", 99))
+    if (!tag->contains(L"allowCommands", Tag::TAG_ANY_NUMERIC))
     {
         mAllowCommands = (mGameType == GameType::CREATIVE);
     }
@@ -133,17 +133,17 @@ LevelData::LevelData(CompoundTag* tag)
         mAllowCommands = tag->getBoolean(L"allowCommands");
     }
 
-    if (tag->contains(L"Difficulty", 99))
+    if (tag->contains(L"Difficulty", Tag::TAG_ANY_NUMERIC))
     {
         mDifficulty = Difficulty::byId(tag->getByte(L"Difficulty"));
     }
 
-    if (tag->contains(L"DifficultyLocked", 1))
+    if (tag->contains(L"DifficultyLocked", Tag::TAG_BYTE))
     {
         mDifficultyLocked = tag->getBoolean(L"DifficultyLocked");
     }
 
-    if (tag->contains(L"DimensionData", 10))
+    if (tag->contains(L"DimensionData", Tag::TAG_COMPOUND))
     {
         CompoundTag* dimensionData = tag->getCompound(L"DimensionData");
         std::vector<std::wstring>* keys = dimensionData->getAllKeys();
@@ -445,7 +445,7 @@ void LevelData::setGameType(const GameType* type)
 {
     mGameType = type;
     bool hasBeenInCreative = true;
-    if (!mHasBeenInCreative && type != GameType::CREATIVE && g_pApp->GetGameHostOption(eGameHostOption_15) == 0)
+    if (!mHasBeenInCreative && type != GameType::CREATIVE && g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) == 0)
     {
         hasBeenInCreative = false;
     }

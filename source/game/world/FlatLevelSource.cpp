@@ -1,7 +1,9 @@
 #include "game/world/FlatLevelSource.hpp"
 
+#include <algorithm>
 #include <cstring>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/world/Level.hpp"
@@ -24,32 +26,29 @@
 #include "game/world/generation/MonsterRoomFeature.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
 #include "game/world/generation/OceanRuinFeature.hpp"
+#include "game/world/generation/RandomScatteredLargeFeature.hpp"
 #include "game/world/generation/ShipwreckFeature.hpp"
 #include "game/world/generation/StrongholdFeature.hpp"
 #include "game/world/generation/StructureFeature.hpp"
 #include "game/world/generation/VillageFeature.hpp"
 #include "game/world/generation/WoodlandMansionFeature.hpp"
+#include "game/core/XMem.hpp"
 
-void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
-void XPhysicalFree(void* address);
-void* XMemCpy(void* destination, const void* source, unsigned int count);
 
 FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config)
-    : mLevel(level),
-      mRandom(seed),
-      mPopulationRandom(seed),
-      mCaves(NULL),
-      mCanyons(NULL),
-      mDecorations(false),
-      mDungeons(false),
-      mLakes(NULL),
-      mLavaLakes(NULL),
+    : mRandom(),
+      mPopulationRandom(),
       mOceanMonument(NULL),
       mElementIds(NULL),
       mElementIdCount(0)
 {
     mLevelSize = level->getLevelData()->getXZSize();
+    mLevel = level;
+    mRandom = Random(seed);
+    mPopulationRandom = Random(seed);
     FlatGeneratorInfo generatorInfo(config);
+    mCanyons = NULL;
+    mCaves = NULL;
 
     if (generateStructures)
     {
@@ -62,8 +61,8 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
         }
         if (generatorInfo.hasBiomeSpecific())
         {
-            mStructureFeatures[L"Temple"] = static_cast<StructureFeature*>(static_cast<void*>(generatorInfo.getBiomeSpecific()));
-            mStructureFeatures[L"Ocean_Ruin"] = new OceanRuinFeature(config);
+            mStructureFeatures[L"Temple"] = generatorInfo.getBiomeSpecific();
+            mStructureFeatures[L"Ruin"] = new OceanRuinFeature(config);
         }
         if (generatorInfo.hasMineshaft())
         {
@@ -71,7 +70,7 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
         }
         if (generatorInfo.hasStronghold())
         {
-            mStructureFeatures[L"Stronghold"] = generatorInfo.getStronghold();
+            mStructureFeatures[L"StrongHold"] = generatorInfo.getStronghold();
         }
         if (generatorInfo.hasOceanMonument())
         {
@@ -100,30 +99,29 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
     generatorInfo.getLayers(layers);
     int seaLevel = 0;
     int airHeight = 0;
-    for (std::vector<FlatLayerInfo>::const_iterator layer = layers.begin(); layer != layers.end(); ++layer)
+    for (std::vector<FlatLayerInfo>::iterator it = layers.begin(); it != layers.end(); ++it)
     {
-        for (unsigned int y = layer->getStart(); y < layer->getStart() + layer->getHeight(); ++y)
+        FlatLayerInfo layer = *it;
+        for (int y = layer.getStart(); y < static_cast<int>(layer.getStart() + layer.getHeight()); ++y)
         {
-            layer->getBlockState()->getBlock();
+            layer.getBlockState()->getBlock();
         }
 
-        if (layer->getBlockState()->getBlock() == Blocks::AIR)
+        if (layer.getBlockState()->getBlock() == Blocks::air)
         {
-            airHeight += layer->getHeight();
+            airHeight += layer.getHeight();
         }
         else
         {
-            seaLevel += layer->getHeight() + airHeight;
+            seaLevel += layer.getHeight() + airHeight;
             airHeight = 0;
         }
     }
     level->setSeaLevel(seaLevel);
 
-    mElementIdCount = 65536;
-    mElementIds = new unsigned short[mElementIdCount]();
-    arrayWithLength<unsigned short> elements;
-    elements.data = mElementIds;
-    elements.length = mElementIdCount;
+    arrayWithLength<unsigned short> elements(65536, true);
+    mElementIds = elements.data;
+    mElementIdCount = elements.length;
     ChunkPrimer primer(false, elements);
     for (int y = 0; y < 128; ++y)
     {
@@ -191,10 +189,12 @@ LevelChunk* FlatLevelSource::createChunk(int chunkX, int chunkZ)
             feature->second->apply(mLevel, chunkX, chunkZ, &primer);
         }
     }
-    StructureMap::iterator shipwreck = mStructureFeatures.find(L"Shipwreck");
-    if (shipwreck != mStructureFeatures.end())
+    for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
     {
-        shipwreck->second->apply(mLevel, chunkX, chunkZ, &primer);
+        if (feature->first == L"Shipwreck")
+        {
+            feature->second->apply(mLevel, chunkX, chunkZ, &primer);
+        }
     }
 
     LevelChunk* chunk = new LevelChunk(mLevel, &primer, chunkX, chunkZ);
@@ -219,21 +219,21 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
     Biome* biome = mLevel->getBiome(BlockPos(chunkX * 16 + 16, 0, chunkZ * 16 + 16));
     bool villageGenerated = false;
 
-    long long seed = mLevel->getSeed();
-    mPopulationRandom.setSeed(seed);
+    mPopulationRandom.setSeed(mLevel->getSeed());
     long long xSeed = mPopulationRandom.nextLong() / 2 * 2 + 1;
     long long zSeed = mPopulationRandom.nextLong() / 2 * 2 + 1;
-    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^ seed);
+    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^
+                              mLevel->getSeed());
 
     ChunkPos chunkPos(chunkX, chunkZ);
     for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
     {
         bool generated = feature->second->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (feature->first == L"Village")
+        if (dynamic_cast<VillageFeature*>(feature->second) != NULL)
         {
-            bool villageBiome = biome == Biome::PLAINS || biome == Biome::DESERT || biome == Biome::SAVANNA ||
-                                biome == Biome::TAIGA || biome == Biome::COLD_TAIGA || biome == Biome::ICE_PLAINS;
-            villageGenerated = generated && villageBiome;
+            std::vector<Biome*>::iterator allowed =
+                std::find(VillageFeature::allowedBiomes.begin(), VillageFeature::allowedBiomes.end(), biome);
+            villageGenerated = villageGenerated || (generated && allowed != VillageFeature::allowedBiomes.end());
         }
     }
 
@@ -273,7 +273,7 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
         biome->decorate(mLevel, mPopulationRandom, origin);
     }
 
-    g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
+    gApp.processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
 bool FlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
@@ -281,28 +281,28 @@ bool FlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
     return false;
 }
 
-std::vector<Biome::MobSpawnerData*> FlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
+std::vector<Biome::MobSpawnerData*>* FlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
     Biome* biome = mLevel->getBiome(pos);
     if (mOceanMonument != NULL && category == MobCategory::MONSTER &&
         mOceanMonument->isInsideBoundingFeature(mLevel, pos))
     {
-        return *mOceanMonument->getEnemies();
+        return mOceanMonument->getEnemies();
     }
-    return *biome->getMobs(category);
+    return biome->getMobs(category);
 }
 
 BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos, bool findUnexplored)
 {
     StructureMap::iterator feature;
 
-    if (featureName == L"Stronghold" && (feature = mStructureFeatures.find(featureName)) != mStructureFeatures.end())
+    if (featureName == L"StrongHold" && (feature = mStructureFeatures.find(featureName)) != mStructureFeatures.end())
     {
         return feature->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Stronghold" && mStructureFeatures.find(L"Stronghold") != mStructureFeatures.end())
+    if (featureName == L"StrongHold" && mStructureFeatures.find(L"StrongHold") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Stronghold")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(L"StrongHold")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Shipwreck" && mStructureFeatures.find(L"Shipwreck") != mStructureFeatures.end())
     {
@@ -328,13 +328,13 @@ BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstrin
     {
         return mStructureFeatures.find(L"Temple")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Buried_Treasure" && mStructureFeatures.find(L"Buried_Treasure") != mStructureFeatures.end())
+    if (featureName == L"BuriedTreasure" && mStructureFeatures.find(L"BuriedTreasure") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Buried_Treasure")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(L"BuriedTreasure")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Ocean_Ruin" && mStructureFeatures.find(L"Ocean_Ruin") != mStructureFeatures.end())
+    if (featureName == L"Ruin" && mStructureFeatures.find(L"Ruin") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Ocean_Ruin")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(L"Ruin")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     return NULL;
 }
@@ -351,11 +351,6 @@ bool FlatLevelSource::isPosInFeature(Level*, const std::wstring& featureName, co
 
 void FlatLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int chunkX, int chunkZ)
 {
-    if (mStructureFeatures.empty())
-    {
-        return;
-    }
-
     for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
     {
         feature->second->apply(mLevel, chunkX, chunkZ, NULL);

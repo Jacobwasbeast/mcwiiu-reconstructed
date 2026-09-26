@@ -2,11 +2,11 @@
 #define GAME_WORLD_THEENDDIMENSION_HPP
 
 #include "game/world/Dimension.hpp"
+#include "game/world/chunk/ChunkPos.hpp"
 
 class AABB;
 class BlockPos;
 class ChunkGenerator;
-class ChunkPos;
 class DimensionType;
 class EndDragonFight;
 
@@ -34,6 +34,7 @@ public:
     virtual void saveData();
     virtual void tick();
     static ChunkPos* closestAreaToPoint(int x, int z);
+    static ChunkPos AREAS[2];
     virtual AABB* getPlayerConstraints(const BlockPos& pos);
     virtual bool containsChunk(int x, int z);
     virtual int getBlockLightColour();

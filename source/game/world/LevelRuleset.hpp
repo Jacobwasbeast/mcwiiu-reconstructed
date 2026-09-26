@@ -7,6 +7,7 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/minigame/CompoundGameRuleDefinition.hpp"
+#include "game/world/LevelRules.hpp"
 
 class AABB;
 class ActiveViewAreaRuleDefinition;
@@ -33,7 +34,7 @@ public:
 
     RandomItemSetRuleDefinition* getRandomItemSet(const std::wstring& name);
     LevelGenerationOptions* getGenerationOptions();
-    ConsoleGameRules::EGameRuleType getRuleType();
+    LevelRules::ELevelRuleType getRuleType();
     unsigned int getThemeId();
 
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);
@@ -76,7 +77,7 @@ private:
     std::vector<PowerupRuleDefinition*> mPowerups;
     std::vector<KillboxRuleDefinition*> mKillboxes;
     LevelGenerationOptions* mGenerationOptions;
-    ConsoleGameRules::EGameRuleType mRuleType;
+    LevelRules::ELevelRuleType mRuleType;
     StringTable* mStringTable;
 };
 

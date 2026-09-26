@@ -44,8 +44,8 @@ public:
     bool isWithinBounds(AABB* box);
     double getDistanceToBorder(double x, double z);
     double getDistanceToBorder(boost::shared_ptr<Entity> entity);
-    double getCenterX();
-    double getCenterZ();
+    virtual double getCenterX();
+    virtual double getCenterZ();
     void setCenter(double x, double z);
     long long getLerpRemainingTime();
     double getLerpTarget();
