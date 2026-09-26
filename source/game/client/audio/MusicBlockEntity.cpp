@@ -1,4 +1,5 @@
 #include "game/client/audio/MusicBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -108,5 +109,5 @@ boost::shared_ptr<BlockEntity> MusicBlockEntity::clone()
 
 unsigned long long MusicBlockEntity::GetType()
 {
-    return 0x0000000001000203ULL;
+    return BlockEntityType::MUSIC;
 }

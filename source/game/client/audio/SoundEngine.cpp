@@ -14,7 +14,7 @@
 #include <cstring>
 
 extern CMinecraftApp* g_pApp;
-extern void SetSpecialThreadIDForFS_MilesStreamThread__Fv();
+extern void SetSpecialThreadIDForFS_MilesStreamThread();
 
 namespace {
 
@@ -317,7 +317,7 @@ SoundEngine::eMusicType SoundEngine::GetMusicToPlay()
         return eMusicType_Overworld;
     if (noPlayers)
     {
-        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)) != 0)
+        if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
             return eMusicType_6;
         return eMusicType_End;
     }
@@ -457,7 +457,7 @@ void SoundEngine::updateMusicVolume(float volume)
 
 unsigned int SoundEngine::OpenStreamThreadProc(void* value)
 {
-    SetSpecialThreadIDForFS_MilesStreamThread__Fv();
+    SetSpecialThreadIDForFS_MilesStreamThread();
     SoundEngine* engine = static_cast<SoundEngine*>(value);
     PlatformSoundEngine* platform = engine->m_platformSoundEngine;
     platform->startStream(engine->m_streamPathBuffer, ConfigureSound);

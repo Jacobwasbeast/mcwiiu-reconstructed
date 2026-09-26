@@ -12,7 +12,7 @@ struct SoundBank
     };
 };
 
-std::int32_t FindAsset__FP9SoundBankPCcPQ2_9SoundBank10AssetEntryi(
+std::int32_t FindAsset(
     SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, std::int32_t count);
 
 #endif

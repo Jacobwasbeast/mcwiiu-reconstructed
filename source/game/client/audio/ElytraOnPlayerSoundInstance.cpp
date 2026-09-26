@@ -1,4 +1,5 @@
 #include "game/client/audio/ElytraOnPlayerSoundInstance.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -103,12 +104,12 @@ void ElytraOnPlayerSoundInstance::tick()
     else
         this->pitch = 1.0f;
 
-    if (this->player->GetType() == ENTITY_TYPE_LOCAL_PLAYER)
+    if (this->player->GetType() == EntityType::LOCAL_PLAYER)
     {
         boost::shared_ptr<LocalPlayer> localPlayer = boost::static_pointer_cast<LocalPlayer>(this->player);
         if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
         {
-            if (gConsoleUIController.IsSceneInStack(localPlayer->mUserIndex, static_cast<EUIScene>(5)))
+            if (gConsoleUIController.IsSceneInStack(localPlayer->mUserIndex, EUIScene_PauseMenu))
                 this->volume = 0.0f;
         }
     }

@@ -1,8 +1,7 @@
 #include "game/client/audio/FalloffGraph.hpp"
+#include "game/core/PODHandleArray.hpp"
 
 #include <stddef.h>
-
-void* Handle_Get(Handle handle);
 
 struct HandleEntry
 {

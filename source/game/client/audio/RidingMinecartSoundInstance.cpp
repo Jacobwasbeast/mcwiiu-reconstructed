@@ -37,7 +37,7 @@ SoundInstance* RidingMinecartSoundInstance::getDRCClone() const
 
 void RidingMinecartSoundInstance::tick()
 {
-    if (GameSettings::GetGameSettings((eGameSetting)0x23) != 0)
+    if (GameSettings::GetGameSettings(eGameSetting_MinecartSounds) != 0)
     {
         if (!this->minecart->mRemoved
             && this->player->isPassenger()

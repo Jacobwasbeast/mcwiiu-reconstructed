@@ -4,6 +4,7 @@
 #include "game/client/audio/SoundInstance.hpp"
 #include "game/core/Handle.hpp"
 #include "game/util/LegacyUtilityFunctions.hpp"
+#include "game/core/PODHandleArray.hpp"
 
 struct SoundInstanceHandleStorage
 {
@@ -27,9 +28,8 @@ struct EventSystemVariable
 
 extern int AIL_stricmp(const char* first, const char* second);
 extern int AIL_find_marker_in_list(int markerList, const char* markerName, int* markerType);
-extern void* Handle_Get(Handle handle);
-extern int strtoi__FPCcPPCc(const char* value, const char** end);
-extern int Var_LookupWithContext__FP11EventSystem6HandlePCciPv(EventSystem* eventSystem,
+extern int strtoi(const char* value, const char** end);
+extern int Var_LookupWithContext(EventSystem* eventSystem,
                                                                 EventSystem::Handle* handle,
                                                                 const char* name,
                                                                 int flags,
@@ -43,7 +43,7 @@ static EventSystemVariable* lookupVariable(const EventSystem::Handle& handle)
     return static_cast<EventSystemVariable*>(Handle_Get(lookup));
 }
 
-int strtoi__FPCcPPCc(const char* value, const char** end)
+int strtoi(const char* value, const char** end)
 {
     int result = 0;
 
@@ -66,7 +66,7 @@ int strtoi__FPCcPPCc(const char* value, const char** end)
     return result;
 }
 
-int Var_LookupWithContext__FP11EventSystem6HandlePCciPv(EventSystem* eventSystem,
+int Var_LookupWithContext(EventSystem* eventSystem,
                                                          EventSystem::Handle* handle,
                                                          const char* name,
                                                          int flags,
@@ -115,7 +115,7 @@ int Var_LookupWithContext__FP11EventSystem6HandlePCciPv(EventSystem* eventSystem
         if (context.index == eventSystem->m_handle.index &&
             context.generation == eventSystem->m_handle.generation)
         {
-            ErrorHandler__F9ErrorTypeULPCc(ERROR_TYPE_MISSING_VARIABLE, 0, name);
+            ErrorHandler(ERROR_TYPE_MISSING_VARIABLE, 0, name);
             return 0;
         }
 
@@ -123,7 +123,7 @@ int Var_LookupWithContext__FP11EventSystem6HandlePCciPv(EventSystem* eventSystem
     }
 }
 
-int FindMarker__FP11EventSystemP13SoundInstanceiPCcPiT5(EventSystem* eventSystem,
+int FindMarker(EventSystem* eventSystem,
                                                           SoundInstance* soundInstance,
                                                           int markerList,
                                                           char* markerName,
@@ -171,15 +171,15 @@ int FindMarker__FP11EventSystemP13SoundInstanceiPCcPiT5(EventSystem* eventSystem
             handle = eventSystem->m_handle;
         }
 
-        return Var_LookupWithContext__FP11EventSystem6HandlePCciPv(eventSystem, &handle,
+        return Var_LookupWithContext(eventSystem, &handle,
                                                                     markerName, 0,
                                                                     markerIndex);
     }
 
     ++markerName;
-    if (OnlyNum__FPCc(markerName) != 0)
+    if (OnlyNum(markerName) != 0)
     {
-        *markerIndex = strtoi__FPCcPPCc(markerName, 0);
+        *markerIndex = strtoi(markerName, 0);
         *markerType = variableType;
         return 1;
     }

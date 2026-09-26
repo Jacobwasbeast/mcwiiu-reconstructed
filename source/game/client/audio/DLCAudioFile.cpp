@@ -5,8 +5,7 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/core/DLCPack.hpp"
-
-std::wstring char16towstring(wchar_t* pText);
+#include "game/core/StringConversion.hpp"
 
 static const wchar_t* s_audioParameterNames[] =
 {

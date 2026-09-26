@@ -18,7 +18,7 @@ public:
 
 class SoundInstance;
 
-int FindMarker__FP11EventSystemP13SoundInstanceiPCcPiT5(EventSystem* eventSystem,
+int FindMarker(EventSystem* eventSystem,
                                                           SoundInstance* soundInstance,
                                                           int markerList,
                                                           char* markerName,

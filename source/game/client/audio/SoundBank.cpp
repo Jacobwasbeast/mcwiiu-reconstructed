@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-std::int32_t FindAsset__FP9SoundBankPCcPQ2_9SoundBank10AssetEntryi(
+std::int32_t FindAsset(
     SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, std::int32_t count)
 {
     while (count != 0)
@@ -17,8 +17,8 @@ std::int32_t FindAsset__FP9SoundBankPCcPQ2_9SoundBank10AssetEntryi(
 
         while (true)
         {
-            const std::int32_t entryCharacter = ourtoupper__Fc(*entryName);
-            const std::int32_t searchCharacter = ourtoupper__Fc(*searchName);
+            const std::int32_t entryCharacter = ourtoupper(*entryName);
+            const std::int32_t searchCharacter = ourtoupper(*searchName);
 
             if (searchCharacter < entryCharacter)
             {

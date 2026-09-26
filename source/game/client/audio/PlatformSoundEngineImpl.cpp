@@ -5,12 +5,6 @@
 
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-struct _SAMPLE
-{
-    unsigned char ucReserved[454];
-    bool bOutputToDRC;
-};
-
 struct _MILESSOUNDINSTANCEINFO
 {
     int iSoundIndex;
@@ -40,6 +34,7 @@ extern "C" void MIXInit();
 extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle, RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface, RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface);
 
 #include "platform/wiiu/WiiUMilesFileSystem.hpp"
+#include "game/client/audio/FalloffGraph.hpp"
 
 extern "C" void AIL_startup();
 extern "C" void AIL_shutdown();
@@ -206,7 +201,7 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
 
     while (MilesEnumerateSoundInstances(NULL, &uiNext, 0, NULL, 0, 0, &info) != 0)
     {
-        info.pSample->bOutputToDRC = pRouteToDRC(pUserData, info.pSoundInstance);
+        info.pSample->outputToDRC = pRouteToDRC(pUserData, info.pSoundInstance);
 
         if (info.uiType == 1)
         {
@@ -316,7 +311,7 @@ void PlatformSoundEngineImpl::startStream(void* pUserData, ConfigureSoundCallbac
 
     pSample = AIL_stream_sample_handle(m_pStream);
     pSampleDRC = AIL_stream_sample_handle(m_pStreamDRC);
-    pSampleDRC->bOutputToDRC = true;
+    pSampleDRC->outputToDRC = true;
 
     AIL_register_falloff_function_callback(pSample, custom_falloff_function);
 
@@ -353,7 +348,7 @@ void PlatformSoundEngineImpl::setStreamVol(float fVolume)
     AIL_set_sample_volume_levels(pSample, fVolume, fVolume);
 
     pSampleDRC = AIL_stream_sample_handle(m_pStreamDRC);
-    pSampleDRC->bOutputToDRC = true;
+    pSampleDRC->outputToDRC = true;
     AIL_set_sample_volume_levels(pSampleDRC, fVolume, fVolume);
 }
 

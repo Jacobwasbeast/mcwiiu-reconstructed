@@ -37,7 +37,7 @@ SoundInstance* MinecartSoundInstance::getDRCClone() const
 
 void MinecartSoundInstance::tick()
 {
-    if (GameSettings::GetGameSettings((eGameSetting)0x23) == 0)
+    if (GameSettings::GetGameSettings(eGameSetting_MinecartSounds) == 0)
     {
         this->volume = 0.0f;
         return;

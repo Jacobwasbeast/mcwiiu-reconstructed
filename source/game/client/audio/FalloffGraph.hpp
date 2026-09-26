@@ -5,11 +5,13 @@
 
 struct _SAMPLE
 {
-    unsigned char reserved0[0x208];
+    unsigned char reserved0[0x1c6];
+    bool outputToDRC;
+    unsigned char reserved1[0x41];
     Handle falloffHandle;
-    unsigned char reserved1[0x5f4];
+    unsigned char reserved2[0x5f4];
     int falloffApplied;
-    unsigned char reserved2[0x48];
+    unsigned char reserved3[0x48];
     int falloffMode;
 };
 
