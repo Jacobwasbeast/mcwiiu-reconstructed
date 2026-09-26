@@ -35,5 +35,5 @@ void RandomDissolveDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCac
 
 ConsoleGameRules::EGameRuleType RandomDissolveDegrade::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(34);
+    return ConsoleGameRules::eGameRuleType_RandomDissolveDegrade;
 }

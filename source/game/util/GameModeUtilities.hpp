@@ -20,6 +20,8 @@ class ServerPlayer;
 class TumbleGenerator;
 class WeighedTreasure;
 
+extern const std::wstring SPECTATOR_TEAM_NAME;
+
 class GameModeUtilities
 {
 public:

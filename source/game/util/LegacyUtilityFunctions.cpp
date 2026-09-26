@@ -27,7 +27,7 @@ void outresuhex(std::uint32_t value)
     AIL_debug_log("!-Result = 0x%lX", value);
 }
 
-std::int32_t ourtoupper__Fc(char value)
+std::int32_t ourtoupper(char value)
 {
     if (value >= 'a' && value <= 'z')
     {
@@ -36,7 +36,7 @@ std::int32_t ourtoupper__Fc(char value)
     return static_cast<std::int32_t>(value);
 }
 
-int OnlyNum__FPCc(const char* value)
+int OnlyNum(const char* value)
 {
     const char* current = value;
     while (*current != '\0')

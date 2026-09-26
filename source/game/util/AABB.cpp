@@ -5,12 +5,9 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/core/HitResult.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 #include <sstream>
-
-unsigned int TlsAlloc();
-void* TlsGetValue(unsigned int index);
-int TlsSetValue(unsigned int index, void* value);
 
 static const int TEMP_POOL_SIZE = 1024;
 

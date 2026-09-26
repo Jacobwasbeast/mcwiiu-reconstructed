@@ -1,6 +1,6 @@
 #include "game/util/Mth.hpp"
 
-double fclamp__FfN21(float value, float min, float max)
+double fclamp(float value, float min, float max)
 {
     if (value < min)
     {

@@ -1,4 +1,5 @@
 #include "game/util/GameModeUtilities.hpp"
+#include "game/world/block/PressurePlateBlock.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -44,6 +45,8 @@ struct ChestItemsInfoLess
 };
 }
 
+const std::wstring SPECTATOR_TEAM_NAME = L"s";
+
 GameModeUtilities::Position::Position() : x(0.0), z(0.0), y(0.0) {}
 
 GameModeUtilities::Position::Position(double xValue, double zValue)
@@ -58,26 +61,28 @@ void GameModeUtilities::Position::randomize(Random* random, double minX, double 
 
 bool GameModeUtilities::Position::isSafeInRange(Level* level, int minY, int maxY)
 {
-    unsigned int ix = (unsigned int)x;
-    unsigned int iz = (unsigned int)z;
-    if (x < (double)(int)ix) --ix;
-    if (z < (double)(int)iz) --iz;
-    if (maxY > level->getHeight()) maxY = level->getHeight();
-    if (minY < 2) minY = 2;
-    while (minY < maxY)
+    static const int MAX_SAFE_HEIGHT = 256;
+    const int blockX = Mth::floor(x);
+    const int blockZ = Mth::floor(z);
+    if (maxY > MAX_SAFE_HEIGHT)
+        maxY = MAX_SAFE_HEIGHT;
+    if (minY < 2)
+        minY = 2;
+
+    for (int y = maxY; y > minY; --y)
     {
-        BlockPos lower((int)ix, minY, (int)iz);
-        BlockPos upper = lower.above();
-        const BlockState* floor = level->getBlockState(lower.below());
-        const BlockState* head = level->getBlockState(upper);
-        if (floor != NULL && floor->getMaterial() != Material::AIR)
-        {
-            if (floor->getMaterial() == Material::AIR || head == NULL ||
-                head->getMaterial() == Material::WATER)
-                return false;
-            return true;
-        }
-        minY += 2;
+        BlockPos floorPos = BlockPos(blockX, y, blockZ).below();
+        const BlockState* floor = level->getBlockState(floorPos);
+        const BlockState* head = level->getBlockState(floorPos.above());
+        if (floor == NULL || floor->getBlock() == Blocks::air)
+            continue;
+        if (!floor->isSolidBlockingCube())
+            return false;
+        if (head->getMaterial() == Material::FIRE)
+            return false;
+        if (dynamic_cast<PressurePlateBlock*>(head->getBlock()) != NULL)
+            return false;
+        return true;
     }
     return false;
 }
@@ -117,28 +122,28 @@ int GameModeUtilities::Position::getSpawnY(Level* level)
         Block* block;
 
         block = level->getBlockState(BlockPos(ix, y, iz))->getBlock();
-        if (block != NULL && block != Blocks::AIR)
+        if (block != NULL && block != Blocks::air)
         {
             if (block != Blocks::lava && block != Blocks::flowing_lava) return y + 1;
             return y + 50;
         }
 
         block = level->getBlockState(BlockPos(ix, y - 1, iz))->getBlock();
-        if (block != NULL && block != Blocks::AIR)
+        if (block != NULL && block != Blocks::air)
         {
             if (block != Blocks::lava && block != Blocks::flowing_lava) return y;
             return (y - 3) + 52;
         }
 
         block = level->getBlockState(BlockPos(ix, y - 2, iz))->getBlock();
-        if (block != NULL && block != Blocks::AIR)
+        if (block != NULL && block != Blocks::air)
         {
             if (block != Blocks::lava && block != Blocks::flowing_lava) return (y - 2) + 1;
             return (y - 2) + 50;
         }
 
         block = level->getBlockState(BlockPos(ix, y - 3, iz))->getBlock();
-        if (block != NULL && block != Blocks::AIR)
+        if (block != NULL && block != Blocks::air)
         {
             if (block != Blocks::lava && block != Blocks::flowing_lava) return y - 2;
             return (y - 3) + 50;
@@ -494,7 +499,7 @@ double GameModeUtilities::setPlayerPositions(std::vector<boost::shared_ptr<Serve
                 position->randomize(level->mRandom, position->x - 16.0, position->z - 16.0,
                                     position->x + 16.0, position->z + 16.0);
                 BlockPos below(BlockPos(position->x, spawnY, position->z).below());
-                level->setBlock(below, Blocks::sponge->defaultBlockState(), 3, false);
+                level->setBlock(below, Blocks::sponge->defaultBlockState(), Block::UPDATE_ALL, false);
                 generator->AddAdditionalBlock(below);
             }
         }
@@ -548,7 +553,7 @@ void GameModeUtilities::DistributePlayersInTeams(std::vector<boost::shared_ptr<S
                 for (unsigned int t = 0; t < teams->size(); ++t)
                 {
                     PlayerTeam* team = teams->at(t);
-                    if (!team->getName().empty())
+                    if (team->getName() != SPECTATOR_TEAM_NAME)
                     {
                         if (smallest == NULL || team->getPlayerCount() < smallest->getPlayerCount())
                             smallest = team;

@@ -1,10 +1,7 @@
 #include "game/util/phys__Vec2.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 #include <math.h>
-
-unsigned int TlsAlloc();
-void* TlsGetValue(unsigned int index);
-int TlsSetValue(unsigned int index, void* value);
 
 static const int TEMP_POOL_SIZE = 1024;
 

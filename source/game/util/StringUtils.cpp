@@ -3,7 +3,7 @@
 #include <cmath>
 #include <limits>
 
-int atoi_with_len__FPCciPi(const char* text, int base, int* length)
+int atoi_with_len(const char* text, int base, int* length)
 {
     const char* current = text;
     const bool negative = *text == '-';
@@ -55,7 +55,7 @@ int atoi_with_len__FPCciPi(const char* text, int base, int* length)
     return value;
 }
 
-double atof_with_len__FPCcPi(const char* text, int* length)
+double atof_with_len(const char* text, int* length)
 {
     const char* current = text;
     const bool negative = *text == '-';

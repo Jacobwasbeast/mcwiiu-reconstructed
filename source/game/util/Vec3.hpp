@@ -70,7 +70,6 @@ public:
     double distanceToSqr(Vec3* other);
     double distanceToSqr(double x, double y, double z);
     double distanceTo(AABB* box);
-
     Vec3* scale(double factor);
     double length();
     double lengthSqr();

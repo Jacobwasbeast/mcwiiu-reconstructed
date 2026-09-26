@@ -1,8 +1,7 @@
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 
 #include <cstring>
-
-int javaStringHashCode(const std::wstring& text);
 
 ResourceLocation::ResourceLocation() {
     textures = NULL;

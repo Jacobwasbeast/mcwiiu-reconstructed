@@ -15,6 +15,7 @@
 #include "game/world/block/MoveToBlockGoal.hpp"
 #include "game/client/audio/SoundSource.hpp"
 
+class Block;
 class BlockPos;
 class CompoundTag;
 class DataFixerUpper;
@@ -105,8 +106,8 @@ public:
         virtual bool isValidTarget(Level* level, const BlockPos& pos);
     private:
         Rabbit* mRabbit;
-        bool mHasTarget;
-        bool mReachedTarget;
+        bool mWantsToRaid;
+        bool mCanRaid;
     };
 
     Rabbit(Level* level);
@@ -159,14 +160,14 @@ public:
 private:
     int mJumpTicks;
     int mJumpDuration;
-    bool mJumping;
-    int mLandingDelay;
+    bool mWasOnGround;
+    int mJumpDelayTicks;
     int mMoreCarrotTicks;
-    void* mUnknown;
-    int mRabbitType;
-    int mSnowType;
-    int mDesertType;
-    int mMountainType;
+    boost::shared_ptr<void> mField0x794;
+    Block* mGrassBlock;
+    Block* mSnowBlock;
+    Block* mSnowLayerBlock;
+    Block* mSandBlock;
 };
 
 #endif
