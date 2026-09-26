@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
 
+#include "game/core/ConsoleInputSource.hpp"
 #include "game/core/ConsoleSchematicFile.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/Difficulty.hpp"
@@ -17,8 +19,10 @@
 class ChunkGenerator;
 class ChunkSource;
 class CommandDispatcher;
+class ConsoleInput;
 class C4JEventImpl;
 class C4JThreadImpl;
+class Entity;
 class FillTool;
 class Level;
 class LevelStorageSource;
@@ -30,18 +34,17 @@ class ProgressRenderer;
 class ServerConnection;
 class ServerLevel;
 class Settings;
-class ConsoleInputSource;
 class _NetworkGameInitData;
 
-class MinecraftServer
+class MinecraftServer : public ConsoleInputSource
 {
 public:
     struct postProcessRequest
     {
         int x;
         int z;
-        ChunkSource* source;
-        ChunkGenerator* generator;
+        ChunkSource* chunkSource;
+        ChunkGenerator* chunkGenerator;
     };
 
     MinecraftServer();
@@ -59,14 +62,14 @@ public:
     void setLevelDifficulty(ServerLevel* level, const Difficulty* difficulty);
     void setDifficulty(const Difficulty* difficulty);
     static int runPostUpdate(void* argument);
-    void postProcessTerminate(ProgressRenderer* renderer);
+    void postProcessTerminate(ProgressRenderer* progressRenderer);
     ServerLevel* getLevel(int dimension);
     void saveGameRules();
     void endProgress();
-    bool loadLevel(LevelStorageSource* storage, const std::wstring& name, long long seed, LevelType* type, _NetworkGameInitData* initData);
-    bool initServer(long long seed, _NetworkGameInitData* initData, unsigned int flags, bool dedicated);
+    bool loadLevel(LevelStorageSource* storageSource, const std::wstring& name, long long seed, LevelType* levelType, _NetworkGameInitData* initData);
+    bool initServer(long long seed, _NetworkGameInitData* initData, unsigned int hostSettings, bool findSeed);
     void saveAllChunks();
-    void stopServer(bool save);
+    void stopServer(bool didInit);
     PlayerList* getPlayers();
     void setDefaultGameMode(const GameType* gameType);
     const GameType* getDefaultGameType();
@@ -91,22 +94,22 @@ public:
     void broadcastStartSavingPacket();
     void broadcastStopSavingPacket();
     static unsigned long long main(long long seed, void* argument);
-    static void HaltServer(bool force);
+    static void HaltServer(bool primaryPlayerSignedOut);
     virtual void info(const std::wstring& message);
     virtual void warn(const std::wstring& message);
     virtual std::wstring getConsoleName();
     void setLevel(int dimension, ServerLevel* level);
-    bool flagEntitiesToBeRemoved(unsigned int* id);
-    void addPostProcessRequest(ChunkSource* source, ChunkGenerator* generator, int x, int z);
+    bool flagEntitiesToBeRemoved(unsigned int* entityIds);
+    void addPostProcessRequest(ChunkSource* chunkSource, ChunkGenerator* chunkGenerator, int x, int z);
     static bool chunkPacketManagement_CanSendTo(INetworkPlayer* player);
     static void chunkPacketManagement_DidSendTo(INetworkPlayer* player);
     void Suspend();
 
     void saveDevData();
-    void setProgress(const std::wstring& progress, int percent);
+    void setProgress(const std::wstring& progressName, int progress);
     int getOperatorUserPermissionLevel();
     Level* getCommandSenderWorld();
-    class Entity* getCommandSenderEntity();
+    Entity* getCommandSenderEntity();
     void setForceGameType(bool force);
     int getPlayerIdleTimeout();
     void setPlayerIdleTimeout(int timeout);
@@ -116,63 +119,71 @@ public:
     std::wstring getFile(const std::wstring& name);
     bool IsSuspending();
 
+    int getGameModeId() const { return texturePackId; }
+
+    static bool s_primaryPlayerSignedOut;
+    static bool s_haltRequested;
+    static bool s_saveOnExitAnswered;
+    static bool s_setTimeAtEndOfTick;
+    static long long s_setTime;
+    static bool s_setDayTimeAtEndOfTick;
+    static long long s_setDayTime;
+
     ServerConnection* mConnection;
     Settings* mSettings;
     arrayWithLength<ServerLevel*> mLevels;
     PlayerList* mPlayers;
-    int mLoginComparisonValue;
-    int getGameModeId() const { return gameModeId; }
 
 private:
     friend class PlayerList;
+    friend class GameStats;
     friend class MasterGameMode;
+
+    static long long s_chunkPacketTickStart;
+    static bool s_chunkPacketBudgetSpent;
+    static std::vector<INetworkPlayer*> s_chunkPacketRecipients;
+    static boost::unordered_map<std::wstring, int> s_countdownTimers;
+
     ConsoleSchematicFile* schematicFiles[8];
     FillTool* fillTools[8];
     Random random;
-    int tickCount;
+    int unusedValue0;
     bool running;
-    bool levelLoaded;
+    bool initialised;
 public:
     bool shuttingDown;
 private:
-    bool saving;
-    int networkTick;
+    int tickCount;
     std::wstring progressName;
-    int progressNameLength;
-    int progressNameCapacity;
-    int progressValue;
+    int progress;
     CommandDispatcher* commandDispatcher;
-    std::vector<ConsoleInputSource*> consoleInputs;
-    int consoleInputIndex;
-    unsigned short consoleInputCount;
+    std::vector<ConsoleInput*> consoleInput;
+    bool unusedFlag0;
+    bool unusedFlag1;
     bool animals;
     bool npcsEnabled;
     bool pvpAllowed;
     bool flightAllowed;
-    unsigned short serverFlags;
-    std::wstring statusMessage;
-    int statusMessageLength;
-    int statusMessageCapacity;
+    std::wstring motd;
     int maxBuildHeight;
-    const Difficulty* difficulty;
-    LevelType* levelType;
-    const GameType* defaultGameType;
-    int gameModeId;
     int playerIdleTimeout;
-    ProgressRenderer* progressRenderer;
-    bool stopping;
-    std::vector<postProcessRequest> postProcessRequests;
-    LevelStorageSource* levelStorage;
-    int postProcessState;
-    OSFastMutex postProcessLock;
-    C4JThreadImpl* postProcessThread;
-    bool serverPaused;
     bool forceGameType;
+    const GameType* defaultGameType;
+public:
+    int ugcPlayersVersion;
+    int texturePackId;
+private:
+    C4JThreadImpl* postProcessThread;
+    bool postProcessTerminating;
+    std::vector<postProcessRequest> postProcessRequests;
+    OSFastMutex postProcessCritSec;
+    C4JEventImpl* serverPausedEvent;
+    bool serverPaused;
+    long long serverPauseTime;
+public:
+    bool saveOnExit;
+private:
     bool suspending;
-    long long lastServerTime;
-    bool postProcessing;
-    bool suspended;
-    unsigned short shutdownFlags;
 
 public:
     MasterGameMode* mMasterGameMode;

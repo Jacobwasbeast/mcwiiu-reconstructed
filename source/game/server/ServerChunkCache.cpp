@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <sstream>
 
-extern void instructionSynchronize();
 extern long InterlockedCompareExchangeRelease(volatile long* destination, long exchange, long comparand);
 
 namespace
@@ -272,7 +271,6 @@ LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk
         newChunk->checkChests(this, x, z);
 
     LeaveCriticalSection(&m_mutex);
-    instructionSynchronize();
     return newChunk;
 }
 
@@ -524,7 +522,7 @@ void ServerChunkCache::tick()
 
 bool ServerChunkCache::shouldSave()
 {
-    return !m_level->saving;
+    return !m_level->noSave;
 }
 
 std::wstring ServerChunkCache::gatherStats()
@@ -532,7 +530,7 @@ std::wstring ServerChunkCache::gatherStats()
     return L"ServerChunkCache";
 }
 
-std::vector<Biome::MobSpawnerData*> ServerChunkCache::getMobsAt(MobCategory* category, const BlockPos& pos)
+std::vector<Biome::MobSpawnerData*>* ServerChunkCache::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
     return m_generator->getMobsAt(category, pos);
 }
@@ -601,7 +599,6 @@ unsigned int ServerChunkCache::runSaveThreadProc(void* data)
         Compression::ReleaseThreadStorage();
         OldChunkStorage::ReleaseThreadStorage();
     }
-    instructionSynchronize();
     return 0;
 }
 

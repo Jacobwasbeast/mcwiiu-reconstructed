@@ -56,10 +56,10 @@ public:
     bool IsNearCentreOf(const AABB* box, ServerPlayer* player, double x, double y, double z);
     virtual void tick();
     virtual void OnDeath(boost::shared_ptr<ServerPlayer> player);
-    unsigned int GetDeaths();
-    void SetDeaths(int deaths);
-    unsigned int GetKills();
-    void SetKills(int kills);
+    virtual unsigned int GetDeaths();
+    virtual void SetDeaths(int deaths);
+    virtual unsigned int GetKills();
+    virtual void SetKills(int kills);
     virtual void RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry,
                               boost::shared_ptr<ClientboundChatPacket> packet);
     virtual void RecordDeath(boost::shared_ptr<Entity> entity);

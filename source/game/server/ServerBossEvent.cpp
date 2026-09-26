@@ -66,31 +66,34 @@ void ServerBossEvent::setOverlay(BossBarOverlay overlay)
     }
 }
 
-void ServerBossEvent::setDarkenScreen(bool darkenScreen)
+BossEvent* ServerBossEvent::setDarkenScreen(bool darkenScreen)
 {
     if (darkenScreen != this->darkenScreen)
     {
         BossEvent::setDarkenScreen(darkenScreen);
         broadcast(ClientboundBossEventPacket::UPDATE_PROPERTIES);
     }
+    return this;
 }
 
-void ServerBossEvent::setPlayBossMusic(bool playBossMusic)
+BossEvent* ServerBossEvent::setPlayBossMusic(bool playBossMusic)
 {
     if (playBossMusic != this->playBossMusic)
     {
         BossEvent::setPlayBossMusic(playBossMusic);
         broadcast(ClientboundBossEventPacket::UPDATE_PROPERTIES);
     }
+    return this;
 }
 
-void ServerBossEvent::setCreateWorldFog(bool createWorldFog)
+BossEvent* ServerBossEvent::setCreateWorldFog(bool createWorldFog)
 {
     if (createWorldFog != this->createWorldFog)
     {
         BossEvent::setCreateWorldFog(createWorldFog);
         broadcast(ClientboundBossEventPacket::UPDATE_PROPERTIES);
     }
+    return this;
 }
 
 void ServerBossEvent::setName(const std::wstring& name)

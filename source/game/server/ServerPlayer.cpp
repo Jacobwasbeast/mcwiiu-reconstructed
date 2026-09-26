@@ -1,4 +1,6 @@
 #include "game/server/ServerPlayer.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/ResultSlot.hpp"
 #include "game/item/ArmorItem.hpp"
@@ -83,6 +85,7 @@
 #include "game/data/DataFixTypes.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/MasterGameMode.hpp"
+#include "game/network/ChunkHistory.hpp"
 #include "game/network/BlockRegionUpdatePacket.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/Connection.hpp"
@@ -114,28 +117,13 @@
 #include <limits>
 #include <set>
 #include <vector>
+#include "game/item/ComplexItem.hpp"
 
 namespace
 {
-class ServerPlayerDataWalker : public DataWalker
-{
-public:
-    CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version)
-    {
-        const std::wstring rootVehicle(L"RootVehicle");
-        if (tag->contains(rootVehicle, 10))
-        {
-            CompoundTag* root = tag->getCompound(rootVehicle);
-            const std::wstring entity(L"Entity");
-            if (root->contains(entity, 10))
-            {
-                root->put(entity, fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                                                root->getCompound(entity), version));
-            }
-        }
-        return tag;
-    }
-};
+const int CHUNK_SIZE = 16;
+const int CHUNK_HEIGHT = 256;
+const int MAX_DELAYED_CHUNK_PACKETS = 3;
 
 static void sendClientChatPacket(ServerPlayer* player, const std::wstring& text,
                                  ClientboundChatPacket::EChatPacketMessage message, int entityType)
@@ -194,71 +182,71 @@ static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource
         if (attacker == NULL)
             return;
         const unsigned long long entityType = attacker->GetType();
-        if (entityType == 0x5D540049ULL)
+        if (entityType == EntityType::PHANTOM)
             player->mPvpState = 0x46;
-        else if (entityType == 0xD502003ULL)
+        else if (entityType == EntityType::PUFFERFISH)
             return;
-        else if (entityType == 0xD602001ULL)
+        else if (entityType == EntityType::DOLPHIN)
             player->mPvpState = 0x53;
-        else if (entityType == 0x5D541041ULL)
+        else if (entityType == EntityType::VINDICATION_ILLAGER)
             player->mPvpState = 0x52;
-        else if (entityType == 0x5D541841ULL || entityType == 0x8000011ULL)
+        else if (entityType == EntityType::EVOCATION_ILLAGER || entityType == EntityType::EVOCATION_FANGS)
             player->mPvpState = 0x51;
-        else if (entityType == 0x88000012ULL || entityType == 0x2D698003ULL)
+        else if (entityType == EntityType::LLAMA_SPIT || entityType == EntityType::LLAMA)
             player->mPvpState = 0x50;
-        else if (entityType == 0x4D580043ULL || entityType == 0x8000010ULL)
+        else if (entityType == EntityType::SHULKER || entityType == EntityType::SHULKER_BULLET)
             player->mPvpState = 0x4b;
-        else if (entityType == 0x2D680006ULL)
+        else if (entityType == EntityType::POLAR_BEAR)
             player->mPvpState = 0x4a;
-        else if (entityType == 0x8A400000ULL)
+        else if (entityType == EntityType::FIREBALL)
             player->mPvpState = 0x29;
-        else if (entityType == 0x800000BULL)
+        else if (entityType == EntityType::PRIMED_TNT)
             player->mPvpState = 0x22;
-        else if (entityType == 0xB000001ULL)
+        else if (entityType == EntityType::LIGHTNING_BOLT)
             player->mPvpState = 0x45;
-        else if (entityType == 0x2D680005ULL)
+        else if (entityType == EntityType::RABBIT)
             player->mPvpState = 0x49;
-        else if (entityType == 0x4D54004BULL)
+        else if (entityType == EntityType::ENDERMITE)
             player->mPvpState = 0x48;
-        else if (entityType == 0x5D544000ULL)
+        else if (entityType == EntityType::GUARDIAN)
             player->mPvpState = 0x47;
-        else if (entityType == 0xD000005ULL)
+        else if (entityType == EntityType::ENDER_DRAGON)
             player->mPvpState = 0x44;
-        else if (entityType == 0x5D540044ULL)
+        else if (entityType == EntityType::SILVERFISH)
             player->mPvpState = 0x43;
-        else if (entityType == 0x5D540047ULL)
+        else if (entityType == EntityType::WITHER_BOSS)
             player->mPvpState = 0x42;
-        else if (entityType == 0x5D108001ULL)
+        else if (entityType == EntityType::MAGMA_CUBE)
             player->mPvpState = 0x41;
-        else if (entityType == 0x5D540045ULL)
+        else if (entityType == EntityType::BLAZE)
             player->mPvpState = 0x40;
-        else if (entityType == 0x5D540043ULL)
+        else if (entityType == EntityType::ENDER_MAN)
             player->mPvpState = 0x3f;
-        else if (entityType == 0x5D540046ULL)
+        else if (entityType == EntityType::WITCH)
             player->mPvpState = 0x3e;
-        else if (entityType == 0x5D108000ULL)
+        else if (entityType == EntityType::SLIME)
             player->mPvpState = 0x28;
-        else if (entityType == 0x5D0000C1ULL)
+        else if (entityType == EntityType::GHAST)
             player->mPvpState = 0x29;
-        else if (entityType == 0x5D550041ULL)
+        else if (entityType == EntityType::PIG_ZOMBIE)
             player->mPvpState = 0x2a;
-        else if (entityType == 0x5D550044ULL || entityType == 0x5D550043ULL || entityType == 0x5D550040ULL)
+        else if (entityType == EntityType::DROWNED || entityType == EntityType::HUSK || entityType == EntityType::ZOMBIE)
             player->mPvpState = 0x25;
-        else if (entityType == 0x5D560041ULL)
+        else if (entityType == EntityType::CAVE_SPIDER)
             player->mPvpState = 0x3d;
-        else if (entityType == 0x5D560040ULL)
+        else if (entityType == EntityType::SPIDER)
             player->mPvpState = 0x27;
-        else if (entityType == 0x5D540443ULL || entityType == 0x5D540442ULL || entityType == 0x5D540441ULL)
+        else if (entityType == EntityType::STRAY || entityType == EntityType::WITHER_SKELETON || entityType == EntityType::SKELETON)
             player->mPvpState = 0x26;
-        else if (entityType == 0x5D540041ULL)
+        else if (entityType == EntityType::CREEPER)
             player->mPvpState = 0x23;
-        else if (entityType == 0x2D580001ULL)
+        else if (entityType == EntityType::SNOW_MAN)
             player->mPvpState = 0x3c;
-        else if (entityType == 0xD580002ULL)
+        else if (entityType == EntityType::VILLAGER_GOLEM)
             player->mPvpState = 0x3b;
-        else if (entityType == 0xD6C0002ULL)
+        else if (entityType == EntityType::WOLF)
             player->mPvpState = 0x24;
-        else if (entityType == 0xC800001ULL || entityType == 0xC800000ULL)
+        else if (entityType == EntityType::SERVER_PLAYER || entityType == EntityType::PLAYER)
         {
             player->mPvpState = 0x20;
             boost::shared_ptr<Player> attackerPlayer = boost::static_pointer_cast<Player>(attacker);
@@ -267,15 +255,15 @@ static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource
             if (!mainHand->isEmpty())
                 player->mCauseOfDeathId = Item::getId(mainHand->getItem());
         }
-        else if (entityType == 0x8A020002ULL || entityType == 0x8A020000ULL)
+        else if (entityType == EntityType::TIPPABLE_ARROW || entityType == EntityType::ARROW)
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
             if (arrow->mOwner != NULL)
             {
                 const unsigned long long ownerType = arrow->mOwner->GetType();
-                if (ownerType == 0xC800001ULL || ownerType == 0xC800000ULL)
+                if (ownerType == EntityType::SERVER_PLAYER || ownerType == EntityType::PLAYER)
                     player->mPvpState = 0x21;
-                else if (ownerType == 0x5D540441ULL)
+                else if (ownerType == EntityType::SKELETON)
                     player->mPvpState = 0x26;
             }
         }
@@ -287,7 +275,7 @@ static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
     : Player((Level*)level, name), mConnection(), mServer(server), mGameMode(gameMode),
-      mLoadedChunks(), mSentEntityIds(), mTrackedChunks(), mState(0), mChunkRequestTime(0),
+      mLoadedChunks(), mEntitiesToRemove(), mTrackedChunks(), mState(0), mChunkRequestTime(0),
       mLevitationSourceY(NULL), mLastRecordedHealth(std::numeric_limits<float>::min()),
       mLastRecordedFood(std::numeric_limits<int>::min()), mLastRecordedAir(std::numeric_limits<int>::min()),
       mLastRecordedArmor(std::numeric_limits<int>::min()), mLastRecordedExperienceLevel(std::numeric_limits<int>::min()),
@@ -303,7 +291,7 @@ ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const st
     mDisconnected = false;
     mLastSentX = 0.0;
     mLastSentZ = 0.0;
-    mSpawnInvulnerableTime = Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ? 0 : 60;
+    mSpawnInvulnerableTime = Minecraft::InMiniGame(eMiniGameId_Glide, true) ? 0 : 60;
 
     BlockPos spawn = level->getSharedSpawnPos();
     if (!level->mDimension->isHasCeiling() &&
@@ -337,7 +325,7 @@ ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const st
             while (waterDepth < 128)
             {
                 Block* block = level->getBlockState(BlockPos(spawn.x, waterDepth, spawn.z))->getBlock();
-                if (block != Blocks::FLOWING_WATER && block != Blocks::WATER)
+                if (block != Blocks::flowing_water && block != Blocks::water)
                     break;
                 ++waterDepth;
             }
@@ -407,39 +395,34 @@ void ServerPlayer::setAllContainerData(AbstractContainerMenu* menu, boost::share
     }
 }
 
-uint64_t ServerPlayer::flagEntitiesToBeRemoved(uint32_t* parameterOne, bool* parameterTwo)
+void ServerPlayer::flagEntitiesToBeRemoved(uint32_t* removedFlags, bool* flagsInitialised)
 {
-    if (parameterOne == NULL || parameterTwo == NULL || mSentEntityIds.empty())
-        return 0;
-    if (!*parameterTwo)
+    if (removedFlags == NULL || flagsInitialised == NULL || mEntitiesToRemove.empty())
+        return;
+    if (!*flagsInitialised)
     {
-        *parameterTwo = true;
-        std::memset(parameterOne, 0, 0x40);
+        *flagsInitialised = true;
+        std::memset(removedFlags, 0, 0x40);
     }
-    for (std::vector<int32_t>::const_iterator it = mSentEntityIds.begin();
-         it != mSentEntityIds.end(); ++it)
+    for (std::vector<int32_t>::const_iterator it = mEntitiesToRemove.begin();
+         it != mEntitiesToRemove.end(); ++it)
     {
         const uint32_t id = static_cast<uint32_t>(*it);
         if (id < 0x800)
-            parameterOne[id >> 5] |= 0x80000000U >> (id & 0x1f);
+            removedFlags[id >> 5] |= 0x80000000U >> (id & 0x1f);
     }
-    return 0;
 }
 
-int32_t ServerPlayer::getFlagIndexForChunk(ChunkPos* parameterOne, int32_t parameterTwo)
+int ServerPlayer::getFlagIndexForChunk(const ChunkPos& chunkPos, int dimension)
 {
-    if (parameterOne == NULL)
-        return 0;
-    unsigned long long index = LevelRenderer::getGlobalIndexForChunk(
-        parameterOne->x * 16, 0, parameterOne->z * 16, parameterTwo);
-    return static_cast<int32_t>(index / 16);
+    return LevelRenderer::getGlobalIndexForChunk(chunkPos.x << 4, 0, chunkPos.z << 4, dimension) / 16;
 }
 
 void ServerPlayer::disconnect()
 {
     ejectPassengers();
     mDisconnected = true;
-    if (mField0x6c0 != 0)
+    if (mSleeping != 0)
     {
         stopSleepInBed(true, false, false);
     }
@@ -457,190 +440,178 @@ void ServerPlayer::doTickA()
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "Update inventory");
+    for (unsigned int slot = 0; slot < mInventory->getContainerSize(); ++slot)
+    {
+        not_null_ptr<ItemInstance> item = mInventory->getItem(slot);
+        if (!item->isEmpty() && item->getItem()->isComplex())
+        {
+            boost::shared_ptr<Packet> packet = dynamic_cast<ComplexItem*>(item->getItem())->getUpdatePacket(
+                item, mLevel, boost::static_pointer_cast<Player>(shared_from_this()));
+            if (packet != NULL)
+                mConnection->send(packet);
+        }
+    }
     PIXEndNamedEvent();
 }
 
-uint64_t ServerPlayer::broadcast(boost::shared_ptr<BlockEntity>* parameterOne, bool parameterTwo)
+void ServerPlayer::broadcast(boost::shared_ptr<BlockEntity> blockEntity, bool delay)
 {
-    if (parameterOne == NULL || !*parameterOne)
-        return 0;
-    boost::shared_ptr<Packet> packet = (*parameterOne)->getUpdatePacket();
-    if (!packet || mConnection == NULL)
-        return 0;
-    if (parameterTwo)
-        mConnection->queueSend(packet);
-    else
+    if (blockEntity == NULL)
+        return;
+
+    boost::shared_ptr<Packet> packet = blockEntity->getUpdatePacket();
+    if (packet == NULL)
+        return;
+
+    packet->shouldDelay = delay;
+    if (!delay)
         mConnection->send(packet);
-    return 0;
+    else
+        mConnection->queueSend(packet);
 }
 
-void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
+void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
 {
-    if (mLoadedChunks.empty() || mConnection == NULL || mServer == NULL || mLevel == NULL)
-        return;
-
-    bool forceImmediateResend = false;
-    ChunkPos closestChunk(0, 0);
-    bool foundClosest = false;
-    double closestDistance = std::numeric_limits<double>::max();
-
-    for (std::list<ChunkPos>::iterator it = mLoadedChunks.begin(); it != mLoadedChunks.end();)
+    bool resendChangedChunks = false;
+    if (!mLoadedChunks.empty())
     {
-        const ChunkPos chunkPos = *it;
-        if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        MasterGameMode* masterGameMode = mServer->mMasterGameMode;
+        ChunkPos closestChunk = mLoadedChunks.front();
+        double closestDistance = std::numeric_limits<double>::max();
+        bool foundChunk = false;
+        for (std::list<ChunkPos>::iterator chunkIt = mLoadedChunks.begin(); chunkIt != mLoadedChunks.end();)
         {
-            MasterGameMode* gameMode = mServer->mMasterGameMode;
-            if (mShowOnMaps && gameMode != NULL &&
-                !MasterGameMode::IsChunkWithinActiveBounds(gameMode, chunkPos.x, chunkPos.z))
+            ChunkPos chunkPos = *chunkIt;
+            if (Minecraft::InMiniGame(eMiniGameId_Any, true) && masterGameMode->IsRoundPlaying()
+                && !MasterGameMode::IsChunkWithinActiveBounds(masterGameMode, chunkPos.x, chunkPos.z))
             {
-                it = mLoadedChunks.erase(it);
+                chunkIt = mLoadedChunks.erase(chunkIt);
                 continue;
             }
+
+            if (mLevel->isChunkFinalised(chunkPos.x, chunkPos.z)
+                && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                    || !masterGameMode->IsChunkWithinLobbyRegionOfRoundLevel(chunkPos.x, chunkPos.z))
+                && (!foundChunk || chunkPos.distanceToSqr(mX, mZ) < closestDistance)
+                && (!historyOnly || masterGameMode->GetChunkHistory()->ShouldLoadOnClient(chunkPos.x, chunkPos.z)))
+            {
+                closestChunk = chunkPos;
+                closestDistance = chunkPos.distanceToSqr(mX, mZ);
+                foundChunk = true;
+            }
+            ++chunkIt;
         }
 
-        if (!mLevel->isChunkFinalised(chunkPos.x, chunkPos.z))
+        bool sendChanges = false;
+        if (foundChunk && Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
-            ++it;
-            continue;
+            sendChanges = masterGameMode->GetChunkHistory()->ShouldLoadOnClient(closestChunk.x, closestChunk.z);
+            if (sendChanges)
+                dontDelay = true;
+            else
+                resendChangedChunks = true;
         }
 
-        if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mServer->mMasterGameMode != NULL &&
-            mServer->mMasterGameMode->IsChunkWithinLobbyRegionOfRoundLevel(chunkPos.x, chunkPos.z))
+        bool canSend = foundChunk;
+        if (canSend && !mConnection->isLocal())
         {
-            ++it;
-            continue;
+            const bool clientReady = MinecraftServer::chunkPacketManagement_CanSendTo(mConnection->getNetworkPlayer());
+            if (!dontDelay)
+            {
+                canSend = clientReady && mConnection->countDelayedPackets() <= MAX_DELAYED_CHUNK_PACKETS
+                    && CGameNetworkManager::sInstance.GetHostPlayer()->GetSendQueueSizeMessages(NULL, true) <= MAX_DELAYED_CHUNK_PACKETS
+                    && !mConnection->mDisconnected;
+            }
+            if (canSend)
+            {
+                mLastChunkSendingTick = mTickCount;
+                MinecraftServer::chunkPacketManagement_DidSendTo(mConnection->getNetworkPlayer());
+            }
+        }
+        else if (canSend && mConnection->mDisconnected)
+        {
+            canSend = false;
         }
 
-        if (parameterTwo && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-            mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() == 0)
+        if (canSend)
         {
-            ++it;
-            continue;
-        }
+            ServerLevel* level = mServer->getLevel(mDimension);
+            const int flagIndex = getFlagIndexForChunk(closestChunk, mLevel->mDimension->getType()->getId());
+            const bool clientHasChunk = CGameNetworkManager::sInstance.SystemFlagGet(mConnection->getNetworkPlayer(), flagIndex);
+            LevelChunk* chunk = level->getChunk(closestChunk.x, closestChunk.z);
+            if (chunk->getHasGapsToCheck() && level->mDimension->isHasSkyLight())
+                chunk->recheckGaps(false);
 
-        const double distance = chunkPos.distanceToSqr(mX, mZ);
-        if (!foundClosest || distance < closestDistance)
-        {
-            closestChunk = chunkPos;
-            closestDistance = distance;
-            foundClosest = true;
+            bool sendBlockEntities = !clientHasChunk;
+            if (!mConnection->isLocal())
+            {
+                mLoadedChunks.remove(closestChunk);
+                if (!clientHasChunk)
+                {
+                    BlockRegionUpdatePacket* regionPacket = NULL;
+                    if (!sendChanges)
+                    {
+                        regionPacket = new BlockRegionUpdatePacket(closestChunk.x << 4, 0, closestChunk.z << 4, CHUNK_SIZE,
+                                                                   CHUNK_HEIGHT, CHUNK_SIZE, level, false, NULL);
+                    }
+                    else
+                    {
+                        std::vector<short>* changes = masterGameMode->GetChunkHistory()->GetChangesForChunk(closestChunk.x, closestChunk.z);
+                        if (changes != NULL && !changes->empty())
+                        {
+                            regionPacket = new BlockRegionUpdatePacket(closestChunk.x << 4, 0, closestChunk.z << 4, CHUNK_SIZE,
+                                                                       CHUNK_HEIGHT, CHUNK_SIZE, level, true, changes);
+                        }
+                    }
+
+                    boost::shared_ptr<Packet> packet(regionPacket);
+                    if (packet != NULL)
+                    {
+                        if (dontDelay)
+                            packet->shouldDelay = false;
+                        if (!packet->shouldDelay)
+                            mConnection->send(packet);
+                        else
+                            mConnection->queueSend(packet);
+                    }
+                    CGameNetworkManager::sInstance.SystemFlagSet(mConnection->getNetworkPlayer(), flagIndex);
+                }
+            }
+            else
+            {
+                MultiPlayerLevel* clientLevel = Minecraft::GetInstance()->getLevel(level->mDimension->getType()->getId());
+                if (clientLevel == NULL)
+                {
+                    sendBlockEntities = false;
+                }
+                else
+                {
+                    LevelChunk* clientChunk = clientLevel->getChunk(closestChunk.x, closestChunk.z);
+                    mLoadedChunks.remove(closestChunk);
+                    clientChunk->reSyncLighting();
+                    clientChunk->recalcHeightmapOnly();
+                    CGameNetworkManager::sInstance.SystemFlagSet(mConnection->getNetworkPlayer(), flagIndex);
+                }
+            }
+
+            if (sendBlockEntities)
+            {
+                const int minX = closestChunk.x * CHUNK_SIZE;
+                const int minZ = closestChunk.z * CHUNK_SIZE;
+                std::vector<boost::shared_ptr<BlockEntity> >* blockEntities = level->getBlockEntitiesInRegion(
+                    minX, 0, minZ, minX + CHUNK_SIZE, CHUNK_HEIGHT, minZ + CHUNK_SIZE);
+                for (unsigned int index = 0; index < blockEntities->size(); ++index)
+                    broadcast(blockEntities->at(index), !mConnection->isLocal() && !dontDelay);
+                delete blockEntities;
+            }
         }
-        ++it;
     }
 
-    if (!foundClosest)
-        return;
-
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mServer->mMasterGameMode != NULL)
-    {
-        if (mServer->mMasterGameMode->GetChunkHistory() == 0)
-            forceImmediateResend = true;
-        else
-            parameterOne = true;
-    }
-
-    if (!mConnection->isLocal())
-    {
-        if (!parameterOne)
-        {
-            INetworkPlayer* sendPlayer = mConnection->getNetworkPlayer();
-            if (sendPlayer == NULL ||
-                !MinecraftServer::chunkPacketManagement_CanSendTo(sendPlayer))
-                return;
-
-            Connection* connection = mConnection->getConnection();
-            if (connection != NULL && connection->countDelayedPackets() > 3)
-                return;
-
-            INetworkPlayer* hostPlayer = CGameNetworkManager::sInstance.GetHostPlayer();
-            if (hostPlayer != NULL && hostPlayer->GetSinglePlayerOutstandingAckCount() > 3)
-                return;
-        }
-
-        INetworkPlayer* sendPlayer = mConnection->getNetworkPlayer();
-        if (sendPlayer != NULL)
-            MinecraftServer::chunkPacketManagement_DidSendTo(sendPlayer);
-    }
-
-    ServerLevel* serverLevel = mServer->getLevel(mDimension);
-    if (serverLevel == NULL)
-        return;
-
-    const int flagIndex = getFlagIndexForChunk(&closestChunk, serverLevel->mDimension->getType()->getId());
-    INetworkPlayer* networkPlayer = mConnection->getNetworkPlayer();
-    if (networkPlayer != NULL &&
-        CGameNetworkManager::sInstance.SystemFlagGet(networkPlayer, flagIndex) &&
-        !mConnection->isLocal())
-    {
-        mLoadedChunks.remove(closestChunk);
-        return;
-    }
-
-    LevelChunk* chunk = serverLevel->getChunk(closestChunk.x, closestChunk.z);
-    if (chunk != NULL && chunk->getHasGapsToCheck() && serverLevel->mDimension->isHasSkyLight())
-        chunk->recheckGaps(false);
-
-    if (mConnection->isLocal())
-    {
-        MultiPlayerLevel* clientLevel = Minecraft::GetInstance()->getLevel(
-            serverLevel->mDimension->getType()->getId());
-        if (clientLevel == NULL)
-            return;
-        LevelChunk* clientChunk = clientLevel->getChunk(closestChunk.x, closestChunk.z);
-        mLoadedChunks.remove(closestChunk);
-        if (clientChunk != NULL)
-        {
-            clientChunk->reSyncLighting();
-            clientChunk->recalcHeightmapOnly();
-        }
-    }
-    else
-    {
-        mLoadedChunks.remove(closestChunk);
-
-        boost::shared_ptr<Packet> packet;
-        if (parameterTwo && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-            mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() != 0)
-        {
-            packet.reset(new BlockRegionUpdatePacket(
-                closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, true, NULL));
-        }
-        else
-        {
-            packet.reset(new BlockRegionUpdatePacket(
-                closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, false, NULL));
-        }
-
-        if (parameterOne || !packet->isAync())
-            mConnection->send(packet);
-        else
-            mConnection->queueSend(packet);
-    }
-
-    if (networkPlayer != NULL)
-        CGameNetworkManager::sInstance.SystemFlagSet(networkPlayer, flagIndex);
-
-    const int regionMinX = closestChunk.x * 16;
-    const int regionMinZ = closestChunk.z * 16;
-    std::vector<boost::shared_ptr<BlockEntity> >* blockEntities =
-        serverLevel->getBlockEntitiesInRegion(regionMinX, 0, regionMinZ,
-                                              regionMinX + 16, 256, regionMinZ + 16);
-    if (blockEntities != NULL)
-    {
-        for (size_t entityIndex = 0; entityIndex < blockEntities->size(); ++entityIndex)
-        {
-            boost::shared_ptr<BlockEntity> entity = (*blockEntities)[entityIndex];
-            const bool queueBlockEntity = !mConnection->isLocal() && !parameterOne;
-            broadcast(&entity, queueBlockEntity);
-        }
-        delete blockEntities;
-    }
-
-    if (!parameterTwo && forceImmediateResend)
+    if (!historyOnly && resendChangedChunks)
         doChunkSendingTick(true, true);
 }
 
-uint64_t ServerPlayer::doTickB()
+void ServerPlayer::doTickB()
 {
     processDimensionDelay();
 
@@ -674,14 +645,13 @@ uint64_t ServerPlayer::doTickB()
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetExperiencePacket(
             mExperienceProgress, mTotalExperience, mExperienceLevel)));
     }
-    return 0;
 }
 
-void ServerPlayer::doTick(bool parameterOne, bool parameterTwo, bool parameterThree)
+void ServerPlayer::doTick(bool tickFrame, bool sendChunks, bool ignorePortals)
 {
-    mIgnorePortals = parameterThree;
+    mIgnorePortals = ignorePortals;
 
-    if (parameterOne)
+    if (tickFrame)
     {
         PIXBeginNamedEvent(0.0f, "Update frame tick");
         updateFrameTick();
@@ -692,10 +662,10 @@ void ServerPlayer::doTick(bool parameterOne, bool parameterTwo, bool parameterTh
     doTickA();
     PIXEndNamedEvent();
 
-    if (parameterOne)
+    if (tickFrame)
     {
         PIXBeginNamedEvent(0.0f, "doChunkSendingTick");
-        doChunkSendingTick(parameterTwo, false);
+        doChunkSendingTick(sendChunks, false);
         PIXEndNamedEvent();
     }
 
@@ -712,53 +682,40 @@ void ServerPlayer::initMenu()
         mInventoryMenu->addSlotListener(this);
 }
 
-uint64_t ServerPlayer::SpectatePlayerChange(uint32_t parameterOne, int32_t parameterTwo)
+boost::shared_ptr<ServerPlayer> ServerPlayer::SpectatePlayerChange(bool previous)
 {
-    std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = gMinecraftServer->getPlayers()->getPlayers();
     std::vector<boost::shared_ptr<ServerPlayer> > candidates;
-    int32_t currentIndex = -1;
-
-    for (size_t index = 0; index < allPlayers->size(); ++index)
+    int currentIndex = -1;
+    std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = gMinecraftServer->getPlayers()->getPlayers();
+    for (unsigned int index = 0; index < allPlayers->size(); ++index)
     {
-        if (index >= mLevel->mPlayers.size() || !mLevel->mPlayers[index])
-            continue;
-        if (mLevel->mPlayers[index]->isSpectator())
+        if (index >= mLevel->mPlayers.size() || mLevel->mPlayers[index] == NULL || mLevel->mPlayers[index]->isSpectator())
             continue;
 
-        boost::shared_ptr<ServerPlayer> candidate = (*allPlayers)[index];
-        candidates.push_back(candidate);
-        if (candidate.get() == GetCamera().get())
-            currentIndex = static_cast<int32_t>(candidates.size()) - 1;
+        candidates.push_back(allPlayers->at(index));
+        if (allPlayers->at(index) == GetCamera())
+            currentIndex = static_cast<int>(candidates.size()) - 1;
     }
 
     boost::shared_ptr<ServerPlayer> target;
     if (!candidates.empty())
     {
-        int32_t count = static_cast<int32_t>(candidates.size());
-        int32_t newIndex;
+        const unsigned int count = candidates.size();
+        int nextIndex;
         if (currentIndex == -1)
-        {
-            newIndex = parameterTwo != 0 ? -1 : 0;
-        }
-        else if (parameterTwo == 0)
-        {
-            newIndex = currentIndex + 1;
-        }
+            nextIndex = previous ? -1 : 0;
         else
-        {
-            newIndex = currentIndex - 1;
-        }
-        newIndex = ((newIndex % count) + count) % count;
+            nextIndex = previous ? currentIndex - 1 : currentIndex + 1;
+        nextIndex = (count + nextIndex) % count;
 
-        target = candidates[newIndex];
+        target = candidates[nextIndex];
         std::wstring name = target->getName();
-        int32_t messageParams[2] = { newIndex + 1, count };
-        sendMessage(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x9a),
-                    messageParams, 2, &name, 1);
+        int messageParams[2] = { nextIndex + 1, static_cast<int>(count) };
+        sendMessage(ClientboundChatPacket::eChatPacketMessage_NowSpectating, messageParams, 2, &name, 1);
     }
 
     SetCamera(target);
-    return 0;
+    return target;
 }
 
 void ServerPlayer::updateClientsCameras()
@@ -768,35 +725,34 @@ void ServerPlayer::updateClientsCameras()
     data.camera = mPlayerIndex;
     data.target = camera ? camera->getId() : -1;
     gMinecraftServer->getPlayers()->broadcastAll(
-        GameModePacket::Create(static_cast<GameModePacket::EMessage>(2), data));
+        GameModePacket::Create(GameModePacket::eMessage_SetCamera, data));
 }
 
-uint64_t ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* parameterOne, boost::shared_ptr<ServerPlayer>* parameterTwo)
+void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* oldPlayer, boost::shared_ptr<ServerPlayer>* newPlayer)
 {
-    if (mCamera && mCamera->getId() == (*parameterOne)->getId())
+    if (mCamera && mCamera->getId() == (*oldPlayer)->getId())
     {
-        if (!(*parameterTwo)->isSpectator())
+        if (!(*newPlayer)->isSpectator())
         {
-            SetCamera(*parameterTwo);
+            SetCamera(*newPlayer);
         }
         else
         {
-            SpectatePlayerChange(0, 0);
+            SpectatePlayerChange(false);
         }
         updateClientsCameras();
     }
-    return 0;
 }
 
 void ServerPlayer::flushEntitiesToRemove()
 {
-    if (!mSentEntityIds.empty())
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(arrayWithLength<int>(mSentEntityIds))));
+    if (!mEntitiesToRemove.empty())
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(arrayWithLength<int>(mEntitiesToRemove))));
 
-    mSentEntityIds.clear();
+    mEntitiesToRemove.clear();
 }
 
-uint64_t ServerPlayer::markAttributesDirty()
+void ServerPlayer::markAttributesDirty()
 {
     BaseAttributeMap* attributes = getAttributes();
     std::vector<AttributeInstance*> instances;
@@ -809,13 +765,12 @@ uint64_t ServerPlayer::markAttributesDirty()
         if (instance != NULL)
             instance->setDirty();
     }
-    return 0;
 }
 
-void ServerPlayer::refreshContainer(AbstractContainerMenu* parameterOne)
+void ServerPlayer::refreshContainer(AbstractContainerMenu* menu)
 {
-    AbstractContainerMenu::ItemList* items = parameterOne->getItems();
-    refreshContainer(parameterOne, items);
+    AbstractContainerMenu::ItemList* items = menu->getItems();
+    refreshContainer(menu, items);
     delete items;
 }
 
@@ -823,57 +778,57 @@ void ServerPlayer::resetSentInfo()
 {
 }
 
-int32_t ServerPlayer::getFlagIndexForChunk(int32_t parameterOne, int32_t parameterTwo, int32_t parameterThree)
+int32_t ServerPlayer::getFlagIndexForChunk(int32_t x, int32_t z, int32_t dimension)
 {
     unsigned long long index = LevelRenderer::getGlobalIndexForChunk(
-        parameterOne * 16, 0, parameterTwo * 16, parameterThree);
+        x * 16, 0, z * 16, dimension);
     return static_cast<int32_t>(index / 16);
 }
 
-void ServerPlayer::resetChunkFlagsOutsideArea(int32_t parameterOne, int32_t parameterTwo, int32_t parameterThree, int32_t parameterFour, int32_t parameterFive)
+void ServerPlayer::resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_t maxX, int32_t maxZ, int32_t dimension)
 {
-    const int width = parameterFour - parameterTwo;
-    const int height = parameterThree - parameterOne;
+    const int width = maxZ - minZ;
+    const int height = maxX - minX;
     std::vector<unsigned char> snapshot(static_cast<size_t>(width) * static_cast<size_t>(height));
 
-    for (int x = parameterOne; x < parameterThree; ++x)
+    for (int x = minX; x < maxX; ++x)
     {
-        for (int z = parameterTwo; z < parameterFour; ++z)
+        for (int z = minZ; z < maxZ; ++z)
         {
-            const int flagIndex = getFlagIndexForChunk(x, z, parameterFive);
-            snapshot[(x - parameterOne) * width + (z - parameterTwo)] =
+            const int flagIndex = getFlagIndexForChunk(x, z, dimension);
+            snapshot[(x - minX) * width + (z - minZ)] =
                 static_cast<unsigned char>(CGameNetworkManager::sInstance.SystemFlagGet(mConnection->getNetworkPlayer(), flagIndex));
         }
     }
 
     CGameNetworkManager::sInstance.SystemFlagClearAll(mConnection->getNetworkPlayer());
 
-    for (int x = parameterOne; x < parameterThree; ++x)
+    for (int x = minX; x < maxX; ++x)
     {
-        for (int z = parameterTwo; z < parameterFour; ++z)
+        for (int z = minZ; z < maxZ; ++z)
         {
-            const int flagIndex = getFlagIndexForChunk(x, z, parameterFive);
-            if (snapshot[(x - parameterOne) * width + (z - parameterTwo)] != 0)
+            const int flagIndex = getFlagIndexForChunk(x, z, dimension);
+            if (snapshot[(x - minX) * width + (z - minZ)] != 0)
                 CGameNetworkManager::sInstance.SystemFlagSet(mConnection->getNetworkPlayer(), flagIndex);
         }
     }
 }
 
-void ServerPlayer::readAdditionalSaveData(CompoundTag* parameterOne)
+void ServerPlayer::readAdditionalSaveData(CompoundTag* tag)
 {
-    Player::readAdditionalSaveData(parameterOne);
+    Player::readAdditionalSaveData(tag);
 
-    if (parameterOne->contains(std::wstring(L"playerGameType"), 99))
+    if (tag->contains(std::wstring(L"playerGameType"), 99))
     {
         if (mServer->getForceGameType())
             mGameMode->SetGameType(mServer->getDefaultGameType());
         else
-            mGameMode->SetGameType(GameType::byId(parameterOne->getInt(std::wstring(L"playerGameType"))));
+            mGameMode->SetGameType(GameType::byId(tag->getInt(std::wstring(L"playerGameType"))));
     }
 
-    if (parameterOne->contains(std::wstring(L"GameRules")) && mGameMode->mGameRules != NULL)
+    if (tag->contains(std::wstring(L"GameRules")) && mGameMode->mGameRules != NULL)
     {
-        ByteArrayInputStream bytes(parameterOne->getByteArray(std::wstring(L"GameRules")));
+        ByteArrayInputStream bytes(tag->getByteArray(std::wstring(L"GameRules")));
         DataInputStream input(&bytes);
         mGameMode->mGameRules->read(&input);
         input.close();
@@ -881,21 +836,41 @@ void ServerPlayer::readAdditionalSaveData(CompoundTag* parameterOne)
     }
 }
 
-void ServerPlayer::addWalkers(DataFixerUpper* parameterOne)
+void ServerPlayer::addWalkers(DataFixerUpper* dataFixer)
 {
-    parameterOne->addWalker(DataFixTypes::eDataFixTypes_Player, new ServerPlayerDataWalker());
+    class ServerPlayerDataWalker : public DataWalker
+    {
+    public:
+        CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version)
+        {
+            const std::wstring rootVehicle(L"RootVehicle");
+            if (tag->contains(rootVehicle, Tag::TAG_COMPOUND))
+            {
+                CompoundTag* root = tag->getCompound(rootVehicle);
+                const std::wstring entity(L"Entity");
+                if (root->contains(entity, Tag::TAG_COMPOUND))
+                {
+                    root->put(entity, fixer->update(DataFixTypes::eDataFixTypes_Entity,
+                                                    root->getCompound(entity), version));
+                }
+            }
+            return tag;
+        }
+    };
+
+    dataFixer->addWalker(DataFixTypes::eDataFixTypes_Player, new ServerPlayerDataWalker());
 }
 
-void ServerPlayer::addAdditonalSaveData(CompoundTag* parameterOne)
+void ServerPlayer::addAdditonalSaveData(CompoundTag* tag)
 {
-    Player::addAdditonalSaveData(parameterOne);
+    Player::addAdditonalSaveData(tag);
 
     if (mGameMode->mGameRules != NULL)
     {
         ByteArrayOutputStream bytes;
         DataOutputStream output(&bytes);
         mGameMode->mGameRules->write(&output);
-        parameterOne->putByteArray(std::wstring(L"GameRules"), bytes.toByteArray());
+        tag->putByteArray(std::wstring(L"GameRules"), bytes.toByteArray());
         output.close();
     }
 
@@ -903,7 +878,7 @@ void ServerPlayer::addAdditonalSaveData(CompoundTag* parameterOne)
     boost::shared_ptr<Entity> vehicle = getVehicle();
     if (vehicle != NULL && rootVehicle.get() != this)
     {
-        std::set<boost::shared_ptr<Entity> >* passengers = rootVehicle->getIndirectPassengers(0xC800001ULL);
+        std::set<boost::shared_ptr<Entity> >* passengers = rootVehicle->getIndirectPassengers(EntityType::SERVER_PLAYER);
         const size_t passengerCount = passengers->size();
         delete passengers;
 
@@ -914,20 +889,21 @@ void ServerPlayer::addAdditonalSaveData(CompoundTag* parameterOne)
             rootVehicle->saveAsPassenger(entityTag);
             rootTag->putString(std::wstring(L"Attach"), vehicle->getUUID());
             rootTag->put(std::wstring(L"Entity"), entityTag);
-            parameterOne->put(std::wstring(L"RootVehicle"), rootTag);
+            tag->put(std::wstring(L"RootVehicle"), rootTag);
         }
     }
 }
 
-void ServerPlayer::giveExperienceLevels(int32_t parameterOne)
+void ServerPlayer::giveExperienceLevels(int32_t levels)
 {
-    Player::giveExperienceLevels(parameterOne);
+    Player::giveExperienceLevels(levels);
     mLastSentTotalExperience = -1;
 }
 
-void ServerPlayer::onEnchantmentPerformed(int32_t parameterOne)
+void ServerPlayer::onEnchantmentPerformed(int32_t cost)
 {
-    Player::onEnchantmentPerformed(parameterOne);
+    Player::onEnchantmentPerformed(cost);
+    mLastSentTotalExperience = -1;
 }
 
 void ServerPlayer::onEnterCombat()
@@ -984,7 +960,7 @@ void ServerPlayer::tick()
         boost::shared_ptr<Player> target = boost::dynamic_pointer_cast<Player>(mCamera);
         if (target && target->isSpectator())
         {
-            SpectatePlayerChange(0, 0);
+            SpectatePlayerChange(false);
         }
     }
 
@@ -1016,7 +992,7 @@ void ServerPlayer::die(const DamageSource* source)
     else
         mPlayerWeaponId = Item::getId(selected->getItem());
 
-    const bool includeKiller = mLevel->getGameRules()->getBoolean(0xb);
+    const bool includeKiller = mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES);
     CombatTracker* combatTracker = getCombatTracker();
     boost::shared_ptr<ClientboundPlayerCombatPacket> combatPacket(
         new ClientboundPlayerCombatPacket(combatTracker,
@@ -1056,7 +1032,7 @@ void ServerPlayer::die(const DamageSource* source)
         }
     }
 
-    if (!mLevel->getGameRules()->getBoolean(2) && !isSpectator())
+    if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY) && !isSpectator())
     {
         destroyVanishingCursedItems();
         mInventory->dropAll();
@@ -1072,7 +1048,7 @@ void ServerPlayer::die(const DamageSource* source)
         boost::static_pointer_cast<ServerPlayer>(shared_from_this());
     mGameMode->OnDeath(self);
     clearFire();
-    setSharedFlag(0, false);
+    setSharedFlag(FLAG_ONFIRE, false);
     getCombatTracker()->recheckStatus();
 }
 
@@ -1091,19 +1067,19 @@ bool ServerPlayer::hurt(const DamageSource* source, float damage)
         {
             boost::shared_ptr<Entity> attacker = entitySource->getEntity();
 
-            if ((attacker->GetType() & 0xC800000ULL) == 0xC800000ULL)
+            if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
             {
                 boost::shared_ptr<Player> attackerPlayer = boost::static_pointer_cast<Player>(attacker);
                 if (!canHarmPlayer(attackerPlayer))
                     return false;
             }
 
-            if (attacker != NULL && (attacker->GetType() & 0x8A020000ULL) == 0x8A020000ULL)
+            if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
             {
                 if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
                 {
                     boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
-                    if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & 0xC800000ULL) == 0xC800000ULL)
+                    if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
                     {
                         boost::shared_ptr<Player> ownerPlayer = boost::dynamic_pointer_cast<Player>(arrow->mOwner);
                         if (!canHarmPlayer(ownerPlayer))
@@ -1127,20 +1103,20 @@ bool ServerPlayer::isPvpAllowed()
     return mServer->isPvpAllowed();
 }
 
-uint32_t ServerPlayer::canHarmPlayer(boost::shared_ptr<Player> parameterOne)
+uint32_t ServerPlayer::canHarmPlayer(boost::shared_ptr<Player> wstring)
 {
     if (!isPvpAllowed())
         return 0;
     if (!isAllowedToAttackPlayers())
         return 0;
-    return Player::canHarmPlayer(parameterOne);
+    return Player::canHarmPlayer(wstring);
 }
 
-bool ServerPlayer::canHarmPlayer(std::wstring parameterOne)
+bool ServerPlayer::canHarmPlayer(std::wstring wstring)
 {
-    const bool permittedByBase = Player::canHarmPlayer(parameterOne);
+    const bool permittedByBase = Player::canHarmPlayer(wstring);
     boost::shared_ptr<ServerPlayer> target =
-        mServer->getPlayers()->getPlayerByName(parameterOne);
+        mServer->getPlayers()->getPlayerByName(wstring);
     if (target == NULL)
         return false;
     if (!permittedByBase)
@@ -1148,11 +1124,11 @@ bool ServerPlayer::canHarmPlayer(std::wstring parameterOne)
     return canHarmPlayer(boost::static_pointer_cast<Player>(target));
 }
 
-void ServerPlayer::addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo)
+void ServerPlayer::addEffect(MobEffectInstance* effectInstance, const boost::shared_ptr<Entity>& source)
 {
-    if (parameterOne != NULL && parameterOne->getEffect() == MobEffects::LEVITATION)
+    if (effectInstance != NULL && effectInstance->getEffect() == MobEffects::LEVITATION)
     {
-        if (parameterTwo && parameterTwo->GetType() == 0x0000000008000010ULL)
+        if (source && source->GetType() == EntityType::SHULKER_BULLET)
         {
             if (mLevitationSourceY == NULL)
                 mLevitationSourceY = new double(mY);
@@ -1164,7 +1140,7 @@ void ServerPlayer::addEffect(MobEffectInstance* parameterOne, const boost::share
         }
     }
     boost::shared_ptr<Entity> emptySource;
-    LivingEntity::addEffect(parameterOne, emptySource);
+    LivingEntity::addEffect(effectInstance, emptySource);
 }
 
 boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
@@ -1240,9 +1216,9 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
     mConnection->send(boost::shared_ptr<Packet>(
         new ClientboundLevelEventPacket(0, BlockPos(), 0x408, false)));
 
-    *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x8f4) = -1.0f;
-    *reinterpret_cast<int32_t*>(reinterpret_cast<char*>(this) + 0x8f8) = -1;
-    *reinterpret_cast<int32_t*>(reinterpret_cast<char*>(this) + 0x900) = -1;
+    mLastSentHealth = -1.0f;
+    mLastSentFood = -1;
+    mLastSentTotalExperience = -1;
 
     return self;
 }
@@ -1269,7 +1245,7 @@ void ServerPlayer::take(boost::shared_ptr<Entity> entity, int32_t count)
 uint32_t ServerPlayer::startSleepInBed(const BlockPos& position, bool force)
 {
     const uint32_t result = Player::startSleepInBed(position, force);
-    if (result != 0)
+    if (result != BED_SLEEPING_OK)
         return result;
 
     boost::shared_ptr<Entity> self = shared_from_this();
@@ -1277,10 +1253,10 @@ uint32_t ServerPlayer::startSleepInBed(const BlockPos& position, bool force)
     boost::shared_ptr<Packet> packet(new ClientboundPlayerSleepPacket(player, position));
     getLevel()->getTracker()->broadcast(player, packet);
     mConnection->send(packet);
-    return 0;
+    return BED_SLEEPING_OK;
 }
 
-void ServerPlayer::stopSleepInBed(bool parameterOne, bool parameterTwo, bool parameterThree)
+void ServerPlayer::stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpawn)
 {
     if (isSleeping())
     {
@@ -1289,7 +1265,7 @@ void ServerPlayer::stopSleepInBed(bool parameterOne, bool parameterTwo, bool par
             boost::shared_ptr<Packet>(new ClientboundAnimatePacket(self, 2)));
     }
 
-    Player::stopSleepInBed(parameterOne, parameterTwo, parameterThree);
+    Player::stopSleepInBed(resetTimer, updateLevel, setSpawn);
 
     if (mConnection != NULL)
         mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
@@ -1332,15 +1308,15 @@ uint8_t ServerPlayer::isChangingDimension()
     return mChangingDimension;
 }
 
-bool ServerPlayer::isInvulnerableTo(const DamageSource* parameterOne)
+bool ServerPlayer::isInvulnerableTo(const DamageSource* source)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
-        ((parameterOne->isFire() && !Entity::isInLava()) || !TakeGlideCollisionDamage()))
+        ((source->isFire() && !Entity::isInLava()) || !TakeGlideCollisionDamage()))
     {
         return true;
     }
     bool result = true;
-    if (!Entity::isInvulnerableTo(parameterOne) && !isChangingDimension())
+    if (!Entity::isInvulnerableTo(source) && !isChangingDimension())
     {
         result = false;
     }
@@ -1351,11 +1327,11 @@ void ServerPlayer::checkFallDamage(double, bool, Block*, const BlockPos&)
 {
 }
 
-uint64_t ServerPlayer::doCheckFallDamage(double parameterOne, bool parameterTwo)
+void ServerPlayer::doCheckFallDamage(double yMovement, bool onGround)
 {
     BlockPos pos(mX, mY - 0.2, mZ);
     Block* block = mLevel->getBlock(pos);
-    if (block == Blocks::AIR)
+    if (block == Blocks::air)
     {
         BlockPos belowPos = pos.below();
         Block* belowBlock = mLevel->getBlock(belowPos);
@@ -1368,8 +1344,7 @@ uint64_t ServerPlayer::doCheckFallDamage(double parameterOne, bool parameterTwo)
             block = belowBlock;
         }
     }
-    LivingEntity::checkFallDamage(parameterOne, parameterTwo, block, pos);
-    return 0;
+    LivingEntity::checkFallDamage(yMovement, onGround, block, pos);
 }
 
 void ServerPlayer::nextContainerCounter()
@@ -1377,9 +1352,8 @@ void ServerPlayer::nextContainerCounter()
     mContainerCounter = mContainerCounter % 100 + 1;
 }
 
-void ServerPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne)
+void ServerPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> sign)
 {
-    boost::shared_ptr<SignBlockEntity> sign = boost::dynamic_pointer_cast<SignBlockEntity>(parameterOne);
     if (sign == NULL)
         return;
 
@@ -1434,7 +1408,7 @@ int ServerPlayer::openFireworks(int32_t x, int32_t y, int32_t z)
 
     InteractionObject::NameData nameData(std::wstring(L""), std::wstring(L""), true, false);
     mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-        mContainerCounter, 12, nameData, 9, 0)));
+        mContainerCounter, ClientboundContainerOpenPacket::FIREWORKS, nameData, 9, 0)));
 
     mContainerMenu = new FireworksMenu(mInventory, mLevel, BlockPos(x, y, z));
     mContainerMenu->m_containerId = mContainerCounter;
@@ -1479,13 +1453,13 @@ int ServerPlayer::openContainer(boost::shared_ptr<Container> container)
         {
             InteractionObject::NameData nameData = enderChest->GetNetworkNameData();
             mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-                mContainerCounter, 15, nameData, container->getContainerSize())));
+                mContainerCounter, ClientboundContainerOpenPacket::ENDER_CHEST, nameData, container->getContainerSize())));
         }
         else
         {
             InteractionObject::NameData nameData(container->getDisplayName(), std::wstring(L""), true, false);
             mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-                mContainerCounter, 0, nameData, container->getContainerSize())));
+                mContainerCounter, ClientboundContainerOpenPacket::CONTAINER, nameData, container->getContainerSize())));
         }
 
         mContainerMenu = new ChestMenu(mInventory, container,
@@ -1524,7 +1498,7 @@ int ServerPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::w
     }
 
     mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-        mContainerCounter, 6, nameData, tradeContainer->getContainerSize(), entityId)));
+        mContainerCounter, ClientboundContainerOpenPacket::TRADER_NPC, nameData, tradeContainer->getContainerSize(), entityId)));
 
     MerchantRecipeList* offers = merchant->getOffers(boost::dynamic_pointer_cast<Player>(shared_from_this()));
     if (offers != NULL)
@@ -1550,7 +1524,7 @@ int ServerPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boo
     InteractionObject::NameData nameData(horse->getCustomName(), horse->getOwnerUUID(),
                                          horse->wasNamedOnHost(), horse->wasNamedByRestrictedPlayer());
     mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-        mContainerCounter, 11, nameData, container->getContainerSize(), horse->getId())));
+        mContainerCounter, ClientboundContainerOpenPacket::HORSE, nameData, container->getContainerSize(), horse->getId())));
 
     mContainerMenu = new HorseInventoryMenu(mInventory, container, horse,
                                             boost::dynamic_pointer_cast<Player>(shared_from_this()));
@@ -1594,16 +1568,16 @@ void ServerPlayer::broadcastCarriedItem()
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
 }
 
-void ServerPlayer::setPlayerInput(float parameterOne, float parameterTwo, bool parameterThree, bool parameterFour)
+void ServerPlayer::setPlayerInput(float xxa, float zza, bool jumping, bool sneaking)
 {
     if (mConnection && mConnection->isLocal())
     {
-        if (parameterOne >= -1.0f && parameterOne <= 1.0f)
-            mXxa = parameterOne;
-        if (parameterTwo >= -1.0f && parameterTwo <= 1.0f)
-            mZza = parameterTwo;
-        mJumping = parameterThree;
-        setSneaking(parameterFour);
+        if (xxa >= -1.0f && xxa <= 1.0f)
+            mXxa = xxa;
+        if (zza >= -1.0f && zza <= 1.0f)
+            mZza = zza;
+        mJumping = jumping;
+        setSneaking(sneaking);
     }
 }
 
@@ -1620,7 +1594,7 @@ void ServerPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> paramete
     delete[] parameters.data;
 }
 
-void ServerPlayer::resetStat(Stat* parameterOne)
+void ServerPlayer::resetStat(Stat* stat)
 {
 }
 
@@ -1629,60 +1603,60 @@ uint8_t ServerPlayer::hasDisconnected()
     return mDisconnected;
 }
 
-void ServerPlayer::displayClientMessage(int32_t parameterOne, bool parameterTwo)
+void ServerPlayer::displayClientMessage(int32_t message, bool force)
 {
-    const std::wstring localizedText(L10N::GetString(parameterOne));
+    const std::wstring localizedText(L10N::GetString(message));
     ClientboundChatPacket::EChatPacketMessage packetMessage =
         ClientboundChatPacket::eChatPacketMessage_Text;
     bool broadcast = false;
 
-    switch (parameterOne)
+    switch (message)
     {
-    case 0x00FE5875: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x54); broadcast = true; break;
-    case 0x16972FBF: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4d); broadcast = true; break;
-    case 0x16C81B7F:
-        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(4), -1);
+    case 0x00FE5875: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms; broadcast = true; break;
+    case 0x16972FBF: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxVillagers; broadcast = true; break;
+    case IDS_TILE_BED_NOTSAFE:
+        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedNotSafe, -1);
         return;
-    case 0x1E0D17D0: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x48); broadcast = true; break;
-    case 0x1EE681BA: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4e); broadcast = true; break;
-    case 0x3221ECE8: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x56); broadcast = true; break;
-    case 0x3DCD926B: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5e); broadcast = true; break;
-    case 0x3E35B6E8: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x49); broadcast = true; break;
-    case 0x56C64197:
-        broadcastClientChatPacket(mServer, localizedText, static_cast<ClientboundChatPacket::EChatPacketMessage>(6));
+    case 0x1E0D17D0: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxSquid; broadcast = true; break;
+    case 0x1EE681BA: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities; broadcast = true; break;
+    case IDS_CANT_SHEAR_MOOSHROOM: packetMessage = ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom; broadcast = true; break;
+    case 0x3DCD926B: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxPhantoms; broadcast = true; break;
+    case 0x3E35B6E8: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms; broadcast = true; break;
+    case IDS_TILE_BED_PLAYERSLEEP:
+        broadcastClientChatPacket(mServer, localizedText, ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep);
         return;
-    case 0x60A3835D: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5f); broadcast = true; break;
-    case 0x6E3A65E3: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x45); broadcast = true; break;
-    case 0x70EDC806: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4a); broadcast = true; break;
-    case static_cast<int32_t>(0x82460728): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x47); broadcast = true; break;
-    case static_cast<int32_t>(0x8ECD701E): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4f); broadcast = true; break;
-    case static_cast<int32_t>(0x99326383): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x53); broadcast = true; break;
-    case static_cast<int32_t>(0x9F8BFFAE): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x46); broadcast = true; break;
-    case static_cast<int32_t>(0xA82B5A66): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4c); broadcast = true; break;
-    case static_cast<int32_t>(0xB2145884): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x57); broadcast = true; break;
-    case static_cast<int32_t>(0xB399BD15): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x52); broadcast = true; break;
-    case static_cast<int32_t>(0xB604AAFF): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x58); broadcast = true; break;
-    case static_cast<int32_t>(0xB714E0E2): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5d); broadcast = true; break;
-    case static_cast<int32_t>(0xC952E8B9): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5b); broadcast = true; break;
-    case static_cast<int32_t>(0xD08616D9):
-        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(1), -1);
+    case 0x60A3835D: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxFishAndSquid; broadcast = true; break;
+    case IDS_PLAYER_LEFT_END: packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerLeftEnd; broadcast = true; break;
+    case 0x70EDC806: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxWolves; broadcast = true; break;
+    case static_cast<int32_t>(0x82460728): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxChickens; broadcast = true; break;
+    case static_cast<int32_t>(0x8ECD701E): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxArmorStands; broadcast = true; break;
+    case static_cast<int32_t>(0x99326383): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredChickens; broadcast = true; break;
+    case static_cast<int32_t>(0x9F8BFFAE): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxAnimals; broadcast = true; break;
+    case static_cast<int32_t>(0xA82B5A66): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnemies; broadcast = true; break;
+    case static_cast<int32_t>(0xB2145884): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBoats; broadcast = true; break;
+    case static_cast<int32_t>(0xB399BD15): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals; broadcast = true; break;
+    case static_cast<int32_t>(0xB604AAFF): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMinecarts; broadcast = true; break;
+    case static_cast<int32_t>(0xB714E0E2): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxDolphins; broadcast = true; break;
+    case static_cast<int32_t>(0xC952E8B9): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals; broadcast = true; break;
+    case static_cast<int32_t>(IDS_TILE_BED_OCCUPIED):
+        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedOccupied, -1);
         return;
-    case static_cast<int32_t>(0xD3560061): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x44); broadcast = true; break;
-    case static_cast<int32_t>(0xD97FDBA2): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x50); broadcast = true; break;
-    case static_cast<int32_t>(0xE08B6A47):
-        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(1), -1);
+    case static_cast<int32_t>(IDS_PLAYER_ENTERED_END): packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerEnteredEnd; broadcast = true; break;
+    case static_cast<int32_t>(IDS_CANT_SPAWN_IN_PEACEFUL): packetMessage = ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful; broadcast = true; break;
+    case static_cast<int32_t>(IDS_TILE_BED_NOT_VALID):
+        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedOccupied, -1);
         return;
-    case static_cast<int32_t>(0xEC344E3D): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x55); broadcast = true; break;
-    case static_cast<int32_t>(0xEF12CC40): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5c); broadcast = true; break;
-    case static_cast<int32_t>(0xF084EC0C):
-        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(1), -1);
+    case static_cast<int32_t>(0xEC344E3D): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredWolves; broadcast = true; break;
+    case static_cast<int32_t>(0xEF12CC40): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBeacons; broadcast = true; break;
+    case static_cast<int32_t>(IDS_TILE_BED_TOO_FAR_AWAY):
+        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedOccupied, -1);
         return;
-    case static_cast<int32_t>(0xFAB1DEB6): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x59); broadcast = true; break;
-    case static_cast<int32_t>(0xFAB38114):
-        sendClientChatPacket(this, localizedText, static_cast<ClientboundChatPacket::EChatPacketMessage>(7),
-                             parameterTwo ? 1 : 0);
+    case static_cast<int32_t>(0xFAB1DEB6): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBats; broadcast = true; break;
+    case static_cast<int32_t>(IDS_TILE_BED_MESLEEP):
+        sendClientChatPacket(this, localizedText, ClientboundChatPacket::eChatPacketMessage_BedMeSleep,
+                             force ? 1 : 0);
         return;
-    case static_cast<int32_t>(0xFDF65C18): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5a); broadcast = true; break;
+    case static_cast<int32_t>(0xFDF65C18): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBanners; broadcast = true; break;
     default:
         return;
     }
@@ -1710,7 +1684,7 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
     bool copyInventory = false;
     if (keepEverything)
         copyInventory = true;
-    else if (mLevel->getGameRules()->getBoolean(2))
+    else if (mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY))
         copyInventory = true;
     else if (oldPlayer->isSpectator())
         copyInventory = true;
@@ -1740,8 +1714,8 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
 
     mEnderChestInventory = oldPlayer->mEnderChestInventory;
 
-    mEntityData->set(Entity::DATA_SHARED_FLAGS_ID,
-                     oldPlayer->mEntityData->get(Entity::DATA_SHARED_FLAGS_ID), true);
+    getEntityData()->set(Entity::DATA_SHARED_FLAGS_ID,
+                     oldPlayer->getEntityData()->get(Entity::DATA_SHARED_FLAGS_ID), true);
 
     mLastSentHealth = -1.0f;
     mLastSentFood = -1;
@@ -1749,7 +1723,7 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
 
     const boost::shared_ptr<ServerPlayer> oldServerPlayer =
         boost::dynamic_pointer_cast<ServerPlayer>(oldPlayer);
-    mSentEntityIds = oldServerPlayer->mSentEntityIds;
+    mEntitiesToRemove = oldServerPlayer->mEntitiesToRemove;
 
     setShoulderEntityLeft(oldPlayer->getShoulderEntityLeft()->copy());
     setShoulderEntityRight(oldPlayer->getShoulderEntityRight()->copy());
@@ -1757,37 +1731,37 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
     mGameMode->RestoreFromOld(oldServerPlayer->mGameMode);
 }
 
-void ServerPlayer::onEffectAdded(MobEffectInstance* parameterOne)
+void ServerPlayer::onEffectAdded(MobEffectInstance* effect)
 {
-    LivingEntity::onEffectAdded(parameterOne);
+    LivingEntity::onEffectAdded(effect);
     if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(getId(), parameterOne)));
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
 }
 
-void ServerPlayer::onEffectUpdated(MobEffectInstance* parameterOne, bool parameterTwo)
+void ServerPlayer::onEffectUpdated(MobEffectInstance* effect, bool attributesChanged)
 {
-    LivingEntity::onEffectUpdated(parameterOne, parameterTwo);
+    LivingEntity::onEffectUpdated(effect, attributesChanged);
     if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(getId(), parameterOne)));
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
 }
 
-void ServerPlayer::onEffectRemoved(MobEffectInstance* parameterOne)
+void ServerPlayer::onEffectRemoved(MobEffectInstance* effect)
 {
-    LivingEntity::onEffectRemoved(parameterOne);
+    LivingEntity::onEffectRemoved(effect);
     if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveMobEffectPacket(getId(), parameterOne->getEffect())));
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveMobEffectPacket(getId(), effect->getEffect())));
 }
 
-void ServerPlayer::teleportTo(double parameterOne, double parameterTwo, double parameterThree)
+void ServerPlayer::teleportTo(double x, double y, double z)
 {
     if (mConnection != NULL)
-        mConnection->teleport(parameterOne, parameterTwo, parameterThree, mYRot, mXRot, true, false);
+        mConnection->teleport(x, y, z, mYRot, mXRot, true, false);
 }
 
-void ServerPlayer::teleportTo(double parameterOne, double parameterTwo, double parameterThree, float parameterFour, float parameterFive)
+void ServerPlayer::teleportTo(double x, double y, double z, float yRot, float xRot)
 {
     if (mConnection != NULL)
-        mConnection->teleport(parameterOne, parameterTwo, parameterThree, parameterFive, parameterFour, true, true);
+        mConnection->teleport(x, y, z, xRot, yRot, true, true);
 }
 
 void ServerPlayer::crit(boost::shared_ptr<Entity> entity)
@@ -1813,7 +1787,7 @@ void ServerPlayer::onUpdateAbilities()
 void ServerPlayer::setGameMode(const GameType* gameType)
 {
     mGameMode->SetGameType(gameType);
-    setPlayerGamePrivilege(static_cast<Player::EPlayerGamePrivileges>(9),
+    setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CreativeMode,
                            mGameMode->isCreative());
     if (gameType == GameType::SPECTATOR)
     {
@@ -1839,26 +1813,24 @@ void ServerPlayer::resetLastActionTime()
     mLastActionTime = System::processTimeInMilliSecs();
 }
 
-uint64_t ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity>* parameterOne)
+void ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity>* entity)
 {
-    if (((*parameterOne)->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    if (((*entity)->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket((*parameterOne)->getId())));
-        mSentEntityIds.push_back((*parameterOne)->getId());
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket((*entity)->getId())));
+        mEntitiesToRemove.push_back((*entity)->getId());
     }
-    return 0;
 }
 
-uint64_t ServerPlayer::cancelRemoveEntity(boost::shared_ptr<Entity>* parameterOne)
+void ServerPlayer::cancelRemoveEntity(boost::shared_ptr<Entity>* entity)
 {
-    if (parameterOne == NULL || !*parameterOne)
-        return 0;
-    const int32_t id = (*parameterOne)->getId();
-    std::vector<int32_t>::iterator it = mSentEntityIds.begin();
-    for (; it != mSentEntityIds.end() && *it != id; ++it) {}
-    if (it != mSentEntityIds.end())
-        mSentEntityIds.erase(it);
-    return 0;
+    if (entity == NULL || !*entity)
+        return;
+    const int32_t id = (*entity)->getId();
+    std::vector<int32_t>::iterator it = mEntitiesToRemove.begin();
+    for (; it != mEntitiesToRemove.end() && *it != id; ++it) {}
+    if (it != mEntitiesToRemove.end())
+        mEntitiesToRemove.erase(it);
 }
 
 void ServerPlayer::updateInvisibilityStatus()
@@ -1874,17 +1846,16 @@ void ServerPlayer::processDimensionDelay()
     --mPortalCooldown;
 }
 
-uint64_t ServerPlayer::attack(boost::shared_ptr<Entity> parameterOne)
+void ServerPlayer::attack(boost::shared_ptr<Entity> entity)
 {
     if (mGameMode != NULL && mGameMode->GetGameType() == GameType::SPECTATOR)
-        return 0;
-    Player::attack(parameterOne);
-    return 0;
+        return;
+    Player::attack(entity);
 }
 
-bool ServerPlayer::swing(InteractionHand::EInteractionHand parameterOne)
+bool ServerPlayer::swing(InteractionHand::EInteractionHand hand)
 {
-    bool swung = LivingEntity::swing(parameterOne);
+    bool swung = LivingEntity::swing(hand);
     resetAttackStrengthTicker();
     return swung;
 }
@@ -1896,13 +1867,13 @@ void ServerPlayer::hasChangedDimension()
 
 void ServerPlayer::startFallFlying()
 {
-    setSharedFlag(9, true);
+    setSharedFlag(FLAG_FALL_FLYING, true);
 }
 
 void ServerPlayer::stopFallFlying()
 {
     mFallFlying = 0;
-    setSharedFlag(9, false);
+    setSharedFlag(FLAG_FALL_FLYING, false);
 }
 
 uint32_t ServerPlayer::getPlayerViewDistanceModifier()
@@ -1916,15 +1887,15 @@ uint32_t ServerPlayer::getPlayerViewDistanceModifier()
     return modifier > 4 ? 4 : modifier;
 }
 
-void ServerPlayer::handleCollectItem(not_null_ptr<ItemInstance> parameterOne)
+void ServerPlayer::handleCollectItem(not_null_ptr<ItemInstance> item)
 {
     if (mGameMode != NULL && mGameMode->mGameRules != NULL)
-        mGameMode->mGameRules->onCollectItem(parameterOne);
+        mGameMode->mGameRules->onCollectItem(item);
 }
 
-void ServerPlayer::SetCamera(boost::shared_ptr<Entity> parameterOne)
+void ServerPlayer::SetCamera(boost::shared_ptr<Entity> entity)
 {
-    Player::SetCamera(parameterOne);
+    Player::SetCamera(entity);
     if (isSpectator() && IsSpectatingOtherPlayer() && mCamera)
     {
         teleportTo(mCamera->mX, mCamera->mY, mCamera->mZ, mCamera->mXRot, mCamera->mYRot);
@@ -1975,5 +1946,5 @@ bool ServerPlayer::checkTotemDeathProtection(const DamageSource* source)
 
 uint64_t ServerPlayer::GetType()
 {
-    return 0x000000000C800001ULL;
+    return EntityType::SERVER_PLAYER;
 }

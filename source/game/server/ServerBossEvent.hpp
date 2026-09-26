@@ -25,9 +25,9 @@ public:
     virtual void setPercent(float percent);
     virtual void setColor(BossBarColor color);
     virtual void setOverlay(BossBarOverlay overlay);
-    virtual void setDarkenScreen(bool darkenScreen);
-    virtual void setPlayBossMusic(bool playBossMusic);
-    virtual void setCreateWorldFog(bool createWorldFog);
+    virtual BossEvent* setDarkenScreen(bool darkenScreen);
+    virtual BossEvent* setPlayBossMusic(bool playBossMusic);
+    virtual BossEvent* setCreateWorldFog(bool createWorldFog);
 
     void addPlayer(boost::shared_ptr<ServerPlayer> player, int party);
     void removePlayer(boost::shared_ptr<ServerPlayer> player);

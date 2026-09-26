@@ -66,13 +66,13 @@ void ObserverBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
     if (state->getValue(POWERED))
     {
         TypedBoxed<bool> powered(false);
-        level->setBlock(pos, state->setBoxedValue(POWERED, &powered), 2, false);
+        level->setBlock(pos, state->setBoxedValue(POWERED, &powered), Block::UPDATE_CLIENTS, false);
         updateNeighborsInFront(level, pos, state);
     }
     else
     {
         TypedBoxed<bool> powered(true);
-        level->setBlock(pos, state->setBoxedValue(POWERED, &powered), 2, false);
+        level->setBlock(pos, state->setBoxedValue(POWERED, &powered), Block::UPDATE_CLIENTS, false);
         level->addToTickNextTick(pos, this, 2);
         updateNeighborsInFront(level, pos, state);
     }
@@ -175,4 +175,4 @@ void ObserverBlock::registerIcons(IconRegister* iconRegister)
     mBackLitIcon = iconRegister->registerIcon(L"observer_back_lit");
 }
 
-EBlockRenderShape ObserverBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(48); }
+EBlockRenderShape ObserverBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_OBSERVER; }

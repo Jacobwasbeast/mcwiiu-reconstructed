@@ -1,4 +1,6 @@
 #include "game/server/ServerPlayerGameMode.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -138,7 +140,7 @@ int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
     }
 
     boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
-    mLevel->levelEvent(serverPlayer, 2001, pos, Block::getIdWithData(state));
+    mLevel->levelEvent(serverPlayer, LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
 
     int result = superDestroyBlock(pos);
 
@@ -207,17 +209,17 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         if (blockEntity)
         {
-            if ((blockEntity->GetType() & 0x1c00200ULL) == 0x1c00200ULL)
+            if ((blockEntity->GetType() & BlockEntityType::LOCKABLE_CONTAINER) == BlockEntityType::LOCKABLE_CONTAINER)
             {
                 boost::shared_ptr<LockableContainer> container =
                     boost::dynamic_pointer_cast<LockableContainer>(blockEntity);
-                if (blockEntity->GetType() == 0x1e00201ULL && dynamic_cast<ChestBlock*>(block) != NULL)
+                if (blockEntity->GetType() == BlockEntityType::CHEST && dynamic_cast<ChestBlock*>(block) != NULL)
                     container = static_cast<ChestBlock*>(block)->getContainer(level, pos);
                 if (container)
                     player->openContainer(container);
                 return InteractionResult::eInteractionResult_Success;
             }
-            if ((blockEntity->GetType() & 0x1800200ULL) == 0x1800200ULL)
+            if ((blockEntity->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER)
             {
                 player->openContainer(boost::dynamic_pointer_cast<Container>(blockEntity));
                 return InteractionResult::eInteractionResult_Success;
