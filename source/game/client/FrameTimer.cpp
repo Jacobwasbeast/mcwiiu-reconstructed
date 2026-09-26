@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-void FindFrameBoundary__Fi(BcfStream* stream)
+void FindFrameBoundary(BcfStream* stream)
 {
     if (stream->pendingBytes != 0)
     {

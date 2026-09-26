@@ -20,6 +20,6 @@ struct BcfStream
     std::uint32_t bufferCapacity;
 };
 
-void FindFrameBoundary__Fi(BcfStream* stream);
+void FindFrameBoundary(BcfStream* stream);
 
 #endif
