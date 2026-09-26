@@ -51,7 +51,7 @@ void CombinationVariationsRuleDefinition::getChildren(std::vector<GameRuleDefini
 
 GameRuleDefinition* CombinationVariationsRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(40))
+    if (type == ConsoleGameRules::eGameRuleType_AnyCombinationOf)
     {
         AnyCombinationOfRuleDefinition* child =
             new AnyCombinationOfRuleDefinition(mParent, mDefinition);
@@ -64,5 +64,5 @@ GameRuleDefinition* CombinationVariationsRuleDefinition::addChild(ConsoleGameRul
 
 ConsoleGameRules::EGameRuleType CombinationVariationsRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(42);
+    return ConsoleGameRules::eGameRuleType_Variations;
 }

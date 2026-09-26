@@ -9,15 +9,11 @@ FirstToBottomMedal::~FirstToBottomMedal()
 double FirstToBottomMedal::GetScore(PlayerStats* playerStats) const
 {
     int count = 0;
-
-    for (unsigned int round = 0; round < playerStats->getTotalRounds(); ++round)
+    for (unsigned int round = 0; round < static_cast<unsigned int>(playerStats->getTotalRounds()); ++round)
     {
-        PlayerStats::RoundStats* stats = playerStats->getRoundStats(round);
-        if (stats->mLayer != -2 && stats->mFinished)
-        {
+        PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
+        if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED && roundStats->mLanded)
             ++count;
-        }
     }
-
-    return static_cast<double>(static_cast<float>(count));
+    return static_cast<float>(count);
 }

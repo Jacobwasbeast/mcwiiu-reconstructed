@@ -6,15 +6,15 @@
 
 SpiralShapeRuleDefinition::SpiralShapeRuleDefinition()
 {
-    GameRules_IntAttribute* minRadius = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(46), &mMinRadius);
+    GameRules_IntAttribute* minRadius = addIntAttribute(ConsoleGameRules::eGameRuleAttr_minCount, &mMinRadius);
     minRadius->setMin(1);
     minRadius->setMax(24);
 
-    GameRules_IntAttribute* maxRadius = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(47), &mMaxRadius);
+    GameRules_IntAttribute* maxRadius = addIntAttribute(ConsoleGameRules::eGameRuleAttr_maxCount, &mMaxRadius);
     maxRadius->setMin(1);
     maxRadius->setMax(24);
 
-    GameRules_DoubleAttribute* angle = addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(17), &mAngle);
+    GameRules_DoubleAttribute* angle = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_rot, &mAngle);
     angle->setMin(0.0);
     angle->setMax(360.0);
 }
@@ -23,7 +23,7 @@ SpiralShapeRuleDefinition::~SpiralShapeRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType SpiralShapeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(53);
+    return ConsoleGameRules::eGameRuleType_SpiralShape;
 }
 
 LayerShape* SpiralShapeRuleDefinition::Generate() const

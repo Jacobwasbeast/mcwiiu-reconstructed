@@ -28,7 +28,7 @@ void GrantPermissionsRuleDefinition::getChildren(std::vector<GameRuleDefinition*
 
 GameRuleDefinition* GrantPermissionsRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type != static_cast<ConsoleGameRules::EGameRuleType>(37))
+    if (type != ConsoleGameRules::eGameRuleType_AllowIn)
     {
         return NULL;
     }
@@ -111,5 +111,5 @@ bool GrantPermissionsRuleDefinition::canUse(const boost::shared_ptr<Player>& pla
 
 ConsoleGameRules::EGameRuleType GrantPermissionsRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(36);
+    return ConsoleGameRules::eGameRuleType_GrantPermissions;
 }

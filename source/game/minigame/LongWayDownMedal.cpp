@@ -2,20 +2,23 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
+namespace
+{
+const int TOP_LAYER = 0;
+}
+
 LongWayDownMedal::~LongWayDownMedal()
 {
 }
 
 double LongWayDownMedal::GetScore(PlayerStats* playerStats) const
 {
-    unsigned int count = 0;
-
-    for (unsigned int round = 0; round < playerStats->getTotalRounds(); ++round)
+    int count = 0;
+    for (unsigned int round = 0; round < static_cast<unsigned int>(playerStats->getTotalRounds()); ++round)
     {
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-        if (roundStats->mTimeSpent[0] == 0 && !roundStats->mActive)
+        if (roundStats->mDeathLayer == TOP_LAYER && !roundStats->mParticipated)
             ++count;
     }
-
-    return (double)(float)count;
+    return static_cast<float>(count);
 }

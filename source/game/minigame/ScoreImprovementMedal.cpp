@@ -19,9 +19,9 @@ double ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
         {
             return static_cast<double>(static_cast<float>(
                 (playerStats->getRoundStats(finalRound)->mPoints
-                 + playerStats->getRoundStats(finalRound)->mBonusPoints)
+                 + playerStats->getRoundStats(finalRound)->mUnbankedPoints)
                 - (playerStats->getRoundStats(0)->mPoints
-                   + playerStats->getRoundStats(0)->mBonusPoints)));
+                   + playerStats->getRoundStats(0)->mUnbankedPoints)));
         }
 
         miniGame = CommonMasterGameMode::GetMiniGame();

@@ -9,7 +9,7 @@ KillboxRuleDefinition::KillboxRuleDefinition(AABB* legacyArea)
 {
     if (legacyArea == NULL)
     {
-        addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(90), &mDeathMessageIDS);
+        addIntAttribute(ConsoleGameRules::eGameRuleAttr_string_IDS, &mDeathMessageIDS);
     }
     else
     {
@@ -23,7 +23,7 @@ KillboxRuleDefinition::~KillboxRuleDefinition()
 
 ConsoleGameRules::EGameRuleType KillboxRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(23);
+    return ConsoleGameRules::eGameRuleType_Killbox;
 }
 
 void KillboxRuleDefinition::ConvertFromLegacy(AABB* legacyArea)
@@ -60,10 +60,10 @@ void KillboxRuleDefinition::WriteAttributesAsXML(std::string& xml)
 {
     if (!mName.empty())
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(9), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_name, xml);
     }
 
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(90), xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_string_IDS, xml);
 
     NamedAreaRuleDefinition::WriteAttributesAsXML(xml);
 }

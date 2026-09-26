@@ -7,14 +7,14 @@ NamedAreaRuleDefinition::NamedAreaRuleDefinition()
     : mName(L""),
       mArea(AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), &mName);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(26), &mArea->mMinX);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(29), &mArea->mMinY);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(32), &mArea->mMinZ);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(27), &mArea->mMaxX);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(30), &mArea->mMaxY);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(33), &mArea->mMaxZ);
-    addHexAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(2), &mDataTag);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mName);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_x0, &mArea->mMinX);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_y0, &mArea->mMinY);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_z0, &mArea->mMinZ);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_x1, &mArea->mMaxX);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_y1, &mArea->mMaxY);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_z1, &mArea->mMaxZ);
+    addHexAttribute(ConsoleGameRules::eGameRuleAttr_dataTag, &mDataTag);
 }
 
 NamedAreaRuleDefinition::~NamedAreaRuleDefinition()
@@ -24,7 +24,7 @@ NamedAreaRuleDefinition::~NamedAreaRuleDefinition()
 
 ConsoleGameRules::EGameRuleType NamedAreaRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(17);
+    return ConsoleGameRules::eGameRuleType_NamedArea;
 }
 
 AABB* NamedAreaRuleDefinition::getBoundingVolume()
@@ -89,18 +89,18 @@ void NamedAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
 {
     if (!mName.empty())
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(9), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_name, xml);
     }
 
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(26), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(29), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(32), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(27), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(30), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(33), xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_x0, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_y0, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_z0, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_x1, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_y1, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_z1, xml);
 
     if (mDataTag != 0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(2), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_dataTag, xml);
     }
 }

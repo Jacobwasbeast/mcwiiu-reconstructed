@@ -41,32 +41,59 @@ enum EGameModeSound
 };
 enum EBuildMode
 {
-    EBuildMode_Default
+    EBuildMode_NoRestrictions,
+    EBuildMode_WhiteList,
+    EBuildMode_BlackList
 };
+
+class GameType;
 
 class MiniGameDef
 {
 public:
+    static const std::wstring sPlayerInventoryLootGroup;
+
+    enum ESpectateMode
+    {
+        eSpectateMode_HostOption = -1,
+        eSpectateMode_Invisible,
+        eSpectateMode_Bat,
+        eSpectateMode_Parrot,
+        eSpectateMode_Vex,
+        eSpectateMode_FloatingHead
+    };
+
+    enum ELootDistributionMethod
+    {
+        eLootDistributionMethod_Spread,
+        eLootDistributionMethod_KitKPRandom,
+        eLootDistributionMethod_KitKPGreedy,
+        eLootDistributionMethod_Fixed,
+        eLootDistributionMethod_WeightedRandom
+    };
     struct BlockData
     {
-        EBuildMode mPlaceMode;
-        boost::unordered_map<int, bool> mMayPlace;
-        EBuildMode mDestroyMode;
-        boost::unordered_map<int, bool> mMayDestroy;
+        maybe<bool> mTickOverride;
+        maybe<bool> mTickDefault;
+        boost::unordered_map<int, bool> mTick;
+        maybe<bool> mCollisionOverride;
+        maybe<bool> mCollisionDefault;
+        boost::unordered_map<int, bool> mCollision;
         BlockData();
     };
     struct ChestItemsInfo
     {
         not_null_ptr<ItemInstance> mItem;
+        int mMinStackCount;
+        int mMaxStackCount;
         int mMinCount;
         int mMaxCount;
+        int mPlayersForMin;
         int mWeight;
-        int mMinPlayers;
-        int mMaxPlayers;
-        int mChance;
         int mKpScore;
         ChestItemsInfo()
-            : mItem(), mMinCount(0), mMaxCount(0), mWeight(0), mMinPlayers(0), mMaxPlayers(0), mChance(0), mKpScore(0)
+            : mItem(), mMinStackCount(0), mMaxStackCount(0), mMinCount(0), mMaxCount(0), mPlayersForMin(0), mWeight(0)
+            , mKpScore(0)
         {
         }
         ChestItemsInfo(const ChestItemsInfo& other);
@@ -76,8 +103,7 @@ public:
     {
         std::vector<not_null_ptr<ItemInstance> > mItems;
         int mWeight;
-        int mMinPlayers;
-        int mMaxPlayers;
+        int mKpScore;
     };
     struct PlayerEquipmentInfo
     {
@@ -85,22 +111,26 @@ public:
     };
     struct ChestRefill
     {
-        bool mEnabled;
-        int mCentralChance;
-        bool mOuterEnabled;
-        int mOuterChance;
-        bool mHvEnabled;
-        int mHvChance;
-        bool mNumberEnabled;
-        int mNumber;
-        bool mMinDistanceEnabled;
-        int mMinDistance;
-        bool mMaxDistanceEnabled;
-        int mMaxDistance;
-        std::wstring mCentralLootGroup;
-        std::wstring mOuterLootGroup;
-        std::wstring mHighValueLootGroup;
+        maybe<int> mCentralRefillChance;
+        maybe<int> mOuterRefillChance;
+        maybe<int> mHVRefillChance;
+        maybe<int> mNumberOfChestsToRefill;
+        maybe<int> mMinPlayerDistanceToEffectChance;
+        maybe<int> mMaxPlayerDistanceToEffectChance;
+        maybe<std::wstring> mCentralLootGroup;
+        maybe<std::wstring> mOuterLootGroup;
+        maybe<std::wstring> mHVLootGroup;
         ChestRefill();
+    };
+    struct ItemBalance
+    {
+        boost::unordered_map<int, double> mBaseDamage;
+        boost::unordered_map<int, int> mProtection;
+        boost::unordered_map<int, double> mDegradation;
+        boost::unordered_map<int, int> mNutrition;
+        boost::unordered_map<int, float> mSaturationFactor;
+        boost::unordered_map<int, int> mPotionDuration;
+        boost::unordered_map<int, int> mLingeringDuration;
     };
     struct FoodBalance
     {
@@ -151,10 +181,8 @@ public:
     };
     struct SoundSpec
     {
-        bool mEnabled;
-        int mSound;
-        bool mForLast;
-        float mVolume;
+        maybe<int> mForLast;
+        maybe<float> mVolume;
         SoundSpec();
         SoundSpec(const XmlObject& object);
         unsigned int ForLast() const;
@@ -162,16 +190,11 @@ public:
     };
     struct TimerSpec
     {
-        bool mEnabled;
-        int mDuration;
-        bool mAnnounce;
-        int mAnnounceEvery;
-        bool mChangeAnnounce;
-        int mChangeAnnounceAfter;
-        bool mEndAnnounce;
-        int mEndAnnounceAfter;
-        bool mFinalAnnounce;
-        int mFinalAnnounceAfter;
+        maybe<int> mDuration;
+        maybe<int> mAnnounceEvery;
+        maybe<int> mChangeAnnounceAfter;
+        maybe<int> mChangeAnnounceWhenRemaining;
+        maybe<int> mChangedAnnounce;
         TimerSpec();
         TimerSpec(const XmlObject& object);
         void SetDurationS(int value);
@@ -198,7 +221,7 @@ public:
         std::vector<ChestKitInfo> mKits;
         PlayerEquipmentInfo mPlayerEquipment;
         int mChestKpScore;
-        int mDistributionMethod;
+        ELootDistributionMethod mDistributionMethod;
         ModeVariationLootGroup();
         ModeVariationLootGroup(const ModeVariationLootGroup& other);
         ~ModeVariationLootGroup();
@@ -208,6 +231,12 @@ public:
         unsigned int GetChestKPScore() const;
         arrayWithLength<WeighedTreasure*> GetWeightedChestItems() const;
         const PlayerEquipmentInfo& GetPlayerEquipment() const;
+    };
+
+    enum EGlideVariant
+    {
+        eGlideVariant_TimeAttack,
+        eGlideVariant_ScoreAttack
     };
 
     MiniGameDef(const XmlObject& object);
@@ -222,13 +251,13 @@ public:
     bool ArePointsActive() const;
     bool ArePowerupsActive() const;
     bool HasFeatureSupportForInfiniteLives() const;
-    static std::pair<bool, int> parseTimer(std::wstring name);
-    static std::pair<bool, int> parseSound(std::wstring name);
-    void parseFoodBalance(const XmlObject& object, FoodBalance* balance);
+    static maybe<int> parseTimer(std::wstring name);
+    static maybe<EGameModeSound> parseSound(std::wstring name);
+    void parseFoodBalance(const XmlObject& object, FoodBalance* parent);
     void parsePermissions(const XmlObject& object);
     void parseChestRefill(const XmlObject& object);
-    static std::pair<bool, int> parseDistributionMethod(std::wstring name);
-    static std::deque<not_null_ptr<ItemInstance> > parseItemInstance(const XmlObject& object, int* weight);
+    static maybe<ELootDistributionMethod> parseDistributionMethod(std::wstring name);
+    static std::deque<not_null_ptr<ItemInstance> > parseItemInstance(const XmlObject& object, int* slot);
     static void parseKit(std::vector<ChestKitInfo>* kits, const XmlObject& object);
     static void parseEquipment(PlayerEquipmentInfo& equipment, const XmlObject& object);
     static void parseChestItem(std::vector<ChestItemsInfo>* items, const XmlObject& object);
@@ -244,7 +273,7 @@ public:
     void setCRC(unsigned int crc);
     static MiniGameDef* parseMiniGameDef(arrayWithLength<unsigned char> data);
     static MiniGameDef* parseMiniGameDef(std::wstring fileName);
-    unsigned int GetId() const;
+    EMiniGameId GetId() const;
     void cleanUp();
     const LootSetDef& getCurrentLootSet() const;
     bool HasLootGroup(const std::wstring& group) const;
@@ -331,7 +360,7 @@ public:
     int GetSpectateMode() const;
     unsigned long long GetSpectateEntity() const;
     maybe<int> getDifficulty() const;
-    maybe<int> getPlayerGameType() const;
+    const GameType* getPlayerGameType() const;
     Abilities getPlayerAbilities() const;
     TimerSpec getTimerSpec(int timer) const;
     SoundSpec getSoundSpec(EGameModeSound sound) const;
@@ -340,8 +369,8 @@ public:
     float getSaturationModifier(int itemId, float defaultValue) const;
     int getPotionDuration(int effectId, int defaultValue) const;
     int getLingeringDuration(int effectId, int defaultValue) const;
-    double getThrowPower(unsigned long long itemId, double defaultValue) const;
-    double getThrowAngle(unsigned long long itemId, double defaultValue) const;
+    double getThrowPower(unsigned long long entityType, double defaultValue) const;
+    double getThrowAngle(unsigned long long entityType, double defaultValue) const;
     bool shouldTickBlocks() const;
     bool shouldTickBlock(int blockId) const;
     bool canLavaConvertWater() const;
@@ -404,8 +433,8 @@ public:
     bool HasFeatureSnowballAwards() const;
     bool AllowsUGC() const;
     bool CanCraft() const;
-    static void addWeightedChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item, unsigned int weight, unsigned int minCount, unsigned int maxCount);
-    static void addChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item, unsigned int weight, unsigned int minCount, unsigned int maxCount, unsigned int slot, unsigned int chance);
+    static void addWeightedChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item, unsigned int minCount, unsigned int maxCount, unsigned int weight);
+    static void addChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item, unsigned int minStackCount, unsigned int maxStackCount, unsigned int minCount, unsigned int maxCount, unsigned int playersForMin);
     unsigned int GetName() const;
     static unsigned int GetHostOptionStringId(eCustomGameModeHostOption option);
     void AddLabelForOption(std::vector<HtmlString>& labels, eCustomGameModeHostOption option, unsigned int value) const;
@@ -457,18 +486,11 @@ private:
     }
 
     unsigned char mHostOptionVersion;
-    boost::unordered_map<int, double> mBaseDamage;
-    boost::unordered_map<int, int> mNutrition;
-    boost::unordered_map<int, int> mPotionDurations;
-    boost::unordered_map<int, std::vector<int> > mOptionLists;
-    boost::unordered_map<int, double> mProjectilePower;
-    std::vector<boost::unordered_map<int, boost::unordered_map<int, int> > > mMatchmakingFilters;
-    std::vector<int> mMatchmakingFilterIds;
     boost::unordered_map<int, unsigned int> mOptionDefaults;
+    boost::unordered_map<int, std::vector<int> > mOptionLists;
+    std::vector<boost::unordered_map<int, boost::unordered_map<int, int> > > mMatchmakingFilters;
+    std::vector<int> mMatchmakingFilterDefaults;
     MiniGamePlayerSettings mPlayerSettings;
-    boost::unordered_map<int, float> mSaturationModifiers;
-    boost::unordered_map<int, int> mLingeringDurations;
-    boost::unordered_map<int, int> mItemOverrides;
     boost::unordered_map<int, TimerSpec> mTimers;
     boost::unordered_map<int, SoundSpec> mSounds;
     EMiniGameId mId;
@@ -481,44 +503,34 @@ private:
     unsigned int mCrc;
     bool mCanAutoStart;
     bool mLoadOnlyActiveAreaChunks;
-    bool mDisableBuilding;
-    bool mDifficultySet;
-    int mDifficulty;
-    bool mPlayerGameTypeSet;
-    int mPlayerGameType;
+    bool mEditActionsDisabled;
+    maybe<int> mDifficulty;
+    maybe<int> mPlayerGameType;
     int mSpectateMode;
-    long long mSpectateEntity;
-    bool mSpectateEntitySet;
-    bool mPlayerAbilitiesSet;
-    Abilities mPlayerAbilities;
+    unsigned long long mSpectateEntity;
+    bool mAllowCrafting;
     bool mShowInvulnerableEffect;
     bool mLockedInventory;
     bool mShowdownAnnouncements;
     bool mAllowPvP;
     bool mTutorialsEnabled;
     float mDamageIndicatorDelay;
-    bool mShouldTickBlocks;
-    bool mShouldTickBlocksSet;
-    bool mCanLavaConvertWater;
-    bool mCanLavaConvertWaterSet;
+    maybe<bool> mCanLavaConvertWater;
     EBuildMode mPlaceMode;
     EBuildMode mDestroyMode;
     EBuildMode mUseMode;
     EBuildMode mUseBlockMode;
-    std::vector<int> mMayPlace;
-    std::vector<int> mMayDestroy;
-    std::vector<int> mMayUse;
-    std::vector<int> mMayUseBlock;
-    bool mCanTntDestroyBlocks;
+    std::vector<int> mPlacePermissions;
+    std::vector<int> mDestroyPermissions;
+    std::vector<int> mUsePermissions;
+    std::vector<int> mBlockUsePermissions;
+    bool mAllowsUGC;
     unsigned char mMaxPlayersForSmallMaps;
     boost::unordered_map<int, FoodBalance*> mFoodBalances;
     ChestRefill mChestRefill;
     BlockData mBlockData;
+    ItemBalance mItemBalance;
     std::vector<LootSetDef> mLootSets;
-    std::wstring mTextureName;
-    bool mCanCraft;
-    bool mAllowsUGC;
-    mutable GameModeOptions mHostOptions;
 };
 
 #endif

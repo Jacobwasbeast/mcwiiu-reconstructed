@@ -6,7 +6,7 @@
 PatchyShapeRuleDefinition::PatchyShapeRuleDefinition()
     : mScale(5.0)
 {
-    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(65), &mScale);
+    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mScale);
     scaleAttribute->setMin(1.0);
     scaleAttribute->setMax(254.0);
 }
@@ -17,7 +17,7 @@ PatchyShapeRuleDefinition::~PatchyShapeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType PatchyShapeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(51);
+    return ConsoleGameRules::eGameRuleType_PatchyShape;
 }
 
 LayerShape* PatchyShapeRuleDefinition::Generate() const

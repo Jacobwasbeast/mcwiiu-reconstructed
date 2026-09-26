@@ -12,5 +12,5 @@ SniperMedal::~SniperMedal() = default;
 
 double SniperMedal::GetScore(PlayerStats* playerStats) const
 {
-    return static_cast<double>(static_cast<float>(playerStats->mSniper->mValue));
+    return static_cast<double>(static_cast<float>(playerStats->mSniper->getValue()));
 }

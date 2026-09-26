@@ -2,6 +2,11 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
+namespace
+{
+const int FIRST_DEATH = 1;
+}
+
 FirstToDieMedal::FirstToDieMedal(int name, float target, unsigned int weight)
     : GameMedal(name, target, weight, GameMedal::OPERATOR_AT_LEAST, true, false)
 {
@@ -19,7 +24,7 @@ double FirstToDieMedal::GetScore(PlayerStats* playerStats) const
 
     for (unsigned int round = 0; round < playerStats->getTotalRounds(); ++round)
     {
-        if (playerStats->getRoundStats(round)->mLives == 1)
+        if (playerStats->getRoundStats(round)->mDeathOrder == FIRST_DEATH)
         {
             score += roundScore;
             ++scoringRounds;

@@ -1,4 +1,5 @@
 #include "game/minigame/TankMedal.hpp"
+#include "game/core/DamageReceivedStatTracker.hpp"
 
 #include "game/core/StatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"

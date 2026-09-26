@@ -1,4 +1,5 @@
 #include "game/minigame/DamageDealtMedal.hpp"
+#include "game/core/DamageDealtStatTracker.hpp"
 
 #include "game/core/StatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"

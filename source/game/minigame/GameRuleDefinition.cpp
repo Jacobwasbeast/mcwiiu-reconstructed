@@ -16,8 +16,7 @@
 #include "game/data/TagCollectorSaveInterface.hpp"
 #include "game/minigame/CompleteAllRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
-
-std::string formatstr(const char* format, ...);
+#include "game/core/StringFormat.hpp"
 
 static const wchar_t* sTagNames[] =
 {
@@ -100,16 +99,14 @@ static const wchar_t* sTagNames[] =
     L"ActiveViewArea"
 };
 
-static const int sGameRuleAttrCount = 91;
-
 GameRuleDefinition::GameRuleDefinition()
-    : mDescriptionName(L"Complete"),
-      mPromptName(L"Complete"),
+    : mDescriptionName(L""),
+      mPromptName(L""),
       mDataTag(0)
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(0), &mDescriptionName);
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(1), &mPromptName);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(2), &mDataTag);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_descriptionName, &mDescriptionName);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_promptName, &mPromptName);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_dataTag, &mDataTag);
 }
 
 GameRuleDefinition::~GameRuleDefinition()
@@ -200,7 +197,7 @@ void GameRuleDefinition::addAttribute(const std::wstring& name, const std::wstri
     int attributeId = IGameRuleAttribute::attributeIdFromName(name);
     ConsoleGameRules::EGameRuleAttr attribute = static_cast<ConsoleGameRules::EGameRuleAttr>(attributeId);
 
-    if (attributeId != -1 && attributeId < sGameRuleAttrCount && mAttributes.find(attribute) != mAttributes.end())
+    if (attributeId != -1 && attributeId < ConsoleGameRules::eGameRuleAttr_Count && mAttributes.find(attribute) != mAttributes.end())
     {
         mAttributes[attribute]->setValue(value);
     }
@@ -341,7 +338,7 @@ void GameRuleDefinition::WriteXMLData(std::string& xml)
 
     if (type == 19 && !static_cast<TargetAreaRuleDefinition*>(this)->mPrimary)
     {
-        type = static_cast<ConsoleGameRules::EGameRuleType>(20);
+        type = ConsoleGameRules::eGameRuleType_ScoreRing;
     }
 
     xml += formatstr("<%ls", sTagNames[type]);

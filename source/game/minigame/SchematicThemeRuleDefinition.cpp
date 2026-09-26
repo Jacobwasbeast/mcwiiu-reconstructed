@@ -18,7 +18,7 @@ SchematicThemeRuleDefinition::~SchematicThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType SchematicThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(71);
+    return ConsoleGameRules::eGameRuleType_SchematicTheme;
 }
 
 LayerTheme* SchematicThemeRuleDefinition::Generate() const
@@ -46,7 +46,7 @@ LayerTheme* SchematicThemeRuleDefinition::Generate() const
 
 GameRuleDefinition* SchematicThemeRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(39))
+    if (type == ConsoleGameRules::eGameRuleType_LayerAsset)
     {
         AssetRuleDef* asset = new AssetRuleDef();
         mAssets.push_back(asset);
@@ -60,8 +60,8 @@ SchematicThemeRuleDefinition::AssetRuleDef::AssetRuleDef()
     : mFilename()
     , mMinimumWidth(0)
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(16), &mFilename);
-    GameRules_IntAttribute* width = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(64), &mMinimumWidth);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_filename, &mFilename);
+    GameRules_IntAttribute* width = addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth);
     width->setMin(0);
     width->setMax(128);
 }
@@ -70,5 +70,5 @@ SchematicThemeRuleDefinition::AssetRuleDef::~AssetRuleDef() = default;
 
 ConsoleGameRules::EGameRuleType SchematicThemeRuleDefinition::AssetRuleDef::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(39);
+    return ConsoleGameRules::eGameRuleType_LayerAsset;
 }

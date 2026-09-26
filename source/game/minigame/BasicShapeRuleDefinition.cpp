@@ -8,14 +8,13 @@
 namespace
 {
 const ConsoleGameRules::EGameRuleType BASIC_SHAPE_ACTION_TYPE =
-    static_cast<ConsoleGameRules::EGameRuleType>(49);
+    ConsoleGameRules::eGameRuleType_BasicShape;
 }
 
 BasicShapeRuleDefinition::BasicShapeRuleDefinition()
     : mShape(L"")
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(
-                           IGameRuleAttribute::attributeIdFromName(L"type")), &mShape);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mShape);
 }
 
 BasicShapeRuleDefinition::~BasicShapeRuleDefinition()

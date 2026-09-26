@@ -5,14 +5,14 @@
 StarShapeRuleDefinition::StarShapeRuleDefinition()
     : mPoints(5)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(72), &mPoints);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_points, &mPoints);
 }
 
 StarShapeRuleDefinition::~StarShapeRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType StarShapeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(50);
+    return ConsoleGameRules::eGameRuleType_StarShape;
 }
 
 LayerShape* StarShapeRuleDefinition::Generate() const

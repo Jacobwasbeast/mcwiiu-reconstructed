@@ -7,12 +7,12 @@ WorldPositionRuleDefinition::WorldPositionRuleDefinition()
       mY(0),
       mZ(0)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), &mX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x, &mX);
 
-    GameRules_IntAttribute* height = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), &mY);
+    GameRules_IntAttribute* height = addIntAttribute(ConsoleGameRules::eGameRuleAttr_y, &mY);
     height->setMin(0);
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), &mZ);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mZ);
 }
 
 WorldPositionRuleDefinition::~WorldPositionRuleDefinition()
@@ -21,5 +21,5 @@ WorldPositionRuleDefinition::~WorldPositionRuleDefinition()
 
 ConsoleGameRules::EGameRuleType WorldPositionRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(15);
+    return ConsoleGameRules::eGameRuleType_WorldPosition;
 }

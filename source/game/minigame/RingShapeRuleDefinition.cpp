@@ -8,7 +8,7 @@ RingShapeRuleDefinition::RingShapeRuleDefinition()
     : mScale(0.75)
     , mChild(NULL)
 {
-    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(73), &mScale);
+    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_holeSize, &mScale);
     scaleAttribute->setMin(0.0);
     scaleAttribute->setMax(2.0);
 }
@@ -17,7 +17,7 @@ RingShapeRuleDefinition::~RingShapeRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType RingShapeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(52);
+    return ConsoleGameRules::eGameRuleType_RingShape;
 }
 
 GameRuleDefinition* RingShapeRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)

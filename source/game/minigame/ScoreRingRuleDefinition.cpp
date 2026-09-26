@@ -11,16 +11,16 @@ ScoreRingRuleDefinition::ScoreRingRuleDefinition()
       mOrientation(GlideRingGenerator::eGlideRingOrientation_XY),
       mSize(GlideRingGenerator::eGlideRingSize_Large)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), &mX);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), &mY);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), &mZ);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x, &mX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_y, &mY);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mZ);
 }
 
 ScoreRingRuleDefinition::~ScoreRingRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType ScoreRingRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(20);
+    return ConsoleGameRules::eGameRuleType_ScoreRing;
 }
 
 void ScoreRingRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)

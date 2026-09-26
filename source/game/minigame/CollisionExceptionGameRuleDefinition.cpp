@@ -5,7 +5,7 @@
 CollisionExceptionGameRuleDefinition::CollisionExceptionGameRuleDefinition()
     : mBlockId(0)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlockId);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
 }
 
 CollisionExceptionGameRuleDefinition::~CollisionExceptionGameRuleDefinition()
@@ -14,7 +14,7 @@ CollisionExceptionGameRuleDefinition::~CollisionExceptionGameRuleDefinition()
 
 ConsoleGameRules::EGameRuleType CollisionExceptionGameRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(72);
+    return ConsoleGameRules::eGameRuleType_BlockCollisionException;
 }
 
 bool CollisionExceptionGameRuleDefinition::ShouldCollideWith(Block* block)

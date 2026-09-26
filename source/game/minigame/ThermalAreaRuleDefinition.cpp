@@ -1,4 +1,5 @@
 #include "game/minigame/ThermalAreaRuleDefinition.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -10,8 +11,7 @@
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/Player.hpp"
-
-std::string formatstr(const char* format, ...);
+#include "game/core/StringFormat.hpp"
 
 ThermalAreaRuleDefinition::ThermalAreaRuleDefinition()
 {
@@ -25,13 +25,13 @@ ThermalAreaRuleDefinition::ThermalAreaRuleDefinition()
     mConditionValue1 = 0;
     mConditionValue0 = 0;
 
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(80), &mLiftForceModifier);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(81), &mStaticLift);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(82), &mTargetHeight);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(83), &mSpeedBoost);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(85), &mConditionType);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(86), &mConditionValue0);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(87), &mConditionValue1);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_liftForceModifier, &mLiftForceModifier);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_staticLift, &mStaticLift);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_targetHeight, &mTargetHeight);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_speedBoost, &mSpeedBoost);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_condition_type, &mConditionType);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_condition_value_0, &mConditionValue0);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_condition_value_1, &mConditionValue1);
     mUseCount = 0;
 }
 
@@ -48,7 +48,7 @@ bool ThermalAreaRuleDefinition::getConditionsMet(boost::shared_ptr<Entity> entit
     }
     else if (mConditionType == 2)
     {
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             int points = Minecraft::GetInstance()->mLevel->GetClientScoreboard()->GetPoints(player->getSUID(), -1);
@@ -162,23 +162,23 @@ void ThermalAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
 {
     if (!mName.empty())
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(9), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_name, xml);
     }
     if (mLiftForceModifier != 1.0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(80), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_liftForceModifier, xml);
     }
     if (mStaticLift != 0.0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(81), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_staticLift, xml);
     }
     if (mTargetHeight != 0.0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(82), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_targetHeight, xml);
     }
     if (mSpeedBoost != 0.0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(83), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_speedBoost, xml);
         const wchar_t* direction = L"none";
         switch (mBoostDirection)
         {
@@ -211,23 +211,23 @@ void ThermalAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
     }
     if (mConditionType != 0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(85), xml);
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(86), xml);
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(87), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_condition_type, xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_condition_value_0, xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_condition_value_1, xml);
     }
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(26), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(29), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(32), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(27), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(30), xml);
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(33), xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_x0, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_y0, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_z0, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_x1, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_y1, xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_z1, xml);
     if (mDataTag != 0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(2), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_dataTag, xml);
     }
 }
 
 ConsoleGameRules::EGameRuleType ThermalAreaRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(21);
+    return ConsoleGameRules::eGameRuleType_ThermalArea;
 }

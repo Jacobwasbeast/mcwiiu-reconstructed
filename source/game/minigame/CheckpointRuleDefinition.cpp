@@ -5,8 +5,7 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/UpdatePlayerRuleDefinition.hpp"
-
-std::string formatstr(const char* format, ...);
+#include "game/core/StringFormat.hpp"
 
 static const wchar_t* sTagNames[] =
 {
@@ -94,8 +93,8 @@ CheckpointRuleDefinition::CheckpointRuleDefinition()
     mSpawnPoint = NULL;
     mElytraBoost = -1.0;
     mSequenceID = -1;
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(49), &mSequenceID);
-    addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(83), &mElytraBoost);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_id, &mSequenceID);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_speedBoost, &mElytraBoost);
 }
 
 CheckpointRuleDefinition::~CheckpointRuleDefinition()
@@ -140,13 +139,13 @@ void CheckpointRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* chi
 
 GameRuleDefinition* CheckpointRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(28))
+    if (type == ConsoleGameRules::eGameRuleType_UpdatePlayer)
     {
         mSpawnPoint = new UpdatePlayerRuleDefinition();
         return mSpawnPoint;
     }
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(75))
+    if (type == ConsoleGameRules::eGameRuleType_CustomBeacon)
     {
         CustomBeaconRuleDefinition* beacon = new CustomBeaconRuleDefinition();
         mBeacons.push_back(beacon);
@@ -223,15 +222,15 @@ void CheckpointRuleDefinition::deactivateBeacons(ServerLevel* level)
 
 void CheckpointRuleDefinition::WriteAttributesAsXML(std::string& xml)
 {
-    WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(49), xml);
+    WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_id, xml);
     if (mElytraBoost > -1.0)
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(83), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_speedBoost, xml);
     }
     NamedAreaRuleDefinition::WriteAttributesAsXML(xml);
 }
 
 ConsoleGameRules::EGameRuleType CheckpointRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(74);
+    return ConsoleGameRules::eGameRuleType_Checkpoint;
 }

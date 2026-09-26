@@ -14,7 +14,7 @@ RandomizeSizeRuleDefinition::~RandomizeSizeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType RandomizeSizeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(46);
+    return ConsoleGameRules::eGameRuleType_RandomizeSize;
 }
 
 LayerSize* RandomizeSizeRuleDefinition::Generate() const

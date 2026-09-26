@@ -6,9 +6,9 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, int description,
-                           eHintType hintType, bool repeatMessage, bool allowFadeValue,
+                           eHintType hintType, bool allowFadeValue, bool repeatMessage,
                            int minimumDisplayTime)
-    : hint(hintValue), descriptionId(description), tutorial(tutorialValue), type(hintType),
+    : type(hintType), descriptionId(description), tutorial(tutorialValue), hint(hintValue),
       consecutiveTicks(0), lastBlock(NULL), active(true), fadeAllowed(allowFadeValue),
       minimumTime(minimumDisplayTime)
 {

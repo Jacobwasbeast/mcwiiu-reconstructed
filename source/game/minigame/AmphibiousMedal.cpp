@@ -1,4 +1,5 @@
 #include "game/minigame/AmphibiousMedal.hpp"
+#include "game/core/AmphibiousKillStatTracker.hpp"
 
 #include "game/core/StatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"

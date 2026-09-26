@@ -8,12 +8,12 @@ CarpetTrapThemeRuleDefinition::CarpetTrapThemeRuleDefinition()
     : mCarpetColour(0)
 {
     GameRules_IntAttribute* carpetColourAttribute =
-        addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(63), &mCarpetColour);
+        addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mCarpetColour);
     carpetColourAttribute->setMin(0);
     carpetColourAttribute->setMax(15);
 
     GameRules_FloatAttribute* noiseScaleAttribute =
-        addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(65), &mNoiseScale);
+        addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
     noiseScaleAttribute->setMin(0.0f);
     noiseScaleAttribute->setMax(100.0f);
 }
@@ -24,7 +24,7 @@ CarpetTrapThemeRuleDefinition::~CarpetTrapThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType CarpetTrapThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(68);
+    return ConsoleGameRules::eGameRuleType_CarpetTrapTheme;
 }
 
 LayerTheme* CarpetTrapThemeRuleDefinition::Generate() const

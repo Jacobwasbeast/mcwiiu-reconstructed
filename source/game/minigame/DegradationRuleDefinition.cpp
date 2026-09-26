@@ -8,11 +8,11 @@ template<typename T>
 std::wstring _toString(T value);
 
 DegradationRuleDefinition::DegradationRuleDefinition()
-    : mTargetLayer(L"_UNINTIALISED_"),
+    : mTargetLayer(L"[UNINTIALISED]"),
       mSpeed(2)
 {
     addStringAttribute(
-        static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"target")),
+        ConsoleGameRules::eGameRuleAttr_target,
         &mTargetLayer);
 }
 
@@ -25,7 +25,7 @@ void DegradationRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInter
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 1);
 
     saveInterface->saveAttribute(
-        static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"speed")),
+        ConsoleGameRules::eGameRuleAttr_speed,
         _toString(mSpeed));
 }
 

@@ -62,7 +62,7 @@ bool CompleteAllRuleDefinition::onCollectItem(GameRule* rule, not_null_ptr<ItemI
 
 ConsoleGameRules::EGameRuleType CompleteAllRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(27);
+    return ConsoleGameRules::eGameRuleType_CompleteAll;
 }
 
 CompleteAllRuleDefinition::~CompleteAllRuleDefinition()

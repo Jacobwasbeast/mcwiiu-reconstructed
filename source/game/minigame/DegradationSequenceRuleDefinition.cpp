@@ -19,7 +19,7 @@ DegradationSequenceRuleDefinition::~DegradationSequenceRuleDefinition()
 
 ConsoleGameRules::EGameRuleType DegradationSequenceRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(33);
+    return ConsoleGameRules::eGameRuleType_DegradationSequence;
 }
 
 void DegradationSequenceRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -34,12 +34,12 @@ GameRuleDefinition* DegradationSequenceRuleDefinition::addChild(ConsoleGameRules
 {
     DegradationRuleDefinition* rule = NULL;
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(34))
+    if (type == ConsoleGameRules::eGameRuleType_RandomDissolveDegrade)
     {
         rule = new RandomDissolveDegrade();
         mDegradationRules.push_back(rule);
     }
-    else if (type == static_cast<ConsoleGameRules::EGameRuleType>(35))
+    else if (type == ConsoleGameRules::eGameRuleType_DirectionalDegrade)
     {
         rule = new DirectionalDegrade();
         mDegradationRules.push_back(rule);

@@ -6,5 +6,5 @@ MissedSnowballsMedal::~MissedSnowballsMedal()
 
 double MissedSnowballsMedal::GetScore(PlayerStats* playerStats) const
 {
-    return 176.0f;
+    return 0.0f;
 }

@@ -2,9 +2,9 @@
 
 #include "game/core/GameModeOptions.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/PlayerUID.hpp"
 
 PlayerUID getPlayerUID(int playerIndex, bool includeOffline);
-unsigned int hash_value(const PlayerUID& uid);
 
 MiniGameOptionCache gMiniGameOptionCache;
 
@@ -38,7 +38,7 @@ MiniGamePlayerSettings& MiniGameOptionCache::getPreviousOptions(int playerIndex,
         MiniGamePlayerSettings options = miniGame->GetDefaultPlayerSettings();
         if (miniGameId == eMiniGameId_Tumble || miniGameId == eMiniGameId_Build)
         {
-            options.Set(eCustomGameModeHostOption_SpectateMode, 0);
+            options.mHostOptions.Set(eCustomGameModeHostOption_SpectateMode, 0);
         }
         (*this)[key] = options;
         it = find(key);

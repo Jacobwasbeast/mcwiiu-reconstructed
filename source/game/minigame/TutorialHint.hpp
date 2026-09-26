@@ -22,11 +22,15 @@ public:
         HINT_START_DESTROY_BLOCK = 1,
         HINT_CREATE_ITEM_SELECTED = 2,
         HINT_ITEM_DAMAGED = 3,
-        HINT_WATER_MOVEMENT = 8
+        HINT_AREA = 5,
+        HINT_LOOK_AT_BLOCK = 6,
+        HINT_LOOK_AT_ENTITY = 7,
+        HINT_WATER_MOVEMENT = 8,
+        HINT_GAME_MODE = 9
     };
 
     TutorialHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
-                 eHintType type, bool repeatMessage, bool allowFade,
+                 eHintType type, bool allowFade, bool repeatMessage,
                  int minimumDisplayTime);
     virtual ~TutorialHint();
 
@@ -41,14 +45,16 @@ public:
     virtual unsigned int onLookAtEntity(boost::shared_ptr<Entity> entity);
     virtual unsigned int onGameModeChange(eTutorial_GameMode gameMode);
     virtual int tick();
-    virtual unsigned int getMinimumDisplayTime();
+    unsigned int getMinimumDisplayTime();
     virtual unsigned char allowFade();
 
 protected:
-    eTutorial_Hint hint;
+    friend class Tutorial;
+
+    eHintType type;
     int descriptionId;
     Tutorial* tutorial;
-    eHintType type;
+    eTutorial_Hint hint;
     int consecutiveTicks;
     Block* lastBlock;
     bool active;

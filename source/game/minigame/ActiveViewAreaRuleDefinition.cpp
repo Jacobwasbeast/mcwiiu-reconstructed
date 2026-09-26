@@ -10,5 +10,5 @@ ActiveViewAreaRuleDefinition::~ActiveViewAreaRuleDefinition()
 
 ConsoleGameRules::EGameRuleType ActiveViewAreaRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(76);
+    return ConsoleGameRules::eGameRuleType_ActiveViewArea;
 }

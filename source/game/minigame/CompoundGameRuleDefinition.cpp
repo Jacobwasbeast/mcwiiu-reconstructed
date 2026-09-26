@@ -51,31 +51,31 @@ GameRuleDefinition* CompoundGameRuleDefinition::addChild(ConsoleGameRules::EGame
 
     switch (type)
     {
-    case 6:
+    case ConsoleGameRules::eGameRuleType_PlaceContainer:
         pChild = new PlaceContainerRuleDefinition();
         break;
 
-    case 14:
+    case ConsoleGameRules::eGameRuleType_DistributeItems:
         pChild = new DistributeItemsRuleDefinition();
         break;
 
-    case 25:
+    case ConsoleGameRules::eGameRuleType_UseBlock:
         pChild = new UseBlockRuleDefinition();
         break;
 
-    case 26:
+    case ConsoleGameRules::eGameRuleType_CollectItem:
         pChild = new CollectItemRuleDefinition();
         break;
 
-    case 27:
+    case ConsoleGameRules::eGameRuleType_CompleteAll:
         pChild = new CompleteAllRuleDefinition();
         break;
 
-    case 28:
+    case ConsoleGameRules::eGameRuleType_UpdatePlayer:
         pChild = new UpdatePlayerRuleDefinition();
         break;
 
-    case 32:
+    case ConsoleGameRules::eGameRuleType_PopulateContainer:
         pChild = new PopulateContainerRuleDefinition();
         break;
 

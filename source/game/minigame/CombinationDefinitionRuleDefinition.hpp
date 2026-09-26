@@ -18,5 +18,4 @@ public:
 
     const std::wstring& GetName() const;
 };
-
 #endif

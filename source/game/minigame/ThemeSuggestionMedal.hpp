@@ -8,7 +8,7 @@ class PlayerStats;
 class ThemeSuggestionMedal : public GameMedal
 {
 public:
-    ThemeSuggestionMedal(int name, float target, unsigned int weight, const PlayerStats*& playerStats, bool bestOnly);
+    ThemeSuggestionMedal(int name, float target, unsigned int weight, float (&scoreFunction)(const PlayerStats*), bool bestOnly);
 
     virtual ~ThemeSuggestionMedal();
     virtual double GetScore(PlayerStats* playerStats) const;

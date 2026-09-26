@@ -32,7 +32,7 @@ bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
         return false;
 
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    if (miniGame->GetGameVariant() != 1)
+    if (miniGame->GetGameVariant() != MiniGameDef::eGlideVariant_ScoreAttack)
         return false;
 
     std::vector<TargetAreaRuleDefinition*> targetAreas;
@@ -59,33 +59,33 @@ bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
         bool third = false;
 
         if (mFirstAmount == 0)
-            first = roundStats->mDistanceStats[0] + roundStats->mProgressStats[0] == 0;
+            first = roundStats->mBankedRings[0] + roundStats->mUnbankedRings[0] == 0;
         else if (mFirstAmount == 1)
-            first = roundStats->mDistanceStats[0] + roundStats->mProgressStats[0] == targetAreaCounts[0];
+            first = roundStats->mBankedRings[0] + roundStats->mUnbankedRings[0] == targetAreaCounts[0];
         else if (mFirstAmount < 3)
-            first = roundStats->mDistanceStats[0] + roundStats->mProgressStats[0] != 0;
+            first = roundStats->mBankedRings[0] + roundStats->mUnbankedRings[0] != 0;
         else if (mFirstAmount == 3)
             first = true;
         else
             return false;
 
         if (mSecondAmount == 0)
-            second = roundStats->mDistanceStats[1] + roundStats->mProgressStats[1] == 0;
+            second = roundStats->mBankedRings[1] + roundStats->mUnbankedRings[1] == 0;
         else if (mSecondAmount == 1)
-            second = roundStats->mDistanceStats[1] + roundStats->mProgressStats[1] == targetAreaCounts[1];
+            second = roundStats->mBankedRings[1] + roundStats->mUnbankedRings[1] == targetAreaCounts[1];
         else if (mSecondAmount < 3)
-            second = roundStats->mDistanceStats[1] + roundStats->mProgressStats[1] != 0;
+            second = roundStats->mBankedRings[1] + roundStats->mUnbankedRings[1] != 0;
         else if (mSecondAmount == 3)
             second = true;
         else
             return false;
 
         if (mThirdAmount == 0)
-            third = roundStats->mDistanceStats[2] + roundStats->mProgressStats[2] == 0;
+            third = roundStats->mBankedRings[2] + roundStats->mUnbankedRings[2] == 0;
         else if (mThirdAmount == 1)
-            third = roundStats->mDistanceStats[2] + roundStats->mProgressStats[2] == targetAreaCounts[2];
+            third = roundStats->mBankedRings[2] + roundStats->mUnbankedRings[2] == targetAreaCounts[2];
         else if (mThirdAmount < 3)
-            third = roundStats->mDistanceStats[2] + roundStats->mProgressStats[2] != 0;
+            third = roundStats->mBankedRings[2] + roundStats->mUnbankedRings[2] != 0;
         else if (mThirdAmount == 3)
             third = true;
         else

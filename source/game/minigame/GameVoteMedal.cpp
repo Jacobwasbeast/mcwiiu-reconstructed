@@ -17,10 +17,10 @@ double GameVoteMedal::GetScore(PlayerStats* playerStats) const
     {
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
         float votes[4];
-        votes[0] = (float)roundStats->mKillsByType[0];
-        votes[1] = (float)roundStats->mKillsByType[1];
-        votes[2] = (float)roundStats->mKillsByType[2];
-        votes[3] = (float)roundStats->mKillsByType[3];
+        votes[0] = static_cast<float>(roundStats->mScoresReceived[0]);
+        votes[1] = static_cast<float>(roundStats->mScoresReceived[1]);
+        votes[2] = static_cast<float>(roundStats->mScoresReceived[2]);
+        votes[3] = static_cast<float>(roundStats->mScoresReceived[3]);
 
         float totalVotes = votes[0] + votes[1] + votes[2] + votes[3];
         roundCount += 1.0f;

@@ -17,8 +17,8 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(LayerGenerationRu
     , mShapes(new LayerShapeRuleDefinition())
     , mFills(new LayerFillRuleDefinition())
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"name")), &mName);
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"type")), &mFilter);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mName);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mFilter);
 }
 
 AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
@@ -32,8 +32,8 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
     , mShapes(new LayerShapeRuleDefinition())
     , mFills(new LayerFillRuleDefinition())
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"name")), &mName);
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(IGameRuleAttribute::attributeIdFromName(L"type")), &mFilter);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mName);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mFilter);
 }
 
 AnyCombinationOfRuleDefinition::~AnyCombinationOfRuleDefinition()
@@ -204,5 +204,5 @@ GameRuleDefinition* AnyCombinationOfRuleDefinition::addChild(ConsoleGameRules::E
 
 ConsoleGameRules::EGameRuleType AnyCombinationOfRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(40);
+    return ConsoleGameRules::eGameRuleType_AnyCombinationOf;
 }

@@ -8,7 +8,7 @@ NullThemeRuleDefinition::~NullThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType NullThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(0x3b);
+    return ConsoleGameRules::eGameRuleType_NullTheme;
 }
 
 LayerTheme* NullThemeRuleDefinition::Generate() const

@@ -3,24 +3,23 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-std::string formatstr(const char* format, ...);
+#include "game/core/StringFormat.hpp"
 
 TargetAreaRuleDefinition::TargetAreaRuleDefinition()
     : mPrimary(false),
       mPointValue(0),
       mLaps(0)
 {
-    addBoolAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(78), &mPrimary);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(79), &mLaps);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(72), &mPointValue);
+    addBoolAttribute(ConsoleGameRules::eGameRuleAttr_primary, &mPrimary);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_laps, &mLaps);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_points, &mPointValue);
 }
 
 TargetAreaRuleDefinition::~TargetAreaRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType TargetAreaRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(19);
+    return ConsoleGameRules::eGameRuleType_TargetArea;
 }
 
 int TargetAreaRuleDefinition::getPointValue()
@@ -53,12 +52,12 @@ void TargetAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
 
         if (mPrimary)
         {
-            WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(78), xml);
+            WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_primary, xml);
         }
 
         if (mLaps != 0)
         {
-            WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(79), xml);
+            WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_laps, xml);
         }
 
         return;
@@ -66,7 +65,7 @@ void TargetAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
 
     if (!mName.empty())
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(9), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_name, xml);
     }
 
     BlockPos centre(mArea->getCenter()->x, mArea->getCenter()->y, mArea->getCenter()->z);

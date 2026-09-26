@@ -12,9 +12,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 ApplySchematicRuleDefinition::ApplySchematicRuleDefinition(LevelGenerationOptions* options)
     : mLevelGenerationOptions(options),
@@ -190,24 +188,24 @@ std::wstring ApplySchematicRuleDefinition::getSchematicName()
 
 ConsoleGameRules::EGameRuleType ApplySchematicRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(2);
+    return ConsoleGameRules::eGameRuleType_ApplySchematic;
 }
 
 void ApplySchematicRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
                                                     unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 5);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(16), mSchematicName);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), _toString(mOrigin->x));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), _toString(mOrigin->y));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), _toString(mOrigin->z));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_filename, mSchematicName);
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_x, _toString(mOrigin->x));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_y, _toString(mOrigin->y));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_z, _toString(mOrigin->z));
     int rotation = 0;
     if (mRotation >= ConsoleSchematicFile::eSchematicRotation_90 &&
         mRotation <= ConsoleSchematicFile::eSchematicRotation_270)
     {
         rotation = static_cast<int>(mRotation) * 90;
     }
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(17), _toString(rotation));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_rot, _toString(rotation));
 }
 
 void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
