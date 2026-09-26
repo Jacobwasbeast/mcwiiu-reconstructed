@@ -75,7 +75,7 @@ public:
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
 private:
-    bool mSticky;
+    TextureAtlasSprite* mOverrideTopTexture;
 };
 
 extern PistonHeadBlock::PistonType* pistonTypeNormal;

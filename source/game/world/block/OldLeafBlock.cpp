@@ -15,48 +15,31 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-static EnumProperty<PlanksBlock::Variant*>* gOldLeafVariantProperty = NULL;
-static Property* gOldLeafDecayableProperty = NULL;
-static Property* gOldLeafCheckDecayProperty = NULL;
-
-static bool oldleaf_filter(PlanksBlock::Variant* value)
+bool oldleaf_filter(PlanksBlock::Variant* value)
 {
-    return value != NULL && value->getData() < 4;
+    return value->getData() < 4;
 }
-
-class OldLeafVariantPredicate : public Predicate<PlanksBlock::Variant*>
-{
-public:
-    virtual bool apply(PlanksBlock::Variant* value) const
-    {
-        return oldleaf_filter(value);
-    }
-};
 
 EnumProperty<PlanksBlock::Variant*>* OldLeafBlock::VARIANT = NULL;
 Property* OldLeafBlock_VARIANT = NULL;
-Property* OldLeafBlock_DECAYABLE = NULL;
 
 void OldLeafBlock::blockStaticCtor()
 {
     boost::unordered_set<PlanksBlock::Variant*> values;
-    values.insert(PlanksBlock::Variant::byData(0));
-    values.insert(PlanksBlock::Variant::byData(1));
-    values.insert(PlanksBlock::Variant::byData(2));
-    values.insert(PlanksBlock::Variant::byData(3));
-    values.insert(PlanksBlock::Variant::byData(4));
-    values.insert(PlanksBlock::Variant::byData(5));
-    OldLeafVariantPredicate predicate;
-    gOldLeafVariantProperty = EnumProperty<PlanksBlock::Variant*>::create(
-        L"variant", typeid(PlanksBlock::Variant*), values, &predicate);
-    gOldLeafDecayableProperty = BooleanProperty::create(L"decayable");
-    gOldLeafCheckDecayProperty = BooleanProperty::create(L"check_decay");
-    VARIANT = gOldLeafVariantProperty;
+    values.insert(PlanksBlock::Variant::OAK);
+    values.insert(PlanksBlock::Variant::SPRUCE);
+    values.insert(PlanksBlock::Variant::BIRCH);
+    values.insert(PlanksBlock::Variant::JUNGLE);
+    values.insert(PlanksBlock::Variant::ACACIA);
+    values.insert(PlanksBlock::Variant::DARK_OAK);
+    VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
+        L"variant", typeid(PlanksBlock::Variant*), values,
+        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(oldleaf_filter));
     OldLeafBlock_VARIANT = VARIANT;
-    OldLeafBlock_DECAYABLE = gOldLeafDecayableProperty;
 }
 
 OldLeafBlock::OldLeafBlock()
@@ -66,9 +49,9 @@ OldLeafBlock::OldLeafBlock()
     TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(0));
     const BlockState* state = mStateDefinition->any()->setBoxedValue(VARIANT, &variant);
     TypedBoxed<bool> decayable(true);
-    state = state->setBoxedValue(gOldLeafDecayableProperty, &decayable);
+    state = state->setBoxedValue(DECAYABLE, &decayable);
     TypedBoxed<bool> checkDecay(true);
-    registerDefaultState(state->setBoxedValue(gOldLeafCheckDecayProperty, &checkDecay));
+    registerDefaultState(state->setBoxedValue(CHECK_DECAY, &checkDecay));
 }
 
 OldLeafBlock::~OldLeafBlock() {}
@@ -113,16 +96,16 @@ const BlockState* OldLeafBlock::getBlockState(int data)
     TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(data & 3));
     state = state->setBoxedValue(VARIANT, &variant);
     TypedBoxed<bool> decayable((data & 4) == 0);
-    state = state->setBoxedValue(gOldLeafDecayableProperty, &decayable);
+    state = state->setBoxedValue(DECAYABLE, &decayable);
     TypedBoxed<bool> checkDecay((data & 8) != 0);
-    return state->setBoxedValue(gOldLeafCheckDecayProperty, &checkDecay);
+    return state->setBoxedValue(CHECK_DECAY, &checkDecay);
 }
 
 int OldLeafBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(VARIANT)->getData();
-    if (!state->getValue(static_cast<AbstractProperty<bool>*>(gOldLeafDecayableProperty))) data |= 4;
-    if (state->getValue(static_cast<AbstractProperty<bool>*>(gOldLeafCheckDecayProperty))) data |= 8;
+    if (!state->getValue(DECAYABLE)) data |= 4;
+    if (state->getValue(CHECK_DECAY)) data |= 8;
     return data;
 }
 
@@ -133,7 +116,7 @@ PlanksBlock::Variant* OldLeafBlock::getWoodVariantForData(int data)
 
 BlockStateDefinition* OldLeafBlock::createBlockStateDefinition()
 {
-    const Property* properties[3] = { VARIANT, gOldLeafCheckDecayProperty, gOldLeafDecayableProperty };
+    const Property* properties[3] = { VARIANT, CHECK_DECAY, DECAYABLE };
     return new BlockStateDefinition(this, properties, 3);
 }
 

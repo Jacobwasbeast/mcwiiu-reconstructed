@@ -14,7 +14,7 @@ StructureVoidBlock::~StructureVoidBlock()
 
 EBlockRenderShape StructureVoidBlock::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(-1);
+    return BLOCK_RENDER_INVISIBLE;
 }
 
 const AABB* StructureVoidBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)

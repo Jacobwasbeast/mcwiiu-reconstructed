@@ -1,4 +1,5 @@
 #include "game/world/block/LeafBlock.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/client/audio/SoundType.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/FoliageColor.hpp"
@@ -12,9 +13,14 @@
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
-void* TlsGetValue(unsigned int index);
+AbstractProperty<bool>* LeafBlock::DECAYABLE = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"decayable"));
+AbstractProperty<bool>* LeafBlock::CHECK_DECAY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"check_decay"));
+
 extern unsigned int THREAD_STORAGE_INDEX;
 
 static const std::wstring LEAF_TEXTURES[12] = {
@@ -68,28 +74,23 @@ int LeafBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const Blo
     return BiomeColors::getAverageFoliageColor(levelSource, pos);
 }
 
-void LeafBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
+void LeafBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*)
 {
-    int x;
-    int y;
-    int z;
-    if (!level->hasChunksAt(pos.offset(-2, -2, -2), pos.offset(2, 2, 2)))
+    if (!level->hasChunksAt(BlockPos(pos.x - 2, pos.y - 2, pos.z - 2), BlockPos(pos.x + 2, pos.y + 2, pos.z + 2)))
         return;
 
-    for (x = -1; x <= 1; ++x)
+    for (int x = -1; x <= 1; ++x)
     {
-        for (z = -1; z <= 1; ++z)
+        for (int y = -1; y <= 1; ++y)
         {
-            for (y = -1; y <= 1; ++y)
+            for (int z = -1; z <= 1; ++z)
             {
                 BlockPos neighborPos = pos.offset(x, y, z);
                 const BlockState* neighborState = level->getBlockState(neighborPos);
-                if (neighborState->getMaterial() == Material::LEAVES)
+                if (neighborState->getMaterial() == Material::LEAVES && !neighborState->getValue(CHECK_DECAY))
                 {
-                    Block* neighborBlock = neighborState->getBlock();
-                    int data = neighborBlock->convertBlockStateToLegacyData(neighborState);
-                    if ((data & 8) == 0)
-                        level->setBlock(neighborPos, neighborBlock->getBlockState(data | 8), 4, false);
+                    TypedBoxed<bool> checkDecay(true);
+                    level->setBlock(neighborPos, neighborState->setBoxedValue(CHECK_DECAY, &checkDecay), Block::UPDATE_INVISIBLE, false);
                 }
             }
         }
@@ -105,7 +106,7 @@ void LeafBlock::die(Level* level, const BlockPos& pos)
 
 void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (level->mIsClientSide || !shouldBlockTick(level, pos, state))
+    if (level->mIsClientSide || !state->getValue(CHECK_DECAY) || !state->getValue(DECAYABLE))
         return;
 
     if (mLeafDistance == NULL)
@@ -170,8 +171,8 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
 
     if (mLeafDistance[center] >= 0)
     {
-        int data = convertBlockStateToLegacyData(state);
-        level->setBlock(pos, getBlockState(data & ~8), 4, false);
+        TypedBoxed<bool> checkDecay(false);
+        level->setBlock(pos, state->setBoxedValue(CHECK_DECAY, &checkDecay), Block::UPDATE_INVISIBLE, false);
     }
     else
     {
@@ -275,15 +276,14 @@ bool LeafBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSour
 
 bool LeafBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    int data = convertBlockStateToLegacyData(state);
-    return (data & 4) == 0 && (data & 8) != 0;
+    return state->getValue(CHECK_DECAY) && state->getValue(DECAYABLE);
 }
 
 int LeafBlock::getDescriptionId(int auxValue)
 {
     static const int descriptions[6] = {
-        0x07F97ECD, 0x17B87ECA, 0x66F04DAA,
-        static_cast<int>(0x81F6464F), 0x2F02AC98, static_cast<int>(0xA3CFE26E)
+        IDS_TILE_LEAVES_OAK, IDS_TILE_LEAVES_SPRUCE, IDS_TILE_LEAVES_BIRCH,
+        static_cast<int>(IDS_TILE_LEAVES_JUNGLE), IDS_TILE_LEAVES_ACACIA, static_cast<int>(IDS_TILE_LEAVES_DARK_OAK)
     };
     const BlockState* state = auxValue == -1 ? defaultBlockState() : getBlockState(auxValue);
     return descriptions[getWoodType(state)];

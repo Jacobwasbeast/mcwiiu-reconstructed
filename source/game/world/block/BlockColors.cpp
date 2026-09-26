@@ -17,9 +17,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/block/DoublePlantBlock.hpp"
-#include "game/world/block/DoublePlant_BlockColor__L0__createDefault__11BlockColorsSFv.hpp"
 #include "game/world/block/FlowerPotBlockEntity.hpp"
-#include "game/world/block/Leaves2_BlockColor__L0__createDefault__11BlockColorsSFv.hpp"
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/RedStoneWireBlock.hpp"
@@ -45,11 +43,28 @@ BlockColors* BlockColors::createDefault()
     BlockColors* blockColors = new BlockColors();
     arrayWithLength<Block*> blocks;
 
+    class DoublePlant_BlockColor : public BlockColor
+    {
+    public:
+        virtual int getColor(const BlockState* state, LevelSource* levelSource, const BlockPos* pos, int tintIndex)
+        {
+            DoublePlantBlock::Variant* variant = state->getValue(DoublePlantBlock::VARIANT);
+            if (levelSource == NULL || pos == NULL || (variant != gDoublePlantGrass && variant != gDoublePlantFern))
+            {
+                return -1;
+            }
+
+            BlockPos plantPos = state->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER]
+                                    ? pos->below()
+                                    : *pos;
+            return BiomeColors::getAverageGrassColor(levelSource, plantPos);
+        }
+    };
+
     Block* doublePlantBlocks[] = { Blocks::double_plant };
     blocks.data = doublePlantBlocks;
     blocks.length = 1;
-    blockColors->registerColor(
-        new DoublePlant_BlockColor__L0__createDefault__11BlockColorsSFv(), blocks);
+    blockColors->registerColor(new DoublePlant_BlockColor(), blocks);
 
     class FlowerPot_BlockColor : public BlockColor
     {
@@ -137,10 +152,23 @@ BlockColors* BlockColors::createDefault()
     blocks.length = 1;
     blockColors->registerColor(new Leaves1_BlockColor(), blocks);
 
+    class Leaves2_BlockColor : public BlockColor
+    {
+    public:
+        virtual int getColor(const BlockState* state, LevelSource* levelSource, const BlockPos* pos, int tintIndex)
+        {
+            if (levelSource != NULL && pos != NULL)
+            {
+                return BiomeColors::getAverageFoliageColor(levelSource, *pos);
+            }
+            return FoliageColor::getDefaultColor();
+        }
+    };
+
     Block* leaves2Blocks[] = { Blocks::leaves2 };
     blocks.data = leaves2Blocks;
     blocks.length = 1;
-    blockColors->registerColor(new Leaves2_BlockColor__L0__createDefault__11BlockColorsSFv(), blocks);
+    blockColors->registerColor(new Leaves2_BlockColor(), blocks);
 
     class Water_BlockColor : public BlockColor
     {
@@ -156,7 +184,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* waterBlocks[] = { Blocks::WATER, Blocks::FLOWING_WATER };
+    Block* waterBlocks[] = { Blocks::water, Blocks::flowing_water };
     blocks.data = waterBlocks;
     blocks.length = 2;
     blockColors->registerColor(new Water_BlockColor(), blocks);

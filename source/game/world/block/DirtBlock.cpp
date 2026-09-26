@@ -1,4 +1,5 @@
 #include "game/world/block/DirtBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 
@@ -28,8 +29,8 @@ const int kFirstHoeItemId = 0x122;
 const int kLastHoeItemId = 0x126;
 const int kDyeItemId = 0x15f;
 const int kWaterDepth = 0x10e;
-const unsigned int kHoeTooltip = 0x70889480u;
-const unsigned int kDyeTooltip = 0x9f5fdc40u;
+const unsigned int kHoeTooltip = IDS_TOOLTIPS_TILL;
+const unsigned int kDyeTooltip = IDS_TOOLTIPS_GROW;
 }
 
 DirtBlock::Variant* DirtBlock::Variant::DIRT = NULL;
@@ -149,9 +150,9 @@ void DirtBlock::blockStaticCtor()
         return;
     }
 
-    Variant::DIRT = new Variant(0, L"dirt", 0x672CD46C, 0x5437FAF1, MaterialColor::DIRT,
+    Variant::DIRT = new Variant(0, L"dirt", IDS_TILE_DIRT, 0x5437FAF1, MaterialColor::DIRT,
                                 L"dirt", L"", L"");
-    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", 0xC79DB172, 0x935970C7, MaterialColor::DIRT,
+    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", IDS_TILE_DIRT_COARSE, 0x935970C7, MaterialColor::DIRT,
                                        L"coarse_dirt", L"", L"");
     Variant::PODZOL = new Variant(2, L"podzol", 0x64186D51, 0x8FB42134, MaterialColor::PODZOL,
                                   L"dirt", L"dirt_podzol_top", L"dirt_podzol_side");

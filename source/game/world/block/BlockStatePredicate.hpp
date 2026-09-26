@@ -20,21 +20,20 @@ public:
     class PredicateConversion : public Predicate<Boxed*>
     {
     public:
-        PredicateConversion(const Property* property, T value)
-            : mProperty(property), mValue(value)
+        explicit PredicateConversion(const Predicate<T>* predicate)
+            : mPredicate(predicate)
         {
         }
         virtual bool apply(Boxed* value) const;
         virtual ~PredicateConversion();
     private:
-        const Property* mProperty;
-        T mValue;
+        const Predicate<T>* mPredicate;
     };
 
     explicit BlockStatePredicate(BlockStateDefinition* definition);
     virtual ~BlockStatePredicate();
-    static Predicate<const BlockState*>* forBlock(Block* block);
-    static Predicate<const BlockState*>* forDefinition(BlockStateDefinition* definition);
+    static BlockStatePredicate* forBlock(Block* block);
+    static BlockStatePredicate* forDefinition(BlockStateDefinition* definition);
     virtual bool apply(const BlockState* state) const;
     BlockStatePredicate* where(Property* property, const Predicate<Boxed*>* predicate);
 private:
@@ -45,9 +44,8 @@ private:
 template <typename T>
 bool BlockStatePredicate::PredicateConversion<T>::apply(Boxed* value) const
 {
-    const TypedBoxed<T>* boxed = value != NULL && value->isA(typeid(T))
-        ? static_cast<const TypedBoxed<T>*>(value) : NULL;
-    return boxed != NULL && mValue == boxed->getValue();
+    TypedBoxed<T>* boxed = value->isA(typeid(T)) ? static_cast<TypedBoxed<T>*>(value) : NULL;
+    return mPredicate->apply(boxed->getValue());
 }
 
 template <typename T>

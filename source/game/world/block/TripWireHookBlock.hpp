@@ -12,7 +12,7 @@ public:
     static DirectionProperty* FACING;
     static AbstractProperty<bool>* POWERED;
     static AbstractProperty<bool>* ATTACHED;
-    static AbstractProperty<bool>* DISARMED;
+    static AbstractProperty<bool>* SUSPENDED;
     static const AABB* AABB_DOWN;
     static const AABB* AABB_UP;
     static const AABB* AABB_NORTH;
@@ -33,7 +33,8 @@ public:
     virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
     void notifyNeighbors(Level* level, const BlockPos& pos, const Direction* direction);
     void playSound(Level* level, const BlockPos& pos, bool attached, bool powered, bool oldAttached, bool oldPowered);
-    const BlockState* calculateState(Level* level, const BlockPos& pos, const BlockState* state, bool attached, bool powered, int distance, const BlockState* replacement);
+    void calculateState(Level* level, const BlockPos& pos, const BlockState* state, bool isBeingDestroyed, bool canUpdate,
+                        int wireSource, const BlockState* wireSourceState);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     bool checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);

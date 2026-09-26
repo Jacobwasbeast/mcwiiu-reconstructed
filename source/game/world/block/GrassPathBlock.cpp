@@ -1,4 +1,5 @@
 #include "game/world/block/GrassPathBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -115,7 +116,7 @@ unsigned int GrassPathBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
         && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
         && tooltipData.m_bIsInside)
     {
-        return 0x70889480u;
+        return IDS_TOOLTIPS_TILL;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

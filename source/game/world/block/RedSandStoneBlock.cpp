@@ -1,4 +1,5 @@
 #include "game/world/block/RedSandStoneBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 
@@ -15,11 +16,11 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::DEFAULT =
-    new RedSandStoneBlock::Variant(0, L"red_sandstone", 1891675551);
+    new RedSandStoneBlock::Variant(0, L"red_sandstone", IDS_TILE_REDSANDSTONE);
 RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::CHISELED =
-    new RedSandStoneBlock::Variant(1, L"chiseled_red_sandstone", -801175471);
+    new RedSandStoneBlock::Variant(1, L"chiseled_red_sandstone", 0xD03F0851);
 RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::SMOOTH =
-    new RedSandStoneBlock::Variant(2, L"smooth_red_sandstone", 1078552610);
+    new RedSandStoneBlock::Variant(2, L"smooth_red_sandstone", 0x40496822);
 static RedSandStoneBlock::Variant* gRedSandStoneVariants[3] = {
     RedSandStoneBlock::Variant::DEFAULT,
     RedSandStoneBlock::Variant::CHISELED,
@@ -76,7 +77,7 @@ RedSandStoneBlock::RedSandStoneBlock()
 {
     DerivedInit();
     TypedBoxed<Variant*> value(Variant::DEFAULT);
-    registerDefaultState(defaultBlockState()->setBoxedValue(TYPE, &value));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(TYPE, &value));
     for (int i = 0; i < 5; ++i)
     {
         mTextures[i] = NULL;

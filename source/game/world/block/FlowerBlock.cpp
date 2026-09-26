@@ -1,4 +1,7 @@
 #include "game/world/block/FlowerBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <cstddef>
 #include <typeinfo>
@@ -20,62 +23,63 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/item/ItemId.hpp"
 
 FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::YELLOW = new FlowerBlock::FlowerCategory();
 FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::RED = new FlowerBlock::FlowerCategory();
 
 FlowerBlock::Flower* FlowerBlock::Flower::DANDELION = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", 115721561, 1847906812,
+    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", IDS_TILE_DANDELION, 0x6E24D1FC,
     L"flower_dandelion", FlowerBlock::Flower::FLOWER_DANDELION);
 
 FlowerBlock::Flower* FlowerBlock::Flower::POPPY = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 0, L"poppy", -1991483335, -651465812,
+    FlowerBlock::FlowerCategory::RED, 0, L"poppy", IDS_TILE_POPPY, 0xD92B6BAC,
     L"flower_rose", FlowerBlock::Flower::FLOWER_POPPY);
 
-static FlowerBlock::Flower* gBlueOrchid = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", -1075794771, 65534745,
+FlowerBlock::Flower* FlowerBlock::Flower::BLUE_ORCHID = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", IDS_TILE_BLUE_ORCHID, 0x03E7FB19,
     L"flower_blue_orchid", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
 
-static FlowerBlock::Flower* gAllium = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 2, L"allium", -459188977, 1381974082,
+FlowerBlock::Flower* FlowerBlock::Flower::ALLIUM = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 2, L"allium", IDS_TILE_ALLIUM, 0x525F4042,
     L"flower_alium", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
 
-static FlowerBlock::Flower* gHoustonia = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", 151996011, -1874500818,
+FlowerBlock::Flower* FlowerBlock::Flower::HOUSTONIA = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", IDS_TILE_AZURE_BLUET, 0x9045632E,
     L"flower_houstonia", FlowerBlock::Flower::FLOWER_HOUSTONIA);
 
-static FlowerBlock::Flower* gRedTulip = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", -237699297, 1013643162,
+FlowerBlock::Flower* FlowerBlock::Flower::RED_TULIP = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", IDS_TILE_TULIP_RED, 0x3C6AF79A,
     L"flower_tulip_red", FlowerBlock::Flower::FLOWER_RED_TULIP);
 
-static FlowerBlock::Flower* gOrangeTulip = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 5, L"orange_tulip", -222227692, -1169810583,
+FlowerBlock::Flower* FlowerBlock::Flower::ORANGE_TULIP = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 5, L"orange_tulip", IDS_TILE_TULIP_ORANGE, 0xBA461B69,
     L"flower_tulip_orange", FlowerBlock::Flower::FLOWER_ORANGE_TULIP);
 
-static FlowerBlock::Flower* gWhiteTulip = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 6, L"white_tulip", -727005853, -2136162442,
+FlowerBlock::Flower* FlowerBlock::Flower::WHITE_TULIP = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 6, L"white_tulip", IDS_TILE_TULIP_WHITE, 0x80ACBF76,
     L"flower_tulip_white", FlowerBlock::Flower::FLOWER_WHITE_TULIP);
 
-static FlowerBlock::Flower* gPinkTulip = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", 439136352, -152482691,
+FlowerBlock::Flower* FlowerBlock::Flower::PINK_TULIP = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", IDS_TILE_TULIP_PINK, 0xF6E94C7D,
     L"flower_tulip_pink", FlowerBlock::Flower::FLOWER_PINK_TULIP);
 
-static FlowerBlock::Flower* gOxeyeDaisy = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", -1503237240, 484087620,
+FlowerBlock::Flower* FlowerBlock::Flower::OXEYE_DAISY = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", IDS_TILE_OXEYE_DAISY, 0x1CDA9744,
     L"flower_oxeye_daisy", FlowerBlock::Flower::FLOWER_OXEYE_DAISY);
 
 FlowerBlock::Flower* FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_COUNT] =
 {
     FlowerBlock::Flower::DANDELION,
     FlowerBlock::Flower::POPPY,
-    gBlueOrchid,
-    gAllium,
-    gHoustonia,
-    gRedTulip,
-    gOrangeTulip,
-    gWhiteTulip,
-    gPinkTulip,
-    gOxeyeDaisy
+    FlowerBlock::Flower::BLUE_ORCHID,
+    FlowerBlock::Flower::ALLIUM,
+    FlowerBlock::Flower::HOUSTONIA,
+    FlowerBlock::Flower::RED_TULIP,
+    FlowerBlock::Flower::ORANGE_TULIP,
+    FlowerBlock::Flower::WHITE_TULIP,
+    FlowerBlock::Flower::PINK_TULIP,
+    FlowerBlock::Flower::OXEYE_DAISY
 };
 
 FlowerBlock::Flower* FlowerBlock::Flower::YELLOW_FLOWERS[FlowerBlock::Flower::YELLOW_FLOWER_COUNT] =
@@ -86,14 +90,14 @@ FlowerBlock::Flower* FlowerBlock::Flower::YELLOW_FLOWERS[FlowerBlock::Flower::YE
 FlowerBlock::Flower* FlowerBlock::Flower::RED_FLOWERS[FlowerBlock::Flower::RED_FLOWER_COUNT] =
 {
     FlowerBlock::Flower::POPPY,
-    gBlueOrchid,
-    gAllium,
-    gHoustonia,
-    gRedTulip,
-    gOrangeTulip,
-    gWhiteTulip,
-    gPinkTulip,
-    gOxeyeDaisy
+    FlowerBlock::Flower::BLUE_ORCHID,
+    FlowerBlock::Flower::ALLIUM,
+    FlowerBlock::Flower::HOUSTONIA,
+    FlowerBlock::Flower::RED_TULIP,
+    FlowerBlock::Flower::ORANGE_TULIP,
+    FlowerBlock::Flower::WHITE_TULIP,
+    FlowerBlock::Flower::PINK_TULIP,
+    FlowerBlock::Flower::OXEYE_DAISY
 };
 
 FlowerBlock::Flower::Flower(FlowerCategory* category, int data, const std::wstring& name, int nameId,
@@ -178,7 +182,7 @@ FlowerBlock::Flower* FlowerBlock::Flower::byData(const FlowerCategory* category,
 
 Block* FlowerBlock::FlowerCategory::getBlock()
 {
-    return Block::byId(this == YELLOW ? 37 : 38);
+    return this == YELLOW ? Blocks::yellow_flower : Blocks::red_flower;
 }
 
 FlowerBlock::FlowerCategoryPredicate::FlowerCategoryPredicate(FlowerBlock* block)
@@ -303,12 +307,12 @@ void FlowerBlock::registerIcons(IconRegister* iconRegister)
 
 unsigned int FlowerBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
         if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            return 0x9F5FDC40u;
+            return IDS_TOOLTIPS_GROW;
         }
     }
 
@@ -341,21 +345,27 @@ bool FlowerBlock::performBonemeal(bool checkOnly, Level* level, Random* random, 
         MutableBlockPos flowerPos(pos);
 
         if (!randomWalk(level, flowerPos, distance)
-            || level->getBlockId(flowerPos.x, flowerPos.y, flowerPos.z) != 0)
+            || level->getBlockId(flowerPos.x, flowerPos.y, flowerPos.z) != BlockId::AIR)
         {
             continue;
         }
 
-        bool keepCategory = levelRandom->nextInt(8) != 0;
-        Block* redFlower = FlowerCategory::RED->getBlock();
-        Block* yellowFlower = FlowerCategory::YELLOW->getBlock();
-        Block* flowerBlock = (this == redFlower) == keepCategory ? redFlower : yellowFlower;
+        Block* flowerBlock = Blocks::red_flower;
+        if (levelRandom->nextInt(8) == 0)
+        {
+            if (this == Blocks::red_flower)
+                flowerBlock = Blocks::yellow_flower;
+        }
+        else if (this != Blocks::red_flower)
+        {
+            flowerBlock = Blocks::yellow_flower;
+        }
 
         if (flowerBlock != NULL && flowerBlock->canSurvive(level, flowerPos, state))
         {
             if (!checkOnly)
             {
-                level->setBlockAndData(flowerPos.x, flowerPos.y, flowerPos.z, Block::getId(flowerBlock), 0, 3);
+                level->setBlockAndData(flowerPos.x, flowerPos.y, flowerPos.z, Block::getId(flowerBlock), 0, Block::UPDATE_ALL);
             }
 
             success = true;
@@ -376,7 +386,7 @@ bool FlowerBlock::randomWalk(Level* level, MutableBlockPos& pos, int distance) c
         pos.addY((random->nextInt(3) - 1) * random->nextInt(3) / 2);
         pos.addZ(random->nextInt(3) - 1);
 
-        if (level->getBlockId(pos.x, pos.y - 1, pos.z) != 2)
+        if (level->getBlockId(pos.x, pos.y - 1, pos.z) != BlockId::GRASS)
         {
             return false;
         }

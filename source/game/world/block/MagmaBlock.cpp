@@ -1,4 +1,5 @@
 #include "game/world/block/MagmaBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/BubbleColumnSegment.hpp"
@@ -38,7 +39,7 @@ const MaterialColor* MagmaBlock::getMapColor(const BlockState*, LevelSource*, co
 void MagmaBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity)
 {
     if (!entity->isFireImmune()
-        && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
         && !EnchantmentHelper::hasFrostWalker(boost::static_pointer_cast<LivingEntity>(entity)))
     {
         entity->hurt(DamageSource::HOT_FLOOR, 1.0f);
@@ -60,7 +61,7 @@ void MagmaBlock::addToTickQueue(Level* level, const BlockPos& pos, Random* rando
 
 void MagmaBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random* random)
 {
-    if (level->getBlock(pos.above().above()) == Blocks::AIR && level->isEmptyWaterBlock(pos.above()))
+    if (level->getBlock(pos.above().above()) == Blocks::air && level->isEmptyWaterBlock(pos.above()))
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
         if (!level->isEmptyWaterBlock(pos.above()) || liquidLevel != 0)
@@ -72,10 +73,10 @@ void MagmaBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
     {
         BlockPos above = pos.above();
         Block* block = level->getBlock(above);
-        bool sourceWater = block == Blocks::WATER;
-        if (block == Blocks::FLOWING_WATER || sourceWater)
+        bool ice = block == Blocks::ice;
+        if (block == Blocks::snow_layer || ice)
         {
-            if (random->nextInt(8) == 0 && sourceWater)
+            if (random->nextInt(8) == 0 && ice)
                 IceBlock::melt(level, above);
             addToTickQueue(level, pos, random);
         }
@@ -89,8 +90,8 @@ void MagmaBlock::neighborChanged(const BlockState*, Level* level, const BlockPos
         level->addToTickNextTick(pos, this, level->mRandom->nextInt(2, 3));
 
     Block* block = level->getBlock(fromPos);
-    if (block == Blocks::WATER || block == Blocks::FLOWING_WATER
-        || block == Blocks::ice || block == Blocks::frosted_ice)
+    if (block == Blocks::water || block == Blocks::flowing_water
+        || block == Blocks::snow_layer || block == Blocks::ice)
         addToTickQueue(level, pos, level->mRandom);
 }
 
@@ -101,7 +102,7 @@ int MagmaBlock::getTickDelay(Level*)
 
 void MagmaBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (level->getBlock(pos.above().above()) == Blocks::AIR && level->isEmptyWaterBlock(pos.above()))
+    if (level->getBlock(pos.above().above()) == Blocks::air && level->isEmptyWaterBlock(pos.above()))
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
         if (!level->isEmptyWaterBlock(pos.above()) || liquidLevel != 0)

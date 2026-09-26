@@ -1,4 +1,5 @@
 #include "game/world/block/BeaconBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -126,13 +127,13 @@ void BeaconBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape BeaconBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(34);
+    return BLOCK_RENDER_BEACON;
 }
 
 unsigned int BeaconBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
-        return 0xea4e897e;
+        return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 

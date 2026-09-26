@@ -15,9 +15,14 @@ class MaterialColor;
 class Random;
 class TextureAtlasSprite;
 
+class DyeColor;
+template <class T> class EnumProperty;
+
 class StainedGlassBlock : public HalfTransparentBlock
 {
 public:
+    static EnumProperty<const DyeColor*>* COLOR;
+
     StainedGlassBlock(Material* material);
     virtual ~StainedGlassBlock();
 

@@ -1,4 +1,5 @@
 #include "game/world/block/FlowerPotBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -69,7 +70,7 @@ CompoundTag* FlowerPotBlockEntity::save(CompoundTag* tag)
 void FlowerPotBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    if (tag->contains(L"Item", 8))
+    if (tag->contains(L"Item", Tag::TAG_STRING))
     {
         mPlantItem = Item::byString(tag->getString(L"Item"));
     }
@@ -106,5 +107,5 @@ boost::shared_ptr<BlockEntity> FlowerPotBlockEntity::clone()
 
 unsigned long long FlowerPotBlockEntity::GetType()
 {
-    return 0x000000000100020DULL;
+    return BlockEntityType::FLOWER_POT;
 }

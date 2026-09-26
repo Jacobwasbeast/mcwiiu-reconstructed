@@ -37,7 +37,7 @@ public:
     bool mActive;
     bool mHunting;
     int mCheckTime;
-    long long mNextTargetCheck;
+    long long mNextAmbientSoundActivation;
     int mTickCount;
     float mAnimationValue;
     float mActiveRotation;

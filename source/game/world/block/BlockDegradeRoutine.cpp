@@ -1,4 +1,5 @@
 #include "game/world/block/BlockDegradeRoutine.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -112,7 +113,7 @@ void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
     {
         BlockPos& pos = mBlocks.data[i];
         mLevel->destroyBlockProgress(-1 - (int)i, pos, -1);
-        mLevel->setBlockAndData(pos.x, pos.y, pos.z, 0, 0, 2);
+        mLevel->setBlockAndData(pos.x, pos.y, pos.z, BlockId::AIR, 0, Block::UPDATE_CLIENTS);
     }
 
     mProgress = 1;

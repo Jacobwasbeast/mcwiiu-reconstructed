@@ -20,6 +20,8 @@ class Player;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class TurtleEggBlock : public Block
 {
 public:
@@ -27,9 +29,9 @@ public:
     virtual ~TurtleEggBlock();
 
     bool shouldUpdateHatchLevel(Level* level);
-    void _decreaseEggs(Level* level, const BlockPos& pos, int eggs, bool playSound, bool hatch) const;
+    void _decreaseEggs(Level* level, const BlockPos& pos, int eggCount, bool crack, bool jump) const;
     void _destroyEgg(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity,
-                     int chance, bool playSound, bool hatch) const;
+                     int chance, bool crack, bool jump) const;
     virtual void stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity);
     virtual void fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity,
                         float fallDistance);
@@ -65,6 +67,9 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual bool isSilkTouchable();
+
+    static AbstractProperty<int>* EGG_COUNT;
+    static AbstractProperty<int>* HATCH_LEVEL;
 };
 
 #endif

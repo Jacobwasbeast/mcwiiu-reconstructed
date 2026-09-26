@@ -1,7 +1,9 @@
 #ifndef GAME_WORLD_BLOCK_WOODSLABBLOCK_HPP
 #define GAME_WORLD_BLOCK_WOODSLABBLOCK_HPP
 
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
 
 class BlockState;
 class BlockStateDefinition;
@@ -34,6 +36,8 @@ public:
     virtual ~WoodSlabBlock();
     virtual void DerivedInit();
     static void blockStaticCtor();
+
+    static EnumProperty<PlanksBlock::Variant*>* VARIANT;
 };
 
 #endif

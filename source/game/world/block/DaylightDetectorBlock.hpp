@@ -29,14 +29,14 @@ public:
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                           const Direction* direction);
-    void updateSignalStrength(Level* level, const BlockPos& pos);
+    virtual void updateSignalStrength(Level* level, const BlockPos& pos);
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
                                                              const BlockState* state);
-    bool isInverted();
+    virtual bool isInverted();
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual EBlockRenderShape getRenderShape(const BlockState* state);

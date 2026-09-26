@@ -1,4 +1,5 @@
 #include "game/world/block/Predicates.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/world/block/TallGrassBlock.hpp"
 
 #include <typeinfo>
@@ -29,6 +30,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 AbstractProperty<TallGrassBlock::Variant*>* TallGrassBlock::VARIANT = NULL;
 TallGrassBlock::Variant* TallGrassBlock::VARIANTS[3] = { NULL, NULL, NULL };
@@ -124,7 +126,7 @@ void TallGrassBlock::performBonemeal(Level* level, Random*, const BlockPos& pos,
     }
     if (level->isEmptyBlock(pos.above()))
     {
-        DoublePlantBlock* doublePlant = static_cast<DoublePlantBlock*>(Block::byId(175));
+        DoublePlantBlock* doublePlant = static_cast<DoublePlantBlock*>(Blocks::double_plant);
         doublePlant->placeAt(level, pos, variant, 2);
     }
 }
@@ -136,7 +138,7 @@ const AABB* TallGrassBlock::getShape(const BlockState* state, LevelSource* level
 
 bool TallGrassBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return Bush::canSurvive(level, pos, state);
+    return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
 bool TallGrassBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
@@ -174,7 +176,7 @@ int TallGrassBlock::getColor(LevelSource* levelSource, const BlockPos& pos, cons
 
 Item* TallGrassBlock::getResource(const BlockState*, Random* random, int)
 {
-    return random->nextInt(8) == 0 ? Items::wheatSeeds : NULL;
+    return random->nextInt(8) == 0 ? Items::wheatSeeds : Items::air;
 }
 
 int TallGrassBlock::getResourceCountForLootBonus(int lootBonus, Random* random)
@@ -216,11 +218,11 @@ int TallGrassBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int TallGrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
         && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
     {
-        return 0x9F5FDC40u;
+        return IDS_TOOLTIPS_GROW;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

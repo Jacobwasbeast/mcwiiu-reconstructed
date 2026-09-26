@@ -1,4 +1,7 @@
 #include "game/world/block/SnowLayerBlock.hpp"
+#include "game/core/Direction.hpp"
+
+#include <algorithm>
 
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -65,8 +68,12 @@ bool SnowLayerBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     const BlockState* below = level->getBlockState(pos.below());
     Block* block = below->getBlock();
-    if (block->isLiquidBlock() || block->isSolidBlockingCube(below)) return false;
-    return block != this || below->getValue(LAYERS) < 8;
+    if (block == Blocks::ice || block == Blocks::barrier) return false;
+    if (below->getBlockFaceShape(level, pos.below(), Direction::UP) == BLOCK_FACE_SOLID
+        || below->getMaterial() == Material::LEAVES) {
+        return true;
+    }
+    return block == this && below->getValue(LAYERS) == 8;
 }
 
 void SnowLayerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -112,20 +119,39 @@ int SnowLayerBlock::melt(Level* level, const BlockPos& pos, int amount)
         level->removeBlock(pos);
         return 1;
     }
-    level->setBlock(pos, getBlockState(layers - amount), 3, false);
+    level->setBlock(pos, getBlockState(layers - amount), Block::UPDATE_ALL, false);
     return 0;
 }
 
 void SnowLayerBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (level->getBlockState(pos.above())->getBlock()->isLiquidBlock()) return;
+    Block* above = level->getBlock(pos.above());
+    if (above == Blocks::snow_layer || above == Blocks::snow)
+        return;
+
     int amount = 0;
-    if (!level->mIsClientSide && level->getGameRules()->getBoolean(18) && random->nextInt(16) == 0
-        && !level->isSnowingAt(pos) && level->getBrightness(pos) > 11)
-        amount = 1;
-    int lightAmount = level->getBrightness(pos, 0) - 11;
-    if (lightAmount > amount) amount = lightAmount > 8 ? 8 : lightAmount;
-    if (melt(level, pos, amount) == 0) FallingBlock::tick(level, pos, state, random);
+    if (level->getGameRules()->getBoolean(GameRules::RULE_WEATHER_CYCLE) && random->nextInt(16) == 0)
+    {
+        Biome* biome = level->getBiome(pos);
+        if (!level->isSnowingAt(pos) && (level->getBrightness(pos) > 11.0f || biome->getTemperature(pos) > 0.15f))
+        {
+            int minLayers = biome->getMinSnowLayers();
+            if (minLayers < 1 || level->calcSnowBlockDepth(pos, minLayers + 1) > minLayers)
+                amount = 1;
+        }
+    }
+
+    int blockLight = level->getBrightness(LightLayer::BLOCK, pos);
+    if (blockLight > 11)
+        amount = std::max(amount, std::min(blockLight - 11, 8));
+
+    if (melt(level, pos, amount) != 0)
+        return;
+
+    Block* below = level->getBlock(pos.below());
+    if (below != Blocks::air && below->defaultBlockState()->getMaterial() != Material::WATER)
+        return;
+    FallingBlock::tick(level, pos, state, random);
 }
 
 bool SnowLayerBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)

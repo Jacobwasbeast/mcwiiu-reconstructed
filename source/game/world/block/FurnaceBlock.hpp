@@ -24,9 +24,13 @@ class LivingEntity;
 class Player;
 template <class T> class not_null_ptr;
 
+class DirectionProperty;
+
 class FurnaceBlock : public BaseEntityBlock
 {
 public:
+    static DirectionProperty* FACING;
+
     FurnaceBlock(bool lit);
     virtual ~FurnaceBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);

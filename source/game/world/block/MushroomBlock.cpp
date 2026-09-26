@@ -1,4 +1,6 @@
 #include "game/world/block/MushroomBlock.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/item/Item.hpp"
@@ -42,7 +44,7 @@ bool MushroomBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Bl
 
 bool MushroomBlock::growMushroom(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    level->setBlock(pos, state, 3, false);
+    level->removeBlock(pos);
     HugeMushroomFeature* feature = NULL;
     if (this == Blocks::brown_mushroom)
         feature = new HugeMushroomFeature(Blocks::brown_mushroom_block);
@@ -55,7 +57,7 @@ bool MushroomBlock::growMushroom(Level* level, const BlockPos& pos, const BlockS
         return true;
     }
 
-    level->setBlock(pos, state, 3, false);
+    level->setBlock(pos, state, Block::UPDATE_ALL, false);
     delete feature;
     return false;
 }
@@ -107,7 +109,7 @@ void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
         {
             currentPos = target;
             if (attempt == 4)
-                level->setBlock(currentPos, defaultBlockState(), 2, false);
+                level->setBlock(currentPos, defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
     }
 }
@@ -142,10 +144,10 @@ bool MushroomBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSta
 
 unsigned int MushroomBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance->getItem() == Items::dye
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
         && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
-        return 0x9f5fdc40u;
+        return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }
 

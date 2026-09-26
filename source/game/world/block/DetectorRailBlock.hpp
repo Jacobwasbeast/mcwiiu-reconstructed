@@ -7,9 +7,13 @@
 
 #include "game/world/block/BaseRailBlock.hpp"
 
+template <typename T>
+class EnumProperty;
+
 class AABB;
 class BlockPos;
 class BlockState;
+class BooleanProperty;
 class BlockStateDefinition;
 class Direction;
 class Entity;
@@ -47,7 +51,7 @@ public:
     virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                                 const Direction* direction);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual const Property* getShapeProperty();
+    virtual const AbstractProperty<BaseRailBlock::RailShape*>* getShapeProperty();
     virtual bool hasAnalogOutputSignal(const BlockState* state);
     virtual int getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);
@@ -57,6 +61,9 @@ public:
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
+
+    static EnumProperty<BaseRailBlock::RailShape*>* SHAPE;
+    static BooleanProperty* POWERED;
 
 private:
     TextureAtlasSprite* mIconOff;

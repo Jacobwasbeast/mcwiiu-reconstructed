@@ -1,4 +1,5 @@
 #include "game/world/block/CoralBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <string>
@@ -18,39 +19,23 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<int>* CORAL_TYPE = NULL;
-static AbstractProperty<bool>* CORAL_DEAD = NULL;
-AbstractProperty<int>* CoralBlock_PROPERTY_1 = NULL;
-AbstractProperty<bool>* CoralBlock_PROPERTY_2 = NULL;
+AbstractProperty<int>* CoralBlock::VARIANT =
+    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 5));
+AbstractProperty<bool>* CoralBlock::DEAD =
+    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"dead_coral"));
 
-namespace
-{
-    std::wstring gCoralBlockIconNames[10] =
-    {
-        L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple",
-        L"dead_coral_red", L"dead_coral_orange", L"dead_coral_yellow", L"dead_coral_blue", L"dead_coral_purple"
-    };
+static std::wstring ICON_NAMES[10] = {
+    L"coral_blue",      L"coral_pink",      L"coral_purple",      L"coral_red",      L"coral_yellow",
+    L"coral_blue_dead", L"coral_pink_dead", L"coral_purple_dead", L"coral_red_dead", L"coral_yellow_dead"
+};
 
-    void destroyCoralBlockIconNames(std::wstring* names, int count)
-    {
-        for (int i = 0; i < count; ++i)
-            names[i].~basic_string();
-    }
-}
-
-void __T13()
-{
-    destroyCoralBlockIconNames(gCoralBlockIconNames, 10);
-}
-
-static const unsigned int CORAL_DESCRIPTION_IDS[8] =
-{
-    0x3513E921U, 0xF7EF6A83U, 0x259DE196U, 0x919D90B9U,
-    0x323B09A8U, 0xE8C04B12U, 0xCDCA46E0U, 0x30F2646DU
+static const unsigned int DESCRIPTION_IDS[9] = {
+    0x3513E921U, 0xF7EF6A83U, 0x259DE196U, 0x919D90B9U, 0x323B09A8U,
+    0xE8C04B12U, 0xCDCA46E0U, 0x30F2646DU, 0xEE954CBAU
 };
 
 CoralBlock::CoralBlock()
-    : Block(Material::CORAL)
+    : Block(Material::STONE)
 {
     DerivedInit();
     for (int i = 0; i < 10; ++i)
@@ -58,9 +43,9 @@ CoralBlock::CoralBlock()
         mIcons[i] = NULL;
     }
 
-    TypedBoxed<int> type(0);
+    TypedBoxed<int> variant(0);
     TypedBoxed<bool> dead(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(CORAL_TYPE, &type)->setBoxedValue(CORAL_DEAD, &dead));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variant)->setBoxedValue(DEAD, &dead));
     setTicking(true);
 }
 
@@ -75,55 +60,53 @@ Item* CoralBlock::getResource(const BlockState*, Random*, int)
 
 not_null_ptr<ItemInstance> CoralBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1,
-                                                       convertBlockStateToLegacyData(state)));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, convertBlockStateToLegacyData(state)));
 }
 
-void CoralBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block*, const BlockPos&)
+void CoralBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!level->mIsClientSide)
     {
-        level->levelEvent(getTickDelay(level), pos, 0);
+        level->addToTickNextTick(pos, this, getTickDelay(level));
     }
 }
 
 void CoralBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
     if (!level->mIsClientSide && !level->isTouchingMaterial(pos, Material::WATER)
-        && level->isTouchingMaterial(pos, Material::CORAL))
+        && level->isTouchingMaterial(pos, Material::AIR))
     {
         TypedBoxed<bool> dead(true);
-        level->setBlock(pos, state->setBoxedValue(CORAL_DEAD, &dead), 3, false);
+        level->setBlock(pos, state->setBoxedValue(DEAD, &dead), Block::UPDATE_ALL, false);
     }
 }
 
 TextureAtlasSprite* CoralBlock::getTexture(const Direction*, const BlockState* state)
 {
-    int type = state->getValue(CORAL_TYPE);
-    if (type > 4)
+    int variant = state->getValue(VARIANT);
+    if (variant > 4)
     {
-        type = 4;
+        variant = 4;
     }
-    if (state->getValue(CORAL_DEAD))
+    if (state->getValue(DEAD))
     {
-        type += 5;
+        variant += 5;
     }
-    return mIcons[type];
+    return mIcons[variant];
 }
 
 void CoralBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 10; ++i)
     {
-        mIcons[i] = iconRegister->registerIcon(gCoralBlockIconNames[i]);
+        mIcons[i] = iconRegister->registerIcon(ICON_NAMES[i]);
     }
 }
 
 int CoralBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(CORAL_TYPE);
-    if (state->getValue(CORAL_DEAD))
+    int data = state->getValue(VARIANT);
+    if (state->getValue(DEAD))
     {
         data |= 8;
     }
@@ -132,21 +115,19 @@ int CoralBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CoralBlock::getBlockState(int data)
 {
-    TypedBoxed<int> type(data & 7);
-    const BlockState* state = defaultBlockState()->setBoxedValue(CORAL_TYPE, &type);
-    TypedBoxed<bool> dead((data >> 3) & 1);
-    return state->setBoxedValue(CORAL_DEAD, &dead);
+    TypedBoxed<int> variant(data & 7);
+    TypedBoxed<bool> dead((data >> 3 & 1) != 0);
+    return defaultBlockState()->setBoxedValue(VARIANT, &variant)->setBoxedValue(DEAD, &dead);
 }
 
-const BlockState* CoralBlock::setPropertyValueFromString(const BlockState* state,
-                                                         const Property* property,
+const BlockState* CoralBlock::setPropertyValueFromString(const BlockState* state, const Property* property,
                                                          const std::wstring& value)
 {
-    if (property == CORAL_DEAD && value.compare(L"dead_coral") == 0)
+    if (property == VARIANT && value.compare(L"dead_coral") == 0)
     {
         TypedBoxed<bool> dead(true);
-        TypedBoxed<int> type(Math::randomInt(5));
-        return state->setBoxedValue(CORAL_DEAD, &dead)->setBoxedValue(CORAL_TYPE, &type);
+        TypedBoxed<int> variant(Math::randomInt(5));
+        return state->setBoxedValue(DEAD, &dead)->setBoxedValue(VARIANT, &variant);
     }
     return Block::setPropertyValueFromString(state, property, value);
 }
@@ -155,22 +136,22 @@ int CoralBlock::getDescriptionId(int auxValue)
 {
     if (auxValue > 0 && auxValue < 5)
     {
-        return CORAL_DESCRIPTION_IDS[auxValue];
+        return DESCRIPTION_IDS[auxValue - 1];
     }
     if (auxValue > 7 && auxValue < 13)
     {
-        return CORAL_DESCRIPTION_IDS[auxValue - 5];
+        return DESCRIPTION_IDS[auxValue - 4];
     }
-    return -1854932677;
+    return 0x916FF93B;
 }
 
 int CoralBlock::getUseDescriptionId(int auxValue)
 {
     if (auxValue > 7 && auxValue < 13)
     {
-        return 0x7BF6B03F;
+        return IDS_DESC_TILE_CORAL_BLOCK_DEAD;
     }
-    return 0x7A0CC2D4;
+    return IDS_DESC_TILE_CORAL_BLOCK;
 }
 
 int CoralBlock::getTickDelay(Level* level)
@@ -178,34 +159,21 @@ int CoralBlock::getTickDelay(Level* level)
     return level->mRandom->nextInt(40, 200);
 }
 
-void CoralBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
+void CoralBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (!level->isTouchingMaterial(pos, Material::WATER)
-        && level->isTouchingMaterial(pos, Material::CORAL))
+    if (!level->isTouchingMaterial(pos, Material::WATER) && level->isTouchingMaterial(pos, Material::AIR))
     {
-        level->levelEvent(0x2D, pos, 0);
+        level->addToTickNextTick(pos, this, 45);
     }
 }
 
 BlockStateDefinition* CoralBlock::createBlockStateDefinition()
 {
-    if (CORAL_TYPE == NULL)
-    {
-        CORAL_TYPE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"type", 0, 4));
-        CORAL_DEAD = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"dead"));
-        CoralBlock_PROPERTY_1 = CORAL_TYPE;
-        CoralBlock_PROPERTY_2 = CORAL_DEAD;
-    }
-    const Property* properties[2] = { CORAL_TYPE, CORAL_DEAD };
+    static const Property* properties[] = { DEAD, VARIANT };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 int CoralBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(CORAL_TYPE) | 8;
-}
-
-bool CoralBlock::isValidAuxValue(int auxValue)
-{
-    return auxValue >= 0 && auxValue < 13;
+    return state->getValue(VARIANT) | 8;
 }

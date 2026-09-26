@@ -1,4 +1,5 @@
 #include "game/world/block/DriedKelpBlock.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/core/Direction.hpp"
@@ -23,7 +24,7 @@ DriedKelpBlock::~DriedKelpBlock()
 void DriedKelpBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!level->mIsClientSide
-        && level->getBlockId(pos.x, pos.y + 1, pos.z) == 51
+        && level->getBlockId(pos.x, pos.y + 1, pos.z) == BlockId::FIRE
         && level->isUnderWater(pos, 269, 0))
     {
         level->removeBlock(pos.above());

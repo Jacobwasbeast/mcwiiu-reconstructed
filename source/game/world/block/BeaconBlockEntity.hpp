@@ -78,7 +78,7 @@ public:
     virtual InteractionObject::NameData GetNetworkNameData();
 
     virtual void setChanged();
-    int getValidEffectById(int id);
+    MobEffect* getValidEffectById(int id);
     void setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal);
     int getBeamDirection();
     void updateShapeForGlide();
@@ -115,16 +115,17 @@ private:
     not_null_ptr<ItemInstance> mItem;
     short mLastBeamBlockCount;
     short mBeamColorCounts[16];
+    short mBeamRebuildTicks;
     boost::shared_ptr<CensoredString> mName;
     MobEffect* mPrimaryPower;
     MobEffect* mSecondaryPower;
     int mLevels;
     long long mNextClientSideUpdate;
-    int mLastCheckY;
     float mClientSideScale;
     bool mActive;
     unsigned int mBeamDirection;
     int mBeamLength;
+    int mTickCount;
 };
 
 #endif

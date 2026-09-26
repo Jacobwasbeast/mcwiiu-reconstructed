@@ -138,8 +138,8 @@ TextureAtlasSprite* MyceliumBlock::getTexture(LevelSource* levelSource, const Bl
     {
         return Blocks::dirt->getTexture(direction);
     }
-    const Block* above = levelSource->getBlockState(pos.above())->getBlock();
-    if (above != Blocks::snow && above != Blocks::snow_layer)
+    Material* aboveMaterial = levelSource->getBlockState(pos.above())->getBlock()->mMaterial;
+    if (aboveMaterial != Material::TOP_SNOW && aboveMaterial != Material::SNOW)
     {
         return mIcon;
     }

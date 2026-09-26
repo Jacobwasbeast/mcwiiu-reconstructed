@@ -1,4 +1,6 @@
 #include "game/world/block/DropperBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -19,13 +21,13 @@ BlockEntity* DropperBlockEntity::create()
 
 int DropperBlockEntity::getTypeId(bool)
 {
-    return 10;
+    return ClientboundContainerOpenPacket::DROPPER;
 }
 
 void DropperBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new ItemListDataWalker(0x3c00201ULL, L"Items"));
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::DROPPER, L"Items"));
 }
 
 boost::shared_ptr<BlockEntity> DropperBlockEntity::clone()
@@ -38,5 +40,5 @@ boost::shared_ptr<BlockEntity> DropperBlockEntity::clone()
 
 unsigned long long DropperBlockEntity::GetType()
 {
-    return 0x0000000003C00201ULL;
+    return BlockEntityType::DROPPER;
 }

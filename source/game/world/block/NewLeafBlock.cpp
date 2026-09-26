@@ -20,8 +20,6 @@
 #include "game/util/Random.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* NewLeafBlock::VARIANT = NULL;
-AbstractProperty<bool>* NewLeafBlock::DECAYABLE = NULL;
-AbstractProperty<bool>* NewLeafBlock::CHECK_DECAY = NULL;
 
 bool leaf_variant_predicate(PlanksBlock::Variant* value);
 
@@ -42,8 +40,6 @@ void NewLeafBlock::blockStaticCtor()
     VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
         L"variant", typeid(PlanksBlock::Variant*), values,
         new Predicates<PlanksBlock::Variant*>::FunctionPredicate(leaf_variant_predicate));
-    DECAYABLE = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"decayable"));
-    CHECK_DECAY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"check_decay"));
 }
 
 NewLeafBlock::NewLeafBlock()

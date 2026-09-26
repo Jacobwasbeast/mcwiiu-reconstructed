@@ -1,4 +1,5 @@
 #include "game/world/block/SkullBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
@@ -144,5 +145,5 @@ boost::shared_ptr<BlockEntity> SkullBlockEntity::clone()
 
 unsigned long long SkullBlockEntity::GetType()
 {
-    return 0x01200207ULL;
+    return BlockEntityType::SKULL;
 }

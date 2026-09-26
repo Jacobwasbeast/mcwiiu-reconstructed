@@ -3,6 +3,9 @@
 
 #include "game/world/block/BaseRailBlock.hpp"
 
+template <typename T>
+class EnumProperty;
+
 class BlockState;
 class BlockStateDefinition;
 class BlockTooltipDataHolder;
@@ -21,7 +24,7 @@ public:
     virtual ~RailBlock();
     static void blockStaticCtor();
     virtual void updateState(const BlockState* state, Level* level, const BlockPos& pos, Block* block);
-    virtual const Property* getShapeProperty();
+    virtual const AbstractProperty<BaseRailBlock::RailShape*>* getShapeProperty();
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
@@ -30,6 +33,8 @@ public:
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
+
+    static EnumProperty<BaseRailBlock::RailShape*>* SHAPE;
 
 private:
     TextureAtlasSprite* mTurnedTexture;

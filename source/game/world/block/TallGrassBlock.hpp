@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Bush.hpp"
+#include "game/world/block/BonemealableBlock.hpp"
 #include "game/item/not_null_ptr.hpp"
 
 class BlockEntity;
@@ -25,7 +26,7 @@ class TextureAtlasSprite;
 template <class T>
 class AbstractProperty;
 
-class TallGrassBlock : public Bush
+class TallGrassBlock : public Bush, public BonemealableBlock
 {
 public:
     class Variant

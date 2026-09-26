@@ -4,9 +4,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-Block* gDoubleSlabPurpur = NULL;
-
-Block* Blocks::AIR = NULL;
+Block* Blocks::air = NULL;
 Block* Blocks::stone = NULL;
 Block* Blocks::grass = NULL;
 Block* Blocks::dirt = NULL;
@@ -14,8 +12,8 @@ Block* Blocks::cobblestone = NULL;
 Block* Blocks::planks = NULL;
 Block* Blocks::sapling = NULL;
 Block* Blocks::bedrock = NULL;
-Block* Blocks::FLOWING_WATER = NULL;
-Block* Blocks::WATER = NULL;
+Block* Blocks::flowing_water = NULL;
+Block* Blocks::water = NULL;
 Block* Blocks::flowing_lava = NULL;
 Block* Blocks::lava = NULL;
 Block* Blocks::sand = NULL;
@@ -59,7 +57,7 @@ Block* Blocks::bookshelf = NULL;
 Block* Blocks::mossy_cobblestone = NULL;
 Block* Blocks::obsidian = NULL;
 Block* Blocks::torch = NULL;
-Block* Blocks::FIRE = NULL;
+Block* Blocks::fire = NULL;
 Block* Blocks::mob_spawner = NULL;
 Block* Blocks::oak_stairs = NULL;
 Block* Blocks::chest = NULL;
@@ -184,7 +182,7 @@ Block* Blocks::quartz_stairs = NULL;
 Block* Blocks::activator_rail = NULL;
 Block* Blocks::dropper = NULL;
 Block* Blocks::stained_hardened_clay = NULL;
-Block* Blocks::BARRIER = NULL;
+Block* Blocks::barrier = NULL;
 Block* Blocks::iron_trapdoor = NULL;
 Block* Blocks::hay_block = NULL;
 Block* Blocks::carpet = NULL;
@@ -260,7 +258,7 @@ Block* Blocks::red_glazed_terracotta = NULL;
 Block* Blocks::black_glazed_terracotta = NULL;
 Block* Blocks::concrete = NULL;
 Block* Blocks::concrete_powder = NULL;
-Block* Blocks::STRUCTURE_BLOCK = NULL;
+Block* Blocks::structure_block = NULL;
 Block* Blocks::conduit = NULL;
 Block* Blocks::kelp = NULL;
 Block* Blocks::coral_block = NULL;
@@ -316,7 +314,7 @@ Block* Blocks::get(const std::wstring& name)
 
 void Blocks::staticInit()
 {
-    AIR = get(L"air");
+    air = get(L"air");
     stone = get(L"stone");
     grass = get(L"grass");
     dirt = get(L"dirt");
@@ -324,8 +322,8 @@ void Blocks::staticInit()
     planks = get(L"planks");
     sapling = get(L"sapling");
     bedrock = get(L"bedrock");
-    FLOWING_WATER = get(L"flowing_water");
-    WATER = get(L"water");
+    flowing_water = get(L"flowing_water");
+    water = get(L"water");
     flowing_lava = get(L"flowing_lava");
     lava = get(L"lava");
     sand = get(L"sand");
@@ -369,7 +367,7 @@ void Blocks::staticInit()
     mossy_cobblestone = get(L"mossy_cobblestone");
     obsidian = get(L"obsidian");
     torch = get(L"torch");
-    FIRE = get(L"fire");
+    fire = get(L"fire");
     mob_spawner = get(L"mob_spawner");
     oak_stairs = get(L"oak_stairs");
     chest = get(L"chest");
@@ -494,7 +492,7 @@ void Blocks::staticInit()
     activator_rail = get(L"activator_rail");
     dropper = get(L"dropper");
     stained_hardened_clay = get(L"stained_hardened_clay");
-    BARRIER = get(L"barrier");
+    barrier = get(L"barrier");
     iron_trapdoor = get(L"iron_trapdoor");
     hay_block = get(L"hay_block");
     carpet = get(L"carpet");
@@ -522,7 +520,6 @@ void Blocks::staticInit()
     purpur_pillar = get(L"purpur_pillar");
     purpur_stairs = get(L"purpur_stairs");
     purpur_double_slab = get(L"purpur_double_slab");
-    gDoubleSlabPurpur = purpur_double_slab;
     purpur_slab = get(L"purpur_slab");
     end_bricks = get(L"end_bricks");
     beetroots = get(L"beetroots");
@@ -571,7 +568,7 @@ void Blocks::staticInit()
     black_glazed_terracotta = get(L"black_glazed_terracotta");
     concrete = get(L"concrete");
     concrete_powder = get(L"concrete_powder");
-    STRUCTURE_BLOCK = get(L"structure_block");
+    structure_block = get(L"structure_block");
     conduit = get(L"conduit");
     kelp = get(L"kelp");
     coral_block = get(L"coral_block");

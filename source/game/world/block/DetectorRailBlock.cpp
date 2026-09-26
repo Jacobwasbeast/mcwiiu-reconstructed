@@ -20,16 +20,15 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<BaseRailBlock::RailShape*>* gDetectorRailShapeProperty = NULL;
-static const AbstractProperty<bool>* gDetectorRailPoweredProperty =
-    static_cast<const AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
+EnumProperty<BaseRailBlock::RailShape*>* DetectorRailBlock::SHAPE = NULL;
+BooleanProperty* DetectorRailBlock::POWERED = static_cast<BooleanProperty*>(BooleanProperty::create(L"powered"));
 
 void DetectorRailBlock::blockStaticCtor()
 {
     boost::unordered_set<BaseRailBlock::RailShape*> values;
     for (int i = 0; i < 10; ++i)
         values.insert(BaseRailBlock::RailShape::byData(i));
-    gDetectorRailShapeProperty = EnumProperty<BaseRailBlock::RailShape*>::create(
+    DetectorRailBlock::SHAPE = EnumProperty<BaseRailBlock::RailShape*>::create(
         L"shape", typeid(BaseRailBlock::RailShape*), values,
         new Predicates<BaseRailBlock::RailShape*>::FunctionPredicate(railpredicate));
 }
@@ -40,9 +39,9 @@ DetectorRailBlock::DetectorRailBlock()
     DerivedInit();
     setTicking(true);
     TypedBoxed<bool> poweredValue(false);
-    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(BaseRailBlock::RailShape::byData(0));
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(gDetectorRailPoweredProperty, &poweredValue);
-    registerDefaultState(state->setBoxedValue(gDetectorRailShapeProperty, &shapeValue));
+    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(BaseRailBlock::RailShape::NORTH_SOUTH);
+    const BlockState* state = mStateDefinition->any()->setBoxedValue(DetectorRailBlock::POWERED, &poweredValue);
+    registerDefaultState(state->setBoxedValue(DetectorRailBlock::SHAPE, &shapeValue));
 }
 
 DetectorRailBlock::~DetectorRailBlock()
@@ -56,7 +55,7 @@ bool DetectorRailBlock::isSignalSource(const BlockState*) { return true; }
 void DetectorRailBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                      const boost::shared_ptr<Entity>&)
 {
-    if (!level->mIsClientSide && !state->getValue(gDetectorRailPoweredProperty))
+    if (!level->mIsClientSide && !state->getValue(DetectorRailBlock::POWERED))
         checkPressed(level, pos, state);
 }
 
@@ -66,13 +65,13 @@ void DetectorRailBlock::randomTick(Level*, const BlockPos&, const BlockState*, R
 
 void DetectorRailBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (!level->mIsClientSide && state->getValue(gDetectorRailPoweredProperty))
+    if (!level->mIsClientSide && state->getValue(DetectorRailBlock::POWERED))
         checkPressed(level, pos, state);
 }
 
 int DetectorRailBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    return state->getValue(gDetectorRailPoweredProperty) ? 15 : 0;
+    return state->getValue(DetectorRailBlock::POWERED) ? 15 : 0;
 }
 
 AABB* DetectorRailBlock::getSearchBB(const BlockPos& pos)
@@ -93,14 +92,14 @@ std::vector<boost::shared_ptr<Entity> >* DetectorRailBlock::getInteractingMineca
 
 void DetectorRailBlock::checkPressed(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    bool powered = state->getValue(gDetectorRailPoweredProperty);
+    bool powered = state->getValue(DetectorRailBlock::POWERED);
     std::vector<boost::shared_ptr<Entity> >* minecarts =
         getInteractingMinecartOfType(level, pos, typeid(Minecart), NULL);
     bool occupied = !minecarts->empty();
     if (occupied && !powered)
     {
         TypedBoxed<bool> poweredValue(true);
-        level->setBlock(pos, state->setBoxedValue(gDetectorRailPoweredProperty, &poweredValue), 3, false);
+        level->setBlock(pos, state->setBoxedValue(DetectorRailBlock::POWERED, &poweredValue), Block::UPDATE_ALL, false);
         level->updateNeighborsAt(pos, this, false);
         level->updateNeighborsAt(pos.below(), this, false);
         level->setBlocksDirty(pos, pos);
@@ -108,7 +107,7 @@ void DetectorRailBlock::checkPressed(Level* level, const BlockPos& pos, const Bl
     if (!occupied && powered)
     {
         TypedBoxed<bool> poweredValue(false);
-        level->setBlock(pos, state->setBoxedValue(gDetectorRailPoweredProperty, &poweredValue), 3, false);
+        level->setBlock(pos, state->setBoxedValue(DetectorRailBlock::POWERED, &poweredValue), Block::UPDATE_ALL, false);
         level->updateNeighborsAt(pos, this, false);
         level->updateNeighborsAt(pos.below(), this, false);
         level->setBlocksDirty(pos, pos);
@@ -135,7 +134,7 @@ void DetectorRailBlock::updatePowerToConnected(Level* level, const BlockPos& pos
 int DetectorRailBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&,
                                        const Direction* direction)
 {
-    return state->getValue(gDetectorRailPoweredProperty) && direction == Direction::UP ? 15 : 0;
+    return state->getValue(DetectorRailBlock::POWERED) && direction == Direction::UP ? 15 : 0;
 }
 
 void DetectorRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -144,9 +143,9 @@ void DetectorRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockSt
     checkPressed(level, pos, state);
 }
 
-const Property* DetectorRailBlock::getShapeProperty()
+const AbstractProperty<BaseRailBlock::RailShape*>* DetectorRailBlock::getShapeProperty()
 {
-    return gDetectorRailShapeProperty;
+    return DetectorRailBlock::SHAPE;
 }
 
 bool DetectorRailBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
@@ -154,7 +153,7 @@ bool DetectorRailBlock::hasAnalogOutputSignal(const BlockState*) { return true; 
 int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos)
 {
     const BlockState* railState = level->getBlockState(pos);
-    if (!railState->getValue(gDetectorRailPoweredProperty))
+    if (!railState->getValue(DetectorRailBlock::POWERED))
         return 0;
     std::vector<boost::shared_ptr<Entity> >* commandCarts =
         getInteractingMinecartOfType(level, pos, typeid(MinecartCommandBlock), NULL);
@@ -167,83 +166,275 @@ int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* lev
         return successCount;
     }
     delete commandCarts;
-    return state->getValue(gDetectorRailPoweredProperty) ? 15 : 0;
+    return state->getValue(DetectorRailBlock::POWERED) ? 15 : 0;
 }
 
 const BlockState* DetectorRailBlock::getBlockState(int data)
 {
     TypedBoxed<BaseRailBlock::RailShape*> shapeValue(BaseRailBlock::RailShape::byData(data & 7));
     TypedBoxed<bool> poweredValue((data & 8) != 0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(gDetectorRailShapeProperty, &shapeValue);
-    return state->setBoxedValue(gDetectorRailPoweredProperty, &poweredValue);
+    const BlockState* state = defaultBlockState()->setBoxedValue(DetectorRailBlock::SHAPE, &shapeValue);
+    return state->setBoxedValue(DetectorRailBlock::POWERED, &poweredValue);
 }
 
 int DetectorRailBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(gDetectorRailShapeProperty)->getData();
-    if (state->getValue(gDetectorRailPoweredProperty))
+    int data = state->getValue(DetectorRailBlock::SHAPE)->getData();
+    if (state->getValue(DetectorRailBlock::POWERED))
         data |= 8;
     return data;
 }
 
 const BlockState* DetectorRailBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    static const int clockwise90[10] = { 1, 0, 5, 4, 2, 3, 7, 8, 9, 6 };
-    static const int clockwise180[10] = { 0, 1, 3, 2, 5, 4, 8, 9, 6, 7 };
-    static const int counterClockwise90[10] = { 1, 0, 4, 5, 3, 2, 9, 6, 7, 8 };
-    const int* mapping = NULL;
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90: mapping = clockwise90; break;
-    case Rotation::eTYPE_Clockwise180: mapping = clockwise180; break;
-    case Rotation::eTYPE_CounterClockwise90: mapping = counterClockwise90; break;
-    default: return state;
+    case Rotation::eTYPE_Clockwise180:
+        switch (state->getValue(DetectorRailBlock::SHAPE)->getData())
+        {
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        }
+    case Rotation::eTYPE_CounterClockwise90:
+        switch (state->getValue(DetectorRailBlock::SHAPE)->getData())
+        {
+        case 0:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::EAST_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 1:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        }
+    case Rotation::eTYPE_Clockwise90:
+        switch (state->getValue(DetectorRailBlock::SHAPE)->getData())
+        {
+        case 0:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::EAST_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 1:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        }
+    default:
+        break;
     }
-    int shape = state->getValue(gDetectorRailShapeProperty)->getData();
-    if (mapping[shape] == shape)
-        return state;
-    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(BaseRailBlock::RailShape::byData(mapping[shape]));
-    return state->setBoxedValue(gDetectorRailShapeProperty, &shapeValue);
+
+    return state;
 }
 
 const BlockState* DetectorRailBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    int shape = state->getValue(gDetectorRailShapeProperty)->getData();
-    int mirrored = -1;
     if (mirror->getType() == Mirror::eTYPE_LeftRight)
     {
-        static const int leftRight[6] = { 5, 4, 9, 8, 7, 6 };
-        if (shape >= 4)
-            mirrored = leftRight[shape - 4];
+        switch (state->getValue(DetectorRailBlock::SHAPE)->getData())
+        {
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        }
     }
     else if (mirror->getType() == Mirror::eTYPE_FrontBack)
     {
-        switch (shape)
+        switch (state->getValue(DetectorRailBlock::SHAPE)->getData())
         {
-        case 2: mirrored = 3; break;
-        case 3: mirrored = 2; break;
-        case 6: mirrored = 7; break;
-        case 7: mirrored = 6; break;
-        case 8: mirrored = 9; break;
-        case 9: mirrored = 8; break;
-        default: break;
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(DetectorRailBlock::SHAPE, &shape);
+        }
         }
     }
-    if (mirrored < 0)
-        return Block::mirror(state, mirror);
-    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(BaseRailBlock::RailShape::byData(mirrored));
-    return state->setBoxedValue(gDetectorRailShapeProperty, &shapeValue);
+
+    return Block::mirror(state, mirror);
 }
 
 BlockStateDefinition* DetectorRailBlock::createBlockStateDefinition()
 {
-    const Property* properties[2] = { gDetectorRailShapeProperty, gDetectorRailPoweredProperty };
+    const Property* properties[2] = { DetectorRailBlock::SHAPE, DetectorRailBlock::POWERED };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 TextureAtlasSprite* DetectorRailBlock::getTexture(const Direction*, const BlockState* state)
 {
-    return state->getValue(gDetectorRailPoweredProperty) ? mIconOn : mIconOff;
+    return state->getValue(DetectorRailBlock::POWERED) ? mIconOn : mIconOff;
 }
 
 void DetectorRailBlock::registerIcons(IconRegister* iconRegister)

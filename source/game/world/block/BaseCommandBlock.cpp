@@ -19,9 +19,9 @@ CompoundTag* BaseCommandBlock::save(CompoundTag* tag) {
 }
 void BaseCommandBlock::load(CompoundTag* tag) {
     mCommand = tag->getString(L"Command"); mSuccessCount = tag->getInt(L"SuccessCount");
-    if (tag->contains(L"CustomName", 8)) setName(tag->getString(L"CustomName"), true);
-    if (tag->contains(L"TrackOutput", 1)) mTrackOutput = tag->getBoolean(L"TrackOutput");
-    tag->contains(L"LastOutput", 8); mLastOutput = L"";
+    if (tag->contains(L"CustomName", Tag::TAG_STRING)) setName(tag->getString(L"CustomName"), true);
+    if (tag->contains(L"TrackOutput", Tag::TAG_BYTE)) mTrackOutput = tag->getBoolean(L"TrackOutput");
+    tag->contains(L"LastOutput", Tag::TAG_STRING); mLastOutput = L"";
 }
 bool BaseCommandBlock::hasPermission(EGameCommand) { return false; }
 void BaseCommandBlock::setCommand(const std::wstring& command) { mCommand = command; mSuccessCount = 0; }

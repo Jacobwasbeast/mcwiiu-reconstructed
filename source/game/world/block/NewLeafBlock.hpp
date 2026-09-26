@@ -18,8 +18,6 @@ class NewLeafBlock : public LeafBlock
 {
 public:
     static EnumProperty<PlanksBlock::Variant*>* VARIANT;
-    static AbstractProperty<bool>* DECAYABLE;
-    static AbstractProperty<bool>* CHECK_DECAY;
 
     NewLeafBlock();
     virtual ~NewLeafBlock();

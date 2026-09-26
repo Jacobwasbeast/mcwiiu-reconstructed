@@ -35,6 +35,8 @@ public:
 private:
     int mNextId;
     IdMapper<V> mIdMapper;
+
+public:
     boost::unordered_map<V, K, ValueHash, ValueEqual> mInverseRegistry;
 };
 

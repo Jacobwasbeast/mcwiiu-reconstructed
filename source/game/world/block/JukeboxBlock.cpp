@@ -1,4 +1,7 @@
 #include "game/world/block/JukeboxBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -42,7 +45,7 @@ boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int)
 void JukeboxBlock::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new ItemDataWalker(0x01000204ULL, L"RecordItem"));
+                     (DataWalker*)new ItemDataWalker(BlockEntityType::JUKEBOX, L"RecordItem"));
 }
 
 bool JukeboxBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player>)
@@ -57,14 +60,14 @@ void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockS
     if (entity.get() == NULL) return;
     not_null_ptr<ItemInstance> record = entity->getRecord();
     if (record->isEmpty()) return;
-    level->levelEvent(1010, pos, 0);
+    level->levelEvent(LevelEvent::SOUND_PLAY_RECORDING, pos, 0);
     Random* random = level->mRandom;
     boost::shared_ptr<ItemEntity> item(new ItemEntity(level, pos.x + random->nextFloat() * 0.7 + 0.15, pos.y + random->nextFloat() * 0.7 + 0.66, pos.z + random->nextFloat() * 0.7 + 0.15, record->copy()));
     item->setDefaultPickUpDelay(); level->addEntity(item);
 }
 bool JukeboxBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
-    if (!clientSide && TestUse(level, pos, state, player)) { dropRecording(level, pos, state); TypedBoxed<bool> value(false); level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), 2, false); return true; } return false;
+    if (!clientSide && TestUse(level, pos, state, player)) { dropRecording(level, pos, state); TypedBoxed<bool> value(false); level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), Block::UPDATE_CLIENTS, false); return true; } return false;
 }
 void JukeboxBlock::setRecord(Level* level, const BlockPos& pos, const BlockState* state,
                              not_null_ptr<ItemInstance> record)
@@ -79,9 +82,8 @@ void JukeboxBlock::setRecord(Level* level, const BlockPos& pos, const BlockState
     if (record->hasTag())
         stored->setTag(record->getTag()->copy());
     entity->setRecord(stored);
-    level->levelEvent(1010, pos, 1);
     TypedBoxed<bool> value(true);
-    level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), 2, false);
+    level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), Block::UPDATE_CLIENTS, false);
 }
 
 void JukeboxBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -133,12 +135,12 @@ unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tool
     {
         int id = Item::VALIDgetId(tooltipData.m_pItemInstance->getItem());
         if (id >= 2256 && id < 2268 && tooltipData.m_bCanPlace && tooltipData.m_bIsInside)
-            return 0x293a30d9;
+            return IDS_TOOLTIPS_PLAY;
     }
 
     if (tooltipData.m_pBlockState != NULL &&
         tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bIsInside)
-        return 0x3f9c7cf0;
+        return IDS_TOOLTIPS_EJECT;
 
     return Block::GetInteractTooltip(tooltipData);
 }
@@ -151,7 +153,7 @@ BlockEntity* JukeboxBlock::Entity::create() { return new Entity(); }
 void JukeboxBlock::Entity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    if (tag->contains(L"RecordItem", 10))
+    if (tag->contains(L"RecordItem", Tag::TAG_COMPOUND))
     {
         setRecord(not_null_ptr<ItemInstance>(
             new ItemInstance(tag->getCompound(L"RecordItem"))));
@@ -166,4 +168,4 @@ CompoundTag* JukeboxBlock::Entity::save(CompoundTag* tag) { BlockEntity::save(ta
 not_null_ptr<ItemInstance> JukeboxBlock::Entity::getRecord() { return mRecord; }
 void JukeboxBlock::Entity::setRecord(not_null_ptr<ItemInstance> record) { mRecord = record; setChanged(); }
 boost::shared_ptr<BlockEntity> JukeboxBlock::Entity::clone() { boost::shared_ptr<Entity> result(new Entity()); BlockEntity::clone(result); result->mRecord = mRecord; return result; }
-unsigned long long JukeboxBlock::Entity::GetType() { return 0x0000000001000204ULL; }
+unsigned long long JukeboxBlock::Entity::GetType() { return BlockEntityType::JUKEBOX; }

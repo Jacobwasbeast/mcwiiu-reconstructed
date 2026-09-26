@@ -1,4 +1,5 @@
 #include "game/world/block/ThinFenceBlock.hpp"
+#include "game/item/Items.hpp"
 
 #include "game/core/Boxed.hpp"
 #include "game/core/Direction.hpp"
@@ -43,7 +44,7 @@ static const AABB* getThinFenceShape(int index)
 }
 
 ThinFenceBlock::ThinFenceBlock(const std::wstring& name, const std::wstring& edgeTexture, Material* material, bool extraBlock)
-    : Block(material), mExtraBlock(extraBlock), mEdgeTexture(edgeTexture), mName(name), mEdgeTextureId(0)
+    : Block(material), mDropsOnBreak(extraBlock), mEdgeTexture(edgeTexture), mName(name), mEdgeTextureId(0)
 {
     DerivedInit();
     TypedBoxed<bool> north(false);
@@ -104,7 +105,7 @@ bool ThinFenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
         || block == Blocks::sticky_piston || block == Blocks::piston_head
         || block == Blocks::melon_block || block == Blocks::pumpkin
         || block == Blocks::carved_pumpkin || block == Blocks::lit_pumpkin
-        || block == Blocks::BARRIER || block == Blocks::turtle_egg;
+        || block == Blocks::barrier || block == Blocks::turtle_egg;
 }
 
 bool ThinFenceBlock::attachsTo(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
@@ -128,7 +129,7 @@ const BlockState* ThinFenceBlock::fillVirtualBlockStateProperties(const BlockSta
 
 Item* ThinFenceBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
-    return mExtraBlock ? Block::getResource(state, random, lootBonus) : NULL;
+    return mDropsOnBreak ? Block::getResource(state, random, lootBonus) : Items::air;
 }
 
 bool ThinFenceBlock::isSolidRender(const BlockState*) const { return false; }
@@ -147,21 +148,41 @@ int ThinFenceBlock::convertBlockStateToLegacyData(const BlockState*) { return 0;
 
 const BlockState* ThinFenceBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<bool> north(state->getValue(THIN_FENCE_NORTH));
-    TypedBoxed<bool> east(state->getValue(THIN_FENCE_EAST));
-    TypedBoxed<bool> south(state->getValue(THIN_FENCE_SOUTH));
-    TypedBoxed<bool> west(state->getValue(THIN_FENCE_WEST));
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90:
-        return state->setBoxedValue(THIN_FENCE_EAST, &west)->setBoxedValue(THIN_FENCE_SOUTH, &north)
-            ->setBoxedValue(THIN_FENCE_NORTH, &east)->setBoxedValue(THIN_FENCE_WEST, &south);
     case Rotation::eTYPE_Clockwise180:
-        return state->setBoxedValue(THIN_FENCE_NORTH, &south)->setBoxedValue(THIN_FENCE_EAST, &west)
-            ->setBoxedValue(THIN_FENCE_SOUTH, &north)->setBoxedValue(THIN_FENCE_WEST, &east);
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_SOUTH));
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_NORTH));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_EAST));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
+            ->setBoxedValue(THIN_FENCE_EAST, &east)
+            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
+            ->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
     case Rotation::eTYPE_CounterClockwise90:
-        return state->setBoxedValue(THIN_FENCE_WEST, &east)->setBoxedValue(THIN_FENCE_NORTH, &south)
-            ->setBoxedValue(THIN_FENCE_EAST, &west)->setBoxedValue(THIN_FENCE_SOUTH, &north);
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_EAST));
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_SOUTH));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_NORTH));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
+            ->setBoxedValue(THIN_FENCE_EAST, &east)
+            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
+            ->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
+    case Rotation::eTYPE_Clockwise90:
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_NORTH));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_EAST));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_SOUTH));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
+            ->setBoxedValue(THIN_FENCE_EAST, &east)
+            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
+            ->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
     default:
         return state;
     }
@@ -169,15 +190,23 @@ const BlockState* ThinFenceBlock::rotate(const BlockState* state, Rotation* rota
 
 const BlockState* ThinFenceBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    TypedBoxed<bool> north(state->getValue(THIN_FENCE_NORTH));
-    TypedBoxed<bool> east(state->getValue(THIN_FENCE_EAST));
-    TypedBoxed<bool> south(state->getValue(THIN_FENCE_SOUTH));
-    TypedBoxed<bool> west(state->getValue(THIN_FENCE_WEST));
-    if (mirror->getType() == Mirror::eTYPE_LeftRight)
-        return state->setBoxedValue(THIN_FENCE_NORTH, &south)->setBoxedValue(THIN_FENCE_SOUTH, &north);
-    if (mirror->getType() == Mirror::eTYPE_FrontBack)
-        return state->setBoxedValue(THIN_FENCE_EAST, &west)->setBoxedValue(THIN_FENCE_WEST, &east);
-    return Block::mirror(state, mirror);
+    switch (mirror->getType())
+    {
+    case Mirror::eTYPE_LeftRight:
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_SOUTH));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_NORTH));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)->setBoxedValue(THIN_FENCE_SOUTH, &south);
+    }
+    case Mirror::eTYPE_FrontBack:
+    {
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_EAST));
+        return state->setBoxedValue(THIN_FENCE_EAST, &east)->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
+    default:
+        return Block::mirror(state, mirror);
+    }
 }
 
 BlockStateDefinition* ThinFenceBlock::createBlockStateDefinition()
@@ -188,7 +217,7 @@ BlockStateDefinition* ThinFenceBlock::createBlockStateDefinition()
 
 EBlockFaceShape ThinFenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
 {
-    return direction == Direction::DOWN || direction == Direction::UP ? static_cast<EBlockFaceShape>(2) : static_cast<EBlockFaceShape>(3);
+    return direction == Direction::DOWN || direction == Direction::UP ? BLOCK_FACE_CENTER_SMALL : BLOCK_FACE_MIDDLE_POLE_THIN;
 }
 
 void ThinFenceBlock::registerIcons(IconRegister* iconRegister)
@@ -201,5 +230,5 @@ TextureAtlasSprite* ThinFenceBlock::getEdgeTexture() { return mEdgeTextureId; }
 
 EBlockRenderShape ThinFenceBlock::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(state->mElementId == mCachedElementId ? 0x28 : 0x12);
+    return mMaterial == Material::GLASS ? BLOCK_RENDER_GLASS_PANE : BLOCK_RENDER_THIN_FENCE;
 }

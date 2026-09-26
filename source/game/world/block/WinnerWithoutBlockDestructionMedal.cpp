@@ -2,8 +2,6 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-int wasWinnerWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats);
-
 WinnerWithoutBlockDestructionMedal::~WinnerWithoutBlockDestructionMedal()
 {
 }

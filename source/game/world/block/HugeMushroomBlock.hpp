@@ -8,6 +8,8 @@
 
 class BlockState;
 class BlockStateDefinition;
+template <typename T>
+class EnumProperty;
 class Direction;
 class IconRegister;
 class Level;
@@ -28,6 +30,22 @@ public:
         Variant(int data, const std::wstring& name);
         int getData();
         static Variant* byData(int data);
+
+        static Variant* NORTH_WEST;
+        static Variant* NORTH;
+        static Variant* NORTH_EAST;
+        static Variant* WEST;
+        static Variant* CENTER;
+        static Variant* EAST;
+        static Variant* SOUTH_WEST;
+        static Variant* SOUTH;
+        static Variant* SOUTH_EAST;
+        static Variant* STEM;
+        static Variant* ALL_INSIDE;
+        static Variant* ALL_OUTSIDE;
+        static Variant* ALL_STEM;
+        static Variant* VALUES[13];
+
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
         std::wstring getName();
@@ -41,6 +59,7 @@ public:
     virtual ~HugeMushroomBlock();
 
     static void blockStaticCtor();
+    static EnumProperty<Variant*>* VARIANT;
 
     virtual int getResourceCount(Random* random);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

@@ -15,10 +15,13 @@ class Level;
 class LevelSource;
 class Random;
 class TextureAtlasSprite;
+template <class T> class AbstractProperty;
 
 class KelpBlock : public Block, public BonemealableBlock
 {
 public:
+    static AbstractProperty<int>* AGE;
+
     KelpBlock();
     virtual ~KelpBlock();
 

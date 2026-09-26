@@ -67,6 +67,14 @@ public:
         static Flower* RED_FLOWERS[RED_FLOWER_COUNT];
         static Flower* DANDELION;
         static Flower* POPPY;
+        static Flower* BLUE_ORCHID;
+        static Flower* ALLIUM;
+        static Flower* HOUSTONIA;
+        static Flower* RED_TULIP;
+        static Flower* ORANGE_TULIP;
+        static Flower* WHITE_TULIP;
+        static Flower* PINK_TULIP;
+        static Flower* OXEYE_DAISY;
 
         FlowerCategory* mCategory;
         int mData;

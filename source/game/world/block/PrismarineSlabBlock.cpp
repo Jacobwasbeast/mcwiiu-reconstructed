@@ -1,4 +1,5 @@
 #include "game/world/block/PrismarineSlabBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
@@ -70,9 +71,9 @@ std::wstring PrismarineSlabBlock::Variant::getSerializedName() const
 
 void PrismarineSlabBlock::blockStaticCtor()
 {
-    Variant::ROUGH = new Variant(0, L"prismarine_slab", 0xda0d9878, 0x546d89cd, L"prismarine_rough");
-    Variant::BRICKS = new Variant(1, L"prismarine_bricks_slab", 0xed755f9d, 0x546d89cd, L"prismarine_bricks");
-    Variant::DARK = new Variant(2, L"dark_prismarine_slab", 0xaa6c4d33, 0x546d89cd, L"prismarine_dark");
+    Variant::ROUGH = new Variant(0, L"prismarine_slab", IDS_TILE_SLAB_PRISMARINE, 0x546d89cd, L"prismarine_rough");
+    Variant::BRICKS = new Variant(1, L"prismarine_bricks_slab", IDS_TILE_SLAB_PRISMARINE_BRICKS, 0x546d89cd, L"prismarine_bricks");
+    Variant::DARK = new Variant(2, L"dark_prismarine_slab", IDS_TILE_SLAB_DARK_PRISMARINE, 0x546d89cd, L"prismarine_dark");
     gPrismarineSlabVariants[0] = Variant::ROUGH;
     gPrismarineSlabVariants[1] = Variant::BRICKS;
     gPrismarineSlabVariants[2] = Variant::DARK;

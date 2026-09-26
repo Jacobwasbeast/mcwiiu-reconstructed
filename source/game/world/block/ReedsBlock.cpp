@@ -1,4 +1,6 @@
 #include "game/world/block/ReedsBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/item/Item.hpp"
@@ -17,6 +19,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/core/DyeColor.hpp"
+#include "game/item/ItemId.hpp"
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
 static const AABB* REEDS_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
@@ -38,7 +41,7 @@ bool ReedsBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const 
 {
     int bottom = pos.y;
     int lower = bottom - 4;
-    while (lower < bottom - 1 && bottom - 1 > 0 && level->getBlockId(pos.x, bottom - 1, pos.z) == 83)
+    while (lower < bottom - 1 && bottom - 1 > 0 && level->getBlockId(pos.x, bottom - 1, pos.z) == BlockId::REEDS)
     {
         --lower;
         --bottom;
@@ -46,7 +49,7 @@ bool ReedsBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const 
 
     int upper = pos.y + 4;
     int top = pos.y;
-    while (top + 1 < upper && top + 1 < level->getMaxBuildHeight() && level->getBlockId(pos.x, top + 1, pos.z) == 83)
+    while (top + 1 < upper && top + 1 < level->getMaxBuildHeight() && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::REEDS)
     {
         ++upper;
         ++top;
@@ -65,7 +68,7 @@ void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, con
     int bottom = pos.y;
     int lower = bottom - 4;
     while (lower < bottom - 1 && bottom - 1 > 0
-           && level->getBlockId(pos.x, bottom - 1, pos.z) == 83)
+           && level->getBlockId(pos.x, bottom - 1, pos.z) == BlockId::REEDS)
     {
         --lower;
         --bottom;
@@ -74,7 +77,7 @@ void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, con
     int upper = pos.y + 4;
     int top = pos.y;
     while (top + 1 < upper && top + 1 < level->getMaxBuildHeight()
-           && level->getBlockId(pos.x, top + 1, pos.z) == 83)
+           && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::REEDS)
     {
         ++upper;
         ++top;
@@ -88,7 +91,7 @@ void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, con
         {
             return;
         }
-        level->setBlockAndData(pos.x, y, pos.z, 83, 0, 3);
+        level->setBlockAndData(pos.x, y, pos.z, BlockId::REEDS, 0, Block::UPDATE_ALL);
     }
 }
 
@@ -97,53 +100,53 @@ const AABB* ReedsBlock::getShape(const BlockState*, LevelSource*, const BlockPos
     return REEDS_SHAPE;
 }
 
-void ReedsBlock::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
+bool ReedsBlock::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
 {
     if (canSurvive(level, pos, state))
     {
-        return;
+        return true;
     }
 
     spawnResources(level, pos, state, 0);
     level->removeBlock(pos);
+    return false;
 }
 
-void ReedsBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
+void ReedsBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (level->getBlockState(pos.below())->getBlock() != this)
+    if (level->getBlockState(pos.below())->getBlock() != Blocks::reeds && !checkAlive(level, pos, state))
     {
-        checkAlive(level, pos, state);
+        return;
     }
-
     if (!level->isEmptyBlock(pos.above()))
     {
         return;
     }
 
     int height = 1;
-    if (level->getBlockState(pos.below())->getBlock() == this)
+    if (level->getBlockState(pos.below(1))->getBlock() == this)
     {
-        while (level->getBlockState(pos.below(height))->getBlock() == this)
+        do
         {
             ++height;
-        }
+        } while (level->getBlockState(pos.below(height))->getBlock() == this);
         if (height > 2)
         {
             return;
         }
     }
 
-    int age = convertBlockStateToLegacyData(state);
+    int age = state->getValue(AGE);
     if (age == 15)
     {
-        level->setBlockAndData(pos.x, pos.y + 1, pos.z, 83, 0, 4);
+        level->setBlockAndUpdate(pos.above(), defaultBlockState());
         TypedBoxed<int> reset(0);
-        level->setBlock(pos, state->setBoxedValue(AGE, &reset), 4, false);
+        level->setBlock(pos, state->setBoxedValue(AGE, &reset), Block::UPDATE_INVISIBLE, false);
     }
     else
     {
         TypedBoxed<int> next(age + 1);
-        level->setBlock(pos, state->setBoxedValue(AGE, &next), 4, false);
+        level->setBlock(pos, state->setBoxedValue(AGE, &next), Block::UPDATE_INVISIBLE, false);
     }
 }
 
@@ -156,25 +159,24 @@ bool ReedsBlock::mayPlace(Level* level, const BlockPos& pos)
     }
 
     const Block* current = level->getBlockState(pos)->getBlock();
-    if (current != Blocks::AIR && current != this)
+    if (current != Blocks::air && current != this)
     {
         return false;
     }
 
-    if (below != Blocks::sand && below != Blocks::dirt && below != Blocks::grass)
+    if (below != Blocks::grass && below != Blocks::dirt && below != Blocks::sand)
     {
         return false;
     }
 
+    BlockPos belowPos = pos.below();
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
-        BlockPos adjacent = pos.below().relative(directions.data[i]);
-        const BlockState* adjacentState = level->getBlockState(adjacent);
-        const BlockState* liquidState = level->getLiquidBlockState(adjacent);
-        if (adjacentState->getMaterial() == Material::WATER
-            || liquidState->getMaterial() == Material::WATER
-            || adjacentState->getBlock() == Blocks::ice)
+        const BlockState* adjacentState = level->getBlockState(belowPos.relative(directions.data[i]));
+        const BlockState* extraState = level->getExtraBlockState(belowPos.relative(directions.data[i]));
+        if (adjacentState->getMaterial() == Material::WATER || extraState->getMaterial() == Material::WATER
+            || adjacentState->getBlock() == Blocks::frosted_ice)
         {
             return true;
         }
@@ -271,17 +273,17 @@ bool ReedsBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockS
 
 EBlockRenderShape ReedsBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_ENTITY;
+    return BLOCK_RENDER_CROSS;
 }
 
 unsigned int ReedsBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
         if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            return 0x9F5FDC40u;
+            return IDS_TOOLTIPS_GROW;
         }
     }
     return Block::GetInteractTooltip(tooltipData);

@@ -42,8 +42,8 @@ public:
         void registerIcons(IconRegister* iconRegister);
         int getNameId();
         int getDescriptionId();
-        std::wstring toString() const;
-        std::wstring getSerializedName() const;
+        virtual std::wstring toString() const;
+        virtual std::wstring getSerializedName() const;
         std::wstring getName();
 
     private:

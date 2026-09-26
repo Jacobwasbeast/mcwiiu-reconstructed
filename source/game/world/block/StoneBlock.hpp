@@ -15,6 +15,8 @@ class MaterialColor;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class EnumProperty;
+
 class StoneBlock : public Block
 {
 public:
@@ -25,6 +27,16 @@ public:
         const MaterialColor* getMaterialColor();
         int getData();
         static Variant* byData(int data);
+
+        static Variant* STONE;
+        static Variant* GRANITE;
+        static Variant* SMOOTH_GRANITE;
+        static Variant* DIORITE;
+        static Variant* SMOOTH_DIORITE;
+        static Variant* ANDESITE;
+        static Variant* SMOOTH_ANDESITE;
+        static Variant* BY_DATA[7];
+
         TextureAtlasSprite* getTexture();
         void registerIcons(IconRegister* iconRegister);
         virtual std::wstring toString() const;
@@ -47,6 +59,9 @@ public:
     StoneBlock();
     virtual ~StoneBlock();
     static void blockStaticCtor();
+
+    static EnumProperty<Variant*>* VARIANT;
+
     virtual std::wstring getName();
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual Item* getResource(const BlockState* state, Random* random, int fortune);

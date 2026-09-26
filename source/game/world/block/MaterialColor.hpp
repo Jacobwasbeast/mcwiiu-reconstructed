@@ -72,8 +72,9 @@ public:
     eMinecraftColour col;
     int id;
 
-private:
     static const MaterialColor** MATERIAL_COLORS;
+
+private:
     static const MaterialColor** DYE_MATERIALS;
 };
 

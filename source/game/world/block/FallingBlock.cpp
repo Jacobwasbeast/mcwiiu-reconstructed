@@ -42,7 +42,7 @@ void FallingBlock::neighborChanged(const BlockState* state, Level* level, const 
 bool FallingBlock::isFree(const BlockState* state)
 {
     Material* material = state->getMaterial();
-    return state->getBlock() == Blocks::FIRE || material == Material::AIR || material->isLiquid();
+    return state->getBlock() == Blocks::fire || material == Material::AIR || material->isLiquid();
 }
 
 void FallingBlock::checkSlide(Level* level, const BlockPos& pos)

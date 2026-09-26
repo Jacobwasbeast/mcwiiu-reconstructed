@@ -85,7 +85,7 @@ double BlockPlacedOverTime::GetScore(PlayerStats* playerStats) const
 
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
         int roundTime = getGameStats()->GetRoundTime();
-        score += (*mScoreFunction)(roundTime / 10 - 1, roundStats->mBlocksPlacedInfo.mRounds);
+        score += (*mScoreFunction)(roundTime / 10 - 1, roundStats->mBlocksPlaced.mByTime);
     }
 
     return score;

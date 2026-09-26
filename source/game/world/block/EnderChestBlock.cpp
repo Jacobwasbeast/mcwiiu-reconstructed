@@ -1,4 +1,6 @@
 #include "game/world/block/EnderChestBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/Blocks.hpp"
 
 #include "game/client/render/PlayerEnderChestContainer.hpp"
 #include "game/core/Direction.hpp"
@@ -38,7 +40,7 @@ EnderChestBlock::EnderChestBlock()
 {
     DerivedInit();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(defaultBlockState()->setBoxedValue(FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
 }
 
 EnderChestBlock::~EnderChestBlock()
@@ -79,7 +81,7 @@ bool EnderChestBlock::hasCustomBreakingProgress(const BlockState*)
 
 Item* EnderChestBlock::getResource(const BlockState*, Random*, int)
 {
-    return Item::byBlock(this);
+    return Item::byBlock(Blocks::obsidian);
 }
 
 int EnderChestBlock::getResourceCount(Random*)
@@ -106,7 +108,7 @@ void EnderChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const Block
 {
     const Direction* facing = placer->getDirection()->getOpposite();
     TypedBoxed<const Direction*> boxedFacing(facing);
-    level->setBlock(pos, state->setBoxedValue(FACING, &boxedFacing), 2, false);
+    level->setBlock(pos, state->setBoxedValue(FACING, &boxedFacing), Block::UPDATE_CLIENTS, false);
 
     if (itemInstance->hasCustomHoverName())
     {
@@ -175,7 +177,7 @@ unsigned int EnderChestBlock::GetInteractTooltip(const BlockTooltipDataHolder& t
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
     {
-        return 0x41590ad1;
+        return IDS_TOOLTIPS_OPEN;
     }
     return Block::GetInteractTooltip(tooltipData);
 }
@@ -209,5 +211,5 @@ void EnderChestBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape EnderChestBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(0x16);
+    return BLOCK_RENDER_ENTITY;
 }

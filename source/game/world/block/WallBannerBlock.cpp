@@ -10,7 +10,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
-#include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -25,7 +24,7 @@ WallBannerBlock::WallBannerBlock()
 {
     DerivedInit();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(DirectionalBlock::FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(BannerBlock::FACING, &facing));
 }
 
 WallBannerBlock::~WallBannerBlock()
@@ -34,19 +33,19 @@ WallBannerBlock::~WallBannerBlock()
 
 const BlockState* WallBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    const Direction* direction = state->getValue(DirectionalBlock::FACING);
+    const Direction* direction = state->getValue(BannerBlock::FACING);
     TypedBoxed<const Direction*> facing(rotation->rotate(direction));
-    return state->setBoxedValue(DirectionalBlock::FACING, &facing);
+    return state->setBoxedValue(BannerBlock::FACING, &facing);
 }
 
 const BlockState* WallBannerBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(DirectionalBlock::FACING)));
+    return rotate(state, mirror->getRotation(state->getValue(BannerBlock::FACING)));
 }
 
 const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    const Direction* direction = state->getValue(DirectionalBlock::FACING);
+    const Direction* direction = state->getValue(BannerBlock::FACING);
     if (direction == Direction::SOUTH)
         return WALL_BANNER_SHAPE_SOUTH;
     if (direction == Direction::WEST)
@@ -59,7 +58,7 @@ const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, con
 void WallBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                       Block* block, const BlockPos& fromPos)
 {
-    const Direction* direction = state->getValue(DirectionalBlock::FACING);
+    const Direction* direction = state->getValue(BannerBlock::FACING);
     const BlockPos supportPos = pos.relative(direction->getOpposite());
     if (!level->getBlockState(supportPos)->getMaterial()->isSolid())
     {
@@ -75,16 +74,16 @@ const BlockState* WallBannerBlock::getBlockState(int data)
     if (direction->getAxis() == Direction::Axis::Y)
         direction = Direction::NORTH;
     TypedBoxed<const Direction*> facing(direction);
-    return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING, &facing);
+    return defaultBlockState()->setBoxedValue(BannerBlock::FACING, &facing);
 }
 
 int WallBannerBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(DirectionalBlock::FACING)->get3DDataValue();
+    return state->getValue(BannerBlock::FACING)->get3DDataValue();
 }
 
 BlockStateDefinition* WallBannerBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { DirectionalBlock::FACING };
+    static const Property* properties[] = { BannerBlock::FACING };
     return new BlockStateDefinition(this, properties, 1);
 }

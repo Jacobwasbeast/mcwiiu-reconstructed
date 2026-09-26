@@ -1,4 +1,7 @@
 #include "game/world/block/CauldronBlockEntity.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/L10N.hpp"
@@ -37,7 +40,7 @@ std::wstring CauldronBlockEntity::getName()
     {
         return mCustomName->get();
     }
-    return L10N::GetString(0x5a1ba3a);
+    return L10N::GetString(IDS_ITEM_CAULDRON);
 }
 
 std::wstring CauldronBlockEntity::getCustomName()
@@ -249,7 +252,7 @@ void CauldronBlockEntity::load(CompoundTag* tag)
 void CauldronBlockEntity::loadFromPacket(Level* level, const BlockPos& pos, CompoundTag* tag)
 {
     load(tag);
-    if (level->getBlockId(pos.x, pos.y, pos.z) == 118)
+    if (level->getBlockId(pos.x, pos.y, pos.z) == BlockId::CAULDRON)
     {
         int data = level->getBlockData(pos.x, pos.y, pos.z);
         level->setData(pos, data, 2, true);
@@ -303,5 +306,5 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
 void CauldronBlockEntity::setChanged() { BlockEntity::setChanged(); }
 unsigned long long CauldronBlockEntity::GetType()
 {
-    return 0x0000000001000211ULL;
+    return BlockEntityType::CAULDRON;
 }

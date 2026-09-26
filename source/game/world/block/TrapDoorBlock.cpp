@@ -1,4 +1,8 @@
 #include "game/world/block/Predicates.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/TrapDoorBlock.hpp"
 
 #include <typeinfo>
@@ -21,10 +25,10 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 AbstractProperty<TrapDoorBlock::Half*>* TrapDoorBlock::HALF = NULL;
-AbstractProperty<bool>* TrapDoorBlock::OPEN = NULL;
+AbstractProperty<bool>* TrapDoorBlock::OPEN = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"open"));
 AbstractProperty<const Direction*>* TrapDoorBlock::FACING = NULL;
-TrapDoorBlock::Half* TrapDoorBlock::TOP = NULL;
-TrapDoorBlock::Half* TrapDoorBlock::BOTTOM = NULL;
+TrapDoorBlock::Half* TrapDoorBlock::TOP = new TrapDoorBlock::Half(L"top");
+TrapDoorBlock::Half* TrapDoorBlock::BOTTOM = new TrapDoorBlock::Half(L"bottom");
 
 std::wstring TrapDoorBlock::Half::toString() const { return mName; }
 std::wstring TrapDoorBlock::Half::getSerializedName() const { return mName; }
@@ -59,22 +63,11 @@ TrapDoorBlock::~TrapDoorBlock() {}
 
 void TrapDoorBlock::blockStaticCtor()
 {
-    if (BOTTOM == NULL) BOTTOM = new Half(L"bottom");
-    if (TOP == NULL) TOP = new Half(L"top");
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
     boost::unordered_set<Half*> halves;
-    halves.insert(BOTTOM);
     halves.insert(TOP);
+    halves.insert(BOTTOM);
     HALF = EnumProperty<Half*>::create(L"half", typeid(Half*), halves, Predicates<Half*>::alwaysTrue);
-    if (OPEN == NULL) OPEN = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"open"));
-    if (FACING == NULL)
-    {
-        boost::unordered_set<const Direction*> directions;
-        directions.insert(Direction::NORTH);
-        directions.insert(Direction::SOUTH);
-        directions.insert(Direction::WEST);
-        directions.insert(Direction::EAST);
-        FACING = EnumProperty<const Direction*>::create(L"facing", typeid(const Direction*), directions, Predicates<const Direction*>::alwaysTrue);
-    }
 }
 
 const AABB* TrapDoorBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -101,7 +94,11 @@ bool TrapDoorBlock::TestUse() { return mMaterial != Material::METAL; }
 
 void TrapDoorBlock::playSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, bool open)
 {
-    int sound = open ? (mMaterial == Material::METAL ? 0x40d : 0x3ef) : (mMaterial == Material::METAL ? 0x40c : 0x3f5);
+    int sound;
+    if (open)
+        sound = mMaterial == Material::METAL ? LevelEvent::SOUND_OPEN_IRON_TRAP_DOOR : LevelEvent::SOUND_OPEN_WOODEN_TRAP_DOOR;
+    else
+        sound = mMaterial == Material::METAL ? LevelEvent::SOUND_CLOSE_IRON_TRAP_DOOR : LevelEvent::SOUND_CLOSE_WOODEN_TRAP_DOOR;
     level->levelEvent(player, sound, pos, 0);
 }
 
@@ -113,7 +110,7 @@ bool TrapDoorBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
         return false;
     }
     TypedBoxed<bool> open(!state->getValue(OPEN));
-    level->setBlock(pos, state->setBoxedValue(OPEN, &open), 3, false);
+    level->setBlock(pos, state->setBoxedValue(OPEN, &open), Block::UPDATE_ALL, false);
     playSound(player, level, pos, open.getValue());
     return true;
 }
@@ -125,7 +122,7 @@ void TrapDoorBlock::neighborChanged(const BlockState* state, Level* level, const
     if (powered != state->getValue(OPEN))
     {
         TypedBoxed<bool> open(powered);
-        level->setBlock(pos, state->setBoxedValue(OPEN, &open), 3, false);
+        level->setBlock(pos, state->setBoxedValue(OPEN, &open), Block::UPDATE_ALL, false);
         playSound(boost::shared_ptr<Player>(), level, pos, powered);
     }
 }
@@ -172,9 +169,9 @@ int TrapDoorBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int TrapDoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.m_bIsInside) return 0xffffffff;
-    if (mMaterial == Material::METAL && tooltipData.m_pItemInstance->isEmpty()) return 0xffffffff;
-    if (mMaterial != Material::METAL && (tooltipData.m_bCanPlace || tooltipData.m_bUseItem) && tooltipData.m_pItemInstance->isEmpty()) return 0xea4e897e;
+    if (!tooltipData.m_bIsInside) return IDS_NONE;
+    if (mMaterial == Material::METAL && tooltipData.m_pItemInstance->isEmpty()) return IDS_NONE;
+    if (mMaterial != Material::METAL && (tooltipData.m_bCanPlace || tooltipData.m_bUseItem) && tooltipData.m_pItemInstance->isEmpty()) return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -205,5 +202,5 @@ EBlockFaceShape TrapDoorBlock::getBlockFaceShape(LevelSource*, const BlockState*
 
 EBlockRenderShape TrapDoorBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(0x2b);
+    return BLOCK_RENDER_TRAPDOOR;
 }

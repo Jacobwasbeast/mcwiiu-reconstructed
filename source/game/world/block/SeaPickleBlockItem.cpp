@@ -1,13 +1,21 @@
 #include "game/world/block/SeaPickleBlockItem.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/core/SeaPickle.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockProperties.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/LiquidBlock.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
 SeaPickleBlockItem::SeaPickleBlockItem(Block* block)
@@ -31,76 +39,84 @@ InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_pt
                                                                 const BlockPos& pos,
                                                                 InteractionHand::EInteractionHand hand,
                                                                 const Direction* direction,
-                                                                float hitX,
-                                                                float hitY,
-                                                                float hitZ,
+                                                                float,
+                                                                float,
+                                                                float,
                                                                 bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->isEmpty())
+    if (itemInstance->isEmpty() || !player->mayUseItemAt(pos, direction, itemInstance))
         return InteractionResult::eInteractionResult_Fail;
-
-    const BlockState* state = level->getBlockState(pos);
-    Block* block = state->getBlock();
-    if (block == getBlock())
-    {
-        int data = block->convertBlockStateToLegacyData(state);
-        int count = (data & 7) + 1;
-        if (count < 4 && level->isUnderWater(pos, state))
-        {
-            if (simulate)
-                return InteractionResult::eInteractionResult_Success;
-
-            const BlockState* newState = block->getBlockState(data + 1);
-            if (level->setBlock(pos, newState, 2, false))
-            {
-                itemInstance->shrink(1);
-                return InteractionResult::eInteractionResult_Success;
-            }
-            return InteractionResult::eInteractionResult_Fail;
-        }
-    }
 
     BlockPos placePos = pos.relative(direction);
-    const BlockState* placeState = level->getBlockState(placePos);
-    if (placeState->getBlock() == getBlock())
+    BlockPos targetPos = pos.relative(direction);
+    if (level->getBlockId(pos.x, pos.y, pos.z) != BlockId::SEA_GRASS)
     {
-        int data = getBlock()->convertBlockStateToLegacyData(placeState);
-        int count = (data & 7) + 1;
-        if (count < 4 && level->isUnderWater(placePos, placeState))
-        {
-            if (simulate)
-                return InteractionResult::eInteractionResult_Success;
+        if (direction == Direction::UP)
+            targetPos = targetPos.below();
+        else if (direction != Direction::DOWN)
+            targetPos = targetPos.relative(direction->getOpposite());
+    }
 
-            const BlockState* newState = getBlock()->getBlockState((data & 8) | count);
-            if (level->setBlock(placePos, newState, 2, false))
-            {
-                itemInstance->shrink(1);
-                return InteractionResult::eInteractionResult_Success;
-            }
+    const BlockState* targetState = level->getBlockState(targetPos);
+    const BlockState* newState = Blocks::sea_pickle->defaultBlockState();
+    if (targetState->getBlock() == Blocks::sea_pickle)
+    {
+        int count = targetState->getValue(SeaPickle::COUNT) + 1;
+        if (count > 3)
             return InteractionResult::eInteractionResult_Fail;
+        TypedBoxed<int> countValue(count);
+        const BlockState* stacked = newState->setBoxedValue(SeaPickle::COUNT, &countValue);
+        placePos = targetPos;
+        bool underWater = level->isUnderWater(targetPos, newState);
+        newState = stacked;
+        if (!underWater)
+        {
+            TypedBoxed<int> flange(1);
+            newState = newState->setBoxedValue(SeaPickle::FLANGE, &flange);
+        }
+    }
+    else
+    {
+        if (level->getLiquidBlock(placePos)->mMaterial == Material::WATER
+            && static_cast<unsigned int>(level->getLiquidBlockState(placePos)->getValue(LiquidBlock::LEVEL) - 1) < 7)
+        {
+            return InteractionResult::eInteractionResult_Fail;
+        }
+        if (!level->isConsideredSolidBlock(placePos.below()) && targetState->getBlock() != Blocks::glass
+            && targetState->getBlock() != Blocks::stained_glass)
+        {
+            return InteractionResult::eInteractionResult_Fail;
+        }
+        if (!level->canProvideSupport(placePos.below(), Direction::UP, BLOCK_SUPPORT_CENTER))
+            return InteractionResult::eInteractionResult_Fail;
+        if (!level->isEmptyBlock(placePos) && !level->isEmptyWaterBlock(placePos)
+            && targetState->getBlock() != Blocks::sea_grass)
+        {
+            return InteractionResult::eInteractionResult_Fail;
+        }
+        if (!level->isUnderWater(placePos, newState))
+        {
+            TypedBoxed<int> flange(1);
+            newState = newState->setBoxedValue(SeaPickle::FLANGE, &flange);
         }
     }
 
-    if (!level->isUnderWater(placePos, placeState)
-        || !level->canProvideSupport(placePos.below(), Direction::UP, BLOCK_SUPPORT_ANY))
-        return InteractionResult::eInteractionResult_Fail;
-
-    const BlockState* newState = getBlock()->getStateForPlacement(level, placePos, direction,
-                                                                   hitX, hitY, hitZ, 0, player);
     if (!simulate)
     {
-        const AABB* shape = getBlock()->getShape(newState, level, placePos);
-        if (!level->isUnobstructed(shape)
-            || !level->setBlock(placePos, newState, 3, false))
+        if (!level->isUnobstructed(Blocks::sea_pickle->getShape(targetState, level, placePos))
+            || !level->setBlock(placePos, newState, Block::UPDATE_ALL, false))
+        {
             return InteractionResult::eInteractionResult_Fail;
+        }
 
-        const SoundType* soundType = getBlock()->getSoundType();
+        const SoundType* soundType = Blocks::sea_pickle->getSoundType();
         level->playSound(boost::shared_ptr<Player>(), placePos, soundType->getPlaceSound(),
-                         SoundSource::eSoundSource_Blocks,
-                         (soundType->getVolume() + 1.0f) * 0.5f,
-                         soundType->getPitch() * 0.8f, 16.0f);
+                         SoundSource::eSoundSource_Blocks, (soundType->getVolume() + 1.0f) * 0.5f,
+                         soundType->getPitch(), 16.0f);
         itemInstance->shrink(1);
+        if (newState->getValue(SeaPickle::COUNT) == 3)
+            player->awardStat(GenericStats::_1234Pickle(), GenericStats::param_1234Pickle());
     }
     return InteractionResult::eInteractionResult_Success;
 }

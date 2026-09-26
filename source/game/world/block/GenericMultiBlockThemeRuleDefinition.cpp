@@ -9,7 +9,7 @@ GenericMultiBlockThemeRuleDefinition::~GenericMultiBlockThemeRuleDefinition()
 
 GameRuleDefinition* GenericMultiBlockThemeRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(43))
+    if (type == ConsoleGameRules::eGameRuleType_BlockDef)
     {
         BlockRuleDefinition* blockRule = new BlockRuleDefinition();
         mBlocks.push_back(blockRule);
@@ -31,8 +31,8 @@ GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::BlockRuleDefinition()
     : mBlockState(NULL),
       mBlockAux(-1)
 {
-    addBlockStateAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlockState);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(63), &mBlockAux);
+    addBlockStateAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockState);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mBlockAux);
 }
 
 GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::~BlockRuleDefinition()
@@ -41,7 +41,7 @@ GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::~BlockRuleDefinition(
 
 ConsoleGameRules::EGameRuleType GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(43);
+    return ConsoleGameRules::eGameRuleType_BlockDef;
 }
 
 const BlockState* GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::getBlockState() const

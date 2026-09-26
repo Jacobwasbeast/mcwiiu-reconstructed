@@ -1,4 +1,7 @@
 #include "game/world/block/AnvilBlock.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <string>
 
@@ -36,7 +39,7 @@ namespace
 {
     std::wstring gAnvilTopIconNames[3] =
     {
-        L"anvil_top", L"anvil_top_damaged", L"anvil_top_damaged_2"
+        L"anvil_top", L"anvil_top_damaged_1", L"anvil_top_damaged_2"
     };
 }
 
@@ -121,12 +124,12 @@ void AnvilBlock::falling(boost::shared_ptr<FallingBlockEntity> entity)
 
 void AnvilBlock::onLand(Level* level, const BlockPos& pos, const BlockState*, const BlockState*)
 {
-    level->levelEvent(0x407, pos, 0);
+    level->levelEvent(LevelEvent::SOUND_ANVIL_LAND, pos, 0);
 }
 
 void AnvilBlock::onBroken(Level* level, const BlockPos& pos)
 {
-    level->levelEvent(0x405, pos, 0);
+    level->levelEvent(LevelEvent::SOUND_ANVIL_BROKEN, pos, 0);
 }
 
 bool AnvilBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*)
@@ -151,7 +154,7 @@ int AnvilBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int AnvilBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
-        return 0xea4e897e;
+        return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -188,7 +191,7 @@ void AnvilBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape AnvilBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(0x23);
+    return BLOCK_RENDER_ANVIL;
 }
 
 AnvilBlock::Anvil::Anvil(Level* level, const BlockPos& pos)
@@ -204,7 +207,7 @@ AbstractContainerMenu* AnvilBlock::Anvil::createMenu(boost::shared_ptr<Inventory
 
 int AnvilBlock::Anvil::getTypeId(bool)
 {
-    return 0x13;
+    return ClientboundContainerOpenPacket::REPAIR_TABLE;
 }
 
 std::wstring AnvilBlock::Anvil::getName()

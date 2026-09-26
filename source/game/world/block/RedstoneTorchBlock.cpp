@@ -133,7 +133,7 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
         }
     }
 
-    int flags = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) ? 0x25 : 3;
+    int flags = g_pApp->GetGameHostOption(eGameHostOption_MiniGame) ? 0x25 : 3;
     if (!mLit && !powered && !isToggledTooFrequently(level, pos, false))
         level->setBlock(pos, copyTorchState(state, Blocks::redstone_torch->defaultBlockState()), flags, false);
     else if (mLit && powered)

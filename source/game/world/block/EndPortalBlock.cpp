@@ -1,4 +1,5 @@
 #include "game/world/block/EndPortalBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -20,9 +21,7 @@
 
 namespace
 {
-const unsigned long long PORTAL_EXCLUDED_ENTITY_TYPE = ENTITY_TYPE_ENTITY | 3ULL;
-const unsigned long long PORTAL_PROJECTILE_ENTITY_MASK = 0x8A020000ULL;
-const unsigned long long PORTAL_PLAYER_ENTITY_MASK = 0x0C800000ULL;
+const unsigned long long PORTAL_EXCLUDED_ENTITY_TYPE = EntityType::ENTITY | 3ULL;
 const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE =
     static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 6);
 }
@@ -94,7 +93,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
         return;
 
     AABB* portalBox;
-    if ((entity->GetType() & PORTAL_PROJECTILE_ENTITY_MASK) == PORTAL_PROJECTILE_ENTITY_MASK)
+    if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
     {
         portalBox = AABB::newTemp(pos.x, pos.y, pos.z, pos.x + 1.0, pos.y + 1.0, pos.z + 1.0);
     }
@@ -110,7 +109,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
                                           portalBox->mMaxX, portalBox->mMaxY, portalBox->mMaxZ))
         return;
 
-    if ((entity->GetType() & PORTAL_PLAYER_ENTITY_MASK) == PORTAL_PLAYER_ENTITY_MASK)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         int x = 0;
         int z = 0;
@@ -175,5 +174,5 @@ void EndPortalBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape EndPortalBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)-1;
+    return BLOCK_RENDER_INVISIBLE;
 }

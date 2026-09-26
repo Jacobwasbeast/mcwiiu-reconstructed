@@ -1,11 +1,14 @@
 #include "game/world/block/GrassBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
+#include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -16,9 +19,14 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/FlowerBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+
+AbstractProperty<bool>* GrassBlock::SNOWY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
 GrassBlock::GrassBlock()
     : Block(Material::GRASS)
@@ -43,34 +51,19 @@ bool GrassBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Block
 
 bool GrassBlock::randomWalk(Level* level, Random* random, BlockPos& pos, int distance)
 {
-    int walks = (distance + 15) / 16;
-    for (int i = 0; i < walks / 2; ++i)
+    const int steps = distance / 16;
+    for (int i = 0; i < steps; ++i)
     {
-        pos = pos.offset(random->nextInt(3) - 1,
-                         ((random->nextInt(3) - 1) * random->nextInt(3)) / 2,
-                         random->nextInt(3) - 1);
-        const BlockState* belowState = level->getBlockState(pos.below());
-        if (belowState->getBlock() != this || level->getExtraBlockState(pos)->getBlock() != NULL)
-            return false;
-
-        pos = pos.offset(random->nextInt(3) - 1,
-                         ((random->nextInt(3) - 1) * random->nextInt(3)) / 2,
-                         random->nextInt(3) - 1);
-        belowState = level->getBlockState(pos.below());
-        if (belowState->getBlock() != this || level->getExtraBlockState(pos)->getBlock() != NULL)
+        const int dx = random->nextInt(3) - 1;
+        const int dyDirection = random->nextInt(3) - 1;
+        const int dy = dyDirection * random->nextInt(3) / 2;
+        const int dz = random->nextInt(3) - 1;
+        pos = pos.offset(dx, dy, dz);
+        if (level->getBlockState(pos.below())->getBlock() != Blocks::grass
+            || level->getBlockState(pos)->isSolidBlockingCubeAndNotSignalSource())
             return false;
     }
-    if ((walks & 1) != 0)
-    {
-        pos = pos.offset(random->nextInt(3) - 1,
-                         ((random->nextInt(3) - 1) * random->nextInt(3)) / 2,
-                         random->nextInt(3) - 1);
-        const BlockState* belowState = level->getBlockState(pos.below());
-        if (belowState->getBlock() == this && level->getExtraBlockState(pos)->getBlock() == NULL)
-            return true;
-        return false;
-    }
-    return walks == 0;
+    return steps > 0;
 }
 
 void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
@@ -110,7 +103,7 @@ void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& p
 
         if (block->canSurvive(level, candidate, generatedState))
         {
-            level->setBlock(candidate, generatedState, 3, false);
+            level->setBlock(candidate, generatedState, Block::UPDATE_ALL, false);
         }
     }
 }
@@ -140,34 +133,49 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
     if (level->mIsClientSide)
         return;
 
-    BlockPos above = pos.above();
-    int brightness = level->getRawBrightness(above);
+    int brightness = level->getRawBrightness(pos.above());
     if (brightness < 4)
     {
-        const BlockState* state = level->getBlockState(above);
-        const BlockState* extraState = level->getExtraBlockState(above);
-        int lightBlock = state->getLightBlock();
-        if (extraState->getLightBlock() > lightBlock)
-            lightBlock = extraState->getLightBlock();
+        int lightBlock = level->getBlockState(pos.above())->getLightBlock();
+        int extraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
+        if (lightBlock < extraLightBlock)
+            lightBlock = extraLightBlock;
         if (lightBlock > 2)
-        {
-            level->setBlock(pos, defaultBlockState(), 2, false);
-            return;
-        }
+            level->setBlock(pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+        return;
     }
-    else if (brightness > 8)
+    if (brightness <= 8)
+        return;
+
+    for (int i = 0; i < 4; ++i)
     {
-        for (int i = 0; i < 4; ++i)
+        int zOffset = random->nextInt(3) - 1;
+        int yOffset = random->nextInt(2);
+        int xOffset = random->nextInt(3) - 1;
+        BlockPos target(pos.x + xOffset, pos.y + yOffset, pos.z + zOffset);
+        Block* block = level->getBlock(target);
+        if (target.y < 256 && !level->hasChunkAt(target))
+            return;
+        if (block != Blocks::dirt)
+            continue;
+        if (Blocks::dirt->getBlockState(level->getBlockData(target.x, target.y, target.z))->getValue(DirtBlock::VARIANT)
+            != DirtBlock::Variant::DIRT)
         {
-            BlockPos target = pos.offset(random->nextInt(3) - 1,
-                                         random->nextInt(2),
-                                         random->nextInt(3) - 1);
-            const BlockState* state = level->getBlockState(target);
-            if (!level->hasChunkAt(target))
-                return;
-            if (state->getBlock() != this)
-                continue;
-            level->setBlock(target, defaultBlockState(), 2, false);
+            continue;
+        }
+
+        const BlockState* aboveState = level->getBlockState(target.above());
+        const BlockState* aboveExtraState = level->getExtraBlockState(target.above());
+        Material* aboveMaterial = aboveState->getBlock()->mMaterial;
+        Material* aboveExtraMaterial = aboveExtraState->getBlock()->mMaterial;
+        int lightBlock = aboveState->getLightBlock();
+        int extraLightBlock = aboveExtraState->getLightBlock();
+        if (lightBlock < extraLightBlock)
+            lightBlock = extraLightBlock;
+        if (level->getRawBrightness(target.above()) >= 4 && !aboveState->isSolid() && !aboveMaterial->isLiquid()
+            && !aboveExtraMaterial->isLiquid() && lightBlock < 3)
+        {
+            level->setBlock(target, Blocks::grass->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
     }
 }
@@ -189,6 +197,32 @@ int GrassBlock::convertBlockStateToLegacyData(const BlockState*)
 
 unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
+    switch (Item::getId(tooltipData.m_pItemInstance->getItem()))
+    {
+    case 256:
+    case 269:
+    case 273:
+    case 277:
+    case 284:
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bIsInside)
+            return IDS_TOOLTIPS_DIG_PATH;
+        break;
+    case 290:
+    case 291:
+    case 292:
+    case 293:
+    case 294:
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bIsInside)
+            return IDS_TOOLTIPS_TILL;
+        break;
+    case 351:
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+            && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
+        {
+            return IDS_TOOLTIPS_GROW;
+        }
+        break;
+    }
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -199,7 +233,8 @@ bool GrassBlock::waterSpreadCausesSpawn()
 
 BlockStateDefinition* GrassBlock::createBlockStateDefinition()
 {
-    return new BlockStateDefinition(this);
+    static const Property* properties[1] = { SNOWY };
+    return new BlockStateDefinition(this, properties, 1);
 }
 
 bool GrassBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockState*)
@@ -229,9 +264,9 @@ TextureAtlasSprite* GrassBlock::getTexture(LevelSource* levelSource, const Block
     if (direction == Direction::UP)
         return mTopIcon;
     if (direction == Direction::DOWN)
-        return mSnowSideIcon;
-    const BlockState* above = levelSource->getBlockState(pos.above());
-    if (above->getBlock() != Blocks::snow && above->getBlock() != Blocks::snow_layer)
+        return Blocks::dirt->getTexture(direction);
+    Material* aboveMaterial = levelSource->getBlockState(pos.above())->getBlock()->mMaterial;
+    if (aboveMaterial != Material::TOP_SNOW && aboveMaterial != Material::SNOW)
         return mSideIcon;
     return mSnowSideIcon;
 }

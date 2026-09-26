@@ -1,4 +1,5 @@
 #include "game/world/block/RailBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 
@@ -16,23 +17,23 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<BaseRailBlock::RailShape*>* gRailShapeProperty = NULL;
+EnumProperty<BaseRailBlock::RailShape*>* RailBlock::SHAPE = NULL;
 
 void RailBlock::blockStaticCtor()
 {
     boost::unordered_set<BaseRailBlock::RailShape*> values;
-    values.insert(gRailShapes[0]);
-    values.insert(gRailShapes[1]);
-    values.insert(gRailShapes[2]);
-    values.insert(gRailShapes[3]);
-    values.insert(gRailShapes[4]);
-    values.insert(gRailShapes[5]);
-    values.insert(gRailShapes[6]);
-    values.insert(gRailShapes[7]);
-    values.insert(gRailShapes[8]);
-    values.insert(gRailShapes[9]);
+    values.insert(RailShape::NORTH_SOUTH);
+    values.insert(RailShape::EAST_WEST);
+    values.insert(RailShape::ASCENDING_EAST);
+    values.insert(RailShape::ASCENDING_WEST);
+    values.insert(RailShape::ASCENDING_NORTH);
+    values.insert(RailShape::ASCENDING_SOUTH);
+    values.insert(RailShape::SOUTH_EAST);
+    values.insert(RailShape::SOUTH_WEST);
+    values.insert(RailShape::NORTH_WEST);
+    values.insert(RailShape::NORTH_EAST);
 
-    gRailShapeProperty = EnumProperty<BaseRailBlock::RailShape*>::create(
+    RailBlock::SHAPE = EnumProperty<BaseRailBlock::RailShape*>::create(
         L"shape", typeid(BaseRailBlock::RailShape*), values,
         Predicates<BaseRailBlock::RailShape*>::alwaysTrue);
 }
@@ -41,8 +42,8 @@ RailBlock::RailBlock()
     : BaseRailBlock(false)
 {
     DerivedInit();
-    TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[0]);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gRailShapeProperty, &shape));
+    TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(RailBlock::SHAPE, &shape));
 }
 
 RailBlock::~RailBlock()
@@ -61,20 +62,20 @@ void RailBlock::updateState(const BlockState* state, Level* level, const BlockPo
     }
 }
 
-const Property* RailBlock::getShapeProperty()
+const AbstractProperty<BaseRailBlock::RailShape*>* RailBlock::getShapeProperty()
 {
-    return gRailShapeProperty;
+    return RailBlock::SHAPE;
 }
 
 const BlockState* RailBlock::getBlockState(int data)
 {
     TypedBoxed<BaseRailBlock::RailShape*> shape(BaseRailBlock::RailShape::byData(data));
-    return defaultBlockState()->setBoxedValue(gRailShapeProperty, &shape);
+    return defaultBlockState()->setBoxedValue(RailBlock::SHAPE, &shape);
 }
 
 int RailBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gRailShapeProperty)->getData();
+    return state->getValue(RailBlock::SHAPE)->getData();
 }
 
 unsigned int RailBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -83,7 +84,7 @@ unsigned int RailBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (tooltipData.m_bIsInside
         && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
     {
-        return 0x4C36CD96U;
+        return IDS_TOOLTIPS_PLACE;
     }
 
     return tooltip;
@@ -94,155 +95,155 @@ const BlockState* RailBlock::rotate(const BlockState* state, Rotation* rotation)
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise180:
-        switch (state->getValue(gRailShapeProperty)->getData())
+        switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 2:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 3:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 4:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 5:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 6:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 7:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 8:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 9:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         }
     case Rotation::eTYPE_CounterClockwise90:
-        switch (state->getValue(gRailShapeProperty)->getData())
+        switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 0:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[1]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::EAST_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 1:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[0]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 2:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 3:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 4:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 5:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 6:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 7:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 8:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 9:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         }
     case Rotation::eTYPE_Clockwise90:
-        switch (state->getValue(gRailShapeProperty)->getData())
+        switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 0:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[1]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::EAST_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 1:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[0]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 2:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 3:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 4:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 5:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 6:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 7:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 8:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 9:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         }
     default:
@@ -256,73 +257,73 @@ const BlockState* RailBlock::mirror(const BlockState* state, Mirror* mirror)
 {
     if (mirror->getType() == Mirror::eTYPE_LeftRight)
     {
-        switch (state->getValue(gRailShapeProperty)->getData())
+        switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 4:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 5:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 6:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 7:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 8:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 9:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         }
     }
     else if (mirror->getType() == Mirror::eTYPE_FrontBack)
     {
-        switch (state->getValue(gRailShapeProperty)->getData())
+        switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 2:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 3:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 6:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 7:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 8:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         case 9:
         {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
-            return state->setBoxedValue(gRailShapeProperty, &shape);
+            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
+            return state->setBoxedValue(RailBlock::SHAPE, &shape);
         }
         }
     }
@@ -332,13 +333,13 @@ const BlockState* RailBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* RailBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { gRailShapeProperty };
+    static const Property* properties[] = { RailBlock::SHAPE };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* RailBlock::getTexture(const Direction*, const BlockState* state)
 {
-    if (state->getValue(gRailShapeProperty)->getData() > 5)
+    if (state->getValue(RailBlock::SHAPE)->getData() > 5)
     {
         return mTurnedTexture;
     }

@@ -7,24 +7,9 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/System.hpp"
 #include "game/core/XLockFreeStack.hpp"
+#include "game/core/XMem.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
-struct _MEMORYSTATUS
-{
-    unsigned long dwLength;
-    unsigned long dwMemoryLoad;
-    unsigned long dwTotalPhys;
-    unsigned long dwAvailPhys;
-    unsigned long dwTotalPageFile;
-    unsigned long dwAvailPageFile;
-    unsigned long dwTotalVirtual;
-    unsigned long dwAvailVirtual;
-};
-
-void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
-void XPhysicalFree(void* address);
-void* XMemSet(void* destination, int value, unsigned int count);
-void* XMemCpy(void* destination, const void* source, unsigned int count);
-void GlobalMemoryStatus(_MEMORYSTATUS* status);
 void __debugbreak();
 
 static int sPendingDeleteList;

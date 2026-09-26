@@ -323,7 +323,7 @@ const BlockState* RedStoneWireBlock::updatePowerStrength(Level* level, const Blo
         state = state->setBoxedValue(POWER, &boxedPower);
         if (level->getBlockState(pos) == placedState)
         {
-            int flags = gApp.GetGameHostOption(static_cast<eGameHostOption>(0x1f)) ? 0x24 : 2;
+            int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x24 : 2;
             level->setData(pos.x, pos.y, pos.z, power, flags, false);
         }
         mUpdatedPositions.insert(pos);
@@ -611,21 +611,41 @@ int RedStoneWireBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* RedStoneWireBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<ConnectingSide*> north(state->getValue(NORTH));
-    TypedBoxed<ConnectingSide*> east(state->getValue(EAST));
-    TypedBoxed<ConnectingSide*> south(state->getValue(SOUTH));
-    TypedBoxed<ConnectingSide*> west(state->getValue(WEST));
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90:
-        return state->setBoxedValue(NORTH, &west)->setBoxedValue(EAST, &north)
-            ->setBoxedValue(SOUTH, &east)->setBoxedValue(WEST, &south);
     case Rotation::eTYPE_Clockwise180:
-        return state->setBoxedValue(NORTH, &south)->setBoxedValue(EAST, &west)
-            ->setBoxedValue(SOUTH, &north)->setBoxedValue(WEST, &east);
+    {
+        TypedBoxed<ConnectingSide*> north(state->getValue(SOUTH));
+        TypedBoxed<ConnectingSide*> east(state->getValue(WEST));
+        TypedBoxed<ConnectingSide*> south(state->getValue(NORTH));
+        TypedBoxed<ConnectingSide*> west(state->getValue(EAST));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
     case Rotation::eTYPE_CounterClockwise90:
-        return state->setBoxedValue(NORTH, &east)->setBoxedValue(EAST, &south)
-            ->setBoxedValue(SOUTH, &west)->setBoxedValue(WEST, &north);
+    {
+        TypedBoxed<ConnectingSide*> north(state->getValue(EAST));
+        TypedBoxed<ConnectingSide*> east(state->getValue(SOUTH));
+        TypedBoxed<ConnectingSide*> south(state->getValue(WEST));
+        TypedBoxed<ConnectingSide*> west(state->getValue(NORTH));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
+    case Rotation::eTYPE_Clockwise90:
+    {
+        TypedBoxed<ConnectingSide*> north(state->getValue(WEST));
+        TypedBoxed<ConnectingSide*> east(state->getValue(NORTH));
+        TypedBoxed<ConnectingSide*> south(state->getValue(EAST));
+        TypedBoxed<ConnectingSide*> west(state->getValue(SOUTH));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
     default:
         return state;
     }
@@ -695,5 +715,5 @@ TextureAtlasSprite* RedStoneWireBlock::getTexture(const std::wstring& name)
 
 EBlockRenderShape RedStoneWireBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(5);
+    return BLOCK_RENDER_DUST;
 }

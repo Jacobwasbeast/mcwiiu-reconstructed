@@ -60,12 +60,12 @@ const BlockState* GlazedTerracottaBlock::getBlockState(int data)
 
 EPistonPushReaction GlazedTerracottaBlock::getPistonPushReaction(const BlockState*)
 {
-    return static_cast<EPistonPushReaction>(4);
+    return PISTON_PUSH_PUSH_ONLY;
 }
 
 EBlockRenderShape GlazedTerracottaBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(47);
+    return BLOCK_RENDER_HORIZONTAL_DIRECTIONAL;
 }
 
 BlockStateDefinition* GlazedTerracottaBlock::createBlockStateDefinition()

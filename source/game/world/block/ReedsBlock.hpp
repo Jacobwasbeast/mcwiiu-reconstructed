@@ -35,7 +35,7 @@ public:
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder&);
 
 private:
-    void checkAlive(Level*, const BlockPos&, const BlockState*);
+    bool checkAlive(Level*, const BlockPos&, const BlockState*);
 };
 
 #endif

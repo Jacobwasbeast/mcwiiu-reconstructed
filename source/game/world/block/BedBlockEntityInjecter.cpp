@@ -17,8 +17,8 @@ CompoundTag* BedBlockEntityInjecter::fix(CompoundTag* tag)
     CompoundTag* level = tag->getCompound(L"Level");
     int chunkX = level->getInt(L"xPos");
     int chunkZ = level->getInt(L"zPos");
-    ListTag* tileEntities = level->getList(L"TileEntities", 10);
-    ListTag* sections = level->getList(L"Sections", 10);
+    ListTag* tileEntities = level->getList(L"TileEntities", Tag::TAG_COMPOUND);
+    ListTag* sections = level->getList(L"Sections", Tag::TAG_COMPOUND);
 
     for (int sectionIndex = 0; sectionIndex < sections->size(); sectionIndex++)
     {

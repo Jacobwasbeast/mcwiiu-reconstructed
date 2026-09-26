@@ -56,7 +56,7 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
         Material* material = level->getBlockState(pos.below())->getBlock()->getCraftingMaterial();
         if (material->blocksMotion() || material->isLiquid())
         {
-            level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+            level->setBlockAndUpdate(pos, Blocks::flowing_water->defaultBlockState());
         }
     }
     else
@@ -78,7 +78,7 @@ void IceBlock::melt(Level* level, const BlockPos& pos)
         return;
     }
 
-    level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+    level->setBlockAndUpdate(pos, Blocks::flowing_water->defaultBlockState());
     level->neighborChanged(pos, level->getBlock(pos), pos);
 }
 

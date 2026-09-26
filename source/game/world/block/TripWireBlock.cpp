@@ -85,26 +85,29 @@ const AABB* TripWireBlock::getClipAABB(const BlockState*, LevelSource*, const Bl
 bool TripWireBlock::isSolidRender(const BlockState*) const { return false; }
 bool TripWireBlock::isCubeShaped(const BlockState*) { return false; }
 int TripWireBlock::getRenderLayer() { return 1; }
-Item* TripWireBlock::getResource(const BlockState*, Random*, int) { return Item::byBlock(this); }
+Item* TripWireBlock::getResource(const BlockState*, Random*, int) { return Items::string; }
 not_null_ptr<ItemInstance> TripWireBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*) { return not_null_ptr<ItemInstance>(new ItemInstance(Items::string)); }
 
 void TripWireBlock::updateSource(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* directions[2] = { Direction::EAST, Direction::SOUTH };
+    static const Direction* directions[2] = { Direction::SOUTH, Direction::WEST };
     for (int d = 0; d < 2; ++d)
     {
         const Direction* direction = directions[d];
-        for (int distance = 1; distance <= 42; ++distance)
+        for (int i = 1; i < 42; ++i)
         {
-            BlockPos check = pos.relative(direction, distance);
-            const BlockState* next = level->getBlockState(check);
-            if (next->getBlock() == Blocks::tripwire_hook)
+            BlockPos testPos = pos.relative(direction, i);
+            const BlockState* testState = level->getBlockState(testPos);
+            if (testState->getBlock() == Blocks::tripwire_hook)
             {
-                if (next->getValue(static_cast<AbstractProperty<const Direction*>*>(TripWireHookBlock::FACING)) == direction->getOpposite())
-                    static_cast<TripWireHookBlock*>(next->getBlock())->calculateState(level, check, next, false, true, distance, state);
+                if (testState->getValue(TripWireHookBlock::FACING) == direction->getOpposite())
+                {
+                    static_cast<TripWireHookBlock*>(Blocks::tripwire_hook)
+                        ->calculateState(level, testPos, testState, false, true, i, state);
+                }
                 break;
             }
-            if (next->getBlock() != Blocks::tripwire)
+            if (testState->getBlock() != Blocks::tripwire)
                 break;
         }
     }
@@ -112,7 +115,7 @@ void TripWireBlock::updateSource(Level* level, const BlockPos& pos, const BlockS
 
 void TripWireBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    level->setBlock(pos, state, 3, false);
+    level->setBlock(pos, state, Block::UPDATE_ALL, false);
     updateSource(level, pos, state);
 }
 
@@ -135,7 +138,7 @@ bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const B
         if (wasShears)
         {
             TypedBoxed<bool> disarmed(true);
-            level->setBlock(pos, state->setBoxedValue(DISARMED, &disarmed), 4, false);
+            level->setBlock(pos, state->setBoxedValue(DISARMED, &disarmed), Block::UPDATE_INVISIBLE, false);
         }
     }
     return false;
@@ -144,16 +147,35 @@ bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const B
 void TripWireBlock::checkPressed(Level* level, const BlockPos& pos)
 {
     const BlockState* state = level->getBlockState(pos);
+    if (state->getBlock() != this)
+        return;
+
+    bool wasPressed = state->getValue(POWERED);
     bool pressed = false;
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), getShape(state, level, pos)->move(pos));
-    for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = entities->begin(); it != entities->end(); ++it)
-        if ((*it)->isPickable()) { pressed = true; break; }
-    if (pressed != state->getValue(POWERED))
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        level->getEntities(boost::shared_ptr<Entity>(), state->getShape(level, pos)->move(pos), NULL);
+    if (!entities->empty())
     {
-        TypedBoxed<bool> value(pressed);
-        level->setBlock(pos, state->setBoxedValue(POWERED, &value), 3, false);
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+        {
+            boost::shared_ptr<Entity> entity = *it;
+            if (!entity->isIgnoringBlockTriggers())
+            {
+                pressed = true;
+                break;
+            }
+        }
+    }
+
+    if (pressed != wasPressed)
+    {
+        TypedBoxed<bool> poweredValue(pressed);
+        state = state->setBoxedValue(POWERED, &poweredValue);
+        level->setBlock(pos, state, Block::UPDATE_ALL, false);
         updateSource(level, pos, state);
     }
+    if (pressed)
+        level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
 void TripWireBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>&)
@@ -185,46 +207,65 @@ int TripWireBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* TripWireBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    const Direction* directions[4] = { Direction::NORTH, Direction::EAST,
-                                       Direction::SOUTH, Direction::WEST };
-    AbstractProperty<bool>* properties[4] = { NORTH, EAST, SOUTH, WEST };
-    const BlockState* result = state;
-    for (int i = 0; i < 4; ++i)
+    switch (rotation->getType())
     {
-        TypedBoxed<bool> value(state->getValue(properties[i]));
-        const Direction* destination = rotation->rotate(directions[i]);
-        for (int j = 0; j < 4; ++j)
-        {
-            if (directions[j] == destination)
-            {
-                result = result->setBoxedValue(properties[j], &value);
-                break;
-            }
-        }
+    case Rotation::eTYPE_Clockwise180:
+    {
+        TypedBoxed<bool> north(state->getValue(SOUTH));
+        TypedBoxed<bool> east(state->getValue(WEST));
+        TypedBoxed<bool> south(state->getValue(NORTH));
+        TypedBoxed<bool> west(state->getValue(EAST));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
     }
-    return result;
+    case Rotation::eTYPE_CounterClockwise90:
+    {
+        TypedBoxed<bool> north(state->getValue(EAST));
+        TypedBoxed<bool> east(state->getValue(SOUTH));
+        TypedBoxed<bool> south(state->getValue(WEST));
+        TypedBoxed<bool> west(state->getValue(NORTH));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
+    case Rotation::eTYPE_Clockwise90:
+    {
+        TypedBoxed<bool> north(state->getValue(WEST));
+        TypedBoxed<bool> east(state->getValue(NORTH));
+        TypedBoxed<bool> south(state->getValue(EAST));
+        TypedBoxed<bool> west(state->getValue(SOUTH));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
+    default:
+        return state;
+    }
 }
 
 const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    const Direction* directions[4] = { Direction::NORTH, Direction::EAST,
-                                       Direction::SOUTH, Direction::WEST };
-    AbstractProperty<bool>* properties[4] = { NORTH, EAST, SOUTH, WEST };
-    const BlockState* result = state;
-    for (int i = 0; i < 4; ++i)
+    switch (mirror->getType())
     {
-        TypedBoxed<bool> value(state->getValue(properties[i]));
-        const Direction* destination = mirror->mirror(directions[i]);
-        for (int j = 0; j < 4; ++j)
-        {
-            if (directions[j] == destination)
-            {
-                result = result->setBoxedValue(properties[j], &value);
-                break;
-            }
-        }
+    case Mirror::eTYPE_LeftRight:
+    {
+        TypedBoxed<bool> north(state->getValue(SOUTH));
+        TypedBoxed<bool> south(state->getValue(NORTH));
+        return state->setBoxedValue(NORTH, &north)->setBoxedValue(SOUTH, &south);
     }
-    return result;
+    case Mirror::eTYPE_FrontBack:
+    {
+        TypedBoxed<bool> east(state->getValue(WEST));
+        TypedBoxed<bool> west(state->getValue(EAST));
+        return state->setBoxedValue(EAST, &east)->setBoxedValue(WEST, &west);
+    }
+    default:
+        return Block::mirror(state, mirror);
+    }
 }
 
 BlockStateDefinition* TripWireBlock::createBlockStateDefinition()
@@ -234,4 +275,4 @@ BlockStateDefinition* TripWireBlock::createBlockStateDefinition()
 }
 
 EBlockFaceShape TripWireBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape TripWireBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(30); }
+EBlockRenderShape TripWireBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_TRIPWIRE; }

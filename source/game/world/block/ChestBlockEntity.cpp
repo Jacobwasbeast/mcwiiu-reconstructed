@@ -1,4 +1,6 @@
 #include "game/world/block/ChestBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/ParticleType.hpp"
@@ -15,9 +17,9 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-ChestBlockEntity::ChestBlockEntity(bool large)
+ChestBlockEntity::ChestBlockEntity(bool isBonusChest)
     : RandomizableLockableContainerBlockEntity(),
-      mLarge(large),
+      mIsBonusChest(isBonusChest),
       mRefilledAnimationTicks(-1),
       mNeighborsChecked(false),
       mNorthNeighbour(),
@@ -31,12 +33,12 @@ ChestBlockEntity::ChestBlockEntity(bool large)
       mCachedType(-1),
       mNeighbourRemoved(false)
 {
-    _init(large);
+    _init(isBonusChest);
 }
 
-ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool large)
+ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool isBonusChest)
     : RandomizableLockableContainerBlockEntity(),
-      mLarge(large),
+      mIsBonusChest(isBonusChest),
       mRefilledAnimationTicks(-1),
       mNeighborsChecked(false),
       mNorthNeighbour(),
@@ -50,7 +52,7 @@ ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool large)
       mCachedType(type),
       mNeighbourRemoved(false)
 {
-    _init(large);
+    _init(isBonusChest);
     mCachedType = type;
 }
 
@@ -63,9 +65,9 @@ BlockEntity* ChestBlockEntity::create()
     return new ChestBlockEntity(false);
 }
 
-void ChestBlockEntity::_init(bool large)
+void ChestBlockEntity::_init(bool isBonusChest)
 {
-    mLarge = large;
+    mIsBonusChest = isBonusChest;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
     mRefilledAnimationTicks = -1;
     mOpen = 0.0F;
@@ -179,11 +181,11 @@ AbstractContainerMenu* ChestBlockEntity::createMenu(boost::shared_ptr<Inventory>
 
 int ChestBlockEntity::getTypeId(bool large)
 {
-    if (mLarge)
+    if (mIsBonusChest)
     {
-        return 13;
+        return ClientboundContainerOpenPacket::BONUS_CHEST;
     }
-    return large ? 14 : 0;
+    return large ? ClientboundContainerOpenPacket::LARGE_CHEST : ClientboundContainerOpenPacket::CONTAINER;
 }
 
 void ChestBlockEntity::addDataWalkers(DataFixerUpper* fixer)
@@ -191,7 +193,7 @@ void ChestBlockEntity::addDataWalkers(DataFixerUpper* fixer)
     if (fixer)
     {
         fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                         (DataWalker*)new ItemListDataWalker(0x1e00201ULL, L"Items"));
+                         (DataWalker*)new ItemListDataWalker(BlockEntityType::CHEST, L"Items"));
     }
 }
 
@@ -204,7 +206,7 @@ void ChestBlockEntity::load(CompoundTag* tag)
     {
         ContainerHelper::loadAllItems(tag, mItems);
     }
-    mLarge = tag->getBoolean(L"bonus");
+    mIsBonusChest = tag->getBoolean(L"bonus");
 }
 
 CompoundTag* ChestBlockEntity::save(CompoundTag* tag)
@@ -212,7 +214,7 @@ CompoundTag* ChestBlockEntity::save(CompoundTag* tag)
     BlockEntity::save(tag);
     mCustomName->saveToTag(tag);
     ContainerHelper::saveAllItems(tag, mItems);
-    tag->putBoolean(L"bonus", mLarge);
+    tag->putBoolean(L"bonus", mIsBonusChest);
     return tag;
 }
 
@@ -498,7 +500,7 @@ void ChestBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 
 boost::shared_ptr<BlockEntity> ChestBlockEntity::clone()
 {
-    boost::shared_ptr<ChestBlockEntity> result(new ChestBlockEntity((ChestBlock::Type)getType(), mLarge));
+    boost::shared_ptr<ChestBlockEntity> result(new ChestBlockEntity((ChestBlock::Type)getType(), mIsBonusChest));
     result->setItems(mItems);
     result->mOpenCount = mOpenCount;
     result->mOpen = mOpen;
@@ -526,5 +528,5 @@ std::wstring ChestBlockEntity::getDisplayName()
 
 unsigned long long ChestBlockEntity::GetType()
 {
-    return 0x0000000001e00201ULL;
+    return BlockEntityType::CHEST;
 }

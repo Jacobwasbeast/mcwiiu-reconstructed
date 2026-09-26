@@ -20,7 +20,7 @@
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<PlanksBlock::Variant*>* gWoodSlabVariantProperty = NULL;
+EnumProperty<PlanksBlock::Variant*>* WoodSlabBlock::VARIANT = NULL;
 static const int gWoodSlabDescriptionIds[6] = {
     (int)0xDE25DD5A, (int)0x74EF0A65, (int)0x26F5D1DD,
     (int)0xE0B76C20, (int)0x5C9C0D57, (int)0x1C5A6EC1
@@ -34,7 +34,7 @@ void WoodSlabBlock::blockStaticCtor()
         values.insert(PlanksBlock::Variant::byData(i));
     }
 
-    gWoodSlabVariantProperty = EnumProperty<PlanksBlock::Variant*>::create(
+    VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
         L"variant", typeid(PlanksBlock::Variant*), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
 }
 
@@ -59,12 +59,12 @@ void WoodSlabBlock::DerivedInit()
     }
 
     TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(0));
-    registerDefaultState(state->setBoxedValue(gWoodSlabVariantProperty, &variant));
+    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
 }
 
 const MaterialColor* WoodSlabBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return state->getValue(gWoodSlabVariantProperty)->getMaterialColor();
+    return state->getValue(VARIANT)->getMaterialColor();
 }
 
 Item* WoodSlabBlock::getResource(const BlockState*, Random*, int)
@@ -74,7 +74,7 @@ Item* WoodSlabBlock::getResource(const BlockState*, Random*, int)
 
 not_null_ptr<ItemInstance> WoodSlabBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    int data = state->getValue(gWoodSlabVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
     return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wooden_slab, 1, data));
 }
 
@@ -85,7 +85,7 @@ int WoodSlabBlock::getAuxName(int auxValue)
 
 Property* WoodSlabBlock::getTypeProperty()
 {
-    return gWoodSlabVariantProperty;
+    return VARIANT;
 }
 
 Boxed* WoodSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
@@ -98,7 +98,7 @@ const BlockState* WoodSlabBlock::getBlockState(int data)
 {
     TypedBoxed<PlanksBlock::Variant*> variant(
         PlanksBlock::Variant::byData(data & 7));
-    const BlockState* state = defaultBlockState()->setBoxedValue(gWoodSlabVariantProperty, &variant);
+    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
 
     if (!isFullSize())
     {
@@ -111,7 +111,7 @@ const BlockState* WoodSlabBlock::getBlockState(int data)
 
 int WoodSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(gWoodSlabVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
 
     if (!isFullSize() && state->getValue(TYPE) == TOP)
     {
@@ -125,22 +125,22 @@ BlockStateDefinition* WoodSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        const Property* properties[1] = { gWoodSlabVariantProperty };
+        const Property* properties[1] = { VARIANT };
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    const Property* properties[2] = { TYPE, gWoodSlabVariantProperty };
+    const Property* properties[2] = { TYPE, VARIANT };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 int WoodSlabBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gWoodSlabVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 TextureAtlasSprite* WoodSlabBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    int data = state->getValue(gWoodSlabVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
     return Blocks::planks->getTexture(direction, Blocks::planks->getBlockState(data));
 }
 
@@ -151,7 +151,7 @@ void WoodSlabBlock::registerIcons(IconRegister*)
 int WoodSlabBlock::getDescriptionId(int auxValue)
 {
     const BlockState* state = getBlockState(-1);
-    int data = state->getValue(gWoodSlabVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
     if (data == -1)
     {
         data = 0;

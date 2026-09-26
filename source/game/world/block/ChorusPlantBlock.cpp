@@ -69,25 +69,20 @@ void ChorusPlantBlock::DerivedInit()
     registerDefaultState(state->setBoxedValue(CHORUS_WEST, &west));
 }
 
-static bool chorusConnection(const BlockState*, const BlockState* neighbor, const ChorusPlantBlock* block)
-{
-    return neighbor->getBlock() == block || neighbor->getBlock() == Blocks::AIR;
-}
-
 const BlockState* ChorusPlantBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* below = levelSource->getBlockState(pos.below());
-    const BlockState* above = levelSource->getBlockState(pos.above());
-    const BlockState* north = levelSource->getBlockState(pos.north());
-    const BlockState* east = levelSource->getBlockState(pos.east());
-    const BlockState* south = levelSource->getBlockState(pos.south());
-    const BlockState* west = levelSource->getBlockState(pos.west());
-    TypedBoxed<bool> down(chorusConnection(state, below, this));
-    TypedBoxed<bool> up(chorusConnection(state, above, this));
-    TypedBoxed<bool> northValue(chorusConnection(state, north, this));
-    TypedBoxed<bool> eastValue(chorusConnection(state, east, this));
-    TypedBoxed<bool> southValue(chorusConnection(state, south, this));
-    TypedBoxed<bool> westValue(chorusConnection(state, west, this));
+    Block* below = levelSource->getBlock(pos.below());
+    Block* above = levelSource->getBlock(pos.above());
+    Block* north = levelSource->getBlock(pos.north());
+    Block* east = levelSource->getBlock(pos.east());
+    Block* south = levelSource->getBlock(pos.south());
+    Block* west = levelSource->getBlock(pos.west());
+    TypedBoxed<bool> down(below == this || below == Blocks::chorus_flower || below == Blocks::end_stone);
+    TypedBoxed<bool> up(above == this || above == Blocks::chorus_flower);
+    TypedBoxed<bool> northValue(north == this || north == Blocks::chorus_flower);
+    TypedBoxed<bool> eastValue(east == this || east == Blocks::chorus_flower);
+    TypedBoxed<bool> southValue(south == this || south == Blocks::chorus_flower);
+    TypedBoxed<bool> westValue(west == this || west == Blocks::chorus_flower);
     const BlockState* result = state->setBoxedValue(CHORUS_DOWN, &down);
     result = result->setBoxedValue(CHORUS_UP, &up);
     result = result->setBoxedValue(CHORUS_NORTH, &northValue);
@@ -129,7 +124,7 @@ void ChorusPlantBlock::tick(Level* level, const BlockPos& pos, const BlockState*
     if (!canSurvive(level, pos, state)) level->destroyBlock(pos, true);
 }
 
-Item* ChorusPlantBlock::getResource(const BlockState*, Random*, int) { return Items::air; }
+Item* ChorusPlantBlock::getResource(const BlockState*, Random*, int) { return Items::chorusFruit; }
 int ChorusPlantBlock::getResourceCount(Random* random) { return random->nextInt(2); }
 bool ChorusPlantBlock::isCubeShaped(const BlockState*) { return false; }
 bool ChorusPlantBlock::isSolidRender(const BlockState*) const { return false; }
@@ -174,7 +169,7 @@ bool ChorusPlantBlock::canSurvive(Level* level, const BlockPos& pos, const Block
 int ChorusPlantBlock::getRenderLayer() { return 0; }
 bool ChorusPlantBlock::isPathfindable(LevelSource*, const BlockPos&) { return false; }
 EBlockFaceShape ChorusPlantBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape ChorusPlantBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)46; }
+EBlockRenderShape ChorusPlantBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_CHORUS_PLANT; }
 
 const AABB* ChorusPlantBlock::getVerticalShape(const BlockState* state, LevelSource*, const BlockPos&)
 {

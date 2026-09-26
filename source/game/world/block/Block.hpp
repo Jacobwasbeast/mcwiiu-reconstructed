@@ -45,21 +45,75 @@ class Vec3;
 enum EBlockType
 {
     EBLOCK_TYPE_NONE = 0,
+    EBLOCK_TYPE_DOOR = 1,
     EBLOCK_TYPE_RAIL = 2,
+    EBLOCK_TYPE_WALL = 3,
+    EBLOCK_TYPE_FENCE_GATE = 4,
     EBLOCK_TYPE_FENCE = 5,
-    EBLOCK_TYPE_MOB_SPAWNER = 6,
+    EBLOCK_TYPE_LIQUID = 6,
     EBLOCK_TYPE_SLAB = 8,
     EBLOCK_TYPE_FALLING = 11
 };
 
 enum EBlockRenderShape
 {
+    BLOCK_RENDER_INVISIBLE = -1,
     BLOCK_RENDER_MODEL = 0,
-    BLOCK_RENDER_ENTITY = 1,
-    BLOCK_RENDER_INVISIBLE = 2,
+    BLOCK_RENDER_CROSS = 1,
+    BLOCK_RENDER_TORCH = 2,
+    BLOCK_RENDER_FIRE = 3,
+    BLOCK_RENDER_WATER = 4,
+    BLOCK_RENDER_DUST = 5,
+    BLOCK_RENDER_ROW = 6,
     BLOCK_RENDER_DOOR = 7,
+    BLOCK_RENDER_LADDER = 8,
+    BLOCK_RENDER_RAIL = 9,
+    BLOCK_RENDER_STAIRS = 10,
+    BLOCK_RENDER_FENCE = 11,
+    BLOCK_RENDER_LEVER = 12,
+    BLOCK_RENDER_CACTUS = 13,
+    BLOCK_RENDER_BED = 14,
+    BLOCK_RENDER_REPEATER = 15,
+    BLOCK_RENDER_PISTON_BASE = 16,
+    BLOCK_RENDER_PISTON_EXTENSION = 17,
+    BLOCK_RENDER_THIN_FENCE = 18,
+    BLOCK_RENDER_STEM = 19,
+    BLOCK_RENDER_VINE = 20,
+    BLOCK_RENDER_FENCE_GATE = 21,
+    BLOCK_RENDER_ENTITY = 22,
+    BLOCK_RENDER_LILYPAD = 23,
+    BLOCK_RENDER_CAULDRON = 24,
+    BLOCK_RENDER_BREWING_STAND = 25,
     BLOCK_RENDER_AIR_PORTAL_FRAME = 26,
-    BLOCK_RENDER_END_ROD = 44
+    BLOCK_RENDER_EGG = 27,
+    BLOCK_RENDER_COCOA = 28,
+    BLOCK_RENDER_TRIPWIRE_SOURCE = 29,
+    BLOCK_RENDER_TRIPWIRE = 30,
+    BLOCK_RENDER_TREE = 31,
+    BLOCK_RENDER_WALL = 32,
+    BLOCK_RENDER_FLOWER_POT = 33,
+    BLOCK_RENDER_BEACON = 34,
+    BLOCK_RENDER_ANVIL = 35,
+    BLOCK_RENDER_DIODE = 36,
+    BLOCK_RENDER_COMPARATOR = 37,
+    BLOCK_RENDER_HOPPER = 38,
+    BLOCK_RENDER_QUARTZ = 39,
+    BLOCK_RENDER_GLASS_PANE = 40,
+    BLOCK_RENDER_DOUBLE_PLANT = 41,
+    BLOCK_RENDER_SLIME_BLOCK = 42,
+    BLOCK_RENDER_TRAPDOOR = 43,
+    BLOCK_RENDER_END_ROD = 44,
+    BLOCK_RENDER_CHORUS_FLOWER = 45,
+    BLOCK_RENDER_CHORUS_PLANT = 46,
+    BLOCK_RENDER_HORIZONTAL_DIRECTIONAL = 47,
+    BLOCK_RENDER_OBSERVER = 48,
+    BLOCK_RENDER_KELP = 49,
+    BLOCK_RENDER_TURTLE_EGG = 50,
+    BLOCK_RENDER_CORAL_FAN = 51,
+    BLOCK_RENDER_SEAGRASS = 52,
+    BLOCK_RENDER_SEA_PICKLE = 53,
+    BLOCK_RENDER_CONDUIT = 54,
+    BLOCK_RENDER_COMMAND_BLOCK = 55
 };
 
 enum EBlockOffsetType
@@ -72,8 +126,23 @@ enum EBlockOffsetType
 class Block
 {
 public:
+    enum EUpdateFlag
+    {
+        UPDATE_NONE = 0,
+        UPDATE_NEIGHBORS = 1,
+        UPDATE_CLIENTS = 2,
+        UPDATE_ALL = UPDATE_NEIGHBORS | UPDATE_CLIENTS,
+        UPDATE_INVISIBLE = 4,
+        UPDATE_IMMEDIATE = 8,
+        UPDATE_NO_OBSERVERS = 16,
+        UPDATE_LIGHT_IF_CHANGED = 32,
+        UPDATE_CHUNK_ONLY = 64
+    };
+
     static DefaultedMappedRegistry<ResourceLocation, Block*>* blockRegistry;
     static IdMapper<const BlockState*>* blockStateRegistry;
+    static float INDESTRUCTIBLE;
+    static const AABB* FULL_BLOCK_SHAPE;
 
     class ThreadStorage
     {
@@ -271,19 +340,19 @@ public:
     int getFaceFlagsFast(LevelSource* levelSource, const BlockPos& pos);
     int getFaceFlags(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, bool forceAll);
     bool instanceof(EBlockType blockType);
-    int mCachedElementId;
 
     Material* getCraftingMaterial() { return mMaterial; }
 
 public:
     void _init(Material* material, const MaterialColor* materialColor);
 
-    bool mUseSharedIcon;
-    bool mHasSecondaryIcon;
-    bool mHasTintedFace;
-    bool mIsExtraBlock;
-    bool mIsAlwaysRendered;
+    bool mIsDoor;
+    bool mIsRail;
+    bool mIsFence;
+    bool mIsWall;
+    bool mIsFenceGate;
     std::wstring mIconName;
+    int mCachedElementId;
     bool mFullBlock;
     int mLightBlock;
     bool mTranslucent;
@@ -318,7 +387,6 @@ public:
 
 extern unsigned int THREAD_STORAGE_INDEX;
 
-void* TlsGetValue(unsigned int index);
 
 boost::shared_ptr<ItemInstance> createItem(Block* block);
 

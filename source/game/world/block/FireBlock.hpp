@@ -5,9 +5,18 @@
 
 #include "game/world/block/Block.hpp"
 
+template <class T> class AbstractProperty;
+
 class FireBlock : public Block
 {
 public:
+    static AbstractProperty<int>* AGE;
+    static AbstractProperty<bool>* NORTH;
+    static AbstractProperty<bool>* EAST;
+    static AbstractProperty<bool>* SOUTH;
+    static AbstractProperty<bool>* WEST;
+    static AbstractProperty<bool>* UP;
+
     FireBlock();
     virtual ~FireBlock();
 

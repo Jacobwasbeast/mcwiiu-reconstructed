@@ -1,4 +1,5 @@
 #include "game/world/block/StoneSlabBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
@@ -19,8 +20,17 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::STONE = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::SAND = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::WOOD = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::COBBLESTONE = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::BRICK = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::SMOOTHBRICK = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::NETHERBRICK = NULL;
+StoneSlabBlock::Variant* StoneSlabBlock::Variant::QUARTZ = NULL;
+
 static StoneSlabBlock::Variant* gStoneSlabVariants[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-static EnumProperty<StoneSlabBlock::Variant*>* gStoneSlabVariantProperty = NULL;
+EnumProperty<StoneSlabBlock::Variant*>* StoneSlabBlock::VARIANT = NULL;
 static AbstractProperty<bool>* gStoneSlabSeamlessProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"seamless"));
 
@@ -48,21 +58,29 @@ std::wstring StoneSlabBlock::Variant::getSerializedName() const { return mName; 
 
 void StoneSlabBlock::blockStaticCtor()
 {
-    gStoneSlabVariants[0] = new Variant(0, MaterialColor::STONE, L"stone", 762025956);
-    gStoneSlabVariants[1] = new Variant(1, MaterialColor::SAND, L"sandstone", -293529481);
-    gStoneSlabVariants[2] = new Variant(2, MaterialColor::WOOD, L"wood_old", -1214914228);
-    gStoneSlabVariants[3] = new Variant(3, MaterialColor::STONE, L"cobblestone", -1579406718);
-    gStoneSlabVariants[4] = new Variant(4, MaterialColor::COLOR_RED, L"brick", -1553598690);
-    gStoneSlabVariants[5] = new Variant(5, MaterialColor::STONE, L"stone_brick", -227356180);
-    gStoneSlabVariants[6] = new Variant(6, MaterialColor::NETHER, L"nether_brick", -1524297450);
-    gStoneSlabVariants[7] = new Variant(7, MaterialColor::QUARTZ, L"quartz", 684318662);
+    Variant::STONE = new Variant(0, MaterialColor::STONE, L"stone", IDS_TILE_STONESLAB_STONE);
+    Variant::SAND = new Variant(1, MaterialColor::SAND, L"sandstone", 0xEE811877);
+    Variant::WOOD = new Variant(2, MaterialColor::WOOD, L"wood_old", 0xB795E14C);
+    Variant::COBBLESTONE = new Variant(3, MaterialColor::STONE, L"cobblestone", 0xA1DC2A82);
+    Variant::BRICK = new Variant(4, MaterialColor::COLOR_RED, L"brick", 0xA365F71E);
+    Variant::SMOOTHBRICK = new Variant(5, MaterialColor::STONE, L"stone_brick", 0xF272D1EC);
+    Variant::NETHERBRICK = new Variant(6, MaterialColor::NETHER, L"nether_brick", 0xA5251116);
+    Variant::QUARTZ = new Variant(7, MaterialColor::QUARTZ, L"quartz", 0x28C9DFC6);
+    gStoneSlabVariants[0] = Variant::STONE;
+    gStoneSlabVariants[1] = Variant::SAND;
+    gStoneSlabVariants[2] = Variant::WOOD;
+    gStoneSlabVariants[3] = Variant::COBBLESTONE;
+    gStoneSlabVariants[4] = Variant::BRICK;
+    gStoneSlabVariants[5] = Variant::SMOOTHBRICK;
+    gStoneSlabVariants[6] = Variant::NETHERBRICK;
+    gStoneSlabVariants[7] = Variant::QUARTZ;
 
     boost::unordered_set<Variant*> values;
     for (int i = 0; i < 8; ++i)
     {
         values.insert(gStoneSlabVariants[i]);
     }
-    gStoneSlabVariantProperty = EnumProperty<Variant*>::create(
+    VARIANT = EnumProperty<Variant*>::create(
         L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
@@ -88,7 +106,7 @@ void StoneSlabBlock::DerivedInit()
         state = state->setBoxedValue(TYPE, &half);
     }
     TypedBoxed<Variant*> variant(gStoneSlabVariants[0]);
-    registerDefaultState(state->setBoxedValue(gStoneSlabVariantProperty, &variant));
+    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
 }
 
 Item* StoneSlabBlock::getResource(const BlockState* state, Random*, int)
@@ -98,7 +116,7 @@ Item* StoneSlabBlock::getResource(const BlockState* state, Random*, int)
 
 not_null_ptr<ItemInstance> StoneSlabBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    int data = state->getValue(gStoneSlabVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
     return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_slab, 1, data));
 }
 
@@ -109,7 +127,7 @@ int StoneSlabBlock::getAuxName(int auxValue)
 
 Property* StoneSlabBlock::getTypeProperty()
 {
-    return gStoneSlabVariantProperty;
+    return VARIANT;
 }
 
 Boxed* StoneSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
@@ -120,7 +138,7 @@ Boxed* StoneSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
 const BlockState* StoneSlabBlock::getBlockState(int data)
 {
     TypedBoxed<Variant*> variant(Variant::byData(data & 7));
-    const BlockState* state = defaultBlockState()->setBoxedValue(gStoneSlabVariantProperty, &variant);
+    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
     if (!isFullSize())
     {
         Half* halfValue = (data & 8) == 0 ? BOTTOM : TOP;
@@ -132,7 +150,7 @@ const BlockState* StoneSlabBlock::getBlockState(int data)
 
 int StoneSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(gStoneSlabVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
     if (isFullSize())
     {
         if (state->getValue(gStoneSlabSeamlessProperty))
@@ -152,24 +170,24 @@ BlockStateDefinition* StoneSlabBlock::createBlockStateDefinition()
     const Property* properties[2] = {
         isFullSize() ? static_cast<const Property*>(gStoneSlabSeamlessProperty)
                      : static_cast<const Property*>(HalfSlabBlock::TYPE),
-        gStoneSlabVariantProperty
+        VARIANT
     };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 int StoneSlabBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gStoneSlabVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 const MaterialColor* StoneSlabBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return state->getValue(gStoneSlabVariantProperty)->getColor();
+    return state->getValue(VARIANT)->getColor();
 }
 
 TextureAtlasSprite* StoneSlabBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    StoneSlabBlock::Variant* variant = state->getValue(gStoneSlabVariantProperty);
+    StoneSlabBlock::Variant* variant = state->getValue(VARIANT);
     if (variant->getData() == 0)
     {
         return direction == Direction::UP || direction == Direction::DOWN ? mIcon : mSideTexture;
@@ -187,7 +205,7 @@ TextureAtlasSprite* StoneSlabBlock::getTexture(const Direction* direction, const
     case 5:
         return Blocks::stonebrick->getTexture(direction);
     case 6:
-        return Blocks::netherrack->getTexture(Direction::UP);
+        return Blocks::nether_brick->getTexture(Direction::UP);
     case 7:
         return Blocks::quartz_block->getTexture(direction);
     }

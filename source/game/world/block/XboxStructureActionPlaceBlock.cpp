@@ -13,11 +13,11 @@ XboxStructureActionPlaceBlock::XboxStructureActionPlaceBlock()
     mBlock = NULL;
     mAuxValue = 0;
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), &mEndX);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), &mEndY);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), &mEndZ);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(18), &mAuxValue);
-    addBlockAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(19), &mBlock);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x, &mEndX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_y, &mEndY);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mEndZ);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_data, &mAuxValue);
+    addBlockAttribute(ConsoleGameRules::eGameRuleAttr_block, &mBlock);
 }
 
 XboxStructureActionPlaceBlock::~XboxStructureActionPlaceBlock()
@@ -32,7 +32,7 @@ uint32_t XboxStructureActionPlaceBlock::placeBlockInLevel(StructurePiece* struct
 
 ConsoleGameRules::EGameRuleType XboxStructureActionPlaceBlock::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(5);
+    return ConsoleGameRules::eGameRuleType_PlaceBlock;
 }
 
 uint32_t XboxStructureActionPlaceBlock::getEndX()

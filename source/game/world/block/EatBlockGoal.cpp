@@ -1,4 +1,6 @@
 #include "game/world/block/EatBlockGoal.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -39,10 +41,8 @@ EatBlockGoal::~EatBlockGoal()
 
 void EatBlockGoal::staticCtor()
 {
-    sTallGrassPredicate = static_cast<BlockStatePredicate*>(
-        BlockStatePredicate::forBlock(Blocks::tallgrass))->where(
-            TallGrassBlock_VARIANT,
-            new Predicates<Boxed*>::FunctionPredicate(tallGrassPredicate));
+    sTallGrassPredicate = BlockStatePredicate::forBlock(Blocks::tallgrass)
+                              ->where(TallGrassBlock_VARIANT, new Predicates<Boxed*>::FunctionPredicate(tallGrassPredicate));
 }
 
 bool EatBlockGoal::canUse()
@@ -61,7 +61,7 @@ bool EatBlockGoal::canUse()
 void EatBlockGoal::start()
 {
     mEatAnimationTick = 40;
-    mLevel->broadcastEntityEvent(mMob->shared_from_this(), 10, 0);
+    mLevel->broadcastEntityEvent(mMob->shared_from_this(), EntityEvent::EAT_GRASS, 0);
     mMob->getNavigation()->stop();
 }
 
@@ -92,7 +92,7 @@ void EatBlockGoal::tick()
     BlockPos pos(mMob->mX, mMob->mY, mMob->mZ);
     if (sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
     {
-        if (mLevel->getGameRules()->getBoolean(1))
+        if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
             mLevel->destroyBlock(pos, false);
         mMob->ate();
         return;
@@ -100,10 +100,10 @@ void EatBlockGoal::tick()
 
     BlockPos below = pos.below();
     if (mLevel->getBlockState(below)->getBlock() == Blocks::grass &&
-        mLevel->getGameRules()->getBoolean(1))
+        mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
     {
-        mLevel->levelEvent(2001, below, Block::getId(Blocks::grass));
-        mLevel->setBlock(below, Blocks::dirt->defaultBlockState(), 2, false);
+        mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, below, Block::getId(Blocks::grass));
+        mLevel->setBlock(below, Blocks::dirt->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
     mMob->ate();
 }

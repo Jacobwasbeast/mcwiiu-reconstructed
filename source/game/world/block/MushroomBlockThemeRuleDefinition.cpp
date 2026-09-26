@@ -4,10 +4,12 @@
 #include "game/world/block/HugeMushroomBlock.hpp"
 #include "game/world/block/MushroomBlockLayerTheme.hpp"
 
+static Block* sDefaultMushroomBlock = Blocks::red_mushroom_block;
+
 MushroomBlockThemeRuleDefinition::MushroomBlockThemeRuleDefinition()
-    : mBlock(Blocks::red_mushroom_block)
+    : mBlock(sDefaultMushroomBlock)
 {
-    addBlockAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlock);
+    addBlockAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlock);
 }
 
 MushroomBlockThemeRuleDefinition::~MushroomBlockThemeRuleDefinition()
@@ -16,7 +18,7 @@ MushroomBlockThemeRuleDefinition::~MushroomBlockThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType MushroomBlockThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(69);
+    return ConsoleGameRules::eGameRuleType_MushroomBlockTheme;
 }
 
 LayerTheme* MushroomBlockThemeRuleDefinition::Generate() const
@@ -25,7 +27,7 @@ LayerTheme* MushroomBlockThemeRuleDefinition::Generate() const
 
     if (mushroomBlock == NULL)
     {
-        mushroomBlock = static_cast<HugeMushroomBlock*>(Blocks::red_mushroom_block);
+        mushroomBlock = static_cast<HugeMushroomBlock*>(sDefaultMushroomBlock);
     }
 
     return new MushroomBlockLayerTheme(mushroomBlock);

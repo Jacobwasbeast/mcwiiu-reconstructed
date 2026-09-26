@@ -1,4 +1,6 @@
 #include "game/world/block/PumpkinBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -24,6 +26,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/item/ItemId.hpp"
 
 PumpkinBlock::PumpkinBlock()
     : HorizontalDirectionalBlock(Material::VEGETABLE, MaterialColor::COLOR_ORANGE),
@@ -35,7 +38,7 @@ PumpkinBlock::PumpkinBlock()
       mIronGolemFullPattern(NULL)
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
+    TypedBoxed<const Direction*> facing(Direction::SOUTH);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing));
     setTicking(true);
 }
@@ -115,8 +118,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
     BlockPattern::BlockPatternMatch* snow = mSnowGolemFullPattern->find(level, pos);
     if (snow != NULL)
     {
-        const unsigned long long snowManType = 0x2D580001ULL;
-        bool canCreate = level->canCreateMore(snowManType, 0);
+        bool canCreate = level->canCreateMore(EntityType::SNOW_MAN, Level::eSpawnType_Egg);
 
         for (int y = 0; y < snow->getHeight(); ++y)
         {
@@ -127,7 +129,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
                 Block* block = blockInWorld->getState()->getBlock();
                 block->spawnResources(level, blockPos, level->getBlockState(blockPos), 0);
             }
-            level->setBlock(blockPos, Blocks::AIR->defaultBlockState(), 2, false);
+            level->setBlock(blockPos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
 
         BlockPos spawnPos = snow->getBlock(0, 2, 0)->getPos();
@@ -137,7 +139,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
             snowMan->moveTo((double)spawnPos.x + 0.5, (double)spawnPos.y + 0.05,
                             (double)spawnPos.z + 0.5, 0.0f, 0.0f);
             level->addEntity(snowMan);
-            fjAwardCraftedGolemStat(snowManType);
+            fjAwardCraftedGolemStat(EntityType::SNOW_MAN);
         }
 
         for (int i = 0; i < 120; ++i)
@@ -150,7 +152,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
         }
 
         for (int y = 0; y < snow->getHeight(); ++y)
-            level->blockUpdated(snow->getBlock(0, y, 0)->getPos(), Blocks::AIR, false);
+            level->blockUpdated(snow->getBlock(0, y, 0)->getPos(), Blocks::air, false);
         return;
     }
 
@@ -158,8 +160,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
     BlockPattern::BlockPatternMatch* iron = mIronGolemFullPattern->find(level, pos);
     if (iron != NULL)
     {
-        const unsigned long long villagerGolemType = 0x0D580002ULL;
-        bool canCreate = level->canCreateMore(villagerGolemType, 0);
+        bool canCreate = level->canCreateMore(EntityType::VILLAGER_GOLEM, Level::eSpawnType_Egg);
 
         for (int x = 0; x < iron->getWidth(); ++x)
         {
@@ -172,7 +173,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
                     Block* block = blockInWorld->getState()->getBlock();
                     block->spawnResources(level, blockPos, level->getBlockState(blockPos), 0);
                 }
-                level->setBlock(blockPos, Blocks::AIR->defaultBlockState(), 2, false);
+                level->setBlock(blockPos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             }
         }
 
@@ -184,7 +185,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
             villagerGolem->moveTo((double)spawnPos.x + 0.5, (double)spawnPos.y + 0.05,
                                   (double)spawnPos.z + 0.5, 0.0f, 0.0f);
             level->addEntity(villagerGolem);
-            fjAwardCraftedGolemStat(villagerGolemType);
+            fjAwardCraftedGolemStat(EntityType::VILLAGER_GOLEM);
         }
 
         for (int i = 0; i < 120; ++i)
@@ -199,7 +200,7 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
         for (int x = 0; x < iron->getWidth(); ++x)
         {
             for (int y = 0; y < iron->getHeight(); ++y)
-                level->blockUpdated(iron->getBlock(x, y, 0)->getPos(), Blocks::AIR, false);
+                level->blockUpdated(iron->getBlock(x, y, 0)->getPos(), Blocks::air, false);
         }
     }
 }
@@ -214,7 +215,7 @@ bool PumpkinBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     const BlockState* below = level->getBlockState(pos.below());
     const BlockState* current = level->getBlockState(pos);
-    if (!current->getMaterial()->isReplaceable() && current->getBlock() != Blocks::AIR)
+    if (!current->getMaterial()->isReplaceable() && current->getBlock() != Blocks::air)
         return false;
     return below->canProvideSupport(Direction::UP, BLOCK_SUPPORT_ANY);
 }
@@ -265,7 +266,7 @@ TextureAtlasSprite* PumpkinBlock::getTexture(const Direction* direction, const B
 
 void PumpkinBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring suffix = (this == Blocks::carved_pumpkin) ? L"on" : L"off";
+    std::wstring suffix = (this == Blocks::lit_pumpkin) ? L"on" : L"off";
     mFaceIcon = iconRegister->registerIcon(getIconName() + L"_face_" + suffix);
     mTopIcon = iconRegister->registerIcon(getIconName() + L"_top");
     mIcon = iconRegister->registerIcon(getIconName() + L"_side");
@@ -273,8 +274,8 @@ void PumpkinBlock::registerIcons(IconRegister* iconRegister)
 
 unsigned int PumpkinBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (this == Blocks::pumpkin && Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x167
+    if (this == Blocks::pumpkin && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::SHEARS
         && !tooltipData.m_bUseItem)
-        return 0x95D5A56Eu;
+        return IDS_TOOLTIPS_CARVE;
     return Block::GetInteractTooltip(tooltipData);
 }

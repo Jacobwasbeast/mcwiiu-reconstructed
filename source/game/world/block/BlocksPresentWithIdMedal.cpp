@@ -23,10 +23,10 @@ double BlocksPresentWithIdMedal::GetScore(PlayerStats* playerStats) const
         std::set<int>::const_iterator it = mBlockIds.begin();
         for (; it != mBlockIds.end(); ++it)
         {
-            blockCount += roundStats->mBlocksUsed.mItems[*it];
+            blockCount += roundStats->mBlocksPresent.mByBlock[*it];
         }
 
-        score = (*mScoreFunction)(blockCount, roundStats->mBlocksUsed.mCount);
+        score = (*mScoreFunction)(blockCount, roundStats->mBlocksPresent.mCount);
     }
 
     return score;

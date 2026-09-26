@@ -1,6 +1,6 @@
 #include "game/world/block/BlockPlacedMedal.hpp"
 
-int getBlocksPlaced(const PlayerStats::RoundStats& roundStats);
+#include "game/world/generation/PlayerStats.hpp"
 
 BlockPlacedMedal::BlockPlacedMedal(int name, float target, unsigned int weight, GameMedal::EOperator op)
     : GameMedal(name, target, weight, op, true, false)

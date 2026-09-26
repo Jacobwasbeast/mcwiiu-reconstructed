@@ -15,6 +15,9 @@ class Level;
 class LevelSource;
 class Property;
 
+template <typename T>
+class AbstractProperty;
+
 class BaseRailBlock : public Block
 {
 public:
@@ -26,6 +29,17 @@ public:
         int getData();
         virtual std::wstring toString() const;
         static RailShape* byData(int data);
+        static RailShape* NORTH_SOUTH;
+        static RailShape* EAST_WEST;
+        static RailShape* ASCENDING_EAST;
+        static RailShape* ASCENDING_WEST;
+        static RailShape* ASCENDING_NORTH;
+        static RailShape* ASCENDING_SOUTH;
+        static RailShape* SOUTH_EAST;
+        static RailShape* SOUTH_WEST;
+        static RailShape* NORTH_WEST;
+        static RailShape* NORTH_EAST;
+        static RailShape* VALUES[10];
         virtual std::wstring getSerializedName() const;
         std::wstring getName();
 
@@ -82,12 +96,10 @@ public:
     virtual int getRenderLayer();
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
-    virtual const Property* getShapeProperty() = 0;
-    virtual bool usesDataBit() { return mIsPowered; }
+    virtual const AbstractProperty<RailShape*>* getShapeProperty() = 0;
+    bool usesDataBit() { return mIsPowered; }
     bool mIsPowered;
 };
-
-extern BaseRailBlock::RailShape* gRailShapes[10];
 
 bool railfilter(BaseRailBlock::RailShape* shape);
 bool railpredicate(BaseRailBlock::RailShape* shape);

@@ -1,14 +1,24 @@
 #include "game/world/block/ConduitBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
+#include <stdlib.h>
 #include <typeinfo>
+#include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/MobEffects.hpp"
+#include "game/entity/mob/Monster.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Dimension.hpp"
@@ -18,13 +28,14 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/PlayerList.hpp"
 
 ConduitBlockEntity::ConduitBlockEntity()
     : BlockEntity(),
       mActive(false),
       mHunting(false),
       mCheckTime(0),
-      mNextTargetCheck(0LL),
+      mNextAmbientSoundActivation(0LL),
       mTickCount(0),
       mAnimationValue(0.0f),
       mActiveRotation(0.0f),
@@ -56,31 +67,37 @@ boost::shared_ptr<BlockEntity> ConduitBlockEntity::clone()
 void ConduitBlockEntity::_animateTick()
 {
     BlockPos position = getBlockPos();
-    double x = (double)position.x + 0.5;
-    double y = (double)position.y + 1.5;
-    double z = (double)position.z + 0.5;
+    double x = position.x + 0.5;
+    double y = position.y + 1.5;
+    double z = position.z + 0.5;
 
     if (mLevel->mRandom->nextInt(5) != 0)
-    {
         return;
-    }
 
-    if (mActive && !mBlocks.empty())
+    if (mActive)
     {
-        std::vector<BlockPos>::iterator it;
-        for (it = mBlocks.begin(); it != mBlocks.end(); ++it)
+        for (std::vector<BlockPos>::iterator it = mBlocks.begin(); it != mBlocks.end(); ++it)
         {
             if (mLevel->mRandom->nextInt(5) == 0)
             {
-                double ox = (double)mLevel->mRandom->nextFloat(-0.5f, 0.5f);
-                double oy = (double)mLevel->mRandom->nextFloat(-2.0f, -1.0f);
-                double oz = (double)mLevel->mRandom->nextFloat(-0.5f, 0.5f);
-                mLevel->addParticle(PARTICLE_CONDUIT, x, y, z,
-                                     (double)(it->x - position.x) + ox,
-                                     (double)(it->y - position.y) + oy,
-                                     (double)(it->z - position.z) + oz,
-                                     arrayWithLength<int>());
+                double ox = mLevel->mRandom->nextFloat(-0.5f, 0.5f);
+                double oy = mLevel->mRandom->nextFloat(-2.0f, -1.0f);
+                double oz = mLevel->mRandom->nextFloat(-0.5f, 0.5f);
+                mLevel->addParticle(PARTICLE_CONDUIT, x, y, z, (it->x - position.x) + ox, (it->y - position.y) + oy,
+                                    (it->z - position.z) + oz, arrayWithLength<int>());
             }
+        }
+    }
+
+    boost::shared_ptr<Entity> target = mLevel->getEntity(mTargetId);
+    if (target)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            float xa = (mLevel->mRandom->nextFloat() + -0.5f) * (target->mBbWidth + 3.0f);
+            float ya = mLevel->mRandom->nextFloat() * target->mBbHeight + -1.0f;
+            float za = (mLevel->mRandom->nextFloat() + -0.5f) * (target->mBbWidth + 3.0f);
+            mLevel->addParticle(PARTICLE_CONDUIT, x, y, z, xa, ya, za, arrayWithLength<int>());
         }
     }
 }
@@ -93,78 +110,120 @@ void ConduitBlockEntity::setEffectRange(int range)
 
 void ConduitBlockEntity::_checkShape()
 {
-    const BlockPos center = getBlockPos();
+    bool wasActive = mActive;
     mBlocks.clear();
     mActive = false;
     mHunting = false;
 
-    bool submerged = true;
-    int dx;
-    int dy;
-    int dz;
-    for (dx = -1; dx <= 1; ++dx)
+    bool dry = false;
+    BlockPos center = getBlockPos();
+    for (int x = -1; x <= 1; ++x)
     {
-        for (dy = -1; dy <= 1; ++dy)
+        for (int y = -1; y <= 1; ++y)
         {
-            for (dz = -1; dz <= 1; ++dz)
+            for (int z = -1; z <= 1; ++z)
             {
-                if (dx == 0 && dy == 0 && dz == 0)
-                {
+                if (x == 0 && y == 0 && z == 0)
                     continue;
-                }
-                if (mLevel->getLiquidBlock(center.offset(dx, dy, dz))->mMaterial != Material::WATER)
+                if (mLevel->getLiquidBlock(BlockPos(center.x + x, center.y + y, center.z + z))->mMaterial
+                    != Material::WATER)
                 {
-                    submerged = false;
+                    dry = true;
                 }
             }
         }
     }
 
-    if (submerged)
+    for (int x = -2; x <= 2; ++x)
     {
-        int count = 0;
-        int y;
-        int x;
-        int z;
-        for (y = -2; y <= 2; ++y)
+        for (int y = -2; y <= 2; ++y)
         {
-            for (x = -2; x <= 2; ++x)
+            if ((abs(x) == 1 || x == 0) && (abs(y) == 1 || y == 0))
+                continue;
+            BlockPos framePos(center.x + x, center.y + y, center.z);
+            Block* block = mLevel->getBlock(framePos);
+            if (block == Blocks::prismarine)
+                mBlocks.push_back(framePos);
+            if (block == Blocks::sea_lantern)
+                mBlocks.push_back(framePos);
+        }
+    }
+
+    for (int x = -2; x <= 2; ++x)
+    {
+        for (int z = -2; z <= 2; ++z)
+        {
+            if ((abs(x) == 1 || x == 0) && (abs(z) == 1 || z == 0))
+                continue;
+            if (abs(x) == 2 && z == 0)
+                continue;
+            BlockPos framePos(center.x + x, center.y, center.z + z);
+            Block* block = mLevel->getBlock(framePos);
+            if (block == Blocks::prismarine)
+                mBlocks.push_back(framePos);
+            if (block == Blocks::sea_lantern)
+                mBlocks.push_back(framePos);
+        }
+    }
+
+    for (int z = -2; z <= 2; ++z)
+    {
+        for (int y = -2; y <= 2; ++y)
+        {
+            if ((abs(z) == 1 || z == 0) && (abs(y) == 1 || y == 0))
+                continue;
+            if (abs(z) == 2 && y == 0)
+                continue;
+            if (abs(y) == 2 && z == 0)
+                continue;
+            BlockPos framePos(center.x, center.y + y, center.z + z);
+            Block* block = mLevel->getBlock(framePos);
+            if (block == Blocks::prismarine)
+                mBlocks.push_back(framePos);
+            if (block == Blocks::sea_lantern)
+                mBlocks.push_back(framePos);
+        }
+    }
+
+    if (!dry)
+    {
+        unsigned int count = mBlocks.size();
+        setEffectRange((static_cast<int>(count) / 7) * 16);
+        if (count > 15)
+        {
+            mActive = true;
+            if (!wasActive)
             {
-                for (z = -2; z <= 2; ++z)
+                mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z,
+                                       SoundEvents::CONDUIT_ACTIVATE, SoundSource::eSoundSource_Blocks, 1.0f,
+                                       1.0f, false, 16.0f);
+                if (!mLevel->mIsClientSide)
                 {
-                    bool frame = false;
-                    if ((y == -2 || y == 2) && x >= -1 && x <= 1 && z >= -1 && z <= 1)
+                    int range = mEffectRange;
+                    PlayerList* playerList = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+                    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+                    for (unsigned int i = 0; i < players->size(); ++i)
                     {
-                        frame = true;
-                    }
-                    if ((x == -2 || x == 2) && y >= -1 && y <= 1 && z >= -1 && z <= 1)
-                    {
-                        frame = true;
-                    }
-                    if ((z == -2 || z == 2) && y == 0 && x >= -1 && x <= 1)
-                    {
-                        frame = true;
-                    }
-                    if (frame)
-                    {
-                        BlockPos position = center.offset(x, y, z);
-                        Block* block = mLevel->getBlock(position);
-                        if (block == Blocks::prismarine || block == Blocks::sea_lantern)
+                        boost::shared_ptr<ServerPlayer> player = players->at(i);
+                        Vec3* position = player->getPos(0.0f);
+                        if (center.x - range < position->x && position->x < center.x + range
+                            && center.y - range < position->y && position->y < center.y + range
+                            && center.z - range < position->z && position->z < center.z + range)
                         {
-                            mBlocks.push_back(position);
-                            ++count;
+                            player->awardStat(GenericStats::moskstraumen(), GenericStats::param_moskstraumen());
                         }
                     }
                 }
             }
+            if (count > 41)
+                mHunting = true;
         }
+    }
 
-        setEffectRange((count / 7) * 16);
-        if (count > 15)
-        {
-            mActive = true;
-            mHunting = count > 41;
-        }
+    if (wasActive && !mActive)
+    {
+        mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, SoundEvents::CONDUIT_DEACTIVATE,
+                               SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, false, 16.0f);
     }
 }
 
@@ -193,37 +252,52 @@ void ConduitBlockEntity::_applyEffects()
 
 void ConduitBlockEntity::_updateTarget()
 {
-    if (mLevel == NULL || mLevel->mIsClientSide)
-    {
+    if (mLevel->mIsClientSide)
         return;
-    }
+
+    int previousTarget = mTargetId;
+    if (!mHunting)
+        mTargetId = -1;
 
     boost::shared_ptr<Entity> target = mLevel->getEntity(mTargetId);
-    if (target && target->isInWaterOrRain() && target->distanceToSqr(getBlockPos()) < 64.0)
+    if (target)
     {
-        return;
-    }
-
-    mTargetId = -1;
-    if (!mHunting)
-    {
-        setChanged();
-        return;
-    }
-
-    AABB* area = AABB::newTemp(getBlockPos());
-    area->grow(8.0)->expand(0.0, 1.0, 0.0);
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), area);
-    if (entities != NULL && !entities->empty())
-    {
-        int index = mLevel->mRandom->nextInt((int)entities->size());
-        if ((*entities)[index])
+        if (target->isAlive() && target->isInWaterOrRain() && target->distanceToSqr(getBlockPos()) < 64.0)
         {
-            mTargetId = (*entities)[index]->getId();
+            mLevel->playSound(boost::shared_ptr<Player>(), getBlockPos(), SoundEvents::CONDUIT_ATTACK,
+                              SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+            target->hurt(DamageSource::MAGIC, 4.0f);
+            if (mTargetId != previousTarget)
+                setChanged();
         }
+        else
+        {
+            mTargetId = -1;
+            if (previousTarget != -1)
+                setChanged();
+        }
+        return;
     }
-    delete entities;
-    setChanged();
+
+    if (mHunting)
+    {
+        std::vector<boost::shared_ptr<Entity> > candidates;
+        const AABB* area = AABB::newTemp(mPos.x, mPos.y, mPos.z, mPos.x + 1, mPos.y + 1, mPos.z + 1)
+                               ->grow(8.0)
+                               ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
+        std::vector<boost::shared_ptr<Entity> >* monsters = mLevel->getEntitiesOfClass(typeid(Monster), area);
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = monsters->begin(); it != monsters->end(); ++it)
+        {
+            boost::shared_ptr<Entity> monster = *it;
+            if (monster && monster->isAlive() && monster->isInWaterOrRain())
+                candidates.push_back(monster);
+        }
+        delete monsters;
+        if (!candidates.empty())
+            mTargetId = candidates[mLevel->mRandom->nextInt(candidates.size())]->getId();
+    }
+    if (mTargetId != previousTarget)
+        setChanged();
 }
 
 void ConduitBlockEntity::tick()
@@ -231,18 +305,33 @@ void ConduitBlockEntity::tick()
     ++mTickCount;
     BlockEntity::tick();
     if (mActive)
-    {
         _animateTick();
-    }
-    if (--mCheckTime <= 0)
+
+    if (mLevel->mIsClientSide)
     {
-        mCheckTime = 40;
-        _checkShape();
-        if (mActive)
+        Random random(getBlockPos().hashCode());
+        int tick = mTickCount + random.nextInt(9001);
+        if (tick % 80 == 0 && mActive)
         {
-            _applyEffects();
-            _updateTarget();
+            mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, SoundEvents::CONDUIT_AMBIENT,
+                                   SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, false, 16.0f);
         }
+        if (tick > mNextAmbientSoundActivation && mActive)
+        {
+            mNextAmbientSoundActivation = tick + 60 + mLevel->mRandom->nextInt(40);
+            mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, SoundEvents::CONDUIT_SHORT,
+                                   SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, false, 16.0f);
+        }
+    }
+
+    if (--mCheckTime > 0)
+        return;
+    mCheckTime = 40;
+    _checkShape();
+    if (mActive)
+    {
+        _applyEffects();
+        _updateTarget();
     }
 }
 
@@ -302,5 +391,5 @@ void ConduitBlockEntity::incrementWindLevel()
 
 unsigned long long ConduitBlockEntity::GetType()
 {
-    return 0x0000000001200212ULL;
+    return BlockEntityType::CONDUIT;
 }

@@ -1,4 +1,6 @@
 #include "game/world/block/SignBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -17,7 +19,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 
-static const unsigned long long SIGN_BLOCK_ENTITY_TYPE = 0x01000202ULL;
 static const AABB* gSignShape = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
 
 SignBlock::SignBlock()
@@ -88,7 +89,7 @@ bool SignBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
         return true;
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() == NULL || blockEntity->GetType() != SIGN_BLOCK_ENTITY_TYPE)
+    if (blockEntity.get() == NULL || blockEntity->GetType() != BlockEntityType::SIGN)
         return false;
 
     boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(blockEntity);
@@ -114,8 +115,8 @@ unsigned int SignBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 {
     unsigned int result = Block::GetInteractTooltip(tooltipData);
     if (tooltipData.m_pPlayer != NULL && !tooltipData.m_pPlayer->isSneaking()
-        && (result == 0x4C36CD96u || result == 0xCE1819A5u))
-        return 0xFFFFFFFFu;
+        && (result == IDS_TOOLTIPS_PLACE || result == IDS_TOOLTIPS_HANG))
+        return IDS_NONE;
     return result;
 }
 
@@ -130,5 +131,5 @@ void SignBlock::registerIcons(IconRegister*)
 
 EBlockRenderShape SignBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(-1);
+    return BLOCK_RENDER_INVISIBLE;
 }

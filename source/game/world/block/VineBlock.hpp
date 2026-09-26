@@ -22,9 +22,15 @@ class VineBlock : public Block
 public:
     static BooleanProperty* UP;
     static BooleanProperty* NORTH;
+    static BooleanProperty* EAST;
     static BooleanProperty* SOUTH;
     static BooleanProperty* WEST;
-    static BooleanProperty* EAST;
+    static BooleanProperty* ALL_FACES[5];
+    static const AABB* UP_AABB;
+    static const AABB* WEST_AABB;
+    static const AABB* EAST_AABB;
+    static const AABB* NORTH_AABB;
+    static const AABB* SOUTH_AABB;
 
     VineBlock();
     virtual ~VineBlock();

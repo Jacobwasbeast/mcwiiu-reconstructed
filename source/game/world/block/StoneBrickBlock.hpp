@@ -20,6 +20,9 @@ public:
     {
     public:
         static Variant* DEFAULT;
+        static Variant* MOSSY;
+        static Variant* CRACKED;
+        static Variant* CHISELED;
 
         Variant(int data, const std::wstring& name, int translationKey);
         virtual std::wstring toString() const;
@@ -36,6 +39,10 @@ public:
     };
 
     static EnumProperty<Variant*>* VARIANT;
+    static int DEFAULT_META;
+    static int MOSSY_META;
+    static int CRACKED_META;
+    static int CHISELED_META;
 
     StoneBrickBlock();
     virtual ~StoneBrickBlock();

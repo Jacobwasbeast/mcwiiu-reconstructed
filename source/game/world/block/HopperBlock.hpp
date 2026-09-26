@@ -22,7 +22,9 @@ class ItemInstance;
 class Level;
 class LevelSource;
 class Mirror;
+class DirectionProperty;
 class Player;
+class Property;
 class Rotation;
 class TextureAtlasSprite;
 class LivingEntity;
@@ -30,6 +32,16 @@ class LivingEntity;
 class HopperBlock : public BaseEntityBlock
 {
 public:
+    static const std::wstring TEXTURE_OUTSIDE;
+    static const std::wstring TEXTURE_INSIDE;
+    static DirectionProperty* FACING;
+    static Property* ENABLED;
+    static const AABB* BASE_AABB;
+    static const AABB* SOUTH_AABB;
+    static const AABB* NORTH_AABB;
+    static const AABB* WEST_AABB;
+    static const AABB* EAST_AABB;
+
     HopperBlock();
     virtual ~HopperBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);

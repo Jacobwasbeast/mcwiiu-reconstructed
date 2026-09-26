@@ -49,13 +49,13 @@ void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
                 level->setBlockAndUpdate(pos.above(), defaultBlockState());
                 TypedBoxed<int> reset(0);
                 const BlockState* resetState = state->setBoxedValue(AGE, &reset);
-                level->setBlock(pos, resetState, 4, false);
+                level->setBlock(pos, resetState, Block::UPDATE_INVISIBLE, false);
                 resetState->neighborChanged(level, pos.above(), this, pos);
             }
             else
             {
                 TypedBoxed<int> next(age + 1);
-                level->setBlock(pos, state->setBoxedValue(AGE, &next), 4, false);
+                level->setBlock(pos, state->setBoxedValue(AGE, &next), Block::UPDATE_INVISIBLE, false);
             }
         }
     }
@@ -163,5 +163,5 @@ void CactusBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape CactusBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)13;
+    return BLOCK_RENDER_CACTUS;
 }

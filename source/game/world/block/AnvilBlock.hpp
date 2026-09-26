@@ -82,6 +82,8 @@ public:
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
 private:
+    friend class BlockRenderer;
+
     int mTextureType;
     TextureAtlasSprite* mTopIcons[3];
 };

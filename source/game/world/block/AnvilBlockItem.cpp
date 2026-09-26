@@ -1,13 +1,10 @@
 #include "game/world/block/AnvilBlockItem.hpp"
 
-#include <typeinfo>
-#include <cassert>
-
-#include "game/core/Boxed.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/AnvilBlock.hpp"
-#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 
 static const int ANVIL_BLOCK_NAME_IDS[] = {
     (int)0x99A9E601,
@@ -26,10 +23,7 @@ AnvilBlockItem::~AnvilBlockItem()
 
 int AnvilBlockItem::AnvilBlockNameResolver(int damage)
 {
-    Boxed* boxed = AnvilBlock::DAMAGE->getValueAtIndex((unsigned int)damage);
-    assert(boxed->isA(typeid(int)));
-    TypedBoxed<int>* value = static_cast<TypedBoxed<int>*>(boxed);
-    return ANVIL_BLOCK_NAME_IDS[value->getValue()];
+    return ANVIL_BLOCK_NAME_IDS[Blocks::anvil->getBlockState(damage)->getValue(AnvilBlock::DAMAGE)];
 }
 
 int AnvilBlockItem::AnvilBlockNameResolver(not_null_ptr<ItemInstance> itemInstance)

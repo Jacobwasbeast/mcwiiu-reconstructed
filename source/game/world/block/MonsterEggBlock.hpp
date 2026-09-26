@@ -30,6 +30,14 @@ public:
         static Variant* byData(int data);
         static Variant* byHostBlock(const BlockState* state);
 
+        static Variant* STONE;
+        static Variant* COBBLESTONE;
+        static Variant* STONEBRICK;
+        static Variant* MOSSY_STONEBRICK;
+        static Variant* CRACKED_STONEBRICK;
+        static Variant* CHISELED_STONEBRICK;
+        static Variant* VALUES[6];
+
     private:
         int mData;
         std::wstring mName;

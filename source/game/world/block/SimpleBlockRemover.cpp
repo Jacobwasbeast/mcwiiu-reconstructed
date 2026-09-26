@@ -21,9 +21,9 @@ bool SimpleBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
             {
                 BlockPos pos(area.mX, area.mY, area.mZ);
 
-                if (mLevel->getBlock(pos) != Blocks::AIR)
+                if (mLevel->getBlock(pos) != Blocks::air)
                 {
-                    mLevel->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+                    mLevel->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
 
                     ++removed;
 

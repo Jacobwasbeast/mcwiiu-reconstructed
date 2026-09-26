@@ -1,4 +1,5 @@
 #include "game/world/block/GravelBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/item/Item.hpp"
@@ -11,6 +12,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/core/SeaGrass.hpp"
+#include "game/item/ItemId.hpp"
 
 GravelBlock::GravelBlock()
     : FallingBlock()
@@ -62,14 +64,14 @@ unsigned int GravelBlock::getDustColor(const BlockState*)
 
 unsigned int GravelBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351)
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE)
     {
         BlockPos above = tooltipData.m_blockPos.above();
         if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 270, 0)
             && tooltipData.m_eInteractionResult != 2
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            return 0x9f5fdc40u;
+            return IDS_TOOLTIPS_GROW;
         }
     }
 

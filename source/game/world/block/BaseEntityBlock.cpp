@@ -47,7 +47,7 @@ bool BaseEntityBlock::touchesCactus(Level* level, const BlockPos& pos)
 
 EBlockRenderShape BaseEntityBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)-1;
+    return BLOCK_RENDER_INVISIBLE;
 }
 
 void BaseEntityBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -97,5 +97,5 @@ bool BaseEntityBlock::triggerEvent(const BlockState* state, Level* level, const 
 
 EPistonPushReaction BaseEntityBlock::getPistonPushReaction(const BlockState*)
 {
-    return (EPistonPushReaction)2;
+    return PISTON_PUSH_BLOCK;
 }

@@ -1,4 +1,10 @@
 #include "game/world/block/Block.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
+
+#include <limits>
+
 #include "game/item/ItemInstance.hpp"
 #include "game/item/LeadItem.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
@@ -9,7 +15,6 @@
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/ThinFenceBlock.hpp"
-#include "game/world/block/HalfTransparentBlock.hpp"
 #include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/SnowBlock.hpp"
 #include "game/world/block/StaticLiquidBlock.hpp"
@@ -222,9 +227,7 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/core/HitResult.hpp"
-
-unsigned int TlsAlloc();
-int TlsSetValue(unsigned int index, void* value);
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 template <class T>
 std::wstring _toString(T value);
@@ -233,8 +236,8 @@ static const ResourceLocation* AIR_LOCATION = new ResourceLocation(L"air");
 DefaultedMappedRegistry<ResourceLocation, Block*>* Block::blockRegistry =
     new DefaultedMappedRegistry<ResourceLocation, Block*>(*AIR_LOCATION);
 IdMapper<const BlockState*>* Block::blockStateRegistry = new IdMapper<const BlockState*>();
-static const AABB* FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
-static const float INDESTRUCTIBLE = -1.0f;
+const AABB* Block::FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
+float Block::INDESTRUCTIBLE = std::numeric_limits<float>::max();
 unsigned int THREAD_STORAGE_INDEX = TlsAlloc();
 
 boost::shared_ptr<ItemInstance> createItem(Block* block)
@@ -288,18 +291,18 @@ void Block::_init(Material* material, const MaterialColor* materialColor)
     mExplosionResistance = 0.0f;
     mDestroyTime = 0.0f;
     mTicking = false;
-    mHasSecondaryIcon = false;
+    mIsRail = false;
     mBaseItemType = 0;
     mMipmap = true;
-    mUseSharedIcon = false;
+    mIsDoor = false;
     mIcon = NULL;
-    mIsAlwaysRendered = false;
-    mHasTintedFace = false;
+    mIsFenceGate = false;
+    mIsFence = false;
     mSemiTransparent = false;
     mBaseItemMaterial = 0;
     mDerivedInitDone = false;
     mTranslucent = !material->blocksLight();
-    mIsExtraBlock = false;
+    mIsWall = false;
 
     setThickness(0.0f);
 }
@@ -392,7 +395,7 @@ Block* Block::byItem(Item* item)
 
     if (blockItem == NULL)
     {
-        return byId(0);
+        return Blocks::air;
     }
 
     return blockItem->getBlock();
@@ -530,46 +533,19 @@ bool Block::isTopSolidBlocking(const BlockState* state)
     return state->getMaterial()->isSolidBlocking() && state->isCubeShaped();
 }
 
-bool Block::canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType)
+bool Block::canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType)
 {
-    if (supportType != BLOCK_SUPPORT_CENTER)
-    {
+    if (direction != Direction::UP)
         return isCubeShaped(state) || isSolidBlockingCube(state);
-    }
-
-    if (isValidSpawn(state, boost::shared_ptr<Entity>()) || isCubeShaped(state))
-    {
+    if (isTopSolidBlocking(state) || isCubeShaped(state))
         return true;
-    }
-
-    if (HalfSlabBlock::isHalfSlab(state))
-    {
-        TypedBoxed<const HalfSlabBlock::Half*>* half =
-            (TypedBoxed<const HalfSlabBlock::Half*>*)state->getBoxedValue(HalfSlabBlock::TYPE);
-
-        if (half != NULL && half->getValue() == HalfSlabBlock::TOP)
-        {
-            return true;
-        }
-    }
-
-    if (StairBlock::isStairs(state))
-    {
-        TypedBoxed<const StairBlock::Half*>* half =
-            (TypedBoxed<const StairBlock::Half*>*)state->getBoxedValue(StairBlock::HALF);
-
-        if (half != NULL && half->getValue() != NULL && half->getValue()->getSerializedName() == L"top")
-        {
-            return true;
-        }
-    }
-
-    if (state->getBlock() != byId(78))
-    {
+    if (HalfSlabBlock::isHalfSlab(state) && state->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP)
+        return true;
+    if (StairBlock::isStairs(state) && state->getValue(StairBlock::HALF) == StairBlock::Half::TOP)
+        return true;
+    if (state->getBlock() != Blocks::snow_layer)
         return false;
-    }
-
-    return state->getBlock()->convertBlockStateToLegacyData(state) == 7;
+    return state->getValue(SnowLayerBlock::LAYERS) == 7;
 }
 
 bool Block::isValidSpawn(const BlockState* state, boost::shared_ptr<Entity> entity)
@@ -605,34 +581,34 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
 
         switch (blockId)
         {
-        case 6:
-        case 31:
-        case 32:
-        case 33:
-        case 34:
-        case 41:
-        case 42:
-        case 43:
-        case 44:
-        case 45:
-        case 46:
-        case 47:
-        case 48:
-        case 49:
-        case 50:
-        case 81:
-        case 83:
-        case 141:
-        case 142:
-        case 175:
-        case 270:
-        case 271:
+        case BlockId::SAPLING:
+        case BlockId::TALLGRASS:
+        case BlockId::DEADBUSH:
+        case BlockId::PISTON:
+        case BlockId::PISTON_HEAD:
+        case BlockId::GOLD_BLOCK:
+        case BlockId::IRON_BLOCK:
+        case BlockId::DOUBLE_STONE_SLAB:
+        case BlockId::STONE_SLAB:
+        case BlockId::BRICK_BLOCK:
+        case BlockId::TNT:
+        case BlockId::BOOKSHELF:
+        case BlockId::MOSSY_COBBLESTONE:
+        case BlockId::OBSIDIAN:
+        case BlockId::TORCH:
+        case BlockId::CACTUS:
+        case BlockId::REEDS:
+        case BlockId::CARROTS:
+        case BlockId::POTATOES:
+        case BlockId::DOUBLE_PLANT:
+        case BlockId::SEA_GRASS:
+        case BlockId::SEA_PICKLE:
             if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
             {
-                return 0x512092D2u;
+                return IDS_TOOLTIPS_PLANT;
             }
 
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
 
         default:
             break;
@@ -640,10 +616,10 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
 
         if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
-        return 0x4C36CD96u;
+        return IDS_TOOLTIPS_PLACE;
     }
 
     unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
@@ -654,10 +630,10 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
     case 0x181:
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
-        return 0xA3BAC985u;
+        return IDS_TOOLTIPS_IGNITE;
 
     case 0x127:
     case 0x152:
@@ -668,19 +644,19 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
     case 0x188:
         if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            return 0x512092D2u;
+            return IDS_TOOLTIPS_PLANT;
         }
 
-        return 0xFFFFFFFFu;
+        return IDS_NONE;
 
     case 0x141:
     case 0x185:
         if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success)
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
-        return 0xCE1819A5u;
+        return IDS_TOOLTIPS_HANG;
 
     case 0x146:
     case 0x147:
@@ -690,28 +666,28 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
     case 0x1CE:
         if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
-        return 0xE80CCF48u;
+        return IDS_TOOLTIPS_EMPTY;
 
     case 0x15F:
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
         if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 12)
         {
-            return 0x512092D2u;
+            return IDS_TOOLTIPS_PLANT;
         }
 
-        return 0xFFFFFFFFu;
+        return IDS_NONE;
 
     case 0x191:
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
         return 0x568A07BEu;
@@ -721,49 +697,49 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
         {
             if (LeadItem::bindPlayerMobsTest(tooltipData.m_pPlayer, tooltipData.m_pLevel, BlockPos(tooltipData.m_pPlayer)))
             {
-                return 0x7B938F36u;
+                return IDS_TOOLTIPS_ATTACH;
             }
         }
 
-        return 0xFFFFFFFFu;
+        return IDS_NONE;
 
     case 0x1B3:
     case 0x1C9:
         if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            return 0x512092D2u;
+            return IDS_TOOLTIPS_PLANT;
         }
 
-        return 0xFFFFFFFFu;
+        return IDS_NONE;
 
     default:
         break;
     }
 
-    return 0xFFFFFFFFu;
+    return IDS_NONE;
 }
 
 unsigned int Block::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if (!tooltipData.m_bCanDestroy)
     {
-        return 0xFFFFFFFFu;
+        return IDS_NONE;
     }
 
     if (getId(tooltipData.m_pBlockState->getBlock()) == 7)
     {
         if (!tooltipData.m_pPlayer->GetGameMode()->isCreative())
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
 
         if (!tooltipData.m_pLevel->mDimension->inPlayerConstraints(tooltipData.m_blockPos))
         {
-            return 0xFFFFFFFFu;
+            return IDS_NONE;
         }
     }
 
-    return 0x5FB7A25Au;
+    return IDS_TOOLTIPS_MINE;
 }
 
 const MaterialColor* Block::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -809,19 +785,8 @@ const BlockState* Block::mirror(const BlockState* state, Mirror* mirror)
 
 bool Block::isExceptionBlockForAttaching(Block* block)
 {
-    if (block == NULL)
-    {
-        return false;
-    }
-
-    if (dynamic_cast<HalfTransparentBlock*>(block) != NULL
-        || dynamic_cast<LeafBlock*>(block) != NULL
-        || dynamic_cast<ThinFenceBlock*>(block) != NULL)
-    {
-        return true;
-    }
-
-    return block == byId(20) || block == byId(102);
+    return block == NULL || dynamic_cast<ShulkerBoxBlock*>(block) != NULL || dynamic_cast<LeafBlock*>(block) != NULL
+        || dynamic_cast<TrapDoorBlock*>(block) != NULL || block == Blocks::cauldron || block == Blocks::turtle_egg;
 }
 
 bool Block::isExceptionBlockForAttachingPlusPiston(Block* block)
@@ -831,13 +796,13 @@ bool Block::isExceptionBlockForAttachingPlusPiston(Block* block)
 
 bool Block::isExceptionForPistonAttaching(Block* block)
 {
-    return block == byId(29) || block == byId(33) || block == byId(34);
+    return block == Blocks::piston || block == Blocks::sticky_piston || block == Blocks::piston_extension;
 }
 
 bool Block::isExceptionForTopSolidBlocking(Block* block)
 {
-    return block == byId(44) || block == byId(126) || block == byId(78)
-        || block == byId(2) || block == byId(125);
+    return block == Blocks::glowstone || block == Blocks::sea_lantern || block == Blocks::ice || block == Blocks::glass
+        || block == Blocks::stained_glass;
 }
 
 bool Block::isSolidBlockingCube(const BlockState* state)
@@ -1170,7 +1135,7 @@ void Block::popResource(Level* level, const BlockPos& pos, not_null_ptr<ItemInst
         return;
     }
 
-    if (!level->getGameRules()->getBoolean(5))
+    if (!level->getGameRules()->getBoolean(GameRules::RULE_DOBLOCKDROPS))
     {
         return;
     }
@@ -1220,7 +1185,7 @@ void Block::popExperience(Level* level, const BlockPos& pos, int amount)
         return;
     }
 
-    if (!level->getGameRules()->getBoolean(5))
+    if (!level->getGameRules()->getBoolean(GameRules::RULE_DOBLOCKDROPS))
     {
         return;
     }
@@ -1296,12 +1261,12 @@ void Block::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
         return;
     }
 
-    if (source->GetType() == 0x88000005)
+    if (source->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY)
     {
         source = boost::static_pointer_cast<FireworksRocketEntity>(source)->getOwner();
     }
 
-    if (source != NULL && (source->GetType() & 0xC800000) == 0xC800000)
+    if (source != NULL && (source->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(source);
         player->GetGameMode()->RecordBlockDestroyed(pos, getId(this));
@@ -1430,7 +1395,7 @@ void Block::playerDestroy(Level* level, boost::shared_ptr<Player> player, const 
     player->awardStat(GenericStats::mineBlock(), GenericStats::param_noArgs());
     player->causeFoodExhaustion(FoodConstants::ExhaustionMine());
 
-    if (state->getBlock() == byId(17) || state->getBlock() == byId(18))
+    if (state->getBlock() == Blocks::log || state->getBlock() == Blocks::log2)
     {
         player->awardStat(GenericStats::mineWood(), GenericStats::param_noArgs());
     }
@@ -1882,907 +1847,907 @@ void Block::staticCtor()
         (new AirBlock())->setNameAndDescriptionId(-1, -1));
 
     registerBlock(1, L"stone",
-        (new StoneBlock())->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"stone")->setNameAndDescriptionId(-1951576660, 1182278201)->setBaseItemTypeAndMaterial(14, 2));
+        (new StoneBlock())->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"stone")->setNameAndDescriptionId(IDS_TILE_STONE, IDS_DESC_STONE)->setBaseItemTypeAndMaterial(14, 2));
 
     registerBlock(2, L"grass",
-        (new GrassBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setIconName(L"grass")->setNameAndDescriptionId(-1011953045, 1347151022)->setBaseItemTypeAndMaterial(13, 58));
+        (new GrassBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setIconName(L"grass")->setNameAndDescriptionId(IDS_TILE_GRASS, IDS_DESC_GRASS)->setBaseItemTypeAndMaterial(13, 58));
 
     registerBlock(3, L"dirt",
-        (new DirtBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::GRAVEL)->setIconName(L"dirt")->setNameAndDescriptionId(1730991212, 1412954865)->setBaseItemTypeAndMaterial(13, 58));
+        (new DirtBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::GRAVEL)->setIconName(L"dirt")->setNameAndDescriptionId(IDS_TILE_DIRT, 0x5437FAF1)->setBaseItemTypeAndMaterial(13, 58));
 
-    Block* cobblestone = (new BlockImpl(Material::STONE))->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"cobblestone")->setNameAndDescriptionId(1660683698, 1587890167)->setBaseItemTypeAndMaterial(14, 2);
+    Block* cobblestone = (new BlockImpl(Material::STONE))->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"cobblestone")->setNameAndDescriptionId(0x62FC05B2, 0x5EA547F7)->setBaseItemTypeAndMaterial(14, 2);
     registerBlock(4, L"cobblestone", cobblestone);
 
-    Block* planks = (new PlanksBlock())->setIconName(L"planks")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(318988197, 478421857)->setBaseItemTypeAndMaterial(50, 1);
+    Block* planks = (new PlanksBlock())->setIconName(L"planks")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x13035FA5, 0x1C842361)->setBaseItemTypeAndMaterial(50, 1);
     registerBlock(5, L"planks", planks);
 
     registerBlock(6, L"sapling",
-        (new SaplingBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"sapling")->sendBlockData(15)->setNameAndDescriptionId(1867374529, -1103634204)->disableMipmap());
+        (new SaplingBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"sapling")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_SAPLING, 0xBE37E0E4)->disableMipmap());
 
     registerBlock(7, L"bedrock",
-        (new BlockImpl(Material::STONE))->setIndestructible()->setExplodeable(6000000.0f)->setSoundType(SoundType::STONE)->setIconName(L"bedrock")->setNotCollectStatistics()->setNameAndDescriptionId(-366796655, 179614580));
+        (new BlockImpl(Material::STONE))->setIndestructible()->setExplodeable(6000000.0f)->setSoundType(SoundType::STONE)->setIconName(L"bedrock")->setNotCollectStatistics()->setNameAndDescriptionId(IDS_TILE_BEDROCK, 0x0AB4B374));
 
     registerBlock(8, L"flowing_water",
-        (new DynamicLiquidBlock(Material::WATER))->setDestroyTime(100.0f)->setLightBlock(2)->setIconName(L"water_flow")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(886002090, -1593126065));
+        (new DynamicLiquidBlock(Material::WATER))->setDestroyTime(100.0f)->setLightBlock(2)->setIconName(L"water_flow")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_WATER, 0xA10AD34F));
 
     registerBlock(9, L"water",
-        (new StaticLiquidBlock(Material::WATER))->setDestroyTime(100.0f)->setLightBlock(2)->setIconName(L"water_still")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(886002090, -1593126065));
+        (new StaticLiquidBlock(Material::WATER))->setDestroyTime(100.0f)->setLightBlock(2)->setIconName(L"water_still")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_WATER, 0xA10AD34F));
 
     registerBlock(10, L"flowing_lava",
-        (new DynamicLiquidBlock(Material::LAVA))->setDestroyTime(100.0f)->setLightEmission(1.0f)->setIconName(L"lava_flow")->setLightBlock(14)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-285958635, 791466680));
+        (new DynamicLiquidBlock(Material::LAVA))->setDestroyTime(100.0f)->setLightEmission(1.0f)->setIconName(L"lava_flow")->setLightBlock(14)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LAVA, 0x2F2CD2B8));
 
     registerBlock(11, L"lava",
-        (new StaticLiquidBlock(Material::LAVA))->setDestroyTime(100.0f)->setLightEmission(1.0f)->setIconName(L"lava_still")->setLightBlock(14)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-285958635, 791466680));
+        (new StaticLiquidBlock(Material::LAVA))->setDestroyTime(100.0f)->setLightEmission(1.0f)->setIconName(L"lava_still")->setLightBlock(14)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LAVA, 0x2F2CD2B8));
 
     registerBlock(12, L"sand",
-        (new SandBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::SAND)->setIconName(L"sand")->setNameAndDescriptionId(-461941713, 738590338)->setBaseItemTypeAndMaterial(13, 13));
+        (new SandBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::SAND)->setIconName(L"sand")->setNameAndDescriptionId(IDS_TILE_SAND, 0x2C05FE82)->setBaseItemTypeAndMaterial(13, 13));
 
     registerBlock(13, L"gravel",
-        (new GravelBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"gravel")->setNameAndDescriptionId(1789965892, -1090874487));
+        (new GravelBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"gravel")->setNameAndDescriptionId(IDS_TILE_GRAVEL, 0xBEFA9389));
 
     registerBlock(14, L"gold_ore",
-        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"gold_ore")->setNameAndDescriptionId(87729608, 1159503909));
+        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"gold_ore")->setNameAndDescriptionId(IDS_TILE_ORE_GOLD, 0x451CA025));
 
     registerBlock(15, L"iron_ore",
-        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"iron_ore")->setNameAndDescriptionId(-1157619462, -651919785));
+        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"iron_ore")->setNameAndDescriptionId(IDS_TILE_ORE_IRON, 0xD9247E57));
 
     registerBlock(16, L"coal_ore",
-        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"coal_ore")->setNameAndDescriptionId(-798334967, -309588396));
+        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"coal_ore")->setNameAndDescriptionId(IDS_TILE_ORE_COAL, 0xED8C0E54));
 
     registerBlock(17, L"log",
-        (new OldLogBlock())->setIconName(L"log")->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new OldLogBlock())->setIconName(L"log")->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(18, L"leaves",
-        (new OldLeafBlock())->setIconName(L"leaves")->sendBlockData(3)->setNameAndDescriptionId(-806242921, -636152246));
+        (new OldLeafBlock())->setIconName(L"leaves")->sendBlockData(3)->setNameAndDescriptionId(IDS_TILE_LEAVES, 0xDA15164A));
 
     registerBlock(19, L"sponge",
-        (new SpongeBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setIconName(L"sponge")->setNameAndDescriptionId(-1164385321, 1450219226));
+        (new SpongeBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setIconName(L"sponge")->setNameAndDescriptionId(IDS_TILE_SPONGE, IDS_DESC_SPONGE));
 
     registerBlock(20, L"glass",
-        (new GlassBlock(Material::GLASS, 0))->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setIconName(L"glass")->setNameAndDescriptionId(1743648693, -208402928)->setBaseItemTypeAndMaterial(42, 34));
+        (new GlassBlock(Material::GLASS, 0))->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setIconName(L"glass")->setNameAndDescriptionId(IDS_TILE_GLASS, 0xF3940610)->setBaseItemTypeAndMaterial(42, 34));
 
     registerBlock(21, L"lapis_ore",
-        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"lapis_ore")->setNameAndDescriptionId(-1756036801, -1391530246));
+        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"lapis_ore")->setNameAndDescriptionId(IDS_TILE_ORE_LAPIS, 0xAD0EEEFA));
 
     registerBlock(22, L"lapis_block",
-        (new BlockImpl(Material::METAL))->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"lapis_block")->setNameAndDescriptionId(1241032974, -1933971317)->setBaseItemTypeAndMaterial(32, 10));
+        (new BlockImpl(Material::METAL))->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"lapis_block")->setNameAndDescriptionId(IDS_TILE_BLOCK_LAPIS, IDS_DESC_BLOCK_LAPIS)->setBaseItemTypeAndMaterial(32, 10));
 
     registerBlock(23, L"dispenser",
-        (new DispenserBlock())->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"dispenser")->sendBlockData(15)->setNameAndDescriptionId(1725322846, -1023739365)->setBaseItemTypeAndMaterial(51, 2));
+        (new DispenserBlock())->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"dispenser")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_DISPENSER, 0xC2FAFA1B)->setBaseItemTypeAndMaterial(51, 2));
 
-    Block* sandstone = (new SandStoneBlock())->setSoundType(SoundType::STONE)->setIconName(L"sandstone")->setDestroyTime(0.8f)->sendBlockData(15)->sendBlockData(15)->setNameAndDescriptionId(-803557604, 1826546953)->setBaseItemTypeAndMaterial(13, 13);
+    Block* sandstone = (new SandStoneBlock())->setSoundType(SoundType::STONE)->setIconName(L"sandstone")->setDestroyTime(0.8f)->sendBlockData(15)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_SANDSTONE, IDS_DESC_SANDSTONE)->setBaseItemTypeAndMaterial(13, 13);
     registerBlock(24, L"sandstone", sandstone);
 
     registerBlock(25, L"noteblock",
-        (new NoteBlock())->setSoundType(SoundType::WOOD)->setDestroyTime(0.8f)->setIconName(L"noteblock")->sendBlockData(15)->setBaseItemTypeAndMaterial(56, 0)->setNameAndDescriptionId(573932120, 251253259));
+        (new NoteBlock())->setSoundType(SoundType::WOOD)->setDestroyTime(0.8f)->setIconName(L"noteblock")->sendBlockData(15)->setBaseItemTypeAndMaterial(56, 0)->setNameAndDescriptionId(0x22358258, IDS_DESC_NOTEBLOCK));
 
     registerBlock(26, L"bed",
-        (new BedBlock())->setSoundType(SoundType::WOOD)->setDestroyTime(0.2f)->setIconName(L"bed")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-2044341404, -1192892383));
+        (new BedBlock())->setSoundType(SoundType::WOOD)->setDestroyTime(0.2f)->setIconName(L"bed")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BED, IDS_DESC_BED));
 
     registerBlock(27, L"golden_rail",
-        (new PoweredRailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_golden")->sendBlockData(15)->setNameAndDescriptionId(1765197957, 1191188682)->setBaseItemTypeAndMaterial(12, 9)->disableMipmap());
+        (new PoweredRailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_golden")->sendBlockData(15)->setNameAndDescriptionId(0x6936C885, IDS_DESC_POWEREDRAIL)->setBaseItemTypeAndMaterial(12, 9)->disableMipmap());
 
     registerBlock(28, L"detector_rail",
-        (new DetectorRailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_detector")->sendBlockData(15)->setNameAndDescriptionId(-920002828, -688423498)->disableMipmap()->setBaseItemTypeAndMaterial(12, 8));
+        (new DetectorRailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_detector")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_DETECTOR_RAIL, 0xD6F77DB6)->disableMipmap()->setBaseItemTypeAndMaterial(12, 8));
 
     registerBlock(29, L"pistonStickyBase",
-        (new PistonBaseBlock(1))->sendBlockData(15)->setNameAndDescriptionId(-1070671485, -524444667)->setBaseItemTypeAndMaterial(27, 28)->setIconName(L"sticky_piston"));
+        (new PistonBaseBlock(1))->sendBlockData(15)->setNameAndDescriptionId(0xC02ED983, 0xE0BD9C05)->setBaseItemTypeAndMaterial(27, 28)->setIconName(L"sticky_piston"));
 
     registerBlock(30, L"web",
-        (new WebBlock())->setLightBlock(1)->setDestroyTime(4.0f)->setIconName(L"web")->setNameAndDescriptionId(-1091729841, -1572113478)->disableMipmap());
+        (new WebBlock())->setLightBlock(1)->setDestroyTime(4.0f)->setIconName(L"web")->setNameAndDescriptionId(0xBEED864F, 0xA24B73BA)->disableMipmap());
 
     registerBlock(31, L"tallgrass",
-        (new TallGrassBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"tallgrass")->setNameAndDescriptionId(1678129041, -692404068)->disableMipmap());
+        (new TallGrassBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"tallgrass")->setNameAndDescriptionId(IDS_TILE_TALL_GRASS, 0xD6BAC09C)->disableMipmap());
 
     registerBlock(32, L"deadbush",
-        (new DeadBushBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"deadbush")->setNameAndDescriptionId(-252434952, 1558910013)->disableMipmap());
+        (new DeadBushBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"deadbush")->setNameAndDescriptionId(IDS_TILE_DEAD_BUSH, 0x5CEB143D)->disableMipmap());
 
     registerBlock(33, L"piston",
-        (new PistonBaseBlock(0))->sendBlockData(15)->setNameAndDescriptionId(-1724938342, 678207717)->setBaseItemTypeAndMaterial(27, 28)->setIconName(L"pistonBase"));
+        (new PistonBaseBlock(0))->sendBlockData(15)->setNameAndDescriptionId(0x992F879A, IDS_DESC_PISTON)->setBaseItemTypeAndMaterial(27, 28)->setIconName(L"pistonBase"));
 
     registerBlock(34, L"piston_head",
-        (new PistonHeadBlock())->setNameAndDescriptionId(-1724938342, 678207717)->sendBlockData(15));
+        (new PistonHeadBlock())->setNameAndDescriptionId(0x992F879A, IDS_DESC_PISTON)->sendBlockData(15));
 
     registerBlock(35, L"wool",
-        (new ColoredBlock(Material::WOOL))->setDestroyTime(0.8f)->setSoundType(SoundType::CLOTH)->setIconName(L"wool_colored")->sendBlockData(15)->setNameAndDescriptionId(-1090398773, 163579633)->setBaseItemTypeAndMaterial(49, 55));
+        (new ColoredBlock(Material::WOOL))->setDestroyTime(0.8f)->setSoundType(SoundType::CLOTH)->setIconName(L"wool_colored")->sendBlockData(15)->setNameAndDescriptionId(0xBF01D5CB, 0x09C006F1)->setBaseItemTypeAndMaterial(49, 55));
 
     registerBlock(36, L"piston_extension",
-        (new PistonMagicBlock())->setIconName(L"pistonBase")->setNameAndDescriptionId(-1724938342, -1));
+        (new PistonMagicBlock())->setIconName(L"pistonBase")->setNameAndDescriptionId(0x992F879A, -1));
 
     registerBlock(37, L"yellow_flower",
-        (new YellowFlowerBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"flower_dandelion")->setNameAndDescriptionId(1134989826, 1194834415)->disableMipmap());
+        (new YellowFlowerBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"flower_dandelion")->setNameAndDescriptionId(IDS_TILE_FLOWER, 0x4737B9EF)->disableMipmap());
 
     registerBlock(38, L"red_flower",
-        (new RedFlowerBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"flower_rose")->setNameAndDescriptionId(-1991483335, 1194834415)->disableMipmap());
+        (new RedFlowerBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"flower_rose")->setNameAndDescriptionId(IDS_TILE_POPPY, 0x4737B9EF)->disableMipmap());
 
     registerBlock(39, L"brown_mushroom",
-        (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setLightEmission(0.125f)->setIconName(L"mushroom_brown")->setNameAndDescriptionId(192600811, 1857369046)->disableMipmap());
+        (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setLightEmission(0.125f)->setIconName(L"mushroom_brown")->setNameAndDescriptionId(IDS_TILE_MUSHROOM, 0x6EB533D6)->disableMipmap());
 
     registerBlock(40, L"red_mushroom",
-        (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"mushroom_red")->setNameAndDescriptionId(192600811, 1857369046)->disableMipmap());
+        (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"mushroom_red")->setNameAndDescriptionId(IDS_TILE_MUSHROOM, 0x6EB533D6)->disableMipmap());
 
     registerBlock(41, L"gold_block",
-        (new BlockImpl(Material::METAL, MaterialColor::GOLD))->setDestroyTime(3.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"gold_block")->setNameAndDescriptionId(-537198959, -267065668)->setBaseItemTypeAndMaterial(32, 4));
+        (new BlockImpl(Material::METAL, MaterialColor::GOLD))->setDestroyTime(3.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"gold_block")->setNameAndDescriptionId(IDS_TILE_BLOCK_GOLD, IDS_DESC_BLOCK_GOLD)->setBaseItemTypeAndMaterial(32, 4));
 
     registerBlock(42, L"iron_block",
-        (new BlockImpl(Material::METAL, MaterialColor::METAL))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"iron_block")->setNameAndDescriptionId(941478371, -146969842)->setBaseItemTypeAndMaterial(32, 3));
+        (new BlockImpl(Material::METAL, MaterialColor::METAL))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"iron_block")->setNameAndDescriptionId(IDS_TILE_BLOCK_IRON, IDS_DESC_BLOCK_IRON)->setBaseItemTypeAndMaterial(32, 3));
 
     registerBlock(43, L"double_stone_slab",
-        (new FullStoneSlabBlock())->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"stoneSlab")->setNameAndDescriptionId(1625160352, -2103709410)->setBaseItemTypeAndMaterial(21, 2));
+        (new FullStoneSlabBlock())->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"stoneSlab")->setNameAndDescriptionId(IDS_TILE_STONESLAB, IDS_DESC_SLAB)->setBaseItemTypeAndMaterial(21, 2));
 
     registerBlock(44, L"stone_slab",
-        (new HalfStoneSlabBlock())->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"stoneSlab")->setNameAndDescriptionId(1625160352, 859572981)->setBaseItemTypeAndMaterial(22, 2));
+        (new HalfStoneSlabBlock())->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"stoneSlab")->setNameAndDescriptionId(IDS_TILE_STONESLAB, IDS_DESC_HALFSLAB)->setBaseItemTypeAndMaterial(22, 2));
 
-    Block* brickBlock = (new BlockImpl(Material::STONE, MaterialColor::COLOR_RED))->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"brick")->setNameAndDescriptionId(1699884934, 71287859)->setBaseItemTypeAndMaterial(13, 14);
+    Block* brickBlock = (new BlockImpl(Material::STONE, MaterialColor::COLOR_RED))->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"brick")->setNameAndDescriptionId(IDS_TILE_BRICK, 0x043FC433)->setBaseItemTypeAndMaterial(13, 14);
     registerBlock(45, L"brick_block", brickBlock);
 
     registerBlock(46, L"tnt",
-        (new TntBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"tnt")->setNameAndDescriptionId(-382113911, -1145801876)->setBaseItemTypeAndMaterial(28, 0));
+        (new TntBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"tnt")->setNameAndDescriptionId(IDS_TILE_TNT, 0xBBB4736C)->setBaseItemTypeAndMaterial(28, 0));
 
     registerBlock(47, L"bookshelf",
-        (new BookshelfBlock())->setDestroyTime(1.5f)->setSoundType(SoundType::WOOD)->setIconName(L"bookshelf")->setIconName(L"bookshelf")->setNameAndDescriptionId(940001922, -655217577)->setBaseItemTypeAndMaterial(46, 52));
+        (new BookshelfBlock())->setDestroyTime(1.5f)->setSoundType(SoundType::WOOD)->setIconName(L"bookshelf")->setIconName(L"bookshelf")->setNameAndDescriptionId(IDS_TILE_BOOKSHELF, 0xD8F22C57)->setBaseItemTypeAndMaterial(46, 52));
 
     registerBlock(48, L"mossy_cobblestone",
-        (new BlockImpl(Material::STONE))->setIconName(L"cobblestone_mossy")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1763304729, 1357145140)->setBaseItemTypeAndMaterial(14, 2));
+        (new BlockImpl(Material::STONE))->setIconName(L"cobblestone_mossy")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_STONE_MOSS, 0x50E46434)->setBaseItemTypeAndMaterial(14, 2));
 
     registerBlock(49, L"obsidian",
-        (new ObsidianBlock())->setDestroyTime(50.0f)->setExplodeable(2000.0f)->setTicking(1)->setSoundType(SoundType::STONE)->setIconName(L"obsidian")->setNameAndDescriptionId(75283994, -1953294233)->setBaseItemTypeAndMaterial(13, 2));
+        (new ObsidianBlock())->setDestroyTime(50.0f)->setExplodeable(2000.0f)->setTicking(1)->setSoundType(SoundType::STONE)->setIconName(L"obsidian")->setNameAndDescriptionId(IDS_TILE_OBSIDIAN, 0x8B931867)->setBaseItemTypeAndMaterial(13, 2));
 
     registerBlock(50, L"torch",
-        (new TorchBlock())->setDestroyTime(0.0f)->setLightEmission(0.9375f)->setSoundType(SoundType::WOOD)->setIconName(L"torch_on")->setNameAndDescriptionId(-422971867, -1189036672)->disableMipmap()->setBaseItemTypeAndMaterial(23, 1));
+        (new TorchBlock())->setDestroyTime(0.0f)->setLightEmission(0.9375f)->setSoundType(SoundType::WOOD)->setIconName(L"torch_on")->setNameAndDescriptionId(IDS_TILE_TORCH, IDS_DESC_TORCH)->disableMipmap()->setBaseItemTypeAndMaterial(23, 1));
 
     registerBlock(51, L"fire",
-        (new FireBlock())->setDestroyTime(0.0f)->setLightEmission(1.0f)->setSoundType(SoundType::CLOTH)->setIconName(L"fire")->setNotCollectStatistics()->setNameAndDescriptionId(-1247941401, -1)->disableMipmap());
+        (new FireBlock())->setDestroyTime(0.0f)->setLightEmission(1.0f)->setSoundType(SoundType::CLOTH)->setIconName(L"fire")->setNotCollectStatistics()->setNameAndDescriptionId(IDS_TILE_FIRE, -1)->disableMipmap());
 
     registerBlock(52, L"mob_spawner",
-        (new MobSpawnerBlock())->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setIconName(L"mob_spawner")->setNotCollectStatistics()->setNameAndDescriptionId(1689012380, 4403401));
+        (new MobSpawnerBlock())->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setIconName(L"mob_spawner")->setNotCollectStatistics()->setNameAndDescriptionId(0x64AC489C, 0x004330C9));
 
     registerBlock(53, L"oak_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::OAK))))->setIconName(L"stairsWood")->sendBlockData(15)->setNameAndDescriptionId(-779521723, 1962448236)->setBaseItemTypeAndMaterial(16, 1));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::OAK))))->setIconName(L"stairsWood")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_WOOD, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 1));
 
     registerBlock(54, L"chest",
-        (new ChestBlock(ChestBlock::TYPE_SINGLE))->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"chest")->sendBlockData(15)->setNameAndDescriptionId(1888250110, -1487670933)->setBaseItemTypeAndMaterial(36, 1));
+        (new ChestBlock(ChestBlock::TYPE_SINGLE))->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"chest")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CHEST, IDS_DESC_CHEST)->setBaseItemTypeAndMaterial(36, 1));
 
     registerBlock(55, L"redstone_wire",
-        (new RedStoneWireBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::STONE)->setIconName(L"redstone_dust")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(733836782, -2085079141)->disableMipmap());
+        (new RedStoneWireBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::STONE)->setIconName(L"redstone_dust")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_REDSTONE_DUST, 0x83B8379B)->disableMipmap());
 
     registerBlock(56, L"diamond_ore",
-        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"diamond_ore")->setNameAndDescriptionId(-2051872732, 526693633));
+        (new OreBlock())->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setIconName(L"diamond_ore")->setNameAndDescriptionId(IDS_TILE_ORE_DIAMOND, 0x1F64B501));
 
     registerBlock(57, L"diamond_block",
-        (new BlockImpl(Material::METAL, MaterialColor::DIAMOND))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"diamond_block")->setNameAndDescriptionId(1557210581, 1044427824)->setBaseItemTypeAndMaterial(32, 5));
+        (new BlockImpl(Material::METAL, MaterialColor::DIAMOND))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"diamond_block")->setNameAndDescriptionId(IDS_TILE_BLOCK_DIAMOND, IDS_DESC_BLOCK_DIAMOND)->setBaseItemTypeAndMaterial(32, 5));
 
     registerBlock(58, L"crafting_table",
-        (new CraftingTableBlock())->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"crafting_table")->setNameAndDescriptionId(-488183524, -405433066)->setBaseItemTypeAndMaterial(30, 1));
+        (new CraftingTableBlock())->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"crafting_table")->setNameAndDescriptionId(0xE2E6E91C, IDS_DESC_CRAFTINGTABLE)->setBaseItemTypeAndMaterial(30, 1));
 
     registerBlock(59, L"wheat",
-        (new CropBlock(0))->setIconName(L"wheat")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1565208526, -355421273)->disableMipmap());
+        (new CropBlock(0))->setIconName(L"wheat")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CROPS, IDS_DESC_CROPS)->disableMipmap());
 
-    Block* farmland = (new FarmBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"farmland")->sendBlockData(15)->setNameAndDescriptionId(934190936, 635505253);
+    Block* farmland = (new FarmBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"farmland")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_FARMLAND, 0x25E10A65);
     registerBlock(60, L"farmland", farmland);
 
     registerBlock(61, L"furnace",
-        (new FurnaceBlock(false))->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"furnace")->sendBlockData(15)->setNameAndDescriptionId(-2146068145, 339052362)->setBaseItemTypeAndMaterial(30, 2));
+        (new FurnaceBlock(false))->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"furnace")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_FURNACE, 0x1435874A)->setBaseItemTypeAndMaterial(30, 2));
 
     registerBlock(62, L"lit_furnace",
-        (new FurnaceBlock(true))->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"furnace")->setLightEmission(0.875f)->sendBlockData(15)->setNameAndDescriptionId(-2146068145, 339052362));
+        (new FurnaceBlock(true))->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setIconName(L"furnace")->setLightEmission(0.875f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_FURNACE, 0x1435874A));
 
     registerBlock(63, L"standing_sign",
-        (new StandingSignBlock())->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setIconName(L"sign")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-922556236, -1238865095));
+        (new StandingSignBlock())->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setIconName(L"sign")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_SIGN, 0xB6286B39));
 
     registerBlock(64, L"wooden_door",
-        (new DoorBlock(Material::WOOD))->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setIconName(L"door_wood")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(1964228784, 716140400));
+        (new DoorBlock(Material::WOOD))->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setIconName(L"door_wood")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0x7513C0B0, IDS_DESC_DOOR_WOOD));
 
     registerBlock(65, L"ladder",
-        (new LadderBlock())->setDestroyTime(0.4f)->setSoundType(SoundType::LADDER)->setIconName(L"ladder")->sendBlockData(15)->setNameAndDescriptionId(-1253079859, -2140469840)->disableMipmap()->setBaseItemTypeAndMaterial(48, 1));
+        (new LadderBlock())->setDestroyTime(0.4f)->setSoundType(SoundType::LADDER)->setIconName(L"ladder")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LADDER, 0x806B05B0)->disableMipmap()->setBaseItemTypeAndMaterial(48, 1));
 
     registerBlock(66, L"rail",
-        (new RailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_normal")->sendBlockData(15)->setNameAndDescriptionId(2060256657, 207750380)->setBaseItemTypeAndMaterial(12, 9)->disableMipmap());
+        (new RailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_normal")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_RAIL, 0x0C6204EC)->setBaseItemTypeAndMaterial(12, 9)->disableMipmap());
 
     registerBlock(67, L"stone_stairs",
-        (new StairBlock(cobblestone->defaultBlockState()))->setIconName(L"stairsStone")->sendBlockData(15)->setNameAndDescriptionId(883201333, 1962448236)->setBaseItemTypeAndMaterial(16, 2));
+        (new StairBlock(cobblestone->defaultBlockState()))->setIconName(L"stairsStone")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_STONE, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 2));
 
     registerBlock(68, L"wall_sign",
-        (new WallSignBlock())->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setIconName(L"sign")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-922556236, -1238865095));
+        (new WallSignBlock())->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setIconName(L"sign")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_SIGN, 0xB6286B39));
 
     registerBlock(69, L"lever",
-        (new LeverBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->setIconName(L"lever")->sendBlockData(15)->setNameAndDescriptionId(1523807903, 423055482)->setBaseItemTypeAndMaterial(45, 1));
+        (new LeverBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->setIconName(L"lever")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LEVER, 0x1937507A)->setBaseItemTypeAndMaterial(45, 1));
 
     registerBlock(70, L"stone_pressure_plate",
-        (new PressurePlateBlock(L"stone", Material::STONE, PressurePlateBlock::MOBS))->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(-1688694459, 2139474008)->setBaseItemTypeAndMaterial(15, 2));
+        (new PressurePlateBlock(L"stone", Material::STONE, PressurePlateBlock::MOBS))->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PRESSURE_PLATE_STONE, 0x7F85C858)->setBaseItemTypeAndMaterial(15, 2));
 
     registerBlock(71, L"iron_door",
-        (new DoorBlock(Material::METAL))->setIconName(L"door_iron")->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1764856892, -458439679));
+        (new DoorBlock(Material::METAL))->setIconName(L"door_iron")->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_DOOR_IRON, IDS_DESC_DOOR_IRON));
 
     registerBlock(72, L"wooden_pressure_plate",
-        (new PressurePlateBlock(L"planks_oak", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(3680245, -413015488)->setBaseItemTypeAndMaterial(15, 1));
+        (new PressurePlateBlock(L"planks_oak", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x003827F5, 0xE761E240)->setBaseItemTypeAndMaterial(15, 1));
 
     registerBlock(73, L"redstone_ore",
-        (new RedStoneOreBlock(0))->setIconName(L"redstone_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(-1282273712, 1472513597));
+        (new RedStoneOreBlock(0))->setIconName(L"redstone_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_ORE_REDSTONE, 0x57C4C63D));
 
     registerBlock(74, L"lit_redstone_ore",
-        (new RedStoneOreBlock(1))->setIconName(L"redstone_ore")->setLightEmission(0.625f)->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(-1282273712, 1472513597));
+        (new RedStoneOreBlock(1))->setIconName(L"redstone_ore")->setLightEmission(0.625f)->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_ORE_REDSTONE, 0x57C4C63D));
 
     registerBlock(75, L"unlit_redstone_torch",
-        (new RedstoneTorchBlock(0))->setIconName(L"redstone_torch_off")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(2037557570, 780434656)->disableMipmap());
+        (new RedstoneTorchBlock(0))->setIconName(L"redstone_torch_off")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x7972A942, 0x2E847CE0)->disableMipmap());
 
     registerBlock(76, L"redstone_torch",
-        (new RedstoneTorchBlock(1))->setIconName(L"redstone_torch_on")->setDestroyTime(0.0f)->setLightEmission(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(2037557570, 780434656)->disableMipmap());
+        (new RedstoneTorchBlock(1))->setIconName(L"redstone_torch_on")->setDestroyTime(0.0f)->setLightEmission(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x7972A942, 0x2E847CE0)->disableMipmap());
 
     registerBlock(77, L"stone_button",
-        (new StoneButtonBlock())->setIconName(L"stone")->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(1464423445, -753144148)->setBaseItemTypeAndMaterial(35, 2));
+        (new StoneButtonBlock())->setIconName(L"stone")->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_STONE, 0xD31BEEAC)->setBaseItemTypeAndMaterial(35, 2));
 
     registerBlock(78, L"snow_layer",
-        (new SnowLayerBlock())->setIconName(L"snow")->setDestroyTime(0.1f)->setSoundType(SoundType::SNOW)->sendBlockData(15)->setLightBlock(0)->setNameAndDescriptionId(-226754302, -1353574661)->setBaseItemTypeAndMaterial(13, 16));
+        (new SnowLayerBlock())->setIconName(L"snow")->setDestroyTime(0.1f)->setSoundType(SoundType::SNOW)->sendBlockData(15)->setLightBlock(0)->setNameAndDescriptionId(IDS_TILE_SNOW, 0xAF5216FB)->setBaseItemTypeAndMaterial(13, 16));
 
     registerBlock(79, L"ice",
-        (new IceBlock(0))->setIconName(L"ice")->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(-1972979160, 1699472637));
+        (new IceBlock(0))->setIconName(L"ice")->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(IDS_TILE_ICE, 0x654BE4FD));
 
     registerBlock(80, L"snow",
-        (new SnowBlock())->setIconName(L"snow")->setDestroyTime(0.2f)->setSoundType(SoundType::CLOTH)->setNameAndDescriptionId(-226754302, 1621205791)->setBaseItemTypeAndMaterial(13, 16));
+        (new SnowBlock())->setIconName(L"snow")->setDestroyTime(0.2f)->setSoundType(SoundType::CLOTH)->setNameAndDescriptionId(IDS_TILE_SNOW, IDS_DESC_SNOW)->setBaseItemTypeAndMaterial(13, 16));
 
     registerBlock(81, L"cactus",
-        (new CactusBlock())->setIconName(L"cactus")->setDestroyTime(0.4f)->setSoundType(SoundType::CLOTH)->setNameAndDescriptionId(-1222532308, -1996497743)->disableMipmap());
+        (new CactusBlock())->setIconName(L"cactus")->setDestroyTime(0.4f)->setSoundType(SoundType::CLOTH)->setNameAndDescriptionId(IDS_TILE_CACTUS, 0x88FFDCB1)->disableMipmap());
 
     registerBlock(82, L"clay",
-        (new ClayBlock())->setIconName(L"clay")->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setNameAndDescriptionId(556408288, -1246404842)->setBaseItemTypeAndMaterial(13, 15));
+        (new ClayBlock())->setIconName(L"clay")->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setNameAndDescriptionId(IDS_TILE_CLAY, IDS_DESC_CLAY_TILE)->setBaseItemTypeAndMaterial(13, 15));
 
     registerBlock(83, L"reeds",
-        (new ReedsBlock())->setIconName(L"reeds")->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setNotCollectStatistics()->setNameAndDescriptionId(-1754411966, 697296055)->disableMipmap());
+        (new ReedsBlock())->setIconName(L"reeds")->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setNotCollectStatistics()->setNameAndDescriptionId(0x976DCC42, 0x298FE4B7)->disableMipmap());
 
     registerBlock(84, L"jukebox",
-        (new JukeboxBlock())->setIconName(L"jukebox")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(676972475, -2057803490)->setBaseItemTypeAndMaterial(53, 0));
+        (new JukeboxBlock())->setIconName(L"jukebox")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_JUKEBOX, 0x8558691E)->setBaseItemTypeAndMaterial(53, 0));
 
     registerBlock(85, L"fence",
-        (new FenceBlock(L"planks_oak", Material::WOOD, PlanksBlock::Variant::OAK->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(1463281045, 1128628177)->setBaseItemTypeAndMaterial(29, 1));
+        (new FenceBlock(L"planks_oak", Material::WOOD, PlanksBlock::Variant::OAK->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x5737E595, 0x43457FD1)->setBaseItemTypeAndMaterial(29, 1));
 
     registerBlock(86, L"carved_pumpkin",
-        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-235109589, 278425254));
+        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CARVED_PUMPKIN, 0x10986EA6));
 
     registerBlock(257, L"pumpkin",
-        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1271821741, 1522582022));
+        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PUMPKIN, IDS_DESC_PUMPKIN));
 
     registerBlock(87, L"netherrack",
-        (new NetherrackBlock())->setIconName(L"netherrack")->setDestroyTime(0.4f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-916997000, -407860275));
+        (new NetherrackBlock())->setIconName(L"netherrack")->setDestroyTime(0.4f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0xC957BC78, 0xE7B08BCD));
 
     registerBlock(88, L"soul_sand",
-        (new SoulSandBlock())->setIconName(L"soul_sand")->setDestroyTime(0.5f)->setSoundType(SoundType::SAND)->setNameAndDescriptionId(-871834659, -1364743816));
+        (new SoulSandBlock())->setIconName(L"soul_sand")->setDestroyTime(0.5f)->setSoundType(SoundType::SAND)->setNameAndDescriptionId(0xCC08DBDD, 0xAEA7A978));
 
     registerBlock(89, L"glowstone",
-        (new Glowstoneblock(Material::GLASS))->setIconName(L"glowstone")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setLightEmission(1.0f)->setNameAndDescriptionId(1524807217, -2004119014)->setBaseItemTypeAndMaterial(23, 23));
+        (new Glowstoneblock(Material::GLASS))->setIconName(L"glowstone")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setLightEmission(1.0f)->setNameAndDescriptionId(0x5AE2B631, 0x888B921A)->setBaseItemTypeAndMaterial(23, 23));
 
     registerBlock(90, L"portal",
-        (new PortalBlock())->setDestroyTime(-1.0f)->setIconName(L"portal")->setSoundType(SoundType::GLASS)->setLightEmission(0.75f)->setNameAndDescriptionId(2020085891, 361110974));
+        (new PortalBlock())->setDestroyTime(-1.0f)->setIconName(L"portal")->setSoundType(SoundType::GLASS)->setLightEmission(0.75f)->setNameAndDescriptionId(IDS_TILE_PORTAL, IDS_DESC_PORTAL));
 
     registerBlock(91, L"lit_pumpkin",
-        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setLightEmission(1.0f)->sendBlockData(15)->setNameAndDescriptionId(-144849667, 211640248)->setBaseItemTypeAndMaterial(23, 22));
+        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setLightEmission(1.0f)->sendBlockData(15)->setNameAndDescriptionId(0xF75DC4FD, 0x0C9D5FB8)->setBaseItemTypeAndMaterial(23, 22));
 
     registerBlock(92, L"cake",
-        (new CakeBlock())->setIconName(L"cake")->setDestroyTime(0.5f)->setSoundType(SoundType::CLOTH)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1614580205, 464030782));
+        (new CakeBlock())->setIconName(L"cake")->setDestroyTime(0.5f)->setSoundType(SoundType::CLOTH)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CAKE, 0x1BA88C3E));
 
     registerBlock(93, L"unpowered_repeater",
-        (new RepeaterBlock(0))->setIconName(L"repeater_off")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1183081123, -128546302)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
+        (new RepeaterBlock(0))->setIconName(L"repeater_off")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0xB97B9D5D, IDS_DESC_REDSTONEREPEATER)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
 
     registerBlock(94, L"powered_repeater",
-        (new RepeaterBlock(1))->setIconName(L"repeater_on")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1183081123, -128546302)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
+        (new RepeaterBlock(1))->setIconName(L"repeater_on")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0xB97B9D5D, IDS_DESC_REDSTONEREPEATER)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
 
     registerBlock(95, L"stained_glass",
-        (new StainedGlassBlock(Material::GLASS))->setIconName(L"glass")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(-2141183110, 1295116847)->setSemiTransparent()->setBaseItemTypeAndMaterial(42, 34));
+        (new StainedGlassBlock(Material::GLASS))->setIconName(L"glass")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(IDS_TILE_STAINED_GLASS, 0x4D31EA2F)->setSemiTransparent()->setBaseItemTypeAndMaterial(42, 34));
 
     registerBlock(96, L"trapdoor",
-        (new TrapDoorBlock(Material::WOOD, MaterialColor::WOOD))->setIconName(L"trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-579730614, 1969487947)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::WOOD, MaterialColor::WOOD))->setIconName(L"trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0xDD72034A, 0x7564004B)->setBaseItemTypeAndMaterial(6, 25));
 
     registerBlock(97, L"monster_egg",
-        (new MonsterEggBlock())->setIconName(L"monsterStoneEgg")->setDestroyTime(0.75f)->setNameAndDescriptionId(786740680, 1095399893));
+        (new MonsterEggBlock())->setIconName(L"monsterStoneEgg")->setDestroyTime(0.75f)->setNameAndDescriptionId(IDS_TILE_STONE_SILVERFISH, 0x414A79D5));
 
-    Block* stonebrick = (new StoneBrickBlock())->setIconName(L"stonebrick")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1018384393, -1881711158)->setBaseItemTypeAndMaterial(14, 31);
+    Block* stonebrick = (new StoneBrickBlock())->setIconName(L"stonebrick")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0xC34CAFF7, 0x8FD75DCA)->setBaseItemTypeAndMaterial(14, 31);
     registerBlock(98, L"stonebrick", stonebrick);
 
     registerBlock(99, L"brown_mushroom_block",
-        (new HugeMushroomBlock(Material::WOOD, MaterialColor::DIRT, byId(39)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-335533579, 1445448480)->sendBlockData(15));
+        (new HugeMushroomBlock(Material::WOOD, MaterialColor::DIRT, byId(39)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0xEC0029F5, 0x5627CB20)->sendBlockData(15));
 
     registerBlock(100, L"red_mushroom_block",
-        (new HugeMushroomBlock(Material::WOOD, MaterialColor::COLOR_RED, byId(40)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(302163038, 1445448480)->sendBlockData(15));
+        (new HugeMushroomBlock(Material::WOOD, MaterialColor::COLOR_RED, byId(40)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x1202A45E, 0x5627CB20)->sendBlockData(15));
 
     registerBlock(101, L"iron_bars",
-        (new ThinFenceBlock(L"iron_bars", L"iron_bars", Material::METAL, true))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(-88007431, -318588764)->setBaseItemTypeAndMaterial(29, 3));
+        (new ThinFenceBlock(L"iron_bars", L"iron_bars", Material::METAL, true))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_IRON_FENCE, IDS_DESC_IRON_FENCE)->setBaseItemTypeAndMaterial(29, 3));
 
     registerBlock(102, L"glass_pane",
-        (new ThinFenceBlock(L"glass", L"glass_pane_top", Material::GLASS, false))->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(1607245545, 736707028)->setBaseItemTypeAndMaterial(42, 34));
+        (new ThinFenceBlock(L"glass", L"glass_pane_top", Material::GLASS, false))->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(0x5FCC9EE9, 0x2BE941D4)->setBaseItemTypeAndMaterial(42, 34));
 
     registerBlock(103, L"melon_block",
-        (new MelonBlock())->setIconName(L"melon")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-591549446, -34103255));
+        (new MelonBlock())->setIconName(L"melon")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_MELON, IDS_DESC_MELON_BLOCK));
 
     registerBlock(104, L"pumpkin_stem",
-        (new StemBlock())->setIconName(L"pumpkin_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1022325989, -1)->disableMipmap());
+        (new StemBlock())->setIconName(L"pumpkin_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PUMPKIN_STEM, -1)->disableMipmap());
 
     registerBlock(105, L"melon_stem",
-        (new StemBlock())->setIconName(L"melon_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(630381882, -1)->disableMipmap());
+        (new StemBlock())->setIconName(L"melon_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_MELON_STEM, -1)->disableMipmap());
 
     registerBlock(106, L"vine",
-        (new VineBlock())->setIconName(L"vine")->setDestroyTime(0.2f)->setSoundType(SoundType::GRASS)->sendBlockData(15)->setNameAndDescriptionId(1791100347, -334192122)->disableMipmap());
+        (new VineBlock())->setIconName(L"vine")->setDestroyTime(0.2f)->setSoundType(SoundType::GRASS)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_VINE, 0xEC14A206)->disableMipmap());
 
     registerBlock(107, L"fence_gate",
-        (new FenceGateBlock(L"planks_oak", PlanksBlock::Variant::OAK))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1761600827, -1927890567)->setBaseItemTypeAndMaterial(47, 1));
+        (new FenceGateBlock(L"planks_oak", PlanksBlock::Variant::OAK))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x97001AC5, 0x8D16B979)->setBaseItemTypeAndMaterial(47, 1));
 
     registerBlock(108, L"brick_stairs",
-        (new StairBlock(brickBlock->defaultBlockState()))->setIconName(L"stairsBrick")->sendBlockData(15)->setNameAndDescriptionId(-1097401796, 1962448236)->setBaseItemTypeAndMaterial(16, 14));
+        (new StairBlock(brickBlock->defaultBlockState()))->setIconName(L"stairsBrick")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_BRICKS, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 14));
 
     registerBlock(109, L"stone_brick_stairs",
-        (new StairBlock(stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, new TypedBoxed<StoneBrickBlock::Variant*>(StoneBrickBlock::Variant::DEFAULT))))->setIconName(L"stairsStoneBrickSmooth")->sendBlockData(15)->setNameAndDescriptionId(-251417459, 1962448236)->setBaseItemTypeAndMaterial(16, 31));
+        (new StairBlock(stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, new TypedBoxed<StoneBrickBlock::Variant*>(StoneBrickBlock::Variant::DEFAULT))))->setIconName(L"stairsStoneBrickSmooth")->sendBlockData(15)->setNameAndDescriptionId(0xF103AC8D, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 31));
 
     registerBlock(110, L"mycelium",
-        (new MyceliumBlock())->setIconName(L"mycelium")->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(1212229689, 1645782764));
+        (new MyceliumBlock())->setIconName(L"mycelium")->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(0x48412839, 0x6218A6EC));
 
     registerBlock(111, L"waterlily",
-        (new WaterlilyBlock())->setIconName(L"waterlily")->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(-1831372102, -709402049)->disableMipmap());
+        (new WaterlilyBlock())->setIconName(L"waterlily")->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(IDS_TILE_WATERLILY, IDS_DESC_WATERLILY)->disableMipmap());
 
-    Block* netherBrick = (new NetherBrickBlock())->setIconName(L"nether_brick")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(579553374, -759882693)->setBaseItemTypeAndMaterial(13, 32);
+    Block* netherBrick = (new NetherBrickBlock())->setIconName(L"nether_brick")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_NETHERBRICK, IDS_DESC_NETHERBRICK)->setBaseItemTypeAndMaterial(13, 32);
     registerBlock(112, L"nether_brick", netherBrick);
 
     registerBlock(113, L"nether_brick_fence",
-        (new FenceBlock(L"nether_brick", Material::STONE, MaterialColor::NETHER))->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-561299988, 2016476681)->setBaseItemTypeAndMaterial(29, 32));
+        (new FenceBlock(L"nether_brick", Material::STONE, MaterialColor::NETHER))->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_NETHERFENCE, IDS_DESC_NETHERFENCE)->setBaseItemTypeAndMaterial(29, 32));
 
     registerBlock(114, L"nether_brick_stairs",
-        (new StairBlock(netherBrick->defaultBlockState()))->setIconName(L"stairsNetherBrick")->sendBlockData(15)->setNameAndDescriptionId(-360518601, 1962448236)->setBaseItemTypeAndMaterial(16, 32));
+        (new StairBlock(netherBrick->defaultBlockState()))->setIconName(L"stairsNetherBrick")->sendBlockData(15)->setNameAndDescriptionId(0xEA82EC37, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 32));
 
     registerBlock(115, L"nether_wart",
-        (new NetherWartBlock())->setIconName(L"nether_wart")->sendBlockData(15)->setNameAndDescriptionId(-1730502778, 1370132419)->disableMipmap());
+        (new NetherWartBlock())->setIconName(L"nether_wart")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_NETHERSTALK, IDS_DESC_NETHERSTALK)->disableMipmap());
 
     registerBlock(116, L"enchanting_table",
-        (new EnchantmentTableBlock())->setIconName(L"enchanting_table")->setDestroyTime(5.0f)->setExplodeable(2000.0f)->setNameAndDescriptionId(1317837992, -2025668523)->setBaseItemTypeAndMaterial(30, 36));
+        (new EnchantmentTableBlock())->setIconName(L"enchanting_table")->setDestroyTime(5.0f)->setExplodeable(2000.0f)->setNameAndDescriptionId(IDS_TILE_ENCHANTMENTTABLE, IDS_DESC_ENCHANTMENTTABLE)->setBaseItemTypeAndMaterial(30, 36));
 
     registerBlock(117, L"brewing_stand",
-        (new BrewingStandBlock())->setIconName(L"brewing_stand")->setDestroyTime(0.5f)->setLightEmission(0.125f)->sendBlockData(15)->setNameAndDescriptionId(539335289, -1918013109)->setBaseItemTypeAndMaterial(30, 35));
+        (new BrewingStandBlock())->setIconName(L"brewing_stand")->setDestroyTime(0.5f)->setLightEmission(0.125f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BREWINGSTAND, 0x8DAD714B)->setBaseItemTypeAndMaterial(30, 35));
 
     registerBlock(118, L"cauldron",
-        (new CauldronBlock())->setIconName(L"cauldron")->setDestroyTime(2.0f)->sendBlockData(15)->setNameAndDescriptionId(-1383143349, -1833942746));
+        (new CauldronBlock())->setIconName(L"cauldron")->setDestroyTime(2.0f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CAULDRON, 0x92B04126));
 
     registerBlock(119, L"end_portal",
-        (new EndPortalBlock(Material::PORTAL))->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(1238979323, -666504698));
+        (new EndPortalBlock(Material::PORTAL))->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_END_PORTAL, IDS_DESC_END_PORTAL));
 
     registerBlock(120, L"end_portal_frame",
-        (new EndPortalFrameBlock())->setIconName(L"endframe")->setSoundType(SoundType::GLASS)->setLightEmission(0.125f)->setDestroyTime(0.0f)->sendBlockData(15)->setExplodeable(6000000.0f)->setNameAndDescriptionId(-561531743, 1304651180));
+        (new EndPortalFrameBlock())->setIconName(L"endframe")->setSoundType(SoundType::GLASS)->setLightEmission(0.125f)->setDestroyTime(0.0f)->sendBlockData(15)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_ENDPORTALFRAME, IDS_DESC_ENDPORTALFRAME));
 
     registerBlock(121, L"end_stone",
-        (new BlockImpl(Material::STONE, MaterialColor::SAND))->setIconName(L"end_stone")->setDestroyTime(3.0f)->setExplodeable(15.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1896130883, -482475298));
+        (new BlockImpl(Material::STONE, MaterialColor::SAND))->setIconName(L"end_stone")->setDestroyTime(3.0f)->setExplodeable(15.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0x7104A943, 0xE33E02DE));
 
     registerBlock(122, L"dragon_egg",
-        (new DragonEggBlock())->setDestroyTime(3.0f)->setIconName(L"dragon_egg")->setExplodeable(15.0f)->setSoundType(SoundType::STONE)->setLightEmission(0.125f)->setNameAndDescriptionId(-2096307741, 2006994726));
+        (new DragonEggBlock())->setDestroyTime(3.0f)->setIconName(L"dragon_egg")->setExplodeable(15.0f)->setSoundType(SoundType::STONE)->setLightEmission(0.125f)->setNameAndDescriptionId(IDS_TILE_DRAGONEGG, IDS_DESC_DRAGONEGG));
 
     registerBlock(123, L"redstone_lamp",
-        (new RedstoneLampBlock(0))->setIconName(L"redstone_lamp_off")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setBaseItemTypeAndMaterial(56, 0)->setNameAndDescriptionId(1627139062, -1622610869));
+        (new RedstoneLampBlock(0))->setIconName(L"redstone_lamp_off")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setBaseItemTypeAndMaterial(56, 0)->setNameAndDescriptionId(IDS_TILE_REDSTONE_LIGHT, IDS_DESC_REDSTONE_LIGHT));
 
     registerBlock(124, L"lit_redstone_lamp",
-        (new RedstoneLampBlock(1))->setIconName(L"redstone_lamp_on")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setBaseItemTypeAndMaterial(56, 0)->setNameAndDescriptionId(1627139062, -1622610869));
+        (new RedstoneLampBlock(1))->setIconName(L"redstone_lamp_on")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setBaseItemTypeAndMaterial(56, 0)->setNameAndDescriptionId(IDS_TILE_REDSTONE_LIGHT, IDS_DESC_REDSTONE_LIGHT));
 
     registerBlock(125, L"double_wooden_slab",
-        (new FullWoodSlabBlock())->setIconName(L"woodSlab")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(754256853, 754256853)->setBaseItemTypeAndMaterial(21, 1));
+        (new FullWoodSlabBlock())->setIconName(L"woodSlab")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_DESC_WOODSLAB, IDS_DESC_WOODSLAB)->setBaseItemTypeAndMaterial(21, 1));
 
     registerBlock(126, L"wooden_slab",
-        (new HalfWoodSlabBlock())->setIconName(L"woodSlab")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(754256853, 754256853)->setBaseItemTypeAndMaterial(22, 1));
+        (new HalfWoodSlabBlock())->setIconName(L"woodSlab")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_DESC_WOODSLAB, IDS_DESC_WOODSLAB)->setBaseItemTypeAndMaterial(22, 1));
 
     registerBlock(127, L"cocoa",
-        (new CocoaBlock())->setIconName(L"cocoa")->setDestroyTime(0.2f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-344420786, -1677943605));
+        (new CocoaBlock())->setIconName(L"cocoa")->setDestroyTime(0.2f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_COCOA, IDS_DESC_COCOA));
 
     registerBlock(128, L"sandstone_stairs",
-        (new StairBlock(sandstone->defaultBlockState()->setBoxedValue(SandStoneBlock::TYPE, new TypedBoxed<SandStoneBlock::Type*>(SandStoneBlock::SMOOTH))))->setIconName(L"stairsSandstone")->sendBlockData(15)->setNameAndDescriptionId(-1842581131, 1962448236)->setBaseItemTypeAndMaterial(16, 13));
+        (new StairBlock(sandstone->defaultBlockState()->setBoxedValue(SandStoneBlock::TYPE, new TypedBoxed<SandStoneBlock::Type*>(SandStoneBlock::SMOOTH))))->setIconName(L"stairsSandstone")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_SANDSTONE, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 13));
 
     registerBlock(129, L"emerald_ore",
-        (new OreBlock())->setIconName(L"emerald_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1525740761, 1075886516));
+        (new OreBlock())->setIconName(L"emerald_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_EMERALDORE, IDS_DESC_EMERALDORE));
 
     registerBlock(130, L"ender_chest",
-        (new EnderChestBlock())->setDestroyTime(22.5f)->setIconName(L"enderChest")->setExplodeable(1000.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setLightEmission(0.5f)->setNameAndDescriptionId(-621298906, 1270672747)->setBaseItemTypeAndMaterial(36, 33));
+        (new EnderChestBlock())->setDestroyTime(22.5f)->setIconName(L"enderChest")->setExplodeable(1000.0f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setLightEmission(0.5f)->setNameAndDescriptionId(IDS_TILE_ENDERCHEST, IDS_DESC_ENDERCHEST)->setBaseItemTypeAndMaterial(36, 33));
 
     registerBlock(131, L"tripwire_hook",
-        (new TripWireHookBlock())->setIconName(L"trip_wire_source")->sendBlockData(15)->setNameAndDescriptionId(1949301963, -1376884498)->setBaseItemTypeAndMaterial(45, 0));
+        (new TripWireHookBlock())->setIconName(L"trip_wire_source")->sendBlockData(15)->setNameAndDescriptionId(0x742FFCCB, 0xADEE68EE)->setBaseItemTypeAndMaterial(45, 0));
 
     registerBlock(132, L"tripwire",
-        (new TripWireBlock())->setIconName(L"trip_wire")->sendBlockData(15)->setNameAndDescriptionId(57442505, -189186572)->disableMipmap());
+        (new TripWireBlock())->setIconName(L"trip_wire")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRIPWIRE, IDS_DESC_TRIPWIRE)->disableMipmap());
 
     registerBlock(133, L"emerald_block",
-        (new BlockImpl(Material::METAL, MaterialColor::EMERALD))->setIconName(L"emerald_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(1707855608, 1799850453)->setBaseItemTypeAndMaterial(32, 44));
+        (new BlockImpl(Material::METAL, MaterialColor::EMERALD))->setIconName(L"emerald_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_EMERALDBLOCK, 0x6B4789D5)->setBaseItemTypeAndMaterial(32, 44));
 
     registerBlock(134, L"spruce_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::SPRUCE))))->setIconName(L"stairsWoodSpruce")->sendBlockData(15)->setNameAndDescriptionId(666001927, 1962448236)->setBaseItemTypeAndMaterial(16, 39));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::SPRUCE))))->setIconName(L"stairsWoodSpruce")->sendBlockData(15)->setNameAndDescriptionId(0x27B26207, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 39));
 
     registerBlock(135, L"birch_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::BIRCH))))->setIconName(L"stairsWoodBirch")->sendBlockData(15)->setNameAndDescriptionId(2140340631, 1962448236)->setBaseItemTypeAndMaterial(16, 40));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::BIRCH))))->setIconName(L"stairsWoodBirch")->sendBlockData(15)->setNameAndDescriptionId(0x7F930197, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 40));
 
     registerBlock(136, L"jungle_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::JUNGLE))))->setIconName(L"stairsWoodJungle")->sendBlockData(15)->setNameAndDescriptionId(1700333602, 1962448236)->setBaseItemTypeAndMaterial(16, 41));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::JUNGLE))))->setIconName(L"stairsWoodJungle")->sendBlockData(15)->setNameAndDescriptionId(0x65590822, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 41));
 
     registerBlock(137, L"command_block",
-        (new CommandBlock(MaterialColor::COLOR_BROWN, CommandBlock::IMPULSE))->setIconName(L"command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(1574311038, -79610325));
+        (new CommandBlock(MaterialColor::COLOR_BROWN, CommandBlock::IMPULSE))->setIconName(L"command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_COMMAND_BLOCK, IDS_DESC_COMMAND_BLOCK));
 
     registerBlock(138, L"beacon",
-        (new BeaconBlock())->setIconName(L"beacon")->setLightEmission(1.0f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(-63126613, -1056354586)->setBaseItemTypeAndMaterial(61, 34));
+        (new BeaconBlock())->setIconName(L"beacon")->setLightEmission(1.0f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(IDS_TILE_BEACON, 0xC1094EE6)->setBaseItemTypeAndMaterial(61, 34));
 
     registerBlock(139, L"cobblestone_wall",
-        (new WallBlock())->setIconName(L"cobbleWall")->setNameAndDescriptionId(726532432, -1616412963)->setBaseItemTypeAndMaterial(29, 2));
+        (new WallBlock(cobblestone))->setIconName(L"cobbleWall")->setNameAndDescriptionId(IDS_TILE_COBBLESTONE_WALL, IDS_DESC_COBBLESTONE_WALL)->setBaseItemTypeAndMaterial(29, 2));
 
     registerBlock(140, L"flower_pot",
-        (new FlowerPotBlock())->setDestroyTime(0.0f)->setIconName(L"flower_pot")->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-691080247, -1237969044));
+        (new FlowerPotBlock())->setDestroyTime(0.0f)->setIconName(L"flower_pot")->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_FLOWERPOT, IDS_DESC_FLOWERPOT));
 
     registerBlock(141, L"carrots",
-        (new CropBlock(0))->setIconName(L"carrots")->setNameAndDescriptionId(344335317, 1476904080)->disableMipmap());
+        (new CropBlock(0))->setIconName(L"carrots")->setNameAndDescriptionId(IDS_TILE_CARROTS, IDS_DESC_CARROTS)->disableMipmap());
 
     registerBlock(142, L"potatoes",
-        (new PotatoBlock())->setIconName(L"potatoes")->setNameAndDescriptionId(-1607323512, 1877161723)->disableMipmap());
+        (new PotatoBlock())->setIconName(L"potatoes")->setNameAndDescriptionId(IDS_TILE_POTATOES, 0x6FE336FB)->disableMipmap());
 
     registerBlock(143, L"wooden_button",
-        (new WoodButtonBlock())->setIconName(L"planks_oak")->setBaseItemTypeAndMaterial(35, 1)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1792100991, -753144148));
+        (new WoodButtonBlock())->setIconName(L"planks_oak")->setBaseItemTypeAndMaterial(35, 1)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON, 0xD31BEEAC));
 
     registerBlock(144, L"skull",
-        (new SkullBlock())->setIconName(L"skull")->setDestroyTime(1.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-31596006, -1989482401));
+        (new SkullBlock())->setIconName(L"skull")->setDestroyTime(1.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SKULL, 0x896AE85F));
 
     registerBlock(145, L"anvil",
-        (new AnvilBlock())->setIconName(L"anvil")->setBaseItemTypeAndMaterial(30, 3)->setDestroyTime(5.0f)->setSoundType(SoundType::ANVIL)->setExplodeable(2000.0f)->sendBlockData(15)->setNameAndDescriptionId(366579523, -2146312138));
+        (new AnvilBlock())->setIconName(L"anvil")->setBaseItemTypeAndMaterial(30, 3)->setDestroyTime(5.0f)->setSoundType(SoundType::ANVIL)->setExplodeable(2000.0f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_ANVIL, 0x8011E036));
 
     registerBlock(146, L"trapped_chest",
-        (new ChestBlock(ChestBlock::TYPE_LEFT))->setBaseItemTypeAndMaterial(36, 25)->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(845811998, -1767515453));
+        (new ChestBlock(ChestBlock::TYPE_LEFT))->setBaseItemTypeAndMaterial(36, 25)->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x326A111E, 0x96A5DAC3));
 
     registerBlock(147, L"light_weighted_pressure_plate",
-        (new WeightedPressurePlateBlock(L"gold_block", Material::METAL, 15, MaterialColor::GOLD))->setBaseItemTypeAndMaterial(15, 4)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(1888521428, 1823420681));
+        (new WeightedPressurePlateBlock(L"gold_block", Material::METAL, 15, MaterialColor::GOLD))->setBaseItemTypeAndMaterial(15, 4)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_WEIGHTED_PLATE_LIGHT, IDS_DESC_WEIGHTED_PLATE_LIGHT));
 
     registerBlock(148, L"heavy_weighted_pressure_plate",
-        (new WeightedPressurePlateBlock(L"iron_block", Material::METAL, 150, MaterialColor::METAL))->setBaseItemTypeAndMaterial(15, 3)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(506712369, 986861820));
+        (new WeightedPressurePlateBlock(L"iron_block", Material::METAL, 150, MaterialColor::METAL))->setBaseItemTypeAndMaterial(15, 3)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_WEIGHTED_PLATE_HEAVY, IDS_DESC_WEIGHTED_PLATE_HEAVY));
 
     registerBlock(149, L"unpowered_comparator",
-        (new ComparatorBlock(0))->setIconName(L"comparator_off")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(1442887949, -150634528)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
+        (new ComparatorBlock(0))->setIconName(L"comparator_off")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_COMPARATOR, 0xF7057FE0)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
 
     registerBlock(150, L"powered_comparator",
-        (new ComparatorBlock(1))->setIconName(L"comparator_on")->setDestroyTime(0.0f)->setLightEmission(0.625f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(1442887949, -150634528)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
+        (new ComparatorBlock(1))->setIconName(L"comparator_on")->setDestroyTime(0.0f)->setLightEmission(0.625f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_COMPARATOR, 0xF7057FE0)->disableMipmap()->setBaseItemTypeAndMaterial(59, 0));
 
     registerBlock(151, L"daylight_detector",
-        (new DaylightDetectorBlock(0))->setIconName(L"daylight_detector")->setNameAndDescriptionId(1065283032, -379601475));
+        (new DaylightDetectorBlock(0))->setIconName(L"daylight_detector")->setNameAndDescriptionId(0x3F7EEDD8, 0xE95FBDBD));
 
     registerBlock(152, L"redstone_block",
-        (new PoweredBlock(Material::METAL, MaterialColor::FIRE))->setIconName(L"redstone_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(-2072282455, 963824100)->setBaseItemTypeAndMaterial(32, 48));
+        (new PoweredBlock(Material::METAL, MaterialColor::FIRE))->setIconName(L"redstone_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_REDSTONE_BLOCK, IDS_DESC_REDSTONE_BLOCK)->setBaseItemTypeAndMaterial(32, 48));
 
     registerBlock(153, L"quartz_ore",
-        (new OreBlock(MaterialColor::NETHER))->setIconName(L"quartz_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1018040569, -1084182693));
+        (new OreBlock(MaterialColor::NETHER))->setIconName(L"quartz_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_NETHER_QUARTZ, 0xBF60AF5B));
 
     registerBlock(154, L"hopper",
-        (new HopperBlock())->setIconName(L"hopper")->setDestroyTime(3.0f)->setExplodeable(8.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(2089418295, 2098570490)->setBaseItemTypeAndMaterial(51, 0));
+        (new HopperBlock())->setIconName(L"hopper")->setDestroyTime(3.0f)->setExplodeable(8.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_HOPPER, 0x7D15A4FA)->setBaseItemTypeAndMaterial(51, 0));
 
-    Block* quartzBlock = (new QuartzBlock())->setIconName(L"quartz_block")->setSoundType(SoundType::STONE)->setDestroyTime(0.8f)->setNameAndDescriptionId(1404172104, -1571399371)->setBaseItemTypeAndMaterial(14, 45);
+    Block* quartzBlock = (new QuartzBlock())->setIconName(L"quartz_block")->setSoundType(SoundType::STONE)->setDestroyTime(0.8f)->setNameAndDescriptionId(IDS_TILE_QUARTZ_BLOCK, 0xA2565935)->setBaseItemTypeAndMaterial(14, 45);
     registerBlock(155, L"quartz_block", quartzBlock);
 
     registerBlock(156, L"quartz_stairs",
-        (new StairBlock(quartzBlock->defaultBlockState()->setBoxedValue(QuartzBlock::VARIANT, new TypedBoxed<QuartzBlock::Variant*>(QuartzBlock::Variant::DEFAULT))))->setIconName(L"stairsQuartz")->setNameAndDescriptionId(2021542239, 1962448236)->setBaseItemTypeAndMaterial(16, 45));
+        (new StairBlock(quartzBlock->defaultBlockState()->setBoxedValue(QuartzBlock::VARIANT, new TypedBoxed<QuartzBlock::Variant*>(QuartzBlock::Variant::DEFAULT))))->setIconName(L"stairsQuartz")->setNameAndDescriptionId(IDS_TILE_STAIRS_QUARTZ, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 45));
 
     registerBlock(157, L"activator_rail",
-        (new PoweredRailBlock())->setIconName(L"rail_activator")->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(-8062537, 238648458)->setBaseItemTypeAndMaterial(12, 9));
+        (new PoweredRailBlock())->setIconName(L"rail_activator")->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_ACTIVATOR_RAIL, IDS_DESC_ACTIVATOR_RAIL)->setBaseItemTypeAndMaterial(12, 9));
 
     registerBlock(158, L"dropper",
-        (new DropperBlock())->setIconName(L"dropper")->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(634103265, -1693458140)->setBaseItemTypeAndMaterial(51, 0));
+        (new DropperBlock())->setIconName(L"dropper")->setDestroyTime(3.5f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_DROPPER, IDS_DESC_DROPPER)->setBaseItemTypeAndMaterial(51, 0));
 
     registerBlock(159, L"stained_hardened_clay",
-        (new StainedHardenedClayBlock())->setIconName(L"hardened_clay_stained")->setDestroyTime(1.25f)->setExplodeable(7.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1192910743, 946027994)->setBaseItemTypeAndMaterial(41, 15));
+        (new StainedHardenedClayBlock())->setIconName(L"hardened_clay_stained")->setDestroyTime(1.25f)->setExplodeable(7.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0x471A5F97, 0x38633DDA)->setBaseItemTypeAndMaterial(41, 15));
 
     registerBlock(160, L"stained_glass_pane",
-        (new StainedGlassPaneBlock())->setIconName(L"glass")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(-1809051305, 1981321514)->setBaseItemTypeAndMaterial(42, 34));
+        (new StainedGlassPaneBlock())->setIconName(L"glass")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(IDS_TILE_STAINED_GLASS_PANE, 0x7618912A)->setBaseItemTypeAndMaterial(42, 34));
 
     registerBlock(161, L"leaves2",
-        (new NewLeafBlock())->setIconName(L"leaves2")->sendBlockData(3)->setNameAndDescriptionId(-806242921, -636152246));
+        (new NewLeafBlock())->setIconName(L"leaves2")->sendBlockData(3)->setNameAndDescriptionId(IDS_TILE_LEAVES, 0xDA15164A));
 
     registerBlock(162, L"log2",
-        (new NewLogBlock())->setIconName(L"log")->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new NewLogBlock())->setIconName(L"log")->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(163, L"acacia_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::ACACIA))))->setIconName(L"stairsWoodAcacia")->sendBlockData(15)->setNameAndDescriptionId(-2082414187, 1962448236)->setBaseItemTypeAndMaterial(16, 42));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::ACACIA))))->setIconName(L"stairsWoodAcacia")->sendBlockData(15)->setNameAndDescriptionId(0x83E0E195, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 42));
 
     registerBlock(164, L"dark_oak_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::DARK_OAK))))->setIconName(L"stairsWoodDarkOak")->sendBlockData(15)->setNameAndDescriptionId(1820864892, 1962448236)->setBaseItemTypeAndMaterial(16, 43));
+        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::DARK_OAK))))->setIconName(L"stairsWoodDarkOak")->sendBlockData(15)->setNameAndDescriptionId(0x6C88317C, 0x74F8956C)->setBaseItemTypeAndMaterial(16, 43));
 
     registerBlock(165, L"slime",
-        (new SlimeBlock())->setSoundType(SoundType::SLIME)->setNameAndDescriptionId(1273472087, 208588370)->setBaseItemTypeAndMaterial(32, 57)->setSemiTransparent());
+        (new SlimeBlock())->setSoundType(SoundType::SLIME)->setNameAndDescriptionId(IDS_TILE_BLOCK_SLIME, 0x0C6ECE52)->setBaseItemTypeAndMaterial(32, 57)->setSemiTransparent());
 
     registerBlock(166, L"barrier",
-        (new BarrierBlock())->setIconName(L"barrier")->setNameAndDescriptionId(70640450, 711746119));
+        (new BarrierBlock())->setIconName(L"barrier")->setNameAndDescriptionId(IDS_TILE_BARRIER, 0x2A6C6247));
 
     registerBlock(167, L"iron_trapdoor",
-        (new TrapDoorBlock(Material::METAL))->setIconName(L"iron_trapdoor")->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-93457941, 361384478)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::METAL))->setIconName(L"iron_trapdoor")->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRAPDOOR_IRON, IDS_DESC_TRAPDOOR_IRON)->setBaseItemTypeAndMaterial(6, 25));
 
-    Block* prismarine = (new PrismarineBlock())->setIconName(L"prismarine_rough")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1016146117, 1294842838)->setBaseItemTypeAndMaterial(13, 13);
+    Block* prismarine = (new PrismarineBlock())->setIconName(L"prismarine_rough")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_PRISMARINE, IDS_DESC_PRISMARINE)->setBaseItemTypeAndMaterial(13, 13);
     registerBlock(168, L"prismarine", prismarine);
 
     registerBlock(169, L"sea_lantern",
-        (new SeaLanternBlock(Material::GLASS))->setIconName(L"sea_lantern")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setLightEmission(1.0f)->setNameAndDescriptionId(2073873113, 2134025212)->setBaseItemTypeAndMaterial(23, 54));
+        (new SeaLanternBlock(Material::GLASS))->setIconName(L"sea_lantern")->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setLightEmission(1.0f)->setNameAndDescriptionId(IDS_TILE_SEA_LANTERN, 0x7F32A3FC)->setBaseItemTypeAndMaterial(23, 54));
 
     registerBlock(170, L"hay_block",
-        (new HayBlock())->setDestroyTime(0.5f)->setIconName(L"hay_block")->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(-628091201, 1790302378)->setBaseItemTypeAndMaterial(32, 53));
+        (new HayBlock())->setDestroyTime(0.5f)->setIconName(L"hay_block")->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(IDS_TILE_HAY, 0x6AB5D8AA)->setBaseItemTypeAndMaterial(32, 53));
 
     registerBlock(171, L"carpet",
-        (new WoolCarpetBlock())->setIconName(L"woolCarpet")->setDestroyTime(0.1f)->setSoundType(SoundType::CLOTH)->setLightBlock(0)->setNameAndDescriptionId(-67474618, 29708315)->setBaseItemTypeAndMaterial(40, 6));
+        (new WoolCarpetBlock())->setIconName(L"woolCarpet")->setDestroyTime(0.1f)->setSoundType(SoundType::CLOTH)->setLightBlock(0)->setNameAndDescriptionId(IDS_TILE_CARPET, 0x01C5501B)->setBaseItemTypeAndMaterial(40, 6));
 
     registerBlock(172, L"hardened_clay",
-        (new HardenedClayBlock())->setIconName(L"hardened_clay")->setDestroyTime(1.25f)->setExplodeable(7.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(2142500442, 954439535)->setBaseItemTypeAndMaterial(41, 15));
+        (new HardenedClayBlock())->setIconName(L"hardened_clay")->setDestroyTime(1.25f)->setExplodeable(7.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0x7FB3F65A, 0x38E3976F)->setBaseItemTypeAndMaterial(41, 15));
 
     registerBlock(173, L"coal_block",
-        (new BlockImpl(Material::STONE, MaterialColor::COLOR_BLACK))->setIconName(L"coal_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(2112358854, 2042591469)->setBaseItemTypeAndMaterial(32, 49));
+        (new BlockImpl(Material::STONE, MaterialColor::COLOR_BLACK))->setIconName(L"coal_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_COAL, IDS_DESC_COAL_BLOCK)->setBaseItemTypeAndMaterial(32, 49));
 
     registerBlock(174, L"packed_ice",
-        (new PackedIceBlock())->setIconName(L"ice_packed")->setDestroyTime(0.5f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(474586919, -1694722534));
+        (new PackedIceBlock())->setIconName(L"ice_packed")->setDestroyTime(0.5f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(IDS_TILE_ICE_PACKED, 0x9AFC961A));
 
     registerBlock(175, L"double_plant",
-        (new DoublePlantBlock())->setNameAndDescriptionId(1348410234, -31749657)->disableMipmap());
+        (new DoublePlantBlock())->setNameAndDescriptionId(IDS_TILE_DOUBLE_PLANT, IDS_DESC_DOUBLE_PLANT)->disableMipmap());
 
     registerBlock(176, L"standing_banner",
-        (new StandingBannerBlock())->setIconName(L"planks_oak")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->setNameAndDescriptionId(445928624, 1713023493));
+        (new StandingBannerBlock())->setIconName(L"planks_oak")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->setNameAndDescriptionId(IDS_TILE_STANDING_BANNER, IDS_DESC_STANDING_BANNER));
 
     registerBlock(177, L"wall_banner",
-        (new WallBannerBlock())->setIconName(L"planks_oak")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->setNameAndDescriptionId(631422002, 1567917047));
+        (new WallBannerBlock())->setIconName(L"planks_oak")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->setNameAndDescriptionId(0x25A2BC32, 0x5D7483F7));
 
     registerBlock(178, L"daylight_detector_inverted",
-        (new DaylightDetectorBlock(1))->setIconName(L"daylight_detector")->setNameAndDescriptionId(1065283032, -379601475));
+        (new DaylightDetectorBlock(1))->setIconName(L"daylight_detector")->setNameAndDescriptionId(0x3F7EEDD8, 0xE95FBDBD));
 
-    Block* redSandstone = (new RedSandStoneBlock())->setIconName(L"red_sandstone")->setSoundType(SoundType::STONE)->setDestroyTime(0.8f)->setNameAndDescriptionId(1891675551, -1229413198)->setBaseItemTypeAndMaterial(13, 48);
+    Block* redSandstone = (new RedSandStoneBlock())->setIconName(L"red_sandstone")->setSoundType(SoundType::STONE)->setDestroyTime(0.8f)->setNameAndDescriptionId(IDS_TILE_REDSANDSTONE, IDS_DESC_REDSANDSTONE)->setBaseItemTypeAndMaterial(13, 48);
     registerBlock(179, L"red_sandstone", redSandstone);
 
     registerBlock(180, L"red_sandstone_stairs",
-        (new StairBlock(redSandstone->defaultBlockState()->setBoxedValue(RedSandStoneBlock::TYPE, new TypedBoxed<RedSandStoneBlock::Type*>(RedSandStoneBlock::Type::SMOOTH))))->setIconName(L"red_sandstone")->setNameAndDescriptionId(1845194718, 786142283)->setBaseItemTypeAndMaterial(16, 48));
+        (new StairBlock(redSandstone->defaultBlockState()->setBoxedValue(RedSandStoneBlock::TYPE, new TypedBoxed<RedSandStoneBlock::Type*>(RedSandStoneBlock::Type::SMOOTH))))->setIconName(L"red_sandstone")->setNameAndDescriptionId(0x6DFB6FDE, 0x2EDB944B)->setBaseItemTypeAndMaterial(16, 48));
 
     registerBlock(181, L"double_stone_slab2",
-        (new FullNewStoneSlabBlock())->setIconName(L"double_stone_slab2")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1316829447, 406008282)->setBaseItemTypeAndMaterial(21, 48));
+        (new FullNewStoneSlabBlock())->setIconName(L"double_stone_slab2")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0x4E7D3907, 0x183331DA)->setBaseItemTypeAndMaterial(21, 48));
 
     registerBlock(182, L"stone_slab2",
-        (new HalfNewStoneSlabBlock())->setIconName(L"stone_slab2")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1316829447, 406008282)->setBaseItemTypeAndMaterial(22, 48));
+        (new HalfNewStoneSlabBlock())->setIconName(L"stone_slab2")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0x4E7D3907, 0x183331DA)->setBaseItemTypeAndMaterial(22, 48));
 
     registerBlock(183, L"spruce_fence_gate",
-        (new FenceGateBlock(L"planks_spruce", PlanksBlock::Variant::SPRUCE))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-474640214, -1927890567)->setBaseItemTypeAndMaterial(47, 39));
+        (new FenceGateBlock(L"planks_spruce", PlanksBlock::Variant::SPRUCE))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0xE3B590AA, 0x8D16B979)->setBaseItemTypeAndMaterial(47, 39));
 
-    registerBlock(184, L"planks_birch",
-        (new FenceGateBlock(L"planks_birch", PlanksBlock::Variant::BIRCH))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-707596766, -1927890567)->setBaseItemTypeAndMaterial(47, 40));
+    registerBlock(184, L"birch_fence_gate",
+        (new FenceGateBlock(L"planks_birch", PlanksBlock::Variant::BIRCH))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0xD5D2EE22, 0x8D16B979)->setBaseItemTypeAndMaterial(47, 40));
 
     registerBlock(185, L"jungle_fence_gate",
-        (new FenceGateBlock(L"planks_jungle", PlanksBlock::Variant::JUNGLE))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1452719473, -1927890567)->setBaseItemTypeAndMaterial(47, 41));
+        (new FenceGateBlock(L"planks_jungle", PlanksBlock::Variant::JUNGLE))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0xA969428F, 0x8D16B979)->setBaseItemTypeAndMaterial(47, 41));
 
-    registerBlock(186, L"planks_big_oak",
-        (new FenceGateBlock(L"planks_big_oak", PlanksBlock::Variant::DARK_OAK))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-424434903, -1927890567)->setBaseItemTypeAndMaterial(47, 42));
+    registerBlock(186, L"dark_oak_fence_gate",
+        (new FenceGateBlock(L"planks_big_oak", PlanksBlock::Variant::DARK_OAK))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0xE6B3A329, 0x8D16B979)->setBaseItemTypeAndMaterial(47, 42));
 
     registerBlock(187, L"acacia_fence_gate",
-        (new FenceGateBlock(L"planks_acacia", PlanksBlock::Variant::ACACIA))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1397533096, -1927890567)->setBaseItemTypeAndMaterial(47, 43));
+        (new FenceGateBlock(L"planks_acacia", PlanksBlock::Variant::ACACIA))->setIconName(L"fenceGate")->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0xACB35658, 0x8D16B979)->setBaseItemTypeAndMaterial(47, 43));
 
-    registerBlock(188, L"planks_spruce",
-        (new FenceBlock(L"planks_spruce", Material::WOOD, PlanksBlock::Variant::SPRUCE->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(1571971706, 1128628177)->setBaseItemTypeAndMaterial(29, 39));
+    registerBlock(188, L"spruce_fence",
+        (new FenceBlock(L"planks_spruce", Material::WOOD, PlanksBlock::Variant::SPRUCE->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x5DB2627A, 0x43457FD1)->setBaseItemTypeAndMaterial(29, 39));
 
     registerBlock(189, L"birch_fence",
-        (new FenceBlock(L"planks_birch", Material::WOOD, PlanksBlock::Variant::BIRCH->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-1758441134, 1128628177)->setBaseItemTypeAndMaterial(29, 40));
+        (new FenceBlock(L"planks_birch", Material::WOOD, PlanksBlock::Variant::BIRCH->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x97305152, 0x43457FD1)->setBaseItemTypeAndMaterial(29, 40));
 
-    registerBlock(190, L"planks_jungle",
-        (new FenceBlock(L"planks_jungle", Material::WOOD, PlanksBlock::Variant::JUNGLE->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(445729087, 1128628177)->setBaseItemTypeAndMaterial(29, 41));
+    registerBlock(190, L"jungle_fence",
+        (new FenceBlock(L"planks_jungle", Material::WOOD, PlanksBlock::Variant::JUNGLE->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x1A91493F, 0x43457FD1)->setBaseItemTypeAndMaterial(29, 41));
 
     registerBlock(191, L"dark_oak_fence",
-        (new FenceBlock(L"planks_big_oak", Material::WOOD, PlanksBlock::Variant::DARK_OAK->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(511023769, 1128628177)->setBaseItemTypeAndMaterial(29, 42));
+        (new FenceBlock(L"planks_big_oak", Material::WOOD, PlanksBlock::Variant::DARK_OAK->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x1E759A99, 0x43457FD1)->setBaseItemTypeAndMaterial(29, 42));
 
-    registerBlock(192, L"planks_acacia",
-        (new FenceBlock(L"planks_acacia", Material::WOOD, PlanksBlock::Variant::ACACIA->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-1887801560, 1128628177)->setBaseItemTypeAndMaterial(29, 43));
+    registerBlock(192, L"acacia_fence",
+        (new FenceBlock(L"planks_acacia", Material::WOOD, PlanksBlock::Variant::ACACIA->getMaterialColor()))->setDestroyTime(2.0f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x8F7A6F28, 0x43457FD1)->setBaseItemTypeAndMaterial(29, 43));
 
     registerBlock(193, L"spruce_door",
-        (new DoorBlock(Material::WOOD))->setIconName(L"door_spruce")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(791032551, 716140400));
+        (new DoorBlock(Material::WOOD))->setIconName(L"door_spruce")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0x2F2632E7, IDS_DESC_DOOR_WOOD));
 
     registerBlock(194, L"birch_door",
-        (new DoorBlock(Material::WOOD))->setIconName(L"door_birch")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-47248137, 716140400));
+        (new DoorBlock(Material::WOOD))->setIconName(L"door_birch")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0xFD2F0CF7, IDS_DESC_DOOR_WOOD));
 
     registerBlock(195, L"jungle_door",
-        (new DoorBlock(Material::WOOD))->setIconName(L"door_jungle")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1744743806, 716140400));
+        (new DoorBlock(Material::WOOD))->setIconName(L"door_jungle")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0x98015282, IDS_DESC_DOOR_WOOD));
 
     registerBlock(196, L"acacia_door",
-        (new DoorBlock(Material::WOOD))->setIconName(L"door_acacia")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(1678692597, 716140400));
+        (new DoorBlock(Material::WOOD))->setIconName(L"door_acacia")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0x640ED0F5, IDS_DESC_DOOR_WOOD));
 
     registerBlock(197, L"dark_oak_door",
-        (new DoorBlock(Material::WOOD))->setIconName(L"door_dark_oak")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-547368868, 716140400));
+        (new DoorBlock(Material::WOOD))->setIconName(L"door_dark_oak")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(0xDF5FD05C, IDS_DESC_DOOR_WOOD));
 
     registerBlock(198, L"end_rod",
-        (new EndRodBlock())->setIconName(L"end_rod")->setDestroyTime(0.0f)->setLightEmission(0.9375f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-1150000506, 1875247091));
+        (new EndRodBlock())->setIconName(L"end_rod")->setDestroyTime(0.0f)->setLightEmission(0.9375f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_END_ROD, IDS_DESC_END_ROD));
 
     registerBlock(199, L"chorus_plant",
-        (new ChorusPlantBlock())->setIconName(L"chorus_flower_plant")->setDestroyTime(0.4f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(662828135, -1659105222));
+        (new ChorusPlantBlock())->setIconName(L"chorus_flower_plant")->setDestroyTime(0.4f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_CHORUS_PLANT, IDS_DESC_CHORUS_PLANT));
 
     registerBlock(200, L"chorus_flower",
-        (new ChorusFlowerBlock())->setIconName(L"chorus_flower")->setDestroyTime(0.4f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-777779883, -1873306112));
+        (new ChorusFlowerBlock())->setIconName(L"chorus_flower")->setDestroyTime(0.4f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_CHORUS_FLOWER, IDS_DESC_CHORUS_FLOWER));
 
-    Block* purpurBlock = (new BlockImpl(Material::STONE, MaterialColor::COLOR_MAGENTA))->setIconName(L"purpur_block")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1451163449, 1780598970)->setBaseItemTypeAndMaterial(32, 62);
+    Block* purpurBlock = (new BlockImpl(Material::STONE, MaterialColor::COLOR_MAGENTA))->setIconName(L"purpur_block")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_PURPUR, 0x6A21C8BA)->setBaseItemTypeAndMaterial(32, 62);
     registerBlock(201, L"purpur_block", purpurBlock);
 
     registerBlock(202, L"purpur_pillar",
-        (new RotatedPillarBlockImpl(Material::STONE, MaterialColor::COLOR_MAGENTA))->setIconTopName(L"purpur_pillar_top")->setIconName(L"purpur_pillar")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(175836970, -1656134881)->setBaseItemTypeAndMaterial(14, 62));
+        (new RotatedPillarBlockImpl(Material::STONE, MaterialColor::COLOR_MAGENTA))->setIconTopName(L"purpur_pillar_top")->setIconName(L"purpur_pillar")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_PURPUR_PILLAR, IDS_DESC_PURPUR_PILLAR)->setBaseItemTypeAndMaterial(14, 62));
 
     registerBlock(203, L"purpur_stairs",
-        (new StairBlock(purpurBlock->defaultBlockState()))->setNameAndDescriptionId(2022113926, 232393875)->setBaseItemTypeAndMaterial(16, 62));
+        (new StairBlock(purpurBlock->defaultBlockState()))->setNameAndDescriptionId(IDS_TILE_PURPUR_STAIRS, 0x0DDA0C93)->setBaseItemTypeAndMaterial(16, 62));
 
     registerBlock(204, L"purpur_double_slab",
-        (new PurpurSlabBlockFull())->setDestroyTime(2.0f)->setIconName(L"purpur_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1321483148, -234598575)->setBaseItemTypeAndMaterial(21, 62));
+        (new PurpurSlabBlockFull())->setDestroyTime(2.0f)->setIconName(L"purpur_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_PURPUR_SLAB, IDS_DESC_PURPUR_SLAB)->setBaseItemTypeAndMaterial(21, 62));
 
     registerBlock(205, L"purpur_slab",
-        (new PurpurSlabBlockHalf())->setDestroyTime(2.0f)->setIconName(L"purpur_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1321483148, -234598575)->setBaseItemTypeAndMaterial(22, 62));
+        (new PurpurSlabBlockHalf())->setDestroyTime(2.0f)->setIconName(L"purpur_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_PURPUR_SLAB, IDS_DESC_PURPUR_SLAB)->setBaseItemTypeAndMaterial(22, 62));
 
     registerBlock(206, L"end_bricks",
-        (new BlockImpl(Material::STONE, MaterialColor::SAND))->setSoundType(SoundType::STONE)->setDestroyTime(0.8f)->setIconName(L"end_bricks")->setNameAndDescriptionId(637472533, -1647411429)->setBaseItemTypeAndMaterial(14, 33));
+        (new BlockImpl(Material::STONE, MaterialColor::SAND))->setSoundType(SoundType::STONE)->setDestroyTime(0.8f)->setIconName(L"end_bricks")->setNameAndDescriptionId(IDS_TILE_END_BRICKS, IDS_DESC_TILE_END_BRICKS)->setBaseItemTypeAndMaterial(14, 33));
 
     registerBlock(207, L"beetroots",
-        (new BeetrootBlock())->setIconName(L"beetroots")->disableMipmap()->setNameAndDescriptionId(-185865156, 2110888562));
+        (new BeetrootBlock())->setIconName(L"beetroots")->disableMipmap()->setNameAndDescriptionId(IDS_TILE_BEETROOTS, 0x7DD19A72));
 
-    Block* grassPath = (new GrassPathBlock())->setDestroyTime(0.65f)->setSoundType(SoundType::GRASS)->setIconName(L"grass_path")->setNotCollectStatistics()->setNameAndDescriptionId(2077997905, 388250431);
+    Block* grassPath = (new GrassPathBlock())->setDestroyTime(0.65f)->setSoundType(SoundType::GRASS)->setIconName(L"grass_path")->setNotCollectStatistics()->setNameAndDescriptionId(IDS_TILE_GRASS_PATH, IDS_DESC_TILE_GRASS_PATH);
     registerBlock(208, L"grass_path", grassPath);
 
     registerBlock(209, L"end_gateway",
-        (new EndGatewayBlock(Material::PORTAL))->setIconName(L"stone")->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(929597140, -308337414));
+        (new EndGatewayBlock(Material::PORTAL))->setIconName(L"stone")->setDestroyTime(0.0f)->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_END_GATEWAY, IDS_DESC_END_GATEWAY));
 
     registerBlock(210, L"repeating_command_block",
-        (new CommandBlock(MaterialColor::COLOR_PURPLE, CommandBlock::REPEAT))->setIconName(L"repeating_command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(1574311038, -79610325));
+        (new CommandBlock(MaterialColor::COLOR_PURPLE, CommandBlock::REPEAT))->setIconName(L"repeating_command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_COMMAND_BLOCK, IDS_DESC_COMMAND_BLOCK));
 
     registerBlock(211, L"chain_command_block",
-        (new CommandBlock(MaterialColor::COLOR_GREEN, CommandBlock::CHAIN))->setIconName(L"chain_command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(1574311038, -79610325));
+        (new CommandBlock(MaterialColor::COLOR_GREEN, CommandBlock::CHAIN))->setIconName(L"chain_command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_COMMAND_BLOCK, IDS_DESC_COMMAND_BLOCK));
 
     registerBlock(212, L"frosted_ice",
-        (new FrostedIceBlock())->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(-1819286078, -832368980));
+        (new FrostedIceBlock())->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(IDS_TILE_FROSTED_ICE, IDS_DESC_TILE_FROSTED_ICE));
 
     registerBlock(213, L"magma",
-        (new MagmaBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->setIconName(L"magma")->setNameAndDescriptionId(378681848, -1833708938)->setBaseItemTypeAndMaterial(32, 61));
+        (new MagmaBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->setIconName(L"magma")->setNameAndDescriptionId(IDS_TILE_MAGMA, 0x92B3D276)->setBaseItemTypeAndMaterial(32, 61));
 
     registerBlock(214, L"nether_wart_block",
-        (new BlockImpl(Material::GRASS, MaterialColor::COLOR_RED))->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setIconName(L"nether_wart_block")->setNameAndDescriptionId(-1017084682, -746937032)->setBaseItemTypeAndMaterial(32, 60));
+        (new BlockImpl(Material::GRASS, MaterialColor::COLOR_RED))->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setIconName(L"nether_wart_block")->setNameAndDescriptionId(IDS_TILE_NETHER_WART_BLOCK, IDS_DESC_TILE_NETHER_WART_BLOCK)->setBaseItemTypeAndMaterial(32, 60));
 
     registerBlock(215, L"red_nether_brick",
-        (new NetherBrickBlock())->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"red_nether_brick")->setNameAndDescriptionId(394564789, -1270652069)->setBaseItemTypeAndMaterial(14, 32));
+        (new NetherBrickBlock())->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setIconName(L"red_nether_brick")->setNameAndDescriptionId(IDS_TILE_RED_NETHER_BRICK, IDS_DESC_TILE_RED_NETHER_BRICK)->setBaseItemTypeAndMaterial(14, 32));
 
     registerBlock(216, L"bone_block",
-        (new BoneBlock())->setIconName(L"bone_block")->setNameAndDescriptionId(-2045584929, -1381471327)->setBaseItemTypeAndMaterial(13, 59));
+        (new BoneBlock())->setIconName(L"bone_block")->setNameAndDescriptionId(IDS_TILE_BONE_BLOCK, IDS_DESC_TILE_BONE_BLOCK)->setBaseItemTypeAndMaterial(13, 59));
 
     registerBlock(217, L"structure_void",
         (new StructureVoidBlock())->setIconName(L"structure_block")->setNameAndDescriptionId(-1, -1));
 
     registerBlock(218, L"observer",
-        (new ObserverBlock())->setDestroyTime(3.0f)->setNameAndDescriptionId(919115967, -450986799));
+        (new ObserverBlock())->setDestroyTime(3.0f)->setNameAndDescriptionId(IDS_TILE_OBSERVER, 0xE51E7CD1));
 
     registerBlock(219, L"white_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::WHITE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1852278165, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::WHITE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_WHITE, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(220, L"orange_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::ORANGE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-181944388, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::ORANGE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_ORANGE, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(221, L"magenta_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::MAGENTA))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1397207335, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::MAGENTA))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_MAGENTA, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(222, L"light_blue_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::LIGHT_BLUE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-993600685, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::LIGHT_BLUE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0xC4C6DB53, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(223, L"yellow_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::YELLOW))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-1378120288, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::YELLOW))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_YELLOW, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(224, L"lime_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::LIME))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1291125785, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::LIME))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_LIME, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(225, L"pink_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::PINK))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1406224920, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::PINK))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_PINK, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(226, L"gray_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::GRAY))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-2127590495, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::GRAY))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_GRAY, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(227, L"silver_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::SILVER))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(632612827, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::SILVER))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0x25B4E7DB, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(228, L"cyan_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::CYAN))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(269607033, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::CYAN))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_CYAN, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(229, L"purple_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::PURPLE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-915929846, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::PURPLE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_PURPLE, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(230, L"blue_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::BLUE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(1370616402, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::BLUE))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_BLUE, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(231, L"brown_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::BROWN))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(837000442, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::BROWN))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_BROWN, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(232, L"green_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::GREEN))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-334831233, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::GREEN))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_GREEN, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(233, L"red_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::RED))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(715884903, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::RED))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_RED, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(234, L"black_shulker_box",
-        (new ShulkerBoxBlock(DyeColor::BLACK))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(202884659, 1964547301)->setBaseItemTypeAndMaterial(36, 70));
+        (new ShulkerBoxBlock(DyeColor::BLACK))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_BLACK, 0x75189CE5)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(235, L"white_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::WHITE))->setIconName(L"glazed_terracotta_white")->setNameAndDescriptionId(1628058156, -151425670));
+        (new GlazedTerracottaBlock(DyeColor::WHITE))->setIconName(L"glazed_terracotta_white")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_WHITE, 0xF6F96D7A));
 
     registerBlock(236, L"orange_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::ORANGE))->setIconName(L"glazed_terracotta_orange")->setNameAndDescriptionId(-1280717229, -1670944035));
+        (new GlazedTerracottaBlock(DyeColor::ORANGE))->setIconName(L"glazed_terracotta_orange")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_ORANGE, 0x9C676ADD));
 
     registerBlock(237, L"magenta_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::MAGENTA))->setIconName(L"glazed_terracotta_magenta")->setNameAndDescriptionId(902019870, 129555800));
+        (new GlazedTerracottaBlock(DyeColor::MAGENTA))->setIconName(L"glazed_terracotta_magenta")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_MAGENTA, 0x07B8DD58));
 
     registerBlock(238, L"light_blue_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::LIGHT_BLUE))->setIconName(L"glazed_terracotta_light_blue")->setNameAndDescriptionId(624388556, -502732646));
+        (new GlazedTerracottaBlock(DyeColor::LIGHT_BLUE))->setIconName(L"glazed_terracotta_light_blue")->setNameAndDescriptionId(0x253769CC, 0xE208E89A));
 
     registerBlock(239, L"yellow_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::YELLOW))->setIconName(L"glazed_terracotta_yellow")->setNameAndDescriptionId(-1601647889, 1923313889));
+        (new GlazedTerracottaBlock(DyeColor::YELLOW))->setIconName(L"glazed_terracotta_yellow")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_YELLOW, 0x72A370E1));
 
     registerBlock(240, L"lime_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::LIME))->setIconName(L"glazed_terracotta_lime")->setNameAndDescriptionId(978734374, 2046805872));
+        (new GlazedTerracottaBlock(DyeColor::LIME))->setIconName(L"glazed_terracotta_lime")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_LIME, 0x79FFC770));
 
     registerBlock(241, L"pink_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::PINK))->setIconName(L"glazed_terracotta_pink")->setNameAndDescriptionId(1194519607, -956349351));
+        (new GlazedTerracottaBlock(DyeColor::PINK))->setIconName(L"glazed_terracotta_pink")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_PINK, 0xC6FF4459));
 
     registerBlock(242, L"gray_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::GRAY))->setIconName(L"glazed_terracotta_gray")->setNameAndDescriptionId(10555198, 1945017848));
+        (new GlazedTerracottaBlock(DyeColor::GRAY))->setIconName(L"glazed_terracotta_gray")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_GRAY, 0x73EE9DF8));
 
     registerBlock(243, L"silver_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::SILVER))->setIconName(L"glazed_terracotta_silver")->setNameAndDescriptionId(1704134580, -680897838));
+        (new GlazedTerracottaBlock(DyeColor::SILVER))->setIconName(L"glazed_terracotta_silver")->setNameAndDescriptionId(0x659307B4, 0xD76A52D2));
 
     registerBlock(244, L"cyan_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::CYAN))->setIconName(L"glazed_terracotta_cyan")->setNameAndDescriptionId(36664886, -1432293952));
+        (new GlazedTerracottaBlock(DyeColor::CYAN))->setIconName(L"glazed_terracotta_cyan")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_CYAN, 0xAAA0EDC0));
 
     registerBlock(245, L"purple_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::PURPLE))->setIconName(L"glazed_terracotta_purple")->setNameAndDescriptionId(1800023349, -55405333));
+        (new GlazedTerracottaBlock(DyeColor::PURPLE))->setIconName(L"glazed_terracotta_purple")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_PURPLE, 0xFCB294EB));
 
     registerBlock(246, L"blue_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::BLUE))->setIconName(L"glazed_terracotta_blue")->setNameAndDescriptionId(-1882284179, 1902553715));
+        (new GlazedTerracottaBlock(DyeColor::BLUE))->setIconName(L"glazed_terracotta_blue")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BLUE, 0x7166AA73));
 
     registerBlock(247, L"brown_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::BROWN))->setIconName(L"glazed_terracotta_brown")->setNameAndDescriptionId(-2072210035, 1267838099));
+        (new GlazedTerracottaBlock(DyeColor::BROWN))->setIconName(L"glazed_terracotta_brown")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BROWN, 0x4B91AC93));
 
     registerBlock(248, L"green_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::GREEN))->setIconName(L"glazed_terracotta_green")->setNameAndDescriptionId(135251048, 1879648542));
+        (new GlazedTerracottaBlock(DyeColor::GREEN))->setIconName(L"glazed_terracotta_green")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_GREEN, 0x7009291E));
 
     registerBlock(249, L"red_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::RED))->setIconName(L"glazed_terracotta_red")->setNameAndDescriptionId(467194480, 1904104694));
+        (new GlazedTerracottaBlock(DyeColor::RED))->setIconName(L"glazed_terracotta_red")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_RED, 0x717E54F6));
 
     registerBlock(250, L"black_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::BLACK))->setIconName(L"glazed_terracotta_black")->setNameAndDescriptionId(-1105669692, 883395810));
+        (new GlazedTerracottaBlock(DyeColor::BLACK))->setIconName(L"glazed_terracotta_black")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BLACK, 0x34A78CE2));
 
     registerBlock(251, L"concrete",
-        (new ColoredBlock(Material::STONE))->setDestroyTime(1.8f)->setSoundType(SoundType::STONE)->setIconName(L"concrete")->setNameAndDescriptionId(1021483312, -1002471842));
+        (new ColoredBlock(Material::STONE))->setDestroyTime(1.8f)->setSoundType(SoundType::STONE)->setIconName(L"concrete")->setNameAndDescriptionId(IDS_TILE_CONCRETE_BLACK, IDS_TILE_CONCRETE_DESC));
 
     registerBlock(252, L"concrete_powder",
-        (new ConcretePowderBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::SAND)->setIconName(L"concrete_powder")->setNameAndDescriptionId(-282780732, 1414336874)->setBaseItemTypeAndMaterial(57, 69));
+        (new ConcretePowderBlock())->setDestroyTime(0.5f)->setSoundType(SoundType::SAND)->setIconName(L"concrete_powder")->setNameAndDescriptionId(IDS_TILE_CONCRETE_POWDER_BLACK, 0x544D116A)->setBaseItemTypeAndMaterial(57, 69));
 
     registerBlock(255, L"structure_block",
         (new StructureBlock())->setIconName(L"structure_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(-1, -1));
 
     registerBlock(256, L"conduit",
-        (new ConduitBlock())->setDestroyTime(3.0f)->setLightEmission(1.0f)->setNameAndDescriptionId(-635688620, 590787882)->setBaseItemTypeAndMaterial(61, 2));
+        (new ConduitBlock())->setDestroyTime(3.0f)->setLightEmission(1.0f)->setNameAndDescriptionId(0xDA1C2954, 0x2336B52A)->setBaseItemTypeAndMaterial(61, 2));
 
     registerBlock(258, L"kelp",
-        (new KelpBlock())->setIconName(L"kelp_top")->setSoundType(SoundType::GRASS)->setDestroyTime(0.0f)->setNameAndDescriptionId(68990709, 1293354491));
+        (new KelpBlock())->setIconName(L"kelp_top")->setSoundType(SoundType::GRASS)->setDestroyTime(0.0f)->setNameAndDescriptionId(IDS_TILE_KELP, 0x4D1705FB));
 
     registerBlock(259, L"coral_block",
-        (new CoralBlock())->setIconName(L"coral_red")->setDestroyTime(7.0f)->setNameAndDescriptionId(-1854932677, 2047656660));
+        (new CoralBlock())->setIconName(L"coral_red")->setDestroyTime(7.0f)->setNameAndDescriptionId(0x916FF93B, IDS_DESC_TILE_CORAL_BLOCK));
 
     registerBlock(263, L"coral",
-        (new Coral())->setIconName(L"coral")->setDestroyTime(0.0f)->setNameAndDescriptionId(634798269, 577391330)->disableMipmap());
+        (new Coral())->setIconName(L"coral")->setDestroyTime(0.0f)->setNameAndDescriptionId(0x25D640BD, IDS_DESC_TILE_CORAL)->disableMipmap());
 
     registerBlock(264, L"coral_fan",
-        (new CoralFan())->setIconName(L"coral_fan")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(-1592619875, 955602852)->disableMipmap());
+        (new CoralFan())->setIconName(L"coral_fan")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(0xA1128C9D, 0x38F557A4)->disableMipmap());
 
     registerBlock(265, L"coral_fan_dead",
-        (new CoralFan())->setIconName(L"coral_fan_dead")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(-1287380242, -491243345)->disableMipmap());
+        (new CoralFan())->setIconName(L"coral_fan_dead")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(0xB34422EE, IDS_DESC_TILE_CORAL_FAN_DEAD)->disableMipmap());
 
     registerBlock(266, L"coral_fan_hang",
-        (new CoralFanHang())->setIconName(L"coral_fan_hang")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(-1592619875, 955602852)->disableMipmap());
+        (new CoralFanHang())->setIconName(L"coral_fan_hang")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(0xA1128C9D, 0x38F557A4)->disableMipmap());
 
     registerBlock(267, L"coral_fan_hang2",
-        (new CoralFanHang())->setIconName(L"coral_fan_hang2")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(1418867847, 955602852)->disableMipmap());
+        (new CoralFanHang())->setIconName(L"coral_fan_hang2")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(0x54923487, 0x38F557A4)->disableMipmap());
 
     registerBlock(268, L"coral_fan_hang3",
-        (new CoralFanHang())->setIconName(L"coral_fan_hang3")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(1544104069, 955602852)->disableMipmap());
+        (new CoralFanHang())->setIconName(L"coral_fan_hang3")->setDestroyTime(0.0f)->setExplodeable(1.5f)->setNameAndDescriptionId(0x5C092885, 0x38F557A4)->disableMipmap());
 
     registerBlock(269, L"dried_kelp_block",
-        (new DriedKelpBlock(Material::BAMBOO))->setSoundType(SoundType::GRASS)->setIconName(L"dried_kelp_block")->setDestroyTime(0.6f)->setNameAndDescriptionId(2079230276, 506381546)->setBaseItemTypeAndMaterial(32, 73));
+        (new DriedKelpBlock(Material::BAMBOO))->setSoundType(SoundType::GRASS)->setIconName(L"dried_kelp_block")->setDestroyTime(0.6f)->setNameAndDescriptionId(IDS_TILE_DRIED_KELP, IDS_DESC_TILE_DRIED_KELP)->setBaseItemTypeAndMaterial(32, 73));
 
     registerBlock(270, L"sea_grass",
-        (new SeaGrass())->setIconName(L"seagrass")->setSoundType(SoundType::GRASS)->setDestroyTime(0.0f)->setNameAndDescriptionId(-835292333, 726461));
+        (new SeaGrass())->setIconName(L"seagrass")->setSoundType(SoundType::GRASS)->setDestroyTime(0.0f)->setNameAndDescriptionId(IDS_TILE_SEA_GRASS, IDS_DESC_TILE_SEA_GRASS));
 
     registerBlock(271, L"sea_pickle",
-        (new SeaPickle())->setIconName(L"sea_pickle")->setSoundType(SoundType::SLIME)->setDestroyTime(0.4f)->setNameAndDescriptionId(-1602384073, 644018585));
+        (new SeaPickle())->setIconName(L"sea_pickle")->setSoundType(SoundType::SLIME)->setDestroyTime(0.4f)->setNameAndDescriptionId(IDS_TILE_SEA_PICKLE, 0x2662F199));
 
     registerBlock(272, L"bubble_column_segment",
-        (new BubbleColumnSegment(Material::BUBBLE_COLUMN))->setIconName(L"bubble_column_segment")->setTicking(1)->setNameAndDescriptionId(-478126772, -22685454));
+        (new BubbleColumnSegment(Material::BUBBLE_COLUMN))->setIconName(L"bubble_column_segment")->setTicking(1)->setNameAndDescriptionId(0xE3805D4C, 0xFEA5D8F2));
 
     registerBlock(273, L"blue_ice",
-        (new BlueIceBlock(Material::ICE_SOLID))->setIconName(L"blue_ice")->setDestroyTime(2.8f)->setSoundType(SoundType::GLASS)->setLightEmission(0.3f)->setNameAndDescriptionId(1371904713, 1737388871)->setBaseItemTypeAndMaterial(32, 74));
+        (new BlueIceBlock(Material::ICE_SOLID))->setIconName(L"blue_ice")->setDestroyTime(2.8f)->setSoundType(SoundType::GLASS)->setLightEmission(0.3f)->setNameAndDescriptionId(IDS_TILE_BLUE_ICE, IDS_DESC_TILE_BLUE_ICE)->setBaseItemTypeAndMaterial(32, 74));
 
     registerBlock(274, L"spruce_trapdoor",
-        (new TrapDoorBlock(Material::WOOD, MaterialColor::PODZOL))->setIconName(L"spruce_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(1918030883, 1969487947)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::WOOD, MaterialColor::PODZOL))->setIconName(L"spruce_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRAPDOOR_SPRUCE, 0x7564004B)->setBaseItemTypeAndMaterial(6, 25));
 
     registerBlock(275, L"birch_trapdoor",
-        (new TrapDoorBlock(Material::WOOD, MaterialColor::SAND))->setIconName(L"birch_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(2013809035, 1969487947)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::WOOD, MaterialColor::SAND))->setIconName(L"birch_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRAPDOOR_BIRCH, 0x7564004B)->setBaseItemTypeAndMaterial(6, 25));
 
     registerBlock(276, L"jungle_trapdoor",
-        (new TrapDoorBlock(Material::WOOD, MaterialColor::DIRT))->setIconName(L"jungle_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1491120218, 1969487947)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::WOOD, MaterialColor::DIRT))->setIconName(L"jungle_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRAPDOOR_JUNGLE, 0x7564004B)->setBaseItemTypeAndMaterial(6, 25));
 
     registerBlock(277, L"acacia_trapdoor",
-        (new TrapDoorBlock(Material::WOOD, MaterialColor::COLOR_ORANGE))->setIconName(L"acacia_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(1557027153, 1969487947)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::WOOD, MaterialColor::COLOR_ORANGE))->setIconName(L"acacia_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRAPDOOR_ACACIA, 0x7564004B)->setBaseItemTypeAndMaterial(6, 25));
 
     registerBlock(278, L"dark_oak_trapdoor",
-        (new TrapDoorBlock(Material::WOOD, MaterialColor::COLOR_BROWN))->setIconName(L"dark_oak_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(-1951682489, 1969487947)->setBaseItemTypeAndMaterial(6, 25));
+        (new TrapDoorBlock(Material::WOOD, MaterialColor::COLOR_BROWN))->setIconName(L"dark_oak_trapdoor")->setDestroyTime(3.0f)->setSoundType(SoundType::WOOD)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_TRAPDOOR_DARK_OAK, 0x7564004B)->setBaseItemTypeAndMaterial(6, 25));
 
     registerBlock(279, L"turtle_egg",
-        (new TurtleEggBlock())->setSoundType(SoundType::STONE)->setIconName(L"turtle_egg_hatch_0")->setDestroyTime(0.4f)->setNameAndDescriptionId(912101067, -46237355));
+        (new TurtleEggBlock())->setSoundType(SoundType::STONE)->setIconName(L"turtle_egg_hatch_0")->setDestroyTime(0.4f)->setNameAndDescriptionId(IDS_TILE_TURTLE_EGG, IDS_DESC_TILE_TURTLE_EGG));
 
     registerBlock(291, L"prismarine_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::ROUGH))))->setIconName(L"prismarine_stairs")->setNameAndDescriptionId(-587055318, 1258585647)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::ROUGH))))->setIconName(L"prismarine_stairs")->setNameAndDescriptionId(IDS_TILE_STAIRS_PRISMARINE, 0x4B047E2F)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(292, L"prismarine_bricks_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::BRICKS))))->setIconName(L"prismarine_bricks")->setNameAndDescriptionId(240124639, 103047266)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::BRICKS))))->setIconName(L"prismarine_bricks")->setNameAndDescriptionId(IDS_TILE_STAIRS_PRISMARINE_BRICKS, 0x06246062)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(293, L"dark_prismarine_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::DARK))))->setIconName(L"dark_prismarine")->setNameAndDescriptionId(-891724559, -1052410340)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::DARK))))->setIconName(L"dark_prismarine")->setNameAndDescriptionId(IDS_TILE_STAIRS_DARK_PRISMARINE, 0xC1457E1C)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(295, L"stripped_log_spruce",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_spruce_top")->setIconName(L"stripped_log_spruce")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(875624916, -1597509807));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_spruce_top")->setIconName(L"stripped_log_spruce")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_SPRUCE, 0xA0C7EF51));
 
     registerBlock(296, L"stripped_log_birch",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_birch_top")->setIconName(L"stripped_log_birch")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-393264956, 48531913));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_birch_top")->setIconName(L"stripped_log_birch")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_BIRCH, 0x02E489C9));
 
     registerBlock(297, L"stripped_log_jungle",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_jungle_top")->setIconName(L"stripped_log_jungle")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-4201887, 1054734580));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_jungle_top")->setIconName(L"stripped_log_jungle")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_JUNGLE, 0x3EDDF8F4));
 
     registerBlock(298, L"stripped_log_acacia",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_acacia_top")->setIconName(L"stripped_log_acacia")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(577563830, -1871963005));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_acacia_top")->setIconName(L"stripped_log_acacia")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_ACACIA, 0x906C1C83));
 
     registerBlock(299, L"stripped_log_dark_oak",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_dark_oak_top")->setIconName(L"stripped_log_dark_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(1879620976, -1504211787));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_dark_oak_top")->setIconName(L"stripped_log_dark_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(0x7008BD70, 0xA6578CB5));
 
     registerBlock(300, L"stripped_log_oak",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_oak_top")->setIconName(L"stripped_log_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(-1162676829, 822856878));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_oak_top")->setIconName(L"stripped_log_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_OAK, 0x310BCCAE));
 
     registerBlock(301, L"acacia_pressure_plate",
-        (new PressurePlateBlock(L"planks_acacia", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-581175314, 136821440)->setBaseItemTypeAndMaterial(15, 42));
+        (new PressurePlateBlock(L"planks_acacia", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PRESSURE_PLATE_ACACIA, IDS_DESC_TILE_PRESSURE_PLATE_ACACIA)->setBaseItemTypeAndMaterial(15, 42));
 
     registerBlock(302, L"birch_pressure_plate",
-        (new PressurePlateBlock(L"planks_birch", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(409645100, -1702551582)->setBaseItemTypeAndMaterial(15, 40));
+        (new PressurePlateBlock(L"planks_birch", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PRESSURE_PLATE_BIRCH, IDS_TILE_OAKPLANKSSENSITIVE_TITLE)->setBaseItemTypeAndMaterial(15, 40));
 
     registerBlock(303, L"dark_oak_pressure_plate",
-        (new PressurePlateBlock(L"planks_big_oak", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-714459144, 1585240838)->setBaseItemTypeAndMaterial(15, 43));
+        (new PressurePlateBlock(L"planks_big_oak", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0xD56A37F8, 0x5E7CDB06)->setBaseItemTypeAndMaterial(15, 43));
 
     registerBlock(304, L"jungle_pressure_plate",
-        (new PressurePlateBlock(L"planks_jungle", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(919836665, 1227514775)->setBaseItemTypeAndMaterial(15, 41));
+        (new PressurePlateBlock(L"planks_jungle", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PRESSURE_PLATE_JUNGLE, IDS_DESC_TILE_PRESSURE_PLATE_JUNGLE)->setBaseItemTypeAndMaterial(15, 41));
 
     registerBlock(305, L"spruce_pressure_plate",
-        (new PressurePlateBlock(L"planks_spruce", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1105754404, 507335842)->setBaseItemTypeAndMaterial(15, 39));
+        (new PressurePlateBlock(L"planks_spruce", Material::WOOD, PressurePlateBlock::EVERYTHING))->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PRESSURE_PLATE_SPRUCE, IDS_DESC_TILE_PRESSURE_PLATE_SPRUCE)->setBaseItemTypeAndMaterial(15, 39));
 
     registerBlock(306, L"acacia_button",
-        (new WoodButtonBlock())->setIconName(L"planks_acacia")->setBaseItemTypeAndMaterial(35, 42)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(2070353022, -753144148));
+        (new WoodButtonBlock())->setIconName(L"planks_acacia")->setBaseItemTypeAndMaterial(35, 42)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_ACACIA, 0xD31BEEAC));
 
     registerBlock(307, L"birch_button",
-        (new WoodButtonBlock())->setIconName(L"planks_birch")->setBaseItemTypeAndMaterial(35, 40)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(102998108, -753144148));
+        (new WoodButtonBlock())->setIconName(L"planks_birch")->setBaseItemTypeAndMaterial(35, 40)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_BIRCH, 0xD31BEEAC));
 
     registerBlock(308, L"dark_oak_button",
-        (new WoodButtonBlock())->setIconName(L"planks_big_oak")->setBaseItemTypeAndMaterial(35, 43)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(238880712, -753144148));
+        (new WoodButtonBlock())->setIconName(L"planks_big_oak")->setBaseItemTypeAndMaterial(35, 43)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_DARK_OAK, 0xD31BEEAC));
 
     registerBlock(309, L"jungle_button",
-        (new WoodButtonBlock())->setIconName(L"planks_jungle")->setBaseItemTypeAndMaterial(35, 41)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1565863721, -753144148));
+        (new WoodButtonBlock())->setIconName(L"planks_jungle")->setBaseItemTypeAndMaterial(35, 41)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_JUNGLE, 0xD31BEEAC));
 
     registerBlock(310, L"spruce_button",
-        (new WoodButtonBlock())->setIconName(L"planks_spruce")->setBaseItemTypeAndMaterial(35, 39)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(-1815731156, -753144148));
+        (new WoodButtonBlock())->setIconName(L"planks_spruce")->setBaseItemTypeAndMaterial(35, 39)->setDestroyTime(0.5f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_SPRUCE, 0xD31BEEAC));
 
     registerBlock(311, L"prismarine_double_slab",
-        (new PrismarineSlabBlockFull())->setDestroyTime(2.0f)->setIconName(L"prismarine_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-636643208, 1416464845)->setBaseItemTypeAndMaterial(21, 54));
+        (new PrismarineSlabBlockFull())->setDestroyTime(2.0f)->setIconName(L"prismarine_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SLAB_PRISMARINE, 0x546D89CD)->setBaseItemTypeAndMaterial(21, 54));
 
     registerBlock(312, L"prismarine_slab",
-        (new PrismarineSlabBlockHalf())->setDestroyTime(2.0f)->setIconName(L"prismarine_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(-636643208, 1416464845)->setBaseItemTypeAndMaterial(22, 54));
+        (new PrismarineSlabBlockHalf())->setDestroyTime(2.0f)->setIconName(L"prismarine_block")->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SLAB_PRISMARINE, 0x546D89CD)->setBaseItemTypeAndMaterial(22, 54));
 
     registerBlock(313, L"bark_spruce",
-        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_spruce")->setIconName(L"log_spruce")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_spruce")->setIconName(L"log_spruce")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(314, L"bark_birch",
-        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_birch")->setIconName(L"log_birch")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_birch")->setIconName(L"log_birch")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(315, L"bark_jungle",
-        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_jungle")->setIconName(L"log_jungle")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_jungle")->setIconName(L"log_jungle")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(316, L"bark_acacia",
-        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_acacia")->setIconName(L"log_acacia")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_acacia")->setIconName(L"log_acacia")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(317, L"bark_dark_oak",
-        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_big_oak")->setIconName(L"log_big_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_big_oak")->setIconName(L"log_big_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     registerBlock(318, L"bark_oak",
-        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_oak")->setIconName(L"log_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(1652869627, 1299556926));
+        (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_oak")->setIconName(L"log_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(0x6284C9FB, 0x4D75AA3E));
 
     DefaultedMappedRegistry<ResourceLocation, Block*>::iterator it;
 

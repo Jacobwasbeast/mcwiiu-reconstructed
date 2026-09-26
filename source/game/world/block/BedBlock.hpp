@@ -66,6 +66,7 @@ public:
     static bool BlockIsDoor(const Block* block);
     static bool hasSolidGroundAndTwoBlocksSpaceAt(Level* level, const BlockPos& pos);
     static BlockPos* findStandUpPosition(Level* level, const BlockPos& pos, int data);
+    using Block::spawnResources;
     virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
     virtual int getRenderLayer();

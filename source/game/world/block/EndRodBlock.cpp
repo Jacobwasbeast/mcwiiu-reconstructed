@@ -1,4 +1,5 @@
 #include "game/world/block/EndRodBlock.hpp"
+#include "game/world/block/Blocks.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Direction.hpp"
@@ -86,7 +87,7 @@ const BlockState* EndRodBlock::getStateForPlacement(Level* level, const BlockPos
                                                      float, float, float, int, boost::shared_ptr<LivingEntity>)
 {
     const BlockState* neighbor = level->getBlockState(pos.relative(direction->getOpposite()));
-    if (neighbor->getBlock() == this && neighbor->getValue(DirectionalBlock::FACING_PROPERTY) == direction)
+    if (neighbor->getBlock() == Blocks::end_rod && neighbor->getValue(DirectionalBlock::FACING_PROPERTY) == direction)
     {
         TypedBoxed<const Direction*> facing(direction->getOpposite());
         return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);

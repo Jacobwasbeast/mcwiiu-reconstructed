@@ -20,6 +20,14 @@ static StoneBrickBlock::Variant* gStoneBrickVariants[4] = {
     &gStoneBrickVariant0, &gStoneBrickVariant1, &gStoneBrickVariant2, &gStoneBrickVariant3
 };
 StoneBrickBlock::Variant* StoneBrickBlock::Variant::DEFAULT = &gStoneBrickVariant0;
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::MOSSY = &gStoneBrickVariant1;
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::CRACKED = &gStoneBrickVariant2;
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::CHISELED = &gStoneBrickVariant3;
+
+int StoneBrickBlock::DEFAULT_META = 0;
+int StoneBrickBlock::MOSSY_META = 0;
+int StoneBrickBlock::CRACKED_META = 0;
+int StoneBrickBlock::CHISELED_META = 0;
 EnumProperty<StoneBrickBlock::Variant*>* StoneBrickBlock::VARIANT = NULL;
 
 StoneBrickBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
@@ -68,6 +76,10 @@ void StoneBrickBlock::blockStaticCtor()
     VARIANT = EnumProperty<Variant*>::create(
             L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
     }
+    DEFAULT_META = gStoneBrickVariants[0]->getData();
+    MOSSY_META = gStoneBrickVariants[1]->getData();
+    CRACKED_META = gStoneBrickVariants[2]->getData();
+    CHISELED_META = gStoneBrickVariants[3]->getData();
 }
 
 StoneBrickBlock::StoneBrickBlock()
@@ -75,7 +87,7 @@ StoneBrickBlock::StoneBrickBlock()
 {
     DerivedInit();
     TypedBoxed<Variant*> value(Variant::DEFAULT);
-    registerDefaultState(defaultBlockState()->setBoxedValue(VARIANT, &value));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
     for (int i = 0; i < 4; ++i)
     {
         mTextures[i] = NULL;

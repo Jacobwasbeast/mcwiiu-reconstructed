@@ -1,4 +1,6 @@
 #include "game/world/block/CocoaBlock.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -32,7 +34,7 @@ namespace
 {
     std::wstring gCocoaIconNames[3] =
     {
-        L"cocoa_stage_0", L"cocoa_stage_1", L"cocoa_stage_2"
+        L"cocoa_0", L"cocoa_1", L"cocoa_2"
     };
 }
 
@@ -97,12 +99,12 @@ bool CocoaBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Block
 void CocoaBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
 {
     TypedBoxed<int> age(state->getValue(AGE) + 1);
-    level->setBlock(pos, state->setBoxedValue(AGE, &age), 2, false);
+    level->setBlock(pos, state->setBoxedValue(AGE, &age), Block::UPDATE_CLIENTS, false);
 }
 
 void CocoaBlock::removeAndSpawn(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+    level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     spawnResources(level, pos, state, 0.0f, 0);
 }
 
@@ -119,7 +121,7 @@ void CocoaBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
         if (age < 2)
         {
             TypedBoxed<int> nextAge(age + 1);
-            level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), 2, false);
+            level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), Block::UPDATE_CLIENTS, false);
         }
     }
 }
@@ -163,7 +165,7 @@ void CocoaBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
 {
     const Direction* facing = Direction::fromYRot(placer->mYRot);
     TypedBoxed<const Direction*> boxed(facing);
-    level->setBlock(pos, state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &boxed), 2, false);
+    level->setBlock(pos, state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &boxed), Block::UPDATE_CLIENTS, false);
 }
 
 const BlockState* CocoaBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction,
@@ -211,10 +213,10 @@ int CocoaBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int CocoaBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance->getItem() == Items::dye
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
         && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
-        return 0x9f5fdc40u;
+        return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -249,5 +251,5 @@ void CocoaBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape CocoaBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)28;
+    return BLOCK_RENDER_COCOA;
 }

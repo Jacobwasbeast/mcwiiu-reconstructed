@@ -37,6 +37,9 @@ public:
     class ComparatorMode : public StringRepresentable
     {
     public:
+        static ComparatorMode* COMPARE;
+        static ComparatorMode* SUBTRACT;
+
         explicit ComparatorMode(const std::wstring& name);
         virtual ~ComparatorMode();
         virtual std::wstring toString() const;
@@ -56,6 +59,8 @@ public:
     private:
         const Direction* mDirection;
     };
+
+    static EnumProperty<ComparatorMode*>* MODE;
 
     ComparatorBlock(bool on);
     virtual ~ComparatorBlock();

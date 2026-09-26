@@ -6,6 +6,7 @@
 #include "game/world/block/BaseEntityBlock.hpp"
 #include "game/world/block/EntityBlock.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 
 class AABB;
 class BlockEntity;
@@ -23,6 +24,8 @@ class Random;
 class EndGatewayBlock : public BaseEntityBlock
 {
 public:
+    static AbstractProperty<int>* PORTAL_NUMBER;
+
     EndGatewayBlock(Material* material);
     virtual ~EndGatewayBlock();
 

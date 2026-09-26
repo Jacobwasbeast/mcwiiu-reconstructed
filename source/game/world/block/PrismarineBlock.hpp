@@ -46,6 +46,9 @@ public:
     };
 
     static EnumProperty<Variant*>* VARIANT;
+    static int ROUGH_DATA;
+    static int BRICKS_DATA;
+    static int DARK_DATA;
 
     PrismarineBlock();
     virtual ~PrismarineBlock();

@@ -15,9 +15,14 @@ class Mirror;
 class Rotation;
 class TextureAtlasSprite;
 
+class DyeColor;
+template <class T> class EnumProperty;
+
 class StainedGlassPaneBlock : public ThinFenceBlock
 {
 public:
+    static EnumProperty<const DyeColor*>* COLOR;
+
     StainedGlassPaneBlock();
     virtual ~StainedGlassPaneBlock();
 

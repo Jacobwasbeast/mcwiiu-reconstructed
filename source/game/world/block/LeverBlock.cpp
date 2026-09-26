@@ -1,4 +1,5 @@
 #include "game/world/block/LeverBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
@@ -283,7 +284,7 @@ bool LeverBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
                          SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
         return true;
     }
-    level->setBlock(pos, toggledState, 3, false);
+    level->setBlock(pos, toggledState, Block::UPDATE_ALL, false);
     level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
                      SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
     level->updateNeighborsAt(pos, this, false);
@@ -339,7 +340,7 @@ int LeverBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int LeverBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
-        return 0xea4e897e;
+        return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -412,5 +413,5 @@ EBlockFaceShape LeverBlock::getBlockFaceShape(LevelSource*, const BlockState*, c
 
 EBlockRenderShape LeverBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(12);
+    return BLOCK_RENDER_LEVER;
 }

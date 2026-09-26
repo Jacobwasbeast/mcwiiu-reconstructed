@@ -69,7 +69,7 @@ void FrostedIceBlock::slightlyMelt(Level* level, const BlockPos& pos, const Bloc
     if (age < 3)
     {
         TypedBoxed<int> nextAge(age + 1);
-        level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), 2, false);
+        level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), Block::UPDATE_CLIENTS, false);
         level->addToTickNextTick(pos, this, Mth::nextInt(random, 20, 40));
         return;
     }

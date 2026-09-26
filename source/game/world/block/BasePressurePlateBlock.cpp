@@ -128,7 +128,7 @@ void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, con
     if (signal != sensedSignal)
     {
         const BlockState* newState = setSignalForState(state, sensedSignal);
-        level->setBlock(pos, newState, 2, false);
+        level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
         updateNeighbours(level, pos);
         level->setBlocksDirty(pos, pos);
     }

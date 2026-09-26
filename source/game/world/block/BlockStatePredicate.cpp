@@ -18,12 +18,12 @@ BlockStatePredicate::~BlockStatePredicate()
 {
 }
 
-Predicate<const BlockState*>* BlockStatePredicate::forBlock(Block* block)
+BlockStatePredicate* BlockStatePredicate::forBlock(Block* block)
 {
     return new BlockStatePredicate(block->getBlockStateDefinition());
 }
 
-Predicate<const BlockState*>* BlockStatePredicate::forDefinition(BlockStateDefinition* definition)
+BlockStatePredicate* BlockStatePredicate::forDefinition(BlockStateDefinition* definition)
 {
     return new BlockStatePredicate(definition);
 }

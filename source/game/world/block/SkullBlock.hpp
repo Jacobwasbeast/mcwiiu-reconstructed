@@ -34,7 +34,7 @@ class SkullBlock : public BaseEntityBlock
 {
 public:
     static DirectionProperty* FACING;
-    static AbstractProperty<bool>* WATERLOGGED;
+    static AbstractProperty<bool>* NODROP;
 
     SkullBlock();
     virtual ~SkullBlock();

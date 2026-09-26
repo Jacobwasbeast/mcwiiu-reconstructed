@@ -2,13 +2,6 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-int lostFirstWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats);
-
-int lostFirstWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats)
-{
-    return roundStats.mLives == 1 && roundStats.mBlocksDestroyed.mCount == 0;
-}
-
 FirstDeathWithoutBlockDestructionMedal::~FirstDeathWithoutBlockDestructionMedal()
 {
 }

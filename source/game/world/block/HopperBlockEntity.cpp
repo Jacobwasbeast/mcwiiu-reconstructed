@@ -1,4 +1,6 @@
 #include "game/world/block/HopperBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 
@@ -103,7 +105,7 @@ AbstractContainerMenu* HopperBlockEntity::createMenu(boost::shared_ptr<Inventory
 
 int HopperBlockEntity::getTypeId(bool)
 {
-    return 9;
+    return ClientboundContainerOpenPacket::HOPPER;
 }
 
 Level* HopperBlockEntity::getLevel()
@@ -129,7 +131,7 @@ double HopperBlockEntity::getLevelZ()
 void HopperBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new ItemListDataWalker(0x1e00205ULL, L"Items"));
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::HOPPER, L"Items"));
 }
 
 boost::shared_ptr<BlockEntity> HopperBlockEntity::clone()
@@ -511,5 +513,5 @@ std::wstring HopperBlockEntity::getDisplayName()
 
 unsigned long long HopperBlockEntity::GetType()
 {
-    return 0x0000000001E00205ULL;
+    return BlockEntityType::HOPPER;
 }

@@ -1,163 +1,234 @@
 #include "game/world/block/VineBlock.hpp"
 
 #include "game/core/FoliageColor.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/core/Stats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/AbstractProperty.hpp"
-#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/Player.hpp"
 
 BooleanProperty* VineBlock::UP = static_cast<BooleanProperty*>(BooleanProperty::create(L"up"));
 BooleanProperty* VineBlock::NORTH = static_cast<BooleanProperty*>(BooleanProperty::create(L"north"));
+BooleanProperty* VineBlock::EAST = static_cast<BooleanProperty*>(BooleanProperty::create(L"east"));
 BooleanProperty* VineBlock::SOUTH = static_cast<BooleanProperty*>(BooleanProperty::create(L"south"));
 BooleanProperty* VineBlock::WEST = static_cast<BooleanProperty*>(BooleanProperty::create(L"west"));
-BooleanProperty* VineBlock::EAST = static_cast<BooleanProperty*>(BooleanProperty::create(L"east"));
+BooleanProperty* VineBlock::ALL_FACES[5] = { UP, NORTH, SOUTH, WEST, EAST };
+const AABB* VineBlock::UP_AABB = AABB::newPermanent(0.0, 0.9375, 0.0, 1.0, 1.0, 1.0);
+const AABB* VineBlock::WEST_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 0.0625, 1.0, 1.0);
+const AABB* VineBlock::EAST_AABB = AABB::newPermanent(0.9375, 0.0, 0.0, 1.0, 1.0, 1.0);
+const AABB* VineBlock::NORTH_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.0625);
+const AABB* VineBlock::SOUTH_AABB = AABB::newPermanent(0.0, 0.0, 0.9375, 1.0, 1.0, 1.0);
 
-static const AABB* VINE_DEFAULT = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
-static const AABB* VINE_UP = AABB::newPermanent(0.0, 0.9375, 0.0, 1.0, 1.0, 1.0);
-static const AABB* VINE_NORTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.0625);
-static const AABB* VINE_SOUTH = AABB::newPermanent(0.0, 0.0, 0.9375, 1.0, 1.0, 1.0);
-static const AABB* VINE_WEST = AABB::newPermanent(0.0, 0.0, 0.0, 0.0625, 1.0, 1.0);
-static const AABB* VINE_EAST = AABB::newPermanent(0.9375, 0.0, 0.0, 1.0, 1.0, 1.0);
-
-VineBlock::VineBlock() : Block(Material::PLANT)
+VineBlock::VineBlock() : Block(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
-    bool falseValue = false;
-    TypedBoxed<bool> boxed(falseValue);
-    const BlockState* state = defaultBlockState();
-    state = state->setBoxedValue(UP, &boxed);
-    state = state->setBoxedValue(NORTH, &boxed);
-    state = state->setBoxedValue(SOUTH, &boxed);
-    state = state->setBoxedValue(WEST, &boxed);
-    state = state->setBoxedValue(EAST, &boxed);
+    TypedBoxed<bool> up(false);
+    const BlockState* state = mStateDefinition->any()->setBoxedValue(UP, &up);
+    TypedBoxed<bool> north(false);
+    state = state->setBoxedValue(NORTH, &north);
+    TypedBoxed<bool> east(false);
+    state = state->setBoxedValue(EAST, &east);
+    TypedBoxed<bool> south(false);
+    state = state->setBoxedValue(SOUTH, &south);
+    TypedBoxed<bool> west(false);
+    state = state->setBoxedValue(WEST, &west);
     registerDefaultState(state);
     setTicking(true);
 }
 
-VineBlock::~VineBlock() {}
-
-const AABB* VineBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
-
-const AABB* VineBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
+VineBlock::~VineBlock()
 {
-    if (countFaces(state) != 1) return VINE_DEFAULT;
-    if (state->getValue(UP)) return VINE_UP;
-    if (state->getValue(NORTH)) return VINE_NORTH;
-    if (state->getValue(SOUTH)) return VINE_SOUTH;
-    if (state->getValue(WEST)) return VINE_WEST;
-    return VINE_EAST;
 }
 
-const BlockState* VineBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const AABB* VineBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    bool up = !levelSource->getBlockState(pos.above())->getBlock()->isSolidFace(levelSource, pos.above(), Direction::DOWN);
-    TypedBoxed<bool> value(up);
-    return state->setBoxedValue(UP, &value);
+    return NULL;
 }
 
-bool VineBlock::isSolidRender(const BlockState*) const { return false; }
-bool VineBlock::isCubeShaped(const BlockState*) { return false; }
-bool VineBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&) { return true; }
+const AABB* VineBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+{
+    const BlockState* actualState = state->fillVirtualBlockStateProperties(levelSource, pos);
+    int faces = 0;
+    const AABB* shape = Block::FULL_BLOCK_SHAPE;
+    if (actualState->getValue(UP))
+    {
+        shape = UP_AABB;
+        ++faces;
+    }
+    if (actualState->getValue(NORTH))
+    {
+        shape = NORTH_AABB;
+        ++faces;
+    }
+    if (actualState->getValue(EAST))
+    {
+        shape = EAST_AABB;
+        ++faces;
+    }
+    if (actualState->getValue(SOUTH))
+    {
+        shape = SOUTH_AABB;
+        ++faces;
+    }
+    if (actualState->getValue(WEST))
+    {
+        shape = WEST_AABB;
+        ++faces;
+    }
+    return faces == 1 ? shape : Block::FULL_BLOCK_SHAPE;
+}
+
+const BlockState* VineBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                             const BlockPos& pos)
+{
+    BlockPos above = pos.above();
+    TypedBoxed<bool> up(levelSource->getBlockState(above)->getBlockFaceShape(levelSource, above, Direction::DOWN)
+                        == BLOCK_FACE_SOLID);
+    return state->setBoxedValue(UP, &up);
+}
+
+bool VineBlock::isSolidRender(const BlockState* state) const
+{
+    return false;
+}
+
+bool VineBlock::isCubeShaped(const BlockState* state)
+{
+    return false;
+}
+
+bool VineBlock::mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos)
+{
+    return true;
+}
 
 bool VineBlock::isExceptionBlockForAttaching(Block* block)
 {
-    return block == NULL || dynamic_cast<VineBlock*>(block) != NULL || block == Blocks::AIR ||
-           block == Blocks::WATER || block == Blocks::FLOWING_WATER || block == Blocks::lava ||
-           block == Blocks::flowing_lava || block == Blocks::FIRE || block == Blocks::snow_layer ||
-           block == Blocks::redstone_wire || block == Blocks::torch || block == Blocks::redstone_torch ||
-           block == Blocks::tripwire || block == Blocks::deadbush || block == Blocks::tallgrass;
+    return block == NULL || dynamic_cast<ShulkerBoxBlock*>(block) != NULL || block == Blocks::beacon
+           || block == Blocks::cauldron || block == Blocks::glass || block == Blocks::stained_glass
+           || block == Blocks::piston || block == Blocks::sticky_piston || block == Blocks::piston_head
+           || block == Blocks::trapdoor || block == Blocks::spruce_trapdoor || block == Blocks::birch_trapdoor
+           || block == Blocks::jungle_trapdoor || block == Blocks::acacia_trapdoor
+           || block == Blocks::dark_oak_trapdoor;
 }
 
 bool VineBlock::isAcceptableNeighbor(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    Block* block = level->getBlockState(pos)->getBlock();
-    if (!block->isSolidFace(level, pos, direction)) return !isExceptionBlockForAttaching(block);
-    return false;
+    const BlockState* state = level->getBlockState(pos);
+    return state->getBlockFaceShape(level, pos, direction) == BLOCK_FACE_SOLID
+           && !isExceptionBlockForAttaching(state->getBlock());
 }
 
 bool VineBlock::canAttachBelow(Block* block)
 {
-    return block == Blocks::leaves || block == Blocks::leaves2 || block == Blocks::log ||
-           block == Blocks::log2 || block == Blocks::vine || block == Blocks::cocoa;
+    return block == Blocks::air || block == Blocks::water || block == Blocks::vine || block == Blocks::torch
+           || block == Blocks::redstone_torch || block == Blocks::unlit_redstone_torch;
 }
 
 bool VineBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    const BlockPos above = pos.above();
-    Block* aboveBlock = level->getBlockState(above)->getBlock();
-    if (!isAcceptableNeighbor(level, pos.relative(direction->getOpposite()), direction)) return false;
-    return canAttachBelow(aboveBlock) || isAcceptableNeighbor(level, above, Direction::DOWN);
+    Block* aboveBlock = level->getBlockState(pos.above())->getBlock();
+    return isAcceptableNeighbor(level, pos.relative(direction->getOpposite()), direction)
+           && (canAttachBelow(aboveBlock) || isAcceptableNeighbor(level, pos.above(), Direction::UP));
 }
 
 bool VineBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    return direction != Direction::UP && direction != Direction::DOWN && canAttachTo(level, pos, direction);
+    return direction != Direction::DOWN && direction != Direction::UP && canAttachTo(level, pos, direction);
 }
 
 AbstractProperty<bool>* VineBlock::getPropertyForFace(const Direction* direction)
 {
     switch (direction->get3DDataValue())
     {
-    case Direction::eDirection_Up: return UP;
-    case Direction::eDirection_North: return NORTH;
-    case Direction::eDirection_South: return SOUTH;
-    case Direction::eDirection_West: return WEST;
-    case Direction::eDirection_East: return EAST;
-    default: return NULL;
+    case Direction::eDirection_Up:
+        return UP;
+    case Direction::eDirection_North:
+        return NORTH;
+    case Direction::eDirection_South:
+        return SOUTH;
+    case Direction::eDirection_West:
+        return WEST;
+    case Direction::eDirection_East:
+        return EAST;
+    default:
+        return NULL;
     }
 }
 
 unsigned char VineBlock::countFaces(const BlockState* state)
 {
-    return (unsigned char)(state->getValue(UP) + state->getValue(NORTH) + state->getValue(SOUTH) + state->getValue(WEST) + state->getValue(EAST));
+    unsigned char faces = 0;
+    for (int i = 0; i < 5; ++i)
+    {
+        if (state->getValue(ALL_FACES[i]))
+            ++faces;
+    }
+    return faces;
 }
 
 bool VineBlock::updateSurvival(Level* level, const BlockPos& pos, const BlockState* state)
 {
     const BlockState* newState = state;
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-    for (unsigned int i = 0; i < directions.length; i++)
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
         const Direction* direction = directions.data[i];
         AbstractProperty<bool>* property = getPropertyForFace(direction);
-        if (newState->getValue(property))
-        {
-            if (!canAttachTo(level, pos, direction->getOpposite()))
-            {
-                const BlockState* aboveState = level->getBlockState(pos.above());
-                if (aboveState->getBlock() == this && aboveState->getValue(property))
-                {
-                    continue;
-                }
-                TypedBoxed<bool> value(false);
-                newState = newState->setBoxedValue(property, &value);
-            }
-        }
+        if (!newState->getValue(property) || canAttachTo(level, pos, direction->getOpposite()))
+            continue;
+        const BlockState* aboveState = level->getBlockState(pos.above());
+        if (aboveState->getBlock() == this && aboveState->getValue(property))
+            continue;
+        TypedBoxed<bool> value(false);
+        newState = newState->setBoxedValue(property, &value);
     }
-    if (countFaces(newState) == 0) return false;
-    if (state != newState) level->setBlock(pos, newState, 2, false);
+    if (countFaces(newState) == 0)
+        return false;
+    if (state != newState)
+        level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
     return true;
 }
 
-int VineBlock::getColor() const { return FoliageColor::getDefaultColor(); }
-int VineBlock::getColor(const BlockState*) { return FoliageColor::getDefaultColor(); }
-int VineBlock::getColor(LevelSource*, const BlockPos&, const BlockState*) { return getColor(); }
-int VineBlock::getColor(LevelSource* levelSource, const BlockPos& pos) { return levelSource->getBlockState(pos)->getBlock()->getColor(levelSource, pos, levelSource->getBlockState(pos)); }
+int VineBlock::getColor() const
+{
+    return FoliageColor::getDefaultColor();
+}
 
-void VineBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
+int VineBlock::getColor(const BlockState* state)
+{
+    return FoliageColor::getDefaultColor();
+}
+
+int VineBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
+{
+    return getColor(levelSource, pos);
+}
+
+int VineBlock::getColor(LevelSource* levelSource, const BlockPos& pos)
+{
+    return levelSource->getBiome(pos)->getFoliageColor(pos);
+}
+
+void VineBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                const BlockPos& fromPos)
 {
     if (!level->mIsClientSide && !updateSurvival(level, pos, state))
     {
@@ -168,128 +239,299 @@ void VineBlock::neighborChanged(const BlockState* state, Level* level, const Blo
 
 void VineBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (level->mIsClientSide || random->nextInt(4) != 0) return;
+    if (level->mIsClientSide || level->mRandom->nextInt(4) != 0)
+        return;
+
+    int remaining = 5;
+    bool crowded = false;
+    for (int dx = -4; dx <= 4 && !crowded; ++dx)
+    {
+        for (int dz = -4; dz <= 4 && !crowded; ++dz)
+        {
+            for (int dy = -1; dy <= 1; ++dy)
+            {
+                if (level->getBlockState(pos.offset(dx, dy, dz))->getBlock() == this && --remaining <= 0)
+                {
+                    crowded = true;
+                    break;
+                }
+            }
+        }
+    }
+
     const Direction* direction = Direction::getRandomDirection(*random);
-    AbstractProperty<bool>* property = getPropertyForFace(direction);
-    if (property == NULL || state->getValue(property)) return;
-    if (!canAttachTo(level, pos, direction)) return;
-    TypedBoxed<bool> value(true);
-    level->setBlock(pos, state->setBoxedValue(property, &value), 2, false);
+    BlockPos above = pos.above();
+    if (direction == Direction::UP && pos.y < 255 && level->isEmptyBlock(above))
+    {
+        const BlockState* newState = state;
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+        for (unsigned int i = 0; i < directions.length; ++i)
+        {
+            const Direction* face = directions.data[i];
+            TypedBoxed<bool> value(random->nextBoolean() && canAttachTo(level, above, face->getOpposite()));
+            newState = newState->setBoxedValue(getPropertyForFace(face), &value);
+        }
+        if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
+            || newState->getValue(WEST))
+            level->setBlock(above, newState, Block::UPDATE_CLIENTS, false);
+        return;
+    }
+
+    if (direction->getAxis()->isHorizontal() && !state->getValue(getPropertyForFace(direction)))
+    {
+        if (crowded)
+            return;
+        BlockPos target = pos.relative(direction);
+        const BlockState* targetState = level->getBlockState(target);
+        if (targetState->getBlock()->getCraftingMaterial() == Material::AIR)
+        {
+            const Direction* clockWise = direction->getClockWise();
+            const Direction* counterClockWise = direction->getCounterClockWise();
+            bool hasClockWise = state->getValue(getPropertyForFace(clockWise));
+            bool hasCounterClockWise = state->getValue(getPropertyForFace(counterClockWise));
+            BlockPos clockWisePos = target.relative(clockWise);
+            BlockPos counterClockWisePos = target.relative(counterClockWise);
+            if (hasClockWise && canAttachTo(level, clockWisePos.relative(clockWise), clockWise))
+            {
+                TypedBoxed<bool> value(true);
+                level->setBlock(target, defaultBlockState()->setBoxedValue(getPropertyForFace(clockWise), &value), Block::UPDATE_CLIENTS,
+                                false);
+            }
+            else if (hasCounterClockWise
+                     && canAttachTo(level, counterClockWisePos.relative(counterClockWise), counterClockWise))
+            {
+                TypedBoxed<bool> value(true);
+                level->setBlock(target,
+                                defaultBlockState()->setBoxedValue(getPropertyForFace(counterClockWise), &value), Block::UPDATE_CLIENTS,
+                                false);
+            }
+            else if (hasClockWise && level->isEmptyBlock(clockWisePos) && canAttachTo(level, clockWisePos, direction))
+            {
+                TypedBoxed<bool> value(true);
+                level->setBlock(clockWisePos,
+                                defaultBlockState()->setBoxedValue(getPropertyForFace(direction->getOpposite()),
+                                                                   &value),
+                                Block::UPDATE_CLIENTS, false);
+            }
+            else if (hasCounterClockWise && level->isEmptyBlock(counterClockWisePos)
+                     && canAttachTo(level, counterClockWisePos, direction))
+            {
+                TypedBoxed<bool> value(true);
+                level->setBlock(counterClockWisePos,
+                                defaultBlockState()->setBoxedValue(getPropertyForFace(direction->getOpposite()),
+                                                                   &value),
+                                Block::UPDATE_CLIENTS, false);
+            }
+        }
+        else if (targetState->getBlockFaceShape(level, target, direction) == BLOCK_FACE_SOLID)
+        {
+            TypedBoxed<bool> value(true);
+            level->setBlock(pos, state->setBoxedValue(getPropertyForFace(direction), &value), Block::UPDATE_CLIENTS, false);
+        }
+        return;
+    }
+
+    if (pos.y <= 1)
+        return;
+    BlockPos below = pos.below();
+    const BlockState* belowState = level->getBlockState(below);
+    Block* belowBlock = belowState->getBlock();
+    if (belowBlock->getCraftingMaterial() == Material::AIR)
+    {
+        const BlockState* newState = state;
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->getFaces();
+        for (unsigned int i = 0; i < directions.length; ++i)
+        {
+            if (random->nextBoolean())
+            {
+                TypedBoxed<bool> value(false);
+                newState = newState->setBoxedValue(getPropertyForFace(directions.data[i]), &value);
+            }
+        }
+        if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
+            || newState->getValue(WEST))
+            level->setBlock(below, newState, Block::UPDATE_CLIENTS, false);
+    }
+    else if (belowBlock == this)
+    {
+        const BlockState* newState = belowState;
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+        for (unsigned int i = 0; i < directions.length; ++i)
+        {
+            AbstractProperty<bool>* property = getPropertyForFace(directions.data[i]);
+            if (random->nextBoolean() && state->getValue(property))
+            {
+                TypedBoxed<bool> value(true);
+                newState = newState->setBoxedValue(property, &value);
+            }
+        }
+        if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
+            || newState->getValue(WEST))
+            level->setBlock(below, newState, Block::UPDATE_CLIENTS, false);
+    }
 }
 
-const BlockState* VineBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float, float, float, int, boost::shared_ptr<LivingEntity>)
+const BlockState* VineBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                  float hitX, float hitY, float hitZ, int auxValue,
+                                                  boost::shared_ptr<LivingEntity> placer)
 {
-    if (!mayPlace(level, pos, direction)) return NULL;
-    TypedBoxed<bool> value(true);
-    return defaultBlockState()->setBoxedValue(getPropertyForFace(direction), &value);
+    TypedBoxed<bool> up(false);
+    const BlockState* state = defaultBlockState()->setBoxedValue(UP, &up);
+    TypedBoxed<bool> north(false);
+    state = state->setBoxedValue(NORTH, &north);
+    TypedBoxed<bool> east(false);
+    state = state->setBoxedValue(EAST, &east);
+    TypedBoxed<bool> south(false);
+    state = state->setBoxedValue(SOUTH, &south);
+    TypedBoxed<bool> west(false);
+    state = state->setBoxedValue(WEST, &west);
+    if (direction->getAxis()->isHorizontal())
+    {
+        TypedBoxed<bool> value(true);
+        return state->setBoxedValue(getPropertyForFace(direction->getOpposite()), &value);
+    }
+    return state;
 }
 
-Item* VineBlock::getResource(const BlockState*, Random*, int) { return Items::shears; }
-int VineBlock::getResourceCount(Random*) { return 0; }
+Item* VineBlock::getResource(const BlockState* state, Random* random, int lootBonus)
+{
+    return Items::air;
+}
 
-void VineBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
+int VineBlock::getResourceCount(Random* random)
+{
+    return 0;
+}
+
+void VineBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                              const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
+                              not_null_ptr<ItemInstance> tool)
 {
     if (!level->mIsClientSide && tool->getItem() == Items::shears)
     {
-        popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::vine, 1, 0)));
+        player->awardStat(Stats::blockMinedStats.data[Block::getId(this)],
+                          GenericStats::param_blocksMined(state, 1));
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::vine, 1, 0)));
         return;
     }
     Block::playerDestroy(level, player, pos, state, blockEntity, tool);
 }
 
-int VineBlock::getRenderLayer() { return 0; }
+int VineBlock::getRenderLayer()
+{
+    return 0;
+}
 
 const BlockState* VineBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    bool up = (data & 1) != 0;
-    bool north = (data & 2) != 0;
-    bool south = (data & 4) != 0;
-    bool west = (data & 8) != 0;
-    bool east = (data & 16) != 0;
-    TypedBoxed<bool> value(up); state = state->setBoxedValue(UP, &value);
-    value = TypedBoxed<bool>(north); state = state->setBoxedValue(NORTH, &value);
-    value = TypedBoxed<bool>(south); state = state->setBoxedValue(SOUTH, &value);
-    value = TypedBoxed<bool>(west); state = state->setBoxedValue(WEST, &value);
-    value = TypedBoxed<bool>(east); return state->setBoxedValue(EAST, &value);
+    TypedBoxed<bool> south((data & 1) != 0);
+    const BlockState* state = defaultBlockState()->setBoxedValue(SOUTH, &south);
+    TypedBoxed<bool> west((data & 2) != 0);
+    state = state->setBoxedValue(WEST, &west);
+    TypedBoxed<bool> north((data & 4) != 0);
+    state = state->setBoxedValue(NORTH, &north);
+    TypedBoxed<bool> east((data & 8) != 0);
+    return state->setBoxedValue(EAST, &east);
 }
 
 int VineBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return (state->getValue(UP) ? 1 : 0) | (state->getValue(NORTH) ? 2 : 0) | (state->getValue(SOUTH) ? 4 : 0) | (state->getValue(WEST) ? 8 : 0) | (state->getValue(EAST) ? 16 : 0);
+    int data = 0;
+    if (state->getValue(SOUTH))
+        data |= 1;
+    if (state->getValue(WEST))
+        data |= 2;
+    if (state->getValue(NORTH))
+        data |= 4;
+    if (state->getValue(EAST))
+        data |= 8;
+    return data;
 }
 
 BlockStateDefinition* VineBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { UP, NORTH, SOUTH, WEST, EAST };
+    static const Property* properties[] = { UP, NORTH, EAST, SOUTH, WEST };
     return new BlockStateDefinition(this, properties, 5);
 }
 
 const BlockState* VineBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    bool north = state->getValue(NORTH);
-    bool south = state->getValue(SOUTH);
-    bool west = state->getValue(WEST);
-    bool east = state->getValue(EAST);
-    if (rotation->getType() == Rotation::eTYPE_Clockwise90)
+    switch (rotation->getType())
     {
-        TypedBoxed<bool> value(north);
-        const BlockState* result = state->setBoxedValue(EAST, &value);
-        value = TypedBoxed<bool>(east);
-        result = result->setBoxedValue(SOUTH, &value);
-        value = TypedBoxed<bool>(south);
-        result = result->setBoxedValue(WEST, &value);
-        value = TypedBoxed<bool>(west);
-        return result->setBoxedValue(NORTH, &value);
-    }
-    if (rotation->getType() == Rotation::eTYPE_Clockwise180)
+    case Rotation::eTYPE_Clockwise90:
     {
-        TypedBoxed<bool> value(west);
-        const BlockState* result = state->setBoxedValue(EAST, &value);
-        value = TypedBoxed<bool>(north);
-        result = result->setBoxedValue(SOUTH, &value);
-        value = TypedBoxed<bool>(east);
-        result = result->setBoxedValue(WEST, &value);
-        value = TypedBoxed<bool>(south);
-        return result->setBoxedValue(NORTH, &value);
+        TypedBoxed<bool> north(state->getValue(WEST));
+        const BlockState* result = state->setBoxedValue(NORTH, &north);
+        TypedBoxed<bool> east(state->getValue(NORTH));
+        result = result->setBoxedValue(EAST, &east);
+        TypedBoxed<bool> south(state->getValue(EAST));
+        result = result->setBoxedValue(SOUTH, &south);
+        TypedBoxed<bool> west(state->getValue(SOUTH));
+        return result->setBoxedValue(WEST, &west);
     }
-    if (rotation->getType() == Rotation::eTYPE_CounterClockwise90)
+    case Rotation::eTYPE_Clockwise180:
     {
-        TypedBoxed<bool> value(south);
-        const BlockState* result = state->setBoxedValue(EAST, &value);
-        value = TypedBoxed<bool>(west);
-        result = result->setBoxedValue(SOUTH, &value);
-        value = TypedBoxed<bool>(north);
-        result = result->setBoxedValue(WEST, &value);
-        value = TypedBoxed<bool>(east);
-        return result->setBoxedValue(NORTH, &value);
+        TypedBoxed<bool> north(state->getValue(SOUTH));
+        const BlockState* result = state->setBoxedValue(NORTH, &north);
+        TypedBoxed<bool> east(state->getValue(WEST));
+        result = result->setBoxedValue(EAST, &east);
+        TypedBoxed<bool> south(state->getValue(NORTH));
+        result = result->setBoxedValue(SOUTH, &south);
+        TypedBoxed<bool> west(state->getValue(EAST));
+        return result->setBoxedValue(WEST, &west);
     }
-    return state;
+    case Rotation::eTYPE_CounterClockwise90:
+    {
+        TypedBoxed<bool> north(state->getValue(EAST));
+        const BlockState* result = state->setBoxedValue(NORTH, &north);
+        TypedBoxed<bool> east(state->getValue(SOUTH));
+        result = result->setBoxedValue(EAST, &east);
+        TypedBoxed<bool> south(state->getValue(WEST));
+        result = result->setBoxedValue(SOUTH, &south);
+        TypedBoxed<bool> west(state->getValue(NORTH));
+        return result->setBoxedValue(WEST, &west);
+    }
+    default:
+        return state;
+    }
 }
 
 const BlockState* VineBlock::mirror(const BlockState* state, Mirror* mirror)
 {
     if (mirror->getType() == Mirror::eTYPE_LeftRight)
     {
-        bool west = state->getValue(WEST);
-        bool east = state->getValue(EAST);
-        TypedBoxed<bool> value(west);
-        const BlockState* result = state->setBoxedValue(EAST, &value);
-        value = TypedBoxed<bool>(east);
-        return result->setBoxedValue(WEST, &value);
+        TypedBoxed<bool> north(state->getValue(SOUTH));
+        const BlockState* result = state->setBoxedValue(NORTH, &north);
+        TypedBoxed<bool> south(state->getValue(NORTH));
+        return result->setBoxedValue(SOUTH, &south);
     }
     if (mirror->getType() == Mirror::eTYPE_FrontBack)
     {
-        bool north = state->getValue(NORTH);
-        bool south = state->getValue(SOUTH);
-        TypedBoxed<bool> value(north);
-        const BlockState* result = state->setBoxedValue(SOUTH, &value);
-        value = TypedBoxed<bool>(south);
-        return result->setBoxedValue(NORTH, &value);
+        TypedBoxed<bool> east(state->getValue(WEST));
+        const BlockState* result = state->setBoxedValue(EAST, &east);
+        TypedBoxed<bool> west(state->getValue(EAST));
+        return result->setBoxedValue(WEST, &west);
     }
     return Block::mirror(state, mirror);
 }
-EBlockFaceShape VineBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return (EBlockFaceShape)8; }
-EBlockRenderShape VineBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)20; }
-bool VineBlock::shouldBlockTick(Level*, const BlockPos&, const BlockState*) { return !Minecraft::InMiniGame((EMiniGameId)15, true); }
-bool VineBlock::waterSpreadCausesSpawn() { return true; }
+
+EBlockFaceShape VineBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                             const Direction* direction)
+{
+    return BLOCK_FACE_UNDEFINED;
+}
+
+EBlockRenderShape VineBlock::getRenderShape(const BlockState* state)
+{
+    return BLOCK_RENDER_VINE;
+}
+
+bool VineBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockState* state)
+{
+    return !Minecraft::InMiniGame(eMiniGameId_Any, true);
+}
+
+bool VineBlock::waterSpreadCausesSpawn()
+{
+    return true;
+}

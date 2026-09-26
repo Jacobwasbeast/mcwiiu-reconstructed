@@ -1,4 +1,6 @@
 #include "game/world/block/KelpBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <string>
 
@@ -16,12 +18,15 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/item/ItemId.hpp"
 
-static AbstractProperty<int>* KELP_AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
+AbstractProperty<int>* KelpBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
 static const AABB* KELP_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
 
 KelpBlock::KelpBlock()
@@ -29,7 +34,7 @@ KelpBlock::KelpBlock()
 {
     DerivedInit();
     TypedBoxed<int> age(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(KELP_AGE, &age));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(AGE, &age));
     setTicking(true);
     mIcons[0] = NULL;
     mIcons[1] = NULL;
@@ -47,7 +52,7 @@ bool KelpBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const B
     int bottom = pos.y;
     int lower = bottom - 4;
     while (lower < bottom - 1 && bottom - 1 > 0
-           && level->getBlockId(pos.x, bottom - 1, pos.z) == 258)
+           && level->getBlockId(pos.x, bottom - 1, pos.z) == BlockId::KELP)
     {
         --lower;
         --bottom;
@@ -56,7 +61,7 @@ bool KelpBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const B
     int upper = pos.y + 4;
     int top = pos.y;
     while (top + 1 < upper && top + 1 < level->getMaxBuildHeight()
-           && level->getBlockId(pos.x, top + 1, pos.z) == 258)
+           && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::KELP)
     {
         ++upper;
         ++top;
@@ -76,7 +81,7 @@ void KelpBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, cons
     int bottom = pos.y;
     int lower = bottom - 4;
     while (lower < bottom - 1 && bottom - 1 > 0
-           && level->getBlockId(pos.x, bottom - 1, pos.z) == 258)
+           && level->getBlockId(pos.x, bottom - 1, pos.z) == BlockId::KELP)
     {
         --lower;
         --bottom;
@@ -85,7 +90,7 @@ void KelpBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, cons
     int upper = pos.y + 4;
     int top = pos.y;
     while (top + 1 < upper && top + 1 < level->getMaxBuildHeight()
-           && level->getBlockId(pos.x, top + 1, pos.z) == 258)
+           && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::KELP)
     {
         ++upper;
         ++top;
@@ -102,7 +107,7 @@ void KelpBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, cons
         BlockPos target(pos.x, y, pos.z);
         if (!mayPlace(level, target))
             return;
-        level->setBlockAndData(pos.x, y, pos.z, 258, 0, 3);
+        level->setBlockAndData(pos.x, y, pos.z, BlockId::KELP, 0, Block::UPDATE_ALL);
     }
 }
 
@@ -133,7 +138,7 @@ EBlockFaceShape KelpBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
 
 EBlockRenderShape KelpBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(49);
+    return BLOCK_RENDER_KELP;
 }
 
 void KelpBlock::checkAlive(Level* level, const BlockPos& pos)
@@ -141,13 +146,13 @@ void KelpBlock::checkAlive(Level* level, const BlockPos& pos)
     if (!canSurvive(level, pos, NULL))
     {
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::kelp)));
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }
 
 int KelpBlock::getAge(const BlockState* state)
 {
-    return state->getValue(KELP_AGE);
+    return state->getValue(AGE);
 }
 
 bool KelpBlock::shouldGrow(Level* level, const BlockPos& pos)
@@ -155,31 +160,31 @@ bool KelpBlock::shouldGrow(Level* level, const BlockPos& pos)
     if (getAge(level->getBlockState(pos)) >= 15)
         return false;
     const BlockState* above = level->getBlockState(pos.above());
-    return above->getMaterial() == Material::WATER && above->getValue(KELP_AGE) == 0;
+    return above->getMaterial() == Material::WATER && above->getValue(AGE) == 0;
 }
 
 void KelpBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
     checkAlive(level, pos);
-    if (level->getBlockId(pos.x, pos.y, pos.z) != 258)
+    if (level->getBlockId(pos.x, pos.y, pos.z) != BlockId::KELP)
         return;
 
     if (level->isEmptyWaterBlock(pos.above()))
     {
         int height = 1;
-        while (level->getBlockId(pos.x, pos.y - height, pos.z) == 258)
+        while (level->getBlockId(pos.x, pos.y - height, pos.z) == BlockId::KELP)
             ++height;
         if (height <= 14)
         {
             int age = level->getBlockData(pos.x, pos.y, pos.z);
             if (age == 15)
             {
-                level->setBlockAndData(pos.x, pos.y + 1, pos.z, 258, 0, 3);
-                level->setBlockAndData(pos.x, pos.y, pos.z, 258, 0, 4);
+                level->setBlockAndData(pos.x, pos.y + 1, pos.z, BlockId::KELP, 0, Block::UPDATE_ALL);
+                level->setBlockAndData(pos.x, pos.y, pos.z, BlockId::KELP, 0, Block::UPDATE_INVISIBLE);
             }
             else
             {
-                level->setBlockAndData(pos.x, pos.y, pos.z, 258, age + 1, 4);
+                level->setBlockAndData(pos.x, pos.y, pos.z, BlockId::KELP, age + 1, Block::UPDATE_INVISIBLE);
             }
         }
     }
@@ -190,26 +195,40 @@ void KelpBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
 
 void KelpBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (level->getBlockState(pos)->getMaterial() == mMaterial)
-        level->setExtraBlock(pos, Blocks::WATER->defaultBlockState(), 3, false);
-    if (level->isTouchingMaterial(pos, Material::WATER) && shouldGrow(level, pos)
-        && !level->mIsClientSide)
-        level->levelEvent(0x2D, pos, level->getBlockState(pos)->getBlock()->getColor());
+    if (level->getLiquidBlock(pos)->mMaterial == mMaterial)
+        level->setExtraBlock(pos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_ALL, false);
+    if (level->isTouchingMaterial(pos, Material::WATER) && shouldGrow(level, pos) && !level->mIsClientSide)
+        level->addToTickNextTick(pos, level->getBlock(pos), 45);
 }
 
 bool KelpBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    const BlockState* below = level->getBlockState(pos.below());
-    const Material* material = below->getMaterial();
-    if (material == Material::AIR || material == Material::WATER || material == Material::LAVA
-        || material == Material::FIRE || material == Material::PORTAL || material == Material::WEB
-        || material == Material::PLANT || material == Material::REPLACEABLE_PLANT)
+    const BlockState* belowState = level->getBlockState(pos.below());
+    Block* below = belowState->getBlock();
+    if (below == Blocks::magma || below == Blocks::soul_sand || below == Blocks::fence
+        || below == Blocks::jungle_fence || below == Blocks::nether_brick_fence || below == Blocks::spruce_fence
+        || below == Blocks::birch_fence || below == Blocks::dark_oak_fence || below == Blocks::acacia_fence)
+    {
         return false;
-    if (below->getBlock() == this && getAge(below) < 7)
+    }
+
+    if (level->getLiquidBlock(pos)->mMaterial == Material::WATER
+        && static_cast<unsigned int>(level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL) - 1) < 7)
+    {
         return false;
-    if (!below->isSolid() && !below->getBlock()->isSolidRender(below))
-        return false;
-    return level->isUnderWater(pos, 258, 0);
+    }
+
+    if (below == Blocks::kelp && level->getLiquidBlock(pos)->mMaterial == Material::WATER)
+        return true;
+
+    if (!belowState->isSolidBlockingBlock())
+    {
+        if (!below->isSlabBlock())
+            return false;
+        if (HalfSlabBlock::isBottomSlab(below->convertBlockStateToLegacyData(belowState)))
+            return false;
+    }
+    return level->isUnderWater(pos, 0x102, 0);
 }
 
 void KelpBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -262,28 +281,28 @@ bool KelpBlock::isSilkTouchable()
 const BlockState* KelpBlock::getBlockState(int data)
 {
     TypedBoxed<int> age(data);
-    return defaultBlockState()->setBoxedValue(KELP_AGE, &age);
+    return defaultBlockState()->setBoxedValue(AGE, &age);
 }
 
 int KelpBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(KELP_AGE);
+    return state->getValue(AGE);
 }
 
 BlockStateDefinition* KelpBlock::createBlockStateDefinition()
 {
-    const Property* properties[1] = { KELP_AGE };
+    const Property* properties[1] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 unsigned int KelpBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
         && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
         && isValidBonemealTarget((Level*)tooltipData.m_pLevel, tooltipData.m_blockPos,
                                  tooltipData.m_pBlockState, true))
-        return 0x9F5FDC40U;
+        return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -299,9 +318,9 @@ TextureAtlasSprite* KelpBlock::getTexture(const Direction* direction, const Bloc
 
 void KelpBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(L"kelp_top");
-    mIcons[1] = iconRegister->registerIcon(L"kelp_bottom");
-    mIcons[2] = iconRegister->registerIcon(L"kelp_side");
-    mIcons[3] = iconRegister->registerIcon(L"kelp_side");
-    mIcons[4] = iconRegister->registerIcon(L"kelp_side");
+    mIcons[0] = iconRegister->registerIcon(L"kelp_d");
+    mIcons[1] = iconRegister->registerIcon(L"kelp_c");
+    mIcons[2] = iconRegister->registerIcon(L"kelp_a");
+    mIcons[3] = iconRegister->registerIcon(L"kelp_b");
+    mIcons[4] = iconRegister->registerIcon(L"kelp_top_a");
 }

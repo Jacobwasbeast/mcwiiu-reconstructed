@@ -7,7 +7,7 @@ BlockLayerRuleDefinition::BlockLayerRuleDefinition()
 {
     mBlockId = 0;
 
-    GameRules_IntAttribute* blockId = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlockId);
+    GameRules_IntAttribute* blockId = addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
     blockId->setMin(0);
     blockId->setMax(255);
 }
@@ -18,7 +18,7 @@ BlockLayerRuleDefinition::~BlockLayerRuleDefinition()
 
 ConsoleGameRules::EGameRuleType BlockLayerRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(24);
+    return ConsoleGameRules::eGameRuleType_BlockLayer;
 }
 
 bool BlockLayerRuleDefinition::containsBlock(int blockId, const BlockPos& pos)

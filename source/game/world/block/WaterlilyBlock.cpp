@@ -1,4 +1,5 @@
 #include "game/world/block/WaterlilyBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
@@ -27,7 +28,7 @@ void WaterlilyBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos
                                        const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
                                        boost::shared_ptr<Entity> entity, bool)
 {
-    if (entity && entity->GetType() != ENTITY_TYPE_BOAT)
+    if (entity && entity->GetType() != EntityType::BOAT)
     {
         Block::addCollisionAABB(pos, entityBox, collidingBoxes, LILY_PAD_AABB);
     }
@@ -37,7 +38,7 @@ void WaterlilyBlock::entityInside(Level* level, const BlockPos& pos, const Block
                                   const boost::shared_ptr<Entity>& entity)
 {
     Block::entityInside(level, pos, state, entity);
-    if (entity->GetType() == ENTITY_TYPE_BOAT)
+    if (entity->GetType() == EntityType::BOAT)
     {
         level->destroyBlock(pos, true);
     }
@@ -70,7 +71,7 @@ const AABB* WaterlilyBlock::getShape(const BlockState*, LevelSource*, const Bloc
 
 bool WaterlilyBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
 {
-    return state->getBlock() == Blocks::WATER || state->getMaterial() == Material::ICE;
+    return state->getBlock() == Blocks::water || state->getMaterial() == Material::ICE;
 }
 
 bool WaterlilyBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
@@ -98,5 +99,5 @@ bool WaterlilyBlock::canContainLiquid(const BlockState*) const
 
 EBlockRenderShape WaterlilyBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(0x17);
+    return BLOCK_RENDER_LILYPAD;
 }

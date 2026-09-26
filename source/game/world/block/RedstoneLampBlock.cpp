@@ -30,14 +30,14 @@ void RedstoneLampBlock::onPlace(Level* level, const BlockPos& pos, const BlockSt
         {
             if (!level->hasNeighborSignal(pos))
             {
-                level->setBlock(pos, Blocks::redstone_lamp->defaultBlockState(), 2, false);
+                level->setBlock(pos, Blocks::redstone_lamp->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 return;
             }
             if (mLit)
                 return;
         }
         if (level->hasNeighborSignal(pos))
-            level->setBlock(pos, Blocks::lit_redstone_lamp->defaultBlockState(), 2, false);
+            level->setBlock(pos, Blocks::lit_redstone_lamp->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
 }
 
@@ -57,14 +57,14 @@ void RedstoneLampBlock::neighborChanged(const BlockState* state, Level* level, c
                 return;
         }
         if (level->hasNeighborSignal(pos))
-            level->setBlock(pos, Blocks::lit_redstone_lamp->defaultBlockState(), 3, false);
+            level->setBlock(pos, Blocks::lit_redstone_lamp->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }
 
 void RedstoneLampBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     if (!level->mIsClientSide && mLit && !level->hasNeighborSignal(pos))
-        level->setBlock(pos, Blocks::redstone_lamp->defaultBlockState(), 3, false);
+        level->setBlock(pos, Blocks::redstone_lamp->defaultBlockState(), Block::UPDATE_ALL, false);
 }
 
 Item* RedstoneLampBlock::getResource(const BlockState* state, Random* random, int lootBonus)

@@ -1,4 +1,5 @@
 #include "game/world/block/ComparatorBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/CompoundTag.hpp"
 
@@ -49,5 +50,5 @@ void ComparatorBlockEntity::load(CompoundTag* tag)
 
 unsigned long long ComparatorBlockEntity::GetType()
 {
-    return 0x000000000100020AULL;
+    return BlockEntityType::COMPARATOR;
 }

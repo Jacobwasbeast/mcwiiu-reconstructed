@@ -20,6 +20,17 @@ class Rotation;
 class FenceBlock : public Block
 {
 public:
+    static AbstractProperty<bool>* NORTH;
+    static AbstractProperty<bool>* EAST;
+    static AbstractProperty<bool>* SOUTH;
+    static AbstractProperty<bool>* WEST;
+    static const AABB* BOUNDING_BOXES[16];
+    static const AABB* PILLAR_AABB;
+    static const AABB* SOUTH_AABB;
+    static const AABB* WEST_AABB;
+    static const AABB* NORTH_AABB;
+    static const AABB* EAST_AABB;
+
     FenceBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor);
     FenceBlock(const std::wstring& name, Material* material);
     virtual ~FenceBlock();
@@ -33,7 +44,7 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
     static bool isExceptionBlockForAttachingPlusPiston(Block* block);
-    bool connectsTo(LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual bool connectsTo(LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
     virtual bool canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType);
     virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,

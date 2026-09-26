@@ -1,4 +1,5 @@
 #include "game/world/block/CakeBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/IconRegister.hpp"
 #include "game/core/Direction.hpp"
@@ -61,7 +62,7 @@ bool CakeBlock::eat(Level* level, const BlockPos& pos, const BlockState* state,
     if (bites < 6)
     {
         TypedBoxed<int> next(bites + 1);
-        level->setBlock(pos, state->setBoxedValue(BITES, &next), 3, false);
+        level->setBlock(pos, state->setBoxedValue(BITES, &next), Block::UPDATE_ALL, false);
     }
     else
         level->removeBlock(pos);
@@ -103,7 +104,7 @@ bool CakeBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 }
 
 int CakeBlock::getResourceCount(Random*) { return 0; }
-Item* CakeBlock::getResource(const BlockState*, Random*, int) { return Items::cake; }
+Item* CakeBlock::getResource(const BlockState*, Random*, int) { return Items::air; }
 
 not_null_ptr<ItemInstance> CakeBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
@@ -128,7 +129,7 @@ unsigned int CakeBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (!tooltipData.m_pPlayer->mAbilities.mInstabuild
         && tooltipData.m_pPlayer->getFoodData()->needsFood()
         && tooltipData.m_bUseItem && tooltipData.m_bIsInside)
-        return 0xD26C6DB5u;
+        return IDS_TOOLTIPS_EAT;
     return Block::GetInteractTooltip(tooltipData);
 }
 

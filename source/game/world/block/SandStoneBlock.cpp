@@ -74,7 +74,7 @@ SandStoneBlock::SandStoneBlock()
 {
     DerivedInit();
     TypedBoxed<Variant*> value(SANDSTONE);
-    registerDefaultState(defaultBlockState()->setBoxedValue(TYPE, &value));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(TYPE, &value));
     for (int i = 0; i < 5; ++i)
     {
         mTextures[i] = NULL;
@@ -130,7 +130,7 @@ TextureAtlasSprite* SandStoneBlock::getTexture(const Direction* direction, const
 
 void SandStoneBlock::registerIcons(IconRegister* iconRegister)
 {
-    mTextures[0] = iconRegister->registerIcon(L"sandstone");
+    mTextures[0] = iconRegister->registerIcon(L"sandstone_side");
     mTextures[1] = iconRegister->registerIcon(L"sandstone_carved");
     mTextures[2] = iconRegister->registerIcon(L"sandstone_smooth");
     mTextures[3] = iconRegister->registerIcon(L"sandstone_top");

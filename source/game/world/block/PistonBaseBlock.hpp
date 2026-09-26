@@ -82,9 +82,9 @@ public:
 
 private:
     bool mSticky;
-    TextureAtlasSprite* mSideIcon;
-    TextureAtlasSprite* mTopIcon;
+    TextureAtlasSprite* mInnerTopIcon;
     TextureAtlasSprite* mBottomIcon;
+    TextureAtlasSprite* mTopIcon;
 };
 
 #endif

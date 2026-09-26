@@ -36,6 +36,7 @@ public:
 };
 
 extern Property* OldLeafBlock_VARIANT;
-extern Property* OldLeafBlock_DECAYABLE;
+
+bool oldleaf_filter(PlanksBlock::Variant* value);
 
 #endif

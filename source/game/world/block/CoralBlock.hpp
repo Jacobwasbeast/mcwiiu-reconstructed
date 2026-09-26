@@ -39,13 +39,14 @@ public:
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
-    virtual bool isValidAuxValue(int auxValue);
+    bool isValidAuxValue(int auxValue);
+
+    static AbstractProperty<int>* VARIANT;
+    static AbstractProperty<bool>* DEAD;
 
 private:
     TextureAtlasSprite* mIcons[10];
 };
 
-extern AbstractProperty<int>* CoralBlock_PROPERTY_1;
-extern AbstractProperty<bool>* CoralBlock_PROPERTY_2;
 
 #endif

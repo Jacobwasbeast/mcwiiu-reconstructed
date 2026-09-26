@@ -1,4 +1,6 @@
 #include "game/world/block/DispenserBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -16,7 +18,6 @@
 #include "game/world/block/BlockEntity.hpp"
 
 static Random gDispenserRandom;
-const unsigned long long DispenserBlockEntity::TYPE_ID = 0x0000000003C00200ULL;
 
 DispenserBlockEntity::DispenserBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(9, ItemInstance::EMPTY))
@@ -89,7 +90,7 @@ AbstractContainerMenu* DispenserBlockEntity::createMenu(boost::shared_ptr<Invent
 
 int DispenserBlockEntity::getTypeId(bool large)
 {
-    return 20;
+    return ClientboundContainerOpenPacket::TRAP;
 }
 
 int DispenserBlockEntity::getRandomSlot()
@@ -129,7 +130,7 @@ int DispenserBlockEntity::addItem(not_null_ptr<ItemInstance> item)
 void DispenserBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new ItemListDataWalker(DispenserBlockEntity::TYPE_ID, L"Items"));
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::DISPENSER, L"Items"));
 }
 
 void DispenserBlockEntity::load(CompoundTag* tag)
@@ -181,5 +182,5 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
 
 unsigned long long DispenserBlockEntity::GetType()
 {
-    return DispenserBlockEntity::TYPE_ID;
+    return BlockEntityType::DISPENSER;
 }

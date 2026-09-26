@@ -1,4 +1,5 @@
 #include "game/world/block/WebBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -23,7 +24,7 @@ void WebBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
 {
     entity->makeStuckInWeb();
 
-    if (entity->GetType() == 0x88000005ULL
+    if (entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY
         && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
         entity->mIsInWeb = true;
@@ -78,7 +79,7 @@ int WebBlock::getRenderLayer()
 
 EBlockRenderShape WebBlock::getRenderShape(const BlockState* state)
 {
-    return BLOCK_RENDER_ENTITY;
+    return BLOCK_RENDER_CROSS;
 }
 
 bool WebBlock::waterSpreadCausesSpawn()

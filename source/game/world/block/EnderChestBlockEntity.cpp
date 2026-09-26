@@ -1,4 +1,6 @@
 #include "game/world/block/EnderChestBlockEntity.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -35,7 +37,7 @@ void EnderChestBlockEntity::tick()
     ++mTickCount;
     if (mTickCount % 20 == 0 && mLevel != NULL)
     {
-        mLevel->blockEvent(mPos, NULL, 1, mOpenCount);
+        mLevel->blockEvent(mPos, Blocks::ender_chest, 1, mOpenCount);
     }
 
     mOpenOld = mOpen;
@@ -94,19 +96,13 @@ void EnderChestBlockEntity::setRemoved()
 void EnderChestBlockEntity::startOpen()
 {
     ++mOpenCount;
-    if (mLevel != NULL)
-    {
-        mLevel->blockEvent(mPos, NULL, 1, mOpenCount);
-    }
+    mLevel->blockEvent(mPos, Blocks::ender_chest, 1, mOpenCount);
 }
 
 void EnderChestBlockEntity::stopOpen()
 {
     --mOpenCount;
-    if (mLevel != NULL)
-    {
-        mLevel->blockEvent(mPos, NULL, 1, mOpenCount);
-    }
+    mLevel->blockEvent(mPos, Blocks::ender_chest, 1, mOpenCount);
 }
 
 bool EnderChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
@@ -138,5 +134,5 @@ boost::shared_ptr<BlockEntity> EnderChestBlockEntity::clone()
 
 unsigned long long EnderChestBlockEntity::GetType()
 {
-    return 0x0000000001200208ULL;
+    return BlockEntityType::ENDER_CHEST;
 }

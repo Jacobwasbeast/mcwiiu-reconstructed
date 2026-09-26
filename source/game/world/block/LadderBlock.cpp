@@ -22,10 +22,10 @@ static const AABB* LADDER_SHAPE_SOUTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1
 static const AABB* LADDER_SHAPE_NORTH = AABB::newPermanent(0.0, 0.0, 0.875, 1.0, 1.0, 1.0);
 
 LadderBlock::LadderBlock()
-    : Block(Material::WOOD)
+    : Block(Material::DECORATION)
 {
     DerivedInit();
-    mHasTintedFace = false;
+    mWaterBlocking = false;
 }
 
 LadderBlock::~LadderBlock()
@@ -141,5 +141,5 @@ EBlockFaceShape LadderBlock::getBlockFaceShape(LevelSource*, const BlockState*, 
 
 EBlockRenderShape LadderBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(8);
+    return BLOCK_RENDER_LADDER;
 }

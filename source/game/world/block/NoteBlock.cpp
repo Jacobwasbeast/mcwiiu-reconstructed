@@ -1,4 +1,6 @@
 #include "game/world/block/NoteBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <vector>
@@ -36,7 +38,7 @@ void NoteBlock::neighborChanged(const BlockState*, Level* level, const BlockPos&
 {
     bool powered = level->hasNeighborSignal(pos);
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && entity->GetType() == 0x1000203ULL)
+    if (entity && entity->GetType() == BlockEntityType::MUSIC)
     {
         boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
         if (powered)
@@ -59,7 +61,7 @@ bool NoteBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
         return false;
     }
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && entity->GetType() == 0x1000203ULL)
+    if (entity && entity->GetType() == BlockEntityType::MUSIC)
     {
         boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
         music->tune();
@@ -73,7 +75,7 @@ void NoteBlock::attack(Level* level, const BlockPos& pos, boost::shared_ptr<Play
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if (entity && entity->GetType() == 0x1000203ULL)
+        if (entity && entity->GetType() == BlockEntityType::MUSIC)
         {
             boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
             music->playNote(level, BlockPos(pos));
@@ -85,22 +87,22 @@ unsigned int NoteBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
     {
-        return 0x1ceafe25U;
+        return IDS_TOOLTIPS_CHANGEPITCH;
     }
     return Block::GetInteractTooltip(tooltipData);
 }
 
 unsigned int NoteBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.m_bIsInside && !Minecraft::InMiniGame((EMiniGameId)0, true))
+    if (!tooltipData.m_bIsInside && !Minecraft::InMiniGame(eMiniGameId_Lobby, true))
     {
-        return 0xffffffffU;
+        return IDS_NONE;
     }
     if (tooltipData.m_bIsInside)
     {
-        return 0x5fb7a25aU;
+        return IDS_TOOLTIPS_MINE;
     }
-    return 0x293a30d9U;
+    return IDS_TOOLTIPS_PLAY;
 }
 
 const SoundEvent* NoteBlock::getInstrument(int instrument)

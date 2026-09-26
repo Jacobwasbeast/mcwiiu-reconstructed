@@ -1,4 +1,5 @@
 #include "game/world/block/LogBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/unordered_set.hpp>
 
@@ -16,6 +17,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Iterator.hpp"
+#include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -96,23 +99,21 @@ LogBlock::~LogBlock()
 
 void LogBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!level->hasChunksAt(pos.offset(-5, -5, -5), pos.offset(5, 5, 5))) return;
-    int x;
-    int y;
-    int z;
-    for (x = -4; x <= 4; ++x)
+    if (!level->hasChunksAt(pos.offset(-5, -5, -5), pos.offset(5, 5, 5)))
+        return;
+
+    Iterator<BlockPos*>* positions = BlockPos::between(pos.offset(-4, -4, -4), pos.offset(4, 4, 4));
+    while (positions->hasNext())
     {
-        for (y = -4; y <= 4; ++y)
+        BlockPos neighbour = *positions->next();
+        const BlockState* neighbourState = level->getBlockState(neighbour);
+        if (neighbourState->getBlock()->mMaterial == Material::LEAVES && !neighbourState->getValue(LeafBlock::CHECK_DECAY))
         {
-            for (z = -4; z <= 4; ++z)
-            {
-                BlockPos neighbor = pos.offset(x, y, z);
-                const BlockState* neighborState = level->getBlockState(neighbor);
-                if (neighborState->getMaterial() == Material::LEAVES)
-                    level->setBlock(neighbor, neighborState, 4, false);
-            }
+            TypedBoxed<bool> checkDecay(true);
+            level->setBlock(neighbour, neighbourState->setBoxedValue(LeafBlock::CHECK_DECAY, &checkDecay), Block::UPDATE_INVISIBLE, false);
         }
     }
+    delete positions;
 }
 
 const BlockState* LogBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
@@ -164,7 +165,7 @@ const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int id = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e) && !tooltipData.m_bCanPlace && !Minecraft::InMiniGame((EMiniGameId)15, true)) return 0x2c6a27a9;
+    if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e) && !tooltipData.m_bCanPlace && !Minecraft::InMiniGame(eMiniGameId_Any, true)) return IDS_TOOLTIPS_STRIP;
     return Block::GetInteractTooltip(tooltipData);
 }
 

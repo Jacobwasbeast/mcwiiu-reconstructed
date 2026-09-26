@@ -20,7 +20,7 @@ AirBlock::~AirBlock()
 
 EBlockRenderShape AirBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(-1);
+    return BLOCK_RENDER_INVISIBLE;
 }
 
 const AABB* AirBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)

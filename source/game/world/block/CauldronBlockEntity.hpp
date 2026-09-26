@@ -71,6 +71,9 @@ public:
     bool isLingeringPotion() const;
 
 private:
+    friend class BlockRenderer;
+    friend class CauldronBlock;
+
     std::wstring mPotionId;
     Potion::EType mPotionType;
     bool mHasCustomColor;

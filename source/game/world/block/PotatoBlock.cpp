@@ -57,7 +57,7 @@ void PotatoBlock::spawnResources(Level* level, const BlockPos& pos, const BlockS
     {
         return;
     }
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::potato)));
+    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::poisonousPotato)));
 }
 
 const AABB* PotatoBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)

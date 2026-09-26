@@ -2,6 +2,7 @@
 #define GAME_WORLD_BLOCK_DOUBLEPLANTBLOCK_HPP
 
 #include "game/core/Bush.hpp"
+#include "game/world/block/BonemealableBlock.hpp"
 #include "game/item/not_null_ptr.hpp"
 
 #include <string>
@@ -21,7 +22,7 @@ class LivingEntity;
 class BlockEntity;
 class Player;
 
-class DoublePlantBlock : public Bush
+class DoublePlantBlock : public Bush, public BonemealableBlock
 {
 public:
     class Half
@@ -58,6 +59,14 @@ public:
         virtual ~Variant();
         int getData();
         static Variant* byData(int data);
+
+        static Variant* SUNFLOWER;
+        static Variant* SYRINGA;
+        static Variant* GRASS;
+        static Variant* FERN;
+        static Variant* ROSE;
+        static Variant* PAEONIA;
+
         TextureAtlasSprite* getIcon(ETexture texture);
         std::wstring* getTexture(int texture);
         void setIcon(ETexture texture, TextureAtlasSprite* icon);
@@ -77,7 +86,7 @@ public:
 
     DoublePlantBlock();
     virtual ~DoublePlantBlock();
-    virtual int getType(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
+    virtual Variant* getType(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
     virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);

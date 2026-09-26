@@ -260,5 +260,5 @@ void QuartzBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape QuartzBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)39;
+    return BLOCK_RENDER_QUARTZ;
 }

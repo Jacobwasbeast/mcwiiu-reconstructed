@@ -43,7 +43,7 @@ void HayBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape HayBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(31);
+    return BLOCK_RENDER_TREE;
 }
 
 Direction::Axis* HayBlock::getAxis(const BlockState* state)

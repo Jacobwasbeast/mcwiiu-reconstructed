@@ -1,4 +1,5 @@
 #include "game/world/block/ClayBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/SeaGrass.hpp"
@@ -10,6 +11,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/item/ItemId.hpp"
 
 ClayBlock::ClayBlock()
     : Block(Material::CLAY)
@@ -44,14 +46,14 @@ Item* ClayBlock::getResource(const BlockState*, Random*, int)
 
 unsigned int ClayBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351)
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE)
     {
         BlockPos above = tooltipData.m_blockPos.above();
         if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 270, 0)
             && tooltipData.m_eInteractionResult != 2
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            return 0x9F5FDC40u;
+            return IDS_TOOLTIPS_GROW;
         }
     }
 

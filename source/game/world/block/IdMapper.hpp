@@ -9,8 +9,7 @@
 
 class BlockState;
 
-template <class T>
-class IdMapper : public IdMap<T>
+template<class T> class IdMapper : public IdMap<T>
 {
 public:
     virtual int getId(T value);
@@ -23,8 +22,7 @@ private:
     std::vector<T> mObjects;
 };
 
-template <class T>
-int IdMapper<T>::getId(T value)
+template<class T> int IdMapper<T>::getId(T value)
 {
     typename boost::unordered_map<T, int>::iterator found = mIds.find(value);
     if (found == mIds.end())
@@ -35,8 +33,7 @@ int IdMapper<T>::getId(T value)
     return found->second;
 }
 
-template <class T>
-T IdMapper<T>::byId(int id)
+template<class T> T IdMapper<T>::byId(int id)
 {
     if (id >= 0 && id < (int)mObjects.size())
     {
@@ -46,8 +43,7 @@ T IdMapper<T>::byId(int id)
     return T();
 }
 
-template <class T>
-void IdMapper<T>::addMapping(T value, int id)
+template<class T> void IdMapper<T>::addMapping(T value, int id)
 {
     mIds[value] = id;
 
@@ -59,8 +55,7 @@ void IdMapper<T>::addMapping(T value, int id)
     mObjects[id] = value;
 }
 
-template <>
-class IdMapper<const BlockState*> : public IdMap<const BlockState*>
+template<> class IdMapper<const BlockState*> : public IdMap<const BlockState*>
 {
 public:
     enum
@@ -72,7 +67,6 @@ public:
 
     virtual int getId(const BlockState* state);
     virtual const BlockState* byId(int id);
-
     void addMapping(const BlockState* state, int id);
     bool contains(int id);
 

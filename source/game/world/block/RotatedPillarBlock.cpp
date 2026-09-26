@@ -148,5 +148,5 @@ TextureAtlasSprite* RotatedPillarBlock::getTopTexture(const BlockState*)
 
 EBlockRenderShape RotatedPillarBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)31;
+    return BLOCK_RENDER_TREE;
 }

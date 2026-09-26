@@ -19,31 +19,55 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static HugeMushroomBlock::Variant gHugeMushroomVariants[13] = {
-    HugeMushroomBlock::Variant(0, L"all_inside"),
-    HugeMushroomBlock::Variant(1, L"north_west"),
-    HugeMushroomBlock::Variant(2, L"north"),
-    HugeMushroomBlock::Variant(3, L"north_east"),
-    HugeMushroomBlock::Variant(4, L"west"),
-    HugeMushroomBlock::Variant(5, L"center"),
-    HugeMushroomBlock::Variant(6, L"east"),
-    HugeMushroomBlock::Variant(7, L"south_west"),
-    HugeMushroomBlock::Variant(8, L"south"),
-    HugeMushroomBlock::Variant(9, L"south_east"),
-    HugeMushroomBlock::Variant(10, L"stem"),
-    HugeMushroomBlock::Variant(11, L"all_outside"),
-    HugeMushroomBlock::Variant(12, L"all_stem")
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH_WEST =
+    new HugeMushroomBlock::Variant(1, L"north_west");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH =
+    new HugeMushroomBlock::Variant(2, L"north");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH_EAST =
+    new HugeMushroomBlock::Variant(3, L"north_east");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::WEST =
+    new HugeMushroomBlock::Variant(4, L"west");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::CENTER =
+    new HugeMushroomBlock::Variant(5, L"center");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::EAST =
+    new HugeMushroomBlock::Variant(6, L"east");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH_WEST =
+    new HugeMushroomBlock::Variant(7, L"south_west");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH =
+    new HugeMushroomBlock::Variant(8, L"south");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH_EAST =
+    new HugeMushroomBlock::Variant(9, L"south_east");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::STEM =
+    new HugeMushroomBlock::Variant(10, L"stem");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_INSIDE =
+    new HugeMushroomBlock::Variant(0, L"all_inside");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_OUTSIDE =
+    new HugeMushroomBlock::Variant(11, L"all_outside");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_STEM =
+    new HugeMushroomBlock::Variant(12, L"all_stem");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::VALUES[13] = {
+    HugeMushroomBlock::Variant::ALL_INSIDE,
+    HugeMushroomBlock::Variant::NORTH_WEST,
+    HugeMushroomBlock::Variant::NORTH,
+    HugeMushroomBlock::Variant::NORTH_EAST,
+    HugeMushroomBlock::Variant::WEST,
+    HugeMushroomBlock::Variant::CENTER,
+    HugeMushroomBlock::Variant::EAST,
+    HugeMushroomBlock::Variant::SOUTH_WEST,
+    HugeMushroomBlock::Variant::SOUTH,
+    HugeMushroomBlock::Variant::SOUTH_EAST,
+    HugeMushroomBlock::Variant::STEM,
+    HugeMushroomBlock::Variant::ALL_OUTSIDE,
+    HugeMushroomBlock::Variant::ALL_STEM
 };
-
-static HugeMushroomBlock::Variant* gHugeMushroomVariantPointers[13];
-static EnumProperty<HugeMushroomBlock::Variant*>* gHugeMushroomVariantProperty = NULL;
+EnumProperty<HugeMushroomBlock::Variant*>* HugeMushroomBlock::VARIANT = NULL;
 
 int getMushroomDataValue(HugeMushroomBlock::Variant* variant)
 {
     TypedBoxed<HugeMushroomBlock::Variant*> value(variant);
     Block* block = Blocks::red_mushroom_block;
     return block->convertBlockStateToLegacyData(
-        block->defaultBlockState()->setBoxedValue(gHugeMushroomVariantProperty, &value));
+        block->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &value));
 }
 
 HugeMushroomBlock::Variant::Variant(int data, const std::wstring& name)
@@ -64,9 +88,9 @@ HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::byData(int data)
     }
     for (int i = 0; i < 13; ++i)
     {
-        if (gHugeMushroomVariantPointers[i]->getData() == data)
+        if (VALUES[i]->getData() == data)
         {
-            return gHugeMushroomVariantPointers[i];
+            return VALUES[i];
         }
     }
     return NULL;
@@ -86,17 +110,12 @@ template std::wstring _toString<HugeMushroomBlock::Variant>(HugeMushroomBlock::V
 
 void HugeMushroomBlock::blockStaticCtor()
 {
-    for (int i = 0; i < 13; ++i)
-    {
-        gHugeMushroomVariantPointers[i] = &gHugeMushroomVariants[i];
-    }
-
     boost::unordered_set<Variant*> values;
     for (int i = 0; i < 13; ++i)
     {
-        values.insert(gHugeMushroomVariantPointers[i]);
+        values.insert(Variant::VALUES[i]);
     }
-    gHugeMushroomVariantProperty = EnumProperty<Variant*>::create(
+    VARIANT = EnumProperty<Variant*>::create(
         L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
@@ -104,8 +123,8 @@ HugeMushroomBlock::HugeMushroomBlock(Material* material, const MaterialColor* ma
     : Block(material, materialColor), mOtherBlock(otherBlock), mIsOtherBlock(0), mStemTexture(NULL), mInsideTexture(NULL)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::byData(0));
-    registerDefaultState(defaultBlockState()->setBoxedValue(gHugeMushroomVariantProperty, &value));
+    TypedBoxed<Variant*> value(Variant::ALL_OUTSIDE);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
     mIsOtherBlock = -1;
     mTextures[0] = NULL;
     mTextures[1] = NULL;
@@ -123,7 +142,7 @@ int HugeMushroomBlock::getResourceCount(Random* random)
 
 const MaterialColor* HugeMushroomBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    int data = state->getValue(gHugeMushroomVariantProperty)->getData();
+    int data = state->getValue(VARIANT)->getData();
     if (data == 12)
     {
         return MaterialColor::COLOR_BROWN;
@@ -143,7 +162,7 @@ Item* HugeMushroomBlock::getResource(const BlockState*, Random*, int)
 not_null_ptr<ItemInstance> HugeMushroomBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(gHugeMushroomVariantProperty)->getData()));
+        state->getValue(VARIANT)->getData()));
 }
 
 const BlockState* HugeMushroomBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int auxValue, boost::shared_ptr<LivingEntity>)
@@ -154,81 +173,283 @@ const BlockState* HugeMushroomBlock::getStateForPlacement(Level*, const BlockPos
 const BlockState* HugeMushroomBlock::getBlockState(int data)
 {
     TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(gHugeMushroomVariantProperty, &value);
+    return defaultBlockState()->setBoxedValue(VARIANT, &value);
 }
 
 int HugeMushroomBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gHugeMushroomVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 const BlockState* HugeMushroomBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    static const int clockwise[13] = { 0, 7, 4, 1, 8, 5, 2, 9, 6, 3, 10, 11, 12 };
-    static const int clockwise180[13] = { 0, 9, 8, 7, 6, 5, 4, 3, 2, 1, 10, 11, 12 };
-    static const int counterClockwise[13] = { 0, 3, 6, 9, 2, 5, 8, 1, 4, 7, 10, 11, 12 };
-    int data = state->getValue(gHugeMushroomVariantProperty)->getData();
-    const int* mapping = NULL;
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90: mapping = clockwise; break;
-    case Rotation::eTYPE_Clockwise180: mapping = clockwise180; break;
-    case Rotation::eTYPE_CounterClockwise90: mapping = counterClockwise; break;
-    default: return state;
+    case Rotation::eTYPE_Clockwise180:
+        switch (state->getValue(VARIANT)->getData())
+        {
+        case 10:
+            break;
+        case 1:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 2:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<Variant*> value(Variant::EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 6:
+        {
+            TypedBoxed<Variant*> value(Variant::WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 8:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 9:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        default:
+            return state;
+        }
+    case Rotation::eTYPE_CounterClockwise90:
+        switch (state->getValue(VARIANT)->getData())
+        {
+        case 1:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 2:
+        {
+            TypedBoxed<Variant*> value(Variant::WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 6:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 8:
+        {
+            TypedBoxed<Variant*> value(Variant::EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 9:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        default:
+            return state;
+        }
+    case Rotation::eTYPE_Clockwise90:
+        switch (state->getValue(VARIANT)->getData())
+        {
+        case 1:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 2:
+        {
+            TypedBoxed<Variant*> value(Variant::EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 6:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 8:
+        {
+            TypedBoxed<Variant*> value(Variant::WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 9:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        default:
+            return state;
+        }
+    default:
+        return state;
     }
-    TypedBoxed<Variant*> value(Variant::byData(mapping[data]));
-    return state->setBoxedValue(gHugeMushroomVariantProperty, &value);
 }
 
 const BlockState* HugeMushroomBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    int data = state->getValue(gHugeMushroomVariantProperty)->getData();
-    static const int leftRight[13] = { 0, 3, 2, 1, 6, 5, 4, 9, 8, 7, 10, 11, 12 };
-    static const int frontBack[13] = { 0, 7, 8, 9, 4, 5, 6, 1, 2, 3, 10, 11, 12 };
-    const int* mapping = mirror->getType() == Mirror::eTYPE_LeftRight ? leftRight : frontBack;
-    if (mirror->getType() == Mirror::eTYPE_None)
+    switch (mirror->getType())
     {
-        return state;
+    case Mirror::eTYPE_LeftRight:
+        switch (state->getValue(VARIANT)->getData())
+        {
+        case 1:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 2:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 8:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 9:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        default:
+            return Block::mirror(state, mirror);
+        }
+    case Mirror::eTYPE_FrontBack:
+        switch (state->getValue(VARIANT)->getData())
+        {
+        case 1:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<Variant*> value(Variant::EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 6:
+        {
+            TypedBoxed<Variant*> value(Variant::WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        case 9:
+        {
+            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
+            return state->setBoxedValue(VARIANT, &value);
+        }
+        default:
+            return Block::mirror(state, mirror);
+        }
+    default:
+        return Block::mirror(state, mirror);
     }
-    TypedBoxed<Variant*> value(Variant::byData(mapping[data]));
-    return state->setBoxedValue(gHugeMushroomVariantProperty, &value);
 }
 
 not_null_ptr<ItemInstance> HugeMushroomBlock::getSilkTouchItemInstance(const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(gHugeMushroomVariantProperty)->getData()));
+        state->getValue(VARIANT)->getData()));
 }
 
 BlockStateDefinition* HugeMushroomBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gHugeMushroomVariantProperty };
+    const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* HugeMushroomBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    int data = state->getValue(gHugeMushroomVariantProperty)->getData();
-    if (data == 10 || data == 12)
-    {
+    int data = state->getValue(VARIANT)->getData();
+    if (data == 10 && direction->get3DDataValue() > 1)
         return mStemTexture;
-    }
-    if (data == 11)
-    {
-        return mInsideTexture;
-    }
-    if (data == 1 || data == 2 || data == 3 || data == 4 || data == 5 || data == 6 || data == 7 || data == 8 || data == 9)
-    {
-        return mTextures[direction->get3DDataValue() == 1 ? 0 : 1];
-    }
+
+    if (mIsOtherBlock == -1)
+        mIsOtherBlock = mOtherBlock == Blocks::red_mushroom;
+
+    if ((data >= 1 && data <= 9 && direction == Direction::UP) ||
+        (data >= 1 && data <= 3 && direction == Direction::NORTH) ||
+        (data >= 7 && data <= 9 && direction == Direction::SOUTH) ||
+        ((data == 1 || data == 4 || data == 7) && direction == Direction::WEST) ||
+        ((data == 3 || data == 6 || data == 9) && direction == Direction::EAST) ||
+        data == 11)
+        return mTextures[mIsOtherBlock];
+
+    if (data == 12)
+        return mStemTexture;
     return mInsideTexture;
 }
 
 void HugeMushroomBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring base = getIconName();
-    mTextures[0] = iconRegister->registerIcon(base + L"_skin");
-    mTextures[1] = iconRegister->registerIcon(base + L"_skin_top");
-    mStemTexture = iconRegister->registerIcon(base + L"_stem");
-    mInsideTexture = iconRegister->registerIcon(base + L"_inside");
+    static const std::wstring skinNames[2] = { L"skin_brown", L"skin_red" };
+    for (int i = 0; i < 2; ++i)
+        mTextures[i] = iconRegister->registerIcon(getIconName() + L"_" + skinNames[i]);
+    mInsideTexture = iconRegister->registerIcon(getIconName() + L"_" + L"inside");
+    mStemTexture = iconRegister->registerIcon(getIconName() + L"_" + L"skin_stem");
 }

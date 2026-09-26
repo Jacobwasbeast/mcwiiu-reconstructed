@@ -1,4 +1,6 @@
 #include "game/world/block/SpongeBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Direction.hpp"
@@ -34,7 +36,7 @@ SpongeBlock::~SpongeBlock()
 
 std::wstring SpongeBlock::getName()
 {
-    return std::wstring(L10N::GetString(0xba98e3d7));
+    return std::wstring(L10N::GetString(IDS_TILE_SPONGE));
 }
 
 int SpongeBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -47,43 +49,39 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
     std::deque<std::pair<BlockPos, int> > queue;
     queue.push_back(std::make_pair(pos, 0));
     int removed = 0;
-
-    const BlockState* air = Blocks::AIR->defaultBlockState();
-    while (!queue.empty() && removed <= 64)
+    const BlockState* air = Blocks::air->defaultBlockState();
+    while (!queue.empty())
     {
         std::pair<BlockPos, int> current = queue.front();
         queue.pop_front();
-
         for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
         {
-            const Direction* direction = Direction::VALUES[i];
-            BlockPos adjacent = current.first.relative(direction);
+            BlockPos adjacent = current.first.relative(Direction::VALUES[i]);
             const BlockState* adjacentState = level->getBlockState(adjacent);
-
+            Block* extraBlock = level->getExtraBlock(adjacent);
             if (adjacentState->getMaterial() == Material::WATER)
             {
-                level->setBlock(adjacent, air, 3, false);
-                ++removed;
-                if (current.second < 6)
-                    queue.push_back(std::make_pair(adjacent, current.second + 1));
+                level->setBlock(adjacent, air, Block::UPDATE_ALL, false);
             }
-            else if (adjacentState->getBlock()->isLiquidBlock())
+            else if (adjacentState->getBlock() == Blocks::bubble_column_segment)
             {
-                level->setBlockAndUpdate(adjacent, air);
-                level->setBlock(adjacent, air, 3, false);
-                ++removed;
-                if (current.second < 6)
-                    queue.push_back(std::make_pair(adjacent, current.second + 1));
+                level->setExtraBlock(adjacent, air, Block::UPDATE_ALL, false);
+                level->setBlock(adjacent, air, Block::UPDATE_ALL, false);
             }
-            else if (!level->isEmptyBlock(adjacent) &&
-                     level->getLiquidBlockState(adjacent)->getMaterial() == Material::WATER)
+            else if (extraBlock != Blocks::air && level->getExtraBlockState(adjacent)->getMaterial() == Material::WATER)
             {
-                level->setBlockAndUpdate(adjacent, air);
-                ++removed;
-                if (current.second < 6)
-                    queue.push_back(std::make_pair(adjacent, current.second + 1));
+                level->setExtraBlock(adjacent, air, Block::UPDATE_ALL, false);
             }
+            else
+            {
+                continue;
+            }
+            ++removed;
+            if (current.second < 6)
+                queue.push_back(std::make_pair(adjacent, current.second + 1));
         }
+        if (removed > 64)
+            break;
     }
 
     return removed > 0;
@@ -94,8 +92,8 @@ void SpongeBlock::tryAbsorbWater(Level* level, const BlockPos& pos, const BlockS
     if (!state->getValue(WET) && removeWaterBreadthFirstSearch(level, pos))
     {
         TypedBoxed<bool> wet(true);
-        level->setBlock(pos, state->setBoxedValue(WET, &wet), 3, false);
-        level->levelEvent(2001, pos, Block::getId(Blocks::WATER));
+        level->setBlock(pos, state->setBoxedValue(WET, &wet), Block::UPDATE_ALL, false);
+        level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getId(Blocks::water));
     }
 }
 

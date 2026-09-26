@@ -1,4 +1,5 @@
 #include "game/world/block/StemBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
@@ -21,6 +22,10 @@
 #include "game/world/block/CropBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DirectionalBlock.hpp"
+#include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TorchBlock.hpp"
+#include "game/item/ItemId.hpp"
 
 #include <string>
 
@@ -35,7 +40,7 @@ static const AABB* STEM_SHAPES[8] =
     AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.875, 0.625),
     AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625)
 };
-AbstractProperty<int>* StemBlock::AGE = NULL;
+AbstractProperty<int>* StemBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 7));
 DirectionProperty* StemBlock::FACING = NULL;
 
 StemBlock::StemBlock(Block* fruitType)
@@ -43,10 +48,6 @@ StemBlock::StemBlock(Block* fruitType)
       mAngledTexture(NULL),
       mFruitType(fruitType)
 {
-    if (AGE == NULL)
-        AGE = CropBlock::AGE;
-    if (FACING == NULL)
-        FACING = DirectionalBlock::FACING;
     DerivedInit();
     TypedBoxed<int> age(0);
     TypedBoxed<const Direction*> facing(Direction::UP);
@@ -61,7 +62,7 @@ StemBlock::~StemBlock()
 
 bool StemBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState* state, bool)
 {
-    return state->getValue(CropBlock::AGE) != 7;
+    return state->getValue(AGE) != 7;
 }
 
 bool StemBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*)
@@ -76,8 +77,7 @@ void StemBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, cons
 
 void StemBlock::blockStaticCtor()
 {
-    AGE = CropBlock::AGE;
-    FACING = DirectionalBlock::FACING;
+    FACING = TorchBlock::FACING;
 }
 
 const AABB* StemBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -89,24 +89,19 @@ const BlockState* StemBlock::fillVirtualBlockStateProperties(const BlockState* s
                                                               LevelSource* levelSource,
                                                               const BlockPos& pos)
 {
-    TypedBoxed<const Direction*> defaultFacing(Direction::UP);
-    const BlockState* result = state->setBoxedValue(FACING, &defaultFacing);
-
-    if (state->getValue(AGE) == 7)
+    int age = state->getValue(AGE);
+    TypedBoxed<const Direction*> up(Direction::UP);
+    state = state->setBoxedValue(FACING, &up);
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
-        const Direction* horizontalDirections[] = { Direction::NORTH, Direction::SOUTH,
-                                                    Direction::WEST, Direction::EAST };
-        for (int i = 0; i < 4; ++i)
+        if (levelSource->getBlockState(pos.relative(directions.data[i]))->getBlock() == mFruitType && age == 7)
         {
-            BlockPos neighbourPos = pos.relative(horizontalDirections[i]);
-            if (levelSource->getBlockState(neighbourPos)->getBlock() == mFruitType)
-            {
-                TypedBoxed<const Direction*> facing(horizontalDirections[i]);
-                return state->setBoxedValue(FACING, &facing);
-            }
+            TypedBoxed<const Direction*> facing(directions.data[i]);
+            return state->setBoxedValue(FACING, &facing);
         }
     }
-    return result;
+    return state;
 }
 
 bool StemBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
@@ -116,35 +111,37 @@ bool StemBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
 
 void StemBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    Block::tick(level, pos, state, random);
-    if (level->getRawBrightness(pos.above()) <= 8)
+    BlockPos stemPos = pos;
+    Block::tick(level, stemPos, state, random);
+    if (level->getRawBrightness(stemPos.above()) <= 8)
+        return;
+
+    int chance = static_cast<int>(25.0f / CropBlock::getGrowthSpeed(this, level, stemPos));
+    if (random->nextInt(chance + 1) != 0)
         return;
 
     int age = state->getValue(AGE);
-    if (age < 7 && random->nextInt((int)(25.0 / CropBlock::getGrowthSpeed(this, level, pos))) == 0)
+    if (age < 7)
     {
         TypedBoxed<int> nextAge(age + 1);
-        level->setBlock(pos, state->setBoxedValue(CropBlock::AGE, &nextAge), 2, false);
+        level->setBlock(stemPos, state->setBoxedValue(AGE, &nextAge), Block::UPDATE_CLIENTS, false);
         return;
     }
 
-    if (age != 7 || random->nextInt((int)(25.0 / CropBlock::getGrowthSpeed(this, level, pos))) != 0)
-        return;
-
-    const Direction* directions[] = { Direction::NORTH, Direction::SOUTH,
-                                      Direction::WEST, Direction::EAST };
-    for (int i = 0; i < 4; ++i)
-        if (level->getBlockState(pos.relative(directions[i]))->getBlock() == mFruitType)
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
+    {
+        if (level->getBlockState(stemPos.relative(directions.data[i]))->getBlock() == mFruitType)
             return;
+    }
 
-    const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
-    BlockPos target = pos.relative(direction);
-    const BlockState* below = level->getBlockState(target.below());
-    const BlockState* targetState = level->getBlockState(target);
-    if (targetState->getBlock() == Blocks::AIR &&
-        (below->getBlock() == Blocks::farmland || below->getBlock() == Blocks::dirt ||
-         below->getBlock() == Blocks::grass))
-        level->setBlock(target, mFruitType->defaultBlockState(), 2, false);
+    stemPos = stemPos.relative(Direction::Plane::HORIZONTAL->getRandomDirection(*random));
+    Block* below = level->getBlockState(stemPos.below())->getBlock();
+    if (level->getBlockState(stemPos)->getBlock()->mMaterial == Material::AIR
+        && (below == Blocks::farmland || below == Blocks::dirt || below == Blocks::grass))
+    {
+        level->setBlockAndUpdate(stemPos, mFruitType->defaultBlockState());
+    }
 }
 
 void StemBlock::growCrops(Level* level, const BlockPos& pos, const BlockState* state)
@@ -153,7 +150,7 @@ void StemBlock::growCrops(Level* level, const BlockPos& pos, const BlockState* s
     if (age > 7)
         age = 7;
     TypedBoxed<int> nextAge(age);
-    level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), 2, false);
+    level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), Block::UPDATE_CLIENTS, false);
 }
 
 int StemBlock::getColor(const BlockState* state)
@@ -194,7 +191,7 @@ void StemBlock::spawnResources(Level* level, const BlockPos& pos, const BlockSta
     Block::spawnResources(level, pos, state, chance, lootBonus);
     if (level->mIsClientSide || getSeedItem() == NULL)
         return;
-    int age = state->getValue(CropBlock::AGE);
+    int age = state->getValue(AGE);
     for (int i = 0; i < 3; ++i)
     {
         if (level->mRandom->nextInt(15) <= age)
@@ -204,7 +201,7 @@ void StemBlock::spawnResources(Level* level, const BlockPos& pos, const BlockSta
 
 Item* StemBlock::getResource(const BlockState*, Random*, int)
 {
-    return Items::melonSeeds;
+    return Items::air;
 }
 
 not_null_ptr<ItemInstance> StemBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
@@ -225,12 +222,12 @@ int StemBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int StemBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351 &&
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE &&
         tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail &&
         DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0 &&
         isValidBonemealTarget(tooltipData.m_pLevel, tooltipData.m_blockPos,
                               tooltipData.m_pBlockState, true))
-        return 0x9f5fdc40U;
+        return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -243,7 +240,7 @@ BlockStateDefinition* StemBlock::createBlockStateDefinition()
 void StemBlock::registerIcons(IconRegister* iconRegister)
 {
     mIcon = iconRegister->registerIcon(L"stem_straight");
-    mAngledTexture = iconRegister->registerIcon(L"stem_angled");
+    mAngledTexture = iconRegister->registerIcon(L"stem_bent");
 }
 
 TextureAtlasSprite* StemBlock::getAngledTexture()
@@ -253,5 +250,5 @@ TextureAtlasSprite* StemBlock::getAngledTexture()
 
 EBlockRenderShape StemBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(19);
+    return BLOCK_RENDER_STEM;
 }

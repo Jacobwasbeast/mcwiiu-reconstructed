@@ -1,4 +1,5 @@
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/UniqueTypeWalker.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -22,7 +23,7 @@ MobSpawnerBlockEntity::~MobSpawnerBlockEntity()
 
 unsigned long long MobSpawnerBlockEntity::GetType()
 {
-    return 0x0000000001200201ULL;
+    return BlockEntityType::MOB_SPAWNER;
 }
 
 BlockEntity* MobSpawnerBlockEntity::create()
@@ -38,7 +39,7 @@ MobSpawnerBlockEntity::BlockEntityMobSpawner* MobSpawnerBlockEntity::getSpawner(
 void MobSpawnerBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     new UniqueTypeWalker(BlockEntity::getKey(0x01200201ULL)));
+                     new UniqueTypeWalker(BlockEntity::getKey(BlockEntityType::MOB_SPAWNER)));
 }
 
 void MobSpawnerBlockEntity::load(CompoundTag* tag)

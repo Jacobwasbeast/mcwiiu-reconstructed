@@ -1,4 +1,6 @@
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
@@ -154,7 +156,7 @@ AbstractContainerMenu* ShulkerBoxBlockEntity::createMenu(boost::shared_ptr<Inven
 
 int ShulkerBoxBlockEntity::getTypeId(bool large)
 {
-    return 21;
+    return ClientboundContainerOpenPacket::SHULKER_BOX;
 }
 
 arrayWithLength<int> ShulkerBoxBlockEntity::getSlotsForFace(const Direction* face)
@@ -326,18 +328,18 @@ bool ShulkerBoxBlockEntity::triggerEvent(int id, int param)
 
 void ShulkerBoxBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
-    fixer->addWalker(static_cast<DataFixTypes::EDataFixTypes>(3),
-                     (DataWalker*)new ItemListDataWalker(0x0120020fULL, L"Items"));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::SHULKER_BOX, L"Items"));
 }
 
 void ShulkerBoxBlockEntity::loadFromTag(CompoundTag* tag)
 {
     ContainerHelper::loadAllItems(tag, mItems);
-    if (tag->contains(L"Color", 3))
+    if (tag->contains(L"Color", Tag::TAG_INT))
     {
         mColor = DyeColor::byItemData(tag->getInt(L"Color"));
     }
-    if (tag->contains(L"AnimationStatus", 1))
+    if (tag->contains(L"AnimationStatus", Tag::TAG_BYTE))
     {
         mAnimationStatus = tag->getByte(L"AnimationStatus");
     }
@@ -398,7 +400,7 @@ boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()
 
 unsigned long long ShulkerBoxBlockEntity::GetType()
 {
-    return 0x0120020fULL;
+    return BlockEntityType::SHULKER_BOX;
 }
 
 void ShulkerBoxBlockEntity::operator=(const ShulkerBoxBlockEntity& other)

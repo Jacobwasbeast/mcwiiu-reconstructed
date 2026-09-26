@@ -4,6 +4,7 @@
 #include <string>
 
 #include "game/world/block/Block.hpp"
+#include "game/core/StringIds.hpp"
 
 class BlockPos;
 class BlockState;
@@ -36,7 +37,7 @@ public:
             eTranslationKeyOak = 0x13035FA5,
             eTranslationKeySpruce = 0x7A4DF272,
             eTranslationKeyBirch = 0x9BC6104A,
-            eTranslationKeyJungle = 0x8CE369FC,
+            eTranslationKeyJungle = IDS_TILE_JUNGLE_PLANKS,
             eTranslationKeyAcacia = 0x674A2380,
             eTranslationKeyDarkOak = 0x0458BC59
         };

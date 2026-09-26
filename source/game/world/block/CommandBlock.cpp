@@ -1,4 +1,5 @@
 #include "game/world/block/CommandBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -95,7 +96,7 @@ bool CommandBlock::hasAnalogOutputSignal(const BlockState*)
 int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity && blockEntity->GetType() == 0x1000209ULL)
+    if (blockEntity && blockEntity->GetType() == BlockEntityType::COMMAND)
     {
         boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
         return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
@@ -106,7 +107,7 @@ int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const B
 void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity->GetType() == 0x1000209ULL)
+    if (blockEntity->GetType() == BlockEntityType::COMMAND)
     {
         boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
         if (itemInstance->hasCustomHoverName())
@@ -123,7 +124,7 @@ int CommandBlock::getResourceCount(Random*)
 
 EBlockRenderShape CommandBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)55;
+    return BLOCK_RENDER_COMMAND_BLOCK;
 }
 
 const BlockState* CommandBlock::getBlockState(int data)

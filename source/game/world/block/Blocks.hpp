@@ -1,10 +1,6 @@
 #ifndef GAME_WORLD_BLOCK_BLOCKS_HPP
 #define GAME_WORLD_BLOCK_BLOCKS_HPP
 
-class Block;
-
-extern Block* gDoubleSlabPurpur;
-
 #include <string>
 
 class Block;
@@ -13,7 +9,7 @@ class Blocks {
 public:
     static void staticInit();
 
-    static Block* AIR;
+    static Block* air;
     static Block* stone;
     static Block* grass;
     static Block* dirt;
@@ -21,8 +17,8 @@ public:
     static Block* planks;
     static Block* sapling;
     static Block* bedrock;
-    static Block* FLOWING_WATER;
-    static Block* WATER;
+    static Block* flowing_water;
+    static Block* water;
     static Block* flowing_lava;
     static Block* lava;
     static Block* sand;
@@ -66,7 +62,7 @@ public:
     static Block* mossy_cobblestone;
     static Block* obsidian;
     static Block* torch;
-    static Block* FIRE;
+    static Block* fire;
     static Block* mob_spawner;
     static Block* oak_stairs;
     static Block* chest;
@@ -191,7 +187,7 @@ public:
     static Block* activator_rail;
     static Block* dropper;
     static Block* stained_hardened_clay;
-    static Block* BARRIER;
+    static Block* barrier;
     static Block* iron_trapdoor;
     static Block* hay_block;
     static Block* carpet;
@@ -267,7 +263,7 @@ public:
     static Block* black_glazed_terracotta;
     static Block* concrete;
     static Block* concrete_powder;
-    static Block* STRUCTURE_BLOCK;
+    static Block* structure_block;
     static Block* conduit;
     static Block* kelp;
     static Block* coral_block;

@@ -40,7 +40,7 @@ void DiodeBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
     if (!mOn)
     {
         const BlockState* onState = getOnBlock(state);
-        level->setBlock(pos, onState, 2, false);
+        level->setBlock(pos, onState, Block::UPDATE_CLIENTS, false);
         if (!turnOn)
         {
             level->addToTickNextTick(pos, onState->getBlock(), getTurnOffDelay(state), -1);
@@ -48,7 +48,7 @@ void DiodeBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
     }
     else if (!turnOn)
     {
-        level->setBlock(pos, getOffBlock(state), 2, false);
+        level->setBlock(pos, getOffBlock(state), Block::UPDATE_CLIENTS, false);
     }
 }
 
@@ -217,7 +217,7 @@ EBlockFaceShape DiodeBlock::getBlockFaceShape(LevelSource*, const BlockState*, c
 
 EBlockRenderShape DiodeBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(36);
+    return BLOCK_RENDER_DIODE;
 }
 
 TextureAtlasSprite* DiodeBlock::getTexture(const Direction* direction, const BlockState*)

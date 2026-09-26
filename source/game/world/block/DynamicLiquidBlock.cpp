@@ -1,17 +1,25 @@
 #include "game/world/block/DynamicLiquidBlock.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/Direction.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 DynamicLiquidBlock::DynamicLiquidBlock(Material* material)
-    : LiquidBlock(material), mTickQueue(), mProcessingTicks(false), mHighestDepth(0)
+    : LiquidBlock(material), mTickQueue(), mProcessingTicks(false), mAdjacentSources(0)
 {
     LiquidBlock::DerivedInit();
 }
@@ -20,16 +28,18 @@ DynamicLiquidBlock::~DynamicLiquidBlock()
 {
 }
 
-void DynamicLiquidBlock::setStatic(Level* level, const BlockPos& pos, bool remove)
+void DynamicLiquidBlock::setStatic(Level* level, const BlockPos& pos, bool extraLayer)
 {
-    const unsigned short element = LiquidBlock::getLiquidElement(level, pos);
-    const unsigned short staticElement = static_cast<unsigned short>(LiquidBlock::getStaticLiquidElementId(element));
-    const BlockState* state = level->getBlockState(pos);
-    const int blockId = Block::getId(state->getBlock());
-    if (remove || blockId == 8 || blockId == 10)
+    unsigned short staticElement = static_cast<unsigned short>(LiquidBlock::getStaticLiquidElementId(
+        LiquidBlock::getLiquidElement(level, pos)));
+    int blockId = extraLayer ? level->getExtraBlockId(pos.x, pos.y, pos.z) : level->getBlockId(pos.x, pos.y, pos.z);
+    if (blockId != BlockId::FLOWING_WATER)
     {
-        LiquidBlock::setLiquidElement(level, pos, staticElement, remove, 18);
+        if (blockId != BlockId::FLOWING_LAVA)
+            return;
+        extraLayer = false;
     }
+    LiquidBlock::setLiquidElement(level, pos, staticElement, extraLayer, 18);
 }
 
 int DynamicLiquidBlock::getHighest(Level* level, const BlockPos& pos, int currentHighest)
@@ -39,7 +49,7 @@ int DynamicLiquidBlock::getHighest(Level* level, const BlockPos& pos, int curren
     {
         if (depth < 1)
         {
-            ++mHighestDepth;
+            ++mAdjacentSources;
         }
         else if (depth > 7)
         {
@@ -70,18 +80,17 @@ bool DynamicLiquidBlock::_isWaterBlocking(Level* level, const BlockPos& pos,
     return true;
 }
 
-bool DynamicLiquidBlock::_canSpreadTo(Level* level, const BlockPos& pos,
-                                      const BlockPos& sourcePos, const Direction* direction)
+bool DynamicLiquidBlock::_canSpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
+                                      const Direction* direction)
 {
-    if (!level->isInWorldBounds(pos))
+    int size = level->mChunkCacheSize;
+    int chunkX = (pos.x >> 4) + size / 2;
+    int chunkZ = (pos.z >> 4) + size / 2;
+    if (chunkX >= 0 && chunkX < size && chunkZ >= 0 && chunkZ < size)
     {
-        return false;
-    }
-    const BlockState* state = level->getBlockState(pos);
-    const Material* material = state->getMaterial();
-    if (material != getCraftingMaterial() && material != Material::LAVA)
-    {
-        return !_isWaterBlocking(level, pos, sourcePos, direction);
+        Block* liquid = Block::byId(LiquidBlock::getLiquidElement(level, pos) >> 4);
+        if (liquid->mMaterial != mMaterial && liquid->mMaterial != Material::LAVA)
+            return !_isWaterBlocking(level, pos, sourcePos, direction);
     }
     return false;
 }
@@ -112,151 +121,243 @@ void DynamicLiquidBlock::_trySpreadTo(Level* level, const BlockPos& pos, const B
     if (!state->getBlock()->isLiquidBlock())
     {
         level->destroyBlock(pos, true);
-        level->levelEvent(2001, pos, Block::getIdWithData(state));
+        level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
         remove = false;
     }
     _spread(level, pos, depth, remove);
 }
 
-int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int distance,
-                                          int directionIndex)
+int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int distance, int directionIndex)
 {
+    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST, Direction::SOUTH, Direction::NORTH};
+    PIXBeginNamedEvent(0.0F, "getSlopeDistance");
     int best = 1000;
-    static const Direction* directions[4] = {Direction::WEST, Direction::EAST,
-                                             Direction::NORTH, Direction::SOUTH};
-    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST,
-                                                 Direction::SOUTH, Direction::NORTH};
     for (int index = 0; index < 4; ++index)
     {
-        if (index == directionIndex)
-        {
+        if (index == (directionIndex ^ 1))
             continue;
-        }
-        const BlockPos next = pos.relative(directions[index]);
+
+        MutableBlockPos next(pos);
+        if (index == 0)
+            next.addX(-1);
+        else if (index == 1)
+            next.addX(1);
+        else if (index == 2)
+            next.addZ(-1);
+        else
+            next.addZ(1);
         if (_isWaterBlocking(level, next, pos, fromDirections[index]))
-        {
             continue;
-        }
+
         const BlockState* state = level->getBlockState(next);
-        if (state->getMaterial() == getCraftingMaterial())
+        if (state->getBlock()->mMaterial == mMaterial && state->getValue(LEVEL) == 0)
+            continue;
+
+        if (!_isWaterBlocking(level, next.below(), pos, Direction::UP))
         {
-            const BlockPos below = next.below();
-            if (_isWaterBlocking(level, below, pos, Direction::UP))
-            {
-                const int limit = getCraftingMaterial() == Material::LAVA ? 2 : 4;
-                if (distance < limit)
-                {
-                    const int slope = _getSlopeDistance(level, next, distance + 1, index);
-                    if (slope < best)
-                    {
-                        best = slope;
-                    }
-                }
-            }
+            PIXEndNamedEvent();
+            return distance;
+        }
+
+        int limit = mMaterial == Material::LAVA ? 2 : 4;
+        if (distance < limit)
+        {
+            int slope = _getSlopeDistance(level, next, distance + 1, index);
+            if (slope < best)
+                best = slope;
         }
     }
+    PIXEndNamedEvent();
     return best;
 }
 
 void DynamicLiquidBlock::_getSpread(Level* level, const BlockPos& pos, bool (&spread)[4])
 {
-    static const Direction* directions[4] = {Direction::WEST, Direction::EAST,
-                                             Direction::NORTH, Direction::SOUTH};
-    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST,
-                                                 Direction::SOUTH, Direction::NORTH};
-    int distances[4] = {1000, 1000, 1000, 1000};
-    int minimum = 1000;
+    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST, Direction::SOUTH, Direction::NORTH};
+    PIXBeginNamedEvent(0.0F, "Get Spread");
+    int distances[4];
     for (int index = 0; index < 4; ++index)
     {
-        const BlockPos next = pos.relative(directions[index]);
-        if (!_isWaterBlocking(level, next, pos, fromDirections[index]))
+        distances[index] = 1000;
+        MutableBlockPos next(pos);
+        if (index == 0)
+            next.addX(-1);
+        else if (index == 1)
+            next.addX(1);
+        else if (index == 2)
+            next.addZ(-1);
+        else
+            next.addZ(1);
+        if (_isWaterBlocking(level, next, pos, fromDirections[index]))
+            continue;
+
+        int element = level->getElement(next.x, next.y, next.z);
+        Block* block = level->getBlock(next);
+        if (block->mMaterial != mMaterial || (element & 0xf) != 0)
         {
-            const BlockPos below = next.below();
-            if (_isWaterBlocking(level, below, pos, Direction::UP))
-            {
+            distances[index] = 0;
+            if (_isWaterBlocking(level, next.below(), pos, Direction::UP))
                 distances[index] = _getSlopeDistance(level, next, 1, index);
-            }
-        }
-        if (distances[index] < minimum)
-        {
-            minimum = distances[index];
         }
     }
-    for (int index = 0; index < 4; ++index)
-    {
-        spread[index] = distances[index] == minimum;
-    }
+
+    int minimum = distances[0];
+    if (distances[1] <= minimum)
+        minimum = distances[1];
+    if (distances[2] <= minimum)
+        minimum = distances[2];
+    if (distances[3] <= minimum)
+        minimum = distances[3];
+    spread[0] = distances[0] == minimum;
+    spread[1] = distances[1] == minimum;
+    spread[2] = distances[2] == minimum;
+    spread[3] = distances[3] == minimum;
+    PIXEndNamedEvent();
 }
 
 void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    const bool water = getCraftingMaterial() == Material::WATER;
-    const bool remove = level->getBlockState(pos)->getMaterial() != getCraftingMaterial();
-    const int oldDepth = getDepth(level, pos);
-    const int rate = water ? 1 : 2;
-    if (!water)
+    bool extraLayer = level->getBlockState(pos)->getMaterial() != mMaterial;
+    int depth = getDepth(level, pos);
+    int dropOff = 1;
+    if (mMaterial == Material::LAVA)
     {
+        if (!level->mDimension->isUltraWarm())
+            dropOff = 2;
         trySpreadFire(level, pos, random);
     }
-    int depth = 1000;
-    mHighestDepth = 0;
-    static const Direction* directions[4] = {Direction::WEST, Direction::EAST,
-                                             Direction::NORTH, Direction::SOUTH};
-    for (int index = 0; index < 4; ++index)
+    int tickDelay = getTickDelay(level);
+
+    bool placeStatic = false;
+    if (depth < 1)
     {
-        depth = getHighest(level, pos.relative(directions[index]), depth);
+        placeStatic = true;
     }
-    depth += rate;
-    const int aboveDepth = getDepth(level, pos.above());
-    if (aboveDepth >= 0 && aboveDepth < 8)
+    else
     {
-        depth = aboveDepth + 8;
-    }
-    if (mHighestDepth >= 2)
-    {
-        depth = -1;
-    }
-    if (oldDepth != depth)
-    {
-        if (depth < 0)
+        PIXBeginNamedEvent(0.0F, "Tick depth > 0");
+        int highest = -100;
+        mAdjacentSources = 0;
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+        for (unsigned int i = 0; i < directions.length; ++i)
+            highest = getHighest(level, pos.relative(directions.data[i]), highest);
+
+        int newDepth = highest + dropOff;
+        if (newDepth > 7 || highest < 0)
+            newDepth = -1;
+
+        int aboveDepth = getDepth(level, pos.above());
+        if (aboveDepth >= 0)
+            newDepth = aboveDepth < 8 ? aboveDepth + 8 : aboveDepth;
+
+        if (mAdjacentSources == 1 && getDepth(level, pos.above()) == 0)
+            ++mAdjacentSources;
+
+        if (mAdjacentSources >= 2 && mMaterial == Material::WATER)
         {
-            if (remove)
+            const BlockState* belowState = level->getBlockState(pos.below());
+            if (belowState->getMaterial()->isSolid())
             {
-                level->setBlockAndUpdate(pos, defaultBlockState());
+                newDepth = 0;
             }
-            else
+            else if (belowState->getBlock()->mMaterial == mMaterial && belowState->getValue(LEVEL) == 0)
             {
-                level->removeBlock(pos);
+                newDepth = 0;
             }
+        }
+
+        if (mMaterial == Material::LAVA && depth < 8 && newDepth < 8 && newDepth > depth && random->nextInt(4) != 0)
+            tickDelay *= 4;
+
+        if (newDepth == depth)
+        {
+            placeStatic = true;
+            PIXEndNamedEvent();
         }
         else
         {
-            const unsigned short element = static_cast<unsigned short>(((water ? 8 : 10) << 4) | depth);
-            LiquidBlock::setLiquidElement(level, pos, element, remove, 2);
-            level->updateNeighborsAt(pos, this, false);
+            depth = newDepth;
+            if (newDepth < 0)
+            {
+                if (extraLayer)
+                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
+                else
+                    level->removeBlock(pos);
+            }
+            else
+            {
+                TypedBoxed<int> levelValue(newDepth);
+                const BlockState* newState = state->setBoxedValue(LEVEL, &levelValue);
+                if (mMaterial == Material::LAVA)
+                {
+                    extraLayer = false;
+                    level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
+                }
+                else if (extraLayer)
+                {
+                    level->setExtraBlock(pos, newState, Block::UPDATE_CLIENTS, false);
+                }
+                else
+                {
+                    level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
+                }
+                level->addToTickNextTick(pos, this, tickDelay);
+                level->updateNeighborsAt(pos, this, false);
+            }
+            PIXEndNamedEvent();
         }
     }
-    if (depth >= 0)
+
+    if (placeStatic)
     {
-        const BlockPos below = pos.below();
-        if (_canSpreadTo(level, below, pos, Direction::DOWN))
+        PIXBeginNamedEvent(0.0F, "Tick setStatic");
+        setStatic(level, pos, extraLayer);
+        PIXEndNamedEvent();
+    }
+
+    PIXBeginNamedEvent(0.0F, "Check for flow and spread");
+    if (_canSpreadTo(level, pos.below(), pos, Direction::UP))
+    {
+        PIXBeginNamedEvent(0.0F, "Can flow");
+        if (mMaterial == Material::LAVA
+            && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                || Minecraft::GetInstance()->GetMiniGame()->canLavaConvertWater()))
         {
-            _trySpreadTo(level, below, pos, Direction::DOWN, depth < 8 ? depth + 8 : depth);
-        }
-        else if (oldDepth >= 0)
-        {
-            bool spread[4];
-            _getSpread(level, pos, spread);
-            const int nextDepth = oldDepth + rate < 8 ? oldDepth + rate : 1;
-            for (int index = 0; index < 4; ++index)
+            Material* belowMaterial = level->getBlockState(pos.below())->getMaterial();
+            if (belowMaterial == Material::WATER || belowMaterial == Material::BUBBLE_COLUMN)
             {
-                if (spread[index])
-                {
-                    _trySpreadTo(level, pos.relative(directions[index]), pos, directions[index], nextDepth);
-                }
+                level->setBlockAndUpdate(pos.below(), Blocks::stone->defaultBlockState());
+                fizz(level, pos.below());
+                PIXEndNamedEvent();
+                PIXEndNamedEvent();
+                return;
             }
         }
+        _trySpreadTo(level, pos.below(), pos, Direction::UP, depth < 8 ? depth + 8 : depth);
+        PIXEndNamedEvent();
     }
+    else if (depth >= 0 && (depth == 0 || _isWaterBlocking(level, pos.below(), pos, Direction::UP)))
+    {
+        PIXBeginNamedEvent(0.0F, "Cannot flow");
+        bool spread[4];
+        _getSpread(level, pos, spread);
+        int spreadDepth = depth + dropOff;
+        if (depth >= 8)
+            spreadDepth = 1;
+        if (spreadDepth <= 7)
+        {
+            if (spread[0])
+                _trySpreadTo(level, pos.west(), pos, Direction::EAST, spreadDepth);
+            if (spread[1])
+                _trySpreadTo(level, pos.east(), pos, Direction::WEST, spreadDepth);
+            if (spread[2])
+                _trySpreadTo(level, pos.north(), pos, Direction::SOUTH, spreadDepth);
+            if (spread[3])
+                _trySpreadTo(level, pos.south(), pos, Direction::NORTH, spreadDepth);
+        }
+        PIXEndNamedEvent();
+    }
+    PIXEndNamedEvent();
 }
 
 void DynamicLiquidBlock::iterativetick(Level* level, const BlockPos& pos,

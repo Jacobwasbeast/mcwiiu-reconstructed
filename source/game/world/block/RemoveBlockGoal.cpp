@@ -1,10 +1,12 @@
 #include "game/world/block/RemoveBlockGoal.hpp"
 
 #include "game/client/audio/SoundEvent.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/Random.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -31,7 +33,7 @@ RemoveBlockGoal::~RemoveBlockGoal()
 
 bool RemoveBlockGoal::canUse()
 {
-    if (mMob->mLevel->getGameRules()->getBoolean(1) &&
+    if (mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) &&
         mMob->getRandom()->nextInt(20) == 0)
     {
         return MoveToBlockGoal::canUse();
@@ -52,6 +54,7 @@ bool RemoveBlockGoal::canContinueToUse()
 void RemoveBlockGoal::stop()
 {
     Goal::stop();
+    mMob->mFallDistance = 1.0f;
 }
 
 void RemoveBlockGoal::start()
@@ -82,37 +85,64 @@ BlockPos* RemoveBlockGoal::getPosWithBlock(BlockPos pos, Level* level)
 void RemoveBlockGoal::tick()
 {
     MoveToBlockGoal::tick();
+    Level* level = mMob->mLevel;
     BlockPos origin(mMob);
-    BlockPos* position = getPosWithBlock(origin, mMob->mLevel);
-    if (!isReachedTarget())
+    BlockPos* position = getPosWithBlock(origin, level);
+    Random* random = mMob->getRandom();
+    if (!isReachedTarget() || position == NULL)
     {
         delete position;
         return;
     }
-    if (position != NULL)
+
+    if (mTicks % 6 == 0 && mMob->mVerticalCollision)
     {
-        if (mTicks % 6 == 0 && mMob->mLevel->mIsClientSide)
-        {
-            mMob->playSound(mStartSound, 1.0f, 1.0f);
-        }
-        if (mTicks % 6 == 3)
-        {
-            mMob->playSound(mStartSound, 1.0f, 1.0f);
-        }
-        if (mTicks > 0 && !mMob->mLevel->mIsClientSide)
-        {
-            if (mTicks % 6 == 0)
-            {
-                mMob->playSound(mStartSound, 1.0f, 1.0f);
-            }
-            if (mTicks > 60)
-            {
-                mMob->mLevel->removeBlock(*position);
-                mMob->playSound(mEndSound, 1.0f, 1.0f);
-            }
-        }
-        ++mTicks;
+        mMob->mYd = 0.3f;
     }
+    if (mTicks % 6 == 3)
+    {
+        mMob->mYd = -0.3f;
+    }
+
+    if (mTicks > 0)
+    {
+        if (!level->mIsClientSide)
+        {
+            int params[2] = { Block::getId(mBlock), 0 };
+            if (mStartSound != NULL && mTicks % 6 == 0)
+            {
+                mMob->playSound(mStartSound, 0.65f, 1.0f);
+            }
+            double xDist = (random->nextFloat() - 0.5) * 0.08;
+            double yDist = (random->nextFloat() - 0.5) * 0.08;
+            double zDist = (random->nextFloat() - 0.5) * 0.08;
+            static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_ICON_CRACK, position->x + 0.5, position->y + 0.7,
+                                                            position->z + 0.5, 3, xDist, yDist, zDist, 0.15f,
+                                                            arrayWithLength<int>(params, 2));
+        }
+
+        if (mTicks > 60)
+        {
+            level->removeBlock(*position);
+            if (!level->mIsClientSide)
+            {
+                if (mEndSound != NULL)
+                {
+                    mMob->playSound(mEndSound, 0.65f, 1.0f);
+                }
+                for (int i = 0; i < 20; ++i)
+                {
+                    double xDist = random->nextGaussian() * 0.02;
+                    double yDist = random->nextGaussian() * 0.02;
+                    double zDist = random->nextGaussian() * 0.02;
+                    static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_EXPLODE, position->x + 0.5, position->y,
+                                                                    position->z + 0.5, 1, xDist, yDist,
+                                                                    zDist, 0.15f, arrayWithLength<int>());
+                }
+            }
+        }
+    }
+    ++mTicks;
     delete position;
 }
 

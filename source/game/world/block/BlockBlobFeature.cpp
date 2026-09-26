@@ -61,7 +61,7 @@ bool BlockBlobFeature::place(Level* level, Random& random, const BlockPos& origi
             BlockPos* candidate = positions->next();
             if (candidate->distSqr(position) <= (double)(radius * radius))
             {
-                level->setBlock(*candidate, mBlock->defaultBlockState(), 4, false);
+                level->setBlock(*candidate, mBlock->defaultBlockState(), Block::UPDATE_INVISIBLE, false);
             }
         }
 

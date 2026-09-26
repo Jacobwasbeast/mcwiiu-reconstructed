@@ -11,11 +11,11 @@ UseBlockRuleDefinition::UseBlockRuleDefinition()
     mY = 0;
     mZ = 0;
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlockId);
-    addBoolAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(13), &mUsePosition);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), &mX);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), &mY);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), &mZ);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
+    addBoolAttribute(ConsoleGameRules::eGameRuleAttr_useCoords, &mUsePosition);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x, &mX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_y, &mY);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mZ);
 }
 
 UseBlockRuleDefinition::~UseBlockRuleDefinition()
@@ -24,7 +24,7 @@ UseBlockRuleDefinition::~UseBlockRuleDefinition()
 
 ConsoleGameRules::EGameRuleType UseBlockRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(25);
+    return ConsoleGameRules::eGameRuleType_UseBlock;
 }
 
 bool UseBlockRuleDefinition::onUseBlock(GameRule* gameRule, int blockId, int x, int y, int z)

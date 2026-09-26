@@ -1,4 +1,5 @@
 #include "game/world/block/FenceBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -13,15 +14,40 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/FenceGateBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<bool>* FENCE_NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
-static AbstractProperty<bool>* FENCE_EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
-static AbstractProperty<bool>* FENCE_SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
-static AbstractProperty<bool>* FENCE_WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
+AbstractProperty<bool>* FenceBlock::NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
+AbstractProperty<bool>* FenceBlock::EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
+AbstractProperty<bool>* FenceBlock::SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
+AbstractProperty<bool>* FenceBlock::WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
+
+const AABB* FenceBlock::BOUNDING_BOXES[16] = {
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.375, 0.625, 1.0, 0.625),
+    AABB::newPermanent(0.0, 0.0, 0.375, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 0.625, 1.0, 0.625),
+    AABB::newPermanent(0.0, 0.0, 0.0, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.375, 1.0, 1.0, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.375, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 0.625),
+    AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 1.0, 0.625),
+    AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.625),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0),
+};
+const AABB* FenceBlock::PILLAR_AABB = AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.5, 0.625);
+const AABB* FenceBlock::SOUTH_AABB = AABB::newPermanent(0.375, 0.0, 0.625, 0.625, 1.5, 1.0);
+const AABB* FenceBlock::WEST_AABB = AABB::newPermanent(0.0, 0.0, 0.375, 0.375, 1.5, 0.625);
+const AABB* FenceBlock::NORTH_AABB = AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.5, 0.375);
+const AABB* FenceBlock::EAST_AABB = AABB::newPermanent(0.625, 0.0, 0.375, 1.0, 1.5, 0.625);
 
 FenceBlock::FenceBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor)
     : Block(material, materialColor), mTextureName(name)
@@ -36,44 +62,48 @@ FenceBlock::~FenceBlock()
 void FenceBlock::_init()
 {
     mBlockType = EBLOCK_TYPE_FENCE;
+    mIsFence = true;
     DerivedInit();
     TypedBoxed<bool> falseValue(false);
     const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(FENCE_NORTH, &falseValue);
-    state = state->setBoxedValue(FENCE_EAST, &falseValue);
-    state = state->setBoxedValue(FENCE_SOUTH, &falseValue);
-    registerDefaultState(state->setBoxedValue(FENCE_WEST, &falseValue));
+    state = state->setBoxedValue(NORTH, &falseValue);
+    state = state->setBoxedValue(EAST, &falseValue);
+    state = state->setBoxedValue(SOUTH, &falseValue);
+    registerDefaultState(state->setBoxedValue(WEST, &falseValue));
 }
 
 unsigned int FenceBlock::getAABBIndex(const BlockState* state)
 {
-    unsigned int result = 0;
-    if (state->getValue(FENCE_SOUTH)) result |= 1u << Direction::SOUTH->get2DDataValue();
-    if (state->getValue(FENCE_WEST)) result |= 1u << Direction::WEST->get2DDataValue();
-    if (state->getValue(FENCE_NORTH)) result |= 1u << Direction::NORTH->get2DDataValue();
-    if (state->getValue(FENCE_EAST)) result |= 1u << Direction::EAST->get2DDataValue();
-    return result;
+    unsigned int index = 0;
+    if (state->getValue(NORTH))
+        index |= 1u << Direction::NORTH->get2DDataValue();
+    if (state->getValue(EAST))
+        index |= 1u << Direction::EAST->get2DDataValue();
+    if (state->getValue(SOUTH))
+        index |= 1u << Direction::SOUTH->get2DDataValue();
+    if (state->getValue(WEST))
+        index |= 1u << Direction::WEST->get2DDataValue();
+    return index;
 }
 
 const AABB* FenceBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* actual = levelSource == NULL ? state : fillVirtualBlockStateProperties(state, levelSource, pos);
-    double minX = actual->getValue(FENCE_WEST) ? 0.0 : 0.375;
-    double minZ = actual->getValue(FENCE_NORTH) ? 0.0 : 0.375;
-    double maxX = actual->getValue(FENCE_EAST) ? 1.0 : 0.625;
-    double maxZ = actual->getValue(FENCE_SOUTH) ? 1.0 : 0.625;
-    return AABB::newTemp(minX, 0.0, minZ, maxX, 1.0, maxZ);
+    state = fillVirtualBlockStateProperties(state, levelSource, pos);
+    return BOUNDING_BOXES[getAABBIndex(state)];
 }
 
 void FenceBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
                                     std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool isActualState)
 {
-    if (!isActualState) state = fillVirtualBlockStateProperties(state, level, pos);
-    addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.375, 0.625, 1.0, 0.625));
-    if (state->getValue(FENCE_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.0, 0.625, 1.0, 0.625));
-    if (state->getValue(FENCE_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.375, 1.0, 1.0, 0.625));
-    if (state->getValue(FENCE_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.375, 0.625, 1.0, 1.0));
-    if (state->getValue(FENCE_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.0, 0.0, 0.375, 0.625, 1.0, 0.625));
+    addCollisionAABB(pos, entityBox, collidingBoxes, PILLAR_AABB);
+    if (connectsTo(level, pos.north(), Direction::SOUTH))
+        addCollisionAABB(pos, entityBox, collidingBoxes, NORTH_AABB);
+    if (connectsTo(level, pos.east(), Direction::WEST))
+        addCollisionAABB(pos, entityBox, collidingBoxes, EAST_AABB);
+    if (connectsTo(level, pos.south(), Direction::NORTH))
+        addCollisionAABB(pos, entityBox, collidingBoxes, SOUTH_AABB);
+    if (connectsTo(level, pos.west(), Direction::EAST))
+        addCollisionAABB(pos, entityBox, collidingBoxes, WEST_AABB);
 }
 
 bool FenceBlock::isSolidRender(const BlockState*) const { return false; }
@@ -85,7 +115,9 @@ bool FenceBlock::canContainLiquid(const BlockState*) const { return true; }
 
 bool FenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 {
-    return Block::isExceptionBlockForAttachingPlusPiston(block);
+    return Block::isExceptionBlockForAttachingPlusPiston(block) || block == Blocks::barrier
+        || block == Blocks::melon_block || block == Blocks::pumpkin || block == Blocks::carved_pumpkin
+        || block == Blocks::lit_pumpkin;
 }
 
 bool FenceBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
@@ -93,8 +125,8 @@ bool FenceBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const
     const BlockState* state = levelSource->getBlockState(pos);
     EBlockFaceShape faceShape = state->getBlockFaceShape(levelSource, pos, direction);
     Block* block = state->getBlock();
-    bool fenceFace = faceShape == BLOCK_FACE_MIDDLE_POLE_THICK
-        && (block == this || dynamic_cast<FenceGateBlock*>(block) != NULL);
+    bool fenceFace = faceShape == BLOCK_FACE_MIDDLE_POLE
+        && (state->getMaterial() == mMaterial || (block != NULL && dynamic_cast<FenceGateBlock*>(block) != NULL));
     return (!isExceptionBlockForAttachingPlusPiston(block) && faceShape == BLOCK_FACE_SOLID) || fenceFace;
 }
 
@@ -112,79 +144,88 @@ bool FenceBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost
 
 const BlockState* FenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    TypedBoxed<bool> north(connectsTo(levelSource, pos.north(), Direction::NORTH));
-    TypedBoxed<bool> east(connectsTo(levelSource, pos.east(), Direction::EAST));
-    TypedBoxed<bool> south(connectsTo(levelSource, pos.south(), Direction::SOUTH));
-    TypedBoxed<bool> west(connectsTo(levelSource, pos.west(), Direction::WEST));
-    const BlockState* result = state->setBoxedValue(FENCE_NORTH, &north);
-    result = result->setBoxedValue(FENCE_EAST, &east);
-    result = result->setBoxedValue(FENCE_SOUTH, &south);
-    return result->setBoxedValue(FENCE_WEST, &west);
+    TypedBoxed<bool> north(connectsTo(levelSource, pos.north(), Direction::SOUTH));
+    TypedBoxed<bool> east(connectsTo(levelSource, pos.east(), Direction::WEST));
+    TypedBoxed<bool> south(connectsTo(levelSource, pos.south(), Direction::NORTH));
+    TypedBoxed<bool> west(connectsTo(levelSource, pos.west(), Direction::EAST));
+    const BlockState* result = state->setBoxedValue(NORTH, &north);
+    result = result->setBoxedValue(EAST, &east);
+    result = result->setBoxedValue(SOUTH, &south);
+    return result->setBoxedValue(WEST, &west);
 }
 
 const BlockState* FenceBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    bool north = state->getValue(FENCE_NORTH);
-    bool east = state->getValue(FENCE_EAST);
-    bool south = state->getValue(FENCE_SOUTH);
-    bool west = state->getValue(FENCE_WEST);
-    TypedBoxed<bool> valueNorth(north);
-    TypedBoxed<bool> valueEast(east);
-    TypedBoxed<bool> valueSouth(south);
-    TypedBoxed<bool> valueWest(west);
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90:
-        state = state->setBoxedValue(FENCE_NORTH, &valueWest);
-        state = state->setBoxedValue(FENCE_EAST, &valueNorth);
-        state = state->setBoxedValue(FENCE_SOUTH, &valueEast);
-        return state->setBoxedValue(FENCE_WEST, &valueSouth);
     case Rotation::eTYPE_Clockwise180:
-        state = state->setBoxedValue(FENCE_NORTH, &valueSouth);
-        state = state->setBoxedValue(FENCE_EAST, &valueWest);
-        state = state->setBoxedValue(FENCE_SOUTH, &valueNorth);
-        return state->setBoxedValue(FENCE_WEST, &valueEast);
+    {
+        TypedBoxed<bool> north(state->getValue(SOUTH));
+        TypedBoxed<bool> east(state->getValue(WEST));
+        TypedBoxed<bool> south(state->getValue(NORTH));
+        TypedBoxed<bool> west(state->getValue(EAST));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
     case Rotation::eTYPE_CounterClockwise90:
-        state = state->setBoxedValue(FENCE_NORTH, &valueEast);
-        state = state->setBoxedValue(FENCE_EAST, &valueSouth);
-        state = state->setBoxedValue(FENCE_SOUTH, &valueWest);
-        return state->setBoxedValue(FENCE_WEST, &valueNorth);
-    default: return state;
+    {
+        TypedBoxed<bool> north(state->getValue(EAST));
+        TypedBoxed<bool> east(state->getValue(SOUTH));
+        TypedBoxed<bool> south(state->getValue(WEST));
+        TypedBoxed<bool> west(state->getValue(NORTH));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
+    case Rotation::eTYPE_Clockwise90:
+    {
+        TypedBoxed<bool> north(state->getValue(WEST));
+        TypedBoxed<bool> east(state->getValue(NORTH));
+        TypedBoxed<bool> south(state->getValue(EAST));
+        TypedBoxed<bool> west(state->getValue(SOUTH));
+        return state->setBoxedValue(NORTH, &north)
+            ->setBoxedValue(EAST, &east)
+            ->setBoxedValue(SOUTH, &south)
+            ->setBoxedValue(WEST, &west);
+    }
+    default:
+        return state;
     }
 }
 
 const BlockState* FenceBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    if (mirror->getType() == Mirror::eTYPE_LeftRight)
+    switch (mirror->getType())
     {
-        bool north = state->getValue(FENCE_NORTH);
-        bool south = state->getValue(FENCE_SOUTH);
-        TypedBoxed<bool> valueNorth(south);
-        TypedBoxed<bool> valueSouth(north);
-        state = state->setBoxedValue(FENCE_NORTH, &valueNorth);
-        return state->setBoxedValue(FENCE_SOUTH, &valueSouth);
-    }
-    if (mirror->getType() == Mirror::eTYPE_FrontBack)
+    case Mirror::eTYPE_LeftRight:
     {
-        bool east = state->getValue(FENCE_EAST);
-        bool west = state->getValue(FENCE_WEST);
-        TypedBoxed<bool> valueEast(west);
-        TypedBoxed<bool> valueWest(east);
-        state = state->setBoxedValue(FENCE_EAST, &valueEast);
-        return state->setBoxedValue(FENCE_WEST, &valueWest);
+        TypedBoxed<bool> north(state->getValue(SOUTH));
+        TypedBoxed<bool> south(state->getValue(NORTH));
+        return state->setBoxedValue(NORTH, &north)->setBoxedValue(SOUTH, &south);
     }
-    return Block::mirror(state, mirror);
+    case Mirror::eTYPE_FrontBack:
+    {
+        TypedBoxed<bool> east(state->getValue(WEST));
+        TypedBoxed<bool> west(state->getValue(EAST));
+        return state->setBoxedValue(EAST, &east)->setBoxedValue(WEST, &west);
+    }
+    default:
+        return Block::mirror(state, mirror);
+    }
 }
 
 BlockStateDefinition* FenceBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FENCE_NORTH, FENCE_EAST, FENCE_SOUTH, FENCE_WEST };
+    const Property* properties[] = { NORTH, EAST, SOUTH, WEST };
     return new BlockStateDefinition(this, properties, 4);
 }
 
 EBlockFaceShape FenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
 {
-    return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER : BLOCK_FACE_MIDDLE_POLE_THICK;
+    return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER : BLOCK_FACE_MIDDLE_POLE;
 }
 
 void FenceBlock::registerIcons(IconRegister* iconRegister)
@@ -192,11 +233,11 @@ void FenceBlock::registerIcons(IconRegister* iconRegister)
     mIcon = iconRegister->registerIcon(mTextureName);
 }
 
-EBlockRenderShape FenceBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)11; }
+EBlockRenderShape FenceBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_FENCE; }
 
 unsigned int FenceBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     boost::shared_ptr<Player> player = (boost::shared_ptr<Player>&)tooltipData.m_pPlayer;
     return LeadItem::bindPlayerMobsTest(player, (Level*)tooltipData.m_pLevel, tooltipData.m_blockPos)
-        ? 0x7b938f36u : Block::GetInteractTooltip(tooltipData);
+        ? IDS_TOOLTIPS_ATTACH : Block::GetInteractTooltip(tooltipData);
 }

@@ -1,4 +1,5 @@
 #include "game/world/block/SignBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -288,5 +289,5 @@ bool SignBlockEntity::getTextCacheEnabled()
 
 unsigned long long SignBlockEntity::GetType()
 {
-    return 0x0000000001000202ULL;
+    return BlockEntityType::SIGN;
 }

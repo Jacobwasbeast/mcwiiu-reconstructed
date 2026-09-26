@@ -1,4 +1,7 @@
 #include "game/world/block/BrewingStandBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -134,15 +137,17 @@ bool BrewingStandBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> 
     {
         return PotionBrewing::isIngredient(itemInstance);
     }
+    Item* item = itemInstance->getItem();
     if (slot == 4)
     {
-        return itemInstance->getItem() == NULL || itemInstance->isEmpty();
+        return item == Items::blazePowder;
     }
-    if (slot < 0 || slot > 2)
+    if (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion ||
+        item == Items::glassBottle)
     {
-        return false;
+        return getItem(slot)->isEmpty();
     }
-    return !itemInstance->isEmpty() && PotionBrewing::isContainerIngredient(itemInstance);
+    return false;
 }
 
 int BrewingStandBlockEntity::getContainerData(int id)
@@ -192,7 +197,7 @@ AbstractContainerMenu* BrewingStandBlockEntity::createMenu(boost::shared_ptr<Inv
 
 int BrewingStandBlockEntity::getTypeId(bool large)
 {
-    return 5;
+    return ClientboundContainerOpenPacket::BREWING_STAND;
 }
 
 InteractionObject::NameData BrewingStandBlockEntity::GetNetworkNameData()
@@ -220,7 +225,7 @@ bool BrewingStandBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<Item
 {
     if (slot == 3)
     {
-        return itemInstance->getItem() != NULL;
+        return itemInstance->getItem() == Items::glassBottle;
     }
     return true;
 }
@@ -286,7 +291,7 @@ void BrewingStandBlockEntity::doBrew()
         }
     }
     mItems[3] = ingredient;
-    mLevel->levelEvent(1035, pos, 0);
+    mLevel->levelEvent(LevelEvent::SOUND_BREWING_STAND_BREW, pos, 0);
     --mFuel;
 }
 
@@ -386,5 +391,5 @@ BlockEntity* BrewingStandBlockEntity::create()
 
 unsigned long long BrewingStandBlockEntity::GetType()
 {
-    return 0x0000000001E00203ULL;
+    return BlockEntityType::BREWING_STAND;
 }

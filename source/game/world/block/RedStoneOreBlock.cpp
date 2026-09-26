@@ -1,4 +1,5 @@
 #include "game/world/block/RedStoneOreBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/item/Item.hpp"
@@ -115,7 +116,7 @@ void RedStoneOreBlock::interact(Level* level, const BlockPos& pos)
     spawnParticles(level, pos);
     if (!level->mIsClientSide && this == Blocks::redstone_ore)
     {
-        level->setBlock(pos, Blocks::lit_redstone_ore->defaultBlockState(), 2, false);
+        level->setBlock(pos, Blocks::lit_redstone_ore->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
 }
 
@@ -123,7 +124,7 @@ void RedStoneOreBlock::tick(Level* level, const BlockPos& pos, const BlockState*
 {
     if (this == Blocks::lit_redstone_ore)
     {
-        level->setBlock(pos, Blocks::redstone_ore->defaultBlockState(), 2, false);
+        level->setBlock(pos, Blocks::redstone_ore->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
 }
 
@@ -165,7 +166,7 @@ unsigned int RedStoneOreBlock::GetInteractTooltip(const BlockTooltipDataHolder& 
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
         && tooltipData.m_bIsInside)
     {
-        return 0xEA4E897EU;
+        return IDS_TOOLTIPS_USE;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

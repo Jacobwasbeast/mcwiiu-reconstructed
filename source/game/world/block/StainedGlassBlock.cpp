@@ -18,7 +18,7 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<const DyeColor*>* gStainedGlassBlockColorProperty = NULL;
+EnumProperty<const DyeColor*>* StainedGlassBlock::COLOR = NULL;
 static TextureAtlasSprite* gStainedGlassBlockIcons[16] = { NULL };
 
 void StainedGlassBlock::blockStaticCtor()
@@ -29,7 +29,7 @@ void StainedGlassBlock::blockStaticCtor()
         colors.insert(DyeColor::byBlockData(data));
     }
 
-    gStainedGlassBlockColorProperty = EnumProperty<const DyeColor*>::create(
+    COLOR = EnumProperty<const DyeColor*>::create(
         L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
 }
 
@@ -38,7 +38,7 @@ StainedGlassBlock::StainedGlassBlock(Material* material)
 {
     DerivedInit();
     TypedBoxed<const DyeColor*> color(DyeColor::WHITE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gStainedGlassBlockColorProperty, &color));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(COLOR, &color));
 }
 
 StainedGlassBlock::~StainedGlassBlock()
@@ -47,12 +47,12 @@ StainedGlassBlock::~StainedGlassBlock()
 
 int StainedGlassBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gStainedGlassBlockColorProperty)->getBlockData();
+    return state->getValue(COLOR)->getBlockData();
 }
 
 const MaterialColor* StainedGlassBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return MaterialColor::getDyeMaterial(state->getValue(gStainedGlassBlockColorProperty));
+    return MaterialColor::getDyeMaterial(state->getValue(COLOR));
 }
 
 int StainedGlassBlock::getRenderLayer()
@@ -88,7 +88,7 @@ bool StainedGlassBlock::isTransparent(const BlockState*)
 const BlockState* StainedGlassBlock::getBlockState(int data)
 {
     TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(data));
-    return defaultBlockState()->setBoxedValue(gStainedGlassBlockColorProperty, &color);
+    return defaultBlockState()->setBoxedValue(COLOR, &color);
 }
 
 void StainedGlassBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
@@ -113,18 +113,18 @@ void StainedGlassBlock::onRemove(Level* level, const BlockPos& pos, const BlockS
 
 int StainedGlassBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gStainedGlassBlockColorProperty)->getBlockData();
+    return state->getValue(COLOR)->getBlockData();
 }
 
 BlockStateDefinition* StainedGlassBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gStainedGlassBlockColorProperty };
+    const Property* properties[] = { COLOR };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* StainedGlassBlock::getTexture(const Direction*, const BlockState* state)
 {
-    return gStainedGlassBlockIcons[state->getValue(gStainedGlassBlockColorProperty)->getBlockData()];
+    return gStainedGlassBlockIcons[state->getValue(COLOR)->getBlockData()];
 }
 
 void StainedGlassBlock::registerIcons(IconRegister* iconRegister)

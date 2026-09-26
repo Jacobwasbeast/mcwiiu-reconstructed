@@ -18,7 +18,7 @@ CompoundTag* BlockEntityMobSpawnerEntityIdentifiersFix::fix(CompoundTag* tag)
 {
     if (CheckID(tag, L"MobSpawner"))
     {
-        if (tag->contains(L"EntityId", 8))
+        if (tag->contains(L"EntityId", Tag::TAG_STRING))
         {
             std::wstring entityId = tag->getString(L"EntityId");
             CompoundTag* spawnData = tag->getCompound(L"SpawnData");
@@ -29,15 +29,15 @@ CompoundTag* BlockEntityMobSpawnerEntityIdentifiersFix::fix(CompoundTag* tag)
             tag->remove(L"EntityId");
         }
 
-        if (tag->contains(L"SpawnPotentials", 9))
+        if (tag->contains(L"SpawnPotentials", Tag::TAG_LIST))
         {
-            ListTag* spawnPotentials = tag->getList(L"SpawnPotentials", 10);
+            ListTag* spawnPotentials = tag->getList(L"SpawnPotentials", Tag::TAG_COMPOUND);
 
             for (int i = 0; i < spawnPotentials->size(); i++)
             {
                 CompoundTag* spawnPotential = spawnPotentials->getCompound(i);
 
-                if (spawnPotential->contains(L"Type", 8))
+                if (spawnPotential->contains(L"Type", Tag::TAG_STRING))
                 {
                     CompoundTag* properties = spawnPotential->getCompound(L"Properties");
 

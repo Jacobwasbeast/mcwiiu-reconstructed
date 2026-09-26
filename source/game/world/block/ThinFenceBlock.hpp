@@ -50,11 +50,11 @@ public:
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
     virtual void registerIcons(IconRegister* iconRegister);
-    TextureAtlasSprite* getEdgeTexture();
+    virtual TextureAtlasSprite* getEdgeTexture();
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
 private:
-    bool mExtraBlock;
+    bool mDropsOnBreak;
     std::wstring mEdgeTexture;
     std::wstring mName;
     TextureAtlasSprite* mEdgeTextureId;

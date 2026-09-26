@@ -18,7 +18,7 @@ BarrierBlock::~BarrierBlock()
 
 EBlockRenderShape BarrierBlock::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(-1);
+    return BLOCK_RENDER_INVISIBLE;
 }
 
 bool BarrierBlock::isSolidRender(const BlockState* state) const

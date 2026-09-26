@@ -1,4 +1,6 @@
 #include "game/world/block/CraftingTableBlock.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -72,7 +74,7 @@ unsigned int CraftingTableBlock::GetInteractTooltip(const BlockTooltipDataHolder
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
     {
-        return 0xea4e897e;
+        return IDS_TOOLTIPS_USE;
     }
     return Block::GetInteractTooltip(tooltipData);
 }
@@ -92,7 +94,7 @@ AbstractContainerMenu* CraftingTableBlock::CraftingTable::createMenu(boost::shar
 
 int CraftingTableBlock::CraftingTable::getTypeId(bool large)
 {
-    return 1;
+    return ClientboundContainerOpenPacket::WORKBENCH;
 }
 
 std::wstring CraftingTableBlock::CraftingTable::getName()

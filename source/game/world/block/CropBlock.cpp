@@ -1,4 +1,7 @@
 #include "game/world/block/CropBlock.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/block/FarmBlock.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
@@ -116,36 +119,45 @@ const BlockState* CropBlock::getStateForAge(int age)
     return defaultBlockState()->setBoxedValue(getAgeProperty(), &value);
 }
 
-double CropBlock::getGrowthSpeed(Block* block, Level* level, const BlockPos& pos)
+float CropBlock::getGrowthSpeed(Block* block, Level* level, const BlockPos& pos)
 {
-    double speed = 1.0;
+    float speed = 1.0f;
+    BlockPos below = pos.below();
     for (int x = -1; x <= 1; ++x)
     {
-        const BlockState* below = level->getBlockState(pos.below().offset(x, 0, 0));
-        double contribution = 0.0;
-        if (below->getBlock() == block)
+        for (int z = -1; z <= 1; ++z)
         {
-            contribution = below->getValue(AGE) > 0 ? 3.0 : 1.0;
+            float contribution = 0.0f;
+            const BlockState* state = level->getBlockState(below.offset(x, 0, z));
+            if (state->getBlock() == Blocks::farmland)
+            {
+                contribution = 1.0f;
+                if (state->getValue(FarmBlock::MOISTURE) > 0)
+                    contribution = 3.0f;
+            }
+            if (x != 0 || z != 0)
+                contribution *= 0.25f;
+            speed += contribution;
         }
-        if (x != 0)
-        {
-            contribution *= 0.25;
-        }
-        speed += contribution;
     }
-    const BlockState* west = level->getBlockState(pos.west());
-    const BlockState* east = level->getBlockState(pos.east());
-    const BlockState* north = level->getBlockState(pos.north());
-    const BlockState* south = level->getBlockState(pos.south());
-    bool horizontal = west->getBlock() == block || east->getBlock() == block;
-    bool vertical = north->getBlock() == block || south->getBlock() == block;
-    if ((!horizontal || !vertical) &&
-        level->getBlockState(pos.north().west())->getBlock() != block &&
-        level->getBlockState(pos.south().west())->getBlock() != block &&
-        level->getBlockState(pos.north().east())->getBlock() != block &&
-        level->getBlockState(pos.south().east())->getBlock() != block)
+
+    BlockPos north = pos.north();
+    BlockPos south = pos.south();
+    BlockPos west = pos.west();
+    BlockPos east = pos.east();
+    bool eastWest = block == level->getBlockState(west)->getBlock() || block == level->getBlockState(east)->getBlock();
+    bool northSouth =
+        block == level->getBlockState(north)->getBlock() || block == level->getBlockState(south)->getBlock();
+    if (eastWest && northSouth)
     {
-        speed *= 0.5;
+        speed *= 0.5f;
+    }
+    else if (block == level->getBlockState(west.north())->getBlock()
+             || block == level->getBlockState(east.north())->getBlock()
+             || block == level->getBlockState(east.south())->getBlock()
+             || block == level->getBlockState(west.south())->getBlock())
+    {
+        speed *= 0.5f;
     }
     return speed;
 }
@@ -156,9 +168,9 @@ void CropBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     if (level->getRawBrightness(pos.above()) > 8)
     {
         int age = getAge(state);
-        if (age < getMaxAge() && random->nextInt((int)(12.0 / getGrowthSpeed(this, level, pos))) == 0)
+        if (age < getMaxAge() && random->nextInt(static_cast<int>(12.0f / getGrowthSpeed(this, level, pos))) == 0)
         {
-            level->setBlock(pos, getStateForAge(age + 1), 2, false);
+            level->setBlock(pos, getStateForAge(age + 1), Block::UPDATE_CLIENTS, false);
         }
     }
 }
@@ -167,7 +179,7 @@ void CropBlock::growCrops(Level* level, const BlockPos& pos, const BlockState* s
 {
     int age = getAge(state) + getBonemealAgeIncrease(level);
     if (age > getMaxAge()) age = getMaxAge();
-    level->setBlock(pos, getStateForAge(age), 2, false);
+    level->setBlock(pos, getStateForAge(age), Block::UPDATE_CLIENTS, false);
 }
 
 int CropBlock::getBonemealAgeIncrease(Level* level)
@@ -226,13 +238,13 @@ int CropBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int CropBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance->getItem() == Items::dye &&
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE &&
         tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail &&
         DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0 &&
         isValidBonemealTarget(tooltipData.m_pLevel, tooltipData.m_blockPos,
                               tooltipData.m_pBlockState, true))
     {
-        return 0x9f5fdc40u;
+        return IDS_TOOLTIPS_GROW;
     }
     return Block::GetInteractTooltip(tooltipData);
 }
@@ -263,5 +275,5 @@ void CropBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape CropBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(6);
+    return BLOCK_RENDER_ROW;
 }

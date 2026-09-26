@@ -19,7 +19,6 @@ class Player;
 class DispenserBlockEntity : public RandomizableLockableContainerBlockEntity
 {
 public:
-    static const unsigned long long TYPE_ID;
     DispenserBlockEntity();
     virtual ~DispenserBlockEntity();
 

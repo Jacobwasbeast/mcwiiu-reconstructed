@@ -19,6 +19,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
@@ -27,7 +28,7 @@
 
 AbstractProperty<const Direction*>* PistonHeadBlock::FACING = NULL;
 AbstractProperty<PistonHeadBlock::PistonType*>* PistonHeadBlock::TYPE = NULL;
-AbstractProperty<bool>* PistonHeadBlock::SHORT = NULL;
+AbstractProperty<bool>* PistonHeadBlock::SHORT = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"short"));
 
 PistonHeadBlock::PistonType* pistonTypeNormal = NULL;
 PistonHeadBlock::PistonType* pistonTypeSticky = NULL;
@@ -73,8 +74,7 @@ std::wstring PistonHeadBlock::PistonType::getSerializedName() const
 
 void PistonHeadBlock::blockStaticCtor()
 {
-    if (FACING == NULL)
-        FACING = DirectionProperty::create(L"facing");
+    FACING = DirectionalBlock::FACING;
     if (pistonTypeNormal == NULL)
         pistonTypeNormal = new PistonType(L"normal");
     if (pistonTypeSticky == NULL)
@@ -87,12 +87,10 @@ void PistonHeadBlock::blockStaticCtor()
         TYPE = EnumProperty<PistonType*>::create(L"type", typeid(PistonType*), values,
                                                   Predicates<PistonType*>::alwaysTrue);
     }
-    if (SHORT == NULL)
-        SHORT = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"short"));
 }
 
 PistonHeadBlock::PistonHeadBlock()
-    : Block(Material::PISTON), mSticky(false)
+    : Block(Material::PISTON), mOverrideTopTexture(NULL)
 {
     DerivedInit();
     setSoundType(NULL);
@@ -244,11 +242,19 @@ EBlockFaceShape PistonHeadBlock::getBlockFaceShape(LevelSource*, const BlockStat
 
 TextureAtlasSprite* PistonHeadBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction == state->getValue(FACING))
-        return mIcon;
-    if (direction == state->getValue(FACING)->getOpposite())
-        return PistonBaseBlock::getTexture(L"piston_top");
-    return PistonBaseBlock::getTexture(L"piston_side");
+    const Direction* facing = state->getValue(FACING);
+    if (direction == facing)
+    {
+        if (mOverrideTopTexture != NULL)
+            return mOverrideTopTexture;
+        if (state->getValue(TYPE) == pistonTypeSticky)
+            return PistonBaseBlock::getTexture(L"piston_top_sticky");
+    }
+    else if (facing->get3DDataValue() > 5 || direction != facing->getOpposite())
+    {
+        return PistonBaseBlock::getTexture(L"piston_side");
+    }
+    return PistonBaseBlock::getTexture(L"piston_top");
 }
 
 void PistonHeadBlock::registerIcons(IconRegister*)
@@ -257,5 +263,5 @@ void PistonHeadBlock::registerIcons(IconRegister*)
 
 EBlockRenderShape PistonHeadBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(0x11);
+    return BLOCK_RENDER_PISTON_EXTENSION;
 }

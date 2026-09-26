@@ -1,6 +1,13 @@
 #include "game/world/block/SkullBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
+#include <typeinfo>
+#include <vector>
+
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Mirror.hpp"
@@ -24,6 +31,7 @@
 #include "game/world/block/BlockStatePredicate.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
@@ -40,7 +48,7 @@ bool isWitherSkull(BlockInWorld* block)
         return false;
 
     boost::shared_ptr<BlockEntity> entity = block->getEntity();
-    if (!entity || entity->GetType() != 0x0120020700000000ULL)
+    if (!entity || entity->GetType() != BlockEntityType::SKULL)
         return false;
 
     boost::shared_ptr<SkullBlockEntity> skull = boost::dynamic_pointer_cast<SkullBlockEntity>(entity);
@@ -48,7 +56,7 @@ bool isWitherSkull(BlockInWorld* block)
 }
 
 DirectionProperty* SkullBlock::FACING = NULL;
-AbstractProperty<bool>* SkullBlock::WATERLOGGED = NULL;
+AbstractProperty<bool>* SkullBlock::NODROP = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"nodrop"));
 
 static const AABB* SKULL_AABB = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 0.5, 0.75);
 static const AABB* SKULL_NORTH_AABB = AABB::newPermanent(0.25, 0.25, 0.5, 0.75, 0.75, 1.0);
@@ -63,8 +71,8 @@ SkullBlock::SkullBlock()
     const BlockState* state = mStateDefinition->any();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
     state = state->setBoxedValue(FACING, &facing);
-    TypedBoxed<bool> waterlogged(false);
-    registerDefaultState(state->setBoxedValue(WATERLOGGED, &waterlogged));
+    TypedBoxed<bool> noDrop(false);
+    registerDefaultState(state->setBoxedValue(NODROP, &noDrop));
 }
 
 SkullBlock::~SkullBlock()
@@ -78,13 +86,12 @@ boost::shared_ptr<BlockEntity> SkullBlock::newBlockEntity(Level*, int)
 
 void SkullBlock::blockStaticCtor()
 {
-    FACING = DirectionProperty::create(L"facing");
-    WATERLOGGED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"waterlogged"));
+    FACING = DirectionalBlock::FACING;
 }
 
 std::wstring SkullBlock::getName()
 {
-    return std::wstring(L10N::GetString(0xfe1de21a));
+    return std::wstring(L10N::GetString(IDS_TILE_SKULL));
 }
 
 bool SkullBlock::isSolidRender(const BlockState*) const
@@ -119,9 +126,9 @@ const BlockState* SkullBlock::getStateForPlacement(Level*, const BlockPos& pos, 
 {
     const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer);
     TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<bool> waterlogged(false);
+    TypedBoxed<bool> noDrop(false);
     const BlockState* state = defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
-    return state->setBoxedValue(WATERLOGGED, &waterlogged);
+    return state->setBoxedValue(NODROP, &noDrop);
 }
 
 not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
@@ -129,7 +136,7 @@ not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const 
 {
     int skullType = 0;
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && entity->GetType() == 0x01200207ULL)
+    if (entity && entity->GetType() == BlockEntityType::SKULL)
     {
         boost::shared_ptr<SkullBlockEntity> skull = boost::dynamic_pointer_cast<SkullBlockEntity>(entity);
         if (skull)
@@ -148,18 +155,18 @@ bool SkullBlock::playerWillDestroy(Level* level, const BlockPos& pos, const Bloc
 {
     if (player && player->mAbilities.mInstabuild)
     {
-        TypedBoxed<bool> waterlogged(true);
-        level->setBlock(pos, state->setBoxedValue(WATERLOGGED, &waterlogged), 4, false);
+        TypedBoxed<bool> noDrop(true);
+        level->setBlock(pos, state->setBoxedValue(NODROP, &noDrop), Block::UPDATE_INVISIBLE, false);
     }
     return Block::playerWillDestroy(level, pos, state, player);
 }
 
 void SkullBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!level->mIsClientSide && !state->getValue(WATERLOGGED))
+    if (!level->mIsClientSide && !state->getValue(NODROP))
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if (entity && entity->GetType() == 0x01200207ULL)
+        if (entity && entity->GetType() == BlockEntityType::SKULL)
             Block::popResource(level, pos, getCloneItemInstance(level, pos, state));
     }
     BaseEntityBlock::onRemove(level, pos, state);
@@ -212,59 +219,94 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
                                boost::shared_ptr<SkullBlockEntity> skull,
                                boost::shared_ptr<Player> player)
 {
-    if (!skull || skull->getSkullType() != 1 || pos.y <= 1 || level->mIsClientSide)
+    if (skull->getSkullType() != 1 || pos.y < 2 || level->mIsClientSide)
         return;
-    BlockPattern::BlockPatternMatch* match = getOrCreateWitherFull()->find(level, pos);
+
+    BlockPattern* pattern = getOrCreateWitherFull();
+    BlockPattern::BlockPatternMatch* match = pattern->find(level, pos);
     if (match == NULL)
         return;
+
     if (level->getDifficulty() == Difficulty::PEACEFUL)
     {
         if (player)
-            player->displayClientMessage(0xd97fdba2, true);
+            player->displayClientMessage(IDS_CANT_SPAWN_IN_PEACEFUL, true);
         return;
     }
-    bool canCreate = level->canCreateMore(0x000000005d540047ULL, 0);
-    for (int x = 0; x < 3; ++x)
+
+    bool canCreate = level->canCreateMore(EntityType::WITHER_BOSS, Level::eSpawnType_Egg);
+    for (int i = 0; i < 3; ++i)
     {
-        for (int y = 0; y < 3; ++y)
+        BlockInWorld* block = match->getBlock(i, 0, 0);
+        const BlockState* state = block->getState();
+        if (canCreate)
+        {
+            TypedBoxed<bool> noDrop(true);
+            state = state->setBoxedValue(NODROP, &noDrop);
+        }
+        level->setBlock(block->getPos(), state, Block::UPDATE_CLIENTS, false);
+    }
+
+    for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
+    {
+        for (int y = 0; y < static_cast<int>(pattern->getHeight()); ++y)
         {
             BlockInWorld* block = match->getBlock(x, y, 0);
-            BlockPos blockPos = block->getPos();
             if (!canCreate)
-                level->blockUpdated(blockPos, block->getState()->getBlock(), false);
-            level->setBlock(blockPos, Blocks::AIR->defaultBlockState(), 2, false);
+                block->getState()->getBlock()->spawnResources(level, block->getPos(), block->getState(), 0);
+            level->setBlock(block->getPos(), Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
     }
+
     if (canCreate)
     {
-        BlockPos spawn = match->getBlock(1, 2, 0)->getPos();
         boost::shared_ptr<WitherBoss> wither(new WitherBoss(level));
-        wither->moveTo(spawn.x + 0.5, spawn.y + 0.55, spawn.z + 0.5, 0.0f, 0.0f);
+        BlockPos spawnPos = match->getBlock(1, 2, 0)->getPos();
+        wither->moveTo(spawnPos.x + 0.5, spawnPos.y + 0.55, spawnPos.z + 0.5,
+                       match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f, 0.0f);
+        wither->mYBodyRot = match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f;
         wither->makeInvulnerable();
+
+        std::vector<boost::shared_ptr<Entity> >* players =
+            level->getEntitiesOfClass(typeid(Player), wither->mBoundingBox->grow(50.0, 50.0, 50.0));
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
+        {
+            boost::shared_ptr<Player> nearby = boost::static_pointer_cast<Player>(*it);
+            nearby->awardStat(GenericStats::spawnWither(), GenericStats::param_spawnWither());
+        }
+        delete players;
         level->addEntity(wither);
     }
-    for (int x = 0; x < match->getWidth(); ++x)
+
+    for (int i = 0; i < 120; ++i)
     {
-        for (int y = 0; y < match->getHeight(); ++y)
-        {
-            BlockInWorld* block = match->getBlock(x, y, 0);
-            level->blockUpdated(block->getPos(), Blocks::AIR, false);
-        }
+        BlockPos particlePos = match->getBlock(1, 0, 0)->getPos();
+        double x = particlePos.x + level->mRandom->nextDouble();
+        double y = (particlePos.y - 2) + level->mRandom->nextDouble() * 3.9;
+        double z = particlePos.z + level->mRandom->nextDouble();
+        level->addParticle(PARTICLE_SNOWBALL_POOF, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
+
+    for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
+    {
+        for (int y = 0; y < static_cast<int>(pattern->getHeight()); ++y)
+            level->blockUpdated(match->getBlock(x, y, 0)->getPos(), Blocks::air, false);
+    }
+
     delete match;
 }
 
 const BlockState* SkullBlock::getBlockState(int data)
 {
     TypedBoxed<const Direction*> facing(Direction::from3DDataValue(data & 7));
-    TypedBoxed<bool> waterlogged((data & 8) != 0);
+    TypedBoxed<bool> noDrop((data & 8) != 0);
     const BlockState* state = defaultBlockState()->setBoxedValue(FACING, &facing);
-    return state->setBoxedValue(WATERLOGGED, &waterlogged);
+    return state->setBoxedValue(NODROP, &noDrop);
 }
 
 int SkullBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(FACING)->get3DDataValue() | (state->getValue(WATERLOGGED) ? 8 : 0);
+    return state->getValue(FACING)->get3DDataValue() | (state->getValue(NODROP) ? 8 : 0);
 }
 
 bool SkullBlock::waterSpreadCausesSpawn()
@@ -290,13 +332,13 @@ const BlockState* SkullBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* SkullBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING, WATERLOGGED };
+    const Property* properties[] = { FACING, NODROP };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 EBlockFaceShape SkullBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
-    return static_cast<EBlockFaceShape>(8);
+    return BLOCK_FACE_UNDEFINED;
 }
 
 void SkullBlock::registerIcons(IconRegister*)
@@ -315,5 +357,5 @@ std::wstring SkullBlock::getTileItemIconName()
 
 EBlockRenderShape SkullBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(-1);
+    return BLOCK_RENDER_INVISIBLE;
 }

@@ -52,7 +52,7 @@ void ConcretePowderBlock::onLand(Level* level, const BlockPos& pos, const BlockS
     if (replacedState->getMaterial()->isLiquid())
     {
         level->setBlock(pos, Blocks::concrete->getBlockState(
-            state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), 3, false);
+            state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), Block::UPDATE_ALL, false);
     }
 }
 
@@ -64,7 +64,7 @@ unsigned int ConcretePowderBlock::tryTouchWater(Level* level, const BlockPos& po
         if (direction != Direction::DOWN && level->getBlockState(pos.relative(direction))->getMaterial() == Material::WATER)
         {
             level->setBlock(pos, Blocks::concrete->getBlockState(
-                state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), 3, false);
+                state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), Block::UPDATE_ALL, false);
             return 1;
         }
     }

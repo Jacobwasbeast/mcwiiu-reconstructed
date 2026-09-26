@@ -6,6 +6,8 @@
 #include "game/world/block/HalfSlabBlock.hpp"
 
 class BlockState;
+template <typename T>
+class EnumProperty;
 class BlockStateDefinition;
 class Direction;
 class IconRegister;
@@ -21,6 +23,15 @@ public:
     class Variant
     {
     public:
+        static Variant* STONE;
+        static Variant* SAND;
+        static Variant* WOOD;
+        static Variant* COBBLESTONE;
+        static Variant* BRICK;
+        static Variant* SMOOTHBRICK;
+        static Variant* NETHERBRICK;
+        static Variant* QUARTZ;
+
         Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int translationKey);
         int getData();
         int getTranslationKey();
@@ -39,6 +50,7 @@ public:
 
     StoneSlabBlock();
     static void blockStaticCtor();
+    static EnumProperty<Variant*>* VARIANT;
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);

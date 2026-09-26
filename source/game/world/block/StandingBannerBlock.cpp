@@ -1,5 +1,6 @@
 #include "game/world/block/StandingBannerBlock.hpp"
 
+#include "game/core/Direction.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/util/AABB.hpp"
@@ -9,6 +10,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -35,14 +37,13 @@ const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const
 
 const BlockState* StandingBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<int> value(rotation->rotate(state->getValue(gStandingBannerRotation), 16));
-    return state->setBoxedValue(gStandingBannerRotation, &value);
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(BannerBlock::FACING)));
+    return state->setBoxedValue(BannerBlock::FACING, &facing);
 }
 
 const BlockState* StandingBannerBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    TypedBoxed<int> value(mirror->mirror(state->getValue(gStandingBannerRotation), 16));
-    return state->setBoxedValue(gStandingBannerRotation, &value);
+    return rotate(state, mirror->getRotation(state->getValue(BannerBlock::FACING)));
 }
 
 void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,

@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/world/block/BlockEntity.hpp"
+#include "game/core/Nameable.hpp"
 #include "game/core/CensoredString.hpp"
 #include "game/item/not_null_ptr.hpp"
 
@@ -15,7 +16,7 @@ class DyeColor;
 class ItemInstance;
 class ListTag;
 
-class BannerBlockEntity : public BlockEntity
+class BannerBlockEntity : public BlockEntity, public Nameable
 {
 public:
     BannerBlockEntity();

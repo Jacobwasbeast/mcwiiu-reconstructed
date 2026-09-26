@@ -1,10 +1,13 @@
 #include "game/world/block/LiquidBlock.hpp"
 
+#include "game/core/BubbleColumnSegment.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Math.hpp"
 #include "game/util/Vec3.hpp"
@@ -16,6 +19,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/item/Items.hpp"
+#include "game/world/block/StairBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/Level.hpp"
@@ -34,7 +38,7 @@ AbstractProperty<int>* LiquidBlock::LEVEL =
 LiquidBlock::LiquidBlock(Material* material) : Block(material)
 {
     mFlowIcon = NULL;
-    mBlockType = EBLOCK_TYPE_MOB_SPAWNER;
+    mBlockType = EBLOCK_TYPE_LIQUID;
     setTicking(true);
 }
 
@@ -150,14 +154,22 @@ bool LiquidBlock::isSolidFace(LevelSource* levelSource, const BlockPos& pos, con
            !state->getBlock()->isSolidFace(levelSource, pos, direction);
 }
 
-bool LiquidBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool LiquidBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                   const Direction* direction)
 {
-    BlockPos adjacent = pos.relative(direction);
-    const BlockState* adjacentState = levelSource->getBlockState(adjacent);
-    if (adjacentState != NULL && adjacentState->getMaterial() == mMaterial)
+    if (Block::getStateByElementId(getLiquidElement(levelSource, pos.relative(direction)))->getMaterial() == mMaterial)
         return false;
     if (direction == Direction::UP)
         return true;
+
+    Block* block = levelSource->getBlock(pos);
+    if (StairBlock::isStairs(Block::getId(block)) && !block->liquidCanFlowIntoFromDirection(levelSource, pos, direction))
+        return false;
+
+    BlockPos adjacent = pos.relative(direction);
+    int adjacentId = levelSource->getBlockId(adjacent.x, adjacent.y, adjacent.z);
+    if (adjacentId == 208 || adjacentId == 272)
+        return false;
     return Block::shouldRenderFace(state, levelSource, pos, direction);
 }
 
@@ -165,22 +177,19 @@ bool LiquidBlock::shouldRenderBackwardUpFace(LevelSource* levelSource, const Blo
 {
     for (int x = -1; x <= 1; ++x)
     {
-        const BlockState* state = levelSource->getBlockState(pos.offset(x, 0, -1));
-        if (state != NULL && state->getMaterial() != mMaterial && !state->isSolid())
-            return true;
-        state = levelSource->getBlockState(pos.offset(x, 0, 0));
-        if (state != NULL && state->getMaterial() != mMaterial && !state->isSolid())
-            return true;
-        state = levelSource->getBlockState(pos.offset(x, 0, 1));
-        if (state != NULL && state->getMaterial() != mMaterial && !state->isSolid())
-            return true;
+        for (int z = -1; z <= 1; ++z)
+        {
+            const BlockState* state = Block::getStateByElementId(getLiquidElement(levelSource, pos.offset(x, 0, z)));
+            if (state->getMaterial() != mMaterial && !state->isSolid() && state->getBlock() != Blocks::ice)
+                return true;
+        }
     }
     return false;
 }
 
 EBlockRenderShape LiquidBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(4);
+    return BLOCK_RENDER_WATER;
 }
 
 Item* LiquidBlock::getResource(const BlockState*, Random*, int)
@@ -195,35 +204,38 @@ int LiquidBlock::getResourceCount(Random*)
 
 Vec3* LiquidBlock::getFlow(LevelSource* levelSource, const BlockPos& pos, const BlockState*)
 {
-    int depth = getRenderedDepth(levelSource, pos);
     double x = 0.0;
     double y = 0.0;
     double z = 0.0;
-    const Direction* directions[4] = { Direction::WEST, Direction::EAST, Direction::NORTH, Direction::SOUTH };
-    int i;
-    for (i = 0; i < 4; ++i)
+    int depth = getRenderedDepth(levelSource, pos);
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
-        const BlockPos adjacent = pos.relative(directions[i]);
+        const Direction* direction = directions.data[i];
+        BlockPos adjacent = pos.relative(direction);
         int adjacentDepth = getRenderedDepth(levelSource, adjacent);
         if (adjacentDepth < 0)
         {
-            const BlockState* adjacentState = levelSource->getBlockState(adjacent);
-            if (adjacentState != NULL && !adjacentState->isSolid())
+            if (!levelSource->getBlockState(adjacent)->getBlock()->isWaterBlocking())
             {
-                int belowDepth = getRenderedDepth(levelSource, adjacent.below());
-                if (belowDepth >= 0)
-                    adjacentDepth = belowDepth - (depth - 8);
+                adjacentDepth = getRenderedDepth(levelSource, adjacent.below());
+                if (adjacentDepth >= 0)
+                {
+                    int difference = adjacentDepth - (depth - 8);
+                    x += direction->getStepX() * difference;
+                    y += direction->getStepY() * difference;
+                    z += direction->getStepZ() * difference;
+                }
             }
         }
-        if (adjacentDepth >= 0)
+        else
         {
             int difference = adjacentDepth - depth;
-            x += directions[i] == Direction::WEST ? -difference : directions[i] == Direction::EAST ? difference : 0;
-            z += directions[i] == Direction::NORTH ? -difference : directions[i] == Direction::SOUTH ? difference : 0;
+            x += direction->getStepX() * difference;
+            y += direction->getStepY() * difference;
+            z += direction->getStepZ() * difference;
         }
     }
-    if (depth >= 0 && depth < 8)
-        y = 0.0;
     return Vec3::newTemp(x, y, z)->normalize();
 }
 
@@ -235,9 +247,29 @@ Vec3* LiquidBlock::handleEntityInside(Level* level, const BlockPos& pos, boost::
     return motion;
 }
 
-void LiquidBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
+void LiquidBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*,
+                               const boost::shared_ptr<Entity>& entity)
 {
-    Block::entityInside(level, pos, state, entity);
+    const BlockState* below = level->getBlockState(entity->mTickCache, pos.below());
+    if (below->getBlock() != Blocks::bubble_column_segment)
+        return;
+
+    entity->onAboveBubbleCol(below->getValue(BubbleColumnSegment::DRAG));
+    if (level->mIsClientSide || level->mRandom->nextInt(4) == 0)
+        return;
+
+    ServerLevel* serverLevel = static_cast<ServerLevel*>(level);
+    for (int i = 0; i < 2; ++i)
+    {
+        float x = static_cast<float>(pos.x) + level->mRandom->nextFloat();
+        float z = static_cast<float>(pos.z) + level->mRandom->nextFloat();
+        serverLevel->sendParticles(PARTICLE_SPLASH, x, pos.y + 1, z, 1, 0.0, 0.0, 0.0, 1.0,
+                                   arrayWithLength<int>());
+        x = static_cast<float>(pos.x) + level->mRandom->nextFloat();
+        z = static_cast<float>(pos.z) + level->mRandom->nextFloat();
+        serverLevel->sendParticles(PARTICLE_BUBBLE, x, pos.y + 1, z, 1, 0.0, 0.01, 0.0, 0.2,
+                                   arrayWithLength<int>());
+    }
 }
 
 int LiquidBlock::getTickDelay(Level* level)
@@ -271,36 +303,98 @@ int LiquidBlock::getRenderLayer()
 
 void LiquidBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
+    double x = pos.x;
+    double y = pos.y;
+    double z = pos.z;
+
     if (mMaterial == Material::WATER)
     {
-        if (random->nextInt(64) == 0)
-            level->addParticle(PARTICLE_SUSPENDED, pos.x + random->nextDouble(), pos.y + random->nextDouble(),
-                               pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>(2, true));
+        if (static_cast<unsigned int>(state->getValue(LEVEL) - 1) < 7)
+        {
+            if (random->nextInt(64) == 0)
+            {
+                level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WATER_AMBIENT,
+                                      SoundSource::eSoundSource_Blocks, random->nextFloat() * 0.25f + 0.75f,
+                                      random->nextFloat() * 1.0f + 0.5f, false, 16.0f);
+            }
+        }
+        else if (random->nextInt(25) == 0)
+        {
+            Minecraft* minecraft = Minecraft::GetInstance();
+            for (int i = 0; i < 4; ++i)
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[i];
+                if (player && player->isUnderLiquid(mMaterial) && player->distanceToSqr(pos) < 64.0)
+                {
+                    level->addParticle(PARTICLE_SUSPENDED, x + random->nextFloat(), y + random->nextFloat(),
+                                       z + random->nextFloat(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+                    break;
+                }
+            }
+        }
 
-        const BlockState* above = level->getBlockState(pos.above());
-        if (above != NULL && above->getMaterial() == Material::AIR && random->nextInt(10) == 0)
-            level->addParticle(PARTICLE_DRIP_WATER, pos.x + random->nextFloat(), pos.y + 1.0,
-                               pos.z + random->nextFloat(), 0.0, 0.0, 0.0,
-                               arrayWithLength<int>(2, true));
+        const BlockState* below = level->getBlockState(pos.below());
+        if (below->getBlock() == Blocks::bubble_column_segment)
+        {
+            if (below->getValue(BubbleColumnSegment::DRAG))
+            {
+                level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8, pos.z + 0.3, 0.0,
+                                                0.0, 0.0, arrayWithLength<int>());
+            }
+            else
+            {
+                double bubbleX = x + random->nextFloat();
+                double bubbleZ = z + random->nextFloat();
+                level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE_POP, bubbleX, y + 1.05, bubbleZ, 0.0, 0.0, 0.0,
+                                                arrayWithLength<int>());
+            }
+        }
     }
-    else if (mMaterial == Material::LAVA)
+
+    if (mMaterial == Material::LAVA && level->getBlockState(pos.above())->getBlock()->mMaterial == Material::AIR
+        && !level->getBlockState(pos.above())->isSolidRender())
     {
         if (random->nextInt(100) == 0)
-            level->addParticle(PARTICLE_LAVA, pos.x + random->nextDouble(), pos.y + 1.0,
-                               pos.z + random->nextDouble(), 0.0, 0.0, 0.0,
-                               arrayWithLength<int>(2, true));
+        {
+            double lavaX = x + random->nextFloat();
+            double lavaY = y + state->getShape(level, pos)->mMaxY;
+            double lavaZ = z + random->nextFloat();
+            level->addParticle(PARTICLE_LAVA, lavaX, lavaY, lavaZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->playLocalSound(lavaX, lavaY, lavaZ, SoundEvents::LAVA_POP, SoundSource::eSoundSource_Blocks,
+                                  random->nextFloat() * 0.2f + 0.2f, random->nextFloat() * 0.15f + 0.9f, false,
+                                  16.0f);
+        }
+        if (random->nextInt(200) == 0)
+        {
+            level->playLocalSound(x, y, z, SoundEvents::LAVA_AMBIENT, SoundSource::eSoundSource_Blocks,
+                                  random->nextFloat() * 0.2f + 0.2f, random->nextFloat() * 0.15f + 0.9f, false,
+                                  16.0f);
+        }
+    }
 
-        const BlockState* above = level->getBlockState(pos.above());
-        if (above != NULL && above->getMaterial() == Material::AIR && random->nextInt(200) == 0)
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextFloat(), pos.y + 1.0,
-                               pos.z + random->nextFloat(), 0.0, 0.0, 0.0,
-                               arrayWithLength<int>(2, true));
+    if (random->nextInt(10) == 0 && level->getBlockState(pos.below())->isTopSolidBlocking())
+    {
+        Material* material = level->getBlockState(pos.below(2))->getBlock()->mMaterial;
+        if (!material->blocksMotion() && !material->isLiquid())
+        {
+            double dripX = x + random->nextFloat();
+            double dripY = y - 1.05;
+            double dripZ = z + random->nextFloat();
+            if (mMaterial == Material::WATER)
+                level->addParticle(PARTICLE_DRIP_WATER, dripX, dripY, dripZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            else
+                level->addParticle(PARTICLE_DRIP_LAVA, dripX, dripY, dripZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
     }
 }
 
 LiquidBlock* LiquidBlock::getDynamicLiquid(Material* material)
 {
-    return dynamic_cast<LiquidBlock*>(Block::byId(material == Material::WATER ? 8 : 10));
+    if (material == Material::WATER)
+        return static_cast<LiquidBlock*>(Blocks::flowing_water);
+    if (material == Material::LAVA)
+        return static_cast<LiquidBlock*>(Blocks::flowing_lava);
+    return NULL;
 }
 
 double LiquidBlock::getSlopeAngle(LevelSource* levelSource, const BlockPos& pos, Material* material, const BlockState* state)
@@ -321,7 +415,9 @@ void LiquidBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* s
 
 void LiquidBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    updateLiquid(level, pos, state);
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || miniGame->shouldTickBlocks())
+        updateLiquid(level, pos, state);
 }
 
 bool LiquidBlock::updateLiquid(Level* level, const BlockPos& pos, const BlockState* state)
@@ -415,9 +511,16 @@ unsigned int LiquidBlock::getStaticLiquidElementId(unsigned short elementId)
 
 void LiquidBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water" : L"lava");
-    mFlowIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water_flow" : L"lava_flow");
-    mUseSharedIcon = false;
+    if (mMaterial == Material::LAVA)
+    {
+        mIcon = iconRegister->registerIcon(L"lava");
+        mFlowIcon = iconRegister->registerIcon(L"lava_flow");
+    }
+    else
+    {
+        mIcon = iconRegister->registerIcon(L"water");
+        mFlowIcon = iconRegister->registerIcon(L"water_flow");
+    }
 }
 
 TextureAtlasSprite* LiquidBlock::getTexture(const Direction* direction, const BlockState*)
@@ -456,7 +559,7 @@ void LiquidBlock::setLiquidElement(Level* level, const BlockPos& pos, unsigned s
 
 void LiquidBlock::trySpreadFire(Level* level, const BlockPos& pos, Random* random)
 {
-    if (!level->getGameRules()->getBoolean(0))
+    if (!level->getGameRules()->getBoolean(GameRules::RULE_DOFIRETICK))
         return;
 
     const BlockState* above = level->getBlockState(pos.above());
@@ -483,7 +586,7 @@ void LiquidBlock::trySpreadFire(Level* level, const BlockPos& pos, Random* rando
                 BlockPos adjacent = candidate.relative(directions[direction]);
                 if (level->getBlockState(adjacent)->getMaterial() == Material::AIR)
                 {
-                    level->setBlock(adjacent, Blocks::FIRE->defaultBlockState(), 11, false);
+                    level->setBlock(adjacent, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                     return;
                 }
             }
@@ -506,7 +609,7 @@ void LiquidBlock::trySpreadFire(Level* level, const BlockPos& pos, Random* rando
                 BlockPos adjacent = candidate.relative(directions[direction]);
                 if (level->getBlockState(adjacent)->getMaterial() == Material::AIR)
                 {
-                    level->setBlock(adjacent, Blocks::FIRE->defaultBlockState(), 11, false);
+                    level->setBlock(adjacent, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                     return;
                 }
             }

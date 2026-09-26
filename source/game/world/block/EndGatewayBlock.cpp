@@ -1,9 +1,9 @@
 #include "game/world/block/EndGatewayBlock.hpp"
+#include "game/world/block/Blocks.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/entity/mob/TheEndGatewayEntity.hpp"
-#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -15,8 +15,8 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-static const AABB* END_GATEWAY_CLIP_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
-static Property* END_GATEWAY_DATA = IntegerProperty::create(L"age", 0, 3);
+AbstractProperty<int>* EndGatewayBlock::PORTAL_NUMBER =
+    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"fj_portal_number", 0, 15));
 
 EndGatewayBlock::EndGatewayBlock(Material* material)
     : BaseEntityBlock(material)
@@ -41,13 +41,12 @@ bool EndGatewayBlock::shouldRenderFace(const BlockState*, LevelSource* levelSour
 {
     const BlockPos neighbor = pos.relative(direction);
     const BlockState* state = levelSource->getBlockState(neighbor);
-    return state->getBlock()->isSolidRender(state) == false
-        && state->getBlock()->getRenderShape(state) != 0;
+    return !state->isSolidRender() && state->getBlock() != Blocks::end_gateway;
 }
 
 const AABB* EndGatewayBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return END_GATEWAY_CLIP_SHAPE;
+    return NULL;
 }
 
 bool EndGatewayBlock::isSolidRender(const BlockState*) const
@@ -130,20 +129,17 @@ bool EndGatewayBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* EndGatewayBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { END_GATEWAY_DATA };
+    static const Property* properties[] = { PORTAL_NUMBER };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 const BlockState* EndGatewayBlock::getBlockState(int data)
 {
     TypedBoxed<int> value(data);
-    return defaultBlockState()->setBoxedValue(END_GATEWAY_DATA, &value);
+    return defaultBlockState()->setBoxedValue(PORTAL_NUMBER, &value);
 }
 
 int EndGatewayBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    Boxed* value = state->getBoxedValue(END_GATEWAY_DATA);
-    if (value == NULL)
-        return 0;
-    return static_cast<const TypedBoxed<int>*>(value)->getValue();
+    return state->getValue(PORTAL_NUMBER);
 }

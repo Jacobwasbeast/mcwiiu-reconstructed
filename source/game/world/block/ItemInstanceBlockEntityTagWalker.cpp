@@ -137,11 +137,11 @@ std::wstring ItemInstanceBlockEntityTagWalker::getBlockEntityId(int version, con
 
 CompoundTag* ItemInstanceBlockEntityTagWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (tag->contains(L"tag", 10))
+    if (tag->contains(L"tag", Tag::TAG_COMPOUND))
     {
         CompoundTag* itemTag = tag->getCompound(L"tag");
 
-        if (itemTag->contains(L"BlockEntityTag", 10))
+        if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
         {
             CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
 

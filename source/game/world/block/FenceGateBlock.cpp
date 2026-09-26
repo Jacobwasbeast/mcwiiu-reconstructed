@@ -1,4 +1,6 @@
 #include "game/world/block/FenceGateBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -12,6 +14,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
@@ -25,15 +28,16 @@ AbstractProperty<bool>* FenceGateBlock::IN_WALL = static_cast<AbstractProperty<b
 FenceGateBlock::FenceGateBlock(const std::wstring& name, PlanksBlock::Variant* variant)
     : HorizontalDirectionalBlock(Material::WOOD, variant->getMaterialColor()), mTextureName(name)
 {
-    mBlockType = EBLOCK_TYPE_FENCE;
+    mIsFenceGate = true;
+    mBlockType = EBLOCK_TYPE_FENCE_GATE;
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    TypedBoxed<bool> falseValue(false);
-    const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
-    state = state->setBoxedValue(POWERED, &falseValue);
-    state = state->setBoxedValue(IN_WALL, &falseValue);
-    registerDefaultState(state->setBoxedValue(OPEN, &falseValue));
+    TypedBoxed<bool> open(false);
+    TypedBoxed<bool> powered(false);
+    TypedBoxed<bool> inWall(false);
+    registerDefaultState(mStateDefinition->any()
+                             ->setBoxedValue(OPEN, &open)
+                             ->setBoxedValue(POWERED, &powered)
+                             ->setBoxedValue(IN_WALL, &inWall));
 }
 
 FenceGateBlock::~FenceGateBlock()
@@ -57,12 +61,16 @@ const BlockState* FenceGateBlock::fillVirtualBlockStateProperties(const BlockSta
                                                                    const BlockPos& pos)
 {
     const Direction::Axis* axis = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis();
-    bool inWall = false;
-    if (axis == Direction::Axis::X)
-        inWall = levelSource->getBlock(pos.west())->getRenderLayer() == 5 || levelSource->getBlock(pos.east())->getRenderLayer() == 5;
-    else if (axis == Direction::Axis::Z)
-        inWall = levelSource->getBlock(pos.north())->getRenderLayer() == 5 || levelSource->getBlock(pos.south())->getRenderLayer() == 5;
-    TypedBoxed<bool> value(inWall);
+    const bool inWall =
+        (axis == Direction::Axis::Z
+         && (levelSource->getBlockState(pos.west())->getBlock() == Blocks::cobblestone_wall
+             || levelSource->getBlockState(pos.east())->getBlock() == Blocks::cobblestone_wall))
+        || (axis == Direction::Axis::X
+            && (levelSource->getBlockState(pos.north())->getBlock() == Blocks::cobblestone_wall
+                || levelSource->getBlockState(pos.south())->getBlock() == Blocks::cobblestone_wall));
+    if (!inWall)
+        return state;
+    TypedBoxed<bool> value(true);
     return state->setBoxedValue(IN_WALL, &value);
 }
 
@@ -134,22 +142,28 @@ bool FenceGateBlock::use(Level* level, const BlockPos& pos, const BlockState* st
             TypedBoxed<bool> value(false);
             newState = state->setBoxedValue(OPEN, &value);
         }
-        level->setBlock(pos, newState, 11, false);
-        level->levelEvent(player, newState->getValue(OPEN) ? 1008 : 1014, pos, 0);
+        level->setBlock(pos, newState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        level->levelEvent(player, newState->getValue(OPEN) ? LevelEvent::SOUND_OPEN_FENCE_GATE : LevelEvent::SOUND_CLOSE_FENCE_GATE, pos, 0);
         return true;
     }
-    level->levelEvent(player, open ? 1008 : 1014, pos, 0);
+    level->levelEvent(player, open ? LevelEvent::SOUND_OPEN_FENCE_GATE : LevelEvent::SOUND_CLOSE_FENCE_GATE, pos, 0);
     return false;
 }
 
 void FenceGateBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    bool powered = level->hasNeighborSignal(pos);
-    if (powered != state->getValue(POWERED))
+    if (level->mIsClientSide)
+        return;
+    const bool powered = level->hasNeighborSignal(pos);
+    if (state->getValue(POWERED) != powered)
     {
         TypedBoxed<bool> value(powered);
-        level->setBlock(pos, state->setBoxedValue(POWERED, &value)->setBoxedValue(OPEN, &value), 11, false);
-        level->levelEvent(powered ? 1008 : 1010, pos, 0);
+        level->setBlock(pos, state->setBoxedValue(POWERED, &value)->setBoxedValue(OPEN, &value), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        if (state->getValue(OPEN) != powered)
+        {
+            level->levelEvent(boost::shared_ptr<Player>(),
+                              powered ? LevelEvent::SOUND_OPEN_FENCE_GATE : LevelEvent::SOUND_CLOSE_FENCE_GATE, pos, 0);
+        }
     }
 }
 
@@ -161,11 +175,9 @@ const BlockState* FenceGateBlock::getBlockState(int data)
     TypedBoxed<const Direction*> facing(direction);
     TypedBoxed<bool> open((data & 4) != 0);
     TypedBoxed<bool> powered((data & 8) != 0);
-    TypedBoxed<bool> inWall(false);
     const BlockState* state = defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
     state = state->setBoxedValue(OPEN, &open);
-    state = state->setBoxedValue(POWERED, &powered);
-    return state->setBoxedValue(IN_WALL, &inWall);
+    return state->setBoxedValue(POWERED, &powered);
 }
 
 int FenceGateBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -175,7 +187,7 @@ int FenceGateBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int FenceGateBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    return (tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy ? 0xea4e897eu : Block::GetInteractTooltip(tooltipData);
+    return (tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy ? IDS_TOOLTIPS_USE : Block::GetInteractTooltip(tooltipData);
 }
 
 bool FenceGateBlock::canContainLiquid(const BlockState*) const { return true; }
@@ -189,13 +201,15 @@ BlockStateDefinition* FenceGateBlock::createBlockStateDefinition()
 EBlockFaceShape FenceGateBlock::getBlockFaceShape(LevelSource*, const BlockState* state, const BlockPos&, const Direction* direction)
 {
     if (direction == Direction::UP || direction == Direction::DOWN) return BLOCK_FACE_UNDEFINED;
-    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == direction->getClockWise()->getAxis() ? BLOCK_FACE_MIDDLE_POLE_THICK : BLOCK_FACE_UNDEFINED;
+    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == direction->getClockWise()->getAxis() ? BLOCK_FACE_MIDDLE_POLE : BLOCK_FACE_UNDEFINED;
 }
 
 bool FenceGateBlock::isFenceGate(Block* block)
 {
-    return block != NULL && block->mBlockType == EBLOCK_TYPE_FENCE;
+    return block == Blocks::fence_gate || block == Blocks::spruce_fence_gate || block == Blocks::birch_fence_gate
+        || block == Blocks::jungle_fence_gate || block == Blocks::acacia_fence_gate
+        || block == Blocks::dark_oak_fence_gate;
 }
 
 void FenceGateBlock::registerIcons(IconRegister* iconRegister) { mIcon = iconRegister->registerIcon(mTextureName); }
-EBlockRenderShape FenceGateBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(21); }
+EBlockRenderShape FenceGateBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_FENCE_GATE; }

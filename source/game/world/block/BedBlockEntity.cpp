@@ -1,4 +1,5 @@
 #include "game/world/block/BedBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -86,7 +87,7 @@ bool BedBlockEntity::isHeadPiece()
 
 unsigned long long BedBlockEntity::GetType()
 {
-    return 0x0000000001000210ULL;
+    return BlockEntityType::BED;
 }
 
 BlockEntity* BedBlockEntity::create()

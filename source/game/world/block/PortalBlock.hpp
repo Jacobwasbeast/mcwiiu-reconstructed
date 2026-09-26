@@ -45,13 +45,13 @@ public:
     virtual ~PortalBlock();
 
     static void blockStaticCtor();
-    static BlockPattern::BlockPatternMatch* getPortalShape(Level* level, const BlockPos& pos);
+    BlockPattern::BlockPatternMatch* getPortalShape(Level* level, const BlockPos& pos);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     static int getDataForAxis(Direction::Axis* axis);
     virtual bool isCubeShaped(const BlockState* state);
-    bool trySpawnPortal(Level* level, const BlockPos& pos, bool create);
+    virtual bool trySpawnPortal(Level* level, const BlockPos& pos, bool create);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
     virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
     virtual int getResourceCount(Random* random);

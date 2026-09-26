@@ -1,4 +1,5 @@
 #include "game/world/block/PrismarineBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 
@@ -17,11 +18,11 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 PrismarineBlock::Variant* PrismarineBlock::Variant::ROUGH =
-    new Variant(0, L"prismarine", 0xc36ed73b, 0x4d2dbbd6, L"prismarine_rough");
+    new Variant(0, L"prismarine", IDS_TILE_PRISMARINE, IDS_DESC_PRISMARINE, L"prismarine_rough");
 PrismarineBlock::Variant* PrismarineBlock::Variant::BRICKS =
-    new Variant(1, L"prismarine_bricks", 0xf0338e76, 0xc6915853, L"prismarine_bricks");
+    new Variant(1, L"prismarine_bricks", IDS_TILE_BRICKS_PRISMARINE, IDS_DESC_BRICKS_PRISMARINE, L"prismarine_bricks");
 PrismarineBlock::Variant* PrismarineBlock::Variant::DARK =
-    new Variant(2, L"dark_prismarine", 0x704b6b38, 0xc9e0c23d, L"prismarine_dark");
+    new Variant(2, L"dark_prismarine", IDS_TILE_PRISMARINE_DARK, IDS_DESC_PRISMARINE_DARK, L"prismarine_dark");
 
 static PrismarineBlock::Variant* gPrismarineVariants[3] = {
     PrismarineBlock::Variant::ROUGH,
@@ -31,7 +32,9 @@ static PrismarineBlock::Variant* gPrismarineVariants[3] = {
 EnumProperty<PrismarineBlock::Variant*>* PrismarineBlock::VARIANT = NULL;
 static Predicate<PrismarineBlock::Variant*>* gPrismarineVariantPredicate =
     new Predicates<PrismarineBlock::Variant*>::ConstantPredicate(true);
-static int gPrismarineVariantData[3] = { -1, -1, -1 };
+int PrismarineBlock::ROUGH_DATA;
+int PrismarineBlock::BRICKS_DATA;
+int PrismarineBlock::DARK_DATA;
 
 PrismarineBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
                                   int descriptionId, const std::wstring& serializedName)
@@ -96,9 +99,9 @@ void PrismarineBlock::blockStaticCtor()
     values.insert(gPrismarineVariants[1]);
     values.insert(gPrismarineVariants[2]);
     VARIANT = EnumProperty<Variant*>::create(name, typeid(Variant), values, gPrismarineVariantPredicate);
-    gPrismarineVariantData[0] = gPrismarineVariants[0]->getData();
-    gPrismarineVariantData[1] = gPrismarineVariants[1]->getData();
-    gPrismarineVariantData[2] = gPrismarineVariants[2]->getData();
+    ROUGH_DATA = gPrismarineVariants[0]->getData();
+    BRICKS_DATA = gPrismarineVariants[1]->getData();
+    DARK_DATA = gPrismarineVariants[2]->getData();
 }
 
 PrismarineBlock::PrismarineBlock()
@@ -115,7 +118,7 @@ PrismarineBlock::~PrismarineBlock()
 
 std::wstring PrismarineBlock::getName()
 {
-    return L10N::GetString(0xc36ed73b);
+    return L10N::GetString(IDS_TILE_PRISMARINE);
 }
 
 const MaterialColor* PrismarineBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)

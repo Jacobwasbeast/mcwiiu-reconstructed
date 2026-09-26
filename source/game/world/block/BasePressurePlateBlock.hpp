@@ -34,7 +34,7 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
     virtual bool isPossibleToRespawnInThis();
-    virtual bool canPlaceOn(Level* level, const BlockPos& pos);
+    bool canPlaceOn(Level* level, const BlockPos& pos);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
     virtual void randomTick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
@@ -42,13 +42,13 @@ public:
     virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity);
     virtual void checkPressed(Level* level, const BlockPos& pos, const BlockState* state, int signal);
 
-    virtual int getSignalForState(const BlockState* state) = 0;
-    virtual const BlockState* setSignalForState(const BlockState* state, int signal) = 0;
+    virtual void playOnSound(Level* level, const BlockPos& pos) = 0;
+    virtual void playOffSound(Level* level, const BlockPos& pos) = 0;
     virtual const AABB* getSensitiveAABB(const BlockPos& pos);
     virtual void updateNeighbours(Level* level, const BlockPos& pos);
     virtual int getSignalStrength(Level* level, const BlockPos& pos) = 0;
-    virtual void playOnSound(Level* level, const BlockPos& pos) = 0;
-    virtual void playOffSound(Level* level, const BlockPos& pos) = 0;
+    virtual int getSignalForState(const BlockState* state) = 0;
+    virtual const BlockState* setSignalForState(const BlockState* state, int signal) = 0;
 
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);

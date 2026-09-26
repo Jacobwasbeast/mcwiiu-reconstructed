@@ -1,4 +1,5 @@
 #include "game/world/block/BlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <map>
 #include <boost/unordered_map.hpp>
@@ -144,7 +145,7 @@ void BlockEntity::setChanged()
         const BlockState* state = mLevel->getBlockState(mPos);
         mData = state->getBlock()->convertBlockStateToLegacyData(state);
         mLevel->blockEntityChanged(mPos, shared_from_this());
-        if (getBlock() != Blocks::AIR)
+        if (getBlock() != Blocks::air)
         {
             mLevel->updateNeighbourForOutputSignal(mPos, getBlock());
         }
@@ -255,32 +256,32 @@ void BlockEntity::operator=(const BlockEntity& other)
 
 void BlockEntity::staticCtor()
 {
-    Register(1, FurnaceBlockEntity::create, 0x1e00202ULL, L"furnace");
-    Register(2, ChestBlockEntity::create, 0x1e00201ULL, L"chest");
-    Register(3, EnderChestBlockEntity::create, 0x1200208ULL, L"ender_Chest");
-    Register(4, JukeboxBlock::Entity::create, 0x1000204ULL, L"jukebox");
-    Register(5, DispenserBlockEntity::create, 0x3c00200ULL, L"dispenser");
-    Register(6, DropperBlockEntity::create, 0x3c00201ULL, L"dropper");
-    Register(7, SignBlockEntity::create, 0x1000202ULL, L"sign");
-    Register(8, MobSpawnerBlockEntity::create, 0x1200201ULL, L"mob_spawner");
-    Register(9, MusicBlockEntity::create, 0x1000203ULL, L"noteblock");
-    Register(10, PistonMovingBlockEntity::create, 0x1200205ULL, L"piston");
-    Register(11, BrewingStandBlockEntity::create, 0x1e00203ULL, L"brewing_stand");
-    Register(12, EnchantmentTableEntity::create, 0x1200206ULL, L"enchanting_table");
-    Register(13, TheEndPortalBlockEntity::create, 0x1300200ULL, L"end_portal");
-    Register(14, BeaconBlockEntity::create, 0x1e00204ULL, L"beacon");
-    Register(15, SkullBlockEntity::create, 0x1200207ULL, L"skull");
-    Register(16, DaylightDetectorBlockEntity::create, 0x120020bULL, L"daylight_detector");
-    Register(17, HopperBlockEntity::create, 0x1e00205ULL, L"hopper");
-    Register(18, ComparatorBlockEntity::create, 0x100020aULL, L"comparator");
-    Register(19, FlowerPotBlockEntity::create, 0x100020dULL, L"flower_pot");
-    Register(20, BannerBlockEntity::create, 0x100020cULL, L"banner");
-    Register(22, TheEndGatewayEntity::create, 0x1300201ULL, L"end_gateway");
-    Register(23, CommandBlockEntity::create, 0x1000209ULL, L"command_block");
-    Register(24, ShulkerBoxBlockEntity::create, 0x120020fULL, L"shulker_box");
-    Register(25, BedBlockEntity::create, 0x1000210ULL, L"bed");
-    Register(26, CauldronBlockEntity::create, 0x1000211ULL, L"cauldron");
-    Register(27, ConduitBlockEntity::create, 0x1200212ULL, L"conduit");
+    Register(1, FurnaceBlockEntity::create, BlockEntityType::FURNACE, L"furnace");
+    Register(2, ChestBlockEntity::create, BlockEntityType::CHEST, L"chest");
+    Register(3, EnderChestBlockEntity::create, BlockEntityType::ENDER_CHEST, L"ender_Chest");
+    Register(4, JukeboxBlock::Entity::create, BlockEntityType::JUKEBOX, L"jukebox");
+    Register(5, DispenserBlockEntity::create, BlockEntityType::DISPENSER, L"dispenser");
+    Register(6, DropperBlockEntity::create, BlockEntityType::DROPPER, L"dropper");
+    Register(7, SignBlockEntity::create, BlockEntityType::SIGN, L"sign");
+    Register(8, MobSpawnerBlockEntity::create, BlockEntityType::MOB_SPAWNER, L"mob_spawner");
+    Register(9, MusicBlockEntity::create, BlockEntityType::MUSIC, L"noteblock");
+    Register(10, PistonMovingBlockEntity::create, BlockEntityType::PISTON_MOVING, L"piston");
+    Register(11, BrewingStandBlockEntity::create, BlockEntityType::BREWING_STAND, L"brewing_stand");
+    Register(12, EnchantmentTableEntity::create, BlockEntityType::ENCHANTMENT_TABLE_ENTITY, L"enchanting_table");
+    Register(13, TheEndPortalBlockEntity::create, BlockEntityType::THE_END_PORTAL, L"end_portal");
+    Register(14, BeaconBlockEntity::create, BlockEntityType::BEACON, L"beacon");
+    Register(15, SkullBlockEntity::create, BlockEntityType::SKULL, L"skull");
+    Register(16, DaylightDetectorBlockEntity::create, BlockEntityType::DAYLIGHT_DETECTOR, L"daylight_detector");
+    Register(17, HopperBlockEntity::create, BlockEntityType::HOPPER, L"hopper");
+    Register(18, ComparatorBlockEntity::create, BlockEntityType::COMPARATOR, L"comparator");
+    Register(19, FlowerPotBlockEntity::create, BlockEntityType::FLOWER_POT, L"flower_pot");
+    Register(20, BannerBlockEntity::create, BlockEntityType::BANNER, L"banner");
+    Register(22, TheEndGatewayEntity::create, BlockEntityType::THE_END_GATEWAY_ENTITY, L"end_gateway");
+    Register(23, CommandBlockEntity::create, BlockEntityType::COMMAND, L"command_block");
+    Register(24, ShulkerBoxBlockEntity::create, BlockEntityType::SHULKER_BOX, L"shulker_box");
+    Register(25, BedBlockEntity::create, BlockEntityType::BED, L"bed");
+    Register(26, CauldronBlockEntity::create, BlockEntityType::CAULDRON, L"cauldron");
+    Register(27, ConduitBlockEntity::create, BlockEntityType::CONDUIT, L"conduit");
 }
 
 void BlockEntity::Register(int id, Creator creator, unsigned long long type, const std::wstring& name)

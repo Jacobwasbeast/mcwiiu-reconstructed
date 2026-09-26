@@ -3,9 +3,12 @@
 
 #include <string>
 #include "game/core/Bush.hpp"
+#include "game/world/block/BonemealableBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 
-class SaplingBlock : public Bush
+template <class T> class EnumProperty;
+
+class SaplingBlock : public Bush, public BonemealableBlock
 {
 public:
     SaplingBlock();
@@ -20,7 +23,7 @@ public:
     virtual std::wstring getName();
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual void tick(Level*, const BlockPos&, const BlockState*, Random*);
-    void advanceTree(Level*, const BlockPos&, const BlockState*, Random*);
+    virtual void advanceTree(Level*, const BlockPos&, const BlockState*, Random*);
     virtual int getSpawnResourcesAuxValue(const BlockState*);
     virtual const BlockState* getBlockState(int);
     virtual int convertBlockStateToLegacyData(const BlockState*);
@@ -30,6 +33,9 @@ public:
     virtual TextureAtlasSprite* getTexture(const Direction*, const BlockState*);
     virtual void registerIcons(IconRegister*);
     virtual int getDescriptionId(int);
+
+    static EnumProperty<PlanksBlock::Variant*>* TYPE;
+
 private:
     TextureAtlasSprite* mIcons[6];
 };

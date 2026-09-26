@@ -14,15 +14,19 @@ class LevelSource;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class FarmBlock : public Block
 {
 public:
+    static AbstractProperty<int>* MOISTURE;
+
     FarmBlock();
     virtual ~FarmBlock();
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual bool isSolidRender(const BlockState*) const;
     virtual bool isCubeShaped(const BlockState*);
-    virtual void turnToDirt(Level*, const BlockPos&);
+    void turnToDirt(Level*, const BlockPos&);
     virtual void tick(Level*, const BlockPos&, const BlockState*, Random*);
     virtual void fallOn(Level*, const BlockPos&, boost::shared_ptr<Entity>, float);
     virtual bool isUnderCrops(Level*, const BlockPos&);

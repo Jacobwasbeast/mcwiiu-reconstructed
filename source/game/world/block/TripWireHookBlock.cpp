@@ -11,16 +11,18 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/TripWireBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 DirectionProperty* TripWireHookBlock::FACING = NULL;
-AbstractProperty<bool>* TripWireHookBlock::POWERED = NULL;
-AbstractProperty<bool>* TripWireHookBlock::ATTACHED = NULL;
-AbstractProperty<bool>* TripWireHookBlock::DISARMED = NULL;
+AbstractProperty<bool>* TripWireHookBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
+AbstractProperty<bool>* TripWireHookBlock::ATTACHED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"attached"));
+AbstractProperty<bool>* TripWireHookBlock::SUSPENDED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"suspended"));
 const AABB* TripWireHookBlock::AABB_DOWN = AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 0.125, 0.625);
 const AABB* TripWireHookBlock::AABB_UP = AABB::newPermanent(0.0, 0.875, 0.375, 1.0, 1.0, 0.625);
 const AABB* TripWireHookBlock::AABB_NORTH = AABB::newPermanent(0.3125, 0.0, 0.625, 0.6875, 0.625, 1.0);
@@ -37,7 +39,7 @@ TripWireHookBlock::TripWireHookBlock() : Block(Material::DECORATION)
     TypedBoxed<bool> falseValue(false);
     state = state->setBoxedValue(POWERED, &falseValue);
     state = state->setBoxedValue(ATTACHED, &falseValue);
-    registerDefaultState(state->setBoxedValue(DISARMED, &falseValue));
+    registerDefaultState(state->setBoxedValue(SUSPENDED, &falseValue));
     setTicking(true);
 }
 
@@ -46,9 +48,6 @@ TripWireHookBlock::~TripWireHookBlock() {}
 void TripWireHookBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
-    POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
-    ATTACHED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"attached"));
-    DISARMED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"disarmed"));
 }
 
 const AABB* TripWireHookBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -79,8 +78,12 @@ bool TripWireHookBlock::mayPlace(Level* level, const BlockPos& pos, const Direct
 
 bool TripWireHookBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
-        if (mayPlace(level, pos, *it)) return true;
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
+    {
+        if (mayPlace(level, pos, directions.data[i]))
+            return true;
+    }
     return false;
 }
 
@@ -135,73 +138,93 @@ void TripWireHookBlock::playSound(Level* level, const BlockPos& pos, bool attach
     }
 }
 
-const BlockState* TripWireHookBlock::calculateState(Level* level, const BlockPos& pos, const BlockState* state, bool attached, bool powered, int distance, const BlockState* replacement)
+void TripWireHookBlock::calculateState(Level* level, const BlockPos& pos, const BlockState* state,
+                                       bool isBeingDestroyed, bool canUpdate, int wireSource,
+                                       const BlockState* wireSourceState)
 {
     const Direction* facing = state->getValue(FACING);
-    const Direction* opposite = facing->getOpposite();
-    bool connected = false;
-    bool wirePowered = false;
-    bool wireDisarmed = false;
-    const BlockState* result = replacement ? replacement : defaultBlockState();
-    for (int i = 1; i <= 41; ++i)
+    bool wasAttached = state->getValue(ATTACHED);
+    bool wasPowered = state->getValue(POWERED);
+    bool attached = !isBeingDestroyed;
+    bool powered = false;
+    int receiverPos = 0;
+    const BlockState* wireStates[42];
+
+    for (int i = 1; i < 42; ++i)
     {
-        BlockPos check = pos.relative(facing, i);
-        const BlockState* other = level->getBlockState(check);
-        Block* block = other->getBlock();
-        if (block == this)
+        BlockPos testPos = pos.relative(facing, i);
+        const BlockState* testState = level->getBlockState(testPos);
+        if (testState->getBlock() == Blocks::tripwire_hook)
         {
-            if (other->getValue(FACING) == opposite)
+            if (testState->getValue(FACING) == facing->getOpposite())
+                receiverPos = i;
+            break;
+        }
+
+        if (testState->getBlock() != Blocks::tripwire && i != wireSource)
+        {
+            wireStates[i] = NULL;
+            attached = false;
+        }
+        else
+        {
+            if (i == wireSource && wireSourceState != NULL)
+                testState = wireSourceState;
+            bool armed = !testState->getValue(TripWireBlock::SUSPENDED);
+            bool wirePowered = testState->getValue(TripWireBlock::POWERED);
+            powered |= armed && wirePowered;
+            wireStates[i] = testState;
+            if (i == wireSource)
             {
-                connected = i > 1;
-                distance = i;
-                break;
+                level->addToTickNextTick(pos, this, getTickDelay(level));
+                attached &= armed;
             }
         }
-        else if (block != this && block->isSolidBlockingCube(other)) break;
-        wireDisarmed = wireDisarmed || other->getValue(DISARMED);
-        wirePowered = wirePowered || (!other->getValue(DISARMED) && other->getValue(POWERED));
     }
-    bool newAttached = connected && attached;
-    TypedBoxed<bool> attachedValue(newAttached);
-    TypedBoxed<bool> poweredValue(wirePowered || powered);
-    TypedBoxed<const Direction*> facingValue(facing);
-    result = result->setBoxedValue(FACING, &facingValue);
-    result = result->setBoxedValue(ATTACHED, &attachedValue);
-    result = result->setBoxedValue(POWERED, &poweredValue);
-    if (result->hasProperty(DISARMED))
+
+    attached &= receiverPos > 1;
+    powered &= attached;
+    TypedBoxed<bool> attachedValue(attached);
+    TypedBoxed<bool> poweredValue(powered);
+    const BlockState* newState = defaultBlockState()->setBoxedValue(ATTACHED, &attachedValue)
+                                     ->setBoxedValue(POWERED, &poweredValue);
+    if (receiverPos > 0)
     {
-        TypedBoxed<bool> disarmedValue(wireDisarmed);
-        result = result->setBoxedValue(DISARMED, &disarmedValue);
+        BlockPos receiver = pos.relative(facing, receiverPos);
+        const Direction* opposite = facing->getOpposite();
+        TypedBoxed<const Direction*> oppositeValue(opposite);
+        level->setBlock(receiver, newState->setBoxedValue(FACING, &oppositeValue), Block::UPDATE_ALL, false);
+        notifyNeighbors(level, receiver, opposite);
+        playSound(level, receiver, attached, powered, wasAttached, wasPowered);
     }
-    if (distance > 0)
+
+    playSound(level, pos, attached, powered, wasAttached, wasPowered);
+    if (!isBeingDestroyed)
     {
-        BlockPos otherPos = pos.relative(facing, distance);
-        const BlockState* other = level->getBlockState(otherPos);
-        if (other->getBlock() == this)
+        TypedBoxed<const Direction*> facingValue(facing);
+        level->setBlock(pos, newState->setBoxedValue(FACING, &facingValue), Block::UPDATE_ALL, false);
+        if (canUpdate)
+            notifyNeighbors(level, pos, facing);
+    }
+
+    if (wasAttached != attached)
+    {
+        for (int i = 1; i < receiverPos; ++i)
         {
-            TypedBoxed<const Direction*> otherFacing(opposite);
-            const BlockState* otherState = other->setBoxedValue(FACING, &otherFacing)
-                ->setBoxedValue(ATTACHED, &attachedValue)
-                ->setBoxedValue(POWERED, &poweredValue);
-            level->setBlock(otherPos, otherState, 3, false);
-            notifyNeighbors(level, otherPos, opposite);
-            playSound(level, otherPos, newAttached, poweredValue.getValue(),
-                      other->getValue(ATTACHED), other->getValue(POWERED));
+            BlockPos wirePos = pos.relative(facing, i);
+            const BlockState* wireState = wireStates[i];
+            if (wireState != NULL && level->getBlockState(wirePos)->getMaterial() != Material::AIR)
+            {
+                TypedBoxed<bool> wireAttached(attached);
+                level->setBlock(wirePos, wireState->setBoxedValue(TripWireBlock::ATTACHED, &wireAttached), Block::UPDATE_ALL, false);
+            }
         }
     }
-    playSound(level, pos, newAttached, poweredValue.getValue(),
-              state->getValue(ATTACHED), state->getValue(POWERED));
-    if (!attached)
-    {
-        level->setBlock(pos, result, 3, false);
-        notifyNeighbors(level, pos, facing);
-    }
-    return result;
 }
 
 void TripWireHookBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
 {
-    calculateState(level, pos, state, false, false, 0, NULL);
+    calculateState(level, pos, state, false, false, -1, NULL);
 }
 
 bool TripWireHookBlock::checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -224,7 +247,7 @@ void TripWireHookBlock::neighborChanged(const BlockState* state, Level* level, c
 void TripWireHookBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*) {}
 void TripWireHookBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    calculateState(level, pos, state, state->getValue(ATTACHED), state->getValue(POWERED), -1, NULL);
+    calculateState(level, pos, state, false, true, -1, NULL);
 }
 
 void TripWireHookBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -275,9 +298,9 @@ const BlockState* TripWireHookBlock::mirror(const BlockState* state, Mirror* mir
 
 BlockStateDefinition* TripWireHookBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING, POWERED, ATTACHED, DISARMED };
+    const Property* properties[] = { FACING, POWERED, ATTACHED, SUSPENDED };
     return new BlockStateDefinition(this, properties, 4);
 }
 
 EBlockFaceShape TripWireHookBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape TripWireHookBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(29); }
+EBlockRenderShape TripWireHookBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_TRIPWIRE_SOURCE; }

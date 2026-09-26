@@ -9,7 +9,22 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/AbstractBlockState.hpp"
 
-class AABB; class Block; class BlockPos; class Boxed; class Direction; class Entity; class Level; class LevelSource; class Material; class MaterialColor; class Mirror; class Player; class Property; class Rotation; class Vec3; class HitResult;
+class AABB;
+class Block;
+class BlockPos;
+class Boxed;
+class Direction;
+class Entity;
+class Level;
+class LevelSource;
+class Material;
+class MaterialColor;
+class Mirror;
+class Player;
+class Property;
+class Rotation;
+class Vec3;
+class HitResult;
 
 class BlockStateDefinition
 {
@@ -62,7 +77,8 @@ public:
         virtual bool shouldRenderFace(LevelSource*, const BlockPos&, const Direction*) const;
         virtual bool isSolidRender() const;
         virtual const AABB* getClipAABB(LevelSource*, const BlockPos&) const;
-        virtual void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*, boost::shared_ptr<Entity>, bool) const;
+        virtual void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*,
+                                        boost::shared_ptr<Entity>, bool) const;
         virtual const AABB* getShape(LevelSource*, const BlockPos&) const;
         virtual HitResult* clip(Level*, const BlockPos&, Vec3*, Vec3*) const;
         virtual bool isTopSolidBlocking() const;

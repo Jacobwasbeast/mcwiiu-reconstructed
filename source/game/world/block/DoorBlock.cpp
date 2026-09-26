@@ -1,9 +1,11 @@
 #include "game/world/block/DoorBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 namespace {
-const unsigned int kDoorTooltipMetalLocked = 0x4c36cd96;
+const unsigned int kDoorTooltipMetalLocked = IDS_TOOLTIPS_PLACE;
 const unsigned int kDoorTooltipUnavailable = 0xffffffff;
-const unsigned int kDoorTooltipInteract = 0xea4e897e;
+const unsigned int kDoorTooltipInteract = IDS_TOOLTIPS_USE;
 }
 
 #include <typeinfo>
@@ -67,6 +69,8 @@ DoorBlock::DoorBlock(Material* material)
     : Block(material),
       mDoorData(0)
 {
+    mIsDoor = true;
+    mBlockType = EBLOCK_TYPE_DOOR;
     DerivedInit();
     const BlockState* state = mStateDefinition->any();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
@@ -152,8 +156,15 @@ int DoorBlock::getCompositeData(LevelSource* levelSource, const BlockPos& pos)
 
 bool DoorBlock::isPathfindable(LevelSource* levelSource, const BlockPos& pos) { return isOpenFromData(getCompositeData(levelSource, pos)); }
 bool DoorBlock::isCubeShaped(const BlockState*) { return false; }
-int DoorBlock::getCloseSound() { return mMaterial == Material::METAL ? 0x3f3 : 0x3f4; }
-int DoorBlock::getOpenSound() { return mMaterial == Material::METAL ? 0x3ed : 0x3ee; }
+int DoorBlock::getCloseSound()
+{
+    return mMaterial == Material::METAL ? LevelEvent::SOUND_CLOSE_IRON_DOOR : LevelEvent::SOUND_CLOSE_WOODEN_DOOR;
+}
+
+int DoorBlock::getOpenSound()
+{
+    return mMaterial == Material::METAL ? LevelEvent::SOUND_OPEN_IRON_DOOR : LevelEvent::SOUND_OPEN_WOODEN_DOOR;
+}
 const MaterialColor* DoorBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     Block* block = state->getBlock();
@@ -180,7 +191,7 @@ bool DoorBlock::use(Level* level, const BlockPos& pos, const BlockState* state, 
     if (!(pos == lowerPos)) state = level->getBlockState(lowerPos);
     if (state->getBlock() != this) return false;
     const BlockState* changedState = state->cycle(OPEN);
-    level->setBlock(lowerPos, changedState, 11, false);
+    level->setBlock(lowerPos, changedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
     level->setBlocksDirty(lowerPos, pos);
     BlockPos upperPos = lowerPos.above();
     level->updateObservingBlocksAt(upperPos, level->getBlock(upperPos));
@@ -198,7 +209,7 @@ void DoorBlock::setOpen(Level* level, const BlockPos& pos, bool open)
     if (lowerState->getBlock() != this) return;
     if (lowerState->getValue(OPEN) == open) return;
     TypedBoxed<bool> value(open);
-    level->setBlock(lowerPos, lowerState->setBoxedValue(OPEN, &value), 10, false);
+    level->setBlock(lowerPos, lowerState->setBoxedValue(OPEN, &value), Block::UPDATE_CLIENTS | Block::UPDATE_IMMEDIATE, false);
     BlockPos upperPos = lowerPos.above();
     level->updateObservingBlocksAt(upperPos, level->getBlock(upperPos));
     level->setBlocksDirty(lowerPos, pos);
@@ -242,10 +253,10 @@ void DoorBlock::neighborChanged(const BlockState* state, Level* level, const Blo
     if (powered != upperState->getValue(POWERED))
     {
         TypedBoxed<bool> value(powered);
-        level->setBlock(upperPos, upperState->setBoxedValue(POWERED, &value), 3, false);
+        level->setBlock(upperPos, upperState->setBoxedValue(POWERED, &value), Block::UPDATE_ALL, false);
         if (powered != state->getValue(OPEN))
         {
-            level->setBlock(pos, state->setBoxedValue(OPEN, &value), 3, false);
+            level->setBlock(pos, state->setBoxedValue(OPEN, &value), Block::UPDATE_ALL, false);
             level->setBlocksDirty(pos, pos);
             level->levelEvent(boost::shared_ptr<Player>(), powered ? getOpenSound() : getCloseSound(), pos, 0);
         }

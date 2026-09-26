@@ -64,7 +64,7 @@ void NetherWartBlock::tick(Level* level, const BlockPos& pos, const BlockState* 
     {
         TypedBoxed<int> nextAge(age + 1);
         state = state->setBoxedValue(AGE, &nextAge);
-        level->setBlock(pos, state, 2, false);
+        level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
     }
     Bush::tick(level, pos, state, random);
 }
@@ -91,7 +91,7 @@ void NetherWartBlock::spawnResources(Level* level, const BlockPos& pos, const Bl
 
 Item* NetherWartBlock::getResource(const BlockState*, Random*, int)
 {
-    return Items::netherWart;
+    return Items::air;
 }
 
 int NetherWartBlock::getResourceCount(Random*)
@@ -144,5 +144,5 @@ void NetherWartBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape NetherWartBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)6;
+    return BLOCK_RENDER_ROW;
 }

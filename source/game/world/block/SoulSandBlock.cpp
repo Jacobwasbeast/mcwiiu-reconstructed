@@ -40,7 +40,7 @@ void SoulSandBlock::entityInside(Level*, const BlockPos&, const BlockState*,
 void SoulSandBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random*)
 {
     Block* blockAbove = level->getBlock(pos.above().above());
-    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::AIR)
+    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::air)
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
         if (!level->isEmptyWaterBlock(pos.above()))
@@ -62,7 +62,7 @@ void SoulSandBlock::neighborChanged(const BlockState* state, Level* level, const
 void SoulSandBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
     Block* blockAbove = level->getBlock(pos.above().above());
-    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::AIR)
+    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::air)
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
         if (!level->isEmptyWaterBlock(pos.above()))

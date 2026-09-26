@@ -42,6 +42,7 @@ BlockItem* BlockItem::setDescriptionId(unsigned int descriptionId)
 InteractionResultHolder BlockItem::use(Level* level, boost::shared_ptr<Player> player,
                                        InteractionHand::EInteractionHand hand)
 {
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     return Item::use(level, player, hand);
 }
 
@@ -100,7 +101,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
     const BlockState* state = level->getBlockState(placePos);
     Block* block = state->getBlock();
     const Direction* placeDirection = direction;
-    if (block == Blocks::AIR || block == Blocks::tallgrass || block == Blocks::sea_grass)
+    if (block == Blocks::snow_layer || block == Blocks::tallgrass || block == Blocks::sea_grass)
     {
         placeDirection = Direction::UP;
     }
@@ -133,7 +134,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
             mBlock->getStateForPlacement(level, placePos, placeDirection, hitX, hitY, hitZ,
                                          auxValue, player);
         currentlyPlacingBlockPlayer = player;
-        if (!level->setBlock(placePos, placedState, 11, false))
+        if (!level->setBlock(placePos, placedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
         {
             if (mBlock == Blocks::beacon)
             {
@@ -204,7 +205,7 @@ bool BlockItem::mayPlace(Level* level, const BlockPos& pos, const Direction* dir
     const BlockState* state = level->getBlockState(placePos);
     Block* block = state->getBlock();
     const Direction* placeDirection = direction;
-    if (block == Blocks::AIR || block == Blocks::tallgrass)
+    if (block == Blocks::snow_layer || block == Blocks::tallgrass)
     {
         placeDirection = Direction::UP;
     }

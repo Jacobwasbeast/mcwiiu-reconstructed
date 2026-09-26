@@ -1,4 +1,5 @@
 #include "game/world/block/TheEndPortalBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Direction.hpp"
 
@@ -25,5 +26,5 @@ bool TheEndPortalBlockEntity::shouldRenderFace(const Direction* direction)
 
 unsigned long long TheEndPortalBlockEntity::GetType()
 {
-    return 0x01300200ULL;
+    return BlockEntityType::THE_END_PORTAL;
 }

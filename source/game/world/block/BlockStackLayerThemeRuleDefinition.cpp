@@ -10,7 +10,7 @@ BlockStackLayerThemeRuleDefinition::~BlockStackLayerThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType BlockStackLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(63);
+    return ConsoleGameRules::eGameRuleType_BlockStackTheme;
 }
 
 LayerTheme* BlockStackLayerThemeRuleDefinition::Generate() const

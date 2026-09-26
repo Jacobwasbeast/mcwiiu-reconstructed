@@ -14,7 +14,7 @@ StructureBlock::~StructureBlock()
 
 EBlockRenderShape StructureBlock::getRenderShape(const BlockState* state)
 {
-    return (EBlockRenderShape)-1;
+    return BLOCK_RENDER_INVISIBLE;
 }
 
 const AABB* StructureBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)

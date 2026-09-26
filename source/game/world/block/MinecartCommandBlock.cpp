@@ -1,4 +1,5 @@
 #include "game/world/block/MinecartCommandBlock.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/OverwritableWalker.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -21,14 +22,14 @@ MinecartCommandBlock::~MinecartCommandBlock()
 
 void MinecartCommandBlock::staticCtor()
 {
-    DATA_COMMAND_ID = SynchedEntityData::defineId<std::wstring>(0x000000000A800005ULL, ENTITY_TYPE_MINECART, EntityDataSerializers::STRING);
-    DATA_LAST_OUTPUT_ID = SynchedEntityData::defineId<std::wstring>(0x000000000A800005ULL, ENTITY_TYPE_MINECART, EntityDataSerializers::STRING);
+    DATA_COMMAND_ID = SynchedEntityData::defineId<std::wstring>(EntityType::MINECART_COMMAND_BLOCK, EntityType::MINECART, EntityDataSerializers::STRING);
+    DATA_LAST_OUTPUT_ID = SynchedEntityData::defineId<std::wstring>(EntityType::MINECART_COMMAND_BLOCK, EntityType::MINECART, EntityDataSerializers::STRING);
 }
 
 void MinecartCommandBlock::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
     std::wstring name(L"Control");
-    dataFixerUpper->addWalker(static_cast<DataFixTypes::EDataFixTypes>(4), new OverwritableWalker(0x000000000A800005ULL, name));
+    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity, new OverwritableWalker(EntityType::MINECART_COMMAND_BLOCK, name));
 }
 
 void MinecartCommandBlock::defineSynchedData()
@@ -56,7 +57,7 @@ void MinecartCommandBlock::addAdditonalSaveData(CompoundTag* tag)
 
 unsigned long long MinecartCommandBlock::GetType()
 {
-    return 0x000000000A800005ULL;
+    return EntityType::MINECART_COMMAND_BLOCK;
 }
 
 const Minecart::Type* MinecartCommandBlock::getType()

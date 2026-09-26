@@ -17,10 +17,15 @@ class Player;
 class Random;
 class Rotation;
 class Item;
+template <class T> class AbstractProperty;
 
 class RepeaterBlock : public DiodeBlock
 {
 public:
+    static const double DELAY_TORCH_OFFSETS[4];
+    static AbstractProperty<bool>* LOCKED;
+    static AbstractProperty<int>* DELAY;
+
     RepeaterBlock(bool on);
     virtual ~RepeaterBlock();
     virtual std::wstring getName();

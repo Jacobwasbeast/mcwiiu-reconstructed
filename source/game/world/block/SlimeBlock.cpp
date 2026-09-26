@@ -1,4 +1,5 @@
 #include "game/world/block/SlimeBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
@@ -41,7 +42,7 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
 {
     if (entity->mYd > -0.08 && entity->mYd < 0.0)
     {
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
                 boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(entity);
@@ -52,7 +53,7 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
         }
 
         entity->mYd = -entity->mYd;
-        if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
         {
             entity->mYd *= 1.1;
         }
@@ -77,5 +78,5 @@ void SlimeBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Ent
 
 EBlockRenderShape SlimeBlock::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(42);
+    return BLOCK_RENDER_SLIME_BLOCK;
 }

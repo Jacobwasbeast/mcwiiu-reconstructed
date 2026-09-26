@@ -13,9 +13,14 @@ class LevelSource;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class LeafBlock : public TransparentBlock
 {
 public:
+    static AbstractProperty<bool>* DECAYABLE;
+    static AbstractProperty<bool>* CHECK_DECAY;
+
     LeafBlock();
     virtual ~LeafBlock();
 

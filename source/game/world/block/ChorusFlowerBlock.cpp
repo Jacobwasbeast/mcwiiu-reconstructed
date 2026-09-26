@@ -1,4 +1,5 @@
 #include "game/world/block/ChorusFlowerBlock.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -88,15 +89,15 @@ bool ChorusFlowerBlock::allNeighborsEmpty(Level* level, const BlockPos& pos, con
 void ChorusFlowerBlock::placeGrownFlower(Level* level, const BlockPos& pos, int age)
 {
     TypedBoxed<int> value(age);
-    level->setBlock(pos, defaultBlockState()->setBoxedValue(CHORUS_AGE, &value), 2, false);
-    level->levelEvent(0x409, pos, 0);
+    level->setBlock(pos, defaultBlockState()->setBoxedValue(CHORUS_AGE, &value), Block::UPDATE_CLIENTS, false);
+    level->levelEvent(LevelEvent::SOUND_CHORUS_GROW, pos, 0);
 }
 
 void ChorusFlowerBlock::placeDeadFlower(Level* level, const BlockPos& pos)
 {
     TypedBoxed<int> value(5);
-    level->setBlock(pos, defaultBlockState()->setBoxedValue(CHORUS_AGE, &value), 2, false);
-    level->levelEvent(0x40A, pos, 0);
+    level->setBlock(pos, defaultBlockState()->setBoxedValue(CHORUS_AGE, &value), Block::UPDATE_CLIENTS, false);
+    level->levelEvent(LevelEvent::SOUND_CHORUS_DEATH, pos, 0);
 }
 
 void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
@@ -154,7 +155,7 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
 
     if (growUp && allNeighborsEmpty(level, above, NULL) && level->isEmptyBlock(pos.above(2)))
     {
-        level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), 2, false);
+        level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         placeGrownFlower(level, above, age);
         return;
     }
@@ -176,7 +177,7 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
         }
         if (grew)
         {
-            level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), 2, false);
+            level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             return;
         }
     }
@@ -265,7 +266,7 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
         {
             return;
         }
-        level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), 2, false);
+        level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
     if (depth < 4)
     {
@@ -280,7 +281,7 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
                 && level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
                 && allNeighborsEmpty(level, branch, direction->getOpposite()))
             {
-                level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), 2, false);
+                level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 growTreeRecursive(level, branch, random, origin, radius, depth + 1);
                 grew = true;
             }
@@ -291,12 +292,12 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
         }
     }
     TypedBoxed<int> dead(5);
-    level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setBoxedValue(CHORUS_AGE, &dead), 2, false);
+    level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setBoxedValue(CHORUS_AGE, &dead), Block::UPDATE_CLIENTS, false);
 }
 
 void ChorusFlowerBlock::generatePlant(Level* level, BlockPos pos, Random* random, int radius)
 {
-    level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), 2, false);
+    level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     growTreeRecursive(level, pos, random, pos, radius, 0);
 }
 
@@ -316,7 +317,7 @@ TextureAtlasSprite* ChorusFlowerBlock::getTexture(const Direction* direction, co
     return isDead(state->getValue(CHORUS_AGE)) ? mDeadIcon : mIcon;
 }
 
-EBlockRenderShape ChorusFlowerBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)45; }
+EBlockRenderShape ChorusFlowerBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_CHORUS_FLOWER; }
 bool ChorusFlowerBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction* direction) { return direction != mCulledFace; }
 void ChorusFlowerBlock::setCulledFace(const Direction* direction) { mCulledFace = direction; }
 bool ChorusFlowerBlock::isWaterBlocking() const { return false; }

@@ -24,12 +24,12 @@ class Player;
 class ChestBlockEntity : public RandomizableLockableContainerBlockEntity
 {
 public:
-    ChestBlockEntity(bool large = false);
-    ChestBlockEntity(ChestBlock::Type type, bool large);
+    ChestBlockEntity(bool isBonusChest = false);
+    ChestBlockEntity(ChestBlock::Type type, bool isBonusChest);
     virtual ~ChestBlockEntity();
 
     static BlockEntity* create();
-    void _init(bool large);
+    void _init(bool isBonusChest);
 
     virtual bool stillValid(boost::shared_ptr<Player> player);
     virtual void startOpen(boost::shared_ptr<Player> player);
@@ -70,9 +70,10 @@ public:
 
 private:
     friend class BonusChestFeature;
+    friend class ServerLevel;
 
     NonNullList<not_null_ptr<ItemInstance> > mItems;
-    bool mLarge;
+    bool mIsBonusChest;
     int mRefilledAnimationTicks;
     bool mNeighborsChecked;
 

@@ -59,7 +59,7 @@ InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<
         const BlockState* placedState =
             mBlock->getStateForPlacement(level, placePos, direction, hitX, hitY, hitZ, 0, player);
 
-        if (!level->setBlock(placePos, placedState, 11, false))
+        if (!level->setBlock(placePos, placedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
         {
             return InteractionResult::eInteractionResult_Fail;
         }

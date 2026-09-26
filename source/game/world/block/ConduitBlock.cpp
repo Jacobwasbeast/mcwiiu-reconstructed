@@ -70,7 +70,7 @@ void ConduitBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape ConduitBlock::getRenderShape(const BlockState* state)
 {
-    return (EBlockRenderShape)54;
+    return BLOCK_RENDER_CONDUIT;
 }
 
 void ConduitBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,

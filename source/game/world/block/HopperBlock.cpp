@@ -1,4 +1,6 @@
 #include "game/world/block/HopperBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/util/AABB.hpp"
 
 #include "game/core/Boxed.hpp"
 #include "game/core/Direction.hpp"
@@ -17,19 +19,33 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/HopperBlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-static DirectionProperty* HopperBlock_FACING = NULL;
-static Property* HopperBlock_ENABLED = NULL;
+const std::wstring HopperBlock::TEXTURE_OUTSIDE = L"hopper_outside";
+const std::wstring HopperBlock::TEXTURE_INSIDE = L"hopper_inside";
+DirectionProperty* HopperBlock::FACING = NULL;
+Property* HopperBlock::ENABLED = BooleanProperty::create(L"enabled");
+const AABB* HopperBlock::BASE_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0);
+const AABB* HopperBlock::SOUTH_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.125);
+const AABB* HopperBlock::NORTH_AABB = AABB::newPermanent(0.0, 0.0, 0.875, 1.0, 1.0, 1.0);
+const AABB* HopperBlock::WEST_AABB = AABB::newPermanent(0.875, 0.0, 0.0, 1.0, 1.0, 1.0);
+const AABB* HopperBlock::EAST_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 0.125, 1.0, 1.0);
+
+bool notUpFunction(const Direction* direction)
+{
+    return direction != Direction::UP;
+}
 
 HopperBlock::HopperBlock()
     : BaseEntityBlock(Material::METAL, MaterialColor::STONE), mTopTexture(NULL), mSideTexture(NULL), mBottomTexture(NULL)
 {
-    mBlockEntity = true;
     DerivedInit();
-    registerDefaultState(defaultBlockState()->setBoxedValue(HopperBlock_FACING, new TypedBoxed<const Direction*>(Direction::DOWN)));
+    TypedBoxed<const Direction*> facing(Direction::DOWN);
+    TypedBoxed<bool> enabled(true);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing)->setBoxedValue(ENABLED, &enabled));
 }
 
 HopperBlock::~HopperBlock()
@@ -45,11 +61,7 @@ boost::shared_ptr<BlockEntity> HopperBlock::newBlockEntity(Level* level, int dat
 
 void HopperBlock::blockStaticCtor()
 {
-    if (HopperBlock_FACING == NULL)
-    {
-        HopperBlock_FACING = DirectionProperty::create(L"facing");
-        HopperBlock_ENABLED = BooleanProperty::create(L"enabled");
-    }
+    FACING = DirectionProperty::create(L"facing", new Predicates<const Direction*>::FunctionPredicate(notUpFunction));
 }
 
 const AABB* HopperBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -61,7 +73,11 @@ void HopperBlock::addCollisionAABBs(const BlockState* state, Level* level, const
                                     const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
                                     boost::shared_ptr<Entity> entity, bool isActualState)
 {
-    Block::addCollisionAABBs(state, level, pos, entityBox, collidingBoxes, entity, isActualState);
+    addCollisionAABB(pos, entityBox, collidingBoxes, BASE_AABB);
+    addCollisionAABB(pos, entityBox, collidingBoxes, EAST_AABB);
+    addCollisionAABB(pos, entityBox, collidingBoxes, WEST_AABB);
+    addCollisionAABB(pos, entityBox, collidingBoxes, SOUTH_AABB);
+    addCollisionAABB(pos, entityBox, collidingBoxes, NORTH_AABB);
 }
 
 const BlockState* HopperBlock::getStateForPlacement(Level* level, const BlockPos& pos,
@@ -76,7 +92,7 @@ const BlockState* HopperBlock::getStateForPlacement(Level* level, const BlockPos
     }
     TypedBoxed<const Direction*> facing(attached);
     TypedBoxed<bool> enabled(true);
-    return defaultBlockState()->setBoxedValue(HopperBlock_FACING, &facing)->setBoxedValue(HopperBlock_ENABLED, &enabled);
+    return defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(ENABLED, &enabled);
 }
 
 void HopperBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
@@ -100,12 +116,12 @@ bool HopperBlock::isTopSolidBlocking(const BlockState* state)
 
 void HopperBlock::checkPoweredState(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    bool enabled = state->getValue(static_cast<const AbstractProperty<bool>*>(HopperBlock_ENABLED));
+    bool enabled = state->getValue(static_cast<const AbstractProperty<bool>*>(ENABLED));
     bool powered = !level->hasNeighborSignal(pos);
     if (powered != enabled)
     {
         TypedBoxed<bool> value(powered);
-        level->setBlock(pos, state->setBoxedValue(HopperBlock_ENABLED, &value), 4, false);
+        level->setBlock(pos, state->setBoxedValue(ENABLED, &value), Block::UPDATE_INVISIBLE, false);
     }
 }
 
@@ -175,13 +191,13 @@ const BlockState* HopperBlock::getBlockState(int data)
 {
     TypedBoxed<const Direction*> facing(getAttachedFace(data));
     TypedBoxed<bool> enabled(isTurnedOn(data));
-    return defaultBlockState()->setBoxedValue(HopperBlock_FACING, &facing)->setBoxedValue(HopperBlock_ENABLED, &enabled);
+    return defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(ENABLED, &enabled);
 }
 
 int HopperBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(static_cast<const AbstractProperty<const Direction*>*>(HopperBlock_FACING))->get3DDataValue();
-    if (!state->getValue(static_cast<const AbstractProperty<bool>*>(HopperBlock_ENABLED)))
+    int data = state->getValue(static_cast<const AbstractProperty<const Direction*>*>(FACING))->get3DDataValue();
+    if (!state->getValue(static_cast<const AbstractProperty<bool>*>(ENABLED)))
     {
         data |= 8;
     }
@@ -192,27 +208,26 @@ unsigned int HopperBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
 {
     if (tooltipData.m_bUseItem || tooltipData.m_bCanPlace)
     {
-        return 0x41590AD1u;
+        return IDS_TOOLTIPS_OPEN;
     }
     return Block::GetInteractTooltip(tooltipData);
 }
 
 const BlockState* HopperBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(static_cast<const AbstractProperty<const Direction*>*>(HopperBlock_FACING))));
-    return state->setBoxedValue(HopperBlock_FACING, &facing);
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(static_cast<const AbstractProperty<const Direction*>*>(FACING))));
+    return state->setBoxedValue(FACING, &facing);
 }
 
 const BlockState* HopperBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    TypedBoxed<const Direction*> facing(mirror->mirror(state->getValue(static_cast<const AbstractProperty<const Direction*>*>(HopperBlock_FACING))));
-    return state->setBoxedValue(HopperBlock_FACING, &facing);
+    return rotate(state, mirror->getRotation(state->getValue(static_cast<const AbstractProperty<const Direction*>*>(FACING))));
 }
 
 BlockStateDefinition* HopperBlock::createBlockStateDefinition()
 {
     blockStaticCtor();
-    const Property* properties[2] = { HopperBlock_FACING, HopperBlock_ENABLED };
+    const Property* properties[2] = { FACING, ENABLED };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -237,9 +252,9 @@ void HopperBlock::registerIcons(IconRegister* iconRegister)
 TextureAtlasSprite* HopperBlock::getTexture(const std::wstring& name)
 {
     HopperBlock* hopper = static_cast<HopperBlock*>(Blocks::hopper);
-    if (name == L"hopper_outside")
+    if (name == TEXTURE_OUTSIDE)
         return hopper->mSideTexture;
-    if (name == L"hopper_inside")
+    if (name == TEXTURE_INSIDE)
         return hopper->mBottomTexture;
     return NULL;
 }
@@ -251,7 +266,7 @@ std::wstring HopperBlock::getTileItemIconName()
 
 EBlockRenderShape HopperBlock::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(38);
+    return BLOCK_RENDER_HOPPER;
 }
 
 bool HopperBlock::canProvideSupport(const BlockState* state, const Direction* direction,

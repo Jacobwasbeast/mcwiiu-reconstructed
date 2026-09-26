@@ -1,4 +1,5 @@
 #include "game/world/block/BrewingStandBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -57,7 +58,7 @@ boost::shared_ptr<BlockEntity> BrewingStandBlock::newBlockEntity(Level* level, i
 
 std::wstring BrewingStandBlock::getName()
 {
-    return std::wstring(L10N::GetString(0xdf516f15));
+    return std::wstring(L10N::GetString(IDS_BREWING_STAND));
 }
 
 bool BrewingStandBlock::isSolidRender(const BlockState*) const
@@ -177,7 +178,7 @@ int BrewingStandBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int BrewingStandBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bCanPlace || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
-        return 0xea4e897e;
+        return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -209,5 +210,5 @@ TextureAtlasSprite* BrewingStandBlock::getBaseTexture()
 
 EBlockRenderShape BrewingStandBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(25);
+    return BLOCK_RENDER_BREWING_STAND;
 }

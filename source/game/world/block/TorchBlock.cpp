@@ -224,5 +224,5 @@ EBlockFaceShape TorchBlock::getBlockFaceShape(LevelSource*, const BlockState*, c
 
 EBlockRenderShape TorchBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_INVISIBLE;
+    return BLOCK_RENDER_TORCH;
 }

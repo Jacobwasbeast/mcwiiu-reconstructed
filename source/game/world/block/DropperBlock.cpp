@@ -1,4 +1,6 @@
 #include "game/world/block/DropperBlock.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -60,7 +62,7 @@ void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
     int slot = dispenser->getRandomSlot();
     if (slot < 0)
     {
-        level->levelEvent(1001, pos, 0);
+        level->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, pos, 0);
         return;
     }
 
@@ -100,6 +102,6 @@ void DropperBlock::registerIcons(IconRegister* iconRegister)
 unsigned int DropperBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
-        return 0x41590ad1U;
+        return IDS_TOOLTIPS_OPEN;
     return Block::GetInteractTooltip(tooltipData);
 }

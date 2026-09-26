@@ -2,6 +2,7 @@
 #define GAME_WORLD_BLOCK_COMMANDBLOCKENTITY_HPP
 
 #include <boost/shared_ptr.hpp>
+#include "game/core/EntityType.hpp"
 #include <string>
 
 #include "game/world/block/BaseCommandBlock.hpp"
@@ -14,7 +15,7 @@ class DataOutputStream;
 class CommandBlockEntity : public BlockEntity
 {
 public:
-    static constexpr unsigned long long BLOCK_ENTITY_TYPE = 0x1000209ULL;
+    static constexpr unsigned long long BLOCK_ENTITY_TYPE = BlockEntityType::COMMAND;
 
     class AnonymousCommandBlock : public BaseCommandBlock
     {

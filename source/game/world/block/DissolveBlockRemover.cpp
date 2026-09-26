@@ -7,11 +7,11 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-DissolveBlockRemover::DissolveBlockRemover(Level* level, std::vector<AABB*>& areas, int ticks, int interval)
+DissolveBlockRemover::DissolveBlockRemover(Level* level, std::vector<AABB*>& areas, int passCount, int ticksPerRemoval)
     : BlockRemover(level, areas),
-      mDissolveInterval(ticks)
+      mPassCount(passCount)
 {
-    mTicksPerRemoval = interval;
+    mTicksPerRemoval = ticksPerRemoval;
     mBlocksPerRemoval = 1;
 }
 
@@ -23,7 +23,7 @@ void DissolveBlockRemover::Tick()
 {
     BlockRemover::Tick();
 
-    if (mDissolveInterval <= mRemovalCount)
+    if (mPassCount <= mRemovalCount)
     {
         mFinished = true;
     }
@@ -40,12 +40,12 @@ bool DissolveBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
         {
             for (int x = (int)area.mBounds->mMinX; x < (int)area.mBounds->mMaxX; ++x)
             {
-                if (phase >= 0 && phase % mDissolveInterval == 0)
+                if (phase >= 0 && phase % mPassCount == 0)
                 {
                     BlockPos pos(x, y, z);
                     const BlockState* state = mLevel->getBlockState(pos);
                     int colour = state->getMapColor(mLevel, pos)->calculateRGBColor(2);
-                    mLevel->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+                    mLevel->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
                     CreateParticles(pos, colour);
                 }
 

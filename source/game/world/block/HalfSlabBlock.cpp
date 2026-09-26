@@ -17,16 +17,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Blocks.hpp"
 
-Block* gHalfSlabStone = NULL;
-Block* gHalfSlabWood = NULL;
-Block* gHalfSlabStone2 = NULL;
-Block* gHalfSlabPurpur = NULL;
-Block* gHalfSlabPrismarine = NULL;
-extern Block* gDoubleSlabPurpur;
-Block* gDoubleSlabWood = NULL;
-Block* gDoubleSlabStone2 = NULL;
-Block* gDoubleSlabStone = NULL;
-Block* gDoubleSlabPrismarine = NULL;
 
 static const AABB* FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 static const AABB* BOTTOM_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
@@ -58,16 +48,6 @@ std::wstring HalfSlabBlock::Half::getSerializedName() const
 
 void HalfSlabBlock::blockStaticCtor()
 {
-    gHalfSlabStone = Blocks::stone_slab;
-    gHalfSlabStone2 = Blocks::stone_slab2;
-    gHalfSlabWood = Blocks::wooden_slab;
-    gHalfSlabPurpur = Blocks::purpur_slab;
-    gHalfSlabPrismarine = Blocks::prismarine_slab;
-    gDoubleSlabStone = Blocks::double_stone_slab;
-    gDoubleSlabStone2 = Blocks::double_stone_slab2;
-    gDoubleSlabWood = Blocks::double_wooden_slab;
-    gDoubleSlabPurpur = Blocks::purpur_double_slab;
-    gDoubleSlabPrismarine = Blocks::prismarine_double_slab;
     std::wstring name = L"half";
 
     boost::unordered_set<Half*> values;
@@ -190,8 +170,8 @@ bool HalfSlabBlock::isCubeShaped(const BlockState* state)
 
 bool HalfSlabBlock::isHalfSlab(Block* block)
 {
-    return block == gHalfSlabStone || block == gHalfSlabWood || block == gHalfSlabStone2
-        || block == gHalfSlabPurpur || block == gHalfSlabPrismarine;
+    return block == Blocks::stone_slab || block == Blocks::wooden_slab || block == Blocks::stone_slab2
+        || block == Blocks::purpur_slab || block == Blocks::prismarine_slab;
 }
 
 bool HalfSlabBlock::isHalfSlab(const BlockState* state)
@@ -259,35 +239,35 @@ bool HalfSlabBlock::isSlabBlock()
 
 bool HalfSlabBlock::isFullSlab(Block* block)
 {
-    return block == gDoubleSlabPurpur || block == gDoubleSlabWood || block == gDoubleSlabStone2
-        || block == gDoubleSlabStone || block == gDoubleSlabPrismarine;
+    return block == Blocks::purpur_double_slab || block == Blocks::double_wooden_slab || block == Blocks::double_stone_slab2
+        || block == Blocks::double_stone_slab || block == Blocks::prismarine_double_slab;
 }
 
 Block* HalfSlabBlock::GetDoubleSlabBlockFromSlab(Block* block)
 {
-    if (block == gHalfSlabStone)
+    if (block == Blocks::stone_slab)
     {
-        return gDoubleSlabStone;
+        return Blocks::double_stone_slab;
     }
 
-    if (block == gHalfSlabWood)
+    if (block == Blocks::wooden_slab)
     {
-        return gDoubleSlabWood;
+        return Blocks::double_wooden_slab;
     }
 
-    if (block == gHalfSlabStone2)
+    if (block == Blocks::stone_slab2)
     {
-        return gDoubleSlabStone2;
+        return Blocks::double_stone_slab2;
     }
 
-    if (block == gHalfSlabPurpur)
+    if (block == Blocks::purpur_slab)
     {
-        return gDoubleSlabPurpur;
+        return Blocks::purpur_double_slab;
     }
 
-    if (block == gHalfSlabPrismarine)
+    if (block == Blocks::prismarine_slab)
     {
-        return gDoubleSlabPrismarine;
+        return Blocks::prismarine_double_slab;
     }
 
     return NULL;

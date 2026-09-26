@@ -39,7 +39,7 @@ public:
     static boost::shared_ptr<BlockEntity> newMovingBlockEntity(const BlockState* state,
                                                                 const Direction* direction,
                                                                 bool extending, bool source,
-                                                                CompoundTag* lastTick);
+                                                                CompoundTag* blockEntityTag);
     static void blockStaticCtor();
 
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);

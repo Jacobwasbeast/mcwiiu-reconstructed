@@ -3,7 +3,14 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include "game/world/block/BlockEntity.hpp"
-class AABB; class BlockState; class CompoundTag; class DataFixerUpper; class Direction; class Entity; class Level; class LevelSource;
+class AABB;
+class BlockState;
+class CompoundTag;
+class DataFixerUpper;
+class Direction;
+class Entity;
+class Level;
+class LevelSource;
 class PistonMovingBlockEntity : public BlockEntity
 {
 public:
@@ -29,7 +36,7 @@ public:
     const BlockState* getCollisionRelatedBlockState();
     AABB* getAABB(LevelSource*, const BlockPos&, float);
     AABB* getAABB(LevelSource*, const BlockPos&);
-    void moveByPositionAndProgress(AABB*);
+    AABB* moveByPositionAndProgress(AABB*);
     AABB* getMinMaxPiecesAABB(std::vector<AABB*>*);
     AABB* getMovementArea(AABB*, const Direction*, double);
     static double getDeltaX(AABB*, const Direction*, AABB*);
@@ -42,15 +49,17 @@ public:
     static void addDataWalkers(DataFixerUpper*);
     virtual void load(CompoundTag*);
     virtual CompoundTag* save(CompoundTag*);
-    void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*, boost::shared_ptr<Entity>);
+    void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*,
+                            boost::shared_ptr<Entity>);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual unsigned long long GetType();
+
 private:
     const BlockState* mMovedState;
     const Direction* mDirection;
     bool mExtending;
     bool mSourcePiston;
-    CompoundTag* mLastTick;
+    CompoundTag* mBlockEntityTag;
     float mProgress;
     float mLastProgress;
 };

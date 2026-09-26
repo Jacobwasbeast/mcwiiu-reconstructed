@@ -1,10 +1,17 @@
 #include "game/world/block/FurnaceBlockEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/FurnaceFuelSlot.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/Mth.hpp"
 #include "game/item/ContainerHelper.hpp"
 #include "game/item/FurnaceRecipes.hpp"
+#include "game/item/BoatItem.hpp"
+#include "game/item/DiggerItem.hpp"
+#include "game/item/DoorItem.hpp"
+#include "game/item/HoeItem.hpp"
+#include "game/item/SwordItem.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/FurnaceMenu.hpp"
@@ -145,6 +152,12 @@ int FurnaceBlockEntity::getBurnDuration(not_null_ptr<ItemInstance> item)
         if (material != Material::WOOD)
         {
             if (itemType == Item::byBlock(Blocks::coal_block)) return 16000;
+            DiggerItem* digger = dynamic_cast<DiggerItem*>(itemType);
+            if (digger != NULL && digger->getTier() == Item::Tier::WOOD) return 200;
+            SwordItem* sword = dynamic_cast<SwordItem*>(itemType);
+            if (sword != NULL && sword->getTier() == Item::Tier::WOOD) return 200;
+            HoeItem* hoe = dynamic_cast<HoeItem*>(itemType);
+            if (hoe != NULL && hoe->getTier() == Item::Tier::WOOD) return 200;
             if (itemType == Items::stick) return 100;
             if (itemType == Items::bow) return 300;
             if (itemType == Items::fishingRod) return 300;
@@ -156,6 +169,8 @@ int FurnaceBlockEntity::getBurnDuration(not_null_ptr<ItemInstance> item)
             if (itemType == Items::blazeRod) return 2400;
             if (itemType == Item::byBlock(Blocks::dried_kelp_block)) return 4000;
             if (itemType == NULL) return 0;
+            if (dynamic_cast<DoorItem*>(itemType) != NULL && itemType != Items::ironDoor) return 200;
+            if (dynamic_cast<BoatItem*>(itemType) != NULL) return 400;
             return 0;
         }
     }
@@ -171,7 +186,7 @@ bool FurnaceBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
     if (slot == 2) return false;
     if (slot != 1) return true;
-    return isFuel(item) || (FurnaceFuelSlot::isBucket(item) && mItems[1]->getItem() == NULL);
+    return isFuel(item) || (FurnaceFuelSlot::isBucket(item) && mItems[1]->getItem() != Items::bucket);
 }
 
 int FurnaceBlockEntity::getContainerData(int id)
@@ -209,7 +224,7 @@ AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventor
 
 int FurnaceBlockEntity::getTypeId(bool large)
 {
-    return 2;
+    return ClientboundContainerOpenPacket::FURNACE;
 }
 
 InteractionObject::NameData FurnaceBlockEntity::GetNetworkNameData()
@@ -249,7 +264,13 @@ bool FurnaceBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInst
 
 bool FurnaceBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face)
 {
-    return !(face == Direction::DOWN && slot == 1) || item->getItem() == NULL;
+    if (face == Direction::DOWN && slot == 1)
+    {
+        Item* itemType = item->getItem();
+        if (itemType != Items::waterBucket && itemType != Items::bucket)
+            return false;
+    }
+    return true;
 }
 
 void FurnaceBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
@@ -260,7 +281,7 @@ void FurnaceBlockEntity::setCustomName(const std::wstring& name, const std::wstr
 void FurnaceBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new ItemListDataWalker(0x1e00202ULL, L"Items"));
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::FURNACE, L"Items"));
 }
 
 void FurnaceBlockEntity::load(CompoundTag* tag)
@@ -421,5 +442,5 @@ boost::shared_ptr<BlockEntity> FurnaceBlockEntity::clone()
 
 unsigned long long FurnaceBlockEntity::GetType()
 {
-    return 0x0000000001E00202ULL;
+    return BlockEntityType::FURNACE;
 }

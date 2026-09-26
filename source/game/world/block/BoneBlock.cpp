@@ -39,7 +39,7 @@ void BoneBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape BoneBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(31);
+    return BLOCK_RENDER_TREE;
 }
 
 Direction::Axis* BoneBlock::getAxis(const BlockState* state)

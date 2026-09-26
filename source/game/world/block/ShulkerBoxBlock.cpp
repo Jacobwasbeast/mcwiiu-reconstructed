@@ -1,4 +1,5 @@
 #include "game/world/block/ShulkerBoxBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
@@ -59,7 +60,7 @@ bool ShulkerBoxBlock::isCubeShaped(const BlockState*) { return false; }
 bool ShulkerBoxBlock::hasCustomBreakingProgress(const BlockState*) { return true; }
 EBlockRenderShape ShulkerBoxBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(0x16);
+    return BLOCK_RENDER_ENTITY;
 }
 
 bool ShulkerBoxBlock::isEntityOnChest(Level* level, const AABB* box)
@@ -182,17 +183,17 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     Block::appendHoverText(itemInstance, player, lines, advanced);
 
     CompoundTag* tag = itemInstance->getTag();
-    if (tag == NULL || !tag->contains(L"BlockEntityTag", 10))
+    if (tag == NULL || !tag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
         return;
 
     CompoundTag* blockEntityTag = tag->getCompound(L"BlockEntityTag");
-    if (blockEntityTag->contains(L"LootTable", 8))
+    if (blockEntityTag->contains(L"LootTable", Tag::TAG_STRING))
     {
         lines->push_back(HtmlString(L"???????",
                                     eMinecraftColour_NOTSET, false, false, 0));
     }
 
-    if (!blockEntityTag->contains(L"Items", 9))
+    if (!blockEntityTag->contains(L"Items", Tag::TAG_LIST))
         return;
 
     NonNullList<not_null_ptr<ItemInstance> > items =
@@ -313,6 +314,6 @@ EBlockFaceShape ShulkerBoxBlock::getBlockFaceShape(LevelSource* levelSource, con
 unsigned int ShulkerBoxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
-        return 0x41590ad1;
+        return IDS_TOOLTIPS_OPEN;
     return Block::GetInteractTooltip(tooltipData);
 }

@@ -1,4 +1,5 @@
 #include "game/world/block/FallingBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
@@ -35,7 +36,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 const EntityDataAccessor<BlockPos>* FallingBlockEntity::DATA_START_POS = NULL;
-static const unsigned long long ENTITY_TYPE_FALLING_BLOCK = 0x0000000008000009ULL;
 
 FallingBlockEntity::FallingBlockEntity(Level* level, double x, double y, double z, const BlockState* blockState)
     : Entity(level, true)
@@ -70,7 +70,7 @@ FallingBlockEntity::~FallingBlockEntity()
 
 void FallingBlockEntity::staticCtor()
 {
-    DATA_START_POS = SynchedEntityData::defineId(ENTITY_TYPE_FALLING_BLOCK, ENTITY_TYPE_ENTITY, EntityDataSerializers::BLOCK_POS);
+    DATA_START_POS = SynchedEntityData::defineId(EntityType::FALLING_BLOCK_ENTITY, EntityType::ENTITY, EntityDataSerializers::BLOCK_POS);
 }
 
 void FallingBlockEntity::_init()
@@ -178,7 +178,7 @@ void FallingBlockEntity::tick()
         {
             if (mTime > 100 && !mLevel->mIsClientSide && (pos.y < 1 || pos.y > 256))
             {
-                if (mDropItem && mLevel->getGameRules()->getBoolean(6))
+                if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                 {
                     spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
                 }
@@ -205,7 +205,7 @@ void FallingBlockEntity::tick()
                     bool placed = false;
                     if (mLevel->mayPlace(block, pos, true, Direction::UP, boost::shared_ptr<Entity>())
                         && (inWater || !FallingBlock::isFree(mLevel->getBlockState(pos.below())))
-                        && mLevel->setBlock(pos, mBlockState, 3, false))
+                        && mLevel->setBlock(pos, mBlockState, Block::UPDATE_ALL, false))
                     {
                         placed = true;
                     }
@@ -239,7 +239,7 @@ void FallingBlockEntity::tick()
                             }
                         }
                     }
-                    else if (mDropItem && mLevel->getGameRules()->getBoolean(6))
+                    else if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                     {
                         spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
                     }
@@ -313,7 +313,7 @@ void FallingBlockEntity::addDataWalkers(DataFixerUpper*)
 
 void FallingBlockEntity::addAdditonalSaveData(CompoundTag* tag)
 {
-    Block* block = mBlockState == NULL ? Blocks::AIR : mBlockState->getBlock();
+    Block* block = mBlockState == NULL ? Blocks::air : mBlockState->getBlock();
     ResourceLocation location = Block::blockRegistry->getKey(block);
     tag->putString(std::wstring(L"Block"), location.toString());
     tag->putByte(std::wstring(L"Data"), (unsigned char)block->convertBlockStateToLegacyData(mBlockState));
@@ -406,5 +406,5 @@ void FallingBlockEntity::create(Level* level)
 
 unsigned long long FallingBlockEntity::GetType()
 {
-    return 0x0000000008000009ULL;
+    return EntityType::FALLING_BLOCK_ENTITY;
 }

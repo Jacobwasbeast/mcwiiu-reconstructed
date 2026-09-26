@@ -37,7 +37,7 @@ PistonMagicBlock::PistonMagicBlock()
     state = state->setBoxedValue(FACING, &facing);
     TypedBoxed<PistonHeadBlock::PistonType*> type(pistonTypeNormal);
     registerDefaultState(state->setBoxedValue(TYPE, &type));
-    setDestroyTime(-1.0f);
+    setDestroyTime(Block::INDESTRUCTIBLE);
 }
 
 PistonMagicBlock::~PistonMagicBlock()
@@ -52,9 +52,9 @@ boost::shared_ptr<BlockEntity> PistonMagicBlock::newBlockEntity(Level*, int)
 boost::shared_ptr<BlockEntity> PistonMagicBlock::newMovingBlockEntity(const BlockState* state,
                                                                        const Direction* direction,
                                                                        bool extending, bool source,
-                                                                       CompoundTag* lastTick)
+                                                                       CompoundTag* blockEntityTag)
 {
-    return boost::shared_ptr<BlockEntity>(new PistonMovingBlockEntity(state, direction, extending, source, lastTick));
+    return boost::shared_ptr<BlockEntity>(new PistonMovingBlockEntity(state, direction, extending, source, blockEntityTag));
 }
 
 void PistonMagicBlock::blockStaticCtor()
@@ -247,5 +247,5 @@ void PistonMagicBlock::registerIcons(IconRegister*)
 
 EBlockRenderShape PistonMagicBlock::getRenderShape(const BlockState*)
 {
-    return (EBlockRenderShape)-1;
+    return BLOCK_RENDER_INVISIBLE;
 }

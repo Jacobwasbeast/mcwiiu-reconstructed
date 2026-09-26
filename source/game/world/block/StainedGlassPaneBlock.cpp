@@ -20,7 +20,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<const DyeColor*>* gStainedGlassPaneColor = NULL;
+EnumProperty<const DyeColor*>* StainedGlassPaneBlock::COLOR = NULL;
 static TextureAtlasSprite* gStainedGlassPaneIcons[16];
 static TextureAtlasSprite* gStainedGlassPaneEdges[16];
 
@@ -32,7 +32,7 @@ void StainedGlassPaneBlock::blockStaticCtor()
         colors.insert(DyeColor::byBlockData(data));
     }
 
-    gStainedGlassPaneColor = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 StainedGlassPaneBlock::StainedGlassPaneBlock()
@@ -50,7 +50,7 @@ StainedGlassPaneBlock::StainedGlassPaneBlock()
     state = state->setBoxedValue(THIN_FENCE_EAST, &east);
     state = state->setBoxedValue(THIN_FENCE_SOUTH, &south);
     state = state->setBoxedValue(THIN_FENCE_WEST, &west);
-    registerDefaultState(state->setBoxedValue(gStainedGlassPaneColor, &color));
+    registerDefaultState(state->setBoxedValue(COLOR, &color));
 }
 
 StainedGlassPaneBlock::~StainedGlassPaneBlock()
@@ -59,12 +59,12 @@ StainedGlassPaneBlock::~StainedGlassPaneBlock()
 
 int StainedGlassPaneBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gStainedGlassPaneColor)->getBlockData();
+    return state->getValue(COLOR)->getBlockData();
 }
 
 const MaterialColor* StainedGlassPaneBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return MaterialColor::getDyeMaterial(state->getValue(gStainedGlassPaneColor));
+    return MaterialColor::getDyeMaterial(state->getValue(COLOR));
 }
 
 int StainedGlassPaneBlock::getRenderLayer()
@@ -75,31 +75,51 @@ int StainedGlassPaneBlock::getRenderLayer()
 const BlockState* StainedGlassPaneBlock::getBlockState(int data)
 {
     TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(data));
-    return defaultBlockState()->setBoxedValue(gStainedGlassPaneColor, &color);
+    return defaultBlockState()->setBoxedValue(COLOR, &color);
 }
 
 int StainedGlassPaneBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gStainedGlassPaneColor)->getBlockData();
+    return state->getValue(COLOR)->getBlockData();
 }
 
 const BlockState* StainedGlassPaneBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<bool> north(state->getValue(THIN_FENCE_NORTH));
-    TypedBoxed<bool> east(state->getValue(THIN_FENCE_EAST));
-    TypedBoxed<bool> south(state->getValue(THIN_FENCE_SOUTH));
-    TypedBoxed<bool> west(state->getValue(THIN_FENCE_WEST));
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90:
-        return state->setBoxedValue(THIN_FENCE_EAST, &west)->setBoxedValue(THIN_FENCE_SOUTH, &north)
-            ->setBoxedValue(THIN_FENCE_NORTH, &east)->setBoxedValue(THIN_FENCE_WEST, &south);
     case Rotation::eTYPE_Clockwise180:
-        return state->setBoxedValue(THIN_FENCE_NORTH, &south)->setBoxedValue(THIN_FENCE_EAST, &west)
-            ->setBoxedValue(THIN_FENCE_SOUTH, &north)->setBoxedValue(THIN_FENCE_WEST, &east);
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_SOUTH));
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_NORTH));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_EAST));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
+            ->setBoxedValue(THIN_FENCE_EAST, &east)
+            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
+            ->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
     case Rotation::eTYPE_CounterClockwise90:
-        return state->setBoxedValue(THIN_FENCE_WEST, &east)->setBoxedValue(THIN_FENCE_NORTH, &south)
-            ->setBoxedValue(THIN_FENCE_EAST, &west)->setBoxedValue(THIN_FENCE_SOUTH, &north);
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_EAST));
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_SOUTH));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_NORTH));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
+            ->setBoxedValue(THIN_FENCE_EAST, &east)
+            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
+            ->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
+    case Rotation::eTYPE_Clockwise90:
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_NORTH));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_EAST));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_SOUTH));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
+            ->setBoxedValue(THIN_FENCE_EAST, &east)
+            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
+            ->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
     default:
         return state;
     }
@@ -107,21 +127,29 @@ const BlockState* StainedGlassPaneBlock::rotate(const BlockState* state, Rotatio
 
 const BlockState* StainedGlassPaneBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    TypedBoxed<bool> north(state->getValue(THIN_FENCE_NORTH));
-    TypedBoxed<bool> east(state->getValue(THIN_FENCE_EAST));
-    TypedBoxed<bool> south(state->getValue(THIN_FENCE_SOUTH));
-    TypedBoxed<bool> west(state->getValue(THIN_FENCE_WEST));
-    if (mirror->getType() == Mirror::eTYPE_LeftRight)
-        return state->setBoxedValue(THIN_FENCE_NORTH, &south)->setBoxedValue(THIN_FENCE_SOUTH, &north);
-    if (mirror->getType() == Mirror::eTYPE_FrontBack)
-        return state->setBoxedValue(THIN_FENCE_EAST, &west)->setBoxedValue(THIN_FENCE_WEST, &east);
-    return ThinFenceBlock::mirror(state, mirror);
+    switch (mirror->getType())
+    {
+    case Mirror::eTYPE_LeftRight:
+    {
+        TypedBoxed<bool> north(state->getValue(THIN_FENCE_SOUTH));
+        TypedBoxed<bool> south(state->getValue(THIN_FENCE_NORTH));
+        return state->setBoxedValue(THIN_FENCE_NORTH, &north)->setBoxedValue(THIN_FENCE_SOUTH, &south);
+    }
+    case Mirror::eTYPE_FrontBack:
+    {
+        TypedBoxed<bool> east(state->getValue(THIN_FENCE_WEST));
+        TypedBoxed<bool> west(state->getValue(THIN_FENCE_EAST));
+        return state->setBoxedValue(THIN_FENCE_EAST, &east)->setBoxedValue(THIN_FENCE_WEST, &west);
+    }
+    default:
+        return ThinFenceBlock::mirror(state, mirror);
+    }
 }
 
 BlockStateDefinition* StainedGlassPaneBlock::createBlockStateDefinition()
 {
     const Property* properties[5] = { THIN_FENCE_NORTH, THIN_FENCE_EAST,
-        THIN_FENCE_SOUTH, THIN_FENCE_WEST, gStainedGlassPaneColor };
+        THIN_FENCE_SOUTH, THIN_FENCE_WEST, COLOR };
     return new BlockStateDefinition(this, properties, 5);
 }
 
@@ -141,12 +169,12 @@ void StainedGlassPaneBlock::onRemove(Level* level, const BlockPos& pos, const Bl
 
 TextureAtlasSprite* StainedGlassPaneBlock::getIconTexture(const Direction*, const BlockState* state)
 {
-    return gStainedGlassPaneIcons[state->getValue(gStainedGlassPaneColor)->getBlockData()];
+    return gStainedGlassPaneIcons[state->getValue(COLOR)->getBlockData()];
 }
 
 TextureAtlasSprite* StainedGlassPaneBlock::getEdgeTexture(const BlockState* state)
 {
-    return gStainedGlassPaneEdges[state->getValue(gStainedGlassPaneColor)->getBlockData()];
+    return gStainedGlassPaneEdges[state->getValue(COLOR)->getBlockData()];
 }
 
 TextureAtlasSprite* StainedGlassPaneBlock::getTexture(const Direction* direction, const BlockState* state)

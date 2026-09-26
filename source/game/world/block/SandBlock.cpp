@@ -1,4 +1,5 @@
 #include "game/world/block/SandBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 
@@ -20,6 +21,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/item/ItemId.hpp"
 
 static SandBlock::Variant* gSandVariants[2] = { NULL, NULL };
 static AbstractProperty<SandBlock::Variant*>* gSandVariantProperty = NULL;
@@ -89,7 +91,7 @@ SandBlock::SandBlock()
 {
     DerivedInit();
     TypedBoxed<Variant*> value(Variant::SAND);
-    registerDefaultState(defaultBlockState()->setBoxedValue(TYPE, &value));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(TYPE, &value));
     mTextures[0] = NULL;
     mTextures[1] = NULL;
 }
@@ -118,9 +120,9 @@ void SandBlock::blockStaticCtor()
         return;
     }
 
-    gSandVariants[0] = new Variant(0, L"sand", -461941713, 738590338, MaterialColor::SAND,
+    gSandVariants[0] = new Variant(0, L"sand", IDS_TILE_SAND, 0x2C05FE82, MaterialColor::SAND,
                                    -2370656);
-    gSandVariants[1] = new Variant(1, L"red_sand", -162001853, 291229582,
+    gSandVariants[1] = new Variant(1, L"red_sand", IDS_TILE_SAND_RED, IDS_DESC_SAND_RED,
                                    MaterialColor::COLOR_ORANGE, -5679071);
     Variant::SAND = gSandVariants[0];
     Variant::RED_SAND = gSandVariants[1];
@@ -156,14 +158,14 @@ int SandBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int SandBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x15F)
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE)
     {
         BlockPos above = tooltipData.m_blockPos.above();
         if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 0x10E, 0)
             && tooltipData.m_eInteractionResult != 2
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            return 0x9F5FDC40u;
+            return IDS_TOOLTIPS_GROW;
         }
     }
     return Block::GetInteractTooltip(tooltipData);

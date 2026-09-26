@@ -9,6 +9,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BaseEntityBlock.hpp"
 
+class AABB;
 class BlockEntity;
 class BlockPos;
 class BlockState;
@@ -20,6 +21,7 @@ class Level;
 class LevelSource;
 class Random;
 
+template <class T> class AbstractProperty;
 template <class T> class EnumProperty;
 
 class FlowerPotBlock : public BaseEntityBlock
@@ -30,34 +32,58 @@ public:
     public:
         enum EContents
         {
-            EMPTY = 0,
-            POPPY = 1,
-            DANDELION = 2,
-            OAK_SAPLING = 3,
-            SPRUCE_SAPLING = 4,
-            BIRCH_SAPLING = 5,
-            JUNGLE_SAPLING = 6,
-            ACACIA_SAPLING = 7,
-            DARK_OAK_SAPLING = 8,
-            MUSHROOM_RED = 9,
-            MUSHROOM_BROWN = 10,
-            DEAD_BUSH = 11,
-            FERN = 12,
-            GRASS = 13,
-            BLUE_ORCHID = 14,
-            ALLIUM = 15,
-            HOUSTONIA = 16,
-            RED_TULIP = 17,
-            ORANGE_TULIP = 18,
-            WHITE_TULIP = 19,
-            PINK_TULIP = 20,
-            OXEYE_DAISY = 21,
-            CACTUS = 22
+            eContentsEmpty = 0,
+            eContentsPoppy = 1,
+            eContentsBlueOrchid = 2,
+            eContentsAllium = 3,
+            eContentsHoustonia = 4,
+            eContentsRedTulip = 5,
+            eContentsOrangeTulip = 6,
+            eContentsWhiteTulip = 7,
+            eContentsPinkTulip = 8,
+            eContentsOxeyeDaisy = 9,
+            eContentsDandelion = 10,
+            eContentsOakSapling = 11,
+            eContentsSpruceSapling = 12,
+            eContentsBirchSapling = 13,
+            eContentsJungleSapling = 14,
+            eContentsAcaciaSapling = 15,
+            eContentsDarkOakSapling = 16,
+            eContentsMushroomRed = 17,
+            eContentsMushroomBrown = 18,
+            eContentsDeadBush = 19,
+            eContentsFern = 20,
+            eContentsCactus = 21,
+            eContents_Count = 22
         };
 
         Contents(EContents contents, const std::wstring& name);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
+
+        static Contents* EMPTY;
+        static Contents* POPPY;
+        static Contents* BLUE_ORCHID;
+        static Contents* ALLIUM;
+        static Contents* HOUSTONIA;
+        static Contents* RED_TULIP;
+        static Contents* ORANGE_TULIP;
+        static Contents* WHITE_TULIP;
+        static Contents* PINK_TULIP;
+        static Contents* OXEYE_DAISY;
+        static Contents* DANDELION;
+        static Contents* OAK_SAPLING;
+        static Contents* SPRUCE_SAPLING;
+        static Contents* BIRCH_SAPLING;
+        static Contents* JUNGLE_SAPLING;
+        static Contents* ACACIA_SAPLING;
+        static Contents* DARK_OAK_SAPLING;
+        static Contents* MUSHROOM_RED;
+        static Contents* MUSHROOM_BROWN;
+        static Contents* DEAD_BUSH;
+        static Contents* FERN;
+        static Contents* CACTUS;
+        static Contents* VALUES[eContents_Count];
 
         std::wstring mName;
         EContents mContents;
@@ -79,7 +105,7 @@ public:
                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
                                                              const BlockState* state);
-    void CanSurvive(const BlockState* state);
+    bool CanSurvive(const BlockState* state);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                  Block* block, const BlockPos& fromPos);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
@@ -100,7 +126,9 @@ public:
     virtual bool mayPlace(Level* level, const BlockPos& pos);
     virtual bool waterSpreadCausesSpawn();
 
-    static EnumProperty<Contents*>* CONTENTS;
+    static EnumProperty<const Contents*>* CONTENTS;
+    static AbstractProperty<int>* LEGACY_DATA;
+    static AABB* SHAPE;
 };
 
 #endif

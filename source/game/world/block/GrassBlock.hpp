@@ -15,9 +15,13 @@ class LevelSource;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class GrassBlock : public Block, public BonemealableBlock
 {
 public:
+    static AbstractProperty<bool>* SNOWY;
+
     GrassBlock();
 
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,

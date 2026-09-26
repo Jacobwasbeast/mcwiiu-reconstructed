@@ -47,7 +47,7 @@ bool SpiralBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
             continue;
         }
 
-        mLevel->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        mLevel->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
         ++removed;
     }
 

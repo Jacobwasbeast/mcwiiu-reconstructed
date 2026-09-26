@@ -24,6 +24,7 @@ public:
     public:
         static Variant* COBBLESTONE;
         static Variant* MOSSY;
+        static Variant* VALUES[2];
 
         Variant(int data, const std::wstring& name, int translationKey);
         virtual std::wstring toString() const;
@@ -39,7 +40,7 @@ public:
 
     static EnumProperty<Variant*>* VARIANT;
 
-    WallBlock(Block* block = NULL);
+    WallBlock(Block* block);
     virtual ~WallBlock();
     static void blockStaticCtor();
     static unsigned int getAABBIndex(const BlockState* state);

@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 
 class BlockState;
@@ -23,6 +24,8 @@ public:
     public:
         Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor);
         static Variant* byData(int data);
+
+        static Variant* RED_SANDSTONE;
         int getData();
         const MaterialColor* getMaterialColor();
         virtual std::wstring toString() const;
@@ -41,6 +44,8 @@ public:
     virtual ~NewStoneSlabBlock();
     virtual void DerivedInit();
     static void blockStaticCtor();
+
+    static EnumProperty<Variant*>* VARIANT;
     virtual std::wstring getName();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);

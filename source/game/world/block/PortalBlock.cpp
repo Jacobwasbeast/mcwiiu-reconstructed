@@ -1,4 +1,5 @@
 #include "game/world/block/PortalBlock.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
@@ -59,7 +60,6 @@ void PortalBlock::blockStaticCtor()
 {
     boost::unordered_set<Direction::Axis*> values;
     values.insert(Direction::Axis::X);
-    values.insert(Direction::Axis::Y);
     values.insert(Direction::Axis::Z);
     gPortalAxis = EnumProperty<Direction::Axis*>::create(L"axis", typeid(Direction::Axis*), values,
                                                           Predicates<Direction::Axis*>::alwaysTrue);
@@ -141,7 +141,7 @@ void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
     Block::tick(level, pos, state, random);
 
     if (level->mDimension->isNaturalDimension()
-        && level->getGameRules()->getBoolean(3)
+        && level->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING)
         && random->nextInt(2000) < level->getDifficulty()->getId())
     {
         int y = pos.y;
@@ -155,8 +155,8 @@ void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
         {
             int error = 0;
             std::wstring customName;
-            boost::shared_ptr<Mob> mob =
-                SpawnEggItem::spawnMobAt(level, EntityIO::getKey(ENTITY_TYPE_PIG_ZOMBIE),
+            boost::shared_ptr<Entity> mob =
+                SpawnEggItem::spawnMobAt(level, EntityIO::getKey(EntityType::PIG_ZOMBIE),
                                          (double)ground.x + 0.5, (double)ground.y + 1.1,
                                          (double)ground.z + 0.5, &error, customName);
             if (mob)
@@ -206,7 +206,7 @@ void PortalBlock::neighborChanged(const BlockState* state, Level* level, const B
         PortalShape shape(level, pos, axis);
         if (!shape.isValid() || shape.mNumPortalBlocks < shape.mWidth * shape.mHeight)
         {
-            level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+            level->setBlockAndUpdate(pos, Blocks::air->defaultBlockState());
         }
     }
     else if (axis == Direction::Axis::Z)
@@ -214,7 +214,7 @@ void PortalBlock::neighborChanged(const BlockState* state, Level* level, const B
         PortalShape shape(level, pos, axis);
         if (!shape.isValid() || shape.mNumPortalBlocks < shape.mWidth * shape.mHeight)
         {
-            level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+            level->setBlockAndUpdate(pos, Blocks::air->defaultBlockState());
         }
     }
 }
@@ -300,12 +300,12 @@ int PortalBlock::getRenderLayer() { return 1; }
 
 void PortalBlock::entityInside(Level*, const BlockPos& pos, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() == 0x8000003ULL)
+    if (entity->GetType() == EntityType::EXPERIENCE_ORB)
         return;
     if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
         return;
 
-    if ((entity->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         if (Minecraft::GetInstance()->mGameMode == NULL)
             return;
@@ -417,7 +417,7 @@ int PortalBlock::PortalShape::getHeight() { return mHeight; }
 
 bool PortalBlock::PortalShape::isEmptyBlock(Block* block)
 {
-    return block == Blocks::AIR || block == Blocks::structure_void || block->getCraftingMaterial() == Material::AIR;
+    return block->mMaterial == Material::AIR || block == Blocks::fire || block == Blocks::portal;
 }
 
 int PortalBlock::PortalShape::getDistanceUntilEdge(const BlockPos& pos, const Direction* direction)
@@ -540,6 +540,6 @@ void PortalBlock::PortalShape::createPortalBlocks()
         {
             BlockPos at = mBottomLeft->relative(mLeftDir, width).above(height);
             TypedBoxed<Direction::Axis*> axis(mAxis);
-            mLevel->setBlock(at, Blocks::portal->defaultBlockState()->setBoxedValue(gPortalAxis, &axis), 2, false);
+            mLevel->setBlock(at, Blocks::portal->defaultBlockState()->setBoxedValue(gPortalAxis, &axis), Block::UPDATE_CLIENTS, false);
         }
 }

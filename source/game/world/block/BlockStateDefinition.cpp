@@ -152,7 +152,7 @@ std::wstring BlockStateDefinition::PROPERTY_TO_STRING_FUNCTION(const Property* p
 {
     if (property == NULL)
     {
-        return std::wstring(L"_NULL_");
+        return std::wstring(L"<NULL>");
     }
 
     return property->getName();

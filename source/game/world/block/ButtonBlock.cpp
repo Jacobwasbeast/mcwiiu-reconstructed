@@ -1,4 +1,5 @@
 #include "game/world/block/ButtonBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/Mirror.hpp"
@@ -81,8 +82,8 @@ bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction
     Block* support = supportState->getBlock();
     if (direction == Direction::UP)
     {
-        if (support != Blocks::AIR && (Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) &&
-            !Block::isExceptionForPistonAttaching(support) && !support->mHasTintedFace) return false;
+        if (support != Blocks::hopper && (Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) &&
+            !Block::isExceptionForPistonAttaching(support) && !support->mIsFence) return false;
         return true;
     }
     if ((Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) && !Block::isExceptionForPistonAttaching(support)) return false;
@@ -158,7 +159,7 @@ bool ButtonBlock::use(Level* level, const BlockPos& pos, const BlockState* state
     }
     if (state->getValue(POWERED)) return true;
     TypedBoxed<bool> powered(true);
-    level->setBlock(pos, state->setBoxedValue(POWERED, &powered), 3, false);
+    level->setBlock(pos, state->setBoxedValue(POWERED, &powered), Block::UPDATE_ALL, false);
     level->setBlocksDirty(pos, pos);
     playOnSound(player, level, pos);
     updateNeighbours(level, pos, state->getValue(FACING));
@@ -267,7 +268,7 @@ int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int ButtonBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside) return 0xea4e897e;
+    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside) return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 

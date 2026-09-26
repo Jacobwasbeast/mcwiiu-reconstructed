@@ -35,18 +35,6 @@ static const AABB* END_PORTAL_FRAME_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.
 static const AABB* END_PORTAL_FRAME_EYE_SHAPE = AABB::newPermanent(0.25, 0.8125, 0.25, 0.75, 1.0, 0.75);
 static BlockPattern* END_PORTAL_SHAPE = NULL;
 
-static Predicate<BlockInWorld*>* portalFramePredicate(const Direction* facing)
-{
-    BlockStatePredicate* statePredicate = static_cast<BlockStatePredicate*>(
-        BlockStatePredicate::forBlock(Blocks::end_portal_frame));
-    statePredicate->where(EndPortalFrameBlock::EYE,
-                          new BlockStatePredicate::PredicateConversion<bool>(EndPortalFrameBlock::EYE, true));
-    statePredicate->where(EndPortalFrameBlock::FACING,
-                          new BlockStatePredicate::PredicateConversion<const Direction*>(
-                              EndPortalFrameBlock::FACING, facing));
-    return BlockInWorld::hasState(statePredicate);
-}
-
 EndPortalFrameBlock::EndPortalFrameBlock()
     : Block(Material::STONE, MaterialColor::COLOR_GREEN),
       mTopIcon(NULL),
@@ -158,13 +146,38 @@ BlockPattern* EndPortalFrameBlock::getOrCreatePortalShape()
     if (END_PORTAL_SHAPE == NULL)
     {
         std::wstring rows[5] = { L"?vvv?", L">???<", L">???<", L">???<", L"?^^^?" };
-        END_PORTAL_SHAPE = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'?', BlockInWorld::hasState(Predicates<const BlockState*>::alwaysTrue))
-            ->where(L'^', portalFramePredicate(Direction::SOUTH))
-            ->where(L'>', portalFramePredicate(Direction::WEST))
-            ->where(L'v', portalFramePredicate(Direction::NORTH))
-            ->where(L'<', portalFramePredicate(Direction::EAST))
-            ->build(Direction::SOUTH, Direction::DOWN);
+        BlockStatePredicate* south =
+            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
+                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                 new Predicates<bool>::EqualToValuePredicate(true)))
+                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::SOUTH)));
+        BlockStatePredicate* west =
+            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
+                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                 new Predicates<bool>::EqualToValuePredicate(true)))
+                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::WEST)));
+        BlockStatePredicate* north =
+            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
+                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                 new Predicates<bool>::EqualToValuePredicate(true)))
+                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::NORTH)));
+        BlockStatePredicate* east =
+            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
+                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                 new Predicates<bool>::EqualToValuePredicate(true)))
+                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::EAST)));
+        END_PORTAL_SHAPE = BlockPatternBuilder::start()
+                               ->aisle(rows)
+                               ->where(L'?', BlockInWorld::hasState(Predicates<const BlockState*>::alwaysTrue))
+                               ->where(L'^', BlockInWorld::hasState(south))
+                               ->where(L'>', BlockInWorld::hasState(west))
+                               ->where(L'v', BlockInWorld::hasState(north))
+                               ->where(L'<', BlockInWorld::hasState(east))
+                               ->build(Direction::SOUTH, Direction::DOWN);
     }
     return END_PORTAL_SHAPE;
 }

@@ -5,12 +5,11 @@
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/core/StringFormat.hpp"
+#include "game/core/StringUtils.hpp"
 
 #include <string>
 #include <vector>
-
-std::string formatstr(const char* format, ...);
-std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 
 
 template<typename T>

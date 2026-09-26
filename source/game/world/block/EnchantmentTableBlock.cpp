@@ -1,4 +1,5 @@
 #include "game/world/block/EnchantmentTableBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/IconRegister.hpp"
@@ -163,16 +164,16 @@ TextureAtlasSprite* EnchantmentTableBlock::getTexture(const Direction* direction
 
 void EnchantmentTableBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(L"enchanting_table_side");
-    mBottomTexture = iconRegister->registerIcon(L"enchanting_table_bottom");
-    mTopTexture = iconRegister->registerIcon(L"enchanting_table_top");
+    mIcon = iconRegister->registerIcon(L"enchantment_side");
+    mTopTexture = iconRegister->registerIcon(L"enchantment_top");
+    mBottomTexture = iconRegister->registerIcon(L"enchantment_bottom");
 }
 
 unsigned int EnchantmentTableBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
     {
-        return 0xea4e897e;
+        return IDS_TOOLTIPS_USE;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

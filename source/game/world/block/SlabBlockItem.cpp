@@ -4,6 +4,7 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -63,7 +64,7 @@ bool SlabBlockItem::tryConvertTargetBlock(boost::shared_ptr<Player> player,
     {
         const BlockState* fullState = makeState(property, currentType);
         const AABB* box = mFullSlab->getClipAABB(fullState, level, pos);
-        if (!level->isUnobstructed(box) || !level->setBlock(pos, fullState, 3, false))
+        if (!level->isUnobstructed(box) || !level->setBlock(pos, fullState, Block::UPDATE_ALL, false))
         {
             return false;
         }
@@ -100,13 +101,27 @@ InteractionResult::EInteractionResult SlabBlockItem::useOn(boost::shared_ptr<Pla
     const BlockState* state = level->getBlockState(pos);
     if (state->getBlock() == mHalfSlab)
     {
-        TypedBoxed<HalfSlabBlock::Half*>* half =
-            static_cast<TypedBoxed<HalfSlabBlock::Half*>*>(state->getBoxedValue(HalfSlabBlock::TYPE));
-        if (half != NULL && ((direction == Direction::UP && half->getValue() == HalfSlabBlock::BOTTOM)
-                              || (direction == Direction::DOWN && half->getValue() == HalfSlabBlock::TOP)))
+        Property* property = mHalfSlab->getTypeProperty();
+        Boxed* currentType = state->getBoxedValue(property);
+        HalfSlabBlock::Half* half = state->getValue(HalfSlabBlock::TYPE);
+        if (((direction == Direction::UP && half == HalfSlabBlock::BOTTOM)
+             || (direction == Direction::DOWN && half == HalfSlabBlock::TOP))
+            && *currentType == type)
         {
-            tryConvertTargetBlock(player, itemInstance, level, pos, type, simulate);
+            const BlockState* fullState = makeState(property, currentType);
             delete type;
+            if (!simulate)
+            {
+                const AABB* shape = fullState->getClipAABB(level, pos);
+                if (shape != NULL && level->isUnobstructed(shape->move(pos))
+                    && level->setBlock(pos, fullState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
+                {
+                    const SoundType* soundType = mFullSlab->getSoundType();
+                    level->playSound(player, pos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+                                     (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
+                    itemInstance->shrink(1);
+                }
+            }
             return InteractionResult::eInteractionResult_Success;
         }
     }
@@ -124,20 +139,28 @@ InteractionResult::EInteractionResult SlabBlockItem::useOn(boost::shared_ptr<Pla
 bool SlabBlockItem::mayPlace(Level* level, const BlockPos& pos, const Direction* direction,
                              boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance)
 {
+    Property* property = mHalfSlab->getTypeProperty();
+    Boxed* type = mHalfSlab->getTypeForItem(itemInstance);
+
     const BlockState* state = level->getBlockState(pos);
-    if (state->getBlock() == mHalfSlab && (direction == Direction::UP || direction == Direction::DOWN))
+    if (state->getBlock() == mHalfSlab)
     {
-        Property* property = mHalfSlab->getTypeProperty();
-        TypedBoxed<HalfSlabBlock::Half*>* half =
-            static_cast<TypedBoxed<HalfSlabBlock::Half*>*>(state->getBoxedValue(property));
-        if (half != NULL && ((direction == Direction::UP && half->getValue() == HalfSlabBlock::BOTTOM)
-                              || (direction == Direction::DOWN && half->getValue() == HalfSlabBlock::TOP)))
+        bool top = state->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP;
+        if (((direction == Direction::UP && !top) || (direction == Direction::DOWN && top))
+            && *type == state->getBoxedValue(property))
         {
-            Boxed* type = mHalfSlab->getTypeForItem(itemInstance);
-            bool result = *state->getBoxedValue(property) == type;
-            return result;
+            delete type;
+            return true;
         }
     }
 
+    const BlockState* adjacent = level->getBlockState(pos.relative(direction));
+    if (adjacent->getBlock() == mHalfSlab && *type == adjacent->getBoxedValue(property))
+    {
+        delete type;
+        return true;
+    }
+
+    delete type;
     return BlockItem::mayPlace(level, pos, direction, player, itemInstance);
 }

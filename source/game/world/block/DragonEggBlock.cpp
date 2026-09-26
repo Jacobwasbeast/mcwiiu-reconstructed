@@ -1,4 +1,5 @@
 #include "game/world/block/DragonEggBlock.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/util/Random.hpp"
@@ -57,7 +58,7 @@ void DragonEggBlock::checkSlide(Level* level, const BlockPos& pos)
         target = target.below();
     }
     if (target.y > 0)
-        level->setBlock(target, defaultBlockState(), 2, false);
+        level->setBlock(target, defaultBlockState(), Block::UPDATE_CLIENTS, false);
 }
 
 void DragonEggBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random*)
@@ -83,9 +84,9 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
         {
             if (level->mIsClientSide)
                 return;
-            level->setBlock(target, state, 2, false);
+            level->setBlock(target, state, Block::UPDATE_CLIENTS, false);
             level->removeBlock(pos);
-            level->levelEvent(0x232a, target,
+            level->levelEvent(LevelEvent::DRAGON_EGG_TELEPORT, target,
                               ((pos.z - target.z) & 0xff) << 16 |
                               ((pos.y - target.y) & 0xff) << 8 |
                               (pos.x - target.x) & 0xff);
@@ -117,7 +118,7 @@ bool DragonEggBlock::isSolidRender(const BlockState*) const { return false; }
 bool DragonEggBlock::isCubeShaped(const BlockState*) { return false; }
 bool DragonEggBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*) { return true; }
 EBlockFaceShape DragonEggBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape DragonEggBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)0x1b; }
+EBlockRenderShape DragonEggBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_EGG; }
 
 void DragonEggBlock::generateTeleportParticles(Level* level, int x, int y, int z, int data)
 {

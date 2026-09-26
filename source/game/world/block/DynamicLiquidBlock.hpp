@@ -29,7 +29,7 @@ public:
     DynamicLiquidBlock(Material* material);
     virtual ~DynamicLiquidBlock();
 
-    void setStatic(Level* level, const BlockPos& pos, bool remove);
+    void setStatic(Level* level, const BlockPos& pos, bool extraLayer);
     int getHighest(Level* level, const BlockPos& pos, int currentHighest);
     bool _isWaterBlocking(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
                           const Direction* direction);
@@ -49,7 +49,7 @@ public:
 private:
     std::deque<LiquidTickData> mTickQueue;
     bool mProcessingTicks;
-    int mHighestDepth;
+    int mAdjacentSources;
 };
 
 #endif

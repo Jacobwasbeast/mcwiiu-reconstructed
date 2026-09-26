@@ -1,4 +1,5 @@
 #include "game/world/block/HarvestFarmBlockGoal.hpp"
+#include "game/world/block/Material.hpp"
 
 #include "game/entity/ai/LookControl.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -45,7 +46,7 @@ unsigned int HarvestFarmBlockGoal::fjGetNextFarmTarget()
 
 bool HarvestFarmBlockGoal::canUse()
 {
-    if (!mVillager->getLevel()->getGameRules()->getBoolean(1))
+    if (!mVillager->getLevel()->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
     {
         return false;
     }
@@ -100,59 +101,53 @@ void HarvestFarmBlockGoal::tick()
     const BlockState* state = level->getBlockState(above);
     Block* block = state->getBlock();
 
-    if (block == Blocks::AIR)
+    if (mTargetType == 0 && isCropBlock(block) && static_cast<CropBlock*>(block)->isMaxAge(state))
     {
-        if (mTargetType == 1)
-        {
-            int slot = findInventorySlotForFarmSeeds();
-            if (slot < 0)
-            {
-                mTargetType = -1;
-                mNextStartTick = 0;
-                return;
-            }
-            SimpleContainer* inventory = mVillager->getInventory();
-            not_null_ptr<ItemInstance> item = inventory->getItem(slot);
-            Item* itemType = item->getItem();
-            if (itemType == Items::wheatSeeds)
-            {
-                level->setBlock(above, Blocks::wheat->defaultBlockState(), 3,
-                                false);
-            }
-            else if (itemType == Items::carrot)
-            {
-                level->setBlock(above, Blocks::carrots->defaultBlockState(), 3,
-                                false);
-            }
-            else if (itemType == Items::potato)
-            {
-                level->setBlock(above, Blocks::potatoes->defaultBlockState(), 3,
-                                false);
-            }
-            else if (itemType == Items::beetrootSeeds)
-            {
-                level->setBlock(above, Blocks::beetroots->defaultBlockState(), 3,
-                                false);
-            }
-            item->shrink(1);
-            if (item->isEmpty())
-            {
-                inventory->setItem(slot, ItemInstance::EMPTY);
-            }
-            if (fjGetNextFarmTarget() != 0)
-            {
-                start();
-                return;
-            }
-        }
+        level->destroyBlock(above, true);
+        mTargetType = -1;
+        mNextStartTick = 10;
+        return;
     }
-    else if (mTargetType == 0)
+    if (mTargetType == 1 && state->getMaterial() == Material::AIR)
     {
-        if (isCropBlock(block) && static_cast<CropBlock*>(block)->isMaxAge(state))
+        int slot = findInventorySlotForFarmSeeds();
+        if (slot < 0)
         {
-            level->destroyBlock(above, true);
             mTargetType = -1;
-            mNextStartTick = 10;
+            mNextStartTick = 0;
+            return;
+        }
+        SimpleContainer* inventory = mVillager->getInventory();
+        not_null_ptr<ItemInstance> item = inventory->getItem(slot);
+        Item* itemType = item->getItem();
+        if (itemType == Items::wheatSeeds)
+        {
+            level->setBlock(above, Blocks::wheat->defaultBlockState(), Block::UPDATE_ALL,
+                            false);
+        }
+        else if (itemType == Items::carrot)
+        {
+            level->setBlock(above, Blocks::carrots->defaultBlockState(), Block::UPDATE_ALL,
+                            false);
+        }
+        else if (itemType == Items::potato)
+        {
+            level->setBlock(above, Blocks::potatoes->defaultBlockState(), Block::UPDATE_ALL,
+                            false);
+        }
+        else if (itemType == Items::beetrootSeeds)
+        {
+            level->setBlock(above, Blocks::beetroots->defaultBlockState(), Block::UPDATE_ALL,
+                            false);
+        }
+        item->shrink(1);
+        if (item->isEmpty())
+        {
+            inventory->setItem(slot, ItemInstance::EMPTY);
+        }
+        if (fjGetNextFarmTarget() != 0)
+        {
+            start();
             return;
         }
     }
@@ -172,7 +167,7 @@ bool HarvestFarmBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     BlockPos above = pos.above();
     const BlockState* aboveState = level->getBlockState(above);
     Block* aboveBlock = aboveState->getBlock();
-    if (mHasFarmSeeds && aboveBlock == Blocks::AIR)
+    if (mHasFarmSeeds && aboveState->getMaterial() == Material::AIR)
     {
         mTargetType = 1;
         return true;

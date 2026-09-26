@@ -1,4 +1,5 @@
 #include "game/world/block/DaylightDetectorBlockEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/world/Level.hpp"
 #include "game/world/block/DaylightDetectorBlock.hpp"
@@ -39,5 +40,5 @@ void DaylightDetectorBlockEntity::tick()
 
 unsigned long long DaylightDetectorBlockEntity::GetType()
 {
-    return 0x000000000120020BULL;
+    return BlockEntityType::DAYLIGHT_DETECTOR;
 }
