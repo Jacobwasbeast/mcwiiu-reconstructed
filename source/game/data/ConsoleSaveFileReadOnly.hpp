@@ -6,7 +6,7 @@
 class ConsoleSaveFileReadOnly : public ConsoleSaveFileCommon
 {
 public:
-    ConsoleSaveFileReadOnly(const std::wstring& filename, void* data, unsigned int dataSize, bool force, ESavePlatform platform);
+    ConsoleSaveFileReadOnly(const std::wstring& filename, void* data, unsigned int dataSize, bool resetData, ESavePlatform platform);
     virtual ~ConsoleSaveFileReadOnly();
 
     virtual FileEntry* createFile(const ConsoleSavePath& path);

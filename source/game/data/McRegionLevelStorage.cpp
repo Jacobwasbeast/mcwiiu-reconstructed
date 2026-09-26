@@ -10,8 +10,7 @@
 #include "game/world/NetherDimension.hpp"
 #include "game/world/TheEndDimension.hpp"
 #include "game/world/chunk/McRegionChunkStorage.hpp"
-
-void MemSect(int section);
+#include "game/core/MemSect.hpp"
 
 static void clearFiles(ConsoleSaveFile* saveFile, const std::wstring& prefix)
 {
@@ -57,12 +56,12 @@ McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimens
         {
             short saveVersion = getSaveFile()->getSaveVersion();
             if (saveVersion == 0 || saveVersion > 3)
-                return new McRegionChunkStorage(getSaveFile(), L"DIM1", mFixer);
+                return new McRegionChunkStorage(getSaveFile(), L"DIM1/", mFixer);
         }
 
-        clearFiles(getSaveFile(), L"DIM1");
+        clearFiles(getSaveFile(), L"DIM1/");
         resetEndPlayerPositions();
-        return new McRegionChunkStorage(getSaveFile(), L"DIM1", mFixer);
+        return new McRegionChunkStorage(getSaveFile(), L"DIM1/", mFixer);
     }
 
     return new McRegionChunkStorage(getSaveFile(), L"", mFixer);

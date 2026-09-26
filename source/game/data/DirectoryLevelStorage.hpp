@@ -9,11 +9,11 @@
 
 #include "game/core/File.hpp"
 #include "game/data/LevelStorage.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/PlayerIO.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
 
-unsigned int hash_value(const PlayerUID& uid);
 
 class ByteArrayOutputStream;
 class CompoundTag;
@@ -31,11 +31,13 @@ class DirectoryLevelStorage : public LevelStorage, public PlayerIO
 public:
     class PlayerMappings
     {
+        friend class DirectoryLevelStorage;
+
     public:
         void writeMappings(DataOutputStream* output);
-        void addMapping(int mapId, int x, int z, int dimension, int scale);
+        void addMapping(int id, int centreX, int centreZ, int dimension, int scale);
         void readMappings(DataInputStream* input);
-        bool getMapping(int& mapId, int x, int z, int dimension, int scale);
+        bool getMapping(int& id, int centreX, int centreZ, int dimension, int scale);
 
     private:
         boost::unordered_map<long long, short> mMappings;
@@ -69,28 +71,35 @@ public:
     virtual std::wstring getLevelId();
     virtual StructureManager* getStructureManager();
     virtual ConsoleSaveFile* getSaveFile();
-    virtual int getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale);
+    virtual int getAuxValueForMap(PlayerUID uid, int dimension, int centreX, int centreZ, int scale);
     void resetPlayerPositionsInDimension(int dimension);
     virtual void resetNetherPlayerPositions();
     virtual void resetEndPlayerPositions();
 
 private:
-    ConsoleSaveFile* mSaveFile;
+    typedef boost::unordered_map<PlayerUID, PlayerMappings, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >
+        PlayerMappingsMap;
+    typedef boost::unordered_map<std::wstring, ByteArrayOutputStream*> CachedSaveDataMap;
+
+    static const unsigned int MAX_PLAYER_DATA_SAVES = 80;
+
     File mFolder;
+    std::wstring mPlayerDir;
+    std::wstring mDataDir;
+    long long mSessionId;
     std::wstring mLevelId;
-    std::wstring mPlayersPrefix;
-    std::wstring mDataPrefix;
-    bool mCreateIfMissing;
-    long long mSessionLock;
+    StructureManager* mStructureManager;
 
 protected:
     DataFixerUpper* mFixer;
 
 private:
-    StructureManager* mStructureManager;
-    boost::unordered_map<PlayerUID, PlayerMappings, boost::hash<PlayerUID>, std::equal_to<PlayerUID> > mPlayerMappings;
-    boost::unordered_map<std::wstring, ByteArrayOutputStream*> mCachedData;
-    std::vector<short> mMapIds;
+    PlayerMappingsMap mPlayerMappings;
+    arrayWithLength<unsigned char> mUsedMappings;
+    bool mHasLoadedMapDataMappings;
+    CachedSaveDataMap mCachedSaveData;
+    std::vector<short> mMapFilesToDelete;
+    ConsoleSaveFile* mSaveFile;
 };
 
 #endif

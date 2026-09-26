@@ -11,6 +11,7 @@
 
 #ifdef RECON_NATIVE
 #include "win32_memory.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #else
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
 int VirtualFree(void* address, unsigned long size, unsigned int freeType);
@@ -20,8 +21,6 @@ void __debugbreak()
 {
 }
 #endif
-void PIXBeginNamedEvent(float color, const char* format, ...);
-void PIXEndNamedEvent();
 
 static void* s_saveData;
 static unsigned int s_saveDataSize;
@@ -31,31 +30,31 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, v
     bool resetData, ESavePlatform platform)
     : ConsoleSaveFileCommon()
 {
-    bool deleteBaseData = false;
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-
     if (s_saveData == NULL)
         s_saveData = VirtualAlloc(NULL, 0x4000000, 0x2000, 4);
-
     mData = s_saveData;
 
-    if (dataSize == 0 && options != NULL && options->requiresBaseSave())
+    bool deleteBaseSaveData = false;
+    unsigned int saveDataSize = dataSize;
+    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    if (data == NULL)
     {
-        data = options->getBaseSaveData(dataSize);
-        if (data != NULL)
-            deleteBaseData = true;
+        if (options != NULL && options->requiresBaseSave() &&
+            (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
+            deleteBaseSaveData = true;
+        else
+            saveDataSize = gStorage->GetSaveSize();
     }
-    else if (dataSize != 0 && data == NULL)
+    else if (saveDataSize == 0)
     {
-        unsigned int loadedSize = 0;
-        data = reinterpret_cast<void*>(gStorage->GetSaveData(NULL, &loadedSize));
+        saveDataSize = gStorage->GetSaveSize();
     }
 
     if (resetData)
-        data = NULL;
+        saveDataSize = 0;
 
-    _initSaveFromData(filename, dataSize, data, platform);
-    if (deleteBaseData)
+    _initSaveFromData(filename, saveDataSize, data, platform);
+    if (deleteBaseSaveData)
         options->deleteBaseSaveData();
 }
 

@@ -4,21 +4,17 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/data/SparseDataStorage.hpp"
 #include "game/world/block/CompressedBlockStorage.hpp"
+#include "platform/wiiu/NQRNetworkManager_Lan_WiiU.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
+#include "game/core/CriticalSection.hpp"
 
 #include <cstdlib>
-
-extern unsigned int TlsAlloc();
-extern void* TlsGetValue(unsigned int index);
-extern int TlsSetValue(unsigned int index, void* value);
 
 static unsigned int sElementThreadStorageIndex = TlsAlloc();
 static unsigned int sMainThreadStorageCount = 0;
 static unsigned int sRenderThreadStorageCount = 0;
 static OSFastMutex sElementLocks[128];
 static OSFastMutex sThreadCountLock;
-extern void EnterCriticalSection(void* mutex);
-extern void LeaveCriticalSection(void* mutex);
-extern void InitializeCriticalSectionAndSpinCount(void* mutex, unsigned long spinCount);
 
 ElementStorage::ThreadStorage::ThreadStorage()
     : mThreadId(0), mReadLocks(0), mHasTempData(false), mBlockReadLock(false), mDataLock(false), mTempData(0)
@@ -352,9 +348,9 @@ void ElementStorage::CreateNewThreadStorage(eHESThreadId threadId)
 {
     ThreadStorage* storage = new ThreadStorage();
     storage->mThreadId = (unsigned int)threadId;
-    storage->mBlockReadLock = threadId == (eHESThreadId)1 || threadId == (eHESThreadId)2;
-    storage->mDataLock = threadId == (eHESThreadId)8 || threadId == (eHESThreadId)10 ||
-        (threadId >= (eHESThreadId)16 && threadId <= (eHESThreadId)18);
+    storage->mBlockReadLock = threadId == eHESThreadId_Server || threadId == eHESThreadId_ServerPostUpdate;
+    storage->mDataLock = threadId == eHESThreadId_NetworkGame || threadId == eHESThreadId_Main ||
+        (threadId >= eHESThreadId_GameModeTransition && threadId <= eHESThreadId_ClientChunkStorage);
     storage->mHasTempData = storage->mBlockReadLock || storage->mDataLock;
     TlsSetValue(sElementThreadStorageIndex, storage);
     if (storage->mHasTempData)

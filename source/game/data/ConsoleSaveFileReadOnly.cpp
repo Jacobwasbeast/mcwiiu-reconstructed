@@ -17,34 +17,33 @@ void __debugbreak();
 static void* sSaveData = NULL;
 static unsigned int sSaveDataPages = 0;
 
-ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, void* data, unsigned int dataSize, bool force, ESavePlatform platform)
+ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, void* data, unsigned int dataSize, bool resetData, ESavePlatform platform)
     : ConsoleSaveFileCommon()
 {
-    bool deleteBaseSaveData = false;
-    unsigned int saveDataSize = dataSize;
-
     if (sSaveData == NULL)
         sSaveData = VirtualAlloc(NULL, 0x4000000, 0x2000, 4);
     mData = sSaveData;
 
+    bool deleteBaseSaveData = false;
+    unsigned int saveDataSize = dataSize;
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
     if (data == NULL)
     {
         if (options != NULL && options->requiresBaseSave() &&
             (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
             deleteBaseSaveData = true;
+        else
+            saveDataSize = gStorage->GetSaveSize();
     }
-
-    if (saveDataSize == 0)
+    else if (saveDataSize == 0)
     {
-        gStorage->GetSaveData(NULL, &saveDataSize);
+        saveDataSize = gStorage->GetSaveSize();
     }
 
-    if (force)
+    if (resetData)
         saveDataSize = 0;
 
     _initSaveFromData(filename, saveDataSize, data, platform);
-
     if (deleteBaseSaveData)
         options->deleteBaseSaveData();
 }

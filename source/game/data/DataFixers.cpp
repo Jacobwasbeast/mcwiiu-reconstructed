@@ -264,7 +264,7 @@ void DataFixers::addFixers(DataFixerUpper* fixerUpper)
 
 CompoundTag* DataFixers::updateItem(DataFixer* fixer, CompoundTag* tag, int version, const std::wstring& name)
 {
-    if (tag->contains(name, 10))
+    if (tag->contains(name, Tag::TAG_COMPOUND))
     {
         tag->put(name, fixer->update(DataFixTypes::eDataFixTypes_ItemInstance, tag->getCompound(name), version));
     }
@@ -274,9 +274,9 @@ CompoundTag* DataFixers::updateItem(DataFixer* fixer, CompoundTag* tag, int vers
 
 CompoundTag* DataFixers::updateItems(DataFixer* fixer, CompoundTag* tag, int version, const std::wstring& name)
 {
-    if (tag->contains(name, 9))
+    if (tag->contains(name, Tag::TAG_LIST))
     {
-        ListTag* items = tag->getList(name, 10);
+        ListTag* items = tag->getList(name, Tag::TAG_COMPOUND);
         for (int i = 0; i < items->size(); ++i)
         {
             items->set(i, fixer->update(DataFixTypes::eDataFixTypes_ItemInstance, items->getCompound(i), version));

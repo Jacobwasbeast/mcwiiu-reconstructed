@@ -3,11 +3,10 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/XLockFreeStack.hpp"
+#include "game/core/XMem.hpp"
 #include <cstdlib>
 #include <string.h>
 
-void* XMemCpy(void* destination, const void* source, unsigned int size);
-void* XMemSet(void* destination, int value, unsigned int size);
 long long InterlockedCompareExchangeRelease64(volatile long long* destination, long long exchange, long long comparand);
 
 static int sPendingDeleteList;

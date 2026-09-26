@@ -46,7 +46,7 @@ DataFixerUpper::~DataFixerUpper()
 CompoundTag* DataFixerUpper::updateData(DataFixTypes::EDataFixTypes type, CompoundTag* tag)
 {
     int version = -1;
-    if (tag->contains(DATA_VERSION_TAG, 99))
+    if (tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC))
     {
         version = tag->getInt(DATA_VERSION_TAG);
         if (version > 921)

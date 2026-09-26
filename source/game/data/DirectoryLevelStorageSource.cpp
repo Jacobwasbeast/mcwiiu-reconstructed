@@ -24,7 +24,7 @@ LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, 
     ConsoleSaveFileInputStream input(saveFile, path);
     CompoundTag* root = NbtIo::readCompressed(&input);
     CompoundTag* data = root->getCompound(std::wstring(L"Data"));
-    data = fixer->updateData((DataFixTypes::EDataFixTypes)0, data);
+    data = fixer->updateData(DataFixTypes::eDataFixTypes_Level, data);
     LevelData* levelData = new LevelData(data);
     if (root != 0)
     {
@@ -35,7 +35,7 @@ LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, 
 
 std::wstring DirectoryLevelStorageSource::getName()
 {
-    return std::wstring(L"Old_Format");
+    return std::wstring(L"Old Format");
 }
 
 std::vector<LevelSummary*>* DirectoryLevelStorageSource::getLevelList()

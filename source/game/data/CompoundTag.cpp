@@ -15,13 +15,12 @@
 #include "game/data/StringTag.hpp"
 #include "game/data/Tag.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/StringFormat.hpp"
 
 #include <string>
 #include <vector>
 
 #include <boost/unordered_map.hpp>
-
-std::wstring formatwstr(const wchar_t* format, ...);
 
 template <class K, class T>
 void deleteElements(const boost::unordered_map<K, T*>& elements);
@@ -172,7 +171,7 @@ void CompoundTag::writeNamedTag(const std::wstring& name, Tag* tag, DataOutput* 
 {
     output->writeByte(tag->getId());
 
-    if (tag->getId() != 0)
+    if (tag->getId() != Tag::TAG_END)
     {
         output->writeUTF(name);
         tag->write(output);
@@ -316,7 +315,7 @@ void CompoundTag::putBoolean(const std::wstring& name, bool value)
 
 unsigned char CompoundTag::getByte(const std::wstring& name)
 {
-    if (!contains(name, 99))
+    if (!contains(name, Tag::TAG_ANY_NUMERIC))
     {
         return 0;
     }
@@ -326,7 +325,7 @@ unsigned char CompoundTag::getByte(const std::wstring& name)
 
 short CompoundTag::getShort(const std::wstring& name)
 {
-    if (!contains(name, 99))
+    if (!contains(name, Tag::TAG_ANY_NUMERIC))
     {
         return 0;
     }
@@ -336,7 +335,7 @@ short CompoundTag::getShort(const std::wstring& name)
 
 int CompoundTag::getInt(const std::wstring& name)
 {
-    if (!contains(name, 99))
+    if (!contains(name, Tag::TAG_ANY_NUMERIC))
     {
         return 0;
     }
@@ -346,7 +345,7 @@ int CompoundTag::getInt(const std::wstring& name)
 
 long long CompoundTag::getLong(const std::wstring& name)
 {
-    if (!contains(name, 99))
+    if (!contains(name, Tag::TAG_ANY_NUMERIC))
     {
         return 0;
     }
@@ -356,7 +355,7 @@ long long CompoundTag::getLong(const std::wstring& name)
 
 float CompoundTag::getFloat(const std::wstring& name)
 {
-    if (!contains(name, 99))
+    if (!contains(name, Tag::TAG_ANY_NUMERIC))
     {
         return 0.0F;
     }
@@ -366,7 +365,7 @@ float CompoundTag::getFloat(const std::wstring& name)
 
 double CompoundTag::getDouble(const std::wstring& name)
 {
-    if (!contains(name, 99))
+    if (!contains(name, Tag::TAG_ANY_NUMERIC))
     {
         return 0.0;
     }
@@ -376,7 +375,7 @@ double CompoundTag::getDouble(const std::wstring& name)
 
 std::wstring CompoundTag::getString(const std::wstring& name)
 {
-    if (!contains(name, 8))
+    if (!contains(name, Tag::TAG_STRING))
     {
         return L"";
     }
@@ -386,7 +385,7 @@ std::wstring CompoundTag::getString(const std::wstring& name)
 
 arrayWithLength<unsigned char> CompoundTag::getByteArray(const std::wstring& name)
 {
-    if (!contains(name, 7))
+    if (!contains(name, Tag::TAG_BYTE_ARRAY))
     {
         return arrayWithLength<unsigned char>();
     }
@@ -396,7 +395,7 @@ arrayWithLength<unsigned char> CompoundTag::getByteArray(const std::wstring& nam
 
 arrayWithLength<int> CompoundTag::getIntArray(const std::wstring& name)
 {
-    if (!contains(name, 11))
+    if (!contains(name, Tag::TAG_INT_ARRAY))
     {
         return arrayWithLength<int>();
     }
@@ -406,7 +405,7 @@ arrayWithLength<int> CompoundTag::getIntArray(const std::wstring& name)
 
 CompoundTag* CompoundTag::getCompound(const std::wstring& name)
 {
-    if (!contains(name, 10))
+    if (!contains(name, Tag::TAG_COMPOUND))
     {
         return new CompoundTag();
     }
@@ -416,7 +415,7 @@ CompoundTag* CompoundTag::getCompound(const std::wstring& name)
 
 ListTag* CompoundTag::getList(const std::wstring& name, int type)
 {
-    if (getTagType(name) == 9)
+    if (getTagType(name) == Tag::TAG_LIST)
     {
         ListTag* list = (ListTag*)mTags[name];
 
@@ -436,7 +435,7 @@ bool CompoundTag::getBoolean(const std::wstring& name)
 
 CompoundTag* CompoundTag::fjSafeGetCompoundTag(const std::wstring& name)
 {
-    if (!contains(name, 10))
+    if (!contains(name, Tag::TAG_COMPOUND))
     {
         return &sEmptyCompoundTag;
     }
@@ -446,7 +445,7 @@ CompoundTag* CompoundTag::fjSafeGetCompoundTag(const std::wstring& name)
 
 ListTag* CompoundTag::fjSafeGetListTag(const std::wstring& name, int type) const
 {
-    if (getTagType(name) == 9)
+    if (getTagType(name) == Tag::TAG_LIST)
     {
         ListTag* list = (ListTag*)mTags.at(name);
 
@@ -587,9 +586,9 @@ void CompoundTag::merge(CompoundTag* other)
         std::wstring key = it->first;
         Tag* tag = it->second;
 
-        if (tag->getId() == 10)
+        if (tag->getId() == Tag::TAG_COMPOUND)
         {
-            if (contains(key, 10))
+            if (contains(key, Tag::TAG_COMPOUND))
             {
                 getCompound(key)->merge((CompoundTag*)tag);
             }

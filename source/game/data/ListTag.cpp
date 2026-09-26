@@ -41,7 +41,7 @@ void ListTag::write(DataOutput* output)
 {
     if (size() == 0)
     {
-        mType = 0;
+        mType = Tag::TAG_END;
     }
     else
     {
@@ -115,12 +115,12 @@ void ListTag::print(const std::wstring& name, char* indent, std::wostream& out)
 
 void ListTag::add(Tag* tag)
 {
-    if (tag->getId() == 0)
+    if (tag->getId() == Tag::TAG_END)
     {
         return;
     }
 
-    if (mType == 0)
+    if (mType == Tag::TAG_END)
     {
         mType = tag->getId();
     }
@@ -139,7 +139,7 @@ void ListTag::add(Tag* tag)
 
 void ListTag::set(int index, Tag* tag)
 {
-    if (tag->getId() == 0)
+    if (tag->getId() == Tag::TAG_END)
     {
         return;
     }
@@ -149,7 +149,7 @@ void ListTag::set(int index, Tag* tag)
         return;
     }
 
-    if (mType == 0)
+    if (mType == Tag::TAG_END)
     {
         mType = tag->getId();
     }
@@ -220,7 +220,7 @@ CompoundTag* ListTag::getCompound(int index) const
     {
         Tag* tag = mList.at(index);
 
-        if (tag->getId() == 10)
+        if (tag->getId() == Tag::TAG_COMPOUND)
         {
             return dynamic_cast<CompoundTag*>(tag);
         }
@@ -235,7 +235,7 @@ int ListTag::getInt(int index) const
     {
         Tag* tag = mList.at(index);
 
-        if (tag->getId() == 3)
+        if (tag->getId() == Tag::TAG_INT)
         {
             return dynamic_cast<NumericTag*>(tag)->getAsInt();
         }
@@ -250,7 +250,7 @@ arrayWithLength<int> ListTag::getIntArray(int index) const
     {
         Tag* tag = mList.at(index);
 
-        if (tag->getId() == 11)
+        if (tag->getId() == Tag::TAG_INT_ARRAY)
         {
             return dynamic_cast<IntArrayTag*>(tag)->getAsIntArray();
         }
@@ -265,7 +265,7 @@ double ListTag::getDouble(int index) const
     {
         Tag* tag = mList.at(index);
 
-        if (tag->getId() == 6)
+        if (tag->getId() == Tag::TAG_DOUBLE)
         {
             return dynamic_cast<NumericTag*>(tag)->getAsDouble();
         }
@@ -280,7 +280,7 @@ float ListTag::getFloat(int index) const
     {
         Tag* tag = mList.at(index);
 
-        if (tag->getId() == 5)
+        if (tag->getId() == Tag::TAG_FLOAT)
         {
             return dynamic_cast<NumericTag*>(tag)->getAsFloat();
         }
@@ -295,7 +295,7 @@ std::wstring ListTag::getString(int index) const
     {
         Tag* tag = mList.at(index);
 
-        if (tag->getId() != 8)
+        if (tag->getId() != Tag::TAG_STRING)
         {
             return tag->toString();
         }

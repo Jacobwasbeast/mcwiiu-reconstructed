@@ -11,10 +11,8 @@
 #include "game/core/RegionFileCache.hpp"
 #include "game/core/System.hpp"
 #include "platform/wiiu/CStorage.hpp"
-
-void PIXBeginNamedEvent(float color, const char* format, ...);
-void PIXEndNamedEvent();
-void* XMemCpy(void* destination, const void* source, unsigned int size);
+#include "game/core/XMem.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 ConsoleSaveFileCommon::ConsoleSaveFileCommon()
     : mFileHeader(), mFilename(L"Growing file")
@@ -317,14 +315,14 @@ unsigned int ConsoleSaveFileCommon::fjGetSaveThumbnailData(unsigned char* data, 
     std::memset(data, 0, size);
     CMinecraftApp::PngTagData imageData;
     g_pApp->CurrentImageTextData(&imageData);
-    if ((imageData.flags & 0x02000000) == 0)
+    if ((imageData.flags & CMinecraftApp::PngTagData::eFlag_NumLoads) == 0)
     {
-        imageData.dataSize = 0;
-        imageData.flags |= 0x02000000;
+        imageData.numLoads = 0;
+        imageData.flags |= CMinecraftApp::PngTagData::eFlag_NumLoads;
     }
-    imageData.flags |= 0x08000000;
-    g_pApp->SetExtraGameData(imageData.values[7], static_cast<eGameExtraData>(4), 0x881);
-    g_pApp->SetExtraGameData(imageData.values[7], static_cast<eGameExtraData>(5), 0xb);
+    imageData.flags |= CMinecraftApp::PngTagData::eFlag_ExtraData;
+    g_pApp->SetExtraGameData(imageData.extraData, eGameExtraData_SaveBuild, EXTRA_DATA_SAVE_BUILD);
+    g_pApp->SetExtraGameData(imageData.extraData, eGameExtraData_SaveVersion, EXTRA_DATA_SAVE_VERSION);
 
     unsigned int imageDataSize = g_pApp->CreateImageTextData(data, &imageData);
 
@@ -335,7 +333,7 @@ unsigned int ConsoleSaveFileCommon::fjGetSaveThumbnailData(unsigned char* data, 
 
 int ConsoleSaveFileCommon::fjCountSavedChunks(int dimension)
 {
-    const std::wstring dimensions[] = {L"", L"DIM-1", L"DIM1"};
+    const std::wstring dimensions[] = {L"", L"DIM-1", L"DIM1/"};
     const std::wstring& folder = dimensions[dimension];
     int savedChunks = 0;
     int regionX;

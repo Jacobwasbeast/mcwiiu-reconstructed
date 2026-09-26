@@ -29,7 +29,6 @@ public:
     virtual double getAsDouble();
     virtual float getAsFloat();
 
-private:
     double mValue;
 };
 

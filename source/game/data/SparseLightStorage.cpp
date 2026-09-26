@@ -8,9 +8,8 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/XLockFreeStack.hpp"
+#include "game/core/XMem.hpp"
 
-void* XMemSet(void* destination, int value, unsigned int size);
-void* XMemCpy(void* destination, const void* source, unsigned int size);
 long long InterlockedCompareExchangeRelease64(volatile long long* destination, long long exchange, long long comparand);
 
 static const int CHUNK_WIDTH = 16;
