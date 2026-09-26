@@ -18,7 +18,6 @@ namespace nex
 
 class CallContextRegister;
 class ClientProtocol;
-
 class CallContext : public RefCountedObject
 {
 public:
@@ -38,15 +37,9 @@ public:
 
     bool Wait(unsigned int uiTimeout);
 
-    State GetState() const
-    {
-        return m_state;
-    }
+    State GetState() const { return m_state; }
 
-    const qResult& GetResult() const
-    {
-        return m_result;
-    }
+    const qResult& GetResult() const { return m_result; }
 
     static const wchar_t* GetStateString(State state);
 
@@ -73,8 +66,8 @@ public:
     void SetUserContext(unsigned int uiIndex, const UserContext& rUserContext);
     UserContext GetUserContext(unsigned int uiIndex) const;
 
-    void RegisterCompletionCallback(
-        CompletionCallback cbCallback, const UserContext& rUserContext, bool bAppend);
+    void RegisterCompletionCallback(CompletionCallback cbCallback, const UserContext& rUserContext,
+                                    bool bAppend);
     void RegisterCompletionCallback(CallbackRoot* pCallback, bool bOnSuccessOnly, bool bAppend);
     void RegisterCancellationCallback(CallbackRoot* pCallback);
 
@@ -92,7 +85,6 @@ protected:
 private:
     friend class CallContextRegister;
     friend class ClientProtocol;
-
     class InternalData
     {
     public:
@@ -100,7 +92,7 @@ private:
         UserContext m_userContext;
     };
 
-    typedef std::list<InternalData, MemAllocator<InternalData> > CompletionCallbackList;
+    typedef std::list<InternalData, MemAllocator<InternalData>> CompletionCallbackList;
 
     unsigned int m_uiFlags;
     State m_state;
