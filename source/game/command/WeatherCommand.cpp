@@ -47,7 +47,7 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
         levelData->setRaining(true);
         levelData->setThundering(false);
 
-        logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)107, NULL, 0, NULL, 0);
+        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherRain, NULL, 0, NULL, 0);
     }
     else if (mode == 2)
     {
@@ -57,7 +57,7 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
         levelData->setRaining(true);
         levelData->setThundering(true);
 
-        logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)108, NULL, 0, NULL, 0);
+        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherThunder, NULL, 0, NULL, 0);
     }
     else
     {
@@ -67,7 +67,7 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
         levelData->setRaining(false);
         levelData->setThundering(false);
 
-        logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)106, NULL, 0, NULL, 0);
+        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherClear, NULL, 0, NULL, 0);
     }
 
     level->tickWeather(true);

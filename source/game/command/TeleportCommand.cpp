@@ -55,13 +55,13 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
             {
                 std::wstring stringParams[1];
                 stringParams[0] = source->getName();
-                target->sendMessage(static_cast<ClientboundChatPacket::EChatPacketMessage>(98), NULL, 0, stringParams, 1);
+                target->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedToYou, NULL, 0, stringParams, 1);
             }
             else
             {
                 std::wstring stringParams[1];
                 stringParams[0] = target->getName();
-                source->sendMessage(static_cast<ClientboundChatPacket::EChatPacketMessage>(97), NULL, 0, stringParams, 1);
+                source->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition, NULL, 0, stringParams, 1);
             }
         }
     }

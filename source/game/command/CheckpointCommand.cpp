@@ -119,7 +119,7 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 
                     if (checkpoint == 0)
                     {
-                        (*it)->mConnection->send(GameModePacket::Create(GameModePacket::UpdateStartTime,
+                        (*it)->mConnection->send(GameModePacket::Create(GameModePacket::eMessage_UpdateStartTime,
                                                                         GameModePacket::UpdateStartTimeData(0)));
                     }
                 }

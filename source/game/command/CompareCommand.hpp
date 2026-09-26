@@ -17,5 +17,4 @@ public:
 
     static boost::shared_ptr<GameCommandPacket> preparePacket(unsigned char commandId);
 };
-
 #endif

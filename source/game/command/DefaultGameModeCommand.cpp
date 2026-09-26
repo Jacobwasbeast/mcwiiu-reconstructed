@@ -15,10 +15,9 @@
 extern MinecraftServer* gMinecraftServer;
 
 static const eGameHostOption eGameHostOption_DefaultGameMode =
-    static_cast<eGameHostOption>(6);
-static const int eChatPacketMessage_DefaultGameModeAdminActionId = 101;
+    eGameHostOption_GameType;
 static const ClientboundChatPacket::EChatPacketMessage eChatPacketMessage_AdminAction =
-    static_cast<ClientboundChatPacket::EChatPacketMessage>(eChatPacketMessage_DefaultGameModeAdminActionId);
+    ClientboundChatPacket::eChatPacketMessage_DefaultGameModeSuccess;
 
 DefaultGameModeCommand::~DefaultGameModeCommand()
 {

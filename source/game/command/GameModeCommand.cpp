@@ -41,7 +41,7 @@ void GameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
         player->setGameMode(const_cast<GameType*>(GameType::byId(gameMode)));
         player->mFallDistance = 0.0f;
 
-        if (sender->getCommandSenderWorld()->getGameRules()->getBoolean(9))
+        if (sender->getCommandSenderWorld()->getGameRules()->getBoolean(GameRules::RULE_SENDCOMMANDFEEDBACK))
         {
             player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeChanged, NULL, 0, NULL, 0);
         }
