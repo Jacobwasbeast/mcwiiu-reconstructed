@@ -1,4 +1,9 @@
 #include "game/entity/projectile/Arrow.hpp"
+#include "game/core/Difficulty.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/network/ClientboundGameEventPacket.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
@@ -88,62 +93,73 @@ void Arrow::setEnchantmentEffectsFromEntity(const boost::shared_ptr<LivingEntity
 
 void Arrow::onHitEntity(const HitResult* result)
 {
-    double speed = Mth::sqrt(mXd * mXd + mYd * mYd + mZd * mZd);
-    float difficulty = static_cast<float>(mLevel->getDifficulty()->getId());
-    float damage = static_cast<float>(mRandom->nextGaussian()) * 0.25f + (difficulty - 1.0f) * 0.11f;
-    damage = static_cast<float>(speed) * 0.97f + damage;
-    damage = mRandom->nextFloat(1.0f, 5.0f) + damage;
+    boost::shared_ptr<Entity> entity = result->mEntity;
+    const double speed = Mth::sqrt(mZd * mZd + mXd * mXd + mYd * mYd);
+    const float roll = mRandom->nextFloat(1.0f, 5.0f);
+    const float gaussian = static_cast<float>(mRandom->nextGaussian());
+    const int difficulty = mLevel->getDifficulty()->getId();
+    float damage = static_cast<float>(
+        roll + static_cast<float>(speed * 0.97f + (gaussian * 0.25f + static_cast<float>(difficulty) * 0.11f)));
     if (isCritArrow())
-        damage = Mth::clamp(damage + mRandom->nextFloat(damage * 0.5f + 2.0f), 9.0f, 10.0f);
+        damage = Mth::clamp(static_cast<float>(damage + mRandom->nextFloat(damage * 0.5f + 2.0f)), 9.0f, 10.0f);
     if (mEnchantPower > 0)
         damage = damage * (static_cast<float>(mEnchantPower) * 0.25f + 1.25f);
-
-    boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Entity>(mOwner);
-    boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(shared_from_this());
-    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    const bool fire = miniGame != NULL && miniGame->HasFeatureArrowCanKnockback();
-    boost::shared_ptr<DamageSource> source = DamageSource::CreateArrow(arrow, owner, fire);
-
     int wholeDamage = static_cast<int>(damage);
-    if (fire)
+
+    const bool fire = isOnFire() && entity->GetType() != EntityType::ENDER_MAN;
+    boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(shared_from_this());
+    DamageSource* source = DamageSource::CreateArrow(arrow, mOwner == NULL ? shared_from_this() : mOwner, fire);
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
         wholeDamage = 0;
 
-    if (!result->mEntity->hurt(source.get(), static_cast<float>(wholeDamage)))
+    bool hurt = entity->hurt(source, static_cast<float>(wholeDamage));
+    delete source;
+    if (!hurt)
     {
-        mXd *= -0.1;
-        mYd *= -0.1;
-        mZd *= -0.1;
+        mXd *= -0.1f;
+        mYd *= -0.1f;
+        mZd *= -0.1f;
+        mInGroundTime = 0;
         mYRot += 180.0f;
         mYRotO += 180.0f;
-        mInGroundTime = 0;
         setCritArrow(false);
-    }
-    else
-    {
-        if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (!mLevel->mIsClientSide && mZd * mZd + mXd * mXd + mYd * mYd < 0.001f)
         {
-            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(result->mEntity);
-            if (!mLevel->mIsClientSide)
-                living->setArrowCount(living->getArrowCount() + 1);
+            if (mPickup == ePickup_Allowed)
+                spawnAtLocation(getPickupItem(), 0.1f);
+            remove();
         }
+        return;
+    }
+
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
+        if (!mLevel->mIsClientSide)
+            living->setArrowCount(living->getArrowCount() + 1);
         if (mKnockback > 0)
         {
-            double horizontal = Mth::sqrt(mXd * mXd + mYd * mYd);
+            const double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
             if (horizontal > 0.0)
             {
-                result->mEntity->push(mXd * mKnockback * 0.6 / horizontal,
-                    mYd * mKnockback * 0.6 / horizontal,
-                    mZd * mKnockback * 0.6 / horizontal);
+                const double knockback = static_cast<double>(mKnockback);
+                living->push(mXd * knockback * 0.6 / horizontal, 0.1, mZd * knockback * 0.6 / horizontal);
             }
         }
-        if (mOwner)
+        if (mOwner != NULL && (mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
-            EnchantmentHelper::doPostHurtEffects(
-                boost::static_pointer_cast<LivingEntity>(result->mEntity), mOwner);
-            EnchantmentHelper::doPostDamageEffects(
-                boost::static_pointer_cast<LivingEntity>(mOwner), result->mEntity);
+            EnchantmentHelper::doPostHurtEffects(living, mOwner);
+            EnchantmentHelper::doPostDamageEffects(boost::static_pointer_cast<LivingEntity>(mOwner), living);
+        }
+        doPostHurtEffects(living);
+        if (mOwner != NULL && entity != mOwner && mOwner->GetType() == EntityType::SERVER_PLAYER)
+        {
+            boost::static_pointer_cast<ServerPlayer>(mOwner)->mConnection->send(
+                boost::shared_ptr<Packet>(new ClientboundGameEventPacket(13, 0.0f)));
         }
     }
 
-    remove();
+    playSound(SoundEvents::ARROW_HIT, 1.0f, 1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
+    if (entity->GetType() != EntityType::ENDER_DRAGON)
+        remove();
 }

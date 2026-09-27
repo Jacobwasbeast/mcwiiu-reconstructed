@@ -1,4 +1,7 @@
 #include "game/entity/projectile/Fireball.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <cmath>
@@ -112,51 +115,96 @@ bool Fireball::shouldRenderAtSqrDistance(double distanceSqr)
 
 void Fireball::tick()
 {
-    if (!mLevel->mIsClientSide && !mLevel->hasChunkAt(BlockPos(mX, mY, mZ)))
+    PIXBeginNamedEvent(0.0f, "Fireball tick");
+
+    if (!mLevel->mIsClientSide)
     {
-        remove();
-        return;
+        bool keep = false;
+
+        if ((mOwner == NULL || !mOwner->mRemoved) && mLevel->hasChunkAt(BlockPos(this)))
+        {
+            ChunkPos chunkPos(BlockPos(this));
+            keep = mLevel->mDimension->containsChunk(chunkPos.x, chunkPos.z);
+        }
+
+        if (!keep)
+        {
+            remove();
+            PIXEndNamedEvent();
+            return;
+        }
     }
 
     Entity::tick();
+
     if (shouldBurn())
     {
         setSecondsOnFire(1);
     }
 
-    std::vector<boost::shared_ptr<Entity> > ignoredEntities;
-    if (mOwner)
+    std::vector<boost::shared_ptr<Entity> >* ignoredEntities = NULL;
+    if (mOwner != NULL)
     {
-        ignoredEntities.push_back(boost::static_pointer_cast<Entity>(mOwner));
+        ignoredEntities = new std::vector<boost::shared_ptr<Entity> >();
+        ignoredEntities->push_back(mOwner);
     }
-    HitResult* hit = ProjectileUtil::forwardsRaycast(shared_from_this(), true, &ignoredEntities, getEntityTypesToIgnoreCollisionsWith());
+
+    std::vector<unsigned long long>* ignoredTypes = getEntityTypesToIgnoreCollisionsWith();
+    HitResult* hit = ProjectileUtil::forwardsRaycast(shared_from_this(), true, ignoredEntities, ignoredTypes);
+    delete ignoredTypes;
+    delete ignoredEntities;
+
     if (hit != NULL)
     {
         onHit(hit);
         delete hit;
     }
 
-    mXo = mX;
-    mYo = mY;
-    mZo = mZ;
     mX += mXd;
     mY += mYd;
     mZ += mZd;
     ProjectileUtil::rotateTowardsMovement(shared_from_this(), 0.2f);
 
     double inertia = getInertia();
-    mXd += mPowerX;
-    mYd += mPowerY;
-    mZd += mPowerZ;
-    mXd *= inertia;
-    mYd *= inertia;
-    mZd *= inertia;
+
+    if (isInWater())
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25, mZ - mZd * 0.25, mXd, mYd, mZd,
+                                arrayWithLength<int>());
+        }
+
+        inertia = 0.8f;
+    }
+
+    double xd = (mXd + mPowerX) * inertia;
+    double yd = (mYd + mPowerY) * inertia;
+    double zd = (mZd + mPowerZ) * inertia;
+
+    if (mLevel->mIsClientSide || fabs(xd) >= 0.002 || fabs(yd) >= 0.002 || fabs(zd) >= 0.002)
+    {
+        mXd = xd;
+        mYd = yd;
+        mZd = zd;
+    }
+    else
+    {
+        mXd = 0.0;
+        mYd = 0.0;
+        mZd = 0.0;
+        remove();
+    }
+
+    mLevel->addParticle(getTrailParticleType(), mX, mY + 0.5, mZ, 0.0, 0.01, 0.0, arrayWithLength<int>());
     setPos(mX, mY, mZ);
+
+    PIXEndNamedEvent();
 }
 
 double Fireball::getInertia()
 {
-    return 0.05000000074505806;
+    return 0.95f;
 }
 
 void Fireball::addAdditonalSaveData(CompoundTag* tag)
@@ -244,7 +292,7 @@ int Fireball::getLightColor()
 
 const ParticleType* Fireball::getTrailParticleType()
 {
-    return static_cast<const ParticleType*>(0);
+    return PARTICLE_SMOKE;
 }
 
 bool Fireball::shouldBurn()

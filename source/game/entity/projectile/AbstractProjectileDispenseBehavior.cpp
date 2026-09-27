@@ -5,6 +5,7 @@
 
 #include "game/core/Direction.hpp"
 #include "game/core/Position.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/projectile/Projectile.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -25,7 +26,7 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
 {
     Level* level = blockSource->getWorld();
 
-    if (level->countInstanceOf(0ULL, false, NULL, NULL) < 300)
+    if (level->countInstanceOf(EntityType::PROJECTILE, false, NULL, NULL) < MAX_PROJECTILES)
     {
         Position* position = DispenserBlock::getDispensePosition(blockSource);
         const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);

@@ -1,4 +1,5 @@
 #include "game/entity/projectile/DragonFireball.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -51,43 +52,36 @@ void DragonFireball::addDataWalkers(DataFixerUpper* fixer)
 
 void DragonFireball::onHit(const HitResult* result)
 {
-    if ((result->mEntity.get() == NULL
-         || result->mEntity.owner_before(mOwner) != mOwner.owner_before(result->mEntity))
-        && !mLevel->mIsClientSide)
+    if ((result->mEntity == NULL || result->mEntity != mOwner) && !mLevel->mIsClientSide)
     {
-        AABB* box = mBoundingBox->grow(2.0, 2.0, 2.0);
         std::vector<boost::shared_ptr<Entity> >* entities =
-            mLevel->getEntitiesOfClass(typeid(Entity), box);
+            mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(4.0, 2.0, 4.0));
 
-        boost::shared_ptr<AreaEffectCloud> cloud(
-            new AreaEffectCloud(mLevel, mX, mY, mZ));
+        boost::shared_ptr<AreaEffectCloud> cloud(new AreaEffectCloud(mLevel, mX, mY, mZ));
         cloud->setOwner(mOwner);
         cloud->setParticle(PARTICLE_DRAGON_BREATH);
         cloud->setRadius(3.0f);
         cloud->setParticleSpawnRateOnTick(10);
         cloud->setDuration(200);
-        cloud->setRadiusPerTick((7.0f - cloud->getRadius()) /
-                                static_cast<float>(cloud->getDuration() - 1));
+        cloud->setRadiusPerTick((7.0f - cloud->getRadius()) / static_cast<float>(cloud->getDuration()));
         cloud->addEffect(new MobEffectInstance(MobEffects::HARM, 1, 1));
-        mLevel->addEntity(boost::static_pointer_cast<Entity>(cloud));
 
-        if (entities != NULL)
+        if (!entities->empty())
         {
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-                 it != entities->end(); ++it)
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
             {
                 boost::shared_ptr<Entity> entity = *it;
-                if (entity && distanceToSqr(entity) < 16.0)
+                if (distanceToSqr(entity) < 16.0)
                 {
-                    boost::shared_ptr<DamageSource> source =
-                        DamageSource::CreateIndirectMagic(shared_from_this(), entity, NULL);
-                    entity->hurt(source.get(), 6.0f);
+                    cloud->setPos(entity->mX, entity->mY, entity->mZ);
+                    break;
                 }
             }
-            delete entities;
         }
 
         mLevel->levelEvent(LevelEvent::PARTICLES_DRAGON_FIREBALL_SPLASH, BlockPos(mX, mY, mZ), 0);
+        mLevel->addEntity(boost::static_pointer_cast<Entity>(cloud));
+        delete entities;
         remove();
     }
 }

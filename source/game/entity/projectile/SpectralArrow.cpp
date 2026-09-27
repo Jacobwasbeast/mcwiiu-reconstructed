@@ -49,7 +49,7 @@ void SpectralArrow::tick()
 {
     AbstractRotatedItemProjectile::tick();
     if (mLevel->mIsClientSide && !mInGround)
-        mLevel->addParticle(PARTICLE_CRIT, mX, mY, mZ, 0.0, 0.0, 0.0,
+        mLevel->addParticle(PARTICLE_INSTANT_SPELL, mX, mY, mZ, 0.0, 0.0, 0.0,
             arrayWithLength<int>());
 }
 
