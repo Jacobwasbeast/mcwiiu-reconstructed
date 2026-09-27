@@ -1,9 +1,7 @@
 #include "game/world/generation/IslandLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 IslandLayer::IslandLayer(long long seed)
     : Layer(seed)

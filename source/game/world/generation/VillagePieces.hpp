@@ -73,12 +73,11 @@ public:
         VillagePiece(StartPiece*, int);
         VillagePiece();
         virtual ~VillagePiece();
-        void setStructureType(int);
         static bool isOkBox(BoundingBox*, StartPiece*);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        unsigned int generateHouseNorthernLeft(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int);
-        unsigned int generateHouseNorthernRight(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int);
+        StructurePiece* generateHouseNorthernLeft(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int);
+        StructurePiece* generateHouseNorthernRight(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int);
         int getAverageGroundHeight(Level*, BoundingBox*);
         void spawnVillagers(Level*, BoundingBox*, int, int, int, int);
         virtual int getVillagerProfession(int, int);
@@ -86,16 +85,15 @@ public:
         virtual DoorBlock* biomeDoor();
         virtual void createVillageDoor(Level*, BoundingBox*, Random&, int, int, int, const Direction*);
         virtual void placeTorch(Level*, const Direction*, int, int, int, BoundingBox*);
+        virtual void setStructureType(int);
         using StructurePiece::placeBlock;
         void placeBlock(Level*, Random&, const BlockState*, StructurePiece::BlockSelector*, int, int, int, BoundingBox*);
     protected:
-        int mType;
-        int mWidth;
-        int mHeight;
-        bool mHasMadeChest;
-        CobbleStoneSelector* mCobblestoneSelector;
         int mAverageGroundHeight;
         int mVillagerCount;
+        int mType;
+        bool mIsZombieVillage;
+        CobbleStoneSelector* mCobblestoneSelector;
         std::vector<bool> mFirstBools;
         std::vector<bool> mSecondBools;
         std::vector<int> mFirstInts;
@@ -105,6 +103,8 @@ public:
     class VillageRoadPiece : public VillagePiece
     {
     public:
+        VillageRoadPiece();
+        VillageRoadPiece(StartPiece*, int);
         virtual ~VillageRoadPiece();
     };
     class Well : public VillagePiece
@@ -131,26 +131,26 @@ public:
         int mSize;
         bool mHasPlacedWell;
         PieceWeight* mLastPieceWeight;
+        std::list<PieceWeight*>* mPieceWeights;
         Level* mLevel;
         std::vector<StructurePiece*> mPendingPieces;
         std::vector<StructurePiece*> mRoadPieces;
-        std::list<PieceWeight*>* mPieceWeights;
     };
-    class StraightRoad : public VillagePiece
+    class StraightRoad : public VillageRoadPiece
     {
     public:
         StraightRoad();
         StraightRoad(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~StraightRoad();
-        static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
         virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
         static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
-        virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+    private:
+        int mLength;
     };
     class SimpleHouse : public VillagePiece
     {
@@ -161,12 +161,10 @@ public:
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
-        virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        bool mHasMadeDoor;
+        bool mIsRoofAccessible;
     };
     class SmallTemple : public VillagePiece
     {
@@ -175,7 +173,6 @@ public:
         SmallTemple(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~SmallTemple();
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
@@ -188,7 +185,6 @@ public:
         BookHouse(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~BookHouse();
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
@@ -203,13 +199,11 @@ public:
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
-        virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        int mVillagersSpawned;
-        bool mHasMadeDoor;
+        bool mIsTallHouse;
+        int mTablePosition;
     };
     class PigHouse : public VillagePiece
     {
@@ -218,7 +212,6 @@ public:
         PigHouse(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~PigHouse();
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
@@ -231,11 +224,11 @@ public:
         TwoRoomHouse(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~TwoRoomHouse();
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
-        virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+    private:
+        bool mHasPlacedChest;
     };
     class Smithy : public VillagePiece
     {
@@ -246,12 +239,13 @@ public:
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        static BoundingBox* findPieceBox(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*);
         static void staticCtor();
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         virtual int getVillagerProfession(int, int);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+    private:
+        bool mHasPlacedChest;
     };
     class Farmland : public VillagePiece
     {
@@ -259,35 +253,39 @@ public:
         Farmland();
         Farmland(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~Farmland();
-        unsigned int selectCrops(Random&);
+        Block* selectCrops(Random&);
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int,
             const Direction*, int);
-        int selectOldCrops(int);
+        Block* selectOldCrops(int);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        int mCropA;
-        int mCropB;
+    private:
+        Block* mCropA;
+        Block* mCropB;
     };
-    class DoubleFarmland : public Farmland
+    class DoubleFarmland : public VillagePiece
     {
     public:
         DoubleFarmland();
         DoubleFarmland(StartPiece*, int, Random&, BoundingBox*, const Direction*);
         virtual ~DoubleFarmland();
-        unsigned int selectCrops(Random&);
+        Block* selectCrops(Random&);
         static StructurePiece* createPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int,
             const Direction*, int);
-        int selectOldCrops(int);
+        Block* selectOldCrops(int);
         virtual void addAdditionalSaveData(DataOutputStream*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
         virtual bool postProcess(Level*, Random&, BoundingBox*);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        int mCropC;
-        int mCropD;
+    private:
+        Block* mCropA;
+        Block* mCropB;
+        Block* mCropC;
+        Block* mCropD;
     };
     class LightPost : public VillagePiece
     {

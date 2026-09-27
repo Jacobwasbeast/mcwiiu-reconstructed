@@ -1,4 +1,7 @@
 #include "game/world/generation/Villager.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/ParticleType.hpp"
@@ -70,8 +73,8 @@
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/VillagerInteractGoal.hpp"
 #include "game/world/generation/Villages.hpp"
+#include "game/item/ItemId.hpp"
 
-static const unsigned long long ENTITY_TYPE_AGABLE_MOB = 0x000000000D600000ULL;
 
 const EntityDataAccessor<int>* Villager::DATA_PROFESSION = NULL;
 const EntityDataAccessor<int>* Villager::DATA_CAREER = NULL;
@@ -282,19 +285,19 @@ void Villager::_init(int profession)
     mCareerLevel = 0;
     mAdditionalTasksSet = false;
     mRewardPlayersInVillage = false;
-    mInventory = new SimpleContainer(0xa2009d52, L"", false, 8);
+    mInventory = new SimpleContainer(IDS_ITEMS, L"", false, 8);
     static_cast<GroundPathNavigation*>(getNavigation())->setCanOpenDoors(true);
     setCanPickUpLoot(true);
-    mCategories |= 0x1000;
+    mCategories |= EntityCategory::eEntityCategory_Villager;
 }
 
 void Villager::staticCtor()
 {
-    DATA_PROFESSION = SynchedEntityData::defineId(ENTITY_TYPE_VILLAGER, ENTITY_TYPE_AGABLE_MOB,
+    DATA_PROFESSION = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB,
                                                   EntityDataSerializers::INT);
-    DATA_CAREER = SynchedEntityData::defineId(ENTITY_TYPE_VILLAGER, ENTITY_TYPE_AGABLE_MOB,
+    DATA_CAREER = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB,
                                               EntityDataSerializers::INT);
-    DATA_TRADING = SynchedEntityData::defineId(ENTITY_TYPE_VILLAGER, ENTITY_TYPE_AGABLE_MOB,
+    DATA_TRADING = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB,
                                                EntityDataSerializers::INT);
 
     std::vector<std::vector<arrayWithLength<ItemListing*> > > profession;
@@ -631,16 +634,16 @@ void Villager::staticCtor()
 
 void Villager::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_VILLAGER);
+    Mob::addDataWalkers(fixer, EntityType::VILLAGER);
     fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     (DataWalker*)new ItemListDataWalker(ENTITY_TYPE_VILLAGER, L"Inventory"));
+                     (DataWalker*)new ItemListDataWalker(EntityType::VILLAGER, L"Inventory"));
     fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     (DataWalker*)new UniqueTypeWalker(EntityIO::getKey(ENTITY_TYPE_VILLAGER)));
+                     (DataWalker*)new UniqueTypeWalker(EntityIO::getKey(EntityType::VILLAGER)));
 }
 
 unsigned long long Villager::GetType()
 {
-    return ENTITY_TYPE_VILLAGER;
+    return EntityType::VILLAGER;
 }
 
 void Villager::defineSynchedData()
@@ -704,37 +707,37 @@ std::wstring Villager::getDisplayName()
 
     if (profession == 0)
     {
-        if (getCareer() == 1) return L10N::GetString(0xafc5d10a);
-        if (getCareer() == 2) return L10N::GetString(0x6034aaa4);
-        if (getCareer() == 3) return L10N::GetString(0x90f9b618);
-        if (getCareer() == 4) return L10N::GetString(0xdb47c202);
+        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_FARMER);
+        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_FISHERMAN);
+        if (getCareer() == 3) return L10N::GetString(IDS_VILLAGER_SHEPHERD);
+        if (getCareer() == 4) return L10N::GetString(IDS_VILLAGER_FLETCHER);
     }
     else if (profession == 1)
     {
-        if (getCareer() == 1) return L10N::GetString(0x8007817d);
-        if (getCareer() == 2) return L10N::GetString(0x27a9699d);
+        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_LIBRARIAN);
+        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_CARTOGRAPHER);
     }
     else if (profession == 2)
     {
-        return L10N::GetString(0x869e763f);
+        return L10N::GetString(IDS_VILLAGER_CLERIC);
     }
     else if (profession == 3)
     {
-        if (getCareer() == 1) return L10N::GetString(0x7a749749);
-        if (getCareer() == 2) return L10N::GetString(0x2c92054c);
-        if (getCareer() == 3) return L10N::GetString(0x1b5f9e56);
+        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_ARMORER);
+        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_WEAPONSMITH);
+        if (getCareer() == 3) return L10N::GetString(IDS_VILLAGER_TOOLSMITH);
     }
     else if (profession == 4)
     {
-        if (getCareer() == 1) return L10N::GetString(0x88879922);
-        if (getCareer() == 2) return L10N::GetString(0xb61448e0);
+        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_BUTCHER);
+        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_LEATHERWORKER);
     }
     else if (profession == 5)
     {
-        return L10N::GetString(0x6c6add7c);
+        return L10N::GetString(IDS_VILLAGER_NITWIT);
     }
 
-    return L10N::GetString(0x6fa8f932);
+    return L10N::GetString(IDS_VILLAGER);
 }
 
 void Villager::setTradingPlayer(const boost::shared_ptr<Player>& player)
@@ -1085,7 +1088,7 @@ void Villager::customServerAiStep()
 
                 if (village != NULL && !mLastTradedPlayerName.empty())
                 {
-                    mLevel->broadcastEntityEvent(shared_from_this(), 14, 0);
+                    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::VILLAGER_HAPPY, 0);
                     village->modifyStanding(mLastTradedPlayerName, 1);
                 }
             }
@@ -1149,7 +1152,7 @@ bool Villager::hurt(const DamageSource* source, float damage)
     {
         boost::shared_ptr<Entity> attacker = source->getEntity();
 
-        if ((attacker->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(attacker);
 
@@ -1159,11 +1162,11 @@ bool Villager::hurt(const DamageSource* source, float damage)
             }
         }
 
-        if (attacker != NULL && (attacker->GetType() & 0x8a020000ULL) == 0x8a020000ULL)
+        if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
 
-            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
             {
                 boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(arrow->mOwner);
 
@@ -1182,18 +1185,18 @@ unsigned int Villager::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
     int itemId = Item::getId(holder.m_pItemInstance->getItem());
 
-    if (itemId == 0x17f)
+    if (itemId == ItemId::SPAWN_EGG)
     {
-        if (SpawnEggItem::fjGetType(holder.m_pItemInstance) == ENTITY_TYPE_VILLAGER)
+        if (SpawnEggItem::fjGetType(holder.m_pItemInstance) == EntityType::VILLAGER)
         {
-            return 0x4c36cd96;
+            return IDS_TOOLTIPS_PLACE;
         }
     }
-    else if (itemId == 0x1a5)
+    else if (itemId == ItemId::NAME_TAG)
     {
         if (!holder.m_pItemInstance->hasCustomHoverName())
         {
-            return 0xffffffff;
+            return IDS_NONE;
         }
 
         if (hasCustomName())
@@ -1202,19 +1205,19 @@ unsigned int Villager::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 
             if (hoverName.compare(getCustomName()) == 0)
             {
-                return 0xffffffff;
+                return IDS_NONE;
             }
         }
 
-        return 0x5592c692;
+        return IDS_TOOLTIPS_NAME;
     }
 
     if (!isBaby() && getProfession() != 5)
     {
-        return 0x80cf40eb;
+        return IDS_TOOLTIPS_TRADE;
     }
 
-    return 0xffffffff;
+    return IDS_NONE;
 }
 
 bool Villager::HideUseTooltips()
@@ -1338,7 +1341,7 @@ void Villager::setLastHurtByMob(boost::shared_ptr<LivingEntity> attacker)
     {
         village->addAggressor(attacker);
 
-        if ((attacker->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             int amount = -1;
 
@@ -1351,7 +1354,7 @@ void Villager::setLastHurtByMob(boost::shared_ptr<LivingEntity> attacker)
 
             if (isAlive())
             {
-                mLevel->broadcastEntityEvent(shared_from_this(), 13, 0);
+                mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::VILLAGER_ANGRY, 0);
             }
         }
     }
@@ -1374,11 +1377,11 @@ void Villager::die(const DamageSource* source)
                 village->resetNoBreedTimer();
             }
         }
-        else if ((killer->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+        else if ((killer->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             village->modifyStanding(killer->getName(), -2);
         }
-        else if ((killer->GetType() & 0x40000000ULL) == 0x40000000ULL)
+        else if ((killer->GetType() & EntityType::ENEMY) == EntityType::ENEMY)
         {
             village->resetNoBreedTimer();
         }
@@ -1421,7 +1424,7 @@ bool Villager::isWillingToBreed(bool consumeFood)
 
             if (consumed)
             {
-                mLevel->broadcastEntityEvent(shared_from_this(), 18, 0);
+                mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::IN_LOVE_HEARTS, 0);
                 mWillingToBreed = true;
                 break;
             }
@@ -1472,15 +1475,15 @@ void Villager::addParticlesAroundSelf(const ParticleType* particle)
 
 void Villager::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 12)
+    if (event == EntityEvent::LOVE_HEARTS)
     {
         addParticlesAroundSelf(PARTICLE_HEART);
     }
-    else if (event == 13)
+    else if (event == EntityEvent::VILLAGER_ANGRY)
     {
         addParticlesAroundSelf(PARTICLE_ANGRY_VILLAGER);
     }
-    else if (event == 14)
+    else if (event == EntityEvent::VILLAGER_HAPPY)
     {
         addParticlesAroundSelf(PARTICLE_HAPPY_VILLAGER);
     }

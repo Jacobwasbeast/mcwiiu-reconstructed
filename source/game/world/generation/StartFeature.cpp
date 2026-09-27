@@ -26,17 +26,17 @@ StartFeature::~StartFeature()
 
 ConsoleGameRules::EGameRuleType StartFeature::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(9);
+    return ConsoleGameRules::eGameRuleType_StartFeature;
 }
 
 void StartFeature::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 4);
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(34), _toString(mChunkX));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(35), _toString(mChunkZ));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(45), _toString(mFeatureType));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(41),
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_chunkX, _toString(mChunkX));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_chunkZ, _toString(mChunkZ));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_feature, _toString(mFeatureType));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_orientation,
                                  _toString(mOrientation != NULL ? mOrientation : Direction::NORTH));
 }
 

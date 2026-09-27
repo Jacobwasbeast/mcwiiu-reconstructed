@@ -41,7 +41,7 @@ bool DeadBushFeature::place(Level* level, Random& random, const BlockPos& origin
         if (level->isEmptyBlock(target)
             && Blocks::deadbush->canSurvive(level, target, Blocks::deadbush->defaultBlockState()))
         {
-            level->setBlock(target, Blocks::deadbush->defaultBlockState(), 2, false);
+            level->setBlock(target, Blocks::deadbush->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
     }
 

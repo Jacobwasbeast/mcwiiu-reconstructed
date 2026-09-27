@@ -20,11 +20,13 @@ bool ReedsFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int attempt = 0; attempt < 20; ++attempt)
     {
-        const int dx = random.nextInt(4) - random.nextInt(4);
-        const int dz = random.nextInt(4) - random.nextInt(4);
+        const int xOffsetStart = random.nextInt(4);
+        const int dx = xOffsetStart - random.nextInt(4);
+        const int zOffsetStart = random.nextInt(4);
+        const int dz = zOffsetStart - random.nextInt(4);
         const BlockPos position = origin.offset(dx, 0, dz);
-        LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-        if (options != NULL && options->checkIntersects(position, position))
+        if (g_pApp->getLevelGenerationOptions() != NULL
+            && g_pApp->getLevelGenerationOptions()->checkIntersects(position, position))
         {
             continue;
         }
@@ -43,10 +45,9 @@ bool ReedsFeature::place(Level* level, Random& random, const BlockPos& origin)
             const int height = random.nextInt(random.nextInt(3) + 1) + 2;
             for (int y = 0; y < height; ++y)
             {
-                const BlockPos blockPosition = position.above(y);
-                if (Blocks::reeds->mayPlace(level, blockPosition))
+                if (Blocks::reeds->canSurvive(level, position, NULL))
                 {
-                    level->setBlock(blockPosition, Blocks::reeds->defaultBlockState(), 2, false);
+                    level->setBlock(position.above(y), Blocks::reeds->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
         }

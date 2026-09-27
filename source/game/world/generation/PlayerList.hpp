@@ -114,6 +114,10 @@ public:
     void setViewDistance(int distance);
 
 private:
+    friend class MinecraftServer;
+    friend class EntityTracker;
+    friend class MapItemSavedData;
+    friend class TrackedEntity;
     std::vector<boost::shared_ptr<ServerPlayer> > mPlayers;
     MinecraftServer* mServer;
     MasterGameMode* mGameMode;

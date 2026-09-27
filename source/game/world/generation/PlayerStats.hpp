@@ -9,22 +9,48 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/core/Scoreboard.hpp"
-#include "game/core/StatTracker.hpp"
 #include "game/core/StatsUID.hpp"
-#include "game/core/KillsWithBowStatTracker.hpp"
-#include "game/world/generation/MaxSnowballHitsWithSnowballOnPlayerStatTracker.hpp"
+#include "game/world/block/BlockPos.hpp"
 
-class CheckpointRuleDefinition;
-class ContainerInfo;
+class AmphibiousKillStatTracker;
+class DamageDealtStatTracker;
 class DamageEvent;
+class DamageReceivedStatTracker;
 class DamageSourceMedal;
-class GameMedal;
-class Item;
+class DamageTakenBySourceStatTracker;
+class DeadshotStatTracker;
 class FallKillStatTracker;
+class GameMedal;
+class GameStats;
+class Item;
+class KillsWithBowStatTracker;
+class LastPlayerDamageStatTracker;
+class LastPlayerFatalDamageStatTracker;
+class MaxSnowballHitsWithSnowballOnPlayerStatTracker;
 class SniperStatTracker;
 class TotalKillsStatTracker;
+class UntypedStatTracker;
+class WeaponDamageStatTracker;
 
-typedef int eTimeSpentCategory;
+enum eTimeSpentCategory
+{
+    eTimeSpentCategory_Leading,
+    eTimeSpentCategory_Trailing,
+    eTimeSpentCategory_BetweenCheckpoints,
+    eTimeSpentCategory_GoingBackwards,
+    eTimeSpentCategory_NearBlocks,
+    eTimeSpentCategory_InWater,
+    eTimeSpentCategory_Count
+};
+
+class ContainerInfo
+{
+public:
+    int mX;
+    int mY;
+    int mZ;
+    int mType;
+};
 
 class PlayerStats
 {
@@ -38,12 +64,21 @@ public:
             BlockInteractionInfo();
 
             int mCount;
-            std::map<int, int> mItems;
-            std::map<int, int> mPlayers;
-            std::map<int, int> mRounds;
+            std::map<int, int> mByBlock;
+            std::map<int, int> mByHeight;
+            std::map<int, int> mByTime;
         };
 
-        typedef std::wstring PerLifeStats;
+        class PerLifeStats
+        {
+        public:
+            std::wstring mKillerName;
+        };
+
+        static const int NO_LAYER = -1;
+        static const int LAYERS_UNUSED = -2;
+        static const int RING_SIZE_COUNT = 3;
+        static const int BUILD_SCORE_COUNT = 4;
 
         RoundStats(const StatsUID& statsUID);
         ~RoundStats();
@@ -54,11 +89,11 @@ public:
 
         std::vector<UntypedStatTracker*> mTrackers;
         bool mWon;
-        bool mActive;
-        StatTracker<float>* mDamageDealt;
-        StatTracker<float>* mDamageReceived;
-        UntypedStatTracker* mLastPlayerDamage;
-        UntypedStatTracker* mLastPlayerFatalDamage;
+        bool mParticipated;
+        DamageDealtStatTracker* mDamageDealt;
+        DamageReceivedStatTracker* mDamageReceived;
+        LastPlayerDamageStatTracker* mLastPlayerDamage;
+        LastPlayerFatalDamageStatTracker* mLastPlayerFatalDamage;
         KillsWithBowStatTracker* mKillsWithBow;
         MaxSnowballHitsWithSnowballOnPlayerStatTracker* mMaxSnowballHits;
         int mJumpCount;
@@ -74,50 +109,55 @@ public:
         std::vector<Item*> mItemsUsed;
         int mSplashPotionsUsed;
         int mPotionsUsed;
-        int mSecondaryTargets;
+        int mSnowballsThrown;
         int mLifeSpan;
-        Scoreboard::Weapon mWeapon;
-        int mBlocksPlaced;
-        int mItemsCollected;
-        int mLayer;
-        int mLastCheckpointId;
-        std::vector<unsigned int> mCheckpointTimes;
-        int mLastCheckpointSequenceId;
-        bool mFinished;
-        int mLives;
+        Scoreboard::Weapon mFatalWeapon;
+        const DamageEvent* mFatalDamage;
+        int mField0x94;
+        int mDeathLayer;
+        int mLayerChanges;
+        std::vector<unsigned int> mTimeOnLayer;
+        int mFinalLayer;
+        bool mLanded;
+        int mDeathOrder;
         bool mReachedEnd;
         int mDeaths;
-        int mLastPointsAdded;
+        int mTargetsReached;
         int mPoints;
-        int mBonusPoints;
-        int mRoundTime;
-        int mTotalTime;
+        int mUnbankedPoints;
+        int mLastBankedPoints;
+        int mLastPointsAdded;
         double mTopSpeed;
-        std::vector<std::wstring> mMedals;
-        std::vector<std::wstring> mMedalNames;
-        int mDistanceStats[3];
-        int mProgressStats[3];
-        int mRoundStats[4];
-        double mBestTime;
-        double mCurrentTime;
-        double mPreviousTime;
-        boost::unordered_map<int, int> mThermalsEntered;
-        int mTimeSpent[6];
-        int mTimeSpentPadding;
-        long long mTimestamp[6];
-        std::set<int> mSpawnedCheckpoints;
-        int mCheckpointPadding[8];
-        BlockInteractionInfo mBlocksPlacedInfo;
-        BlockInteractionInfo mBlocksDestroyed;
-        BlockInteractionInfo mBlocksUsed;
-        unsigned short mDeathsByType[4];
-        unsigned short mKillsByType[4];
-        std::wstring mWinningTheme;
-        std::vector<PerLifeStats> mLifeStats;
+        std::vector<std::wstring> mBankedTargets;
+        std::vector<std::wstring> mUnbankedTargets;
+        int mUnbankedRings[RING_SIZE_COUNT];
+        int mBankedRings[RING_SIZE_COUNT];
+        int mLastCheckpointID;
+        int mLastCheckpointSequenceID;
+        int mLastBankedCheckpointID;
         int mLapsCompleted;
-        std::vector<unsigned int> mLayerTime;
-        int mLayerTimeCounter;
+        double mSequenceProgress;
+        double mNearestDistance;
+        double mProgress;
+        boost::unordered_map<int, int> mCheckpointTimes;
+        int mThermalsEntered;
+        int mTimeSpent[eTimeSpentCategory_Count];
+        long long mTimestamps[eTimeSpentCategory_Count];
+        std::set<int> mSpawnedCheckpoints;
+        int mFinishPosition;
+        int mFinishPlayerCount;
+        BlockPos mBuildAreaFrom;
+        BlockPos mBuildAreaTo;
+        BlockInteractionInfo mBlocksPlaced;
+        BlockInteractionInfo mBlocksDestroyed;
+        BlockInteractionInfo mBlocksPresent;
+        unsigned short mScoresGiven[BUILD_SCORE_COUNT];
+        unsigned short mScoresReceived[BUILD_SCORE_COUNT];
+        std::wstring mThemeVote;
+        std::vector<PerLifeStats> mLifeStats;
     };
+
+    static const int DAMAGE_SOURCE_COUNT = 15;
 
     PlayerStats(const StatsUID& statsUID);
     ~PlayerStats();
@@ -130,6 +170,7 @@ public:
     int getTotalDistanceMoved(unsigned int round);
     double getAllDamageTaken();
     int getTotalJumpCount();
+    int getTotalSecondaryTargets();
     int getTotalDeaths();
     int getDeaths(unsigned int round);
     int getDeathsInAnyRound(int deaths);
@@ -142,60 +183,57 @@ public:
     int getTotalUnderwaterDistance();
     int getTotalClimbDistance();
     void getAllItemsUsed(std::vector<Item*>& items);
+    void getAllContainers(std::vector<ContainerInfo*>& containers);
     int getTotalRoundsWon();
-    unsigned char getRoundWon(unsigned int round);
+    bool getRoundWon(unsigned int round);
     int getTotalBlocksDestroyed();
     int getTotalSplashPotionsUsed();
     int getTotalPotionsUsed();
     int getTotalLifeSpan();
-    int getLifeSpan(unsigned int round);
-    int getBestLifeSpan(bool highest, bool reachedEndOnly);
+    unsigned int getLifeSpan(unsigned int round);
+    unsigned int getBestLifeSpan(bool highest, bool reachedEndOnly);
     int getTotalPoints();
+    int GetLastPointsAdded(unsigned int round);
     int getPoints(unsigned int round);
-    int getBestPoints(bool highest, bool reachedEndOnly);
-    unsigned char getReachedEnd(unsigned int round);
+    unsigned int getBestPoints(bool highest, bool reachedEndOnly);
+    int getTotalRoundsReachedEnd();
+    bool getReachedEnd(unsigned int round);
     int getTotalThermalsEntered();
+    bool hasSpawnedAtCheckpoint(int checkpoint);
     bool hasSpawnedAtCheckpoint(int checkpoint, unsigned int round);
+    bool hasSpawnedAtAllCheckpoints();
     bool hasSpawnedAtAllCheckpointsInOneRound();
     double getTopSpeed();
     int getImprovement();
     bool hasRoundStats(unsigned int round) const;
 
-    int getTotalSecondaryTargets();
-    void getAllContainers(std::vector<ContainerInfo*>& containers);
-    int GetLastPointsAdded(unsigned int round);
-    int getTotalRoundsReachedEnd();
-    bool hasSpawnedAtCheckpoint(int checkpoint);
-    bool hasSpawnedAtAllCheckpoints();
-
-private:
     StatsUID mStatsUID;
     std::wstring mName;
-    int mCurrentRound;
-    unsigned char m_unknownHeaderTail[8];
+    const GameMedal* mAwardedMedal;
     std::vector<const GameMedal*> mMedals;
-    int mWinningMedal;
-    int mLastMedal;
-
-public:
-    int mSnowballDirectHits;
-    int mHitsFromProjectile;
-    StatTracker<float>* mDamageDealt;
-    StatTracker<float>* mDamageReceived;
+    int mMedalWeight;
+    int mBlocksDestroyedFromBelow;
+    unsigned int mSnowballDirectHits;
+    unsigned int mHitsBySnowball;
+    DamageDealtStatTracker* mDamageDealt;
+    DamageReceivedStatTracker* mDamageReceived;
     FallKillStatTracker* mFallKills;
-    StatTracker<unsigned int>* mAmphibiousKills;
+    AmphibiousKillStatTracker* mAmphibiousKills;
     TotalKillsStatTracker* mTotalKills;
     SniperStatTracker* mSniper;
-
-private:
-    friend class DamageSourceMedal;
-    friend class GameStats;
-
-    UntypedStatTracker* mDamageTakenBySource[15];
-    UntypedStatTracker* mWeaponDamage[2];
-    UntypedStatTracker* mDeadshot;
+    DamageTakenBySourceStatTracker* mDamageTakenBySource[DAMAGE_SOURCE_COUNT];
+    WeaponDamageStatTracker* mWeaponDamage[2];
+    DeadshotStatTracker* mDeadshot;
     std::vector<UntypedStatTracker*> mTrackers;
     boost::unordered_map<int, RoundStats*> mRoundStats;
 };
+
+int getBlocksPlaced(const PlayerStats::RoundStats& roundStats);
+int getBlocksDestroyed(const PlayerStats::RoundStats& roundStats);
+int getBlocksPresent(const PlayerStats::RoundStats& roundStats);
+int wasWinnerWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats);
+int lostFirstWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats);
+void writeBlockInteractionData(PlayerStats::RoundStats& roundStats, PlayerStats::RoundStats::BlockInteractionInfo& info,
+                               const long long& roundStartTime, const BlockPos& pos, int blockId);
 
 #endif

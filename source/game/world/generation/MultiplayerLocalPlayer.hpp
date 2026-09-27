@@ -20,7 +20,7 @@ public:
     MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener);
     virtual ~MultiplayerLocalPlayer();
 
-    virtual MultiPlayerLevel* GetLevel();
+    MultiPlayerLevel* GetLevel();
     virtual const GameType* GetGameType();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual void heal(float amount);
@@ -38,8 +38,8 @@ public:
     virtual void awardStat(Stat* stat, arrayWithLength<unsigned char> params);
     virtual bool isLocalPlayer();
     virtual bool startRiding(boost::shared_ptr<Entity> vehicle, bool force);
-    virtual unsigned long long sendRidingJump();
-    virtual unsigned long long sendOpenInventory();
+    virtual void sendRidingJump();
+    virtual void sendOpenInventory();
     virtual void StopSleeping();
     virtual void setAndBroadcastCustomSkin(unsigned int skin);
     virtual void setAndBroadcastCustomCape(unsigned int cape);
@@ -50,14 +50,14 @@ public:
     void onSlimeBlockBounce();
 
 private:
-    bool m_hurt;
-    int m_scoreboardWait;
-    bool m_hasSentOpenInventory;
-    bool m_hasSentRidingJump;
-    bool m_receivedRespawn;
-    int m_lastSentStat;
-    double* m_bounceHeight;
-    int m_bounceTicks;
+    bool mHurt;
+    int mScoreboardWait;
+    bool mHasSentOpenInventory;
+    bool mHasSentRidingJump;
+    bool mReceivedRespawn;
+    int mLastSentStat;
+    double* mBounceHeight;
+    int mFreeDiverTicks;
 };
 
 #endif

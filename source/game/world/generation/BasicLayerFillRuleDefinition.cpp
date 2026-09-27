@@ -5,10 +5,9 @@
 
 namespace BasicLayerFillRuleDefinitionConstants {
 const ConsoleGameRules::EGameRuleAttr LayerFillTypeAttribute =
-    static_cast<ConsoleGameRules::EGameRuleAttr>(
-        IGameRuleAttribute::attributeIdFromName(L"type"));
+    ConsoleGameRules::eGameRuleAttr_type;
 const ConsoleGameRules::EGameRuleType BasicLayerFillActionType =
-    static_cast<ConsoleGameRules::EGameRuleType>(55);
+    ConsoleGameRules::eGameRuleType_BasicLayerFill;
 LayerFill* const NoGeneratedLayerFill = NULL;
 }
 

@@ -17,15 +17,15 @@ XboxStructureActionGenerateBox::XboxStructureActionGenerateBox()
     mExistingOnly = false;
     mStartY = 0;
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(26), &mStartX);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(29), &mStartY);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(32), &mStartZ);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(27), &mEndX);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(30), &mEndY);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(33), &mEndZ);
-    addBlockAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(22), &mOuterBlock);
-    addBlockAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(23), &mInnerBlock);
-    addBoolAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(24), &mExistingOnly);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x0, &mStartX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_y0, &mStartY);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z0, &mStartZ);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x1, &mEndX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_y1, &mEndY);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z1, &mEndZ);
+    addBlockAttribute(ConsoleGameRules::eGameRuleAttr_edgeBlock, &mOuterBlock);
+    addBlockAttribute(ConsoleGameRules::eGameRuleAttr_fillBlock, &mInnerBlock);
+    addBoolAttribute(ConsoleGameRules::eGameRuleAttr_skipAir, &mExistingOnly);
 }
 
 XboxStructureActionGenerateBox::~XboxStructureActionGenerateBox()
@@ -43,7 +43,7 @@ uint32_t XboxStructureActionGenerateBox::generateBoxInLevel(StructurePiece* stru
 
 ConsoleGameRules::EGameRuleType XboxStructureActionGenerateBox::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(4);
+    return ConsoleGameRules::eGameRuleType_GenerateBox;
 }
 
 uint32_t XboxStructureActionGenerateBox::getEndX()

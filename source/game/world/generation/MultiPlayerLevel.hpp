@@ -108,6 +108,7 @@ public:
 
 private:
     friend class Minecraft;
+    friend class ClientPacketListener;
 
     typedef boost::unordered_map<int, boost::shared_ptr<Entity> > EntityMap;
     typedef boost::unordered_set<boost::shared_ptr<Entity> > EntitySet;

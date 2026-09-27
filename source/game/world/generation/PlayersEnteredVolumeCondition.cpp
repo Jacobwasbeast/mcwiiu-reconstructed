@@ -1,4 +1,5 @@
 #include "game/world/generation/PlayersEnteredVolumeCondition.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <vector>
 
@@ -71,7 +72,7 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
                 AABB* volume = (*area)->getArea();
                 if (volume != NULL && (*it)->getBoundingBoxForCulling()->intersects(volume->mMinX, volume->mMinY, volume->mMinZ,
                                                                            volume->mMaxX, volume->mMaxY, volume->mMaxZ) &&
-                    gameMode->mGameStats.GetLastCheckpointSequenceID(uid) == gameMode->mCurrentCheckpoint)
+                    gameMode->mGameStats.GetLastCheckpointSequenceID(uid) == gameMode->mFinalCheckpointSequenceID)
                 {
                     ++entered;
                     break;
@@ -109,7 +110,7 @@ unsigned int PlayersEnteredVolumeCondition::GetThreshold(MasterGameMode* gameMod
 void PlayersEnteredVolumeCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
     params->push_back(GetValue(gameMode));
-    params->push_back(0x57a4fda9);
+    params->push_back(IDS_MG_PLAYERS);
 }
 
 bool PlayersEnteredVolumeCondition::IsUsingPrimaryTargetAreas() const

@@ -6,7 +6,7 @@
 UniformLayerSizeRuleDefinition::UniformLayerSizeRuleDefinition()
     : mSize(-1)
 {
-    GameRules_IntAttribute* size = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(64), &mSize);
+    GameRules_IntAttribute* size = addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mSize);
     size->setMin(0);
     size->setMax(254);
 }
@@ -17,7 +17,7 @@ UniformLayerSizeRuleDefinition::~UniformLayerSizeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType UniformLayerSizeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(45);
+    return ConsoleGameRules::eGameRuleType_UniformSize;
 }
 
 LayerSize* UniformLayerSizeRuleDefinition::Generate() const

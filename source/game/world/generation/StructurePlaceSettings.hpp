@@ -24,13 +24,13 @@ public:
     void write(DataOutputStream* output);
     StructurePlaceSettings* copy();
 
-    void setMirror(Mirror* mirror);
-    void setRotation(Rotation* rotation);
-    void setIgnoreEntities(bool ignoreEntities);
-    void setIgnoreBlock(Block* block);
+    StructurePlaceSettings* setMirror(Mirror* mirror);
+    StructurePlaceSettings* setRotation(Rotation* rotation);
+    StructurePlaceSettings* setIgnoreEntities(bool ignoreEntities);
+    StructurePlaceSettings* setIgnoreBlock(Block* block);
     StructurePlaceSettings* setBoundingBox(BoundingBox* box);
-    void setRandom(Random* random);
-    void setIntegrity(float integrity);
+    StructurePlaceSettings* setRandom(Random* random);
+    StructurePlaceSettings* setIntegrity(float integrity);
 
     Mirror* getMirror() const;
     Rotation* getRotation() const;

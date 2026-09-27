@@ -1,4 +1,5 @@
 #include "game/world/generation/PlayersCondition.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/MasterGameMode.hpp"
@@ -23,7 +24,7 @@ int PlayersCondition::GetValue(MasterGameMode* gameMode) const
 void PlayersCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
     params->push_back(GetValue(gameMode));
-    params->push_back(0x57a4fda9);
+    params->push_back(IDS_MG_PLAYERS);
 }
 
 bool PlayersCondition::IsSatisfied(MasterGameMode* gameMode) const

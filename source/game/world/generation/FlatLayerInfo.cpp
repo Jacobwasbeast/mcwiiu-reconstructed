@@ -1,10 +1,12 @@
 #include "game/world/generation/FlatLayerInfo.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/util/ResourceLocation.hpp"
-std::wstring formatwstr(const wchar_t* format, ...);
+#include "game/core/StringFormat.hpp"
 FlatLayerInfo::FlatLayerInfo() : mVersion(3), mBlockState(NULL), mHeight(0), mStart(0) {}
 FlatLayerInfo::FlatLayerInfo(int height, Block* block)
 {
@@ -41,11 +43,22 @@ int FlatLayerInfo::getData() const { Block* block = getBlock(); return block ? b
 void FlatLayerInfo::setStart(int start) { mStart = start; }
 std::wstring FlatLayerInfo::toString()
 {
-    std::wstring result = formatwstr(L"%i", getId());
-    if (mHeight > 1)
-        result = formatwstr(L"%i", mHeight) + L"x" + result;
-    if (getData() > 0)
-        result += formatwstr(L":%i", getData());
+    std::wstring result;
+    if (mVersion < 3)
+    {
+        result = _toString<int>(Block::getId(getBlock()));
+        if (mHeight > 1)
+            result = _toString<int>(mHeight) + L"x" + result;
+    }
+    else
+    {
+        result = Block::blockRegistry->getKey(getBlock()).toString();
+        if (mHeight > 1)
+            result = _toString<int>(mHeight) + L"*" + result;
+    }
+    int data = getData();
+    if (data > 0)
+        result += L":" + _toString<int>(data);
     return result;
 }
 
@@ -57,6 +70,8 @@ std::wstring FlatLayerInfo::getHeightText() const
 std::wstring FlatLayerInfo::getNameText() const
 {
     Block* block = getBlock();
+    if (block == Blocks::air)
+        return std::wstring(L10N::GetString(0x2825E7E3));
     if (block == NULL)
         return std::wstring();
     ItemInstance item(block);
@@ -67,6 +82,8 @@ std::wstring FlatLayerInfo::getNameText() const
 std::wstring FlatLayerInfo::getDescriptionText() const
 {
     Block* block = getBlock();
+    if (block == Blocks::air)
+        return std::wstring(L10N::GetString(0xDDB4DEC5));
     if (block == NULL)
         return std::wstring();
     return std::wstring(L10N::GetString(block->getDescriptionId(-1)));

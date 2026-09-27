@@ -58,7 +58,7 @@ const BlockState* FunctionPatchesLayerTheme::HELLFIRE_PATCHES(Random&, float noi
 
         if (isAir && heightAboveSurface == ABOVE_SURFACE(1))
         {
-            return Blocks::FIRE->defaultBlockState();
+            return Blocks::fire->defaultBlockState();
         }
     }
 
@@ -95,7 +95,7 @@ const BlockState* FunctionPatchesLayerTheme::TNT_TRAPS(Random&, float noise, int
                 return Blocks::tnt->defaultBlockState();
             }
 
-            return Blocks::AIR->defaultBlockState();
+            return Blocks::air->defaultBlockState();
         }
 
         if (heightAboveSurface <= aboveSurface)
@@ -120,7 +120,7 @@ const BlockState* FunctionPatchesLayerTheme::CARPET_TRAP(Random&, float noise, i
 
         if (noise < -0.43f && heightAboveSurface < 1)
         {
-            return Blocks::AIR->defaultBlockState();
+            return Blocks::air->defaultBlockState();
         }
     }
 

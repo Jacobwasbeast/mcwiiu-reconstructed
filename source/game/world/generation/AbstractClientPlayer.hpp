@@ -18,7 +18,7 @@ public:
     virtual bool isPickable();
     virtual bool isSpectator();
     virtual bool isCreative();
-    virtual double getFieldOfViewModifier();
+    double getFieldOfViewModifier();
     virtual const GameType* GetGameType() = 0;
     virtual void SetGameType(const GameType* gameType) = 0;
 

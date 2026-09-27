@@ -1,38 +1,54 @@
 #include "game/world/generation/UnderwaterLargeCaveFeature.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <cmath>
 
+#include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 
-unsigned int UnderwaterLargeCaveFeature::isDiggable(int blockId)
+bool UnderwaterLargeCaveFeature::isDiggable(int blockId)
 {
-    if (blockId < 0x6e)
+    switch (blockId)
     {
-        if (blockId < 4)
-            return 1;
-        if (blockId > 7)
-            return blockId < 0xe || blockId == 0x18 || blockId == 0x31;
+    case BlockId::AIR:
+    case BlockId::STONE:
+    case BlockId::GRASS:
+    case BlockId::DIRT:
+    case BlockId::FLOWING_WATER:
+    case BlockId::WATER:
+    case BlockId::FLOWING_LAVA:
+    case BlockId::LAVA:
+    case BlockId::SAND:
+    case BlockId::GRAVEL:
+    case BlockId::SANDSTONE:
+    case BlockId::OBSIDIAN:
+    case BlockId::MYCELIUM:
+    case BlockId::STAINED_HARDENED_CLAY:
+    case BlockId::HARDENED_CLAY:
+    case BlockId::RED_SANDSTONE:
+        return true;
     }
-    else
-        return blockId == 0x6e || blockId == 0x9f || blockId == 0xac || blockId == 0xb3;
-    return 0;
+    return false;
 }
 
 void UnderwaterLargeCaveFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     random.setSeed(level->getSeed());
-    const int xStep = (random.nextInt() / 2) * 2 + 1;
-    const int zStep = (random.nextInt() / 2) * 2 + 1;
+    int xStep = random.nextInt() / 2 * 2 + 1;
+    int zStep = random.nextInt() / 2 * 2 + 1;
     for (int x = chunkX - 8; x <= chunkX + 8; ++x)
     {
-        const long long xSeed = static_cast<long long>(x) * xStep;
         for (int z = chunkZ - 8; z <= chunkZ + 8; ++z)
         {
-            random.setSeed(level->getSeed() ^ (xSeed + static_cast<long long>(z) * zStep));
+            int seedOffset = x * xStep + z * zStep;
+            random.setSeed(seedOffset ^ level->getSeed());
             addFeature(level, x, z, chunkX, chunkZ, primer);
         }
     }
@@ -43,17 +59,19 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
                                             float width, float yaw, float pitch, int originChunkX,
                                             int originChunkZ, double scale)
 {
+    const float originX = static_cast<float>(chunkX * 16 + 8);
+    const float originZ = static_cast<float>(chunkZ * 16 + 8);
+    float yawVariance = 0.0F;
+    float pitchVariance = 0.0F;
+    const BlockPos startPos(x, y, z);
+    MemSect(49);
     Random tunnelRandom(seed);
+    MemSect(0);
     int length = originChunkZ;
     if (length < 1)
         length = 0x70 - tunnelRandom.nextInt(0x1c);
     int start = originChunkX;
-    const float originX = static_cast<float>(chunkX * 16 + 8);
-    const float originZ = static_cast<float>(chunkZ * 16 + 8);
     const bool room = originChunkX == -1;
-    const BlockPos startPos(x, y, z);
-    float yawVariance = 0.0F;
-    float pitchVariance = 0.0F;
     if (room) start = length / 2;
     const int branchPoint = tunnelRandom.nextInt(length / 2) + length / 4;
 
@@ -64,9 +82,11 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
     {
         const float radius = std::sin(static_cast<float>(step) * pi / static_cast<float>(length)) * width + 1.5F;
         const double radiusY = static_cast<double>(radius * static_cast<float>(scale));
-        x += std::cos(yaw) * std::cos(pitch);
-        y += std::sin(pitch);
-        z += std::sin(yaw) * std::cos(pitch);
+        const float cosPitch = std::cos(pitch);
+        const float sinPitch = std::sin(pitch);
+        x += std::cos(yaw) * cosPitch;
+        y += sinPitch;
+        z += std::sin(yaw) * cosPitch;
         pitch *= steeringMode == 0 ? 0.92F : 0.7F;
         pitch += pitchVariance * 0.1F;
         yaw += yawVariance * 0.1F;
@@ -96,14 +116,21 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
             x > originX + 16.0F + radius * 2.0F || z > originZ + 16.0F + radius * 2.0F) continue;
         int minX = static_cast<int>(std::floor(x - radius)) - chunkX * 16 - 1;
         int maxX = static_cast<int>(std::floor(x + radius)) - chunkX * 16 + 1;
+        const double bottom = std::floor(y - radiusY);
+        const double top = std::floor(y + radiusY);
         int minZ = static_cast<int>(std::floor(z - radius)) - chunkZ * 16 - 1;
         int maxZ = static_cast<int>(std::floor(z + radius)) - chunkZ * 16 + 1;
-        const int maxY = Mth::clamp(static_cast<int>(std::floor(y + radiusY)) + 1, 1, 120);
-        const int minY = Mth::clamp(static_cast<int>(std::floor(y - radiusY)) - 1, 1, maxY);
         if (minX < 0) minX = 0;
         if (maxX > 16) maxX = 16;
+        const int maxY = Mth::clamp(static_cast<int>(top) + 1, 1, 120);
+        const int minY = Mth::clamp(static_cast<int>(bottom) - 1, 1, maxY);
         if (minZ < 0) minZ = 0;
         if (maxZ > 16) maxZ = 16;
+        int magmaData = Blocks::magma->convertBlockStateToLegacyData(Blocks::magma->defaultBlockState());
+        int obsidianData = Blocks::obsidian->convertBlockStateToLegacyData(Blocks::obsidian->defaultBlockState());
+        int flowingWaterData = Blocks::flowing_water->convertBlockStateToLegacyData(Blocks::flowing_water->defaultBlockState());
+        int waterData = Blocks::water->convertBlockStateToLegacyData(Blocks::water->defaultBlockState());
+        int lavaData = Blocks::lava->convertBlockStateToLegacyData(Blocks::lava->defaultBlockState());
         bool found = false;
         for (int localX = minX; localX < maxX; ++localX)
         {
@@ -115,25 +142,48 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
                     continue;
                 for (int localY = maxY - 1; localY >= minY; --localY)
                 {
-                    const float yd = (localY + 0.5F - static_cast<float>(y)) / static_cast<float>(radiusY);
+                    const float yd = (localY + 0.5F - static_cast<float>(y)) / radiusY;
                     const int index = (localX << 11) | (localZ << 7) | localY;
-                    if (yd <= -0.7 || xd * xd + zd * zd + yd * yd >= 1.0F || localY >= 0x3e || !isDiggable(primer->getBlockId(index)))
+                    if (yd <= -0.7 || xd * xd + yd * yd + zd * zd >= 1.0F || localY >= 0x3e || !isDiggable(primer->getBlockId(index)))
                         continue;
                     if (!found && level != NULL && level->getBiome(startPos)->getBiomeType() != Biome::eBiomeType_Ocean)
                         return;
                     found = true;
                     if (localY < 9)
-                        primer->setBlockAndData(index, 0xb, 0);
+                    {
+                        primer->setBlockAndData(index, BlockId::LAVA, lavaData);
+                    }
                     else if (localY < 10)
-                        primer->setBlockAndData(index, tunnelRandom.nextFloat() < 0.5F ? 0xd5 : 0x31, 0);
+                    {
+                        if (tunnelRandom.nextFloat() < 0.25F)
+                            primer->setBlockAndData(index, BlockId::MAGMA, magmaData);
+                        else
+                            primer->setBlockAndData(index, BlockId::OBSIDIAN, obsidianData);
+                    }
                     else
                     {
                         bool water = false;
-                        if (localX < 15 && primer->getBlockId(index + 0x800) == 0) { primer->setBlockAndData(index + 0x800, 8, 0); water = true; }
-                        if (localX > 0 && primer->getBlockId(index - 0x800) == 0) { primer->setBlockAndData(index - 0x800, 8, 0); water = true; }
-                        if (localZ < 15 && primer->getBlockId(index + 0x80) == 0) { primer->setBlockAndData(index + 0x80, 8, 0); water = true; }
-                        if (localZ > 0 && primer->getBlockId(index - 0x80) == 0) { primer->setBlockAndData(index - 0x80, 8, 0); water = true; }
-                        if (!water) primer->setBlockAndData(index, 9, 0);
+                        if (localX < 15 && primer->getBlockId(index + 0x800) == BlockId::AIR)
+                        {
+                            primer->setBlockAndData(index + 0x800, BlockId::FLOWING_WATER, flowingWaterData);
+                            water = true;
+                        }
+                        if (localX > 0 && primer->getBlockId(index - 0x800) == BlockId::AIR)
+                        {
+                            primer->setBlockAndData(index - 0x800, BlockId::FLOWING_WATER, flowingWaterData);
+                            water = true;
+                        }
+                        if (localZ < 15 && primer->getBlockId(index + 0x80) == BlockId::AIR)
+                        {
+                            primer->setBlockAndData(index + 0x80, BlockId::FLOWING_WATER, flowingWaterData);
+                            water = true;
+                        }
+                        if (localZ > 0 && primer->getBlockId(index - 0x80) == BlockId::AIR)
+                        {
+                            primer->setBlockAndData(index - 0x80, BlockId::FLOWING_WATER, flowingWaterData);
+                            water = true;
+                        }
+                        if (!water) primer->setBlockAndData(index, BlockId::WATER, waterData);
                     }
                 }
             }

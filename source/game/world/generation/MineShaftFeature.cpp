@@ -30,7 +30,6 @@ std::wstring MineShaftFeature::getFeatureName()
 
 bool MineShaftFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
-    (void)flatWorld;
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
     if (options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Mineshaft, NULL))
         return true;

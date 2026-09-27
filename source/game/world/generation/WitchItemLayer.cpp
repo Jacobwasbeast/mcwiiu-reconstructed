@@ -61,7 +61,7 @@ void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, floa
         GlStateManager::rotatef(-15.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(40.0f, 0.0f, 0.0f, 1.0f);
     }
-    else if (item == Items::potion)
+    else if (item == Items::bow)
     {
         GlStateManager::translatef(0.0f, 0.125f, -0.125f);
         GlStateManager::rotatef(-45.0f, 0.0f, 1.0f, 0.0f);
@@ -99,7 +99,7 @@ void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, floa
     }
 
     Minecraft::GetInstance()->getItemInHandRenderer()->renderItem(
-        entity, itemInstance, ItemTransforms::THIRD_PERSON_LEFT_HAND, false, 0, true);
+        entity, itemInstance, ItemTransforms::THIRD_PERSON_RIGHT_HAND, false, 0, true);
     GlStateManager::popMatrix();
 }
 

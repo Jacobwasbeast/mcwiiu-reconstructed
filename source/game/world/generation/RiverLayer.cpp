@@ -2,9 +2,7 @@
 
 #include "game/core/IntCache.hpp"
 #include "game/world/biome/Biome.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 RiverLayer::RiverLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)

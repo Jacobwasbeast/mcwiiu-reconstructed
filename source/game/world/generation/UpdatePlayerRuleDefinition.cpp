@@ -19,8 +19,7 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/minigame/EMiniGameId.hpp"
-
-std::string formatstr(const char* format, ...);
+#include "game/core/StringFormat.hpp"
 
 template<typename T>
 std::wstring toString(T value);
@@ -37,11 +36,11 @@ UpdatePlayerRuleDefinition::UpdatePlayerRuleDefinition()
     mYRot = 0.0f;
     mXRot = 0.0f;
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(42), &mDimension);
-    addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(36), &mYRot)->setOptional(true);
-    addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(37), &mXRot)->setOptional(true);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(10), &mFoodLevel)->setOptional(true);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(11), &mHealth)->setOptional(true);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_dimension, &mDimension);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_yRot, &mYRot)->setOptional(true);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_xRot, &mXRot)->setOptional(true);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_food, &mFoodLevel)->setOptional(true);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_health, &mHealth)->setOptional(true);
 }
 
 UpdatePlayerRuleDefinition::UpdatePlayerRuleDefinition(boost::shared_ptr<Player> player)
@@ -112,7 +111,7 @@ void UpdatePlayerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* c
 GameRuleDefinition* UpdatePlayerRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     AddItemRuleDefinition* item = NULL;
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(10))
+    if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
         item = new AddItemRuleDefinition();
         mItems.push_back(item);
@@ -124,9 +123,9 @@ void UpdatePlayerRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInte
                                                  unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(38), toString(mSpawnPosition->x));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(39), toString(mSpawnPosition->y));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(40), toString(mSpawnPosition->z));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, toString(mSpawnPosition->x));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, toString(mSpawnPosition->y));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, toString(mSpawnPosition->z));
 }
 
 void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -163,11 +162,11 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
 
 void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> player)
 {
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(11)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_health))
     {
         player->setHealth(static_cast<float>(mHealth));
     }
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(10)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_food))
     {
         player->getFoodData()->setFoodLevel(mFoodLevel);
     }
@@ -200,17 +199,17 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
         }
     }
 
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(36)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_yRot))
     {
         yRot = mYRot;
     }
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(37)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_xRot))
     {
         xRot = mXRot;
     }
     if (mSpawnPosition != NULL
-        || attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(36))
-        || attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(37)))
+        || attributeHasValue(ConsoleGameRules::eGameRuleAttr_yRot)
+        || attributeHasValue(ConsoleGameRules::eGameRuleAttr_xRot))
     {
         player->absMoveTo(x, y, z, yRot, xRot);
     }
@@ -252,25 +251,25 @@ void UpdatePlayerRuleDefinition::WriteAttributesAsXML(std::string& xml)
     xml.append(formatstr(" spawnY=\"%d\"", mSpawnPosition->y));
     xml.append(formatstr(" spawnZ=\"%d\"", mSpawnPosition->z));
 
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(36)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_yRot))
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(36), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_yRot, xml);
     }
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(37)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_xRot))
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(37), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_xRot, xml);
     }
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(10)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_food))
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(10), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_food, xml);
     }
-    if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(11)))
+    if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_health))
     {
-        WriteAttributeAsXML(static_cast<ConsoleGameRules::EGameRuleAttr>(11), xml);
+        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_health, xml);
     }
 }
 
 ConsoleGameRules::EGameRuleType UpdatePlayerRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(28);
+    return ConsoleGameRules::eGameRuleType_UpdatePlayer;
 }

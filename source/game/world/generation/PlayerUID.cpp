@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cwchar>
 
-#include "platform/wiiu/FFLiTypes.hpp"
+#include <nn/ffl/FFLCreateID.h>
 
 template<typename T> T _fromHEXString(const std::wstring& text);
 template<> int _fromHEXString<int>(const std::wstring& text);

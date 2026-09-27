@@ -1,4 +1,6 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/LevelRenderer.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
@@ -514,7 +516,7 @@ bool MultiPlayerGameMode::isServerControlledInventory()
     {
         boost::shared_ptr<Entity> vehicle = mMinecraft->mPlayer->getVehicle();
         unsigned long long type = vehicle->GetType();
-        if ((type & 0x0D690000ULL) == 0x0D690000ULL)
+        if ((type & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
             result = true;
     }
     return result;
@@ -555,11 +557,11 @@ void MultiPlayerGameMode::MakeSpectateSound()
     boost::shared_ptr<Player> player = GetLocalPlayer();
     const unsigned long long entityType = player->GetSpectateEntity();
     const SoundEvent* sound = 0;
-    if (entityType == 0x5D540048ULL)
+    if (entityType == EntityType::VEX)
         sound = SoundEvents::VEX_CHARGE;
-    else if (entityType == 0x2D6C0003ULL)
+    else if (entityType == EntityType::PARROT)
         sound = SoundEvents::PARROT_AMBIENT;
-    else if (entityType == 0x1D000101ULL)
+    else if (entityType == EntityType::BAT)
         sound = SoundEvents::BAT_AMBIENT;
     if (!sound || !mConnection)
         return;
@@ -578,14 +580,14 @@ void MultiPlayerGameMode::Follow(bool follow, bool immediate)
     if (!mConnection)
         return;
     GameModePacket::FollowData data(follow, immediate);
-    mConnection->send(GameModePacket::Create(GameModePacket::MessageUnknown, data));
+    mConnection->send(GameModePacket::Create(GameModePacket::eMessage_Follow, data));
 }
 void MultiPlayerGameMode::StartSpectating()
 {
     if (!mConnection)
         return;
     GameModePacket::EmptyData data;
-    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(1), data));
+    mConnection->send(GameModePacket::Create(GameModePacket::eMessage_StartSpectating, data));
 
 
 }
@@ -709,9 +711,9 @@ void MultiPlayerGameMode::SetGameType(const GameType* gameType)
     if (!mMinecraft->GetClientMasterGameMode()->IsRoundEnding() && gameType != GameType::LOBBY &&
         gameType == GameType::SPECTATOR && getTutorial() != 0)
     {
-        eTutorial_GameMode mode = static_cast<eTutorial_GameMode>(7);
+        eTutorial_GameMode mode = eTutorial_GameMode_SpectatingAsMob;
         if (player->SpectateAsInvisible())
-            mode = static_cast<eTutorial_GameMode>(6);
+            mode = eTutorial_GameMode_SpectatingInvisible;
         getTutorial()->onGameModeChange(mode);
     }
     mGameType = gameType;
@@ -731,14 +733,14 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
     if (state->getMaterial() == Material::AIR)
         return false;
 
-    level->levelEvent(2001, pos, Block::getIdWithData(state));
+    level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
 
     boost::shared_ptr<Player> player = GetLocalPlayer();
     bool handled = block->playerWillDestroy(level, pos, state, player);
     if (!handled)
     {
         mMinecraft->mLevelRenderer->mDestroyedBlocks->destroyingBlockAt(level, pos);
-        handled = level->setBlock(pos, Blocks::AIR->defaultBlockState(), 11, false);
+        handled = level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         if (handled)
             block->destroy(level, pos, state);
     }
@@ -805,11 +807,11 @@ void MultiPlayerGameMode::handleCreativeModeItemDrop(not_null_ptr<ItemInstance> 
 bool MultiPlayerGameMode::hasExperience() { return isSurvival(); }
 bool MultiPlayerGameMode::hasFarPickRange() { return isCreative(); }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleCraftItem(
-    int category, int recipe, boost::shared_ptr<Player> player)
+    int recipe, int category, boost::shared_ptr<Player> player)
 {
     int uid = player->mContainerMenu->backup(player->mInventory);
-    mConnection->send(boost::shared_ptr<Packet>(new CraftItemPacket(category, recipe, static_cast<short>(uid))));
-    return GameMode::handleCraftItem(category, recipe, player);
+    mConnection->send(boost::shared_ptr<Packet>(new CraftItemPacket(recipe, category, static_cast<short>(uid))));
+    return GameMode::handleCraftItem(recipe, category, player);
 }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleStackedCraftItem(
     std::vector<std::pair<int, int> >& recipes, int category, boost::shared_ptr<Player> player)
@@ -879,7 +881,7 @@ void MultiPlayerGameMode::SendTeamInvite(std::wstring playerName)
         return;
     GameModePacket::SendTeamInviteData data;
     data.playerName = playerName;
-        mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(8), data));
+        mConnection->send(GameModePacket::Create(GameModePacket::eMessage_SendTeamInvite, data));
 }
 std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteTo(std::wstring playerName)
 {
@@ -915,7 +917,7 @@ void MultiPlayerGameMode::AcceptTeamInvite(std::wstring playerName)
     if (it == mTeamInvites.end() || *it == NULL)
         return;
     GameModePacket::TeamIDData data((*it)->m_uTeamID);
-    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(0xB), data));
+    mConnection->send(GameModePacket::Create(GameModePacket::eMessage_AcceptTeamInvite, data));
 }
 
 void MultiPlayerGameMode::LeaveTeam()
@@ -929,7 +931,7 @@ void MultiPlayerGameMode::LeaveTeam()
     if (team != 0)
     {
         GameModePacket::EmptyData data;
-        mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x10), data));
+        mConnection->send(GameModePacket::Create(GameModePacket::eMessage_LeaveTeam, data));
     }
 }
 bool MultiPlayerGameMode::RecordLastCheckpoint(int checkpoint, int, bool, bool, bool)

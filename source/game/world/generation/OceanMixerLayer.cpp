@@ -1,9 +1,7 @@
 #include "game/world/generation/OceanMixerLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 OceanMixerLayer::OceanMixerLayer(long long seed, boost::shared_ptr<Layer> landLayer, boost::shared_ptr<Layer> oceanLayer)
     : Layer(seed),

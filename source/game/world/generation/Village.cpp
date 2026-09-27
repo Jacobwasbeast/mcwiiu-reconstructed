@@ -54,23 +54,28 @@ bool Village::canSpawnAt(const BlockPos& size, const BlockPos& pos)
 {
     BlockPos below = pos.below();
     const BlockState* state = mLevel->getBlockState(below);
-    if (!state->isTopSolidBlocking() && state->getBlock() != Blocks::WATER)
+    if (!state->isTopSolidBlocking() && state->getBlock() != Blocks::grass_path)
         return false;
-    MutableBlockPos current;
-    int x = pos.x - (size.x / 2);
-    int z = pos.z - (size.z / 2);
-    int ix;
-    int iy;
-    int iz;
-    for (ix = x; ix < x + size.x; ++ix)
-        for (iy = pos.y; iy < pos.y + size.y; ++iy)
-            for (iz = z; iz < z + size.z; ++iz)
+    int x = pos.x - size.x / 2;
+    int z = pos.z - size.z / 2;
+    MutableBlockPos current(0, 0, 0);
+    for (int ix = x; ix < x + size.x; ++ix)
+    {
+        current.setX(ix);
+        for (int iy = pos.y; iy < pos.y + size.y; ++iy)
+        {
+            current.setY(iy);
+            for (int iz = z; iz < z + size.z; ++iz)
             {
-                current.set(ix, iy, iz);
+                current.setZ(iz);
                 state = mLevel->getBlockState(current);
-                if (state->isSolidBlockingCubeAndNotSignalSource() || state->getBlock() == Blocks::WATER)
+                if (state->isSolidBlockingCubeAndNotSignalSource())
+                    return false;
+                if (state->getBlock() == Blocks::grass_path)
                     return false;
             }
+        }
+    }
     return true;
 }
 
@@ -335,7 +340,7 @@ void Village::readAdditionalSaveData(CompoundTag* tag)
     mStable = tag->getInt(L"Stable"); mTick = tag->getInt(L"Tick"); mNoBreedTimer = tag->getInt(L"MTick");
     mCenter = BlockPos(tag->getInt(L"CX"), tag->getInt(L"CY"), tag->getInt(L"CZ"));
     mBottom = BlockPos(tag->getInt(L"ACX"), tag->getInt(L"ACY"), tag->getInt(L"ACZ"));
-    ListTag* doors = tag->getList(L"Doors", 10);
+    ListTag* doors = tag->getList(L"Doors", Tag::TAG_COMPOUND);
     int i;
     for (i = 0; i < doors->size(); ++i)
     {
@@ -343,7 +348,7 @@ void Village::readAdditionalSaveData(CompoundTag* tag)
         BlockPos pos(door->getInt(L"X"), door->getInt(L"Y"), door->getInt(L"Z"));
         mDoors.push_back(boost::shared_ptr<DoorInfo>(new DoorInfo(pos, door->getInt(L"IDX"), door->getInt(L"IDZ"), door->getInt(L"TS"))));
     }
-    ListTag* players = tag->getList(L"Players", 10);
+    ListTag* players = tag->getList(L"Players", Tag::TAG_COMPOUND);
     for (i = 0; i < players->size(); ++i)
     {
         CompoundTag* player = players->getCompound(i);

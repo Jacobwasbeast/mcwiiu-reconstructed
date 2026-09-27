@@ -1,4 +1,5 @@
 #include "game/world/generation/RandomPatchesLayerTheme.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/SimplexNoise.hpp"
 #include "game/util/Random.hpp"
@@ -15,7 +16,7 @@ const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState)
     Block* block = pState->getBlock();
     int blockId = Block::getId(block);
 
-    if (blockId == 44)
+    if (blockId == BlockId::STONE_SLAB)
     {
         StoneSlabBlock* slab = static_cast<StoneSlabBlock*>(block);
         TypedBoxed<StoneSlabBlock::Variant*>* boxed =
@@ -44,7 +45,7 @@ const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState)
         }
     }
 
-    if (blockId == 128)
+    if (blockId == BlockId::SANDSTONE_STAIRS)
     {
         return Blocks::sandstone->defaultBlockState();
     }
@@ -110,7 +111,7 @@ void RandomPatchesLayerTheme::Apply(Random& random, BlockTransaction* pTransacti
                 Vec3i vPos(iX, iY, iZ);
                 Block* pBlock = Block::byId(pTransaction->getBlock(vPos));
                 const BlockState* pExistingState = pBlock->getBlockState(pTransaction->getData(vPos));
-                bool bIsAir = pBlock == Block::byId(0);
+                bool bIsAir = pBlock == Blocks::air;
 
                 const BlockState* pState = BlockAt(random, fNoise, iY - iSurfaceY, bIsAir);
                 if (pState != NULL)

@@ -77,30 +77,30 @@ bool MegaPineTreeFeature::place(Level* level, Random& random,
 
     for (int y = 0; y < height; ++y)
     {
-        Material* material = level->getBlockState(origin.above(y))->getMaterial();
-        if (material == Material::AIR || material == Material::LEAVES)
+        const BlockState* state = level->getBlockState(origin.above(y));
+        if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
         {
-            setBlock(level, origin.above(y), mTrunkState, 0);
+            setBlock(level, origin.above(y), mTrunkState, Block::UPDATE_NONE);
         }
 
         if (y < height - 1)
         {
-            material = level->getBlockState(origin.offset(1, y, 0))->getMaterial();
-            if (material == Material::AIR || material == Material::LEAVES)
+            state = level->getBlockState(origin.offset(1, y, 0));
+            if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
             {
-                setBlock(level, origin.offset(1, y, 0), mTrunkState, 0);
+                setBlock(level, origin.offset(1, y, 0), mTrunkState, Block::UPDATE_NONE);
             }
 
-            material = level->getBlockState(origin.offset(1, y, 1))->getMaterial();
-            if (material == Material::AIR || material == Material::LEAVES)
+            state = level->getBlockState(origin.offset(1, y, 1));
+            if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
             {
-                setBlock(level, origin.offset(1, y, 1), mTrunkState, 0);
+                setBlock(level, origin.offset(1, y, 1), mTrunkState, Block::UPDATE_NONE);
             }
 
-            material = level->getBlockState(origin.offset(0, y, 1))->getMaterial();
-            if (material == Material::AIR || material == Material::LEAVES)
+            state = level->getBlockState(origin.offset(0, y, 1));
+            if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
             {
-                setBlock(level, origin.offset(0, y, 1), mTrunkState, 0);
+                setBlock(level, origin.offset(0, y, 1), mTrunkState, Block::UPDATE_NONE);
             }
         }
     }
@@ -117,7 +117,7 @@ void MegaPineTreeFeature::placePodzolAt(Level* level, const BlockPos& pos)
         Block* block = state->getBlock();
         if (block == Blocks::grass || block == Blocks::dirt)
         {
-            setBlock(level, checkPos, megaPinePodzolState, 0);
+            setBlock(level, checkPos, megaPinePodzolState, Block::UPDATE_NONE);
             return;
         }
 

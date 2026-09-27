@@ -2,12 +2,14 @@
 #define GAME_WORLD_GENERATION_VILLAGEFEATURE_HPP
 
 #include <string>
+#include <vector>
 
 #include <boost/unordered_map.hpp>
 
 #include "game/world/generation/StructureFeature.hpp"
 #include "game/world/generation/StructureStart.hpp"
 
+class Biome;
 class BlockPos;
 class BoundingBox;
 class DataInputStream;
@@ -41,6 +43,8 @@ public:
     VillageFeature(SuperflatConfig* config, int size);
     VillageFeature(boost::unordered_map<std::wstring, std::wstring> options, int size);
     virtual ~VillageFeature();
+
+    static std::vector<Biome*> allowedBiomes;
 
     static void staticCtor();
     void _init(int size);

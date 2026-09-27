@@ -1,4 +1,6 @@
 #include "game/world/generation/TumbleGenerator.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <string>
 #include <utility>
@@ -13,9 +15,7 @@
 #include "game/world/block/Iterator.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/LayerGenerator.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 TumbleGenerator::TumbleGenerator(Random random, std::vector<LayerGenerator*>& layers)
     : MapGenerator(random)
@@ -125,7 +125,7 @@ void TumbleGenerator::CleanUp(Level* level)
             BlockPos* position = positions->next();
             while (positions->hasNext())
             {
-                level->setBlockAndData(position->x, position->y, position->z, 0, 0, 0x22);
+                level->setBlockAndData(position->x, position->y, position->z, BlockId::AIR, 0, Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
                 dirtyChunks.insert(level->getChunkAt(position->x, position->z));
                 position = positions->next();
             }
@@ -139,7 +139,7 @@ void TumbleGenerator::CleanUp(Level* level)
     std::vector<BlockPos>::iterator additional = mAdditionalBlocks.begin();
     while (additional != mAdditionalBlocks.end())
     {
-        level->setBlockAndData(additional->x, additional->y, additional->z, 0, 0, 0x22);
+        level->setBlockAndData(additional->x, additional->y, additional->z, BlockId::AIR, 0, Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
         dirtyChunks.insert(level->getChunkAt(additional->x, additional->z));
         ++additional;
     }

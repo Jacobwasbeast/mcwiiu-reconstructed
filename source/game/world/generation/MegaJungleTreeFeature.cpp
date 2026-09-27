@@ -38,7 +38,7 @@ void MegaJungleTreeFeature::placeVine(Level* level, Random& random, const BlockP
     {
         TypedBoxed<bool> value(true);
         const BlockState* state = Blocks::vine->defaultBlockState()->setBoxedValue(property, &value);
-        setBlock(level, pos, state, 0);
+        setBlock(level, pos, state, Block::UPDATE_NONE);
     }
 }
 
@@ -64,14 +64,14 @@ bool MegaJungleTreeFeature::place(Level* level, Random& random, const BlockPos& 
     while (top > origin.y + height / 2)
     {
         const float angle = random.nextFloat() * 6.2831855f;
-        int x = 0;
-        int z = 0;
+        int x = origin.x + (int)(0.5f + Mth::cos(angle) * 4.0f);
+        int z = origin.z + (int)(0.5f + Mth::sin(angle) * 4.0f);
         for (int i = 0; i < 5; ++i)
         {
             x = origin.x + (int)(1.5f + Mth::cos(angle) * (float)i);
             z = origin.z + (int)(1.5f + Mth::sin(angle) * (float)i);
             leafPos.set(x, top - 3 + i / 2, z);
-            setBlock(level, leafPos, mLeafState, 0);
+            setBlock(level, leafPos, mTrunkState, Block::UPDATE_NONE);
         }
 
         const int lowest = top - (random.nextInt(2) + 1);
@@ -91,13 +91,13 @@ bool MegaJungleTreeFeature::place(Level* level, Random& random, const BlockPos& 
         const BlockPos trunkPos = origin.above(y);
         if (isFree(level->getBlockState(trunkPos)->getBlock()))
         {
-            setBlock(level, trunkPos, mTrunkState, 0);
+            setBlock(level, trunkPos, mTrunkState, Block::UPDATE_NONE);
             if (y > 0)
             {
                 placeVine(level, random, trunkPos.west(),
-                          static_cast<const BooleanProperty*>(VineBlock::WEST));
+                          static_cast<const BooleanProperty*>(VineBlock::EAST));
                 placeVine(level, random, trunkPos.north(),
-                          static_cast<const BooleanProperty*>(VineBlock::NORTH));
+                          static_cast<const BooleanProperty*>(VineBlock::SOUTH));
             }
         }
 
@@ -106,39 +106,39 @@ bool MegaJungleTreeFeature::place(Level* level, Random& random, const BlockPos& 
             const BlockPos eastPos = trunkPos.east();
             if (isFree(level->getBlockState(eastPos)->getBlock()))
             {
-                setBlock(level, eastPos, mTrunkState, 0);
+                setBlock(level, eastPos, mTrunkState, Block::UPDATE_NONE);
                 if (y > 0)
                 {
                     placeVine(level, random, eastPos.east(),
-                              static_cast<const BooleanProperty*>(VineBlock::EAST));
+                              static_cast<const BooleanProperty*>(VineBlock::WEST));
                     placeVine(level, random, eastPos.north(),
-                              static_cast<const BooleanProperty*>(VineBlock::NORTH));
+                              static_cast<const BooleanProperty*>(VineBlock::SOUTH));
                 }
             }
 
             const BlockPos southEastPos = trunkPos.south().east();
             if (isFree(level->getBlockState(southEastPos)->getBlock()))
             {
-                setBlock(level, southEastPos, mTrunkState, 0);
+                setBlock(level, southEastPos, mTrunkState, Block::UPDATE_NONE);
                 if (y > 0)
                 {
                     placeVine(level, random, southEastPos.east(),
-                              static_cast<const BooleanProperty*>(VineBlock::EAST));
+                              static_cast<const BooleanProperty*>(VineBlock::WEST));
                     placeVine(level, random, southEastPos.south(),
-                              static_cast<const BooleanProperty*>(VineBlock::SOUTH));
+                              static_cast<const BooleanProperty*>(VineBlock::NORTH));
                 }
             }
 
             const BlockPos southPos = trunkPos.south();
             if (isFree(level->getBlockState(southPos)->getBlock()))
             {
-                setBlock(level, southPos, mTrunkState, 0);
+                setBlock(level, southPos, mTrunkState, Block::UPDATE_NONE);
                 if (y > 0)
                 {
                     placeVine(level, random, southPos.west(),
-                              static_cast<const BooleanProperty*>(VineBlock::WEST));
+                              static_cast<const BooleanProperty*>(VineBlock::EAST));
                     placeVine(level, random, southPos.south(),
-                              static_cast<const BooleanProperty*>(VineBlock::SOUTH));
+                              static_cast<const BooleanProperty*>(VineBlock::NORTH));
                 }
             }
         }

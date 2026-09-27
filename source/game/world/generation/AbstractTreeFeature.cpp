@@ -50,7 +50,7 @@ void AbstractTreeFeature::setDirtAt(Level* level, const BlockPos& pos)
 {
     if (level->getBlockState(pos)->getBlock() != Blocks::dirt)
     {
-        setBlock(level, pos, Blocks::dirt->defaultBlockState(), 0);
+        setBlock(level, pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_NONE);
     }
 }
 
@@ -102,18 +102,18 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
         LogBlock::LogAxis* logAxis = direction->getAxis()->getId() == Direction::Axis::eAxis_X ?
                 LogBlock::X : LogBlock::Z;
         TypedBoxed<LogBlock::LogAxis*> axisValue(logAxis);
-        setBlock(level, cursor, mTrunkState->setBoxedValue(LogBlock::AXIS, &axisValue), 0);
+        setBlock(level, cursor, mTrunkState->setBoxedValue(LogBlock::AXIS, &axisValue), Block::UPDATE_NONE);
 
         if (random.nextInt(10) == 0 &&
             level->getBlockState(cursor.above())->getMaterial() == Material::AIR)
         {
             if (random.nextFloat() >= 0.5f)
             {
-                setBlock(level, cursor.above(), Blocks::red_mushroom->defaultBlockState(), 0);
+                setBlock(level, cursor.above(), Blocks::red_mushroom->defaultBlockState(), Block::UPDATE_NONE);
             }
             else
             {
-                setBlock(level, cursor.above(), Blocks::brown_mushroom->defaultBlockState(), 0);
+                setBlock(level, cursor.above(), Blocks::brown_mushroom->defaultBlockState(), Block::UPDATE_NONE);
             }
         }
     }
@@ -124,7 +124,7 @@ void AbstractTreeFeature::addVine(Level* level, const BlockPos& pos,
 {
     TypedBoxed<bool> value(true);
     const BlockState* state = Blocks::vine->defaultBlockState()->setBoxedValue(property, &value);
-    setBlock(level, pos, state, 0);
+    setBlock(level, pos, state, Block::UPDATE_NONE);
 }
 
 bool AbstractTreeFeature::placeTrunk(Level* level, const BlockPos& pos,
@@ -162,7 +162,7 @@ bool AbstractTreeFeature::placeTrunk(Level* level, const BlockPos& pos,
             material == Material::REPLACEABLE_PLANT || material == Material::DIRT ||
             material == Material::GRASS)
         {
-            setBlock(level, pos.above(i), mTrunkState, 0);
+            setBlock(level, pos.above(i), mTrunkState, Block::UPDATE_NONE);
 
             if (vineChance != 0.0f)
             {

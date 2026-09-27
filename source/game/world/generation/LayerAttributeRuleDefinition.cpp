@@ -31,7 +31,7 @@ void LayerAttributeRuleDefinition<T>::writeAttributes(GameRuleSaveInterface* sav
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 1);
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), mWholeLevel ? L"WholeLevel" : L"PerLayer");
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_name, mWholeLevel ? L"WholeLevel" : L"PerLayer");
 }
 
 template <class T>
@@ -43,7 +43,7 @@ void LayerAttributeRuleDefinition<T>::getChildren(std::vector<GameRuleDefinition
 template <class T>
 GameRuleDefinition* LayerAttributeRuleDefinition<T>::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(60))
+    if (type == ConsoleGameRules::eGameRuleType_FilterTheme)
     {
         FilterRuleDefinition<T>* filter = new FilterRuleDefinition<T>(mCreateChild);
         mChildren.push_back(filter);

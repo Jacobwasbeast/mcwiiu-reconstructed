@@ -32,9 +32,9 @@ void CurvedLayerFillRuleDefinition::writeAttributes(GameRuleSaveInterface* saveI
     };
 
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(59), curveNames[mCurve + 1]);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(70), toString(mOffset));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(71), toString(mThickness));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, curveNames[mCurve + 1]);
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dY, toString(mOffset));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_thickness, toString(mThickness));
 }
 
 void CurvedLayerFillRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -83,5 +83,5 @@ LayerFill* CurvedLayerFillRuleDefinition::Generate() const
 
 ConsoleGameRules::EGameRuleType CurvedLayerFillRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(56);
+    return ConsoleGameRules::eGameRuleType_CurvedLayerFill;
 }

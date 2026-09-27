@@ -1,4 +1,5 @@
 #include "game/world/generation/GhostPlayer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/GhostGameMode.hpp"
 
@@ -53,5 +54,5 @@ GhostGameMode* GhostPlayer::GetGameMode()
 
 unsigned long long GhostPlayer::GetType()
 {
-    return 0x000000000C800004ULL;
+    return EntityType::GHOST_PLAYER;
 }

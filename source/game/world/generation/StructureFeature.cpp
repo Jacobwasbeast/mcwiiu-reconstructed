@@ -208,11 +208,6 @@ BlockPos* StructureFeature::findNearestFeaturePositionBySpacing(
     Level* levelToSearch, StructureFeature* feature, const BlockPos& pos, int spacing,
     int separation, int salt, bool skipKnownStructures, int maxDistance, bool skipExistingChunks)
 {
-    if (maxDistance < 0)
-    {
-        return NULL;
-    }
-
     int centerX = pos.x >> 4;
     int centerZ = pos.z >> 4;
     int halfSize = levelToSearch->getLevelData()->getXZSize() / 2;
@@ -220,26 +215,26 @@ BlockPos* StructureFeature::findNearestFeaturePositionBySpacing(
     {
         for (int xOffset = -radius; xOffset <= radius; ++xOffset)
         {
+            bool xEdge = xOffset == -radius || xOffset == radius;
             for (int zOffset = -radius; zOffset <= radius; ++zOffset)
             {
-                if (radius != 0 && xOffset != -radius && xOffset != radius &&
-                    zOffset != -radius && zOffset != radius)
-                {
+                bool zEdge = zOffset == -radius || zOffset == radius;
+                if (!xEdge && !zEdge)
                     continue;
-                }
 
                 int chunkX = centerX + xOffset;
                 int chunkZ = centerZ + zOffset;
                 bool flatWorld = levelToSearch->getLevelData()->getGeneratorType() == LevelType::FLAT;
-                if (chunkX < -halfSize || chunkX > halfSize || chunkZ < -halfSize || chunkZ > halfSize ||
-                    !feature->isFeatureChunk(chunkX, chunkZ, flatWorld))
+                if (!feature->isFeatureChunk(chunkX, chunkZ, flatWorld))
                 {
+                    if (radius == 0)
+                        break;
                     continue;
                 }
-                if (skipExistingChunks && levelToSearch->isChunkPostPostProcessed(chunkX, chunkZ))
-                {
+                if (chunkX < -halfSize || chunkX > halfSize || chunkZ < -halfSize || chunkZ > halfSize)
                     continue;
-                }
+                if (skipExistingChunks && levelToSearch->isChunkGeneratedAt(chunkX, chunkZ))
+                    continue;
                 return new BlockPos(chunkX * 16 + 8, 64, chunkZ * 16 + 8);
             }
         }

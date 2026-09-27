@@ -42,10 +42,7 @@ public:
     void initPlayer(boost::shared_ptr<Player> player);
     void adjustPlayer(boost::shared_ptr<Player> player);
     void ensureHasSentCarriedItem();
-    InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
-                                                      const BlockPos& pos, const Direction* direction,
-                                                      Vec3* hit, InteractionHand::EInteractionHand hand,
-                                                      bool simulate, bool* used);
+    virtual bool _destroyBlock(const BlockPos& pos);
     bool GetTutorialsEnabled();
     InteractionResult::EInteractionResult useItemOn(boost::shared_ptr<Player> player, Level* level,
                                                      const BlockPos& pos, const Direction* direction,
@@ -84,7 +81,7 @@ public:
     void StartSpectating();
 
     virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction);
-    virtual bool canHurtPlayer();
+    bool canHurtPlayer();
     virtual void tick();
     virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player,
                                                             Level* level,
@@ -94,7 +91,10 @@ public:
     virtual const GameType* GetGameType();
 
     void setLocalMode(const GameType* gameType);
-    bool _destroyBlock(const BlockPos& pos);
+    virtual InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
+                                                      const BlockPos& pos, const Direction* direction,
+                                                      Vec3* hit, InteractionHand::EInteractionHand hand,
+                                                      bool simulate, bool* used);
     double getPickRange();
     boost::shared_ptr<ItemInstance> handleTakeAllInvenetory(int containerId, int slot, int button,
                                                              int mode, boost::shared_ptr<Player> player);
@@ -106,7 +106,7 @@ public:
     void handleCreativeModeItemDrop(not_null_ptr<ItemInstance> item);
     bool hasExperience();
     bool hasFarPickRange();
-    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int category, int recipe,
+    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int recipe, int category,
                                                              boost::shared_ptr<Player> player);
     virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
         std::vector<std::pair<int, int> >& recipes, int category, boost::shared_ptr<Player> player);

@@ -1,4 +1,5 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/world/biome/Biome.hpp"
@@ -15,8 +16,7 @@
 #include "game/world/generation/ShipwreckFeature.hpp"
 #include "game/world/generation/StrongholdFeature.hpp"
 #include "game/world/generation/VillageFeature.hpp"
-
-std::wstring formatwstr(const wchar_t* format, ...);
+#include "game/core/StringFormat.hpp"
 
 long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum)
 {
@@ -71,7 +71,7 @@ MineShaftFeature* FlatGeneratorInfo::getMineshaft() { return hasMineshaft() ? ne
 StrongholdFeature* FlatGeneratorInfo::getStronghold() { return hasStronghold() ? new StrongholdFeature(core()) : 0; }
 OceanMonumentFeature* FlatGeneratorInfo::getOceanMonument() { return hasOceanMonument() ? new OceanMonumentFeature(core()) : 0; }
 ShipwreckFeature* FlatGeneratorInfo::getShipwreck(GenericOverworldLevelSource* source, OceanMonumentFeature* monument) { return hasShipwrecks() ? new ShipwreckFeature(source, monument, core()) : 0; }
-LakeFeature* FlatGeneratorInfo::getLakes() { return hasLakes() ? new LakeFeature(Blocks::WATER) : 0; }
+LakeFeature* FlatGeneratorInfo::getLakes() { return hasLakes() ? new LakeFeature(Blocks::water) : 0; }
 LakeFeature* FlatGeneratorInfo::getLavaLakes() { return hasLavaLakes() ? new LakeFeature(Blocks::lava) : 0; }
 
 int FlatGeneratorInfo::getLayerIndexAtHeight(int height) const
@@ -92,7 +92,7 @@ void FlatGeneratorInfo::getLayers(const BlockState* (&states)[256]) const
         for (int offset = 0; offset < 4 && height + offset < 256; ++offset)
         {
             int index = getLayerIndexAtHeight(height + offset);
-            states[height + offset] = index < 0 ? Blocks::AIR->defaultBlockState() : getLayer(index).getBlockState();
+            states[height + offset] = index < 0 ? Blocks::air->defaultBlockState() : getLayer(index).getBlockState();
         }
     }
 }
@@ -116,7 +116,7 @@ void FlatGeneratorInfo::setCaves(bool enabled) { if (enabled) core()->addParam(0
 void FlatGeneratorInfo::setCanyons(bool enabled) { if (enabled) core()->addParam(0x26); else core()->removeParam(0x26); }
 
 void FlatGeneratorInfo::insertLayer(int index, const FlatLayerInfo& layer) { core()->layers.insert(core()->layers.begin() + index, layer); core()->updateLayers(); }
-void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer) { core()->layers.push_back(layer); core()->updateLayers(); }
+void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer) { core()->layers.insert(core()->layers.begin(), layer); core()->updateLayers(); }
 void FlatGeneratorInfo::setDisplayname(const std::wstring& displayname) { core()->setDisplayname(displayname); }
 void FlatGeneratorInfo::setWoodlandMansion(int spacing, int separation) { setWoodlandMansion(true); core()->setOption(0x27, 0, spacing); core()->setOption(0x27, 1, separation); }
 void FlatGeneratorInfo::setOceanMonument(int spacing, int separation) { setOceanMonument(true); core()->setOption(0x24, 0, spacing); core()->setOption(0x24, 1, separation); }
@@ -189,8 +189,8 @@ int FlatGeneratorInfo::getWoodlandMansionSeparation() { return core()->maybeOpti
 std::wstring FlatGeneratorInfo::generateDescription()
 {
     std::wstring biomeName = Biome::getBiomes()[getBiome()]->getName(false);
-    std::wstring description = formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(0xfc5c5250), biomeName.c_str());
-    description += formatwstr(L"%ls:<br />", L10N::GetString(0x7eda4f74));
+    std::wstring description = formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(IDS_BIOME), biomeName.c_str());
+    description += formatwstr(L"%ls:<br />", L10N::GetString(IDS_LAYERS));
     for (int i = numLayers() - 1; i >= 0; --i)
     {
         FlatLayerInfo layer = getLayer(i);
@@ -211,7 +211,7 @@ std::wstring FlatGeneratorInfo::generateDescription()
     if (hasWoodlandMansion()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x9a333426));
     if (!features.empty())
     {
-        description += formatwstr(L"<br />%ls:<br />", L10N::GetString(0x7914b2cb));
+        description += formatwstr(L"<br />%ls:<br />", L10N::GetString(IDS_FEATURES));
         description += features;
     }
     return description;

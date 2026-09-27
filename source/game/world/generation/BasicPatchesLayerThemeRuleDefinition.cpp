@@ -12,14 +12,14 @@ BasicPatchesLayerThemeRuleDefinition::BasicPatchesLayerThemeRuleDefinition()
       mNoiseScale(5.0),
       mPatchDepth(0)
 {
-    GameRules_IntAttribute* depthAttribute = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(75), &mPatchDepth);
+    GameRules_IntAttribute* depthAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mPatchDepth);
     depthAttribute->setMax(9);
 
-    GameRules_FloatAttribute* thresholdAttribute = addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(66), &mPatchThreshold);
+    GameRules_FloatAttribute* thresholdAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_freq, &mPatchThreshold);
     thresholdAttribute->setMin(-1.1f);
     thresholdAttribute->setMax(1.1f);
 
-    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(65), &mNoiseScale);
+    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
     scaleAttribute->setMin(1.0);
     scaleAttribute->setMax(1000.0);
 }
@@ -30,7 +30,7 @@ BasicPatchesLayerThemeRuleDefinition::~BasicPatchesLayerThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType BasicPatchesLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(62);
+    return ConsoleGameRules::eGameRuleType_BasicPatchesTheme;
 }
 
 LayerTheme* BasicPatchesLayerThemeRuleDefinition::Generate() const

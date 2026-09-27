@@ -1,4 +1,5 @@
 #include "game/world/generation/CustomHeadLayer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -40,10 +41,10 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         return;
     }
 
-    bool bSpectating = (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+    bool bSpectating = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
         && boost::static_pointer_cast<Player>(entity)->isSpectator();
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
         && bSpectating
         && boost::static_pointer_cast<Player>(entity)->SpectateAsSkull()
         && (boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags & 0x100) != 0)
@@ -68,10 +69,10 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         GlStateManager::translatef(0.0f, 0.2f, 0.0f);
     }
 
-    bool bVillagerHead = entity->GetType() == ENTITY_TYPE_VILLAGER
-        || entity->GetType() == ENTITY_TYPE_ZOMBIE_VILLAGER;
+    bool bVillagerHead = entity->GetType() == EntityType::VILLAGER
+        || entity->GetType() == EntityType::ZOMBIE_VILLAGER;
 
-    if (entity->isBaby() && entity->GetType() != ENTITY_TYPE_VILLAGER)
+    if (entity->isBaby() && entity->GetType() != EntityType::VILLAGER)
     {
         GlStateManager::translatef(0.0f, 0.5f * scale, 0.0f);
         GlStateManager::scalef(0.7f, 0.7f, 0.7f);
@@ -89,12 +90,12 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     {
         float headScale = 1.0f;
 
-        if (entity->GetType() != ENTITY_TYPE_ARMOR_STAND)
+        if (entity->GetType() != EntityType::ARMOR_STAND)
         {
             headScale = 1.1875f;
         }
 
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             headScale = 1.25f;
         }
@@ -106,9 +107,9 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
             GlStateManager::translatef(0.0f, 0.0625f, 0.0f);
         }
 
-        if (entity->GetType() == ENTITY_TYPE_ARMOR_STAND)
+        if (entity->GetType() == EntityType::ARMOR_STAND)
         {
-            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(0x0120020700000000ULL))->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(BlockEntityType::SKULL))->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
 
             GlStateManager::popMatrix();
         }
@@ -116,7 +117,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         {
             GlStateManager::translatef(0.0f, (-0.5f - entity->getSkinAdjustments().mHeadY) * 0.0625f, 0.0f);
 
-            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(0x0120020700000000ULL))->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, netHeadYaw + 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(BlockEntityType::SKULL))->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, netHeadYaw + 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
 
             GlStateManager::popMatrix();
         }

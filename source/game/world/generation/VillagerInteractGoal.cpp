@@ -1,4 +1,5 @@
 #include "game/world/generation/VillagerInteractGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -28,7 +29,7 @@ void VillagerInteractGoal::start()
 
     mInteractionDelay = 0;
     if (mVillager->hasExcessFood() && mLookAt.lock() &&
-        mLookAt.lock()->GetType() == ENTITY_TYPE_VILLAGER)
+        mLookAt.lock()->GetType() == EntityType::VILLAGER)
     {
         boost::shared_ptr<Villager> villager =
             boost::dynamic_pointer_cast<Villager>(mLookAt.lock());

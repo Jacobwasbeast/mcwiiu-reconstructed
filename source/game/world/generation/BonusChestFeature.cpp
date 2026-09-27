@@ -1,4 +1,5 @@
 #include "game/world/generation/BonusChestFeature.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/pointer_cast.hpp>
 
@@ -28,7 +29,7 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
     if (!useOrigin)
     {
         const BlockState* state = level->getBlockState(position);
-        while (state->getMaterial() == Material::AIR || state->getMaterial() == Material::WATER)
+        while (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
         {
             if (position.y < 2)
             {
@@ -64,7 +65,7 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
         }
         else
         {
-            candidate = position.offset(0, 0, -1);
+            candidate = position.offset(0, -1, 0);
         }
 
         if (!level->isEmptyBlock(candidate))
@@ -72,22 +73,22 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
             continue;
         }
 
-        if (!level->getBlockState(candidate.below())->isSolid())
+        if (!level->getBlockState(candidate.below())->isTopSolidBlocking())
         {
             continue;
         }
 
-        level->setBlock(candidate, Blocks::chest->defaultBlockState(), 2, false);
+        level->setBlock(candidate, Blocks::chest->defaultBlockState(), Block::UPDATE_CLIENTS, false);
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(candidate);
-        if (blockEntity->GetType() == 0x01e00201ULL)
+        if (blockEntity->GetType() == BlockEntityType::CHEST)
         {
             boost::shared_ptr<ChestBlockEntity> chest =
                 boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
             if (chest)
             {
                 chest->setLootTable(&BuiltInLootTables::SPAWN_BONUS_CHEST, random.nextLong());
-                chest->mLarge = true;
+                chest->mIsBonusChest = true;
             }
         }
 
@@ -96,24 +97,24 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
         const BlockPos north = candidate.north();
         const BlockPos south = candidate.south();
 
-        if (level->isEmptyBlock(west) && level->getBlockState(west.below())->isSolid())
+        if (level->isEmptyBlock(west) && level->getBlockState(west.below())->isTopSolidBlocking())
         {
-            level->setBlock(west, Blocks::torch->defaultBlockState(), 2, false);
+            level->setBlock(west, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
 
-        if (level->isEmptyBlock(east) && level->getBlockState(east.below())->isSolid())
+        if (level->isEmptyBlock(east) && level->getBlockState(east.below())->isTopSolidBlocking())
         {
-            level->setBlock(east, Blocks::torch->defaultBlockState(), 2, false);
+            level->setBlock(east, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
 
-        if (level->isEmptyBlock(north) && level->getBlockState(north.below())->isSolid())
+        if (level->isEmptyBlock(north) && level->getBlockState(north.below())->isTopSolidBlocking())
         {
-            level->setBlock(north, Blocks::torch->defaultBlockState(), 2, false);
+            level->setBlock(north, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
 
-        if (level->isEmptyBlock(south) && level->getBlockState(south.below())->isSolid())
+        if (level->isEmptyBlock(south) && level->getBlockState(south.below())->isTopSolidBlocking())
         {
-            level->setBlock(south, Blocks::torch->defaultBlockState(), 2, false);
+            level->setBlock(south, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
 
         return true;

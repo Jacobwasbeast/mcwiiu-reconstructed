@@ -32,15 +32,15 @@ FunctionPatchesLayerThemeRuleDefinition::~FunctionPatchesLayerThemeRuleDefinitio
 
 ConsoleGameRules::EGameRuleType FunctionPatchesLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(66);
+    return ConsoleGameRules::eGameRuleType_FunctionPatchesTheme;
 }
 
 void FunctionPatchesLayerThemeRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
                                                                unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 2);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(67), _toString(mFunction));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(65), _toString(mNoiseScale));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_func, _toString(mFunction));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_scale, _toString(mNoiseScale));
 }
 
 void FunctionPatchesLayerThemeRuleDefinition::addAttribute(const std::wstring& name,

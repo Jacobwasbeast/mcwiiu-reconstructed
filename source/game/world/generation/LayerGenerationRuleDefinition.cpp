@@ -133,5 +133,5 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
 
 ConsoleGameRules::EGameRuleType LayerGenerationRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(38);
+    return ConsoleGameRules::eGameRuleType_LayerGeneration;
 }

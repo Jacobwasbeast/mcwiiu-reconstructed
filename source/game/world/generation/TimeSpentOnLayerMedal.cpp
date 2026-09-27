@@ -31,10 +31,10 @@ double TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
         do
         {
             PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-            if (roundStats->mBlocksPlaced != -2 && roundStats->mLastCheckpointSequenceId != 0
-                && layer < roundStats->mCheckpointTimes.size())
+            if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED && !roundStats->mTimeOnLayer.empty()
+                && layer < roundStats->mTimeOnLayer.size())
             {
-                total += roundStats->mCheckpointTimes.at(layer);
+                total += roundStats->mTimeOnLayer.at(layer);
             }
 
             ++round;
@@ -43,5 +43,5 @@ double TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
         while (round < totalRounds);
     }
 
-    return static_cast<double>(static_cast<float>(static_cast<double>(static_cast<int>(total)) - 176.0));
+    return static_cast<float>(static_cast<int>(total));
 }

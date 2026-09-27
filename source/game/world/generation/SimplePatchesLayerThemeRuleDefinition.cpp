@@ -11,17 +11,17 @@ SimplePatchesLayerThemeRuleDefinition::SimplePatchesLayerThemeRuleDefinition()
       mNoiseScale(5.0f),
       mPatchThreshold(0.0f)
 {
-    GameRules_IntAttribute* blockIdAttribute = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlockId);
+    GameRules_IntAttribute* blockIdAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
     blockIdAttribute->setMin(0);
     blockIdAttribute->setMax(255);
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(63), &mBlockAux);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mBlockAux);
 
-    GameRules_FloatAttribute* noiseScaleAttribute = addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(65), &mNoiseScale);
+    GameRules_FloatAttribute* noiseScaleAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
     noiseScaleAttribute->setMin(0.0f);
     noiseScaleAttribute->setMax(100.0f);
 
-    GameRules_FloatAttribute* thresholdAttribute = addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(66), &mPatchThreshold);
+    GameRules_FloatAttribute* thresholdAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_freq, &mPatchThreshold);
     thresholdAttribute->setMin(-1.0f);
     thresholdAttribute->setMax(1.0f);
 }
@@ -32,7 +32,7 @@ SimplePatchesLayerThemeRuleDefinition::~SimplePatchesLayerThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType SimplePatchesLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(67);
+    return ConsoleGameRules::eGameRuleType_SimplePatchesTheme;
 }
 
 LayerTheme* SimplePatchesLayerThemeRuleDefinition::Generate() const

@@ -1,9 +1,7 @@
 #include "game/world/generation/RiverMixerLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 RiverMixerLayer::RiverMixerLayer(long long seed,
                                  boost::shared_ptr<Layer> biomeLayer,

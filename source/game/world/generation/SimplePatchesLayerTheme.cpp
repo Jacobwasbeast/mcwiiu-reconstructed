@@ -22,7 +22,7 @@ const BlockState* SimplePatchesLayerTheme::BlockAt(Random& random, float fNoise,
     {
         if (iHeightAboveSurface > 0)
         {
-            return Blocks::AIR->defaultBlockState();
+            return Blocks::air->defaultBlockState();
         }
 
         if (!bIsAir)

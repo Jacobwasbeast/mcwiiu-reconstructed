@@ -46,4 +46,6 @@ struct PlayerUID
     bool operator!=(const PlayerUID& other) const;
 };
 
+unsigned int hash_value(const PlayerUID& uid);
+
 #endif

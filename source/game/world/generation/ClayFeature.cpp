@@ -19,7 +19,7 @@ ClayFeature::~ClayFeature()
 
 bool ClayFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (level->getBlockState(origin)->getMaterial() != Material::WATER)
+    if (level->getBlockState(origin)->getBlock()->mMaterial != Material::WATER)
     {
         return false;
     }
@@ -43,7 +43,7 @@ bool ClayFeature::place(Level* level, Random& random, const BlockPos& origin)
                     Block* block = level->getBlockState(pos)->getBlock();
                     if (block == Blocks::dirt || block == Blocks::clay)
                     {
-                        level->setBlock(pos, mClay->defaultBlockState(), 2, false);
+                        level->setBlock(pos, mClay->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                     }
                 }
             }

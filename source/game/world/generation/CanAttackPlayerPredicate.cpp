@@ -1,4 +1,5 @@
 #include "game/world/generation/CanAttackPlayerPredicate.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/ai/TargetGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -14,7 +15,7 @@ CanAttackPlayerPredicate::CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* g
 
 bool CanAttackPlayerPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return false;
     }

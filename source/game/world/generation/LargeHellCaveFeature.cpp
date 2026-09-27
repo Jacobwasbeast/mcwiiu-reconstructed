@@ -107,11 +107,14 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
 
         if (!room && start == branchPoint && width > 1.0f)
         {
-            addTunnel(tunnelRandom.nextLong(), chunkX, chunkZ, primer, x, y, z,
-                      tunnelRandom.nextFloat() * 0.5f + 0.5f, yaw - 1.5707964f, pitch / 3.0f,
+            long long leftSeed = tunnelRandom.nextLong();
+            float leftWidth = tunnelRandom.nextFloat() * 0.5f + 0.5f;
+            pitch = pitch / 3.0f;
+            addTunnel(leftSeed, chunkX, chunkZ, primer, x, y, z, leftWidth, yaw - 1.5707964f, pitch,
                       start, end, 1.0);
-            addTunnel(tunnelRandom.nextLong(), chunkX, chunkZ, primer, x, y, z,
-                      tunnelRandom.nextFloat() * 0.5f + 0.5f, yaw + 1.5707964f, pitch / 3.0f,
+            long long rightSeed = tunnelRandom.nextLong();
+            float rightWidth = tunnelRandom.nextFloat() * 0.5f + 0.5f;
+            addTunnel(rightSeed, chunkX, chunkZ, primer, x, y, z, rightWidth, yaw + 1.5707964f, pitch,
                       start, end, 1.0);
             return;
         }
@@ -121,7 +124,7 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
             const double offsetX = x - centerX;
             const double offsetZ = z - centerZ;
             const double remaining = (double)(end - start);
-            const double reach = (double)(width + 2.0f + 16.0f);
+            const double reach = (double)(width + 18.0f);
             if (offsetX * offsetX + offsetZ * offsetZ - remaining * remaining > reach * reach)
             {
                 return;
@@ -162,6 +165,36 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
                     maxZ = 16;
                 }
 
+                bool lava = false;
+                for (int localX = minX; !lava && localX < maxX; ++localX)
+                {
+                    for (int localZ = minZ; !lava && localZ < maxZ; ++localZ)
+                    {
+                        for (int localY = maxY + 1; !lava && localY >= minY - 1; --localY)
+                        {
+                            if (localY >= 0 && localY < 128)
+                            {
+                                const BlockState* state = primer->getState(localX, localY, localZ);
+                                if (state->getBlock() == Blocks::flowing_lava || state->getBlock() == Blocks::lava)
+                                {
+                                    lava = true;
+                                }
+
+                                if (localY != minY - 1 && localX != minX && localX != maxX - 1 && localZ != minZ
+                                    && localZ != maxZ - 1)
+                                {
+                                    localY = minY;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (lava)
+                {
+                    continue;
+                }
+
                 for (int localX = minX; localX < maxX; ++localX)
                 {
                     const double dx = ((double)(localX + chunkX * 16) + 0.5 - x) / radius;
@@ -179,7 +212,7 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
                                     || state->getBlock() == Blocks::grass)
                                 {
                                     primer->setState(localX, localY, localZ,
-                                                     Blocks::AIR->defaultBlockState());
+                                                     Blocks::air->defaultBlockState());
                                 }
                             }
                         }

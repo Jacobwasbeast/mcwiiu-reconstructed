@@ -1,4 +1,5 @@
 #include "game/world/generation/RemotePlayer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -11,7 +12,7 @@ RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
       mGameType(NULL)
 {
     fjDerivedCtorCalls();
-    mField0x6d4 = 0.25f;
+    mBedOffsetY = 0.25f;
     mNoPhysics = true;
     mMaxUpStep = 1.0f;
     setViewScale(10.0);
@@ -42,7 +43,7 @@ bool RemotePlayer::hurt(const DamageSource*, float)
 
 void RemotePlayer::tick()
 {
-    mField0x6d4 = 0;
+    mBedOffsetY = 0;
     AbstractClientPlayer::tick();
 
     double horizontalDistance = std::sqrt((mX - mXOld) * (mX - mXOld)
@@ -113,5 +114,5 @@ const GameType* RemotePlayer::GetGameType()
 
 unsigned long long RemotePlayer::GetType()
 {
-    return 0x000000000C800002ULL;
+    return EntityType::REMOTE_PLAYER;
 }

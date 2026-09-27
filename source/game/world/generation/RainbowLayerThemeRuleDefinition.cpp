@@ -10,7 +10,7 @@ RainbowLayerThemeRuleDefinition::~RainbowLayerThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType RainbowLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(64);
+    return ConsoleGameRules::eGameRuleType_RainbowTheme;
 }
 
 LayerTheme* RainbowLayerThemeRuleDefinition::Generate() const

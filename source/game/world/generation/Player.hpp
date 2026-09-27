@@ -18,6 +18,7 @@
 #include "game/core/Abilities.hpp"
 #include "game/core/FoodData.hpp"
 
+class TextureAtlasSprite;
 class ItemInstance;
 class AbstractContainerMenu;
 class AbstractHorse;
@@ -73,22 +74,22 @@ public:
     friend class ServerGamePacketListenerImpl;
 
     enum EPlayerGamePrivileges {
-        ePlayerGamePrivilege_0 = 0,
-        ePlayerGamePrivilege_1 = 1,
-        ePlayerGamePrivilege_3 = 3,
-        ePlayerGamePrivilege_4 = 4,
-        ePlayerGamePrivilege_5 = 5,
-        ePlayerGamePrivilege_6 = 6,
-        ePlayerGamePrivilege_7 = 7,
-        ePlayerGamePrivilege_8 = 8,
-        ePlayerGamePrivilege_9 = 9,
-        ePlayerGamePrivilege_10 = 10,
-        ePlayerGamePrivilege_11 = 11,
-        ePlayerGamePrivilege_12 = 12,
-        ePlayerGamePrivilege_13 = 13,
-        ePlayerGamePrivilege_14 = 14,
-        ePlayerGamePrivilege_15 = 15,
-        ePlayerGamePrivilege_16 = 16,
+        ePlayerGamePrivilege_CannotMine = 0,
+        ePlayerGamePrivilege_CannotBuild = 1,
+        ePlayerGamePrivilege_CannotAttackPlayers = 3,
+        ePlayerGamePrivilege_Op = 4,
+        ePlayerGamePrivilege_CanFly = 5,
+        ePlayerGamePrivilege_ExhaustionDisabled = 6,
+        ePlayerGamePrivilege_Invisible = 7,
+        ePlayerGamePrivilege_Invulnerable = 8,
+        ePlayerGamePrivilege_CreativeMode = 9,
+        ePlayerGamePrivilege_CannotAttackAnimals = 10,
+        ePlayerGamePrivilege_CanUseDoorsAndSwitches = 11,
+        ePlayerGamePrivilege_CanUseContainers = 12,
+        ePlayerGamePrivilege_CanToggleInvisible = 13,
+        ePlayerGamePrivilege_CanToggleFly = 14,
+        ePlayerGamePrivilege_CanToggleExhaustion = 15,
+        ePlayerGamePrivilege_CanTeleport = 16,
         ePlayerGamePrivilege_All = 0x21,
         ePlayerGamePrivilege_Moderator = 0x22
     };
@@ -112,6 +113,22 @@ public:
         int mId;
     };
 
+
+    enum TimerAchievements
+    {
+        eTimerAchievement_Castaway = 0,
+        eTimerAchievement_SleepWithTheFishes = 1
+    };
+
+    enum BedSleepingProblem
+    {
+        BED_SLEEPING_OK = 0,
+        BED_SLEEPING_NOT_POSSIBLE_HERE = 1,
+        BED_SLEEPING_NOT_POSSIBLE_NOW = 2,
+        BED_SLEEPING_TOO_FAR_AWAY = 3,
+        BED_SLEEPING_OTHER_PROBLEM = 4,
+        BED_SLEEPING_NOT_SAFE = 5
+    };
 
     class PreventsMeFromSleeping : public Predicate<boost::shared_ptr<Entity> > {
     public:
@@ -142,32 +159,25 @@ public:
     double mChasingPosY;
     double mChasingPosZ;
     std::wstring mDisplayName;
-    int16_t mField0x6a4;
-    int16_t mField0x6a6;
-    int32_t mField0x6ac;
-    int32_t mField0x6b0;
-    int32_t mField0x6b4;
-    int32_t mField0x6b8;
-    int32_t mField0x6bc;
-    uint8_t mField0x6c0;
-    BlockPos* mField0x6c4;
-    int32_t mField0x6c8;
-    int32_t mField0x6cc;
-    float mField0x6d0;
-    float mField0x6d4;
-    float mField0x6d8;
+    uint8_t mSleeping;
+    BlockPos* mBedPosition;
+    int32_t mSleepCounter;
+    int32_t mDeathFadeTimer;
+    float mBedOffsetX;
+    float mBedOffsetY;
+    float mBedOffsetZ;
     int32_t mField0x6dc;
-    BlockPos* mField0x6e0;
-    uint8_t mField0x6e4;
-    BlockPos* mField0x6e8;
-    int32_t mField0x6ec;
-    int32_t mField0x6f0;
-    int32_t mField0x6f4;
-    int32_t mField0x6f8;
-    int32_t mField0x6fc;
-    int32_t mField0x700;
-    int32_t mField0x704;
-    int32_t mField0x708;
+    BlockPos* mRespawnPosition;
+    uint8_t mRespawnForced;
+    BlockPos* mStartRidingPos;
+    int32_t mWalkDistanceCm;
+    int32_t mSwimDistanceCm;
+    int32_t mDiveDistanceCm;
+    int32_t mFallDistanceCm;
+    int32_t mClimbDistanceCm;
+    int32_t mMinecartDistanceCm;
+    int32_t mBoatDistanceCm;
+    int32_t mPigDistanceCm;
     Abilities mAbilities;
     int32_t mExperienceLevel;
     int32_t mTotalExperience;
@@ -186,22 +196,22 @@ public:
     uint8_t mField0x781;
     uint8_t mField0x782;
     PlayerUID mXuid;
-    PlayerUID m_0x798;
+    PlayerUID mOnlineXuid;
     StatsUID mSuid;
-    int32_t mField0x7c0;
+    int32_t mWinnerParticleTicks;
     bool mShowOnMaps;
     bool mIsGuest;
     NonNullList<not_null_ptr<ItemInstance> > mField0x7c8;
     uint32_t mField0x7d8;
-    int32_t mField0x7dc;
-    int32_t mField0x7e0;
+    int32_t mCustomSkin;
+    int32_t mCustomCape;
     int32_t mPlayerIndex;
     unsigned int mDebugOptions;
     uint8_t mField0x7ec;
-    int32_t mField0x7f0;
-    int32_t mField0x7f4;
-    uint8_t mField0x7f8;
-    uint32_t mField0x7fc;
+    int32_t mLastPoints;
+    int32_t mLastCheckpointId;
+    uint8_t mEndZoneEffectShown;
+    uint32_t mGamePrivileges;
     std::vector<ModelPart*>* mAdditionalModelParts;
     uint8_t mField0x804;
     uint8_t mField0x805;
@@ -212,9 +222,9 @@ public:
     double mField0x818;
     double mField0x820;
     int32_t mField0x828;
-    uint8_t mField0x82c;
+    uint8_t mSpectatorSkullEquipped;
     int32_t mPowerupTicks[3];
-    uint8_t mField0x83c;
+    uint8_t mRingSoundAlternate;
     float mFlap;
     float mFlapSpeed;
     float mOFlapSpeed;
@@ -222,43 +232,39 @@ public:
     float mField0x850;
     float mField0x854;
     float mField0x858;
-    uint8_t mField0x85c;
-    uint8_t mField0x85d;
-    uint8_t mField0x85e;
+    bool mLastAteKelp;
+    bool mTimerAchievementAwarded[2];
     int32_t mTimerAchievementTicks[2];
-    int32_t mField0x868;
-    int32_t mField0x86c;
 
 
-    Player(Level* , const std::wstring& );
+    Player(Level* level, const std::wstring& name);
     ~Player();
 
 
     std::wstring getDisplayName();
     bool isSendMessageEnabled();
-    void SetPowerupTicks(int32_t , int32_t );
-    void isStarving();
+    void SetPowerupTicks(int32_t powerup, int32_t ticks);
+    bool isStarving();
     void tickArmor();
     static void staticCtor();
     void _init();
     void registerAttributes();
     void defineSynchedData();
-    bool shouldRenderAtSqrDistance(double );
+    bool shouldRenderAtSqrDistance(double distance);
     bool shouldTick();
-    virtual bool isSpectator() = 0;
     bool checkBedExists();
     virtual void updateFrameTick();
     StatsUID getSUID();
-    void AwardTimerAchievement(int32_t );
-    uint64_t CheckTimerAchievements();
-    static EPlayerGamePrivileges getPlayerGamePrivilege(uint32_t , EPlayerGamePrivileges );
-    EPlayerGamePrivileges getPlayerGamePrivilege(EPlayerGamePrivileges );
+    void AwardTimerAchievement(TimerAchievements achievement);
+    void CheckTimerAchievements();
+    static unsigned int getPlayerGamePrivilege(unsigned int privileges, EPlayerGamePrivileges privilege);
+    unsigned int getPlayerGamePrivilege(EPlayerGamePrivileges privilege);
     uint32_t hasInvulnerablePrivilege();
     void tickCamera();
     void moveCloak();
     void resetAttackStrengthTicker();
     void updatePlayerSize();
-    void PlayerRingSoundEffect(int32_t );
+    void PlayerRingSoundEffect(int32_t ring);
     void tick();
     int getPortalWaitTime();
     int GetSuffocateTime();
@@ -268,238 +274,240 @@ public:
     const SoundEvent* getSwimSplashSound();
     const SoundEvent* getHeavySplashSound();
     int getDimensionChangingDelay();
-    void playSound(const SoundEvent* , float , float );
+    void playSound(const SoundEvent* sound, float volume, float pitch);
     SoundSource::ESoundSource getSoundSource();
-    void handleEntityEvent(uint8_t , int32_t );
+    void handleEntityEvent(uint8_t event, int32_t data);
     bool isImmobile();
-    void onChangedBlock(const BlockPos& );
+    void onChangedBlock(const BlockPos& position);
     virtual void closeContainer();
     void prepareCustomTextures();
-    void checkRidingStatistiscs(double , double , double );
+    void checkRidingStatistiscs(double x, double y, double z);
     void rideTick();
     void SetNormalSize();
     void resetPos();
     void serverAiStep();
-    void playShoulderEntityAmbientSound(CompoundTag* );
+    void playShoulderEntityAmbientSound(CompoundTag* tag);
     CompoundTag* getShoulderEntityLeft();
     CompoundTag* getShoulderEntityRight();
-    void respawnEntityOnShoulder(CompoundTag* );
-    void setShoulderEntityLeft(CompoundTag* );
-    void setShoulderEntityRight(CompoundTag* );
+    void respawnEntityOnShoulder(CompoundTag* tag);
+    void setShoulderEntityLeft(CompoundTag* tag);
+    void setShoulderEntityRight(CompoundTag* tag);
     void removeEntitiesOnShoulder();
     void calculateFlapping();
     void aiStep();
-    virtual void touch(boost::shared_ptr<Entity> );
+    virtual void touch(boost::shared_ptr<Entity> entity);
     virtual uint32_t getScore();
-    virtual void setScore(int32_t );
-    virtual void increaseScore(int32_t );
-    boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> , bool , bool );
+    virtual void setScore(int32_t score);
+    virtual void increaseScore(int32_t amount);
+    boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> item, bool randomThrow, bool retainOwnership);
     void destroyVanishingCursedItems();
-    void die(const DamageSource* );
-    const SoundEvent* getHurtSound(const DamageSource* );
+    void die(const DamageSource* source);
+    const SoundEvent* getHurtSound(const DamageSource* source);
     const SoundEvent* getDeathSound();
-    boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> , bool );
-    virtual boost::shared_ptr<ItemEntity> drop(bool );
-    virtual not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> );
-    float getDestroySpeed(const BlockState* );
-    bool canDestroy(const BlockState* );
-    static void addWalkers(DataFixerUpper* );
-    void readAdditionalSaveData(CompoundTag* );
-    void addAdditonalSaveData(CompoundTag* );
-    virtual CameraController* GetCameraController();
-    virtual void SetCameraController(CameraController* , bool );
+    boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> item, bool randomThrow);
+    virtual boost::shared_ptr<ItemEntity> drop(bool dropAll);
+    virtual not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item);
+    float getDestroySpeed(const BlockState* state);
+    bool canDestroy(const BlockState* state);
+    static void addWalkers(DataFixerUpper* fixer);
+    void readAdditionalSaveData(CompoundTag* tag);
+    void addAdditonalSaveData(CompoundTag* tag);
+    virtual uint32_t GetThirdPersonView(bool firstPerson);
+    virtual void SetThirdPersonView(int32_t view);
     uint32_t isAllowedToFly();
-    bool hurt(const DamageSource* , float );
-    void blockUsingShield(const boost::shared_ptr<LivingEntity>& );
-    virtual uint32_t canHarmPlayer(boost::shared_ptr<Player> );
+    bool hurt(const DamageSource* source, float damage);
+    void blockUsingShield(const boost::shared_ptr<LivingEntity>& attacker);
+    virtual uint32_t CanChangeThirdPersonView();
     uint32_t hasInvisiblePrivilege();
     uint32_t isAllowedToAttackPlayers();
-    virtual bool canHarmPlayer(std::wstring );
-    void hurtArmor(float );
-    virtual double getArmorCoverPercentage();
-    void hurtCurrentlyUsedShield(float );
+    virtual CameraController* GetCameraController();
+    void hurtArmor(float damage);
+    virtual void SetCameraController(CameraController* controller, bool owned);
+    void hurtCurrentlyUsedShield(float damage);
     uint32_t isAllowedToIgnoreExhaustion();
-    void causeFoodExhaustion(float );
-    void actuallyHurt(const DamageSource* , float );
-    virtual void openTextEdit(boost::shared_ptr<SignBlockEntity> );
-    virtual void openMinecartCommandBlock(boost::shared_ptr<BaseCommandBlock> );
-    virtual void openCommandBlock(boost::shared_ptr<CommandBlockEntity> );
-    virtual int openTrading(boost::shared_ptr<Merchant> , const std::wstring& , int );
-    virtual int openContainer(boost::shared_ptr<Container> );
-    virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> , boost::shared_ptr<Container> );
-    virtual int startBlockInteraction(InteractionObject& );
-    virtual void openItemInstanceGui(not_null_ptr<ItemInstance> , InteractionHand::EInteractionHand );
-    virtual uint32_t interactOn(boost::shared_ptr<Entity> , InteractionHand::EInteractionHand );
+    void causeFoodExhaustion(float exhaustion);
+    void actuallyHurt(const DamageSource* source, float damage);
+    virtual uint32_t canHarmPlayer(boost::shared_ptr<Player> player);
+    virtual bool canHarmPlayer(std::wstring playerName);
+    virtual double getArmorCoverPercentage();
+    virtual void openTextEdit(boost::shared_ptr<SignBlockEntity> sign);
+    virtual void openMinecartCommandBlock(boost::shared_ptr<BaseCommandBlock> commandBlock);
+    virtual void openCommandBlock(boost::shared_ptr<CommandBlockEntity> block);
+    virtual int openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int entityId);
+    virtual int openContainer(boost::shared_ptr<Container> container);
+    virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container);
     double getRidingHeight();
     void stopRiding();
-    virtual uint64_t attack(boost::shared_ptr<Entity> );
-    virtual void disableShield(bool );
-    virtual void crit(boost::shared_ptr<Entity> );
-    virtual void magicCrit(boost::shared_ptr<Entity> );
-    virtual void respawn();
-    void onSyncedDataUpdated(const EntityDataAccessor_Base* );
+    virtual int startBlockInteraction(InteractionObject& interaction);
+    virtual void openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand);
+    virtual uint32_t interactOn(boost::shared_ptr<Entity> entity, InteractionHand::EInteractionHand hand);
+    virtual void attack(boost::shared_ptr<Entity> entity);
+    virtual void disableShield(bool force);
+    void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     void remove();
     bool isInWall();
+    virtual void crit(boost::shared_ptr<Entity> entity);
+    virtual void magicCrit(boost::shared_ptr<Entity> entity);
+    bool bedInRange(const BlockPos& position, const Direction* direction);
+    void setBedOffset(const Direction* direction);
+    virtual void respawn();
     virtual bool isLocalPlayer();
-    virtual std::wstring getGameProfile();
-    uint32_t bedInRange(BlockPos* , Direction* );
-    void setBedOffset(Direction* );
-    virtual uint32_t startSleepInBed(const BlockPos& , bool );
-    virtual void stopSleepInBed(bool , bool , bool );
-    static BlockPos* checkBedValidRespawnPosition(Level* , const BlockPos& , bool );
+    static BlockPos* checkBedValidRespawnPosition(Level* level, const BlockPos& position, bool forced);
     double getSleepRotation();
     bool isSleeping();
     uint32_t isSleepingLongEnough();
     uint32_t getSleepTimer();
     uint32_t getDeathFadeTimer();
-    virtual void displayClientMessage(int32_t , bool );
+    virtual std::wstring getGameProfile();
+    virtual uint32_t startSleepInBed(const BlockPos& position, bool force);
+    virtual void stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpawn);
+    virtual void displayClientMessage(int32_t message, bool force);
     virtual BlockPos* getRespawnPosition();
     virtual uint8_t isRespawnForced();
-    virtual uint64_t setRespawnPosition(BlockPos* , bool );
-    virtual uint32_t hasAchievement(Achievement* );
-    virtual void awardStat(Stat* , arrayWithLength<unsigned char> );
-    virtual void resetStat(Stat* );
+    virtual void setRespawnPosition(BlockPos* position, bool forced);
     void jumpFromGround();
-    void fjCheckSuperSonic(double , double , double , double , double , double );
-    void travel(float , float , float );
+    void fjCheckSuperSonic(double oldX, double oldY, double oldZ, double newX, double newY, double newZ);
+    void travel(float x, float y, float z);
     float getSpeed();
-    void ResetTimerAchievement(int32_t );
-    virtual void checkMovementStatistiscs(double , double , double );
-    void causeFallDamage(float , float );
+    void ResetTimerAchievement(TimerAchievements achievement);
+    virtual uint32_t hasAchievement(Achievement* achievement);
+    void causeFallDamage(float distance, float multiplier);
     void doWaterSplashEffect();
-    const SoundEvent* getFallDamageSound(int32_t );
-    void killed(boost::shared_ptr<LivingEntity> );
+    const SoundEvent* getFallDamageSound(int32_t damage);
+    void killed(boost::shared_ptr<LivingEntity> entity);
     void makeStuckInWeb();
-    int getItemInHandIcon(not_null_ptr<ItemInstance> , int32_t );
+    virtual TextureAtlasSprite* getItemInHandIcon(not_null_ptr<ItemInstance> item, int frame);
     int32_t getXpNeededForNextLevel();
-    virtual void increaseXp(int32_t );
-    virtual uint32_t getEnchantmentSeed();
-    virtual void onEnchantmentPerformed(int32_t );
-    virtual void giveExperienceLevels(int32_t );
+    virtual void awardStat(Stat* stat, arrayWithLength<unsigned char> params);
+    virtual void resetStat(Stat* stat);
+    virtual void checkMovementStatistiscs(double x, double y, double z);
+    virtual void increaseXp(int32_t amount);
     FoodData* getFoodData();
-    uint32_t canEat(bool );
+    uint32_t canEat(bool alwaysEdible);
     uint32_t isHurt();
-    virtual bool mayBuild();
-    virtual uint32_t mayUseItemAt(const BlockPos& , const Direction* , not_null_ptr<ItemInstance> );
-    int32_t getExperienceReward(boost::shared_ptr<Player> );
+    virtual uint32_t getEnchantmentSeed();
+    virtual void onEnchantmentPerformed(int32_t cost);
+    int32_t getExperienceReward(boost::shared_ptr<Player> killer);
     bool isAlwaysExperienceDropper();
     bool shouldShowName();
     bool makeStepSound();
-    virtual void onUpdateAbilities();
-    virtual void setGameMode(const GameType* gameType);
-    virtual const GameType* GetGameType() = 0;
+    virtual void giveExperienceLevels(int32_t levels);
+    virtual bool mayBuild();
     std::wstring getName();
     std::wstring getNetworkName();
     boost::shared_ptr<PlayerEnderChestContainer> getEnderChestInventory();
-    not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* );
-    void setItemSlot(const EquipmentSlot* , not_null_ptr<ItemInstance> );
-    uint32_t addItem(not_null_ptr<ItemInstance> );
+    not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
+    void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item);
+    uint32_t addItem(not_null_ptr<ItemInstance> item);
     std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
     std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
-    uint32_t setEntityOnShoulder(CompoundTag* );
-    bool isInvisibleTo(boost::shared_ptr<Player> );
+    uint32_t setEntityOnShoulder(CompoundTag* tag);
+    bool isInvisibleTo(boost::shared_ptr<Player> player);
     bool isPushedByWater();
-    virtual Scoreboard* GetScoreboard();
+    virtual uint32_t mayUseItemAt(const BlockPos& position, const Direction* direction, not_null_ptr<ItemInstance> item);
     Team* getTeam();
     uint32_t SpectateAsOtherEntity();
     uint32_t SpectateAsFloatingHead();
     double getEyeHeight();
-    void setAbsorptionAmount(float );
+    void setAbsorptionAmount(float amount);
     float getAbsorptionAmount();
-    bool canUnlock(LockCode* );
-    uint32_t isModelPartShown(const PlayerModelPart* );
-    bool setSlot(int32_t , const not_null_ptr<ItemInstance>& );
+    bool canUnlock(LockCode* lock);
+    uint32_t isModelPartShown(const PlayerModelPart* part);
+    bool setSlot(int32_t slot, const not_null_ptr<ItemInstance>& item);
     uint8_t isReducedDebugInfo();
     const HumanoidArm* getMainArm();
-    void setMainArm(const HumanoidArm* );
+    void setMainArm(const HumanoidArm* arm);
     double getCurrentItemAttackStrengthDelay();
-    double getAttackStrengthScale(float );
+    double getAttackStrengthScale(float partialTicks);
     ItemCooldowns* getCooldowns();
-    void push(boost::shared_ptr<Entity> );
+    void push(boost::shared_ptr<Entity> entity);
     void pushEntities();
     double getLuck();
     uint8_t canUseCommandBlocks();
-    static uint32_t GetModelTypeFromAnimBitmask(uint32_t );
-    static uint32_t GetModelTypeFromTextureId(int32_t );
+    static uint32_t GetModelTypeFromAnimBitmask(uint32_t value);
+    static uint32_t GetModelTypeFromTextureId(int32_t value);
     uint32_t getModelName();
-    static uint32_t hash_fnct(boost::shared_ptr<Player> );
-    static bool eq_test(boost::shared_ptr<Player> , boost::shared_ptr<Player> );
-    virtual uint8_t getTexture();
-    void setPlayerDefaultSkin(uint32_t );
-    static _SkinAdjustments getSkinAdjustmentsById(uint32_t );
-    void SetAdditionalModelParts(std::vector<ModelPart*>* );
-    virtual void setCustomSkin(uint32_t );
-    static std::wstring getCapePathFromId(uint32_t );
-    virtual uint64_t setCustomCape(uint32_t );
-    static uint32_t getCapeIdFromPath(const std::wstring& );
-    void setXuid(PlayerUID );
-    static void setPlayerGamePrivilege(uint32_t& , EPlayerGamePrivileges , uint32_t );
-    void setPlayerGamePrivilege(EPlayerGamePrivileges , uint32_t );
-    uint32_t isAllowedToUse(Block* );
-    uint32_t isAllowedToUse(not_null_ptr<ItemInstance> );
-    bool isAllowedToInteract(boost::shared_ptr<Entity> );
+    static uint32_t hash_fnct(boost::shared_ptr<Player> player);
+    static bool eq_test(boost::shared_ptr<Player> first, boost::shared_ptr<Player> second);
+    virtual void onUpdateAbilities();
+    void setPlayerDefaultSkin(uint32_t skin);
+    static _SkinAdjustments getSkinAdjustmentsById(uint32_t id);
+    void SetAdditionalModelParts(std::vector<ModelPart*>* parts);
+    virtual void setGameMode(const GameType* gameType);
+    virtual bool isSpectator() = 0;
+    static std::wstring getCapePathFromId(uint32_t id);
+    virtual Scoreboard* GetScoreboard();
+    static uint32_t getCapeIdFromPath(const std::wstring& path);
+    void setXuid(PlayerUID xuid);
+    PlayerUID getXuid() { return mXuid; }
+    static void setPlayerGamePrivilege(uint32_t& privileges, EPlayerGamePrivileges privilege, uint32_t enabled);
+    void setPlayerGamePrivilege(EPlayerGamePrivileges privilege, uint32_t enabled);
+    uint32_t isAllowedToUse(Block* block);
+    uint32_t isAllowedToUse(not_null_ptr<ItemInstance> item);
+    bool isAllowedToInteract(boost::shared_ptr<Entity> entity);
     uint32_t isAllowedToMine();
     uint32_t isAllowedToAttackAnimals();
-    uint32_t isAllowedToHurtEntity(boost::shared_ptr<Entity> );
+    uint32_t isAllowedToHurtEntity(boost::shared_ptr<Entity> entity);
     bool isModerator();
     bool IsCreativeFlying();
-    static void enableAllPlayerPrivileges(uint32_t& , bool );
-    void enableAllPlayerPrivileges(bool );
+    static void enableAllPlayerPrivileges(uint32_t& privileges, bool enabled);
+    void enableAllPlayerPrivileges(bool enabled);
     bool canCreateParticles();
     std::vector<ModelPart*>* GetAdditionalModelParts();
     void UpdateSize();
     void SetSmallSize();
     void SetNoCollisionSize();
-    void setName(const std::wstring& );
-    virtual void SetCamera(boost::shared_ptr<Entity> );
+    void setName(const std::wstring& name);
+    virtual void onCrafted(not_null_ptr<ItemInstance> item);
     boost::shared_ptr<Entity> GetCamera();
-    void Follow(bool );
+    void Follow(bool follow);
     uint32_t SpectateAsSkull();
     uint32_t SpectateAsInvisible();
     uint64_t GetSpectateEntity();
-    Vec3* getAttachPos(Entity::EEntityLocation , float );
-    virtual uint32_t IsSpectatingOtherPlayer();
-    virtual int32_t AutoEquip(not_null_ptr<ItemInstance>& , not_null_ptr<ItemInstance>& , bool& );
-    uint32_t CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID );
-    uint32_t CanRecordStats(Stat* , arrayWithLength<unsigned char> );
+    Vec3* getAttachPos(Entity::EEntityLocation location, float partialTicks);
+    virtual uint8_t getTexture();
+    virtual void setCustomSkin(uint32_t skin);
+    uint32_t CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID powerup);
+    uint32_t CanRecordStats(Stat* stat, arrayWithLength<unsigned char> parameters);
     double getUnderwaterLightLevel();
-    void setUnderwaterLightLevel(float );
+    void setUnderwaterLightLevel(float level);
     double getUnderwaterVisionScale();
-    void setUnderwaterVisionScale(float );
+    void setUnderwaterVisionScale(float scale);
     void startSpinAttack();
     void stopSpinAttack();
-    void AdvanceTimerAchievement(int32_t , int32_t );
-    void SetLastAteKelp(bool );
+    void AdvanceTimerAchievement(TimerAchievements achievement, int32_t ticks);
+    void SetLastAteKelp(bool ate);
     void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams) override;
     uint64_t GetType();
-    virtual uint32_t GetThirdPersonView(bool );
-    virtual void SetThirdPersonView(int32_t );
-    virtual uint32_t CanChangeThirdPersonView();
-    virtual void onCrafted(not_null_ptr<ItemInstance> );
-    void setInvisible(bool );
-    virtual void handleCollectItem(not_null_ptr<ItemInstance> );
+    virtual uint64_t setCustomCape(uint32_t cape);
+    virtual void handleCollectItem(not_null_ptr<ItemInstance> item);
+    virtual void SetCamera(boost::shared_ptr<Entity> entity);
     virtual void SpectatePlayerNext();
+    void setInvisible(bool invisible);
     virtual void SpectatePlayerPrev();
     virtual void StopSpectatingPlayer();
+    virtual uint32_t IsSpectatingOtherPlayer();
+    virtual const GameType* GetGameType() = 0;
+    virtual GameMode* GetGameMode();
     bool ShouldRenderShadow();
     bool PositionLocked();
-    void SetPositionLocked(bool );
+    void SetPositionLocked(bool locked);
     bool TakeGlideCollisionDamage();
-    void SetGlideCollisionDamage(bool );
+    void SetGlideCollisionDamage(bool enabled);
     double GetLiftForceModifier();
-    void SetLiftForceModifier(double );
-    virtual GameMode* GetGameMode();
+    void SetLiftForceModifier(double modifier);
+    virtual int32_t AutoEquip(not_null_ptr<ItemInstance>& item, not_null_ptr<ItemInstance>& replaced, bool& replacedExisting);
     bool isPickable();
-    virtual void OnEquipArmor(not_null_ptr<ItemInstance> );
-    virtual void OnTakeFromAnvil(not_null_ptr<ItemInstance> );
+    virtual void OnEquipArmor(not_null_ptr<ItemInstance> item);
+    virtual void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);
     void ChangePlayerSkin();
-    void GetQuickCraftItem(int , int );
+    void GetQuickCraftItem(int playerIndex, int slotIndex);
     void sweepAttack();
-    static PlayerUID createPlayerUUID(const std::wstring& );
-    void setReducedDebugInfo(bool );
+    static PlayerUID createPlayerUUID(const std::wstring& name);
+    void setReducedDebugInfo(bool reducedDebugInfo);
     bool isAllowedToTeleport();
     double GetCollisionSize();
-    void AdvanceAllTimerAchievements(int );
+    void AdvanceAllTimerAchievements(int amount);
 
 
 };

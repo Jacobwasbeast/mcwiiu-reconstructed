@@ -11,9 +11,7 @@
 #include "game/world/generation/FunctionLayerFill.hpp"
 #include "game/world/generation/LayerShape.hpp"
 #include "game/world/generation/LayerTheme.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 LayerGenerator::LayerGenerator(AABB* area, const LayerShape* shape, const LayerFill* fill,
                                const std::vector<const LayerTheme*>& themes)

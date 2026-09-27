@@ -93,7 +93,7 @@ void MegaTreeFeature::placeDoubleTrunkLeaves(Level* level, const BlockPos& pos, 
                 Material* material = level->getBlockState(leafPos)->getMaterial();
                 if (material == Material::AIR || material == Material::LEAVES)
                 {
-                    setBlock(level, leafPos, mLeafState, 0);
+                    setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
                 }
             }
         }
@@ -113,7 +113,7 @@ void MegaTreeFeature::placeSingleTrunkLeaves(Level* level, const BlockPos& pos, 
                 Material* material = level->getBlockState(leafPos)->getMaterial();
                 if (material == Material::AIR || material == Material::LEAVES)
                 {
-                    setBlock(level, leafPos, mLeafState, 0);
+                    setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
                 }
             }
         }

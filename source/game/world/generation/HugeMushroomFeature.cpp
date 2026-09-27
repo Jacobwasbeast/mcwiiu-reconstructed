@@ -6,8 +6,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/HugeMushroomBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 HugeMushroomFeature::HugeMushroomFeature(Block* block)
     : Feature(true), mBlock(block)
@@ -27,135 +29,123 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
 {
     Block* block = mBlock;
     if (block == NULL)
-    {
         block = random.nextBoolean() ? Blocks::brown_mushroom_block : Blocks::red_mushroom_block;
-    }
 
     int height = random.nextInt(3) + 4;
-    int extraHeight = random.nextInt(12);
-    if (extraHeight == 0)
-    {
+    if (random.nextInt(12) == 0)
         height *= 2;
-    }
 
-    bool clear = true;
-    if (origin.y > 0 && origin.y + height + 1 < 256)
+    if (origin.y < 1 || origin.y + height + 1 >= 256)
+        return false;
+
+    bool free = true;
+    for (int y = origin.y; y <= origin.y + height + 1; ++y)
     {
-        for (int y = origin.y; y <= origin.y + height + 1; ++y)
+        int radius = y <= origin.y + 3 ? 0 : 3;
+        BlockPos checkPos;
+        for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
         {
-            int radius = y <= origin.y + 3 ? 0 : 3;
-            for (int x = origin.x - radius; x <= origin.x + radius && clear; ++x)
+            for (int z = origin.z - radius; z <= origin.z + radius && free; ++z)
             {
-                for (int z = origin.z - radius; z <= origin.z + radius; ++z)
+                if (y >= 0 && y < 256)
                 {
-                    const BlockState* state = level->getBlockState(BlockPos(x, y, z));
-                    if (state->getMaterial() != Material::AIR
-                        && state->getMaterial() != Material::LEAVES)
-                    {
-                        clear = false;
-                        break;
-                    }
+                    checkPos = BlockPos(x, y, z);
+                    Material* material = level->getBlockState(checkPos)->getMaterial();
+                    if (material != Material::AIR && material != Material::LEAVES)
+                        free = false;
+                }
+                else
+                {
+                    free = false;
                 }
             }
-        }
-        if (!clear)
-        {
-            return false;
-        }
-
-        const BlockState* below = level->getBlockState(origin.below());
-        Block* belowBlock = below->getBlock();
-        if (belowBlock == Blocks::dirt || belowBlock == Blocks::grass || belowBlock == Blocks::mycelium)
-        {
-            int top = origin.y + height;
-            int layer = top;
-            if (block == Blocks::brown_mushroom_block)
-            {
-                layer = top - 3;
-            }
-
-            for (int y = layer; y <= top; ++y)
-            {
-                int radius = 1;
-                if (y < top)
-                {
-                    radius = 2;
-                }
-                if (block == Blocks::brown_mushroom_block && y == layer)
-                {
-                    radius = 3;
-                }
-
-                for (int x = origin.x - radius; x <= origin.x + radius; ++x)
-                {
-                    bool left = x == origin.x - radius;
-                    bool right = x == origin.x + radius;
-                    for (int z = origin.z - radius; z <= origin.z + radius; ++z)
-                    {
-                        bool north = z == origin.z - radius;
-                        bool south = z == origin.z + radius;
-                        int data = 5;
-                        if (left)
-                        {
-                            data = 4;
-                        }
-                        if (right)
-                        {
-                            data = 6;
-                        }
-                        if (north)
-                        {
-                            data = left ? 1 : right ? 3 : 2;
-                        }
-                        if (south)
-                        {
-                            data = left ? 7 : right ? 9 : 8;
-                        }
-
-                        if (block == Blocks::brown_mushroom_block || y < top)
-                        {
-                            if ((!left && !right) || (!north && !south))
-                            {
-                                if (left && north)
-                                {
-                                    data = 1;
-                                }
-                                else if (right && north)
-                                {
-                                    data = 3;
-                                }
-                                else if (left && south)
-                                {
-                                    data = 7;
-                                }
-                                else if (right && south)
-                                {
-                                    data = 9;
-                                }
-                            }
-                        }
-
-                        const BlockState* state = level->getBlockState(BlockPos(x, y, z));
-                        if ((state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
-                            && ((data != 5 || y >= top) || y >= top - 1))
-                        {
-                            setBlock(level, BlockPos(x, y, z), block->getBlockState(data), 0);
-                        }
-                    }
-                }
-            }
-
-            for (int y = 0; y < height; ++y)
-            {
-                BlockPos stem = origin.above(y);
-                const BlockState* state = level->getBlockState(stem);
-                if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
-                {
-                    setBlock(level, stem, block->getBlockState(10), 0);
-                }
-            }
-            return true;
         }
     }
-    return false;
+    if (!free)
+        return false;
+
+    Block* ground = level->getBlockState(origin.below())->getBlock();
+    if (ground != Blocks::dirt && ground != Blocks::grass && ground != Blocks::mycelium)
+        return false;
+
+    int top = origin.y + height;
+    int capBottom = top;
+    if (block == Blocks::red_mushroom_block)
+        capBottom = top - 3;
+
+    for (int y = capBottom; y <= top; ++y)
+    {
+        int radius = 1;
+        if (y < top)
+            radius = 2;
+        if (block == Blocks::brown_mushroom_block)
+            radius = 3;
+
+        int minX = origin.x - radius;
+        int maxX = origin.x + radius;
+        int minZ = origin.z - radius;
+        int maxZ = origin.z + radius;
+        for (int x = minX; x <= maxX; ++x)
+        {
+            for (int z = minZ; z <= maxZ; ++z)
+            {
+                int data = 5;
+                if (x == minX)
+                    --data;
+                else if (x == maxX)
+                    ++data;
+                if (z == minZ)
+                    data -= 3;
+                else if (z == maxZ)
+                    data += 3;
+                HugeMushroomBlock::Variant* variant = HugeMushroomBlock::Variant::byData(data);
+
+                if (block == Blocks::brown_mushroom_block || y < top)
+                {
+                    if ((x == minX || x == maxX) && (z == minZ || z == maxZ))
+                        continue;
+
+                    if (x == origin.x - (radius - 1) && z == minZ)
+                        variant = HugeMushroomBlock::Variant::NORTH_WEST;
+                    if (x == minX && z == origin.z - (radius - 1))
+                        variant = HugeMushroomBlock::Variant::NORTH_WEST;
+                    if (x == origin.x + (radius - 1) && z == minZ)
+                        variant = HugeMushroomBlock::Variant::NORTH_EAST;
+                    if (x == maxX && z == origin.z - (radius - 1))
+                        variant = HugeMushroomBlock::Variant::NORTH_EAST;
+                    if (x == origin.x - (radius - 1) && z == maxZ)
+                        variant = HugeMushroomBlock::Variant::SOUTH_WEST;
+                    if (x == minX && z == origin.z + (radius - 1))
+                        variant = HugeMushroomBlock::Variant::SOUTH_WEST;
+                    if (x == origin.x + (radius - 1) && z == maxZ)
+                        variant = HugeMushroomBlock::Variant::SOUTH_EAST;
+                    if (x == maxX && z == origin.z + (radius - 1))
+                        variant = HugeMushroomBlock::Variant::SOUTH_EAST;
+                }
+
+                if (variant == HugeMushroomBlock::Variant::CENTER && y < top)
+                    variant = HugeMushroomBlock::Variant::ALL_INSIDE;
+
+                if (origin.y >= top - 1 || variant != HugeMushroomBlock::Variant::ALL_INSIDE)
+                {
+                    BlockPos capPos(x, y, z);
+                    if (!level->getBlockState(capPos)->isSolid())
+                    {
+                        TypedBoxed<HugeMushroomBlock::Variant*> value(variant);
+                        setBlock(level, capPos, block->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &value), Block::UPDATE_NONE);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int y = 0; y < height; ++y)
+    {
+        if (!level->getBlockState(origin.above(y))->isSolid())
+        {
+            TypedBoxed<HugeMushroomBlock::Variant*> value(HugeMushroomBlock::Variant::STEM);
+            setBlock(level, origin.above(y), block->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &value), Block::UPDATE_NONE);
+        }
+    }
+    return true;
 }

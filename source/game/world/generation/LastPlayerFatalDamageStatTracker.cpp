@@ -3,21 +3,20 @@
 #include "game/core/DamageEvent.hpp"
 
 LastPlayerFatalDamageStatTracker::LastPlayerFatalDamageStatTracker(const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mLastFatalDamage(0)
+    : StatTracker<const DamageEvent*>(statsUID, NULL)
 {
 }
 
 LastPlayerFatalDamageStatTracker::~LastPlayerFatalDamageStatTracker()
 {
-    delete mLastFatalDamage;
+    delete mValue;
 }
 
 void LastPlayerFatalDamageStatTracker::update(const DamageEvent* damageEvent)
 {
     if (isTracking(damageEvent->mVictim) && damageEvent->mFatal)
     {
-        delete mLastFatalDamage;
-        mLastFatalDamage = new DamageEvent(*damageEvent);
+        delete mValue;
+        mValue = new DamageEvent(*damageEvent);
     }
 }

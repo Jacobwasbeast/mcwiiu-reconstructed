@@ -41,7 +41,7 @@ bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& orig
     if (ground == Blocks::dirt || ground == Blocks::grass)
     {
         position = position.above();
-        setBlock(level, position, mTrunkState, 0);
+        setBlock(level, position, mTrunkState, Block::UPDATE_NONE);
 
         for (int y = position.y; y <= position.y + 2; ++y)
         {
@@ -58,7 +58,7 @@ bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& orig
                         const Material* material = level->getBlockState(leafPos)->getMaterial();
                         if (material == Material::AIR || material == Material::LEAVES)
                         {
-                            setBlock(level, leafPos, mLeafState, 0);
+                            setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
                         }
                     }
                 }

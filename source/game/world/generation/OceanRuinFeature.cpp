@@ -1,5 +1,7 @@
 #include "game/world/generation/OceanRuinFeature.hpp"
 
+#include <algorithm>
+
 #include "game/core/BoundingBox.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/Direction.hpp"
@@ -48,7 +50,7 @@ bool OceanRuinFeature::IsValidSpawnArea(Level* level, int x, int z, int radius)
 
 std::wstring OceanRuinFeature::getFeatureName()
 {
-    return L"Ocean_Ruin";
+    return L"Ocean Ruin";
 }
 
 BlockPos* OceanRuinFeature::getNearestGeneratedFeature(Level* sourceLevel, const BlockPos& pos,
@@ -146,9 +148,12 @@ void OceanRuinFeature::OceanRuinStart::addClusterRuins(
 
     for (int i = 0; i < count; ++i)
     {
+        if (positions->empty())
+            continue;
+
         int index = random.nextInt((int)positions->size());
         BlockPos position = positions->at(index);
-        positions->at(index) = positions->back();
+        std::swap(positions->at(index), positions->back());
         positions->pop_back();
 
         BoundingBox* candidate = BoundingBox::createProper(
@@ -157,16 +162,16 @@ void OceanRuinFeature::OceanRuinStart::addClusterRuins(
         int xSpan = candidate->getXSpan();
         int zSpan = candidate->getZSpan();
         int radius = xSpan < zSpan ? zSpan : xSpan;
-        bool valid = !candidate->intersects(structureBox)
-            && IsValidSpawnArea(mLevel, position.x + xSpan / 2,
-                                position.z + zSpan / 2, radius);
-        delete candidate;
-
-        if (valid)
+        if (!candidate->intersects(structureBox)
+            && IsValidSpawnArea(mLevel, position.x + candidate->getXSpan() / 2,
+                                position.z + candidate->getZSpan() / 2, radius))
         {
+            delete candidate;
             pieces.push_back(new OceanRuin(mLevel, random, position.x, position.z,
                                            7, 7, 7, warm, false));
+            continue;
         }
+        delete candidate;
     }
 
     delete positions;
@@ -179,11 +184,11 @@ void OceanRuinFeature::OceanRuinStart::create(
     int x = chunkX << 4;
     int z = chunkZ << 4;
     bool warm = configuration.biomeType == OceanRuin::eRuinType_Warm;
-    bool small = random.nextFloat() <= configuration.smallProbability;
+    bool large = random.nextFloat() <= configuration.smallProbability;
 
-    if (small)
+    if (large)
     {
-        push_back(new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, false));
+        push_back(new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, true));
         if (random.nextFloat() <= configuration.clusterProbability)
         {
             addClusterRuins(random, Direction::Plane::HORIZONTAL->getRandomDirection(random),
@@ -192,7 +197,7 @@ void OceanRuinFeature::OceanRuinStart::create(
     }
     else
     {
-        push_back(new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, true));
+        push_back(new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, false));
     }
 
     calculateBoundingBox();

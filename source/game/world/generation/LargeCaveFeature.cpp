@@ -1,6 +1,5 @@
 #include "game/world/generation/LargeCaveFeature.hpp"
-
-#include <cmath>
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
@@ -13,9 +12,12 @@
 
 unsigned int LargeCaveFeature::canReplaceBlock(int blockId, int data)
 {
-    if (blockId == 1 || blockId == 3 || blockId == 2 || blockId == 172 || blockId == 159 || blockId == 24 || blockId == 179 || blockId == 110 || blockId == 78)
+    if (blockId == BlockId::STONE || blockId == BlockId::DIRT || blockId == BlockId::GRASS
+        || blockId == BlockId::HARDENED_CLAY || blockId == BlockId::STAINED_HARDENED_CLAY
+        || blockId == BlockId::SANDSTONE || blockId == BlockId::RED_SANDSTONE || blockId == BlockId::MYCELIUM
+        || blockId == BlockId::SNOW_LAYER)
         return 1;
-    if (blockId == 12 || blockId == 13)
+    if (blockId == BlockId::SAND || blockId == BlockId::GRAVEL)
     {
         Block* block = Block::byId(data);
         if (block != NULL && block->getCraftingMaterial() != Material::WATER)
@@ -26,49 +28,65 @@ unsigned int LargeCaveFeature::canReplaceBlock(int blockId, int data)
 
 void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int chunkX, int chunkZ, double centerX, double centerY, double centerZ, bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer)
 {
-    bool found = false;
+    BlockPos columnPos(0, 0, 0);
+    int lavaData = Blocks::lava->convertBlockStateToLegacyData(Blocks::lava->defaultBlockState());
+    int waterData = Blocks::water->convertBlockStateToLegacyData(Blocks::water->defaultBlockState());
+    bool carved = false;
     for (int localX = minX; localX < maxX; ++localX)
     {
-        const double xd = (localX + chunkX * 16 + 0.5 - centerX) / radiusX;
-        if (xd * xd >= 1.0) continue;
+        int worldX = localX + chunkX * 16;
+        double xd = ((double)worldX + 0.5 - centerX) / radiusX;
         for (int localZ = minZ; localZ < maxZ; ++localZ)
         {
-            const double zd = (localZ + chunkZ * 16 + 0.5 - centerZ) / radiusX;
-            if (xd * xd + zd * zd >= 1.0) continue;
-            bool snow = false;
-            Biome* biome = level->getBiome(BlockPos(localX + chunkX * 16, 0, localZ + chunkZ * 16));
-            if (biome->getDepth() < -0.9f && biome->isSnowCovered()) snow = true;
-            if (hasWater && !snow) continue;
-            int index = (localX << 11) | (localZ << 7) | (maxY - 1);
-            bool surfaceFound = false;
-            for (int localY = maxY - 1; localY >= minY; --localY, --index)
+            bool frozen = false;
+            int worldZ = localZ + chunkZ * 16;
+            columnPos = BlockPos(worldX, 0, worldZ);
+            Biome* biome = level->getBiome(columnPos);
+            if (biome->getDepth() < -0.9F && biome->isSnowCovered())
+                frozen = true;
+            if (hasWater && !frozen)
+                return;
+
+            double zd = ((double)worldZ + 0.5 - centerZ) / radiusX;
+            bool foundTop = false;
+            if (xd * xd + zd * zd >= 1.0)
+                continue;
+
+            for (int localY = maxY - 1; localY >= minY; --localY)
             {
-                const double yd = (localY - 1 + 0.5 - centerY) / radiusZ;
-                if (yd <= -0.7 || yd * yd + xd * xd + zd * zd >= 1.0) continue;
-                const int blockId = primer->getBlockId(index);
-                const int data = primer->getBlockId(index + 1);
-                if (blockId == 2 || blockId == 110) surfaceFound = true;
-                if ((!hasWater || blockId == 174) && canReplaceBlock(blockId, data) != 0)
+                double yd = ((double)(localY - 1) + 0.5 - centerY) / radiusZ;
+                int index = (localX << 11) | (localZ << 7) | localY;
+                if (yd <= -0.7 || yd * yd + xd * xd + zd * zd >= 1.0)
+                    continue;
+
+                int blockId = primer->getBlockId(index);
+                int aboveBlockId = primer->getBlockId(index + 1);
+                if (blockId == BlockId::GRASS || blockId == BlockId::MYCELIUM)
+                    foundTop = true;
+                if ((hasWater && blockId != BlockId::PACKED_ICE) || !canReplaceBlock(blockId, aboveBlockId))
+                    continue;
+
+                if (!carved && level->getBiome(BlockPos(centerX, centerY, centerZ))->getBiomeType() == Biome::eBiomeType_Ocean)
+                    return;
+                carved = true;
+
+                if (localY - 1 < 10)
                 {
-                    if (!found)
-                    {
-                        Biome* startBiome = level->getBiome(BlockPos(centerX, centerY, centerZ));
-                        if (startBiome->getBiomeType() == Biome::eBiomeType_Ocean) return;
-                    }
-                    found = true;
-                    if (localY - 1 < 10)
-                        primer->setBlockAndData(index, 11, 0);
-                    else if (snow && localY < level->getSeaLevel() && blockId == 174)
-                        primer->setBlockAndData(index, 9, 0);
+                    primer->setBlockAndData(index, BlockId::LAVA, lavaData);
+                }
+                else
+                {
+                    if (frozen && localY < level->getSeaLevel() && blockId == BlockId::PACKED_ICE)
+                        primer->setBlockAndData(index, BlockId::WATER, waterData);
                     else
-                        primer->setBlockAndData(index, 0, 0);
-                    if (localY - 1 >= 10 && surfaceFound && primer->getBlockId(index - 1) == 3)
+                        primer->setBlockAndData(index, BlockId::AIR, 0);
+
+                    if (foundTop && primer->getBlockId(index - 1) == BlockId::DIRT)
                     {
-                        Biome* replacementBiome = level->getBiome(BlockPos(localX + chunkX * 16, 0, localZ + chunkZ * 16));
-                        const int replacementId = replacementBiome->mTopBlock.blockId;
-                        Block* replacement = Block::byId(replacementId);
-                        if (replacement != NULL)
-                            primer->setBlockAndData(index - 1, replacementId, replacement->convertBlockStateToLegacyData(replacement->defaultBlockState()));
+                        Biome* columnBiome = level->getBiome(columnPos);
+                        Block* topBlock = Block::byId(columnBiome->mTopBlock.blockId);
+                        primer->setBlockAndData(index - 1, columnBiome->mTopBlock.blockId,
+                            topBlock->convertBlockStateToLegacyData(topBlock->defaultBlockState()));
                     }
                 }
             }
@@ -130,12 +148,12 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
         if (dx * dx + dz * dz - remaining * remaining > reach * reach) return;
         if (x < originX - 16.0 - radius * 2.0 || z < originZ - 16.0 - radius * 2.0 ||
             x > originX + 16.0 + radius * 2.0 || z > originZ + 16.0 + radius * 2.0) continue;
-        int minX = static_cast<int>(std::floor(x - radius)) - chunkX * 16 - 1;
-        int maxX = static_cast<int>(std::floor(x + radius)) - chunkX * 16 + 1;
-        int minY = static_cast<int>(std::floor(y - verticalRadius)) - 1;
-        int maxY = static_cast<int>(std::floor(y + verticalRadius)) + 1;
-        int minZ = static_cast<int>(std::floor(z - radius)) - chunkZ * 16 - 1;
-        int maxZ = static_cast<int>(std::floor(z + radius)) - chunkZ * 16 + 1;
+        int minX = Mth::floor(x - radius) - chunkX * 16 - 1;
+        int maxX = Mth::floor(x + radius) - chunkX * 16 + 1;
+        int minY = Mth::floor(y - verticalRadius) - 1;
+        int maxY = Mth::floor(y + verticalRadius) + 1;
+        int minZ = Mth::floor(z - radius) - chunkZ * 16 - 1;
+        int maxZ = Mth::floor(z + radius) - chunkZ * 16 + 1;
         if (minX < 0) minX = 0;
         if (maxX > 16) maxX = 16;
         if (minY < 1) minY = 1;
@@ -152,7 +170,7 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
                     if (localY >= 0 && localY < 128)
                     {
                         const int blockId = primer->getBlockId((localX << 11) | (localZ << 7) | localY);
-                        if (blockId == 8 || blockId == 9) hasWater = true;
+                        if (blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER) hasWater = true;
                         if (localY != minY - 1 && localX != minX && localX != maxX - 1 &&
                             localZ != minZ && localZ != maxZ - 1) localY = minY;
                     }

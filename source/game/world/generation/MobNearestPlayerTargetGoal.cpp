@@ -1,4 +1,5 @@
 #include "game/world/generation/MobNearestPlayerTargetGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <typeinfo>
@@ -81,7 +82,7 @@ bool MobNearestPlayerTargetGoal::canContinueToUse()
         return false;
     }
 
-    if (target->GetType() == 0x000000000C800001ULL
+    if (target->GetType() == EntityType::SERVER_PLAYER
         && boost::static_pointer_cast<ServerPlayer>(target)->mGameMode->isCreative())
     {
         return false;

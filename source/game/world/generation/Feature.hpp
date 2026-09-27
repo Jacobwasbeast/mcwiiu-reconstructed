@@ -14,7 +14,7 @@ public:
 
     virtual bool place(Level* level, Random& random, const BlockPos& origin) = 0;
     virtual void init();
-    virtual void setBlock(Level* level, const BlockPos& pos, const BlockState* state, int flags);
+    virtual bool setBlock(Level* level, const BlockPos& pos, const BlockState* state, int flags);
 
 protected:
     bool mDoBlockNotify;

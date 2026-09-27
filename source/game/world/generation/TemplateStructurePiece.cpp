@@ -19,14 +19,14 @@ TemplateStructurePiece::TemplateStructurePiece()
     : StructurePiece(), mTemplate(NULL), mPlaceSettings(new StructurePlaceSettings()), mTemplatePosition()
 {
     mPlaceSettings->setIgnoreEntities(true);
-    mPlaceSettings->setIgnoreBlock(Blocks::AIR);
+    mPlaceSettings->setIgnoreBlock(Blocks::air);
 }
 
 TemplateStructurePiece::TemplateStructurePiece(int genDepth)
     : StructurePiece(genDepth), mTemplate(NULL), mPlaceSettings(new StructurePlaceSettings()), mTemplatePosition()
 {
     mPlaceSettings->setIgnoreEntities(true);
-    mPlaceSettings->setIgnoreBlock(Blocks::AIR);
+    mPlaceSettings->setIgnoreBlock(Blocks::air);
 }
 
 TemplateStructurePiece::~TemplateStructurePiece()

@@ -27,40 +27,39 @@ bool VinesFeature::place(Level* level, Random& random, const BlockPos& origin)
     {
         if (!level->isEmptyBlock(position))
         {
-            int xOffset = random.nextInt(4);
-            int zOffset = random.nextInt(4);
-            int xSubtraction = random.nextInt(4);
-            int zSubtraction = random.nextInt(4);
-            position = position.offset(xOffset - xSubtraction, 0,
-                                       zOffset - zSubtraction);
+            const int xOffsetStart = random.nextInt(4);
+            const int xOffsetEnd = random.nextInt(4);
+            const int zOffsetStart = random.nextInt(4);
+            const int zOffsetEnd = random.nextInt(4);
+            position = position.offset(xOffsetStart - xOffsetEnd, 0, zOffsetStart - zOffsetEnd);
         }
         else
         {
             arrayWithLength<const Direction*> directions =
                 Direction::Plane::HORIZONTAL->iterator();
-            bool movedUp = false;
+            bool placed = false;
             for (unsigned int i = 0; i < directions.length; ++i)
             {
                 const Direction* direction = directions.data[i];
-                if (level->isEmptyBlock(position.relative(direction)))
+                if (Blocks::vine->mayPlace(level, position, direction))
                 {
-                    TypedBoxed<bool> north(direction == Direction::NORTH);
-                    TypedBoxed<bool> east(direction == Direction::EAST);
-                    TypedBoxed<bool> south(direction == Direction::SOUTH);
-                    TypedBoxed<bool> west(direction == Direction::WEST);
                     const BlockState* state = Blocks::vine->defaultBlockState();
+                    TypedBoxed<bool> north(direction == Direction::SOUTH);
                     state = state->setBoxedValue(VineBlock::NORTH, &north);
+                    TypedBoxed<bool> east(direction == Direction::WEST);
                     state = state->setBoxedValue(VineBlock::EAST, &east);
+                    TypedBoxed<bool> south(direction == Direction::NORTH);
                     state = state->setBoxedValue(VineBlock::SOUTH, &south);
+                    TypedBoxed<bool> west(direction == Direction::EAST);
                     state = state->setBoxedValue(VineBlock::WEST, &west);
-                    level->setBlock(position, state, 2, false);
+                    level->setBlock(position, state, Block::UPDATE_CLIENTS, false);
                     position = position.above();
-                    movedUp = true;
+                    placed = true;
                     break;
                 }
             }
 
-            if (movedUp)
+            if (placed)
             {
                 continue;
             }

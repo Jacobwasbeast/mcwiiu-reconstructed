@@ -23,7 +23,7 @@ static const std::wstring sPassNames[4] =
 };
 
 LayerThemeRuleDefinition::LayerThemeRuleDefinition()
-    : LayerAttributeRuleDefinition<LayerTheme*>(static_cast<ConsoleGameRules::EGameRuleType>(58), CreateFuncImpl)
+    : LayerAttributeRuleDefinition<LayerTheme*>(ConsoleGameRules::eGameRuleType_LayerTheme, CreateFuncImpl)
     , mPassId(0xFFFFFFFF)
 {
 }
@@ -41,7 +41,7 @@ void LayerThemeRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterf
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 1);
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), sPassNames[mPassId]);
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_name, sPassNames[mPassId]);
 }
 
 void LayerThemeRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -78,40 +78,40 @@ LayerAttributeChildRuleDefinition<LayerTheme*>* LayerThemeRuleDefinition::Create
 {
     switch (type)
     {
-    case static_cast<ConsoleGameRules::EGameRuleType>(59):
+    case ConsoleGameRules::eGameRuleType_NullTheme:
         return new NullThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(61):
+    case ConsoleGameRules::eGameRuleType_ShaftsTheme:
         return new ShaftsLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(62):
+    case ConsoleGameRules::eGameRuleType_BasicPatchesTheme:
         return new BasicPatchesLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(63):
+    case ConsoleGameRules::eGameRuleType_BlockStackTheme:
         return new BlockStackLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(64):
+    case ConsoleGameRules::eGameRuleType_RainbowTheme:
         return new RainbowLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(65):
+    case ConsoleGameRules::eGameRuleType_TerracottaTheme:
         return new TerracottaLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(66):
+    case ConsoleGameRules::eGameRuleType_FunctionPatchesTheme:
         return new FunctionPatchesLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(67):
+    case ConsoleGameRules::eGameRuleType_SimplePatchesTheme:
         return new SimplePatchesLayerThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(68):
+    case ConsoleGameRules::eGameRuleType_CarpetTrapTheme:
         return new CarpetTrapThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(69):
+    case ConsoleGameRules::eGameRuleType_MushroomBlockTheme:
         return new MushroomBlockThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(70):
+    case ConsoleGameRules::eGameRuleType_TextureTheme:
         return new TextureThemeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(71):
+    case ConsoleGameRules::eGameRuleType_SchematicTheme:
         return new SchematicThemeRuleDefinition();
 
     default:

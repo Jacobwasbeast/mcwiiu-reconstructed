@@ -17,7 +17,7 @@ double WinningOnTopLayerMedal::GetScore(PlayerStats* playerStats) const
         do
         {
             PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-            if (roundStats->mBlocksPlaced != -2 && roundStats->mWon && roundStats->mLastCheckpointSequenceId == 0)
+            if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED && roundStats->mWon && roundStats->mFinalLayer == 0)
             {
                 ++count;
             }
@@ -28,5 +28,5 @@ double WinningOnTopLayerMedal::GetScore(PlayerStats* playerStats) const
         while (round < totalRounds);
     }
 
-    return static_cast<double>(static_cast<float>(static_cast<double>(count) - 176.0));
+    return static_cast<float>(static_cast<int>(count));
 }

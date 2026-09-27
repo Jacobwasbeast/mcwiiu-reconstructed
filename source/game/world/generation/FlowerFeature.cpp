@@ -28,23 +28,26 @@ void FlowerFeature::setNextFlower(FlowerBlock* block, FlowerBlock::Flower* flowe
 
 bool FlowerFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL && options->checkIntersects(origin.offset(-8, -4, -8), origin.offset(8, 4, 8)))
+    if (g_pApp->getLevelGenerationOptions() != NULL
+        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-8, -4, -8), origin.offset(8, 4, 8)))
     {
         return false;
     }
 
     for (int attempt = 0; attempt < 64; ++attempt)
     {
-        const int dx = random.nextInt(8) - random.nextInt(8);
-        const int dy = random.nextInt(4) - random.nextInt(4);
-        const int dz = random.nextInt(8) - random.nextInt(8);
+        const int xOffsetStart = random.nextInt(8);
+        const int dx = xOffsetStart - random.nextInt(8);
+        const int yOffsetStart = random.nextInt(4);
+        const int dy = yOffsetStart - random.nextInt(4);
+        const int zOffsetStart = random.nextInt(8);
+        const int dz = zOffsetStart - random.nextInt(8);
         const BlockPos position = origin.offset(dx, dy, dz);
         if (level->isEmptyBlock(position)
             && (!level->mDimension->isHasCeiling() || position.y < 127)
             && mFlowerBlock->canSurvive(level, position, mState))
         {
-            level->setBlock(position, mState, 2, false);
+            level->setBlock(position, mState, Block::UPDATE_CLIENTS, false);
         }
     }
 

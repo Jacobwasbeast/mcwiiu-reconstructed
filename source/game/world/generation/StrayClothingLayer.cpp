@@ -64,7 +64,7 @@ void StrayClothingLayer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    const std::wstring modelName = L"stray_armor";
+    const std::wstring modelName = L"stray.armor";
     if (!pTexturePack->HasCustomModel(modelName))
     {
         mModel = mOriginalModel;

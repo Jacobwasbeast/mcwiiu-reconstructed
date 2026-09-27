@@ -36,7 +36,7 @@ uint32_t IUIScene_PlayerList::KickPlayerReturned(void* context, int playerIndex,
 {
     unsigned char smallId = *static_cast<unsigned char*>(context);
     delete static_cast<unsigned char*>(context);
-    if (result != C4JStorage::EMessageResult_4)
+    if (result != C4JStorage::EMessageResult_Accept)
         return 0;
 
     Minecraft* minecraft = Minecraft::GetInstance();

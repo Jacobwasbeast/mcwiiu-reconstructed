@@ -28,7 +28,7 @@ bool CactusFeature::place(Level* level, Random& random, const BlockPos& origin)
             for (int y = 0; y < height; ++y)
             {
                 if (Blocks::cactus->canSurvive(level, position, NULL))
-                    level->setBlock(position.above(y), Blocks::cactus->defaultBlockState(), 2, false);
+                    level->setBlock(position.above(y), Blocks::cactus->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             }
         }
     }

@@ -1,4 +1,5 @@
 #include "game/world/generation/ZombieArmorLayer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
@@ -30,7 +31,7 @@ void ZombieArmorLayer::createArmorModels()
     ModelDefinition innerDefinition;
     ModelDefinition outerDefinition;
 
-    if (mEntityType == 0x5d550044ULL)
+    if (mEntityType == EntityType::DROWNED)
     {
         mModelArmorInner = new ZombieModel(0.75f, false, innerDefinition);
         mModelArmor = new ZombieModel(1.25f, false, outerDefinition);

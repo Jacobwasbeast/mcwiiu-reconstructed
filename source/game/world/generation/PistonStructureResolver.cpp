@@ -1,5 +1,8 @@
 #include "game/world/generation/PistonStructureResolver.hpp"
 
+#include <algorithm>
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/core/Direction.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -58,121 +61,82 @@ bool PistonStructureResolver::addBranchingBlocks(const BlockPos& pos)
 bool PistonStructureResolver::addBlockLine(const BlockPos& pos, const Direction* direction)
 {
     const BlockState* state = mLevel->getBlockState(pos);
-    if (state->getPistonPushReaction() == PISTON_PUSH_IGNORE)
+    if (state->getMaterial() == Material::AIR)
     {
         return true;
     }
-
     if (!PistonBaseBlock::isPushable(state, mLevel, pos, mMoveDirection, false, direction))
     {
         return true;
     }
-
     if (pos.equals(mPistonPos))
     {
         return true;
     }
-
-    std::vector<BlockPos>::const_iterator existing = mToPush.begin();
-    while (existing != mToPush.end())
+    if (std::find(mToPush.begin(), mToPush.end(), pos) != mToPush.end())
     {
-        if (*existing == pos)
+        return true;
+    }
+
+    int length = 1;
+    if (!mToPush.empty() && mToPush.size() + length > 12)
+    {
+        return false;
+    }
+    while (state->getBlock() == Blocks::slime)
+    {
+        const BlockPos behind = pos.relative(mMoveDirection->getOpposite(), length);
+        state = mLevel->getBlockState(behind);
+        if (state->getMaterial() == Material::AIR
+            || !PistonBaseBlock::isPushable(state, mLevel, behind, mMoveDirection, false, mMoveDirection->getOpposite())
+            || behind.equals(mPistonPos))
         {
-            return true;
+            break;
         }
-        ++existing;
-    }
-
-    int distance = 1;
-    if (state->getBlock()->getPistonPushReaction(state) == PISTON_PUSH_NORMAL)
-    {
-        while (true)
+        ++length;
+        if (length + mToPush.size() > 12)
         {
-            BlockPos next = pos.relative(mMoveDirection->getOpposite(), distance);
-            const BlockState* nextState = mLevel->getBlockState(next);
-            if (nextState->getPistonPushReaction() == PISTON_PUSH_IGNORE)
-            {
-                break;
-            }
-
-            if (!PistonBaseBlock::isPushable(nextState, mLevel, next, mMoveDirection, false,
-                                             mMoveDirection->getOpposite()) || next.equals(mPistonPos))
-            {
-                break;
-            }
-
-            ++distance;
-            if (mToPush.size() + distance > 12)
-            {
-                return false;
-            }
-
-            if (nextState->getBlock()->getPistonPushReaction(nextState) != PISTON_PUSH_NORMAL)
-            {
-                break;
-            }
+            return false;
         }
-        --distance;
-    }
-    else
-    {
-        distance = 0;
     }
 
-    int start = static_cast<int>(mToPush.size());
-    while (distance >= 0)
+    int added = 0;
+    for (int offset = length - 1; offset >= 0; --offset)
     {
-        mToPush.push_back(pos.relative(mMoveDirection->getOpposite(), distance));
-        --distance;
+        mToPush.push_back(pos.relative(mMoveDirection->getOpposite(), offset));
+        ++added;
     }
 
-    int index = 1;
-    while (true)
+    for (int step = 1;; ++step)
     {
-        BlockPos next = pos.relative(mMoveDirection, index);
-        std::vector<BlockPos>::const_iterator collision = mToPush.begin();
-        while (collision != mToPush.end() && !(*collision == next))
-        {
-            ++collision;
-        }
+        const BlockPos next = pos.relative(mMoveDirection, step);
+        std::vector<BlockPos>::iterator collision = std::find(mToPush.begin(), mToPush.end(), next);
         if (collision != mToPush.end())
         {
-            int collisionIndex = static_cast<int>(collision - mToPush.begin());
-            reorderListAtCollision(start, collisionIndex);
-            collisionIndex += start;
-            if (collisionIndex < 0)
+            const int collisionIndex = static_cast<int>(collision - mToPush.begin());
+            reorderListAtCollision(added, collisionIndex);
+            for (int i = 0; i <= collisionIndex + added; ++i)
             {
-                return true;
-            }
-
-            int i = 0;
-            while (i < collisionIndex)
-            {
-                const BlockState* collisionState = mLevel->getBlockState(mToPush.at(i));
-                if (collisionState->getPistonPushReaction() == PISTON_PUSH_NORMAL
-                    && !addBranchingBlocks(mToPush.at(i)))
+                const BlockPos moved = mToPush.at(i);
+                if (mLevel->getBlockState(moved)->getBlock() == Blocks::slime && !addBranchingBlocks(moved))
                 {
                     return false;
                 }
-                ++i;
             }
-            return false;
+            return true;
         }
 
-        const BlockState* nextState = mLevel->getBlockState(next);
-        if (nextState->getPistonPushReaction() == PISTON_PUSH_IGNORE)
+        state = mLevel->getBlockState(next);
+        if (state->getMaterial() == Material::AIR)
         {
             return true;
         }
-        if (!PistonBaseBlock::isPushable(nextState, mLevel, next, mMoveDirection, true, mMoveDirection))
+        if (!PistonBaseBlock::isPushable(state, mLevel, next, mMoveDirection, true, mMoveDirection)
+            || next.equals(mPistonPos))
         {
             return false;
         }
-        if (next.equals(mPistonPos))
-        {
-            return false;
-        }
-        if (nextState->getPistonPushReaction() == PISTON_PUSH_DESTROY)
+        if (state->getPistonPushReaction() == PISTON_PUSH_DESTROY)
         {
             mToDestroy.push_back(next);
             return true;
@@ -182,7 +146,7 @@ bool PistonStructureResolver::addBlockLine(const BlockPos& pos, const Direction*
             return false;
         }
         mToPush.push_back(next);
-        ++index;
+        ++added;
     }
 }
 
@@ -199,23 +163,21 @@ bool PistonStructureResolver::resolve()
             mToDestroy.push_back(mBlockPos);
             return true;
         }
+        return false;
     }
-    else if (addBlockLine(mBlockPos, mMoveDirection))
+    if (!addBlockLine(mBlockPos, mMoveDirection))
     {
-        std::size_t index = 0;
-        while (index < mToPush.size())
-        {
-            const BlockState* nextState = mLevel->getBlockState(mToPush.at(index));
-            if (nextState->getPistonPushReaction() == PISTON_PUSH_NORMAL
-                && !addBranchingBlocks(mToPush.at(index)))
-            {
-                return false;
-            }
-            ++index;
-        }
-        return true;
+        return false;
     }
-    return false;
+    for (std::size_t index = 0; index < mToPush.size(); ++index)
+    {
+        const BlockPos moved = mToPush.at(index);
+        if (mLevel->getBlockState(moved)->getBlock() == Blocks::slime && !addBranchingBlocks(moved))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::vector<BlockPos>& PistonStructureResolver::getToPush()

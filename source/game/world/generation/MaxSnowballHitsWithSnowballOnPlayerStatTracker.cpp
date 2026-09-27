@@ -6,8 +6,7 @@
 
 MaxSnowballHitsWithSnowballOnPlayerStatTracker::MaxSnowballHitsWithSnowballOnPlayerStatTracker(
     const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mMaxSnowballHits(0)
+    : StatTracker<unsigned int>(statsUID, 0)
     , mPlayerUID(0)
 {
     mSnowballHits[mPlayerUID] = 0;
@@ -38,13 +37,8 @@ void MaxSnowballHitsWithSnowballOnPlayerStatTracker::update(const DamageEvent* d
                     return;
             }
 
-            mMaxSnowballHits = mSnowballHits[damageEvent->mVictim];
+            mValue = mSnowballHits[damageEvent->mVictim];
             mPlayerUID = damageEvent->mVictim;
         }
     }
-}
-
-unsigned int MaxSnowballHitsWithSnowballOnPlayerStatTracker::getValue() const
-{
-    return mMaxSnowballHits;
 }

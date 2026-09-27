@@ -1,9 +1,7 @@
 #include "game/world/generation/RemoveTooMuchOceanLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 RemoveTooMuchOceanLayer::RemoveTooMuchOceanLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)

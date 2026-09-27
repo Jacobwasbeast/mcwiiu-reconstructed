@@ -27,7 +27,7 @@ float BowlLayerFill::DOME(float value)
 void BowlLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&,
                                  BlockTransaction* transaction, int* minY, int* maxY) const
 {
-    const float height = (float)mOffset - 176.0f - 0.001f;
+    const float height = mOffset - 0.001f;
     for (unsigned int x = 0; x < shape.width; ++x)
     {
         for (unsigned int z = 0; z < shape.depth; ++z)

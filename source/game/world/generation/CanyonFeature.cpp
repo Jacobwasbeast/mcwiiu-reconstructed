@@ -1,122 +1,192 @@
 #include "game/world/generation/CanyonFeature.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/LargeCaveFeature.hpp"
 
-void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z, float width, float yaw, float pitch, int start, int length, double scale)
+void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
+    double x, double y, double z, float thickness, float yaw, float pitch, int startIndex, int endIndex,
+    double yScale)
 {
-    Random tunnelRandom(seed);
-    int end = length * 16 + 8;
-    if (length < 1) end = 128 - tunnelRandom.nextInt(32);
-    const bool room = start == -1;
-    if (room)
+    BlockPos origin(x, y, z);
+    MemSect(49);
+    Random random(seed);
+    MemSect(0);
+    double centerX = chunkX * 16 + 8;
+    double centerZ = chunkZ * 16 + 8;
+    float yawDelta = 0.0F;
+    float pitchDelta = 0.0F;
+
+    if (endIndex <= 0)
     {
-        start = end / 2;
-        length = tunnelRandom.nextInt(end / 4) + end / 4;
-        pitch = (float)tunnelRandom.nextInt(6);
+        int blockRange = range * 16 - 16;
+        endIndex = blockRange - random.nextInt(blockRange / 4);
     }
-    else
+
+    bool singleStep = false;
+    if (startIndex == -1)
     {
-        length = tunnelRandom.nextInt(end / 2) + end / 4;
-        pitch = (float)tunnelRandom.nextInt(6);
+        startIndex = endIndex / 2;
+        singleStep = true;
     }
-    const double originX = chunkX * 16 + 8;
-    const double originZ = chunkZ * 16 + 8;
-    const double span = end - start;
-    const float pi = 3.1415927F;
-    float widthFactors[128];
-    int factorCount = 0;
-    while (factorCount < 128)
+
+    float widthScale = 1.0F;
+    for (int i = 0; i < 128; ++i)
     {
-        const float factor = tunnelRandom.nextFloat() * tunnelRandom.nextFloat() + 1.0F;
-        do
+        if (i == 0 || random.nextInt(3) == 0)
+            widthScale = 1.0F + random.nextFloat() * random.nextFloat();
+        rs[i] = widthScale * widthScale;
+    }
+
+    for (; startIndex < endIndex; ++startIndex)
+    {
+        double horizontalRadius = 1.5 + (double)(Mth::sin((float)startIndex * 3.1415927F / (float)endIndex) * thickness);
+        double verticalRadius = horizontalRadius * yScale;
+        horizontalRadius *= random.nextFloat() * 0.25 + 0.75;
+        verticalRadius *= random.nextFloat() * 0.25 + 0.75;
+        float cosPitch = Mth::cos(pitch);
+        float sinPitch = Mth::sin(pitch);
+        x += (double)(Mth::cos(yaw) * cosPitch);
+        y += (double)sinPitch;
+        z += (double)(Mth::sin(yaw) * cosPitch);
+        yaw += yawDelta * 0.05F;
+        pitch = pitch * 0.7F + pitchDelta * 0.05F;
+        pitchDelta = pitchDelta * 0.8F + (random.nextFloat() - random.nextFloat()) * random.nextFloat() * 2.0F;
+        yawDelta = yawDelta * 0.5F + (random.nextFloat() - random.nextFloat()) * random.nextFloat() * 4.0F;
+
+        if (!singleStep && random.nextInt(4) == 0)
+            continue;
+
+        double dx = x - centerX;
+        double dz = z - centerZ;
+        double remaining = endIndex - startIndex;
+        double maxDistance = thickness + 18.0F;
+        if (dx * dx + dz * dz - remaining * remaining > maxDistance * maxDistance)
+            return;
+
+        if (x < centerX - 16.0 - horizontalRadius * 2.0 || z < centerZ - 16.0 - horizontalRadius * 2.0
+            || x > centerX + 16.0 + horizontalRadius * 2.0 || z > centerZ + 16.0 + horizontalRadius * 2.0)
+            continue;
+
+        int minX = Mth::floor(x - horizontalRadius) - chunkX * 16 - 1;
+        int maxX = Mth::floor(x + horizontalRadius) - chunkX * 16 + 1;
+        int minY = Mth::floor(y - verticalRadius) - 1;
+        int maxY = Mth::floor(y + verticalRadius) + 1;
+        int minZ = Mth::floor(z - horizontalRadius) - chunkZ * 16 - 1;
+        int maxZ = Mth::floor(z + horizontalRadius) - chunkZ * 16 + 1;
+        if (minX < 0)
+            minX = 0;
+        if (maxX > 16)
+            maxX = 16;
+        if (minY < 1)
+            minY = 1;
+        if (maxY > 120)
+            maxY = 120;
+        if (minZ < 0)
+            minZ = 0;
+        if (maxZ > 16)
+            maxZ = 16;
+
+        bool foundWater = false;
+        for (int bx = minX; !foundWater && bx < maxX; ++bx)
         {
-            widthFactors[factorCount++] = factor * factor;
-        }
-        while (factorCount < 128 && tunnelRandom.nextInt(3) != 0);
-    }
-    float yawChange = 0.0F;
-    float pitchChange = 0.0F;
-    for (int step = start; step < end; ++step)
-    {
-        const double progress = (step - start) / span;
-        const double radius = Mth::sin((float)(progress * pi)) * width + 1.5;
-        const double horizontalRadius = radius * (tunnelRandom.nextFloat() * 0.25F + 0.75F);
-        const double verticalRadius = radius * scale * (tunnelRandom.nextFloat() * 0.25F + 0.75F);
-        x += Mth::cos(yaw) * Mth::cos(pitch);
-        y += Mth::sin(pitch);
-        z += Mth::sin(yaw) * Mth::cos(pitch);
-        yaw += yawChange;
-        pitch = pitch * 0.7F + pitchChange * 0.05F;
-        yawChange = yawChange * 0.8F + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.2F;
-        pitchChange = pitchChange * 0.5F + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.125F;
-        if (!room && tunnelRandom.nextInt(4) != 0) continue;
-        const double distance = step - start;
-        if (radius * radius < distance * distance - ((x - originX) * (x - originX) + (z - originZ) * (z - originZ))) break;
-        if (x < originX - 16.0 || z < originZ - 16.0 || x > originX + 16.0 || z > originZ + 16.0) continue;
-        int minX = Mth::floor((float)(x - horizontalRadius)) - chunkX * 16 - 1;
-        int maxX = Mth::floor((float)(x + horizontalRadius)) - chunkX * 16 + 1;
-        int minY = Mth::floor((float)(y - verticalRadius)) - 1;
-        int maxY = Mth::floor((float)(y + verticalRadius)) + 1;
-        int minZ = Mth::floor((float)(z - horizontalRadius)) - chunkZ * 16 - 1;
-        int maxZ = Mth::floor((float)(z + horizontalRadius)) - chunkZ * 16 + 1;
-        if (minX < 0) minX = 0;
-        if (maxX > 16) maxX = 16;
-        if (minZ < 0) minZ = 0;
-        if (maxZ > 16) maxZ = 16;
-        if (minY < 1) minY = 1;
-        if (maxY > 120) maxY = 120;
-        bool found = false;
-        for (int localX = minX; localX < maxX; ++localX)
-        {
-            const double xd = (localX + chunkX * 16 + 0.5 - x) / horizontalRadius;
-            if (xd * xd >= 1.0) continue;
-            for (int localZ = minZ; localZ < maxZ; ++localZ)
+            for (int bz = minZ; !foundWater && bz < maxZ; ++bz)
             {
-                const double zd = (localZ + chunkZ * 16 + 0.5 - z) / horizontalRadius;
-                if (xd * xd + zd * zd >= 1.0) continue;
-                bool foundLiquid = false;
-                for (int localY = maxY - 1; localY >= minY; --localY)
+                for (int by = maxY + 1; !foundWater && by >= minY - 1; --by)
                 {
-                    const double yd = (localY + 0.5 - y) / verticalRadius;
-                    const int factorIndex = localY < 128 ? localY : 127;
-                    if (xd * xd * widthFactors[factorIndex] + yd * yd / 6.0 >= 1.0) continue;
-                    const int index = (localX << 11) | (localZ << 7) | localY;
-                    const int blockId = primer->getBlockId(index);
-                    const int data = primer->getBlockId(index + 1);
-                    if (blockId == 8 || blockId == 9) foundLiquid = true;
-                    if (LargeCaveFeature::canReplaceBlock(blockId, data) == 0) continue;
-                    if (!found && level != NULL && level->getBiome(BlockPos((int)x, (int)y, (int)z))->getBiomeType() == Biome::eBiomeType_Ocean) return;
-                    found = true;
-                    if (localY < 10) primer->setBlockAndData(index, 11, 0);
-                    else primer->setBlockAndData(index, 0, 0);
-                    if (foundLiquid && primer->getBlockId(index - 1) == 3 && level != NULL)
+                    if (by >= 0 && by < 128)
                     {
-                        Biome* biome = level->getBiome(BlockPos(chunkX * 16 + localX, localY, chunkZ * 16 + localZ));
-                        primer->setBlockAndData(index - 1, biome->mTopBlock.blockId, biome->mTopBlock.blockData);
+                        const BlockState* state = primer->getState(bx, by, bz);
+                        if (state->getBlock() == Blocks::flowing_water || state->getBlock() == Blocks::water)
+                            foundWater = true;
+                        if (by != minY - 1 && bx != minX && bx != maxX - 1 && bz != minZ && bz != maxZ - 1)
+                            by = minY;
                     }
                 }
             }
         }
+        if (foundWater)
+            continue;
+
+        BlockPos biomePos(0, 0, 0);
+        int lavaData = Blocks::flowing_lava->convertBlockStateToLegacyData(Blocks::flowing_lava->defaultBlockState());
+        bool carved = false;
+        for (int bx = minX; bx < maxX; ++bx)
+        {
+            double xd = ((double)(bx + chunkX * 16) + 0.5 - x) / horizontalRadius;
+            for (int bz = minZ; bz < maxZ; ++bz)
+            {
+                double zd = ((double)(bz + chunkZ * 16) + 0.5 - z) / horizontalRadius;
+                double horizontalDistance = zd * zd + xd * xd;
+                bool foundTop = false;
+                if (horizontalDistance >= 1.0)
+                    continue;
+
+                for (int by = maxY - 1; by >= minY; --by)
+                {
+                    double yd = ((double)by + 0.5 - y) / verticalRadius;
+                    int index = (bx << 11) | (bz << 7) | by;
+                    if (horizontalDistance * rs[by] + yd * yd / 6.0 >= 1.0)
+                        continue;
+
+                    if (primer->getState(bx, by, bz)->getBlock() == Blocks::grass)
+                        foundTop = true;
+                    int aboveBlockId = primer->getBlockId(index + 1);
+                    int blockId = primer->getBlockId(index);
+                    if (!LargeCaveFeature::canReplaceBlock(blockId, aboveBlockId))
+                        continue;
+
+                    if (!carved && level != NULL
+                        && level->getBiome(origin)->getBiomeType() == Biome::eBiomeType_Ocean)
+                        return;
+                    carved = true;
+
+                    if (by - 1 < 10)
+                    {
+                        primer->setBlockAndData(index, BlockId::FLOWING_LAVA, lavaData);
+                    }
+                    else
+                    {
+                        primer->setBlockAndData(index, BlockId::AIR, 0);
+                        if (foundTop && primer->getState(bx, by - 1, bz)->getBlock() == Blocks::dirt)
+                        {
+                            biomePos = BlockPos(bx + chunkX * 16, 0, bz + chunkZ * 16);
+                            Biome* biome = level->getBiome(biomePos);
+                            primer->setBlockAndData(index - 1, biome->mTopBlock.blockId, biome->mTopBlock.blockData);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (singleStep)
+            break;
     }
 }
 
-void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ, ChunkPrimer* primer)
+void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+    ChunkPrimer* primer)
 {
-    if (random.nextInt(50) != 0) return;
-    const double x = chunkX * 16 + random.nextInt(16);
-    const double y = random.nextInt(random.nextInt(40) + 8) + 20;
-    const double z = chunkZ * 16 + random.nextInt(16);
-    const float width = random.nextFloat() * 2.0F + random.nextFloat();
-    const float yaw = random.nextFloat() * 6.2831855F;
-    const float pitch = (random.nextFloat() - 0.5F) * 0.25F;
-    addTunnel(level, random.nextLong(), chunkX, chunkZ, primer, x, y, z, width, yaw, pitch, originChunkX, originChunkZ, 1.0);
+    if (random.nextInt(50) != 0)
+        return;
+
+    double x = chunkX * 16 + random.nextInt(16);
+    double y = random.nextInt(random.nextInt(40) + 8) + 20;
+    double z = chunkZ * 16 + random.nextInt(16);
+    float yaw = random.nextFloat() * 3.1415927F * 2.0F;
+    float pitch = (random.nextFloat() - 0.5F) * 2.0F * 0.125F;
+    float thickness = (random.nextFloat() * 2.0F + random.nextFloat()) * 2.0F;
+    addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
     g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)4, (int)(x * 0.0625), (int)(y * 0.0625));
 }
 

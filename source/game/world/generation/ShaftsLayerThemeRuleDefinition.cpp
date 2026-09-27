@@ -8,7 +8,7 @@
 ShaftsLayerThemeRuleDefinition::ShaftsLayerThemeRuleDefinition()
     : mHeightOffset(0)
 {
-    GameRules_IntAttribute* heightOffsetAttribute = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(75), &mHeightOffset);
+    GameRules_IntAttribute* heightOffsetAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mHeightOffset);
     heightOffsetAttribute->setMin(-9);
     heightOffsetAttribute->setMax(9);
 }
@@ -19,7 +19,7 @@ ShaftsLayerThemeRuleDefinition::~ShaftsLayerThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType ShaftsLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(61);
+    return ConsoleGameRules::eGameRuleType_ShaftsTheme;
 }
 
 LayerTheme* ShaftsLayerThemeRuleDefinition::Generate() const

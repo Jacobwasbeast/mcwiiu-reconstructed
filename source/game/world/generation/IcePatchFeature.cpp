@@ -6,6 +6,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
 
 IcePatchFeature::IcePatchFeature(int radius)
     : Feature(false), mBlock(Blocks::packed_ice), mRadius(radius)
@@ -24,12 +25,13 @@ bool IcePatchFeature::place(Level* level, Random& random, const BlockPos& origin
         position = position.below();
     }
 
-    if (level->getBlock(position) != Blocks::snow)
+    if (level->getBlockState(position)->getBlock() != Blocks::snow)
     {
         return false;
     }
 
     const int radius = random.nextInt(mRadius - 2) + 2;
+    MutableBlockPos target(0, 0, 0);
     for (int x = position.x - radius; x <= position.x + radius; ++x)
     {
         for (int z = position.z - radius; z <= position.z + radius; ++z)
@@ -42,11 +44,11 @@ bool IcePatchFeature::place(Level* level, Random& random, const BlockPos& origin
 
             for (int y = position.y - 1; y <= position.y + 1; ++y)
             {
-                BlockPos target(x, y, z);
-                Block* block = level->getBlock(target);
-                if (block == Blocks::AIR || block == Blocks::snow || block == Blocks::dirt)
+                target.set(x, y, z);
+                Block* block = level->getBlockState(target)->getBlock();
+                if (block == Blocks::dirt || block == Blocks::snow || block == Blocks::ice)
                 {
-                    level->setBlock(target, mBlock->defaultBlockState(), 2, false);
+                    level->setBlock(target, mBlock->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
         }

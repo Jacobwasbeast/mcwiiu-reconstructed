@@ -1,5 +1,7 @@
 #include "game/world/generation/SpikeFeature.hpp"
 
+#include <cstdlib>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Entity.hpp"
@@ -44,49 +46,43 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     int radius = (int)mSpike->getRadius();
-    int height = (int)mSpike->getHeight();
-    BlockPos from(origin.x - radius, 1, origin.z - radius);
-    BlockPos to(origin.x + radius, height + 10, origin.z + radius);
-    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(from, to);
+    Iterator<MutableBlockPos*>* positions =
+        BlockPos::mutablesBetween(BlockPos(origin.x - radius, 1, origin.z - radius),
+                                  BlockPos(origin.x + radius, (int)mSpike->getHeight() + 10, origin.z + radius));
 
     while (positions->hasNext())
     {
-        MutableBlockPos* position = positions->next();
-        if (position->distSqr((double)origin.x, (double)position->y,
-                              (double)origin.z) <= (double)(radius * radius + 1) &&
-            position->y < height)
+        BlockPos position = *positions->next();
+        if (position.distSqr((double)origin.x, (double)position.y, (double)origin.z) <= (double)(radius * radius + 1) &&
+            position.y < (int)mSpike->getHeight())
         {
-            setBlock(level, *position, Blocks::end_stone->defaultBlockState(), 0);
+            setBlock(level, position, Blocks::obsidian->defaultBlockState(), Block::UPDATE_NONE);
         }
-        else if (position->y > 65)
+        else if (position.y > 65)
         {
-            setBlock(level, *position, Blocks::AIR->defaultBlockState(), 0);
+            setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
         }
     }
     delete positions;
 
     if (mSpike->isGuarded())
     {
-        int x;
-        int z;
-        for (x = -2; x <= 2; ++x)
+        for (int x = -2; x <= 2; ++x)
         {
-            for (z = -2; z <= 2; ++z)
+            for (int z = -2; z <= 2; ++z)
             {
-                int y;
-                if (x == -2 || x == 2 || z == -2 || z == 2)
+                if (abs(x) == 2 || abs(z) == 2)
                 {
-                    for (y = 0; y <= 3; ++y)
-                    {
-                        BlockPos cage(origin.x + x, height + y, origin.z + z);
-                        setBlock(level, cage, Blocks::obsidian->defaultBlockState(), 0);
-                    }
+                    setBlock(level, BlockPos(origin.x + x, (int)mSpike->getHeight(), origin.z + z),
+                             Blocks::iron_bars->defaultBlockState(), Block::UPDATE_NONE);
+                    setBlock(level, BlockPos(origin.x + x, (int)mSpike->getHeight() + 1, origin.z + z),
+                             Blocks::iron_bars->defaultBlockState(), Block::UPDATE_NONE);
+                    setBlock(level, BlockPos(origin.x + x, (int)mSpike->getHeight() + 2, origin.z + z),
+                             Blocks::iron_bars->defaultBlockState(), Block::UPDATE_NONE);
                 }
-                else
-                {
-                    BlockPos cage(origin.x + x, height + 3, origin.z + z);
-                    setBlock(level, cage, Blocks::obsidian->defaultBlockState(), 0);
-                }
+
+                setBlock(level, BlockPos(origin.x + x, (int)mSpike->getHeight() + 3, origin.z + z),
+                         Blocks::iron_bars->defaultBlockState(), Block::UPDATE_NONE);
             }
         }
     }
@@ -101,12 +97,11 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
         crystal->setBeamTarget(new BlockPos(*mCrystalBeamTarget));
     }
     crystal->setInvulnerable(mCrystalInvulnerable);
-    crystal->moveTo((double)origin.x + 0.5, (double)height + 1.0,
-                    (double)origin.z + 0.5, random.nextFloat() * 360.0f, 3.0f);
+    crystal->moveTo((float)origin.x + 0.5f, (double)((int)mSpike->getHeight() + 1),
+                    (float)origin.z + 0.5f, random.nextFloat() * 360.0f, 0.0f);
     level->addEntity(boost::shared_ptr<Entity>(crystal));
 
-    BlockPos base(origin.x, height, origin.z);
-    setBlock(level, base, Blocks::bedrock->defaultBlockState(), 0);
+    setBlock(level, BlockPos(origin.x, (int)mSpike->getHeight(), origin.z), Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
     delete mSpike;
     mSpike = NULL;
     return true;

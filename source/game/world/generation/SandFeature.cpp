@@ -32,9 +32,9 @@ bool SandFeature::place(Level* level, Random& random, const BlockPos& origin)
     Level::setInstaTick(true);
     const int radius = random.nextInt(mNumberOfBlocks - 2) + 2;
 
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL && options->checkIntersects(origin.offset(-radius, -2, -radius),
-                                                      origin.offset(radius, 2, radius)))
+    if (g_pApp->getLevelGenerationOptions() != NULL
+        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-radius, -2, -radius),
+                                                                origin.offset(radius, 2, radius)))
     {
         Level::setInstaTick(false);
         return false;
@@ -55,9 +55,9 @@ bool SandFeature::place(Level* level, Random& random, const BlockPos& origin)
             {
                 position.set(x, y, z);
                 Block* block = level->getBlockState(position)->getBlock();
-                if (block == Blocks::dirt || block == Blocks::gravel)
+                if (block == Blocks::dirt || block == Blocks::grass)
                 {
-                    level->setBlock(position, mBlock->defaultBlockState(), 2, false);
+                    level->setBlock(position, mBlock->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
         }

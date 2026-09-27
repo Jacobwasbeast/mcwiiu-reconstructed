@@ -39,8 +39,8 @@ void RoofTreeFeature::staticCtor()
     const BlockState* leafState = Blocks::leaves2->defaultBlockState()->setBoxedValue(
         NewLeafBlock::VARIANT, &leafVariant);
 
-    TypedBoxed<bool> decayable(false);
-    roofTreeLeafState = leafState->setBoxedValue(NewLeafBlock::DECAYABLE, &decayable);
+    TypedBoxed<bool> checkDecay(false);
+    roofTreeLeafState = leafState->setBoxedValue(LeafBlock::CHECK_DECAY, &checkDecay);
 }
 
 bool RoofTreeFeature::canPlaceTreeOfHeight(Level* level, const BlockPos& pos, int height)
@@ -68,7 +68,7 @@ void RoofTreeFeature::placeLogAt(Level* level, const BlockPos& pos)
 {
     if (isFree(level->getBlockState(pos)->getBlock()))
     {
-        setBlock(level, pos, mTrunkState, 0);
+        setBlock(level, pos, mTrunkState, Block::UPDATE_NONE);
     }
 }
 
@@ -77,7 +77,7 @@ void RoofTreeFeature::placeLeafAt(Level* level, int x, int y, int z)
     BlockPos leafPos(x, y, z);
     if (level->getBlockState(leafPos)->getMaterial() == Material::AIR)
     {
-        setBlock(level, leafPos, mLeafState, 0);
+        setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
     }
 }
 
@@ -85,7 +85,8 @@ bool RoofTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
     PIXBeginNamedEvent(0.0f, "RoofTreeFeature::place");
 
-    const int height = random.nextInt(3) + random.nextInt(2) + mBaseHeight;
+    const int heightOffset = random.nextInt(3);
+    const int height = heightOffset + random.nextInt(2) + mBaseHeight;
     if (pos.y <= 0 || pos.y + height + 1 >= 257)
     {
         PIXEndNamedEvent();

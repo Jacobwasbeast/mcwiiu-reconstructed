@@ -1,4 +1,5 @@
 #include "game/world/generation/OceanMonumentFeature.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 
@@ -48,7 +49,7 @@ void OceanMonumentFeature::staticCtor()
         FjFeatureBiomeRequirements(&gOceanMonumentSpawnBiomes, 8,
                                    &gOceanMonumentAllowedBiomes, 29);
     gOceanMonumentEnemies.push_back(
-        new Biome::MobSpawnerData(1, 0x5D544000ULL, 2, 4));
+        new Biome::MobSpawnerData(1, EntityType::GUARDIAN, 2, 4));
 }
 
 OceanMonumentFeature::OceanMonumentFeature()

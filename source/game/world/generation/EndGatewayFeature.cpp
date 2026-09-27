@@ -5,14 +5,14 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/EndGatewayBlock.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-EndGatewayFeature::EndGatewayFeature(int exactTeleport)
+EndGatewayFeature::EndGatewayFeature(int portalNumber)
     : Feature(false),
-      mExactTeleport(exactTeleport)
+      mPortalNumber(portalNumber)
 {
 }
 
@@ -37,36 +37,34 @@ bool EndGatewayFeature::place(Level* level, Random& random, const BlockPos& orig
                 {
                     if (x != origin.x || !centerZ)
                     {
-                        setBlock(level, position, Blocks::AIR->defaultBlockState(), 0);
+                        setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
                     }
                     else
                     {
-                        TypedBoxed<bool> exactTeleport(mExactTeleport != 0);
-                        const BlockStateDefinition* definition =
-                            Blocks::end_gateway->getBlockStateDefinition();
+                        TypedBoxed<int> portalNumber(mPortalNumber);
                         const BlockState* state = Blocks::end_gateway->defaultBlockState()->setBoxedValue(
-                            definition->getProperties()[0], &exactTeleport);
-                        setBlock(level, position, state, 0);
+                            EndGatewayBlock::PORTAL_NUMBER, &portalNumber);
+                        setBlock(level, position, state, Block::UPDATE_NONE);
                     }
                 }
                 else if (x != origin.x)
                 {
                     if (centerZ && innerY)
                     {
-                        setBlock(level, position, Blocks::bedrock->defaultBlockState(), 0);
+                        setBlock(level, position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
                     }
                     else
                     {
-                        setBlock(level, position, Blocks::AIR->defaultBlockState(), 0);
+                        setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
                     }
                 }
                 else if (innerY || centerZ)
                 {
-                    setBlock(level, position, Blocks::bedrock->defaultBlockState(), 0);
+                    setBlock(level, position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
                 }
                 else
                 {
-                    setBlock(level, position, Blocks::AIR->defaultBlockState(), 0);
+                    setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
                 }
             }
         }

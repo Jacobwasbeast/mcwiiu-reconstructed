@@ -12,8 +12,8 @@ double TimeInLayerCentreMedal::GetScore(PlayerStats* playerStats) const
 
     for (unsigned int round = 0; round < static_cast<unsigned int>(playerStats->getTotalRounds()); ++round)
     {
-        total += playerStats->getRoundStats(round)->mItemsCollected;
+        total += playerStats->getRoundStats(round)->mLayerChanges;
     }
 
-    return static_cast<double>(static_cast<float>(static_cast<double>(total) - 176.0));
+    return static_cast<float>(total);
 }

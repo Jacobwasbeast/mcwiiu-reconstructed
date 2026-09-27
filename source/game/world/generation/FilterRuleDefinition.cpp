@@ -35,7 +35,7 @@ FilterRuleDefinition<T>::~FilterRuleDefinition()
 template <class T>
 ConsoleGameRules::EGameRuleType FilterRuleDefinition<T>::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(60);
+    return ConsoleGameRules::eGameRuleType_FilterTheme;
 }
 
 template <class T>
@@ -43,8 +43,8 @@ void FilterRuleDefinition<T>::writeAttributes(GameRuleSaveInterface* saveInterfa
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 2);
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(74), toString(mVariant));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(59), LayerMetadata::toStringFilter(mFilter));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_variant, toString(mVariant));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, LayerMetadata::toStringFilter(mFilter));
 }
 
 template <class T>

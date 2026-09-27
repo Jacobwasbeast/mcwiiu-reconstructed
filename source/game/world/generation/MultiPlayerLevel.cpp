@@ -1,4 +1,5 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -32,6 +33,10 @@
 #include "game/world/chunk/ClientChunkCache.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/GameType.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 MultiPlayerLevel::MultiPlayerLevel(boost::shared_ptr<LevelStorage> levelStorage,
                                    ClientPacketListener* connection, LevelSettings* settings,
@@ -104,23 +109,39 @@ void MultiPlayerLevel::animateTick(int x, int y, int z)
 
 void MultiPlayerLevel::animateTickDoWork()
 {
+    Minecraft::GetInstance()->mAnimateTickLevel = this;
     Random random;
-    for (int pass = 0; pass < 16 && !mAnimatedSections.empty(); ++pass)
+    not_null_ptr<ItemInstance> held = mMinecraft->mPlayer->getMainHandItem();
+    bool showBarriers = false;
+    if (mMinecraft->mGameMode->GetGameType() == GameType::CREATIVE && Block::byItem(held->getItem()) == Blocks::barrier)
     {
-        boost::unordered_set<int>::const_iterator section = mAnimatedSections.begin();
-        for (; section != mAnimatedSections.end(); ++section)
+        showBarriers = true;
+    }
+
+    for (int pass = 0; pass < 16; ++pass)
+    {
+        if (mAnimatedSections.empty())
         {
-            int packed = *section;
-            int sectionX = packed >> 20;
-            int sectionY = (packed >> 12) & 255;
-            int sectionZ = (packed << 20) >> 20;
-            BlockPos pos(sectionX * 8 + random.nextInt(8),
-                         sectionY * 8 + random.nextInt(8),
-                         sectionZ * 8 + random.nextInt(8));
+            continue;
+        }
+        for (boost::unordered_set<int>::const_iterator section = mAnimatedSections.begin();
+             section != mAnimatedSections.end(); ++section)
+        {
+            const int packed = *section;
+            const int x = (packed >> 20) * 8 + mRandom->nextInt(8);
+            const int y = (static_cast<int>(static_cast<unsigned int>(packed) << 12) >> 24) * 8 + mRandom->nextInt(8);
+            const int z = (static_cast<int>(static_cast<unsigned int>(packed) << 20) >> 17) + mRandom->nextInt(8);
+            const BlockPos pos(x, y, z);
             const BlockState* state = getBlockState(pos);
             state->getBlock()->animateTick(state, this, pos, &random);
+            if (showBarriers && state->getBlock() == Blocks::barrier)
+            {
+                addParticle(PARTICLE_BARRIER, x + 0.5f, y + 0.5f, z + 0.5f, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
         }
     }
+
+    Minecraft::GetInstance()->mAnimateTickLevel = NULL;
     mAnimatedSections.clear();
 }
 
@@ -170,7 +191,7 @@ void MultiPlayerLevel::MultiPlayerLevelInit(ClientPacketListener* connection, Le
 void MultiPlayerLevel::tick()
 {
     setGameTime(getGameTime() + 1);
-    if (getGameRules()->getBoolean(8))
+    if (getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))
         setDayTime(getDayTime() + 1);
 
     int added = 0;
@@ -310,7 +331,7 @@ bool MultiPlayerLevel::addEntity(boost::shared_ptr<Entity> entity)
     mTrackedEntities.insert(entity);
     if (!added)
         mPendingEntityAdditions.insert(entity);
-    else if ((entity->GetType() & 0x0a800000ULL) == 0x0a800000ULL)
+    else if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
         static_cast<ConsoleSoundEngine*>(mMinecraft->mSoundEngine)->play(
             new MinecartSoundInstance(boost::static_pointer_cast<Minecart>(entity)));
     return added;
@@ -389,7 +410,7 @@ void MultiPlayerLevel::removeEntities(std::vector<boost::shared_ptr<Entity> >* e
     while (it != entities->end())
     {
         boost::shared_ptr<Entity> entity = *it;
-        if ((entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             it = entities->erase(it);
         }
@@ -418,15 +439,15 @@ bool MultiPlayerLevel::doSetBlockAndData(const BlockPos& pos, const BlockState* 
     const BlockState* oldState = getBlockState(pos);
 
     bool liquidFlowChange =
-        (oldState->getBlock() == Blocks::FLOWING_WATER && state->getBlock() == Blocks::WATER) ||
-        (oldState->getBlock() == Blocks::WATER && state->getBlock() == Blocks::FLOWING_WATER) ||
+        (oldState->getBlock() == Blocks::flowing_water && state->getBlock() == Blocks::water) ||
+        (oldState->getBlock() == Blocks::water && state->getBlock() == Blocks::flowing_water) ||
         (oldState->getBlock() == Blocks::flowing_lava && state->getBlock() == Blocks::lava) ||
         (oldState->getBlock() == Blocks::lava && state->getBlock() == Blocks::lava) ||
         (oldState->getBlock() == Blocks::lava && state->getBlock() == Blocks::flowing_lava);
 
     bool changed = false;
     if (extraState != NULL)
-        changed = setExtraBlock(pos, extraState, 3, false);
+        changed = setExtraBlock(pos, extraState, Block::UPDATE_ALL, false);
     changed = setBlockAndUpdate(pos, state) || changed;
 
     if (!changed && !CGameNetworkManager::sInstance.IsHost())

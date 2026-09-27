@@ -1,11 +1,13 @@
 #include "game/world/generation/LakeFeature.hpp"
+#include "game/world/block/BlockId.hpp"
 
-#include <vector>
+#include <cstring>
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -23,67 +25,46 @@ LakeFeature::~LakeFeature()
 
 bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    BlockPos lakeOrigin = origin.offset(-8, 0, -8);
-    while (lakeOrigin.y > 5 && level->isEmptyBlock(lakeOrigin))
-    {
-        lakeOrigin = lakeOrigin.below();
-    }
-    if (lakeOrigin.y < 5)
-    {
+    BlockPos pos = origin.offset(-8, 0, -8);
+    while (pos.y > 5 && level->isEmptyBlock(pos))
+        pos = pos.below();
+    if (pos.y < 5)
         return false;
-    }
 
-    lakeOrigin = lakeOrigin.below(4);
+    pos = pos.below(4);
+    bool fill[2048];
+    memset(fill, 0, sizeof(fill));
 
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL && options->checkIntersects(lakeOrigin, lakeOrigin.offset(16, 8, 16)))
-    {
+    if (g_pApp->getLevelGenerationOptions() != NULL
+        && g_pApp->getLevelGenerationOptions()->checkIntersects(BlockPos(pos.x, pos.y, pos.z),
+                                                                BlockPos(pos.x + 16, pos.y + 8, pos.z + 16)))
         return false;
-    }
 
-    std::vector<unsigned char> mask(16 * 8 * 16, 0);
-    const int ellipsoids = random.nextInt(4) + 4;
-    for (int ellipsoid = 0; ellipsoid < ellipsoids; ++ellipsoid)
+    int count = random.nextInt(4) + 4;
+    for (int i = 0; i < count; ++i)
     {
-        const double xSize = random.nextDouble() * 6.0 + 5.0;
-        const double ySize = random.nextDouble() * 4.0 + 2.0;
-        const double zSize = random.nextDouble() * 6.0 + 5.0;
-        const double xCenter = random.nextDouble() * (14.0 - xSize) + 1.0 + xSize * 0.5;
-        const double yCenter = random.nextDouble() * (4.0 - ySize) + 2.0 + ySize * 0.5;
-        const double zCenter = random.nextDouble() * (14.0 - zSize) + 1.0 + zSize * 0.5;
+        double xSize = random.nextDouble() * 6.0 + 3.0;
+        double ySize = random.nextDouble() * 4.0 + 2.0;
+        double zSize = random.nextDouble() * 6.0 + 3.0;
+        double xCenter = random.nextDouble() * (14.0 - xSize) + 1.0 + xSize * 0.5;
+        double yCenter = random.nextDouble() * (4.0 - ySize) + 2.0 + ySize * 0.5;
+        double zCenter = random.nextDouble() * (14.0 - zSize) + 1.0 + zSize * 0.5;
 
         for (int x = 1; x < 15; ++x)
         {
-            const double dx = (x - xCenter) / (xSize * 0.5);
-            for (int y = 1; y < 7; ++y)
+            for (int z = 1; z < 15; ++z)
             {
-                const double dy = (y - yCenter) / (ySize * 0.5);
-                for (int z = 1; z < 15; ++z)
+                for (int y = 1; y < 7; ++y)
                 {
-                    const double dz = (z - zCenter) / (zSize * 0.5);
-                    if (dx * dx + dy * dy + dz * dz < 1.0)
-                    {
-                        mask[(x * 8 + y) * 16 + z] = 1;
-                    }
+                    double dx = ((double)x - xCenter) / (xSize * 0.5);
+                    double dy = ((double)y - yCenter) / (ySize * 0.5);
+                    double dz = ((double)z - zCenter) / (zSize * 0.5);
+                    if (dz * dz + dx * dx + dy * dy < 1.0)
+                        fill[(x * 16 + z) * 8 + y] = true;
                 }
             }
         }
     }
-
-    const auto isBoundaryCell = [&mask](int x, int y, int z) -> bool
-    {
-        if (mask[(x * 8 + y) * 16 + z] != 0)
-        {
-            return false;
-        }
-
-        return (x > 0 && mask[((x - 1) * 8 + y) * 16 + z] != 0) ||
-            (x < 15 && mask[((x + 1) * 8 + y) * 16 + z] != 0) ||
-            (y > 0 && mask[(x * 8 + y - 1) * 16 + z] != 0) ||
-            (y < 7 && mask[(x * 8 + y + 1) * 16 + z] != 0) ||
-            (z > 0 && mask[(x * 8 + y) * 16 + z - 1] != 0) ||
-            (z < 15 && mask[(x * 8 + y) * 16 + z + 1] != 0);
-    };
 
     for (int x = 0; x < 16; ++x)
     {
@@ -91,38 +72,55 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
         {
             for (int y = 0; y < 8; ++y)
             {
-                if (!isBoundaryCell(x, y, z))
-                {
+                bool edge = !fill[(x * 16 + z) * 8 + y]
+                    && ((x < 15 && fill[((x + 1) * 16 + z) * 8 + y])
+                        || (x > 0 && fill[((x - 1) * 16 + z) * 8 + y])
+                        || (z < 15 && fill[(x * 16 + z + 1) * 8 + y])
+                        || (z > 0 && fill[(x * 16 + (z - 1)) * 8 + y])
+                        || (y < 7 && fill[(x * 16 + z) * 8 + y + 1])
+                        || (y > 0 && fill[(x * 16 + z) * 8 + (y - 1)]));
+                if (!edge)
                     continue;
-                }
-                const BlockPos pos = lakeOrigin.offset(x, y, z);
-                const BlockState* state = level->getBlockState(pos);
-                if (y < 4)
-                {
-                    if (!state->getMaterial()->isSolid() && level->getBlock(pos) != mBlock)
-                    {
-                        return false;
-                    }
-                }
-                else if (state->getMaterial()->isLiquid())
-                {
+
+                Material* material = level->getBlockState(pos.offset(x, y, z))->getMaterial();
+                if (y >= 4 && material->isLiquid())
                     return false;
-                }
+                if (y < 4 && !material->isSolid() && level->getBlockState(pos.offset(x, y, z))->getBlock() != mBlock)
+                    return false;
             }
         }
     }
 
     for (int x = 0; x < 16; ++x)
     {
-        for (int y = 0; y < 8; ++y)
+        for (int z = 0; z < 16; ++z)
         {
-            for (int z = 0; z < 16; ++z)
+            for (int y = 0; y < 8; ++y)
             {
-                if (mask[(x * 8 + y) * 16 + z] != 0)
+                if (fill[(x * 16 + z) * 8 + y])
+                    level->setBlock(pos.offset(x, y, z), y >= 4 ? Blocks::air->defaultBlockState() : mBlock->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+            }
+        }
+    }
+
+    for (int x = 0; x < 16; ++x)
+    {
+        for (int z = 0; z < 16; ++z)
+        {
+            for (int y = 4; y < 8; ++y)
+            {
+                if (!fill[(x * 16 + z) * 8 + y])
+                    continue;
+
+                BlockPos below = pos.offset(x, y - 1, z);
+                if (level->getBlockState(below)->getBlock() == Blocks::dirt
+                    && level->getBrightness(LightLayer::SKY, pos.offset(x, y, z)) > 0)
                 {
-                    const BlockPos pos = lakeOrigin.offset(x, y, z);
-                    Block* block = y < 4 ? mBlock : Blocks::AIR;
-                    level->setBlock(pos, block->defaultBlockState(), 2, false);
+                    Biome* biome = level->getBiome(below);
+                    if (biome->mTopBlock.blockId == BlockId::MYCELIUM)
+                        level->setBlock(below, Blocks::mycelium->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    else
+                        level->setBlock(below, Blocks::grass->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
         }
@@ -136,16 +134,16 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
             {
                 for (int y = 0; y < 8; ++y)
                 {
-                    if (!isBoundaryCell(x, y, z) || (y >= 4 && random.nextInt(2) == 0))
-                    {
-                        continue;
-                    }
-
-                    const BlockPos pos = lakeOrigin.offset(x, y, z);
-                    if (level->getBlockState(pos)->getMaterial()->isSolid())
-                    {
-                        level->setBlock(pos, Blocks::stone->defaultBlockState(), 2, false);
-                    }
+                    bool edge = !fill[(x * 16 + z) * 8 + y]
+                        && ((x < 15 && fill[((x + 1) * 16 + z) * 8 + y])
+                            || (x > 0 && fill[((x - 1) * 16 + z) * 8 + y])
+                            || (z < 15 && fill[(x * 16 + z + 1) * 8 + y])
+                            || (z > 0 && fill[(x * 16 + (z - 1)) * 8 + y])
+                            || (y < 7 && fill[(x * 16 + z) * 8 + y + 1])
+                            || (y > 0 && fill[(x * 16 + z) * 8 + (y - 1)]));
+                    if (edge && (y < 4 || random.nextInt(2) != 0)
+                        && level->getBlockState(pos.offset(x, y, z))->getMaterial()->isSolid())
+                        level->setBlock(pos.offset(x, y, z), Blocks::stone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
         }
@@ -157,11 +155,8 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
         {
             for (int z = 0; z < 16; ++z)
             {
-                const BlockPos pos = lakeOrigin.offset(x, 4, z);
-                if (level->shouldFreezeIgnoreNeighbors(pos))
-                {
-                    level->setBlock(pos, Blocks::ice->defaultBlockState(), 2, false);
-                }
+                if (level->shouldFreezeIgnoreNeighbors(pos.offset(x, 4, z)))
+                    level->setBlock(pos.offset(x, 4, z), Blocks::ice->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             }
         }
     }

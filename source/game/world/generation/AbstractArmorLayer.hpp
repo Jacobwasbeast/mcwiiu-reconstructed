@@ -25,9 +25,9 @@ public:
     virtual void resetColor();
     virtual void setColor(float red, float green, float blue, float alpha);
     virtual Model* getArmorModel(const EquipmentSlot* slot);
+    virtual void createArmorModels() = 0;
     virtual void setPartVisibility(Model* model, const EquipmentSlot* slot) = 0;
     virtual void hideAllArmor(Model* model) = 0;
-    virtual void createArmorModels() = 0;
     bool usesInnerModel(const EquipmentSlot* slot);
     not_null_ptr<ItemInstance> getSlot(boost::shared_ptr<LivingEntity>& entity, const EquipmentSlot* slot);
     ResourceLocation* getArmorLocation(ArmorItem* armor, bool inner, bool overlay);

@@ -17,7 +17,7 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/VillagePieces.hpp"
 
-static std::vector<Biome*> gVillageBiomes;
+std::vector<Biome*> VillageFeature::allowedBiomes;
 
 VillageFeature::VillageFeature(int size)
     : StructureFeature()
@@ -40,12 +40,12 @@ VillageFeature::~VillageFeature()
 
 void VillageFeature::staticCtor()
 {
-    gVillageBiomes.push_back(Biome::PLAINS);
-    gVillageBiomes.push_back(Biome::DESERT);
-    gVillageBiomes.push_back(Biome::SAVANNA);
-    gVillageBiomes.push_back(Biome::TAIGA);
-    gVillageBiomes.push_back(Biome::COLD_TAIGA);
-    gVillageBiomes.push_back(Biome::ICE_PLAINS);
+    allowedBiomes.push_back(Biome::PLAINS);
+    allowedBiomes.push_back(Biome::DESERT);
+    allowedBiomes.push_back(Biome::SAVANNA);
+    allowedBiomes.push_back(Biome::TAIGA);
+    allowedBiomes.push_back(Biome::COLD_TAIGA);
+    allowedBiomes.push_back(Biome::ICE_PLAINS);
 }
 
 void VillageFeature::_init(int size)
@@ -63,7 +63,7 @@ std::wstring VillageFeature::getFeatureName()
 
 bool VillageFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
-    int spacing = flatWorld ? 0x10 : mSpacing;
+    int spacing = flatWorld ? mSpacing : 0x10;
     int regionX = chunkX < 0 ? chunkX + 1 - spacing : chunkX;
     int regionZ = chunkZ < 0 ? chunkZ + 1 - spacing : chunkZ;
     Random& chunkRandom = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0x9E7F70);
@@ -75,7 +75,7 @@ bool VillageFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
          chunkZ == regionZ / spacing * spacing + offsetZ))
     {
         return level->getBiomeSource()->containsOnly(chunkX * 16 + 8, chunkZ * 16 + 8, 0,
-                                                     gVillageBiomes);
+                                                     allowedBiomes);
     }
     return false;
 }
@@ -107,36 +107,32 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
     push_back(startPiece);
     startPiece->addChildren(startPiece, this, random);
 
-    while ((!startPiece->mPendingPieces.empty()) || (!startPiece->mRoadPieces.empty()))
+    while (!startPiece->mRoadPieces.empty() || !startPiece->mPendingPieces.empty())
     {
-        if (!startPiece->mPendingPieces.empty())
+        if (startPiece->mRoadPieces.empty())
         {
-            std::vector<StructurePiece*>::iterator it = startPiece->mPendingPieces.begin();
-            std::advance(it, random.nextInt((int)startPiece->mPendingPieces.size()));
-            StructurePiece* piece = *it;
-            startPiece->mPendingPieces.erase(it);
+            int index = random.nextInt((int)startPiece->mPendingPieces.size());
+            StructurePiece* piece = startPiece->mPendingPieces[index];
+            startPiece->mPendingPieces.erase(startPiece->mPendingPieces.begin() + index);
             piece->addChildren(startPiece, this, random);
         }
         else
         {
-            std::vector<StructurePiece*>::iterator it = startPiece->mRoadPieces.begin();
-            std::advance(it, random.nextInt((int)startPiece->mRoadPieces.size()));
-            StructurePiece* piece = *it;
-            startPiece->mRoadPieces.erase(it);
+            int index = random.nextInt((int)startPiece->mRoadPieces.size());
+            StructurePiece* piece = startPiece->mRoadPieces[index];
+            startPiece->mRoadPieces.erase(startPiece->mRoadPieces.begin() + index);
             piece->addChildren(startPiece, this, random);
         }
     }
 
     calculateBoundingBox();
-    int villagePieceCount = 0;
+    int nonRoadCount = 0;
     for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
     {
-        if (*it != NULL && dynamic_cast<VillagePieces::VillagePiece*>(*it) != NULL)
-        {
-            ++villagePieceCount;
-        }
+        if (dynamic_cast<VillagePieces::VillageRoadPiece*>(*it) == NULL)
+            ++nonRoadCount;
     }
-    mValid = villagePieceCount > 2;
+    mValid = nonRoadCount > 2;
 }
 
 VillageFeature::VillageStart::VillageStart()
@@ -156,9 +152,9 @@ StructureStart* VillageFeature::VillageStart::Create()
 bool VillageFeature::VillageStart::isValid()
 {
     BoundingBox* box = getBoundingBox();
-    int minX = -(mDistance / 2) - (mDistance % 2 != 0 ? 1 : 0);
-    int maxX = mDistance / 2;
-    if (minX <= box->x0 && box->x1 <= maxX && minX <= box->z0 && box->z1 <= maxX)
+    int min = -mDistance / 2;
+    int max = mDistance / 2;
+    if (min <= box->x0 && box->x1 <= max && min <= box->z0 && box->z1 <= max)
     {
         return mValid;
     }

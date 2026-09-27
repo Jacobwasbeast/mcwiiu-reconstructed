@@ -77,12 +77,12 @@ void SlimeOuterLayer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    if (!pTexturePack->HasCustomModel(L"slime_armor"))
+    if (!pTexturePack->HasCustomModel(L"slime.armor"))
     {
         mModel = mOriginalModel;
     }
     else
     {
-        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(L"slime_armor"));
+        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(L"slime.armor"));
     }
 }

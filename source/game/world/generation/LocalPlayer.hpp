@@ -45,7 +45,7 @@ class LocalPlayer : public AbstractClientPlayer
     friend class Gui;
 
 public:
-    LocalPlayer(Minecraft* minecraft, Level* level, User* user, int playerIndex);
+    LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dimension);
     virtual ~LocalPlayer();
 
     virtual bool hasPermission(EGameCommand command);
@@ -80,7 +80,7 @@ public:
     virtual void aiStep();
     virtual MobEffectInstance* removeEffectNoUpdate(MobEffect* effect);
     virtual void move(MoverType type, double xa, double ya, double za, bool collide);
-    virtual int openFireworks(int slot, int x, int y);
+    virtual unsigned long long sendPosition();
     virtual void displayClientMessage(int message, bool force);
     virtual void awardStat(Stat* stat, arrayWithLength<unsigned char> params);
     virtual unsigned int GetThirdPersonView(bool) override;
@@ -112,7 +112,7 @@ public:
     int getIndicatorSegment(float, float);
     void updateProximityIndicator();
     bool isControlledCamera();
-    virtual unsigned long long sendPosition();
+    virtual unsigned int getPermissionLevel();
     unsigned long long chat(const std::wstring&);
     bool swing(InteractionHand::EInteractionHand);
     void respawn() override;
@@ -123,14 +123,14 @@ public:
     bool isLocalPlayer();
     void updateDamageIndicator(float, float, bool);
     double getJumpRidingScale();
-    unsigned long long sendRidingJump();
-    unsigned long long sendOpenInventory();
-    virtual unsigned int getPermissionLevel();
+    void sendRidingJump();
+    void sendOpenInventory();
     virtual void setPermissionLevel(int);
+    virtual int openFireworks(int x, int y, int z);
     unsigned int freeAtAndAbove(const BlockPos&);
     unsigned int freeAt(const BlockPos&);
     bool checkInBlock(double, double, double);
-    void setExperienceValues(float, int, int);
+    void setExperienceValues(float progress, int total, int level);
     void playSound(const SoundEvent*, float, float);
     bool isEffectiveAi();
     void startUsingItem(InteractionHand::EInteractionHand);
@@ -143,10 +143,10 @@ public:
     void mapPlayerChunk(unsigned int targetBlockId);
     double getDamageTaken();
     bool isSolidBlock(int x, int y, int z);
-    virtual not_null_ptr<ItemInstance> getCarriedItem();
+    virtual void setAndBroadcastCustomSkin(unsigned int);
     MultiPlayerGameMode* GetLocalGameMode();
     GameMode* GetGameMode() override;
-    virtual void StartSpectating();
+    virtual void setAndBroadcastCustomCape(unsigned int);
     void OnEquipArmor(not_null_ptr<ItemInstance> item) override;
     void OnTakeFromAnvil(not_null_ptr<ItemInstance> item) override;
     double getUnderwaterVisionClarity();
@@ -155,8 +155,8 @@ public:
     void SetPercentageTraversed(double);
     void setDamageNearbyMobs(bool);
     bool getDamageNearbyMobs();
-    virtual void setAndBroadcastCustomSkin(unsigned int);
-    virtual void setAndBroadcastCustomCape(unsigned int);
+    virtual not_null_ptr<ItemInstance> getCarriedItem();
+    virtual void StartSpectating();
 
     void setHandsBusy(bool);
     unsigned long long getSessionTimer();
@@ -165,11 +165,13 @@ public:
     int getTicksInWater();
 
 private:
+    friend class Boat;
     friend class Minecraft;
     friend class PlayerRenderer;
     friend class ItemInHandRenderer;
-
-    unsigned char mReserved0x850[0x28];
+    friend class UIScene_HUD;
+    friend class Tooltips;
+    friend class MultiplayerLocalPlayer;
 
 protected:
     ClientPacketListener* mPacketListener;
@@ -181,19 +183,20 @@ private:
     double mLastSentZ;
     float mLastSentYRot;
     float mLastSentXRot;
-    int mPositionSendCounter;
     bool mPreviousOnGround;
-    unsigned char mReserved0x8a1[0xb];
+    bool mWasSneaking;
+    bool mWasSprinting;
+    bool mWasSwimming;
+    bool mWasDamagingNearbyMobs;
+    int mPositionSendCounter;
     bool mHealthInitialized;
-    unsigned char mReserved0x8ad[3];
     Input* mInput;
     Minecraft* mMinecraft;
     int mSprintDelay;
     bool mSprintPending;
     bool mFlyTogglePending;
-    unsigned char mReserved0x8be[6];
+    int mRightClickDelay;
     unsigned int mIdleTicks;
-    unsigned char mReserved0x8c8[4];
     int mSprinting;
     int mThirdPersonViewTimer;
     float mViewYRot;
@@ -207,11 +210,9 @@ private:
     float mFallFlyingAlignment;
     float mFallFlyingAlignmentO;
     bool mItemUsePending;
-    unsigned char mReserved0x8f9[3];
     InteractionHand::EInteractionHand mUsedItemHand;
     bool mHandsBusy;
     bool mAutoJumpEnabled;
-    unsigned char mReserved0x902[2];
     int mAutoJumpTime;
 public:
     int mViewport;
@@ -224,20 +225,19 @@ public:
 
 private:
     unsigned int mButtonsPressed;
-    unsigned int mMoveInputX;
-    unsigned int mMoveInputY;
-    unsigned int mLookInputX;
-    unsigned int mLookInputY;
-    unsigned int mReserved0x928;
-    unsigned int mReserved0x92c;
+    unsigned int mLastSingleFlyButtons[2];
+    unsigned int mFlyButtonsDown[2];
+    unsigned int mFlyButtons[2];
     int mDestroyTicks;
     int mLastAttackTick;
     int mLastUseTick;
-    unsigned char mReserved0x93c[4];
+    bool mReserved0x93c;
     int mThirdPersonView;
-    int mGameMode;
+    int mInWallThirdPersonView;
     bool mDRCTouching;
-    unsigned char mReserved0x949[0xf];
+    float mFlyMotionX;
+    float mFlyMotionY;
+    float mFlyMotionZ;
     int mRideJumpTicks;
     float mRideJumpScale;
 
@@ -246,7 +246,6 @@ public:
 
 private:
     bool mPresenceIdleSent;
-    unsigned char mReserved0x965[3];
     SmoothFloat mViewBob;
     SmoothFloat mViewBobPrev;
     SmoothFloat mViewBobAmount;
@@ -258,21 +257,20 @@ private:
     float mCreativeMouseDeltaZ;
     float mCreativeMouseRepeatDelay;
     int mCreativeRepeatState;
-    unsigned char mReserved0x9ac[0xc];
+    bool mDamageIndicatorSegments[8];
+    bool mDamageIndicatorAllDirections;
     float mDamageTaken;
     bool mHasOpenedInventory;
     bool mWaitingForScoreboard;
-    unsigned char mReserved0x9be[2];
     double mSessionTimer;
     std::vector<ModelPart*> mAdditionalModelParts;
-    unsigned char mReserved0x9d4[4];
     float mWaterVisionClarity;
     float mWaterVisionClarityO;
     float mWaterVisionClarityTarget;
-    unsigned char mReserved0x9e0[0x1c];
+    int mUnderwaterTicks[2];
+    unsigned char mAwardedAchievements[0x14];
     double mPercentageTraversed;
     bool mDamageNearbyMobs;
-    unsigned char mReserved0xa09[7];
 };
 
 #endif

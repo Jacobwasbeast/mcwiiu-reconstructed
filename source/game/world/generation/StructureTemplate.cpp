@@ -1,4 +1,6 @@
 #include "game/world/generation/StructureTemplate.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <climits>
@@ -138,7 +140,7 @@ StructureTemplate::MarkerMap StructureTemplate::getMarkers(const BlockPos& pos, 
             continue;
         }
 
-        if (blockInfo->mState->getBlock() == Blocks::STRUCTURE_BLOCK && blockInfo->mNbt != NULL)
+        if (blockInfo->mState->getBlock() == Blocks::structure_block && blockInfo->mNbt != NULL)
         {
             markers.insert(std::make_pair(blockPos, blockInfo->mNbt->getString(L"metadata")));
         }
@@ -284,21 +286,21 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
         Block* block = state->getBlock();
 
         if ((ignoreBlock != NULL && ignoreBlock == block)
-            || (settings->isIgnoreStructureBlocks() && block == Blocks::STRUCTURE_BLOCK))
+            || (settings->isIgnoreStructureBlocks() && block == Blocks::structure_block))
         {
             continue;
         }
 
         if (settings->isPlacingWaterBelowSeaLevel() && level->getSeaLevel() > blockPos.y)
         {
-            if (Block::getId(block) == 0)
+            if (Block::getId(block) == BlockId::AIR)
             {
-                block = Blocks::WATER;
-                state = Blocks::WATER->defaultBlockState();
+                block = Blocks::water;
+                state = Blocks::water->defaultBlockState();
             }
             else if (block->canContainLiquid(state))
             {
-                level->setExtraBlock(blockPos, Blocks::FLOWING_WATER->defaultBlockState(), 4, false);
+                level->setExtraBlock(blockPos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_INVISIBLE, false);
             }
         }
 
@@ -308,12 +310,12 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
 
             if (blockEntity)
             {
-                if ((blockEntity->GetType() & 0x1800200ULL) == 0x1800200ULL)
+                if ((blockEntity->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER)
                 {
                     boost::dynamic_pointer_cast<Container>(blockEntity)->clearContent();
                 }
 
-                level->setBlock(blockPos, Blocks::BARRIER->defaultBlockState(), 4, false);
+                level->setBlock(blockPos, Blocks::barrier->defaultBlockState(), Block::UPDATE_INVISIBLE, false);
             }
         }
 
@@ -463,12 +465,12 @@ void StructureTemplate::load(CompoundTag* tag)
     mEntities.clear();
     mBlocks.clear();
 
-    ListTag* sizeTag = tag->getList(SIZE_TAG, 3);
+    ListTag* sizeTag = tag->getList(SIZE_TAG, Tag::TAG_INT);
     mSize = BlockPos(sizeTag->getInt(0), sizeTag->getInt(1), sizeTag->getInt(2));
 
     mAuthor = tag->getString(AUTHOR_TAG);
 
-    ListTag* paletteTag = tag->getList(PALETTE_TAG, 10);
+    ListTag* paletteTag = tag->getList(PALETTE_TAG, Tag::TAG_COMPOUND);
 
     for (int i = 0; i < paletteTag->size(); ++i)
     {
@@ -476,13 +478,13 @@ void StructureTemplate::load(CompoundTag* tag)
         mPalette.push_back(state);
     }
 
-    ListTag* blocksTag = tag->getList(BLOCKS_TAG, 10);
+    ListTag* blocksTag = tag->getList(BLOCKS_TAG, Tag::TAG_COMPOUND);
 
     for (int i = 0; i < blocksTag->size(); ++i)
     {
         CompoundTag* blockTag = blocksTag->getCompound(i);
 
-        ListTag* posTag = blockTag->getList(BLOCK_POS_TAG, 3);
+        ListTag* posTag = blockTag->getList(BLOCK_POS_TAG, Tag::TAG_INT);
         BlockPos blockPos(posTag->getInt(0), posTag->getInt(1), posTag->getInt(2));
 
         unsigned int paletteIndex = (unsigned int)blockTag->getInt(BLOCK_STATE_TAG);
@@ -491,7 +493,7 @@ void StructureTemplate::load(CompoundTag* tag)
 
         if (mPalette.empty() || paletteIndex >= mPalette.size())
         {
-            state = Blocks::AIR->defaultBlockState();
+            state = Blocks::air->defaultBlockState();
         }
         else
         {
@@ -510,16 +512,16 @@ void StructureTemplate::load(CompoundTag* tag)
 
     std::sort(mBlocks.begin(), mBlocks.end(), StructureBlockInfo::byColumnSorter());
 
-    ListTag* entitiesTag = tag->getList(ENTITIES_TAG, 10);
+    ListTag* entitiesTag = tag->getList(ENTITIES_TAG, Tag::TAG_COMPOUND);
 
     for (int i = 0; i < entitiesTag->size(); ++i)
     {
         CompoundTag* entityTag = entitiesTag->getCompound(i);
 
-        ListTag* posTag = entityTag->getList(ENTITY_POS_TAG, 6);
+        ListTag* posTag = entityTag->getList(ENTITY_POS_TAG, Tag::TAG_DOUBLE);
         Vec3* entityPos = Vec3::newPermanent(posTag->getDouble(0), posTag->getDouble(1), posTag->getDouble(2));
 
-        ListTag* blockPosTag = entityTag->getList(ENTITY_BLOCK_POS_TAG, 3);
+        ListTag* blockPosTag = entityTag->getList(ENTITY_BLOCK_POS_TAG, Tag::TAG_INT);
         BlockPos blockPos(blockPosTag->getInt(0), blockPosTag->getInt(1), blockPosTag->getInt(2));
 
         if (entityTag->contains(ENTITY_NBT_TAG))

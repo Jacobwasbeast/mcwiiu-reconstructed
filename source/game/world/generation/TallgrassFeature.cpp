@@ -7,6 +7,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 TallgrassFeature::TallgrassFeature(TallGrassBlock::Variant* variant)
@@ -24,26 +25,26 @@ bool TallgrassFeature::place(Level* level, Random& random, const BlockPos& origi
 {
     BlockPos position(origin);
 
-    while (level->getBlockState(position)->getBlock() == Blocks::AIR ||
-           level->getBlockState(position)->getBlock() == Blocks::WATER)
+    const BlockState* state = level->getBlockState(position);
+    while ((state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES) && position.y > 0)
     {
-        if (position.y < 1)
-        {
-            break;
-        }
         position = position.below();
+        state = level->getBlockState(position);
     }
 
     for (int i = 0; i < 128; ++i)
     {
-        const int dx = random.nextInt(8) - random.nextInt(8);
-        const int dy = random.nextInt(4) - random.nextInt(4);
-        const int dz = random.nextInt(8) - random.nextInt(8);
+        const int xOffsetStart = random.nextInt(8);
+        const int dx = xOffsetStart - random.nextInt(8);
+        const int yOffsetStart = random.nextInt(4);
+        const int dy = yOffsetStart - random.nextInt(4);
+        const int zOffsetStart = random.nextInt(8);
+        const int dz = zOffsetStart - random.nextInt(8);
         const BlockPos candidate = position.offset(dx, dy, dz);
         if (level->isEmptyBlock(candidate) &&
             Blocks::tallgrass->canSurvive(level, candidate, mState))
         {
-            level->setBlock(candidate, mState, 18, false);
+            level->setBlock(candidate, mState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
         }
     }
 

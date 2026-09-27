@@ -1,5 +1,6 @@
 #include "game/world/generation/WoodlandMansionFeature.hpp"
 
+#include <algorithm>
 #include <vector>
 
 #include "game/core/BoundingBox.hpp"
@@ -19,6 +20,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
@@ -107,7 +109,6 @@ bool WoodlandMansionFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWor
     Random& chunkRandom = *level->getRandomFor(center.x, center.z, 0x9E7F77);
     bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
                                                sizeInChunks, chunkX, chunkZ);
-    result = canPlaceFeatureInChunk(result, eFeatureType_WoodlandMansion, chunkX, chunkZ);
     if (result)
         g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)9, chunkX, chunkZ);
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
@@ -126,6 +127,9 @@ BlockPos* WoodlandMansionFeature::getNearestGeneratedFeature(Level* levelIn,
                                                               bool skipExistingChunks)
 {
     level = levelIn;
+    BiomeSource* biomeSource = levelIn->getBiomeSource();
+    if (biomeSource->isFixedBiome() && biomeSource->getFixedBiome() != Biome::ROOFED_FOREST)
+        return NULL;
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
     if (options != NULL &&
         canPlaceFeatureInChunk(false, eFeatureType_WoodlandMansion, pos.x >> 4, pos.z >> 4))
@@ -171,38 +175,35 @@ void WoodlandMansionFeature::WoodlandMansionStart::create(
     arrayWithLength<unsigned short> elementIds(0x10000, true);
     ChunkPrimer primer(true, elementIds);
     source->prepareHeights(chunkX, chunkZ, &primer);
-    int height = 5;
-    int x0;
-    int x1;
-    int z0;
-    int z1;
-    if (rotation->getType() == Rotation::eTYPE_None)
+    int offset = 5;
+    int corner0;
+    int corner1;
+    int corner2;
+    int corner3;
+    if (rotation == Rotation::CLOCKWISE_90)
     {
-        x0 = primer.getHighestNonAirPos(7, 7);
-        x1 = primer.getHighestNonAirPos(7, 12);
-        z0 = primer.getHighestNonAirPos(2, 7);
-        z1 = primer.getHighestNonAirPos(2, 12);
+        corner0 = primer.getHighestNonAirPos(7, 7);
+        corner1 = primer.getHighestNonAirPos(7, 12);
+        corner2 = primer.getHighestNonAirPos(2, 7);
+        corner3 = primer.getHighestNonAirPos(2, 12);
     }
-    else if (rotation->getType() == Rotation::eTYPE_Clockwise180)
+    else if (rotation == Rotation::CLOCKWISE_180)
     {
-        x0 = primer.getHighestNonAirPos(7, 7);
-        x1 = primer.getHighestNonAirPos(7, 2);
-        z0 = primer.getHighestNonAirPos(2, 7);
-        z1 = primer.getHighestNonAirPos(2, 2);
+        corner0 = primer.getHighestNonAirPos(7, 7);
+        corner1 = primer.getHighestNonAirPos(7, 2);
+        corner2 = primer.getHighestNonAirPos(2, 7);
+        corner3 = primer.getHighestNonAirPos(2, 2);
     }
     else
     {
-        if (rotation->getType() == Rotation::eTYPE_CounterClockwise90)
-            height = -5;
-        x0 = primer.getHighestNonAirPos(7, 7);
-        x1 = primer.getHighestNonAirPos(7, height + 7);
-        z0 = primer.getHighestNonAirPos(12, 7);
-        z1 = primer.getHighestNonAirPos(12, height + 7);
+        if (rotation == Rotation::COUNTERCLOCKWISE_90)
+            offset = -5;
+        corner0 = primer.getHighestNonAirPos(7, 7);
+        corner1 = primer.getHighestNonAirPos(7, offset + 7);
+        corner2 = primer.getHighestNonAirPos(12, 7);
+        corner3 = primer.getHighestNonAirPos(12, offset + 7);
     }
-    int minHeight = z0 < z1 ? z0 : z1;
-    if (x0 < x1)
-        minHeight = x0 < minHeight ? x0 : minHeight;
-    int baseHeight = x0;
+    int minHeight = std::min(std::min(corner0, corner1), std::min(corner2, corner3));
     if (minHeight < 60 && !source->isFlat())
     {
         mValid = false;
@@ -212,9 +213,7 @@ void WoodlandMansionFeature::WoodlandMansionStart::create(
     std::vector<WoodlandMansionPieces::WoodlandMansionPiece*> pieces;
     WoodlandMansionPieces::generateMansion(
         levelIn->getLevelStorage()->getStructureManager(), origin, rotation, pieces, randomIn);
-    for (std::vector<WoodlandMansionPieces::WoodlandMansionPiece*>::iterator it = pieces.begin();
-         it != pieces.end(); ++it)
-        push_back(*it);
+    insert(end(), pieces.begin(), pieces.end());
     calculateBoundingBox();
     mValid = true;
 }
@@ -223,32 +222,28 @@ void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, R
                                                                 BoundingBox* box)
 {
     StructureStart::postProcess(levelIn, randomIn, box);
-    int minX = box->x0;
-    int maxX = box->x1;
-    int minZ = box->z0;
-    int maxZ = box->z1;
-    int ground = getBoundingBox()->y0 + 1;
-    if (maxX < minX)
-        return;
-    for (int x = minX; x <= maxX; ++x)
+    int y = getBoundingBox()->y0;
+    for (int x = box->x0; x <= box->x1; ++x)
     {
-        for (int z = minZ; z <= maxZ; ++z)
+        for (int z = box->z0; z <= box->z1; ++z)
         {
-            BlockPos pos(x, ground, z);
-            if (levelIn->isEmptyBlock(pos) && getBoundingBox()->isInside(Vec3i(x, ground, z)))
+            BlockPos pos(x, y, z);
+            if (levelIn->isEmptyBlock(pos) || !getBoundingBox()->isInside(pos))
+                continue;
+
+            for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
             {
-                for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+                if (!(*it)->getBoundingBox()->isInside(pos))
+                    continue;
+
+                for (int fillY = y - 1; fillY > 1; --fillY)
                 {
-                    if ((*it)->getBoundingBox()->isInside(Vec3i(x, ground, z)))
-                    {
-                        int y = ground - 1;
-                        while (y > 1 && levelIn->isEmptyBlock(BlockPos(x, y, z)))
-                            --y;
-                        if (!levelIn->isEmptyBlock(BlockPos(x, y, z)))
-                            levelIn->setBlock(BlockPos(x, ground, z), Blocks::stone->defaultBlockState(), 2, false);
+                    BlockPos fillPos(x, fillY, z);
+                    if (!levelIn->isEmptyBlock(fillPos) && !levelIn->getBlockState(fillPos)->getMaterial()->isLiquid())
                         break;
-                    }
+                    levelIn->setBlock(fillPos, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
+                break;
             }
         }
     }

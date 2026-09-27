@@ -28,7 +28,7 @@ bool TimeSincePlayersCondition::IsSatisfied(MasterGameMode* gameMode) const
 
 unsigned int TimeSincePlayersCondition::GetTimerID() const
 {
-    return 10;
+    return MasterGameMode::eTimerID_TimeSincePlayers;
 }
 
 bool TimeSincePlayersCondition::ShouldBlock() const

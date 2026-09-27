@@ -9,6 +9,8 @@
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/chunk/array2DWithLength.hpp"
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/TemplateStructurePiece.hpp"
 
@@ -30,50 +32,49 @@ public:
         int get(int x, int y);
         void setIf(int x, int y, int oldValue, int newValue);
         bool edgesTo(int x, int y, int value);
+        array2DWithLength<int> mGrid;
         int mWidth;
         int mHeight;
-        int mDefaultValue;
-        int** mValues;
-        int* mRows;
+        int mValueIfOutside;
     };
 
     class FloorRoomCollection
     {
     public:
         virtual ~FloorRoomCollection();
-        virtual int get1x1(Random& random) = 0;
-        virtual int get1x1Secret(Random& random) = 0;
-        virtual int get1x2SideEntrance(Random& random, bool staircase) = 0;
-        virtual int get1x2FrontEntrance(Random& random, bool staircase) = 0;
-        virtual int get1x2Secret(Random& random) = 0;
-        virtual int get2x2(Random& random) = 0;
-        virtual int get2x2Secret(Random& random) = 0;
+        virtual eMinecraftStructureTemplate get1x1(Random& random) = 0;
+        virtual eMinecraftStructureTemplate get1x1Secret(Random& random) = 0;
+        virtual eMinecraftStructureTemplate get1x2SideEntrance(Random& random, bool staircase) = 0;
+        virtual eMinecraftStructureTemplate get1x2FrontEntrance(Random& random, bool staircase) = 0;
+        virtual eMinecraftStructureTemplate get1x2Secret(Random& random) = 0;
+        virtual eMinecraftStructureTemplate get2x2(Random& random) = 0;
+        virtual eMinecraftStructureTemplate get2x2Secret(Random& random) = 0;
     };
 
     class FirstFloorRoomCollection : public FloorRoomCollection
     {
     public:
         virtual ~FirstFloorRoomCollection();
-        virtual int get1x1(Random& random);
-        virtual int get1x1Secret(Random& random);
-        virtual int get1x2SideEntrance(Random& random, bool staircase);
-        virtual int get1x2FrontEntrance(Random& random, bool staircase);
-        virtual int get1x2Secret(Random& random);
-        virtual int get2x2(Random& random);
-        virtual int get2x2Secret(Random& random);
+        virtual eMinecraftStructureTemplate get1x1(Random& random);
+        virtual eMinecraftStructureTemplate get1x1Secret(Random& random);
+        virtual eMinecraftStructureTemplate get1x2SideEntrance(Random& random, bool staircase);
+        virtual eMinecraftStructureTemplate get1x2FrontEntrance(Random& random, bool staircase);
+        virtual eMinecraftStructureTemplate get1x2Secret(Random& random);
+        virtual eMinecraftStructureTemplate get2x2(Random& random);
+        virtual eMinecraftStructureTemplate get2x2Secret(Random& random);
     };
 
     class SecondFloorRoomCollection : public FloorRoomCollection
     {
     public:
         virtual ~SecondFloorRoomCollection();
-        virtual int get1x1(Random& random);
-        virtual int get1x1Secret(Random& random);
-        virtual int get1x2SideEntrance(Random& random, bool staircase);
-        virtual int get1x2FrontEntrance(Random& random, bool staircase);
-        virtual int get1x2Secret(Random& random);
-        virtual int get2x2(Random& random);
-        virtual int get2x2Secret(Random& random);
+        virtual eMinecraftStructureTemplate get1x1(Random& random);
+        virtual eMinecraftStructureTemplate get1x1Secret(Random& random);
+        virtual eMinecraftStructureTemplate get1x2SideEntrance(Random& random, bool staircase);
+        virtual eMinecraftStructureTemplate get1x2FrontEntrance(Random& random, bool staircase);
+        virtual eMinecraftStructureTemplate get1x2Secret(Random& random);
+        virtual eMinecraftStructureTemplate get2x2(Random& random);
+        virtual eMinecraftStructureTemplate get2x2Secret(Random& random);
     };
 
     class ThirdFloorRoomCollection : public SecondFloorRoomCollection
@@ -90,24 +91,23 @@ public:
         void recursiveCorridor(SimpleGrid* grid, int x, int y, const Direction* direction, int length);
         static bool isHouse(SimpleGrid* grid, int x, int y);
         bool cleanEdges(SimpleGrid* grid);
-        void identifyRooms(SimpleGrid* floor, SimpleGrid* rooms);
+        void identifyRooms(SimpleGrid* grid, SimpleGrid* rooms);
         bool isRoomId(SimpleGrid* grid, int x, int y, int floor, int roomId);
         const Direction* get1x2RoomDirection(SimpleGrid* grid, int x, int y, int floor, int roomId);
         void setupThirdFloor();
         void print();
         SimpleGrid* mBaseGrid;
-        SimpleGrid* mSecondFloorGrid;
-        SimpleGrid** mThirdFloorRooms;
-        int mThirdFloorRoomsCount;
-        int mStartX;
-        int mStartY;
+        SimpleGrid* mThirdFloorGrid;
+        arrayWithLength<SimpleGrid*> mFloorRooms;
+        int mEntranceX;
+        int mEntranceY;
     };
 
     struct PlacementData
     {
         Rotation* rotation;
         BlockPos position;
-        eMinecraftStructureTemplate templateType;
+        eMinecraftStructureTemplate wallType;
     };
 
     class WoodlandMansionPiece : public TemplateStructurePiece
@@ -126,8 +126,7 @@ public:
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
         virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position,
             Level* level, Random& random, BoundingBox* box);
-        static TemplateStructurePiece* create();
-        static StructurePiece* Create();
+        static StructurePiece* create();
         virtual EStructurePiece GetType();
         eMinecraftStructureTemplate mTemplateType;
         Rotation* mRotation;
@@ -143,16 +142,16 @@ public:
         void traverseWallPiece(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data);
         void traverseInnerTurn(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data);
         void traverseOuterWalls(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data,
-            SimpleGrid* grid, const Direction* direction, int x, int y, int depth, int roomId);
+            SimpleGrid* grid, const Direction* direction, int startX, int startY, int endX, int endY);
         void createRoof(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
             Rotation* rotation, SimpleGrid* grid, SimpleGrid* upperGrid);
         void addRoom1x1(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
             Rotation* rotation, const Direction* direction, FloorRoomCollection* rooms);
         void addRoom1x2(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
-            Rotation* rotation, const Direction* first, const Direction* second,
-            FloorRoomCollection* rooms, bool secret);
+            Rotation* rotation, const Direction* frontDirection, const Direction* sideDirection,
+            FloorRoomCollection* rooms, bool staircase);
         void addRoom2x2(std::vector<WoodlandMansionPiece*>& pieces, BlockPos position,
-            Rotation* rotation, const Direction* first, const Direction* second,
+            Rotation* rotation, const Direction* frontDirection, const Direction* sideDirection,
             FloorRoomCollection* rooms);
         void addRoom2x2Secret(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
             Rotation* rotation, FloorRoomCollection* rooms);
@@ -160,8 +159,8 @@ public:
             std::vector<WoodlandMansionPiece*>& pieces, MansionGrid* grid);
         StructureManager* mStructureManager;
         Random mRandom;
-        int mRoofStartX;
-        int mRoofStartZ;
+        int mStartX;
+        int mStartY;
     };
 
     static void generateMansion(StructureManager* manager, const BlockPos& position,

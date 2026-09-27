@@ -7,7 +7,7 @@
 #include "game/minigame/StarShapeRuleDefinition.hpp"
 
 LayerShapeRuleDefinition::LayerShapeRuleDefinition()
-    : LayerAttributeRuleDefinition<LayerShape*>(static_cast<ConsoleGameRules::EGameRuleType>(48), CreateFuncImpl)
+    : LayerAttributeRuleDefinition<LayerShape*>(ConsoleGameRules::eGameRuleType_LayerShape, CreateFuncImpl)
 {
 }
 
@@ -19,19 +19,19 @@ LayerAttributeChildRuleDefinition<LayerShape*>* LayerShapeRuleDefinition::Create
 {
     switch (type)
     {
-    case static_cast<ConsoleGameRules::EGameRuleType>(49):
+    case ConsoleGameRules::eGameRuleType_BasicShape:
         return new BasicShapeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(50):
+    case ConsoleGameRules::eGameRuleType_StarShape:
         return new StarShapeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(51):
+    case ConsoleGameRules::eGameRuleType_PatchyShape:
         return new PatchyShapeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(52):
+    case ConsoleGameRules::eGameRuleType_RingShape:
         return new RingShapeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(53):
+    case ConsoleGameRules::eGameRuleType_SpiralShape:
         return new SpiralShapeRuleDefinition();
     }
 

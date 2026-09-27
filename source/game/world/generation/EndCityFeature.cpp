@@ -33,11 +33,11 @@ std::wstring EndCityFeature::getFeatureName()
 bool EndCityFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
 {
     ChunkPos* area = TheEndDimension::closestAreaToPoint(chunkX, chunkZ);
-    if (area->x == 0 && area->z == 0)
+    if (area->x == TheEndDimension::AREAS[1].x && area->z == TheEndDimension::AREAS[1].z)
     {
         return chunkX == area->x && chunkZ == area->z;
     }
-    if (area->x == 0 && area->z == 0)
+    if (area->x == TheEndDimension::AREAS[0].x && area->z == TheEndDimension::AREAS[0].z)
     {
         return false;
     }
@@ -48,22 +48,21 @@ bool EndCityFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
 int EndCityFeature::getYPositionForFeature(int chunkX, int chunkZ,
                                            TheEndLevelSource* source)
 {
-    Random random(static_cast<long long>(chunkX) +
-                  static_cast<long long>(chunkZ) * 0x9E7F71LL);
-    int rotation = random.nextInt(4);
+    Random random(chunkX + chunkZ * 10387313);
+    Rotation* rotation = Rotation::VALUES[random.nextInt(4)];
     arrayWithLength<unsigned short> elements(65536, true);
-    ChunkPrimer primer(false, elements);
+    ChunkPrimer primer(true, elements);
     source->prepareHeights(chunkX, chunkZ, &primer);
     int offset = 5;
     int heights[4];
-    if (rotation == 0)
+    if (rotation == Rotation::CLOCKWISE_90)
     {
         heights[0] = primer.getHighestNonAirPos(7, 7);
         heights[1] = primer.getHighestNonAirPos(7, 12);
         heights[2] = primer.getHighestNonAirPos(2, 7);
         heights[3] = primer.getHighestNonAirPos(2, 12);
     }
-    else if (rotation == 1)
+    else if (rotation == Rotation::CLOCKWISE_180)
     {
         heights[0] = primer.getHighestNonAirPos(7, 7);
         heights[1] = primer.getHighestNonAirPos(7, 2);
@@ -72,10 +71,10 @@ int EndCityFeature::getYPositionForFeature(int chunkX, int chunkZ,
     }
     else
     {
-        if (rotation == 2)
+        if (rotation == Rotation::COUNTERCLOCKWISE_90)
             offset = -5;
         heights[0] = primer.getHighestNonAirPos(7, 7);
-        heights[1] = primer.getHighestNonAirPos(offset + 7, 7);
+        heights[1] = primer.getHighestNonAirPos(7, offset + 7);
         heights[2] = primer.getHighestNonAirPos(12, 7);
         heights[3] = primer.getHighestNonAirPos(12, offset + 7);
     }
@@ -86,9 +85,6 @@ int EndCityFeature::getYPositionForFeature(int chunkX, int chunkZ,
 
 StructureStart* EndCityFeature::createStructureStart(int chunkX, int chunkZ)
 {
-    g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)8,
-                                       (chunkX * 16 + 8) >> 4,
-                                       (chunkZ * 16 + 8) >> 4);
     return new EndCityStart(level, mSource, random, chunkX, chunkZ);
 }
 
@@ -105,9 +101,14 @@ EndCityFeature::EndCityStart::EndCityStart(Level* levelIn, TheEndLevelSource* so
     : StructureStart(chunkX, chunkZ)
 {
     g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)8,
-                                       (chunkX * 16 + 8) >> 4,
-                                       (chunkZ * 16 + 8) >> 4);
+                                       (chunkX * 16 + 8) / 16,
+                                       (chunkZ * 16 + 8) / 16);
     create(levelIn, source, random, chunkX, chunkZ);
+}
+
+EndCityFeature::EndCityStart::EndCityStart()
+    : StructureStart()
+{
 }
 
 EndCityFeature::EndCityStart::~EndCityStart()

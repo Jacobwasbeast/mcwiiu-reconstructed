@@ -5,6 +5,7 @@
 
 #include "game/world/generation/AbstractTreeFeature.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/LogBlock.hpp"
 #include "game/util/Random.hpp"
 
 class Block;
@@ -36,7 +37,7 @@ public:
     void crossection(const BlockPos& pos, float radius, const BlockState* state);
     double foliageShape(int layer);
     void foliageCluster(const BlockPos& pos);
-    int getLogAxis(const BlockPos& from, const BlockPos& to);
+    LogBlock::LogAxis* getLogAxis(const BlockPos& from, const BlockPos& to);
     void limb(const BlockPos& from, const BlockPos& to, Block* block);
     void makeFoliage();
     bool trimBranches(int branchBase);
@@ -49,17 +50,15 @@ private:
     Random mRandom;
     Level* mLevel;
     BlockPos mBasePos;
-    int mOriginY;
-    int mOriginZ;
     int mHeightLimit;
     int mHeight;
-    double mScaleWidth;
+    double mHeightAttenuation;
     double mBranchSlope;
-    double mBranchDensity;
+    double mScaleWidth;
     double mLeafDensity;
-    int mTrunkWidth;
+    int mTrunkSize;
+    int mHeightLimitLimit;
     int mLeafDistanceLimit;
-    int mFoliageHeight;
     std::vector<FoliageCoords> mFoliageCoords;
 };
 

@@ -1,9 +1,7 @@
 #include "game/world/generation/ImposeContinentsLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 static const int CONTINENT_MAP_SIZE = 10;
 

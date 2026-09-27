@@ -2,23 +2,26 @@
 
 #include <cstdlib>
 
-#include "game/util/Random.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
+#include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/VineBlock.hpp"
 
 extern CMinecraftApp* g_pApp;
-extern Property* OldLogBlock_VARIANT;
-extern Property* OldLeafBlock_VARIANT;
-extern Property* OldLeafBlock_DECAYABLE;
 
 static const BlockState* swampTrunkState = NULL;
 static const BlockState* swampLeafState = NULL;
@@ -34,95 +37,113 @@ SwampTreeFeature::~SwampTreeFeature()
 
 void SwampTreeFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(0));
-    swampTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(
-        OldLogBlock_VARIANT, &variant);
-    swampLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
-        OldLeafBlock_VARIANT, &variant);
+    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::OAK);
+    swampTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
+    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::OAK);
     TypedBoxed<bool> decayable(false);
-    swampLeafState = swampLeafState->setBoxedValue(
-        OldLeafBlock_DECAYABLE, &decayable);
+    swampLeafState = Blocks::leaves->defaultBlockState()
+                         ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
+                         ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
 }
 
 void SwampTreeFeature::addVine(Level* level, const BlockPos& pos,
                                const BooleanProperty* property)
 {
     TypedBoxed<bool> value(true);
-    const BlockState* state = Blocks::vine->defaultBlockState();
-    if (property != NULL)
+    const BlockState* state = Blocks::vine->defaultBlockState()->setBoxedValue(property, &value);
+    BlockPos vinePos = pos;
+    setBlock(level, vinePos, state, Block::UPDATE_NONE);
+    int length = 4;
+    vinePos = vinePos.below();
+    while (level->getBlockState(vinePos)->getBlock()->mMaterial == Material::AIR && length > 0)
     {
-        state = state->setBoxedValue(property, &value);
-    }
-    setBlock(level, pos, state, 0);
-    BlockPos vinePos = pos.below();
-    for (int i = 4; i > 0; --i)
-    {
-        if (level->getBlock(vinePos) != Blocks::AIR)
-        {
-            break;
-        }
-        setBlock(level, vinePos, state, 0);
+        setBlock(level, vinePos, state, Block::UPDATE_NONE);
         vinePos = vinePos.below();
+        --length;
     }
 }
 
 bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
+    PIXBeginNamedEvent(0.0f, "SwampTreeFeature::place");
+    BlockPos origin = pos;
     int height = random.nextInt(4) + mBaseHeight;
-    BlockPos cursor = pos;
-    while (level->getBlock(cursor.below()) == Blocks::WATER)
-    {
-        cursor = cursor.below();
-    }
+    while (level->getBlockState(origin.below())->getMaterial() == Material::WATER)
+        origin = origin.below();
 
-    if (cursor.y <= 0 || cursor.y + height + 1 >= 128)
+    if (origin.y < 1 || origin.y + height + 1 > 128)
     {
-        return false;
-    }
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL && options->checkIntersects(cursor.offset(-3, -1, -3), cursor.offset(3, height, 3)))
-    {
+        PIXEndNamedEvent();
         return false;
     }
 
-    MutableBlockPos check;
-    for (int y = cursor.y; y <= cursor.y + height + 1; ++y)
+    if (g_pApp->getLevelGenerationOptions() != NULL
+        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-3, -1, -3),
+                                                                origin.offset(3, height, 3)))
     {
-        int radius = y == cursor.y ? 0 : (y >= cursor.y + height - 1 ? 3 : 1);
-        for (int x = cursor.x - radius; x <= cursor.x + radius; ++x)
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    bool free = true;
+    MutableBlockPos checkPos(0, 0, 0);
+    for (int y = origin.y; y <= origin.y + height + 1; ++y)
+    {
+        int radius = y == origin.y ? 0 : 1;
+        if (y >= origin.y + height - 1)
+            radius = 3;
+        for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
         {
-            for (int z = cursor.z - radius; z <= cursor.z + radius; ++z)
+            for (int z = origin.z - radius; z <= origin.z + radius && free; ++z)
             {
-                check.set(x, y, z);
-                if (!isFree(level->getBlock(check)))
+                if (y >= 0 && y < 128)
                 {
-                    return false;
+                    checkPos.set(x, y, z);
+                    const BlockState* state = level->getBlockState(checkPos);
+                    Block* block = state->getBlock();
+                    if (state->getMaterial() != Material::AIR && state->getMaterial() != Material::LEAVES)
+                    {
+                        if ((block != Blocks::water && block != Blocks::flowing_water) || y > origin.y)
+                            free = false;
+                    }
+                }
+                else
+                {
+                    free = false;
                 }
             }
         }
     }
-
-    Block* ground = level->getBlock(cursor.below());
-    if ((ground != Blocks::grass && ground != Blocks::dirt) || cursor.y >= 127 - height)
+    if (!free)
     {
+        PIXEndNamedEvent();
         return false;
     }
-    setDirtAt(level, cursor.below());
 
-    for (int y = cursor.y + height - 3; y <= cursor.y + height; ++y)
+    Block* ground = level->getBlockState(origin.below())->getBlock();
+    if ((ground != Blocks::grass && ground != Blocks::dirt) || origin.y >= 127 - height)
     {
-        int radius = 2 - (y - (cursor.y + height));
-        for (int x = cursor.x - radius; x <= cursor.x + radius; ++x)
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    setDirtAt(level, origin.below());
+
+    MutableBlockPos leafPos(0, 0, 0);
+    for (int y = origin.y - 3 + height; y <= origin.y + height; ++y)
+    {
+        int yOffset = y - (origin.y + height);
+        int radius = 2 - yOffset / 2;
+        for (int x = origin.x - radius; x <= origin.x + radius; ++x)
         {
-            for (int z = cursor.z - radius; z <= cursor.z + radius; ++z)
+            for (int z = origin.z - radius; z <= origin.z + radius; ++z)
             {
-                if ((std::abs(x - cursor.x) != radius || std::abs(z - cursor.z) != radius || radius <= 0 || random.nextInt(2) != 0))
+                if (abs(x - origin.x) != radius || abs(z - origin.z) != radius
+                    || (random.nextInt(2) != 0 && yOffset != 0))
                 {
-                    check.set(x, y, z);
-                    if (level->getBlock(check) == Blocks::AIR)
-                    {
-                        setBlock(level, check, mLeafState, 0);
-                    }
+                    leafPos.set(x, y, z);
+                    if (!level->getBlockState(leafPos)->isSolid())
+                        setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
                 }
             }
         }
@@ -130,21 +151,42 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 
     for (int y = 0; y < height; ++y)
     {
-        check.set(cursor.x, cursor.y + y, cursor.z);
-        if (isFree(level->getBlock(check)))
+        const BlockState* state = level->getBlockState(origin.above(y));
+        Block* block = state->getBlock();
+        if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES
+            || block == Blocks::flowing_water || block == Blocks::water)
+            setBlock(level, origin.above(y), mTrunkState, Block::UPDATE_NONE);
+    }
+
+    MutableBlockPos vineSource(0, 0, 0);
+    for (int y = origin.y - 3 + height; y <= origin.y + height; ++y)
+    {
+        int yOffset = y - (origin.y + height);
+        int radius = 2 - yOffset / 2;
+        for (int x = origin.x - radius; x <= origin.x + radius; ++x)
         {
-            setBlock(level, check, mTrunkState, 0);
+            for (int z = origin.z - radius; z <= origin.z + radius; ++z)
+            {
+                vineSource.set(x, y, z);
+                if (level->getBlockState(vineSource)->getMaterial() != Material::LEAVES)
+                    continue;
+
+                BlockPos west = vineSource.west();
+                BlockPos east = vineSource.east();
+                BlockPos north = vineSource.north();
+                BlockPos south = vineSource.south();
+                if (random.nextInt(4) == 0 && level->getBlockState(west)->getMaterial() == Material::AIR)
+                    addVine(level, west, VineBlock::EAST);
+                if (random.nextInt(4) == 0 && level->getBlockState(east)->getMaterial() == Material::AIR)
+                    addVine(level, east, VineBlock::WEST);
+                if (random.nextInt(4) == 0 && level->getBlockState(north)->getMaterial() == Material::AIR)
+                    addVine(level, north, VineBlock::SOUTH);
+                if (random.nextInt(4) == 0 && level->getBlockState(south)->getMaterial() == Material::AIR)
+                    addVine(level, south, VineBlock::NORTH);
+            }
         }
     }
 
-    for (int y = 0; y < height / 2; ++y)
-    {
-        BlockPos vinePos = cursor.above(y * 2);
-        if (isFree(level->getBlock(vinePos.west()))) addVine(level, vinePos.west(), NULL);
-        if (isFree(level->getBlock(vinePos.east()))) addVine(level, vinePos.east(), NULL);
-        if (isFree(level->getBlock(vinePos.north()))) addVine(level, vinePos.north(), NULL);
-        if (isFree(level->getBlock(vinePos.south()))) addVine(level, vinePos.south(), NULL);
-    }
-
+    PIXEndNamedEvent();
     return true;
 }

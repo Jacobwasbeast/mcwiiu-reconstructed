@@ -1,25 +1,30 @@
 #include "game/world/generation/UnderwaterCanyonFeature.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <cmath>
 
+#include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/UnderwaterLargeCaveFeature.hpp"
 
 void UnderwaterCanyonFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     random.setSeed(level->getSeed());
-    const int xStep = (random.nextInt() / 2) * 2 + 1;
-    const int zStep = (random.nextInt() / 2) * 2 + 1;
+    int xStep = random.nextInt() / 2 * 2 + 1;
+    int zStep = random.nextInt() / 2 * 2 + 1;
     for (int x = chunkX - 8; x <= chunkX + 8; ++x)
     {
-        const long long xSeed = static_cast<long long>(x) * xStep;
         for (int z = chunkZ - 8; z <= chunkZ + 8; ++z)
         {
-            random.setSeed(level->getSeed() ^ (xSeed + static_cast<long long>(z) * zStep));
+            int seedOffset = x * xStep + z * zStep;
+            random.setSeed(seedOffset ^ level->getSeed());
             addFeature(level, x, z, chunkX, chunkZ, primer);
         }
     }
@@ -27,145 +32,176 @@ void UnderwaterCanyonFeature::apply(Level* level, int chunkX, int chunkZ, ChunkP
 
 void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ,
                                         ChunkPrimer* primer, double x, double y, double z,
-                                        float width, float yaw, float pitch, int originChunkX,
-                                        int originChunkZ, double scale)
+                                        float thickness, float yaw, float pitch, int startIndex,
+                                        int endIndex, double yScale)
 {
-    Random tunnelRandom(seed);
-    int length = originChunkZ;
-    if (length < 1)
-        length = 0x70 - tunnelRandom.nextInt(0x1c);
-    int start = originChunkX;
-    const float originX = static_cast<float>(chunkX * 16 + 8);
-    const float originZ = static_cast<float>(chunkZ * 16 + 8);
-    const bool room = originChunkX == -1;
-    if (room)
+    MemSect(49);
+    Random random(seed);
+    MemSect(0);
+    float centerX = (float)(chunkX * 16 + 8);
+    float centerZ = (float)(chunkZ * 16 + 8);
+    float pitchDelta = 0.0F;
+    float yawDelta = 0.0F;
+    BlockPos origin(x, y, z);
+
+    if (endIndex < 1)
+        endIndex = 112 - random.nextInt(28);
+
+    bool singleStep = false;
+    if (startIndex == -1)
     {
-        start = length / 2;
+        startIndex = endIndex / 2;
+        singleStep = true;
     }
 
-    const float pi = 3.1415927F;
-    const double span = length - start;
-    float widthScale[128];
-    int widthIndex = 0;
-    while (widthIndex < 128)
+    float widthScale = 1.0F;
+    for (int i = 0; i < 128; ++i)
     {
-        const float factor = tunnelRandom.nextFloat() * tunnelRandom.nextFloat() + 1.0F;
-        do
-        {
-            widthScale[widthIndex++] = factor * factor;
-        }
-        while (widthIndex < 128 && tunnelRandom.nextInt(3) != 0);
+        if (i == 0 || random.nextInt(3) == 0)
+            widthScale = 1.0F + random.nextFloat() * random.nextFloat();
+        rs[i] = widthScale * widthScale;
     }
 
-    for (int step = start; step < length; ++step)
+    for (; startIndex < endIndex; ++startIndex)
     {
-        const double progress = static_cast<double>(step - start) / span;
-        const double radius = std::sin(progress * pi) * width + 1.5;
-        const double verticalRadius = radius * scale;
-        x += std::cos(yaw) * std::cos(pitch);
-        y += std::sin(pitch);
-        z += std::sin(yaw) * std::cos(pitch);
-        yaw += (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.5F;
-        pitch = pitch * 0.7F + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 0.25F;
+        float radius = sinf((float)startIndex * 3.1415927F / (float)endIndex) * thickness + 1.5F;
+        double horizontalRadius = radius * (random.nextFloat() * 0.25F + 0.75F);
+        double verticalRadius = radius * (float)yScale * (random.nextFloat() * 0.25F + 0.75F);
+        float cosPitch = cosf(pitch);
+        float sinPitch = sinf(pitch);
+        x += cosf(yaw) * cosPitch;
+        y += sinPitch;
+        z += sinf(yaw) * cosPitch;
+        yaw += yawDelta * 0.05F;
+        pitch = pitch * 0.7F + pitchDelta * 0.05F;
+        float change = random.nextGaussianFloat();
+        change *= random.nextFloat();
+        pitchDelta = pitchDelta * 0.8F + change * 2.0F;
+        change = random.nextGaussianFloat();
+        change *= random.nextFloat();
+        yawDelta = yawDelta * 0.5F + change * 4.0F;
 
-        if (!room && tunnelRandom.nextInt(4) != 0)
+        if (!singleStep && random.nextInt(4) == 0)
             continue;
 
-        const double distance = step - start;
-        if (radius * radius < distance * distance -
-            ((x - originX) * (x - originX) + (z - originZ) * (z - originZ)))
-            break;
-        if (x < originX - 16.0F || z < originZ - 16.0F || x > originX + 16.0F || z > originZ + 16.0F)
+        float remaining = (float)(endIndex - startIndex);
+        float maxDistance = thickness + 18.0F;
+        float dx = (float)x - centerX;
+        float dz = (float)z - centerZ;
+        if (dx * dx + dz * dz - remaining * remaining > maxDistance * maxDistance)
+            return;
+
+        float doubleRadius = (float)(horizontalRadius + horizontalRadius);
+        if (x < centerX - 16.0F - doubleRadius || z < centerZ - 16.0F - doubleRadius
+            || x > centerX + 16.0F + doubleRadius || z > centerZ + 16.0F + doubleRadius)
             continue;
 
-        int minX = Mth::floor(x - radius) - chunkX * 16 - 1;
-        int maxX = Mth::floor(x + radius) - chunkX * 16 + 1;
-        int minY = Mth::floor(y - verticalRadius) - 1;
-        int maxY = Mth::floor(y + verticalRadius) + 1;
-        int minZ = Mth::floor(z - radius) - chunkZ * 16 - 1;
-        int maxZ = Mth::floor(z + radius) - chunkZ * 16 + 1;
-        if (minX < 0) minX = 0;
-        if (maxX > 16) maxX = 16;
-        if (minZ < 0) minZ = 0;
-        if (maxZ > 16) maxZ = 16;
-        minY = Mth::clamp(minY, 1, 120);
-        maxY = Mth::clamp(maxY, 1, 120);
+        int minX = (int)floor(x - horizontalRadius) - chunkX * 16 - 1;
+        int maxX = (int)floor(x + horizontalRadius) - chunkX * 16 + 1;
+        double bottom = floor(y - verticalRadius);
+        double top = floor(y + verticalRadius);
+        int minZ = (int)floor(z - horizontalRadius) - chunkZ * 16 - 1;
+        int maxZ = (int)floor(z + horizontalRadius) - chunkZ * 16 + 1;
+        if (minX < 0)
+            minX = 0;
+        if (maxX > 16)
+            maxX = 16;
+        int maxY = Mth::clamp((int)top + 1, 1, 120);
+        int minY = Mth::clamp((int)bottom - 1, 1, maxY);
+        if (minZ < 0)
+            minZ = 0;
+        if (maxZ > 16)
+            maxZ = 16;
 
-        bool found = false;
+        int magmaData = Blocks::magma->convertBlockStateToLegacyData(Blocks::magma->defaultBlockState());
+        int obsidianData = Blocks::obsidian->convertBlockStateToLegacyData(Blocks::obsidian->defaultBlockState());
+        int flowingWaterData = Blocks::flowing_water->convertBlockStateToLegacyData(Blocks::flowing_water->defaultBlockState());
+        int waterData = Blocks::water->convertBlockStateToLegacyData(Blocks::water->defaultBlockState());
+        bool carved = false;
         for (int localX = minX; localX < maxX; ++localX)
         {
-            const double xd = (localX + chunkX * 16 + 0.5 - x) / radius;
+            float xd = (float)(((float)(localX + chunkX * 16) + 0.5F - (float)x) / horizontalRadius);
             for (int localZ = minZ; localZ < maxZ; ++localZ)
             {
-                const double zd = (localZ + chunkZ * 16 + 0.5 - z) / radius;
-                if (xd * xd + zd * zd >= 1.0)
+                float zd = (float)(((float)(localZ + chunkZ * 16) + 0.5F - (float)z) / horizontalRadius);
+                float horizontalDistance = zd * zd + xd * xd;
+                if (horizontalDistance >= 1.0F)
                     continue;
+
                 for (int localY = maxY - 1; localY >= minY; --localY)
                 {
-                    const double yd = (localY + 0.5 - y) / verticalRadius;
-                    if (localY >= 0x3e || xd * xd + zd * zd >= 1.0 ||
-                        (xd * xd + zd * zd) * widthScale[localY] + yd * yd / 8192.0 >= 1.0)
+                    float yd = (float)(((float)localY + 0.5F - (float)y) / verticalRadius);
+                    int index = (localX << 11) | (localZ << 7) | localY;
+                    if (horizontalDistance * rs[localY - 1] + yd * yd / 6.0F >= 1.0F || localY >= 62)
                         continue;
-                    const int index = (localX << 11) | (localZ << 7) | localY;
-                    if (UnderwaterLargeCaveFeature::isDiggable(primer->getBlockId(index)) == 0)
+                    if (!UnderwaterLargeCaveFeature::isDiggable(primer->getBlockId(index)))
                         continue;
-                    if (!found && level != NULL &&
-                        level->getBiome(BlockPos(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z)))->getBiomeType() != Biome::eBiomeIDs_Ocean)
-                        return;
 
-                    found = true;
+                    if (!carved && level != NULL
+                        && level->getBiome(origin)->getBiomeType() != Biome::eBiomeType_Ocean)
+                        return;
+                    carved = true;
+
                     if (localY < 10)
                     {
-                        if (tunnelRandom.nextFloat() <= tunnelRandom.nextFloat())
-                            primer->setBlockAndData(index, 0x31, 0);
+                        if (random.nextFloat() < 0.25F)
+                            primer->setBlockAndData(index, BlockId::MAGMA, magmaData);
                         else
-                            primer->setBlockAndData(index, 0xd5, 0);
+                            primer->setBlockAndData(index, BlockId::OBSIDIAN, obsidianData);
                     }
                     else
                     {
                         bool water = false;
-                        if (localX < 15 && primer->getBlockId(index + 0x800) == 0)
+                        if (localX < 15 && primer->getBlockId(index + 0x800) == BlockId::AIR)
                         {
-                            primer->setBlockAndData(index + 0x800, 8, 0);
+                            primer->setBlockAndData(index + 0x800, BlockId::FLOWING_WATER, flowingWaterData);
                             water = true;
                         }
-                        if (localX > 0 && primer->getBlockId(index - 0x800) == 0)
+                        if (localX > 0 && primer->getBlockId(index - 0x800) == BlockId::AIR)
                         {
-                            primer->setBlockAndData(index - 0x800, 8, 0);
+                            primer->setBlockAndData(index - 0x800, BlockId::FLOWING_WATER, flowingWaterData);
                             water = true;
                         }
-                        if (localZ < 15 && primer->getBlockId(index + 0x80) == 0)
+                        if (localZ < 15 && primer->getBlockId(index + 0x80) == BlockId::AIR)
                         {
-                            primer->setBlockAndData(index + 0x80, 8, 0);
+                            primer->setBlockAndData(index + 0x80, BlockId::FLOWING_WATER, flowingWaterData);
                             water = true;
                         }
-                        if (localZ > 0 && primer->getBlockId(index - 0x80) == 0)
+                        if (localZ > 0 && primer->getBlockId(index - 0x80) == BlockId::AIR)
                         {
-                            primer->setBlockAndData(index - 0x80, 8, 0);
+                            primer->setBlockAndData(index - 0x80, BlockId::FLOWING_WATER, flowingWaterData);
                             water = true;
                         }
                         if (!water)
-                            primer->setBlockAndData(index, 9, 0);
+                            primer->setBlockAndData(index, BlockId::WATER, waterData);
                     }
                 }
             }
         }
+
+        if (singleStep)
+            break;
     }
 }
 
 void UnderwaterCanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX,
                                          int originChunkZ, ChunkPrimer* primer)
 {
-    if (random.nextInt(0x14) != 0)
+    if (random.nextInt(20) != 0)
         return;
-    const double x = chunkX * 16 + random.nextInt(16);
-    const double y = random.nextInt(random.nextInt(0x28) + 8) + 0x14;
-    const double z = chunkZ * 16 + random.nextInt(16);
-    const float width = random.nextFloat() * 2.0F + random.nextFloat();
-    const float yaw = random.nextFloat() * 6.2831855F;
-    const float pitch = (random.nextFloat() - 0.5F) * 0.25F;
-    addTunnel(level, random.nextLong(), chunkX, chunkZ, primer, x, y, z, width, yaw, pitch,
-              originChunkX, originChunkZ, 3.0);
+
+    double x = chunkX * 16 + random.nextInt(16);
+    double y = random.nextInt(random.nextInt(40) + 8) + 20;
+    if ((float)random.nextInt() <= 0.2F)
+        y += 15.0;
+    double z = chunkZ * 16 + random.nextInt(16);
+    float yaw = random.nextFloat() * 3.1415927F * 2.0F;
+    float pitch = (random.nextFloat() - 0.5F) * 2.0F * 0.125F;
+    float firstWidth = random.nextFloat() * 3.0F;
+    float thickness = random.nextFloat() * 3.0F + firstWidth;
+    if (random.nextFloat() < 0.05F)
+        thickness *= 2.0F;
+    addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
 }
 
 UnderwaterCanyonFeature::~UnderwaterCanyonFeature()

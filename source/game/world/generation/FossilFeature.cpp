@@ -14,26 +14,26 @@
 
 static const eMinecraftStructureTemplate FOSSILS[8] =
 {
-    static_cast<eMinecraftStructureTemplate>(3),
-    static_cast<eMinecraftStructureTemplate>(4),
-    static_cast<eMinecraftStructureTemplate>(5),
-    static_cast<eMinecraftStructureTemplate>(6),
-    static_cast<eMinecraftStructureTemplate>(11),
-    static_cast<eMinecraftStructureTemplate>(12),
-    static_cast<eMinecraftStructureTemplate>(13),
-    static_cast<eMinecraftStructureTemplate>(14)
+    eMinecraftStructureTemplate_Fossil_Spine01,
+    eMinecraftStructureTemplate_Fossil_Spine02,
+    eMinecraftStructureTemplate_Fossil_Spine03,
+    eMinecraftStructureTemplate_Fossil_Spine04,
+    eMinecraftStructureTemplate_Fossil_Skull01,
+    eMinecraftStructureTemplate_Fossil_Skull02,
+    eMinecraftStructureTemplate_Fossil_Skull03,
+    eMinecraftStructureTemplate_Fossil_Skull04
 };
 
 static const eMinecraftStructureTemplate FOSSILS_COAL[8] =
 {
-    static_cast<eMinecraftStructureTemplate>(7),
-    static_cast<eMinecraftStructureTemplate>(8),
-    static_cast<eMinecraftStructureTemplate>(9),
-    static_cast<eMinecraftStructureTemplate>(10),
-    static_cast<eMinecraftStructureTemplate>(15),
-    static_cast<eMinecraftStructureTemplate>(16),
-    static_cast<eMinecraftStructureTemplate>(17),
-    static_cast<eMinecraftStructureTemplate>(18)
+    eMinecraftStructureTemplate_Fossil_Spine01Coal,
+    eMinecraftStructureTemplate_Fossil_Spine02Coal,
+    eMinecraftStructureTemplate_Fossil_Spine03Coal,
+    eMinecraftStructureTemplate_Fossil_Spine04Coal,
+    eMinecraftStructureTemplate_Fossil_Skull01Coal,
+    eMinecraftStructureTemplate_Fossil_Skull02Coal,
+    eMinecraftStructureTemplate_Fossil_Skull03Coal,
+    eMinecraftStructureTemplate_Fossil_Skull04Coal
 };
 
 FossilFeature::~FossilFeature()
@@ -54,10 +54,8 @@ bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
     ChunkPos chunkPos(origin);
     BoundingBox* boundingBox = new BoundingBox(chunkPos.getMinBlockX(), 0, chunkPos.getMinBlockZ(),
                                                chunkPos.getMaxBlockX(), 256, chunkPos.getMaxBlockZ());
-    StructurePlaceSettings* settings = new StructurePlaceSettings();
-    settings->setRotation(rotation);
-    settings->setBoundingBox(boundingBox);
-    settings->setRandom(&placementRandom);
+    StructurePlaceSettings* settings =
+        (new StructurePlaceSettings())->setRotation(rotation)->setBoundingBox(boundingBox)->setRandom(&placementRandom);
 
     const BlockPos size = fossil->getSize(rotation);
     const int xOffset = placementRandom.nextInt(16 - size.x);

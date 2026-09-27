@@ -1,5 +1,6 @@
 #include "game/world/generation/WallGenerator.hpp"
 
+#include <cmath>
 #include <vector>
 
 #include "game/util/AABB.hpp"
@@ -7,6 +8,9 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/BlockTransaction.hpp"
 #include "game/core/GenerationWriteTask.hpp"
 
@@ -86,72 +90,66 @@ bool WallGenerator::IsPointInternal(int x, int z, int size)
 void WallGenerator::StartGeneration(Level* level)
 {
     AABB* grown = mBounds->grow(2.0, 1.0, 2.0);
-    BlockPos min(grown->mMinX, grown->mMinY, grown->mMinZ);
     BlockPos max(grown->mMaxX, grown->mMaxY, grown->mMaxZ);
+    BlockPos min(grown->mMinX, grown->mMinY, grown->mMinZ);
     BlockTransaction* transaction = BlockTransaction::CreateTransaction(min, max);
 
-    const int size = static_cast<int>((mBounds->mMaxX - mBounds->mMinX) * 0.5);
-    int x = 0;
-    int z = 0;
-    while (x < 3)
+    if (mWalls.empty())
     {
-        z = 0;
-        while (z < 3)
+        const int size = static_cast<int>(std::floor((mBounds->mMaxX - mBounds->mMinX) * 0.5));
+        for (int x = 0; x < 3; ++x)
         {
-            bool internal = IsPointInternal(x, z, 2);
-            AABB* center = AABB::newTemp(mBounds->mMinX + x * size,
-                                         mBounds->mMinY,
-                                         mBounds->mMinZ + z * size,
-                                         mBounds->mMinX + (x + 1) * size,
-                                         mBounds->mMaxY,
-                                         mBounds->mMinZ + (z + 1) * size);
-            mWalls.push_back(new Wall(center, internal, true));
+            for (int z = 0; z < 3; ++z)
+            {
+                const bool internal = IsPointInternal(x, z, 2);
+                AABB* cell = AABB::newTemp(mBounds->mMinX + x * size, mBounds->mMinY, mBounds->mMinZ + z * size,
+                                           mBounds->mMinX + x * size + size, mBounds->mMinY + 16.0,
+                                           mBounds->mMinZ + z * size + size);
+                mWalls.push_back(new Wall(cell, internal, true));
 
-            if (x + 1 < 3)
-            {
-                bool boundary = internal || IsPointInternal(x + 1, z, 2);
-                AABB* side = AABB::newTemp(mBounds->mMinX + (x + 1) * size,
-                                            mBounds->mMinY,
-                                            mBounds->mMinZ + z * size + 1.0,
-                                            mBounds->mMinX + (x + 1) * size + 1.0,
-                                            mBounds->mMaxY,
-                                            mBounds->mMinZ + (z + 1) * size + 1.0);
-                mWalls.push_back(new Wall(side, boundary, false));
+                if (x + 1 < 3)
+                {
+                    const bool boundary = internal || IsPointInternal(x + 1, z, 2);
+                    const double wallZ = mBounds->mMinZ + z * size;
+                    AABB* side = AABB::newTemp(mBounds->mMinX + x * size + 1.0, mBounds->mMinY, wallZ,
+                                               mBounds->mMinX + (x + 1) * size, mBounds->mMinY + 16.0, wallZ + 1.0);
+                    mWalls.push_back(new Wall(side, boundary, false));
+                }
+                if (z + 1 < 3)
+                {
+                    const bool boundary = internal || IsPointInternal(x, z + 1, 2);
+                    const double wallX = mBounds->mMinX + x * size;
+                    AABB* side = AABB::newTemp(wallX, mBounds->mMinY, mBounds->mMinZ + z * size + 1.0,
+                                               wallX + 1.0, mBounds->mMinY + 16.0, mBounds->mMinZ + (z + 1) * size);
+                    mWalls.push_back(new Wall(side, boundary, false));
+                }
             }
-            if (z + 1 < 3)
-            {
-                bool boundary = internal || IsPointInternal(x, z + 1, 2);
-                AABB* side = AABB::newTemp(mBounds->mMinX + x * size,
-                                            mBounds->mMinY,
-                                            mBounds->mMinZ + (z + 1) * size + 1.0,
-                                            mBounds->mMinX + (x + 1) * size + 1.0,
-                                            mBounds->mMaxY,
-                                            mBounds->mMinZ + (z + 1) * size + 1.0);
-                mWalls.push_back(new Wall(side, boundary, false));
-            }
-            ++z;
         }
-        ++x;
+
+        SetArea(level, transaction,
+                AABB::newTemp(grown->mMinX, grown->mMinY, grown->mMinZ, grown->mMaxX, grown->mMinY + 1.0, grown->mMaxZ),
+                Blocks::structure_void->defaultBlockState());
+
+        for (std::vector<AABB*>::iterator area = mAreas.begin(); area != mAreas.end(); ++area)
+        {
+            TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::SPRUCE);
+            const BlockState* floor = Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
+            AABB* bounds = *area;
+            SetArea(level, transaction,
+                    AABB::newTemp(bounds->mMinX, bounds->mMinY - 1.0, bounds->mMinZ, bounds->mMaxX, bounds->mMinY,
+                                  bounds->mMaxZ),
+                    floor);
+        }
     }
 
-    std::vector<AABB*>::iterator area = mAreas.begin();
-    while (area != mAreas.end())
+    for (std::vector<Wall*>::iterator wall = mWalls.begin(); wall != mWalls.end(); ++wall)
     {
-        SetArea(level, transaction, *area, Blocks::stone->defaultBlockState());
-        ++area;
-    }
-
-    std::vector<Wall*>::iterator wall = mWalls.begin();
-    while (wall != mWalls.end())
-    {
-        const BlockState* state = ((*wall)->mBoundary && (*wall)->mInternal)
-            ? Blocks::stone->defaultBlockState() : Blocks::AIR->defaultBlockState();
+        const BlockState* state = (!(*wall)->mBoundary && !(*wall)->mInternal)
+            ? Blocks::stonebrick->defaultBlockState() : Blocks::planks->defaultBlockState();
         SetArea(level, transaction, (*wall)->mArea, state);
-        ++wall;
     }
 
-    BlockPos origin(static_cast<int>(grown->mMinX), static_cast<int>(grown->mMinY),
-                    static_cast<int>(grown->mMinZ));
+    BlockPos origin(static_cast<int>(grown->mMinX), static_cast<int>(grown->mMinY), static_cast<int>(grown->mMinZ));
     mGenerationWriteTasks.push_back(new GenerationWriteTask(level, transaction, origin, NULL));
 }
 

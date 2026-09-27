@@ -5,7 +5,7 @@
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/maybe.hpp"
 
-class MiniGamePlayerSettings : public GameModeOptions
+class MiniGamePlayerSettings
 {
 public:
     MiniGamePlayerSettings();
@@ -13,6 +13,7 @@ public:
 
     bool operator==(const MiniGamePlayerSettings& other) const;
 
+    GameModeOptions mHostOptions;
     Abilities mPlayerAbilities;
     unsigned int mLivesPerRound;
     unsigned int mLootSetId;
@@ -36,7 +37,7 @@ public:
     bool mSmallSkinsEnabled;
     int mRoundLength;
     int mMaxPlayers;
-    bool mFriendlyFire;
+    bool mCentralSpawnDisabled;
     bool mTeamGame;
     bool mSpectatorParticipation;
 };

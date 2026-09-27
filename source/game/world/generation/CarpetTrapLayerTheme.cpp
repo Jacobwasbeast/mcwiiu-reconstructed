@@ -22,7 +22,7 @@ const BlockState* CarpetTrapLayerTheme::BlockAt(Random& random, float fNoise, in
 
         if (fNoise < -0.43f && iHeightAboveSurface <= 0)
         {
-            return Blocks::AIR->defaultBlockState();
+            return Blocks::air->defaultBlockState();
         }
     }
 

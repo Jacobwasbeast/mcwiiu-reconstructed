@@ -1,4 +1,5 @@
 #include "game/world/generation/SpringFeature.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/util/Random.hpp"
@@ -19,93 +20,73 @@ SpringFeature::~SpringFeature()
 
 bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL && options->checkIntersects(origin, origin))
+    if (g_pApp->getLevelGenerationOptions() != NULL
+        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin, origin))
     {
         return false;
     }
 
-    if (level->getBlockId(origin.x, origin.y + 1, origin.z) != 1)
+    if (level->getBlockId(origin.x, origin.y + 1, origin.z) != BlockId::STONE)
     {
         return false;
     }
-    if (level->getBlockId(origin.x, origin.y - 1, origin.z) != 1)
-    {
-        return false;
-    }
-
-    int centerBlockId = level->getBlockId(origin.x, origin.y, origin.z);
-    if (centerBlockId != 0 &&
-        level->getBlockId(origin.x, origin.y, origin.z) != 1)
+    if (level->getBlockId(origin.x, origin.y - 1, origin.z) != BlockId::STONE)
     {
         return false;
     }
 
-    int solidNeighbourCount = 0;
+    if (level->getBlockId(origin.x, origin.y, origin.z) != BlockId::AIR
+        && level->getBlockId(origin.x, origin.y, origin.z) != BlockId::STONE)
+    {
+        return false;
+    }
+
+    int rockCount = 0;
     int blockId = level->getBlockId(origin.x - 1, origin.y, origin.z);
-    if (blockId == 1)
+    if (blockId == BlockId::STONE)
     {
-        solidNeighbourCount = 1;
-        blockId = level->getBlockId(origin.x + 1, origin.y, origin.z);
+        ++rockCount;
     }
-    else if (blockId != 0)
-    {
-        return false;
-    }
-    else
-    {
-        blockId = level->getBlockId(origin.x + 1, origin.y, origin.z);
-    }
-
-    if (blockId == 1)
-    {
-        ++solidNeighbourCount;
-        blockId = level->getBlockId(origin.x, origin.y, origin.z - 1);
-    }
-    else if (blockId != 0)
+    else if (blockId != BlockId::AIR)
     {
         return false;
     }
-    else
-    {
-        blockId = level->getBlockId(origin.x, origin.y, origin.z - 1);
-    }
 
-    if (blockId == 1)
+    blockId = level->getBlockId(origin.x + 1, origin.y, origin.z);
+    if (blockId == BlockId::STONE)
     {
-        ++solidNeighbourCount;
-        blockId = level->getBlockId(origin.x, origin.y, origin.z + 1);
+        ++rockCount;
     }
-    else if (blockId != 0)
+    else if (blockId != BlockId::AIR)
     {
         return false;
     }
-    else
+
+    blockId = level->getBlockId(origin.x, origin.y, origin.z - 1);
+    if (blockId == BlockId::STONE)
     {
-        blockId = level->getBlockId(origin.x, origin.y, origin.z + 1);
+        ++rockCount;
+    }
+    else if (blockId != BlockId::AIR)
+    {
+        return false;
     }
 
-    if (blockId == 1)
+    blockId = level->getBlockId(origin.x, origin.y, origin.z + 1);
+    if (blockId == BlockId::STONE)
     {
-        if (solidNeighbourCount != 2)
-        {
-            return true;
-        }
+        ++rockCount;
     }
-    else
+    else if (blockId != BlockId::AIR)
     {
-        if (blockId != 0)
-        {
-            return false;
-        }
-        if (solidNeighbourCount != 3)
-        {
-            return true;
-        }
+        return false;
     }
 
-    const BlockState* state = mBlock->defaultBlockState();
-    level->setBlock(origin, state, 2, false);
-    level->instaTick(origin, state, random);
+    if (rockCount == 3)
+    {
+        const BlockState* state = mBlock->defaultBlockState();
+        level->setBlock(origin, state, Block::UPDATE_CLIENTS, false);
+        level->instaTick(origin, state, random);
+    }
     return true;
 }

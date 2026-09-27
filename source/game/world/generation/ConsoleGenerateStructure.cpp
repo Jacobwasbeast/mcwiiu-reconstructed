@@ -40,18 +40,18 @@ ConsoleGenerateStructure::~ConsoleGenerateStructure()
 
 ConsoleGameRules::EGameRuleType ConsoleGenerateStructure::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(3);
+    return ConsoleGameRules::eGameRuleType_GenerateStructure;
 }
 
 void ConsoleGenerateStructure::writeAttributes(GameRuleSaveInterface* saveInterface,
                                                 unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 5);
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), _toString(mX));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), _toString(mY));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), _toString(mZ));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(41), _toString(getOrientation()));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(42), _toString(mDimension));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_x, _toString(mX));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_y, _toString(mY));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_z, _toString(mZ));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_orientation, _toString(getOrientation()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dimension, _toString(mDimension));
 }
 
 void ConsoleGenerateStructure::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -184,7 +184,7 @@ BoundingBox* ConsoleGenerateStructure::getBoundingBox()
 
 EStructurePiece ConsoleGenerateStructure::GetType()
 {
-    return static_cast<EStructurePiece>(0);
+    return eStructurePiece_MonumentBuilding;
 }
 
 void ConsoleGenerateStructure::addAdditionalSaveData(DataOutputStream* output)

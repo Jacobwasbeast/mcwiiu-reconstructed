@@ -1,5 +1,7 @@
 #include "game/world/generation/SpruceFeature.hpp"
 
+#include <cstdlib>
+
 #include "game/core/CMinecraftApp.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -8,15 +10,13 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 extern CMinecraftApp* g_pApp;
-extern Property* OldLogBlock_VARIANT;
-extern Property* OldLeafBlock_VARIANT;
-extern Property* OldLeafBlock_DECAYABLE;
 
 static const BlockState* spruceTrunkState = NULL;
 static const BlockState* spruceLeafState = NULL;
@@ -32,108 +32,94 @@ SpruceFeature::~SpruceFeature()
 
 void SpruceFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(1));
-    spruceTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(
-        OldLogBlock_VARIANT, &variant);
-    spruceLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
-        OldLeafBlock_VARIANT, &variant);
+    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::SPRUCE);
+    spruceTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
+    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::SPRUCE);
     TypedBoxed<bool> decayable(false);
-    spruceLeafState = spruceLeafState->setBoxedValue(
-        OldLeafBlock_DECAYABLE, &decayable);
+    spruceLeafState = Blocks::leaves->defaultBlockState()
+                          ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
+                          ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
 }
 
 bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
-    const int height = random.nextInt(4) + mBaseHeight;
-    const int foliageStart = height - (random.nextInt(2) + 1);
-    const int foliageRadius = random.nextInt(2) + 2;
+    int height = random.nextInt(4) + mBaseHeight;
+    int bareTrunk = random.nextInt(2) + 1;
+    int foliageHeight = height - bareTrunk;
+    int maxRadius = random.nextInt(2) + 2;
 
-    if (pos.y <= 0 || pos.y + height + 1 >= 257)
-    {
+    if (pos.y < 1 || pos.y + height + 1 > 256)
         return false;
-    }
 
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL && options->checkIntersects(pos.offset(-foliageRadius, -1, -foliageRadius),
-                                                     pos.offset(foliageRadius, height, foliageRadius)))
-    {
+    if (g_pApp->getLevelGenerationOptions() != NULL
+        && g_pApp->getLevelGenerationOptions()->checkIntersects(pos.offset(-maxRadius, -1, -maxRadius),
+                                                                pos.offset(maxRadius, height, maxRadius)))
         return false;
-    }
 
-    for (int y = 0; y <= height + 1; ++y)
+    bool free = true;
+    BlockPos checkPos(0, 0, 0);
+    for (int y = pos.y; y <= pos.y + height + 1; ++y)
     {
-        int radius = 0;
-        if (y >= foliageStart + 1)
+        int radius = y - pos.y >= bareTrunk ? maxRadius : 0;
+        for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
         {
-            radius = foliageRadius;
-        }
-        for (int x = -radius; x <= radius; ++x)
-        {
-            for (int z = -radius; z <= radius; ++z)
+            for (int z = pos.z - radius; z <= pos.z + radius && free; ++z)
             {
-                if (pos.y + y >= 256 ||
-                    !isFree(level->getBlock(pos.offset(x, y, z))))
+                if (y >= 0 && y < 256)
                 {
-                    return false;
+                    checkPos = BlockPos(x, y, z);
+                    Material* material = level->getBlockState(checkPos)->getMaterial();
+                    if (material != Material::AIR && material != Material::LEAVES)
+                        free = false;
+                }
+                else
+                {
+                    free = false;
                 }
             }
         }
+        if (!free)
+            return false;
     }
 
-    Block* ground = level->getBlock(pos.below());
-    if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::mycelium) ||
-        pos.y >= 255 - height)
-    {
+    Block* ground = level->getBlockState(pos.below())->getBlock();
+    if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::farmland) || pos.y >= 255 - height)
         return false;
-    }
 
     setDirtAt(level, pos.below());
     if (!placeTrunk(level, pos, random, height - random.nextInt(3)))
-    {
-        return false;
-    }
+        return true;
 
-    int radius = 0;
-    int radiusLimit = 0;
-    int topY = pos.y + height;
-    for (int y = topY; y >= pos.y + foliageStart; --y)
+    int radius = random.nextInt(2);
+    int radiusLimit = 1;
+    int nextRadius = 0;
+    for (int layer = 0; layer <= foliageHeight; ++layer)
     {
-        const int layer = topY - y;
-        if (layer == 0)
-        {
-            radius = 0;
-        }
-        else if (layer & 1)
-        {
-            ++radiusLimit;
-        }
-        if (radius < foliageRadius)
-        {
-            ++radius;
-        }
-
+        int y = pos.y + height - layer;
         for (int x = pos.x - radius; x <= pos.x + radius; ++x)
         {
             for (int z = pos.z - radius; z <= pos.z + radius; ++z)
             {
-                if ((x - pos.x != radius || z - pos.z != radius || radius < 1) &&
-                    (x - pos.x != -radius || z - pos.z != -radius || radius < 1) &&
-                    (x - pos.x != -radius || z - pos.z != radius || radius < 1) &&
-                    (x - pos.x != radius || z - pos.z != -radius || radius < 1))
+                if (abs(x - pos.x) != radius || abs(z - pos.z) != radius || radius <= 0)
                 {
                     BlockPos leafPos(x, y, z);
-                    if (isFree(level->getBlock(leafPos)))
-                    {
-                        setBlock(level, leafPos, mLeafState, 0);
-                    }
+                    if (!level->getBlockState(leafPos)->isSolid())
+                        setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
                 }
             }
         }
 
-        if (radiusLimit > 0 && radius > 1)
+        if (radius >= radiusLimit)
         {
-            --radius;
-            radiusLimit = 0;
+            radius = nextRadius;
+            nextRadius = 1;
+            ++radiusLimit;
+            if (radiusLimit > maxRadius)
+                radiusLimit = maxRadius;
+        }
+        else
+        {
+            ++radius;
         }
     }
 

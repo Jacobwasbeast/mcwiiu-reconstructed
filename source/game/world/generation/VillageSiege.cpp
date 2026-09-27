@@ -36,7 +36,7 @@ Vec3* VillageSiege::findRandomSpawnPos(const BlockPos& pos)
                                               mLevel->mRandom->nextInt(6) - 3,
                                               mLevel->mRandom->nextInt(16) - 8);
         if (village->isInside(candidate)
-            && NaturalMobSpawner::isSpawnPositionOk(Mob::SPAWN_PLACEMENT_TYPE_DEFAULT, mLevel,
+            && NaturalMobSpawner::isSpawnPositionOk(Mob::SPAWN_PLACEMENT_TYPE_ON_GROUND, mLevel,
                                                     candidate, 10, 10))
         {
             return Vec3::newTemp((double)candidate.x, (double)candidate.y, (double)candidate.z);

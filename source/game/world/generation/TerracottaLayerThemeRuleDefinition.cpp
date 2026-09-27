@@ -64,8 +64,8 @@ TerracottaLayerThemeRuleDefinition::TerracottaLayerThemeRuleDefinition()
 {
     mPattern.assign(L"RANDOM:2");
     mColourFunction.assign(L"UNIFORM");
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(77), &mColourFunction);
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(76), &mPattern);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColourFunction);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_pattern, &mPattern);
 }
 
 TerracottaLayerThemeRuleDefinition::~TerracottaLayerThemeRuleDefinition()
@@ -74,7 +74,7 @@ TerracottaLayerThemeRuleDefinition::~TerracottaLayerThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType TerracottaLayerThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(65);
+    return ConsoleGameRules::eGameRuleType_TerracottaTheme;
 }
 
 LayerTheme* TerracottaLayerThemeRuleDefinition::Generate() const

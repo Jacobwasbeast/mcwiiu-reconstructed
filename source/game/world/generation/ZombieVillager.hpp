@@ -36,9 +36,9 @@ public:
     virtual void tick();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
-    bool removeWhenFarAway();
+    virtual bool removeWhenFarAway();
     virtual void handleEntityEvent(unsigned char event, int data);
-    void finishConversion();
+    virtual void finishConversion();
     virtual float getVoicePitch();
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);

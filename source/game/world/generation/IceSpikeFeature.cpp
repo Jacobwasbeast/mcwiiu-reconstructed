@@ -54,19 +54,21 @@ bool IceSpikeFeature::place(Level* level, Random& random, const BlockPos& origin
                         || random.nextFloat() <= 0.75f))
                 {
                     const BlockState* state = level->getBlockState(pos.offset(x, y, z));
-                    if (state->getMaterial() == Material::AIR || state->getBlock() == Blocks::dirt
-                        || state->getBlock() == Blocks::snow || state->getBlock() == Blocks::ice)
+                    Block* block = state->getBlock();
+                    if (state->getMaterial() == Material::AIR || block == Blocks::dirt
+                        || block == Blocks::snow || block == Blocks::ice)
                     {
-                        setBlock(level, pos.offset(x, y, z), Blocks::packed_ice->defaultBlockState(), 0);
+                        setBlock(level, pos.offset(x, y, z), Blocks::packed_ice->defaultBlockState(), Block::UPDATE_NONE);
                     }
 
                     if (y != 0 && extent > 1)
                     {
                         state = level->getBlockState(pos.offset(x, -y, z));
-                        if (state->getMaterial() == Material::AIR || state->getBlock() == Blocks::dirt
-                            || state->getBlock() == Blocks::snow || state->getBlock() == Blocks::ice)
+                        block = state->getBlock();
+                        if (state->getMaterial() == Material::AIR || block == Blocks::dirt
+                            || block == Blocks::snow || block == Blocks::ice)
                         {
-                            setBlock(level, pos.offset(x, -y, z), Blocks::packed_ice->defaultBlockState(), 0);
+                            setBlock(level, pos.offset(x, -y, z), Blocks::packed_ice->defaultBlockState(), Block::UPDATE_NONE);
                         }
                     }
                 }
@@ -98,14 +100,15 @@ bool IceSpikeFeature::place(Level* level, Random& random, const BlockPos& origin
             while (target.y > 50)
             {
                 const BlockState* state = level->getBlockState(target);
-                if (state->getMaterial() != Material::AIR && state->getBlock() != Blocks::dirt
-                    && state->getBlock() != Blocks::snow && state->getBlock() != Blocks::ice
-                    && state->getBlock() != Blocks::packed_ice)
+                Block* block = state->getBlock();
+                if (state->getMaterial() != Material::AIR && block != Blocks::dirt
+                    && block != Blocks::snow && block != Blocks::ice
+                    && block != Blocks::packed_ice)
                 {
                     break;
                 }
 
-                setBlock(level, target, Blocks::packed_ice->defaultBlockState(), 0);
+                setBlock(level, target, Blocks::packed_ice->defaultBlockState(), Block::UPDATE_NONE);
                 target = target.below();
                 --remaining;
                 if (remaining <= 0)

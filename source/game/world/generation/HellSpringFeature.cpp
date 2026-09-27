@@ -77,7 +77,7 @@ bool HellSpringFeature::place(Level* level, Random& random, const BlockPos& orig
     if ((!mInsideRock && rockSides == 4 && emptySides == 1) || rockSides == 5)
     {
         const BlockState* state = mBlock->defaultBlockState();
-        level->setBlock(origin, state, 2, false);
+        level->setBlock(origin, state, Block::UPDATE_CLIENTS, false);
         level->instaTick(origin, state, random);
     }
 

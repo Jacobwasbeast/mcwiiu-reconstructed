@@ -1,6 +1,7 @@
 #include "game/world/generation/AddOceanTemperatureLayer.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
 AddOceanTemperatureLayer::AddOceanTemperatureLayer(long long seed, boost::shared_ptr<Layer> parent)
@@ -15,6 +16,8 @@ AddOceanTemperatureLayer::~AddOceanTemperatureLayer()
 
 arrayWithLength<int> AddOceanTemperatureLayer::getArea(int x, int z, int width, int height)
 {
+    PIXBeginNamedEvent(0.0f, "AddOceanTemperatureLayer::getArea");
+
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
     for (int i = 0; i < height; i++)
@@ -46,6 +49,8 @@ arrayWithLength<int> AddOceanTemperatureLayer::getArea(int x, int z, int width, 
             }
         }
     }
+
+    PIXEndNamedEvent();
 
     return area;
 }

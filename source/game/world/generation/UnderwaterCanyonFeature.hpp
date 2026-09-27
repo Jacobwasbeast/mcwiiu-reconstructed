@@ -12,10 +12,13 @@ public:
     virtual ~UnderwaterCanyonFeature();
     virtual void apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer);
     void addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
-                   double x, double y, double z, float width, float yaw, float pitch,
-                   int originChunkX, int originChunkZ, double scale);
+                   double x, double y, double z, float thickness, float yaw, float pitch,
+                   int startIndex, int endIndex, double yScale);
     virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX,
                             int originChunkZ, ChunkPrimer* primer);
+
+private:
+    float rs[128];
 };
 
 #endif

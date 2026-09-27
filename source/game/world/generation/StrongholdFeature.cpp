@@ -65,7 +65,7 @@ StrongholdFeature::~StrongholdFeature()
 
 std::wstring StrongholdFeature::getFeatureName()
 {
-    return L"Stronghold";
+    return L"StrongHold";
 }
 
 void StrongholdFeature::generatePositions()
@@ -95,12 +95,12 @@ void StrongholdFeature::generatePositions()
             int x = Math::round(std::cos(angle) * distance);
             int z = Math::round(std::sin(angle) * distance);
             BlockPos* biomePosition = level->getBiomeSource()->findBiome(
-                x, z, 112, mAllowedBiomes, &positionRandom);
+                x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
             if (biomePosition != NULL)
             {
                 x = biomePosition->x >> 4;
                 z = biomePosition->z >> 4;
-                g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)1, x, z);
+                g_pApp->AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold, x, z);
                 foundPosition = true;
                 delete biomePosition;
             }
@@ -119,7 +119,7 @@ void StrongholdFeature::generatePositions()
 
     if (!foundPosition && !mPositions.empty() && mPositions.front() != NULL)
     {
-        g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)1,
+        g_pApp->AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold,
                                           mPositions.front()->x, mPositions.front()->z);
     }
 }
@@ -213,10 +213,8 @@ StructureStart* StrongholdFeature::createStructureStart(int chunkX, int chunkZ)
     for (;;)
     {
         StrongholdStart* start = new StrongholdStart(level, random, chunkX, chunkZ);
-        if (!start->empty() && start->front() != NULL && start->front()->getBoundingBox() != NULL)
-        {
+        if (!start->empty() && static_cast<StrongholdPieces::StartPiece*>(start->front())->mPortalRoom != NULL)
             return start;
-        }
         delete start;
     }
 }

@@ -1,4 +1,7 @@
 #include "game/world/generation/VillagerGolem.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -36,13 +39,14 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
+#include "game/item/ItemId.hpp"
 
 const EntityDataAccessor<unsigned char>* VillagerGolem::DATA_PLAYER_CREATED_ID = NULL;
 
 bool villagerGolemTargetPredicate(boost::shared_ptr<Entity> entity)
 {
-    return entity && (entity->GetType() & 0x0D000000ULL) == 0x0D000000ULL &&
-           entity->GetType() != 0x5D540041ULL;
+    return entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB &&
+           entity->GetType() != EntityType::CREEPER;
 }
 
 VillagerGolem::VillagerGolem(Level* level)
@@ -63,12 +67,12 @@ void VillagerGolem::create(Level* level)
 
 void VillagerGolem::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x0D580002ULL);
+    Mob::addDataWalkers(fixer, EntityType::VILLAGER_GOLEM);
 }
 
 void VillagerGolem::staticCtor()
 {
-    DATA_PLAYER_CREATED_ID = SynchedEntityData::defineId<unsigned char>(0x0D580002ULL, 0x0D580000ULL,
+    DATA_PLAYER_CREATED_ID = SynchedEntityData::defineId<unsigned char>(EntityType::VILLAGER_GOLEM, EntityType::GOLEM,
                                                                           EntityDataSerializers::BYTE);
 }
 
@@ -127,7 +131,7 @@ int VillagerGolem::decreaseAirSupply(int airSupply)
 
 void VillagerGolem::doPush(boost::shared_ptr<Entity> entity)
 {
-    if (entity && (entity->GetType() & 0x40000000ULL) != 0 && entity->GetType() != 0x5D540041ULL &&
+    if (entity && (entity->GetType() & EntityType::ENEMY) != 0 && entity->GetType() != EntityType::CREEPER &&
         mRandom->nextInt(20) == 0)
     {
         boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
@@ -160,9 +164,9 @@ bool VillagerGolem::isPlayerCreated()
 
 bool VillagerGolem::canAttackType(unsigned long long type)
 {
-    if (isPlayerCreated() && (type & 0x0C800000ULL) == 0x0C800000ULL)
+    if (isPlayerCreated() && (type & EntityType::PLAYER) == EntityType::PLAYER)
         return false;
-    if (type == 0x5D540041ULL)
+    if (type == EntityType::CREEPER)
         return false;
     return Mob::canAttackType(type);
 }
@@ -199,14 +203,14 @@ bool VillagerGolem::doHurtTarget(boost::shared_ptr<Entity> entity)
 
 void VillagerGolem::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 4)
+    if (event == EntityEvent::START_ATTACKING)
     {
         mAttackAnimationTick = 10;
         playSound(SoundEvents::IRONGOLEM_ATTACK, 1.0f, 1.0f);
     }
-    else if (event == 11)
+    else if (event == EntityEvent::OFFER_FLOWER)
         mOfferFlowerTick = 400;
-    else if (event == 34)
+    else if (event == EntityEvent::STOP_OFFER_FLOWER)
         mOfferFlowerTick = 0;
     else
         Mob::handleEntityEvent(event, data);
@@ -276,23 +280,23 @@ bool VillagerGolem::hurt(const DamageSource* source, float damage)
 
 unsigned int VillagerGolem::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance->getItem() != NULL && Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x1A4)
+    if (tooltipData.m_pItemInstance->getItem() != NULL && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::LEAD)
     {
         boost::shared_ptr<Village> village = getVillage();
         if (village && tooltipData.m_bAllowedToInteract)
-            return 0x551269B5U;
+            return IDS_TOOLTIPS_UNLEASH;
     }
-    return 0xFFFFFFFFU;
+    return IDS_NONE;
 }
 
 unsigned int VillagerGolem::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (isPlayerCreated() && !tooltipData.m_bAllowedToHurt)
-        return 0xFFFFFFFFU;
-    return 0xFDEF7118U;
+        return IDS_NONE;
+    return IDS_TOOLTIPS_HIT;
 }
 
 unsigned long long VillagerGolem::GetType()
 {
-    return 0x0D580002ULL;
+    return EntityType::VILLAGER_GOLEM;
 }

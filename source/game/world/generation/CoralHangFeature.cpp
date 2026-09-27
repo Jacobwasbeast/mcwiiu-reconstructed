@@ -1,5 +1,6 @@
 #include "game/world/generation/CoralHangFeature.hpp"
 
+#include "game/core/CoralFanHang.hpp"
 #include "game/core/Direction.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -10,9 +11,6 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
-extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
-extern AbstractProperty<bool>* CoralFanHang_PROPERTY_3;
 
 CoralHangFeature::CoralHangFeature()
     : Feature(false)
@@ -88,17 +86,17 @@ bool CoralHangFeature::place(Level* level, Random& random, const BlockPos& origi
             && level->isUnderWater(target, 266, 0))
         {
             const BlockState* state = Blocks::coral_fan_hang->defaultBlockState();
-            TypedBoxed<int> variant(random.nextInt(CoralFanHang_PROPERTY_1->getValueCount()));
-            state = state->setBoxedValue(CoralFanHang_PROPERTY_1, &variant);
+            TypedBoxed<int> variant(random.nextInt(CoralFanHang::VARIANT->getValueCount()));
+            state = state->setBoxedValue(CoralFanHang::VARIANT, &variant);
             TypedBoxed<bool> dead(random.nextBoolean());
-            state = state->setBoxedValue(CoralFanHang_PROPERTY_3, &dead);
+            state = state->setBoxedValue(CoralFanHang::DEAD, &dead);
             TypedBoxed<int> facing(turnFacingIntoint(direction));
-            state = state->setBoxedValue(CoralFanHang_PROPERTY_2, &facing);
+            state = state->setBoxedValue(CoralFanHang::DIRECTION, &facing);
             if (!level->reallyHasChunkAt(target))
             {
                 return true;
             }
-            setBlock(level, target, state, 0);
+            setBlock(level, target, state, Block::UPDATE_NONE);
             return true;
         }
     }

@@ -4,6 +4,7 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/ShipwreckPiece.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -15,66 +16,63 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
-#include "game/core/ShipwreckPiece.hpp"
 
-StructurePiece* createShipwreckPiece(Level* level, GenericOverworldLevelSource* source,
-                                     int x, int z, Random& random, const Direction* direction)
-{
-    return new ShipwreckPiece(level, source, x, z, random, direction);
-}
-
-static std::vector<Biome*> gShipwreckSpawnBiomes;
-static std::vector<Biome*> gShipwreckAllowedBiomes;
-static FjFeatureBiomeRequirements gShipwreckBiomeRequirements;
+static std::vector<Biome*>* gShipwreckSpawnBiomes = NULL;
+static std::vector<Biome*>* gShipwreckAllowedBiomes = NULL;
+static FjFeatureBiomeRequirements* gShipwreckBiomeRequirements = NULL;
 
 std::vector<Biome*>* ShipwreckFeature::GetSpawnBiomes()
 {
-    if (gShipwreckSpawnBiomes.empty())
+    if (gShipwreckSpawnBiomes == NULL)
     {
-        gShipwreckSpawnBiomes.push_back(Biome::OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::DEEP_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::COLD_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::DEEP_COLD_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::FROZEN_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::DEEP_FROZEN_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::LUKEWARM_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::DEEP_LUKEWARM_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::WARM_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::DEEP_WARM_OCEAN);
-        gShipwreckSpawnBiomes.push_back(Biome::RIVER);
-        gShipwreckSpawnBiomes.push_back(Biome::FROZEN_RIVER);
+        gShipwreckSpawnBiomes = new std::vector<Biome*>();
+        gShipwreckSpawnBiomes->reserve(12);
+        gShipwreckSpawnBiomes->push_back(Biome::BEACH);
+        gShipwreckSpawnBiomes->push_back(Biome::COLD_BEACH);
+        gShipwreckSpawnBiomes->push_back(Biome::MUSHROOM_ISLAND_SHORE);
+        gShipwreckSpawnBiomes->push_back(Biome::OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::DEEP_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::COLD_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::DEEP_COLD_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::LUKEWARM_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::DEEP_LUKEWARM_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::FROZEN_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::DEEP_FROZEN_OCEAN);
+        gShipwreckSpawnBiomes->push_back(Biome::WARM_OCEAN);
     }
-    return &gShipwreckSpawnBiomes;
+    return gShipwreckSpawnBiomes;
 }
 
 std::vector<Biome*>* ShipwreckFeature::GetAllowedBiomes()
 {
-    if (gShipwreckAllowedBiomes.empty())
+    if (gShipwreckAllowedBiomes == NULL)
     {
-        gShipwreckAllowedBiomes.push_back(Biome::OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::DEEP_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::COLD_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::DEEP_COLD_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::FROZEN_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::DEEP_FROZEN_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::LUKEWARM_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::DEEP_LUKEWARM_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::WARM_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::DEEP_WARM_OCEAN);
-        gShipwreckAllowedBiomes.push_back(Biome::RIVER);
-        gShipwreckAllowedBiomes.push_back(Biome::FROZEN_RIVER);
+        gShipwreckAllowedBiomes = new std::vector<Biome*>();
+        gShipwreckAllowedBiomes->reserve(12);
+        gShipwreckAllowedBiomes->push_back(Biome::BEACH);
+        gShipwreckAllowedBiomes->push_back(Biome::COLD_BEACH);
+        gShipwreckAllowedBiomes->push_back(Biome::MUSHROOM_ISLAND_SHORE);
+        gShipwreckAllowedBiomes->push_back(Biome::OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::DEEP_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::COLD_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::DEEP_COLD_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::LUKEWARM_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::DEEP_LUKEWARM_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::FROZEN_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::DEEP_FROZEN_OCEAN);
+        gShipwreckAllowedBiomes->push_back(Biome::WARM_OCEAN);
     }
-    return &gShipwreckAllowedBiomes;
+    return gShipwreckAllowedBiomes;
 }
 
 FjFeatureBiomeRequirements* ShipwreckFeature::GetFJBiomeRequirements()
 {
-    if (gShipwreckBiomeRequirements.spawnBiomes == NULL)
+    if (gShipwreckBiomeRequirements == NULL)
     {
-        gShipwreckBiomeRequirements = FjFeatureBiomeRequirements(
+        gShipwreckBiomeRequirements = new FjFeatureBiomeRequirements(
             GetSpawnBiomes(), 5, GetAllowedBiomes(), 10);
     }
-    return &gShipwreckBiomeRequirements;
+    return gShipwreckBiomeRequirements;
 }
 
 ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
@@ -82,7 +80,7 @@ ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
     : StructureFeature(), mSource(source), mSpacing(10), mSeparation(5),
       mOceanMonument(monument)
 {
-    mFeatureChunk = FjIsFeatureChunk(GetFJBiomeRequirements(), 20, mSeparation, mSpacing);
+    mFeatureChunk = FjIsFeatureChunk(GetFJBiomeRequirements(), 20, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
@@ -152,15 +150,17 @@ bool ShipwreckFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLevelSource* source,
                                                 Random& random, int chunkX, int chunkZ)
 {
-    const Direction* direction = Direction::NORTH;
+    const Direction* direction = Direction::SOUTH;
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
     if (options != NULL)
     {
-        if (!options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Shipwreck, &direction))
-            direction = Direction::NORTH;
+        const Direction* featureDirection = NULL;
+        if (options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Shipwreck, &featureDirection)
+            && featureDirection != NULL)
+            direction = featureDirection;
     }
-    push_back(createShipwreckPiece(level, source, chunkX * 16 - 2, chunkZ * 16 - 2,
-                                   random, direction));
+    push_back(new ShipwreckPiece(level, source, chunkX * 16 - 2, chunkZ * 16 - 2,
+                                 random, direction));
     calculateBoundingBox();
 }
 

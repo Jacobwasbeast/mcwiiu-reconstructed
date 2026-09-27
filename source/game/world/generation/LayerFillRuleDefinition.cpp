@@ -5,7 +5,7 @@
 #include "game/world/generation/WarpedLayerFillRuleDefinition.hpp"
 
 LayerFillRuleDefinition::LayerFillRuleDefinition()
-    : LayerAttributeRuleDefinition<LayerFill*>(static_cast<ConsoleGameRules::EGameRuleType>(54), CreateFuncImpl)
+    : LayerAttributeRuleDefinition<LayerFill*>(ConsoleGameRules::eGameRuleType_LayerFill, CreateFuncImpl)
 {
 }
 
@@ -17,13 +17,13 @@ LayerAttributeChildRuleDefinition<LayerFill*>* LayerFillRuleDefinition::CreateFu
 {
     switch (type)
     {
-    case static_cast<ConsoleGameRules::EGameRuleType>(55):
+    case ConsoleGameRules::eGameRuleType_BasicLayerFill:
         return new BasicLayerFillRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(56):
+    case ConsoleGameRules::eGameRuleType_CurvedLayerFill:
         return new CurvedLayerFillRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(57):
+    case ConsoleGameRules::eGameRuleType_WarpedLayerFill:
         return new WarpedLayerFillRuleDefinition();
 
     default:

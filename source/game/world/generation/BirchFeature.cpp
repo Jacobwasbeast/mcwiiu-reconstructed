@@ -6,17 +6,17 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include <cstdlib>
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 extern CMinecraftApp* g_pApp;
 static const BlockState* birchTrunkState = NULL;
@@ -34,15 +34,13 @@ BirchFeature::~BirchFeature()
 
 void BirchFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> birchVariant(PlanksBlock::Variant::byData(2));
-    birchTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(
-        OldLogBlock_VARIANT, &birchVariant);
-
-    birchLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
-        OldLeafBlock_VARIANT, &birchVariant);
+    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::BIRCH);
+    birchTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
+    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::BIRCH);
     TypedBoxed<bool> decayable(false);
-    birchLeafState = birchLeafState->setBoxedValue(
-        OldLeafBlock_DECAYABLE, &decayable);
+    birchLeafState = Blocks::leaves->defaultBlockState()
+                         ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
+                         ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
 }
 
 bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -58,71 +56,82 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
     if (origin.y > 0 && origin.y + height + 1 < 257)
     {
         MutableBlockPos check(0, 0, 0);
-        for (int y = origin.y; y <= origin.y + height + 1 && free; ++y)
+        for (int y = origin.y; y <= origin.y + height + 1; ++y)
         {
-            if (y < 256)
+            int radius = 1;
+            if (y == origin.y)
             {
-                int radius = y == origin.y ? 0 : (y >= origin.y + height - 1 ? 2 : 1);
-                for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
+                radius = 0;
+            }
+            if (y >= origin.y + height - 1)
+            {
+                radius = 2;
+            }
+            for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
+            {
+                for (int z = origin.z - radius; z <= origin.z + radius && free; ++z)
                 {
-                    for (int z = origin.z - radius; z <= origin.z + radius; ++z)
+                    if (y >= 0 && y < 256)
                     {
                         check.set(x, y, z);
-                        if (!isFree(level->getBlock(check)))
-                        {
+                        if (!isFree(level->getBlockState(check)->getBlock()))
                             free = false;
-                            break;
-                        }
+                    }
+                    else
+                    {
+                        free = false;
                     }
                 }
             }
         }
 
-        Block* ground = level->getBlock(origin.below());
-        if (free && (ground == Blocks::grass || ground == Blocks::dirt ||
-                     ground == Blocks::mycelium) && origin.y < 255 - height)
+        if (!free)
         {
-            LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-            if (options != NULL && options->checkIntersects(
-                    origin.offset(-3, -1, -3), origin.offset(3, height, 3)))
-            {
-                free = false;
-            }
-            if (free)
-            {
-                setDirtAt(level, origin.below());
-                if (!placeTrunk(level, origin, random, height))
-                {
-                    PIXEndNamedEvent();
-                    return true;
-                }
+            PIXEndNamedEvent();
+            return false;
+        }
 
-                MutableBlockPos leaves(0, 0, 0);
-                const int top = origin.y + height;
-                for (int y = origin.y + height - 3; y <= top; ++y)
+        Block* ground = level->getBlockState(origin.below())->getBlock();
+        if ((ground == Blocks::grass || ground == Blocks::dirt || ground == Blocks::farmland) &&
+            origin.y < 255 - height)
+        {
+            if (g_pApp->getLevelGenerationOptions() != NULL &&
+                g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-3, -1, -3),
+                                                                     origin.offset(3, height, 3)))
+            {
+                PIXEndNamedEvent();
+                return false;
+            }
+
+            setDirtAt(level, origin.below());
+            if (!placeTrunk(level, origin, random, height))
+                return true;
+
+            MutableBlockPos leaves(0, 0, 0);
+            const int top = origin.y + height;
+            for (int y = origin.y + height - 3; y <= top; ++y)
+            {
+                const int radius = 1 - (y - top) / 2;
+                for (int x = origin.x - radius; x <= origin.x + radius; ++x)
                 {
-                    const int radius = 1 - (y - top) / 2;
-                    for (int x = origin.x - radius; x <= origin.x + radius; ++x)
+                    for (int z = origin.z - radius; z <= origin.z + radius; ++z)
                     {
-                        for (int z = origin.z - radius; z <= origin.z + radius; ++z)
+                        if (std::abs(x - origin.x) != radius ||
+                            std::abs(z - origin.z) != radius ||
+                            (random.nextInt(2) != 0 && y != top))
                         {
-                            if (std::abs(x - origin.x) != radius ||
-                                std::abs(z - origin.z) != radius ||
-                                (random.nextInt(2) != 0 && y != top))
+                            leaves.set(x, y, z);
+                            Material* material = level->getBlockState(leaves)->getMaterial();
+                            if (material == Material::AIR || material == Material::LEAVES)
                             {
-                                leaves.set(x, y, z);
-                                Block* block = level->getBlock(leaves);
-                                if (block == Blocks::leaves || block == Blocks::leaves2)
-                                {
-                                    setBlock(level, leaves, mLeafState, 0);
-                                }
+                                setBlock(level, leaves, mLeafState, Block::UPDATE_NONE);
                             }
                         }
                     }
                 }
-                PIXEndNamedEvent();
-                return true;
             }
+            PIXEndNamedEvent();
+            return true;
         }
     }
 

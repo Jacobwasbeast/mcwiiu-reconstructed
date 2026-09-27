@@ -1,5 +1,7 @@
 #include "game/world/generation/SeaAnemoneFeature.hpp"
 
+#include "game/core/CoralFan.hpp"
+#include "game/core/Coral.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -11,9 +13,6 @@
 
 class Property;
 
-extern AbstractProperty<int>* CoralFan_PROPERTY_1;
-extern AbstractProperty<int>* CoralFan_PROPERTY_2;
-extern AbstractProperty<int>* Coral_VARIANT;
 
 SeaAnemoneFeature::~SeaAnemoneFeature()
 {
@@ -32,7 +31,7 @@ bool SeaAnemoneFeature::place(Level* level, Random& random, const BlockPos& orig
         pos = pos.below();
     }
 
-    if (level->isEmptyBlock(pos)
+    if (level->isEmptyWaterBlock(pos)
         && level->isSolidBlockingBlock(pos.below())
         && pos.y > 48
         && level->isUnderWater(pos, 259, 0)
@@ -41,18 +40,18 @@ bool SeaAnemoneFeature::place(Level* level, Random& random, const BlockPos& orig
         if (!random.rollPercentageChance(75))
         {
             const BlockState* state = Blocks::coral_fan->defaultBlockState();
-            state = state->setBoxedValue(CoralFan_PROPERTY_1,
-                                         new TypedBoxed<int>(random.nextInt(CoralFan_PROPERTY_1->getValueCount())));
-            state = state->setBoxedValue(CoralFan_PROPERTY_2,
-                                         new TypedBoxed<int>(random.nextInt(CoralFan_PROPERTY_2->getValueCount())));
-            setBlock(level, pos, state, 0);
+            TypedBoxed<int> variant(random.nextInt(CoralFan::VARIANT->getValueCount()));
+            state = state->setBoxedValue(CoralFan::VARIANT, &variant);
+            TypedBoxed<int> direction(random.nextInt(CoralFan::DIRECTION->getValueCount()));
+            state = state->setBoxedValue(CoralFan::DIRECTION, &direction);
+            setBlock(level, pos, state, Block::UPDATE_NONE);
             return true;
         }
 
         const BlockState* state = Blocks::coral->defaultBlockState();
-        state = state->setBoxedValue(Coral_VARIANT,
-                                     new TypedBoxed<int>(random.nextInt(Coral_VARIANT->getValueCount())));
-        setBlock(level, pos, state, 0);
+        TypedBoxed<int> variant(random.nextInt(Coral::VARIANT->getValueCount()));
+        state = state->setBoxedValue(Coral::VARIANT, &variant);
+        setBlock(level, pos, state, Block::UPDATE_NONE);
         return true;
     }
 

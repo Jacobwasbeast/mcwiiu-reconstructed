@@ -1,4 +1,5 @@
 #include "game/world/generation/EntityRidingShoulderLayer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -50,7 +51,7 @@ void EntityRidingShoulderLayer::renderShoulder(boost::shared_ptr<LivingEntity>& 
     {
         name = tag->getString(std::wstring(L"UUID"));
         entityType = EntityIO::byString(tag->getString(std::wstring(L"id")));
-        if (entityType == 0x000000002D6C0003ULL)
+        if (entityType == EntityType::PARROT)
         {
             renderer = mParrotRenderer;
             texture = PARROT_LOCATIONS[tag->getInt(std::wstring(L"Variant"))];

@@ -1,9 +1,7 @@
 #include "game/world/generation/ZoomLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 ZoomLayer::ZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)

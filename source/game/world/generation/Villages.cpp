@@ -212,7 +212,7 @@ std::vector<boost::shared_ptr<Village> >* Villages::getVillages()
 void Villages::load(CompoundTag* tag)
 {
     mTick = tag->getInt(L"Tick");
-    ListTag* list = tag->getList(L"Villages", 10);
+    ListTag* list = tag->getList(L"Villages", Tag::TAG_COMPOUND);
     int i;
     for (i = 0; i < list->size(); ++i)
     {

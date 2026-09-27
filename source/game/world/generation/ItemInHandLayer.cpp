@@ -1,4 +1,5 @@
 #include "game/world/generation/ItemInHandLayer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ItemInHandRenderer.hpp"
 #include "game/client/render/LivingEntityRenderer.hpp"
@@ -62,7 +63,7 @@ void ItemInHandLayer::renderArmWithItem(boost::shared_ptr<LivingEntity> entity, 
     translateToHand(arm);
 
     bool leftHand = arm == HumanoidArm::LEFT;
-    bool suppressSneakingTransform = (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+    bool suppressSneakingTransform = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
         && entity->getFallFlyingTicks() > 4;
     if (entity->isSneaking() && !suppressSneakingTransform)
     {

@@ -17,7 +17,7 @@ void Feature::init()
 {
 }
 
-void Feature::setBlock(Level* level, const BlockPos& pos, const BlockState* state, int flags)
+bool Feature::setBlock(Level* level, const BlockPos& pos, const BlockState* state, int flags)
 {
-    level->setBlock(pos, state, flags | (mDoBlockNotify ? 3 : 2), false);
+    return level->setBlock(pos, state, flags | (mDoBlockNotify ? 3 : 2), false);
 }

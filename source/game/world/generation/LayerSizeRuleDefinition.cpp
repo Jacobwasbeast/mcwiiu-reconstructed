@@ -5,7 +5,7 @@
 #include "game/world/generation/UniformLayerSizeRuleDefinition.hpp"
 
 LayerSizeRuleDefinition::LayerSizeRuleDefinition()
-    : LayerAttributeRuleDefinition<LayerSize*>(static_cast<ConsoleGameRules::EGameRuleType>(44), CreateFuncImpl)
+    : LayerAttributeRuleDefinition<LayerSize*>(ConsoleGameRules::eGameRuleType_LayerSize, CreateFuncImpl)
 {
 }
 
@@ -17,13 +17,13 @@ LayerAttributeChildRuleDefinition<LayerSize*>* LayerSizeRuleDefinition::CreateFu
 {
     switch (type)
     {
-    case static_cast<ConsoleGameRules::EGameRuleType>(45):
+    case ConsoleGameRules::eGameRuleType_UniformSize:
         return new UniformLayerSizeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(46):
+    case ConsoleGameRules::eGameRuleType_RandomizeSize:
         return new RandomizeSizeRuleDefinition();
 
-    case static_cast<ConsoleGameRules::EGameRuleType>(47):
+    case ConsoleGameRules::eGameRuleType_LinearBlendSize:
         return new LinearBlendSizeRuleDefinition();
 
     default:

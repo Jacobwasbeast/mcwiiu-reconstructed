@@ -47,7 +47,7 @@ not_null_ptr<ItemInstance> AbstractArmorLayer::getSlot(boost::shared_ptr<LivingE
 ResourceLocation* AbstractArmorLayer::getArmorLocation(ArmorItem* armor, bool inner, bool overlay)
 {
     std::wstringstream name;
-    name << L"armor_" << armor->GetArmorType() << L"_" << (inner ? 2 : 1);
+    name << L"armor/" << armor->GetArmorType() << L"_" << (inner ? 2 : 1);
     if (overlay)
         name << L"_b";
     std::wstring key = name.str();

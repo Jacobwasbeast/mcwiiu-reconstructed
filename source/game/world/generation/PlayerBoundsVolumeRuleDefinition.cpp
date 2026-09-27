@@ -12,5 +12,5 @@ PlayerBoundsVolumeRuleDefinition::~PlayerBoundsVolumeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType PlayerBoundsVolumeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(22);
+    return ConsoleGameRules::eGameRuleType_PlayerBoundsVolume;
 }

@@ -7,6 +7,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 
 LightGemFeature::~LightGemFeature()
 {
@@ -24,7 +25,7 @@ bool LightGemFeature::place(Level* level, Random& random, const BlockPos& origin
         return false;
     }
 
-    level->setBlock(origin, Blocks::glowstone->defaultBlockState(), 2, false);
+    level->setBlock(origin, Blocks::glowstone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
 
     for (int i = 0; i < 1500; ++i)
     {
@@ -32,7 +33,7 @@ bool LightGemFeature::place(Level* level, Random& random, const BlockPos& origin
         const int dy = -random.nextInt(12);
         const int dz = random.nextInt(8) - random.nextInt(8);
         const BlockPos position = origin.offset(dx, dy, dz);
-        if (level->getBlockState(position)->getBlock() == Blocks::AIR)
+        if (level->getBlockState(position)->getMaterial() == Material::AIR)
         {
             int glowstoneNeighbours = 0;
             std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
@@ -51,7 +52,7 @@ bool LightGemFeature::place(Level* level, Random& random, const BlockPos& origin
 
             if (glowstoneNeighbours == 1)
             {
-                level->setBlock(position, Blocks::glowstone->defaultBlockState(), 2, false);
+                level->setBlock(position, Blocks::glowstone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             }
         }
     }

@@ -1,8 +1,10 @@
 #include "game/world/generation/MonsterRoomFeature.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 #include <vector>
 
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Direction.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/util/Random.hpp"
@@ -11,6 +13,9 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/ChestBlock.hpp"
+#include "game/world/block/ChestBlockEntity.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
 
@@ -20,80 +25,72 @@ MonsterRoomFeature::~MonsterRoomFeature()
 
 std::wstring MonsterRoomFeature::randomEntityId(Random& random)
 {
-    static bool initialized = false;
-    static std::wstring entityIds[4];
-
-    if (!initialized)
-    {
-        initialized = true;
-        entityIds[0] = EntityIO::getKey(0x000000005D540441ULL).toString();
-        entityIds[1] = EntityIO::getKey(0x000000005D550040ULL).toString();
-        entityIds[2] = EntityIO::getKey(0x000000005D550040ULL).toString();
-        entityIds[3] = EntityIO::getKey(0x000000005D560040ULL).toString();
-    }
+    static std::wstring entityIds[] = {
+        EntityIO::getKey(EntityType::SKELETON).toString(),
+        EntityIO::getKey(EntityType::ZOMBIE).toString(),
+        EntityIO::getKey(EntityType::ZOMBIE).toString(),
+        EntityIO::getKey(EntityType::SPIDER).toString(),
+    };
 
     return entityIds[random.nextInt(4)];
 }
 
 bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    const int xRadius = random.nextInt(2) + 3;
-    const int zRadius = random.nextInt(2) + 3;
+    int xExtent = random.nextInt(2) + 2;
+    int xMin = -xExtent - 1;
+    int xMax = xExtent + 1;
+    int zExtent = random.nextInt(2) + 2;
+    int zMin = -zExtent - 1;
+    int zMax = zExtent + 1;
     int openings = 0;
 
-    for (int x = -xRadius; x <= xRadius; ++x)
+    for (int x = xMin; x <= xMax; ++x)
     {
-        const bool xEdge = x == -xRadius || x == xRadius;
         for (int y = -1; y <= 4; ++y)
         {
-            for (int z = -zRadius; z <= zRadius; ++z)
+            for (int z = zMin; z <= zMax; ++z)
             {
-                const BlockPos position = origin.offset(x, y, z);
-                const bool solid = level->getBlockState(position)->isSolidRender();
+                BlockPos pos = origin.offset(x, y, z);
+                bool solid = level->getBlockState(pos)->getMaterial()->isSolid();
                 if ((y == -1 || y == 4) && !solid)
-                {
                     return false;
-                }
 
-                if ((xEdge || z == -zRadius || z == zRadius) && y == 0 && solid
-                    && !level->getBlockState(position.above())->isSolidRender())
-                {
+                if ((x == xMin || x == xMax || z == zMin || z == zMax) && y == 0
+                    && level->isEmptyBlock(pos) && level->isEmptyBlock(pos.above()))
                     ++openings;
-                }
             }
         }
     }
 
     if (openings < 1 || openings > 5)
-    {
         return false;
-    }
 
-    for (int x = -xRadius; x <= xRadius; ++x)
+    for (int x = xMin; x <= xMax; ++x)
     {
         for (int y = 3; y >= -1; --y)
         {
-            for (int z = -zRadius; z <= zRadius; ++z)
+            for (int z = zMin; z <= zMax; ++z)
             {
-                const BlockPos position = origin.offset(x, y, z);
-                const bool edge = x == -xRadius || x == xRadius || z == -zRadius || z == zRadius;
-                if (edge || y == -1)
+                BlockPos pos = origin.offset(x, y, z);
+                if (x == xMin || y == -1 || z == zMin || x == xMax || z == zMax)
                 {
-                    if (!level->getBlockState(position.below())->isSolidRender())
+                    if (pos.y >= 0 && !level->getBlockState(pos.below())->getMaterial()->isSolid())
                     {
-                        level->setBlock(position, Blocks::mossy_cobblestone->defaultBlockState(), 2, false);
+                        level->removeBlock(pos);
                     }
-
-                    if (level->getBlockState(position)->getBlock() != Blocks::AIR)
+                    else if (level->getBlockState(pos)->getMaterial()->isSolid()
+                             && level->getBlockState(pos)->getBlock() != Blocks::chest)
                     {
-                        Block* block = y == -1 && random.nextInt(4) != 0
-                            ? Blocks::cobblestone : Blocks::mossy_cobblestone;
-                        level->setBlock(position, block->defaultBlockState(), 2, false);
+                        if (y == -1 && random.nextInt(4) != 0)
+                            level->setBlock(pos, Blocks::mossy_cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                        else
+                            level->setBlock(pos, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                     }
                 }
-                else if (level->getBlockState(position)->getBlock() != Blocks::AIR)
+                else if (level->getBlockState(pos)->getBlock() != Blocks::chest)
                 {
-                    level->setBlock(position, Blocks::AIR->defaultBlockState(), 2, false);
+                    level->removeBlock(pos);
                 }
             }
         }
@@ -103,36 +100,37 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
     {
         for (int attempt = 0; attempt < 3; ++attempt)
         {
-            const BlockPos position = origin.offset(random.nextInt(xRadius * 2 + 1) - xRadius,
-                                                     0,
-                                                     random.nextInt(zRadius * 2 + 1) - zRadius);
-            if (!level->isEmptyBlock(position))
-            {
+            int chestX = origin.x + random.nextInt(xExtent * 2 + 1) - xExtent;
+            int chestY = origin.y;
+            int chestZ = origin.z + random.nextInt(zExtent * 2 + 1) - zExtent;
+            BlockPos pos(chestX, chestY, chestZ);
+            if (!level->isEmptyBlock(pos))
                 continue;
-            }
 
             int solidNeighbours = 0;
-            std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
-            while (it != Direction::VALUES.end())
+            arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+            for (unsigned int i = 0; i < directions.length; ++i)
             {
-                if (level->getBlockState(position.relative(*it))->isSolidRender())
-                {
+                if (level->getBlockState(pos.relative(directions.data[i]))->getMaterial()->isSolid())
                     ++solidNeighbours;
-                }
-                ++it;
             }
+            if (solidNeighbours != 1)
+                continue;
 
-            if (solidNeighbours == 1)
+            level->setBlock(pos, static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState()), Block::UPDATE_CLIENTS, false);
+            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+            if (blockEntity->GetType() == BlockEntityType::CHEST)
             {
-                level->setBlock(position, Blocks::chest->defaultBlockState(), 2, false);
-                break;
+                boost::shared_ptr<ChestBlockEntity> chestEntity = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                chestEntity->setLootTable(&BuiltInLootTables::SIMPLE_DUNGEON, random.nextLong());
             }
+            break;
         }
     }
 
-    level->setBlock(origin, Blocks::mob_spawner->defaultBlockState(), 2, false);
+    level->setBlock(origin, Blocks::mob_spawner->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(origin);
-    if (blockEntity->GetType() == 0x0000000001200201ULL)
+    if (blockEntity->GetType() == BlockEntityType::MOB_SPAWNER)
     {
         boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity =
             boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);

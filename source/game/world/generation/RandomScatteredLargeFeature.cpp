@@ -1,4 +1,5 @@
 #include "game/world/generation/RandomScatteredLargeFeature.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/SuperflatConfig.hpp"
@@ -6,6 +7,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/biome/BiomeSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/ScatteredFeaturePieces.hpp"
 
@@ -27,6 +29,11 @@ RandomScatteredLargeFeature::RandomScatteredLargeFeature(SuperflatConfig* config
 
 RandomScatteredLargeFeature::~RandomScatteredLargeFeature()
 {
+    for (std::vector<Biome::MobSpawnerData*>::iterator it = mSwamphutEnemies.begin();
+         it != mSwamphutEnemies.end(); ++it)
+    {
+        delete *it;
+    }
 }
 
 void RandomScatteredLargeFeature::staticCtor()
@@ -44,7 +51,7 @@ void RandomScatteredLargeFeature::_init()
 {
     mSpacing = 0x20;
     mSeparation = 8;
-    mSwamphutEnemies.push_back(new Biome::MobSpawnerData(1, 0x5D540046ULL, 1, 1));
+    mSwamphutEnemies.push_back(new Biome::MobSpawnerData(1, EntityType::WITCH, 1, 1));
 }
 
 std::wstring RandomScatteredLargeFeature::getFeatureName()
@@ -75,7 +82,7 @@ bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool fl
          chunkZ == regionZ / spacing * mSpacing + offsetZ))
     {
         BlockPos pos(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
-        Biome* biome = level->getBiome(pos);
+        Biome* biome = level->getBiomeSource()->getBiome(pos);
         for (std::vector<Biome*>::const_iterator it = gRandomScatteredLargeFeatureBiomes.begin();
              it != gRandomScatteredLargeFeatureBiomes.end(); ++it)
         {

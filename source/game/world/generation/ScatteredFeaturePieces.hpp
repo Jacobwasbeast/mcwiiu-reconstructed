@@ -26,14 +26,14 @@ public:
         virtual ~ScatteredFeaturePiece();
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
-        bool updateAverageGroundHeight(Level* level, BoundingBox* box, int offset, bool useHeightmap);
+        bool updateAverageGroundHeight(Level* level, BoundingBox* box, int offset, bool useSpawnHeight);
 
     protected:
         StructurePlaceSettings mPlaceSettings;
         int mWidth;
         int mHeight;
         int mDepth;
-        int mGroundHeight;
+        int mHeightPosition;
         std::vector<bool> mFirstBools;
         std::vector<bool> mSecondBools;
         std::vector<int> mFirstInts;
@@ -52,7 +52,7 @@ public:
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     private:
-        bool mTrap[4];
+        bool mHasPlacedChest[4];
     };
 
     class Igloo : public ScatteredFeaturePiece
@@ -68,7 +68,7 @@ public:
         virtual EStructurePiece GetType();
     private:
         bool mHasBasement;
-        int mHeightOffset;
+        int mBasementDepth;
     };
 
     class JunglePyramidPiece : public ScatteredFeaturePiece
@@ -93,7 +93,10 @@ public:
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     private:
-        bool mTrap[4];
+        bool mPlacedMainChest;
+        bool mPlacedHiddenChest;
+        bool mPlacedTrap1;
+        bool mPlacedTrap2;
     };
 
     class SwamplandHut : public ScatteredFeaturePiece

@@ -15,22 +15,19 @@ EndIslandFeature::~EndIslandFeature()
 
 bool EndIslandFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    float radius = (float)(random.nextInt(3) + 4);
+    float radius = (float)random.nextInt(3) + 4.0f;
     int y = 0;
 
     while (radius > 0.5f)
     {
-        const int min = (int)floorf(-radius);
-        const int max = (int)ceilf(radius);
-
-        for (int x = min; x <= max; ++x)
+        for (int x = (int)floorf(-radius); x <= (int)ceilf(radius); ++x)
         {
-            for (int z = min; z <= max; ++z)
+            for (int z = (int)floorf(-radius); z <= (int)ceilf(radius); ++z)
             {
                 if ((float)(x * x + z * z) <= (radius + 1.0f) * (radius + 1.0f))
                 {
                     const BlockPos position = origin.offset(x, y, z);
-                    setBlock(level, position, Blocks::end_stone->defaultBlockState(), 0);
+                    setBlock(level, position, Blocks::end_stone->defaultBlockState(), Block::UPDATE_NONE);
                 }
             }
         }
