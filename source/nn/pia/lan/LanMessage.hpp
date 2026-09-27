@@ -3,7 +3,12 @@
 
 #include <cstdint>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMessage
 {
@@ -19,7 +24,8 @@ private:
     unsigned int m_messageType;
     unsigned char m_payload[11];
 };
-
-}}}
+}
+}
+}
 
 #endif

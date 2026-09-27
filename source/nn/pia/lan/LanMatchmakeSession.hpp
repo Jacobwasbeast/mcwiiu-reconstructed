@@ -3,7 +3,12 @@
 
 #include <cstdint>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchmakeSession
 {
@@ -61,6 +66,8 @@ private:
     unsigned char m_storage[6912];
 };
 
-}}}
+}
+}
+}
 
 #endif

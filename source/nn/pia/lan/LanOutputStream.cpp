@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "nn/pia/common/Common.hpp"
+#include "nn/pia/common/common.hpp"
 #include "nn/pia/common/InetAddress.hpp"
 #include "nn/pia/common/Packet.hpp"
 #include "nn/pia/common/Socket.hpp"

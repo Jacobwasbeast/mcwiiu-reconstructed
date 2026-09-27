@@ -3,7 +3,12 @@
 
 #include <cstdint>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchBrowseMatchmakeJob
 {
@@ -22,6 +27,8 @@ private:
     unsigned char m_storage[96];
 };
 
-}}}
+}
+}
+}
 
 #endif

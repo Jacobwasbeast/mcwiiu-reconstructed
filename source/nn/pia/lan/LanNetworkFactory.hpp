@@ -5,17 +5,47 @@
 #include "nn/pia/session/SessionNetworkFactory.hpp"
 #include "nn/pia/lan/LanConnectStationJob.hpp"
 
-namespace nn { namespace pia {
-namespace common { class IPacketInput; class IPacketOutput; class StepSequenceJob; }
-namespace transport { class ConnectStationJob; class NetworkFactory; }
-namespace session { class ISessionInfoList; class IMatchmakeSession; class MeshLayerController; class CreateMeshJob; class JoinMeshJob; class LeaveMeshJob; class KickoutManageJob; }
-namespace lan {
-class LanInputStream; class LanOutputStream; class LanConnectStationJob;
-class LanLeaveWithHostMigrationJob; class LanMatchCreateSessionJob;
-class LanMatchRandomMatchmakeJob; class LanMatchBrowseMatchmakeJob;
-class LanMatchJoinSessionJob; class LanMatchLeaveSessionJob;
-class LanMatchDestroySessionJob; class LanMatchUpdateSessionSettingJob;
-class LanMatchJointSessionJob; class LanMatchmakeSession; class LanMatchMeshLayerController;
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class IPacketInput;
+class IPacketOutput;
+class StepSequenceJob;
+}
+namespace transport
+{
+class ConnectStationJob;
+class NetworkFactory;
+}
+namespace session
+{
+class ISessionInfoList;
+class IMatchmakeSession;
+class MeshLayerController;
+class CreateMeshJob;
+class JoinMeshJob;
+class LeaveMeshJob;
+class KickoutManageJob;
+}
+namespace lan
+{
+class LanInputStream;
+class LanOutputStream;
+class LanConnectStationJob;
+class LanLeaveWithHostMigrationJob;
+class LanMatchCreateSessionJob;
+class LanMatchRandomMatchmakeJob;
+class LanMatchBrowseMatchmakeJob;
+class LanMatchJoinSessionJob;
+class LanMatchLeaveSessionJob;
+class LanMatchDestroySessionJob;
+class LanMatchUpdateSessionSettingJob;
+class LanMatchJointSessionJob;
+class LanMatchmakeSession;
+class LanMatchMeshLayerController;
 class LanNetworkFactory : public session::SessionNetworkFactory
 {
 public:
@@ -76,6 +106,8 @@ public:
     bool IsJointSessionPermitted() const override;
     bool IsMultiplayerPermitted() const override;
 };
-}}}
+}
+}
+}
 
 #endif

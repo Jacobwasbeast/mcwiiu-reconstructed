@@ -1,10 +1,10 @@
 #include "nn/pia/lan/LanSupport.hpp"
 
+#include <nn/middleware.h>
+
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/ModuleStackChecker.hpp"
 #include "platform/wiiu/pead.hpp"
-
-extern void SetModuleId(const char* moduleId);
 
 namespace
 {

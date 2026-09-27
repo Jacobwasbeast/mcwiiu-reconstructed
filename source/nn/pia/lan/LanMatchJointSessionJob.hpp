@@ -3,7 +3,12 @@
 
 #include <cstdint>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchJointSessionJob
 {
@@ -45,7 +50,8 @@ public:
     uint64_t StartupJoinJointSessionImpl(void* a1);
     uint64_t StartupLeaveJointSessionImpl();
     uint64_t StartupDestroyJointSessionImpl();
-    uint64_t StartupPassiveProcessImpl(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, int32_t a5, int32_t a6, int32_t a7);
+    uint64_t StartupPassiveProcessImpl(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, int32_t a5,
+                                       int32_t a6, int32_t a7);
     uint64_t ReceiveLeaveInvitationImpl(uint32_t a1, void* a2, uint16_t a3, uint64_t a4);
     uint32_t GetJointSessionStateForDebug();
     uint64_t ReceiveNextSessionIdImpl(uint32_t a1, uint32_t a2, void* a3, uint8_t a4, uint64_t a5);
@@ -57,6 +63,8 @@ private:
     unsigned char m_storage[328];
 };
 
-}}}
+}
+}
+}
 
 #endif
