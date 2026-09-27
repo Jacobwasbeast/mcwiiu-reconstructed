@@ -59,14 +59,14 @@ void ClientboundAddEntityPacket::_init(boost::shared_ptr<Entity> entity, int typ
 
 void ClientboundAddEntityPacket::read(DataInputStream* input)
 {
-    mId = input->readInt();
+    mId = input->readShort();
     mUUID = input->readUTF();
-    mType = input->readUnsignedByte();
-    mX = input->readInt();
-    mY = input->readInt();
-    mZ = input->readInt();
-    mYRot = input->readUnsignedByte();
-    mXRot = input->readUnsignedByte();
+    mType = input->readByte();
+    mX = input->readShort();
+    mY = input->readShort();
+    mZ = input->readShort();
+    mYRot = input->readByte();
+    mXRot = input->readByte();
     mData = input->readInt();
     if (mData >= 0)
     {
@@ -85,7 +85,7 @@ void ClientboundAddEntityPacket::read(DataInputStream* input)
 void ClientboundAddEntityPacket::write(DataOutputStream* output)
 {
     output->writeShort((short)mId);
-    writeUtf(mUUID, output);
+    output->writeUTF(mUUID);
     output->writeByte((unsigned char)mType);
     output->writeShort((short)mX);
     output->writeShort((short)mY);

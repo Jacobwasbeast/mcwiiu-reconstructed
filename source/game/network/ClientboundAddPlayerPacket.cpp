@@ -71,17 +71,17 @@ PlayerUID ClientboundAddPlayerPacket::getPlayerId()
     return mPlayerId;
 }
 
-unsigned int ClientboundAddPlayerPacket::getX()
+int ClientboundAddPlayerPacket::getX()
 {
     return (unsigned int)mX;
 }
 
-unsigned int ClientboundAddPlayerPacket::getY()
+int ClientboundAddPlayerPacket::getY()
 {
     return (unsigned int)mY;
 }
 
-unsigned int ClientboundAddPlayerPacket::getZ()
+int ClientboundAddPlayerPacket::getZ()
 {
     return (unsigned int)mZ;
 }

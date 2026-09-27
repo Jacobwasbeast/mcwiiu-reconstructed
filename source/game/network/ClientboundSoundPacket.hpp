@@ -17,7 +17,9 @@ class ClientboundSoundPacket : public Packet, public boost::enable_shared_from_t
 public:
     enum ESoundInstances
     {
-        eSoundInstances_Default
+        eSoundInstances_None = -1,
+        eSoundInstances_FollowLocalPlayer = 0,
+        eSoundInstances_FollowEntity = 1
     };
 
     ClientboundSoundPacket();

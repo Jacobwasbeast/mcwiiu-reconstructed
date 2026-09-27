@@ -36,12 +36,16 @@
 #include "game/server/ServerPlayerGameMode.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/core/MasterGameMode.hpp"
+#include "game/entity/mob/MoverType.hpp"
+#include "game/util/AABB.hpp"
+#include "game/entity/mob/MobEffects.hpp"
 #include "game/core/Boat.hpp"
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DLCSkinFile.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/Voteable.hpp"
 #include "game/core/Voteables.hpp"
 #include "game/core/EquipmentSlot.hpp"
@@ -60,6 +64,8 @@
 #include "game/item/MerchantRecipe.hpp"
 #include "game/item/MerchantRecipeList.hpp"
 #include "game/item/WritableBookItem.hpp"
+#include "game/data/ListTag.hpp"
+#include "game/data/StringTag.hpp"
 #include "game/item/WrittenBookItem.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/ClientboundSoundPacket.hpp"
@@ -93,6 +99,10 @@
 #include "game/ui/MerchantMenu.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/world/WorldBorder.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -101,25 +111,33 @@ ServerGamePacketListenerImpl::ServerGamePacketListenerImpl(
     MinecraftServer* server, Connection* connection,
     boost::shared_ptr<ServerPlayer> player)
     : mConnection(connection), mDisconnected(false), mPlayerUID(0),
-      mOldPlayerUID(0), mServer(server), mPlayer(player), mTickCount(0),
-      mKeepAliveId(0), mKeepAliveTime(0), mChatSpamTickCount(0),
+      mOldPlayerUID(0), mServer(server), mTickCount(0),
+      mKeepAliveId(0), mKeepAliveTime(0), mKeepAlivePending(0), mChatSpamTickCount(0),
       mDropSpamTickCount(0), mFirstGoodX(0.0), mFirstGoodY(0.0),
       mFirstGoodZ(0.0), mLastGoodX(0.0), mLastGoodY(0.0), mLastGoodZ(0.0),
       mVehicleFirstGoodX(0.0), mVehicleFirstGoodY(0.0), mVehicleFirstGoodZ(0.0),
       mVehicleLastGoodX(0.0), mVehicleLastGoodY(0.0), mVehicleLastGoodZ(0.0),
-      mPendingTeleportPosition(0), mTeleportId(0), mTeleportTime(0),
+      mPendingTeleportPosition(NULL), mTeleportId(0), mTeleportTime(0),
       mClientIsFloating(false), mAboveGroundTickCount(0),
       mClientVehicleIsFloating(false), mAboveGroundVehicleTickCount(0),
-      mReceivedMovePacketCount(0), mKnownMovePacketCount(0),
-      mUseAltLeaveMessage(false)
+      mReceivedMovePacketCount(0), mKnownMovePacketCount(0)
 {
-    if (mConnection != 0)
-        mConnection->setListener(this);
+    connection->setListener(this);
+    mPlayer = player;
+    InitializeCriticalSection(&mDisconnectMutex);
+    mConnectionClosed = false;
+    mFriendsOnly = false;
+    mUseAltLeaveMessage = false;
+    mPlayerUID = PlayerUID(0);
+    mOldPlayerUID = PlayerUID(0);
+    setShowOnMaps(g_pApp->GetGameHostOption(eGameHostOption_Gamertags) != 0);
 }
 
 ServerGamePacketListenerImpl::~ServerGamePacketListenerImpl()
 {
     delete mPendingTeleportPosition;
+    delete mConnection;
+    DeleteCriticalSection(&mDisconnectMutex);
 }
 
 void ServerGamePacketListenerImpl::send(boost::shared_ptr<Packet> packet)
@@ -151,19 +169,22 @@ std::wstring ServerGamePacketListenerImpl::getConsoleName()
 
 void ServerGamePacketListenerImpl::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
-    if (mDisconnected)
-        return;
-
-    mPlayer->disconnect();
-    mServer->getPlayers()->removePlayerFromReceiving(mPlayer, true, 0);
-    send(boost::shared_ptr<Packet>(new DisconnectPacket(reason)));
-    mConnection->sendAndQuit();
-    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
-        new ClientboundChatPacket(mPlayer->getName(),
-                                  static_cast<ClientboundChatPacket::EChatPacketMessage>(
-                                      mUseAltLeaveMessage ? 10 : 8), -1)));
-    mServer->getPlayers()->remove(mPlayer);
-    mDisconnected = true;
+    EnterCriticalSection(&mDisconnectMutex);
+    if (!mDisconnected)
+    {
+        mPlayer->disconnect();
+        mServer->getPlayers()->removePlayerFromReceiving(mPlayer, true, 0);
+        send(boost::shared_ptr<Packet>(new DisconnectPacket(reason)));
+        mConnection->sendAndQuit();
+        ClientboundChatPacket::EChatPacketMessage message = mUseAltLeaveMessage
+            ? ClientboundChatPacket::eChatPacketMessage_PlayerKicked
+            : ClientboundChatPacket::eChatPacketMessage_PlayerLeft;
+        mServer->getPlayers()->broadcastAll(
+            boost::shared_ptr<Packet>(new ClientboundChatPacket(mPlayer->getName(), message, -1)));
+        mServer->getPlayers()->remove(mPlayer);
+        mDisconnected = true;
+    }
+    LeaveCriticalSection(&mDisconnectMutex);
 }
 
 void ServerGamePacketListenerImpl::setShowOnMaps(bool show)
@@ -243,6 +264,11 @@ void ServerGamePacketListenerImpl::tick()
 {
     if (mDisconnected)
         return;
+    if (mConnectionClosed)
+    {
+        disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
+        return;
+    }
 
     resetPosition();
     mPlayer->doTick(false, false, false);
@@ -340,27 +366,59 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
     }
 
     boost::shared_ptr<Entity> vehicle = mPlayer->getRootVehicle();
-    if (!vehicle || vehicle == mPlayer || vehicle->getControllingPassenger() != mPlayer)
+    if (vehicle == mPlayer || vehicle->getControllingPassenger() != mPlayer || vehicle != mLastVehicle.lock())
         return;
 
+    ServerLevel* level = mPlayer->getLevel();
     double oldX = vehicle->mX;
     double oldY = vehicle->mY;
     double oldZ = vehicle->mZ;
-    vehicle->absMoveTo(packet->getX(), packet->getY(), packet->getZ(),
-                       packet->getYRot(), packet->getXRot());
-    mPlayer->getLevel()->tick(vehicle, false);
-    mServer->getPlayers()->move(mPlayer);
+    double x = packet->getX();
+    double y = packet->getY();
+    double z = packet->getZ();
+    float yRot = packet->getYRot();
+    float xRot = packet->getXRot();
 
-    double dx = packet->getX() - oldX;
-    double dy = packet->getY() - oldY;
-    double dz = packet->getZ() - oldZ;
-    mPlayer->doCheckFallDamage(dy, mPlayer->mOnGround);
+    double dx = x - mVehicleFirstGoodX;
+    double dy = y - mVehicleFirstGoodY;
+    double dz = z - mVehicleFirstGoodZ;
+    double expected = vehicle->mXd * vehicle->mXd + vehicle->mYd * vehicle->mYd + vehicle->mZd * vehicle->mZd;
+    if (dx * dx + dy * dy + dz * dz - expected > 100.0)
+    {
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket(vehicle)));
+        return;
+    }
+
+    bool wasFree = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->empty();
+    dx = x - mVehicleLastGoodX;
+    dy = y - mVehicleLastGoodY - 1.0E-6;
+    dz = z - mVehicleLastGoodZ;
+    vehicle->move(eMoverType_Player, dx, dy, dz, false);
+    double movedY = dy;
+
+    dx = x - vehicle->mX;
+    dy = y - vehicle->mY;
+    if (dy > -0.5 || dy < 0.5)
+        dy = 0.0;
+    dz = z - vehicle->mZ;
+    bool movedWrongly = dx * dx + dy * dy + dz * dz > 0.0625;
+    vehicle->absMoveTo(x, y, z, yRot, xRot);
+    bool isFree = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->empty();
+    if (wasFree && (movedWrongly || !isFree))
+    {
+        vehicle->absMoveTo(oldX, oldY, oldZ, yRot, xRot);
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket(vehicle)));
+        return;
+    }
+
+    PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+    players->move(mPlayer);
+    mPlayer->checkMovementStatistiscs(mPlayer->mX - oldX, mPlayer->mY - oldY, mPlayer->mZ - oldZ);
+    mClientVehicleIsFloating = movedY >= -0.03125 && !mServer->isFlightAllowed()
+                            && !level->containsAnyBlocks(vehicle->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
     mVehicleLastGoodX = vehicle->mX;
     mVehicleLastGoodY = vehicle->mY;
     mVehicleLastGoodZ = vehicle->mZ;
-
-    if (dx * dx + dy * dy + dz * dz > 100.0 && !mServer->isFlightAllowed())
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket(vehicle)));
 }
 void ServerGamePacketListenerImpl::handleAcceptTeleportPacket(boost::shared_ptr<ServerboundAcceptTeleportationPacket> packet)
 {
@@ -381,31 +439,92 @@ void ServerGamePacketListenerImpl::handleAcceptTeleportPacket(boost::shared_ptr<
 }
 void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<ServerboundMovePlayerPacket> packet)
 {
-    if (mPlayer->isChangingDimension())
+    ServerLevel* level = mServer->getLevel(mPlayer->mDimension);
+    if (mPlayer->mRespawnState)
         return;
 
+    if (mTickCount == 0)
+        resetPosition();
+
+    if (mPendingTeleportPosition != NULL)
+    {
+        if (mTickCount - mTeleportTime > TELEPORT_RESEND_TICKS)
+        {
+            mTeleportTime = mTickCount;
+            teleport(mPendingTeleportPosition->x, mPendingTeleportPosition->y, mPendingTeleportPosition->z,
+                     mPlayer->mYRot, mPlayer->mXRot, true, true);
+        }
+        return;
+    }
+
+    mTeleportTime = mTickCount;
+    if (mPlayer->isPassenger())
+    {
+        mPlayer->absMoveTo(mPlayer->mX, mPlayer->mY, mPlayer->mZ, packet->getYRot(mPlayer->mYRot),
+                           packet->getXRot(mPlayer->mXRot));
+        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        players->move(mPlayer);
+        return;
+    }
+
+    double startX = mPlayer->mX;
+    double startY = mPlayer->mY;
+    double startZ = mPlayer->mZ;
+    double fallStartY = mPlayer->mY;
     double x = packet->getX(mPlayer->mX);
     double y = packet->getY(mPlayer->mY);
     double z = packet->getZ(mPlayer->mZ);
     float yRot = packet->getYRot(mPlayer->mYRot);
     float xRot = packet->getXRot(mPlayer->mXRot);
-    double dy = y - mPlayer->mY;
 
-    if (mPendingTeleportPosition != 0)
-    {
-        if (mPlayer->distanceToSqr(mPendingTeleportPosition->x,
-                                   mPendingTeleportPosition->y,
-                                   mPendingTeleportPosition->z) > 1.0)
-            teleport(mPendingTeleportPosition->x, mPendingTeleportPosition->y,
-                     mPendingTeleportPosition->z, yRot, xRot, false, false);
-        return;
-    }
+    double dx = x - mFirstGoodX;
+    double dy = y - mFirstGoodY;
+    double dz = z - mFirstGoodZ;
+    if (mPlayer->isSleeping() && dx * dx + dy * dy + dz * dz > 1.0)
+        teleport(mPlayer->mX, mPlayer->mZ, mPlayer->mZ, packet->getYRot(mPlayer->mYRot),
+                 packet->getXRot(mPlayer->mXRot), true, true);
+
+    ++mReceivedMovePacketCount;
+    bool missedMovePackets = mReceivedMovePacketCount - mKnownMovePacketCount > 1;
+
+    dx = x - mLastGoodX;
+    dy = y - mLastGoodY;
+    dz = z - mLastGoodZ;
+    if (mPlayer->mOnGround && !packet->isOnGround() && dy > 0.0)
+        mPlayer->jumpFromGround();
+    mPlayer->move(eMoverType_Player, dx, dy, dz, false);
+    mPlayer->mOnGround = packet->isOnGround();
 
     mPlayer->absMoveTo(x, y, z, yRot, xRot);
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        mPlayer->mYBodyRot = yRot;
+    mPlayer->checkMovementStatistiscs(mPlayer->mX - startX, mPlayer->mY - startY, mPlayer->mZ - startZ);
+
+    mClientIsFloating = dy >= -0.03125;
+    mClientIsFloating &= !mServer->isFlightAllowed() && !mPlayer->mAbilities.mMayfly;
+    mClientIsFloating &= !mPlayer->hasEffect(MobEffects::LEVITATION) && !mPlayer->isFallFlying()
+                      && !level->containsAnyBlocks(mPlayer->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
     mPlayer->mOnGround = packet->isOnGround();
-    mPlayer->doCheckFallDamage(dy, packet->isOnGround());
-    mServer->getPlayers()->move(mPlayer);
-    resetPosition();
+
+    PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+    players->move(mPlayer);
+    mPlayer->doCheckFallDamage(mPlayer->mY - fallStartY, packet->isOnGround());
+    mLastGoodX = mPlayer->mX;
+    mLastGoodY = mPlayer->mY;
+    mLastGoodZ = mPlayer->mZ;
+
+    if (missedMovePackets && Minecraft::GetInstance()->GetMiniGame()->HasFeatureCheckpoints())
+    {
+        MasterGameMode* masterGameMode = mServer->mMasterGameMode;
+        double minX = std::min(startX, mPlayer->mX);
+        double minY = std::min(startY, mPlayer->mY);
+        double minZ = std::min(startZ, mPlayer->mZ);
+        double maxX = std::max(startX, mPlayer->mX);
+        double maxY = std::max(startY, mPlayer->mY);
+        double maxZ = std::max(startZ, mPlayer->mZ);
+        if (masterGameMode != NULL)
+            masterGameMode->CatchUpCheckpointCheck(mPlayer, AABB::newTemp(minX, minY, minZ, maxX, maxY, maxZ));
+    }
 }
 void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<ServerboundPlayerActionPacket> packet)
 {
@@ -415,74 +534,60 @@ void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<Serverbo
 
     switch (packet->getAction())
     {
-    case ServerboundPlayerActionPacket::START_DESTROY_BLOCK:
-        if (mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5,
-                                   pos.z + 0.5) <= 36.0 &&
-            pos.y < mServer->getMaxBuildHeight())
+    case ServerboundPlayerActionPacket::SWAP_ITEM_WITH_OFFHAND:
+        if (!mPlayer->isSpectator())
         {
-            if (level->getWorldBorder()->isWithinBounds(pos))
-            {
-                mPlayer->mGameMode->startDestroyBlock(pos, packet->getDirection());
-                return;
-            }
+            not_null_ptr<ItemInstance> offHand = mPlayer->getItemInHand(InteractionHand::eInteractionHand_OffHand);
+            mPlayer->setItemInHand(InteractionHand::eInteractionHand_OffHand,
+                                   mPlayer->getItemInHand(InteractionHand::eInteractionHand_MainHand));
+            mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, offHand);
         }
-        send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
         return;
-    case ServerboundPlayerActionPacket::ABORT_DESTROY_BLOCK:
-        if (mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5,
-                                   pos.z + 0.5) <= 36.0 &&
-            pos.y < mServer->getMaxBuildHeight())
-        {
-            mPlayer->mGameMode->abortDestroyBlock();
-            return;
-        }
-        send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
-        return;
-    case ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK:
-        if (mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5,
-                                   pos.z + 0.5) <= 36.0 &&
-            pos.y < mServer->getMaxBuildHeight())
-        {
-            mPlayer->mGameMode->stopDestroyBlock(pos);
-            mServer->getPlayers()->prioritiseBlockChanges(pos, mPlayer->mDimension);
-            return;
-        }
-        send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+    case ServerboundPlayerActionPacket::DROP_ITEM:
+        if (!mPlayer->isSpectator())
+            mPlayer->drop(false);
         return;
     case ServerboundPlayerActionPacket::DROP_ALL_ITEMS:
-        if (mPlayer->isSpectator())
-        {
-            send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
-            return;
-        }
-        mPlayer->drop(true);
-        break;
-    case ServerboundPlayerActionPacket::DROP_ITEM:
-        if (mPlayer->isSpectator())
-        {
-            send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
-            return;
-        }
-        mPlayer->drop(false);
-        break;
+        if (!mPlayer->isSpectator())
+            mPlayer->drop(true);
+        return;
     case ServerboundPlayerActionPacket::RELEASE_USE_ITEM:
         mPlayer->releaseUsingItem(packet->getUseTime());
+        return;
+    case ServerboundPlayerActionPacket::START_DESTROY_BLOCK:
+    case ServerboundPlayerActionPacket::ABORT_DESTROY_BLOCK:
+    case ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK:
         break;
-    case ServerboundPlayerActionPacket::SWAP_ITEM_WITH_OFFHAND:
-        if (mPlayer->isSpectator())
-        {
-            send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
-            return;
-        }
-        {
-            not_null_ptr<ItemInstance> mainHand = mPlayer->getItemSlot(EquipmentSlot::MAINHAND);
-            not_null_ptr<ItemInstance> offHand = mPlayer->getItemSlot(EquipmentSlot::OFFHAND);
-            mPlayer->setItemSlot(EquipmentSlot::MAINHAND, offHand);
-            mPlayer->setItemSlot(EquipmentSlot::OFFHAND, mainHand);
-            mPlayer->stopUsingItem();
-        }
-        break;
+    default:
+        return;
     }
+
+    double dx = mPlayer->mX - (pos.x + 0.5);
+    double dy = mPlayer->mY - (pos.y + 0.5) + 1.5;
+    double dz = mPlayer->mZ - (pos.z + 0.5);
+    if (dx * dx + dy * dy + dz * dz > 36.0 || pos.y >= mServer->getMaxBuildHeight())
+        return;
+
+    if (packet->getAction() == ServerboundPlayerActionPacket::START_DESTROY_BLOCK)
+    {
+        if (level->getWorldBorder()->isWithinBounds(pos))
+            mPlayer->mGameMode->startDestroyBlock(pos, packet->getDirection());
+        else
+            mPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+        return;
+    }
+
+    if (packet->getAction() == ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK)
+    {
+        mPlayer->mGameMode->stopDestroyBlock(pos);
+        mServer->getPlayers()->prioritiseBlockChanges(pos, level->mDimension->getType()->getId());
+    }
+    else if (packet->getAction() == ServerboundPlayerActionPacket::ABORT_DESTROY_BLOCK)
+    {
+        mPlayer->mGameMode->abortDestroyBlock();
+    }
+    if (level->getBlockState(pos)->getBlock()->mMaterial != Material::AIR)
+        mPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
 }
 void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<ServerboundUseItemOnPacket> packet)
 {
@@ -493,21 +598,21 @@ void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<Serverbound
     const Direction* face = packet->getFace();
     mPlayer->resetLastActionTime();
 
-    double reachX = pos.x + packet->getClickX();
-    double reachY = pos.y + packet->getClickY();
-    double reachZ = pos.z + packet->getClickZ();
-    if (mPlayer->distanceToSqr(reachX, reachY, reachZ) < 64.0 &&
-        pos.y < mServer->getMaxBuildHeight() &&
-        level->getWorldBorder()->isWithinBounds(pos))
+    bool belowBuildLimit = pos.y < mServer->getMaxBuildHeight() - 1
+                        || (face != Direction::UP && pos.y < mServer->getMaxBuildHeight());
+    if (belowBuildLimit && mPendingTeleportPosition == NULL
+        && mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5) < 64.0
+        && level->getWorldBorder()->isWithinBounds(pos))
     {
         bool result = false;
-        mPlayer->mGameMode->useItemOn(mPlayer, level, item, hand, pos, face,
-                                      packet->getClickX(), packet->getClickY(),
-                                      packet->getClickZ(), false, &result);
+        mPlayer->mGameMode->useItemOn(mPlayer, level, item, hand, pos, face, packet->getClickX(),
+                                      packet->getClickY(), packet->getClickZ(), false, &result);
     }
 
-    send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
-    send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos.relative(face))));
+    mPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+    if (level->getBlockState(pos)->getBlock() != Blocks::piston_head)
+        mPlayer->mConnection->send(
+            boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos.relative(face))));
 }
 void ServerGamePacketListenerImpl::handleUseItem(boost::shared_ptr<ServerboundUseItemPacket> packet)
 {
@@ -688,7 +793,7 @@ void ServerGamePacketListenerImpl::handleInteract(boost::shared_ptr<ServerboundI
 {
     boost::shared_ptr<Entity> target = packet->getTarget(mServer->getLevel(mPlayer->mDimension));
     mPlayer->resetLastActionTime();
-    if (target && target->isPickable())
+    if (target && target->isAlive())
     {
         unsigned long long type = target->GetType();
         if ((type & EntityType::PLAYER) != EntityType::PLAYER || mPlayer->distanceToSqr(target) < 36.0)
@@ -707,18 +812,19 @@ void ServerGamePacketListenerImpl::handleInteract(boost::shared_ptr<ServerboundI
 void ServerGamePacketListenerImpl::handleClientCommand(boost::shared_ptr<ServerboundClientCommandPacket> packet)
 {
     mPlayer->resetLastActionTime();
-    if (packet->getAction() == ServerboundClientCommandPacket::PERFORM_RESPAWN)
+    if (packet->getAction() != ServerboundClientCommandPacket::PERFORM_RESPAWN)
+        return;
+
+    if (mPlayer->mRespawnState)
     {
-        if (mPlayer->mFallFlying)
-        {
-            int dimension = mPlayer->mRespawnState ? 0 : mPlayer->mDimension;
-            mPlayer = mServer->getPlayers()->respawn(mPlayer, dimension, true);
-            mPlayer->mFallFlying = false;
-        }
-        else if (mPlayer->getHealth() <= 0.01)
-        {
-            mPlayer = mServer->getPlayers()->respawn(mPlayer, 0, false);
-        }
+        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        mPlayer = players->respawn(mPlayer, mPlayer->mFallFlying ? 0 : mPlayer->mDimension, true);
+        mPlayer->mRespawnState = false;
+    }
+    else if (mPlayer->mChangedDimension || mPlayer->getHealth() <= 0.0f)
+    {
+        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        mPlayer = players->respawn(mPlayer, 0, false);
     }
 }
 void ServerGamePacketListenerImpl::handleContainerClose(boost::shared_ptr<ServerboundContainerClosePacket> packet)
@@ -729,41 +835,83 @@ void ServerGamePacketListenerImpl::handleContainerClick(boost::shared_ptr<Server
 {
     mPlayer->resetLastActionTime();
     AbstractContainerMenu* menu = mPlayer->mContainerMenu;
-    if (menu->m_containerId != packet->getContainerId())
+    if (menu->m_containerId != packet->getContainerId() || !menu->isSynched(mPlayer) || !menu->stillValid(mPlayer))
     {
-        mPlayer->refreshContainer(mPlayer->mInventoryMenu);
+        if (mPlayer->mContainerMenu->m_containerId != packet->getContainerId()
+            || !mPlayer->mContainerMenu->stillValid(mPlayer))
+            mPlayer->refreshContainer(mPlayer->mInventoryMenu);
         return;
     }
-    if (!menu->isSynched(mPlayer))
-    {
-        mPlayer->refreshContainer(mPlayer->mInventoryMenu);
-        return;
-    }
+
     if (mPlayer->isSpectator())
     {
-        std::vector<not_null_ptr<ItemInstance> > items;
-        for (std::vector<Slot*>::iterator slot = menu->m_slots.begin();
-             slot != menu->m_slots.end(); ++slot)
-            items.push_back((*slot)->getItem());
-        mPlayer->refreshContainer(menu, &items);
+        AbstractContainerMenu::ItemList items;
+        for (unsigned int i = 0; i < mPlayer->mContainerMenu->m_slots.size(); ++i)
+            items.push_back(mPlayer->mContainerMenu->m_slots.at(i)->getItem());
+        mPlayer->refreshContainer(mPlayer->mContainerMenu, &items);
         return;
     }
 
-    not_null_ptr<ItemInstance> result = menu->clicked(
-        packet->getSlotNum(), packet->getButtonNum(), packet->getClickType(), mPlayer);
-    bool accepted = packet->getNumSlots() < 2
-        ? ItemInstance::matches(packet->getItem(), result, true)
-        : true;
-    send(boost::shared_ptr<Packet>(new ClientboundContainerAckPacket(
-        packet->getContainerId(), packet->getUid(), accepted)));
-
-    if (!accepted)
+    bool accepted = false;
+    if (packet->getNumSlots() > 1)
     {
-        mContainerType[menu->m_containerId] = packet->getUid();
-        menu->setSynched(mPlayer, false);
-        mPlayer->refreshContainer(menu);
-        mPlayer->broadcastCarriedItem();
+        AbstractContainerMenu::ItemList taken = mPlayer->mContainerMenu->takeAll(
+            mPlayer, packet->getButtonNum(), packet->getSlotNum(), packet->getNumSlots());
+        if (taken.size() == packet->getItems().size())
+        {
+            accepted = true;
+            for (unsigned int i = 0; i < taken.size(); ++i)
+            {
+                if (!ItemInstance::matches(taken.at(i), packet->getItemAt(i), true))
+                {
+                    accepted = false;
+                    break;
+                }
+            }
+        }
     }
+    else
+    {
+        not_null_ptr<ItemInstance> result = mPlayer->mContainerMenu->clicked(
+            packet->getSlotNum(), packet->getButtonNum(), packet->getClickType(), mPlayer);
+        if (ItemInstance::matches(packet->getItem(), result, true))
+        {
+            accepted = true;
+            if (packet->getClickType() == ClickType::eClickType_QuickMove && mPlayer->mConnection != NULL
+                && mPlayer->mConnection->getNetworkPlayer() != NULL
+                && mPlayer->mConnection->getNetworkPlayer()->IsLocal())
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+                    Minecraft::GetInstance()->mLocalPlayers[mPlayer->mPlayerIndex];
+                if (localPlayer != NULL
+                    && !AbstractContainerMenu::matches(localPlayer->mContainerMenu, mPlayer->mContainerMenu))
+                    accepted = false;
+            }
+        }
+    }
+
+    if (accepted)
+    {
+        mPlayer->mConnection->send(boost::shared_ptr<Packet>(
+            new ClientboundContainerAckPacket(packet->getContainerId(), packet->getUid(), true)));
+        mPlayer->mIsChangingQuantityOnly = true;
+        mPlayer->mContainerMenu->broadcastChanges();
+        mPlayer->broadcastCarriedItem();
+        mPlayer->mIsChangingQuantityOnly = false;
+        return;
+    }
+
+    mContainerType[mPlayer->mContainerMenu->m_containerId] = packet->getUid();
+    mPlayer->mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundContainerAckPacket(packet->getContainerId(), packet->getUid(), false)));
+    mPlayer->mContainerMenu->setSynched(mPlayer, false);
+    AbstractContainerMenu::ItemList items;
+    for (unsigned int i = 0; i < mPlayer->mContainerMenu->m_slots.size(); ++i)
+    {
+        not_null_ptr<ItemInstance> item = mPlayer->mContainerMenu->m_slots.at(i)->getItem();
+        items.push_back(item->isEmpty() ? ItemInstance::EMPTY : item);
+    }
+    mPlayer->refreshContainer(mPlayer->mContainerMenu, &items);
 }
 void ServerGamePacketListenerImpl::handleContainerButtonClick(boost::shared_ptr<ServerboundContainerButtonClickPacket> packet)
 {
@@ -780,20 +928,51 @@ void ServerGamePacketListenerImpl::handleSetCreativeModeSlot(boost::shared_ptr<S
     if (!mPlayer->mGameMode->isCreative())
         return;
 
-    int slot = packet->getSlotNum();
+    bool drop = packet->getSlotNum() < 0;
     not_null_ptr<ItemInstance> item = packet->getItem();
-    if (slot >= 1 && slot < 46)
+    if (!item->isEmpty() && item->hasTag() && item->getTag()->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
     {
-        if (!item->isEmpty())
-            item->setCount(std::min(item->getCount(), 64));
-        mPlayer->mInventoryMenu->setItem(slot, item);
+        CompoundTag* blockEntityTag = item->getTag()->getCompound(L"BlockEntityTag");
+        if (blockEntityTag->contains(L"x") && blockEntityTag->contains(L"y") && blockEntityTag->contains(L"z"))
+        {
+            BlockPos pos(blockEntityTag->getInt(L"x"), blockEntityTag->getInt(L"y"), blockEntityTag->getInt(L"z"));
+            boost::shared_ptr<BlockEntity> blockEntity = mPlayer->mLevel->getBlockEntity(pos);
+            if (blockEntity != NULL)
+            {
+                CompoundTag* saved = blockEntity->save(new CompoundTag());
+                saved->remove(L"x");
+                saved->remove(L"y");
+                saved->remove(L"z");
+                item->addTagElement(L"BlockEntityTag", saved);
+            }
+        }
+    }
+
+    bool validSlot = packet->getSlotNum() >= INVENTORY_MENU_FIRST_SLOT && packet->getSlotNum() <= INVENTORY_MENU_LAST_SLOT;
+    bool validItem = item->isEmpty()
+                  || (item->getAuxValue() >= 0 && item->getCount() <= 64 && item->getCount() > 0);
+    if (validSlot && validItem)
+    {
+        if (item->isEmpty())
+            mPlayer->mInventoryMenu->setItem(packet->getSlotNum(), ItemInstance::EMPTY);
+        else
+            mPlayer->mInventoryMenu->setItem(packet->getSlotNum(), item);
         mPlayer->mInventoryMenu->setSynched(mPlayer, true);
     }
-    else if (slot < 0 && !item->isEmpty())
+    else if (drop && validItem && mDropSpamTickCount < DROP_SPAM_LIMIT)
     {
+        mDropSpamTickCount += DROP_SPAM_STEP;
         boost::shared_ptr<ItemEntity> dropped = mPlayer->drop(item, true);
-        if (dropped)
+        if (dropped != NULL)
             dropped->setShortLifeTime();
+    }
+
+    if (item->getItem() == Items::filledMap)
+    {
+        std::vector<not_null_ptr<ItemInstance> > items;
+        for (unsigned int i = 0; i < mPlayer->mInventoryMenu->m_slots.size(); ++i)
+            items.push_back(mPlayer->mInventoryMenu->m_slots.at(i)->getItem());
+        mPlayer->refreshContainer(mPlayer->mInventoryMenu, &items);
     }
 }
 void ServerGamePacketListenerImpl::handleContainerAck(boost::shared_ptr<ServerboundContainerAckPacket> packet)
@@ -943,10 +1122,106 @@ void ServerGamePacketListenerImpl::handlePlayerAbilities(boost::shared_ptr<Serve
     mPlayer->mAbilities.mFlying = packet->isFlying() &&
         (mPlayer->mAbilities.mMayfly || mPlayer->isAllowedToFly());
 }
+static void releaseStreamBuffer(ByteArrayInputStream& bytes)
+{
+    bytes.mBuffer.data = NULL;
+    bytes.mBuffer.length = 0;
+    bytes.mCount = 0;
+    bytes.mMark = 0;
+    bytes.mPosition = 0;
+}
+
 void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<ServerboundCustomPayloadPacket> packet)
 {
     std::wstring identifier = packet->getIdentifier();
-    arrayWithLength<unsigned char> data = packet->getData();
+    if (identifier == L"MC|BEdit")
+    {
+        ByteArrayInputStream bytes(packet->getData());
+        DataInputStream input(&bytes);
+        not_null_ptr<ItemInstance> book = input.readItem();
+        input.close();
+        releaseStreamBuffer(bytes);
+        if (book->isEmpty() || !WritableBookItem::makeSureTagIsValid(book->getTag()))
+            return;
+        not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
+        if (held->isEmpty())
+            return;
+        if (book->getItem() == Items::writableBook && book->getItem() == held->getItem())
+        {
+            CompoundTag* bookTag = book->getTag();
+            held->addTagElement(L"pages", bookTag->getList(L"pages", Tag::TAG_STRING)->copy());
+            held->getTag()->putString(L"ownerUUID", bookTag->getString(L"ownerUUID"));
+            held->getTag()->putByte(L"createdByRestrictedPlayer", bookTag->getByte(L"createdByRestrictedPlayer"));
+            held->getTag()->putByte(L"createdByHost", bookTag->getByte(L"createdByHost"));
+        }
+        return;
+    }
+
+    if (identifier == L"MC|BSign")
+    {
+        ByteArrayInputStream bytes(packet->getData());
+        DataInputStream input(&bytes);
+        not_null_ptr<ItemInstance> book = input.readItem();
+        input.close();
+        releaseStreamBuffer(bytes);
+        if (book->isEmpty() || !WrittenBookItem::makeSureTagIsValid(book->getTag()))
+            return;
+        not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
+        if (held->isEmpty())
+            return;
+        if (book->getItem() == Items::writableBook && held->getItem() == Items::writableBook)
+        {
+            not_null_ptr<ItemInstance> signedBook(new ItemInstance(Items::writtenBook));
+            signedBook->addTagElement(L"author", new StringTag(mPlayer->getName()));
+            signedBook->addTagElement(L"title", new StringTag(book->getTag()->getString(L"title")));
+            signedBook->addTagElement(L"pages", book->getTag()->getList(L"pages", Tag::TAG_STRING)->copy());
+            mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, signedBook);
+            signedBook->getTag()->putString(L"ownerUUID", book->getTag()->getString(L"ownerUUID"));
+            signedBook->getTag()->putByte(L"createdByRestrictedPlayer",
+                                          book->getTag()->getByte(L"createdByRestrictedPlayer"));
+            signedBook->getTag()->putByte(L"createdByHost", book->getTag()->getByte(L"createdByHost"));
+        }
+        return;
+    }
+
+    if (identifier == L"MC|TrSel")
+    {
+        ByteArrayInputStream bytes(packet->getData());
+        DataInputStream input(&bytes);
+        int selection = input.readInt();
+        input.close();
+        AbstractContainerMenu* menu = mPlayer->mContainerMenu;
+        if (menu != NULL && dynamic_cast<MerchantMenu*>(menu) != NULL)
+            static_cast<MerchantMenu*>(menu)->setSelectionHint(selection);
+        releaseStreamBuffer(bytes);
+        return;
+    }
+
+    if (identifier == L"MC|Beacon")
+    {
+        AbstractContainerMenu* menu = mPlayer->mContainerMenu;
+        if (menu == NULL)
+            return;
+        BeaconMenu* beaconMenu = dynamic_cast<BeaconMenu*>(menu);
+        if (beaconMenu == NULL)
+            return;
+        ByteArrayInputStream bytes(packet->getData());
+        DataInputStream input(&bytes);
+        int primary = input.readInt();
+        int secondary = input.readInt();
+        input.close();
+        Slot* payment = beaconMenu->getSlot(0);
+        if (payment->hasItem())
+        {
+            payment->remove(1);
+            boost::shared_ptr<Container> beacon = beaconMenu->getBeaconContainer();
+            beacon->setContainerData(1, primary);
+            beacon->setContainerData(2, secondary);
+            beacon->setChanged();
+        }
+        releaseStreamBuffer(bytes);
+        return;
+    }
 
     if (identifier == L"MC|ItemName")
     {
@@ -959,50 +1234,15 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         return;
     }
 
-    ByteArrayInputStream bytes(data);
-    DataInputStream input(&bytes);
-    if (identifier == L"MC|TrSel")
+    if (identifier == L"MC|PickItem")
     {
-        MerchantMenu* menu = dynamic_cast<MerchantMenu*>(mPlayer->mContainerMenu);
-        if (menu != 0)
-            menu->setSelectionHint(input.readInt());
-    }
-    else if (identifier == L"MC|Beacon")
-    {
-        BeaconMenu* menu = dynamic_cast<BeaconMenu*>(mPlayer->mContainerMenu);
-        int primary = input.readInt();
-        int secondary = input.readInt();
-        if (menu != 0)
-        {
-            boost::shared_ptr<Container> beacon = menu->getBeaconContainer();
-            beacon->setContainerData(1, primary);
-            beacon->setContainerData(2, secondary);
-            beacon->removeItem(0, 1);
-        }
-    }
-    else if (identifier == L"MC|PickItem")
-    {
+        ByteArrayInputStream bytes(packet->getData());
+        DataInputStream input(&bytes);
         not_null_ptr<ItemInstance> item = input.readItem();
         mPlayer->mInventory->setPickedItem(item);
+        input.close();
+        releaseStreamBuffer(bytes);
     }
-    else if (identifier == L"MC|BEdit" || identifier == L"MC|BSign")
-    {
-        not_null_ptr<ItemInstance> book = input.readItem();
-        not_null_ptr<ItemInstance> held = mPlayer->getItemInHand(InteractionHand::eInteractionHand_MainHand);
-        bool signing = identifier == L"MC|BSign";
-        bool valid = signing
-            ? WrittenBookItem::makeSureTagIsValid(book->getTag())
-            : WritableBookItem::makeSureTagIsValid(book->getTag());
-        if (valid && held->getItem() == Items::writableBook &&
-            (!signing || book->getItem() == Items::writtenBook))
-            mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, book);
-    }
-    input.close();
-    bytes.mBuffer.data = NULL;
-    bytes.mBuffer.length = 0;
-    bytes.mCount = 0;
-    bytes.mMark = 0;
-    bytes.mPosition = 0;
 }
 void ServerGamePacketListenerImpl::handleCraftItem(boost::shared_ptr<CraftItemPacket> packet)
 {
@@ -1274,24 +1514,21 @@ void ServerGamePacketListenerImpl::handleSoundEvent(boost::shared_ptr<Clientboun
 void ServerGamePacketListenerImpl::onDisconnect(
     DisconnectPacket::eDisconnectReason, void*)
 {
-    if (mDisconnected)
-        return;
-
-    if (mUseAltLeaveMessage)
+    EnterCriticalSection(&mDisconnectMutex);
+    if (!mDisconnected)
     {
-        mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
-            new ClientboundChatPacket(mPlayer->getName(),
-                                      ClientboundChatPacket::eChatPacketMessage_PlayerKicked, -1)));
+        ClientboundChatPacket::EChatPacketMessage message = mUseAltLeaveMessage
+            ? ClientboundChatPacket::eChatPacketMessage_PlayerKicked
+            : ClientboundChatPacket::eChatPacketMessage_PlayerLeft;
+        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        players->broadcastAll(
+            boost::shared_ptr<Packet>(new ClientboundChatPacket(mPlayer->getName(), message, -1)));
+        mPlayer->disconnect();
+        players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        players->remove(mPlayer);
+        mDisconnected = true;
     }
-    else
-    {
-        mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
-            new ClientboundChatPacket(mPlayer->getName(),
-                                      ClientboundChatPacket::eChatPacketMessage_PlayerLeft, -1)));
-    }
-    mPlayer->disconnect();
-    mServer->getPlayers()->remove(mPlayer);
-    mDisconnected = true;
+    LeaveCriticalSection(&mDisconnectMutex);
 }
 
 uint64_t ServerGamePacketListenerImpl::getMilliseconds()

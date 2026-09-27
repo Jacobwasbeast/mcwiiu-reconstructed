@@ -46,7 +46,7 @@ protected:
     signed char mZa;
     signed char myRot;
     signed char mxRot;
-    signed char mUnused;
+    signed char mHasRot;
     bool mOnGround;
 };
 

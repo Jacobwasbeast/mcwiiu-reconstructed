@@ -48,6 +48,7 @@ public:
         eMessage_SyncTeamInvite = 9,
         eMessage_RemoveTeamInvite = 10,
         eMessage_AcceptTeamInvite = 11,
+        eMessage_Unnamed12 = 12,
         eMessage_AddAreaBounds = 13,
         eMessage_SetAreaBounds = 14,
         eMessage_ClearAreaBounds = 15,

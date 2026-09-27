@@ -5,8 +5,8 @@
 #include <boost/pointer_cast.hpp>
 #include <cassert>
 
-MoveEntityPacketSmall::MoveEntityPacketSmall() : mEntityId(-1), mXa(0), mYa(0), mZa(0), myRot(0), mxRot(0), mUnused(0), mOnGround(true) {}
-MoveEntityPacketSmall::MoveEntityPacketSmall(int entityId) : mEntityId(entityId), mXa(0), mYa(0), mZa(0), myRot(0), mxRot(0), mUnused(0), mOnGround(true) { assert(entityId <= 0x7ff); }
+MoveEntityPacketSmall::MoveEntityPacketSmall() : mEntityId(-1), mXa(0), mYa(0), mZa(0), myRot(0), mxRot(0), mHasRot(0), mOnGround(true) {}
+MoveEntityPacketSmall::MoveEntityPacketSmall(int entityId) : mEntityId(entityId), mXa(0), mYa(0), mZa(0), myRot(0), mxRot(0), mHasRot(0), mOnGround(true) { assert(entityId <= 0x7ff); }
 MoveEntityPacketSmall::~MoveEntityPacketSmall() {}
 int MoveEntityPacketSmall::getPacketId() { return 162; }
 void MoveEntityPacketSmall::read(DataInputStream* input) { mEntityId = input->readUnsignedShort(); }
@@ -39,7 +39,7 @@ void MoveEntityPacketSmall::Pos::write(DataOutputStream* output) { int packed = 
 int MoveEntityPacketSmall::Pos::getEstimatedSize() { return 4; }
 boost::shared_ptr<Packet> MoveEntityPacketSmall::Pos::create() { return boost::shared_ptr<Packet>(new Pos()); }
 
-MoveEntityPacketSmall::PosRot::PosRot() : MoveEntityPacketSmall() { mUnused = 1; }
+MoveEntityPacketSmall::PosRot::PosRot() : MoveEntityPacketSmall() { mHasRot = 1; }
 MoveEntityPacketSmall::PosRot::PosRot(int entityId, signed char xa, signed char ya, signed char za,
                                       signed char yRot, signed char xRot, bool onGround)
     : MoveEntityPacketSmall(entityId)
@@ -50,7 +50,7 @@ MoveEntityPacketSmall::PosRot::PosRot(int entityId, signed char xa, signed char 
     myRot = yRot;
     mxRot = xRot;
     mOnGround = onGround;
-    mUnused = 1;
+    mHasRot = 1;
 }
 MoveEntityPacketSmall::PosRot::~PosRot() {}
 int MoveEntityPacketSmall::PosRot::getPacketId() { return 165; }
@@ -80,8 +80,8 @@ void MoveEntityPacketSmall::PosRot::write(DataOutputStream* output)
 int MoveEntityPacketSmall::PosRot::getEstimatedSize() { return 5; }
 boost::shared_ptr<Packet> MoveEntityPacketSmall::PosRot::create() { return boost::shared_ptr<Packet>(new PosRot()); }
 
-MoveEntityPacketSmall::Rot::Rot() : MoveEntityPacketSmall() { mUnused = 1; }
-MoveEntityPacketSmall::Rot::Rot(int entityId, signed char yRot, signed char xRot, bool onGround) : MoveEntityPacketSmall(entityId) { myRot = yRot; mOnGround = onGround; mxRot = xRot; mUnused = 1; }
+MoveEntityPacketSmall::Rot::Rot() : MoveEntityPacketSmall() { mHasRot = 1; }
+MoveEntityPacketSmall::Rot::Rot(int entityId, signed char yRot, signed char xRot, bool onGround) : MoveEntityPacketSmall(entityId) { myRot = yRot; mOnGround = onGround; mxRot = xRot; mHasRot = 1; }
 MoveEntityPacketSmall::Rot::~Rot() {}
 int MoveEntityPacketSmall::Rot::getPacketId() { return 164; }
 void MoveEntityPacketSmall::Rot::read(DataInputStream* input) { int packed = input->readUnsignedShort(); mEntityId = (packed >> 4) & 0xfff; if (mEntityId & 0x800) mEntityId -= 0x1000; mOnGround = (packed & 1) != 0; myRot = (signed char)input->readByte(); }

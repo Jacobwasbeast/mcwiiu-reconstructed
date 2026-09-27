@@ -35,9 +35,9 @@ public:
 
     unsigned int getEntityId();
     PlayerUID getPlayerId();
-    unsigned int getX();
-    unsigned int getY();
-    unsigned int getZ();
+    int getX();
+    int getY();
+    int getZ();
     unsigned char getyRot();
     unsigned char getxRot();
     std::wstring getName();

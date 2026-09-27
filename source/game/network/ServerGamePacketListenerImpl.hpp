@@ -6,9 +6,11 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
+#include "game/core/CriticalSection.hpp"
 #include "game/network/ServerGamePacketListener.hpp"
 #include "game/network/Connection.hpp"
 #include "game/network/DisconnectPacket.hpp"
@@ -146,16 +148,24 @@ private:
     friend class PlayerList;
     friend class ServerPlayer;
     friend class ServerConnection;
+    static const int TELEPORT_RESEND_TICKS = 100;
+    static const int INVENTORY_MENU_FIRST_SLOT = 1;
+    static const int INVENTORY_MENU_LAST_SLOT = 45;
+    static const int DROP_SPAM_LIMIT = 200;
+    static const int DROP_SPAM_STEP = 20;
+
     Connection* mConnection;
     bool mDisconnected;
+    OSFastMutex mDisconnectMutex;
     PlayerUID mPlayerUID;
     PlayerUID mOldPlayerUID;
-    bool mFriendsOnly = false;
+    bool mFriendsOnly;
     MinecraftServer* mServer;
     boost::shared_ptr<ServerPlayer> mPlayer;
     int mTickCount;
     int mKeepAliveId;
     uint64_t mKeepAliveTime;
+    int mKeepAlivePending;
     int mChatSpamTickCount;
     int mDropSpamTickCount;
     double mFirstGoodX;
@@ -164,7 +174,7 @@ private:
     double mLastGoodX;
     double mLastGoodY;
     double mLastGoodZ;
-    boost::shared_ptr<Entity> mLastVehicle;
+    boost::weak_ptr<Entity> mLastVehicle;
     double mVehicleFirstGoodX;
     double mVehicleFirstGoodY;
     double mVehicleFirstGoodZ;
@@ -181,6 +191,7 @@ private:
     int mReceivedMovePacketCount;
     int mKnownMovePacketCount;
     boost::unordered_map<int, short, IntKeyHash, IntKeyEq> mContainerType;
+    bool mConnectionClosed;
     std::vector<std::wstring> mNames;
     bool mUseAltLeaveMessage;
 };

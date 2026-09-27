@@ -61,6 +61,7 @@ public:
         eChatPacketMessage_DeathFallingBlock = 37,
         eChatPacketMessage_DeathThorns = 39,
         eChatPacketMessage_DeathExplosionAlternate = 40,
+        eChatPacketMessage_DeathDryOut = 41,
         eChatPacketMessage_DeathTrident = 42,
         eChatPacketMessage_DeathFellLadder = 43,
         eChatPacketMessage_DeathFellVines = 44,
@@ -198,6 +199,7 @@ public:
 
 private:
     friend class ClientPacketListener;
+    friend class CombatTracker;
     friend class GameStats;
     friend class MasterGameMode;
     friend class ServerPlayer;

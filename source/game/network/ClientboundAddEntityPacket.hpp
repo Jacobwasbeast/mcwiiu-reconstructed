@@ -17,6 +17,42 @@ class PacketListener;
 class ClientboundAddEntityPacket : public Packet, public boost::enable_shared_from_this<ClientboundAddEntityPacket>
 {
 public:
+    enum
+    {
+        BOAT = 1,
+        ITEM = 2,
+        AREA_EFFECT_CLOUD = 3,
+        MINECART = 10,
+        PRIMED_TNT = 50,
+        ENDER_CRYSTAL = 51,
+        ARROW = 60,
+        SNOWBALL = 61,
+        EGG = 62,
+        FIREBALL = 63,
+        SMALL_FIREBALL = 64,
+        THROWN_ENDERPEARL = 65,
+        WITHER_SKULL = 66,
+        SHULKER_BULLET = 67,
+        LLAMA_SPIT = 68,
+        FALLING_ALT = 69,
+        FALLING = 70,
+        ITEM_FRAME = 71,
+        EYE_OF_ENDER = 72,
+        POTION = 73,
+        EXPERIENCE_BOTTLE_ALT = 74,
+        EXPERIENCE_BOTTLE = 75,
+        FIREWORKS = 76,
+        LEASH_KNOT = 77,
+        ARMOR_STAND = 78,
+        EVOCATION_FANGS = 79,
+        FISHING_HOOK_FIRST = 80,
+        FISHING_HOOK = 90,
+        SPECTRAL_ARROW = 91,
+        DRAGON_FIREBALL_ALT = 92,
+        DRAGON_FIREBALL = 93,
+        TRIDENT = 94
+    };
+
     ClientboundAddEntityPacket();
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data);
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int yRot, int xRot, int xa, int ya, int za);

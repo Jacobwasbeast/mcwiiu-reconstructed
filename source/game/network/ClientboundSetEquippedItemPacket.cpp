@@ -25,14 +25,14 @@ ClientboundSetEquippedItemPacket::~ClientboundSetEquippedItemPacket()
 void ClientboundSetEquippedItemPacket::read(DataInputStream* input)
 {
     m_entity = input->readVarInt();
-    m_slot = EquipmentSlot::SLOTS[input->readByte()];
+    m_slot = EquipmentSlot::SLOTS[input->readShort()];
     m_item = input->readItem();
 }
 
 void ClientboundSetEquippedItemPacket::write(DataOutputStream* output)
 {
     output->writeVarInt(m_entity);
-    output->writeShort(static_cast<short>(m_slot->getIndex()));
+    output->writeShort(static_cast<short>(m_slot->getEIndex()));
     output->writeItem(m_item);
 }
 
