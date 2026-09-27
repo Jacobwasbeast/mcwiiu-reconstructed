@@ -1179,7 +1179,6 @@ public:
 protected:
     unsigned int mThreadNameVtable;
     const char* mThreadName;
-    /* MessageQueue is at 0x18 in the Wii U object. */
     MessageQueue mMessageQueue;
     int mStackSize;
     int mUnknown5c;
