@@ -47,6 +47,14 @@ public:
 
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
+
+    enum BiomePresentFlag
+    {
+        BIOME_PRESENT_OCEAN = 1,
+        BIOME_PRESENT_DEEP_OCEAN = 2,
+        BIOME_PRESENT_SLIME_CHUNK = 4,
+        BIOME_PRESENT_SWAMP = 8
+    };
     class BlockChange
     {
     public:

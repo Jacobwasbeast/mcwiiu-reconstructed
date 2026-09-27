@@ -656,7 +656,7 @@ void LevelChunk::init(Level* level, int x, int z)
     std::memcpy(&randomSeed, &randomSeedBits, sizeof(randomSeed));
     Random random(randomSeed);
     if (random.nextInt(10) == 0)
-        mBiomePresent |= 4;
+        mBiomePresent |= BIOME_PRESENT_SLIME_CHUNK;
 }
 bool LevelChunk::isAt(int x, int z)
 {
@@ -2252,11 +2252,11 @@ Biome* LevelChunk::getBiome(const BlockPos& pos, BiomeSource* source)
         int biomeId = Biome::getId(biome);
         mBiomes.data[columnIndex] = (unsigned char)biomeId;
         if (biomeId == 0)
-            mBiomePresent |= 1;
+            mBiomePresent |= BIOME_PRESENT_OCEAN;
         else if (biomeId == 6)
-            mBiomePresent |= 8;
+            mBiomePresent |= BIOME_PRESENT_SWAMP;
         else if (biomeId == 0x18)
-            mBiomePresent |= 2;
+            mBiomePresent |= BIOME_PRESENT_DEEP_OCEAN;
     }
     Biome* result = Biome::getBiome(mBiomes.data[columnIndex]);
     if (result == NULL)
@@ -2283,13 +2283,13 @@ void LevelChunk::updateBiomePresentFlags()
     {
         unsigned int biome = mBiomes.data[i];
         if (biome == 0)
-            mBiomePresent |= 1;
+            mBiomePresent |= BIOME_PRESENT_OCEAN;
         else if (biome == 6)
-            mBiomePresent |= 8;
+            mBiomePresent |= BIOME_PRESENT_SWAMP;
         else if (biome == 24)
-            mBiomePresent |= 2;
+            mBiomePresent |= BIOME_PRESENT_DEEP_OCEAN;
         else if (biome >= 40 && biome < 48)
-            mBiomePresent |= (biome & 1) == 0 ? 1 : 2;
+            mBiomePresent |= (biome & 1) == 0 ? BIOME_PRESENT_OCEAN : BIOME_PRESENT_DEEP_OCEAN;
     }
 }
 void LevelChunk::setBiomes(arrayWithLength<unsigned char> biomes)
