@@ -1,23 +1,23 @@
 #ifndef SOURCE_VENDOR_LOADINGINPUTPARAMS_HPP
 #define SOURCE_VENDOR_LOADINGINPUTPARAMS_HPP
 
-#include <stdint.h>
+#include "game/minigame/EMiniGameId.hpp"
 
 class _LoadingInputParams
 {
 public:
     _LoadingInputParams();
 
-    void* (*m_firstParameter)(void*);
-    void* m_secondParameter;
-    void* m_thirdParameter;
-    int32_t m_selectedIndex;
-    int32_t m_fifthParameter;
-    int32_t m_sixthParameter;
-    int32_t m_seventhParameter;
-    int32_t m_eighthParameter;
-    bool m_isEnabled;
-    int32_t m_timeout;
+    int (*m_threadProc)(void*);
+    void* m_threadParam;
+    void* m_completionData;
+    int m_cancelText;
+    int (*m_cancelFunc)(void*);
+    int (*m_completeFunc)(void*);
+    void* m_cancelFuncParam;
+    void* m_completeFuncParam;
+    bool m_waitForThreadToDelete;
+    EMiniGameId m_miniGameId;
 };
 
 #endif

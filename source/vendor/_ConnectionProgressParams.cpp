@@ -1,13 +1,15 @@
 #include "vendor/_ConnectionProgressParams.hpp"
 
+#include <cstddef>
+
 _ConnectionProgressParams::_ConnectionProgressParams()
 {
-    m_connectionId = 0;
-    m_userIndex = -1;
-    m_isLocal = false;
-    m_isJoining = false;
-    m_progress = 0;
-    m_gameType = 0;
-    m_miniGameType = 0;
-    m_timeout = 15;
+    m_cancelFunc = NULL;
+    m_miniGameId = eMiniGameId_Any;
+    m_cancelFuncParam = NULL;
+    m_setFailTimer = false;
+    m_showTooltips = false;
+    m_playerId = 0;
+    m_timerTime = 0;
+    m_stringId = -1;
 }

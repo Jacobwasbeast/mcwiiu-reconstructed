@@ -6,14 +6,13 @@
 class _MapDataMappings
 {
 public:
+    PlayerUID xuids[256];
+    unsigned char dimensions[64];
+
     _MapDataMappings();
 
-    unsigned int getDimension(int mapId);
-    void setMapping(int mapId, PlayerUID uid, int dimension);
-
-private:
-    unsigned char m_playerUidData[256][20];
-    unsigned char m_dimensions[16];
+    int getDimension(int id);
+    void setMapping(int id, PlayerUID xuid, int dimension);
 };
 
 #endif

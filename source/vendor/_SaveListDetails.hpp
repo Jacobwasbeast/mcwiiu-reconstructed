@@ -8,7 +8,7 @@ class _SaveListDetails
 {
 public:
     _SaveListDetails();
-    uint32_t m_value0;
+    uint32_t m_saveIndex;
     unsigned char* m_thumbnail;
     uint32_t m_thumbnailSize;
     wchar_t m_title[128];

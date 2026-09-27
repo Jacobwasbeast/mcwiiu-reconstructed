@@ -4,32 +4,21 @@
 
 _MapDataMappings_old::_MapDataMappings_old()
 {
-    std::memset(mMappingWords, 0, 0x500);
-    std::memset(mDimensionMappings, 0, 8);
+    std::memset(xuids, 0, sizeof(xuids));
+    std::memset(dimensions, 0, sizeof(dimensions));
 }
 
-unsigned int _MapDataMappings_old::getDimension(int mapping)
+int _MapDataMappings_old::getDimension(int id)
 {
-    const unsigned int byteIndex = static_cast<unsigned int>(mapping >> 3);
-    const unsigned int bitIndex = static_cast<unsigned int>(mapping & 7);
-    if ((mDimensionMappings[byteIndex] & (static_cast<unsigned char>(0x80) >> bitIndex)) == 0)
-    {
-        return 0;
-    }
-    return 0xffffffffU;
+    return (dimensions[id >> 3] & (128 >> (id % 8))) ? -1 : 0;
 }
 
-void _MapDataMappings_old::setMapping(int mapping, PlayerUID player, int dimension)
+void _MapDataMappings_old::setMapping(int id, PlayerUID xuid, int dimension)
 {
-    std::memcpy(mMappingWords + mapping * 5, &player, 20);
-    const unsigned int byteIndex = static_cast<unsigned int>(mapping >> 3);
-    const unsigned char bit = static_cast<unsigned char>(0x80) >> static_cast<unsigned int>(mapping & 7);
+    xuids[id] = xuid;
+
     if (dimension == 0)
-    {
-        mDimensionMappings[byteIndex] = static_cast<unsigned char>(mDimensionMappings[byteIndex] & static_cast<unsigned char>(~bit));
-    }
+        dimensions[id >> 3] &= ~(128 >> (id % 8));
     else
-    {
-        mDimensionMappings[byteIndex] = static_cast<unsigned char>(mDimensionMappings[byteIndex] | bit);
-    }
+        dimensions[id >> 3] |= 128 >> (id % 8);
 }

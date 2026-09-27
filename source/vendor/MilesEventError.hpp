@@ -16,6 +16,6 @@ extern MilesEventErrorCallback g_milesAuditionErrorCallback;
 extern "C" void MilesSetEventErrorCallback(MilesEventErrorCallback callback);
 extern "C" void MilesSetEventErrorCallbackInternal(MilesEventErrorCallback callback);
 extern "C" void Audition_Error(long long context, const char* text);
-void ErrorHandler__F9ErrorTypeULPCc(ErrorType type, unsigned long long context, const char* text);
+void ErrorHandler(ErrorType type, unsigned long long context, const char* text);
 
 #endif

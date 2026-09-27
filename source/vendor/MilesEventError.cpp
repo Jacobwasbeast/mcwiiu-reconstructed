@@ -44,7 +44,7 @@ extern "C" void Audition_Error(long long context, const char* text)
         g_milesAuditionErrorCallback(context, text);
 }
 
-void ErrorHandler__F9ErrorTypeULPCc(ErrorType type, unsigned long long context, const char* text)
+void ErrorHandler(ErrorType type, unsigned long long context, const char* text)
 {
     const unsigned int value = static_cast<unsigned int>(type);
     if (value < 2)

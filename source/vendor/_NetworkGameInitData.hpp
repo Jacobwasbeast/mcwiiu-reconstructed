@@ -3,9 +3,11 @@
 
 #include <vector>
 
+#include "game/core/FileHeader.hpp"
 #include "game/world/LevelRules.hpp"
 
 class LevelGenerationOptions;
+class LevelType;
 class SuperflatConfig;
 struct DiskSaveBuffer;
 
@@ -15,23 +17,23 @@ public:
     _NetworkGameInitData();
 
     long long m_seed;
-    DiskSaveBuffer* m_value2;
-    int m_value3;
-    int m_value4;
-    LevelGenerationOptions* m_value5;
-    int m_value6;
-    unsigned char m_flag0;
-    int m_value7;
-    unsigned char m_mode;
-    int m_value8;
-    int m_value9;
-    SuperflatConfig* m_value10;
+    DiskSaveBuffer* m_saveData;
+    int m_hostOptions;
+    int m_miniGameHostOptions;
+    LevelGenerationOptions* m_levelGenerationOptions;
+    int m_texturePackId;
+    unsigned char m_findSeed;
+    int m_xzSize;
+    unsigned char m_hellScale;
+    ESavePlatform m_savePlatform;
+    int m_gameType;
+    SuperflatConfig* m_levelTypeOptions;
     std::vector<LevelRules::LevelRulesetGroup*> m_ruleGroups;
-    unsigned char m_flag1;
-    int m_value11;
-    int m_value12;
-    int m_value13;
-    unsigned char m_flag2;
+    unsigned char m_biomeScale;
+    int m_biomeCentreXChunk;
+    int m_biomeCentreZChunk;
+    LevelType* m_levelType;
+    unsigned char m_recordLevelResume;
 };
 
 #endif

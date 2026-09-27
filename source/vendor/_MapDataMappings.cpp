@@ -4,37 +4,42 @@
 
 _MapDataMappings::_MapDataMappings()
 {
-    std::memset(m_playerUidData, 0, sizeof(m_playerUidData));
-    std::memset(m_dimensions, 0, sizeof(m_dimensions));
+    std::memset(xuids, 0, sizeof(xuids));
+    std::memset(dimensions, 0, sizeof(dimensions));
 }
 
-unsigned int _MapDataMappings::getDimension(int mapId)
+int _MapDataMappings::getDimension(int id)
 {
-    const unsigned int shift = static_cast<unsigned int>((mapId & 3) * 2);
-    const unsigned int value = (m_dimensions[mapId >> 2] >> shift) & 3;
-    if (value == 1)
+    int shift = (id % 4) * 2;
+    int value = (dimensions[id >> 2] & (3 << shift)) >> shift;
+    switch (value)
     {
-        return static_cast<unsigned int>(-1);
-    }
-    if (value == 2)
-    {
+    case 0:
+        return 0;
+    case 1:
+        return -1;
+    case 2:
         return 1;
+    default:
+        return 0;
     }
-    return 0;
 }
 
-void _MapDataMappings::setMapping(int mapId, PlayerUID uid, int dimension)
+void _MapDataMappings::setMapping(int id, PlayerUID xuid, int dimension)
 {
-    std::memcpy(m_playerUidData[mapId], &uid, sizeof(uid));
-    const unsigned int shift = static_cast<unsigned int>((mapId & 3) * 2);
-    unsigned int value = 0;
-    if (dimension == -1)
+    xuids[id] = xuid;
+
+    int shift = (id % 4) * 2;
+    dimensions[id >> 2] &= ~(3 << shift);
+    switch (dimension)
     {
-        value = 1;
+    case -1:
+        dimensions[id >> 2] |= 1 << shift;
+        break;
+    case 1:
+        dimensions[id >> 2] |= 2 << shift;
+        break;
+    default:
+        break;
     }
-    else if (dimension == 1)
-    {
-        value = 2;
-    }
-    m_dimensions[mapId >> 2] = static_cast<unsigned char>((m_dimensions[mapId >> 2] & ~(3u << shift)) | (value << shift));
 }

@@ -6,13 +6,13 @@
 class _MapDataMappings_old
 {
 public:
-    _MapDataMappings_old();
-    unsigned int getDimension(int mapping);
-    void setMapping(int mapping, PlayerUID player, int dimension);
+    PlayerUID xuids[256];
+    unsigned char dimensions[32];
 
-private:
-    unsigned int mMappingWords[1280];
-    unsigned char mDimensionMappings[32];
+    _MapDataMappings_old();
+
+    int getDimension(int id);
+    void setMapping(int id, PlayerUID xuid, int dimension);
 };
 
 #endif

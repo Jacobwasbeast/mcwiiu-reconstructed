@@ -4,14 +4,31 @@
 #include <stdint.h>
 #include "nn/nex/qResult.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 class ByteStream;
 class EndPoint;
 class Packet;
 class UserContext;
-class SocketDriver { public: typedef int _Result; class InetAddress {}; };
-namespace Stream { enum Type { TypeUnknown = 0 }; }
-}}
+class SocketDriver
+{
+public:
+    typedef int _Result;
+    class InetAddress
+    {
+    };
+};
+namespace Stream
+{
+enum Type
+{
+    TypeUnknown = 0
+};
+}
+}
+}
 
 class __N_19_OnlineCore_Blob_cpp_9428d484
 {
@@ -81,11 +98,16 @@ public:
     bool PRUDPUnpackCheck(const nn::nex::ByteStream*, unsigned int*);
     uint32_t RelayProtocolCheck(const nn::nex::ByteStream*);
     uint64_t DisconnectCallback(nn::nex::EndPoint*, nn::nex::qResult, const nn::nex::UserContext*);
-    uint32_t CalcDataPacketSignature(const nn::nex::Packet*, nn::nex::Stream::Type, const unsigned char*, int, bool);
-    void DefaultRecvFromCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const nn::nex::SocketDriver::InetAddress*, const unsigned int*);
-    void DefaultSendToCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const nn::nex::SocketDriver::InetAddress&, const unsigned int*);
-    void DefaultRecvCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const unsigned int*);
-    void DefaultSendCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const unsigned int*);
+    uint32_t CalcDataPacketSignature(const nn::nex::Packet*, nn::nex::Stream::Type, const unsigned char*, int,
+                                     bool);
+    void DefaultRecvFromCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int,
+                                 const nn::nex::SocketDriver::InetAddress*, const unsigned int*);
+    void DefaultSendToCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int,
+                               const nn::nex::SocketDriver::InetAddress&, const unsigned int*);
+    void DefaultRecvCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int,
+                             const unsigned int*);
+    void DefaultSendCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int,
+                             const unsigned int*);
     int findReturnCode(int*, int);
     int GetNeededWideCharBufferSize(const char*);
     int Latin1ToUtf8(const char*, char*, unsigned int);

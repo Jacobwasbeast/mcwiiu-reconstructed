@@ -4,7 +4,7 @@
 
 _SaveListDetails::_SaveListDetails()
 {
-    m_value0 = 0;
+    m_saveIndex = 0;
     m_thumbnail = 0;
     m_thumbnailSize = 0;
     std::memset(m_title, 0, sizeof(m_title));

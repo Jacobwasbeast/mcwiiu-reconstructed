@@ -2,14 +2,14 @@
 
 _LoadingInputParams::_LoadingInputParams()
 {
-    m_firstParameter = 0;
-    m_secondParameter = 0;
-    m_thirdParameter = 0;
-    m_selectedIndex = -1;
-    m_fifthParameter = 0;
-    m_sixthParameter = 0;
-    m_seventhParameter = 0;
-    m_eighthParameter = 0;
-    m_isEnabled = false;
-    m_timeout = 15;
+    m_threadProc = 0;
+    m_threadParam = 0;
+    m_completionData = 0;
+    m_cancelText = -1;
+    m_cancelFunc = 0;
+    m_completeFunc = 0;
+    m_cancelFuncParam = 0;
+    m_completeFuncParam = 0;
+    m_waitForThreadToDelete = false;
+    m_miniGameId = eMiniGameId_Any;
 }
