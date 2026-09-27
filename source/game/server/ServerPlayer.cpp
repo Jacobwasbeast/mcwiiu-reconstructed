@@ -125,35 +125,6 @@ const int CHUNK_SIZE = 16;
 const int CHUNK_HEIGHT = 256;
 const int MAX_DELAYED_CHUNK_PACKETS = 3;
 
-static void sendClientChatPacket(ServerPlayer* player, const std::wstring& text,
-                                 ClientboundChatPacket::EChatPacketMessage message, int entityType)
-{
-    if (player == NULL || player->mConnection == NULL)
-        return;
-    boost::shared_ptr<ClientboundChatPacket> packet(new ClientboundChatPacket(text, message, entityType));
-    player->mConnection->send(boost::static_pointer_cast<Packet>(packet));
-}
-
-static void broadcastClientChatPacket(MinecraftServer* server, const std::wstring& text,
-                                      ClientboundChatPacket::EChatPacketMessage message)
-{
-    if (server == NULL)
-        return;
-    PlayerList* playerList = server->getPlayers();
-    if (playerList == NULL)
-        return;
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
-    if (players == NULL)
-        return;
-    for (size_t i = 0; i < players->size(); ++i)
-    {
-        boost::shared_ptr<ServerPlayer> player = (*players)[i];
-        if (player == NULL)
-            continue;
-        sendClientChatPacket(player.get(), text, message, 0x14);
-    }
-}
-
 static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource* source)
 {
     player->mPvpState = 0;
@@ -1605,64 +1576,177 @@ uint8_t ServerPlayer::hasDisconnected()
 
 void ServerPlayer::displayClientMessage(int32_t message, bool force)
 {
-    const std::wstring localizedText(L10N::GetString(message));
-    ClientboundChatPacket::EChatPacketMessage packetMessage =
-        ClientboundChatPacket::eChatPacketMessage_Text;
-    bool broadcast = false;
-
-    switch (message)
+    std::wstring name = getName();
+    ClientboundChatPacket::EChatPacketMessage packetMessage = ClientboundChatPacket::eChatPacketMessage_Text;
+    enum
     {
-    case 0x00FE5875: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms; broadcast = true; break;
-    case 0x16972FBF: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxVillagers; broadcast = true; break;
+        eRecipients_None,
+        eRecipients_Self,
+        eRecipients_Others,
+        eRecipients_All
+    } recipients = eRecipients_None;
+
+    switch (static_cast<uint32_t>(message))
+    {
+    case IDS_TILE_BED_OCCUPIED:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedOccupied;
+        mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
+        break;
+    case IDS_TILE_BED_NO_SLEEP:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedNoSleep;
+        mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
+        break;
+    case IDS_TILE_BED_NOT_VALID:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedNotValid;
+        mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
+        break;
     case IDS_TILE_BED_NOTSAFE:
-        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedNotSafe, -1);
-        return;
-    case 0x1E0D17D0: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxSquid; broadcast = true; break;
-    case 0x1EE681BA: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities; broadcast = true; break;
-    case IDS_CANT_SHEAR_MOOSHROOM: packetMessage = ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom; broadcast = true; break;
-    case 0x3DCD926B: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxPhantoms; broadcast = true; break;
-    case 0x3E35B6E8: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms; broadcast = true; break;
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedNotSafe;
+        mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
+        break;
+    case IDS_TILE_BED_TOO_FAR_AWAY:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedTooFarAway;
+        mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
+        break;
+    case IDS_TILE_BED_MESLEEP:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedMeSleep;
+        mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
+        break;
     case IDS_TILE_BED_PLAYERSLEEP:
-        broadcastClientChatPacket(mServer, localizedText, ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep);
-        return;
-    case 0x60A3835D: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxFishAndSquid; broadcast = true; break;
-    case IDS_PLAYER_LEFT_END: packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerLeftEnd; broadcast = true; break;
-    case 0x70EDC806: packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxWolves; broadcast = true; break;
-    case static_cast<int32_t>(0x82460728): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxChickens; broadcast = true; break;
-    case static_cast<int32_t>(0x8ECD701E): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxArmorStands; broadcast = true; break;
-    case static_cast<int32_t>(0x99326383): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredChickens; broadcast = true; break;
-    case static_cast<int32_t>(0x9F8BFFAE): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxAnimals; broadcast = true; break;
-    case static_cast<int32_t>(0xA82B5A66): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnemies; broadcast = true; break;
-    case static_cast<int32_t>(0xB2145884): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBoats; broadcast = true; break;
-    case static_cast<int32_t>(0xB399BD15): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals; broadcast = true; break;
-    case static_cast<int32_t>(0xB604AAFF): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMinecarts; broadcast = true; break;
-    case static_cast<int32_t>(0xB714E0E2): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxDolphins; broadcast = true; break;
-    case static_cast<int32_t>(0xC952E8B9): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals; broadcast = true; break;
-    case static_cast<int32_t>(IDS_TILE_BED_OCCUPIED):
-        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedOccupied, -1);
-        return;
-    case static_cast<int32_t>(IDS_PLAYER_ENTERED_END): packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerEnteredEnd; broadcast = true; break;
-    case static_cast<int32_t>(IDS_CANT_SPAWN_IN_PEACEFUL): packetMessage = ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful; broadcast = true; break;
-    case static_cast<int32_t>(IDS_TILE_BED_NOT_VALID):
-        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedOccupied, -1);
-        return;
-    case static_cast<int32_t>(0xEC344E3D): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredWolves; broadcast = true; break;
-    case static_cast<int32_t>(0xEF12CC40): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBeacons; broadcast = true; break;
-    case static_cast<int32_t>(IDS_TILE_BED_TOO_FAR_AWAY):
-        sendClientChatPacket(this, std::wstring(), ClientboundChatPacket::eChatPacketMessage_BedOccupied, -1);
-        return;
-    case static_cast<int32_t>(0xFAB1DEB6): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBats; broadcast = true; break;
-    case static_cast<int32_t>(IDS_TILE_BED_MESLEEP):
-        sendClientChatPacket(this, localizedText, ClientboundChatPacket::eChatPacketMessage_BedMeSleep,
-                             force ? 1 : 0);
-        return;
-    case static_cast<int32_t>(0xFDF65C18): packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBanners; broadcast = true; break;
-    default:
+    {
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep;
+        std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
+        for (unsigned int i = 0; i < players->size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = (*players)[i];
+            if (shared_from_this() == player)
+                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
+                    new ClientboundChatPacket(name, ClientboundChatPacket::eChatPacketMessage_BedMeSleep, -1)));
+            else
+                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
+                    new ClientboundChatPacket(name, ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep, -1)));
+        }
         return;
     }
+    case IDS_PLAYER_ENTERED_END:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerEnteredEnd;
+        recipients = eRecipients_All;
+        break;
+    case IDS_PLAYER_LEFT_END:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerLeftEnd;
+        recipients = eRecipients_All;
+        break;
+    case 0x9F8BFFAE:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxAnimals;
+        recipients = eRecipients_All;
+        break;
+    case 0x82460728:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxChickens;
+        recipients = eRecipients_All;
+        break;
+    case 0x1E0D17D0:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxSquid;
+        recipients = eRecipients_All;
+        break;
+    case 0x3E35B6E8:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms;
+        recipients = eRecipients_All;
+        break;
+    case 0x70EDC806:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxWolves;
+        recipients = eRecipients_All;
+        break;
+    case 0xA82B5A66:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnemies;
+        recipients = eRecipients_All;
+        break;
+    case 0x16972FBF:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxVillagers;
+        recipients = eRecipients_All;
+        break;
+    case 0x1EE681BA:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities;
+        recipients = eRecipients_All;
+        break;
+    case 0x8ECD701E:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxArmorStands;
+        recipients = eRecipients_All;
+        break;
+    case IDS_CANT_SPAWN_IN_PEACEFUL:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful;
+        recipients = eRecipients_All;
+        break;
+    case 0xB399BD15:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals;
+        recipients = eRecipients_All;
+        break;
+    case 0x99326383:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredChickens;
+        recipients = eRecipients_All;
+        break;
+    case 0x00FE5875:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms;
+        recipients = eRecipients_All;
+        break;
+    case 0xEC344E3D:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredWolves;
+        recipients = eRecipients_All;
+        break;
+    case IDS_CANT_SHEAR_MOOSHROOM:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom;
+        recipients = eRecipients_All;
+        break;
+    case 0xB2145884:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBoats;
+        recipients = eRecipients_All;
+        break;
+    case 0xB604AAFF:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMinecarts;
+        recipients = eRecipients_All;
+        break;
+    case 0xFAB1DEB6:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBats;
+        recipients = eRecipients_All;
+        break;
+    case 0xFDF65C18:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBanners;
+        recipients = eRecipients_All;
+        break;
+    case 0xC952E8B9:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals;
+        recipients = eRecipients_All;
+        break;
+    case 0xEF12CC40:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBeacons;
+        recipients = eRecipients_All;
+        break;
+    case 0xB714E0E2:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxDolphins;
+        recipients = eRecipients_All;
+        break;
+    case 0x3DCD926B:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxPhantoms;
+        recipients = eRecipients_All;
+        break;
+    case 0x60A3835D:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxFishAndSquid;
+        recipients = eRecipients_All;
+        break;
+    }
 
-    if (broadcast)
-        broadcastClientChatPacket(mServer, localizedText, packetMessage);
+    if (recipients == eRecipients_None)
+        return;
+
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
+    for (unsigned int i = 0; i < players->size(); ++i)
+    {
+        boost::shared_ptr<ServerPlayer> player = players->at(i);
+        bool isSelf = shared_from_this() == player;
+        if (recipients == eRecipients_All || (recipients == eRecipients_Self && isSelf)
+            || (recipients == eRecipients_Others && !isSelf))
+            player->mConnection->send(
+                boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(name, packetMessage, -1)));
+    }
 }
 
 void ServerPlayer::completeUsingItem()

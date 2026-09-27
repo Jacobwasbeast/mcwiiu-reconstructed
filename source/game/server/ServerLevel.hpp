@@ -71,6 +71,8 @@ struct TickNextTickDataKeyEq
 
 class ServerLevel : public Level
 {
+    friend class PlayerList;
+
 public:
     struct QueuedSendBlockData
     {
