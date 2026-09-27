@@ -58,7 +58,7 @@ void MinecartSoundInstance::tick()
     if (speed >= 0.01)
     {
         this->distance = Mth::clamp(this->distance + 0.0025f, 0.0f, 1.0f);
-        this->volume = static_cast<float>(Mth::clamp(speed, 0.0, 1.75) * 0.7);
+        this->volume = static_cast<float>(Mth::clamp(speed, 0.0, 0.5) * 0.699999988079071);
     }
     else
     {
