@@ -1,4 +1,7 @@
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <typeinfo>
@@ -36,7 +39,9 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/core/Sensing.hpp"
 #include "game/item/ArmorItem.hpp"
+#include "game/item/BowItem.hpp"
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/item/SwordItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/Items.hpp"
@@ -53,40 +58,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
-namespace
-{
-not_null_ptr<ItemInstance> sMobEquipmentItems[4][5];
-bool sMobEquipmentItemsInitialized = false;
-
-void initMobEquipmentItems()
-{
-    if (sMobEquipmentItemsInitialized)
-        return;
-    sMobEquipmentItemsInitialized = true;
-
-    Item* headItems[5] = {Items::leatherHelmet, Items::goldenHelmet, Items::chainmailHelmet,
-                          Items::ironHelmet, Items::diamondHelmet};
-    Item* chestItems[5] = {Items::leatherChestplate, Items::goldenChestplate,
-                           Items::chainmailChestplate, Items::ironChestplate,
-                           Items::diamondChestplate};
-    Item* legsItems[5] = {Items::leatherLeggings, Items::goldenLeggings, Items::chainmailLeggings,
-                          Items::ironLeggings, Items::diamondLeggings};
-    Item* feetItems[5] = {Items::leatherBoots, Items::goldenBoots, Items::chainmailBoots,
-                          Items::ironBoots, Items::diamondBoots};
-
-    for (int tier = 0; tier < 5; ++tier)
-    {
-        sMobEquipmentItems[0][tier] = not_null_ptr<ItemInstance>(new ItemInstance(feetItems[tier]));
-        sMobEquipmentItems[1][tier] = not_null_ptr<ItemInstance>(new ItemInstance(legsItems[tier]));
-        sMobEquipmentItems[2][tier] = not_null_ptr<ItemInstance>(new ItemInstance(chestItems[tier]));
-        sMobEquipmentItems[3][tier] = not_null_ptr<ItemInstance>(new ItemInstance(headItems[tier]));
-    }
-}
-}
+#include "game/core/PIXNamedEvents.hpp"
 
 const EntityDataAccessor<unsigned char>* Mob::DATA_MOB_FLAGS_ID = NULL;
 
@@ -141,12 +113,12 @@ Mob::~Mob()
 
 unsigned long long Mob::GetType()
 {
-    return 0x000000000d000000ULL;
+    return EntityType::MOB;
 }
 
 void Mob::staticCtor()
 {
-    DATA_MOB_FLAGS_ID = SynchedEntityData::defineId(ENTITY_TYPE_MOB, ENTITY_TYPE_LIVING_ENTITY,
+    DATA_MOB_FLAGS_ID = SynchedEntityData::defineId(EntityType::MOB, EntityType::LIVING_ENTITY,
                                                      EntityDataSerializers::BYTE);
 }
 
@@ -176,6 +148,7 @@ void Mob::_init()
     mFollowsLeader = false;
     mMaxFlockSize = 1;
     mFlockSize = 0;
+    mCategories |= EntityCategory::eEntityCategory_Mob;
 }
 
 void Mob::registerAttributes()
@@ -271,7 +244,7 @@ void Mob::setLevel(Level* level)
 
 bool Mob::canAttackType(unsigned long long type)
 {
-    return type != 0x5D0000C1ULL;
+    return type != EntityType::GHAST;
 }
 
 void Mob::ate()
@@ -344,7 +317,7 @@ void Mob::spawnAnim()
 {
     if (!mLevel->mIsClientSide)
     {
-        mLevel->broadcastEntityEvent(shared_from_this(), 20, 0);
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SPAWN_ANIM, 0);
         return;
     }
 
@@ -372,7 +345,7 @@ void Mob::spawnAnim()
 
 void Mob::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 20)
+    if (event == EntityEvent::SPAWN_ANIM)
     {
         spawnAnim();
         return;
@@ -395,9 +368,9 @@ void Mob::tick()
         if (mTickCount % 5 == 0)
         {
             boost::shared_ptr<Entity> controllingPassenger = getControllingPassenger();
-            bool hasNonMobPassenger = !Entity::instanceof(controllingPassenger, ENTITY_TYPE_MOB);
+            bool hasNonMobPassenger = !Entity::instanceof(controllingPassenger, EntityType::MOB);
             boost::shared_ptr<Entity> vehicle = getVehicle();
-            bool vehicleIsBoat = Entity::instanceof(vehicle, ENTITY_TYPE_BOAT);
+            bool vehicleIsBoat = Entity::instanceof(vehicle, EntityType::BOAT);
             mGoalSelector.setControlFlag(1, hasNonMobPassenger);
             mGoalSelector.setControlFlag(4, hasNonMobPassenger && !vehicleIsBoat);
             mGoalSelector.setControlFlag(2, hasNonMobPassenger);
@@ -539,11 +512,11 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
         CompoundTag* leashTag = new CompoundTag();
         unsigned long long holderType = leashHolder->GetType();
 
-        if ((holderType & 0x0C000000ULL) == 0x0C000000ULL)
+        if ((holderType & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             leashTag->putString(L"UUID", leashHolder->getUUID());
         }
-        else if ((holderType & 0x0A080000ULL) == 0x0A080000ULL)
+        else if ((holderType & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
         {
             boost::shared_ptr<HangingEntity> hanging =
                 boost::dynamic_pointer_cast<HangingEntity>(leashHolder);
@@ -584,41 +557,41 @@ void Mob::readAdditionalSaveData(CompoundTag* tag)
 {
     LivingEntity::readAdditionalSaveData(tag);
 
-    if (tag->contains(L"CanPickUpLoot", 1))
+    if (tag->contains(L"CanPickUpLoot", Tag::TAG_BYTE))
         setCanPickUpLoot(tag->getBoolean(L"CanPickUpLoot"));
 
     setPersistenceRequired(tag->getBoolean(L"PersistenceRequired"));
 
-    if (tag->contains(L"ArmorItems", 9))
+    if (tag->contains(L"ArmorItems", Tag::TAG_LIST))
     {
-        ListTag* items = tag->getList(L"ArmorItems", 10);
+        ListTag* items = tag->getList(L"ArmorItems", Tag::TAG_COMPOUND);
         for (int i = 0; i < 4; ++i)
             mArmorItems[i] = not_null_ptr<ItemInstance>(new ItemInstance(items->getCompound(i)));
     }
 
-    if (tag->contains(L"HandItems", 9))
+    if (tag->contains(L"HandItems", Tag::TAG_LIST))
     {
-        ListTag* items = tag->getList(L"HandItems", 10);
+        ListTag* items = tag->getList(L"HandItems", Tag::TAG_COMPOUND);
         for (int i = 0; i < 2; ++i)
             mHandItems[i] = not_null_ptr<ItemInstance>(new ItemInstance(items->getCompound(i)));
     }
 
-    if (tag->contains(L"ArmorDropChances", 9))
+    if (tag->contains(L"ArmorDropChances", Tag::TAG_LIST))
     {
-        ListTag* chances = tag->getList(L"ArmorDropChances", 5);
+        ListTag* chances = tag->getList(L"ArmorDropChances", Tag::TAG_FLOAT);
         for (int i = 0; i < chances->size(); ++i)
             mArmorDropChances[i] = chances->getFloat(i);
     }
 
-    if (tag->contains(L"HandDropChances", 9))
+    if (tag->contains(L"HandDropChances", Tag::TAG_LIST))
     {
-        ListTag* chances = tag->getList(L"HandDropChances", 5);
+        ListTag* chances = tag->getList(L"HandDropChances", Tag::TAG_FLOAT);
         for (int i = 0; i < chances->size(); ++i)
             mHandDropChances[i] = chances->getFloat(i);
     }
 
     mLeashed = tag->getBoolean(L"Leashed");
-    if (mLeashed && tag->contains(L"Leash", 10))
+    if (mLeashed && tag->contains(L"Leash", Tag::TAG_COMPOUND))
     {
         delete mLeashInfoTag;
         mLeashInfoTag = tag->getCompound(L"Leash")->copy();
@@ -626,7 +599,7 @@ void Mob::readAdditionalSaveData(CompoundTag* tag)
 
     setLeftHanded(tag->getBoolean(L"LeftHanded"));
 
-    if (tag->contains(L"DeathLootTable", 8))
+    if (tag->contains(L"DeathLootTable", Tag::TAG_STRING))
     {
         mLootTable = new ResourceLocation(tag->getString(L"DeathLootTable"));
         mLootTableSeed = tag->getLong(L"DeathLootTableSeed");
@@ -717,7 +690,7 @@ void Mob::aiStep()
     if (mLevel->mIsClientSide || !canPickUpLoot() || isNoAi())
         return;
 
-    if (!mLevel->getGameRules()->getBoolean(1))
+    if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
         return;
 
     AABB* searchBox = mBoundingBox->grow(1.0, 0.25, 1.0);
@@ -742,9 +715,10 @@ void Mob::aiStep()
 
 const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> item)
 {
-    Item* heldItem = item->getItem();
-    if (heldItem == Item::byBlock(Blocks::pumpkin) || heldItem == Items::skull)
+    if (Block::byItem(item->getItem()) == Blocks::carved_pumpkin || item->getItem() == Items::skull)
         return EquipmentSlot::HEAD;
+
+    Item* heldItem = item->getItem();
 
     ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);
     if (armorItem != NULL)
@@ -758,25 +732,102 @@ const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> ite
 
 void Mob::pickUpItem(boost::shared_ptr<ItemEntity> entity)
 {
-    not_null_ptr<ItemInstance> incoming = entity->getItem();
+    not_null_ptr<ItemInstance> item = entity->getItem();
+    const EquipmentSlot* slot = getEquipmentSlotForItem(item);
+    bool replace = true;
+    not_null_ptr<ItemInstance> current = getItemSlot(slot);
 
-    const EquipmentSlot* slot = getEquipmentSlotForItem(incoming);
-
-    not_null_ptr<ItemInstance> equipped = getItemSlot(slot);
-    bool accept = equipped->isEmpty();
-    if (!accept && equipped->sameItem(incoming)
-        && equipped->getAuxValue() == incoming->getAuxValue()
-        && (!incoming->hasTag() || equipped->hasTag()))
+    if (!current->isEmpty())
     {
-        accept = equipped->getCount() < equipped->getMaxStackSize();
+        if (slot->getType() == EquipmentSlot::HAND)
+        {
+            SwordItem* newSword = dynamic_cast<SwordItem*>(item->getItem());
+            SwordItem* currentSword = dynamic_cast<SwordItem*>(current->getItem());
+            BowItem* newBow = dynamic_cast<BowItem*>(item->getItem());
+            BowItem* currentBow = dynamic_cast<BowItem*>(current->getItem());
+            if (newSword != NULL && currentSword == NULL)
+            {
+                replace = true;
+            }
+            else if (newSword != NULL && currentSword != NULL)
+            {
+                if (newSword->getTierDamage() == currentSword->getTierDamage())
+                {
+                    replace = item->getAuxValue() > current->getAuxValue() || (item->hasTag() && !current->hasTag());
+                }
+                else
+                {
+                    replace = newSword->getTierDamage() > currentSword->getTierDamage();
+                }
+            }
+            else if (newBow != NULL && currentBow != NULL)
+            {
+                replace = item->hasTag() && !current->hasTag();
+            }
+            else
+            {
+                replace = false;
+            }
+        }
+        else
+        {
+            ArmorItem* newArmor = dynamic_cast<ArmorItem*>(item->getItem());
+            ArmorItem* currentArmor = dynamic_cast<ArmorItem*>(current->getItem());
+            if (newArmor != NULL && currentArmor == NULL)
+            {
+                replace = true;
+            }
+            else if (newArmor != NULL && currentArmor != NULL && !EnchantmentHelper::hasBindingCurse(current))
+            {
+                if (newArmor->mDefense == currentArmor->mDefense)
+                {
+                    replace = item->getAuxValue() > current->getAuxValue() || (item->hasTag() && !current->hasTag());
+                }
+                else
+                {
+                    replace = newArmor->mDefense > currentArmor->mDefense;
+                }
+            }
+            else
+            {
+                replace = false;
+            }
+        }
     }
-    if (!accept)
-        return;
-    if (!canHoldItem(incoming))
+
+    if (!replace || !canHoldItem(item))
         return;
 
-    setItemSlot(slot, incoming);
+    double dropChance;
+    switch (slot->getType())
+    {
+    case EquipmentSlot::HAND:
+        dropChance = mHandDropChances[slot->getIndex()];
+        break;
+    case EquipmentSlot::ARMOR:
+        dropChance = mArmorDropChances[slot->getIndex()];
+        break;
+    default:
+        dropChance = 0.0;
+        break;
+    }
+
+    if (!current->isEmpty() && (double)(mRandom->nextFloat() - 0.1f) < dropChance)
+        spawnAtLocation(current, 0.0f);
+
+    setItemSlot(slot, item);
+    switch (slot->getType())
+    {
+    case EquipmentSlot::HAND:
+        mHandDropChances[slot->getIndex()] = 2.0f;
+        break;
+    case EquipmentSlot::ARMOR:
+        mArmorDropChances[slot->getIndex()] = 2.0f;
+        break;
+    }
+
     setPersistenceRequired(true);
+    take(entity, item->getCount());
     entity->remove();
 }
 
@@ -850,7 +901,7 @@ void Mob::serverAiStep()
     if (isPassenger())
     {
         boost::shared_ptr<Entity> vehicle = getVehicle();
-        if (Entity::instanceof(vehicle, ENTITY_TYPE_MOB))
+        if (Entity::instanceof(vehicle, EntityType::MOB))
         {
             boost::shared_ptr<Mob> vehicleMob = boost::static_pointer_cast<Mob>(getVehicle());
 
@@ -916,7 +967,7 @@ void Mob::lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxH
     double dz = entity->mZ - mZ;
     double dy;
 
-    if ((entity->GetType() & 0x0C000000ULL) == 0x0C000000ULL)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
         if (living)
@@ -1018,24 +1069,61 @@ not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot* slot)
     return ItemInstance::EMPTY;
 }
 
-not_null_ptr<ItemInstance> Mob::getEquipmentForSlot(const EquipmentSlot* slot, int tier)
+Item* Mob::getEquipmentForSlot(const EquipmentSlot* slot, int tier)
 {
-    initMobEquipmentItems();
-
-    int slotIndex = -1;
-    if (slot == EquipmentSlot::FEET)
-        slotIndex = 0;
-    else if (slot == EquipmentSlot::LEGS)
-        slotIndex = 1;
+    if (slot == EquipmentSlot::HEAD)
+    {
+        if (tier == 0)
+            return Items::leatherHelmet;
+        if (tier == 1)
+            return Items::goldenHelmet;
+        if (tier == 2)
+            return Items::chainmailHelmet;
+        if (tier == 3)
+            return Items::ironHelmet;
+        if (tier == 4)
+            return Items::diamondHelmet;
+    }
     else if (slot == EquipmentSlot::CHEST)
-        slotIndex = 2;
-    else if (slot == EquipmentSlot::HEAD)
-        slotIndex = 3;
-
-    if (slotIndex < 0 || tier < 0 || tier > 4)
-        return not_null_ptr<ItemInstance>();
-
-    return sMobEquipmentItems[slotIndex][tier];
+    {
+        if (tier == 0)
+            return Items::leatherChestplate;
+        if (tier == 1)
+            return Items::goldenChestplate;
+        if (tier == 2)
+            return Items::chainmailChestplate;
+        if (tier == 3)
+            return Items::ironChestplate;
+        if (tier == 4)
+            return Items::diamondChestplate;
+    }
+    else if (slot == EquipmentSlot::LEGS)
+    {
+        if (tier == 0)
+            return Items::leatherLeggings;
+        if (tier == 1)
+            return Items::goldenLeggings;
+        if (tier == 2)
+            return Items::chainmailLeggings;
+        if (tier == 3)
+            return Items::ironLeggings;
+        if (tier == 4)
+            return Items::diamondLeggings;
+    }
+    else if (slot == EquipmentSlot::FEET)
+    {
+        if (tier == 0)
+            return Items::leatherBoots;
+        if (tier == 1)
+            return Items::goldenBoots;
+        if (tier == 2)
+            return Items::chainmailBoots;
+        if (tier == 3)
+            return Items::ironBoots;
+        if (tier == 4)
+            return Items::diamondBoots;
+    }
+    return NULL;
 }
 
 void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
@@ -1118,11 +1206,11 @@ void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
         if (!equipped->isEmpty())
             continue;
 
-        not_null_ptr<ItemInstance> equipment = getEquipmentForSlot(slot, tier);
-        if (equipment.get() == NULL)
+        Item* equipment = getEquipmentForSlot(slot, tier);
+        if (equipment == NULL)
             continue;
 
-        setItemSlot(slot, equipment);
+        setItemSlot(slot, not_null_ptr<ItemInstance>(new ItemInstance(equipment)));
     }
 }
 
@@ -1234,18 +1322,21 @@ bool Mob::canBeLeashed(const boost::shared_ptr<Player>&)
 {
     if (isLeashed())
         return false;
-    return (GetType() & 0x40000000ULL) == 0;
+    return (GetType() & EntityType::ENEMY) == 0;
 }
 
 bool Mob::startRiding(boost::shared_ptr<Entity> entity, bool force)
 {
-    return Entity::startRiding(entity, force);
+    bool riding = Entity::startRiding(entity, force);
+    if (riding && isLeashed())
+        dropLeash(true, true);
+    return riding;
 }
 
 unsigned int Mob::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
     if (isLeashedToPlayer(holder.m_pPlayer))
-        return 0x551269b5U;
+        return IDS_TOOLTIPS_UNLEASH;
     return Entity::GetInteractTooltip(holder);
 }
 

@@ -25,7 +25,33 @@ class MobEffect : public boost::unordered_map<Attribute*, AttributeModifier*>
 public:
     enum EMobEffectIcon
     {
-        EMobEffectIcon_0 = 0
+        EMobEffectIcon_None,
+        EMobEffectIcon_Blindness,
+        EMobEffectIcon_FireResistance,
+        EMobEffectIcon_Haste,
+        EMobEffectIcon_Hunger,
+        EMobEffectIcon_Invisibility,
+        EMobEffectIcon_JumpBoost,
+        EMobEffectIcon_MiningFatigue,
+        EMobEffectIcon_Nausea,
+        EMobEffectIcon_NightVision,
+        EMobEffectIcon_Poison,
+        EMobEffectIcon_Regeneration,
+        EMobEffectIcon_Resistance,
+        EMobEffectIcon_Slowness,
+        EMobEffectIcon_Speed,
+        EMobEffectIcon_Strength,
+        EMobEffectIcon_WaterBreathing,
+        EMobEffectIcon_Weakness,
+        EMobEffectIcon_Wither,
+        EMobEffectIcon_HealthBoost,
+        EMobEffectIcon_Absorption,
+        EMobEffectIcon_Glowing,
+        EMobEffectIcon_Levitation,
+        EMobEffectIcon_Luck,
+        EMobEffectIcon_Unluck,
+        EMobEffectIcon_SlowFalling = 26,
+        EMobEffectIcon_ConduitPower
     };
 
     static MappedRegistry<ResourceLocation, MobEffect*>* mobEffectRegistry;

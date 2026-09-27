@@ -181,7 +181,7 @@ MobEffectInstance* MobEffectInstance::load(CompoundTag* tag)
     int duration = tag->getInt(L"Duration");
     bool ambient = tag->getBoolean(L"Ambient");
     bool visible = true;
-    if (tag->contains(L"ShowParticles", 1))
+    if (tag->contains(L"ShowParticles", Tag::TAG_BYTE))
     {
         visible = tag->getBoolean(L"ShowParticles");
     }

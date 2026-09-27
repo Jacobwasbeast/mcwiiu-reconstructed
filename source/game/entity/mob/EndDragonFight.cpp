@@ -1,11 +1,21 @@
 #include "game/entity/mob/EndDragonFight.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/server/ServerPlayer.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <boost/assert.hpp>
 
 #include "game/util/AABB.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/block/Predicates.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/entity/ai/EntitySelector.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/EntityType.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/data/IntTag.hpp"
@@ -27,58 +37,66 @@
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/core/System.hpp"
 
+struct EndGatewaySorter
+{
+    bool operator()(int first, int second) const
+    {
+        return first != 0 && second == 0;
+    }
+};
+
+Predicate<boost::shared_ptr<Player> >* EndDragonFight::VALID_PLAYER =
+    new Predicates<boost::shared_ptr<Player> >::FunctionPredicate(validPlayerPredicate);
+
 EndDragonFight::EndDragonFight(ServerLevel* levelValue, CompoundTag* data)
-    : dragonEvent(new ServerBossEvent(0x5157A755, L"Dragon", BossEvent::PINK, BossEvent::PROGRESS)),
-      level(levelValue),
-      gateways(),
+    : level(levelValue),
+      mReserved(0),
       ticksSinceDragonSeen(0),
       crystalsAlive(0),
+      ticksSinceCrystalsScanned(0),
+      ticksSinceLastPlayerScan(0),
       dragonKilled(false),
       previouslyKilledDragon(false),
-      dragonUUID(),
-      exitPortalFound(false),
-      exitPortalLocation(0),
-      respawnStage(0),
-      respawnTime(0),
-      crystals()
+      needsStateScanning(true),
+      exitPortalLocation(NULL),
+      respawnStage(NULL),
+      respawnTime(0)
 {
-    dragonEvent->setPlayBossMusic(true);
-    dragonEvent->setCreateWorldFog(true);
-    if (data == 0)
+    ServerBossEvent* bossEvent = new ServerBossEvent(IDS_ENDERDRAGON, L"", BossEvent::PINK, BossEvent::PROGRESS);
+    bossEvent->setPlayBossMusic(true);
+    dragonEvent = static_cast<ServerBossEvent*>(bossEvent->setCreateWorldFog(true));
+
+    if (data != NULL && data->contains(L"DragonKilled", Tag::TAG_ANY_NUMERIC) && !gApp.GetResetEnd())
     {
-        previouslyKilledDragon = true;
-        dragonKilled = true;
-        gateways.push_back(0);
-        return;
-    }
-    if (data->contains(L"DragonUUID"))
-    {
-        dragonUUID = data->getString(L"DragonUUID");
-    }
-    dragonKilled = data->getBoolean(L"DragonKilled");
-    previouslyKilledDragon = data->getBoolean(L"PreviouslyKilled");
-    if (data->getBoolean(L"IsRespawning"))
-    {
-        respawnTime = 1;
-    }
-    if (data->contains(L"ExitPortalLocation", 10))
-    {
-        exitPortalLocation = new BlockPos(NbtUtils::readBlockPos(data->getCompound(L"ExitPortalLocation")));
-        exitPortalFound = true;
-    }
-    if (data->contains(L"Gateways", 9))
-    {
-        ListTag* list = data->getList(L"Gateways", 3);
-        int i;
-        for (i = 0; i < list->size(); ++i)
-        {
-            gateways.push_back(list->getInt(i));
-        }
+        if (data->contains(L"DragonUUID"))
+            dragonUUID = data->getString(L"DragonUUID");
+        dragonKilled = data->getBoolean(L"DragonKilled");
+        previouslyKilledDragon = data->getBoolean(L"PreviouslyKilled");
+        if (data->getBoolean(L"IsRespawning"))
+            respawnStage = DragonRespawnAnimation::START;
+        if (data->contains(L"ExitPortalLocation", Tag::TAG_COMPOUND))
+            exitPortalLocation = new BlockPos(NbtUtils::readBlockPos(data->getCompound(L"ExitPortalLocation")));
     }
     else
     {
-        gateways.push_back(0);
+        previouslyKilledDragon = true;
+        dragonKilled = true;
     }
+
+    if (data != NULL && data->contains(L"Gateways", Tag::TAG_LIST) && !gApp.GetResetEnd())
+    {
+        ListTag* list = data->getList(L"Gateways", Tag::TAG_INT);
+        for (int i = 0; i < list->size(); ++i)
+            gateways.push_back(list->getInt(i));
+    }
+    else
+    {
+        for (int i = 0; i < 1; ++i)
+            gateways.push_back(i);
+        Random random(level->getSeed());
+        Mth::shuffle(&gateways, random);
+    }
+    mReserved = 0;
 }
 
 EndDragonFight::~EndDragonFight()
@@ -99,14 +117,12 @@ void EndDragonFight::resetSpikeCrystals()
     {
         AABB* box = spikes.data[i].getTopBoundingBox();
         std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), box);
-        std::vector<boost::shared_ptr<Entity> >::iterator entity;
-        for (entity = entities->begin(); entity != entities->end(); ++entity)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator entity = entities->begin(); entity != entities->end();
+             ++entity)
         {
             boost::shared_ptr<EnderCrystal> crystal = boost::static_pointer_cast<EnderCrystal>(*entity);
-            if (crystal)
-            {
-                crystal->setBeamTarget(0);
-            }
+            crystal->setInvulnerable(false);
+            crystal->setBeamTarget(NULL);
         }
         delete entities;
     }
@@ -145,154 +161,138 @@ void EndDragonFight::updateCrystalCount()
 
 void EndDragonFight::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const DamageSource* source)
 {
-    std::vector<boost::shared_ptr<EnderCrystal> >::iterator it;
-    bool tracked = false;
-    for (it = crystals.begin(); it != crystals.end(); ++it)
+    std::vector<boost::shared_ptr<EnderCrystal> >::iterator tracked = respawnCrystals.begin();
+    while (tracked != respawnCrystals.end() && *tracked != crystal)
+        ++tracked;
+
+    if (respawnStage != NULL && tracked != respawnCrystals.end())
     {
-        if (*it == crystal)
-        {
-            tracked = true;
-            break;
-        }
-    }
-    if (respawnStage != 0 && tracked)
-    {
-        for (it = crystals.begin(); it != crystals.end(); ++it)
+        for (std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = respawnCrystals.begin();
+             it != respawnCrystals.end(); ++it)
         {
             if (*it != crystal)
-            {
-                (*it)->setBeamTarget(0);
-            }
+                (*it)->setBeamTarget(NULL);
         }
-        respawnStage = 0;
+        respawnStage = NULL;
         respawnTime = 0;
         resetSpikeCrystals();
         spawnExitPortal(true);
         return;
     }
+
     updateCrystalCount();
+    boost::shared_ptr<Entity> dragon = level->getEntityByUUID(dragonUUID);
+    if (Entity::instanceof(dragon, EntityType::ENDER_DRAGON))
+        boost::static_pointer_cast<EnderDragon>(dragon)->onCrystalDestroyed(crystal, BlockPos(crystal), source);
 }
 
-bool EndDragonFight::findExitPortal()
+BlockPattern::BlockPatternMatch* EndDragonFight::findExitPortal()
 {
-    return false;
+    return NULL;
 }
 
 void EndDragonFight::fjFindCrystals(std::vector<boost::shared_ptr<EnderCrystal> >& result, const BlockPos& pos)
 {
-    AABB box(pos.x - 10.0, pos.y - 10.0, pos.z - 10.0,
-             pos.x + 10.0, pos.y + 10.0, pos.z + 10.0);
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), &box);
-    std::vector<boost::shared_ptr<Entity> >::iterator entity;
-    for (entity = entities->begin(); entity != entities->end(); ++entity)
+    result.clear();
+    BlockPos centre = pos.above(1);
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
-        result.push_back(boost::static_pointer_cast<EnderCrystal>(*entity));
+        AABB* box = AABB::newTemp(centre.relative(directions.data[i], 2));
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), box);
+        if (entities->empty())
+        {
+            delete entities;
+            return;
+        }
+        for (std::vector<boost::shared_ptr<Entity> >::iterator entity = entities->begin(); entity != entities->end();
+             ++entity)
+            result.push_back(boost::static_pointer_cast<EnderCrystal>(*entity));
+        delete entities;
     }
-    delete entities;
 }
 
-void EndDragonFight::respawnDragon(const std::vector<boost::shared_ptr<EnderCrystal> >& result)
+void EndDragonFight::respawnDragon(const std::vector<boost::shared_ptr<EnderCrystal> >& crystals)
 {
-    if (!dragonKilled || respawnStage != 0)
+    if (!dragonKilled || respawnStage != NULL)
         return;
-
     if (!level->getLevelData()->getModernEnd())
         return;
 
-    if (findExitPortal())
-        return;
-
-    respawnStage = 0;
+    respawnStage = DragonRespawnAnimation::START;
     respawnTime = 0;
     spawnExitPortal(false);
-    crystals = result;
+    respawnCrystals = crystals;
 }
 
-bool EndDragonFight::tryRespawn()
+void EndDragonFight::tryRespawn()
 {
-    if (!dragonKilled || respawnStage != 0)
-    {
-        return false;
-    }
-    std::vector<boost::shared_ptr<EnderCrystal> > found;
-    fjFindCrystals(found, BlockPos(0, 0, 0));
-    if (found.size() != 4)
-    {
-        return false;
-    }
-    respawnDragon(found);
-    return true;
+    ServerLevel* endLevel = gMinecraftServer->getLevel(1);
+    if (!dragonKilled || respawnStage != NULL)
+        return;
+    if (!endLevel->getLevelData()->getModernEnd())
+        return;
+
+    if (exitPortalLocation == NULL && findExitPortal() == NULL)
+        spawnExitPortal(true);
+    BlockPos portalPos = *exitPortalLocation;
+
+    std::vector<boost::shared_ptr<EnderCrystal> > crystals;
+    fjFindCrystals(crystals, portalPos);
+    if (crystals.size() == 4)
+        respawnDragon(crystals);
 }
 
 CompoundTag* EndDragonFight::saveData()
 {
-    if (!previouslyKilledDragon && dragonUUID.empty())
-    {
+    if (!level->getLevelData()->getModernEnd())
         return new CompoundTag();
-    }
+
     CompoundTag* data = new CompoundTag();
     if (!dragonUUID.empty())
-    {
         data->putString(L"DragonUUID", dragonUUID);
-    }
     data->putBoolean(L"DragonKilled", dragonKilled);
     data->putBoolean(L"PreviouslyKilled", previouslyKilledDragon);
-    if (exitPortalLocation != 0)
-    {
+    if (exitPortalLocation != NULL)
         data->put(L"ExitPortalLocation", NbtUtils::writeBlockPos(*exitPortalLocation));
-    }
-    if (respawnStage != 0)
-    {
+    if (respawnStage != NULL)
         data->putBoolean(L"IsRespawning", true);
-    }
-    ListTag* list = new ListTag(3);
-    std::vector<int>::iterator gateway;
-    for (gateway = gateways.begin(); gateway != gateways.end(); ++gateway)
-    {
+
+    ListTag* list = new ListTag(0);
+    for (std::vector<int>::iterator gateway = gateways.begin(); gateway != gateways.end(); ++gateway)
         list->add(new IntTag(*gateway));
-    }
     data->put(L"Gateways", list);
     return data;
 }
 
 BlockPos EndDragonFight::getGatewayPosition(int index)
 {
-    const float angle = static_cast<float>(index) * 3.14159265358979323846f * 2.0f / 20.0f;
-    return BlockPos(static_cast<int>(65.0f * std::cos(angle)), 75,
-                    static_cast<int>(65.0f * std::sin(angle)));
+    const float PI = 3.1415927f;
+    const float angle = (PI * static_cast<float>(index) - PI) * 2.0f;
+    return BlockPos(static_cast<int>(65.0f * std::cos(angle)), 75, static_cast<int>(65.0f * std::sin(angle)));
 }
 
 bool EndDragonFight::hasExitPortal()
 {
-    for (int chunkX = -8; chunkX < 9; ++chunkX)
-    {
-        for (int chunkZ = -8; chunkZ < 9; ++chunkZ)
+    for (int chunkX = -8; chunkX <= 8; ++chunkX)
+        for (int chunkZ = -8; chunkZ <= 8; ++chunkZ)
         {
-            LevelChunk* chunk = level->getChunk(chunkX, chunkZ);
-            LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
-            if (blockEntities->empty())
-                continue;
-
-            for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin();
-                 it != blockEntities->end(); ++it)
+            LevelChunk::BlockEntityMap* blockEntities = level->getChunk(chunkX, chunkZ)->getBlockEntities();
+            for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
             {
-                boost::shared_ptr<BlockEntity> blockEntity = it->second;
-                if (boost::dynamic_pointer_cast<TheEndPortalBlockEntity>(blockEntity))
-                {
+                if ((it->second->GetType() & BlockEntityType::THE_END_PORTAL) == BlockEntityType::THE_END_PORTAL)
                     return true;
-                }
             }
         }
-    }
     return false;
 }
 
 void EndDragonFight::updatePlayers()
 {
     std::vector<boost::shared_ptr<ServerPlayer> > current;
-    std::vector<boost::shared_ptr<Player> >* players = level->getPlayers(0, 0);
-    std::vector<boost::shared_ptr<Player> >::iterator player;
-    for (player = players->begin(); player != players->end(); ++player)
+    std::vector<boost::shared_ptr<Player> >* players = level->getPlayers(EntityType::SERVER_PLAYER, VALID_PLAYER);
+    for (std::vector<boost::shared_ptr<Player> >::iterator player = players->begin(); player != players->end();
+         ++player)
     {
         boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(*player);
         dragonEvent->addPlayer(serverPlayer, 0);
@@ -300,46 +300,29 @@ void EndDragonFight::updatePlayers()
     }
     delete players;
 
-    std::vector<boost::shared_ptr<ServerPlayer> > bossPlayers = dragonEvent->getPlayers();
-    std::vector<boost::shared_ptr<ServerPlayer> >::iterator bossPlayer;
-    for (bossPlayer = bossPlayers.begin(); bossPlayer != bossPlayers.end(); ++bossPlayer)
+    std::vector<boost::shared_ptr<ServerPlayer> > departed = dragonEvent->getPlayers();
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = current.begin(); player != current.end();
+         ++player)
     {
-        std::vector<boost::shared_ptr<ServerPlayer> >::iterator currentPlayer;
-        bool tracked = false;
-        for (currentPlayer = current.begin(); currentPlayer != current.end(); ++currentPlayer)
-        {
-            if (*currentPlayer == *bossPlayer)
-            {
-                tracked = true;
-                break;
-            }
-        }
-        if (!tracked)
-        {
-            dragonEvent->removePlayer(*bossPlayer);
-        }
+        std::vector<boost::shared_ptr<ServerPlayer> >::iterator found =
+            std::find(departed.begin(), departed.end(), *player);
+        if (found != departed.end())
+            departed.erase(found);
     }
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = departed.begin(); player != departed.end();
+         ++player)
+        dragonEvent->removePlayer(*player);
 }
 
 void EndDragonFight::ensureArenaLoaded()
 {
     System::processTimeInMilliSecs();
-    ChunkSource* chunkSource = level->getChunkSource();
-    for (int chunkX = -8; chunkX < 9; ++chunkX)
-    {
-        int chunkZ = -8;
-        for (int band = 0; band < 2; ++band)
+    for (int chunkX = -8; chunkX <= 8; ++chunkX)
+        for (int chunkZ = -8; chunkZ <= 8; ++chunkZ)
         {
-            for (int i = 0; i < 8; ++i)
-            {
-                level->reallyHasChunk(chunkX, chunkZ);
-                chunkSource->getOrCreateChunk(chunkX, chunkZ, false);
-                ++chunkZ;
-            }
+            level->reallyHasChunk(chunkX, chunkZ);
+            level->getChunkSource()->getOrCreateChunk(chunkX, chunkZ, false);
         }
-        level->reallyHasChunk(chunkX, chunkZ);
-        chunkSource->getOrCreateChunk(chunkX, chunkZ, false);
-    }
 }
 
 void EndDragonFight::createNewDragon()
@@ -354,16 +337,107 @@ void EndDragonFight::createNewDragon()
 
 void EndDragonFight::tick()
 {
-    ensureArenaLoaded();
-    updatePlayers();
-    if (respawnStage != 0)
+    std::vector<boost::shared_ptr<ServerPlayer> > players = dragonEvent->getPlayers();
+    dragonEvent->setVisible(!dragonKilled);
+
+    if (++ticksSinceLastPlayerScan >= 20)
     {
-        ++respawnTime;
+        updatePlayers();
+        ticksSinceLastPlayerScan = 0;
+        for (int index = 0; index < 1; ++index)
+        {
+            BlockPos gatewayPos = getGatewayPosition(index);
+            std::vector<int>::iterator pending = std::find(gateways.begin(), gateways.end(), index);
+            if (!level->hasChunkAt(gatewayPos))
+                continue;
+            const bool gatewayPresent = level->getBlockState(gatewayPos)->getBlock() == Blocks::end_gateway;
+            if (pending == gateways.end())
+            {
+                if (!gatewayPresent)
+                    gateways.push_back(index);
+            }
+            else if (gatewayPresent)
+            {
+                gateways.erase(pending);
+            }
+        }
+        std::sort(gateways.begin(), gateways.end(), EndGatewaySorter());
     }
-    else if (!dragonKilled)
+
+    if (!players.empty())
     {
-        ++ticksSinceDragonSeen;
-        updateCrystalCount();
+        const double radius = level->mDimension->getXZSize() * 16.0 * 0.5;
+        AABB* arena = AABB::newPermanent(-radius, 0.0, -radius, radius, level->getMaxBuildHeight(), radius);
+
+        if (needsStateScanning)
+        {
+            ensureArenaLoaded();
+            needsStateScanning = false;
+            if (respawnStage == NULL)
+            {
+                const bool portalExists = hasExitPortal();
+                if (portalExists)
+                {
+                    previouslyKilledDragon = true;
+                }
+                else
+                {
+                    previouslyKilledDragon = false;
+                    spawnExitPortal(false);
+                }
+
+                std::vector<boost::shared_ptr<Entity> >* dragons =
+                    level->getEntitiesOfClass(typeid(EnderDragon), arena, EntitySelector::ENTITY_STILL_ALIVE, false);
+                if (dragons->empty())
+                {
+                    dragonKilled = true;
+                }
+                else
+                {
+                    boost::shared_ptr<EnderDragon> dragon = boost::static_pointer_cast<EnderDragon>(dragons->at(0));
+                    dragonUUID = dragon->getUUID();
+                    dragonKilled = false;
+                    if (portalExists)
+                    {
+                        dragon->remove();
+                        dragonUUID = L"";
+                    }
+                }
+                if (!previouslyKilledDragon && dragonKilled)
+                    dragonKilled = false;
+                delete dragons;
+            }
+            if (respawnStage != NULL)
+            {
+                respawnTime = 0;
+                fjFindCrystals(respawnCrystals, EndPodiumFeature::END_PODIUM_LOCATION);
+            }
+        }
+
+        if (respawnStage != NULL)
+            respawnStage->tick(level, this, &respawnCrystals, respawnTime++, BlockPos(0, level->getSeaLevel(), 0));
+
+        if (!dragonKilled && respawnStage == NULL)
+        {
+            if (dragonUUID.empty() || ++ticksSinceDragonSeen >= 1200)
+            {
+                ensureArenaLoaded();
+                std::vector<boost::shared_ptr<Entity> >* dragons =
+                    level->getEntitiesOfClass(typeid(EnderDragon), arena, EntitySelector::ENTITY_STILL_ALIVE, false);
+                if (dragons->empty())
+                    createNewDragon();
+                else
+                    dragonUUID = dragons->at(0)->getUUID();
+                delete dragons;
+                ticksSinceDragonSeen = 0;
+            }
+            if (++ticksSinceCrystalsScanned >= 100)
+            {
+                updateCrystalCount();
+                ticksSinceCrystalsScanned = 0;
+            }
+        }
+        delete arena;
     }
 }
 
@@ -388,7 +462,7 @@ void EndDragonFight::setRespawnStage(DragonRespawnAnimation* stage)
 
 void EndDragonFight::spawnNewGateway(const BlockPos& pos, int index)
 {
-    level->levelEvent(3000, pos, 0);
+    level->levelEvent(LevelEvent::ANIMATION_END_GATEWAY_SPAWN, pos, 0);
     Random random;
     EndGatewayFeature feature(index);
     feature.place(level, random, pos);
@@ -412,10 +486,14 @@ void EndDragonFight::setDragonKilled(boost::shared_ptr<EnderDragon> dragon)
         dragonEvent->setPercent(0.0f);
         dragonEvent->setVisible(false);
         spawnExitPortal(true);
+        if (level->getLevelData()->getModernEnd())
+            spawnNewGateway();
         if (!previouslyKilledDragon)
         {
-            BlockPos topBlock(0, level->getAboveTopSolidBlock(BlockPos(0, 0, 0), false, false), 0);
-            level->setBlockAndUpdate(topBlock, Blocks::bedrock->defaultBlockState());
+            BlockPos topBlock(EndPodiumFeature::END_PODIUM_LOCATION.x,
+                              level->getAboveTopSolidBlock(EndPodiumFeature::END_PODIUM_LOCATION, false, false),
+                              EndPodiumFeature::END_PODIUM_LOCATION.z);
+            level->setBlockAndUpdate(topBlock, Blocks::dragon_egg->defaultBlockState());
         }
         dragonKilled = true;
         previouslyKilledDragon = true;
@@ -428,6 +506,8 @@ void EndDragonFight::updateDragon(boost::shared_ptr<EnderDragon> dragon)
     {
         dragonEvent->setPercent(dragon->getHealth() / dragon->getMaxHealth());
         ticksSinceDragonSeen = 0;
+        if (dragon->hasCustomName())
+            dragonEvent->setName(dragon->getDisplayName());
     }
 }
 

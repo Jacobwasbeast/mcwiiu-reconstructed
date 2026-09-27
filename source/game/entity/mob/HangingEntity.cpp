@@ -1,4 +1,5 @@
 #include "game/entity/mob/HangingEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -160,7 +161,7 @@ bool HangingEntity::skipAttackInteraction(boost::shared_ptr<Entity> entity)
 {
     if (entity == NULL)
         return false;
-    if ((entity->GetType() & 0x0C800000ULL) != 0x0C800000ULL)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         return false;
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
@@ -180,7 +181,7 @@ bool HangingEntity::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
     boost::shared_ptr<Entity> attacker = source == NULL ? boost::shared_ptr<Entity>() : source->getEntity();
-    if (attacker != NULL && (attacker->GetType() & 0x0C800000ULL) == 0x0C800000ULL)
+    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         if (!boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
             return false;
@@ -296,12 +297,12 @@ bool HangingEntity::shouldRenderAtSqrDistance(double distanceSqr)
 
 unsigned long long HangingEntity::GetType()
 {
-    return 0x0A080000ULL;
+    return EntityType::HANGING_ENTITY;
 }
 
 bool HangingEntity::HangingEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return (entity->GetType() & 0x0A080000ULL) == 0x0A080000ULL;
+    return (entity->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY;
 }
 
 HangingEntity::HangingEntitySelector::~HangingEntitySelector()

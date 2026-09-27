@@ -14,6 +14,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+class TextureAtlasSprite;
 class AABB;
 class Attribute;
 class AttributeInstance;
@@ -173,7 +174,7 @@ public:
     virtual void setItemInHand(InteractionHand::EInteractionHand hand, not_null_ptr<ItemInstance> itemInstance);
     virtual bool hasItemInSlot(const EquipmentSlot* slot);
     virtual not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot) = 0;
-    virtual int getItemInHandIcon(not_null_ptr<ItemInstance> itemInstance, int frame);
+    virtual TextureAtlasSprite* getItemInHandIcon(not_null_ptr<ItemInstance> itemInstance, int frame);
     virtual float getSoundVolume();
     virtual float getVoicePitch();
     virtual bool isImmobile();
@@ -310,7 +311,7 @@ public:
     bool mThermalAreaChanged;
     double mElytraCollisionDistance;
     bool mThermalAreasChecked;
-    Team* mTeam;
+    int mDeathMessageId;
     std::wstring mDeathMessage;
     bool mHurtByPlayerOnPeaceful;
     boost::shared_ptr<Player> mLastHurtByPlayer;
@@ -342,23 +343,17 @@ public:
     boost::weak_ptr<LivingEntity> mLastHurtMob;
     int mLastHurtMobTimestamp;
     float mSpeed;
-    float mMovementSpeedScale;
-    int mAttackStrengthCooldown;
+    float mWaterTravelSpeedFactor;
+    int mWaterTravelCheckTicks;
     int mNoJumpDelay;
+    float mAbsorptionAmount;
     not_null_ptr<ItemInstance> mUseItem;
-    float mUnresolvedFloat;
     int mUseItemRemaining;
     int mFallFlyTicks;
-    int mUnresolvedState;
-    float mAbsorptionAmount;
-    int mUnresolvedInt0;
+    BlockPos mLastPos;
     DamageSource* mLastDamageSource;
     long long mLastDamageStamp;
-    BlockPos mLastPos;
     bool mFallFlyingStateDisabled;
-    int mUnresolvedInt1;
-    int mUnresolvedInt2;
-    unsigned char mUnresolvedByteState;
     int mLightCacheTicks;
     int mLightSampleMinX;
     int mLightSampleMaxX;
@@ -370,8 +365,6 @@ public:
     bool mLightCacheValid;
     int mLastLightColor;
     bool mSwimSoundPlayed;
-    float mWaterTravelSpeedFactor;
-    int mWaterTravelCheckTicks;
 };
 
 #endif

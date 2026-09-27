@@ -20,8 +20,8 @@
 WaterAnimal::WaterAnimal(Level* level)
     : PathfinderMob(level)
 {
-    mWaterValueA = 0.0f;
-    mWaterValueB = 0.0f;
+    mSwimAmplitude = 0.0f;
+    mSwimFrequency = 0.0f;
 }
 
 WaterAnimal::~WaterAnimal()

@@ -1,4 +1,5 @@
 #include <cstddef>
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/world/block/Material.hpp"
@@ -16,23 +17,23 @@ struct MobSpawnLimits
 static MobSpawnLimits SPAWN_LIMITS[NUM_MOB_CATEGORIES] =
 {
     { 0x40ULL,        50,  0, 20 },
-    { 0x20000000ULL,  50, 20, 20 },
-    { 0x0D000100ULL,  20,  0,  8 },
-    { 0x0D502000ULL,  20,  0,  8 },
-    { 0x0D502001ULL,   8,  0,  6 },
-    { 0x0D6C0002ULL,   8,  8, 10 },
-    { 0x0D680004ULL,   8,  8, 10 },
-    { 0x2D6A0001ULL,   2, 10,  8 },
-    { 0x5D108000ULL,  25,  0,  0 },
-    { 0x5D544000ULL,  35,  0,  0 },
-    { 0x0D600001ULL,  35,  0, 15 },
-    { 0x2D580001ULL,  16,  0,  0 },
-    { 0x0D580002ULL,  16,  0,  0 },
-    { 0x5D540047ULL,   5,  0,  0 },
-    { 0x0C000001ULL,  16,  0,  0 },
-    { 0x0800000EULL,  64,  0,  0 },
-    { 0x0D602001ULL,  15,  5,  5 },
-    { 0x5D540049ULL,   5,  0,  0 }
+    { EntityType::CREATURE_CATEGORY,  50, 20, 20 },
+    { EntityType::AMBIENT_CREATURE,  20,  0,  8 },
+    { EntityType::WATER_ANIMAL,  20,  0,  8 },
+    { EntityType::SQUID,   8,  0,  6 },
+    { EntityType::WOLF,   8,  8, 10 },
+    { EntityType::CHICKEN,   8,  8, 10 },
+    { EntityType::MUSHROOM_COW,   2, 10,  8 },
+    { EntityType::SLIME,  25,  0,  0 },
+    { EntityType::GUARDIAN,  35,  0,  0 },
+    { EntityType::VILLAGER,  35,  0, 15 },
+    { EntityType::SNOW_MAN,  16,  0,  0 },
+    { EntityType::VILLAGER_GOLEM,  16,  0,  0 },
+    { EntityType::WITHER_BOSS,   5,  0,  0 },
+    { EntityType::ARMOR_STAND,  16,  0,  0 },
+    { EntityType::ENDER_CRYSTAL,  64,  0,  0 },
+    { EntityType::DOLPHIN,  15,  5,  5 },
+    { EntityType::PHANTOM,   5,  0,  0 }
 };
 
 MobCategory* MobCategory::MONSTER;
@@ -87,21 +88,21 @@ int MobCategory::getMaxInstancesPerChunk()
 void MobCategory::staticCtor()
 {
     MONSTER = new MobCategory(70, Material::AIR, false, false, 0x40ULL, false);
-    CREATURE = new MobCategory(10, Material::AIR, true, true, 0x20000000ULL, false);
-    AMBIENT = new MobCategory(15, Material::AIR, true, false, 0x0D000100ULL, false);
-    WATER_CREATURE = new MobCategory(5, Material::WATER, true, false, 0x0D502000ULL, false);
+    CREATURE = new MobCategory(10, Material::AIR, true, true, EntityType::CREATURE_CATEGORY, false);
+    AMBIENT = new MobCategory(15, Material::AIR, true, false, EntityType::AMBIENT_CREATURE, false);
+    WATER_CREATURE = new MobCategory(5, Material::WATER, true, false, EntityType::WATER_ANIMAL, false);
 
     CATEGORIES.data[0] = MONSTER;
     CATEGORIES.data[1] = CREATURE;
     CATEGORIES.data[2] = AMBIENT;
     CATEGORIES.data[3] = WATER_CREATURE;
 
-    SQUID = new MobCategory(4, Material::WATER, true, false, 0x0D502001ULL, true);
-    WOLF = new MobCategory(3, Material::AIR, true, true, 0x0D6C0002ULL, true);
-    CHICKEN = new MobCategory(2, Material::AIR, true, true, 0x0D680004ULL, true);
-    MUSHROOM_COW = new MobCategory(2, Material::AIR, true, true, 0x2D6A0001ULL, true);
-    SLIME = new MobCategory(15, Material::AIR, false, false, 0x5D108000ULL, false);
-    GUARDIAN = new MobCategory(25, Material::WATER, false, false, 0x5D544000ULL, false);
+    SQUID = new MobCategory(4, Material::WATER, true, false, EntityType::SQUID, true);
+    WOLF = new MobCategory(3, Material::AIR, true, true, EntityType::WOLF, true);
+    CHICKEN = new MobCategory(2, Material::AIR, true, true, EntityType::CHICKEN, true);
+    MUSHROOM_COW = new MobCategory(2, Material::AIR, true, true, EntityType::MUSHROOM_COW, true);
+    SLIME = new MobCategory(15, Material::AIR, false, false, EntityType::SLIME, false);
+    GUARDIAN = new MobCategory(25, Material::WATER, false, false, EntityType::GUARDIAN, false);
 
     CATEGORIES.data[4] = SQUID;
     CATEGORIES.data[5] = WOLF;
@@ -110,28 +111,28 @@ void MobCategory::staticCtor()
     CATEGORIES.data[8] = SLIME;
     CATEGORIES.data[9] = GUARDIAN;
 
-    VILLAGER = new MobCategory(25, Material::AIR, false, false, 0x0D600001ULL, true);
+    VILLAGER = new MobCategory(25, Material::AIR, false, false, EntityType::VILLAGER, true);
     CATEGORIES.data[10] = VILLAGER;
 
-    SNOW_MAN = new MobCategory(25, Material::AIR, false, false, 0x2D580001ULL, true);
+    SNOW_MAN = new MobCategory(25, Material::AIR, false, false, EntityType::SNOW_MAN, true);
     CATEGORIES.data[11] = SNOW_MAN;
 
-    VILLAGER_GOLEM = new MobCategory(25, Material::AIR, false, false, 0x0D580002ULL, true);
+    VILLAGER_GOLEM = new MobCategory(25, Material::AIR, false, false, EntityType::VILLAGER_GOLEM, true);
     CATEGORIES.data[12] = VILLAGER_GOLEM;
 
-    WITHER_BOSS = new MobCategory(25, Material::AIR, false, false, 0x5D540047ULL, true);
+    WITHER_BOSS = new MobCategory(25, Material::AIR, false, false, EntityType::WITHER_BOSS, true);
     CATEGORIES.data[13] = WITHER_BOSS;
 
-    ARMOR_STAND = new MobCategory(25, Material::AIR, false, false, 0x0C000001ULL, true);
+    ARMOR_STAND = new MobCategory(25, Material::AIR, false, false, EntityType::ARMOR_STAND, true);
     CATEGORIES.data[14] = ARMOR_STAND;
 
-    ENDER_CRYSTAL = new MobCategory(25, Material::AIR, false, false, 0x0800000EULL, true);
+    ENDER_CRYSTAL = new MobCategory(25, Material::AIR, false, false, EntityType::ENDER_CRYSTAL, true);
     CATEGORIES.data[15] = ENDER_CRYSTAL;
 
-    DOLPHIN = new MobCategory(25, Material::WATER, false, false, 0x0D602001ULL, true);
+    DOLPHIN = new MobCategory(25, Material::WATER, false, false, EntityType::DOLPHIN, true);
     CATEGORIES.data[16] = DOLPHIN;
 
-    PHANTOM = new MobCategory(5, Material::AIR, false, false, 0x5D540049ULL, true);
+    PHANTOM = new MobCategory(5, Material::AIR, false, false, EntityType::PHANTOM, true);
     CATEGORIES.data[17] = PHANTOM;
 
     for (int i = 0; i < NUM_MOB_CATEGORIES; i++)
@@ -142,67 +143,67 @@ void MobCategory::staticCtor()
 
 MobCategory* MobCategory::getCategory(unsigned long long enumBaseClass)
 {
-    if (enumBaseClass == 0x5D540049ULL)
+    if (enumBaseClass == EntityType::PHANTOM)
     {
         return PHANTOM;
     }
 
-    if (enumBaseClass == 0x0D602001ULL)
+    if (enumBaseClass == EntityType::DOLPHIN)
     {
         return DOLPHIN;
     }
 
-    if (enumBaseClass == 0x0800000EULL)
+    if (enumBaseClass == EntityType::ENDER_CRYSTAL)
     {
         return ENDER_CRYSTAL;
     }
 
-    if (enumBaseClass == 0x0C000001ULL)
+    if (enumBaseClass == EntityType::ARMOR_STAND)
     {
         return ARMOR_STAND;
     }
 
-    if (enumBaseClass == 0x5D540047ULL)
+    if (enumBaseClass == EntityType::WITHER_BOSS)
     {
         return WITHER_BOSS;
     }
 
-    if (enumBaseClass == 0x0D580002ULL)
+    if (enumBaseClass == EntityType::VILLAGER_GOLEM)
     {
         return VILLAGER_GOLEM;
     }
 
-    if (enumBaseClass == 0x2D580001ULL)
+    if (enumBaseClass == EntityType::SNOW_MAN)
     {
         return SNOW_MAN;
     }
 
-    if (enumBaseClass == 0x2D6A0001ULL)
+    if (enumBaseClass == EntityType::MUSHROOM_COW)
     {
         return MUSHROOM_COW;
     }
 
-    if (enumBaseClass == 0x0D6C0002ULL)
+    if (enumBaseClass == EntityType::WOLF)
     {
         return WOLF;
     }
 
-    if (enumBaseClass == 0x0D502001ULL)
+    if (enumBaseClass == EntityType::SQUID)
     {
         return SQUID;
     }
 
-    if (enumBaseClass == 0x0D680004ULL)
+    if (enumBaseClass == EntityType::CHICKEN)
     {
         return CHICKEN;
     }
 
-    if (enumBaseClass == 0x0D600001ULL)
+    if (enumBaseClass == EntityType::VILLAGER)
     {
         return VILLAGER;
     }
 
-    if ((enumBaseClass & 0x20000000ULL) == 0x20000000ULL)
+    if ((enumBaseClass & EntityType::CREATURE_CATEGORY) == EntityType::CREATURE_CATEGORY)
     {
         return CREATURE;
     }
@@ -212,27 +213,27 @@ MobCategory* MobCategory::getCategory(unsigned long long enumBaseClass)
         return MONSTER;
     }
 
-    if ((enumBaseClass & 0x5D108000ULL) == 0x5D108000ULL)
+    if ((enumBaseClass & EntityType::SLIME) == EntityType::SLIME)
     {
         return SLIME;
     }
 
-    if ((enumBaseClass & 0x5D544000ULL) == 0x5D544000ULL)
+    if ((enumBaseClass & EntityType::GUARDIAN) == EntityType::GUARDIAN)
     {
         return GUARDIAN;
     }
 
-    if ((enumBaseClass & 0x40000000ULL) == 0x40000000ULL)
+    if ((enumBaseClass & EntityType::ENEMY) == EntityType::ENEMY)
     {
         return MONSTER;
     }
 
-    if ((enumBaseClass & 0x0D000100ULL) == 0x0D000100ULL)
+    if ((enumBaseClass & EntityType::AMBIENT_CREATURE) == EntityType::AMBIENT_CREATURE)
     {
         return AMBIENT;
     }
 
-    if ((enumBaseClass & 0x0D502000ULL) == 0x0D502000ULL)
+    if ((enumBaseClass & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL)
     {
         return WATER_CREATURE;
     }

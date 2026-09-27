@@ -23,7 +23,7 @@ public:
 
     static BlockEntity* create();
     bool isCoolingDown();
-    static BlockPos findTallestBlock(Level* level, const BlockPos& origin, int radius, bool skipAir);
+    static BlockPos findTallestBlock(Level* level, const BlockPos& origin, int radius, bool allowBedrock);
     void SetExitPortal(BlockPos* position);
     static BlockPos* findValidSpawnInChunk(LevelChunk* chunk);
     void createExitPortal(const BlockPos& position);
@@ -56,10 +56,6 @@ private:
     int mCooldown;
     BlockPos* mExitPortal;
     bool mExactTeleport;
-    unsigned char mReserved1;
-    unsigned char mReserved2;
-    unsigned char mReserved3;
-    void* mUnknown;
 };
 
 #endif

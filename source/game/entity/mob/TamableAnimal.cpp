@@ -1,4 +1,6 @@
 #include "game/entity/mob/TamableAnimal.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/CombatTracker.hpp"
 #include "game/core/DamageSource.hpp"
@@ -48,9 +50,9 @@ boost::shared_ptr<LivingEntity> TamableAnimal::getOwner()
 
 void TamableAnimal::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId(0x000000000D6C0000ULL, 0x000000000D680000ULL,
+    DATA_FLAGS = SynchedEntityData::defineId(EntityType::TAMABLE_ANIMAL, EntityType::ANIMAL,
                                              EntityDataSerializers::BYTE);
-    DATA_OWNER_UUID = SynchedEntityData::defineId(0x000000000D6C0000ULL, 0x000000000D680000ULL,
+    DATA_OWNER_UUID = SynchedEntityData::defineId(EntityType::TAMABLE_ANIMAL, EntityType::ANIMAL,
                                                   EntityDataSerializers::STRING);
 }
 
@@ -119,11 +121,11 @@ void TamableAnimal::spawnTamingParticles(bool success)
 
 void TamableAnimal::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 6)
+    if (event == EntityEvent::TAMING_FAILED)
     {
         spawnTamingParticles(false);
     }
-    else if (event == 7)
+    else if (event == EntityEvent::TAMING_SUCCEEDED)
     {
         spawnTamingParticles(true);
     }
@@ -212,8 +214,8 @@ bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 
 void TamableAnimal::die(const DamageSource* source)
 {
-    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(11) && hasCustomName() &&
-        getOwner() != NULL && getOwner()->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES) && hasCustomName() &&
+        getOwner() != NULL && getOwner()->GetType() == EntityType::SERVER_PLAYER)
     {
         boost::dynamic_pointer_cast<ServerPlayer>(getOwner())->mConnection->send(
             getCombatTracker()->getDeathMessagePacket());

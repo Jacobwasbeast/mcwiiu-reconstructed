@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/BossMob.hpp"
 #include "game/entity/mob/MultiEntityMob.hpp"
 #include "game/core/BinaryHeap.hpp"
 #include "game/util/Random.hpp"
@@ -26,19 +27,19 @@ class MultiEntityMobPart;
 class SoundEvent;
 class Vec3;
 
-class EnderDragon : public Mob, public MultiEntityMob
+class EnderDragon : public Mob, public BossMob, public MultiEntityMob
 {
 public:
     enum EEnderdragonAction
     {
-        ACTION_NONE = 0,
-        ACTION_1 = 1,
-        ACTION_2 = 2,
-        ACTION_3 = 3,
-        ACTION_4 = 4,
-        ACTION_5 = 5,
-        ACTION_6 = 6,
-        ACTION_7 = 7
+        ACTION_HOLDING_PATTERN = 0,
+        ACTION_STRAFE_PLAYER = 1,
+        ACTION_LANDING_APPROACH = 2,
+        ACTION_LANDING = 3,
+        ACTION_TAKEOFF = 4,
+        ACTION_SITTING_FLAMING = 5,
+        ACTION_SITTING_SCANNING = 6,
+        ACTION_SITTING_ATTACKING = 7
     };
 
     EnderDragon(Level* level);
@@ -46,7 +47,7 @@ public:
     virtual std::wstring getDisplayName();
     virtual float getMaxHealth();
     virtual float getHealth();
-    virtual unsigned int getDimension();
+    virtual int getDimension();
     virtual Level* getLevel();
     unsigned int getSynchedAction();
     int setSynchedAction(EEnderdragonAction action, bool force);

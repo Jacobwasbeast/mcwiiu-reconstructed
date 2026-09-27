@@ -1,4 +1,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <vector>
@@ -102,17 +105,8 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
+#include "game/core/MemSect.hpp"
 
-void MemSect(int section);
-
-const unsigned long long ENTITY_TYPE_EXPERIENCE_ORB = 0x0000000008000003ULL;
-const unsigned long long ENTITY_TYPE_ITEM_ENTITY = 0x000000000800000AULL;
-extern const unsigned long long ENTITY_TYPE_ABSTRACT_HORSE = 0x000000000D690000ULL;
-const unsigned long long ENTITY_TYPE_SKELETON_HORSE = 0x000000002D690002ULL;
-const unsigned long long ENTITY_TYPE_FLYING_MOB = 0x000000000D000080ULL;
-const unsigned long long ENTITY_TYPE_WOLF = 0x000000000D6C0002ULL;
-const unsigned long long ENTITY_TYPE_WITHER_BOSS = 0x000000005D540047ULL;
-const unsigned long long ENTITY_TYPE_ARROW = 0x000000008A020000ULL;
 
 const AttributeModifier* LivingEntity::SPEED_MODIFIER_SPRINTING;
 const EntityDataAccessor<unsigned char>* LivingEntity::DATA_LIVING_ENTITY_FLAGS;
@@ -127,11 +121,11 @@ void LivingEntity::staticCtor()
         (new AttributeModifier(eMODIFIER_ID_SprintingSpeedBoost, 0.30000001192092896, 2))
             ->setSerialize(false);
 
-    DATA_LIVING_ENTITY_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BYTE);
-    DATA_HEALTH_ID = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::FLOAT);
-    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
-    DATA_EFFECT_AMBIENCE_ID = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_ARROW_COUNT_ID = SynchedEntityData::defineId(ENTITY_TYPE_LIVING_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_LIVING_ENTITY_FLAGS = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::BYTE);
+    DATA_HEALTH_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::FLOAT);
+    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_EFFECT_AMBIENCE_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_ARROW_COUNT_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
 }
 
 LivingEntity::LivingEntity(Level* level)
@@ -214,7 +208,7 @@ void LivingEntity::_init()
     mThermalAreaChanged = true;
     mElytraCollisionDistance = 0.0;
     mThermalAreasChecked = false;
-    mTeam = NULL;
+    mDeathMessageId = 0;
     mDeathMessage.assign(L"", 0);
     mHurtByPlayerOnPeaceful = false;
     mLastHurtByPlayer.reset();
@@ -246,23 +240,15 @@ void LivingEntity::_init()
     mLastHurtMob.reset();
     mLastHurtMobTimestamp = 0;
     mSpeed = 0.0f;
-    mMovementSpeedScale = 1.0f;
-    mAttackStrengthCooldown = 60;
     mNoJumpDelay = 0;
     mUseItem = ItemInstance::EMPTY;
-    mUnresolvedFloat = 0.0f;
     mUseItemRemaining = 0;
     mFallFlyTicks = 0;
-    mUnresolvedState = 0;
     mAbsorptionAmount = 0.0f;
-    mUnresolvedInt0 = 0;
     mLastDamageSource = NULL;
     mLastDamageStamp = 0LL;
     mLastPos = BlockPos(0, 0, 0);
     mFallFlyingStateDisabled = false;
-    mUnresolvedInt1 = 0;
-    mUnresolvedInt2 = 0;
-    mUnresolvedByteState = 0;
     mLightCacheTicks = 5;
     mLightSampleMinX = 0;
     mLightSampleMinY = 0;
@@ -438,7 +424,7 @@ bool LivingEntity::canBreathe()
     Material* material = state->getMaterial();
     Material* fluidMaterial = mLevel->getExtraBlockState(pos)->getMaterial();
 
-    if (block == Blocks::AIR || (!material->isSolid() && !material->isLiquid() && !fluidMaterial->isLiquid()))
+    if (block == Blocks::air || (!material->isSolid() && !material->isLiquid() && !fluidMaterial->isLiquid()))
     {
         return breathesAir();
     }
@@ -494,7 +480,7 @@ void LivingEntity::baseTick()
 
     Entity::baseTick();
 
-    bool isPlayer = (GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER;
+    bool isPlayer = (GetType() & EntityType::PLAYER) == EntityType::PLAYER;
 
     if (isAlive())
     {
@@ -596,9 +582,9 @@ void LivingEntity::baseTick()
             }
 
             if (!mLevel->mIsClientSide && isPassenger() && getVehicle()
-                && (getVehicle()->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY
-                && getVehicle()->GetType() != ENTITY_TYPE_DOLPHIN
-                && getVehicle()->GetType() != ENTITY_TYPE_SKELETON_HORSE)
+                && (getVehicle()->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY
+                && getVehicle()->GetType() != EntityType::DOLPHIN
+                && getVehicle()->GetType() != EntityType::SKELETON_HORSE)
             {
                 stopRiding();
             }
@@ -627,7 +613,7 @@ void LivingEntity::baseTick()
         --mHurtTime;
     }
 
-    if (mInvulnerableTime > 0 && GetType() != ENTITY_TYPE_LOCAL_PLAYER)
+    if (mInvulnerableTime > 0 && GetType() != EntityType::LOCAL_PLAYER)
     {
         --mInvulnerableTime;
     }
@@ -701,7 +687,7 @@ void LivingEntity::tickDeath()
         if (!mLevel->mIsClientSide
             && (mLastHurtByPlayerTime > 0 || isAlwaysExperienceDropper())
             && shouldDropExperience()
-            && mLevel->getGameRules()->getBoolean(4))
+            && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
         {
             int reward = getExperienceReward(mLastHurtByPlayer);
 
@@ -767,8 +753,8 @@ void LivingEntity::stopRiding()
     if (vehicle && vehicle != getVehicle())
     {
         if (!mLevel->mIsClientSide
-            || (GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER
-            || vehicle->GetType() != ENTITY_TYPE_BOAT)
+            || (GetType() & EntityType::PLAYER) != EntityType::PLAYER
+            || vehicle->GetType() != EntityType::BOAT)
         {
             findStandUpPosition(vehicle);
         }
@@ -808,7 +794,7 @@ int LivingEntity::getLastHurtMobTimestamp()
 
 void LivingEntity::setLastHurtMob(boost::shared_ptr<Entity> target)
 {
-    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         mLastHurtMob = boost::static_pointer_cast<LivingEntity>(target);
     }
@@ -832,7 +818,7 @@ void LivingEntity::playEquipSound(not_null_ptr<ItemInstance> itemInstance)
         return;
     }
 
-    if (GetType() == ENTITY_TYPE_ARMOR_STAND)
+    if (GetType() == EntityType::ARMOR_STAND)
     {
         Item* item = itemInstance->getItem();
         ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item);
@@ -958,7 +944,7 @@ void LivingEntity::readAdditionalSaveData(CompoundTag* tag)
 
     if (tag->getBoolean(std::wstring(L"FallFlying")))
     {
-        setSharedFlag(9, true);
+        setSharedFlag(FLAG_FALL_FLYING, true);
     }
 
     if (mInsomniaComponent != NULL)
@@ -1307,7 +1293,7 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
 
     if (source->isFire() && hasEffect(MobEffects::FIRE_RESISTANCE))
     {
-        if ((GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER && source == DamageSource::LAVA)
+        if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER && source == DamageSource::LAVA)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
             player->awardStat(GenericStats::stayinFrosty(), GenericStats::param_stayinFrosty());
@@ -1378,13 +1364,13 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
 
     if (attacker)
     {
-        if ((attacker->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if ((attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             mHurtByPlayerOnPeaceful = false;
             setLastHurtByMob(boost::static_pointer_cast<LivingEntity>(attacker));
         }
 
-        if ((attacker->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             if (mLevel->getDifficulty() == Difficulty::PEACEFUL)
             {
@@ -1394,7 +1380,7 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
             mLastHurtByPlayerTime = 100;
             mLastHurtByPlayer = boost::static_pointer_cast<Player>(attacker);
         }
-        else if (attacker->GetType() == ENTITY_TYPE_WOLF)
+        else if (attacker->GetType() == EntityType::WOLF)
         {
             boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(attacker);
 
@@ -1420,12 +1406,12 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
     {
         if (blocked)
         {
-            mLevel->broadcastEntityEvent(shared_from_this(), 29, 0);
+            mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ATTACK_BLOCKED, 0);
         }
         else if (dynamic_cast<const EntityDamageSource*>(source) != NULL
                  && static_cast<const EntityDamageSource*>(source)->isThorns())
         {
-            mLevel->broadcastEntityEvent(shared_from_this(), 33, 0);
+            mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::THORNED, 0);
         }
         else
         {
@@ -1566,7 +1552,7 @@ bool LivingEntity::checkTotemDeathProtection(const DamageSource* source)
         addEffect(new MobEffectInstance(MobEffects::REGENERATION, 800, 1), boost::shared_ptr<Entity>());
         addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 100, 1), boost::shared_ptr<Entity>());
         addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 800, 1), boost::shared_ptr<Entity>());
-        mLevel->broadcastEntityEvent(shared_from_this(), 35, 0);
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TALISMAN_ACTIVATE, 0);
     }
 
     return !totem->isEmpty();
@@ -1633,13 +1619,13 @@ void LivingEntity::die(const DamageSource* source)
         int looting = 0;
         boost::shared_ptr<Player> player;
 
-        if (killer && (killer->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if (killer && (killer->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             player = boost::dynamic_pointer_cast<Player>(killer);
             looting = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(player));
         }
 
-        if (shouldDropExperience() && mLevel->getGameRules()->getBoolean(4))
+        if (shouldDropExperience() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
         {
             dropAllDeathLoot(mLastHurtByPlayerTime > 0, looting, source);
         }
@@ -1653,7 +1639,7 @@ void LivingEntity::die(const DamageSource* source)
         }
     }
 
-    mLevel->broadcastEntityEvent(shared_from_this(), 3, 0);
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::DEATH, 0);
 }
 
 void LivingEntity::dropEquipment(bool hitByPlayer, int lootingLevel)
@@ -1748,7 +1734,7 @@ bool LivingEntity::onLadder()
     int y = Mth::floor(mBoundingBox->mMinY);
     int z = Mth::floor(mZ);
 
-    if ((GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+    if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER
         && boost::static_pointer_cast<Player>(shared_from_this())->isSpectator())
     {
         return false;
@@ -2046,7 +2032,7 @@ bool LivingEntity::swing(InteractionHand::EInteractionHand hand)
 
 void LivingEntity::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 3)
+    if (event == EntityEvent::DEATH)
     {
         MemSect(31);
 
@@ -2065,14 +2051,14 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
         return;
     }
 
-    if (event == 30)
+    if (event == EntityEvent::SHIELD_DISABLED)
     {
         playSound(SoundEvents::SHIELD_BREAK, 0.800000011920929f,
                   (float)(mLevel->mRandom->nextFloat() * 0.4000000059604645 + 0.800000011920929));
         return;
     }
 
-    if (event != 2 && event != 29 && event != 33 && event != 36 && event != 37)
+    if (event != EntityEvent::HURT && event != EntityEvent::ATTACK_BLOCKED && event != EntityEvent::THORNED && event != EntityEvent::DROWNED && event != EntityEvent::BURNED)
     {
         Entity::handleEntityEvent(event, data);
         return;
@@ -2084,12 +2070,12 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
     mInvulnerableTime = mInvulnerableDuration;
     mHurtDuration = 10;
 
-    if (event == 33)
+    if (event == EntityEvent::THORNED)
     {
         playSound(SoundEvents::ENCHANT_THORNS_HIT, getSoundVolume(),
                   (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.0f);
     }
-    else if (event == 29)
+    else if (event == EntityEvent::ATTACK_BLOCKED)
     {
         playSound(SoundEvents::SHIELD_BLOCK, 1.0f,
                   (float)(mLevel->mRandom->nextFloat() * 0.4000000059604645 + 0.800000011920929));
@@ -2097,11 +2083,11 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
 
     const DamageSource* source = DamageSource::GENERIC;
 
-    if (event == 37)
+    if (event == EntityEvent::BURNED)
     {
         source = DamageSource::ON_FIRE;
     }
-    else if (event == 36)
+    else if (event == EntityEvent::DROWNED)
     {
         source = DamageSource::DROWN;
     }
@@ -2231,11 +2217,10 @@ void LivingEntity::setSprinting(bool sprinting)
     }
 }
 
-int LivingEntity::getItemInHandIcon(not_null_ptr<ItemInstance> itemInstance, int frame)
+TextureAtlasSprite* LivingEntity::getItemInHandIcon(not_null_ptr<ItemInstance> itemInstance, int frame)
 {
     Item* item = itemInstance->getItem();
-
-    return (int)item->getLayerIcon(itemInstance->getAuxValue(), frame, itemInstance);
+    return item->getLayerIcon(itemInstance->getAuxValue(), frame, itemInstance);
 }
 
 float LivingEntity::getSoundVolume()
@@ -2261,8 +2246,8 @@ bool LivingEntity::isImmobile()
 
 void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
 {
-    if (vehicle->GetType() != ENTITY_TYPE_BOAT
-        && (vehicle->GetType() & ENTITY_TYPE_ABSTRACT_HORSE) != ENTITY_TYPE_ABSTRACT_HORSE)
+    if (vehicle->GetType() != EntityType::BOAT
+        && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) != EntityType::ABSTRACT_HORSE)
     {
         double standX = vehicle->mX;
         double standY = vehicle->mBoundingBox->mMinY + (double)vehicle->mBbHeight;
@@ -2331,7 +2316,7 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
     double distance = (double)(mBbWidth * 0.5f + vehicle->mBbWidth * 0.5f) + 0.4;
     float angle;
 
-    if (vehicle->GetType() == ENTITY_TYPE_BOAT)
+    if (vehicle->GetType() == EntityType::BOAT)
     {
         angle = 0.0f;
     }
@@ -2428,7 +2413,7 @@ float LivingEntity::getFrictionForTravel()
         && (block == Blocks::ice || block == Blocks::packed_ice || block == Blocks::frosted_ice
             || block == Blocks::blue_ice || block == Blocks::slime))
     {
-        return Blocks::AIR->mFriction * friction;
+        return Blocks::stone->mFriction * friction;
     }
 
     return mLevel->getBlockState(mTickCache, pos)->getBlock()->mFriction * friction;
@@ -2436,9 +2421,9 @@ float LivingEntity::getFrictionForTravel()
 
 bool LivingEntity::shouldApplyWaterGravity()
 {
-    if ((GetType() & ENTITY_TYPE_VILLAGER) != ENTITY_TYPE_VILLAGER
-        && GetType() != ENTITY_TYPE_DOLPHIN
-        && GetType() != ENTITY_TYPE_RABBIT)
+    if ((GetType() & EntityType::VILLAGER) != EntityType::VILLAGER
+        && GetType() != EntityType::DOLPHIN
+        && GetType() != EntityType::RABBIT)
     {
         return true;
     }
@@ -2513,12 +2498,12 @@ void LivingEntity::CheckThermalAreas()
             {
                 if (mLevel->mIsClientSide)
                 {
-                    if (GetType() == ENTITY_TYPE_LOCAL_PLAYER)
+                    if (GetType() == EntityType::LOCAL_PLAYER)
                     {
                         Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f);
                     }
                 }
-                else if (GetType() == ENTITY_TYPE_PLAYER)
+                else if (GetType() == EntityType::PLAYER)
                 {
                     boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
                         ClientboundSoundPacket::eSoundInstances_Default, SoundEvents::MG03_THERMAL_BOOST,
@@ -2718,13 +2703,13 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     boost::shared_ptr<Player> player;
     bool skeletonHorseWithPlayerPassenger = false;
 
-    if ((GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         player = boost::static_pointer_cast<Player>(shared_from_this());
     }
 
-    skeletonHorseWithPlayerPassenger = GetType() == ENTITY_TYPE_SKELETON_HORSE
-                                       && hasPassenger(ENTITY_TYPE_PLAYER);
+    skeletonHorseWithPlayerPassenger = GetType() == EntityType::SKELETON_HORSE
+                                       && hasPassenger(EntityType::PLAYER);
 
     if (PositionLocked())
     {
@@ -2756,7 +2741,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
                          GetLiftForceModifier());
 
         if (g_pApp->GetFirstMiniGameType() == eMiniGameId_Glide && player
-            && player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_0) && mYd < 0.0)
+            && player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_SlowFall) && mYd < 0.0)
         {
             move(eMoverType_Self, mXd, mYd * 0.2, mZd, false);
             updateModelAnimation();
@@ -2808,7 +2793,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     {
         double oldY = mY;
         float waterSlowdown = isSprinting() ? 0.9f : getWaterSlowDown();
-        float moveSpeed = GetType() == ENTITY_TYPE_DOLPHIN ? (float)getSpeed() : 0.02f;
+        float moveSpeed = GetType() == EntityType::DOLPHIN ? (float)getSpeed() : 0.02f;
         int depthStrider = EnchantmentHelper::getDepthStrider(
             boost::static_pointer_cast<LivingEntity>(shared_from_this()));
 
@@ -2898,7 +2883,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
     if (!mOnGround)
     {
-        if (GetType() == ENTITY_TYPE_WITHER_BOSS)
+        if (GetType() == EntityType::WITHER_BOSS)
         {
             speed = mFlyingSpeed * acceleration;
         }
@@ -2927,7 +2912,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             mYd = -0.15000000596046448;
         }
 
-        if (isSneaking() && (GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER && mYd < 0.0)
+        if (isSneaking() && (GetType() & EntityType::PLAYER) == EntityType::PLAYER && mYd < 0.0)
         {
             mYd = 0.0;
         }
@@ -3002,7 +2987,7 @@ void LivingEntity::updateModelAnimation()
 
     float target;
 
-    if ((GetType() & ENTITY_TYPE_FLYING_MOB) == ENTITY_TYPE_FLYING_MOB)
+    if ((GetType() & EntityType::FLYING_MOB) == EntityType::FLYING_MOB)
     {
         double dy = mY - mYo;
         target = (float)(Mth::sqrt(dx * dx + dy * dy + dz * dz) * 4.0);
@@ -3071,7 +3056,7 @@ void LivingEntity::takeFallFlyingCollisionDamage()
             }
         }
 
-        setSharedFlag(9, false);
+        setSharedFlag(FLAG_FALL_FLYING, false);
     }
 }
 
@@ -3090,8 +3075,8 @@ int LivingEntity::getLightColor()
 
     if (isPassenger() && getVehicle())
     {
-        if ((getVehicle()->GetType() & ENTITY_TYPE_MINECART) != ENTITY_TYPE_MINECART
-            && getVehicle()->GetType() == ENTITY_TYPE_BOAT)
+        if ((getVehicle()->GetType() & EntityType::MINECART) != EntityType::MINECART
+            && getVehicle()->GetType() == EntityType::BOAT)
         {
             riding = true;
         }
@@ -3349,9 +3334,9 @@ void LivingEntity::tick()
         {
             bool glowing = hasEffect(MobEffects::GLOWING);
 
-            if (getSharedFlag(8) != glowing)
+            if (getSharedFlag(FLAG_GLOWING) != glowing)
             {
-                setSharedFlag(8, glowing);
+                setSharedFlag(FLAG_GLOWING, glowing);
             }
         }
     }
@@ -3364,7 +3349,7 @@ void LivingEntity::tick()
     BlockPos pos(mX + (double)(mBbWidth * 0.5f), mY, mZ + (double)(mBbWidth * 0.5f));
     const BlockState* state = mLevel->getBlockState(mTickCache, pos);
 
-    if (Block::getId(state->getBlock()) == 272)
+    if (Block::getId(state->getBlock()) == BlockId::BUBBLE_COLUMN_SEGMENT)
     {
         if (!mSwimSoundPlayed)
         {
@@ -3520,7 +3505,7 @@ float LivingEntity::tickHeadTurn(float yBodyRot, float headTurnDelta)
 
 void LivingEntity::updateFallFlying()
 {
-    bool flying = getSharedFlag(9);
+    bool flying = getSharedFlag(FLAG_FALL_FLYING);
 
     bool blocked = false;
 
@@ -3562,7 +3547,7 @@ void LivingEntity::updateFallFlying()
             }
         }
 
-        setSharedFlag(9, flying);
+        setSharedFlag(FLAG_FALL_FLYING, flying);
     }
 }
 
@@ -3713,7 +3698,7 @@ void LivingEntity::pushEntities()
         return;
     }
 
-    int maxCramming = mLevel->getGameRules()->getInt(17);
+    int maxCramming = mLevel->getGameRules()->getInt(GameRules::RULE_MAX_ENTITY_CRAMMING);
 
     if (maxCramming > 0 && entities->size() >= (unsigned int)maxCramming && mRandom->nextInt(4) == 0)
     {
@@ -3775,9 +3760,9 @@ void LivingEntity::take(boost::shared_ptr<Entity> entity, int count)
         return;
     }
 
-    if (entity->GetType() != ENTITY_TYPE_ITEM_ENTITY
-        && (entity->GetType() & ENTITY_TYPE_ARROW) != ENTITY_TYPE_ARROW
-        && entity->GetType() != ENTITY_TYPE_EXPERIENCE_ORB)
+    if (entity->GetType() != EntityType::ITEM_ENTITY
+        && (entity->GetType() & EntityType::ARROW) != EntityType::ARROW
+        && entity->GetType() != EntityType::EXPERIENCE_ORB)
     {
         return;
     }
@@ -4106,7 +4091,7 @@ bool LivingEntity::isBlocking()
 
 bool LivingEntity::isFallFlying()
 {
-    return getSharedFlag(9);
+    return getSharedFlag(FLAG_FALL_FLYING);
 }
 
 int LivingEntity::getFallFlyingTicks()
@@ -4209,7 +4194,7 @@ void LivingEntity::setRecordPlayingNearby(const BlockPos& pos, bool playing)
 
 Team* LivingEntity::getTeam()
 {
-    if (GetType() == ENTITY_TYPE_PLAYER)
+    if (GetType() == EntityType::PLAYER)
     {
         return mLevel->GetScoreboard()->getPlayersTeam(static_cast<Player*>(this)->mXuid);
     }
@@ -4244,5 +4229,5 @@ bool LivingEntity::IsCreativeFlying()
 
 unsigned long long LivingEntity::GetType()
 {
-    return ENTITY_TYPE_LIVING_ENTITY;
+    return EntityType::LIVING_ENTITY;
 }

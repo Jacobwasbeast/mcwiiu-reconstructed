@@ -14,9 +14,9 @@ class TutorialConstraint;
 class RideEntityTask : public TutorialTask
 {
 public:
-    RideEntityTask(int entityType, Tutorial* tutorial, int descriptionId,
-                   bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                   bool showMinimumTime, bool allowFade, bool repeatMessage);
+    RideEntityTask(int entityType, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                   std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                   bool repeatMessage);
 
     virtual ~RideEntityTask();
 
@@ -25,5 +25,4 @@ public:
 
     int mEntityType;
 };
-
 #endif

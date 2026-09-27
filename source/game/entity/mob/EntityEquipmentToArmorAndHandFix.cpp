@@ -15,9 +15,9 @@ int EntityEquipmentToArmorAndHandFix::getVersion()
 
 CompoundTag* EntityEquipmentToArmorAndHandFix::fix(CompoundTag* tag)
 {
-    ListTag* equipment = tag->getList(L"Equipment", 10);
+    ListTag* equipment = tag->getList(L"Equipment", Tag::TAG_COMPOUND);
 
-    if (!equipment->isEmpty() && !tag->contains(L"HandItems", 10))
+    if (!equipment->isEmpty() && !tag->contains(L"HandItems", Tag::TAG_COMPOUND))
     {
         ListTag* handItems = new ListTag();
 
@@ -27,7 +27,7 @@ CompoundTag* EntityEquipmentToArmorAndHandFix::fix(CompoundTag* tag)
         tag->put(L"HandItems", handItems);
     }
 
-    if (equipment->size() > 1 && !tag->contains(L"ArmorItems", 10))
+    if (equipment->size() > 1 && !tag->contains(L"ArmorItems", Tag::TAG_COMPOUND))
     {
         ListTag* armorItems = new ListTag();
 
@@ -43,11 +43,11 @@ CompoundTag* EntityEquipmentToArmorAndHandFix::fix(CompoundTag* tag)
 
     tag->remove(L"Equipment");
 
-    if (tag->contains(L"DropChances", 9))
+    if (tag->contains(L"DropChances", Tag::TAG_LIST))
     {
-        ListTag* dropChances = tag->getList(L"DropChances", 5);
+        ListTag* dropChances = tag->getList(L"DropChances", Tag::TAG_FLOAT);
 
-        if (!tag->contains(L"HandDropChances", 10))
+        if (!tag->contains(L"HandDropChances", Tag::TAG_COMPOUND))
         {
             ListTag* handDropChances = new ListTag();
 
@@ -57,7 +57,7 @@ CompoundTag* EntityEquipmentToArmorAndHandFix::fix(CompoundTag* tag)
             tag->put(L"HandDropChances", handDropChances);
         }
 
-        if (!tag->contains(L"ArmorDropChances", 10))
+        if (!tag->contains(L"ArmorDropChances", Tag::TAG_COMPOUND))
         {
             ListTag* armorDropChances = new ListTag();
 

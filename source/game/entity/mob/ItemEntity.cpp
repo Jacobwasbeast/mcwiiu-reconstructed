@@ -1,10 +1,21 @@
 #include "game/entity/mob/ItemEntity.hpp"
+#include "game/core/EntityType.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/MemSect.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ItemDataWalker.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/item/Inventory.hpp"
@@ -59,7 +70,7 @@ void ItemEntity::_init()
     double bob = Math::random() * 3.1415927410125732;
     mBobOffs = (float)(bob + bob);
     setSize(0.25f, 0.25f);
-    mCategories |= 0x400;
+    mCategories |= EntityCategory::eEntityCategory_Item;
 }
 
 void ItemEntity::_init(Level*, double x, double y, double z)
@@ -74,7 +85,7 @@ void ItemEntity::_init(Level*, double x, double y, double z)
 
 void ItemEntity::setItem(not_null_ptr<ItemInstance> item)
 {
-    mEntityData->set(DATA_ITEM, item, true);
+    getEntityData()->set(DATA_ITEM, item, true);
 }
 
 void ItemEntity::setDefaultPickUpDelay()
@@ -85,13 +96,13 @@ void ItemEntity::setDefaultPickUpDelay()
 void ItemEntity::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
     dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                              new ItemDataWalker(0x0800000aULL, L"Item"));
+                              new ItemDataWalker(EntityType::ITEM_ENTITY, L"Item"));
 }
 
 void ItemEntity::staticCtor()
 {
     DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
-        0x000000000800000AULL, 0x0000000008000000ULL,
+        EntityType::ITEM_ENTITY, EntityType::ENTITY,
         EntityDataSerializers::ITEM_INSTANCE);
 }
 
@@ -102,46 +113,51 @@ bool ItemEntity::makeStepSound()
 
 void ItemEntity::defineSynchedData()
 {
-    mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    getEntityData()->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
 }
 
 not_null_ptr<ItemInstance> ItemEntity::getItem()
 {
-    return mEntityData->get(DATA_ITEM);
+    return getEntityData()->get(DATA_ITEM);
 }
 
 void ItemEntity::setUnderwaterMovement()
 {
-    mXd *= 0.99;
-    mYd = 0.06;
-    mZd *= 0.99;
+    mYd += 0.0005f;
+    mYd = Mth::Lerp(mYd, 0.06, 0.01);
+    mXd *= 0.99f;
+    mZd *= 0.99f;
 }
 
 bool ItemEntity::merge(boost::shared_ptr<ItemEntity> entity)
 {
-    if (entity.get() == this)
+    if (entity == shared_from_this())
         return false;
     if (!entity->isAlive() || !isAlive())
         return false;
-    if (mPickupDelay == 32767 || entity->mPickupDelay == 32767)
-        return false;
+
     not_null_ptr<ItemInstance> thisItem = getItem();
     not_null_ptr<ItemInstance> otherItem = entity->getItem();
-    if (!otherItem->sameItem(thisItem))
+    if (mPickupDelay == 32767 || entity->mPickupDelay == 32767)
+        return false;
+    if (otherItem->getItem() != thisItem->getItem())
+        return false;
+    if (otherItem->hasTag() != thisItem->hasTag())
+        return false;
+    if (otherItem->hasTag() && !otherItem->getTag()->equals(thisItem->getTag()))
+        return false;
+    if (otherItem->getItem() == NULL)
+        return false;
+    if (otherItem->getItem()->isStackedByData() && otherItem->getAuxValue() != thisItem->getAuxValue())
         return false;
     if (otherItem->getCount() < thisItem->getCount())
         return entity->merge(boost::dynamic_pointer_cast<ItemEntity>(shared_from_this()));
     if (otherItem->getCount() + thisItem->getCount() > otherItem->getMaxStackSize())
         return false;
+
     otherItem->grow(thisItem->getCount());
-    int mergedPickupDelay = mPickupDelay;
-    if (entity->mPickupDelay > mergedPickupDelay)
-        mergedPickupDelay = entity->mPickupDelay;
-    int mergedAge = mAge;
-    if (entity->mAge < mergedAge)
-        mergedAge = entity->mAge;
-    entity->mPickupDelay = mergedPickupDelay;
-    entity->mAge = mergedAge;
+    entity->mPickupDelay = mPickupDelay < entity->mPickupDelay ? entity->mPickupDelay : mPickupDelay;
+    entity->mAge = entity->mAge < mAge ? entity->mAge : mAge;
     entity->setItem(otherItem);
     remove();
     return true;
@@ -164,24 +180,36 @@ void ItemEntity::mergeWithNeighbours()
 
 void ItemEntity::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Item entity tick");
     if (getItem()->isEmpty())
     {
         remove();
+        PIXEndNamedEvent();
         return;
     }
+
     Entity::tick();
     if (mPickupDelay > 0 && mPickupDelay != 32767)
         --mPickupDelay;
 
-    mXo = mX;
-    mYo = mY;
-    mZo = mZ;
-
-    double oldXd = mXd;
-    double oldYd = mYd;
     double oldZd = mZd;
+    mZo = mZ;
+    double oldXd = mXd;
+    mXo = mX;
+    double oldYd = mYd;
+    mYo = mY;
 
-    if (isUnderLiquid(Material::WATER))
+    if (mLevel->getBlockState(BlockPos(shared_from_this()))->getBlock()->mMaterial == Material::LAVA)
+    {
+        mYd = 0.2f;
+        mXd = (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f;
+        mZd = (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f;
+        MemSect(31);
+        playSound(SoundEvents::GENERIC_BURN, 0.4f, 2.0f + mRandom->nextFloat() * 0.4f);
+        MemSect(0);
+    }
+
+    if (isUnderLiquid(Material::WATER) && mLevel->getBlock(BlockPos(getPos(0.0f))) != Blocks::flowing_water)
     {
         setNoGravity(true);
         setUnderwaterMovement();
@@ -189,22 +217,52 @@ void ItemEntity::tick()
     else
     {
         setNoGravity(false);
+    }
+
+    if (mLevel->mIsClientSide)
+    {
+        mNoPhysics = false;
+    }
+    else
+    {
         if (mAge % 25 == 0)
             mergeWithNeighbours();
-        if (!isNoGravity())
-            mYd -= 0.04;
+        mNoPhysics = checkInBlock(mX, (mBoundingBox->mMinY + mBoundingBox->mMaxY) * 0.5, mZ);
     }
-    move(eMoverType_Self, mXd, mYd, mZd, true);
-    mXd *= 0.98;
-    mYd *= 0.98;
-    mZd *= 0.98;
+
+    PIXBeginNamedEvent(0.0f, "move");
+    Vec3* motion = Vec3::newTemp(mXd, mYd, mZd);
+    if (!mOnGround || motion->lengthSqr() > 0.01 || isInWater() || (mAge & 3) == 0)
+    {
+        if (!isNoGravity())
+            mYd -= 0.04f;
+        move(eMoverType_Self, mXd, mYd, mZd, true);
+
+        float friction = 0.98f;
+        if ((mVerticalCollision && mYd <= 0.0) || mOnGround)
+        {
+            friction = 0.588f;
+            Block* below = mLevel->getBlock(BlockPos(mX, mBoundingBox->mMinY - 1.0, mZ));
+            if (below != Blocks::air)
+                friction = below->mFriction * 0.98f;
+        }
+        mXd *= friction;
+        mYd *= 0.98f;
+        mZd *= friction;
+    }
+    PIXEndNamedEvent();
+
     updateInWaterState();
-    if (!mLevel->mIsClientSide &&
-        (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) + (mZd - oldZd) * (mZd - oldZd) > 0.01)
+    bool clientSide = mLevel->mIsClientSide;
+    if (!clientSide &&
+        (mZd - oldZd) * (mZd - oldZd) + (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) > 0.01)
+    {
         mHasImpulse = true;
+    }
     ++mAge;
-    if (!mLevel->mIsClientSide && mAge > 5999)
+    if (!clientSide && mAge >= 6000)
         remove();
+    PIXEndNamedEvent();
 }
 
 void ItemEntity::setShortLifeTime()
@@ -263,9 +321,9 @@ void ItemEntity::addAdditonalSaveData(CompoundTag* tag)
     tag->putShort(L"Health", static_cast<short>(mHealth));
     tag->putShort(L"Age", static_cast<short>(mAge));
     tag->putShort(L"PickupDelay", static_cast<short>(mPickupDelay));
-    if (!mThrower.empty())
+    if (!getThrower().empty())
         tag->putString(L"Thrower", mThrower);
-    if (!mOwner.empty())
+    if (!getOwner().empty())
         tag->putString(L"Owner", mOwner);
     if (!getItem()->isEmpty())
         tag->put(L"Item", getItem()->save(new CompoundTag()));
@@ -281,8 +339,7 @@ void ItemEntity::readAdditionalSaveData(CompoundTag* tag)
         mOwner = tag->getString(L"Owner");
     if (tag->contains(L"Thrower"))
         mThrower = tag->getString(L"Thrower");
-    if (tag->contains(L"Item"))
-        setItem(not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"Item"))));
+    setItem(not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"Item"))));
     if (getItem()->isEmpty())
         remove();
 }
@@ -314,9 +371,9 @@ void ItemEntity::playerTouch(boost::shared_ptr<Player> player)
     if (itemType == Items::diamond)
     {
         player->awardStat(GenericStats::diamonds(), GenericStats::param_diamonds());
-        if (!mThrower.empty())
+        if (!getThrower().empty())
         {
-            boost::shared_ptr<Player> thrower = mLevel->getPlayerByName(mThrower);
+            boost::shared_ptr<Player> thrower = mLevel->getPlayerByName(getThrower());
             if (thrower && thrower != player)
                 thrower->awardStat(GenericStats::diamondsToYou(), GenericStats::param_diamondsToYou());
         }
@@ -342,7 +399,7 @@ std::wstring ItemEntity::getName()
 boost::shared_ptr<Entity> ItemEntity::changeDimension(int dimension)
 {
     boost::shared_ptr<Entity> newEntity = Entity::changeDimension(dimension);
-    if (!mLevel->mIsClientSide && newEntity && newEntity->GetType() == GetType())
+    if (!mLevel->mIsClientSide && newEntity && newEntity->GetType() == EntityType::ITEM_ENTITY)
         boost::static_pointer_cast<ItemEntity>(newEntity)->mergeWithNeighbours();
     return newEntity;
 }
@@ -395,7 +452,7 @@ void ItemEntity::makeFakeItem()
 
 unsigned long long ItemEntity::GetType()
 {
-    return 0x0800000aULL;
+    return EntityType::ITEM_ENTITY;
 }
 
 int ItemEntity::getAge()

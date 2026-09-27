@@ -1,4 +1,6 @@
 #include "game/entity/mob/LeashFenceKnotEntity.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <typeinfo>
@@ -22,6 +24,7 @@
 #include "game/world/block/FenceBlock.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 LeashFenceKnotEntity::LeashFenceKnotEntity(Level* level)
     : HangingEntity(level)
@@ -201,20 +204,20 @@ boost::shared_ptr<LeashFenceKnotEntity> LeashFenceKnotEntity::findKnotAt(Level* 
 unsigned int LeashFenceKnotEntity::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     bool bound = false;
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x1a4)
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::LEAD)
     {
         boost::shared_ptr<Player> player = tooltipData.m_pPlayer;
         bound = LeadItem::bindPlayerMobsTest(player, mLevel, BlockPos(shared_from_this()));
     }
-    return bound ? 0x7b938f36u : 0x551269b5u;
+    return bound ? IDS_TOOLTIPS_ATTACH : IDS_TOOLTIPS_UNLEASH;
 }
 
 unsigned int LeashFenceKnotEntity::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return 0x551269b5;
+    return IDS_TOOLTIPS_UNLEASH;
 }
 
 unsigned long long LeashFenceKnotEntity::GetType()
 {
-    return 0x000000000A080003ULL;
+    return EntityType::LEASH_FENCE_KNOT_ENTITY;
 }

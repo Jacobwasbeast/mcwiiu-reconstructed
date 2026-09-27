@@ -1,4 +1,5 @@
 #include "game/entity/mob/LookAtEntityHint.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Boat.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -10,7 +11,7 @@
 LookAtEntityHint::LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorialValue,
                                    int description, int id,
                                    unsigned long long typeValue)
-    : TutorialHint(hint, tutorialValue, description, (eHintType)7, true, true, -1),
+    : TutorialHint(hint, tutorialValue, description, HINT_LOOK_AT_ENTITY, true, true, -1),
       entityType(typeValue), entityId(id), entityPredicate(NULL)
 {
 }
@@ -24,47 +25,47 @@ boost::shared_ptr<ItemInstance> LookAtEntityHint::GetEntityAsItem(boost::shared_
     unsigned long long type = entity->GetType();
     Item* item = NULL;
 
-    if (type == 0x800000eULL)
+    if (type == EntityType::ENDER_CRYSTAL)
     {
         item = Items::endCrystal;
     }
-    else if (type == 0xc000001ULL)
+    else if (type == EntityType::ARMOR_STAND)
     {
         item = Items::armorStand;
     }
-    else if (type == 0x8000008ULL)
+    else if (type == EntityType::BOAT)
     {
         item = boost::static_pointer_cast<Boat>(entity)->getDropItem();
     }
-    else if (type == 0xa800004ULL)
+    else if (type == EntityType::MINECART_TNT)
     {
         item = Items::tntMinecart;
     }
-    else if (type == 0xa840005ULL)
+    else if (type == EntityType::MINECART_HOPPER)
     {
         item = Items::hopperMinecart;
     }
-    else if (type == 0xa800003ULL)
+    else if (type == EntityType::MINECART_FURNACE)
     {
         item = Items::furnaceMinecart;
     }
-    else if (type == 0xa840002ULL)
+    else if (type == EntityType::MINECART_CHEST)
     {
         item = Items::chestMinecart;
     }
-    else if (type == 0xa800001ULL)
+    else if (type == EntityType::MINECART_RIDEABLE)
     {
         item = Items::minecart;
     }
-    else if (type == 0xa080003ULL)
+    else if (type == EntityType::LEASH_FENCE_KNOT_ENTITY)
     {
         item = Items::lead;
     }
-    else if (type == 0xa080002ULL)
+    else if (type == EntityType::ITEM_FRAME)
     {
         item = Items::itemFrame;
     }
-    else if (type == 0xa080001ULL)
+    else if (type == EntityType::PAINTING)
     {
         item = Items::painting;
     }
@@ -94,9 +95,9 @@ unsigned int LookAtEntityHint::onLookAtEntity(boost::shared_ptr<Entity> entity)
     details->isItem = true;
 
     unsigned long long type = entity->GetType();
-    if ((type & 0xa080000ULL) != 0xa080000ULL &&
-        (type & 0xa800000ULL) != 0xa800000ULL &&
-        type != 0xc000001ULL && type != 0x800000eULL)
+    if ((type & EntityType::HANGING_ENTITY) != EntityType::HANGING_ENTITY &&
+        (type & EntityType::MINECART) != EntityType::MINECART &&
+        type != EntityType::ARMOR_STAND && type != EntityType::ENDER_CRYSTAL)
     {
         return tutorial->setMessage(this, details);
     }

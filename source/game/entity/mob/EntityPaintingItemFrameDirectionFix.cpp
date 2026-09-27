@@ -22,11 +22,11 @@ CompoundTag* EntityPaintingItemFrameDirectionFix::fix(CompoundTag* tag)
     bool painting = CheckID(tag, L"Painting");
     bool itemFrame = CheckID(tag, L"ItemFrame");
 
-    if ((painting || itemFrame) && !tag->contains(L"Facing", 99))
+    if ((painting || itemFrame) && !tag->contains(L"Facing", Tag::TAG_ANY_NUMERIC))
     {
         const Direction* direction;
 
-        if (tag->contains(L"Direction", 99))
+        if (tag->contains(L"Direction", Tag::TAG_ANY_NUMERIC))
         {
             direction = Direction::from2DDataValue(tag->getByte(L"Direction"));
 
@@ -36,7 +36,7 @@ CompoundTag* EntityPaintingItemFrameDirectionFix::fix(CompoundTag* tag)
 
             tag->remove(L"Direction");
 
-            if (itemFrame && tag->contains(L"ItemRotation", 99))
+            if (itemFrame && tag->contains(L"ItemRotation", Tag::TAG_ANY_NUMERIC))
             {
                 tag->putByte(L"ItemRotation", tag->getByte(L"ItemRotation") * 2);
             }

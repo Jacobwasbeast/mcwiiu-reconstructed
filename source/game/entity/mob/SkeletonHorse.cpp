@@ -1,4 +1,6 @@
 #include "game/entity/mob/SkeletonHorse.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -17,6 +19,7 @@
 #include "game/item/Items.hpp"
 #include "game/item/SpawnEggItem.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
+#include "game/item/ItemId.hpp"
 
 SkeletonHorse::SkeletonHorse(Level* level)
     : AbstractHorse(level), mSkeletonTrapGoal(this), mTrap(false), mTrapTime(0)
@@ -170,7 +173,7 @@ void SkeletonHorse::aiStep()
 
 void SkeletonHorse::addDataWalkers(DataFixerUpper* fixer)
 {
-    AbstractHorse::addDataWalkers(fixer, 0x2D690002ULL);
+    AbstractHorse::addDataWalkers(fixer, EntityType::SKELETON_HORSE);
 }
 
 void SkeletonHorse::addAdditonalSaveData(CompoundTag* tag)
@@ -237,84 +240,84 @@ bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player,
 unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (!tooltipData.m_bAllowedToInteract)
-        return 0xffffffffU;
+        return IDS_NONE;
 
     not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
     unsigned int itemId = Item::getId(item->getItem());
-    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == 453;
+    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
     boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                      (Player*)tooltipData.m_pPlayer.get());
 
-    if (itemId == 420)
+    if (itemId == ItemId::LEAD)
     {
         if (isLeashedToPlayer(player))
-            return 0x551269b5U;
+            return IDS_TOOLTIPS_UNLEASH;
         if (isLeashed())
-            return 0xffffffffU;
-        return 0xa1b34a96U;
+            return IDS_NONE;
+        return IDS_TOOLTIPS_LEASH;
     }
 
-    if (itemId == 383)
+    if (itemId == ItemId::SPAWN_EGG)
     {
         if (SpawnEggItem::fjGetType(item) == GetType())
-            return 0x4c36cd96U;
+            return IDS_TOOLTIPS_PLACE;
         if (isLeashedToPlayer(player))
-            return 0x551269b5U;
-        return 0xffffffffU;
+            return IDS_TOOLTIPS_UNLEASH;
+        return IDS_NONE;
     }
 
     if (isLeashedToPlayer(player))
-        return 0x551269b5U;
+        return IDS_TOOLTIPS_UNLEASH;
 
-    if (itemId == 421)
+    if (itemId == ItemId::NAME_TAG)
     {
         if (!player->isSneaking() || !isTamed())
         {
             if (!item->hasCustomHoverName())
-                return 0xffffffffU;
+                return IDS_NONE;
             if (hasCustomName() && item->getHoverName() == getCustomName())
-                return 0xffffffffU;
-            return 0x5592c692U;
+                return IDS_NONE;
+            return IDS_TOOLTIPS_NAME;
         }
         if (!item->hasCustomHoverName())
         {
             if (getPassengers()->empty())
-                return 0x497adcf0U;
-            return 0xffffffffU;
+                return IDS_TOOLTIPS_MOUNT;
+            return IDS_NONE;
         }
         if (hasCustomName() && item->getHoverName() == getCustomName())
-            return 0xffffffffU;
-        return 0x5592c692U;
+            return IDS_NONE;
+        return IDS_TOOLTIPS_NAME;
     }
 
     if (isBaby())
-        return 0xffffffffU;
+        return IDS_NONE;
 
     bool openInventory = true;
     if (!player->isSneaking())
     {
-        if ((itemId != 329 || isSaddled()) && (!wearsArmor() || !horseArmor))
+        if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
             openInventory = false;
     }
     else if (isVehicle())
     {
         if (!mobInteract(player, InteractionHand::eInteractionHand_MainHand))
         {
-            if ((itemId != 329 || isSaddled()) && (!wearsArmor() || !horseArmor))
+            if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
                 openInventory = false;
         }
     }
 
     if (openInventory)
-        return 0x41590ad1U;
+        return IDS_TOOLTIPS_OPEN;
 
     if (getPassengers()->empty())
-        return 0x497adcf0U;
+        return IDS_TOOLTIPS_MOUNT;
 
-    return 0xffffffffU;
+    return IDS_NONE;
 }
 
 unsigned long long SkeletonHorse::GetType()
 {
-    return 0x2D690002ULL;
+    return EntityType::SKELETON_HORSE;
 }

@@ -1,4 +1,5 @@
 #include "game/entity/mob/Skeleton.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -14,8 +15,6 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-static const unsigned long long ENTITY_TYPE_SKELETON = 0x5D540441ULL;
-static const unsigned long long ENTITY_TYPE_TIPPABLE_ARROW = 0x8A020002ULL;
 
 Skeleton::Skeleton(Level* level)
     : AbstractSkeleton(level)
@@ -34,7 +33,7 @@ void Skeleton::create(Level* level)
 
 void Skeleton::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_SKELETON);
+    Mob::addDataWalkers(fixer, EntityType::SKELETON);
 }
 
 void Skeleton::registerGoals()
@@ -78,7 +77,7 @@ void Skeleton::die(const DamageSource* source)
 {
     AbstractSkeleton::die(source);
 
-    if (source->getEntity() && source->getEntity()->GetType() == 0x5D540041ULL)
+    if (source->getEntity() && source->getEntity()->GetType() == EntityType::CREEPER)
     {
         boost::shared_ptr<Creeper> creeper =
             boost::static_pointer_cast<Creeper>(source->getEntity());
@@ -94,12 +93,12 @@ boost::shared_ptr<TippableArrow> Skeleton::getArrow(float distanceFactor)
 {
     not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::OFFHAND);
     boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (item->getItem() == Items::tippedArrow && arrow->GetType() == ENTITY_TYPE_TIPPABLE_ARROW)
+    if (item->getItem() == Items::tippedArrow && arrow->GetType() == EntityType::TIPPABLE_ARROW)
         arrow->setEffectsFromItem(item);
     return arrow;
 }
 
 unsigned long long Skeleton::GetType()
 {
-    return ENTITY_TYPE_SKELETON;
+    return EntityType::SKELETON;
 }

@@ -1,4 +1,6 @@
 #include "game/entity/mob/HangingEntityItem.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -15,6 +17,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DiodeBlock.hpp"
+#include "game/item/Items.hpp"
 
 HangingEntityItem::HangingEntityItem(unsigned long long entityType)
     : Item(), mEntityType(entityType)
@@ -28,18 +31,16 @@ HangingEntityItem::~HangingEntityItem()
 boost::shared_ptr<HangingEntity> HangingEntityItem::createEntity(Level* level, const BlockPos& pos,
                                                                   const Direction* direction, int auxValue)
 {
-    if (mEntityType == 0x000000000A080001ULL)
+    if (mEntityType == EntityType::PAINTING)
     {
         boost::shared_ptr<Painting> painting(new Painting(level, pos, direction));
         painting->PaintingPostConstructor(direction, -1);
-        level->addEntity(boost::static_pointer_cast<Entity>(painting));
         return boost::static_pointer_cast<HangingEntity>(painting);
     }
-    else if (mEntityType == 0x000000000A080002ULL)
+    else if (mEntityType == EntityType::ITEM_FRAME)
     {
         boost::shared_ptr<ItemFrame> itemFrame(new ItemFrame(level, pos, direction));
-        level->updateObservingBlocksAt(pos, NULL);
-        level->addEntity(boost::static_pointer_cast<Entity>(itemFrame));
+        level->updateObservingBlocksAt(pos, Blocks::air);
         return boost::static_pointer_cast<HangingEntity>(itemFrame);
     }
     return boost::shared_ptr<HangingEntity>();
@@ -67,16 +68,24 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
         return InteractionResult::eInteractionResult_Success;
     }
 
-    createEntity(level, placePos, direction, itemInstance->getAuxValue());
+    boost::shared_ptr<HangingEntity> entity = createEntity(level, placePos, direction, itemInstance->getAuxValue());
+    if (entity == NULL || !entity->survives())
+        return InteractionResult::eInteractionResult_Success;
 
     if (!level->mIsClientSide)
     {
-        Block* block = NULL;
-        if (mEntityType == 0x000000000A080001ULL)
-            block = Block::byItem(Item::byId(321));
-        else if (mEntityType == 0x000000000A080002ULL)
-            block = Block::byItem(Item::byId(389));
+        if (!level->addEntity(entity))
+        {
+            player->displayClientMessage(0x1EE681BA, true);
+            return InteractionResult::eInteractionResult_Fail;
+        }
+        entity->playPlacementSound();
 
+        Block* block = NULL;
+        if (mEntityType == EntityType::PAINTING)
+            block = Block::byItem(Items::painting);
+        else if (mEntityType == EntityType::ITEM_FRAME)
+            block = Block::byItem(Items::itemFrame);
         if (block != NULL)
         {
             player->awardStat(Stats::blockPlacedStats.data[Block::getId(block)],

@@ -1,4 +1,6 @@
 #include "game/entity/mob/ZombieHorse.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -15,6 +17,7 @@
 #include "game/item/SpawnEggItem.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 ZombieHorse::ZombieHorse(Level* level)
     : AbstractHorse(level)
@@ -33,7 +36,7 @@ void ZombieHorse::create(Level* level)
 
 void ZombieHorse::addDataWalkers(DataFixerUpper* fixer)
 {
-    AbstractHorse::addDataWalkers(fixer, 0x2d690003ULL);
+    AbstractHorse::addDataWalkers(fixer, EntityType::ZOMBIE_HORSE);
 }
 
 void ZombieHorse::registerAttributes()
@@ -126,42 +129,42 @@ unsigned int ZombieHorse::GetInteractTooltip(const EntityTooltipDataHolder& tool
     {
         not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
         unsigned int itemId = Item::getId(item->getItem());
-        bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == 453;
+        bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
         boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                          (Player*)tooltipData.m_pPlayer.get());
 
-        if (itemId == 383 && SpawnEggItem::fjGetType(item) == GetType())
-            return 0x4c36cd96U;
+        if (itemId == ItemId::SPAWN_EGG && SpawnEggItem::fjGetType(item) == GetType())
+            return IDS_TOOLTIPS_PLACE;
         if (isLeashedToPlayer(player))
-            return 0x551269b5U;
-        if (itemId == 420)
+            return IDS_TOOLTIPS_UNLEASH;
+        if (itemId == ItemId::LEAD)
         {
             if (!isLeashed())
-                return 0xa1b34a96U;
+                return IDS_TOOLTIPS_LEASH;
         }
-        else if (itemId == 421)
+        else if (itemId == ItemId::NAME_TAG)
         {
             if (!player->isSneaking() || !isTamed())
             {
                 if (!item->hasCustomHoverName())
-                    return 0xffffffffU;
+                    return IDS_NONE;
                 if (hasCustomName() && item->getHoverName() == getCustomName())
-                    return 0xffffffffU;
-                return 0x5592c692U;
+                    return IDS_NONE;
+                return IDS_TOOLTIPS_NAME;
             }
         }
 
         if (isTamed())
         {
             if (player->isSneaking()
-                || itemId == 329 && !isSaddled()
+                || itemId == ItemId::SADDLE && !isSaddled()
                 || wearsArmor() && horseArmor)
-                return 0x41590ad1U;
+                return IDS_TOOLTIPS_OPEN;
             if (getPassengers()->empty())
-                return 0x497adcf0U;
+                return IDS_TOOLTIPS_MOUNT;
         }
     }
-    return 0xffffffffU;
+    return IDS_NONE;
 }
 
 bool ZombieHorse::breathesWater()
@@ -171,5 +174,5 @@ bool ZombieHorse::breathesWater()
 
 unsigned long long ZombieHorse::GetType()
 {
-    return 0x000000002D690003ULL;
+    return EntityType::ZOMBIE_HORSE;
 }

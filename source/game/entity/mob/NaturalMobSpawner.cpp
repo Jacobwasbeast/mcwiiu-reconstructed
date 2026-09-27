@@ -20,13 +20,13 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/System.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
-
-void MemSect(int section);
+#include "game/core/MemSect.hpp"
 
 NaturalMobSpawner::NaturalMobSpawner(int chunkRadius, ServerLevel* level)
     : mLastSpawnTime(0), mMinChunk(0), mMaxChunk(0), mLevel(level)
@@ -85,48 +85,55 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
         return false;
 
     const BlockState* state = level->getBlockState(pos);
-    if (placementType == 2)
+    if (placementType == Mob::SPAWN_PLACEMENT_TYPE_IN_WATER)
     {
-        return state->getMaterial()->isLiquid()
-            && level->getBlockState(pos.below())->getMaterial()->isLiquid()
-            && !level->getBlockState(pos.above())->isSolid();
+        return state->getMaterial() == Material::WATER
+            && level->getBlockState(pos.below())->getMaterial() == Material::WATER
+            && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
 
-    if (placementType == 3)
+    if (placementType == Mob::SPAWN_PLACEMENT_TYPE_IN_OPEN_WATER)
     {
-        MutableBlockPos mutablePos(pos.x, pos.y, pos.z);
-        int solidBelow = 0;
-        int i;
-        for (i = 0; i < 5 && pos.y - i >= 0; ++i)
+        int blocksBelow = 0;
+        MutableBlockPos column(0, 0, 0);
+        for (int depth = 0; pos.y - depth >= 0 && depth < 5; ++depth)
         {
-            mutablePos.set(pos.x, pos.y - i, pos.z);
-            if (level->getBlockState(mutablePos)->getMaterial()->isSolid())
-                ++solidBelow;
+            column.set(pos.x, pos.y - depth, pos.z);
+            if (level->getBlock(column) != NULL)
+                ++blocksBelow;
         }
-        bool sidesSolid = solidBelow == 5
-            && level->getBlockState(pos.offset(5, 0, 0))->getMaterial()->isSolid()
-            && level->getBlockState(pos.offset(-5, 0, 0))->getMaterial()->isSolid()
-            && level->getBlockState(pos.offset(0, 0, 5))->getMaterial()->isSolid()
-            && level->getBlockState(pos.offset(0, 0, -5))->getMaterial()->isSolid();
-        return state->getMaterial()->isSolid() && sidesSolid
-            && !level->getBlockState(pos.above())->isSolid();
+
+        bool surrounded = false;
+        if (blocksBelow == 5 && level->getBlockState(pos.offset(5, 0, 0))->getMaterial() != NULL
+            && level->getBlockState(pos.offset(-5, 0, 0))->getMaterial() != NULL
+            && level->getBlockState(pos.offset(0, 0, 5))->getMaterial() != NULL
+            && level->getBlockState(pos.offset(0, 0, -5))->getMaterial() != NULL)
+            surrounded = true;
+
+        return state->getMaterial() != NULL && surrounded
+            && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
 
-    const BlockState* below = level->getBlockState(pos.below());
-    if (placementType == 4)
+    if (placementType == Mob::SPAWN_PLACEMENT_TYPE_ON_WATER_FLOOR)
     {
-        if (!below->isSolid() && state->getMaterial()->isSolid())
+        BlockPos below = pos.below();
+        if (!level->getBlockState(below)->isTopSolidBlocking() && level->getBlock(pos) != NULL)
             return false;
-        return below->getMaterial() != Material::AIR
-            && isValidEmptyUnderWaterSpawnBlock(below)
+        Block* floor = level->getBlock(below);
+        bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
+        return validFloor && isValidEmptyUnderWaterSpawnBlock(state)
             && isValidEmptyUnderWaterSpawnBlock(level->getBlockState(pos.above()));
     }
 
-    return below->isSolid() && isValidEmptySpawnBlock(below)
-        && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
+    BlockPos below = pos.below();
+    if (!level->getBlockState(below)->isTopSolidBlocking())
+        return false;
+    Block* floor = level->getBlock(below);
+    bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
+    return validFloor && isValidEmptySpawnBlock(state) && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
 }
 
-unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, bool spawnEnemies,
+unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool spawnFriendlies,
                             bool spawnPersistent)
 {
     if (!spawnFriendlies && !spawnEnemies && !spawnPersistent)
@@ -211,7 +218,7 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, b
                         continue;
                     if (candidate.distSqr(sharedSpawn) < 576.0)
                         continue;
-                    Mob::SpawnPlacementType placementType = Mob::SPAWN_PLACEMENT_TYPE_DEFAULT;
+                    Mob::SpawnPlacementType placementType = Mob::SPAWN_PLACEMENT_TYPE_ON_GROUND;
                     if (!isSpawnPositionOk(placementType, level, candidate, group, attempt))
                         continue;
                     boost::shared_ptr<Mob> mob = mMobCache.getTestMob(level, type);

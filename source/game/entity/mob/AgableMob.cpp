@@ -1,4 +1,6 @@
 #include "game/entity/mob/AgableMob.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 
 #include <string>
@@ -16,10 +18,13 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/client/render/ParticleType.hpp"
+#include "game/item/Items.hpp"
+#include "game/core/Abilities.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID = NULL;
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID_2 = NULL;
-static const unsigned long long ENTITY_TYPE_AGABLE_MOB = 0x000000000D600000ULL;
 
 AgableMob::AgableMob(Level* level)
     : PathfinderMob(level), mAge(0), mForcedAge(0), mForcedAgeTimer(0),
@@ -33,70 +38,53 @@ AgableMob::~AgableMob()
 
 void AgableMob::staticCtor()
 {
-    DATA_BABY_ID = SynchedEntityData::defineId(ENTITY_TYPE_AGABLE_MOB, ENTITY_TYPE_MOB,
+    DATA_BABY_ID = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::MOB,
                                                EntityDataSerializers::BOOLEAN);
-    DATA_BABY_ID_2 = SynchedEntityData::defineId(ENTITY_TYPE_AGABLE_MOB, ENTITY_TYPE_MOB,
+    DATA_BABY_ID_2 = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::MOB,
                                                  EntityDataSerializers::BOOLEAN);
 }
 
 bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> itemInstance = ((LivingEntity*)player.get())->getItemInHand(hand);
-    if (Item::getId(itemInstance->getItem()) != 383 || isBaby())
-    {
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    if (itemInstance->getItem() != Items::spawnEgg || mLevel->mIsClientSide)
         return false;
-    }
 
-    unsigned long long type = SpawnEggItem::fjGetType(itemInstance);
-    if (type != GetType())
-    {
+    const unsigned long long type = SpawnEggItem::fjGetType(itemInstance);
+    if (type == 0 || (type & EntityType::AGABLE_MOB) != EntityType::AGABLE_MOB || GetType() != type)
         return false;
-    }
 
-    ResourceLocation entityType = SpawnEggItem::getNamedIdFrom(itemInstance);
     int error = -1;
-    if (!SpawnEggItem::canSpawn(entityType, mLevel, &error))
-    {
-        SpawnEggItem::DisplaySpawnError(player, error);
-        return true;
-    }
-    if (!mLevel->canCreateMore(GetType(), 0))
-    {
-        return true;
-    }
-
-    boost::shared_ptr<Mob> mob = SpawnEggItem::getMob(mLevel, entityType, mX, mY, mZ, &error, std::wstring(L""));
-    if (!mob)
+    if (!SpawnEggItem::canSpawn(SpawnEggItem::getNamedIdFrom(itemInstance), mLevel, &error))
     {
         SpawnEggItem::DisplaySpawnError(player, error);
         return true;
     }
 
-    mob->moveTo(mX, mY, mZ, mYRot, 0.0f);
-    boost::shared_ptr<AgableMob> agable = boost::dynamic_pointer_cast<AgableMob>(mob);
-    if (agable)
+    if (mLevel->canCreateMore(GetType(), Level::eSpawnType_Egg))
     {
-        agable->setAge(-24000);
-    }
-    mLevel->addEntity(mob);
-    if (itemInstance->hasCustomHoverName())
-    {
-        mob->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
-                           itemInstance->wasCreatedByRestrictedPlayer());
-    }
-    if (!((LivingEntity*)player.get())->isCreative())
-    {
-        itemInstance->shrink(1);
+        boost::shared_ptr<AgableMob> child =
+            getBreedOffspring(boost::static_pointer_cast<AgableMob>(shared_from_this()));
+        if (child != NULL)
+        {
+            child->setAge(-24000);
+            child->moveTo(mX, mY, mZ, 0.0f, 0.0f);
+            child->setDespawnProtected();
+            mLevel->addEntity(child);
+            if (itemInstance->hasCustomHoverName())
+                child->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
+                                     itemInstance->wasCreatedByRestrictedPlayer());
+            if (!player->mAbilities.mInstabuild)
+                itemInstance->shrink(1);
+        }
     }
     return true;
 }
 
 bool AgableMob::holdingSpawnEggOfClass(const not_null_ptr<ItemInstance>& itemInstance, unsigned long long type)
 {
-    if (Item::getId(itemInstance->getItem()) != 383)
-    {
+    if (itemInstance->getItem() != Items::spawnEgg)
         return false;
-    }
     return SpawnEggItem::fjGetType(itemInstance) == type;
 }
 
@@ -229,10 +217,10 @@ bool AgableMob::isBaby()
 
 unsigned int AgableMob::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    if (Item::getId(holder.m_pItemInstance->getItem()) == 383
+    if (Item::getId(holder.m_pItemInstance->getItem()) == ItemId::SPAWN_EGG
         && SpawnEggItem::fjGetType(holder.m_pItemInstance) == GetType())
     {
-        return 0x4C36CD96;
+        return IDS_TOOLTIPS_PLACE;
     }
     return Mob::GetInteractTooltip(holder);
 }

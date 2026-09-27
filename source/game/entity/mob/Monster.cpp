@@ -1,4 +1,5 @@
 #include "game/entity/mob/Monster.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundEvents.hpp"
@@ -20,15 +21,13 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 Monster::Monster(Level* level)
     : PathfinderMob(level)
 {
     mExperienceReward = 5;
-    mCategories |= 4;
+    mCategories |= EntityCategory::eEntityCategory_Monster;
 }
 
 Monster::~Monster()
@@ -37,7 +36,7 @@ Monster::~Monster()
 
 unsigned long long Monster::GetType()
 {
-    return ENTITY_TYPE_MONSTER;
+    return EntityType::MONSTER;
 }
 
 SoundSource::ESoundSource Monster::getSoundSource()
@@ -105,7 +104,7 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     boost::shared_ptr<LivingEntity> livingTarget;
     float damage = (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
     int knockback = 0;
-    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         livingTarget = boost::static_pointer_cast<LivingEntity>(target);
         damage += (float)EnchantmentHelper::getDamageBonus(getMainHandItem(), livingTarget);
@@ -127,7 +126,7 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     int fireAspect = EnchantmentHelper::getFireAspect(attacker);
     if (fireAspect > 0)
         target->setSecondsOnFire(fireAspect * 4);
-    if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
         not_null_ptr<ItemInstance> mainHandItem = getMainHandItem();

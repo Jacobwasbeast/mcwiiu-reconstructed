@@ -16,9 +16,9 @@ int EntityRedundantChanceTagsFix::getVersion()
 
 CompoundTag* EntityRedundantChanceTagsFix::fix(CompoundTag* tag)
 {
-    if (tag->contains(L"HandDropChances", 9))
+    if (tag->contains(L"HandDropChances", Tag::TAG_LIST))
     {
-        ListTag* handDropChances = tag->getList(L"HandDropChances", 5);
+        ListTag* handDropChances = tag->getList(L"HandDropChances", Tag::TAG_FLOAT);
 
         if (handDropChances->size() == 2 &&
             handDropChances->getFloat(0) == 0.0f &&
@@ -28,9 +28,9 @@ CompoundTag* EntityRedundantChanceTagsFix::fix(CompoundTag* tag)
         }
     }
 
-    if (tag->contains(L"ArmorDropChances", 9))
+    if (tag->contains(L"ArmorDropChances", Tag::TAG_LIST))
     {
-        ListTag* armorDropChances = tag->getList(L"ArmorDropChances", 5);
+        ListTag* armorDropChances = tag->getList(L"ArmorDropChances", Tag::TAG_FLOAT);
 
         if (armorDropChances->size() == 4 &&
             armorDropChances->getFloat(0) == 0.0f &&

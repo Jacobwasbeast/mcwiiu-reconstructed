@@ -1,4 +1,5 @@
 #include "game/entity/mob/PigZombie.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -46,7 +47,7 @@ void PigZombie::_init()
 {
     mRemainingPersistentAngerTime = 0;
     mAngerSoundDelay = 0;
-    mCategories |= PigZombieCategoryMask;
+    mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Monster;
 }
 
 void PigZombie::setLastHurtByMob(boost::shared_ptr<LivingEntity> entity)
@@ -62,7 +63,7 @@ void PigZombie::addBehaviourGoals()
 void PigZombie::registerAttributes()
 {
     Zombie::registerAttributes();
-    getAttributes()->getInstance(eATTRIBUTE_ID_ZombieSpawnReinforcements)->setBaseValue(1.0);
+    getAttribute(Zombie::SPAWN_REINFORCEMENTS_CHANCE)->setBaseValue(0.0);
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(5.0);
 }
@@ -111,7 +112,7 @@ bool PigZombie::checkSpawnRules()
 
 void PigZombie::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_PIG_ZOMBIE);
+    Mob::addDataWalkers(fixer, EntityType::PIG_ZOMBIE);
 }
 
 void PigZombie::addAdditonalSaveData(CompoundTag* tag)
@@ -130,7 +131,7 @@ void PigZombie::makeAngry(boost::shared_ptr<Entity> entity)
 {
     mRemainingPersistentAngerTime = mRandom->nextInt(400) + 400;
     mAngerSoundDelay = mRandom->nextInt(40);
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         setLastHurtByMob(boost::dynamic_pointer_cast<LivingEntity>(entity));
 }
 
@@ -140,7 +141,7 @@ bool PigZombie::hurt(const DamageSource* source, float damage)
         return false;
 
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && (attacker->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if (attacker && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         makeAngry(attacker);
     return Zombie::hurt(source, damage);
 }
@@ -192,7 +193,7 @@ bool PigZombie::isPreventingPlayerRest(boost::shared_ptr<Player>)
 
 unsigned long long PigZombie::GetType()
 {
-    return ENTITY_TYPE_PIG_ZOMBIE;
+    return EntityType::PIG_ZOMBIE;
 }
 
 PigZombie::PigZombieHurtByOtherGoal::PigZombieHurtByOtherGoal(PigZombie* mob)
@@ -208,7 +209,7 @@ void PigZombie::PigZombieHurtByOtherGoal::alertOther(
     boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target)
 {
     HurtByTargetGoal::alertOther(mob, target);
-    if (mob->GetType() == ENTITY_TYPE_PIG_ZOMBIE)
+    if (mob->GetType() == EntityType::PIG_ZOMBIE)
     {
         boost::shared_ptr<PigZombie> pig = boost::dynamic_pointer_cast<PigZombie>(mob);
         pig->makeAngry(target);

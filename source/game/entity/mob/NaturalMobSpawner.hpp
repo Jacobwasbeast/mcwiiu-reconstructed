@@ -29,7 +29,7 @@ public:
     static bool isSpawnPositionOk(Mob::SpawnPlacementType placementType, Level* level, const BlockPos& pos,
                                   int xSize, int zSize);
 
-    unsigned int tick(ServerLevel* level, bool spawnFriendlies, bool spawnEnemies, bool spawnPersistent);
+    unsigned int tick(ServerLevel* level, bool spawnEnemies, bool spawnFriendlies, bool spawnPersistent);
 
     static void spawnMobsForChunkGeneration(Level* level, Biome* biome, int x, int y,
                                             int z, int count, Random* random);

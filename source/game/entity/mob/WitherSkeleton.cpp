@@ -1,4 +1,5 @@
 #include "game/entity/mob/WitherSkeleton.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -41,7 +42,7 @@ void WitherSkeleton::create(Level* level)
 
 void WitherSkeleton::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5d540442ULL);
+    Mob::addDataWalkers(fixer, EntityType::WITHER_SKELETON);
 }
 
 void WitherSkeleton::registerGoals()
@@ -68,7 +69,7 @@ bool WitherSkeleton::doHurtTarget(boost::shared_ptr<Entity> target)
     if (!Monster::doHurtTarget(target))
         return false;
 
-    if (target && (target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if (target && (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
         living->addEffect(new MobEffectInstance(MobEffects::WITHER, 200),
@@ -95,7 +96,7 @@ void WitherSkeleton::die(const DamageSource* source)
         return;
 
     boost::shared_ptr<Entity> entity = source->getEntity();
-    if (!entity || entity->GetType() != 0x5d540041ULL)
+    if (!entity || entity->GetType() != EntityType::CREEPER)
         return;
 
     boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(entity);
@@ -163,5 +164,5 @@ boost::shared_ptr<TippableArrow> WitherSkeleton::getArrow(float distanceFactor)
 
 unsigned long long WitherSkeleton::GetType()
 {
-    return 0x5D540442ULL;
+    return EntityType::WITHER_SKELETON;
 }

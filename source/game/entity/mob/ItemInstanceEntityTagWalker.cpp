@@ -17,7 +17,7 @@ CompoundTag* ItemInstanceEntityTagWalker::walk(DataFixer* fixer, CompoundTag* ta
     }
 
     CompoundTag* itemTag = tag->getCompound(L"tag");
-    if (!itemTag->contains(L"EntityTag", 10))
+    if (!itemTag->contains(L"EntityTag", Tag::TAG_COMPOUND))
     {
         return tag;
     }
@@ -45,7 +45,7 @@ CompoundTag* ItemInstanceEntityTagWalker::walk(DataFixer* fixer, CompoundTag* ta
     }
     else
     {
-        bool hadId = entityTag->contains(L"id", 8);
+        bool hadId = entityTag->contains(L"id", Tag::TAG_STRING);
 
         entityTag->putString(L"id", entityId);
         fixer->update(DataFixTypes::eDataFixTypes_Entity, entityTag, version);

@@ -1,63 +1,89 @@
 #include "game/entity/mob/TrackedEntity.hpp"
+#include "game/core/EntityType.hpp"
 
-#include <cmath>
+#include <cstdlib>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/Direction.hpp"
+#include "game/core/EquipmentSlot.hpp"
 #include "game/core/ExperienceOrb.hpp"
-#include "game/core/EnderCrystal.hpp"
-#include "game/core/EvocationFangs.hpp"
-#include "game/core/EyeOfEnderSignal.hpp"
-#include "game/core/ShulkerBullet.hpp"
-#include "game/core/ThrownEgg.hpp"
-#include "game/core/ThrownEnderpearl.hpp"
-#include "game/core/ThrownExpBottle.hpp"
-#include "game/core/WitherSkull.hpp"
 #include "game/core/Minecart.hpp"
+#include "game/core/MinecartTNT.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/ModifiableAttributeMap.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Painting.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
+#include "game/entity/mob/Creature.hpp"
+#include "game/entity/mob/FireworksRocketEntity.hpp"
 #include "game/entity/mob/LeashFenceKnotEntity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
-#include "game/entity/mob/PathfinderMob.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
-#include "game/entity/mob/FireworksRocketEntity.hpp"
 #include "game/entity/projectile/Arrow.hpp"
 #include "game/entity/projectile/Fireball.hpp"
-#include "game/entity/projectile/DragonFireball.hpp"
 #include "game/entity/projectile/FishingHook.hpp"
-#include "game/entity/projectile/SpectralArrow.hpp"
 #include "game/item/AreaEffectCloud.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemFrame.hpp"
 #include "game/item/ItemInstance.hpp"
-#include "game/item/not_null_ptr.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/MapItem.hpp"
+#include "game/item/MapItemSavedData.hpp"
 #include "game/item/ThrownPotion.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/network/ClientboundAddEntityPacket.hpp"
 #include "game/network/ClientboundAddExperienceOrbPacket.hpp"
 #include "game/network/ClientboundAddMobPacket.hpp"
 #include "game/network/ClientboundAddPaintingPacket.hpp"
 #include "game/network/ClientboundAddPlayerPacket.hpp"
-#include "game/network/Packet.hpp"
+#include "game/network/ClientboundEntityEventPacket.hpp"
+#include "game/network/ClientboundMoveEntityPacket.hpp"
+#include "game/network/ClientboundPlayerSleepPacket.hpp"
+#include "game/network/ClientboundRotateHeadPacket.hpp"
 #include "game/network/ClientboundSetEntityDataPacket.hpp"
+#include "game/network/ClientboundSetEntityLinkPacket.hpp"
+#include "game/network/ClientboundSetEntityMotionPacket.hpp"
+#include "game/network/ClientboundSetEquippedItemPacket.hpp"
+#include "game/network/ClientboundSetPassengersPacket.hpp"
+#include "game/network/ClientboundTeleportEntityPacket.hpp"
+#include "game/network/ClientboundUpdateAttributesPacket.hpp"
+#include "game/network/ClientboundUpdateMobEffectPacket.hpp"
+#include "game/network/GameModePacket.hpp"
+#include "game/network/INetworkPlayer.hpp"
+#include "game/network/MoveEntityPacketSmall.hpp"
+#include "game/network/Packet.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/FallingBlockEntity.hpp"
-#include "game/core/Direction.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/PlayerList.hpp"
 
-TrackedEntity::TrackedEntity(boost::shared_ptr<Entity> entity, int range, int updateInterval, int maxRange, bool sendVelocityUpdates)
-    : mEntity(entity), mRange(range), mUpdateInterval(updateInterval), mMaxRange(maxRange),
-      mXLoc(0), mYLoc(0), mZLoc(0), mXRot(0.0), mYRot(0.0), mZRot(0.0),
-      mSendVelocityUpdates(sendVelocityUpdates), mWasRiding(false), mUpdateCounter(0)
+static int sSmallPosRotPacketCount = 0;
+static int sPosRotPacketCount = 0;
+static int sSmallPosPacketCount = 0;
+static int sPosPacketCount = 0;
+static int sSmallRotPacketCount = 0;
+static int sRotPacketCount = 0;
+
+TrackedEntity::TrackedEntity(boost::shared_ptr<Entity> entity, int range, int maxRange, int updateInterval,
+                             bool trackDelta)
+    : mEntity(entity), mRange(range), mMaxRange(maxRange), mUpdateInterval(updateInterval),
+      mXp(Mth::floor(entity->mX * 32.0)), mYp(Mth::floor(entity->mY * 32.0)), mZp(Mth::floor(entity->mZ * 32.0)),
+      mYRotp(Mth::floor(entity->mYRot * 256.0f / 360.0f)), mXRotp(Mth::floor(entity->mXRot * 256.0f / 360.0f)),
+      mYHeadRotp(Mth::floor(entity->getYHeadRot() * 256.0f / 360.0f)), mXap(0.0), mYap(0.0), mZap(0.0),
+      mTickCount(0), mXpu(entity->mX), mYpu(entity->mY), mZpu(entity->mZ), mUpdatedPlayerVisibility(false),
+      mTrackDelta(trackDelta), mTeleportDelay(0), mLastPassengers(), mWasRiding(false),
+      mWasOnGround(entity->mOnGround), mPlayerEntitiesUpdated(false), mSeenBy()
 {
-    mXLoc = EntityTracker::truncate(entity->mX);
-    mYLoc = EntityTracker::truncate(entity->mY);
-    mZLoc = EntityTracker::truncate(entity->mZ);
-    mXRot = Mth::floor(entity->mYRot * 256.0f / 360.0f);
-    mYRot = Mth::floor(entity->mXRot * 256.0f / 360.0f);
-    mZRot = Mth::floor(entity->getYHeadRot() * 256.0f / 360.0f);
 }
 
 bool TrackedEntity::canBySeenBy(boost::shared_ptr<ServerPlayer> player)
@@ -65,346 +91,499 @@ bool TrackedEntity::canBySeenBy(boost::shared_ptr<ServerPlayer> player)
     return true;
 }
 
-bool TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<ServerPlayer>& player, bool force, bool suppress)
+int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<ServerPlayer>& player, bool force,
+                               bool skipRangeCheck)
 {
-    if (!player || !mEntity || mEntity->mRemoved)
-    {
-        return false;
-    }
-    if (!force && !canBySeenBy(player))
-    {
-        return false;
-    }
-    if (!suppress && mEntity->isInvisibleTo(boost::static_pointer_cast<Player>(player)))
-    {
-        return false;
-    }
-    return mEntity->broadcastToPlayer(player);
-}
+    if (mEntity == NULL)
+        return 0;
 
-namespace
-{
-int encodeFireballPower(double power)
-{
-    double clamped = std::max(-4.0, std::min(4.0, power));
-    return (int)((clamped + 4.0) * 65535.0 / 8.0 - 32768.0);
-}
+    double xd = player->mX - mXpu;
+    double zd = player->mZ - mZpu;
+    if (mEntity->mForcedLoading)
+    {
+        xd = player->mX - mXp / 32;
+        zd = player->mZ - mZp / 32;
+    }
 
-boost::shared_ptr<ClientboundAddEntityPacket> makeFireballPacket(
-    boost::shared_ptr<Entity> entity, int type, int data, int yRot, int xRot, int x, int y, int z,
-    boost::shared_ptr<Fireball> fireball)
-{
-    boost::shared_ptr<ClientboundAddEntityPacket> packet(
-        new ClientboundAddEntityPacket(entity, type, data, yRot, xRot, x, y, z));
-    packet->setXa(encodeFireballPower(fireball->mPowerX));
-    packet->setYa(encodeFireballPower(fireball->mPowerY));
-    packet->setZa(encodeFireballPower(fireball->mPowerZ));
-    return packet;
-}
+    int range = mRange < mMaxRange ? mRange : mMaxRange;
+    if (range > 4)
+        range -= player->getPlayerViewDistanceModifier();
+
+    bool inRange = false;
+    if (!skipRangeCheck && -range <= xd && xd <= range && -range <= zd && zd <= range)
+        inRange = true;
+
+    if (!inRange && mEntity->hasPassenger(EntityType::PLAYER))
+    {
+        std::vector<boost::weak_ptr<Entity> > passengers = *mEntity->getPassengers();
+        for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers.begin(); it != passengers.end(); ++it)
+        {
+            boost::shared_ptr<Entity> passenger = it->lock();
+            if (passenger == NULL)
+                continue;
+            boost::shared_ptr<TrackedEntity> passengerTracker = tracker->getTracker(passenger);
+            if (passengerTracker != NULL)
+            {
+                int visible = passengerTracker->isVisibleTo(tracker, player, force, skipRangeCheck);
+                if (visible != 0)
+                    return visible;
+            }
+        }
+    }
+
+    bool canSee = canBySeenBy(player);
+    if (!inRange)
+    {
+        INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
+        if (networkPlayer != NULL)
+        {
+            for (unsigned int i = 0; i < gMinecraftServer->getPlayers()->mPlayers.size(); ++i)
+            {
+                boost::shared_ptr<ServerPlayer>& other = gMinecraftServer->getPlayers()->mPlayers[i];
+                if (other == player || other == mEntity || other->mDimension != player->mDimension)
+                    continue;
+                INetworkPlayer* otherNetworkPlayer = other->mConnection->getNetworkPlayer();
+                if (otherNetworkPlayer == NULL || !networkPlayer->IsSameSystem(otherNetworkPlayer))
+                    continue;
+                double otherXd = other->mX - mXpu;
+                double otherZd = other->mZ - mZpu;
+                bool otherInRange = -range <= otherXd && otherXd <= range && -range <= otherZd && otherZd <= range;
+                inRange = inRange || otherInRange;
+                canSee = canSee || canBySeenBy(other);
+            }
+        }
+    }
+
+    if (force && canSee)
+        canSee = mSeenBy.find(player) != mSeenBy.end();
+
+    bool inLevel = false;
+    if (canSee)
+    {
+        std::vector<boost::shared_ptr<Player> >& levelPlayers = player->mLevel->mPlayers;
+        std::vector<boost::shared_ptr<Player> >::iterator it = levelPlayers.begin();
+        while (it != levelPlayers.end() && *it != player)
+            ++it;
+        if (it != levelPlayers.end())
+            inLevel = true;
+    }
+
+    if (!inRange)
+        return 0;
+    return inLevel ? 2 : 1;
 }
 
 boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
 {
-    if (!mEntity)
-    {
-        return boost::shared_ptr<Packet>();
-    }
-
-    const int yRot = (int)mXRot;
-    const int xRot = (int)mYRot;
-    const int headRot = (int)mZRot;
-    unsigned long long entityType = mEntity->GetType();
-    unsigned int entityTypeHigh = (unsigned int)(entityType >> 32);
-    unsigned int entityTypeLow = (unsigned int)entityType;
-
-    if (entityType == ENTITY_TYPE_SERVER_PLAYER)
+    unsigned long long type = mEntity->GetType();
+    if (type == EntityType::SERVER_PLAYER)
     {
         boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(mEntity);
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddPlayerPacket(player, player->mXuid, player->m_0x798, mXLoc, mYLoc, mZLoc,
-                                           yRot, xRot, headRot));
+        PlayerUID xuid(0);
+        PlayerUID onlineXuid(0);
+        if (player != NULL)
+        {
+            xuid = player->mXuid;
+            onlineXuid = player->mOnlineXuid;
+        }
+        return boost::shared_ptr<Packet>(new ClientboundAddPlayerPacket(player, xuid, onlineXuid, mXp, mYp, mZp,
+                                                                        mYRotp, mXRotp, mYHeadRotp));
     }
 
-    boost::shared_ptr<PathfinderMob> creature = boost::dynamic_pointer_cast<PathfinderMob>(mEntity);
-    if (creature || entityType == ENTITY_TYPE_SHULKER)
+    if (boost::dynamic_pointer_cast<Creature>(mEntity) != NULL || mEntity->GetType() == EntityType::SHULKER)
     {
-        int yHeadRot = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddMobPacket(boost::static_pointer_cast<LivingEntity>(mEntity), yRot, xRot, mXLoc,
-                                        mYLoc, mZLoc, yHeadRot, mEntity->getAdditionContructionTag()));
+        mYHeadRotp = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
+        return boost::shared_ptr<Packet>(new ClientboundAddMobPacket(
+            boost::static_pointer_cast<LivingEntity>(mEntity), mYRotp, mXRotp, mXp, mYp, mZp, mYHeadRotp,
+            mEntity->getAdditionContructionTag()));
     }
 
-    if (boost::dynamic_pointer_cast<Painting>(mEntity))
+    if (mEntity->GetType() == EntityType::PAINTING)
     {
         return boost::shared_ptr<Packet>(
             new ClientboundAddPaintingPacket(boost::static_pointer_cast<Painting>(mEntity)));
     }
 
-    if (entityType == 0x0800000aULL)
-    {
+    if (mEntity->GetType() == EntityType::ITEM_ENTITY)
         return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 2, 1));
-    }
 
-    if ((entityType & ENTITY_TYPE_MINECART) == ENTITY_TYPE_MINECART)
+    if ((mEntity->GetType() & EntityType::MINECART) == EntityType::MINECART)
     {
         boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(mEntity);
-        int displayData = Block::getIdWithData(minecart->getDisplayBlockState());
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 10, displayData, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 10, minecart->getType()->mId,
+                                                                        mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (entityType == ENTITY_TYPE_BOAT)
+    if (mEntity->GetType() == EntityType::BOAT)
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 1, mYRotp, mXRotp, mXp, mYp, mZp));
+
+    if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, mEntity->GetType()))
     {
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 1, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        return boost::shared_ptr<Packet>(new ClientboundAddExperienceOrbPacket(
+            boost::static_pointer_cast<ExperienceOrb>(mEntity), mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8000003, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::ENDER_DRAGON, mEntity->GetType()))
     {
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddExperienceOrbPacket(boost::static_pointer_cast<ExperienceOrb>(mEntity), yRot, xRot,
-                                                  mXLoc, mYLoc, mZLoc));
+        mYHeadRotp = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
+        return boost::shared_ptr<Packet>(new ClientboundAddMobPacket(
+            boost::static_pointer_cast<LivingEntity>(mEntity), mYRotp, mXRotp, mXp, mYp, mZp, mYHeadRotp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0xd000005, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::FISHING_HOOK, mEntity->GetType()))
     {
-        int yHeadRot = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
+        boost::shared_ptr<Entity> owner = boost::static_pointer_cast<FishingHook>(mEntity)->getOwner();
+        int ownerId = owner != NULL ? owner->getId() : mEntity->getId();
         return boost::shared_ptr<Packet>(
-            new ClientboundAddMobPacket(boost::static_pointer_cast<LivingEntity>(mEntity), yRot, xRot, mXLoc,
-                                        mYLoc, mZLoc, yHeadRot));
+            new ClientboundAddEntityPacket(mEntity, 0x5a, ownerId, mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x88000006, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::SPECTRAL_ARROW, mEntity->GetType()))
     {
-        boost::shared_ptr<FishingHook> hook = boost::static_pointer_cast<FishingHook>(mEntity);
-        boost::shared_ptr<Player> owner = hook->getOwner();
-        int data = owner ? owner->getId() : mEntity->getId();
+        boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Arrow>(mEntity)->mOwner;
+        int ownerId = owner != NULL ? owner->getId() : mEntity->getId();
         return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x5a, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            new ClientboundAddEntityPacket(mEntity, 0x5b, ownerId + 1, mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a020001, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::TIPPABLE_ARROW, mEntity->GetType()))
     {
-        boost::shared_ptr<SpectralArrow> arrow = boost::static_pointer_cast<SpectralArrow>(mEntity);
-        int data = arrow->mOwner ? arrow->mOwner->getId() + 1 : mEntity->getId() + 1;
+        boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Arrow>(mEntity)->mOwner;
+        int ownerId = owner != NULL ? owner->getId() : mEntity->getId();
         return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x5b, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            new ClientboundAddEntityPacket(mEntity, 0x3c, ownerId + 1, mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a020002, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::THROWN_TRIDENT, mEntity->GetType()))
     {
-        boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(mEntity);
-        int data = arrow->mOwner ? arrow->mOwner->getId() + 1 : mEntity->getId() + 1;
+        boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Arrow>(mEntity)->mOwner;
+        int ownerId = owner != NULL ? owner->getId() : mEntity->getId();
         return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x3c, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            new ClientboundAddEntityPacket(mEntity, 0x5e, ownerId + 1, mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a200006, entityTypeHigh, entityTypeLow))
-    {
-        boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(mEntity);
-        int data = arrow->mOwner ? arrow->mOwner->getId() + 1 : mEntity->getId() + 1;
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x5e, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
-    }
+    if (eTYPE_DERIVED_FROM(EntityType::SNOWBALL, mEntity->GetType()))
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x3d, mYRotp, mXRotp, mXp, mYp, mZp));
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a200001, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::LLAMA_SPIT, mEntity->GetType()))
     {
         return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x3d, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            new ClientboundAddEntityPacket(mEntity, 0x44, 0, mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x88000012, entityTypeHigh, entityTypeLow))
+    if (eTYPE_DERIVED_FROM(EntityType::THROWN_POTION, mEntity->GetType()))
     {
+        not_null_ptr<ItemInstance> potion = boost::static_pointer_cast<ThrownPotion>(mEntity)->getItem();
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(
+            mEntity, 0x49, Item::getId(potion->getItem()), mYRotp, mXRotp, mXp, mYp, mZp));
+    }
+
+    if (mEntity->GetType() == EntityType::THROWN_EXP_BOTTLE)
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x4b, mYRotp, mXRotp, mXp, mYp, mZp));
+
+    if (mEntity->GetType() == EntityType::THROWN_ENDERPEARL)
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x41, mYRotp, mXRotp, mXp, mYp, mZp));
+
+    if (mEntity->GetType() == EntityType::EYE_OF_ENDER_SIGNAL)
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x48, mYRotp, mXRotp, mXp, mYp, mZp));
+
+    if (mEntity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY)
+    {
+        boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<FireworksRocketEntity>(mEntity)->getOwner();
+        if (owner == NULL)
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x4c, 0, mYRotp, mXRotp, mXp, mYp, mZp));
         return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x44, 0, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            new ClientboundAddEntityPacket(mEntity, 0x4c, owner->getId(), mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a200004, entityTypeHigh, entityTypeLow))
+    if ((mEntity->GetType() & EntityType::FIREBALL) != EntityType::FIREBALL)
     {
-        boost::shared_ptr<ThrownPotion> potion = boost::static_pointer_cast<ThrownPotion>(mEntity);
-        not_null_ptr<ItemInstance> item = potion->getItem();
-        int data = Item::getId(item->getItem());
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x49, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
-    }
-
-    if (boost::dynamic_pointer_cast<ThrownExpBottle>(mEntity))
-    {
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x4b, yRot, xRot, mXLoc, mYLoc, mZLoc));
-    }
-
-    if (boost::dynamic_pointer_cast<ThrownEnderpearl>(mEntity))
-    {
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x41, yRot, xRot, mXLoc, mYLoc, mZLoc));
-    }
-
-    if (boost::dynamic_pointer_cast<EyeOfEnderSignal>(mEntity))
-    {
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x48, yRot, xRot, mXLoc, mYLoc, mZLoc));
-    }
-
-    if (boost::dynamic_pointer_cast<FireworksRocketEntity>(mEntity))
-    {
-        boost::shared_ptr<FireworksRocketEntity> rocket =
-            boost::static_pointer_cast<FireworksRocketEntity>(mEntity);
-        boost::shared_ptr<LivingEntity> owner = rocket->getOwner();
-        int data = owner ? owner->getId() : 0;
-        return boost::shared_ptr<Packet>(
-            new ClientboundAddEntityPacket(mEntity, 0x4c, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
-    }
-
-    if (!boost::dynamic_pointer_cast<Fireball>(mEntity))
-    {
-        if (boost::dynamic_pointer_cast<ShulkerBullet>(mEntity))
+        if (mEntity->GetType() == EntityType::SHULKER_BULLET)
         {
             return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(
-                mEntity, 0x43, 0, yRot, xRot, (int)mEntity->mX, (int)mEntity->mY, (int)mEntity->mZ));
+                mEntity, 0x43, 0, mYRotp, mXRotp, static_cast<int>(mEntity->mXd), static_cast<int>(mEntity->mYd),
+                static_cast<int>(mEntity->mZd)));
         }
-
-        if (boost::dynamic_pointer_cast<ThrownEgg>(mEntity))
+        if (mEntity->GetType() == EntityType::THROWN_EGG)
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x3e, mYRotp, mXRotp, mXp, mYp, mZp));
+        if (mEntity->GetType() == EntityType::EVOCATION_FANGS)
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x4f, mYRotp, mXRotp, mXp, mYp, mZp));
+        if (mEntity->GetType() == EntityType::PRIMED_TNT)
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x32, mYRotp, mXRotp, mXp, mYp, mZp));
+        if (mEntity->GetType() == EntityType::ENDER_CRYSTAL)
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x33, mYRotp, mXRotp, mXp, mYp, mZp));
+        if (mEntity->GetType() == EntityType::FALLING_BLOCK_ENTITY)
         {
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x3e, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            boost::shared_ptr<FallingBlockEntity> fallingBlock = boost::static_pointer_cast<FallingBlockEntity>(mEntity);
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(
+                mEntity, 0x46, Block::getIdWithData(fallingBlock->getBlock()), mYRotp, mXRotp, mXp, mYp, mZp));
         }
-
-        if (boost::dynamic_pointer_cast<EvocationFangs>(mEntity))
-        {
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x4f, yRot, xRot, mXLoc, mYLoc, mZLoc));
-        }
-
-        if (entityType == ENTITY_TYPE_PRIMED_TNT)
-        {
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x32, yRot, xRot, mXLoc, mYLoc, mZLoc));
-        }
-
-        if (boost::dynamic_pointer_cast<EnderCrystal>(mEntity))
-        {
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x33, yRot, xRot, mXLoc, mYLoc, mZLoc));
-        }
-
-        if (entityType == ENTITY_TYPE_LEASH_FENCE_KNOT)
-        {
-            boost::shared_ptr<FallingBlockEntity> fallingBlock =
-                boost::static_pointer_cast<FallingBlockEntity>(mEntity);
-            int data = Block::getIdWithData(fallingBlock->getBlock());
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x46, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
-        }
-
-        if (entityType == ENTITY_TYPE_ARMOR_STAND)
-        {
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x4e, yRot, xRot, mXLoc, mYLoc, mZLoc));
-        }
-
-        if (boost::dynamic_pointer_cast<ItemFrame>(mEntity))
+        if (mEntity->GetType() == EntityType::ARMOR_STAND)
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 0x4e, mYRotp, mXRotp, mXp, mYp, mZp));
+        if (mEntity->GetType() == EntityType::ITEM_FRAME)
         {
             boost::shared_ptr<ItemFrame> frame = boost::static_pointer_cast<ItemFrame>(mEntity);
-            int data = frame->getDirection()->get2DDataValue();
-            return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x47, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(
+                mEntity, 0x47, frame->mDirection->get2DDataValue(), mYRotp, mXRotp, mXp, mYp, mZp));
         }
-
-        if (boost::dynamic_pointer_cast<LeashFenceKnotEntity>(mEntity))
+        if (mEntity->GetType() == EntityType::LEASH_FENCE_KNOT_ENTITY)
         {
-            boost::shared_ptr<LeashFenceKnotEntity> knot =
-                boost::static_pointer_cast<LeashFenceKnotEntity>(mEntity);
+            boost::shared_ptr<LeashFenceKnotEntity> knot = boost::static_pointer_cast<LeashFenceKnotEntity>(mEntity);
             BlockPos pos = knot->getPos();
             return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 0x4d, 0, pos, yRot, xRot, mXLoc, mYLoc, mZLoc));
+                new ClientboundAddEntityPacket(mEntity, 0x4d, 0, pos, mYRotp, mXRotp, mXp, mYp, mZp));
         }
-
-        if (boost::dynamic_pointer_cast<AreaEffectCloud>(mEntity))
+        if (mEntity->GetType() == EntityType::AREA_EFFECT_CLOUD)
         {
-            boost::shared_ptr<AreaEffectCloud> cloud = boost::static_pointer_cast<AreaEffectCloud>(mEntity);
-            boost::shared_ptr<LivingEntity> owner = cloud->getOwner();
-            int data = owner ? owner->getId() + 1 : mEntity->getId() + 1;
+            boost::shared_ptr<Entity> owner = boost::static_pointer_cast<AreaEffectCloud>(mEntity)->getOwner();
+            int ownerId = owner != NULL ? owner->getId() : mEntity->getId();
             return boost::shared_ptr<Packet>(
-                new ClientboundAddEntityPacket(mEntity, 3, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+                new ClientboundAddEntityPacket(mEntity, 3, ownerId + 1, mYRotp, mXRotp, mXp, mYp, mZp));
         }
-
         return boost::shared_ptr<Packet>();
     }
 
-    boost::shared_ptr<Fireball> fireball = boost::static_pointer_cast<Fireball>(mEntity);
+    unsigned long long fireballType = mEntity->GetType();
     int packetType = 0x3f;
-    if (boost::dynamic_pointer_cast<Fireball>(mEntity))
-    {
+    if (fireballType == EntityType::SMALL_FIREBALL)
         packetType = 0x40;
-    }
-    else if (boost::dynamic_pointer_cast<DragonFireball>(mEntity))
-    {
+    else if (fireballType == EntityType::DRAGON_FIREBALL)
         packetType = 0x5d;
-    }
-    else if (boost::dynamic_pointer_cast<WitherSkull>(mEntity))
-    {
+    else if (fireballType == EntityType::WITHER_SKULL)
         packetType = 0x42;
-    }
+    boost::shared_ptr<Fireball> fireball = boost::static_pointer_cast<Fireball>(mEntity);
 
-    int data = 0;
-    if (fireball->mOwner)
+    boost::shared_ptr<ClientboundAddEntityPacket> packet;
+    if (fireball->mOwner == NULL)
     {
-        data = fireball->mOwner->getId();
+        packet = boost::shared_ptr<ClientboundAddEntityPacket>(
+            new ClientboundAddEntityPacket(mEntity, packetType, 0, mYRotp, mXRotp, mXp, mYp, mZp));
+    }
+    else
+    {
+        packet = boost::shared_ptr<ClientboundAddEntityPacket>(new ClientboundAddEntityPacket(
+            mEntity, packetType, fireball->mOwner->getId(), mYRotp, mXRotp, mXp, mYp, mZp));
     }
 
-    return makeFireballPacket(mEntity, packetType, data, yRot, xRot, mXLoc, mYLoc, mZLoc, fireball);
+    double power = fireball->mPowerX;
+    if (power < -4.0)
+        power = -4.0;
+    if (power > 4.0)
+        power = 4.0;
+    packet->setXa(static_cast<int>(((power + 4.0) / 8.0) * 65535.0 + -32768.0));
+    power = fireball->mPowerY;
+    if (power < -4.0)
+        power = -4.0;
+    if (power > 4.0)
+        power = 4.0;
+    packet->setYa(static_cast<int>(((power + 4.0) / 8.0) * 65535.0 + -32768.0));
+    power = fireball->mPowerZ;
+    if (power < -4.0)
+        power = -4.0;
+    if (power > 4.0)
+        power = 4.0;
+    packet->setZa(static_cast<int>(((power + 4.0) / 8.0) * 65535.0 + -32768.0));
+    return packet;
 }
 
 bool TrackedEntity::ShouldSendEntityDataOnContruction(boost::shared_ptr<Entity> entity)
 {
-    return entity && entity->GetType() != ENTITY_TYPE_PLAYER;
+    if (entity->GetType() == EntityType::THROWN_POTION
+        && Minecraft::GetInstance()->GetMiniGame()->HasFeatureSplashLevitatePotions())
+    {
+        return false;
+    }
+    if (entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY
+        && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+    {
+        return false;
+    }
+    return true;
 }
 
 void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<ServerPlayer> player)
 {
-    if (!player || !mEntity)
+    if (player == mEntity)
+        return;
+
+    bool canReceiveAll = gMinecraftServer->getPlayers()->canReceiveAllPackets(player);
+    int visible = isVisibleTo(tracker, player, false, !canReceiveAll);
+    bool seen = mSeenBy.find(player) != mSeenBy.end();
+
+    if (visible == 2 && (!seen || mEntity->mForcedLoading))
     {
+        mSeenBy.insert(player);
+        boost::shared_ptr<Packet> packet = getAddEntityPacket();
+        player->mConnection->send(packet);
+
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mEntity->GetType() == EntityType::SERVER_PLAYER)
+        {
+            boost::shared_ptr<ServerPlayer> trackedPlayer = boost::static_pointer_cast<ServerPlayer>(mEntity);
+            GameModePacket::SetCameraData cameraData;
+            cameraData.camera = trackedPlayer->mPlayerIndex;
+            if (trackedPlayer->GetCamera() == NULL)
+                cameraData.target = -1;
+            else
+                cameraData.target = trackedPlayer->GetCamera()->getId();
+            player->mConnection->send(
+                GameModePacket::Create(GameModePacket::eMessage_SetCamera, cameraData));
+        }
+
+        mXap = mEntity->mXd;
+        mYap = mEntity->mYd;
+        mZap = mEntity->mZd;
+
+        boost::shared_ptr<ClientboundAddMobPacket> addMobPacket =
+            boost::dynamic_pointer_cast<ClientboundAddMobPacket>(packet);
+        if (!mEntity->getEntityData()->isEmpty() && ShouldSendEntityDataOnContruction(mEntity))
+        {
+            player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetEntityDataPacket(
+                mEntity->getId(), static_cast<int>(mEntity->GetType()), mEntity->getEntityData(), true)));
+        }
+
+        bool sendMotion = mTrackDelta;
+        if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(mEntity);
+            ModifiableAttributeMap::AttributeInstanceSet* attributes =
+                static_cast<ModifiableAttributeMap*>(living->getAttributes())->getSyncableAttributes();
+            if (!attributes->empty())
+            {
+                player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateAttributesPacket(
+                    mEntity->getId(), static_cast<int>(mEntity->GetType()), attributes)));
+            }
+            delete attributes;
+            if (living->isFallFlying())
+                sendMotion = true;
+        }
+
+        if (sendMotion && addMobPacket == NULL)
+        {
+            player->mConnection->send(boost::shared_ptr<Packet>(
+                new ClientboundSetEntityMotionPacket(mEntity->getId(), mEntity->mXd, mEntity->mYd, mEntity->mZd)));
+        }
+
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType()))
+        {
+            for (int i = 0; i < 6; ++i)
+            {
+                const EquipmentSlot* slot = EquipmentSlot::SLOTS[i];
+                not_null_ptr<ItemInstance> item = boost::static_pointer_cast<LivingEntity>(mEntity)->getItemSlot(slot);
+                if (!item->isEmpty())
+                {
+                    player->mConnection->send(boost::shared_ptr<Packet>(
+                        new ClientboundSetEquippedItemPacket(mEntity->getId(), slot, item)));
+                }
+            }
+        }
+
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, mEntity->GetType()))
+        {
+            boost::shared_ptr<Player> trackedPlayer = boost::static_pointer_cast<Player>(mEntity);
+            if (trackedPlayer->isSleeping())
+            {
+                player->mConnection->send(boost::shared_ptr<Packet>(
+                    new ClientboundPlayerSleepPacket(trackedPlayer, BlockPos(mEntity))));
+            }
+        }
+
+        if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            std::vector<MobEffectInstance*>* effects =
+                boost::static_pointer_cast<LivingEntity>(mEntity)->getActiveEffects();
+            for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
+            {
+                player->mConnection->send(
+                    boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(mEntity->getId(), *it)));
+            }
+            delete effects;
+        }
+
+        if (mEntity->GetType() == EntityType::MINECART_TNT)
+        {
+            boost::shared_ptr<MinecartTNT> minecart = boost::static_pointer_cast<MinecartTNT>(mEntity);
+            if (minecart != NULL && minecart->isPrimed())
+                player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundEntityEventPacket(mEntity, 40, 0)));
+        }
+
+        if (!mEntity->getPassengers()->empty())
+            player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(mEntity)));
+
+        if (mEntity->isPassenger())
+            player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(mEntity->getVehicle())));
+
+        if ((mEntity->GetType() & EntityType::MOB) == EntityType::MOB)
+        {
+            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(mEntity);
+            if (mob->isLeashed())
+            {
+                player->mConnection->send(
+                    boost::shared_ptr<Packet>(new ClientboundSetEntityLinkPacket(2, mob, mob->getLeashHolder())));
+            }
+        }
+
+        mEntity->startSeenByPlayer(player);
+        player->cancelRemoveEntity(&mEntity);
         return;
     }
-    if (isVisibleTo(tracker, player, false, false))
-    {
-        mTrackedPlayers.insert(player);
-        mEntity->startSeenByPlayer(player);
-    }
-    else
-    {
-        removePlayer(tracker, player);
-    }
+
+    if (visible != 0)
+        return;
+
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it =
+        mSeenBy.find(player);
+    if (it == mSeenBy.end())
+        return;
+    mSeenBy.erase(it);
+    mEntity->stopSeenByPlayer(player);
+    player->sendRemoveEntity(&mEntity);
 }
 
 void TrackedEntity::updatePlayers(EntityTracker* tracker, std::vector<boost::shared_ptr<Player> >* players)
 {
-    if (!players)
-    {
-        return;
-    }
-    for (std::vector<boost::shared_ptr<Player> >::iterator it = players->begin(); it != players->end(); ++it)
-    {
-        boost::shared_ptr<ServerPlayer> player = boost::dynamic_pointer_cast<ServerPlayer>(*it);
-        if (player)
-        {
-            updatePlayer(tracker, player);
-        }
-    }
+    for (unsigned int i = 0; i < players->size(); ++i)
+        updatePlayer(tracker, boost::dynamic_pointer_cast<ServerPlayer>(players->at(i)));
 }
 
 void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
 {
-    if (!packet)
+    if (!Packet::canSendToAnyClient(packet))
     {
-        return;
-    }
-    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it = mTrackedPlayers.begin(); it != mTrackedPlayers.end(); ++it)
-    {
-        if (*it)
+        for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator
+                 it = mSeenBy.begin();
+             it != mSeenBy.end(); ++it)
         {
             (*it)->mConnection->send(packet);
+        }
+        return;
+    }
+
+    std::vector<boost::shared_ptr<ServerPlayer> > sentTo;
+    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator
+             it = mSeenBy.begin();
+         it != mSeenBy.end(); ++it)
+    {
+        boost::shared_ptr<ServerPlayer> player = *it;
+        bool dontSend = false;
+        if (!sentTo.empty())
+        {
+            INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
+            if (networkPlayer != NULL)
+            {
+                for (unsigned int i = 0; i < sentTo.size(); ++i)
+                {
+                    boost::shared_ptr<ServerPlayer> sent = sentTo[i];
+                    INetworkPlayer* sentNetworkPlayer = sent->mConnection->getNetworkPlayer();
+                    if (sentNetworkPlayer != NULL && networkPlayer->IsSameSystem(sentNetworkPlayer))
+                        dontSend = true;
+                }
+            }
+        }
+        if (!dontSend)
+        {
+            player->mConnection->send(packet);
+            sentTo.push_back(player);
         }
     }
 }
@@ -412,89 +591,322 @@ void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
 void TrackedEntity::broadcastAndSend(boost::shared_ptr<Packet> packet)
 {
     broadcast(packet);
-    if (mEntity && mEntity->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    if (mEntity->GetType() == EntityType::SERVER_PLAYER)
     {
         boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(mEntity);
-        if (player && player->mConnection)
-        {
+        if (player != NULL && player->mConnection != NULL)
             player->mConnection->send(packet);
-        }
     }
 }
 
 void TrackedEntity::sendDirtyEntityData()
 {
-    if (!mEntity)
+    boost::shared_ptr<SynchedEntityData> entityData = mEntity->getEntityData();
+    if (entityData->isDirty())
     {
-        return;
+        broadcastAndSend(boost::shared_ptr<Packet>(new ClientboundSetEntityDataPacket(
+            mEntity->getId(), static_cast<int>(mEntity->GetType()), entityData, false)));
     }
-    boost::shared_ptr<SynchedEntityData> data = mEntity->getEntityData();
-    if (data && data->isDirty())
+
+    if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
-        boost::shared_ptr<Packet> packet(new ClientboundSetEntityDataPacket(mEntity->getId(), (int)mEntity->GetType(), data, false));
-        broadcastAndSend(packet);
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(mEntity);
+        ModifiableAttributeMap::AttributeInstanceSet* attributes =
+            static_cast<ModifiableAttributeMap*>(living->getAttributes())->getDirtyAttributes();
+        if (!attributes->empty())
+        {
+            broadcastAndSend(boost::shared_ptr<Packet>(new ClientboundUpdateAttributesPacket(
+                mEntity->getId(), static_cast<int>(mEntity->GetType()), attributes)));
+        }
+        attributes->clear();
     }
 }
 
 void TrackedEntity::resetPlayerVisibility()
 {
-    mTrackedPlayers.clear();
+    mUpdatedPlayerVisibility = false;
 }
 
 void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<Player> >* players)
 {
-    if (!mEntity)
+    mPlayerEntitiesUpdated = false;
+    if (!mUpdatedPlayerVisibility || mEntity->distanceToSqr(mXpu, mYpu, mZpu) > 16.0)
     {
-        return;
-    }
-    ++mUpdateCounter;
-    if (mUpdateCounter % mUpdateInterval == 0)
-    {
+        mXpu = mEntity->mX;
+        mYpu = mEntity->mY;
+        mZpu = mEntity->mZ;
+        mUpdatedPlayerVisibility = true;
+        mPlayerEntitiesUpdated = true;
         updatePlayers(tracker, players);
     }
-    sendDirtyEntityData();
+
+    std::vector<boost::weak_ptr<Entity> >* passengers = mEntity->getPassengers();
+    bool passengersChanged = passengers->size() != mLastPassengers.size();
+    for (std::vector<boost::weak_ptr<Entity> >::iterator passenger = passengers->begin();
+         !passengersChanged && passenger != passengers->end(); ++passenger)
+    {
+        bool found = false;
+        for (std::vector<boost::weak_ptr<Entity> >::iterator last = mLastPassengers.begin();
+             last != mLastPassengers.end(); ++last)
+        {
+            if (last->lock() == passenger->lock())
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            passengersChanged = true;
+    }
+    if (passengersChanged)
+    {
+        mLastPassengers = *passengers;
+        broadcast(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(mEntity)));
+    }
+
+    if (mEntity->GetType() == EntityType::ITEM_FRAME && mTickCount % 10 == 0)
+    {
+        not_null_ptr<ItemInstance> item = boost::static_pointer_cast<ItemFrame>(mEntity)->getItem();
+        if (item->getItem() == Items::filledMap && !mEntity->mRemoved)
+        {
+            MapItem* mapItem = static_cast<MapItem*>(Items::filledMap);
+            boost::shared_ptr<MapItemSavedData> savedData = mapItem->getSavedData(item, mEntity->mLevel);
+            for (std::vector<boost::shared_ptr<Player> >::iterator it = players->begin(); it != players->end(); ++it)
+            {
+                boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(*it);
+                savedData->tickCarriedBy(player, item);
+                if (!player->mRemoved && player->mConnection != NULL && player->mConnection->countDelayedPackets() < 6)
+                {
+                    boost::shared_ptr<Packet> packet = mapItem->getUpdatePacket(item, mEntity->mLevel, player);
+                    if (packet != NULL)
+                        player->mConnection->send(packet);
+                }
+            }
+        }
+
+        boost::shared_ptr<SynchedEntityData> entityData = mEntity->getEntityData();
+        if (entityData->isDirty())
+        {
+            broadcastAndSend(boost::shared_ptr<Packet>(new ClientboundSetEntityDataPacket(
+                mEntity->getId(), static_cast<int>(mEntity->GetType()), entityData, false)));
+        }
+    }
+
+    if (mTickCount % mUpdateInterval != 0 && !mEntity->mHasImpulse && !mEntity->getEntityData()->isDirty())
+    {
+        ++mTickCount;
+    }
+    else
+    {
+        if (!mEntity->isPassenger())
+        {
+            ++mTeleportDelay;
+            int x = EntityTracker::truncate(mEntity->mX);
+            int y = EntityTracker::truncate(mEntity->mY);
+            int z = EntityTracker::truncate(mEntity->mZ);
+            int yRot = Mth::floor(Mth::wrapDegrees(mEntity->mYRot) * 256.0f / 360.0f);
+            int xRot = Mth::floor(Mth::wrapDegrees(mEntity->mXRot) * 256.0f / 360.0f);
+            int xa = x - mXp;
+            int ya = y - mYp;
+            int za = z - mZp;
+            boost::shared_ptr<Packet> packet;
+            bool pos = xa * xa + ya * ya + za * za >= 4 || mTickCount % 60 == 0;
+            bool rot = std::abs(yRot - mYRotp) >= 1 || std::abs(xRot - mXRotp) >= 1;
+
+            if (mTickCount > 0 || (mEntity->GetType() & EntityType::ARROW) == EntityType::ARROW
+                || (mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            {
+                if (xa >= -512 && xa < 512 && ya >= -512 && ya < 512 && za >= -512 && za < 512 && !mWasRiding
+                    && mWasOnGround == mEntity->mOnGround)
+                {
+                    if ((mEntity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+                    {
+                        rot = true;
+                        pos = pos || mTickCount > 0;
+                    }
+
+                    bool small = xa >= -16 && xa < 16 && za >= -16 && za < 16 && ya >= -32 && ya < 32;
+                    if (pos && rot)
+                    {
+                        if (small)
+                        {
+                            packet = boost::shared_ptr<Packet>(new MoveEntityPacketSmall::PosRot(
+                                mEntity->getId(), static_cast<signed char>(xa), static_cast<signed char>(ya),
+                                static_cast<signed char>(za), static_cast<signed char>(yRot),
+                                static_cast<signed char>(xRot), mEntity->mOnGround));
+                            ++sSmallPosRotPacketCount;
+                        }
+                        else
+                        {
+                            packet = boost::shared_ptr<Packet>(new ClientboundMoveEntityPacket::PosRot(
+                                mEntity->getId(), xa, ya, za, static_cast<unsigned char>(yRot),
+                                static_cast<unsigned char>(xRot), mEntity->mOnGround));
+                            ++sPosRotPacketCount;
+                        }
+                    }
+                    else if (pos)
+                    {
+                        if (small)
+                        {
+                            packet = boost::shared_ptr<Packet>(new MoveEntityPacketSmall::Pos(
+                                mEntity->getId(), static_cast<signed char>(xa), static_cast<signed char>(ya),
+                                static_cast<signed char>(za), mEntity->mOnGround));
+                            ++sSmallPosPacketCount;
+                        }
+                        else
+                        {
+                            packet = boost::shared_ptr<Packet>(
+                                new ClientboundMoveEntityPacket::Pos(mEntity->getId(), xa, ya, za, mEntity->mOnGround));
+                            ++sPosPacketCount;
+                        }
+                    }
+                    else if (rot)
+                    {
+                        if (xRot == mXRotp)
+                        {
+                            packet = boost::shared_ptr<Packet>(new MoveEntityPacketSmall::Rot(
+                                mEntity->getId(), static_cast<signed char>(yRot), static_cast<signed char>(xRot),
+                                mEntity->mOnGround));
+                            ++sSmallRotPacketCount;
+                        }
+                        else
+                        {
+                            packet = boost::shared_ptr<Packet>(new ClientboundMoveEntityPacket::Rot(
+                                mEntity->getId(), static_cast<unsigned char>(yRot), static_cast<unsigned char>(xRot),
+                                mEntity->mOnGround));
+                            ++sRotPacketCount;
+                        }
+                    }
+                }
+                else
+                {
+                    mWasOnGround = mEntity->mOnGround;
+                    mTeleportDelay = 0;
+                    resetPlayerVisibility();
+                    packet = boost::shared_ptr<Packet>(new ClientboundTeleportEntityPacket(mEntity));
+                    mXp = x;
+                    mYp = y;
+                    mZp = z;
+                    mYRotp = yRot;
+                    mXRotp = xRot;
+                }
+            }
+            else
+            {
+                pos = false;
+                rot = false;
+            }
+
+            bool fallFlying = false;
+            if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+                && boost::static_pointer_cast<LivingEntity>(mEntity)->isFallFlying())
+            {
+                fallFlying = true;
+            }
+            if ((fallFlying || mTrackDelta) && mTickCount > 0)
+            {
+                double xd = mEntity->mXd - mXap;
+                double yd = mEntity->mYd - mYap;
+                double zd = mEntity->mZd - mZap;
+                double distance = zd * zd + xd * xd + yd * yd;
+                if (distance > 0.0004
+                    || (distance > 0.0 && mEntity->mXd == 0.0 && mEntity->mYd == 0.0 && mEntity->mZd == 0.0))
+                {
+                    mXap = mEntity->mXd;
+                    mYap = mEntity->mYd;
+                    mZap = mEntity->mZd;
+                    broadcast(boost::shared_ptr<Packet>(
+                        new ClientboundSetEntityMotionPacket(mEntity->getId(), mXap, mYap, mZap)));
+                }
+            }
+
+            if (packet != NULL)
+                broadcast(packet);
+            sendDirtyEntityData();
+            if (pos)
+            {
+                mXp = x;
+                mYp = y;
+                mZp = z;
+            }
+            if (rot)
+            {
+                mYRotp = yRot;
+                mXRotp = xRot;
+            }
+            mWasRiding = false;
+        }
+        else
+        {
+            int yRot = Mth::floor(mEntity->mYRot * 256.0f / 360.0f);
+            int xRot = Mth::floor(mEntity->mXRot * 256.0f / 360.0f);
+            if (std::abs(yRot - mYRotp) >= 1 || std::abs(xRot - mXRotp) >= 1)
+            {
+                broadcast(boost::shared_ptr<Packet>(new ClientboundMoveEntityPacket::Rot(
+                    mEntity->getId(), static_cast<unsigned char>(yRot), static_cast<unsigned char>(xRot),
+                    mEntity->mOnGround)));
+                mYRotp = yRot;
+                mXRotp = xRot;
+            }
+            mXp = EntityTracker::truncate(mEntity->mX);
+            mYp = EntityTracker::truncate(mEntity->mY);
+            mZp = EntityTracker::truncate(mEntity->mZ);
+            sendDirtyEntityData();
+            mWasRiding = true;
+        }
+
+        int yHeadRot = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
+        if (std::abs(yHeadRot - mYHeadRotp) >= 1)
+        {
+            broadcast(boost::shared_ptr<Packet>(
+                new ClientboundRotateHeadPacket(mEntity, static_cast<unsigned char>(yHeadRot))));
+            mYHeadRotp = yHeadRot;
+        }
+        mEntity->mHasImpulse = false;
+        ++mTickCount;
+    }
+
+    if (mEntity->mHurtMarked)
+    {
+        broadcastAndSend(boost::shared_ptr<Packet>(new ClientboundSetEntityMotionPacket(mEntity)));
+        mEntity->mHurtMarked = false;
+    }
 }
 
 void TrackedEntity::broadcastRemoved()
 {
-    if (!mEntity)
+    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator
+             it = mSeenBy.begin();
+         it != mSeenBy.end(); ++it)
     {
-        return;
+        mEntity->stopSeenByPlayer(*it);
+        (*it)->sendRemoveEntity(&mEntity);
     }
-    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it = mTrackedPlayers.begin(); it != mTrackedPlayers.end(); ++it)
-    {
-        if (*it)
-        {
-            boost::shared_ptr<Entity> entity = mEntity;
-            (*it)->sendRemoveEntity(&entity);
-        }
-    }
-    mTrackedPlayers.clear();
 }
 
 void TrackedEntity::removePlayer(EntityTracker* tracker, boost::shared_ptr<ServerPlayer> player)
 {
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it = mTrackedPlayers.find(player);
-    if (it != mTrackedPlayers.end())
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it =
+        mSeenBy.find(player);
+    if (it == mSeenBy.end())
+        return;
+    mSeenBy.erase(it);
+    if (isVisibleTo(tracker, player, false, true) == 0)
     {
-        mTrackedPlayers.erase(it);
-        if (player)
-        {
-            boost::shared_ptr<Entity> entity = mEntity;
-            player->sendRemoveEntity(&entity);
-        }
+        mEntity->stopSeenByPlayer(player);
+        player->mEntitiesToRemove.push_back(mEntity->getId());
     }
 }
 
 void TrackedEntity::clear(boost::shared_ptr<ServerPlayer> player)
 {
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it = mTrackedPlayers.find(player);
-    if (it != mTrackedPlayers.end())
-    {
-        mTrackedPlayers.erase(it);
-        mEntity->stopSeenByPlayer(player);
-        player->sendRemoveEntity(&mEntity);
-    }
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it =
+        mSeenBy.find(player);
+    if (it == mSeenBy.end())
+        return;
+    mSeenBy.erase(it);
+    mEntity->stopSeenByPlayer(player);
+    player->sendRemoveEntity(&mEntity);
 }
 
 boost::shared_ptr<Entity> TrackedEntity::getEntity()
@@ -502,7 +914,7 @@ boost::shared_ptr<Entity> TrackedEntity::getEntity()
     return mEntity;
 }
 
-void TrackedEntity::setMaxRange(int range)
+void TrackedEntity::setMaxRange(int maxRange)
 {
-    mMaxRange = range;
+    mMaxRange = maxRange;
 }

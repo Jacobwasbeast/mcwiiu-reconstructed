@@ -1,4 +1,5 @@
 #include "game/entity/mob/IndirectEntityDamageSource.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -36,11 +37,11 @@ boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMes
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
     std::wstring attackerName;
 
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         item = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
 
     boost::shared_ptr<Entity> attacker = owner ? owner : entity;
-    if (owner && owner->GetType() == 0x0c800001ULL)
+    if (owner && owner->GetType() == EntityType::SERVER_PLAYER)
         attackerName = boost::static_pointer_cast<Player>(owner)->getDisplayName();
 
     std::wstring victimName = victim->getNetworkName();

@@ -1,4 +1,7 @@
 #include "game/entity/mob/Animal.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/Mth.hpp"
@@ -22,21 +25,21 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 namespace
 {
 }
 
-const unsigned long long ENTITY_TYPE_ANIMAL = Animal::ENTITY_TYPE_ANIMAL;
 
 const EntityDataAccessor<int>* Animal::DATA_IN_LOVE = NULL;
 const EntityDataAccessor<int>* Animal::DATA_IN_LOVE_TIME = NULL;
 
-Animal::Animal(Level* level) : AgableMob(level), mWalkTargetBlock(Blocks::grass), mLoveCause(L""),
+Animal::Animal(Level* level) : AgableMob(level), mSpawnableBlock(Blocks::grass), mLoveCause(L""),
                                mBreedCooldown(1200)
 {
     setDespawnProtected();
-    mCategories |= 0x10;
+    mCategories |= EntityCategory::eEntityCategory_Animal;
 }
 
 Animal::~Animal()
@@ -45,9 +48,9 @@ Animal::~Animal()
 
 void Animal::staticCtor()
 {
-    DATA_IN_LOVE = SynchedEntityData::defineId(ENTITY_TYPE_ANIMAL, ENTITY_TYPE_MOB,
+    DATA_IN_LOVE = SynchedEntityData::defineId(EntityType::ANIMAL, EntityType::MOB,
                                                EntityDataSerializers::INT);
-    DATA_IN_LOVE_TIME = SynchedEntityData::defineId(ENTITY_TYPE_ANIMAL, ENTITY_TYPE_MOB,
+    DATA_IN_LOVE_TIME = SynchedEntityData::defineId(EntityType::ANIMAL, EntityType::MOB,
                                                     EntityDataSerializers::INT);
 }
 
@@ -183,7 +186,7 @@ bool Animal::hurt(const DamageSource* source, float damage)
     boost::shared_ptr<Entity> attacker = source->getEntity();
     bool attackDenied = false;
 
-    if (attacker != NULL && (attacker->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(attacker);
         if (!player->isAllowedToAttackAnimals())
@@ -203,7 +206,7 @@ bool Animal::hurt(const DamageSource* source, float damage)
 
 double Animal::getWalkTargetValue(const BlockPos& pos)
 {
-    if (mLevel->getBlockState(pos.below())->getBlock() == mWalkTargetBlock)
+    if (mLevel->getBlockState(pos.below())->getBlock() == mSpawnableBlock)
     {
         return 10.0;
     }
@@ -247,7 +250,7 @@ void Animal::readAdditionalSaveData(CompoundTag* tag)
 bool Animal::checkSpawnRules()
 {
     BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY), Mth::floor(mZ));
-    return mLevel->getBlockState(pos.below())->getBlock() == mWalkTargetBlock
+    return mLevel->getBlockState(pos.below())->getBlock() == mSpawnableBlock
         && mLevel->getDaytimeRawBrightness(pos) > 8
         && PathfinderMob::checkSpawnRules();
 }
@@ -313,7 +316,7 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
 
             if (GetType() == MobCategory::MUSHROOM_COW->getEnumBaseClass())
             {
-                if (!mLevel->canCreateMore(MobCategory::MUSHROOM_COW->getEnumBaseClass(), 1))
+                if (!mLevel->canCreateMore(MobCategory::MUSHROOM_COW->getEnumBaseClass(), Level::eSpawnType_Breed))
                 {
                     player->displayClientMessage(MESSAGE_ANIMAL_LIMIT, true);
                     return false;
@@ -321,7 +324,7 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
             }
             else if (GetType() == MobCategory::WOLF->getEnumBaseClass())
             {
-                if (!mLevel->canCreateMore(MobCategory::WOLF->getEnumBaseClass(), 1))
+                if (!mLevel->canCreateMore(MobCategory::WOLF->getEnumBaseClass(), Level::eSpawnType_Breed))
                 {
                     player->displayClientMessage(MESSAGE_WOLF_LIMIT, true);
                     return false;
@@ -329,15 +332,15 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
             }
             else if (GetType() == MobCategory::CHICKEN->getEnumBaseClass())
             {
-                if (!mLevel->canCreateMore(MobCategory::CHICKEN->getEnumBaseClass(), 1))
+                if (!mLevel->canCreateMore(MobCategory::CHICKEN->getEnumBaseClass(), Level::eSpawnType_Breed))
                 {
                     player->displayClientMessage(MESSAGE_CHICKEN_LIMIT, true);
                     return false;
                 }
             }
-            else if ((GetType() & ENTITY_TYPE_MOB) != 0)
+            else if ((GetType() & EntityType::MOB) != 0)
             {
-                if (!mLevel->canCreateMore(GetType(), 1))
+                if (!mLevel->canCreateMore(GetType(), Level::eSpawnType_Breed))
                 {
                     player->displayClientMessage(MESSAGE_MOB_LIMIT, true);
                     return false;
@@ -367,7 +370,7 @@ void Animal::setInLove(boost::shared_ptr<Player> player)
         mLoveCause = player->getUUID();
     }
 
-    mLevel->broadcastEntityEvent(shared_from_this(), 18, 0);
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::IN_LOVE_HEARTS, 0);
 }
 
 boost::shared_ptr<Player> Animal::getLoveCause()
@@ -378,7 +381,7 @@ boost::shared_ptr<Player> Animal::getLoveCause()
     }
 
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(mLoveCause);
-    if (player != NULL && player->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    if (player != NULL && player->GetType() == EntityType::SERVER_PLAYER)
     {
         return boost::static_pointer_cast<ServerPlayer>(player);
     }
@@ -414,7 +417,7 @@ bool Animal::canMate(const boost::shared_ptr<Animal>& other)
 
 void Animal::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 18)
+    if (event == EntityEvent::IN_LOVE_HEARTS)
     {
         for (int i = 0; i < 7; ++i)
         {
@@ -440,18 +443,18 @@ unsigned int Animal::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     {
         if (isBaby())
         {
-            return Wolf::TOOLTIP_FEED_BABY;
+            return IDS_TOOLTIPS_FEED;
         }
 
         if (!isInLove() && !isBreedCoolingDown() && !isBaby())
         {
-            return Wolf::TOOLTIP_FEED;
+            return IDS_TOOLTIPS_LOVEMODE;
         }
     }
 
-    if (Item::getId(holder.m_pItemInstance->getItem()) == 0x1A4 && !isLeashed())
+    if (Item::getId(holder.m_pItemInstance->getItem()) == ItemId::LEAD && !isLeashed())
     {
-        return Wolf::TOOLTIP_LEASH;
+        return IDS_TOOLTIPS_LEASH;
     }
 
     return AgableMob::GetInteractTooltip(holder);
@@ -472,7 +475,7 @@ boost::shared_ptr<Entity> Animal::changeDimension(int dimension)
 {
     boost::shared_ptr<Entity> entity = Entity::changeDimension(dimension);
 
-    if (Entity::instanceof(entity, ENTITY_TYPE_ANIMAL))
+    if (Entity::instanceof(entity, EntityType::ANIMAL))
     {
         boost::static_pointer_cast<Animal>(entity)->setDespawnProtected();
     }

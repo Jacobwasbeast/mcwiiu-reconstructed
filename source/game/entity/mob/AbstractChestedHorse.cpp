@@ -1,4 +1,5 @@
 #include "game/entity/mob/AbstractChestedHorse.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -88,12 +89,12 @@ void AbstractChestedHorse::die(const DamageSource* source)
 void AbstractChestedHorse::addDataWalkers(DataFixerUpper* fixer, unsigned long long type)
 {
     AbstractHorse::addDataWalkers(fixer, type);
-    fixer->addWalker((DataFixTypes::EDataFixTypes)4, (DataWalker*)new ItemListDataWalker(type, L"Items"));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, (DataWalker*)new ItemListDataWalker(type, L"Items"));
 }
 
 void AbstractChestedHorse::staticCtor()
 {
-    DATA_CHEST = SynchedEntityData::defineId<bool>(0x000000000D698000ULL, 0x000000000D690000ULL,
+    DATA_CHEST = SynchedEntityData::defineId<bool>(EntityType::ABSTRACT_CHESTED_HORSE, EntityType::ABSTRACT_HORSE,
                                                    EntityDataSerializers::BOOLEAN);
 }
 
@@ -125,7 +126,7 @@ void AbstractChestedHorse::readAdditionalSaveData(CompoundTag* tag)
     setChest(tag->getBoolean(L"ChestedHorse"));
     if (hasChest())
     {
-        ListTag* items = tag->getList(L"Items", 10);
+        ListTag* items = tag->getList(L"Items", Tag::TAG_COMPOUND);
         createInventory();
         for (int i = 0; i < items->size(); ++i)
         {
@@ -249,5 +250,5 @@ bool AbstractChestedHorse::removeWhenFarAway()
 
 unsigned long long AbstractChestedHorse::GetType()
 {
-    return 0x000000000D698000ULL;
+    return EntityType::ABSTRACT_CHESTED_HORSE;
 }

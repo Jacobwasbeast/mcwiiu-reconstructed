@@ -1,4 +1,5 @@
 #include "game/entity/mob/DragonRespawnAnimation_SUMMONING_DRAGON.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/entity/mob/EndDragonFight.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -26,13 +27,13 @@ void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level,
             else if (tick < 5)
             {
                 BlockPos eventPosition(0, 128, 0);
-                level->levelEvent(3001, eventPosition, 0);
+                level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, eventPosition, 0);
             }
         }
         else
         {
             BlockPos eventPosition(0, 128, 0);
-            level->levelEvent(3001, eventPosition, 0);
+            level->levelEvent(LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR, eventPosition, 0);
         }
         return;
     }

@@ -2,6 +2,7 @@
 #define GAME_ENTITY_MOB_ANIMAL_HPP
 
 #include <string>
+#include "game/core/EntityType.hpp"
 #include <boost/shared_ptr.hpp>
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -16,16 +17,16 @@ class ItemInstance;
 class Level;
 template <class T> class EntityDataAccessor;
 
-extern const unsigned long long ENTITY_TYPE_ANIMAL;
+extern const unsigned long long EntityType::ANIMAL;
 
 class Animal : public AgableMob
 {
 public:
     // Entity and UI identities used by the Wii U animal interaction paths.
-    static const unsigned long long ENTITY_TYPE_ANIMAL = 0x000000000D680000ULL;
-    static const unsigned long long ENTITY_TYPE_MUSHROOM_COW = 0x000000002D6A0001ULL;
-    static const unsigned long long ENTITY_TYPE_WOLF = 0x000000000D6C0002ULL;
-    static const unsigned long long ENTITY_TYPE_CHICKEN = 0x000000000D680004ULL;
+    
+    
+    
+    
     static const unsigned int MESSAGE_ANIMAL_LIMIT = 0x00FE5875U;
     static const unsigned int MESSAGE_WOLF_LIMIT = 0xEC344E3DU;
     static const unsigned int MESSAGE_CHICKEN_LIMIT = 0x99326383U;
@@ -38,7 +39,7 @@ public:
     void setInLoveValue(int value);
     virtual void customServerAiStep();
     int getInLoveValue();
-    virtual void updateDespawnProtectedState();
+    void updateDespawnProtectedState();
     virtual void aiStep();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual double getWalkTargetValue(const BlockPos& pos);
@@ -61,11 +62,11 @@ public:
     virtual bool canMate(const boost::shared_ptr<Animal>& other);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
-    bool isDespawnProtected() const;
+    virtual bool isDespawnProtected() const;
     virtual void dropLeash(bool dropLeash, bool suppressDrops);
     virtual boost::shared_ptr<Entity> changeDimension(int dimension);
 protected:
-    Block* mWalkTargetBlock;
+    Block* mSpawnableBlock;
     std::wstring mLoveCause;
     bool mDespawnProtected;
     short mMinX;

@@ -30,7 +30,7 @@ PathfinderMob::~PathfinderMob()
 
 double PathfinderMob::getWalkTargetValue(const BlockPos&)
 {
-    return 176.0;
+    return 0.0;
 }
 
 bool PathfinderMob::checkSpawnRules()
@@ -41,7 +41,7 @@ bool PathfinderMob::checkSpawnRules()
     }
 
     BlockPos pos(mX, mY, mZ);
-    return getWalkTargetValue(pos) >= 176.0;
+    return getWalkTargetValue(pos) >= 0.0;
 }
 
 bool PathfinderMob::isPathFinding()

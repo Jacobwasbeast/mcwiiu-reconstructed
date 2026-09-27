@@ -12,10 +12,12 @@
 #include "game/entity/mob/EnderDragon.hpp"
 #include "game/server/ServerBossEvent.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/world/block/BlockPattern.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Predicate.hpp"
 
 class DragonRespawnAnimation;
-class Level;
+class Player;
 
 class EndDragonFight
 {
@@ -28,10 +30,10 @@ public:
     void spawnExitPortal(bool active);
     void updateCrystalCount();
     void onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const DamageSource* source);
-    bool findExitPortal();
+    BlockPattern::BlockPatternMatch* findExitPortal();
     void fjFindCrystals(std::vector<boost::shared_ptr<EnderCrystal> >& crystals, const BlockPos& pos);
     void respawnDragon(const std::vector<boost::shared_ptr<EnderCrystal> >& crystals);
-    bool tryRespawn();
+    void tryRespawn();
     CompoundTag* saveData();
     static BlockPos getGatewayPosition(int index);
     bool hasExitPortal();
@@ -46,20 +48,25 @@ public:
     void updateDragon(boost::shared_ptr<EnderDragon> dragon);
     bool hasPreviouslyKilledDragon();
 
+    static Predicate<boost::shared_ptr<Player> >* VALID_PLAYER;
+
 private:
     ServerBossEvent* dragonEvent;
-    Level* level;
+    ServerLevel* level;
     std::vector<int> gateways;
+    int mReserved;
     int ticksSinceDragonSeen;
     int crystalsAlive;
+    int ticksSinceCrystalsScanned;
+    int ticksSinceLastPlayerScan;
     bool dragonKilled;
     bool previouslyKilledDragon;
     std::wstring dragonUUID;
-    bool exitPortalFound;
+    bool needsStateScanning;
     BlockPos* exitPortalLocation;
     DragonRespawnAnimation* respawnStage;
     int respawnTime;
-    std::vector<boost::shared_ptr<EnderCrystal> > crystals;
+    std::vector<boost::shared_ptr<EnderCrystal> > respawnCrystals;
 };
 
 #endif

@@ -8,6 +8,7 @@
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/item/not_null_ptr.hpp"
 
+class Attribute;
 class Block;
 class BlockPos;
 class CompoundTag;
@@ -30,13 +31,15 @@ public:
     class ZombieGroupData : public MobGroupData
     {
     public:
-        ZombieGroupData(bool canBreakDoors, bool isBaby, bool isJockey);
+        ZombieGroupData(bool isBaby, bool isJockey, bool isVillager);
         virtual ~ZombieGroupData();
 
-        bool mCanBreakDoors;
         bool mIsBaby;
         bool mIsJockey;
+        bool mIsVillager;
     };
+
+    static Attribute* SPAWN_REINFORCEMENTS_CHANCE;
 
     Zombie(Level* level);
     Zombie(Level* level, bool initializeGoals);
@@ -51,7 +54,7 @@ public:
     virtual void defineSynchedData();
     virtual void setAggressive(bool aggressive);
     virtual bool isAggressive();
-    bool canBreakDoors();
+    virtual bool canBreakDoors();
     virtual void setCanBreakDoors(bool canBreakDoors);
     virtual bool isBaby();
     bool isJockey();
@@ -86,12 +89,12 @@ public:
     void waterCheck();
     virtual void tick();
     virtual void setSize(float width, float height);
-    void internalSetSize(float scale);
+    virtual void internalSetSize(float scale);
     virtual not_null_ptr<ItemInstance> getSkull();
     virtual double getRidingHeight();
     virtual void die(const DamageSource* source);
     virtual bool startRiding(boost::shared_ptr<Entity> vehicle, bool force);
-    void finishConversion();
+    virtual void finishConversion();
     virtual unsigned long long GetType();
 
 protected:

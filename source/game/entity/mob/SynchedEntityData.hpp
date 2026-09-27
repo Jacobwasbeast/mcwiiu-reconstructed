@@ -35,6 +35,8 @@ public:
 
     template <class T>
     void set(const EntityDataAccessor<T>* accessor, T value, bool updateDirty);
+    template <class T>
+    void markDirty(const EntityDataAccessor<T>* accessor);
 
     bool isDirty();
     bool isEmpty();
@@ -136,6 +138,13 @@ void SynchedEntityData::set(const EntityDataAccessor<T>* accessor, T value, bool
         item->setDirty(true);
         mIsDirty = true;
     }
+}
+
+template <class T>
+void SynchedEntityData::markDirty(const EntityDataAccessor<T>* accessor)
+{
+    mItemsById[accessor->getId()]->setDirty(true);
+    mIsDirty = true;
 }
 
 #endif

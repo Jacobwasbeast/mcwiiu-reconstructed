@@ -41,11 +41,11 @@ class Mob : public LivingEntity
 public:
     enum SpawnPlacementType
     {
-        SPAWN_PLACEMENT_TYPE_DEFAULT = 0,
+        SPAWN_PLACEMENT_TYPE_ON_GROUND = 0,
         SPAWN_PLACEMENT_TYPE_1 = 1,
-        SPAWN_PLACEMENT_TYPE_2 = 2,
-        SPAWN_PLACEMENT_TYPE_3 = 3,
-        SPAWN_PLACEMENT_TYPE_4 = 4
+        SPAWN_PLACEMENT_TYPE_IN_WATER = 2,
+        SPAWN_PLACEMENT_TYPE_IN_OPEN_WATER = 3,
+        SPAWN_PLACEMENT_TYPE_ON_WATER_FLOOR = 4
     };
 
     Mob(Level* level);
@@ -70,20 +70,15 @@ public:
     virtual void serverAiStep();
     virtual bool isEffectiveAi();
     virtual const HumanoidArm* getMainArm();
-    virtual void setNoAi(bool noAi);
-    virtual void setLeftHanded(bool leftHanded);
-    virtual bool isNoAi();
-    virtual void underwaterEjectRider();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
-
-    static void staticCtor();
-    void _init();
-    void registerAttributes();
     virtual void registerGoals();
     virtual PathNavigation* createNavigation(Level* level);
     virtual float getPathfindingMalus(const BlockPathTypes* type);
     virtual void setPathfindingMalus(const BlockPathTypes* type, float malus);
     virtual BodyControl* createBodyControl();
+
+    static void staticCtor();
+    void _init();
+    void registerAttributes();
     virtual LookControl* getLookControl();
     virtual MoveControl* getMoveControl();
     virtual JumpControl* getJumpControl();
@@ -91,55 +86,60 @@ public:
     virtual Sensing* getSensing();
     virtual boost::shared_ptr<LivingEntity> getTarget();
     virtual void setTarget(boost::shared_ptr<LivingEntity> target);
-    virtual void setLevel(Level* level);
     virtual bool canAttackType(unsigned long long type);
     virtual void ate();
     virtual int getAmbientSoundInterval();
     virtual void playAmbientSound();
-    void playHurtSound(const DamageSource* source);
     virtual void resetAmbientSoundTime();
-    int getExperienceReward(boost::shared_ptr<Player> player);
+    virtual void setLevel(Level* level);
     virtual void spawnAnim();
+    virtual const SoundEvent* getAmbientSound();
+    virtual Item* getDeathLoot();
+    virtual ResourceLocation* getDefaultLootTable();
+    void playHurtSound(const DamageSource* source);
+    virtual ResourceLocation* getDefaultGearTable();
+    int getExperienceReward(boost::shared_ptr<Player> player);
+    virtual void setZza(float zza);
     void handleEntityEvent(unsigned char event, int data);
     void setLeader(bool leader);
-    virtual const SoundEvent* getAmbientSound();
-    Item* getDeathLoot();
+    virtual void setYya(float yya);
+    virtual void setXxa(float xxa);
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType);
     bool isLeftHanded();
-    bool canPickUpLoot();
-    void setCanPickUpLoot(bool canPickUp);
+    virtual void pickUpItem(boost::shared_ptr<ItemEntity> item);
+    virtual bool canHoldItem(not_null_ptr<ItemInstance> item);
     void setPersistenceRequired(bool required);
-    bool isPersistenceRequired();
-    virtual ResourceLocation* getDefaultLootTable();
-    virtual ResourceLocation* getDefaultGearTable();
-    void setZza(float zza);
-    void setYya(float yya);
-    void setXxa(float xxa);
-    static const EquipmentSlot* getEquipmentSlotForItem(not_null_ptr<ItemInstance> item);
-    void pickUpItem(boost::shared_ptr<ItemEntity> item);
-    bool canHoldItem(not_null_ptr<ItemInstance> item);
-    bool removeWhenFarAway();
+    virtual bool removeWhenFarAway();
     virtual void checkDespawn();
     virtual void customServerAiStep();
     virtual int getMaxHeadXRot();
     virtual int getMaxHeadYRot();
-    float rotlerp(float from, float to, float max);
-    void lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxHeadYRot);
-    bool checkSpawnRules();
-    bool checkSpawnObstruction();
+    virtual bool checkSpawnRules();
+    static const EquipmentSlot* getEquipmentSlotForItem(not_null_ptr<ItemInstance> item);
+    virtual bool checkSpawnObstruction();
     virtual double getSizeScale();
     virtual double getHeadSizeScale();
-    int getMaxSpawnClusterSize();
-    int getMaxFallDistance();
-    std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
-    std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
-    static not_null_ptr<ItemInstance> getEquipmentForSlot(const EquipmentSlot* slot, int level);
+    virtual int getMaxSpawnClusterSize();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual void populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    float rotlerp(float from, float to, float max);
+    void lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxHeadYRot);
     virtual void finalizeSpawnEggSpawn(int type);
     virtual bool canBeControlledByRider();
-    void setDropChance(const EquipmentSlot* slot, float chance);
+    virtual void setDropChance(const EquipmentSlot* slot, float chance);
+    virtual bool canPickUpLoot();
+    virtual void setCanPickUpLoot(bool canPickUp);
+    int getMaxFallDistance();
+    std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
+    std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
+    static Item* getEquipmentForSlot(const EquipmentSlot* slot, int tier);
+    virtual bool isPersistenceRequired();
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
+    virtual void underwaterEjectRider();
+    virtual void setNoAi(bool noAi);
+    virtual void setLeftHanded(bool leftHanded);
+    virtual bool isNoAi();
     bool canBeLeashed(const boost::shared_ptr<Player>& player);
     unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     bool shouldRender(double distance);

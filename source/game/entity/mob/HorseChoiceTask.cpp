@@ -1,4 +1,5 @@
 #include "game/entity/mob/HorseChoiceTask.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 
@@ -23,19 +24,19 @@ HorseChoiceTask::~HorseChoiceTask()
 
 int HorseChoiceTask::getDescriptionId()
 {
-    if (entityType == 0x2D698002ULL)
+    if (entityType == EntityType::MULE)
     {
         return muleDescriptionId;
     }
-    if (entityType == 0x2D698001ULL)
+    if (entityType == EntityType::DONKEY)
     {
         return donkeyDescriptionId;
     }
-    if (entityType == 0x2D698003ULL)
+    if (entityType == EntityType::LLAMA)
     {
         return fourthDescriptionId;
     }
-    if (entityType == 0x2D690001ULL)
+    if (entityType == EntityType::HORSE)
     {
         return horseDescriptionId;
     }
@@ -49,8 +50,8 @@ void HorseChoiceTask::onLookAtEntity(boost::shared_ptr<Entity> entity)
         return;
     }
 
-    if (entity->GetType() != 0x2D690001ULL && entity->GetType() != 0x2D698001ULL &&
-        entity->GetType() != 0x2D698002ULL && entity->GetType() != 0x2D698003ULL)
+    if (entity->GetType() != EntityType::HORSE && entity->GetType() != EntityType::DONKEY &&
+        entity->GetType() != EntityType::MULE && entity->GetType() != EntityType::LLAMA)
     {
         return;
     }

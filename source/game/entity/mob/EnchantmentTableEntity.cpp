@@ -1,4 +1,6 @@
 #include "game/entity/mob/EnchantmentTableEntity.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -68,7 +70,7 @@ AbstractContainerMenu* EnchantmentTableEntity::createMenu(boost::shared_ptr<Inve
 
 int EnchantmentTableEntity::getTypeId(bool large)
 {
-    return 4;
+    return ClientboundContainerOpenPacket::ENCHANTMENT;
 }
 
 InteractionObject::NameData EnchantmentTableEntity::GetNetworkNameData()
@@ -170,5 +172,5 @@ boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
 
 unsigned long long EnchantmentTableEntity::GetType()
 {
-    return 0x0000000001200206ULL;
+    return BlockEntityType::ENCHANTMENT_TABLE_ENTITY;
 }

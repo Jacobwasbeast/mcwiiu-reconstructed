@@ -29,7 +29,7 @@ void EntityRidingToPassengersFix::addPassengerToVehicle(CompoundTag* passenger, 
 
 CompoundTag* EntityRidingToPassengersFix::fix(CompoundTag* tag)
 {
-    while (tag->contains(L"Riding", 10))
+    while (tag->contains(L"Riding", Tag::TAG_COMPOUND))
     {
         CompoundTag* vehicle = extractVehicle(tag);
         addPassengerToVehicle(tag, vehicle);

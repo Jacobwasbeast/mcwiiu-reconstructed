@@ -2,6 +2,7 @@
 #define GAME_ENTITY_MOB_ENTITY_HPP
 
 #include <set>
+#include "game/core/EntityType.hpp"
 #include <string>
 #include <vector>
 
@@ -62,38 +63,10 @@ class Vec2;
 template <class T> class EntityDataAccessor;
 template <class T> class not_null_ptr;
 
-const unsigned long long ENTITY_TYPE_ENTITY = 0x0000000008000000ULL;
-const unsigned long long ENTITY_TYPE_BOAT = 0x0000000008000008ULL;
-const unsigned long long ENTITY_TYPE_LEASH_FENCE_KNOT = 0x0000000008000009ULL;
-const unsigned long long ENTITY_TYPE_PRIMED_TNT = 0x000000000800000BULL;
-const unsigned long long ENTITY_TYPE_MINECART = 0x000000000A800000ULL;
-const unsigned long long ENTITY_TYPE_MINECART_RIDEABLE = 0x000000000A800001ULL;
-const unsigned long long ENTITY_TYPE_LIVING_ENTITY = 0x000000000C000000ULL;
-const unsigned long long ENTITY_TYPE_MONSTER = 0x000000004D540000ULL;
-const unsigned long long ENTITY_TYPE_ARMOR_STAND = 0x000000000C000001ULL;
-const unsigned long long ENTITY_TYPE_PLAYER = 0x000000000C800000ULL;
-const unsigned long long ENTITY_TYPE_SERVER_PLAYER = 0x000000000C800001ULL;
-const unsigned long long ENTITY_TYPE_LOCAL_PLAYER = 0x000000000C800003ULL;
-const unsigned long long ENTITY_TYPE_MOB = 0x000000000D000000ULL;
-const unsigned long long ENTITY_TYPE_VILLAGER = 0x000000000D600001ULL;
-const unsigned long long ENTITY_TYPE_DOLPHIN = 0x000000000D602001ULL;
-const unsigned long long ENTITY_TYPE_ZOMBIE = 0x000000005D550040ULL;
-const unsigned long long ENTITY_TYPE_PIG_ZOMBIE = 0x000000005D550041ULL;
-const unsigned long long ENTITY_TYPE_ZOMBIE_VILLAGER = 0x000000005D550042ULL;
-const unsigned long long ENTITY_TYPE_DROWNED = 0x000000005D550044ULL;
-const unsigned long long ENTITY_TYPE_ENDER_DRAGON = 0x000000000D000005ULL;
-const unsigned long long ENTITY_TYPE_SHEEP = 0x000000002D680002ULL;
-const unsigned long long ENTITY_TYPE_RABBIT = 0x000000002D680005ULL;
-const unsigned long long ENTITY_TYPE_HORSE = 0x000000002D690001ULL;
-const unsigned long long ENTITY_TYPE_DONKEY = 0x000000002D698001ULL;
-const unsigned long long ENTITY_TYPE_MULE = 0x000000002D698002ULL;
-const unsigned long long ENTITY_TYPE_SHULKER = 0x000000004D580043ULL;
 
 class Entity;
 
-bool eTYPE_DERIVED_FROM__FULT1(unsigned int typeHigh, unsigned int typeLow,
-                               unsigned int entityTypeHigh,
-                               unsigned int entityTypeLow);
+
 int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
             const boost::shared_ptr<Entity>& entity);
 bool isPickable_apply(const boost::shared_ptr<Entity>& entity);
@@ -101,6 +74,22 @@ bool isPickable_apply(const boost::shared_ptr<Entity>& entity);
 class Entity : public boost::enable_shared_from_this<Entity>, public CommandSender
 {
 public:
+    enum ESharedFlag
+    {
+        FLAG_ONFIRE = 0,
+        FLAG_SNEAKING = 1,
+        FLAG_INVULNERABLE = 2,
+        FLAG_SPRINTING = 3,
+        FLAG_INVISIBLE = 5,
+        FLAG_IDLE = 6,
+        FLAG_WEAKENED = 7,
+        FLAG_GLOWING = 8,
+        FLAG_FALL_FLYING = 9,
+        FLAG_SWIMMER = 10,
+        FLAG_SWIMMING = 11,
+        FLAG_DAMAGE_NEARBY_MOBS = 12
+    };
+
     enum EEntityLocation
     {
         ENTITY_LOCATION_FEET,
@@ -565,7 +554,7 @@ public:
     bool mFirstTick;
     bool mFireImmune;
     boost::shared_ptr<SynchedEntityData> mEntityData;
-    bool mPreventEntitySpawning;
+    bool mInChunk;
     int mChunkX;
     int mChunkY;
     int mChunkZ;
@@ -577,7 +566,7 @@ public:
     int mLastSentZ;
     int mLastSentYRot;
     int mLastSentXRot;
-    bool mAddedToChunk;
+    bool mNoCulling;
     bool mHasImpulse;
     int mPortalCooldown;
     bool mIsInsidePortal;
@@ -604,12 +593,10 @@ public:
     boost::weak_ptr<Entity> mLeashHolder;
     CompoundTag* mLeashInfoTag;
     unsigned long long mType;
-    boost::weak_ptr<Entity> mRootVehicle;
-    int mLeashRestoreTicks;
-    _SkinAdjustments mSkinAdjustments;
-    int mAutoSpinAttackTicks;
     boost::weak_ptr<Entity> mShouldTickNearbyCache;
     int mShouldTickCounter;
+    _SkinAdjustments mSkinAdjustments;
+    int mAutoSpinAttackTicks;
 };
 
 #endif

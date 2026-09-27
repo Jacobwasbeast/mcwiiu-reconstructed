@@ -31,8 +31,10 @@ public:
     virtual bool breathesAir();
 
 protected:
-    float mWaterValueA;
-    float mWaterValueB;
+    friend class SwimIdleGoal;
+
+    float mSwimAmplitude;
+    float mSwimFrequency;
     float mWaterValueC;
 };
 

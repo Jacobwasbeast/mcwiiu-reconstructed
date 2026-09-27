@@ -1,10 +1,11 @@
 #include "game/entity/mob/HorseArmorItem.hpp"
+#include "game/item/Items.hpp"
 
 #include "game/core/IconRegister.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
 
-static const wchar_t* HORSE_ARMOR_COLOR = L"CustomColor";
+static const wchar_t* HORSE_ARMOR_COLOR = L"customColor";
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash)
     : Item(), mTier(tier), mProtection(protection), mTextures(), mHash(hash == NULL ? L"" : hash), mArmorIcon(NULL)
@@ -33,7 +34,8 @@ HorseArmorItem::~HorseArmorItem()
 
 bool HorseArmorItem::isHorseArmor(Item* item)
 {
-    return dynamic_cast<HorseArmorItem*>(item) != NULL;
+    return item == Items::leatherHorseArmor || item == Items::ironHorseArmor || item == Items::goldenHorseArmor
+        || item == Items::diamondHorseArmor;
 }
 
 int HorseArmorItem::getTier() const
@@ -89,7 +91,7 @@ void HorseArmorItem::registerIcons(IconRegister* iconRegister)
     Item::registerIcons(iconRegister);
     if (mTier == 1)
     {
-        mArmorIcon = iconRegister->registerIcon(getIconName());
+        mArmorIcon = iconRegister->registerIcon(L"leather_horse_armor_base");
     }
 }
 

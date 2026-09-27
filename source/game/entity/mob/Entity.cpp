@@ -1,5 +1,9 @@
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
+#include <cfloat>
 #include <cmath>
 #include <cstdarg>
 
@@ -68,6 +72,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
@@ -79,15 +84,12 @@
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/MemSect.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 class ServerPlayer;
-
-unsigned int TlsAlloc();
-void* TlsGetValue(unsigned int index);
-int TlsSetValue(unsigned int index, void* value);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-void MemSect(int section);
 
 static unsigned int gSmallIdTlsIndex = TlsAlloc();
 
@@ -111,19 +113,6 @@ int Entity::sWanderingCount;
 int Entity::sWanderingTick;
 int Entity::sWanderingIds[3];
 
-bool eTYPE_DERIVED_FROM__FULT1(unsigned int typeHigh, unsigned int typeLow,
-                               unsigned int entityTypeHigh,
-                               unsigned int entityTypeLow)
-{
-    if ((typeLow & 0x3F) != 0)
-    {
-        return typeHigh == entityTypeHigh && typeLow == entityTypeLow;
-    }
-
-    return (typeHigh & entityTypeHigh) == typeHigh
-        && (typeLow & entityTypeLow) == typeLow;
-}
-
 int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
             const boost::shared_ptr<Entity>& entity)
 {
@@ -145,21 +134,21 @@ bool isPickable_apply(const boost::shared_ptr<Entity>& entity)
         return true;
     }
 
-    return entity->GetType() == 0x000000000800000AULL;
+    return entity->GetType() == EntityType::ITEM_ENTITY;
 }
 
 void Entity::staticCtor()
 {
-    DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
-    DATA_AIR_SUPPLY_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
-    DATA_CUSTOM_NAME = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::STRING);
-    DATA_CUSTOM_NAME_VISIBLE = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_SILENT = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_NO_GRAVITY = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_MOVING = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_OWNER_UUID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::STRING);
-    DATA_CREATED_ON_HOST = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_AIR_SUPPLY_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_CUSTOM_NAME = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::STRING);
+    DATA_CUSTOM_NAME_VISIBLE = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_SILENT = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_NO_GRAVITY = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_MOVING = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_OWNER_UUID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::STRING);
+    DATA_CREATED_ON_HOST = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
 }
 
 bool Entity::instanceof(const boost::shared_ptr<Entity>& entity, unsigned long long type)
@@ -464,7 +453,7 @@ void Entity::_init(bool createEntityData, Level* level)
     mInvulnerableTime = 0;
     mFirstTick = true;
     mFireImmune = false;
-    mPreventEntitySpawning = false;
+    mInChunk = false;
     mChunkX = 0;
     mChunkY = 0;
     mChunkZ = 0;
@@ -476,7 +465,7 @@ void Entity::_init(bool createEntityData, Level* level)
     mLastSentZ = 0;
     mLastSentYRot = 0;
     mLastSentXRot = 0;
-    mAddedToChunk = false;
+    mNoCulling = false;
     mHasImpulse = false;
     mIsInsidePortal = false;
     mPortalTime = 0;
@@ -509,7 +498,7 @@ void Entity::_init(bool createEntityData, Level* level)
     mLeashed = false;
     mLeashInfoTag = NULL;
     mType = 0;
-    mLeashRestoreTicks = 0;
+    mShouldTickCounter = 0;
     mTeleported = false;
 
     mWasOnFire = false;
@@ -793,7 +782,7 @@ void Entity::tick()
 {
     if (!mLevel->mIsClientSide)
     {
-        setSharedFlag(8, isGlowing());
+        setSharedFlag(FLAG_GLOWING, isGlowing());
     }
 
     if (getDamageNearbyMobs())
@@ -840,21 +829,17 @@ bool Entity::isInWaterOrRain()
 
 bool Entity::isInWaterRainOrBubble()
 {
-    if (mLevel->getBlock(BlockPos(mX, mY, mZ)) == Blocks::bubble_column_segment)
-    {
+    BlockPos pos(mX, mY, mZ);
+    if (mLevel->getBlockId(pos.x, pos.y, pos.z) == BlockId::BUBBLE_COLUMN_SEGMENT)
         return true;
-    }
-
     return isInWaterOrRain();
 }
 
 bool Entity::isInWaterOrBubble()
 {
-    if (mLevel->getBlock(BlockPos(mX, mY, mZ)) == Blocks::bubble_column_segment)
-    {
+    BlockPos pos(mX, mY, mZ);
+    if (mLevel->getBlockId(pos.x, pos.y, pos.z) == BlockId::BUBBLE_COLUMN_SEGMENT)
         return true;
-    }
-
     return isInWater();
 }
 
@@ -1062,7 +1047,7 @@ void Entity::baseTick()
 
     if (!mLevel->mIsClientSide)
     {
-        setSharedFlag(0, mRemainingFireTicks > 0);
+        setSharedFlag(FLAG_ONFIRE, mRemainingFireTicks > 0);
     }
 
     mFirstTick = false;
@@ -1085,7 +1070,7 @@ void Entity::setSecondsOnFire(int seconds)
 {
     int ticks = seconds * 20;
 
-    if ((GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         ticks = ProtectionEnchantment::getFireAfterDampener(
             boost::static_pointer_cast<LivingEntity>(shared_from_this()), ticks);
@@ -1132,7 +1117,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     {
         boost::shared_ptr<Entity> passenger = it->lock();
 
-        if (passenger && passenger->GetType() == ENTITY_TYPE_LOCAL_PLAYER)
+        if (passenger && passenger->GetType() == EntityType::LOCAL_PLAYER)
         {
             if (!boost::static_pointer_cast<LocalPlayer>(passenger)->canMoveOrBeMovedFromTo(
                     mX, mY, mZ, mX + x, mY + y, mZ + z, NULL))
@@ -1231,7 +1216,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     double wantedZ = z;
 
     if ((type == eMoverType_Self || type == eMoverType_Player) && mOnGround && isSneaking()
-        && (GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         while (x != 0.0
                && mLevel->getCollisionAABBs(shared_from_this(),
@@ -1320,7 +1305,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
     bool spectator = false;
 
-    if ((GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         spectator = boost::static_pointer_cast<Player>(shared_from_this())->isSpectator();
     }
@@ -1540,7 +1525,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     mOnGround = mVerticalCollision && wantedY < 0.0;
     mCollision = mHorizontalCollision || mVerticalCollision;
 
-    if ((GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY && mCollision
+    if ((GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY && mCollision
         && !g_pApp->IsAppPaused())
     {
         boost::shared_ptr<LivingEntity> living =
@@ -1579,7 +1564,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     updateDeltaAfterMove(landingBlock, wantedX, wantedY, wantedZ, x, y, z);
 
     if (makeStepSound()
-        && (!mOnGround || !isSneaking() || (GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+        && (!mOnGround || !isSneaking() || (GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         && !isPassenger())
     {
         PIXBeginNamedEvent(0.0f, "Make step sound");
@@ -1739,7 +1724,7 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
 
     MemSect(31);
 
-    if ((GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER
+    if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER
         || (getSkinAdjustments().mAnimFlags & 0x4) == 0)
     {
         Block* above = mLevel->getBlockState(mTickCache, pos.above())->getBlock();
@@ -1970,7 +1955,7 @@ bool Entity::updateInWaterState()
 
     bool inBoat = false;
 
-    if (getVehicle() && getVehicle()->GetType() == ENTITY_TYPE_BOAT)
+    if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
     {
         inBoat = true;
     }
@@ -2081,7 +2066,7 @@ void Entity::doSprintParticleEffect()
     BlockPos pos(Mth::absFloor(mX), Mth::absFloor(mY - 0.20000000298023224), Mth::absFloor(mZ));
     const BlockState* state = mLevel->getBlockState(mTickCache, pos);
 
-    if (state->getRenderShape() == -1)
+    if (state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
     {
         return;
     }
@@ -2099,7 +2084,7 @@ void Entity::doSprintParticleEffect()
 
 bool Entity::isUnderLiquid(Material* material)
 {
-    if (getVehicle() && getVehicle()->GetType() == ENTITY_TYPE_BOAT)
+    if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
     {
         return false;
     }
@@ -2136,12 +2121,12 @@ bool Entity::isUnderLiquid(Material* material)
         return true;
     }
 
-    return (GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER ? false : false;
+    return (GetType() & EntityType::PLAYER) == EntityType::PLAYER ? false : false;
 }
 
 bool Entity::isInLiquid(Material* material, Vec3* pos)
 {
-    if (getVehicle() && getVehicle()->GetType() == ENTITY_TYPE_BOAT)
+    if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
     {
         return false;
     }
@@ -2513,24 +2498,22 @@ HitResult* Entity::pick(double distance, float partialTicks)
 {
     Vec3* from = getEyePosition(partialTicks);
     Vec3* view = getViewVector(partialTicks);
-    Vec3* to = Vec3::newTemp(from->x, from->y, from->z)
-                   ->add(view->x * distance, view->y * distance, view->z * distance);
+    Vec3* to = from->add(view->x * distance, view->y * distance, view->z * distance);
 
-    boost::unordered_set<Block*>* ignored = NULL;
-
-    if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
+    bool inMiniGame = false;
+    boost::unordered_set<Block*>* alwaysClipBlocks = NULL;
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && !Minecraft::InMiniGame(eMiniGameId_Lobby, true))
     {
-        ignored = new boost::unordered_set<Block*>(11, boost::hash<Block*>(),
-                                                   std::equal_to<Block*>(),
-                                                   std::allocator<Block*>());
-        ignored->insert(Blocks::snow_layer);
-        ignored->insert(Blocks::wool);
+        inMiniGame = true;
+        if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
+        {
+            alwaysClipBlocks = new boost::unordered_set<Block*>(11);
+            alwaysClipBlocks->insert(Blocks::web);
+            alwaysClipBlocks->insert(Blocks::vine);
+        }
     }
-
-    HitResult* hit = mLevel->clip(from, to, false, false, true, false, ignored, false);
-
-    delete ignored;
-
+    HitResult* hit = mLevel->clip(from, to, false, inMiniGame, true, inMiniGame, alwaysClipBlocks, false);
+    delete alwaysClipBlocks;
     return hit;
 }
 
@@ -2631,7 +2614,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
     tag->putShort(std::wstring(L"Air"), (short)getAirSupply());
     tag->putBoolean(std::wstring(L"OnGround"), mOnGround);
     tag->putInt(std::wstring(L"Dimension"), mDimension);
-    tag->putBoolean(std::wstring(L"Invulnerable"), getSharedFlag(2));
+    tag->putBoolean(std::wstring(L"Invulnerable"), getSharedFlag(FLAG_INVULNERABLE));
     tag->putInt(std::wstring(L"PortalCooldown"), mPortalCooldown);
     tag->putString(std::wstring(L"UUID"), getUUID());
 
@@ -3017,7 +3000,7 @@ void Entity::rideTick()
 
     vehicle->positionRider(shared_from_this());
 
-    if (vehicle->GetType() != ENTITY_TYPE_MINECART_RIDEABLE)
+    if (vehicle->GetType() != EntityType::MINECART_RIDEABLE)
     {
         return;
     }
@@ -3106,7 +3089,7 @@ double Entity::getRideHeight()
 
 bool Entity::showVehicleHealth()
 {
-    return (GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY;
+    return (GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
 }
 
 bool Entity::startRiding(boost::shared_ptr<Entity> vehicle)
@@ -3146,24 +3129,24 @@ bool Entity::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
 unsigned int Entity::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_pItemInstance
-        && Item::getId(tooltipData.m_pItemInstance->getItem()) == 421
+        && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
         && tooltipData.m_pItemInstance->hasCustomHoverName()
         && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName() != getCustomName()))
     {
-        return 0x5592C692;
+        return IDS_TOOLTIPS_NAME;
     }
 
-    return 0xFFFFFFFF;
+    return IDS_NONE;
 }
 
 unsigned int Entity::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (!tooltipData.m_bAllowedToHurt)
     {
-        return 0xFFFFFFFF;
+        return IDS_NONE;
     }
 
-    return 0xFDEF7118;
+    return IDS_TOOLTIPS_HIT;
 }
 
 bool Entity::HideUseTooltips()
@@ -3237,11 +3220,11 @@ void Entity::addPassenger(boost::shared_ptr<Entity> passenger)
 
     bool front = false;
 
-    if (!mLevel->mIsClientSide && (passenger->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if (!mLevel->mIsClientSide && (passenger->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Entity> controller = getControllingPassenger();
 
-        if (!controller || (controller->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+        if (!controller || (controller->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         {
             front = true;
         }
@@ -3337,7 +3320,7 @@ void Entity::handleInsidePortal(const BlockPos& pos)
             mPortalEntrancePos = pos;
 
             BlockPattern::BlockPatternMatch* portal =
-                PortalBlock::getPortalShape(mLevel, mPortalEntrancePos);
+                static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(mLevel, mPortalEntrancePos);
 
             double axis = portal->getForwards()->getAxis() == Direction::Axis::X
                               ? (double)portal->getFrontTopLeft().z
@@ -3374,7 +3357,7 @@ void Entity::lerpMotion(double xd, double yd, double zd)
 
 void Entity::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 39)
+    if (event == EntityEvent::EAT_ITEM_PARTICLES)
     {
         spawnEatParticles(ItemInstance(Item::byId(data), 1, 0), 5);
     }
@@ -3438,7 +3421,7 @@ bool Entity::isOnFire()
         return false;
     }
 
-    return mRemainingFireTicks > 0 || (clientSide && getSharedFlag(0));
+    return mRemainingFireTicks > 0 || (clientSide && getSharedFlag(FLAG_ONFIRE));
 }
 
 bool Entity::isPassenger()
@@ -3453,57 +3436,57 @@ bool Entity::isVehicle()
 
 bool Entity::isSneaking()
 {
-    return getSharedFlag(1);
+    return getSharedFlag(FLAG_SNEAKING);
 }
 
 void Entity::setSneaking(bool sneaking)
 {
-    setSharedFlag(1, sneaking);
+    setSharedFlag(FLAG_SNEAKING, sneaking);
 }
 
 bool Entity::isIdle()
 {
-    return getSharedFlag(6);
+    return getSharedFlag(FLAG_IDLE);
 }
 
 void Entity::setIsIdle(bool idle)
 {
-    setSharedFlag(6, idle);
+    setSharedFlag(FLAG_IDLE, idle);
 }
 
 bool Entity::isSprinting()
 {
-    return getSharedFlag(3);
+    return getSharedFlag(FLAG_SPRINTING);
 }
 
 void Entity::setSprinting(bool sprinting)
 {
-    setSharedFlag(3, sprinting);
+    setSharedFlag(FLAG_SPRINTING, sprinting);
 }
 
 bool Entity::isSwimming()
 {
-    return getSharedFlag(11);
+    return getSharedFlag(FLAG_SWIMMING);
 }
 
 bool Entity::isSwimmer()
 {
-    return getSharedFlag(10);
+    return getSharedFlag(FLAG_SWIMMER);
 }
 
 void Entity::startSwimming()
 {
-    setSharedFlag(11, true);
+    setSharedFlag(FLAG_SWIMMING, true);
 }
 
 void Entity::stopSwimming()
 {
-    setSharedFlag(11, false);
+    setSharedFlag(FLAG_SWIMMING, false);
 }
 
 void Entity::setSwimmer(bool swimmer)
 {
-    setSharedFlag(10, swimmer);
+    setSharedFlag(FLAG_SWIMMER, swimmer);
 }
 
 float Entity::getSwimAmount(float partialTicks) const
@@ -3515,17 +3498,17 @@ void Entity::setDamageNearbyMobs(bool damageNearbyMobs)
 {
     mAutoSpinAttackTicks = 0;
 
-    setSharedFlag(12, damageNearbyMobs);
+    setSharedFlag(FLAG_DAMAGE_NEARBY_MOBS, damageNearbyMobs);
 }
 
 bool Entity::getDamageNearbyMobs()
 {
-    return getSharedFlag(12);
+    return getSharedFlag(FLAG_DAMAGE_NEARBY_MOBS);
 }
 
 bool Entity::isGlowing()
 {
-    return mGlowing || (mLevel->mIsClientSide && getSharedFlag(8));
+    return mGlowing || (mLevel->mIsClientSide && getSharedFlag(FLAG_GLOWING));
 }
 
 void Entity::setGlowing(bool glowing)
@@ -3537,12 +3520,12 @@ void Entity::setGlowing(bool glowing)
         return;
     }
 
-    setSharedFlag(8, glowing);
+    setSharedFlag(FLAG_GLOWING, glowing);
 }
 
 bool Entity::isInvisible()
 {
-    return getSharedFlag(5);
+    return getSharedFlag(FLAG_INVISIBLE);
 }
 
 bool Entity::isInvisibleTo(boost::shared_ptr<Player> player)
@@ -3564,7 +3547,7 @@ bool Entity::isInvisibleTo(boost::shared_ptr<Player> player)
 
 Team* Entity::getTeam()
 {
-    if ((GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return NULL;
     }
@@ -3593,7 +3576,7 @@ bool Entity::isAlliedTo(Team* team)
 
 void Entity::setInvisible(bool invisible)
 {
-    setSharedFlag(5, invisible);
+    setSharedFlag(FLAG_INVISIBLE, invisible);
 }
 
 bool Entity::ShouldRenderShadow()
@@ -3642,12 +3625,12 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
 
 bool Entity::isWeakened()
 {
-    return getSharedFlag(7);
+    return getSharedFlag(FLAG_WEAKENED);
 }
 
 void Entity::setWeakened(bool weakened)
 {
-    setSharedFlag(7, weakened);
+    setSharedFlag(FLAG_WEAKENED, weakened);
 }
 
 void Entity::thunderHit(const LightningBolt* lightningBolt)
@@ -3695,76 +3678,58 @@ void Entity::killed(boost::shared_ptr<LivingEntity> killed)
 bool Entity::checkInBlock(double x, double y, double z)
 {
     BlockPos pos(x, y, z);
-
-    double fx = x - (double)pos.x;
-    double fy = y - (double)pos.y;
-    double fz = z - (double)pos.z;
-
+    const double fx = x - pos.x;
+    const double fy = y - pos.y;
+    const double fz = z - pos.z;
     if (!mLevel->hasBlockCubes(mBoundingBox))
-    {
         return false;
-    }
 
-    const Direction* pushDirection = NULL;
-    double best = 1.7976931348623157e+308;
-
-    if (!mLevel->isFullAABBBlock(pos.west()) && fx < best)
+    const Direction* pushDirection = Direction::UP;
+    double closest = DBL_MAX;
+    if (!mLevel->isFullAABBBlock(pos.west()) && fx < closest)
     {
-        best = fx;
+        closest = fx;
         pushDirection = Direction::WEST;
     }
-
-    if (!mLevel->isFullAABBBlock(pos.east()) && 1.0 - fx < best)
+    if (!mLevel->isFullAABBBlock(pos.east()) && 1.0 - fx < closest)
     {
-        best = 1.0 - fx;
+        closest = 1.0 - fx;
         pushDirection = Direction::EAST;
     }
-
-    if (!mLevel->isFullAABBBlock(pos.north()) && fz < best)
+    if (!mLevel->isFullAABBBlock(pos.north()) && fz < closest)
     {
-        best = fz;
+        closest = fz;
         pushDirection = Direction::NORTH;
     }
-
-    if (!mLevel->isFullAABBBlock(pos.south()) && 1.0 - fz < best)
+    if (!mLevel->isFullAABBBlock(pos.south()) && 1.0 - fz < closest)
     {
-        best = 1.0 - fz;
+        closest = 1.0 - fz;
         pushDirection = Direction::SOUTH;
     }
-
-    if (!mLevel->isFullAABBBlock(pos.above()) && 1.0 - fy < best)
-    {
-        best = 1.0 - fy;
+    if (!mLevel->isFullAABBBlock(pos.above()) && 1.0 - fy < closest)
         pushDirection = Direction::UP;
-    }
 
-    if (pushDirection == NULL)
-    {
-        return false;
-    }
-
-    float speed = mRandom->nextFloat() * 0.20000000298023224f + 0.10000000149011612f;
-    float step = (float)pushDirection->getAxisDirection()->getStep();
-
+    const float speed = mRandom->nextFloat() * 0.2f + 0.1f;
+    const float step = static_cast<float>(pushDirection->getAxisDirection()->getStep());
     if (pushDirection->getAxis() == Direction::Axis::X)
     {
-        mXd = (double)(step * speed);
+        mXd = step * speed;
         mYd *= 0.75;
         mZd *= 0.75;
     }
-    else if (pushDirection->getAxis() == Direction::Axis::Y)
+    const bool airAbove = mLevel->getBlock(pos.above()) == Blocks::air;
+    if (pushDirection->getAxis() == Direction::Axis::Y || airAbove)
     {
         mXd *= 0.75;
-        mYd = (double)(step * speed);
+        mYd = step * speed;
         mZd *= 0.75;
     }
-    else
+    if (pushDirection->getAxis() == Direction::Axis::Z)
     {
         mXd *= 0.75;
         mYd *= 0.75;
-        mZd = (double)(step * speed);
+        mZd = step * speed;
     }
-
     return true;
 }
 
@@ -3792,18 +3757,18 @@ std::wstring Entity::getName()
 
 bool Entity::isInvulnerableTo(const DamageSource* source)
 {
-    return getSharedFlag(2) && source != DamageSource::OUT_OF_WORLD
+    return getSharedFlag(FLAG_INVULNERABLE) && source != DamageSource::OUT_OF_WORLD
         && source != DamageSource::CREATIVE_PLAYER && !source->isCreativePlayer();
 }
 
 bool Entity::isInvulnerable()
 {
-    return getSharedFlag(2);
+    return getSharedFlag(FLAG_INVULNERABLE);
 }
 
 void Entity::setInvulnerable(bool invulnerable)
 {
-    setSharedFlag(2, invulnerable);
+    setSharedFlag(FLAG_INVULNERABLE, invulnerable);
 }
 
 std::vector<boost::shared_ptr<Entity> >* Entity::getSubEntities()
@@ -3870,13 +3835,13 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
 
     bool dropsLeash = false;
 
-    if ((GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB && isLeashed())
+    if ((GetType() & EntityType::MOB) == EntityType::MOB && isLeashed())
     {
         dropsLeash = true;
         dropLeash(true, true);
     }
 
-    if (GetType() == ENTITY_TYPE_LEASH_FENCE_KNOT)
+    if (GetType() == EntityType::FALLING_BLOCK_ENTITY)
     {
         mRemoved = true;
         return boost::shared_ptr<Entity>();
@@ -3889,8 +3854,8 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         return boost::shared_ptr<Entity>();
     }
 
-    if ((GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER
-        && !mLevel->canCreateMore(mType, 2))
+    if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER
+        && !mLevel->canCreateMore(mType, Level::eSpawnType_Portal))
     {
         return boost::shared_ptr<Entity>();
     }
@@ -4230,7 +4195,7 @@ bool Entity::ignoreExplosion()
 void Entity::doEnchantDamageEffects(boost::shared_ptr<LivingEntity> attacker,
                                     boost::shared_ptr<Entity> target)
 {
-    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         EnchantmentHelper::doPostHurtEffects(
             boost::dynamic_pointer_cast<LivingEntity>(target),
@@ -4403,7 +4368,7 @@ std::set<boost::shared_ptr<Entity> >* Entity::getIndirectPassengers()
 {
     std::set<boost::shared_ptr<Entity> >* passengers = new std::set<boost::shared_ptr<Entity> >();
 
-    fillIndirectPassengers(ENTITY_TYPE_ENTITY, passengers);
+    fillIndirectPassengers(EntityType::ENTITY, passengers);
 
     return passengers;
 }
@@ -4480,7 +4445,7 @@ bool Entity::isControlledByLocalInstance()
 {
     boost::shared_ptr<Entity> controller = getControllingPassenger();
 
-    if (instanceof(controller, ENTITY_TYPE_PLAYER))
+    if (instanceof(controller, EntityType::PLAYER))
     {
         return boost::static_pointer_cast<Player>(controller)->isLocalPlayer();
     }

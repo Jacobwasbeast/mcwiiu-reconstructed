@@ -1,4 +1,5 @@
 #include "game/entity/mob/AbstractSkeleton.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -32,6 +33,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/core/SharedConstants.hpp"
+#include "game/world/block/Blocks.hpp"
 
 const EntityDataAccessor<bool>* AbstractSkeleton::DATA_ID_ATTACKING = NULL;
 
@@ -42,6 +45,7 @@ AbstractSkeleton::AbstractSkeleton(Level* level)
 {
     setSize(0.6f, 1.99f);
     mBlocksBuilding = true;
+    mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
 
 AbstractSkeleton::~AbstractSkeleton()
@@ -84,8 +88,8 @@ void AbstractSkeleton::setAggressive(bool aggressive)
 
 void AbstractSkeleton::staticCtor()
 {
-    DATA_ID_ATTACKING = SynchedEntityData::defineId<bool>(0x4D540440ULL,
-                                                           ENTITY_TYPE_MONSTER,
+    DATA_ID_ATTACKING = SynchedEntityData::defineId<bool>(EntityType::ABSTRACT_SKELETON,
+                                                           EntityType::MONSTER,
                                                            EntityDataSerializers::BOOLEAN);
 }
 
@@ -159,7 +163,7 @@ void AbstractSkeleton::aiStep()
         float brightness = getBrightness();
         boost::shared_ptr<Entity> vehicle = getVehicle();
         BlockPos pos(mX, (double)Math::round(mY), mZ);
-        if (Entity::instanceof(vehicle, ENTITY_TYPE_BOAT))
+        if (Entity::instanceof(vehicle, EntityType::BOAT))
             pos = pos.above();
 
         if (brightness > 0.5f
@@ -196,7 +200,7 @@ void AbstractSkeleton::rideTick()
 {
     LivingEntity::rideTick();
     boost::shared_ptr<Entity> vehicle = getVehicle();
-    if (vehicle.get() != NULL && (vehicle->GetType() & 0xd400000ULL) == 0xd400000ULL)
+    if (vehicle.get() != NULL && (vehicle->GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
     {
         boost::shared_ptr<PathfinderMob> pathfinder = boost::static_pointer_cast<PathfinderMob>(getVehicle());
         mYRot = pathfinder->mYRot;
@@ -215,10 +219,10 @@ void AbstractSkeleton::die(const DamageSource* source)
     if (!entity)
         return;
 
-    if ((directEntity->GetType() & 0x8a020000ULL) != 0x8a020000ULL)
+    if ((directEntity->GetType() & EntityType::ARROW) != EntityType::ARROW)
         return;
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         return;
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
@@ -243,6 +247,13 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
     populateDefaultEquipmentEnchantments(difficulty);
     mReassessWeaponGoal = true;
     setCanPickUpLoot(mRandom->nextFloat() < 0.55f * difficulty.getSpecialMultiplier());
+
+    if (getItemSlot(EquipmentSlot::HEAD)->isEmpty() && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
+    {
+        setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
+                                             mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
+        mArmorDropChances[EquipmentSlot::HEAD->getIndex()] = 0.0f;
+    }
     return data;
 }
 
@@ -284,7 +295,7 @@ bool AbstractSkeleton::breathesWater()
 
 unsigned long long AbstractSkeleton::GetType()
 {
-    return 0x000000004D540440ULL;
+    return EntityType::ABSTRACT_SKELETON;
 }
 
 AbstractSkeleton::SkeleteMeleeAttackGoal::SkeleteMeleeAttackGoal(AbstractSkeleton* skeleton)

@@ -77,13 +77,15 @@ public:
     bool hasTexture();
 
 private:
-    HorseArmorItem* mArmorType;
+    static const int VARIANT_TEXTURES[7];
+    static const std::wstring VARIANT_HASHES[7];
+    static const int MARKING_TEXTURES[5];
+    static const std::wstring MARKING_HASHES[5];
+    static HorseArmorItem* ARMOR_NONE;
+
     std::wstring mLayeredTextureHashName;
     arrayWithLength<int> mLayeredTextureLayers;
-    bool mWearingDyedArmor;
-    int mDyedArmorColor;
-    int mDyedArmorLayer;
-    not_null_ptr<ItemInstance> mArmorItem;
+    bool mLayeredTextureInfoBuilt;
 };
 
 #endif

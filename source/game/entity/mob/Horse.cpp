@@ -1,6 +1,9 @@
 #include "game/entity/mob/Horse.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/AttributeModifier.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -19,61 +22,72 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Mule.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/world/block/BlockId.hpp"
 
 const EntityDataAccessor<int>* Horse::DATA_VARIANT = NULL;
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* Horse::DATA_ARMOR = NULL;
+
+const int Horse::VARIANT_TEXTURES[7] = {100, 92, 91, 90, 89, 94, 93};
+const std::wstring Horse::VARIANT_HASHES[7] = {L"hwh", L"hcr", L"hch", L"hbr", L"hbl", L"hgr", L"hdb"};
+const int Horse::MARKING_TEXTURES[5] = {-1, 96, 98, 97, 95};
+const std::wstring Horse::MARKING_HASHES[5] = {L"", L"wo_", L"wmo", L"wdo", L"bdo"};
+HorseArmorItem* Horse::ARMOR_NONE = new HorseArmorItem(0, 0);
 
 Horse::HorseGroupData::HorseGroupData(int variant) : MobGroupData(), mVariant(variant) { }
 Horse::HorseGroupData::~HorseGroupData() { }
 
 Horse::Horse(Level* level)
-    : AbstractHorse(level), mArmorType(NULL), mLayeredTextureHashName(L""),
-      mLayeredTextureLayers(4, true), mWearingDyedArmor(false), mDyedArmorColor(0),
-      mDyedArmorLayer(-1), mArmorItem()
+    : AbstractHorse(level)
 {
     fjDerivedCtorCalls();
-    unsigned int layer;
-    for (layer = 0; layer < mLayeredTextureLayers.length; ++layer)
-    {
-        mLayeredTextureLayers.data[layer] = -1;
-    }
+    mLayeredTextureHashName = L"";
+    mLayeredTextureLayers = arrayWithLength<int>(4, true);
+    mLayeredTextureLayers.data[0] = -1;
+    mLayeredTextureLayers.data[2] = -1;
+    mLayeredTextureLayers.data[3] = -1;
+    mLayeredTextureLayers.data[1] = -1;
+    mLayeredTextureInfoBuilt = false;
 }
 
-Horse::~Horse() { }
+Horse::~Horse()
+{
+    delete[] mLayeredTextureLayers.data;
+}
 
 void Horse::create(Level* level) { new Horse(level); }
 
 HorseArmorItem* Horse::getArmorType()
 {
     not_null_ptr<ItemInstance> item = getEntityData()->get(DATA_ARMOR);
+    HorseArmorItem* armor = ARMOR_NONE;
     if (HorseArmorItem::isHorseArmor(item->getItem()))
-        return static_cast<HorseArmorItem*>(item->getItem());
-    return NULL;
+        armor = static_cast<HorseArmorItem*>(item->getItem());
+    return armor;
 }
 
 void Horse::containerChanged(Container* container)
 {
-    HorseArmorItem* oldArmor = mArmorType;
+    HorseArmorItem* oldArmor = getArmorType();
     AbstractHorse::containerChanged(container);
-    updateEquipment();
-    if (oldArmor != mArmorType && mArmorType != NULL && mArmorType->getTier() != 0)
-    {
-        clearLayeredTextureInfo();
-    }
+    HorseArmorItem* newArmor = getArmorType();
+    if (mTickCount > 20 && oldArmor != newArmor && newArmor->getTier() != 0)
+        playSound(SoundEvents::HORSE_ARMOR, 0.5f, 1.0f);
 }
 
 void Horse::addDataWalkers(DataFixerUpper* fixer)
 {
-    AbstractHorse::addDataWalkers(fixer, 0x2d690001ULL);
+    AbstractHorse::addDataWalkers(fixer, EntityType::HORSE);
     fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     new ItemDataWalker(0x2d690001ULL, L"ArmorItem"));
+                     new ItemDataWalker(EntityType::HORSE, L"ArmorItem"));
 }
 void Horse::staticCtor()
 {
-    DATA_VARIANT = SynchedEntityData::defineId<int>(0x2d690001ULL, 0x0d690000ULL,
+    DATA_VARIANT = SynchedEntityData::defineId<int>(EntityType::HORSE, EntityType::ABSTRACT_HORSE,
                                                      EntityDataSerializers::INT);
-    DATA_ARMOR = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(0x2d690001ULL, 0x0d690000ULL,
+    DATA_ARMOR = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(EntityType::HORSE, EntityType::ABSTRACT_HORSE,
                                                                           EntityDataSerializers::ITEM_INSTANCE);
 }
 void Horse::defineSynchedData()
@@ -110,7 +124,7 @@ void Horse::readAdditionalSaveData(CompoundTag* tag)
 {
     AbstractHorse::readAdditionalSaveData(tag);
     setVariant(tag->getInt(L"Variant"));
-    if (tag->contains(L"ArmorItem", 10))
+    if (tag->contains(L"ArmorItem", Tag::TAG_COMPOUND))
     {
         not_null_ptr<ItemInstance> armorItem(new ItemInstance(tag->getCompound(L"ArmorItem")));
         if (!armorItem->isEmpty() && HorseArmorItem::isHorseArmor(armorItem->getItem()))
@@ -123,24 +137,23 @@ void Horse::readAdditionalSaveData(CompoundTag* tag)
 
 void Horse::rebuildLayeredTextureInfo()
 {
-    mLayeredTextureHashName = L"horse_";
-    unsigned int layer;
-    for (layer = 0; layer < mLayeredTextureLayers.length; ++layer)
-    {
+    mLayeredTextureHashName = L"horse/";
+    for (unsigned int layer = 0; layer < mLayeredTextureLayers.length; ++layer)
         mLayeredTextureLayers.data[layer] = -1;
-    }
-    layer = 0;
-    const int variant = getVariant();
-    mLayeredTextureLayers.data[layer++] = variant & 7;
-    mLayeredTextureLayers.data[layer++] = (variant >> 8) % 5;
-    if (mArmorType != NULL)
-    {
-        int i;
-        for (i = 0; i < mArmorType->getTextureCount() && layer < mLayeredTextureLayers.length; ++i)
-        {
-            mLayeredTextureLayers.data[layer++] = mArmorType->getTexture(i);
-        }
-    }
+
+    int variant = getVariant();
+    int colour = (variant & 0xFF) % 7;
+    int markings = ((variant >> 8) & 0xFF) % 5;
+    HorseArmorItem* armor = getArmorType();
+
+    mLayeredTextureLayers.data[0] = VARIANT_TEXTURES[colour];
+    mLayeredTextureLayers.data[1] = MARKING_TEXTURES[markings];
+    int layerCount = mLayeredTextureLayers.data[1] == -1 ? 1 : 2;
+    for (int i = 0; i < armor->getTextureCount(); ++i)
+        mLayeredTextureLayers.data[layerCount + i] = armor->getTexture(i);
+
+    mLayeredTextureHashName = L"horse/" + VARIANT_HASHES[colour] + MARKING_HASHES[markings] + armor->getHash();
+    mLayeredTextureInfoBuilt = true;
 }
 
 std::wstring Horse::getLayeredTextureHashName()
@@ -157,8 +170,7 @@ arrayWithLength<int> Horse::getLayeredTextureLayers()
 
 bool Horse::isWearingDyedArmor()
 {
-    HorseArmorItem* armor = getArmorType();
-    return armor != NULL && armor->isDyeable();
+    return getArmorType() != ARMOR_NONE && getArmorType()->isDyeable();
 }
 
 int Horse::getDyedArmorColor()
@@ -177,11 +189,23 @@ int Horse::getDyedArmorLayer()
 
 void Horse::setArmorType(const not_null_ptr<ItemInstance>& item)
 {
-    mArmorType = HorseArmorItem::isHorseArmor(item->getItem())
-        ? static_cast<HorseArmorItem*>(item->getItem())
-        : NULL;
+    HorseArmorItem* armor = ARMOR_NONE;
+    if (HorseArmorItem::isHorseArmor(item->getItem()))
+        armor = static_cast<HorseArmorItem*>(item->getItem());
+
     getEntityData()->set(DATA_ARMOR, item, true);
     clearLayeredTextureInfo();
+
+    if (!mLevel->mIsClientSide)
+    {
+        getAttribute(SharedMonsterAttributes::ARMOR)->removeModifier(eMODIFIER_ID_ArmorBonus);
+        int protection = armor->getProtection();
+        if (protection != 0)
+        {
+            getAttribute(SharedMonsterAttributes::ARMOR)
+                ->addModifier((new AttributeModifier(eMODIFIER_ID_ArmorBonus, (double)protection, 0))->setSerialize(false));
+        }
+    }
 }
 
 void Horse::updateEquipment()
@@ -194,7 +218,8 @@ void Horse::updateEquipment()
 void Horse::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     AgableMob::onSyncedDataUpdated(accessor);
-    clearLayeredTextureInfo();
+    if (DATA_ARMOR == accessor)
+        clearLayeredTextureInfo();
 }
 
 void Horse::playGallopSound(const SoundType* sound)
@@ -216,7 +241,7 @@ void Horse::tick()
 {
     PIXBeginNamedEvent(0.0f, "Horse tick");
     AbstractHorse::tick();
-    if (getEntityData()->isDirty())
+    if (mLevel->mIsClientSide && getEntityData()->isDirty())
     {
         getEntityData()->clearDirty();
         clearLayeredTextureInfo();
@@ -280,94 +305,94 @@ bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
 unsigned int Horse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (!tooltipData.m_bAllowedToInteract)
-        return 0xffffffffU;
+        return IDS_NONE;
 
     not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
     unsigned int itemId = Item::getId(item->getItem());
-    bool food = itemId == 170 || itemId == 260 || itemId == 296
-             || itemId == 322 || itemId == 353 || itemId == 396;
-    bool breedFood = itemId == 396 || itemId == 322;
-    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == 453;
+    bool food = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
+             || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
+    bool breedFood = itemId == ItemId::GOLDEN_CARROT || itemId == ItemId::GOLDEN_APPLE;
+    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
     boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                      (Player*)tooltipData.m_pPlayer.get());
 
-    if (itemId == 383)
+    if (itemId == ItemId::SPAWN_EGG)
     {
         if (SpawnEggItem::fjGetType(item) == GetType())
-            return 0x4c36cd96U;
+            return IDS_TOOLTIPS_PLACE;
         if (isLeashedToPlayer(player))
-            return 0x551269b5U;
-        return 0xffffffffU;
+            return IDS_TOOLTIPS_UNLEASH;
+        return IDS_NONE;
     }
 
     if (isLeashedToPlayer(player))
-        return 0x551269b5U;
+        return IDS_TOOLTIPS_UNLEASH;
 
-    if (itemId == 420)
+    if (itemId == ItemId::LEAD)
     {
         if (!isLeashed())
-            return 0xa1b34a96U;
+            return IDS_TOOLTIPS_LEASH;
         if (!isTamed() || !getPassengers()->empty())
-            return 0xffffffffU;
-        return 0x497adcf0U;
+            return IDS_NONE;
+        return IDS_TOOLTIPS_MOUNT;
     }
 
-    if (itemId == 421)
+    if (itemId == ItemId::NAME_TAG)
     {
         if (!player->isSneaking() || !isTamed())
         {
             if (!item->hasCustomHoverName())
-                return 0xffffffffU;
+                return IDS_NONE;
             if (hasCustomName() && item->getHoverName() == getCustomName())
-                return 0xffffffffU;
-            return 0x5592c692U;
+                return IDS_NONE;
+            return IDS_TOOLTIPS_NAME;
         }
     }
 
     if (isBaby())
-        return food ? 0x82f8d90fU : 0xffffffffU;
+        return food ? IDS_TOOLTIPS_FEED : IDS_NONE;
 
     if (!isTamed())
     {
         if (!item->isEmpty())
         {
-            if (food && itemId != 170)
-                return 0x82f8d90fU;
-            return 0xffffffffU;
+            if (food && itemId != BlockId::HAY_BLOCK)
+                return IDS_TOOLTIPS_FEED;
+            return IDS_NONE;
         }
         if (getPassengers()->empty())
-            return 0x95cfa728U;
-        return 0xffffffffU;
+            return IDS_TOOLTIPS_TAME;
+        return IDS_NONE;
     }
 
     bool openInventory = true;
     if (!player->isSneaking())
     {
-        if ((itemId != 329 || isSaddled()) && (!wearsArmor() || !horseArmor))
+        if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
             openInventory = false;
     }
     else if (isVehicle())
     {
         if (!mobInteract(player, InteractionHand::eInteractionHand_MainHand))
         {
-            if ((itemId != 329 || isSaddled()) && (!wearsArmor() || !horseArmor))
+            if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
                 openInventory = false;
         }
     }
 
     if (openInventory)
-        return 0x41590ad1U;
+        return IDS_TOOLTIPS_OPEN;
 
     if (breedFood && !isInLove() && getPassengers()->empty() && !isBreedCoolingDown())
-        return 0xb47a2ab6U;
+        return IDS_TOOLTIPS_LOVEMODE;
 
     if (food && getHealth() < getMaxHealth())
-        return 0x56b3f98dU;
+        return IDS_TOOLTIPS_HEAL;
 
     if (getPassengers()->empty())
-        return 0x497adcf0U;
+        return IDS_TOOLTIPS_MOUNT;
 
-    return 0xffffffffU;
+    return IDS_NONE;
 }
 
 bool Horse::HideUseTooltips() { return true; }
@@ -379,7 +404,7 @@ bool Horse::canMate(const boost::shared_ptr<Animal>& other)
         return false;
     }
     unsigned long long otherType = other->GetType();
-    if (otherType != ENTITY_TYPE_DONKEY && otherType != ENTITY_TYPE_HORSE)
+    if (otherType != EntityType::DONKEY && otherType != EntityType::HORSE)
     {
         return false;
     }
@@ -394,7 +419,7 @@ bool Horse::canMate(const boost::shared_ptr<Animal>& other)
 boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<AbstractHorse> child;
-    if (partner->GetType() == ENTITY_TYPE_DONKEY)
+    if (partner->GetType() == EntityType::DONKEY)
     {
         child = boost::shared_ptr<AbstractHorse>(new Mule(mLevel));
     }
@@ -440,7 +465,7 @@ bool Horse::wearsArmor() { return true; }
 
 bool Horse::isArmor(const not_null_ptr<ItemInstance>& item)
 {
-    return !item->isEmpty() && HorseArmorItem::isHorseArmor(item->getItem());
+    return HorseArmorItem::isHorseArmor(item->getItem());
 }
 
 MobGroupData* Horse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
@@ -458,7 +483,7 @@ MobGroupData* Horse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobG
 
 bool Horse::removeWhenFarAway()
 {
-    return AbstractHorse::removeWhenFarAway() && mArmorType == NULL;
+    return AbstractHorse::removeWhenFarAway() && getArmorType() == ARMOR_NONE;
 }
 
-unsigned long long Horse::GetType() { return 0x000000002D690001ULL; }
+unsigned long long Horse::GetType() { return EntityType::HORSE; }

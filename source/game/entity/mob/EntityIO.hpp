@@ -25,9 +25,8 @@ public:
     class SpawnableMobInfo
     {
     public:
-        SpawnableMobInfo(int id, const ResourceLocation& location,
-                         eMinecraftColour colour, eMinecraftColour secondaryColour,
-                         eMinecraftIconOverride icon);
+        SpawnableMobInfo(int id, const ResourceLocation& location, eMinecraftColour colour,
+                         eMinecraftColour secondaryColour, eMinecraftIconOverride icon);
         SpawnableMobInfo(const SpawnableMobInfo& other);
 
         int id;
@@ -42,7 +41,6 @@ public:
     typedef Entity* (*Creator)(Level*);
     typedef boost::unordered_map<ResourceLocation, SpawnableMobInfo*> SpawnInfo;
     static SpawnInfo sSpawnInfo;
-
     static ResourceLocation getKey(unsigned long long entityType);
     static boost::shared_ptr<Entity> newEntity(unsigned long long entityType, Level* level);
     static ResourceLocation getKey(const boost::shared_ptr<Entity>& entity);
@@ -57,10 +55,8 @@ public:
     static bool isEntityOfType(boost::shared_ptr<Entity> entity, const ResourceLocation& location);
     static int getNameDisplayId(const std::wstring& name);
     static SpawnableMobInfo addSpawnInfo(int id, std::wstring name, eMinecraftColour colour,
-                                        eMinecraftColour secondaryColour,
-                                        eMinecraftIconOverride icon);
-    static void Register(Creator creator, int id, const std::wstring& name,
-                         unsigned long long entityType,
+                                         eMinecraftColour secondaryColour, eMinecraftIconOverride icon);
+    static void Register(Creator creator, int id, const std::wstring& name, unsigned long long entityType,
                          const std::wstring& translationName);
     static void bootStrap();
     static std::wstring getTranslationName(const ResourceLocation& location);
@@ -69,14 +65,10 @@ public:
 
 namespace std
 {
-    template <>
-    struct hash<ResourceLocation>
-    {
-        size_t operator()(const ResourceLocation& value) const
-        {
-            return boost::hash<ResourceLocation>()(value);
-        }
-    };
+template<> struct hash<ResourceLocation>
+{
+    size_t operator()(const ResourceLocation& value) const { return boost::hash<ResourceLocation>()(value); }
+};
 }
 
 #endif

@@ -1,4 +1,5 @@
 #include "game/entity/mob/TheEndGatewayEntity.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -21,11 +22,15 @@
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
+#include "game/world/TheEndDimension.hpp"
+#include "game/world/block/EndGatewayBlock.hpp"
+#include "game/world/block/Iterator.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/generation/EndGatewayFeature.hpp"
+#include "game/world/generation/EndIslandFeature.hpp"
 
 TheEndGatewayEntity::TheEndGatewayEntity()
-    : BlockEntity(), mAge(0), mCooldown(0), mExitPortal(NULL), mExactTeleport(false),
-      mReserved1(0), mReserved2(0), mReserved3(0), mUnknown(NULL)
+    : BlockEntity(), mAge(0), mCooldown(0), mExitPortal(NULL), mExactTeleport(false)
 {
 }
 
@@ -44,32 +49,33 @@ bool TheEndGatewayEntity::isCoolingDown()
     return mCooldown > 0;
 }
 
-BlockPos TheEndGatewayEntity::findTallestBlock(Level* level, const BlockPos& origin, int radius, bool skipAir)
+BlockPos TheEndGatewayEntity::findTallestBlock(Level* level, const BlockPos& origin, int radius, bool allowBedrock)
 {
-    BlockPos* result = NULL;
-    int minimum = -radius;
-    int maximum = radius;
-    for (int x = minimum; x < maximum; ++x)
+    BlockPos* tallest = NULL;
+    for (int x = -radius; x < radius; ++x)
     {
-        for (int z = minimum; z < maximum; ++z)
+        for (int z = -radius; z < radius; ++z)
         {
-            for (int y = 255; y >= 0; --y)
+            if (x == 0 && z == 0 && !allowBedrock)
+                continue;
+
+            for (int y = 255; y > (tallest == NULL ? 0 : tallest->y); --y)
             {
-                BlockPos candidate = origin.offset(x, y, z);
+                BlockPos candidate(origin.x + x, y, origin.z + z);
                 const BlockState* state = level->getBlockState(candidate);
-                if (state != NULL && state->getBlock() != Blocks::bedrock &&
-                    (!skipAir || !level->isEmptyBlock(candidate)))
+                if (state->isSolidBlockingCube() && (allowBedrock || state->getBlock() != Blocks::bedrock))
                 {
-                    delete result;
-                    result = new BlockPos(candidate);
+                    delete tallest;
+                    tallest = new BlockPos(candidate);
                     break;
                 }
             }
         }
     }
-    BlockPos answer = result == NULL ? origin : *result;
-    delete result;
-    return answer;
+
+    BlockPos result = tallest == NULL ? origin : *tallest;
+    delete tallest;
+    return result;
 }
 
 void TheEndGatewayEntity::SetExitPortal(BlockPos* position)
@@ -80,73 +86,98 @@ void TheEndGatewayEntity::SetExitPortal(BlockPos* position)
 
 BlockPos* TheEndGatewayEntity::findValidSpawnInChunk(LevelChunk* chunk)
 {
-    if (chunk == NULL)
-        return NULL;
-    ChunkPos chunkPosition = chunk->getPos();
-    BlockPos first(chunkPosition.x * 16, 30, chunkPosition.z * 16);
-    BlockPos last(chunkPosition.x * 16 + 15, chunk->getHighestSectionPosition() + 15, chunkPosition.z * 16 + 15);
-    BlockPos* best = NULL;
-    double bestDistance = 0.0;
-    for (int x = first.x; x <= last.x; ++x)
+    BlockPos from = BlockPos(chunk->x << 4, 30, chunk->z << 4).offset(1, 0, 1);
+    int top = chunk->getHighestSectionPosition();
+    BlockPos to = BlockPos(chunk->x * 16 + 15, top + 15, chunk->z * 16 + 15).offset(-1, 0, -1);
+
+    BlockPos* spawn = NULL;
+    double spawnDistance = 0.0;
+    Iterator<BlockPos*>* positions = BlockPos::between(from, to);
+    while (positions->hasNext())
     {
-        for (int z = first.z; z <= last.z; ++z)
+        BlockPos pos = *positions->next();
+        if (chunk->getBlockState(pos)->getBlock() != Blocks::end_stone)
+            continue;
+        if (chunk->getBlockState(pos.above(1))->isSolidBlockingCube())
+            continue;
+        if (chunk->getBlockState(pos.above(2))->isSolidBlockingCube())
+            continue;
+
+        double distance = pos.distSqrToCenter(0.0, 0.0, 0.0);
+        if (spawn == NULL || distance < spawnDistance)
         {
-            for (int y = last.y; y >= first.y; --y)
-            {
-                BlockPos candidate(x, y, z);
-                const BlockState* state = chunk->getBlockState(candidate);
-                if (state != NULL && state->getBlock() == Blocks::end_stone)
-                {
-                    if (chunk->getBlockState(candidate.above()) == NULL || !chunk->getLevel()->isEmptyBlock(candidate.above()))
-                        continue;
-                    if (chunk->getBlockState(candidate.above(2)) == NULL || !chunk->getLevel()->isEmptyBlock(candidate.above(2)))
-                        continue;
-                    double distance = candidate.distSqrToCenter(0.0, 0.0, 0.0);
-                    if (best == NULL || distance < bestDistance)
-                    {
-                        delete best;
-                        best = new BlockPos(candidate);
-                        bestDistance = distance;
-                    }
-                }
-            }
+            delete spawn;
+            spawn = new BlockPos(pos);
+            spawnDistance = distance;
         }
     }
-    return best;
+    return spawn;
 }
 
 void TheEndGatewayEntity::createExitPortal(const BlockPos& position)
 {
     Random random;
-    EndGatewayFeature feature(mExactTeleport ? 1 : 0);
-    feature.place(mLevel, random, position);
-    boost::shared_ptr<BlockEntity> other = mLevel->getBlockEntity(position);
-    if (other.get() != NULL && other->GetType() == 0x1300201ULL)
+    int portalNumber = mLevel->getBlockState(getBlockPos())->getValue(EndGatewayBlock::PORTAL_NUMBER);
+    EndGatewayFeature(portalNumber).place(mLevel, random, position);
+
+    boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(position);
+    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
     {
-        boost::shared_ptr<TheEndGatewayEntity> otherGateway = boost::static_pointer_cast<TheEndGatewayEntity>(other);
-        otherGateway->SetExitPortal(new BlockPos(getBlockPos()));
-        otherGateway->setChanged();
+        boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
+        gateway->SetExitPortal(new BlockPos(getBlockPos()));
+        gateway->setChanged();
     }
 }
 
 void TheEndGatewayEntity::findExitPortal()
 {
-    if (mLevel == NULL)
-        return;
-    if (mExitPortal != NULL)
+    int portalNumber = mLevel->getBlockState(getBlockPos())->getValue(EndGatewayBlock::PORTAL_NUMBER);
+    Random random(mLevel->getSeed() + portalNumber);
+    ChunkPos chunkPos(0, 0);
+    for (unsigned int attempt = 0; mExitPortal == NULL; ++attempt)
     {
-        BlockPos origin = ChunkPos(0, 0).getMiddleBlockPosition(0);
-        BlockPos tallest = findTallestBlock(mLevel, origin, 7, true);
-        SetExitPortal(new BlockPos(tallest.above(10)));
-        createExitPortal(*mExitPortal);
-        setChanged();
-        return;
+        if (attempt >= 1000)
+        {
+            SetExitPortal(new BlockPos(chunkPos.getMiddleBlockPosition(75)));
+            Random islandRandom(mExitPortal->compressBlockPos());
+            EndIslandFeature().place(mLevel, islandRandom, *mExitPortal);
+            break;
+        }
+
+        chunkPos = TheEndDimension::AREAS[portalNumber + 1];
+        int xOffset = random.nextInt(2) + 3;
+        if (!random.nextBoolean())
+            xOffset = -xOffset;
+        int zOffset = random.nextInt(2) + 3;
+        if (!random.nextBoolean())
+            zOffset = -zOffset;
+        chunkPos.x += xOffset;
+        chunkPos.z += zOffset;
+
+        if (!mLevel->mIsClientSide && mLevel->getChunk(chunkPos.x, chunkPos.z)->isEmpty())
+            mLevel->getChunkSource()->create(chunkPos.x, chunkPos.z);
+
+        LevelChunk* chunk = mLevel->getChunk(chunkPos.x, chunkPos.z);
+        LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
+        if (!blockEntities->empty())
+        {
+            for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
+            {
+                if (it->second->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
+                {
+                    boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(it->second);
+                    SetExitPortal(new BlockPos(gateway->getBlockPos()));
+                    setChanged();
+                    return;
+                }
+            }
+        }
+        SetExitPortal(findValidSpawnInChunk(chunk));
     }
-    BlockPos origin = getBlockPos();
-    LevelChunk* chunk = mLevel->getChunkAt(origin);
-    SetExitPortal(findValidSpawnInChunk(chunk));
-    if (mExitPortal != NULL)
-        createExitPortal(*mExitPortal);
+
+    BlockPos tallest = findTallestBlock(mLevel, chunkPos.getMiddleBlockPosition(0), 7, true);
+    SetExitPortal(new BlockPos(tallest.above(10)));
+    createExitPortal(*mExitPortal);
     setChanged();
 }
 
@@ -173,7 +204,7 @@ void TheEndGatewayEntity::teleportEntity(boost::shared_ptr<Entity> entity)
         return;
     if (isCoolingDown())
         return;
-    if (entity->GetType() == 0x8a200003ULL)
+    if (entity->GetType() == EntityType::THROWN_ENDERPEARL)
     {
         boost::shared_ptr<ThrownEnderpearl> pearl = boost::static_pointer_cast<ThrownEnderpearl>(entity);
         boost::shared_ptr<LivingEntity> owner = pearl->getOwner();
@@ -220,8 +251,8 @@ void TheEndGatewayEntity::teleportEntity(boost::shared_ptr<Entity> entity)
         {
             mLevel->setBlockAndUpdate(mExitPortal->offset(0, 1, 0), Blocks::bedrock->defaultBlockState());
             mLevel->setBlockAndUpdate(mExitPortal->offset(0, 2, 0), Blocks::bedrock->defaultBlockState());
-            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 3, 0), Blocks::AIR->defaultBlockState());
-            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 4, 0), Blocks::AIR->defaultBlockState());
+            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 3, 0), Blocks::air->defaultBlockState());
+            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 4, 0), Blocks::air->defaultBlockState());
             target = mExitPortal->offset(0, 3, 0);
         }
     }
@@ -244,7 +275,7 @@ void TheEndGatewayEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mAge = tag->getLong(L"Age");
-    if (tag->contains(L"ExitPortal", 10))
+    if (tag->contains(L"ExitPortal", Tag::TAG_COMPOUND))
         SetExitPortal(new BlockPos(NbtUtils::readBlockPos(tag->getCompound(L"ExitPortal"))));
     mExactTeleport = tag->getBoolean(L"ExactTeleport");
 }
@@ -265,16 +296,23 @@ void TheEndGatewayEntity::tick()
     bool cooling = isCoolingDown();
     ++mAge;
     if (cooling)
+    {
         --mCooldown;
+    }
     else if (!mLevel->mIsClientSide)
     {
         std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), AABB::newTemp(getBlockPos()));
-        if (entities != NULL)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
-                teleportEntity(*it);
-            delete entities;
+            if ((*it)->GetType() == EntityType::ENDER_CRYSTAL || (*it)->GetType() == EntityType::ENDER_DRAGON)
+                continue;
+            teleportEntity(*it);
+            break;
         }
+        delete entities;
+
+        if (mAge % 2400 == 0)
+            triggerCooldown();
     }
     if (spawning != isSpawning() || cooling != isCoolingDown())
         setChanged();
@@ -349,5 +387,5 @@ boost::shared_ptr<BlockEntity> TheEndGatewayEntity::clone()
 
 unsigned long long TheEndGatewayEntity::GetType()
 {
-    return 0x1300201ULL;
+    return BlockEntityType::THE_END_GATEWAY_ENTITY;
 }

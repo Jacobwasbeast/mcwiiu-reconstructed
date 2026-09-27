@@ -1,4 +1,7 @@
 #include "game/entity/mob/Zombie.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <typeinfo>
@@ -43,14 +46,21 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/core/SharedConstants.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/core/RangedAttribute.hpp"
+#include "game/core/BaseAttributeMap.hpp"
 
 static const EntityDataAccessor<bool>* gZombieBabyId = NULL;
 static const EntityDataAccessor<bool>* gZombieAggressiveId = NULL;
 static const EntityDataAccessor<bool>* gZombieJockeyId = NULL;
 static const EntityDataAccessor<bool>* gZombieConvertingId = NULL;
 
-Zombie::ZombieGroupData::ZombieGroupData(bool canBreakDoors, bool isBaby, bool isJockey)
-    : mCanBreakDoors(canBreakDoors), mIsBaby(isBaby), mIsJockey(isJockey)
+Attribute* Zombie::SPAWN_REINFORCEMENTS_CHANCE =
+    new RangedAttribute(NULL, eATTRIBUTE_ID_ZombieSpawnReinforcements, 0.0, 0.0, 1.0);
+
+Zombie::ZombieGroupData::ZombieGroupData(bool isBaby, bool isJockey, bool isVillager)
+    : mIsBaby(isBaby), mIsJockey(isJockey), mIsVillager(isVillager)
 {
 }
 
@@ -87,9 +97,9 @@ void Zombie::create(Level* level)
 
 void Zombie::staticCtor()
 {
-    gZombieBabyId = SynchedEntityData::defineId<bool>(0x5D550040ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
-    gZombieAggressiveId = SynchedEntityData::defineId<bool>(0x5D550040ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
-    gZombieConvertingId = SynchedEntityData::defineId<bool>(0x5D550040ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
+    gZombieBabyId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    gZombieAggressiveId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    gZombieConvertingId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
 }
 
 void Zombie::_init()
@@ -100,6 +110,7 @@ void Zombie::_init()
     mIsJockey = false;
     mConversionTime = 0;
     mWaterConversionTime = 0;
+    mCategories |= EntityCategory::eEntityCategory_Zombie | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
 
 void Zombie::registerGoals()
@@ -116,7 +127,7 @@ void Zombie::addBehaviourGoals()
     mGoalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0, false), true);
     mGoalSelector.addGoal(1, new FindMountGoal(*this, 16.0f, -1, false, false, -1.0f), true);
     arrayWithLength<unsigned long long> entityTypes(1, true);
-    entityTypes.data[0] = 0x5d550041ULL;
+    entityTypes.data[0] = EntityType::PIG_ZOMBIE;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Drowned), false, false, false), true);
@@ -129,22 +140,21 @@ void Zombie::registerAttributes()
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(3.0);
-    getAttribute(SharedMonsterAttributes::ATTACK_SPEED)->setBaseValue(2.0);
-    getAttributes()->getInstance(eATTRIBUTE_ID_ZombieSpawnReinforcements)
-        ->setBaseValue(mRandom->nextDouble() * 0.145);
+    getAttribute(SharedMonsterAttributes::ARMOR)->setBaseValue(2.0);
+    getAttributes()->registerAttribute(SPAWN_REINFORCEMENTS_CHANCE)->setBaseValue(mRandom->nextDouble() * 0.1f);
 }
 
 void Zombie::defineSynchedData()
 {
     Monster::defineSynchedData();
     if (mEntityData && gZombieBabyId)
-        mEntityData->createDateItem(gZombieBabyId, false);
+        getEntityData()->createDateItem(gZombieBabyId, false);
     if (mEntityData && gZombieAggressiveId)
-        mEntityData->createDateItem(gZombieAggressiveId, false);
+        getEntityData()->createDateItem(gZombieAggressiveId, false);
     if (mEntityData && gZombieJockeyId)
-        mEntityData->createDateItem(gZombieJockeyId, false);
+        getEntityData()->createDateItem(gZombieJockeyId, false);
     if (mEntityData && gZombieConvertingId)
-        mEntityData->createDateItem(gZombieConvertingId, false);
+        getEntityData()->createDateItem(gZombieConvertingId, false);
 }
 
 void Zombie::setAggressive(bool aggressive)
@@ -241,23 +251,17 @@ bool Zombie::hurt(const DamageSource* source, float damage)
     if (!attacker)
     {
         boost::shared_ptr<Entity> entity = source->getEntity();
-        if (Entity::instanceof(entity, ENTITY_TYPE_LIVING_ENTITY))
+        if (Entity::instanceof(entity, EntityType::LIVING_ENTITY))
             attacker = boost::static_pointer_cast<LivingEntity>(entity);
     }
 
     if (attacker && mLevel->getDifficulty() == Difficulty::NORMAL
-        && mRandom->nextFloat() < (float)getAttributes()->getInstance(eATTRIBUTE_ID_ZombieSpawnReinforcements)->getValue()
-        && mLevel->getGameRules()->getBoolean(3))
+        && mRandom->nextFloat() < (float)getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->getValue()
+        && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
     {
         int blockX = Mth::floor(mX);
         int blockY = Mth::floor(mY);
         int blockZ = Mth::floor(mZ);
-        if ((double)blockX - 176.0 > mX)
-            --blockX;
-        if ((double)blockY - 176.0 > mY)
-            --blockY;
-        if ((double)blockZ - 176.0 > mZ)
-            --blockZ;
 
         boost::shared_ptr<Zombie> reinforcement(new Zombie(mLevel));
         for (int attempt = 0; attempt < 50; ++attempt)
@@ -293,9 +297,9 @@ bool Zombie::hurt(const DamageSource* source, float damage)
             reinforcement->finalizeMobSpawn(
                 mLevel->getCurrentDifficultyAt(BlockPos(reinforcement)), NULL, std::wstring());
             AttributeInstance* spawnChance =
-                getAttributes()->getInstance(eATTRIBUTE_ID_ZombieSpawnReinforcements);
+                getAttribute(SPAWN_REINFORCEMENTS_CHANCE);
             AttributeInstance* reinforcementSpawnChance =
-                reinforcement->getAttributes()->getInstance(eATTRIBUTE_ID_ZombieSpawnReinforcements);
+                reinforcement->getAttribute(SPAWN_REINFORCEMENTS_CHANCE);
             spawnChance->addModifier(new AttributeModifier(-0.05, 0));
             reinforcementSpawnChance->addModifier(new AttributeModifier(-0.05, 0));
             break;
@@ -371,7 +375,7 @@ void Zombie::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 
 void Zombie::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5d550040ULL);
+    Mob::addDataWalkers(fixer, EntityType::ZOMBIE);
 }
 
 void Zombie::addAdditonalSaveData(CompoundTag* tag)
@@ -403,7 +407,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 
     if (mLevel->getDifficulty() == Difficulty::NORMAL || mLevel->getDifficulty() == Difficulty::HARD)
     {
-        if (entity->GetType() == 0x0D600001ULL && mLevel->canCreateMore(0x5D550040ULL, 0) &&
+        if (entity->GetType() == EntityType::VILLAGER && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg) &&
             (mLevel->getDifficulty() == Difficulty::HARD || !mRandom->nextBoolean()))
         {
             boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
@@ -427,7 +431,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
             }
 
             mLevel->addEntity(zombieVillager);
-            mLevel->levelEvent(boost::shared_ptr<Player>(), 0x402, BlockPos(this), 0);
+            mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ZOMBIE_INFECTED, BlockPos(this), 0);
         }
     }
 }
@@ -458,7 +462,9 @@ bool Zombie::breathesWater()
 
 bool Zombie::canHoldItem(not_null_ptr<ItemInstance> item)
 {
-    return !item->isEmpty() && !isPassenger();
+    if (item->getItem() == Items::egg && isBaby() && isPassenger())
+        return false;
+    return Mob::canHoldItem(item);
 }
 
 MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
@@ -466,12 +472,47 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 {
     data = Mob::finalizeMobSpawn(difficulty, data, std::wstring());
 
-    float specialMultiplier = difficulty.getSpecialMultiplier();
-    setCanPickUpLoot(mRandom->nextFloat() < specialMultiplier * 0.55f);
-    setCanBreakDoors(mRandom->nextFloat() < specialMultiplier * 0.1f);
+    const float specialMultiplier = difficulty.getSpecialMultiplier();
+    setCanPickUpLoot(mRandom->nextFloat() < 0.55f * specialMultiplier);
 
+    if (data == NULL)
+    {
+        Random* random = mLevel->mRandom;
+        const bool isBaby = random->rollPercentageChance(5);
+        const bool isJockey = isBaby && random->rollPercentageChance(15);
+        data = new ZombieGroupData(isBaby, isJockey, random->rollPercentageChance(5));
+    }
+
+    ZombieGroupData* groupData = dynamic_cast<ZombieGroupData*>(data);
+    if (groupData != NULL)
+    {
+        if (groupData->mIsBaby)
+            setBaby(true);
+        if (groupData->mIsJockey)
+            mIsJockey = groupData->mIsJockey;
+    }
+
+    setCanBreakDoors(mRandom->nextFloat() < specialMultiplier * 0.1f);
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
+
+    if (getItemSlot(EquipmentSlot::HEAD)->isEmpty() && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
+    {
+        setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
+                                             mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
+        mArmorDropChances[EquipmentSlot::HEAD->getIndex()] = 0.0f;
+    }
+
+    getAttribute(SharedMonsterAttributes::KNOCKBACK_RESISTANCE)
+        ->addModifier(new AttributeModifier(mRandom->nextDouble() * 0.05f, 0));
+
+    if (mRandom->nextFloat() < specialMultiplier * 0.05f)
+    {
+        getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->addModifier(new AttributeModifier(mRandom->nextDouble() * 0.25 + 0.5, 0));
+        getAttribute(SharedMonsterAttributes::MAX_HEALTH)
+            ->addModifier(new AttributeModifier(mRandom->nextDouble() * 3.0 + 1.0, 2));
+        setCanBreakDoors(true);
+    }
 
     return data;
 }
@@ -485,7 +526,7 @@ void Zombie::startConverting(int conversionTime)
 {
     mConversionTime = conversionTime;
     getEntityData()->set(gZombieConvertingId, true, true);
-    mLevel->broadcastEntityEvent(shared_from_this(), 0x10, 0);
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ZOMBIE_CONVERTING, 0);
 }
 
 void Zombie::waterCheck()
@@ -533,7 +574,7 @@ void Zombie::die(const DamageSource* source)
     LivingEntity::die(source);
 
     boost::shared_ptr<Entity> entity = source->getEntity();
-    if (!entity || entity->GetType() != 0x5D540041ULL)
+    if (!entity || entity->GetType() != EntityType::CREEPER)
         return;
 
     boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(entity);
@@ -548,7 +589,10 @@ void Zombie::die(const DamageSource* source)
 
 bool Zombie::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
 {
-    return Entity::startRiding(vehicle, force);
+    bool riding = Mob::startRiding(vehicle, force);
+    if (isBaby() && force && vehicle->GetType() == EntityType::CHICKEN)
+        mIsJockey = true;
+    return riding;
 }
 
 void Zombie::finishConversion()
@@ -580,5 +624,5 @@ void Zombie::finishConversion()
 
 unsigned long long Zombie::GetType()
 {
-    return 0x5D550040ULL;
+    return EntityType::ZOMBIE;
 }

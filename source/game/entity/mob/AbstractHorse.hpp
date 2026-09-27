@@ -2,6 +2,7 @@
 #define GAME_ENTITY_MOB_ABSTRACTHORSE_HPP
 
 #include <string>
+#include "game/core/EntityType.hpp"
 #include <boost/shared_ptr.hpp>
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/OwnableEntity.hpp"
@@ -28,7 +29,6 @@ class ItemInstance;
 class AgableMob;
 template <class T> class EntityDataAccessor;
 
-extern const unsigned long long ENTITY_TYPE_ABSTRACT_HORSE;
 
 class AbstractHorse : public Animal, public net_minecraft_world::ContainerListener, public PlayerRideableJumping,
                       public OwnableEntity

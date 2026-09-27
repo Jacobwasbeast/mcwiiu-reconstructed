@@ -17,7 +17,7 @@ CompoundTag* EntityShulkerColorFix::fix(CompoundTag* tag)
 {
     if (tag->getString(L"id") == L"minecraft:shulker")
     {
-        if (!tag->contains(L"Color", 99))
+        if (!tag->contains(L"Color", Tag::TAG_ANY_NUMERIC))
         {
             tag->putByte(L"Color", 10);
         }

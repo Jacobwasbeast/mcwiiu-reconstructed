@@ -1,4 +1,6 @@
 #include "game/entity/mob/MultiEntityMobPart.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/MultiEntityMob.hpp"
@@ -18,7 +20,7 @@ MultiEntityMobPart::~MultiEntityMobPart()
 
 unsigned long long MultiEntityMobPart::GetType()
 {
-    return 0x000000000800000CULL;
+    return EntityType::MULTI_ENTITY_MOB_PART;
 }
 
 void MultiEntityMobPart::defineSynchedData()
@@ -57,7 +59,7 @@ unsigned int MultiEntityMobPart::GetInteractTooltip(const EntityTooltipDataHolde
         parentMob->GetInteractTooltip(boost::static_pointer_cast<MultiEntityMobPart>(shared_from_this()), tooltipData);
     }
 
-    return 0xFFFFFFFF;
+    return IDS_NONE;
 }
 
 bool MultiEntityMobPart::canRide(boost::shared_ptr<Entity> vehicle)

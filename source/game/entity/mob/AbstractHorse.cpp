@@ -1,4 +1,6 @@
 #include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 namespace
 {
@@ -147,7 +149,7 @@ void AbstractHorse::stand()
 
 void AbstractHorse::onPlayerJump(int jump)
 {
-    if (!isSaddled() && GetType() != ENTITY_TYPE_MULE)
+    if (!isSaddled() && GetType() != EntityType::MULE)
         return;
     if (jump < 0)
     {
@@ -166,14 +168,14 @@ void AbstractHorse::onPlayerJump(int jump)
     mJumpRidingScale = 0.4f * (float)jump / 90.0f + 0.4f;
 }
 
-bool AbstractHorse::canJump() { return isSaddled() || GetType() == ENTITY_TYPE_MULE; }
+bool AbstractHorse::canJump() { return isSaddled() || GetType() == EntityType::MULE; }
 double AbstractHorse::getJumpRidingScale() { return mJumpRidingScale; }
 void AbstractHorse::setJumpRidingScale(float scale) { mJumpRidingScale = scale; }
 
 void AbstractHorse::handleStartJump(int)
 {
     boost::shared_ptr<Entity> passenger = getControllingPassenger();
-    if ((passenger->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((passenger->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         mLevel->playSound(boost::static_pointer_cast<Player>(passenger), BlockPos(mX, mY, mZ),
                           getJumpSound(), SoundSource::eSoundSource_Players, 0.4f, 1.0f, 16.0f);
@@ -203,9 +205,9 @@ int AbstractHorse::getTailCounter() const { return mTailCounter; }
 
 void AbstractHorse::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_ABSTRACT_HORSE, ENTITY_TYPE_ANIMAL,
+    DATA_FLAGS = SynchedEntityData::defineId(EntityType::ABSTRACT_HORSE, EntityType::ANIMAL,
                                              EntityDataSerializers::BYTE);
-    DATA_OWNER_UUID = SynchedEntityData::defineId(ENTITY_TYPE_ABSTRACT_HORSE, ENTITY_TYPE_ANIMAL,
+    DATA_OWNER_UUID = SynchedEntityData::defineId(EntityType::ABSTRACT_HORSE, EntityType::ANIMAL,
                                                   EntityDataSerializers::STRING);
 }
 
@@ -299,7 +301,7 @@ bool AbstractHorse::hurt(const DamageSource* source, float damage)
     if (isTamed())
     {
         boost::shared_ptr<Entity> direct = source->getDirectEntity();
-        if (direct && (direct->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             if (!boost::static_pointer_cast<Player>(direct)->canHarmPlayer(getOwnerUUID()))
                 return false;
@@ -319,7 +321,7 @@ bool AbstractHorse::hurt(const DamageSource* source, float damage)
 
 bool AbstractHorse::isPushable(boost::shared_ptr<Entity> entity)
 {
-    return !isVehicle() || entity->GetType() == ENTITY_TYPE_BOAT;
+    return !isVehicle() || entity->GetType() == EntityType::BOAT;
 }
 
 void AbstractHorse::openMouth()
@@ -339,7 +341,7 @@ void AbstractHorse::eating(int animation)
                           getSoundSource(), 1.0f,
                           (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f, 16.0f);
     }
-    mLevel->broadcastEntityEvent(shared_from_this(), 39, animation);
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::EAT_ITEM_PARTICLES, animation);
 }
 
 void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
@@ -521,10 +523,10 @@ void AbstractHorse::openInventory(const boost::shared_ptr<Player>& player)
 
 int AbstractHorse::CheckAndSetInLove(boost::shared_ptr<Player> player)
 {
-    if (GetType() == ENTITY_TYPE_MULE || isBaby() || getInLoveValue() >= 1)
+    if (GetType() == EntityType::MULE || isBaby() || getInLoveValue() >= 1)
         return 0;
 
-    if (mLevel->canCreateMore(GetType(), 1))
+    if (mLevel->canCreateMore(GetType(), Level::eSpawnType_Breed))
     {
         if (!mLevel->mIsClientSide)
             setInLove(player);
@@ -790,11 +792,11 @@ bool AbstractHorse::tameWithName(const boost::shared_ptr<Player>& player)
 {
     setOwnerUUID(player->getUUID());
     setTamed(true);
-    mLevel->broadcastEntityEvent(shared_from_this(), 7, 0);
-    if (player->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0);
+    if (player->GetType() == EntityType::SERVER_PLAYER)
     {
-        player->awardStat(gStats->get_tamedEntity(ENTITY_TYPE_HORSE),
-                          GenericStats::param_tamedEntity(ENTITY_TYPE_HORSE));
+        player->awardStat(gStats->get_tamedEntity(EntityType::HORSE),
+                          GenericStats::param_tamedEntity(EntityType::HORSE));
     }
     return true;
 }
@@ -802,7 +804,7 @@ bool AbstractHorse::tameWithName(const boost::shared_ptr<Player>& player)
 void AbstractHorse::travel(float x, float y, float z)
 {
     if (!isVehicle() || !canBeControlledByRider()
-        || (!isSaddled() && GetType() != ENTITY_TYPE_MULE))
+        || (!isSaddled() && GetType() != EntityType::MULE))
     {
         mFlyingSpeed = 0.02f;
         LivingEntity::travel(x, y, z);
@@ -847,7 +849,7 @@ void AbstractHorse::travel(float x, float y, float z)
             mXd += static_cast<double>(-0.4f * Mth::sin(mYRot * 0.01745329238474369f) * mJumpRidingScale);
             mZd += static_cast<double>(0.4f * Mth::cos(mYRot * 0.01745329238474369f) * mJumpRidingScale);
         }
-        if ((rider->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((rider->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             mLevel->playLocalSound(mX, mY, mZ, getJumpSound(), SoundSource::eSoundSource_Players,
                                    0.4f, 1.0f, false, 16.0f);
@@ -863,7 +865,7 @@ void AbstractHorse::travel(float x, float y, float z)
         setSpeed(static_cast<float>(getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
         LivingEntity::travel(strafe, y, forward);
     }
-    else if ((rider->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    else if ((rider->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         mXd = 0.0;
         mYd = 0.0;
@@ -932,14 +934,14 @@ void AbstractHorse::readAdditionalSaveData(CompoundTag* tag)
     setTamed(tag->getBoolean(L"Tame"));
 
     std::wstring owner(L"");
-    if (tag->contains(L"OwnerUUID", 8))
+    if (tag->contains(L"OwnerUUID", Tag::TAG_STRING))
         owner = tag->getString(L"OwnerUUID");
     else
         tag->getString(L"OwnerName");
     if (owner.empty())
         setOwnerUUID(owner);
 
-    if (tag->contains(L"SaddleItem", 10))
+    if (tag->contains(L"SaddleItem", Tag::TAG_COMPOUND))
     {
         not_null_ptr<ItemInstance> saddle(new ItemInstance(tag->getCompound(L"SaddleItem")));
         if (saddle->getItem() == Items::saddle)
@@ -1007,9 +1009,9 @@ void AbstractHorse::setOffspringAttributes(const boost::shared_ptr<AgableMob>& o
 
 bool AbstractHorse::canBeControlledByRider()
 {
-    if ((!isTamed() || !isSaddled()) && GetType() != ENTITY_TYPE_MULE)
+    if ((!isTamed() || !isSaddled()) && GetType() != EntityType::MULE)
         return false;
-    return Entity::instanceof(getControllingPassenger(), ENTITY_TYPE_LIVING_ENTITY);
+    return Entity::instanceof(getControllingPassenger(), EntityType::LIVING_ENTITY);
 }
 
 double AbstractHorse::getEatAnim(float partialTick) const
@@ -1047,11 +1049,11 @@ void AbstractHorse::spawnTamingParticles(bool success)
 
 void AbstractHorse::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 6)
+    if (event == EntityEvent::TAMING_FAILED)
         spawnTamingParticles(false);
-    else if (event == 7)
+    else if (event == EntityEvent::TAMING_SUCCEEDED)
         spawnTamingParticles(true);
-    else if (event == 18)
+    else if (event == EntityEvent::IN_LOVE_HEARTS)
         spawnTamingParticles(true);
     else
         Mob::handleEntityEvent(event, data);
@@ -1062,7 +1064,7 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
         Entity::positionRider(passenger);
 
-    if ((passenger->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+    if ((passenger->GetType() & EntityType::MOB) == EntityType::MOB)
         mYBodyRot = boost::dynamic_pointer_cast<Mob>(passenger)->mYBodyRot;
 
     if (mStandAnimO <= 0.0f)
@@ -1077,7 +1079,7 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
                       mY + getRideHeight() + passenger->getRidingHeight() + static_cast<double>(rise),
                       mZ - static_cast<double>(offset * cos));
 
-    if ((passenger->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         boost::dynamic_pointer_cast<LivingEntity>(passenger)->mYBodyRot = mYBodyRot;
 }
 
@@ -1131,4 +1133,4 @@ bool AbstractHorse::removeWhenFarAway()
     return Animal::removeWhenFarAway() && !isTamed() && !isSaddled() && !isPassenger();
 }
 
-unsigned long long AbstractHorse::GetType() { return ENTITY_TYPE_ABSTRACT_HORSE; }
+unsigned long long AbstractHorse::GetType() { return EntityType::ABSTRACT_HORSE; }

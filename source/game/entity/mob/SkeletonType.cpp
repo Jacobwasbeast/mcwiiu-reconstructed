@@ -1,4 +1,5 @@
 #include "game/entity/mob/SkeletonType.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 
 namespace
@@ -8,9 +9,9 @@ namespace
         static ResourceLocation skeletonLootTable;
         static ResourceLocation witherSkeletonLootTable;
         static ResourceLocation strayLootTable;
-        static SkeletonType skeleton(0, 0x3f15b435, &skeletonLootTable);
-        static SkeletonType witherSkeleton(1, (int)0xb6a67881, &witherSkeletonLootTable);
-        static SkeletonType stray(2, 0x3f15b435, &strayLootTable);
+        static SkeletonType skeleton(0, IDS_SKELETON, &skeletonLootTable);
+        static SkeletonType witherSkeleton(1, (int)IDS_WITHER, &witherSkeletonLootTable);
+        static SkeletonType stray(2, IDS_SKELETON, &strayLootTable);
 
         switch (id)
         {

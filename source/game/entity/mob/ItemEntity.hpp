@@ -18,6 +18,8 @@ template <class T> class EntityDataAccessor;
 
 class ItemEntity : public Entity
 {
+    friend class ItemRenderer;
+
 public:
     ItemEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item);
     ItemEntity(Level* level, double x, double y, double z);

@@ -12,15 +12,17 @@
 
 class EntityTracker;
 class Packet;
+class Player;
 class ServerPlayer;
 
 class TrackedEntity
 {
 public:
-    TrackedEntity(boost::shared_ptr<Entity> entity, int range, int updateInterval, int maxRange, bool sendVelocityUpdates);
+    TrackedEntity(boost::shared_ptr<Entity> entity, int range, int maxRange, int updateInterval, bool trackDelta);
 
     bool canBySeenBy(boost::shared_ptr<ServerPlayer> player);
-    bool isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<ServerPlayer>& player, bool force, bool suppress);
+    int isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<ServerPlayer>& player, bool force,
+                    bool skipRangeCheck);
     boost::shared_ptr<Packet> getAddEntityPacket();
     bool ShouldSendEntityDataOnContruction(boost::shared_ptr<Entity> entity);
     void updatePlayer(EntityTracker* tracker, boost::shared_ptr<ServerPlayer> player);
@@ -34,24 +36,33 @@ public:
     void removePlayer(EntityTracker* tracker, boost::shared_ptr<ServerPlayer> player);
     void clear(boost::shared_ptr<ServerPlayer> player);
     boost::shared_ptr<Entity> getEntity();
-    void setMaxRange(int range);
+    void setMaxRange(int maxRange);
 
-private:
     boost::shared_ptr<Entity> mEntity;
     int mRange;
-    int mUpdateInterval;
     int mMaxRange;
-    int mXLoc;
-    int mYLoc;
-    int mZLoc;
-    double mXRot;
-    double mYRot;
-    double mZRot;
-    bool mSendVelocityUpdates;
+    int mUpdateInterval;
+    int mXp;
+    int mYp;
+    int mZp;
+    int mYRotp;
+    int mXRotp;
+    int mYHeadRotp;
+    double mXap;
+    double mYap;
+    double mZap;
+    int mTickCount;
+    double mXpu;
+    double mYpu;
+    double mZpu;
+    bool mUpdatedPlayerVisibility;
+    bool mTrackDelta;
+    int mTeleportDelay;
+    std::vector<boost::weak_ptr<Entity> > mLastPassengers;
     bool mWasRiding;
-    int mUpdateCounter;
-    std::vector<boost::weak_ptr<Entity> > mPassengers;
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > > mTrackedPlayers;
+    bool mWasOnGround;
+    bool mPlayerEntitiesUpdated;
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > > mSeenBy;
 };
 
 #endif

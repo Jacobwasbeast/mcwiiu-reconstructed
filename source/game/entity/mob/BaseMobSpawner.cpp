@@ -1,4 +1,5 @@
 #include "game/entity/mob/BaseMobSpawner.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <algorithm>
 
@@ -131,7 +132,7 @@ void BaseMobSpawner::tick()
             delete entities;
             if (nearby < mMaxNearbyEntities)
             {
-                if (!level->canCreateMore(entity->GetType(), 0))
+                if (!level->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
                 {
                     delay();
                     return;
@@ -143,7 +144,7 @@ void BaseMobSpawner::tick()
                     mob->finalizeMobSpawn(difficulty, NULL, std::wstring());
                 }
                 OldChunkStorage::addEntityToWorld(entity, level);
-                level->levelEvent(2004, origin, 0);
+                level->levelEvent(LevelEvent::PARTICLES_MOBBLOCK_SPAWN, origin, 0);
                 spawned = true;
             }
         }
@@ -169,26 +170,26 @@ void BaseMobSpawner::load(CompoundTag* tag)
     mSpawnPotentials.clear();
     if (tag->contains(L"SpawnPotentials"))
     {
-        ListTag* list = tag->getList(L"SpawnPotentials", 10);
+        ListTag* list = tag->getList(L"SpawnPotentials", Tag::TAG_COMPOUND);
         for (int i = 0; i < list->size(); ++i)
             mSpawnPotentials.push_back(new SpawnData(list->getCompound(i)));
     }
-    if (tag->contains(L"SpawnData", 10))
+    if (tag->contains(L"SpawnData", Tag::TAG_COMPOUND))
         setNextSpawnData(new SpawnData(1, tag->getCompound(L"SpawnData")));
     else if (!mSpawnPotentials.empty())
         setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, mSpawnPotentials.begin(), mSpawnPotentials.end())));
-    if (tag->contains(L"MinSpawnDelay", 99))
+    if (tag->contains(L"MinSpawnDelay", Tag::TAG_ANY_NUMERIC))
     {
         mMinSpawnDelay = tag->getShort(L"MinSpawnDelay");
         mMaxSpawnDelay = tag->getShort(L"MaxSpawnDelay");
         mSpawnCount = tag->getShort(L"SpawnCount");
     }
-    if (tag->contains(L"MaxNearbyEntities", 99))
+    if (tag->contains(L"MaxNearbyEntities", Tag::TAG_ANY_NUMERIC))
     {
         mMaxNearbyEntities = tag->getShort(L"MaxNearbyEntities");
         mRequiredPlayerRange = tag->getShort(L"RequiredPlayerRange");
     }
-    if (tag->contains(L"SpawnRange", 99))
+    if (tag->contains(L"SpawnRange", Tag::TAG_ANY_NUMERIC))
         mSpawnRange = tag->getShort(L"SpawnRange");
     mDisplayEntity.reset();
 }
@@ -233,7 +234,7 @@ int BaseMobSpawner::onEventTriggered(int event)
     {
         Level* level = getLevel();
         if (level->mIsClientSide)
-            level->levelEvent(1001, getPos(), 0);
+            level->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, getPos(), 0);
         return 1;
     }
     if (event == 1)

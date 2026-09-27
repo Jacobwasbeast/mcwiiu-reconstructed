@@ -1,4 +1,5 @@
 #include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -35,12 +36,12 @@ boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePack
     if (entity)
     {
         unsigned long long type = entity->GetType();
-        if ((type & 0x0c000000ULL) == 0x0c000000ULL)
+        if ((type & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
             item = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
 
-        if (type == 0x0c800001ULL)
+        if (type == EntityType::SERVER_PLAYER)
             attackerName = entity->getDisplayName();
-        else if ((type & 0x0d000000ULL) == 0x0d000000ULL && entity->hasCustomName())
+        else if ((type & EntityType::MOB) == EntityType::MOB && entity->hasCustomName())
             attackerName = entity->getCustomName();
     }
 
@@ -52,8 +53,8 @@ boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePack
 
 bool EntityDamageSource::scalesWithDifficulty() const
 {
-    if (entity && (entity->GetType() & 0x0c000000ULL) == 0x0c000000ULL)
-        return (entity->GetType() & 0x0c800000ULL) != 0x0c800000ULL;
+    if (entity && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        return (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER;
     return false;
 }
 

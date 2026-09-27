@@ -60,14 +60,14 @@ CompoundTag* EntityHealthFix::fix(CompoundTag* tag)
         {
             float health;
 
-            if (tag->contains(L"HealF", 99))
+            if (tag->contains(L"HealF", Tag::TAG_ANY_NUMERIC))
             {
                 health = tag->getFloat(L"HealF");
                 tag->remove(L"HealF");
             }
             else
             {
-                if (!tag->contains(L"Health", 99))
+                if (!tag->contains(L"Health", Tag::TAG_ANY_NUMERIC))
                 {
                     break;
                 }

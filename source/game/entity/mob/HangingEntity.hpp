@@ -20,6 +20,8 @@ template <class T> class not_null_ptr;
 
 class HangingEntity : public Entity
 {
+    friend class TrackedEntity;
+
 public:
     class HangingEntitySelector : public Predicate<boost::shared_ptr<Entity> >
     {
@@ -34,9 +36,9 @@ public:
 
     void _init(Level* level);
     virtual void defineSynchedData();
-    void setDirection(const Direction* direction);
+    virtual void setDirection(const Direction* direction);
     double offs(int value);
-    void recalculateBoundingBox();
+    virtual void recalculateBoundingBox();
     virtual void tick();
     virtual bool survives();
     virtual bool isPickable();
@@ -46,11 +48,10 @@ public:
     virtual void move(MoverType type, double x, double y, double z, bool pushedByPiston);
     virtual void push(double x, double y, double z);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual void readAdditionalSaveData(CompoundTag* tag) = 0;
+    virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual boost::shared_ptr<ItemEntity> spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset);
     virtual bool repositionEntityAfterLoad();
     virtual void setPos(double x, double y, double z);
-    BlockPos getPos();
     virtual float rotate(Rotation* rotation);
     virtual float mirror(Mirror* mirror);
     virtual void thunderHit(const LightningBolt* lightningBolt);
@@ -61,11 +62,15 @@ public:
     virtual int getWidth() = 0;
     virtual int getHeight() = 0;
     virtual void dropItem(boost::shared_ptr<Entity> breaker) = 0;
+    virtual void playPlacementSound() = 0;
+    virtual BlockPos getPos();
 
 protected:
     int mTickCounter;
     BlockPos mPos;
     const Direction* mDirection;
 };
+
+extern uint32_t gHangingEntityRenderCount;
 
 #endif

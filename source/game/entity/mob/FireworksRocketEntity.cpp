@@ -1,4 +1,6 @@
 #include "game/entity/mob/FireworksRocketEntity.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -115,9 +117,9 @@ void FireworksRocketEntity::_init(double x, double y, double z, const not_null_p
 void FireworksRocketEntity::staticCtor()
 {
     DATA_ATTACHED_TO_ENTITY = SynchedEntityData::defineId<int>(
-        0x88000005ULL, 0x08000000ULL, EntityDataSerializers::INT);
+        EntityType::FIREWORKS_ROCKET_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
     DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
-        0x88000005ULL, 0x08000000ULL, EntityDataSerializers::ITEM_INSTANCE);
+        EntityType::FIREWORKS_ROCKET_ENTITY, EntityType::ENTITY, EntityDataSerializers::ITEM_INSTANCE);
 }
 
 bool FireworksRocketEntity::isAttachedToEntity()
@@ -185,7 +187,7 @@ void FireworksRocketEntity::dealExplosionDamage()
     {
         return;
     }
-    ListTag* explosions = fireworksTag->getList(L"Explosions", 10);
+    ListTag* explosions = fireworksTag->getList(L"Explosions", Tag::TAG_COMPOUND);
     float power = 5.0f;
     if (explosions != NULL && !explosions->isEmpty())
     {
@@ -374,7 +376,7 @@ void FireworksRocketEntity::setExplosionColourToPipColour(CompoundTag* tag)
     {
         return;
     }
-    ListTag* explosions = tag->getList(L"Explosions", 10);
+    ListTag* explosions = tag->getList(L"Explosions", Tag::TAG_COMPOUND);
     if (explosions == NULL)
     {
         return;
@@ -393,7 +395,7 @@ void FireworksRocketEntity::setExplosionColourToPipColour(CompoundTag* tag)
 
 void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
 {
-    if (event != 17)
+    if (event != EntityEvent::FIREWORKS_EXPLODE)
     {
         Entity::handleEntityEvent(event, data);
         return;
@@ -418,7 +420,7 @@ void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
 void FireworksRocketEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     new ItemDataWalker(0x88000005ULL, L"FireworksItem"));
+                     new ItemDataWalker(EntityType::FIREWORKS_ROCKET_ENTITY, L"FireworksItem"));
 }
 
 void FireworksRocketEntity::addAdditonalSaveData(CompoundTag* tag)
@@ -480,7 +482,7 @@ void FireworksRocketEntity::create(Level* level)
 
 unsigned long long FireworksRocketEntity::GetType()
 {
-    return 0x88000005ULL;
+    return EntityType::FIREWORKS_ROCKET_ENTITY;
 }
 
 bool FireworksRocketEntity::shouldTick()
