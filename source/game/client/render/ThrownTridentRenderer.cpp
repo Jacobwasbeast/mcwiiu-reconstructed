@@ -1,4 +1,5 @@
 #include "game/client/render/ThrownTridentRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -98,7 +99,7 @@ void ThrownTridentRenderer::renderLeash(boost::shared_ptr<ThrownTrident>& entity
 void ThrownTridentRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                                    float yaw, float partialTick)
 {
-    if (entity->GetType() == 0x8A200006ULL)
+    if (entity->GetType() == EntityType::THROWN_TRIDENT)
     {
         bindTexture(entity);
         GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);

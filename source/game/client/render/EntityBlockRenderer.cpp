@@ -1,4 +1,5 @@
 #include "game/client/render/EntityBlockRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/client/render/SkullBlockRenderer.hpp"
@@ -50,11 +51,11 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     else if (itemType == Items::skull)
     {
         if (BlockEntityRenderDispatcher::instance != NULL &&
-            BlockEntityRenderDispatcher::instance->getRenderer(0x01200207ULL) != NULL)
+            BlockEntityRenderDispatcher::instance->getRenderer(BlockEntityType::SKULL) != NULL)
         {
             GlStateManager::pushMatrix();
             GlStateManager::disableCull();
-            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(0x01200207ULL))->renderSkull(0.0F, 0.0F, 0.0F, NULL, 180.0F,
+            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(BlockEntityType::SKULL))->renderSkull(0.0F, 0.0F, 0.0F, NULL, 180.0F,
                                               0.0F, item->getAuxValue(), -1, 0.5F,
                                               bUseDisplayList);
             GlStateManager::enableCull();

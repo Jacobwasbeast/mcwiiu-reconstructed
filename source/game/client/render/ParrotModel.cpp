@@ -116,7 +116,7 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     else if (mAnimationState == 3)
     {
         boost::shared_ptr<Parrot> parrot = boost::static_pointer_cast<Parrot>(entity);
-        float phase = static_cast<float>(parrot->mTickCount) - 176.0f;
+        float phase = parrot->mTickCount;
         float sine = Mth::sin(phase);
         float cosine = Mth::cos(phase);
         mHead->mXRot = cosine;
@@ -149,7 +149,7 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     mLeg0->mYRot = mWing0Z;
     mLeg1->mYRot = mWing1Y;
 
-    if (Minecraft::InMiniGame((EMiniGameId)15, true))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         mAnimationState = 0;
     }

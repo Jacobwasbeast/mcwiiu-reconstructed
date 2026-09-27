@@ -1,4 +1,5 @@
 #include "game/client/render/DragonBreathParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
@@ -106,7 +107,7 @@ float DragonBreathParticle::getBrightness(float partialTicks)
 
 uint64_t DragonBreathParticle::GetType()
 {
-    return 0x000000000008021EULL;
+    return ParticleKind::DRAGON_BREATH;
 }
 
 Particle* DragonBreathParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

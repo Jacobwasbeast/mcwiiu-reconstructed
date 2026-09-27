@@ -9,6 +9,7 @@
 #include "game/core/BufferedImage.hpp"
 #include "game/core/StbiFile.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 class IntBuffer;
 class Minecraft;
@@ -17,7 +18,6 @@ class StbiFile;
 int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int** pixels);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
-void CloseHandle(int file);
 
 int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int** pixels)
 {

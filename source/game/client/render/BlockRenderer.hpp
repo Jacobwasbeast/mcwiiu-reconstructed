@@ -24,13 +24,13 @@ class BlockRenderer
 public:
     struct BoxDesc
     {
+        unsigned char hiddenFaces;
         float x0;
         float y0;
         float z0;
         float x1;
         float y1;
         float z1;
-        unsigned char hiddenFaces;
     };
 
     struct BoxUV
@@ -71,7 +71,7 @@ public:
     void renderEast(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
     void tesselateCrossTexture(TextureAtlasSprite* texture, TextureAtlasSprite* overlay, float x, float y, float z, float scale);
     void tesselateCrossTexture(const BlockState* state, float x, float y, float z, float scale);
-    void tesselateStemTexture(const BlockState* state, float x, float y, float z, float scale);
+    void tesselateStemTexture(const BlockState* state, float height, float x, float y, float z);
     void tesselateRowTexture(const BlockState* state, float x, float y, float z);
     void tesselateTorch(const BlockState* state, float x, float y, float z, float xTilt, float zTilt);
     void fjRenderCubes(const BlockState* state, const BoxDesc* boxes, unsigned int boxCount, const BoxUV* uvs);
@@ -85,7 +85,8 @@ public:
     bool hasLightOverride();
     bool tesselateBlockInWorld(const BlockState* state, const BlockPos& pos, float red, float green, float blue);
     bool tesselateBlockInWorld(const BlockState* state, const BlockPos& pos);
-    void tesselateAnvilPiece(const BlockState* state, const BlockPos& pos, int part, float x0, float y0, float x1, float y1, bool rotate, bool flip);
+    float tesselateAnvilPiece(const BlockState* state, const BlockPos& pos, int part, float bottom, float width,
+                              float height, float length, bool rotate, bool inventory);
     bool tesselateAnvilInWorld(const BlockState* state, const BlockPos& pos, bool inventory);
     void setFixedTexture(TextureAtlasSprite* texture);
     void clearFixedTexture();
@@ -94,7 +95,7 @@ public:
     void tesselateEndRodCenter(const BlockState* state, float x, float y, float z);
     void tesselateEndRodBase(const BlockState* state, float x, float y, float z);
     void tesselateEndRod(const BlockState* state, float x, float y, float z);
-    void renderBlock(const BlockState* state, float brightness, float alpha, bool tint, bool inventory);
+    void renderBlock(const BlockState* state, float brightness, float alpha, bool useDisplayList, bool centre);
     void prepare(LevelSource* levelSource);
     void setLightOverride(int lightColor);
     void clearLightOverride();
@@ -139,11 +140,11 @@ public:
     bool tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateRepeaterInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateComparatorInWorld(const BlockState* state, const BlockPos& pos);
-    bool tesselatePistonBaseInWorld(const BlockState* state, const BlockPos& pos, bool extended, const BlockState* actualState);
-    void renderPistonArmUpDown(float x, float y, float z, float x0, float y0, float z0, float x1, float z1);
-    void renderPistonArmNorthSouth(float x, float y, float z, float x0, float y0, float z0, float x1, float z1);
-    void renderPistonArmEastWest(float x, float y, float z, float x0, float y0, float z0, float x1, float z1);
-    bool tesselatePistonExtensionInWorld(const BlockState* state, const BlockPos& pos, bool shortHead, const BlockState* actualState);
+    bool tesselatePistonBaseInWorld(const BlockState* state, const BlockPos& pos, bool forceExtended, const BlockState* actualState);
+    void renderPistonArmUpDown(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length);
+    void renderPistonArmNorthSouth(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length);
+    void renderPistonArmEastWest(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length);
+    bool tesselatePistonExtensionInWorld(const BlockState* state, const BlockPos& pos, bool fullArm, const BlockState* actualState);
     bool tesselateThinFenceInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateVineInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateFenceGateInWorld(const BlockState* state, const BlockPos& pos);
@@ -184,7 +185,7 @@ private:
     bool mRenderAllFaces;
     bool mUseInventoryTint;
 public:
-    bool mUseAmbientOcclusion;
+    bool mUseColor;
 private:
     float mMinX;
     float mMaxX;

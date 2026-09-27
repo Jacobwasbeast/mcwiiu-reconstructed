@@ -91,7 +91,7 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     }
 
     const BlockState* state = minecart->getDisplayBlockState();
-    if (state != NULL && state->getBlock()->getRenderShape(state) != BLOCK_RENDER_INVISIBLE)
+    if (state != NULL && state->getRenderShape() != BLOCK_RENDER_INVISIBLE)
         renderMinecartContents(minecart, partialTick, state);
 
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);

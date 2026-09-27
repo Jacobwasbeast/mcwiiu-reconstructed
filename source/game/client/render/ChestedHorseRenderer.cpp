@@ -1,4 +1,5 @@
 #include "game/client/render/ChestedHorseRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ChestedHorseModel.hpp"
 #include "game/client/render/EntityRenderer.hpp"
@@ -21,9 +22,9 @@ ChestedHorseRenderer::~ChestedHorseRenderer()
 const ResourceLocation* ChestedHorseRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     unsigned long long type = entity->GetType();
-    if (type == ENTITY_TYPE_MULE)
+    if (type == EntityType::MULE)
         return &MULE_LOCATION;
-    if (type == ENTITY_TYPE_DONKEY)
+    if (type == EntityType::DONKEY)
         return &DONKEY_LOCATION;
     return EntityRenderer::getTextureLocation(entity);
 }

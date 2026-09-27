@@ -1,4 +1,5 @@
 #include "game/client/render/VexRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/VexModel.hpp"
@@ -24,7 +25,7 @@ VexRenderer::~VexRenderer()
 const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         return &VEX_LOCATION;
     }

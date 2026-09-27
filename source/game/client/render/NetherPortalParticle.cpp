@@ -1,4 +1,5 @@
 #include "game/client/render/NetherPortalParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/Particle.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -104,7 +105,7 @@ void NetherPortalParticle::move(double xa, double ya, double za)
 
 uint64_t NetherPortalParticle::GetType()
 {
-    return 0x000000000008020AULL;
+    return ParticleKind::NETHER_PORTAL;
 }
 
 Particle* NetherPortalParticle::Provider::createParticle(ePARTICLE_TYPE type,

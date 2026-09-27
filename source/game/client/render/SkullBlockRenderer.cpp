@@ -20,10 +20,7 @@ static ResourceLocation SKULL_TEXTURE_3((_TEXTURE_NAME)37);
 static ResourceLocation SKULL_TEXTURE_4((_TEXTURE_NAME)29);
 static ResourceLocation SKULL_TEXTURE_5((_TEXTURE_NAME)59);
 
-namespace
-{
-    SkullBlockRenderer* g_0x104CBE84 = NULL;
-}
+SkullBlockRenderer* SkullBlockRenderer::instance = NULL;
 
 SkullBlockRenderer::SkullBlockRenderer()
     : mCreeperModel(NULL), mDragonModel(NULL), mActiveCreeperModel(NULL), mActiveDragonModel(NULL)
@@ -182,12 +179,12 @@ void SkullBlockRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
 void SkullBlockRenderer::init(BlockEntityRenderDispatcher* pDispatcher)
 {
     BlockEntityRenderer::init(pDispatcher);
-    g_0x104CBE84 = this;
+    instance = this;
 }
 
-void SkullBlockRenderer::dragonJawCheck()
+bool SkullBlockRenderer::dragonJawCheck()
 {
-    mDragonModel->hasJawPart();
+    return mDragonModel->hasJawPart();
 }
 
 void SkullBlockRenderer::updateModel(int modelIndex, const std::wstring& modelName,
@@ -213,7 +210,7 @@ void SkullBlockRenderer::updateModel(int modelIndex, const std::wstring& modelNa
 void SkullBlockRenderer::setupForTexturePack(TexturePack* pTexturePack)
 {
     updateModel(0, L"skeleton_head", L"skeleton", pTexturePack);
-    updateModel(1, L"skeleton_wither_head", L"skeleton_wither", pTexturePack);
+    updateModel(1, L"skeleton_wither_head", L"skeleton.wither", pTexturePack);
     updateModel(2, L"zombie_head", L"zombie", pTexturePack);
 
     if (mActiveDragonModel == NULL)

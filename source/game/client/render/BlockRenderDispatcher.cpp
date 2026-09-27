@@ -13,7 +13,7 @@ BlockRenderDispatcher::BlockRenderDispatcher(BlockColors* blockColors)
 void BlockRenderDispatcher::renderSingleBlock(const BlockState* state, float x, float y, bool color)
 {
     int renderShape = state->getRenderShape();
-    if (renderShape != -1 && (BlockRenderer::canRender(renderShape) || renderShape == BLOCK_RENDER_ENTITY))
+    if (renderShape != BLOCK_RENDER_INVISIBLE && (BlockRenderer::canRender(renderShape) || renderShape == BLOCK_RENDER_CROSS))
     {
         mBlockRenderer->renderBlock(state, x, y, color, true);
     }
@@ -25,12 +25,12 @@ bool BlockRenderDispatcher::canRenderGeneric(Block* block)
     {
         return false;
     }
-    return block->defaultBlockState()->getRenderShape() == 0x16;
+    return block->defaultBlockState()->getRenderShape() == BLOCK_RENDER_ENTITY;
 }
 
 void BlockRenderDispatcher::setColor(bool color)
 {
-    mBlockRenderer->mUseAmbientOcclusion = color;
+    mBlockRenderer->mUseColor = color;
 }
 
 BlockRenderer* BlockRenderDispatcher::getBlockRenderer()

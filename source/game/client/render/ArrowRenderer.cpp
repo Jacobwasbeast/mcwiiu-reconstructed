@@ -1,4 +1,5 @@
 #include "game/client/render/ArrowRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -28,7 +29,7 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     float yRot = entity->mYRot;
     float shake = 0.0F;
 
-    if ((entity->GetType() & 0x8A020000ULL) == 0x8A020000ULL)
+    if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
     {
         boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(entity);
         shake = (float)arrow->mShake - partialTick;

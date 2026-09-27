@@ -49,7 +49,7 @@ LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
         mLeg3->mY += 1.0f;
         mLeg2->mZ -= 1.0f;
         mLeg3->mZ -= 1.0f;
-        mHeadYOffset += 2.0f;
+        mZHeadOffs += 2.0f;
     }
 
     compileSkinnedDrawlist();

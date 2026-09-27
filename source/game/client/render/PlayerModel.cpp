@@ -1,4 +1,5 @@
 #include "game/client/render/PlayerModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -135,7 +136,7 @@ void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
             {
                 bool fallFlying = false;
 
-                if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+                if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
                 {
                     boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
 
@@ -286,7 +287,7 @@ void PlayerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
         {
             bool fallFlying = false;
 
-            if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+            if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
             {
                 boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
 

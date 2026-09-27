@@ -1,4 +1,5 @@
 #include "game/client/render/PlayerRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -288,7 +289,7 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     GlStateManager::setProfile();
 
     bool suppressSpecialRender = false;
-    if ((player->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((player->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
         if (localPlayer->GetThirdPersonView(false) != 0
@@ -395,8 +396,8 @@ void PlayerRenderer::setupPosition(boost::shared_ptr<LivingEntity>& entity, doub
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
     if (player->isAlive() && player->isSleeping())
     {
-        LivingEntityRenderer::setupPosition(entity, x + player->mField0x6d0, y + player->mField0x6d4,
-                                            z + player->mField0x6d8);
+        LivingEntityRenderer::setupPosition(entity, x + player->mBedOffsetX, y + player->mBedOffsetY,
+                                            z + player->mBedOffsetZ);
         return;
     }
     if (player->isPassenger())
@@ -491,7 +492,7 @@ void PlayerRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     {
         return;
     }
-    if (!gApp.GetGameHostOption(static_cast<eGameHostOption>(0x12)) || !player->hasInvisiblePrivilege())
+    if (!gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) || !player->hasInvisiblePrivilege())
     {
         EntityRenderer::renderShadow(entity, x, y, z, alpha, partialTicks);
     }
@@ -504,15 +505,15 @@ bool PlayerRenderer::bindTexture(boost::shared_ptr<Entity>& entity)
 }
 
 void PlayerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                                  float ageInTicks, float netHeadYaw, float headPitch, float scale, float partialTick,
+                                  float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                                   bool overlay)
 {
     if (mDispatcher->mRenderLeash)
     {
         mElytraLayer->getElytraModel()->mOverrideAnim = true;
     }
-    LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                                        scale, partialTick, overlay);
+    LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw,
+                                        headPitch, scale, overlay);
     if (mDispatcher->mRenderLeash)
     {
         mElytraLayer->getElytraModel()->mOverrideAnim = false;

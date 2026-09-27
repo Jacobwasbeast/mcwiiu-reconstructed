@@ -29,10 +29,9 @@
 #include "game/world/generation/StructureManager.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 extern CStorage* gStorage;
-
-void Sleep(unsigned int milliseconds);
 
 DLCTexturePack::DLCTexturePack(unsigned int id, DLCPack* pack, TexturePack* parentPack)
     : AbstractTexturePack(id, NULL, pack->getName(), parentPack)
@@ -183,9 +182,9 @@ BufferedImage* DLCTexturePack::getImageResource(const std::wstring& fileName, bo
 
 void DLCTexturePack::loadMaterialTable()
 {
-    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Material, L"entityMaterials_bin", true, true))
+    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Material, L"entityMaterials.bin", true, true))
     {
-        DLCMaterialFile* file = static_cast<DLCMaterialFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Material, L"entityMaterials_bin", true, true));
+        DLCMaterialFile* file = static_cast<DLCMaterialFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Material, L"entityMaterials.bin", true, true));
         m_pMaterialTable = file->m_pMaterialTable;
         m_materialTableLoaded = false;
     }
@@ -239,10 +238,10 @@ bool DLCTexturePack::isLoadingData()
 
 void DLCTexturePack::loadCustomModels()
 {
-    if (m_loadedPack == NULL || !m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Models, L"models_bin", true, true))
+    if (m_loadedPack == NULL || !m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Models, L"models.bin", true, true))
         return;
     m_customModels.clear();
-    DLCModelsFile* file = static_cast<DLCModelsFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Models, L"models_bin", true, true));
+    DLCModelsFile* file = static_cast<DLCModelsFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Models, L"models.bin", true, true));
     ByteArrayInputStream byteStream(file->getData());
     DataInputStream stream(&byteStream);
     int version = stream.readInt();
@@ -261,9 +260,9 @@ void DLCTexturePack::loadCustomModels()
 
 void DLCTexturePack::loadBehaviours()
 {
-    if (m_loadedPack == NULL || !m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Behaviours, L"behaviours_bin", true, true))
+    if (m_loadedPack == NULL || !m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Behaviours, L"behaviours.bin", true, true))
         return;
-    DLCBehavioursFile* file = static_cast<DLCBehavioursFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Behaviours, L"behaviours_bin", true, true));
+    DLCBehavioursFile* file = static_cast<DLCBehavioursFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Behaviours, L"behaviours.bin", true, true));
     ByteArrayInputStream byteStream(file->getData());
     DataInputStream stream(&byteStream);
     stream.readInt();
@@ -296,7 +295,7 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
         else
         {
             std::wstring fullDataPath = gApp.getFilePath(
-                pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK\\");
+                pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK:");
             bool loaded = gApp.mDLCManager.readDLCDataFile(numItemsAdded, fullDataPath,
                                                        pack->m_loadedPack,
                                                        pack->m_dlcPack->GetPackId(), false);
@@ -305,7 +304,7 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
                 if (pack->m_loadedPack != NULL)
                 {
                     File mediaArchive(gApp.getFilePath(
-                        pack->m_dlcPack->GetPackId(), L"media.arc", true, L"TPACK\\"));
+                        pack->m_dlcPack->GetPackId(), L"media.arc", true, L"TPACK:"));
                     if (mediaArchive.exists())
                     {
                         delete pack->m_archiveFile;
@@ -325,7 +324,7 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
                         {
                             File baseSave(gApp.getFilePath(
                                 pack->m_dlcPack->GetPackId(), options->getBaseSavePath(),
-                                true, L"TPACK\\"));
+                                true, L"TPACK:"));
                             options->setBaseSaveData(baseSave);
                         }
                     }
@@ -448,7 +447,7 @@ void DLCTexturePack::loadData()
 
 void DLCTexturePack::loadUI()
 {
-    if (m_archiveFile != NULL && m_archiveFile->hasFile(L"skin_swf"))
+    if (m_archiveFile != NULL && m_archiveFile->hasFile(L"skin.swf"))
         gConsoleUIController.ReloadSkin();
     else
         AbstractTexturePack::loadDefaultUI();

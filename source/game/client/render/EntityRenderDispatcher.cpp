@@ -1,4 +1,5 @@
 #include "game/client/render/EntityRenderDispatcher.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/AreaEffectCloudRenderer.hpp"
 #include "game/client/render/ArmorStandRenderer.hpp"
@@ -117,101 +118,6 @@
 
 namespace
 {
-const unsigned long long ENTITY_RENDERER_TYPE_SPIDER = 0x000000005D560040ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_CAVESPIDER = 0x000000005D560041ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_PIG = 0x000000002D680003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SHEEP = 0x000000002D680002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_COW = 0x000000002D6A0000ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_MUSHROOMCOW = 0x000000002D6A0001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_WOLF = 0x000000000D6C0002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_CHICKEN = 0x000000000D680004ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_OCELOT = 0x000000002D6C0001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_RABBIT = 0x000000002D680005ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_PARROT = 0x000000002D6C0003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SILVERFISH = 0x000000005D540044ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ENDERMITE = 0x000000004D54004BULL;
-const unsigned long long ENTITY_RENDERER_TYPE_CREEPER = 0x000000005D540041ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ENDERMAN = 0x000000005D540043ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SNOWMAN = 0x000000002D580001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SKELETON = 0x000000005D540441ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_WITHERSKELETON = 0x000000005D540442ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_STRAY = 0x000000005D540443ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_WITCH = 0x000000005D540046ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_BLAZE = 0x000000005D540045ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_PIGZOMBIE = 0x000000005D550041ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ZOMBIE = 0x000000005D550040ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ZOMBIEVILLAGER = 0x000000005D550042ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_HUSK = 0x000000005D550043ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_DROWNED = 0x000000005D550044ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SLIME = 0x000000005D108000ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_LAVASLIME = 0x000000005D108001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_GIANTMOB = 0x000000005D540042ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_GHAST = 0x000000005D0000C1ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SQUID = 0x000000000D502001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_TROPICALFISH = 0x000000000D502005ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_FISH = 0x000000000D502002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_PUFFERFISH = 0x000000000D502003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_FISH_2 = 0x000000000D502004ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_TURTLE = 0x000000002D680007ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_DOLPHIN = 0x000000000D602001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_VILLAGER = 0x000000000D600001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_VILLAGERGOLEM = 0x000000000D580002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_BAT = 0x000000001D000101ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_GUARDIAN = 0x000000005D544000ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ELDERGUARDIAN = 0x000000005D544001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SHULKER = 0x000000004D580043ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_POLARBEAR = 0x000000002D680006ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_EVOCATIONILLAGER = 0x000000005D541841ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_VINDICATIONILLAGER = 0x000000005D541041ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_VEX = 0x000000005D540048ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_PHANTOM = 0x000000005D540049ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ILLUSIONILLAGER = 0x000000005D541842ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ENDERDRAGON = 0x000000000D000005ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ENDERCRYSTAL = 0x000000000800000EULL;
-const unsigned long long ENTITY_RENDERER_TYPE_WITHERBOSS = 0x000000005D540047ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_DEFAULT = 0x0000000008000000ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_PAINTING = 0x000000000A080001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_LEASHKNOT = 0x000000000A080003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_TIPPABLEARROW = 0x000000008A020002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SPECTRALARROW = 0x000000008A020001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNITEM = 0x000000008A200001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNITEM_2 = 0x000000008A200003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNITEM_3 = 0x0000000088000004ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNITEM_4 = 0x000000008A200002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNPOTION = 0x000000008A200004ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNITEM_5 = 0x000000008A200005ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_FIREBALL = 0x000000008A400003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_FIREBALL_2 = 0x000000008A400004ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_DRAGONFIREBALL = 0x000000008A400001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_WITHERSKULL = 0x000000008A400002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_SHULKERBULLET = 0x0000000008000010ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ITEMENTITY = 0x000000000800000AULL;
-const unsigned long long ENTITY_RENDERER_TYPE_EXPERIENCEORB = 0x0000000008000003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_TNT = 0x000000000800000BULL;
-const unsigned long long ENTITY_RENDERER_TYPE_FALLINGBLOCK = 0x0000000008000009ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_ARMORSTAND = 0x000000000C000001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_EVOCATIONFANGS = 0x0000000008000011ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_TNTMINECART = 0x000000000A800004ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_MINECARTSPAWNER = 0x000000000A800006ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_MINECART = 0x000000000A800001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_MINECART_2 = 0x000000000A800003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_MINECART_3 = 0x000000000A840002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_MINECART_4 = 0x000000000A840005ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_BOAT = 0x0000000008000008ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_FISHINGHOOK = 0x0000000088000006ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_AREAEFFECTCLOUD = 0x000000000800000FULL;
-const unsigned long long ENTITY_RENDERER_TYPE_HORSE = 0x000000002D690001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_UNDEADHORSE = 0x000000002D690002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_UNDEADHORSE_2 = 0x000000002D690003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_CHESTEDHORSE = 0x000000002D698002ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_CHESTEDHORSE_2 = 0x000000002D698001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_LLAMA = 0x000000002D698003ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_LLAMASPIT = 0x0000000088000012ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_LIGHTNINGBOLT = 0x000000000B000001ULL;
-const unsigned long long ENTITY_RENDERER_TYPE_THROWNTRIDENT = 0x000000008A200006ULL;
-const unsigned long long FIREWORK_ROCKET_ENTITY_TYPE = 0x0000000088000005ULL;
-const unsigned long long ITEM_FRAME_ENTITY_TYPE = 0x000000000A080002ULL;
-const unsigned long long ARROW_ENTITY_TYPE = 0x000000008A020000ULL;
 }
 EntityRenderDispatcher::EntityRenderDispatcher(Textures* textures, ItemRenderer* itemRenderer)
     : boost::unordered_map<unsigned long long, EntityRenderer*>(), mPlayerRenderers(),
@@ -219,101 +125,101 @@ EntityRenderDispatcher::EntityRenderDispatcher(Textures* textures, ItemRenderer*
       mRenderShadow(true), mRenderHitBoxes(false)
 {
     GlStateManager::enableLighting();
-    (*this)[ENTITY_RENDERER_TYPE_SPIDER] = new SpiderRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_CAVESPIDER] = new CaveSpiderRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_PIG] = new PigRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SHEEP] = new SheepRenderer(this, new SheepModel(ModelDefinition()), new SheepFurModel(ModelDefinition()), 0.7F);
-    (*this)[ENTITY_RENDERER_TYPE_COW] = new CowRenderer(this, new CowModel(ModelDefinition()), 0.7F);
-    (*this)[ENTITY_RENDERER_TYPE_MUSHROOMCOW] = new MushroomCowRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_WOLF] = new WolfRenderer(this, new WolfModel(ModelDefinition()), 0.5F);
-    (*this)[ENTITY_RENDERER_TYPE_CHICKEN] = new ChickenRenderer(this, new ChickenModel(ModelDefinition()), 0.3F);
-    (*this)[ENTITY_RENDERER_TYPE_OCELOT] = new OcelotRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_RABBIT] = new RabbitRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_PARROT] = new ParrotRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SILVERFISH] = new SilverfishRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ENDERMITE] = new EndermiteRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_CREEPER] = new CreeperRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ENDERMAN] = new EndermanRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SNOWMAN] = new SnowManRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SKELETON] = new SkeletonRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_WITHERSKELETON] = new WitherSkeletonRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_STRAY] = new StrayRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_WITCH] = new WitchRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_BLAZE] = new BlazeRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_PIGZOMBIE] = new PigZombieRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ZOMBIE] = new ZombieRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ZOMBIEVILLAGER] = new ZombieVillagerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_HUSK] = new HuskRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_DROWNED] = new DrownedRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SLIME] = new SlimeRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_LAVASLIME] = new LavaSlimeRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_GIANTMOB] = new GiantMobRenderer(this, 6.0F);
-    (*this)[ENTITY_RENDERER_TYPE_GHAST] = new GhastRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SQUID] = new SquidRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_TROPICALFISH] = new TropicalFishRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_FISH] = new FishRenderer(this, FishRenderer::FISH_TYPE_COD, 0.2F);
-    (*this)[ENTITY_RENDERER_TYPE_PUFFERFISH] = new PufferfishRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_FISH_2] = new FishRenderer(this, FishRenderer::FISH_TYPE_SALMON, 0.25F);
-    (*this)[ENTITY_RENDERER_TYPE_TURTLE] = new TurtleRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_DOLPHIN] = new DolphinRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_VILLAGER] = new VillagerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_VILLAGERGOLEM] = new VillagerGolemRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_BAT] = new BatRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_GUARDIAN] = new GuardianRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ELDERGUARDIAN] = new ElderGuardianRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SHULKER] = new ShulkerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_POLARBEAR] = new PolarBearRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_EVOCATIONILLAGER] = new EvocationIllagerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_VINDICATIONILLAGER] = new VindicationIllagerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_VEX] = new VexRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_PHANTOM] = new PhantomRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ILLUSIONILLAGER] = new IllusionIllagerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ENDERDRAGON] = new EnderDragonRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ENDERCRYSTAL] = new EnderCrystalRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_WITHERBOSS] = new WitherBossRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_DEFAULT] = new DefaultRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_PAINTING] = new PaintingRenderer(this);
-    (*this)[ITEM_FRAME_ENTITY_TYPE] = new ItemFrameRenderer(this, itemRenderer);
-    (*this)[ENTITY_RENDERER_TYPE_LEASHKNOT] = new LeashKnotRenderer(this);
-    (*this)[ARROW_ENTITY_TYPE] = new ArrowRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_TIPPABLEARROW] = new TippableArrowRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SPECTRALARROW] = new SpectralArrowRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNITEM] = new ThrownItemRenderer(this, Items::snowball);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNITEM_2] = new ThrownItemRenderer(this, Items::enderPearl);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNITEM_3] = new ThrownItemRenderer(this, Items::enderEye);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNITEM_4] = new ThrownItemRenderer(this, Items::egg);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNPOTION] = new ThrownPotionRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNITEM_5] = new ThrownItemRenderer(this, Items::experienceBottle);
-    (*this)[FIREWORK_ROCKET_ENTITY_TYPE] = new ThrownItemRenderer(this, Items::fireworks);
-    (*this)[ENTITY_RENDERER_TYPE_FIREBALL] = new FireballRenderer(this, 2.0F);
-    (*this)[ENTITY_RENDERER_TYPE_FIREBALL_2] = new FireballRenderer(this, 0.5F);
-    (*this)[ENTITY_RENDERER_TYPE_DRAGONFIREBALL] = new DragonFireballRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_WITHERSKULL] = new WitherSkullRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_SHULKERBULLET] = new ShulkerBulletRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ITEMENTITY] = new ItemEntityRenderer(this, itemRenderer);
-    (*this)[ENTITY_RENDERER_TYPE_EXPERIENCEORB] = new ExperienceOrbRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_TNT] = new TntRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_FALLINGBLOCK] = new FallingBlockRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_ARMORSTAND] = new ArmorStandRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_EVOCATIONFANGS] = new EvocationFangsRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_TNTMINECART] = new TntMinecartRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_MINECARTSPAWNER] = new MinecartSpawnerRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_MINECART] = new MinecartRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_MINECART_2] = new MinecartRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_MINECART_3] = new MinecartRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_MINECART_4] = new MinecartRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_BOAT] = new BoatRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_FISHINGHOOK] = new FishingHookRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_AREAEFFECTCLOUD] = new AreaEffectCloudRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_HORSE] = new HorseRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_UNDEADHORSE] = new UndeadHorseRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_UNDEADHORSE_2] = new UndeadHorseRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_CHESTEDHORSE] = new ChestedHorseRenderer(this, 0.92F);
-    (*this)[ENTITY_RENDERER_TYPE_CHESTEDHORSE_2] = new ChestedHorseRenderer(this, 0.87F);
-    (*this)[ENTITY_RENDERER_TYPE_LLAMA] = new LlamaRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_LLAMASPIT] = new LlamaSpitRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_LIGHTNINGBOLT] = new LightningBoltRenderer(this);
-    (*this)[ENTITY_RENDERER_TYPE_THROWNTRIDENT] = new ThrownTridentRenderer(this);
+    (*this)[EntityType::SPIDER] = new SpiderRenderer(this);
+    (*this)[EntityType::CAVE_SPIDER] = new CaveSpiderRenderer(this);
+    (*this)[EntityType::PIG] = new PigRenderer(this);
+    (*this)[EntityType::SHEEP] = new SheepRenderer(this, new SheepModel(ModelDefinition()), new SheepFurModel(ModelDefinition()), 0.7F);
+    (*this)[EntityType::COW] = new CowRenderer(this, new CowModel(ModelDefinition()), 0.7F);
+    (*this)[EntityType::MUSHROOM_COW] = new MushroomCowRenderer(this);
+    (*this)[EntityType::WOLF] = new WolfRenderer(this, new WolfModel(ModelDefinition()), 0.5F);
+    (*this)[EntityType::CHICKEN] = new ChickenRenderer(this, new ChickenModel(ModelDefinition()), 0.3F);
+    (*this)[EntityType::OCELOT] = new OcelotRenderer(this);
+    (*this)[EntityType::RABBIT] = new RabbitRenderer(this);
+    (*this)[EntityType::PARROT] = new ParrotRenderer(this);
+    (*this)[EntityType::SILVERFISH] = new SilverfishRenderer(this);
+    (*this)[EntityType::ENDERMITE] = new EndermiteRenderer(this);
+    (*this)[EntityType::CREEPER] = new CreeperRenderer(this);
+    (*this)[EntityType::ENDER_MAN] = new EndermanRenderer(this);
+    (*this)[EntityType::SNOW_MAN] = new SnowManRenderer(this);
+    (*this)[EntityType::SKELETON] = new SkeletonRenderer(this);
+    (*this)[EntityType::WITHER_SKELETON] = new WitherSkeletonRenderer(this);
+    (*this)[EntityType::STRAY] = new StrayRenderer(this);
+    (*this)[EntityType::WITCH] = new WitchRenderer(this);
+    (*this)[EntityType::BLAZE] = new BlazeRenderer(this);
+    (*this)[EntityType::PIG_ZOMBIE] = new PigZombieRenderer(this);
+    (*this)[EntityType::ZOMBIE] = new ZombieRenderer(this);
+    (*this)[EntityType::ZOMBIE_VILLAGER] = new ZombieVillagerRenderer(this);
+    (*this)[EntityType::HUSK] = new HuskRenderer(this);
+    (*this)[EntityType::DROWNED] = new DrownedRenderer(this);
+    (*this)[EntityType::SLIME] = new SlimeRenderer(this);
+    (*this)[EntityType::MAGMA_CUBE] = new LavaSlimeRenderer(this);
+    (*this)[EntityType::GIANT] = new GiantMobRenderer(this, 6.0F);
+    (*this)[EntityType::GHAST] = new GhastRenderer(this);
+    (*this)[EntityType::SQUID] = new SquidRenderer(this);
+    (*this)[EntityType::TROPICAL_FISH] = new TropicalFishRenderer(this);
+    (*this)[EntityType::FISH] = new FishRenderer(this, FishRenderer::FISH_TYPE_COD, 0.2F);
+    (*this)[EntityType::PUFFERFISH] = new PufferfishRenderer(this);
+    (*this)[EntityType::SALMON] = new FishRenderer(this, FishRenderer::FISH_TYPE_SALMON, 0.25F);
+    (*this)[EntityType::TURTLE] = new TurtleRenderer(this);
+    (*this)[EntityType::DOLPHIN] = new DolphinRenderer(this);
+    (*this)[EntityType::VILLAGER] = new VillagerRenderer(this);
+    (*this)[EntityType::VILLAGER_GOLEM] = new VillagerGolemRenderer(this);
+    (*this)[EntityType::BAT] = new BatRenderer(this);
+    (*this)[EntityType::GUARDIAN] = new GuardianRenderer(this);
+    (*this)[EntityType::ELDER_GUARDIAN] = new ElderGuardianRenderer(this);
+    (*this)[EntityType::SHULKER] = new ShulkerRenderer(this);
+    (*this)[EntityType::POLAR_BEAR] = new PolarBearRenderer(this);
+    (*this)[EntityType::EVOCATION_ILLAGER] = new EvocationIllagerRenderer(this);
+    (*this)[EntityType::VINDICATION_ILLAGER] = new VindicationIllagerRenderer(this);
+    (*this)[EntityType::VEX] = new VexRenderer(this);
+    (*this)[EntityType::PHANTOM] = new PhantomRenderer(this);
+    (*this)[EntityType::ILLUSION_ILLAGER] = new IllusionIllagerRenderer(this);
+    (*this)[EntityType::ENDER_DRAGON] = new EnderDragonRenderer(this);
+    (*this)[EntityType::ENDER_CRYSTAL] = new EnderCrystalRenderer(this);
+    (*this)[EntityType::WITHER_BOSS] = new WitherBossRenderer(this);
+    (*this)[EntityType::ENTITY] = new DefaultRenderer(this);
+    (*this)[EntityType::PAINTING] = new PaintingRenderer(this);
+    (*this)[EntityType::ITEM_FRAME] = new ItemFrameRenderer(this, itemRenderer);
+    (*this)[EntityType::LEASH_FENCE_KNOT_ENTITY] = new LeashKnotRenderer(this);
+    (*this)[EntityType::ARROW] = new ArrowRenderer(this);
+    (*this)[EntityType::TIPPABLE_ARROW] = new TippableArrowRenderer(this);
+    (*this)[EntityType::SPECTRAL_ARROW] = new SpectralArrowRenderer(this);
+    (*this)[EntityType::SNOWBALL] = new ThrownItemRenderer(this, Items::snowball);
+    (*this)[EntityType::THROWN_ENDERPEARL] = new ThrownItemRenderer(this, Items::enderPearl);
+    (*this)[EntityType::EYE_OF_ENDER_SIGNAL] = new ThrownItemRenderer(this, Items::enderEye);
+    (*this)[EntityType::THROWN_EGG] = new ThrownItemRenderer(this, Items::egg);
+    (*this)[EntityType::THROWN_POTION] = new ThrownPotionRenderer(this);
+    (*this)[EntityType::THROWN_EXP_BOTTLE] = new ThrownItemRenderer(this, Items::experienceBottle);
+    (*this)[EntityType::FIREWORKS_ROCKET_ENTITY] = new ThrownItemRenderer(this, Items::fireworks);
+    (*this)[EntityType::LARGE_FIREBALL] = new FireballRenderer(this, 2.0F);
+    (*this)[EntityType::SMALL_FIREBALL] = new FireballRenderer(this, 0.5F);
+    (*this)[EntityType::DRAGON_FIREBALL] = new DragonFireballRenderer(this);
+    (*this)[EntityType::WITHER_SKULL] = new WitherSkullRenderer(this);
+    (*this)[EntityType::SHULKER_BULLET] = new ShulkerBulletRenderer(this);
+    (*this)[EntityType::ITEM_ENTITY] = new ItemEntityRenderer(this, itemRenderer);
+    (*this)[EntityType::EXPERIENCE_ORB] = new ExperienceOrbRenderer(this);
+    (*this)[EntityType::PRIMED_TNT] = new TntRenderer(this);
+    (*this)[EntityType::FALLING_BLOCK_ENTITY] = new FallingBlockRenderer(this);
+    (*this)[EntityType::ARMOR_STAND] = new ArmorStandRenderer(this);
+    (*this)[EntityType::EVOCATION_FANGS] = new EvocationFangsRenderer(this);
+    (*this)[EntityType::MINECART_TNT] = new TntMinecartRenderer(this);
+    (*this)[EntityType::MINECART_SPAWNER] = new MinecartSpawnerRenderer(this);
+    (*this)[EntityType::MINECART_RIDEABLE] = new MinecartRenderer(this);
+    (*this)[EntityType::MINECART_FURNACE] = new MinecartRenderer(this);
+    (*this)[EntityType::MINECART_CHEST] = new MinecartRenderer(this);
+    (*this)[EntityType::MINECART_HOPPER] = new MinecartRenderer(this);
+    (*this)[EntityType::BOAT] = new BoatRenderer(this);
+    (*this)[EntityType::FISHING_HOOK] = new FishingHookRenderer(this);
+    (*this)[EntityType::AREA_EFFECT_CLOUD] = new AreaEffectCloudRenderer(this);
+    (*this)[EntityType::HORSE] = new HorseRenderer(this);
+    (*this)[EntityType::SKELETON_HORSE] = new UndeadHorseRenderer(this);
+    (*this)[EntityType::ZOMBIE_HORSE] = new UndeadHorseRenderer(this);
+    (*this)[EntityType::MULE] = new ChestedHorseRenderer(this, 0.92F);
+    (*this)[EntityType::DONKEY] = new ChestedHorseRenderer(this, 0.87F);
+    (*this)[EntityType::LLAMA] = new LlamaRenderer(this);
+    (*this)[EntityType::LLAMA_SPIT] = new LlamaSpitRenderer(this);
+    (*this)[EntityType::LIGHTNING_BOLT] = new LightningBoltRenderer(this);
+    (*this)[EntityType::THROWN_TRIDENT] = new ThrownTridentRenderer(this);
     mPlayerRenderer = new PlayerRenderer(this, false, false);
     const EPlayerModelType defaultModel = EPLAYER_MODEL_DEFAULT;
     mPlayerRenderers[defaultModel] = mPlayerRenderer;
@@ -352,7 +258,7 @@ void EntityRenderDispatcher::setPosition(double x, double y, double z)
 
 EntityRenderer* EntityRenderDispatcher::getRenderer(unsigned long long type)
 {
-    if ((type & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((type & EntityType::PLAYER) == EntityType::PLAYER)
         return mPlayerRenderer;
     iterator it = find(type);
     return it->second;
@@ -368,7 +274,7 @@ PlayerRenderer* EntityRenderDispatcher::getPlayerRenderer(EPlayerModelType model
 
 EntityRenderer* EntityRenderDispatcher::getRenderer(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         if (player->isSpectator() && player->SpectateAsOtherEntity())
@@ -376,8 +282,8 @@ EntityRenderer* EntityRenderDispatcher::getRenderer(boost::shared_ptr<Entity> en
         return getPlayerRenderer(static_cast<EPlayerModelType>(player->getModelName()));
     }
 
-    if (entity->GetType() == FIREWORK_ROCKET_ENTITY_TYPE)
-        return getRenderer(ARROW_ENTITY_TYPE);
+    if (entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY)
+        return getRenderer(EntityType::ARROW);
 
     return getRenderer(entity->GetType());
 }
@@ -391,7 +297,7 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
     mFont = font;
     mPlayer = player;
 
-    bool sleeping = (camera->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+    bool sleeping = (camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
         && boost::static_pointer_cast<LivingEntity>(camera)->isSleeping();
 
     if (sleeping)
@@ -412,7 +318,7 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
             + Minecraft::GetInstance()->mPlayer->mXRotO;
     }
 
-    if ((Minecraft::GetInstance()->mPlayer->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+    if ((Minecraft::GetInstance()->mPlayer->GetType() & EntityType::PLAYER) == EntityType::PLAYER
         && boost::static_pointer_cast<Player>(camera)->GetThirdPersonView(false) == 2)
     {
         mCameraYRot += 180.0F;
@@ -462,7 +368,7 @@ void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, dou
                                                box->mMaxY - entity->mY + y,
                                                box->mMaxZ - entity->mZ + z), color);
 
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         LevelRenderer::renderLineBox(AABB::newTemp(x - halfWidth,
                                                    y + entity->getEyeHeight() - 0.01F,
@@ -537,7 +443,7 @@ void EntityRenderDispatcher::render(boost::shared_ptr<Entity>& entity, float par
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
     render(entity, x, y, z, yaw, partialTicks, renderOutlines,
-           entity->GetType() == ITEM_FRAME_ENTITY_TYPE, entity->ShouldRenderShadow(), false);
+           entity->GetType() == EntityType::ITEM_FRAME, entity->ShouldRenderShadow(), false);
 }
 
 void EntityRenderDispatcher::renderSecondPass(boost::shared_ptr<Entity>& entity, float partialTicks)

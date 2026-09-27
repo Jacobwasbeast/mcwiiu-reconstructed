@@ -1,4 +1,5 @@
 #include "game/client/render/FireworksParticles__FireworksSparkParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -68,5 +69,5 @@ void FireworksParticles::FireworksSparkParticle::tick()
 
 uint64_t FireworksParticles::FireworksSparkParticle::GetType()
 {
-    return 0x0000000000080221ULL;
+    return ParticleKind::FIREWORKS_SPARK;
 }

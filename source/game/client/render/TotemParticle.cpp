@@ -1,4 +1,5 @@
 #include "game/client/render/TotemParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 TotemParticle::TotemParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
@@ -32,7 +33,7 @@ TotemParticle::~TotemParticle()
 
 uint64_t TotemParticle::GetType()
 {
-    return 0x000000000008022BULL;
+    return ParticleKind::TOTEM;
 }
 
 Particle* TotemParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

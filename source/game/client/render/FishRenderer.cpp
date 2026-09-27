@@ -1,4 +1,5 @@
 #include "game/client/render/FishRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/FishModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
@@ -22,18 +23,18 @@ FishRenderer::~FishRenderer()
 
 Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 {
-    if (entity->GetType() == 0x000000000D502003ULL)
+    if (entity->GetType() == EntityType::PUFFERFISH)
         return LivingEntityRenderer::getModel(entity);
     return mModel;
 }
 
 const ResourceLocation* FishRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() != 0x000000000D502002ULL)
+    if (entity->GetType() != EntityType::FISH)
     {
-        if (entity->GetType() == 0x000000000D502003ULL)
+        if (entity->GetType() == EntityType::PUFFERFISH)
             return &PUFFERFISH_TEXTURE;
-        if (entity->GetType() == 0x000000000D502004ULL)
+        if (entity->GetType() == EntityType::SALMON)
             return &SALMON_TEXTURE;
     }
     return &FISH_TEXTURE;

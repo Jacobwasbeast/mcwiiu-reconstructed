@@ -1,4 +1,5 @@
 #include "game/client/render/RedDustParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mth.hpp"
 
@@ -82,7 +83,7 @@ void RedDustParticle::tick()
 
 uint64_t RedDustParticle::GetType()
 {
-    return 0x000000000008020BULL;
+    return ParticleKind::RED_DUST;
 }
 
 Particle* RedDustParticle::Provider::createParticle(ePARTICLE_TYPE type,

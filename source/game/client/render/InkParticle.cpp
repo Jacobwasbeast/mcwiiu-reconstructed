@@ -1,4 +1,6 @@
 #include "game/client/render/InkParticle.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/TextureUVCoordinateSet.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -53,9 +55,9 @@ void InkParticle::tick()
     move(xd, yd, zd);
     BlockPos position(x, y, z);
     const BlockState* state = ((LevelSource*)level)->getBlockState(position);
-    if (state != NULL && state->getBlock() == Blocks::AIR)
+    if (state->getMaterial() == Material::AIR)
         yd -= 0.008;
-    if (z == zo)
+    if (y == yo)
     {
         xd *= 1.1;
         zd *= 1.1;
@@ -65,17 +67,16 @@ void InkParticle::tick()
     zd *= 0.92;
     if (onGround)
     {
-        xd *= 0.5;
-        zd *= 0.5;
+        xd *= 0.7;
+        zd *= 0.7;
     }
-    ++age;
-    if (age >= lifetime)
+    if (age++ >= lifetime)
         remove();
 }
 
 uint64_t InkParticle::GetType()
 {
-    return 0x0000000000080203ULL;
+    return ParticleKind::INK;
 }
 
 Particle* InkParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

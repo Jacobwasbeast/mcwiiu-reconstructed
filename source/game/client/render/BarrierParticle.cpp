@@ -1,19 +1,24 @@
 #include "game/client/render/BarrierParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/Direction.hpp"
 #include "game/item/Item.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
 BarrierParticle::BarrierParticle(Level* level, double x, double y, double z, Item* item)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
-    setSprite(item->getIcon(0));
+    setSprite(Blocks::barrier->getTexture(Direction::UP));
     xd = 0.0;
     yd = 0.0;
     zd = 0.0;
-    size = 1.0f;
-    gravity = 90.0f;
+    rCol = 1.0f;
+    gCol = 1.0f;
+    bCol = 1.0f;
+    gravity = 0.0f;
     lifetime = 80;
 }
 
@@ -60,7 +65,7 @@ void BarrierParticle::render(BufferBuilder* buffer,
 
 uint64_t BarrierParticle::GetType()
 {
-    return 0x0000000000080223ULL;
+    return ParticleKind::BARRIER;
 }
 
 Particle* BarrierParticle::Provider::createParticle(ePARTICLE_TYPE type,
@@ -73,5 +78,5 @@ Particle* BarrierParticle::Provider::createParticle(ePARTICLE_TYPE type,
                                                     double za,
                                                     arrayWithLength<int> params)
 {
-    return new BarrierParticle(level, x, y, z, Item::byBlock(Blocks::BARRIER));
+    return new BarrierParticle(level, x, y, z, Item::byBlock(Blocks::barrier));
 }

@@ -1,4 +1,5 @@
 #include "game/client/render/AbstractHorseModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 
@@ -372,7 +373,7 @@ void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
 
     bool chestedHorse = true;
 
-    if (type != ENTITY_TYPE_DONKEY && type != ENTITY_TYPE_MULE)
+    if (type != EntityType::DONKEY && type != EntityType::MULE)
     {
         chestedHorse = false;
     }
@@ -468,5 +469,5 @@ void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
 
 std::wstring AbstractHorseModel::getName()
 {
-    return L"horse_v2";
+    return L"horse.v2";
 }

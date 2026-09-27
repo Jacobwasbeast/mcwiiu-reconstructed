@@ -1,4 +1,5 @@
 #include "game/client/render/ZombieModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -32,7 +33,7 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
 
     bool aggressive = false;
 
-    if ((entity->GetType() & ENTITY_TYPE_ZOMBIE) == ENTITY_TYPE_ZOMBIE)
+    if ((entity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE)
     {
         boost::shared_ptr<Zombie> zombie = boost::dynamic_pointer_cast<Zombie>(entity);
         aggressive = zombie->isAggressive();

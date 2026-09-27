@@ -1,4 +1,5 @@
 #include "game/client/render/ItemInHandRenderer.hpp"
+#include "game/world/block/BlockId.hpp"
 #include <cmath>
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/GameRenderer.hpp"
@@ -27,6 +28,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/FireBlock.hpp"
@@ -41,7 +43,7 @@
 
 namespace
 {
-int sItemRenderDisplayLists[6] = {-1, -1, -1, -1, -1, -1};
+int sItemRenderDisplayLists[5] = {-1, -1, -1, -1, -1};
 static ResourceLocation TERRAIN_LOCATION((_TEXTURE_NAME)0);
 static ResourceLocation WATER_OVERLAY_LOCATION((_TEXTURE_NAME)2);
 static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)13);
@@ -60,288 +62,6 @@ void bindPlayerSkin(Textures* textures, boost::shared_ptr<LocalPlayer> player)
     textures->clearLastBoundId();
 }
 
-void buildBlockItemDisplayList(int listId)
-{
-    GlStateManager::newList(listId, 0);
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
-    const float zero = 0.0f;
-    const float one = 1.0f;
-    const float negOne = -1.0f;
-    const float uvBase = 0.001953125f;
-    const float uvStep = 0.0625f;
-    const float uvScale = 0.00390625f;
-    const float negHalf = -0.0625f;
-    for (int slice = 0; slice < 16; ++slice)
-    {
-        float v1 = (float)(15 - slice) * uvScale + uvBase;
-        for (int column = 0; column < 16; ++column)
-        {
-            float u0 = (float)column * uvStep;
-            float u1 = u0 + uvStep;
-            float x0 = (float)column * uvStep;
-            float x1 = x0 + uvStep;
-            float y0 = (float)slice * uvStep;
-            float y1 = y0 + uvStep;
-            builder->normal(zero, zero, one);
-            builder->vertexUV(x0, y0, zero, v1, u1);
-            builder->vertexUV(x1, y0, zero, v1, u1);
-            builder->vertexUV(x1, y1, zero, v1, u1);
-            builder->vertexUV(x0, y1, zero, v1, u1);
-            builder->normal(zero, zero, negOne);
-            builder->vertexUV(x0, y1, negHalf, v1, u1);
-            builder->vertexUV(x1, y1, negHalf, v1, u1);
-            builder->vertexUV(x1, y0, negHalf, v1, u1);
-            builder->vertexUV(x0, y0, negHalf, v1, u1);
-            builder->normal(negOne, zero, zero);
-            builder->vertexUV(x0, y0, negHalf, v1, u1);
-            builder->vertexUV(x0, y0, zero, v1, u1);
-            builder->vertexUV(x0, y1, zero, v1, u1);
-            builder->vertexUV(x0, y1, negHalf, v1, u1);
-            builder->normal(one, zero, zero);
-            builder->vertexUV(x1, y1, negHalf, v1, u1);
-            builder->vertexUV(x1, y1, zero, v1, u1);
-            builder->vertexUV(x1, y0, zero, v1, u1);
-            builder->vertexUV(x1, y0, negHalf, v1, u1);
-            builder->normal(zero, one, zero);
-            builder->vertexUV(x1, y0, zero, v1, u1);
-            builder->vertexUV(x0, y0, zero, v1, u1);
-            builder->vertexUV(x0, y0, negHalf, v1, u1);
-            builder->vertexUV(x1, y0, negHalf, v1, u1);
-            builder->normal(zero, negOne, zero);
-            builder->vertexUV(x1, y1, negHalf, v1, u1);
-            builder->vertexUV(x0, y1, negHalf, v1, u1);
-            builder->vertexUV(x0, y1, zero, v1, u1);
-            builder->vertexUV(x1, y1, zero, v1, u1);
-        }
-    }
-    builder->end();
-    GlStateManager::endList(0);
-}
-
-void buildExtrudedItemDisplayList(int listId, float layerScale, float depth)
-{
-    GlStateManager::newList(listId, 0);
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
-    const float zero = 0.0f;
-    const float one = 1.0f;
-    const float negOne = -1.0f;
-    const float uvEnd = 0.05882352963089943f;
-    const float uvInset = 0.029411764815449715f;
-    float halfDepth = depth / layerScale;
-    builder->normal(zero, zero, one);
-    builder->vertexUV(zero, zero, zero, uvEnd, uvEnd);
-    builder->vertexUV(one, zero, zero, zero, uvEnd);
-    builder->vertexUV(one, one, zero, zero, zero);
-    builder->vertexUV(zero, one, zero, uvEnd, zero);
-    builder->normal(zero, zero, negOne);
-    builder->vertexUV(zero, one, negOne, uvEnd, zero);
-    builder->vertexUV(one, one, negOne, zero, zero);
-    builder->vertexUV(one, zero, negOne, zero, uvEnd);
-    builder->vertexUV(zero, zero, negOne, uvEnd, uvEnd);
-    builder->normal(negOne, zero, zero);
-    float layerWidth = one / layerScale;
-    for (int layer = 0; layer < (int)layerScale; ++layer)
-    {
-        float x = (float)layer / layerScale;
-        float u = uvEnd - (x * halfDepth - halfDepth) - 0.009999999776482582f;
-        builder->vertexUV(x, zero, negOne, u, uvEnd);
-        builder->vertexUV(x, zero, zero, u, uvEnd);
-        builder->vertexUV(x, one, zero, u, zero);
-        builder->vertexUV(x, one, negOne, u, zero);
-    }
-    builder->normal(one, zero, zero);
-    for (int layer = 0; layer < (int)layerScale; ++layer)
-    {
-        float x = (float)layer / layerScale;
-        float x1 = x + layerWidth;
-        float u = uvEnd - (x * halfDepth - halfDepth) - 0.009999999776482582f;
-        builder->vertexUV(x1, one, negOne, u, zero);
-        builder->vertexUV(x1, one, zero, u, zero);
-        builder->vertexUV(x1, zero, zero, u, uvEnd);
-        builder->vertexUV(x1, zero, negOne, u, uvEnd);
-    }
-    builder->normal(zero, one, zero);
-    for (int layer = 0; layer < 4; ++layer)
-    {
-        float x = (float)layer / layerScale;
-        float u = uvEnd - (x * halfDepth - halfDepth) - 0.009999999776482582f;
-        builder->vertexUV(one, x + layerWidth, zero, zero, u);
-        builder->vertexUV(zero, x + layerWidth, zero, uvEnd, u);
-        builder->vertexUV(zero, x + layerWidth, negOne, uvEnd, u);
-        builder->vertexUV(one, x + layerWidth, negOne, zero, u);
-    }
-    builder->normal(zero, negOne, zero);
-    for (int layer = 0; layer < 4; ++layer)
-    {
-        float x = (float)layer / layerScale;
-        float u = uvEnd - (x * halfDepth - halfDepth) - 0.009999999776482582f;
-        builder->vertexUV(one, x, negOne, zero, u);
-        builder->vertexUV(zero, x, negOne, uvEnd, u);
-        builder->vertexUV(zero, x, zero, uvEnd, u);
-        builder->vertexUV(one, x, zero, zero, u);
-    }
-    builder->end();
-    GlStateManager::endList(0);
-}
-
-void buildFlatItemDisplayList(int listId)
-{
-    GlStateManager::newList(listId, 0);
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
-    const float zero = 0.0f;
-    const float one = 1.0f;
-    const float negHalf = -0.0625f;
-    const float negOne = -1.0f;
-    const float uv0 = 0.05859375f;
-    const float uv1 = 0.02757352963089943f;
-    builder->normal(zero, zero, negOne);
-    builder->vertexUV(zero, one, negHalf, uv0, zero);
-    builder->vertexUV(one, one, negHalf, zero, zero);
-    builder->vertexUV(one, zero, negHalf, zero, uv1);
-    builder->vertexUV(zero, zero, negHalf, uv0, uv1);
-    builder->end();
-    GlStateManager::endList(0);
-}
-
-void buildGuiItemDisplayList(int listId)
-{
-    GlStateManager::newList(listId, 0);
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
-    const float zero = 0.0f;
-    const float one = 1.0f;
-    const float negHalf = -0.0625f;
-    const float negOne = -1.0f;
-    const float uvStep = 0.0625f;
-    const float uvB = 0.029411764815449715f;
-    const float uvC = 0.02757352963089943f;
-    const float uvD = 0.0018382353009656072f;
-    const float uvE = 0.05859375f;
-    const float uvF = 0.00390625f;
-    builder->normal(zero, zero, one);
-    builder->vertexUV(zero, zero, zero, uvStep, uvB);
-    builder->vertexUV(one, zero, zero, zero, uvB);
-    builder->vertexUV(one, one, zero, zero, zero);
-    builder->vertexUV(zero, one, zero, uvStep, zero);
-    builder->normal(zero, zero, negOne);
-    builder->vertexUV(zero, one, negHalf, uvStep, zero);
-    builder->vertexUV(one, one, negHalf, zero, zero);
-    builder->vertexUV(one, zero, negHalf, zero, uvB);
-    builder->vertexUV(zero, zero, negHalf, uvStep, uvB);
-    builder->normal(negOne, zero, zero);
-    builder->vertexUV(zero, zero, negHalf, uvStep, uvB);
-    builder->vertexUV(zero, zero, zero, uvStep, uvB);
-    builder->vertexUV(zero, one, zero, uvE, zero);
-    builder->vertexUV(zero, one, negHalf, uvE, zero);
-    builder->normal(one, zero, zero);
-    builder->vertexUV(one, one, negHalf, zero, zero);
-    builder->vertexUV(one, one, zero, zero, zero);
-    builder->vertexUV(one, zero, zero, uvF, uvB);
-    builder->vertexUV(one, zero, negHalf, uvF, uvB);
-    builder->normal(zero, one, zero);
-    builder->vertexUV(one, zero, zero, zero, uvC);
-    builder->vertexUV(zero, zero, zero, uvStep, uvB);
-    builder->vertexUV(zero, zero, negHalf, uvStep, uvB);
-    builder->vertexUV(one, zero, negHalf, zero, uvC);
-    builder->normal(zero, negOne, zero);
-    builder->vertexUV(one, one, negHalf, zero, zero);
-    builder->vertexUV(zero, one, negHalf, uvStep, uvD);
-    builder->vertexUV(zero, one, zero, uvStep, uvD);
-    builder->vertexUV(one, one, zero, zero, uvD);
-    builder->end();
-    GlStateManager::endList(0);
-}
-
-void buildHighResBlockItemDisplayList(int listId)
-{
-    GlStateManager::newList(listId, 0);
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
-    const float zero = 0.0f;
-    const float one = 1.0f;
-    const float negOne = -1.0f;
-    const float uvBase = 0.0009191176504828036f;
-    const float uvStep = 0.0625f;
-    const float uvScale = 0.029411764815449715f;
-    const float negHalf = -0.0625f;
-    for (int slice = 0; slice < 16; ++slice)
-    {
-        float v1 = (float)(15 - slice) * uvScale + uvBase;
-        for (int column = 0; column < 16; ++column)
-        {
-            float u1 = (float)(15 - column) * uvScale + 0.00390625f;
-            float x0 = (float)column * uvStep;
-            float x1 = x0 + uvStep;
-            float y0 = (float)slice * uvStep;
-            float y1 = y0 + uvStep;
-            builder->normal(zero, zero, one);
-            builder->vertexUV(x0, y0, zero, u1, v1);
-            builder->vertexUV(x1, y0, zero, u1, v1);
-            builder->vertexUV(x1, y1, zero, u1, v1);
-            builder->vertexUV(x0, y1, zero, u1, v1);
-            builder->normal(zero, zero, negOne);
-            builder->vertexUV(x0, y1, negHalf, u1, v1);
-            builder->vertexUV(x1, y1, negHalf, u1, v1);
-            builder->vertexUV(x1, y0, negHalf, u1, v1);
-            builder->vertexUV(x0, y0, negHalf, u1, v1);
-            builder->normal(negOne, zero, zero);
-            builder->vertexUV(x0, y0, negHalf, u1, v1);
-            builder->vertexUV(x0, y0, zero, u1, v1);
-            builder->vertexUV(x0, y1, zero, u1, v1);
-            builder->vertexUV(x0, y1, negHalf, u1, v1);
-            builder->normal(one, zero, zero);
-            builder->vertexUV(x1, y1, negHalf, u1, v1);
-            builder->vertexUV(x1, y1, zero, u1, v1);
-            builder->vertexUV(x1, y0, zero, u1, v1);
-            builder->vertexUV(x1, y0, negHalf, u1, v1);
-            builder->normal(zero, one, zero);
-            builder->vertexUV(x1, y0, zero, u1, v1);
-            builder->vertexUV(x0, y0, zero, u1, v1);
-            builder->vertexUV(x0, y0, negHalf, u1, v1);
-            builder->vertexUV(x1, y0, negHalf, u1, v1);
-            builder->normal(zero, negOne, zero);
-            builder->vertexUV(x1, y1, negHalf, u1, v1);
-            builder->vertexUV(x0, y1, negHalf, u1, v1);
-            builder->vertexUV(x0, y1, zero, u1, v1);
-            builder->vertexUV(x1, y1, zero, u1, v1);
-        }
-    }
-    builder->end();
-    GlStateManager::endList(0);
-}
-
-void ensureItemDisplayListsBuilt()
-{
-    if (sItemRenderDisplayLists[0] == -1)
-    {
-        sItemRenderDisplayLists[0] = MemoryTracker::genLists(1);
-        buildBlockItemDisplayList(sItemRenderDisplayLists[0]);
-    }
-    if (sItemRenderDisplayLists[4] == -1)
-    {
-        sItemRenderDisplayLists[4] = MemoryTracker::genLists(2);
-        buildExtrudedItemDisplayList(sItemRenderDisplayLists[4], 16.0f, 0.8500000238418579f);
-        buildExtrudedItemDisplayList(sItemRenderDisplayLists[4] + 1, 256.0f, 0.8500000238418579f);
-    }
-    if (sItemRenderDisplayLists[2] == -1)
-    {
-        sItemRenderDisplayLists[2] = MemoryTracker::genLists(1);
-        buildFlatItemDisplayList(sItemRenderDisplayLists[2]);
-    }
-    if (sItemRenderDisplayLists[3] == -1)
-    {
-        sItemRenderDisplayLists[3] = MemoryTracker::genLists(1);
-        buildHighResBlockItemDisplayList(sItemRenderDisplayLists[3]);
-    }
-    if (sItemRenderDisplayLists[1] == -1)
-    {
-        sItemRenderDisplayLists[1] = MemoryTracker::genLists(1);
-        buildGuiItemDisplayList(sItemRenderDisplayLists[1]);
-    }
-}
 }
 
 ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
@@ -350,7 +70,241 @@ ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
       mMainHandHeightOld(0.0f), mOffHandHeightOld(0.0f),
       mEntityRenderDispatcher(minecraft->getEntityRenderDispatcher()), mItemRenderer(minecraft->getItemRenderer()), mListId(-1)
 {
-    ensureItemDisplayListsBuilt();
+    if (sItemRenderDisplayLists[0] == -1)
+    {
+        sItemRenderDisplayLists[0] = MemoryTracker::genLists(1);
+        GlStateManager::newList(sItemRenderDisplayLists[0], 0);
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        builder->begin();
+        for (int row = 0; row < 16; ++row)
+        {
+            float y0 = static_cast<float>(row) * 0.0625f;
+            float v = static_cast<float>(15 - row) / 272.0f + 0.0018382353f;
+            for (int column = 0; column < 16; ++column)
+            {
+                float y1 = y0 + 0.0625f;
+                float x0 = static_cast<float>(column) * 0.0625f;
+                float u = static_cast<float>(15 - column) * 0.00390625f + 0.001953125f;
+                float x1 = x0 + 0.0625f;
+                builder->normal(0.0f, 0.0f, 1.0f);
+                builder->vertexUV(x0, y0, 0.0f, u, v);
+                builder->vertexUV(x1, y0, 0.0f, u, v);
+                builder->vertexUV(x1, y1, 0.0f, u, v);
+                builder->vertexUV(x0, y1, 0.0f, u, v);
+                builder->normal(0.0f, 0.0f, -1.0f);
+                builder->vertexUV(x0, y1, -0.0625f, u, v);
+                builder->vertexUV(x1, y1, -0.0625f, u, v);
+                builder->vertexUV(x1, y0, -0.0625f, u, v);
+                builder->vertexUV(x0, y0, -0.0625f, u, v);
+                builder->normal(-1.0f, 0.0f, 0.0f);
+                builder->vertexUV(x0, y0, -0.0625f, u, v);
+                builder->vertexUV(x0, y0, 0.0f, u, v);
+                builder->vertexUV(x0, y1, 0.0f, u, v);
+                builder->vertexUV(x0, y1, -0.0625f, u, v);
+                builder->normal(1.0f, 0.0f, 0.0f);
+                builder->vertexUV(x1, y1, -0.0625f, u, v);
+                builder->vertexUV(x1, y1, 0.0f, u, v);
+                builder->vertexUV(x1, y0, 0.0f, u, v);
+                builder->vertexUV(x1, y0, -0.0625f, u, v);
+                builder->normal(0.0f, 1.0f, 0.0f);
+                builder->vertexUV(x1, y0, 0.0f, u, v);
+                builder->vertexUV(x0, y0, 0.0f, u, v);
+                builder->vertexUV(x0, y0, -0.0625f, u, v);
+                builder->vertexUV(x1, y0, -0.0625f, u, v);
+                builder->normal(0.0f, -1.0f, 0.0f);
+                builder->vertexUV(x1, y1, -0.0625f, u, v);
+                builder->vertexUV(x0, y1, -0.0625f, u, v);
+                builder->vertexUV(x0, y1, 0.0f, u, v);
+                builder->vertexUV(x1, y1, 0.0f, u, v);
+            }
+        }
+        builder->end();
+        GlStateManager::endList(0);
+    }
+
+    if (sItemRenderDisplayLists[1] == -1)
+    {
+        int list = MemoryTracker::genLists(2);
+        sItemRenderDisplayLists[1] = list;
+        float pixels = 16.0f;
+        float textureSize = 256.0f;
+        float depth = 0.0625f;
+        for (int size = 0; size < 2; ++size, ++list)
+        {
+            GlStateManager::newList(list, 0);
+            BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+            builder->begin();
+            float uvSize = pixels / textureSize;
+            float uvEdge = uvSize + -6.1035156e-05f;
+            builder->normal(0.0f, 0.0f, 1.0f);
+            builder->vertexUV(0.0f, 0.0f, 0.0f, uvEdge, uvEdge);
+            builder->vertexUV(1.0f, 0.0f, 0.0f, -6.1035156e-05f, uvEdge);
+            builder->vertexUV(1.0f, 1.0f, 0.0f, -6.1035156e-05f, -6.1035156e-05f);
+            builder->vertexUV(0.0f, 1.0f, 0.0f, uvEdge, -6.1035156e-05f);
+            builder->normal(0.0f, 0.0f, -1.0f);
+            float back = -depth;
+            builder->vertexUV(0.0f, 1.0f, back, uvEdge, -6.1035156e-05f);
+            builder->vertexUV(1.0f, 1.0f, back, -6.1035156e-05f, -6.1035156e-05f);
+            builder->vertexUV(1.0f, 0.0f, back, -6.1035156e-05f, uvEdge);
+            builder->vertexUV(0.0f, 0.0f, back, uvEdge, uvEdge);
+            builder->normal(-1.0f, 0.0f, 0.0f);
+            int layers = static_cast<int>(pixels);
+            float halfTexel = 0.5f / textureSize;
+            for (int layer = 0; layer < layers; ++layer)
+            {
+                float x = static_cast<float>(layer) / pixels;
+                float u = -(uvSize * x - uvSize) - halfTexel;
+                builder->vertexUV(x, 0.0f, back, u, uvSize);
+                builder->vertexUV(x, 0.0f, 0.0f, u, uvSize);
+                builder->vertexUV(x, 1.0f, 0.0f, u, 0.0f);
+                builder->vertexUV(x, 1.0f, back, u, 0.0f);
+            }
+            builder->normal(1.0f, 0.0f, 0.0f);
+            for (int layer = 0; layer < layers; ++layer)
+            {
+                float x = static_cast<float>(layer) / pixels;
+                float x1 = x + 1.0f / pixels;
+                float u = -(uvSize * x - uvSize) - halfTexel;
+                builder->vertexUV(x1, 1.0f, back, u, 0.0f);
+                builder->vertexUV(x1, 1.0f, 0.0f, u, 0.0f);
+                builder->vertexUV(x1, 0.0f, 0.0f, u, uvSize);
+                builder->vertexUV(x1, 0.0f, back, u, uvSize);
+            }
+            builder->normal(0.0f, 1.0f, 0.0f);
+            for (int layer = 0; layer < 16; ++layer)
+            {
+                float y = static_cast<float>(layer) / pixels;
+                float y1 = y + 1.0f / pixels;
+                float v = -(uvSize * y - uvSize) - halfTexel;
+                builder->vertexUV(0.0f, y1, 0.0f, uvSize, v);
+                builder->vertexUV(1.0f, y1, 0.0f, 0.0f, v);
+                builder->vertexUV(1.0f, y1, back, 0.0f, v);
+                builder->vertexUV(0.0f, y1, back, uvSize, v);
+            }
+            builder->normal(0.0f, -1.0f, 0.0f);
+            for (int layer = 0; layer < 16; ++layer)
+            {
+                float y = static_cast<float>(layer) / pixels;
+                float v = -(uvSize * y - uvSize) - halfTexel;
+                builder->vertexUV(1.0f, y, 0.0f, 0.0f, v);
+                builder->vertexUV(0.0f, y, 0.0f, uvSize, v);
+                builder->vertexUV(0.0f, y, back, uvSize, v);
+                builder->vertexUV(1.0f, y, back, 0.0f, v);
+            }
+            builder->end();
+            GlStateManager::endList(0);
+            pixels = pixels + pixels;
+            textureSize = textureSize + textureSize;
+            depth = depth * 0.5f;
+        }
+    }
+
+    if (sItemRenderDisplayLists[2] == -1)
+    {
+        sItemRenderDisplayLists[2] = MemoryTracker::genLists(1);
+        GlStateManager::newList(sItemRenderDisplayLists[2], 0);
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        builder->begin();
+        builder->normal(0.0f, 0.0f, -1.0f);
+        builder->vertexUV(0.0f, 1.0f, -0.0625f, 0.0625f, 0.0f);
+        builder->vertexUV(1.0f, 1.0f, -0.0625f, 0.0f, 0.0f);
+        builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.0f, 0.05882353f);
+        builder->vertexUV(0.0f, 0.0f, -0.0625f, 0.0625f, 0.05882353f);
+        builder->end();
+        GlStateManager::endList(0);
+    }
+
+    if (sItemRenderDisplayLists[3] == -1)
+    {
+        sItemRenderDisplayLists[3] = MemoryTracker::genLists(1);
+        GlStateManager::newList(sItemRenderDisplayLists[3], 0);
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        builder->begin();
+        for (int row = 0; row < 16; ++row)
+        {
+            float y0 = static_cast<float>(row) * 0.0625f;
+            float v = static_cast<float>(15 - row) / 544.0f + 0.00091911765f;
+            for (int column = 0; column < 16; ++column)
+            {
+                float y1 = y0 + 0.0625f;
+                float x0 = static_cast<float>(column) * 0.0625f;
+                float u = static_cast<float>(15 - column) * 0.00390625f + 0.001953125f;
+                float x1 = x0 + 0.0625f;
+                builder->normal(0.0f, 0.0f, 1.0f);
+                builder->vertexUV(x0, y0, 0.0f, u, v);
+                builder->vertexUV(x1, y0, 0.0f, u, v);
+                builder->vertexUV(x1, y1, 0.0f, u, v);
+                builder->vertexUV(x0, y1, 0.0f, u, v);
+                builder->normal(0.0f, 0.0f, -1.0f);
+                builder->vertexUV(x0, y1, -0.0625f, u, v);
+                builder->vertexUV(x1, y1, -0.0625f, u, v);
+                builder->vertexUV(x1, y0, -0.0625f, u, v);
+                builder->vertexUV(x0, y0, -0.0625f, u, v);
+                builder->normal(-1.0f, 0.0f, 0.0f);
+                builder->vertexUV(x0, y0, -0.0625f, u, v);
+                builder->vertexUV(x0, y0, 0.0f, u, v);
+                builder->vertexUV(x0, y1, 0.0f, u, v);
+                builder->vertexUV(x0, y1, -0.0625f, u, v);
+                builder->normal(1.0f, 0.0f, 0.0f);
+                builder->vertexUV(x1, y1, -0.0625f, u, v);
+                builder->vertexUV(x1, y1, 0.0f, u, v);
+                builder->vertexUV(x1, y0, 0.0f, u, v);
+                builder->vertexUV(x1, y0, -0.0625f, u, v);
+                builder->normal(0.0f, 1.0f, 0.0f);
+                builder->vertexUV(x1, y0, 0.0f, u, v);
+                builder->vertexUV(x0, y0, 0.0f, u, v);
+                builder->vertexUV(x0, y0, -0.0625f, u, v);
+                builder->vertexUV(x1, y0, -0.0625f, u, v);
+                builder->normal(0.0f, -1.0f, 0.0f);
+                builder->vertexUV(x1, y1, -0.0625f, u, v);
+                builder->vertexUV(x0, y1, -0.0625f, u, v);
+                builder->vertexUV(x0, y1, 0.0f, u, v);
+                builder->vertexUV(x1, y1, 0.0f, u, v);
+            }
+        }
+        builder->end();
+        GlStateManager::endList(0);
+    }
+
+    if (sItemRenderDisplayLists[4] == -1)
+    {
+        sItemRenderDisplayLists[4] = MemoryTracker::genLists(1);
+        GlStateManager::newList(sItemRenderDisplayLists[4], 0);
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        builder->begin();
+        builder->normal(0.0f, 0.0f, 1.0f);
+        builder->vertexUV(0.0f, 0.0f, 0.0f, 0.0625f, 0.029411765f);
+        builder->vertexUV(1.0f, 0.0f, 0.0f, 0.0f, 0.029411765f);
+        builder->vertexUV(1.0f, 1.0f, 0.0f, 0.0f, 0.0f);
+        builder->vertexUV(0.0f, 1.0f, 0.0f, 0.0625f, 0.0f);
+        builder->normal(0.0f, 0.0f, -1.0f);
+        builder->vertexUV(0.0f, 1.0f, -0.0625f, 0.0625f, 0.0f);
+        builder->vertexUV(1.0f, 1.0f, -0.0625f, 0.0f, 0.0f);
+        builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.0f, 0.029411765f);
+        builder->vertexUV(0.0f, 0.0f, -0.0625f, 0.0625f, 0.029411765f);
+        builder->normal(-1.0f, 0.0f, 0.0f);
+        builder->vertexUV(0.0f, 0.0f, -0.0625f, 0.0625f, 0.029411765f);
+        builder->vertexUV(0.0f, 0.0f, 0.0f, 0.0625f, 0.029411765f);
+        builder->vertexUV(0.0f, 1.0f, 0.0f, 0.05859375f, 0.0f);
+        builder->vertexUV(0.0f, 1.0f, -0.0625f, 0.05859375f, 0.0f);
+        builder->normal(1.0f, 0.0f, 0.0f);
+        builder->vertexUV(1.0f, 1.0f, -0.0625f, 0.0f, 0.0f);
+        builder->vertexUV(1.0f, 1.0f, 0.0f, 0.0f, 0.0f);
+        builder->vertexUV(1.0f, 0.0f, 0.0f, 0.00390625f, 0.029411765f);
+        builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.00390625f, 0.029411765f);
+        builder->normal(0.0f, 1.0f, 0.0f);
+        builder->vertexUV(1.0f, 0.0f, 0.0f, 0.0f, 0.027573530f);
+        builder->vertexUV(0.0f, 0.0f, 0.0f, 0.0625f, 0.029411765f);
+        builder->vertexUV(0.0f, 0.0f, -0.0625f, 0.0625f, 0.029411765f);
+        builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.0f, 0.027573530f);
+        builder->normal(0.0f, -1.0f, 0.0f);
+        builder->vertexUV(1.0f, 1.0f, -0.0625f, 0.0f, 0.0f);
+        builder->vertexUV(0.0f, 1.0f, -0.0625f, 0.0625f, 0.0018382353f);
+        builder->vertexUV(0.0f, 1.0f, 0.0f, 0.0625f, 0.0018382353f);
+        builder->vertexUV(1.0f, 1.0f, 0.0f, 0.0f, 0.0f);
+        builder->end();
+        GlStateManager::endList(0);
+    }
 }
 
 unsigned long long ItemInHandRenderer::renderItem3D(Tesselator*, float x, float y, float, float, int, int, float, eItemRenderMode mode)
@@ -362,7 +316,7 @@ unsigned long long ItemInHandRenderer::renderItem3D(Tesselator*, float x, float 
         listId = sItemRenderDisplayLists[3];
         break;
     case ITEM_RENDER_MODE_GUI:
-        listId = sItemRenderDisplayLists[1];
+        listId = sItemRenderDisplayLists[4];
         break;
     case ITEM_RENDER_MODE_3D:
         listId = sItemRenderDisplayLists[0];
@@ -371,10 +325,10 @@ unsigned long long ItemInHandRenderer::renderItem3D(Tesselator*, float x, float 
         listId = sItemRenderDisplayLists[2];
         break;
     case ITEM_RENDER_MODE_EXTRUDED:
-        listId = sItemRenderDisplayLists[4];
+        listId = sItemRenderDisplayLists[1];
         break;
     case ITEM_RENDER_MODE_EXTRUDED_HIGH_RES:
-        listId = sItemRenderDisplayLists[4] + 1;
+        listId = sItemRenderDisplayLists[1] + 1;
         break;
     default:
         return 0;
@@ -408,17 +362,17 @@ void ItemInHandRenderer::renderItem(boost::shared_ptr<LivingEntity> entity, not_
     }
     Block* block = Block::byItem(item->getItem());
     GlStateManager::pushMatrix();
-    if (Block::getId(block) == 218)
+    if (Block::getId(block) == BlockId::OBSERVER)
     {
         if (mMinecraft->mPlayer->GetThirdPersonView(false) == 0)
         {
             GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
         }
     }
-    bool wasGui3d = mItemRenderer->mIsGui3d;
-    mItemRenderer->mIsGui3d = gui3d;
+    bool wasGui3d = mItemRenderer->mRenderWithColor;
+    mItemRenderer->mRenderWithColor = gui3d;
     mItemRenderer->renderStatic(item, entity, transform, 1.0f, leftHand, 0);
-    mItemRenderer->mIsGui3d = wasGui3d;
+    mItemRenderer->mRenderWithColor = wasGui3d;
     GlStateManager::popMatrix();
 }
 
@@ -809,9 +763,9 @@ void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player
             GlStateManager::scalef(2.5f, 2.5f, 2.5f);
         }
     }
-    ItemTransforms::TransformType transform = mainHand ? ItemTransforms::FIRST_PERSON_LEFT_HAND
-                                                       : ItemTransforms::FIRST_PERSON_RIGHT_HAND;
-    renderItem(boost::shared_ptr<LivingEntity>(), item, transform, !mainHand, 0, true);
+    ItemTransforms::TransformType transform = rightArm ? ItemTransforms::FIRST_PERSON_RIGHT_HAND
+                                                       : ItemTransforms::FIRST_PERSON_LEFT_HAND;
+    renderItem(player, item, transform, !rightArm, 0, true);
     GlStateManager::popMatrix();
 }
 
@@ -940,7 +894,7 @@ void ItemInHandRenderer::renderFire()
 {
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(static_cast<eMinecraftColour>(400));
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Fire_Overlay);
     float r = (float)((colour >> 16) & 0xFF) / 255.0f;
     float g = (float)((colour >> 8) & 0xFF) / 255.0f;
     float b = (float)(colour & 0xFF) / 255.0f;
@@ -950,7 +904,7 @@ void ItemInHandRenderer::renderFire()
     GlStateManager::depthMask(false);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::FIRE);
+    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
     TextureAtlasSprite* sprite = fire->getTextureLayer(1);
     mMinecraft->mTextures->bindTexture(&TERRAIN_LOCATION);
     float u0 = (float)sprite->getU0(true);
@@ -986,40 +940,36 @@ void ItemInHandRenderer::renderFire()
 void ItemInHandRenderer::renderScreenEffect(float partialTick)
 {
     GlStateManager::disableAlphaTest();
-    boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
-    if (player->isOnFire())
+    if (mMinecraft->mPlayer->isInWall())
     {
-        Level* level = mMinecraft->mLevel;
-        const BlockState* selectedState = Blocks::AIR->defaultBlockState();
+        const BlockState* state = mMinecraft->mLevel->getBlockState(BlockPos(mMinecraft->mPlayer));
+        boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
         for (int sample = 0; sample < 8; ++sample)
         {
-            float ox = (float)(sample % 2) - 0.5f;
-            float oy = (float)((sample >> 1) % 2) - 0.5f;
-            float oz = (float)((sample >> 2) % 2) - 0.5f;
-            BlockPos samplePos(
-                player->mX + (double)(ox * player->mWalkDist * 0.800000011920929f * 2.75f),
-                player->mY + (double)(oy * 0.10000000149011612f) + player->getEyeHeight(),
-                player->mZ + (double)(oz * player->mWalkDist * 0.05000000074505806f * 2.75f));
-            const BlockState* state = level->getBlockState(samplePos);
-            if (state->getBlock()->isViewBlocking(state))
+            const float offsetX = static_cast<float>(sample % 2) - 0.5f;
+            const float offsetY = static_cast<float>((sample >> 1) % 2) - 0.5f;
+            const float offsetZ = static_cast<float>((sample >> 2) % 2) - 0.5f;
+            const BlockPos samplePos(player->mX + offsetX * player->mBbWidth * 0.8f,
+                                     player->mY + offsetY * 0.1f + player->getEyeHeight(),
+                                     player->mZ + offsetZ * player->mBbWidth * 0.8f);
+            const BlockState* sampleState = mMinecraft->mLevel->getBlockState(samplePos);
+            if (sampleState->isViewBlocking())
             {
-                selectedState = state;
+                state = sampleState;
             }
         }
-        Block* block = selectedState->getBlock();
-        if (block->getRenderLayer() != -1)
+        if (state->getBlock()->defaultBlockState()->getRenderShape() != BLOCK_RENDER_INVISIBLE)
         {
-            TextureAtlasSprite* sprite = block->getTexture(Direction::UP, selectedState);
-            renderTex(sprite);
+            renderTex(state->getBlock()->getIconTexture(Direction::UP, state));
         }
     }
-    if (!player->isSpectator())
+    if (!mMinecraft->mPlayer->isSpectator())
     {
-        if (player->isInWater())
+        if (mMinecraft->mPlayer->isUnderLiquid(Material::WATER))
         {
             renderWater(partialTick);
         }
-        if (player->isOnFire())
+        if (mMinecraft->mPlayer->isOnFire())
         {
             renderFire();
         }

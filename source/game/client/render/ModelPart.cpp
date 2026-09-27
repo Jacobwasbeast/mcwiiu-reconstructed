@@ -10,12 +10,10 @@
 #include "game/core/MemoryTracker.hpp"
 #include "game/core/TexOffs.hpp"
 #include "vendor/SKIN_BOX.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include <cmath>
 #include <cstdio>
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 static const float RADIANS_TO_DEGREES = (float)(180.0 / M_PI);
 

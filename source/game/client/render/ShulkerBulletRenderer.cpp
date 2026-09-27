@@ -36,7 +36,7 @@ void ShulkerBulletRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     Entity* bullet = entity.get();
     float yRot = rotlerp(bullet->mYRotO, bullet->mYRot, partialTick);
     float xRot = bullet->mXRotO + (bullet->mXRot - bullet->mXRotO) * partialTick;
-    float animation = (float)((double)bullet->mTickCount - 176.0 - (double)partialTick);
+    float animation = bullet->mTickCount + partialTick;
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y + 0.15F, (float)z);

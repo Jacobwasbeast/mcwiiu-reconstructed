@@ -1,10 +1,7 @@
 #include "game/client/render/Tesselator.hpp"
 
 #include "game/core/BufferBuilder.hpp"
-
-unsigned int TlsAlloc();
-int TlsSetValue(unsigned int index, void* value);
-void* TlsGetValue(unsigned int index);
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 static unsigned int g_tesselatorTlsIndex = TlsAlloc();
 

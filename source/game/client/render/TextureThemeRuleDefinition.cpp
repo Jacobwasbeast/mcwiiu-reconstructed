@@ -6,8 +6,7 @@
 #include "game/core/DLCPack.hpp"
 #include "game/core/GameRules_IntAttribute.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
-
-std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
+#include "game/core/StringUtils.hpp"
 
 static const std::wstring gColourReplacements[4][8] =
 {
@@ -35,7 +34,7 @@ TextureThemeRuleDefinition::~TextureThemeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType TextureThemeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(70);
+    return ConsoleGameRules::eGameRuleType_TextureTheme;
 }
 
 TextureTheme* TextureThemeRuleDefinition::Generate() const
@@ -46,7 +45,7 @@ TextureTheme* TextureThemeRuleDefinition::Generate() const
         CommonMasterGameMode* gameMode = CommonMasterGameMode::GetMasterOrClient();
         LevelGenerationOptions* options = gameMode->getRoundLevelGenOptions();
         DLCPack* pack = options->mPack;
-        DLCFile* file = pack->getFile(static_cast<DLCManager::EDLCType>(2), (*it)->mFilename, true, true);
+        DLCFile* file = pack->getFile(DLCManager::eDLCType_Texture, (*it)->mFilename, true, true);
         unsigned int length = 0;
         BufferedImage* image = new BufferedImage(file->getData(length), length);
         theme->addAsset(static_cast<unsigned int>((*it)->mMinimumWidth), image);
@@ -66,19 +65,19 @@ TextureTheme* TextureThemeRuleDefinition::Generate() const
 
 GameRuleDefinition* TextureThemeRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(39))
+    if (type == ConsoleGameRules::eGameRuleType_LayerAsset)
     {
         LayerTexture* texture = new LayerTexture();
         mLayerTextures.push_back(texture);
         return texture;
     }
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(43))
+    if (type == ConsoleGameRules::eGameRuleType_BlockDef)
     {
         IndexedBlockDef* block = new IndexedBlockDef();
         mBlockStackGetters.push_back(block);
         return block;
     }
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(61))
+    if (type == ConsoleGameRules::eGameRuleType_ShaftsTheme)
     {
         MaskedShaftsThemeRuleDefinition* shafts = new MaskedShaftsThemeRuleDefinition();
         mBlockStackGetters.push_back(shafts);
@@ -123,8 +122,8 @@ void TextureThemeRuleDefinition::IndexedBlockDef::getStack(TextureTheme::BlockSt
 TextureThemeRuleDefinition::LayerTexture::LayerTexture()
     : mMinimumWidth(0)
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), &mFilename);
-    GameRules_IntAttribute* width = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(64), &mMinimumWidth);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mFilename);
+    GameRules_IntAttribute* width = addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth);
     width->setMin(0);
     width->setMax(128);
 }
@@ -135,7 +134,7 @@ TextureThemeRuleDefinition::LayerTexture::~LayerTexture()
 
 ConsoleGameRules::EGameRuleType TextureThemeRuleDefinition::LayerTexture::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(39);
+    return ConsoleGameRules::eGameRuleType_LayerAsset;
 }
 
 TextureThemeRuleDefinition::MaskedShaftsThemeRuleDefinition::~MaskedShaftsThemeRuleDefinition()

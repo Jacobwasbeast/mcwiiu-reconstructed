@@ -1,4 +1,5 @@
 #include "game/client/render/ZombieRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -16,7 +17,7 @@ static ResourceLocation sZombieLocation;
 ZombieRenderer::ZombieRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new ZombieModel(ModelDefinition()), 0.5F)
 {
-    addLayer(new ZombieArmorLayer(this, ENTITY_TYPE_ZOMBIE));
+    addLayer(new ZombieArmorLayer(this, EntityType::ZOMBIE));
 }
 
 ZombieRenderer::~ZombieRenderer()

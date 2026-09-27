@@ -1,4 +1,5 @@
 #include "game/client/render/DrownedRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -16,7 +17,7 @@ static ResourceLocation DROWNED_LOCATION;
 DrownedRenderer::DrownedRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new DrownedModel(ModelDefinition()), 0.5F)
 {
-    addLayer(new ZombieArmorLayer(this, ENTITY_TYPE_DROWNED));
+    addLayer(new ZombieArmorLayer(this, EntityType::DROWNED));
 }
 
 DrownedRenderer::~DrownedRenderer()

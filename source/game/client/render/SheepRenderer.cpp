@@ -83,13 +83,13 @@ void SheepRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
 }
 
 void SheepRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                 float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                 float headPitch, float scale, float partialTick, bool overlay)
+                                 float limbSwingAmount, float partialTick, float ageInTicks,
+                                 float netHeadYaw, float headPitch, float scale, bool overlay)
 {
     if (!mFurModel->hasOverriddenParts())
     {
-        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, ageInTicks,
-                                           netHeadYaw, headPitch, scale, partialTick, overlay);
+        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick,
+                                           ageInTicks, netHeadYaw, headPitch, scale, overlay);
     }
 }
 

@@ -1,4 +1,5 @@
 #include "game/client/render/SnowShovelParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <math.h>
 
@@ -77,7 +78,7 @@ void SnowShovelParticle::init(Level* level, double x, double y, double z,
 
 uint64_t SnowShovelParticle::GetType()
 {
-    return 0x000000000008020DULL;
+    return ParticleKind::SNOW_SHOVEL;
 }
 
 Particle* SnowShovelParticle::Provider::createParticle(ePARTICLE_TYPE type,

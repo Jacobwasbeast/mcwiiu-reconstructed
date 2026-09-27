@@ -1,4 +1,5 @@
 #include "game/client/render/ConduitRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ConduitBaseModel.hpp"
 #include "game/client/render/ConduitCageModel.hpp"
@@ -35,7 +36,7 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
                              float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                              bool bUseDisplayList)
 {
-    if (blockEntity->GetType() != 0x01200212ULL)
+    if (blockEntity->GetType() != BlockEntityType::CONDUIT)
     {
         return;
     }

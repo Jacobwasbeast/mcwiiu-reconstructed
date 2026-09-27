@@ -1,4 +1,5 @@
 #include "game/client/render/DolphinModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -109,7 +110,7 @@ void DolphinModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mBody->mXRot = headPitch * 0.01745329238474369f;
     mBody->mYRot = netHeadYaw * 0.01745329238474369f;
 
-    if (entity->GetType() == ENTITY_TYPE_DOLPHIN)
+    if (entity->GetType() == EntityType::DOLPHIN)
     {
         boost::shared_ptr<Dolphin> dolphin = boost::static_pointer_cast<Dolphin>(entity);
 

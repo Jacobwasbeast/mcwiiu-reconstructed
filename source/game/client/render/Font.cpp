@@ -10,9 +10,7 @@
 #include "game/core/BufferedImage.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
-
-std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
-std::wstring trimString(const std::wstring& text);
+#include "game/core/StringUtils.hpp"
 
 Font::Font(Options*, const std::wstring& name, Textures* textures, bool,
            ResourceLocation* location, int characterWidth, int characterHeight,

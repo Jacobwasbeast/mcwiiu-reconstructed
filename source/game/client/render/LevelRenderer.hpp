@@ -211,7 +211,9 @@ private:
     std::vector<AABB*> mCameraInsideAreas;
     OSFastMutex mChunkMutex;
     unsigned char mChunkStatePadding[4];
+public:
     DestroyedBlockManager* mDestroyedBlocks;
+private:
     float mCloudOffset;
     unsigned char* mGlobalChunkFlags;
     XLockFreeStack<int> mDirtyChunkStack;

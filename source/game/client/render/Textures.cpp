@@ -808,7 +808,7 @@ int Textures::loadMemTexture(const std::wstring& name, const std::wstring& path)
         if (name == L"dlcskin" || name == L"dlccape") sTextureMipmap = false;
         if (fields.m_textureId < 0)
         {
-            result = getTexture(fields.m_image, (C4JRender::eTextureFormat)0, sTextureMipmap);
+            result = getTexture(fields.m_image, C4JRender::eTextureFormat_RGBA8, sTextureMipmap);
             fields.m_textureId = result;
             fields.m_loaded = true;
             sTextureMipmap = true;
@@ -850,7 +850,7 @@ int Textures::loadMemTexture(const std::wstring& name, int texture)
         if (name == L"dlcskin" || name == L"dlccape") sTextureMipmap = false;
         if (fields.m_textureId < 0)
         {
-            result = getTexture(fields.m_image, (C4JRender::eTextureFormat)0, sTextureMipmap);
+            result = getTexture(fields.m_image, C4JRender::eTextureFormat_RGBA8, sTextureMipmap);
             fields.m_textureId = result;
             fields.m_loaded = true;
             sTextureMipmap = true;
@@ -976,8 +976,8 @@ void Textures::reloadAll()
     freeStitch();
     loadIndexedTextures();
     mTexturePixels.clear();
-    GrassColor::init(loadTexturePixels((_TEXTURE_NAME)0, L"misc_grasscolor"));
-    FoliageColor::init(loadTexturePixels((_TEXTURE_NAME)1, L"misc_foliagecolor"));
+    GrassColor::init(loadTexturePixels((_TEXTURE_NAME)0, L"misc/grasscolor"));
+    FoliageColor::init(loadTexturePixels((_TEXTURE_NAME)1, L"misc/foliagecolor"));
     stitch();
     if (mTexturePackRepository != NULL) mTexturePackRepository->clearInvalidTexturePacks();
 }

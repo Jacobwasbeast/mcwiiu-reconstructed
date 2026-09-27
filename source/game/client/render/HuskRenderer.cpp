@@ -17,7 +17,7 @@ HuskRenderer::~HuskRenderer()
 
 std::wstring HuskRenderer::getModelName()
 {
-    return L"zombie_husk";
+    return L"zombie.husk";
 }
 
 void HuskRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTick)

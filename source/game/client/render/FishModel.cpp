@@ -197,9 +197,9 @@ std::wstring FishModel::getName()
     if (mFishType == FishRenderer::FISH_TYPE_COD) return L"cod";
     if (mFishType == FishRenderer::FISH_TYPE_PUFFERFISH)
     {
-        if (mVariant == 0) return L"pufferfish_small";
-        if (mVariant == 1) return L"pufferfish_mid";
-        if (mVariant == 2) return L"pufferfish_large";
+        if (mVariant == 0) return L"pufferfish.small";
+        if (mVariant == 1) return L"pufferfish.mid";
+        if (mVariant == 2) return L"pufferfish.large";
         return L"pufferfish";
     }
     if (mFishType == FishRenderer::FISH_TYPE_SALMON) return L"salmon";

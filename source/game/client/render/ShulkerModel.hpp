@@ -31,7 +31,6 @@ public:
     ModelPart* mHead;
     ModelPart* mHeadSkin;
     ModelPartsSkinned mSkinnedParts;
-    bool mUseSkin;
 };
 
 #endif

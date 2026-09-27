@@ -1,4 +1,5 @@
 #include "game/client/render/BatRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -9,7 +10,6 @@
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation BAT_LOCATION;
-static const unsigned long long ENTITY_TYPE_BAT = 0x1D000101ULL;
 
 BatRenderer::BatRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new BatModel(ModelDefinition()), 0.25F)
@@ -40,7 +40,7 @@ void BatRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float 
 {
     bool resting = false;
     boost::shared_ptr<Bat> bat;
-    if (entity->GetType() == ENTITY_TYPE_BAT)
+    if (entity->GetType() == EntityType::BAT)
         bat = boost::static_pointer_cast<Bat>(entity);
     if (bat)
         resting = bat->isResting();

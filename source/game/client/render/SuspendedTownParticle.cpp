@@ -1,4 +1,5 @@
 #include "game/client/render/SuspendedTownParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 SuspendedTownParticle::SuspendedTownParticle(Level* level, double x, double y, double z,
                                              double xa, double ya, double za)
@@ -43,7 +44,7 @@ void SuspendedTownParticle::move(double xa, double ya, double za)
 
 uint64_t SuspendedTownParticle::GetType()
 {
-    return 0x000000000008021AULL;
+    return ParticleKind::SUSPENDED_TOWN;
 }
 
 Particle* SuspendedTownParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

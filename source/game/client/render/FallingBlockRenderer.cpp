@@ -44,7 +44,7 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     {
         Block* block = blockState->getBlock();
         const BlockState* defaultState = block->defaultBlockState();
-        if (defaultState->getRenderShape() != -1)
+        if (defaultState->getRenderShape() != BLOCK_RENDER_INVISIBLE)
         {
             GlStateManager::pushMatrix();
             GlStateManager::translatef((float)x, (float)y, (float)z);
@@ -55,7 +55,7 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
             BlockRenderer* blockRenderer = Minecraft::GetInstance()->getBlockRenderer()->getBlockRenderer();
 
             float offset = 0.5F;
-            if (block == Blocks::anvil && defaultState->getRenderShape() == 0x23)
+            if (block == Blocks::anvil && defaultState->getRenderShape() == BLOCK_RENDER_ANVIL)
             {
                 blockRenderer->prepare(level);
                 builder->begin();

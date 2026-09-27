@@ -1,4 +1,5 @@
 #include "game/client/render/EnchantmentTableParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/ColourTable.hpp"
@@ -80,7 +81,7 @@ void EnchantmentTableParticle::tick()
 
 uint64_t EnchantmentTableParticle::GetType()
 {
-    return 0x000000000008021CULL;
+    return ParticleKind::ENCHANTMENT_TABLE;
 }
 
 Particle* EnchantmentTableParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

@@ -226,8 +226,9 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
         {
             scale = 0.25F;
             int renderShape = block->defaultBlockState()->getRenderShape();
-            if (renderShape != 0 && (renderShape < 3 || renderShape == 0xC || renderShape == 0x13
-                                     || renderShape == 0x29))
+            if (renderShape != BLOCK_RENDER_MODEL
+                && (renderShape <= BLOCK_RENDER_TORCH || renderShape == BLOCK_RENDER_LEVER
+                    || renderShape == BLOCK_RENDER_STEM || renderShape == BLOCK_RENDER_DOUBLE_PLANT))
             {
                 scale = 0.5F;
             }

@@ -1,4 +1,5 @@
 #include "game/client/render/HorseRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <map>
 #include <string>
@@ -67,7 +68,7 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
         bool dyedArmor = false;
         boost::shared_ptr<Horse> horse;
 
-        if (entity->GetType() == ENTITY_TYPE_HORSE)
+        if (entity->GetType() == EntityType::HORSE)
         {
             horse = boost::static_pointer_cast<Horse>(entity);
             if (horse->isWearingDyedArmor())

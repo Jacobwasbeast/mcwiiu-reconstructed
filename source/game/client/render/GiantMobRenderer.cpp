@@ -1,4 +1,5 @@
 #include "game/client/render/GiantMobRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ZombieModel.hpp"
@@ -14,7 +15,7 @@ GiantMobRenderer::GiantMobRenderer(EntityRenderDispatcher* dispatcher, float sha
 {
     mScale = shadowRadius;
     addLayer(new ItemInHandLayer(this));
-    addLayer(new ZombieArmorLayer(this, 0x5D550040ULL));
+    addLayer(new ZombieArmorLayer(this, EntityType::ZOMBIE));
 }
 
 GiantMobRenderer::~GiantMobRenderer()

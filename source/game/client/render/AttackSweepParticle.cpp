@@ -1,4 +1,5 @@
 #include "game/client/render/AttackSweepParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -89,7 +90,7 @@ int AttackSweepParticle::getParticleTexture()
 
 uint64_t AttackSweepParticle::GetType()
 {
-    return 0x0000000000080228ULL;
+    return ParticleKind::ATTACK_SWEEP;
 }
 
 Particle* AttackSweepParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

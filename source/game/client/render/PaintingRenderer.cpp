@@ -114,6 +114,7 @@ void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int 
 void PaintingRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                               float yaw, float partialTick)
 {
+    ++gHangingEntityRenderCount;
     boost::shared_ptr<Painting> painting = boost::static_pointer_cast<Painting>(entity);
     mRandom->setSeed(187LL);
     GlStateManager::pushMatrix();

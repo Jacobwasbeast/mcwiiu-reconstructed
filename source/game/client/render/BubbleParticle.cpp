@@ -1,4 +1,6 @@
 #include "game/client/render/BubbleParticle.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mth.hpp"
 #include "game/util/Math.hpp"
@@ -40,7 +42,7 @@ BubbleParticle::BubbleParticle(Level* level,
     {
         lifetime *= 5;
         int blockId = level->getBlockId((int)x, (int)y + 1, (int)z);
-        if (blockId == 9 || blockId == 8)
+        if (blockId == BlockId::WATER || blockId == BlockId::FLOWING_WATER)
         {
             lifetime *= 3;
         }
@@ -128,7 +130,7 @@ int BubbleParticle::getLightColor(float partialTicks)
 
 uint64_t BubbleParticle::GetType()
 {
-    return 0x0000000000080203ULL;
+    return ParticleKind::BUBBLE;
 }
 
 Particle* BubbleParticle::Provider::createParticle(ePARTICLE_TYPE type,

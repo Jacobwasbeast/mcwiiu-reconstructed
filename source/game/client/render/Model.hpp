@@ -52,6 +52,8 @@ public:
     int mTexWidth;
     int mTexHeight;
     ModelPartsSkinned mSkinnedParts;
+    float mYHeadOffs;
+    float mZHeadOffs;
     bool mHasOverriddenParts;
 };
 

@@ -11,7 +11,7 @@
 #include "game/core/GlStateManager.hpp"
 
 ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
-    : mBase(NULL), mLid(NULL), mHead(NULL), mHeadSkin(NULL), mSkinnedParts(), mUseSkin(false)
+    : mBase(NULL), mLid(NULL), mHead(NULL), mHeadSkin(NULL), mSkinnedParts()
 {
     mTexWidth = 64;
     mTexHeight = 128;
@@ -33,7 +33,7 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
     }
     else
     {
-        mUseSkin = true;
+        mHasOverriddenParts = true;
         mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
         mLid = new ModelPartSkin(this, L"lid", modelDefinition, NULL, 0.0f, NULL);
         mBase = new ModelPartSkin(this, L"base", modelDefinition, NULL, 0.0f, NULL);
@@ -82,7 +82,7 @@ void ShulkerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     mBase->render(scale, useDisplayList, false);
     mLid->render(scale, useDisplayList, false);
-    if (mUseSkin)
+    if (mHasOverriddenParts)
     {
         mHead->render(scale, useDisplayList, false);
         mSkinnedParts.render();
@@ -98,7 +98,7 @@ void ShulkerModel::renderWhenInvisible(boost::shared_ptr<Entity>& entity, float 
                                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
                                        bool useDisplayList)
 {
-    if (mUseSkin)
+    if (mHasOverriddenParts)
     {
         mHeadSkin->render(scale, useDisplayList, false);
         mSkinnedParts.render();

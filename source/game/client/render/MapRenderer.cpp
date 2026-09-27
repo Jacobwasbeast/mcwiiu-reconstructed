@@ -16,6 +16,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/MapItemSavedData.hpp"
 #include "game/core/Options.hpp"
+#include "game/core/StringFormat.hpp"
 
 static unsigned int gMapColours[208];
 static bool gMapColoursLoaded = true;
@@ -88,8 +89,6 @@ bool sortByTexture(const MapDecoration& left, const MapDecoration& right)
         return true;
     return false;
 }
-
-std::wstring formatwstr(const wchar_t* format, ...);
 
 MapRenderer::MapRenderer(Font* font, Options* options, Textures* textures)
     : mTextures(textures), mMapInstances(), mOptions(options), mFont(font)
@@ -187,7 +186,7 @@ void MapRenderer::MapInstance::fjUpdateWithRenderContext()
     if (mTexture == -1)
     {
         BufferedImage image(128, 128, 0);
-        mTexture = mRenderer->mTextures->getTexture(&image, (C4JRender::eTextureFormat)0, false);
+        mTexture = mRenderer->mTextures->getTexture(&image, C4JRender::eTextureFormat_RGBA8, false);
         mTextureDirty = true;
     }
     if (mTextureDirty)

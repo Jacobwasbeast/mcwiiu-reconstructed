@@ -70,7 +70,7 @@ void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
 void FireballRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x,
                                    double y, double z, float partialTick) {
     GlStateManager::disableLighting();
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::FIRE);
+    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
     TextureAtlasSprite* sprite = fire->getTextureLayer(0);
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y, (float)z);

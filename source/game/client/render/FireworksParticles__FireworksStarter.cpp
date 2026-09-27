@@ -1,4 +1,5 @@
 #include "game/client/render/FireworksParticles__FireworksStarter.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -20,7 +21,7 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
     lifetime = 8;
     if (fireworks != NULL)
     {
-        explosions = fireworks->getList(L"Explosions", 10);
+        explosions = fireworks->getList(L"Explosions", Tag::TAG_COMPOUND);
         if (explosions != NULL && explosions->size() > 0)
         {
             lifetime = explosions->size() * 2 - 1;
@@ -209,5 +210,5 @@ int FireworksParticles::FireworksStarter::getParticleTexture()
 
 uint64_t FireworksParticles::FireworksStarter::GetType()
 {
-    return 0x0000000000080220ULL;
+    return ParticleKind::FIREWORKS_STARTER;
 }

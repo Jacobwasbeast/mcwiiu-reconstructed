@@ -1,4 +1,5 @@
 #include "game/client/render/SpellParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
@@ -82,7 +83,7 @@ void SpellParticle::setBaseTex(int texture)
 
 uint64_t SpellParticle::GetType()
 {
-    return 0x000000000008021DULL;
+    return ParticleKind::SPELL;
 }
 
 Particle* SpellParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

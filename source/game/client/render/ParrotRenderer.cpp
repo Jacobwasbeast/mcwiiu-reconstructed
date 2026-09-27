@@ -1,4 +1,5 @@
 #include "game/client/render/ParrotRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ParrotModel.hpp"
@@ -36,7 +37,7 @@ const ResourceLocation* ParrotRenderer::getSpectateTextureLocation(boost::shared
 const ResourceLocation* ParrotRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
             boost::static_pointer_cast<MultiplayerLocalPlayer>(entity);
@@ -63,13 +64,13 @@ double ParrotRenderer::getCustomBob(boost::shared_ptr<Player> player, float part
 
 double ParrotRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    if (entity->GetType() == 0x2D6C0003ULL)
+    if (entity->GetType() == EntityType::PARROT)
     {
         return getCustomBob(boost::static_pointer_cast<Parrot>(entity), partialTicks);
     }
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         return getCustomBob(boost::static_pointer_cast<Player>(entity), partialTicks);
     }

@@ -52,7 +52,7 @@ PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition)
         mLeg3->mZ = mLeg3->mZ + 3.5f;
         mLeg1->mY = mLeg1->mY - 4.0f;
         mLeg3->mY = mLeg3->mY - 4.0f;
-        mScale = mScale + 2.0f;
+        mZHeadOffs += 2.0f;
     }
 
     compileSkinnedDrawlist();
@@ -81,11 +81,11 @@ void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
     }
     else
     {
-        mScale = 16.0f;
-        mHeadYOffset = 4.0f;
+        mYHeadOffs = 16.0f;
+        mZHeadOffs = 4.0f;
         GlStateManager::pushMatrix();
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-        GlStateManager::translatef(0.0f, mScale * scale, mHeadYOffset * scale);
+        GlStateManager::translatef(0.0f, mYHeadOffs * scale, mZHeadOffs * scale);
         mHead->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
 

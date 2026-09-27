@@ -1,4 +1,5 @@
 #include "game/client/render/HugeExplosionParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
@@ -103,7 +104,7 @@ int HugeExplosionParticle::getParticleTexture()
 
 uint64_t HugeExplosionParticle::GetType()
 {
-    return 0x0000000000080216ULL;
+    return ParticleKind::HUGE_EXPLOSION;
 }
 
 Particle* HugeExplosionParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,

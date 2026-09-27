@@ -1,4 +1,5 @@
 #include "game/client/render/CritParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mth.hpp"
 
@@ -73,7 +74,7 @@ void CritParticle::_init(Level* level, double x, double y, double z,
 
 uint64_t CritParticle::GetType()
 {
-    return 0x0000000000080214ULL;
+    return ParticleKind::CRIT;
 }
 
 Particle* CritParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

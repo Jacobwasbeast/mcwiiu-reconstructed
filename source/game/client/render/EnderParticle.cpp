@@ -1,4 +1,5 @@
 #include "game/client/render/EnderParticle.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/client/render/TextureUVCoordinateSet.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/ColourTable.hpp"
@@ -9,7 +10,7 @@
 EnderParticle::EnderParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za), originX(x), originY(y), originZ(z), scale(1.0f)
 {
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)241);
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Ender);
     rCol = (float)((colour >> 16) & 255) / 255.0f;
     gCol = (float)((colour >> 8) & 255) / 255.0f;
     bCol = (float)(colour & 255) / 255.0f;
@@ -61,7 +62,7 @@ void EnderParticle::move(double xa, double ya, double za)
     setBoundingBox(box->move(xa, ya, za));
     setLocationFromBoundingbox();
 }
-uint64_t EnderParticle::GetType() { return 0x000000000008021FULL; }
+uint64_t EnderParticle::GetType() { return ParticleKind::ENDER; }
 Particle* EnderParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new EnderParticle(level, x, y, z, xa, ya, za);

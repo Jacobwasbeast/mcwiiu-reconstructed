@@ -25,8 +25,8 @@ public:
     virtual void translateWeaponItem();
     float setupScale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     bool setupSolidState(boost::shared_ptr<LivingEntity>& entity);
-    bool setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks, bool overlay);
-    void setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
+    bool setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks, bool combineTextures);
+    bool setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     void teardownOverlayColor();
     void tearDownSolidState();
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
@@ -40,7 +40,7 @@ public:
     virtual float getAttackAnim(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual double getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual void renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                              float ageInTicks, float netHeadYaw, float headPitch, float scale, float partialTick,
+                              float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                               bool overlay);
     virtual double getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual int getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v);

@@ -1,4 +1,5 @@
 #include "game/client/render/ParticleEngine.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/client/render/Particle.hpp"
 #include "game/client/render/TerrainParticle.hpp"
 #include "game/client/render/Tesselator.hpp"
@@ -252,7 +253,7 @@ void ParticleEngine::add(Particle* particle)
     else if (list.size() >= static_cast<unsigned int>(limit))
     {
         Particle* old = list.at(0);
-        if (old->GetType() == 0x80221)
+        if (old->GetType() == ParticleKind::FIREWORKS_SPARK)
         {
             --particleCount;
         }
@@ -296,7 +297,7 @@ void ParticleEngine::tickParticleList(ParticleList* list)
             tickParticle(particle);
             if (!particle->isAlive())
             {
-                if (particle->GetType() == 0x80221)
+                if (particle->GetType() == ParticleKind::FIREWORKS_SPARK)
                 {
                     --particleCount;
                 }
@@ -546,7 +547,7 @@ void ParticleEngine::crack(const BlockPos& pos, const Direction* direction)
 {
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
-    if (state->getRenderShape() == -1)
+    if (state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
     {
         return;
     }

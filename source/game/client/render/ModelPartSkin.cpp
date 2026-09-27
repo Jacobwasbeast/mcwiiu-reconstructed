@@ -5,11 +5,9 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Matrix4f.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include <cmath>
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 static const float RADIANS_TO_DEGREES = (float)(180.0 / M_PI);
 

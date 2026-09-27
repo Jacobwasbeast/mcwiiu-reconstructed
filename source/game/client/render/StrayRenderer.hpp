@@ -24,7 +24,7 @@ public:
     virtual std::wstring getModelName();
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                              float ageInTicks, float netHeadYaw, float headPitch, float scale, float partialTick,
+                              float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                               bool overlay);
     virtual Model* createModel(const ModelDefinition& definition);
 

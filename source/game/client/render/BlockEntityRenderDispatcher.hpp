@@ -2,6 +2,7 @@
 #define GAME_CLIENT_RENDER_BLOCKENTITYRENDERDISPATCHER_HPP
 
 #include <boost/shared_ptr.hpp>
+#include "game/core/EntityType.hpp"
 #include <boost/unordered_map.hpp>
 
 class BlockEntity;
@@ -15,21 +16,21 @@ class Entity;
 
 enum class BlockEntityRendererType : unsigned long long
 {
-    Sign = 0x01000202ULL,
-    MobSpawner = 0x01200201ULL,
-    Piston = 0x01200205ULL,
-    Chest = 0x01E00201ULL,
-    EnderChest = 0x01200208ULL,
-    EnchantTable = 0x01200206ULL,
-    EndPortal = 0x01300200ULL,
-    EndGateway = 0x01300201ULL,
-    Skull = 0x01200207ULL,
-    Furnace = 0x01E00202ULL,
-    Beacon = 0x01E00204ULL,
-    Banner = 0x0100020CULL,
-    ShulkerBox = 0x0120020FULL,
-    Bed = 0x01000210ULL,
-    Conduit = 0x01200212ULL
+    Sign = BlockEntityType::SIGN,
+    MobSpawner = BlockEntityType::MOB_SPAWNER,
+    Piston = BlockEntityType::PISTON_MOVING,
+    Chest = BlockEntityType::CHEST,
+    EnderChest = BlockEntityType::ENDER_CHEST,
+    EnchantTable = BlockEntityType::ENCHANTMENT_TABLE_ENTITY,
+    EndPortal = BlockEntityType::THE_END_PORTAL,
+    EndGateway = BlockEntityType::THE_END_GATEWAY_ENTITY,
+    Skull = BlockEntityType::SKULL,
+    Furnace = BlockEntityType::FURNACE,
+    Beacon = BlockEntityType::BEACON,
+    Banner = BlockEntityType::BANNER,
+    ShulkerBox = BlockEntityType::SHULKER_BOX,
+    Bed = BlockEntityType::BED,
+    Conduit = BlockEntityType::CONDUIT
 };
 
 class BlockEntityRenderDispatcher : public boost::unordered_map<unsigned long long, BlockEntityRenderer*>

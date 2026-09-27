@@ -1,4 +1,5 @@
 #include "game/client/render/BoatRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -46,7 +47,7 @@ void BoatRenderer::setupRotation(boost::shared_ptr<Entity> entity, float yaw, fl
     GlStateManager::rotatef(180.0F - yaw, 0.0F, 1.0F, 0.0F);
     boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
     float hurtTime = (float)((double)boat->getHurtTime() - (double)partialTick);
-    float damage = (float)(boat->getDamage() - (double)partialTick);
+    float damage = boat->getDamage() - partialTick;
     if (damage < 0.0F)
         damage = 0.0F;
     if (hurtTime > 0.0F)
@@ -82,7 +83,7 @@ void BoatRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (!mSolidRender)
     {
-        if (entity->GetType() == ENTITY_TYPE_BOAT)
+        if (entity->GetType() == EntityType::BOAT)
         {
             boost::shared_ptr<Boat> leashedBoat = boost::static_pointer_cast<Boat>(entity);
             renderLeash(leashedBoat, x, y, z, yaw, partialTick);
@@ -133,7 +134,7 @@ void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y
     double cosYaw = std::cos(holderYaw);
     double sinYaw = std::sin(holderYaw);
     double sinPitch = std::sin(holderPitch);
-    if ((holder->GetType() & 0x0A080000ULL) == 0x0A080000ULL)
+    if ((holder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
     {
         sinYaw = 0.0;
         sinPitch = -1.0;

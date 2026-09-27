@@ -1,4 +1,5 @@
 #include "game/client/render/ArmorStandArmorModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ArmorStand.hpp"
 
@@ -20,7 +21,7 @@ ArmorStandArmorModel::~ArmorStandArmorModel()
 
 void ArmorStandArmorModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    if (entity->GetType() == ENTITY_TYPE_ARMOR_STAND)
+    if (entity->GetType() == EntityType::ARMOR_STAND)
     {
         boost::shared_ptr<ArmorStand> armorStand = boost::dynamic_pointer_cast<ArmorStand>(entity);
 

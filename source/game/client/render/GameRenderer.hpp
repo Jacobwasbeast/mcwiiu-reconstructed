@@ -11,6 +11,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 
 class Minecraft;
+class Vec3;
 class ResourceManager;
 class AbstractClientPlayer;
 class Font;
@@ -36,6 +37,8 @@ class FloatBuffer;
 class GameRenderer
 {
 public:
+    static const int EFFECT_NONE = 24;
+
     struct PositionStruct
     {
         float x;
@@ -79,6 +82,7 @@ public:
     double getUnderWaterVisionScale(const boost::shared_ptr<Player>&, float);
     void updateLightTexture(float);
     static unsigned int fjGetFpsCap(int);
+    static bool anaglyph3d;
     const BlockPos* getFogOffsets();
     double getTargetFogDistance(const BlockPos&);
     void getTargetFogColor(const BlockPos&, float&, float&, float&);
@@ -109,7 +113,7 @@ public:
     void DisableUpdateThread(int);
     static void EnterDeleteThreadCS();
     static void LeaveDeleteThreadCS();
-    unsigned long long displayItemActivation(not_null_ptr<ItemInstance>, int);
+    void displayItemActivation(not_null_ptr<ItemInstance>, int);
 
     void setRenderHand(bool);
     bool shouldRenderHand();
@@ -141,20 +145,77 @@ private:
     MapRenderer* mMapRenderer;
     unsigned int mTickCount;
     boost::shared_ptr<Entity> mPointedEntity;
-    SmoothFloat mFov;
-    SmoothFloat mFog;
-    SmoothFloat mCamera;
-    SmoothFloat mZoom;
-    SmoothFloat mView;
-    SmoothFloat mLight;
-    unsigned char mData[120];
+    SmoothFloat mSmoothTurnX;
+    SmoothFloat mSmoothTurnY;
+    SmoothFloat mSmoothDummy1;
+    SmoothFloat mSmoothDummy2;
+    SmoothFloat mSmoothDummy3;
+    SmoothFloat mSmoothDummy4;
+    float mThirdPersonDistance;
+    float mThirdPersonDistanceO;
+    float mDebugCamYaw;
+    float mDebugCamYawO;
+    float mDebugCamPitch;
+    float mDebugCamPitchO;
+    float mSmoothCamYaw;
+    float mSmoothCamPitch;
+    float mSmoothCamFilterX;
+    float mSmoothCamFilterY;
+    float mSmoothCamPartialTicks;
+    Vec3* mZeroVector;
+    float mFov[4];
+    float mFovO[4];
+    float mUnusedPlayerFloats[4];
+    float mFovSetting;
+    float mDarkenWorldAmount;
+    float mDarkenWorldAmountO;
+    bool mCloudFog;
+    bool mRenderHand;
+    bool mRenderBlockOutline;
+    long long mLastActiveTime;
     unsigned int mLightTextures[4];
     arrayWithLength<int> mLightPixels[4];
-    unsigned char mDataAfterLight[8452];
-    not_null_ptr<ItemInstance> mActivationItems[4];
-    unsigned char mDataTail[108];
-    FloatBuffer* mBuffer;
-    bool mRenderBlockOutline;
+    float mBlockLightRedFlicker;
+    float mBlockLightRedFlickerSpeed;
+    int mRainSoundTime;
+    float mRainSizeX[1024];
+    float mRainSizeZ[1024];
+    FloatBuffer* mFogBuffer;
+    float mFogRed;
+    float mFogGreen;
+    float mFogBlue;
+    float mPlayerFogRed[4];
+    float mPlayerFogGreen[4];
+    float mPlayerFogBlue[4];
+    float mPlayerFogDistance[4];
+    float mTargetFogRed[4];
+    float mTargetFogGreen[4];
+    float mTargetFogBlue[4];
+    float mTargetFogDistance[4];
+    float mFogBrightnessO;
+    float mFogBrightness;
+    bool mFogHeightLocked;
+    long long mFogColourChangeTime[4];
+    long long mFogDistanceChangeTime[4];
+    double mFogHeight;
+    unsigned int mPanoramicSection;
+    bool mPanoramicMode;
+    float mZoom;
+    float mZoomX;
+    float mZoomY;
+    not_null_ptr<ItemInstance> mItemActivationItems[4];
+    int mItemActivationTicks[4];
+    float mItemActivationOffX[4];
+    float mItemActivationOffY[4];
+    PostChain* mPostEffect;
+    int mEffectIndex;
+    bool mEffectActive;
+    int mFrameCount;
+    long long mLastNanos;
+    bool mLightTextureDirty;
+    unsigned char* mOwnedArrays[2];
+    FloatBuffer* mUnusedBuffer;
+    int mDebugView;
 };
 
 #endif

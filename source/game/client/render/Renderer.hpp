@@ -6,6 +6,10 @@
 #include "game/client/render/C4JRender.hpp"
 #include "game/core/CriticalSection.hpp"
 
+#include <cafe/gx2/gx2Types.h>
+#include <nn/ffl/FFLDataSource.h>
+#include <nn/ffl/FFLStandard.h>
+
 struct ImageFileBuffer
 {
     int mFormat;
@@ -13,116 +17,9 @@ struct ImageFileBuffer
     int mSize;
 };
 
-enum FFLDataSource
-{
-    FFL_DATA_SOURCE_OFFICIAL = 0,
-    FFL_DATA_SOURCE_DEFAULT = 1,
-    FFL_DATA_SOURCE_MIDDLE_DB = 2,
-    FFL_DATA_SOURCE_STORE_DATA_OFFICIAL = 3,
-    FFL_DATA_SOURCE_STORE_DATA = 4,
-    FFL_DATA_SOURCE_BUFFER = 5,
-    FFL_DATA_SOURCE_DIRECT_POINTER = 6
-};
-
-enum IconShaderType
-{
-    ICON_SHADER_TYPE_DEFAULT = 0,
-    ICON_SHADER_TYPE_PLAIN = 1,
-    ICON_SHADER_TYPE_BEGIN = 0,
-    ICON_SHADER_TYPE_END = 2
-};
-
 struct D3DXIMAGE_INFO;
 struct _XSOCIAL_PREVIEWIMAGE;
-struct FFLStoreData;
 struct MEMHeapHeader;
-struct _GX2ContextState;
-struct _GX2VertexShader;
-struct _GX2PixelShader;
-
-struct _GX2FetchShader
-{
-    unsigned int type;
-    unsigned int regs;
-    unsigned int size;
-    void* program;
-    unsigned int attributeCount;
-    unsigned int divisorCount;
-    unsigned int divisors[2];
-};
-
-struct _GX2AttribStream
-{
-    unsigned int location;
-    unsigned int buffer;
-    unsigned int offset;
-    unsigned int format;
-    unsigned int indexType;
-    unsigned int aluDivisor;
-    unsigned int destinationSelector;
-    unsigned int endianSwap;
-};
-
-struct _GX2Surface
-{
-    unsigned int dim;
-    unsigned int width;
-    unsigned int height;
-    unsigned int depth;
-    unsigned int numMips;
-    unsigned int format;
-    unsigned int aaMode;
-    unsigned int use;
-    unsigned int imageSize;
-    void* imagePtr;
-    unsigned int mipSize;
-    void* mipPtr;
-    unsigned int tileMode;
-    unsigned int swizzle;
-    unsigned int alignment;
-    unsigned int pitch;
-    unsigned int mipOffset[13];
-};
-
-struct _GX2Texture
-{
-    _GX2Surface surface;
-    unsigned int viewFirstMip;
-    unsigned int viewNumMips;
-    unsigned int viewFirstSlice;
-    unsigned int viewNumSlices;
-    unsigned int compMap;
-    unsigned int regs[5];
-};
-
-struct _GX2ColorBuffer
-{
-    _GX2Surface surface;
-    unsigned int viewMip;
-    unsigned int viewFirstSlice;
-    unsigned int viewNumSlices;
-    void* aaBuffer;
-    unsigned int aaSize;
-    unsigned int regs[5];
-};
-
-struct _GX2DepthBuffer
-{
-    _GX2Surface surface;
-    unsigned int viewMip;
-    unsigned int viewFirstSlice;
-    unsigned int viewNumSlices;
-    void* hiZPtr;
-    unsigned int hiZSize;
-    float depthClear;
-    unsigned int stencilClear;
-    unsigned int regs[7];
-};
-
-struct _GX2Sampler
-{
-    unsigned int regs[3];
-};
 
 class Renderer
 {
@@ -271,10 +168,10 @@ public:
         float mAlphaTestRef;
         bool mDepthMask;
         bool mDepthTestEnable;
-        int mStencilFunc;
-        int mDepthFunc;
-        int mBlendSource;
-        int mBlendDestination;
+        GX2CompareFunction mStencilFunc;
+        GX2CompareFunction mDepthFunc;
+        GX2BlendFunction mBlendSource;
+        GX2BlendFunction mBlendDestination;
         bool mBlendEnable;
         bool mFogEnable;
         float mFogNearDistance;
@@ -331,10 +228,10 @@ public:
     virtual void Set_matrixDirty();
     virtual void Initialise();
     virtual void InitialiseContext();
-    virtual _GX2ColorBuffer* GetColorBuffer();
-    virtual _GX2DepthBuffer* GetDepthStencilBuffer();
-    virtual _GX2ColorBuffer* GetColorBufferDRC();
-    virtual _GX2DepthBuffer* GetDepthStencilBufferDRC();
+    virtual GX2ColorBuffer* GetColorBuffer();
+    virtual GX2DepthBuffer* GetDepthStencilBuffer();
+    virtual GX2ColorBuffer* GetColorBufferDRC();
+    virtual GX2DepthBuffer* GetDepthStencilBufferDRC();
     virtual void StartFrame();
     virtual void TEMP_PatchStateFromIggy();
     virtual void ResetRenderState();
@@ -391,7 +288,7 @@ public:
     virtual int SaveTextureDataToMemory(void* destination, int destinationSize, int* bytesWritten, int width,
                                         int height, int* data);
     virtual void TextureGetStats();
-    virtual _GX2Texture* TextureGetTexture(int texture);
+    virtual GX2Texture* TextureGetTexture(int texture);
     virtual void StateSetColour(float red, float green, float blue, float alpha);
     virtual void StateSetColourAdd(float red, float green, float blue, float alpha);
     virtual void StateSetTexColour(int stage, float red, float green, float blue, float alpha);
@@ -472,8 +369,8 @@ public:
     void StateUpdate();
     void UpdateTextureState(int stage);
     C4JRender::ePixelShaderType FinalisePixelShaderType(C4JRender::ePixelShaderType pixelShaderType);
-    void TextureSetTexture(int texture, _GX2Texture& source);
-    void TextureSetSampler(int texture, _GX2Sampler& source);
+    void TextureSetTexture(int texture, GX2Texture& source);
+    void TextureSetSampler(int texture, GX2Sampler& source);
     void* GetDynamicVertexMemory(C4JRender::eVertexType vertexType, int numVertices);
     void DrawVertexSetup(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType,
                          C4JRender::ePrimitiveType primitiveType);
@@ -489,45 +386,45 @@ private:
     struct Texture
     {
         bool mUsed;
-        _GX2Texture mTexture;
+        GX2Texture mTexture;
         int mReserved;
         int mLevels;
         C4JRender::eTextureFormat mFormat;
-        _GX2Sampler mSampler;
+        GX2Sampler mSampler;
         unsigned int mFlags;
     };
 
     float mClearColour[4];
     bool mDRCFrameStarted;
-    _GX2ContextState* mContextState;
+    GX2ContextState* mContextState;
     bool mDisplayEnabled;
     bool mForegroundAcquired;
     void* mTVScanBuffer;
     void* mDRCScanBuffer;
-    _GX2ColorBuffer mColourBuffer;
-    _GX2ColorBuffer mThumbnailColourBuffer[4];
-    _GX2Texture mColourTexture;
-    _GX2Texture mThumbnailTexture[4];
-    _GX2DepthBuffer mDepthBuffer;
-    _GX2ColorBuffer mAlphaColourBuffer;
-    _GX2Texture mAlphaTexture;
-    _GX2Sampler mAlphaSampler;
-    _GX2ColorBuffer mTVColourBuffer;
-    _GX2Texture mTVTexture;
-    _GX2ColorBuffer mDRCColourBuffer;
-    _GX2Texture mDRCTexture;
-    _GX2Sampler mDRCSampler;
-    _GX2DepthBuffer mDRCDepthBuffer;
-    _GX2VertexShader** mVertexShaders;
-    _GX2FetchShader** mFetchShaders;
-    _GX2VertexShader* mResolveVertexShader;
-    _GX2VertexShader* mClearVertexShader;
-    _GX2PixelShader** mPixelShaders;
-    _GX2PixelShader* mCopyPixelShader;
-    _GX2PixelShader* mClearPixelShader;
-    _GX2PixelShader* mAlphaResolvePixelShader;
-    _GX2PixelShader* mAlphaAccumulatePixelShader;
-    _GX2PixelShader* mGammaPixelShader;
+    GX2ColorBuffer mColourBuffer;
+    GX2ColorBuffer mThumbnailColourBuffer[4];
+    GX2Texture mColourTexture;
+    GX2Texture mThumbnailTexture[4];
+    GX2DepthBuffer mDepthBuffer;
+    GX2ColorBuffer mAlphaColourBuffer;
+    GX2Texture mAlphaTexture;
+    GX2Sampler mAlphaSampler;
+    GX2ColorBuffer mTVColourBuffer;
+    GX2Texture mTVTexture;
+    GX2ColorBuffer mDRCColourBuffer;
+    GX2Texture mDRCTexture;
+    GX2Sampler mDRCSampler;
+    GX2DepthBuffer mDRCDepthBuffer;
+    GX2VertexShader** mVertexShaders;
+    GX2FetchShader** mFetchShaders;
+    GX2VertexShader* mResolveVertexShader;
+    GX2VertexShader* mClearVertexShader;
+    GX2PixelShader** mPixelShaders;
+    GX2PixelShader* mCopyPixelShader;
+    GX2PixelShader* mClearPixelShader;
+    GX2PixelShader* mAlphaResolvePixelShader;
+    GX2PixelShader* mAlphaAccumulatePixelShader;
+    GX2PixelShader* mGammaPixelShader;
     unsigned int* mVertexStrides;
     int mDefaultTexture;
     unsigned short mGamma;

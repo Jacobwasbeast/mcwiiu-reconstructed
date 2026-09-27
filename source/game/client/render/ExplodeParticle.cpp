@@ -1,4 +1,5 @@
 #include "game/client/render/ExplodeParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/ColourTable.hpp"
@@ -31,7 +32,7 @@ ExplodeParticle::~ExplodeParticle()
 
 uint64_t ExplodeParticle::GetType()
 {
-    return 0x0000000000080204ULL;
+    return ParticleKind::EXPLODE;
 }
 
 void ExplodeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,

@@ -3,9 +3,11 @@
 
 #include <string>
 
+#include "game/network/ProgressListener.hpp"
+
 class Minecraft;
 
-class ProgressRenderer
+class ProgressRenderer : public ProgressListener
 {
 public:
     class TextField
@@ -23,13 +25,13 @@ public:
     virtual ~ProgressRenderer();
 
     void internalProgressStart(const TextField& field);
-    void progressStart(int id);
-    void progressStartNoAbort(int id);
+    virtual void progressStagePercentage(int percentage);
+    virtual void progressStart(int id);
+    virtual void progressStartNoAbort(int id);
+    virtual void progressStage(int id);
+    virtual void progressStage(const std::wstring& text);
     void progressStartNoAbort(const std::wstring& text);
     void progressStart(const std::wstring& text);
-    void progressStage(int id);
-    void progressStage(const std::wstring& text);
-    void progressStagePercentage(int percentage);
     int getCurrentTitle();
     std::wstring getCurrentTitleString();
     std::wstring getCurrentStatusString();

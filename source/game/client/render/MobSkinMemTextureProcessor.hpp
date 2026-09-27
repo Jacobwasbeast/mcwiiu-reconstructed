@@ -18,7 +18,7 @@ public:
     void setNoAlpha(int x0, int y0, int x1, int y1);
     uint32_t hasAlpha(int x0, int y0, int x1, int y1);
     void setForceAlpha(int x0, int y0, int x1, int y1);
-    BufferedImage* process(BufferedImage* image);
+    virtual BufferedImage* process(BufferedImage* image);
 };
 
 #endif

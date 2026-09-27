@@ -1,4 +1,5 @@
 #include "game/client/render/StrayRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -32,7 +33,7 @@ StrayRenderer::~StrayRenderer()
 
 std::wstring StrayRenderer::getModelName()
 {
-    return L"skeleton_stray";
+    return L"skeleton.stray";
 }
 
 const ResourceLocation* StrayRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
@@ -41,7 +42,7 @@ const ResourceLocation* StrayRenderer::getTextureLocation(boost::shared_ptr<Enti
 }
 
 void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                                 float ageInTicks, float netHeadYaw, float headPitch, float scale, float partialTick,
+                                 float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                                  bool overlay)
 {
     bool visible = isVisible(entity);
@@ -56,7 +57,7 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
         if ((visible && !invisibleToPlayer) || layer != mStrayClothingLayer)
         {
             bool skipLayer = false;
-            if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+            if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
                 && boost::static_pointer_cast<Player>(entity)->isSpectator()
                 && boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead()
                 && (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))

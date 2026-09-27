@@ -1,4 +1,5 @@
 #include "game/client/render/NoteParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -84,7 +85,7 @@ void NoteParticle::init(Level* level, double x, double y, double z,
 
 uint64_t NoteParticle::GetType()
 {
-    return 0x0000000000080209ULL;
+    return ParticleKind::NOTE;
 }
 
 Particle* NoteParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

@@ -59,6 +59,6 @@ void SheepModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
 std::wstring SheepModel::getName()
 {
     std::wstring result;
-    result.assign(L"sheep_sheared");
+    result.assign(L"sheep.sheared");
     return result;
 }

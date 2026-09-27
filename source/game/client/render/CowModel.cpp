@@ -25,11 +25,12 @@ CowModel::CowModel(const ModelDefinition& modelDefinition)
         mLeg2->mY -= 1.0f;
         mLeg3->mY -= 1.0f;
 
+        mZHeadOffs += 2.0f;
         compileSkinnedDrawlist();
     }
     else
     {
-        mScale += 2.0f;
+        mZHeadOffs += 2.0f;
     }
 }
 

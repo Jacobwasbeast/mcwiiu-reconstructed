@@ -29,16 +29,12 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)13);
-
-static float itemFrameDisplayRotation(int rotation)
-{
-    return static_cast<float>(rotation) * 45.0f;
-}
 
 ItemFrameRenderer::ItemFrameRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher),
@@ -69,7 +65,8 @@ void ItemFrameRenderer::drawBlockFrame(const boost::shared_ptr<ItemFrame>& itemF
         BufferBuilder* builder = tesselator->getBuilder();
         builder->begin();
         GlStateManager::newList(mBlockFrameDisplayList, 0);
-        const BlockState* state = Blocks::AIR->defaultBlockState();
+        TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::BIRCH);
+        const BlockState* state = Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
         BlockRenderer* renderer = mMinecraft->getBlockRenderer()->getBlockRenderer();
         renderer->setFixedShape(0.0625f, 0.0625f, 0.9375625f, 0.9375f, 0.9375f, 1.0f);
         renderer->setFixedTexture(mFrameIcon);
@@ -104,20 +101,21 @@ void ItemFrameRenderer::drawFrame(const boost::shared_ptr<ItemFrame>& itemFrame)
         BufferBuilder* builder = tesselator->getBuilder();
         builder->begin();
         GlStateManager::newList(mFrameDisplayList, 0);
-        const BlockState* state = Blocks::AIR->defaultBlockState();
+        TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::BIRCH);
+        const BlockState* state = Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
         BlockRenderer* renderer = mMinecraft->getBlockRenderer()->getBlockRenderer();
         renderer->setFixedShape(0.1875f, 0.1875f, 0.96875f, 0.8125f, 0.8125f, 1.0f);
         renderer->setFixedTexture(mFrameIcon);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
         renderer->clearFixedTexture();
         renderer->clearFixedShape();
-        renderer->setFixedShape(0.125f, 0.125f, 0.96875f, 0.875f, 0.1875f, 1.0f);
+        renderer->setFixedShape(0.125f, 0.125f, 0.9375f, 0.875f, 0.1875f, 1.0f);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
-        renderer->setFixedShape(0.125f, 0.8125f, 0.96875f, 0.875f, 0.875f, 1.0f);
+        renderer->setFixedShape(0.125f, 0.8125f, 0.9375f, 0.875f, 0.875f, 1.0f);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
-        renderer->setFixedShape(0.125f, 0.1875f, 0.96875f, 0.1875f, 0.8125f, 1.0f);
+        renderer->setFixedShape(0.125f, 0.1875f, 0.9375f, 0.1875f, 0.8125f, 1.0f);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
-        renderer->setFixedShape(0.8125f, 0.1875f, 0.96875f, 0.875f, 0.8125f, 1.0f);
+        renderer->setFixedShape(0.8125f, 0.1875f, 0.9375f, 0.875f, 0.8125f, 1.0f);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
         renderer->clearFixedShape();
         renderer->clearFixedTexture();
@@ -135,22 +133,22 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
         return;
     GlStateManager::pushMatrix();
     GlStateManager::disableLighting();
-    if (item->getItem() == Items::map)
+    if (item->getItem() == Items::filledMap)
     {
-        int rotation = itemFrame->getRotation() & 3;
-        GlStateManager::rotatef(static_cast<float>(rotation) * 90.0f, 0.0f, 0.0f, 1.0f);
+        const int rotation = itemFrame->getRotation() % 4 * 2;
+        GlStateManager::rotatef(static_cast<float>(rotation) * 360.0f / 8.0f, 0.0f, 0.0f, 1.0f);
         mDispatcher->mTextures->bindTexture(&MAP_BACKGROUND_LOCATION);
         GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::scalef(0.0078125f, 0.0078125f, 0.0078125f);
         GlStateManager::translatef(-64.0f, -64.0f, 0.0f);
-        boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(item->getItem())->getSavedData(item, itemFrame->mLevel);
+        boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(Items::filledMap)->getSavedData(item, itemFrame->mLevel);
         GlStateManager::translatef(0.0f, 0.0f, -1.0f);
         if (data)
             mMinecraft->mGameRenderer->getMapRenderer()->render(data, boost::shared_ptr<Player>());
     }
     else
     {
-        GlStateManager::rotatef(itemFrameDisplayRotation(itemFrame->getRotation()), 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(static_cast<float>(itemFrame->getRotation()) * 360.0f / 8.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
         mItemRenderer->renderStatic(item, boost::shared_ptr<LivingEntity>(), ItemTransforms::FIXED, 1.0f, false, NULL);
     }
@@ -160,6 +158,7 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
 
 void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
+    ++gHangingEntityRenderCount;
     PIXBeginNamedEvent(0.0f, "ItemFrameRenderer");
     boost::shared_ptr<ItemFrame> itemFrame = boost::static_pointer_cast<ItemFrame>(entity);
     BlockPos pos = itemFrame->getPos();
@@ -176,7 +175,7 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
     not_null_ptr<ItemInstance> item = itemFrame->getItem();
-    if (item->getItem() == Items::map)
+    if (item->getItem() == Items::filledMap)
         drawBlockFrame(itemFrame);
     else
         drawFrame(itemFrame);
@@ -190,9 +189,8 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     drawItem(itemFrame);
     GlStateManager::popMatrix();
     const Direction* direction = itemFrame->getDirection();
-    EntityRenderer::render(entity, x + (double)direction->getStepX() * 0.3,
-                           y - 0.25, z + (double)direction->getStepZ() * 0.3,
-                           yaw, partialTick);
+    renderName(entity, x + static_cast<float>(direction->getStepX()) * 0.3f, y - 0.25,
+               z + static_cast<float>(direction->getStepZ()) * 0.3f);
     PIXEndNamedEvent();
 }
 

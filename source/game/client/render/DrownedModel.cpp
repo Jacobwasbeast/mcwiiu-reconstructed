@@ -1,4 +1,5 @@
 #include "game/client/render/DrownedModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -159,7 +160,7 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
 
     bool swimming = false;
 
-    if (entity->GetType() == ENTITY_TYPE_DROWNED)
+    if (entity->GetType() == EntityType::DROWNED)
     {
         boost::shared_ptr<Drowned> drowned = boost::static_pointer_cast<Drowned>(entity);
 

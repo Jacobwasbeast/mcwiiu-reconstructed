@@ -1,7 +1,6 @@
 #include "game/client/render/ModelResourceLocation.hpp"
-
-std::wstring toLower(const std::wstring& text);
-int javaStringHashCode(const std::wstring& text);
+#include "game/core/StringUtils.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 
 static const std::wstring DEFAULT_VARIANT = L"normal";
 

@@ -1,4 +1,5 @@
 #include "game/client/render/SuspendedParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
@@ -11,7 +12,7 @@ SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z,
                                      double xa, double ya, double za)
     : Particle(level, x, y - 0.125, z, xa, ya, za)
 {
-    int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)250);
+    int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Suspend);
     rCol = (float)((colour >> 16) & 0xff) / 255.0f;
     gCol = (float)((colour >> 8) & 0xff) / 255.0f;
     bCol = (float)(colour & 0xff) / 255.0f;
@@ -44,7 +45,7 @@ void SuspendedParticle::tick()
 
 uint64_t SuspendedParticle::GetType()
 {
-    return 0x0000000000080219ULL;
+    return ParticleKind::SUSPENDED;
 }
 
 Particle* SuspendedParticle::Provider::createParticle(ePARTICLE_TYPE type,

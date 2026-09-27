@@ -107,10 +107,10 @@ void ShulkerRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
     GlStateManager::scalef(0.999F, 0.999F, 0.999F);
 }
 
-void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, float partialTick, bool overlay)
+void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool overlay)
 {
     if (!mModel->hasOverriddenParts())
-        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, partialTick, overlay);
+        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch, scale, overlay);
 }
 
 void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale)

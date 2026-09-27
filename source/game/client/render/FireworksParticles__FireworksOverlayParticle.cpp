@@ -1,4 +1,5 @@
 #include "game/client/render/FireworksParticles__FireworksOverlayParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -27,7 +28,7 @@ void FireworksOverlayParticle::render(BufferBuilder* buffer,
                                       float za2)
 {
     (void)camera;
-    float phase = ((float)age - 176.0f + partialTicks - 1.75f) * 0.25f;
+    float phase = (age + partialTicks - 1.0f) * 0.25f;
     float sine = (float)std::sin(phase * 3.1415927410125732f);
     float scale = 7.099999904632568f * sine;
     setAlpha(0.6000000238418579f - phase * 0.5f);
@@ -59,6 +60,6 @@ void FireworksOverlayParticle::render(BufferBuilder* buffer,
 
 uint64_t FireworksOverlayParticle::GetType()
 {
-    return 0x0000000000080222ULL;
+    return ParticleKind::FIREWORKS_OVERLAY;
 }
 }

@@ -1,4 +1,5 @@
 #include "game/client/render/UndeadHorseRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/AbstractHorseModel.hpp"
 #include "game/client/render/EntityRenderer.hpp"
@@ -21,9 +22,9 @@ const ResourceLocation* UndeadHorseRenderer::getTextureLocation(boost::shared_pt
     static ResourceLocation zombieHorseTexture;
 
     unsigned long long type = entity->GetType();
-    if (type == 0x2D690002ULL)
+    if (type == EntityType::SKELETON_HORSE)
         return &skeletonHorseTexture;
-    if (type == 0x2D690003ULL)
+    if (type == EntityType::ZOMBIE_HORSE)
         return &zombieHorseTexture;
     return EntityRenderer::getTextureLocation(entity);
 }

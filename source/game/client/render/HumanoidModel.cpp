@@ -1,4 +1,5 @@
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <math.h>
 
@@ -199,7 +200,7 @@ bool HumanoidModel::IsBodyPartDisabled(animbits bodyPart)
 
 const HumanoidArm* HumanoidModel::getAttackArm(boost::shared_ptr<Entity> entity)
 {
-    if (Entity::instanceof(entity, ENTITY_TYPE_LIVING_ENTITY))
+    if (Entity::instanceof(entity, EntityType::LIVING_ENTITY))
     {
         boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
 
@@ -426,7 +427,7 @@ void HumanoidModel::setupBoneMatrices(boost::shared_ptr<Entity>& entity, float l
 
     if (entity)
     {
-        bool spectator = (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+        bool spectator = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
             && boost::static_pointer_cast<Player>(entity)->isSpectator();
 
         if (spectator)
@@ -478,7 +479,7 @@ void HumanoidModel::setupBoneMatrices(boost::shared_ptr<Entity>& entity, float l
     {
         if (entity)
         {
-            bool fallFlying = (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+            bool fallFlying = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
                 && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
 
             if (entity && entity->isSneaking() && !fallFlying)
@@ -538,10 +539,10 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     {
         mSwimAmount = entity->getSwimAmount(limbSwingAmount);
 
-        fallFlying = (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        fallFlying = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
             && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
 
-        bool fallFlyingDisabled = (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        bool fallFlyingDisabled = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
             && boost::static_pointer_cast<LivingEntity>(entity)->isFallFlyingStateDisabled();
 
         mHead->mYRot = netHeadYaw * 0.01745329238474369f;

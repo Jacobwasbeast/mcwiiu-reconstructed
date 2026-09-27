@@ -1,4 +1,5 @@
 #include "game/client/render/MobRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -49,7 +50,7 @@ void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (mItemFrame)
         return;
-    if ((entity->GetType() & ENTITY_TYPE_MOB) != ENTITY_TYPE_MOB)
+    if ((entity->GetType() & EntityType::MOB) != EntityType::MOB)
         return;
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
     renderLeash(mob, x, y, z, yaw, partialTick);

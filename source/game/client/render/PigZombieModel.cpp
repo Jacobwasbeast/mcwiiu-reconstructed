@@ -1,4 +1,5 @@
 #include "game/client/render/PigZombieModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -106,7 +107,7 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 
     bool angry = false;
 
-    if (entity->GetType() == ENTITY_TYPE_PIG_ZOMBIE)
+    if (entity->GetType() == EntityType::PIG_ZOMBIE)
     {
         boost::shared_ptr<PigZombie> pigZombie = boost::static_pointer_cast<PigZombie>(entity);
 

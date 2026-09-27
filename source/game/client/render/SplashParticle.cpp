@@ -1,4 +1,5 @@
 #include "game/client/render/SplashParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mth.hpp"
 
@@ -24,7 +25,7 @@ SplashParticle::~SplashParticle()
 
 uint64_t SplashParticle::GetType()
 {
-    return 0x000000000008020EULL;
+    return ParticleKind::SPLASH;
 }
 
 Particle* SplashParticle::Provider::createParticle(ePARTICLE_TYPE type,

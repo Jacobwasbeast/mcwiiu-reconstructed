@@ -1,4 +1,5 @@
 #include "game/client/render/BreakingItemParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/client/render/TextureUVCoordinateSet.hpp"
@@ -87,7 +88,7 @@ void BreakingItemParticle::_init(Item* item, int meta)
 
 uint64_t BreakingItemParticle::GetType()
 {
-    return 0x0000000000080202ULL;
+    return ParticleKind::BREAKING_ITEM;
 }
 
 Particle* BreakingItemParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

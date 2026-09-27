@@ -15,10 +15,9 @@ class TexturePack;
 class BlockEntityRenderer
 {
 public:
-
     virtual ~BlockEntityRenderer();
-
-    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
+    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                        int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
     virtual void onNewLevel(Level* pLevel);
     virtual void init(BlockEntityRenderDispatcher* pDispatcher);
     virtual bool shouldRenderOffScreen(boost::shared_ptr<BlockEntity> blockEntity);
@@ -32,7 +31,8 @@ protected:
     Font* getFont();
     Level* getLevel();
 
-    void renderNameTag(boost::shared_ptr<BlockEntity> blockEntity, std::wstring name, double x, double y, double z, int maxDistance);
+    void renderNameTag(boost::shared_ptr<BlockEntity> blockEntity, std::wstring name, double x, double y,
+                       double z, int maxDistance);
 
     void bindTexture(ResourceLocation* pResourceLocation);
     void bindTexture(const std::wstring& texturePath, ResourceLocation* pResourceLocation);

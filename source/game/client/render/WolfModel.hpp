@@ -3,14 +3,31 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/client/render/Model.hpp"
-class Entity; class LivingEntity; class ModelDefinition; class ModelPart;
-class WolfModel : public Model {
+class Entity;
+class LivingEntity;
+class ModelDefinition;
+class ModelPart;
+class WolfModel : public Model
+{
 public:
- WolfModel(const ModelDefinition& modelDefinition); virtual ~WolfModel();
- virtual void render(boost::shared_ptr<Entity>& entity,float limbSwing,float limbSwingAmount,float ageInTicks,float netHeadYaw,float headPitch,float scale,bool useDisplayList);
- virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity,float limbSwing,float limbSwingAmount,float partialTicks);
- virtual void setupAnim(float limbSwing,float limbSwingAmount,float ageInTicks,float netHeadYaw,float headPitch,float scale,boost::shared_ptr<Entity> entity,_SkinAdjustments skinAdjustments);
- virtual std::wstring getName();
- ModelPart* mHead; ModelPart* mBody; ModelPart* mLeg1; ModelPart* mLeg2; ModelPart* mLeg3; ModelPart* mLeg4; ModelPart* mTail; ModelPart* mUpperBody;
+    WolfModel(const ModelDefinition& modelDefinition);
+    virtual ~WolfModel();
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                        bool useDisplayList);
+    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                 float limbSwingAmount, float partialTicks);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                           float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                           _SkinAdjustments skinAdjustments);
+    virtual std::wstring getName();
+    ModelPart* mHead;
+    ModelPart* mBody;
+    ModelPart* mLeg1;
+    ModelPart* mLeg2;
+    ModelPart* mLeg3;
+    ModelPart* mLeg4;
+    ModelPart* mTail;
+    ModelPart* mUpperBody;
 };
 #endif

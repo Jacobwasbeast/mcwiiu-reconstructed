@@ -1,4 +1,5 @@
 #include "game/client/render/FootstepParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 
@@ -84,7 +85,7 @@ int FootstepParticle::getParticleTexture()
 
 uint64_t FootstepParticle::GetType()
 {
-    return 0x0000000000080206ULL;
+    return ParticleKind::FOOTSTEP;
 }
 
 Particle* FootstepParticle::Provider::createParticle(ePARTICLE_TYPE type,

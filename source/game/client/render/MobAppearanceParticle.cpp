@@ -1,4 +1,5 @@
 #include "game/client/render/MobAppearanceParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -42,7 +43,7 @@ bool MobAppearanceParticle::isAffected()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (guardian != NULL && minecraft != NULL && minecraft->getCameraEntity())
     {
-        if ((minecraft->getCameraEntity()->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if ((minecraft->getCameraEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             boost::shared_ptr<LivingEntity> living =
                 boost::static_pointer_cast<LivingEntity>(minecraft->getCameraEntity());
@@ -97,7 +98,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
 
 uint64_t MobAppearanceParticle::GetType()
 {
-    return 0x0000000000080227ULL;
+    return ParticleKind::MOB_APPEARANCE;
 }
 
 Particle* MobAppearanceParticle::Provider::createParticle(ePARTICLE_TYPE,

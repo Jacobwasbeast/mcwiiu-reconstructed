@@ -1,4 +1,5 @@
 #include "game/client/render/HeartParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Mth.hpp"
 
@@ -72,7 +73,7 @@ void HeartParticle::init(Level* level, double x, double y, double z,
 
 uint64_t HeartParticle::GetType()
 {
-    return 0x0000000000080207ULL;
+    return ParticleKind::HEART;
 }
 
 Particle* HeartParticle::Provider::createParticle(ePARTICLE_TYPE type,

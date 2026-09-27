@@ -1,4 +1,5 @@
 #include "game/client/render/SpitParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 SpitParticle::SpitParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : ExplodeParticle(level, x, y, z, xa, ya, za)
@@ -12,7 +13,7 @@ SpitParticle::~SpitParticle()
 
 uint64_t SpitParticle::GetType()
 {
-    return 0x000000000008022CULL;
+    return ParticleKind::SPIT;
 }
 
 void SpitParticle::tick()

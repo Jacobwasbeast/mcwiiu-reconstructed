@@ -25,15 +25,14 @@ public:
 
     void render(QuadrupedModel* model, float scale, bool useDisplayList);
 
-    float mScale;
-    float mHeadYOffset;
-    bool mHasOverriddenParts;
     ModelPartSkin* mHead;
     ModelPartSkin* mBody;
     ModelPartSkin* mLeg0;
     ModelPartSkin* mLeg1;
     ModelPartSkin* mLeg2;
     ModelPartSkin* mLeg3;
+    unsigned int mUnused;
+    bool mModelOverridden;
 };
 
 #endif

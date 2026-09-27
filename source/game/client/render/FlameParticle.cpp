@@ -1,4 +1,5 @@
 #include "game/client/render/FlameParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/Mth.hpp"
@@ -81,7 +82,7 @@ void FlameParticle::tick()
 
 uint64_t FlameParticle::GetType()
 {
-    return 0x0000000000080205ULL;
+    return ParticleKind::FLAME;
 }
 
 Particle* FlameParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

@@ -34,15 +34,19 @@ public:
     static void copyToBuffer(arrayWithLength<int> pixels, int offset, int length);
 
     static void uploadImage(int textureId, arrayWithLength<int> pixels, int width, int height);
-    static void uploadImage(int textureId, BufferedImage* image, int xOffset, int yOffset, bool blur, bool clamp);
+    static void uploadImage(int textureId, BufferedImage* image, int xOffset, int yOffset, bool blur,
+                            bool clamp);
     static void uploadImage(int textureId, BufferedImage* image, bool blur, bool clamp);
     static void uploadImage(int textureId, BufferedImage* image);
 
-    static void uploadImageChunked(int mipLevel, arrayWithLength<int> pixels, int width, int height, int xOffset, int yOffset, bool blur, bool clamp, bool mipmap);
+    static void uploadImageChunked(int mipLevel, arrayWithLength<int> pixels, int width, int height,
+                                   int xOffset, int yOffset, bool blur, bool clamp, bool mipmap);
     static void uploadImageChunked(BufferedImage* image, int xOffset, int yOffset, bool blur, bool clamp);
-    static void uploadImageChunked(array2DWithLength<int> mipPixels, int width, int height, int xOffset, int yOffset, bool blur, bool clamp);
+    static void uploadImageChunked(array2DWithLength<int> mipPixels, int width, int height, int xOffset,
+                                   int yOffset, bool blur, bool clamp);
 
-    static array2DWithLength<int> generateMipLevels(int mipLevels, int width, array2DWithLength<int> mipPixels);
+    static array2DWithLength<int> generateMipLevels(int mipLevels, int width,
+                                                    array2DWithLength<int> mipPixels);
 
     static int alphaBlend(int topLeft, int topRight);
     static int alphaBlend(int topLeft, int topRight, int bottomLeft, int bottomRight);
@@ -56,11 +60,12 @@ public:
     static arrayWithLength<int> flipVertical(arrayWithLength<int> pixels, int width, int height);
 
     static void* decodeJpeg(void* data, int length, int* width, int* height);
-    static void insertZlibAlphaChannelData(void* pixels, int width, int height, void* compressedData, int compressedLength);
+    static void insertZlibAlphaChannelData(void* pixels, int width, int height, void* compressedData,
+                                           int compressedLength);
 
     static int LoadTextureData(const char* fileName, int* width, int* height, int** pixels);
-    static int LoadTextureData(unsigned char* data, unsigned int length, int* width, int* height, int** pixels);
-
+    static int LoadTextureData(unsigned char* data, unsigned int length, int* width, int* height,
+                               int** pixels);
     static void ByteFlipRGBAToARGB(unsigned int& colour);
     static void ByteFlipRGBAToBGRA(unsigned int& colour);
     static void ByteFlipARGBToABGR(unsigned int& colour);

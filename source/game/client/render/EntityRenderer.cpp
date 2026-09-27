@@ -1,4 +1,5 @@
 #include "game/client/render/EntityRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -51,7 +52,7 @@ bool EntityRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* cul
                             entity->mX + 2.0, entity->mY + 2.0, entity->mZ + 2.0);
     }
 
-    return entity->shouldRender(x, y, z) && (entity->mAddedToChunk || culler->isVisible(entity->mBoundingBox));
+    return entity->shouldRender(x, y, z) && (entity->mNoCulling || culler->isVisible(entity->mBoundingBox));
 }
 
 bool EntityRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double distance)
@@ -63,7 +64,7 @@ bool EntityRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* cul
                             entity->mX + 2.0, entity->mY + 2.0, entity->mZ + 2.0);
     }
 
-    return entity->shouldRender(distance) && (entity->mAddedToChunk || culler->isVisible(entity->mBoundingBox));
+    return entity->shouldRender(distance) && (entity->mNoCulling || culler->isVisible(entity->mBoundingBox));
 }
 
 void EntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float, float)
@@ -176,7 +177,7 @@ const ResourceLocation* EntityRenderer::getTextureLocation(boost::shared_ptr<Ent
 void EntityRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x, double y, double z, float)
 {
     GlStateManager::disableLighting();
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::FIRE);
+    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
     TextureAtlasSprite* fire0 = fire->getTextureLayer(0);
     TextureAtlasSprite* fire1 = fire->getTextureLayer(1);
     GlStateManager::pushMatrix();
@@ -231,11 +232,11 @@ void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     GlStateManager::depthMask(false);
 
     float radius = mShadowRadius;
-    if ((entity->GetType() & 0x0D000000ULL) == 0x0D000000ULL)
+    if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
         radius *= (float)mob->getSizeScale();
-        if ((mob->GetType() & 0x0D600000ULL) == 0x0D600000ULL)
+        if ((mob->GetType() & EntityType::AGABLE_MOB) == EntityType::AGABLE_MOB)
         {
             boost::shared_ptr<Animal> animal = boost::static_pointer_cast<Animal>(mob);
             if (animal->isBaby())
@@ -260,7 +261,7 @@ void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     {
         BlockPos pos = *positions->next();
         const BlockState* state = level->getBlockState(pos.below());
-        if (state->getRenderShape() != -1 && level->getRawBrightness(pos) > 3)
+        if (state->getRenderShape() != BLOCK_RENDER_INVISIBLE && level->getRawBrightness(pos) > 3)
             renderBlockShadow(state, x, y, z, pos, alpha, radius, x - entityX, y - entityY, z - entityZ);
     }
     delete positions;
@@ -324,7 +325,7 @@ void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, dou
         if (entity->displayFireAnimation())
         {
             bool spectator = false;
-            if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+            if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
                 spectator = boost::static_pointer_cast<Player>(entity)->isSpectator();
             if (!spectator)
                 renderFlame(entity, x, y, z, partialTick);
@@ -350,7 +351,7 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
         yOffset -= 0.25F;
     std::wstring displayName(name);
     int nameOffset = 0;
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         if (g_pApp->isXuidDeadmau5(player->mXuid))

@@ -1,4 +1,5 @@
 #include "game/client/render/EndRodParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 EndRodParticle::EndRodParticle(Level* level, double x, double y, double z,
                                double xa, double ya, double za)
@@ -25,7 +26,7 @@ void EndRodParticle::move(double xa, double ya, double za)
 
 uint64_t EndRodParticle::GetType()
 {
-    return 0x0000000000080229ULL;
+    return ParticleKind::END_ROD;
 }
 
 Particle* EndRodParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

@@ -1,4 +1,5 @@
 #include "game/client/render/FallingDustParticle.hpp"
+#include "game/world/block/Blocks.hpp"
 
 #include <cmath>
 
@@ -90,17 +91,14 @@ Particle* FallingDustParticle::Provider::createParticle(ePARTICLE_TYPE type,
                                                          double za,
                                                          arrayWithLength<int> params)
 {
-    if (params.data == 0)
-        return 0;
-
     const BlockState* state = Block::stateByIdWithData(params.data[0]);
-    if (state == 0)
-        return 0;
+    if (state->getBlock() != Blocks::air && state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
+        return NULL;
 
     Block* block = state->getBlock();
     BlockPos position(x, y, z);
     int colour = Minecraft::GetInstance()->getBlockColors()->getColor(state, (LevelSource*)level, position);
-    if (block->instanceof((EBlockType)11))
+    if (block->instanceof(EBLOCK_TYPE_FALLING))
         colour = block->getColor(state);
     float red = (float)((colour >> 16) & 0xff) / 255.0f;
     float green = (float)((colour >> 8) & 0xff) / 255.0f;

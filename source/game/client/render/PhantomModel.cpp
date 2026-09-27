@@ -195,7 +195,7 @@ void PhantomModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
                              _SkinAdjustments skinAdjustments)
 {
     const float radians = 0.01745329238474369f;
-    const float angle = (((float)entity->getId() - 176.0f) * 3.0f + ageInTicks) * 0.13f;
+    const float angle = (entity->getId() * 3.0f + ageInTicks) * 0.13f;
 
     mPhantomParts[1]->mZRot = (Mth::cos(angle) * 16.0f + 16.0f) * radians;
     mPhantomParts[2]->mZRot = (Mth::cos(angle) * 16.0f + 16.0f) * radians;

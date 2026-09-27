@@ -1,4 +1,5 @@
 #include "game/client/render/SmokeParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
@@ -76,7 +77,7 @@ void SmokeParticle::tick()
 
 uint64_t SmokeParticle::GetType()
 {
-    return 0x000000000008020CULL;
+    return ParticleKind::SMOKE;
 }
 
 Particle* SmokeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,

@@ -1,4 +1,5 @@
 #include "game/client/render/ItemPickupParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -30,7 +31,7 @@ ItemPickupParticle::~ItemPickupParticle()
 
 uint64_t ItemPickupParticle::GetType()
 {
-    return 0x0000000000080225ULL;
+    return ParticleKind::ITEM_PICKUP;
 }
 
 void ItemPickupParticle::tick()

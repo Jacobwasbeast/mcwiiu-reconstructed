@@ -22,7 +22,7 @@ TextureTheme::BlockStack::BlockStack(const BlockState* state, unsigned int count
 {
     for (unsigned int i = 0; i < count; ++i)
         mStates.push_back(state);
-    static const BlockState* air = Blocks::AIR->defaultBlockState();
+    static const BlockState* air = Blocks::air->defaultBlockState();
     mStates.push_back(air);
 }
 
@@ -42,7 +42,7 @@ const BlockState* TextureTheme::BlockStack::at(int index) const
     if (mStates.empty())
         return NULL;
     if (index < 0)
-        return Blocks::AIR->defaultBlockState();
+        return Blocks::air->defaultBlockState();
     if (index >= (int)mStates.size() - 1)
         index = (int)mStates.size() - 1;
     return mStates.at(index);
@@ -55,7 +55,7 @@ TextureTheme::TextureTheme()
 const TextureTheme::BlockStack& TextureTheme::getStack(BufferedImage* image, int x, int y) const
 {
     static BlockStack defaultStack;
-    static BlockStack invalidStack(Blocks::AIR->defaultBlockState(), 1, 0);
+    static BlockStack invalidStack(Blocks::air->defaultBlockState(), 1, 0);
     if (x > 0 && y > 0 && x < (int)image->getWidth() && y < (int)image->getHeight())
     {
         int key = image->getData()[(x * image->getWidth() + y)] & 0xFFFFFF;

@@ -8,6 +8,7 @@
 
 class Entity;
 class ModelDefinition;
+class ModelPart;
 
 class HumanoidHeadModel : public SkeletonHeadModel
 {
@@ -21,6 +22,8 @@ public:
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);
+
+    ModelPart* mHat;
 };
 
 #endif

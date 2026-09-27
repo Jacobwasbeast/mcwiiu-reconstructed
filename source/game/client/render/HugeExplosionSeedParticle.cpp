@@ -1,4 +1,5 @@
 #include "game/client/render/HugeExplosionSeedParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Minecraft.hpp"
@@ -25,7 +26,7 @@ void HugeExplosionSeedParticle::render(BufferBuilder* buffer, const boost::share
 
 void HugeExplosionSeedParticle::tick()
 {
-    Minecraft::GetInstance()->mLevel = (MultiPlayerLevel*)level;
+    Minecraft::GetInstance()->mAnimateTickLevel = level;
 
     for (int i = 0; i < 3; ++i)
     {
@@ -37,7 +38,7 @@ void HugeExplosionSeedParticle::tick()
                            arrayWithLength<int>());
     }
 
-    Minecraft::GetInstance()->mLevel = NULL;
+    Minecraft::GetInstance()->mAnimateTickLevel = NULL;
     ++age;
     if (age == lifetime)
     {
@@ -52,7 +53,7 @@ int HugeExplosionSeedParticle::getParticleTexture()
 
 uint64_t HugeExplosionSeedParticle::GetType()
 {
-    return 0x0000000000080217ULL;
+    return ParticleKind::HUGE_EXPLOSION_SEED;
 }
 
 Particle* HugeExplosionSeedParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

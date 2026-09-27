@@ -18,6 +18,8 @@ class TexturePack;
 class SkullBlockRenderer : public BlockEntityRenderer
 {
 public:
+    static SkullBlockRenderer* instance;
+
     SkullBlockRenderer();
     virtual ~SkullBlockRenderer();
 
@@ -28,7 +30,7 @@ public:
                         float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                         bool bUseDisplayList);
     virtual void init(BlockEntityRenderDispatcher* pDispatcher);
-    void dragonJawCheck();
+    bool dragonJawCheck();
     void updateModel(int modelIndex, const std::wstring& modelName,
                      const std::wstring& originalModelName, TexturePack* pTexturePack);
     virtual void setupForTexturePack(TexturePack* pTexturePack);

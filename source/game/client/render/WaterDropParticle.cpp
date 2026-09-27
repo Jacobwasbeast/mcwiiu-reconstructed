@@ -1,4 +1,5 @@
 #include "game/client/render/WaterDropParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -65,7 +66,7 @@ void WaterDropParticle::tick()
 
 uint64_t WaterDropParticle::GetType()
 {
-    return 0x0000000000080212ULL;
+    return ParticleKind::WATER_DROP;
 }
 
 Particle* WaterDropParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

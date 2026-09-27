@@ -1,4 +1,5 @@
 #include "game/client/render/ChestRefillParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
@@ -60,7 +61,7 @@ void ChestRefillParticle::_init(Level* level, double x, double y, double z,
 
 uint64_t ChestRefillParticle::GetType()
 {
-    const uint64_t type = 0x0000000000080201ULL;
+    const uint64_t type = ParticleKind::CHEST_REFILL;
     return type;
 }
 

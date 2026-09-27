@@ -31,7 +31,7 @@ public:
     public:
         IndexedBlockDef()
         {
-            addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(77), &mColours);
+            addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours);
         }
         virtual ~IndexedBlockDef();
         virtual void getStack(TextureTheme::BlockStack& stack);
@@ -53,7 +53,7 @@ public:
     public:
         MaskedShaftsThemeRuleDefinition()
         {
-            addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(77), &mColours);
+            addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours);
         }
         virtual ~MaskedShaftsThemeRuleDefinition();
         virtual void getStack(TextureTheme::BlockStack& stack);

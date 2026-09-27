@@ -1,4 +1,5 @@
 #include "game/client/render/TextureAtlas.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -961,7 +962,7 @@ void TextureAtlas::stitch()
                 Block::byId(id)->registerIcons(this);
         GlideRingGenerator::registerIcons(this);
         minecraft->mLevelRenderer->registerTextures(this);
-        static_cast<ItemFrameRenderer*>(minecraft->getEntityRenderDispatcher()->getRenderer(0x0a080002ULL))->registerTerrainTextures(this);
+        static_cast<ItemFrameRenderer*>(minecraft->getEntityRenderDispatcher()->getRenderer(EntityType::ITEM_FRAME))->registerTerrainTextures(this);
     }
     for (int id = 0; id < 32000; ++id)
     {

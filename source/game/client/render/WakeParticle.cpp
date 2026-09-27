@@ -1,4 +1,5 @@
 #include "game/client/render/WakeParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/util/Random.hpp"
 
@@ -44,7 +45,7 @@ void WakeParticle::tick()
 
 uint64_t WakeParticle::GetType()
 {
-    return 0x0000000000080213ULL;
+    return ParticleKind::WAKE;
 }
 
 Particle* WakeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

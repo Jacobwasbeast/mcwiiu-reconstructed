@@ -1,4 +1,5 @@
 #include "game/client/render/DripParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -138,7 +139,7 @@ void DripParticle::tick()
 
 uint64_t DripParticle::GetType()
 {
-    return 0x000000000008021BULL;
+    return ParticleKind::DRIP;
 }
 
 Particle* DripParticle::LavaProvider::createParticle(ePARTICLE_TYPE type, Level* level,

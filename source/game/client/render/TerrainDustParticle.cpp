@@ -1,4 +1,5 @@
 #include "game/client/render/TerrainDustParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -24,7 +25,7 @@ TerrainDustParticle::~TerrainDustParticle()
 
 uint64_t TerrainDustParticle::GetType()
 {
-    return 0x0000000000080211ULL;
+    return ParticleKind::TERRAIN_DUST;
 }
 
 Particle* TerrainDustParticle::Provider::createParticle(ePARTICLE_TYPE type,
@@ -38,7 +39,7 @@ Particle* TerrainDustParticle::Provider::createParticle(ePARTICLE_TYPE type,
                                                          arrayWithLength<int> params)
 {
     const BlockState* state = Block::stateByIdWithData(params.data[0]);
-    if (state->getRenderShape() != -1)
+    if (state->getRenderShape() != BLOCK_RENDER_INVISIBLE)
     {
         return (new TerrainDustParticle(level, x, y, z, xa, ya, za, state))->init();
     }

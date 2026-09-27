@@ -243,7 +243,7 @@ void Particle::setMiscTex(int texture)
 
 std::wstring Particle::toString()
 {
-    return std::wstring(L"A_particle");
+    return std::wstring(L"A particle");
 }
 
 bool Particle::isSemiTransparent()

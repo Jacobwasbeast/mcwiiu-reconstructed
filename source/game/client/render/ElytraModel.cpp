@@ -1,4 +1,5 @@
 #include "game/client/render/ElytraModel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <math.h>
 
@@ -50,7 +51,7 @@ void ElytraModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
     bool isBaby = false;
 
-    if (Entity::instanceof(entity, ENTITY_TYPE_LIVING_ENTITY))
+    if (Entity::instanceof(entity, EntityType::LIVING_ENTITY))
     {
         boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
 
@@ -93,7 +94,7 @@ void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
 
     bool isFallFlying = false;
 
-    if (!mOverrideAnim && Entity::instanceof(entity, ENTITY_TYPE_LIVING_ENTITY))
+    if (!mOverrideAnim && Entity::instanceof(entity, EntityType::LIVING_ENTITY))
     {
         boost::shared_ptr<LivingEntity> livingEntity = boost::dynamic_pointer_cast<LivingEntity>(entity);
 

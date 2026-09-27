@@ -1,4 +1,5 @@
 #include "game/client/render/LavaParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -78,7 +79,7 @@ void LavaParticle::tick()
 
 uint64_t LavaParticle::GetType()
 {
-    return 0x0000000000080208ULL;
+    return ParticleKind::LAVA;
 }
 
 Particle* LavaParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

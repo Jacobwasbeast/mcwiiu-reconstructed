@@ -21,7 +21,7 @@ public:
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
 
-    unsigned int getContainerType();
+    virtual unsigned int getContainerType();
     void setActiveChest(boost::shared_ptr<EnderChestBlockEntity> chest);
     void setItemsByTag(ListTag* tag);
     ListTag* createTag();

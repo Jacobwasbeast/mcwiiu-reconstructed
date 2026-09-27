@@ -1,7 +1,8 @@
 #include "game/client/render/LargeSmokeParticle.hpp"
+#include "game/core/EntityType.hpp"
 
 namespace {
-const uint64_t kLargeSmokeParticleType = 0x0000000000080226ULL;
+const uint64_t kLargeSmokeParticleType = ParticleKind::LARGE_SMOKE;
 }
 
 LargeSmokeParticle::LargeSmokeParticle(Level* level, double x, double y, double z,

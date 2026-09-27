@@ -1,8 +1,11 @@
 #include "game/client/render/LivingEntityRenderer.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/PlayerModelPart.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/client/render/RenderLayer.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -17,16 +20,20 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "vendor/_SkinAdjustments.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 double lerp(double from, double to, double amount)
 {
     return (to - from) * amount + from;
+}
+
+float hermiteBlend(float amount)
+{
+    return 3.0F * amount * amount - (amount + amount) * amount * amount;
 }
 
 LivingEntityRenderer::LivingEntityRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
@@ -87,7 +94,7 @@ float LivingEntityRenderer::setupScale(boost::shared_ptr<LivingEntity>& entity, 
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     scale(entity, partialTicks);
-    GlStateManager::translatef(0.0F, 3.0F, 0.0F);
+    GlStateManager::translatef(0.0F, -1.501F, 0.0F);
     return 0.0625F;
 }
 
@@ -100,22 +107,75 @@ bool LivingEntityRenderer::setupSolidState(boost::shared_ptr<LivingEntity>&)
     return true;
 }
 
-bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>&, float, bool overlay)
+bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks,
+                                             bool combineTextures)
 {
-    if (!overlay)
+    float brightness = entity->getBrightness();
+    unsigned int overlayColor = getOverlayColor(entity, brightness, partialTicks);
+    unsigned int alpha = overlayColor >> 24;
+    bool hasOverlay = alpha > 0;
+    bool hurt = entity->mHurtTime > 0 || entity->mDeathTime > 0;
+
+    bool fireTransition = false;
+    float fireRed = 0.0F;
+    float fireGreen = 0.0F;
+    float fireBlue = 0.0F;
+    float fireAlpha = 0.0F;
+    if (entity->getFireTransitionStartTick() >= 0)
+    {
+        int elapsed = entity->mTickCount - entity->getFireTransitionStartTick();
+        float progress = 0.0F;
+        if (entity->isOnFire())
+        {
+            progress = Mth::clamp((float)elapsed / 5.0F, 0.0F, 1.0F);
+        }
+        else if (elapsed <= 4)
+        {
+            progress = 1.0F - Mth::clamp((float)elapsed / 5.0F, 0.0F, 1.0F);
+        }
+
+        if (progress > 0.0F)
+        {
+            fireTransition = true;
+            float phase = ((float)elapsed / 20.0F + (float)elapsed / 20.0F) * 3.1415927F;
+            float pulse = Mth::sin((phase + phase) * 0.5F);
+            fireRed = 0.8F;
+            fireGreen = (float)lerp(0.3F, 0.15F, pulse * pulse);
+            fireBlue = 0.0F;
+            fireAlpha = hermiteBlend(progress) * 0.7F;
+        }
+    }
+
+    if (!hasOverlay && !hurt && !fireTransition)
         return false;
-    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    if (hurt && !combineTextures)
+        return false;
+
+    if (fireTransition)
+    {
+        gRenderer->StateSetLerpColour(fireRed, fireGreen, fireBlue, fireAlpha);
+    }
+    else if (hurt)
+    {
+        gRenderer->StateSetLerpColour(1.0F, 0.0F, 0.0F, 0.3F);
+    }
+    else
+    {
+        gRenderer->StateSetLerpColour((float)(overlayColor >> 16 & 0xff) / 255.0F,
+                                      (float)(overlayColor >> 8 & 0xff) / 255.0F,
+                                      (float)(overlayColor & 0xff) / 255.0F, (float)alpha / 255.0F);
+    }
     return true;
 }
 
-void LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    setupOverlayColor(entity, partialTicks, true);
+    return setupOverlayColor(entity, partialTicks, true);
 }
 
 void LivingEntityRenderer::teardownOverlayColor()
 {
-    GlStateManager::color4f(0.0F, 0.0F, 0.0F, 0.0F);
+    gRenderer->StateSetLerpColour(0.0F, 0.0F, 0.0F, 0.0F);
 }
 
 void LivingEntityRenderer::tearDownSolidState()
@@ -129,61 +189,49 @@ void LivingEntityRenderer::tearDownSolidState()
 void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
                                   float partialTick)
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        if (player->isSpectator() && player->hasInvisiblePrivilege())
+        if (player->isSpectator() && player->IsSpectatingOtherPlayer())
             return;
     }
 
-    PIXBeginNamedEvent(16711935.0F, "LivingEntityRenderer %d", (int)entity.get());
+    PIXBeginNamedEvent(16711935.0F, "LivingEntityRenderer %d", entity->GetType());
     boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
 
     GlStateManager::pushMatrix();
     GlStateManager::disableCull();
 
-    float attackAnim = getAttackAnim(living, partialTick);
-    (void)attackAnim;
-    (void)getBob(living, partialTick);
-
-    bool ridingOnLivingVehicle = false;
-    if (living->isPassenger())
-    {
-        boost::shared_ptr<Entity> vehicle = living->getVehicle();
-        if (vehicle)
-        {
-            if ((vehicle->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
-                ridingOnLivingVehicle = true;
-        }
-    }
+    Model* model = getModel(living);
+    model->mAttackTime = getAttackAnim(living, partialTick);
+    model->mRiding = living->isPassenger() && living->getVehicle()->GetType() != EntityType::DOLPHIN;
+    model->mYoung = living->isBaby();
+    model->mRidingDolphin = living->isPassenger() && living->getVehicle()->GetType() == EntityType::DOLPHIN;
 
     float bodyRot = rotlerp(living->mYBodyRotO, living->mYBodyRot, partialTick);
     float headRot = rotlerp(living->mYHeadRotO, living->mYHeadRot, partialTick);
     float netHeadYaw = headRot - bodyRot;
 
-    if (ridingOnLivingVehicle)
+    if (living->isPassenger() &&
+        (living->getVehicle()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
-        boost::shared_ptr<LivingEntity> vehicleLiving =
-            boost::static_pointer_cast<LivingEntity>(living->getVehicle());
-        float vehicleBodyRot = rotlerp(vehicleLiving->mYBodyRotO, vehicleLiving->mYBodyRot, partialTick);
-        float wrapped = Mth::wrapDegrees(headRot - vehicleBodyRot);
-        float clamped = wrapped;
-        if (clamped < -85.0F)
-            clamped = -85.0F;
-        else if (clamped > 85.0F)
-            clamped = 85.0F;
-        float clampedSq = clamped * clamped;
-        if (2500.0F < clampedSq)
-            netHeadYaw = headRot - (clamped * 0.5128204822540283F + netHeadYaw);
-        else
-            netHeadYaw = headRot - clamped;
+        boost::shared_ptr<LivingEntity> vehicle = boost::static_pointer_cast<LivingEntity>(living->getVehicle());
+        bodyRot = rotlerp(vehicle->mYBodyRotO, vehicle->mYBodyRot, partialTick);
+        float headDiff = Mth::wrapDegrees(headRot - bodyRot);
+        if (headDiff < -85.0F)
+            headDiff = -85.0F;
+        if (headDiff >= 85.0F)
+            headDiff = 85.0F;
+        bodyRot = headRot - headDiff;
+        if (headDiff * headDiff > 2500.0F)
+            bodyRot += headDiff * 0.2F;
+        netHeadYaw = headRot - bodyRot;
     }
 
-    float headPitch = rotlerp(living->mXRotO, living->mXRot, partialTick);
-    float ageInTicks = (float)living->mTickCount + partialTick;
-
+    float headPitch = living->mXRotO + (living->mXRot - living->mXRotO) * partialTick;
     setupPosition(living, x, y, z);
-    setupRotations(living, ageInTicks, bodyRot, partialTick);
+    float bob = (float)getBob(living, partialTick);
+    setupRotations(living, bob, bodyRot, partialTick);
     float scale = setupScale(living, partialTick);
 
     float limbSwingAmount = 0.0F;
@@ -192,50 +240,42 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     {
         limbSwingAmount = living->mAnimationSpeedOld +
                           (living->mAnimationSpeed - living->mAnimationSpeedOld) * partialTick;
-        limbSwing = -(living->mAnimationSpeed * (1.0F - partialTick) - living->mAnimationPosition);
+        limbSwing = living->mAnimationPosition - living->mAnimationSpeed * (1.0F - partialTick);
         if (living->isBaby())
             limbSwing *= 3.0F;
-        if (limbSwing > 1.0F)
-            limbSwing = 1.0F;
+        if (limbSwingAmount > 1.0F)
+            limbSwingAmount = 1.0F;
     }
 
     GlStateManager::enableAlphaTest();
     PIXBeginNamedEvent(0.0F, "prepareMobModel");
-    mModel->prepareMobModel(living, limbSwing, limbSwingAmount, ageInTicks);
+    model->prepareMobModel(living, limbSwing, limbSwingAmount, partialTick);
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0F, "setupAnim");
-    _SkinAdjustments skinAdjustments;
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
-        skinAdjustments = boost::static_pointer_cast<Player>(entity)->getSkinAdjustments();
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(living);
-    mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, renderEntity,
-                      skinAdjustments);
+    model->setupAnim(limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale,
+                     boost::static_pointer_cast<Entity>(living), _SkinAdjustments());
     PIXEndNamedEvent();
 
     if (!mSolidRender)
     {
-        bool overlay = setupOverlayColor(living, partialTick, true);
-        renderModel(living, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
+        bool overlay = setupOverlayColor(living, partialTick);
+        renderModel(living, limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale);
         if (overlay)
             teardownOverlayColor();
         GlStateManager::depthMask(true);
 
-        bool renderLayerPass = true;
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        PIXBeginNamedEvent(0.0F, "renderLayers");
+        bool showLayers = true;
+        if ((living->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            boost::static_pointer_cast<Player>(living)->isSpectator() &&
+            !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
-            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-            if (player->isSpectator() && player->SpectateAsFloatingHead())
-                renderLayerPass = false;
+            showLayers = false;
         }
-
-        if (renderLayerPass)
-        {
-            PIXBeginNamedEvent(0.0F, "renderLayers");
-            renderLayers(living, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, partialTick,
-                         true);
-            PIXEndNamedEvent();
-        }
+        if (showLayers)
+            renderLayers(living, limbSwing, limbSwingAmount, partialTick, bob, netHeadYaw, headPitch, scale, true);
+        PIXEndNamedEvent();
 
         GlStateManager::disableRescaleNormal();
         GlStateManager::activeTexture(1);
@@ -246,40 +286,39 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         PIXBeginNamedEvent(0.0F, "EntityRender");
         EntityRenderer::render(entity, x, y, z, yaw, partialTick);
         PIXEndNamedEvent();
-        postRender(entity, x, y, z, yaw, partialTick, true);
+        model->clearAllOffsets();
+        PIXEndNamedEvent();
     }
     else
     {
-        bool solid = setupSolidState(living);
+        bool solidState = setupSolidState(living);
         PIXBeginNamedEvent(0.0F, "solidRender");
         GlStateManager::enableColorMaterial();
-        unsigned int teamColor = getTeamColor(entity);
-        GlStateManager::setupSolidRenderingTextureCombine((int)teamColor);
+        GlStateManager::setupSolidRenderingTextureCombine(getTeamColor(entity));
         if (!mItemFrame)
         {
-            bool overlay = setupOverlayColor(living, partialTick, true);
-            renderModel(living, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
+            bool overlay = setupOverlayColor(living, partialTick);
+            renderModel(living, limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale);
             if (overlay)
                 teardownOverlayColor();
         }
 
-        bool renderLayerPass = true;
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        bool showLayers = true;
+        if ((living->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            boost::static_pointer_cast<Player>(living)->isSpectator() &&
+            !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
-            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-            if (player->isSpectator() && player->SpectateAsFloatingHead())
-                renderLayerPass = false;
+            showLayers = false;
         }
-
-        if (renderLayerPass)
-            renderLayers(living, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, partialTick,
-                         true);
+        if (showLayers)
+            renderLayers(living, limbSwing, limbSwingAmount, partialTick, bob, netHeadYaw, headPitch, scale, true);
 
         GlStateManager::tearDownSolidRenderingTextureCombine();
         GlStateManager::disableColorMaterial();
         PIXEndNamedEvent();
-        if (solid)
+        if (solidState)
             tearDownSolidState();
+
         GlStateManager::disableRescaleNormal();
         GlStateManager::activeTexture(1);
         GlStateManager::enableTexture();
@@ -289,10 +328,9 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         PIXBeginNamedEvent(0.0F, "EntityRender");
         EntityRenderer::render(entity, x, y, z, yaw, partialTick);
         PIXEndNamedEvent();
-        postRender(entity, x, y, z, yaw, partialTick, true);
+        model->clearAllOffsets();
+        PIXEndNamedEvent();
     }
-
-    PIXEndNamedEvent();
 }
 
 void LivingEntityRenderer::setupForTexturePack(TexturePack* pack)
@@ -338,7 +376,7 @@ void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
 
 bool LivingEntityRenderer::isVisible(boost::shared_ptr<LivingEntity>& entity)
 {
-    if (entity->isInvisible() && !mItemFrame)
+    if (entity->isInvisible() && !mSolidRender)
         return false;
     return true;
 }
@@ -348,50 +386,89 @@ void LivingEntityRenderer::setupPosition(boost::shared_ptr<LivingEntity>&, doubl
     GlStateManager::translatef((float)x, (float)y, (float)z);
 }
 
-void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw, float partialTicks)
+void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
+                                          float partialTicks)
 {
     GlStateManager::rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
 
     if (entity->mDeathTime > 0)
     {
-        float progress = ((float)entity->mDeathTime + partialTicks - 1.0F) / 20.0F * 1.6F;
-        if (progress < 0.0F)
-            progress = 0.0F;
-        if (progress > 1.0F)
-            progress = 1.0F;
-        GlStateManager::rotatef(progress * (float)getFlipDegrees(entity), 0.0F, 0.0F, 1.0F);
+        float fall = std::sqrt(((float)entity->mDeathTime + partialTicks - 1.0F) / 20.0F * 1.6F);
+        if (fall > 1.0F)
+            fall = 1.0F;
+        GlStateManager::rotatef(fall * (float)getFlipDegrees(entity), 0.0F, 0.0F, 1.0F);
     }
-
-    std::wstring name = entity->getDisplayName();
-    if (name == L"Dinnerbone" || name == L"Grumm")
+    else
     {
-        GlStateManager::translatef(0.0F, 0.1F, 0.0F);
-        GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+        std::wstring name = entity->getName();
+        if (name == L"Dinnerbone" || name == L"Grumm")
+        {
+            bool flip = true;
+            if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+                !boost::static_pointer_cast<Player>(entity)->isModelPartShown(PlayerModelPart::CAPE))
+            {
+                flip = false;
+            }
+            if (flip)
+            {
+                GlStateManager::translatef(0.0F, entity->mBbHeight + 0.1F, 0.0F);
+                GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+            }
+        }
+        else if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+                 (boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags & 0x80000000) != 0)
+        {
+            GlStateManager::translatef(0.0F, entity->mBbHeight + 0.1F, 0.0F);
+            GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+        }
     }
 
-    (void)ageInTicks;
+    if (entity->getSwimAmount(partialTicks) > 0.0F)
+    {
+        float swimAmount = entity->getSwimAmount(partialTicks);
+        if (swimAmount > 0.0F)
+        {
+            float xRot = entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTicks;
+            GlStateManager::rotatef(entity->getSwimAmount(partialTicks) * (-90.0F - xRot), 1.0F, 0.0F, 0.0F);
+            GlStateManager::translatef(0.0F, -swimAmount, 0.5F * swimAmount);
+        }
+    }
 }
 
-float LivingEntityRenderer::getAttackAnim(boost::shared_ptr<LivingEntity>&, float)
+float LivingEntityRenderer::getAttackAnim(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    return mModel == NULL ? 0.0F : mModel->mAttackTime;
+    return entity->getAttackAnim(partialTicks);
 }
 
 double LivingEntityRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    return entity->mOBob + (entity->mBob - entity->mOBob) * partialTicks;
+    return (float)entity->mTickCount + partialTicks;
 }
 
-void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                                        float partialTick, bool overlay)
+void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                        float limbSwingAmount, float partialTick, float ageInTicks,
+                                        float netHeadYaw, float headPitch, float scale, bool overlay)
 {
-    std::vector<RenderLayer*>::iterator it = mLayers.begin();
-    while (it != mLayers.end())
+    for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
     {
-        (*it)->render(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch, scale,
-                      overlay);
-        ++it;
+        RenderLayer* layer = *it;
+        bool skipLayer = false;
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            boost::static_pointer_cast<Player>(entity)->isSpectator() &&
+            boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead() &&
+            (layer == NULL || dynamic_cast<CustomHeadLayer*>(layer) == NULL))
+        {
+            skipLayer = true;
+        }
+
+        if (!skipLayer)
+        {
+            bool damageOverlay = setupOverlayColor(entity, partialTick, layer->colorsOnDamage());
+            layer->render(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch,
+                          scale, overlay);
+            if (damageOverlay)
+                teardownOverlayColor();
+        }
     }
 }
 
@@ -428,7 +505,7 @@ void LivingEntityRenderer::renderName(boost::shared_ptr<Entity>& entity, double 
     if (name.empty())
         return;
 
-    if (GameSettings::GetGameSettings(static_cast<eGameSetting>(0x17)) == 0 ||
+    if (GameSettings::GetGameSettings(eGameSetting_DisplayHUD) == 0 ||
         Minecraft::GetInstance()->mOptions->mHideGui)
         return;
 
@@ -452,7 +529,7 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
         return false;
     }
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return Minecraft::renderNames() && entity->hasCustomName();
     }
@@ -539,7 +616,7 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
 
     if (!Minecraft::renderNames())
         return false;
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(4)) == 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_Gamertags) == 0)
         return false;
     return true;
 }
