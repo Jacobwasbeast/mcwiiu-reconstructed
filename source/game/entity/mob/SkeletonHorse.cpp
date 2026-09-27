@@ -71,27 +71,22 @@ void SkeletonHorse::registerGoals()
 
 void SkeletonHorse::playUnderwaterSound(const BlockPos& pos, Block* block)
 {
-    if (isInWater())
+    if (mOnGround)
     {
         if (!isVehicle())
         {
-            playSound(SoundEvents::SKELETON_HORSE_STEP_WATER, 1.0f, 0.8f);
+            playSound(SoundEvents::SKELETON_HORSE_STEP_WATER, 0.4f, 1.0f);
+        }
+        else if (++mGallopSoundCounter > 5)
+        {
+            if (mGallopSoundCounter % 3 == 0)
+            {
+                playSound(SoundEvents::SKELETON_HORSE_GALLOP_WATER, 0.4f, 1.0f);
+            }
         }
         else
         {
-            ++mTailCounter;
-            if (mTailCounter < 6)
-            {
-                playSound(SoundEvents::SKELETON_HORSE_STEP_WATER, 1.0f, 0.8f);
-                Entity::playUnderwaterSound(pos, block);
-                return;
-            }
-            if (mTailCounter % 3 == 0)
-            {
-                playSound(SoundEvents::SKELETON_HORSE_GALLOP_WATER, 1.0f, 0.8f);
-                Entity::playUnderwaterSound(pos, block);
-                return;
-            }
+            playSound(SoundEvents::SKELETON_HORSE_STEP_WATER, 0.4f, 1.0f);
         }
     }
     Entity::playUnderwaterSound(pos, block);

@@ -81,6 +81,7 @@
 #include "game/network/Packet.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/server/ServerPlayerGameMode.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Math.hpp"
@@ -703,15 +704,13 @@ void LivingEntity::tickDeath()
 
         for (int i = 0; i < 20; ++i)
         {
-            double xd = mRandom->nextGaussian() * 0.014;
-            double yd = mRandom->nextGaussian() * 0.014;
-            double zd = mRandom->nextGaussian() * 0.014;
-
-            mLevel->addParticle(PARTICLE_EXPLODE,
-                                mX + (double)(mRandom->nextFloat() * mBbWidth * 2.0f) - (double)mBbWidth,
-                                mY + (double)(mRandom->nextFloat() * mBbHeight),
-                                mZ + (double)(mRandom->nextFloat() * mBbWidth * 2.0f) - (double)mBbWidth,
-                                xd, yd, zd, arrayWithLength<int>());
+            double xd = mRandom->nextGaussian() * 0.02;
+            double yd = mRandom->nextGaussian() * 0.02;
+            double zd = mRandom->nextGaussian() * 0.02;
+            double x = mX + (double)(mRandom->nextFloat() * mBbWidth * 2.0f) - (double)mBbWidth;
+            double y = mY + (double)(mRandom->nextFloat() * mBbHeight);
+            double z = mZ + (double)(mRandom->nextFloat() * mBbWidth * 2.0f) - (double)mBbWidth;
+            mLevel->addParticle(PARTICLE_EXPLODE, x, y, z, xd, yd, zd, arrayWithLength<int>());
         }
     }
 }
@@ -1851,7 +1850,7 @@ float LivingEntity::getDamageAfterMagicAbsorb(const DamageSource* source, float 
 
     if (hasEffect(MobEffects::DAMAGE_RESISTANCE)
         && source != DamageSource::OUT_OF_WORLD
-        && source != DamageSource::KILL)
+        && source != DamageSource::CREATIVE_PLAYER)
     {
         int amplifier = getEffect(MobEffects::DAMAGE_RESISTANCE)->getAmplifier();
         damage = damage * (float)(25 - (amplifier * 5 + 5)) / 25.0f;
@@ -2457,6 +2456,7 @@ void LivingEntity::CheckThermalAreas()
 
     int boostMod = 0;
     int boostDirection = 0;
+    bool boostModsSet = false;
 
     std::vector<ThermalAreaRuleDefinition*> areas;
     ruleset->getThermalAreas(&areas);
@@ -2466,77 +2466,87 @@ void LivingEntity::CheckThermalAreas()
 
     for (std::vector<ThermalAreaRuleDefinition*>::iterator it = areas.begin(); it != areas.end(); ++it)
     {
-        if (!(*it)->isEnabled())
+        bool intersecting = false;
+
+        if ((*it)->isEnabled() && (*it)->getConditionsMet(shared_from_this()))
         {
-            continue;
+            AABB* bounds = (*it)->getArea();
+            AABB* swept = getSweptVolume();
+
+            if (bounds->intersects(swept->mMinX, swept->mMinY, swept->mMinZ, swept->mMaxX, swept->mMaxY, swept->mMaxZ))
+            {
+                intersecting = true;
+            }
         }
 
-        if (!(*it)->getConditionsMet(shared_from_this()))
+        if (intersecting)
         {
-            continue;
-        }
+            inside = true;
 
-        AABB* areaBounds = (*it)->getArea();
-        if (!getBoundingBoxForCulling()->intersects(areaBounds->mMinX, areaBounds->mMinY, areaBounds->mMinZ,
-                                                     areaBounds->mMaxX, areaBounds->mMaxY, areaBounds->mMaxZ))
-        {
-            continue;
+            if (!mThermalAreasChecked)
+            {
+                area = *it;
+                break;
+            }
         }
-
-        area = *it;
-        inside = true;
-        break;
     }
 
-    if (inside && !mThermalAreasChecked)
+    if (area != NULL)
     {
         if (mThermalAreaChanged)
         {
             mThermalAreaChanged = false;
 
-            if (!(area->isEnabled() && area->getElytraSpeedBoost() != 0.0))
-            {
-                if (mLevel->mIsClientSide)
-                {
-                    if (GetType() == EntityType::LOCAL_PLAYER)
-                    {
-                        Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f);
-                    }
-                }
-                else if (GetType() == EntityType::PLAYER)
-                {
-                    boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
-                        ClientboundSoundPacket::eSoundInstances_Default, SoundEvents::MG03_THERMAL_BOOST,
-                        1.0f, 1.0f, false, getId()));
+            const SoundEvent* sound = area->getElytraSpeedBoost() != 0.0 ? SoundEvents::MG03_BOOST
+                                                                          : SoundEvents::MG03_THERMAL_BOOST;
 
-                    gMinecraftServer->getPlayers()->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()),
-                                                              mX, mY, mZ, 30.0, mDimension, packet);
+            if (mLevel->mIsClientSide)
+            {
+                if (GetType() == EntityType::LOCAL_PLAYER)
+                {
+                    Minecraft::GetInstance()->mSoundEngine->playUI(sound, 1.0f, 1.0f);
                 }
+            }
+            else if (GetType() == EntityType::SERVER_PLAYER)
+            {
+                boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
+                    ClientboundSoundPacket::eSoundInstances_FollowEntity, sound, 1.0f, 1.0f, false, getId()));
+
+                gMinecraftServer->getPlayers()->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()),
+                                                          mX, mY, mZ, 30.0, mDimension, packet);
             }
         }
 
-        if (area->isEnabled())
-        {
-            if (!mInThermalArea)
-            {
-                if (area->getLiftSpeed() != 0.0)
-                {
-                    mThermalLerpTicks = 0;
-                    mThermalLerping = true;
-                }
+        SetLiftForceModifier(area->getLiftForceModifier());
 
-                mThermalTargetLiftSpeed = area->getLiftSpeed();
+        if (!mInThermalArea)
+        {
+            if (area->getLiftSpeed() != 0.0)
+            {
+                mThermalLerpTicks = 0;
+                mThermalLerping = true;
             }
 
+            mThermalTargetLiftSpeed = area->getLiftSpeed();
+        }
+
+        if (area->getMaxHeight() > 0.0)
+        {
             mInThermalArea = true;
             mThermalCeiling = area->getMaxHeight();
-            mThermalLiftRising = area->getLiftSpeed() >= 0.0;
+        }
 
-            if (area->getElytraSpeedBoost() != 0.0)
-            {
-                activateElytraSpeedBoost(area->getElytraSpeedBoost());
-                area->setBoostMods(boostMod, boostDirection);
-            }
+        mThermalLiftRising = area->getLiftSpeed() >= 0.0;
+
+        if (area->getElytraSpeedBoost() > 0.0)
+        {
+            activateElytraSpeedBoost(area->getElytraSpeedBoost());
+            boostModsSet = area->setBoostMods(boostMod, boostDirection) != 0;
+        }
+
+        if (mThermalArea != area && GetType() == EntityType::SERVER_PLAYER)
+        {
+            boost::static_pointer_cast<ServerPlayer>(shared_from_this())->GetGameMode()->RecordThermalEntered();
         }
 
         mThermalArea = area;
@@ -2559,66 +2569,70 @@ void LivingEntity::CheckThermalAreas()
         }
     }
 
-    if (mInThermalArea)
+    if (mInThermalArea && (mY >= mThermalCeiling || mVerticalCollision))
     {
-        if (mThermalCeiling <= mY || mVerticalCollision)
-        {
-            mInThermalArea = false;
-        }
-        else if (mThermalLerping)
-        {
-            if (mThermalLiftSpeed == 0.0 && mYd != 0.0)
-            {
-                mThermalLiftSpeed = mYd;
-            }
+        mInThermalArea = false;
+        mThermalLerping = false;
+    }
+    else if (mInThermalArea)
+    {
+        mThermalLerping = true;
+    }
 
-            if (mThermalLiftRising)
+    if (mThermalLerping)
+    {
+        if (mThermalLiftSpeed == 0.0 && mYd != 0.0)
+        {
+            mThermalLiftSpeed = mYd;
+        }
+
+        if (mThermalLiftRising)
+        {
+            if (mThermalLiftSpeed < mThermalTargetLiftSpeed)
             {
-                if (mThermalTargetLiftSpeed <= mThermalLiftSpeed)
-                {
-                    mThermalLiftSpeed = mThermalTargetLiftSpeed;
-                }
-                else
-                {
-                    mThermalLiftSpeed = mThermalLiftSpeed
-                                        + ((mThermalTargetLiftSpeed - mThermalLiftSpeed) / mThermalTargetLiftSpeed) * 0.1;
-                }
+                mThermalLiftSpeed += ((mThermalTargetLiftSpeed - mThermalLiftSpeed) / mThermalTargetLiftSpeed) * 0.1;
             }
-            else if (mThermalLiftSpeed <= mThermalTargetLiftSpeed)
+            else
             {
                 mThermalLiftSpeed = mThermalTargetLiftSpeed;
             }
-            else
-            {
-                mThermalLiftSpeed = -(((mThermalTargetLiftSpeed - mThermalLiftSpeed) / mThermalTargetLiftSpeed) * 0.1
-                                      - mThermalLiftSpeed);
-            }
+        }
+        else if (mThermalLiftSpeed > mThermalTargetLiftSpeed)
+        {
+            mThermalLiftSpeed -= ((mThermalTargetLiftSpeed - mThermalLiftSpeed) / mThermalTargetLiftSpeed) * 0.1;
+        }
+        else
+        {
+            mThermalLiftSpeed = mThermalTargetLiftSpeed;
+        }
 
-            if (mThermalLerpTicks + 1 < 21)
-            {
-                ++mThermalLerpTicks;
-            }
-            else
+        if (!mInThermalArea)
+        {
+            if (mThermalLerpTicks + 1 > 20)
             {
                 mThermalLerping = false;
                 mThermalLerpTicks = 0;
+            }
+            else
+            {
+                ++mThermalLerpTicks;
             }
         }
     }
     else if (mThermalLiftRising)
     {
-        if (mThermalLiftSpeed <= 0.0)
+        if (mThermalLiftSpeed > 0.0)
         {
-            mThermalLiftSpeed = 0.0;
+            mThermalLiftSpeed -= 0.025f;
         }
         else
         {
-            mThermalLiftSpeed = mThermalLiftSpeed - 0.0010000000474974513;
+            mThermalLiftSpeed = 0.0;
         }
     }
     else if (mThermalLiftSpeed < 0.0)
     {
-        mThermalLiftSpeed = mThermalLiftSpeed + 0.0010000000474974513;
+        mThermalLiftSpeed += 0.025f;
     }
     else
     {
@@ -2627,25 +2641,25 @@ void LivingEntity::CheckThermalAreas()
 
     if (mElytraSpeedBoostActive)
     {
-        double speed = Mth::sqrt(mXd * mXd + mZd * mZd);
-
-        if (speed >= mElytraSpeedBoost)
+        if (Mth::sqrt(mXd * mXd + mZd * mZd) < mElytraSpeedBoost)
         {
-            mXd = mXd * 0.9990000128746033;
-            mZd = mZd * 0.9990000128746033;
-            return;
+            if (!boostModsSet)
+            {
+                mXd *= 1.1;
+                mZd *= 1.1;
+                return;
+            }
+
+            mXd += Mth::abs(mXd) * 0.1 * boostMod;
+            mZd += Mth::abs(mZd) * 0.1 * boostDirection;
+
+            if (mXd * boostMod >= 0.0 && mZd * boostDirection >= 0.0)
+            {
+                return;
+            }
         }
 
-        double newXd = mXd + Mth::abs(mXd) * 0.1 * (double)boostMod;
-        double newZd = mZd + Mth::abs(mZd) * 0.1 * (double)boostDirection;
-
-        mXd = newXd;
-        mZd = newZd;
-
-        if (newXd * (double)boostMod < 0.0 || newZd * (double)boostDirection < 0.0)
-        {
-            mElytraSpeedBoostActive = false;
-        }
+        mElytraSpeedBoostActive = false;
     }
 }
 
@@ -2668,7 +2682,7 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
 
     lift = (double)((float)((double)cosPitch * (double)(float)((double)cosPitch * lift)) * (float)lookHorizontal);
 
-    double newYd = yd + lift * 0.75 - 0.05;
+    double newYd = yd + lift * 0.06 + -0.08;
 
     if (newYd < 0.0 && lookLength > 0.0)
     {
@@ -3050,7 +3064,7 @@ void LivingEntity::takeFallFlyingCollisionDamage()
         {
             float health = getHealth();
 
-            if (hurt(DamageSource::FALL, health + 1.0f))
+            if (hurt(DamageSource::FLY_INTO_WALL, health + 1.0f))
             {
                 playSound(getFallDamageSound((int)(health + 1.0f)), 1.0f, 1.0f);
             }
@@ -3389,7 +3403,7 @@ void LivingEntity::tick()
         float wanted = (float)atan2(dz, dx) * 57.2957763671875f - 90.0f;
         float diff = Mth::abs(Mth::wrapDegrees(mYRot) - wanted);
 
-        if (diff > 5.0f && diff < 175.0f)
+        if (diff > 95.0f && diff < 265.0f)
         {
             bodyRot = wanted - 180.0f;
         }
@@ -3541,7 +3555,7 @@ void LivingEntity::updateFallFlying()
         {
             float health = getHealth();
 
-            if (hurt(DamageSource::FALL, health + 1.0f))
+            if (hurt(DamageSource::FLY_INTO_WALL, health + 1.0f))
             {
                 playSound(getFallDamageSound((int)(health + 1.0f)), 1.0f, 1.0f);
             }

@@ -232,18 +232,32 @@ int BaseMobSpawner::onEventTriggered(int event)
 {
     if (event == 2)
     {
-        Level* level = getLevel();
-        if (level->mIsClientSide)
-            level->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, getPos(), 0);
+        if (getLevel()->mIsClientSide)
+        {
+            BlockPos pos = getPos();
+            getLevel()->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, pos, 0);
+
+            Random random;
+            for (int i = 0; i < 20; ++i)
+            {
+                float x = (float)pos.x + getLevel()->mRandom->nextFloat();
+                float y = (float)pos.y + getLevel()->mRandom->nextFloat();
+                float z = (float)pos.z + getLevel()->mRandom->nextFloat();
+                double xd = random.nextGaussian() * 0.02;
+                double yd = random.nextGaussian() * 0.02;
+                double zd = random.nextGaussian() * 0.02;
+                getLevel()->addParticle(PARTICLE_EXPLODE, x, y, z, xd, yd, zd, arrayWithLength<int>());
+            }
+        }
         return 1;
     }
-    if (event == 1)
+
+    if (event == 1 && getLevel()->mIsClientSide)
     {
-        Level* level = getLevel();
-        if (level->mIsClientSide)
-            mDelay = mMinSpawnDelay;
+        mDelay = mMinSpawnDelay;
         return 1;
     }
+
     return 0;
 }
 

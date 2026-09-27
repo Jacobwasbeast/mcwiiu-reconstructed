@@ -1,4 +1,6 @@
 #include "game/entity/mob/EnderDragon.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/world/generation/Player.hpp"
@@ -558,10 +560,10 @@ void EnderDragon::strafeAttackTarget()
     const double dx = mTarget->mX - mX;
     const double dz = mTarget->mZ - mZ;
     double distance = std::sqrt(dx * dx + dz * dz);
-    distance = distance / 80.0 + 10.0;
+    distance = distance / 80.0 - 0.6f;
     if (distance > 10.0)
         distance = 10.0;
-    const double targetY = mTarget->mY + distance;
+    const double targetY = mTarget->mBoundingBox->mMinY + distance;
     Node targetNode(static_cast<int>(mTarget->mX), static_cast<int>(targetY), static_cast<int>(mTarget->mZ));
     if (mPath != NULL)
         delete mPath;
@@ -828,7 +830,6 @@ bool EnderDragon::checkCrystals()
     AABB* searchBox = mBoundingBox->grow(32.0, 32.0, 32.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntitiesOfClass(typeid(EnderCrystal), searchBox);
-    delete searchBox;
 
     boost::shared_ptr<EnderCrystal> closest;
     double closestDistance = std::numeric_limits<double>::max();
@@ -983,73 +984,73 @@ void EnderDragon::tickDeath()
     const EEnderdragonAction action = static_cast<EEnderdragonAction>(getSynchedAction());
     if (action != ACTION_SITTING_FLAMING && action != ACTION_SITTING_SCANNING && action != ACTION_SITTING_ATTACKING)
     {
-        if (mLevel != NULL && !mLevel->mIsClientSide)
-            LivingEntity::tickDeath();
+        if (!mLevel->mIsClientSide)
+        {
+            setHealth(1.0f);
+        }
         return;
     }
 
     if (mDragonFight != NULL)
     {
-        boost::shared_ptr<EnderDragon> self =
-            boost::static_pointer_cast<EnderDragon>(shared_from_this());
-        mDragonFight->updateDragon(self);
+        mDragonFight->updateDragon(boost::static_pointer_cast<EnderDragon>(shared_from_this()));
     }
 
-    const int prevDeathTime = mDeathTime;
     ++mDeathTime;
 
-    if (mLevel != NULL && (unsigned)(prevDeathTime - 0xB3) < 0x15U)
+    if (mDeathTime >= 180 && mDeathTime <= 200)
     {
-        const float spread = 8.0f;
-        const double px = mX + (double)((mRandom->nextFloat() - 0.5f) * spread);
-        const double py = mY + (double)((mRandom->nextFloat() - 0.5f) * 4.0f) + 2.0;
-        const double pz = mZ + (double)((mRandom->nextFloat() - 0.5f) * spread);
-        mLevel->addParticle(PARTICLE_DRAGON_BREATH, px, py, pz, 0.0, 128.0, 128.0,
+        float xOffset = (mRandom->nextFloat() - 0.5f) * 8.0f;
+        float yOffset = (mRandom->nextFloat() - 0.5f) * 4.0f;
+        float zOffset = (mRandom->nextFloat() - 0.5f) * 8.0f;
+        mLevel->addParticle(PARTICLE_HUGE_EXPLOSION, mX + xOffset, mY + 2.0 + yOffset, mZ + zOffset, 0.0, 0.0, 0.0,
                             arrayWithLength<int>());
     }
 
-    const bool doExpDrop = mLevel != NULL && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT);
-    unsigned int totalExp = 500U;
+    bool doMobLoot = mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT);
+    int experience = 500;
     if (mDragonFight != NULL && !mDragonFight->hasPreviouslyKilledDragon())
-        totalExp = 12000U;
-
-    if (mLevel != NULL && !mLevel->mIsClientSide)
     {
-        if (mDeathTime > 150)
+        experience = 12000;
+    }
+
+    if (!mLevel->mIsClientSide)
+    {
+        if (mDeathTime > 150 && mDeathTime % 5 == 0 && doMobLoot)
         {
-            if (mDeathTime % 5 == 0 && doExpDrop)
-                dropExperience(static_cast<int>((float)totalExp * 0.05f));
+            dropExperience(Mth::floor((float)experience * 0.08f));
         }
+
         if (mDeathTime == 1)
         {
-            BlockPos pos(shared_from_this());
-            mLevel->globalLevelEvent(0x404, pos, 0);
+            mLevel->globalLevelEvent(LevelEvent::SOUND_DRAGON_DEATH, BlockPos(shared_from_this()), 0);
         }
     }
 
-    makeStepSound();
+    move(eMoverType_Self, 0.0, 0.1f, 0.0, false);
+    mYRot += 20.0f;
+    mYBodyRot = mYRot;
 
-    mFlapTime += 20.0f;
-    mOldFlapTime = mFlapTime;
-
-    if (mDeathTime == 200 && mLevel != NULL && !mLevel->mIsClientSide)
+    if (mDeathTime == 200 && !mLevel->mIsClientSide)
     {
-        if (doExpDrop)
-            dropExperience(static_cast<int>((float)totalExp * 0.9f));
+        if (doMobLoot)
+        {
+            dropExperience(Mth::floor((float)experience * 0.2f));
+        }
+
         if (mDragonFight != NULL)
         {
-            boost::shared_ptr<EnderDragon> self =
-                boost::static_pointer_cast<EnderDragon>(shared_from_this());
-            mDragonFight->setDragonKilled(self);
+            mDragonFight->setDragonKilled(boost::static_pointer_cast<EnderDragon>(shared_from_this()));
         }
-        kill();
+
+        remove();
     }
 }
 void EnderDragon::checkDespawn() {}
 std::vector<boost::shared_ptr<Entity> >* EnderDragon::getSubEntities() { return &mParts; }
 bool EnderDragon::isPickable() { return false; }
-const SoundEvent* EnderDragon::getAmbientSound() { return NULL; }
-const SoundEvent* EnderDragon::getHurtSound(const DamageSource*) { return NULL; }
+const SoundEvent* EnderDragon::getAmbientSound() { return SoundEvents::ENDERDRAGON_GROWL; }
+const SoundEvent* EnderDragon::getHurtSound(const DamageSource*) { return SoundEvents::ENDERDRAGON_HURT; }
 float EnderDragon::getSoundVolume() { return 5.0f; }
 
 void EnderDragon::addAdditonalSaveData(CompoundTag* tag)

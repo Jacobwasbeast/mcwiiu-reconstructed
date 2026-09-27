@@ -22,7 +22,6 @@ extern const unsigned long long EntityType::ANIMAL;
 class Animal : public AgableMob
 {
 public:
-    // Entity and UI identities used by the Wii U animal interaction paths.
     
     
     

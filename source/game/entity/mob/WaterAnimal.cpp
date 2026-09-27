@@ -87,10 +87,11 @@ void WaterAnimal::aiStep()
     if (mOnGround && !isInWater())
     {
         mYd += 0.5;
-        mXd += (static_cast<double>(mRandom->nextFloat() * 2.0f) - 1.0) * 0.2;
-        mZd += (static_cast<double>(mRandom->nextFloat() * 2.0f) - 1.0) * 0.2;
-        mOnGround = false;
+        mXd += (mRandom->nextFloat() * 2.0f - 1.0f) * 0.2f;
+        mZd += (mRandom->nextFloat() * 2.0f - 1.0f) * 0.2f;
         mYRot = mRandom->nextFloat() * 360.0f;
+        mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(this), getFlopSound(),
+                          SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
     }
 }
 

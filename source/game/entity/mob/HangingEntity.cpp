@@ -77,26 +77,27 @@ void HangingEntity::recalculateBoundingBox()
     double x = (double)mPos.x + 0.5;
     double y = (double)mPos.y + 0.5;
     double z = (double)mPos.z + 0.5;
-    double width = (double)offs(getWidth());
-    double height = (double)offs(getHeight());
+    double widthOffset = offs(getWidth());
+    double heightOffset = offs(getHeight());
+    y += heightOffset;
+    x -= mDirection->getStepX() * 0.46875;
+    z -= mDirection->getStepZ() * 0.46875;
     const Direction* side = mDirection->getCounterClockWise();
-    const Vec3i normal = mDirection->getNormal();
-    const Vec3i sideNormal = side->getNormal();
-
-    x += (double)sideNormal.x * width;
-    y += (double)normal.y * height;
-    z += (double)sideNormal.z * width;
+    x += widthOffset * side->getStepX();
+    z += widthOffset * side->getStepZ();
     mX = x;
     mY = y;
     mZ = z;
 
-    double depth = 0.03125;
-    if (mDirection->getAxis() == Direction::Axis::X)
-        setBoundingBox(AABB::newTemp(x - depth, y - height * 0.5, z - width * 0.5,
-                                     x + depth, y + height * 0.5, z + width * 0.5));
+    float halfWidth = (float)getWidth() * 0.03125f;
+    float halfHeight = (float)getHeight() * 0.03125f;
+    float halfDepth = 0.03125f;
+    if (mDirection->getAxis() == Direction::Axis::Z)
+        setBoundingBox(AABB::newTemp(x - halfWidth, y - halfHeight, z - halfDepth,
+                                     x + halfWidth, y + halfHeight, z + halfDepth));
     else
-        setBoundingBox(AABB::newTemp(x - width * 0.5, y - height * 0.5, z - depth,
-                                     x + width * 0.5, y + height * 0.5, z + depth));
+        setBoundingBox(AABB::newTemp(x - halfDepth, y - halfHeight, z - halfWidth,
+                                     x + halfDepth, y + halfHeight, z + halfWidth));
 }
 
 void HangingEntity::tick()

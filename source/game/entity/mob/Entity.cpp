@@ -457,14 +457,11 @@ void Entity::_init(bool createEntityData, Level* level)
     mChunkX = 0;
     mChunkY = 0;
     mChunkZ = 0;
-    mLastChunkX = 0;
-    mLastChunkY = 0;
-    mLastChunkZ = 0;
-    mLastSentX = 0;
-    mLastSentY = 0;
-    mLastSentZ = 0;
-    mLastSentYRot = 0;
-    mLastSentXRot = 0;
+    mXp = 0;
+    mYp = 0;
+    mZp = 0;
+    mXRotp = 0;
+    mYRotp = 0;
     mNoCulling = false;
     mHasImpulse = false;
     mIsInsidePortal = false;
@@ -1028,8 +1025,8 @@ void Entity::baseTick()
     if (inWater && isOnFire())
     {
         PIXBeginNamedEvent(0.0f, "Play fizz sound");
-        playSound(SoundEvents::GENERIC_EXTINGUISH_FIRE, 0.699999988079071f,
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4000000059604645f + 1.0f);
+        playSound(SoundEvents::GENERIC_EXTINGUISH_FIRE, 0.7f,
+                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.6f);
         mRemainingFireTicks = -1;
         PIXEndNamedEvent();
     }
@@ -2075,7 +2072,7 @@ void Entity::doSprintParticleEffect()
 
     arrayWithLength<int> particleData(1, false);
     particleData.data[0] = stateId;
-    mLevel->addParticle(PARTICLE_BLOCK_DUST,
+    mLevel->addParticle(PARTICLE_BLOCK_CRACK,
                         mX + (double)((mRandom->nextFloat() - 0.5f) * mBbWidth),
                         mBoundingBox->mMinY + 0.1,
                         mZ + (double)((mRandom->nextFloat() - 0.5f) * mBbWidth),
@@ -4657,6 +4654,8 @@ void Entity::restoreLeashFromSave()
                 break;
             }
         }
+
+        delete nearby;
     }
     else if (mLeashInfoTag->contains(std::wstring(L"X"), 99)
              && mLeashInfoTag->contains(std::wstring(L"Y"), 99)

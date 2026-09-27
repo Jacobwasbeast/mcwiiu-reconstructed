@@ -288,7 +288,7 @@ bool ItemEntity::updateInWaterState()
 
 void ItemEntity::burn(int damage)
 {
-    hurt(NULL, static_cast<float>(damage));
+    hurt(DamageSource::IN_FIRE, static_cast<float>(damage));
 }
 
 bool ItemEntity::hurt(const DamageSource* source, float damage)

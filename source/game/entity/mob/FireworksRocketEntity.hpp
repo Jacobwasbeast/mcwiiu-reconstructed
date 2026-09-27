@@ -22,7 +22,8 @@ public:
     FireworksRocketEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item);
     FireworksRocketEntity(Level* level, const not_null_ptr<ItemInstance>& item, const boost::shared_ptr<LivingEntity>& entity);
     explicit FireworksRocketEntity(Level* level);
-    FireworksRocketEntity(unsigned long long x, unsigned long long y, unsigned long long z, unsigned long long xd, unsigned long long yd, unsigned long long zd, unsigned int level, unsigned int item, unsigned char attached, unsigned int owner);
+    FireworksRocketEntity(Level* level, double x, double y, double z, double xd, double yd, double zd,
+                          not_null_ptr<ItemInstance> item, bool hasDirectionalData, const boost::shared_ptr<Player>& owner);
     virtual ~FireworksRocketEntity();
 
     void _init(double x, double y, double z, const not_null_ptr<ItemInstance>& item);

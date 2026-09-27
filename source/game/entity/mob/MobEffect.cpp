@@ -87,12 +87,12 @@ void MobEffect::applyEffectTick(const boost::shared_ptr<LivingEntity>& entity, i
     {
         if (entity->getHealth() > 1.0f)
         {
-            entity->hurt(NULL, 1.0f);
+            entity->hurt(DamageSource::POISON, 1.0f);
         }
     }
     else if (this == MobEffects::WITHER)
     {
-        entity->hurt(NULL, 1.0f);
+        entity->hurt(DamageSource::WITHER, 1.0f);
     }
     else if (this == MobEffects::HUNGER)
     {
@@ -121,7 +121,7 @@ void MobEffect::applyEffectTick(const boost::shared_ptr<LivingEntity>& entity, i
         else if ((this == MobEffects::HARM && !inverted) ||
                  (this == MobEffects::HEAL && inverted))
         {
-            entity->hurt(NULL, (float)(6 << amplifier));
+            entity->hurt(DamageSource::INSTANT_DAMAGE, (float)(6 << amplifier));
         }
     }
 }
@@ -143,12 +143,12 @@ void MobEffect::applyInstantenousEffect(const boost::shared_ptr<Entity>& source,
         if (source)
         {
             boost::shared_ptr<DamageSource> damage =
-                DamageSource::CreateIndirectMagic(source, indirectSource, NULL);
+                DamageSource::CreateIndirectMagic(source, indirectSource, DamageSource::INSTANT_DAMAGE);
             entity->hurt(damage.get(), amount);
         }
         else
         {
-            entity->hurt(NULL, amount);
+            entity->hurt(DamageSource::MAGIC, amount);
         }
     }
 }

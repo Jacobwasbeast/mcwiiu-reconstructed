@@ -27,7 +27,6 @@
 #include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
-#include "game/entity/mob/AbstractSkeleton.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/core/Drowned.hpp"
@@ -35,6 +34,8 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MoveThroughVillageGoal.hpp"
 #include "game/world/generation/Villager.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
+#include "game/core/Turtle.hpp"
 #include "game/world/generation/ZombieVillager.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
@@ -48,6 +49,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/core/SharedConstants.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/RemoveBlockGoal.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/core/RangedAttribute.hpp"
 #include "game/core/BaseAttributeMap.hpp"
 
@@ -116,8 +119,12 @@ void Zombie::_init()
 void Zombie::registerGoals()
 {
     mGoalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false), true);
+    mGoalSelector.addGoal(4, new RemoveBlockGoal(Blocks::turtle_egg, this, 1.0, 16, 2, 1.6,
+                                                 SoundEvents::TURTLE_EGG_HATCH,
+                                                 SoundEvents::TURTLE_EGG_BREAK), true);
     mGoalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new SinkInWaterRandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     addBehaviourGoals();
 }
@@ -125,14 +132,15 @@ void Zombie::registerGoals()
 void Zombie::addBehaviourGoals()
 {
     mGoalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0, false), true);
-    mGoalSelector.addGoal(1, new FindMountGoal(*this, 16.0f, -1, false, false, -1.0f), true);
+    mGoalSelector.addGoal(1, new FindMountGoal(*this, 16.0f, 0, false, false, -1.0f), true);
     arrayWithLength<unsigned long long> entityTypes(1, true);
     entityTypes.data[0] = EntityType::PIG_ZOMBIE;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Drowned), false, false, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(AbstractSkeleton), true, false, false), true);
-    mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(LivingEntity), 10, true, false, NULL, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Villager), false, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), true, false, false), true);
+    mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
+                                                               Turtle::BABY_ON_LAND_SELECTOR, false, false), true);
 }
 
 void Zombie::registerAttributes()
@@ -438,7 +446,12 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 
 double Zombie::getEyeHeight()
 {
-    return isBaby() ? 0.93 : 1.74;
+    float height = 1.62f;
+    if (isBaby())
+    {
+        height -= 0.81f;
+    }
+    return height;
 }
 
 void Zombie::positionRider(const boost::shared_ptr<Entity>& entity)
@@ -566,7 +579,7 @@ not_null_ptr<ItemInstance> Zombie::getSkull()
 
 double Zombie::getRidingHeight()
 {
-    return isBaby() ? 0.6 : 1.0;
+    return isBaby() ? 0.0 : -0.45;
 }
 
 void Zombie::die(const DamageSource* source)

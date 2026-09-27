@@ -37,7 +37,7 @@ public:
     static MobCategory* getCategory(unsigned long long enumBaseClass);
 
     int getMaxInstancesPerChunk();
-    int getMaxInstancesPerLevel();
+    unsigned int getMaxInstancesPerLevel();
     int getMaxInstancesPerLevelWithBreeding();
     int getMaxInstancesPerLevelWithSpawnEgg();
     Material* getSpawnPositionMaterial();

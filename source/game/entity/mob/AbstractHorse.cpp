@@ -1053,10 +1053,8 @@ void AbstractHorse::handleEntityEvent(unsigned char event, int data)
         spawnTamingParticles(false);
     else if (event == EntityEvent::TAMING_SUCCEEDED)
         spawnTamingParticles(true);
-    else if (event == EntityEvent::IN_LOVE_HEARTS)
-        spawnTamingParticles(true);
     else
-        Mob::handleEntityEvent(event, data);
+        Animal::handleEntityEvent(event, data);
 }
 
 void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)

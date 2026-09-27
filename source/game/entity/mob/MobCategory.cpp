@@ -241,7 +241,7 @@ MobCategory* MobCategory::getCategory(unsigned long long enumBaseClass)
     return NULL;
 }
 
-int MobCategory::getMaxInstancesPerLevel()
+unsigned int MobCategory::getMaxInstancesPerLevel()
 {
     return maxInstancesPerLevel;
 }

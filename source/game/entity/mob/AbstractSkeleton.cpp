@@ -22,10 +22,13 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/ai/FleeSunGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/RangedBowAttackGoal.hpp"
 #include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
 #include "game/entity/projectile/TippableArrow.hpp"
+#include "game/core/Turtle.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
@@ -70,10 +73,7 @@ void AbstractSkeleton::performRangedAttack(boost::shared_ptr<LivingEntity> targe
     arrow->shoot(dx, dy + horizontalDistance * 0.2, dz, 1.6f, inaccuracy);
     mLevel->addEntity(boost::static_pointer_cast<Entity>(arrow));
 
-    const float pitch = 1.0f / (mRandom->nextFloat() * 0.4f + 1.2f)
-        + distanceFactor * 0.5f;
-    playSound(SoundEvents::SKELETON_SHOOT, 1.0f, pitch);
-    setAggressive(true);
+    playSound(SoundEvents::SKELETON_SHOOT, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
 }
 
 bool AbstractSkeleton::isAggressive()
@@ -130,8 +130,12 @@ void AbstractSkeleton::registerGoals()
 {
     mGoalSelector.addGoal(5, new SinkInWaterRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(3, new FleeSunGoal(this, 1.0), true);
+    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(6, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
+                                                               Turtle::BABY_ON_LAND_SELECTOR, false, false), true);
 }
 
 void AbstractSkeleton::registerAttributes()

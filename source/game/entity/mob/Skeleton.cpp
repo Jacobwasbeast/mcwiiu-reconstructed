@@ -6,6 +6,7 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Creeper.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/entity/ai/AvoidEntityGoal.hpp"
@@ -40,7 +41,7 @@ void Skeleton::registerGoals()
 {
     AbstractSkeleton::registerGoals();
     mGoalSelector.addGoal(2, new RestrictSunGoal(this), true);
-    mGoalSelector.addGoal(4, new AvoidEntityGoal(this, typeid(Creeper), 6.0f, 1.0, 1.2), true);
+    mGoalSelector.addGoal(4, new AvoidEntityGoal(this, typeid(Wolf), 6.0f, 1.0, 1.2), true);
 }
 
 ResourceLocation* Skeleton::getDefaultLootTable()

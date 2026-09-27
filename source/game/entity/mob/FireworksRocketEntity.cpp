@@ -1,4 +1,8 @@
 #include "game/entity/mob/FireworksRocketEntity.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/core/GameMode.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -26,6 +30,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
@@ -65,13 +70,21 @@ FireworksRocketEntity::FireworksRocketEntity(Level* level)
     setSize(0.25f, 0.25f);
 }
 
-FireworksRocketEntity::FireworksRocketEntity(unsigned long long x, unsigned long long y, unsigned long long z, unsigned long long xd, unsigned long long yd, unsigned long long zd, unsigned int, unsigned int, unsigned char attached, unsigned int)
-    : Entity(NULL, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(attached != 0), mDirectionalX(static_cast<int>(xd)), mDirectionalY(static_cast<int>(yd)), mDirectionalZ(static_cast<int>(zd)), mDirectionalInitialized(false), mOwner()
+FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, double z, double xd, double yd, double zd,
+                                             not_null_ptr<ItemInstance> item, bool hasDirectionalData,
+                                             const boost::shared_ptr<Player>& owner)
+    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(false), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner()
 {
-    mX = static_cast<double>(x);
-    mY = static_cast<double>(y);
-    mZ = static_cast<double>(z);
-    mLevel = NULL;
+    _init(x, y, z, item);
+    mDirectionalX = static_cast<int>(Math::round(xd));
+    mDirectionalZ = static_cast<int>(Math::round(zd));
+    mDirectionalY = static_cast<int>(Math::round(yd));
+    mXd = xd;
+    mYd = yd;
+    mZd = zd;
+    mDirectionalInitialized = true;
+    mHasDirectionalData = hasDirectionalData;
+    mOwner = owner;
 }
 
 FireworksRocketEntity::~FireworksRocketEntity()
@@ -241,6 +254,7 @@ void FireworksRocketEntity::dealExplosionDamage()
                 living->hurt(explosionSource.get(), power * static_cast<float>(falloff));
             }
         }
+        delete entities;
     }
 }
 
@@ -255,35 +269,46 @@ void FireworksRocketEntity::tick()
 
     if (!isAttachedToEntity())
     {
-        if (mDirectionalX != 0 || mDirectionalY != 0 || mDirectionalZ != 0)
+        if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
         {
-            mXd = HandleDirectionalAcceleration(mDirectionalX, mXd);
-            mYd = HandleDirectionalAcceleration(mDirectionalY, mYd);
-            mZd = HandleDirectionalAcceleration(mDirectionalZ, mZd);
+            if (mDirectionalX != 0 || mDirectionalY != 0 || mDirectionalZ != 0)
+            {
+                mXd = HandleDirectionalAcceleration(mDirectionalX, mXd);
+                mYd = HandleDirectionalAcceleration(mDirectionalY, mYd);
+                mZd = HandleDirectionalAcceleration(mDirectionalZ, mZd);
+            }
+            else
+            {
+                mYd += 0.04;
+            }
         }
-        else
-        {
-            mYd += 0.04;
-        }
+
         move(eMoverType_Self, mXd, mYd, mZd, false);
     }
     else
     {
         boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
-        if (!attached)
+
+        if (attached == NULL)
         {
-            attached = boost::static_pointer_cast<LivingEntity>(
-                mLevel->getEntity(mEntityData->get(DATA_ATTACHED_TO_ENTITY)));
+            boost::shared_ptr<Entity> entity = mLevel->getEntity(mEntityData->get(DATA_ATTACHED_TO_ENTITY));
+
+            if (entity != NULL && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            {
+                attached = boost::static_pointer_cast<LivingEntity>(entity);
+            }
         }
-        if (attached)
+
+        if (attached != NULL)
         {
             if (attached->isFallFlying())
             {
                 Vec3* look = attached->getLookAngle();
-                attached->mXd = attached->mXd + look->x * 0.1 + (look->x * 1.5 - attached->mXd) * 0.5;
-                attached->mYd = attached->mYd + look->y * 0.1 + (look->y * 1.5 - attached->mYd) * 0.5;
-                attached->mZd = attached->mZd + look->z * 0.1 + (look->z * 1.5 - attached->mZd) * 0.5;
+                attached->mXd += look->x * 0.1 + (look->x * 1.5 - attached->mXd) * 0.5;
+                attached->mYd += look->y * 0.1 + (look->y * 1.5 - attached->mYd) * 0.5;
+                attached->mZd += look->z * 0.1 + (look->z * 1.5 - attached->mZd) * 0.5;
             }
+
             setPos(attached->mX, attached->mY, attached->mZ);
             mXd = attached->mXd;
             mYd = attached->mYd;
@@ -291,80 +316,141 @@ void FireworksRocketEntity::tick()
         }
     }
 
-    bool directional = Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks();
-    double horizontalSpeed;
-    float targetYaw;
-    float targetPitch;
-    if (directional)
+    double facingX;
+    double facingY;
+    double facingZ;
+
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
-        horizontalSpeed = Mth::sqrt(mXd * mXd + mZd * mZd);
-        targetYaw = static_cast<float>(std::atan2(mXd, mZd) * 57.2957763671875);
-        targetPitch = static_cast<float>(std::atan2(mYd, horizontalSpeed) * 57.2957763671875);
+        facingX = mXd;
+        facingY = mYd;
+        facingZ = mZd;
+    }
+    else if (mDirectionalX != 0 || mDirectionalY != 0 || mDirectionalZ != 0)
+    {
+        facingX = mDirectionalX;
+        facingY = mDirectionalY;
+        facingZ = mDirectionalZ;
     }
     else
     {
-        horizontalSpeed = Mth::sqrt(static_cast<double>(mDirectionalX) * mDirectionalX
-            + static_cast<double>(mDirectionalZ) * mDirectionalZ);
-        targetYaw = static_cast<float>(std::atan2(static_cast<double>(mDirectionalX),
-            static_cast<double>(mDirectionalZ)) * 57.2957763671875);
-        targetPitch = static_cast<float>(std::atan2(static_cast<double>(mDirectionalY),
-            horizontalSpeed) * 57.2957763671875);
+        facingX = 0.0;
+        facingY = 1.0;
+        facingZ = 0.0;
     }
-    mYRot = targetYaw;
-    mXRot = targetPitch;
-    while (mXRot - mXRotO < -180.0f) mXRotO -= 360.0f;
-    while (mXRot - mXRotO >= 180.0f) mXRotO += 360.0f;
-    while (mYRot - mYRotO < -180.0f) mYRotO -= 360.0f;
-    while (mYRot - mYRotO >= 180.0f) mYRotO += 360.0f;
+
+    double horizontal = Mth::sqrt(facingX * facingX + facingZ * facingZ);
+    mYRot = (float)(atan2(facingX, facingZ) * 57.2957763671875f);
+    mXRot = (float)(atan2(facingY, horizontal) * 57.2957763671875f);
+
+    while (mXRot - mXRotO < -180.0f)
+    {
+        mXRotO -= 360.0f;
+    }
+
+    while (mXRot - mXRotO >= 180.0f)
+    {
+        mXRotO += 360.0f;
+    }
+
+    while (mYRot - mYRotO < -180.0f)
+    {
+        mYRotO -= 360.0f;
+    }
+
+    while (mYRot - mYRotO >= 180.0f)
+    {
+        mYRotO += 360.0f;
+    }
+
     mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
     mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
 
+    if (mLife == 0 && mLevel->mIsClientSide && !isSilent())
+    {
+        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::FIREWORK_LAUNCH, SoundSource::eSoundSource_Ambient, 3.0f, 1.0f,
+                               false, 16.0f);
+    }
+
     ++mLife;
 
-    int particleInterval = directional ? 4 : 2;
-    if (mLevel->mIsClientSide && (mLife % particleInterval) == 0)
+    int particleInterval = 2;
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
-        double py;
-        double vx;
-        double vy;
-        double vz;
-        if (mDirectionalX == 0 && mDirectionalY == 0 && mDirectionalZ == 0 && !directional)
+        particleInterval = 4;
+    }
+
+    if (mLevel->mIsClientSide)
+    {
+        if (mLife % particleInterval == 0)
         {
-            py = mY - 0.3;
-            vx = mRandom->nextGaussian() * 0.05;
-            vy = -(mYd * 0.5);
-            vz = mRandom->nextGaussian() * 0.05;
+            double py;
+            double vx;
+            double vy;
+            double vz;
+
+            if (mDirectionalX == 0 && mDirectionalY == 0 && mDirectionalZ == 0
+                && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+            {
+                py = mY - 0.3;
+                vy = -(mYd * 0.5);
+                vz = mRandom->nextGaussian() * 0.05;
+                vx = mRandom->nextGaussian() * 0.05;
+            }
+            else
+            {
+                py = mY;
+                double drag = Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks() ? 0.1 : 0.5;
+                vy = mRandom->nextGaussian() * 0.05 - mYd * drag;
+                vz = mRandom->nextGaussian() * 0.05 - mZd * drag;
+                vx = mRandom->nextGaussian() * 0.05 - mXd * drag;
+            }
+
+            if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+            {
+                mLevel->addParticle(PARTICLE_FIREWORKS_SPARK, mX, py, mZ, vx, vy, vz, arrayWithLength<int>());
+            }
+            else
+            {
+                int playerIndex = mOwner != NULL ? mOwner->mPlayerIndex : 0;
+                unsigned int nametagColour = PlayerRenderer::getNametagColour(playerIndex);
+                if (playerIndex == 0)
+                {
+                    nametagColour = 0xffffffff;
+                }
+
+                arrayWithLength<int> colour(4, true);
+                colour.data[0] = (nametagColour >> 16) & 0xff;
+                colour.data[1] = (nametagColour >> 8) & 0xff;
+                colour.data[2] = nametagColour & 0xff;
+                colour.data[3] = 0xff;
+                mLevel->addParticle(PARTICLE_FIREWORKS_SPARK, mX, py, mZ, vx, vy, vz, colour);
+            }
         }
-        else
+    }
+    else
+    {
+        if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks() && mCollision)
         {
-            py = mY;
-            vx = mRandom->nextGaussian() * 0.05 - mXd * 0.1;
-            vy = mYd;
-            vz = mRandom->nextGaussian() * 0.05 - mZd * 0.1;
+            if (mOwner != NULL)
+            {
+                bool mayDestroy = boost::static_pointer_cast<Player>(mOwner)->GetGameMode()->MayDestroy(BlockPos(mX, mY, mZ));
+                mLevel->explode(shared_from_this(), mX, mY, mZ, 2.0f, false, mayDestroy, false, false, false, -1.0f);
+            }
+
+            remove();
         }
 
-        if (!directional)
+        if (!mLevel->mIsClientSide && mLife > mLifetime)
         {
-            mLevel->addParticle(PARTICLE_FIREWORKS_SPARK, mX, py, mZ, vx, vy, vz, arrayWithLength<int>());
-        }
-        else
-        {
-            unsigned int nametagColour = mOwner
-                ? PlayerRenderer::getNametagColour(mOwner->mPlayerIndex)
-                : PlayerRenderer::getNametagColour(0);
-            arrayWithLength<int> colour(4, true);
-            colour.data[0] = static_cast<int>((nametagColour >> 16) & 0xff);
-            colour.data[1] = static_cast<int>((nametagColour >> 8) & 0xff);
-            colour.data[2] = static_cast<int>(nametagColour & 0xff);
-            colour.data[3] = 0xff;
-            mLevel->addParticle(PARTICLE_FIREWORKS_SPARK, mX, py, mZ, vx, vy, vz, colour);
+            dealExplosionDamage();
+            remove();
         }
     }
 
-    if (!mLevel->mIsClientSide && mLifetime < mLife)
+    if (mRemoved && !mLevel->mIsClientSide)
     {
-        dealExplosionDamage();
-        remove();
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::FIREWORKS_EXPLODE, 0);
     }
 
     PIXEndNamedEvent();

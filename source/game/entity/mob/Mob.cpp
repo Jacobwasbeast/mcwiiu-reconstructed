@@ -154,7 +154,7 @@ void Mob::_init()
 void Mob::registerAttributes()
 {
     LivingEntity::registerAttributes();
-    getAttributes()->registerAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(2.75);
+    getAttributes()->registerAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(16.0);
 }
 
 void Mob::fjDerivedCtorCalls()
@@ -321,24 +321,14 @@ void Mob::spawnAnim()
         return;
     }
 
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 20; ++i)
     {
-        double gx = mRandom->nextGaussian();
-        double gy = mRandom->nextGaussian();
-        double gz = mRandom->nextGaussian();
-        double px = mX + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
-        double py = mY + mRandom->nextFloat() * (double)mBbHeight;
-        double pz = mZ + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
-        mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, gx * 0.02, gy * 0.02, gz * 0.02,
-                            arrayWithLength<int>());
-
-        gx = mRandom->nextGaussian();
-        gy = mRandom->nextGaussian();
-        gz = mRandom->nextGaussian();
-        px = mX + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
-        py = mY + mRandom->nextFloat() * (double)mBbHeight;
-        pz = mZ + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
-        mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, gx * 0.02, gy * 0.02, gz * 0.02,
+        double xa = mRandom->nextGaussian() * 0.02;
+        double ya = mRandom->nextGaussian() * 0.02;
+        double za = mRandom->nextGaussian() * 0.02;
+        mLevel->addParticle(PARTICLE_EXPLODE, mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth - xa * 10.0,
+                            mY + mRandom->nextFloat() * mBbHeight - ya * 10.0,
+                            mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth - za * 10.0, xa, ya, za,
                             arrayWithLength<int>());
     }
 }
@@ -360,7 +350,7 @@ void Mob::setLeader(bool leader)
 
 void Mob::tick()
 {
-    PIXBeginNamedEvent(4.5f, "Mob tick");
+    PIXBeginNamedEvent(0.0f, "Mob tick");
     LivingEntity::tick();
     if (!mLevel->mIsClientSide)
     {
@@ -379,13 +369,12 @@ void Mob::tick()
         {
             if (mRandom->nextInt(200) == 1)
             {
-                AABB* searchBox = mBoundingBox->grow(2.5, 2.5, 2.5);
+                AABB* searchBox = mBoundingBox->grow(8.0);
                 std::vector<boost::shared_ptr<Entity> >* entities =
                     mLevel->getEntitiesOfClass(typeid(*this), searchBox);
                 if (entities->size() < 2)
                 {
                     setLeader(false);
-                    mFlockSize = 0;
                 }
                 delete entities;
             }
@@ -680,7 +669,7 @@ void Mob::setXxa(float xxa)
 void Mob::setSpeed(float speed)
 {
     LivingEntity::setSpeed(speed);
-    mMoveSpeed = speed;
+    setZza(speed);
 }
 
 void Mob::aiStep()
@@ -1173,22 +1162,14 @@ void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
         return;
 
     int tier = mRandom->nextInt(2);
-    if (mLevel->getDifficulty() == Difficulty::HARD)
-    {
-        if (mRandom->nextFloat() < 0.8999999761581421f)
-            ++tier;
-    }
-    else if (mRandom->nextFloat() < 0.25f)
-    {
+    float stopChance = mLevel->getDifficulty() == Difficulty::HARD ? 0.1f : 0.25f;
+    if (mRandom->nextFloat() < 0.095f)
         ++tier;
-    }
-
     if (mRandom->nextFloat() < 0.095f)
         ++tier;
     if (mRandom->nextFloat() < 0.095f)
         ++tier;
 
-    float stopChance = mLevel->getDifficulty() == Difficulty::HARD ? 0.8999999761581421f : 0.25f;
     bool firstArmorSlot = true;
 
     for (int i = 0; i < 6; ++i)
@@ -1223,7 +1204,7 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
     {
         mainHand = EnchantmentHelper::enchantItem(
             mRandom, mainHand,
-            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 0.5f), false);
+            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f), false);
         setItemSlot(EquipmentSlot::MAINHAND, mainHand);
     }
 
@@ -1242,7 +1223,7 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
 
         item = EnchantmentHelper::enchantItem(
             mRandom, item,
-            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 0.5f), false);
+            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f), false);
         setItemSlot(slot, item);
     }
 }
