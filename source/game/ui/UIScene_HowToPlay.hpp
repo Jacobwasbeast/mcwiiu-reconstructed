@@ -64,17 +64,17 @@ public:
     class sCustomItems
     {
     public:
-        sCustomItems(Item* item, int auxValue, int count);
-        sCustomItems(Block* block, int auxValue, int count);
-        sCustomItems(int blockId, int auxValue, int count);
-        sCustomItems(Item* item, Potion* potion, int auxValue, int count);
+        sCustomItems(Item* item, int count, int auxValue);
+        sCustomItems(Block* block, int count, int auxValue);
+        sCustomItems(int blockId, int count, int auxValue);
+        sCustomItems(Item* item, Potion* potion, int count, int auxValue);
         not_null_ptr<ItemInstance> GetItemInstance() const;
 
         Block* m_block;
         Item* m_item;
         Potion* m_potion;
-        int m_auxValue;
         int m_count;
+        int m_auxValue;
     };
 
     UIScene_HowToPlay(int playerId, void* data, UILayer* layer);

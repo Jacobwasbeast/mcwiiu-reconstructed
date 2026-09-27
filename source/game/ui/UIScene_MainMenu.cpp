@@ -263,6 +263,8 @@ void UIScene_MainMenu::handleUnlockFullVersion()
 
 void UIScene_MainMenu::PrepareToPlayGame(int playerId)
 {
+    gProfile->SetLockedProfile(playerId);
+    gProfile->QuerySigninStatus();
     if (!gApp.DLCInstallProcessCompleted())
         gApp.StartInstallDLCProcess(playerId);
 }

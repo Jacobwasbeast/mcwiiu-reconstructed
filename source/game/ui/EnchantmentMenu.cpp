@@ -11,6 +11,9 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
 #include "game/world/Level.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
@@ -293,6 +296,11 @@ bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
             }
 
             mEnchantmentContainer->setChanged();
+            mEnchantmentSeed = static_cast<long long>(static_cast<int>(player->getEnchantmentSeed()));
+            slotsChanged();
+            mLevel->playSound(boost::shared_ptr<Player>(), mPosition, SoundEvents::ENCHANTMENT_TABLE_USE,
+                              SoundSource::eSoundSource_Blocks, 1.0f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f,
+                              16.0f);
         }
         else if (results != 0)
         {

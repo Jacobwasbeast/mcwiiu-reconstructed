@@ -19,6 +19,8 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/item/Potions.hpp"
+#include "game/core/DyeColor.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/item/BowItem.hpp"
@@ -35,6 +37,9 @@
 #include "game/world/block/GrassBlock.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/SandBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/StoneBlock.hpp"
+#include "game/world/block/SandStoneBlock.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/StringUtils.hpp"
 
@@ -43,75 +48,35 @@ extern ConsoleUIController gConsoleUIController;
 void replaceAll(std::wstring& result, const std::wstring& source,
                 const std::wstring& search, const std::wstring& replacement);
 
-namespace
+template <class T>
+const UIScene_HowToPlay::sCustomItems SLOT(T item, int count, int auxValue)
 {
-    typedef UIScene_HowToPlay::sCustomItems CustomItem;
-
-    static CustomItem makeItem(Item* item, int count, int aux)
-    {
-        return CustomItem(item, aux, count);
-    }
-
-    static CustomItem makeBlock(Block* block, int count, int aux)
-    {
-        return CustomItem(block, aux, count);
-    }
-
-    static CustomItem makePotion(Item* item, Potion* potion, int count, int aux)
-    {
-        return CustomItem(item, potion, aux, count);
-    }
+    return UIScene_HowToPlay::sCustomItems(item, count, auxValue);
 }
 
-template <typename T>
-void SLOT(UIScene_HowToPlay::sCustomItems* destination, T item, int count, int aux)
+template <class T, class P>
+const UIScene_HowToPlay::sCustomItems SLOT_POTION(T item, P potion, int count, int auxValue)
 {
-    new (destination) UIScene_HowToPlay::sCustomItems(reinterpret_cast<Item*>(item), aux, count);
+    return UIScene_HowToPlay::sCustomItems(item, potion, count, auxValue);
 }
 
-template <>
-void SLOT<int>(UIScene_HowToPlay::sCustomItems* destination, int item, int count, int aux)
-{
-    new (destination) UIScene_HowToPlay::sCustomItems(item, aux, count);
-}
-
-template <>
-void SLOT<Block*>(UIScene_HowToPlay::sCustomItems* destination, Block* item, int count, int aux)
-{
-    new (destination) UIScene_HowToPlay::sCustomItems(item, aux, count);
-}
-
-template <>
-void SLOT<Potion*>(UIScene_HowToPlay::sCustomItems* destination, Potion* item, int count, int aux)
-{
-    new (destination) UIScene_HowToPlay::sCustomItems(reinterpret_cast<Item*>(item), aux, count);
-}
-
-template <typename T>
-void SLOT(UIScene_HowToPlay::sCustomItems* destination, Item* item, Potion* potion,
-          int count, int aux)
-{
-    (void)sizeof(T);
-    new (destination) UIScene_HowToPlay::sCustomItems(item, potion, aux, count);
-}
-
-UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, int auxValue, int count)
-    : m_block(NULL), m_item(item), m_potion(NULL), m_auxValue(auxValue), m_count(count)
+UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, int count, int auxValue)
+    : m_block(NULL), m_item(item), m_potion(NULL), m_count(count), m_auxValue(auxValue)
 {
 }
 
-UIScene_HowToPlay::sCustomItems::sCustomItems(Block* block, int auxValue, int count)
-    : m_block(block), m_item(NULL), m_potion(NULL), m_auxValue(auxValue), m_count(count)
+UIScene_HowToPlay::sCustomItems::sCustomItems(Block* block, int count, int auxValue)
+    : m_block(block), m_item(NULL), m_potion(NULL), m_count(count), m_auxValue(auxValue)
 {
 }
 
-UIScene_HowToPlay::sCustomItems::sCustomItems(int blockId, int auxValue, int count)
-    : m_block(Block::byId(blockId)), m_item(NULL), m_potion(NULL), m_auxValue(auxValue), m_count(count)
+UIScene_HowToPlay::sCustomItems::sCustomItems(int blockId, int count, int auxValue)
+    : m_block(Block::byId(blockId)), m_item(NULL), m_potion(NULL), m_count(count), m_auxValue(auxValue)
 {
 }
 
-UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, Potion* potion, int auxValue, int count)
-    : m_block(NULL), m_item(item), m_potion(potion), m_auxValue(auxValue), m_count(count)
+UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, Potion* potion, int count, int auxValue)
+    : m_block(NULL), m_item(item), m_potion(potion), m_count(count), m_auxValue(auxValue)
 {
 }
 
@@ -415,217 +380,313 @@ unsigned int UIScene_HowToPlay::getSubSceneType() const
     return static_cast<unsigned int>(m_page);
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListAnvil()
-{
-    static CustomItem slots[3] = {
-        makeItem(Items::ironIngot, 1, 150), makeItem(Items::ironIngot, 1, 0),
-        makeItem(Items::ironIngot, 1, 0)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListArmor()
-{
-    static CustomItem slots[4] = {
-        makeItem(Items::ironHelmet, 1, 0), makeItem(Items::ironChestplate, 1, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListBeacon()
-{
-    static CustomItem slots[5] = {
-        makeItem(Items::emerald, 1, 0), makeItem(Items::ironIngot, 1, 0),
-        makeItem(Items::goldIngot, 1, 0), makeItem(Items::diamond, 1, 0),
-        makeItem(Items::diamond, 1, 0)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListBrewing()
-{
-    static CustomItem slots[5] = {
-        makeItem(Items::glassBottle, 1, 0),
-        makePotion(Items::potion, Potion::byName(L"healing"), 1, 0),
-        makePotion(Items::potion, Potion::byName(L"healing"), 1, 0),
-        makePotion(Items::potion, Potion::byName(L"healing"), 1, 0),
-        makeItem(Items::blazePowder, 3, 0)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListChestLarge()
-{
-    static CustomItem slots[54] = {
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
-    };
-    slots[0] = makeBlock(Blocks::chest, 12, 0);
-    slots[1] = makeItem(Items::diamond, 1, 0);
-    slots[2] = makeItem(Items::emerald, 3, 0);
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListChestSmall()
-{
-    static CustomItem slots[27] = {
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
-    };
-    slots[0] = makeBlock(Blocks::chest, 1, 0);
-    slots[1] = makeItem(Items::diamond, 1, 0);
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListCreative()
-{
-    static CustomItem slots[50] = {
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
-    };
-    slots[0] = makeBlock(Blocks::stone, 1, 0);
-    slots[1] = makeBlock(Blocks::grass, 1, 0);
-    slots[2] = makeBlock(Blocks::dirt, 1, 0);
-    slots[3] = makeBlock(Blocks::cobblestone, 1, 0);
-    slots[4] = makeBlock(Blocks::planks, 1, 0);
-    slots[5] = makeBlock(Blocks::sand, 1, 0);
-    slots[6] = makeBlock(Blocks::glass, 1, 0);
-    slots[7] = makeBlock(Blocks::chest, 1, 0);
-    slots[8] = makeItem(Items::ironIngot, 1, 0);
-    slots[9] = makeItem(Items::goldIngot, 1, 0);
-    slots[10] = makeItem(Items::diamond, 1, 0);
-    slots[11] = makeItem(Items::emerald, 1, 0);
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListDispenser()
-{
-    static CustomItem slots[9] = {
-        makeItem(Items::diamond, 64, 0), makeItem(Items::diamond, 64, 0),
-        makeItem(Items::diamond, 64, 0), makeItem(Items::diamond, 64, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListEntchantment()
-{
-    static CustomItem slots[2] = {
-        makeItem(Items::bow, 1, 0), makeItem(Items::enchantedBook, 7, 4)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListFurnace()
-{
-    static CustomItem slots[3] = {
-        makeBlock(Blocks::coal_ore, 61, 0), makeItem(Items::coal, 63, 0),
-        makeItem(Items::goldIngot, 3, 0)
-    };
-    return slots;
-}
-
-const UIScene_HowToPlay::sCustomItems* SlotListHopper()
-{
-    static CustomItem slots[5] = {
-        makeBlock(Blocks::iron_block, 3, 0), makeBlock(Blocks::iron_block, 1, 0),
-        makeItem(Items::diamond, 32, 0), makeItem(Items::diamond, 32, 0),
-        makeItem(Items::ironIngot, 12, 0)
-    };
-    return slots;
-}
-
 const UIScene_HowToPlay::sCustomItems* SlotListHotBar()
 {
-    static CustomItem slots[10] = {
-        makeItem(Items::diamond, 1, 0), makeItem(Items::bow, 1, 0),
-        makeItem(Items::diamond, 64, 0), makeItem(Items::diamond, 1, 30),
-        makeItem(Items::diamond, 1, 0), makeItem(Items::shears, 1, 0),
-        makeItem(Items::diamond, 1, 50), makeItem(Items::fishingRod, 1, 0),
-        makeItem(Items::diamond, 1, 0), makeItem(Items::map, 1, 0)
+    static const UIScene_HowToPlay::sCustomItems slots[10] = {
+        SLOT(Items::ironSword, 1, 0),
+        SLOT(Items::bow, 1, 0),
+        SLOT(Items::arrow, 64, 0),
+        SLOT(Items::flintAndSteel, 1, 30),
+        SLOT(Items::clock, 1, 0),
+        SLOT(Items::shears, 1, 0),
+        SLOT(Items::ironAxe, 1, 50),
+        SLOT(Items::fishingRod, 1, 0),
+        SLOT(Items::compass, 1, 0),
+        SLOT(Items::filledMap, 1, 0)
     };
     return slots;
 }
 
 const UIScene_HowToPlay::sCustomItems* SlotListInventory()
 {
-    static CustomItem slots[27] = {
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
+    static const UIScene_HowToPlay::sCustomItems slots[27] = {
+        SLOT(Blocks::stone, 32, 0),
+        SLOT(Blocks::planks, 17, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::fence_gate, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::arrow, 64, 0),
+        SLOT(Items::stick, 10, 0),
+        SLOT(Blocks::bookshelf, 3, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::darkOakDoor, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::emerald, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::cobblestone_wall, 7, 0),
+        SLOT(Items::sign, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::stone_brick_stairs, 24, 0),
+        SLOT(Blocks::stone_stairs, 16, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::log, 7, 0),
+        SLOT(Blocks::acacia_stairs, 15, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::diamondPickaxe, 1, 0),
+        SLOT(Items::paper, 21, 0),
+        SLOT(Items::gunpowder, 15, 0)
     };
-    slots[0] = makeBlock(Blocks::stone, 32, 0);
-    slots[1] = makeBlock(Blocks::grass, 17, 0);
-    slots[4] = makeBlock(Blocks::cobblestone, 1, 0);
-    slots[7] = makeItem(Items::diamond, 64, 0);
-    slots[8] = makeItem(Items::ironIngot, 10, 0);
-    slots[9] = makeBlock(Blocks::brick_block, 3, 0);
-    slots[11] = makeItem(Items::ironSword, 1, 0);
-    slots[13] = makeItem(Items::diamond, 1, 0);
-    slots[15] = makeBlock(Blocks::wool, 7, 0);
-    slots[16] = makeItem(Items::ironPickaxe, 1, 0);
-    slots[19] = makeBlock(Blocks::glass, 24, 0);
-    slots[20] = makeBlock(Blocks::planks, 16, 0);
-    slots[23] = makeBlock(Blocks::stonebrick, 7, 0);
-    slots[24] = makeBlock(Blocks::iron_bars, 15, 0);
-    slots[26] = makeItem(Items::diamond, 1, 0);
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListChestSmall()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[27] = {
+        SLOT(Items::experienceBottle, 64, 0),
+        SLOT(Blocks::wooden_slab, 5, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::glassBottle, 15, 0),
+        SLOT(Blocks::enchanting_table, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::wheat, 7, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::anvil, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::cobblestone, 12, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::goldenApple, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::stick, 12, 0),
+        SLOT(0, 0, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListChestLarge()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[54] = {
+        SLOT(Blocks::glass_pane, 12, 0),
+        SLOT(Items::ironDoor, 1, 0),
+        SLOT(Items::pumpkinSeeds, 3, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::ironHoe, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::glass, 2, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::stoneAxe, 1, 175),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Blocks::cobblestone, 54, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::bone, 2, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::ironHelmet, 1, 0),
+        SLOT(Items::ironChestplate, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::string, 3, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::woodenShovel, 1, 50),
+        SLOT(Items::ironIngot, 0, 0),
+        SLOT(Blocks::dirt, 6, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::leather, 2, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::birchDoor, 6, 0),
+        SLOT(0, 0, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListAnvil()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[3] = {
+        SLOT(Items::ironSword, 1, 150),
+        SLOT(Items::ironSword, 1, 0),
+        SLOT(Items::ironSword, 1, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListBeacon()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[5] = {
+        SLOT(Items::emerald, 1, 0),
+        SLOT(Items::diamond, 1, 0),
+        SLOT(Items::goldIngot, 1, 0),
+        SLOT(Items::ironIngot, 1, 0),
+        SLOT(Items::ironIngot, 1, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListBrewing()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[5] = {
+        SLOT(Items::fermentedSpiderEye, 1, 0),
+        SLOT_POTION(Items::potion, Potions::WATER, 1, 0),
+        SLOT_POTION(Items::potion, Potions::WATER, 1, 0),
+        SLOT_POTION(Items::potion, Potions::WATER, 1, 0),
+        SLOT(Items::blazePowder, 3, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListDispenser()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[9] = {
+        SLOT(Items::arrow, 64, 0),
+        SLOT(Items::arrow, 64, 0),
+        SLOT(Items::arrow, 64, 0),
+        SLOT(Items::arrow, 64, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListEntchantment()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[2] = {
+        SLOT(Items::bow, 1, 0),
+        SLOT(Items::dye, 7, 4)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListFurnace()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[3] = {
+        SLOT(Blocks::iron_ore, 61, 0),
+        SLOT(Items::coal, 63, 0),
+        SLOT(Items::ironIngot, 3, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListHopper()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[5] = {
+        SLOT(Blocks::torch, 3, 0),
+        SLOT(Blocks::gold_block, 1, 0),
+        SLOT(Items::redstone, 32, 0),
+        SLOT(Items::arrow, 32, 0),
+        SLOT(Items::glowstoneDust, 12, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListArmor()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[4] = {
+        SLOT(Items::ironHelmet, 1, 0),
+        SLOT(Items::leatherChestplate, 1, 0),
+        SLOT(0, 0, 0),
+        SLOT(0, 0, 0)
+    };
     return slots;
 }
 
 const UIScene_HowToPlay::sCustomItems* SlotListTrading()
 {
-    static CustomItem slots[9] = {
-        makeItem(Items::emerald, 1, 0), makeItem(Items::emerald, 1, 0),
-        makeItem(Items::diamond, 2, 0), makeItem(Items::enchantedBook, 1, 0),
-        makeItem(Items::wheat, 1, 0), makeBlock(Blocks::wool, 3, 0),
-        makeItem(NULL, 0, 0), makeItem(Items::emerald, 1, 0),
-        makeItem(NULL, 0, 0)
+    static const UIScene_HowToPlay::sCustomItems slots[9] = {
+        SLOT(Items::emerald, 1, 0),
+        SLOT(Items::emerald, 1, 0),
+        SLOT(Items::redstone, 2, 0),
+        SLOT(Items::dye, 1, DyeColor::BLUE->getItemData()),
+        SLOT(Items::enderEye, 1, 0),
+        SLOT(Blocks::glowstone, 3, 0),
+        SLOT(0, 0, 0),
+        SLOT(Items::emerald, 1, 0),
+        SLOT(0, 0, 0)
+    };
+    return slots;
+}
+
+const UIScene_HowToPlay::sCustomItems* SlotListCreative()
+{
+    static const UIScene_HowToPlay::sCustomItems slots[50] = {
+        SLOT(Blocks::stone, 1, 0),
+        SLOT(Blocks::grass, 1, 0),
+        SLOT(Blocks::grass_path, 1, 0),
+        SLOT(Blocks::dirt, 1, 0),
+        SLOT(Blocks::cobblestone, 1, 0),
+        SLOT(Blocks::sand, 1, 0),
+        SLOT(Blocks::sandstone, 1, SandStoneBlock::SANDSTONE->getData()),
+        SLOT(Blocks::sandstone, 1, SandStoneBlock::SMOOTH->getData()),
+        SLOT(Blocks::sandstone, 1, SandStoneBlock::CHISELED->getData()),
+        SLOT(Blocks::sand, 1, SandBlock::Variant::RED_SAND->getData()),
+        SLOT(Blocks::red_sandstone, 1, SandStoneBlock::SANDSTONE->getData()),
+        SLOT(Blocks::red_sandstone, 1, SandStoneBlock::SMOOTH->getData()),
+        SLOT(Blocks::red_sandstone, 1, SandStoneBlock::CHISELED->getData()),
+        SLOT(Blocks::stone, 1, StoneBlock::Variant::GRANITE->getData()),
+        SLOT(Blocks::stone, 1, StoneBlock::Variant::SMOOTH_GRANITE->getData()),
+        SLOT(Blocks::stone, 1, StoneBlock::Variant::ANDESITE->getData()),
+        SLOT(Blocks::stone, 1, StoneBlock::Variant::SMOOTH_ANDESITE->getData()),
+        SLOT(Blocks::stone, 1, StoneBlock::Variant::DIORITE->getData()),
+        SLOT(Blocks::stone, 1, StoneBlock::Variant::SMOOTH_DIORITE->getData()),
+        SLOT(Blocks::coal_block, 1, 0),
+        SLOT(Blocks::gold_block, 1, 0),
+        SLOT(Blocks::iron_block, 1, 0),
+        SLOT(Blocks::lapis_block, 1, 0),
+        SLOT(Blocks::diamond_block, 1, 0),
+        SLOT(Blocks::emerald_block, 1, 0),
+        SLOT(Blocks::quartz_block, 1, 0),
+        SLOT(Blocks::coal_ore, 1, 0),
+        SLOT(Blocks::lapis_ore, 1, 0),
+        SLOT(Blocks::diamond_ore, 1, 0),
+        SLOT(Blocks::redstone_ore, 1, 0),
+        SLOT(Blocks::iron_ore, 1, 0),
+        SLOT(Blocks::gold_ore, 1, 0),
+        SLOT(Blocks::emerald_ore, 1, 0),
+        SLOT(Blocks::quartz_ore, 1, 0),
+        SLOT(Blocks::nether_wart_block, 1, 0),
+        SLOT(Blocks::bedrock, 1, 0),
+        SLOT(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()),
+        SLOT(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()),
+        SLOT(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()),
+        SLOT(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()),
+        SLOT(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()),
+        SLOT(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()),
+        SLOT(Blocks::log, 1, PlanksBlock::Variant::OAK->getData()),
+        SLOT(Blocks::log, 1, PlanksBlock::Variant::SPRUCE->getData()),
+        SLOT(Blocks::log, 1, PlanksBlock::Variant::BIRCH->getData()),
+        SLOT(Blocks::log, 1, PlanksBlock::Variant::JUNGLE->getData()),
+        SLOT(Blocks::log2, 1, PlanksBlock::Variant::ACACIA->getData() - 4),
+        SLOT(Blocks::log2, 1, PlanksBlock::Variant::DARK_OAK->getData() - 4),
+        SLOT(Blocks::gravel, 1, 0),
+        SLOT(Blocks::brick_block, 1, 0)
     };
     return slots;
 }
