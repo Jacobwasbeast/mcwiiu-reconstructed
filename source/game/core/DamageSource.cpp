@@ -13,9 +13,54 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const DamageSource* CreateOutOfWorldDamageSource()
+static DamageSource* NewDamageSource(ClientboundChatPacket::EChatPacketMessage message,
+                                     ClientboundChatPacket::EChatPacketMessage deathMessage = ClientboundChatPacket::eChatPacketMessage_Text)
 {
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathOutOfWorld, ClientboundChatPacket::eChatPacketMessage_Text);
+    return new DamageSource(message, deathMessage);
+}
+
+static const DamageSource* CreateFireDamageSource(ClientboundChatPacket::EChatPacketMessage message,
+                                                  ClientboundChatPacket::EChatPacketMessage deathMessage)
+{
+    DamageSource* source = NewDamageSource(message, deathMessage);
+    source->setIsFire();
+    return source;
+}
+
+static const DamageSource* CreateLightningBoltDamageSource()
+{
+    DamageSource* source = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathLightningBolt, ClientboundChatPacket::eChatPacketMessage_DeathLightningBoltAlternate);
+    source->bypassGraceInvul();
+    return source;
+}
+
+static const DamageSource* CreateOnFireDamageSource()
+{
+    DamageSource* source = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathOnFire, ClientboundChatPacket::eChatPacketMessage_DeathOnFireFighting);
+    source->bypassArmor();
+    source->setIsFire();
+    return source;
+}
+
+static const DamageSource* CreateBypassArmorDamageSource(ClientboundChatPacket::EChatPacketMessage message,
+                                                         ClientboundChatPacket::EChatPacketMessage deathMessage = ClientboundChatPacket::eChatPacketMessage_Text)
+{
+    DamageSource* source = NewDamageSource(message, deathMessage);
+    source->bypassArmor();
+    return source;
+}
+
+static const DamageSource* CreateStarveDamageSource()
+{
+    DamageSource* source = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathStarve);
+    source->bypassArmor();
+    source->bypassMagic();
+    return source;
+}
+
+static const DamageSource* CreateBypassInvulDamageSource(ClientboundChatPacket::EChatPacketMessage message)
+{
+    DamageSource* source = NewDamageSource(message);
     source->bypassArmor();
     source->bypassInvul();
     return source;
@@ -23,113 +68,45 @@ static const DamageSource* CreateOutOfWorldDamageSource()
 
 static const DamageSource* CreateMagicDamageSource()
 {
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathMagic, ClientboundChatPacket::eChatPacketMessage_Text);
+    DamageSource* source = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathMagic);
     source->bypassArmor();
     source->setMagic();
     return source;
 }
 
-static const DamageSource* CreateLightningBoltDamageSource()
+static const DamageSource* CreateFireworksDamageSource()
 {
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathLightningBolt, ClientboundChatPacket::eChatPacketMessage_DeathLightningBoltAlternate);
-    source->bypassGraceInvul();
+    DamageSource* source = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionAlternate);
+    source->setExplosion();
     return source;
 }
 
-static const DamageSource* CreateStarveDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathStarve, ClientboundChatPacket::eChatPacketMessage_Text);
-    source->bypassArmor();
-    source->bypassMagic();
-    return source;
-}
-
-static const DamageSource* CreateCreativePlayerDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathCustom, ClientboundChatPacket::eChatPacketMessage_Text);
-    source->bypassArmor();
-    source->bypassInvul();
-    return source;
-}
-
-static const DamageSource* CreateInFireDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathInFire, ClientboundChatPacket::eChatPacketMessage_DeathInFireFighting);
-    source->setIsFire();
-    return source;
-}
-
-static const DamageSource* CreateOnFireDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathOnFire, ClientboundChatPacket::eChatPacketMessage_DeathOnFireFighting);
-    source->bypassArmor();
-    source->setIsFire();
-    return source;
-}
-
-static const DamageSource* CreateLavaDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathLava, ClientboundChatPacket::eChatPacketMessage_DeathLavaEscaping);
-    source->setIsFire();
-    return source;
-}
-
-static const DamageSource* CreateHotFloorDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathHotFloor, ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping);
-    source->setIsFire();
-    return source;
-}
-
-static const DamageSource* CreateBypassArmorDamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage)
-{
-    DamageSource* source = new DamageSource(message, deathMessage);
-    source->bypassArmor();
-    return source;
-}
-
-static const DamageSource* CreateFallingBlockDamageSource()
-{
-    DamageSource* source = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathAnvil, ClientboundChatPacket::eChatPacketMessage_PlayerLeftEnd);
-    source->bypassArmor();
-    return source;
-}
-
-const DamageSource* DamageSource::IN_FIRE =
-    CreateInFireDamageSource();
+const DamageSource* DamageSource::IN_FIRE = CreateFireDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathInFire, ClientboundChatPacket::eChatPacketMessage_DeathInFireFighting);
 const DamageSource* DamageSource::LIGHTNING_BOLT = CreateLightningBoltDamageSource();
-const DamageSource* DamageSource::ON_FIRE =
-    CreateOnFireDamageSource();
-const DamageSource* DamageSource::LAVA =
-    CreateLavaDamageSource();
-const DamageSource* DamageSource::HOT_FLOOR =
-    CreateHotFloorDamageSource();
-const DamageSource* DamageSource::IN_WALL =
-    new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathInWall, ClientboundChatPacket::eChatPacketMessage_Text);
-const DamageSource* DamageSource::CRAMMING =
-    new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathCramming, ClientboundChatPacket::eChatPacketMessage_Text);
-const DamageSource* DamageSource::DROWN =
-    CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathDrown, ClientboundChatPacket::eChatPacketMessage_DeathDrownEscaping);
+const DamageSource* DamageSource::ON_FIRE = CreateOnFireDamageSource();
+const DamageSource* DamageSource::LAVA = CreateFireDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathLava, ClientboundChatPacket::eChatPacketMessage_DeathLavaEscaping);
+const DamageSource* DamageSource::HOT_FLOOR = CreateFireDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathHotFloor, ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping);
+const DamageSource* DamageSource::IN_WALL = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathInWall);
+const DamageSource* DamageSource::CRAMMING = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathCramming);
+const DamageSource* DamageSource::DROWN = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathDrown, ClientboundChatPacket::eChatPacketMessage_DeathDrownEscaping);
 const DamageSource* DamageSource::STARVE = CreateStarveDamageSource();
-const DamageSource* DamageSource::CACTUS =
-    new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathCactus, ClientboundChatPacket::eChatPacketMessage_DeathCactusEscaping);
-const DamageSource* DamageSource::FALL =
-    CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFall, ClientboundChatPacket::eChatPacketMessage_Text);
-const DamageSource* DamageSource::FIREWORKS =
-    new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFlyIntoWall, ClientboundChatPacket::eChatPacketMessage_Text);
-const DamageSource* DamageSource::OUT_OF_WORLD = CreateOutOfWorldDamageSource();
-const DamageSource* DamageSource::CREATIVE_PLAYER = CreateCreativePlayerDamageSource();
-const DamageSource* DamageSource::GENERIC =
-    CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathGeneric, ClientboundChatPacket::eChatPacketMessage_Text);
+const DamageSource* DamageSource::CACTUS = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathCactus, ClientboundChatPacket::eChatPacketMessage_DeathCactusEscaping);
+const DamageSource* DamageSource::FALL = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFall);
+const DamageSource* DamageSource::FLY_INTO_WALL = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFlyIntoWall);
+const DamageSource* DamageSource::OUT_OF_WORLD = CreateBypassInvulDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathOutOfWorld);
+const DamageSource* DamageSource::CREATIVE_PLAYER = CreateBypassInvulDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathCustom);
+const DamageSource* DamageSource::GENERIC = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathGeneric);
 const DamageSource* DamageSource::MAGIC = CreateMagicDamageSource();
-const DamageSource* DamageSource::ANVIL =
-    CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathDragonBreath, ClientboundChatPacket::eChatPacketMessage_PlayerEnteredEnd);
-const DamageSource* DamageSource::KILL =
-    CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathWither, ClientboundChatPacket::eChatPacketMessage_Text);
-const DamageSource* DamageSource::FALLING_BLOCK =
-    CreateFallingBlockDamageSource();
-const DamageSource* DamageSource::DRY_OUT =
-    new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionAlternate, ClientboundChatPacket::eChatPacketMessage_Text);
+const DamageSource* DamageSource::DRAGON_BREATH = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathDragonBreath);
+const DamageSource* DamageSource::WITHER = CreateBypassArmorDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathWither);
+const DamageSource* DamageSource::ANVIL = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathAnvil);
+const DamageSource* DamageSource::FALLING_BLOCK = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFallingBlock);
+const DamageSource* DamageSource::FIREWORKS = CreateFireworksDamageSource();
+const DamageSource* DamageSource::ARROW = DamageSource::CreateArrow(boost::shared_ptr<Arrow>(), boost::shared_ptr<Entity>(), false);
+const DamageSource* DamageSource::THORNS = DamageSource::CreateThorns(boost::shared_ptr<Entity>());
+const DamageSource* DamageSource::POISON = DamageSource::MAGIC->copy();
+const DamageSource* DamageSource::INSTANT_DAMAGE = DamageSource::MAGIC->copy();
+const DamageSource* DamageSource::DRY_OUT = NewDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathDryOut);
 
 DamageSource::DamageSource(ClientboundChatPacket::EChatPacketMessage messageValue, ClientboundChatPacket::EChatPacketMessage deathMessageValue)
     : message(messageValue), deathMessage(deathMessageValue), bypassArmorFlag(false), bypassInvulFlag(false), bypassGraceInvulFlag(false), bypassMagicFlag(false), foodExhaustion(FoodConstants::ExhaustionAttack()), fire(false), projectile(false), scalesDifficulty(false), magic(false), explosion(false), fireProjectile(false)
@@ -166,10 +143,10 @@ EntityDamageSource* DamageSource::CreatePlayerAttack(boost::shared_ptr<Player> p
 
 void DamageSource::setIsFireProjectile() { fireProjectile = true; }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fireValue)
+DamageSource* DamageSource::CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fireValue)
 {
     boost::shared_ptr<Entity> arrowEntity(arrow, (Entity*)arrow.get());
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathArrow, ClientboundChatPacket::eChatPacketMessage_DeathArrowItem, arrowEntity, owner, 0));
+    DamageSource* result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathArrow, ClientboundChatPacket::eChatPacketMessage_DeathArrowItem, arrowEntity, owner, 0);
     result->setProjectile();
     if (fireValue) result->setIsFireProjectile();
     return result;
@@ -225,9 +202,9 @@ boost::shared_ptr<DamageSource> DamageSource::CreateIndirectMagic(boost::shared_
     return result;
 }
 
-boost::shared_ptr<EntityDamageSource> DamageSource::CreateThorns(boost::shared_ptr<Entity> entity)
+EntityDamageSource* DamageSource::CreateThorns(boost::shared_ptr<Entity> entity)
 {
-    boost::shared_ptr<EntityDamageSource> result(new EntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathThorns, ClientboundChatPacket::eChatPacketMessage_DeathThorns, entity));
+    EntityDamageSource* result = new EntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathThorns, ClientboundChatPacket::eChatPacketMessage_DeathThorns, entity);
     result->setThorns();
     result->setMagic();
     return result;

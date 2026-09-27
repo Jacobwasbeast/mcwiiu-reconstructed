@@ -1,4 +1,5 @@
 #include "game/core/MinecartTNT.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -20,6 +21,9 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/world/generation/Player.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -74,7 +78,7 @@ void MinecartTNT::tick()
         if (mFuse > 0)
         {
             --mFuse;
-            mLevel->addParticle(ePARTICLE_SMOKE, false, mX, mY + 0.5, mZ,
+            mLevel->addParticle(PARTICLE_SMOKE, mX, mY + 0.5, mZ,
                                 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
         else
@@ -103,7 +107,7 @@ bool MinecartTNT::hurt(const DamageSource* source, float damage)
 void MinecartTNT::destroy(const DamageSource* source)
 {
     if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0 &&
-        (source->isFire() || source->isExplosion() || mXd * mXd + mZd * mZd >= 0.01))
+        (source->isFire() || source->isExplosion() || mXd * mXd + mZd * mZd >= 0.01f))
     {
         if (mFuse < 0)
         {
@@ -117,7 +121,7 @@ void MinecartTNT::destroy(const DamageSource* source)
     if (g_pApp->GetGameHostOption(eGameHostOption_TNT) == 0 ||
         (!source->isExplosion() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS)))
     {
-        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tnt, 1)), 4.5f);
+        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tnt, 1)), 0.0f);
     }
 }
 
@@ -130,14 +134,13 @@ void MinecartTNT::explode(double power)
             double radius = std::sqrt(power);
             if (radius > 5.0)
                 radius = 5.0;
-            radius = (float)(mRandom->nextDouble() * 1.5 * radius - 1.0);
-            mLevel->explode(shared_from_this(), mX, mY, mZ, (float)radius,
-                            false, false, true, true, true, -1.0f);
+            mLevel->explode(shared_from_this(), mX, mY, mZ, (float)(mRandom->nextDouble() * 1.5 * radius + 4.0),
+                            false, true, false, false, false, -1.0f);
             remove();
         }
         else
         {
-            remove();
+            destroy(NULL);
         }
     }
 }
@@ -171,10 +174,12 @@ void MinecartTNT::primeFuse()
     {
         mFuse = 80;
         if (!mLevel->mIsClientSide)
+        {
             mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::MINECART_TNT_PRIME, 0);
-        if (!isSilent())
-            mLevel->addParticle(ePARTICLE_SMOKE, false, mX, mY, mZ, 0.0, 0.0, 0.0,
-                                arrayWithLength<int>());
+            if (!isSilent())
+                mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::TNT_PRIMED,
+                                  SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+        }
     }
 }
 

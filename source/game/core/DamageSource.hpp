@@ -20,24 +20,30 @@ class DamageSource
 {
 public:
     static const DamageSource* IN_FIRE;
+    static const DamageSource* LIGHTNING_BOLT;
     static const DamageSource* ON_FIRE;
-    static const DamageSource* FIREWORKS;
-    static const DamageSource* OUT_OF_WORLD;
-    static const DamageSource* IN_WALL;
     static const DamageSource* LAVA;
     static const DamageSource* HOT_FLOOR;
-    static const DamageSource* ANVIL;
-    static const DamageSource* FALLING_BLOCK;
-    static const DamageSource* KILL;
-    static const DamageSource* GENERIC;
-    static const DamageSource* MAGIC;
+    static const DamageSource* IN_WALL;
     static const DamageSource* CRAMMING;
     static const DamageSource* DROWN;
     static const DamageSource* STARVE;
     static const DamageSource* CACTUS;
     static const DamageSource* FALL;
-    static const DamageSource* LIGHTNING_BOLT;
+    static const DamageSource* FLY_INTO_WALL;
+    static const DamageSource* OUT_OF_WORLD;
     static const DamageSource* CREATIVE_PLAYER;
+    static const DamageSource* GENERIC;
+    static const DamageSource* MAGIC;
+    static const DamageSource* DRAGON_BREATH;
+    static const DamageSource* WITHER;
+    static const DamageSource* ANVIL;
+    static const DamageSource* FALLING_BLOCK;
+    static const DamageSource* FIREWORKS;
+    static const DamageSource* ARROW;
+    static const DamageSource* THORNS;
+    static const DamageSource* POISON;
+    static const DamageSource* INSTANT_DAMAGE;
     static const DamageSource* DRY_OUT;
 
     DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage);
@@ -49,7 +55,7 @@ public:
     static boost::shared_ptr<DamageSource> CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
     static EntityDamageSource* CreatePlayerAttack(boost::shared_ptr<Player> player);
     void setIsFireProjectile();
-    static boost::shared_ptr<DamageSource> CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fire);
+    static DamageSource* CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fire);
     static boost::shared_ptr<DamageSource> CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner);
     void setIsFire();
     static boost::shared_ptr<DamageSource> CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner);
@@ -57,7 +63,7 @@ public:
     void setMagic();
     void bypassArmor();
     static boost::shared_ptr<DamageSource> CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource);
-    static boost::shared_ptr<EntityDamageSource> CreateThorns(boost::shared_ptr<Entity> entity);
+    static EntityDamageSource* CreateThorns(boost::shared_ptr<Entity> entity);
     void setExplosion();
     void setScalesWithDifficulty();
     static boost::shared_ptr<DamageSource> CreateExplosion(Explosion* explosion);

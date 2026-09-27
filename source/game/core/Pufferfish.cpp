@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/core/System.hpp"
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
@@ -29,11 +31,9 @@ Pufferfish::Pufferfish(Level* level)
       mDamage(2),
       mSmallPuffRadius(1.5f),
       mLargePuffRadius(10.0f),
-      mPuffSoundPitch(0.2f),
-      mField778(0),
-      mField77c(0),
-      mField780(0),
-      mField784(2)
+      mStingRange(0.2f),
+      mLastStingSoundTime(0),
+      mStingSoundDelay(2)
 {
     setSize(0.5f, 0.5f);
     fjDerivedCtorCalls();
@@ -60,9 +60,10 @@ void Pufferfish::damageNearbyMobs()
         return;
 
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow((double)mPuffSoundPitch,
-                                                                    (double)mPuffSoundPitch,
-                                                                    (double)mPuffSoundPitch), NULL);
+        mLevel->getEntities(shared_from_this(), mBoundingBox->grow((double)mStingRange,
+                                                                    (double)mStingRange,
+                                                                    (double)mStingRange), NULL);
+    bool stung = false;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
         boost::shared_ptr<Entity> entity = entities->at(i);
@@ -72,6 +73,18 @@ void Pufferfish::damageNearbyMobs()
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
             living->hurt(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this())), mDamage);
             living->addEffect(new MobEffectInstance(MobEffects::POISON, mPoisonDuration), boost::shared_ptr<Entity>());
+            stung = true;
+        }
+    }
+
+    if (mLevel->mIsClientSide && stung)
+    {
+        int64_t now = System::processTimeInSeconds();
+        if (mLastStingSoundTime + mStingSoundDelay < now)
+        {
+            mLastStingSoundTime = now;
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_STING, SoundSource::eSoundSource_Hostile, 1.0f,
+                                   1.0f, false, 16.0f);
         }
     }
 }
@@ -119,6 +132,7 @@ void Pufferfish::checkForDangerousMobs()
 void Pufferfish::baseTick()
 {
     Fish::baseTick();
+
     if (mNextPuffState != mPuffState)
     {
         --mPuffTransitionTime;
@@ -126,14 +140,35 @@ void Pufferfish::baseTick()
         {
             PuffedState oldState = mPuffState;
             mPuffState = mNextPuffState;
+
             if (oldState == PUFFED_STATE_SMALL)
+            {
                 setNextPuffedState(PUFFED_STATE_LARGE, 1);
+                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_UP, SoundSource::eSoundSource_Hostile,
+                                       0.6f, 1.0f, false, 16.0f);
+            }
             else if (oldState == PUFFED_STATE_LARGE)
+            {
                 setNextPuffedState(PUFFED_STATE_SMALL, 20);
+            }
+            else if (mPuffState == PUFFED_STATE_LARGE)
+            {
+                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
+            }
+            else
+            {
+                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.3);
+                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_OUT, SoundSource::eSoundSource_Hostile,
+                                       0.6f, 1.0f, false, 16.0f);
+            }
         }
     }
+
     if (mPuffState == PUFFED_STATE_LARGE)
+    {
         damageNearbyMobs();
+    }
+
     checkForDangerousMobs();
 }
 

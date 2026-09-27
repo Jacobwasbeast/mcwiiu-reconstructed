@@ -81,7 +81,7 @@ void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
     {
         if (owner == NULL)
         {
-            target->hurt(NULL, 6.0f);
+            target->hurt(DamageSource::MAGIC, 6.0f);
         }
         else
         {
@@ -110,17 +110,12 @@ void EvocationFangs::tick()
             if (mWarmupDelay == -8)
             {
                 std::vector<boost::shared_ptr<Entity> >* entities =
-                    mLevel->getEntitiesOfClass(typeid(Entity), mBoundingBox->grow(6.0, 128.0, 6.0));
-                if (entities != NULL)
+                    mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
+                for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
                 {
-                    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
-                    {
-                        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(*it);
-                        if (living)
-                            dealDamageTo(living);
-                    }
-                    delete entities;
+                    dealDamageTo(boost::static_pointer_cast<LivingEntity>(*it));
                 }
+                delete entities;
             }
             if (!mSentSpikeEvent)
             {
@@ -132,10 +127,12 @@ void EvocationFangs::tick()
     }
     else if (mClientSideAttack && --mLifeTicks == 14)
     {
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 12; ++i)
         {
-            mLevel->addParticle(PARTICLE_SNOWBALL_POOF, mX + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 1.75,
-                                mY + mRandom->nextDouble() + 1.0625, mZ + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 1.75,
+            double x = mX + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 0.5;
+            double y = mY + mRandom->nextDouble() + 0.05;
+            double z = mZ + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 0.5;
+            mLevel->addParticle(PARTICLE_CRIT, x, y + 1.0, z,
                                 (mRandom->nextDouble() * 2.0 - 1.0) * 0.3, mRandom->nextDouble() * 0.3 + 0.3,
                                 (mRandom->nextDouble() * 2.0 - 1.0) * 0.3, arrayWithLength<int>());
         }

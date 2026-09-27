@@ -106,6 +106,9 @@ uint8_t CConsoleMinecraftApp::GetDRCIconEnabled() { return m_drcIconEnabled; }
 void CConsoleMinecraftApp::SetDRCOuputEnabled(bool value) { m_drcOutputEnabled = value; }
 uint8_t CConsoleMinecraftApp::GetDRCOutputEnabled() { return m_drcOutputEnabled; }
 uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled() { return m_drcCheckPlayerCountEnabled; }
+#if defined(RECON_NATIVE)
+extern "C" void native_report_stack(const char* tag);
+#endif
 void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {
 #if defined(RECON_NATIVE)
@@ -117,6 +120,7 @@ void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
         va_end(args);
         OSReport("[native-fatal-load] CConsoleMinecraftApp::FatalLoadError caller=%p %ls\n",
                  __builtin_return_address(0), text);
+        native_report_stack("native-fatal-load");
     }
 #endif
     gRenderer->InitialiseContext();

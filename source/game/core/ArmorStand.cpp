@@ -695,7 +695,7 @@ void ArmorStand::handleEntityEvent(unsigned char event, int data)
 {
     if (event == EntityEvent::ARMORSTAND_WOBBLE)
     {
-        playBrokenSound();
+        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ARMORSTAND_HIT, getSoundSource(), 0.3f, 1.0f, false, 16.0f);
         mLastHit = mLevel->getGameTime();
     }
     else
@@ -703,7 +703,14 @@ void ArmorStand::handleEntityEvent(unsigned char event, int data)
         LivingEntity::handleEntityEvent(event, data);
     }
 }
-bool ArmorStand::shouldRenderAtSqrDistance(double distanceSqr) { return distanceSqr < 4096.0; }
+bool ArmorStand::shouldRenderAtSqrDistance(double distanceSqr) {
+    double size = mBoundingBox->getSize();
+    if (size == 0.0)
+    {
+        size = 4.0;
+    }
+    return distanceSqr < size * 64.0 * size * 64.0;
+}
 void ArmorStand::setInvisible(bool invisible)
 {
     mInvisible = invisible;
@@ -751,7 +758,7 @@ float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
     }
     return 0.0f;
 }
-double ArmorStand::getRidingHeight() { return isMarker() ? 0.05 : 1.45; }
+double ArmorStand::getRidingHeight() { return isMarker() ? 0.0 : 0.1; }
 double ArmorStand::getEyeHeight() { return (double)(mBbHeight * (isBaby() ? 0.5f : 0.9f)); }
 void ArmorStand::travel(float xxa, float yya, float zza)
 {

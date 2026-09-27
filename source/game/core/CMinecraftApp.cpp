@@ -3894,7 +3894,6 @@ void CMinecraftApp::CaptureScreenshot(int32_t playerNumber)
 }
 void CMinecraftApp::RunFrame()
 {
-    /* The Wii U symbol is an intentional no-op in this build. */
 }
 void CMinecraftApp::HandleXuiActions()
 {

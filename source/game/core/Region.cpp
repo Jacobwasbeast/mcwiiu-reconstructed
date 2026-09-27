@@ -188,11 +188,56 @@ const BlockState* Region::getBlockState(LevelChunk* chunk, EntityTickCache&, con
     return chunk == NULL ? getBlockState(pos) : chunk->getBlockState(pos);
 }
 
-int Region::getBlockId(int x, int y, int z) { return getChunk(x >> 4, z >> 4) == NULL ? 0 : getChunk(x >> 4, z >> 4)->getBlockId(x & 15, y, z & 15); }
-int Region::getBlockId(EntityTickCache& cache, int x, int y, int z) { unsigned short e = getElement(cache, x, y, z); return e == 0xffff ? getBlockId(x, y, z) : e >> 4; }
-void Region::getBlockAndExtraBlockId(int x, int y, int z, int* blockId, int* extraBlockId) { *blockId = getBlockId(x, y, z); *extraBlockId = getExtraBlockId(x, y, z); }
-unsigned short Region::getElement(EntityTickCache& cache, int x, int y, int z) { unsigned short e = cache.getElement(x, y, z); return e == 0xffff ? getElement(x, y, z) : e; }
-unsigned short Region::getElement(int x, int y, int z) { LevelChunk* c = getChunk(x >> 4, z >> 4); return y < 0 || y >= 256 || c == NULL ? 0 : c->getElement(x & 15, y, z & 15); }
+int Region::getBlockId(int x, int y, int z)
+{
+    if ((unsigned int)y < 256)
+    {
+        if (mCachedStates != NULL && x >> 4 == mCachedX && z >> 4 == mCachedZ)
+        {
+            int yBase = mCachedY * 16 - 1;
+            if (y >= yBase && y < mCachedY * 16 + 17)
+                return Block::getId(mCachedStates[((y - yBase) << 8) | ((z & 15) << 4) | (x & 15)]->getBlock());
+        }
+        LevelChunk* chunk = getChunk(x >> 4, z >> 4);
+        if (chunk != NULL)
+            return chunk->getBlockId(x, y, z);
+    }
+    return 0;
+}
+
+int Region::getBlockId(EntityTickCache& cache, int x, int y, int z)
+{
+    int element = cache.getElement(x, y, z);
+    if (element == 0xffff)
+        element = getElement(x, y, z);
+    return element >> 4;
+}
+
+void Region::getBlockAndExtraBlockId(int x, int y, int z, int* blockId, int* extraBlockId)
+{
+    *blockId = getBlockId(x, y, z);
+    *extraBlockId = getExtraBlockId(x, y, z);
+}
+
+unsigned short Region::getElement(EntityTickCache& cache, int x, int y, int z)
+{
+    unsigned short element = cache.getElement(x, y, z);
+    if (element == 0xffff)
+        element = getElement(x, y, z);
+    return element;
+}
+
+unsigned short Region::getElement(int x, int y, int z)
+{
+    if ((unsigned int)y < 256)
+    {
+        LevelChunk* chunk = getChunk(x >> 4, z >> 4);
+        if (chunk != NULL)
+            return chunk->getElement(x, y, z);
+    }
+    return 0;
+}
+
 int Region::getBlockData(int x, int y, int z)
 {
     if (y >= 0 && y < 256)
@@ -213,8 +258,32 @@ int Region::getBlockData(int x, int y, int z)
     }
     return 0;
 }
-unsigned short Region::getExtraElement(int x, int y, int z) { LevelChunk* c = getChunk(x >> 4, z >> 4); return y < 0 || y >= 256 || c == NULL ? 0 : c->getExtraElement(x & 15, y, z & 15); }
-void Region::getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement) { *element = getElement(x, y, z); *extraElement = getExtraElement(x, y, z); }
+unsigned short Region::getExtraElement(int x, int y, int z)
+{
+    if ((unsigned int)y < 256)
+    {
+        LevelChunk* chunk = getChunk(x >> 4, z >> 4);
+        if (chunk != NULL)
+            return chunk->getExtraElement(x, y, z);
+    }
+    return 0;
+}
+
+void Region::getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement)
+{
+    if ((unsigned int)y < 256)
+    {
+        LevelChunk* chunk = getChunk(x >> 4, z >> 4);
+        if (chunk != NULL)
+            chunk->getElementAndExtraElement(x, y, z, element, extraElement);
+    }
+    else
+    {
+        *element = 0;
+        *extraElement = 0;
+    }
+}
+
 Block* Region::getBlock(const BlockPos& pos)
 {
     if (pos.y >= 0 && pos.y < 256)
@@ -257,7 +326,7 @@ bool Region::isSolidRender(const BlockPos& pos)
     {
         const BlockState* neighbour = mLevel->getBlockState(pos.offset(xOffsets[i], yOffsets[i], zOffsets[i]));
 
-        if (!LeafBlock::isLeaves(neighbour->getBlock()) || !neighbour->isSolidRender())
+        if (!LeafBlock::isLeaves(neighbour->getBlock()) && !neighbour->isSolidRender())
         {
             return false;
         }
@@ -265,16 +334,42 @@ bool Region::isSolidRender(const BlockPos& pos)
 
     return true;
 }
-Biome* Region::getBiome(const BlockPos& pos) { LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? NULL : c->getBiome(pos, getBiomeSource()); }
+Biome* Region::getBiome(const BlockPos& pos)
+{
+    LevelChunk* chunk = mChunks->data[(pos.x >> 4) - mMinChunkX]->data[(pos.z >> 4) - mMinChunkZ];
+    return chunk->getBiome(pos, mLevel->getBiomeSource());
+}
+
 BiomeSource* Region::getBiomeSource() { return mLevel->getBiomeSource(); }
 int Region::getMaxBuildHeight() { return 256; }
 bool Region::isAllEmpty() { return mAllEmpty; }
-int Region::getDirectSignal(const BlockPos& pos, const Direction* direction) { return getBlock(pos)->getDirectSignal(getBlockState(pos), this, pos, direction); }
+int Region::getDirectSignal(const BlockPos& pos, const Direction* direction)
+{
+    return getBlockState(pos)->getDirectSignal(this, pos, direction);
+}
+
 LevelType* Region::getGeneratorType() { return mLevel->getGeneratorType(); }
 int Region::getExtraBlockId(int x, int y, int z) { return getExtraElement(x, y, z) >> 4; }
 int Region::getExtraBlockData(int x, int y, int z) { return getExtraElement(x, y, z) & 15; }
-Block* Region::getExtraBlock(const BlockPos& pos) { return Block::byId(getExtraBlockId(pos.x, pos.y, pos.z)); }
-Block* Region::getLiquidBlock(const BlockPos& pos) { Block* block = getBlock(pos); return block->isLiquidBlock() ? block : getExtraBlock(pos); }
+Block* Region::getExtraBlock(const BlockPos& pos)
+{
+    if ((unsigned int)pos.y < 256)
+    {
+        LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+        if (chunk != NULL)
+            return chunk->getExtraBlock(pos);
+    }
+    return Blocks::air;
+}
+
+Block* Region::getLiquidBlock(const BlockPos& pos)
+{
+    Block* extra = getExtraBlock(pos);
+    if (extra != NULL && extra != Blocks::air)
+        return extra;
+    return getBlock(pos);
+}
+
 const BlockState* Region::getLiquidBlockState(const BlockPos& pos)
 {
     const BlockState* extra = getExtraBlockState(pos);

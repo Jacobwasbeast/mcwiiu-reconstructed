@@ -50,9 +50,9 @@ public:
         virtual bool canContinueToUse();
         virtual void tick();
     private:
-        int mTargetChangeTime;
-        boost::shared_ptr<Player> mTarget;
-        int mAggression;
+        boost::shared_ptr<Player> mPendingTarget;
+        int mAggroTime;
+        int mTeleportTime;
         EnderMan* mEnderMan;
     };
 

@@ -68,10 +68,12 @@ void Drowned::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
     double dz = target->mZ - mZ;
     double distance = std::sqrt(dx * dx + dz * dz);
     boost::shared_ptr<ThrownTrident> trident(new ThrownTrident(mLevel, mX, mY + getEyeHeight(), mZ));
+    trident->mOwner = shared_from_this();
     float difficultyFactor = 14.0f - (float)mLevel->getDifficulty()->getId() * 4.0f;
     trident->shoot(dx,
                    distance * 0.2f + (target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - trident->mY),
                    dz, 1.6f, difficultyFactor);
+    playSound(SoundEvents::TRIDENT_THROW, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
     mLevel->addEntity(trident);
 }
 
@@ -212,23 +214,47 @@ float Drowned::getWaterSlowDown()
 
 void Drowned::travel(float xxa, float yya, float zza)
 {
-    if (!isEffectiveAi() || !isInWaterOrBubble())
+    boost::shared_ptr<LivingEntity> target = getTarget();
+    if (isEffectiveAi() && target == NULL)
+    {
+        stopSwimming();
+    }
+
+    if (!isInWaterOrBubble() || !isEffectiveAi())
     {
         LivingEntity::travel(xxa, yya, zza);
         return;
     }
-    PIXBeginNamedEvent(0.25f, "Travel in water");
-    double oldYd = mYd;
-    moveRelative(xxa, yya, zza, 0.02f);
+
+    PIXBeginNamedEvent(0.0f, "Travel in water");
+    double oldY = mY;
+    float slowDown = getWaterSlowDown();
+    double gravity = 0.0;
+    moveRelative(xxa, yya, zza, 0.06f);
     move(eMoverType_Self, mXd, mYd, mZd, false);
-    mXd *= getWaterSlowDown();
-    mZd *= getWaterSlowDown();
-    if (!mOnGround)
-        mYd = mYd * 0.6 - 0.005;
-    if (mOnGround && isFree(mXd, mYd + 0.6 - mY, mZd))
-        mYd = 0.3;
+    mXd *= slowDown;
+    mZd *= slowDown;
+
+    if (target != NULL)
+    {
+        if (target->mOnGround && !mOnGround)
+        {
+            gravity = 0.005;
+        }
+    }
+    else if (shouldApplyWaterGravity() && !isSwimming())
+    {
+        slowDown = LivingEntity::getWaterSlowDown();
+        gravity = 0.02f;
+    }
+
+    mYd = mYd * slowDown - gravity;
+    if (mHorizontalCollision && isFree(mXd, mYd + 0.6f - mY + oldY, mZd))
+    {
+        mYd = 0.3f;
+    }
     PIXEndNamedEvent();
-    updateFallFlying();
+    updateModelAnimation();
 }
 
 not_null_ptr<ItemInstance> Drowned::getSkull()

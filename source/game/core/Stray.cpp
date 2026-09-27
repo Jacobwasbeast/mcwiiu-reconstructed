@@ -14,6 +14,7 @@
 #include "game/entity/projectile/TippableArrow.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/world/generation/Player.hpp"
 
 Stray::Stray(Level* level)
@@ -47,7 +48,7 @@ void Stray::registerGoals()
 {
     AbstractSkeleton::registerGoals();
     mGoalSelector.addGoal(2, new RestrictSunGoal(this), true);
-    mGoalSelector.addGoal(4, new AvoidEntityGoal(this, typeid(Player), 6.0f, 1.0, 1.2), true);
+    mGoalSelector.addGoal(4, new AvoidEntityGoal(this, typeid(Wolf), 6.0f, 1.0, 1.2), true);
 }
 
 ResourceLocation* Stray::getDefaultLootTable()

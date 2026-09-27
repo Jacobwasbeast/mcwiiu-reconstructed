@@ -1,4 +1,5 @@
 #include "game/core/LlamaSpit.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <cmath>
@@ -123,7 +124,7 @@ void LlamaSpit::restoreOwnerFromSave()
     }
 
     const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
-    AABB* searchBox = mBoundingBox->grow(2.0);
+    AABB* searchBox = mBoundingBox->grow(15.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         Entity::mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
@@ -173,34 +174,78 @@ boost::shared_ptr<Entity> LlamaSpit::getHitEntity(Vec3* from, Vec3* to)
 void LlamaSpit::tick()
 {
     Entity::tick();
+    if (mOwnerTag != NULL)
+    {
+        restoreOwnerFromSave();
+    }
+
     Vec3* from = Vec3::newTemp(mX, mY, mZ);
     Vec3* to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
     HitResult* hit = Entity::mLevel->clip(from, to);
-    if (hit == NULL || hit->mType == HitResult::MISS)
+    from = Vec3::newTemp(mX, mY, mZ);
+    to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
+    if (hit != NULL)
     {
-        boost::shared_ptr<Entity> entity = getHitEntity(from, to);
-        if (entity)
-        {
-            hit = new HitResult(entity);
-        }
+        to = Vec3::newTemp(hit->mLocation->x, hit->mLocation->y, hit->mLocation->z);
     }
+
+    boost::shared_ptr<Entity> entity = getHitEntity(from, to);
+    if (entity != NULL)
+    {
+        hit = new HitResult(entity);
+    }
+
     if (hit != NULL)
     {
         onHit(hit);
         delete hit;
-        return;
     }
+
     mX += mXd;
     mY += mYd;
     mZ += mZd;
-    setPos(mX, mY, mZ);
     double horizontal = std::sqrt(mXd * mXd + mZd * mZd);
     mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
     mXRot = (float)(std::atan2(mYd, horizontal) * 57.2957763671875);
-    mXd *= 0.99;
-    mYd *= 0.99;
-    mZd *= 0.99;
-    mYd -= 0.06;
+
+    while (mXRot - mXRotO < -180.0f)
+    {
+        mXRotO -= 360.0f;
+    }
+    while (mXRot - mXRotO >= 180.0f)
+    {
+        mXRotO += 360.0f;
+    }
+    while (mYRot - mYRotO < -180.0f)
+    {
+        mYRotO -= 360.0f;
+    }
+    while (mYRot - mYRotO >= 180.0f)
+    {
+        mYRotO += 360.0f;
+    }
+    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
+    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
+
+    if (!Entity::mLevel->containsMaterial(mBoundingBox, Material::AIR))
+    {
+        remove();
+    }
+    else if (isInWaterOrBubble())
+    {
+        remove();
+    }
+    else
+    {
+        mXd *= 0.99f;
+        mYd *= 0.99f;
+        mZd *= 0.99f;
+        if (!isNoGravity())
+        {
+            mYd -= 0.06f;
+        }
+        setPos(mX, mY, mZ);
+    }
 }
 
 void LlamaSpit::lerpMotion(double xd, double yd, double zd)

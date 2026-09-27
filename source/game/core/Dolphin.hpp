@@ -67,7 +67,7 @@ public:
 
 private:
     int mTreasureTime;
-    int mAirSupply;
+    int mBlowholeCooldown;
     FindUnderwaterTreasureGoal* mTreasureGoal;
 };
 

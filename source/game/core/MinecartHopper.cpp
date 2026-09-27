@@ -230,15 +230,16 @@ bool MinecartHopper::suckInItems()
         return true;
     AliveEntitySelector selector;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.5, 0.0, 0.5),
+        mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.25, 0.0, 0.25),
                                    &selector, false);
-    if (entities != NULL && !entities->empty())
+    bool added = false;
+    if (!entities->empty())
     {
-        boost::shared_ptr<ItemEntity> item =
-        boost::static_pointer_cast<ItemEntity>(entities->at(0));
-        return HopperBlockEntity::addItem(NULL, this, item);
+        boost::shared_ptr<ItemEntity> item = boost::static_pointer_cast<ItemEntity>(entities->at(0));
+        added = HopperBlockEntity::addItem(NULL, this, item);
     }
-    return false;
+    delete entities;
+    return added;
 }
 
 void MinecartHopper::destroy(const DamageSource* source)

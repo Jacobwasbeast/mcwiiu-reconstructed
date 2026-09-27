@@ -50,11 +50,9 @@ private:
     int mDamage;
     float mSmallPuffRadius;
     float mLargePuffRadius;
-    float mPuffSoundPitch;
-    int mField778;
-    int mField77c;
-    int mField780;
-    int mField784;
+    float mStingRange;
+    int64_t mLastStingSoundTime;
+    int64_t mStingSoundDelay;
 };
 
 #endif

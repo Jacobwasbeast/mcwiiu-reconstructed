@@ -2937,7 +2937,7 @@ void MasterGameMode::PlayReachedEndSFX(const std::vector<boost::shared_ptr<Serve
     }
 
     boost::shared_ptr<Packet> packet(
-        new ClientboundSoundPacket(ClientboundSoundPacket::eSoundInstances_Default, sound, 1.0f, 1.0f, false, player->getId()));
+        new ClientboundSoundPacket(ClientboundSoundPacket::eSoundInstances_FollowLocalPlayer, sound, 1.0f, 1.0f, false, player->getId()));
     ServerPlayers()->broadcast(player->mX, player->mY, player->mZ, FINISH_LINE_SOUND_RANGE, player->mDimension, packet);
 }
 

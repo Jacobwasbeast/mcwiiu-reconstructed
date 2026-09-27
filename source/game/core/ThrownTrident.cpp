@@ -121,7 +121,11 @@ void ThrownTrident::tick()
         if (mLevel->mIsClientSide)
             mYo = mY;
         if (mReturnTimer == 0)
+        {
             playSound(SoundEvents::TRIDENT_RETURN, 1.0f, 1.0f);
+            mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(mOwner), SoundEvents::TRIDENT_RETURN,
+                              SoundSource::eSoundSource_Players, 0.2f, 1.0f, 16.0f);
+        }
         direction->normalize();
         mXd += direction->x * 0.05 * scale - mXd * 0.05;
         mYd += direction->y * 0.05 * scale - mYd * 0.05;

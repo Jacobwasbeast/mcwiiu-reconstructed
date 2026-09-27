@@ -59,8 +59,7 @@ const SoundEvent* Mule::getHurtSound(const DamageSource* source)
 
 void Mule::playChestEquipsSound()
 {
-    playSound(SoundEvents::DONKEY_CHEST, 1.0f,
-              1.0f + (getRandom()->nextFloat() - getRandom()->nextFloat()) * 0.2f);
+    playSound(SoundEvents::MULE_CHEST, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
 }
 
 unsigned int Mule::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

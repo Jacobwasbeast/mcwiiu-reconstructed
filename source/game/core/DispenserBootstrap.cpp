@@ -1,6 +1,7 @@
 #include "game/core/DispenserBootstrap.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/world/generation/Player.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -236,16 +237,18 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             Level* level = source->getWorld();
-            if (level->countInstanceOf(EntityType::FIREWORKS_ROCKET_ENTITY, false, NULL, NULL) >= 200)
+            if (level->countInstanceOf(EntityType::PROJECTILE, false, NULL, NULL) >= MAX_PROJECTILES)
             {
                 outcome = eOUTCOME_Failure;
                 return item;
             }
             const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
-            Position* position = DispenserBlock::getDispensePosition(source);
-            boost::shared_ptr<FireworksRocketEntity> rocket(new FireworksRocketEntity(level,
-                position->getX() + direction->getStepX() * 0.2, position->getY() + direction->getStepY() * 0.2,
-                position->getZ() + direction->getStepZ() * 0.2, item));
+            double x = source->getX() + direction->getStepX();
+            float y = source->getPos().y + direction->getStepY() + 0.2f;
+            double z = source->getZ() + direction->getStepZ();
+            boost::shared_ptr<FireworksRocketEntity> rocket(new FireworksRocketEntity(
+                level, x, y, z, direction->getStepX(), direction->getStepY(), direction->getStepZ(), item, true,
+                boost::shared_ptr<Player>()));
             level->addEntity(rocket);
             item->shrink(1);
             outcome = eOUTCOME_Success;

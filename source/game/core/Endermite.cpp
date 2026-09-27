@@ -79,22 +79,22 @@ bool Endermite::makeStepSound()
 
 const SoundEvent* Endermite::getAmbientSound()
 {
-    return SoundEvents::ENDERMITE_AMBIENT;
+    return SoundEvents::SILVERFISH_AMBIENT;
 }
 
 const SoundEvent* Endermite::getHurtSound(const DamageSource*)
 {
-    return SoundEvents::ENDERMITE_HURT;
+    return SoundEvents::SILVERFISH_HURT;
 }
 
 const SoundEvent* Endermite::getDeathSound()
 {
-    return SoundEvents::ENDERMITE_DEATH;
+    return SoundEvents::SILVERFISH_DEATH;
 }
 
 void Endermite::playStepSound(const BlockPos&, Block*)
 {
-    playSound(SoundEvents::ENDERMITE_STEP, 0.15f, 1.0f);
+    playSound(SoundEvents::SILVERFISH_STEP, 0.15f, 1.0f);
 }
 
 ResourceLocation* Endermite::getDefaultLootTable()
@@ -152,7 +152,7 @@ void Endermite::aiStep()
     {
         for (int i = 0; i < 2; ++i)
         {
-            mLevel->addParticle(PARTICLE_PORTAL,
+            mLevel->addParticle(PARTICLE_ENDER,
                                 mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
                                 mY + mRandom->nextDouble() * (double)mBbHeight,
                                 mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,

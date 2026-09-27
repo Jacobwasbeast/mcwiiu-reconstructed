@@ -6,6 +6,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
+#include "game/entity/mob/FlyingAnimal.hpp"
 #include "game/entity/mob/ShoulderRidingEntity.hpp"
 #include "game/world/block/Predicate.hpp"
 #include "game/core/InteractionHand.hpp"
@@ -31,7 +32,7 @@ class Random;
 class SoundEvent;
 class Vec3i;
 
-class Parrot : public ShoulderRidingEntity
+class Parrot : public ShoulderRidingEntity, public FlyingAnimal
 {
 public:
     static const EntityDataAccessor<int>* DATA_VARIANT;

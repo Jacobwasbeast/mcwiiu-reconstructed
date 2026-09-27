@@ -3,6 +3,11 @@
 
 class LocalPlayer;
 
+namespace phys
+{
+class Vec2;
+}
+
 class Input
 {
 public:
@@ -10,7 +15,7 @@ public:
     virtual ~Input();
 
     virtual void tick(LocalPlayer* player);
-    virtual void getMoveVector();
+    virtual phys::Vec2* getMoveVector();
 
     float mMoveStrafe;
     float mMoveForward;

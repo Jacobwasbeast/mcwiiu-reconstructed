@@ -1,4 +1,5 @@
 #include "game/core/Ghast.hpp"
+#include "game/core/Mth.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -110,7 +111,7 @@ void Ghast::registerAttributes()
 }
 
 const SoundEvent* Ghast::getAmbientSound() { return SoundEvents::GHAST_AMBIENT; }
-const SoundEvent* Ghast::getHurtSound(const DamageSource*) { return SoundEvents::GHAST_HURT; }
+const SoundEvent* Ghast::getHurtSound(const DamageSource*) { return SoundEvents::GHAST_SCREAM; }
 const SoundEvent* Ghast::getDeathSound() { return SoundEvents::GHAST_DEATH; }
 ResourceLocation* Ghast::getDefaultLootTable() { return &BuiltInLootTables::GHAST; }
 float Ghast::getSoundVolume() { return 0.5f; }
@@ -195,15 +196,14 @@ void Ghast::GhastMoveControl::tick()
     double dx = mWantedX - mGhast->mX;
     double dy = mWantedY - mGhast->mY;
     double dz = mWantedZ - mGhast->mZ;
-    --mCountdown;
-    if (mCountdown <= 0)
+    if (mCountdown-- <= 0)
     {
-        mCountdown = mGhast->mRandom->nextInt(5) + 2;
-        double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+        mCountdown += mGhast->getRandom()->nextInt(5) + 2;
+        double distance = Mth::sqrt(dx * dx + dy * dy + dz * dz);
         if (canReach(mWantedX, mWantedY, mWantedZ, distance))
         {
-            mGhast->mXd += dy / distance * 0.1;
-            mGhast->mYd += dx / distance * 0.1;
+            mGhast->mXd += dx / distance * 0.1;
+            mGhast->mYd += dy / distance * 0.1;
             mGhast->mZd += dz / distance * 0.1;
         }
         else

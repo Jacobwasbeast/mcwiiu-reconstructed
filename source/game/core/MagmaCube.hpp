@@ -24,7 +24,7 @@ public:
     virtual void setSize(int size, bool reset);
     virtual int getLightColor();
     virtual float getBrightness();
-    virtual const void* getParticleType();
+    virtual const ParticleType* getParticleType();
     virtual boost::shared_ptr<Slime> createChild();
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool isOnFire();

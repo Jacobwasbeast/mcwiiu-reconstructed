@@ -12,6 +12,7 @@
 
 class Block;
 class BlockPos;
+class MobEffect;
 class DamageSource;
 class DataFixerUpper;
 class DifficultyInstance;
@@ -39,8 +40,8 @@ public:
     public:
         SpiderEffectsGroupData();
         virtual ~SpiderEffectsGroupData();
-        unsigned long long setRandomEffect(Random* random);
-        int mEffect;
+        void setRandomEffect(Random* random);
+        MobEffect* mEffect;
     };
 
     class SpiderTargetGoal : public NearestAttackableTargetGoal

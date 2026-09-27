@@ -60,6 +60,7 @@
 const EntityDataAccessor<int>* Ocelot::DATA_CAT_TYPE = NULL;
 const EntityDataAccessor<bool>* Ocelot::DATA_IS_TEMPTED = NULL;
 
+static const int OCELOT_SPAWN_EGG_AUX = 98;
 
 Ocelot::Ocelot(Level* level) : TamableAnimal(level), mAvoidPlayersGoal(NULL)
 {
@@ -321,7 +322,7 @@ bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
 
         bool toggleSitting = true;
         if (!item->isEmpty()
-            && ((item->getItem() == Items::spawnEgg && item->getAuxValue() == 0x62)
+            && ((item->getItem() == Items::spawnEgg && item->getAuxValue() == OCELOT_SPAWN_EGG_AUX)
                 || renaming
                 || item->getItem() == Items::lead))
         {

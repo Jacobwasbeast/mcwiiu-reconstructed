@@ -32,8 +32,8 @@ void VindicationIllager::registerGoals()
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0, false), true);
     mGoalSelector.addGoal(8, new RandomStrollGoal(this, 0.6), true);
-    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 8.0, 1.0f), true);
-    mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0), true);
+    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
+    mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
     arrayWithLength<unsigned long long> alertTypes(1, true);
     alertTypes.data[0] = EntityType::VINDICATION_ILLAGER;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, alertTypes), true);

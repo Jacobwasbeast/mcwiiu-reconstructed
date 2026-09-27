@@ -35,7 +35,7 @@
 #include "game/core/EquipmentSlot.hpp"
 
 const EntityDataAccessor<bool>* Witch::DATA_USING_ITEM = NULL;
-Witch::Witch(Level* level) : Monster(level) {
+Witch::Witch(Level* level) : Monster(level), mUsingTime(0) {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
@@ -105,10 +105,10 @@ void Witch::aiStep()
 {
     if (!mLevel->mIsClientSide) {
         if (isDrinkingPotion()) {
-            --mUseItemRemaining;
-            if (mUseItemRemaining <= 0) {
+            if (mUsingTime-- <= 0) {
                 setUsingItem(false);
-                not_null_ptr<ItemInstance> item = getItemInHand(getUsedItemHand());
+                not_null_ptr<ItemInstance> item = getMainHandItem();
+                setItemSlot(EquipmentSlot::MAINHAND, ItemInstance::EMPTY);
                 if (item->getItem() == Items::potion) {
                     std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
                     if (effects != NULL) {
@@ -118,41 +118,42 @@ void Witch::aiStep()
                         delete effects;
                     }
                 }
-                setItemInHand(getUsedItemHand(), ItemInstance::EMPTY);
                 getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->removeModifier(
                     eMODIFIER_ID_WitchDrinkingSpeedPenalty);
             }
-        } else if (isAlive()) {
+        } else {
             Potion* potion = NULL;
-            if (getRandom()->nextFloat() < 0.15f &&
-                isUnderLiquid(Material::WATER) &&
-                !hasEffect(MobEffects::WATER_BREATHING)) {
+            const DamageSource* lastDamage = NULL;
+            if (mRandom->nextFloat() < 0.15f && isUnderLiquid(Material::WATER)
+                && !hasEffect(MobEffects::WATER_BREATHING)) {
                 potion = Potions::WATER_BREATHING;
-            } else if (getRandom()->nextFloat() < 0.15f) {
-                const DamageSource* lastDamage = getLastDamageSource();
-                if ((isOnFire() || (lastDamage != NULL && lastDamage->isFire())) &&
-                    !hasEffect(MobEffects::FIRE_RESISTANCE))
-                    potion = Potions::FIRE_RESISTANCE;
-            } else if (getRandom()->nextFloat() < 0.05f &&
-                       getHealth() < getMaxHealth()) {
+            } else if (mRandom->nextFloat() < 0.15f
+                       && (isOnFire() || ((lastDamage = getLastDamageSource()) != NULL && lastDamage->isFire()))
+                       && !hasEffect(MobEffects::FIRE_RESISTANCE)) {
+                potion = Potions::FIRE_RESISTANCE;
+            } else if (mRandom->nextFloat() < 0.05f && getHealth() < getMaxHealth()) {
                 potion = Potions::HEALING;
-            } else if (getRandom()->nextFloat() < 0.25f) {
-                boost::shared_ptr<LivingEntity> target = getTarget();
-                if (target != NULL &&
-                    !target->hasEffect(MobEffects::MOVEMENT_SPEED) &&
-                    target->distanceToSqr(boost::static_pointer_cast<Entity>(shared_from_this())) > 121.0)
-                    potion = Potions::SWIFTNESS;
+            } else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL
+                       && !hasEffect(MobEffects::MOVEMENT_SPEED)
+                       && getTarget()->distanceToSqr(boost::static_pointer_cast<Entity>(shared_from_this())) > 121.0) {
+                potion = Potions::SWIFTNESS;
             }
+
             if (potion != NULL) {
-                not_null_ptr<ItemInstance> item = PotionUtils::setPotion(
-                    not_null_ptr<ItemInstance>(new ItemInstance(Items::potion)), potion);
-                setItemSlot(EquipmentSlot::MAINHAND, item);
-                startUsingItem(InteractionHand::eInteractionHand_MainHand);
+                setItemSlot(EquipmentSlot::MAINHAND,
+                            PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(Items::potion)), potion));
+                mUsingTime = getMainHandItem()->getUseDuration();
                 setUsingItem(true);
-                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->addModifier(
-                    new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0, false));
-                mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::WITCH_HAT_MAGIC, 0);
+                mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::WITCH_DRINK, getSoundSource(),
+                                  1.0f, 0.8f + getRandom()->nextFloat() * 0.4f, 16.0f);
+                AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
+                speed->removeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty);
+                speed->addModifier(new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0, false));
             }
+        }
+
+        if (mRandom->nextFloat() < 0.00075f) {
+            mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::WITCH_HAT_MAGIC, 0);
         }
     }
     Monster::aiStep();

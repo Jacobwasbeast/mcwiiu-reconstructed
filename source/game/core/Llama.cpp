@@ -34,6 +34,7 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -51,37 +52,12 @@ Llama::LlamaDefendTargetGoal::LlamaDefendTargetGoal(Llama* llama)
 Llama::LlamaDefendTargetGoal::~LlamaDefendTargetGoal() { }
 bool Llama::LlamaDefendTargetGoal::canUse()
 {
-    if (!NearestAttackableTargetGoal::canUse())
-        return false;
-
-    double followDistance = getFollowDistance();
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(LivingEntity),
-                                         getTargetSearchArea(followDistance));
-    boost::shared_ptr<LivingEntity> target;
-    if (entities != NULL && !entities->empty())
+    boost::shared_ptr<LivingEntity> target = mTarget.lock();
+    if (NearestAttackableTargetGoal::canUse() && target != NULL && target->GetType() == EntityType::WOLF)
     {
-        const double maxDistSq = followDistance * followDistance;
-        double bestDistSq = maxDistSq;
-        for (unsigned int i = 0; i < entities->size(); ++i)
-        {
-            const double distSq = mMob->distanceToSqr(entities->at(i));
-            if (distSq <= bestDistSq)
-            {
-                target = boost::dynamic_pointer_cast<LivingEntity>(entities->at(i));
-                bestDistSq = distSq;
-            }
-        }
-    }
-    delete entities;
-
-    if (target && target->GetType() == EntityType::WOLF)
-    {
-        if (!boost::static_pointer_cast<Wolf>(target)->isAngry())
+        if (!boost::static_pointer_cast<Wolf>(target)->isTame())
             return true;
     }
-
-    mMob->setTarget(boost::shared_ptr<LivingEntity>());
     return false;
 }
 double Llama::LlamaDefendTargetGoal::getFollowDistance() { return TargetGoal::getFollowDistance() * 0.25; }
@@ -123,18 +99,26 @@ const DyeColor* Llama::getSwag()
     int blockData = getEntityData()->get(DATA_SWAG);
     return blockData == -1 ? NULL : DyeColor::byBlockData(blockData);
 }
-void Llama::containerChanged(Container* container) { AbstractChestedHorse::containerChanged(container); updateEquipment(); }
+void Llama::containerChanged(Container* container)
+{
+    const DyeColor* oldSwag = getSwag();
+    AbstractHorse::containerChanged(container);
+    const DyeColor* swag = getSwag();
+    if (mTickCount > 20 && swag != NULL && swag != oldSwag)
+        playSound(SoundEvents::LLAMA_SWAG, 0.5f, 1.0f);
+}
 void Llama::spit(const boost::shared_ptr<LivingEntity>& target)
 {
     boost::shared_ptr<Llama> owner = boost::static_pointer_cast<Llama>(shared_from_this());
     boost::shared_ptr<LlamaSpit> spitEntity(new LlamaSpit(mLevel, owner));
     double dx = target->mX - mX;
     double dz = target->mZ - mZ;
-    double targetY = target->mBoundingBox->mMinY + (double)target->mEyeHeight / 3.0;
-    double distance = Mth::sqrt(dx * dx + dz * dz);
-    spitEntity->shoot(dx, targetY - spitEntity->mY + distance * 0.2, dz, 1.5f, 10.0f);
-    playSound(SoundEvents::LLAMA_SPIT, 1.0f,
-              (getRandom()->nextFloat() - getRandom()->nextFloat()) * 0.2f + 1.0f);
+    double dy = target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - spitEntity->mY;
+    float distance = Mth::sqrt(dx * dx + dz * dz) * 0.2f;
+    spitEntity->shoot(dx, dy + distance, dz, 1.5f, 10.0f);
+    float pitch = (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f;
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::LLAMA_SPIT, getSoundSource(), 1.0f,
+                      pitch, 16.0f);
     mLevel->addEntity(spitEntity);
     mDidSpit = true;
 }
@@ -158,7 +142,10 @@ void Llama::setStrength(int strength)
         getEntityData()->set(DATA_STRENGTH, mStrength, true);
     }
 }
-void Llama::setRandomStrength() { setStrength(getRandom()->nextInt(3) + 1); }
+void Llama::setRandomStrength() {
+    int maxStrength = mRandom->nextFloat() < 0.04f ? 5 : 3;
+    setStrength(mRandom->nextInt(maxStrength) + 1);
+}
 int Llama::getStrength()
 {
     return getEntityData() != NULL && DATA_STRENGTH != NULL ? getEntityData()->get(DATA_STRENGTH) : mStrength;
@@ -204,13 +191,13 @@ void Llama::registerGoals()
 {
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(1, new RunAroundLikeCrazyGoal(this, 1.2), true);
-    mGoalSelector.addGoal(2, new LlamaFollowCaravanGoal(this, 1.25), true);
-    mGoalSelector.addGoal(3, new RangedAttackGoal(this, this, 0.7, 40, 20.0f), true);
+    mGoalSelector.addGoal(2, new LlamaFollowCaravanGoal(this, 2.1f), true);
+    mGoalSelector.addGoal(3, new RangedAttackGoal(this, this, 1.25, 40, 20.0f), true);
     mGoalSelector.addGoal(3, new PanicGoal(this, 1.2), true);
     mGoalSelector.addGoal(4, new BreedGoal(this, 1.0), true);
     mGoalSelector.addGoal(5, new FollowParentGoal(this, 1.0), true);
     mGoalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.7), true);
-    mGoalSelector.addGoal(7, new LookAtPlayerGoal(this, typeid(Mob), 6.0f), true);
+    mGoalSelector.addGoal(7, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new LlamaHurtByTargetGoal(this), true);
     mTargetSelector.addGoal(2, new LlamaDefendTargetGoal(this), true);
@@ -248,7 +235,7 @@ void Llama::positionRider(const boost::shared_ptr<Entity>& passenger)
                           mZ - 0.30000001192092896 * cos);
     }
 }
-double Llama::getRideHeight() { return AbstractChestedHorse::getRideHeight(); }
+double Llama::getRideHeight() { return mBbHeight * 0.67; }
 bool Llama::canBeControlledByRider() { return false; }
 int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item)
 {
@@ -307,7 +294,11 @@ int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_
     }
 
     if (!isSilent())
-        eating(Item::getId(food));
+    {
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::EAT_ITEM_PARTICLES, Item::getId(food));
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::LLAMA_EAT, getSoundSource(), 1.0f,
+                          (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f, 16.0f);
+    }
 
     return flag;
 }
@@ -346,8 +337,7 @@ void Llama::playStepSound(const BlockPos&, Block*)
 }
 void Llama::playChestEquipsSound()
 {
-    playSound(SoundEvents::DONKEY_CHEST, 1.0f,
-              1.0f + (getRandom()->nextFloat() - getRandom()->nextFloat()) * 0.2f);
+    playSound(SoundEvents::LLAMA_CHEST, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
 }
 void Llama::makeMad()
 {

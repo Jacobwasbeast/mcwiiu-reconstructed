@@ -34,21 +34,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/Predicates.hpp"
+#include "game/entity/ai/EntitySelector.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
-
-bool enemySelectorFunc(boost::shared_ptr<Entity> entity);
-
-bool enemySelectorFunc(boost::shared_ptr<Entity> entity)
-{
-    return entity->isAlive();
-}
-
-static Predicate<boost::shared_ptr<Entity> >* ENEMY_SELECTOR =
-    new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(enemySelectorFunc);
 
 const EntityDataAccessor<unsigned char>* SnowMan::DATA_PUMPKIN = NULL;
 
@@ -108,7 +98,7 @@ void SnowMan::registerGoals()
     mGoalSelector.addGoal(3, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
     mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Mob), 10,
-                                                               true, false, ENEMY_SELECTOR,
+                                                               true, false, EntitySelector::ENEMY_SELECTOR,
                                                                true, false), true);
 }
 

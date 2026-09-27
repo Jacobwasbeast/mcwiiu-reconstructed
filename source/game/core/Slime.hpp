@@ -15,6 +15,7 @@ class DifficultyInstance;
 class EntityDataAccessor_Base;
 class GroundPathNavigation;
 class MobGroupData;
+class ParticleType;
 class Random;
 class SoundEvent;
 template<class T> class EntityDataAccessor;
@@ -124,7 +125,7 @@ public:
     virtual int getSize();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual bool isTiny();
-    virtual const void* getParticleType();
+    virtual const ParticleType* getParticleType();
     virtual void decreaseSquish();
     virtual int getJumpDelay();
     virtual boost::shared_ptr<Slime> createChild();
@@ -140,11 +141,9 @@ private:
     static const EntityDataAccessor<int>* DATA_ID_SIZE;
 
 public:
-    float mSquishO;
-    float mSquish;
-
-protected:
     float mTargetSquish;
+    float mSquish;
+    float mSquishO;
 
 private:
     bool mWasOnGround;

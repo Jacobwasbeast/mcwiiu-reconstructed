@@ -23,10 +23,6 @@ struct PlayerInfo
     char voiceStatus;
     short colour;
     std::wstring name;
-
-    // Scoreboard layouts extend the common player record with their
-    // per-player metrics.  These members are populated by the owning layout
-    // and keep the metric types explicit at the source boundary.
     int roundsWon;
     int kills;
     int lifeSpan;

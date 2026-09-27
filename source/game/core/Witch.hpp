@@ -38,5 +38,7 @@ public:
 
 private:
     static const EntityDataAccessor<bool>* DATA_USING_ITEM;
+
+    int mUsingTime;
 };
 #endif

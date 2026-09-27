@@ -109,7 +109,7 @@ void Salmon::defineSynchedData()
 void Salmon::registerGoals()
 {
     Fish::registerGoals();
-    mGoalSelector.addGoal(3, new RiverFollowingGoal(this, 2.0f, 1.2f), true);
+    mGoalSelector.addGoal(3, new RiverFollowingGoal(this, 2.0f, 0.07f), true);
 }
 
 void Salmon::registerAttributes()

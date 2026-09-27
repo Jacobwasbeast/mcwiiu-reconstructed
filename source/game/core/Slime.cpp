@@ -1,4 +1,5 @@
 #include "game/core/Slime.hpp"
+#include "game/util/AABB.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/client/render/ParticleType.hpp"
 
@@ -19,6 +20,9 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
+#include "game/entity/ai/MobNearestMobTargetGoal.hpp"
+#include "game/world/generation/MobNearestPlayerTargetGoal.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -73,7 +77,8 @@ void Slime::registerGoals()
     mGoalSelector.addGoal(2, new SlimeAttackGoal(this), true);
     mGoalSelector.addGoal(3, new SlimeRandomDirectionGoal(this), true);
     mGoalSelector.addGoal(5, new SlimeKeepOnJumpingGoal(this), true);
-    Mob::registerGoals();
+    mTargetSelector.addGoal(1, new MobNearestPlayerTargetGoal(this), true);
+    mTargetSelector.addGoal(3, new MobNearestMobTargetGoal(this, typeid(VillagerGolem)), true);
 }
 
 void Slime::defineSynchedData()
@@ -85,14 +90,14 @@ void Slime::defineSynchedData()
 void Slime::setSize(int size, bool reset)
 {
     mEntityData->set(DATA_ID_SIZE, size, true);
-    Entity::setSize(size * 0.51f, size * 0.51f);
+    const float scale = (float)size;
+    setSize(0.51f * scale, 0.51f * scale);
+    setPos(mX, mY, mZ);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue((double)(size * size));
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue((double)(size * 0.6f + 1.0f));
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue((double)(0.1f * scale + 0.2f));
     if (reset)
-    {
-        setPos(mX, mY, mZ);
-        setBoundingBox(mBoundingBox);
-    }
+        setHealth(getMaxHealth());
+    mExperienceReward = size;
 }
 
 int Slime::getSize()
@@ -127,7 +132,7 @@ bool Slime::isTiny()
     return getSize() < 2;
 }
 
-const void* Slime::getParticleType()
+const ParticleType* Slime::getParticleType()
 {
     return PARTICLE_SLIME;
 }
@@ -135,44 +140,48 @@ const void* Slime::getParticleType()
 void Slime::tick()
 {
     PIXBeginNamedEvent(0.0f, "Slime tick");
-    mSquishO = mSquish;
+
+    if (!mLevel->mIsClientSide && mLevel->getDifficulty() == Difficulty::PEACEFUL && getSize() > 0)
+    {
+        mRemoved = true;
+    }
+
     mSquish += (mTargetSquish - mSquish) * 0.5f;
+    mSquishO = mSquish;
     Mob::tick();
+
     if (mOnGround && !mWasOnGround)
     {
         int size = getSize();
-        int count = size * 4;
-        float radius = (float)size;
-        for (int i = 0; i < count; ++i)
+
+        for (int i = 0; i < size * 8; ++i)
         {
             float angle = mRandom->nextFloat() * 6.2831855f;
-            float radiusFactor = mRandom->nextFloat() * 0.5f + 0.5f;
-            mLevel->addParticle(PARTICLE_SLIME,
-                                 mX + (double)(Mth::sin(angle) * radius * 0.5f * radiusFactor),
-                                 mY,
-                                 mZ + (double)(Mth::cos(angle) * radius * 0.5f * radiusFactor),
-                                 0.0, 0.0, 0.0, arrayWithLength<int>());
-            angle = mRandom->nextFloat() * 6.2831855f;
-            radiusFactor = mRandom->nextFloat() * 0.5f + 0.5f;
-            mLevel->addParticle(PARTICLE_SLIME,
-                                 mX + (double)(Mth::sin(angle) * radius * 0.5f * radiusFactor),
-                                 mY,
-                                 mZ + (double)(Mth::cos(angle) * radius * 0.5f * radiusFactor),
-                                 0.0, 0.0, 0.0, arrayWithLength<int>());
+            float distance = mRandom->nextFloat() * 0.5f + 0.5f;
+            float xOffset = Mth::sin(angle) * (float)size * 0.5f * distance;
+            float zOffset = Mth::cos(angle) * (float)size * 0.5f * distance;
+            mLevel->addParticle(getParticleType(), mX + xOffset, mBoundingBox->mMinY, mZ + zOffset, 0.0, 0.0, 0.0,
+                                arrayWithLength<int>());
         }
-        mTargetSquish = -0.5f;
+
         playSound(getSquishSound(), getSoundVolume(),
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
+                  ((mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f) / 0.8f);
+        mTargetSquish = -0.5f;
     }
     else if (!mOnGround && mWasOnGround)
+    {
         mTargetSquish = 1.0f;
+    }
+
     mWasOnGround = mOnGround;
     decreaseSquish();
+
     if (mLevel->mIsClientSide)
     {
-        float f = 0.6f * (float)getSize();
-        Entity::setSize(f, f);
+        float scale = 0.6f * (float)getSize();
+        Entity::setSize(scale, scale);
     }
+
     PIXEndNamedEvent();
 }
 
@@ -256,6 +265,7 @@ void Slime::dealDamage(boost::shared_ptr<LivingEntity> entity)
         EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
         if (entity->hurt(source, (float)getAttackDamage()))
         {
+            playSound(SoundEvents::SLIME_ATTACK, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
             doEnchantDamageEffects(boost::static_pointer_cast<LivingEntity>(shared_from_this()), entity);
         }
         delete source;
@@ -322,7 +332,7 @@ bool Slime::checkSpawnRules()
         }
         if (mRandom->nextInt(10) == 0)
         {
-            if (mY < 40.0 && (chunk->getBiomePresentFlag() & 4) != 0)
+            if (mY < 40.0 && (chunk->getBiomePresentFlag() & LevelChunk::BIOME_PRESENT_SLIME_CHUNK) != 0)
                 return Mob::checkSpawnRules();
         }
     }
@@ -341,14 +351,13 @@ int Slime::getMaxHeadXRot()
 
 bool Slime::doPlayJumpSound()
 {
-    playSound(getJumpSound(), getSoundVolume(), 1.0f);
-    return !isTiny();
+    return getSize() > 0;
 }
 
 void Slime::jumpFromGround()
 {
-    LivingEntity::jumpFromGround();
-    mTargetSquish = 1.0f;
+    mYd = 0.42f;
+    mHasImpulse = true;
 }
 
 MobGroupData* Slime::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
@@ -429,7 +438,9 @@ bool Slime::SlimeFloatGoal::canUse()
 
 void Slime::SlimeFloatGoal::tick()
 {
-    static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setWantedMovement(1.0);
+    if (mSlime->getRandom()->nextFloat() < 0.8f)
+        mSlime->getJumpControl()->jump();
+    static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setWantedMovement(1.2);
 }
 
 std::wstring Slime::SlimeFloatGoal::getName()

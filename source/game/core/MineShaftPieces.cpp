@@ -575,8 +575,8 @@ void MineShaftPieces::MineShaftCrossing::readAdditionalSaveData(DataInputStream*
                                                                  StructureManager* structureManager)
 {
     MineShaftPiece::readAdditionalSaveData(input, structureManager);
-    mDirection = Direction::from3DDataValue(input->readInt());
     mIsTwoFloored = input->readBoolean();
+    mDirection = Direction::from2DDataValue(input->readInt());
 }
 
 void MineShaftPieces::MineShaftCrossing::addChildren(StructurePiece* startPiece,

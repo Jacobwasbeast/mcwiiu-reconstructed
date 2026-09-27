@@ -1599,7 +1599,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     if (winner.compare(0, winner.size(), mPlayer->getDisplayName().c_str(),
                                        mPlayer->getDisplayName().size()) == 0 && waitingForScoreboard)
                     {
-                        mSoundEngine->playUI(SoundEvents::MG03_WINNER_ANNOUNCE, 1.0f, 1.0f);
+                        mSoundEngine->playUI(SoundEvents::MG03_WINNER, 1.0f, 1.0f);
                     }
                 }
                 gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
@@ -2617,23 +2617,37 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
 
     mGameModes[playerIdx]->initPlayer(newPlayer);
 
+    ClientMasterGameMode* masterGameMode = GetClientMasterGameMode();
+
     if (InMiniGame(eMiniGameId_Glide, true) && CommonMasterGameMode::GetMiniGame()->IsCheckpointBasedSpawn())
     {
-        MultiPlayerLevel* level = newPlayer->GetLevel();
-        if (level != NULL && level->GetClientScoreboard() != NULL)
+        int checkpoint = newPlayer->GetLevel()->GetClientScoreboard()->GetLastCheckpointID(newPlayer->getSUID(), -1);
+
+        if (gApp.getLevelGenerationOptions() != NULL)
         {
-            int checkpoint = level->GetClientScoreboard()->GetLastCheckpointID(newPlayer->getSUID(), -1);
-            LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions();
-            if (generationOptions != NULL)
+            const std::vector<CheckpointRuleDefinition*> checkpoints =
+                *gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
+
+            if (checkpoint >= 0 && !checkpoints.empty() && static_cast<unsigned int>(checkpoint) < checkpoints.size())
             {
-                LevelRuleset* ruleset = generationOptions->getRequiredGameRules();
-                const std::vector<CheckpointRuleDefinition*> checkpoints = *ruleset->getCheckpoints();
-                if (checkpoint >= 0 && static_cast<unsigned int>(checkpoint) < checkpoints.size())
+                double speedBoost = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints()->at(checkpoint)->getElytraBoost();
+                if (speedBoost > 0.0)
                 {
-                    double speedBoost = ruleset->getCheckpoints()->at(checkpoint)->getElytraBoost();
-                    if (speedBoost > 0.0)
-                        newPlayer->activateElytraSpeedBoost(speedBoost);
+                    newPlayer->activateElytraSpeedBoost(speedBoost);
                 }
+            }
+        }
+
+        if (masterGameMode->IsRoundPlaying())
+        {
+            if (newPlayer->isLocalPlayer())
+            {
+                mSoundEngine->playUI(SoundEvents::MG03_RESPAWN, 1.0f, 1.0f);
+            }
+            else
+            {
+                mSoundEngine->play(SoundEvents::MG03_RESPAWN, (float)newPlayer->mX, (float)newPlayer->mY,
+                                   (float)newPlayer->mZ, 1.0f, 1.0f, NULL);
             }
         }
     }

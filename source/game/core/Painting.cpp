@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -171,8 +172,13 @@ void Painting::dropItem(boost::shared_ptr<Entity> breaker)
 {
     if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
         return;
-    if (breaker && breaker->isCreative())
-        return;
+    playSound(SoundEvents::PAINTING_BREAK, 1.0f, 1.0f);
+    if (breaker != NULL && (breaker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(breaker);
+        if (player->mAbilities.mInstabuild)
+            return;
+    }
     spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::painting)), 0.0f);
 }
 

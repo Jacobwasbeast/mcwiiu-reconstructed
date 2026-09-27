@@ -96,7 +96,7 @@ const SoundEvent* Parrot::getImitatedSound(unsigned long long type)
 {
     boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
         gImitatedSounds.find(type);
-    return it == gImitatedSounds.end() ? NULL : it->second;
+    return it == gImitatedSounds.end() ? SoundEvents::PARROT_AMBIENT : it->second;
 }
 
 double Parrot::getPitch(Random* random)
@@ -106,51 +106,48 @@ double Parrot::getPitch(Random* random)
 
 bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
 {
-    if (level == NULL || entity == NULL || entity->isSilent())
+    if (entity->isSilent() || level->mRandom->nextInt(50) != 0)
         return false;
-    Random* random = level->getRandomFor(0, 0, 0);
-    if (random == NULL || random->nextInt(50) != 0)
-        return false;
-    AABB* box = entity->getBoundingBoxForCulling();
-    if (box == NULL)
-        return false;
-    AABB* area = box->grow(20.0);
+
     NotParrotPredicate predicate;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Mob), area, &predicate, false);
-    if (entities == NULL || entities->empty())
+        level->getEntitiesOfClass(typeid(Mob), entity->mBoundingBox->grow(20.0), &predicate, false);
+    if (!entities->empty())
     {
-        delete area;
-        delete entities;
-        return false;
+        boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(
+            entities->at(level->mRandom->nextInt(static_cast<int>(entities->size()))));
+        if (!mob->isSilent())
+        {
+            const SoundEvent* sound = getImitatedSound(mob->GetType());
+            level->playSound(boost::shared_ptr<Player>(), entity->mX, entity->mY, entity->mZ, sound,
+                             entity->getSoundSource(), 0.7f, static_cast<float>(getPitch(level->mRandom)), 16.0f);
+            delete entities;
+            return true;
+        }
     }
-    boost::shared_ptr<Entity> selected = (*entities)[random->nextInt((int)entities->size())];
-    const SoundEvent* sound = selected ? getImitatedSound(selected->GetType()) : NULL;
-    if (selected && !selected->isSilent() && sound != NULL)
-        selected->playSound(sound, 0.7f, (float)getPitch(random));
-    delete area;
     delete entities;
-    return selected && !selected->isSilent() && sound != NULL;
+    return false;
 }
 
 const SoundEvent* Parrot::getAmbient(Random* random)
 {
     if (random->nextInt(1000) != 0)
-        return NULL;
+        return SoundEvents::PARROT_AMBIENT;
     boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
         gImitatedSounds.begin();
     std::advance(it, random->nextInt((int)gImitatedSounds.size()));
-    return it->second;
+    return getImitatedSound(it->first);
 }
 
 void Parrot::playAmbientSound(Level* level, boost::shared_ptr<Entity> entity)
 {
-    if (!level || !entity || entity->isSilent())
+    if (entity->isSilent() || imitateNearbyMobs(level, entity.get()) || level->mRandom->nextInt(200) != 0)
         return;
-    Random* random = level->getRandomFor(0, 0, 0);
-    if (random == NULL || imitateNearbyMobs(level, entity.get()) || random->nextInt(200) != 0)
-        return;
-    entity->playSound(getAmbient(random), 1.0f, (float)getPitch(random));
+    const SoundEvent* sound = getAmbient(level->mRandom);
+    SoundSource::ESoundSource source = entity->getSoundSource();
+    float pitch = (float)getPitch(level->mRandom);
+    level->playSound(boost::shared_ptr<Player>(), entity->mX, entity->mY, entity->mZ, sound, source, 1.0f, pitch,
+                     16.0f);
 }
 
 void Parrot::_init()
@@ -216,15 +213,16 @@ MobGroupData* Parrot::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 
 void Parrot::registerGoals()
 {
-    Mob::registerGoals();
-    mGoalSelector.addGoal(0, new SitGoal(this), true);
+    delete mSitGoal;
+    mSitGoal = new SitGoal(this);
     mGoalSelector.addGoal(0, new PanicGoal(this, 1.25), true);
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(1, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(2, mSitGoal, false);
     mGoalSelector.addGoal(2, new FollowOwnerFlyingGoal(this, 1.0, 5.0f, 1.0f), true);
     mGoalSelector.addGoal(2, new WaterAvoidingRandomFlyingGoal(this, 1.0), true);
     mGoalSelector.addGoal(3, new LandOnOwnersShoulderGoal(this), true);
-    mGoalSelector.addGoal(3, new FollowMobGoal(this, 1.0, 3.0f, 10.0f), true);
+    mGoalSelector.addGoal(3, new FollowMobGoal(this, 1.0, 3.0f, 7.0f), true);
 }
 
 void Parrot::registerAttributes()
@@ -304,7 +302,7 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
         if (!isSilent())
         {
             mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PARROT_EAT,
-                              getSoundSource(), 1.0f, (float)getPitch(mRandom), 16.0f);
+                              getSoundSource(), 1.0f, 1.0f + (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f, 16.0f);
         }
 
         if (!mLevel->mIsClientSide)
@@ -493,6 +491,7 @@ void Parrot::playStepSound(const BlockPos&, Block*)
 
 float Parrot::playFlySound(float volume)
 {
+    playSound(SoundEvents::PARROT_FLY, 0.15f, 1.0f);
     return volume + mFlapSpeed * 0.5f;
 }
 

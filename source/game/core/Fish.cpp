@@ -12,7 +12,6 @@
 #include "game/entity/ai/FollowFlockLeaderGoal.hpp"
 #include "game/entity/ai/RandomSwimmingGoal.hpp"
 #include "game/entity/ai/SwimIdleGoal.hpp"
-#include "game/core/Dolphin.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/BucketItem.hpp"
@@ -65,7 +64,7 @@ void Fish::registerGoals()
     mGoalSelector.addGoal(3, new FollowFlockLeaderGoal(this, true), true);
     mGoalSelector.addGoal(3, new SwimIdleGoal(this), true);
     mGoalSelector.addGoal(4, new RandomSwimmingGoal(this, 1.0, 10, 16, 4), true);
-    mGoalSelector.addGoal(2, new AvoidEntityGoal(this, typeid(Dolphin), 6.0f, 1.2, 1.4), true);
+    mGoalSelector.addGoal(2, new AvoidEntityGoal(this, typeid(Player), 6.0f, 1.2, 1.4), true);
 }
 
 void Fish::registerAttributes()

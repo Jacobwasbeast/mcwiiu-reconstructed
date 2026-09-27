@@ -97,6 +97,6 @@ private:
     bool mIsWet;
     bool mIsShaking;
     float mShakeAnim;
-    float mWetShade;
+    float mShakeAnimO;
 };
 #endif

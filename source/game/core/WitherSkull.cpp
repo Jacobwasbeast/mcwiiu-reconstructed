@@ -59,9 +59,8 @@ bool WitherSkull::isDangerous() const { return mEntityData->get(DATA_DANGEROUS);
 void WitherSkull::setDangerous(bool dangerous) { mEntityData->set(DATA_DANGEROUS, dangerous, true); }
 double WitherSkull::getInertia()
 {
-    const double dangerousInertia = 0.73;
     if (isDangerous())
-        return dangerousInertia;
+        return 0.73f;
     return Fireball::getInertia();
 }
 void WitherSkull::onHit(const HitResult* result)

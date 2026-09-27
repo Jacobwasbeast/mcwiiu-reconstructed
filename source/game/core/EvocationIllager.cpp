@@ -1,4 +1,5 @@
 #include "game/core/EvocationIllager.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/core/EntityType.hpp"
 #include <cmath>
 #include <typeinfo>
@@ -9,9 +10,12 @@
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/core/Sheep.hpp"
+#include "game/core/SnowMan.hpp"
 #include "game/core/Vex.hpp"
 #include "game/entity/ai/AvoidEntityGoal.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -22,6 +26,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Villager.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
 
 extern SpellcasterIllager::IllagerSpell* gSpell1;
 extern SpellcasterIllager::IllagerSpell* gSpell2;
@@ -39,13 +45,24 @@ void EvocationIllager::registerGoals()
 {
     Mob::registerGoals();
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
-    mGoalSelector.addGoal(2, new AvoidEntityGoal(this, typeid(Mob), 8.0f, 0.6, 1.0), true);
+    mGoalSelector.addGoal(2, new AvoidEntityGoal(this, typeid(Player), 8.0f, 0.6, 1.0), true);
     mGoalSelector.addGoal(4, new EvokerSummonSpellGoal(this), true);
     mGoalSelector.addGoal(5, new EvokerAttackSpellGoal(this), true);
     mGoalSelector.addGoal(6, new EvokerWololoSpellGoal(this), true);
     mGoalSelector.addGoal(8, new RandomStrollGoal(this, 0.6), true);
-    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Mob), 8.0f, 1.0f), true);
+    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
+
+    unsigned long long* hurtByTargetTypes = new unsigned long long[1];
+    hurtByTargetTypes[0] = EntityType::EVOCATION_ILLAGER;
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
+        arrayWithLength<unsigned long long>(hurtByTargetTypes, 1)), true);
+    mTargetSelector.addGoal(2, (new NearestAttackableTargetGoal(this, typeid(Player), true, false, false))
+        ->setUnseenMemoryTicks(300), true);
+    mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(Villager), true, false, false))
+        ->setUnseenMemoryTicks(300), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), true, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(SnowMan), true, false, false), true);
 }
 void EvocationIllager::registerAttributes()
 {
@@ -192,13 +209,12 @@ bool EvocationIllager::EvokerSummonSpellGoal::canUse()
     if (!SpellcasterUseSpellGoal::canUse())
         return false;
     EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
-    AABB* area = evoker->mBoundingBox->grow(2.75);
+    AABB* area = evoker->mBoundingBox->grow(16.0);
     std::vector<boost::shared_ptr<Entity> >* vexes =
         evoker->mLevel->getEntitiesOfClass(typeid(Vex), area);
     int count = 0;
     if (vexes != NULL)
         count = (int)vexes->size();
-    delete area;
     delete vexes;
     return count < evoker->mRandom->nextInt(8) + 1;
 }
@@ -248,14 +264,12 @@ bool EvocationIllager::EvokerWololoSpellGoal::canUse()
         evoker->mLevel->getEntitiesOfClass(typeid(Sheep), area, &selector, false);
     if (sheep == NULL || sheep->empty())
     {
-        delete area;
         delete sheep;
         return false;
     }
     boost::shared_ptr<Sheep> target = boost::static_pointer_cast<Sheep>(
         sheep->at(evoker->mRandom->nextInt((int)sheep->size())));
     evoker->setWololoTarget(target);
-    delete area;
     delete sheep;
     return true;
 }

@@ -1,4 +1,5 @@
 #include "game/core/MG03ScoreboardLayout.hpp"
+#include "game/core/StringFormat.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <algorithm>
@@ -32,27 +33,6 @@ MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType type)
 
 MG03ScoreboardLayout::~MG03ScoreboardLayout()
 {
-}
-
-namespace
-{
-std::wstring formatProgressTime(int milliseconds)
-{
-    std::wstringstream text;
-    text << (milliseconds / 60000) << L":";
-    const int seconds = (milliseconds / 1000) % 60;
-    const int millis = milliseconds % 1000;
-    if (seconds < 10)
-        text << L"0";
-    text << seconds << L":";
-    if (millis < 100)
-        text << L"0";
-    if (millis < 10)
-        text << L"0";
-    text << millis;
-    return text.str();
-}
-
 }
 
 unsigned int MG03ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
@@ -155,12 +135,12 @@ std::wstring MG03ScoreboardLayout::getStatForRound(const StatsUID& uid, int roun
 
     if (miniGame->ArePointsActive())
     {
-        return _toString<int>(scoreboard->GetPoints(uid, round));
+        return formatwstr(L"%d", scoreboard->GetPoints(uid, round));
     }
 
-    if (scoreboard->HasStats(uid))
+    if (scoreboard->GetEndZoneEntered(uid, round))
     {
-        return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, round), false);
+        return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, round)), false);
     }
 
     return L10N::GetString(IDS_DNF);
@@ -267,39 +247,64 @@ unsigned int MG03ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
 
 std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type)
 {
-    if (type != EScoreboardType_Scoreboard || (column != 0 && column != 2))
-        return std::wstring();
-
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
-    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
-    const bool best = gameMode->IsWaitingToStart() || gameMode->IsRoundStarting();
-    int round = -1;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
 
-    if (miniGame->ArePointsActive())
+    if (!miniGame->ArePointsActive())
     {
         if (column == 0)
         {
-            const int points = best ? scoreboard->GetBestPoints(uid, &round)
-                                    : scoreboard->GetPoints(uid, -1);
-            return scoreboard->HasStats(uid) ? _toString<int>(points) : L"---";
+            if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
+            {
+                int round = -1;
+                const unsigned int lifeSpan = scoreboard->GetBestLifeSpan(uid, &round);
+                if (scoreboard->GetEndZoneEntered(uid, round))
+                    return UIScene_HUD::formatTime(lifeSpan, false);
+                if ((gameMode->IsWaitingToStart() || gameMode->IsRoundStarting()) && scoreboard->mNextTeamIndex == 0)
+                    return L"---";
+                return L10N::GetString(IDS_DNF);
+            }
+            if (scoreboard->GetEndZoneEntered(uid, -1))
+                return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1)), false);
+            return L"---";
         }
-
-        if (best)
-            scoreboard->GetBestPoints(uid, &round);
-        return scoreboard->HasStats(uid) ?
-            UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, best ? round : -1), false) : L"---";
     }
-
-    if (column == 0)
+    else
     {
-        const int life = best ? scoreboard->GetBestLifeSpan(uid, &round)
-                              : scoreboard->GetLifeSpan(uid, -1);
-        return scoreboard->HasStats(uid) ? UIScene_HUD::formatTime(life, false) : L"---";
+        if (column == 0)
+        {
+            int points;
+            if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
+            {
+                int round = -1;
+                points = scoreboard->GetBestPoints(uid, &round);
+                if (!scoreboard->GetEndZoneEntered(uid, round))
+                    return L10N::GetString(IDS_DNF);
+            }
+            else
+            {
+                points = scoreboard->GetPoints(uid, -1);
+            }
+            return formatwstr(L"%d", points);
+        }
+        if (column == 2)
+        {
+            if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
+            {
+                int round = -1;
+                scoreboard->GetBestPoints(uid, &round);
+                if (scoreboard->GetEndZoneEntered(uid, round))
+                    return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, round)), false);
+                return L10N::GetString(IDS_DNF);
+            }
+            if (scoreboard->GetEndZoneEntered(uid, -1))
+                return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1)), false);
+            return L"---";
+        }
     }
-
-    return L"---";
+    return L"";
 }
 
 boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
@@ -465,27 +470,43 @@ std::wstring MG03ScoreboardLayout::GetCustomProgressDetails(const StatsUID& uid,
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    std::wstring details = L"";
     int round = -1;
-    int personal;
-    int total;
-    std::wstring details;
 
-    if (miniGame->ArePointsActive())
+    if (!miniGame->ArePointsActive())
     {
-        personal = scoreboard->GetBestPoints(uid, &round);
-        total = scoreboard->GetBestPoints();
-        value = total == 0 ? 100 : static_cast<int>((static_cast<float>(personal) / total) * 100.0f);
-        details = _toString<int>(personal == total ? personal : personal - total);
+        const unsigned int personal = scoreboard->GetBestLifeSpan(uid, &round);
+        const unsigned int best = scoreboard->GetBestLifeSpan();
+        const unsigned int behind = personal - best;
+        if (behind == 0)
+        {
+            value = 100;
+            details = formatwstr(L"%d:%.2d.%.3d", (personal / 60000) % 60, (personal / 1000) % 60, personal % 1000);
+        }
+        else
+        {
+            value = static_cast<int>((static_cast<float>(best) / static_cast<float>(personal)) * 100.0f);
+            details = formatwstr(L"+%d:%.2d.%.3d", (behind / 60000) % 60, (behind / 1000) % 60, behind % 1000);
+        }
     }
     else
     {
-        personal = scoreboard->GetBestLifeSpan(uid, &round);
-        total = scoreboard->GetBestLifeSpan();
-        value = total == 0 ? 100 : static_cast<int>((static_cast<float>(personal) / total) * 100.0f);
-        details = formatProgressTime(personal == total ? personal : total - personal);
+        const int personal = scoreboard->GetBestPoints(uid, &round);
+        const int best = scoreboard->GetBestPoints();
+        if (best - personal == 0)
+        {
+            value = 100;
+            details = formatwstr(L"%d", personal);
+        }
+        else
+        {
+            value = static_cast<int>((static_cast<float>(static_cast<unsigned int>(personal)) /
+                                      static_cast<float>(static_cast<unsigned int>(best))) * 100.0f);
+            details = formatwstr(L"-%d", best - personal);
+        }
     }
 
-    if (!scoreboard->HasStats(uid))
+    if (!scoreboard->GetEndZoneEntered(uid, round))
     {
         value = 0;
         return L10N::GetString(IDS_DNF);

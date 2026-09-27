@@ -120,10 +120,10 @@ void MinecartFurnace::moveAlongTrack(const BlockPos& pos, const BlockState* stat
         const double length = Mth::sqrt(pushLength);
         mPushX /= length;
         mPushZ /= length;
-        if (mPushX * mXd + mPushZ * mZd < 0.25)
+        if (mPushX * mXd + mPushZ * mZd < 0.0)
         {
-            mPushX = 0.25;
-            mPushZ = 0.25;
+            mPushX = 0.0;
+            mPushZ = 0.0;
         }
         else
         {

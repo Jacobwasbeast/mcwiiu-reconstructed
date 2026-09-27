@@ -150,7 +150,7 @@ void Input::tick(LocalPlayer* player)
                gameMode->isInputAllowed(EControllerActions_Jump);
 }
 
-void Input::getMoveVector()
+phys::Vec2* Input::getMoveVector()
 {
-    phys::Vec2::newTemp(mMoveStrafe, mMoveForward);
+    return phys::Vec2::newTemp(mMoveStrafe, mMoveForward);
 }

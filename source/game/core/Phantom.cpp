@@ -44,22 +44,26 @@ void Phantom::tick()
 {
     if (mLevel->mIsClientSide)
     {
-        int phase = getId() * 3 + mTickCount;
-        float first = Mth::cos((float)(phase - 176) * 0.13f);
-        float second = Mth::cos((float)(phase - 175) * 0.13f);
-        if (first > 0.0f && second <= 0.0f)
-            mLevel->addParticle(PARTICLE_CLOUD, mX, mY, mZ, 0.0, 0.0, 0.0,
-                                arrayWithLength<int>());
-        float angle = mYRot * 0.01745329238474369f;
-        float wingAngle = (first + 0.5f) * 0.13f * -50.0f * 0.01745329238474369f;
-        float xOffset = Mth::cos(angle) * 1.3f * Mth::cos(wingAngle);
-        float zOffset = Mth::sin(angle) * 1.3f * Mth::cos(wingAngle);
-        float yOffset = Mth::sin(wingAngle);
-        mLevel->addParticle(PARTICLE_CLOUD, mX + xOffset, mY + yOffset + 0.3,
-                            mZ + zOffset, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        mLevel->addParticle(PARTICLE_CLOUD, mX - xOffset, mY + yOffset + 0.3,
-                            mZ - zOffset, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        float flap = Mth::cos((float)(getId() * 3 + mTickCount) * 0.13f);
+        float nextFlap = Mth::cos((float)(getId() * 3 + mTickCount + 1) * 0.13f);
+
+        if (flap > 0.0f && nextFlap <= 0.0f)
+        {
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PHANTOM_FLAP, getSoundSource(),
+                                   0.95f + mRandom->nextFloat() * 0.05f, 0.95f + mRandom->nextFloat() * 0.05f, false,
+                                   16.0f);
+        }
+
+        float wingAngle = (flap + 1.0f) * 0.5f * -50.0f * 0.017453292f;
+        float xOffset = Mth::cos(mYRot * 0.017453292f) * 1.3f * Mth::cos(wingAngle);
+        float zOffset = Mth::sin(mYRot * 0.017453292f) * 1.3f * Mth::cos(wingAngle);
+        float yOffset = Mth::sin(wingAngle) + 0.3f;
+        mLevel->addParticle(PARTICLE_TOWN_AURA, mX + xOffset, mY + yOffset, mZ + zOffset, 0.0, 0.0, 0.0,
+                            arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_TOWN_AURA, mX - xOffset, mY + yOffset, mZ - zOffset, 0.0, 0.0, 0.0,
+                            arrayWithLength<int>());
     }
+
     Monster::tick();
 }
 
@@ -115,13 +119,13 @@ bool Phantom::canFly() { return true; }
 
 void Phantom::registerGoals()
 {
-    Goal::FloatRange distance = { 6.0f, 20.0f };
-    mGoalSelector.addGoal(1, new SwoopAttackGoal(this, 1.0f, distance), true);
-    Goal::FloatRange anchor = { 12.0f, -4.0f };
-    Goal::FloatRange height = { 18.0f, 5.0f };
-    Goal::FloatRange vertical = { 1.8f, 30.0f };
-    mGoalSelector.addGoal(2, new CircleAroundAnchorGoal(this, 1.0f, anchor, 250,
-                                                         height, vertical, 350, 1.0f), true);
+    Goal::FloatRange attackDistance = { 10.0f, 20.0f };
+    mGoalSelector.addGoal(1, new SwoopAttackGoal(this, 1.0f, attackDistance), true);
+    Goal::FloatRange distanceRange = { 12.0f, 18.0f };
+    Goal::FloatRange heightRange = { 20.0f, 40.0f };
+    Goal::FloatRange verticalRange = { -4.0f, 5.0f };
+    mGoalSelector.addGoal(2, new CircleAroundAnchorGoal(this, 1.0f, distanceRange, 250,
+                                                         heightRange, verticalRange, 350, 1.0f), true);
     mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Player), false,
                                                                 false, false), true);
 }
@@ -131,7 +135,7 @@ void Phantom::registerAttributes()
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.8);
-    getAttribute(SharedMonsterAttributes::FLYING_SPEED)->setBaseValue(0.4);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(64.0);
 }
 

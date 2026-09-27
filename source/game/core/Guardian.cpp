@@ -83,11 +83,12 @@ void Guardian::registerGoals()
     mGoalSelector.addGoal(5, restriction, true);
     mGoalSelector.addGoal(7, mRandomStrollGoal, true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
-    mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Mob), 3.0f, 1.0f), true);
+    mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Guardian), 12.0f, 0.01f), true);
     mGoalSelector.addGoal(9, new RandomLookAroundGoal(this), true);
-    Mob::registerGoals();
+    mRandomStrollGoal->setRequiredControlFlags(3);
+    restriction->setRequiredControlFlags(3);
     mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(
-        this, typeid(Player), 10, true, false, new GuardianAttackSelector(this), false, false), true);
+        this, typeid(LivingEntity), 10, true, false, new GuardianAttackSelector(this), true, true), true);
 }
 
 void Guardian::registerAttributes()
@@ -398,9 +399,9 @@ bool Guardian::hurt(const DamageSource* source, float damage)
                 boost::dynamic_pointer_cast<LivingEntity>(entity);
             if (!source->isExplosion())
             {
-                boost::shared_ptr<EntityDamageSource> thornsSource =
-                    DamageSource::CreateThorns(shared_from_this());
-                attacker->hurt(thornsSource.get(), 2.0f);
+                EntityDamageSource* thornsSource = DamageSource::CreateThorns(shared_from_this());
+                attacker->hurt(thornsSource, 2.0f);
+                delete thornsSource;
             }
         }
     }
@@ -423,10 +424,10 @@ void Guardian::travel(float xxa, float yya, float zza)
     }
     moveRelative(xxa, yya, zza, 0.1f);
     move(eMoverType_Self, mXd, mYd, mZd, false);
-    mXd *= 0.9;
-    mYd *= 0.9;
-    mZd *= 0.9;
-    if (!hasActiveAttackTarget() && getTarget() == NULL)
+    mXd *= 0.8999999761581421;
+    mYd *= 0.8999999761581421;
+    mZd *= 0.8999999761581421;
+    if (!isMoving() && getTarget() == NULL)
     {
         mYd -= 0.005;
     }

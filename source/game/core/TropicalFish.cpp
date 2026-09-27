@@ -5,7 +5,7 @@
 
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
-#include "game/core/Dolphin.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/util/Random.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/AvoidEntityGoal.hpp"
@@ -119,7 +119,7 @@ void TropicalFish::registerGoals()
 {
     mGoalSelector.addGoal(3, new SwimIdleGoal(this), true);
     mGoalSelector.addGoal(4, new RandomSwimmingGoal(this, 1.0, 10, 16, 4), true);
-    mGoalSelector.addGoal(2, new AvoidEntityGoal(this, typeid(Dolphin), 6.0f, 1.2, 1.4), true);
+    mGoalSelector.addGoal(2, new AvoidEntityGoal(this, typeid(Player), 6.0f, 0.3, 0.4), true);
 }
 
 void TropicalFish::registerAttributes()

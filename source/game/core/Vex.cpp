@@ -69,8 +69,8 @@ void Vex::registerGoals()
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(4, new VexChargeAttackGoal(this), true);
     mGoalSelector.addGoal(8, new VexRandomMoveGoal(this), true);
-    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Mob), 3.0f, 1.0f), true);
-    mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
+    mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
     arrayWithLength<unsigned long long> entityTypes(1, true);
     entityTypes.data[0] = EntityType::VEX;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
@@ -80,8 +80,8 @@ void Vex::registerGoals()
 void Vex::registerAttributes()
 {
     Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(14.0);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(4.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.25);
 }
 void Vex::defineSynchedData()
 {

@@ -16,10 +16,15 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/core/Difficulty.hpp"
+#include "game/core/DifficultyInstance.hpp"
+#include <climits>
 #include "game/entity/mob/Skeleton.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/WitherSkeleton.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -64,16 +69,15 @@ void Spider::addDataWalkers(DataFixerUpper* fixer)
 
 void Spider::registerGoals()
 {
-    Mob::registerGoals();
     mGoalSelector.addGoal(1, new FloatGoal(this), true);
     mGoalSelector.addGoal(3, new LeapAtTargetGoal(this, 0.4f), true);
     mGoalSelector.addGoal(4, new SpiderAttackGoal(this), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8), true);
-    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
+    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(6, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
-    mTargetSelector.addGoal(2, new SpiderTargetGoal(this, typeid(Mob)), true);
-    mTargetSelector.addGoal(3, new SpiderTargetGoal(this, typeid(Mob)), true);
+    mTargetSelector.addGoal(2, new SpiderTargetGoal(this, typeid(Player)), true);
+    mTargetSelector.addGoal(3, new SpiderTargetGoal(this, typeid(VillagerGolem)), true);
 }
 
 double Spider::getRideHeight()
@@ -178,8 +182,18 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 
     if (result == NULL)
     {
-        result = new SpiderEffectsGroupData();
+        SpiderEffectsGroupData* effects = new SpiderEffectsGroupData();
+        result = effects;
+        if (mLevel->getDifficulty() == Difficulty::HARD &&
+            mLevel->mRandom->nextFloat() < 0.1f * difficulty.getSpecialMultiplier())
+        {
+            effects->setRandomEffect(mLevel->mRandom);
+        }
     }
+
+    SpiderEffectsGroupData* effects = dynamic_cast<SpiderEffectsGroupData*>(result);
+    if (effects != NULL && effects->mEffect != NULL)
+        addEffect(new MobEffectInstance(effects->mEffect, INT_MAX), boost::shared_ptr<Entity>());
 
     return result;
 }
@@ -196,8 +210,11 @@ Spider::SpiderAttackGoal::~SpiderAttackGoal() = default;
 
 bool Spider::SpiderAttackGoal::canContinueToUse()
 {
-    if (mMob == NULL || mMob->getNavigation() == NULL) return false;
-    if (mMob->getNavigation()->isDone() && mMob->getTarget() == NULL) return false;
+    if (mMob->getBrightness() >= 0.5f && mMob->getRandom()->nextInt(100) == 0)
+    {
+        mMob->setTarget(boost::shared_ptr<LivingEntity>());
+        return false;
+    }
     return MeleeAttackGoal::canContinueToUse();
 }
 
@@ -206,14 +223,20 @@ double Spider::SpiderAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntit
     return (double)(target->mBbWidth * target->mBbWidth + 4.0f);
 }
 
-Spider::SpiderEffectsGroupData::SpiderEffectsGroupData() : mEffect(0) { }
+Spider::SpiderEffectsGroupData::SpiderEffectsGroupData() : mEffect(NULL) { }
 Spider::SpiderEffectsGroupData::~SpiderEffectsGroupData() { }
 
-unsigned long long Spider::SpiderEffectsGroupData::setRandomEffect(Random* random)
+void Spider::SpiderEffectsGroupData::setRandomEffect(Random* random)
 {
-    int effect = random->nextInt(5);
-    mEffect = effect < 2 ? 0 : effect == 2 ? 1 : effect == 3 ? 2 : 3;
-    return 0;
+    int roll = random->nextInt(5);
+    if (roll <= 1)
+        mEffect = MobEffects::MOVEMENT_SPEED;
+    else if (roll <= 2)
+        mEffect = MobEffects::DAMAGE_BOOST;
+    else if (roll <= 3)
+        mEffect = MobEffects::REGENERATION;
+    else if (roll <= 4)
+        mEffect = MobEffects::INVISIBILITY;
 }
 
 Spider::SpiderTargetGoal::SpiderTargetGoal(Spider* spider, const std::type_info& targetType)

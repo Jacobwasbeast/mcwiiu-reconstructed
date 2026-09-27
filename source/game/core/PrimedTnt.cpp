@@ -1,4 +1,5 @@
 #include "game/core/PrimedTnt.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <cmath>
@@ -124,7 +125,7 @@ void PrimedTnt::tick()
     else
     {
         updateInWaterState();
-        mLevel->addParticle(ePARTICLE_SMOKE, false, mX, mY + 0.5, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_SMOKE, mX, mY + 0.5, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
     PIXEndNamedEvent();
 }

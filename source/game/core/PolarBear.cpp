@@ -25,6 +25,11 @@
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/FollowParentGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/RandomStrollGoal.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -67,8 +72,13 @@ bool PolarBear::isFood(const not_null_ptr<ItemInstance>&)
 void PolarBear::registerGoals()
 {
     Mob::registerGoals();
+    mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(1, new PolarBearMeleeAttackGoal(this), true);
     mGoalSelector.addGoal(1, new PolarBearPanicGoal(this), true);
+    mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.25), true);
+    mGoalSelector.addGoal(5, new RandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
+    mGoalSelector.addGoal(7, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new PolarBearHurtByTargetGoal(this), true);
     mTargetSelector.addGoal(2, new PolarBearAttackPlayersGoal(this), true);
 }

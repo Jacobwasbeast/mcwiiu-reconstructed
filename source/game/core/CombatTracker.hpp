@@ -37,6 +37,8 @@ public:
     CombatEntry* getLastEntry();
 
 private:
+    static const int KNOCKOFF_TICKS = 60;
+
     std::vector<CombatEntry*> mEntries;
     LivingEntity* mMob;
     int mLastDamageTime;

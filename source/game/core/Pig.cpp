@@ -282,8 +282,8 @@ void Pig::travel(float xxa, float yya, float zza)
 
     if (!isVehicle() || !canBeControlledByRider())
     {
-        mFlyingSpeed = 0.5f;
-        mSpeed = 0.02f;
+        mMaxUpStep = 0.5f;
+        mFlyingSpeed = 0.02f;
         LivingEntity::travel(xxa, yya, zza);
         return;
     }
@@ -294,9 +294,8 @@ void Pig::travel(float xxa, float yya, float zza)
     setRot(mYRot, mXRot);
     mYBodyRot = mYRot;
     mYHeadRot = mYRot;
-    mFlyingSpeed = 1.0f;
-    mSpeed = static_cast<float>(getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue())
-        * 0.225f;
+    mMaxUpStep = 1.0f;
+    mFlyingSpeed = getSpeed() * 0.1f;
 
     if (mBoosting)
     {
@@ -322,7 +321,7 @@ void Pig::travel(float xxa, float yya, float zza)
         float speed = static_cast<float>(
             getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
         if (mBoosting)
-            speed += speed * 2.0f
+            speed += (speed + speed)
                 * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
         setSpeed(speed);
         LivingEntity::travel(0.0f, 0.0f, 1.0f);

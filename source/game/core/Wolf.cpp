@@ -1,4 +1,8 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/util/AABB.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/Difficulty.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/core/Wolf.hpp"
@@ -27,10 +31,16 @@
 #include "game/entity/ai/OwnerHurtByTargetGoal.hpp"
 #include "game/entity/ai/OwnerHurtTargetGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/ai/SitGoal.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/Llama.hpp"
+#include "game/core/Turtle.hpp"
+#include "game/entity/ai/PreySelector.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/ai/NonTameRandomTargetGoal.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
@@ -44,6 +54,9 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/core/Mth.hpp"
 
+static Predicate<boost::shared_ptr<Entity> >* PREY_SELECTOR = new PreySelector();
+static const int WOLF_SPAWN_EGG_AUX = 95;
+
 const EntityDataAccessor<float>* Wolf::DATA_HEALTH_ID = NULL;
 const EntityDataAccessor<bool>* Wolf::DATA_INTERESTED = NULL;
 const EntityDataAccessor<int>* Wolf::DATA_COLLAR_COLOR = NULL;
@@ -54,7 +67,7 @@ Wolf::Wolf(Level* level)
       mIsWet(false),
       mIsShaking(false),
       mShakeAnim(0.0f),
-      mWetShade(0.0f)
+      mShakeAnimO(0.0f)
 {
     fjDerivedCtorCalls();
     setSize(0.6f, 0.85f);
@@ -93,9 +106,10 @@ void Wolf::registerGoals()
     mTargetSelector.addGoal(2, new OwnerHurtTargetGoal(this), true);
     mTargetSelector.addGoal(3, new HurtByTargetGoal(this, true,
                                                       arrayWithLength<unsigned long long>()), true);
-    mTargetSelector.addGoal(4, new NonTameRandomTargetGoal(this, typeid(Player), true, NULL, false), true);
-    mTargetSelector.addGoal(4, new NonTameRandomTargetGoal(this, typeid(Animal), false, NULL, false), true);
-    mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
+    mTargetSelector.addGoal(4, new NonTameRandomTargetGoal(this, typeid(Animal), true, PREY_SELECTOR, false), true);
+    mTargetSelector.addGoal(4, new NonTameRandomTargetGoal(this, typeid(Turtle), false,
+                                                           Turtle::BABY_ON_LAND_SELECTOR, false), true);
+    mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(AbstractSkeleton), true, false, false), true);
 }
 void Wolf::registerAttributes()
 {
@@ -147,7 +161,18 @@ void Wolf::readAdditionalSaveData(CompoundTag* tag)
     if (tag->contains(L"CollarColor"))
         setCollarColor(DyeColor::byItemData(tag->getByte(L"CollarColor")));
 }
-const SoundEvent* Wolf::getAmbientSound() { return isAngry() ? SoundEvents::WOLF_GROWL : SoundEvents::WOLF_AMBIENT; }
+const SoundEvent* Wolf::getAmbientSound()
+{
+    if (isAngry())
+        return SoundEvents::WOLF_GROWL;
+    if (mRandom->nextInt(3) == 0)
+    {
+        if (isTame() && mEntityData->get(DATA_HEALTH_ID) < 10.0f)
+            return SoundEvents::WOLF_WHINE;
+        return SoundEvents::WOLF_PANT;
+    }
+    return SoundEvents::WOLF_AMBIENT;
+}
 const SoundEvent* Wolf::getHurtSound(const DamageSource*) { return SoundEvents::WOLF_HURT; }
 const SoundEvent* Wolf::getDeathSound() { return SoundEvents::WOLF_DEATH; }
 float Wolf::getSoundVolume() { return 0.4f; }
@@ -159,7 +184,7 @@ void Wolf::aiStep()
         getTarget() == NULL && isInWaterRainOrBubble()) {
         mIsShaking = true;
         mShakeAnim = 0.0f;
-        mWetShade = 0.0f;
+        mShakeAnimO = 0.0f;
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SHAKE_WETNESS, 0);
     }
     if (!mLevel->mIsClientSide && getTarget() == NULL && isAngry())
@@ -168,37 +193,78 @@ void Wolf::aiStep()
 bool Wolf::isInterested() { return getEntityData()->get(DATA_INTERESTED); }
 void Wolf::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Wolf tick");
     Mob::tick();
+
     mInterestedAngleO = mInterestedAngle;
-    mInterestedAngle += isInterested() ? (1.0f - mInterestedAngle) * 0.4f
-                                       : -mInterestedAngle * 0.4f;
-    if (isInWaterRainOrBubble()) {
-        mShakeAnim = 0.0f;
+    if (isInterested())
+    {
+        mInterestedAngle += (1.0f - mInterestedAngle) * 0.4f;
+    }
+    else
+    {
+        mInterestedAngle += (0.0f - mInterestedAngle) * 0.4f;
+    }
+
+    if (isInWaterRainOrBubble())
+    {
         mIsWet = true;
-        mWetShade = 0.0f;
         mIsShaking = false;
-    } else if (mIsShaking) {
+        mShakeAnim = 0.0f;
+        mShakeAnimO = 0.0f;
+    }
+    else if (mIsShaking)
+    {
+        if (mShakeAnim == 0.0f)
+        {
+            playSound(SoundEvents::WOLF_SHAKE, getSoundVolume(),
+                      (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
+        }
+
+        mShakeAnimO = mShakeAnim;
         mShakeAnim += 0.05f;
-        if (mShakeAnim >= 2.0f) {
+
+        if (mShakeAnimO >= 2.0f)
+        {
             mIsWet = false;
             mIsShaking = false;
-            mWetShade = 0.0f;
+            mShakeAnimO = 0.0f;
             mShakeAnim = 0.0f;
-        } else {
-            mWetShade = mShakeAnim;
         }
-    } else {
-        mWetShade = 0.0f;
-        mShakeAnim = 0.0f;
+        else if (mShakeAnim > 0.4f)
+        {
+            float y = (float)mBoundingBox->mMinY;
+            int count = (int)(Mth::sin((mShakeAnim - 0.4f) * Mth::PI) * 7.0f);
+
+            for (int i = 0; i < count; ++i)
+            {
+                float xOffset = (mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth * 0.5f;
+                float zOffset = (mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth * 0.5f;
+                mLevel->addParticle(PARTICLE_SPLASH, mX + xOffset, y + 0.8f, mZ + zOffset, mXd, mYd, mZd,
+                                    arrayWithLength<int>());
+            }
+        }
     }
+
+    if (Entity::instanceof(getTarget(), EntityType::PLAYER) && mLevel->getDifficulty() == Difficulty::PEACEFUL)
+    {
+        setTarget(boost::shared_ptr<LivingEntity>());
+    }
+
+    PIXEndNamedEvent();
 }
 double Wolf::getBodyRollAngle(float partialTick, float bodyRotation)
 {
-    float shake = (mShakeAnim - mWetShade) * partialTick + mWetShade;
-    if (shake < 0.0f) shake = 0.0f;
-    if (shake > 1.0f) shake = 1.0f;
-    const float angle = shake * 3.14159265358979323846f;
-    return static_cast<double>(Mth::sin(angle) * Mth::sin(angle * 11.0f) * 0.15f);
+    float shake = (mShakeAnimO + (mShakeAnim - mShakeAnimO) * partialTick + bodyRotation) / 1.8f;
+    if (shake < 0.0f)
+    {
+        shake = 0.0f;
+    }
+    else if (shake > 1.0f)
+    {
+        shake = 1.0f;
+    }
+    return Mth::sin(shake * Mth::PI) * Mth::sin(shake * Mth::PI * 11.0f) * 0.15f * Mth::PI;
 }
 double Wolf::getHeadRollAngle(float partialTick)
 {
@@ -240,54 +306,131 @@ void Wolf::setTame(bool tame)
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(8.0);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(4.0);
 }
-void Wolf::tame(boost::shared_ptr<Player> player, bool success, bool broadcast) { if (success) { TamableAnimal::tame(player); setAngry(false); } if (broadcast && mLevel != NULL) mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0); }
+void Wolf::tame(boost::shared_ptr<Player> player, bool showParticles, bool)
+{
+    TamableAnimal::tame(player);
+    mNavigation->stop();
+    setTarget(boost::shared_ptr<LivingEntity>());
+    setHealth(20.0f);
+    spawnTamingParticles(showParticles);
+}
 bool Wolf::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    if (player == NULL)
-        return false;
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (!isTame() && !isAngry() && item->getItem() == Items::bone) {
-        if (!player->mAbilities.mInstabuild)
-            item->shrink(1);
-        if (!mLevel->mIsClientSide)
-            tame(player, getRandom()->nextInt(3) == 0, true);
-        return true;
+
+    if (!isTame())
+    {
+        if (Item::getId(item->getItem()) == Item::getId(Items::bone) && !isAngry())
+        {
+            if (!player->mAbilities.mInstabuild)
+            {
+                item->shrink(1);
+            }
+
+            if (!mLevel->mIsClientSide)
+            {
+                if (mRandom->nextInt(3) == 0)
+                {
+                    player->awardStat(gStats->get_tamedEntity(EntityType::WOLF),
+                                      GenericStats::param_tamedEntity(EntityType::WOLF));
+                    tame(player, true, true);
+                    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0);
+                }
+                else
+                {
+                    spawnTamingParticles(false);
+                    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_FAILED, 0);
+                }
+            }
+            return true;
+        }
+
+        if (AgeUpBaby(player, item))
+        {
+            return true;
+        }
+        return AgableMob::mobInteract(player, hand);
     }
-    if (isTame() && !item->isEmpty()) {
-        if (item->getItem() == Items::dye) {
-            const DyeColor* color = DyeColor::byItemData(item->getAuxValue());
-            if (color != getCollarColor()) {
-                setCollarColor(color);
+
+    if (!item->isEmpty())
+    {
+        FoodItem* food = dynamic_cast<FoodItem*>(item->getItem());
+        if (food != NULL)
+        {
+            if (food->isMeat() && mEntityData->get(DATA_HEALTH_ID) < 20.0f)
+            {
                 if (!player->mAbilities.mInstabuild)
+                {
                     item->shrink(1);
+                }
+                heal((float)food->getNutrition(item));
+                if (item->getCount() < 1)
+                {
+                    player->mInventory->setItem(player->mInventory->m_selected, ItemInstance::EMPTY);
+                }
                 return true;
             }
         }
-        if (isFood(item) && getHealth() < getMaxHealth()) {
-            FoodItem* food = dynamic_cast<FoodItem*>(item->getItem());
-            if (food != NULL)
-                heal(static_cast<float>(food->getNutrition(item)));
-            if (!player->mAbilities.mInstabuild)
-                item->shrink(1);
-            return true;
+        else if (item->getItem() == Items::dye)
+        {
+            const DyeColor* color = DyeColor::byItemData(item->getAuxValue());
+            if (color != getCollarColor())
+            {
+                setCollarColor(color);
+                if (!player->mAbilities.mInstabuild)
+                {
+                    item->shrink(1);
+                }
+                return true;
+            }
         }
     }
-    bool interacted = Animal::mobInteract(player, hand);
-    if (interacted && isTame())
-        setIsInterested(false);
-    return interacted;
+
+    if (isOwnedBy(player) && !mLevel->mIsClientSide && !isFood(item) && !isLeashedToPlayer(player)
+        && item->getItem() != Items::lead
+        && (item->isEmpty() || item->getItem() != Items::spawnEgg || item->getAuxValue() != WOLF_SPAWN_EGG_AUX))
+    {
+        bool renaming = false;
+        if (Item::getId(item->getItem()) == ItemId::NAME_TAG && !isPassenger() && item->hasCustomHoverName())
+        {
+            renaming = !hasCustomName() || item->getHoverName() != getCustomName();
+        }
+
+        if (!renaming)
+        {
+            mSitGoal->wantToSit(!isSitting());
+            mJumping = false;
+            mNavigation->stop();
+            setTarget(boost::shared_ptr<LivingEntity>());
+        }
+    }
+
+    return Animal::mobInteract(player, hand);
 }
 void Wolf::handleEntityEvent(unsigned char event, int data)
 {
     if (event == EntityEvent::SHAKE_WETNESS) {
         mIsShaking = true;
         mShakeAnim = 0.0f;
-        mWetShade = 0.0f;
+        mShakeAnimO = 0.0f;
         return;
     }
     TamableAnimal::handleEntityEvent(event, data);
 }
-double Wolf::getTailAngle() { return isAngry() ? 0.8 : 1.0 + mInterestedAngle * 0.1; }
+double Wolf::getTailAngle()
+{
+    if (isAngry())
+    {
+        return 1.5393804f;
+    }
+
+    if (isTame())
+    {
+        return (0.55f - (getMaxHealth() - mEntityData->get(DATA_HEALTH_ID)) * 0.02f) * Mth::PI;
+    }
+
+    return Mth::PI / 5.0f;
+}
 bool Wolf::isFood(const not_null_ptr<ItemInstance>& item)
 {
     if (item->isEmpty())

@@ -89,7 +89,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
     {
         for (int i = 0; i < 32; ++i)
         {
-            mLevel->addParticle(PARTICLE_PORTAL,
+            mLevel->addParticle(PARTICLE_ENDER,
                 mX, mY + mRandom->nextDouble() * 2.0, mZ,
                 mRandom->nextGaussian(), 0.0, mRandom->nextGaussian(),
                 arrayWithLength<int>());

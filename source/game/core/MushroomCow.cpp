@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/item/Inventory.hpp"
@@ -65,31 +66,48 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
 
     if (item == Items::shears && getAge() >= 0)
     {
-        if (mLevel->mIsClientSide)
+        if (!mLevel->canCreateMore(EntityType::COW, Level::eSpawnType_Breed))
+        {
+            player->displayClientMessage(IDS_CANT_SHEAR_MOOSHROOM, true);
             return true;
+        }
+
+        mLevel->addParticle(PARTICLE_LARGE_EXPLODE, mX, mY + mBbHeight * 0.5f, mZ, 0.0, 0.0, 0.0,
+                            arrayWithLength<int>());
+
+        if (mLevel->mIsClientSide)
+        {
+            return true;
+        }
 
         remove();
 
         boost::shared_ptr<Cow> cow(new Cow(mLevel, true));
         if (isPassenger())
+        {
             cow->startRiding(getVehicle(), true);
+        }
         if (isLeashed())
+        {
             cow->setLeashedTo(getLeashHolder(), true);
-        mLevel->addEntity(cow);
-        cow->moveTo(mX, mY, mZ, mYRotO, mXRotO);
+        }
+        cow->moveTo(mX, mY, mZ, mYRot, mXRot);
         cow->setHealth(getHealth());
+        cow->mYBodyRot = mYBodyRot;
         if (hasCustomName())
+        {
             cow->setCustomName(getCustomName(), getOwnerUUID(), wasNamedByRestrictedPlayer());
+        }
+        mLevel->addEntity(cow);
 
         for (int i = 0; i < 5; ++i)
         {
-            not_null_ptr<ItemInstance> mushroom(new ItemInstance(Blocks::red_mushroom));
-            boost::shared_ptr<Entity> mushroomEntity(new ItemEntity(mLevel, mX, mY + mWalkDist, mZ, mushroom));
-            mLevel->addEntity(mushroomEntity);
+            mLevel->addEntity(boost::shared_ptr<Entity>(new ItemEntity(
+                mLevel, mX, mY + mBbHeight, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom)))));
         }
 
         itemInstance->hurtAndBreak(1, player);
-        playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.75f);
+        playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.0f);
         return true;
     }
 

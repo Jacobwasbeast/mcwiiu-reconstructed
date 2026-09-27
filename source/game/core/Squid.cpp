@@ -9,6 +9,7 @@
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
@@ -208,9 +209,13 @@ bool Squid::checkSpawnRules()
 
 Vec3* Squid::randomInkDir()
 {
-    float x = mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth;
-    float y = mRandom->nextFloat() * mBbHeight + 0.5f;
-    float z = mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth;
+    Random* random = getRandom();
+    Vec3* backwards = getViewVector(0.0f)->multiply(-0.25, -0.25, -0.25);
+    float xSpread = random->nextFloat() * mBbWidth;
+    float x = (float)backwards->x + xSpread + xSpread - mBbWidth;
+    float y = (float)(random->nextFloat() * (double)mBbHeight + ((float)backwards->y + 0.5f));
+    float zSpread = random->nextFloat() * mBbWidth;
+    float z = (float)backwards->z + zSpread + zSpread - mBbWidth;
     return Vec3::newTemp(x, y, z)->normalize();
 }
 
@@ -248,6 +253,8 @@ void Squid::handleEntityEvent(unsigned char event, int data)
     else if (event == EntityEvent::SQUID_INK)
     {
         spawnInkParticles();
+        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::SQUID_SQUIRT, SoundSource::eSoundSource_Hostile, 0.3f, 1.0f,
+                               false, 16.0f);
     }
     else
     {

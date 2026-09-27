@@ -1,4 +1,6 @@
 #include "game/core/Dolphin.hpp"
+#include "game/core/Guardian.hpp"
+#include "game/entity/ai/AvoidEntityGoal.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -48,7 +50,7 @@
 #include "game/world/generation/Player.hpp"
 
 Dolphin::Dolphin(Level* level)
-    : AgableWaterAnimal(level), mTreasureTime(0), mAirSupply(0), mTreasureGoal(NULL)
+    : AgableWaterAnimal(level), mTreasureTime(0), mBlowholeCooldown(0), mTreasureGoal(NULL)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 0.6f);
@@ -57,7 +59,7 @@ Dolphin::Dolphin(Level* level)
     delete mLookControl;
     mLookControl = new DolphinLookControl(this, 10);
     setCanPickUpLoot(false);
-    mAirSupply = mRandom->nextInt(2, 5);
+    mMaxFlockSize = mRandom->nextInt(2, 5);
 }
 
 Dolphin::~Dolphin()
@@ -72,24 +74,30 @@ MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, Mo
 }
 
 unsigned int Dolphin::getMaxAirSupply() { return 4800; }
-double Dolphin::getEyeHeight() { return 1.2; }
+double Dolphin::getEyeHeight() { return 0.3f; }
 int Dolphin::getAmbientSoundInterval() { return 120; }
 int Dolphin::getMaxHeadXRot() { return 1; }
 int Dolphin::getMaxHeadYRot() { return 1; }
 
 void Dolphin::aiStep()
 {
-    if (isInWater() && getMaxHeadXRot())
+    if (isMoving() && isInWater())
     {
         mLevel->addParticle(PARTICLE_BUBBLE, false, mX + (mRandom->nextFloat() - 0.5f) * mBbWidth,
                             mY + mRandom->nextFloat() * mBbHeight,
                             mZ + (mRandom->nextFloat() - 0.5f) * mBbWidth,
                             0.0, 0.0, 0.0, arrayWithLength<int>());
     }
-    if (mAirSupply < 1 && !isPassenger() && mRandom->nextInt(40) == 0)
+    if (mBlowholeCooldown > 0)
+    {
+        --mBlowholeCooldown;
+        Mob::aiStep();
+        return;
+    }
+    if (!isInWater() && mOnGround && mRandom->nextInt(40) == 0)
     {
         playSound(SoundEvents::DOLPHIN_BLOWHOLE, 1.0f, mRandom->nextFloat(0.8f, 1.2f));
-        mAirSupply = 40;
+        mBlowholeCooldown = 40;
     }
     Mob::aiStep();
 }
@@ -110,7 +118,7 @@ void Dolphin::tick()
         --mTreasureTime;
         if (mTreasureTime < 1)
         {
-            hurt(NULL, 1.0f);
+            hurt(DamageSource::DRY_OUT, 1.0f);
         }
     }
     else
@@ -152,10 +160,14 @@ bool Dolphin::doHurtTarget(boost::shared_ptr<Entity> target)
 
 void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
 {
-    Entity::positionRider(passenger);
-    double angle = (double)mYRot * 0.01745329238474369;
-    passenger->setPos(mX - std::sin(angle) * 0.4, mY + (double)getEyeHeight() + passenger->getRideHeight(),
-                      mZ + std::cos(angle) * 0.4);
+    const Direction* side = getDirection()->getCounterClockWise();
+    passenger->setPos(mX + side->getStepX() * 0.7 - getDirection()->getStepX(),
+                      mY + passenger->getRidingHeight() + 0.5,
+                      mZ + side->getStepZ() * 0.7 - getDirection()->getStepZ());
+    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        boost::static_pointer_cast<LivingEntity>(passenger)->mYBodyRot = mYHeadRot;
+    }
 }
 
 boost::shared_ptr<ItemEntity> Dolphin::drop(const not_null_ptr<ItemInstance>& item)
@@ -164,6 +176,14 @@ boost::shared_ptr<ItemEntity> Dolphin::drop(const not_null_ptr<ItemInstance>& it
     boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY - 0.3 + getEyeHeight(), mZ, item));
     itemEntity->setPickUpDelay(40);
     itemEntity->setThrower(getUUID());
+    const double toRadians = 0.017453292f;
+    itemEntity->mXd = -std::sin(mYRot * toRadians) * std::cos(mXRot * toRadians) * 0.3f;
+    itemEntity->mYd = std::sin(mXRot * toRadians) * 0.3f * 1.5;
+    itemEntity->mZd = std::cos(mYRot * toRadians) * std::cos(mXRot * toRadians) * 0.3f;
+    const double angle = mRandom->nextDouble() * 6.2831854820251465;
+    const double speed = 0.02 * mRandom->nextDouble();
+    itemEntity->mXd += std::cos(angle) * speed;
+    itemEntity->mZd += std::sin(angle) * speed;
     return itemEntity;
 }
 
@@ -218,8 +238,9 @@ void Dolphin::registerGoals()
     mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
     mGoalSelector.addGoal(5, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
     mGoalSelector.addGoal(5, new JumpGoal(this, 10), true);
-    mGoalSelector.addGoal(6, new MeleeAttackGoal(this, 1.2, true), true);
+    mGoalSelector.addGoal(6, new MeleeAttackGoal(this, 1.2f, true), true);
     mGoalSelector.addGoal(8, new FollowBoatGoal(this), true);
+    mGoalSelector.addGoal(9, new AvoidEntityGoal(this, typeid(Guardian), 8.0f, 1.0, 1.0), true);
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
         arrayWithLength<unsigned long long>(hurtByTargetTypes, 2)), true);
 }

@@ -185,78 +185,34 @@ void Scoreboard::syncTeamChanges(PlayerTeam* pTeam)
 Scoreboard::EDamageSource Scoreboard::GetDamageSource(const DamageSource* pSource)
 {
     if (pSource->isExplosion())
-    {
         return DAMAGE_SOURCE_EXPLOSION;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathLightningBolt
-        || pSource->equals(DamageSource::ON_FIRE))
-    {
+    if (pSource->equals(DamageSource::IN_FIRE) || pSource->equals(DamageSource::ON_FIRE))
         return DAMAGE_SOURCE_FIRE;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathLava)
-    {
+    if (pSource->equals(DamageSource::LAVA))
         return DAMAGE_SOURCE_LAVA;
-    }
-
     if (pSource->equals(DamageSource::DROWN))
-    {
         return DAMAGE_SOURCE_DROWN;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathStarve)
-    {
+    if (pSource->equals(DamageSource::STARVE))
         return DAMAGE_SOURCE_STARVE;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathCactus)
-    {
+    if (pSource->equals(DamageSource::CACTUS))
         return DAMAGE_SOURCE_CACTUS;
-    }
-
-    if (pSource->equals(DamageSource::FALL)
-        || pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathOutOfWorld
-        || pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathCustom)
-    {
+    if (pSource->equals(DamageSource::FALL) || pSource->equals(DamageSource::OUT_OF_WORLD)
+        || pSource->equals(DamageSource::CREATIVE_PLAYER))
         return DAMAGE_SOURCE_FALL;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathFireball)
-    {
+    if (pSource->equals(DamageSource::THORNS))
         return DAMAGE_SOURCE_THORNS;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathThrown)
-    {
+    if (pSource == DamageSource::POISON)
         return DAMAGE_SOURCE_POISON;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic)
-    {
+    if (pSource == DamageSource::INSTANT_DAMAGE)
         return DAMAGE_SOURCE_HARM;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathGeneric)
-    {
+    if (pSource->equals(DamageSource::MAGIC))
         return DAMAGE_SOURCE_MAGIC;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathPlayer)
-    {
+    if (pSource->equals(DamageSource::ARROW))
         return DAMAGE_SOURCE_ARROW;
-    }
-
-    if (pSource->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathFlyIntoWall)
-    {
+    if (pSource->equals(DamageSource::FLY_INTO_WALL))
         return DAMAGE_SOURCE_FLY_INTO_WALL;
-    }
-
     if (pSource->getEntity())
-    {
         return DAMAGE_SOURCE_MELEE;
-    }
-
     return DAMAGE_SOURCE_UNKNOWN;
 }
 

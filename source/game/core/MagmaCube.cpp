@@ -1,4 +1,5 @@
 #include "game/core/MagmaCube.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
@@ -76,9 +77,9 @@ float MagmaCube::getBrightness()
     return 1.0f;
 }
 
-const void* MagmaCube::getParticleType()
+const ParticleType* MagmaCube::getParticleType()
 {
-    return NULL;
+    return PARTICLE_FLAME;
 }
 
 boost::shared_ptr<Slime> MagmaCube::createChild()

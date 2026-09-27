@@ -1,4 +1,6 @@
 #include "game/core/IllusionIllager.hpp"
+#include "game/core/Mth.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/EntityType.hpp"
 #include <cmath>
 #include <typeinfo>
@@ -9,7 +11,7 @@
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
-#include "game/entity/ai/RangedAttackGoal.hpp"
+#include "game/entity/ai/RangedBowAttackGoal.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -24,6 +26,9 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/Villager.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
 
 extern SpellcasterIllager::IllagerSpell* gSpell4;
 extern SpellcasterIllager::IllagerSpell* gSpell5;
@@ -67,13 +72,21 @@ void IllusionIllager::registerGoals()
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(4, new IllusionistMirrorSpellGoal(this), true);
     mGoalSelector.addGoal(5, new IllusionistBlindnessSpellGoal(this), true);
-    mGoalSelector.addGoal(6, new RangedAttackGoal(this, this, 0.5, 20, 15.0f), true);
+    mGoalSelector.addGoal(6, new RangedBowAttackGoal(this, 0.5, 20, 15.0f), true);
     mGoalSelector.addGoal(8, new RandomStrollGoal(this, 0.6), true);
-    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Mob), 8.0f, 1.0f), true);
+    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, arrayWithLength<unsigned long long>(1, true)), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Mob), true, false, false), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), false, false, false), true);
+
+    unsigned long long* hurtByTargetTypes = new unsigned long long[1];
+    hurtByTargetTypes[0] = EntityType::ILLUSION_ILLAGER;
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
+        arrayWithLength<unsigned long long>(hurtByTargetTypes, 1)), true);
+    mTargetSelector.addGoal(2, (new NearestAttackableTargetGoal(this, typeid(Player), true, false, false))
+        ->setUnseenMemoryTicks(300), true);
+    mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(Villager), false, false, false))
+        ->setUnseenMemoryTicks(300), true);
+    mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(VillagerGolem), false, false, false))
+        ->setUnseenMemoryTicks(300), true);
 }
 
 void IllusionIllager::registerAttributes()
@@ -96,42 +109,78 @@ AABB* IllusionIllager::getBoundingBoxForCulling() { return Entity::getBoundingBo
 void IllusionIllager::aiStep()
 {
     Monster::aiStep();
+
     if (mLevel->mIsClientSide && isInvisible())
     {
         int nextLevel = mIllusionLevel - 1;
         if (nextLevel < 0)
+        {
             nextLevel = 0;
-        if (mTickCount % 1200 == 0 || mAttackStrengthTicker == 1)
+        }
+
+        if (mHurtTime == 1 || mTickCount % 1200 == 0)
         {
             mIllusionLevel = 3;
-            int roll = mRandom->nextInt(6);
-            double y = (roll > 4) ? (double)(roll - 4) : 0.0;
-            double z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
-            double x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+
+            int roll;
+            double x;
+            double y;
+            double z;
+            roll = mRandom->nextInt(6) - 4;
+            y = roll > 0 ? (double)roll : 0.0;
+            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPosition;
             mDisguisedPosition = mDisguisedPosition3;
             mDisguisedPosition3 = Vec3::newPermanent(x, y, z);
-            roll = mRandom->nextInt(6);
-            y = (roll > 4) ? (double)(roll - 4) : 0.0;
-            z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            roll = mRandom->nextInt(6) - 4;
+            y = roll > 0 ? (double)roll : 0.0;
+            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPositionO;
             mDisguisedPositionO = mDisguisedPosition3O;
             mDisguisedPosition3O = Vec3::newPermanent(x, y, z);
-            roll = mRandom->nextInt(6);
-            y = (roll > 4) ? (double)(roll - 4) : 0.0;
-            z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            roll = mRandom->nextInt(6) - 4;
+            y = roll > 0 ? (double)roll : 0.0;
+            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPosition2;
             mDisguisedPosition2 = mDisguisedPosition4;
             mDisguisedPosition4 = Vec3::newPermanent(x, y, z);
-            roll = mRandom->nextInt(6);
-            y = (roll > 4) ? (double)(roll - 4) : 0.0;
-            z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            roll = mRandom->nextInt(6) - 4;
+            y = roll > 0 ? (double)roll : 0.0;
+            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPosition2O;
             mDisguisedPosition2O = mDisguisedPosition4O;
             mDisguisedPosition4O = Vec3::newPermanent(x, y, z);
+
+            for (int i = 0; i < 16; ++i)
+            {
+                mLevel->addParticle(PARTICLE_CLOUD, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                    mY + mRandom->nextDouble() * mBbHeight,
+                                    mZ + (mRandom->nextDouble() - 0.5) * mBbWidth, 0.0, 0.0, 0.0,
+                                    arrayWithLength<int>());
+            }
+
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ILLUSION_ILLAGER_MIRROR_MOVE, getSoundSource(), 1.0f, 1.0f,
+                                   false, 16.0f);
+        }
+        else if (mHurtTime == mHurtDuration - 1)
+        {
+            mIllusionLevel = 3;
+            delete mDisguisedPosition;
+            mDisguisedPosition = mDisguisedPosition3;
+            mDisguisedPosition3 = Vec3::newPermanent(0.0, 0.0, 0.0);
+            delete mDisguisedPositionO;
+            mDisguisedPositionO = mDisguisedPosition3O;
+            mDisguisedPosition3O = Vec3::newPermanent(0.0, 0.0, 0.0);
+            delete mDisguisedPosition2;
+            mDisguisedPosition2 = mDisguisedPosition4;
+            mDisguisedPosition4 = Vec3::newPermanent(0.0, 0.0, 0.0);
+            delete mDisguisedPosition2O;
+            mDisguisedPosition2O = mDisguisedPosition4O;
+            mDisguisedPosition4O = Vec3::newPermanent(0.0, 0.0, 0.0);
         }
         else
         {
@@ -176,19 +225,14 @@ arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
 
 void IllusionIllager::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
-    if (target == NULL)
-        return;
-
     boost::shared_ptr<TippableArrow> arrow = getArrow(distanceFactor);
     double dx = target->mX - mX;
+    double dy = target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - arrow->mY;
     double dz = target->mZ - mZ;
-    double horizontal = std::sqrt(dx * dx + dz * dz);
-    double dy = target->mY + target->mBbHeight * 0.5 - arrow->mY;
-    float inaccuracy = 14.0f - static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f;
-    arrow->shoot(dx, dy + horizontal * 0.2, dz, 1.6f, inaccuracy);
-    playSound(SoundEvents::ILLUSION_ILLAGER_CAST_SPELL, 0.5f,
-              0.5f / (mRandom->nextFloat() * 0.25f + 0.75f));
-    mLevel->addEntity(boost::static_pointer_cast<Entity>(arrow));
+    double horizontal = Mth::sqrt(dx * dx + dz * dz);
+    arrow->shoot(dx, dy + horizontal * 0.2f, dz, 1.6f, (float)(14 - mLevel->getDifficulty()->getId() * 4));
+    playSound(SoundEvents::SKELETON_SHOOT, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
+    mLevel->addEntity(arrow);
 }
 
 boost::shared_ptr<TippableArrow> IllusionIllager::getArrow(float distanceFactor)

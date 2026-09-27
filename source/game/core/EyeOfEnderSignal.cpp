@@ -1,4 +1,6 @@
 #include "game/core/EyeOfEnderSignal.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -101,69 +103,97 @@ void EyeOfEnderSignal::tick()
     mY += mYd;
     mZ += mZd;
 
-    double horizontal = std::sqrt(mXd * mXd + mZd * mZd);
-    mYRot = static_cast<float>(std::atan2(mXd, mZd) * 57.2957763671875);
-    mXRot = static_cast<float>(std::atan2(mYd, horizontal) * 57.2957763671875);
-    while (mYRotO - mYRot < -180.0f)
-    {
-        mYRotO -= 360.0f;
-    }
-    while (mYRotO - mYRot >= 180.0f)
-    {
-        mYRotO += 360.0f;
-    }
-    while (mXRotO - mXRot < -180.0f)
+    double horizontal = sqrt(mXd * mXd + mZd * mZd);
+    mYRot = (float)(atan2(mXd, mZd) * 57.2957763671875f);
+    mXRot = (float)(atan2(mYd, horizontal) * 57.2957763671875f);
+
+    while (mXRot - mXRotO < -180.0f)
     {
         mXRotO -= 360.0f;
     }
-    while (mXRotO - mXRot >= 180.0f)
+
+    while (mXRot - mXRotO >= 180.0f)
     {
         mXRotO += 360.0f;
     }
-    mYRotO += (mYRot - mYRotO) * 0.2f;
-    mXRotO += (mXRot - mXRotO) * 0.2f;
 
-    if (mLevel != NULL)
+    while (mYRot - mYRotO < -180.0f)
+    {
+        mYRotO -= 360.0f;
+    }
+
+    while (mYRot - mYRotO >= 180.0f)
+    {
+        mYRotO += 360.0f;
+    }
+
+    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
+    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
+
+    if (!mLevel->mIsClientSide)
     {
         double dx = mTargetX - mX;
         double dz = mTargetZ - mZ;
-        double distance = std::sqrt(dx * dx + dz * dz);
-        double speed = (distance - horizontal) * 0.0025 + horizontal;
+        double distance = sqrt(dx * dx + dz * dz);
+        float angle = (float)atan2(dz, dx);
+        double speed = horizontal + (distance - horizontal) * 0.0025;
+
         if (distance < 1.0)
         {
             speed *= 0.8;
             mYd *= 0.8;
         }
-        mXd = dx / distance * speed;
-        mZd = dz / distance * speed;
-        double gravity = mY < mTargetY ? 0.015 : -1.0;
-        mYd += (gravity - mYd) * 0.015;
-    }
 
-    lerpMotion(mXd, mYd, mZd);
-    setPos(mX, mY, mZ);
+        mXd = cosf(angle) * speed;
+        mZd = sinf(angle) * speed;
 
-    if (mLevel != NULL && mLevel->mIsClientSide)
-    {
-        for (int i = 0; i < 4; ++i)
+        if (mY < mTargetY)
         {
-            mLevel->addParticle(PARTICLE_PORTAL, mX - mXd * 0.25, mY - mYd * 0.25,
-                mZ - mZd * 0.25, mXd, mYd, mZd, arrayWithLength<int>());
-        }
-        return;
-    }
-
-    ++mLife;
-    if (mLife > 80)
-    {
-        remove();
-        if (mDropItem)
-        {
-            spawnAtLocation(Items::enderEye, 1);
+            mYd += (1.0 - mYd) * 0.015;
         }
         else
         {
-            mLevel->levelEvent(LevelEvent::PARTICLES_EYE_OF_ENDER_DEATH, BlockPos(this), 0);
+            mYd += (-1.0 - mYd) * 0.015;
+        }
+    }
+
+    if (isInWater())
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25, mZ - mZd * 0.25, mXd, mYd, mZd,
+                                arrayWithLength<int>());
+        }
+    }
+    else
+    {
+        mLevel->addParticle(PARTICLE_ENDER, mX - mXd * 0.25 + mRandom->nextDouble() * 0.6 - 0.3,
+                            mY - mYd * 0.25 - 0.5, mZ - mZd * 0.25 + mRandom->nextDouble() * 0.6 - 0.3, mXd, mYd, mZd,
+                            arrayWithLength<int>());
+    }
+
+    if (mLevel->mIsClientSide)
+    {
+        return;
+    }
+
+    setPos(mX, mY, mZ);
+
+    ++mLife;
+
+    if (mLife > 80 && !mLevel->mIsClientSide)
+    {
+        playSound(SoundEvents::ENDEREYE_DEATH, 1.0f, 1.0f);
+        remove();
+
+        if (mDropItem)
+        {
+            mLevel->addEntity(boost::shared_ptr<Entity>(
+                new ItemEntity(mLevel, mX, mY, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Items::enderEye)))));
+        }
+        else
+        {
+            mLevel->levelEvent(LevelEvent::PARTICLES_EYE_OF_ENDER_DEATH, BlockPos(shared_from_this()), 0);
         }
     }
 }

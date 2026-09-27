@@ -1,4 +1,6 @@
 #include "game/core/Slot.hpp"
+#include "game/item/ArmorItem.hpp"
+#include "game/item/ArmorDyeRecipe.hpp"
 
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -131,13 +133,20 @@ bool Slot::mayCombine(not_null_ptr<ItemInstance> item)
 
 not_null_ptr<ItemInstance> Slot::combine(not_null_ptr<ItemInstance> item)
 {
-    boost::shared_ptr<CraftingContainer> craftingContainer(
-        new CraftingContainer(NULL, 2, 2));
-    craftingContainer->setItem(0, getItem());
-    craftingContainer->setItem(1, item);
+    not_null_ptr<ItemInstance> slotItem = getItem();
+    boost::shared_ptr<CraftingContainer> craftingContainer(new CraftingContainer(NULL, 2, 2));
+    craftingContainer->setItem(0, item);
+    craftingContainer->setItem(1, slotItem);
 
-    return Recipes::getInstance()->getItemFor(
-        craftingContainer, NULL, NULL, Recipes::eRecipeCategory_Crafting);
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
+    if (dynamic_cast<ArmorItem*>(slotItem->getItem()) != NULL)
+        result = ArmorDyeRecipe::assembleDyedArmor(craftingContainer);
+    else
+        result = Recipes::getInstance()->getItemFor(craftingContainer, NULL, NULL, Recipes::eRecipeCategory_Crafting);
+
+    craftingContainer->setItem(0, ItemInstance::EMPTY);
+    craftingContainer->setItem(1, ItemInstance::EMPTY);
+    return result;
 }
 
 void Slot::swap(Slot* other)
