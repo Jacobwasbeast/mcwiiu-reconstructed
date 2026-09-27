@@ -33,6 +33,8 @@ public:
     void setOperation(Operation operation);
 
 protected:
+    static const float MIN_SPEED_SQR;
+
     Mob* mMob;
     double mWantedX;
     double mWantedY;

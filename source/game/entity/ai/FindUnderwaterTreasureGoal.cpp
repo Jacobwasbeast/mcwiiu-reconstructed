@@ -4,6 +4,10 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/core/AttributeInstance.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/core/Direction.hpp"
@@ -140,6 +144,15 @@ void FindUnderwaterTreasureGoal::tick()
         return;
     }
 
+    Random* random = static_cast<Mob*>(mMob)->getRandom();
+    float xSpread = random->nextFloat() * mMob->mBbWidth;
+    float ySpread = random->nextFloat() * mMob->mBbHeight;
+    float zSpread = random->nextFloat() * mMob->mBbWidth;
+    static_cast<ServerLevel*>(mMob->mLevel)->sendParticles(
+        PARTICLE_FIREWORKS_SPARK, mMob->mX + (xSpread + xSpread) - mMob->mBbWidth, mMob->mY + 0.5 + ySpread,
+        mMob->mZ + (zSpread + zSpread) - mMob->mBbWidth, 7, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>(), 0.0, 0.0,
+        0.0);
+
     BlockPos topSolid = mMob->mLevel->getTopSolidBlockPos(*mTreasurePos);
     Vec3* current = mMob->getPos(0.0f);
     Vec3* direction = Vec3::newTemp((double)topSolid.x - current->x,
@@ -150,12 +163,19 @@ void FindUnderwaterTreasureGoal::tick()
     double targetY = topSolid.y;
     double targetZ = topSolid.z;
 
-    if (direction->lengthSqr() > 16.0)
+    double range = 16.0;
+    AttributeInstance* followRange = static_cast<LivingEntity*>(mMob)->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
+    if (followRange != NULL)
+    {
+        range = followRange->getValue();
+    }
+
+    if (direction->lengthSqr() > range)
     {
         if (mStuck > 1)
         {
             Direction const* facing = Direction::fromVec3(direction);
-            Random* random = static_cast<Mob*>(mMob)->getRandom();
+            random = static_cast<Mob*>(mMob)->getRandom();
             if (facing == Direction::UP || facing == Direction::DOWN)
             {
                 facing = facing->getOpposite();
@@ -177,7 +197,7 @@ void FindUnderwaterTreasureGoal::tick()
         }
 
         direction->normalize();
-        direction->multiply(16.0 * 0.5);
+        direction->multiply(range * 0.5);
         current->add(direction);
         BlockPos partial(current);
         targetX = partial.x;

@@ -54,7 +54,7 @@ public:
     virtual std::wstring getName();
     virtual AABB* getTargetSearchArea(double distance);
 
-private:
+protected:
     const std::type_info* mTargetType;
     int mRandomInterval;
     DistComp mSorter;

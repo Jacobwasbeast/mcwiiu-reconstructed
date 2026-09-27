@@ -130,7 +130,7 @@ BlockPos FollowFlockLeaderGoal::GetTargetPosition(boost::shared_ptr<Mob> leader)
     if (leaderZ < static_cast<double>(z)) --z;
 
     Vec3* sideOffset = side->multiply(sideAmount * 3.0);
-    Vec3* viewOffset = leader->getLookAngle()->multiply(0.0625);
+    Vec3* viewOffset = leader->getLookAngle()->multiply(6.0);
     Vec3* position = Vec3::newTemp(static_cast<double>(x), static_cast<double>(y), static_cast<double>(z))
                          ->add(0.5, 0.5, 0.5)
                          ->add(viewOffset)

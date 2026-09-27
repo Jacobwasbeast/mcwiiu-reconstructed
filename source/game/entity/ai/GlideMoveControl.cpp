@@ -59,19 +59,19 @@ void GlideMoveControl::tick()
     {
         float movementSpeed = (float)mob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
         mSpeed = Mth::approach(mSpeed, (float)(movementSpeed * mSpeedModifier),
-                               (float)(0.005 * (0.7 / mSpeed)));
+                               0.005f * (float)(1.8f / (double)mSpeed));
     }
 
-    float wantedXRot = (float)(-atan2(-dy, horizontalLength) * 57.2957763671875);
+    float wantedXRot = -((float)atan2(-dy, horizontalLength) * 57.29578f);
     LookControl* lookControl = static_cast<LookControl*>(mob->getLookControl());
-    lookControl->setLookRotation(Vec3::newTemp((double)(-wantedXRot), (double)mob->mYRot, 0.0),
+    lookControl->setLookRotation(Vec3::newTemp((double)wantedXRot, (double)mob->mYRot, 0.0),
                                   60.0f, 20.0f);
 
     float yawRadians = (mob->mYRot + 90.0f) * 0.01745329238474369f;
     float pitchRadians = wantedXRot * 0.01745329238474369f;
     float cosYaw = cosf(yawRadians);
     float sinYaw = sinf(yawRadians);
-    float sinPitch = sinf(-pitchRadians);
+    float sinPitch = sinf(pitchRadians);
     mob->mXd += ((double)(mSpeed * cosYaw * Mth::abs((float)(dx / distance))) - mob->mXd) * 0.2;
     mob->mZd += ((double)(mSpeed * sinYaw * Mth::abs((float)(dz / distance))) - mob->mZd) * 0.2;
     mob->mYd += ((double)(mSpeed * sinPitch * Mth::abs((float)(dy / distance))) - mob->mYd) * 0.2;

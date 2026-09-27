@@ -28,7 +28,7 @@ public:
                           bool allowInvulnerablePlayers, bool requireSight);
     bool canReach(boost::shared_ptr<LivingEntity> target);
     virtual bool canAttack(boost::shared_ptr<LivingEntity> target, bool allowInvulnerablePlayers);
-    void setUnseenMemoryTicks(int ticks);
+    TargetGoal* setUnseenMemoryTicks(int ticks);
     virtual std::wstring getName()
     {
         return std::wstring(L"TargetGoal");

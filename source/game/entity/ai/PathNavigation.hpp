@@ -11,6 +11,7 @@ class Mob;
 class AttributeInstance;
 struct Node;
 class Path;
+class NodeEvaluator;
 class PathFinder;
 
 class PathNavigation
@@ -38,7 +39,7 @@ public:
 
     PathNavigation(Mob* mob, Level* level);
     virtual ~PathNavigation();
-    virtual bool canUpdatePath() = 0;
+    virtual PathFinder* createPathFinder() = 0;
     virtual Path* createPath(const BlockPos& pos);
     virtual Path* createPath(boost::shared_ptr<Entity> entity);
     virtual Path* createDirectPath(const BlockPos& pos);
@@ -49,8 +50,10 @@ public:
     virtual bool shouldAvoidSun() const;
     virtual void updatePath();
     virtual Vec3* getTempMobPos() = 0;
-    virtual bool canMoveDirectly(Vec3* a, Vec3* b, int x, int y, int z) = 0;
+    virtual bool canUpdatePath() = 0;
     virtual void trimPath();
+    virtual bool canMoveDirectly(Vec3* a, Vec3* b, int x, int y, int z) = 0;
+    virtual NodeEvaluator* getNodeEvaluator() = 0;
     virtual bool isStableDestination(const BlockPos& pos);
 
     bool isDone();

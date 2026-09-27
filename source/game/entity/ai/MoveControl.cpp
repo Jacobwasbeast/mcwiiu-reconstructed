@@ -2,13 +2,24 @@
 
 #include <math.h>
 
+#include <algorithm>
+
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/JumpControl.hpp"
 #include "game/core/Mth.hpp"
+#include "game/entity/ai/NodeEvaluator.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/util/AABB.hpp"
+
+const float MoveControl::MIN_SPEED_SQR = 2.5000003E-7f;
 
 MoveControl::MoveControl(Mob* mob)
     : mMob(mob), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0), mSpeedModifier(0.0),
@@ -89,75 +100,142 @@ float MoveControl::rotlerp(float from, float to, float max)
     {
         delta = -max;
     }
-    return from + delta;
+
+    float result = from + delta;
+    if (result >= 180.0f)
+    {
+        result -= 360.0f;
+    }
+    if (result < -180.0f)
+    {
+        result += 360.0f;
+    }
+    return result;
 }
 
 void MoveControl::tick()
 {
-    bool aquatic = mMob->isInWater();
-    float speed = (float)mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
+    bool swimming = false;
+    if ((mMob->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL
+        && mMob->GetType() != EntityType::SQUID && mMob->isInWater())
+    {
+        swimming = true;
+    }
 
     if (mOperation == STRAFE)
     {
-        float length = Mth::sqrt(mStrafeForwards * mStrafeForwards + mStrafeRight * mStrafeRight);
+        mOperation = WAIT;
+        float movementSpeed = (float)mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
+        float speed = (float)mSpeedModifier * movementSpeed;
+        float friction = 0.91f;
+        if (mMob->mOnGround)
+        {
+            BlockPos below(Mth::floor(mMob->mX), Mth::floor(mMob->mBoundingBox->mMinY - 1.0), Mth::floor(mMob->mZ));
+            friction = mMob->mLevel->getBlockState(below)->getBlock()->mFriction * 0.91f;
+        }
+
+        float frictionFactor = 0.16277136f / (friction * friction * friction);
+        float forwards = mStrafeForwards;
+        float right = mStrafeRight;
+        float acceleration = mMob->mOnGround ? speed * frictionFactor : mMob->mFlyingSpeed;
+        float length = Mth::sqrt(right * right + forwards * forwards);
         if (length < 1.0f)
         {
             length = 1.0f;
         }
-        float scale = (float)(mSpeedModifier * (double)speed / (double)length);
-        float sinYaw = Mth::sin(mMob->mYRot * 0.01745329238474369f);
-        float cosYaw = Mth::cos(mMob->mYRot * 0.01745329238474369f);
-        mMob->mXxa = mStrafeForwards * cosYaw - mStrafeRight * sinYaw;
-        mMob->mZza = mStrafeRight * cosYaw + mStrafeForwards * sinYaw;
-        mMob->mXxa *= scale;
-        mMob->mZza *= scale;
-        mOperation = WAIT;
-        return;
-    }
+        length = acceleration / length;
+        right *= length;
+        forwards *= length;
 
-    if (mOperation == MOVE_TO)
-    {
-        mOperation = WAIT;
-        double dx = mWantedX - mMob->mX;
-        double dy = mWantedY - mMob->mY;
-        double dz = mWantedZ - mMob->mZ;
-        double horizontal = dx * dx + dz * dz;
-        double distance = sqrt(horizontal + dy * dy);
-        if (distance < 0.0001)
+        float sinYaw = Mth::sin(mMob->mYRot * 0.017453292f);
+        float cosYaw = Mth::cos(mMob->mYRot * 0.017453292f);
+        float xa = right * cosYaw - forwards * sinYaw;
+        float za = forwards * cosYaw + right * sinYaw;
+
+        PathNavigation* navigation = mMob->getNavigation();
+        if (navigation != NULL)
         {
-            mMob->setSpeed(0.0f);
+            NodeEvaluator* evaluator = navigation->getNodeEvaluator();
+            BlockPos target(mMob->mX + xa + mMob->mXd, mMob->mY, mMob->mZ + za + mMob->mZd);
+            if (evaluator != NULL)
+            {
+                bool blocked = evaluator->getBlockPathType(mMob->mLevel, target.x, target.y, target.z)
+                               != BlockPathTypes::WALKABLE;
+                bool sunlit = false;
+                if (navigation->shouldAvoidSun() && mMob->mLevel->isDay() && mMob->mLevel->canSeeSky(target))
+                {
+                    sunlit = true;
+                }
+
+                if (blocked || sunlit)
+                {
+                    mMob->setSpeed(0.0f);
+                    mMob->setZza(0.0f);
+                    mMob->setXxa(0.0f);
+                    if (!mMob->mHasImpulse)
+                    {
+                        mMob->mXd = 0.0;
+                        mMob->mZd = 0.0;
+                    }
+                    return;
+                }
+            }
+        }
+
+        mMob->setSpeed(speed);
+        mMob->setZza(mStrafeForwards);
+        mMob->setXxa(mStrafeRight);
+        mMob->setMoving(true);
+    }
+    else if (mOperation == MOVE_TO)
+    {
+        double dx = mWantedX - mMob->mX;
+        double dz = mWantedZ - mMob->mZ;
+        double dy = mWantedY - mMob->mY;
+        double distanceSqr = dy * dy + dx * dx + dz * dz;
+        mOperation = WAIT;
+        if (distanceSqr < MIN_SPEED_SQR)
+        {
+            mMob->setZza(0.0f);
             return;
         }
 
-        if (horizontal > 0.01)
+        float wantedYRot = 0.0f;
+        double horizontalSqr = dx * dx + dz * dz;
+        if (horizontalSqr > 0.1f)
         {
-            float wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
-            mMob->mYRot = rotlerp(mMob->mYRot, wantedYRot, 30.0f);
+            wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
         }
-        mMob->setSpeed((float)((double)speed * mSpeedModifier));
+        mMob->mYRot = rotlerp(mMob->mYRot, wantedYRot, 30.0f);
+        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
 
-        if (dy > (double)mMob->mMaxUpStep && horizontal > 0.01)
+        if (!swimming && dy > 0.009f && horizontalSqr < std::max(1.0f, mMob->mBbWidth))
         {
-            JumpControl* jumpControl = static_cast<JumpControl*>(mMob->getJumpControl());
-            if (jumpControl != NULL)
-            {
-                jumpControl->jump();
-            }
+            mMob->getJumpControl()->jump();
+            mOperation = JUMPING;
         }
-        else if (aquatic)
-        {
-            mMob->mYya = dy > 0.0 ? 1.0f : -1.0f;
-        }
-        return;
+        mMob->setMoving(true);
     }
-
-    if (mOperation == JUMPING)
+    else if (mOperation == JUMPING)
     {
-        mMob->setSpeed((float)((double)speed * mSpeedModifier));
+        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        if (mMob->mOnGround)
+        {
+            mOperation = WAIT;
+        }
     }
     else
     {
-        mMob->setSpeed(0.0f);
+        mMob->setZza(0.0f);
+        mMob->setXxa(0.0f);
+        mMob->setMoving(false);
+    }
+
+    if (swimming)
+    {
+        mMob->mYd += 0.005;
+        double movementSpeed = mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
+        mMob->setYya((float)(mWantedY + 0.5 - mMob->mY) * (float)(mSpeedModifier * movementSpeed));
     }
 }
 

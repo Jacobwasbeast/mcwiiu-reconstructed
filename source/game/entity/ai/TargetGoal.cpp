@@ -204,7 +204,8 @@ bool TargetGoal::canAttack(boost::shared_ptr<LivingEntity> target, bool allowInv
     return mCanReach != 2;
 }
 
-void TargetGoal::setUnseenMemoryTicks(int ticks)
+TargetGoal* TargetGoal::setUnseenMemoryTicks(int ticks)
 {
     mUnseenMemoryTicks = ticks;
+    return this;
 }

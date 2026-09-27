@@ -1,4 +1,5 @@
 #include "game/entity/ai/MakeLoveGoal.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -59,10 +60,9 @@ bool MakeLoveGoal::canUse()
         || !mVillager->isWillingToBreed(true))
         return false;
 
-    AABB* area = mVillager->mBoundingBox->grow(8.0, 4.0, 8.0);
+    AABB* area = mVillager->mBoundingBox->grow(8.0, 3.0, 8.0);
     boost::shared_ptr<Entity> entity =
         mLevel->getClosestEntityOfClass(typeid(Villager), area, self);
-    delete area;
     if (!entity)
         return false;
 
@@ -117,6 +117,8 @@ void MakeLoveGoal::tick()
     if (mVillager->distanceToSqr(mPartner) <= 2.25) {
         if (mRunningTicks == 0 && mPartner->isInLove())
             breed();
+    } else {
+        mVillager->getNavigation()->moveTo(mPartner, 0.25);
     }
 
     if (mVillager->getRandom()->nextInt(35) == 0)

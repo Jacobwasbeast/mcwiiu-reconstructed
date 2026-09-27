@@ -137,8 +137,8 @@ void TemptGoal::stop()
 
 void TemptGoal::tick()
 {
-    mMob->getLookControl()->setLookAt(mPlayer.lock(), mMob->getMaxHeadYRot(),
-                                      mMob->getMaxHeadXRot());
+    mMob->getLookControl()->setLookAt(mPlayer.lock(), (float)mMob->getMaxHeadYRot() + 20.0f,
+                                      (float)mMob->getMaxHeadXRot());
 
     if (mMob->distanceToSqr(mPlayer.lock()) < 6.25)
     {
