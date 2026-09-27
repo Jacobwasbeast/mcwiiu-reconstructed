@@ -1154,7 +1154,7 @@ float Biome::getTemperature(const BlockPos& pos)
 {
     if (pos.y > 64)
     {
-        float noise = (float)(TEMPERATURE_NOISE->getValue(pos.x * 0.125F, pos.z * 0.125F) * 2.25);
+        float noise = (float)(TEMPERATURE_NOISE->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
 
         return getTemperature() - (noise + pos.y - 64.0F) * 0.05F / 30.0F;
     }
