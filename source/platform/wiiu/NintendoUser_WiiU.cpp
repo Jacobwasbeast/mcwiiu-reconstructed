@@ -2,7 +2,7 @@
 
 #include <coreinit/memdefaultheap.h>
 
-int CoreUser_DynLoad_DefaultAlloc__FiT1PPv(int32_t size, int32_t alignment, void** result)
+int CoreUser_DynLoad_DefaultAlloc(int32_t size, int32_t alignment, void** result)
 {
     void* block;
 
@@ -38,7 +38,7 @@ int CoreUser_DynLoad_DefaultAlloc__FiT1PPv(int32_t size, int32_t alignment, void
     return block != 0 ? 0 : 0xbad10002;
 }
 
-void CoreUser_DynLoad_DefaultFree__FPv(void* block)
+void CoreUser_DynLoad_DefaultFree(void* block)
 {
     MEMFreeToDefaultHeap(block);
 }

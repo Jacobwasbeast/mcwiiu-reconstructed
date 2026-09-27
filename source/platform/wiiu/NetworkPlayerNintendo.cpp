@@ -2,7 +2,7 @@
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "game/core/System.hpp"
 
-INetworkPlayer* NetworkPlayerNintendo_Create__FP16NQRNetworkPlayer(NQRNetworkPlayer* player)
+INetworkPlayer* NetworkPlayerNintendo_Create(NQRNetworkPlayer* player)
 {
     return new NetworkPlayerNintendo(player);
 }

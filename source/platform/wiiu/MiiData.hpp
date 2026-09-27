@@ -26,7 +26,6 @@ public:
 
 private:
     friend class CProfile;
-
     void CreateSysUserData(int slot);
     void CreateGuestData(int index);
     void CreateMiiMakerData(int index);

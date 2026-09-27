@@ -145,7 +145,7 @@ void UIComponent_WiiUDRC::handleReload()
 
 int UIComponent_WiiUDRC::getSceneType()
 {
-    return 0x41;
+    return EUIScene_WiiUDRC;
 }
 
 bool UIComponent_WiiUDRC::stealsFocus()

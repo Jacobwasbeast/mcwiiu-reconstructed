@@ -24,9 +24,8 @@
 
 #if defined(RECON_NATIVE)
 #include "network_manager.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #endif
-
-unsigned int GetTickCount();
 
 namespace nn
 {
@@ -69,11 +68,12 @@ public:
     SearchEntry entries[7];
 };
 
+NQRNetworkManager_Lan_WiiU* gLanNetworkManager;
+
 namespace
 {
-NQRNetworkManager_Lan_WiiU* s_lanNetworkManager;
 CPlatformNetworkManagerNintendo* s_platformNetworkManager;
-const eGameHostOption kGameHostOption3 = static_cast<eGameHostOption>(3);
+const eGameHostOption kGameHostOption3 = eGameHostOption_FriendsOfFriends;
 
 const nn::fp::FriendPresence* getNintendoPresence(const FriendPresence* presence)
 {
@@ -354,10 +354,10 @@ void CPlatformNetworkManagerNintendo::Initialise(CGameNetworkManager* manager, i
     m_networkManager = 0;
 #else
     m_onlineNetworkManager = new NQRNetworkManager_WiiU(this);
-    s_lanNetworkManager = new NQRNetworkManager_Lan_WiiU(this);
+    gLanNetworkManager = new NQRNetworkManager_Lan_WiiU(this);
     m_networkManager = m_onlineNetworkManager;
     m_onlineNetworkManager->Initialise();
-    s_lanNetworkManager->Initialise();
+    gLanNetworkManager->Initialise();
 #endif
     m_suppressConnections = false;
     m_lastFriendSearchTime = 0;
@@ -651,7 +651,7 @@ void CPlatformNetworkManagerNintendo::_HostGame(int userIndexMask, unsigned char
     m_sessionData.m_bPublicGame = !IsPrivateGame();
     m_sessionData.m_bGameStarted = false;
     m_sessionData.m_numPlayers = (unsigned char)countLocalPlayers(userIndexMask);
-    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption(eGameHostOption_32);
+    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption(eGameHostOption_All);
     m_sessionData.m_customGameModeHostOptions = Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_All);
     m_sessionData.m_gameModeId = gameMode;
     m_sessionData.m_miniGameId = miniGameId;
@@ -683,7 +683,7 @@ void CPlatformNetworkManagerNintendo::UpdateAndSetGameSessionData(INetworkPlayer
     INetworkPlayer* host = GetHostPlayer();
     if (host != 0)
         wcstombs(m_sessionData.m_hostGamertag.m_name, host->GetOnlineName(), GameSessionData::MAX_GAMERTAG_LENGTH);
-    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption(eGameHostOption_32);
+    m_sessionData.m_gameHostOptions = g_pApp->GetGameHostOption(eGameHostOption_All);
     if (player == 0)
     {
         UpdateMatchMakingData();
@@ -852,17 +852,17 @@ bool CPlatformNetworkManagerNintendo::setLanMode(bool mode)
             }
             else
             {
-                s_lanNetworkManager->SignalInitialiseAfterOnline();
+                gLanNetworkManager->SignalInitialiseAfterOnline();
                 m_enteringLanMode = false;
                 m_lanMode = true;
-                m_networkManager = s_lanNetworkManager;
+                m_networkManager = gLanNetworkManager;
             }
         }
         else
         {
             if (!m_leavingLanMode)
             {
-                s_lanNetworkManager->Pia_ShutdownForOnline();
+                gLanNetworkManager->Pia_ShutdownForOnline();
                 m_leavingLanMode = true;
             }
             else

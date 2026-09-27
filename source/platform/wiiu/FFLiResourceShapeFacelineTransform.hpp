@@ -1,9 +1,0 @@
-#ifndef PLATFORM_WIIU_FFLIRESOURCESHAPEFACELINETRANSFORM_HPP
-#define PLATFORM_WIIU_FFLIRESOURCESHAPEFACELINETRANSFORM_HPP
-
-struct FFLiResourceShapeFacelineTransform
-{
-    void SwapEndian();
-};
-
-#endif

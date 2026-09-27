@@ -22,13 +22,11 @@ public:
 
     enum EMessageResult
     {
-        EMessageResult_0 = 0,
-        EMessageResult_1 = 1,
-        EMessageResult_2 = 2,
-        EMessageResult_3 = 3,
-        EMessageResult_4 = 4,
-        EMessageResult_5 = 5,
-        EMessageResult_6 = 6
+        EMessageResult_Cancelled = 3,
+        EMessageResult_Accept,
+        EMessageResult_Decline,
+        EMessageResult_ThirdOption,
+        EMessageResult_FourthOption
     };
 
     struct DLC_TMS_DETAILS;
@@ -47,7 +45,31 @@ public:
         ESaveIncompleteType_1 = 1,
         ESaveIncompleteType_2 = 2
     };
-    enum ESaveGameState { ESaveGameStateValue = 0 };
+    enum ESaveGameState
+    {
+        ESaveGame_Idle,
+        ESaveGame_Save,
+        ESaveGame_SaveComplete,
+        ESaveGame_SaveFailed,
+        ESaveGame_SaveCancelled,
+        ESaveGame_SaveIncomplete,
+        ESaveGame_SaveIncompleteWaiting,
+        ESaveGame_Load,
+        ESaveGame_LoadComplete,
+        ESaveGame_LoadFailed,
+        ESaveGame_Delete,
+        ESaveGame_DeleteComplete,
+        ESaveGame_DeleteFailed,
+        ESaveGame_Rename,
+        ESaveGame_RenameComplete,
+        ESaveGame_RenameFailed,
+        ESaveGame_Copy,
+        ESaveGame_CopyComplete,
+        ESaveGame_CopyFailed,
+        ESaveGame_CopyFailedNoSpace,
+        ESaveGame_CopyFailedOther,
+        ESaveGame_GetThumbnail
+    };
     enum eOptionsCallback
     {
         eOptionsCallback_0 = 0,

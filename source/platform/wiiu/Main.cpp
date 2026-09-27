@@ -34,6 +34,7 @@
 #include "platform/wiiu/WiiU_Runtime.hpp"
 #include "platform/wiiu/FJ_WiiUDRC.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/core/CriticalSection.hpp"
 
 #include <coreinit/messagequeue.h>
 #include <coreinit/thread.h>
@@ -45,20 +46,16 @@ extern "C" void OSReport(const char*, ...);
 extern "C" void OSBlockThreadsOnExit();
 extern "C" int OSResumeThread(OSThread* thread);
 extern "C" void OSInitMessageQueue(OSMessageQueue*, OSMessage*, int);
-extern void InitializeCriticalSection(OSFastMutex*);
-extern void EnterCriticalSection(OSFastMutex*);
-extern void LeaveCriticalSection(OSFastMutex*);
 extern "C" int ProcUIInitEx(int (*saveCallback)(void*), void* context);
 extern "C" int ProcUIRegisterCallback(int, unsigned int (*callback)(void*), void*, int);
 extern "C" int ProcUIProcessMessages(int);
-void Sleep(unsigned int);
 extern "C" void DefineActions();
 extern "C" void RegisterAwardsWithProfileManager();
 extern "C" void ReleaseCallback();
 extern "C" int SaveCallback(void*);
 extern "C" void ShutdownAndExit();
-extern "C" void CallbackAcquiredForeground(void*);
-extern unsigned int CallbackReleaseForeground__FPv(void*);
+extern unsigned int CallbackAcquiredForeground(void*);
+extern unsigned int CallbackReleaseForeground(void*);
 extern unsigned int CallbackHomebuttonDenied(void*);
 extern bool ReadDir(int*, FSDirEntry*);
 extern int altMainThread(int, void*);
@@ -129,8 +126,8 @@ int main()
     g_pInput->SetDeadzoneAndMovementRange(0, 20000, 0x7fff);
     BOOT_TRACE("input configured");
     ProcUIInitEx(SaveCallback, 0);
-    ProcUIRegisterCallback(0, (unsigned int (*)(void*))CallbackAcquiredForeground, 0, 100);
-    ProcUIRegisterCallback(1, CallbackReleaseForeground__FPv, 0, 100);
+    ProcUIRegisterCallback(0, CallbackAcquiredForeground, 0, 100);
+    ProcUIRegisterCallback(1, CallbackReleaseForeground, 0, 100);
     ProcUIRegisterCallback(5, CallbackHomebuttonDenied, 0, 100);
     BOOT_TRACE("procui callbacks registered");
     nn::ac::Initialize();

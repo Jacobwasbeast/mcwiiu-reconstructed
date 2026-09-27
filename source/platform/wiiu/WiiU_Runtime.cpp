@@ -7,6 +7,7 @@
 #include <coreinit/time.h>
 
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/WiiU_FileCache.hpp"
 
 static FSClient* sFileSystemClient = 0;
@@ -143,3 +144,32 @@ void operator delete[](void* address) noexcept
     ::operator delete(address);
 }
 #endif
+
+void EnterCriticalSection(OSFastMutex* criticalSection)
+{
+    OSFastMutex_Lock(criticalSection);
+}
+
+void LeaveCriticalSection(OSFastMutex* criticalSection)
+{
+    OSFastMutex_Unlock(criticalSection);
+}
+
+void InitializeCriticalSection(OSFastMutex* criticalSection)
+{
+    OSFastMutex_Init(criticalSection, "");
+}
+
+void InitializeCriticalSectionAndSpinCount(OSFastMutex* criticalSection, unsigned long)
+{
+    InitializeCriticalSection(criticalSection);
+}
+
+void DeleteCriticalSection(OSFastMutex*)
+{
+}
+
+int TryEnterCriticalSection(OSFastMutex* criticalSection)
+{
+    return OSFastMutex_TryLock(criticalSection);
+}

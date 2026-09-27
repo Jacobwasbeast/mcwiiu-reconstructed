@@ -1,9 +1,0 @@
-#ifndef PLATFORM_WIIU_FFLIRESOURCESHAPEDATAHEADER_HPP
-#define PLATFORM_WIIU_FFLIRESOURCESHAPEDATAHEADER_HPP
-
-struct FFLiResourceShapeDataHeader
-{
-    void SwapEndian();
-};
-
-#endif

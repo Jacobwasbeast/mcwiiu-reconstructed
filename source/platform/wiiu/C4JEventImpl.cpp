@@ -1,6 +1,5 @@
 #include "platform/wiiu/C4JEventImpl.hpp"
-
-void Sleep(unsigned int milliseconds);
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 C4JEventImpl::C4JEventImpl(C4JEvent::EMode mode)
     : m_mode(mode), m_waitCount(0)

@@ -12,17 +12,16 @@ class NQRNetworkPlayer;
 
 namespace nn
 {
-    namespace fp
-    {
-        struct FriendPresence;
-    }
+namespace fp
+{
+struct FriendPresence;
+}
 }
 
 class NQRNetworkManager
 {
 public:
-    template <typename T, unsigned int, std::size_t>
-    class TargetDeque
+    template<typename T, unsigned int, std::size_t> class TargetDeque
     {
     public:
         TargetDeque() {}
@@ -33,8 +32,16 @@ public:
 
         bool empty() const { return m_values.empty(); }
         void push_back(const T& value) { m_values.push_back(value); }
-        void pop_front() { if (!m_values.empty()) m_values.pop_front(); }
-        void pop_back() { if (!m_values.empty()) m_values.pop_back(); }
+        void pop_front()
+        {
+            if (!m_values.empty())
+                m_values.pop_front();
+        }
+        void pop_back()
+        {
+            if (!m_values.empty())
+                m_values.pop_back();
+        }
         void clear() { m_values.clear(); }
         void _Tidy() { m_values.clear(); }
 
@@ -197,12 +204,19 @@ public:
         unsigned int m_uiSyncFlags : 20;
     };
 
-    virtual void Tick() = 0; virtual void Initialise() = 0; virtual void Terminate() = 0;
-    virtual eNQRNetworkManagerState GetState() = 0; virtual bool IsHost() = 0;
-    virtual bool IsReadyToPlayOrIdle() = 0; virtual bool IsInSession() = 0; virtual bool IsMatchmakingEnabled() = 0;
+    virtual void Tick() = 0;
+    virtual void Initialise() = 0;
+    virtual void Terminate() = 0;
+    virtual eNQRNetworkManagerState GetState() = 0;
+    virtual bool IsHost() = 0;
+    virtual bool IsReadyToPlayOrIdle() = 0;
+    virtual bool IsInSession() = 0;
+    virtual bool IsMatchmakingEnabled() = 0;
     virtual void CreateAndJoinRoom(int, int, void*, int, int*, int, bool, unsigned char) = 0;
-    virtual void UpdateExternalRoomData() = 0; virtual bool FriendRoomManagerIsBusy() = 0;
-    virtual bool FriendRoomManagerSearch() = 0; virtual bool FriendRoomManagerSearch2() = 0;
+    virtual void UpdateExternalRoomData() = 0;
+    virtual bool FriendRoomManagerIsBusy() = 0;
+    virtual bool FriendRoomManagerSearch() = 0;
+    virtual bool FriendRoomManagerSearch2() = 0;
     virtual int FriendRoomManagerGetCount() = 0;
     virtual void FriendRoomManagerGetRoomInfo(int, SessionSearchResult*) = 0;
     virtual bool JoinRoom(SessionSearchResult*, int) = 0;
@@ -212,20 +226,31 @@ public:
     virtual SessionSearchResult* GetFriendRoomSearchResults(int*) = 0;
     virtual void GetExtDataForRoom(unsigned int, void*, void (*)(bool, void*), void*) = 0;
     virtual bool FindAndJoinRoom(int, unsigned int, CMatchMakeSearchParam*, unsigned char) = 0;
-    virtual void StartGame() = 0; virtual void LeaveRoom(bool) = 0; virtual void EndGame() = 0;
-    virtual bool SessionHasSpace(int) = 0; virtual bool SessionHasMii(int) = 0;
-    virtual bool AddLocalPlayerByUserIndex(int) = 0; virtual bool RemoveLocalPlayerByUserIndex(int) = 0;
-    virtual void SendInviteGUI() = 0; virtual int GetPlayerCount() = 0; virtual int GetOnlinePlayerCount() = 0;
-    virtual NQRNetworkPlayer* GetPlayerByIndex(int) = 0; virtual NQRNetworkPlayer* GetPlayerBySmallId(int) = 0;
+    virtual void StartGame() = 0;
+    virtual void LeaveRoom(bool) = 0;
+    virtual void EndGame() = 0;
+    virtual bool SessionHasSpace(int) = 0;
+    virtual bool SessionHasMii(int) = 0;
+    virtual bool AddLocalPlayerByUserIndex(int) = 0;
+    virtual bool RemoveLocalPlayerByUserIndex(int) = 0;
+    virtual void SendInviteGUI() = 0;
+    virtual int GetPlayerCount() = 0;
+    virtual int GetOnlinePlayerCount() = 0;
+    virtual NQRNetworkPlayer* GetPlayerByIndex(int) = 0;
+    virtual NQRNetworkPlayer* GetPlayerBySmallId(int) = 0;
     virtual NQRNetworkPlayer* GetPlayerByXuid(PlayerUID) = 0;
     virtual std::wstring GetDisplayNameByGamertag(std::wstring) = 0;
-    virtual NQRNetworkPlayer* GetLocalPlayerByUserIndex(int) = 0; virtual NQRNetworkPlayer* GetHostPlayer() = 0;
-    virtual void SetPresenceDataStartHostingGame() = 0; virtual int GetJoiningReadyPercentage() = 0;
+    virtual NQRNetworkPlayer* GetLocalPlayerByUserIndex(int) = 0;
+    virtual NQRNetworkPlayer* GetHostPlayer() = 0;
+    virtual void SetPresenceDataStartHostingGame() = 0;
+    virtual int GetJoiningReadyPercentage() = 0;
     virtual void LocalDataSend(NQRNetworkPlayer*, NQRNetworkPlayer*, const void*, unsigned int) = 0;
     virtual void RemoteDataSend(NQRNetworkPlayer*, NQRNetworkPlayer*, const void*, unsigned int) = 0;
     virtual int GetSessionIndex(NQRNetworkPlayer*) = 0;
     virtual void TryToConnectOnline(int (*)(void*, bool, int), void*, bool) = 0;
-    virtual bool isAdhocConnected() = 0; virtual bool connectToAdhoc() = 0; virtual bool isLanConnected() = 0;
+    virtual bool isAdhocConnected() = 0;
+    virtual bool connectToAdhoc() = 0;
+    virtual bool isLanConnected() = 0;
 
     int GetOutstandingAckCount(NQRNetworkPlayer* pPlayer);
     int GetSendQueueSizeBytes();

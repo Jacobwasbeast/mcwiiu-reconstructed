@@ -2,6 +2,10 @@
 
 #include "game/core/cDLCInfo.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
+#include "platform/wiiu/cNintendoDLCInfo.hpp"
+#include "game/core/StringConversion.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiUFileSystemHelpers.hpp"
 
 #include <string>
 #include <stdlib.h>
@@ -13,10 +17,7 @@ static const unsigned int AOC_THREAD_STACK_SIZE = 0x10000;
 static const int AOC_THREAD_PRIORITY = 16;
 static const unsigned short AOC_THREAD_ATTRIBUTES = 12;
 
-bool OpenDir(const char* pPath, int* piHandle);
 bool ReadDir(int* piHandle, FSDirEntry* pDirEntry);
-bool CloseDir(int* piHandle);
-std::wstring convStringToWstring(const std::string& string);
 
 extern "C"
 {
@@ -157,10 +158,10 @@ void C_AOC::GetPurchasedContent()
                 {
                     for (iContent = 0; iContent < m_iNumContentNames; iContent++)
                     {
-                        cDLCInfo* pDLCInfoInstance = (cDLCInfo*)(unsigned long)gApp.GetDLCInfoInstance();
+                        cNintendoDLCInfo* pDLCInfoInstance = gApp.GetDLCInfoInstance();
                         DLC_INFO* pDLCInfo = pDLCInfoInstance->GetDLCInfoByRomName(m_contentNames[iContent]);
 
-                        if (m_pPurchased[iContent] > 0 && pDLCInfo != NULL)
+                        if (m_pPurchased[iContent] == 1 && pDLCInfo != NULL)
                         {
                             if (pDLCInfoInstance->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
                             {

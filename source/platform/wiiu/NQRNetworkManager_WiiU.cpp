@@ -1,4 +1,5 @@
 #include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
+#include "game/core/StringIds.hpp"
 
 
 #include <algorithm>
@@ -32,6 +33,7 @@
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/memexpheap.h>
 #include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 static NQRNetworkManager_WiiU* s_networkManager;
 static unsigned int s_connectedLocalPlayerMask;
@@ -69,8 +71,6 @@ static unsigned int GetPiaErrorCode(int result)
 }
 static nn::nex::NotificationEventHandler* s_matchmakeNotificationHandler;
 static bool s_piaSessionStarted;
-
-unsigned int GetTickCount();
 
 nn::pia::Result StartPiaSession(
     nn::pia::transport::Station::IdentificationToken* token, char* name)
@@ -370,10 +370,10 @@ int NQRNetworkManager_WiiU::InvitationSignInReturned(void* context, bool signedI
     return ConnectOnlineNintendo_Returned(context, false, error);
 }
 
-int NQRNetworkManager_WiiU::InvitationMustConnectReturned(void* context, int button, C4JStorage::EMessageResult)
+int NQRNetworkManager_WiiU::InvitationMustConnectReturned(void* context, int pad, C4JStorage::EMessageResult)
 {
     NQRNetworkManager_WiiU* manager = static_cast<NQRNetworkManager_WiiU*>(context);
-    if (manager != NULL && button == 0)
+    if (manager != NULL && pad == 0)
         manager->TryToConnectOnline();
     else
         s_handlingBootInvite = false;
@@ -1214,8 +1214,8 @@ void NQRNetworkManager_WiiU::PollReceiveData()
             {
                 for (unsigned int index = 1; index < 4; ++index)
                     if ((mask & (1ull << index)) != 0 && g_pApp != NULL)
-                        g_pApp->SetAction(static_cast<int>(index), static_cast<eXuiAction>(0xb), NULL);
-                int parameter = static_cast<int>(0xb9a1bf4d);
+                        g_pApp->SetAction(static_cast<int>(index), eXuiAction_RemoveLocalPlayer, NULL);
+                int parameter = static_cast<int>(IDS_CONFIRM_OK);
                 if (m_localGame == false)
                     gConsoleUIController.RequestErrorMessage(0x1afa54b5, 0xf18fccd0,
                         &parameter, 1, 0xff, NULL, NULL, NULL, true);
@@ -1223,7 +1223,7 @@ void NQRNetworkManager_WiiU::PollReceiveData()
                     gConsoleUIController.RequestErrorMessage(0x624aead3, 0x3103be06,
                         &parameter, 1, 0xff, NULL, NULL, NULL, true);
                 else
-                    gConsoleUIController.RequestErrorMessage(0x386c3a1a, 0xaab2b6dd,
+                    gConsoleUIController.RequestErrorMessage(IDS_ERROR_NETWORK_TITLE, IDS_ERROR_NETWORK,
                         &parameter, 1, 0xff, NULL, NULL, NULL, true);
             }
             else
@@ -1231,9 +1231,9 @@ void NQRNetworkManager_WiiU::PollReceiveData()
                 if (g_pApp != NULL)
                 {
                     const DisconnectPacket::eDisconnectReason reason =
-                        m_localGame == false ? static_cast<DisconnectPacket::eDisconnectReason>(0xd) :
-                        m_localGame == true ? static_cast<DisconnectPacket::eDisconnectReason>(0x1e) :
-                        static_cast<DisconnectPacket::eDisconnectReason>(0);
+                        m_localGame == false ? DisconnectPacket::eDisconnectReason_GameFull :
+                        m_localGame == true ? DisconnectPacket::eDisconnectReason_AgeRestricted :
+                        DisconnectPacket::eDisconnectReason_None;
                     g_pApp->SetDisconnectReason(reason);
                 }
                 if (m_listener != NULL)

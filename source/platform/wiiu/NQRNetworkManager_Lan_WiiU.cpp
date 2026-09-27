@@ -15,6 +15,7 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 void AssertPiaError(nn::pia::Result& result);
 
@@ -27,7 +28,6 @@ static bool s_handlingBootInvite;
 static bool s_initialiseAfterOnline;
 static bool s_sessionDisconnectPending;
 
-unsigned int GetTickCount();
 extern "C" int socket_lib_init();
 extern "C" int socket_lib_finish();
 extern "C" void OSFastMutex_Unlock(OSFastMutex* mutex);
@@ -53,40 +53,6 @@ int Net_FinaliseSocket()
         s_socketLibraryInitialised = false;
     }
     return 0;
-}
-
-void LeaveCriticalSection(OSFastMutex* mutex)
-{
-    OSFastMutex_Unlock(mutex);
-}
-
-void LeaveCriticalSection(void* mutex)
-{
-    OSFastMutex_Unlock(static_cast<OSFastMutex*>(mutex));
-}
-
-void InitializeCriticalSection(OSFastMutex* mutex)
-{
-    OSFastMutex_Init(mutex, "map/set<T> too long");
-}
-
-void InitializeCriticalSectionAndSpinCount(OSFastMutex* mutex, unsigned long)
-{
-    InitializeCriticalSection(mutex);
-}
-
-void EnterCriticalSection(OSFastMutex* mutex)
-{
-    OSFastMutex_Lock(mutex);
-}
-
-int TryEnterCriticalSection(OSFastMutex* mutex)
-{
-    return OSFastMutex_TryLock(mutex) != 0;
-}
-
-void DeleteCriticalSection(OSFastMutex*)
-{
 }
 
 void Local_FinalizeLocalCommunication()
@@ -192,7 +158,7 @@ NQRNetworkManager_Lan_WiiU::NQRNetworkManager_Lan_WiiU(INQRNetworkManagerListene
       m_pendingUserMask(0), m_maxPlayers(8), m_gameMode(0), m_externalData(NULL),
       m_externalDataSize(0), m_running(false), m_leaveRequested(false), m_createRequested(false),
       m_joinRequested(false), m_browseRequested(false), m_randomJoinRequested(false),
-      m_updateRequested(false), m_lastRateControlledEvent(0), m_saveTransferState(0),
+      m_updateRequested(false), m_lastRateControlledEvent(0), m_saveTransferState(eSaveTransfer_Idle),
       m_saveTransferData(NULL), m_saveTransferSize(0), m_saveTransferOffset(0),
       m_saveTransferPacketPending(false), m_saveTransferSessionId(0),
       m_saveTransferDescriptor(), m_saveTransferGeneration(0), m_saveTransferFlags(0),
@@ -911,7 +877,7 @@ void NQRNetworkManager_Lan_WiiU::SendSaveTransferDataPacket(void* data, int size
 
 void NQRNetworkManager_Lan_WiiU::TickSaveTransferData()
 {
-    if (m_saveTransferState == 4 && !m_saveTransferPacketPending)
+    if (m_saveTransferState == eSaveTransfer_Transferring && !m_saveTransferPacketPending)
     {
         unsigned int remaining = m_saveTransferSize - m_saveTransferOffset;
         unsigned int packetSize = remaining > 0x4000 ? 0x4000 : remaining;
@@ -919,8 +885,9 @@ void NQRNetworkManager_Lan_WiiU::TickSaveTransferData()
         m_saveTransferPacketPending = true;
         m_saveTransferOffset += packetSize;
     }
-    if ((m_saveTransferState == 4 || m_saveTransferState == 12) && m_connectedStations.empty())
-        m_saveTransferState = 14;
+    if ((m_saveTransferState == eSaveTransfer_Transferring || m_saveTransferState == eSaveTransfer_Joined) &&
+        m_connectedStations.empty())
+        m_saveTransferState = eSaveTransfer_ConnectionLost;
 }
 
 void NQRNetworkManager_Lan_WiiU::ShowErrorViewer()
@@ -1443,7 +1410,7 @@ void NQRNetworkManager_Lan_WiiU::Pia_ShutdownForOnline()
     }
 }
 
-void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long saveId, unsigned int worldId, unsigned int titleVersion, wchar_t* name)
+void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long seed, unsigned int hostOptions, unsigned int texturePack, wchar_t* name)
 {
     const unsigned int totalSize = static_cast<unsigned int>(dataSize) + static_cast<unsigned int>(metadataSize);
     delete[] m_saveTransferData;
@@ -1460,9 +1427,9 @@ void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void
     m_saveTransferDescriptor.version = 2;
     m_saveTransferDescriptor.dataSize = static_cast<unsigned int>(dataSize);
     m_saveTransferDescriptor.metadataSize = static_cast<unsigned int>(metadataSize);
-    m_saveTransferDescriptor.saveId = saveId;
-    m_saveTransferDescriptor.worldId = worldId;
-    m_saveTransferDescriptor.titleVersion = titleVersion;
+    m_saveTransferDescriptor.seed = seed;
+    m_saveTransferDescriptor.hostOptions = hostOptions;
+    m_saveTransferDescriptor.texturePack = texturePack;
     if (name != NULL)
         std::wcsncpy(m_saveTransferDescriptor.name, name, 63);
     m_saveTransferDescriptor.name[63] = L'\0';
@@ -1476,13 +1443,13 @@ void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void
 unsigned int NQRNetworkManager_Lan_WiiU::FindSessionForSaveTransfer()
 {
     SetFriendSearchState(eNQRNetworkManagerFriendSearchState_Searching);
-    m_saveTransferState = 9;
+    m_saveTransferState = eSaveTransfer_Searching;
     return GetFriendsFromSessionBrowse();
 }
 
 void NQRNetworkManager_Lan_WiiU::JoinSaveTransferConnection()
 {
-    m_saveTransferState = 10;
+    m_saveTransferState = eSaveTransfer_Joining;
     JoinRoom(m_saveTransferSessionId, 0, NULL);
     m_saveTransferOffset = 0;
 }

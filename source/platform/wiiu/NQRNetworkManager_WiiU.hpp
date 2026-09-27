@@ -164,7 +164,7 @@ public:
     static void CancelConnectOnlineNintendo(void* context);
     static void ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* callbackData);
     static int InvitationSignInReturned(void* context, bool signedIn, int error, int userIndex);
-    static int InvitationMustConnectReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int InvitationMustConnectReturned(void* context, int pad, C4JStorage::EMessageResult result);
     void UpdateInvitationChecks();
     NQRNetworkPlayer* GetPlayerFromStationIdAndLocalIdx(unsigned long long stationId, int localIndex);
     void RemoveConnectedStation(unsigned long long stationId);

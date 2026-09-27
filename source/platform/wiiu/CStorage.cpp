@@ -6,6 +6,7 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -27,7 +28,6 @@ extern "C" int SAVEGetStatEvidence(FSClient*, FSCmdBlock*, unsigned char, const 
     __asm__("SAVEGetStat");
 
 }
-void Sleep(unsigned int);
 
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
 extern "C"
@@ -244,13 +244,13 @@ CStorage::CStorage()
 }
 void CStorage::DisplaySavingMessages()
 {
-    int saveState = GetSaveState();
+    C4JStorage::ESaveGameState saveState = GetSaveState();
     int optionsWriting = IsOptionsWriteInProgress();
-    if (optionsWriting == 0 && saveState != 1) {
+    if (optionsWriting == 0 && saveState != C4JStorage::ESaveGame_Save) {
         if (m_savingMessageCallback != NULL)
-            m_savingMessageCallback(m_savingMessageContext, static_cast<C4JStorage::ESavingMessage>(0), 0);
+            m_savingMessageCallback(m_savingMessageContext, C4JStorage::ESavingMessage_0, 0);
     } else if (m_savingMessageCallback != NULL)
-        m_savingMessageCallback(m_savingMessageContext, static_cast<C4JStorage::ESavingMessage>(2), 0);
+        m_savingMessageCallback(m_savingMessageContext, C4JStorage::ESavingMessage_2, 0);
 }
 void CStorage::Tick()
 {
@@ -330,7 +330,10 @@ int CStorage::ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_File
 }
 int CStorage::WriteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*, unsigned char*, unsigned int) { return 1; }
 int CStorage::DeleteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*) { return 1; }
-int CStorage::GetDLCOffers(int, DLCStatusCallback, void*, unsigned int) { return 1; }
+int CStorage::GetDLCOffers(int, DLCOffersCallback, void*, unsigned int)
+{
+    return 1;
+}
 unsigned long long CStorage::InitialiseProfileData(unsigned short version, unsigned int profileCount,
                                                    unsigned int optionCount, unsigned int* defaults, int gameDataSize,
                                                    unsigned int* gameDataSizes)
@@ -598,7 +601,7 @@ void CStorage::ProcessOptionsUpdate()
             m_profileReadBuffers[profile] = NULL;
             *m_gameProfileSizes |= 1U << profile;
             if (m_optionsDataCallback != NULL)
-                m_optionsDataCallback(m_optionsDataContext, profile, 0, (C4JStorage::eOptionsCallback)4);
+                m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_4);
         } else if (m_profileReadState[profile].state == 8) {
             OSJoinThread(&m_profileLoadThreads[profile], NULL);
             m_profileReadState[profile].state = 0;
@@ -615,12 +618,12 @@ void CStorage::ProcessOptionsUpdate()
             m_profileBuffers[profile] = NULL;
             if (m_optionsDataCallback != NULL) {
                 if (result == 3)
-                    m_optionsDataCallback(m_optionsDataContext, profile, 0, (C4JStorage::eOptionsCallback)1);
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_1);
                 else if (m_profileResult == 4) {
                     m_profileResult = 0;
-                    m_optionsDataCallback(m_optionsDataContext, profile, 0, (C4JStorage::eOptionsCallback)2);
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_2);
                 } else
-                    m_optionsDataCallback(m_optionsDataContext, profile, 0, (C4JStorage::eOptionsCallback)3);
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_3);
             }
         }
     }
@@ -646,7 +649,7 @@ unsigned int CStorage::DeleteOptionsThreadProc(int profile)
         int result =
             SAVERemove(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), FS_ERROR_FLAG_ALL);
         if (result == 0 && m_optionsDataCallback != NULL)
-            m_optionsDataCallback(m_optionsDataContext, profile, 0, (C4JStorage::eOptionsCallback)9);
+            m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_9);
     }
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
@@ -671,7 +674,7 @@ unsigned long long CStorage::ResetSaveData()
     m_saveData = NULL;
     return 0;
 }
-int CStorage::GetSaveState() { return (int)m_saveState; }
+C4JStorage::ESaveGameState CStorage::GetSaveState() { return m_saveState; }
 int CStorage::GetFileNANDSize(unsigned int size)
 {
     if (size < 0xa000U)
@@ -691,7 +694,7 @@ int CStorage::saveInfoSortfn(const void* left, const void* right)
 unsigned int CStorage::GetSavesInfoThreadProc()
 {
     DebugPrintf("GetSavesInfoThreadProc - start\n");
-    while (m_saveState != 0 && m_saveState != 6)
+    while (m_saveState != C4JStorage::ESaveGame_Idle && m_saveState != C4JStorage::ESaveGame_SaveIncompleteWaiting)
         Sleep(10);
 
     unsigned char slot = nn::act::GetSlotNo();
@@ -794,11 +797,11 @@ unsigned long long CStorage::ClearSavesInfo()
     }
     return 0;
 }
-int CStorage::LoadSaveDataThumbnail(SAVE_INFO* info, int (*callback)(void*, unsigned char*, unsigned int),
+C4JStorage::ESaveGameState CStorage::LoadSaveDataThumbnail(SAVE_INFO* info, int (*callback)(void*, unsigned char*, unsigned int),
                                     void* context)
 {
     callback(context, info->thumbnail, info->thumbnailSize);
-    return 0x15;
+    return C4JStorage::ESaveGame_GetThumbnail;
 }
 unsigned int CStorage::LoadGameThreadProc()
 {
@@ -813,33 +816,33 @@ unsigned int CStorage::LoadGameThreadProc()
         m_saveSize = FSReadFile(&m_saveClient, &m_saveCommandBlock, m_saveData, 1, stat.size, file, 0, FS_ERROR_FLAG_ALL);
         if (m_saveSize == stat.size) {
             FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
-            m_saveState = 8;
+            m_saveState = C4JStorage::ESaveGame_LoadComplete;
             gProfile->LeaveInitSaveDirCS();
             return 0;
         }
     }
     gProfile->LeaveInitSaveDirCS();
-    m_saveState = 9;
+    m_saveState = C4JStorage::ESaveGame_LoadFailed;
     return 0;
 }
 int CStorage::_LoadGameThreadProc(int, void* storage) { return ((CStorage*)storage)->LoadGameThreadProc(); }
-int CStorage::LoadSaveData(SAVE_INFO* info, LoadCallback callback, void* context)
+C4JStorage::ESaveGameState CStorage::LoadSaveData(SAVE_INFO* info, LoadCallback callback, void* context)
 {
     m_loadCallback = callback;
     m_loadCallbackContext = context;
-    if (m_saveState != 0)
-        return 0;
+    if (m_saveState != C4JStorage::ESaveGame_Idle)
+        return C4JStorage::ESaveGame_Idle;
     SetSaveUniqueFilename(info->filename);
     std::memcpy(m_saveTitle, info->title, 0x100);
-    m_saveState = 7;
+    m_saveState = C4JStorage::ESaveGame_Load;
     void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[1], _LoadGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[1]);
-        return 7;
+        return C4JStorage::ESaveGame_Load;
     }
-    m_saveState = 0;
-    return 0;
+    m_saveState = C4JStorage::ESaveGame_Idle;
+    return C4JStorage::ESaveGame_Idle;
 }
 int CStorage::GetSaveSize() { return (int)m_saveSize; }
 unsigned long long CStorage::GetSaveData(void* destination, unsigned int* size)
@@ -963,8 +966,8 @@ unsigned int CStorage::SaveGameThreadProc()
         replacedSize += GetFileNANDSize(stat.size);
     unsigned int saveNandSize = GetFileNANDSize(m_saveSize);
     unsigned int metadataNandSize = GetFileNANDSize(m_saveImageSize + 0x100);
-    if (m_savesInfo->nandSize + saveNandSize + metadataNandSize - replacedSize > 0x1e000000U) {
-        m_saveState = 5;
+    if (m_savesInfo->nandSize + saveNandSize + metadataNandSize - replacedSize > SAVE_DATA_QUOTA) {
+        m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
         m_incompleteReason = 1;
         return 0;
     }
@@ -996,7 +999,7 @@ unsigned int CStorage::SaveGameThreadProc()
                     OSFastMutex_Unlock(&m_storageMutex);
                     if (m_savesInfo != NULL)
                         m_savesInfo->nandSize += saveNandSize + metadataNandSize - replacedSize;
-                    m_saveState = 2;
+                    m_saveState = C4JStorage::ESaveGame_SaveComplete;
                     return 0;
                 }
             } else
@@ -1005,41 +1008,41 @@ unsigned int CStorage::SaveGameThreadProc()
             FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
     }
     if (result == -12) {
-        m_saveState = 5;
+        m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
         m_incompleteReason = 1;
     } else
-        m_saveState = 3;
+        m_saveState = C4JStorage::ESaveGame_SaveFailed;
     SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     gProfile->LeaveInitSaveDirCS();
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
 int CStorage::_SaveGameThreadProc(int, void* storage) { return ((CStorage*)storage)->SaveGameThreadProc(); }
-int CStorage::SaveSaveData(SaveCallback callback, void* context)
+C4JStorage::ESaveGameState CStorage::SaveSaveData(SaveCallback callback, void* context)
 {
     m_saveCallback = callback;
     m_saveCallbackContext = context;
-    if (m_saveState != 0 && m_saveState != 6)
-        return 0;
-    m_saveState = 1;
+    if (m_saveState != C4JStorage::ESaveGame_Idle && m_saveState != C4JStorage::ESaveGame_SaveIncompleteWaiting)
+        return C4JStorage::ESaveGame_Idle;
+    m_saveState = C4JStorage::ESaveGame_Save;
     void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[0], _SaveGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[0]);
-        return 1;
+        return C4JStorage::ESaveGame_Save;
     }
-    m_saveState = 0;
-    return 0;
+    m_saveState = C4JStorage::ESaveGame_Idle;
+    return C4JStorage::ESaveGame_Idle;
 }
 void CStorage::ContinueIncompleteOperation()
 {
-    if (m_saveState == 6)
+    if (m_saveState == C4JStorage::ESaveGame_SaveIncompleteWaiting)
         SaveSaveData(m_saveCallback, m_saveCallbackContext);
 }
 void CStorage::CancelIncompleteOperation()
 {
-    if (m_saveState == 6)
-        m_saveState = 4;
+    if (m_saveState == C4JStorage::ESaveGame_SaveIncompleteWaiting)
+        m_saveState = C4JStorage::ESaveGame_SaveCancelled;
 }
 unsigned int CStorage::DeleteGameThreadProc()
 {
@@ -1056,33 +1059,33 @@ unsigned int CStorage::DeleteGameThreadProc()
         OSFastMutex_Unlock(&m_storageMutex);
         m_savesInfo->nandSize -= m_selectedSave->nandSize;
         m_selectedSave->nandSize = 0;
-        m_saveState = 11;
+        m_saveState = C4JStorage::ESaveGame_DeleteComplete;
     } else {
-        m_saveState = 12;
+        m_saveState = C4JStorage::ESaveGame_DeleteFailed;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
     }
     return 0;
 }
 int CStorage::_DeleteGameThreadProc(int, void* storage) { return ((CStorage*)storage)->DeleteGameThreadProc(); }
-int CStorage::DeleteSaveData(SAVE_INFO* info, SaveCallback callback, void* context)
+C4JStorage::ESaveGameState CStorage::DeleteSaveData(SAVE_INFO* info, SaveCallback callback, void* context)
 {
-    unsigned int oldState = m_saveState;
+    C4JStorage::ESaveGameState oldState = m_saveState;
     m_selectedSave = info;
     m_deleteCallback = callback;
     m_deleteCallbackContext = context;
     if (oldState != 0 && oldState != 6)
-        return 0;
-    m_saveState = 10;
+        return C4JStorage::ESaveGame_Idle;
+    m_saveState = C4JStorage::ESaveGame_Delete;
     m_previousSaveState = oldState;
     void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[3], _DeleteGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[3]);
-        return 10;
+        return C4JStorage::ESaveGame_Delete;
     }
     m_saveState = m_previousSaveState;
-    return 0;
+    return C4JStorage::ESaveGame_Idle;
 }
 unsigned int CStorage::CopyGameThreadProc()
 {
@@ -1094,7 +1097,7 @@ unsigned int CStorage::CopyGameThreadProc()
     int result =
         SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_selectedSave->filename, "r", &sourceFile, FS_ERROR_FLAG_ALL);
     if (result != 0 || FSGetStatFile(&m_saveClient, &m_saveCommandBlock, sourceFile, &sourceStat, FS_ERROR_FLAG_ALL) != 0) {
-        m_saveState = 18;
+        m_saveState = C4JStorage::ESaveGame_CopyFailed;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
@@ -1104,7 +1107,7 @@ unsigned int CStorage::CopyGameThreadProc()
     int saveSize = FSReadFile(&m_saveClient, &m_saveCommandBlock, save, 1, sourceStat.size, sourceFile, 0, FS_ERROR_FLAG_ALL);
     if (saveSize != (int)sourceStat.size) {
         MEMFreeToDefaultHeap(save);
-        m_saveState = 18;
+        m_saveState = C4JStorage::ESaveGame_CopyFailed;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
@@ -1118,7 +1121,7 @@ unsigned int CStorage::CopyGameThreadProc()
     result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "r", &metadataFile, FS_ERROR_FLAG_ALL);
     if (result != 0 ||
         FSGetStatFile(&m_saveClient, &m_saveCommandBlock, metadataFile, &metadataStat, FS_ERROR_FLAG_ALL) != 0) {
-        m_saveState = 18;
+        m_saveState = C4JStorage::ESaveGame_CopyFailed;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
@@ -1131,17 +1134,17 @@ unsigned int CStorage::CopyGameThreadProc()
         MEMFreeToDefaultHeap(save);
         MEMFreeToDefaultHeap(metadata);
         FSCloseFile(&m_saveClient, &m_saveCommandBlock, metadataFile, FS_ERROR_FLAG_ALL);
-        m_saveState = 18;
+        m_saveState = C4JStorage::ESaveGame_CopyFailed;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
     FSCloseFile(&m_saveClient, &m_saveCommandBlock, metadataFile, FS_ERROR_FLAG_ALL);
 
-    if (m_savesInfo->nandSize + GetFileNANDSize(saveSize) + GetFileNANDSize(metadataSize) > 0x1e000000U) {
+    if (m_savesInfo->nandSize + GetFileNANDSize(saveSize) + GetFileNANDSize(metadataSize) > SAVE_DATA_QUOTA) {
         MEMFreeToDefaultHeap(save);
         MEMFreeToDefaultHeap(metadata);
-        m_saveState = 19;
+        m_saveState = C4JStorage::ESaveGame_CopyFailedNoSpace;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
@@ -1157,7 +1160,7 @@ unsigned int CStorage::CopyGameThreadProc()
             MEMFreeToDefaultHeap(save);
             MEMFreeToDefaultHeap(metadata);
             FSCloseFile(&m_saveClient, &m_saveCommandBlock, destinationFile, FS_ERROR_FLAG_ALL);
-            m_saveState = result == -12 ? 19 : 18;
+            m_saveState = result == FS_STATUS_STORAGE_FULL ? C4JStorage::ESaveGame_CopyFailedNoSpace : C4JStorage::ESaveGame_CopyFailed;
             SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
             OSFastMutex_Unlock(&m_storageMutex);
             return 0;
@@ -1176,12 +1179,12 @@ unsigned int CStorage::CopyGameThreadProc()
             if (result == metadataSize) {
                 if (SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
                     OSFastMutex_Unlock(&m_storageMutex);
-                    m_saveState = 17;
+                    m_saveState = C4JStorage::ESaveGame_CopyComplete;
                     return 0;
                 }
                 SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
                 OSFastMutex_Unlock(&m_storageMutex);
-                m_saveState = 18;
+                m_saveState = C4JStorage::ESaveGame_CopyFailed;
                 return 0;
             }
         } else {
@@ -1193,32 +1196,32 @@ unsigned int CStorage::CopyGameThreadProc()
         MEMFreeToDefaultHeap(metadata);
     }
 
-    m_saveState = result == -12 ? 19 : 18;
+    m_saveState = result == FS_STATUS_STORAGE_FULL ? C4JStorage::ESaveGame_CopyFailedNoSpace : C4JStorage::ESaveGame_CopyFailed;
     SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
 int CStorage::_CopyGameThreadProc(int, void* storage) { return ((CStorage*)storage)->CopyGameThreadProc(); }
-int CStorage::CopySaveData(SAVE_INFO* info, CopyCallback callback, CopyProgressCallback progressCallback,
+C4JStorage::ESaveGameState CStorage::CopySaveData(SAVE_INFO* info, CopyCallback callback, CopyProgressCallback progressCallback,
                            void* context)
 {
     m_selectedSave = info;
     m_copyCallback = callback;
     m_copyProgressCallback = progressCallback;
     m_copyCallbackContext = context;
-    if (m_saveState != 0)
-        return 0;
+    if (m_saveState != C4JStorage::ESaveGame_Idle)
+        return C4JStorage::ESaveGame_Idle;
     SetSaveUniqueFilename(info->filename);
     std::memcpy(m_saveTitle, info->title, 0x100);
-    m_saveState = 16;
+    m_saveState = C4JStorage::ESaveGame_Copy;
     void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[5], _CopyGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[5]);
-        return 16;
+        return C4JStorage::ESaveGame_Copy;
     }
-    m_saveState = 0;
-    return 0;
+    m_saveState = C4JStorage::ESaveGame_Idle;
+    return C4JStorage::ESaveGame_Idle;
 }
 unsigned int CStorage::RenameGameThreadProc()
 {
@@ -1237,40 +1240,40 @@ unsigned int CStorage::RenameGameThreadProc()
         if (result == 0x100 && SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
             OSFastMutex_Unlock(&m_storageMutex);
             std::memcpy(m_savesInfo->saves[m_renameSaveIndex].title, m_renameTitle, 0x100);
-            m_saveState = 14;
+            m_saveState = C4JStorage::ESaveGame_RenameComplete;
             return 0;
         }
     }
-    m_saveState = 15;
+    m_saveState = C4JStorage::ESaveGame_RenameFailed;
     SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
 int CStorage::_RenameGameThreadProc(int, void* storage) { return ((CStorage*)storage)->RenameGameThreadProc(); }
-int CStorage::RenameSaveData(int index, wchar_t* title, SaveCallback callback, void* context)
+C4JStorage::ESaveGameState CStorage::RenameSaveData(int index, wchar_t* title, SaveCallback callback, void* context)
 {
     m_renameSaveIndex = index;
     m_renameCallback = callback;
     m_renameCallbackContext = context;
     std::memcpy(m_renameTitle, title, 0x100);
-    if (m_saveState != 0)
-        return 0;
-    m_saveState = 13;
+    if (m_saveState != C4JStorage::ESaveGame_Idle)
+        return C4JStorage::ESaveGame_Idle;
+    m_saveState = C4JStorage::ESaveGame_Rename;
     void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[4], _RenameGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[4]);
-        return 13;
+        return C4JStorage::ESaveGame_Rename;
     }
-    m_saveState = 0;
-    return 0;
+    m_saveState = C4JStorage::ESaveGame_Idle;
+    return C4JStorage::ESaveGame_Idle;
 }
 void CStorage::GetSaveImage(unsigned char**, int*) {}
 void CStorage::GetSaveThumbnail(unsigned char**, int*) {}
 void CStorage::InitSaveGame(unsigned int, const wchar_t*, const char*, int, bool* exists)
 {
     SAVEInit();
-    m_saveState = 0;
+    m_saveState = C4JStorage::ESaveGame_Idle;
     std::memset(m_saveUniqueFilename, 0, 32);
     std::memset(m_saveTitle, 0, 0x100);
     std::memset(m_gameSaveFolderTitle, 0, 0x100);
@@ -1330,19 +1333,19 @@ void CStorage::SetDefaultImages(unsigned char* image, unsigned int imageSize, un
 }
 void CStorage::TickSaveGame()
 {
-    unsigned int state = m_saveState;
+    C4JStorage::ESaveGameState state = m_saveState;
 
-    if (state == 2) {
+    if (state == C4JStorage::ESaveGame_SaveComplete) {
         OSJoinThread(&m_saveThreads[0], NULL);
-        m_saveState = 0;
-        state = 0;
+        m_saveState = C4JStorage::ESaveGame_Idle;
+        state = C4JStorage::ESaveGame_Idle;
 
         if (m_saveCallback != NULL) {
             m_saveCallback(m_saveCallbackContext, true);
             state = m_saveState;
         }
-    } else if (state == 3 || state == 4) {
-        if (state == 3) {
+    } else if (state == C4JStorage::ESaveGame_SaveFailed || state == C4JStorage::ESaveGame_SaveCancelled) {
+        if (state == C4JStorage::ESaveGame_SaveFailed) {
             OSJoinThread(&m_saveThreads[0], NULL);
         }
 
@@ -1350,19 +1353,19 @@ void CStorage::TickSaveGame()
             m_saveCallback(m_saveCallbackContext, false);
         }
 
-        m_saveState = 0;
-        state = 0;
+        m_saveState = C4JStorage::ESaveGame_Idle;
+        state = C4JStorage::ESaveGame_Idle;
     }
 
-    if (state == 8 || state == 9) {
+    if (state == C4JStorage::ESaveGame_LoadComplete || state == C4JStorage::ESaveGame_LoadFailed) {
         OSJoinThread(&m_saveThreads[1], NULL);
 
         if (m_loadCallback != NULL) {
-            m_loadCallback(m_loadCallbackContext, state == 9, true);
+            m_loadCallback(m_loadCallbackContext, state == C4JStorage::ESaveGame_LoadFailed, true);
         }
 
-        m_saveState = 0;
-        state = 0;
+        m_saveState = C4JStorage::ESaveGame_Idle;
+        state = C4JStorage::ESaveGame_Idle;
     }
 
     if (m_savesInfoState == 2) {
@@ -1377,10 +1380,10 @@ void CStorage::TickSaveGame()
         m_savesInfoState = 0;
     }
 
-    if (state == 11 || state == 12) {
+    if (state == C4JStorage::ESaveGame_DeleteComplete || state == C4JStorage::ESaveGame_DeleteFailed) {
         OSJoinThread(&m_saveThreads[3], NULL);
 
-        if (state == 11) {
+        if (state == C4JStorage::ESaveGame_DeleteComplete) {
             int index = (int)(m_selectedSave - m_savesInfo->saves);
             for (int i = index; i < m_savesInfo->count - 1; ++i) {
                 m_savesInfo->saves[i] = m_savesInfo->saves[i + 1];
@@ -1396,38 +1399,38 @@ void CStorage::TickSaveGame()
         state = m_saveState;
     }
 
-    if (state == 14 || state == 15) {
+    if (state == C4JStorage::ESaveGame_RenameComplete || state == C4JStorage::ESaveGame_RenameFailed) {
         OSJoinThread(&m_saveThreads[4], NULL);
 
         if (m_renameCallback != NULL) {
             m_renameCallback(m_renameCallbackContext, true);
-            m_saveState = 0;
+            m_saveState = C4JStorage::ESaveGame_Idle;
             return;
         }
-    } else if (state == 17) {
+    } else if (state == C4JStorage::ESaveGame_CopyComplete) {
         OSJoinThread(&m_saveThreads[5], NULL);
 
         if (m_copyCallback != NULL) {
-            m_copyCallback(m_copyCallbackContext, true, (C4JStorage::ESaveGameState)m_saveState);
-            m_saveState = 0;
+            m_copyCallback(m_copyCallbackContext, true, m_saveState);
+            m_saveState = C4JStorage::ESaveGame_Idle;
             return;
         }
-    } else if (state >= 18 && state <= 20) {
+    } else if (state >= C4JStorage::ESaveGame_CopyFailed && state <= C4JStorage::ESaveGame_CopyFailedOther) {
         OSJoinThread(&m_saveThreads[5], NULL);
 
         if (m_copyCallback != NULL) {
-            m_copyCallback(m_copyCallbackContext, false, (C4JStorage::ESaveGameState)m_saveState);
-            m_saveState = 0;
+            m_copyCallback(m_copyCallbackContext, false, m_saveState);
+            m_saveState = C4JStorage::ESaveGame_Idle;
             return;
         }
     } else {
-        if (state != 5) {
+        if (state != C4JStorage::ESaveGame_SaveIncomplete) {
             return;
         }
 
         OSJoinThread(&m_saveThreads[0], NULL);
         if (m_incompleteSaveCallback != NULL) {
-            m_saveState = 6;
+            m_saveState = C4JStorage::ESaveGame_SaveIncompleteWaiting;
             m_incompleteSaveCallback(m_incompleteSaveContext, (C4JStorage::ESaveIncompleteType)m_incompleteReason);
             return;
         }
@@ -1437,7 +1440,7 @@ void CStorage::TickSaveGame()
         }
     }
 
-    m_saveState = 0;
+    m_saveState = C4JStorage::ESaveGame_Idle;
 }
 void CStorage::SetOpenDirFn(DirectoryOpenCallback callback) { m_openDir = callback; }
 void CStorage::SetReadDirFn(DirectoryReadCallback callback) { m_readDir = callback; }
@@ -1806,7 +1809,7 @@ void CStorage::GenericDataTick()
         *m_genericReadSize = m_genericLoadedSize;
         *m_genericReadData = m_genericLoadedData;
         m_genericState = 0;
-        m_genericCallback(m_genericContext, m_genericSlot, (C4JStorage::eGeneralData_Callback_Status)0, 0);
+        m_genericCallback(m_genericContext, m_genericSlot, C4JStorage::eGeneralData_Callback_StatusValue, 0);
         m_genericLoadedData = NULL;
         return;
     case 10:

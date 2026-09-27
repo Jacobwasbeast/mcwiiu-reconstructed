@@ -10,10 +10,12 @@
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
-#include "platform/wiiu/FFLiFsClient.hpp"
+#include <nn/ffl/FFLiFsClient.h>
 
 class C4JThreadImpl;
 class CProfile;
+
+const unsigned int SAVE_DATA_QUOTA = 0x1E000000;
 struct CONTENT_DATA
 {
     unsigned int state;
@@ -26,7 +28,7 @@ struct CONTENT_DATA
 struct SAVE_INFO
 {
     char filename[32];
-    unsigned char title[256];
+    wchar_t title[128];
     unsigned int timeHigh;
     unsigned int timeLow;
     unsigned char* thumbnail;
@@ -62,7 +64,8 @@ public:
     typedef bool (*DirectoryOpenCallback)(const char*, int*);
     typedef bool (*DirectoryReadCallback)(int*, FSDirEntry*);
     typedef bool (*DirectoryCloseCallback)(int*);
-    typedef int (*DLCStatusCallback)(void*, int, unsigned int);
+    typedef int (*DLCOffersCallback)(void*, unsigned int, unsigned int, int);
+    typedef int (*OffersCallback)(void*, int, unsigned int, unsigned int);
     typedef int (*InstalledDLCCallback)(void*, int, int);
     typedef int (*DLCMountCallback)(void*, int, unsigned int, unsigned int);
     typedef void (*DLCUpgradeCallback)(void*, bool);
@@ -94,12 +97,12 @@ public:
     virtual unsigned long long ResetSaveData();
     virtual int DoesSaveExist(bool*);
     virtual int EnoughSpaceForAMinSaveGame();
-    virtual int GetSaveState();
+    virtual C4JStorage::ESaveGameState GetSaveState();
     virtual int GetSavesInfo(int, SavesInfoCallback, void*, const char*);
     virtual SAVE_DETAILS* ReturnSavesInfo();
     virtual unsigned long long ClearSavesInfo();
-    virtual int LoadSaveDataThumbnail(SAVE_INFO*, int (*)(void*, unsigned char*, unsigned int), void*);
-    virtual int LoadSaveData(SAVE_INFO*, LoadCallback, void*);
+    virtual C4JStorage::ESaveGameState LoadSaveDataThumbnail(SAVE_INFO*, int (*)(void*, unsigned char*, unsigned int), void*);
+    virtual C4JStorage::ESaveGameState LoadSaveData(SAVE_INFO*, LoadCallback, void*);
     virtual int GetSaveSize();
     virtual unsigned long long GetSaveData(void*, unsigned int*);
     virtual int GetSaveUniqueNumber(int*);
@@ -112,12 +115,12 @@ public:
     virtual void GetDefaultSaveImage(unsigned char**, unsigned int*);
     virtual void GetDefaultSaveThumbnail(unsigned char**, unsigned int*);
     virtual unsigned long long SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int);
-    virtual int SaveSaveData(SaveCallback, void*);
+    virtual C4JStorage::ESaveGameState SaveSaveData(SaveCallback, void*);
     virtual void ContinueIncompleteOperation();
     virtual void CancelIncompleteOperation();
-    virtual int DeleteSaveData(SAVE_INFO*, SaveCallback, void*);
-    virtual int CopySaveData(SAVE_INFO*, CopyCallback, CopyProgressCallback, void*);
-    virtual int RenameSaveData(int, wchar_t*, SaveCallback, void*);
+    virtual C4JStorage::ESaveGameState DeleteSaveData(SAVE_INFO*, SaveCallback, void*);
+    virtual C4JStorage::ESaveGameState CopySaveData(SAVE_INFO*, CopyCallback, CopyProgressCallback, void*);
+    virtual C4JStorage::ESaveGameState RenameSaveData(int, wchar_t*, SaveCallback, void*);
     virtual void GetSaveImage(unsigned char**, int*);
     virtual void GetSaveThumbnail(unsigned char**, int*);
     virtual unsigned long long InitialiseProfileData(unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*);
@@ -141,7 +144,7 @@ public:
     virtual int ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, void*), void*, C4JStorage::eTMS_FileType);
     virtual int WriteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*, unsigned char*, unsigned int);
     virtual int DeleteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*);
-    virtual int GetDLCOffers(int, DLCStatusCallback, void*, unsigned int);
+    virtual int GetDLCOffers(int pad, DLCOffersCallback callback, void* context, unsigned int contentId);
     virtual void SetOpenDirFn(DirectoryOpenCallback);
     virtual void SetReadDirFn(DirectoryReadCallback);
     virtual void SetCloseDirFn(DirectoryCloseCallback);
@@ -214,7 +217,7 @@ public:
     static unsigned int _DeleteOptionsThreadProc(int, void*);
     int ReadEntitlements();
     int DLCInit();
-    int GetOffers(int, DLCStatusCallback, void*, unsigned int);
+    int GetOffers(int pad, OffersCallback callback, void* context, unsigned int contentId);
     void ClearOffers();
     const char* FindDriveMapping(const char*);
     void SetBootTypeDisc(bool);
@@ -235,8 +238,8 @@ private:
     FSCmdBlock m_saveDirectoryCommandBlock;
     OSFastMutex m_storageMutex;
     OSThread m_saveThreads[6];
-    unsigned int m_saveState;
-    unsigned int m_previousSaveState;
+    C4JStorage::ESaveGameState m_saveState;
+    C4JStorage::ESaveGameState m_previousSaveState;
     unsigned int m_savesInfoState;
     bool m_savesInfoAvailable;
     SAVE_DETAILS* m_savesInfo;

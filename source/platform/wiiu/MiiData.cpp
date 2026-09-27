@@ -4,35 +4,9 @@
 
 #include <string.h>
 #include <nn/act/client_cpp.h>
+#include <nn/ffl.h>
 
-struct FFLColor
-{
-    float r;
-    float g;
-    float b;
-    float a;
-};
-
-struct FFLAdditionalInfo
-{
-    unsigned short name[11];
-    unsigned short creatorName[11];
-    FFLCreateID createId;
-    FFLColor skinColor;
-    unsigned int flags;
-    unsigned char faceType;
-    unsigned char faceLine;
-    unsigned char faceTexture;
-    unsigned char hairType;
-};
-
-int FFLGetAdditionalInfo(FFLAdditionalInfo* additionalInfo, FFLDataSource dataSource, FFLStoreData* storeData,
-                         unsigned short index, int checkFontRegion);
-int FFLGetAvailableOfficialDataNum();
-bool FFLIsAvailableOfficialData(unsigned short index);
-bool FFLIsRegularOfficialData(unsigned short index);
-
-static int sAdditionalInfoResult;
+static FFLResult sAdditionalInfoResult;
 
 void MiiData::CreateSysUserData(int slot)
 {
@@ -42,10 +16,10 @@ void MiiData::CreateSysUserData(int slot)
 
     nn::act::GetMiiEx(&storeData, slot);
 
-    sAdditionalInfoResult = FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_STORE_DATA, &storeData, 0, 1);
+    sAdditionalInfoResult = FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_STORE_DATA, &storeData, 0, TRUE);
 
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
-    memcpy(entry.mCreatorId, &additionalInfo.createId, sizeof(entry.mCreatorId));
+    memcpy(entry.mCreatorId, &additionalInfo.creatorID, sizeof(entry.mCreatorId));
 
     entry.mIsAccountMii = true;
     entry.mIsGuestMii = false;
@@ -63,10 +37,10 @@ void MiiData::CreateGuestData(int index)
     FFLAdditionalInfo additionalInfo;
     MiiDataEntry entry;
 
-    FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_DEFAULT, NULL, index, 1);
+    FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_DEFAULT, NULL, index, TRUE);
 
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
-    memcpy(entry.mCreatorId, &additionalInfo.createId, sizeof(entry.mCreatorId));
+    memcpy(entry.mCreatorId, &additionalInfo.creatorID, sizeof(entry.mCreatorId));
 
     entry.mIsAccountMii = false;
     entry.mIsGuestMii = true;
@@ -82,10 +56,10 @@ void MiiData::CreateMiiMakerData(int index)
     FFLAdditionalInfo additionalInfo;
     MiiDataEntry entry;
 
-    FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_OFFICIAL, NULL, index, 1);
+    FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_OFFICIAL, NULL, index, TRUE);
 
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
-    memcpy(entry.mCreatorId, &additionalInfo.createId, sizeof(entry.mCreatorId));
+    memcpy(entry.mCreatorId, &additionalInfo.creatorID, sizeof(entry.mCreatorId));
 
     entry.mIsAccountMii = false;
     entry.mIsGuestMii = false;

@@ -1,4 +1,5 @@
 #include "platform/wiiu/cCommerceNintendoWiiU.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -195,7 +196,7 @@ void cCommerceNintendoWiiU::LaunchThread_GetShoppingCatalog()
 
 void cCommerceNintendoWiiU::ClearShoppingCatalogRetrieved()
 {
-    SetShoppingCatalogState((cCommerceNintendo::eCommerce_ShoppingCatalogState)0);
+    SetShoppingCatalogState(cCommerceNintendo::eCommerce_ShoppingCatalogState_Unknown);
     if (m_catalogData != NULL)
     {
         std::free(m_catalogData);
@@ -213,7 +214,7 @@ void cCommerceNintendoWiiU::tick()
     {
         SetNetworkConnected(false);
         ClearShoppingCatalogRetrieved();
-        SetProcessState((cCommerceNintendo::eCommerce_Process_State)0);
+        SetProcessState(cCommerceNintendo::eCommerce_Process_State_Unknown);
         SetLoggedIn(false);
     }
     else
@@ -267,8 +268,8 @@ unsigned int cCommerceNintendoWiiU::PurchaseDLCByIndex(unsigned int index, int c
     unsigned int result = PurchaseDLC(info);
     if (result == 0)
     {
-        int parameter = 0xb9a1bf4d;
-        gConsoleUIController.RequestErrorMessage(0x9da04a9e, 0xcba57cf3, &parameter, 1,
+        int parameter = IDS_CONFIRM_OK;
+        gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, &parameter, 1,
                                                   controllerId, NULL, NULL, NULL, true);
     }
     return result;
@@ -329,8 +330,8 @@ unsigned int cCommerceNintendoWiiU::GetDLCProductInfo(cProductInfo** productInfo
 void cCommerceNintendoWiiU::SetDLCCatalogState(cCommerce::eDLCCatalogState state)
 {
     cCommerce::SetDLCCatalogState(state);
-    if (state == (cCommerce::eDLCCatalogState)0)
-        SetProcessState((cCommerceNintendo::eCommerce_Process_State)0);
+    if (state == cCommerce::eDLCCatalogState_Unknown)
+        SetProcessState(cCommerceNintendo::eCommerce_Process_State_Unknown);
 }
 
 unsigned int cCommerceNintendoWiiU::AttemptLogIn()

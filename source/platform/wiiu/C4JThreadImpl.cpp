@@ -1,5 +1,6 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/core/System.hpp"
+#include "game/core/CriticalSection.hpp"
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/fastmutex.h>
 #include <coreinit/atomic64.h>
@@ -18,34 +19,9 @@ static uint32_t s_specialThreadIDForFS_MilesStreamThread = 0;
 static const unsigned int s_processorAffinity[3] = { 0x01020400u, 0x1211100Fu, 0x0E000000u };
 static const unsigned char s_priorities[] = { 0x10, 0x0F, 0x0E, 0x00 };
 
-extern void InitializeCriticalSection(OSFastMutex*);
-extern void InitializeCriticalSectionAndSpinCount(OSFastMutex*, unsigned long);
-extern void EnterCriticalSection(OSFastMutex*);
-extern int TryEnterCriticalSection(OSFastMutex*);
-extern void DeleteCriticalSection(OSFastMutex*);
-
 void SetThreadName(unsigned int, const char* name)
 {
     OSSetThreadName(OSGetCurrentThread(), name);
-}
-
-void InitializeCriticalSectionAndSpinCount(void* mutex, unsigned long spinCount)
-{
-    InitializeCriticalSectionAndSpinCount(static_cast<OSFastMutex*>(mutex), spinCount);
-}
-
-void EnterCriticalSection(void* mutex)
-{
-    EnterCriticalSection(static_cast<OSFastMutex*>(mutex));
-}
-
-void instructionSynchronize()
-{
-#if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
-    __asm__ volatile("isync" ::: "memory");
-#else
-    __atomic_signal_fence(__ATOMIC_SEQ_CST);
-#endif
 }
 
 long long InterlockedCompareExchangeRelease64(volatile long long* destination,
@@ -293,7 +269,7 @@ void C4JThreadImpl::Sleep(int milliseconds)
     OSSleepTicks(OSMillisecondsToTicks(milliseconds));
 }
 
-void SetSpecialThreadIDForFS_MilesStreamThread__Fv()
+void SetSpecialThreadIDForFS_MilesStreamThread()
 {
     s_specialThreadIDForFS_MilesStreamThread = 0x40000000u;
 }

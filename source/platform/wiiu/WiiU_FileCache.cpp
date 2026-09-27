@@ -1,4 +1,5 @@
 #include "platform/wiiu/WiiU_FileCache.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <cstring>
 #include <cstdlib>
@@ -7,13 +8,13 @@
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 #include "platform/wiiu/CafeThreadLocal.hpp"
+#include "platform/wiiu/WiiU_FileSystem.hpp"
 
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/thread.h>
 
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
-extern void getFinalFilePath(char (&path)[256], const char *fileName);
 
 static std::map<int, WiiU_FileCache *> s_fileCaches;
 static OSFastMutex s_fileCacheMutex;
@@ -37,7 +38,7 @@ FSCmdBlock *GetCommandBlock()
 {
     EnterCriticalSection(&s_commandBlockMutex);
     int& commandBlockId = currentCommandBlockId();
-    if (commandBlockId == 0)
+    if (commandBlockId == BlockId::AIR)
     {
         commandBlockId = s_nextCommandBlockId++;
     }
@@ -169,11 +170,6 @@ unsigned int GetFileAttributesA(const char *fileName)
         return 0xffffffffu;
     }
     return (stat.flags & FS_STAT_DIRECTORY) != 0 ? 0x10 : 0x80;
-}
-
-double RadianToDegree(float radians)
-{
-    return static_cast<double>(radians * 180.0f / 3.141590118408203125f);
 }
 
 WiiU_FileCache::WiiU_FileCache(int file)

@@ -6,6 +6,8 @@
 
 #include "platform/wiiu/C4JEventImpl.hpp"
 
+void Sleep(unsigned int milliseconds);
+
 class C4JThreadImpl
 {
 public:

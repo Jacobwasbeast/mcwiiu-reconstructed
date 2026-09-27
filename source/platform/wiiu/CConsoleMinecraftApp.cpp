@@ -6,6 +6,7 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 #include <coreinit/messagequeue.h>
 #include <coreinit/thread.h>
@@ -13,10 +14,6 @@
 extern "C" int ProcUIProcessMessages(int count);
 extern "C" void ShutdownAndExit();
 extern "C" void ReleaseCallback();
-extern void InitializeCriticalSection(OSFastMutex*);
-extern void EnterCriticalSection(OSFastMutex*);
-extern void LeaveCriticalSection(OSFastMutex*);
-void Sleep(unsigned int milliseconds);
 
 extern CInput* g_pInput;
 extern Renderer* gRenderer;

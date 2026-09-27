@@ -9,16 +9,19 @@ struct OSThread;
 
 namespace nn
 {
-    namespace pia
-    {
-        namespace common { class BackgroundScheduler; }
-        namespace transport
-        {
-            class PacketHandler;
-            class StationPacketHandler;
-            class TransportThreadStream;
-        }
-    }
+namespace pia
+{
+namespace common
+{
+class BackgroundScheduler;
+}
+namespace transport
+{
+class PacketHandler;
+class StationPacketHandler;
+class TransportThreadStream;
+}
+}
 }
 
 namespace pead
@@ -39,8 +42,7 @@ struct Endian
     };
 };
 
-template <typename T>
-class SafeStringBase
+template<typename T> class SafeStringBase
 {
 public:
     class iterator
@@ -48,10 +50,15 @@ public:
     public:
         iterator(const T* current = 0) : mCurrent(current) {}
         const T& operator*() const { return *mCurrent; }
-        iterator& operator++() { ++mCurrent; return *this; }
+        iterator& operator++()
+        {
+            ++mCurrent;
+            return *this;
+        }
         bool operator==(const iterator& other) const { return mCurrent == other.mCurrent; }
         bool operator!=(const iterator& other) const { return mCurrent != other.mCurrent; }
         const T* get() const { return mCurrent; }
+
     private:
         const T* mCurrent;
     };
@@ -65,31 +72,37 @@ public:
     }
     SafeStringBase& __as__S(const SafeStringBase& other);
     virtual void assureTerminationImpl_() const {}
-    const T* cstr() const { assureTerminationImpl_(); return mStringTop; }
+    const T* cstr() const
+    {
+        assureTerminationImpl_();
+        return mStringTop;
+    }
     iterator begin() const { return iterator(mStringTop); }
     iterator end() const
     {
         const T* end = mStringTop;
-        while (*end) ++end;
+        while (*end)
+            ++end;
         return iterator(end);
     }
     int calcLength() const
     {
         const T* end = mStringTop;
-        while (*end) ++end;
+        while (*end)
+            ++end;
         return static_cast<int>(end - mStringTop);
     }
+
 protected:
     static const T* emptyString()
     {
-        static const T empty[1] = { 0 };
+        static const T empty[1] = {0};
         return empty;
     }
     const T* mStringTop;
 };
 
-template <typename T>
-class Buffer
+template<typename T> class Buffer
 {
 public:
     Buffer(T* buffer = 0, int size = 0) : mBuffer(buffer), mSize(size) {}
@@ -97,29 +110,30 @@ public:
     T* end() const { return mBuffer + mSize; }
     int size() const { return mSize; }
     const T& operator[](int index) const { return mBuffer[index]; }
+
 private:
     T* mBuffer;
     int mSize;
 };
 
-template <typename T>
-class BitFlag
+template<typename T> class BitFlag
 {
 public:
     BitFlag(T value = 0) : mValue(value) {}
     T getDirect() const { return mValue; }
+
 private:
     T mValue;
 };
 
-template <typename T>
-class BufferedSafeStringBase : public SafeStringBase<T>
+template<typename T> class BufferedSafeStringBase : public SafeStringBase<T>
 {
 public:
     BufferedSafeStringBase(T* buffer = 0, int size = 0)
         : SafeStringBase<T>(buffer), mBuffer(buffer), mBufferSize(size)
     {
-        if (mBuffer && mBufferSize > 0) mBuffer[0] = 0;
+        if (mBuffer && mBufferSize > 0)
+            mBuffer[0] = 0;
     }
     virtual ~BufferedSafeStringBase() {}
     virtual BufferedSafeStringBase& operator=(const SafeStringBase<T>& other)
@@ -130,7 +144,8 @@ public:
     BufferedSafeStringBase& __as__S(const SafeStringBase<T>& other);
     virtual void assureTerminationImpl_() const
     {
-        if (mBuffer && mBufferSize > 0) mBuffer[mBufferSize - 1] = 0;
+        if (mBuffer && mBufferSize > 0)
+            mBuffer[mBufferSize - 1] = 0;
     }
     static int formatImpl_(T* buffer, int size, const T* format, va_list args);
     static int formatImpl___S(T* buffer, int size, const T* format, va_list args);
@@ -146,26 +161,28 @@ public:
     int getBufferSize() const { return mBufferSize; }
     T* getBuffer() { return mBuffer; }
     const T* getBuffer() const { return mBuffer; }
-    void clear() { if (mBuffer && mBufferSize > 0) mBuffer[0] = 0; }
+    void clear()
+    {
+        if (mBuffer && mBufferSize > 0)
+            mBuffer[0] = 0;
+    }
     void copy(const T* text);
+
 protected:
     T* mBuffer;
     int mBufferSize;
 };
 
-template <typename T>
-class StringBuilderBase : public BufferedSafeStringBase<T>
+template<typename T> class StringBuilderBase : public BufferedSafeStringBase<T>
 {
 public:
     StringBuilderBase(T* buffer, int size) : BufferedSafeStringBase<T>(buffer, size) {}
 };
 
-template <typename T>
-class HeapSafeStringBase : public BufferedSafeStringBase<T>
+template<typename T> class HeapSafeStringBase : public BufferedSafeStringBase<T>
 {
 public:
-    HeapSafeStringBase(T* buffer = 0, int size = 0)
-        : BufferedSafeStringBase<T>(buffer, size) {}
+    HeapSafeStringBase(T* buffer = 0, int size = 0) : BufferedSafeStringBase<T>(buffer, size) {}
     virtual ~HeapSafeStringBase();
     virtual HeapSafeStringBase& operator=(const SafeStringBase<T>& other)
     {
@@ -175,25 +192,26 @@ public:
     HeapSafeStringBase& __as__S(const SafeStringBase<T>& other);
 };
 
-template <int N>
-class FixedSafeStringBase : public BufferedSafeStringBase<char>
+template<int N> class FixedSafeStringBase : public BufferedSafeStringBase<char>
 {
 public:
     FixedSafeStringBase() : BufferedSafeStringBase<char>(mStorage, N) {}
-    FixedSafeStringBase(const SafeStringBase<char>& text)
-        : BufferedSafeStringBase<char>(mStorage, N) { this->copy(text.cstr()); }
+    FixedSafeStringBase(const SafeStringBase<char>& text) : BufferedSafeStringBase<char>(mStorage, N)
+    {
+        this->copy(text.cstr());
+    }
     virtual ~FixedSafeStringBase() {}
     virtual FixedSafeStringBase& operator=(const SafeStringBase<char>& text)
     {
         this->copy(text.cstr());
         return *this;
     }
+
 private:
     char mStorage[N];
 };
 
-template <int N>
-class FixedSafeString : public FixedSafeStringBase<N>
+template<int N> class FixedSafeString : public FixedSafeStringBase<N>
 {
 public:
     FixedSafeString() {}
@@ -213,28 +231,28 @@ typedef FixedSafeString<1024> FixedSafeString1024;
 
 namespace RuntimeTypeInfo
 {
-    class Interface
-    {
-    public:
-        virtual ~Interface() {}
-        virtual bool isDerived(const Interface*) const = 0;
-    };
+class Interface
+{
+public:
+    virtual bool isDerived(const Interface*) const = 0;
+};
 
-    class Root : public Interface
-    {
-    public:
-        virtual bool isDerived(const Interface* type) const { return type == this; }
-    };
+class Root : public Interface
+{
+public:
+    virtual bool isDerived(const Interface* type) const { return type == this; }
+};
 
-    template <typename T>
-    class Derive : public Root
+template<typename BaseType> class Derive : public Interface
+{
+public:
+    virtual bool isDerived(const Interface* type) const
     {
-    public:
-        virtual bool isDerived(const Interface* type) const
-        {
-            return type == this || Root::isDerived(type);
-        }
-    };
+        if (this == type)
+            return true;
+        return BaseType::getRuntimeTypeInfoStatic()->isDerived(type);
+    }
+};
 }
 
 class ListNode
@@ -246,6 +264,7 @@ public:
     void erase_();
     ListNode* prev() const { return mPrev; }
     ListNode* next() const { return mNext; }
+
 private:
     ListNode* mPrev;
     ListNode* mNext;
@@ -273,6 +292,7 @@ public:
     ListNode* find(const void*, int, int (*)(const void*, const void*)) const;
     void uniq(int, int (*)(const void*, const void*));
     bool checkLinks() const;
+
 private:
     ListNode mStart;
     int mCount;
@@ -297,6 +317,7 @@ public:
     void heapSort(int (*)(const void*, const void*));
     int compare(const PtrArrayImpl&, int (*)(const void*, const void*)) const;
     void uniq(int (*)(const void*, const void*));
+
 private:
     void** mBuffer;
     int mSize;
@@ -314,6 +335,7 @@ public:
     unsigned int getU32();
     unsigned long long getU64();
     void getContext(unsigned int*, unsigned int*, unsigned int*, unsigned int*) const;
+
 private:
     unsigned int mContext[4];
 };
@@ -340,6 +362,7 @@ public:
     virtual unsigned int write(const void*, unsigned int);
     virtual void rewind();
     virtual bool isEOF();
+
 private:
     const unsigned char* mBuffer;
     unsigned int mSize;
@@ -358,6 +381,7 @@ public:
     virtual void rewind();
     virtual bool isEOF();
     virtual bool flush();
+
 protected:
     unsigned char* mBuffer;
     unsigned int mBufferSize;
@@ -483,6 +507,7 @@ public:
     virtual void skip(StreamSrc*, unsigned int);
     virtual void rewind(StreamSrc*);
     virtual void flush(StreamSrc*);
+
 private:
     void getNextData_(StreamSrc*);
     FixedSafeString128 mTextBuffer;
@@ -491,7 +516,11 @@ private:
 class Stream
 {
 public:
-    enum Modes { cBinary = 0, cText = 1 };
+    enum Modes
+    {
+        cBinary = 0,
+        cText = 1
+    };
     Stream();
     Stream(StreamSrc*, Modes);
     Stream(StreamSrc*, StreamFormat*);
@@ -505,6 +534,7 @@ public:
     void setBinaryEndian(Endian::Types);
     StreamSrc* getStreamSrc() const { return mSrc; }
     StreamFormat* getStreamFormat() const { return mFormat; }
+
 protected:
     StreamSrc* mSrc;
     StreamFormat* mFormat;
@@ -588,6 +618,7 @@ public:
     PrintWriteStream(Modes);
     PrintWriteStream(StreamFormat*);
     virtual ~PrintWriteStream();
+
 private:
     PrintStreamSrc mPrintSrc;
 };
@@ -597,6 +628,7 @@ class BufferReadStream : public ReadStream
 public:
     BufferReadStream(ReadStream*, const void*, unsigned int);
     virtual ~BufferReadStream();
+
 private:
     BufferReadStreamSrc mBufferSrc;
 };
@@ -606,6 +638,7 @@ class BufferWriteStream : public WriteStream
 public:
     BufferWriteStream(WriteStream*, void*, unsigned int);
     virtual ~BufferWriteStream();
+
 private:
     BufferWriteStreamSrc mBufferSrc;
 };
@@ -615,6 +648,7 @@ class BufferMultiByteTextWriteStream : public WriteStream
 public:
     BufferMultiByteTextWriteStream(WriteStream*, void*, unsigned int);
     virtual ~BufferMultiByteTextWriteStream();
+
 private:
     BufferMultiByteTextWriteStreamSrc mBufferSrc;
 };
@@ -642,6 +676,7 @@ public:
     CoreId();
     explicit CoreId(int id) : mId(id) {}
     int value() const { return mId; }
+
 private:
     int mId;
 };
@@ -652,6 +687,7 @@ public:
     CoreIdMask(unsigned int mask = 0) : mMask(mask) {}
     int countOnBits() const;
     unsigned int value() const { return mMask; }
+
 private:
     unsigned int mMask;
 };
@@ -668,18 +704,22 @@ public:
 class IDisposer
 {
 public:
-    enum HeapNullOption { cHeapNullOption_Assert = 0, cHeapNullOption_Allow = 1 };
+    enum HeapNullOption
+    {
+        cHeapNullOption_Assert = 0,
+        cHeapNullOption_Allow = 1
+    };
     IDisposer();
     IDisposer(Heap*, HeapNullOption);
     virtual ~IDisposer();
+
 private:
     friend class Heap;
     ListNode mDisposerNode;
     Heap* mHeap;
 };
 
-template <typename T>
-class IDelegate1
+template<typename T> class IDelegate1
 {
 public:
     virtual ~IDelegate1() {}
@@ -687,8 +727,7 @@ public:
     virtual IDelegate1* clone(Heap*) const { return 0; }
 };
 
-template <typename T1, typename T2>
-class IDelegate2
+template<typename T1, typename T2> class IDelegate2
 {
 public:
     virtual ~IDelegate2() {}
@@ -696,21 +735,20 @@ public:
     virtual IDelegate2* clone(Heap*) const { return 0; }
 };
 
-template <typename Owner, typename T1, typename T2>
-class Delegate2 : public IDelegate2<T1, T2>
+template<typename Owner, typename T1, typename T2> class Delegate2 : public IDelegate2<T1, T2>
 {
 public:
     typedef void (Owner::*Method)(T1, T2);
     Delegate2(Owner* owner, Method method) : mOwner(owner), mMethod(method) {}
     virtual void invoke(T1 first, T2 second) { (mOwner->*mMethod)(first, second); }
     virtual IDelegate2<T1, T2>* clone(Heap*) const { return new Delegate2(*this); }
+
 private:
     Owner* mOwner;
     Method mMethod;
 };
 
-template <typename T>
-class DelegateEvent
+template<typename T> class DelegateEvent
 {
 public:
     class Slot : public ListNode
@@ -726,6 +764,7 @@ public:
         for (ListNode* node = mSlots.next(); node != &mSlots; node = node->next())
             static_cast<Slot*>(node)->mDelegate->invoke(argument);
     }
+
 private:
     ListNode mSlots;
     bool mEnabled;
@@ -734,10 +773,24 @@ private:
 class Heap : public IDisposer
 {
     friend class HeapMgr;
+
 public:
-    enum HeapDirection { cHeapDirection_Forward = 1, cHeapDirection_Reverse = -1 };
+    enum HeapDirection
+    {
+        cHeapDirection_Forward = 1,
+        cHeapDirection_Reverse = -1
+    };
     Heap(const SafeStringBase<char>&, Heap*, void*, unsigned int, HeapDirection, bool);
     virtual ~Heap();
+    static const RuntimeTypeInfo::Interface* getRuntimeTypeInfoStatic()
+    {
+        static const RuntimeTypeInfo::Root typeInfo;
+        return &typeInfo;
+    }
+    static bool checkDerivedRuntimeTypeInfoStatic(const RuntimeTypeInfo::Interface* type)
+    {
+        return type == getRuntimeTypeInfoStatic();
+    }
     virtual bool checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface*) const;
     virtual const RuntimeTypeInfo::Interface* getRuntimeTypeInfo() const;
     virtual void destroy() = 0;
@@ -769,6 +822,7 @@ public:
     void appendDisposer_(IDisposer*);
     void removeDisposer_(IDisposer*);
     void checkAccessThread_() const;
+
 protected:
     SafeStringBase<char> mName;
     Heap* mParent;
@@ -795,10 +849,31 @@ public:
 class ExpHeap : public Heap
 {
 public:
-    enum FindMode { cFindMode_FirstFit = 0, cFindMode_BestFit = 1 };
-    enum AllocMode { cAllocMode_FirstFit = 0, cAllocMode_BestFit = 1 };
+    enum FindMode
+    {
+        cFindMode_FirstFit = 0,
+        cFindMode_BestFit = 1
+    };
+    enum AllocMode
+    {
+        cAllocMode_FirstFit = 0,
+        cAllocMode_BestFit = 1
+    };
     ExpHeap(const SafeStringBase<char>&, Heap*, void*, unsigned int, HeapDirection, bool);
     virtual ~ExpHeap();
+    static const RuntimeTypeInfo::Interface* getRuntimeTypeInfoStatic()
+    {
+        static const RuntimeTypeInfo::Derive<Heap> typeInfo;
+        return &typeInfo;
+    }
+    static bool checkDerivedRuntimeTypeInfoStatic(const RuntimeTypeInfo::Interface* type)
+    {
+        if (type == getRuntimeTypeInfoStatic())
+            return true;
+        return Heap::checkDerivedRuntimeTypeInfoStatic(type);
+    }
+    virtual bool checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface*) const;
+    virtual const RuntimeTypeInfo::Interface* getRuntimeTypeInfo() const;
     static ExpHeap* tryCreate(unsigned int, const SafeStringBase<char>&, Heap*, HeapDirection, bool);
     static ExpHeap* create(unsigned int, const SafeStringBase<char>&, Heap*, HeapDirection, bool);
     static ExpHeap* tryCreate(void*, unsigned int, const SafeStringBase<char>&, bool);
@@ -823,13 +898,14 @@ public:
     virtual bool isAdjustable() const;
     virtual void dump() const;
     virtual void dumpYAML(WriteStream&, int) const;
-    void setAllocMode(AllocMode);
-    AllocMode getAllocMode() const;
+    virtual void setAllocMode(AllocMode);
+    virtual AllocMode getAllocMode() const;
     unsigned int getAllocatedSize(void*);
     void dumpUseList() const;
     void dumpFreeList() const;
     bool tryCheckFreeList() const;
     bool tryCheckUseList() const;
+
 private:
     void pushToFreeList_(MemBlock*);
     static void createMaxSizeFreeMemBlock_(ExpHeap*);
@@ -865,6 +941,7 @@ class FindContainHeapCache
 public:
     FindContainHeapCache();
     bool tryRemoveHeap(Heap*);
+
 private:
     Heap* mHeap;
 };
@@ -879,6 +956,7 @@ public:
     void unlock();
     bool tryLock();
     void dump(StackSymbolResolver*);
+
 private:
     unsigned int mStorage[11];
 };
@@ -886,9 +964,23 @@ private:
 class HeapMgr
 {
 public:
-    struct AllocCallbackArg { Heap* heap; void* address; unsigned int size; };
-    struct FreeCallbackArg { Heap* heap; void* address; };
-    struct AllocFailedCallbackArg { Heap* heap; unsigned int size; int alignment; };
+    struct AllocCallbackArg
+    {
+        Heap* heap;
+        void* address;
+        unsigned int size;
+    };
+    struct FreeCallbackArg
+    {
+        Heap* heap;
+        void* address;
+    };
+    struct AllocFailedCallbackArg
+    {
+        Heap* heap;
+        unsigned int size;
+        int alignment;
+    };
     HeapMgr();
     ~HeapMgr();
     static void initialize(Arena*);
@@ -901,6 +993,7 @@ public:
     static void setAllocFailedCallback(IDelegate1<const AllocFailedCallbackArg*>*);
     void setCurrentHeap_(Heap*);
     static HeapMgr* instance();
+
 private:
     static void createRootHeap_();
     static void initializeImpl_();
@@ -920,21 +1013,23 @@ void* allocateFromSeadHeap(unsigned int, Heap*, int);
 void freeToSeadHeap(void*);
 unsigned int getArraySize(void*);
 
-template <typename T>
-T* NewArray(unsigned int count, Heap* heap, int alignment)
+template<typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
 {
     T* array = static_cast<T*>(allocateFromSeadHeap(sizeof(T) * count, heap, alignment));
-    if (!array) return 0;
-    for (unsigned int index = 0; index < count; ++index) new (array + index) T();
+    if (!array)
+        return 0;
+    for (unsigned int index = 0; index < count; ++index)
+        new (array + index) T();
     return array;
 }
 
-template <typename T>
-void DeleteArray(T* array)
+template<typename T> void DeleteArray(T* array)
 {
-    if (!array) return;
+    if (!array)
+        return;
     unsigned int count = getArraySize(array) / sizeof(T);
-    while (count) array[--count].~T();
+    while (count)
+        array[--count].~T();
     freeToSeadHeap(array);
 }
 
@@ -947,29 +1042,43 @@ public:
     void lock();
     void unlock();
     bool tryLock();
+
 private:
     unsigned int mStorage[11];
 };
 
-template <typename Lock>
-class ScopedLock
+template<typename Lock> class ScopedLock
 {
 public:
-    ScopedLock(Lock* lock) : mLock(lock) { if (mLock) mLock->lock(); }
-    ~ScopedLock() { if (mLock) mLock->unlock(); }
+    ScopedLock(Lock* lock) : mLock(lock)
+    {
+        if (mLock)
+            mLock->lock();
+    }
+    ~ScopedLock()
+    {
+        if (mLock)
+            mLock->unlock();
+    }
+
 private:
     Lock* mLock;
 };
 
-template <typename Lock>
-class ConditionalScopedLock
+template<typename Lock> class ConditionalScopedLock
 {
 public:
     ConditionalScopedLock(Lock* lock, bool condition) : mLock(condition ? lock : 0)
     {
-        if (mLock) mLock->lock();
+        if (mLock)
+            mLock->lock();
     }
-    ~ConditionalScopedLock() { if (mLock) mLock->unlock(); }
+    ~ConditionalScopedLock()
+    {
+        if (mLock)
+            mLock->unlock();
+    }
+
 private:
     Lock* mLock;
 };
@@ -981,6 +1090,7 @@ public:
     long long toNanoSeconds() const;
     void setNanoSeconds(long long);
     long long getTicks() const { return mTicks; }
+
 private:
     long long mTicks;
 };
@@ -998,6 +1108,7 @@ public:
     bool wait(TickSpan);
     void setSignal();
     void resetSignal();
+
 private:
     unsigned int mStorage[9];
 };
@@ -1005,7 +1116,11 @@ private:
 class MessageQueue
 {
 public:
-    enum BlockType { cBlock = 0, cNoBlock = 1 };
+    enum BlockType
+    {
+        cBlock = 0,
+        cNoBlock = 1
+    };
     MessageQueue();
     ~MessageQueue();
     void allocate(int, Heap*);
@@ -1014,6 +1129,7 @@ public:
     int pop(BlockType);
     bool jam(int, BlockType);
     int peek(BlockType) const;
+
 private:
     int* mMessages;
     int mCapacity;
@@ -1027,6 +1143,7 @@ private:
 class Thread : public IDisposer
 {
     friend class ThreadMgr;
+
 public:
     Thread(Heap*, OSThread*);
     Thread(const SafeStringBase<char>&, Heap*, int, MessageQueue::BlockType, int, int, int);
@@ -1058,6 +1175,7 @@ public:
     void setStackOverflowExceptionEnable(bool);
     void initStackCheck_();
     void initStackCheckWithCurrentStackPointer_();
+
 protected:
     unsigned int mThreadNameVtable;
     const char* mThreadName;
@@ -1100,6 +1218,7 @@ public:
                    MessageQueue::BlockType, int, int, int);
     virtual ~DelegateThread();
     virtual void calc_(int);
+
 private:
     IDelegate2<Thread*, int>* mDelegate;
 };
@@ -1125,6 +1244,7 @@ public:
     static void checkCurrentThreadStackOverFlow(const char*, int);
     static void checkCurrentThreadStackEndCorruption(const char*, int);
     static void checkCurrentThreadStackPointerOverFlow(const char*, int);
+
 private:
     void initMainThread_(Heap*);
     void destroyMainThread_();
@@ -1162,6 +1282,7 @@ public:
     StringPrintOutput(BufferedSafeStringBase<char>* string) : mString(string) {}
     virtual ~StringPrintOutput();
     virtual void write(const char*, int);
+
 protected:
     BufferedSafeStringBase<char>* mString;
 };
@@ -1180,6 +1301,7 @@ public:
     StreamPrintOutput(StreamSrc* src) : mSrc(src) {}
     virtual ~StreamPrintOutput();
     virtual void write(const char*, int);
+
 private:
     StreamSrc* mSrc;
 };
@@ -1187,8 +1309,7 @@ private:
 class PrintFormatter
 {
 public:
-    template <typename T, template <typename> class Wrapper>
-    class OutImpl
+    template<typename T, template<typename> class Wrapper> class OutImpl
     {
     public:
         static void out(const Wrapper<T>&, const char*, PrintOutput*);
@@ -1202,12 +1323,13 @@ public:
     PrintFormatter& __ls(const char*);
     static void outputString_(const char*, PrintOutput*, const char*, int);
     static void outputPtr_(const char*, PrintOutput*, unsigned int);
-    template <typename T> static void out(const T&, const char*, PrintOutput*);
+    template<typename T> static void out(const T&, const char*, PrintOutput*);
     static void out(const char*, const char*, PrintOutput*);
     static void out(const wchar_t*, const char*, PrintOutput*);
     static void out(const Heap&, const char*, PrintOutput*);
     static void out(const ExpHeap&, const char*, PrintOutput*);
     static void out(const TickSpan&, const char*, PrintOutput*);
+
 private:
     void proceedToFormatMark_(char*);
     const char* mFormat;
@@ -1229,6 +1351,7 @@ class StringPrintFormatter : public PrintFormatter
 public:
     StringPrintFormatter(BufferedSafeStringBase<char>*);
     StringPrintFormatter(BufferedSafeStringBase<char>*, const char*);
+
 private:
     StringPrintOutput mStringOutput;
 };
@@ -1238,6 +1361,7 @@ class StringCutOffPrintFormatter : public PrintFormatter
 public:
     StringCutOffPrintFormatter(BufferedSafeStringBase<char>*);
     StringCutOffPrintFormatter(BufferedSafeStringBase<char>*, const char*);
+
 private:
     StringCutOffPrintOutput mStringOutput;
 };
@@ -1248,6 +1372,7 @@ public:
     StreamPrintFormatter(StreamSrc*);
     StreamPrintFormatter(StreamSrc*, const char*);
     void flushAndWriteNullChar();
+
 private:
     StreamPrintOutput mStreamOutput;
 };
@@ -1270,8 +1395,18 @@ public:
 class StringUtil
 {
 public:
-    enum CardinalNumber { cDecimal = 0, cHexadecimal = 1, cOctal = 2, cBinary = 3 };
-    struct Char16Pair { wchar_t from; wchar_t to; };
+    enum CardinalNumber
+    {
+        cDecimal = 0,
+        cHexadecimal = 1,
+        cOctal = 2,
+        cBinary = 3
+    };
+    struct Char16Pair
+    {
+        wchar_t from;
+        wchar_t to;
+    };
     static bool tryParseU64(unsigned long long*, const SafeStringBase<char>&, CardinalNumber);
     static bool tryParseS64(long long*, const SafeStringBase<char>&, CardinalNumber);
     static bool tryParseU32(unsigned int*, const SafeStringBase<char>&, CardinalNumber);
@@ -1334,9 +1469,11 @@ public:
             void printString_(OutBuffer16*);
             void printFloat_(OutBuffer16*, wchar_t, bool);
             int execute(OutBuffer16*, const wchar_t*);
-            template <typename T> static void printIntegerInverseString_(OutBuffer16*, unsigned int, bool, T);
-            template <typename T> void printIntegerInverseStringFromArg_(OutBuffer16*, bool*, bool, unsigned int, bool);
-            template <typename T> void printStringCore_(OutBuffer16*, const T*);
+            template<typename T> static void printIntegerInverseString_(OutBuffer16*, unsigned int, bool, T);
+            template<typename T>
+            void printIntegerInverseStringFromArg_(OutBuffer16*, bool*, bool, unsigned int, bool);
+            template<typename T> void printStringCore_(OutBuffer16*, const T*);
+
         private:
             va_list* mArgs;
             bool mLeftJustify;
@@ -1353,13 +1490,14 @@ public:
         static int checkAndConvertHexChar_(char);
         static void tryParseSignImpl_(int*, SafeStringBase<char>::iterator&);
         static bool tryParsePrefixImpl_(int*, SafeStringBase<char>::iterator&, const SafeStringBase<char>&);
-        template <typename T> static bool tryParseNumberImpl_(T*, SafeStringBase<char>::iterator&, int);
-        template <typename T> static bool tryParseDecImpl_(T*, SafeStringBase<char>::iterator&, int);
-        template <typename T> static bool tryParseImpl_(T*, const SafeStringBase<char>&, int);
-        template <typename T> static void tryParseUnderDecimalPointImpl_(T*, SafeStringBase<char>::iterator&, T, T);
-        template <typename T> static bool tryParseDecimalFractionImpl_(T*, const SafeStringBase<char>&);
-        template <typename T> static T parseImpl_(const SafeStringBase<char>&, CardinalNumber);
-        template <typename T> static T parseDecimalFractionImpl_(const SafeStringBase<char>&);
+        template<typename T> static bool tryParseNumberImpl_(T*, SafeStringBase<char>::iterator&, int);
+        template<typename T> static bool tryParseDecImpl_(T*, SafeStringBase<char>::iterator&, int);
+        template<typename T> static bool tryParseImpl_(T*, const SafeStringBase<char>&, int);
+        template<typename T>
+        static void tryParseUnderDecimalPointImpl_(T*, SafeStringBase<char>::iterator&, T, T);
+        template<typename T> static bool tryParseDecimalFractionImpl_(T*, const SafeStringBase<char>&);
+        template<typename T> static T parseImpl_(const SafeStringBase<char>&, CardinalNumber);
+        template<typename T> static T parseDecimalFractionImpl_(const SafeStringBase<char>&);
     };
 };
 
@@ -1377,19 +1515,19 @@ public:
 
 namespace system
 {
-    void PrintStringImpl(const char*, int);
-    void PrintString(const char*, int);
-    void PrintV(const char*, va_list);
-    void Print(const char*, ...);
+void PrintStringImpl(const char*, int);
+void PrintString(const char*, int);
+void PrintV(const char*, va_list);
+void Print(const char*, ...);
 }
 
-int replaceStringImpl(char*, int*, int, const char*, int,
-                      const SafeStringBase<char>&, const SafeStringBase<char>&, bool*);
-int replaceStringImpl(wchar_t*, int*, int, const wchar_t*, int,
-                      const SafeStringBase<wchar_t>&, const SafeStringBase<wchar_t>&, bool*);
-template <typename T>
-int replaceStringImpl_(T*, int*, int, const T*, int,
-                       const SafeStringBase<T>&, const SafeStringBase<T>&, bool*);
+int replaceStringImpl(char*, int*, int, const char*, int, const SafeStringBase<char>&,
+                      const SafeStringBase<char>&, bool*);
+int replaceStringImpl(wchar_t*, int*, int, const wchar_t*, int, const SafeStringBase<wchar_t>&,
+                      const SafeStringBase<wchar_t>&, bool*);
+template<typename T>
+int replaceStringImpl_(T*, int*, int, const T*, int, const SafeStringBase<T>&, const SafeStringBase<T>&,
+                       bool*);
 }
 
 #endif

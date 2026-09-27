@@ -14,7 +14,7 @@
 #include "game/util/ACTUuid.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
-#include "platform/wiiu/FFLiFsClient.hpp"
+#include <nn/ffl/FFLiFsClient.h>
 #include "platform/wiiu/MiiData.hpp"
 
 class CAchievements;

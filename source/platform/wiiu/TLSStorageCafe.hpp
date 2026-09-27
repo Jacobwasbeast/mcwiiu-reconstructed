@@ -15,4 +15,8 @@ private:
     static TLSStorageCafe* m_instance;
 };
 
+unsigned int TlsAlloc();
+void* TlsGetValue(unsigned int index);
+int TlsSetValue(unsigned int index, void* value);
+
 #endif

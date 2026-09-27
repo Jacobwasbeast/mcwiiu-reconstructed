@@ -15,7 +15,6 @@
 class C4JEventImpl;
 class C4JThreadImpl;
 
-void LeaveCriticalSection(void* pCriticalSection);
 
 namespace nn
 {
@@ -35,6 +34,25 @@ namespace nn
 class NQRNetworkManager_Lan_WiiU : public NQRNetworkManager
 {
 public:
+    enum ESaveTransferState
+    {
+        eSaveTransfer_Idle,
+        eSaveTransfer_CreatingSession,
+        eSaveTransfer_CreateSessionFailed,
+        eSaveTransfer_WaitingForReceiver,
+        eSaveTransfer_Transferring,
+        eSaveTransfer_SendComplete,
+        eSaveTransfer_Searching,
+        eSaveTransfer_NoSessionFound,
+        eSaveTransfer_Unused,
+        eSaveTransfer_SessionFound,
+        eSaveTransfer_Joining,
+        eSaveTransfer_JoinFailed,
+        eSaveTransfer_Joined,
+        eSaveTransfer_ReceiveComplete,
+        eSaveTransfer_ConnectionLost
+    };
+
     enum NetworkType
     {
         eNetworkType_None,
@@ -177,7 +195,7 @@ public:
     void SetNexAsyncProcess(ENEXAsyncProcess process);
     void SetFriendSearchState(eNQRNetworkManagerFriendSearchState state);
     static int InvitationSignInReturned(void* context, bool signedIn, int error, int userIndex);
-    static int InvitationMustConnectReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int InvitationMustConnectReturned(void* context, int pad, C4JStorage::EMessageResult result);
     NQRNetworkPlayer* GetPlayerFromStationIdAndLocalIdx(unsigned long long stationId, int localIndex);
     void RemoveConnectedStation(unsigned long long stationId);
     void RemoveConnectedPlayer(NQRNetworkPlayer* player);
@@ -270,7 +288,7 @@ public:
     unsigned int GetSaveTransferConnectionFromSessionBrowse();
     static void GetSaveTransferConnectionThreadProc(void* context);
     void Pia_ShutdownForOnline();
-    void CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long saveId, unsigned int worldId, unsigned int titleVersion, wchar_t* name);
+    void CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long seed, unsigned int hostOptions, unsigned int texturePack, wchar_t* name);
     unsigned int FindSessionForSaveTransfer();
     void JoinSaveTransferConnection();
 
@@ -299,12 +317,12 @@ private:
         unsigned short version;
         unsigned int dataSize;
         unsigned int metadataSize;
-        long long saveId;
-        unsigned int worldId;
-        unsigned int titleVersion;
+        long long seed;
+        unsigned int hostOptions;
+        unsigned int texturePack;
         wchar_t name[64];
 
-        SaveTransferDescriptor() : kind(0), version(0), dataSize(0), metadataSize(0), saveId(0), worldId(0), titleVersion(0)
+        SaveTransferDescriptor() : kind(0), version(0), dataSize(0), metadataSize(0), seed(0), hostOptions(0), texturePack(0)
         {
             std::memset(name, 0, sizeof(name));
         }
@@ -363,10 +381,14 @@ private:
     bool m_randomJoinRequested;
     bool m_updateRequested;
     unsigned int m_lastRateControlledEvent;
-    int m_saveTransferState;
+
+public:
+    ESaveTransferState m_saveTransferState;
     unsigned char* m_saveTransferData;
     unsigned int m_saveTransferSize;
     unsigned int m_saveTransferOffset;
+
+private:
     bool m_saveTransferPacketPending;
     unsigned int m_saveTransferSessionId;
     SaveTransferDescriptor m_saveTransferDescriptor;
@@ -376,5 +398,7 @@ private:
     unsigned char m_saveTransferMode;
 
 };
+
+extern NQRNetworkManager_Lan_WiiU* gLanNetworkManager;
 
 #endif

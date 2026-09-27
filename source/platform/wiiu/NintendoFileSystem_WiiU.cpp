@@ -4,10 +4,10 @@
 
 #include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include "platform/wiiu/WiiU_FileSystem.hpp"
 
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
-extern void getFinalFilePath(char (&path)[256], const char* fileName);
 extern FSCmdBlock* GetCommandBlock();
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,

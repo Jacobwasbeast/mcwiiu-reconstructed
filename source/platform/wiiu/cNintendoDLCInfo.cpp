@@ -1,4 +1,5 @@
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -20,7 +21,6 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead,
              _OVERLAPPED* overlapped);
-void CloseHandle(int handle);
 
 cNintendoDLCInfo::cNintendoDLCInfo()
 {

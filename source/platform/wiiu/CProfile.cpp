@@ -16,6 +16,7 @@
 
 #if defined(RECON_NATIVE)
 #include "local_network.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #endif
 
 namespace nn
@@ -26,7 +27,6 @@ unsigned char GetSlotNoEx(const ACTUuid&) asm("GetSlotNoEx__Q2_2nn3actFRC7ACTUui
 }
 }
 
-unsigned int GetTickCount();
 PlayerUID getPlayerUID(int, bool);
 int getSlotId(int);
 int SCIGetParentalEnable(unsigned char*);

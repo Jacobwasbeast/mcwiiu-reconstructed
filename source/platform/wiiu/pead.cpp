@@ -1,4 +1,5 @@
 #include "platform/wiiu/pead.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 #include <algorithm>
 #include <ctype.h>
@@ -14,13 +15,6 @@
 #include <coreinit/mutex.h>
 #include <coreinit/thread.h>
 #include <coreinit/event.h>
-
-class C4JThreadImpl
-{
-public:
-    static unsigned int OSCreateThread4J(OSThread*, int (*)(int, void*), int, void*, void*, unsigned int, unsigned int, unsigned short);
-};
-
 
 namespace pead
 {
@@ -915,8 +909,10 @@ Heap::Heap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned
 }
 
 Heap::~Heap() { for (std::vector<Heap*>::iterator it = sHeaps.begin(); it != sHeaps.end(); ++it) if (*it == this) { sHeaps.erase(it); break; } }
-bool Heap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return getRuntimeTypeInfo()->isDerived(type); }
-const RuntimeTypeInfo::Interface* Heap::getRuntimeTypeInfo() const { static RuntimeTypeInfo::Derive<Heap> type; return &type; }
+bool Heap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return checkDerivedRuntimeTypeInfoStatic(type); }
+const RuntimeTypeInfo::Interface* Heap::getRuntimeTypeInfo() const { return getRuntimeTypeInfoStatic(); }
+bool ExpHeap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return checkDerivedRuntimeTypeInfoStatic(type); }
+const RuntimeTypeInfo::Interface* ExpHeap::getRuntimeTypeInfo() const { return getRuntimeTypeInfoStatic(); }
 void* Heap::tryRealloc(void*, unsigned int, int) { return 0; }
 void Heap::dump() const {}
 void Heap::dumpYAML(WriteStream& stream, int indent) const
@@ -1305,7 +1301,7 @@ bool MessageQueue::push(int value, BlockType block) { if (mCount >= mCapacity) r
 int MessageQueue::pop(BlockType block) { if (!mCount) return 0; int value = mMessages[mRead]; mRead = (mRead + 1) % mCapacity; --mCount; (void)block; return value; }
 bool MessageQueue::jam(int value, BlockType block) { if (mCount >= mCapacity) return false; mRead = (mRead + mCapacity - 1) % mCapacity; mMessages[mRead] = value; ++mCount; (void)block; return true; }
 
-Thread::Thread(Heap* heap, OSThread* thread) : IDisposer(heap, cHeapNullOption_Allow), mThreadNameVtable(0), mThreadName("_pead__MainThread"), mMessageQueue(), mStackSize(0), mUnknown5c(0), mUnknown60(0), mUnknown64(0), mUnknown68(0), mUnknown6c(0), mFindContainHeapCache(), mBlockType(MessageQueue::cNoBlock), mUnknown78(0x7fffffff), mMessageState(static_cast<int>(reinterpret_cast<uintptr_t>(thread))), mThreadState(1), mAffinityMask(1), mThread(thread), mStack(0), mPriority(thread ? OSGetThreadPriority(thread) : 0) {
+Thread::Thread(Heap* heap, OSThread* thread) : IDisposer(heap, cHeapNullOption_Allow), mThreadNameVtable(0), mThreadName("$pead::MainThread"), mMessageQueue(), mStackSize(0), mUnknown5c(0), mUnknown60(0), mUnknown64(0), mUnknown68(0), mUnknown6c(0), mFindContainHeapCache(), mBlockType(MessageQueue::cNoBlock), mUnknown78(0x7fffffff), mMessageState(static_cast<int>(reinterpret_cast<uintptr_t>(thread))), mThreadState(1), mAffinityMask(1), mThread(thread), mStack(0), mPriority(thread ? OSGetThreadPriority(thread) : 0) {
     mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this));
     mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(thread));
     if (thread)

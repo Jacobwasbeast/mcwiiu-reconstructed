@@ -285,4 +285,6 @@ public:
 
 extern CInput* g_pInput;
 
+int XEnableGuestSignin(int enable);
+
 #endif
