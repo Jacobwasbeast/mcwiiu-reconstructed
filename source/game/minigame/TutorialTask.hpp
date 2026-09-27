@@ -48,6 +48,8 @@ public:
     virtual void onRideEntity(boost::shared_ptr<Entity> entity);
 
 protected:
+    friend class Tutorial;
+
     int descriptionId;
     int promptId;
     Tutorial* tutorial;

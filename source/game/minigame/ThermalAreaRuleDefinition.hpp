@@ -27,10 +27,10 @@ public:
     unsigned int getBoostDirection();
 
     bool isEnabled() const { return mEnabled; }
-    double getLiftForceModifier() const { return mLiftForceModifier; }
-    double getLiftSpeed() const { return mStaticLift; }
-    double getMaxHeight() const { return mTargetHeight; }
-    double getElytraSpeedBoost() const { return mSpeedBoost; }
+    double getLiftForceModifier() const { return mEnabled ? mLiftForceModifier : 1.0; }
+    double getLiftSpeed() const { return mEnabled ? mStaticLift : 0.0; }
+    double getMaxHeight() const { return mEnabled ? mTargetHeight : 0.0; }
+    double getElytraSpeedBoost() const { return mEnabled ? mSpeedBoost : 0.0; }
 
 protected:
     double mLiftForceModifier;

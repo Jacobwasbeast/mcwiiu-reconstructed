@@ -22,6 +22,12 @@
 #include "game/minigame/TutorialHint.hpp"
 #include "game/minigame/TutorialMessage.hpp"
 #include "game/minigame/TutorialTask.hpp"
+#include "game/minigame/TutorialConstraint.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
@@ -40,8 +46,13 @@ extern ConsoleUIController gConsoleUIController;
 
 namespace
 {
+    const unsigned int gTutorialStartDelay = 1500;
+    unsigned int gTutorialHintRepeatTime = 14000;
     unsigned int gTutorialVisibleTime = 7000;
     unsigned int gTutorialMinimumDisplayTime = 2000;
+    unsigned int gTutorialMessageRepeatDelay = 13000;
+    long long gTutorialDayTime = 8000;
+    unsigned int gTutorialMessageRepeatTime = gTutorialVisibleTime + gTutorialMessageRepeatDelay;
     std::vector<int> gTutorialCompletionIds;
     static const int gTutorialCompletionIdValues[] = { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70, 72, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 101, 102, 103, 104, 105, 107, 106, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 32, 188, 190, 191, 192, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 34, 36, 29, 31, 33, 35, 189, 8, 193, 194, 195, 309, 310, 311, 312, 313, 308, 196, 100, 64, 314, 315, 316, 317, 318, 319, 149, 150, 151, 152, 153, 197, 198, 199, 200, 38, 39, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 383, 384 };
 }
@@ -841,7 +852,7 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
     if (!details->allowFade && messageState == currentState && currentMessage != NULL &&
         details->isSameContent(currentMessage) != 0 &&
         (!details->unknown || GetTickCount() <
-             static_cast<unsigned int>(visibleTime) + gTutorialVisibleTime))
+             static_cast<unsigned int>(visibleTime) + gTutorialMessageRepeatTime))
     {
         delete details;
         return 0;
@@ -941,12 +952,12 @@ int Tutorial::setMessage(TutorialHint* hint, PopupMessageDetails* details)
     {
         if (!popupPending)
         {
-            if (now - static_cast<unsigned int>(visibleTime) <= 2000)
+            if (now - static_cast<unsigned int>(visibleTime) <= gTutorialMinimumDisplayTime)
             {
                 return 0;
             }
         }
-        else if (now - static_cast<unsigned int>(messageTime) <= 14000)
+        else if (now - static_cast<unsigned int>(messageTime) <= gTutorialHintRepeatTime)
         {
             return 0;
         }
@@ -976,126 +987,293 @@ void Tutorial::tick()
         unsigned int now = GetTickCount();
         if (startTime == 0)
         {
-            startTime = (int)now;
+            startTime = static_cast<int>(now);
             return;
         }
-        if (now - (unsigned int)startTime < 1501)
-        {
+        if (now - static_cast<unsigned int>(startTime) <= gTutorialStartDelay)
             return;
-        }
         started = true;
     }
 
-    if (!popupVisible)
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (overridesGameHostOptions)
     {
-        gConsoleUIController.SetTutorialVisible(playerId, false);
-        return;
-    }
-
-    if (!uiControllerSet)
-    {
-        gConsoleUIController.SetTutorial(playerId, this);
-        uiControllerSet = true;
-    }
-
-    if (gConsoleUIController.IsPauseMenuDisplayed(playerId))
-        return;
-
-    if (tutorialHidden)
-    {
-        if (!gameModeConstraints->HasFailedConstraint(currentState) &&
-            currentTask[currentState] != NULL)
+        if (gameHostOptionsOverridden)
         {
-            gConsoleUIController.SetTutorialVisible(playerId, true);
-            visibleTime = static_cast<int>(GetTickCount());
+            if (completed)
+            {
+                MinecraftServer::s_setDayTimeAtEndOfTick = true;
+                MinecraftServer::s_setDayTime = gTutorialDayTime;
+                minecraft->mLevel->setDayTime(gTutorialDayTime);
+                gApp.SetGameHostOption(eGameHostOption_DoDaylightCycle, 1);
+                gameHostOptionsOverridden = false;
+            }
         }
-        tutorialHidden = false;
+        else if (!completed)
+        {
+            MinecraftServer::s_setDayTimeAtEndOfTick = true;
+            MinecraftServer::s_setDayTime = gTutorialDayTime;
+            minecraft->mLevel->setDayTime(gTutorialDayTime);
+            gApp.SetGameHostOption(eGameHostOption_DoDaylightCycle, 0);
+            gameHostOptionsOverridden = true;
+        }
     }
 
-    if (currentTask[currentState] == NULL && !stateTasks[currentState].empty())
+    if (popupVisible)
     {
-        currentTask[currentState] = stateTasks[currentState].front();
-        currentTask[currentState]->setAsCurrentTask(true);
-        stateChanged = true;
+        bool taskChanged = false;
+        if (!uiControllerSet)
+        {
+            gConsoleUIController.SetTutorial(playerId, this);
+            uiControllerSet = true;
+        }
+        else if (splitScreen != (gApp.GetLocalPlayerCount() > 1))
+        {
+            gConsoleUIController.SetTutorial(playerId, this);
+        }
+
+        if (!gConsoleUIController.IsPauseMenuDisplayed(playerId))
+        {
+            if (tutorialHidden)
+            {
+                if (!gameModeConstraints->HasFailedConstraint(currentState) &&
+                    currentTask[currentState] != NULL)
+                {
+                    gConsoleUIController.SetTutorialVisible(playerId, true);
+                    visibleTime = static_cast<int>(GetTickCount());
+                }
+                tutorialHidden = false;
+            }
+
+            if (!popupPending)
+            {
+                const bool hintsEnabled =
+                    enabled || GameSettings::GetGameSettings(playerId, eGameSetting_Hints) != 0;
+                if ((gameModeChanged && gameMode == eTutorial_GameMode_Fireworks) || hintsEnabled)
+                {
+                    std::vector<TutorialHint*>& hints = stateHints[currentState];
+                    for (std::vector<TutorialHint*>::iterator it = hints.begin(); it != hints.end(); ++it)
+                    {
+                        TutorialHint* hint = *it;
+                        int hintId = hint->tick();
+                        if (gameModeChanged && !gConsoleUIController.GetMenuDisplayed(playerId))
+                            hintId = static_cast<int>(hint->onGameModeChange(gameMode));
+                        if (hintId != -1)
+                        {
+                            hintShown = true;
+                            gameModeChanged = false;
+                            PopupMessageDetails* details = new PopupMessageDetails();
+                            details->titleId = hintId;
+                            details->repeat = hint->allowFade() != 0;
+                            details->allowFade = true;
+                            details->state = static_cast<int>(hint->getMinimumDisplayTime());
+                            setMessage(hint, details);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!tasksChecked)
+            {
+                if (!gameModeConstraints->HasFailedConstraint(currentState))
+                {
+                    std::vector<TutorialTask*>& tasks = stateTasks[currentState];
+                    bool checkTask = true;
+                    std::vector<TutorialTask*>::iterator it = tasks.begin();
+                    while (!tasks.empty() && it != tasks.end())
+                    {
+                        TutorialTask* task = *it;
+                        if (!checkTask && !task->isPreCompletionEnabled())
+                        {
+                            ++it;
+                            continue;
+                        }
+                        checkTask = false;
+                        if ((!task->ShowMinimumTime() ||
+                             (task->hasBeenActivated() &&
+                              static_cast<unsigned int>(visibleTime) + gTutorialMinimumDisplayTime <
+                                  GetTickCount())) &&
+                            task->isCompleted())
+                        {
+                            const eTutorial_CompletionAction action = task->getCompletionAction();
+                            it = tasks.erase(it);
+                            delete task;
+                            if (!tasks.empty() &&
+                                (action == eTutorial_CompletionAction_CompleteState ||
+                                 action == eTutorial_CompletionAction_CompleteStateAndConstraints))
+                            {
+                                if (action == eTutorial_CompletionAction_CompleteStateAndConstraints)
+                                    gameModeConstraints->MoveDelayedConstraints(currentState, 0);
+                                for (std::vector<TutorialTask*>::iterator rest = tasks.begin(); rest != tasks.end();
+                                     ++rest)
+                                {
+                                    delete *rest;
+                                }
+                                tasks.clear();
+                                it = tasks.end();
+                                if (currentState == eTutorial_State_Gameplay)
+                                    gApp.SetTutorialMode(false, minecraft->mLocalPlayers[playerId]);
+                            }
+                            else if (!tasks.empty() &&
+                                     action == eTutorial_CompletionAction_CompleteStateExceptLastTask)
+                            {
+                                TutorialTask* lastTask = tasks.at(tasks.size() - 1);
+                                tasks.pop_back();
+                                for (std::vector<TutorialTask*>::iterator rest = tasks.begin(); rest != tasks.end();
+                                     ++rest)
+                                {
+                                    delete *rest;
+                                }
+                                tasks.clear();
+                                tasks.push_back(lastTask);
+                                it = tasks.begin();
+                                if (currentState == eTutorial_State_Gameplay)
+                                    gApp.SetTutorialMode(false, minecraft->mLocalPlayers[playerId]);
+                            }
+
+                            taskChanged = true;
+                            if (tasks.empty())
+                            {
+                                setStateCompleted(currentState);
+                                currentTask[currentState] = NULL;
+                            }
+                            else
+                            {
+                                currentTask[currentState] = tasks.front();
+                                currentTask[currentState]->setAsCurrentTask(true);
+                                if (currentTask[currentState]->isPreCompletionEnabled())
+                                    checkTask = true;
+                            }
+                        }
+                        else
+                        {
+                            ++it;
+                            if (task->ShowMinimumTime() && task->hasBeenActivated() &&
+                                static_cast<unsigned int>(visibleTime) + gTutorialMinimumDisplayTime <
+                                    GetTickCount())
+                            {
+                                task->setShownForMinimumTime();
+                                if (!popupPending)
+                                {
+                                    PopupMessageDetails* details = new PopupMessageDetails();
+                                    details->titleId = task->getDescriptionId();
+                                    details->messageId = task->getPromptId();
+                                    details->repeat = task->AllowFade();
+                                    details->displayed = true;
+                                    setMessage(details);
+                                }
+                            }
+                        }
+                    }
+
+                    if (currentTask[currentState] == NULL && !tasks.empty())
+                    {
+                        currentTask[currentState] = tasks.front();
+                        currentTask[currentState]->setAsCurrentTask(true);
+                        taskChanged = true;
+                    }
+                }
+
+                if (!tasksChecked && (taskChanged || stateChanged))
+                {
+                    bool allTasksDone = true;
+                    for (int state = 0; state < eTutorial_State_Max; ++state)
+                    {
+                        if (!stateTasks[state].empty())
+                        {
+                            allTasksDone = false;
+                            break;
+                        }
+                        if (state == eTutorial_State_Gameplay)
+                        {
+                            completed = true;
+                            gApp.SetTutorialMode(false, minecraft->mLocalPlayers[playerId]);
+                            Minecraft::GetInstance()->playerLeftTutorial(playerId);
+                        }
+                    }
+                    if (allTasksDone)
+                        tasksChecked = true;
+                }
+            }
+
+            bool showTaskMessage =
+                gameModeConstraints->HasFailedConstraint(currentState) || taskChanged || stateChanged;
+            if (!showTaskMessage && !popupPending && !gameModeConstraints->HasFailedConstraint(currentState) &&
+                currentTask[currentState] != NULL &&
+                (currentMessage == NULL || currentTask[currentState]->getDescriptionId() != currentMessage->titleId))
+            {
+                showTaskMessage = true;
+            }
+
+            if (showTaskMessage)
+            {
+                if (!gameModeConstraints->HasFailedConstraint(currentState))
+                {
+                    TutorialTask* task = currentTask[currentState];
+                    if (task == NULL)
+                    {
+                        setMessage(static_cast<PopupMessageDetails*>(NULL));
+                    }
+                    else
+                    {
+                        PopupMessageDetails* details = new PopupMessageDetails();
+                        details->titleId = task->getDescriptionId();
+                        details->messageId = task->getPromptId();
+                        details->repeat = task->AllowFade();
+                        setMessage(details);
+                        messageRepeatCount = currentTask[currentState]->repeatMessage;
+                    }
+                }
+                else
+                {
+                    PopupMessageDetails* details = new PopupMessageDetails();
+                    details->titleId = gameModeConstraints->GetFailedConstraint(currentState)->messageId;
+                    details->repeat = false;
+                    setMessage(details);
+                }
+            }
+
+            if (popupPending && static_cast<unsigned int>(visibleTime) + gTutorialVisibleTime < GetTickCount())
+                popupPending = false;
+
+            if (!gameModeConstraints->HasFailedConstraint(currentState))
+            {
+                TutorialTask* task = currentTask[currentState];
+                if (task != NULL && messageRepeatCount != 0 &&
+                    static_cast<unsigned int>(visibleTime) + messageRepeatCount * gTutorialMessageRepeatTime <
+                        GetTickCount())
+                {
+                    PopupMessageDetails* details = new PopupMessageDetails();
+                    details->titleId = task->getDescriptionId();
+                    details->messageId = task->getPromptId();
+                    details->repeat = task->AllowFade();
+                    details->unknown = true;
+                    setMessage(details);
+                    ++messageRepeatCount;
+                    if (static_cast<unsigned int>(messageRepeatCount) > 1)
+                        messageRepeatCount = 1;
+                }
+            }
+            stateChanged = false;
+
+            if (currentState != eTutorial_State_Gameplay && stateTasks[currentState].empty() &&
+                (isSelectedItemState() || !gConsoleUIController.GetMenuDisplayed(playerId)))
+            {
+                completedStates.push_back(currentState);
+                changeTutorialState(eTutorial_State_Gameplay, NULL);
+            }
+            return;
+        }
     }
 
     TutorialTask* task = currentTask[currentState];
-    if (task == NULL || gameModeConstraints->HasFailedConstraint(currentState))
+    if (task != NULL &&
+        (!task->AllowFade() || static_cast<unsigned int>(visibleTime) + gTutorialVisibleTime > GetTickCount()))
     {
-        gConsoleUIController.SetTutorialVisible(playerId, false);
-        return;
+        tutorialHidden = true;
     }
-
-    if (stateChanged)
-    {
-        PopupMessageDetails* details = new PopupMessageDetails();
-        details->titleId = task->getDescriptionId();
-        details->messageId = task->getPromptId();
-        details->repeat = task->AllowFade();
-        setMessage(details);
-        stateChanged = false;
-    }
-
-    if (task->ShowMinimumTime() &&
-        GetTickCount() > static_cast<unsigned int>(visibleTime) + gTutorialMinimumDisplayTime)
-    {
-        task->setShownForMinimumTime();
-        if (currentMessage != NULL && currentMessage->messageId != task->getPromptId())
-        {
-            PopupMessageDetails* details = new PopupMessageDetails();
-            details->titleId = task->getDescriptionId();
-            details->messageId = task->getPromptId();
-            details->repeat = task->AllowFade();
-            details->displayed = true;
-            setMessage(details);
-        }
-    }
-
-    std::vector<TutorialTask*>& activeTasks = stateTasks[currentState];
-    for (std::vector<TutorialTask*>::iterator it = activeTasks.begin(); it != activeTasks.end();)
-    {
-        TutorialTask* candidate = *it;
-        if (candidate != task && !candidate->isPreCompletionEnabled())
-        {
-            ++it;
-            continue;
-        }
-        if (candidate->ShowMinimumTime()
-            && (!candidate->hasBeenActivated()
-                || GetTickCount() <= static_cast<unsigned int>(visibleTime)
-                                     + gTutorialMinimumDisplayTime))
-        {
-            ++it;
-            continue;
-        }
-        if (!candidate->isCompleted())
-        {
-            ++it;
-            continue;
-        }
-
-        const eTutorial_CompletionAction action = candidate->getCompletionAction();
-        candidate->taskCompleted();
-        it = activeTasks.erase(it);
-        delete candidate;
-        if (action == eTutorial_CompletionAction_CompleteStateAndConstraints)
-            gameModeConstraints->MoveDelayedConstraints(currentState, 0);
-        if (action == eTutorial_CompletionAction_CompleteState
-            || action == eTutorial_CompletionAction_CompleteStateAndConstraints)
-        {
-            for (std::vector<TutorialTask*>::iterator rest = activeTasks.begin();
-                 rest != activeTasks.end(); ++rest)
-                delete *rest;
-            activeTasks.clear();
-        }
-        currentTask[currentState] = activeTasks.empty() ? NULL : activeTasks.front();
-        if (currentTask[currentState] != NULL)
-            currentTask[currentState]->setAsCurrentTask(true);
-        else
-            setMessage(static_cast<PopupMessageDetails*>(NULL));
-        stateChanged = true;
-        break;
-    }
+    gConsoleUIController.SetTutorialVisible(playerId, false);
 }
 
 unsigned char Tutorial::isStateCompleted(eTutorial_State state)
@@ -1309,7 +1487,7 @@ void Tutorial::createItemSelected(not_null_ptr<ItemInstance> item, bool selected
 
 unsigned int Tutorial::onCrafted(not_null_ptr<ItemInstance> item)
 {
-    for (int state = 0; state < 44; ++state)
+    for (int state = 0; state < eTutorial_State_Max; ++state)
     {
         for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
              it != stateTasks[state].end(); ++it)
@@ -1323,7 +1501,7 @@ unsigned int Tutorial::onCrafted(not_null_ptr<ItemInstance> item)
 
 unsigned int Tutorial::onEquip(not_null_ptr<ItemInstance> item)
 {
-    for (int state = 0; state < 44; ++state)
+    for (int state = 0; state < eTutorial_State_Max; ++state)
     {
         for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
              it != stateTasks[state].end(); ++it)
@@ -1337,7 +1515,7 @@ unsigned int Tutorial::onEquip(not_null_ptr<ItemInstance> item)
 
 unsigned int Tutorial::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
 {
-    for (int state = 0; state < 44; ++state)
+    for (int state = 0; state < eTutorial_State_Max; ++state)
     {
         for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
              it != stateTasks[state].end(); ++it)

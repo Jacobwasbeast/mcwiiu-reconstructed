@@ -335,7 +335,8 @@ enum eTutorial_State
     eTutorial_State_Slime,
     eTutorial_State_Elytra,
     eTutorial_State_Trident = 42,
-    eTutorial_State_Conduit
+    eTutorial_State_Conduit,
+    eTutorial_State_Max
 };
 
 enum eTutorial_GameMode
@@ -459,9 +460,9 @@ public:
     GameModeConstraints* gameModeConstraints;
     boost::unordered_map<int, TutorialMessage*> messages;
     std::vector<TutorialTask*> tasks;
-    std::vector<TutorialTask*> stateTasks[44];
-    std::vector<TutorialHint*> stateHints[44];
-    TutorialTask* currentTask[44];
+    std::vector<TutorialTask*> stateTasks[eTutorial_State_Max];
+    std::vector<TutorialHint*> stateHints[eTutorial_State_Max];
+    TutorialTask* currentTask[eTutorial_State_Max];
     std::vector<eTutorial_State> completedStates;
     bool overridesGameHostOptions;
     bool gameHostOptionsOverridden;
