@@ -1,4 +1,5 @@
 #include "game/core/DelayedRelease.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/CompoundTag.hpp"
 #include "game/core/DamageSource.hpp"
@@ -49,5 +50,5 @@ void DelayedRelease::addAdditonalSaveData(CompoundTag*)
 
 unsigned long long DelayedRelease::GetType()
 {
-    return 0x0000000008000007ULL;
+    return EntityType::DELAYED_RELEASE;
 }

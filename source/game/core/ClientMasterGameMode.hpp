@@ -25,7 +25,6 @@ class MultiPlayerLevel;
 class ClientboundChatPacket;
 class Scoreboard;
 
-unsigned int hash_value(const PlayerUID& uid);
 
 class ClientMasterGameMode : public CommonMasterGameMode
 {
@@ -110,7 +109,7 @@ public:
     void RecievedBRUP();
     void SetBRUPSToWaitOn(int count);
     bool IsValidStateForItemUse() const;
-    unsigned int GetGameModeState() const;
+    EGameModeState GetGameModeState() const;
     MultiPlayerLevel* GeneratorTargetLevel() const;
     class Scoreboard* getScoreboard();
     double GetPlayerMapProgress(PlayerUID uid) const;
@@ -133,7 +132,7 @@ private:
     bool mNewLevelDataPending;
     std::vector<MapSelectInfo> mPlaylist;
     StringTable mStringTable;
-    unsigned int mGameModeState;
+    EGameModeState mGameModeState;
     std::vector<GameModeTransitionParams*> mTransitions;
     boost::unordered_map<std::wstring, unsigned int> mStrings;
     boost::unordered_map<PlayerUID, double, boost::hash<PlayerUID> > mPlayerProgress;

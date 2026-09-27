@@ -1,7 +1,9 @@
 #include "game/core/SeaGrass.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/Coral.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
@@ -15,249 +17,299 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/world/block/BlockId.hpp"
 
-static AbstractProperty<int>* SEAGRASS_TYPE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"type", 0, 2));
-static const AABB* SEAGRASS_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
+AbstractProperty<int>* SeaGrass::TYPE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"type", 0, 2));
+const AABB* SeaGrass::SHAPE = AABB::newPermanent(0.10000000149011612, 0.0, 0.10000000149011612, 0.8999999761581421,
+                                                 0.800000011920929, 0.8999999761581421);
 
 SeaGrass::SeaGrass()
-    : Bush(Material::PLANT), mCarriedIcon(NULL), mDoubleTallTopIcon(NULL), mDoubleTallBottomIcon(NULL)
+    : Bush(Material::REPLACEABLE_PLANT), mCarriedIcon(NULL), mDoubleTallTopIcon(NULL), mDoubleTallBottomIcon(NULL)
 {
     DerivedInit();
-    TypedBoxed<int> type(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(SEAGRASS_TYPE, &type));
+    TypedBoxed<int> type(TYPE_SINGLE);
+    registerDefaultState(defaultBlockState()->setBoxedValue(TYPE, &type));
     setTicking(true);
 }
-SeaGrass::~SeaGrass() {}
-bool SeaGrass::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool) { return true; }
+
+SeaGrass::~SeaGrass()
+{
+}
+
+bool SeaGrass::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool clientSide)
+{
+    return true;
+}
+
 bool SeaGrass::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
-    return trySpawnSeaGrass(true, level, random, pos, state);
+    return state->getBlock() == this && state->getValue(TYPE) == TYPE_SINGLE;
 }
-void SeaGrass::performBonemeal(Level* l, Random*, const BlockPos& p, const BlockState* s)
+
+void SeaGrass::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
-    if (s->getValue(SEAGRASS_TYPE) != 0)
+    if (state->getValue(TYPE) != TYPE_SINGLE)
         return;
 
-    const BlockState* aboveState = l->getBlockState(p.above());
+    const BlockState* aboveState = level->getBlockState(pos.above());
     Block* aboveBlock = aboveState->getBlock();
-    if (!aboveBlock->isLiquidBlock() || aboveBlock->mMaterial != Material::WATER)
+    if (!aboveBlock->isLiquidBlock() || aboveBlock->mMaterial != Material::WATER
+        || aboveState->getValue(LiquidBlock::LEVEL) != 0)
         return;
 
-    const BlockState* topState = getBlockState(1);
-    const BlockState* bottomState = getBlockState(2);
-    l->setBlock(p.above(), topState, 3, false);
-    l->setBlock(p, bottomState, 3, false);
+    TypedBoxed<int> top(TYPE_TALL_TOP);
+    const BlockState* topState = defaultBlockState()->setBoxedValue(TYPE, &top);
+    TypedBoxed<int> bottom(TYPE_TALL_BOTTOM);
+    const BlockState* bottomState = defaultBlockState()->setBoxedValue(TYPE, &bottom);
+    level->setBlock(pos.above(), topState, Block::UPDATE_ALL, false);
+    level->setBlock(pos, bottomState, Block::UPDATE_ALL, false);
 }
-void SeaGrass::tick(Level* level, const BlockPos& pos, const BlockState*, Random*)
+
+void SeaGrass::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     if (!level->mIsClientSide)
-        level->addToTickNextTick(pos, defaultBlockState()->getBlock(), 1);
+        checkAlive(level, pos, state);
 }
-void SeaGrass::registerIcons(IconRegister* r)
+
+void SeaGrass::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = r->registerIcon(L"seagrass");
-    mCarriedIcon = r->registerIcon(L"seagrass_carried");
-    mDoubleTallTopIcon = r->registerIcon(L"seagrass_doubletall_top");
-    mDoubleTallBottomIcon = r->registerIcon(L"seagrass_doubletall_bottom");
+    mIcon = iconRegister->registerIcon(L"seagrass");
+    mCarriedIcon = iconRegister->registerIcon(L"seagrass_carried");
+    mDoubleTallTopIcon = iconRegister->registerIcon(L"seagrass_doubletall_top");
+    mDoubleTallBottomIcon = iconRegister->registerIcon(L"seagrass_doubletall_bottom");
 }
-TextureAtlasSprite* SeaGrass::getTexture(const Direction* d, const BlockState* s)
+
+TextureAtlasSprite* SeaGrass::getTexture(const Direction* face, const BlockState* state)
 {
-    if (d == Direction::UP)
+    if (face == Direction::UP)
         return mCarriedIcon;
 
-    int n = convertBlockStateToLegacyData(s);
-    if (n == 1)
+    int type = state->getValue(TYPE);
+    if (type == TYPE_TALL_TOP)
         return mDoubleTallTopIcon;
-    if (n == 2)
+    if (type == TYPE_TALL_BOTTOM)
         return mDoubleTallBottomIcon;
     return mIcon;
 }
-EBlockRenderShape SeaGrass::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(52); }
-int SeaGrass::getColor(const BlockState* s) { return Block::getColor(s); }
-int SeaGrass::getColor(LevelSource* l, const BlockPos& p, const BlockState*) { return Block::getColor(l, p); }
-const MaterialColor* SeaGrass::getMapColor(const BlockState* s, LevelSource* l, const BlockPos& p) { return Block::getMapColor(s, l, p); }
-Item* SeaGrass::getResource(const BlockState*, Random*, int) { return NULL; }
-const BlockState* SeaGrass::getBlockState(int data) { TypedBoxed<int> type(data); return defaultBlockState()->setBoxedValue(SEAGRASS_TYPE, &type); }
-int SeaGrass::convertBlockStateToLegacyData(const BlockState* s) { return s->getValue(SEAGRASS_TYPE); }
+
+EBlockRenderShape SeaGrass::getRenderShape(const BlockState* state)
+{
+    return BLOCK_RENDER_SEAGRASS;
+}
+
+int SeaGrass::getColor(const BlockState* state)
+{
+    return Blocks::grass->getColor(state);
+}
+
+int SeaGrass::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
+{
+    return Blocks::grass->getColor(levelSource, pos, state);
+}
+
+const MaterialColor* SeaGrass::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+{
+    return Blocks::grass->getMapColor(state, levelSource, pos);
+}
+
+Item* SeaGrass::getResource(const BlockState* state, Random* random, int lootBonus)
+{
+    return NULL;
+}
+
+const BlockState* SeaGrass::getBlockState(int data)
+{
+    TypedBoxed<int> type(data);
+    return defaultBlockState()->setBoxedValue(TYPE, &type);
+}
+
+int SeaGrass::convertBlockStateToLegacyData(const BlockState* state)
+{
+    return state->getValue(TYPE);
+}
+
 unsigned int SeaGrass::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x15f
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
         && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
         && tooltipData.m_pBlockState->getBlock() == this
-        && tooltipData.m_pBlockState->getValue(SEAGRASS_TYPE) == 0)
+        && tooltipData.m_pBlockState->getValue(TYPE) == TYPE_SINGLE)
     {
-        return 0x9F5FDC40u;
+        return IDS_TOOLTIPS_GROW;
     }
     return Block::GetInteractTooltip(tooltipData);
 }
-EBlockOffsetType SeaGrass::getOffsetType() { return BLOCK_OFFSET_XZ; }
-const AABB* SeaGrass::getShape(const BlockState*, LevelSource*, const BlockPos&) { return SEAGRASS_SHAPE; }
-void SeaGrass::neighborChanged(const BlockState* s, Level* l, const BlockPos& p, Block*, const BlockPos&)
+
+EBlockOffsetType SeaGrass::getOffsetType()
 {
-    if (!l->mIsClientSide && !canSurvive(l, p, s))
-        l->addToTickNextTick(p, defaultBlockState()->getBlock(), 2);
+    return BLOCK_OFFSET_XZ;
 }
-bool SeaGrass::mayPlace(Level* l, const BlockPos& p, bool client)
+
+const AABB* SeaGrass::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* s = l->getBlockState(p.below());
-    if (s->getBlock() == NULL || s->getBlock()->isLiquidBlock()
-        || !l->isSolidBlockingBlock(p.below()))
+    return SHAPE;
+}
+
+void SeaGrass::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                               const BlockPos& neighborPos)
+{
+    if (!level->mIsClientSide && !canSurvive(level, pos, state))
+        level->addToTickNextTick(pos, this, 2);
+}
+
+bool SeaGrass::mayPlace(Level* level, const BlockPos& pos, bool clientSide)
+{
+    Block* below = level->getBlock(pos.below());
+    if (below == Blocks::magma || below->mIsFence || below == Blocks::soul_sand
+        || !level->isSolidBlockingBlock(pos.below()))
         return false;
-    if (client)
+    if (clientSide)
         return true;
-    if (!l->isUnderWater(p, 270, 0))
+    if (!level->isUnderWater(pos, BlockId::SEA_GRASS, 0)
+        || level->getLiquidBlock(pos)->mMaterial != Material::WATER)
         return false;
-    const BlockState* e = l->getExtraBlockState(p);
-    return e->mElementId == 0 || e->mElementId > 7;
+    int waterLevel = level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL);
+    return waterLevel == 0 || waterLevel > 7;
 }
 
-bool SeaGrass::canSurvive(Level* l, const BlockPos& p, const BlockState* s, bool client)
+bool SeaGrass::canSurvive(Level* level, const BlockPos& pos, const BlockState* state, bool clientSide)
 {
-    if (l->getBlockState(p)->getBlock() != this)
-        return mayPlace(l, p, client);
-    if (!l->isUnderWater(p, 270, convertBlockStateToLegacyData(s)))
+    if (level->getBlock(pos) != this)
+        return mayPlace(level, pos, clientSide);
+    if (!level->isUnderWater(pos, BlockId::SEA_GRASS, convertBlockStateToLegacyData(state)))
         return false;
 
-    int n = convertBlockStateToLegacyData(s);
-    if (n == 1)
+    int type = state->getValue(TYPE);
+    if (type == TYPE_TALL_TOP)
     {
-        return l->getBlockState(p.below())->getBlock() == this
-            && convertBlockStateToLegacyData(l->getBlockState(p.below())) == 2;
+        if (!level->isUnderWater(pos, BlockId::SEA_GRASS, convertBlockStateToLegacyData(state)))
+            return false;
+        const BlockState* belowState = level->getBlockState(pos.below());
+        return belowState->getBlock() == this && belowState->getValue(TYPE) == TYPE_TALL_BOTTOM;
     }
-    if (n == 2)
-    {
-        return l->getBlockState(p.above())->getBlock() == this
-            && convertBlockStateToLegacyData(l->getBlockState(p.above())) == 1
-            && l->isSolidBlockingBlock(p.below());
-    }
-    return mayPlace(l, p, client);
+    if (type != TYPE_TALL_BOTTOM)
+        return mayPlace(level, pos, clientSide);
+
+    const BlockState* aboveState = level->getBlockState(pos.above());
+    return aboveState->getBlock() == this && aboveState->getValue(TYPE) == TYPE_TALL_TOP
+        && level->isSolidBlockingBlock(pos.below());
 }
-bool SeaGrass::canSurvive(Level* l, const BlockPos& p, const BlockState* s) { return canSurvive(l, p, s, false); }
-bool SeaGrass::mayPlace(Level* l, const BlockPos& p) { return mayPlace(l, p, false); }
-void SeaGrass::onPlace(Level* l, const BlockPos& p, const BlockState*)
+
+bool SeaGrass::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (l->getBlockState(p)->getBlock() == Blocks::double_plant)
-        l->setExtraBlock(p, Blocks::double_plant->defaultBlockState(), 3, false);
+    return canSurvive(level, pos, state, false);
 }
-void SeaGrass::playerDestroy(Level* l, boost::shared_ptr<Player>, const BlockPos& p, const BlockState* s,
-                             boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance> t)
+
+bool SeaGrass::mayPlace(Level* level, const BlockPos& pos)
 {
-    if (t->isEmpty() || Item::getId(t->getItem()) != 0x167)
+    return mayPlace(level, pos, false);
+}
+
+void SeaGrass::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
+{
+    if (level->getLiquidBlock(pos)->mMaterial == mMaterial)
+        level->setExtraBlock(pos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_ALL, false);
+}
+
+void SeaGrass::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                             const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
+                             not_null_ptr<ItemInstance> tool)
+{
+    if (tool->isEmpty() || Item::getId(tool->getItem()) != ItemId::SHEARS)
         return;
 
-    int n = convertBlockStateToLegacyData(s) == 0 ? 1 : 2;
-    not_null_ptr<ItemInstance> drop(new ItemInstance(Item::byBlock(Blocks::double_plant), 2, n));
-    Block::popResource(l, p, drop);
+    int count = state->getValue(TYPE) == TYPE_SINGLE ? 1 : 2;
+    Block::popResource(level, pos,
+                       not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_grass), count,
+                                                                   getSpawnResourcesAuxValue(state))));
 }
 
-bool SeaGrass::trySpawnSeaGrass(bool check, Level* l, Random* r, const BlockPos& p, const BlockState*)
+bool SeaGrass::trySpawnSeaGrass(bool simulate, Level* level, Random* random, const BlockPos& pos,
+                                const BlockState* state)
 {
-    if (!l->isUnderWater(p.above(), 270, 0))
+    if (!level->isUnderWater(pos.above(), BlockId::SEA_GRASS, 0))
         return false;
 
-    bool growTallSeaGrass = false;
-    bool result = false;
-    SeaGrass* seaGrass = static_cast<SeaGrass*>(Blocks::sea_grass);
-    const BlockState* tallTopState = seaGrass->getBlockState(1);
+    bool spawned = false;
+    bool tall = false;
+    TypedBoxed<int> top(TYPE_TALL_TOP);
+    const BlockState* tallTopState = Blocks::sea_grass->defaultBlockState()->setBoxedValue(TYPE, &top);
 
     for (int attempt = 16; attempt < 64; ++attempt)
     {
-        BlockPos pos = p.above();
-        int stepCount = attempt >> 4;
-        bool foundGround = true;
-        if (stepCount < 1)
+        BlockPos spawnPos = pos.above();
+        bool reachable = true;
+        for (int step = 0; step < attempt / 16; ++step)
         {
-            foundGround = (stepCount != 0);
-        }
-        else
-        {
-            for (int step = 0; step < stepCount; ++step)
+            int dx = random->nextInt(3) - 1;
+            int dyScale = random->nextInt(3) - 1;
+            int dy = dyScale * random->nextInt(3) / 2;
+            int dz = random->nextInt(3) - 1;
+            spawnPos = BlockPos(spawnPos.x + dx, spawnPos.y + dy, spawnPos.z + dz);
+            Block* ground = level->getBlock(spawnPos.below());
+            if ((ground != Blocks::dirt && ground != Blocks::sand && ground != Blocks::gravel && ground != Blocks::clay)
+                || !level->isEmptyWaterBlock(spawnPos))
             {
-                int dx = r->nextInt(3);
-                int ya = r->nextInt(3);
-                int yb = r->nextInt(3);
-                int dz = r->nextInt(3);
-                pos = pos.offset(dx - 1, (ya - 1) * yb / 2, dz - 1);
-                Block* ground = l->getBlock(pos.below());
-                if ((ground != Blocks::dirt && ground != Blocks::sand && ground != Blocks::gravel && ground != Blocks::clay)
-                    || !l->isEmptyWaterBlock(pos))
-                {
-                    foundGround = false;
-                    break;
-                }
+                reachable = false;
+                break;
             }
         }
-
-        if (!foundGround)
+        if (!reachable)
             continue;
 
-        if (!l->isUnderWater(pos.above(), 270, 0)
-            || l->getBlock(pos) == Blocks::sea_grass
-            || l->getBlock(pos) == Blocks::coral)
+        if (!level->isUnderWater(spawnPos.above(), BlockId::SEA_GRASS, 0) || level->getBlock(spawnPos) == Blocks::sea_grass
+            || level->getBlock(spawnPos) == Blocks::coral)
             continue;
 
-        int roll = r->nextInt(8);
-        const BlockState* chosenState;
-        bool placed = false;
+        const BlockState* spawnState;
+        int roll = random->nextInt(8);
         if (roll == 0)
         {
-            growTallSeaGrass = true;
-            chosenState = seaGrass->getBlockState(2);
-            if (chosenState != NULL)
-            {
-                Block* chosenBlock = chosenState->getBlock();
-                if (chosenBlock->mayPlace(l, pos) && l->isEmptyWaterBlock(pos.above()))
-                    placed = true;
-            }
+            tall = true;
+            TypedBoxed<int> bottom(TYPE_TALL_BOTTOM);
+            spawnState = Blocks::sea_grass->defaultBlockState()->setBoxedValue(TYPE, &bottom);
+        }
+        else if (roll == 2)
+        {
+            TypedBoxed<int> variant(random->nextInt(5));
+            spawnState = Blocks::coral->defaultBlockState()->setBoxedValue(Coral::VARIANT, &variant);
         }
         else
         {
-            if (roll == 2)
-            {
-                r->nextInt(5);
-                chosenState = Blocks::coral->defaultBlockState();
-            }
-            else
-            {
-                chosenState = Blocks::sea_grass->defaultBlockState();
-            }
-
-            if (chosenState != NULL)
-            {
-                Block* chosenBlock = chosenState->getBlock();
-                if (growTallSeaGrass)
-                {
-                    if (chosenBlock->mayPlace(l, pos) && l->isEmptyWaterBlock(pos.above()))
-                        placed = true;
-                }
-                else
-                {
-                    if (chosenBlock->mayPlace(l, pos))
-                        placed = true;
-                }
-            }
+            spawnState = Blocks::sea_grass->defaultBlockState();
         }
 
-        if (placed)
+        bool canPlace = false;
+        if (spawnState != NULL && spawnState->getBlock()->mayPlace(level, spawnPos))
+            canPlace = !tall || level->isEmptyWaterBlock(spawnPos.above());
+
+        if (canPlace)
         {
-            result = true;
-            if (!check)
+            spawned = true;
+            if (!simulate)
             {
-                if (growTallSeaGrass)
-                    l->setBlockAndUpdate(pos.above(), tallTopState);
-                l->setBlockAndUpdate(pos, chosenState);
+                if (tall)
+                    level->setBlockAndUpdate(spawnPos.above(), tallTopState);
+                level->setBlockAndUpdate(spawnPos, spawnState);
             }
         }
     }
 
-    return result;
+    return spawned;
 }
+
 BlockStateDefinition* SeaGrass::createBlockStateDefinition()
 {
-    const Property* properties[] = { SEAGRASS_TYPE };
+    static const Property* properties[] = { TYPE };
     return new BlockStateDefinition(this, properties, 1);
 }
-bool SeaGrass::isSilkTouchable() { return false; }
+
+bool SeaGrass::isSilkTouchable()
+{
+    return false;
+}

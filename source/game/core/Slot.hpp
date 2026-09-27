@@ -14,6 +14,7 @@ class Player;
 class Slot
 {
     friend class AbstractContainerMenu;
+    friend class UIScene_AbstractContainerMenu;
 
 public:
     Slot(boost::shared_ptr<Container> container, int index, int x, int y);

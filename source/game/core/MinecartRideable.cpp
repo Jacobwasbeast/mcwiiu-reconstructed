@@ -1,4 +1,6 @@
 #include "game/core/MinecartRideable.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -10,14 +12,14 @@
 MinecartRideable::MinecartRideable(Level* level) : Minecart(level)
 {
     fjDerivedCtorCalls();
-    mCategories |= 0x100;
+    mCategories |= EntityCategory::eEntityCategory_Rideable;
 }
 
 MinecartRideable::MinecartRideable(Level* level, double x, double y, double z)
     : Minecart(level, x, y, z)
 {
     fjDerivedCtorCalls();
-    mCategories |= 0x100;
+    mCategories |= EntityCategory::eEntityCategory_Rideable;
 }
 
 MinecartRideable::~MinecartRideable()
@@ -77,13 +79,13 @@ unsigned int MinecartRideable::GetInteractTooltip(const EntityTooltipDataHolder&
 {
     if (!tooltipData.m_pPlayer->isSneaking() && getPassengers()->empty())
     {
-        return 0x257433afU;
+        return IDS_TOOLTIPS_RIDE;
     }
 
-    return 0xffffffffU;
+    return IDS_NONE;
 }
 
 unsigned long long MinecartRideable::GetType()
 {
-    return ENTITY_TYPE_MINECART_RIDEABLE;
+    return EntityType::MINECART_RIDEABLE;
 }

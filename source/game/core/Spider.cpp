@@ -1,4 +1,6 @@
 #include "game/core/Spider.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -24,7 +26,6 @@
 #include "game/entity/ai/WallClimberNavigation.hpp"
 #include "game/util/Random.hpp"
 
-static const unsigned long long ENTITY_TYPE_SPIDER = 0x5D560040ULL;
 static const EntityDataAccessor<unsigned char>* SPIDER_DATA_FLAGS = NULL;
 
 Spider::Spider(Level* level) : Monster(level)
@@ -32,6 +33,7 @@ Spider::Spider(Level* level) : Monster(level)
     fjDerivedCtorCalls();
     setSize(1.4f, 0.9f);
     mBlocksBuilding = true;
+    mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
 Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
@@ -39,6 +41,7 @@ Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
     if (callDerivedConstructor) fjDerivedCtorCalls();
     setSize(1.4f, 0.9f);
     mBlocksBuilding = true;
+    mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
 Spider::~Spider() = default;
@@ -50,13 +53,13 @@ void Spider::create(Level* level)
 
 void Spider::staticCtor()
 {
-    SPIDER_DATA_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_SPIDER, 0x4D540000ULL,
+    SPIDER_DATA_FLAGS = SynchedEntityData::defineId(EntityType::SPIDER, EntityType::MONSTER,
                                                      EntityDataSerializers::BYTE);
 }
 
 void Spider::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_SPIDER);
+    Mob::addDataWalkers(fixer, EntityType::SPIDER);
 }
 
 void Spider::registerGoals()
@@ -120,7 +123,7 @@ EMobType Spider::getMobType() { return MOB_TYPE_ARTHROPOD; }
 
 bool Spider::canBeAffected(MobEffectInstance* effect)
 {
-    if (effect->getEffect() == NULL) return false;
+    if (effect->getEffect() == MobEffects::POISON) return false;
     return LivingEntity::canBeAffected(effect);
 }
 
@@ -182,7 +185,7 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 }
 
 double Spider::getEyeHeight() { return 0.65; }
-unsigned long long Spider::GetType() { return ENTITY_TYPE_SPIDER; }
+unsigned long long Spider::GetType() { return EntityType::SPIDER; }
 
 Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
     : MeleeAttackGoal(spider, 1.0, true)

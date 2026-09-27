@@ -15,14 +15,12 @@ class LivingEntity;
 class Random;
 class Vec3;
 class Vec3i;
-
 class StringRepresentable
 {
 public:
     virtual std::wstring toString() const = 0;
     virtual std::wstring getSerializedName() const = 0;
 };
-
 class Direction : public StringRepresentable
 {
 public:
@@ -127,7 +125,6 @@ public:
     Direction(int data3D, int oppositeIndex, int data2D, const std::wstring& name,
               AxisDirection* axisDirection, Axis* axis, Vec3i* normal, unsigned char ordinal);
     ~Direction();
-
     static void staticCtor();
 
     static const Direction* from3DDataValue(int data3D);
@@ -166,7 +163,6 @@ public:
 
     double toYRot() const;
     Vec3i getNormal() const;
-
     virtual std::wstring toString() const;
     virtual std::wstring getSerializedName() const;
 

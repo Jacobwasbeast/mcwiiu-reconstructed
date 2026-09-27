@@ -11,7 +11,6 @@ class HitResult;
 class WitherSkull : public Fireball
 {
 public:
-    static const unsigned long long ENTITY_TYPE;
     explicit WitherSkull(Level* level);
     WitherSkull(Level* level, boost::shared_ptr<LivingEntity> owner, double x, double y, double z);
     WitherSkull(Level* level, double x, double y, double z, double xd, double yd, double zd);
@@ -22,8 +21,8 @@ public:
     bool isOnFire() override;
     float getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos) override;
     bool isPickable() override;
-    bool isDangerous() const;
-    void setDangerous(bool dangerous);
+    virtual bool isDangerous() const;
+    virtual void setDangerous(bool dangerous);
     double getInertia() override;
     void onHit(const HitResult* result) override;
     void defineSynchedData() override;

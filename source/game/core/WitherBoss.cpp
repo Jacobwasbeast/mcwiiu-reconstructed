@@ -1,320 +1,1342 @@
 #include "game/core/WitherBoss.hpp"
-#include "game/core/DamageSource.hpp"
-#include "game/entity/mob/EntityDamageSource.hpp"
-#include "game/data/CompoundTag.hpp"
-#include "game/world/block/Block.hpp"
-#include "game/client/audio/SoundEvents.hpp"
-#include "game/entity/ai/GoalSelector.hpp"
-#include "game/entity/mob/EntityDataSerializers.hpp"
-#include "game/entity/mob/SynchedEntityData.hpp"
-#include "game/core/Mth.hpp"
-#include "game/util/AABB.hpp"
-#include "game/world/block/BlockPos.hpp"
-#include "game/world/block/Blocks.hpp"
-#include "game/world/Level.hpp"
-#include "game/server/ServerBossEvent.hpp"
-#include "game/entity/ai/FlyingPathNavigation.hpp"
-#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
-const unsigned long long WitherBoss::ENTITY_TYPE = 0x5D540047ULL;
-const EntityDataAccessor<int>* WitherBoss::DATA_TARGETS[3] = { NULL, NULL, NULL };
-const EntityDataAccessor<int>* WitherBoss::DATA_INVULNERABLE_TICKS = NULL;
+#include <cmath>
+#include <algorithm>
+#include <typeinfo>
+#include <vector>
+
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/AttributeInstance.hpp"
+#include "game/core/BaseAttributeMap.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/core/Difficulty.hpp"
+#include "game/core/ExperienceOrb.hpp"
+#include "game/core/GameRules.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/WitherSkull.hpp"
+#include "game/core/WitherTargetHighestDamage.hpp"
+#include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/FlyingPathNavigation.hpp"
+#include "game/entity/ai/GroundPathNavigation.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/LivingEntitySelector.hpp"
+#include "game/entity/ai/MoveControl.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/entity/ai/WitherRandomAttackPosGoal.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/WitherSkeleton.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/SpawnEggItem.hpp"
+#include "game/server/ServerBossEvent.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
+#include "game/util/ResourceLocation.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
+
+
+const EntityDataAccessor<int>* WitherBoss::DATA_TARGET_A = NULL;
+const EntityDataAccessor<int>* WitherBoss::DATA_TARGET_B = NULL;
+const EntityDataAccessor<int>* WitherBoss::DATA_TARGET_C = NULL;
+const EntityDataAccessor<int>* WitherBoss::DATA_TARGETS[3] = {NULL, NULL, NULL};
+const EntityDataAccessor<int>* WitherBoss::DATA_ID_INV = NULL;
 const EntityDataAccessor<bool>* WitherBoss::DATA_AERIAL_ATTACK = NULL;
 const EntityDataAccessor<bool>* WitherBoss::DATA_CHARGE_ATTACK = NULL;
-const EntityDataAccessor<bool>* WitherBoss::DATA_AGGRESSIVE = NULL;
+Predicate<boost::shared_ptr<Entity> >* WitherBoss::LIVING_ENTITY_SELECTOR = new LivingEntitySelector();
 
 WitherBoss::WitherBoss(Level* level)
-    : Monster(level), mShieldHealth(0), mPhase(0), mSpawningFrames(0), mMaxHealth(300),
-      mLastHealthInterval(0), mDyingFrames(0), mOverlayAlpha(0.0f), mSwellAmount(0.0f),
-      mOldSwellAmount(0.0f), mAlternativeTargets{0, 0, 0}, mHeadYRot{0.0f, 0.0f, 0.0f},
-      mHeadXRot{0.0f, 0.0f, 0.0f}, mAerialAttack(false), mAggressive(false), mBossEvent(NULL)
+    : Monster(level),
+      mInitialShieldHealth(40),
+      mDeathSource(NULL),
+      mPhase(1),
+      mShotDelay(0),
+      mPauseTicks(0),
+      mDyingFrames(0),
+      mDyingFlashInterval(15),
+      mOverlayAlpha(1.0f),
+      mSwellAmount(0.0f),
+      mOldSwellAmount(0.0f),
+      mChargeDelay(0),
+      mCharging(false),
+      mHeadShotCooldown(3),
+      mFireRate(20),
+      mShotTicks(20),
+      mTargetRange(30.0f),
+      mSpawningFrames(200),
+      mDiving(false),
+      mChargeTimer(0),
+      mChargeDirection(NULL),
+      mWantsToMove(false),
+      mChargeTicks(0),
+      mTicksSinceShot(0),
+      mShieldHealth(40),
+      mShotCount(0),
+      mChargeInterval(40),
+      mSkipNextCharge(false),
+      mMaxHealth(0),
+      mLastHealthInterval(-1),
+      mSpinSpeed(10.0f),
+      mDestroyBlocksTick(5),
+      mPhaseHealth(0),
+      mHealthInterval(0),
+      mIsPathing(false),
+      mBossEvent(NULL)
 {
-    setSize(0.9f, 3.5f);
-    mFireImmune = true;
-    mExperienceReward = 50;
-    mPhase = 0;
-    mShieldHealth = 0;
     defineSynchedData();
     registerAttributes();
-    registerGoals();
+    fjDerivedCtorCalls();
+
+    mBossEvent = static_cast<ServerBossEvent*>(
+        (new ServerBossEvent(IDS_WITHER, L"", BossEvent::PURPLE, BossEvent::PROGRESS))->setDarkenScreen(true));
+
+    for (int head = 0; head < 2; ++head)
+    {
+        mXRotHeads[head] = 0.0f;
+        mYRotHeads[head] = 0.0f;
+        mXRotOHeads[head] = 0.0f;
+        mYRotOHeads[head] = 0.0f;
+        mNextHeadUpdate[head] = 0;
+        mIdleHeadUpdates[head] = 0;
+    }
+
+    mFireImmune = true;
+    static_cast<GroundPathNavigation*>(getNavigation())->setCanFloat(true);
+    mExperienceReward = 50;
+    mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Monster;
+    setSize(1.0f, 3.5f);
+    setAerialAttack(true);
+
+    mMaxHealth = (int)getMaxHealth();
+    setHealth(1.0f);
+    mBossEvent->setPercent(0.0f);
+    mLastHealthInterval = (int)getMaxHealth();
+    mPhaseHealth = (int)getMaxHealth() / 2;
+    mHealthInterval = (int)getMaxHealth() / 6;
+
+    mDeathSource = DamageSource::OUT_OF_WORLD->copy();
+    mFlyingSpeed = 0.05f;
 }
-WitherBoss::~WitherBoss() = default;
-void WitherBoss::create(Level* level) { new WitherBoss(level); }
-void WitherBoss::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, ENTITY_TYPE); }
+
+WitherBoss::~WitherBoss()
+{
+    delete mDeathSource;
+}
+
+void WitherBoss::create(Level* level)
+{
+    new WitherBoss(level);
+}
+
+void WitherBoss::addDataWalkers(DataFixerUpper* fixer)
+{
+    Mob::addDataWalkers(fixer, EntityType::WITHER_BOSS);
+}
+
 void WitherBoss::staticCtor()
 {
-    for (int index = 0; index < 3; ++index)
-        DATA_TARGETS[index] = SynchedEntityData::defineId<int>(ENTITY_TYPE, ENTITY_TYPE_MONSTER,
-                                                              EntityDataSerializers::INT);
-    DATA_INVULNERABLE_TICKS = SynchedEntityData::defineId<int>(ENTITY_TYPE, ENTITY_TYPE_MONSTER,
-                                                               EntityDataSerializers::INT);
-    DATA_AERIAL_ATTACK = SynchedEntityData::defineId<bool>(ENTITY_TYPE, ENTITY_TYPE_MONSTER,
-                                                           EntityDataSerializers::BOOLEAN);
-    DATA_CHARGE_ATTACK = SynchedEntityData::defineId<bool>(ENTITY_TYPE, ENTITY_TYPE_MONSTER,
-                                                           EntityDataSerializers::BOOLEAN);
-    DATA_AGGRESSIVE = SynchedEntityData::defineId<bool>(ENTITY_TYPE, ENTITY_TYPE_MONSTER,
-                                                        EntityDataSerializers::BOOLEAN);
+    DATA_TARGET_A = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
+    DATA_TARGET_B = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
+    DATA_TARGET_C = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
+
+    const EntityDataAccessor<int>* targets[3] = {DATA_TARGET_A, DATA_TARGET_B, DATA_TARGET_C};
+    memcpy(DATA_TARGETS, targets, sizeof(DATA_TARGETS));
+
+    DATA_ID_INV = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
+    DATA_AERIAL_ATTACK = SynchedEntityData::defineId<bool>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    DATA_CHARGE_ATTACK = SynchedEntityData::defineId<bool>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
 }
-bool WitherBoss::isAggressive() const { return mEntityData->get(DATA_AGGRESSIVE); }
-void WitherBoss::setAggressive(bool aggressive) { mEntityData->set(DATA_AGGRESSIVE, aggressive, true); }
-bool WitherBoss::canDestroy(const Block* block)
+
+bool WitherBoss::canDestroy(Block* block)
 {
-    return block != NULL && block != Blocks::bedrock && block != Blocks::end_portal &&
-           block != Blocks::end_portal_frame && block != Blocks::command_block &&
-           block != Blocks::repeating_command_block && block != Blocks::chain_command_block &&
-           block != Blocks::BARRIER && block != Blocks::STRUCTURE_BLOCK &&
-           block != Blocks::structure_void;
+    return block != Blocks::bedrock && block != Blocks::end_portal && block != Blocks::end_portal_frame &&
+           block != Blocks::command_block && block != Blocks::barrier && block != Blocks::structure_block &&
+           block != Blocks::structure_void && block != Blocks::piston_extension && block != Blocks::end_gateway;
 }
+
+unsigned long long WitherBoss::GetType()
+{
+    return EntityType::WITHER_BOSS;
+}
+
 void WitherBoss::defineSynchedData()
 {
-    Monster::defineSynchedData();
-    for (int index = 0; index < 3; ++index)
-        mEntityData->createDateItem(DATA_TARGETS[index], getId());
-    mEntityData->createDateItem(DATA_INVULNERABLE_TICKS, 0);
+    Mob::defineSynchedData();
+    mEntityData->createDateItem(DATA_TARGET_A, getId());
+    mEntityData->createDateItem(DATA_TARGET_B, getId());
+    mEntityData->createDateItem(DATA_TARGET_C, getId());
+    mEntityData->createDateItem(DATA_ID_INV, 0);
     mEntityData->createDateItem(DATA_AERIAL_ATTACK, false);
     mEntityData->createDateItem(DATA_CHARGE_ATTACK, false);
-    mEntityData->createDateItem(DATA_AGGRESSIVE, false);
 }
+
 void WitherBoss::registerAttributes()
 {
     Monster::registerAttributes();
-    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(300.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.6);
-    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(8.0);
+    getAttributes()->registerAttribute(SharedMonsterAttributes::FLYING_SPEED);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(600.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.6f);
+
+    if (mLevel->getDifficulty() == Difficulty::EASY)
+    {
+        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(getMaxHealth() * 0.5f);
+        mInitialShieldHealth /= 2;
+    }
+    else if (mLevel->getDifficulty() == Difficulty::NORMAL)
+    {
+        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(getMaxHealth() * 0.75f);
+        mInitialShieldHealth = (int)(mInitialShieldHealth * 0.75f);
+    }
+
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(70.0);
+    getAttribute(SharedMonsterAttributes::ARMOR)->setBaseValue(4.0);
 }
+
+void WitherBoss::causeFallDamage(float fallDistance, float damageModifier)
+{
+}
+
+int WitherBoss::getLightColor()
+{
+    return 0xF000F0;
+}
+
+bool WitherBoss::hurt(const DamageSource* source, float damage)
+{
+    if (isInvulnerableTo(source))
+        return false;
+
+    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
+    if (directEntity != NULL && directEntity->GetType() == EntityType::WITHER_SKULL)
+        mPauseTicks = 80;
+
+    if (source == DamageSource::DROWN)
+        return false;
+    if (source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::WITHER_BOSS)
+        return false;
+
+    if (mSpawningFrames > 0 && source->getEntity() != NULL)
+    {
+        if ((source->getEntity()->GetType() & EntityType::MOB) == EntityType::MOB)
+        {
+            boost::shared_ptr<Mob> attacker =
+                boost::static_pointer_cast<Mob>(mLevel->getEntity(source->getEntity()->getId()));
+            attacker->knockback(shared_from_this(), damage, mX - attacker->mX, mY - attacker->mY);
+        }
+    }
+
+    if ((getInvulnerableTicks() > 0 && source != DamageSource::OUT_OF_WORLD) || mDyingFrames > 0)
+        return false;
+
+    if (isPowered() && directEntity != NULL)
+    {
+        if ((directEntity->GetType() & EntityType::ARROW) == EntityType::ARROW || directEntity->GetType() == EntityType::THROWN_TRIDENT)
+            return false;
+    }
+
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    {
+        bool undead = false;
+        if ((attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            boost::shared_ptr<LivingEntity> livingAttacker = boost::static_pointer_cast<LivingEntity>(attacker);
+            if (livingAttacker->getMobType() == MOB_TYPE_UNDEAD)
+                undead = true;
+        }
+        if (undead)
+            return false;
+    }
+
+    if (mDestroyBlocksTick < 1)
+        mDestroyBlocksTick = 20;
+    mIdleHeadUpdates[0] += 3;
+    mIdleHeadUpdates[1] += 3;
+
+    bool hurt = Monster::hurt(source, damage);
+    if (hurt)
+    {
+        int health = (int)getHealth();
+        if (mLevel->getDifficulty() != Difficulty::EASY && health < mLastHealthInterval - mHealthInterval)
+        {
+            mFireRate /= 2;
+            mLastHealthInterval -= mHealthInterval;
+        }
+
+        if (health <= mPhaseHealth && mPhase > 0)
+            changePhase();
+
+        if (attacker != NULL)
+        {
+            bool canSeeAttacker = canSee(attacker);
+            double distanceSqr = getPos(1.0f)->subtract(attacker->mX, attacker->mY, attacker->mZ)->lengthSqr();
+            if (attacker == getTarget() && (!canSeeAttacker || mTargetRange * mTargetRange < (float)distanceSqr))
+                mChargeTimer = 1;
+        }
+
+        if (mBossEvent != NULL && attacker != NULL && attacker->GetType() == EntityType::SERVER_PLAYER)
+            mBossEvent->addPlayer(boost::static_pointer_cast<ServerPlayer>(attacker), (int)damage);
+    }
+    return hurt;
+}
+
+bool WitherBoss::isPickable()
+{
+    return !mRemoved;
+}
+
+void WitherBoss::readAdditionalSaveData(CompoundTag* tag)
+{
+    Mob::readAdditionalSaveData(tag);
+    setInvulnerableTicks(tag->getInt(L"Invul"));
+
+    if (hasCustomName())
+        mBossEvent->setName(getDisplayName());
+
+    bool legacySave = true;
+    if (tag->contains(L"Phase"))
+    {
+        mPhase = tag->getInt(L"Phase");
+        legacySave = false;
+    }
+    if (tag->contains(L"AirAttack"))
+        setAerialAttack(tag->getBoolean(L"AirAttack"));
+    if (tag->contains(L"ShieldHealth"))
+        mShieldHealth = tag->getInt(L"ShieldHealth");
+    if (tag->contains(L"maxHealth"))
+        mMaxHealth = tag->getInt(L"maxHealth");
+    if (tag->contains(L"lastHealthInterval"))
+        mLastHealthInterval = tag->getInt(L"lastHealthInterval");
+    if (tag->contains(L"dyingFrames"))
+        mDyingFrames = tag->getInt(L"dyingFrames");
+    if (tag->contains(L"swellAmount"))
+        mSwellAmount = tag->getFloat(L"swellAmount");
+    if (tag->contains(L"oldSwellAmount"))
+        mOldSwellAmount = tag->getFloat(L"oldSwellAmount");
+    if (tag->contains(L"firerate"))
+        mFireRate = tag->getInt(L"firerate");
+
+    int invulnerableTicks = getInvulnerableTicks();
+    if (tag->contains(L"SpawningFrames"))
+        mSpawningFrames = tag->getInt(L"SpawningFrames");
+    else if (invulnerableTicks <= 0)
+        mSpawningFrames = 0;
+
+    if (tag->contains(L"overlayAlpha"))
+        mOverlayAlpha = tag->getFloat(L"overlayAlpha");
+    else
+        mOverlayAlpha = mSpawningFrames < 1 ? 0.0f : 1.0f;
+
+    if (legacySave)
+    {
+        int maxHealth = (int)getMaxHealth();
+        int health = (int)getHealth();
+        mLastHealthInterval = health;
+        mPhaseHealth = maxHealth / 2;
+        mHealthInterval = maxHealth / 6;
+        if (health <= mPhaseHealth)
+            mPhase = 0;
+    }
+}
+
+void WitherBoss::addAdditonalSaveData(CompoundTag* tag)
+{
+    Mob::addAdditonalSaveData(tag);
+    tag->putBoolean(L"AirAttack", getAerialAttack());
+    tag->putInt(L"ShieldHealth", mShieldHealth);
+    tag->putInt(L"Phase", mPhase);
+    tag->putInt(L"SpawningFrames", mSpawningFrames);
+    tag->putInt(L"maxHealth", mMaxHealth);
+    tag->putInt(L"lastHealthInterval", mLastHealthInterval);
+    tag->putInt(L"dyingFrames", mDyingFrames);
+    tag->putFloat(L"overlayAlpha", mOverlayAlpha);
+    tag->putFloat(L"swellAmount", mSwellAmount);
+    tag->putFloat(L"oldSwellAmount", mOldSwellAmount);
+    tag->putInt(L"firerate", mFireRate);
+}
+
+void WitherBoss::readAdditionContructionTag(CompoundTag* tag)
+{
+    setAerialAttack(tag->getBoolean(L"AirAttack"));
+    mShieldHealth = tag->getInt(L"ShieldHealth");
+    mPhase = tag->getInt(L"Phase");
+    mSpawningFrames = tag->getInt(L"SpawningFrames");
+    mMaxHealth = tag->getInt(L"maxHealth");
+    mLastHealthInterval = tag->getInt(L"lastHealthInterval");
+    mDyingFrames = tag->getInt(L"dyingFrames");
+    mOverlayAlpha = tag->getFloat(L"overlayAlpha");
+    mSwellAmount = tag->getFloat(L"swellAmount");
+    mOldSwellAmount = tag->getFloat(L"oldSwellAmount");
+    mFireRate = tag->getInt(L"firerate");
+}
+
+CompoundTag* WitherBoss::getAdditionContructionTag()
+{
+    CompoundTag* tag = Entity::getAdditionContructionTag();
+    if (tag == NULL)
+        tag = new CompoundTag();
+
+    tag->putBoolean(L"AirAttack", getAerialAttack());
+    tag->putInt(L"ShieldHealth", mShieldHealth);
+    tag->putInt(L"Phase", mPhase);
+    tag->putInt(L"SpawningFrames", mSpawningFrames);
+    tag->putInt(L"maxHealth", mMaxHealth);
+    tag->putInt(L"lastHealthInterval", mLastHealthInterval);
+    tag->putInt(L"dyingFrames", mDyingFrames);
+    tag->putFloat(L"overlayAlpha", mOverlayAlpha);
+    tag->putFloat(L"swellAmount", mSwellAmount);
+    tag->putFloat(L"oldSwellAmount", mOldSwellAmount);
+    tag->putInt(L"firerate", mFireRate);
+    return tag;
+}
+
+bool WitherBoss::canRide(boost::shared_ptr<Entity> entity)
+{
+    return false;
+}
+
+void WitherBoss::handleEntityEvent(unsigned char event, int data)
+{
+    if (event == EntityEvent::DEATH)
+    {
+        mDyingFrames = 200;
+        return;
+    }
+    Mob::handleEntityEvent(event, data);
+}
+
+bool WitherBoss::canFly()
+{
+    return true;
+}
+
+void WitherBoss::makeStuckInWeb()
+{
+}
+
+bool WitherBoss::canChangeDimensions()
+{
+    return false;
+}
+
+std::wstring WitherBoss::getDisplayName()
+{
+    if (hasCustomName())
+        return getCustomName();
+    return L10N::GetString(IDS_WITHER);
+}
+
 void WitherBoss::setCustomName(const std::wstring& name, const std::wstring& displayName, bool visible)
 {
     Entity::setCustomName(name, displayName, visible);
-    if (mBossEvent != NULL)
-        mBossEvent->setName(displayName);
+    mBossEvent->setName(getDisplayName());
 }
-PathNavigation* WitherBoss::createNavigation(Level* level)
-{
-    return new FlyingPathNavigation(this, level);
-}
-int WitherBoss::getLightColor() { return 0xF000F0; }
-EMobType WitherBoss::getMobType() { return MOB_TYPE_UNDEAD; }
+
 void WitherBoss::startSeenByPlayer(boost::shared_ptr<ServerPlayer> player)
 {
-    Monster::startSeenByPlayer(player);
+    Entity::startSeenByPlayer(player);
+    mBossEvent->addPlayer(player, 0);
 }
+
 void WitherBoss::stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player)
 {
-    Monster::stopSeenByPlayer(player);
+    Entity::stopSeenByPlayer(player);
+    mBossEvent->removePlayer(player);
 }
-void WitherBoss::getPlayerParty()
+
+void WitherBoss::addEffect(MobEffectInstance* effectInstance, const boost::shared_ptr<Entity>& source)
 {
-    if (mBossEvent != NULL)
-        mBossEvent->getPartyPlayers();
 }
-float WitherBoss::getHeadYRot(int index) const
+
+void WitherBoss::heal(float amount)
 {
-    return index >= 0 && index < 3 ? mHeadYRot[index] : 0.0f;
+    if (getHealth() > 0.0f && !mLevel->mIsClientSide)
+        LivingEntity::heal(amount);
 }
-float WitherBoss::getHeadXRot(int index) const
+
+float WitherBoss::getHealth()
 {
-    return index >= 0 && index < 3 ? mHeadXRot[index] : 0.0f;
+    return LivingEntity::getHealth();
 }
-float WitherBoss::rotlerp(float from, float to, float max)
+
+void WitherBoss::die(const DamageSource* source)
 {
-    float delta = Mth::wrapDegrees(to - from);
-    if (delta > max)
-        delta = max;
-    if (delta < -max)
-        delta = -max;
-    return from + delta;
+    mDyingFrames = 200;
+    mDeathSource = source->copy();
+    mChargeDelay = 0;
+    mCharging = false;
+    mPauseTicks = 0;
+    playSound(getDeathSound(), 0.5f, 1.0f);
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::DEATH, 0);
 }
-void WitherBoss::setAerialAttack(bool attacking) { mEntityData->set(DATA_AERIAL_ATTACK, attacking, true); }
-bool WitherBoss::getAerialAttack() const { return mEntityData->get(DATA_AERIAL_ATTACK); }
-void WitherBoss::addAdditonalSaveData(CompoundTag* tag)
+
+const SoundEvent* WitherBoss::getHurtSound(const DamageSource* source)
 {
-    Monster::addAdditonalSaveData(tag);
-    tag->putBoolean(std::wstring(L"AirAttack"), getAerialAttack());
-    tag->putInt(std::wstring(L"Invul"), getInvulnerableTicks());
-    tag->putInt(std::wstring(L"ShieldHealth"), mShieldHealth);
-    tag->putInt(std::wstring(L"Phase"), mPhase);
-    tag->putInt(std::wstring(L"SpawningFrames"), mSpawningFrames);
-    tag->putInt(std::wstring(L"maxHealth"), mMaxHealth);
-    tag->putInt(std::wstring(L"lastHealthInterval"), mLastHealthInterval);
-    tag->putInt(std::wstring(L"dyingFrames"), mDyingFrames);
-    tag->putFloat(std::wstring(L"overlayAlpha"), mOverlayAlpha);
-    tag->putFloat(std::wstring(L"swellAmount"), mSwellAmount);
-    tag->putFloat(std::wstring(L"oldSwellAmount"), mOldSwellAmount);
+    return SoundEvents::WITHER_HURT;
 }
-int WitherBoss::getInvulnerableTicks() const { return mEntityData->get(DATA_INVULNERABLE_TICKS); }
-void WitherBoss::setInvulnerableTicks(int ticks) { mEntityData->set(DATA_INVULNERABLE_TICKS, ticks, true); }
-void WitherBoss::readAdditionalSaveData(CompoundTag* tag)
+
+const SoundEvent* WitherBoss::getDeathSound()
 {
-    Monster::readAdditionalSaveData(tag);
-    setInvulnerableTicks(tag->getInt(std::wstring(L"Invul")));
-    if (tag->contains(std::wstring(L"AirAttack")))
-        setAerialAttack(tag->getBoolean(std::wstring(L"AirAttack")));
-    if (tag->contains(std::wstring(L"ShieldHealth"))) mShieldHealth = tag->getInt(std::wstring(L"ShieldHealth"));
-    if (tag->contains(std::wstring(L"Phase"))) mPhase = tag->getInt(std::wstring(L"Phase"));
-    if (tag->contains(std::wstring(L"SpawningFrames"))) mSpawningFrames = tag->getInt(std::wstring(L"SpawningFrames"));
-    if (tag->contains(std::wstring(L"maxHealth"))) mMaxHealth = tag->getInt(std::wstring(L"maxHealth"));
-    if (tag->contains(std::wstring(L"lastHealthInterval"))) mLastHealthInterval = tag->getInt(std::wstring(L"lastHealthInterval"));
-    if (tag->contains(std::wstring(L"dyingFrames"))) mDyingFrames = tag->getInt(std::wstring(L"dyingFrames"));
-    if (tag->contains(std::wstring(L"overlayAlpha"))) mOverlayAlpha = tag->getFloat(std::wstring(L"overlayAlpha"));
-    if (tag->contains(std::wstring(L"swellAmount"))) mSwellAmount = tag->getFloat(std::wstring(L"swellAmount"));
-    if (tag->contains(std::wstring(L"oldSwellAmount"))) mOldSwellAmount = tag->getFloat(std::wstring(L"oldSwellAmount"));
+    return SoundEvents::WITHER_DEATH;
 }
-void WitherBoss::readAdditionContructionTag(CompoundTag* tag)
+
+void WitherBoss::dropDeathLoot(bool hitByPlayer, int lootingLevel)
 {
-    if (tag->contains(std::wstring(L"AirAttack")))
-        setAerialAttack(tag->getBoolean(std::wstring(L"AirAttack")));
-    if (tag->contains(std::wstring(L"Invul")))
-        setInvulnerableTicks(tag->getInt(std::wstring(L"Invul")));
+    boost::shared_ptr<ItemEntity> netherStar = spawnAtLocation(Items::netherStar, 1);
+    if (netherStar != NULL)
+        netherStar->setExtendedLifetime();
+
+    if (!mLevel->mIsClientSide)
+    {
+        std::vector<boost::shared_ptr<Entity> >* players =
+            mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(50.0, 100.0, 50.0));
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
+            player->awardStat(GenericStats::killWither(), GenericStats::param_killWither());
+        }
+        delete players;
+    }
 }
-int WitherBoss::getAdditionContructionTag() const { return getInvulnerableTicks(); }
-bool WitherBoss::isPowered() const { return getInvulnerableTicks() > 0; }
-bool WitherBoss::IsChargeAttacking() { return mEntityData->get(DATA_CHARGE_ATTACK); }
-bool WitherBoss::canShoot() const { return getInvulnerableTicks() == 0; }
+
+int WitherBoss::getArmorValue()
+{
+    return 4;
+}
+
+float WitherBoss::getMaxHealth()
+{
+    return LivingEntity::getMaxHealth();
+}
+
+EMobType WitherBoss::getMobType()
+{
+    return MOB_TYPE_UNDEAD;
+}
+
 void WitherBoss::aiStep()
 {
-    if (getInvulnerableTicks() > 0)
-        setInvulnerableTicks(getInvulnerableTicks() - 1);
-    if (mSpawningFrames > 0)
-        --mSpawningFrames;
-    mOldSwellAmount = mSwellAmount;
-    mSwellAmount = getAerialAttack() ? 1.0f : 0.0f;
-    customServerAiStep();
-    setAggressive(getInvulnerableTicks() > 0 || getTarget() != 0);
-    Monster::aiStep();
-}
-void WitherBoss::makeInvulnerable() { setInvulnerableTicks(220); }
-void WitherBoss::makeStuckInWeb() { mXd = 0.0; mYd = 0.0; mZd = 0.0; }
-int WitherBoss::getArmorValue() const { return 4; }
-bool WitherBoss::hurt(const DamageSource* source, float damage)
-{
-    if (getInvulnerableTicks() > 0)
-        return false;
-    if (mShieldHealth > 0)
-        mShieldHealth -= static_cast<int>(damage);
-    return Monster::hurt(source, damage);
-}
-bool WitherBoss::isPickable() { return true; }
-void WitherBoss::causeFallDamage(float fallDistance, float multiplier)
-{
-    LivingEntity::causeFallDamage(fallDistance, multiplier);
-}
-void WitherBoss::heal(float amount) { LivingEntity::heal(amount); }
-bool WitherBoss::canFly() const { return true; }
-void WitherBoss::registerGoals()
-{
-    mGoalSelector.addGoal(0, new WitherDoNothingGoal(this), true);
-    setAerialAttack(false);
-}
-const SoundEvent* WitherBoss::getAmbientSound() { return SoundEvents::WITHER_AMBIENT; }
-const SoundEvent* WitherBoss::getHurtSound(const DamageSource* source) { return Monster::getHurtSound(source); }
-const SoundEvent* WitherBoss::getDeathSound() { return Monster::getDeathSound(); }
-void WitherBoss::checkDespawn() { Monster::checkDespawn(); }
-bool WitherBoss::canRide(boost::shared_ptr<Entity>) { return false; }
-bool WitherBoss::canChangeDimensions() { return true; }
-double WitherBoss::getHeadX(int head) const
-{
-    if (head < 1)
-        return mX;
-    const float angle = (mYRot + static_cast<float>((head - 1) * 180 - 180)) * 0.017453292384f;
-    return static_cast<double>(Mth::cos(angle)) * 1.3 + mX;
-}
-double WitherBoss::getHeadY(int head) const { return mY + (head < 1 ? 3.0 : 2.2); }
-double WitherBoss::getHeadZ(int head) const
-{
-    if (head < 1)
-        return mZ;
-    const float angle = (mYRot + static_cast<float>((head - 1) * 180 - 180)) * 0.017453292384f;
-    return static_cast<double>(Mth::sin(angle)) * 1.3 + mZ;
-}
-float WitherBoss::getMaxHealth() const { return 300.0f; }
-float WitherBoss::getHealth() { return LivingEntity::getHealth(); }
-unsigned long long WitherBoss::GetType() { return ENTITY_TYPE; }
-std::wstring WitherBoss::getDisplayName() const { return std::wstring(L"Wither"); }
-void WitherBoss::performRangedAttack(boost::shared_ptr<LivingEntity> target, float power)
-{
-    (void)power;
-    performRangedAttack(0, target);
-}
-void WitherBoss::performRangedAttack(int head, boost::shared_ptr<LivingEntity> target)
-{
-    if (target)
-        target->hurt(DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this())), 5.0f);
-}
-int WitherBoss::getAlternativeTarget(int head) const
-{
-    return head >= 0 && head < 3 ? mAlternativeTargets[head] : 0;
-}
-void WitherBoss::setAlternativeTarget(int head, int target)
-{
-    const int selfId = getId();
-    if (head == 0)
+    generateParticles();
+
+    int pauseTicks = mPauseTicks;
+    if (mShotDelay > 0)
+        --mShotDelay;
+    mPauseTicks = pauseTicks - 1;
+    if (mPauseTicks > 0)
+        return;
+
+    mYd *= 0.6f;
+
+    if (mDyingFrames > 0)
     {
-        if (target != selfId && mAlternativeTargets[1] == target)
-            mAlternativeTargets[1] = selfId;
-        if (target != selfId && mAlternativeTargets[2] == target)
-            mAlternativeTargets[2] = selfId;
-    }
-    else if (target != selfId && (mAlternativeTargets[0] == target ||
-                                  mAlternativeTargets[1] == target ||
-                                  mAlternativeTargets[2] == target))
-    {
+        mDeathTime = -1;
+        if (mDyingFrames == 200)
+            mOverlayAlpha = 0.0f;
+
+        --mDyingFrames;
+        if (mDyingFrames == 0)
+        {
+            if (!mLevel->mIsClientSide)
+            {
+                mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
+                                mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false, -1.0f);
+                LivingEntity::die(mDeathSource);
+
+                if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
+                {
+                    int experience = getExperienceReward(mLastHurtByPlayer);
+                    while (experience > 0)
+                    {
+                        int value = ExperienceOrb::getExperienceValue(experience);
+                        experience -= value;
+                        mLevel->addEntity(boost::shared_ptr<Entity>(new ExperienceOrb(mLevel, mX, mY, mZ, value)));
+                    }
+                }
+
+                remove();
+                return;
+            }
+        }
+        else if (mDyingFrames % mDyingFlashInterval != 0)
+        {
+            goto dyingSounds;
+        }
+
+        setAerialAttack(!getAerialAttack());
+        if (mDyingFlashInterval > 1)
+            --mDyingFlashInterval;
+
+    dyingSounds:
+        if (mDyingFrames == 120)
+            playSound(SoundEvents::WITHER_DEATH, 1.0f, 1.0f);
+        else if (mDyingFrames == 60)
+            playSound(SoundEvents::WITHER_DEATH, 0.75f, 1.0f);
+
+        setInvulnerableTicks(mDyingFrames);
+        mOverlayAlpha += 0.005f;
+        mOldSwellAmount = mSwellAmount;
+        mSwellAmount = mSwellAmount + 1.0f;
         return;
     }
-    if (head >= 0 && head < 3)
-        mAlternativeTargets[head] = target;
-}
-void WitherBoss::generateParticles() { mOverlayAlpha = getAerialAttack() ? 1.0f : 0.0f; }
-void WitherBoss::changePhase() { mPhase = mPhase == 0 ? 1 : 0; }
-bool WitherBoss::destroyBlocks(Level* level, AABB* area, int radius)
-{
-    if (level == NULL || area == NULL || !level->getGameRules()->getBoolean(1))
-        return false;
 
-    bool destroyedAny = false;
-    const int minX = static_cast<int>(area->mMinX) - radius;
-    const int maxX = static_cast<int>(area->mMaxX) + radius;
-    const int minY = static_cast<int>(area->mMinY) - radius;
-    const int maxY = static_cast<int>(area->mMaxY) + radius;
-    const int minZ = static_cast<int>(area->mMinZ) - radius;
-    const int maxZ = static_cast<int>(area->mMaxZ) + radius;
-    for (int x = minX; x <= maxX; ++x)
+    int health = (int)getHealth();
+    if (mSpawningFrames > 0 && health > 0)
     {
-        for (int y = minY; y <= maxY; ++y)
+        --mSpawningFrames;
+        if (mSpawningFrames == 0)
         {
-            for (int z = minZ; z <= maxZ; ++z)
+            if (!mLevel->mIsClientSide)
             {
-                const BlockPos pos(x, y, z);
-                const BlockState* state = level->getBlockState(pos);
-                if (state == NULL || !canDestroy(state->getBlock()))
-                    continue;
-                if (level->destroyBlock(pos, true))
-                    destroyedAny = true;
+                setAerialAttack(true);
+                mShieldHealth = mInitialShieldHealth;
+                mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
+                                mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false, -1.0f);
+            }
+            playSoundToAllPlayers(SoundEvents::WITHER_SPAWN, 1.0f, 1.0f);
+        }
+
+        setInvulnerableTicks(mSpawningFrames);
+        heal(ceilf(getMaxHealth() / 200.0f));
+
+        float oldBodyRot = mYBodyRot;
+        mSpinSpeed += 0.2f;
+        float bodyRot = Mth::wrapDegrees(oldBodyRot - mSpinSpeed);
+        mYBodyRot = bodyRot;
+        mYHeadRot = bodyRot;
+        mYRot = bodyRot;
+        if ((oldBodyRot < 0.0f && bodyRot >= 0.0f) || mSpawningFrames == 199)
+            playSound(SoundEvents::WITHER_SPAWN, 1.0f, 1.0f);
+
+        mYRotHeads[0] = Mth::wrapDegrees(mYRotHeads[0] + mSpinSpeed);
+        mYRotHeads[1] = Mth::wrapDegrees(mYRotHeads[1] + mSpinSpeed);
+        Monster::aiStep();
+        return;
+    }
+
+    if (!mLevel->mIsClientSide && getAlternativeTarget(0) != getId())
+    {
+        boost::shared_ptr<Entity> target = mLevel->getEntity(getAlternativeTarget(0));
+        if (target != NULL)
+        {
+            if (!mIsPathing)
+            {
+                if ((target->mY <= mY || mDiving) && (isPowered() || mY >= target->mY + 5.0))
+                {
+                    if (mDiving)
+                        mYd -= 1.0;
+                }
+                else
+                {
+                    double yd = std::max(mYd, 0.0);
+                    mYd = yd + (0.5 - yd) * 0.6;
+                }
+            }
+            else if (getMoveControl() != NULL)
+            {
+                mYd = getMoveControl()->getWantedY() - mY;
             }
         }
     }
-    return destroyedAny;
+
+    float bodyXRot = 90.0f;
+    if (mChargeTicks > 0 && mChargeDirection != NULL)
+    {
+        double chargeX = mChargeDirection->x;
+        double chargeZ = mChargeDirection->z;
+        --mChargeTicks;
+        if (mChargeTicks == 0)
+        {
+            mChargeDirection->x = 0.0;
+            mXd = 0.0;
+            mZd = 0.0;
+            mShotDelay = 20;
+            mCharging = false;
+        }
+        else
+        {
+            mZd = chargeZ + chargeZ;
+            mXd = chargeX + chargeX;
+        }
+    }
+
+    boost::shared_ptr<LivingEntity> target = getTarget();
+    if (target != NULL)
+    {
+        Vec3* myPos = getAttachPos(ENTITY_LOCATION_MOUNT, 0.0f);
+        Vec3* direction = target->getAttachPos(ENTITY_LOCATION_MOUNT, 0.0f)->subtract(myPos);
+        int directionX = (int)direction->x;
+        float yaw = (float)(Mth::atan2((int)direction->z, directionX) * 57.295776f - bodyXRot);
+        mYHeadRot = Mth::clampRotateDegrees(mYHeadRot, yaw, 10.0f);
+        if (IsChargeAttacking())
+            mYBodyRot = mYHeadRot;
+    }
+    Monster::aiStep();
+
+    if (!mLevel->mIsClientSide)
+    {
+        if (IsChargeAttacking())
+            mXRot = bodyXRot;
+        else
+            mXRot = 0.0f;
+    }
+
+    mXRotOHeads[0] = mXRotHeads[0];
+    mXRotOHeads[1] = mXRotHeads[1];
+    mYRotOHeads[0] = mYRotHeads[0];
+    mYRotOHeads[1] = mYRotHeads[1];
+
+    for (int head = 0; head < 2; ++head)
+    {
+        int targetId = getAlternativeTarget(head + 1);
+        boost::shared_ptr<Entity> headTarget;
+        if (targetId != getId())
+            headTarget = mLevel->getEntity(targetId);
+
+        if (headTarget != NULL)
+        {
+            double headX = getHeadX(head + 1);
+            double headY = getHeadY(head + 1);
+            double headZ = getHeadZ(head + 1);
+            double xd = headTarget->mX - headX;
+            double yd = headTarget->mY + headTarget->getEyeHeight() - headY;
+            double zd = headTarget->mZ - headZ;
+            double horizontalDistance = Mth::sqrt(xd * xd + zd * zd);
+            double yaw = atan2(zd, xd);
+            double pitch = atan2(yd, horizontalDistance);
+            mXRotHeads[head] = rotlerp(mXRotHeads[head], -(float)(pitch * 57.295776f), 40.0f);
+            mYRotHeads[head] = rotlerp(mYRotHeads[head], (float)(yaw * 57.295776f) - bodyXRot, 10.0f);
+        }
+        else
+        {
+            mYRotHeads[head] = rotlerp(mYRotHeads[head], mYBodyRot, 10.0f);
+            mXRotHeads[head] = rotlerp(mXRotHeads[head], mXRot, 40.0f);
+        }
+    }
+
+    if (canShoot())
+    {
+        boost::shared_ptr<LivingEntity> shootTarget = getTarget();
+        if (shootTarget != NULL && ++mTicksSinceShot > 100)
+        {
+            mChargeTimer = 1;
+            mTicksSinceShot = 0;
+        }
+    }
 }
-void WitherBoss::customServerAiStep() { generateParticles(); }
-void WitherBoss::dropDeathLoot(bool hitByPlayer, int lootingLevel) { Monster::dropAllDeathLoot(hitByPlayer, lootingLevel, NULL); }
-float WitherBoss::getOverlayAlpha() const { return mOverlayAlpha; }
-float WitherBoss::getSwellAmount(float partialTick) const { return mOldSwellAmount + (mSwellAmount - mOldSwellAmount) * partialTick; }
-int WitherBoss::getTarget() const { return mAlternativeTargets[0]; }
-bool WitherBoss::IsSpawning() const { return mSpawningFrames > 0; }
-void WitherBoss::setWantsToMove(bool wantsToMove) { mAerialAttack = wantsToMove; }
-bool WitherBoss::wantsToMove() const { return mAerialAttack; }
-void WitherBoss::setIsPathing(bool pathing) { mAggressive = pathing; }
-void WitherBoss::setShotDelay(int delay) { mLastHealthInterval = delay; }
-int WitherBoss::getDimension() const { return mPhase; }
-WitherBoss::WitherDoNothingGoal::WitherDoNothingGoal(WitherBoss* boss) : Goal(), mBoss(boss)
+
+void WitherBoss::registerGoals()
+{
+    mGoalSelector.addGoal(0, new WitherDoNothingGoal(this), true);
+    mGoalSelector.addGoal(1, new FloatGoal(this), true);
+    mGoalSelector.addGoal(2, new WitherRandomAttackPosGoal(this, 1.0f, 40, 10, 7), true);
+    mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(7, new RandomLookAroundGoal(this), true);
+    mTargetSelector.addGoal(1, new WitherTargetHighestDamage(this), true);
+    mTargetSelector.addGoal(2, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, false,
+                                                               LIVING_ENTITY_SELECTOR, true, false),
+                            true);
+}
+
+PathNavigation* WitherBoss::createNavigation(Level* level)
+{
+    FlyingPathNavigation* navigation = new FlyingPathNavigation(this, level);
+    navigation->setCanOpenDoors(false);
+    navigation->setCanFloat(true);
+    navigation->setCanPassDoors(true);
+    return navigation;
+}
+
+boost::shared_ptr<LivingEntity> WitherBoss::getTarget()
+{
+    if (mLevel->mIsClientSide && getAlternativeTarget(0) != getId())
+    {
+        boost::shared_ptr<Entity> target = mLevel->getEntity(getAlternativeTarget(0));
+        if (target != NULL && (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            return boost::static_pointer_cast<LivingEntity>(target);
+    }
+    return Mob::getTarget();
+}
+
+const SoundEvent* WitherBoss::getAmbientSound()
+{
+    return SoundEvents::WITHER_AMBIENT;
+}
+
+void WitherBoss::checkDespawn()
+{
+    mNoActionTime = 0;
+}
+
+void WitherBoss::customServerAiStep()
+{
+    if (mBossEvent != NULL)
+        mBossEvent->setPercent(getHealth() / getMaxHealth());
+
+    if (mSpawningFrames > 0)
+        return;
+
+    if ((mOnGround || isInWater()) && mDiving)
+    {
+        mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
+                        mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false, -1.0f);
+        mDiving = false;
+        mPauseTicks = 80;
+
+        if (mLevel->getDifficulty() != Difficulty::EASY)
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                int error;
+                boost::shared_ptr<Entity> entity =
+                    SpawnEggItem::spawnMobAt(mLevel, EntityIO::getKey(EntityType::WITHER_SKELETON), mX, mY, mZ, &error, L"");
+                if (entity != NULL)
+                {
+                    boost::shared_ptr<WitherSkeleton> witherSkeleton = boost::static_pointer_cast<WitherSkeleton>(entity);
+                    if (error == 0)
+                    {
+                        witherSkeleton->setWitherParent(boost::static_pointer_cast<WitherBoss>(shared_from_this()));
+                        witherSkeleton->mInvulnerableTime = 60;
+                    }
+                }
+            }
+        }
+    }
+
+    Mob::customServerAiStep();
+
+    if (mHeadShotCooldown > 0)
+        --mHeadShotCooldown;
+
+    if (getTarget() != NULL && getTarget()->getId() != getAlternativeTarget(0))
+        setAlternativeTarget(0, getTarget()->getId());
+    else
+        setAlternativeTarget(0, getId());
+
+    if (mShotTicks > 0 && --mShotTicks == 0)
+    {
+        if (canShoot() && getTarget() != NULL)
+        {
+            if (getNavigation() != NULL)
+                getNavigation()->stop();
+            performRangedAttack(0, getTarget());
+        }
+        mShotTicks = mFireRate;
+    }
+
+    for (int head = 1; head < 3; ++head)
+    {
+        if (mTickCount >= mNextHeadUpdate[head - 1] && canShoot())
+        {
+            mHeadShotCooldown = mFireRate;
+            mNextHeadUpdate[head - 1] = mTickCount + 10 + mRandom->nextInt(10);
+
+            const Difficulty* difficulty = mLevel->getDifficulty();
+            if ((difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD) &&
+                ++mIdleHeadUpdates[head - 1] > 15)
+            {
+                float x = mRandom->nextFloat((float)mX - 10.0f, (float)mX + 10.0f);
+                float y = mRandom->nextFloat((float)mY - 5.0f, (float)mY + 5.0f);
+                float z = mRandom->nextFloat((float)mZ - 10.0f, (float)mZ + 10.0f);
+                if (head == 1)
+                    performRangedAttack(1, x, y, z, true);
+                mIdleHeadUpdates[head - 1] = 0;
+            }
+
+            int targetId = getAlternativeTarget(head);
+            if (targetId == getId())
+            {
+                std::vector<boost::shared_ptr<Entity> >* players =
+                    mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(mTargetRange, 8.0, mTargetRange));
+                for (int attempt = 0; attempt < 10 && players != NULL && !players->empty(); ++attempt)
+                {
+                    boost::shared_ptr<Player> player =
+                        boost::static_pointer_cast<Player>(players->at(mRandom->nextInt(players->size())));
+                    if (player->hasCategory(EntityCategory::eEntityCategory_Player) &&
+                        !player->mAbilities.mInstabuild && getTarget() != player)
+                    {
+                        setAlternativeTarget(head, player->getId());
+                        break;
+                    }
+                    players->erase(std::remove(players->begin(), players->end(), player), players->end());
+                }
+                delete players;
+            }
+            else
+            {
+                boost::shared_ptr<Entity> target = mLevel->getEntity(targetId);
+                bool lostTarget = true;
+                if (target != NULL && target->isAlive() &&
+                    distanceToSqr(target) <= (double)(mTargetRange * mTargetRange) && canSee(target))
+                {
+                    lostTarget = false;
+                }
+
+                if (lostTarget)
+                {
+                    setAlternativeTarget(head, getId());
+                }
+                else
+                {
+                    bool invulnerablePlayer = false;
+                    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                    {
+                        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+                        if (player->mAbilities.mInvulnerable)
+                            invulnerablePlayer = true;
+                    }
+
+                    if (invulnerablePlayer)
+                    {
+                        setAlternativeTarget(head, getId());
+                    }
+                    else if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY &&
+                             (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD))
+                    {
+                        performRangedAttack(head, boost::static_pointer_cast<LivingEntity>(target));
+                        mNextHeadUpdate[head - 1] = mTickCount + 40 + mRandom->nextInt(20);
+                        mIdleHeadUpdates[head - 1] = 0;
+                    }
+                }
+            }
+        }
+
+        boost::shared_ptr<LivingEntity> target = getTarget();
+        if (target != NULL)
+            setAlternativeTarget(0, target->getId());
+        else
+            setAlternativeTarget(0, getId());
+
+        if (mDestroyBlocksTick > 0 && --mDestroyBlocksTick == 0)
+            destroyBlocks(mLevel, mBoundingBox, 1);
+    }
+
+    if (mChargeTimer > 0 && --mChargeTimer == 0)
+    {
+        if (!isPowered())
+        {
+            mWantsToMove = true;
+        }
+        else
+        {
+            mChargeDelay = 20;
+            boost::shared_ptr<LivingEntity> target = getTarget();
+            if (target != NULL)
+            {
+                delete mChargeDirection;
+                Vec3* myPos = getPos(1.0f);
+                mChargeDirection = Vec3::newPermanent(target->getPos(1.0f)->subtract(myPos)->normalize());
+            }
+        }
+    }
+
+    if (mCharging)
+    {
+        destroyBlocks(mLevel, mBoundingBox, 2);
+        std::vector<boost::shared_ptr<Entity> >* mobs =
+            mLevel->getEntitiesOfClass(typeid(Mob), mBoundingBox->grow(1.0, 4.0, 1.0));
+        for (unsigned int i = 0; i < mobs->size(); ++i)
+        {
+            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(mobs->at(i));
+            if (mob != shared_from_this())
+            {
+                DamageSource* source =
+                    DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+                mob->hurt(source, 15.0f);
+                delete source;
+            }
+        }
+        delete mobs;
+    }
+
+    if (mChargeDelay > 0 && --mChargeDelay == 0)
+    {
+        boost::shared_ptr<LivingEntity> target = getTarget();
+        if (target != NULL)
+        {
+            mChargeTicks = 10;
+            mCharging = true;
+        }
+    }
+
+    if (mTickCount % 20 == 0)
+    {
+        std::vector<boost::shared_ptr<Entity> >* players =
+            mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(50.0, 50.0, 50.0));
+        delete players;
+    }
+
+    mEntityData->set(DATA_CHARGE_ATTACK, mChargeDelay != 0 || mCharging, true);
+}
+
+MobGroupData* WitherBoss::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& dataString)
+{
+    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, dataString);
+
+    setSize(1.0f, 3.5f);
+    setAerialAttack(true);
+    mSpawningFrames = 200;
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.6f);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(70.0);
+    makeInvulnerable();
+
+    if (mLevel->getDifficulty() == Difficulty::EASY)
+    {
+        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(getMaxHealth() * 0.5);
+        mInitialShieldHealth /= 2;
+    }
+    else if (mLevel->getDifficulty() == Difficulty::NORMAL)
+    {
+        getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(getMaxHealth() * 0.75);
+        mInitialShieldHealth = (int)(mInitialShieldHealth * 0.75f);
+    }
+
+    mMaxHealth = (int)getMaxHealth();
+    setHealth(1.0f);
+    mLastHealthInterval = (int)getMaxHealth();
+    mPhaseHealth = (int)getMaxHealth() / 2;
+    mHealthInterval = (int)getMaxHealth() / 6;
+    return result;
+}
+
+int WitherBoss::getDimension()
+{
+    return mDimension;
+}
+
+void WitherBoss::makeInvulnerable()
+{
+    mInvulnerableTime = 200;
+    setInvulnerableTicks(200);
+}
+
+void WitherBoss::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
+{
+    performRangedAttack(0, target);
+}
+
+void WitherBoss::performRangedAttack(int head, boost::shared_ptr<LivingEntity> target)
+{
+    if (head == 0)
+    {
+        mTicksSinceShot = 0;
+        ++mShotCount;
+        performRangedAttack(0, target->mX, target->mY + target->getEyeHeight() * 0.5, target->mZ,
+                            (mShotCount & 3) == 0);
+        if ((mShotCount & 3) == 0)
+        {
+            mChargeTimer = mChargeInterval;
+            if (!getAerialAttack())
+            {
+                mSkipNextCharge = !mSkipNextCharge;
+                if (!mSkipNextCharge)
+                {
+                    mChargeTimer = 0;
+                    mShotDelay = 60;
+                }
+            }
+        }
+    }
+    else
+    {
+        performRangedAttack(head, target->mX, target->mY + target->getEyeHeight() * 0.5, target->mZ, false);
+    }
+}
+
+void WitherBoss::performRangedAttack(int head, double x, double y, double z, bool dangerous)
+{
+    mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_WITHER_BOSS_SHOOT, BlockPos(mX, mY, mZ), 0);
+
+    double headX = getHeadX(head);
+    double headY = getHeadY(head);
+    double headZ = getHeadZ(head);
+    double xd = x - headX;
+    double yd = y - headY;
+    double zd = z - headZ;
+
+    boost::shared_ptr<WitherSkull> skull(
+        new WitherSkull(mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this()), xd, yd, zd));
+    if (dangerous)
+        skull->setDangerous(true);
+    skull->mY = headY;
+    skull->mX = headX;
+    skull->mZ = headZ;
+    mLevel->addEntity(skull);
+}
+
+bool WitherBoss::isAggressive()
+{
+    return false;
+}
+
+void WitherBoss::setAggressive(bool aggressive)
+{
+}
+
+double WitherBoss::getHeadX(int head)
+{
+    if (head < 1)
+        return mX;
+    float angle = (mYBodyRot + (float)(180 * head - 180)) * 0.017453292f;
+    return Mth::cos(angle) * 1.3 + mX;
+}
+
+double WitherBoss::getHeadY(int head)
+{
+    if (head < 1)
+        return mY + 3.0;
+    return mY + 2.2;
+}
+
+double WitherBoss::getHeadZ(int head)
+{
+    if (head < 1)
+        return mZ;
+    float angle = (mYBodyRot + (float)(180 * head - 180)) * 0.017453292f;
+    return Mth::sin(angle) * 1.3 + mZ;
+}
+
+float WitherBoss::rotlerp(float from, float to, float maxDelta)
+{
+    float delta = Mth::wrapDegrees(to - from);
+    if (delta > maxDelta)
+        delta = maxDelta;
+    if (delta < -maxDelta)
+        delta = -maxDelta;
+
+    float result = from + delta;
+    if (result >= 180.0f)
+        result -= 360.0f;
+    if (result < -180.0f)
+        result += 360.0f;
+    return result;
+}
+
+void WitherBoss::setAerialAttack(bool aerialAttack)
+{
+    mEntityData->set(DATA_AERIAL_ATTACK, aerialAttack, true);
+}
+
+bool WitherBoss::getAerialAttack() const
+{
+    return mEntityData->get(DATA_AERIAL_ATTACK);
+}
+
+int WitherBoss::getInvulnerableTicks()
+{
+    return mEntityData->get(DATA_ID_INV);
+}
+
+void WitherBoss::setInvulnerableTicks(int ticks)
+{
+    mEntityData->set(DATA_ID_INV, ticks, true);
+}
+
+int WitherBoss::getAlternativeTarget(int head)
+{
+    return mEntityData->get(DATA_TARGETS[head]);
+}
+
+void WitherBoss::setAlternativeTarget(int head, int target)
+{
+    if (head == 0)
+    {
+        if (target != getId() && getAlternativeTarget(1) == target)
+            setAlternativeTarget(1, getId());
+        if (target != getId() && getAlternativeTarget(2) == target)
+            setAlternativeTarget(2, getId());
+    }
+    else if (target != getId())
+    {
+        if (getAlternativeTarget(0) == target || getAlternativeTarget(1) == target ||
+            getAlternativeTarget(2) == target)
+        {
+            return;
+        }
+    }
+    mEntityData->set(DATA_TARGETS[head], target, true);
+}
+
+bool WitherBoss::isPowered()
+{
+    return getHealth() <= getMaxHealth() * 0.5f;
+}
+
+void WitherBoss::generateParticles()
+{
+    if (!mLevel->mIsClientSide)
+        return;
+
+    if (getInvulnerableTicks() > 0)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            mLevel->addParticle(PARTICLE_MOB_SPELL, mX + mRandom->nextGaussian() * 1.0,
+                                mY + (float)(mRandom->nextFloat() * 3.3f), mZ + mRandom->nextGaussian() * 1.0,
+                                0.7f, 0.7f, 0.9f, arrayWithLength<int>());
+        }
+    }
+
+    bool powered = isPowered();
+    for (int head = 0; head < 3; ++head)
+    {
+        double headX = getHeadX(head);
+        double headY = getHeadY(head);
+        double headZ = getHeadZ(head);
+        mLevel->addParticle(PARTICLE_SMOKE, headX + mRandom->nextGaussian() * 0.3f,
+                            headY + mRandom->nextGaussian() * 0.3f, headZ + mRandom->nextGaussian() * 0.3f, 0.0,
+                            0.0, 0.0, arrayWithLength<int>());
+        if (powered && mLevel->mRandom->nextInt(4) == 0)
+        {
+            mLevel->addParticle(PARTICLE_MOB_SPELL, headX + mRandom->nextGaussian() * 0.3f,
+                                headY + mRandom->nextGaussian() * 0.3f, headZ + mRandom->nextGaussian() * 0.3f,
+                                0.7f, 0.7f, 0.5, arrayWithLength<int>());
+        }
+    }
+}
+
+bool WitherBoss::IsChargeAttacking()
+{
+    return mEntityData->get(DATA_CHARGE_ATTACK);
+}
+
+bool WitherBoss::canShoot()
+{
+    return mChargeTimer == 0 && !mWantsToMove && !mCharging && mChargeDelay == 0 && mShotDelay < 1;
+}
+
+std::map<boost::shared_ptr<ServerPlayer>, int>& WitherBoss::getPlayerParty()
+{
+    return mBossEvent->getPartyPlayers();
+}
+
+void WitherBoss::changePhase()
+{
+    --mPhase;
+    mMaxHealth -= (int)getMaxHealth() - mPhaseHealth;
+    setAerialAttack(false);
+    mDiving = true;
+    mFireRate = 20;
+    mWantsToMove = false;
+    mChargeInterval <<= 1;
+}
+
+float WitherBoss::getHeadYRot(int head)
+{
+    return mYRotHeads[head];
+}
+
+float WitherBoss::getHeadXRot(int head)
+{
+    return mXRotHeads[head];
+}
+
+float WitherBoss::getOverlayAlpha()
+{
+    return mOverlayAlpha;
+}
+
+float WitherBoss::getSwellAmount(float partialTicks) const
+{
+    return ((mSwellAmount - mOldSwellAmount) * partialTicks + mOldSwellAmount) / 28.0f;
+}
+
+bool WitherBoss::wantsToMove()
+{
+    return mWantsToMove;
+}
+
+void WitherBoss::setWantsToMove(bool wantsToMove)
+{
+    mWantsToMove = wantsToMove;
+}
+
+void WitherBoss::setIsPathing(bool isPathing)
+{
+    mIsPathing = isPathing;
+}
+
+void WitherBoss::setShotDelay(int shotDelay)
+{
+    mShotDelay = shotDelay;
+}
+
+bool WitherBoss::IsSpawning() const
+{
+    return mSpawningFrames > 0;
+}
+
+void WitherBoss::destroyBlocks(Level* level, const AABB* area, int radius)
+{
+    if (!level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+        return;
+
+    bool destroyed = false;
+    for (int x = (int)area->mMinX - radius; x <= (int)area->mMaxX + radius; ++x)
+    {
+        for (int z = (int)area->mMinZ - radius; z <= (int)area->mMaxZ + radius; ++z)
+        {
+            for (int y = (int)area->mMinY - radius; y <= (int)area->mMaxY + radius; ++y)
+            {
+                BlockPos pos(x, y, z);
+                const BlockState* state = level->getBlockState(pos);
+                if (state->getMaterial() == Material::AIR)
+                    continue;
+
+                if (canDestroy(state->getBlock()))
+                {
+                    destroyed = level->removeBlock(pos) || destroyed;
+                    state->getBlock()->spawnResources(level, pos, state, 1);
+                }
+            }
+        }
+    }
+
+    if (destroyed)
+        playSound(SoundEvents::WITHER_BREAK_BLOCK, 1.0f, 1.0f);
+}
+
+WitherBoss::WitherDoNothingGoal::WitherDoNothingGoal(WitherBoss* wither)
+    : Goal(),
+      mWither(wither)
 {
     setRequiredControlFlags(7);
 }
-WitherBoss::WitherDoNothingGoal::~WitherDoNothingGoal() = default;
-bool WitherBoss::WitherDoNothingGoal::canUse() { return mBoss->getInvulnerableTicks() > 0; }
+
+WitherBoss::WitherDoNothingGoal::~WitherDoNothingGoal()
+{
+}
+
+bool WitherBoss::WitherDoNothingGoal::canUse()
+{
+    return mWither->getInvulnerableTicks() > 0;
+}
+
 std::wstring WitherBoss::WitherDoNothingGoal::getName()
 {
-    std::wstring name;
-    name.assign(L"WitherDoNothingGoal");
-    return name;
+    return L"WitherDoNothing";
 }

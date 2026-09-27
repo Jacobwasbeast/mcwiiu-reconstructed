@@ -19,7 +19,6 @@ class LivingEntity;
 class Player;
 class Vec3;
 
-unsigned int hash_value(const BlockPos& pos);
 
 class _ExplosionPlayerKeyHash
 {

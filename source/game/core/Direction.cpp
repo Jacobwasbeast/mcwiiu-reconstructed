@@ -8,8 +8,7 @@
 #include "game/util/Vec3i.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-
-std::wstring toLower(const std::wstring& value);
+#include "game/core/StringUtils.hpp"
 
 const Direction* Direction::DOWN;
 const Direction* Direction::UP;

@@ -1,4 +1,5 @@
 #include "game/core/Bush.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/util/Random.hpp"
@@ -76,11 +77,11 @@ void Bush::checkAlive(Level* level, const BlockPos& pos, const BlockState* state
         Block* block = defaultBlockState()->getBlock();
         if (block == Blocks::tallgrass || block == Blocks::double_plant || block == Blocks::deadbush)
         {
-            level->levelEvent(2001, pos, Block::getIdWithData(state));
+            level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
         }
 
         spawnResources(level, pos, state, 0);
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }
 
@@ -126,5 +127,5 @@ EBlockFaceShape Bush::getBlockFaceShape(LevelSource* levelSource, const BlockSta
 
 EBlockRenderShape Bush::getRenderShape(const BlockState* state)
 {
-    return BLOCK_RENDER_ENTITY;
+    return BLOCK_RENDER_CROSS;
 }

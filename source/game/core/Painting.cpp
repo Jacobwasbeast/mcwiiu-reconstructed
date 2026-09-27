@@ -1,4 +1,5 @@
 #include "game/core/Painting.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
@@ -168,7 +169,7 @@ int Painting::getHeight()
 
 void Painting::dropItem(boost::shared_ptr<Entity> breaker)
 {
-    if (!mLevel->getGameRules()->getBoolean(6))
+    if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
         return;
     if (breaker && breaker->isCreative())
         return;
@@ -194,5 +195,5 @@ void Painting::lerpTo(double x, double y, double z, float yRot, float xRot,
 
 unsigned long long Painting::GetType()
 {
-    return 0x000000000A080001ULL;
+    return EntityType::PAINTING;
 }

@@ -46,12 +46,12 @@ public:
     virtual void setOverlay(BossBarOverlay overlay);
 
     bool shouldDarkenScreen();
-    virtual void setDarkenScreen(bool darkenScreen);
+    virtual BossEvent* setDarkenScreen(bool darkenScreen);
 
     bool shouldPlayBossMusic();
-    virtual void setPlayBossMusic(bool playBossMusic);
+    virtual BossEvent* setPlayBossMusic(bool playBossMusic);
 
-    virtual void setCreateWorldFog(bool createWorldFog);
+    virtual BossEvent* setCreateWorldFog(bool createWorldFog);
     bool shouldCreateWorldFog();
 
 protected:

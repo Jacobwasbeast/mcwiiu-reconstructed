@@ -27,8 +27,7 @@ class ServerPlayer;
 class Scoreboard : public boost::unordered_map<std::wstring, PlayerTeam*>
 {
 public:
-    typedef boost::unordered_map<PlayerUID, PlayerTeam*, boost::hash<PlayerUID>,
-                                std::equal_to<PlayerUID> >
+    typedef boost::unordered_map<PlayerUID, PlayerTeam*, boost::hash<PlayerUID>, std::equal_to<PlayerUID>>
         PlayerTeamByUIDMap;
 
     enum EDamageSource

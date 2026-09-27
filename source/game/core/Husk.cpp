@@ -1,4 +1,5 @@
 #include "game/core/Husk.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -32,7 +33,7 @@ void Husk::create(Level* level)
 
 void Husk::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5d550043ULL);
+    Mob::addDataWalkers(fixer, EntityType::HUSK);
 }
 
 bool Husk::checkSpawnRules()
@@ -80,7 +81,7 @@ bool Husk::doHurtTarget(boost::shared_ptr<Entity> target)
         return false;
     not_null_ptr<ItemInstance> item = getMainHandItem();
     if (item->isEmpty() && target &&
-        (target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
         BlockPos pos(this);
@@ -94,7 +95,7 @@ bool Husk::doHurtTarget(boost::shared_ptr<Entity> target)
 
 not_null_ptr<ItemInstance> Husk::getSkull()
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0));
+    return ItemInstance::EMPTY;
 }
 
 void Husk::finishConversion()
@@ -126,5 +127,5 @@ void Husk::finishConversion()
 
 unsigned long long Husk::GetType()
 {
-    return 0x000000005D550043ULL;
+    return EntityType::HUSK;
 }

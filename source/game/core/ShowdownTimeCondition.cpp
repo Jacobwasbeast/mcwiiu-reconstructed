@@ -18,7 +18,7 @@ int ShowdownTimeCondition::GetValue(MasterGameMode* gameMode) const
 
 unsigned int ShowdownTimeCondition::GetTimerID() const
 {
-    return 8;
+    return MasterGameMode::eTimerID_Showdown;
 }
 
 bool ShowdownTimeCondition::ShouldBlock() const

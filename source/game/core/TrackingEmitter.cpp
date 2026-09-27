@@ -1,4 +1,5 @@
 #include "game/core/TrackingEmitter.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/Level.hpp"
@@ -56,5 +57,5 @@ int TrackingEmitter::getParticleTexture()
 
 uint64_t TrackingEmitter::GetType()
 {
-    return 0x0000000000080224ULL;
+    return ParticleKind::TRACKING_EMITTER;
 }

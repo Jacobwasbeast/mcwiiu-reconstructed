@@ -1,4 +1,5 @@
 #include "game/core/TimeCondition.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/MasterGameMode.hpp"
@@ -35,7 +36,7 @@ TimeCondition::~TimeCondition()
 void TimeCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
     params->push_back(GetValue(gameMode));
-    params->push_back(0xe5800c3a);
+    params->push_back(IDS_MG_SECONDS);
 }
 
 unsigned int TimeCondition::GetThreshold(MasterGameMode* gameMode) const

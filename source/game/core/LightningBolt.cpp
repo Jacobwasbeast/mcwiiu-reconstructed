@@ -1,4 +1,5 @@
 #include "game/core/LightningBolt.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 
@@ -37,16 +38,16 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
 
     if (!visualOnly
         && !level->mIsClientSide
-        && level->getGameRules()->getBoolean(0)
+        && level->getGameRules()->getBoolean(GameRules::RULE_DOFIRETICK)
         && (level->getDifficulty() == Difficulty::NORMAL
             || level->getDifficulty() == Difficulty::HARD)
         && level->hasChunksAt(pos, 10))
     {
         if (gMinecraftServer->getPlayers()->isTrackingBlock(pos, level->mDimension)
             && level->getBlockState(pos)->getMaterial() == Material::AIR
-            && Blocks::FIRE->mayPlace(level, pos))
+            && Blocks::fire->mayPlace(level, pos))
         {
-            level->setBlockAndUpdate(pos, Blocks::FIRE->defaultBlockState());
+            level->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
         }
 
         for (int i = 0; i < 4; ++i)
@@ -57,9 +58,9 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
 
             if (gMinecraftServer->getPlayers()->isTrackingBlock(pos, level->mDimension)
                 && level->getBlockState(firePos)->getMaterial() == Material::AIR
-                && Blocks::FIRE->mayPlace(level, firePos))
+                && Blocks::fire->mayPlace(level, firePos))
             {
-                level->setBlockAndUpdate(firePos, Blocks::FIRE->defaultBlockState());
+                level->setBlockAndUpdate(firePos, Blocks::fire->defaultBlockState());
             }
         }
     }
@@ -71,7 +72,7 @@ LightningBolt::~LightningBolt()
 
 unsigned long long LightningBolt::GetType()
 {
-    return 0x000000000B000001ULL;
+    return EntityType::LIGHTNING_BOLT;
 }
 
 void LightningBolt::defineSynchedData()
@@ -112,13 +113,13 @@ void LightningBolt::tick()
                 mSeed = mRandom->nextLong();
                 BlockPos pos(shared_from_this());
 
-                if (mLevel->getGameRules()->getBoolean(0)
+                if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOFIRETICK)
                     && mLevel->hasChunksAt(pos, 10)
                     && gMinecraftServer->getPlayers()->isTrackingBlock(pos, mLevel->mDimension)
                     && mLevel->getBlockState(pos)->getBlock()->mMaterial == Material::AIR
-                    && Blocks::FIRE->mayPlace(mLevel, pos))
+                    && Blocks::fire->mayPlace(mLevel, pos))
                 {
-                    mLevel->setBlockAndUpdate(pos, Blocks::FIRE->defaultBlockState());
+                    mLevel->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
                 }
             }
         }

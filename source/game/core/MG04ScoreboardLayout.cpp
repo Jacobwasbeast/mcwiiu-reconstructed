@@ -1,4 +1,5 @@
 #include "game/core/MG04ScoreboardLayout.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -105,7 +106,7 @@ UIString MG04ScoreboardLayout::getLabel3(const StatsUID& uid)
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int blocks = scoreboard->GetBlocksDestroyed(uid, -1);
-    std::wstring text(L10N::GetString(0x782d903f));
+    std::wstring text(L10N::GetString(IDS_MG_BLOCKS_DESTROYED));
     text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
     return UIString(text);
 }
@@ -115,7 +116,7 @@ UIString MG04ScoreboardLayout::getLabel4(const StatsUID& uid)
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int distance = scoreboard->GetTotalDistanceTravelled(uid);
-    std::wstring text(L10N::GetString(0x2815dc90));
+    std::wstring text(L10N::GetString(IDS_MG_DISTANCE_TRAVELLED));
     text = replaceAll(text, L"{*DELTA*}", _toString<unsigned int>(distance));
     return UIString(text);
 }
@@ -126,7 +127,7 @@ UIString MG04ScoreboardLayout::getLabel5(const StatsUID& uid)
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     if (scoreboard->IsOverallWinner(uid))
     {
-        return UIString(0x9148f7e8);
+        return UIString(IDS_MG_WINNER);
     }
     return UIString(L"");
 }

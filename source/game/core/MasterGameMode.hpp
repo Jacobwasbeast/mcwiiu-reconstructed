@@ -20,6 +20,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/LevelRules.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ActiveChunkBoundsChecker.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
@@ -28,7 +29,9 @@ class Abilities;
 class BlockPos;
 class BlockRemover;
 class BlockChangeListener;
+class BlockDegradeRoutine;
 class CheckpointRuleDefinition;
+class ChunkHistory;
 class Entity;
 class GameType;
 class KillboxRuleDefinition;
@@ -49,32 +52,41 @@ class Vec3;
 class MasterGameMode : public CommonMasterGameMode
 {
 public:
+    static const int MAX_PLAYERS = 8;
+
     enum ETimerID
     {
-        eTimerID_GameChange,
-        eTimerID_WaitingToStart,
-        eTimerID_RoundStart,
+        eTimerID_GameInitialise,
+        eTimerID_RoundPreparing,
+        eTimerID_RoundStartDelay,
         eTimerID_GracePeriod,
+        eTimerID_RoundEndDelay,
         eTimerID_ChestRefill,
+        eTimerID_LobbyInterval,
+        eTimerID_RoundLimit,
         eTimerID_Showdown,
-        eTimerID_GameEnd,
-        eTimerID_ReturnToLobby,
-        eTimerID_Tutorial,
-        eTimerID_Transition,
         eTimerID_PostGame,
-        eTimerID_RoundLimit
+        eTimerID_TimeSincePlayers,
+        eTimerID_TimeToReachEnd
     };
 
     enum EInternalGameModeState
     {
+        eInternalGameModeState_Initialising,
+        eInternalGameModeState_LobbyCountdown,
         eInternalGameModeState_Lobby,
+        eInternalGameModeState_SelectingGameRules,
+        eInternalGameModeState_LoadingGameRules,
+        eInternalGameModeState_LoadingRound,
+        eInternalGameModeState_LoadingSubRound,
+        eInternalGameModeState_PreparingRound,
         eInternalGameModeState_WaitingToStart,
         eInternalGameModeState_RoundStarting,
         eInternalGameModeState_RoundPlaying,
-        eInternalGameModeState_Showdown,
+        eInternalGameModeState_PostRound,
         eInternalGameModeState_RoundEnding,
-        eInternalGameModeState_PostGame,
-        eInternalGameModeState_ReturningToLobby
+        eInternalGameModeState_ReturningToLobby,
+        eInternalGameModeState_NextSubRound
     };
 
     typedef void (*TimerCallback)(ETimerID, MasterGameMode*, void*);
@@ -97,17 +109,11 @@ public:
     class ChestRefillInfo
     {
     public:
-        ChestRefillInfo();
-        ChestRefillInfo(const ChestRefillInfo& other);
         float distance;
-        float weight;
-        int x;
-        int y;
-        int z;
+        float chance;
+        BlockPos pos;
         std::wstring itemSet;
-        int minimumPlayers;
         std::wstring lootGroup;
-        int unknownTail;
     };
 
     class CountdownInfo
@@ -168,7 +174,7 @@ public:
     bool LoadNewGameRules();
     void SetLockPlayerPositions(bool locked);
     void UpdateGeneratorSeed();
-    int GeneratorSpawn() const;
+    AABB* GeneratorSpawn() const;
     boost::shared_ptr<ServerPlayer> GetRoundWinner();
     int GetSpawnLayerIndex() const;
     void PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >* players, bool atStart, bool includeSpectators);
@@ -193,7 +199,7 @@ public:
     static void OnRefillChestTimer(MasterGameMode* gameMode, void* context);
     static void OnGracePeriodEnd(MasterGameMode* gameMode, void* context);
     bool StartTimer(ETimerID timer, CountdownInfo* countdown, int duration);
-    void StartTimer(ETimerID timer, CountdownInfo* countdown);
+    bool StartTimer(ETimerID timer, CountdownInfo* countdown);
     static void OnGameStart(MasterGameMode* gameMode, void* context);
     void SetLastKnownPosition(boost::shared_ptr<Player> player);
     void UpdateClientsCameras(boost::shared_ptr<ServerPlayer> player);
@@ -229,7 +235,7 @@ public:
     void PlayerFinishedLoadingLocally();
     static void ResetLobbyTimerAfterSuspend();
     void OnLevelLoad(ServerLevel* level);
-    int GetChunkHistory() const;
+    ChunkHistory* GetChunkHistory() const;
     int GetRoundTime();
     int GetPostGameTime();
     int GetMaxKills();
@@ -256,7 +262,7 @@ public:
     void ResetSpawnLayers();
     void RegenTumbleLayers();
     virtual void RestartMapGenerator();
-    virtual unsigned int GetGameModeState() const;
+    virtual EGameModeState GetGameModeState() const;
     virtual ServerLevel* GeneratorTargetLevel() const;
     virtual void setChosenThemeWordId(int wordId);
     virtual bool IsRoundPlaying() const;
@@ -268,7 +274,7 @@ public:
     virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule);
 
     void DebugPrintTimerStates();
-    void getActiveViewAreas();
+    std::vector<AABB*>* getActiveViewAreas();
     void debugRoundTime();
     static void OnGameInitialised(MasterGameMode* gameMode, void* context);
     void DegradeBlocks();
@@ -279,104 +285,63 @@ public:
     bool IsPlayerReady(unsigned int playerIndex);
 
 private:
-    friend struct MasterGameModeLayoutAssertions;
     friend class CheckpointCommand;
     friend class GameMedal;
+    friend class GameStats;
     friend class PlayersEnteredVolumeCondition;
     friend class ServerPlayerGameMode;
     friend class ServerScoreboard;
 
+    static std::map<EInternalGameModeState, EGameModeState> sStateMap;
+    static bool sLobbyTimerNeedsReset;
+
     unsigned long long mRoundStartTime;
-    int mRoundTimeOffset;
-    int mPausedRoundTime;
-    int mShowdownTime;
-    int mPostGameTime;
+    unsigned long long mShowdownStartTime;
+    unsigned long long mPostRoundStartTime;
     boost::unordered_map<ETimerID, _TimerInfo> mTimers;
-    LevelGenerationOptions* mNextLevelGenerationOptions;
+    unsigned int mTexturePackId;
+    EInternalGameModeState mState;
+    bool mLobbyChestsPopulated;
+    bool mPlayersInvulnerable;
+    unsigned int mBeaconCheckpointIndex;
+    bool mRandomLootSetChosen;
+    bool mGameRulesChanged;
+    LevelGenerationOptions* mLobbyLevelGenOptions;
     GameStats mGameStats;
     arrayWithLength<unsigned char> mPlaylistSyncData;
-    int mInternalState;
-    int mPreviousState;
     std::vector<LevelRules::LevelRulesetGroup*> mPlaylist;
-    std::deque<LevelRules::LevelRulesetGroup*> mRuleGroups;
-    std::deque<LevelRules::LevelRulesetGroup*> mShuffledRuleGroups;
-    int mCurrentPlaylistEntry;
-    int mCurrentRuleIndex;
-    unsigned int mReadyPlayers;
-    unsigned int mRequiredPlayers;
-    int mMinimumPlayers;
-    int mMaximumPlayers;
-    int mMinChunkX;
-    int mMaxChunkX;
-    int mMinChunkZ;
-    int mMaxChunkZ;
-    arrayWithLength<unsigned char> mSpawnDistribution;
-    arrayWithLength<unsigned char> mAlternateSpawnDistribution;
+    std::deque<LevelRules::LevelRulesetGroup*> mPlayedRuleGroups;
+    std::deque<LevelRules::LevelRulesetGroup*> mRemainingRuleGroups;
+    int mLobbyMinX;
+    int mLobbyMaxX;
+    int mLobbyMinZ;
+    int mLobbyMaxZ;
+    arrayWithLength<unsigned char> mPlayerSpawnSlots;
+    arrayWithLength<unsigned char> mSpectatorSpawnSlots;
     std::vector<ChestRefillInfo> mChestRefills;
     std::vector<KillboxRuleDefinition*> mKillboxes;
-    std::vector<AABB*> mKillboxAreas;
+    std::vector<AABB*> mActiveViewAreas;
     ActiveChunkBoundsChecker mActiveChunkBounds;
     Random mRandom;
-    bool mLockPlayerPositions;
-    bool mRoundStarted;
-    bool mRoundEnding;
-    bool mShowdownStarted;
-    bool mPlaylistDirty;
-    bool mTutorialDirty;
-    bool mPlayersPrepared;
-    bool mReturningToLobby;
-    bool mPlayersInvulnerable;
-    bool mBattleLootSetChosen;
-    bool mAchievementExploitStopped;
-    int mGeneratorSpawn;
-    int mSpawnLayerIndex;
-    int mChunkHistory;
-    int mRoundWinner;
-    int mActiveTeamCount;
-    int mShowdownReduction;
-    bool mPlayerReady[8];
-    Vec3* mLastKnownPositions[8];
-    unsigned int mUnknown2D0;
-    unsigned char mUnknown2D4;
-    unsigned int mUnknown2D8;
-    unsigned int mUnknown2E0;
-    unsigned int mUnknown2E4;
-    unsigned int mUnknown2E8;
+    bool mPlayerReady[MAX_PLAYERS];
+    Vec3* mLastKnownPositions[MAX_PLAYERS];
+    BlockDegradeRoutine* mBlockDegradeRoutine;
+    bool mWaitingForChunkLoading;
+    int mPlayersLoading;
+    unsigned long long mChunkLoadStartTime;
+    unsigned int mChunkLoadStartTick;
     unsigned int mLayerBlocksDestroyed;
-    unsigned int mUnknown2F0;
-    unsigned char mUnknown2F4;
-    unsigned char mUnknown2F4Padding[3];
-    unsigned int mLastTutorialPlayerCount;
+    int mSpawnLayerIndex;
+    bool mTutorialDirty;
+    int mLastTutorialPlayerCount;
     GameModePacket::TutorialGameModeData mTutorialData;
     BlockChangeListener* mBlockChangeListener;
-    unsigned long long mLastBroadcastTime;
+    unsigned long long mLastChatTime;
     int mLastChatMessage;
-    unsigned int mUnknown318;
+    int mPostRoundTeamIndex;
+    unsigned int mTickCount;
     BlockRemover* mBlockRemover;
     std::vector<StatsUID> mLastKnownPositionPlayers;
-    unsigned int mUnknown32C;
-
 };
-
-#if UINTPTR_MAX == 0xffffffffU && !defined(RECON_NATIVE)
-static_assert(offsetof(MasterGameMode::ChestRefillInfo, lootGroup) == 0x34,
-              "MasterGameMode ChestRefillInfo loot-group ABI offset");
-static_assert(offsetof(MasterGameMode::ChestRefillInfo, itemSet) == 0x14,
-              "MasterGameMode ChestRefillInfo item-set ABI offset");
-static_assert(sizeof(MasterGameMode::ChestRefillInfo) == 0x54,
-              "MasterGameMode ChestRefillInfo ABI size");
-
-struct MasterGameModeLayoutAssertions
-{
-    static_assert(offsetof(MasterGameMode, mPlayerReady) == 0x2a8, "MasterGameMode player-ready ABI offset");
-    static_assert(offsetof(MasterGameMode, mLastKnownPositions) == 0x2b0, "MasterGameMode last-position ABI offset");
-    static_assert(offsetof(MasterGameMode, mUnknown2D0) == 0x2d0, "MasterGameMode scalar ABI offset");
-    static_assert(offsetof(MasterGameMode, mTutorialData) == 0x2fc, "MasterGameMode tutorial ABI offset");
-    static_assert(offsetof(MasterGameMode, mBlockChangeListener) == 0x304, "MasterGameMode listener ABI offset");
-    static_assert(offsetof(MasterGameMode, mBlockRemover) == 0x31c, "MasterGameMode remover ABI offset");
-    static_assert(offsetof(MasterGameMode, mLastKnownPositionPlayers) == 0x320, "MasterGameMode stats ABI offset");
-    static_assert(sizeof(MasterGameMode) == 0x330, "MasterGameMode ABI size");
-};
-#endif
 
 #endif

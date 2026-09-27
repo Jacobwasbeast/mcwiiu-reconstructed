@@ -1,4 +1,6 @@
 #include "game/core/MinecartTNT.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <string>
@@ -17,9 +19,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -102,7 +102,7 @@ bool MinecartTNT::hurt(const DamageSource* source, float damage)
 
 void MinecartTNT::destroy(const DamageSource* source)
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0 &&
+    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0 &&
         (source->isFire() || source->isExplosion() || mXd * mXd + mZd * mZd >= 0.01))
     {
         if (mFuse < 0)
@@ -114,8 +114,8 @@ void MinecartTNT::destroy(const DamageSource* source)
     }
 
     Minecart::destroy(source);
-    if (g_pApp->GetGameHostOption(eGameHostOption_13) == 0 ||
-        (!source->isExplosion() && mLevel->getGameRules()->getBoolean(6)))
+    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) == 0 ||
+        (!source->isExplosion() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS)))
     {
         spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tnt, 1)), 4.5f);
     }
@@ -125,7 +125,7 @@ void MinecartTNT::explode(double power)
 {
     if (!mLevel->mIsClientSide)
     {
-        if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
+        if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0)
         {
             double radius = std::sqrt(power);
             if (radius > 5.0)
@@ -159,7 +159,7 @@ void MinecartTNT::activateMinecart(int, int, int, bool powered)
 
 void MinecartTNT::handleEntityEvent(unsigned char event, int data)
 {
-    if (data == 40)
+    if (event == EntityEvent::MINECART_TNT_PRIME)
         primeFuse();
     else
         Entity::handleEntityEvent(event, data);
@@ -167,11 +167,11 @@ void MinecartTNT::handleEntityEvent(unsigned char event, int data)
 
 void MinecartTNT::primeFuse()
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0)
     {
         mFuse = 80;
         if (!mLevel->mIsClientSide)
-            mLevel->broadcastEntityEvent(shared_from_this(), 40, 0);
+            mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::MINECART_TNT_PRIME, 0);
         if (!isSilent())
             mLevel->addParticle(ePARTICLE_SMOKE, false, mX, mY, mZ, 0.0, 0.0, 0.0,
                                 arrayWithLength<int>());
@@ -204,7 +204,7 @@ float MinecartTNT::getBlockExplosionResistance(Explosion* explosion, Level* leve
 
 bool MinecartTNT::shouldBlockExplode(Explosion* explosion, Level* level, const BlockPos& pos, float radius)
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0)
     {
         const BlockState* state = level->getBlockState(pos);
         if (BaseRailBlock::isRail(state) || BaseRailBlock::isRail(level, pos.above()))
@@ -217,7 +217,7 @@ void MinecartTNT::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
     std::wstring key(L"TNTFuse");
-    if (tag->contains(key, 99))
+    if (tag->contains(key, Tag::TAG_ANY_NUMERIC))
         mFuse = tag->getInt(key);
 }
 
@@ -229,5 +229,5 @@ void MinecartTNT::addAdditonalSaveData(CompoundTag* tag)
 
 unsigned long long MinecartTNT::GetType()
 {
-    return 0x000000000A800004ULL;
+    return EntityType::MINECART_TNT;
 }

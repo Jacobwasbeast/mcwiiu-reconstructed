@@ -12,6 +12,13 @@ public:
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
+    enum ESpawnSetType
+    {
+        eSpawnSetType_Centre,
+        eSpawnSetType_Standard,
+        eSpawnSetType_Winner
+    };
+
     unsigned char getType();
 
 private:

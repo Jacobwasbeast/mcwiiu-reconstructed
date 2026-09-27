@@ -4,11 +4,11 @@
 #include <map>
 
 #include "game/core/Scoreboard.hpp"
-#include "game/core/UntypedStatTracker.hpp"
+#include "game/core/StatTracker.hpp"
 
 class DamageEvent;
 
-class WeaponDamageStatTracker : public UntypedStatTracker
+class WeaponDamageStatTracker : public StatTracker<Scoreboard::Weapon>
 {
 public:
     enum ETrackingType
@@ -22,7 +22,6 @@ public:
     virtual void update(const DamageEvent* damageEvent);
 
 private:
-    Scoreboard::Weapon mWeapon;
     std::map<unsigned int, float> mDamageByWeapon;
     ETrackingType mTrackingType;
 };

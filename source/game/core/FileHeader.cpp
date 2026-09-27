@@ -1,4 +1,5 @@
 #include "game/core/FileHeader.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <string.h>
 #include <wchar.h>
@@ -6,7 +7,6 @@
 #include <algorithm>
 
 wchar_t* wstringtochar16(const std::wstring& string);
-std::wstring char16towstring(wchar_t* string);
 
 wchar_t* wstringtochar16(const std::wstring& string)
 {

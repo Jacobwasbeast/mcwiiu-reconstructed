@@ -50,10 +50,10 @@ private:
     double mPowerX;
     double mPowerY;
     double mPowerZ;
-    std::wstring mTargetUniqueId;
-    BlockPos mTargetPos;
     std::wstring mOwnerUniqueId;
     BlockPos mOwnerPos;
+    std::wstring mTargetUniqueId;
+    BlockPos mTargetPos;
 };
 
 #endif

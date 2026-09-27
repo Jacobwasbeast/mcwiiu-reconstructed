@@ -10,8 +10,6 @@ class Entity;
 class DamageEvent
 {
 public:
-    DamageEvent(const DamageEvent& other);
-
     StatsUID mVictim;
     StatsUID mAttacker;
     boost::shared_ptr<Entity> mAttackerEntity;

@@ -5,8 +5,7 @@
 #include "game/item/Items.hpp"
 
 SniperStatTracker::SniperStatTracker(const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mValue(0.0)
+    : StatTracker<double>(statsUID, 0.0)
 {
 }
 

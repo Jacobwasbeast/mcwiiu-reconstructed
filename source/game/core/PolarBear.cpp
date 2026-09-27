@@ -1,4 +1,8 @@
 #include "game/core/PolarBear.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/core/Mth.hpp"
+#include "game/world/biome/Biome.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -25,7 +29,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 
-static const unsigned long long ENTITY_TYPE_POLAR_BEAR = 0x2d680006ULL;
 
 const EntityDataAccessor<bool>* PolarBear::DATA_STANDING = NULL;
 
@@ -47,7 +50,7 @@ void PolarBear::create(Level* level)
 
 void PolarBear::staticCtor()
 {
-    DATA_STANDING = SynchedEntityData::defineId<bool>(ENTITY_TYPE_POLAR_BEAR, 0xd680000ULL,
+    DATA_STANDING = SynchedEntityData::defineId<bool>(EntityType::POLAR_BEAR, EntityType::ANIMAL,
                                                        EntityDataSerializers::BOOLEAN);
 }
 
@@ -182,22 +185,15 @@ MobGroupData* PolarBear::finalizeMobSpawn(const DifficultyInstance&, MobGroupDat
 
 bool PolarBear::checkSpawnRules()
 {
-    int x = static_cast<int>(mX);
-    int y = static_cast<int>(mY);
-    int z = static_cast<int>(mZ);
-    if (mX < static_cast<double>(x)) --x;
-    if (mY < static_cast<double>(y)) --y;
-    if (mZ < static_cast<double>(z)) --z;
-    BlockPos pos(x, y, z);
-    const BlockState* state = mLevel->getBlockState(pos);
-    if (state == NULL) return false;
-    if (mLevel->getRawBrightness(pos, false) <= 8) return false;
-    return Animal::checkSpawnRules();
+    BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY), Mth::floor(mZ));
+    Biome* biome = mLevel->getBiome(pos);
+    if (biome != Biome::FROZEN_OCEAN && biome != Biome::DEEP_FROZEN_OCEAN) return Animal::checkSpawnRules();
+    return mLevel->getRawBrightness(pos, false) > 8 && mLevel->getBlockState(pos.below())->getBlock() == Blocks::ice;
 }
 
 unsigned long long PolarBear::GetType()
 {
-    return ENTITY_TYPE_POLAR_BEAR;
+    return EntityType::POLAR_BEAR;
 }
 
 PolarBear::PolarBearGroupData::PolarBearGroupData() : mIsBaby(false)
@@ -270,7 +266,7 @@ void PolarBear::PolarBearHurtByTargetGoal::start()
 void PolarBear::PolarBearHurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
                                                        boost::shared_ptr<LivingEntity> target)
 {
-    if (mob->GetType() == ENTITY_TYPE_POLAR_BEAR)
+    if (mob->GetType() == EntityType::POLAR_BEAR)
     {
         boost::shared_ptr<PolarBear> bear = boost::static_pointer_cast<PolarBear>(mob);
         if (!bear->isBaby())
@@ -293,7 +289,7 @@ bool PolarBear::PolarBearMeleeAttackGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
     if (mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL && target &&
-        (target->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+        (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         return false;
     return MeleeAttackGoal::canUse();
 }

@@ -18,57 +18,57 @@ template<typename T> T _fromString(const std::wstring& value);
 namespace
 {
 std::wstring renderDistanceNames[4] = {
-    L"options_renderDistance_far",
-    L"options_renderDistance_normal",
-    L"options_renderDistance_short",
-    L"options_renderDistance_tiny"
+    L"options.renderDistance.far",
+    L"options.renderDistance.normal",
+    L"options.renderDistance.short",
+    L"options.renderDistance.tiny"
 };
 
 std::wstring difficultyNames[4] = {
-    L"options_difficulty_peaceful",
-    L"options_difficulty_easy",
-    L"options_difficulty_normal",
-    L"options_difficulty_hard"
+    L"options.difficulty.peaceful",
+    L"options.difficulty.easy",
+    L"options.difficulty.normal",
+    L"options.difficulty.hard"
 };
 
 std::wstring guiScaleNames[4] = {
-    L"options_guiScale_auto",
-    L"options_guiScale_small",
-    L"options_guiScale_normal",
-    L"options_guiScale_large"
+    L"options.guiScale.auto",
+    L"options.guiScale.small",
+    L"options.guiScale.normal",
+    L"options.guiScale.large"
 };
 
 std::wstring framerateNames[3] = {
-    L"performance_max",
-    L"performance_balanced",
-    L"performance_powersaver"
+    L"performance.max",
+    L"performance.balanced",
+    L"performance.powersaver"
 };
 
 std::wstring particleNames[3] = {
-    L"options_particles_all",
-    L"options_particles_decreased",
-    L"options_particles_minimal"
+    L"options.particles.all",
+    L"options.particles.decreased",
+    L"options.particles.minimal"
 };
 
 Options::Option items[18] = {
-    Options::Option(L"options_music", true, false),
-    Options::Option(L"options_sound", true, false),
+    Options::Option(L"options.music", true, false),
+    Options::Option(L"options.sound", true, false),
     Options::Option(L"options_invertMouse", false, true),
-    Options::Option(L"options_sensitivity", true, false),
-    Options::Option(L"options_renderDistance", false, false),
-    Options::Option(L"options_viewBobbing", false, true),
-    Options::Option(L"options_anaglyph", false, true),
-    Options::Option(L"options_advancedOpengl", false, true),
-    Options::Option(L"options_framerateLimit", false, false),
-    Options::Option(L"options_difficulty", false, false),
-    Options::Option(L"options_graphics", false, false),
-    Options::Option(L"options_ao", false, true),
-    Options::Option(L"options_guiScale", false, false),
-    Options::Option(L"options_fov", true, false),
-    Options::Option(L"options_gamma", true, false),
-    Options::Option(L"options_renderClouds", false, true),
-    Options::Option(L"options_particles", false, false),
-    Options::Option(L"options_autoJump", false, true)
+    Options::Option(L"options.sensitivity", true, false),
+    Options::Option(L"options.renderDistance", false, false),
+    Options::Option(L"options.viewBobbing", false, true),
+    Options::Option(L"options.anaglyph", false, true),
+    Options::Option(L"options.advancedOpengl", false, true),
+    Options::Option(L"options.framerateLimit", false, false),
+    Options::Option(L"options.difficulty", false, false),
+    Options::Option(L"options.graphics", false, false),
+    Options::Option(L"options.ao", false, true),
+    Options::Option(L"options.guiScale", false, false),
+    Options::Option(L"options.fov", true, false),
+    Options::Option(L"options.gamma", true, false),
+    Options::Option(L"options.renderClouds", false, true),
+    Options::Option(L"options.particles", false, false),
+    Options::Option(L"options.autoJump", false, true)
 };
 }
 
@@ -150,20 +150,20 @@ void Options::init()
     mAutoJump = true;
     mSkin = L"Default";
 
-    mKeyForward = new KeyMapping(L"key_forward", 22);
-    mKeyLeft = new KeyMapping(L"key_left", 0);
-    mKeyBack = new KeyMapping(L"key_back", 18);
-    mKeyRight = new KeyMapping(L"key_right", 3);
-    mKeyJump = new KeyMapping(L"key_jump", 26);
-    mKeyInventory = new KeyMapping(L"key_inventory", 4);
-    mKeyDrop = new KeyMapping(L"key_drop", 16);
-    mKeyChat = new KeyMapping(L"key_chat", 19);
-    mKeySneak = new KeyMapping(L"key_sneak", 27);
-    mKeyAttack = new KeyMapping(L"key_attack", -100);
-    mKeyUse = new KeyMapping(L"key_use", -99);
-    mKeyPlayerList = new KeyMapping(L"key_playerlist", 34);
-    mKeyPickItem = new KeyMapping(L"key_pickItem", -98);
-    mKeyFog = new KeyMapping(L"key_fog", 5);
+    mKeyForward = new KeyMapping(L"key.forward", 22);
+    mKeyLeft = new KeyMapping(L"key.left", 0);
+    mKeyBack = new KeyMapping(L"key.back", 18);
+    mKeyRight = new KeyMapping(L"key.right", 3);
+    mKeyJump = new KeyMapping(L"key.jump", 26);
+    mKeyInventory = new KeyMapping(L"key.inventory", 4);
+    mKeyDrop = new KeyMapping(L"key.drop", 16);
+    mKeyChat = new KeyMapping(L"key.chat", 19);
+    mKeySneak = new KeyMapping(L"key.sneak", 27);
+    mKeyAttack = new KeyMapping(L"key.attack", -100);
+    mKeyUse = new KeyMapping(L"key.use", -99);
+    mKeyPlayerList = new KeyMapping(L"key.playerlist", 34);
+    mKeyPickItem = new KeyMapping(L"key.pickItem", -98);
+    mKeyFog = new KeyMapping(L"key.fog", 5);
 
     mKeyMappings[0] = mKeyForward;
     mKeyMappings[1] = mKeyLeft;
@@ -209,7 +209,7 @@ std::wstring Options::getKeyMessage(int index)
 {
     int key = mKeyMappings[index]->mKey;
     if (key < 0)
-        return I18n::get(L"key_mouseButton", key + 101);
+        return I18n::get(L"key.mouseButton", key + 101);
     return L"KEYNAME";
 }
 
@@ -330,37 +330,37 @@ std::wstring Options::getMessage(const Option* option)
     if (!option->isProgress())
     {
         if (option->isBoolean())
-            return caption + language->getElement(getBooleanValue(option) ? L"options_on" : L"options_off");
+            return caption + language->getElement(getBooleanValue(option) ? L"options.on" : L"options.off");
         if (option == Option::getItem(4)) return caption + language->getElement(renderDistanceNames[mViewDistance]);
         if (option == Option::getItem(9)) return caption + language->getElement(difficultyNames[mDifficulty]);
         if (option == Option::getItem(12)) return caption + language->getElement(guiScaleNames[mGuiScale]);
         if (option == Option::getItem(16)) return caption + language->getElement(particleNames[mParticles]);
         if (option == Option::getItem(8)) return caption + I18n::get(framerateNames[mFpsLimit]);
         if (option == Option::getItem(10))
-            return caption + language->getElement(mFancyGraphics ? L"options_graphics_fancy" : L"options_graphics_fast");
+            return caption + language->getElement(mFancyGraphics ? L"options.graphics.fancy" : L"options.graphics.fast");
         return caption;
     }
 
     double value = getProgressValue(option);
     if (option == Option::getItem(3))
     {
-        if (value == 0.0) return caption + language->getElement(L"options_sensitivity_min");
-        if (value == 1.0) return caption + language->getElement(L"options_sensitivity_max");
+        if (value == 0.0) return caption + language->getElement(L"options.sensitivity.min");
+        if (value == 1.0) return caption + language->getElement(L"options.sensitivity.max");
         return caption + _toString<int>(static_cast<int>(value * 200.0)) + L"%";
     }
     if (option == Option::getItem(13))
     {
-        if (value == 0.0) return caption + language->getElement(L"options_fov_min");
-        if (value == 1.0) return caption + language->getElement(L"options_fov_max");
+        if (value == 0.0) return caption + language->getElement(L"options.fov.min");
+        if (value == 1.0) return caption + language->getElement(L"options.fov.max");
         return caption + _toString<int>(static_cast<int>(value * 40.0 + 70.0));
     }
     if (option != Option::getItem(14))
     {
-        if (value == 0.0) return caption + language->getElement(L"options_off");
+        if (value == 0.0) return caption + language->getElement(L"options.off");
         return caption + _toString<int>(static_cast<int>(value * 100.0)) + L"%";
     }
-    if (value == 0.0) return caption + language->getElement(L"options_gamma_min");
-    if (value == 1.0) return caption + language->getElement(L"options_gamma_max");
+    if (value == 0.0) return caption + language->getElement(L"options.gamma.min");
+    if (value == 1.0) return caption + language->getElement(L"options.gamma.max");
     return caption + L"+" + _toString<int>(static_cast<int>(value * 100.0)) + L"%";
 }
 

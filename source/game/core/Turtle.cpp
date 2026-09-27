@@ -1,4 +1,9 @@
 #include "game/core/Turtle.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/LightningBolt.hpp"
 #include "game/core/DamageSource.hpp"
@@ -50,13 +55,13 @@ void Turtle::staticCtor()
 {
     if (BABY_ON_LAND_SELECTOR == 0)
         BABY_ON_LAND_SELECTOR = new BabyOnLandSelector();
-    DATA_HOME_POS = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BLOCK_POS);
-    DATA_HAS_EGG = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_IS_LAYING_EGG = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_TRAVEL_POS = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BLOCK_POS);
-    DATA_GOING_HOME = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_TRAVELLING = SynchedEntityData::defineId(0x000000002D680007ULL, 0x000000000D680000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_HOME_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BLOCK_POS);
+    DATA_HAS_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
+    DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
+    DATA_IS_LAYING_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
+    DATA_TRAVEL_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BLOCK_POS);
+    DATA_GOING_HOME = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
+    DATA_TRAVELLING = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
 }
 
 Turtle::Turtle(Level* level) : Animal(level), mLayEggTime(0)
@@ -64,6 +69,8 @@ Turtle::Turtle(Level* level) : Animal(level), mLayEggTime(0)
     fjDerivedCtorCalls();
     setSize(1.2f, 0.4f);
     mMoveControl = new TurtleMoveControl(this);
+    mSpawnableBlock = Blocks::sand;
+    mMaxUpStep = 1.0f;
 }
 
 Turtle::~Turtle()
@@ -219,7 +226,7 @@ void Turtle::tick()
         BlockPos below = pos.below();
         const BlockState* state = mLevel->getBlockState(below);
         if (state != NULL && Block::getIdWithData(state) == Block::getId(Blocks::sand))
-            mLevel->levelEvent(2001, below, Block::getIdWithData(state));
+            mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, below, Block::getIdWithData(state));
     }
 }
 
@@ -276,11 +283,11 @@ unsigned int Turtle::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     {
         if (isBaby())
         {
-            return 0x82f8d90fU;
+            return IDS_TOOLTIPS_FEED;
         }
         if (!isInLove() && !isBreedCoolingDown() && !isBaby())
         {
-            return 0xb47a2ab6U;
+            return IDS_TOOLTIPS_LOVEMODE;
         }
     }
     return AgableMob::GetInteractTooltip(holder);
@@ -320,12 +327,12 @@ bool Turtle::isWaterMob()
 
 bool Turtle::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    return Item::getBlockId(itemInstance->getItem()) == Block::getId(Blocks::sea_grass);
+    return Item::getBlockId(itemInstance->getItem()) == BlockId::SEA_GRASS;
 }
 
 double Turtle::getWalkTargetValue(const BlockPos& pos)
 {
-    if (mLevel != NULL && mLevel->getBlockId(pos.x, pos.y, pos.z) == Block::getId(Blocks::WATER)) return 10.0;
+    if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER) return 10.0f;
     return Animal::getWalkTargetValue(pos);
 }
 
@@ -385,5 +392,5 @@ ResourceLocation* Turtle::getDefaultLootTable()
 
 unsigned long long Turtle::GetType()
 {
-    return 0x000000002D680007ULL;
+    return EntityType::TURTLE;
 }

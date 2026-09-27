@@ -1,4 +1,5 @@
 #include "game/core/Gui.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -41,11 +42,10 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/core/MemSect.hpp"
 
 float gGuiScreenScale = 1.0f;
 unsigned int XGetLanguage();
-void MemSect(int section);
-void instructionSynchronize();
 
 namespace
 {
@@ -126,7 +126,6 @@ void Gui::renderPumpkin(int width, int height)
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    instructionSynchronize();
 }
 
 void Gui::renderPortalOverlay(float portalTime, int width, int height)
@@ -159,14 +158,12 @@ void Gui::renderPortalOverlay(float portalTime, int width, int height)
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    instructionSynchronize();
 }
 
 void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int width, int height,
                                float partialTick)
 {
     if (rule->isEnabled() && rule->getElytraSpeedBoost() > 0.0) {
-        instructionSynchronize();
         return;
     }
     GlStateManager::disableAlphaTest();
@@ -205,7 +202,6 @@ void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    instructionSynchronize();
 }
 
 void Gui::render(float partialTick, bool hideGui, int width, int height)
@@ -214,7 +210,7 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
     const int playerIndex = player->mUserIndex;
     const int viewport = player->mViewport;
     const int setting = static_cast<int>(GameSettings::GetGameSettings(
-        playerIndex, static_cast<eGameSetting>(viewport == 0 ? 0x1b : 0x1c)));
+        playerIndex, viewport == 0 ? eGameSetting_HUDSize : eGameSetting_HUDSizeSplitscreen));
     const int guiScale = setting + 2;
     ScreenSizeCalculator size(mMinecraft->mOptions, guiScale);
     const int screenWidth = static_cast<int>(size.getWidth());
@@ -296,10 +292,10 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
 
     bool joinTransform = false;
     if (!gConsoleUIController.GetMenuDisplayed(playerIndex))
-        joinTransform = gApp.GetXuiAction(playerIndex) != 0x1f;
-    if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(0x11)) == 0 && joinTransform)
+        joinTransform = gApp.GetXuiAction(playerIndex) != eXuiAction_AutoSave;
+    if (GameSettings::GetGameSettings(playerIndex, eGameSetting_Tooltips) == 0 && joinTransform)
         BOOST_ASSERT(mMinecraft->mPlayer);
-    if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(0x17)) == 0)
+    if (GameSettings::GetGameSettings(playerIndex, eGameSetting_DisplayHUD) == 0)
         joinTransform = false;
 
     mMinecraft->mGameRenderer->setupGuiScreen(guiScale);
@@ -324,7 +320,7 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
     }
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true)) {
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true)) {
         if (options && options->getRequiredGameRules()) {
             std::vector<ThermalAreaRuleDefinition*> areas;
             options->getRequiredGameRules()->getThermalAreas(&areas);
@@ -363,7 +359,7 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
             GlStateManager::pushMatrix();
             GlStateManager::scalef(xScale, yScale, xScale);
         }
-        if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(0x1d)) != 0 && joinTransform) {
+        if (GameSettings::GetGameSettings(playerIndex, eGameSetting_AnimatedCharacter) != 0 && joinTransform) {
             bool renderPreview = true;
             if (player->isSneaking() || player->isSprinting()) {
                 mCharacterDisplayTime[playerIndex] = 30;
@@ -389,7 +385,7 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                 const float savedXRot = player->mXRot;
                 const float savedYRotO = player->mYRotO;
                 const int savedFireTicks = player->mRemainingFireTicks;
-                const bool savedSharedFlag = player->getSharedFlag(0);
+                const bool savedSharedFlag = player->getSharedFlag(Entity::FLAG_ONFIRE);
 
                 GlStateManager::enableRescaleNormal();
                 GlStateManager::enableColorMaterial();
@@ -414,11 +410,11 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                     player->mXRot = -std::atan(0.25f) * 20.0f;
                 }
                 player->clearFire();
-                player->setSharedFlag(0, false);
+                player->setSharedFlag(Entity::FLAG_ONFIRE, false);
                 if (!player->isFallFlying()) {
                     GlStateManager::translatef(0.0f, -1.62f, 0.0f);
                 } else {
-                    const float pitch = static_cast<float>(fclamp__FfN21(player->mXRot, -90.0f, 90.0f));
+                    const float pitch = static_cast<float>(fclamp(player->mXRot, -90.0f, 90.0f));
                     GlStateManager::translatef(0.0f, 1.62f * (pitch / 90.0f), 0.0f);
                 }
                 dispatcher->mCameraYRot = 180.0f;
@@ -431,7 +427,7 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                 player->mXRot = savedXRot;
                 player->mYRotO = savedYRotO;
                 player->mRemainingFireTicks = savedFireTicks;
-                player->setSharedFlag(0, savedSharedFlag);
+                player->setSharedFlag(Entity::FLAG_ONFIRE, savedSharedFlag);
                 GlStateManager::popMatrix();
                 Lighting::turnOff();
                 GlStateManager::disableRescaleNormal();
@@ -474,7 +470,6 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager::disableBlend();
     GlStateManager::enableAlphaTest();
-    instructionSynchronize();
 }
 
 void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
@@ -575,7 +570,7 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
             if (mMinecraft->mLocalPlayers[i] == NULL) {
                 continue;
             }
-            if (GameSettings::GetGameSettings(i, static_cast<eGameSetting>(overlay ? 0x1a : 0x26)) != 0 ||
+            if (GameSettings::GetGameSettings(i, overlay ? eGameSetting_DeathMessages : eGameSetting_DisplayGameMessages) != 0 ||
                 force) {
                 mMessages[i].insert(mMessages[i].begin(), GuiMessage(text));
                 while (mMessages[i].size() > 50) {
@@ -586,7 +581,7 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
         return;
     }
 
-    if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(overlay ? 0x1a : 0x26)) != 0 ||
+    if (GameSettings::GetGameSettings(playerIndex, overlay ? eGameSetting_DeathMessages : eGameSetting_DisplayGameMessages) != 0 ||
         force) {
         mMessages[playerIndex].insert(mMessages[playerIndex].begin(), GuiMessage(text));
         while (mMessages[playerIndex].size() > 50) {
@@ -622,20 +617,19 @@ void Gui::clearSingleMessages(int playerIndex)
     mSingleMessageVisible = false;
 }
 
-uint64_t Gui::setSingleMessage(const std::wstring& message, int playerIndex, int duration)
+void Gui::setSingleMessage(const std::wstring& message, int playerIndex, int duration)
 {
     if (playerIndex >= 0 && playerIndex < 4) {
         mSingleMessages[playerIndex] = message;
         mSingleMessageTime[playerIndex] = duration < 1 ? 0xb4 : duration;
         mSingleMessageVisible = true;
     }
-    return static_cast<uint64_t>((unsigned long)this) << 32;
 }
 
-uint64_t Gui::setNowPlaying(const std::wstring& message)
+void Gui::setNowPlaying(const std::wstring& message)
 {
     int i;
-    const wchar_t* prefix = L10N::GetString(0x91249e7e);
+    const wchar_t* prefix = L10N::GetString(IDS_NOWPLAYING);
     std::wstring text = prefix == 0 ? std::wstring() : std::wstring(prefix);
     text += message;
     for (i = 0; i < 4; i += 2) {
@@ -645,7 +639,6 @@ uint64_t Gui::setNowPlaying(const std::wstring& message)
         mSingleMessageTime[i + 1] = 0x3c;
     }
     mSingleMessageVisible = true;
-    return static_cast<uint64_t>((unsigned long)this) << 32;
 }
 
 void Gui::displayClientMessage(int stringId, int playerIndex)

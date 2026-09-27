@@ -19,9 +19,9 @@ CompoundTag* ENTITIESONLY_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, i
         for (int entityIndex = 0; entityIndex < entities->size(); entityIndex++)
         {
             CompoundTag* entity = (CompoundTag*)entities->get(entityIndex);
-            if (entity->contains(std::wstring(L"Passengers"), 9))
+            if (entity->contains(std::wstring(L"Riding"), 9))
             {
-                ListTag* passengers = entity->getList(std::wstring(L"Passengers"), 10);
+                ListTag* passengers = entity->getList(std::wstring(L"Riding"), 10);
 
                 for (int passengerIndex = 0; passengerIndex < passengers->size(); passengerIndex++)
                 {

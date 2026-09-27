@@ -4,12 +4,35 @@
 #include "game/core/Bush.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 
-class BlockPos; class BlockState; class BlockStateDefinition; class BlockTooltipDataHolder; class Direction;
-class IconRegister; class Level; class LevelSource; class Random; class TextureAtlasSprite; class ItemInstance; class BlockEntity; class Player;
+template<class T> class AbstractProperty;
+class AABB;
+class BlockPos;
+class BlockState;
+class BlockStateDefinition;
+class BlockTooltipDataHolder;
+class Direction;
+class IconRegister;
+class Level;
+class LevelSource;
+class Random;
+class TextureAtlasSprite;
+class ItemInstance;
+class BlockEntity;
+class Player;
 
 class SeaGrass : public Bush, public BonemealableBlock
 {
 public:
+    enum EType
+    {
+        TYPE_SINGLE = 0,
+        TYPE_TALL_TOP = 1,
+        TYPE_TALL_BOTTOM = 2
+    };
+
+    static AbstractProperty<int>* TYPE;
+    static const AABB* SHAPE;
+
     SeaGrass();
     virtual ~SeaGrass();
     virtual bool isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool);
@@ -34,10 +57,12 @@ public:
     virtual bool canSurvive(Level*, const BlockPos&, const BlockState*);
     virtual bool mayPlace(Level*, const BlockPos&);
     virtual void onPlace(Level*, const BlockPos&, const BlockState*);
-    virtual void playerDestroy(Level*, boost::shared_ptr<Player>, const BlockPos&, const BlockState*, boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>);
+    virtual void playerDestroy(Level*, boost::shared_ptr<Player>, const BlockPos&, const BlockState*,
+                               boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>);
     static bool trySpawnSeaGrass(bool, Level*, Random*, const BlockPos&, const BlockState*);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual bool isSilkTouchable();
+
 private:
     TextureAtlasSprite* mCarriedIcon;
     TextureAtlasSprite* mDoubleTallTopIcon;

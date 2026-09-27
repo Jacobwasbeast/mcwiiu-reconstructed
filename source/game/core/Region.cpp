@@ -1,4 +1,5 @@
 #include "game/core/Region.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/world/Level.hpp"
@@ -9,12 +10,13 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
 #include "game/world/block/LeafBlock.hpp"
+#include "game/world/block/Blocks.hpp"
 
 namespace
 {
     const BlockState* emptyState()
     {
-        return Block::byId(0)->defaultBlockState();
+        return Blocks::air->defaultBlockState();
     }
 }
 
@@ -230,7 +232,7 @@ Block* Region::getBlock(const BlockPos& pos)
         if (chunk != NULL)
             return chunk->getBlock(pos);
     }
-    return Block::byId(0);
+    return Blocks::air;
 }
 void Region::getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock) { *block = getBlock(pos); *extraBlock = getExtraBlock(pos); }
 bool Region::isSolidRender(const BlockPos& pos)
@@ -290,8 +292,8 @@ const BlockState* Region::getExtraBlockState(const BlockPos& pos)
     }
     return emptyState();
 }
-bool Region::isEmptyBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 0; }
-bool Region::isEmptyWaterBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 9; }
+bool Region::isEmptyBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == BlockId::AIR; }
+bool Region::isEmptyWaterBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == BlockId::WATER; }
 int Region::getBrightness(LightLayer::variety layer, const BlockPos& pos) { if (pos.y < 0 || pos.y >= 256) return layer; LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? layer : c->getBrightness(layer, pos); }
 void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states)
 {
@@ -325,7 +327,7 @@ void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int 
                     unsigned short element = elements[index];
                     int blockId = elementToBlockId(element);
                     int data = elementToData(element);
-                    if (blockId == 0)
+                    if (blockId == BlockId::AIR)
                     {
                         state = airState;
                     }

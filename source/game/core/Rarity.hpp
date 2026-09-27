@@ -17,9 +17,10 @@ public:
 
     unsigned int getWeight() const;
 
-private:
     eMinecraftColour colour;
     std::wstring name;
+
+private:
     int weight;
 };
 

@@ -1,6 +1,8 @@
 #ifndef GAME_CORE_PARROT_HPP
 #define GAME_CORE_PARROT_HPP
 
+#include "game/world/biome/arrayWithLength.hpp"
+
 #include <string>
 #include <boost/shared_ptr.hpp>
 
@@ -21,6 +23,7 @@ class DifficultyInstance;
 class Entity;
 class EntityTooltipDataHolder;
 class FlyingPathNavigation;
+class Item;
 class ItemInstance;
 class Level;
 class MobGroupData;
@@ -32,6 +35,8 @@ class Parrot : public ShoulderRidingEntity
 {
 public:
     static const EntityDataAccessor<int>* DATA_VARIANT;
+    static Item* POISONOUS_FOOD;
+    static arrayWithLength<Item*> TAME_FOOD;
     class NotParrotPredicate : public Predicate<boost::shared_ptr<Entity> >
     {
     public:

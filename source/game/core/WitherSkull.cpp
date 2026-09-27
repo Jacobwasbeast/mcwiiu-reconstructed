@@ -1,4 +1,5 @@
 #include "game/core/WitherSkull.hpp"
+#include "game/core/EntityType.hpp"
 #include <algorithm>
 #include "game/core/HitResult.hpp"
 #include "game/core/WitherBoss.hpp"
@@ -14,7 +15,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-const unsigned long long WitherSkull::ENTITY_TYPE = 0x8A400002ULL;
 const EntityDataAccessor<bool>* WitherSkull::DATA_DANGEROUS = NULL;
 
 WitherSkull::WitherSkull(Level* level) : Fireball(level)
@@ -41,10 +41,10 @@ void WitherSkull::create(Level* level)
 }
 void WitherSkull::staticCtor()
 {
-    DATA_DANGEROUS = SynchedEntityData::defineId<bool>(ENTITY_TYPE, 0x8A400000ULL,
+    DATA_DANGEROUS = SynchedEntityData::defineId<bool>(EntityType::WITHER_SKULL, EntityType::FIREBALL,
                                                        EntityDataSerializers::BOOLEAN);
 }
-void WitherSkull::addDataWalkers(DataFixerUpper* fixer) { Fireball::addDataWalkers(fixer, ENTITY_TYPE); }
+void WitherSkull::addDataWalkers(DataFixerUpper* fixer) { Fireball::addDataWalkers(fixer, EntityType::WITHER_SKULL); }
 bool WitherSkull::isOnFire() { return false; }
 float WitherSkull::getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos)
 {
@@ -81,7 +81,7 @@ void WitherSkull::onHit(const HitResult* result)
         {
             result->mEntity->hurt(DamageSource::MAGIC, 5.0f);
         }
-        if ((result->mEntity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             const Difficulty* difficulty = mLevel->getDifficulty();
             if (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)
@@ -93,7 +93,7 @@ void WitherSkull::onHit(const HitResult* result)
             }
         }
     }
-    const bool mobGriefing = mLevel->getGameRules()->getBoolean(1);
+    const bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
     mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false, mobGriefing,
                     false, false, false, -1.0f);
     remove();
@@ -110,4 +110,4 @@ std::vector<unsigned long long>* WitherSkull::getEntityTypesToIgnoreCollisionsWi
     types->push_back(GetType());
     return types;
 }
-unsigned long long WitherSkull::GetType() { return ENTITY_TYPE; }
+unsigned long long WitherSkull::GetType() { return EntityType::WITHER_SKULL; }

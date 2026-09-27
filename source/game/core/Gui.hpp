@@ -39,8 +39,8 @@ public:
                     bool append, bool force);
     void clearSingleMessages();
     void clearSingleMessages(int playerIndex);
-    uint64_t setSingleMessage(const std::wstring& message, int playerIndex, int duration);
-    uint64_t setNowPlaying(const std::wstring& message);
+    void setSingleMessage(const std::wstring& message, int playerIndex, int duration);
+    void setNowPlaying(const std::wstring& message);
     void displayClientMessage(int stringId, int playerIndex);
     void onDisconnected();
     double getOpacity(int playerIndex, unsigned int messageIndex);

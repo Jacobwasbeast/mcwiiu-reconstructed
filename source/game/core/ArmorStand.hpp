@@ -25,6 +25,15 @@ class HumanoidArm;
 class ArmorStand : public LivingEntity
 {
 public:
+    enum EInteraction
+    {
+        eInteraction_None,
+        eInteraction_Place,
+        eInteraction_Take,
+        eInteraction_Swap,
+        eInteraction_ChangePose
+    };
+
     class Pose
     {
     public:
@@ -87,9 +96,9 @@ public:
     bool isShowArms();
     bool interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
                     InteractionHand::EInteractionHand hand);
-    bool test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
-                         not_null_ptr<ItemInstance> item,
-                         InteractionHand::EInteractionHand hand);
+    EInteraction test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
+                                 not_null_ptr<ItemInstance> item,
+                                 InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned int GetHitTooltip(const EntityTooltipDataHolder& tooltipData);
     void playBrokenSound();

@@ -1,4 +1,5 @@
 #include "game/core/Slime.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/client/render/ParticleType.hpp"
 
 #include <cmath>
@@ -26,9 +27,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 const EntityDataAccessor<int>* Slime::DATA_ID_SIZE = NULL;
 
@@ -46,12 +45,12 @@ Slime::~Slime()
 
 unsigned long long Slime::GetType()
 {
-    return 0x5D108000ULL;
+    return EntityType::SLIME;
 }
 
 void Slime::staticCtor()
 {
-    DATA_ID_SIZE = SynchedEntityData::defineId<int>(0x5D108000ULL, 0x0D000000ULL,
+    DATA_ID_SIZE = SynchedEntityData::defineId<int>(EntityType::SLIME, EntityType::MOB,
                                                      EntityDataSerializers::INT);
 }
 
@@ -103,7 +102,7 @@ int Slime::getSize()
 
 void Slime::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5d108000ULL);
+    Mob::addDataWalkers(fixer, EntityType::SLIME);
 }
 
 void Slime::addAdditonalSaveData(CompoundTag* tag)

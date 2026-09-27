@@ -1,6 +1,6 @@
 #include "game/core/XmlConstruct.hpp"
+#include "game/core/StringUtils.hpp"
 
-bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
 template<typename T> T _fromString(const std::wstring& text);
 
 XmlConstruct::~XmlConstruct()

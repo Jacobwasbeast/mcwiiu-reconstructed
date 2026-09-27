@@ -1,4 +1,5 @@
 #include "game/core/CommonStats.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cstring>
 
@@ -7,6 +8,8 @@
 #include "game/core/Stats.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/world/block/BlockId.hpp"
 
 CommonStats::~CommonStats()
 {
@@ -114,7 +117,7 @@ Stat* CommonStats::get_killsNetherZombiePigman()
 
 Stat* CommonStats::get_breedEntity(unsigned long long entityType)
 {
-    if (entityType == 0x2D6A0000ULL)
+    if (entityType == EntityType::COW)
     {
         return GenericStats::repopulation();
     }
@@ -123,15 +126,15 @@ Stat* CommonStats::get_breedEntity(unsigned long long entityType)
 
 Stat* CommonStats::get_tamedEntity(unsigned long long entityType)
 {
-    if (entityType == 0x2D6C0001ULL)
+    if (entityType == EntityType::OCELOT)
     {
         return GenericStats::lionTamer();
     }
-    if (entityType == 0x0D6C0002ULL)
+    if (entityType == EntityType::WOLF)
     {
         return Stats::befriendsWolf;
     }
-    if (entityType == 0x2D690001ULL)
+    if (entityType == EntityType::HORSE)
     {
         return GenericStats::leaderOfThePack();
     }
@@ -140,11 +143,11 @@ Stat* CommonStats::get_tamedEntity(unsigned long long entityType)
 
 Stat* CommonStats::get_craftedEntity(unsigned long long entityType)
 {
-    if (entityType == 0x0D580002ULL)
+    if (entityType == EntityType::VILLAGER_GOLEM)
     {
         return GenericStats::bodyGuard();
     }
-    if (entityType == 0x5D540047ULL)
+    if (entityType == EntityType::WITHER_BOSS)
     {
         return GenericStats::spawnWither();
     }
@@ -153,7 +156,7 @@ Stat* CommonStats::get_craftedEntity(unsigned long long entityType)
 
 Stat* CommonStats::get_shearedEntity(unsigned long long entityType)
 {
-    if (entityType == 0x2D680002ULL)
+    if (entityType == EntityType::SHEEP)
     {
         return GenericStats::haveAShearfulDay();
     }
@@ -186,7 +189,7 @@ Stat* CommonStats::get_blocksMined(int blockId)
 
 Stat* CommonStats::get_itemsCollected(int itemId, int auxValue)
 {
-    if (itemId == 35)
+    if (itemId == BlockId::WOOL)
     {
         return Stats::rainbowCollectionStats.data[auxValue];
     }
@@ -209,11 +212,11 @@ Stat* CommonStats::get_itemsSmelted(int itemId)
 
 Stat* CommonStats::get_itemsUsed(int itemId)
 {
-    if (itemId == 0x140 || itemId == 0x19C)
+    if (itemId == ItemId::COOKED_PORKCHOP || itemId == ItemId::COOKED_RABBIT)
     {
         return Stats::blockPlacedStats.data[itemId];
     }
-    if (itemId == 0x1C1)
+    if (itemId == ItemId::TOTEM_OF_UNDYING)
     {
         return GenericStats::cheatingDeath();
     }

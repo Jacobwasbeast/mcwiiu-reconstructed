@@ -13,30 +13,30 @@ bool GameRules::getBoolean(int rule)
 {
     switch (rule)
     {
-    case 0:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xe)) != 0;
-    case 1:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x18)) != 0;
-    case 2:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x19)) != 0;
-    case 3:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1a)) != 0;
-    case 4:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1b)) != 0;
-    case 5:
-    case 6:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1c)) != 0;
-    case 7:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1d)) != 0;
-    case 8:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1e)) != 0
-            && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0;
-    case 9:
+    case RULE_DOFIRETICK:
+        return g_pApp->GetGameHostOption(eGameHostOption_FireSpreads) != 0;
+    case RULE_MOBGRIEFING:
+        return g_pApp->GetGameHostOption(eGameHostOption_MobGriefing) != 0;
+    case RULE_KEEPINVENTORY:
+        return g_pApp->GetGameHostOption(eGameHostOption_KeepInventory) != 0;
+    case RULE_DOMOBSPAWNING:
+        return g_pApp->GetGameHostOption(eGameHostOption_DoMobSpawning) != 0;
+    case RULE_DOMOBLOOT:
+        return g_pApp->GetGameHostOption(eGameHostOption_DoMobLoot) != 0;
+    case RULE_DOBLOCKDROPS:
+    case RULE_DOENTITYDROPS:
+        return g_pApp->GetGameHostOption(eGameHostOption_DoTileDrops) != 0;
+    case RULE_NATURAL_REGENERATION:
+        return g_pApp->GetGameHostOption(eGameHostOption_NaturalRegeneration) != 0;
+    case RULE_DAYLIGHT:
+        return g_pApp->GetGameHostOption(eGameHostOption_DoDaylightCycle) != 0
+            && g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0;
+    case RULE_SENDCOMMANDFEEDBACK:
         return true;
-    case 0xb:
+    case RULE_SHOWDEATHMESSAGES:
         return true;
-    case 0x12:
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x15)) != 0;
+    case RULE_WEATHER_CYCLE:
+        return g_pApp->GetGameHostOption(eGameHostOption_DoWeatherCycle) != 0;
     default:
         return false;
     }
@@ -44,9 +44,9 @@ bool GameRules::getBoolean(int rule)
 
 unsigned int GameRules::getInt(int rule)
 {
-    if (rule == 0xf)
+    if (rule == RULE_SPAWN_RADIUS)
         return 10;
-    if (rule != 0x11)
+    if (rule != RULE_MAX_ENTITY_CRAMMING)
         return 0;
     return 0x18;
 }

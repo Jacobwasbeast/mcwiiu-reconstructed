@@ -4,35 +4,176 @@
 #include <string>
 #include "platform/wiiu/C4JStorage.hpp"
 #include "game/core/GameModeOptions.hpp"
-enum eGameSetting { eGameSetting_YAxis = 0, eGameSetting_SkinAdjustments = 0x2d };
-enum EControllerActions : int { EControllerActions_First = 0 };
-enum eDebugSetting { eDebugSetting_First = 0 };
+enum eGameSetting
+{
+    eGameSetting_MusicVolume,
+    eGameSetting_SoundVolume,
+    eGameSetting_Gamma,
+    eGameSetting_Difficulty,
+    eGameSetting_GameSensitivity,
+    eGameSetting_InterfaceSensitivity,
+    eGameSetting_ViewBob,
+    eGameSetting_ControlScheme,
+    eGameSetting_InvertLook,
+    eGameSetting_SouthPaw,
+    eGameSetting_SecondaryControls,
+    eGameSetting_SplitScreenVertical,
+    eGameSetting_DisplayMii,
+    eGameSetting_Autosave,
+    eGameSetting_SplitscreenNicknames,
+    eGameSetting_Hints,
+    eGameSetting_InterfaceOpacity,
+    eGameSetting_Tooltips,
+    eGameSetting_Clouds,
+    eGameSetting_Online,
+    eGameSetting_InviteOnly,
+    eGameSetting_FriendsOfFriends,
+    eGameSetting_DisplayUpdateMessage,
+    eGameSetting_DisplayHUD,
+    eGameSetting_DisplayHand,
+    eGameSetting_CustomSkinAnim,
+    eGameSetting_DeathMessages,
+    eGameSetting_HUDSize,
+    eGameSetting_HUDSizeSplitscreen,
+    eGameSetting_AnimatedCharacter,
+    eGameSetting_EULAAccepted,
+    eGameSetting_Reserved,
+    eGameSetting_ClassicCrafting,
+    eGameSetting_CaveSounds,
+    eGameSetting_GameChat,
+    eGameSetting_MinecartSounds,
+    eGameSetting_PublicMiniGamePrompts,
+    eGameSetting_UpdateMessageSeen,
+    eGameSetting_DisplayGameMessages,
+    eGameSetting_DisplaySaveIcon,
+    eGameSetting_FlyingViewRolling,
+    eGameSetting_ControlMappings,
+    eGameSetting_ShowGlideGhost,
+    eGameSetting_ShowGlideGhostPath,
+    eGameSetting_AutoJump,
+    eGameSetting_SkinAdjustments
+};
+enum EControllerActions : int
+{
+    EControllerActions_MenuA = 0,
+    EControllerActions_MenuB,
+    EControllerActions_MenuX,
+    EControllerActions_MenuY,
+    EControllerActions_MenuUp,
+    EControllerActions_MenuDown,
+    EControllerActions_MenuRight,
+    EControllerActions_MenuLeft,
+    EControllerActions_MenuPageUp,
+    EControllerActions_MenuPageDown,
+    EControllerActions_MenuRightScroll,
+    EControllerActions_MenuLeftScroll,
+    EControllerActions_MenuStickPress,
+    EControllerActions_MenuOtherStickPress,
+    EControllerActions_MenuOtherStickUp,
+    EControllerActions_MenuOtherStickDown,
+    EControllerActions_MenuOtherStickLeft,
+    EControllerActions_MenuOtherStickRight,
+    EControllerActions_MenuStart,
+    EControllerActions_MenuBack,
+    EControllerActions_MenuOk,
+    EControllerActions_MenuCancel,
+    EControllerActions_Pause,
+    EControllerActions_Scoreboard,
+    EControllerActions_MoveForward,
+    EControllerActions_MoveBackward,
+    EControllerActions_MoveLeft,
+    EControllerActions_MoveRight,
+    EControllerActions_LookUp,
+    EControllerActions_LookDown,
+    EControllerActions_LookLeft,
+    EControllerActions_LookRight,
+    EControllerActions_Jump,
+    EControllerActions_Use,
+    EControllerActions_Action,
+    EControllerActions_CycleHeldItemLeft,
+    EControllerActions_CycleHeldItemRight,
+    EControllerActions_Inventory,
+    EControllerActions_Drop,
+    EControllerActions_Sneak,
+    EControllerActions_Crafting,
+    EControllerActions_ChangeCameraMode,
+    EControllerActions_FlyLeft,
+    EControllerActions_FlyRight,
+    EControllerActions_FlyUp,
+    EControllerActions_FlyDown,
+    EControllerActions_Sprint,
+    EControllerActions_PickBlock,
+    EControllerActions_SpectatePrevious,
+    EControllerActions_SpectateNext,
+    EControllerActions_SpectateNoise,
+    EControllerActions_SpectateCancel,
+    EControllerActions_ConfirmReady,
+    EControllerActions_Vote,
+    EControllerActions_RestartSection,
+    EControllerActions_RestartRace,
+    EControllerActions_LookBehind
+};
+enum eDebugSetting
+{
+    eDebugSetting_First = 0
+};
 class GameSettings
 {
-    unsigned char mChanged, mYAxis, mSensitivity, mSwapSticks, mVibration, mSkinFlags;
-    unsigned short mOptionFlags;
-    unsigned int mUnknown0x0C, mTutorialFlags, mUnknown0x10, mUnknown0x14, mUnknown0x18, mUnknown0x1c;
-    unsigned int mUnknown0x20, mUnknown0x24, mUnknown0x28, mUnknown0x2c, mUnknown0x30, mUnknown0x34, mUnknown0x38, mUnknown0x3c, mUnknown0x40, mUnknown0x44, mUnknown0x48;
+    unsigned char mChanged;
+    unsigned char mMusicVolume;
+    unsigned char mSoundVolume;
+    unsigned char mGameSensitivity;
+    unsigned char mGamma;
+    unsigned char mSkinFlags;
+    unsigned short mPackedSettings;
+    unsigned int mUnknown0x0C;
+    unsigned int mTutorialFlags;
+    unsigned int mUnknown0x10;
+    unsigned int mUnknown0x14;
+    unsigned int mUnknown0x18;
+    unsigned int mUnknown0x1c;
+    unsigned int mUnknown0x20;
+    unsigned int mUnknown0x24;
+    unsigned int mUnknown0x28;
+    unsigned int mUnknown0x2c;
+    unsigned int mUnknown0x30;
+    unsigned int mUnknown0x34;
+    unsigned int mUnknown0x38;
+    unsigned int mUnknown0x3c;
+    unsigned int mUnknown0x40;
+    unsigned int mUnknown0x44;
+    unsigned int mUnknown0x48;
     unsigned int mSkinId;
-    unsigned char mLanguage, mLocale;
+    unsigned char mInterfaceSensitivity;
+    unsigned char mInterfaceOpacity;
     unsigned short mReserved;
-    unsigned int mDebugMask, mSpecialTutorialFlags, mCapeId, mFavoriteSkins[10];
-    unsigned char mFavoriteSkinsPos, mFavoriteSkinsCount;
+    unsigned int mSettingFlags;
+    unsigned int mSpecialTutorialFlags;
+    unsigned int mCapeId;
+    unsigned int mFavoriteSkins[10];
+    unsigned char mFavoriteSkinsPos;
+    unsigned char mFavoriteSkinsCount;
     unsigned short mReserved2;
     unsigned int mHiddenMashupWorlds;
-    unsigned char mMinecraftLanguage, mMinecraftLocale;
+    unsigned char mMinecraftLanguage;
+    unsigned char mMinecraftLocale;
     unsigned short mReserved3;
     unsigned int mGameModeOptions;
-    unsigned char mHostOptionVersion, mReserved4[3];
-    unsigned int mBattleMiniGameMap, mUnknownA0;
+    unsigned char mHostOptionVersion;
+    unsigned char mReserved4[3];
+    unsigned int mBattleMiniGameMap;
+    unsigned int mUnknownA0;
     unsigned char mActionMappings[25];
-    unsigned char mUnknownBD, mUnknownBE, mUnknownBF;
+    unsigned char mUnknownBD;
+    unsigned char mUnknownBE;
+    unsigned char mUnknownBF;
     unsigned int mGlideMiniGameMap;
+
 public:
     static uint32_t GetGameSettings(int, eGameSetting);
     static uint8_t GetActionMapping(int, int);
     static void SetActionMapping(int, int, unsigned char);
-    static void UpdateActionMapping(int, int, bool);
+    static void UpdateActionMapping(int profile, int scheme, bool swapPrimaryButtons);
     static uint32_t GetInputButton(unsigned int);
     static uint32_t GetActionVal(unsigned char);
     static void ActionGameSettings(int, eGameSetting);
@@ -40,10 +181,10 @@ public:
     static void SetGameSettings(int, eGameSetting, unsigned char);
     static uint8_t GetMinecraftLanguage(int);
     static uint8_t GetMinecraftLocale(int);
-    static void SetDefaultActionMapping(unsigned char, int, unsigned char);
-    static void SetSecondaryActionMapping(unsigned char, int, unsigned char);
-    static void SetCustomisableControllerMapping(int, GameSettings*);
-    uint64_t updateToLatestVersionFrom(unsigned short, int);
+    static void SetDefaultActionMapping(unsigned char scheme, int action, unsigned char value);
+    static void SetSecondaryActionMapping(unsigned char scheme, int action, unsigned char value);
+    static void SetCustomisableControllerMapping(int profile, GameSettings* settings);
+    void updateToLatestVersionFrom(unsigned short, int);
     static uint32_t OldProfileVersionCallback(void*, unsigned char*, unsigned short, int);
     static void SetDefaultControls(C4JStorage::PROFILESETTINGS*, int, bool);
     static void SetDefaultGameOptions(C4JStorage::PROFILESETTINGS*, int, bool);
@@ -51,7 +192,7 @@ public:
     static void ClearGameSettingsChangedFlag(int);
     static void ApplyGameSettingsChanged(int);
     static void CheckGameSettingsChanged(bool, int);
-    static uint64_t GetInputButton(int, bool, EControllerActions);
+    static uint32_t GetInputButton(int profile, bool secondary, EControllerActions action);
     static void SetPlayerCape(int, unsigned int, bool);
     static void SetPlayerCape(int, const std::wstring&);
     static std::wstring GetPlayerCapeName(int);
@@ -76,8 +217,8 @@ public:
     static uint32_t GetTumbleMiniGameMapSelection();
     static void SetMinecraftLanguage(int, unsigned char);
     static void SetMinecraftLocale(int, unsigned char);
-    static uint64_t SetGameSettings(int, eCustomGameModeHostOption, unsigned int);
-    static uint64_t GetGameSettings(eGameSetting);
+    static void SetGameSettings(int profile, eCustomGameModeHostOption option, unsigned int value);
+    static uint32_t GetGameSettings(eGameSetting setting);
     static uint32_t GetGameSettingsDebugMask(int, bool);
     static uint32_t IsDebugSettingEnabled(eDebugSetting, int);
     static void SetGameSettingsDebugMask(int, unsigned int);
@@ -94,4 +235,9 @@ public:
     static void SetLoggingMask(unsigned int);
     static void ResetAllTutorialCompletionFlags(int);
 };
+
+extern bool gHalloweenEvent;
+extern bool gFestiveEvent;
+extern bool gSeasonalEvent;
+
 #endif

@@ -2,12 +2,11 @@
 
 #include "game/core/XmlChild.hpp"
 #include "game/core/XmlValue.hpp"
+#include "game/core/StringUtils.hpp"
 
 #include <stdexcept>
 
 XmlObject gXmlObjectNull(L"");
-
-bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
 
 namespace
 {
@@ -171,4 +170,9 @@ std::wstring XmlObject::toString(int indent, bool formatted) const
 const std::vector<XmlChild>& XmlObject::getChildrenRaw() const
 {
     return m_children;
+}
+
+std::vector<std::pair<std::wstring, std::wstring> >& XmlObject::getAttrs()
+{
+    return m_attrs;
 }

@@ -1,4 +1,5 @@
 #include "game/core/ThrownEnderpearl.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/DamageSource.hpp"
@@ -105,7 +106,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
 
         if (owner)
         {
-            if (owner->GetType() == 0x0c800001ULL)
+            if (owner->GetType() == EntityType::SERVER_PLAYER)
             {
                 boost::shared_ptr<ServerPlayer> player =
                     boost::static_pointer_cast<ServerPlayer>(owner);
@@ -122,7 +123,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
                     }
 
                     if (mRandom->nextFloat() < 0.05f
-                        && mLevel->getGameRules()->getBoolean(3))
+                        && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
                     {
                         boost::shared_ptr<Endermite> endermite(new Endermite(mLevel));
                         endermite->setPlayerSpawned(true);
@@ -164,7 +165,7 @@ void ThrownEnderpearl::_init()
 void ThrownEnderpearl::tick()
 {
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    if (owner && (owner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+    if (owner && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER
         && !owner->isAlive())
     {
         remove();
@@ -175,5 +176,5 @@ void ThrownEnderpearl::tick()
 
 unsigned long long ThrownEnderpearl::GetType()
 {
-    return 0x8A200003ULL;
+    return EntityType::THROWN_ENDERPEARL;
 }

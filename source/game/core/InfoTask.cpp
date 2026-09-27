@@ -33,7 +33,7 @@ void InfoTask::sendTelemetry()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (telemetryChallenge != eTelemetryChallenges_None)
     {
-        if (telemetryChallenge == static_cast<ETelemetryChallenges>(3))
+        if (telemetryChallenge == eTelemetryChallenges_TutorialWelcome)
         {
             tutorial->getCompleted(388);
             tutorial->setCompleted(388);

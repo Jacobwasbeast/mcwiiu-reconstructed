@@ -1,4 +1,5 @@
 #include "game/core/Explosion.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -24,12 +25,8 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
-
-unsigned int TlsAlloc();
-void* TlsGetValue(unsigned int index);
-int TlsSetValue(unsigned int index, void* value);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 static unsigned int gExplosionCountTlsIndex = TlsAlloc();
 
@@ -207,7 +204,7 @@ void Explosion::explode()
                     Block* block = mLevel->getBlock(rayBlockPos);
 
                     if (block->mMaterial != Material::AIR
-                        && (!mBreaksBlocksUnderwater || (block != Blocks::FLOWING_WATER && block != Blocks::WATER)))
+                        && (!mBreaksBlocksUnderwater || (block != Blocks::flowing_water && block != Blocks::water)))
                     {
                         float resistance;
 
@@ -295,7 +292,7 @@ void Explosion::explode()
     {
         boost::shared_ptr<Entity> entity = *it;
 
-        if (mPlayersOnly && (entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+        if (mPlayersOnly && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         {
             continue;
         }
@@ -357,7 +354,7 @@ void Explosion::explode()
 
         double knockback = falloff;
 
-        if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             knockback = ProtectionEnchantment::getExplosionKnockbackAfterDampener(boost::static_pointer_cast<LivingEntity>(entity), falloff);
         }
@@ -368,7 +365,7 @@ void Explosion::explode()
         }
 
         if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades()
-            && mSource->GetType() != ENTITY_TYPE_PRIMED_TNT)
+            && mSource->GetType() != EntityType::PRIMED_TNT)
         {
             knockback = -knockback;
         }
@@ -381,7 +378,7 @@ void Explosion::explode()
         entity->mYd += offsetY;
         entity->mZd += offsetZ;
 
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
 
@@ -486,7 +483,7 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
                     block->spawnResources(mLevel, blockPos, mLevel->getBlockState(blockPos), 1.0f / mRadius, 0);
                 }
 
-                mLevel->setBlock(blockPos, Blocks::AIR->defaultBlockState(), 3, false);
+                mLevel->setBlock(blockPos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
 
                 block->wasExploded(mLevel, blockPos, this);
             }
@@ -503,7 +500,7 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
                 && mLevel->getBlockState(blockPos.below())->isSolid()
                 && mRandom.nextInt(3) == 0)
             {
-                mLevel->setBlockAndUpdate(blockPos, Blocks::FIRE->defaultBlockState());
+                mLevel->setBlockAndUpdate(blockPos, Blocks::fire->defaultBlockState());
             }
         }
     }
@@ -535,12 +532,12 @@ boost::shared_ptr<LivingEntity> Explosion::getSourceMob()
         return boost::shared_ptr<LivingEntity>();
     }
 
-    if (mSource->GetType() == ENTITY_TYPE_PRIMED_TNT)
+    if (mSource->GetType() == EntityType::PRIMED_TNT)
     {
         return boost::static_pointer_cast<PrimedTnt>(mSource)->getOwner();
     }
 
-    if ((mSource->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((mSource->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         return boost::static_pointer_cast<LivingEntity>(mSource);
     }

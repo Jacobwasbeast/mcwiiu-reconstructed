@@ -1,4 +1,5 @@
 #include "game/core/IllusionIllager.hpp"
+#include "game/core/EntityType.hpp"
 #include <cmath>
 #include <typeinfo>
 #include "game/client/audio/SoundEvents.hpp"
@@ -151,7 +152,7 @@ const SoundEvent* IllusionIllager::getDeathSound() { return SoundEvents::ILLUSIO
 const SoundEvent* IllusionIllager::getHurtSound(const DamageSource*) { return SoundEvents::ILLUSION_ILLAGER_HURT; }
 const SoundEvent* IllusionIllager::getCastingSoundEvent() { return SoundEvents::ILLUSION_ILLAGER_CAST_SPELL; }
 int IllusionIllager::getArmPose() { return isCastingSpell() ? 2 : (isAggressive() ? 3 : 0); }
-unsigned long long IllusionIllager::GetType() { return 0x000000005D541842ULL; }
+unsigned long long IllusionIllager::GetType() { return EntityType::ILLUSION_ILLAGER; }
 
 arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
 {

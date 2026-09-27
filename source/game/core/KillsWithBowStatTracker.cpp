@@ -3,8 +3,7 @@
 #include "game/core/DamageEvent.hpp"
 
 KillsWithBowStatTracker::KillsWithBowStatTracker(const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mValue(0)
+    : StatTracker<unsigned int>(statsUID, 0)
 {
 }
 
@@ -19,9 +18,4 @@ void KillsWithBowStatTracker::update(const DamageEvent* damageEvent)
     {
         ++mValue;
     }
-}
-
-int KillsWithBowStatTracker::getValue() const
-{
-    return mValue;
 }

@@ -1,183 +1,348 @@
 #ifndef GAME_CORE_OCEANMONUMENTPIECES_HPP
 #define GAME_CORE_OCEANMONUMENTPIECES_HPP
-#include <cstdint>
+
 #include <vector>
+
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+
 #include "game/world/generation/StructurePiece.hpp"
-class BlockState; class BoundingBox; class DataInputStream; class DataOutputStream; class Direction; class Level; class Random; class StructureManager;
+
+class BlockState;
+class BoundingBox;
+class DataInputStream;
+class DataOutputStream;
+class Direction;
+class Level;
+class Random;
+class StructureManager;
+
 class OceanMonumentPieces
 {
 public:
-    static const BlockState* prismarineState;
-    static const BlockState* prismarineBricksState;
-    static const BlockState* darkPrismarineState;
-    static const BlockState* seaLanternState;
-    static const BlockState* goldState;
-    static void loadStatic();
-    OceanMonumentPieces();
     class RoomDefinition;
     class OceanMonumentPiece;
-    class MonumentRoomFitter;
-    class FitSimpleRoom; class FitSimpleTopRoom; class FitDoubleXRoom; class FitDoubleYRoom; class FitDoubleXYRoom; class FitDoubleYZRoom; class FitDoubleZRoom;
+
+    OceanMonumentPieces();
+    static void loadStatic();
+
     class RoomDefinition : public boost::enable_shared_from_this<RoomDefinition>
     {
     public:
         explicit RoomDefinition(int index);
+
         void setConnection(const Direction* direction, const boost::shared_ptr<RoomDefinition>& connection);
         boost::shared_ptr<RoomDefinition> fjConnection(int index) const;
         boost::shared_ptr<RoomDefinition> fjConnection(const Direction* direction) const;
-        void updateOpenings(); bool findSource(int index); bool isSpecial(); unsigned char countOpenings();
-        int mIndex; bool mOpenings[6]; bool mClaimed; int mSource; boost::weak_ptr<RoomDefinition> mConnections[6];
+        void updateOpenings();
+        bool findSource(int scanIndex);
+        bool isSpecial();
+        int countOpenings();
+
+        int mIndex;
+        bool mHasOpening[6];
+        bool mClaimed;
+        bool mIsSource;
+        int mScanIndex;
+        boost::weak_ptr<RoomDefinition> mConnections[6];
     };
+
     class OceanMonumentPiece : public StructurePiece
     {
     public:
+        static const BlockState* BASE_GRAY;
+        static const BlockState* BASE_LIGHT;
+        static const BlockState* BASE_BLACK;
+        static const BlockState* DOT_DECO_DATA;
+        static const BlockState* LAMP_BLOCK;
+        static const BlockState* FILL_BLOCK;
+        static const int GRIDROOM_SOURCE_INDEX;
+        static const int GRIDROOM_TOP_CONNECT_INDEX;
+        static const int GRIDROOM_LEFTWING_CONNECT_INDEX;
+        static const int GRIDROOM_RIGHTWING_CONNECT_INDEX;
+
         explicit OceanMonumentPiece(int genDepth);
-        OceanMonumentPiece(int genDepth, const Direction* orientation, const boost::shared_ptr<RoomDefinition>& definition, int x, int y, int z);
-        OceanMonumentPiece(const Direction* orientation, BoundingBox* box);
+        OceanMonumentPiece(const Direction* orientation, BoundingBox* boundingBox);
+        OceanMonumentPiece(int genDepth, const Direction* orientation,
+                           const boost::shared_ptr<RoomDefinition>& roomDefinition, int roomWidth,
+                           int roomHeight, int roomDepth);
         virtual ~OceanMonumentPiece();
-        static int getRoomIndex(int x, int y, int z); static int getRoomX(int index); static int getRoomY(int index); static int getRoomZ(int index);
-        static void staticCtor(); void fjKeepReference(const boost::shared_ptr<RoomDefinition>& definition);
-        virtual void addAdditionalSaveData(DataOutputStream* output); virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
-        void generateWaterBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1, bool existingOnly);
-        void generateDefaultFloor(Level* level, BoundingBox* box, int x, int z, bool existingOnly);
-        void generateBoxOnFillOnly(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1, const BlockState* state);
-        bool chunkIntersects(BoundingBox* box, int x0, int z0, int x1, int z1); bool spawnElder(Level* level, BoundingBox* box, int x, int y, int z);
-        int mRoomIndex; boost::shared_ptr<RoomDefinition> mRoomDefinition; std::vector<boost::shared_ptr<RoomDefinition> > mChildPieces;
+
+        static void staticCtor();
+        static int getRoomIndex(int roomX, int roomY, int roomZ);
+        static int getRoomX(int roomIndex);
+        static int getRoomY(int roomIndex);
+        static int getRoomZ(int roomIndex);
+
+        void fjKeepReference(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
+
+    protected:
+        void generateWaterBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1,
+                              bool skipAir);
+        void generateDefaultFloor(Level* level, BoundingBox* box, int x, int z, bool hasOpening);
+        void generateBoxOnFillOnly(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1,
+                                   int z1, const BlockState* state);
+        bool chunkIntersects(BoundingBox* box, int x0, int z0, int x1, int z1);
+        bool spawnElder(Level* level, BoundingBox* box, int x, int y, int z);
+
+        boost::shared_ptr<RoomDefinition> mRoomDefinition;
+        std::vector<boost::shared_ptr<RoomDefinition> > mKeptRooms;
     };
+
     class MonumentRoomFitter
     {
     public:
         virtual ~MonumentRoomFitter();
-        virtual bool fits(const boost::shared_ptr<RoomDefinition>& definition) = 0;
-        virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& definition, Random& random) = 0;
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition) = 0;
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random) = 0;
     };
-    class FitSimpleRoom : public MonumentRoomFitter { public: virtual ~FitSimpleRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class FitSimpleTopRoom : public MonumentRoomFitter { public: virtual ~FitSimpleTopRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class FitDoubleXRoom : public MonumentRoomFitter { public: virtual ~FitDoubleXRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class FitDoubleYRoom : public MonumentRoomFitter { public: virtual ~FitDoubleYRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class FitDoubleXYRoom : public MonumentRoomFitter { public: virtual ~FitDoubleXYRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class FitDoubleYZRoom : public MonumentRoomFitter { public: virtual ~FitDoubleYZRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class FitDoubleZRoom : public MonumentRoomFitter { public: virtual ~FitDoubleZRoom();
-virtual bool fits(const boost::shared_ptr<RoomDefinition>&);
-virtual boost::shared_ptr<OceanMonumentPiece> create(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-};
-    class OceanMonumentCoreRoom : public OceanMonumentPiece { public: OceanMonumentCoreRoom();
-OceanMonumentCoreRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentCoreRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentDoubleXRoom : public OceanMonumentPiece { public: OceanMonumentDoubleXRoom();
-OceanMonumentDoubleXRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentDoubleXRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentDoubleXYRoom : public OceanMonumentPiece { public: OceanMonumentDoubleXYRoom();
-OceanMonumentDoubleXYRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentDoubleXYRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentDoubleYRoom : public OceanMonumentPiece { public: OceanMonumentDoubleYRoom();
-OceanMonumentDoubleYRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentDoubleYRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentDoubleYZRoom : public OceanMonumentPiece { public: OceanMonumentDoubleYZRoom();
-OceanMonumentDoubleYZRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentDoubleYZRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentDoubleZRoom : public OceanMonumentPiece { public: OceanMonumentDoubleZRoom();
-OceanMonumentDoubleZRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentDoubleZRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentSimpleRoom : public OceanMonumentPiece { public: OceanMonumentSimpleRoom();
-OceanMonumentSimpleRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentSimpleRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-private: int mVariant;
-};
-    class OceanMonumentSimpleTopRoom : public OceanMonumentPiece { public: OceanMonumentSimpleTopRoom();
-OceanMonumentSimpleTopRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&, Random&);
-virtual ~OceanMonumentSimpleTopRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentEntryRoom : public OceanMonumentPiece { public: OceanMonumentEntryRoom();
-OceanMonumentEntryRoom(const Direction*, const boost::shared_ptr<RoomDefinition>&);
-virtual ~OceanMonumentEntryRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentPenthouse : public OceanMonumentPiece { public: OceanMonumentPenthouse();
-OceanMonumentPenthouse(const Direction*, BoundingBox*);
-virtual ~OceanMonumentPenthouse();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-};
-    class OceanMonumentWingRoom : public OceanMonumentPiece { public: OceanMonumentWingRoom();
-OceanMonumentWingRoom(const Direction*, BoundingBox*, int);
-virtual ~OceanMonumentWingRoom();
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-virtual EStructurePiece GetType();
-private: int mWingType;
-};
+
+    class FitSimpleRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitSimpleRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
+    class FitSimpleTopRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitSimpleTopRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
+    class FitDoubleYRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitDoubleYRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
+    class FitDoubleXRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitDoubleXRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
+    class FitDoubleZRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitDoubleZRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
+    class FitDoubleXYRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitDoubleXYRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
+    class FitDoubleYZRoom : public MonumentRoomFitter
+    {
+    public:
+        virtual ~FitDoubleYZRoom();
+        virtual bool fits(const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual OceanMonumentPiece* create(const Direction* orientation,
+                                           const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                           Random& random);
+    };
+
     class MonumentBuilding : public OceanMonumentPiece
     {
     public:
         MonumentBuilding();
-MonumentBuilding(Random&, int, int, const Direction*);
-virtual ~MonumentBuilding();
-int generateRoomGraph(Random&);
-void generateWing(bool, int, Level*, Random&, BoundingBox*);
-void generateEntranceArchs(Level*, Random&, BoundingBox*);
-void generateEntranceWall(Level*, Random&, BoundingBox*);
-void generateRoofPiece(Level*, Random&, BoundingBox*);
-void generateLowerWall(Level*, Random&, BoundingBox*);
-void generateMiddleWall(Level*, Random&, BoundingBox*);
-void generateUpperWall(Level*, Random&, BoundingBox*);
-virtual bool postProcess(Level*, Random&, BoundingBox*);
-static StructurePiece* Create();
-virtual EStructurePiece GetType();
-        int mRoomGraphSize; boost::shared_ptr<RoomDefinition> mSourceRoom; int mRoomCount; boost::shared_ptr<RoomDefinition> mRootRoom; std::vector<OceanMonumentPiece*> mPieces;
+        MonumentBuilding(Random& random, int x, int z, const Direction* orientation);
+        virtual ~MonumentBuilding();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+
+    private:
+        std::vector<boost::shared_ptr<RoomDefinition> >* generateRoomGraph(Random& random);
+        void generateWing(bool flipped, int xOffset, Level* level, Random& random, BoundingBox* box);
+        void generateEntranceArchs(Level* level, Random& random, BoundingBox* box);
+        void generateEntranceWall(Level* level, Random& random, BoundingBox* box);
+        void generateRoofPiece(Level* level, Random& random, BoundingBox* box);
+        void generateLowerWall(Level* level, Random& random, BoundingBox* box);
+        void generateMiddleWall(Level* level, Random& random, BoundingBox* box);
+        void generateUpperWall(Level* level, Random& random, BoundingBox* box);
+
+        boost::shared_ptr<RoomDefinition> mSourceRoom;
+        boost::shared_ptr<RoomDefinition> mCoreRoom;
+        std::vector<OceanMonumentPiece*> mChildPieces;
+    };
+
+    class OceanMonumentEntryRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentEntryRoom();
+        OceanMonumentEntryRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition);
+        virtual ~OceanMonumentEntryRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentSimpleRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentSimpleRoom();
+        OceanMonumentSimpleRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                Random& random);
+        virtual ~OceanMonumentSimpleRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+
+    private:
+        int mMainDesign;
+    };
+
+    class OceanMonumentSimpleTopRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentSimpleTopRoom();
+        OceanMonumentSimpleTopRoom(const Direction* orientation,
+                                   const boost::shared_ptr<RoomDefinition>& roomDefinition, Random& random);
+        virtual ~OceanMonumentSimpleTopRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentDoubleYRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentDoubleYRoom();
+        OceanMonumentDoubleYRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                 Random& random);
+        virtual ~OceanMonumentDoubleYRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentDoubleXRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentDoubleXRoom();
+        OceanMonumentDoubleXRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                 Random& random);
+        virtual ~OceanMonumentDoubleXRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentDoubleXYRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentDoubleXYRoom();
+        OceanMonumentDoubleXYRoom(const Direction* orientation,
+                                  const boost::shared_ptr<RoomDefinition>& roomDefinition, Random& random);
+        virtual ~OceanMonumentDoubleXYRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentDoubleYZRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentDoubleYZRoom();
+        OceanMonumentDoubleYZRoom(const Direction* orientation,
+                                  const boost::shared_ptr<RoomDefinition>& roomDefinition, Random& random);
+        virtual ~OceanMonumentDoubleYZRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentDoubleZRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentDoubleZRoom();
+        OceanMonumentDoubleZRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                                 Random& random);
+        virtual ~OceanMonumentDoubleZRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentCoreRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentCoreRoom();
+        OceanMonumentCoreRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
+                              Random& random);
+        virtual ~OceanMonumentCoreRoom();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    };
+
+    class OceanMonumentWingRoom : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentWingRoom();
+        OceanMonumentWingRoom(const Direction* orientation, BoundingBox* boundingBox, int randomValue);
+        virtual ~OceanMonumentWingRoom();
+
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+
+    private:
+        int mMainDesign;
+    };
+
+    class OceanMonumentPenthouse : public OceanMonumentPiece
+    {
+    public:
+        OceanMonumentPenthouse();
+        OceanMonumentPenthouse(const Direction* orientation, BoundingBox* boundingBox);
+        virtual ~OceanMonumentPenthouse();
+
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
     };
 };
+
 #endif

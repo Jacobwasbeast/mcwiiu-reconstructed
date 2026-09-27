@@ -1,4 +1,6 @@
 #include "game/core/ThrownEgg.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Chicken.hpp"
@@ -52,7 +54,7 @@ bool ThrownEgg::onHit(const HitResult* result)
     if (!mLevel->mIsClientSide)
     {
         if (mRandom->nextInt(8) == 0
-            && mLevel->canCreateMore(0x000000000D680004ULL, 1))
+            && mLevel->canCreateMore(EntityType::CHICKEN, Level::eSpawnType_Breed))
         {
             int count = 1;
             if (mRandom->nextInt(32) == 0)
@@ -71,7 +73,7 @@ bool ThrownEgg::onHit(const HitResult* result)
             }
         }
 
-        mLevel->broadcastEntityEvent(shared_from_this(), 3, 0);
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::DEATH, 0);
         remove();
     }
     else
@@ -93,7 +95,7 @@ void ThrownEgg::_init()
 
 void ThrownEgg::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 3)
+    if (event == EntityEvent::DEATH)
     {
         Vec3* position = fjGetParticleSpawnPos();
         for (int i = 0; i < 8; ++i)
@@ -118,5 +120,5 @@ void ThrownEgg::handleEntityEvent(unsigned char event, int data)
 
 unsigned long long ThrownEgg::GetType()
 {
-    return 0x8A200002ULL;
+    return EntityType::THROWN_EGG;
 }

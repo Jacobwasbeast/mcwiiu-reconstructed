@@ -2,8 +2,8 @@
 
 #include "game/core/RegionFile.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
+#include "game/core/MemSect.hpp"
 
-void MemSect(int section);
 template<typename T> std::wstring _toString(T value);
 
 RegionFileCache gRegionFileCache;

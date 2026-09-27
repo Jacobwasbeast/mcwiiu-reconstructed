@@ -1,7 +1,7 @@
 #include "game/core/WonByAmountCondition.hpp"
 
-#include <boost/functional/hash.hpp>
-#include <boost/unordered_map.hpp>
+#include <algorithm>
+#include <climits>
 
 #include "game/core/GameStats.hpp"
 #include "game/core/Minecraft.hpp"
@@ -21,63 +21,33 @@ bool WonByAmountCondition::canAward(const GameMedal* medal, const StatsUID& uid,
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
     if (playerStats == NULL)
-    {
         return false;
-    }
 
-    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > PlayerStatsMap;
-    PlayerStatsMap* allPlayerStats = gameStats->GetPlayerStats();
-    unsigned int bestOpponentScore = static_cast<unsigned int>(-1);
-    unsigned int playerScore = static_cast<unsigned int>(-1);
-    unsigned int playerRound = 0;
-    int round = 0;
-    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    int roundCount = miniGame->GetRoundCount();
-
-    while (round <= roundCount)
+    GameStats::StatsMap* allPlayerStats = gameStats->GetPlayerStats();
+    unsigned int playerTime = UINT_MAX;
+    unsigned int bestOpponentTime = UINT_MAX;
+    for (int round = 0; round <= static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount()); ++round)
     {
-        playerRound = 0;
-        while (playerRound < static_cast<unsigned int>(playerStats->getTotalRounds()))
+        for (unsigned int playerRound = 0; playerRound < static_cast<unsigned int>(playerStats->getTotalRounds()); ++playerRound)
         {
-            playerScore = static_cast<unsigned int>(playerStats->getRoundStats(playerRound)->mPoints);
-            for (PlayerStatsMap::iterator it = allPlayerStats->begin();
-                 it != allPlayerStats->end(); ++it)
+            playerTime = playerStats->getRoundStats(playerRound)->mLifeSpan;
+            for (GameStats::StatsMap::iterator it = allPlayerStats->begin(); it != allPlayerStats->end(); ++it)
             {
                 PlayerStats* opponent = it->second;
-                if (*(StatsUID*)opponent != *(StatsUID*)playerStats && opponent->hasRoundStats(round))
-                {
-                    PlayerStats::RoundStats* opponentStats = opponent->getRoundStats(round);
-                    if (opponentStats->mFinished)
-                    {
-                        unsigned int score = static_cast<unsigned int>(opponentStats->mPoints);
-                        if (score < bestOpponentScore)
-                        {
-                            bestOpponentScore = score;
-                        }
-                    }
-                }
+                if (opponent->mStatsUID != playerStats->mStatsUID && opponent->hasRoundStats(round)
+                    && opponent->getRoundStats(round)->mReachedEnd)
+                    bestOpponentTime = std::min(bestOpponentTime, static_cast<unsigned int>(opponent->getRoundStats(round)->mLifeSpan));
             }
-
-            ++playerRound;
         }
 
-        if (playerScore < bestOpponentScore)
+        if (playerTime < bestOpponentTime)
         {
-            unsigned int amount = bestOpponentScore - playerScore;
-            if (mOperator == GameMedal::OPERATOR_AT_MOST && static_cast<float>(amount) <= mTarget)
-            {
+            const float margin = static_cast<float>(bestOpponentTime - playerTime);
+            if (mOperator == GameMedal::OPERATOR_AT_MOST && margin <= mTarget)
                 return true;
-            }
-
-            if (mOperator == GameMedal::OPERATOR_AT_LEAST && mTarget <= static_cast<float>(amount))
-            {
+            if (mOperator == GameMedal::OPERATOR_AT_LEAST && mTarget <= margin)
                 return true;
-            }
         }
-
-        ++round;
-        roundCount = Minecraft::GetInstance()->GetMiniGame()->GetRoundCount();
     }
-
     return false;
 }

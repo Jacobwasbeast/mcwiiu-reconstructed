@@ -1,6 +1,8 @@
 #ifndef GAME_CORE_PIG_HPP
 #define GAME_CORE_PIG_HPP
 
+#include "game/world/biome/arrayWithLength.hpp"
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Animal.hpp"
@@ -15,6 +17,7 @@ class EntityTooltipDataHolder;
 class Level;
 class LightningBolt;
 class SoundEvent;
+class Item;
 class ItemInstance;
 
 template <class T> class EntityDataAccessor;
@@ -61,6 +64,7 @@ public:
 private:
     static const EntityDataAccessor<bool>* DATA_SADDLE;
     static const EntityDataAccessor<int>* DATA_BOOST_TIME;
+    static arrayWithLength<Item*> FOOD_ITEMS;
     bool mBoosting;
     int mBoostTime;
     int mBoostTotalTime;

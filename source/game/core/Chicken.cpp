@@ -1,4 +1,5 @@
 #include "game/core/Chicken.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -32,7 +33,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
-static Item* chickenFood[4];
+arrayWithLength<Item*> Chicken::FOOD_ITEMS;
 
 Chicken::Chicken(Level* level) : Animal(level)
 {
@@ -48,7 +49,7 @@ Chicken::~Chicken()
 
 void Chicken::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x000000000D680004ULL);
+    Mob::addDataWalkers(fixer, EntityType::CHICKEN);
 }
 
 void Chicken::_init()
@@ -66,8 +67,7 @@ void Chicken::registerGoals()
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(1, new PanicGoal(this, 1.4), true);
     mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(4, true), true,
-                                            arrayWithLength<int>()), true);
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, FOOD_ITEMS, false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.1), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 4.0f), true);
@@ -76,10 +76,8 @@ void Chicken::registerGoals()
 
 void Chicken::staticCtor()
 {
-    chickenFood[0] = Items::wheatSeeds;
-    chickenFood[1] = Items::pumpkinSeeds;
-    chickenFood[2] = Items::melonSeeds;
-    chickenFood[3] = Items::beetrootSeeds;
+    static Item* foodItems[] = { Items::wheatSeeds, Items::pumpkinSeeds, Items::melonSeeds, Items::beetrootSeeds };
+    FOOD_ITEMS = arrayWithLength<Item*>(foodItems, 4);
 }
 
 double Chicken::getEyeHeight()
@@ -101,17 +99,16 @@ void Chicken::aiStep()
     mOFlapSpeed = mFlapSpeed;
     mFlapSpeed += (mOnGround ? -1.0f : 4.0f) * 0.3f;
     mFlapSpeed = Mth::clamp(mFlapSpeed, 0.0f, 1.0f);
-    if (!mOnGround && mFlapping < mFlapSpeed)
-        mFlapping = mFlapSpeed;
+    if (!mOnGround && mFlapping < 1.0f)
+        mFlapping = 1.0f;
     mFlapping *= 0.9f;
     if (!mOnGround && mYd < 0.0)
         mYd *= 0.6;
     mFlapTime += mFlapping * 2.0f;
-    if (mLevel != NULL && !mLevel->mIsClientSide && !isVehicle() && --mTimeUntilNextEgg < 1)
+    if (!mLevel->mIsClientSide && !isBaby() && !canBeControlledByRider() && --mTimeUntilNextEgg < 1)
     {
-        playSound(SoundEvents::CHICKEN_EGG, 1.0f,
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
-        mLevel->broadcastEntityEvent(shared_from_this(), 101, 0);
+        playSound(SoundEvents::CHICKEN_EGG, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
+        spawnAtLocation(Items::egg, 1);
         mTimeUntilNextEgg = mRandom->nextInt(6000) + 6000;
     }
 }
@@ -153,9 +150,9 @@ boost::shared_ptr<AgableMob> Chicken::getBreedOffspring(boost::shared_ptr<Agable
 bool Chicken::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
     Item* item = itemInstance->getItem();
-    for (int i = 0; i < 4; ++i)
+    for (unsigned int i = 0; i < FOOD_ITEMS.length; ++i)
     {
-        if (chickenFood[i] == item)
+        if (FOOD_ITEMS.data[i] == item)
             return true;
     }
     return false;
@@ -170,7 +167,7 @@ void Chicken::readAdditionalSaveData(CompoundTag* tag)
 
 bool Chicken::canBeControlledByRider()
 {
-    if (Entity::instanceof(getControllingPassenger(), ENTITY_TYPE_ZOMBIE))
+    if (Entity::instanceof(getControllingPassenger(), EntityType::ZOMBIE))
     {
         boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(getControllingPassenger());
         return zombie->isJockey();
@@ -200,7 +197,7 @@ void Chicken::positionRider(const boost::shared_ptr<Entity>& passenger)
     passenger->setPos(mX + static_cast<double>(0.1f * Mth::sin(static_cast<float>(angle))),
                       mY + static_cast<double>(mEyeHeight * 0.5f) + passenger->getRideHeight(),
                       mZ - static_cast<double>(0.1f * Mth::cos(static_cast<float>(angle))));
-    if (Entity::instanceof(passenger, ENTITY_TYPE_LIVING_ENTITY) != 0)
+    if (Entity::instanceof(passenger, EntityType::LIVING_ENTITY) != 0)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
         living->mYBodyRot = mYRot;
@@ -209,7 +206,7 @@ void Chicken::positionRider(const boost::shared_ptr<Entity>& passenger)
 
 unsigned long long Chicken::GetType()
 {
-    return 0x000000000D680004ULL;
+    return EntityType::CHICKEN;
 }
 
 void Chicken::create(Level* level)

@@ -29,7 +29,7 @@ ChangeStateConstraint::ChangeStateConstraint(Tutorial* tutorial, eTutorial_State
       states(new eTutorial_State[numStates]),
       numStates(numStates),
       stateChanged(false),
-      previousState((eTutorial_State)-1),
+      previousState(eTutorial_State_Invalid),
       gameTypeChanged(false),
       tutorial(tutorial)
 {
@@ -80,7 +80,7 @@ void ChangeStateConstraint::tick(int playerId)
                 unsigned int privileges =
                     minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
                         Player::ePlayerGamePrivilege_All);
-                Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_9,
+                Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CreativeMode,
                                                previousGameType == GameType::CREATIVE);
 
                 if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
@@ -104,7 +104,7 @@ void ChangeStateConstraint::tick(int playerId)
     {
         if (area->contains(minecraft->mLocalPlayers[playerId]->getPos(1.0f)) == insideArea)
         {
-            previousState = (eTutorial_State)tutorial->currentState;
+            previousState = tutorial->currentState;
             stateChanged = true;
             tutorial->changeTutorialState(targetState, NULL);
 
@@ -122,7 +122,7 @@ void ChangeStateConstraint::tick(int playerId)
                 unsigned int privileges =
                     minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
                         Player::ePlayerGamePrivilege_All);
-                Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_9,
+                Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CreativeMode,
                                                gameType == GameType::CREATIVE);
 
                 if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(

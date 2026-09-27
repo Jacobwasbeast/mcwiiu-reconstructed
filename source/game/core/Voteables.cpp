@@ -35,11 +35,10 @@ void Voteables::addVoteable(Voteable* voteable)
     }
 }
 
-uint64_t Voteables::syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer> player)
+void Voteables::syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer> player)
 {
     for (boost::unordered_map<int, Voteable*>::iterator it = begin(); it != end(); ++it)
     {
         it->second->syncAllVotesToPlayer(player);
     }
-    return 0;
 }

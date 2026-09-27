@@ -82,7 +82,7 @@ public:
     virtual void RecordLanding(const BlockPos& pos);
     virtual void OnMouseDown();
 
-    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int category, int recipe,
+    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int recipe, int category,
                                                             boost::shared_ptr<Player> player);
     virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
         std::vector<std::pair<int, int> >& recipes, int category,
@@ -95,7 +95,7 @@ public:
     bool isAdventure();
     bool isSpectator();
     bool isLobby();
-    void AutoEquipEnabled();
+    bool AutoEquipEnabled();
 
     static void RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients,
                                                Inventory* inventory,

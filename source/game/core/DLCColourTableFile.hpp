@@ -7,7 +7,6 @@
 
 class ColourTable;
 class DLCTexturePack;
-
 class DLCColourTableFile : public DLCFile
 {
     friend class DLCTexturePack;

@@ -1,4 +1,6 @@
 #include "game/core/Guardian.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 
@@ -60,12 +62,12 @@ Guardian::~Guardian()
 
 void Guardian::staticCtor()
 {
-    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(0x5D544000ULL, 0x4D540000ULL, EntityDataSerializers::INT);
+    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(EntityType::GUARDIAN, EntityType::MONSTER, EntityDataSerializers::INT);
 }
 
 void Guardian::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D544000ULL);
+    Mob::addDataWalkers(fixer, EntityType::GUARDIAN);
 }
 
 void Guardian::create(Level* level)
@@ -140,7 +142,7 @@ boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
         return mCachedAttackTarget;
     }
     boost::shared_ptr<Entity> target = mLevel->getEntity(mEntityData->get(DATA_ID_ATTACK_TARGET));
-    if (target != NULL && (target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if (target != NULL && (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         mCachedAttackTarget = boost::static_pointer_cast<LivingEntity>(target);
     }
@@ -390,7 +392,7 @@ bool Guardian::hurt(const DamageSource* source, float damage)
     {
         boost::shared_ptr<Entity> entity = source->getDirectEntity();
         if (entity != NULL
-            && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+            && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             boost::shared_ptr<LivingEntity> attacker =
                 boost::dynamic_pointer_cast<LivingEntity>(entity);
@@ -439,7 +441,7 @@ MobGroupData* Guardian::finalizeMobSpawn(const DifficultyInstance& difficulty,
 
 unsigned long long Guardian::GetType()
 {
-    return 0x000000005D544000ULL;
+    return EntityType::GUARDIAN;
 }
 
 Guardian::GuardianAttackGoal::GuardianAttackGoal(Guardian* guardian)
@@ -501,7 +503,7 @@ void Guardian::GuardianAttackGoal::tick()
     if (mAttackTime == 0)
     {
         mGuardian->setActiveAttackTarget(target->getId());
-        mGuardian->mLevel->broadcastEntityEvent(mGuardian->shared_from_this(), 0x15, 0);
+        mGuardian->mLevel->broadcastEntityEvent(mGuardian->shared_from_this(), EntityEvent::GUARDIAN_ATTACK_SOUND, 0);
         return;
     }
     if (mAttackTime >= (int)mGuardian->getAttackDuration())
@@ -542,7 +544,7 @@ Guardian::GuardianAttackSelector::~GuardianAttackSelector()
 bool Guardian::GuardianAttackSelector::apply(boost::shared_ptr<Entity> entity) const
 {
     unsigned long long type = entity->GetType();
-    if ((type & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER || type == 0xd502001ULL)
+    if ((type & EntityType::PLAYER) == EntityType::PLAYER || type == EntityType::SQUID)
     {
         return entity->distanceToSqr(mGuardian->shared_from_this()) > 9.0;
     }

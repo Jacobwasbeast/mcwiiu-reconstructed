@@ -43,7 +43,7 @@ bool GameMode::isSurvival()
 bool GameMode::isCreative()
 {
     return mGameType->isCreative()
-        || (Minecraft::InMiniGame((EMiniGameId)15, true) && GetPlayer()->mAbilities.mMayBuild);
+        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && GetPlayer()->mAbilities.mMayBuild);
 }
 
 bool GameMode::isAdventure()
@@ -78,13 +78,13 @@ bool GameMode::MayDestroy(const BlockPos& pos)
             return false;
     }
 
-    if (Minecraft::InMiniGame((EMiniGameId)15, true))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
         LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
         GrantPermissionsRuleDefinition* permissions = ruleset == NULL ? NULL :
             static_cast<GrantPermissionsRuleDefinition*>(
-                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+                ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions));
         const MiniGameDef* miniGame = GetMiniGame();
         if (permissions != NULL
             && permissions->canDestroy(GetPlayer(), GetLevel(),
@@ -126,14 +126,14 @@ bool GameMode::MayPlace(const BlockPos& pos, BlockItem* item)
 {
     if (isSpectator())
         return false;
-    if (!Minecraft::InMiniGame((EMiniGameId)15, true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
         return true;
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
     GrantPermissionsRuleDefinition* permissions = ruleset == NULL ? NULL :
         static_cast<GrantPermissionsRuleDefinition*>(
-            ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+            ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions));
     if (permissions != NULL
         && permissions->canPlace(GetPlayer(), GetLevel(),
                                  gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
@@ -145,14 +145,14 @@ bool GameMode::MayUse(const BlockPos& pos, Item* item)
 {
     if (isSpectator())
         return false;
-    if (!Minecraft::InMiniGame((EMiniGameId)15, true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
         return true;
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
     GrantPermissionsRuleDefinition* permissions = ruleset == NULL ? NULL :
         static_cast<GrantPermissionsRuleDefinition*>(
-            ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+            ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions));
     if (permissions != NULL
         && permissions->canUse(GetPlayer(), GetLevel(),
                                gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
@@ -160,9 +160,9 @@ bool GameMode::MayUse(const BlockPos& pos, Item* item)
     return GetMiniGame()->MayUse(Item::getId(item)) != 0;
 }
 
-void GameMode::AutoEquipEnabled()
+bool GameMode::AutoEquipEnabled()
 {
-    Minecraft::InMiniGame((EMiniGameId)15, true);
+    return Minecraft::InMiniGame(eMiniGameId_Any, true);
 }
 
 void GameMode::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry,
@@ -383,11 +383,11 @@ void GameMode::UpdateCraftAchievements(boost::shared_ptr<Player> player,
         break;
     }
 
-    if (award == static_cast<eAward>(0x56))
+    if (award == eAward_ChangeOfSheets)
         player->awardStat(GenericStats::changeOfSheets(), GenericStats::param_changeOfSheets());
 }
 
-boost::shared_ptr<ItemInstance> GameMode::handleCraftItem(int category, int recipe,
+boost::shared_ptr<ItemInstance> GameMode::handleCraftItem(int recipe, int category,
                                                          boost::shared_ptr<Player> player)
 {
     Recipes* recipes = Recipes::getInstance();

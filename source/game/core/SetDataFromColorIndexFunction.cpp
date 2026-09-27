@@ -1,4 +1,5 @@
 #include "game/core/SetDataFromColorIndexFunction.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -19,7 +20,7 @@ not_null_ptr<ItemInstance> SetDataFromColorIndexFunction::apply(const not_null_p
     if (!itemInstance->isDamageableItem())
     {
         boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
-        if (entity->GetType() == ENTITY_TYPE_SHEEP)
+        if (entity->GetType() == EntityType::SHEEP)
         {
             boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(entity);
 

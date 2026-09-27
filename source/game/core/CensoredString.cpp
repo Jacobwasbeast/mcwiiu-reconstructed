@@ -146,9 +146,9 @@ std::wstring CensoredString::raw()
 
 void CensoredString::saveToTag(CompoundTag* tag)
 {
-    static const std::wstring censoredKey;
-    static const std::wstring chatKey;
-    static const std::wstring uuidKey;
+    static const std::wstring censoredKey(L"CScreatedOnHost");
+    static const std::wstring chatKey(L"CSnamedByRestricted");
+    static const std::wstring uuidKey(L"CSownerUUID");
     static const std::wstring customName(L"CustomName");
     tag->putBoolean(censoredKey, m_uuidLocal);
     tag->putBoolean(chatKey, m_chatCensored);
@@ -159,17 +159,17 @@ void CensoredString::saveToTag(CompoundTag* tag)
 
 void CensoredString::loadFromTag(CompoundTag* tag)
 {
-    static const std::wstring censoredKey;
-    static const std::wstring chatKey;
-    static const std::wstring uuidKey;
+    static const std::wstring censoredKey(L"CScreatedOnHost");
+    static const std::wstring chatKey(L"CSnamedByRestricted");
+    static const std::wstring uuidKey(L"CSownerUUID");
     static const std::wstring customName(L"CustomName");
-    if (tag->contains(censoredKey, 1))
+    if (tag->contains(censoredKey, Tag::TAG_BYTE))
         m_uuidLocal = tag->getBoolean(censoredKey);
-    if (tag->contains(chatKey, 1))
+    if (tag->contains(chatKey, Tag::TAG_BYTE))
         m_chatCensored = tag->getBoolean(chatKey);
-    if (tag->contains(uuidKey, 8))
+    if (tag->contains(uuidKey, Tag::TAG_STRING))
         m_uuid = tag->getString(uuidKey);
-    if (tag->contains(customName, 8))
+    if (tag->contains(customName, Tag::TAG_STRING))
         set(tag->getString(customName), m_uuid, m_chatCensored, m_uuidLocal);
 }
 

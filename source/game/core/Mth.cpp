@@ -7,6 +7,9 @@
 
 #include "game/util/Random.hpp"
 
+const float Mth::PI = 3.1415927f;
+const float Mth::DEG_TO_RAD = 0.017453292f;
+
 static const int ATAN_CACHE_SIZE = 40;
 
 static const int MULTIPLY_DE_BRUIJN_BIT_POSITION[32] =

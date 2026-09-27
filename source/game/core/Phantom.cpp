@@ -1,4 +1,5 @@
 #include "game/core/Phantom.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <typeinfo>
@@ -24,7 +25,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const unsigned long long ENTITY_TYPE_PHANTOM = 0x5D540049ULL;
 
 Phantom::Phantom(Level* level) : Monster(level)
 {
@@ -68,7 +68,7 @@ bool Phantom::checkSpawnRules()
     bool hasSkyLight = mLevel->mDimension->isHasSkyLight() != 0;
     PlayerSelector selector(this);
     std::vector<boost::shared_ptr<Player> >* players =
-        mLevel->getPlayers(0xC800000ULL, &selector);
+        mLevel->getPlayers(EntityType::PLAYER, &selector);
     std::vector<boost::shared_ptr<Player> >::iterator it;
     for (it = players->begin(); it != players->end(); ++it)
     {
@@ -146,7 +146,7 @@ const SoundEvent* Phantom::getAmbientSound() { return SoundEvents::PHANTOM_AMBIE
 const SoundEvent* Phantom::getHurtSound(const DamageSource*) { return SoundEvents::PHANTOM_HURT; }
 const SoundEvent* Phantom::getDeathSound() { return SoundEvents::PHANTOM_DEATH; }
 ResourceLocation* Phantom::getDefaultLootTable() { return &BuiltInLootTables::PHANTOM; }
-unsigned long long Phantom::GetType() { return ENTITY_TYPE_PHANTOM; }
+unsigned long long Phantom::GetType() { return EntityType::PHANTOM; }
 
 bool Phantom::PlayerSelector::apply(boost::shared_ptr<Player> player) const
 {

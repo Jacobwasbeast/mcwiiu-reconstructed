@@ -1,4 +1,5 @@
 #include "game/core/OceanRuin.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -6,6 +7,7 @@
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/data/LevelStorage.hpp"
@@ -16,26 +18,31 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/RandomizableLockableContainerBlockEntity.hpp"
+#include "game/world/block/ChestBlock.hpp"
+#include "game/world/block/ChestBlockEntity.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/StructurePiece.hpp"
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
 OceanRuin::OceanRuin()
-    : ScatteredFeaturePieces::ScatteredFeaturePiece(), mBlockState(Blocks::AIR->defaultBlockState()),
-      mIsLarge(false), mIsCold(false)
+    : ScatteredFeaturePieces::ScatteredFeaturePiece(), mBlockState(Blocks::water->defaultBlockState()),
+      mIsLarge(false), mIsWarm(false)
 {
 }
 
 OceanRuin::OceanRuin(Level* level, Random& random, int x, int z, int width, int height, int depth,
-    bool isLarge, bool isCold)
-    : ScatteredFeaturePieces::ScatteredFeaturePiece(level, random, x, 0, z, width, height, depth),
-      mBlockState(Blocks::AIR->defaultBlockState()), mIsLarge(isLarge), mIsCold(isCold)
+    bool isWarm, bool isLarge)
+    : ScatteredFeaturePieces::ScatteredFeaturePiece(level, random, x, 0, z, width, height, depth)
 {
-    setOrientation(NULL);
-    BoundingBox box(x, 0, z, x + width - 1, height - 1, z + depth - 1);
-    setBoundingBox(&box);
+    setOrientation(Direction::SOUTH);
+    setBoundingBox(new BoundingBox(x, 0, z, x + width - 1, height - 1, z + depth - 1));
+    mIsLarge = isLarge;
+    mIsWarm = isWarm;
+    mBlockState = Blocks::water->defaultBlockState();
     setRotation(Rotation::getRandom(random));
 }
 
@@ -43,149 +50,266 @@ OceanRuin::~OceanRuin()
 {
 }
 
-unsigned int OceanRuin::getBigWarmRuin(Random& random)
+eMinecraftStructureTemplate OceanRuin::getBigWarmRuin(Random& random)
 {
-    static const unsigned int ruins[4] = { 0x92, 0x93, 0x94, 0x95 };
+    eMinecraftStructureTemplate ruins[4] =
+    {
+        eMinecraftStructureTemplate_OceanRuin_BigRuinWarm4,
+        eMinecraftStructureTemplate_OceanRuin_BigRuinWarm5,
+        eMinecraftStructureTemplate_OceanRuin_BigRuinWarm6,
+        eMinecraftStructureTemplate_OceanRuin_BigRuinWarm7
+    };
     return ruins[random.nextInt(4)];
 }
 
-unsigned int OceanRuin::getSmallWarmRuin(Random& random)
+eMinecraftStructureTemplate OceanRuin::getSmallWarmRuin(Random& random)
 {
-    static const unsigned int ruins[3] = { 0x96, 0x97, 0x98 };
+    eMinecraftStructureTemplate ruins[3] =
+    {
+        eMinecraftStructureTemplate_OceanRuin_RuinWarm1,
+        eMinecraftStructureTemplate_OceanRuin_RuinWarm2,
+        eMinecraftStructureTemplate_OceanRuin_RuinWarm3
+    };
     return ruins[random.nextInt(3)];
 }
 
-unsigned int OceanRuin::getRuin(int index, bool large, ERuinType type)
+eMinecraftStructureTemplate OceanRuin::getRuin(int index, bool large, ERuinType type)
 {
-    static const unsigned int cold[] = { 0x86, 0x87, 0x88, 0x89, 0x99, 0x9c, 0x9f, 0xa2, 0xa5, 0xa8, 0xab, 0xae };
-    static const unsigned int warm[] = { 0x8e, 0x8f, 0x90, 0x91, 0x9a, 0x9d, 0xa0, 0xa3, 0xa6, 0xa9, 0xac, 0xaf };
-    static const unsigned int brick[] = { 0x8a, 0x8b, 0x8c, 0x8d, 0x9b, 0x9e, 0xa1, 0xa4, 0xa7, 0xaa, 0xad, 0xb0 };
-    const unsigned int* ruins = type == eRuinType_Cold ? cold : type == eRuinType_Warm ? warm : brick;
-    return ruins[large ? index : index + 4];
+    if (type == eRuinType_Cold)
+    {
+        eMinecraftStructureTemplate ruins[12] =
+        {
+            eMinecraftStructureTemplate_OceanRuin_BigRuin1Brick,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin2Brick,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin3Brick,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin8Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin1Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin2Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin3Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin4Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin5Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin6Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin7Brick,
+            eMinecraftStructureTemplate_OceanRuin_Ruin8Brick
+        };
+        return large ? ruins[index] : ruins[index + 4];
+    }
+    if (type == eRuinType_Warm)
+    {
+        eMinecraftStructureTemplate ruins[12] =
+        {
+            eMinecraftStructureTemplate_OceanRuin_BigRuin1Cracked,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin2Cracked,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin3Cracked,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin8Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin1Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin2Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin3Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin4Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin5Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin6Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin7Cracked,
+            eMinecraftStructureTemplate_OceanRuin_Ruin8Cracked
+        };
+        return large ? ruins[index] : ruins[index + 4];
+    }
+    if (type == eRuinType_ColdBrick)
+    {
+        eMinecraftStructureTemplate ruins[12] =
+        {
+            eMinecraftStructureTemplate_OceanRuin_BigRuin1Mossy,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin2Mossy,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin3Mossy,
+            eMinecraftStructureTemplate_OceanRuin_BigRuin8Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin1Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin2Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin3Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin4Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin5Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin6Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin7Mossy,
+            eMinecraftStructureTemplate_OceanRuin_Ruin8Mossy
+        };
+        return large ? ruins[index] : ruins[index + 4];
+    }
+    return eMinecraftStructureTemplate_Invalid;
 }
 
 void OceanRuin::updateChestReplacer(eMinecraftStructureTemplate structureTemplate)
 {
-    if (mIsCold)
+    if (mIsWarm)
     {
         mBlockState = Blocks::sandstone->defaultBlockState();
+        return;
     }
-    else if (structureTemplate == static_cast<eMinecraftStructureTemplate>(0x9f))
+
+    const BlockState* state = Blocks::water->defaultBlockState();
+    if (structureTemplate == eMinecraftStructureTemplate_OceanRuin_Ruin3Brick)
     {
         mBlockState = Blocks::stonebrick->defaultBlockState();
+        return;
     }
-    else
-    {
-        mBlockState = Blocks::AIR->defaultBlockState();
-        if (structureTemplate == static_cast<eMinecraftStructureTemplate>(0x86)
-            || structureTemplate == static_cast<eMinecraftStructureTemplate>(0x89)
-            || structureTemplate == static_cast<eMinecraftStructureTemplate>(0x87))
-            mBlockState = Blocks::stone->defaultBlockState();
-    }
+    if (structureTemplate == eMinecraftStructureTemplate_OceanRuin_BigRuin1Brick
+        || structureTemplate == eMinecraftStructureTemplate_OceanRuin_BigRuin8Brick
+        || structureTemplate == eMinecraftStructureTemplate_OceanRuin_BigRuin2Brick)
+        state = Blocks::gravel->defaultBlockState();
+    mBlockState = state;
 }
 
 const StructureTemplate* OceanRuin::placeRuin(Random& random, StructureManager* structureManager, Level* level,
     const BlockPos& pos, StructurePlaceSettings& settings)
 {
-    float integrity = mIsLarge ? 0.8f : 0.9f;
-    if (!mIsCold)
+    float integrity = mIsLarge ? 0.9f : 0.8f;
+    if (!mIsWarm)
     {
         int index = random.nextInt(mIsLarge ? 4 : 8);
-        unsigned int large = getRuin(index, mIsLarge, eRuinType_Cold);
-        unsigned int small = getRuin(index, mIsLarge, eRuinType_Warm);
-        unsigned int brick = getRuin(index, mIsLarge, eRuinType_ColdBrick);
-        updateChestReplacer(static_cast<eMinecraftStructureTemplate>(large));
-        const StructureTemplate* result = structureManager->getOrCreate(static_cast<eMinecraftStructureTemplate>(large));
+        eMinecraftStructureTemplate base = getRuin(index, mIsLarge, eRuinType_Cold);
+        eMinecraftStructureTemplate second = getRuin(index, mIsLarge, eRuinType_Warm);
+        eMinecraftStructureTemplate third = getRuin(index, mIsLarge, eRuinType_ColdBrick);
+        updateChestReplacer(base);
+        const StructureTemplate* result = structureManager->getOrCreate(base);
         settings.setIntegrity(integrity);
         result->placeInWorld(level, pos, &settings);
-        settings.setIntegrity(0.5f);
-        const StructureTemplate* middle = structureManager->getOrCreate(static_cast<eMinecraftStructureTemplate>(small));
-        middle->placeInWorld(level, pos, &settings);
         settings.setIntegrity(0.7f);
-        const StructureTemplate* last = structureManager->getOrCreate(static_cast<eMinecraftStructureTemplate>(brick));
-        last->placeInWorld(level, pos, &settings);
+        const StructureTemplate* secondTemplate = structureManager->getOrCreate(second);
+        secondTemplate->placeInWorld(level, pos, &settings);
+        settings.setIntegrity(0.5f);
+        const StructureTemplate* thirdTemplate = structureManager->getOrCreate(third);
+        thirdTemplate->placeInWorld(level, pos, &settings);
         return result;
     }
-    unsigned int ruin = mIsLarge ? getBigWarmRuin(random) : getSmallWarmRuin(random);
-    updateChestReplacer(static_cast<eMinecraftStructureTemplate>(ruin));
-    const StructureTemplate* result = structureManager->getOrCreate(static_cast<eMinecraftStructureTemplate>(ruin));
+    eMinecraftStructureTemplate ruin = mIsLarge ? getBigWarmRuin(random) : getSmallWarmRuin(random);
+    updateChestReplacer(ruin);
+    const StructureTemplate* result = structureManager->getOrCreate(ruin);
     settings.setIntegrity(integrity);
     result->placeInWorld(level, pos, &settings);
     return result;
 }
 
-void OceanRuin::adaptPosition(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level)
+BlockPos OceanRuin::adaptPosition(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level)
 {
-    BlockPos size = StructureTemplate::transform(BlockPos(mWidth - 1, 0, mDepth - 1), mirror, rotation);
-    BlockPos min = pos.offset(size.x < pos.x ? size.x : pos.x, size.y < pos.y ? size.y : pos.y, size.z < pos.z ? size.z : pos.z);
-    BlockPos max(size.x < pos.x ? pos.x : size.x, size.y < pos.y ? pos.y : size.y, size.z < pos.z ? pos.z : size.z);
+    BlockPos end = StructureTemplate::transform(BlockPos(mWidth - 1, 0, mDepth - 1), mirror, rotation)
+        .offset(pos.x, pos.y, pos.z);
+    BlockPos min(pos.x < end.x ? pos.x : end.x, end.y < pos.y ? end.y : pos.y,
+        pos.z < end.z ? pos.z : end.z);
+    BlockPos max(end.x < pos.x ? pos.x : end.x, pos.y < end.y ? end.y : pos.y,
+        end.z < pos.z ? pos.z : end.z);
     int lowest = 0x200;
-    int count = 0;
+    int lowCount = 0;
     for (int x = min.x; x <= max.x; ++x)
+    {
         for (int z = min.z; z <= max.z; ++z)
-            for (int y = max.y; y >= min.y && y > 1; --y)
+        {
+            for (int y = min.y; y <= max.y; ++y)
             {
-                BlockPos p(x, y, z);
-                if (level->getBlockState(p) != NULL && level->getBlockState(p)->getBlock() != Blocks::AIR)
-                    break;
-                if (y < lowest) lowest = y;
-                if (y < pos.y - 3) ++count;
+                int height = y - 1;
+                while ((level->isEmptyBlock(BlockPos(x, height, z))
+                           || level->getBlockState(BlockPos(x, height, z))->getMaterial()->isLiquid())
+                    && height > 1)
+                    --height;
+                if (height < lowest)
+                    lowest = height;
+                if (height < pos.y - 3)
+                    ++lowCount;
             }
-    if (pos.y - lowest > 2 && count > mWidth + 4)
-        mBoundingBox->move(0, lowest + 3 - mBoundingBox->y0, 0);
+        }
+    }
+    if (pos.y - 1 - lowest > 2 && lowCount > mWidth + 4)
+        return BlockPos(pos.x, lowest + 3, pos.z);
+    return pos;
 }
 
 void OceanRuin::fillBelow(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level)
 {
-    BlockPos size = StructureTemplate::transform(BlockPos(mWidth - 1, 0, mDepth - 1), mirror, rotation);
-    BlockPos min = pos.offset(size.x < pos.x ? size.x : pos.x, size.y < pos.y ? size.y : pos.y, size.z < pos.z ? size.z : pos.z);
-    BlockPos max(size.x < pos.x ? pos.x : size.x, size.y < pos.y ? pos.y : size.y, size.z < pos.z ? pos.z : size.z);
+    BlockPos end = StructureTemplate::transform(BlockPos(mWidth - 1, 0, mDepth - 1), mirror, rotation)
+        .offset(pos.x, pos.y, pos.z);
+    BlockPos min(pos.x < end.x ? pos.x : end.x, pos.y < end.y ? pos.y : end.y,
+        pos.z < end.z ? pos.z : end.z);
+    BlockPos max(end.x < pos.x ? pos.x : end.x, end.y < pos.y ? pos.y : end.y,
+        end.z < pos.z ? pos.z : end.z);
     for (int x = min.x; x <= max.x; ++x)
+    {
         for (int z = min.z; z <= max.z; ++z)
-            for (int y = max.y; y > 1; --y)
+        {
+            for (int y = min.y; y <= max.y; ++y)
             {
-                BlockPos p(x, y, z);
-                if (level->getBlockState(p) != NULL && level->getBlockState(p)->getBlock() != Blocks::AIR)
-                    break;
-                for (int fill = y - 1; fill >= 0; --fill)
-                    if (level->getRandomFor(x, fill, z)->rollPercentageChance(0x52))
-                        level->setBlock(BlockPos(x, fill, z), Blocks::stone->defaultBlockState(), 2, false);
+                int height = y - 1;
+                while ((level->isEmptyBlock(BlockPos(x, height, z))
+                           || level->getBlockState(BlockPos(x, height, z))->getMaterial()->isLiquid())
+                    && height > 1)
+                    --height;
+                for (; height < pos.y; ++height)
+                {
+                    if (level->mRandom->rollPercentageChance(0x52))
+                        level->setBlock(BlockPos(x, height, z), Blocks::gravel->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
             }
+        }
+    }
 }
 
 bool OceanRuin::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (!updateAverageGroundHeight(level, box, -2, false) || mBoundingBox == NULL)
+    if (!updateAverageGroundHeight(level, box, -2, false))
         return true;
-    BlockPos pos(mBoundingBox->x0, mBoundingBox->y0, mBoundingBox->z0);
-    if (!box->isInside(pos))
+    BoundingBox* boundingBox = getBoundingBox();
+    if (boundingBox == NULL)
         return true;
-    Rotation* rotation = getRotation();
-    Mirror* mirror = Mirror::NONE;
-    adaptPosition(pos, mirror, rotation, level);
-    mBoundingBox->move(0, mGroundHeight - mBoundingBox->y0, 0);
+    BlockPos corner(boundingBox->x0, boundingBox->y0, boundingBox->z0);
+    if (!box->isInside(corner))
+        return true;
+
+    BlockPos pos(getWorldX(0, 0), getWorldY(0), getWorldZ(0, 0));
+    int offsetX = 0;
+    int offsetZ = 0;
+    switch (getRotation()->getType())
+    {
+    case Rotation::eTYPE_None:
+        break;
+    case Rotation::eTYPE_Clockwise90:
+        offsetX = mWidth - 1;
+        break;
+    case Rotation::eTYPE_Clockwise180:
+        offsetX = mWidth - 1;
+        offsetZ = mDepth - 1;
+        break;
+    case Rotation::eTYPE_CounterClockwise90:
+        offsetZ = mDepth - 1;
+        break;
+    }
+    pos = pos.offset(offsetX, 0, offsetZ);
+
+    StructureManager* structureManager = level->getLevelStorage()->getStructureManager();
+    pos = adaptPosition(pos, Mirror::NONE, getRotation(), level);
+    boundingBox->move(0, pos.y - boundingBox->y0, 0);
+
     StructurePlaceSettings settings;
-    settings.setMirror(mirror);
-    settings.setRotation(rotation);
-    settings.setIgnoreBlock(Blocks::AIR);
-    settings.setBoundingBox(mBoundingBox);
-    fillBelow(pos, mirror, rotation, level);
-    const StructureTemplate* structure = placeRuin(random, level->getLevelStorage()->getStructureManager(), level, pos, settings);
+    settings.setMirror(Mirror::NONE);
+    settings.setRotation(getRotation());
+    settings.setIgnoreBlock(Blocks::air);
+    settings.setBoundingBox(boundingBox);
+    fillBelow(pos, Mirror::NONE, getRotation(), level);
+    const StructureTemplate* structure = placeRuin(random, structureManager, level, pos, settings);
     StructureTemplate::MarkerMap markers = structure->getMarkers(pos, &settings);
     StructureTemplate::MarkerMap::iterator it;
     for (it = markers.begin(); it != markers.end(); ++it)
     {
-        if (it->second == L"chest")
+        BlockPos markerPos = it->first;
+        std::wstring marker = it->second;
+        if (marker.compare(0, marker.size(), L"chest", 5) == 0)
         {
-            level->setBlock(it->first, mBlockState, 3, false);
-            BlockPos below = it->first.below();
-            level->setBlock(below, Blocks::AIR->defaultBlockState(), 3, false);
-            boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(below);
-            if (entity && entity->GetType() == 0x1e00201)
+            level->setBlock(markerPos, mBlockState, Block::UPDATE_ALL, false);
+            TypedBoxed<const Direction*> facing(Direction::EAST);
+            level->setBlock(markerPos.below(),
+                Blocks::chest->defaultBlockState()->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing), Block::UPDATE_ALL, false);
+            level->setExtraBlock(markerPos.below(), Blocks::water->defaultBlockState(), Block::UPDATE_ALL, false);
+            boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(markerPos.below());
+            if (entity != NULL && entity->GetType() == BlockEntityType::CHEST)
             {
-                boost::shared_ptr<RandomizableLockableContainerBlockEntity> chest =
-                    boost::static_pointer_cast<RandomizableLockableContainerBlockEntity>(entity);
-                chest->setLootTable(mIsLarge ? &BuiltInLootTables::UNDERWATER_RUIN_BIG : &BuiltInLootTables::UNDERWATER_RUIN_SMALL,
+                boost::shared_ptr<ChestBlockEntity> chest =
+                    boost::static_pointer_cast<ChestBlockEntity>(entity);
+                chest->setLootTable(mIsLarge ? &BuiltInLootTables::UNDERWATER_RUIN_BIG
+                                             : &BuiltInLootTables::UNDERWATER_RUIN_SMALL,
                     random.nextLong());
             }
         }
@@ -197,14 +321,14 @@ void OceanRuin::addAdditionalSaveData(DataOutputStream* output)
 {
     output->writeInt(Block::getId(mBlockState->getBlock()));
     output->writeBoolean(mIsLarge);
-    output->writeBoolean(mIsCold);
+    output->writeBoolean(mIsWarm);
 }
 
 void OceanRuin::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
     mBlockState = Block::byId(input->readInt())->defaultBlockState();
     mIsLarge = input->readBoolean();
-    mIsCold = input->readBoolean();
+    mIsWarm = input->readBoolean();
 }
 
 EStructurePiece OceanRuin::GetType()

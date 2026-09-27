@@ -1,4 +1,5 @@
 #include "game/core/Endermite.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 #include <typeinfo>
@@ -23,9 +24,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 Endermite::Endermite(Level* level)
     : Monster(level)
@@ -35,7 +34,7 @@ Endermite::Endermite(Level* level)
     mPlayerSpawned = false;
     mExperienceReward = 3;
     setSize(0.4f, 0.3f);
-    mCategories |= 0x2000;
+    mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
 Endermite::~Endermite()
@@ -44,7 +43,7 @@ Endermite::~Endermite()
 
 unsigned long long Endermite::GetType()
 {
-    return 0x4D54004BULL;
+    return EntityType::ENDERMITE;
 }
 
 double Endermite::getEyeHeight()
@@ -105,7 +104,7 @@ ResourceLocation* Endermite::getDefaultLootTable()
 
 void Endermite::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x4D54004BULL);
+    Mob::addDataWalkers(fixer, EntityType::ENDERMITE);
 }
 
 void Endermite::readAdditionalSaveData(CompoundTag* tag)

@@ -37,7 +37,7 @@ void LockCode::addTag(CompoundTag* tag)
 
 LockCode* LockCode::fromTag(CompoundTag* tag)
 {
-    if (tag->contains(LOCK_TAG, 8))
+    if (tag->contains(LOCK_TAG, Tag::TAG_STRING))
     {
         return new LockCode(tag->getString(LOCK_TAG));
     }

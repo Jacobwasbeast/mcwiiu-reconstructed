@@ -1,6 +1,6 @@
 #include "game/core/ChinaDlcFilter.hpp"
 
-static const std::wstring sFilteredSkins[12];
+static const std::wstring sFilteredSkins[] = {L"dlcskin00000941.png", L"dlcskin00000217.png", L""};
 
 ChinaDlcFilter::ChinaDlcFilter()
     : boost::unordered_set<std::wstring>(11)

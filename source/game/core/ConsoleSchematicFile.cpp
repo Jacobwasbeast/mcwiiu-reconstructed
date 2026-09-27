@@ -1,4 +1,5 @@
 #include "game/core/ConsoleSchematicFile.hpp"
+#include "game/core/EntityType.hpp"
 #include <cmath>
 #include <cstring>
 #include "game/core/DataInputStream.hpp"
@@ -453,7 +454,7 @@ void ConsoleSchematicFile::load(DataInputStream* input)
         mBlockEntities.clear();
 
         CompoundTag* tags = Minecraft::GetInstance()->getFixerUpper()->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(input));
-        ListTag* tileEntities = tags->getList(L"TileEntities", 10);
+        ListTag* tileEntities = tags->getList(L"TileEntities", Tag::TAG_COMPOUND);
         if (tileEntities != 0)
         {
             for (int i = 0; i < tileEntities->size(); ++i)
@@ -468,18 +469,18 @@ void ConsoleSchematicFile::load(DataInputStream* input)
             }
         }
         mEntities.clear();
-        ListTag* entities = tags->getList(L"Entities", 10);
+        ListTag* entities = tags->getList(L"Entities", Tag::TAG_COMPOUND);
         if (entities != 0)
         {
             for (int i = 0; i < entities->size(); ++i)
             {
                 CompoundTag* tag = entities->getCompound(i);
                 unsigned long long type = EntityIO::byString(tag->getString(L"id"));
-                ListTag* position = tag->getList(L"Pos", 6);
+                ListTag* position = tag->getList(L"Pos", Tag::TAG_DOUBLE);
                 double x = position->getDouble(0);
                 double y = position->getDouble(1);
                 double z = position->getDouble(2);
-                if (type == 0xa080001ULL || type == 0xa080002ULL)
+                if (type == EntityType::PAINTING || type == EntityType::ITEM_FRAME)
                 {
                     x = tag->getInt(L"TileX");
                     y = tag->getInt(L"TileY");
@@ -489,7 +490,7 @@ void ConsoleSchematicFile::load(DataInputStream* input)
             }
         }
         mNamedPositions.clear();
-        ListTag* namedPositions = tags->getList(L"NamedPositions", 10);
+        ListTag* namedPositions = tags->getList(L"NamedPositions", Tag::TAG_COMPOUND);
         if (namedPositions != 0)
         {
             for (int i = 0; i < namedPositions->size(); ++i)
@@ -1456,7 +1457,7 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
             continue;
 
         unsigned long long type = entity->GetType();
-        if (!mMobs && (type & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+        if (!mMobs && (type & EntityType::MOB) == EntityType::MOB)
             continue;
 
         CompoundTag* tag = new CompoundTag();
@@ -1467,7 +1468,7 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
                 tag->remove(L"UUID");
             }
 
-            ListTag* position = tag->getList(L"Pos", 6);
+            ListTag* position = tag->getList(L"Pos", Tag::TAG_DOUBLE);
             if (position != NULL && position->size() >= 3)
             {
                 position->set(0, new DoubleTag(entity->mX - x0));
@@ -1475,7 +1476,7 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
                 position->set(2, new DoubleTag(entity->mZ - z0));
             }
 
-            if (type == 0x000000000A080001ULL || type == 0x000000000A080002ULL)
+            if (type == EntityType::PAINTING || type == EntityType::ITEM_FRAME)
             {
                 tag->putInt(L"TileX", (int)(entity->mX - x0));
                 tag->putInt(L"TileY", (int)(entity->mY - y0));

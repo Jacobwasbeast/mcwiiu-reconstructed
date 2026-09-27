@@ -1,4 +1,5 @@
 #include "game/core/TropicalFish.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -14,12 +15,8 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/Level.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
-static const unsigned long long ENTITY_TYPE_TROPICAL_FISH = 0x000000000D502005ULL;
-static const unsigned long long ENTITY_TYPE_FISH = 0x000000000D502000ULL;
 
 const EntityDataAccessor<int>* TropicalFish::DATA_VARIANT = NULL;
 const EntityDataAccessor<int>* TropicalFish::DATA_COLOR = NULL;
@@ -30,6 +27,9 @@ static const int TROPICAL_FISH_COLOR1_VARIANTS[22] = { 1,1,7,1,1,1,1,1,1,1,1,1,1
 static const int TROPICAL_FISH_COLOR2_VARIANTS[22] = { 7,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,7 };
 static const int TROPICAL_FISH_BASE_TEXTURES[2] = { 0xD6, 0xDD };
 static const int TROPICAL_FISH_MARK_TEXTURES[2][6] = { { 0xD7,0xD8,0xD9,0xDA,0xDB,0xDC }, { 0xDE,0xDF,0xE0,0xE1,0xE2,0xE3 } };
+static const std::wstring TROPICAL_FISH_BASE_HASHES[2] = { L"fba", L"fbb" };
+static const std::wstring TROPICAL_FISH_PATTERN_A_HASHES[6] = { L"pa1", L"pa2", L"pa3", L"pa4", L"pa5", L"pa6" };
+static const std::wstring TROPICAL_FISH_PATTERN_B_HASHES[6] = { L"pb1", L"pb2", L"pb3", L"pb4", L"pb5", L"pb6" };
 
 TropicalFish::TropicalFish(Level* level)
     : Fish(level, true), mLayeredTextureHashName(),
@@ -38,8 +38,8 @@ TropicalFish::TropicalFish(Level* level)
     mLayeredTextureLayers.data[0] = -1;
     mLayeredTextureLayers.data[1] = -1;
     fjDerivedCtorCalls();
-    mWaterValueA = 0.02f;
-    mWaterValueB = 0.01f;
+    mSwimAmplitude = 0.02f;
+    mSwimFrequency = 0.01f;
     setSize(0.4f, 0.4f);
 }
 
@@ -49,8 +49,8 @@ void TropicalFish::create(Level* level) { new TropicalFish(level); }
 
 void TropicalFish::staticCtor()
 {
-    DATA_VARIANT = SynchedEntityData::defineId(ENTITY_TYPE_TROPICAL_FISH, ENTITY_TYPE_FISH, EntityDataSerializers::INT);
-    DATA_COLOR = SynchedEntityData::defineId(ENTITY_TYPE_TROPICAL_FISH, ENTITY_TYPE_FISH, EntityDataSerializers::INT);
+    DATA_VARIANT = SynchedEntityData::defineId(EntityType::TROPICAL_FISH, EntityType::WATER_ANIMAL, EntityDataSerializers::INT);
+    DATA_COLOR = SynchedEntityData::defineId(EntityType::TROPICAL_FISH, EntityType::WATER_ANIMAL, EntityDataSerializers::INT);
 }
 
 void TropicalFish::clearLayeredTextureInfo()
@@ -62,7 +62,7 @@ void TropicalFish::tick()
 {
     PIXBeginNamedEvent(0.0f, "TropicalFish tick");
     Mob::tick();
-    if (mEntityData != NULL && mEntityData->isDirty())
+    if (mLevel->mIsClientSide && mEntityData->isDirty())
     {
         mEntityData->clearDirty();
         clearLayeredTextureInfo();
@@ -87,7 +87,7 @@ void TropicalFish::setColor(int color) { getEntityData()->set(DATA_COLOR, color,
 
 void TropicalFish::rebuildLayeredTextureInfo()
 {
-    mLayeredTextureHashName = L"fish_";
+    mLayeredTextureHashName = L"fish/";
 
     for (unsigned int i = 0; i < mLayeredTextureLayers.length; i++)
     {
@@ -99,11 +99,8 @@ void TropicalFish::rebuildLayeredTextureInfo()
     mLayeredTextureLayers.data[0] = TROPICAL_FISH_BASE_TEXTURES[baseVariant];
     mLayeredTextureLayers.data[1] = baseVariant == 0 ? TROPICAL_FISH_MARK_TEXTURES[0][markVariant] : TROPICAL_FISH_MARK_TEXTURES[1][markVariant];
 
-    static const wchar_t* markNames[6] = { L"0", L"1", L"2", L"3", L"4", L"5" };
-    std::wstring hashName = L"fish_";
-    hashName += baseVariant == 0 ? L"0" : L"1";
-    hashName += markNames[markVariant];
-    mLayeredTextureHashName = hashName;
+    const std::wstring* patternHashes = baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES : TROPICAL_FISH_PATTERN_B_HASHES;
+    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant] + patternHashes[markVariant];
 }
 
 std::wstring TropicalFish::getLayeredTextureHashName()
@@ -191,7 +188,7 @@ MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficult
 }
 
 ResourceLocation* TropicalFish::getDefaultLootTable() { return &BuiltInLootTables::ENTITY_FISH; }
-unsigned long long TropicalFish::GetType() { return ENTITY_TYPE_TROPICAL_FISH; }
+unsigned long long TropicalFish::GetType() { return EntityType::TROPICAL_FISH; }
 
 TropicalFish::TropicalFishGroupData::TropicalFishGroupData(int baseVariant, int markVariant, int color1, int color2)
     : mBaseVariant(baseVariant), mMarkVariant(markVariant), mColor1(color1), mColor2(color2) {}

@@ -1,22 +1,17 @@
 #ifndef GAME_CORE_SNIPERSTATTRACKER_HPP
 #define GAME_CORE_SNIPERSTATTRACKER_HPP
 
-#include "game/core/UntypedStatTracker.hpp"
+#include "game/core/StatTracker.hpp"
 
 class DamageEvent;
-class SniperMedal;
 
-class SniperStatTracker : public UntypedStatTracker
+class SniperStatTracker : public StatTracker<double>
 {
 public:
     SniperStatTracker(const StatsUID& statsUID);
     virtual ~SniperStatTracker();
 
     virtual void update(const DamageEvent* damageEvent);
-
-private:
-    friend class SniperMedal;
-    double mValue;
 };
 
 #endif

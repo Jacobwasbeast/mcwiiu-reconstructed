@@ -1,4 +1,5 @@
 #include "game/core/ThrownTrident.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -70,10 +71,10 @@ void ThrownTrident::create(Level* level)
 
 void ThrownTrident::staticCtor()
 {
-    ID_LOYALTY = SynchedEntityData::defineId(0x000000008A200006ULL,
-        0x000000008A200000ULL, EntityDataSerializers::BYTE);
-    ID_FOIL = SynchedEntityData::defineId(0x000000008A200006ULL,
-        0x000000008A200000ULL, EntityDataSerializers::BOOLEAN);
+    ID_LOYALTY = SynchedEntityData::defineId(EntityType::THROWN_TRIDENT,
+        EntityType::THROWABLE_PROJECTILE, EntityDataSerializers::BYTE);
+    ID_FOIL = SynchedEntityData::defineId(EntityType::THROWN_TRIDENT,
+        EntityType::THROWABLE_PROJECTILE, EntityDataSerializers::BOOLEAN);
 }
 
 void ThrownTrident::_init()
@@ -164,7 +165,7 @@ void ThrownTrident::onHitEntity(const HitResult* result)
 {
     boost::shared_ptr<Entity> entity = result->mEntity;
     float damage = 8.0f;
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         if (!mTridentItem->isEmpty())
         {
@@ -182,12 +183,12 @@ void ThrownTrident::onHitEntity(const HitResult* result)
     mDealtDamage = true;
     if (entity->hurt(source.get(), damage))
     {
-        if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             boost::shared_ptr<LivingEntity> target =
                 boost::static_pointer_cast<LivingEntity>(entity);
             if (mOwner &&
-                (mOwner->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+                (mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
             {
                 EnchantmentHelper::doPostHurtEffects(target,
                     boost::static_pointer_cast<Entity>(mOwner));
@@ -205,7 +206,7 @@ void ThrownTrident::onHitEntity(const HitResult* result)
     mZd *= -0.01;
     mHasImpulse = true;
 
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
         && mLevel->isThundering() && !mTridentItem->isEmpty()
         && EnchantmentHelper::hasChanneling(mTridentItem))
     {
@@ -287,5 +288,5 @@ bool ThrownTrident::shouldRenderAtSqrDistance(double)
 
 unsigned long long ThrownTrident::GetType()
 {
-    return 0x000000008A200006ULL;
+    return EntityType::THROWN_TRIDENT;
 }

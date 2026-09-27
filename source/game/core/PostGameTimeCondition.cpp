@@ -18,7 +18,7 @@ int PostGameTimeCondition::GetValue(MasterGameMode* gameMode) const
 
 unsigned int PostGameTimeCondition::GetTimerID() const
 {
-    return 9;
+    return MasterGameMode::eTimerID_PostGame;
 }
 
 bool PostGameTimeCondition::ShouldBlock() const

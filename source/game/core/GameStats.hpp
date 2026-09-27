@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/core/StatsUID.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -17,6 +17,7 @@
 
 class ClientboundChatPacket;
 class CombatEntry;
+class DamageEvent;
 class Entity;
 class ItemInstance;
 class ServerPlayer;
@@ -24,18 +25,21 @@ class ServerPlayer;
 class GameStats
 {
     friend class CheckpointCommand;
+    friend class MasterGameMode;
     friend class NotFastestTimeButWonAnywayCondition;
-    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > StatsMap;
+
 public:
+    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > StatsMap;
+
     GameStats();
     ~GameStats();
 
     PlayerStats* GetPlayerStats(const StatsUID& uid);
     boost::shared_ptr<ServerPlayer> GetFirstPlace();
-    unsigned int GetShortestLifespan(unsigned int round) const;
+    unsigned int GetShortestLifespan(unsigned int round);
     StatsMap* GetPlayerStats();
     unsigned int GetDeathCount(const StatsUID& uid);
-    void RecordBlockPresent(const StatsUID& uid, const BlockPos& pos, int state);
+    void RecordBlockPresent(const StatsUID& uid, const BlockPos& pos, int blockId);
     unsigned int GetRoundTime();
     void AwardMG01Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     static bool SORT_MG02_STATS(PlayerStats* first, PlayerStats* second);
@@ -46,6 +50,7 @@ public:
     static bool SORT_MG03_STATS_TIME(PlayerStats* first, PlayerStats* second);
     static bool SORT_MG03_STATS_POINTS_CURRENT_ROUND(PlayerStats* first, PlayerStats* second);
     static bool SORT_MG03_STATS_TIME_CURRENT_ROUND(PlayerStats* first, PlayerStats* second);
+    static bool SORT_MG03_STATS_FALLBACK_CURRENT_ROUND(PlayerStats* first, PlayerStats* second);
     void AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     void AwardMG04Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     void CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer> >* players, bool newRound);
@@ -57,48 +62,64 @@ public:
     void OnRoundEnd();
     void OnGameStart();
     void OnGameEnd();
-    int GetDamageTakenThisRound(const StatsUID& uid);
+    unsigned int GetDamageTakenThisRound(const StatsUID& uid);
     unsigned int GetKillsWithBowThisRound(const StatsUID& uid);
     unsigned int GetMaxSnowballHitsOnAnyPlayer(const StatsUID& uid);
-    void RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry, boost::shared_ptr<ClientboundChatPacket> packet);
-    unsigned int GetPlayerFatalDamage(const StatsUID& uid);
+    void RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry, boost::shared_ptr<ClientboundChatPacket> deathMessage);
+    const DamageEvent* GetPlayerFatalDamage(const StatsUID& uid);
     void RecordDeath(boost::shared_ptr<Entity> entity);
+    void ResetDeaths(const StatsUID& uid);
+    int GetFavouriteWeapon(const StatsUID& uid);
+    int GetWeaponRecievedMostDamageFrom(const StatsUID& uid);
     void RecordJump(const StatsUID& uid);
+    unsigned int GetJumpCount(const StatsUID& uid);
     void RecordItem(const StatsUID& uid, not_null_ptr<ItemInstance> item);
+    std::vector<int> GetItems(const StatsUID& uid);
     void RecordContainer(const StatsUID& uid, int type, int x, int y, int z);
+    std::vector<int> GetContainers(const StatsUID& uid);
     void RecordWalk(const StatsUID& uid, int distance, bool sprinting, bool sneaking);
-    void RecordSwim(const StatsUID& uid, int distance, bool sprinting);
+    void RecordSwim(const StatsUID& uid, int distance, bool underwater);
     void RecordClimb(const StatsUID& uid, int distance);
     void RecordGainPoints(const StatsUID& uid, int points);
     void ResetTempPoints(const StatsUID& uid);
-    unsigned int RecordSecondaryTargetReached(const StatsUID& uid, const std::wstring& target, int points, GlideRingGenerator::eGlideRingSize size);
+    bool RecordSecondaryTargetReached(const StatsUID& uid, const std::wstring& target, int points,
+                                      GlideRingGenerator::eGlideRingSize size);
+    void ResetSecondaryTargets(const StatsUID& uid);
+    unsigned int GetSecondaryTargetCount(const StatsUID& uid);
+    int GetPoints(const StatsUID& uid);
     void TakeTimestamp(const StatsUID& uid, eTimeSpentCategory category, bool start);
     void RecordUseItem(const StatsUID& uid, not_null_ptr<ItemInstance> item);
-    void RecordTimeOnLayer(const StatsUID& uid, int layer, bool start);
+    void RecordTimeOnLayer(const StatsUID& uid, int layer, bool enteredLayer);
     void RecordSnowballDirectHit(const StatsUID& uid);
     void RecordHitBySnowball(const StatsUID& uid);
     void RecordLanding(const StatsUID& uid);
-    void RecordBlockPlaced(const StatsUID& uid, const BlockPos& pos, int state);
-    void RecordBlockDestroyed(const StatsUID& uid, const BlockPos& pos, int state);
-    unsigned int RecordLastCheckpoint(const StatsUID& uid, int checkpoint, int sequence, bool banked);
+    void RecordBuildArea(const StatsUID& uid, const BlockPos& from, const BlockPos& to);
+    void RecordBlockPlaced(const StatsUID& uid, const BlockPos& pos, int blockId);
+    void RecordBlockDestroyed(const StatsUID& uid, const BlockPos& pos, int blockId);
+    bool RecordLastCheckpoint(const StatsUID& uid, int checkpoint, int sequence, bool banked);
     void RecordLapCompleted(const StatsUID& uid);
     unsigned int GetLapsCompleted(const StatsUID& uid);
     unsigned int GetLastCheckpointID(const StatsUID& uid);
     unsigned int GetLastCheckpointSequenceID(const StatsUID& uid);
+    unsigned int GetLastBankedCheckpointID(const StatsUID& uid);
     void RecordThermalEntered(const StatsUID& uid);
-    void RecordProgress(const StatsUID& uid, double x, double y, double z, double progress);
+    bool RecordProgress(const StatsUID& uid, double sequenceProgress, double nearestDistance, double progress, double speed);
     void RecordSpawnedAtCheckpoint(const StatsUID& uid, int checkpoint);
-    void RecordTimeSpentInPosition(bool inside);
-    unsigned int RecordEndZoneEntered(const StatsUID& uid);
-    unsigned char GetEndZoneEntered(const StatsUID& uid);
+    void RecordTimeSpentInPosition(bool pointsActive);
+    bool RecordEndZoneEntered(const StatsUID& uid);
+    bool GetEndZoneEntered(const StatsUID& uid);
+    unsigned int GetTimeToCheckpoint(const StatsUID& uid, int checkpoint);
     boost::shared_ptr<ServerPlayer> GetLeadingPlayer();
     boost::shared_ptr<ServerPlayer> GetTrailingPlayer(const boost::shared_ptr<ServerPlayer>& player);
     void increasePlayerRoundStartTimeMs(long long milliseconds);
     long long GetStartTime();
+    long long GetPlayerLifeTime(const StatsUID& uid);
     boost::shared_ptr<ServerPlayer> GetRoundWinner();
     boost::shared_ptr<ServerPlayer> GetSecondPlace();
     boost::shared_ptr<ServerPlayer> GetThirdPlace();
     std::wstring GetWinningThemeChoice() const;
+    int GetMedal(const StatsUID& uid);
+    int GetBestMedal(const StatsUID& uid);
     unsigned int GetRoundsWon(const StatsUID& uid);
     unsigned int GetMostBlocksDestroyed();
     unsigned int GetSecondMostBlocksDestroyed();
@@ -107,40 +128,19 @@ public:
     unsigned int GetHighestScoringPlayerScore();
     unsigned int GetFarthestCheckpointReached();
 
-    int GetMedal(const StatsUID& uid);
-    void ResetDeaths(const StatsUID& uid);
-    int GetFavouriteWeapon(const StatsUID& uid);
-    int GetWeaponRecievedMostDamageFrom(const StatsUID& uid);
-    unsigned int GetJumpCount(const StatsUID& uid);
-    std::vector<int> GetItems(const StatsUID& uid);
-    std::vector<int> GetContainers(const StatsUID& uid);
-    void ResetSecondaryTargets(const StatsUID& uid);
-    unsigned int GetSecondaryTargetCount(const StatsUID& uid);
-    int GetPoints(const StatsUID& uid);
-    void RecordBuildArea(const StatsUID& uid, const BlockPos& from, const BlockPos& to);
-    unsigned int GetLastBankedCheckpointID(const StatsUID& uid);
-    unsigned int GetTimeToCheckpoint(const StatsUID& uid, int checkpoint);
-    long long GetPlayerLifeTime(const StatsUID& uid);
-    int GetBestMedal(const StatsUID& uid);
-    static bool SORT_MG03_STATS_FALLBACK_CURRENT_ROUND(PlayerStats* first, PlayerStats* second);
-
 private:
-    unsigned int mPlayerCount;
-    unsigned int mRoundStartTime;
-    union
-    {
-        unsigned int mRound;
-        unsigned int mCurrentRound;
-    };
-    unsigned int mRoundEndTime;
-    unsigned int mRoundTime;
+    int mRoundDeathCount;
+    bool mAchievementExploitDetected;
+    unsigned int mCurrentRound;
+    bool mLandingRecorded;
+    unsigned int mFarthestCheckpointReached;
     StatsMap mPlayerStats;
+    long long mRoundStartTime;
+    long long mRoundEndTime;
     boost::shared_ptr<ServerPlayer> mRoundWinner;
     boost::weak_ptr<ServerPlayer> mFirstPlace;
     boost::weak_ptr<ServerPlayer> mSecondPlace;
     boost::weak_ptr<ServerPlayer> mThirdPlace;
-    unsigned int mFarthestCheckpointReached;
-    bool mLandingRecorded;
     std::wstring mWinningThemeChoice;
 };
 

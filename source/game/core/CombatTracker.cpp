@@ -3,6 +3,12 @@
 #include "game/core/CombatEntry.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/util/AABB.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
 
 CombatTracker::CombatTracker(LivingEntity* mob)
@@ -27,12 +33,18 @@ void CombatTracker::resetPreparedStatus()
 void CombatTracker::prepareForDamage()
 {
     resetPreparedStatus();
-    if (mMob == 0)
-        return;
     if (mMob->onLadder())
-        mPreparedStatus = eLOCATION_CLIMBING;
+    {
+        Block* block = mMob->mLevel->getBlockState(BlockPos(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ))->getBlock();
+        if (block == Blocks::ladder)
+            mPreparedStatus = eLOCATION_LADDER;
+        else if (block == Blocks::vine)
+            mPreparedStatus = eLOCATION_VINES;
+    }
     else if (mMob->isInWater())
+    {
         mPreparedStatus = eLOCATION_WATER;
+    }
 }
 
 void CombatTracker::recheckStatus()

@@ -3,11 +3,10 @@
 #include "game/core/IGameRuleAttribute.hpp"
 #include "game/util/StringUtils.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
+#include "game/core/StringFormat.hpp"
 
 #include <algorithm>
 #include <string>
-
-std::string formatstr(const char* format, ...);
 
 
 template<typename T>

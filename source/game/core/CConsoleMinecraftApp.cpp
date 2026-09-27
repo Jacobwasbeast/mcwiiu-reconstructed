@@ -1,4 +1,5 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/ShutdownManager.hpp"
@@ -8,6 +9,10 @@
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/cCommerceNintendoWiiU.hpp"
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_Platform.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #include <stdlib.h>
 #include <string.h>
 #include <sysapp/launch.h>
@@ -20,8 +25,6 @@ extern "C" void OSReport(const char*, ...);
 
 
 extern void altMain();
-extern void Sleep(unsigned int);
-extern unsigned int GetLastFileErrorCodeForViewer();
 struct _OVERLAPPED;
 unsigned char g_fatalLoadErrorRequested = 0;
 unsigned char g_fatalLoadErrorReady = 0;
@@ -29,7 +32,6 @@ unsigned char g_fatalLoadErrorActive = 0;
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
 extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
 extern unsigned int GetFileSize(int, unsigned int*);
-extern void CloseHandle(int);
 extern ConsoleUIController gConsoleUIController;
 extern CStorage* gStorage;
 
@@ -40,8 +42,6 @@ unsigned char s_altMainOKToRun = 0;
 unsigned char s_altMainPending = 0;
 unsigned char s_altMainExit = 0;
 
-
-extern wchar_t* GetRichPresenceStringFromId(int);
 
 void setAltMainOKToRun()
 {
@@ -119,7 +119,7 @@ void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
                  __builtin_return_address(0), text);
     }
 #endif
-    gRenderer->BeginConditionalSurvey((int)message);
+    gRenderer->InitialiseContext();
     g_pInput->RequestErrorViewer(1, GetLastFileErrorCodeForViewer(), NULL, NULL);
     altMain();
     for (;;)
@@ -204,7 +204,7 @@ void CConsoleMinecraftApp::CommerceInit()
 }
 int CConsoleMinecraftApp::RequestSignInUIChoices(int playerId)
 {
-    gConsoleUIController.NavigateToScene(playerId, (EUIScene)0x50, NULL, (EUILayer)6, (EUIGroup)7);
+    gConsoleUIController.NavigateToScene(playerId, EUIScene_AvatarSelectMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
     s_signInRequested = 1;
     return 0;
 }
@@ -220,21 +220,21 @@ int CConsoleMinecraftApp::Callback_SaveGameIncompleteMessageBoxReturned(void* co
                                                                          C4JStorage::EMessageResult result)
 {
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-    if (result < C4JStorage::EMessageResult_3)
+    if (result < C4JStorage::EMessageResult_Cancelled)
         return 0;
-    if (result == C4JStorage::EMessageResult_4)
+    if (result == C4JStorage::EMessageResult_Accept)
     {
         app->LeaveSaveNotificationSection();
         gStorage->ContinueIncompleteOperation();
     }
-    else if (result == C4JStorage::EMessageResult_3 || result == C4JStorage::EMessageResult_5)
+    else if (result == C4JStorage::EMessageResult_Cancelled || result == C4JStorage::EMessageResult_Decline)
     {
         app->LeaveSaveNotificationSection();
         gStorage->CancelIncompleteOperation();
     }
-    else if (result == C4JStorage::EMessageResult_6)
+    else if (result == C4JStorage::EMessageResult_ThirdOption)
     {
-        gConsoleUIController.NavigateToScene(playerId, (EUIScene)0x4e, NULL, (EUILayer)2, (EUIGroup)1);
+        gConsoleUIController.NavigateToScene(playerId, EUIScene_InGameSaveManagementMenu, NULL, EUILayer_Alert, EUIGroup_Fullscreen);
     }
     return 0;
 }
@@ -244,13 +244,13 @@ void CConsoleMinecraftApp::Callback_SaveGameIncomplete(void* context, C4JStorage
     {
         CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
         app->EnterSaveNotificationSection();
-        int messageParameters[] = { (int)0xaed18de8, (int)0xce9c596c, (int)0xfec9f75f };
-        if (gConsoleUIController.RequestErrorMessage(0xe6a7b0a3, 0x92727461, messageParameters, 3, 0xff,
+        int messageParameters[] = { (int)IDS_SAVE_INCOMPLETE_RETRY_SAVING, (int)0xce9c596c, (int)IDS_SAVE_INCOMPLETE_DELETE_SAVES };
+        if (gConsoleUIController.RequestErrorMessage(IDS_SAVE_INCOMPLETE_TITLE, 0x92727461, messageParameters, 3, 0xff,
                                                        Callback_SaveGameIncompleteMessageBoxReturned, context, NULL,
                                                        true) != 1)
             return;
     }
-    Callback_SaveGameIncompleteMessageBoxReturned(context, 0, C4JStorage::EMessageResult_3);
+    Callback_SaveGameIncompleteMessageBoxReturned(context, 0, C4JStorage::EMessageResult_Cancelled);
 }
 cNintendoDLCInfo* CConsoleMinecraftApp::GetDLCInfoInstance() { return m_dlcInfo; }
 void CConsoleMinecraftApp::HandleDLCLicenseChange(std::wstring& packName)
@@ -328,7 +328,7 @@ uint32_t CConsoleMinecraftApp::UpgradeTrial()
     }
     if (m_commerceState == 2)
     {
-        int messageParameter = 0xb9a1bf4d;
+        int messageParameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(0xa561a8df, 0x84f3e8d2, &messageParameter, 1,
                                                    gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return 1;

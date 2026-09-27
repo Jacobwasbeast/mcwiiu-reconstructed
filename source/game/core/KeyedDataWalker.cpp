@@ -1,4 +1,5 @@
 #include "game/core/KeyedDataWalker.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -9,11 +10,11 @@
 KeyedDataWalker::KeyedDataWalker(unsigned long long type)
     : mKey()
 {
-    if ((type & 0x08000000ULL) != 0)
+    if ((type & EntityType::ENTITY) != 0)
     {
         mKey = EntityIO::getKey(type);
     }
-    else if ((type & 0x01000200ULL) == 0x01000200ULL)
+    else if ((type & BlockEntityType::BLOCK_ENTITY) == BlockEntityType::BLOCK_ENTITY)
     {
         mKey = BlockEntity::getKey(type);
     }

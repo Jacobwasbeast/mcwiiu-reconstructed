@@ -1,12 +1,20 @@
 #include "game/core/MineShaftPieces.hpp"
+#include "game/core/EntityType.hpp"
 
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/MinecartChest.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
 #include "game/world/block/BaseRailBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/MobSpawnerBlockEntity.hpp"
+#include "game/world/block/TorchBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 MineShaftPieces::MineShaftPiece::MineShaftPiece(int genDepth, MineShaftFeature::MineShaftType type)
@@ -25,12 +33,13 @@ MineShaftPieces::MineShaftPiece::~MineShaftPiece()
 
 const BlockState* MineShaftPieces::MineShaftPiece::getPlanksBlock()
 {
-    Block* block = Block::byId(5);
-    if (block == NULL) return NULL;
-    const BlockState* state = block->defaultBlockState();
-    if (mType != MineShaftFeature::eMineShaftType_Mesa) return state;
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::DARK_OAK);
-    return state->setBoxedValue(PlanksBlock::VARIANT, &variant);
+    const BlockState* state = Blocks::planks->defaultBlockState();
+    if (mType == MineShaftFeature::eMineShaftType_Mesa)
+    {
+        TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::DARK_OAK);
+        state = state->setBoxedValue(PlanksBlock::VARIANT, &variant);
+    }
+    return state;
 }
 
 const BlockState* MineShaftPieces::MineShaftPiece::getFenceBlock()
@@ -45,8 +54,8 @@ bool MineShaftPieces::MineShaftPiece::isSupportingBox(Level* level, BoundingBox*
 {
     for (int x = x0; x <= x1; ++x)
     {
-        const BlockState* state = getBlock(level, x, y + 1, z, box);
-        if (state->getMaterial() == Material::AIR) return false;
+        if (getBlock(level, x, y + 1, z, box)->getBlock()->mMaterial == Material::AIR)
+            return false;
     }
     return true;
 }
@@ -338,46 +347,65 @@ rooms:
 bool MineShaftPieces::MineShaftCorridor::createChest(Level* level, BoundingBox* box, Random& random,
                                                       int x, int y, int z, ResourceLocation* lootTable)
 {
-    if (level->countInstanceOf(0xA800000ULL, false, NULL, NULL) >= 100)
+    BlockPos position(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
+    if (level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) >= 100)
         return false;
 
-    BlockPos position(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     if (!box->isInside(position))
         return false;
 
-    if (level->getBlockState(position)->getMaterial() != Material::AIR)
+    if (level->getBlockState(position)->getBlock()->mMaterial != Material::AIR)
         return false;
 
-    if (level->getBlockState(position.below())->getMaterial() == Material::AIR)
+    if (level->getBlockState(position.below())->getBlock()->mMaterial == Material::AIR)
         return false;
 
     TypedBoxed<BaseRailBlock::RailShape*> shape(
-        random.nextBoolean() ? gRailShapes[1] : gRailShapes[0]);
+        random.nextBoolean() ? BaseRailBlock::RailShape::NORTH_SOUTH : BaseRailBlock::RailShape::EAST_WEST);
     const BlockState* railState = Blocks::rail->defaultBlockState()->setBoxedValue(
         static_cast<BaseRailBlock*>(Blocks::rail)->getShapeProperty(), &shape);
     placeBlock(level, railState, x, y, z, box);
 
     boost::shared_ptr<MinecartChest> minecart(new MinecartChest(
-        level, (double)position.x + 0.5, (double)position.y + 0.5, (double)position.z + 0.5));
+        level, (double)((float)position.x + 0.5f), (double)((float)position.y + 0.5f),
+        (double)((float)position.z + 0.5f)));
     minecart->setLootTable(lootTable, random.nextLong());
     level->addEntity(minecart);
     return true;
 }
 
 void MineShaftPieces::MineShaftCorridor::placeSupport(Level* level, BoundingBox* box, int x0, int y0,
-                                                      int z0, int x1, int y1, Random& random)
+                                                      int z, int y1, int x1, Random& random)
 {
+    if (!isSupportingBox(level, box, x0, x1, y1, z))
+        return;
+
     const BlockState* planks = getPlanksBlock();
-    if (planks == NULL) return;
-    generateBox(level, box, x0, y0, z0, x0, y1, z0, planks, planks, false);
-    generateBox(level, box, x1, y0, z0, x1, y1, z0, planks, planks, false);
-    generateBox(level, box, x0, y1, z0, x1, y1, z0, planks, planks, false);
+    const BlockState* fence = getFenceBlock();
+    const BlockState* air = Blocks::air->defaultBlockState();
+    generateBox(level, box, x0, y0, z, x0, y1 - 1, z, fence, air, false);
+    generateBox(level, box, x1, y0, z, x1, y1 - 1, z, fence, air, false);
+    if (random.nextInt(4) == 0)
+    {
+        generateBox(level, box, x0, y1, z, x0, y1, z, planks, air, false);
+        generateBox(level, box, x1, y1, z, x1, y1, z, planks, air, false);
+        return;
+    }
+
+    generateBox(level, box, x0, y1, z, x1, y1, z, planks, air, false);
+    TypedBoxed<const Direction*> north(Direction::NORTH);
+    maybeGenerateBlock(level, box, random, 0.05f, x0 + 1, y1, z - 1,
+                       Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &north));
+    TypedBoxed<const Direction*> south(Direction::SOUTH);
+    maybeGenerateBlock(level, box, random, 0.05f, x0 + 1, y1, z + 1,
+                       Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &south));
 }
 
 void MineShaftPieces::MineShaftCorridor::placeCobWeb(Level* level, BoundingBox* box, Random& random,
                                                       float chance, int x, int y, int z)
 {
-    if (random.nextFloat() < chance) maybeGenerateBlock(level, box, random, 1.0f, x, y, z, getPlanksBlock());
+    if (!isAboveGround(level, x, y, z))
+        maybeGenerateBlock(level, box, random, chance, x, y, z, Blocks::web->defaultBlockState());
 }
 
 bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -385,7 +413,7 @@ bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& rando
     if (edgesLiquid(level, box)) return false;
     int zSpanMax = mNumSections * 5 - 1;
     const BlockState* planks = getPlanksBlock();
-    const BlockState* air = Blocks::AIR->defaultBlockState();
+    const BlockState* air = Blocks::air->defaultBlockState();
     generateBox(level, box, 0, 0, 0, 2, 1, zSpanMax, air, air, false);
     generateMaybeBox(level, box, random, 0.8f, 0, 2, 0, 2, 2, zSpanMax, air, air, false, false);
     if (mHasSpiderWebs)
@@ -407,8 +435,10 @@ bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& rando
         placeCobWeb(level, box, random, 0.05f, 2, 2, z);
         placeCobWeb(level, box, random, 0.05f, 0, 2, z + 4);
         placeCobWeb(level, box, random, 0.05f, 2, 2, z + 4);
-        random.nextInt(100);
-        random.nextInt(100);
+        if (random.nextInt(100) == 0)
+            createChest(level, box, random, 2, 0, z1, &BuiltInLootTables::ABANDONED_MINESHAFT);
+        if (random.nextInt(100) == 0)
+            createChest(level, box, random, 0, 0, z + 3, &BuiltInLootTables::ABANDONED_MINESHAFT);
         if (mHasSpiderWebs && !mHasPlacedSupport)
         {
             int y = getWorldY(0);
@@ -420,7 +450,14 @@ bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& rando
             {
                 setDirty();
                 mHasPlacedSupport = true;
-                level->setBlock(pos, Blocks::mob_spawner->defaultBlockState(), 2, false);
+                level->setBlock(pos, Blocks::mob_spawner->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+                if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::MOB_SPAWNER)
+                {
+                    boost::shared_ptr<MobSpawnerBlockEntity> spawner =
+                        boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
+                    spawner->getSpawner()->setEntityId(EntityIO::getKey(EntityType::CAVE_SPIDER));
+                }
             }
         }
     }
@@ -432,6 +469,22 @@ bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& rando
             const BlockState* wallState = getBlock(level, x, -1, z, box);
             if (wallState->getMaterial() == Material::AIR && !isAboveGround(level, x, -1, z))
                 placeBlock(level, planks, x, -1, z, box);
+        }
+    }
+
+    if (mHasRails)
+    {
+        TypedBoxed<BaseRailBlock::RailShape*> shape(BaseRailBlock::RailShape::NORTH_SOUTH);
+        const BlockState* rail = Blocks::rail->defaultBlockState()->setBoxedValue(
+            static_cast<BaseRailBlock*>(Blocks::rail)->getShapeProperty(), &shape);
+        for (int z = 0; z <= zSpanMax; ++z)
+        {
+            const BlockState* floor = getBlock(level, 1, -1, z, box);
+            if (floor->getMaterial() != Material::AIR && floor->isSolid())
+            {
+                float chance = isAboveGround(level, 1, 0, z) ? 0.7f : 0.9f;
+                maybeGenerateBlock(level, box, random, chance, 1, 0, z, rail);
+            }
         }
     }
 
@@ -576,44 +629,60 @@ void MineShaftPieces::MineShaftCrossing::addChildren(StructurePiece* startPiece,
 }
 
 void MineShaftPieces::MineShaftCrossing::placeSupportPillar(Level* level, BoundingBox* box,
-                                                             int x0, int y0, int z0, int y1)
+                                                             int x, int y0, int z, int y1)
 {
-    const BlockState* planks = getPlanksBlock();
-    if (planks != NULL) generateBox(level, box, x0, y0, z0, x0, y1, z0, planks, planks, false);
+    if (getBlock(level, x, y1 + 1, z, box)->getBlock()->mMaterial != Material::AIR)
+        generateBox(level, box, x, y0, z, x, y1, z, getPlanksBlock(), Blocks::air->defaultBlockState(), false);
 }
 
 bool MineShaftPieces::MineShaftCrossing::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (edgesLiquid(level, box)) return false;
+
     const BlockState* planks = getPlanksBlock();
-    const BlockState* air = Blocks::AIR->defaultBlockState();
+    BoundingBox* bounds = mBoundingBox;
     if (!mIsTwoFloored)
     {
-        generateBox(level, box, box->x0 + 1, box->y0, box->z0, box->x1 - 1, box->y1, box->z1, air, air, false);
-        generateBox(level, box, box->x0, box->y0, box->z0 + 1, box->x1, box->y1, box->z1 - 1, air, air, false);
+        generateBox(level, box, bounds->x0 + 1, bounds->y0, bounds->z0, bounds->x1 - 1, bounds->y1, bounds->z1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        bounds = mBoundingBox;
+        generateBox(level, box, bounds->x0, bounds->y0, bounds->z0 + 1, bounds->x1, bounds->y1, bounds->z1 - 1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
     }
     else
     {
-        int y0 = box->y0;
-        generateBox(level, box, box->x0 + 1, y0, box->z0, box->x1 - 1, y0 + 2, box->z1, air, air, false);
-        generateBox(level, box, box->x0, y0, box->z0 + 1, box->x1, y0 + 2, box->z1 - 1, air, air, false);
-        int y1 = box->y1;
-        generateBox(level, box, box->x0 + 1, y1 - 2, box->z0, box->x1 - 1, y1, box->z1, air, air, false);
-        generateBox(level, box, box->x0, y1 - 2, box->z0 + 1, box->x1, y1, box->z1 - 1, air, air, false);
-        generateBox(level, box, box->x0 + 1, y0 + 3, box->z0 + 1, box->x1 - 1, y0 + 3, box->z1 - 1, air, air, false);
+        generateBox(level, box, bounds->x0 + 1, bounds->y0, bounds->z0, bounds->x1 - 1, bounds->y0 + 2, bounds->z1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        bounds = mBoundingBox;
+        generateBox(level, box, bounds->x0, bounds->y0, bounds->z0 + 1, bounds->x1, bounds->y0 + 2, bounds->z1 - 1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        bounds = mBoundingBox;
+        generateBox(level, box, bounds->x0 + 1, bounds->y1 - 2, bounds->z0, bounds->x1 - 1, bounds->y1, bounds->z1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        bounds = mBoundingBox;
+        generateBox(level, box, bounds->x0, bounds->y1 - 2, bounds->z0 + 1, bounds->x1, bounds->y1, bounds->z1 - 1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        bounds = mBoundingBox;
+        generateBox(level, box, bounds->x0 + 1, bounds->y0 + 3, bounds->z0 + 1, bounds->x1 - 1, bounds->y0 + 3,
+                    bounds->z1 - 1, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
     }
-    placeSupportPillar(level, box, box->x0 + 1, box->y0, box->z0 + 1, box->y1);
-    placeSupportPillar(level, box, box->x0 + 1, box->y0, box->z1 - 1, box->y1);
-    placeSupportPillar(level, box, box->x1 - 1, box->y0, box->z0 + 1, box->y1);
-    placeSupportPillar(level, box, box->x1 - 1, box->y0, box->z1 - 1, box->y1);
 
-    for (int x = box->x0; x <= box->x1; ++x)
+    bounds = mBoundingBox;
+    placeSupportPillar(level, box, bounds->x0 + 1, bounds->y0, bounds->z0 + 1, bounds->y1);
+    bounds = mBoundingBox;
+    placeSupportPillar(level, box, bounds->x0 + 1, bounds->y0, bounds->z1 - 1, bounds->y1);
+    bounds = mBoundingBox;
+    placeSupportPillar(level, box, bounds->x1 - 1, bounds->y0, bounds->z0 + 1, bounds->y1);
+    bounds = mBoundingBox;
+    placeSupportPillar(level, box, bounds->x1 - 1, bounds->y0, bounds->z1 - 1, bounds->y1);
+
+    for (int x = mBoundingBox->x0; x <= mBoundingBox->x1; ++x)
     {
-        for (int z = box->z0; z <= box->z1; ++z)
+        for (int z = mBoundingBox->z0; z <= mBoundingBox->z1; ++z)
         {
-            const BlockState* floorState = getBlock(level, x, box->y0 - 1, z, box);
-            if (floorState->getMaterial() == Material::AIR && !isAboveGround(level, x, box->y0 - 1, z))
-                placeBlock(level, planks, x, box->y0 - 1, z, box);
+            if (getBlock(level, x, mBoundingBox->y0 - 1, z, box)->getBlock()->mMaterial == Material::AIR
+                && !isAboveGround(level, x, mBoundingBox->y0 - 1, z))
+                placeBlock(level, planks, x, mBoundingBox->y0 - 1, z, box);
         }
     }
     return true;
@@ -733,11 +802,23 @@ void MineShaftPieces::MineShaftRoom::move(int x, int y, int z)
 bool MineShaftPieces::MineShaftRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (edgesLiquid(level, box)) return false;
-    const BlockState* planks = getPlanksBlock();
-    if (planks == NULL) return false;
-    generateAirBox(level, box, 0, 0, 0, box->getXSpan() - 1, box->getYSpan() - 1, box->getZSpan() - 1);
+
+    BoundingBox* bounds = mBoundingBox;
+    generateBox(level, box, bounds->x0, bounds->y0, bounds->z0, bounds->x1, bounds->y0, bounds->z1,
+                Blocks::dirt->defaultBlockState(), Blocks::air->defaultBlockState(), true);
+    bounds = mBoundingBox;
+    int top = bounds->y0 + 3 < bounds->y1 ? bounds->y0 + 3 : bounds->y1;
+    generateBox(level, box, bounds->x0, bounds->y0 + 1, bounds->z0, bounds->x1, top, bounds->z1,
+                Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
     for (std::list<BoundingBox*>::iterator it = mChildPieces.begin(); it != mChildPieces.end(); ++it)
-        generateBox(level, box, *it, planks, planks, false);
+    {
+        BoundingBox* child = *it;
+        generateBox(level, box, child->x0, child->y1 - 2, child->z0, child->x1, child->y1, child->z1,
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    }
+    bounds = mBoundingBox;
+    generateUpperHalfSphere(level, box, bounds->x0, bounds->y0 + 4, bounds->z0, bounds->x1, bounds->y1, bounds->z1,
+                            Blocks::air->defaultBlockState(), false);
     return true;
 }
 
@@ -855,7 +936,7 @@ void MineShaftPieces::MineShaftStairs::addChildren(StructurePiece* startPiece,
 bool MineShaftPieces::MineShaftStairs::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (edgesLiquid(level, box)) return false;
-    const BlockState* air = Blocks::AIR->defaultBlockState();
+    const BlockState* air = Blocks::air->defaultBlockState();
     generateBox(level, box, 0, 5, 0, 2, 7, 1, air, air, false);
     generateBox(level, box, 0, 0, 7, 2, 2, 8, air, air, false);
     generateBox(level, box, 0, 4, 2, 2, 7, 2, air, air, false);

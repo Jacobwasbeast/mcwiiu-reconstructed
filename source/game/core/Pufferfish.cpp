@@ -1,4 +1,5 @@
 #include "game/core/Pufferfish.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -65,8 +66,8 @@ void Pufferfish::damageNearbyMobs()
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
         boost::shared_ptr<Entity> entity = entities->at(i);
-        if (entity->GetType() == ENTITY_TYPE_SERVER_PLAYER ||
-            (entity->GetType() & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER)
+        if (entity->GetType() == EntityType::SERVER_PLAYER ||
+            (entity->GetType() & EntityType::MONSTER) == EntityType::MONSTER)
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
             living->hurt(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this())), mDamage);
@@ -80,10 +81,10 @@ bool Pufferfish::validatePuffedTypes(boost::shared_ptr<Entity> entity)
     if (entity == NULL)
         return false;
     unsigned long long type = entity->GetType();
-    if ((type & 0x0C000000ULL) != 0x0C000000ULL)
+    if ((type & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
         return false;
-    return type != 0x0D502002ULL && type != 0x0D502004ULL &&
-           type != 0x0D502003ULL && type != 0x0D502005ULL;
+    return type != EntityType::FISH && type != EntityType::SALMON &&
+           type != EntityType::PUFFERFISH && type != EntityType::TROPICAL_FISH;
 }
 
 void Pufferfish::checkForDangerousMobs()
@@ -99,7 +100,7 @@ void Pufferfish::checkForDangerousMobs()
             continue;
 
         bool isSpectatingPlayer = false;
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->isSpectator())
@@ -178,5 +179,5 @@ ResourceLocation* Pufferfish::getDefaultLootTable()
 
 unsigned long long Pufferfish::GetType()
 {
-    return 0x0D502003ULL;
+    return EntityType::PUFFERFISH;
 }

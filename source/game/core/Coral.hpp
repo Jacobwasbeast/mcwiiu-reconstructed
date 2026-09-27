@@ -3,6 +3,8 @@
 
 #include "game/core/Bush.hpp"
 
+template <class T> class AbstractProperty;
+
 class BlockPos;
 class BlockState;
 class BlockStateDefinition;
@@ -45,6 +47,9 @@ public:
 
 private:
     TextureAtlasSprite* mIcons[5];
+
+public:
+    static AbstractProperty<int>* VARIANT;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "game/core/MinecartSpawner.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cwchar>
 
@@ -8,9 +9,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 void MinecartSpawner::create(Level* level)
 {
@@ -39,7 +38,7 @@ MinecartSpawner::~MinecartSpawner()
 void MinecartSpawner::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     new OverwritableWalker(0x000000000A800006ULL, L"MobSpawner"));
+                     new OverwritableWalker(EntityType::MINECART_SPAWNER, L"MobSpawner"));
 }
 
 const Minecart::Type* MinecartSpawner::getType()
@@ -84,7 +83,7 @@ MinecartSpawner::MinecartMobSpawner* MinecartSpawner::getSpawner()
 
 unsigned long long MinecartSpawner::GetType()
 {
-    return 0x000000000A800006ULL;
+    return EntityType::MINECART_SPAWNER;
 }
 
 MinecartSpawner::MinecartMobSpawner::MinecartMobSpawner(MinecartSpawner* minecart)

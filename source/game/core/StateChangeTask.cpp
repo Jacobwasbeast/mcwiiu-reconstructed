@@ -25,8 +25,8 @@ bool StateChangeTask::isCompleted()
 void StateChangeTask::onStateChange(eTutorial_State stateValue)
 {
     if (stateValue == state ||
-        (GameSettings::GetGameSettings(tutorial->playerId, (eGameSetting)0x20) != 0 &&
-         (stateValue == (eTutorial_State)2 || stateValue == (eTutorial_State)3)))
+        (GameSettings::GetGameSettings(tutorial->playerId, eGameSetting_ClassicCrafting) != 0 &&
+         (stateValue == eTutorial_State_CraftingMenu || stateValue == eTutorial_State_CraftingTableMenu)))
     {
         completed = true;
     }

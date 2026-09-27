@@ -1,4 +1,5 @@
 #include "game/core/DLCManager.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <sstream>
 #include <fstream>
@@ -14,13 +15,14 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/System.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "game/core/StringConversion.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
 std::vector<std::wstring> g_dlcSkinNames;
 
-std::wstring char16towstring(wchar_t* pText);
-std::wstring convStringToWstring(const std::string& text);
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
 struct _OVERLAPPED;
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
@@ -29,7 +31,6 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
 unsigned int GetFileSize(int file, unsigned int* highSize);
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
                       unsigned int* bytesRead, _OVERLAPPED* overlapped);
-void CloseHandle(int file);
 
 static const wchar_t* s_parameterNames[] =
 {
@@ -335,7 +336,7 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
     {
         int messageParameters[1];
 
-        messageParameters[0] = 0xB9A1BF4D;
+        messageParameters[0] = IDS_CONFIRM_OK;
 
         if (numCorruptPacks == 1 && pFirstCorruptPack != NULL)
         {
@@ -343,11 +344,11 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
 
             swprintf(messageText, 132, L"%ls\n\n%%ls", pFirstCorruptPack->getName().c_str());
 
-            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0xA69E5B0D, messageParameters, 1, g_pApp->GetPrimaryUserIndex(), NULL, NULL, messageText, true);
+            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0xA69E5B0D, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, messageText, true);
         }
         else
         {
-            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0x75E79C02, messageParameters, 1, g_pApp->GetPrimaryUserIndex(), NULL, NULL, NULL, true);
+            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0x75E79C02, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         }
     }
 

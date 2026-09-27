@@ -1,4 +1,6 @@
 #include "game/core/EvocationFangs.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -122,7 +124,7 @@ void EvocationFangs::tick()
             }
             if (!mSentSpikeEvent)
             {
-                mLevel->broadcastEntityEvent(shared_from_this(), 4, 0);
+                mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::START_ATTACKING, 0);
                 mSentSpikeEvent = true;
             }
             if (--mLifeTicks < 0) remove();
@@ -142,7 +144,7 @@ void EvocationFangs::tick()
 
 void EvocationFangs::handleEntityEvent(unsigned char event, int data)
 {
-    if (data != 4)
+    if (event != EntityEvent::START_ATTACKING)
     {
         Entity::handleEntityEvent(event, data);
         return;
@@ -172,5 +174,5 @@ void EvocationFangs::create(Level* level)
 
 unsigned long long EvocationFangs::GetType()
 {
-    return 0x0000000008000011ULL;
+    return EntityType::EVOCATION_FANGS;
 }

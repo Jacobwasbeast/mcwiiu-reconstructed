@@ -12,8 +12,7 @@
 #include "game/world/generation/PlayersCondition.hpp"
 #include "game/world/generation/PlayersEnteredVolumeCondition.hpp"
 #include "game/world/generation/TimeSincePlayersCondition.hpp"
-
-bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
+#include "game/core/StringUtils.hpp"
 
 ConditionConnective::ConditionConnective(const XmlObject& object)
     : m_type(parseType(object.mName).second), m_conditions()

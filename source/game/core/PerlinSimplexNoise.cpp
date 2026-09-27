@@ -2,8 +2,7 @@
 
 #include "game/core/SimplexNoise.hpp"
 #include "game/util/Random.hpp"
-
-void MemSect(int section);
+#include "game/core/MemSect.hpp"
 
 PerlinSimplexNoise::PerlinSimplexNoise(int levels)
 {

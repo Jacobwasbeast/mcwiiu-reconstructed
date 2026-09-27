@@ -1,4 +1,5 @@
 #include "game/core/LlamaSpit.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <string>
@@ -223,7 +224,7 @@ void LlamaSpit::defineSynchedData()
 
 void LlamaSpit::readAdditionalSaveData(CompoundTag* tag)
 {
-    if (tag->contains(L"Owner", 10))
+    if (tag->contains(L"Owner", Tag::TAG_COMPOUND))
     {
         mOwnerTag = tag->getCompound(L"Owner");
     }
@@ -242,7 +243,7 @@ void LlamaSpit::addAdditonalSaveData(CompoundTag* tag)
 
 unsigned long long LlamaSpit::GetType()
 {
-    return 0x0000000088000012ULL;
+    return EntityType::LLAMA_SPIT;
 }
 
 bool LlamaSpit::shouldTick()

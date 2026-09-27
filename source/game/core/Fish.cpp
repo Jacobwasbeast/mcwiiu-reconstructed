@@ -1,4 +1,6 @@
 #include "game/core/Fish.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -20,6 +22,7 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 Fish::Fish(Level* level, bool deferredInit)
     : WaterAnimal(level)
@@ -39,8 +42,8 @@ Fish::~Fish()
 
 void Fish::_init()
 {
-    mWaterValueA = 0.01f;
-    mWaterValueB = 0.02f;
+    mSwimAmplitude = 0.01f;
+    mSwimFrequency = 0.02f;
     mWaterValueC = 12.0f;
     mSwimTicks = 1;
     mSwimRotation = 0.0f;
@@ -150,8 +153,8 @@ bool Fish::mobInteract(const boost::shared_ptr<Player>& player,
 unsigned int Fish::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
     int itemId = Item::getId(holder.m_pItemInstance->getItem());
-    if (isInWaterOrBubble() && (itemId == 0x145 || itemId == 0x146))
-        return 0x4c4246b3U;
+    if (isInWaterOrBubble() && (itemId == ItemId::BUCKET || itemId == ItemId::WATER_BUCKET))
+        return IDS_TOOLTIPS_COLLECT;
     return Mob::GetInteractTooltip(holder);
 }
 
@@ -162,7 +165,7 @@ bool Fish::canBeLeashed(const boost::shared_ptr<Player>&)
 
 unsigned long long Fish::GetType()
 {
-    return 0x000000000D502002ULL;
+    return EntityType::FISH;
 }
 
 void Fish::create(Level* level)

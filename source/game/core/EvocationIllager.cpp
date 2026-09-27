@@ -1,4 +1,5 @@
 #include "game/core/EvocationIllager.hpp"
+#include "game/core/EntityType.hpp"
 #include <cmath>
 #include <typeinfo>
 #include "game/client/audio/SoundEvents.hpp"
@@ -30,6 +31,8 @@ EvocationIllager::EvocationIllager(Level* level) : SpellcasterIllager(level), mW
 {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
+    mExperienceReward = 10;
+    mCategories |= EntityCategory::eEntityCategory_Villager | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
 EvocationIllager::~EvocationIllager() {}
 void EvocationIllager::registerGoals()
@@ -52,7 +55,7 @@ void EvocationIllager::registerAttributes()
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(24.0);
 }
 void EvocationIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-void EvocationIllager::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, 0x5D541841ULL); }
+void EvocationIllager::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::EVOCATION_ILLAGER); }
 void EvocationIllager::readAdditionalSaveData(CompoundTag* tag) { SpellcasterIllager::readAdditionalSaveData(tag); }
 void EvocationIllager::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -67,12 +70,12 @@ bool EvocationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
     if (!entity) return false;
     if (entity.get() == this) return true;
     if (Entity::isAlliedTo(entity)) return true;
-    if (entity->GetType() == 0x5D540048ULL)
+    if (entity->GetType() == EntityType::VEX)
     {
         boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
         return isAlliedTo(vex->getOwner());
     }
-    if ((entity->GetType() & 0xC000000ULL) == 0xC000000ULL)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
         if (living->getMobType() == 3)
@@ -89,7 +92,7 @@ void EvocationIllager::setWololoTarget(const boost::shared_ptr<Sheep>& target) {
 boost::shared_ptr<Sheep> EvocationIllager::getWololoTarget() { return mWololoTarget; }
 const SoundEvent* EvocationIllager::getCastingSoundEvent() { return SoundEvents::EVOCATION_ILLAGER_CAST_SPELL; }
 void EvocationIllager::create(Level* level) { new EvocationIllager(level); }
-unsigned long long EvocationIllager::GetType() { return 0x000000005D541841ULL; }
+unsigned long long EvocationIllager::GetType() { return EntityType::EVOCATION_ILLAGER; }
 
 EvocationIllager::EvokerAttackSpellGoal::EvokerAttackSpellGoal(EvocationIllager* evoker) : SpellcasterUseSpellGoal(evoker) {}
 EvocationIllager::EvokerAttackSpellGoal::~EvokerAttackSpellGoal() {}
@@ -236,7 +239,7 @@ bool EvocationIllager::EvokerWololoSpellGoal::canUse()
     EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
     if (evoker->getTarget() || evoker->isCastingSpell() || mNextAttackTickCount > evoker->mTickCount)
         return false;
-    if (!evoker->mLevel->getGameRules()->getBoolean(1))
+    if (!evoker->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
         return false;
 
     SheepSelector selector;

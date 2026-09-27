@@ -1,11 +1,11 @@
 #ifndef GAME_CORE_OCEANRUIN_HPP
 #define GAME_CORE_OCEANRUIN_HPP
 
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/ScatteredFeaturePieces.hpp"
 #include "game/world/generation/StructureManager.hpp"
 
 class BlockState;
-class BlockPos;
 class BoundingBox;
 class DataInputStream;
 class DataOutputStream;
@@ -29,16 +29,16 @@ public:
 
     OceanRuin();
     OceanRuin(Level* level, Random& random, int x, int z, int width, int height, int depth,
-        bool isLarge, bool isCold);
+        bool isWarm, bool isLarge);
     virtual ~OceanRuin();
 
-    unsigned int getBigWarmRuin(Random& random);
-    unsigned int getSmallWarmRuin(Random& random);
-    unsigned int getRuin(int index, bool large, ERuinType type);
+    eMinecraftStructureTemplate getBigWarmRuin(Random& random);
+    eMinecraftStructureTemplate getSmallWarmRuin(Random& random);
+    eMinecraftStructureTemplate getRuin(int index, bool large, ERuinType type);
     void updateChestReplacer(eMinecraftStructureTemplate structureTemplate);
     const StructureTemplate* placeRuin(Random& random, StructureManager* structureManager, Level* level,
         const BlockPos& pos, StructurePlaceSettings& settings);
-    void adaptPosition(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level);
+    BlockPos adaptPosition(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level);
     void fillBelow(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level);
     virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
     virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -50,7 +50,7 @@ public:
 private:
     const BlockState* mBlockState;
     bool mIsLarge;
-    bool mIsCold;
+    bool mIsWarm;
 };
 
 #endif

@@ -14,17 +14,17 @@ void WeaponRecipies::_init()
 {
     mLists = new std::vector<Object*>[2];
 
-    mLists[0].push_back(new Object(Blocks::planks, 0, 0x4000206));
-    mLists[0].push_back(new Object(Blocks::cobblestone, 0, 0x4000206));
-    mLists[0].push_back(new Object(Items::ironIngot, 0, 0x4000202));
-    mLists[0].push_back(new Object(Items::diamond, 0, 0x4000202));
-    mLists[0].push_back(new Object(Items::goldIngot, 0, 0x4000202));
+    mLists[0].push_back(new Object(Blocks::planks, 0, Object::eType_Block));
+    mLists[0].push_back(new Object(Blocks::cobblestone, 0, Object::eType_Block));
+    mLists[0].push_back(new Object(Items::ironIngot, 0, Object::eType_Item));
+    mLists[0].push_back(new Object(Items::diamond, 0, Object::eType_Item));
+    mLists[0].push_back(new Object(Items::goldIngot, 0, Object::eType_Item));
 
-    mLists[1].push_back(new Object(Items::woodenSword, 0, 0x4000202));
-    mLists[1].push_back(new Object(Items::stoneSword, 0, 0x4000202));
-    mLists[1].push_back(new Object(Items::ironSword, 0, 0x4000202));
-    mLists[1].push_back(new Object(Items::diamondSword, 0, 0x4000202));
-    mLists[1].push_back(new Object(Items::goldenSword, 0, 0x4000202));
+    mLists[1].push_back(new Object(Items::woodenSword, 0, Object::eType_Item));
+    mLists[1].push_back(new Object(Items::stoneSword, 0, Object::eType_Item));
+    mLists[1].push_back(new Object(Items::ironSword, 0, Object::eType_Item));
+    mLists[1].push_back(new Object(Items::diamondSword, 0, Object::eType_Item));
+    mLists[1].push_back(new Object(Items::goldenSword, 0, Object::eType_Item));
 }
 
 void WeaponRecipies::addRecipes(Recipes* recipes)
@@ -36,7 +36,7 @@ void WeaponRecipies::addRecipes(Recipes* recipes)
         Object* weapon = mLists[1].at(i);
 
         wchar_t format[] = L"wcicig";
-        if (ingredient->auxValue == 0 && ingredient->flags == 0x4000206)
+        if (ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block)
         {
             format[4] = L't';
         }

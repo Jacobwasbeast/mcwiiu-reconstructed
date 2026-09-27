@@ -263,7 +263,7 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         names.push_back(rules->readUTF());
     }
     boost::unordered_map<int, ConsoleGameRules::EGameRuleType> types;
-    for (unsigned int type = 0; type < 77; ++type)
+    for (unsigned int type = 0; type < ConsoleGameRules::eGameRuleType_Count; ++type)
     {
         for (unsigned int name = 0; name < names.size(); ++name)
         {
@@ -291,13 +291,13 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         boost::unordered_map<int, ConsoleGameRules::EGameRuleType>::iterator found = types.find(nameIndex);
         if (found != types.end()) type = found->second;
             GameRuleDefinition* definition = NULL;
-        if (type == static_cast<ConsoleGameRules::EGameRuleType>(1))
+        if (type == ConsoleGameRules::eGameRuleType_MapOptions)
         {
             addLevelGenerationOptions(options);
             options->loadStringTable(table);
             definition = options;
         }
-        else if (type == static_cast<ConsoleGameRules::EGameRuleType>(16))
+        else if (type == ConsoleGameRules::eGameRuleType_LevelRules)
         {
             LevelRuleset* ruleset = new LevelRuleset();
             options->setRequiredGameRules(ruleset);
@@ -428,7 +428,7 @@ void GameRuleManager::writeRuleFile(DataOutputStream* output)
     mGameRuleDefinitions->findDistinctTagsAndAttributes(tagTypes, attributes);
     output->writeInt(tagTypes.size() + attributes.size());
     int key = 0;
-    for (int type = 0; type < 77; ++type)
+    for (int type = 0; type < ConsoleGameRules::eGameRuleType_Count; ++type)
     {
         if (tagTypes.find(type) != tagTypes.end())
         {
@@ -436,7 +436,7 @@ void GameRuleManager::writeRuleFile(DataOutputStream* output)
             tags[type] = key++;
         }
     }
-    for (int attribute = 0; attribute < 91; ++attribute)
+    for (int attribute = 0; attribute < ConsoleGameRules::eGameRuleAttr_Count; ++attribute)
     {
         if (attributes.find(attribute) != attributes.end())
         {

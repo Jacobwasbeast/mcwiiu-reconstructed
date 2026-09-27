@@ -1,4 +1,5 @@
 #include "game/core/Stray.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -30,7 +31,7 @@ void Stray::create(Level* level)
 
 void Stray::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D540443ULL);
+    Mob::addDataWalkers(fixer, EntityType::STRAY);
 }
 
 bool Stray::checkSpawnRules()
@@ -82,12 +83,12 @@ const SoundEvent* Stray::getStepSound()
 boost::shared_ptr<TippableArrow> Stray::getArrow(float distanceFactor)
 {
     boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (arrow && arrow->GetType() == 0x8A020002ULL)
+    if (arrow && arrow->GetType() == EntityType::TIPPABLE_ARROW)
         arrow->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
     return arrow;
 }
 
 unsigned long long Stray::GetType()
 {
-    return 0x5D540443ULL;
+    return EntityType::STRAY;
 }

@@ -17,8 +17,6 @@ class SoundEvent;
 class Boat : public Entity
 {
 public:
-    static const unsigned int TOOLTIP_BOARD = 0xEC8ECE8AU;
-    static const unsigned int TOOLTIP_HIT_ALLOWED = 0x5FB7A25AU;
 
     enum Type
     {
@@ -28,6 +26,16 @@ public:
         JUNGLE,
         ACACIA,
         DARK_OAK
+    };
+
+    enum EStatus
+    {
+        IN_WATER,
+        UNDER_WATER,
+        UNDER_FLOWING_WATER,
+        NOT_UNDERWATER,
+        ON_LAND,
+        IN_AIR
     };
 
     Boat(Level* level);
@@ -53,23 +61,23 @@ public:
     virtual bool isPickable();
     virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
     virtual const Direction* getMotionDirection();
-    bool isUnderwater();
-    double getGroundFriction();
+    EStatus isUnderwater();
+    float getGroundFriction();
     bool checkInWater();
-    int getStatus();
+    EStatus getStatus();
     const SoundEvent* getPaddleSound();
     bool getIsSinking();
     void tickLerp();
     void setPaddleState(bool left, bool right);
-    double findBlockHeightOnPlane(const AABB* box, float& height, BlockPos& pos);
-    double getWaterLevelAbove();
+    bool findBlockHeightOnPlane(const AABB* box, float& height, BlockPos& pos);
+    float getWaterLevelAbove();
     void floatBoat();
     void controlBoat();
     bool getPaddleState(int paddle);
     void setIsSinking(bool sinking);
     void tickBubbleColumn();
     virtual void tick();
-    double getRowingTime(int paddle, float partialTicks);
+    float getRowingTime(int paddle, float partialTicks);
     void clampRotation(boost::shared_ptr<Entity> passenger);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
     virtual void onPassengerTurned(boost::shared_ptr<Entity> passenger);
@@ -81,16 +89,16 @@ public:
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned int GetHitTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual void checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos);
-    void setDamage(float damage);
-    double getDamage();
-    void setHurtTime(int time);
-    int getHurtTime();
-    double getBubbleAngle(float partialTicks);
-    void setHurtDir(int direction);
-    int getHurtDir();
+    virtual void setDamage(float damage);
+    virtual float getDamage();
+    virtual void setHurtTime(int time);
+    virtual int getHurtTime();
+    float getBubbleAngle(float partialTicks);
+    virtual void setHurtDir(int direction);
+    virtual int getHurtDir();
     virtual bool canAddPassenger(boost::shared_ptr<Entity> entity);
     boost::shared_ptr<Entity> getControllingPassenger();
-    void setInput(bool left, bool right, bool forward, bool backward);
+    void setInput(bool left, bool right, bool up, bool down);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     bool hasPlayerPassenger();
     virtual void tickLeash();
@@ -99,46 +107,40 @@ public:
     bool isOutOfControl();
 
 private:
-    static const EntityDataAccessor<int>* DATA_STATUS;
     static const EntityDataAccessor<int>* DATA_HURT_TIME;
+    static const EntityDataAccessor<int>* DATA_HURT_DIR;
     static const EntityDataAccessor<float>* DATA_DAMAGE;
     static const EntityDataAccessor<int>* DATA_TYPE;
     static const EntityDataAccessor<bool>* DATA_PADDLE_LEFT;
     static const EntityDataAccessor<bool>* DATA_PADDLE_RIGHT;
     static const EntityDataAccessor<int>* DATA_BUBBLE_TIME;
     static const EntityDataAccessor<bool>* DATA_SINKING;
-    int mStatus;
-    int mStatusO;
-    int mUnderwaterTicks;
-    double mWaterLevel;
-    float mGroundFriction;
-    double mWaterScanBase;
-    unsigned char mBubbleColumnActive;
-    unsigned char mBubbleColumnDown;
-    double mRockPhase;
-    int mBubbleTime;
-    int mHurtTime;
-    int mHurtDir;
-    float mDamage;
-    float mBubbleAngle;
-    float mBubbleAngleO;
-    float mBubbleShakeRamp;
+
+    float mPaddlePositions[2];
+    float mInvFriction;
+    int mOutOfControlTicks;
+    float mDeltaRotation;
+    int mLerpSteps;
     double mLerpX;
     double mLerpY;
     double mLerpZ;
     double mLerpYRot;
     double mLerpXRot;
-    int mLerpSteps;
-    bool mPaddleLeft;
-    bool mPaddleRight;
     bool mInputLeft;
     bool mInputRight;
-    bool mInputForward;
-    bool mInputBackward;
-    bool mOutOfControl;
-    bool mSinking;
-    Type mType;
-    AABB* mBoundingBox;
+    bool mInputUp;
+    bool mInputDown;
+    double mWaterLevel;
+    float mLandFriction;
+    EStatus mStatus;
+    EStatus mOldStatus;
+    double mLastYd;
+    bool mIsAboveBubbleColumn;
+    bool mBubbleColumnDirectionIsDown;
+    float mBubbleMultiplier;
+    float mBubbleAngle;
+    float mBubbleAngleO;
+    double mRockPhase;
 };
 
 #endif

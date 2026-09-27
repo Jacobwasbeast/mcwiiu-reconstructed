@@ -4,12 +4,11 @@
 
 WeaponDamageStatTracker::WeaponDamageStatTracker(const StatsUID& statsUID,
                                                  ETrackingType trackingType)
-    : UntypedStatTracker(statsUID)
-    , mWeapon(0, NULL)
+    : StatTracker<Scoreboard::Weapon>(statsUID, Scoreboard::Weapon(0, NULL))
     , mDamageByWeapon()
     , mTrackingType(trackingType)
 {
-    mDamageByWeapon[mWeapon.GetKey()] = 0.0f;
+    mDamageByWeapon[mValue.GetKey()] = 0.0f;
 }
 
 WeaponDamageStatTracker::~WeaponDamageStatTracker()
@@ -37,9 +36,9 @@ void WeaponDamageStatTracker::update(const DamageEvent* damageEvent)
         mDamageByWeapon[weaponKey] = damageEvent->mDamage;
     }
 
-    const unsigned int trackedKey = mWeapon.GetKey();
+    const unsigned int trackedKey = mValue.GetKey();
     if (mDamageByWeapon[weaponKey] >= mDamageByWeapon[trackedKey])
     {
-        mWeapon = damageEvent->mWeapon;
+        mValue = damageEvent->mWeapon;
     }
 }

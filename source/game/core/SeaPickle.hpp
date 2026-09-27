@@ -6,6 +6,8 @@
 
 #include <string>
 
+template <class T> class AbstractProperty;
+
 class BlockPos;
 class BlockState;
 class BlockStateDefinition;
@@ -54,6 +56,9 @@ public:
     virtual void neighborChanged(const BlockState*, Level*, const BlockPos&, Block*, const BlockPos&);
     virtual void tick(Level*, const BlockPos&, const BlockState*, Random*);
     virtual bool canProvideSupport(const BlockState*, const Direction*, EBlockSupportType);
+
+    static AbstractProperty<int>* COUNT;
+    static AbstractProperty<int>* FLANGE;
 };
 
 #endif

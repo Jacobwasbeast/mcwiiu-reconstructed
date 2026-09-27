@@ -15,9 +15,9 @@ public:
     enum eLOCATION
     {
         eLOCATION_NONE = 0,
-        eLOCATION_CLIMBING = 1,
-        eLOCATION_WATER = 2,
-        eLOCATION_FALL = 3
+        eLOCATION_LADDER = 1,
+        eLOCATION_VINES = 2,
+        eLOCATION_WATER = 3
     };
 
     explicit CombatTracker(LivingEntity* mob);

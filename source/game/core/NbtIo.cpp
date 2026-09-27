@@ -14,10 +14,9 @@
 #include "game/data/EndTag.hpp"
 #include "game/data/Tag.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/MemSect.hpp"
 
 #include <string>
-
-void MemSect(int section);
 
 Tag* NbtIo::readUnnamedTag(DataInput* input, int depth)
 {
@@ -46,7 +45,7 @@ CompoundTag* NbtIo::read(DataInput* input)
 {
     Tag* tag = readUnnamedTag(input, 0);
 
-    if (tag->getId() == 10)
+    if (tag->getId() == Tag::TAG_COMPOUND)
     {
         return (CompoundTag*)tag;
     }
@@ -75,7 +74,7 @@ void NbtIo::writeUnnamedTag(Tag* tag, DataOutput* output)
 {
     output->writeByte(tag->getId());
 
-    if (tag->getId() != 0)
+    if (tag->getId() != Tag::TAG_END)
     {
         output->writeUTF(L"");
 

@@ -11,5 +11,10 @@ int XMemCreateCompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, voi
 int XMemCreateDecompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, void**);
 void XMemDestroyCompressionContext(void*);
 void XMemDestroyDecompressionContext(void*);
+void* XMemCpy(void* destination, const void* source, unsigned int count);
+void* XMemSet(void* destination, int value, unsigned int count);
+void* XMemSet128(void* destination, int value, unsigned int count);
+void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
+void XPhysicalFree(void* address);
 
 #endif

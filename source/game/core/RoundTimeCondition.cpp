@@ -36,7 +36,7 @@ unsigned int RoundTimeCondition::GetThreshold(MasterGameMode* gameMode) const
 
 unsigned int RoundTimeCondition::GetTimerID() const
 {
-    return 7;
+    return MasterGameMode::eTimerID_RoundLimit;
 }
 
 bool RoundTimeCondition::ShouldBlock() const

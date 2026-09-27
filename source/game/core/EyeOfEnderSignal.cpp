@@ -1,4 +1,6 @@
 #include "game/core/EyeOfEnderSignal.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -41,7 +43,7 @@ void EyeOfEnderSignal::_init()
     mDropItem = false;
 }
 
-uint64_t EyeOfEnderSignal::signalTo(const BlockPos& pos)
+void EyeOfEnderSignal::signalTo(const BlockPos& pos)
 {
     double dx = static_cast<double>(pos.x) - mX;
     double dz = static_cast<double>(pos.z) - mZ;
@@ -61,7 +63,6 @@ uint64_t EyeOfEnderSignal::signalTo(const BlockPos& pos)
         mTargetY = mY + 8.0;
     }
     mDropItem = mRandom->nextInt(5) > 0;
-    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)) << 32;
 }
 
 void EyeOfEnderSignal::defineSynchedData()
@@ -162,7 +163,7 @@ void EyeOfEnderSignal::tick()
         }
         else
         {
-            mLevel->levelEvent(2003, BlockPos(this), 0);
+            mLevel->levelEvent(LevelEvent::PARTICLES_EYE_OF_ENDER_DEATH, BlockPos(this), 0);
         }
     }
 }
@@ -197,5 +198,5 @@ void EyeOfEnderSignal::create(Level* level)
 
 unsigned long long EyeOfEnderSignal::GetType()
 {
-    return 0x0000000088000004ULL;
+    return EntityType::EYE_OF_ENDER_SIGNAL;
 }

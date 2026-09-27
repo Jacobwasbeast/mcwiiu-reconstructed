@@ -3,8 +3,8 @@
 #include "game/network/INetworkPlayer.hpp"
 #include "game/network/ServerConnection.hpp"
 #include "game/core/ShutdownManager.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
-extern void Sleep(unsigned int milliseconds);
 ServerConnection* Socket::sConnection = NULL;
 static std::deque<unsigned char> gLocalQueues[2];
 static OSFastMutex gLocalMutexes[2];

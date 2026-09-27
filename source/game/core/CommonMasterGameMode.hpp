@@ -26,6 +26,8 @@ class Voteables;
 class ClientPacketListener;
 class CommonMasterGameMode
 {
+    friend class GameStats;
+    friend class PlayerStats;
     friend class PlayersEnteredVolumeCondition;
     friend class ServerGamePacketListenerImpl;
 public:
@@ -39,7 +41,7 @@ public:
     void SetupMiniGameInstance(const MiniGameDef& definition, int variant);
     virtual void OnExitedGame();
     virtual void RestartMapGenerator();
-    virtual unsigned int GetGameModeState() const = 0;
+    virtual EGameModeState GetGameModeState() const = 0;
     virtual Level* GeneratorTargetLevel() const = 0;
     virtual void setChosenThemeWordId(int id);
     virtual bool IsRoundPlaying() const = 0;
@@ -55,10 +57,10 @@ public:
     virtual void OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
     virtual void OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
     virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule);
-    unsigned int GetNextGameMode() const;
+    EMiniGameId GetNextGameMode() const;
     AABB* GetTeamArea(Team* team) const;
-    Team* GetTeamAtPosition(double x, double y, double z, double radius) const;
-    bool HasFallenOffLayer(const double& x, const double& z);
+    Team* GetTeamAtPosition(double x, double y, double z, double margin) const;
+    bool HasFallenOffLayer(const double& previousY, const double& currentY);
     bool IsOnGeneratedLayer(const int& layer, const double& y);
     int GetLayer(const double& y);
     unsigned int GetLayerCount();
@@ -71,11 +73,11 @@ public:
     std::wstring getThemeWordEnglish(int id);
     StringTable* getLocalizedStringTable() const { return mLocalizedStringTable; }
     StringTable* getEnglishStringTable() const { return mEnglishStringTable; }
-    LevelGenerationOptions* getCurrentLevelGenOptions() const;
+    LevelGenerationOptions* getCurrentLevelGenOptions() const { return mCurrentLevelGenOptions; }
     LevelGenerationOptions* getRoundLevelGenOptions() const;
     bool isUsingTrialContent();
     unsigned int CheckpointIDtoSequenceID(int id) const;
-    void setCheckpoints(const std::vector<CheckpointRuleDefinition*>& checkpoints);
+    void setCheckpoints(std::vector<CheckpointRuleDefinition*> checkpoints);
     double getTotalDistance();
     std::vector<double>* getCheckpointDistances();
     void CheckProgress(boost::shared_ptr<Player> player, const std::vector<CheckpointRuleDefinition*>* rules, const std::vector<AABB*>* areas);
@@ -83,52 +85,31 @@ public:
     void CheckCheckpoints(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckTargets(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckPowerups(const std::vector<boost::shared_ptr<Player> >& players);
-    template<class Rule> void CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, const std::vector<Rule*>& rules, void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*));
+    template<class Rule> void CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, std::vector<Rule*>& rules, void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*));
 protected:
-    LevelGenerationOptions* mCurrentLevelGenOptions;
-private:
+    friend class ClientPacketListener;
     LevelGenerationOptions* mNextLevelGenOptions;
+    LevelGenerationOptions* mCurrentLevelGenOptions;
     StringTable* mLocalizedStringTable;
     StringTable* mEnglishStringTable;
-protected:
     RoundInfo mRoundInfo;
-private:
-    unsigned int mState;
-    unsigned int mNextState;
-protected:
     long long mGeneratorSeed;
     float mGeneratorSeedScale;
     MapGenerator* mMapGenerator;
-private:
     OSFastMutex mGeneratorMutex;
-protected:
-    std::vector<AABB*> mTeamAreas;
-protected:
-    std::vector<int> mLayerIds;
-private:
-    unsigned int mChosenThemeWordId;
-protected:
-    friend class ClientPacketListener;
+    std::vector<AABB*> mActiveChunkAreas;
+    std::vector<int> mThemeWordIds;
+    int mChosenThemeWordId;
     Voteables* mVoteables;
-private:
+    std::vector<double> mSequenceDistances;
     std::vector<double> mCheckpointDistances;
-    std::vector<double> mLayerDistances;
-    std::vector<AABB*> mLayerAreas;
-protected:
+    std::vector<AABB*> mPrimaryTargetAreas;
     std::vector<CheckpointRuleDefinition*> mCheckpoints;
-private:
-    unsigned int mCheckpointCount;
-protected:
-    unsigned int mCurrentCheckpoint;
-private:
+    int mRequiredLaps;
     double mTotalDistance;
     bool mDistancesCached;
-    bool mPrimaryTargetActive;
-    bool mUsingTrialContent;
-    bool mBuildOffVotes;
-    unsigned char mFlag0;
-    unsigned char mFlag1;
-    unsigned char mFlag2;
+    int mFinalCheckpointSequenceID;
+    int mSecondaryTargetCounts[3];
 };
 
 #endif

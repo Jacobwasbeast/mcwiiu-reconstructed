@@ -1,5 +1,8 @@
 #include "game/core/File.hpp"
 #include "game/core/StringConversion.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileSystem.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 #include <stdio.h>
 
@@ -43,15 +46,11 @@ std::wstring filenametowstring(const char* filename)
 }
 
 unsigned int GetFileAttributesA(const char* fileName);
-void getFinalFilePath(char (&path)[256], const char* fileName);
 int DeleteFileA(const char* fileName);
-bool CreateDirectoryA(const char* pathName, void* securityAttributes);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 int FindFirstFileA(const char* fileName, _WIN32_FIND_DATAA* findData);
 int FindNextFileA(int findHandle, _WIN32_FIND_DATAA* findData);
-void CloseHandle(int handle);
-unsigned int GetLastError();
 int MoveFileA(const char* existingFileName, const char* newFileName);
 
 int DeleteFileA(const char*)

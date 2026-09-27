@@ -1,4 +1,5 @@
 #include "game/core/GameType.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/Abilities.hpp"
 
 const GameType* GameType::NOT_SET = 0;
@@ -16,9 +17,9 @@ GameType::GameType(int id, const std::wstring& name, const std::wstring& shortNa
 void GameType::staticCtor()
 {
     NOT_SET = new GameType(-1, L"", L"", -1, -1);
-    SURVIVAL = new GameType(0, L"survival", L"s", 0x15AA0E94, (int)0x9BA782A6);
-    CREATIVE = new GameType(1, L"creative", L"c", (int)0xB7C2FCAF, 0x12D696DD);
-    ADVENTURE = new GameType(2, L"adventure", L"a", (int)0xA48E97FA, (int)0xF9915358);
+    SURVIVAL = new GameType(0, L"survival", L"s", IDS_SURVIVAL, (int)IDS_GAMEMODE_SURVIVAL);
+    CREATIVE = new GameType(1, L"creative", L"c", (int)IDS_CREATIVE, IDS_GAMEMODE_CREATIVE);
+    ADVENTURE = new GameType(2, L"adventure", L"a", (int)IDS_ADVENTURE, (int)IDS_GAMEMODE_ADVENTURE);
     SPECTATOR = new GameType(3, L"spectator", L"sp", -1, -1);
     LOBBY = new GameType(4, L"lobby", L"l", -1, -1);
 }

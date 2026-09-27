@@ -17,7 +17,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<bool>* DRAG =
+AbstractProperty<bool>* BubbleColumnSegment::DRAG =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"drag"));
 
 static const int BLOCK_ID_AIR = 0;
@@ -57,7 +57,7 @@ void BubbleColumnSegment::entityInside(Level* level, const BlockPos& pos, const 
                                        const boost::shared_ptr<Entity>& entity)
 {
     const BlockState* aboveState = level->getBlockState(entity->mTickCache, pos.above());
-    if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::AIR)
+    if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air)
     {
         entity->onAboveBubbleCol(state->getValue(DRAG));
 
@@ -142,8 +142,8 @@ bool BubbleColumnSegment::addBubbleColumnSegment(Level* level, const BlockPos& p
     {
         const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState();
         TypedBoxed<bool> drag(getFlowDownward(level->getBlockState(pos)));
-        level->setBlock(above, bubbleState->setBoxedValue(DRAG, &drag), 2, false);
-        level->setExtraBlock(above, Blocks::FLOWING_WATER->defaultBlockState(), 2, false);
+        level->setBlock(above, bubbleState->setBoxedValue(DRAG, &drag), Block::UPDATE_CLIENTS, false);
+        level->setExtraBlock(above, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         return true;
     }
 
@@ -158,7 +158,7 @@ void BubbleColumnSegment::tick(Level* level, const BlockPos& pos, const BlockSta
     }
     else
     {
-        level->setBlockAndUpdate(pos, Blocks::WATER->defaultBlockState());
+        level->setBlockAndUpdate(pos, Blocks::water->defaultBlockState());
         level->neighborChanged(pos, level->getBlock(pos), pos);
     }
 }
@@ -169,7 +169,7 @@ void BubbleColumnSegment::RectifyBubbleFlow(Level* level, const BlockPos& pos, b
     {
         const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState();
         TypedBoxed<bool> drag(down);
-        level->setBlock(pos, bubbleState->setBoxedValue(DRAG, &drag), 2, false);
+        level->setBlock(pos, bubbleState->setBoxedValue(DRAG, &drag), Block::UPDATE_CLIENTS, false);
 
         BlockPos above = pos.above();
         if (level->getBlockId(above.x, above.y, above.z) == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
@@ -189,7 +189,7 @@ void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, con
     if (!state->getValue(DRAG))
     {
         const BlockState* aboveState = level->getBlockState(pos.above());
-        if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::AIR
+        if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
             || level->mRandom->nextInt(4) == 0)
         {
             level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE, pos.x + 0.5, (double)pos.y,
@@ -213,7 +213,7 @@ void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, con
     else
     {
         const BlockState* aboveState = level->getBlockState(pos.above());
-        if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::AIR
+        if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
             || level->mRandom->nextInt(3) == 0)
         {
             level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8,
@@ -258,7 +258,7 @@ bool BubbleColumnSegment::canSurvive(Level* level, const BlockPos& pos, const Bl
             {
                 const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState();
                 TypedBoxed<bool> drag(down);
-                level->setBlock(pos, bubbleState->setBoxedValue(DRAG, &drag), 2, false);
+                level->setBlock(pos, bubbleState->setBoxedValue(DRAG, &drag), Block::UPDATE_CLIENTS, false);
             }
 
             BlockPos above = pos.above();
@@ -312,7 +312,7 @@ EBlockFaceShape BubbleColumnSegment::getBlockFaceShape(LevelSource* levelSource,
 
 EBlockRenderShape BubbleColumnSegment::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(-1);
+    return BLOCK_RENDER_INVISIBLE;
 }
 
 const BlockState* BubbleColumnSegment::getBlockState(int data)

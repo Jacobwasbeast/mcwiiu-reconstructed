@@ -1,9 +1,14 @@
 #include "game/core/Dolphin.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <typeinfo>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/item/Item.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
@@ -178,7 +183,7 @@ unsigned int Dolphin::GetInteractTooltip(const EntityTooltipDataHolder& tooltipD
 {
     not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
     if (!item->isEmpty() && isItemABribingFish(item))
-        return 0x82f8d90fU;
+        return IDS_TOOLTIPS_FEED;
     return AgableMob::GetInteractTooltip(tooltipData);
 }
 
@@ -197,10 +202,10 @@ void Dolphin::readAdditionalSaveData(CompoundTag* tag)
 void Dolphin::registerGoals()
 {
     unsigned long long* swimWithMobTypes = new unsigned long long[1];
-    swimWithMobTypes[0] = 0x0C800000ULL;
+    swimWithMobTypes[0] = EntityType::PLAYER;
     unsigned long long* hurtByTargetTypes = new unsigned long long[2];
-    hurtByTargetTypes[0] = 0x5D544000ULL;
-    hurtByTargetTypes[1] = 0x5D544001ULL;
+    hurtByTargetTypes[0] = EntityType::GUARDIAN;
+    hurtByTargetTypes[1] = EntityType::ELDER_GUARDIAN;
 
     mGoalSelector.addGoal(0, new BreathAirGoal(this), true);
     mGoalSelector.addGoal(0, new MoveToWaterGoal(this, 1.0, 15, 5, 0.5), true);
@@ -238,14 +243,35 @@ bool Dolphin::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
     if (item->isEmpty() || !isItemABribingFish(item))
         return AgableMob::mobInteract(player, hand);
-    if (!mLevel->mIsClientSide) mTreasureGoal->setBribed();
-    if (!player->isCreative()) item->shrink(1);
+
+    if (!mLevel->mIsClientSide)
+    {
+        mTreasureGoal->setBribed();
+        playSound(SoundEvents::DOLPHIN_EAT, 1.0f, 1.0f);
+        player->awardStat(GenericStats::echolocation(), GenericStats::param_echolocation());
+    }
+
+    int fishId = Item::getId(Items::fish);
+    for (int i = 0; i < 7; ++i)
+    {
+        const double xa = mRandom->nextGaussian() * 0.02;
+        const double ya = mRandom->nextGaussian() * 0.02;
+        const double za = mRandom->nextGaussian() * 0.02;
+        const float xOffset = mRandom->nextFloat() * mBbWidth * 2.0f;
+        const float yOffset = mRandom->nextFloat() * mBbHeight;
+        const float zOffset = mRandom->nextFloat() * mBbWidth * 2.0f;
+        mLevel->addParticle(PARTICLE_ICON_CRACK, mX + xOffset - mBbWidth, mY + 0.5 + yOffset, mZ + zOffset - mBbWidth,
+                            xa, ya, za, arrayWithLength<int>(&fishId, 1));
+    }
+
+    if (!player->mAbilities.mInstabuild)
+        item->shrink(1);
     return true;
 }
 
 bool Dolphin::canHoldItem(not_null_ptr<ItemInstance> item)
 {
-    if (item->getItem() == Items::fish && isBaby() && isPassenger()) return false;
+    if (item->getItem() == Items::egg && isBaby() && isPassenger()) return false;
     return Mob::canHoldItem(item);
 }
 
@@ -256,5 +282,5 @@ const SoundEvent* Dolphin::getAmbientSound() { return isInWater() ? SoundEvents:
 const SoundEvent* Dolphin::getSwimSound() { return SoundEvents::DOLPHIN_SWIM; }
 const SoundEvent* Dolphin::getSwimSplashSound() { return SoundEvents::DOLPHIN_SPLASH; }
 bool Dolphin::generatesBubbles() { return false; }
-unsigned long long Dolphin::GetType() { return 0x0d602001ULL; }
+unsigned long long Dolphin::GetType() { return EntityType::DOLPHIN; }
 void Dolphin::create(Level* level) { new Dolphin(level); }

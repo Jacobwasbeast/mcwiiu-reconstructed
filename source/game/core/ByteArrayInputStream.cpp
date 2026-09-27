@@ -1,6 +1,6 @@
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/XMem.hpp"
 
-void* XMemCpy(void* destination, const void* source, unsigned int size);
 
 ByteArrayInputStream::ByteArrayInputStream(arrayWithLength<unsigned char> data)
     : mCount(data.length), mMark(0), mPosition(0)

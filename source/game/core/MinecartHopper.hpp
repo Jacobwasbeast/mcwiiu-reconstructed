@@ -52,12 +52,12 @@ public:
     virtual bool interact(const boost::shared_ptr<Player>& player,
                           InteractionHand::EInteractionHand hand);
     virtual void activateMinecart(int x, int y, int z, bool powered);
-    bool isEnabled();
-    void setEnabled(bool enabled);
+    virtual bool isEnabled();
+    virtual void setEnabled(bool enabled);
     void setCooldown(int cooldown);
     virtual bool isOnCooldown();
     virtual void tick();
-    bool suckInItems();
+    virtual bool suckInItems();
     virtual void destroy(const DamageSource* source);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);

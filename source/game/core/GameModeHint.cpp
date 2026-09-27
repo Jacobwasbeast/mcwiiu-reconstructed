@@ -4,7 +4,7 @@ GameModeHint::GameModeHint(eTutorial_Hint hint, Tutorial* tutorial,
                            int descriptionId, eTutorial_GameMode* gameModesValue,
                            unsigned int gameModeCountValue, bool allowFade,
                            int minimumDisplayTime)
-    : TutorialHint(hint, tutorial, descriptionId, (eHintType)9, true, allowFade,
+    : TutorialHint(hint, tutorial, descriptionId, HINT_GAME_MODE, true, allowFade,
                    minimumDisplayTime),
       gameModes(gameModesValue), gameModeCount(gameModeCountValue)
 {

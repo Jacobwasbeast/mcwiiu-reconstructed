@@ -1,4 +1,5 @@
 #include "game/core/RepairResultSlot.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/item/ItemInstance.hpp"
 #include "game/item/RepairContainer.hpp"
@@ -79,19 +80,19 @@ not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> pl
         if (damage > 2)
         {
             mMenu->mLevel->removeBlock(mPosition);
-            mMenu->mLevel->levelEvent(1029, mPosition, 0);
+            mMenu->mLevel->levelEvent(LevelEvent::SOUND_ANVIL_BROKEN, mPosition, 0);
         }
         else
         {
             TypedBoxed<int> damageValue(damage);
             const BlockState* damagedState = state->setBoxedValue(AnvilBlock::DAMAGE, &damageValue);
-            mMenu->mLevel->setBlock(mPosition, damagedState, 2, false);
-            mMenu->mLevel->levelEvent(1030, mPosition, 0);
+            mMenu->mLevel->setBlock(mPosition, damagedState, Block::UPDATE_CLIENTS, false);
+            mMenu->mLevel->levelEvent(LevelEvent::SOUND_ANVIL_USED, mPosition, 0);
         }
     }
     else if (!mMenu->mLevel->mIsClientSide)
     {
-        mMenu->mLevel->levelEvent(1030, mPosition, 0);
+        mMenu->mLevel->levelEvent(LevelEvent::SOUND_ANVIL_USED, mPosition, 0);
     }
 
     return item;

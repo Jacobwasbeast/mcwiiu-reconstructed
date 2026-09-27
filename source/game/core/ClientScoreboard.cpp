@@ -1,4 +1,5 @@
 #include "game/core/ClientScoreboard.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/minigame/GameMedal.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -157,7 +158,7 @@ int ClientScoreboard::GetActivePlayerCount(EMiniGameId miniGameId)
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         if (miniGame != NULL)
         {
-            miniGameId = static_cast<EMiniGameId>(miniGame->GetId());
+            miniGameId = miniGame->GetId();
         }
     }
 
@@ -252,7 +253,7 @@ std::wstring ClientScoreboard::GetKiller(const StatsUID& suid, int round, int li
             return killer;
         }
     }
-    return L10N::GetString(0xfa198c24);
+    return L10N::GetString(IDS_MG_YOURSELF);
 }
 
 std::wstring ClientScoreboard::GetNemesis(const StatsUID& suid)
@@ -272,7 +273,7 @@ std::wstring ClientScoreboard::GetNemesis(const StatsUID& suid)
             }
         }
     }
-    std::wstring best = L10N::GetString(0xfa198c24);
+    std::wstring best = L10N::GetString(IDS_MG_YOURSELF);
     int bestCount = 0;
     boost::unordered_map<std::wstring, int>::iterator it = killCounts.begin();
     for (; it != killCounts.end(); ++it)

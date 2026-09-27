@@ -37,7 +37,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual void tick();
-    MinecartMobSpawner* getSpawner();
+    virtual MinecartMobSpawner* getSpawner();
     virtual unsigned long long GetType();
 
 private:

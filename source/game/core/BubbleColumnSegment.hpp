@@ -3,6 +3,7 @@
 
 #include "game/world/block/Block.hpp"
 
+template <class T> class AbstractProperty;
 class BlockPos;
 class BlockState;
 class BlockStateDefinition;
@@ -16,6 +17,8 @@ class Random;
 class BubbleColumnSegment : public Block
 {
 public:
+    static AbstractProperty<bool>* DRAG;
+
     BubbleColumnSegment(Material* material);
     virtual ~BubbleColumnSegment();
 

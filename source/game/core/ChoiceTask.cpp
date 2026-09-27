@@ -39,12 +39,12 @@ void ChoiceTask::sendTelemetry()
         return;
     }
 
-    if (telemetryChallenge == static_cast<ETelemetryChallenges>(1))
+    if (telemetryChallenge == eTelemetryChallenges_TutorialStart)
     {
         tutorial->getCompleted(386);
         tutorial->setCompleted(386);
     }
-    else if (telemetryChallenge == static_cast<ETelemetryChallenges>(2))
+    else if (telemetryChallenge == eTelemetryChallenges_CraftingChoice)
     {
         tutorial->getCompleted(387);
         tutorial->setCompleted(387);

@@ -1,4 +1,5 @@
 #include "game/core/Giant.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
@@ -25,7 +26,7 @@ void Giant::create(Level* level)
 
 void Giant::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D540042ULL);
+    Mob::addDataWalkers(fixer, EntityType::GIANT);
 }
 
 double Giant::getEyeHeight()
@@ -53,5 +54,5 @@ ResourceLocation* Giant::getDefaultLootTable()
 
 unsigned long long Giant::GetType()
 {
-    return 0x000000005D540042ULL;
+    return EntityType::GIANT;
 }

@@ -3,6 +3,8 @@
 
 #include "game/core/CoralFan.hpp"
 
+template <class T> class AbstractProperty;
+
 class BlockPos;
 class BlockState;
 class BlockStateDefinition;
@@ -32,10 +34,11 @@ public:
     virtual void checkAlive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
+
+    static AbstractProperty<int>* VARIANT;
+    static AbstractProperty<int>* DIRECTION;
+    static AbstractProperty<bool>* DEAD;
 };
 
-extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
-extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
-extern AbstractProperty<bool>* CoralFanHang_PROPERTY_3;
 
 #endif

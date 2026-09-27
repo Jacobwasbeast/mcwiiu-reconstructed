@@ -1,7 +1,11 @@
 #include "game/core/Minecart.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
-#include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 
 #include "game/core/MinecartChest.hpp"
 #include "game/core/MinecartFurnace.hpp"
@@ -9,23 +13,38 @@
 #include "game/core/MinecartRideable.hpp"
 #include "game/core/MinecartSpawner.hpp"
 #include "game/core/MinecartTNT.hpp"
+#include "game/core/Abilities.hpp"
+#include "game/core/DamageSource.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/PushableBySelector.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-#include "game/entity/mob/SynchedEntityData.hpp"
-#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BaseRailBlock.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/BaseRailBlock.hpp"
-#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/PoweredRailBlock.hpp"
+#include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<float>* Minecart::DATA_ID_DAMAGE = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_DISPLAY_BLOCK = NULL;
@@ -33,6 +52,19 @@ const EntityDataAccessor<int>* Minecart::DATA_ID_DISPLAY_OFFSET = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_TIME = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_DIR = NULL;
 const EntityDataAccessor<bool>* Minecart::DATA_ID_CUSTOM_DISPLAY = NULL;
+
+const int Minecart::EXITS[10][2][3] = {
+    {{0, 0, -1}, {0, 0, 1}},
+    {{-1, 0, 0}, {1, 0, 0}},
+    {{-1, -1, 0}, {1, 0, 0}},
+    {{-1, 0, 0}, {1, -1, 0}},
+    {{0, 0, -1}, {0, -1, 1}},
+    {{0, -1, -1}, {0, 0, 1}},
+    {{0, 0, 1}, {1, 0, 0}},
+    {{0, 0, 1}, {-1, 0, 0}},
+    {{0, 0, -1}, {-1, 0, 0}},
+    {{0, 0, -1}, {1, 0, 0}}
+};
 
 std::wstring Minecart::Type::NAMES[7] = {
     L"MinecartRideable",
@@ -77,49 +109,64 @@ Minecart::Minecart(Level* level, double x, double y, double z) : Entity(level, t
     mXo = x;
     mYo = y;
     mZo = z;
+
+    BlockPos pos(Mth::floor(x), Mth::floor(y), Mth::floor(z));
+    if (BaseRailBlock::isRail(level, pos))
+    {
+        const BlockState* state = level->getBlockState(pos);
+        BaseRailBlock* rail = static_cast<BaseRailBlock*>(state->getBlock());
+        BaseRailBlock::RailShape* shape = state->getValue(rail->getShapeProperty());
+        if (shape == BaseRailBlock::RailShape::NORTH_SOUTH || shape == BaseRailBlock::RailShape::ASCENDING_NORTH
+            || shape == BaseRailBlock::RailShape::ASCENDING_SOUTH)
+        {
+            mYRot = 90.0f;
+            mYRotO = 90.0f;
+        }
+    }
 }
 
 Minecart::~Minecart()
 {
+    operator delete(mReserved);
 }
 
 void Minecart::staticCtor()
 {
-    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
-    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
-    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::FLOAT);
-    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
-    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::INT);
-    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(ENTITY_TYPE_MINECART, 0x08000000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::FLOAT);
+    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
 }
 
 void Minecart::_init()
 {
-    mDamageDirection = 0;
-    mCustomDisplay = 0;
-    mDisplayOffset = 0;
-    mDisplayState = 0;
+    mBlocksBuilding = true;
+    mLerpYd = 0.0;
+    mLerpYRot = 0.0;
+    mLerpXRot = 0.0;
+    mLerpZd = 0.0;
+    mLerpY = 0.0;
+    mLerpXd = 0.0;
+    mInBubbleColumn = false;
+    mFlipped = false;
+    mLerpX = 0.0;
+    mLerpZ = 0.0;
     mLerpSteps = 0;
-    mLerpX = 0.25;
-    mLerpY = 0.25;
-    mLerpZ = 0.25;
-    mLerpXd = 0.25;
-    mLerpYd = 0.25;
-    mLerpZd = 0.25;
-    mLerpYRot = 0.0f;
-    mLerpXRot = 0.0f;
+    setSize(0.98f, 0.7f);
+    mReserved = NULL;
+    mPushedMinecart = false;
+    mCategories |= EntityCategory::eEntityCategory_Minecart;
 }
 
 void Minecart::setPos(double x, double y, double z)
 {
+    double halfWidth = mBbWidth * 0.5f;
     mX = x;
     mY = y;
     mZ = z;
-    if (mBoundingBox != NULL)
-    {
-        double halfWidth = mBbWidth * 0.5;
-        mBoundingBox->set(x - halfWidth, y, z - halfWidth, x + halfWidth, y + mBbHeight, z + halfWidth);
-    }
+    setBoundingBox(AABB::newTemp(x - halfWidth, y, z - halfWidth, x + halfWidth, y + mBbHeight, z + halfWidth));
 }
 
 boost::shared_ptr<Minecart> Minecart::createMinecart(Level* level, double x, double y, double z, const Type* type)
@@ -148,19 +195,19 @@ bool Minecart::makeStepSound()
 
 void Minecart::defineSynchedData()
 {
+    mEntityData->createDateItem(DATA_ID_HURT_TIME, 0);
+    mEntityData->createDateItem(DATA_ID_HURT_DIR, 1);
     mEntityData->createDateItem(DATA_ID_DAMAGE, 0.0f);
     mEntityData->createDateItem(DATA_ID_DISPLAY_BLOCK, 0);
-    mEntityData->createDateItem(DATA_ID_DISPLAY_OFFSET, 0);
-    mEntityData->createDateItem(DATA_ID_HURT_TIME, 0);
-    mEntityData->createDateItem(DATA_ID_HURT_DIR, 6);
+    mEntityData->createDateItem(DATA_ID_DISPLAY_OFFSET, 6);
     mEntityData->createDateItem(DATA_ID_CUSTOM_DISPLAY, false);
 }
 
 AABB* Minecart::getCollideAgainstBox(boost::shared_ptr<Entity> entity)
 {
-    if (entity)
+    if (entity->isPushable(shared_from_this()))
     {
-        return entity->getCollideBox();
+        return entity->mBoundingBox;
     }
     return NULL;
 }
@@ -172,40 +219,72 @@ AABB* Minecart::getCollideBox()
 
 AABB* Minecart::getBoundingBoxForCulling()
 {
+    AABB* box = mBoundingBox;
     if (!hasCustomDisplay())
     {
-        return AABB::newTemp(mBoundingBox);
+        return AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX, box->mMaxY, box->mMaxZ);
     }
-
-    const int offset = getDisplayOffset();
-    const double growAmount = (double)Mth::abs(offset) * 0.0625;
-    return mBoundingBox->grow(growAmount);
+    return box->grow(std::abs(getDisplayOffset()) * 0.0625);
 }
 
 bool Minecart::isPushable(boost::shared_ptr<Entity> entity)
 {
-    return !mRemoved && entity.get() != this;
+    return true;
 }
 
 double Minecart::getRideHeight()
 {
-    return mBbHeight * 0.5;
+    return 0.0;
 }
 
 bool Minecart::hurt(const DamageSource* source, float damage)
 {
+    if (mLevel->mIsClientSide || mRemoved)
+    {
+        return true;
+    }
     if (isInvulnerableTo(source))
     {
         return false;
     }
+
+    if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
+    {
+        boost::shared_ptr<Entity> attacker = source->getDirectEntity();
+        if (Entity::instanceof(attacker, EntityType::PLAYER)
+            && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
+        {
+            return false;
+        }
+    }
+
     setHurtDir(-getHurtDir());
     setHurtTime(10);
     markHurt();
-    setDamage(damage * 10.0f + getDamage());
-    if (getDamage() > 40.0f)
+    setDamage(getDamage() + damage * 10.0f);
+    hasPassenger(source->getEntity());
+
+    bool creativePlayer = false;
+    if (source->getEntity() != NULL)
+    {
+        boost::shared_ptr<Entity> entity = source->getEntity();
+        if (Entity::instanceof(entity, EntityType::PLAYER))
+        {
+            creativePlayer = boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
+        }
+    }
+
+    if (creativePlayer || getDamage() > 40.0f)
     {
         ejectPassengers();
-        destroy(source);
+        if (creativePlayer && !hasCustomName())
+        {
+            remove();
+        }
+        else
+        {
+            destroy(source);
+        }
     }
     return true;
 }
@@ -213,7 +292,7 @@ bool Minecart::hurt(const DamageSource* source, float damage)
 void Minecart::destroy(const DamageSource* source)
 {
     remove();
-    if (!mLevel->getGameRules()->getBoolean(6))
+    if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
     {
         return;
     }
@@ -230,7 +309,7 @@ void Minecart::animateHurt()
 {
     setHurtDir(-getHurtDir());
     setHurtTime(10);
-    setDamage(getDamage() * 10.0f + getDamage());
+    setDamage(getDamage() + getDamage() * 10.0f);
 }
 
 bool Minecart::isPickable()
@@ -240,24 +319,22 @@ bool Minecart::isPickable()
 
 const Direction* Minecart::getMotionDirection()
 {
-    const Direction* direction = getDirection();
-    if (mDamageDirection != 0)
+    if (mFlipped)
     {
-        return direction->getOpposite()->getClockWise();
+        return getDirection()->getOpposite()->getClockWise();
     }
-    return direction->getClockWise();
+    return getDirection()->getClockWise();
 }
 
 void Minecart::onAboveBubbleCol(bool down)
 {
-    if (down)
+    if (!down && mLevel->getBlockState(BlockPos(mX, mY, mZ))->getMaterial() == Material::AIR)
     {
-        mYd += 0.007;
+        mYd += 0.04f;
+        return;
     }
-    else
-    {
-        mYd -= 0.007;
-    }
+    Entity::onAboveBubbleCol(down);
+    mYd *= 0.8f;
 }
 
 bool Minecart::shouldTick()
@@ -267,53 +344,186 @@ bool Minecart::shouldTick()
 
 void Minecart::tick()
 {
-    if (getHurtTime() > 0)
+    PIXBeginNamedEvent(0.0f, "Minecart tick");
+    for (int pass = 0; pass < 2; ++pass)
     {
-        setHurtTime(getHurtTime() - 1);
-    }
-    if (getDamage() > 0.0f)
-    {
-        setDamage(getDamage() - 1.0f);
-    }
-    baseTick();
-    if (mLerpSteps > 0)
-    {
-        mX += (mLerpX - mX) / mLerpSteps;
-        mY += (mLerpY - mY) / mLerpSteps;
-        mZ += (mLerpZ - mZ) / mLerpSteps;
-        --mLerpSteps;
-        mYRot = mLerpYRot;
-        mXRot = mLerpXRot;
-        lerpMotion(mLerpXd, mLerpYd, mLerpZd);
-        return;
-    }
+        if (getHurtTime() > 0)
+        {
+            setHurtTime(getHurtTime() - 1);
+        }
+        if (getDamage() > 0.0f)
+        {
+            setDamage(getDamage() - 1.0f);
+        }
+        if (mY < -64.0)
+        {
+            outOfWorld();
+        }
 
-    BlockPos pos(shared_from_this());
-    const BlockState* state = mLevel->getBlockState(pos);
-    if (!BaseRailBlock::isRail(state))
-    {
-        state = mLevel->getBlockState(pos.below());
+        if (!mLevel->mIsClientSide && dynamic_cast<ServerLevel*>(mLevel) != NULL)
+        {
+            MinecraftServer* server = mLevel->getServer();
+            int waitTime = getPortalWaitTime();
+            if (mIsInsidePortal)
+            {
+                if (server->isNetherEnabled())
+                {
+                    if (!isPassenger() && mPortalTime++ >= waitTime)
+                    {
+                        mPortalTime = waitTime;
+                        mPortalCooldown = getDimensionChangingDelay();
+                        int dimension = mLevel->mDimension->getType()->getId() == -1 ? 0 : -1;
+                        changeDimension(dimension);
+                    }
+                    mIsInsidePortal = false;
+                }
+            }
+            else
+            {
+                if (mPortalTime > 0)
+                {
+                    mPortalTime -= 4;
+                }
+                if (mPortalTime < 0)
+                {
+                    mPortalTime = 0;
+                }
+            }
+            if (mPortalCooldown > 0)
+            {
+                --mPortalCooldown;
+            }
+        }
+
+        if (mLevel->mIsClientSide)
+        {
+            if (mLerpSteps > 0)
+            {
+                double x = mX + (mLerpX - mX) / mLerpSteps;
+                double y = mY + (mLerpY - mY) / mLerpSteps;
+                double z = mZ + (mLerpZ - mZ) / mLerpSteps;
+                double yRotDelta = Mth::wrapDegrees(mLerpYRot - mYRot);
+                mYRot += (float)(yRotDelta / mLerpSteps);
+                mXRot = (float)(mXRot + (float)((mLerpXRot - mXRot) / mLerpSteps));
+                --mLerpSteps;
+                setPos(x, y, z);
+                setRot(mYRot, mXRot);
+            }
+            else
+            {
+                setPos(mX, mY, mZ);
+                setRot(mYRot, mXRot);
+            }
+            break;
+        }
+
+        mXo = mX;
+        mYo = mY;
+        mZo = mZ;
+        if (!isNoGravity())
+        {
+            mYd -= 0.04f;
+        }
+
+        int x = Mth::floor(mX);
+        int y = Mth::floor(mY);
+        int z = Mth::floor(mZ);
+        if (BaseRailBlock::isRail(mLevel, BlockPos(x, y - 1, z)))
+        {
+            --y;
+        }
+
+        BlockPos pos(x, y, z);
+        const BlockState* state = mLevel->getBlockState(pos);
         if (BaseRailBlock::isRail(state))
-            pos = pos.below();
-    }
-    if (BaseRailBlock::isRail(state))
-    {
-        moveAlongTrack(pos, state);
-        applyNaturalSlowdown();
-    }
-    else
-    {
-        comeOffTrack();
-        move(eMoverType_Self, mXd, mYd, mZd, false);
-        mYd -= 0.03999999910593033;
-    }
+        {
+            mInBubbleColumn = false;
+            moveAlongTrack(pos, state);
+            if (state->getBlock() == Blocks::activator_rail)
+            {
+                activateMinecart(x, y, z, state->getValue(PoweredRailBlock::POWERED));
+            }
+        }
+        else
+        {
+            BlockPos here(mX, mY, mZ);
+            Material* material = mLevel->getBlockState(here)->getMaterial();
+            Material* materialBelow = mLevel->getBlockState(here.below())->getMaterial();
+            mInBubbleColumn = material == Material::BUBBLE_COLUMN
+                || (material == Material::AIR && materialBelow == Material::BUBBLE_COLUMN);
+            comeOffTrack();
+        }
 
-    if (mXd * mXd + mZd * mZd > 0.0001)
-    {
-        float angle = static_cast<float>(std::atan2(mZd, mXd) * 57.29577951308232);
-        mYRot = angle;
+        checkInsideBlocks();
+        if (isInLava())
+        {
+            lavaHurt();
+            mFallDistance *= 0.5f;
+        }
+
         mXRot = 0.0f;
+        double xDelta = mXo - mX;
+        double zDelta = mZo - mZ;
+        if (xDelta * xDelta + zDelta * zDelta > 0.001)
+        {
+            mYRot = (float)(std::atan2(zDelta, xDelta) * 180.0 / Mth::PI);
+            if (mFlipped)
+            {
+                mYRot += 180.0f;
+            }
+        }
+
+        double rotDelta = Mth::wrapDegrees(mYRot - mYRotO);
+        if (rotDelta < -170.0 || rotDelta >= 170.0)
+        {
+            mYRot += 180.0f;
+            mFlipped = !mFlipped;
+        }
+        setRot(mYRot, mXRot);
+
+        if (getType() == Type::RIDEABLE)
+        {
+            PushableBySelector selector(shared_from_this());
+            std::vector<boost::shared_ptr<Entity> >* entities =
+                mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), &selector, NULL);
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            {
+                boost::shared_ptr<Entity> entity = *it;
+                if (Entity::instanceof(entity, EntityType::PLAYER) || entity->GetType() == EntityType::VILLAGER_GOLEM
+                    || Entity::instanceof(entity, EntityType::MINECART) || entity->GetType() == EntityType::BOAT
+                    || isVehicle() || entity->isPassenger())
+                {
+                    entity->push(shared_from_this());
+                }
+                else
+                {
+                    entity->startRiding(shared_from_this());
+                }
+            }
+        }
+        else
+        {
+            std::vector<boost::shared_ptr<Entity> >* entities =
+                mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), NULL);
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            {
+                boost::shared_ptr<Entity> entity = *it;
+                if (!hasPassenger(entity) && entity->isPushable(shared_from_this())
+                    && Entity::instanceof(entity, EntityType::MINECART))
+                {
+                    boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
+                    minecart->mPushedMinecart = false;
+                    minecart->push(shared_from_this());
+                    if (minecart->mPushedMinecart)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        updateInWaterState();
     }
+    PIXEndNamedEvent();
 }
 
 double Minecart::getMaxSpeed()
@@ -327,119 +537,383 @@ void Minecart::activateMinecart(int x, int y, int z, bool powered)
 
 void Minecart::comeOffTrack()
 {
-    const double maxSpeed = getMaxSpeed();
-    mXd = Mth::clamp(mXd, -maxSpeed, maxSpeed);
-    mZd = Mth::clamp(mZd, -maxSpeed, maxSpeed);
+    double maxSpeed = getMaxSpeed();
+    double xd = Mth::clamp(mXd, -maxSpeed, maxSpeed);
+    double zd = Mth::clamp(mZd, -maxSpeed, maxSpeed);
     if (mOnGround)
     {
-        mXd *= 0.5;
-        mZd *= 0.5;
+        xd *= 0.5;
+        zd *= 0.5;
     }
-    lerpMotion(mXd, mYd, mZd);
-    if (!mOnGround && !mCustomDisplay)
+    mXd = xd;
+    mZd = zd;
+    move(eMoverType_Self, mXd, mYd, mZd, false);
+    if (!mOnGround && !mInBubbleColumn)
     {
-        mXd *= 0.949999988079071;
-        mZd *= 0.949999988079071;
+        mXd *= 0.95f;
+        mZd *= 0.95f;
     }
 }
 
 void Minecart::moveAlongTrack(const BlockPos& pos, const BlockState* state)
 {
-    if (state == NULL)
-        return;
+    mFallDistance = 0.0f;
+    Vec3* oldPos = getPos(mX, mY, mZ);
+    mY = pos.y;
 
-    mNoPhysics = false;
-    BaseRailBlock* rail = static_cast<BaseRailBlock*>(state->getBlock());
-    BaseRailBlock::RailShape* shape = static_cast<TypedBoxed<BaseRailBlock::RailShape*>*>(
-        state->getBoxedValue(rail->getShapeProperty()))->getValue();
-    if (shape == NULL)
-        return;
-
-    const int data = shape->getData();
-    double dx = 0.0;
-    double dz = 0.0;
-    double slope = 0.0;
-    switch (data)
+    bool powered = false;
+    bool braking = false;
+    BaseRailBlock* rail = dynamic_cast<BaseRailBlock*>(state->getBlock());
+    if (rail == Blocks::golden_rail)
     {
-    case 0: dx = 0.0; dz = 1.0; break;
-    case 1: dx = 1.0; dz = 0.0; break;
-    case 2: dx = 1.0; dz = 0.0; slope = 1.0; break;
-    case 3: dx = 1.0; dz = 0.0; slope = -1.0; break;
-    case 4: dx = 0.0; dz = 1.0; slope = -1.0; break;
-    case 5: dx = 0.0; dz = 1.0; slope = 1.0; break;
-    case 6: dx = 1.0; dz = 1.0; break;
-    case 7: dx = -1.0; dz = 1.0; break;
-    case 8: dx = -1.0; dz = -1.0; break;
-    case 9: dx = 1.0; dz = -1.0; break;
-    default: return;
+        powered = state->getValue(PoweredRailBlock::POWERED);
+        braking = !powered;
     }
 
-    const double length = std::sqrt(dx * dx + dz * dz);
-    dx /= length;
-    dz /= length;
-    const double along = mXd * dx + mZd * dz;
-    mXd = dx * along;
-    mZd = dz * along;
-    mYd += slope * along * 0.4;
-
-    const double maxSpeed = getMaxSpeed();
-    mXd = Mth::clamp(mXd, -maxSpeed, maxSpeed);
-    mZd = Mth::clamp(mZd, -maxSpeed, maxSpeed);
-    double y = static_cast<double>(pos.y);
-    if (shape->isAscending())
+    const double slopeSpeed = 0.0078125;
+    BaseRailBlock::RailShape* shape = state->getValue(rail->getShapeProperty());
+    switch (shape->getData())
     {
-        if (data == 2 || data == 5)
-            y += (mX - pos.x);
-        else if (data == 3 || data == 4)
-            y += (pos.x + 1.0 - mX);
-        y = std::max(y, static_cast<double>(pos.y));
+    case 2:
+        mXd -= slopeSpeed;
+        ++mY;
+        break;
+    case 3:
+        mXd += slopeSpeed;
+        ++mY;
+        break;
+    case 4:
+        mZd += slopeSpeed;
+        ++mY;
+        break;
+    case 5:
+        mZd -= slopeSpeed;
+        ++mY;
+        break;
+    default:
+        break;
     }
-    setPos(mX, y, mZ);
-    move(eMoverType_Self, mXd, mYd, mZd, false);
+
+    int exits[2][3];
+    std::memcpy(exits, EXITS[shape->getData()], sizeof(exits));
+    double xDir = exits[1][0] - exits[0][0];
+    double zDir = exits[1][2] - exits[0][2];
+    double length = std::sqrt(xDir * xDir + zDir * zDir);
+    if (mXd * xDir + mZd * zDir < 0.0)
+    {
+        xDir = -xDir;
+        zDir = -zDir;
+    }
+
+    double speed = std::sqrt(mXd * mXd + mZd * mZd);
+    if (speed > 2.0)
+    {
+        speed = 2.0;
+    }
+    mXd = speed * xDir / length;
+    mZd = speed * zDir / length;
+
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+    if (!passengers->empty())
+    {
+        boost::shared_ptr<Entity> passenger = passengers->at(0).lock();
+        if (Entity::instanceof(passenger, EntityType::LIVING_ENTITY))
+        {
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
+            if (living->mZza > 0.0 && mXd * mXd + mZd * mZd < 0.01)
+            {
+                float xPush = -std::sin(living->mYRot * Mth::DEG_TO_RAD);
+                float zPush = std::cos(living->mYRot * Mth::DEG_TO_RAD);
+                mXd += xPush * 0.1;
+                mZd += zPush * 0.1;
+                braking = false;
+            }
+        }
+    }
+
+    if (braking)
+    {
+        double brakeSpeed = std::sqrt(mXd * mXd + mZd * mZd);
+        if (brakeSpeed < 0.03)
+        {
+            mXd = 0.0;
+            mYd = 0.0;
+            mZd = 0.0;
+        }
+        else
+        {
+            mXd *= 0.5;
+            mYd *= 0.0;
+            mZd *= 0.5;
+        }
+    }
+
+    double x0 = pos.x + exits[0][0] * 0.5 + 0.5;
+    double z0 = pos.z + exits[0][2] * 0.5 + 0.5;
+    double x1 = pos.x + exits[1][0] * 0.5 + 0.5;
+    double z1 = pos.z + exits[1][2] * 0.5 + 0.5;
+    xDir = x1 - x0;
+    zDir = z1 - z0;
+    double progress;
+    if (xDir == 0.0)
+    {
+        progress = mZ - pos.z;
+    }
+    else if (zDir == 0.0)
+    {
+        progress = mX - pos.x;
+    }
+    else
+    {
+        progress = ((mX - x0) * xDir + (mZ - z0) * zDir) * 2.0;
+    }
+    mX = x0 + xDir * progress;
+    mZ = z0 + zDir * progress;
+    setPos(mX, mY, mZ);
+
+    double xd = mXd;
+    double zd = mZd;
+    if (isVehicle())
+    {
+        xd *= 0.75;
+        zd *= 0.75;
+    }
+    double maxSpeed = getMaxSpeed();
+    move(eMoverType_Self, Mth::clamp(xd, -maxSpeed, maxSpeed), 0.0, Mth::clamp(zd, -maxSpeed, maxSpeed), false);
+
+    if (exits[0][1] != 0 && Mth::floor(mX) - pos.x == exits[0][0] && Mth::floor(mZ) - pos.z == exits[0][2])
+    {
+        setPos(mX, mY + exits[0][1], mZ);
+    }
+    else if (exits[1][1] != 0 && Mth::floor(mX) - pos.x == exits[1][0] && Mth::floor(mZ) - pos.z == exits[1][2])
+    {
+        setPos(mX, mY + exits[1][1], mZ);
+    }
+
+    applyNaturalSlowdown();
+
+    Vec3* newPos = getPos(mX, mY, mZ);
+    if (newPos != NULL && oldPos != NULL)
+    {
+        double slopeBoost = (oldPos->y - newPos->y) * 0.05;
+        double currentSpeed = std::sqrt(mXd * mXd + mZd * mZd);
+        if (currentSpeed > 0.0)
+        {
+            mXd = mXd / currentSpeed * (currentSpeed + slopeBoost);
+            mZd = mZd / currentSpeed * (currentSpeed + slopeBoost);
+        }
+        setPos(mX, newPos->y, mZ);
+    }
+
+    int xBlock = Mth::floor(mX);
+    int zBlock = Mth::floor(mZ);
+    if (xBlock != pos.x || zBlock != pos.z)
+    {
+        double currentSpeed = std::sqrt(mXd * mXd + mZd * mZd);
+        mXd = currentSpeed * (xBlock - pos.x);
+        mZd = currentSpeed * (zBlock - pos.z);
+    }
+
+    if (powered)
+    {
+        double currentSpeed = std::sqrt(mXd * mXd + mZd * mZd);
+        if (currentSpeed > 0.01)
+        {
+            const double boost = 0.06;
+            mXd += mXd / currentSpeed * boost;
+            mZd += mZd / currentSpeed * boost;
+        }
+        else if (shape == BaseRailBlock::RailShape::EAST_WEST)
+        {
+            if (mLevel->getBlockState(pos.west())->isSolidBlockingCubeAndNotSignalSource())
+            {
+                mXd = 0.02;
+            }
+            else if (mLevel->getBlockState(pos.east())->isSolidBlockingCubeAndNotSignalSource())
+            {
+                mXd = -0.02;
+            }
+        }
+        else if (shape == BaseRailBlock::RailShape::NORTH_SOUTH)
+        {
+            if (mLevel->getBlockState(pos.north())->isSolidBlockingCubeAndNotSignalSource())
+            {
+                mZd = 0.02;
+            }
+            else if (mLevel->getBlockState(pos.south())->isSolidBlockingCubeAndNotSignalSource())
+            {
+                mZd = -0.02;
+            }
+        }
+    }
 }
 
 void Minecart::applyNaturalSlowdown()
 {
-    double factor = isVehicle() ? 0.997 : 0.96;
-    mXd *= factor;
-    mZd *= factor;
+    if (isVehicle())
+    {
+        mXd *= 0.997;
+        mYd *= 0.0;
+        mZd *= 0.997;
+    }
+    else
+    {
+        mXd *= 0.96;
+        mYd *= 0.0;
+        mZd *= 0.96;
+    }
 }
 
 Vec3* Minecart::getPosOffs(double x, double y, double z, double distance)
 {
-    return new Vec3(mX + x * distance, mY + y * distance, mZ + z * distance);
+    int xBlock = Mth::floor(x);
+    int yBlock = Mth::floor(y);
+    int zBlock = Mth::floor(z);
+    if (BaseRailBlock::isRail(mLevel, BlockPos(xBlock, yBlock - 1, zBlock)))
+    {
+        --yBlock;
+    }
+
+    const BlockState* state = mLevel->getBlockState(BlockPos(xBlock, yBlock, zBlock));
+    if (!BaseRailBlock::isRail(state))
+    {
+        return NULL;
+    }
+
+    BaseRailBlock* rail = dynamic_cast<BaseRailBlock*>(state->getBlock());
+    BaseRailBlock::RailShape* shape = state->getValue(rail->getShapeProperty());
+    y = yBlock;
+    if (shape->isAscending())
+    {
+        y = yBlock + 1;
+    }
+
+    int exits[2][3];
+    std::memcpy(exits, EXITS[shape->getData()], sizeof(exits));
+    double xDir = exits[1][0] - exits[0][0];
+    double zDir = exits[1][2] - exits[0][2];
+    double length = std::sqrt(xDir * xDir + zDir * zDir);
+    xDir /= length;
+    zDir /= length;
+    x += xDir * distance;
+    z += zDir * distance;
+
+    if (exits[0][1] != 0 && Mth::floor(x) - xBlock == exits[0][0] && Mth::floor(z) - zBlock == exits[0][2])
+    {
+        y += exits[0][1];
+    }
+    else if (exits[1][1] != 0 && Mth::floor(x) - xBlock == exits[1][0] && Mth::floor(z) - zBlock == exits[1][2])
+    {
+        y += exits[1][1];
+    }
+    return getPos(x, y, z);
 }
 
 Vec3* Minecart::getPos(double x, double y, double z)
 {
-    return new Vec3(mX + x, mY + y, mZ + z);
+    int xBlock = Mth::floor(x);
+    int yBlock = Mth::floor(y);
+    int zBlock = Mth::floor(z);
+    if (BaseRailBlock::isRail(mLevel, BlockPos(xBlock, yBlock - 1, zBlock)))
+    {
+        --yBlock;
+    }
+
+    const BlockState* state = mLevel->getBlockState(BlockPos(xBlock, yBlock, zBlock));
+    if (!BaseRailBlock::isRail(state))
+    {
+        return NULL;
+    }
+
+    BaseRailBlock* rail = dynamic_cast<BaseRailBlock*>(state->getBlock());
+    BaseRailBlock::RailShape* shape = state->getValue(rail->getShapeProperty());
+    int exits[2][3];
+    std::memcpy(exits, EXITS[shape->getData()], sizeof(exits));
+
+    double x0 = xBlock + 0.5 + exits[0][0] * 0.5;
+    double y0 = yBlock + 0.0625 + exits[0][1] * 0.5;
+    double z0 = zBlock + 0.5 + exits[0][2] * 0.5;
+    double x1 = xBlock + 0.5 + exits[1][0] * 0.5;
+    double y1 = yBlock + 0.0625 + exits[1][1] * 0.5;
+    double z1 = zBlock + 0.5 + exits[1][2] * 0.5;
+    double xDir = x1 - x0;
+    double yDir = (y1 - y0) * 2.0;
+    double zDir = z1 - z0;
+
+    double progress;
+    if (xDir == 0.0)
+    {
+        progress = z - zBlock;
+    }
+    else if (zDir == 0.0)
+    {
+        progress = x - xBlock;
+    }
+    else
+    {
+        progress = ((x - x0) * xDir + (z - z0) * zDir) * 2.0;
+    }
+
+    x = x0 + xDir * progress;
+    y = y0 + yDir * progress;
+    z = z0 + zDir * progress;
+    if (yDir < 0.0)
+    {
+        y += 1.0;
+    }
+    if (yDir > 0.0)
+    {
+        y += 0.5;
+    }
+    return Vec3::newTemp(x, y, z);
 }
 
 void Minecart::addAdditonalSaveData(CompoundTag* tag)
 {
-    if (tag != NULL && hasCustomDisplay())
+    if (hasCustomDisplay())
     {
         tag->putBoolean(L"CustomDisplayTile", true);
-        tag->putInt(L"DisplayData", mDisplayState);
+        const BlockState* state = getDisplayBlockState();
+        ResourceLocation location = Block::blockRegistry->getKey(state->getBlock());
+        tag->putString(L"DisplayTile", location.toString());
+        tag->putInt(L"DisplayData", state->getBlock()->convertBlockStateToLegacyData(state));
         tag->putInt(L"DisplayOffset", getDisplayOffset());
     }
 }
 
 void Minecart::readAdditionalSaveData(CompoundTag* tag)
 {
-    if (tag != NULL && tag->getBoolean(L"CustomDisplayTile"))
+    if (tag->getBoolean(L"CustomDisplayTile"))
     {
-        if (tag->contains(L"DisplayData", 8))
+        Block* block;
+        if (tag->contains(L"DisplayTile", Tag::TAG_STRING))
         {
-            mDisplayState = static_cast<unsigned char>(tag->getInt(L"DisplayData"));
+            block = Block::byString(tag->getString(L"DisplayTile"));
+        }
+        else
+        {
+            block = Block::byId(tag->getInt(L"DisplayTile"));
+        }
+
+        int data = tag->getInt(L"DisplayData");
+        if (block == NULL)
+        {
+            setDisplayBlockState(Blocks::air->defaultBlockState());
+        }
+        else
+        {
+            setDisplayBlockState(block->getBlockState(data));
         }
         setDisplayOffset(tag->getInt(L"DisplayOffset"));
-        setCustomDisplay(true);
     }
 }
 
 void Minecart::push(boost::shared_ptr<Entity> entity)
 {
+    if (mLevel->mIsClientSide)
+    {
+        return;
+    }
     if (entity->mNoPhysics || mNoPhysics)
     {
         return;
@@ -448,36 +922,96 @@ void Minecart::push(boost::shared_ptr<Entity> entity)
     {
         return;
     }
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin(); it != mPassengers.end(); ++it)
+    for (unsigned int i = 0; i < mPassengers.size(); ++i)
     {
-        boost::shared_ptr<Entity> passenger = it->lock();
-        if (passenger && passenger->hasPassenger(entity))
+        boost::shared_ptr<Entity> passenger = mPassengers.at(i).lock();
+        if (passenger != NULL && passenger->hasPassenger(entity))
         {
             return;
         }
     }
 
-    double dx = entity->mX - mX;
-    double dz = entity->mZ - mZ;
-    double distanceSq = dx * dx + dz * dz;
+    double xDistance = entity->mX - mX;
+    double zDistance = entity->mZ - mZ;
+    double distanceSq = xDistance * xDistance + zDistance * zDistance;
     if (distanceSq < 0.0001)
     {
         return;
     }
-    double distance = sqrt(distanceSq);
-    double factor = 1.0 / distance;
-    if (factor > 1.0)
-    {
-        factor = 1.0;
-    }
-    double pushScale = factor * 0.1 * (1.0 - mPushthrough) * 0.5;
-    double pushX = (dx / distance) * pushScale;
-    double pushZ = (dz / distance) * pushScale;
 
-    if ((entity->GetType() & 0x0a800000ULL) != 0x0a800000ULL)
+    double distance = std::sqrt(distanceSq);
+    double scale = 1.0 / distance;
+    if (scale > 1.0)
     {
-        Entity::push(-pushX, 0.0, -pushZ);
-        entity->Entity::push(pushX * 0.25, 0.0, pushZ * 0.25);
+        scale = 1.0;
+    }
+    double xPush = xDistance / distance * scale * 0.1f * (1.0f - mPushthrough) * 0.5;
+    double zPush = zDistance / distance * scale * 0.1f * (1.0f - mPushthrough) * 0.5;
+
+    if (!Entity::instanceof(entity, EntityType::MINECART))
+    {
+        push(-xPush, 0.0, -zPush);
+        entity->push(xPush * 0.25, 0.0, zPush * 0.25);
+        return;
+    }
+
+    double xOffset = entity->mX - mX;
+    double zOffset = entity->mZ - mZ;
+    Vec3* toEntity = Vec3::newTemp(xOffset, 0.0, zOffset)->normalize();
+    Vec3* facing = Vec3::newTemp(std::cos(mYRot * Mth::DEG_TO_RAD), 0.0, std::sin(mYRot * Mth::DEG_TO_RAD))->normalize();
+    if (std::abs(toEntity->dot(facing)) < 0.8)
+    {
+        return;
+    }
+
+    double xd = entity->mXd + mXd;
+    double zd = entity->mZd + mZd;
+    boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
+    if (minecart != NULL && minecart->getType() == Type::FURNACE && getType() != Type::FURNACE)
+    {
+        mXd *= 0.2f;
+        mZd *= 0.2f;
+        push(entity->mXd - xPush, 0.0, entity->mZd - zPush);
+        entity->mXd *= 0.95f;
+        entity->mZd *= 0.95f;
+        mPushedMinecart = true;
+    }
+    else if (minecart != NULL && minecart->getType() != Type::FURNACE && getType() == Type::FURNACE)
+    {
+        entity->mXd *= 0.2f;
+        entity->mZd *= 0.2f;
+        entity->push(mXd + xPush, 0.0, mZd + zPush);
+        mXd *= 0.95f;
+        mZd *= 0.95f;
+        mPushedMinecart = true;
+    }
+    else
+    {
+        xd *= 0.5;
+        zd *= 0.5;
+        mXd *= 0.2f;
+        mZd *= 0.2f;
+        push(xd - xPush, 0.0, zd - zPush);
+        entity->mXd *= 0.2f;
+        entity->mZd *= 0.2f;
+        entity->push(xd + xPush, 0.0, zd + zPush);
+        mPushedMinecart = true;
+
+        xOffset = std::abs(xOffset);
+        if (xOffset < 1.0 && std::abs(zOffset) < 1.0)
+        {
+            double separation = 2.0 - (xOffset + std::abs(zOffset)) * 0.5;
+            entity->mXd /= separation;
+            entity->mZd /= separation;
+        }
+        if (entity->mXd != entity->mXd)
+        {
+            entity->mXd = 0.0;
+        }
+        if (entity->mZd != entity->mZd)
+        {
+            entity->mZd = 0.0;
+        }
     }
 }
 
@@ -486,33 +1020,40 @@ bool Minecart::isInterpolating() const
     return mLerpSteps > 0;
 }
 
-float Minecart::getLerpToYRot() const
+double Minecart::getLerpToYRot() const
 {
     return mLerpYRot;
 }
 
-float Minecart::getLerpToXRot() const
+double Minecart::getLerpToXRot() const
 {
     return mLerpXRot;
 }
 
 void Minecart::lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport)
 {
+    if (mLevel->mIsClientSide)
+    {
+        y = Mth::ceil(y, 0.1);
+    }
     mLerpX = x;
     mLerpY = y;
     mLerpZ = z;
     mLerpYRot = yRot;
     mLerpXRot = xRot;
     mLerpSteps = steps + 2;
+    mXd = mLerpXd;
+    mYd = mLerpYd;
+    mZd = mLerpZd;
 }
 
 void Minecart::lerpMotion(double xd, double yd, double zd)
 {
     mXd = xd;
-    mYd = yd;
-    mZd = zd;
     mLerpXd = xd;
+    mYd = yd;
     mLerpYd = yd;
+    mZd = zd;
     mLerpZd = zd;
 }
 
@@ -557,7 +1098,7 @@ const BlockState* Minecart::getDisplayBlockState()
 
 const BlockState* Minecart::getDefaultDisplayBlockState()
 {
-    return NULL;
+    return Blocks::air->defaultBlockState();
 }
 
 int Minecart::getDisplayOffset()
@@ -598,7 +1139,7 @@ void Minecart::setCustomDisplay(bool customDisplay)
 
 unsigned int Minecart::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_bAllowedToHurt ? 0x5fb7a25aU : 0xffffffffU;
+    return tooltipData.m_bAllowedToHurt ? IDS_TOOLTIPS_MINE : IDS_NONE;
 }
 
 boost::shared_ptr<Entity> Minecart::getControllingPassenger()
@@ -608,7 +1149,7 @@ boost::shared_ptr<Entity> Minecart::getControllingPassenger()
 
 unsigned long long Minecart::GetType()
 {
-    return ENTITY_TYPE_MINECART;
+    return EntityType::MINECART;
 }
 
 std::wstring Minecart::Type::getName() const

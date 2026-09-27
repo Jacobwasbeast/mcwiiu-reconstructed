@@ -3,8 +3,7 @@
 #include "game/core/DamageEvent.hpp"
 
 TotalKillsStatTracker::TotalKillsStatTracker(const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mKills(0)
+    : StatTracker<unsigned int>(statsUID, 0)
 {
 }
 
@@ -16,6 +15,6 @@ void TotalKillsStatTracker::update(const DamageEvent* damageEvent)
 {
     if (isTracking(damageEvent->mAttacker) && damageEvent->mFatal)
     {
-        ++mKills;
+        ++mValue;
     }
 }

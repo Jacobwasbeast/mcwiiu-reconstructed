@@ -2,12 +2,11 @@
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/StringUtils.hpp"
 
 #include <cwchar>
 #include <iomanip>
 #include <sstream>
-
-std::wstring escapeXML(const std::wstring& text);
 
 HtmlString::HtmlString(const HtmlString& other)
 {

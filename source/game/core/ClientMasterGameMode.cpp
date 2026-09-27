@@ -1,4 +1,5 @@
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
@@ -40,55 +41,16 @@
 #include "game/world/generation/GhostPlayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/ui/UIScene_FullscreenProgress.hpp"
 #include "vendor/_LoadingInputParams.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 #include <algorithm>
 
 namespace
 {
-enum ClientMasterGameModeUILayerValue
-{
-    ClientMasterGameModeUILayer_Fullscreen = 6
-};
-
-enum ClientMasterGameModeUIGroupValue
-{
-    ClientMasterGameModeUIGroup_AllPlayers = 7
-};
-
-EMiniGameId ClientMasterGameModeMiniGameId(unsigned int value)
-{
-    switch (value)
-    {
-    case eMiniGameId_Lobby:
-        return eMiniGameId_Lobby;
-    case eMiniGameId_Battle:
-        return eMiniGameId_Battle;
-    case eMiniGameId_Tumble:
-        return eMiniGameId_Tumble;
-    case eMiniGameId_Glide:
-        return eMiniGameId_Glide;
-    case eMiniGameId_Build:
-        return eMiniGameId_Build;
-    default:
-        return eMiniGameId_Any;
-    }
 }
 
-struct FullscreenProgressState
-{
-    bool showConfirmation;
-    bool showProgress;
-    bool showLoading;
-    bool showTip;
-    int closeMode;
-    int playerId;
-    EUIScene backScene;
-};
-}
-
-void Sleep(unsigned int milliseconds);
-
-void* WaitForNextState(void* context)
+int WaitForNextState(void* context)
 {
     ClientMasterGameMode* gameMode = static_cast<ClientMasterGameMode*>(context);
     while (gameMode->IsRoundRestarting())
@@ -111,7 +73,7 @@ ClientMasterGameMode::ClientMasterGameMode()
       mNewLevelDataPending(false),
       mPlaylist(),
       mStringTable(),
-      mGameModeState(0),
+      mGameModeState(eGameModeState_None),
       mTransitions(),
       mStrings(),
       mPlayerProgress(),
@@ -126,10 +88,10 @@ ClientMasterGameMode::ClientMasterGameMode()
       mLastChunkLoadProgress(0x7fffffff)
 {
     mVoteables = new ClientVoteables();
-    mVoteables->addVoteable(new Voteable(0, false, true));
-    mVoteables->addVoteable(new Voteable(1, false, false));
-    mVoteables->addVoteable(new Voteable(2, false, false));
-    mVoteables->addVoteable(new Voteable(3, false, true));
+    mVoteables->addVoteable(new Voteable(Voteables::eVoteable_Map, false, true));
+    mVoteables->addVoteable(new Voteable(Voteables::eVoteable_Kick, false, false));
+    mVoteables->addVoteable(new Voteable(Voteables::eVoteable_BuildOffScoring, false, false));
+    mVoteables->addVoteable(new Voteable(Voteables::eVoteable_BuildOffTheme, false, true));
     ResetReadyStates();
 }
 
@@ -138,7 +100,7 @@ ClientMasterGameMode::~ClientMasterGameMode()
     delete mVoteables;
 }
 
-bool ClientMasterGameMode::IsRoundRestarting() const { return GetGameModeState() == 10; }
+bool ClientMasterGameMode::IsRoundRestarting() const { return GetGameModeState() == eGameModeState_LoadingSubRound; }
 
 void ClientMasterGameMode::ResetReadyStates()
 {
@@ -149,7 +111,7 @@ void ClientMasterGameMode::Reset()
 {
     mRoundInfo.reset();
     mNewLevelDataPending = false;
-    mCurrentLevelGenOptions = NULL;
+    mNextLevelGenOptions = NULL;
 }
 
 void ClientMasterGameMode::PlaySound(const SoundEvent* sound, float volume, float pitch)
@@ -216,12 +178,12 @@ void ClientMasterGameMode::OnRoundStart()
             CameraController* controller = new CameraController(3);
             if (random.nextBoolean())
             {
-                controller->addNode(0.0, 0.0, -25.0, 35.0, 180.0, 0.0, 176.0f);
+                controller->addNode(0.0, 0.0, -25.0, 35.0, 180.0, 0.0, 0.0f);
                 controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
             }
             else
             {
-                controller->addNode(0.0, 0.0, -25.0, 35.0, -180.0, 0.0, 176.0f);
+                controller->addNode(0.0, 0.0, -25.0, 35.0, -180.0, 0.0, 0.0f);
                 controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
             }
             controller->attachToPlayer(player, true);
@@ -346,13 +308,12 @@ void ClientMasterGameMode::OnRoundEndingToLobby()
 
 void ClientMasterGameMode::OnStateChange(EGameModeState state)
 {
-    const unsigned int previousState = mGameModeState;
-    const unsigned int nextState = static_cast<unsigned int>(state);
-    if (previousState == nextState)
+    const EGameModeState previousState = mGameModeState;
+    if (previousState == state)
         return;
 
-    mGameModeState = nextState;
-    if (previousState == 0)
+    mGameModeState = state;
+    if (previousState == eGameModeState_None)
     {
         ResetMapDistances();
         if (!CGameNetworkManager::sInstance.IsHost())
@@ -362,7 +323,7 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
 
     switch (state)
     {
-    case static_cast<EGameModeState>(0):
+    case eGameModeState_None:
     {
         Minecraft* minecraft = Minecraft::GetInstance();
         minecraft->SetGhostController(NULL);
@@ -374,58 +335,58 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
         Reset();
         return;
     }
-    case static_cast<EGameModeState>(2):
-        if (previousState == 9)
+    case eGameModeState_Lobby:
+        if (previousState == eGameModeState_RoundEnding)
             OnRoundEndingToLobby();
         return;
-    case static_cast<EGameModeState>(3):
+    case eGameModeState_SelectingGameRules:
     {
         MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(Minecraft::GetInstance()->mLevel);
         ClientScoreboard* scoreboard = level->GetClientScoreboard();
         scoreboard->mNextTeamIndex = 0;
-        Voteable* voteable = mVoteables->getVoteable(0);
+        Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
         if (voteable != NULL)
             voteable->clearVotes();
         return;
     }
-    case static_cast<EGameModeState>(5):
+    case eGameModeState_WaitingToStart:
         OnRoundWaitingToStart();
         return;
-    case static_cast<EGameModeState>(6):
+    case eGameModeState_RoundStarting:
         OnRoundStart();
         return;
-    case static_cast<EGameModeState>(7):
+    case eGameModeState_RoundPlaying:
         OnRoundPlay();
         return;
-    case static_cast<EGameModeState>(9):
+    case eGameModeState_RoundEnding:
         OnRoundEnding();
         return;
-    case static_cast<EGameModeState>(10):
+    case eGameModeState_LoadingSubRound:
     {
         CleanUpMapGenerator();
         gConsoleUIController.CloseAllPlayersScenes(true);
         gConsoleUIController.HideAllGameUIElements();
 
         _LoadingInputParams* params = new _LoadingInputParams();
-        params->m_firstParameter = WaitForNextState;
-        params->m_secondParameter = this;
+        params->m_threadProc = WaitForNextState;
+        params->m_threadParam = this;
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         if (miniGame != NULL)
-            params->m_timeout = miniGame->GetId();
+            params->m_miniGameId = miniGame->GetId();
 
         FullscreenProgressState* progressState = new FullscreenProgressState();
         progressState->showConfirmation = false;
-        progressState->showProgress = true;
-        progressState->showLoading = true;
+        progressState->reservedFlag1 = true;
+        progressState->reservedFlag2 = true;
         progressState->showTip = true;
         progressState->closeMode = 3;
         progressState->playerId = 0;
         progressState->backScene = EUIScene_None;
-        params->m_thirdParameter = progressState;
+        params->m_completionData = progressState;
 
         gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
-                                             params, static_cast<EUILayer>(ClientMasterGameModeUILayer_Fullscreen),
-                                             static_cast<EUIGroup>(ClientMasterGameModeUIGroup_AllPlayers));
+                                             params, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
 
         const long long now = System::processTimeInMilliSecs();
         mLoadedChunkCount = static_cast<int>(now >> 32);
@@ -442,13 +403,13 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
 void ClientMasterGameMode::OnExitedGame()
 {
     CommonMasterGameMode::OnExitedGame();
-    OnStateChange(EGameModeStateDefault);
+    OnStateChange(eGameModeState_None);
 }
 
 void ClientMasterGameMode::ClearPlaylist()
 {
     mPlaylist.clear();
-    mVoteables->getVoteable(0)->clearVotes();
+    mVoteables->getVoteable(Voteables::eVoteable_Map)->clearVotes();
 }
 
 void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& name, int mapSize)
@@ -462,7 +423,7 @@ void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& na
 
 void ClientMasterGameMode::SetMapVote(int playerIndex, int vote, bool remove)
 {
-    Voteable* voteable = mVoteables->getVoteable(0);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
     voteable->setVoteAndSync(playerIndex, vote, remove ? -1 : 1);
 }
 
@@ -470,7 +431,7 @@ unsigned int ClientMasterGameMode::GetMapVote(int playerIndex, int vote)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(0);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
     return static_cast<unsigned int>(voteable->getVote(localPlayer, vote) >= 0);
 }
 
@@ -488,14 +449,12 @@ void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlis
 
 void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text)
 {
-    Voteable* voteable = mVoteables->getVoteable(0);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
     boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
     std::vector<MapSelectInfo> playlist;
     GetUniquePlaylist(playlist);
 
-    const unsigned int miniGameId = static_cast<unsigned int>(Minecraft::GetMiniGameId());
-    const LevelRules::ELevelRuleType ruleType =
-        static_cast<LevelRules::ELevelRuleType>(miniGameId <= eMiniGameId_Build ? miniGameId : 0);
+    const LevelRules::ELevelRuleType ruleType = LevelRules::GetRuleTypeForMiniGame(Minecraft::GetMiniGameId());
 
     for (std::vector<MapSelectInfo>::const_iterator it = playlist.begin(); it != playlist.end(); ++it)
     {
@@ -523,10 +482,10 @@ void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text)
 }
 void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& text)
 {
-    Voteable* voteable = mVoteables->getVoteable(0);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
     boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
     MiniGameDef* definition =
-        MiniGameDef::GetCustomGameModeById(ClientMasterGameModeMiniGameId(GetNextGameMode()), true);
+        MiniGameDef::GetCustomGameModeById(GetNextGameMode(), true);
     int count = static_cast<int>(definition->GetGameVariantCount()) - 2;
     if (definition->IsCustomGame())
         count = definition->GetLootSetCount();
@@ -553,7 +512,7 @@ void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bo
     if (CGameNetworkManager::sInstance.GetPlayerBySmallId(colour) != NULL)
     {
         const unsigned int voteableId = g_pApp->GetPlayerColour(colour);
-        Voteable* voteable = mVoteables->getVoteable(1);
+        Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Kick);
         voteable->setVoteAndSync(playerIndex, voteableId, vote);
     }
 }
@@ -561,7 +520,7 @@ void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bo
 unsigned int ClientMasterGameMode::GetKickVote(int playerIndex, unsigned char colour)
 {
     const unsigned int voteableId = g_pApp->GetPlayerColour(colour);
-    Voteable* voteable = mVoteables->getVoteable(1);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Kick);
     return static_cast<unsigned int>(voteable->getVote(playerIndex, voteableId) >= 0);
 }
 
@@ -569,7 +528,7 @@ void ClientMasterGameMode::SetBuildOffScoringVote(int playerIndex, int vote, int
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(2);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring);
     voteable->setVoteAndSync(playerIndex, vote, static_cast<char>(value));
 }
 
@@ -591,13 +550,13 @@ unsigned int ClientMasterGameMode::GetBuildOffScoringVote(int playerIndex, int v
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(2);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring);
     return static_cast<unsigned int>(voteable->getVote(localPlayer, vote));
 }
 
 void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int value)
 {
-    Voteable* voteable = mVoteables->getVoteable(3);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
     voteable->setVoteAndSync(playerIndex, vote, 1);
 }
 
@@ -605,18 +564,18 @@ unsigned int ClientMasterGameMode::GetBuildOffThemeVote(int playerIndex)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(3);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
     return static_cast<unsigned int>(voteable->getVote(localPlayer, 0));
 }
 
 const wchar_t* ClientMasterGameMode::GetString(const int& id) { return mStringTable.getString(id); }
 void ClientMasterGameMode::GetCurrentThemeVotesText(std::vector<HtmlString>& text)
 {
-    Voteable* voteable = mVoteables->getVoteable(3);
+    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
     boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
-    for (unsigned int index = 0; index < mLayerIds.size(); ++index)
+    for (unsigned int index = 0; index < mThemeWordIds.size(); ++index)
     {
-        const int themeId = mLayerIds[index];
+        const int themeId = mThemeWordIds[index];
         const wchar_t* name = GetString(themeId);
         const int voteCount = totals[themeId];
         const std::wstring label = formatwstr(L"%ls : %d", name, voteCount);
@@ -638,8 +597,8 @@ std::wstring ClientMasterGameMode::GetTransitionTextOverride()
 
     if (id == 1 || id == 3)
     {
-        if (mCurrentLevelGenOptions != NULL)
-            return std::wstring(mCurrentLevelGenOptions->getWorldName());
+        if (mNextLevelGenOptions != NULL)
+            return std::wstring(mNextLevelGenOptions->getWorldName());
         return std::wstring();
     }
 
@@ -675,11 +634,11 @@ unsigned int ClientMasterGameMode::GetCurrentUniqueId() const { return mRoundInf
 void ClientMasterGameMode::SetNextLevelGenerationOptions(LevelGenerationOptions* options, bool owned)
 {
     mNewLevelDataPending = owned;
-    mCurrentLevelGenOptions = options;
+    mNextLevelGenOptions = options;
     if (owned)
-        mCurrentLevelGenOptions->loadBaseSaveData();
-    mTeamAreas.clear();
-    mCurrentLevelGenOptions->getRequiredGameRules()->getActiveChunkAreas(&mTeamAreas);
+        mNextLevelGenOptions->loadBaseSaveData();
+    mActiveChunkAreas.clear();
+    mNextLevelGenOptions->getRequiredGameRules()->getActiveChunkAreas(&mActiveChunkAreas);
 }
 
 void ClientMasterGameMode::OnShowdown()
@@ -835,28 +794,26 @@ void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale)
     UpdateGeneratorSeed(seed, scale);
     ResetMapDistances();
 }
-bool ClientMasterGameMode::IsWaitingToStart() const { return GetGameModeState() == 5; }
-bool ClientMasterGameMode::IsRoundStarting() const { return GetGameModeState() == 6; }
+bool ClientMasterGameMode::IsWaitingToStart() const { return GetGameModeState() == eGameModeState_WaitingToStart; }
+bool ClientMasterGameMode::IsRoundStarting() const { return GetGameModeState() == eGameModeState_RoundStarting; }
 bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const
 {
-    if (!IsWaitingToStart() && !IsRoundStarting() && mGameModeState != 3 && mGameModeState != 4)
+    if (!IsWaitingToStart() && !IsRoundStarting() && mGameModeState != eGameModeState_SelectingGameRules && mGameModeState != eGameModeState_LoadingRound)
         return false;
     return true;
 }
-bool ClientMasterGameMode::IsRoundEnding() const { return GetGameModeState() == 9; }
-bool ClientMasterGameMode::IsRoundPlaying() const { return GetGameModeState() == 7; }
+bool ClientMasterGameMode::IsRoundEnding() const { return GetGameModeState() == eGameModeState_RoundEnding; }
+bool ClientMasterGameMode::IsRoundPlaying() const { return GetGameModeState() == eGameModeState_RoundPlaying; }
 bool ClientMasterGameMode::IsInScoringState() const
 {
-    return Minecraft::InMiniGame(eMiniGameId_Build, true) && GetGameModeState() == 8;
+    return Minecraft::InMiniGame(eMiniGameId_Build, true) && GetGameModeState() == eGameModeState_PostRound;
 }
-bool ClientMasterGameMode::IsInLobbyState() { return GetGameModeState() <= 4; }
-bool ClientMasterGameMode::IsInActiveRoundState() { return GetGameModeState() >= 6 && GetGameModeState() <= 10; }
+bool ClientMasterGameMode::IsInLobbyState() { return GetGameModeState() <= eGameModeState_LoadingRound; }
+bool ClientMasterGameMode::IsInActiveRoundState() { return GetGameModeState() >= eGameModeState_RoundStarting && GetGameModeState() <= eGameModeState_LoadingSubRound; }
 bool ClientMasterGameMode::IsInTrasitionFromLobby()
 {
-    const unsigned int state = mGameModeState;
-    if ((state != 0) && ((state < 3) || (state > 4)))
-        return false;
-    return true;
+    const EGameModeState state = mGameModeState;
+    return state == eGameModeState_None || state == eGameModeState_SelectingGameRules || state == eGameModeState_LoadingRound;
 }
 bool ClientMasterGameMode::CheckLocalChunksLoaded()
 {
@@ -865,8 +822,8 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
     bool allLoaded = true;
 
     mChunkLoadProgress = 0;
-    for (std::vector<AABB*>::const_iterator areaIt = mTeamAreas.begin();
-         areaIt != mTeamAreas.end() && allLoaded; ++areaIt)
+    for (std::vector<AABB*>::const_iterator areaIt = mActiveChunkAreas.begin();
+         areaIt != mActiveChunkAreas.end() && allLoaded; ++areaIt)
     {
         const AABB* area = *areaIt;
         if (area == NULL)
@@ -901,7 +858,7 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
         if (localPlayer != NULL && connection != NULL)
         {
             GameModePacket::EmptyData emptyData;
-            connection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(6), emptyData));
+            connection->send(GameModePacket::Create(GameModePacket::eMessage_FinishedLoadingLocally, emptyData));
         }
     }
 
@@ -914,12 +871,12 @@ void ClientMasterGameMode::FireGameRoundStats()
         return;
     LevelGenerationOptions* options = g_pApp != NULL ? g_pApp->getLevelGenerationOptions() : NULL;
     if (options == NULL)
-        options = mCurrentLevelGenOptions;
+        options = mNextLevelGenOptions;
     const MiniGameDef* current = GetMiniGame();
     if (current == NULL)
         return;
     MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(
-        ClientMasterGameModeMiniGameId(current->GetId()), true);
+        current->GetId(), true);
     if (definition == NULL || !definition->IsCRCValid() || options == NULL || !options->isCRCValid())
         return;
 
@@ -1014,8 +971,8 @@ void ClientMasterGameMode::Tick()
 {
     CommonMasterGameMode::Tick();
 
-    if (mNewLevelDataPending && mCurrentLevelGenOptions != NULL &&
-        mCurrentLevelGenOptions->hasBaseSaveData())
+    if (mNewLevelDataPending && mNextLevelGenOptions != NULL &&
+        mNextLevelGenOptions->hasBaseSaveData())
     {
         Minecraft* minecraft = Minecraft::GetInstance();
         MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(minecraft->getLevel(0));
@@ -1028,51 +985,54 @@ void ClientMasterGameMode::Tick()
     if (mServerIsWaitingOnChunkLoading && CheckLocalChunksLoaded())
         mLocalChunksLoaded = true;
 
-    const unsigned int state = mGameModeState;
-    if (state > 6)
+    switch (mGameModeState)
     {
-        if (state == 7)
+    case eGameModeState_RoundPlaying:
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        CheckProgress(minecraft->mLevel->mPlayers);
+        CheckCheckpoints(minecraft->mLevel->mPlayers);
+
+        GhostController* ghosts = minecraft->GetGhostController();
+        if (ghosts != NULL)
         {
-            Minecraft* minecraft = Minecraft::GetInstance();
-            CheckProgress(minecraft->mLevel->mPlayers);
-            CheckCheckpoints(minecraft->mLevel->mPlayers);
+            const std::vector<boost::shared_ptr<Player> > ghostPlayers = ghosts->getPlayers();
+            CheckCheckpoints(ghostPlayers);
+            CheckProgress(ghostPlayers);
 
-            GhostController* ghosts = minecraft->GetGhostController();
-            if (ghosts != NULL)
+            const std::vector<boost::shared_ptr<GhostPlayer> > ghostEntities =
+                ghosts->getGhostPlayers();
+            for (std::vector<boost::shared_ptr<GhostPlayer> >::const_iterator it =
+                     ghostEntities.begin();
+                 it != ghostEntities.end(); ++it)
             {
-                const std::vector<boost::shared_ptr<Player> > ghostPlayers = ghosts->getPlayers();
-                CheckCheckpoints(ghostPlayers);
-                CheckProgress(ghostPlayers);
-
-                const std::vector<boost::shared_ptr<GhostPlayer> > ghostEntities =
-                    ghosts->getGhostPlayers();
-                for (std::vector<boost::shared_ptr<GhostPlayer> >::const_iterator it =
-                         ghostEntities.begin();
-                     it != ghostEntities.end(); ++it)
-                {
-                    const boost::shared_ptr<GhostPlayer>& ghost = *it;
-                    if (!ghost)
-                        continue;
-                    ghost->mXOld = ghost->mX;
-                    ghost->mYOld = ghost->mY;
-                    ghost->mZOld = ghost->mZ;
-                }
+                const boost::shared_ptr<GhostPlayer>& ghost = *it;
+                if (!ghost)
+                    continue;
+                ghost->mXOld = ghost->mX;
+                ghost->mYOld = ghost->mY;
+                ghost->mZOld = ghost->mZ;
             }
         }
-        else if (state > 9)
-        {
-            if (state == 10)
-                updateProgressRenderer();
-            return;
-        }
-
         FireGameRoundStats();
-        if (state == 9)
-        {
-            GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
-            if (ghosts != NULL)
-                ghosts->stopPlayback();
-        }
+        break;
+    }
+    case eGameModeState_PostRound:
+        FireGameRoundStats();
+        break;
+    case eGameModeState_RoundEnding:
+    {
+        FireGameRoundStats();
+        GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
+        if (ghosts != NULL)
+            ghosts->stopPlayback();
+        break;
+    }
+    case eGameModeState_LoadingSubRound:
+        updateProgressRenderer();
+        break;
+    default:
+        break;
     }
 }
 bool ClientMasterGameMode::isNewLevelDataPending() { return mNewLevelDataPending; }
@@ -1132,12 +1092,12 @@ void ClientMasterGameMode::onChangeCustomGameMode()
 
     std::vector<TargetAreaRuleDefinition*> targetAreas;
     rules->getTargetAreas(&targetAreas);
-    mTeamAreas.clear();
+    mActiveChunkAreas.clear();
     for (std::vector<TargetAreaRuleDefinition*>::const_iterator it = targetAreas.begin();
          it != targetAreas.end(); ++it)
     {
         if (*it != NULL && (*it)->mPrimary)
-            mTeamAreas.push_back((*it)->getArea());
+            mActiveChunkAreas.push_back((*it)->getArea());
     }
 }
 void ClientMasterGameMode::SetServerIsWaitingOnChunkLoading() { mServerIsWaitingOnChunkLoading = true; }
@@ -1152,9 +1112,9 @@ bool ClientMasterGameMode::IsValidStateForItemUse() const
         return false;
     if (IsRoundRestarting())
         return false;
-    return mGameModeState != 4;
+    return mGameModeState != eGameModeState_LoadingRound;
 }
-unsigned int ClientMasterGameMode::GetGameModeState() const { return mGameModeState; }
+EGameModeState ClientMasterGameMode::GetGameModeState() const { return mGameModeState; }
 MultiPlayerLevel* ClientMasterGameMode::GeneratorTargetLevel() const { return Minecraft::GetInstance()->mLevels[0]; }
 Scoreboard* ClientMasterGameMode::getScoreboard() { return Minecraft::GetInstance()->mLevel->GetClientScoreboard(); }
 
@@ -1166,7 +1126,7 @@ double ClientMasterGameMode::GetPlayerMapProgress(PlayerUID uid) const
 
 void ClientMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>& player, double progress)
 {
-    if (player->GetType() != 0x000000000C800004ULL)
+    if (player->GetType() != EntityType::GHOST_PLAYER)
         mPlayerProgress[player->getSUID().GetID()] = progress;
 }
 

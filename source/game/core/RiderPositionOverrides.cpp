@@ -1,4 +1,5 @@
 #include "game/core/RiderPositionOverrides.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -69,17 +70,17 @@ bool RiderPositionOverrides::OverridePosition(
 
     unsigned char isTamed = 0;
     unsigned char isSaddled = 0;
-    if ((vehicle->GetType() & 0x000000000D6C0000ULL) == 0x000000000D6C0000ULL)
+    if ((vehicle->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL)
     {
         isTamed = boost::static_pointer_cast<TamableAnimal>(vehicle)->isTame();
     }
-    else if ((vehicle->GetType() & 0x000000000D690000ULL) == 0x000000000D690000ULL)
+    else if ((vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
     {
         boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(vehicle);
         isSaddled = horse->isSaddled();
         isTamed = horse->isTamed();
     }
-    else if (vehicle->GetType() == 0x000000002D680003ULL)
+    else if (vehicle->GetType() == EntityType::PIG)
     {
         isSaddled = boost::static_pointer_cast<Pig>(vehicle)->hasSaddle();
     }
@@ -106,7 +107,7 @@ bool RiderPositionOverrides::OverridePosition(
 
         double cosine;
         double sine;
-        if ((vehicle->GetType() & 0x000000000C000000ULL) == 0x000000000C000000ULL)
+        if ((vehicle->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             float bodyRotation =
                 boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot * 0.01745329238474369f;

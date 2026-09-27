@@ -8,7 +8,7 @@ AreaTask::AreaTask(eTutorial_State stateValue, Tutorial* tutorialValue,
     : TutorialTask(tutorialValue, descriptionId, false, constraintsValue, false, false, false),
       state(stateValue)
 {
-    if (stateValue == eTutorial_State_None)
+    if (stateValue == eTutorial_State_Gameplay)
     {
         enableConstraints(true, false);
     }

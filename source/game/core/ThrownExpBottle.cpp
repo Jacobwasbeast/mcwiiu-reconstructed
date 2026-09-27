@@ -1,4 +1,6 @@
 #include "game/core/ThrownExpBottle.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/ExperienceOrb.hpp"
 #include "game/core/HitResult.hpp"
@@ -41,7 +43,7 @@ bool ThrownExpBottle::onHit(const HitResult* result)
     if (!mLevel->mIsClientSide)
     {
         BlockPos pos(shared_from_this());
-        mLevel->levelEvent(2002, pos, PotionUtils::getColor(Potions::WATER));
+        mLevel->levelEvent(LevelEvent::PARTICLES_SPELL_POTION_SPLASH, pos, PotionUtils::getColor(Potions::WATER));
         int experience = mRandom->nextInt(5) + mRandom->nextInt(5) + 3;
         while (experience > 0)
         {
@@ -71,5 +73,5 @@ double ThrownExpBottle::getGravity()
 
 unsigned long long ThrownExpBottle::GetType()
 {
-    return 0x8A200005ULL;
+    return EntityType::THROWN_EXP_BOTTLE;
 }

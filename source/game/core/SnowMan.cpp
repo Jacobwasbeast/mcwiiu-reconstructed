@@ -1,4 +1,7 @@
 #include "game/core/SnowMan.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -35,6 +38,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 bool enemySelectorFunc(boost::shared_ptr<Entity> entity);
 
@@ -89,12 +93,12 @@ void SnowMan::setAggressive(bool)
 
 void SnowMan::staticCtor()
 {
-    DATA_PUMPKIN = SynchedEntityData::defineId<unsigned char>(0x2d580001ULL, 0x0d580000ULL, EntityDataSerializers::BYTE);
+    DATA_PUMPKIN = SynchedEntityData::defineId<unsigned char>(EntityType::SNOW_MAN, EntityType::GOLEM, EntityDataSerializers::BYTE);
 }
 
 void SnowMan::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x2d580001ULL);
+    Mob::addDataWalkers(fixer, EntityType::SNOW_MAN);
 }
 
 void SnowMan::registerGoals()
@@ -161,7 +165,7 @@ void SnowMan::aiStep()
     if (mLevel->getBiome(BlockPos(x, 0, z))->getTemperature(BlockPos(x, y, z)) > 1.0f)
         hurt(DamageSource::ON_FIRE, 1.0f);
 
-    if (mLevel->getGameRules()->getBoolean(1))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -169,7 +173,7 @@ void SnowMan::aiStep()
             int snowY = static_cast<int>(std::floor(mY));
             int snowZ = static_cast<int>(std::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25));
             BlockPos snowPos(snowX, snowY, snowZ);
-            if (mLevel->getBlockState(snowPos)->getBlock() == Blocks::AIR &&
+            if (mLevel->getBlockState(snowPos)->getMaterial() == Material::AIR &&
                 mLevel->getBiome(snowPos)->getTemperature(snowPos) < 0.8f &&
                 Blocks::snow_layer->mayPlace(mLevel, snowPos))
                 mLevel->setBlockAndUpdate(snowPos, Blocks::snow_layer->defaultBlockState());
@@ -190,7 +194,7 @@ double SnowMan::getEyeHeight()
 bool SnowMan::hurt(const DamageSource* source, float damage)
 {
     boost::shared_ptr<Entity> entity = source->getEntity();
-    if (entity && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if (entity && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
         if (!player->isAllowedToAttackPlayers())
@@ -202,21 +206,21 @@ bool SnowMan::hurt(const DamageSource* source, float damage)
 unsigned int SnowMan::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if (itemId == 359 && hasPumpkin())
-        return 0xbe5aab60U;
-    if (itemId == 420)
+    if (itemId == ItemId::SHEARS && hasPumpkin())
+        return IDS_TOOLTIPS_SHEAR;
+    if (itemId == ItemId::LEAD)
     {
         if (!isLeashed())
-            return 0xa1b34a96U;
+            return IDS_TOOLTIPS_LEASH;
         if (getLeashHolder().get() == tooltipData.m_pPlayer.get())
-            return 0x551269b5U;
+            return IDS_TOOLTIPS_UNLEASH;
     }
-    return 0xffffffffU;
+    return IDS_NONE;
 }
 
 unsigned int SnowMan::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_pPlayer->isAllowedToAttackPlayers() ? 0xfdef7118U : 0xffffffffU;
+    return tooltipData.m_pPlayer->isAllowedToAttackPlayers() ? IDS_TOOLTIPS_HIT : IDS_NONE;
 }
 
 bool SnowMan::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -233,4 +237,4 @@ bool SnowMan::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
 const SoundEvent* SnowMan::getAmbientSound() { return SoundEvents::SNOWMAN_AMBIENT; }
 const SoundEvent* SnowMan::getHurtSound(const DamageSource*) { return SoundEvents::SNOWMAN_HURT; }
 const SoundEvent* SnowMan::getDeathSound() { return SoundEvents::SNOWMAN_DEATH; }
-unsigned long long SnowMan::GetType() { return 0x2D580001ULL; }
+unsigned long long SnowMan::GetType() { return EntityType::SNOW_MAN; }

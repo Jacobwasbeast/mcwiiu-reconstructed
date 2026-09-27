@@ -1,8 +1,12 @@
 #include "game/core/Shulker.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
 #include "game/core/AttributeModifier.hpp"
+#include "game/core/AttributeInstance.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/Item.hpp"
 #include "game/client/audio/SoundEvents.hpp"
@@ -35,11 +39,15 @@
 #include "game/world/block/PistonMagicBlock.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 const EntityDataAccessor<const Direction*>* Shulker::DATA_ATTACH_FACE = NULL;
-const EntityDataAccessor<BlockPos>* Shulker::DATA_ATTACH_POSITION = NULL;
+const EntityDataAccessor<BlockPos*>* Shulker::DATA_ATTACH_POSITION = NULL;
 const EntityDataAccessor<unsigned char>* Shulker::DATA_PEEK = NULL;
 const EntityDataAccessor<unsigned char>* Shulker::DATA_COLOR = NULL;
+const DyeColor* Shulker::DEFAULT_COLOR = NULL;
+AttributeModifier* Shulker::COVERED_ARMOR_MODIFIER =
+    (new AttributeModifier(eMODIFIER_ID_ArmorBonus, 20.0, 0))->setSerialize(false);
 
 Shulker::ShulkerAttackGoal::ShulkerAttackGoal(Shulker* shulker)
     : Goal(), mShulker(shulker), mAttackTime(0)
@@ -222,16 +230,25 @@ std::wstring Shulker::ShulkerPeekGoal::getName()
 }
 
 Shulker::Shulker(Level* level)
-    : Golem(level), mOldPeekAmount(0.0f), mPeekAmount(0.0f), mOldAttachPosition(NULL), mAttachPosition(NULL), mClientSideTeleportInterpolation(0)
+    : Golem(level), mOldPeekAmount(0.0f), mPeekAmount(0.0f), mOldAttachPosition(NULL)
 {
     fjDerivedCtorCalls();
     setSize(1.0f, 1.0f);
+    mOldAttachPosition = NULL;
+    mFireImmune = true;
+    mYHeadRot = 180.0f;
+    mYRotO = 180.0f;
+    mYHeadRotO = 180.0f;
+    mXRot = 0.0f;
+    mXRotO = 0.0f;
+    mYBodyRot = 180.0f;
+    mYBodyRotO = 180.0f;
+    mExperienceReward = 5;
+    mYRot = 180.0f;
 }
 
 Shulker::~Shulker()
 {
-    delete mOldAttachPosition;
-    delete mAttachPosition;
 }
 
 void Shulker::create(Level* level)
@@ -241,15 +258,21 @@ void Shulker::create(Level* level)
 
 void Shulker::staticCtor()
 {
-    DATA_ATTACH_FACE = SynchedEntityData::defineId<const Direction*>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::DIRECTION);
-    DATA_ATTACH_POSITION = SynchedEntityData::defineId<BlockPos>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::BLOCK_POS);
-    DATA_PEEK = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::BYTE);
-    DATA_COLOR = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_SHULKER, 0x0d580000ULL, EntityDataSerializers::BYTE);
+    DATA_ATTACH_FACE = SynchedEntityData::defineId<const Direction*>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::DIRECTION);
+    DATA_ATTACH_POSITION = SynchedEntityData::defineId<BlockPos*>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::OPTIONAL_BLOCK_POS);
+    DATA_PEEK = SynchedEntityData::defineId<unsigned char>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::BYTE);
+    DATA_COLOR = SynchedEntityData::defineId<unsigned char>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::BYTE);
+    DEFAULT_COLOR = DyeColor::PURPLE;
 }
 
 MobGroupData* Shulker::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
-    setRawPeekAmount(0);
+    mYBodyRot = 180.0f;
+    mYBodyRotO = 180.0f;
+    mYRot = 180.0f;
+    mYRotO = 180.0f;
+    mYHeadRot = 180.0f;
+    mYHeadRotO = 180.0f;
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
@@ -303,13 +326,10 @@ const SoundEvent* Shulker::getHurtSound(const DamageSource* source)
 void Shulker::defineSynchedData()
 {
     Mob::defineSynchedData();
-    if (mEntityData != NULL)
-    {
-        mEntityData->createDateItem(DATA_ATTACH_FACE, Direction::DOWN);
-        mEntityData->createDateItem(DATA_ATTACH_POSITION, BlockPos::ZERO);
-        mEntityData->createDateItem(DATA_PEEK, (unsigned char)0);
-        mEntityData->createDateItem(DATA_COLOR, (unsigned char)0);
-    }
+    mEntityData->createDateItem(DATA_ATTACH_FACE, Direction::DOWN);
+    mEntityData->createDateItem(DATA_ATTACH_POSITION, static_cast<BlockPos*>(NULL));
+    mEntityData->createDateItem(DATA_PEEK, static_cast<unsigned char>(0));
+    mEntityData->createDateItem(DATA_COLOR, static_cast<unsigned char>(DEFAULT_COLOR->getBlockData()));
 }
 
 void Shulker::registerAttributes()
@@ -325,54 +345,37 @@ BodyControl* Shulker::createBodyControl()
 
 void Shulker::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_SHULKER);
+    Mob::addDataWalkers(fixer, EntityType::SHULKER);
 }
 
 void Shulker::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-
-    if (tag->contains(L"AttachFace") && mEntityData != NULL)
-    {
-        const Direction* direction = Direction::from3DDataValue(tag->getByte(L"AttachFace"));
-        mEntityData->set(DATA_ATTACH_FACE, direction, true);
-    }
-
-    if (tag->contains(L"Peek") && mEntityData != NULL)
-    {
+    if (tag->contains(L"AttachFace"))
+        mEntityData->set(DATA_ATTACH_FACE, Direction::from3DDataValue(tag->getByte(L"AttachFace")), true);
+    if (tag->contains(L"Color"))
         mEntityData->set(DATA_PEEK, tag->getByte(L"Peek"), true);
-    }
-
-    if (tag->contains(L"Color") && mEntityData != NULL)
-    {
+    if (tag->contains(L"Color"))
         mEntityData->set(DATA_COLOR, tag->getByte(L"Color"), true);
-    }
-
-    if (mEntityData != NULL)
+    if (tag->contains(L"APX"))
     {
-        if (tag->contains(L"APX"))
-        {
-            BlockPos attachPos(tag->getInt(L"APX"), tag->getInt(L"APY"), tag->getInt(L"APZ"));
-            mEntityData->set(DATA_ATTACH_POSITION, attachPos, true);
-        }
-        else
-        {
-            mEntityData->set(DATA_ATTACH_POSITION, BlockPos::ZERO, true);
-        }
+        int x = tag->getInt(L"APX");
+        int y = tag->getInt(L"APY");
+        int z = tag->getInt(L"APZ");
+        mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(x, y, z), true);
+    }
+    else
+    {
+        mEntityData->set(DATA_ATTACH_POSITION, static_cast<BlockPos*>(NULL), true);
     }
 }
 
 void Shulker::addAdditonalSaveData(CompoundTag* tag)
 {
     Mob::addAdditonalSaveData(tag);
-
-    if (mEntityData != NULL)
-    {
-        tag->putByte(L"AttachFace", (unsigned char)getAttachFace()->get3DDataValue());
-        tag->putByte(L"Peek", getRawPeekAmount());
-        tag->putByte(L"Color", mEntityData->get(DATA_COLOR));
-    }
-
+    tag->putByte(L"AttachFace", static_cast<unsigned char>(mEntityData->get(DATA_ATTACH_FACE)->get3DDataValue()));
+    tag->putByte(L"Peek", mEntityData->get(DATA_PEEK));
+    tag->putByte(L"Color", mEntityData->get(DATA_COLOR));
     BlockPos* attachPos = getAttachPosition();
     if (attachPos != NULL)
     {
@@ -385,248 +388,154 @@ void Shulker::addAdditonalSaveData(CompoundTag* tag)
 void Shulker::tick()
 {
     Mob::tick();
-
-    BlockPos attachPos;
-    bool hasAttachPos = false;
-    if (mAttachPosition != NULL)
+    BlockPos* attachPos = mEntityData->get(DATA_ATTACH_POSITION);
+    if (attachPos == NULL && !mLevel->mIsClientSide)
     {
-        attachPos = *mAttachPosition;
-        hasAttachPos = true;
-    }
-    else if (mEntityData != NULL)
-    {
-        attachPos = mEntityData->get(DATA_ATTACH_POSITION);
-        hasAttachPos = true;
-    }
-    if (mLevel != NULL && !mLevel->mIsClientSide && mAttachPosition == NULL)
-    {
-        setAttachPosition(new BlockPos(this));
-        attachPos = *mAttachPosition;
-        hasAttachPos = true;
+        attachPos = new BlockPos(this);
+        mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(*attachPos), true);
     }
 
-    if (isAlive())
+    if (isPassenger())
     {
-        if (mLevel != NULL && !mLevel->mIsClientSide && hasAttachPos)
+        attachPos = NULL;
+        float vehicleYRot = getVehicle()->mYRot;
+        mYBodyRot = vehicleYRot;
+        mYRot = vehicleYRot;
+        mYBodyRotO = vehicleYRot;
+        mClientSideTeleportInterpolation = 0;
+    }
+    else if (!mLevel->mIsClientSide)
+    {
+        const BlockState* state = mLevel->getBlockState(*attachPos);
+        if (state->getMaterial() != Material::AIR)
         {
-            const BlockState* state = mLevel->getBlockState(attachPos);
-            Block* block = state != NULL ? state->getBlock() : NULL;
-            if (block == Blocks::AIR)
+            Block* block = state->getBlock();
+            if (block == Blocks::piston_extension)
             {
-                const Direction* attachFace = getAttachFace();
-                BlockPos front = attachPos.relative(attachFace);
-                if (!mLevel->isSolidBlockingBlockInLoadedChunk(front, false))
+                const Direction* facing = state->getValue<const Direction*>(PistonMagicBlock::FACING);
+                if (mLevel->isEmptyBlock(attachPos->relative(facing)))
                 {
-                    for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
-                    {
-                        const Direction* direction = Direction::VALUES[i];
-                        BlockPos candidate = attachPos.relative(direction);
-                        if (mLevel->isSolidBlockingBlockInLoadedChunk(candidate, false))
-                        {
-                            if (mEntityData != NULL)
-                                mEntityData->set(DATA_ATTACH_FACE, direction, true);
-                            break;
-                        }
-                    }
+                    *attachPos = attachPos->relative(facing);
+                    mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(*attachPos), true);
+                }
+                else
+                {
+                    teleportSomewhere();
                 }
             }
             else if (block == Blocks::piston_head)
             {
-                const Direction* facing = state->getValue(PistonHeadBlock::FACING);
-                BlockPos moved = attachPos.relative(facing);
-                if (mLevel->isEmptyBlock(moved))
+                const Direction* facing = state->getValue<const Direction*>(PistonHeadBlock::FACING);
+                if (mLevel->isEmptyBlock(attachPos->relative(facing)))
                 {
-                    setAttachPosition(new BlockPos(moved));
-                    attachPos = moved;
+                    *attachPos = attachPos->relative(facing);
+                    mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(*attachPos), true);
                 }
                 else
                 {
-                    const Direction* attachFace = getAttachFace();
-                    if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(attachFace), false))
-                    {
-                        for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
-                        {
-                            const Direction* direction = Direction::VALUES[i];
-                            if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(direction), false))
-                            {
-                                if (mEntityData != NULL)
-                                    mEntityData->set(DATA_ATTACH_FACE, direction, true);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            else if (block == Blocks::piston || block == Blocks::sticky_piston)
-            {
-                const Direction* facing = state->getValue(PistonBaseBlock::FACING);
-                BlockPos moved = attachPos.relative(facing);
-                if (mLevel->isEmptyBlock(moved))
-                {
-                    setAttachPosition(new BlockPos(moved));
-                    attachPos = moved;
-                }
-                else
-                {
-                    const Direction* attachFace = getAttachFace();
-                    if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(attachFace), false))
-                    {
-                        for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
-                        {
-                            const Direction* direction = Direction::VALUES[i];
-                            if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(direction), false))
-                            {
-                                if (mEntityData != NULL)
-                                    mEntityData->set(DATA_ATTACH_FACE, direction, true);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            else if (block == Blocks::piston_extension)
-            {
-                const Direction* facing = state->getValue(PistonMagicBlock::FACING);
-                BlockPos moved = attachPos.relative(facing);
-                if (mLevel->isEmptyBlock(moved))
-                {
-                    setAttachPosition(new BlockPos(moved));
-                    attachPos = moved;
-                }
-                else
-                {
-                    const Direction* attachFace = getAttachFace();
-                    if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(attachFace), false))
-                    {
-                        for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
-                        {
-                            const Direction* direction = Direction::VALUES[i];
-                            if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(direction), false))
-                            {
-                                if (mEntityData != NULL)
-                                    mEntityData->set(DATA_ATTACH_FACE, direction, true);
-                                break;
-                            }
-                        }
-                    }
+                    teleportSomewhere();
                 }
             }
             else
             {
-                const Direction* attachFace = getAttachFace();
-                if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(attachFace), false))
+                teleportSomewhere();
+            }
+        }
+
+        if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()), false))
+        {
+            bool attached = false;
+            for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
+            {
+                const Direction* direction = Direction::VALUES[i];
+                if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(direction), false))
                 {
-                    for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
-                    {
-                        const Direction* direction = Direction::VALUES[i];
-                        if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos.relative(direction), false))
-                        {
-                            if (mEntityData != NULL)
-                                mEntityData->set(DATA_ATTACH_FACE, direction, true);
-                            break;
-                        }
-                    }
+                    mEntityData->set(DATA_ATTACH_FACE, direction, true);
+                    attached = true;
+                    break;
                 }
             }
+            if (!attached) teleportSomewhere();
+        }
 
-            const Direction* attachFace = getAttachFace();
-            BlockPos behind = attachPos.relative(attachFace->getOpposite());
-            if (!mLevel->isSolidBlockingBlockInLoadedChunk(behind, false))
-                hurt(DamageSource::IN_WALL, 1.0f);
-        }
-    }
-    else
-    {
-        boost::shared_ptr<LivingEntity> target = getTarget();
-        if (target)
-        {
-            mXOld = target->mX;
-            mYOld = target->mY;
-            mZOld = target->mZ;
-        }
-        mClientSideTeleportInterpolation = 0;
+        if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()->getOpposite()), false))
+            teleportSomewhere();
     }
 
-    float targetPeek = (float)getRawPeekAmount() * 0.01f;
+    float targetPeek = getRawPeekAmount() * 0.01f;
     mOldPeekAmount = mPeekAmount;
-    if (targetPeek < mPeekAmount)
+    if (mPeekAmount > targetPeek)
         mPeekAmount = Mth::clamp(mPeekAmount - 0.05f, targetPeek, 1.0f);
     else if (mPeekAmount < targetPeek)
         mPeekAmount = Mth::clamp(mPeekAmount + 0.05f, 0.0f, targetPeek);
 
-    if (hasAttachPos && mLevel != NULL)
+    if (attachPos == NULL)
+        return;
+
+    if (mLevel->mIsClientSide)
     {
-        if (mLevel->mIsClientSide)
+        if (mClientSideTeleportInterpolation > 0 && mOldAttachPosition != NULL)
+            --mClientSideTeleportInterpolation;
+        else
+            mOldAttachPosition = attachPos;
+    }
+
+    double x = attachPos->x + 0.5;
+    double y = attachPos->y;
+    double z = attachPos->z + 0.5;
+    mX = x;
+    mY = y;
+    mZ = z;
+    mXo = x;
+    mYo = y;
+    mZo = z;
+    mXOld = x;
+    mYOld = y;
+    mZOld = z;
+
+    double peekOffset = 0.5 - Mth::sin((mPeekAmount + 0.5f) * Mth::PI) * 0.5;
+    double oldPeekOffset = 0.5 - Mth::sin((mOldPeekAmount + 0.5f) * Mth::PI) * 0.5;
+    double pushAmount = peekOffset - oldPeekOffset;
+    double pushX = 0.0;
+    double pushY = 0.0;
+    double pushZ = 0.0;
+    switch (getAttachFace()->get3DDataValue())
+    {
+    case Direction::eDirection_Down:
+        setBoundingBox(AABB::newTemp(mX - 0.5, mY, mZ - 0.5, mX + 0.5, mY + 1.0 + peekOffset, mZ + 0.5));
+        pushY = pushAmount;
+        break;
+    case Direction::eDirection_Up:
+        setBoundingBox(AABB::newTemp(mX - 0.5, mY - peekOffset, mZ - 0.5, mX + 0.5, mY + 1.0, mZ + 0.5));
+        pushY = -pushAmount;
+        break;
+    case Direction::eDirection_North:
+        setBoundingBox(AABB::newTemp(mX - 0.5, mY, mZ - 0.5, mX + 0.5, mY + 1.0, mZ + 0.5 + peekOffset));
+        pushZ = pushAmount;
+        break;
+    case Direction::eDirection_South:
+        setBoundingBox(AABB::newTemp(mX - 0.5, mY, mZ - 0.5 - peekOffset, mX + 0.5, mY + 1.0, mZ + 0.5));
+        pushZ = -pushAmount;
+        break;
+    case Direction::eDirection_West:
+        setBoundingBox(AABB::newTemp(mX - 0.5, mY, mZ - 0.5, mX + 0.5 + peekOffset, mY + 1.0, mZ + 0.5));
+        pushX = pushAmount;
+        break;
+    case Direction::eDirection_East:
+        setBoundingBox(AABB::newTemp(mX - 0.5 - peekOffset, mY, mZ - 0.5, mX + 0.5, mY + 1.0, mZ + 0.5));
+        pushX = -pushAmount;
+        break;
+    }
+
+    if (pushAmount > 0.0)
+    {
+        std::vector<boost::shared_ptr<Entity> > entities;
+        mLevel->getEntities(shared_from_this(), mBoundingBox, &entities);
+        for (unsigned int i = 0; i < entities.size(); ++i)
         {
-            if (mClientSideTeleportInterpolation < 1 || mOldAttachPosition == NULL)
-            {
-                delete mOldAttachPosition;
-                mOldAttachPosition = new BlockPos(attachPos);
-            }
-            else
-                --mClientSideTeleportInterpolation;
-        }
-
-        double x = (double)attachPos.x + 0.5;
-        double y = (double)attachPos.y + 0.5;
-        double z = (double)attachPos.z + 0.5;
-        mX = x;
-        mY = y;
-        mZ = z;
-        mXOld = x;
-        mYOld = y;
-        mZOld = z;
-
-        const float pi = 3.1415927f;
-        double peekOffset = -(double)(Mth::sin((mPeekAmount + 0.5f) * pi) * 0.5f - 0.5f);
-        double oldPeekOffset = -(double)(Mth::sin((mOldPeekAmount + 0.5f) * pi) * 0.5f - 0.5f);
-        double pushX = 0.0;
-        double pushY = 0.0;
-        double pushZ = 0.0;
-        double pushAmount = oldPeekOffset - peekOffset;
-
-        const Direction* attachFace = getAttachFace();
-        switch (attachFace->get3DDataValue())
-        {
-        case Direction::eDirection_Down:
-            setBoundingBox(AABB::newTemp(x - 0.5, y - 0.5, z - 0.5, x + 0.5, y + 1.0 + peekOffset, z + 0.5));
-            pushY = pushAmount;
-            break;
-        case Direction::eDirection_Up:
-            setBoundingBox(AABB::newTemp(x - 0.5, y - peekOffset - 0.5, z - 0.5, x + 0.5, y + 0.5, z + 0.5));
-            pushY = -pushAmount;
-            break;
-        case Direction::eDirection_North:
-            setBoundingBox(AABB::newTemp(x - 0.5, y - 0.5, z - 0.5, x + 0.5, y + 0.5, z + 0.5 + peekOffset));
-            pushZ = pushAmount;
-            break;
-        case Direction::eDirection_South:
-            setBoundingBox(AABB::newTemp(x - 0.5, y - 0.5, z - peekOffset - 0.5, x + 0.5, y + 0.5, z + 0.5));
-            pushZ = -pushAmount;
-            break;
-        case Direction::eDirection_West:
-            setBoundingBox(AABB::newTemp(x - 0.5, y - 0.5, z - 0.5 - peekOffset, x + 0.5, y + 0.5, z + 0.5));
-            pushX = pushAmount;
-            break;
-        case Direction::eDirection_East:
-            setBoundingBox(AABB::newTemp(x - peekOffset - 0.5, y - 0.5, z - 0.5, x + 0.5, y + 0.5, z + 0.5));
-            pushX = -pushAmount;
-            break;
-        default:
-            break;
-        }
-
-        if (pushAmount > 0.0)
-        {
-            std::vector<boost::shared_ptr<Entity> > entities;
-            mLevel->getEntities(shared_from_this(), mBoundingBox, &entities);
-            for (unsigned int i = 0; i < entities.size(); ++i)
-            {
-                boost::shared_ptr<Entity> entity = entities[i];
-                if (entity == NULL || entity->GetType() == ENTITY_TYPE_SHULKER || entity->mNoPhysics)
-                    continue;
-                entity->push(pushX, pushY, pushZ);
-            }
+            boost::shared_ptr<Entity> entity = entities[i];
+            if (entity->GetType() != EntityType::SHULKER && !entity->mNoPhysics)
+                entity->move(eMoverType_Self, pushX, pushY, pushZ, false);
         }
     }
 }
@@ -644,15 +553,14 @@ void Shulker::move(MoverType type, double xa, double ya, double za, bool onGroun
 void Shulker::setPos(double x, double y, double z)
 {
     Entity::setPos(x, y, z);
-
-    if (mEntityData != NULL && mLevel != NULL)
+    if (mEntityData != NULL && mTickCount != 0)
     {
-        BlockPos pos(x, y, z);
-        BlockPos currentAttachPos = mEntityData->get(DATA_ATTACH_POSITION);
-        if (!pos.equals(currentAttachPos))
+        BlockPos* attachPos = mEntityData->get(DATA_ATTACH_POSITION);
+        BlockPos* pos = new BlockPos(x, y, z);
+        if (!pos->equals(attachPos))
         {
             mEntityData->set(DATA_ATTACH_POSITION, pos, true);
-            mEntityData->set(DATA_PEEK, (unsigned char)0, true);
+            mEntityData->set(DATA_PEEK, static_cast<unsigned char>(0), true);
             mHasImpulse = true;
         }
     }
@@ -668,37 +576,25 @@ bool Shulker::teleportSomewhere()
     if (isNoAi() || !isAlive())
         return true;
 
-    BlockPos origin(this);
+    BlockPos* origin = new BlockPos(this);
     for (int attempt = 0; attempt < 5; ++attempt)
     {
-        int rx = mRandom->nextInt(17);
-        int ry = mRandom->nextInt(17);
-        int rz = mRandom->nextInt(17);
-        BlockPos candidate = origin.offset(8 - rx, 8 - ry, 8 - rz);
-
-        bool foundSpot = false;
-        if (candidate.y > 0 && mLevel->isEmptyBlock(candidate))
-        {
-            if (mLevel->isInsideWorldBorder(shared_from_this()))
-            {
-                std::vector<AABB*>* boxes = mLevel->getCollisionAABBs(shared_from_this(), AABB::newTemp(candidate), false, false, false);
-                if (boxes->empty())
-                    foundSpot = true;
-            }
-        }
-
-        if (foundSpot)
+        int dx = 8 - mRandom->nextInt(17);
+        int dy = 8 - mRandom->nextInt(17);
+        int dz = 8 - mRandom->nextInt(17);
+        BlockPos candidate = origin->offset(dx, dy, dz);
+        if (candidate.y > 0 && mLevel->isEmptyBlock(candidate) && mLevel->isInsideWorldBorder(shared_from_this())
+            && mLevel->getCollisionAABBs(shared_from_this(), AABB::newTemp(candidate), false, false, false)->empty())
         {
             for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
             {
                 const Direction* direction = Direction::VALUES[i];
-                BlockPos adjacent = candidate.relative(direction);
-                if (mLevel->isSolidBlockingBlockInLoadedChunk(adjacent, false))
+                if (mLevel->isSolidBlockingBlockInLoadedChunk(candidate.relative(direction), false))
                 {
                     mEntityData->set(DATA_ATTACH_FACE, direction, true);
                     playSound(SoundEvents::SHULKER_TELEPORT, 1.0f, 1.0f);
-                    mEntityData->set(DATA_ATTACH_POSITION, candidate, true);
-                    mEntityData->set(DATA_PEEK, (unsigned char)0, true);
+                    mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(candidate), true);
+                    mEntityData->set(DATA_PEEK, static_cast<unsigned char>(0), true);
                     setTarget(boost::shared_ptr<LivingEntity>());
                     return true;
                 }
@@ -714,47 +610,36 @@ void Shulker::aiStep()
     mXd = 0.0;
     mYd = 0.0;
     mZd = 0.0;
-    mYHeadRot = 180.0f;
+    mYBodyRotO = 180.0f;
     mYBodyRot = 180.0f;
-    mYHeadRotO = 180.0f;
+    mYRot = 180.0f;
 }
 
 void Shulker::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (DATA_ATTACH_POSITION != NULL && accessor == DATA_ATTACH_POSITION
-        && mLevel != NULL && mLevel->mIsClientSide && isAlive())
+    if (accessor == DATA_ATTACH_POSITION && mLevel->mIsClientSide && !isPassenger())
     {
-        BlockPos attachPosValue;
         BlockPos* attachPos = getAttachPosition();
-        if (attachPos == NULL && mEntityData != NULL)
-        {
-            attachPosValue = mEntityData->get(DATA_ATTACH_POSITION);
-            attachPos = &attachPosValue;
-        }
-
         if (attachPos != NULL)
         {
-            double x = (double)attachPos->x + 0.5;
-            double y = (double)attachPos->y - 0.5;
-            double z = (double)attachPos->z + 0.5;
-
-            if (mAttachPosition == NULL)
-                mAttachPosition = new BlockPos(*attachPos);
+            if (mOldAttachPosition == NULL)
+                mOldAttachPosition = attachPos;
             else
                 mClientSideTeleportInterpolation = 6;
-
+            double x = attachPos->x + 0.5;
+            double y = attachPos->y;
+            double z = attachPos->z + 0.5;
             mX = x;
             mY = y;
             mZ = z;
-            mXOld = x;
-            mYOld = y;
-            mZOld = z;
             mXo = x;
             mYo = y;
             mZo = z;
+            mXOld = x;
+            mYOld = y;
+            mZOld = z;
         }
     }
-
     LivingEntity::onSyncedDataUpdated(accessor);
 }
 
@@ -763,7 +648,7 @@ bool Shulker::hurt(const DamageSource* source, float damage)
     if (isClosed())
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if (attacker != NULL && (attacker->GetType() & 0x8000000000000000ULL) != 0)
+        if (attacker != NULL && (attacker->GetType() & EntityType::PROJECTILE) == EntityType::PROJECTILE)
             return false;
     }
 
@@ -783,36 +668,40 @@ AABB* Shulker::getCollideBox()
 
 const Direction* Shulker::getAttachFace()
 {
-    return mEntityData != NULL ? mEntityData->get(DATA_ATTACH_FACE) : Direction::DOWN;
+    return mEntityData->get(DATA_ATTACH_FACE);
 }
 
 BlockPos* Shulker::getAttachPosition()
 {
-    if (mEntityData == NULL)
-        return mAttachPosition;
-
-    if (mAttachPosition == NULL)
-        mAttachPosition = new BlockPos(mEntityData->get(DATA_ATTACH_POSITION));
-
-    return mAttachPosition;
+    return mEntityData->get(DATA_ATTACH_POSITION);
 }
 
 void Shulker::setAttachPosition(BlockPos* position)
 {
-    if (mEntityData != NULL)
-        mEntityData->set(DATA_ATTACH_POSITION, position != NULL ? *position : BlockPos::ZERO, true);
-    delete mAttachPosition;
-    mAttachPosition = position != NULL ? new BlockPos(*position) : NULL;
+    mEntityData->set(DATA_ATTACH_POSITION, position, true);
 }
 
 unsigned char Shulker::getRawPeekAmount()
 {
-    return mEntityData != NULL ? mEntityData->get(DATA_PEEK) : 0;
+    return mEntityData->get(DATA_PEEK);
 }
 
 void Shulker::setRawPeekAmount(int amount)
 {
-    mEntityData->set(DATA_PEEK, (unsigned char)amount, true);
+    if (!mLevel->mIsClientSide)
+    {
+        getAttribute(SharedMonsterAttributes::ARMOR)->removeModifier(COVERED_ARMOR_MODIFIER);
+        if (amount == 0)
+        {
+            getAttribute(SharedMonsterAttributes::ARMOR)->addModifier(new AttributeModifier(*COVERED_ARMOR_MODIFIER));
+            playSound(SoundEvents::SHULKER_CLOSE, 1.0f, 1.0f);
+        }
+        else
+        {
+            playSound(SoundEvents::SHULKER_OPEN, 1.0f, 1.0f);
+        }
+    }
+    mEntityData->set(DATA_PEEK, static_cast<unsigned char>(amount), true);
 }
 
 double Shulker::getClientPeekAmount(float partialTick)
@@ -866,25 +755,22 @@ ResourceLocation* Shulker::getDefaultLootTable()
 
 const DyeColor* Shulker::getColor()
 {
-    return DyeColor::byBlockData(mEntityData != NULL ? mEntityData->get(DATA_COLOR) : 0);
+    return DyeColor::byBlockData(mEntityData->get(DATA_COLOR));
 }
 
 void Shulker::setColor(const DyeColor* color)
 {
-    if (mEntityData != NULL && color != NULL)
-    {
-        mEntityData->set(DATA_COLOR, static_cast<unsigned char>(color->getBlockData()), true);
-    }
+    mEntityData->set(DATA_COLOR, static_cast<unsigned char>(color->getBlockData()), true);
 }
 
 unsigned int Shulker::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    if (Item::getId(holder.m_pItemInstance->getItem()) != 0x17f)
+    if (Item::getId(holder.m_pItemInstance->getItem()) != ItemId::SPAWN_EGG)
         return Mob::GetInteractTooltip(holder);
-    return 0xffffffffU;
+    return IDS_NONE;
 }
 
 unsigned long long Shulker::GetType()
 {
-    return ENTITY_TYPE_SHULKER;
+    return EntityType::SHULKER;
 }

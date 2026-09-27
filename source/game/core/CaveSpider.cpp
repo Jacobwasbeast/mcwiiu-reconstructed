@@ -1,4 +1,5 @@
 #include "game/core/CaveSpider.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Difficulty.hpp"
@@ -17,7 +18,6 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static const unsigned long long ENTITY_TYPE_CAVE_SPIDER = 0x5D560041ULL;
 
 CaveSpider::CaveSpider(Level* level)
     : Spider(level, false)
@@ -37,7 +37,7 @@ void CaveSpider::create(Level* level)
 
 void CaveSpider::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_CAVE_SPIDER);
+    Mob::addDataWalkers(fixer, EntityType::CAVE_SPIDER);
 }
 
 void CaveSpider::registerAttributes()
@@ -53,7 +53,7 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
         return false;
     }
 
-    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         int duration;
 
@@ -130,5 +130,5 @@ ResourceLocation* CaveSpider::getDefaultLootTable()
 
 unsigned long long CaveSpider::GetType()
 {
-    return ENTITY_TYPE_CAVE_SPIDER;
+    return EntityType::CAVE_SPIDER;
 }

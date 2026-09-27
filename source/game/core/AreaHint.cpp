@@ -8,8 +8,8 @@ namespace
 {
 const int AREA_HINT_TYPE_VALUE = 5;
 const TutorialHint::eHintType AREA_HINT_TYPE = static_cast<TutorialHint::eHintType>(AREA_HINT_TYPE_VALUE);
-const eTutorial_State AREA_HINT_ANY_STATE = static_cast<eTutorial_State>(-2);
-const eTutorial_State AREA_HINT_NO_COMPLETION_STATE = static_cast<eTutorial_State>(-1);
+const eTutorial_State AREA_HINT_ANY_STATE = eTutorial_State_Completed;
+const eTutorial_State AREA_HINT_NO_COMPLETION_STATE = eTutorial_State_Invalid;
 }
 
 AreaHint::AreaHint(eTutorial_Hint hint, Tutorial* tutorial, eTutorial_State state,

@@ -1,4 +1,5 @@
 #include "game/core/Drowned.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <typeinfo>
@@ -36,9 +37,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Villager.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 static Predicate<boost::shared_ptr<Entity> >* DROWNED_TARGET_SELECTOR =
     new UnderwaterOrInDarknessSelector();
@@ -261,5 +260,5 @@ PathNavigation* Drowned::createNavigation(Level* level)
 
 unsigned long long Drowned::GetType()
 {
-    return 0x000000005D550044ULL;
+    return EntityType::DROWNED;
 }

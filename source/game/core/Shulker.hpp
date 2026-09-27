@@ -11,6 +11,7 @@
 #include "game/core/BodyControl.hpp"
 
 class AABB;
+class AttributeModifier;
 class BlockPos;
 class CompoundTag;
 class DamageSource;
@@ -103,7 +104,7 @@ public:
     virtual bool makeStepSound();
     virtual SoundSource::ESoundSource getSoundSource();
     virtual const SoundEvent* getAmbientSound();
-    virtual bool isClosed();
+    bool isClosed();
     virtual void playAmbientSound();
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
@@ -144,13 +145,14 @@ public:
 
 private:
     static const EntityDataAccessor<const Direction*>* DATA_ATTACH_FACE;
-    static const EntityDataAccessor<BlockPos>* DATA_ATTACH_POSITION;
+    static const EntityDataAccessor<BlockPos*>* DATA_ATTACH_POSITION;
     static const EntityDataAccessor<unsigned char>* DATA_PEEK;
     static const EntityDataAccessor<unsigned char>* DATA_COLOR;
+    static const DyeColor* DEFAULT_COLOR;
+    static AttributeModifier* COVERED_ARMOR_MODIFIER;
     float mOldPeekAmount;
     float mPeekAmount;
     BlockPos* mOldAttachPosition;
-    BlockPos* mAttachPosition;
     int mClientSideTeleportInterpolation;
 };
 

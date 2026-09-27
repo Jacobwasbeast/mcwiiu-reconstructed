@@ -139,9 +139,9 @@ void FillTool::tick()
 
         if (top > 0)
         {
-            const BlockState* liquid = Blocks::WATER->defaultBlockState();
+            const BlockState* liquid = Blocks::water->defaultBlockState();
             if (mLiquidType == 0)
-                liquid = Blocks::WATER->defaultBlockState();
+                liquid = Blocks::water->defaultBlockState();
             else if (mLiquidType == 1)
                 liquid = Blocks::lava->defaultBlockState();
 
@@ -159,9 +159,9 @@ void FillTool::tick()
                         MutableBlockPos pos((int)worldX, top, (int)worldZ);
                         const BlockState* state = mOperation.mLevel->getBlockState(pos);
                         while (surface[row + x] < pos.y &&
-                               (state == NULL || state->getBlock() == Blocks::AIR))
+                               (state == NULL || state->getBlock() == Blocks::air))
                         {
-                            mOperation.mLevel->setBlock(pos, liquid, 2, false);
+                            mOperation.mLevel->setBlock(pos, liquid, Block::UPDATE_CLIENTS, false);
                             pos = MutableBlockPos(pos.below());
                             state = mOperation.mLevel->getBlockState(pos);
                         }
@@ -213,7 +213,7 @@ void FillTool::tick()
                         {
                             const BlockState* state = mOperation.mLevel->getBlockState(pos);
                             if (IsValidSurfaceBlock(state))
-                                mOperation.mLevel->setBlock(pos, brush, 2, false);
+                                mOperation.mLevel->setBlock(pos, brush, Block::UPDATE_CLIENTS, false);
                             pos = MutableBlockPos(pos.below());
                         }
                         ++layer;
@@ -302,11 +302,11 @@ void FillTool::tick()
                     mOperation.mLevel->removeBlock(pos);
                     pos.setY(pos.y - 1);
                 }
-                mOperation.mLevel->setBlock(pos, state, 2, false);
+                mOperation.mLevel->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
                 pos.setY(pos.y - 1);
                 while (heights[centre] < pos.y)
                 {
-                    mOperation.mLevel->setBlock(pos, state, 2, false);
+                    mOperation.mLevel->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
                     pos.setY(pos.y - 1);
                 }
             }
@@ -425,9 +425,9 @@ void FillTool::tick()
                         {
                             if (mOperation.mReplaceOnlyBlock != NULL && id == mOperation.mReplaceOnlyBlockId)
                             {
-                                mOperation.mLevel->setExtraBlock(pos, Blocks::AIR->defaultBlockState(), 2, false);
+                                mOperation.mLevel->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                                 mOperation.mLevel->setBlock(
-                                    pos, mOperation.mFillBlock->getBlockState(data & mask), 2, false);
+                                    pos, mOperation.mFillBlock->getBlockState(data & mask), Block::UPDATE_CLIENTS, false);
                             }
                             continue;
                         }
@@ -440,12 +440,12 @@ void FillTool::tick()
                                 if (id == mOperation.mReplaceOnlyBlockId)
                                 {
                                     mOperation.mLevel->setExtraBlock(
-                                        pos, Blocks::AIR->defaultBlockState(), 2, false);
+                                        pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                                     mOperation.mLevel->setBlock(
                                         pos,
                                         mOperation.mFillBlock->getBlockState(
                                             (data & ~mask) | (mOperation.mFillData & mask)),
-                                        2, false);
+                                        Block::UPDATE_CLIENTS, false);
                                 }
                                 else if (id == doubleSlabId)
                                 {
@@ -454,12 +454,12 @@ void FillTool::tick()
                                     if (doubleSlab != NULL)
                                     {
                                         mOperation.mLevel->setExtraBlock(
-                                            pos, Blocks::AIR->defaultBlockState(), 2, false);
+                                            pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                                         mOperation.mLevel->setBlock(
                                             pos,
                                             doubleSlab->getBlockState(
                                                 (data & ~mask) | (mOperation.mFillData & mask)),
-                                            2, false);
+                                            Block::UPDATE_CLIENTS, false);
                                     }
                                 }
                             }
@@ -472,15 +472,15 @@ void FillTool::tick()
                             continue;
                         if (edge)
                         {
-                            mOperation.mLevel->setExtraBlock(pos, Blocks::AIR->defaultBlockState(), 2, false);
+                            mOperation.mLevel->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                             mOperation.mLevel->setBlock(
-                                pos, mOperation.mEdgeBlock->getBlockState(mOperation.mEdgeData & mask), 2, false);
+                                pos, mOperation.mEdgeBlock->getBlockState(mOperation.mEdgeData & mask), Block::UPDATE_CLIENTS, false);
                         }
                         else
                         {
-                            mOperation.mLevel->setExtraBlock(pos, Blocks::AIR->defaultBlockState(), 2, false);
+                            mOperation.mLevel->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                             mOperation.mLevel->setBlock(
-                                pos, mOperation.mFillBlock->getBlockState(mOperation.mFillData & mask), 2, false);
+                                pos, mOperation.mFillBlock->getBlockState(mOperation.mFillData & mask), Block::UPDATE_CLIENTS, false);
                         }
                     }
                 }

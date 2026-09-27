@@ -1,4 +1,10 @@
 #include "game/core/ShulkerBullet.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <vector>
@@ -16,8 +22,8 @@
 
 ShulkerBullet::ShulkerBullet(Level* level)
     : Entity(level, true), mOwner(), mTarget(), mMoveDirection(NULL), mSteps(0),
-      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mTargetUniqueId(), mTargetPos(),
-      mOwnerUniqueId(), mOwnerPos()
+      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
+      mTargetUniqueId(), mTargetPos()
 {
     init();
     setSize(0.3125f, 0.3125f);
@@ -27,8 +33,8 @@ ShulkerBullet::ShulkerBullet(Level* level)
 ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z,
                              double xd, double yd, double zd)
     : Entity(level, true), mOwner(), mTarget(), mMoveDirection(NULL), mSteps(0),
-      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mTargetUniqueId(), mTargetPos(),
-      mOwnerUniqueId(), mOwnerPos()
+      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
+      mTargetUniqueId(), mTargetPos()
 {
     init();
     moveTo(x, y, z, mYRot, mXRot);
@@ -41,8 +47,8 @@ ShulkerBullet::ShulkerBullet(Level* level, const boost::shared_ptr<LivingEntity>
                              const boost::shared_ptr<Entity>& target,
                              const Direction::Axis* axis)
     : Entity(level, true), mOwner(owner), mTarget(target), mMoveDirection(NULL), mSteps(0),
-      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mTargetUniqueId(), mTargetPos(),
-      mOwnerUniqueId(), mOwnerPos()
+      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
+      mTargetUniqueId(), mTargetPos()
 {
     init();
     BlockPos pos(owner.get());
@@ -117,12 +123,23 @@ void ShulkerBullet::selectNextMoveDirection(const Direction::Axis* axis)
 
 void ShulkerBullet::onHit(const HitResult* result)
 {
-    if (result->mEntity)
+    if (!result->mEntity)
+    {
+        static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_LARGE_EXPLODE, mX, mY, mZ, 2, 0.2, 0.2, 0.2, 0.0,
+                                                         arrayWithLength<int>());
+        playSound(SoundEvents::SHULKER_BULLET_HIT, 1.0f, 1.0f);
+    }
+    else
     {
         boost::shared_ptr<DamageSource> damageSource = DamageSource::CreateIndirectMobAttack(shared_from_this(), mOwner, true);
         if (result->mEntity->hurt(damageSource.get(), 4.0f))
         {
             doEnchantDamageEffects(mOwner, result->mEntity);
+            if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            {
+                boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(result->mEntity);
+                target->addEffect(new MobEffectInstance(MobEffects::LEVITATION, 200), shared_from_this());
+            }
         }
     }
     remove();
@@ -156,22 +173,37 @@ void ShulkerBullet::tick()
 
 SoundSource::ESoundSource ShulkerBullet::getSoundSource()
 {
-    return (SoundSource::ESoundSource)5;
+    return SoundSource::eSoundSource_Hostile;
 }
 
 void ShulkerBullet::addAdditonalSaveData(CompoundTag* tag)
 {
+    if (mOwner != NULL)
+    {
+        BlockPos pos(boost::static_pointer_cast<Entity>(mOwner));
+        CompoundTag* owner = new CompoundTag();
+        owner->putString(L"UUID", mOwner->getUUID());
+        owner->putInt(L"X", pos.x);
+        owner->putInt(L"Y", pos.y);
+        owner->putInt(L"Z", pos.z);
+        tag->put(L"Owner", owner);
+    }
+    if (mTarget != NULL)
+    {
+        BlockPos pos(mTarget);
+        CompoundTag* target = new CompoundTag();
+        target->putString(L"UUID", mTarget->getUUID());
+        target->putInt(L"X", pos.x);
+        target->putInt(L"Y", pos.y);
+        target->putInt(L"Z", pos.z);
+        tag->put(L"Target", target);
+    }
+    if (mMoveDirection != NULL)
+        tag->putInt(L"Dir", mMoveDirection->get3DDataValue());
     tag->putInt(L"Steps", mSteps);
     tag->putDouble(L"TXD", mPowerX);
     tag->putDouble(L"TYD", mPowerY);
     tag->putDouble(L"TZD", mPowerZ);
-    tag->putInt(L"Dir", mMoveDirection == NULL ? -1 : mMoveDirection->get3DDataValue());
-    tag->putInt(L"X", mOwnerPos.x);
-    tag->putInt(L"Y", mOwnerPos.y);
-    tag->putInt(L"Z", mOwnerPos.z);
-    tag->putInt(L"TargetX", mTargetPos.x);
-    tag->putInt(L"TargetY", mTargetPos.y);
-    tag->putInt(L"TargetZ", mTargetPos.z);
 }
 
 void ShulkerBullet::readAdditionalSaveData(CompoundTag* tag)
@@ -180,16 +212,20 @@ void ShulkerBullet::readAdditionalSaveData(CompoundTag* tag)
     mPowerX = tag->getDouble(L"TXD");
     mPowerY = tag->getDouble(L"TYD");
     mPowerZ = tag->getDouble(L"TZD");
-    if (tag->contains(L"Dir", 99))
+    if (tag->contains(L"Dir", Tag::TAG_ANY_NUMERIC))
         mMoveDirection = Direction::from3DDataValue(tag->getInt(L"Dir"));
-    if (tag->contains(L"Owner", 10))
-        mOwnerPos = BlockPos(tag->getCompound(L"Owner")->getInt(L"X"),
-                              tag->getCompound(L"Owner")->getInt(L"Y"),
-                              tag->getCompound(L"Owner")->getInt(L"Z"));
-    if (tag->contains(L"Target", 10))
-        mTargetPos = BlockPos(tag->getCompound(L"Target")->getInt(L"X"),
-                              tag->getCompound(L"Target")->getInt(L"Y"),
-                              tag->getCompound(L"Target")->getInt(L"Z"));
+    if (tag->contains(L"Owner", Tag::TAG_COMPOUND))
+    {
+        CompoundTag* owner = tag->getCompound(L"Owner");
+        mOwnerUniqueId = owner->getString(L"UUID");
+        mOwnerPos = BlockPos(owner->getInt(L"X"), owner->getInt(L"Y"), owner->getInt(L"Z"));
+    }
+    if (tag->contains(L"Target", Tag::TAG_COMPOUND))
+    {
+        CompoundTag* target = tag->getCompound(L"Target");
+        mTargetUniqueId = target->getString(L"UUID");
+        mTargetPos = BlockPos(target->getInt(L"X"), target->getInt(L"Y"), target->getInt(L"Z"));
+    }
 }
 
 bool ShulkerBullet::shouldRenderAtSqrDistance(double distanceSqr)
@@ -232,5 +268,5 @@ void ShulkerBullet::defineSynchedData()
 
 unsigned long long ShulkerBullet::GetType()
 {
-    return 0x08000010ULL;
+    return EntityType::SHULKER_BULLET;
 }

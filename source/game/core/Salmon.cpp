@@ -1,4 +1,5 @@
 #include "game/core/Salmon.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -12,8 +13,6 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 
-static const unsigned long long ENTITY_TYPE_FISH = 0x000000000D502000ULL;
-static const unsigned long long ENTITY_TYPE_SALMON = 0x000000000D502004ULL;
 static const EntityDataAccessor<unsigned char>* DATA_ID_SCALE = NULL;
 
 Salmon::Salmon(Level* level)
@@ -21,8 +20,8 @@ Salmon::Salmon(Level* level)
 {
     fjDerivedCtorCalls();
     SalmonWeightedRandomize();
-    mWaterValueA = 0.01f;
-    mWaterValueB = 0.02f;
+    mSwimAmplitude = 0.01f;
+    mSwimFrequency = 0.02f;
     mWaterValueC = 12.0f;
 }
 
@@ -37,7 +36,7 @@ void Salmon::create(Level* level)
 
 void Salmon::staticCtor()
 {
-    DATA_ID_SCALE = SynchedEntityData::defineId(ENTITY_TYPE_SALMON, ENTITY_TYPE_FISH,
+    DATA_ID_SCALE = SynchedEntityData::defineId(EntityType::SALMON, EntityType::WATER_ANIMAL,
                                                  EntityDataSerializers::BYTE);
 }
 
@@ -129,5 +128,5 @@ ResourceLocation* Salmon::getDefaultLootTable()
 
 unsigned long long Salmon::GetType()
 {
-    return ENTITY_TYPE_SALMON;
+    return EntityType::SALMON;
 }

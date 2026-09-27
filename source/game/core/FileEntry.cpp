@@ -1,8 +1,7 @@
 #include "game/core/FileEntry.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <string.h>
-
-std::wstring char16towstring(wchar_t* string);
 
 FileEntry::FileEntry(wchar_t* name, unsigned int fileSize, unsigned int startOffset)
 {

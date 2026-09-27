@@ -1,4 +1,5 @@
 #include "game/core/EndCityPieces.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
@@ -71,7 +72,8 @@ bool EndCityPieces::recursiveChildren(StructureManager* structureManager, Sectio
     for (it = children.begin(); it != children.end(); ++it)
     {
         (*it)->setGenDepth(generationDepth);
-        if (StructurePiece::findCollisionPiece(&pieces, (*it)->getBoundingBox()) != NULL)
+        StructurePiece* collision = StructurePiece::findCollisionPiece(&pieces, (*it)->getBoundingBox());
+        if (collision != NULL && collision->getGenDepth() != previous->getGenDepth())
             return false;
     }
     pieces.insert(pieces.end(), children.begin(), children.end());
@@ -81,18 +83,19 @@ bool EndCityPieces::recursiveChildren(StructureManager* structureManager, Sectio
 void EndCityPieces::startHouseTower(StructureManager* structureManager, const BlockPos& position,
     Rotation* rotation, std::vector<StructurePiece*>& pieces, Random& random)
 {
+    gFatTowerGenerator->init();
+    gHouseGenerator->init();
+    gTowerBridgeGenerator->init();
+    gTowerGenerator->init();
     EndCityPiece* piece = addHelper(pieces, new EndCityPiece(structureManager,
-        static_cast<eMinecraftStructureTemplate>(0x13), position, rotation, true));
-    piece = addPiece(structureManager, piece, BlockPos(-1, 0, -1),
-        static_cast<eMinecraftStructureTemplate>(0x1c), rotation, false);
-    addHelper(pieces, piece);
-    piece = addPiece(structureManager, piece, BlockPos(-1, 4, -1),
-        static_cast<eMinecraftStructureTemplate>(0x20), rotation, false);
-    addHelper(pieces, piece);
-    piece = addPiece(structureManager, piece, BlockPos(-1, 8, -1),
-        static_cast<eMinecraftStructureTemplate>(0x23), rotation, true);
-    addHelper(pieces, piece);
-    recursiveChildren(structureManager, gHouseGenerator, 1, piece, BlockPos::ZERO, pieces, random);
+        eMinecraftStructureTemplate_EndCity_BaseFloor, position, rotation, true));
+    piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 0, -1),
+        eMinecraftStructureTemplate_EndCity_SecondFloor, rotation, false));
+    piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
+        eMinecraftStructureTemplate_EndCity_ThirdFloor, rotation, false));
+    piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 8, -1),
+        eMinecraftStructureTemplate_EndCity_ThirdRoof, rotation, true));
+    recursiveChildren(structureManager, gTowerGenerator, 1, piece, BlockPos(), pieces, random);
 }
 
 boost::unordered_map<Rotation*, BlockPos> EndCityPieces::createTowerBridgesMap()
@@ -124,7 +127,7 @@ void EndCityPieces::loadStatic()
     gIgnoreEntitiesSettings->setIgnoreEntities(true);
     gIgnoreEntitiesAndBlocksSettings = new StructurePlaceSettings();
     gIgnoreEntitiesAndBlocksSettings->setIgnoreEntities(true);
-    gIgnoreEntitiesAndBlocksSettings->setIgnoreBlock(Blocks::AIR);
+    gIgnoreEntitiesAndBlocksSettings->setIgnoreBlock(Blocks::air);
     gHouseGenerator = new HouseTowerSectionGenerator();
     gTowerGenerator = new TowerSectionGenerator();
     gTowerBridgeGenerator = new TowerBridgeSectionGenerator();
@@ -141,7 +144,7 @@ EndCityPieces::EndCityPiece::EndCityPiece(StructureManager* structureManager,
 }
 
 EndCityPieces::EndCityPiece::EndCityPiece()
-    : TemplateStructurePiece(), mTemplateType(static_cast<eMinecraftStructureTemplate>(0xbc)),
+    : TemplateStructurePiece(), mTemplateType(eMinecraftStructureTemplate_Count),
       mRotation(Rotation::NONE), mOverwrite(false)
 {
 }
@@ -153,8 +156,8 @@ EndCityPieces::EndCityPiece::~EndCityPiece()
 void EndCityPieces::EndCityPiece::loadTemplate(StructureManager* structureManager)
 {
     const StructureTemplate* structure = structureManager->getOrCreate(mTemplateType);
-    StructurePlaceSettings* settings = (mOverwrite ? gIgnoreEntitiesAndBlocksSettings :
-        gIgnoreEntitiesSettings)->copy();
+    StructurePlaceSettings* settings = (mOverwrite ? gIgnoreEntitiesSettings :
+        gIgnoreEntitiesAndBlocksSettings)->copy();
     settings->setRotation(mRotation);
     setup(structure, mTemplatePosition, settings);
 }
@@ -179,7 +182,7 @@ void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
         if (box->isInside(below))
         {
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(below);
-            if (blockEntity && blockEntity->GetType() == 0x1e00201ULL)
+            if (blockEntity && blockEntity->GetType() == BlockEntityType::CHEST)
             {
                 boost::shared_ptr<ChestBlockEntity> chest =
                     boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
@@ -197,7 +200,7 @@ void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
     else if (marker == L"Elytra")
     {
         boost::shared_ptr<ItemFrame> frame(new ItemFrame(level, position,
-            getPlaceSettings()->getRotation()->rotate(Direction::SOUTH)));
+            mRotation->rotate(Direction::SOUTH)));
         frame->setItem(not_null_ptr<ItemInstance>(new ItemInstance(Items::elytra)));
         level->addEntity(frame);
     }
@@ -221,38 +224,41 @@ void EndCityPieces::HouseTowerSectionGenerator::init()
 }
 
 bool EndCityPieces::HouseTowerSectionGenerator::generate(StructureManager* structureManager, int genDepth,
-    EndCityPiece* previous, const BlockPos&, std::vector<StructurePiece*>& pieces, Random& random)
+    EndCityPiece* previous, const BlockPos& position, std::vector<StructurePiece*>& pieces, Random& random)
 {
     if (genDepth > 8)
         return false;
     Rotation* rotation = previous->getPlaceSettings()->getRotation();
-    EndCityPiece* piece = addHelper(pieces, EndCityPieces::addPiece(structureManager, previous,
-        BlockPos(-1, 4, -1), static_cast<eMinecraftStructureTemplate>(0x13), rotation, true));
-    int branch = random.nextInt(3);
+    EndCityPiece* piece = addHelper(pieces, addPiece(structureManager, previous, position,
+        eMinecraftStructureTemplate_EndCity_BaseFloor, rotation, true));
+    int roof = random.nextInt(3);
     if (!mGenerated[genDepth])
+    {
         mGenerated[genDepth] = true;
-    else if (branch == 0)
-        addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
-            static_cast<eMinecraftStructureTemplate>(0x14), rotation, true));
-    else if (branch == 1)
-    {
-        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 0, -1),
-            static_cast<eMinecraftStructureTemplate>(0x1d), rotation, false));
-        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 8, -1),
-            static_cast<eMinecraftStructureTemplate>(0x1e), rotation, false));
-        recursiveChildren(structureManager, gHouseGenerator, genDepth + 1, piece,
-            BlockPos::ZERO, pieces, random);
+        roof = 2;
     }
-    else
+    if (roof == 0)
+    {
+        addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
+            eMinecraftStructureTemplate_EndCity_BaseRoof, rotation, true));
+    }
+    else if (roof == 1)
     {
         piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 0, -1),
-            static_cast<eMinecraftStructureTemplate>(0x1d), rotation, false));
-        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
-            static_cast<eMinecraftStructureTemplate>(0x22), rotation, false));
+            eMinecraftStructureTemplate_EndCity_SecondFloor2, rotation, false));
         piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 8, -1),
-            static_cast<eMinecraftStructureTemplate>(0x23), rotation, true));
-        recursiveChildren(structureManager, gTowerGenerator, genDepth + 1, piece,
-            BlockPos::ZERO, pieces, random);
+            eMinecraftStructureTemplate_EndCity_SecondRoof, rotation, false));
+        recursiveChildren(structureManager, gTowerGenerator, genDepth + 1, piece, BlockPos(), pieces, random);
+    }
+    else if (roof == 2)
+    {
+        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 0, -1),
+            eMinecraftStructureTemplate_EndCity_SecondFloor2, rotation, false));
+        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
+            eMinecraftStructureTemplate_EndCity_ThirdFloorC, rotation, false));
+        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 8, -1),
+            eMinecraftStructureTemplate_EndCity_ThirdRoof, rotation, true));
+        recursiveChildren(structureManager, gTowerGenerator, genDepth + 1, piece, BlockPos(), pieces, random);
     }
     return true;
 }
@@ -266,22 +272,27 @@ bool EndCityPieces::FatTowerSectionGenerator::generate(StructureManager* structu
 {
     Rotation* rotation = previous->getPlaceSettings()->getRotation();
     EndCityPiece* piece = addHelper(pieces, addPiece(structureManager, previous,
-        BlockPos(-3, 4, -3), static_cast<eMinecraftStructureTemplate>(0x19), rotation, true));
+        BlockPos(-3, 4, -3), eMinecraftStructureTemplate_EndCity_FatTowerBase, rotation, true));
     piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 4, 0),
-        static_cast<eMinecraftStructureTemplate>(0x1a), rotation, true));
-    piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 8, 0),
-        static_cast<eMinecraftStructureTemplate>(0x1a), rotation, true));
-    piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 8, 0),
-        static_cast<eMinecraftStructureTemplate>(0x1a), rotation, true));
-    boost::unordered_map<Rotation*, BlockPos>::iterator it;
-    for (it = gFatTowerBridges.begin(); it != gFatTowerBridges.end(); ++it)
-        if (random.nextInt(10) > 2)
-            recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1,
-                addHelper(pieces, addPiece(structureManager, piece, it->second,
-                    static_cast<eMinecraftStructureTemplate>(0x15), rotation->getRotated(it->first), true)),
-                BlockPos::ZERO, pieces, random);
+        eMinecraftStructureTemplate_EndCity_FatTowerMiddle, rotation, true));
+    for (int floor = 0; floor < 2; ++floor)
+    {
+        piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 8, 0),
+            eMinecraftStructureTemplate_EndCity_FatTowerMiddle, rotation, true));
+        boost::unordered_map<Rotation*, BlockPos>::iterator it;
+        for (it = gFatTowerBridges.begin(); it != gFatTowerBridges.end(); ++it)
+        {
+            if (random.nextInt(10) > 2)
+            {
+                EndCityPiece* bridge = addHelper(pieces, addPiece(structureManager, piece, it->second,
+                    eMinecraftStructureTemplate_EndCity_BridgeEnd, rotation->getRotated(it->first), true));
+                recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1, bridge,
+                    BlockPos(), pieces, random);
+            }
+        }
+    }
     addHelper(pieces, addPiece(structureManager, piece, BlockPos(-2, 8, -2),
-        static_cast<eMinecraftStructureTemplate>(0x1b), rotation, true));
+        eMinecraftStructureTemplate_EndCity_FatTowerTop, rotation, true));
     return true;
 }
 
@@ -301,31 +312,41 @@ bool EndCityPieces::TowerBridgeSectionGenerator::generate(StructureManager* stru
     Rotation* rotation = previous->getPlaceSettings()->getRotation();
     int count = random.nextInt(4) + 1;
     EndCityPiece* piece = addHelper(pieces, addPiece(structureManager, previous,
-        BlockPos(0, 0, -4), static_cast<eMinecraftStructureTemplate>(0x17), rotation, true));
+        BlockPos(0, 0, -4), eMinecraftStructureTemplate_EndCity_BridgePiece, rotation, true));
     piece->setGenDepth(-1);
     int y = 0;
-    int i;
-    for (i = 0; i < count; ++i)
+    for (int i = 0; i < count; ++i)
     {
         if (random.nextBoolean())
+        {
             piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, y, -4),
-                static_cast<eMinecraftStructureTemplate>(0x17), rotation, true));
+                eMinecraftStructureTemplate_EndCity_BridgePiece, rotation, true));
+            y = 0;
+        }
         else
-            piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, y, -8),
-                static_cast<eMinecraftStructureTemplate>(0x16), rotation, true));
-        y += 4;
+        {
+            if (random.nextBoolean())
+                piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, y, -4),
+                    eMinecraftStructureTemplate_EndCity_BridgeSteepStairs, rotation, true));
+            else
+                piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, y, -8),
+                    eMinecraftStructureTemplate_EndCity_BridgeGentleStairs, rotation, true));
+            y = 4;
+        }
     }
     if (!mGenerated)
     {
         addHelper(pieces, addPiece(structureManager, piece, BlockPos(random.nextInt(8) - 8, y, -48),
-            static_cast<eMinecraftStructureTemplate>(0x1f), rotation, true));
+            eMinecraftStructureTemplate_EndCity_Ship, rotation, true));
         mGenerated = true;
     }
     else if (!recursiveChildren(structureManager, gHouseGenerator, genDepth + 1, piece,
-        BlockPos(-3, y + 1, -21), pieces, random))
+        BlockPos(-3, y + 1, -11), pieces, random))
+    {
         return false;
+    }
     piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(4, y, 0),
-        static_cast<eMinecraftStructureTemplate>(0x15), rotation->getRotated(Rotation::COUNTERCLOCKWISE_90), true));
+        eMinecraftStructureTemplate_EndCity_BridgeEnd, rotation->getRotated(Rotation::CLOCKWISE_180), true));
     piece->setGenDepth(-1);
     return true;
 }
@@ -339,25 +360,49 @@ bool EndCityPieces::TowerSectionGenerator::generate(StructureManager* structureM
 {
     Rotation* rotation = previous->getPlaceSettings()->getRotation();
     EndCityPiece* piece = addHelper(pieces, addPiece(structureManager, previous,
-        BlockPos(4, -3, 4), static_cast<eMinecraftStructureTemplate>(0x24), rotation, true));
+        BlockPos(4, -3, 4), eMinecraftStructureTemplate_EndCity_TowerBase, rotation, true));
     piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 7, 0),
-        static_cast<eMinecraftStructureTemplate>(0x26), rotation, true));
-    random.nextInt(3);
-    int count = random.nextInt(3) + 1;
-    int i;
-    for (i = 0; i <= count; ++i)
+        eMinecraftStructureTemplate_EndCity_TowerPiece, rotation, true));
+    EndCityPiece* bridgePiece = random.nextInt(3) == 0 ? piece : NULL;
+    int extraFloors = random.nextInt(3);
+    for (int i = 0; i < extraFloors + 1; ++i)
     {
         piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 4, 0),
-            static_cast<eMinecraftStructureTemplate>(0x26), rotation, true));
-        if (i < count)
-            random.nextInt(10);
+            eMinecraftStructureTemplate_EndCity_TowerPiece, rotation, true));
+        if (i < extraFloors && random.nextInt(10) > 2)
+            bridgePiece = piece;
     }
-    if (genDepth == 7)
+    if (genDepth == 1 && bridgePiece == NULL)
+        bridgePiece = piece;
+
+    if (bridgePiece == NULL)
     {
-        addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
-            static_cast<eMinecraftStructureTemplate>(0x27), rotation, true));
-        return true;
+        if (genDepth == 7)
+        {
+            addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
+                eMinecraftStructureTemplate_EndCity_TowerTop, rotation, true));
+            return true;
+        }
+        return recursiveChildren(structureManager, gFatTowerGenerator, genDepth + 1, piece,
+            BlockPos(), pieces, random);
     }
-    return recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1,
-        piece, BlockPos::ZERO, pieces, random);
+
+    double bridgeWeight = 3 - genDepth > 0 ? static_cast<double>(3 - genDepth) : 0.0;
+    double remaining = static_cast<double>(gTowerBridges.size());
+    boost::unordered_map<Rotation*, BlockPos>::iterator it;
+    for (it = gTowerBridges.begin(); it != gTowerBridges.end(); ++it)
+    {
+        if (random.nextFloat() < bridgeWeight / remaining || random.nextInt(10) > 2)
+        {
+            EndCityPiece* bridge = addHelper(pieces, addPiece(structureManager, bridgePiece, it->second,
+                eMinecraftStructureTemplate_EndCity_BridgeEnd, rotation->getRotated(it->first), true));
+            if (recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1, bridge,
+                BlockPos(), pieces, random))
+                bridgeWeight -= 1.0;
+        }
+        remaining -= 1.0;
+    }
+    addHelper(pieces, addPiece(structureManager, piece, BlockPos(-1, 4, -1),
+        eMinecraftStructureTemplate_EndCity_TowerTop, rotation, true));
+    return true;
 }

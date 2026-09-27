@@ -1,4 +1,5 @@
 #include "game/core/ElderGuardian.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -43,7 +44,7 @@ void ElderGuardian::registerAttributes()
 
 void ElderGuardian::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D544001ULL);
+    Mob::addDataWalkers(fixer, EntityType::ELDER_GUARDIAN);
 }
 
 ResourceLocation* ElderGuardian::getDefaultLootTable()
@@ -93,7 +94,7 @@ void ElderGuardian::customServerAiStep()
     {
         PlayerSelector selector(this);
         std::vector<boost::shared_ptr<Player> >* players =
-            mLevel->getPlayers(0x0C800001ULL, &selector);
+            mLevel->getPlayers(EntityType::SERVER_PLAYER, &selector);
         for (std::vector<boost::shared_ptr<Player> >::iterator playerIt = players->begin();
              playerIt != players->end(); ++playerIt)
         {
@@ -126,5 +127,5 @@ void ElderGuardian::create(Level* level)
 
 unsigned long long ElderGuardian::GetType()
 {
-    return 0x5D544001ULL;
+    return EntityType::ELDER_GUARDIAN;
 }

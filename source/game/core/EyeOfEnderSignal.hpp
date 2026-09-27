@@ -17,7 +17,7 @@ public:
     virtual ~EyeOfEnderSignal();
 
     void _init();
-    uint64_t signalTo(const BlockPos& pos);
+    void signalTo(const BlockPos& pos);
     virtual void defineSynchedData();
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual void lerpMotion(double xd, double yd, double zd);

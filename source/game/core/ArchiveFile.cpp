@@ -5,6 +5,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/FileInputStream.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 struct _OVERLAPPED
 {
@@ -23,7 +24,6 @@ unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
                       unsigned int* bytesRead, _OVERLAPPED* overlapped);
 int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh,
                    unsigned int moveMethod);
-void CloseHandle(int handle);
 
 static const int INVALID_HANDLE_VALUE = -1;
 static const unsigned int GENERIC_READ = 0x80000000;

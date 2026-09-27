@@ -53,7 +53,7 @@ public:
         virtual void addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces, Random& random);
         bool createChest(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
                          ResourceLocation* lootTable);
-        void placeSupport(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, Random& random);
+        void placeSupport(Level* level, BoundingBox* box, int x0, int y0, int z, int y1, int x1, Random& random);
         void placeCobWeb(Level* level, BoundingBox* box, Random& random, float chance, int x, int y, int z);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
@@ -79,7 +79,7 @@ public:
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         virtual void addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces, Random& random);
-        void placeSupportPillar(Level* level, BoundingBox* box, int x0, int y0, int z0, int y1);
+        void placeSupportPillar(Level* level, BoundingBox* box, int x, int y0, int z, int y1);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();

@@ -1,6 +1,7 @@
 #include "game/core/FileOutputStream.hpp"
 
 #include "game/core/File.hpp"
+#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 struct _OVERLAPPED
 {
@@ -15,7 +16,6 @@ char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
 int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, _OVERLAPPED* overlapped);
-void CloseHandle(int handle);
 
 static const int INVALID_HANDLE_VALUE = -1;
 static const unsigned int GENERIC_WRITE = 0x40000000;

@@ -1,4 +1,7 @@
 #include "game/core/Witch.hpp"
+#include "game/core/Mth.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 #include <cmath>
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -32,45 +35,42 @@
 #include "game/core/EquipmentSlot.hpp"
 
 const EntityDataAccessor<bool>* Witch::DATA_USING_ITEM = NULL;
-Witch::Witch(Level* level) : Monster(level) { fjDerivedCtorCalls(); setSize(0.6f, 1.95f); }
+Witch::Witch(Level* level) : Monster(level) {
+    fjDerivedCtorCalls();
+    setSize(0.6f, 1.95f);
+    mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
+}
 Witch::~Witch() {}
 void Witch::create(Level* level) { new Witch(level); }
-void Witch::staticCtor() { DATA_USING_ITEM = SynchedEntityData::defineId<bool>(TYPE_ID, ENTITY_TYPE_MONSTER, EntityDataSerializers::BOOLEAN); }
-void Witch::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, TYPE_ID); }
+void Witch::staticCtor() { DATA_USING_ITEM = SynchedEntityData::defineId<bool>(EntityType::WITCH, EntityType::MONSTER, EntityDataSerializers::BOOLEAN); }
+void Witch::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::WITCH); }
 void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
     if (isDrinkingPotion())
         return;
-    Potion* potion = target->isInvertedHealAndHarm() ? Potions::HEALING : Potions::HARMING;
+    double targetY = target->mY + target->getEyeHeight() - 1.100000023841858;
     double dx = target->mX + target->mXd - mX;
+    double dy = targetY - 1.100000023841858 - mY;
     double dz = target->mZ + target->mZd - mZ;
-    double horizontal = std::sqrt(dx * dx + dz * dz);
-    double dy = target->mY + target->getEyeHeight() - 1.1 - mY;
-    const double aimHeight = dy + horizontal * 0.2;
-    if (!target->isInvertedHealAndHarm()) {
-        if (horizontal >= 8.0 && !target->hasEffect(MobEffects::MOVEMENT_SLOWDOWN)) {
-            potion = Potions::SLOWNESS;
-        } else if (target->getHealth() >= 8.0f &&
-                   !target->hasEffect(MobEffects::MOVEMENT_SPEED)) {
-            potion = Potions::SWIFTNESS;
-        } else if (horizontal <= 3.0 && target->getHealth() >= 8.0f &&
-                   !target->hasEffect(MobEffects::WEAKNESS) &&
-                   getRandom()->nextFloat() < 0.25f) {
-            potion = Potions::WEAKNESS;
-        } else if (target->getHealth() <= 3.0f &&
-                   !target->hasEffect(MobEffects::POISON)) {
-            potion = Potions::POISON;
-        }
+    float horizontal = Mth::sqrt(dx * dx + dz * dz);
+    Potion* potion = Potions::HARMING;
+    if (horizontal >= 8.0f && !target->hasEffect(MobEffects::MOVEMENT_SLOWDOWN)) {
+        potion = Potions::SLOWNESS;
+    } else if (target->getHealth() >= 8.0f && !target->hasEffect(MobEffects::POISON)) {
+        potion = Potions::POISON;
+    } else if (horizontal <= 3.0f && !target->hasEffect(MobEffects::WEAKNESS) && mRandom->nextFloat() < 0.25f) {
+        potion = Potions::WEAKNESS;
     }
     boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
     not_null_ptr<ItemInstance> item = PotionUtils::setPotion(
         not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion)), potion);
     boost::shared_ptr<ThrownPotion> projectile(new ThrownPotion(mLevel, owner, item));
-    projectile->shoot(dx, aimHeight, dz, 0.75f, 8.0f);
-    const float pitch = 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f);
-    playSound(SoundEvents::WITCH_THROW, 1.0f, pitch);
-    mLevel->addEntity(boost::static_pointer_cast<Entity>(projectile));
-    setAggressive(true);
+    projectile->mXRot -= -20.0f;
+    projectile->shoot(dx, dy + horizontal * 0.2f, dz, 0.75f, 8.0f);
+    playSound(SoundEvents::WITCH_THROW, 1.0f, getRandom()->nextFloat() * 0.4f + 0.8f);
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::WITCH_THROW, getSoundSource(), 1.0f,
+                      mRandom->nextFloat() * 0.4f + 0.8f, 16.0f);
+    mLevel->addEntity(projectile);
 }
 bool Witch::isAggressive() { return false; }
 void Witch::setAggressive(bool) {}
@@ -151,7 +151,7 @@ void Witch::aiStep()
                 setUsingItem(true);
                 getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->addModifier(
                     new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0, false));
-                mLevel->broadcastEntityEvent(shared_from_this(), 15, 0);
+                mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::WITCH_HAT_MAGIC, 0);
             }
         }
     }
@@ -160,7 +160,7 @@ void Witch::aiStep()
 
 void Witch::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 15) {
+    if (event == EntityEvent::WITCH_HAT_MAGIC) {
         for (int i = 0; i < 10 + getRandom()->nextInt(35); ++i) {
             const double spread = 0.13;
             mLevel->addParticle(PARTICLE_WITCH_MAGIC,
@@ -188,4 +188,4 @@ float Witch::getDamageAfterMagicAbsorb(const DamageSource* source, float damage)
 }
 ResourceLocation* Witch::getDefaultLootTable() { return &BuiltInLootTables::WITCH; }
 double Witch::getEyeHeight() { return 1.62; }
-unsigned long long Witch::GetType() { return TYPE_ID; }
+unsigned long long Witch::GetType() { return EntityType::WITCH; }

@@ -52,7 +52,7 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
     lastFoodLevel = foodLevel;
     const double exhaustionDrop = FoodConstants::ExhaustionDrop();
     const double one = 1.0;
-    const bool naturalRegeneration = player->mLevel->getGameRules()->getBoolean(7);
+    const bool naturalRegeneration = player->mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION);
 
     if (static_cast<double>(exhaustionLevel) > exhaustionDrop)
     {
@@ -133,7 +133,7 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
 void FoodData::readAdditionalSaveData(CompoundTag* tag)
 {
     const std::wstring foodLevelName(L"foodLevel");
-    if (tag->contains(foodLevelName, 99))
+    if (tag->contains(foodLevelName, Tag::TAG_ANY_NUMERIC))
     {
         foodLevel = tag->getInt(foodLevelName);
         foodTickTimer = tag->getInt(std::wstring(L"foodTickTimer"));

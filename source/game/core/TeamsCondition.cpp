@@ -1,4 +1,5 @@
 #include "game/core/TeamsCondition.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/MasterGameMode.hpp"
 
@@ -14,5 +15,5 @@ int TeamsCondition::GetValue(MasterGameMode* gameMode) const
 void TeamsCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
     params->push_back(gameMode->GetActiveTeamCount());
-    params->push_back(0x137f436f);
+    params->push_back(IDS_MG_TEAMS);
 }

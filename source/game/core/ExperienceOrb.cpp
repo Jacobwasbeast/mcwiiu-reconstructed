@@ -1,4 +1,5 @@
 #include "game/core/ExperienceOrb.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <string>
@@ -144,7 +145,7 @@ void ExperienceOrb::tick()
         mYd = 0.20000000298023224;
         mXd = (double)((mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f);
         mZd = (double)((mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f);
-        playSound(SoundEvents::LAVA_POP, 0.4f, mRandom->nextFloat() * 0.4f + 2.0f);
+        playSound(SoundEvents::GENERIC_BURN, 0.4f, mRandom->nextFloat() * 0.4f + 2.0f);
     }
 
     checkInBlock(mX, (mBoundingBox->mMinY + mBoundingBox->mMaxY) * 0.5, mZ);
@@ -352,5 +353,5 @@ void ExperienceOrb::create(Level* level)
 
 unsigned long long ExperienceOrb::GetType()
 {
-    return 0x0000000008000003ULL;
+    return EntityType::EXPERIENCE_ORB;
 }

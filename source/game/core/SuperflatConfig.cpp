@@ -196,9 +196,9 @@ SuperflatConfig* SuperflatConfig::makeDefaults()
 {
     clear();
     FlatGeneratorInfo info(this, false);
-    info.addLayer(FlatLayerInfo(1, Blocks::bedrock));
-    info.addLayer(FlatLayerInfo(2, Blocks::dirt));
     info.addLayer(FlatLayerInfo(1, Blocks::grass));
+    info.addLayer(FlatLayerInfo(2, Blocks::dirt));
+    info.addLayer(FlatLayerInfo(1, Blocks::bedrock));
     info.setBiome();
     info.setVillage(true);
     return this;

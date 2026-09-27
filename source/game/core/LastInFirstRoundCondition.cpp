@@ -18,12 +18,8 @@ bool LastInFirstRoundCondition::canAward(const GameMedal* medal, const StatsUID&
     if (playerStats != NULL && playerStats->getTotalRounds() != 0)
     {
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(0);
-        int lastPosition = roundStats->mCheckpointPadding[0];
-        int numberOfPlayers = roundStats->mCheckpointPadding[1];
-        if (numberOfPlayers > 1)
-        {
-            return lastPosition == numberOfPlayers - 1;
-        }
+        if (roundStats->mFinishPlayerCount > 1)
+            return roundStats->mFinishPosition == roundStats->mFinishPlayerCount - 1;
     }
 
     return false;

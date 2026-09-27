@@ -1,4 +1,7 @@
 #include "game/core/Sheep.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/GenericStats.hpp"
@@ -33,6 +36,7 @@
 #include "game/world/block/EatBlockGoal.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 static const EntityDataAccessor<unsigned char>* gSheepSheared;
 static boost::unordered_map<const DyeColor*, arrayWithLength<const float> > gSheepColors;
@@ -80,7 +84,7 @@ arrayWithLength<const float> Sheep::createSheepColor(const DyeColor* color)
 
 void Sheep::staticCtor()
 {
-    gSheepSheared = SynchedEntityData::defineId(ENTITY_TYPE_SHEEP, 0x000000000D680000ULL,
+    gSheepSheared = SynchedEntityData::defineId(EntityType::SHEEP, EntityType::ANIMAL,
                                                 EntityDataSerializers::BYTE);
 
     for (std::vector<const DyeColor*>::iterator it = DyeColor::COLORS.begin();
@@ -161,7 +165,7 @@ ResourceLocation* Sheep::getDefaultLootTable()
 
 void Sheep::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 10)
+    if (event == EntityEvent::EAT_GRASS)
     {
         mEatAnimationTick = 40;
         return;
@@ -246,8 +250,8 @@ bool Sheep::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
                 wool->mZd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
             }
 
-            player->awardStat(gStats->get_shearedEntity(0x000000002D680002ULL),
-                              GenericStats::param_shearedEntity(0x000000002D680002ULL));
+            player->awardStat(gStats->get_shearedEntity(EntityType::SHEEP),
+                              GenericStats::param_shearedEntity(EntityType::SHEEP));
         }
 
         itemInstance->hurtAndBreak(1, player);
@@ -260,7 +264,7 @@ bool Sheep::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
 
 void Sheep::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x000000002D680002ULL);
+    Mob::addDataWalkers(fixer, EntityType::SHEEP);
 }
 
 void Sheep::addAdditonalSaveData(CompoundTag* tag)
@@ -289,19 +293,19 @@ unsigned int Sheep::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
     int itemId = Item::getId(holder.m_pItemInstance->getItem());
 
-    if (itemId == 351)
+    if (itemId == ItemId::DYE)
     {
         const DyeColor* color = DyeColor::byItemData(holder.m_pItemInstance->getAuxValue());
         if (!isSheared() && getColor() != color)
         {
-            return 0x1a4e966dU;
+            return IDS_TOOLTIPS_DYE;
         }
     }
-    else if (itemId == 359)
+    else if (itemId == ItemId::SHEARS)
     {
         if (!isBaby() && !isSheared())
         {
-            return 0xbe5aab60U;
+            return IDS_TOOLTIPS_SHEAR;
         }
     }
 
@@ -383,7 +387,7 @@ double Sheep::getEyeHeight()
 
 unsigned long long Sheep::GetType()
 {
-    return 0x000000002D680002ULL;
+    return EntityType::SHEEP;
 }
 
 Sheep::SheepContainer::~SheepContainer()

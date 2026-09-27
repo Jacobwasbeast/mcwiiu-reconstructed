@@ -74,7 +74,7 @@ bool ControllerTask::isCompleted()
 
     if (useAlternateMappings
         && GameSettings::GetGameSettings(minecraft->mPlayer->mUserIndex,
-                                         static_cast<eGameSetting>(9)) != 0)
+                                         eGameSetting_SouthPaw) != 0)
     {
         mappings = &inputMappings;
     }

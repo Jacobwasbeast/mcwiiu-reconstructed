@@ -1,4 +1,5 @@
 #include "game/core/Coral.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -21,13 +22,13 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 
-AbstractProperty<int>* Coral_VARIANT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
+AbstractProperty<int>* Coral::VARIANT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
 
 namespace
 {
     std::wstring CORAL_ICON_NAMES[5] =
     {
-        L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple"
+        L"coral_plant_blue", L"coral_plant_pink", L"coral_plant_purple", L"coral_plant_red", L"coral_plant_yellow"
     };
 
     const AABB* CORAL_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
@@ -89,7 +90,7 @@ void Coral::neighborChanged(const BlockState* state, Level* level, const BlockPo
 
     if (!level->isSolidBlockingBlock(pos.below()) && !level->getBlock(pos.below())->isSlabBlock())
     {
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 
     level->addToTickNextTick(pos, this, 10);
@@ -97,7 +98,7 @@ void Coral::neighborChanged(const BlockState* state, Level* level, const BlockPo
 
 TextureAtlasSprite* Coral::getTexture(const Direction* direction, const BlockState* state)
 {
-    return mIcons[state->getValue(Coral_VARIANT)];
+    return mIcons[state->getValue(Coral::VARIANT)];
 }
 
 void Coral::registerIcons(IconRegister* iconRegister)
@@ -110,13 +111,13 @@ void Coral::registerIcons(IconRegister* iconRegister)
 
 int Coral::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(Coral_VARIANT);
+    return state->getValue(Coral::VARIANT);
 }
 
 const BlockState* Coral::getBlockState(int data)
 {
     TypedBoxed<int> variant(data);
-    return defaultBlockState()->setBoxedValue(Coral_VARIANT, &variant);
+    return defaultBlockState()->setBoxedValue(Coral::VARIANT, &variant);
 }
 
 int Coral::getDescriptionId(int auxValue)
@@ -136,7 +137,7 @@ int Coral::getDescriptionId(int auxValue)
 
 int Coral::getUseDescriptionId(int auxValue)
 {
-    return 0x226A4AE2;
+    return IDS_DESC_TILE_CORAL;
 }
 
 const AABB* Coral::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -146,7 +147,7 @@ const AABB* Coral::getShape(const BlockState* state, LevelSource* levelSource, c
 
 BlockStateDefinition* Coral::createBlockStateDefinition()
 {
-    static const Property* PROPERTIES[1] = { Coral_VARIANT };
+    static const Property* PROPERTIES[1] = { Coral::VARIANT };
 
     return new BlockStateDefinition(this, PROPERTIES, 1);
 }
@@ -193,6 +194,6 @@ void Coral::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
     if (level->getLiquidBlock(pos)->mMaterial == mMaterial)
     {
-        level->setExtraBlock(pos, Blocks::FLOWING_WATER->defaultBlockState(), 3, false);
+        level->setExtraBlock(pos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }

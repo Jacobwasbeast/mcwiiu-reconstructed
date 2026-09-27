@@ -7,9 +7,9 @@ class ConsoleInputSource
 {
 public:
     virtual ~ConsoleInputSource();
-    virtual const std::wstring& getName() const = 0;
-    virtual void sendMessage(const std::wstring& message) = 0;
-    virtual bool canUseCommand(int permissionLevel, const std::wstring& commandName) const = 0;
+    virtual void info(const std::wstring& message) = 0;
+    virtual void warn(const std::wstring& message) = 0;
+    virtual std::wstring getConsoleName() = 0;
 };
 
 #endif

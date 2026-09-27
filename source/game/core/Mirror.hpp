@@ -30,8 +30,9 @@ public:
     Rotation* getRotation(const Direction* direction);
     const Direction* mirror(const Direction* direction);
 
-private:
     static Mirror* VALUES[3];
+
+private:
 
     std::wstring name;
     eTYPE type;

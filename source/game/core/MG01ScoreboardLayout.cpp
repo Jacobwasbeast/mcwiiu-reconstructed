@@ -1,4 +1,5 @@
 #include "game/core/MG01ScoreboardLayout.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <algorithm>
 
@@ -166,7 +167,7 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
     {
         if (type != EScoreboardType_Award)
         {
-            return boost::shared_ptr<ItemInstance>();
+            return ItemInstance::EMPTY;
         }
 
         ClientScoreboard* scoreboard =
@@ -177,7 +178,7 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
 
         if (slot >= m_players.size() || m_players[slot] == 0)
         {
-            return boost::shared_ptr<ItemInstance>();
+            return ItemInstance::EMPTY;
         }
 
         INetworkPlayer* networkPlayer =
@@ -194,12 +195,12 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
                 }
                 return weaponOrDefaultSkull(scoreboard->GetKillerWeapon(uid, -1));
             }
-            return boost::shared_ptr<ItemInstance>();
+            return ItemInstance::EMPTY;
         }
 
         if (networkPlayer == 0)
         {
-            return boost::shared_ptr<ItemInstance>();
+            return ItemInstance::EMPTY;
         }
 
         return weaponOrDefaultSkull(scoreboard->GetFavouriteWeapon(uid));
@@ -208,13 +209,13 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
     const unsigned int columns = getNumberOfColumns();
     if (column == columns - 2)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::ironIngot, 1, 0));
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0));
     }
     if (column == columns - 1 && type == EScoreboardType_Scoreboard)
     {
         return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
     }
-    return boost::shared_ptr<ItemInstance>();
+    return ItemInstance::EMPTY;
 }
 
 UIString MG01ScoreboardLayout::getLabel2(const StatsUID&)
@@ -232,7 +233,7 @@ UIString MG01ScoreboardLayout::getLabel3(const StatsUID& uid)
     {
         total += scoreboard->GetDamageDealt(uid, round);
     }
-    std::wstring text(L10N::GetString(0x7cea6c57));
+    std::wstring text(L10N::GetString(IDS_MG_DAMAGE_INFLICTED));
     text = replaceAll(text, L"{*DAMAGE*}", _toString<int>(total));
     return UIString(text);
 }
@@ -247,7 +248,7 @@ UIString MG01ScoreboardLayout::getLabel4(const StatsUID& uid)
     {
         total += scoreboard->GetDamageReceived(uid, round);
     }
-    std::wstring text(L10N::GetString(0x2b967c02));
+    std::wstring text(L10N::GetString(IDS_MG_DAMAGE_RECEIVED));
     text = replaceAll(text, L"{*DAMAGE*}", _toString<int>(total));
     return UIString(text);
 }
@@ -262,21 +263,21 @@ UIString MG01ScoreboardLayout::getLabel5(const StatsUID& uid)
     {
         if (!scoreboard->IsWinner(uid, -1))
         {
-            return UIString(0x2473f5a1);
+            return UIString(IDS_MG_SURVIVOR);
         }
     }
     else
     {
         if (!scoreboard->HasStats(uid))
         {
-            return UIString(0xfebed1b8);
+            return UIString(IDS_MG_SPECTATOR);
         }
         if (!scoreboard->IsOverallWinner(uid))
         {
-            return UIString(0xea95ecf3);
+            return UIString(IDS_MG_NEMESIS);
         }
     }
-    return UIString(0x9148f7e8);
+    return UIString(IDS_MG_WINNER);
 }
 
 UIString MG01ScoreboardLayout::getLabel6(const StatsUID& uid)
@@ -312,7 +313,7 @@ UIString MG01ScoreboardLayout::getLabel7(const StatsUID& uid)
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1)
     {
-        return UIString(0x5f46455c);
+        return UIString(IDS_MG_FINAL_BLOW);
     }
     return UIString(0x51f24780);
 }

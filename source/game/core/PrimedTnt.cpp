@@ -1,4 +1,5 @@
 #include "game/core/PrimedTnt.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <string>
@@ -10,9 +11,7 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 const EntityDataAccessor<int>* PrimedTnt::DATA_FUSE_ID = NULL;
 
@@ -45,7 +44,7 @@ void PrimedTnt::create(Level* level)
 
 void PrimedTnt::staticCtor()
 {
-    DATA_FUSE_ID = SynchedEntityData::defineId(ENTITY_TYPE_PRIMED_TNT, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_FUSE_ID = SynchedEntityData::defineId(EntityType::PRIMED_TNT, EntityType::ENTITY, EntityDataSerializers::INT);
 }
 
 void PrimedTnt::_init()
@@ -170,5 +169,5 @@ void PrimedTnt::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 
 unsigned long long PrimedTnt::GetType()
 {
-    return ENTITY_TYPE_PRIMED_TNT;
+    return EntityType::PRIMED_TNT;
 }

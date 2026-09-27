@@ -73,10 +73,11 @@ public:
     virtual Vec3* getPos(double x, double y, double z);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
+    using Entity::push;
     virtual void push(boost::shared_ptr<Entity> entity);
     bool isInterpolating() const;
-    float getLerpToYRot() const;
-    float getLerpToXRot() const;
+    double getLerpToYRot() const;
+    double getLerpToXRot() const;
     virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
     virtual void lerpMotion(double xd, double yd, double zd);
     virtual void setDamage(float damage);
@@ -107,18 +108,18 @@ public:
     static const EntityDataAccessor<bool>* DATA_ID_CUSTOM_DISPLAY;
 
 protected:
-    unsigned char mDamageDirection;
-    unsigned char mCustomDisplay;
-    unsigned short mReserved;
-    int mDisplayOffset;
-    unsigned char mDisplayState;
-    unsigned char mReserved2[3];
+    static const int EXITS[10][2][3];
+
+    bool mFlipped;
+    bool mInBubbleColumn;
+    void* mReserved;
+    bool mPushedMinecart;
     int mLerpSteps;
     double mLerpX;
     double mLerpY;
     double mLerpZ;
-    float mLerpYRot;
-    float mLerpXRot;
+    double mLerpYRot;
+    double mLerpXRot;
     double mLerpXd;
     double mLerpYd;
     double mLerpZd;

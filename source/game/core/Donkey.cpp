@@ -1,4 +1,9 @@
 #include "game/core/Donkey.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
@@ -24,7 +29,7 @@ Donkey::~Donkey()
 
 void Donkey::addDataWalkers(DataFixerUpper* fixer)
 {
-    AbstractChestedHorse::addDataWalkers(fixer, ENTITY_TYPE_DONKEY);
+    AbstractChestedHorse::addDataWalkers(fixer, EntityType::DONKEY);
 }
 
 ResourceLocation* Donkey::getDefaultLootTable()
@@ -58,7 +63,7 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
     }
 
     unsigned long long type = other->GetType();
-    if (type != ENTITY_TYPE_DONKEY && type != ENTITY_TYPE_HORSE)
+    if (type != EntityType::DONKEY && type != EntityType::HORSE)
     {
         return false;
     }
@@ -69,7 +74,7 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
 boost::shared_ptr<AgableMob> Donkey::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<AgableMob> child;
-    if (partner->GetType() == ENTITY_TYPE_HORSE)
+    if (partner->GetType() == EntityType::HORSE)
     {
         child.reset(new Mule(mLevel));
     }
@@ -84,121 +89,78 @@ boost::shared_ptr<AgableMob> Donkey::getBreedOffspring(boost::shared_ptr<AgableM
 unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (!tooltipData.m_bAllowedToInteract)
+        return IDS_NONE;
+
+    int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
+    bool horseFood = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
+                     || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
+    bool loveFood = itemId == ItemId::GOLDEN_CARROT || itemId == ItemId::GOLDEN_APPLE;
+
+    if (itemId == ItemId::SPAWN_EGG)
     {
-        return 0xffffffffU;
+        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::DONKEY)
+            return IDS_TOOLTIPS_PLACE;
+        return isLeashedToPlayer(tooltipData.m_pPlayer) ? IDS_TOOLTIPS_UNLEASH : IDS_NONE;
     }
 
-    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-    Item* itemType = item->getItem();
-    bool horseArmor = itemType == Items::leatherHorseArmor || itemType == Items::apple ||
-                      itemType == Items::wheat || itemType == Items::goldenApple ||
-                      itemType == Items::sugar || itemType == Items::goldenCarrot;
-    bool loveFoodItem = itemType == Items::goldenApple || itemType == Items::goldenCarrot;
-    boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
-                                     (Player*)tooltipData.m_pPlayer.get());
+    if (isLeashedToPlayer(tooltipData.m_pPlayer))
+        return IDS_TOOLTIPS_UNLEASH;
 
-    if (itemType == Items::spawnEgg)
-    {
-        if (SpawnEggItem::fjGetType(item) == GetType())
-        {
-            return 0x4c36cd96U;
-        }
-        if (isLeashedToPlayer(player))
-        {
-            return 0x551269b5U;
-        }
-        return 0xffffffffU;
-    }
-
-    if (isLeashedToPlayer(player))
-    {
-        return 0x551269b5U;
-    }
-
-    if (itemType == Items::lead)
+    if (itemId == ItemId::LEAD)
     {
         if (!isLeashed())
-        {
-            return 0xa1b34a96U;
-        }
+            return IDS_TOOLTIPS_LEASH;
         if (!getPassengers()->empty() || !isTamed())
-        {
-            return 0xffffffffU;
-        }
-        return 0x497adcf0U;
+            return IDS_NONE;
+        return IDS_TOOLTIPS_MOUNT;
     }
 
-    if (itemType == Items::nameTag && (!player->isSneaking() || !isTamed()))
+    if (itemId == ItemId::NAME_TAG && (!tooltipData.m_pPlayer->isSneaking() || !isTamed()))
     {
-        if (item->hasCustomHoverName() && (!hasCustomName() || item->getHoverName() != getCustomName()))
-        {
-            return 0x5592c692U;
-        }
-        if (isTamed())
-        {
-            if (getPassengers()->empty())
-            {
-                return 0x497adcf0U;
-            }
-        }
-        return 0xffffffffU;
+        if (tooltipData.m_pItemInstance->hasCustomHoverName()
+            && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0))
+            return IDS_TOOLTIPS_NAME;
+        if (!isTamed() || !getPassengers()->empty())
+            return IDS_NONE;
+        return IDS_TOOLTIPS_MOUNT;
     }
 
     if (isBaby())
-    {
-        if (horseArmor)
-        {
-            return 0x82f8d90fU;
-        }
-        return 0xffffffffU;
-    }
+        return horseFood ? IDS_TOOLTIPS_FEED : IDS_NONE;
 
     if (!isTamed())
     {
-        if (!item->isEmpty())
+        if (!tooltipData.m_pItemInstance->isEmpty())
         {
-            if (horseArmor && itemType != Items::leatherHorseArmor)
-            {
-                return 0x82f8d90fU;
-            }
+            if (horseFood && itemId != BlockId::HAY_BLOCK)
+                return IDS_TOOLTIPS_FEED;
         }
         else if (getPassengers()->empty())
         {
-            return 0x95cfa728U;
+            return IDS_TOOLTIPS_TAME;
         }
-        return 0xffffffffU;
+        return IDS_NONE;
     }
 
-    bool showMountTooltip = player->isSneaking() && (!isVehicle() || hasPassenger(player));
-    if (!showMountTooltip && itemType == Items::saddle && !isSaddled())
-    {
-        showMountTooltip = true;
-    }
-    if (showMountTooltip)
-    {
-        return 0x41590ad1U;
-    }
+    bool open = tooltipData.m_pPlayer->isSneaking()
+                && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed();
+    if (!open && itemId == ItemId::SADDLE && !isSaddled())
+        open = true;
+    if (open)
+        return IDS_TOOLTIPS_OPEN;
 
-    if (itemType == Item::byBlock(Blocks::chest) && !hasChest())
-    {
-        return 0x7b938f36U;
-    }
+    if (itemId == BlockId::CHEST && !hasChest())
+        return IDS_TOOLTIPS_ATTACH;
 
-    if (loveFoodItem && !isInLove() && getPassengers()->empty() && !isBreedCoolingDown())
-    {
-        return 0xb47a2ab6U;
-    }
+    if (loveFood && !isInLove() && !isBaby() && getPassengers()->empty() && !isBreedCoolingDown())
+        return IDS_TOOLTIPS_LOVEMODE;
 
-    if (horseArmor && getHealth() < getMaxHealth())
-    {
-        return 0x56b3f98dU;
-    }
+    if (horseFood && getHealth() < getMaxHealth())
+        return IDS_TOOLTIPS_HEAL;
 
     if (getPassengers()->empty())
-    {
-        return 0x497adcf0U;
-    }
-    return 0xffffffffU;
+        return IDS_TOOLTIPS_MOUNT;
+    return IDS_NONE;
 }
 
 bool Donkey::HideUseTooltips()
@@ -208,7 +170,7 @@ bool Donkey::HideUseTooltips()
 
 unsigned long long Donkey::GetType()
 {
-    return ENTITY_TYPE_DONKEY;
+    return EntityType::DONKEY;
 }
 
 void Donkey::create(Level* level)

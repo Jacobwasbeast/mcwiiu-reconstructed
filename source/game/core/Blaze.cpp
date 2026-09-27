@@ -1,4 +1,6 @@
 #include "game/core/Blaze.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <typeinfo>
@@ -28,7 +30,6 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const unsigned long long ENTITY_TYPE_BLAZE = 0x5D540045ULL;
 static const EntityDataAccessor<unsigned char>* DATA_FLAGS = NULL;
 
 Blaze::Blaze(Level* level)
@@ -52,13 +53,13 @@ Blaze::~Blaze()
 
 void Blaze::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_BLAZE, ENTITY_TYPE_MONSTER,
+    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(EntityType::BLAZE, EntityType::MONSTER,
                                                             EntityDataSerializers::BYTE);
 }
 
 void Blaze::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_BLAZE);
+    Mob::addDataWalkers(fixer, EntityType::BLAZE);
 }
 
 void Blaze::registerGoals()
@@ -222,7 +223,7 @@ double Blaze::getFollowDistance()
 
 unsigned long long Blaze::GetType()
 {
-    return ENTITY_TYPE_BLAZE;
+    return EntityType::BLAZE;
 }
 
 void Blaze::create(Level* level)
@@ -307,7 +308,7 @@ void Blaze::BlazeAttackGoal::tick()
             if (mAttackStep > 1)
             {
                 double spread = std::sqrt(std::sqrt(distance)) * 0.5;
-                mBlaze->mLevel->levelEvent(boost::shared_ptr<Player>(), 1018,
+                mBlaze->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BLAZE_FIREBALL,
                                            BlockPos(mBlaze->mX, mBlaze->mY, mBlaze->mZ), 0);
                 boost::shared_ptr<SmallFireball> fireball(new SmallFireball(
                     mBlaze->mLevel, boost::dynamic_pointer_cast<Mob>(mBlaze->shared_from_this()),

@@ -1,4 +1,5 @@
 #include "game/core/SpellcasterIllager.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Mth.hpp"
@@ -28,8 +29,8 @@ SpellcasterIllager::~SpellcasterIllager() = default;
 
 void SpellcasterIllager::staticCtor()
 {
-    DATA_ID = SynchedEntityData::defineId<unsigned char>(0x000000004D541840ULL,
-                                                          0x000000004D541040ULL,
+    DATA_ID = SynchedEntityData::defineId<unsigned char>(EntityType::SPELLCASTER_ILLAGER,
+                                                          EntityType::ABSTRACT_ILLAGER,
                                                           EntityDataSerializers::BYTE);
 }
 

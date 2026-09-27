@@ -2,8 +2,10 @@
 #define GAME_CORE_WITHERTARGETHIGHESTDAMAGE_HPP
 #include <boost/shared_ptr.hpp>
 #include "game/entity/ai/TargetGoal.hpp"
-class LivingEntity; class WitherBoss;
-class WitherTargetHighestDamage : public TargetGoal {
+class LivingEntity;
+class WitherBoss;
+class WitherTargetHighestDamage : public TargetGoal
+{
 public:
     explicit WitherTargetHighestDamage(WitherBoss*);
     virtual ~WitherTargetHighestDamage();

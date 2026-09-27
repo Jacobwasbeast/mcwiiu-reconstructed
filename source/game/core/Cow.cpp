@@ -1,4 +1,7 @@
 #include "game/core/Cow.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -10,6 +13,7 @@
 #include "game/entity/ai/FollowParentGoal.hpp"
 #include "game/entity/ai/PanicGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/TemptGoal.hpp"
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
@@ -35,7 +39,7 @@ Cow::~Cow() = default;
 
 void Cow::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x2d6a0000ULL);
+    Mob::addDataWalkers(fixer, EntityType::COW);
 }
 
 void Cow::registerGoals()
@@ -43,6 +47,13 @@ void Cow::registerGoals()
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(1, new PanicGoal(this, 2.0), true);
     mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
+
+    static Item* temptItemsData[1] = { Items::wheat };
+    arrayWithLength<Item*> temptItems;
+    temptItems.data = temptItemsData;
+    temptItems.length = 1;
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.25, temptItems, false, arrayWithLength<int>()), true);
+
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.25), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
@@ -123,14 +134,14 @@ double Cow::getEyeHeight()
 
 unsigned int Cow::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance->getItem() == Items::bucket && !isBaby())
-        return 0x735a2f66U;
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::BUCKET && !isBaby())
+        return IDS_TOOLTIPS_MILK;
     return Animal::GetInteractTooltip(tooltipData);
 }
 
 unsigned long long Cow::GetType()
 {
-    return 0x000000002d6a0000ULL;
+    return EntityType::COW;
 }
 
 void Cow::create(Level* level)

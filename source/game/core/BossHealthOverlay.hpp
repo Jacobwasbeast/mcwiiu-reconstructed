@@ -14,6 +14,8 @@ class Minecraft;
 
 class BossHealthOverlay : public GuiComponent
 {
+    friend class UIScene_HUD;
+
 public:
     BossHealthOverlay(Minecraft* minecraft);
 

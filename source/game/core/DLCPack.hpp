@@ -64,8 +64,12 @@ private:
     std::vector<DLCFile*> m_files[DLCManager::eDLCType_NumTypes];
     std::vector<DLCPack*> m_childPacks;
     DLCPack* m_parentPack;
+
+public:
     std::vector<std::wstring> m_creditIds;
     std::vector<std::wstring> m_creditStrings;
+
+private:
     boost::unordered_map<int, std::wstring> m_parameters;
     std::wstring m_name;
     std::wstring m_dataPath;

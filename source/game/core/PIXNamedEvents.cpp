@@ -2,9 +2,12 @@
 
 #include <cstdarg>
 
-struct _XPARTY_USER_LIST;
-
 unsigned int XPartyGetUserList(_XPARTY_USER_LIST* users)
+{
+    return 0;
+}
+
+unsigned int XBackgroundDownloadSetMode(_XBACKGROUND_DOWNLOAD_MODE mode)
 {
     return 0;
 }
@@ -31,4 +34,9 @@ void PIXEndNamedEvent()
 
 void PIXSetMarkerDeprecated(float colour, const char* name, ...)
 {
+}
+
+int XUserGetSigninInfo(unsigned int, unsigned int, _XUSER_SIGNIN_INFO*)
+{
+    return 0;
 }

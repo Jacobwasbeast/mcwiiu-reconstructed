@@ -1,4 +1,6 @@
 #include "game/core/MinecartFurnace.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/Mth.hpp"
@@ -41,8 +43,8 @@ void MinecartFurnace::create(Level* level)
 
 void MinecartFurnace::staticCtor()
 {
-    DATA_HAS_FUEL = SynchedEntityData::defineId<bool>(0x000000000A800003ULL,
-        ENTITY_TYPE_MINECART, EntityDataSerializers::BOOLEAN);
+    DATA_HAS_FUEL = SynchedEntityData::defineId<bool>(EntityType::MINECART_FURNACE,
+        EntityType::MINECART, EntityDataSerializers::BOOLEAN);
 }
 
 unsigned int MinecartFurnace::getContainerType()
@@ -103,7 +105,7 @@ double MinecartFurnace::getMaxSpeed()
 void MinecartFurnace::destroy(const DamageSource* source)
 {
     Minecart::destroy(source);
-    if (!source->isExplosion() && mLevel->getGameRules()->getBoolean(6))
+    if (!source->isExplosion() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
     {
         spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::furnace, 1)), 0.0f);
     }
@@ -175,7 +177,7 @@ bool MinecartFurnace::interact(const boost::shared_ptr<Player>& player, Interact
 
 unsigned int MinecartFurnace::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_bAllowedToInteract ? 0xEA4E897E : 0xFFFFFFFF;
+    return tooltipData.m_bAllowedToInteract ? IDS_TOOLTIPS_USE : IDS_NONE;
 }
 
 void MinecartFurnace::addAdditonalSaveData(CompoundTag* tag)
@@ -201,5 +203,5 @@ const BlockState* MinecartFurnace::getDefaultDisplayBlockState()
 
 unsigned long long MinecartFurnace::GetType()
 {
-    return 0x000000000A800003ULL;
+    return EntityType::MINECART_FURNACE;
 }

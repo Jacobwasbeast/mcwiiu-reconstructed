@@ -9,7 +9,7 @@ enum EServerSetting
     eServerSetting_Pvp = 3,
     eServerSetting_GameMode = 4,
     eServerSetting_MaxBuildHeight = 5,
-    eServerSetting_KeepSpawnLoaded = 6,
+    eServerSetting_DisableSaving = 6,
     eServerSetting_AllowNether = 7,
     eServerSetting_LevelName = 8,
     eServerSetting_LevelType = 9,

@@ -231,7 +231,7 @@ bool GameModeConstraints::canMoveToPosition(double oldX, double oldY, double old
 
 bool GameModeConstraints::CanUsePortal()
 {
-    return currentState != 13;
+    return currentState != eTutorial_State_Portal;
 }
 
 bool GameModeConstraints::isInputAllowed(int mapping)

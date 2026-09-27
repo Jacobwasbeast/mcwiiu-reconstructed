@@ -1,7 +1,7 @@
 #include "game/core/PerlinNoise.hpp"
 #include "game/core/ImprovedNoise.hpp"
 #include "game/util/Random.hpp"
-void MemSect(int section);
+#include "game/core/MemSect.hpp"
 static int perlinFloor(double value)
 {
     int result = (int)value;

@@ -53,43 +53,56 @@ public:
     class RoomCrossing;
     class StairsRoom;
 
+    static PieceWeight* bridgePieceWeights[6];
+    static PieceWeight* castlePieceWeights[7];
+
     static void loadStatic();
-    static StructurePiece* findAndCreateBridgePieceFactory(PieceWeight*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
+    static StructurePiece* findAndCreateBridgePieceFactory(PieceWeight* weight, std::vector<StructurePiece*>* pieces,
+                                                           Random& random, int x, int y, int z,
+                                                           const Direction* direction, int depth);
 
     class NetherBridgePiece : public StructurePiece
     {
     public:
-        NetherBridgePiece(int genDepth);
+        NetherBridgePiece(int depth);
         NetherBridgePiece();
         virtual ~NetherBridgePiece();
-        static bool isOkBox(BoundingBox*, StartPiece*);
-        virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        virtual void addAdditionalSaveData(DataOutputStream*);
-        int updatePieceWeight(std::list<PieceWeight*>*);
-        StructurePiece* generatePiece(StartPiece*, std::list<PieceWeight*>*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        StructurePiece* generateAndAddPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int, bool);
-        StructurePiece* generateChildForward(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, bool);
-        StructurePiece* generateChildLeft(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, bool);
-        StructurePiece* generateChildRight(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, bool);
-        void generateLightPost(Level*, Random&, BoundingBox*, int, int, int, int, int);
-        void generateLightPostFacingRight(Level*, Random&, BoundingBox*, int, int, int);
-        void generateLightPostFacingLeft(Level*, Random&, BoundingBox*, int, int, int);
-        void generateLightPostFacingUp(Level*, Random&, BoundingBox*, int, int, int);
-        void generateLightPostFacingDown(Level*, Random&, BoundingBox*, int, int, int);
+        static bool isOkBox(BoundingBox* box, StartPiece* start);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        int updatePieceWeight(std::list<PieceWeight*>* weights);
+        StructurePiece* generatePiece(StartPiece* start, std::list<PieceWeight*>* weights,
+                                      std::vector<StructurePiece*>* pieces, Random& random,
+                                      int x, int y, int z, const Direction* direction, int depth);
+        StructurePiece* generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
+                                            int x, int y, int z, const Direction* direction, int depth,
+                                            bool isCastle);
+        StructurePiece* generateChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
+                                             int offsetX, int offsetY, bool isCastle);
+        StructurePiece* generateChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
+                                          int offsetY, int offsetXZ, bool isCastle);
+        StructurePiece* generateChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
+                                           int offsetY, int offsetXZ, bool isCastle);
+        void generateLightPost(Level* level, Random& random, BoundingBox* box, int x, int y, int z,
+                               int xOffset, int zOffset);
+        void generateLightPostFacingRight(Level* level, Random& random, BoundingBox* box, int x, int y, int z);
+        void generateLightPostFacingLeft(Level* level, Random& random, BoundingBox* box, int x, int y, int z);
+        void generateLightPostFacingUp(Level* level, Random& random, BoundingBox* box, int x, int y, int z);
+        void generateLightPostFacingDown(Level* level, Random& random, BoundingBox* box, int x, int y, int z);
     };
 
     class PieceWeight
     {
     public:
-        PieceWeight(EPieceClass, int, int, bool);
-        PieceWeight(EPieceClass, int, int);
-        bool doPlace(int);
+        PieceWeight(EPieceClass pieceClass, int weight, int maxPlaceCount, bool allowInRow);
+        PieceWeight(EPieceClass pieceClass, int weight, int maxPlaceCount);
+        bool doPlace(int depth);
         bool isValid();
         EPieceClass mPieceClass;
         int mWeight;
-        int mMaxPlaceCount;
         int mPlaceCount;
-        bool mIsValid;
+        int mMaxPlaceCount;
+        bool mAllowInRow;
     };
 
     class BridgeStraight : public NetherBridgePiece
@@ -97,10 +110,11 @@ public:
     public:
         BridgeStraight();
         virtual ~BridgeStraight();
-        BridgeStraight(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        BridgeStraight(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -110,10 +124,11 @@ public:
     public:
         CastleCorridorStairsPiece();
         virtual ~CastleCorridorStairsPiece();
-        CastleCorridorStairsPiece(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        CastleCorridorStairsPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -123,10 +138,11 @@ public:
     public:
         CastleCorridorTBalconyPiece();
         virtual ~CastleCorridorTBalconyPiece();
-        CastleCorridorTBalconyPiece(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        CastleCorridorTBalconyPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -136,10 +152,11 @@ public:
     public:
         CastleEntrance();
         virtual ~CastleEntrance();
-        CastleEntrance(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        CastleEntrance(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -149,10 +166,11 @@ public:
     public:
         CastleSmallCorridorCrossingPiece();
         virtual ~CastleSmallCorridorCrossingPiece();
-        CastleSmallCorridorCrossingPiece(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        CastleSmallCorridorCrossingPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -162,10 +180,11 @@ public:
     public:
         CastleSmallCorridorPiece();
         virtual ~CastleSmallCorridorPiece();
-        CastleSmallCorridorPiece(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        CastleSmallCorridorPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -175,10 +194,11 @@ public:
     public:
         CastleStalkRoom();
         virtual ~CastleStalkRoom();
-        CastleStalkRoom(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        CastleStalkRoom(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -188,10 +208,11 @@ public:
     public:
         RoomCrossing();
         virtual ~RoomCrossing();
-        RoomCrossing(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        RoomCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -201,10 +222,11 @@ public:
     public:
         StairsRoom();
         virtual ~StairsRoom();
-        StairsRoom(int, Random&, BoundingBox*, const Direction*);
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        StairsRoom(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
@@ -213,88 +235,94 @@ public:
     {
     public:
         BridgeCrossing();
-        BridgeCrossing(Random&, int, int);
-        BridgeCrossing(int, Random&, BoundingBox*, const Direction*);
+        BridgeCrossing(Random& random, int x, int z);
+        BridgeCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
         virtual ~BridgeCrossing();
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
     };
+
     class BridgeEndFiller : public NetherBridgePiece
     {
     public:
         BridgeEndFiller();
-        BridgeEndFiller(int, Random&, BoundingBox*, const Direction*);
+        BridgeEndFiller(int depth, Random& random, BoundingBox* box, const Direction* direction);
         virtual ~BridgeEndFiller();
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        virtual void addAdditionalSaveData(DataOutputStream*);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        int mUnknown1c;
+        int mSelfSeed;
     };
 
     class CastleSmallCorridorLeftTurnPiece : public NetherBridgePiece
     {
     public:
         CastleSmallCorridorLeftTurnPiece();
-        CastleSmallCorridorLeftTurnPiece(int, Random&, BoundingBox*, const Direction*);
+        CastleSmallCorridorLeftTurnPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
         virtual ~CastleSmallCorridorLeftTurnPiece();
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        virtual void addAdditionalSaveData(DataOutputStream*);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        unsigned char mState[4];
+        bool mIsNeedingChest;
     };
 
     class CastleSmallCorridorRightTurnPiece : public NetherBridgePiece
     {
     public:
         CastleSmallCorridorRightTurnPiece();
-        CastleSmallCorridorRightTurnPiece(int, Random&, BoundingBox*, const Direction*);
+        CastleSmallCorridorRightTurnPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
         virtual ~CastleSmallCorridorRightTurnPiece();
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        virtual void addAdditionalSaveData(DataOutputStream*);
-        virtual void addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        unsigned char mState[4];
+        bool mIsNeedingChest;
     };
 
     class MonsterThrone : public NetherBridgePiece
     {
     public:
         MonsterThrone();
-        MonsterThrone(int, Random&, BoundingBox*, const Direction*);
+        MonsterThrone(int depth, Random& random, BoundingBox* box, const Direction* direction);
         virtual ~MonsterThrone();
-        static StructurePiece* createPiece(std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
-        virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
-        virtual void addAdditionalSaveData(DataOutputStream*);
-        virtual bool postProcess(Level*, Random&, BoundingBox*);
+        static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                           const Direction* direction, int depth);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
-        bool mHasSpawner;
+        bool mHasPlacedSpawner;
     };
 
     class StartPiece : public BridgeCrossing
     {
     public:
-        StartPiece(Random&, int, int, Level*);
+        StartPiece(Random& random, int x, int z, Level* level);
         StartPiece();
         virtual ~StartPiece();
         virtual EStructurePiece GetType();
-        PieceWeight* mPreviousPieceWeight;
+        PieceWeight* mPreviousPiece;
         Level* mLevel;
-        std::list<PieceWeight*> mAvailablePieces;
-        std::list<PieceWeight*> mPendingPieces;
+        std::list<PieceWeight*> mAvailableBridgePieces;
+        std::list<PieceWeight*> mAvailableCastlePieces;
         std::vector<StructurePiece*> mPendingChildren;
     };
 };

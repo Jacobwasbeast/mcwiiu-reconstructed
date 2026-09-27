@@ -1,10 +1,6 @@
 #include "game/core/IntCache.hpp"
-
-unsigned int TlsAlloc();
-void* TlsGetValue(unsigned int index);
-int TlsSetValue(unsigned int index, void* value);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 static unsigned int sTlsIndex = TlsAlloc();
 

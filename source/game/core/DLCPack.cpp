@@ -20,12 +20,9 @@
 #include "game/core/DLCUIDataFile.hpp"
 #include "game/data/StringTable.hpp"
 #include "game/world/block/DLCMaterialFile.hpp"
+#include "game/core/StringUtils.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
-void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement);
-std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
-unsigned int TlsAlloc();
-int TlsSetValue(unsigned int index, void* value);
-void* TlsGetValue(unsigned int index);
 bool pathCmp(DLCFile* file);
 unsigned int g_pathCompareTlsIndex = TlsAlloc();
 

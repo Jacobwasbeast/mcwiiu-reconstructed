@@ -1,4 +1,7 @@
 #include "game/core/Ocelot.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -52,12 +55,11 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
 
 const EntityDataAccessor<int>* Ocelot::DATA_CAT_TYPE = NULL;
 const EntityDataAccessor<bool>* Ocelot::DATA_IS_TEMPTED = NULL;
 
-static const unsigned long long ENTITY_TYPE_OCELOT = 0x000000002D6C0001ULL;
-static const unsigned long long ENTITY_TYPE_TAMABLE_ANIMAL = 0x000000000D6C0000ULL;
 
 Ocelot::Ocelot(Level* level) : TamableAnimal(level), mAvoidPlayersGoal(NULL)
 {
@@ -77,15 +79,15 @@ void Ocelot::create(Level* level)
 
 void Ocelot::staticCtor()
 {
-    DATA_CAT_TYPE = SynchedEntityData::defineId<int>(ENTITY_TYPE_OCELOT, ENTITY_TYPE_TAMABLE_ANIMAL,
+    DATA_CAT_TYPE = SynchedEntityData::defineId<int>(EntityType::OCELOT, EntityType::TAMABLE_ANIMAL,
                                                      EntityDataSerializers::INT);
-    DATA_IS_TEMPTED = SynchedEntityData::defineId<bool>(ENTITY_TYPE_OCELOT, ENTITY_TYPE_TAMABLE_ANIMAL,
+    DATA_IS_TEMPTED = SynchedEntityData::defineId<bool>(EntityType::OCELOT, EntityType::TAMABLE_ANIMAL,
                                                         EntityDataSerializers::BOOLEAN);
 }
 
 void Ocelot::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_OCELOT);
+    Mob::addDataWalkers(fixer, EntityType::OCELOT);
 }
 
 void Ocelot::setSittingOnBlock(bool sitting)
@@ -287,16 +289,16 @@ bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
                 if (mRandom->nextInt(3) == 0)
                 {
                     tame(player);
-                    player->awardStat(gStats->get_tamedEntity(ENTITY_TYPE_OCELOT),
-                                      GenericStats::param_tamedEntity(ENTITY_TYPE_OCELOT));
+                    player->awardStat(gStats->get_tamedEntity(EntityType::OCELOT),
+                                      GenericStats::param_tamedEntity(EntityType::OCELOT));
                     setCatType(mLevel->mRandom->nextInt(3) + 1);
                     spawnTamingParticles(true);
-                    mLevel->broadcastEntityEvent(shared_from_this(), 7, 0);
+                    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0);
                 }
                 else
                 {
                     spawnTamingParticles(false);
-                    mLevel->broadcastEntityEvent(shared_from_this(), 6, 0);
+                    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_FAILED, 0);
                 }
             }
 
@@ -435,7 +437,7 @@ void Ocelot::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
         passenger->setPos(mX, mY + 0.35 + passenger->getRidingHeight(), mZ);
 
-    if (Entity::instanceof(passenger, ENTITY_TYPE_LIVING_ENTITY))
+    if (Entity::instanceof(passenger, EntityType::LIVING_ENTITY))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
         living->mYBodyRot = mYBodyRot;
@@ -446,23 +448,23 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
 {
     int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
 
-    if (itemId == 0x17F && SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == ENTITY_TYPE_OCELOT)
-        return 0x4C36CD96;
+    if (itemId == ItemId::SPAWN_EGG && SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::OCELOT)
+        return IDS_TOOLTIPS_PLACE;
 
     if (isLeashedToPlayer(tooltipData.m_pPlayer))
-        return 0x551269B5;
+        return IDS_TOOLTIPS_UNLEASH;
 
-    if (itemId == 0x1A4)
+    if (itemId == ItemId::LEAD)
     {
         if (!isLeashed() && isOwnedBy(tooltipData.m_pPlayer))
-            return 0xA1B34A96;
-        return 0xFFFFFFFF;
+            return IDS_TOOLTIPS_LEASH;
+        return IDS_NONE;
     }
 
-    if (!isPassenger() && itemId == 0x1A5 && tooltipData.m_pItemInstance->hasCustomHoverName())
+    if (!isPassenger() && itemId == ItemId::NAME_TAG && tooltipData.m_pItemInstance->hasCustomHoverName())
     {
         if (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName() != getCustomName())
-            return 0x5592C692;
+            return IDS_TOOLTIPS_NAME;
     }
 
     if (isTame())
@@ -470,21 +472,21 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
         if (!isFood(tooltipData.m_pItemInstance))
         {
             if (!isOwnedBy(tooltipData.m_pPlayer) || isSittingOnBlock())
-                return 0xFFFFFFFF;
+                return IDS_NONE;
             if (isSitting())
-                return 0xE1122504;
-            return 0x3102263B;
+                return IDS_TOOLTIPS_FOLLOWME;
+            return IDS_TOOLTIPS_SIT;
         }
 
         if (isBaby())
-            return 0x82F8D90F;
+            return IDS_TOOLTIPS_FEED;
         if (!isInLove() && !isBaby() && !isBreedCoolingDown())
-            return 0xB47A2AB6;
-        return 0xFFFFFFFF;
+            return IDS_TOOLTIPS_LOVEMODE;
+        return IDS_NONE;
     }
 
     if (!isFood(tooltipData.m_pItemInstance))
-        return 0xFFFFFFFF;
+        return IDS_NONE;
 
     bool nearPlayer = false;
     if (mEntityData->get(DATA_IS_TEMPTED)
@@ -497,14 +499,14 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     if (nearPlayer)
     {
         if (getPassengers()->empty())
-            return 0x95CFA728;
+            return IDS_TOOLTIPS_TAME;
     }
     else if (isBaby())
     {
-        return 0x82F8D90F;
+        return IDS_TOOLTIPS_FEED;
     }
 
-    return 0xFFFFFFFF;
+    return IDS_NONE;
 }
 
 void Ocelot::reassessTameGoals()
@@ -520,5 +522,5 @@ void Ocelot::reassessTameGoals()
 
 unsigned long long Ocelot::GetType()
 {
-    return ENTITY_TYPE_OCELOT;
+    return EntityType::OCELOT;
 }

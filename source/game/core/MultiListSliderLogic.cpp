@@ -7,7 +7,7 @@
 #include "game/ui/UIString.hpp"
 
 MultiListSliderLogic::MultiListSliderLogic()
-    : mLabelId(0), mDescriptionId(0), mOption(static_cast<eCustomGameModeHostOption>(0)), mMiniGameId(eMiniGameId_Lobby)
+    : mLabelId(0), mDescriptionId(0), mOption(eCustomGameModeHostOption_NoSmallSkins), mMiniGameId(eMiniGameId_Lobby)
 {
 }
 

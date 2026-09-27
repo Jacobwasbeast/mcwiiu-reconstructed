@@ -1,5 +1,6 @@
 #include "game/core/InputConstraint.hpp"
 
+#include "game/core/GameSettings.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 InputConstraint::~InputConstraint()
@@ -13,14 +14,10 @@ int InputConstraint::getType()
 
 bool InputConstraint::isMappingConstrained(int playerId, int mapping)
 {
-    if (constrainedMapping == mapping || mapping <= 22)
-    {
+    if (constrainedMapping == mapping || mapping <= EControllerActions_Pause)
         return true;
-    }
 
-    bool constrainedButton =
-        g_pInput->ButtonDown(playerId, (unsigned char)constrainedMapping);
-    bool requestedButton = g_pInput->ButtonDown(playerId, (unsigned char)mapping);
-
-    return constrainedButton && requestedButton;
+    unsigned int constrainedButtons = g_pInput->GetGameJoypadMaps(playerId, constrainedMapping);
+    unsigned int requestedButtons = g_pInput->GetGameJoypadMaps(playerId, mapping);
+    return (constrainedButtons & requestedButtons) != 0;
 }

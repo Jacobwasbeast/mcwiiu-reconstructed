@@ -11,12 +11,20 @@ class Voteable;
 class Voteables : public boost::unordered_map<int, Voteable*>
 {
 public:
+    enum EVoteableId
+    {
+        eVoteable_Map,
+        eVoteable_Kick,
+        eVoteable_BuildOffScoring,
+        eVoteable_BuildOffTheme
+    };
+
     Voteables();
     virtual ~Voteables();
     Voteable* getVoteable(unsigned int voteableId);
     void init();
     void addVoteable(Voteable* voteable);
-    uint64_t syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer> player);
+    void syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer> player);
     void removeVoteable(int voteableId);
 };
 

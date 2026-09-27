@@ -39,7 +39,7 @@ public:
     MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
                                    MobGroupData* data, const std::wstring& reason);
     virtual void customServerAiStep();
-    bool isAlliedTo(const boost::shared_ptr<Entity>& entity);
+    virtual bool isAlliedTo(const boost::shared_ptr<Entity>& entity);
     void setCustomName(const std::wstring& name, const std::wstring& displayName, bool visible);
     const SoundEvent* getAmbientSound();
     const SoundEvent* getDeathSound();
@@ -61,6 +61,7 @@ public:
         bool canUse();
     };
 
+    bool mJohnny;
 };
 
 #endif

@@ -8,7 +8,7 @@ extern "C" void rrThreadSleep(unsigned int milliseconds);
 
 static volatile unsigned int s_queueTokens = 0;
 
-void ClearQueueToken__Fi(int token)
+void ClearQueueToken(int token)
 {
     const unsigned int mask = 1u << (token & 0x3f);
     unsigned int current = rrAtomicLoadAcquire32(&s_queueTokens);

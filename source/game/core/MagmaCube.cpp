@@ -1,4 +1,5 @@
 #include "game/core/MagmaCube.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -26,7 +27,7 @@ void MagmaCube::create(Level* level)
 
 void MagmaCube::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5d108001ULL);
+    Mob::addDataWalkers(fixer, EntityType::MAGMA_CUBE);
 }
 
 void MagmaCube::registerAttributes()
@@ -158,5 +159,5 @@ const SoundEvent* MagmaCube::getJumpSound()
 
 unsigned long long MagmaCube::GetType()
 {
-    return 0x000000005D108001ULL;
+    return EntityType::MAGMA_CUBE;
 }

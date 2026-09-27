@@ -1,4 +1,5 @@
 #include "game/core/UniqueTypeWalker.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -26,15 +27,15 @@ CompoundTag* UniqueTypeWalker::walk(DataFixer* fixer, CompoundTag* tag, int vers
         return tag;
     }
 
-    ResourceLocation villagerKey = EntityIO::getKey(0x000000000D600001ULL);
+    ResourceLocation villagerKey = EntityIO::getKey(EntityType::VILLAGER);
     if (mKey.toString() == villagerKey.toString())
     {
-        if (tag->contains(L"Offers", 10))
+        if (tag->contains(L"Offers", Tag::TAG_COMPOUND))
         {
             CompoundTag* offers = tag->getCompound(L"Offers");
-            if (offers->contains(L"Recipes", 9))
+            if (offers->contains(L"Recipes", Tag::TAG_LIST))
             {
-                ListTag* recipes = offers->getList(L"Recipes", 10);
+                ListTag* recipes = offers->getList(L"Recipes", Tag::TAG_COMPOUND);
                 for (int i = 0; i < recipes->size(); ++i)
                 {
                     CompoundTag* recipe = recipes->getCompound(i);
@@ -47,11 +48,11 @@ CompoundTag* UniqueTypeWalker::walk(DataFixer* fixer, CompoundTag* tag, int vers
         }
     }
 
-    if (mKey.toString() == L"minecraft_mob_spawner")
+    if (mKey.toString() == L"minecraft:mob_spawner")
     {
-        if (tag->contains(L"SpawnPotentials", 9))
+        if (tag->contains(L"SpawnPotentials", Tag::TAG_LIST))
         {
-            ListTag* potentials = tag->getList(L"SpawnPotentials", 10);
+            ListTag* potentials = tag->getList(L"SpawnPotentials", Tag::TAG_COMPOUND);
             for (int i = 0; i < potentials->size(); ++i)
             {
                 CompoundTag* potential = potentials->getCompound(i);

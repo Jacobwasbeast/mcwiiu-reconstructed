@@ -1,4 +1,5 @@
 #include "game/core/Vex.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Mob.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -39,7 +40,7 @@ Vex::~Vex() { delete boundOrigin; }
 void Vex::create(Level* level) { new Vex(level); }
 void Vex::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(TYPE_ID, ENTITY_TYPE_MONSTER,
+    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(EntityType::VEX, EntityType::MONSTER,
                                                               EntityDataSerializers::BYTE);
 }
 void Vex::move(MoverType operation, double x, double y, double z, bool force)
@@ -71,7 +72,7 @@ void Vex::registerGoals()
     mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Mob), 3.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     arrayWithLength<unsigned long long> entityTypes(1, true);
-    entityTypes.data[0] = TYPE_ID;
+    entityTypes.data[0] = EntityType::VEX;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
     mTargetSelector.addGoal(2, new VexCopyOwnerTargetGoal(this), true);
     mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
@@ -87,7 +88,7 @@ void Vex::defineSynchedData()
     Mob::defineSynchedData();
     mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
 }
-void Vex::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, TYPE_ID); }
+void Vex::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::VEX); }
 void Vex::setLimitedLife(int life) { limitedLife = life; hasLimitedLife = true; }
 void Vex::readAdditionalSaveData(CompoundTag* tag)
 {
@@ -146,7 +147,7 @@ void Vex::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
     Mob::populateDefaultEquipmentSlots(difficulty);
     setDropChance(EquipmentSlot::MAINHAND, 1.65f);
 }
-unsigned long long Vex::GetType() { return TYPE_ID; }
+unsigned long long Vex::GetType() { return EntityType::VEX; }
 
 Vex::VexChargeAttackGoal::VexChargeAttackGoal(Vex* value) : Goal(), owner(value)
 {
@@ -192,7 +193,7 @@ void Vex::VexChargeAttackGoal::tick()
         owner->getMoveControl()->setWantedPosition(eye->x, eye->y, eye->z, 1.0);
     }
 }
-std::wstring Vex::VexChargeAttackGoal::getName() { return L"Vex_Charging_Attack"; }
+std::wstring Vex::VexChargeAttackGoal::getName() { return L"Vex Charging Attack"; }
 
 Vex::VexCopyOwnerTargetGoal::VexCopyOwnerTargetGoal(PathfinderMob* value)
     : TargetGoal(value, false) {}
@@ -212,7 +213,7 @@ void Vex::VexCopyOwnerTargetGoal::start()
     vex->setTarget(owner->getTarget());
     TargetGoal::start();
 }
-std::wstring Vex::VexCopyOwnerTargetGoal::getName() { return L"Vex_Copy_Owner_Target"; }
+std::wstring Vex::VexCopyOwnerTargetGoal::getName() { return L"Vex Copy Owner Target"; }
 
 Vex::VexMoveControl::VexMoveControl(Vex* value) : MoveControl(value) {}
 Vex::VexMoveControl::~VexMoveControl() = default;
@@ -277,4 +278,4 @@ void Vex::VexRandomMoveGoal::tick()
         break;
     }
 }
-std::wstring Vex::VexRandomMoveGoal::getName() { return L"Vex_Random_Move"; }
+std::wstring Vex::VexRandomMoveGoal::getName() { return L"Vex Random Move"; }

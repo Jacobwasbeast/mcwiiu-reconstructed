@@ -1,4 +1,9 @@
 #include "game/core/Squid.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/core/JumpControl.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -18,6 +23,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/item/ItemId.hpp"
 
 Squid::Squid(Level* level) : WaterAnimal(level)
 {
@@ -37,7 +43,7 @@ void Squid::create(Level* level)
 
 void Squid::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0xd502001ULL);
+    Mob::addDataWalkers(fixer, EntityType::SQUID);
 }
 
 void Squid::_init()
@@ -125,7 +131,7 @@ void Squid::aiStep()
             {
                 mTentacleSpeed = 1.0f / (mRandom->nextFloat() + 1.0f) * 0.2f;
             }
-            mLevel->broadcastEntityEvent(shared_from_this(), 19, 0);
+            mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SQUID_ANIM_SYNCH, 0);
         }
     }
     else
@@ -235,11 +241,11 @@ void Squid::spawnInkParticles()
 
 void Squid::handleEntityEvent(unsigned char event, int data)
 {
-    if (data == 0x13)
+    if (event == EntityEvent::SQUID_ANIM_SYNCH)
     {
         mTentacleMovement = 0;
     }
-    else if (data == 0x26)
+    else if (event == EntityEvent::SQUID_INK)
     {
         spawnInkParticles();
     }
@@ -264,26 +270,31 @@ bool Squid::hasMovementVector()
 bool Squid::hurt(const DamageSource* source, float damage)
 {
     bool hurt = LivingEntity::hurt(source, damage);
-    if (hurt)
+    if (source->getEntity() == NULL)
+    {
+        if (getJumpControl() != NULL)
+            getJumpControl()->jump();
+    }
+    else
     {
         spawnInkParticles();
-        handleEntityEvent(0, 0x26);
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SQUID_INK, 0);
     }
     return hurt;
 }
 
 unsigned int Squid::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    if (Item::getId(holder.m_pItemInstance->getItem()) == 0x1A4 && !isLeashed())
+    if (Item::getId(holder.m_pItemInstance->getItem()) == ItemId::LEAD && !isLeashed())
     {
-        return 0xA1B34A96U;
+        return IDS_TOOLTIPS_LEASH;
     }
     return Mob::GetInteractTooltip(holder);
 }
 
 unsigned long long Squid::GetType()
 {
-    return 0x0D502001ULL;
+    return EntityType::SQUID;
 }
 
 Squid::SquidRandomMovementGoal::SquidRandomMovementGoal(Squid* squid) : Goal(), mSquid(squid)

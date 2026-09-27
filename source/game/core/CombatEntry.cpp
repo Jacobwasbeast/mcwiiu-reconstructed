@@ -1,4 +1,5 @@
 #include "game/core/CombatEntry.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -16,7 +17,7 @@ CombatEntry::~CombatEntry()
 bool CombatEntry::isCombatRelated()
 {
     boost::shared_ptr<Entity> entity = mSource->getEntity();
-    return entity && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY;
+    return entity && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
 }
 
 const DamageSource* CombatEntry::getSource()

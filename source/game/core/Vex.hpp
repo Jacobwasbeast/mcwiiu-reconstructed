@@ -2,6 +2,7 @@
 #define GAME_CORE_VEX_HPP
 
 #include <boost/shared_ptr.hpp>
+#include "game/core/EntityType.hpp"
 #include <string>
 
 #include "game/entity/mob/Monster.hpp"
@@ -31,7 +32,6 @@ public:
     virtual ~Vex();
     static void create(Level* level);
     static void staticCtor();
-    static const unsigned long long TYPE_ID = 0x5D540048ULL;
     virtual void move(MoverType operation, double x, double y, double z, bool force);
     virtual void tick();
     virtual void registerGoals();
@@ -56,8 +56,8 @@ public:
     ResourceLocation* getDefaultGearTable();
     int getLightColor();
     float getBrightness();
-    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                   MobGroupData* data, const std::wstring& reason);
+    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                   const std::wstring& reason);
     void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     unsigned long long GetType();
 
@@ -66,16 +66,24 @@ public:
     public:
         explicit VexChargeAttackGoal(Vex* owner);
         virtual ~VexChargeAttackGoal();
-        bool canUse(); bool canContinueToUse(); void start(); void stop(); void tick();
+        bool canUse();
+        bool canContinueToUse();
+        void start();
+        void stop();
+        void tick();
         std::wstring getName();
-    private: Vex* owner;
+
+    private:
+        Vex* owner;
     };
     class VexCopyOwnerTargetGoal : public TargetGoal
     {
     public:
         explicit VexCopyOwnerTargetGoal(PathfinderMob* owner);
         virtual ~VexCopyOwnerTargetGoal();
-        bool canUse(); void start(); std::wstring getName();
+        bool canUse();
+        void start();
+        std::wstring getName();
     };
     class VexMoveControl : public MoveControl
     {
@@ -89,8 +97,13 @@ public:
     public:
         explicit VexRandomMoveGoal(Vex* owner);
         virtual ~VexRandomMoveGoal();
-        bool canUse(); bool canContinueToUse(); void tick(); std::wstring getName();
-    private: Vex* owner;
+        bool canUse();
+        bool canContinueToUse();
+        void tick();
+        std::wstring getName();
+
+    private:
+        Vex* owner;
     };
 
 private:

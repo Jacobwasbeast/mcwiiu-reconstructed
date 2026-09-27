@@ -1,4 +1,6 @@
 #include "game/core/EnderCrystal.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -17,7 +19,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-static const unsigned long long ENTITY_TYPE_ENDER_CRYSTAL = 0x000000000800000EULL;
 
 const EntityDataAccessor<BlockPos*>* EnderCrystal::DATA_BEAM_TARGET = NULL;
 const EntityDataAccessor<bool>* EnderCrystal::DATA_SHOW_BOTTOM = NULL;
@@ -39,11 +40,11 @@ EnderCrystal::~EnderCrystal()
 
 void EnderCrystal::staticCtor()
 {
-    DATA_BEAM_TARGET = SynchedEntityData::defineId(ENTITY_TYPE_ENDER_CRYSTAL,
-                                                    ENTITY_TYPE_ENTITY,
+    DATA_BEAM_TARGET = SynchedEntityData::defineId(EntityType::ENDER_CRYSTAL,
+                                                    EntityType::ENTITY,
                                                     EntityDataSerializers::OPTIONAL_BLOCK_POS);
-    DATA_SHOW_BOTTOM = SynchedEntityData::defineId(ENTITY_TYPE_ENDER_CRYSTAL,
-                                                   ENTITY_TYPE_ENTITY,
+    DATA_SHOW_BOTTOM = SynchedEntityData::defineId(EntityType::ENDER_CRYSTAL,
+                                                   EntityType::ENTITY,
                                                    EntityDataSerializers::BOOLEAN);
 }
 
@@ -77,9 +78,9 @@ void EnderCrystal::tick()
     {
         BlockPos pos(this);
         if (mLevel->mDimension->getType() == DimensionType::THE_END &&
-            mLevel->getBlockState(pos)->getBlock() != Blocks::FIRE)
+            mLevel->getBlockState(pos)->getBlock() != Blocks::fire)
         {
-            mLevel->setBlockAndUpdate(pos, Blocks::FIRE->defaultBlockState());
+            mLevel->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
         }
     }
 }
@@ -113,9 +114,9 @@ void EnderCrystal::setShowBottom(bool showBottom)
 
 void EnderCrystal::readAdditionalSaveData(CompoundTag* tag)
 {
-    if (tag->contains(L"BeamTarget", 10))
+    if (tag->contains(L"BeamTarget", Tag::TAG_COMPOUND))
         setBeamTarget(new BlockPos(NbtUtils::readBlockPos(tag->getCompound(L"BeamTarget"))));
-    if (tag->contains(L"ShowBottom", 1))
+    if (tag->contains(L"ShowBottom", Tag::TAG_BYTE))
         setShowBottom(tag->getBoolean(L"ShowBottom"));
 }
 
@@ -137,13 +138,13 @@ bool EnderCrystal::hurt(const DamageSource* source, float damage)
         return false;
 
     boost::shared_ptr<Entity> entity = source->getEntity();
-    if (entity && entity->GetType() == ENTITY_TYPE_ENDER_DRAGON)
+    if (entity && entity->GetType() == EntityType::ENDER_DRAGON)
         return false;
 
     if (!mRemoved && !mLevel->mIsClientSide)
     {
         remove();
-        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(eGameHostOption_13) && !source->isExplosion())
+        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(eGameHostOption_TNT) && !source->isExplosion())
             mLevel->explode(shared_from_this(), mX, mY, mZ, 6.0f, false, false, true, false, false, -1.0f);
         onDestroyedBy(source);
     }
@@ -163,12 +164,12 @@ bool EnderCrystal::shouldRenderAtSqrDistance(double distanceSqr)
 
 unsigned int EnderCrystal::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return static_cast<unsigned int>(-1);
+    return IDS_NONE;
 }
 
 unsigned long long EnderCrystal::GetType()
 {
-    return 0x000000000800000EULL;
+    return EntityType::ENDER_CRYSTAL;
 }
 
 void EnderCrystal::create(Level* level)

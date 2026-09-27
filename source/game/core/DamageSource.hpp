@@ -19,14 +19,6 @@ class Vec3;
 class DamageSource
 {
 public:
-    enum EDamageMsgId
-    {
-        eDamageMsgId_MobAttack = 0x1D,
-        eDamageMsgId_PlayerAttack = 0x1E,
-        eDamageMsgId_Arrow = 0x1F,
-        eDamageMsgId_Trident = 0x2A
-    };
-
     static const DamageSource* IN_FIRE;
     static const DamageSource* ON_FIRE;
     static const DamageSource* FIREWORKS;

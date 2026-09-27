@@ -12,8 +12,8 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/generation/TerracottaLayerTheme.hpp"
+#include "game/core/XMem.hpp"
 
-void* XMemCpy(void* destination, const void* source, unsigned int size);
 
 typedef boost::unordered_map<std::wstring, eMinecraftColour> ColourNameMap;
 typedef boost::unordered_map<int, ColourTable::BiomeColourInfo> BiomeColourInfoMap;

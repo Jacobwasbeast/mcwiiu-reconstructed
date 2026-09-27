@@ -17,6 +17,7 @@ class BlockColors;
 class BlockEntity;
 class BlockRenderDispatcher;
 class Canvas;
+class Level;
 class ClientMasterGameMode;
 class ClientPacketListener;
 class ColourTable;
@@ -220,10 +221,6 @@ public:
     int mConnectionStartTime[4];
     bool mConnectionFailed[4];
     DisconnectPacket::eDisconnectReason mDisconnectReasons[4];
-    int mConnectionFailedTitle;
-    int mConnectionFailedMessage;
-    int mConnectionFailedParameter;
-    int mConnectionFailedPlayerIdx;
     ClientPacketListener* mPendingConnections[4];
     int mEmptyViewport;
     boost::shared_ptr<Entity> mCameraEntity;
@@ -272,7 +269,7 @@ public:
     long long mLastFrameTime;
     OSFastMutex mLevelLock;
     unsigned char mTutorialPlayers;
-    int mLastTextureRequestTick;
+    Level* mAnimateTickLevel;
     std::vector<std::wstring> mPendingClientTextureRequests;
     std::vector<std::wstring> mReceivedClientTextures;
     const MiniGameDef* mMiniGame;

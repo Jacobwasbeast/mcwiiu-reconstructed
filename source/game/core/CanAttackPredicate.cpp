@@ -1,4 +1,5 @@
 #include "game/core/CanAttackPredicate.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/ai/MobNearestMobTargetGoal.hpp"
 #include "game/entity/ai/TargetGoal.hpp"
@@ -13,7 +14,7 @@ CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal)
 
 bool CanAttackPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         return false;
     }

@@ -1,4 +1,6 @@
 #include "game/core/Snowball.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/GameMode.hpp"
@@ -51,11 +53,11 @@ bool Snowball::onHit(const HitResult* result)
         if (!mLevel->mIsClientSide)
         {
             if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mOwner
-                && (mOwner->GetType() & 0x0C800000ULL) == 0x0C800000ULL)
+                && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
             {
                 boost::static_pointer_cast<Player>(mOwner)->GetGameMode()->RecordSnowballHit();
 
-                if ((result->mEntity->GetType() & 0x0C800000ULL) == 0x0C800000ULL)
+                if ((result->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
                 {
                     boost::shared_ptr<Player> player =
                         boost::static_pointer_cast<Player>(result->mEntity);
@@ -68,11 +70,11 @@ bool Snowball::onHit(const HitResult* result)
         }
 
         float damage = 0.0f;
-        if (result->mEntity->GetType() == 0x5D540045ULL)
+        if (result->mEntity->GetType() == EntityType::BLAZE)
         {
             damage = 3.0f;
         }
-        else if ((result->mEntity->GetType() & 0x0C800000ULL) == 0x0C800000ULL
+        else if ((result->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
                  && Minecraft::InMiniGame(eMiniGameId_Battle, false))
         {
             damage = 0.1f;
@@ -85,7 +87,7 @@ bool Snowball::onHit(const HitResult* result)
 
     if (!mLevel->mIsClientSide)
     {
-        mLevel->broadcastEntityEvent(shared_from_this(), 3, 0);
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::DEATH, 0);
         remove();
     }
     else
@@ -97,12 +99,12 @@ bool Snowball::onHit(const HitResult* result)
 
 void Snowball::addDataWalkers(DataFixerUpper* fixer)
 {
-    ThrowableProjectile::addDataWalkers(fixer, 0x8A200001ULL);
+    ThrowableProjectile::addDataWalkers(fixer, EntityType::SNOWBALL);
 }
 
 void Snowball::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 3)
+    if (event == EntityEvent::DEATH)
     {
         Vec3* position = fjGetParticleSpawnPos();
         for (int i = 0; i < 8; ++i)
@@ -117,5 +119,5 @@ void Snowball::handleEntityEvent(unsigned char event, int data)
 
 unsigned long long Snowball::GetType()
 {
-    return 0x8A200001ULL;
+    return EntityType::SNOWBALL;
 }

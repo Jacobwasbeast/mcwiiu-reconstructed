@@ -48,7 +48,7 @@ void Abilities::addSaveData(CompoundTag* tag)
 
 void Abilities::loadSaveData(CompoundTag* tag)
 {
-    if (tag->contains(L"abilities", 10))
+    if (tag->contains(L"abilities", Tag::TAG_COMPOUND))
     {
         CompoundTag* abilitiesTag = tag->getCompound(L"abilities");
 
@@ -57,13 +57,13 @@ void Abilities::loadSaveData(CompoundTag* tag)
         mMayfly = abilitiesTag->getBoolean(L"mayfly");
         mInstabuild = abilitiesTag->getBoolean(L"instabuild");
 
-        if (abilitiesTag->contains(L"flySpeed", 99))
+        if (abilitiesTag->contains(L"flySpeed", Tag::TAG_ANY_NUMERIC))
         {
             mFlyingSpeed = abilitiesTag->getFloat(L"flySpeed");
             mWalkingSpeed = abilitiesTag->getFloat(L"walkSpeed");
         }
 
-        if (abilitiesTag->contains(L"mayBuild", 1))
+        if (abilitiesTag->contains(L"mayBuild", Tag::TAG_BYTE))
         {
             mMayBuild = abilitiesTag->getBoolean(L"mayBuild");
         }

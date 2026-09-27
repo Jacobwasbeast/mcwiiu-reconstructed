@@ -6,10 +6,8 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/XmlChild.hpp"
 #include "game/core/XmlObject.hpp"
-
-std::wstring convStringToWstring(const std::string& value);
-std::wstring convUtf8ToWstring(const char* value);
-void toUtf8(const std::wstring& value, char** data, unsigned int& length);
+#include "game/core/StringConversion.hpp"
+#include "game/core/StringUtils.hpp"
 
 unsigned int XmlParser::compare(char* first, char* second, unsigned int length)
 {

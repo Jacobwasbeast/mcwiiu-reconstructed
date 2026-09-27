@@ -8,14 +8,14 @@ OnGameStartSpawnPositions::~OnGameStartSpawnPositions()
 
 ConsoleGameRules::EGameRuleType OnGameStartSpawnPositions::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(29);
+    return ConsoleGameRules::eGameRuleType_OnGameStartSpawnPositions;
 }
 
 GameRuleDefinition* OnGameStartSpawnPositions::addChild(ConsoleGameRules::EGameRuleType type)
 {
     GameRuleDefinition* pChild = NULL;
 
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(31))
+    if (type == ConsoleGameRules::eGameRuleType_SpawnPositionSet)
     {
         pChild = new SpawnPositionSet();
         mChildren.push_back(pChild);

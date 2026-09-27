@@ -110,5 +110,5 @@ void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache,
 
 ConsoleGameRules::EGameRuleType DirectionalDegrade::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(35);
+    return ConsoleGameRules::eGameRuleType_DirectionalDegrade;
 }

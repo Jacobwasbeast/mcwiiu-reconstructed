@@ -1,4 +1,6 @@
 #include "game/core/MinecartHopper.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 
@@ -112,7 +114,7 @@ AbstractContainerMenu* MinecartHopper::createMenu(boost::shared_ptr<Inventory> i
 int MinecartHopper::getTypeId(bool large)
 {
     (void)large;
-    return 9;
+    return ClientboundContainerOpenPacket::HOPPER;
 }
 
 Level* MinecartHopper::getLevel()
@@ -145,7 +147,7 @@ void MinecartHopper::_init()
 
 void MinecartHopper::addDataWalkers(DataFixerUpper* fixer)
 {
-    MinecartContainer::addDataWalkers(fixer, 0x0A84000500000000ULL);
+    MinecartContainer::addDataWalkers(fixer, EntityType::MINECART_HOPPER);
 }
 
 const Minecart::Type* MinecartHopper::getType()
@@ -242,7 +244,7 @@ bool MinecartHopper::suckInItems()
 void MinecartHopper::destroy(const DamageSource* source)
 {
     MinecartContainer::destroy(source);
-    if (mLevel->getGameRules()->getBoolean(6))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
         spawnAtLocation(Item::byBlock(Blocks::hopper), 1, 4.5f);
 }
 
@@ -262,5 +264,5 @@ void MinecartHopper::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned long long MinecartHopper::GetType()
 {
-    return 0x000000000A840005ULL;
+    return EntityType::MINECART_HOPPER;
 }

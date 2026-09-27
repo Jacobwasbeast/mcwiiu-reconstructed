@@ -3,6 +3,6 @@
 
 #include <cstdint>
 
-uint32_t isNewLineChar__Fw(uint16_t character);
+uint32_t isNewLineChar(uint16_t character);
 
 #endif

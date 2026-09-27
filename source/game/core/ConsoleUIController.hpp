@@ -23,6 +23,10 @@ struct _CustomDrawData;
 
 class ConsoleUIController : public IUIController
 {
+    friend class UIComponent_MenuBackground;
+    friend class UIScene_HUD;
+    friend class UIScene_SkinSelectMenu;
+
 public:
     enum EFont
     {
@@ -85,16 +89,16 @@ public:
     struct _QueuedMessageBoxData : _MessageBoxData
     {
         unsigned int queuedUserIndex;
-        int type;
+        EUILayer layer;
 
-        _QueuedMessageBoxData() : queuedUserIndex(0), type(0) {}
+        _QueuedMessageBoxData() : queuedUserIndex(0), layer(EUILayer_Debug) {}
         ~_QueuedMessageBoxData() { delete[] messageParameters; }
     };
 
     ConsoleUIController();
     virtual ~ConsoleUIController();
 
-    int GetGroup(int playerId);
+    EUIGroup GetGroup(int playerId);
     void preInit(int width, int height);
     void postInit();
     void init(int width, int height);
@@ -132,6 +136,8 @@ public:
     void ReloadSkin();
     _CachedMovieData& getMovieData(const std::wstring& path);
     void getRenderDimensions(C4JRender::eViewportType viewport, int& width, int& height);
+    float getScreenWidth() const { return m_screenWidth; }
+    float getScreenHeight() const { return m_screenHeight; }
     void setupRenderPosition(C4JRender::eViewportType viewport);
     void setupRenderPosition(int x, int y);
     void setupCustomDrawGameState();
@@ -311,7 +317,7 @@ private:
     UITTFFont* m_oldFont;
     fuiBitmapFont* m_bitmapFont;
     fuiBitmapFont* m_bitmapFontAlt;
-    std::vector<UIELEMENT*> m_touchBoxes[6][8][0x53];
+    std::vector<UIELEMENT*> m_touchBoxes[EUIGroup_Count][EUILayer_Count][EUIScene_None];
     int m_touchHoldPad;
     bool m_touchHeld;
     unsigned char m_paddingB[3];
@@ -356,7 +362,7 @@ private:
     int m_touchOffsetY;
     UIELEMENT* m_touchElement;
     UIELEMENT* m_lastTouchElement;
-    UIGroup* m_groups[6];
+    UIGroup* m_groups[EUIGroup_Count];
     int m_lastUISFXTimeHigh;
     unsigned int m_lastUISFXTimeLow;
     int m_pressStartPlaying;

@@ -24,7 +24,6 @@ public:
     static Rotation* CLOCKWISE_180;
     static Rotation* COUNTERCLOCKWISE_90;
     static Rotation* VALUES[4];
-
     Rotation(const std::wstring& name, eTYPE type);
 
     static Rotation* byName(std::wstring name);

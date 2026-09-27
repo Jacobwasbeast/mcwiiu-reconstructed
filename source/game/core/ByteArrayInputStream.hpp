@@ -15,6 +15,16 @@ public:
     virtual int read(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length);
     virtual void close();
     virtual long long skip(long long count);
+
+    void reset()
+    {
+        mBuffer.data = NULL;
+        mBuffer.length = 0;
+        mCount = 0;
+        mMark = 0;
+        mPosition = 0;
+    }
+
 public:
     arrayWithLength<unsigned char> mBuffer;
     unsigned int mCount;

@@ -1,9 +1,9 @@
 #include "game/core/AbstractIllager.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 
-static const unsigned long long ENTITY_TYPE_ABSTRACT_ILLAGER = 0x000000004D541040ULL;
 
 const EntityDataAccessor<unsigned char>* AbstractIllager::DATA_ILLAGER_FLAGS = NULL;
 
@@ -18,8 +18,8 @@ AbstractIllager::~AbstractIllager()
 
 void AbstractIllager::staticCtor()
 {
-    DATA_ILLAGER_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_ABSTRACT_ILLAGER,
-                                                     ENTITY_TYPE_MONSTER,
+    DATA_ILLAGER_FLAGS = SynchedEntityData::defineId(EntityType::ABSTRACT_ILLAGER,
+                                                     EntityType::MONSTER,
                                                      EntityDataSerializers::BYTE);
 }
 

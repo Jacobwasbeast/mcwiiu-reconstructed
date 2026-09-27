@@ -1,12 +1,9 @@
 #include "game/core/Compression.hpp"
 #include "game/core/XMem.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 #include <string.h>
 #include <zlib.h>
-
-extern unsigned int TlsAlloc();
-extern void* TlsGetValue(unsigned int index);
-extern int TlsSetValue(unsigned int index, void* value);
 
 static unsigned int g_compressionTlsIndex = 0;
 static Compression::ThreadStorage* g_pDefaultThreadStorage = NULL;

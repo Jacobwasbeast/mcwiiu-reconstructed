@@ -1,14 +1,7 @@
 #include "game/core/StatsUID.hpp"
 
 #include "game/network/INetworkPlayer.hpp"
-
-unsigned int hash_value(const PlayerUID& uid);
-
-StatsUID::StatsUID(const PlayerUID& uid)
-    : PlayerUID(0)
-{
-    PlayerUID::operator=(uid);
-}
+#include "game/world/generation/PlayerUID.hpp"
 
 StatsUID StatsUID::EMPTY_SUID()
 {

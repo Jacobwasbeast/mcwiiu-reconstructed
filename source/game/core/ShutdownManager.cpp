@@ -3,12 +3,7 @@
 #include <stddef.h>
 
 #include "game/core/CriticalSection.hpp"
-
-void InitializeCriticalSection(OSFastMutex* pCriticalSection);
-void EnterCriticalSection(OSFastMutex* pCriticalSection);
-void LeaveCriticalSection(OSFastMutex* pCriticalSection);
-
-void Sleep(unsigned int milliSeconds);
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 static int g_threadRunningCount[ShutdownManager::eThreadId_Count];
 static C4JEventArray* g_pThreadEventArray[ShutdownManager::eThreadId_Count];

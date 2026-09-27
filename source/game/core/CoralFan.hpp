@@ -54,9 +54,11 @@ public:
 protected:
     TextureAtlasSprite* mIcons[5];
     TextureAtlasSprite* mDeadIcons[5];
+
+public:
+    static AbstractProperty<int>* VARIANT;
+    static AbstractProperty<int>* DIRECTION;
 };
 
-extern AbstractProperty<int>* CoralFan_PROPERTY_1;
-extern AbstractProperty<int>* CoralFan_PROPERTY_2;
 
 #endif

@@ -1,4 +1,6 @@
 #include "game/core/Bat.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -17,13 +19,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-extern bool gTumbleMapFlags[3];
+extern bool gHalloweenEvent;
 
-static const unsigned long long ENTITY_TYPE_AMBIENT_CREATURE = 0x0d000100ULL;
-static const unsigned long long ENTITY_TYPE_BAT = 0x1d000101ULL;
 
 const EntityDataAccessor<unsigned char>* Bat::DATA_ID_FLAGS = NULL;
 
@@ -33,7 +32,7 @@ Bat::Bat(Level* level)
     fjDerivedCtorCalls();
     setSize(0.5f, 0.9f);
     setResting(true);
-    mCategories |= 0x800;
+    mCategories |= EntityCategory::eEntityCategory_Bat;
 }
 
 Bat::~Bat()
@@ -43,7 +42,7 @@ Bat::~Bat()
 
 void Bat::staticCtor()
 {
-    DATA_ID_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_BAT, ENTITY_TYPE_AMBIENT_CREATURE,
+    DATA_ID_FLAGS = SynchedEntityData::defineId(EntityType::BAT, EntityType::AMBIENT_CREATURE,
                                                  EntityDataSerializers::BYTE);
 }
 
@@ -145,7 +144,7 @@ void Bat::customServerAiStep()
         if (!state->getBlock()->isSolidBlockingCubeAndNotSignalSource(state))
         {
             setResting(false);
-            mLevel->levelEvent(boost::shared_ptr<Player>(), 0x401, pos, 0);
+            mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BAT_LIFTOFF, pos, 0);
         }
         else
         {
@@ -155,7 +154,7 @@ void Bat::customServerAiStep()
             if (player)
             {
                 setResting(false);
-                mLevel->levelEvent(boost::shared_ptr<Player>(), 0x401, pos, 0);
+                mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BAT_LIFTOFF, pos, 0);
             }
         }
         return;
@@ -229,7 +228,7 @@ bool Bat::hurt(const DamageSource* source, float damage)
 
 void Bat::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_BAT);
+    Mob::addDataWalkers(fixer, EntityType::BAT);
 }
 
 void Bat::readAdditionalSaveData(CompoundTag* tag)
@@ -251,7 +250,7 @@ bool Bat::checkSpawnRules()
     {
         int brightness = mLevel->getRawBrightness(pos);
         int threshold;
-        if (!gTumbleMapFlags[0])
+        if (!gHalloweenEvent)
         {
             if (mRandom->nextBoolean())
                 return false;
@@ -277,7 +276,7 @@ ResourceLocation* Bat::getDefaultLootTable()
 
 unsigned long long Bat::GetType()
 {
-    return ENTITY_TYPE_BAT;
+    return EntityType::BAT;
 }
 
 void Bat::create(Level* level)

@@ -73,9 +73,10 @@ bool BossEvent::shouldDarkenScreen()
     return darkenScreen;
 }
 
-void BossEvent::setDarkenScreen(bool darkenScreen)
+BossEvent* BossEvent::setDarkenScreen(bool darkenScreen)
 {
     this->darkenScreen = darkenScreen;
+    return this;
 }
 
 bool BossEvent::shouldPlayBossMusic()
@@ -83,14 +84,16 @@ bool BossEvent::shouldPlayBossMusic()
     return playBossMusic;
 }
 
-void BossEvent::setPlayBossMusic(bool playBossMusic)
+BossEvent* BossEvent::setPlayBossMusic(bool playBossMusic)
 {
     this->playBossMusic = playBossMusic;
+    return this;
 }
 
-void BossEvent::setCreateWorldFog(bool createWorldFog)
+BossEvent* BossEvent::setCreateWorldFog(bool createWorldFog)
 {
     this->createWorldFog = createWorldFog;
+    return this;
 }
 
 bool BossEvent::shouldCreateWorldFog()

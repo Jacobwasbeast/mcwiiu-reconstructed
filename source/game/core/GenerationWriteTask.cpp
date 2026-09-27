@@ -5,8 +5,7 @@
 #include "game/core/System.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
-
-void Sleep(unsigned int milliseconds);
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 GenerationWriteTask::GenerationWriteTask(Level* level, BlockTransaction* transaction,
                                          const BlockPos& origin, int* changedBlocks)
@@ -83,7 +82,7 @@ void GenerationWriteTask::doWork(long long endTime)
                             bool countsAsChanged = block != 0 && block != 106 && block != 46 &&
                                                    block != 70 && block != 51 && block != 31;
                             if (mChangedBlocks != NULL && countsAsChanged) ++*mChangedBlocks;
-                            mLevel->setBlockAndData(x, y, z, block, data, 2);
+                            mLevel->setBlockAndData(x, y, z, block, data, Block::UPDATE_CLIENTS);
                         }
                     }
                 }

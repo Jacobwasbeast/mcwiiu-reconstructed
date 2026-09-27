@@ -3,14 +3,14 @@
 SpawnPositionSet::SpawnPositionSet()
     : mType(0)
 {
-    addUnsignedCharAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(51), &mType);
+    addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_method, &mType);
 }
 
 SpawnPositionSet::~SpawnPositionSet() = default;
 
 ConsoleGameRules::EGameRuleType SpawnPositionSet::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(31);
+    return ConsoleGameRules::eGameRuleType_SpawnPositionSet;
 }
 
 unsigned char SpawnPositionSet::getType()

@@ -1,4 +1,5 @@
 #include "game/core/StbiFile.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 
 #include <stddef.h>
 
@@ -12,7 +13,6 @@ struct _OVERLAPPED
 };
 
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
-int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod);
 
 static const unsigned int FILE_CURRENT = 1;
 

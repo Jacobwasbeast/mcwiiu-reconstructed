@@ -17,7 +17,7 @@ class GroundPathNavigation;
 class MobGroupData;
 class Random;
 class SoundEvent;
-template <class T> class EntityDataAccessor;
+template<class T> class EntityDataAccessor;
 
 class Slime : public Mob
 {
@@ -32,6 +32,7 @@ public:
         virtual bool canContinueToUse();
         virtual void tick();
         virtual std::wstring getName();
+
     private:
         Slime* mSlime;
         int mGrowTiredTimer;
@@ -45,6 +46,7 @@ public:
         virtual bool canUse();
         virtual void tick();
         virtual std::wstring getName();
+
     private:
         Slime* mSlime;
     };
@@ -57,6 +59,7 @@ public:
         virtual bool canUse();
         virtual void tick();
         virtual std::wstring getName();
+
     private:
         Slime* mSlime;
     };
@@ -69,6 +72,7 @@ public:
         void setDirection(float yRot, bool jump);
         virtual void setWantedMovement(double speed);
         virtual void tick();
+
     private:
         float mYRot;
         int mJumpDelay;
@@ -84,6 +88,7 @@ public:
         virtual bool canUse();
         virtual void tick();
         virtual std::wstring getName();
+
     private:
         Slime* mSlime;
         float mChosenDegrees;
@@ -108,34 +113,39 @@ public:
     virtual bool checkSpawnRules();
     virtual int getMaxHeadXRot();
     virtual void jumpFromGround();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& dataString);
 
     static void staticCtor();
     static void create(Level* level);
     void _init();
     void registerGoals();
-    virtual void setSize(int size, bool reset); 
-    int getSize();
+    virtual void setSize(int size, bool reset);
+    virtual int getSize();
     static void addDataWalkers(DataFixerUpper* fixer);
-    bool isTiny();
-    const void* getParticleType();
-    void decreaseSquish();
-    int getJumpDelay();
-    boost::shared_ptr<Slime> createChild();
-    void dealDamage(boost::shared_ptr<LivingEntity> entity);
+    virtual bool isTiny();
+    virtual const void* getParticleType();
+    virtual void decreaseSquish();
+    virtual int getJumpDelay();
+    virtual boost::shared_ptr<Slime> createChild();
+    virtual void dealDamage(boost::shared_ptr<LivingEntity> entity);
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
-    bool isDealsDamage();
-    int getAttackDamage();
-    const SoundEvent* getSquishSound();
-    bool doPlayJumpSound();
-    const SoundEvent* getJumpSound();
+    virtual bool isDealsDamage();
+    virtual int getAttackDamage();
+    virtual const SoundEvent* getSquishSound();
+    virtual bool doPlayJumpSound();
+    virtual const SoundEvent* getJumpSound();
+
 private:
     static const EntityDataAccessor<int>* DATA_ID_SIZE;
+
 public:
     float mSquishO;
     float mSquish;
+
 protected:
     float mTargetSquish;
+
 private:
     bool mWasOnGround;
 };

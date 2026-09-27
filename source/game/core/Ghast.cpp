@@ -1,4 +1,6 @@
 #include "game/core/Ghast.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -44,7 +46,7 @@ void Ghast::create(Level* level)
 
 void Ghast::staticCtor()
 {
-    DATA_CHARGING = SynchedEntityData::defineId<bool>(0x5D0000C1ULL, 0x0D000080ULL,
+    DATA_CHARGING = SynchedEntityData::defineId<bool>(EntityType::GHAST, EntityType::FLYING_MOB,
                                                    EntityDataSerializers::BOOLEAN);
 }
 
@@ -82,10 +84,10 @@ bool Ghast::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
     boost::shared_ptr<Entity> direct = source->getDirectEntity();
-    if (direct && direct->GetType() == 0x8A400003ULL)
+    if (direct && direct->GetType() == EntityType::LARGE_FIREBALL)
     {
         boost::shared_ptr<Entity> owner = source->getEntity();
-        if (owner && (owner->GetType() & 0xC800000ULL) == 0xC800000ULL)
+        if (owner && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             LivingEntity::hurt(source, 1000.0f);
             return true;
@@ -122,7 +124,7 @@ int Ghast::getMaxSpawnClusterSize() { return 1; }
 
 void Ghast::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D0000C1ULL);
+    Mob::addDataWalkers(fixer, EntityType::GHAST);
 }
 
 void Ghast::addAdditonalSaveData(CompoundTag* tag)
@@ -148,7 +150,7 @@ void Ghast::tick()
     static_cast<MoveControl*>(getMoveControl())->tick();
 }
 
-unsigned long long Ghast::GetType() { return 0x000000005D0000C1ULL; }
+unsigned long long Ghast::GetType() { return EntityType::GHAST; }
 
 Ghast::GhastLookGoal::GhastLookGoal(Ghast* ghast) : Goal(), mGhast(ghast)
 {
@@ -222,10 +224,10 @@ void Ghast::GhastShootFireballGoal::tick()
     {
         ++mChargeTime;
         if (mChargeTime == 10)
-            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), 1015, BlockPos(mGhast), 0);
+            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_WARNING, BlockPos(mGhast), 0);
         if (mChargeTime == 20)
         {
-            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), 1016, BlockPos(mGhast), 0);
+            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_FIREBALL, BlockPos(mGhast), 0);
             Vec3* viewVector = mGhast->getViewVector(1.0f);
             boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mGhast->shared_from_this());
             double xd = target->mX - (mGhast->mX + viewVector->x * 4.0);

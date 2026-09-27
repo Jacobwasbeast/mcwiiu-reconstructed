@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Animal.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class Block;
 class BlockPos;
@@ -12,6 +13,7 @@ class ChickenRenderer;
 class DamageSource;
 class DataFixerUpper;
 class Entity;
+class Item;
 class ItemInstance;
 class Level;
 class SoundEvent;
@@ -21,6 +23,8 @@ template <class T> class not_null_ptr;
 class Chicken : public Animal
 {
 public:
+    static arrayWithLength<Item*> FOOD_ITEMS;
+
     Chicken(Level* level);
     virtual ~Chicken();
     static void addDataWalkers(DataFixerUpper* fixer);

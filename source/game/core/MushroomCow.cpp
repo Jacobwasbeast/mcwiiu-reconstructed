@@ -1,4 +1,7 @@
 #include "game/core/MushroomCow.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -21,6 +24,7 @@ MushroomCow::MushroomCow(Level* level)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 1.4f);
+    mSpawnableBlock = Blocks::mycelium;
 }
 
 MushroomCow::~MushroomCow()
@@ -34,7 +38,7 @@ void MushroomCow::create(Level* level)
 
 void MushroomCow::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x2d6a0001ULL);
+    Mob::addDataWalkers(fixer, EntityType::MUSHROOM_COW);
 }
 
 bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
@@ -108,15 +112,21 @@ boost::shared_ptr<AgableMob> MushroomCow::getBreedOffspring(boost::shared_ptr<Ag
 
 unsigned int MushroomCow::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    Item* item = tooltipData.m_pItemInstance->getItem();
-    if (item == Items::bowl && !isBaby())
-        return 0x735a2f66U;
-    if (item == Items::shears && !isBaby())
-        return 0xbe5aab60U;
+    switch (Item::getId(tooltipData.m_pItemInstance->getItem()))
+    {
+    case ItemId::BOWL:
+        if (!isBaby())
+            return IDS_TOOLTIPS_MILK;
+        break;
+    case ItemId::SHEARS:
+        if (!isBaby())
+            return IDS_TOOLTIPS_SHEAR;
+        break;
+    }
     return Cow::GetInteractTooltip(tooltipData);
 }
 
 unsigned long long MushroomCow::GetType()
 {
-    return 0x000000002D6A0001ULL;
+    return EntityType::MUSHROOM_COW;
 }

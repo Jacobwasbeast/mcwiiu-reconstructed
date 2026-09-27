@@ -24,7 +24,7 @@ public:
     std::wstring lookupString(const std::wstring& key, const std::wstring& fallback);
     std::vector<SKIN_BOX*>* getAdditionalBoxes();
     int getAdditionalBoxesCount();
-    _SkinAdjustments* getSkinAdjustments();
+    _SkinAdjustments getSkinAdjustments();
     bool isFree();
 
 private:

@@ -1,4 +1,6 @@
 #include "game/core/Creeper.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <typeinfo>
@@ -33,14 +35,9 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
-static const unsigned long long ENTITY_TYPE_CREEPER = 0x5D540041ULL;
-static const unsigned long long ENTITY_TYPE_SKELETON = 0x5D540441ULL;
-static const unsigned long long ENTITY_TYPE_PROJECTILE_MASK = 0x8A020000ULL;
-static const unsigned long long ENTITY_TYPE_PLAYER_MASK = 0x0C800000ULL;
 static const EntityDataAccessor<int>* DATA_SWELL_DIR = NULL;
 static const EntityDataAccessor<bool>* DATA_IS_POWERED = NULL;
 static const EntityDataAccessor<bool>* DATA_IS_IGNITED = NULL;
@@ -56,9 +53,9 @@ Creeper::~Creeper() = default;
 
 void Creeper::staticCtor()
 {
-    DATA_SWELL_DIR = SynchedEntityData::defineId<int>(ENTITY_TYPE_CREEPER, ENTITY_TYPE_MONSTER, EntityDataSerializers::INT);
-    DATA_IS_POWERED = SynchedEntityData::defineId<bool>(ENTITY_TYPE_CREEPER, ENTITY_TYPE_MONSTER, EntityDataSerializers::BOOLEAN);
-    DATA_IS_IGNITED = SynchedEntityData::defineId<bool>(ENTITY_TYPE_CREEPER, ENTITY_TYPE_MONSTER, EntityDataSerializers::BOOLEAN);
+    DATA_SWELL_DIR = SynchedEntityData::defineId<int>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::INT);
+    DATA_IS_POWERED = SynchedEntityData::defineId<bool>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    DATA_IS_IGNITED = SynchedEntityData::defineId<bool>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
 }
 
 void Creeper::_init()
@@ -112,7 +109,7 @@ void Creeper::defineSynchedData()
 
 void Creeper::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, ENTITY_TYPE_CREEPER);
+    Mob::addDataWalkers(fixer, EntityType::CREEPER);
 }
 
 bool Creeper::isIgnited()
@@ -138,8 +135,8 @@ void Creeper::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
     getEntityData()->set(DATA_IS_POWERED, tag->getBoolean(L"powered"), true);
-    if (tag->contains(L"Fuse", 99)) mMaxSwell = tag->getShort(L"Fuse");
-    if (tag->contains(L"ExplosionRadius", 99)) mExplosionRadius = tag->getByte(L"ExplosionRadius");
+    if (tag->contains(L"Fuse", Tag::TAG_ANY_NUMERIC)) mMaxSwell = tag->getShort(L"Fuse");
+    if (tag->contains(L"ExplosionRadius", Tag::TAG_ANY_NUMERIC)) mExplosionRadius = tag->getByte(L"ExplosionRadius");
     if (tag->getBoolean(L"ignited")) ignite();
 }
 
@@ -177,7 +174,7 @@ void Creeper::explodeCreeper()
 {
     if (!mLevel->mIsClientSide)
     {
-        bool mobGriefing = mLevel->getGameRules()->getBoolean(1);
+        bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
         float power = isPowered() ? 2.0f : 1.0f;
         mDead = true;
         mLevel->explode(shared_from_this(), mX, mY, mZ, (float)mExplosionRadius * power,
@@ -213,7 +210,7 @@ const SoundEvent* Creeper::getDeathSound() { return SoundEvents::CREEPER_DEATH; 
 
 bool Creeper::canDropMobsSkull()
 {
-    return mDroppedSkulls < 1 && mLevel->getGameRules()->getBoolean(4);
+    return mDroppedSkulls < 1 && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT);
 }
 
 void Creeper::increaseDroppedSkulls() { ++mDroppedSkulls; }
@@ -222,16 +219,16 @@ void Creeper::die(const DamageSource* source)
 {
     LivingEntity::die(source);
 
-    if (mLevel->getGameRules()->getBoolean(4))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
         boost::shared_ptr<Entity> attacker = source->getEntity();
-        if (attacker && attacker->GetType() == ENTITY_TYPE_SKELETON)
+        if (attacker && attacker->GetType() == EntityType::SKELETON)
         {
             int firstRecord = Item::VALIDgetId(Items::record13);
             int recordCount = Item::VALIDgetId(Items::recordWait) - firstRecord + 1;
             spawnAtLocation(Item::byId(firstRecord + mRandom->nextInt(recordCount)), 1);
         }
-        else if (attacker && attacker->GetType() == ENTITY_TYPE_CREEPER)
+        else if (attacker && attacker->GetType() == EntityType::CREEPER)
         {
             boost::shared_ptr<Creeper> creeper = boost::dynamic_pointer_cast<Creeper>(attacker);
             if (creeper.get() != this && creeper->isPowered() && creeper->canDropMobsSkull())
@@ -245,8 +242,8 @@ void Creeper::die(const DamageSource* source)
     boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
     boost::shared_ptr<Entity> attacker = source->getEntity();
     if (directEntity && attacker
-        && (directEntity->GetType() & ENTITY_TYPE_PROJECTILE_MASK) == ENTITY_TYPE_PROJECTILE_MASK
-        && (attacker->GetType() & ENTITY_TYPE_PLAYER_MASK) == ENTITY_TYPE_PLAYER_MASK)
+        && (directEntity->GetType() & EntityType::ARROW) == EntityType::ARROW
+        && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(attacker);
         player->awardStat(GenericStats::archer(), GenericStats::param_archer());
@@ -275,8 +272,8 @@ void Creeper::thunderHit(const LightningBolt* lightning)
 
 unsigned int Creeper::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 259) return 0xA3BAC985;
-    return (unsigned int)-1;
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::FLINT_AND_STEEL) return IDS_TOOLTIPS_IGNITE;
+    return IDS_NONE;
 }
 
 bool Creeper::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -297,6 +294,6 @@ bool Creeper::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
     return Mob::mobInteract(player, hand);
 }
 
-unsigned long long Creeper::GetType() { return ENTITY_TYPE_CREEPER; }
+unsigned long long Creeper::GetType() { return EntityType::CREEPER; }
 
 void Creeper::create(Level* level) { new Creeper(level); }

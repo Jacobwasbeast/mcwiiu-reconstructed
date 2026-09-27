@@ -8,7 +8,7 @@ extern ConsoleUIController gConsoleUIController;
 int IUIScene_DLCUpsell::NotOnlineDialogCallback(
     void*, int userIndex, C4JStorage::EMessageResult result)
 {
-    if (result == C4JStorage::EMessageResult_4)
+    if (result == C4JStorage::EMessageResult_Accept)
         CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex, NULL, NULL);
     return 0;
 }

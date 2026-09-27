@@ -125,7 +125,7 @@ std::wstring DLCSkinFile::getParameterAsString(DLCManager::EDLCParameterType par
 
 bool DLCSkinFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)
 {
-    return parameter == (DLCManager::EDLCParameterType)3 && mFree;
+    return parameter == DLCManager::eDLCParameterType_Free && mFree;
 }
 
 DLCLocalisationFile* DLCSkinFile::getLocalisationFile()
@@ -162,10 +162,9 @@ int DLCSkinFile::getAdditionalBoxesCount()
     return (int)mAdditionalBoxes.size();
 }
 
-_SkinAdjustments* DLCSkinFile::getSkinAdjustments()
+_SkinAdjustments DLCSkinFile::getSkinAdjustments()
 {
-    _SkinAdjustments adjustments = mSkinAdjustments;
-    return &adjustments;
+    return mSkinAdjustments;
 }
 
 bool DLCSkinFile::isFree()

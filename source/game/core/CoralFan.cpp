@@ -1,4 +1,5 @@
 #include "game/core/CoralFan.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <string>
 
@@ -21,21 +22,21 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<int>* CoralFan_PROPERTY_1 = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
-AbstractProperty<int>* CoralFan_PROPERTY_2 = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"direction", 0, 1));
+AbstractProperty<int>* CoralFan::VARIANT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
+AbstractProperty<int>* CoralFan::DIRECTION = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"direction", 0, 1));
 
 namespace
 {
     std::wstring DEAD_CORAL_FAN_ICON_NAMES[5] =
     {
-        L"dead_coral_fan_red", L"dead_coral_fan_orange", L"dead_coral_fan_yellow",
-        L"dead_coral_fan_blue", L"dead_coral_fan_purple"
+        L"coral_fan_blue_dead", L"coral_fan_pink_dead", L"coral_fan_purple_dead",
+        L"coral_fan_red_dead", L"coral_fan_yellow_dead"
     };
 
     std::wstring CORAL_FAN_ICON_NAMES[5] =
     {
-        L"coral_fan_red", L"coral_fan_orange", L"coral_fan_yellow", L"coral_fan_blue",
-        L"coral_fan_purple"
+        L"coral_fan_blue", L"coral_fan_pink", L"coral_fan_purple", L"coral_fan_red",
+        L"coral_fan_yellow"
     };
 
     const AABB* CORAL_FAN_SHAPE = AABB::newPermanent(
@@ -55,8 +56,8 @@ CoralFan::CoralFan()
 
     TypedBoxed<int> type(3);
     TypedBoxed<int> direction(1);
-    registerDefaultState(defaultBlockState()->setBoxedValue(CoralFan_PROPERTY_1, &type)
-                                            ->setBoxedValue(CoralFan_PROPERTY_2, &direction));
+    registerDefaultState(defaultBlockState()->setBoxedValue(CoralFan::VARIANT, &type)
+                                            ->setBoxedValue(CoralFan::DIRECTION, &direction));
 }
 
 CoralFan::~CoralFan() = default;
@@ -105,7 +106,7 @@ int CoralFan::getRenderLayer()
 
 EBlockRenderShape CoralFan::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(0x33);
+    return BLOCK_RENDER_CORAL_FAN;
 }
 
 void CoralFan::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
@@ -147,7 +148,7 @@ EBlockOffsetType CoralFan::getOffsetType()
 
 TextureAtlasSprite* CoralFan::getTexture(const Direction* direction, const BlockState* state)
 {
-    int type = state->getValue(CoralFan_PROPERTY_1);
+    int type = state->getValue(CoralFan::VARIANT);
 
     if (this == Blocks::coral_fan_dead)
     {
@@ -168,7 +169,7 @@ void CoralFan::registerIcons(IconRegister* iconRegister)
 
 int CoralFan::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(CoralFan_PROPERTY_1) | (state->getValue(CoralFan_PROPERTY_2) << 3);
+    return state->getValue(CoralFan::VARIANT) | (state->getValue(CoralFan::DIRECTION) << 3);
 }
 
 const BlockState* CoralFan::getBlockState(int data)
@@ -176,8 +177,8 @@ const BlockState* CoralFan::getBlockState(int data)
     TypedBoxed<int> type(data & 7);
     TypedBoxed<int> direction((data >> 3) & 1);
 
-    return defaultBlockState()->setBoxedValue(CoralFan_PROPERTY_1, &type)
-                              ->setBoxedValue(CoralFan_PROPERTY_2, &direction);
+    return defaultBlockState()->setBoxedValue(CoralFan::VARIANT, &type)
+                              ->setBoxedValue(CoralFan::DIRECTION, &direction);
 }
 
 int CoralFan::getDescriptionId(int auxValue)
@@ -185,7 +186,7 @@ int CoralFan::getDescriptionId(int auxValue)
     const BlockState* state = getBlockState(auxValue);
     bool dead = state->getBlock() == Blocks::coral_fan_dead;
 
-    switch (state->getValue(CoralFan_PROPERTY_1))
+    switch (state->getValue(CoralFan::VARIANT))
     {
     case 1:
         return dead ? 0x49DEF5D4 : 0x54923487;
@@ -209,20 +210,22 @@ bool CoralFan::mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos
 
 not_null_ptr<ItemInstance> CoralFan::getSilkTouchItemInstance(const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1,
-                                                       getSpawnResourcesAuxValue(state)));
+    TypedBoxed<int> direction(0);
+    int auxValue = convertBlockStateToLegacyData(state->setBoxedValue(CoralFan::DIRECTION, &direction));
+    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, auxValue));
 }
 
 not_null_ptr<ItemInstance> CoralFan::getCloneItemInstance(Level* level, const BlockPos& pos,
                                                           const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1,
-                                                       getSpawnResourcesAuxValue(state)));
+    TypedBoxed<int> direction(0);
+    int auxValue = convertBlockStateToLegacyData(state->setBoxedValue(CoralFan::DIRECTION, &direction));
+    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, auxValue));
 }
 
 BlockStateDefinition* CoralFan::createBlockStateDefinition()
 {
-    static const Property* PROPERTIES[2] = { CoralFan_PROPERTY_1, CoralFan_PROPERTY_2 };
+    static const Property* PROPERTIES[2] = { CoralFan::VARIANT, CoralFan::DIRECTION };
 
     return new BlockStateDefinition(this, PROPERTIES, 2);
 }
@@ -258,7 +261,7 @@ void CoralFan::onPlace(Level* level, const BlockPos& pos, const BlockState* stat
 {
     if (this != Blocks::coral_fan_dead && level->getLiquidBlock(pos)->mMaterial == mMaterial)
     {
-        level->setExtraBlock(pos, Blocks::FLOWING_WATER->defaultBlockState(), 3, false);
+        level->setExtraBlock(pos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }
 
@@ -271,19 +274,19 @@ void CoralFan::checkAlive(Level* level, const BlockPos& pos, const BlockState* s
 {
     if (!level->isUnderWater(pos, 263, 0))
     {
-        TypedBoxed<int> type(state->getValue(CoralFan_PROPERTY_1));
-        TypedBoxed<int> direction(state->getValue(CoralFan_PROPERTY_2));
+        TypedBoxed<int> type(state->getValue(CoralFan::VARIANT));
+        TypedBoxed<int> direction(state->getValue(CoralFan::DIRECTION));
         level->setBlock(pos,
                         Blocks::coral_fan_dead->defaultBlockState()
-                            ->setBoxedValue(CoralFan_PROPERTY_1, &type)
-                            ->setBoxedValue(CoralFan_PROPERTY_2, &direction),
-                        3, false);
+                            ->setBoxedValue(CoralFan::VARIANT, &type)
+                            ->setBoxedValue(CoralFan::DIRECTION, &direction),
+                        Block::UPDATE_ALL, false);
     }
 
     if (!level->isSolidBlockingBlock(pos.below()) && !level->getBlock(pos.below())->isSlabBlock())
     {
-        level->levelEvent(2001, pos, Block::getIdWithData(state));
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
+        level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }
 

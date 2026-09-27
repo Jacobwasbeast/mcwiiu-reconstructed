@@ -1,4 +1,5 @@
 #include "game/core/MG03ScoreboardLayout.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -162,7 +163,7 @@ std::wstring MG03ScoreboardLayout::getStatForRound(const StatsUID& uid, int roun
         return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, round), false);
     }
 
-    return L10N::GetString(0xf62114b0);
+    return L10N::GetString(IDS_DNF);
 }
 
 UIString MG03ScoreboardLayout::getLabel2(const StatsUID& uid)
@@ -195,11 +196,11 @@ UIString MG03ScoreboardLayout::getLabel5(const StatsUID& uid)
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (!scoreboard->HasStats(uid))
     {
-        return UIString(0xfebed1b8);
+        return UIString(IDS_MG_SPECTATOR);
     }
     if (scoreboard->IsOverallGlideWinner(uid, miniGame->ArePointsActive()))
     {
-        return UIString(0x9148f7e8);
+        return UIString(IDS_MG_WINNER);
     }
     return UIString(L"");
 }
@@ -487,7 +488,7 @@ std::wstring MG03ScoreboardLayout::GetCustomProgressDetails(const StatsUID& uid,
     if (!scoreboard->HasStats(uid))
     {
         value = 0;
-        return L10N::GetString(0xf62114b0);
+        return L10N::GetString(IDS_DNF);
     }
     return details;
 }

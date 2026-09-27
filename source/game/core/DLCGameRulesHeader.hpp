@@ -40,6 +40,8 @@ private:
     unsigned char* m_data;
     unsigned int m_dataSize;
     bool m_ready;
+
+public:
     LevelGenerationOptions* m_levelGenerationOptions;
 };
 

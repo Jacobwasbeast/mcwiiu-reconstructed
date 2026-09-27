@@ -1,4 +1,7 @@
 #include "game/core/MinecartChest.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/pointer_cast.hpp>
 
@@ -57,12 +60,12 @@ AbstractContainerMenu* MinecartChest::createMenu(boost::shared_ptr<Inventory> in
 
 int MinecartChest::getTypeId(bool large)
 {
-    return (int)0xE08B6A47;
+    return ClientboundContainerOpenPacket::CONTAINER;
 }
 
 void MinecartChest::addDataWalkers(DataFixerUpper* fixer)
 {
-    MinecartContainer::addDataWalkers(fixer, 0x000000000A840002ULL);
+    MinecartContainer::addDataWalkers(fixer, EntityType::MINECART_CHEST);
 }
 
 unsigned int MinecartChest::getContainerType()
@@ -74,7 +77,7 @@ void MinecartChest::destroy(const DamageSource* source)
 {
     MinecartContainer::destroy(source);
 
-    if (mLevel->getGameRules()->getBoolean(6))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
     {
         spawnAtLocation(Item::byBlock(Blocks::chest), 1, 0.0f);
     }
@@ -99,5 +102,5 @@ int MinecartChest::getDefaultDisplayOffset()
 
 unsigned long long MinecartChest::GetType()
 {
-    return 0x000000000A840002ULL;
+    return EntityType::MINECART_CHEST;
 }

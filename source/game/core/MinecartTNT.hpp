@@ -31,8 +31,8 @@ public:
     virtual void activateMinecart(int x, int y, int z, bool powered);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual void primeFuse();
-    int getFuse();
-    bool isPrimed();
+    virtual int getFuse();
+    virtual bool isPrimed();
     virtual float getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos);
     virtual bool shouldBlockExplode(Explosion* explosion, Level* level, const BlockPos& pos, float radius);
     virtual void readAdditionalSaveData(CompoundTag* tag);
