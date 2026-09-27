@@ -313,17 +313,17 @@ Vec3* Vec3::zRot(float angle)
         z);
 }
 
-void Vec3::multiply(double x, double y, double z)
+Vec3* Vec3::multiply(double x, double y, double z)
 {
     this->x *= x;
     this->y *= y;
     this->z *= z;
+    return this;
 }
 
 Vec3* Vec3::multiply(double factor)
 {
-    multiply(factor, factor, factor);
-    return this;
+    return multiply(factor, factor, factor);
 }
 
 Vec3* Vec3::multiply(float factor)

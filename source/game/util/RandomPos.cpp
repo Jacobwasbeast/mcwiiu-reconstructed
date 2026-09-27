@@ -81,7 +81,8 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
     if (mob->hasRestriction())
     {
         BlockPos restrictCenter = mob->getRestrictCenter();
-        double distanceSqr = restrictCenter.distSqr(entity->mX, entity->mY, entity->mZ) + 4.0;
+        double distanceSqr = restrictCenter.distSqr((double)Mth::floor(entity->mX), (double)Mth::floor(entity->mY),
+                                                    (double)Mth::floor(entity->mZ)) + 4.0;
         float range = mob->getRestrictRadius() + (float)xz;
 
         checkRestriction = distanceSqr < (double)range * (double)range;

@@ -84,7 +84,7 @@ public:
     Vec3* yRot(float angle);
     Vec3* zRot(float angle);
 
-    void multiply(double x, double y, double z);
+    Vec3* multiply(double x, double y, double z);
     Vec3* multiply(double factor);
     Vec3* multiply(float factor);
 
