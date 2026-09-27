@@ -1,7 +1,12 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/client/audio/ConsoleSoundEngine.hpp"
+#include "game/util/Math.hpp"
+#include "game/core/GameSettings.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 
 #include "game/client/audio/MinecartSoundInstance.hpp"
@@ -538,17 +543,38 @@ void MultiPlayerLevel::playLocalSound(double x, double y, double z, const SoundE
                                       SoundSource::ESoundSource source, float volume, float pitch,
                                       bool distanceDelay, float range)
 {
+    if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_CaveSounds) == 0 &&
+        sound == SoundEvents::AMBIENT_CAVE)
+        return;
     if (volume > 1.0f)
         range *= volume;
-    boost::shared_ptr<Player> player = getNearestPlayer(x, y, z, range, false, -1.0);
-    if (!player)
+    if (sound == SoundEvents::MG02_FALLING)
+    {
+        mMinecraft->mSoundEngine->playUI(sound, volume, pitch);
         return;
-    float distanceSquared = (float)player->distanceToSqr(x, y, z);
-    int delay = 0;
-    if (distanceDelay && distanceSquared > 100.0f)
-        delay = (int)std::floor(std::sqrt(distanceSquared) / 40.0f * 20.0f + 0.5f);
-    mMinecraft->mSoundEngine->schedule(sound, source, (float)x, (float)y, (float)z,
-                                       volume, pitch, delay);
+    }
+
+    float nearest = FLT_MAX;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (mMinecraft->mLocalPlayers[i] != NULL)
+        {
+            const float distance = static_cast<float>(mMinecraft->mLocalPlayers[i]->distanceToSqr(x, y, z));
+            if (distance < nearest)
+                nearest = distance;
+        }
+    }
+    if (nearest >= range * range)
+        return;
+    if (distanceDelay && nearest > 100.0f)
+    {
+        const int delay = static_cast<int>(Math::round(sqrtf(nearest) / 40.0 * 20.0));
+        mMinecraft->mSoundEngine->schedule(sound, SoundSource::eSoundSource_Neutral, static_cast<float>(x),
+                                           static_cast<float>(y), static_cast<float>(z), volume, pitch, delay);
+        return;
+    }
+    mMinecraft->mSoundEngine->play(sound, static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
+                                   volume, pitch, NULL);
 }
 
 void MultiPlayerLevel::createFireworks(double x, double y, double z,

@@ -191,8 +191,8 @@ public:
     uint8_t mReducedDebugInfo;
     not_null_ptr<ItemInstance> mField0x764;
     NonNullList<not_null_ptr<ItemInstance> > mField0x76c;
-    CameraController* mField0x77c;
-    bool mField0x780;
+    CameraController* mCameraController;
+    bool mOwnsCameraController;
     uint8_t mField0x781;
     uint8_t mField0x782;
     PlayerUID mXuid;
@@ -207,7 +207,7 @@ public:
     int32_t mCustomCape;
     int32_t mPlayerIndex;
     unsigned int mDebugOptions;
-    uint8_t mField0x7ec;
+    bool mPlayedFallingSound;
     int32_t mLastPoints;
     int32_t mLastCheckpointId;
     uint8_t mEndZoneEffectShown;
@@ -215,12 +215,12 @@ public:
     std::vector<ModelPart*>* mAdditionalModelParts;
     uint8_t mField0x804;
     uint8_t mField0x805;
-    int32_t mField0x808;
+    int32_t mPendingCameraId;
     boost::shared_ptr<Entity> mCamera;
     bool mField0x814;
     bool mField0x815;
     double mField0x818;
-    double mField0x820;
+    double mLastLayerY;
     int32_t mField0x828;
     uint8_t mSpectatorSkullEquipped;
     int32_t mPowerupTicks[3];

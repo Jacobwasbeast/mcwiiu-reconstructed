@@ -94,7 +94,7 @@ boost::shared_ptr<Player> MultiPlayerGameMode::createPlayer(Level* level)
 
 void MultiPlayerGameMode::initPlayer(boost::shared_ptr<Player> player)
 {
-    player->mYRot = -10.5f;
+    player->mYRot = -180.0f;
 }
 
 void MultiPlayerGameMode::adjustPlayer(boost::shared_ptr<Player> player)

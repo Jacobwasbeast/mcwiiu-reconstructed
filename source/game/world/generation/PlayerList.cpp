@@ -477,7 +477,7 @@ void PlayerList::add(boost::shared_ptr<ServerPlayer> player)
     addPlayerToReceiving(player, false);
 
     ServerLevel* level = mServer->getLevel(player->mDimension);
-    changeDimension(player, level);
+    changeDimension(player, NULL);
     level->addEntity(player);
 
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator it;
@@ -487,8 +487,26 @@ void PlayerList::add(boost::shared_ptr<ServerPlayer> player)
             player->mConnection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(*it)));
     }
 
+    if (level->somePlayerSleeping)
+    {
+        boost::shared_ptr<ServerPlayer> firstSleeper;
+        for (unsigned int i = 0; i < mPlayers.size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> sleeper = mPlayers[i];
+            if (!sleeper->isSleeping())
+                continue;
+            if (firstSleeper == NULL)
+                firstSleeper = sleeper;
+            sleeper->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                sleeper->getName(), ClientboundChatPacket::eChatPacketMessage_BedMeSleep, -1)));
+        }
+        player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+            firstSleeper->getName(), ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep, -1)));
+    }
+
     if (mGameMode)
         mGameMode->OnJoin(player);
+    level->getChunkMap()->onPlayerJoin(player);
 }
 
 void PlayerList::placeNewPlayer(Connection* connection, boost::shared_ptr<ServerPlayer> player,
@@ -743,25 +761,39 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
 {
     BOOST_ASSERT(player);
 
-    const int oldDimension = player->mDimension;
-    ServerLevel* oldLevel = mServer->getLevel(oldDimension);
-    ServerLevel* newLevel = mServer->getLevel(dimension);
     const bool receivingAllPackets = canReceiveAllPackets(player);
-    if (receivingAllPackets)
-        oldLevel->getTracker()->clear(player);
+    const int oldDimension = player->mDimension;
+    bool leavingSystem = dimension != oldDimension;
+    if (leavingSystem)
+    {
+        INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
+        for (unsigned int i = 0; i < mPlayers.size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> other = mPlayers[i];
+            if (other == player || other->mDimension != oldDimension)
+                continue;
+            INetworkPlayer* otherNetworkPlayer = other->mConnection->getNetworkPlayer();
+            if (otherNetworkPlayer != NULL && networkPlayer->IsSameSystem(otherNetworkPlayer))
+                leavingSystem = false;
+        }
+    }
+    if (leavingSystem && receivingAllPackets)
+        player->getLevel()->getTracker()->clear(player);
     else
-        oldLevel->getTracker()->removeEntity(player);
+        player->getLevel()->getTracker()->removeEntity(player);
 
-    const bool wasReceiving = removePlayerFromReceiving(player, true, 0) != 0;
-    oldLevel->getChunkMap()->remove(player);
-
+    player->getLevel()->getChunkMap()->remove(player);
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator oldPlayer =
         std::find(mPlayers.begin(), mPlayers.end(), player);
     if (oldPlayer != mPlayers.end())
         mPlayers.erase(oldPlayer);
+    mServer->getLevel(player->mDimension)->removeEntityImmediately(player);
 
-    oldLevel->removeEntityImmediately(player);
+    BlockPos* respawnPosition = player->getRespawnPosition();
+    const bool respawnForced = player->isRespawnForced() != 0;
+    const bool wasReceiving = removePlayerFromReceiving(player, true, 0) != 0;
     player->mDimension = dimension;
+    ServerLevel* newLevel = mServer->getLevel(player->mDimension);
 
     ServerPlayerGameMode* newGameMode = new ServerPlayerGameMode(newLevel, mGameMode);
     boost::shared_ptr<ServerPlayer> replacement(new ServerPlayer(
@@ -786,12 +818,11 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
     replacement->mGameMode->setGameRules(player->mGameMode->mGameRules);
     player->mGameMode->nullifyGameRules();
     replacement->mDimension = dimension;
+    replacement->mConnection->mPlayer = replacement;
 
     addPlayerToReceiving(replacement, wasReceiving && oldDimension == dimension);
-    updatePlayerGameMode(replacement, player, oldLevel);
-
-    BlockPos* respawnPosition = player->getRespawnPosition();
-    const bool respawnForced = player->isRespawnForced() != 0;
+    updatePlayerGameMode(replacement, player, mServer->getLevel(player->mDimension));
+    replacement->resetPos();
     const bool useSavedRespawn = !player->mRespawnState || dimension != oldDimension
         || player->getHealth() <= 0.0f;
     if (useSavedRespawn)
@@ -799,7 +830,7 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
         if (respawnPosition != NULL)
         {
             BlockPos* validPosition = Player::checkBedValidRespawnPosition(
-                oldLevel, *respawnPosition, respawnForced);
+                mServer->getLevel(player->mDimension), *respawnPosition, respawnForced);
             if (validPosition == NULL)
             {
                 replacement->mConnection->send(boost::shared_ptr<Packet>(
@@ -808,8 +839,8 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
             }
             else
             {
-                replacement->moveTo(validPosition->x + 0.5, validPosition->y + 0.1,
-                                    validPosition->z + 0.5, 0.0f, 0.0f);
+                replacement->moveTo(validPosition->x + 0.5f, validPosition->y + 0.1f,
+                                    validPosition->z + 0.5f, 0.0f, 0.0f);
                 replacement->setRespawnPosition(new BlockPos(*respawnPosition), respawnForced);
                 delete validPosition;
             }
@@ -821,7 +852,11 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
                             player->mYRot, player->mXRot);
         if (respawnPosition != NULL)
             replacement->setRespawnPosition(new BlockPos(*respawnPosition), respawnForced);
+        replacement->mInventory->m_selected = player->mInventory->m_selected;
     }
+
+    if (mGameMode != NULL)
+        mGameMode->OnSpawn(replacement, player, true);
 
     newLevel->getChunkSource()->create(static_cast<int>(replacement->mX) >> 4,
                                        static_cast<int>(replacement->mZ) >> 4);
@@ -831,15 +866,11 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
             replacement, replacement->mBoundingBox, false, false, false);
         while (!collisions->empty())
         {
-            replacement->moveTo(replacement->mX, replacement->mY + 1.0,
-                                replacement->mZ, replacement->mYRot, replacement->mXRot);
+            replacement->setPos(replacement->mX, replacement->mY + 1.0, replacement->mZ);
             collisions = newLevel->getCollisionAABBs(
                 replacement, replacement->mBoundingBox, false, false, false);
         }
     }
-
-    if (mGameMode != NULL)
-        mGameMode->OnSpawn(replacement, player, true);
 
     LevelData* levelData = newLevel->getLevelData();
     const int packetXZSize = levelData->getXZSize();

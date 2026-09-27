@@ -3,6 +3,10 @@
 #include "game/world/block/BlockId.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
+
+#include <algorithm>
+#include <cfloat>
+
 #include "game/core/GameSettings.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 #include "game/world/Dimension.hpp"
@@ -111,6 +115,7 @@
 #include "game/ui/EnchantmentMenu.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/util/phys__Vec2.hpp"
 
 #include <cmath>
 #include <cstring>
@@ -610,10 +615,10 @@ void LocalPlayer::serverAiStep()
         const float movement = std::sqrt(strafe * strafe + forward * forward);
         if (mAbilities.mFlying && mAbilities.mMayfly && movement >= 0.1f)
         {
-            const float angle = std::atan2(forward, strafe) * 57.2957763671875f;
-            const float wrapped = angle + (std::floor((angle + mYRot) / 360.0f + 0.5f)
-                                           * 360.0f - (angle + mYRot));
-            const float radians = wrapped * 0.01745329238474369f;
+            const float angle = std::atan2(forward, strafe) * 57.29578f;
+            const float heading = angle + mYRot;
+            const float snapped = angle + (std::floor(heading / 45.0f + 0.5f) * 45.0f - heading);
+            const float radians = snapped * 0.017453292f;
             mXxa = std::cos(radians) * movement;
             mZza = std::sin(radians) * movement;
         }
@@ -2396,120 +2401,105 @@ void LocalPlayer::updateAutoJump(float xMovement, float zMovement)
     if (!isAutoJumpEnabled() || mAutoJumpTime > 0)
         return;
 
-    if ((!mOnGround || isPassenger()) &&
-        (((isSneaking() || !isPassenger()) && !isInLava()) || mNoPhysics))
-        return;
-
-    Vec3* movement = Vec3::newTemp(xMovement, 0.0, zMovement);
-    double lengthSquared = movement->lengthSqr();
-    double speed = getSpeed();
-    if (lengthSquared <= 1.0e-7)
+    if (!mOnGround || isSneaking())
     {
-        Vec3* view = getViewVector(1.0f);
-        if (view == NULL)
+        bool swimming = (!isUnderLiquid(Material::WATER) && isInWater()) || isInLava();
+        if (!swimming || mAbilities.mFlying)
             return;
-        double angle = static_cast<double>(mYRot) * 0.01745329238474369;
-        double sine = Mth::sin(angle);
-        double cosine = Mth::cos(angle);
-        double viewX = view->x * speed;
-        double viewZ = view->z * speed;
-        movement = Vec3::newTemp(viewX * cosine - viewZ * sine, 0.0,
-                                 viewZ * cosine + viewX * sine);
-        lengthSquared = movement->lengthSqr();
     }
-    if (lengthSquared <= 1.0e-7)
+    if (isPassenger())
         return;
 
-    double inputLength = std::sqrt(lengthSquared);
-    movement = movement->scale(Mth::fastInvSqrt(lengthSquared));
-    Vec3* view = getViewVector(1.0f);
-    if (view == NULL || (view->x == 0.0 && view->z == 0.0) ||
-        view->x * movement->x + view->z * movement->z < -0.15)
+    phys::Vec2* moveVector = mInput->getMoveVector();
+    if (moveVector->x == 0.0f && moveVector->y == 0.0f)
         return;
-    if (isFallFlying())
-        return;
-
-    double distance = speed * 0.9;
-    if (distance < 1.0 / inputLength)
-        distance = 1.0 / inputLength;
 
     Vec3* start = Vec3::newTemp(mX, mBoundingBox->mMinY, mZ);
     Vec3* target = Vec3::newTemp(mX + xMovement, mBoundingBox->mMinY, mZ + zMovement);
-    target->add(movement->x * distance, 0.0, movement->z * distance);
-    BlockPos startBlock(start);
-    BlockPos targetBlock(target);
-
-    const BlockState* startState = mLevel->getBlockState(startBlock);
-    const BlockState* startAboveState = mLevel->getBlockState(startBlock.above());
-    if ((startState != NULL && startState->getShape(mLevel, startBlock) != NULL) ||
-        (startAboveState != NULL && startAboveState->getShape(mLevel, startBlock.above()) != NULL))
-        return;
-
-    double jumpHeight = 1.2;
-    MobEffectInstance* jump = getEffect(MobEffects::JUMP);
-    if (jump != NULL)
-        jumpHeight += static_cast<double>(jump->getAmplifier() + 1) * 0.75;
-
-    AABB* probe = AABB::newTemp(startBlock, targetBlock)->grow(mBbWidth, 0.0, mBbWidth);
-    std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), probe,
-                                                                false, false, false);
-    if (collisions == NULL)
-        return;
-
-    Vec3* up = Vec3::newTemp(0.0, 1.0, 0.0);
-    Vec3* side = Vec3::newTemp(movement)->cross(up)->scale(mBbWidth * 0.5);
-    start->add(0.51, 0.0, 0.51);
-    target->add(0.51, 0.0, 0.51);
-    Vec3* fromLeft = Vec3::newTemp(start)->subtract(side);
-    Vec3* toLeft = Vec3::newTemp(target)->subtract(side);
-    Vec3* fromRight = Vec3::newTemp(start)->add(side);
-    Vec3* toRight = Vec3::newTemp(target)->add(side);
-
-    const double sentinel = static_cast<double>(1.1754943508222875e-38f);
-    double highest = sentinel;
-    for (std::vector<AABB*>::const_iterator it = collisions->begin();
-         it != collisions->end(); ++it)
+    Vec3* movement = Vec3::newTemp(xMovement, 0.0, zMovement);
+    float speed = getSpeed();
+    float lengthSquared = (float)movement->lengthSqr();
+    if (lengthSquared <= 0.001f)
     {
-        if (*it != NULL && ((*it)->intersects(fromLeft, toLeft) ||
-                            (*it)->intersects(fromRight, toRight)))
-        {
-            double candidateHeight = static_cast<double>(static_cast<float>((*it)->mMaxY));
-            BlockPos obstacle((*it)->getCenter());
-            unsigned int step = 1;
-            while (true)
-            {
-                if (step > 1)
-                {
-                    BlockPos immediateAbove = obstacle.above();
-                    const BlockState* immediateState = mLevel->getBlockState(immediateAbove);
-                    const AABB* immediateShape = immediateState == NULL ? NULL :
-                        immediateState->getShape(mLevel, immediateAbove);
-                    if (immediateShape != NULL)
-                        return;
-                }
-                ++step;
-                if (jumpHeight <= static_cast<double>(step) - 1.0)
-                    break;
-                BlockPos above = obstacle.above(static_cast<int>(step));
-                const BlockState* aboveState = mLevel->getBlockState(above);
-                const AABB* aboveShape = aboveState == NULL ? NULL :
-                    aboveState->getShape(mLevel, above);
-                if (aboveShape != NULL)
-                {
-                    float top = static_cast<float>(aboveShape->mMaxY) +
-                        static_cast<float>(static_cast<double>(step) - 1.0);
-                    candidateHeight = static_cast<double>(top);
-                    if (jumpHeight < candidateHeight - mBoundingBox->mMinY)
-                        return;
-                }
-            }
-            highest = candidateHeight;
-            break;
-        }
+        float inputX = speed * moveVector->x;
+        float inputZ = speed * moveVector->y;
+        float sine = Mth::sin(mYRot * Mth::DEG_TO_RAD);
+        float cosine = Mth::cos(mYRot * Mth::DEG_TO_RAD);
+        movement = Vec3::newTemp(inputX * cosine - inputZ * sine, movement->y, inputZ * cosine + inputX * sine);
+        lengthSquared = (float)movement->lengthSqr();
+        if (lengthSquared <= 0.001f)
+            return;
     }
 
-    double height = highest - mBoundingBox->mMinY;
-    if (highest != sentinel && height > distance && !(jumpHeight < height))
+    float inverseLength = (float)Mth::fastInvSqrt(lengthSquared);
+    Vec3* direction = movement->scale(inverseLength);
+    Vec3* forward = getForward();
+    if ((float)(forward->x * direction->x + forward->z * direction->z) < -0.15f)
+        return;
+
+    if ((isInWater() || isInLava()) && !mAbilities.mFlying)
+    {
+        mAutoJumpTime = 1;
+        return;
+    }
+
+    BlockPos headPos(mX, mBoundingBox->mMaxY, mZ);
+    if (mLevel->getBlockState(headPos)->getClipAABB(mLevel, headPos) != NULL)
+        return;
+    headPos = headPos.above();
+    if (mLevel->getBlockState(headPos)->getClipAABB(mLevel, headPos) != NULL)
+        return;
+
+    float jumpHeight = 1.2f;
+    if (hasEffect(MobEffects::JUMP))
+        jumpHeight += (float)(getEffect(MobEffects::JUMP)->getAmplifier() + 1) * 0.75f;
+
+    float reach = std::max(speed * 7.0f, 1.0f / inverseLength);
+    target = target->add(direction->scale(reach));
+    float width = mBbWidth;
+    AABB* probe = AABB::newTemp(BlockPos(start), BlockPos(target->add(0.0, mBbHeight, 0.0)))->grow(width, 0.0, width);
+    start = start->add(0.0, 0.51f, 0.0);
+    target = target->add(0.0, 0.51f, 0.0);
+    Vec3* side = direction->cross(Vec3::newTemp(0.0, 1.0, 0.0))->scale(width * 0.5f);
+    Vec3* leftFrom = start->subtract(side);
+    Vec3* leftTo = target->subtract(side);
+    Vec3* rightFrom = start->add(side);
+    Vec3* rightTo = target->add(side);
+
+    std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), probe, false, false, false);
+    float highest = FLT_MIN;
+    for (std::vector<AABB*>::iterator it = collisions->begin(); it != collisions->end(); ++it)
+    {
+        AABB* collision = *it;
+        if (!collision->intersects(leftFrom, leftTo) && !collision->intersects(rightFrom, rightTo))
+            continue;
+
+        highest = (float)collision->mMaxY;
+        BlockPos obstacle(collision->getCenter());
+        for (int step = 1; (float)step < jumpHeight; ++step)
+        {
+            BlockPos above = obstacle.above(step);
+            const AABB* aboveClip = mLevel->getBlockState(above)->getClipAABB(mLevel, above);
+            if (aboveClip != NULL)
+            {
+                highest = (float)aboveClip->mMaxY + (float)above.y;
+                if (highest - mBoundingBox->mMinY > jumpHeight)
+                    return;
+            }
+            if (step > 1)
+            {
+                headPos = headPos.above();
+                if (mLevel->getBlockState(headPos)->getClipAABB(mLevel, headPos) != NULL)
+                    return;
+            }
+        }
+        break;
+    }
+
+    if (highest == FLT_MIN)
+        return;
+    float height = (float)(highest - mBoundingBox->mMinY);
+    if (height > 0.5f && height <= jumpHeight)
         mAutoJumpTime = 1;
 }
 

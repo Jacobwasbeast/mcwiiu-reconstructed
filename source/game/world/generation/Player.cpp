@@ -1,4 +1,15 @@
 #include "game/world/generation/Player.hpp"
+#include "game/entity/projectile/Arrow.hpp"
+#include "game/core/Difficulty.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/network/ClientboundSetEntityMotionPacket.hpp"
+#include "game/entity/mob/MultiEntityMobPart.hpp"
+#include "game/entity/mob/MultiEntityMob.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/core/CommonMasterGameMode.hpp"
+#include "game/core/MasterGameMode.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
@@ -126,7 +137,7 @@ Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mA
     mCustomSkin = 0;
     mCustomCape = 0;
     mPlayerIndex = 0;
-    mField0x7ec = 0;
+    mPlayedFallingSound = false;
     mLastPoints = 0;
     mLastCheckpointId = 0;
     mEndZoneEffectShown = 0;
@@ -155,8 +166,8 @@ Player::~Player()
     mBedPosition = NULL;
     delete mRespawnPosition;
     mRespawnPosition = NULL;
-    if (mField0x780)
-        delete mField0x77c;
+    if (mOwnsCameraController)
+        delete mCameraController;
     if (mField0x7c8.size() != 0)
         delete[] &mField0x7c8[0];
     if (mField0x76c.size() != 0)
@@ -565,7 +576,7 @@ void Player::SetAdditionalModelParts(std::vector<ModelPart*>* parts)
 
 void Player::Follow(bool follow)
 {
-    if (!follow) mField0x808 = -1;
+    if (!follow) mPendingCameraId = -1;
 }
 
 double Player::getUnderwaterLightLevel()
@@ -1125,7 +1136,7 @@ bool Player::IsCreativeFlying()
 
 uint32_t Player::IsSpectatingOtherPlayer()
 {
-    if ((mCamera || mField0x808 != -1) && isAlive()) {
+    if ((mCamera || mPendingCameraId != -1) && isAlive()) {
         return 1;
     }
     return 0;
@@ -1133,9 +1144,9 @@ uint32_t Player::IsSpectatingOtherPlayer()
 
 void Player::SetCameraController(CameraController* controller, bool owned)
 {
-    if (mField0x780) delete mField0x77c;
-    mField0x780 = owned;
-    mField0x77c = controller;
+    if (mOwnsCameraController) delete mCameraController;
+    mOwnsCameraController = owned;
+    mCameraController = controller;
     if (controller != NULL) SetThirdPersonView(controller->getCameraMode());
 }
 
@@ -1149,7 +1160,7 @@ void Player::SetCamera(boost::shared_ptr<Entity> entity)
     } else {
         mCamera.reset();
     }
-    mField0x808 = -1;
+    mPendingCameraId = -1;
 }
 
 boost::shared_ptr<Entity> Player::GetCamera()
@@ -1320,10 +1331,10 @@ void Player::giveExperienceLevels(int32_t levels)
         mExperienceProgress = 0.0f;
     }
 
-    if (levels > 0 && mExperienceLevel % 5 == 0 && mTickCount - mLastLevelUpTime > 100) {
+    if (levels > 0 && mExperienceLevel % 5 == 0 && (float)mLastLevelUpTime < (float)mTickCount - 100.0f) {
         float volume = mExperienceLevel > 30 ? 1.0f : static_cast<float>(mExperienceLevel) / 30.0f;
         mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
-                          SoundEvents::EXPERIENCE_ORB_PICKUP, getSoundSource(),
+                          SoundEvents::PLAYER_LEVELUP, getSoundSource(),
                           volume * 0.75f, 1.0f, 16.0f);
         mLastLevelUpTime = mTickCount;
     }
@@ -1438,7 +1449,7 @@ void Player::closeContainer()
 
 CameraController* Player::GetCameraController()
 {
-    return mField0x77c;
+    return mCameraController;
 }
 
 void Player::setBedOffset(const Direction* direction)
@@ -1535,11 +1546,40 @@ std::vector<boost::shared_ptr<ItemInstance> >* Player::getArmorSlots()
 
 double Player::getEyeHeight()
 {
-    double height = 1.6200000047683716;
-    if (isSleeping()) height = 0.20000000298023224;
-    else if (isFallFlying() || isSwimming()) height = 0.4000000059604645;
-    else if (SpectateAsFloatingHead()) height -= 1.5;
-    else if (isSneaking()) height -= 0.07999999821186066;
+    float height = 1.62f;
+    if (isSleeping())
+    {
+        height = 0.2f;
+    }
+    else if (isSwimming())
+    {
+        height = 0.55f;
+    }
+    else if (getDamageNearbyMobs())
+    {
+        height = 0.4f;
+    }
+    else if (isSpectator())
+    {
+        if (SpectateAsOtherEntity())
+        {
+            height = (float)(mBoundingBox->mMaxY - mBoundingBox->mMinY) * 0.5f;
+        }
+        else if (SpectateAsFloatingHead())
+        {
+            height -= 1.5f;
+        }
+    }
+
+    if (isFallFlying() || (mBbHeight == 0.6f && !isSwimming()))
+    {
+        return 0.4f;
+    }
+
+    if (isSneaking() || mBbHeight == 1.65f)
+    {
+        height -= 0.08f;
+    }
     return height;
 }
 
@@ -1652,24 +1692,66 @@ void Player::tickArmor()
 
 void Player::updateFrameTick()
 {
-    if (mTakeXpDelay > 0) --mTakeXpDelay;
-    if (isSleeping()) {
-        if (mSleepCounter < 100) ++mSleepCounter;
-        if (!mLevel->mIsClientSide && (!checkBedExists() || mLevel->isDay()))
-            stopSleepInBed(false, true, true);
-    } else if (mSleepCounter > 0) {
-        if (++mSleepCounter >= 110) mSleepCounter = 0;
+    if (!isSpectator())
+    {
+        if (Minecraft::InMiniGame(eMiniGameId_Tumble, true) && !mAbilities.mFlying)
+        {
+            if (!mOnGround)
+            {
+                if (!mPlayedFallingSound)
+                {
+                    CommonMasterGameMode* gameMode = NULL;
+                    if (isLocalPlayer())
+                        gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+                    else if (gMinecraftServer != NULL)
+                        gameMode = gMinecraftServer->mMasterGameMode;
+                    if (gameMode != NULL && gameMode->IsRoundPlaying() && gameMode->HasFallenOffLayer(mLastLayerY, mY))
+                    {
+                        mPlayedFallingSound = true;
+                        playSound(SoundEvents::MG02_FALLING, 1.0f, 1.0f);
+                    }
+                }
+            }
+            else if (mPlayedFallingSound)
+            {
+                mPlayedFallingSound = false;
+            }
+            mLastLayerY = mY;
+        }
     }
-    if (!isAlive()) {
-        if (mDeathFadeTimer < 21) ++mDeathFadeTimer;
-    } else {
-        mDeathFadeTimer = 0;
+    else
+    {
+        mOnGround = false;
     }
+
+    if (mTakeXpDelay > 0)
+        --mTakeXpDelay;
+
+    if (isSleeping())
+    {
+        if (mSleepCounter < 100)
+            ++mSleepCounter;
+        if (!mLevel->mIsClientSide)
+        {
+            if (!checkBedExists())
+                stopSleepInBed(true, true, false);
+            else if (mLevel->isDay())
+                stopSleepInBed(false, true, true);
+        }
+    }
+    else if (mSleepCounter > 0)
+    {
+        if (++mSleepCounter >= 110)
+            mSleepCounter = 0;
+    }
+
+    if (!isAlive() && mDeathFadeTimer < 21)
+        ++mDeathFadeTimer;
 }
 
 void Player::tickCamera()
 {
-    if (mField0x808 != -1 && !mCamera) mField0x808 = -1;
+    if (mPendingCameraId != -1 && !mCamera) mPendingCameraId = -1;
     if (!isSpectator() && mCamera) StopSpectatingPlayer();
     if (mCamera && mField0x814 && Minecraft::InMiniGame(eMiniGameId_Glide, true)) {
         mYRot += Mth::clamp(Mth::wrapDegrees(mCamera->mYRot - mYRot), -2.25f, 2.25f);
@@ -1764,8 +1846,8 @@ void Player::_init()
     mField0x7c8 = NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY);
     mField0x76c = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
     mField0x764 = ItemInstance::EMPTY;
-    mField0x77c = NULL;
-    mField0x780 = true;
+    mCameraController = NULL;
+    mOwnsCameraController = true;
     mWinnerParticleTicks = 0;
     mField0x781 = 0;
     mField0x782 = 0;
@@ -1774,12 +1856,12 @@ void Player::_init()
     mAdditionalModelParts = NULL;
     mField0x804 = 0;
     mField0x805 = 0;
-    mField0x808 = -1;
+    mPendingCameraId = -1;
     mCamera.reset();
     mField0x814 = false;
     mField0x815 = false;
     mField0x818 = 1.0;
-    mField0x820 = mY;
+    mLastLayerY = mY;
     mSpectatorSkullEquipped = 0;
     mField0x828 = 0;
     mRingSoundAlternate = 0;
@@ -2267,25 +2349,28 @@ void Player::die(const DamageSource* source)
 
 const SoundEvent* Player::getHurtSound(const DamageSource* source)
 {
-    if (source != NULL && source->isFire()) return SoundEvents::PLAYER_HURT_ON_FIRE;
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
+        return SoundEvents::MG03_HIT;
+    if (source == DamageSource::ON_FIRE)
+        return SoundEvents::PLAYER_HURT_ON_FIRE;
+    if (source == DamageSource::DROWN)
+        return SoundEvents::PLAYER_HURT_DROWN;
     return SoundEvents::PLAYER_HURT;
 }
 
 bool Player::hurt(const DamageSource* source, float damage)
 {
-    boost::shared_ptr<Entity> sourceEntity = source->getEntity();
-
-    if (damage == 0.0f) {
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && sourceEntity) {
-            unsigned long long type = sourceEntity->GetType();
-            if (type != EntityType::FISHING_HOOK && type != EntityType::SNOWBALL && type != EntityType::THROWN_EGG && type != EntityType::PRIMED_TNT) {
-                if ((type & EntityType::ARROW) != EntityType::ARROW
-                    || !Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback()) {
-                    return false;
-                }
-            }
+    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
+    if (damage == 0.0f && Minecraft::InMiniGame(eMiniGameId_Glide, true) && directEntity)
+    {
+        unsigned long long type = directEntity->GetType();
+        if (type == EntityType::FISHING_HOOK || type == EntityType::SNOWBALL || type == EntityType::THROWN_EGG
+            || type == EntityType::PRIMED_TNT
+            || ((type & EntityType::ARROW) == EntityType::ARROW
+                && Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback()))
+        {
+            return LivingEntity::hurt(source, damage);
         }
-        return LivingEntity::hurt(source, damage);
     }
 
     if (isInvulnerableTo(source)) return false;
@@ -2294,9 +2379,38 @@ bool Player::hurt(const DamageSource* source, float damage)
     if (isSpectator()) return false;
     if (source == DamageSource::FALL && isAllowedToFly() && mAbilities.mFlying) return false;
 
-    if (getHealth() > 0.0f) {
-        if (isSleeping() && !mLevel->mIsClientSide) stopSleepInBed(true, true, false);
-        removeEntitiesOnShoulder();
+    mNoActionTime = 0;
+    if (getHealth() <= 0.0f) return false;
+
+    if (isSleeping() && !mLevel->mIsClientSide) stopSleepInBed(true, true, false);
+    removeEntitiesOnShoulder();
+
+    if (source->scalesWithDifficulty())
+    {
+        if (mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        {
+            damage = 0.0f;
+        }
+        if (mLevel->getDifficulty() == Difficulty::EASY)
+        {
+            damage = std::min(damage * 0.5f + 1.0f, damage);
+        }
+        if (mLevel->getDifficulty() == Difficulty::HARD)
+        {
+            damage = damage * 3.0f * 0.5f;
+        }
+    }
+
+    if (damage == 0.0f) return false;
+
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    if (attacker && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    {
+        boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
+        if (arrow->mOwner)
+        {
+            attacker = arrow->mOwner;
+        }
     }
 
     return LivingEntity::hurt(source, damage);
@@ -2471,7 +2585,49 @@ void Player::travel(float x, float y, float z)
     double oldX = mX;
     double oldY = mY;
     double oldZ = mZ;
-    LivingEntity::travel(x, y, z);
+
+    if (isSwimming())
+    {
+        Vec3* look = getLookAngle();
+        float swimFollow = look->y < -0.2f ? 0.085f : 0.06f;
+        if (mAbilities.mFlying)
+            swimFollow = 1.3f;
+        Vec3* pos = getPos(0.0f);
+        Material* feetMaterial = mLevel->getBlockState(BlockPos(pos))->getMaterial();
+        pos->y += 1.62f - 1.2f;
+        Material* headMaterial = mLevel->getBlockState(BlockPos(pos))->getMaterial();
+        bool follow = look->y <= 0.0 || mAbilities.mFlying || mJumping || headMaterial->isLiquid();
+        if (follow && feetMaterial == Material::AIR && look->y > 0.0 && !isSneaking())
+            follow = false;
+        if (follow)
+            mYd += (look->y - mYd) * swimFollow;
+        else
+            mYd = 0.0;
+    }
+
+    if (mAbilities.mFlying && !isPassenger())
+    {
+        double oldYd = mYd;
+        float oldFlyingSpeed = mFlyingSpeed;
+        mFlyingSpeed = mAbilities.getFlyingSpeed() * (isSprinting() ? 2.0f : 1.0f);
+        LivingEntity::travel(x, y, z);
+        mYd = oldYd * 0.6;
+        mFlyingSpeed = oldFlyingSpeed;
+        mFallDistance = 0.0f;
+        setSharedFlag(FLAG_FALL_FLYING, false);
+    }
+    else if (isFallFlying() && mLevel->mIsClientSide)
+    {
+        double fromX = mX;
+        double fromY = mY;
+        double fromZ = mZ;
+        LivingEntity::travel(x, y, z);
+        fjCheckSuperSonic(fromX, fromY, fromZ, mX, mY, mZ);
+    }
+    else
+    {
+        LivingEntity::travel(x, y, z);
+    }
     checkMovementStatistiscs(mX - oldX, mY - oldY, mZ - oldZ);
 }
 
@@ -2614,11 +2770,59 @@ BlockPos* Player::checkBedValidRespawnPosition(Level* level, const BlockPos& pos
 void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ,
                                double newX, double newY, double newZ)
 {
-    double speed = std::sqrt(mXd * mXd + mYd * mYd + mZd * mZd);
-    if (speed <= 2.0 || gStats == NULL) return;
-    int distance = static_cast<int>(std::sqrt((newX - oldX) * (newX - oldX)
-        + (newY - oldY) * (newY - oldY) + (newZ - oldZ) * (newZ - oldZ)) * 20.0);
-    if (distance > 0) awardStat(GenericStats::superSonic(), GenericStats::param_superSonic(distance));
+    static const double MIN_SPEED_SQR = 1.0 * 2.0 * 2.0;
+
+    double speedSqr = mYd * mYd + mXd * mXd + mZd * mZd;
+    double blocksPerSecond = std::sqrt(speedSqr) * 20.0;
+    if (speedSqr <= MIN_SPEED_SQR)
+    {
+        return;
+    }
+
+    double largestComponent = std::max(std::fabs(mXd), std::max(std::fabs(mYd), std::fabs(mZd)));
+    double step = 0.2 / largestComponent;
+
+    double xDistance = std::fabs(newX - oldX);
+    double yDistance = std::fabs(newY - oldY);
+    double zDistance = std::fabs(newZ - oldZ);
+    Direction::Axis* axis;
+    if (xDistance >= yDistance && xDistance >= zDistance)
+    {
+        axis = Direction::Axis::X;
+    }
+    else if (zDistance <= yDistance)
+    {
+        axis = Direction::Axis::Y;
+    }
+    else
+    {
+        axis = Direction::Axis::Z;
+    }
+
+    Direction::Axis* firstSideAxis = Direction::Axis::VALUES[(axis->getId() + 1) % 3];
+    Direction::Axis* secondSideAxis = Direction::Axis::VALUES[(axis->getId() + 2) % 3];
+    const Direction* firstSide = Direction::get(Direction::AxisDirection::POSITIVE, firstSideAxis);
+    const Direction* oppositeFirstSide = Direction::get(Direction::AxisDirection::NEGATIVE, firstSideAxis);
+    const Direction* secondSide = Direction::get(Direction::AxisDirection::POSITIVE, secondSideAxis);
+    const Direction* oppositeSecondSide = Direction::get(Direction::AxisDirection::NEGATIVE, secondSideAxis);
+
+    BlockPos previous(0, -1, 0);
+    int speed = (int)blocksPerSecond;
+    for (double t = 0.0; t != 1.0; t = std::min(t + step, 1.0))
+    {
+        BlockPos pos((newX - oldX) * t + oldX, (newY - oldY) * t + oldY, (newZ - oldZ) * t + oldZ);
+        if (pos != previous)
+        {
+            if (mLevel->isSolidBlockingBlockInLoadedChunk(pos.relative(firstSide), false)
+                && mLevel->isSolidBlockingBlockInLoadedChunk(pos.relative(oppositeFirstSide), false)
+                && mLevel->isSolidBlockingBlockInLoadedChunk(pos.relative(secondSide), false)
+                && mLevel->isSolidBlockingBlockInLoadedChunk(pos.relative(oppositeSecondSide), false))
+            {
+                awardStat(GenericStats::superSonic(), GenericStats::param_superSonic(speed));
+            }
+            previous = pos;
+        }
+    }
 }
 
 void Player::killed(boost::shared_ptr<LivingEntity> entity)
@@ -2890,81 +3094,178 @@ uint32_t Player::interactOn(boost::shared_ptr<Entity> entity, InteractionHand::E
 
 void Player::attack(boost::shared_ptr<Entity> entity)
 {
-    if (!entity->isAttackable()) return;
-    if (entity->skipAttackInteraction(shared_from_this()) || isSpectator()) return;
+    if (!entity->isAttackable())
+    {
+        return;
+    }
 
-    float damage = static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
+    if (entity->skipAttackInteraction(shared_from_this()) || isSpectator())
+    {
+        return;
+    }
 
-    bool targetIsLiving = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
-    boost::shared_ptr<LivingEntity> targetLiving;
-    if (targetIsLiving) targetLiving = boost::static_pointer_cast<LivingEntity>(entity);
+    float damage = (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
+    float enchantDamage;
+    int knockback = 0;
 
-    not_null_ptr<ItemInstance> item = getMainHandItem();
-    float enchantDamage = static_cast<float>(EnchantmentHelper::getDamageBonus(item, targetLiving));
-    int knockback = EnchantmentHelper::getKnockbackBonus(
-        boost::static_pointer_cast<LivingEntity>(shared_from_this()), targetLiving);
-    if (isSprinting()) ++knockback;
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(entity);
+        enchantDamage = EnchantmentHelper::getDamageBonus(getMainHandItem(), target);
+        knockback = EnchantmentHelper::getKnockbackBonus(
+            boost::static_pointer_cast<LivingEntity>(shared_from_this()), target);
+    }
+    else
+    {
+        enchantDamage = EnchantmentHelper::getDamageBonus(getMainHandItem(), boost::shared_ptr<LivingEntity>());
+    }
 
-    if (damage <= 0.0f && enchantDamage <= 0.0f) return;
+    if (isSprinting())
+    {
+        ++knockback;
+    }
 
-    bool isCritical = mFallDistance > 0.0f && !mOnGround && !onLadder() && !isInWater()
-        && !hasEffect(MobEffects::BLINDNESS) && !isPassenger() && targetIsLiving;
-    if (isCritical && damage > 0.0f) damage *= 1.5f;
+    if (damage <= 0.0f && enchantDamage <= 0.0f)
+    {
+        return;
+    }
+
+    bool critical = mFallDistance > 0.0f && !mOnGround && !onLadder() && !isInWater()
+                    && !hasEffect(MobEffects::BLINDNESS) && !isPassenger()
+                    && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    if (critical && damage > 0.0f)
+    {
+        damage *= 1.5f;
+    }
 
     float totalDamage = damage + enchantDamage;
-
-    int fireAspect = EnchantmentHelper::getFireAspect(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
     bool startedFire = false;
-    if (targetLiving) {
-        if (fireAspect > 0 && !entity->isOnFire()) {
+    int fireAspect = EnchantmentHelper::getFireAspect(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+    float healthBefore = 0.0f;
+
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        healthBefore = boost::static_pointer_cast<LivingEntity>(entity)->getHealth();
+        if (fireAspect > 0 && !entity->isOnFire())
+        {
             startedFire = true;
             entity->setSecondsOnFire(1);
         }
     }
 
-    EntityDamageSource* source =
-        DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(shared_from_this()));
+    double targetXd = entity->mXd;
+    double targetYd = entity->mYd;
+    double targetZd = entity->mZd;
+
+    DamageSource* source = DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(shared_from_this()));
     bool damaged = entity->hurt(source, totalDamage);
     delete source;
 
-    if (!damaged) {
-        if (startedFire) entity->clearFire();
-        resetAttackStrengthTicker();
+    if (!damaged)
+    {
+        if (!isFallFlying())
+        {
+            mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PLAYER_ATTACK_NODAMAGE,
+                              getSoundSource(), 0.6f, 1.0f, 16.0f);
+        }
+
+        if (startedFire)
+        {
+            entity->clearFire();
+        }
         return;
     }
 
-    if (knockback > 0) {
-        float yaw = mYRot * 0.01745329238474369f;
-        entity->push(-static_cast<double>(Mth::sin(yaw)) * knockback * 0.5,
-                     0.1, static_cast<double>(Mth::cos(yaw)) * knockback * 0.5);
+    if (knockback > 0)
+    {
+        entity->push(-Mth::sin(mYRot * 0.017453292f) * (float)knockback * 0.5f, 0.1,
+                     Mth::cos(mYRot * 0.017453292f) * (float)knockback * 0.5f);
         mXd *= 0.6;
         mZd *= 0.6;
         setSprinting(false);
     }
 
-    if (isCritical) crit(entity);
-    if (enchantDamage > 0.0f) magicCrit(entity);
-
-    if (totalDamage >= 18.0f) {
-        awardStat(GenericStats::overkill(), GenericStats::param_overkill(static_cast<int>(damage + enchantDamage)));
+    if (entity->GetType() == EntityType::SERVER_PLAYER && entity->mHurtMarked)
+    {
+        boost::static_pointer_cast<ServerPlayer>(entity)->mConnection->send(
+            boost::shared_ptr<Packet>(new ClientboundSetEntityMotionPacket(entity)));
+        entity->mHurtMarked = false;
+        entity->mXd = targetXd;
+        entity->mYd = targetYd;
+        entity->mZd = targetZd;
     }
 
-    if (targetIsLiving) {
-        EnchantmentHelper::doPostHurtEffects(targetLiving, boost::static_pointer_cast<Entity>(shared_from_this()));
+    if (critical)
+    {
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PLAYER_ATTACK_CRIT, getSoundSource(),
+                          1.0f, 1.0f, 16.0f);
+        crit(entity);
     }
+    else
+    {
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PLAYER_ATTACK_WEAK, getSoundSource(),
+                          1.0f, 1.0f, 16.0f);
+    }
+
+    if (enchantDamage > 0.0f)
+    {
+        magicCrit(entity);
+    }
+
+    if (totalDamage >= 18.0f)
+    {
+        awardStat(GenericStats::overkill(), GenericStats::param_overkill((int)(damage + enchantDamage)));
+    }
+
+    setLastHurtMob(entity);
+
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        EnchantmentHelper::doPostHurtEffects(boost::static_pointer_cast<LivingEntity>(entity), shared_from_this());
+    }
+
     EnchantmentHelper::doPostDamageEffects(boost::static_pointer_cast<LivingEntity>(shared_from_this()), entity);
 
-    if (!item->isEmpty() && targetIsLiving) {
-        item->hurtEnemy(targetLiving, boost::static_pointer_cast<Player>(shared_from_this()));
-        if (item->isEmpty()) {
-            setItemInHand(static_cast<InteractionHand::EInteractionHand>(0), ItemInstance::EMPTY);
+    not_null_ptr<ItemInstance> item = getMainHandItem();
+    boost::shared_ptr<Entity> hurtTarget = entity;
+
+    if (entity->GetType() == EntityType::MULTI_ENTITY_MOB_PART)
+    {
+        boost::shared_ptr<Entity> parent = boost::dynamic_pointer_cast<Entity>(
+            boost::static_pointer_cast<MultiEntityMobPart>(entity)->mParentMob.lock());
+        if (parent != NULL && (parent->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            hurtTarget = boost::static_pointer_cast<LivingEntity>(parent);
         }
     }
 
-    if (targetIsLiving && fireAspect > 0) {
-        entity->setSecondsOnFire(fireAspect * 4);
+    if (!item->isEmpty() && (hurtTarget->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        item->hurtEnemy(boost::static_pointer_cast<LivingEntity>(hurtTarget),
+                        boost::static_pointer_cast<Player>(shared_from_this()));
+        if (item->isEmpty())
+        {
+            setItemInHand(InteractionHand::eInteractionHand_MainHand, ItemInstance::EMPTY);
+        }
     }
 
-    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionAttack()));
-    resetAttackStrengthTicker();
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        float healthAfter = boost::static_pointer_cast<LivingEntity>(entity)->getHealth();
+
+        if (fireAspect > 0)
+        {
+            entity->setSecondsOnFire(fireAspect * 4);
+        }
+
+        ServerLevel* serverLevel = dynamic_cast<ServerLevel*>(mLevel);
+        if (serverLevel != NULL && healthBefore - healthAfter > 2.0f)
+        {
+            int count = (int)((healthBefore - healthAfter) * 0.5);
+            serverLevel->sendParticles(PARTICLE_DAMAGE_INDICATOR, entity->mX, entity->mY + entity->mBbHeight * 0.5f,
+                                       entity->mZ, count, 0.1, 0.0, 0.1, 0.2, arrayWithLength<int>());
+        }
+    }
+
+    causeFoodExhaustion((float)FoodConstants::ExhaustionAttack());
 }

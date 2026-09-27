@@ -2,6 +2,8 @@
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/entity/ai/EntitySelector.hpp"
+#include "game/world/block/Predicates.hpp"
 
 #include <typeinfo>
 
@@ -33,6 +35,11 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/Mth.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/MoveThroughVillageGoal.hpp"
 #include "game/entity/ai/OfferFlowerGoal.hpp"
@@ -46,8 +53,11 @@ const EntityDataAccessor<unsigned char>* VillagerGolem::DATA_PLAYER_CREATED_ID =
 bool villagerGolemTargetPredicate(boost::shared_ptr<Entity> entity)
 {
     return entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB &&
-           entity->GetType() != EntityType::CREEPER;
+           EntitySelector::VISIBLE_ENEMY_SELECTOR->apply(entity) && entity->GetType() != EntityType::CREEPER;
 }
+
+static Predicate<boost::shared_ptr<Entity> >* TARGET_SELECTOR =
+    new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(villagerGolemTargetPredicate);
 
 VillagerGolem::VillagerGolem(Level* level)
     : Golem(level), mVillageCheckTime(0), mVillage(), mAttackAnimationTick(0), mOfferFlowerTick(0)
@@ -80,7 +90,7 @@ void VillagerGolem::registerGoals()
 {
     mGoalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0, true), true);
     mGoalSelector.addGoal(2, new MoveTowardsTargetGoal(this, 0.9, 32.0f), true);
-    mGoalSelector.addGoal(3, new MoveThroughVillageGoal(this, 0.6, false), true);
+    mGoalSelector.addGoal(3, new MoveThroughVillageGoal(this, 0.6, true), true);
     mGoalSelector.addGoal(4, new MoveTowardsRestrictionGoal(this, 1.0), true);
     mGoalSelector.addGoal(5, new OfferFlowerGoal(this), true);
     mGoalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6), true);
@@ -88,7 +98,7 @@ void VillagerGolem::registerGoals()
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new DefendVillageTargetGoal(this), true);
     mTargetSelector.addGoal(2, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Player), true, false, true), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, true, TARGET_SELECTOR, false, false), true);
 }
 
 void VillagerGolem::defineSynchedData()
@@ -148,12 +158,22 @@ void VillagerGolem::aiStep()
         --mAttackAnimationTick;
     if (mOfferFlowerTick > 0)
         --mOfferFlowerTick;
-    if (mRandom->nextInt(5) == 0 && mXd * mXd + mZd * mZd > 0.0)
+    if (mXd * mXd + mZd * mZd > 2.5000003e-7f && mRandom->nextInt(5) == 0)
     {
-        BlockPos pos(static_cast<int>(mX), static_cast<int>(mY), static_cast<int>(mZ));
-        const BlockState* state = mLevel->getBlockState(pos);
-        if (state != NULL && state->getBlock() != NULL)
-            mLevel->addParticle(ePARTICLE_BLOCK_CRACK, false, mX, mY + mEyeHeight, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>(1, true));
+        int x = Mth::floor(mX);
+        int y = Mth::floor(mY - 0.2f);
+        int z = Mth::floor(mZ);
+        const BlockState* state = mLevel->getBlockState(BlockPos(x, y, z));
+
+        if (state->getMaterial() != Material::AIR)
+        {
+            arrayWithLength<int> params(1, true);
+            params.data[0] = Block::getIdWithData(state);
+            mLevel->addParticle(PARTICLE_BLOCK_CRACK, false, mX + (mRandom->nextFloat() - 0.5) * mBbWidth,
+                                mBoundingBox->mMinY + 0.1, mZ + (mRandom->nextFloat() - 0.5) * mBbWidth,
+                                4.0 * (mRandom->nextFloat() - 0.5), 0.5, (mRandom->nextFloat() - 0.5) * 4.0, params);
+            delete[] params.data;
+        }
     }
 }
 
@@ -192,12 +212,16 @@ void VillagerGolem::readAdditionalSaveData(CompoundTag* tag)
 bool VillagerGolem::doHurtTarget(boost::shared_ptr<Entity> entity)
 {
     mAttackAnimationTick = 10;
-    boost::shared_ptr<LivingEntity> target = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    EntityDamageSource* source = DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
-    bool hurt = target && target->hurt(source, static_cast<float>(mRandom->nextInt(8) + 7));
+    mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::START_ATTACKING, 0);
+    EntityDamageSource* source = DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<Mob>(shared_from_this()));
+    bool hurt = entity->hurt(source, static_cast<float>(7 + mRandom->nextInt(15)));
     delete source;
     if (hurt)
+    {
+        entity->mYd += 0.4f;
         doEnchantDamageEffects(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()), entity);
+    }
+    playSound(SoundEvents::IRONGOLEM_ATTACK, 1.0f, 1.0f);
     return hurt;
 }
 

@@ -75,24 +75,22 @@ void RemotePlayer::aiStep()
         --mLerpSteps;
         setPos(lerpX, lerpY, lerpZ);
         setRot(mYRot, mXRot);
+        mYBodyRot = mYRot;
     }
 
-    Player::aiStep();
-
-    double horizontalSpeed = std::sqrt(mXd * mXd + mZd * mZd);
-    double pitch = std::atan(-(mYd * 0.20000000298023224));
-    pitch = (double)((float)pitch * 15.0f);
-    if (horizontalSpeed > 0.10000000149011612)
-        horizontalSpeed = 0.10000000149011612;
-    double targetAnimationSpeed = 1.0;
-    if (mHurtTime != 0 && getHealth() > 1.0f)
-        targetAnimationSpeed = horizontalSpeed;
-    if (mHurtTime != 0 || getHealth() <= 1.0f)
-        pitch = 1.0;
-    mAnimationSpeed = mAnimationSpeed
-        + (float)(targetAnimationSpeed - (double)mAnimationSpeed) * 0.800000011920929f;
-    mAnimationPosition = mAnimationPosition
-        + (float)(pitch - (double)mAnimationPosition) * 0.4000000059604645f;
+    mPrevCameraYaw = mCameraYaw;
+    updateSwingTime();
+    double horizontalSpeed = Mth::sqrt(mXd * mXd + mZd * mZd);
+    double verticalAngle = static_cast<float>(std::atan(-(mYd * 0.20000000298023224))) * 15.0f;
+    if (horizontalSpeed > 0.1f)
+        horizontalSpeed = 0.1f;
+    double cameraYawTarget = 0.0f;
+    if (mOnGround && getHealth() > 0.0f)
+        cameraYawTarget = horizontalSpeed;
+    if (mOnGround || getHealth() <= 0.0f)
+        verticalAngle = 0.0f;
+    mBob = static_cast<float>(verticalAngle - mBob) * 0.8f + mBob;
+    mCameraYaw = static_cast<float>(cameraYawTarget - mCameraYaw) * 0.4f + mCameraYaw;
     calculateFlapping();
 }
 
