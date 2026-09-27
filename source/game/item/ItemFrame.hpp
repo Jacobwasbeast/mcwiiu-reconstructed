@@ -31,7 +31,7 @@ public:
     virtual void defineSynchedData();
     virtual double getPickRadius();
     not_null_ptr<ItemInstance> getItem();
-    void setItem(not_null_ptr<ItemInstance> item, bool showParticles);
+    void setItem(not_null_ptr<ItemInstance> item, bool updateNeighbours);
     void setItem(not_null_ptr<ItemInstance> item);
     virtual bool hurt(const DamageSource* source, float damage);
     virtual int getWidth();

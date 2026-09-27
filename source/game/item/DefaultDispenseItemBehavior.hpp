@@ -20,6 +20,8 @@ public:
         eOUTCOME_Failure
     };
 
+    static const unsigned int MAX_PROJECTILES = 300;
+
     virtual ~DefaultDispenseItemBehavior();
 
     virtual not_null_ptr<ItemInstance> dispense(BlockSource* blockSource,

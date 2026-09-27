@@ -18,6 +18,9 @@ public:
                                                    not_null_ptr<ItemInstance> itemInstance,
                                                    eOUTCOME& outcome);
         virtual void playSound(BlockSource* blockSource, eOUTCOME outcome);
+
+    private:
+        DefaultDispenseItemBehavior mDefaultDispenseItemBehavior;
     };
 
     MinecartItem(const Minecart::Type* type);

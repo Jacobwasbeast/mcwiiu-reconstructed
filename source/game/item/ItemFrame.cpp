@@ -86,7 +86,7 @@ not_null_ptr<ItemInstance> ItemFrame::getItem()
     return getEntityData()->get(DATA_ITEM);
 }
 
-void ItemFrame::setItem(not_null_ptr<ItemInstance> item, bool showParticles)
+void ItemFrame::setItem(not_null_ptr<ItemInstance> item, bool updateNeighbours)
 {
     if (!item->isEmpty())
     {
@@ -95,7 +95,9 @@ void ItemFrame::setItem(not_null_ptr<ItemInstance> item, bool showParticles)
         item->setFramed(boost::static_pointer_cast<ItemFrame>(shared_from_this()));
     }
     getEntityData()->set(DATA_ITEM, item, true);
-    if (showParticles)
+    if (!item->isEmpty())
+        playSound(SoundEvents::ITEMFRAME_ADD_ITEM, 1.0f, 1.0f);
+    if (updateNeighbours)
     {
         mLevel->updateNeighbourForOutputSignal(mPos, Blocks::air);
     }
@@ -128,6 +130,7 @@ bool ItemFrame::hurt(const DamageSource* source, float damage)
     if (!mLevel->mIsClientSide)
     {
         dropItem(source->getEntity(), false);
+        playSound(SoundEvents::ITEMFRAME_REMOVE_ITEM, 1.0f, 1.0f);
         setItem(ItemInstance::EMPTY);
     }
     return true;
@@ -150,6 +153,7 @@ bool ItemFrame::shouldRenderAtSqrDistance(double distanceSqr)
 
 void ItemFrame::dropItem(boost::shared_ptr<Entity> breaker)
 {
+    playSound(SoundEvents::ITEMFRAME_BREAK, 1.0f, 1.0f);
     dropItem(breaker, true);
 }
 
@@ -271,16 +275,19 @@ boost::shared_ptr<ItemFrame> ItemFrame::fjGetItemFrameForPos(Level* level, const
               pos.x + 2.0, pos.y + 2.0, pos.z + 2.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         level->getEntitiesOfClass(typeid(ItemFrame), &area);
-    if (entities == NULL)
-        return boost::shared_ptr<ItemFrame>();
+    boost::shared_ptr<ItemFrame> found;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
         boost::shared_ptr<ItemFrame> frame = boost::dynamic_pointer_cast<ItemFrame>(*it);
         if (frame && frame->getPos().equals(pos))
-            return frame;
+        {
+            found = frame;
+            break;
+        }
     }
-    return boost::shared_ptr<ItemFrame>();
+    delete entities;
+    return found;
 }
 
 bool ItemFrame::fjTryAwardMapRoom(const boost::shared_ptr<Player>& player)
@@ -341,6 +348,7 @@ bool ItemFrame::interact(const boost::shared_ptr<Player>& player, InteractionHan
         }
         else
         {
+            playSound(SoundEvents::ITEMFRAME_ROTATE_ITEM, 1.0f, 1.0f);
             setRotation(getRotation() + 1);
             fjTryAwardMapRoom(player);
             mLevel->updateObservingBlocksAt(BlockPos(this), Blocks::air);

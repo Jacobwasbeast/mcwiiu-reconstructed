@@ -1,5 +1,6 @@
 #include "game/item/AreaEffectCloud.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/Mth.hpp"
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -261,7 +262,7 @@ void AreaEffectCloud::generateParticles()
             for (int i = 0; i < 2; ++i)
             {
                 float angle = mRandom->nextFloat() * 6.2831854820251465f;
-                float dist = std::sqrt(mRandom->nextFloat()) * 0.8999999761581421f;
+                float dist = std::sqrt(mRandom->nextFloat()) * 0.2f;
                 double dx = static_cast<double>(std::cos(angle) * dist);
                 double dz = static_cast<double>(std::sin(angle) * dist);
 
@@ -282,15 +283,15 @@ void AreaEffectCloud::generateParticles()
     }
     else
     {
-        int rate = DATA_PARTICLE_RATE != NULL ? getEntityData()->get(DATA_PARTICLE_RATE) : 0;
-        int count = rate >= 1 ? rate : static_cast<int>(radius * radius * 50.12387886084616);
+        int rate = getEntityData()->get(DATA_PARTICLE_RATE);
+        float count = rate >= 1 ? static_cast<float>(rate) : static_cast<float>(Mth::PI * radius) * radius;
 
         for (int i = 0; i < count; ++i)
         {
             float angle = mRandom->nextFloat() * 6.2831854820251465f;
-            float dist = std::sqrt(mRandom->nextFloat());
-            double dx = static_cast<double>(std::cos(angle) * dist) * radius;
-            double dz = static_cast<double>(std::sin(angle) * dist) * radius;
+            float dist = static_cast<float>(std::sqrt(mRandom->nextFloat()) * radius);
+            double dx = static_cast<double>(std::cos(angle) * dist);
+            double dz = static_cast<double>(std::sin(angle) * dist);
 
             if (particle == ePARTICLE_DRAGON_BREATH)
             {

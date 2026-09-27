@@ -3,6 +3,7 @@
 #include "game/core/EntityType.hpp"
 
 #include "game/core/Direction.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/BehaviorRegistry.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -86,47 +87,51 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance, eOUTCOME& outcome)
 {
     const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
-    BlockPos position = blockSource->getPos().relative(direction);
     Level* level = blockSource->getWorld();
+    double x = blockSource->getX() + (float)direction->getStepX() * 1.125f;
+    double y = Mth::floor(blockSource->getY() + (float)direction->getStepY() * 1.125f);
+    double z = blockSource->getZ() + (float)direction->getStepZ() * 1.125f;
+    BlockPos position = blockSource->getPos().relative(direction);
     const BlockState* state = level->getBlockState(position);
 
-    if (level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) > 249)
+    BaseRailBlock::RailShape* shape = BaseRailBlock::RailShape::NORTH_SOUTH;
+    if (state->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
     {
-        outcome = eOUTCOME_Failure;
-        return DefaultDispenseItemBehavior::execute(blockSource, itemInstance, outcome);
+        shape = state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty());
     }
 
-    if (!BaseRailBlock::isRail(state))
+    if (level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) >= 250)
     {
-        const BlockPos below = position.below();
-        const BlockState* belowState = level->getBlockState(below);
-        if (state->getBlock()->getCraftingMaterial() != Material::AIR
-            || !BaseRailBlock::isRail(belowState))
+        outcome = eOUTCOME_Default;
+        return mDefaultDispenseItemBehavior.dispense(blockSource, itemInstance);
+    }
+
+    double railOffset;
+    if (BaseRailBlock::isRail(state))
+    {
+        railOffset = shape->isAscending() ? 0.6 : 0.1;
+    }
+    else
+    {
+        if (state->getMaterial() != Material::AIR || !BaseRailBlock::isRail(level->getBlockState(position.below())))
         {
-            outcome = eOUTCOME_Failure;
-            return DefaultDispenseItemBehavior::execute(blockSource, itemInstance, outcome);
+            outcome = eOUTCOME_Default;
+            return mDefaultDispenseItemBehavior.dispense(blockSource, itemInstance);
         }
-        position = below;
-        state = belowState;
+
+        const BlockState* belowState = level->getBlockState(position.below());
+        BaseRailBlock::RailShape* belowShape = BaseRailBlock::RailShape::NORTH_SOUTH;
+        if (belowState->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
+        {
+            belowShape = belowState->getValue(static_cast<BaseRailBlock*>(belowState->getBlock())->getShapeProperty());
+        }
+        railOffset = direction != Direction::DOWN && belowShape->isAscending() ? -0.4 : -0.9;
     }
 
-    BaseRailBlock::RailShape* shape = NULL;
-    Block* block = state->getBlock();
-    if (block->instanceof(EBLOCK_TYPE_RAIL))
-    {
-        shape = state->getValue(static_cast<BaseRailBlock*>(block)->getShapeProperty());
-    }
-
-    double y = (double)position.y + 0.0625;
-    if (shape != NULL && shape->isAscending())
-    {
-        y += 1.0;
-    }
-
+    outcome = eOUTCOME_Success;
     MinecartItem* minecartItem = static_cast<MinecartItem*>(itemInstance->getItem());
-    boost::shared_ptr<Minecart> minecart = Minecart::createMinecart(
-        level, (double)position.x + 0.5, y, (double)position.z + 0.5,
-        minecartItem->mMinecartType);
+    boost::shared_ptr<Minecart> minecart =
+        Minecart::createMinecart(level, x, y + railOffset, z, minecartItem->mMinecartType);
 
     if (itemInstance->hasCustomHoverName())
     {
@@ -137,7 +142,6 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
 
     level->addEntity(minecart);
     itemInstance->shrink(1);
-    outcome = eOUTCOME_Success;
     return itemInstance;
 }
 

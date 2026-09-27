@@ -4,6 +4,8 @@
 
 #include "game/core/Mth.hpp"
 #include "game/core/PrimedTnt.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/core/Abilities.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -45,11 +47,11 @@ void PowerupItems::DoDropTNT(boost::shared_ptr<Player> player)
 
     boost::shared_ptr<PrimedTnt> tnt(new PrimedTnt(player->mLevel, player->mX, player->mY,
                                                    player->mZ, player));
-    tnt->shouldTick();
+    tnt->setNoGravity(true);
     tnt->setFuse(10);
     player->mLevel->addEntity(tnt);
-    player->mLevel->explode(tnt, player->mX, player->mY, player->mZ,
-                            1.0f, true, false, false, false, false, 16.0f);
+    player->mLevel->playSound(boost::shared_ptr<Player>(), tnt->mX, tnt->mY, tnt->mZ, SoundEvents::TNT_PRIMED,
+                              SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
 }
 
 void PowerupItems::DoGainPoint(boost::shared_ptr<Player> player)

@@ -1,4 +1,5 @@
 #include "game/item/ThornsEnchantment.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/StringIds.hpp"
 
 #include "game/core/DamageSource.hpp"
@@ -80,15 +81,15 @@ void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target,
     {
         item->hurtAndBreak(1, target);
     }
-    else if (attacker)
-    {
-        boost::shared_ptr<EntityDamageSource> damageSource =
-            DamageSource::CreateThorns(attacker);
-        attacker->hurt(damageSource.get(), (float)getDamage(level, random));
-        item->hurtAndBreak(3, target);
-    }
     else
     {
+        if (attacker)
+        {
+            EntityDamageSource* damageSource = DamageSource::CreateThorns(attacker);
+            attacker->hurt(damageSource, (float)getDamage(level, random));
+            delete damageSource;
+            attacker->playSound(SoundEvents::ENCHANT_THORNS_HIT, 0.5f, 1.0f);
+        }
         item->hurtAndBreak(3, target);
     }
 }

@@ -53,7 +53,7 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
         {
             level->playSound(boost::shared_ptr<Player>(),
                              target,
-                             SoundEvents::FLINTANDSTEEL_USE,
+                             SoundEvents::FIREBALL_SHOOT,
                              SoundSource::eSoundSource_Blocks,
                              1.0f,
                              (random->nextFloat() - random->nextFloat()) * 0.2f + 1.0f,

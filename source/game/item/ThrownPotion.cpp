@@ -1,4 +1,9 @@
 #include "game/item/ThrownPotion.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/world/block/BlockId.hpp"
 #include "game/core/EntityType.hpp"
@@ -86,9 +91,9 @@ not_null_ptr<ItemInstance> ThrownPotion::getItem()
 
 void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
 {
-    if (Block::getId(mLevel->getBlockState(pos)->getBlock()) == BlockId::AIR)
+    if (mLevel->getBlockState(pos)->getBlock() == Blocks::fire)
     {
-        mLevel->extinguishFire(boost::shared_ptr<Player>(), pos, direction->getOpposite());
+        mLevel->extinguishFire(boost::shared_ptr<Player>(), pos.relative(direction), direction->getOpposite());
     }
 }
 
@@ -102,18 +107,21 @@ bool ThrownPotion::isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entit
 
 void ThrownPotion::applyWater()
 {
-    if (mLevel == NULL || mBoundingBox == NULL)
-        return;
+    WATER_SENSITIVE* predicate = new WATER_SENSITIVE();
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(
-        typeid(Entity), mBoundingBox->grow(4.0, 2.0, 4.0), new WATER_SENSITIVE(), false);
-    if (entities == NULL)
-        return;
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it)
+        typeid(LivingEntity), mBoundingBox->grow(4.0, 2.0, 4.0), predicate, false);
+    delete predicate;
+
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        if (distanceToSqr(*it) < 16.0 && isWaterSensitiveEntity(*it))
-            (*it)->clearFire();
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*it);
+        if (distanceToSqr(living) < 16.0 && isWaterSensitiveEntity(living))
+        {
+            living->hurt(DamageSource::DROWN, 1.0f);
+        }
     }
+
+    delete entities;
 }
 
 bool ThrownPotion::isLingering()
@@ -193,11 +201,29 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
             {
                 int duration = static_cast<int>(scale * (effectInstance->getDuration() - 0.0) * 0.75 + 0.5);
                 if (duration > 20)
+                {
                     living->addEffect(new MobEffectInstance(effect, duration,
                                                              effectInstance->getAmplifier()), source);
+
+                    if (effect == MobEffects::POISON && living->GetType() == EntityType::WITCH && owner != NULL
+                        && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                    {
+                        boost::static_pointer_cast<ServerPlayer>(owner)->awardStat(
+                            GenericStats::tasteOfYourOwnMedicine(), GenericStats::param_tasteOfYourOwnMedicine());
+                    }
+
+                    if ((living->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+                        && effect == MobEffects::WATER_BREATHING)
+                    {
+                        boost::static_pointer_cast<Player>(living)->ResetTimerAchievement(
+                            Player::eTimerAchievement_SleepWithTheFishes);
+                    }
+                }
             }
         }
     }
+
+    delete entities;
 }
 
 bool ThrownPotion::onHit(const HitResult* result)

@@ -68,8 +68,9 @@ InteractionResultHolder BottleItem::use(Level* level,
             boost::static_pointer_cast<AreaEffectCloud>(entities->at(0));
         cloud->setRadius(cloud->getRadius() - 0.5f);
         player->awardStat(GenericStats::youNeedAMint(), GenericStats::param_youNeedAMint());
+        level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ,
+                         SoundEvents::BOTTLE_FILL_DRAGONBREATH, SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
         not_null_ptr<ItemInstance> result(new ItemInstance(Items::dragonBreath));
-        PotionUtils::setPotion(result, Potions::WATER);
         not_null_ptr<ItemInstance> usedItem = turnBottleIntoItem(itemInstance, player, result);
         delete entities;
         return InteractionResultHolder(InteractionResult::eInteractionResult_Success, usedItem);
@@ -88,7 +89,7 @@ InteractionResultHolder BottleItem::use(Level* level,
                 && player->mayUseItemAt(pos, hit->mDirection, itemInstance) == 1
                 && level->getBlockState(pos)->getMaterial() == Material::WATER)
             {
-                level->playSound(player, player->mX, player->mY, player->mZ, SoundEvents::BOTTLE_FILL,
+                level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::BOTTLE_FILL,
                                  SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
                 delete hit;
                 not_null_ptr<ItemInstance> result(new ItemInstance(Items::potion));
