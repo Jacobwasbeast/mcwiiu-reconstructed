@@ -1,4 +1,6 @@
 #include "game/item/PotionItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
@@ -17,8 +19,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-static std::wstring gBottleTextureName;
-static std::wstring gPotionOverlayTextureName;
+static std::wstring gBottleTextureName = L"potion";
+static std::wstring gPotionOverlayTextureName = L"potion_contents";
 
 PotionItem::PotionItem()
     : Item(), mIcon(NULL), mLayerIcon(NULL)
@@ -45,7 +47,7 @@ not_null_ptr<ItemInstance> PotionItem::finishUsingItem(not_null_ptr<ItemInstance
                                                        boost::shared_ptr<LivingEntity> entity)
 {
     boost::shared_ptr<Player> player;
-    if ((entity->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         player = boost::static_pointer_cast<Player>(entity);
         if (player.get() != NULL)
@@ -54,7 +56,7 @@ not_null_ptr<ItemInstance> PotionItem::finishUsingItem(not_null_ptr<ItemInstance
                               GenericStats::param_itemsUsed(player, itemInstance));
             if (PotionUtils::hasEffect(itemInstance, MobEffects::WATER_BREATHING))
             {
-                player->ResetTimerAchievement(1);
+                player->ResetTimerAchievement(Player::eTimerAchievement_SleepWithTheFishes);
             }
         }
     }
@@ -189,9 +191,9 @@ unsigned int PotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xffffffff;
+        return IDS_NONE;
     }
-    return 0x32374037;
+    return IDS_TOOLTIPS_DRINK;
 }
 
 std::wstring PotionItem::getBottleTextureName()

@@ -12,6 +12,8 @@ class TextureAtlasSprite;
 class DyeItem : public Item
 {
 public:
+    static const int DYE_COLORS[16];
+
     DyeItem();
     virtual ~DyeItem();
 

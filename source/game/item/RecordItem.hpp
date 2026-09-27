@@ -21,8 +21,9 @@ public:
     virtual TextureAtlasSprite* getIcon(int auxValue);
     virtual void registerIcons(IconRegister* iconRegister);
 private:
-    int mRecordId;
     const SoundEvent* mSound;
+    std::wstring mRecordName;
+    int mRecordId;
 };
 
 #endif

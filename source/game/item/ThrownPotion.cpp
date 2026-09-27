@@ -1,8 +1,12 @@
 #include "game/item/ThrownPotion.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <cmath>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/Minecraft.hpp"
@@ -31,39 +35,40 @@
 
 namespace
 {
-const unsigned long long kThrownPotionType = 0x8A200004ULL;
-const unsigned long long kThrownPotionEntityType = 0x8A200000ULL;
-const unsigned long long kWaterSensitiveTypeOne = 0x5D540043ULL;
-const unsigned long long kWaterSensitiveTypeTwo = 0x5D540045ULL;
-const unsigned long long kWaterSensitiveTypeThree = 0x2D580001ULL;
 }
 
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ThrownPotion::DATA_ITEM = NULL;
 
 ThrownPotion::ThrownPotion(Level* level)
-    : ThrowableProjectile(level), mItem(new ItemInstance(Items::splashPotion))
+    : ThrowableProjectile(level)
 {
     _init();
 }
 
 ThrownPotion::ThrownPotion(Level* level, boost::shared_ptr<LivingEntity> owner, not_null_ptr<ItemInstance> item)
-    : ThrowableProjectile(level, owner), mItem(item)
+    : ThrowableProjectile(level, owner)
 {
     _init();
-    mEntityData->set(DATA_ITEM, item, false);
+    getEntityData()->set(DATA_ITEM, item, false);
 }
 
 ThrownPotion::ThrownPotion(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : ThrowableProjectile(level, x, y, z), mItem(item)
+    : ThrowableProjectile(level, x, y, z)
 {
     _init();
     if (!item->isEmpty())
+    {
         setItem(item);
+        if (level->mIsClientSide && item->getItem() == Items::splashPotion)
+        {
+            level->playLocalSound(x, y, z, SoundEvents::SPLASH_POTION_THROW, SoundSource::eSoundSource_Players, 0.5f,
+                                  0.4f / (mRandom->nextFloat() * 0.4f + 0.8f), false, 16.0f);
+        }
+    }
 }
 
 ThrownPotion::~ThrownPotion()
 {
-    mItem.reset();
 }
 
 void ThrownPotion::create(Level* level)
@@ -73,12 +78,15 @@ void ThrownPotion::create(Level* level)
 
 not_null_ptr<ItemInstance> ThrownPotion::getItem()
 {
-    return mItem;
+    not_null_ptr<ItemInstance> item = getEntityData()->get(DATA_ITEM);
+    if (item->getItem() != Items::splashPotion && item->getItem() != Items::lingeringPotion)
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion));
+    return item;
 }
 
 void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
 {
-    if (Block::getId(mLevel->getBlockState(pos)->getBlock()) == 0)
+    if (Block::getId(mLevel->getBlockState(pos)->getBlock()) == BlockId::AIR)
     {
         mLevel->extinguishFire(boost::shared_ptr<Player>(), pos, direction->getOpposite());
     }
@@ -89,7 +97,7 @@ bool ThrownPotion::isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entit
     if (!entity)
         return true;
     unsigned long long type = entity->GetType();
-    return type == kWaterSensitiveTypeOne || type == kWaterSensitiveTypeTwo || type == kWaterSensitiveTypeThree;
+    return type == EntityType::ENDER_MAN || type == EntityType::BLAZE || type == EntityType::SNOW_MAN;
 }
 
 void ThrownPotion::applyWater()
@@ -230,7 +238,7 @@ bool ThrownPotion::onHit(const HitResult* result)
     }
 
     bool hasInstant = potion->hasInstantEffects();
-    mLevel->levelEvent(hasInstant ? 0x7D7 : 0x7D2, BlockPos(this), PotionUtils::getColor(item));
+    mLevel->levelEvent(hasInstant ? LevelEvent::PARTICLES_INSTANT_POTION_SPLASH : LevelEvent::PARTICLES_SPELL_POTION_SPLASH, BlockPos(this), PotionUtils::getColor(item));
     delete effects;
     remove();
     return true;
@@ -238,7 +246,7 @@ bool ThrownPotion::onHit(const HitResult* result)
 
 void ThrownPotion::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId(kThrownPotionType, kThrownPotionEntityType,
+    DATA_ITEM = SynchedEntityData::defineId(EntityType::THROWN_POTION, EntityType::THROWABLE_PROJECTILE,
                                             EntityDataSerializers::ITEM_INSTANCE);
 }
 
@@ -249,15 +257,15 @@ void ThrownPotion::_init()
 
 void ThrownPotion::setItem(not_null_ptr<ItemInstance> item)
 {
-    mItem = item;
-    mEntityData->set(DATA_ITEM, item, true);
+    getEntityData()->set(DATA_ITEM, item, true);
+    getEntityData()->markDirty(DATA_ITEM);
 }
 
 void ThrownPotion::addDataWalkers(DataFixerUpper* fixer)
 {
     if (fixer != NULL)
         fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance,
-                         (DataWalker*)new ItemDataWalker(kThrownPotionType, L"Potion"));
+                         (DataWalker*)new ItemDataWalker(EntityType::THROWN_POTION, L"Potion"));
 }
 
 void ThrownPotion::readAdditionalSaveData(CompoundTag* tag)
@@ -273,8 +281,9 @@ void ThrownPotion::readAdditionalSaveData(CompoundTag* tag)
 void ThrownPotion::addAdditonalSaveData(CompoundTag* tag)
 {
     ThrowableProjectile::addAdditonalSaveData(tag);
-    if (tag != NULL && !mItem->isEmpty())
-        tag->put(L"Potion", mItem->save(new CompoundTag()));
+    not_null_ptr<ItemInstance> item = getItem();
+    if (!item->isEmpty())
+        tag->put(L"Potion", item->save(new CompoundTag()));
 }
 
 double ThrownPotion::getGravity()
@@ -284,12 +293,12 @@ double ThrownPotion::getGravity()
 
 void ThrownPotion::defineSynchedData()
 {
-    mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    getEntityData()->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
 }
 
 unsigned long long ThrownPotion::GetType()
 {
-    return kThrownPotionType;
+    return EntityType::THROWN_POTION;
 }
 
 bool ThrownPotion::WATER_SENSITIVE::apply(boost::shared_ptr<Entity> entity) const

@@ -1,4 +1,6 @@
 #include "game/item/MilkBucketItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -19,7 +21,7 @@ not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInst
                                                            Level* level,
                                                            boost::shared_ptr<LivingEntity> entity)
 {
-    bool isPlayer = (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER;
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
     boost::shared_ptr<Player> player;
 
     if (isPlayer)
@@ -71,5 +73,5 @@ InteractionResultHolder MilkBucketItem::use(Level* level,
 
 unsigned int MilkBucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return 0x32374037;
+    return IDS_TOOLTIPS_DRINK;
 }

@@ -1,14 +1,19 @@
 #include "game/item/WrittenBookItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/data/StringTag.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/WritableBookItem.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 WrittenBookItem::WrittenBookItem()
@@ -28,7 +33,7 @@ bool WrittenBookItem::makeSureTagIsValid(CompoundTag* tag)
         return false;
     }
 
-    if (!tag->contains(L"title", 8))
+    if (!tag->contains(L"title", Tag::TAG_STRING))
     {
         return false;
     }
@@ -39,7 +44,7 @@ bool WrittenBookItem::makeSureTagIsValid(CompoundTag* tag)
         return false;
     }
 
-    return tag->contains(L"author", 8);
+    return tag->contains(L"author", Tag::TAG_STRING);
 }
 
 int WrittenBookItem::getGeneration(not_null_ptr<ItemInstance> itemInstance)
@@ -52,14 +57,37 @@ std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
     if (itemInstance->hasTag())
     {
         CompoundTag* tag = itemInstance->getTag();
-        if (tag != NULL)
+
+        bool ownedByLocalPlayer = false;
+        if (tag->getString(L"ownerUUID").compare(L"") != 0)
         {
-            std::wstring title = tag->getString(L"title");
-            if (!title.empty())
+            for (int i = 0; i < 4; ++i)
             {
-                return title;
+                boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[i];
+                if (localPlayer != NULL && localPlayer->getUUID() == tag->getString(L"ownerUUID"))
+                {
+                    ownedByLocalPlayer = true;
+                    break;
+                }
             }
         }
+
+        bool chatCensored = g_pApp->IsConsoleChatCensored();
+        bool createdByRestrictedPlayer =
+            tag->contains(L"createdByRestrictedPlayer") && tag->getByte(L"createdByRestrictedPlayer") != 0;
+        bool createdByHost = true;
+        if (tag->contains(L"createdByHost") && tag->getByte(L"createdByHost") == 0)
+            createdByHost = false;
+
+        if ((chatCensored || createdByRestrictedPlayer) && !ownedByLocalPlayer &&
+            (!CGameNetworkManager::sInstance.IsHost() || !createdByHost))
+        {
+            return Item::getName(itemInstance);
+        }
+
+        std::wstring title = tag->getString(L"title");
+        if (!title.empty())
+            return title;
     }
     return Item::getName(itemInstance);
 }
@@ -112,7 +140,7 @@ void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInsta
         return;
     }
 
-    ListTag* pages = tag->getList(L"pages", 8);
+    ListTag* pages = tag->getList(L"pages", Tag::TAG_STRING);
     for (int i = 0; i < pages->size(); ++i)
     {
         pages->set(i, new StringTag(pages->getString(i)));
@@ -144,7 +172,7 @@ bool WrittenBookItem::TestUse(Level* level,
 
 unsigned int WrittenBookItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return 0x80699fffu;
+    return IDS_TOOLTIPS_READ;
 }
 
 bool WrittenBookItem::isFoil(not_null_ptr<ItemInstance> itemInstance)

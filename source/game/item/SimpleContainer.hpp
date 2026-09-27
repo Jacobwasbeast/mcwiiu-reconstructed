@@ -42,10 +42,10 @@ public:
     virtual void clearContent();
 
     void _init(int id, const std::wstring& name, bool hasCustomName, int size);
-    void addListener(net_minecraft_world::ContainerListener* listener);
-    void removeListener(net_minecraft_world::ContainerListener* listener);
-    not_null_ptr<ItemInstance> addItem(not_null_ptr<ItemInstance> item);
-    void setCustomName(const std::wstring& name);
+    virtual void addListener(net_minecraft_world::ContainerListener* listener);
+    virtual void removeListener(net_minecraft_world::ContainerListener* listener);
+    virtual not_null_ptr<ItemInstance> addItem(not_null_ptr<ItemInstance> item);
+    virtual void setCustomName(const std::wstring& name);
 
 private:
     int mId;

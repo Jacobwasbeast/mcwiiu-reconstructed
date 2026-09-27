@@ -1,4 +1,5 @@
 #include "game/item/SnowItem.hpp"
+#include "game/util/AABB.hpp"
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundType.hpp"
@@ -36,7 +37,7 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
                                                         bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->isEmpty())
+    if (itemInstance->isEmpty() || !player->mayUseItemAt(pos, direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -54,13 +55,15 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
     const BlockState* state = level->getBlockState(placePos);
     block = state->getBlock();
 
-    if (block == Blocks::snow_layer
+    if (block == getBlock()
         && state->getValue(SnowLayerBlock::LAYERS) < 8)
     {
         if (!simulate)
         {
             const BlockState* snowState = SnowLayerBlock::buildSnowBlock(level, placePos, 1, 1);
-            if (level->setBlock(placePos, snowState, 11, false))
+            const AABB* shape = snowState->getClipAABB(level, placePos);
+            if (shape != NULL && level->isUnobstructed(shape->move(placePos))
+                && level->setBlock(placePos, snowState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
             {
                 const SoundType* soundType = getBlock()->getSoundType();
                 level->playSound(player, placePos, soundType->getPlaceSound(),
@@ -72,7 +75,7 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
             }
         }
     }
-    else if (block == Blocks::snow_layer)
+    else if (block == getBlock())
     {
         BlockPos abovePos = placePos.above();
         if (player->mayUseItemAt(abovePos, direction, itemInstance))

@@ -15,6 +15,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/item/MapItem.hpp"
 #include "game/item/SpawnEggItem.hpp"
+#include "game/entity/mob/EntityIO.hpp"
 
 template <typename T>
 static arrayWithLength<T> makeColorArray(T* values, unsigned int count)
@@ -139,7 +140,17 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     class SpawnEgg_ItemColor : public ItemColor
     {
     public:
-        int getColor(const not_null_ptr<ItemInstance>& item, int layer) { return item->getItem()->getColor(item, layer); }
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
+        {
+            EntityIO::SpawnInfo::iterator found = EntityIO::sSpawnInfo.find(SpawnEggItem::getNamedIdFrom(item));
+            if (found == EntityIO::sSpawnInfo.end())
+                return -1;
+            EntityIO::SpawnableMobInfo* info = found->second;
+            eMinecraftColour colour = layer == 0 ? info->colour : info->secondaryColour;
+            if (colour == 0)
+                return -1;
+            return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(colour));
+        }
     };
     class TallGrass_ItemColor : public ItemColor
     {
@@ -157,27 +168,27 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
 
     ItemColors* colors = new ItemColors();
     Item* armor[] = { Items::leatherHelmet, Items::leatherChestplate, Items::leatherLeggings, Items::leatherBoots };
-    Item* bed[] = { Items::bed };
-    Item* doublePlant[] = { Item::byBlock(Blocks::double_plant) };
-    Item* maps[] = { Items::map, Items::filledMap, Items::filledMap };
+    Block* doublePlant[] = { Blocks::double_plant };
     Item* firework[] = { Items::fireworkCharge };
-    Block* grass[] = { Blocks::grass, Blocks::tallgrass, Blocks::double_plant, Blocks::leaves, Blocks::leaves2, Blocks::vine };
-    Item* horse[] = { Items::leatherHorseArmor };
-    Item* potion[] = { Items::potion };
-    Item* egg[] = { Items::spawnEgg };
-    Item* tallGrass[] = { Item::byBlock(Blocks::tallgrass) };
-    Block* tipped[] = { Blocks::tallgrass };
+    Item* potions[] = { Items::potion, Items::splashPotion, Items::lingeringPotion };
+    Item* spawnEgg[] = { Items::spawnEgg };
+    Block* foliage[] = { Blocks::grass, Blocks::tallgrass, Blocks::vine, Blocks::leaves, Blocks::leaves2, Blocks::waterlily };
+    Item* tippedArrow[] = { Items::tippedArrow };
+    Item* filledMap[] = { Items::filledMap };
+    Item* bed[] = { Items::bed };
+    Item* horseArmor[] = { Items::leatherHorseArmor };
+    Block* tallGrass[] = { Blocks::tallgrass };
     colors->registerColor(new Armor_ItemColor(), makeColorArray(armor, 4));
-    colors->registerColor(new Bed_ItemColor(), makeColorArray(bed, 1));
     colors->registerColor(new DoublePlant_ItemColor(), makeColorArray(doublePlant, 1));
-    colors->registerColor(new FilledMap_ItemColor(), makeColorArray(maps, 3));
     colors->registerColor(new FireworkCharge_ItemColor(), makeColorArray(firework, 1));
-    colors->registerColor(new Grass_ItemColor(blockColors), makeColorArray(grass, 6));
-    colors->registerColor(new LeatherHorseArmor_ItemColor(), makeColorArray(horse, 1));
-    colors->registerColor(new Potion_ItemColor(), makeColorArray(potion, 1));
-    colors->registerColor(new SpawnEgg_ItemColor(), makeColorArray(egg, 1));
+    colors->registerColor(new Potion_ItemColor(), makeColorArray(potions, 3));
+    colors->registerColor(new SpawnEgg_ItemColor(), makeColorArray(spawnEgg, 1));
+    colors->registerColor(new Grass_ItemColor(blockColors), makeColorArray(foliage, 6));
+    colors->registerColor(new TippedArrow_ItemColor(), makeColorArray(tippedArrow, 1));
+    colors->registerColor(new FilledMap_ItemColor(), makeColorArray(filledMap, 1));
+    colors->registerColor(new Bed_ItemColor(), makeColorArray(bed, 1));
+    colors->registerColor(new LeatherHorseArmor_ItemColor(), makeColorArray(horseArmor, 1));
     colors->registerColor(new TallGrass_ItemColor(), makeColorArray(tallGrass, 1));
-    colors->registerColor(new TippedArrow_ItemColor(), makeColorArray(tipped, 1));
     return colors;
 }
 

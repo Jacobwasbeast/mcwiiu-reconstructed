@@ -1,4 +1,5 @@
 #include "game/item/WaterWalkerEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
@@ -8,7 +9,7 @@ WaterWalkerEnchantment::WaterWalkerEnchantment(
     arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
 {
-    setDescriptionId(0xd41baebf);
+    setDescriptionId(IDS_ENCHANTMENT_DEPTH_STRIDER);
 }
 
 WaterWalkerEnchantment::~WaterWalkerEnchantment()

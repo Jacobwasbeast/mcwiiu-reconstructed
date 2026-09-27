@@ -1,5 +1,7 @@
 #include "game/item/Potions.hpp"
 
+#include "game/world/block/DefaultedMappedRegistry.hpp"
+
 #include "game/item/Potion.hpp"
 #include "game/world/block/SimpleRegistry.hpp"
 #include "game/util/ResourceLocation.hpp"

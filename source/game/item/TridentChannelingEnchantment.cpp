@@ -1,4 +1,5 @@
 #include "game/item/TridentChannelingEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/TridentRiptideEnchantment.hpp"
@@ -7,7 +8,7 @@ TridentChannelingEnchantment::TridentChannelingEnchantment(
     const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
-    setDescriptionId((int)0xbfd40d11);
+    setDescriptionId((int)IDS_ENCHANTMENT_CHANNELING);
 }
 
 int TridentChannelingEnchantment::getMinCost(int level)

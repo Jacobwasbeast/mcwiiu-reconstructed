@@ -44,10 +44,10 @@ TextureAtlasSprite* CompassItem::getIcon(int auxValue)
 void CompassItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(L"compass_0");
-    mIcons[1] = iconRegister->registerIcon(L"compass_1");
-    mIcons[2] = iconRegister->registerIcon(L"compass_2");
-    mIcons[3] = iconRegister->registerIcon(L"compass_3");
+    mIcons[0] = iconRegister->registerIcon(L"compassP0");
+    mIcons[1] = iconRegister->registerIcon(L"compassP1");
+    mIcons[2] = iconRegister->registerIcon(L"compassP2");
+    mIcons[3] = iconRegister->registerIcon(L"compassP3");
 }
 
 double CompassItem::CompassItem_ItemPropertyFunction::getFrameRotation(boost::shared_ptr<ItemFrame> frame)

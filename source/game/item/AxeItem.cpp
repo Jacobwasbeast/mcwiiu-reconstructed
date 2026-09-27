@@ -9,34 +9,35 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
 static arrayWithLength<Block*> BLOCKS(22, false);
 
 void AxeItem::staticCtor()
 {
-    BLOCKS.data[0] = Blocks::log;
-    BLOCKS.data[1] = Blocks::log2;
-    BLOCKS.data[2] = Blocks::planks;
-    BLOCKS.data[3] = Blocks::bookshelf;
+    BLOCKS.data[0] = Blocks::planks;
+    BLOCKS.data[1] = Blocks::bookshelf;
+    BLOCKS.data[2] = Blocks::log;
+    BLOCKS.data[3] = Blocks::log2;
     BLOCKS.data[4] = Blocks::chest;
-    BLOCKS.data[5] = Blocks::trapped_chest;
-    BLOCKS.data[6] = Blocks::pumpkin;
+    BLOCKS.data[5] = Blocks::pumpkin;
+    BLOCKS.data[6] = Blocks::carved_pumpkin;
     BLOCKS.data[7] = Blocks::lit_pumpkin;
     BLOCKS.data[8] = Blocks::melon_block;
     BLOCKS.data[9] = Blocks::ladder;
     BLOCKS.data[10] = Blocks::wooden_button;
-    BLOCKS.data[11] = Blocks::wooden_pressure_plate;
-    BLOCKS.data[12] = Blocks::jukebox;
-    BLOCKS.data[13] = Blocks::noteblock;
-    BLOCKS.data[14] = Blocks::oak_stairs;
-    BLOCKS.data[15] = Blocks::spruce_stairs;
-    BLOCKS.data[16] = Blocks::birch_stairs;
-    BLOCKS.data[17] = Blocks::jungle_stairs;
-    BLOCKS.data[18] = Blocks::acacia_stairs;
-    BLOCKS.data[19] = Blocks::dark_oak_stairs;
-    BLOCKS.data[20] = Blocks::fence;
-    BLOCKS.data[21] = Blocks::fence_gate;
+    BLOCKS.data[11] = Blocks::acacia_button;
+    BLOCKS.data[12] = Blocks::birch_button;
+    BLOCKS.data[13] = Blocks::dark_oak_button;
+    BLOCKS.data[14] = Blocks::jungle_button;
+    BLOCKS.data[15] = Blocks::spruce_button;
+    BLOCKS.data[16] = Blocks::wooden_pressure_plate;
+    BLOCKS.data[17] = Blocks::acacia_pressure_plate;
+    BLOCKS.data[18] = Blocks::birch_pressure_plate;
+    BLOCKS.data[19] = Blocks::dark_oak_pressure_plate;
+    BLOCKS.data[20] = Blocks::jungle_pressure_plate;
+    BLOCKS.data[21] = Blocks::spruce_pressure_plate;
 }
 
 AxeItem::AxeItem(const Item::Tier* tier)
@@ -51,8 +52,9 @@ AxeItem::~AxeItem()
 
 float AxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)
 {
-    Block* block = state->getBlock();
-    if (block != Blocks::log && block != Blocks::log2 && block != Blocks::planks && block != Blocks::bookshelf)
+    Material* material = state->getMaterial();
+    if (material != Material::WOOD && material != Material::PLANT && material != Material::REPLACEABLE_PLANT
+        && material != Material::BAMBOO)
     {
         return DiggerItem::getDestroySpeed(itemInstance, state);
     }
@@ -75,7 +77,7 @@ InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> p
     {
         if (!simulate)
         {
-            level->setBlock(pos, block->getStrippedBlock(state), 11, false);
+            level->setBlock(pos, block->getStrippedBlock(state), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
             if (!level->mIsClientSide)
             {
                 itemInstance->hurtAndBreak(1, player);

@@ -1,8 +1,21 @@
 #include "game/item/SplashPotionItem.hpp"
+#include "game/core/StringIds.hpp"
 
+#include "game/core/GenericStats.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/item/ThrownPotion.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
+
+SplashPotionItem::SplashPotionItem()
+    : PotionItem()
+{
+}
 
 SplashPotionItem::~SplashPotionItem()
 {
@@ -27,21 +40,44 @@ void SplashPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     PotionUtils::addPotionTooltip(itemInstance, lines, 0.75f, player);
 }
 
-InteractionResultHolder SplashPotionItem::use(Level*,
-                                              boost::shared_ptr<Player>,
-                                              InteractionHand::EInteractionHand)
+InteractionResultHolder SplashPotionItem::use(Level* level, boost::shared_ptr<Player> player,
+                                              InteractionHand::EInteractionHand hand)
 {
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                   not_null_ptr<ItemInstance>());
+    bool instabuild = player->mAbilities.mInstabuild;
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    not_null_ptr<ItemInstance> thrownItem;
+    if (!instabuild)
+    {
+        thrownItem = itemInstance->split(1);
+        itemInstance->shrink(1);
+    }
+    else
+    {
+        thrownItem = itemInstance->copy();
+    }
+
+    if (!level->mIsClientSide)
+    {
+        boost::shared_ptr<ThrownPotion> potion(new ThrownPotion(level, player, thrownItem));
+        potion->shootFromRotation(player, player->mXRot, player->mYRot, -20.0f, 0.5f, 1.0f);
+        level->addEntity(potion);
+    }
+    else if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureOverrideHandSwing())
+    {
+        player->swing(InteractionHand::eInteractionHand_MainHand);
+    }
+
+    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)), GenericStats::param_itemsUsed(player, itemInstance));
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
 unsigned int SplashPotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xffffffffu;
+        return IDS_NONE;
     }
-    return 0x3c0788a3u;
+    return IDS_TOOLTIPS_THROW;
 }
 
 int SplashPotionItem::getUseDuration(not_null_ptr<ItemInstance>)

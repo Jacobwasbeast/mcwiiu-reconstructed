@@ -94,7 +94,7 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
 
     if (item->hasTag())
     {
-        ListTag* enchantmentTags = static_cast<ListTag*>(item->getEnchantmentTags());
+        ListTag* enchantmentTags = item->getEnchantmentTags();
         if (enchantmentTags != NULL)
         {
             for (int i = 0; i < enchantmentTags->size(); ++i)

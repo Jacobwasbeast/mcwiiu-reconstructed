@@ -1,4 +1,5 @@
 #include "game/item/BottleItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <typeinfo>
 #include <boost/shared_ptr.hpp>
@@ -153,9 +154,9 @@ unsigned int BottleItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
                 boost::static_pointer_cast<Player>(tooltipData.m_pPlayer),
                 InteractionHand::eInteractionHand_MainHand))
     {
-        return 0x4c4246b3u;
+        return IDS_TOOLTIPS_COLLECT;
     }
-    return 0xffffffffu;
+    return IDS_NONE;
 }
 
 TextureAtlasSprite* BottleItem::getIcon(int)

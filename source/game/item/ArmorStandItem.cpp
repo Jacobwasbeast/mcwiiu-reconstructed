@@ -1,4 +1,5 @@
 #include "game/item/ArmorStandItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
@@ -85,7 +86,7 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
 
     if (!level->mIsClientSide)
     {
-        if (!level->canCreateMore(ENTITY_TYPE_ARMOR_STAND, 0))
+        if (!level->canCreateMore(EntityType::ARMOR_STAND, Level::eSpawnType_Egg))
         {
             player->displayClientMessage(0x8ECD701E, true);
             return InteractionResult::eInteractionResult_Fail;

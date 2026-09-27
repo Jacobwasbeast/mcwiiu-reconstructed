@@ -1,32 +1,28 @@
 #include "game/item/ItemTransform.hpp"
 
-ItemTransform::ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale, bool clampValues)
-{
-    this->rotation = rotation;
-    this->translation = translation;
-    this->scale = scale;
+#include "game/core/Mth.hpp"
 
+ItemTransform* ItemTransform::NO_TRANSFORM =
+    new ItemTransform(Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f(1.0f, 1.0f, 1.0f), false);
+
+ItemTransform::ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale, bool clampValues)
+    : rotation(rotation), translation(translation), scale(scale)
+{
     if (clampValues)
     {
-        float value;
-
-        value = translation.x * 0.0625f;
-        this->translation.x = value < -5.0f ? -5.0f : value > 5.0f ? 5.0f : value;
-        value = translation.y * 0.0625f;
-        this->translation.y = value < -5.0f ? -5.0f : value > 5.0f ? 5.0f : value;
-        value = translation.z * 0.0625f;
-        this->translation.z = value < -5.0f ? -5.0f : value > 5.0f ? 5.0f : value;
-
-        value = scale.x;
-        this->scale.x = value < -4.0f ? -4.0f : value > 4.0f ? 4.0f : value;
-        value = scale.y;
-        this->scale.y = value < -4.0f ? -4.0f : value > 4.0f ? 4.0f : value;
-        value = scale.z;
-        this->scale.z = value < -4.0f ? -4.0f : value > 4.0f ? 4.0f : value;
+        this->translation.x = Mth::clamp(translation.x * 0.0625f, -5.0f, 5.0f);
+        this->translation.y = Mth::clamp(translation.y * 0.0625f, -5.0f, 5.0f);
+        this->translation.z = Mth::clamp(translation.z * 0.0625f, -5.0f, 5.0f);
+        this->scale.x = Mth::clamp(scale.x, -4.0f, 4.0f);
+        this->scale.y = Mth::clamp(scale.y, -4.0f, 4.0f);
+        this->scale.z = Mth::clamp(scale.z, -4.0f, 4.0f);
     }
 }
 
-ItemTransform* ItemTransform::deserialize(float rotationX, float rotationY, float rotationZ, float translationX, float translationY, float translationZ, float scaleX, float scaleY, float scaleZ)
+ItemTransform* ItemTransform::deserialize(float rotationX, float rotationY, float rotationZ, float translationX,
+                                          float translationY, float translationZ, float scaleX, float scaleY,
+                                          float scaleZ)
 {
-    return new ItemTransform(Vector3f(rotationX, rotationY, rotationZ), Vector3f(translationX, translationY, translationZ), Vector3f(scaleX, scaleY, scaleZ), true);
+    return new ItemTransform(Vector3f(rotationX, rotationY, rotationZ), Vector3f(translationX, translationY, translationZ),
+                             Vector3f(scaleX, scaleY, scaleZ), true);
 }

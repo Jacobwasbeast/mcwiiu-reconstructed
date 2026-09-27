@@ -62,8 +62,9 @@ public:
     virtual bool isCurse();
     virtual ~Enchantment();
 
-protected:
     const EnchantmentCategory* mCategory;
+
+protected:
     int mDescriptionId;
     arrayWithLength<const EquipmentSlot*> mSlots;
     const Rarity* mRarity;

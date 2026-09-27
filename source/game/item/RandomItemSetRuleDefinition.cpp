@@ -6,11 +6,10 @@
 #include "game/world/LevelRuleset.hpp"
 
 RandomItemSetRuleDefinition::RandomItemSetRuleDefinition()
+    : mId(L""), mMaxCount(0)
 {
-    mDescriptionName = L"buckets_";
-    mDataTag = 0;
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(49), &mDescriptionName);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(47), &mDataTag);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_id, &mId);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_maxCount, &mMaxCount);
 }
 
 RandomItemSetRuleDefinition::~RandomItemSetRuleDefinition()
@@ -23,7 +22,7 @@ RandomItemSetRuleDefinition::~RandomItemSetRuleDefinition()
 
 std::wstring RandomItemSetRuleDefinition::getId()
 {
-    return mDescriptionName;
+    return mId;
 }
 
 void RandomItemSetRuleDefinition::populateContainer(boost::shared_ptr<Container> container, LevelRuleset* ruleset)
@@ -32,7 +31,7 @@ void RandomItemSetRuleDefinition::populateContainer(boost::shared_ptr<Container>
     {
         if (ruleset != NULL)
         {
-            RandomItemSetRuleDefinition* itemSet = ruleset->getRandomItemSet(mDescriptionName);
+            RandomItemSetRuleDefinition* itemSet = ruleset->getRandomItemSet(mId);
             if (itemSet != NULL)
             {
                 itemSet->populateContainer(container, ruleset);
@@ -48,7 +47,7 @@ void RandomItemSetRuleDefinition::populateContainer(boost::shared_ptr<Container>
         treasures.data[i] = mItems[i]->getItem();
     }
 
-    WeighedTreasure::addChestItems(&random, treasures, container, mDataTag, false);
+    WeighedTreasure::addChestItems(&random, treasures, container, mMaxCount, false);
     for (unsigned int i = 0; i < treasures.length; ++i)
     {
         delete treasures.data[i];
@@ -66,13 +65,13 @@ void RandomItemSetRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* 
 
 ConsoleGameRules::EGameRuleType RandomItemSetRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(13);
+    return ConsoleGameRules::eGameRuleType_RandomItemSet;
 }
 
 GameRuleDefinition* RandomItemSetRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     WeighedTreasureItemRuleDefinition* item = NULL;
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(12))
+    if (type == ConsoleGameRules::eGameRuleType_WeighedTreasureItem)
     {
         item = new WeighedTreasureItemRuleDefinition();
         mItems.push_back(item);

@@ -1,4 +1,5 @@
 #include "game/item/SwordItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/AttributeModifier.hpp"
 #include "game/core/EquipmentSlot.hpp"
@@ -30,7 +31,7 @@ SwordItem::~SwordItem()
 
 unsigned int SwordItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return 0xABF024A4;
+    return IDS_TOOLTIPS_BLOCK;
 }
 
 float SwordItem::getTierDamage()

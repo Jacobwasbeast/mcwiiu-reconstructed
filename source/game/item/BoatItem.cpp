@@ -1,4 +1,6 @@
 #include "game/item/BoatItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
@@ -59,7 +61,7 @@ bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interacti
     }
 
     Block* block = level->getBlockState(hit->getBlockPos())->getBlock();
-    bool onWater = block == Blocks::WATER || block == Blocks::FLOWING_WATER;
+    bool onWater = block == Blocks::water || block == Blocks::flowing_water;
     boost::shared_ptr<Boat> boat(new Boat(level,
                                           hit->mLocation->x,
                                           onWater ? hit->mLocation->y - 0.12 : hit->mLocation->y,
@@ -122,8 +124,8 @@ InteractionResultHolder BoatItem::use(Level* level,
     }
 
     Block* block = level->getBlockState(hit->getBlockPos())->getBlock();
-    bool onWater = block == Blocks::WATER || block == Blocks::FLOWING_WATER;
-    if (level->countInstanceOf(ENTITY_TYPE_BOAT, true, NULL, NULL) < 40)
+    bool onWater = block == Blocks::water || block == Blocks::flowing_water;
+    if (level->countInstanceOf(EntityType::BOAT, true, NULL, NULL) < 40)
     {
         boost::shared_ptr<Boat> boat(new Boat(level,
                                               hit->mLocation->x,
@@ -159,5 +161,5 @@ InteractionResultHolder BoatItem::use(Level* level,
 unsigned int BoatItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     return TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand)
-        ? 0x4C36CD96u : 0xFFFFFFFFu;
+        ? IDS_TOOLTIPS_PLACE : IDS_NONE;
 }

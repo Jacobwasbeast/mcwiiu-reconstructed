@@ -8,6 +8,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/core/InteractionResultHolder.hpp"
+#include "game/item/PotionItem.hpp"
 
 class HtmlString;
 class ItemInstance;
@@ -15,9 +16,10 @@ class ItemTooltipDataHolder;
 class Level;
 class Player;
 
-class SplashPotionItem
+class SplashPotionItem : public PotionItem
 {
 public:
+    SplashPotionItem();
     virtual ~SplashPotionItem();
     virtual unsigned int getPotionType() const;
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);

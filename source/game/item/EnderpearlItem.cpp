@@ -1,4 +1,5 @@
 #include "game/item/EnderpearlItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
@@ -66,7 +67,7 @@ unsigned int EnderpearlItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipD
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xffffffffu;
+        return IDS_NONE;
     }
-    return 0x3c0788a3u;
+    return IDS_TOOLTIPS_THROW;
 }

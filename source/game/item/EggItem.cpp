@@ -1,4 +1,5 @@
 #include "game/item/EggItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -59,5 +60,5 @@ InteractionResultHolder EggItem::use(Level* level,
 
 unsigned int EggItem::GetUseTooltip(const ItemTooltipDataHolder&)
 {
-    return 0x3c0788a3u;
+    return IDS_TOOLTIPS_THROW;
 }

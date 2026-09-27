@@ -1,4 +1,5 @@
 #include "game/item/CoalItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -18,8 +19,8 @@ CoalItem::~CoalItem()
 int CoalItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->getAuxValue() == 1)
-        return (int)0xF0997BAF;
-    return (int)0x1EC60CB7;
+        return (int)IDS_ITEM_CHARCOAL;
+    return (int)IDS_ITEM_COAL;
 }
 
 TextureAtlasSprite* CoalItem::getIcon(int auxValue)

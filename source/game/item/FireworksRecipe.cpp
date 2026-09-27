@@ -3,23 +3,14 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/item/CraftingContainer.hpp"
+#include "game/item/DyeItem.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 
 #include <vector>
-
-unsigned int TlsAlloc();
-int TlsSetValue(unsigned int index, void* pValue);
-void* TlsGetValue(unsigned int index);
-
-static const int DYE_COLORS[16] = {
-    0x1E1B1B, 0xB3312C, 0x3B511A, 0x51301A,
-    0x253192, 0x7B2FBE, 0x287697, 0xABABAB,
-    0x434343, 0xD88198, 0x41CD34, 0xDECF2A,
-    0x6689D3, 0xC354CD, 0xEB8844, 0xF0F0F0
-};
 
 static unsigned int g_fireworksRecipeTlsIndex = 0;
 static FireworksRecipe::ThreadStorage* g_pDefaultThreadStorage = NULL;
@@ -267,7 +258,7 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
                 not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
 
                 if (item->getItem() == Items::fireworkCharge && item->hasTag() &&
-                    item->getTag()->contains(L"Explosion", 10))
+                    item->getTag()->contains(L"Explosion", Tag::TAG_COMPOUND))
                 {
                     explosions->add(item->getTag()->getCompound(L"Explosion")->copy());
                 }
@@ -304,7 +295,7 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
 
             if (item->getItem() == Items::dye)
             {
-                colors.push_back(DYE_COLORS[item->getAuxValue() & 15]);
+                colors.push_back(DyeItem::DYE_COLORS[item->getAuxValue() & 15]);
             }
             else if (item->getItem() == Items::glowstoneDust)
             {
@@ -357,7 +348,7 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
 
             if (item->getItem() == Items::dye)
             {
-                colors.push_back(DYE_COLORS[item->getAuxValue() & 15]);
+                colors.push_back(DyeItem::DYE_COLORS[item->getAuxValue() & 15]);
             }
             else if (item->getItem() == Items::fireworkCharge)
             {

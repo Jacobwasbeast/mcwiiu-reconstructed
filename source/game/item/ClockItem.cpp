@@ -29,8 +29,8 @@ TextureAtlasSprite* ClockItem::getIcon(int auxValue)
 void ClockItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(L"clock_0");
-    mIcons[1] = iconRegister->registerIcon(L"clock_1");
-    mIcons[2] = iconRegister->registerIcon(L"clock_2");
-    mIcons[3] = iconRegister->registerIcon(L"clock_3");
+    mIcons[0] = iconRegister->registerIcon(L"clockP0");
+    mIcons[1] = iconRegister->registerIcon(L"clockP1");
+    mIcons[2] = iconRegister->registerIcon(L"clockP2");
+    mIcons[3] = iconRegister->registerIcon(L"clockP3");
 }

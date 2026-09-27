@@ -1,4 +1,5 @@
 #include "game/item/LootingEnchantFunction.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -27,7 +28,7 @@ not_null_ptr<ItemInstance> LootingEnchantFunction::apply(const not_null_ptr<Item
     {
         boost::shared_ptr<Entity> killer = damageSource->getEntity();
 
-        if (killer && (killer->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        if (killer && (killer->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             int lootingLevel = EnchantmentHelper::getMobLooting(boost::static_pointer_cast<LivingEntity>(killer));
 

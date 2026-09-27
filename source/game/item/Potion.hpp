@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+template <class K, class V> class DefaultedMappedRegistry;
+class Item;
 class MobEffectInstance;
 class ResourceLocation;
 template <class K, class V, class H, class E> class SimpleRegistry;
@@ -14,34 +16,34 @@ public:
     enum EType
     {
         NORMAL = 0,
-        EXTENDED = 1,
-        AMPLIFIED = 2,
-        SPLASH = 3
+        SPLASH = 1,
+        LINGERING = 2,
+        ARROW = 3
     };
 
     static Potion* byId(int id);
     static int getId(Potion* potion);
     static Potion* byName(const std::wstring& name);
-    Potion(int id, int nameId, int extendedNameId, int amplifiedNameId, int useDescriptionId, int splashUseDescriptionId);
-    Potion(MobEffectInstance* effect, int id, int nameId, int extendedNameId, int amplifiedNameId, int useDescriptionId, int splashUseDescriptionId);
-    Potion(const std::vector<MobEffectInstance*>& effects, int id, int nameId, int extendedNameId, int amplifiedNameId, int useDescriptionId, int splashUseDescriptionId);
+    Potion(int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
+    Potion(MobEffectInstance* effect, int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
+    Potion(const std::vector<MobEffectInstance*>& effects, int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
     std::wstring getName(EType type);
     std::vector<MobEffectInstance*>& getEffects();
     int getUseDescriptionId(EType type);
     static void addPotion(const std::wstring& name, Potion* potion);
     static void StaticCtor();
-    static Potion* getBasePotion(EType type);
+    static Item* getBasePotion(EType type);
     bool hasInstantEffects();
 
-    static SimpleRegistry<ResourceLocation, Potion*, struct ResourceLocationHash, struct ResourceLocationEqual>* potionRegistry;
+    static DefaultedMappedRegistry<ResourceLocation, Potion*>* potionRegistry;
 
 private:
-    int mId;
     int mNameId;
-    int mExtendedNameId;
-    int mAmplifiedNameId;
+    int mSplashNameId;
+    int mLingeringNameId;
+    int mArrowNameId;
     int mUseDescriptionId;
-    int mSplashUseDescriptionId;
+    int mArrowUseDescriptionId;
     std::vector<MobEffectInstance*> mEffects;
 };
 

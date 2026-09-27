@@ -1,4 +1,5 @@
 #include "game/item/ChorusFruitItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
@@ -58,7 +59,7 @@ not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemIns
             }
         }
 
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             player->getCooldowns()->addCooldown(this, 20);

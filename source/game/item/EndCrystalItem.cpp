@@ -81,7 +81,7 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
 
     if (!level->mIsClientSide)
     {
-        if (!level->canCreateMore(MobCategory::ENDER_CRYSTAL->getEnumBaseClass(), 0))
+        if (!level->canCreateMore(MobCategory::ENDER_CRYSTAL->getEnumBaseClass(), Level::eSpawnType_Egg))
         {
             player->displayClientMessage(MESSAGE_END_CRYSTAL_LIMIT, true);
             return InteractionResult::eInteractionResult_Fail;

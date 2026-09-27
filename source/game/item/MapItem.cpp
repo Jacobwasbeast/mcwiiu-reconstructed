@@ -1,4 +1,5 @@
 #include "game/item/MapItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -6,6 +7,7 @@
 #include <typeinfo>
 
 #include "game/core/IconRegister.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/StringConversion.hpp"
@@ -27,7 +29,12 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/StoneBlock.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 
 MapItem::MapItem()
     : ComplexItem()
@@ -76,8 +83,11 @@ boost::shared_ptr<MapItemSavedData> MapItem::getSavedDataIfExists(int mapId, Lev
 
 boost::shared_ptr<MapItemSavedData> MapItem::getSavedData(int mapId, Level* level)
 {
+    MemSect(0x1f);
     std::wstring name = mapName(mapId);
-    boost::shared_ptr<MapItemSavedData> data = getSavedDataIfExists(mapId, level);
+    MemSect(0);
+    boost::shared_ptr<MapItemSavedData> data =
+        boost::static_pointer_cast<MapItemSavedData>(level->getSavedData(typeid(MapItemSavedData), name));
     if (!data)
     {
         if (level->mIsClientSide)
@@ -103,257 +113,162 @@ boost::shared_ptr<MapItemSavedData> MapItem::getSavedData(not_null_ptr<ItemInsta
     return getSavedData(itemInstance->getAuxValue(), level);
 }
 
-namespace
-{
-
-uint64_t& mapLastUpdateTime(MapItemSavedData* data)
-{
-    return *reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(data) + 136);
-}
-
-int& holdingPlayerTick(MapItemSavedData::HoldingPlayer* holding)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(holding) + 44);
-}
-
-const BlockState* findMapBlockState(LevelChunk* chunk, Level* level, int x, int y, int z)
-{
-    while (y > 0)
-    {
-        const BlockState* state = chunk->getBlockState(x & 15, y, z & 15);
-        Block* block = state->getBlock();
-        if (block == Blocks::AIR)
-        {
-            --y;
-            continue;
-        }
-        if (!block->isSolidRender(state))
-        {
-            --y;
-            continue;
-        }
-        Material* material = state->getMaterial();
-        if (material != NULL && material->isLiquid())
-        {
-            return state;
-        }
-        int scanY = y;
-        while (scanY > 0)
-        {
-            int belowY = scanY - 1;
-            if (belowY < y - 5)
-            {
-                break;
-            }
-            const BlockState* below = chunk->getBlockState(x & 15, belowY, z & 15);
-            Block* belowBlock = below->getBlock();
-            if (belowBlock == Blocks::AIR || !belowBlock->isSolidRender(below))
-            {
-                break;
-            }
-            Material* belowMaterial = below->getMaterial();
-            if (belowMaterial != NULL && belowMaterial->isLiquid())
-            {
-                break;
-            }
-            scanY = belowY;
-        }
-        return chunk->getBlockState(x & 15, scanY, z & 15);
-    }
-    return Blocks::AIR->defaultBlockState();
-}
-
-int chooseBrightness(double heightDelta, bool isWater, int parity)
-{
-    if (isWater)
-    {
-        double sample = (static_cast<double>(parity) - 0.5) * 0.4 + 0.5 * 0.2;
-        int brightness = 1;
-        if (sample < 0.9)
-        {
-            brightness = 2;
-        }
-        if (0.9 < sample)
-        {
-            brightness = 0;
-        }
-        return brightness;
-    }
-
-    double sample = (static_cast<double>(parity) - 0.5) * 0.2 + heightDelta * 4.0;
-    int brightness = 1;
-    if (0.6 < sample)
-    {
-        brightness = 2;
-    }
-    if (sample < -0.6)
-    {
-        brightness = 0;
-    }
-    return brightness;
-}
-
-unsigned char sampleNetherMapColor(int worldX, int worldZ, Level* level, MutableBlockPos& pos)
-{
-    int hashInput = worldX + worldZ * 0x389bf;
-    unsigned int hash = static_cast<unsigned int>(hashInput * hashInput * 0x1dd6751 + hashInput * 0xb) >> 20;
-    const BlockState* state;
-    if ((hash & 1) == 0)
-    {
-        state = Blocks::bedrock->defaultBlockState();
-    }
-    else
-    {
-        state = Blocks::netherrack->defaultBlockState();
-    }
-    pos.set(worldX, 0, worldZ);
-    state = state->fillVirtualBlockStateProperties(level, pos);
-    const MaterialColor* color = state->getMapColor(level, pos);
-    return static_cast<unsigned char>(color->id * 4 + 1);
-}
-
-unsigned char sampleOverworldMapColor(LevelChunk* chunk, Level* level, int worldX, int worldZ, int scale,
-                                      MutableBlockPos& pos, int parity)
-{
-    int counts[256];
-    std::memset(counts, 0, sizeof(counts));
-    double heightSum = 0.0;
-    int heightSamples = 0;
-    double baseHeight = 0.0;
-    bool hasBaseHeight = false;
-    for (int dx = 0; dx < scale; ++dx)
-    {
-        for (int dz = 0; dz < scale; ++dz)
-        {
-            int x = worldX + dx;
-            int z = worldZ + dz;
-            int y = chunk->getHeightmap(x & 15, z & 15);
-            const BlockState* state = findMapBlockState(chunk, level, x, y, z);
-            pos.set(x, y, z);
-            const MaterialColor* color = state->getMapColor(level, pos);
-            int colorId = color->id;
-            ++counts[colorId];
-            if (!hasBaseHeight)
-            {
-                baseHeight = static_cast<double>(y);
-                hasBaseHeight = true;
-            }
-            heightSum += static_cast<double>(y);
-            ++heightSamples;
-        }
-    }
-
-    int bestColorId = 0;
-    int bestCount = 0;
-    for (int colorId = 0; colorId < 256; ++colorId)
-    {
-        if (counts[colorId] > bestCount)
-        {
-            bestCount = counts[colorId];
-            bestColorId = colorId;
-        }
-    }
-
-    double averageHeight = heightSamples > 0 ? heightSum / static_cast<double>(heightSamples) : baseHeight;
-    double heightDelta = (averageHeight - baseHeight) * 0.014;
-    bool isWater = MaterialColor::WATER != NULL && bestColorId == MaterialColor::WATER->id;
-    int brightness = chooseBrightness(heightDelta, isWater, parity);
-    return static_cast<unsigned char>(bestColorId * 4 + brightness);
-}
-
-} // namespace
-
 void MapItem::update(Level* level, boost::shared_ptr<Entity> entity, boost::shared_ptr<MapItemSavedData> data)
 {
     if (level->mDimension->getType()->getId() != data->mDimension)
-    {
         return;
-    }
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+        return;
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
-    {
+    long long now = System::processTimeInMilliSecs();
+    if (now < data->mLastUpdateTime)
         return;
-    }
-
-    uint64_t now = System::processTimeInMilliSecs();
-    uint64_t lastUpdate = mapLastUpdateTime(data.get());
-    if (now < lastUpdate)
-    {
-        return;
-    }
-    mapLastUpdateTime(data.get()) = now;
+    data->mLastUpdateTime = now;
 
     PIXBeginNamedEvent(0.0f, "Update map");
 
     int scale = 1 << (data->mScale & 0x3f);
-    int mapCenterX = static_cast<int>((entity->mX - static_cast<double>(data->mXCenter)) / static_cast<double>(scale)) + 64;
-    int mapCenterZ = static_cast<int>((entity->mZ - static_cast<double>(data->mZCenter)) / static_cast<double>(scale)) + 64;
-    int halfWidth = 128 / scale;
+    int xCenter = data->mXCenter;
+    int zCenter = data->mZCenter;
+    int playerX = Mth::floor(entity->mX - (double)xCenter) / scale + 64;
+    int playerZ = Mth::floor(entity->mZ - (double)zCenter) / scale + 64;
+    int radius = 128 / scale;
     if (level->mDimension->isHasCeiling())
-    {
-        halfWidth = (halfWidth + (halfWidth < 0 ? 1 : 0)) / 2;
-    }
+        radius /= 2;
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    boost::shared_ptr<MapItemSavedData::HoldingPlayer> holding = data->getHoldingPlayer(player);
-    ++holdingPlayerTick(holding.get());
+    boost::shared_ptr<MapItemSavedData::HoldingPlayer> holding =
+        data->getHoldingPlayer(boost::static_pointer_cast<Player>(entity));
+    ++holding->mStep;
 
     MutableBlockPos pos(0, 0, 0);
-    int halfWidthSq = halfWidth * halfWidth;
-    int innerRadiusSq = (halfWidth - 2) * (halfWidth - 2);
-
-    for (int mapX = mapCenterX - halfWidth; mapX <= mapCenterX + halfWidth; ++mapX)
+    for (int x = playerX - radius + 1; x < playerX + radius; ++x)
     {
-        if (((mapX ^ holdingPlayerTick(holding.get())) & 0xf) != 0)
-        {
+        if (((x ^ holding->mStep) & 15) != 0)
             continue;
-        }
 
-        for (int mapZ = mapCenterZ - halfWidth; mapZ <= mapCenterZ + halfWidth; ++mapZ)
+        double lastHeight = 0.0;
+        for (int z = playerZ - radius - 1; z < playerZ + radius; ++z)
         {
-            if (mapX < 0 || mapX >= 128 || mapZ < 0 || mapZ >= 128)
-            {
+            if (x < 0 || z < -1 || x >= 128 || z >= 128)
                 continue;
-            }
 
-            int dx = mapX - mapCenterX;
-            int dz = mapZ - mapCenterZ;
+            int dx = x - playerX;
+            int dz = z - playerZ;
             int distSq = dx * dx + dz * dz;
-            if (distSq >= halfWidthSq)
-            {
-                continue;
-            }
+            int counts[64];
+            std::memset(counts, 0, sizeof(counts));
 
-            int parity = (mapX + mapZ) & 1;
-            if (distSq > innerRadiusSq && parity == 0)
-            {
-                continue;
-            }
-
-            int worldX = (mapX - 64) * scale + data->mXCenter;
-            int worldZ = (mapZ - 64) * scale + data->mZCenter;
+            int worldX = (xCenter / scale + x - 64) * scale;
+            int worldZ = (zCenter / scale + z - 64) * scale;
             pos.set(worldX, 0, worldZ);
             LevelChunk* chunk = level->getChunkAt(pos);
-            if (!chunk->isReady())
-            {
+            if (chunk->isEmpty())
                 continue;
-            }
 
-            unsigned char colorByte;
+            int localX = worldX & 15;
+            int localZ = worldZ & 15;
+            int waterDepth = 0;
+            double height = 0.0;
             if (level->mDimension->isHasCeiling())
             {
-                colorByte = sampleNetherMapColor(worldX, worldZ, level, pos);
+                int hash = worldX + worldZ * 231871;
+                hash = hash * hash * 31287121 + hash * 11;
+                if (((unsigned int)hash >> 20 & 1) == 0)
+                {
+                    TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::DIRT);
+                    const BlockState* state = Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
+                    counts[state->getMapColor(level, pos)->id] += 10;
+                }
+                else
+                {
+                    TypedBoxed<StoneBlock::Variant*> variant(StoneBlock::Variant::STONE);
+                    const BlockState* state =
+                        Blocks::stone->defaultBlockState()->setBoxedValue(StoneBlock::VARIANT, &variant);
+                    counts[state->getMapColor(level, pos)->id] += 100;
+                }
+                height = 100.0;
             }
             else
             {
-                colorByte = sampleOverworldMapColor(chunk, level, worldX, worldZ, scale, pos, parity);
+                for (int sampleX = 0; sampleX < scale; ++sampleX)
+                {
+                    for (int sampleZ = 0; sampleZ < scale; ++sampleZ)
+                    {
+                        int y = chunk->getHeightmap(sampleX + localX, sampleZ + localZ) + 1;
+                        const BlockState* state = Blocks::air->defaultBlockState();
+                        int colorId = 0;
+                        if (y > 1)
+                        {
+                            do
+                            {
+                                --y;
+                                pos.set(sampleX + localX, y, sampleZ + localZ);
+                                state = chunk->getBlockState(pos);
+                                colorId = state->getMapColor(level, pos)->id;
+                            } while (y > 0 && colorId == 0);
+
+                            if (y > 0 && state->getBlock()->mMaterial->isLiquid())
+                            {
+                                int depthY = y - 4;
+                                while (depthY > 0)
+                                {
+                                    const BlockState* below = chunk->getBlockState(sampleX + localX, depthY, sampleZ + localZ);
+                                    depthY -= 4;
+                                    waterDepth += 4;
+                                    if (depthY <= 0 || !below->getMaterial()->isLiquid())
+                                        break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            state = Blocks::bedrock->defaultBlockState();
+                        }
+                        height += (double)y / (double)(scale * scale);
+                        ++counts[colorId];
+                    }
+                }
             }
 
-            int index = mapX + mapZ * 128;
-            if (data->mColors.data[index] != colorByte)
+            waterDepth /= scale * scale;
+            int parity = (x + z) & 1;
+            double shade = (double)(height - lastHeight) * 4.0 / (double)(scale + 4) + ((double)parity - 0.5) * 0.4;
+            int brightness = 1;
+            if (shade > 0.6)
+                brightness = 2;
+            if (shade < -0.6)
+                brightness = 0;
+
+            int bestColor = 0;
+            int bestCount = 0;
+            for (int colorId = 0; colorId < 64; ++colorId)
             {
-                data->mColors.data[index] = colorByte;
-                data->setDirty(mapX, mapZ);
+                if (bestCount < counts[colorId])
+                {
+                    bestColor = colorId;
+                    bestCount = counts[colorId];
+                }
+            }
+            const MaterialColor* color = MaterialColor::MATERIAL_COLORS[bestColor];
+            if (color == MaterialColor::WATER)
+            {
+                shade = (double)waterDepth * 0.1 + (double)parity * 0.2;
+                brightness = 1;
+                if (shade < 0.5)
+                    brightness = 2;
+                if (shade > 0.9)
+                    brightness = 0;
+            }
+            lastHeight = height;
+
+            if (z >= 0 && distSq < radius * radius && (distSq <= (radius - 2) * (radius - 2) || parity != 0))
+            {
+                unsigned char value = (unsigned char)(color->id * 4 + brightness);
+                if (data->mColors.data[x + z * 128] != value)
+                {
+                    data->mColors.data[x + z * 128] = value;
+                    data->setDirty(x, z);
+                }
             }
         }
     }
@@ -514,7 +429,7 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
 
     boost::shared_ptr<MapItemSavedData> data = getSavedData(itemInstance, level);
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         int newMapId = level->getAuxValueForMap(player->mXuid, data->mDimension, data->mXCenter,
@@ -534,6 +449,8 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
             itemInstance->setAuxValue(newMapId);
             newData->tickCarriedBy(player, itemInstance);
             newData->mergeInMapData(data);
+            player->mInventoryMenu->broadcastChanges();
+            data = newData;
         }
     }
 
@@ -542,7 +459,7 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
     {
         shouldUpdate = true;
     }
-    else if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    else if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         shouldUpdate = (player->getOffhandItem() == itemInstance);
@@ -580,7 +497,6 @@ void MapItem::scaleMap(not_null_ptr<ItemInstance> itemInstance, Level* level, in
     {
         data->mScale = Mth::clamp(oldData->mScale + scale, 0, 4);
         data->mTrackingPosition = oldData->mTrackingPosition;
-        data->mUnlimitedTracking = oldData->mUnlimitedTracking;
         data->setOrigin(static_cast<double>(oldData->mXCenter), static_cast<double>(oldData->mZCenter),
                         data->mScale);
         data->mDimension = oldData->mDimension;
@@ -603,7 +519,6 @@ void MapItem::enableMapTracking(not_null_ptr<ItemInstance> itemInstance, Level* 
         data->mZCenter = oldData->mZCenter;
         data->mScale = oldData->mScale;
         data->mDimension = oldData->mDimension;
-        data->mUnlimitedTracking = oldData->mUnlimitedTracking;
         data->setDirty();
         level->setSavedData(name, boost::static_pointer_cast<SavedData>(data));
     }
@@ -617,7 +532,7 @@ void MapItem::onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level,
     {
         return;
     }
-    if (tag->contains(L"map_scale_direction", 99))
+    if (tag->contains(L"map_scale_direction", Tag::TAG_ANY_NUMERIC))
     {
         scaleMap(itemInstance, level, tag->getInt(L"map_scale_direction"));
         tag->remove(L"map_scale_direction");
@@ -632,7 +547,7 @@ void MapItem::onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level,
 int MapItem::getColor(const not_null_ptr<ItemInstance>& itemInstance)
 {
     CompoundTag* display = static_cast<CompoundTag*>(itemInstance->getTagElement(L"display"));
-    if (!display || !display->contains(L"MapColor", 99))
+    if (!display || !display->contains(L"MapColor", Tag::TAG_ANY_NUMERIC))
     {
         return 0xff46402e;
     }

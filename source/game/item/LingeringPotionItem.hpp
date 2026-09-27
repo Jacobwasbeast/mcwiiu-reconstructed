@@ -19,6 +19,7 @@ class Player;
 class LingeringPotionItem : public PotionItem
 {
 public:
+    LingeringPotionItem();
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~LingeringPotionItem();
     virtual InteractionResultHolder use(Level* level,

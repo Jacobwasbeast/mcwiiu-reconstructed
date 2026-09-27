@@ -10,7 +10,7 @@ void Effect::destroy()
     manager->releaseProgram(this);
 }
 
-uint64_t Effect::clear()
+void Effect::clear()
 {
     unsigned int texture = 0;
     for (boost::unordered_map<std::wstring, RenderTarget*>::iterator it = mSamplers.begin();
@@ -22,7 +22,6 @@ uint64_t Effect::clear()
             GlStateManager::bindTexture(0);
         }
     }
-    return 0;
 }
 
 void Effect::apply()

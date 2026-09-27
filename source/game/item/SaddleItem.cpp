@@ -1,4 +1,5 @@
 #include "game/item/SaddleItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
@@ -21,7 +22,7 @@ bool SaddleItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<LivingEntity> target,
                                InteractionHand::EInteractionHand hand)
 {
-    if (target && target->GetType() == 0x2D680003ULL)
+    if (target && target->GetType() == EntityType::PIG)
     {
         boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(target);
         if (!pig->hasSaddle() && !pig->isBaby())

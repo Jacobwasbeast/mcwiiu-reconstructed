@@ -31,8 +31,8 @@ public:
         MILK = 1,
         FISH = 2,
         SALMON = 3,
-        PUFFER = 4,
-        TROPICAL = 5,
+        TROPICAL = 4,
+        PUFFER = 5,
         WATER = 8,
         LAVA = 10
     };

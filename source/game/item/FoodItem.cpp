@@ -1,4 +1,6 @@
 #include "game/item/FoodItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
@@ -44,7 +46,7 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
                                                      Level* level,
                                                      boost::shared_ptr<LivingEntity> entity)
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(itemInstance->getItem())),
@@ -53,12 +55,12 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
         {
             player->awardStat(GenericStats::ironBelly(), GenericStats::param_ironBelly());
         }
-        player->SetLastAteKelp(itemInstance->getItem() == Items::kelp);
+        player->SetLastAteKelp(itemInstance->getItem() == Items::driedKelp);
     }
 
     if (!level->mIsClientSide)
     {
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             player->getFoodData()->eat(this, itemInstance);
@@ -74,7 +76,7 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
         }
 
         bool consume = true;
-        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mAbilities.mInstabuild)
@@ -130,9 +132,9 @@ unsigned int FoodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
     const bool canUse = canEat(tooltipData.m_pPlayer);
     if (canUse)
     {
-        return 0xD26C6DB5u;
+        return IDS_TOOLTIPS_EAT;
     }
-    return 0xFFFFFFFFu;
+    return IDS_NONE;
 }
 
 int FoodItem::getNutrition(not_null_ptr<ItemInstance> itemInstance)

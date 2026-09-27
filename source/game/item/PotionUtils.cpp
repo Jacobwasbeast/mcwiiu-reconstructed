@@ -1,4 +1,5 @@
 #include "game/item/PotionUtils.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
@@ -7,25 +8,29 @@
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Potion.hpp"
+#include "game/item/Potions.hpp"
+#include "game/world/block/DefaultedMappedRegistry.hpp"
 
 const std::wstring PotionUtils::TAG_POTION(L"Potion");
 static const std::wstring customEffectsKey(L"CustomPotionEffects");
 
 not_null_ptr<ItemInstance> PotionUtils::setPotion(not_null_ptr<ItemInstance> item, Potion* potion)
 {
-    CompoundTag* tag = item->getTag();
-    if (potion == NULL)
+    ResourceLocation key = Potion::potionRegistry->getKey(potion);
+    if (potion == Potions::EMPTY)
     {
-        if (tag != NULL)
+        if (item->hasTag())
         {
+            CompoundTag* tag = item->getTag();
             tag->remove(TAG_POTION);
-            if (tag->isEmpty()) item->setTag(NULL);
+            if (tag->isEmpty())
+                item->setTag(NULL);
         }
     }
     else
     {
-        if (tag == NULL) tag = new CompoundTag();
-        tag->putString(TAG_POTION, potion->getName(Potion::NORMAL));
+        CompoundTag* tag = item->hasTag() ? item->getTag() : new CompoundTag();
+        tag->putString(TAG_POTION, key.toString());
         item->setTag(tag);
     }
     return item;
@@ -38,8 +43,8 @@ Potion* PotionUtils::getPotion(CompoundTag* tag)
 
 void PotionUtils::getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstance*>* effects)
 {
-    if (tag == NULL || effects == NULL || !tag->contains(customEffectsKey, 9)) return;
-    ListTag* list = tag->getList(customEffectsKey, 10);
+    if (tag == NULL || effects == NULL || !tag->contains(customEffectsKey, Tag::TAG_LIST)) return;
+    ListTag* list = tag->getList(customEffectsKey, Tag::TAG_COMPOUND);
     for (int i = 0; i < list->size(); ++i)
     {
         MobEffectInstance* effect = MobEffectInstance::load(list->getCompound(i));
@@ -85,7 +90,7 @@ void PotionUtils::addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<
     std::vector<MobEffectInstance*>* effects = getMobEffects(item);
     if (effects->empty())
     {
-        lines->push_back(HtmlString(L10N::GetString(0xd1664335), eMinecraftColour_Potion_BaseColour, false, false, 0));
+        lines->push_back(HtmlString(L10N::GetString(IDS_POTION_EFFECT_EMPTY), eMinecraftColour_Potion_BaseColour, false, false, 0));
     }
     else
     {
@@ -132,7 +137,7 @@ void PotionUtils::addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<
                 text += MobEffect::formatDuration(effect, durationFactor);
                 text += L")";
             }
-            lines->push_back(HtmlString(text, effect->getEffect()->isHarmful() ? static_cast<eMinecraftColour>(0x19d) : static_cast<eMinecraftColour>(0x198), false, false, 0));
+            lines->push_back(HtmlString(text, effect->getEffect()->isHarmful() ? eMinecraftColour_HTMLColor_c : eMinecraftColour_HTMLColor_7, false, false, 0));
         }
     }
     (void)player;
@@ -177,7 +182,7 @@ int PotionUtils::getColor(std::vector<MobEffectInstance*>* effects)
 int PotionUtils::getColor(const not_null_ptr<ItemInstance>& item)
 {
     CompoundTag* tag = item->getTag();
-    if (tag != NULL && tag->contains(L"CustomPotionColor", 99)) return tag->getInt(L"CustomPotionColor");
+    if (tag != NULL && tag->contains(L"CustomPotionColor", Tag::TAG_ANY_NUMERIC)) return tag->getInt(L"CustomPotionColor");
     if (getPotion(item) == Potion::byId(0)) return 0xf800f8;
     std::vector<MobEffectInstance*>* effects = getMobEffects(item);
     int color = getColor(effects);
@@ -191,21 +196,21 @@ int PotionUtils::getColor(Potion* potion)
     return getColor(&potion->getEffects());
 }
 
-ResourceLocation PotionUtils::getPotionID(not_null_ptr<ItemInstance> item)
+std::wstring PotionUtils::getPotionID(not_null_ptr<ItemInstance> item)
 {
-    std::wstring name;
-    if (item->getTag() != NULL) name = item->getTag()->getString(TAG_POTION);
-    std::wstring::size_type separator = name.find(L':');
-    if (separator != std::wstring::npos) name.assign(name, separator + 1, std::wstring::npos);
-    return ResourceLocation(name);
+    CompoundTag* tag = item->getTag();
+    if (tag == NULL)
+        return L"";
+    std::wstring name = tag->getString(TAG_POTION);
+    std::wstring::size_type separator = name.find(L":");
+    return std::wstring(name, separator + 1, std::wstring::npos);
 }
 
 not_null_ptr<ItemInstance> PotionUtils::setCustomEffects(not_null_ptr<ItemInstance> item, std::vector<MobEffectInstance*>* effects)
 {
     if (effects == NULL || effects->empty()) return item;
-    CompoundTag* tag = item->getTag();
-    if (tag == NULL) tag = new CompoundTag();
-    ListTag* list = tag->getList(customEffectsKey, 9);
+    CompoundTag* tag = item->getTag() == NULL ? new CompoundTag() : item->getTag()->copy();
+    ListTag* list = tag->getList(customEffectsKey, Tag::TAG_LIST);
     for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
         list->add((*it)->save(new CompoundTag()));
     tag->put(customEffectsKey, list);
@@ -221,8 +226,7 @@ not_null_ptr<ItemInstance> PotionUtils::setPotionAndCustomEffects(not_null_ptr<I
 
 void PotionUtils::setPotionName(not_null_ptr<ItemInstance> item, const std::wstring& name)
 {
-    CompoundTag* tag = item->getTag();
-    if (tag == NULL) tag = new CompoundTag();
+    CompoundTag* tag = item->getTag() == NULL ? new CompoundTag() : item->getTag()->copy();
     tag->putString(TAG_POTION, name);
     item->setTag(tag);
 }

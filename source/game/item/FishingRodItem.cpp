@@ -1,4 +1,6 @@
 #include "game/item/FishingRodItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -28,7 +30,7 @@ FishingRodItem::~FishingRodItem()
 
 unsigned int FishingRodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return 0xea4e897eU;
+    return IDS_TOOLTIPS_USE;
 }
 
 InteractionResultHolder FishingRodItem::use(Level* level,
@@ -127,7 +129,7 @@ float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
             inOffhand = false;
         }
         if ((inMainHand || inOffhand)
-            && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+            && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mFishing)

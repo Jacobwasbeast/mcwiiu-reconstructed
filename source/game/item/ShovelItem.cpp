@@ -80,7 +80,7 @@ InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player
                              16.0f);
             if (!level->mIsClientSide)
             {
-                level->setBlock(pos, Blocks::grass_path->defaultBlockState(), 11, false);
+                level->setBlock(pos, Blocks::grass_path->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                 itemInstance->hurtAndBreak(1, player);
             }
         }

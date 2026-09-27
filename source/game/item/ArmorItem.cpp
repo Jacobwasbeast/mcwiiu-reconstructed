@@ -1,4 +1,6 @@
 #include "game/item/ArmorItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -196,7 +198,7 @@ not_null_ptr<ItemInstance> ArmorItem::dispenseArmor(BlockSource* blockSource,
 
     entity->setItemSlot(slot, itemInstance->split(1));
 
-    if ((entity->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+    if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         boost::static_pointer_cast<Mob>(entity)->setDropChance(slot, 2.0f);
     }
@@ -245,9 +247,9 @@ bool ArmorItem::hasCustomColor(not_null_ptr<ItemInstance> itemInstance)
     if (mMaterial == ArmorMaterial::LEATHER)
     {
         CompoundTag* tag = itemInstance->getTag();
-        if (tag != NULL && tag->contains(L"display", 10))
+        if (tag != NULL && tag->contains(L"display", Tag::TAG_COMPOUND))
         {
-            return tag->getCompound(L"display")->contains(L"color", 3);
+            return tag->getCompound(L"display")->contains(L"color", Tag::TAG_INT);
         }
     }
 
@@ -265,7 +267,7 @@ int ArmorItem::getColor(not_null_ptr<ItemInstance> itemInstance, int layer)
     if (tag != NULL)
     {
         CompoundTag* display = tag->getCompound(L"display");
-        if (display != NULL && display->contains(L"color", 3))
+        if (display != NULL && display->contains(L"color", Tag::TAG_INT))
         {
             return display->getInt(L"color");
         }
@@ -367,7 +369,7 @@ unsigned int ArmorItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xFFFFFFFF;
+        return IDS_NONE;
     }
 
     const EquipmentSlot* slot = getSlot();
@@ -377,10 +379,10 @@ unsigned int ArmorItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
          && equippedItem->getItem() == Items::elytra && tooltipData.m_pPlayer->isFallFlying())
         || EnchantmentHelper::hasBindingCurse(equippedItem))
     {
-        return 0xFFFFFFFF;
+        return IDS_NONE;
     }
 
-    return 0xAFD35F15;
+    return IDS_TOOLTIPS_EQUIP;
 }
 
 boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ArmorItem::getDefaultAttributeModifiers(

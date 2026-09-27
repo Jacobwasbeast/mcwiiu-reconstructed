@@ -8,13 +8,23 @@ class LivingEntity;
 class ItemTransforms
 {
 public:
+    static float offsetTranslateX;
+    static float offsetTranslateY;
+    static float offsetTranslateZ;
+    static float offsetRotationX;
+    static float offsetRotationY;
+    static float offsetRotationZ;
+    static float offsetScaleX;
+    static float offsetScaleY;
+    static float offsetScaleZ;
+
     enum TransformType
     {
         NONE,
-        THIRD_PERSON_RIGHT_HAND,
         THIRD_PERSON_LEFT_HAND,
-        FIRST_PERSON_RIGHT_HAND,
+        THIRD_PERSON_RIGHT_HAND,
         FIRST_PERSON_LEFT_HAND,
+        FIRST_PERSON_RIGHT_HAND,
         HEAD,
         GUI,
         GROUND,

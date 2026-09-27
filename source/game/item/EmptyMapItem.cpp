@@ -1,4 +1,5 @@
 #include "game/item/EmptyMapItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/GenericStats.hpp"
 #include "game/item/Inventory.hpp"
@@ -43,5 +44,5 @@ InteractionResultHolder EmptyMapItem::use(Level* level,
 
 unsigned int EmptyMapItem::GetUseTooltip(const ItemTooltipDataHolder&)
 {
-    return 0xea4e897eu;
+    return IDS_TOOLTIPS_USE;
 }

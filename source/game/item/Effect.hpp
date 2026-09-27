@@ -16,7 +16,7 @@ public:
     Effect(ResourceManager* resourceManager, const std::wstring& name);
 
     void destroy();
-    uint64_t clear();
+    void clear();
     void apply();
     void markDirty();
     Uniform* getUniform(const std::wstring& name);

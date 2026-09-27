@@ -1,4 +1,6 @@
 #include "game/item/Inventory.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -25,7 +27,7 @@
 #include "game/world/generation/Player.hpp"
 
 Inventory::Inventory(Player* player)
-    : m_items(NonNullList<not_null_ptr<ItemInstance> >::withSize(36, ItemInstance::EMPTY)),
+    : m_items(NonNullList<not_null_ptr<ItemInstance> >::withSize(INVENTORY_SIZE, ItemInstance::EMPTY)),
       m_armor(NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY)),
       m_offhand(NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY)),
       m_hasPickedItem(false),
@@ -46,7 +48,7 @@ Inventory::~Inventory()
 
 std::wstring Inventory::getName()
 {
-    return std::wstring(L10N::GetString(0x14630b9e));
+    return std::wstring(L10N::GetString(IDS_INVENTORY));
 }
 
 std::wstring Inventory::getCustomName()
@@ -512,7 +514,7 @@ void Inventory::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
     {
         if (slot < m_compartments[compartment].size())
         {
-            if (compartment == 1 && !item->isEmpty() && m_player->GetType() == ENTITY_TYPE_LOCAL_PLAYER)
+            if (compartment == 1 && !item->isEmpty() && m_player->GetType() == EntityType::LOCAL_PLAYER)
             {
                 m_player->OnEquipArmor(item);
             }

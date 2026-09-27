@@ -1,4 +1,5 @@
 #include "game/item/TridentRiptideEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
@@ -8,7 +9,7 @@ TridentRiptideEnchantment::TridentRiptideEnchantment(
     arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
-    setDescriptionId(0x1b47936d);
+    setDescriptionId(IDS_ENCHANTMENT_RIPTIDE);
 }
 
 TridentRiptideEnchantment::~TridentRiptideEnchantment()

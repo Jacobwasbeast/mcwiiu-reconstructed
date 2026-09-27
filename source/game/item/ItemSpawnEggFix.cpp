@@ -100,7 +100,7 @@ CompoundTag* ItemSpawnEggFix::fix(CompoundTag* item)
     CompoundTag* entityTag = itemTag->getCompound(L"EntityTag");
     short damage = item->getShort(L"Damage");
 
-    if (!entityTag->contains(L"id", 8))
+    if (!entityTag->contains(L"id", Tag::TAG_STRING))
     {
         boost::unordered_map<int, std::wstring>::iterator entity = mEntityNames.find(damage);
 

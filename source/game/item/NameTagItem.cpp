@@ -1,4 +1,5 @@
 #include "game/item/NameTagItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -22,7 +23,7 @@ bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
         return false;
     }
 
-    if (Entity::instanceof(target, ENTITY_TYPE_PLAYER))
+    if (Entity::instanceof(target, EntityType::PLAYER))
     {
         return false;
     }
@@ -36,13 +37,13 @@ bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                           itemInstance->getOwnerUUID(),
                           itemInstance->wasCreatedByRestrictedPlayer());
 
-    if (Entity::instanceof(target, ENTITY_TYPE_MOB))
+    if (Entity::instanceof(target, EntityType::MOB))
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(target);
         mob->setPersistenceRequired(true);
 
         if (mob->isPassenger() &&
-            (mob->getVehicle()->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+            (mob->getVehicle()->GetType() & EntityType::MOB) == EntityType::MOB)
         {
             boost::shared_ptr<Mob> vehicle = boost::static_pointer_cast<Mob>(mob->getVehicle());
             vehicle->setPersistenceRequired(true);

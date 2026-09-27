@@ -23,6 +23,8 @@ public:
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
 
 private:
+    std::wstring mId;
+    int mMaxCount;
     std::vector<WeighedTreasureItemRuleDefinition*> mItems;
 };
 

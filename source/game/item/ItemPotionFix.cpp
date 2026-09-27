@@ -4,6 +4,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/item/Items.hpp"
 namespace { std::wstring potionNames[128]; }
 ItemPotionFix::~ItemPotionFix() {}
 int ItemPotionFix::getVersion() { return 102; }
@@ -13,7 +14,7 @@ CompoundTag* ItemPotionFix::fix(CompoundTag* tag)
     {
         CompoundTag* itemTag = tag->getCompound(L"tag");
         short damage = tag->getShort(L"Damage");
-        if (!itemTag->contains(L"Potion", 8))
+        if (!itemTag->contains(L"Potion", Tag::TAG_STRING))
         {
             itemTag->putString(L"Potion", potionNames[damage & 0x7f]);
             tag->put(L"tag", itemTag);
@@ -28,14 +29,15 @@ CompoundTag* ItemPotionFix::fix(CompoundTag* tag)
 void ItemPotionFix::fix(not_null_ptr<ItemInstance> item)
 {
     Item* itemType = item->getItem();
-    if (itemType != Item::byId(373) && itemType != Item::byId(438) && itemType != Item::byId(441) && itemType != Item::byId(440))
+    if (itemType != Items::potion && itemType != Items::splashPotion && itemType != Items::lingeringPotion
+        && itemType != Items::tippedArrow)
         return;
     int auxValue = item->getAuxValue();
     PotionUtils::setPotion(item, Potion::byName(potionNames[auxValue & 0x7f]));
     if (auxValue != 0)
         item->setAuxValue(0);
 }
-uint64_t ItemPotionFix::staticCtor()
+void ItemPotionFix::staticCtor()
 {
     potionNames[0] = L"minecraft:water";
     potionNames[1] = L"minecraft:regeneration";
@@ -165,5 +167,4 @@ uint64_t ItemPotionFix::staticCtor()
     potionNames[125] = L"minecraft:long_water_breathing";
     potionNames[126] = L"minecraft:long_invisibility";
     potionNames[127] = L"";
-    return 0;
 }

@@ -34,7 +34,7 @@ public:
     static int getColor(std::vector<MobEffectInstance*>* effects);
     static int getColor(const not_null_ptr<ItemInstance>& item);
     static int getColor(Potion* potion);
-    static ResourceLocation getPotionID(not_null_ptr<ItemInstance> item);
+    static std::wstring getPotionID(not_null_ptr<ItemInstance> item);
     static not_null_ptr<ItemInstance> setCustomEffects(not_null_ptr<ItemInstance> item, std::vector<MobEffectInstance*>* effects);
     static not_null_ptr<ItemInstance> setPotionAndCustomEffects(not_null_ptr<ItemInstance> target, not_null_ptr<ItemInstance> source);
     static void setPotionName(not_null_ptr<ItemInstance> item, const std::wstring& name);

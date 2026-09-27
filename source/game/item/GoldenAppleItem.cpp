@@ -1,4 +1,5 @@
 #include "game/item/GoldenAppleItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/GenericStats.hpp"
 #include "game/core/Rarity.hpp"
@@ -41,7 +42,7 @@ int GoldenAppleItem::getUseDescriptionId(int auxValue)
     {
         return (int)0x5cf7965c;
     }
-    return (int)0x00cd42e1;
+    return (int)IDS_DESC_GOLDENAPPLE;
 }
 
 int GoldenAppleItem::getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance)

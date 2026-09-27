@@ -1,4 +1,5 @@
 #include "game/item/FireworksItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -159,5 +160,5 @@ void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
 unsigned int FireworksItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_pPlayer->isUsingItem() ? 0x568A07BEu : 0xFFFFFFFFu;
+    return tooltipData.m_pPlayer->isUsingItem() ? 0x568A07BEu : IDS_NONE;
 }

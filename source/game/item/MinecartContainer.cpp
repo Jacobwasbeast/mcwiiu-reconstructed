@@ -1,4 +1,5 @@
 #include "game/item/MinecartContainer.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/pointer_cast.hpp>
 
@@ -49,7 +50,7 @@ std::wstring MinecartContainer::getName()
     {
         return getCustomName();
     }
-    return std::wstring(L10N::GetString(0x917ea687));
+    return std::wstring(L10N::GetString(IDS_CONTAINER_MINECART));
 }
 
 std::wstring MinecartContainer::getCustomName()
@@ -234,15 +235,15 @@ long long MinecartContainer::getLootTableSeed()
     return mLootTableSeed;
 }
 
-void MinecartContainer::addDataWalkers(DataFixerUpper* fixer, unsigned long long gameTime)
+void MinecartContainer::addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType)
 {
-    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, (DataWalker*)new ItemListDataWalker(gameTime, L"Items"));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, (DataWalker*)new ItemListDataWalker(entityType, L"Items"));
 }
 
 void MinecartContainer::destroy(const DamageSource* source)
 {
     Minecart::destroy(source);
-    if (mLevel->getGameRules()->getBoolean(6))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
     {
         boost::shared_ptr<Entity> entity = shared_from_this();
         boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(entity);
@@ -288,7 +289,7 @@ void MinecartContainer::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
-    if (tag->contains(L"LootTable", 8) && StructureFeatureIO::getVersion() > 1)
+    if (tag->contains(L"LootTable", Tag::TAG_STRING) && StructureFeatureIO::getVersion() > 1)
     {
         mLootTable = new ResourceLocation(tag->getString(L"LootTable"));
         mLootTableSeed = tag->getLong(L"LootTableSeed");
@@ -342,5 +343,5 @@ void MinecartContainer::setLootTable(ResourceLocation* lootTable, long long seed
 
 unsigned int MinecartContainer::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_bAllowedToInteract ? 0x41590ad1 : 0xffffffff;
+    return tooltipData.m_bAllowedToInteract ? IDS_TOOLTIPS_OPEN : IDS_NONE;
 }

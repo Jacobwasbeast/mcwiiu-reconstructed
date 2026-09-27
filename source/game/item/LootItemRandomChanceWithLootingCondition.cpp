@@ -1,4 +1,5 @@
 #include "game/item/LootItemRandomChanceWithLootingCondition.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -18,7 +19,7 @@ bool LootItemRandomChanceWithLootingCondition::applies(Random* random, LootTable
     int lootingLevel = 0;
 
     if (context.getEntity(LootTableContext::DIRECT_KILLER)
-        && (context.getEntity(LootTableContext::DIRECT_KILLER)->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        && (context.getEntity(LootTableContext::DIRECT_KILLER)->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         lootingLevel = EnchantmentHelper::getMobLooting(
             boost::dynamic_pointer_cast<LivingEntity>(context.getEntity(LootTableContext::DIRECT_KILLER)));

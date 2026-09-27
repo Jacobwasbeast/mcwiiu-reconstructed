@@ -24,6 +24,7 @@ class Enchantment;
 class EquipmentSlot;
 class Item;
 class Level;
+class ListTag;
 class Random;
 class Tag;
 class Player;
@@ -36,6 +37,7 @@ class AttributeModifier;
 class ItemInstance : public boost::enable_shared_from_this<ItemInstance>
 {
     friend class AbstractContainerMenu;
+    friend class ItemRenderer;
 
 public:
     ItemInstance();
@@ -107,7 +109,7 @@ public:
     void addTagElement(std::wstring name, Tag* tag);
     Tag* getOrCreateTagElement(const std::wstring& name);
     Tag* getTagElement(const std::wstring& name);
-    Tag* getEnchantmentTags();
+    ListTag* getEnchantmentTags();
     bool wasCreatedByRestrictedPlayer();
     std::wstring getHoverNameUnfiltered();
     std::wstring getHoverName();

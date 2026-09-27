@@ -36,7 +36,7 @@ InteractionResult::EInteractionResult SeedFoodItem::useOn(boost::shared_ptr<Play
     {
         if (!simulate)
         {
-            level->setBlock(pos.above(), mCropBlock->defaultBlockState(), 11, false);
+            level->setBlock(pos.above(), mCropBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
             itemInstance->shrink(1);
         }
         return InteractionResult::eInteractionResult_Success;

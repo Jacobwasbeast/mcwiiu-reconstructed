@@ -39,7 +39,7 @@ public:
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual void dropItem(boost::shared_ptr<Entity> breaker);
     void removeFramedMap(not_null_ptr<ItemInstance> item);
-    void dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf);
+    virtual void dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf);
     virtual void playPlacementSound();
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     int getRotation();
@@ -52,7 +52,7 @@ public:
     virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual unsigned int GetHitTooltip(const EntityTooltipDataHolder& holder);
-    int getAnalogOutput();
+    virtual int getAnalogOutput();
     virtual unsigned long long GetType();
 
     static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ITEM;

@@ -1,4 +1,5 @@
 #include "game/item/FrostWalkerEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
@@ -17,7 +18,7 @@ FrostWalkerEnchantment::FrostWalkerEnchantment(const Rarity* rarity,
                                                arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR_FEET, slots)
 {
-    setDescriptionId((int)0x933dfa4f);
+    setDescriptionId((int)IDS_ENCHANTMENT_FROST_WALKER);
 }
 
 int FrostWalkerEnchantment::getMinCost(int level)
@@ -61,11 +62,11 @@ void FrostWalkerEnchantment::onEntityMoved(const boost::shared_ptr<LivingEntity>
             && level->isWaterAt(*current))
         {
             const BlockPos above = current->above();
-            if (level->getBlockState(above)->getBlock() == Blocks::AIR
+            if (level->getBlockState(above)->getBlock() == Blocks::air
                 && level->mayPlace(Blocks::frosted_ice, *current, false, Direction::DOWN,
                                    boost::shared_ptr<Entity>()))
             {
-                level->setBlock(*current, Blocks::frosted_ice->defaultBlockState(), 3, false);
+                level->setBlock(*current, Blocks::frosted_ice->defaultBlockState(), Block::UPDATE_ALL, false);
             }
         }
     }

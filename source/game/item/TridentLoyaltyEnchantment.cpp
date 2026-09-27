@@ -1,4 +1,5 @@
 #include "game/item/TridentLoyaltyEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/Enchantments.hpp"
 #include "game/item/EnchantmentCategory.hpp"
@@ -7,7 +8,7 @@ TridentLoyaltyEnchantment::TridentLoyaltyEnchantment(const Rarity* rarity,
                                                      arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
-    setDescriptionId((int)0x329991d0);
+    setDescriptionId((int)IDS_ENCHANTMENT_LOYALTY);
 }
 
 TridentLoyaltyEnchantment::~TridentLoyaltyEnchantment()

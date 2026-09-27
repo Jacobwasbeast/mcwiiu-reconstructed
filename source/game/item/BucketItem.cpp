@@ -1,9 +1,25 @@
 #include "game/item/BucketItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/item/SpawnEggItem.hpp"
+#include "game/util/Math.hpp"
+#include "game/util/Random.hpp"
+#include "game/core/Direction.hpp"
+#include "game/network/ClientboundChatPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/util/AABB.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -67,7 +83,7 @@ BucketItem::BucketItem(BucketFillType fillType)
 
     if (fillType == EMPTY || fillType == NONE)
     {
-        mBlock = Blocks::AIR;
+        mBlock = Blocks::air;
     }
     else if (fillType == LAVA)
     {
@@ -76,7 +92,7 @@ BucketItem::BucketItem(BucketFillType fillType)
     else if (fillType == MILK || fillType == FISH || fillType == SALMON || fillType == PUFFER
              || fillType == TROPICAL || fillType == WATER)
     {
-        mBlock = Blocks::FLOWING_WATER;
+        mBlock = Blocks::flowing_water;
     }
 }
 
@@ -91,7 +107,7 @@ bool BucketItem::isFishBucket()
 
 bool BucketItem::supportsEntityType(const unsigned long long& type, int& variant) const
 {
-    unsigned int id = (unsigned int)(type >> 32);
+    unsigned int id = static_cast<unsigned int>(type);
     if (id == 0x0d502002U)
     {
         variant = 2;
@@ -157,28 +173,58 @@ not_null_ptr<ItemInstance> BucketItem::createResultItem(not_null_ptr<ItemInstanc
     {
         itemInstance->shrink(1);
     }
-    if (!itemInstance->isEmpty())
+    if (itemInstance->isEmpty())
+        return result;
+
+    if (!player->mInventory->add(result))
     {
-        if (!player->mInventory->add(result))
-        {
-            not_null_ptr<ItemInstance> dropped(new ItemInstance(item, 1, 0));
-            player->drop(dropped, false);
-        }
+        not_null_ptr<ItemInstance> dropped(new ItemInstance(item, 1, 0));
+        if (item != Items::waterBucket && item != Items::lavaBucket)
+            addBucketEntitySaveData(entity, dropped);
+        player->drop(dropped, false);
     }
-    return result;
+    return itemInstance;
 }
 
 not_null_ptr<ItemInstance> BucketItem::collectFish(boost::shared_ptr<Player> player,
                                                    boost::shared_ptr<Entity> entity,
                                                    boost::shared_ptr<ItemInstance> itemInstance)
 {
-    int variant = FISH;
-    unsigned long long type = entity ? entity->GetType() : 0;
-    supportsEntityType(type, variant);
-    Item* resultItem = this;
-    if (variant == SALMON) resultItem = Item::byId(460);
-    if (variant == PUFFER) resultItem = Item::byId(461);
-    if (variant == TROPICAL) resultItem = Item::byId(462);
+    int variant = 0;
+    if (!entity)
+        return itemInstance;
+    unsigned long long type = entity->GetType();
+    if (!supportsEntityType(type, variant))
+        return itemInstance;
+    if (!entity->isInWater() || (mFillType != EMPTY && mFillType != WATER))
+        return itemInstance;
+
+    Item* resultItem = NULL;
+    switch (variant)
+    {
+    case 2:
+        resultItem = Items::fishBucket;
+        break;
+    case 3:
+        resultItem = Items::salmonBucket;
+        break;
+    case 4:
+        resultItem = Items::tropicalBucket;
+        break;
+    case 5:
+        resultItem = Items::pufferBucket;
+        break;
+    default:
+        break;
+    }
+
+    if (!player->mLevel->mIsClientSide)
+    {
+        std::vector<boost::shared_ptr<Entity> > removed;
+        removed.push_back(entity);
+        player->mLevel->removeEntities(&removed);
+    }
+    player->playSound(SoundEvents::BUCKET_FILL_FISH, 1.0f, 1.0f);
     return createResultItem(itemInstance, player, resultItem, entity);
 }
 
@@ -186,11 +232,10 @@ InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player
                                                         InteractionHand::EInteractionHand hand, const Direction* direction,
                                                         float hitX, float hitY, float hitZ, bool simulate)
 {
-    if (simulate)
-    {
-        return InteractionResult::eInteractionResult_Success;
-    }
-    return TestUse(level, player, hand) ? InteractionResult::eInteractionResult_Success : InteractionResult::eInteractionResult_Fail;
+    if (!simulate)
+        return Item::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+    return TestUse(level, player, hand) ? InteractionResult::eInteractionResult_Success
+                                        : InteractionResult::eInteractionResult_Fail;
 }
 
 namespace
@@ -402,127 +447,118 @@ HitResult* BucketItem::GetPlayerHitResult(boost::shared_ptr<Player> player, Leve
 
 bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
+    bool pickUp = mBlock == Blocks::air || isFishBucket();
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    bool useLiquids = mBlock == Blocks::AIR || isFishBucket();
-    HitResult* result = GetPlayerHitResult(player, level, useLiquids);
-    if (result == NULL)
+    HitResult* hitResult = GetPlayerHitResult(player, level, pickUp);
+    if (hitResult == NULL)
+        return false;
+    if (!level->mDimension->inPlayerConstraints(BlockPos(hitResult->mLocation)))
+        return false;
+
+    const Direction* direction = hitResult->mDirection;
+    if (hitResult->getBlockPos().y >= level->getMaxBuildHeight() - 1
+        && (direction == Direction::UP || hitResult->getBlockPos().y >= level->getMaxBuildHeight()))
     {
+        delete hitResult;
         return false;
     }
 
-    BlockPos constraintPos(result->mLocation);
-    if (!level->mDimension->inPlayerConstraints(constraintPos))
+    int variant = 0;
+    if (hitResult->mType == HitResult::ENTITY)
     {
-        return false;
-    }
-
-    BlockPos pos = result->getBlockPos();
-    if (pos.y >= level->getMaxBuildHeight() - 1)
-    {
-        if (result->mDirection == Direction::UP)
-        {
-            delete result;
-            return false;
-        }
-        if (pos.y >= level->getMaxBuildHeight())
-        {
-            delete result;
-            return false;
-        }
-    }
-
-    if (result->mType == HitResult::ENTITY)
-    {
-        boost::shared_ptr<Entity> entity = result->mEntity;
-        int variant = 0;
-        unsigned long long type = entity->GetType();
-        if (supportsEntityType(type, variant) && entity->isInWater()
+        unsigned long long type = hitResult->mEntity->GetType();
+        if (supportsEntityType(type, variant) && hitResult->mEntity->isInWater()
             && (mFillType == EMPTY || mFillType == WATER))
         {
             return true;
         }
-
     }
-    if (result->mType != HitResult::BLOCK)
+
+    if (hitResult->mType != HitResult::BLOCK)
     {
-        if (mBlock == NULL && result->mEntity->GetType() == 0x2d6a0000ULL)
+        if (mBlock == NULL && hitResult->mEntity->GetType() == EntityType::COW)
         {
-            delete result;
+            delete hitResult;
             return true;
         }
-        delete result;
+        delete hitResult;
         return false;
     }
 
+    BlockPos pos = hitResult->getBlockPos();
     Block* block = level->getBlock(pos);
     Block* liquidBlock = level->getLiquidBlock(pos);
-    const BlockState* blockState = block->defaultBlockState();
-    const BlockState* liquidState = liquidBlock->defaultBlockState();
-    const AABB* clipBox = block->getClipAABB(blockState, level, pos);
-    bool hasLiquidMaterial = blockState->getMaterial()->isLiquid()
-                          || liquidState->getMaterial()->isLiquid();
-    if (clipBox == NULL && !hasLiquidMaterial && !mBlock->canContainLiquid(blockState))
+    const AABB* shape = block->getClipAABB(block->defaultBlockState(), level, pos);
+    bool liquid = true;
+    if (!block->defaultBlockState()->getMaterial()->isLiquid()
+        && !liquidBlock->defaultBlockState()->getMaterial()->isLiquid())
     {
-        delete result;
+        liquid = false;
+    }
+    if (shape == NULL && !liquid && !block->canContainLiquid(block->defaultBlockState()))
+    {
+        delete hitResult;
         return false;
     }
 
     if (!level->mayInteract(player, pos, mBlock))
     {
-        delete result;
+        delete hitResult;
         return false;
     }
 
-    Block* cauldronPositionBlock = level->getBlock(pos);
-    if (cauldronPositionBlock == Blocks::cauldron && mFillType != EMPTY && mFillType != WATER)
+    if (!pickUp)
     {
-        delete result;
-        return false;
-    }
-
-    BlockPos placePos = pos.relative(result->mDirection);
-    if (player->mayUseItemAt(placePos, result->mDirection, itemInstance) != 1)
-    {
-        delete result;
-        return false;
-    }
-
-    GameMode* gameMode = player->GetGameMode();
-    if (!gameMode->MayPlace(placePos, mBlock))
-    {
-        delete result;
-        return false;
-    }
-
-    const BlockState* placeState = level->getBlockState(placePos);
-    Block* placeBlock = placeState->getBlock();
-    bool canUseAtPlace = level->isEmptyBlock(placePos) || !placeBlock->isWaterBlocking()
-                      || placeBlock == Blocks::FLOWING_WATER || placeBlock == Blocks::WATER
-                      || placeBlock == Blocks::flowing_lava || placeBlock == Blocks::lava;
-    if (!canUseAtPlace)
-    {
-        const BlockState* hitState = level->getBlockState(pos);
-        const BlockState* extraHitState = level->getExtraBlockState(pos);
-        Material* hitMaterial = hitState->getMaterial();
-        Material* extraHitMaterial = extraHitState->getMaterial();
-        if (hitMaterial == Material::WATER || hitMaterial == Material::LAVA)
+        if (!mBlock->isWaterBlocking())
         {
-            canUseAtPlace = hitState->getValue(LiquidBlock::LEVEL) == 0;
+            delete hitResult;
+            return true;
         }
-        if (!canUseAtPlace
-            && (extraHitMaterial == Material::WATER || extraHitMaterial == Material::LAVA))
+        if (level->getBlock(pos) == Blocks::cauldron && mFillType != EMPTY && mFillType != WATER)
         {
-            canUseAtPlace = extraHitState->getValue(LiquidBlock::LEVEL) == 0;
+            delete hitResult;
+            return false;
         }
+        BlockPos placePos = pos.relative(direction);
+        if (player->mayUseItemAt(pos, direction, itemInstance) != 1)
+        {
+            delete hitResult;
+            return false;
+        }
+        Block* placeBlock = level->getBlockState(placePos)->getBlock();
+        if (level->isEmptyBlock(placePos) || !placeBlock->isWaterBlocking() || placeBlock == Blocks::flowing_water
+            || placeBlock == Blocks::water || placeBlock == Blocks::flowing_lava || placeBlock == Blocks::lava)
+        {
+            delete hitResult;
+            return true;
+        }
+        delete hitResult;
+        return false;
     }
 
-    if (canUseAtPlace)
+    if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance) != 1)
     {
-        delete result;
+        delete hitResult;
+        return false;
+    }
+
+    const BlockState* state = level->getBlockState(pos);
+    Material* material = state->getBlock()->mMaterial;
+    const BlockState* extraState = level->getExtraBlockState(pos);
+    Material* extraMaterial = extraState->getBlock()->mMaterial;
+    if ((material == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0)
+        || (extraMaterial == Material::WATER && extraState->getValue(LiquidBlock::LEVEL) == 0))
+    {
+        delete hitResult;
         return true;
     }
-
-    delete result;
+    if ((material == Material::LAVA && state->getValue(LiquidBlock::LEVEL) == 0)
+        || (extraMaterial == Material::LAVA && extraState->getValue(LiquidBlock::LEVEL) == 0))
+    {
+        delete hitResult;
+        return true;
+    }
+    delete hitResult;
     return false;
 }
 
@@ -560,63 +596,313 @@ bool BucketItem::readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_
 
 bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (mFillType == EMPTY)
-    {
+    if (mBlock == Blocks::air)
         return false;
-    }
-    if (level->setBlock(pos, mBlock->defaultBlockState(), 11, false))
+
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = state->getBlock();
+    Material* material = state->getMaterial();
+    bool notSolid = !material->isSolid();
+    bool waterBlocking = block->isWaterBlocking();
+    bool replaceable = block->mayReplaceWithPlace(level, pos);
+    bool containsLiquid = false;
+    if (mBlock != Blocks::flowing_lava && level->getBlock(pos)->canContainLiquid(state))
+        containsLiquid = true;
+
+    if (!level->isEmptyBlock(pos) && !notSolid && !replaceable && !containsLiquid)
+        return false;
+
+    if (level->mDimension->isUltraWarm() && mBlock == Blocks::flowing_water)
     {
-        itemInstance->shrink(1);
-        return true;
+        int x = pos.x;
+        int y = pos.y;
+        int z = pos.z;
+        float first = level->mRandom->nextFloat();
+        float second = level->mRandom->nextFloat();
+        level->playSound(player, pos, SoundEvents::FIRE_EXTINGUISH, SoundSource::eSoundSource_Blocks, 0.5f,
+                         2.6f + (first - second) * 0.8f, 16.0f);
+        for (int i = 0; i < 8; ++i)
+        {
+            level->addParticle(PARTICLE_LARGE_SMOKE, (double)x + Math::random(), (double)y + Math::random(),
+                               (double)z + Math::random(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
     }
-    return false;
+    else
+    {
+        bool waterlog = level->getBlock(pos)->canContainLiquid(state) && material != Material::AIR
+            && mBlock != Blocks::flowing_lava;
+        if (!level->mIsClientSide && (notSolid || replaceable) && !material->isLiquid() && waterBlocking
+            && !containsLiquid)
+        {
+            level->destroyBlock(pos, true);
+            waterlog = false;
+        }
+
+        const SoundEvent* sound = SoundEvents::BUCKET_EMPTY;
+        if (mBlock == Blocks::flowing_lava)
+            sound = SoundEvents::BUCKET_EMPTY_LAVA;
+        else if (mBlock == Blocks::flowing_water && isFishBucket())
+            sound = SoundEvents::BUCKET_EMPTY_FISH;
+        level->playSound(player, pos, sound, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+
+        if (mBlock != Blocks::flowing_lava || !level->mIsClientSide)
+        {
+            if (waterlog)
+            {
+                level->setExtraBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            }
+            else
+            {
+                if (block->waterSpreadCausesSpawn())
+                    block->spawnResources(level, pos, state, 0);
+                if (material == Material::AIR || notSolid)
+                    level->setBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            }
+        }
+    }
+
+    if (itemInstance == ItemInstance::EMPTY)
+        return true;
+
+    if (!level->mIsClientSide && mBlock == Blocks::flowing_water && isFishBucket())
+    {
+        unsigned long long fishType = EntityType::FISH;
+        switch (mFillType)
+        {
+        case FISH:
+            fishType = EntityType::FISH;
+            break;
+        case SALMON:
+            fishType = EntityType::SALMON;
+            break;
+        case TROPICAL:
+            fishType = EntityType::TROPICAL_FISH;
+            break;
+        case PUFFER:
+            fishType = EntityType::PUFFERFISH;
+            break;
+        default:
+            break;
+        }
+        int error = 0;
+        boost::shared_ptr<Entity> fish = SpawnEggItem::spawnMobAt(level, EntityIO::getKey(fishType), pos.x + 0.5,
+                                                                  pos.y, pos.z + 0.5, &error, L"");
+        if (!fish)
+            SpawnEggItem::DisplaySpawnError(player, error);
+        else if (error == 0)
+            readBucketEntitySaveData(fish, itemInstance);
+    }
+    return true;
 }
 
 InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (TestUse(level, player, hand))
+    if (mFillType == MILK)
     {
-        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)), GenericStats::param_itemsUsed(player, itemInstance));
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+        player->startUsingItem(hand);
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, player->getItemInHand(hand));
     }
+
+    bool pickUp = mBlock == Blocks::air || isFishBucket();
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    HitResult* hitResult = GetPlayerHitResult(player, level, pickUp);
+    if (hitResult == NULL || !level->mDimension->inPlayerConstraints(BlockPos(hitResult->mLocation)))
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
+
+    const Direction* direction = hitResult->mDirection;
+    if (hitResult->getBlockPos().y >= level->getMaxBuildHeight() - 1
+        && (direction == Direction::UP || hitResult->getBlockPos().y >= level->getMaxBuildHeight()))
+    {
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+    }
+
+    if (hitResult->mType != HitResult::BLOCK)
+    {
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
+    }
+
+    BlockPos pos = hitResult->getBlockPos();
+    Block* block = level->getBlock(pos);
+    Block* liquidBlock = level->getLiquidBlock(pos);
+    const AABB* shape = block->getClipAABB(block->defaultBlockState(), level, pos);
+    bool liquid = true;
+    if (!block->defaultBlockState()->getMaterial()->isLiquid()
+        && !liquidBlock->defaultBlockState()->getMaterial()->isLiquid())
+    {
+        liquid = false;
+    }
+    if (shape == NULL && !liquid && !block->canContainLiquid(block->defaultBlockState()))
+    {
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+    }
+
+    bool mayNotInteract = true;
+    if (level->mayInteract(player, pos, mBlock) && level->mayInteract(player, pos.relative(direction), mBlock))
+        mayNotInteract = false;
+
+    if (mayNotInteract)
+    {
+        boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(player);
+        if (serverPlayer != NULL)
+        {
+            serverPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundChatPacket(
+                L"", ClientboundChatPacket::eChatPacketMessage_InteractionNotAllowed, -1)));
+        }
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+    }
+
+    if (!pickUp || mBlock != Blocks::air)
+    {
+        if (level->getBlock(pos) == Blocks::cauldron && mFillType != EMPTY && mFillType != WATER)
+        {
+            delete hitResult;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
+
+        bool fishIntoWater = false;
+        Block* target = level->getBlock(pos);
+        if ((target == Blocks::flowing_water || target == Blocks::water) && isFishBucket())
+            fishIntoWater = true;
+
+        BlockPos placePos = pos;
+        if (!fishIntoWater
+            && (!level->getBlock(pos)->canContainLiquid(level->getBlockState(pos)) || mBlock != Blocks::flowing_water))
+        {
+            placePos = pos.relative(direction);
+        }
+        if (level->getBlock(placePos.below()) == Blocks::snow_layer)
+        {
+            level->destroyBlock(placePos.below(), false);
+            placePos = placePos.below();
+        }
+
+        if (player->mayUseItemAt(placePos, direction, itemInstance) != 1)
+        {
+            delete hitResult;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
+        if (!player->GetGameMode()->MayPlace(placePos, mBlock))
+        {
+            delete hitResult;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
+        if (!emptyBucket(player, level, placePos, itemInstance))
+        {
+            delete hitResult;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
+        delete hitResult;
+        if (player->mAbilities.mInstabuild)
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+                                       not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket)));
+    }
+
+    if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance) != 1)
+    {
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+    }
+
+    const BlockState* state = level->getBlockState(pos);
+    const BlockState* liquidState = level->getLiquidBlockState(pos);
+    Material* material = state->getMaterial();
+    Material* liquidMaterial = liquidState->getMaterial();
+    const BlockState* liquidAbove = level->getLiquidBlock(pos.above())->defaultBlockState();
+    Block* blockAbove = level->getBlock(pos.above());
+    bool waterSourceAbove = false;
+    if (liquidAbove->getMaterial() == Material::WATER && liquidAbove->getValue(LiquidBlock::LEVEL) == 0)
+        waterSourceAbove = true;
+
+    bool removeLiquid = true;
+    if ((blockAbove->defaultBlockState()->isSolid() || waterSourceAbove) && liquidMaterial == Material::WATER)
+    {
+        removeLiquid = false;
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+             ++it)
+        {
+            if (*it == Direction::UP)
+                continue;
+            Block* neighbour = level->getLiquidBlock(pos.relative(*it));
+            bool water = neighbour->defaultBlockState()->getMaterial() == Material::WATER;
+            if (!neighbour->defaultBlockState()->isSolid())
+            {
+                if (!water || neighbour->defaultBlockState()->getValue(LiquidBlock::LEVEL) != 0)
+                {
+                    removeLiquid = true;
+                    break;
+                }
+            }
+            else if (water && neighbour->defaultBlockState()->getValue(LiquidBlock::LEVEL) != 0)
+            {
+                removeLiquid = true;
+                break;
+            }
+        }
+    }
+
+    if ((material == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0)
+        || (liquidMaterial == Material::WATER && liquidState->getValue(LiquidBlock::LEVEL) == 0))
+    {
+        if (liquidMaterial == Material::WATER && removeLiquid)
+            level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        if ((material == Material::WATER || material == Material::BUBBLE_COLUMN) && removeLiquid)
+            level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        player->playSound(SoundEvents::BUCKET_FILL, 1.0f, 1.0f);
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+                                       createResultItem(itemInstance, player, Items::waterBucket,
+                                                        boost::shared_ptr<Entity>()));
+    }
+
+    if ((material == Material::LAVA && state->getValue(LiquidBlock::LEVEL) == 0)
+        || (liquidMaterial == Material::LAVA && liquidState->getValue(LiquidBlock::LEVEL) == 0))
+    {
+        if (liquidMaterial == Material::LAVA)
+            level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        if (material == Material::LAVA)
+            level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        player->playSound(SoundEvents::BUCKET_FILL_LAVA, 1.0f, 1.0f);
+        if (level->mDimension->getType() == DimensionType::NETHER)
+            player->awardStat(gStats->get_netherLavaCollected(), GenericStats::param_noArgs());
+        delete hitResult;
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+                                       createResultItem(itemInstance, player, Items::lavaBucket,
+                                                        boost::shared_ptr<Entity>()));
+    }
+
     return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
 }
 
 not_null_ptr<ItemInstance> BucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                        boost::shared_ptr<LivingEntity> entity)
 {
-    if (mFillType == MILK)
+    if (mFillType != MILK)
+        return itemInstance;
+
+    bool notInstabuild = false;
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        bool notInstabuild = false;
-        unsigned long long type = entity->GetType();
-        if ((static_cast<unsigned int>(type) & 0xc800000U) == 0xc800000U)
-        {
-            boost::shared_ptr<Player> asPlayer = boost::static_pointer_cast<Player>(entity);
-            if (!asPlayer->mAbilities.mInstabuild)
-            {
-                notInstabuild = true;
-            }
-        }
-        if (notInstabuild)
-        {
-            itemInstance->shrink(1);
-        }
-        if (!level->mIsClientSide)
-        {
-            entity->removeAllEffects();
-        }
-        type = entity->GetType();
-        if ((static_cast<unsigned int>(type) & 0xc800000U) == 0xc800000U)
-        {
-            boost::shared_ptr<Player> asPlayer = boost::static_pointer_cast<Player>(entity);
-            asPlayer->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)), GenericStats::param_itemsUsed(asPlayer, itemInstance));
-        }
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+        if (!player->mAbilities.mInstabuild)
+            notInstabuild = true;
+    }
+    if (notInstabuild)
+        itemInstance->shrink(1);
+    if (!level->mIsClientSide)
+        entity->removeAllEffects();
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
+                          GenericStats::param_itemsUsed(player, itemInstance));
     }
     if (!itemInstance->isEmpty())
-    {
         return itemInstance;
-    }
     return not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket));
 }
 
@@ -634,28 +920,86 @@ unsigned int BucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     if (mFillType == MILK)
     {
-        return 0x32374037U;
+        return IDS_TOOLTIPS_DRINK;
     }
     if (!TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand))
     {
-        return 0xFFFFFFFFU;
+        return IDS_NONE;
     }
     if (isFishBucket())
     {
-        return 0xe80ccf48U;
+        return IDS_TOOLTIPS_EMPTY;
     }
-    return 0x4c4246b3U;
+    return IDS_TOOLTIPS_COLLECT;
 }
+
+static const int TROPICAL_FISH_COLOR_NAMES[15] = {
+    static_cast<int>(0x8A9C9A3E), 0x2FF565B1, 0x40A2DD6C, 0x6DBC7AE0, static_cast<int>(0xA94584ED),
+    0x4E44ECC4, static_cast<int>(0xB03701A2), static_cast<int>(0xD02C583C), static_cast<int>(0xF41C4A76),
+    static_cast<int>(0xF6303EFD), static_cast<int>(0xFF2145A5), 0x59210C0F, static_cast<int>(0xA6E7677F),
+    0x3538B71A, 0x4A597242,
+};
+
+static const int TROPICAL_FISH_PATTERN_NAMES[24] = {
+    0x1AC7A9D7, 0x0D35BF83, 0x14328023, 0x0CC5A1D0, static_cast<int>(0x86347D6E), static_cast<int>(0xBDBA78AC),
+    static_cast<int>(0x8C4ED0B3), 0x1918A669, static_cast<int>(0x9983DE84), static_cast<int>(0x947BF784),
+    static_cast<int>(0xC1AD361F), static_cast<int>(0xF13321A2), 0x2189FC84, static_cast<int>(0x9717CFF0),
+    static_cast<int>(0xA9D36B90), 0x1D2AD27B, 0x54FEB165, static_cast<int>(0xAEEAEA77),
+    static_cast<int>(0xACD88200), static_cast<int>(0xF10D126A), 0x2ADC42EF, static_cast<int>(0x8AD673EF),
+    0x75F6484C, 0x340BB259,
+};
 
 std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    if (isFishBucket() && itemInstance->hasCustomHoverName())
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(L"FishBucket"));
+    bool fishBucket = isFishBucket();
+    std::wstring customName = L"";
+    bool censored = false;
+    if (tag != NULL && tag->contains(L"CustomName") && fishBucket)
     {
-        return itemInstance->getHoverName();
+        customName = tag->getString(L"CustomName");
+        std::wstring ownerUUID = tag->getString(L"OwnerUUID");
+        bool restricted = tag->getBoolean(L"CreatedByRestrictedPlayer");
+        bool host = tag->getBoolean(L"CreatedOnHost");
+        if (fishBucket)
+            censored = isFishBucketNameCensored(customName, ownerUUID, restricted, host);
     }
-    if (mFillType == FISH) return L"item.fishBucket.name";
-    if (mFillType == SALMON) return L"item.salmonBucket.name";
-    if (mFillType == PUFFER) return L"item.pufferBucket.name";
-    if (mFillType == TROPICAL) return L"item.tropicalBucket.name";
-    return Item::getName(itemInstance);
+
+    if (fishBucket && !customName.empty() && !censored)
+        return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}", customName);
+
+    if (mFillType != TROPICAL || tag == NULL)
+        return Item::getName(itemInstance);
+
+    int variant = tag->getInt(L"Variant");
+    int pattern = ((variant >> 8) & 0xff) % 6;
+    int color = tag->getInt(L"Color");
+    int baseColor = (color & 0xff) % 15;
+    int patternColor = ((color >> 8) & 0xff) % 15;
+    int patternOffset = 0;
+    if ((variant & 1) != 0)
+        patternOffset = 6;
+    if (baseColor != patternColor)
+        patternOffset += 12;
+
+    int schoolName = getSchoolName(baseColor, patternColor, variant & 1, pattern);
+    if (schoolName != -1)
+    {
+        return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}",
+                          L10N::GetString(schoolName));
+    }
+
+    std::wstring baseName = L10N::GetString(TROPICAL_FISH_COLOR_NAMES[baseColor]);
+    if (baseColor == patternColor)
+    {
+        std::wstring fishName = replaceAll(L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]),
+                                           L"{*COLOR_0*}", baseName);
+        return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}", fishName);
+    }
+
+    std::wstring patternName = L10N::GetString(TROPICAL_FISH_COLOR_NAMES[patternColor]);
+    std::wstring fishName = L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]);
+    fishName = replaceAll(fishName, L"{*COLOR_0*}", baseName);
+    fishName = replaceAll(fishName, L"{*COLOR_1*}", patternName);
+    return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}", fishName);
 }

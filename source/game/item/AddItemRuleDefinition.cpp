@@ -17,11 +17,11 @@ AddItemRuleDefinition::AddItemRuleDefinition()
     m4JData = 0;
     mData = 0;
     mSlot = -1;
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(5), &mItemId);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(6), &mCount);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(7), &mData);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(2), &m4JData);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(8), &mSlot);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_itemId, &mItemId);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_quantity, &mCount);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_auxValue, &mData);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_dataTag, &m4JData);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_slot, &mSlot);
 }
 
 AddItemRuleDefinition::~AddItemRuleDefinition()
@@ -110,13 +110,13 @@ void AddItemRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* childr
 
 ConsoleGameRules::EGameRuleType AddItemRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(10);
+    return ConsoleGameRules::eGameRuleType_AddItem;
 }
 
 GameRuleDefinition* AddItemRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     AddEnchantmentRuleDefinition* child = NULL;
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(11)) {
+    if (type == ConsoleGameRules::eGameRuleType_AddEnchantment) {
         child = new AddEnchantmentRuleDefinition();
         mEnchantments.push_back(child);
     }

@@ -16,6 +16,10 @@ FishFoodItem::Type* gFishFoodTypes[4] = {
     new FishFoodItem::Type(3, 0x60C4EC20, 0x1F16945C, 1, 0.8f, L"fish_pufferfish_raw")
 };
 FishFoodItem::Type* gPufferfishFoodType = gFishFoodTypes[3];
+FishFoodItem::Type* FishFoodItem::Type::COD = gFishFoodTypes[0];
+FishFoodItem::Type* FishFoodItem::Type::SALMON = gFishFoodTypes[1];
+FishFoodItem::Type* FishFoodItem::Type::CLOWNFISH = gFishFoodTypes[2];
+FishFoodItem::Type* FishFoodItem::Type::PUFFERFISH = gFishFoodTypes[3];
 
 FishFoodItem::FishFoodItem(bool cooked)
     : FoodItem(0, 0.0f, false), mCooked(cooked)

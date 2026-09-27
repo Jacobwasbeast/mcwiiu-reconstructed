@@ -1,4 +1,5 @@
 #include "game/item/SignItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/GenericStats.hpp"
@@ -84,7 +85,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
             level->setBlock(signPos,
                             Blocks::standing_sign->defaultBlockState()->setBoxedValue(StandingSignBlock::ROTATION,
                                                                                       &rotationValue),
-                            11,
+                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                             false);
         }
         else
@@ -93,7 +94,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
             level->setBlock(signPos,
                             Blocks::wall_sign->defaultBlockState()->setBoxedValue(WallSignBlock::FACING, &facingValue),
-                            11,
+                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                             false);
         }
 
@@ -101,7 +102,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(signPos);
 
-        if (blockEntity && blockEntity->GetType() == 0x01000202ULL)
+        if (blockEntity && blockEntity->GetType() == BlockEntityType::SIGN)
         {
             if (BlockItem::updateCustomBlockEntityTag(level, player, signPos, itemInstance))
             {

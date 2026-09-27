@@ -1,4 +1,5 @@
 #include "game/item/RecordItem.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <boost/unordered_map.hpp>
 
@@ -6,6 +7,7 @@
 #include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Rarity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -16,9 +18,10 @@
 static boost::unordered_map<const SoundEvent*, RecordItem*> sBySound;
 
 RecordItem::RecordItem(const std::wstring& name, int recordId, const SoundEvent* sound)
-    : Item(), mRecordId(recordId), mSound(sound)
+    : Item(), mSound(sound), mRecordName(name), mRecordId(recordId)
 {
-    setIconName(name);
+    mMaxStackSize = 1;
+    sBySound[sound] = this;
 }
 
 RecordItem::~RecordItem()
@@ -52,7 +55,7 @@ InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player
     {
         not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
         jukebox->setRecord(level, pos, state, itemInstance);
-        level->levelEvent(boost::shared_ptr<Player>(), 1010, pos, Item::getId(this));
+        level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_PLAY_RECORDING, pos, Item::getId(this));
         player->awardStat(GenericStats::musicToMyEars(),
                           GenericStats::param_musicToMyEars(
                               Item::VALIDgetId(itemInstance->getItem())));
@@ -64,18 +67,18 @@ InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player
 
 void RecordItem::appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player>, std::vector<HtmlString>* lines, bool)
 {
-    lines->push_back(HtmlString(L10N::GetString(mRecordId),
-                                static_cast<eMinecraftColour>(getColor(item, 0)), false, false, 0));
+    eMinecraftColour colour = getRarity(item)->colour;
+    lines->push_back(HtmlString(L10N::GetString(mRecordId), colour, false, false, 0));
 }
 
 std::wstring RecordItem::getDisplayName()
 {
-    return mIconName;
+    return L10N::GetString(mRecordId);
 }
 
 const Rarity* RecordItem::getRarity(not_null_ptr<ItemInstance>)
 {
-    return Item::getRarity(ItemInstance::EMPTY);
+    return Rarity::RARE;
 }
 
 RecordItem* RecordItem::getBySound(const SoundEvent* sound)
@@ -98,5 +101,5 @@ TextureAtlasSprite* RecordItem::getIcon(int)
 
 void RecordItem::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(mIconName);
+    mIcon = iconRegister->registerIcon(L"record_" + mRecordName);
 }

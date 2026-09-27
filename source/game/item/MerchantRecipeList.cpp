@@ -33,7 +33,7 @@ void MerchantRecipeList::load(CompoundTag* tag)
     {
         return;
     }
-    ListTag* recipes = tag->getList(L"Recipes", 10);
+    ListTag* recipes = tag->getList(L"Recipes", Tag::TAG_COMPOUND);
     if (recipes == NULL)
     {
         return;

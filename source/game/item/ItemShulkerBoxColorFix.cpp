@@ -38,15 +38,15 @@ CompoundTag* ItemShulkerBoxColorFix::fix(CompoundTag* tag)
 {
     if (tag->getString(L"id") == L"minecraft:shulker_box")
     {
-        if (tag->contains(L"tag", 10))
+        if (tag->contains(L"tag", Tag::TAG_COMPOUND))
         {
             CompoundTag* itemTag = tag->getCompound(L"tag");
 
-            if (itemTag->contains(L"BlockEntityTag", 10))
+            if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
             {
                 CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
 
-                if (blockEntityTag->getList(L"Items", 10)->isEmpty())
+                if (blockEntityTag->getList(L"Items", Tag::TAG_COMPOUND)->isEmpty())
                 {
                     blockEntityTag->remove(L"Items");
                 }

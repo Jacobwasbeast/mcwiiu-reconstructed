@@ -47,7 +47,7 @@ void HoeItem::setBlock(not_null_ptr<ItemInstance> itemInstance,
                      1.0f, 1.0f, 16.0f);
     if (!level->mIsClientSide)
     {
-        level->setBlock(pos, state, 11, false);
+        level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         itemInstance->hurtAndBreak(1, player);
     }
 }

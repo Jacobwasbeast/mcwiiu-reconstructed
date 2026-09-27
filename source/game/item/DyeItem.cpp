@@ -1,4 +1,6 @@
 #include "game/item/DyeItem.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -22,6 +24,13 @@
 #include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/generation/Player.hpp"
+
+const int DyeItem::DYE_COLORS[16] = {
+    0x1E1B1B, 0xB3312C, 0x3B511A, 0x51301A,
+    0x253192, 0x7B2FBE, 0x287697, 0xABABAB,
+    0x434343, 0xD88198, 0x41CD34, 0xDECF2A,
+    0x6689D3, 0xC354CD, 0xEB8844, 0xF0F0F0
+};
 
 DyeItem::DyeItem()
     : Item()
@@ -101,7 +110,7 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
         {
             if (!level->mIsClientSide)
             {
-                level->levelEvent(2005, pos, 0);
+                level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, pos, 0);
             }
 
             return InteractionResult::eInteractionResult_Success;
@@ -127,7 +136,7 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
                 {
                     const BlockState* cocoa = Blocks::cocoa->getStateForPlacement(
                         level, placePos, direction, hitX, hitY, hitZ, 0, player);
-                    level->setBlock(placePos, cocoa, 10, false);
+                    level->setBlock(placePos, cocoa, Block::UPDATE_CLIENTS | Block::UPDATE_IMMEDIATE, false);
 
                     if (!player->mAbilities.mInstabuild)
                     {
@@ -177,7 +186,7 @@ bool DyeItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
     boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> target,
     InteractionHand::EInteractionHand hand)
 {
-    if (target->GetType() != ENTITY_TYPE_SHEEP)
+    if (target->GetType() != EntityType::SHEEP)
     {
         return false;
     }
@@ -203,7 +212,6 @@ void DyeItem::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 16; ++i)
     {
-        std::wstring iconName = getIconName() + L"_" + DyeColor::byItemData(i)->getSerializedName();
-        mIcons[i] = iconRegister->registerIcon(iconName);
+        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[i]);
     }
 }

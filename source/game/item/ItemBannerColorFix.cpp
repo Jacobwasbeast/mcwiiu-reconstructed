@@ -16,25 +16,25 @@ int ItemBannerColorFix::getVersion()
 
 CompoundTag* ItemBannerColorFix::fix(CompoundTag* tag)
 {
-    if (tag->getString(L"id") == L"minecraft:banner" && tag->contains(L"tag", 10))
+    if (tag->getString(L"id") == L"minecraft:banner" && tag->contains(L"tag", Tag::TAG_COMPOUND))
     {
         CompoundTag* itemTag = tag->getCompound(L"tag");
 
-        if (itemTag->contains(L"BlockEntityTag", 10))
+        if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
         {
             CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
 
-            if (blockEntityTag->contains(L"Base", 99))
+            if (blockEntityTag->contains(L"Base", Tag::TAG_ANY_NUMERIC))
             {
                 tag->putShort(L"Damage", (short)(blockEntityTag->getShort(L"Base") & 0xF));
 
-                if (itemTag->contains(L"display", 10))
+                if (itemTag->contains(L"display", Tag::TAG_COMPOUND))
                 {
                     CompoundTag* displayTag = itemTag->getCompound(L"display");
 
-                    if (displayTag->contains(L"Lore", 9))
+                    if (displayTag->contains(L"Lore", Tag::TAG_LIST))
                     {
-                        ListTag* loreTag = displayTag->getList(L"Lore", 8);
+                        ListTag* loreTag = displayTag->getList(L"Lore", Tag::TAG_STRING);
 
                         if (loreTag->size() == 1 && loreTag->getString(0) == L"(+NBT)")
                         {

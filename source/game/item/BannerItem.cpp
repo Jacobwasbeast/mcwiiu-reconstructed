@@ -1,4 +1,5 @@
 #include "game/item/BannerItem.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundType.hpp"
@@ -87,19 +88,19 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
         {
             int rotation = Mth::absFloor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
             StandingBannerBlock* banner = static_cast<StandingBannerBlock*>(Blocks::standing_banner);
-            level->setBlock(placePos, banner->getBlockState(rotation), 3, false);
+            level->setBlock(placePos, banner->getBlockState(rotation), Block::UPDATE_ALL, false);
         }
         else
         {
             WallBannerBlock* banner = static_cast<WallBannerBlock*>(Blocks::wall_banner);
             level->setBlock(placePos,
                             banner->getBlockState(direction->get3DDataValue()),
-                            3,
+                            Block::UPDATE_ALL,
                             false);
         }
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-        if (blockEntity.get() == NULL || blockEntity->GetType() != 0x0100020cULL)
+        if (blockEntity.get() == NULL || blockEntity->GetType() != BlockEntityType::BANNER)
         {
             player->displayClientMessage((int)0xfdf65c18, true);
             return InteractionResult::eInteractionResult_Fail;
@@ -136,7 +137,7 @@ void BannerItem::appendHoverTextFromBannerBlockEntityTag(not_null_ptr<ItemInstan
         return;
     }
 
-    ListTag* patterns = tag->getList(L"Patterns", 10);
+    ListTag* patterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
     for (int i = 0; i < patterns->size() && i < 6; ++i)
     {
         CompoundTag* patternTag = patterns->getCompound(i);
@@ -179,34 +180,30 @@ int BannerItem::getColor(not_null_ptr<ItemInstance> itemInstance, int layer)
     return BannerItem::getColor(itemInstance)->getTextureDiffuseColor();
 }
 
-const wchar_t* BannerItem::getFirstPatternName(not_null_ptr<ItemInstance> itemInstance)
+int BannerItem::getFirstPatternName(not_null_ptr<ItemInstance> itemInstance)
 {
     CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(L"BlockEntityTag"));
     if (tag != NULL)
     {
         if (tag->contains(L"Patterns"))
         {
-            ListTag* patterns = tag->getList(L"Patterns", 10);
+            ListTag* patterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
             if (patterns->size() != 0)
             {
                 CompoundTag* patternTag = patterns->getCompound(0);
                 const DyeColor* color = DyeColor::byItemData(patternTag->getInt(L"Color"));
                 BannerPattern* pattern = BannerPattern::byHash(patternTag->getString(L"Pattern"));
                 if (pattern != NULL)
-                {
-                    return L10N::GetString(pattern->getDisplayName(color->getBlockData()));
-                }
+                    return pattern->getDisplayName(color->getBlockData());
             }
         }
         if (tag->contains(L"Base"))
         {
             const DyeColor* color = DyeColor::byItemData(tag->getInt(L"Base"));
-            BannerPattern* basePattern = BannerPattern::byHash(L"b");
-            return L10N::GetString(basePattern->getDisplayName(color->getBlockData()));
+            return BannerPattern::BASE->getDisplayName(color->getBlockData());
         }
     }
 
-    const DyeColor* color = getColor(itemInstance);
-    BannerPattern* basePattern = BannerPattern::byHash(L"b");
-    return L10N::GetString(basePattern->getDisplayName(color->getBlockData()));
+    const DyeColor* color = DyeColor::byItemData(itemInstance->getAuxValue());
+    return BannerPattern::BASE->getDisplayName(color->getBlockData());
 }

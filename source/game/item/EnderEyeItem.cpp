@@ -1,4 +1,6 @@
 #include "game/item/EnderEyeItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -46,7 +48,7 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
     if (!simulate)
     {
         TypedBoxed<bool> eye(true);
-        level->setBlock(pos, state->setBoxedValue(EndPortalFrameBlock::EYE, &eye), 2, false);
+        level->setBlock(pos, state->setBoxedValue(EndPortalFrameBlock::EYE, &eye), Block::UPDATE_CLIENTS, false);
         level->updateNeighbourForOutputSignal(pos, Blocks::end_portal_frame);
         itemInstance->shrink(1);
 
@@ -71,7 +73,7 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
             {
                 for (int z = 0; z < 3; ++z)
                 {
-                    level->setBlock(origin.offset(x, 0, z), Blocks::end_portal->defaultBlockState(), 2, false);
+                    level->setBlock(origin.offset(x, 0, z), Blocks::end_portal->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
             level->globalLevelEvent(1038, origin.offset(1, 0, 1), 0);
@@ -109,7 +111,7 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
     player->startUsingItem(hand);
     if (!level->mIsClientSide)
     {
-        BlockPos* target = level->findNearestMapFeature(std::wstring(L"Stronghold"), BlockPos(player), false);
+        BlockPos* target = level->findNearestMapFeature(std::wstring(L"StrongHold"), BlockPos(player), false);
         if (target != NULL)
         {
             boost::shared_ptr<EyeOfEnderSignal> signal(
@@ -119,7 +121,7 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
             level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ,
                              SoundEvents::ENDEREYE_LAUNCH, SoundSource::eSoundSource_Neutral,
                              0.5f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
-            level->levelEvent(boost::shared_ptr<Player>(), 1003, BlockPos(player), 0);
+            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ENDER_EYE_LAUNCH, BlockPos(player), 0);
             if (!player->mAbilities.mInstabuild)
             {
                 itemInstance->shrink(1);
@@ -136,7 +138,7 @@ unsigned int EnderEyeItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipDat
 {
     if (tooltipData.m_pLevel->isGenerateMapFeatures())
     {
-        return 0x3c0788a3u;
+        return IDS_TOOLTIPS_THROW;
     }
-    return 0xffffffffu;
+    return IDS_NONE;
 }

@@ -16,7 +16,7 @@ int BedItemColorFix::getVersion()
 
 CompoundTag* BedItemColorFix::fix(CompoundTag* tag)
 {
-    if (CheckID(tag, L"minecraft_bed") && tag->getShort(L"Damage") == 0)
+    if (CheckID(tag, L"minecraft:bed") && tag->getShort(L"Damage") == 0)
     {
         tag->putShort(L"Damage", (short)DyeColor::RED->getBlockData());
     }

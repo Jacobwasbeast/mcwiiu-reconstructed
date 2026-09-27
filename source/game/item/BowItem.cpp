@@ -1,4 +1,6 @@
 #include "game/item/BowItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -121,7 +123,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
                                            int timeLeft,
                                            not_null_ptr<ItemInstance> projectile)
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return;
     }
@@ -227,7 +229,7 @@ void BowItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                            boost::shared_ptr<LivingEntity> entity,
                            int timeLeft)
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return;
     }
@@ -331,7 +333,7 @@ unsigned int BowItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
         && !tooltipData.m_pPlayer->mInventory->hasResource(Items::arrow)
         && !tooltipData.m_pPlayer->mInventory->hasResource(Items::tippedArrow))
     {
-        return 0xFFFFFFFF;
+        return IDS_NONE;
     }
 
     if (tooltipData.m_pPlayer->isUsingItem())

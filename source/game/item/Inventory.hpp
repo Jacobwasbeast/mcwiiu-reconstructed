@@ -22,6 +22,8 @@ class MultiPlayerGameMode;
 class Inventory : public Container
 {
 public:
+    static const int INVENTORY_SIZE = 36;
+
     explicit Inventory(Player* player);
     virtual ~Inventory();
 
@@ -104,8 +106,11 @@ private:
     friend class ServerGamePacketListenerImpl;
     friend class MultiPlayerGameMode;
     friend class Gui;
+    friend class LocalPlayer;
+    friend class MasterGameMode;
     friend class FurnaceMenu;
     friend class EnchantmentMenu;
+    friend class IUIScene_CraftingMenu;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;

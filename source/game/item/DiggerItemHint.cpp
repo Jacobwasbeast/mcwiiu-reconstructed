@@ -1,4 +1,5 @@
 #include "game/item/DiggerItemHint.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/Item.hpp"
@@ -8,7 +9,7 @@
 
 DiggerItemHint::DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
                                Item** items, unsigned int itemCount)
-    : TutorialHint(hint, tutorial, descriptionId, (eHintType)0, true, true, -1)
+    : TutorialHint(hint, tutorial, descriptionId, HINT_NONE, true, true, -1)
 {
     mItemCount = itemCount;
     mItems = new Item*[mItemCount];
@@ -55,7 +56,7 @@ unsigned int DiggerItemHint::attack(not_null_ptr<ItemInstance> item,
         {
             if (item->getItem() == mItems[i])
             {
-                if ((entity->GetType() & ENTITY_TYPE_MOB) != ENTITY_TYPE_MOB)
+                if ((entity->GetType() & EntityType::MOB) != EntityType::MOB)
                 {
                     return 0xffffffffU;
                 }

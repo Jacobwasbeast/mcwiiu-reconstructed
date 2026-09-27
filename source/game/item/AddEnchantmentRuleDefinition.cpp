@@ -15,10 +15,10 @@ AddEnchantmentRuleDefinition::AddEnchantmentRuleDefinition()
     mLevel = 0;
 
     GameRules_IntAttribute* enchantmentAttribute =
-        addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(3), &mEnchantmentId);
+        addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentId, &mEnchantmentId);
     enchantmentAttribute->setMin(0);
     enchantmentAttribute->setMax(0xff);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(4), &mLevel)->setMin(0);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentLevel, &mLevel)->setMin(0);
 }
 
 AddEnchantmentRuleDefinition::~AddEnchantmentRuleDefinition()
@@ -51,5 +51,5 @@ unsigned int AddEnchantmentRuleDefinition::enchantItem(not_null_ptr<ItemInstance
 
 ConsoleGameRules::EGameRuleType AddEnchantmentRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(11);
+    return ConsoleGameRules::eGameRuleType_AddEnchantment;
 }

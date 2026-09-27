@@ -38,32 +38,32 @@ void ArmorRecipes::_init()
 {
     mLists = new std::vector<Object*>[eArmorList_Count];
 
-    mLists[eArmorList_Ingredients].push_back(new Object(Items::leather, 0, 0x4000202));
-    mLists[eArmorList_Ingredients].push_back(new Object(Items::ironIngot, 0, 0x4000202));
-    mLists[eArmorList_Ingredients].push_back(new Object(Items::diamond, 0, 0x4000202));
-    mLists[eArmorList_Ingredients].push_back(new Object(Items::goldIngot, 0, 0x4000202));
-    mLists[eArmorList_Ingredients].push_back(new Object(Items::turtleShellPiece, 0, 0x4000202));
+    mLists[eArmorList_Ingredients].push_back(new Object(Items::leather, 0, Object::eType_Item));
+    mLists[eArmorList_Ingredients].push_back(new Object(Items::ironIngot, 0, Object::eType_Item));
+    mLists[eArmorList_Ingredients].push_back(new Object(Items::diamond, 0, Object::eType_Item));
+    mLists[eArmorList_Ingredients].push_back(new Object(Items::goldIngot, 0, Object::eType_Item));
+    mLists[eArmorList_Ingredients].push_back(new Object(Items::turtleShellPiece, 0, Object::eType_Item));
 
-    mLists[eArmorList_Helmets].push_back(new Object(Items::leatherHelmet, 0, 0x4000205));
-    mLists[eArmorList_Helmets].push_back(new Object(Items::ironHelmet, 0, 0x4000205));
-    mLists[eArmorList_Helmets].push_back(new Object(Items::diamondHelmet, 0, 0x4000205));
-    mLists[eArmorList_Helmets].push_back(new Object(Items::goldenHelmet, 0, 0x4000205));
-    mLists[eArmorList_Helmets].push_back(new Object(Items::turtleHelmet, 0, 0x4000205));
+    mLists[eArmorList_Helmets].push_back(new Object(Items::leatherHelmet, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Helmets].push_back(new Object(Items::ironHelmet, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Helmets].push_back(new Object(Items::diamondHelmet, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Helmets].push_back(new Object(Items::goldenHelmet, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Helmets].push_back(new Object(Items::turtleHelmet, 0, Object::eType_ArmorItem));
 
-    mLists[eArmorList_Chestplates].push_back(new Object(Items::leatherChestplate, 0, 0x4000205));
-    mLists[eArmorList_Chestplates].push_back(new Object(Items::ironChestplate, 0, 0x4000205));
-    mLists[eArmorList_Chestplates].push_back(new Object(Items::diamondChestplate, 0, 0x4000205));
-    mLists[eArmorList_Chestplates].push_back(new Object(Items::goldenChestplate, 0, 0x4000205));
+    mLists[eArmorList_Chestplates].push_back(new Object(Items::leatherChestplate, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Chestplates].push_back(new Object(Items::ironChestplate, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Chestplates].push_back(new Object(Items::diamondChestplate, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Chestplates].push_back(new Object(Items::goldenChestplate, 0, Object::eType_ArmorItem));
 
-    mLists[eArmorList_Leggings].push_back(new Object(Items::leatherLeggings, 0, 0x4000205));
-    mLists[eArmorList_Leggings].push_back(new Object(Items::ironLeggings, 0, 0x4000205));
-    mLists[eArmorList_Leggings].push_back(new Object(Items::diamondLeggings, 0, 0x4000205));
-    mLists[eArmorList_Leggings].push_back(new Object(Items::goldenLeggings, 0, 0x4000205));
+    mLists[eArmorList_Leggings].push_back(new Object(Items::leatherLeggings, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Leggings].push_back(new Object(Items::ironLeggings, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Leggings].push_back(new Object(Items::diamondLeggings, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Leggings].push_back(new Object(Items::goldenLeggings, 0, Object::eType_ArmorItem));
 
-    mLists[eArmorList_Boots].push_back(new Object(Items::leatherBoots, 0, 0x4000205));
-    mLists[eArmorList_Boots].push_back(new Object(Items::ironBoots, 0, 0x4000205));
-    mLists[eArmorList_Boots].push_back(new Object(Items::diamondBoots, 0, 0x4000205));
-    mLists[eArmorList_Boots].push_back(new Object(Items::goldenBoots, 0, 0x4000205));
+    mLists[eArmorList_Boots].push_back(new Object(Items::leatherBoots, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Boots].push_back(new Object(Items::ironBoots, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Boots].push_back(new Object(Items::diamondBoots, 0, Object::eType_ArmorItem));
+    mLists[eArmorList_Boots].push_back(new Object(Items::goldenBoots, 0, Object::eType_ArmorItem));
 }
 
 void ArmorRecipes::addRecipes(Recipes* recipes)
@@ -79,7 +79,7 @@ void ArmorRecipes::addRecipes(Recipes* recipes)
             wchar_t types[5];
             types[0] = L'w';
             types[1] = L'c';
-            types[2] = ingredient->auxValue == 0 && ingredient->flags == 0x4000206 ? L't' : L'i';
+            types[2] = ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block ? L't' : L'i';
             types[3] = L'g';
             types[4] = 0;
             recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(helmet->object)), types,
@@ -92,7 +92,7 @@ void ArmorRecipes::addRecipes(Recipes* recipes)
             wchar_t types[5];
             types[0] = L'w';
             types[1] = L'c';
-            types[2] = ingredient->auxValue == 0 && ingredient->flags == 0x4000206 ? L't' : L'i';
+            types[2] = ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block ? L't' : L'i';
             types[3] = L'g';
             types[4] = 0;
             recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(chestplate->object)), types,
@@ -105,7 +105,7 @@ void ArmorRecipes::addRecipes(Recipes* recipes)
             wchar_t types[5];
             types[0] = L'w';
             types[1] = L'c';
-            types[2] = ingredient->auxValue == 0 && ingredient->flags == 0x4000206 ? L't' : L'i';
+            types[2] = ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block ? L't' : L'i';
             types[3] = L'g';
             types[4] = 0;
             recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(leggings->object)), types,
@@ -118,7 +118,7 @@ void ArmorRecipes::addRecipes(Recipes* recipes)
             wchar_t types[5];
             types[0] = L'w';
             types[1] = L'c';
-            types[2] = ingredient->auxValue == 0 && ingredient->flags == 0x4000206 ? L't' : L'i';
+            types[2] = ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block ? L't' : L'i';
             types[3] = L'g';
             types[4] = 0;
             recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(boots->object)), types,

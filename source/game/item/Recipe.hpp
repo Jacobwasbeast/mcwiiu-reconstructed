@@ -17,6 +17,8 @@ class Recipe
 {
     friend class BannerRecipes;
     friend class Recipes;
+    friend class ShulkerBoxRecipes;
+    friend class IUIScene_CraftingMenu;
 
 public:
     enum _eGroupType

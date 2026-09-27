@@ -48,7 +48,7 @@ public:
     virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
         boost::shared_ptr<Player> player);
 
-    bool contains(boost::shared_ptr<Container> container);
+    virtual bool contains(boost::shared_ptr<Container> container);
 
 private:
     int mId;

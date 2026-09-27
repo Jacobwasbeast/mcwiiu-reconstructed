@@ -1,4 +1,5 @@
 #include "game/item/ThornsEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/DamageSource.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -14,7 +15,7 @@ ThornsEnchantment::ThornsEnchantment(
     const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
 {
-    setDescriptionId((int)0x88507d2e);
+    setDescriptionId((int)IDS_ENCHANTMENT_THORNS);
 }
 
 int ThornsEnchantment::getMinCost(int level)

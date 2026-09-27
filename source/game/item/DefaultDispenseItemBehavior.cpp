@@ -1,4 +1,5 @@
 #include "game/item/DefaultDispenseItemBehavior.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -83,11 +84,11 @@ void DefaultDispenseItemBehavior::playSound(BlockSource* blockSource, eOUTCOME o
 {
     if (outcome == eOUTCOME_Failure)
     {
-        blockSource->getWorld()->levelEvent(1001, blockSource->getPos(), 0);
+        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, blockSource->getPos(), 0);
     }
     else
     {
-        blockSource->getWorld()->levelEvent(1000, blockSource->getPos(), 0);
+        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_DISPENSE, blockSource->getPos(), 0);
     }
 }
 
@@ -96,7 +97,7 @@ void DefaultDispenseItemBehavior::playAnimation(BlockSource* blockSource, const 
 {
     if (outcome != eOUTCOME_Failure)
     {
-        blockSource->getWorld()->levelEvent(2000, blockSource->getPos(), getLevelEventDataFrom(direction));
+        blockSource->getWorld()->levelEvent(LevelEvent::PARTICLES_SHOOT, blockSource->getPos(), getLevelEventDataFrom(direction));
     }
 }
 

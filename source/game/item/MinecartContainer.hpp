@@ -64,7 +64,7 @@ public:
 
     void unpackLootTable(const boost::shared_ptr<Player>& player);
     void _init();
-    static void addDataWalkers(DataFixerUpper* fixer, unsigned long long gameTime);
+    static void addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType);
     void setLootTable(ResourceLocation* lootTable, long long seed);
 
 protected:

@@ -53,15 +53,15 @@ void MerchantRecipe::load(CompoundTag* tag)
     }
     mBuyA = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"buy")));
     mSell = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"sell")));
-    if (tag->contains(L"buyB", 10))
+    if (tag->contains(L"buyB", Tag::TAG_COMPOUND))
     {
         mBuyB = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"buyB")));
     }
-    if (tag->contains(L"uses", 99))
+    if (tag->contains(L"uses", Tag::TAG_ANY_NUMERIC))
     {
         mUses = tag->getInt(L"uses");
     }
-    if (tag->contains(L"maxUses", 99))
+    if (tag->contains(L"maxUses", Tag::TAG_ANY_NUMERIC))
     {
         mMaxUses = tag->getInt(L"maxUses");
     }
@@ -69,7 +69,7 @@ void MerchantRecipe::load(CompoundTag* tag)
     {
         mMaxUses = 7;
     }
-    if (tag->contains(L"rewardExp", 1))
+    if (tag->contains(L"rewardExp", Tag::TAG_BYTE))
     {
         mRewardExp = tag->getBoolean(L"rewardExp");
     }

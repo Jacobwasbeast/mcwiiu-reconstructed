@@ -1,4 +1,5 @@
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <utility>
 #include <vector>
@@ -73,7 +74,7 @@ int EnchantmentHelper::getItemEnchantmentLevel(const Enchantment* enchantment,
         return 0;
     }
 
-    ListTag* tags = static_cast<ListTag*>(item->getEnchantmentTags());
+    ListTag* tags = item->getEnchantmentTags();
     if (tags == NULL)
     {
         return 0;
@@ -107,7 +108,7 @@ boost::unordered_map<Enchantment*, int>* EnchantmentHelper::getEnchantments(
     }
     else
     {
-        tags = static_cast<ListTag*>(item->getEnchantmentTags());
+        tags = item->getEnchantmentTags();
     }
 
     if (tags != NULL)
@@ -198,7 +199,7 @@ void EnchantmentHelper::runIterationOnItem(EnchantmentIterationMethod& method,
         return;
     }
 
-    ListTag* tags = static_cast<ListTag*>(item->getEnchantmentTags());
+    ListTag* tags = item->getEnchantmentTags();
     if (tags == NULL)
     {
         return;
@@ -268,7 +269,7 @@ void EnchantmentHelper::doPostHurtEffects(const boost::shared_ptr<LivingEntity>&
     }
 
     if (attacker.get() != NULL
-        && (attacker->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         runIterationOnItem(sPostHurtIteration, target->getMainHandItem());
     }
@@ -296,7 +297,7 @@ void EnchantmentHelper::doPostDamageEffects(const boost::shared_ptr<LivingEntity
 
     delete slots;
 
-    if ((attacker->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         runIterationOnItem(sPostDamageIteration, attacker->getMainHandItem());
     }

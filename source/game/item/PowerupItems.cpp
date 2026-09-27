@@ -15,6 +15,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "game/item/ItemId.hpp"
+#include "game/world/block/BlockId.hpp"
 
 void PowerupItems::DoLargeBoost(boost::shared_ptr<Player> player)
 {
@@ -57,7 +59,7 @@ void PowerupItems::DoGainPoint(boost::shared_ptr<Player> player)
 
 bool PowerupItems::IsDebuff(eGlide_Timed_Powerup_ID powerupId)
 {
-    return powerupId == eGlide_Timed_Powerup_ID_1;
+    return powerupId == eGlide_Timed_Powerup_ID_InvertControls;
 }
 
 void PowerupItems::BroadcastTimedPowerup(boost::shared_ptr<Player> player,
@@ -109,37 +111,37 @@ void PowerupItems::DoSetInvulnerable(boost::shared_ptr<Player> player, int time)
         boost::shared_ptr<Packet> packet(new ClientboundPlayerAbilitiesPacket(&player->mAbilities,
                                                                                 player->getId()));
         players->broadcastAll(packet);
-        player->SetPowerupTicks(eGlide_Timed_Powerup_ID_2, time);
+        player->SetPowerupTicks(eGlide_Timed_Powerup_ID_Invulnerable, time);
     }
 }
 
 void PowerupItems::UsePowerupItem(boost::shared_ptr<Player> player, int itemId)
 {
-    if (itemId == 0x2e)
+    if (itemId == BlockId::TNT)
     {
         DoDropTNT(player);
     }
-    else if (itemId == 0x4c)
+    else if (itemId == BlockId::REDSTONE_TORCH)
     {
         DoSmallBoost(player);
     }
-    else if (itemId == 0x120)
+    else if (itemId == ItemId::FEATHER)
     {
-        DoTimedPowerup(player, eGlide_Timed_Powerup_ID_0, 0x3c);
+        DoTimedPowerup(player, eGlide_Timed_Powerup_ID_SlowFall, 0x3c);
     }
-    else if (itemId == 0x142)
+    else if (itemId == ItemId::GOLDEN_APPLE)
     {
         DoSetInvulnerable(player, 100);
     }
-    else if (itemId == 0x159)
+    else if (itemId == ItemId::COMPASS)
     {
-        DoTimedPowerup(player, eGlide_Timed_Powerup_ID_1, 0x3c);
+        DoTimedPowerup(player, eGlide_Timed_Powerup_ID_InvertControls, 0x3c);
     }
-    else if (itemId == 0x179)
+    else if (itemId == ItemId::BLAZE_POWDER)
     {
         DoLargeBoost(player);
     }
-    else if (itemId == 0x184)
+    else if (itemId == ItemId::EMERALD)
     {
         DoGainPoint(player);
     }

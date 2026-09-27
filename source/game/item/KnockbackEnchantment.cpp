@@ -1,11 +1,12 @@
 #include "game/item/KnockbackEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 
 KnockbackEnchantment::KnockbackEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::WEAPON, slots)
 {
-    setDescriptionId(0xC3755A5B);
+    setDescriptionId(IDS_ENCHANTMENT_KNOCKBACK);
 }
 
 int KnockbackEnchantment::getMinCost(int level)

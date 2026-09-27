@@ -62,10 +62,10 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
     state = state->setBoxedValue(DoorBlock::OPEN, &open);
     state = state->setBoxedValue(DoorBlock::POWERED, &open);
     state = state->setBoxedValue(DoorBlock::HALF, &half);
-    level->setBlock(pos, state, 3, false);
+    level->setBlock(pos, state, Block::UPDATE_ALL, false);
     TypedBoxed<DoorBlock::DoorHalf*> upper(DoorBlock::UPPER);
     state = state->setBoxedValue(DoorBlock::HALF, &upper);
-    level->setBlock(pos.above(), state, 3, false);
+    level->setBlock(pos.above(), state, Block::UPDATE_ALL, false);
     level->updateNeighborsAt(pos, block, false);
     level->updateNeighborsAt(pos.above(), block, false);
 }

@@ -15,8 +15,9 @@
 PlaceContainerRuleDefinition::PlaceContainerRuleDefinition()
     : XboxStructureActionPlaceBlock(), mChance(1.0f)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(21), &mAuxValue);
-    addFloatAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(50), &mChance);
+    mBlock = Blocks::chest;
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_facing, &mAuxValue);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_probability, &mChance);
 }
 
 PlaceContainerRuleDefinition::~PlaceContainerRuleDefinition()
@@ -38,7 +39,7 @@ uint32_t PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const
     if (oldBlockEntity)
     {
         level->removeBlockEntity(pos);
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 
     Random random;
@@ -47,7 +48,7 @@ uint32_t PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const
         return 0;
     }
 
-    level->setBlock(pos, mBlock->getBlockState(mAuxValue), 3, false);
+    level->setBlock(pos, mBlock->getBlockState(mAuxValue), Block::UPDATE_ALL, false);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(blockEntity);
     if (container)
@@ -97,13 +98,13 @@ void PlaceContainerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>*
 GameRuleDefinition* PlaceContainerRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     GameRuleDefinition* child = NULL;
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(10))
+    if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
         AddItemRuleDefinition* addItem = new AddItemRuleDefinition();
         mAddItems.push_back(addItem);
         child = addItem;
     }
-    else if (type == static_cast<ConsoleGameRules::EGameRuleType>(13))
+    else if (type == ConsoleGameRules::eGameRuleType_RandomItemSet)
     {
         RandomItemSetRuleDefinition* randomItemSet = new RandomItemSetRuleDefinition();
         mRandomItemSets.push_back(randomItemSet);
@@ -122,5 +123,5 @@ bool PlaceContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* rule
 
 ConsoleGameRules::EGameRuleType PlaceContainerRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(6);
+    return ConsoleGameRules::eGameRuleType_PlaceContainer;
 }

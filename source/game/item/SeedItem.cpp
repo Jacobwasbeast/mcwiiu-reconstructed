@@ -34,7 +34,7 @@ InteractionResult::EInteractionResult SeedItem::useOn(boost::shared_ptr<Player> 
     {
         if (!simulate)
         {
-            level->setBlock(pos.above(), mCropBlock->defaultBlockState(), 11, false);
+            level->setBlock(pos.above(), mCropBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
             itemInstance->shrink(1);
         }
         return InteractionResult::eInteractionResult_Success;

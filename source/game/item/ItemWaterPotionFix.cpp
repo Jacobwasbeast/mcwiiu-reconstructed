@@ -22,12 +22,12 @@ CompoundTag* ItemWaterPotionFix::fix(CompoundTag* tag)
     {
         CompoundTag* itemTag = tag->getCompound(L"tag");
 
-        if (!itemTag->contains(L"Potion", 8))
+        if (!itemTag->contains(L"Potion", Tag::TAG_STRING))
         {
             itemTag->putString(L"Potion", L"minecraft:water");
         }
 
-        if (!tag->contains(L"tag", 10))
+        if (!tag->contains(L"tag", Tag::TAG_COMPOUND))
         {
             tag->put(L"tag", itemTag);
         }

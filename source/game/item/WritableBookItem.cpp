@@ -1,4 +1,5 @@
 #include "game/item/WritableBookItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
@@ -33,12 +34,12 @@ bool WritableBookItem::TestUse(Level* level,
 
 bool WritableBookItem::makeSureTagIsValid(CompoundTag* tag)
 {
-    if (tag == NULL || !tag->contains(L"pages", 9))
+    if (tag == NULL || !tag->contains(L"pages", Tag::TAG_LIST))
     {
         return false;
     }
 
-    ListTag* pages = tag->getList(L"pages", 8);
+    ListTag* pages = tag->getList(L"pages", Tag::TAG_STRING);
     for (int index = 0; index < pages->size(); ++index)
     {
         if (pages->getString(index).size() > 256)
@@ -51,5 +52,5 @@ bool WritableBookItem::makeSureTagIsValid(CompoundTag* tag)
 
 unsigned int WritableBookItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return 0x41590ad1u;
+    return IDS_TOOLTIPS_OPEN;
 }

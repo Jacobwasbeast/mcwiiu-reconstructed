@@ -29,7 +29,11 @@ public:
         ~HoldingPlayer();
         boost::shared_ptr<ClientboundMapItemDataPacket> nextUpdatePacket(not_null_ptr<ItemInstance> item);
         void markDirty(int x, int y);
+
     private:
+        friend class MapItemSavedData;
+        friend class MapItem;
+
         boost::shared_ptr<Player> mPlayer;
         bool mDirty;
         int mMinX;
@@ -37,6 +41,9 @@ public:
         int mMaxX;
         int mMaxY;
         int mTick;
+        int mReserved0x20[3];
+        int mStep;
+        bool mReserved0x30;
         MapItemSavedData* mMapData;
     };
 private:
@@ -58,7 +65,7 @@ public:
     void setDirty(int x, int y);
     int fjEnumerateAxisPoint(int point);
     int fjGetDecorationId(CompoundTag* tag);
-    void addDecoration(const MapDecoration::Type* type, Level* level, int id, double x, double z, double rotation, double ignored, bool visible);
+    void addDecoration(const MapDecoration::Type* type, Level* level, int id, double x, double y, double z, double rotation, bool visible);
     void tickCarriedBy(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item);
     void mergeInMapData(boost::shared_ptr<MapItemSavedData> data);
     std::vector<MapDecoration> fjGetAllDecorations();
@@ -74,9 +81,9 @@ private:
 
     int mXCenter;
     int mZCenter;
-    unsigned char mDimension;
+    signed char mDimension;
     bool mTrackingPosition;
-    unsigned char mUnlimitedTracking;
+    bool mUnlimitedTracking;
     unsigned char mScale;
 public:
     arrayWithLength<unsigned char> mColors;
@@ -84,6 +91,7 @@ private:
     std::vector<boost::shared_ptr<HoldingPlayer> > mHoldingPlayers;
     boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, PlayerKeyHash, PlayerKeyEq> mCarriedBy;
     boost::unordered_map<int, MapDecoration> mDecorations;
+    long long mLastUpdateTime;
     boost::unordered_map<int, MapDecoration> mDecorationsById;
 };
 #endif

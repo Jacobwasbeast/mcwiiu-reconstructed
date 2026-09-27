@@ -1,4 +1,5 @@
 #include "game/item/CarrotOnAStickItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -99,7 +100,7 @@ unsigned int CarrotOnAStickItem::GetUseTooltip(const ItemTooltipDataHolder& tool
 {
     if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success)
     {
-        return 0xffffffffu;
+        return IDS_NONE;
     }
-    return 0x39cf7c20u;
+    return IDS_TOOLTIPS_BOOST;
 }

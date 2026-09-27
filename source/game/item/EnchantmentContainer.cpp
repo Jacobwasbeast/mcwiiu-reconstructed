@@ -1,8 +1,9 @@
 #include "game/item/EnchantmentContainer.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/ui/EnchantmentMenu.hpp"
 
 EnchantmentContainer::EnchantmentContainer(EnchantmentMenu* menu)
-    : SimpleContainer(0xf4bd500f, std::wstring(L""), false, 2),
+    : SimpleContainer(IDS_ENCHANT, std::wstring(L""), false, 2),
       mMenu(menu)
 {
 }

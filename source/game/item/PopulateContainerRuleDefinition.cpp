@@ -13,9 +13,9 @@ PopulateContainerRuleDefinition::PopulateContainerRuleDefinition()
     mX = 0;
     mY = 0;
     mZ = 0;
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(25), &mX);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(28), &mY);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(31), &mZ);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_x, &mX);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_y, &mY);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mZ);
 }
 
 PopulateContainerRuleDefinition::~PopulateContainerRuleDefinition()
@@ -52,13 +52,13 @@ void PopulateContainerRuleDefinition::getChildren(std::vector<GameRuleDefinition
 GameRuleDefinition* PopulateContainerRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     GameRuleDefinition* child = NULL;
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(10))
+    if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
         AddItemRuleDefinition* addItem = new AddItemRuleDefinition();
         mAddItems.push_back(addItem);
         child = addItem;
     }
-    else if (type == static_cast<ConsoleGameRules::EGameRuleType>(13))
+    else if (type == ConsoleGameRules::eGameRuleType_RandomItemSet)
     {
         RandomItemSetRuleDefinition* randomItemSet = new RandomItemSetRuleDefinition();
         mRandomItemSets.push_back(randomItemSet);
@@ -96,5 +96,5 @@ bool PopulateContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* r
 
 ConsoleGameRules::EGameRuleType PopulateContainerRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(32);
+    return ConsoleGameRules::eGameRuleType_PopulateContainer;
 }

@@ -96,7 +96,7 @@ InteractionResult::EInteractionResult ShearsItem::useOn(boost::shared_ptr<Player
                                  1.0f,
                                  1.0f,
                                  16.0f);
-                level->setBlock(pos, carvedState, 11, false);
+                level->setBlock(pos, carvedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                 Block::popResource(level, pos,
                                    not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
                 itemInstance->hurtAndBreak(1, player);

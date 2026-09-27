@@ -1,4 +1,5 @@
 #include "game/item/BindingCurseEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 
@@ -6,7 +7,7 @@ BindingCurseEnchantment::BindingCurseEnchantment(const Rarity* rarity,
                                                  arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
 {
-    setDescriptionId((int)0x7b5dbcd8);
+    setDescriptionId((int)IDS_ENCHANTMENT_CURSE_OF_BINDING);
 }
 
 BindingCurseEnchantment::~BindingCurseEnchantment()

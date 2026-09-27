@@ -2,14 +2,18 @@
 #define GAME_ITEM_ITEMINSTANCECLONERBUILDER_HPP
 
 #include "game/item/ItemInstance.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/ui/UIScene_CreativeMenu.hpp"
 
-class ItemInstanceClonerBuilder
+class ItemInstanceClonerBuilder : public UIScene_CreativeMenu::ItemBuilder
 {
 public:
+    ItemInstanceClonerBuilder(const ItemInstance& item);
+
     virtual not_null_ptr<ItemInstance> build() const;
 
-private:
-    ItemInstance itemInstance;
+protected:
+    ItemInstance mItem;
 };
 
 #endif

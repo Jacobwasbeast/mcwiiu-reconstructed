@@ -1,4 +1,6 @@
 #include "game/item/SkullItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -20,12 +22,12 @@
 #include "game/world/generation/Player.hpp"
 
 static const int SKULL_DESCRIPTION_IDS[] = {
-    1318443285,
-    593636577,
-    529811274,
-    -1235002899,
-    -663435654,
-    -1024091147
+    IDS_ITEM_SKULL_SKELETON,
+    IDS_ITEM_SKULL_WITHER,
+    IDS_ITEM_SKULL_ZOMBIE,
+    IDS_ITEM_SKULL_CHARACTER,
+    IDS_ITEM_SKULL_CREEPER,
+    IDS_ITEM_SKULL_DRAGON
 };
 
 SkullItem::SkullItem()
@@ -81,7 +83,7 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
         TypedBoxed<const Direction*> facing(direction);
         level->setBlock(placePos,
                         Blocks::skull->defaultBlockState()->setBoxedValue(SkullBlock::FACING, &facing),
-                        11,
+                        Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                         false);
 
         int rotation = 0;
@@ -91,7 +93,7 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
         }
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-        if (blockEntity && blockEntity->GetType() == 0x01200207ULL)
+        if (blockEntity && blockEntity->GetType() == BlockEntityType::SKULL)
         {
             boost::shared_ptr<SkullBlockEntity> skull =
                 boost::static_pointer_cast<SkullBlockEntity>(blockEntity);
@@ -130,14 +132,14 @@ std::wstring SkullItem::getName(not_null_ptr<ItemInstance> itemInstance)
     if (itemInstance->getAuxValue() == 3 && itemInstance->hasTag())
     {
         CompoundTag* tag = itemInstance->getTag();
-        if (tag->contains(L"SkullOwner", 8))
+        if (tag->contains(L"SkullOwner", Tag::TAG_STRING))
         {
             return tag->getString(L"SkullOwner");
         }
-        if (tag->contains(L"SkullOwner", 10))
+        if (tag->contains(L"SkullOwner", Tag::TAG_COMPOUND))
         {
             CompoundTag* owner = tag->getCompound(L"SkullOwner");
-            if (owner->contains(L"Name", 8))
+            if (owner->contains(L"Name", Tag::TAG_STRING))
             {
                 return owner->getString(L"Name");
             }

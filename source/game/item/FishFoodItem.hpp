@@ -22,6 +22,12 @@ public:
              float saturation, const std::wstring& icon);
 
         static Type* getById(int id);
+
+        static Type* COD;
+        static Type* SALMON;
+        static Type* CLOWNFISH;
+        static Type* PUFFERFISH;
+
         static Type* getByItem(not_null_ptr<ItemInstance> itemInstance);
 
         unsigned char canBeCooked() const;

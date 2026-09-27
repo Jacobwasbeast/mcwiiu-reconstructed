@@ -1,4 +1,6 @@
 #include "game/item/TridentItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <string>
 
@@ -57,7 +59,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<LivingEntity> entity,
                                int timeLeft)
 {
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return;
     }
@@ -246,27 +248,27 @@ unsigned int TridentItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData
     {
         if (tooltipData.m_pPlayer->isUsingItem())
         {
-            return 0x384b59e3u;
+            return IDS_TOOLTIPS_DASH;
         }
 
         if (tooltipData.m_pPlayer->isInWaterOrRain()
             && tooltipData.m_pItemInstance->getDamageValue() < tooltipData.m_pItemInstance->getMaxDamage())
         {
-            return 0xd51bd637u;
+            return IDS_TOOLTIPS_CHARGE;
         }
     }
     else
     {
         if (tooltipData.m_pPlayer->isUsingItem())
         {
-            return 0x3c0788a3u;
+            return IDS_TOOLTIPS_THROW;
         }
 
         if (tooltipData.m_pItemInstance->getDamageValue() < tooltipData.m_pItemInstance->getMaxDamage())
         {
-            return 0xd51bd637u;
+            return IDS_TOOLTIPS_CHARGE;
         }
     }
 
-    return 0xffffffffu;
+    return IDS_NONE;
 }

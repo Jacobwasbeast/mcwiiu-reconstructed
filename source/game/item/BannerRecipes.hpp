@@ -53,6 +53,9 @@ public:
         virtual void recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired);
         virtual boost::shared_ptr<CraftingContainer> generateExpectedCraftSlots();
     };
+
+    static BannerDuplicateRecipe* mDuplicateRecipe;
+    static BannerAddPatternRecipe* mAddPatternRecipe;
 };
 
 #endif

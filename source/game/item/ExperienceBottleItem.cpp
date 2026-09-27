@@ -1,4 +1,5 @@
 #include "game/item/ExperienceBottleItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -72,7 +73,7 @@ unsigned int ExperienceBottleItem::GetUseTooltip(const ItemTooltipDataHolder& to
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xffffffffu;
+        return IDS_NONE;
     }
-    return 0x3c0788a3u;
+    return IDS_TOOLTIPS_THROW;
 }

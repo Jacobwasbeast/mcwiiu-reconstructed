@@ -1,4 +1,5 @@
 #include "game/item/MendingEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 
@@ -6,7 +7,7 @@ MendingEnchantment::MendingEnchantment(const Rarity* rarity,
                                        arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BREAKABLE, slots)
 {
-    setDescriptionId(0x3bcc2150);
+    setDescriptionId(IDS_ENCHANTMENT_MENDING);
 }
 
 MendingEnchantment::~MendingEnchantment()

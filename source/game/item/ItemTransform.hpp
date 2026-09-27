@@ -6,6 +6,8 @@
 class ItemTransform
 {
 public:
+    static ItemTransform* NO_TRANSFORM;
+
     Vector3f rotation;
     Vector3f translation;
     Vector3f scale;

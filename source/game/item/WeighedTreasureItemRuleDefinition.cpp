@@ -11,9 +11,9 @@ WeighedTreasureItemRuleDefinition::WeighedTreasureItemRuleDefinition()
     mMaxCount = 0;
     mWeight = 0;
 
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(46), &mMinCount);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(47), &mMaxCount);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(48), &mWeight);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_minCount, &mMinCount);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_maxCount, &mMaxCount);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_weight, &mWeight);
 }
 
 WeighedTreasureItemRuleDefinition::~WeighedTreasureItemRuleDefinition()
@@ -37,5 +37,5 @@ WeighedTreasure* WeighedTreasureItemRuleDefinition::getItem()
 
 ConsoleGameRules::EGameRuleType WeighedTreasureItemRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(12);
+    return ConsoleGameRules::eGameRuleType_WeighedTreasureItem;
 }

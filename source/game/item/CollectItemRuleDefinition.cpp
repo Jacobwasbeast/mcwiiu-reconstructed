@@ -16,9 +16,9 @@ CollectItemRuleDefinition::CollectItemRuleDefinition()
     , mAuxValue(0)
     , mGoal(0)
 {
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(5), &mIcon);
-    addUnsignedCharAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(7), &mAuxValue);
-    addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(6), &mGoal);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_itemId, &mIcon);
+    addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_auxValue, &mAuxValue);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_quantity, &mGoal);
 }
 
 CollectItemRuleDefinition::~CollectItemRuleDefinition()
@@ -27,7 +27,7 @@ CollectItemRuleDefinition::~CollectItemRuleDefinition()
 
 ConsoleGameRules::EGameRuleType CollectItemRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(26);
+    return ConsoleGameRules::eGameRuleType_CollectItem;
 }
 
 int CollectItemRuleDefinition::getGoal()

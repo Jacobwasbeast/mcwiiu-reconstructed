@@ -1,4 +1,6 @@
 #include "game/item/MinecartItem.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/BehaviorRegistry.hpp"
@@ -45,7 +47,7 @@ InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Play
     not_null_ptr<ItemInstance> itemInstance = ((LivingEntity*)player.get())->getItemInHand(hand);
     if (!simulate && !level->mIsClientSide)
     {
-        if (level->countInstanceOf(0xA800000ULL, false, NULL, NULL) > 249)
+        if (level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) > 249)
         {
             return InteractionResult::eInteractionResult_Fail;
         }
@@ -54,8 +56,7 @@ InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Play
         BaseRailBlock::RailShape* shape = NULL;
         if (block->instanceof(EBLOCK_TYPE_RAIL))
         {
-            shape = static_cast<TypedBoxed<BaseRailBlock::RailShape*>*>(
-                state->getBoxedValue(static_cast<BaseRailBlock*>(block)->getShapeProperty()))->getValue();
+            shape = state->getValue(static_cast<BaseRailBlock*>(block)->getShapeProperty());
         }
 
         double yOffset = shape != NULL && shape->isAscending() ? 1.0 : 0.0;
@@ -89,7 +90,7 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     Level* level = blockSource->getWorld();
     const BlockState* state = level->getBlockState(position);
 
-    if (level->countInstanceOf(0xA800000ULL, false, NULL, NULL) > 249)
+    if (level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) > 249)
     {
         outcome = eOUTCOME_Failure;
         return DefaultDispenseItemBehavior::execute(blockSource, itemInstance, outcome);
@@ -113,8 +114,7 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     Block* block = state->getBlock();
     if (block->instanceof(EBLOCK_TYPE_RAIL))
     {
-        shape = static_cast<TypedBoxed<BaseRailBlock::RailShape*>*>(
-            state->getBoxedValue(static_cast<BaseRailBlock*>(block)->getShapeProperty()))->getValue();
+        shape = state->getValue(static_cast<BaseRailBlock*>(block)->getShapeProperty());
     }
 
     double y = (double)position.y + 0.0625;
@@ -143,5 +143,5 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
 
 void MinecartItem::MinecartDispenseBehavior::playSound(BlockSource* blockSource, eOUTCOME outcome)
 {
-    blockSource->getWorld()->levelEvent(1000, blockSource->getPos(), 0);
+    blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_DISPENSE, blockSource->getPos(), 0);
 }

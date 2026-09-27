@@ -96,9 +96,17 @@ public:
 
 private:
     const EquipmentSlot* mSlot;
+
+public:
     int mDefense;
+
+private:
     float mToughness;
+
+public:
     int mRenderIndex;
+
+private:
     const ArmorMaterial* mMaterial;
     TextureAtlasSprite* mOverlayIcon;
     TextureAtlasSprite* mEmptyIcon;

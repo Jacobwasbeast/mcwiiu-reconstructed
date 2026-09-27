@@ -43,8 +43,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/IdMapper.hpp"
 #include "game/world/block/MappedRegistry.hpp"
-
-std::wstring formatwstr(const wchar_t* format, ...);
+#include "game/core/StringFormat.hpp"
 
 MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >* Enchantment::enchantmentRegistry =
     new MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >();

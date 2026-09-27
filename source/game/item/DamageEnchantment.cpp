@@ -1,4 +1,5 @@
 #include "game/item/DamageEnchantment.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
@@ -85,7 +86,7 @@ bool DamageEnchantment::canEnchant(not_null_ptr<ItemInstance> itemInstance)
 void DamageEnchantment::doPostAttack(boost::shared_ptr<LivingEntity> attacker,
                                      boost::shared_ptr<Entity> target, int level)
 {
-    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> livingTarget =
             boost::static_pointer_cast<LivingEntity>(target);

@@ -52,7 +52,7 @@ CompoundTag* ContainerHelper::saveAllItems(CompoundTag* tag, NonNullList<not_nul
 
 void ContainerHelper::loadAllItems(CompoundTag* tag, NonNullList<not_null_ptr<ItemInstance> > items)
 {
-    ListTag* list = tag->getList(L"Items", 10);
+    ListTag* list = tag->getList(L"Items", Tag::TAG_COMPOUND);
     for (int index = 0; index < list->size(); ++index)
     {
         CompoundTag* itemTag = list->getCompound(index);

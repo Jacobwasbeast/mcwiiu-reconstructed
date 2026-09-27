@@ -19,7 +19,7 @@ int ItemCookedFishIdFix::getVersion()
 
 CompoundTag* ItemCookedFishIdFix::fix(CompoundTag* tag)
 {
-    if (tag->contains(L"id", 8))
+    if (tag->contains(L"id", Tag::TAG_STRING))
     {
         ResourceLocation id(tag->getString(L"id"));
 

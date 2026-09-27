@@ -1,4 +1,5 @@
 #include "game/item/ElytraItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/BehaviorRegistry.hpp"
 #include "game/core/IconRegister.hpp"
@@ -48,7 +49,7 @@ bool ElytraItem::isFlyEnabled(not_null_ptr<ItemInstance> itemInstance)
 
 bool ElytraItem::isValidRepairItem(not_null_ptr<ItemInstance>, not_null_ptr<ItemInstance> repairItem)
 {
-    return repairItem->getItem() == Items::elytra;
+    return repairItem->getItem() == Items::phantomMembrane;
 }
 
 InteractionResultHolder ElytraItem::use(Level*,
@@ -79,10 +80,10 @@ unsigned int ElytraItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xFFFFFFFF;
+        return IDS_NONE;
     }
 
-    return 0xAFD35F15;
+    return IDS_TOOLTIPS_EQUIP;
 }
 
 void ElytraItem::registerIcons(IconRegister* iconRegister)

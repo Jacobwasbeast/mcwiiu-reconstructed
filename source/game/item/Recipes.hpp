@@ -8,9 +8,24 @@
 #include "game/core/GenericStats.hpp"
 #include "game/item/Recipe.hpp"
 
+class ArmorDyeRecipe;
+class ArmorRecipes;
+class BannerRecipes;
+class BookCloningRecipe;
+class ClothDyeRecipes;
 class CraftingContainer;
+class FireworksRecipe;
+class FoodRecipies;
 class ItemInstance;
 class Level;
+class OreRecipies;
+class RepairItemRecipe;
+class ShulkerBoxColoring;
+class ShulkerBoxRecipes;
+class StructureRecipies;
+class TippedArrowRecipe;
+class ToolRecipies;
+class WeaponRecipies;
 
 struct _va_struct
 {
@@ -23,10 +38,11 @@ public:
     enum ERecipeCategory
     {
         eRecipeCategory_Crafting = 0,
-        eRecipeCategory_1 = 1,
-        eRecipeCategory_2 = 2,
-        eRecipeCategory_3 = 3,
-        eRecipeCategory_4 = 4
+        eRecipeCategory_Banners,
+        eRecipeCategory_Fireworks,
+        eRecipeCategory_Dyeing,
+        eRecipeCategory_Reserved,
+        eRecipeCategory_Count
     };
 
     Recipes();
@@ -51,9 +67,25 @@ public:
         return mInstance;
     }
 
+    static ToolRecipies* mToolRecipies;
+    static WeaponRecipies* mWeaponRecipies;
+    static OreRecipies* mOreRecipies;
+    static FoodRecipies* mFoodRecipies;
+    static StructureRecipies* mStructureRecipies;
+    static ArmorRecipes* mArmorRecipes;
+    static ClothDyeRecipes* mClothDyeRecipes;
+    static BannerRecipes* mBannerRecipes;
+    static ShulkerBoxRecipes* mShulkerBoxRecipes;
+    static ShulkerBoxColoring* mShulkerBoxColoring;
+    static FireworksRecipe* mFireworksRecipe;
+    static RepairItemRecipe* mRepairItemRecipe;
+    static BookCloningRecipe* mBookCloningRecipe;
+    static TippedArrowRecipe* mTippedArrowRecipe;
+    static ArmorDyeRecipe* mArmorDyeRecipe;
+
 private:
-    std::vector<Recipe*> mRecipes[5];
-    Recipe::INGREDIENTS_REQUIRED* mRecipeIngredients[5];
+    std::vector<Recipe*> mRecipes[eRecipeCategory_Count];
+    Recipe::INGREDIENTS_REQUIRED* mRecipeIngredients[eRecipeCategory_Count];
     static Recipes* mInstance;
 };
 

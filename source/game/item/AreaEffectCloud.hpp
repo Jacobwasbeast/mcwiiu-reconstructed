@@ -31,7 +31,7 @@ public:
     boost::shared_ptr<LivingEntity> getOwner();
     void applyMobEffects();
     bool isWaiting();
-    int getParticle();
+    const ParticleType* getParticle();
     int getColor();
     int getParticleParam1();
     int getParticleParam2();

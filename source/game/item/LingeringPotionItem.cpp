@@ -1,4 +1,5 @@
 #include "game/item/LingeringPotionItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
@@ -12,6 +13,11 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
+LingeringPotionItem::LingeringPotionItem()
+    : PotionItem()
+{
+}
+
 LingeringPotionItem::~LingeringPotionItem()
 {
 }
@@ -24,7 +30,7 @@ unsigned int LingeringPotionItem::getPotionType() const
 std::wstring LingeringPotionItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
     Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getName(Potion::AMPLIFIED);
+    return potion->getName(Potion::LINGERING);
 }
 
 void LingeringPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -78,9 +84,9 @@ unsigned int LingeringPotionItem::GetUseTooltip(const ItemTooltipDataHolder& too
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        return 0xffffffffu;
+        return IDS_NONE;
     }
-    return 0x3c0788a3u;
+    return IDS_TOOLTIPS_THROW;
 }
 
 std::wstring LingeringPotionItem::getBottleTextureName()

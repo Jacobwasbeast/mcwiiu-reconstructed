@@ -8,7 +8,9 @@
 
 void ShulkerBoxRecipes::addRecipes(Recipes* recipes)
 {
-    recipes->addShapedRecipe(new ItemInstance(Blocks::white_shulker_box), L"ssscictg", L"-", L"#", L"-",
+    recipes->addShapedRecipe(new ItemInstance(Blocks::purple_shulker_box), L"ssscictg", L"-", L"#", L"-",
         L'-', Items::shulkerShell, L'#', Blocks::chest, L'S');
-    recipes->addCustomRecipe(new ShulkerBoxColoring(), Recipes::eRecipeCategory_Crafting);
+    ShulkerBoxColoring* coloring = new ShulkerBoxColoring();
+    coloring->mDisplayInSimpleCrafting = false;
+    recipes->addCustomRecipe(coloring, Recipes::eRecipeCategory_Crafting);
 }

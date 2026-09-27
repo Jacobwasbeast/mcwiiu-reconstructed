@@ -1,4 +1,6 @@
 #include "game/item/BedItem.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundType.hpp"
@@ -21,10 +23,10 @@
 #include "game/world/generation/Player.hpp"
 
 static const unsigned int BED_DESCRIPTION_IDS[16] = {
-    0x6BD9B3C4, 0x70D97B2B, 0x6E73A676, 0xC985D454,
-    0x29C060C7, 0xC872BBEE, 0x2FFA2DDF, 0x6C532C86,
-    0x4B6015EC, 0x0702020E, 0x6E39E7BD, 0xD5F99695,
-    0x09C5C185, 0x9EF3B3D0, 0xF0DD2368, 0x5555A4BC
+    IDS_TILE_BED_WHITE, IDS_TILE_BED_ORANGE, IDS_TILE_BED_MAGENTA, IDS_TILE_BED_LIGHT_BLUE,
+    IDS_TILE_BED_YELLOW, IDS_TILE_BED_LIME, IDS_TILE_BED_PINK, IDS_TILE_BED_GRAY,
+    IDS_TILE_BED_SILVER, IDS_TILE_BED_CYAN, IDS_TILE_BED_PURPLE, IDS_TILE_BED_BLUE,
+    IDS_TILE_BED_BROWN, IDS_TILE_BED_GREEN, IDS_TILE_BED_RED, IDS_TILE_BED_BLACK
 };
 
 BedItem::BedItem()
@@ -106,10 +108,10 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
         footState = footState->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
         TypedBoxed<const BedBlock::Part*> footValue(BedBlock::PART->getUnboxedValue(L"foot"));
         footState = footState->setBoxedValue(BedBlock::PART, &footValue);
-        level->setBlock(footPos, footState, 11, false);
+        level->setBlock(footPos, footState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
 
         TypedBoxed<const BedBlock::Part*> headValue(BedBlock::PART->getUnboxedValue(L"head"));
-        level->setBlock(headPos, footState->setBoxedValue(BedBlock::PART, &headValue), 11, false);
+        level->setBlock(headPos, footState->setBoxedValue(BedBlock::PART, &headValue), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
 
         player->awardStat(gStats->get_blocksPlaced(Block::getId(Blocks::bed)),
                           GenericStats::param_blocksPlaced(headState, 1));
@@ -125,7 +127,7 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
 
         boost::shared_ptr<BlockEntity> headEntity = level->getBlockEntity(headPos);
 
-        if (headEntity->GetType() == 0x01000210ULL)
+        if (headEntity->GetType() == BlockEntityType::BED)
         {
             boost::static_pointer_cast<BedBlockEntity>(headEntity)->setItemValues(itemInstance);
             boost::static_pointer_cast<BedBlockEntity>(headEntity)->setColor(
@@ -134,7 +136,7 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
 
         boost::shared_ptr<BlockEntity> footEntity = level->getBlockEntity(footPos);
 
-        if (footEntity->GetType() == 0x01000210ULL)
+        if (footEntity->GetType() == BlockEntityType::BED)
         {
             boost::static_pointer_cast<BedBlockEntity>(footEntity)->setItemValues(itemInstance);
             boost::static_pointer_cast<BedBlockEntity>(footEntity)->setColor(
@@ -167,7 +169,7 @@ bool BedItem::hasMultipleSpriteLayers()
 void BedItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mBedIcon = iconRegister->registerIcon(getIconName());
+    mBedIcon = iconRegister->registerIcon(L"bed_overlay");
 }
 
 int BedItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)

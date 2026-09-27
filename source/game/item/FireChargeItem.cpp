@@ -58,7 +58,7 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
                              1.0f,
                              (random->nextFloat() - random->nextFloat()) * 0.2f + 1.0f,
                              16.0f);
-            level->setBlockAndUpdate(target, Blocks::FIRE->defaultBlockState());
+            level->setBlockAndUpdate(target, Blocks::fire->defaultBlockState());
         }
         if (!player->mAbilities.mInstabuild)
         {
@@ -68,7 +68,7 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
     }
 
     if (level->getBlockState(target)->getBlock()->mMaterial == Material::AIR &&
-        Blocks::FIRE->mayPlace(level, target))
+        Blocks::fire->mayPlace(level, target))
     {
         return InteractionResult::eInteractionResult_Success;
     }

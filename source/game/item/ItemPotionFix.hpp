@@ -9,7 +9,7 @@ public:
     virtual ~ItemPotionFix();
     virtual int getVersion();
     virtual CompoundTag* fix(CompoundTag* tag);
-    static uint64_t staticCtor();
+    static void staticCtor();
     static void fix(not_null_ptr<ItemInstance> item);
 };
 #endif

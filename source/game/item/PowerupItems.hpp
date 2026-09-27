@@ -10,9 +10,9 @@ class PowerupItems
 public:
     enum eGlide_Timed_Powerup_ID
     {
-        eGlide_Timed_Powerup_ID_0 = 0,
-        eGlide_Timed_Powerup_ID_1 = 1,
-        eGlide_Timed_Powerup_ID_2 = 2
+        eGlide_Timed_Powerup_ID_SlowFall = 0,
+        eGlide_Timed_Powerup_ID_InvertControls = 1,
+        eGlide_Timed_Powerup_ID_Invulnerable = 2
     };
 
     static void DoLargeBoost(boost::shared_ptr<Player> player);

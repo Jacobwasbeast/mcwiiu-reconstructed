@@ -23,7 +23,7 @@ DistributeItemsRuleDefinition::DistributeItemsRuleDefinition()
     : GameRuleDefinition()
 {
     mLootGroup.assign(L"rule");
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(49), &mLootGroup);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_id, &mLootGroup);
 }
 
 DistributeItemsRuleDefinition::~DistributeItemsRuleDefinition()
@@ -44,13 +44,13 @@ void DistributeItemsRuleDefinition::getChildren(std::vector<GameRuleDefinition*>
 
 ConsoleGameRules::EGameRuleType DistributeItemsRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(14);
+    return ConsoleGameRules::eGameRuleType_DistributeItems;
 }
 
 GameRuleDefinition* DistributeItemsRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     WorldPositionRuleDefinition* child = NULL;
-    if (type == static_cast<ConsoleGameRules::EGameRuleType>(15))
+    if (type == ConsoleGameRules::eGameRuleType_WorldPosition)
     {
         child = new WorldPositionRuleDefinition();
         mPositions.push_back(child);

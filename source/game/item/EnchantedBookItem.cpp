@@ -31,7 +31,7 @@ ListTag* EnchantedBookItem::getEnchantments(not_null_ptr<ItemInstance> itemInsta
     CompoundTag* tag = itemInstance->getTag();
     if (tag != NULL)
     {
-        return tag->getList(L"StoredEnchantments", 10);
+        return tag->getList(L"StoredEnchantments", Tag::TAG_COMPOUND);
     }
     return new ListTag(0);
 }
