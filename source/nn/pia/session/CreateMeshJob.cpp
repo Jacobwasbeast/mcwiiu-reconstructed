@@ -119,7 +119,7 @@ unsigned int CreateMeshJob::StartupImpl()
 {
     Reset(true);
     m_state = 0xffff;
-    m_currentStep.m_name = "CreateMeshJob__SetupLocalPlayerInfo";
+    m_currentStep.m_name = "CreateMeshJob::SetupLocalPlayerInfo";
     SetNextStepAtSetupLocalPlayerInfoImpl();
     return cExecuteResultContinue;
 }
@@ -127,7 +127,7 @@ unsigned int CreateMeshJob::StartupImpl()
 void CreateMeshJob::SetNextStepAtSetupLocalPlayerInfoImpl()
 {
     SelectStep(m_currentStep, &CreateMeshJob::SetupLocalStation);
-    m_currentStep.m_name = "CreateMeshJob__SetupLocalStation";
+    m_currentStep.m_name = "CreateMeshJob::SetupLocalStation";
     m_state = 0xffff;
 }
 

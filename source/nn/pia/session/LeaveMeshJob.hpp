@@ -3,14 +3,24 @@
 #include "nn/pia.h"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
-namespace nn { namespace pia { namespace session {
-class LeaveMeshJob : public common::StepSequenceJob {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
+class LeaveMeshJob : public common::StepSequenceJob
+{
 public:
-    LeaveMeshJob(); virtual ~LeaveMeshJob();
+    LeaveMeshJob();
+    virtual ~LeaveMeshJob();
     Result Startup(common::CallContext*);
-    unsigned int SendLeaveRequest(); unsigned int WaitLeaveResponse();
-    unsigned int StartDisconnectStations(); unsigned int WaitLeavingProcess();
-    unsigned int LeaveSuccess(); void Cleanup();
+    unsigned int SendLeaveRequest();
+    unsigned int WaitLeaveResponse();
+    unsigned int StartDisconnectStations();
+    unsigned int WaitLeavingProcess();
+    unsigned int LeaveSuccess();
+    void Cleanup();
     unsigned int RegisterExtraCallback(common::CallContext*);
     virtual void Trace(unsigned long long) const;
     unsigned int m_deadlineHigh;
@@ -20,5 +30,7 @@ public:
     common::CallContext* m_extraContext;
     bool m_disconnectStarted;
 };
-}}}
+}
+}
+}
 #endif

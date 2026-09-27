@@ -42,7 +42,7 @@ Result CreateSessionJob::Startup(common::CallContext* callerContext, const Creat
         return callerContext->m_result;
     Reset(true);
     SelectStep(m_currentStep, &CreateSessionJob::MeshStartup);
-    m_currentStep.m_name = "CreateSessionJob__MeshStartup";
+    m_currentStep.m_name = "CreateSessionJob::MeshStartup";
     return 0;
 }
 
@@ -62,11 +62,11 @@ unsigned int CreateSessionJob::MeshStartup()
     if (status < 5)
     {
         SelectStep(m_currentStep, &CreateSessionJob::CreateMesh);
-        m_currentStep.m_name = "CreateSessionJob__CreateMesh";
+        m_currentStep.m_name = "CreateSessionJob::CreateMesh";
         return cExecuteResultNextStep;
     }
     SelectStep(m_currentStep, &CreateSessionJob::CreateMesh);
-    m_currentStep.m_name = "CreateSessionJob__CreateMesh";
+    m_currentStep.m_name = "CreateSessionJob::CreateMesh";
     return cExecuteResultNextStep;
 }
 
@@ -83,7 +83,7 @@ unsigned int CreateSessionJob::CreateMesh()
     }
     g_piaMesh->SetSkipReport(true);
     SelectStep(m_currentStep, &CreateSessionJob::WaitCreateMesh);
-    m_currentStep.m_name = "CreateSessionJob__WaitCreateMesh";
+    m_currentStep.m_name = "CreateSessionJob::WaitCreateMesh";
     return cExecuteResultNextStep;
 }
 
