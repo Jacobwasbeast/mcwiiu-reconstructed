@@ -153,7 +153,7 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
                 double x = pos.x + 0.2 + random->nextDouble() * 0.6;
                 double y = pos.y + 0.2 + random->nextDouble() * 0.6;
                 double z = pos.z + 0.2 + random->nextDouble() * 0.6;
-                level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+                level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
             }
 
             level->addToTickNextTick(pos, level->getBlockState(pos)->getBlock(), 0xA0);

@@ -19,7 +19,7 @@ WoodButtonBlock::~WoodButtonBlock()
 void WoodButtonBlock::playOnSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos)
 {
     level->playSound(player, pos, SoundEvents::WOOD_BUTTON_CLICK_ON,
-                     SoundSource::eSoundSource_Blocks, 0.3f, 0.9f, 16.0f);
+                     SoundSource::eSoundSource_Blocks, 0.3f, 0.6f, 16.0f);
 }
 
 void WoodButtonBlock::playOffSound(Level* level, const BlockPos& pos)

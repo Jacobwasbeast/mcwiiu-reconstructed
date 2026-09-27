@@ -120,7 +120,7 @@ void FallingBlock::animateTick(const BlockState* state, Level* level, const Bloc
     {
         arrayWithLength<int> params(1, true);
         params.data[0] = Block::getIdWithData(state);
-        level->addParticle(PARTICLE_BLOCK_DUST,
+        level->addParticle(PARTICLE_FALLING_DUST,
                            (double)pos.x + (double)random->nextFloat(),
                            (double)pos.y - 0.05,
                            (double)pos.z + (double)random->nextFloat(),

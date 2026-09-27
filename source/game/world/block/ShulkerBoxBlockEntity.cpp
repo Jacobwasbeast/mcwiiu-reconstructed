@@ -5,6 +5,10 @@
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/Level.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/MoverType.hpp"
 
@@ -122,20 +126,40 @@ void ShulkerBoxBlockEntity::setChanged()
 
 void ShulkerBoxBlockEntity::startOpen(boost::shared_ptr<Player> player)
 {
+    if (player->isSpectator())
+    {
+        return;
+    }
+
+    if (mOpenCount < 0)
+    {
+        mOpenCount = 0;
+    }
+
     ++mOpenCount;
-    mCleared = false;
-    mAnimationStatus = 1;
+    mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
+
+    if (mOpenCount == 1)
+    {
+        mLevel->playSound(boost::shared_ptr<Player>(), mPos, SoundEvents::SHULKER_BOX_OPEN,
+                          SoundSource::eSoundSource_Blocks, 0.5f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+    }
 }
 
 void ShulkerBoxBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 {
-    if (mOpenCount > 0)
+    if (player->isSpectator())
     {
-        --mOpenCount;
+        return;
     }
-    if (mOpenCount == 0)
+
+    --mOpenCount;
+    mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
+
+    if (mOpenCount <= 0)
     {
-        mAnimationStatus = 3;
+        mLevel->playSound(boost::shared_ptr<Player>(), mPos, SoundEvents::SHULKER_BOX_CLOSE,
+                          SoundSource::eSoundSource_Blocks, 0.5f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
     }
 }
 

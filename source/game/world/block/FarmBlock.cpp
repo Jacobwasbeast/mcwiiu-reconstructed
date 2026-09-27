@@ -43,14 +43,15 @@ bool FarmBlock::isCubeShaped(const BlockState*) { return false; }
 
 void FarmBlock::turnToDirt(Level* level, const BlockPos& pos)
 {
-    level->setBlock(pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_ALL, false);
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), getShape(defaultBlockState(), level, pos));
-    if (entities == NULL) return;
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it)
+    const BlockState* dirt = Blocks::dirt->defaultBlockState();
+    level->setBlockAndUpdate(pos, dirt);
+
+    AABB* box = dirt->getClipAABB(level, pos)->move(pos);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(boost::shared_ptr<Entity>(), box, NULL);
+
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        if (it->get() != NULL && it->get()->mBbWidth * it->get()->mBbWidth * it->get()->mBbHeight > 0.512f)
-            it->get()->causeFallDamage(0.0f, 0.0f);
+        (*it)->teleportTo((*it)->mX, box->mMaxY, (*it)->mZ);
     }
 }
 

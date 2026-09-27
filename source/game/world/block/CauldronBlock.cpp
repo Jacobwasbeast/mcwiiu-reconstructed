@@ -23,6 +23,8 @@
 #include "game/util/Random.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
+#include "game/world/biome/BiomeSource.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
@@ -430,11 +432,17 @@ void CauldronBlock::setWaterLevel(Level* level, const BlockPos& pos, const Block
 }
 void CauldronBlock::handleRain(Level* level, const BlockPos& pos)
 {
-    if (level != NULL && level->mRandom != NULL && level->mRandom->nextInt(20) == 1)
+    if (level->mRandom->nextInt(20) == 1)
     {
-        const BlockState* state = level->getBlockState(pos);
-        if (state != NULL && convertBlockStateToLegacyData(state) < 6)
-            setWaterLevel(level, pos, state, convertBlockStateToLegacyData(state) + 1);
+        float temperature = level->getBiome(pos)->getTemperature(pos);
+        if (level->getBiomeSource()->scaleTemp(temperature, pos.y) >= 0.15f)
+        {
+            const BlockState* state = level->getBlockState(pos);
+            if (state->getValue(LEVEL) < 6)
+            {
+                level->setBlock(pos, state->cycle(LEVEL), Block::UPDATE_CLIENTS, false);
+            }
+        }
     }
 }
 

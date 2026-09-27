@@ -1,4 +1,6 @@
 #include "game/world/block/EnderChestBlockEntity.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -34,47 +36,36 @@ void EnderChestBlockEntity::setCustomName(const std::wstring& name, const std::w
 
 void EnderChestBlockEntity::tick()
 {
-    ++mTickCount;
-    if (mTickCount % 20 == 0 && mLevel != NULL)
-    {
+    if (++mTickCount % 20 == 0)
         mLevel->blockEvent(mPos, Blocks::ender_chest, 1, mOpenCount);
-    }
 
     mOpenOld = mOpen;
-    if (mOpenCount > 0 && mOpen < 1.0F)
+    const int x = mPos.x;
+    const int y = mPos.y;
+    const int z = mPos.z;
+    if (mOpenCount > 0 && mOpen == 0.0f)
     {
-        mOpen += 0.1F;
-        if (mOpen > 1.0F)
+        mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(x + 0.5, y + 0.5, z + 0.5),
+                          SoundEvents::ENDERCHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.5f,
+                          mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+    }
+    if ((mOpenCount == 0 && mOpen > 0.0f) || (mOpenCount > 0 && mOpen < 1.0f))
+    {
+        const float oldOpen = mOpen;
+        if (mOpenCount > 0)
+            mOpen += 0.1f;
+        else
+            mOpen -= 0.1f;
+        if (mOpen > 1.0f)
+            mOpen = 1.0f;
+        if (mOpen < 0.5f && oldOpen >= 0.5f)
         {
-            mOpen = 1.0F;
+            mLevel->playSound(boost::shared_ptr<Player>(), x + 0.5, y + 0.5, z + 0.5, SoundEvents::ENDERCHEST_CLOSE,
+                              SoundSource::eSoundSource_Blocks, 0.5f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f,
+                              16.0f);
         }
-    }
-    else if (mOpenCount <= 0 && mOpen > 0.0F)
-    {
-        mOpen -= 0.1F;
-        if (mOpen < 0.0F)
-        {
-            mOpen = 0.0F;
-        }
-    }
-
-    if (mLevel == NULL)
-    {
-        return;
-    }
-
-    Random* random = mLevel->mRandom;
-    if (mOpen == 0.0F && mOpenCount > 0)
-    {
-        mLevel->addParticle(ePARTICLE_PORTAL, false,
-                            (double)mPos.x + 0.5, (double)mPos.y + 0.8 + (double)random->nextFloat() * 0.1,
-                            (double)mPos.z + 0.5, 0.0, 0.0, 0.0, arrayWithLength<int>());
-    }
-    if (mOpen < 0.5F && mOpenOld >= 0.5F)
-    {
-        mLevel->addParticle(ePARTICLE_PORTAL, false,
-                            (double)mPos.x + 0.5, (double)mPos.y + 0.8 + (double)random->nextFloat() * 0.1,
-                            (double)mPos.z + 0.5, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        if (mOpen < 0.0f)
+            mOpen = 0.0f;
     }
 }
 

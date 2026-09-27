@@ -92,7 +92,7 @@ void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPo
             x = static_cast<double>(pos.x) + 0.5 + 0.25 * sign;
             velocityX = static_cast<double>(random->nextFloat() + random->nextFloat()) * sign;
         }
-        level->addParticle(PARTICLE_END_PORTAL, x, y, z, velocityX, velocityY, velocityZ,
+        level->addParticle(PARTICLE_PORTAL, x, y, z, velocityX, velocityY, velocityZ,
                            arrayWithLength<int>());
     }
 }

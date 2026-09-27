@@ -1,4 +1,8 @@
 #include "game/world/block/ComparatorBlock.hpp"
+#include "game/core/Abilities.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <typeinfo>
@@ -184,17 +188,23 @@ int ComparatorBlock::getInputSignal(Level* level, const BlockPos& pos, const Blo
     return signal;
 }
 
-bool ComparatorBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player>, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+bool ComparatorBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool simulate)
 {
-    if (clientSide) return true;
-    if (state->getValue(MODE) == ComparatorMode::COMPARE)
+    if (!player->mAbilities.mMayBuild)
     {
-        TypedBoxed<ComparatorMode*> mode(ComparatorMode::SUBTRACT);
-        level->setBlock(pos, state->setBoxedValue(MODE, &mode), Block::UPDATE_CLIENTS, false);
-        return true;
+        return false;
     }
-    TypedBoxed<ComparatorMode*> mode(ComparatorMode::COMPARE);
-    level->setBlock(pos, state->setBoxedValue(MODE, &mode), Block::UPDATE_CLIENTS, false);
+
+    const BlockState* newState = state->cycle(MODE);
+    float pitch = newState->getValue(MODE) == ComparatorMode::SUBTRACT ? 0.55f : 0.5f;
+    level->playSound(player, pos, SoundEvents::COMPARATOR_CLICK, SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
+
+    if (!simulate)
+    {
+        level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
+        refreshOutputState(level, pos, newState);
+    }
+
     return true;
 }
 

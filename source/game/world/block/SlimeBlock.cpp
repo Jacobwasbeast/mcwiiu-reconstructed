@@ -40,7 +40,11 @@ void SlimeBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Ent
 
 void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> entity)
 {
-    if (entity->mYd > -0.08 && entity->mYd < 0.0)
+    if (entity->isSneaking() || (entity->mYd > -0.08f && entity->mYd < 0.0))
+    {
+        Block::updateEntityAfterFallOn(level, entity);
+    }
+    else if (entity->mYd < 0.0)
     {
         if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
@@ -55,12 +59,8 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
         entity->mYd = -entity->mYd;
         if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
         {
-            entity->mYd *= 1.1;
+            entity->mYd *= 0.8;
         }
-    }
-    else
-    {
-        Block::updateEntityAfterFallOn(level, entity);
     }
 }
 

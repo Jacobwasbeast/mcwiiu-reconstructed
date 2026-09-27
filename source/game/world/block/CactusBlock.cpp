@@ -1,5 +1,6 @@
 #include "game/world/block/CactusBlock.hpp"
 
+#include "game/core/DamageSource.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -110,7 +111,7 @@ bool CactusBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState
 
 void CactusBlock::entityInside(Level*, const BlockPos&, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
-    entity->hurt(NULL, 1.0f);
+    entity->hurt(DamageSource::CACTUS, 1.0f);
 }
 
 int CactusBlock::getRenderLayer()

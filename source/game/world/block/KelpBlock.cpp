@@ -160,7 +160,7 @@ bool KelpBlock::shouldGrow(Level* level, const BlockPos& pos)
     if (getAge(level->getBlockState(pos)) >= 15)
         return false;
     const BlockState* above = level->getBlockState(pos.above());
-    return above->getMaterial() == Material::WATER && above->getValue(AGE) == 0;
+    return above->getMaterial() == Material::WATER && above->getValue(LiquidBlock::LEVEL) == 0;
 }
 
 void KelpBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)

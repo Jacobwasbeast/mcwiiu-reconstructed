@@ -132,44 +132,38 @@ void SpongeBlock::animateTick(const BlockState* state, Level* level, const Block
         return;
 
     const Direction* direction = Direction::getRandomDirection(*random);
-    if (direction == Direction::DOWN)
+    if (direction == Direction::UP)
         return;
 
     BlockPos adjacent = pos.relative(direction);
-    if (level->getBlockState(adjacent)->isSolidBlockingBlock())
+    if (level->getBlockState(adjacent)->isTopSolidBlocking())
         return;
 
-    double x = pos.x + 0.5;
-    double y = pos.y + 0.5;
-    double z = pos.z + 0.5;
-    double offset = random->nextDouble() * 0.8 + 0.1;
-    if (direction == Direction::UP)
+    double x = pos.x;
+    double y = pos.y;
+    double z = pos.z;
+    if (direction == Direction::DOWN)
     {
-        y += 0.5;
-        x += random->nextDouble() * 0.8 - 0.4;
-        z += random->nextDouble() * 0.8 - 0.4;
-    }
-    else if (direction->getAxis() == Direction::Axis::Y)
-    {
-        y -= 0.5;
-        x += random->nextDouble() * 0.8 - 0.4;
-        z += random->nextDouble() * 0.8 - 0.4;
-    }
-    else if (direction == Direction::NORTH || direction == Direction::SOUTH)
-    {
-        x += random->nextDouble() * 0.8 - 0.4;
-        z += direction == Direction::NORTH ? -0.5 : 0.5;
-        y += random->nextDouble() * 0.8 - 0.4;
+        y -= 0.05;
+        x += random->nextDouble();
+        z += random->nextDouble();
     }
     else
     {
-        x += direction == Direction::WEST ? -0.5 : 0.5;
-        y += random->nextDouble() * 0.8 - 0.4;
-        z += random->nextDouble() * 0.8 - 0.4;
+        y += random->nextDouble() * 0.8;
+        if (direction->getAxis() == Direction::Axis::X)
+        {
+            z += random->nextDouble();
+            x += direction == Direction::EAST ? 1.1 : 0.05;
+        }
+        else
+        {
+            x += random->nextDouble();
+            z += direction == Direction::SOUTH ? 1.1 : 0.05;
+        }
     }
 
-    level->addParticle(PARTICLE_DRIP_WATER, false, x, y, z, 0.0, 0.0, 0.0,
-                       arrayWithLength<int>());
+    level->addParticle(PARTICLE_DRIP_WATER, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
 void SpongeBlock::registerIcons(IconRegister* iconRegister)

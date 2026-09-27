@@ -115,9 +115,10 @@ void BrewingStandBlock::setPlacedBy(Level* level, const BlockPos& pos, const Blo
 
 void BrewingStandBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
-    level->addParticle(PARTICLE_SMOKE, pos.x + 0.4 + random->nextFloat() * 0.2,
-                       pos.y + 0.7, pos.z + 0.4 + random->nextFloat() * 0.2,
-                       0.0, 0.0, 0.0, arrayWithLength<int>());
+    float x = pos.x + 0.4f + random->nextFloat() * 0.2f;
+    float y = pos.y + 0.7f + random->nextFloat() * 0.3f;
+    float z = pos.z + 0.4f + random->nextFloat() * 0.2f;
+    level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
 void BrewingStandBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)

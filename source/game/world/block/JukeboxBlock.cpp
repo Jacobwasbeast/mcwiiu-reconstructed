@@ -61,9 +61,16 @@ void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockS
     not_null_ptr<ItemInstance> record = entity->getRecord();
     if (record->isEmpty()) return;
     level->levelEvent(LevelEvent::SOUND_PLAY_RECORDING, pos, 0);
+    entity->setRecord(ItemInstance::EMPTY);
     Random* random = level->mRandom;
-    boost::shared_ptr<ItemEntity> item(new ItemEntity(level, pos.x + random->nextFloat() * 0.7 + 0.15, pos.y + random->nextFloat() * 0.7 + 0.66, pos.z + random->nextFloat() * 0.7 + 0.15, record->copy()));
-    item->setDefaultPickUpDelay(); level->addEntity(item);
+    const float spread = 0.7f;
+    double xOffset = (double)(random->nextFloat() * spread) + (double)(1.0f - spread) * 0.5;
+    double yOffset = (double)(random->nextFloat() * spread) + 0.06f + 0.6;
+    double zOffset = (double)(random->nextFloat() * spread) + (double)(1.0f - spread) * 0.5;
+    boost::shared_ptr<ItemEntity> item(
+        new ItemEntity(level, pos.x + xOffset, pos.y + yOffset, pos.z + zOffset, record->copy()));
+    item->setDefaultPickUpDelay();
+    level->addEntity(item);
 }
 bool JukeboxBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {

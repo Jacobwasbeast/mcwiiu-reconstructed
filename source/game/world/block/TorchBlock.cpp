@@ -195,7 +195,7 @@ const BlockState* TorchBlock::getBlockState(int data)
 
 int TorchBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    static const int values[] = { 5, 5, 2, 3, 4, 1 };
+    static const int values[] = { 5, 5, 4, 3, 2, 1 };
     int data = state->getValue(FACING)->get3DDataValue();
     return data >= 0 && data < 6 ? values[data] : 5;
 }

@@ -1,4 +1,5 @@
 #include "game/world/block/LiquidBlock.hpp"
+#include "game/core/MemSect.hpp"
 
 #include "game/core/BubbleColumnSegment.hpp"
 #include "game/core/Direction.hpp"
@@ -458,15 +459,17 @@ bool LiquidBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
 
 void LiquidBlock::fizz(Level* level, const BlockPos& pos)
 {
-    float pitch = (level->mRandom->nextFloat() - level->mRandom->nextFloat()) * 0.8f + 1.2f;
-    level->playLocalSound(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
-                          SoundEvents::LAVA_EXTINGUISH, SoundSource::eSoundSource_Blocks,
-                          0.5f, pitch, false, 16.0f);
+    double x = pos.x;
+    double y = pos.y;
+    double z = pos.z;
+    MemSect(31);
+    level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LAVA_EXTINGUISH, SoundSource::eSoundSource_Blocks,
+                     0.5f, (level->mRandom->nextFloat() - level->mRandom->nextFloat()) * 0.8f + 2.6f, 16.0f);
+    MemSect(0);
     for (int i = 0; i < 8; ++i)
     {
-        level->addParticle(PARTICLE_LARGE_SMOKE,
-                           pos.x + Math::random(), pos.y + 1.2, pos.z + Math::random(),
-                           0.0, 0.0, 0.0, arrayWithLength<int>(2, true));
+        level->addParticle(PARTICLE_LARGE_SMOKE, x + Math::random(), y + 1.2, z + Math::random(), 0.0, 0.0, 0.0,
+                           arrayWithLength<int>());
     }
 }
 
