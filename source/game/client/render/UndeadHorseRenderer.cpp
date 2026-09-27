@@ -18,8 +18,8 @@ UndeadHorseRenderer::~UndeadHorseRenderer()
 
 const ResourceLocation* UndeadHorseRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation skeletonHorseTexture;
-    static ResourceLocation zombieHorseTexture;
+    static ResourceLocation skeletonHorseTexture((_TEXTURE_NAME)99);
+    static ResourceLocation zombieHorseTexture((_TEXTURE_NAME)101);
 
     unsigned long long type = entity->GetType();
     if (type == EntityType::SKELETON_HORSE)

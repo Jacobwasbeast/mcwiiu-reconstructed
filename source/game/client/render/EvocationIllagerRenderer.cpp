@@ -10,7 +10,7 @@
 #include "game/core/SpellcasterIllager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation evokerLocation;
+static ResourceLocation evokerLocation((_TEXTURE_NAME)196);
 
 EvocationIllagerRenderer::EvocationIllagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)

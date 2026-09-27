@@ -99,14 +99,13 @@ void ProgressRenderer::progressStage(int id)
     if (mMinecraft->mAppPaused || !mNoAbort)
     {
         mStartTime = 0;
-        mPercent = 0;
         EnterCriticalSection(&sProgressRendererMutex);
         mStatus.active = true;
         mStatus.id = id;
         mStatus.text = L10N::GetString(id);
         LeaveCriticalSection(&sProgressRendererMutex);
+        progressStagePercentage(-1);
         mStartTime = 0;
-        mPercent = 0;
     }
 }
 
@@ -115,14 +114,13 @@ void ProgressRenderer::progressStage(const std::wstring& text)
     if (mMinecraft->mAppPaused || !mNoAbort)
     {
         mStartTime = 0;
-        mPercent = 0;
         EnterCriticalSection(&sProgressRendererMutex);
         mStatus.id = -1;
         mStatus.active = false;
         mStatus.text = text;
         LeaveCriticalSection(&sProgressRendererMutex);
+        progressStagePercentage(-1);
         mStartTime = 0;
-        mPercent = 0;
     }
 }
 

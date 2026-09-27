@@ -75,74 +75,87 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
     if (!holder)
         return;
 
-    const double radians = 0.01745329238474369;
-    const double leashOffset = 0.7;
-    const double leashWidth = 0.025;
-    const double segmentCount = 24.0;
-    const double sag = 0.25;
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    y -= (1.6 - (double)mob->mBbHeight) * 0.5;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
-    double mobYaw = lerp((double)mob->mYRotO, (double)mob->mYRot, partialTick) * radians;
-    double mobPitch = lerp((double)mob->mXRotO, (double)mob->mXRot, partialTick) * radians;
-    double mobCosYaw = std::cos(mobYaw);
-    double mobSinYaw = std::sin(mobYaw);
-    double mobSinPitch = std::sin(mobPitch);
-    double mobX = lerp(mob->mXo, mob->mX, partialTick) + mobCosYaw * leashOffset;
-    double mobY = lerp(mob->mYo, mob->mY, partialTick) + mobSinPitch * leashOffset;
-    double mobZ = lerp(mob->mZo, mob->mZ, partialTick) + mobSinYaw * leashOffset;
-    double holderX = lerp(holder->mXo, holder->mX, partialTick);
-    double holderY = lerp(holder->mYo, holder->mY, partialTick) + holder->getEyeHeight();
-    double holderZ = lerp(holder->mZo, holder->mZ, partialTick);
-    double dx = holderX - mobX;
-    double dy = holderY - mobY;
-    double dz = holderZ - mobZ;
+    double holderYaw = lerp((double)holder->mYRotO, (double)holder->mYRot, (double)(partialTick * 0.5F)) *
+                       0.01745329238474369;
+    double holderPitch = lerp((double)holder->mXRotO, (double)holder->mXRot, (double)(partialTick * 0.5F)) *
+                         0.01745329238474369;
+    double cosYaw = std::cos(holderYaw);
+    double sinYaw = std::sin(holderYaw);
+    double sinPitch = std::sin(holderPitch);
+    if ((holder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+    {
+        cosYaw = 0.0;
+        sinYaw = 0.0;
+        sinPitch = -1.0;
+    }
+    double cosPitch = std::cos(holderPitch);
+    double holderX = lerp(holder->mXo, holder->mX, partialTick) - cosYaw * 0.7 - sinYaw * 0.5 * cosPitch;
+    double holderY = lerp(holder->mYo + holder->getEyeHeight() * 0.7, holder->mY + holder->getEyeHeight() * 0.7,
+                          partialTick) -
+                     sinPitch * 0.5 - 0.25;
+    double holderZ = lerp(holder->mZo, holder->mZ, partialTick) - sinYaw * 0.7 + cosYaw * 0.5 * cosPitch;
+
+    double bodyYaw = lerp((double)mob->mYBodyRotO, (double)mob->mYBodyRot, partialTick) * 0.01745329238474369 +
+                     1.5707963705062866;
+    double offsetX = std::cos(bodyYaw) * (double)mob->mBbWidth * 0.4;
+    double offsetZ = std::sin(bodyYaw) * (double)mob->mBbWidth * 0.4;
+    double mobX = lerp(mob->mXo, mob->mX, partialTick) + offsetX;
+    double mobY = lerp(mob->mYo, mob->mY, partialTick);
+    double mobZ = lerp(mob->mZo, mob->mZ, partialTick) + offsetZ;
+    x += offsetX;
+    z += offsetZ;
+    double dx = (double)(float)(holderX - mobX);
+    double dy = (double)(float)(holderY - mobY);
+    double dz = (double)(float)(holderZ - mobZ);
 
     GlStateManager::disableTexture();
     GlStateManager::disableLighting();
     GlStateManager::disableCull();
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     unsigned int lightColour = Minecraft::GetInstance()->getColourTable()->getColour(
         eMinecraftColour_Leash_Light_Colour);
+    const float lightRed = (float)((lightColour >> 16) & 255) / 255.0F;
+    const float lightGreen = (float)((double)((lightColour >> 8) & 255) / 255.0);
+    const float lightBlue = (float)((double)(lightColour & 255) / 255.0);
     unsigned int darkColour = Minecraft::GetInstance()->getColourTable()->getColour(
         eMinecraftColour_Leash_Dark_Colour);
-    const float lightRed = (float)((lightColour >> 16) & 255) / 255.0F;
-    const float lightGreen = (float)((lightColour >> 8) & 255) / 255.0F;
-    const float lightBlue = (float)(lightColour & 255) / 255.0F;
+    const float darkBlue = (float)((double)(darkColour & 255) / 255.0);
+    const float darkGreen = (float)((double)((darkColour >> 8) & 255) / 255.0);
     const float darkRed = (float)((darkColour >> 16) & 255) / 255.0F;
-    const float darkGreen = (float)((darkColour >> 8) & 255) / 255.0F;
-    const float darkBlue = (float)(darkColour & 255) / 255.0F;
 
-    for (int pass = 0; pass < 2; ++pass)
+    const double width = 0.025;
+    builder->begin(1);
+    for (int i = 0; i <= 24; ++i)
     {
-        builder->begin(1);
-        for (int i = 0; i <= 24; ++i)
-        {
-            double fraction = (double)i / segmentCount;
-            double px = x + dx * fraction;
-            double pz = z + dz * fraction;
-            double py = y + dy * fraction + sag * (fraction * fraction + fraction);
-            bool light = (i & 1) != 0;
-            if (pass != 0)
-            {
-                px += leashWidth;
-                pz += leashWidth;
-            }
-            builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen,
-                           light ? lightBlue : darkBlue, 1.0F);
-            if (pass == 0)
-            {
-                builder->vertex((float)px, (float)py, (float)pz);
-                builder->vertex((float)(px + leashWidth), (float)(py + leashWidth),
-                                (float)(pz + leashWidth));
-            }
-            else
-            {
-                builder->vertex((float)px, (float)(py + leashWidth), (float)pz);
-                builder->vertex((float)(px + leashWidth), (float)py,
-                                (float)(pz + leashWidth));
-            }
-        }
-        builder->end();
+        const bool light = (i & 1) != 0;
+        builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen, light ? lightBlue : darkBlue, 1.0F);
+        const float fraction = (float)i / 24.0F;
+        const double px = x + dx * (double)fraction;
+        const double py = y + dy * (double)(fraction * fraction + fraction) * 0.5 +
+                          (double)((24.0F - (float)i) / 18.0F + 0.125F);
+        const double pz = z + dz * (double)fraction;
+        builder->vertex((float)px, (float)py, (float)pz);
+        builder->vertex((float)(px + width), (float)(py + width), (float)pz);
     }
+    builder->end();
+
+    builder->begin(1);
+    for (int i = 0; i <= 24; ++i)
+    {
+        const bool light = (i & 1) != 0;
+        builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen, light ? lightBlue : darkBlue, 1.0F);
+        const float fraction = (float)i / 24.0F;
+        const double px = x + dx * (double)fraction;
+        const double py = y + dy * (double)(fraction * fraction + fraction) * 0.5 +
+                          (double)((24.0F - (float)i) / 18.0F + 0.125F);
+        const double pz = z + dz * (double)fraction;
+        builder->vertex((float)px, (float)(py + width), (float)pz);
+        builder->vertex((float)(px + width), (float)py, (float)(pz + width));
+    }
+    builder->end();
     GlStateManager::enableLighting();
     GlStateManager::enableTexture();
     GlStateManager::enableCull();

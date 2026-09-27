@@ -12,41 +12,47 @@
 TurtleModel::TurtleModel(float scale, const ModelDefinition& modelDefinition)
     : QuadrupedModel(12, scale, modelDefinition)
 {
-    mTexWidth = 128;
-    mTexHeight = 64;
-
     if (!modelDefinition.DoesOverrideModel())
     {
+        mTexWidth = 128;
+        mTexHeight = 64;
+
+        delete mHead;
         mHead = new ModelPartSkin(this, 2, 0, NULL);
-        mHead->addBox(-3.0f, -1.0f, -3.0f, 6, 5, 6, scale);
+        mHead->addBox(-3.0f, -1.0f, -3.0f, 6, 5, 6, 0.0f);
         mHead->setPos(0.0f, 19.0f, -10.0f);
 
         mEggBelly = new ModelPartSkin(this, 69, 33, NULL);
-        mEggBelly->addBox(-9.0f, -3.0f, -12.0f, 9, 18, 1, scale);
-        mEggBelly->setPos(0.0f, 13.0f, 19.0f);
+        mEggBelly->addBox(-4.5f, 3.0f, -12.0f, 9, 18, 1, 0.0f);
+        mEggBelly->setPos(0.0f, 13.0f, -10.0f);
 
+        delete mBody;
         mBody = new ModelPartSkin(this);
         mBody->texOffs(6, 37);
-        mBody->addBox(-9.5f, -12.0f, -10.0f, 19, 20, 6, scale);
+        mBody->addBox(-9.5f, 3.0f, -10.0f, 19, 20, 6, 0.0f);
         mBody->texOffs(30, 1);
-        mBody->addBox(-5.5f, -12.0f, -13.0f, 11, 18, 3, scale);
+        mBody->addBox(-5.5f, 3.0f, -13.0f, 11, 18, 3, 0.0f);
         mBody->setPos(0.0f, 11.0f, -10.0f);
 
+        delete mLeg0;
         mLeg0 = new ModelPartSkin(this, 0, 23, NULL);
-        mLeg0->addBox(-3.5f, 0.0f, 0.0f, 4, 1, 10, scale);
-        mLeg0->setPos(-3.5f, 22.0f, -5.5f);
+        mLeg0->addBox(-2.0f, 0.0f, 0.0f, 4, 1, 10, 0.0f);
+        mLeg0->setPos(-3.5f, 22.0f, 11.0f);
 
+        delete mLeg1;
         mLeg1 = new ModelPartSkin(this, 0, 12, NULL);
-        mLeg1->addBox(-3.5f, 0.0f, 0.0f, 4, 1, 10, scale);
-        mLeg1->setPos(3.5f, 22.0f, -5.5f);
+        mLeg1->addBox(-2.0f, 0.0f, 0.0f, 4, 1, 10, 0.0f);
+        mLeg1->setPos(3.5f, 22.0f, 11.0f);
 
+        delete mLeg2;
         mLeg2 = new ModelPartSkin(this, 26, 30, NULL);
-        mLeg2->addBox(-3.5f, 0.0f, 0.0f, 13, 1, 5, scale);
-        mLeg2->setPos(-3.5f, 22.0f, -5.0f);
+        mLeg2->addBox(-13.0f, 0.0f, -2.0f, 13, 1, 5, 0.0f);
+        mLeg2->setPos(-5.0f, 21.0f, -4.0f);
 
+        delete mLeg3;
         mLeg3 = new ModelPartSkin(this, 26, 24, NULL);
-        mLeg3->addBox(-3.5f, 0.0f, 0.0f, 13, 1, 5, scale);
-        mLeg3->setPos(-3.5f, 22.0f, -5.0f);
+        mLeg3->addBox(0.0f, 0.0f, -2.0f, 13, 1, 5, 0.0f);
+        mLeg3->setPos(5.0f, 21.0f, -4.0f);
     }
     else
     {
@@ -104,48 +110,59 @@ void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     callSkinnedDrawlist();
 }
 
-void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                            float netHeadYaw, float headPitch, float scale,
-                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                            float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                            _SkinAdjustments skinAdjustments)
 {
     QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
                               scale, entity, skinAdjustments);
 
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
-    float swing = limbSwing * 0.6661999821662903f;
-    float halfPi = 1.5707963705062866f;
-    float lower = -1.5707963705062866f;
-    float upper = 1.5707963705062866f;
-
-    mLeg0->mXRot = Mth::clamp(Mth::cos(swing) * 0.5f * limbSwingAmount, lower, upper);
-    mLeg1->mXRot = Mth::clamp(Mth::cos(swing + 3.1415927410125732f) * 0.5f * limbSwingAmount,
-                              lower, upper);
-    mLeg2->mXRot = 0.0f;
-    mLeg3->mXRot = 0.0f;
+    const float halfPi = 1.5707964f;
+    const float swing = limbSwing * 0.6662f * 0.6f;
+    mLeg0->mXRot = Mth::clamp(Mth::cos(swing) * 0.5f * limbSwingAmount, -halfPi, halfPi);
     mLeg0->mYRot = 0.0f;
+    mLeg1->mXRot = Mth::clamp(Mth::cos(swing + 3.1415927f) * 0.5f * limbSwingAmount, -halfPi, halfPi);
     mLeg1->mYRot = 0.0f;
     mLeg2->mYRot = 0.0f;
+    mLeg2->mXRot = 0.0f;
+    mLeg2->mZRot = Mth::clamp(Mth::cos(swing + 3.1415927f) * 0.5f * limbSwingAmount, -halfPi, halfPi);
     mLeg3->mYRot = 0.0f;
+    mLeg3->mXRot = 0.0f;
+    mLeg3->mZRot = Mth::clamp(Mth::cos(swing) * 0.5f * limbSwingAmount, -halfPi, halfPi);
+    mEggBelly->mXRot = 90.0f * Mth::DEG_TO_RAD;
 
-    if (turtle->isLayingEgg())
+    if (turtle->isInWater() || !turtle->mOnGround)
+        return;
+
+    float frontSwing = 3.0f;
+    float backSwing = 8.0f;
+    float speed = 5.0f;
+    float pace = 1.0f;
+    if (turtle->isVehicle())
     {
-        mLeg0->mYRot = Mth::cos(ageInTicks) * halfPi;
-        mLeg1->mYRot = Mth::cos(ageInTicks + 1.5707963705062866f) * halfPi;
-        mLeg2->mYRot = Mth::cos(ageInTicks + 3.1415927410125732f) * halfPi;
-        mLeg3->mYRot = Mth::cos(ageInTicks) * halfPi;
+        speed = 2.0f;
+        frontSwing = 0.5f;
+        backSwing = 2.0f;
+        pace = 0.39972f;
+    }
+    const float walk = limbSwing * pace * speed;
+    if (!turtle->isLayingEgg())
+    {
+        mLeg2->mYRot = Mth::clamp(Mth::cos(walk + 3.1415927f) * backSwing * limbSwingAmount, -halfPi, halfPi);
+        mLeg3->mYRot = Mth::clamp(Mth::cos(walk) * backSwing * limbSwingAmount, -halfPi, halfPi);
     }
     else
     {
-        float paddle = limbSwing * 0.3997200131416321f;
-        mLeg0->mYRot = Mth::clamp(Mth::cos(paddle + 3.1415927410125732f) * 0.5f * limbSwingAmount,
-                                  lower, upper);
-        mLeg1->mYRot = Mth::clamp(Mth::cos(paddle) * 0.5f * limbSwingAmount, lower, upper);
-        mLeg2->mYRot = Mth::clamp(Mth::cos(paddle + 3.1415927410125732f) * 0.5f * limbSwingAmount,
-                                  lower, upper);
-        mLeg3->mYRot = Mth::clamp(Mth::cos(paddle) * 0.5f * limbSwingAmount, lower, upper);
+        mLeg2->mYRot = Mth::cos(ageInTicks + 3.1415927f) * halfPi;
+        mLeg3->mYRot = Mth::cos(ageInTicks) * halfPi;
     }
-
-    mEggBelly->mXRot = 90.0f * 0.01745329238474369f;
+    mLeg0->mXRot = 0.0f;
+    mLeg0->mYRot = Mth::clamp(Mth::cos(walk + 3.1415927f) * frontSwing * limbSwingAmount, -halfPi, halfPi);
+    mLeg1->mXRot = 0.0f;
+    mLeg1->mYRot = Mth::clamp(Mth::cos(walk) * frontSwing * limbSwingAmount, -halfPi, halfPi);
+    mLeg2->mZRot = 0.0f;
+    mLeg3->mZRot = 0.0f;
 }
 
 std::wstring TurtleModel::getName()

@@ -5,20 +5,18 @@
 
 #include "game/core/BufferBuilder.hpp"
 
-namespace FireworksParticles
-{
-FireworksOverlayParticle::FireworksOverlayParticle(Level* level, double x, double y, double z)
+FireworksParticles::FireworksOverlayParticle::FireworksOverlayParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z)
 {
     setAlpha(0.9900000095367432f);
     setLifetime(4);
 }
 
-FireworksOverlayParticle::~FireworksOverlayParticle()
+FireworksParticles::FireworksOverlayParticle::~FireworksOverlayParticle()
 {
 }
 
-void FireworksOverlayParticle::render(BufferBuilder* buffer,
+void FireworksParticles::FireworksOverlayParticle::render(BufferBuilder* buffer,
                                       const boost::shared_ptr<Entity>& camera,
                                       float partialTicks,
                                       float xa,
@@ -58,8 +56,7 @@ void FireworksOverlayParticle::render(BufferBuilder* buffer,
     }
 }
 
-uint64_t FireworksOverlayParticle::GetType()
+uint64_t FireworksParticles::FireworksOverlayParticle::GetType()
 {
     return ParticleKind::FIREWORKS_OVERLAY;
-}
 }

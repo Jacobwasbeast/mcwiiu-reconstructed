@@ -28,7 +28,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 
-static ResourceLocation TERRAIN_LOCATION((_TEXTURE_NAME)0);
 static ResourceLocation ITEMS_LOCATION((_TEXTURE_NAME)1);
 
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
@@ -124,7 +123,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
         Block* block = Block::byItem(item->getItem());
         if (dynamic_cast<StainedGlassPaneBlock*>(block) != NULL)
         {
-            bindTexture(&TERRAIN_LOCATION);
+            bindTexture(&BLOCKS_LOCATION);
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
                 tesselator, (float)u0, (float)v0, (float)u1, (float)v1,
@@ -133,7 +132,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
         }
         else if (item->getItem()->getIconType() == 0 && block != NULL)
         {
-            bindTexture(&TERRAIN_LOCATION);
+            bindTexture(&BLOCKS_LOCATION);
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
                 tesselator, (float)u0, (float)v0, (float)u1, (float)v1,
@@ -353,7 +352,7 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
 
 const ResourceLocation* ItemEntityRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    return &TERRAIN_LOCATION;
+    return &BLOCKS_LOCATION;
 }
 
 void ItemEntityRenderer::SetItemFrame(bool itemFrame)

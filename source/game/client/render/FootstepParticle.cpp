@@ -12,7 +12,7 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static ResourceLocation PARTICLES_LOCATION((_TEXTURE_NAME)3);
+static ResourceLocation FOOTPRINT_LOCATION((_TEXTURE_NAME)16);
 
 FootstepParticle::FootstepParticle(Textures* textures, Level* level, double x, double y, double z)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
@@ -40,7 +40,7 @@ void FootstepParticle::render(BufferBuilder* buffer,
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     progress *= progress;
-    float alpha = std::min(1.75f, 2.0f - progress * 2.0f) * 0.2f;
+    float alpha = std::min(1.0f, 2.0f - progress * 2.0f) * 0.2f;
 
     GlStateManager::disableLighting();
 
@@ -49,7 +49,7 @@ void FootstepParticle::render(BufferBuilder* buffer,
     float pz = (float)(z - Particle::zOff);
     float brightness = ((LevelSource*)level)->getBrightness(BlockPos(x, y, z));
 
-    textures->bindTexture(&PARTICLES_LOCATION);
+    textures->bindTexture(&FOOTPRINT_LOCATION);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
 
@@ -57,7 +57,7 @@ void FootstepParticle::render(BufferBuilder* buffer,
     buffer->color(brightness, brightness, brightness, alpha);
 
     const float scale = 0.125f;
-    const float u0 = 0.5f;
+    const float u0 = 0.0f;
     const float u1 = 1.0f;
     buffer->vertexUV(px - scale, py, pz + scale, u0, u1);
     buffer->vertexUV(px + scale, py, pz + scale, u1, u1);

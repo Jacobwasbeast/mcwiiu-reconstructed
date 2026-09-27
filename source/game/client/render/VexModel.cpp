@@ -25,30 +25,32 @@ VexModel::~VexModel()
 
 void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
 {
+    mLeftLeg->mShow = false;
     if (!modelDefinition.DoesOverrideModel())
     {
-        mHead = new ModelPartSkin(this, 0, 32, NULL);
-        mHead->addBox(-1.0f, -2.0f, -1.0f, 2, 6, 2, 0.4f);
-        mHead->setPos(-1.2f, 12.0f, 0.0f);
+        mHat->mShow = false;
+        delete mRightLeg;
+        mRightLeg = new ModelPartSkin(this, 32, 0, NULL);
+        mRightLeg->addBox(-1.0f, -1.0f, -2.0f, 6, 10, 4, 0.0f);
+        mRightLeg->setPos(-1.9f, 12.0f, 0.0f);
+
+        mRightWing = new ModelPartSkin(this, 0, 32, NULL);
+        mRightWing->addBox(-20.0f, 0.0f, 0.0f, 20, 12, 1);
 
         mLeftWing = new ModelPartSkin(this, 0, 32, NULL);
         mLeftWing->mMirror = true;
         mLeftWing->addBox(0.0f, 0.0f, 0.0f, 20, 12, 1);
 
-        mRightWing = new ModelPartSkin(this, 0, 32, NULL);
-        mRightWing->addBox(-20.0f, 0.0f, 0.0f, 20, 12, 1);
-
         compileSkinnedDrawlist();
+        return;
     }
-    else
-    {
-        mHat = new ModelPartSkin(this, L"hat", modelDefinition, NULL, 0.0f, NULL);
-        mHead = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
-        mLeftWing = new ModelPartSkin(this, L"leftwing", modelDefinition, NULL, 0.0f, NULL);
-        mRightWing = new ModelPartSkin(this, L"rightwing", modelDefinition, NULL, 0.0f, NULL);
 
-        compileSkinnedDrawlist();
-    }
+    mHat->mShow = modelDefinition.hasModelPart(L"hat");
+    delete mRightLeg;
+    mRightLeg = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
+    mRightWing = new ModelPartSkin(this, L"rightwing", modelDefinition, NULL, 0.0f, NULL);
+    mLeftWing = new ModelPartSkin(this, L"leftwing", modelDefinition, NULL, 0.0f, NULL);
+    compileSkinnedDrawlist();
 }
 
 void VexModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)

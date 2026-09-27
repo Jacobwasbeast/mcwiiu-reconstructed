@@ -10,7 +10,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation PARTICLES_LOCATION((_TEXTURE_NAME)3);
+static ResourceLocation EXPLOSION_LOCATION((_TEXTURE_NAME)52);
 
 HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, double x, double y, double z,
                                              double xa, double ya, double za)
@@ -40,12 +40,12 @@ void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_pt
     const int frame = (int)(((float)age + partialTicks) * 15.0f / (float)lifetime);
     if (frame < 16)
     {
-        textureManager->bindTexture(&PARTICLES_LOCATION);
+        textureManager->bindTexture(&EXPLOSION_LOCATION);
 
-        const float u1 = (float)(frame & 3) * 0.25f + 0.24975f;
-        const float v1 = (float)(frame / 4) * 0.25f + 0.24975f;
-        const float u0 = u1 + 0.008f;
-        const float v0 = v1 + 0.008f;
+        const float u0 = (float)(frame % 4) * 0.25f;
+        const float u1 = u0 + 0.24975f;
+        const float v0 = (float)(frame / 4) * 0.25f;
+        const float v1 = v0 + 0.24975f;
         const float scale = size + size;
         const float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
         const float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
@@ -69,10 +69,10 @@ void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_pt
             const float z1 = pz + za * scale;
             const float xOffset = xa2 * scale;
             const float zOffset = za2 * scale;
-            buffer->vertexUV(x0 - xOffset, y0, z0 - zOffset, u0, v0);
-            buffer->vertexUV(x0 + xOffset, y1, z0 + zOffset, u0, v1);
-            buffer->vertexUV(x1 + xOffset, y1, z1 + zOffset, u1, v1);
-            buffer->vertexUV(x1 - xOffset, y0, z1 - zOffset, u1, v0);
+            buffer->vertexUV(x0 - xOffset, y0, z0 - zOffset, u1, v1);
+            buffer->vertexUV(x0 + xOffset, y1, z0 + zOffset, u1, v0);
+            buffer->vertexUV(x1 + xOffset, y1, z1 + zOffset, u0, v0);
+            buffer->vertexUV(x1 - xOffset, y0, z1 - zOffset, u0, v1);
 
             Tesselator::getInstance()->end();
             GlStateManager::enableLighting();

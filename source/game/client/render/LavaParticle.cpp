@@ -62,13 +62,13 @@ void LavaParticle::tick()
         remove();
 
     if ((float)age / (float)lifetime < random.nextFloat())
-        level->addParticle(PARTICLE_LAVA, x, y, z, xd, yd, zd, arrayWithLength<int>());
+        level->addParticle(PARTICLE_SMOKE, x, y, z, xd, yd, zd, arrayWithLength<int>());
 
     yd -= 0.03;
     move(xd, yd, zd);
-    xd *= 0.8;
-    yd *= 0.8;
-    zd *= 0.8;
+    xd *= 0.9990000128746033;
+    yd *= 0.9990000128746033;
+    zd *= 0.9990000128746033;
 
     if (onGround)
     {

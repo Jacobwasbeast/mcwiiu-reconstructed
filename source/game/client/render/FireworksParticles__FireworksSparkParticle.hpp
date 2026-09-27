@@ -15,6 +15,7 @@ class ParticleEngine;
 class FireworksParticles
 {
 public:
+    class FireworksOverlayParticle;
     class FireworksSparkParticle;
     class FireworksStarter;
     class Provider;

@@ -109,10 +109,9 @@ void ArmorStandModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
                       useDisplayList);
     GlStateManager::pushMatrix();
 
-    boost::shared_ptr<ArmorStand> armorStand = boost::dynamic_pointer_cast<ArmorStand>(entity);
     if (!mYoung)
     {
-        if (armorStand->isMarker())
+        if (entity->isSneaking())
         {
             GlStateManager::translatef(0.0f, 0.2f, 0.0f);
         }
@@ -125,7 +124,7 @@ void ArmorStandModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
     else
     {
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-        GlStateManager::translatef(0.0f, 1.5f * scale, 0.0f);
+        GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
         mArmorStandBody->render(scale, useDisplayList, false);
         mArmorStandRightArm->render(scale, useDisplayList, false);
         mArmorStandLeftArm->render(scale, useDisplayList, false);

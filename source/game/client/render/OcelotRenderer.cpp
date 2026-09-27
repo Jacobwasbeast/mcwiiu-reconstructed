@@ -7,10 +7,10 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation sBlackOcelotTexture;
-static ResourceLocation sOcelotTexture;
-static ResourceLocation sRedOcelotTexture;
-static ResourceLocation sSiameseOcelotTexture;
+static ResourceLocation sBlackOcelotTexture((_TEXTURE_NAME)78);
+static ResourceLocation sOcelotTexture((_TEXTURE_NAME)77);
+static ResourceLocation sRedOcelotTexture((_TEXTURE_NAME)79);
+static ResourceLocation sSiameseOcelotTexture((_TEXTURE_NAME)80);
 
 OcelotRenderer::OcelotRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new OcelotModel(), 0.4F)

@@ -65,6 +65,11 @@ void SmokeParticle::tick()
     setMiscTex(7 - (age << 3) / lifetime);
     yd += 0.004;
     move(xd, yd, zd);
+    if (y == yo)
+    {
+        xd *= 1.1;
+        zd *= 1.1;
+    }
     xd *= 0.96;
     yd *= 0.96;
     zd *= 0.96;

@@ -362,7 +362,7 @@ float Particle::getBrightness(float partialTicks)
     BlockPos pos(x, y, z);
     if (level->hasChunkAt(pos))
         return level->getBrightness(pos);
-    return 1.0;
+    return 0.0;
 }
 
 void Particle::setColor(float red, float green, float blue)

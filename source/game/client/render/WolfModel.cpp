@@ -1,4 +1,5 @@
 #include "game/client/render/WolfModel.hpp"
+#include "game/core/GlStateManager.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
@@ -70,16 +71,38 @@ WolfModel::WolfModel(const ModelDefinition& modelDefinition):mHead(NULL),mBody(N
     }
 }
 WolfModel::~WolfModel(){}
-void WolfModel::render(boost::shared_ptr<Entity>& e, float a, float b, float c, float d, float f, float s, bool u)
+void WolfModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                       float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(a, b, c, d, f, s, e, _SkinAdjustments());
-    mHead->render(s, u, false);
-    mBody->render(s, u, false);
-    mLeg1->render(s, u, false);
-    mLeg2->render(s, u, false);
-    mLeg3->render(s, u, false);
-    mLeg4->render(s, u, false);
-    mTail->render(s, u, false);
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+    if (!mYoung)
+    {
+        mHead->renderRollable(scale, useDisplayList);
+        mBody->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        mLeg4->render(scale, useDisplayList, false);
+        mTail->renderRollable(scale, useDisplayList);
+        mUpperBody->render(scale, useDisplayList, false);
+        callSkinnedDrawlist();
+        return;
+    }
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef(0.0f, 5.0f * scale, scale + scale);
+    mHead->renderRollable(scale, useDisplayList);
+    GlStateManager::popMatrix();
+    GlStateManager::pushMatrix();
+    GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+    GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+    mBody->render(scale, useDisplayList, false);
+    mLeg1->render(scale, useDisplayList, false);
+    mLeg2->render(scale, useDisplayList, false);
+    mLeg3->render(scale, useDisplayList, false);
+    mLeg4->render(scale, useDisplayList, false);
+    mTail->renderRollable(scale, useDisplayList);
+    mUpperBody->render(scale, useDisplayList, false);
+    GlStateManager::popMatrix();
     callSkinnedDrawlist();
 }
 void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
@@ -118,7 +141,7 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
         upperBody->mYRot = 0.0f;
         mBody->setPos(0.0f, 18.0f, 0.0f);
         mBody->mXRot = 0.7853981852531433f;
-        mTail->setPos(-1.0f, 5.0f, 6.0f);
+        mTail->setPos(-1.0f, 21.0f, 6.0f);
         mLeg1->setPos(-2.5f, 22.0f, 2.0f);
         mLeg1->mXRot = 4.71238899230957f;
         mLeg2->setPos(0.5f, 22.0f, 2.0f);
@@ -135,16 +158,16 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
     mBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.1599999964237213f);
     mTail->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.20000000298023224f);
 }
-void WolfModel::setupAnim(float a, float b, float c, float d, float f, float s,
-                           boost::shared_ptr<Entity> e, _SkinAdjustments x)
+void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                          float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                          _SkinAdjustments skinAdjustments)
 {
-    Model::setupAnim(a, b, c, d, f, s, e, x);
-    mHead->mYRot = d * 0.017453292f;
-    mHead->mXRot = f * 0.017453292f;
-    mLeg1->mXRot = 0.6662f * a;
-    mLeg2->mXRot = 0.6662f * a + 3.1415927f;
-    mLeg3->mXRot = 0.6662f * a + 3.1415927f;
-    mLeg4->mXRot = 0.6662f * a;
-    mTail->mXRot = 0.3f;
+    Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mTail->mXRot = ageInTicks;
 }
-std::wstring WolfModel::getName(){return L"wolf";}
+std::wstring WolfModel::getName()
+{
+    return L"wolf";
+}

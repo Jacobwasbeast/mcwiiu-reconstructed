@@ -1,4 +1,9 @@
 #include "game/client/render/FireworksParticles__FireworksStarter.hpp"
+#include "game/world/Level.hpp"
+#include "game/item/DyeItem.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/FireworksParticles__FireworksOverlayParticle.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <cmath>
@@ -172,33 +177,100 @@ void FireworksParticles::FireworksStarter::tick()
 {
     if (life == 0 && explosions != NULL)
     {
-        for (int i = 0; i < explosions->size(); ++i)
+        const bool farAway = isFarAwayFromCamera();
+        bool large = explosions->size() >= 3;
+        for (int i = 0; !large && i < explosions->size(); ++i)
         {
-            CompoundTag* explosion = explosions->getCompound(i);
-            arrayWithLength<int> colors = explosion->getIntArray(L"Colors");
-            arrayWithLength<int> fadeColors = explosion->getIntArray(L"FadeColors");
-            int type = explosion->getByte(L"Type");
-            bool trail = explosion->getBoolean(L"Trail");
-            bool flicker = explosion->getBoolean(L"Flicker");
-            if (type == 1)
-            {
-                createParticleBall(0.5, 4, colors, fadeColors, trail, flicker);
-            }
-            else if (type == 2)
-            {
-                createParticleBurst(colors, fadeColors, trail, flicker);
-            }
-            else
-            {
-                createParticleBall(0.5, 2, colors, fadeColors, trail, flicker);
-            }
-            delete[] colors.data;
-            delete[] fadeColors.data;
+            if (explosions->getCompound(i)->getByte(L"Type") == 1)
+                large = true;
         }
+        const SoundEvent* blast;
+        if (large)
+            blast = farAway ? SoundEvents::FIREWORK_LARGE_BLAST_FAR : SoundEvents::FIREWORK_LARGE_BLAST;
+        else
+            blast = farAway ? SoundEvents::FIREWORK_BLAST_FAR : SoundEvents::FIREWORK_BLAST;
+        level->playLocalSound(x, y, z, blast, SoundSource::eSoundSource_Ambient, 20.0f,
+                              0.95f + random.nextFloat() * 0.1f, true, 100.0f);
     }
+
+    if (life % 2 == 0 && explosions != NULL && life / 2 < explosions->size())
+    {
+        CompoundTag* explosion = explosions->getCompound(life / 2);
+        const int type = explosion->getByte(L"Type");
+        const bool trail = explosion->getBoolean(L"Trail");
+        const bool flicker = explosion->getBoolean(L"Flicker");
+        arrayWithLength<int> colors = explosion->getIntArray(L"Colors");
+        arrayWithLength<int> fadeColors = explosion->getIntArray(L"FadeColors");
+        if (colors.length == 0)
+        {
+            colors = arrayWithLength<int>(1, true);
+            colors.data[0] = DyeItem::DYE_COLORS[0];
+        }
+
+        if (type == 1)
+        {
+            createParticleBall(0.5, 4, colors, fadeColors, trail, flicker);
+        }
+        else if (type == 2)
+        {
+            static const double STAR_SHAPE[6][2] = {
+                { 0.0, 1.0 }, { 0.3455, 0.309 }, { 0.9511, 0.309 },
+                { 0.3795918367346939, -0.12653061224489795 }, { 0.6122448979591837, -0.8040816326530612 },
+                { 0.0, -0.35918367346938773 } };
+            array2DWithLength<double> shape(6, 2);
+            for (unsigned int point = 0; point < shape.length; ++point)
+            {
+                shape.data[point]->data[0] = STAR_SHAPE[point][0];
+                shape.data[point]->data[1] = STAR_SHAPE[point][1];
+            }
+            createParticleShape(0.5, shape, colors, fadeColors, trail, flicker, false);
+            for (unsigned int point = 0; point < shape.length; ++point)
+                delete[] shape.data[point]->data;
+            delete[] shape.data;
+        }
+        else if (type == 3)
+        {
+            static const double CREEPER_SHAPE[12][2] = {
+                { 0.0, 0.2 }, { 0.2, 0.2 }, { 0.2, 0.6 }, { 0.6, 0.6 }, { 0.6, 0.2 }, { 0.2, 0.2 },
+                { 0.2, 0.0 }, { 0.4, 0.0 }, { 0.4, -0.6 }, { 0.2, -0.6 }, { 0.2, -0.4 }, { 0.0, -0.4 } };
+            array2DWithLength<double> shape(12, 2);
+            for (unsigned int point = 0; point < shape.length; ++point)
+            {
+                shape.data[point]->data[0] = CREEPER_SHAPE[point][0];
+                shape.data[point]->data[1] = CREEPER_SHAPE[point][1];
+            }
+            createParticleShape(0.5, shape, colors, fadeColors, trail, flicker, true);
+            for (unsigned int point = 0; point < shape.length; ++point)
+                delete[] shape.data[point]->data;
+            delete[] shape.data;
+        }
+        else if (type == 4)
+        {
+            createParticleBurst(colors, fadeColors, trail, flicker);
+        }
+        else
+        {
+            createParticleBall(0.25, 2, colors, fadeColors, trail, flicker);
+        }
+
+        const int colour = colors.data[0];
+        FireworksOverlayParticle* overlay = new FireworksOverlayParticle(level, x, y, z);
+        overlay->setColor((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
+                          (float)(colour & 0xFF) / 255.0f);
+        particleEngine->add(overlay);
+    }
+
     ++life;
     if (life > lifetime)
     {
+        if (twinkle)
+        {
+            const bool farAway = isFarAwayFromCamera();
+            level->playLocalSound(x, y, z,
+                                  farAway ? SoundEvents::FIREWORK_TWINKLE_FAR : SoundEvents::FIREWORK_TWINKLE,
+                                  SoundSource::eSoundSource_Ambient, 20.0f, 0.9f + random.nextFloat() * 0.15f,
+                                  true, 100.0f);
+        }
         remove();
     }
 }

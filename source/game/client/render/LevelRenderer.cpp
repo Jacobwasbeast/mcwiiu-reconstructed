@@ -3155,18 +3155,15 @@ int LevelRenderer::checkAllPresentChunks(bool* present)
 
 void LevelRenderer::playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing)
 {
+    mMinecraft->mSoundEngine->playStreaming(sound, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f, 1.0f, playing,
+                                            false, ConsoleSoundEngine::eAudioDelayType_Random);
     if (sound != NULL)
     {
         RecordItem* record = RecordItem::getBySound(sound);
         if (record != NULL)
-        {
-            std::wstring name = record->getDisplayName();
-            if (mMinecraft != NULL && mMinecraft->mGui != NULL)
-            {
-                mMinecraft->mGui->setNowPlaying(name);
-            }
-        }
+            mMinecraft->mGui->setNowPlaying(record->getDisplayName());
     }
+    notifyNearbyEntities(mLevels[mMinecraft->mPlayer->mUserIndex], pos, sound != NULL);
 }
 
 Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)

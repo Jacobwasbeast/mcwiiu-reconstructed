@@ -122,7 +122,7 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
     }
     else
     {
-        GlStateManager::translatef((float)x + 0.5F, (float)y - 0.3125F, (float)z + 0.5F);
+        GlStateManager::translatef((float)x + 0.5F, (float)y - 0.16666667F, (float)z + 0.5F);
         float rotation = 0.0F;
         if (direction == 2)
             rotation = 180.0F;

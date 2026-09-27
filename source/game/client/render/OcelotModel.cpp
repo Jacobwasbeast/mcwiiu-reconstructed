@@ -90,7 +90,7 @@ void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
               entity, _SkinAdjustments());
 
-    if (!mHasOverriddenParts)
+    if (!mYoung)
     {
         mHead->render(scale, useDisplayList, false);
         mBody->render(scale, useDisplayList, false);
@@ -106,18 +106,18 @@ void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
     GlStateManager::pushMatrix();
     GlStateManager::scalef(0.75f, 0.75f, 0.75f);
-    GlStateManager::translatef(0.0f, 0.25f * scale, 0.0f);
+    GlStateManager::translatef(0.0f, 10.0f * scale, 4.0f * scale);
     mHead->render(scale, useDisplayList, false);
     GlStateManager::popMatrix();
     GlStateManager::pushMatrix();
     GlStateManager::scalef(0.5f, 0.5f, 0.5f);
     GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
     mBody->render(scale, useDisplayList, false);
-    mTail1->render(scale, useDisplayList, false);
     mBackLegL->render(scale, useDisplayList, false);
     mBackLegR->render(scale, useDisplayList, false);
     mFrontLegL->render(scale, useDisplayList, false);
     mFrontLegR->render(scale, useDisplayList, false);
+    mTail1->render(scale, useDisplayList, false);
     mTail2->render(scale, useDisplayList, false);
     GlStateManager::popMatrix();
     callSkinnedDrawlist();
@@ -125,18 +125,26 @@ void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
 void OcelotModel::render(OcelotModel* model, float scale, bool useDisplayList)
 {
-    Model::copyModelPart(model->mHead, mHead);
-    Model::copyModelPart(model->mBody, mBody);
-    Model::copyModelPart(model->mTail1, mTail1);
-    Model::copyModelPart(model->mTail2, mTail2);
-    Model::copyModelPart(model->mBackLegL, mBackLegL);
-    Model::copyModelPart(model->mBackLegR, mBackLegR);
-    Model::copyModelPart(model->mFrontLegL, mFrontLegL);
-    Model::copyModelPart(model->mFrontLegR, mFrontLegR);
+    mHead->mYRot = model->mHead->mYRot;
+    mHead->mXRot = model->mHead->mXRot;
+    mHead->mY = model->mHead->mY;
+    mHead->mX = model->mHead->mX;
+    mBody->mYRot = model->mBody->mYRot;
+    mBody->mXRot = model->mBody->mXRot;
+    mTail1->mYRot = model->mBody->mYRot;
+    mTail1->mY = model->mBody->mY;
+    mTail1->mX = model->mBody->mX;
     mTail1->render(scale, useDisplayList, false);
+    mTail2->mYRot = model->mBody->mYRot;
+    mTail2->mY = model->mBody->mY;
+    mTail2->mX = model->mBody->mX;
     mTail2->render(scale, useDisplayList, false);
+    mBackLegL->mXRot = model->mBackLegL->mXRot;
+    mBackLegR->mXRot = model->mBackLegR->mXRot;
     mBackLegL->render(scale, useDisplayList, false);
     mBackLegR->render(scale, useDisplayList, false);
+    mFrontLegL->mXRot = model->mFrontLegL->mXRot;
+    mFrontLegR->mXRot = model->mFrontLegR->mXRot;
     mFrontLegL->render(scale, useDisplayList, false);
     mFrontLegR->render(scale, useDisplayList, false);
     mHead->render(scale, useDisplayList, false);
@@ -162,10 +170,10 @@ void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
         }
         else
         {
-            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * limbSwingAmount;
-            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * limbSwingAmount;
+            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * limbSwingAmount;
+            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * limbSwingAmount;
             mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f) * limbSwingAmount;
-            mTail2->mXRot = (mPose == 1 ? 0.47123894f : 2.0f) * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
+            mTail2->mXRot = (mPose == 1 ? 0.7853982f : 0.47123894f) * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
         }
     }
 }

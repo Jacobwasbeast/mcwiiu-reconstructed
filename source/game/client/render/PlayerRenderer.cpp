@@ -266,7 +266,7 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     double renderY = y;
     if (player->isSneaking() && player->getFallFlyingTicks() <= 4)
     {
-        renderY -= 1.5;
+        renderY -= 0.125;
     }
 
     setModelProperties(player, partialTick);

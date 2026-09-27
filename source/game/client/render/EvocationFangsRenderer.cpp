@@ -53,7 +53,7 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
 
 const ResourceLocation* EvocationFangsRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation location;
+    static ResourceLocation location((_TEXTURE_NAME)197);
     return &location;
 }
 

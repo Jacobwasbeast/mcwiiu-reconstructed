@@ -55,7 +55,7 @@ bool MobAppearanceParticle::isAffected()
 }
 
 void MobAppearanceParticle::render(BufferBuilder*,
-                                   const boost::shared_ptr<Entity>&,
+                                   const boost::shared_ptr<Entity>& camera,
                                    float partialTicks,
                                    float,
                                    float,
@@ -70,27 +70,26 @@ void MobAppearanceParticle::render(BufferBuilder*,
     EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
     dispatcher->setPosition(0.0, 0.0, 0.0);
 
-    float scale = 1.0f / 5.6f;
+    float scale = 1.0f / 2.35f;
     float progress = ((float)age + partialTicks) / (float)lifetime;
 
     GlStateManager::depthMask(true);
     GlStateManager::enableBlend();
     GlStateManager::enableDepthTest();
     GlStateManager::blendFunc(4, 5);
-    GlStateManager::multiTexCoord2f(240.0f, 1.8f);
+    GlStateManager::multiTexCoord2f(240.0f, 240.0f);
     GlStateManager::pushMatrix();
     float pulse = sinf(progress * 3.1415927f);
-    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 0.5f * pulse + 0.2f);
-    GlStateManager::translatef(3.0f, 1.8f, 3.0f);
-    GlStateManager::rotatef(180.0f - guardian->mYRot, 3.0f, 1.0f, 3.0f);
-    GlStateManager::rotatef(-(150.0f * progress - 60.0f) - guardian->mXRot,
-                            1.0f, 3.0f, 3.0f);
-    GlStateManager::translatef(3.0f, -0.4f, -1.5f);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 0.5f * pulse + 0.05f);
+    GlStateManager::translatef(0.0f, 1.8f, 0.0f);
+    GlStateManager::rotatef(180.0f - camera->mYRot, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-(150.0f * progress - 60.0f) - camera->mXRot, 1.0f, 0.0f, 0.0f);
+    GlStateManager::translatef(0.0f, -0.4f, -1.5f);
     GlStateManager::scalef(scale, scale, scale);
-    guardian->mYRotO = guardian->mYRot = 3.0f;
-    guardianReference->mYRotO = guardianReference->mYRot = 3.0f;
+    guardian->mYRotO = guardian->mYRot = 0.0f;
+    guardian->mYHeadRotO = guardian->mYHeadRot = 0.0f;
     boost::shared_ptr<Entity> renderEntity = guardianReference;
-    dispatcher->render(renderEntity, 0.0, 0.0, 0.0, 3.0f, partialTicks,
+    dispatcher->render(renderEntity, 0.0, 0.0, 0.0, 0.0f, partialTicks,
                        false, false, true, false);
     GlStateManager::popMatrix();
     GlStateManager::enableDepthTest();

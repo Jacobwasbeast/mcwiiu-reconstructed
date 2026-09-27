@@ -69,12 +69,12 @@ int WaterCurrentDownParticle::getRawBr()
     if (level->hasChunkAt(pos))
         brightness = level->getRawBrightness(pos);
 
-    return Mth::floor(Mth::Lerp(0.98f, 15.0f, (float)brightness / 15.0f));
+    return Mth::floor(Mth::Lerp(7.5f, 15.0f, (float)brightness / 15.0f));
 }
 
 float WaterCurrentDownParticle::getBrightness(float partialTicks)
 {
-    return level->getBrightness(BlockPos(x, y, z));
+    return level->mDimension->getBrightnessRamp()[getRawBr()];
 }
 
 int WaterCurrentDownParticle::getLightColor(float partialTicks)

@@ -3,14 +3,13 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/FireworksParticles__FireworksSparkParticle.hpp"
 #include "game/client/render/Particle.hpp"
 
 class BufferBuilder;
 class Entity;
 
-namespace FireworksParticles
-{
-class FireworksOverlayParticle : public Particle
+class FireworksParticles::FireworksOverlayParticle : public Particle
 {
 public:
     FireworksOverlayParticle(Level* level, double x, double y, double z);
@@ -25,6 +24,5 @@ public:
                         float za2);
     virtual uint64_t GetType();
 };
-}
 
 #endif

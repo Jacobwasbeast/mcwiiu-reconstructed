@@ -79,8 +79,11 @@ void NoteParticle::init(Level* level, double x, double y, double z,
     gCol = (float)((colour >> 8) & 255) / 255.0f;
     bCol = (float)(colour & 255) / 255.0f;
 
+    size *= 0.75f;
+    size *= factor;
+    scale = size;
     lifetime = 6;
-    size = scale = size * factor;
+    setMiscTex(64);
 }
 
 uint64_t NoteParticle::GetType()

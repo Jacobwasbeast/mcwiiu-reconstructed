@@ -92,6 +92,6 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
 
 const ResourceLocation* FishingHookRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation location;
+    static ResourceLocation location((_TEXTURE_NAME)20);
     return &location;
 }

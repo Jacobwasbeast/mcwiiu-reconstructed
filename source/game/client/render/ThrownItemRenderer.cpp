@@ -87,7 +87,7 @@ void ThrownItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
 
 const ResourceLocation* ThrownItemRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation location;
+    static ResourceLocation location((_TEXTURE_NAME)240);
     return &location;
 }
 

@@ -44,7 +44,7 @@ public:
 
 private:
     float m_size;
-    float m_gravity;
+    float mRotSpeed;
 };
 
 #endif

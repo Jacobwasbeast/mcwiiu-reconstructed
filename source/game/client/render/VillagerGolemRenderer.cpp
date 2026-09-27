@@ -10,7 +10,7 @@
 #include "game/world/generation/VillagerGolem.hpp"
 #include "game/world/generation/VillagerGolemFlowerLayer.hpp"
 
-static ResourceLocation sTextureLocation;
+static ResourceLocation sTextureLocation((_TEXTURE_NAME)81);
 
 VillagerGolemRenderer::VillagerGolemRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new VillagerGolemModel(0.0F, -7.0F, ModelDefinition()), 0.5F)

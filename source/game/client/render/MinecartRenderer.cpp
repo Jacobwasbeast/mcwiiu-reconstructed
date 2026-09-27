@@ -110,7 +110,7 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
 const ResourceLocation* MinecartRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location;
+    static ResourceLocation location((_TEXTURE_NAME)11);
     return &location;
 }
 

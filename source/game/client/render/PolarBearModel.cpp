@@ -114,17 +114,19 @@ void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     float standingScaleSquared = standingScale * standingScale;
     float standingScaleComplement = 1.0f - standingScaleSquared;
 
-    mBody->mXRot = 1.5707963705062866f - 0.3f * standingScaleSquared;
-    mBody->mX = 9.0f * standingScaleComplement + 11.0f * standingScaleSquared;
-    mLeg2->mX = 14.0f * standingScaleComplement - 6.0f * standingScaleSquared;
-    mLeg2->mY = -8.0f * standingScaleComplement - 4.0f * standingScaleSquared;
-    mLeg2->mXRot = mLeg2->mXRot - 0.3f * 0.35f * standingScaleSquared;
-    mLeg3->mX = mLeg2->mX;
+    const float standingAngle = standingScaleSquared * 3.1415927f;
+
+    mBody->mXRot = 1.5707964f - standingAngle * 0.35f;
+    mBody->mY = 9.0f * standingScaleComplement + 11.0f * standingScaleSquared;
+    mLeg2->mY = 14.0f * standingScaleComplement + -6.0f * standingScaleSquared;
+    mLeg2->mZ = -8.0f * standingScaleComplement + -4.0f * standingScaleSquared;
+    mLeg2->mXRot -= standingAngle * 0.45f;
     mLeg3->mY = mLeg2->mY;
-    mLeg3->mXRot = mLeg3->mXRot - 0.3f * 0.35f * standingScaleSquared;
-    mHead->mX = 10.0f * standingScaleComplement - 12.0f * standingScaleSquared;
-    mHead->mY = -16.0f * standingScaleComplement - 3.0f * standingScaleSquared;
-    mHead->mXRot = mHead->mXRot + 3.1415927410125732f * standingScaleSquared * 0.15f;
+    mLeg3->mZ = mLeg2->mZ;
+    mLeg3->mXRot -= standingAngle * 0.45f;
+    mHead->mY = 10.0f * standingScaleComplement + -12.0f * standingScaleSquared;
+    mHead->mZ = -16.0f * standingScaleComplement + -3.0f * standingScaleSquared;
+    mHead->mXRot += standingAngle * 0.15f;
 }
 
 std::wstring PolarBearModel::getName()

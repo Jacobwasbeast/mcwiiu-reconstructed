@@ -12,7 +12,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation sExperienceOrbTexture;
+static ResourceLocation sExperienceOrbTexture((_TEXTURE_NAME)53);
 
 ExperienceOrbRenderer::ExperienceOrbRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

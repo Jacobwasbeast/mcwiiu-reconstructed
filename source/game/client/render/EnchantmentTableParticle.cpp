@@ -72,7 +72,7 @@ void EnchantmentTableParticle::tick()
     yo = y;
     zo = z;
     x = xd * remaining + mOriginX;
-    y = yd * remaining + mOriginY - drop * 0.025f;
+    y = yd * remaining + mOriginY - drop * 1.2f;
     z = zd * remaining + mOriginZ;
     ++age;
     if (lifetime <= (int)currentAge)

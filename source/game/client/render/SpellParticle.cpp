@@ -56,10 +56,11 @@ void SpellParticle::tick()
 
     setMiscTex(baseTex - (age << 3) / lifetime + 7);
     yd += 0.004;
+    move(xd, yd, zd);
 
     double xMotion = xd;
     double zMotion = zd;
-    if (x == xo)
+    if (y == yo)
     {
         xMotion *= 1.1;
         zMotion *= 1.1;
@@ -69,8 +70,8 @@ void SpellParticle::tick()
     yd *= 0.9599999785423279;
     if (onGround)
     {
-        xMotion *= 0.7;
-        zMotion *= 0.7;
+        xMotion *= 0.699999988079071;
+        zMotion *= 0.699999988079071;
     }
     xd = xMotion;
     zd = zMotion;

@@ -44,7 +44,7 @@ void LavaSlimeRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float par
 {
     boost::shared_ptr<MagmaCube> magmaCube = boost::static_pointer_cast<MagmaCube>(entity);
     float size = (float)magmaCube->getSize();
-    float squish = (magmaCube->mSquishO - magmaCube->mSquish) * partialTick + magmaCube->mSquish;
+    float squish = (magmaCube->mSquish - magmaCube->mSquishO) * partialTick + magmaCube->mSquishO;
     float inverseSquish = 1.0F / (squish / (size * 0.5F + 1.0F) + 1.0F);
     GlStateManager::scalef(inverseSquish * size, (1.0F / inverseSquish) * size,
                            inverseSquish * size);

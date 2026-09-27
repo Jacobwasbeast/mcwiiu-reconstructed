@@ -18,12 +18,12 @@ FallingDustParticle::FallingDustParticle(Level* level,
                                          float red,
                                          float green,
                                          float blue)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0), m_size(0.0f), m_gravity(0.0f)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0), m_size(0.0f), mRotSpeed(0.0f)
 {
     xd = 0.0;
     yd = 0.0;
     zd = 0.0;
-    m_gravity = (random.nextFloat() - 0.5f) * 0.1f;
+    mRotSpeed = (random.nextFloat() - 0.5f) * 0.1f;
     rCol = red;
     gCol = green;
     bCol = blue;
@@ -47,7 +47,7 @@ void FallingDustParticle::render(BufferBuilder* buffer,
                                  float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
-    float alphaScale = Mth::clamp(progress * 32.0f, 0.0f, 1.75f);
+    float alphaScale = Mth::clamp(progress * 32.0f, 0.0f, 1.0f);
     Particle::size = m_size * alphaScale;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
@@ -63,11 +63,12 @@ void FallingDustParticle::tick()
     if (oldAge >= particleLifetime)
         remove();
 
-    xd = yd + m_gravity * 3.1415927f * 2.0f;
+    oRoll = roll;
+    roll += mRotSpeed * 3.1415927f * 2.0f;
     if (onGround)
     {
-        xd = 0.5f;
-        yd = 0.5f;
+        oRoll = 0.0f;
+        roll = 0.0f;
     }
     setMiscTex(7 - (age << 3) / particleLifetime);
     move(xd, yd, zd);

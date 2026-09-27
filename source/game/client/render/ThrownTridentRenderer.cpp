@@ -121,7 +121,7 @@ void ThrownTridentRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
 
 const ResourceLocation* ThrownTridentRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation location;
+    static ResourceLocation location((_TEXTURE_NAME)230);
     (void)entity;
     return &location;
 }

@@ -1,4 +1,5 @@
 #include "game/client/render/PistonHeadRenderer.hpp"
+#include "game/client/render/Textures.hpp"
 
 #include "game/client/render/BlockRenderer.hpp"
 #include "game/client/render/Tesselator.hpp"
@@ -23,7 +24,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/AbstractProperty.hpp"
 
-static ResourceLocation sPistonTexture((_TEXTURE_NAME)0);
 
 PistonHeadRenderer::PistonHeadRenderer()
 {
@@ -55,7 +55,7 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
 
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
-    bindTexture(&sPistonTexture);
+    bindTexture(&BLOCKS_LOCATION);
     Lighting::turnOff();
     GlStateManager::blendFunc(4, 5);
     GlStateManager::enableBlend();

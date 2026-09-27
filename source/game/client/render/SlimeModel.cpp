@@ -22,23 +22,23 @@ SlimeModel::SlimeModel(int size, const ModelDefinition& modelDefinition)
 
         if (size < 1)
         {
-            mBody->addBox(-4.0f, 16.0f, -4.0f, 8, 1, 8);
+            mBody->addBox(-4.0f, 16.0f, -4.0f, 8, 8, 8);
             mEye0 = NULL;
             mEye1 = NULL;
             mMouth = NULL;
         }
         else
         {
-            mBody->addBox(-3.0f, -4.0f, -3.0f, 6, 6, 6);
+            mBody->addBox(-3.0f, 17.0f, -3.0f, 6, 6, 6);
 
             mEye0 = new ModelPartSkin(this, 32, 0, NULL);
-            mEye0->addBox(-3.25f, -3.5f, -3.5f, 2, 2, 2);
+            mEye0->addBox(-3.25f, 18.0f, -3.5f, 2, 2, 2);
 
             mEye1 = new ModelPartSkin(this, 32, 4, NULL);
-            mEye1->addBox(1.25f, -3.5f, -3.5f, 2, 2, 2);
+            mEye1->addBox(1.25f, 18.0f, -3.5f, 2, 2, 2);
 
             mMouth = new ModelPartSkin(this, 32, 8, NULL);
-            mMouth->addBox(0.0f, -1.5f, -3.5f, 1, 1, 1);
+            mMouth->addBox(0.0f, 21.0f, -3.5f, 1, 1, 1);
         }
 
         compileSkinnedDrawlist();

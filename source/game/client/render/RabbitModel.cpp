@@ -201,15 +201,15 @@ void RabbitModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mHead->mXRot = headPitch * 0.0174532924f;
     mNose->mXRot = headPitch * 0.0174532924f;
 
-    mEarRight->mYRot = netHeadYaw * 0.0174532924f;
-    mEarLeft->mYRot = netHeadYaw * 0.0174532924f;
-    mHead->mYRot = netHeadYaw * 0.0174532924f;
     mNose->mYRot = netHeadYaw * 0.0174532924f;
+    mHead->mYRot = netHeadYaw * 0.0174532924f;
+    mEarRight->mYRot = mNose->mYRot - 15.0f * 0.0174532924f;
+    mEarLeft->mYRot = mNose->mYRot + 15.0f * 0.0174532924f;
 
     mRearFootLeft->mXRot = jump * 50.0f * 0.0174532924f;
     mRearFootRight->mXRot = jump * 50.0f * 0.0174532924f;
     mHaunchLeft->mXRot = (jump * 50.0f - 21.0f) * 0.0174532924f;
-    mHaunchRight->mXRot = (jump * 50.0f + 21.0f) * 0.0174532924f;
+    mHaunchRight->mXRot = (jump * 50.0f - 21.0f) * 0.0174532924f;
     mJumpRotation = jump;
     mFrontLegLeft->mXRot = (jump * -40.0f - 11.0f) * 0.0174532924f;
     mFrontLegRight->mXRot = (jump * -40.0f - 11.0f) * 0.0174532924f;

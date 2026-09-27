@@ -26,6 +26,11 @@ public:
                                          double xa, double ya, double za,
                                          arrayWithLength<int> params);
     };
+
+private:
+    float mStartSize;
+    float mEndSize;
+    float mScale;
 };
 
 #endif

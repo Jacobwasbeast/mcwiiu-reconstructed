@@ -18,7 +18,7 @@ double SilverfishRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 
 const ResourceLocation* SilverfishRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location;
+    static ResourceLocation location((_TEXTURE_NAME)50);
     return &location;
 }
 

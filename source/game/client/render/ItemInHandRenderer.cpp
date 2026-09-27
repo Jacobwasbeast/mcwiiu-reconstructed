@@ -44,8 +44,7 @@
 namespace
 {
 int sItemRenderDisplayLists[5] = {-1, -1, -1, -1, -1};
-static ResourceLocation TERRAIN_LOCATION((_TEXTURE_NAME)0);
-static ResourceLocation WATER_OVERLAY_LOCATION((_TEXTURE_NAME)2);
+static ResourceLocation WATER_OVERLAY_LOCATION((_TEXTURE_NAME)15);
 static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)13);
 
 PlayerRenderer* getPlayerRenderer(EntityRenderDispatcher* dispatcher, boost::shared_ptr<LocalPlayer> player)
@@ -844,7 +843,7 @@ void ItemInHandRenderer::render(float partialTick)
 
 void ItemInHandRenderer::renderTex(TextureAtlasSprite* sprite)
 {
-    mMinecraft->mTextures->bindTexture(&TERRAIN_LOCATION);
+    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     GlStateManager::color4f(0.1f, 0.1f, 0.1f, 0.5f);
     GlStateManager::pushMatrix();
@@ -906,7 +905,7 @@ void ItemInHandRenderer::renderFire()
     GlStateManager::blendFunc(4, 5);
     FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
     TextureAtlasSprite* sprite = fire->getTextureLayer(1);
-    mMinecraft->mTextures->bindTexture(&TERRAIN_LOCATION);
+    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
     float u0 = (float)sprite->getU0(true);
     float v0 = (float)sprite->getV0(true);
     float u1 = (float)sprite->getU1(true);

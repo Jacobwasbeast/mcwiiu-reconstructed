@@ -42,7 +42,7 @@ void FlameParticle::render(BufferBuilder* buffer,
                            float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
-    size = mOriginalSize * (1.75f - progress * progress * 0.5f);
+    size = mOriginalSize * (1.0f - progress * progress * 0.5f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
@@ -58,8 +58,8 @@ int FlameParticle::getLightColor(float partialTicks)
 
 float FlameParticle::getBrightness(float partialTicks)
 {
-    float progress = Mth::clamp(((float)age + partialTicks) / (float)lifetime, 0.0f, 1.75f);
-    return Particle::getBrightness(partialTicks) * progress + (1.75f - progress);
+    float progress = Mth::clamp(((float)age + partialTicks) / (float)lifetime, 0.0f, 1.0f);
+    return Particle::getBrightness(partialTicks) * progress + (1.0f - progress);
 }
 
 void FlameParticle::tick()
