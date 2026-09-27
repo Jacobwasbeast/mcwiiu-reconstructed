@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_HelpAndOptionsMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -13,6 +14,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "game/core/GameSettings.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
@@ -22,12 +24,12 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int sceneType, void*, UIL
 {
     initialiseMovie();
     m_unknownFlag = Minecraft::GetInstance()->mPendingLevelChange == 0;
-    m_button1.init(UIString(0x5268d042), 0);
-    m_button2.init(UIString(0x15f695fb), 1);
-    m_button3.init(UIString(0x80fed3f0), 2);
-    m_button4.init(UIString(0xfccd64b9), 3);
-    m_button5.init(UIString(0x4e960eb2), 4);
-    m_button7.init(UIString(0x7693b9cf), 6);
+    m_button1.init(UIString(IDS_CHANGE_SKIN), 0);
+    m_button2.init(UIString(IDS_HOW_TO_PLAY), 1);
+    m_button3.init(UIString(IDS_CONTROLS), 2);
+    m_button4.init(UIString(IDS_SETTINGS), 3);
+    m_button5.init(UIString(IDS_CREDITS), 4);
+    m_button7.init(UIString(IDS_DEBUG_SETTINGS), 6);
     removeControl(&m_buttonUpsell, false);
     removeControl(&m_button6, false);
     removeControl(&m_button7, false);
@@ -60,7 +62,7 @@ unsigned int UIScene_HelpAndOptionsMenu::mapElementsAndNames()
 
 void UIScene_HelpAndOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -69,13 +71,13 @@ void UIScene_HelpAndOptionsMenu::updateComponents()
     Minecraft* minecraft = Minecraft::GetInstance();
     bool showSecond = false;
     if (minecraft->mPendingLevelChange == 0) {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
         showSecond = true;
     } else {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
         showSecond = g_pApp->GetLocalPlayerCount() == 1;
     }
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), showSecond);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, showSecond);
 }
 
 std::wstring UIScene_HelpAndOptionsMenu::getMoviePath()
@@ -107,29 +109,29 @@ void UIScene_HelpAndOptionsMenu::handleReload()
 void UIScene_HelpAndOptionsMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action > 3) {
-        if (action > 5 && action == 0x14 && pressed)
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        if (action == 0x15) {
-            if (!pressed || released)
-                return;
+    if (action < EControllerActions_MenuUp)
+        return;
+    if (action == EControllerActions_MenuCancel)
+    {
+        if (pressed && !released)
             navigateBack();
-            return;
-        }
-        sendInputToMovie(action, repeat, released, pressed);
+        return;
     }
+    if (action == EControllerActions_MenuOk && pressed)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+    sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_HelpAndOptionsMenu::handlePress(int first, int)
+void UIScene_HelpAndOptionsMenu::handlePress(int controlId, int)
 {
-    if (first > 6)
+    if (controlId > 6)
         return;
     static const EUIScene scenes[7] = {
-        static_cast<EUIScene>(0x26), static_cast<EUIScene>(0x11), static_cast<EUIScene>(0x12),
-        static_cast<EUIScene>(0x15), static_cast<EUIScene>(0x17), static_cast<EUIScene>(0x19),
+        EUIScene_SkinSelectMenu, EUIScene_HowToPlayMenu, EUIScene_ControlsMenu,
+        EUIScene_SettingsMenu, EUIScene_Credits, EUIScene_TutorialPopup,
         static_cast<EUIScene>(0x0d)
     };
-    gConsoleUIController.NavigateToScene(m_playerId, scenes[first], 0, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(m_playerId, scenes[controlId], 0, EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
-int UIScene_HelpAndOptionsMenu::getSceneType() { return 15; }
+int UIScene_HelpAndOptionsMenu::getSceneType() { return EUIScene_HelpAndOptionsMenu; }

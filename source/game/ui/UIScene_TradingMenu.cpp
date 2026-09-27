@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_TradingMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -27,6 +28,7 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/core/GameSettings.hpp"
 
 #include <cstdio>
 
@@ -51,7 +53,7 @@ UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
       m_tradeRow(0),
       m_tradeOffset(0),
       m_tradeFocusSet(false),
-      m_tutorialHintValue(0),
+      m_previousTutorialState(eTutorial_State_Gameplay),
       m_mainPanel(),
       m_tradingBar(),
       m_request1(),
@@ -66,8 +68,8 @@ UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
 {
     initialiseMovie();
     m_requiredLabel.init(UIString(L"HotBar"));
-    m_villagerText.init(UIString(L10N::GetString(0x14630b9e)));
-    m_request1Label.init(UIString(L10N::GetString(0x3dbed919)));
+    m_villagerText.init(UIString(L10N::GetString(IDS_INVENTORY)));
+    m_request1Label.init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
     m_request2Label.init(UIString(L"HotBar"));
     m_inventoryLabel.init(UIString(L"HotBar"));
 
@@ -78,8 +80,8 @@ UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
         Tutorial* tutorial = gameMode->getTutorial();
         if (tutorial != 0)
         {
-            m_tutorialHintValue = tutorial->currentState;
-            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x19), this);
+            m_previousTutorialState = tutorial->currentState;
+            tutorial->changeTutorialState(eTutorial_State_TradingMenu, this);
         }
     }
 
@@ -156,7 +158,7 @@ std::wstring UIScene_TradingMenu::getMoviePath()
 
 void UIScene_TradingMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, (int)0x80cf40eb, 0x4f6bcf5e, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_TRADE, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -168,7 +170,7 @@ void UIScene_TradingMenu::handleDestroy()
     {
         Tutorial* tutorial = gameMode->getTutorial();
         if (tutorial != 0)
-            tutorial->changeTutorialState(static_cast<eTutorial_State>(m_tutorialHintValue), 0);
+            tutorial->changeTutorialState(m_previousTutorialState, 0);
     }
 
     if (minecraft->mLocalPlayers[m_playerId])
@@ -353,18 +355,18 @@ void UIScene_TradingMenu::updateDisplay()
             {
                 setRequest2RedBox(!buyB->isEmpty());
                 if (haveEnoughA && buyB->isEmpty())
-                    tooltipHint = 0x80cf40eb;
+                    tooltipHint = IDS_TOOLTIPS_TRADE;
             }
             else
             {
                 setRequest2RedBox(buyB->getCount() > matchesB);
                 if (haveEnoughA && buyB->getCount() <= matchesB)
-                    tooltipHint = 0x80cf40eb;
+                    tooltipHint = IDS_TOOLTIPS_TRADE;
             }
         }
     }
 
-    gConsoleUIController.SetTooltips(m_playerId, tooltipHint, 0xded2ef45, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, tooltipHint, IDS_TOOLTIPS_EXIT, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -462,7 +464,7 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
         }
     }
 
-    if (action == 0)
+    if (action == EControllerActions_MenuA)
     {
         if (m_trades.empty())
             return 1;
@@ -507,7 +509,7 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
         return 1;
     }
 
-    if (action == 1)
+    if (action == EControllerActions_MenuB)
     {
         gConsoleUIController.ShowTooltip(m_playerId, 2, false);
         gConsoleUIController.ShowTooltip(m_playerId, 1, false);
@@ -518,7 +520,7 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
     }
 
     int selectedIndex;
-    if (action == 6)
+    if (action == EControllerActions_MenuRight)
     {
         if (m_tradeRow == 6)
         {
@@ -536,7 +538,7 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
         updateDisplay();
         selectedIndex = m_tradeRow + m_tradeOffset;
     }
-    else if (action == 7)
+    else if (action == EControllerActions_MenuLeft)
     {
         if (m_tradeRow == 0)
         {
@@ -641,5 +643,5 @@ boost::shared_ptr<MerchantMenu> UIScene_TradingMenu::getMerchant()
 
 int UIScene_TradingMenu::getSceneType()
 {
-    return 0x32;
+    return EUIScene_TradingMenu;
 }

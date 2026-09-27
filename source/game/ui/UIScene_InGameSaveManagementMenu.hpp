@@ -7,10 +7,20 @@
 #include "game/ui/UIControl_SpaceIndicatorBar.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 
+class _SaveListDetails;
+struct SAVE_DETAILS;
+
 class UIScene_InGameSaveManagementMenu : public UIScene
 {
 public:
-    UIScene_InGameSaveManagementMenu(int sceneType, void* sceneData, UILayer* layer);
+    enum EPendingAction
+    {
+        ePendingAction_None,
+        ePendingAction_Unused,
+        ePendingAction_RebuildSaveList
+    };
+
+    UIScene_InGameSaveManagementMenu(int playerId, void* data, UILayer* layer);
     virtual ~UIScene_InGameSaveManagementMenu();
 
     void GetSaveInfo();
@@ -18,42 +28,40 @@ public:
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();
     virtual void handleReload();
-    virtual void handleGainFocus(bool hadFocus);
+    virtual void handleGainFocus(bool navigatedBack);
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
-    virtual void handleFocusChange(int focus, int childFocus);
-    virtual void handleInitFocus(int focus, int childFocus);
-    virtual bool hasFocus(int sceneType);
-    static unsigned int LoadSaveDataThumbnailReturned(void* context, unsigned char* data,
-                                                      unsigned int size);
+    virtual void handleFocusChange(int controlId, int childId);
+    virtual void handleInitFocus(int controlId, int childId);
+    virtual bool hasFocus(int playerId);
+    static int LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size);
     virtual void tick();
     virtual std::wstring getMoviePath();
-    static unsigned int DeleteSaveDataReturned(void* context, bool success);
-    static unsigned int DeleteSaveDialogReturned(void* context, int button,
-                                                  C4JStorage::EMessageResult result);
-    virtual void handlePress(int first, int second);
+    static int DeleteSaveDataReturned(void* context, bool success);
+    static int DeleteSaveDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
+    virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
     virtual bool hidesLowerScenes();
 
 private:
-    unsigned char* m_saveDetails;
-    int m_saveCount;
+    _SaveListDetails* m_saveListDetails;
+    int m_saveDetailsCount;
     UIControl_SaveList m_saveList;
     UIControl_Label m_saveListTitle;
     UIControl m_saveTimer;
     UIControl_SpaceIndicatorBar m_saveSizeBar;
-    int m_action;
-    bool m_deletePending;
-    bool m_saveInfoPending;
-    bool m_thumbnailPending;
+    EPendingAction m_pendingAction;
+    bool m_ignoreInput;
+    bool m_thumbnailsComplete;
+    bool m_thumbnailRequested;
     bool m_thumbnailReturned;
-    int m_currentSave;
-    void* m_saveInfo;
+    int m_nextThumbnail;
+    SAVE_DETAILS* m_saveDetails;
     bool m_saveInfoReady;
-    bool m_closeRequested;
-    int m_saveOperation;
-    int m_focusSelection;
-    bool m_focusChanged;
+    bool m_closing;
+    int m_saveListRefreshState;
+    int m_selectedSaveIndex;
+    bool m_selectionChanged;
 };
 
 #endif

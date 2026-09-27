@@ -1,6 +1,7 @@
 #ifndef GAME_UI_UISCENE_MAPSELECTMENU_HPP
 #define GAME_UI_UISCENE_MAPSELECTMENU_HPP
 
+#include "game/minigame/EMiniGameId.hpp"
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -34,7 +35,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
 
 private:
@@ -44,7 +45,7 @@ private:
     LevelGenerationOptions* m_generationOptions;
     unsigned char m_mapInfoPending;
     unsigned int m_mapSelection;
-    int m_miniGameType;
+    EMiniGameId m_miniGameType;
     UIControl_CheckboxButtonList m_mapList;
     UIControl_Label m_mapListTitle;
     UIControl_Label m_mapTitle;

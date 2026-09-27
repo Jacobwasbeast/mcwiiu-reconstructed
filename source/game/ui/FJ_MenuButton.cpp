@@ -20,5 +20,5 @@ void FJ_MenuButton::Init(const std::wstring& name, int id)
 
 void FJ_MenuButton::UseEllipsis(bool useEllipsis)
 {
-    m_useEllipsis = useEllipsis;
+    m_textOnly = useEllipsis;
 }

@@ -55,7 +55,6 @@ public:
     bool IsActiveButton(IUIScene_AbstractContainerMenu::ESceneSection section);
 
 private:
-    UIControl* controlForSection(IUIScene_AbstractContainerMenu::ESceneSection section);
     UIControl_SlotList m_ingredientSlot;
     UIControl_SlotList m_lapisSlot;
     UIControl_Label m_enchantLabel;

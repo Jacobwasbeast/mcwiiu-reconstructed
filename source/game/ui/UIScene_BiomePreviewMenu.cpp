@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_BiomePreviewMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -89,7 +90,7 @@ void UIScene_BiomePreviewMenu::setNewPointerPos(float x, float y)
     if (biome != 0)
     {
         std::vector<HtmlString> lines;
-        lines.push_back(HtmlString(biome->getName(false), (eMinecraftColour)0, false, false, -1));
+        lines.push_back(HtmlString(biome->getName(false), eMinecraftColour_NOTSET, false, false, -1));
         UIString label(HtmlString::Compose(&lines));
         mCursor.setLabel(label, false, true);
         mPlayableAreaLabel.setLabel(UIString(biome->getDescription()), false, false);
@@ -213,21 +214,21 @@ unsigned int UIScene_BiomePreviewMenu::mapElementsAndNames()
 void UIScene_BiomePreviewMenu::updateTooltips()
 {
     int zoom = (int)mOverrideSettings.GetZoomLevel();
-    int zoomTooltip = zoom == 1 ? -2 : zoom == 2 ? 0x5b2efac2 : -1;
-    int scaleTooltip = zoom < 2 ? 0x5b2efac2 : -1;
+    int zoomTooltip = zoom == 1 ? -2 : zoom == 2 ? IDS_TOOLTIPS_ZOOM : -1;
+    int scaleTooltip = zoom < 2 ? IDS_TOOLTIPS_ZOOM : -1;
     int scale = (int)mOverrideSettings.GetGenerationScale();
-    int scaleSlot6 = scale == 1 ? -2 : scale == 2 ? 0x7bc900dd : -1;
-    int scaleSlot7 = (scale == 0 || scale == 1) ? 0x7bc900dd : -1;
+    int scaleSlot6 = scale == 1 ? -2 : scale == 2 ? IDS_TOOLTIPS_SCALE : -1;
+    int scaleSlot7 = (scale == 0 || scale == 1) ? IDS_TOOLTIPS_SCALE : -1;
 
-    gConsoleUIController.SetTooltips(0, 0xd8a6b805, 0xe21d8023, 0xd30e0a41, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_ACCEPT, IDS_TOOLTIPS_CANCEL, 0xd30e0a41, -1,
                                      zoomTooltip, scaleTooltip, scaleSlot6, scaleSlot7,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_BiomePreviewMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, (EUIScene)0x42, true);
-    m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
+    m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 std::wstring UIScene_BiomePreviewMenu::getMoviePath()
@@ -241,7 +242,7 @@ void UIScene_BiomePreviewMenu::customDraw(const char*, fuiRect*)
 
 void UIScene_BiomePreviewMenu::dmouse(float& x, float& y, float& width, float& height)
 {
-    double sensitivity = (double)GameSettings::GetGameSettings(m_playerId, (eGameSetting)5) / 100.0;
+    double sensitivity = (double)GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity) / 100.0;
     x = (float)(g_pInput->GetJoypadStick_Menu_RX(m_playerId) * sensitivity);
     y = (float)(g_pInput->GetJoypadStick_Menu_RY(m_playerId) * sensitivity);
     if (fabsf(x) < 0.01f)
@@ -282,7 +283,7 @@ void UIScene_BiomePreviewMenu::onMouseTick()
         _UIVec2D pos;
         pos.x = mNavigatorWidth + mPointerX;
         pos.y = mNavigatorHeight + mPointerY;
-        if (!gRenderer->IsWidescreen() || g_pApp->GetLocalPlayerCount() > 1)
+        if (!gRenderer->IsHiDef() || g_pApp->GetLocalPlayerCount() > 1)
             scale = 0.6f;
         moveX *= scale;
         moveY *= scale;
@@ -456,7 +457,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
     switch (action)
     {
-    case 2:
+    case EControllerActions_MenuX:
         if (released)
         {
             EnterCriticalSection(&mCriticalSection);
@@ -472,33 +473,33 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
             handled = true;
         }
         break;
-    case 4:
+    case EControllerActions_MenuUp:
         if (released)
         {
             handleNavigate(NAV_UP);
             handled = true;
         }
         break;
-    case 5:
+    case EControllerActions_MenuDown:
         if (released)
         {
             handleNavigate(NAV_DOWN);
             handled = true;
         }
         break;
-    case 6:
+    case EControllerActions_MenuRight:
         if (released)
             handleNavigate(NAV_RIGHT);
         handled = true;
         break;
-    case 7:
+    case EControllerActions_MenuLeft:
         if (released)
         {
             handleNavigate(NAV_LEFT);
             handled = true;
         }
         break;
-    case 8:
+    case EControllerActions_MenuPageUp:
         if (!released)
             return;
         if (!repeat)
@@ -509,7 +510,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         }
         handled = true;
         break;
-    case 9:
+    case EControllerActions_MenuPageDown:
         if (!released)
             return;
         if (!repeat)
@@ -520,7 +521,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         }
         handled = true;
         break;
-    case 10:
+    case EControllerActions_MenuRightScroll:
         if (!released)
             return;
         if (!repeat)
@@ -531,7 +532,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         }
         handled = true;
         break;
-    case 11:
+    case EControllerActions_MenuLeftScroll:
         if (!released)
             return;
         if (!repeat)
@@ -542,14 +543,14 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         }
         handled = true;
         break;
-    case 0x14:
+    case EControllerActions_MenuOk:
         if (released)
         {
             navigateBack();
             handled = true;
         }
         break;
-    case 0x15:
+    case EControllerActions_MenuCancel:
         if (released)
         {
             navigateBack();
@@ -568,5 +569,5 @@ UIControl* UIScene_BiomePreviewMenu::GetMainPanel()
 
 int UIScene_BiomePreviewMenu::getSceneType()
 {
-    return 0x40;
+    return EUIScene_BiomePreviewMenu;
 }

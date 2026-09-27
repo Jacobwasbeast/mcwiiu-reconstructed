@@ -20,7 +20,7 @@ void DisconnectedScreen::keyPressed(char key, int action)
 
 void DisconnectedScreen::init()
 {
-    std::wstring key(L"gui_toMenu");
+    std::wstring key(L"gui.toMenu");
     std::wstring label = Language::getInstance()->getElement(key);
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132, label));
 }

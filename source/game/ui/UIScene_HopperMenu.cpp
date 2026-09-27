@@ -1,4 +1,6 @@
 #include "game/ui/UIScene_HopperMenu.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/InteractionObject.hpp"
@@ -15,6 +17,7 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/ui/UILayer.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -41,10 +44,10 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
     {
         boost::shared_ptr<InteractionObject> interaction =
             boost::dynamic_pointer_cast<InteractionObject>(sceneData->container);
-        if (interaction == 0 || interaction->getTypeId(false) != 0x11)
-            m_hopperLabel.init(UIString(L10N::GetString(0xade7383c)));
+        if (interaction == 0 || interaction->getTypeId(false) != ClientboundContainerOpenPacket::MINECART_HOPPER)
+            m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_HOPPER)));
         else
-            m_hopperLabel.init(UIString(L10N::GetString(0x917ea687)));
+            m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
     }
     else
     {
@@ -58,7 +61,7 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
         if (tutorial != 0)
         {
             m_sceneInterface->m_previousTutorialState = tutorial->currentState;
-            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x20), this);
+            tutorial->changeTutorialState(eTutorial_State_HopperMenu, this);
         }
     }
 
@@ -67,10 +70,10 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
     boost::shared_ptr<Player> player =
         Minecraft::GetInstance()->mLocalPlayers[sceneData->playerIndex];
     HopperMenu* menu = new HopperMenu(playerInventory, sceneData->container, player);
-    const int containerSlotCount = static_cast<int>(sceneData->container->getContainerSize());
-    m_sceneInterface->Initialize(false, sceneData->playerIndex, menu, true, containerSlotCount,
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x47), false);
+    m_containerSize = static_cast<int>(sceneData->container->getContainerSize());
+    m_sceneInterface->Initialize(false, sceneData->playerIndex, menu, true, m_containerSize,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
     m_hopperSlot.addSlots(0, 9);
     delete sceneData;
 }
@@ -82,11 +85,11 @@ UIScene_HopperMenu::~UIScene_HopperMenu()
 unsigned int UIScene_HopperMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         return 9;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         return 9;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         return 5;
     return 0;
 }
@@ -94,11 +97,11 @@ unsigned int UIScene_HopperMenu::getSectionColumns(
 unsigned int UIScene_HopperMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         return 1;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         return GetInventoryRows();
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         return 1;
     return 0;
 }
@@ -108,11 +111,11 @@ unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
     const IUIScene_AbstractContainerMenu::ESceneSection hotbar =
-        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44);
+        IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar;
     const IUIScene_AbstractContainerMenu::ESceneSection inventory =
-        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45);
+        IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory;
     const IUIScene_AbstractContainerMenu::ESceneSection hopper =
-        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46);
+        IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots;
 
     if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
@@ -121,7 +124,7 @@ unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
     }
     if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        const bool smallInventory = m_sceneInterface->m_inventorySmall != 0;
+        const bool smallInventory = m_sceneInterface->m_smallInventory != 0;
         const IUIScene_AbstractContainerMenu::ESceneSection target =
             smallInventory ? hopper : inventory;
         m_sceneInterface->updateSlotPosition(section, target, state, x, y,
@@ -141,7 +144,7 @@ unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
     if (section == hopper && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
         const IUIScene_AbstractContainerMenu::ESceneSection target =
-            m_sceneInterface->m_inventorySmall ? hotbar : inventory;
+            m_sceneInterface->m_smallInventory ? hotbar : inventory;
         m_sceneInterface->updateSlotPosition(section, target, state, x, y, -2, 0);
         return target;
     }
@@ -158,11 +161,11 @@ void UIScene_HopperMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
     UIControl* control = 0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         control = &m_hotbarList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         control = &m_inventoryList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         control = &m_hopperSlot;
     if (control != 0 && position != 0)
     {
@@ -176,20 +179,20 @@ void UIScene_HopperMenu::GetItemScreenData(
     _UIVec2D* position, _UIVec2D* size)
 {
     UIControl* control = 0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         control = &m_hotbarList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         control = &m_inventoryList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         control = &m_hopperSlot;
     const unsigned int columns = getSectionColumns(section);
     const unsigned int rows = getSectionRows(section);
     if (control != 0 && position != 0 && size != 0 && columns != 0 && rows != 0)
     {
-        position->x = static_cast<float>(slot % static_cast<int>(columns));
-        position->y = static_cast<float>(slot / static_cast<int>(columns));
-        size->x = static_cast<float>(control->getWidth() / columns);
-        size->y = static_cast<float>(control->getHeight() / rows);
+        size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
+        size->y = static_cast<float>(control->getHeight() / static_cast<float>(rows));
+        position->x = static_cast<float>(slot % static_cast<int>(columns)) * size->x;
+        position->y = static_cast<float>(slot / static_cast<int>(columns)) * size->y;
     }
 }
 
@@ -197,11 +200,11 @@ void UIScene_HopperMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
     UIControl_SlotList* list = 0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         list = &m_hotbarList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         list = &m_inventoryList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         list = &m_hopperSlot;
     if (wrap && list != 0)
         list->setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
@@ -210,7 +213,7 @@ void UIScene_HopperMenu::setSectionSelectedSlot(
 unsigned int UIScene_HopperMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
-    fuiRenderNode* panel = m_backgroundPanel.getFuiRenderNode();
+    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     m_hopperSlot.setupControl(this, panel, std::string("Trap"));
     m_controls.push_back(&m_hopperSlot);
     m_hopperLabel.setupControl(this, panel, std::string("dispenserLabel"));
@@ -227,19 +230,19 @@ std::wstring UIScene_HopperMenu::getMoviePath()
 void UIScene_HopperMenu::handleReload()
 {
     m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true,
-                                 m_slotIndex, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x47), false);
+                                 m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
     m_hopperSlot.addSlots(0, 9);
 }
 
 UIControl* UIScene_HopperMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         return &m_hotbarList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         return &m_inventoryList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         return &m_hopperSlot;
     return 0;
 }
@@ -251,17 +254,17 @@ void UIScene_HopperMenu::handleSectionClick(
 
 int UIScene_HopperMenu::getSceneType()
 {
-    return 0x35;
+    return EUIScene_HopperMenu;
 }
 
 int UIScene_HopperMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar)
         return 32;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory)
         return 5;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots)
         return 0;
     return 0;
 }

@@ -12,7 +12,6 @@
 #include "game/ui/fuiBitmap.hpp"
 #include "game/ui/fuiEdittext.hpp"
 #include "game/ui/fuiFontName.hpp"
-#include "platform/wiiu/FFLiUtilShader.hpp"
 
 extern Renderer* gRenderer;
 
@@ -495,11 +494,11 @@ bool fuiRenderNodeEditText::endOfWord(wchar_t previous, wchar_t current)
 {
     bool result = false;
     if (previous == 0 || previous == L' ' || previous == L'\t' ||
-        isNewLineChar__Fw(static_cast<uint16_t>(previous)) != 0 ||
+        isNewLineChar(static_cast<uint16_t>(previous)) != 0 ||
         (m_html && previous == L'<'))
         result = true;
     if (current == 0 || current == L' ' || current == L'\t' ||
-        isNewLineChar__Fw(static_cast<uint16_t>(current)) != 0 ||
+        isNewLineChar(static_cast<uint16_t>(current)) != 0 ||
         (m_html && current == L'<') ||
         (isCJKChar(current) && !isCJKPunctuationChar(current)))
         result = true;
@@ -663,7 +662,7 @@ void fuiRenderNodeEditText::renderString(const std::wstring& text, RenderStringS
             setHtmlAlignPosition(state);
 
         cursor = getNextWord(cursor, &m_word, state);
-        if (isNewLineChar__Fw(static_cast<uint16_t>(m_word.c_str()[0])) != 0)
+        if (isNewLineChar(static_cast<uint16_t>(m_word.c_str()[0])) != 0)
         {
             if (m_multiline || m_wordWrap || m_html)
             {

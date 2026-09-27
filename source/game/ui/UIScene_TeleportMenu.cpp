@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_TeleportMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -14,6 +15,7 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/core/GameSettings.hpp"
 
 UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer), m_splitScreen(false), m_playerInfo(), m_playerList(), m_title()
@@ -22,7 +24,7 @@ UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* l
     m_splitScreen = data != 0 && static_cast<unsigned char*>(data)[4] != 0;
     delete static_cast<unsigned char*>(data);
 
-    m_title.init(UIString(L10N::GetString(m_splitScreen ? 0xdd235a1d : 0x4296e646)));
+    m_title.init(UIString(L10N::GetString(m_splitScreen ? IDS_TELEPORT_TO_PLAYER : IDS_TELEPORT_TO_ME)));
     m_playerList.init(0);
 
     INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
@@ -38,7 +40,7 @@ UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* l
         }
     }
     CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
-    m_layer->addComponent(m_playerId, static_cast<EUIScene>(0x48), 0);
+    m_layer->addComponent(m_playerId, EUIScene_MenuBackground, 0);
     updateTooltips();
     gConsoleUIController.HidePressStart();
 }
@@ -103,7 +105,7 @@ void UIScene_TeleportMenu::OnPlayerChanged(void* context, INetworkPlayer* player
 
 void UIScene_TeleportMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -168,17 +170,22 @@ void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool releas
                                        bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action <= 3 || (action >= 6 && action < 8))
-        return;
-    if ((action <= 9 || action == 0x14))
+    switch (action)
     {
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, released, pressed);
-        return;
-    }
-    if (action == 0x15 && released && !repeat)
-    {
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-        navigateBack();
+        break;
+    case EControllerActions_MenuCancel:
+        if (released && !repeat)
+        {
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+            navigateBack();
+        }
+        break;
     }
 }
 
@@ -205,12 +212,12 @@ void UIScene_TeleportMenu::handlePress(int controlId, int itemIndex)
 void UIScene_TeleportMenu::handleDestroy()
 {
     CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x48), false);
+    m_layer->showComponent(m_playerId, EUIScene_MenuBackground, false);
 }
 
 int UIScene_TeleportMenu::getSceneType()
 {
-    return 0x34;
+    return EUIScene_TeleportMenu;
 }
 
 unsigned int UIScene_TeleportMenu::getSubSceneType() const

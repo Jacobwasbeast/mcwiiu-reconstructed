@@ -282,12 +282,12 @@ unsigned int FJ_HowToPlay::getType()
     return 0x58;
 }
 
-void FJ_HowToPlay::SetSafeZone(int iLeft, int iTop, int iRight, int iBottom)
+void FJ_HowToPlay::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_FuiNodeStage* stage = getStage();
     double stageHeight = stage->getStageHeight();
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
-    setX((float)iRight - 176.0f);
-    setY((float)iLeft - 176.0f);
+    setX(left);
+    setY(top);
 }

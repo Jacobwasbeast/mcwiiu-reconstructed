@@ -1,5 +1,6 @@
 #include "game/ui/UIScene_Timer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/UILayer.hpp"
 
 UIScene_Timer::UIScene_Timer(int type, void* data, UILayer* layer)
     : UIScene(type, layer)
@@ -39,7 +40,7 @@ unsigned int UIScene_Timer::mapElementsAndNames()
 
 int UIScene_Timer::getSceneType()
 {
-    return 76;
+    return EUIScene_Timer;
 }
 
 bool UIScene_Timer::hidesLowerScenes()

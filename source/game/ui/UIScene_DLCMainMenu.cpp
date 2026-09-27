@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_DLCMainMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -14,6 +15,7 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/core/GameSettings.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CConsoleMinecraftApp gApp;
@@ -24,8 +26,8 @@ UIScene_DLCMainMenu::UIScene_DLCMainMenu(int type, void* data, UILayer* layer)
 {
     initialiseMovie();
     g_pApp->SetLiveLinkRequired(true);
-    m_controlFocus = static_cast<int>((uintptr_t)data);
-    m_titleLabel.init(UIString(0x65154db0));
+    m_playerId = type;
+    m_titleLabel.init(UIString(IDS_DOWNLOADABLE_CONTENT_OFFERS));
     m_offerList.init(0);
     gApp.LoadLocalDLCImages();
     m_timer.setVisible(true);
@@ -67,9 +69,9 @@ void UIScene_DLCMainMenu::handleTimerComplete(int timerId)
 {
     if (timerId == 0 && g_pApp->DLCInstallPending() == 0)
     {
-        int parameter = static_cast<int>(0xb9a1bf4d);
-        gConsoleUIController.RequestErrorMessage(0xf1c0f3d9, 0x16cb58e9,
-                                                  &parameter, 1, m_controlFocus,
+        int parameter = static_cast<int>(IDS_CONFIRM_OK);
+        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_LOST, 0x16cb58e9,
+                                                  &parameter, 1, m_playerId,
                                                   ExitDLCMainMenu, this, NULL, true);
     }
 }
@@ -88,7 +90,7 @@ void UIScene_DLCMainMenu::tick()
     {
         m_initialized = true;
         m_timer.setVisible(false);
-        m_offerList.addItem(UIString(0xb512343d), 0);
+        m_offerList.addItem(UIString(IDS_MAP_PACKS), 0);
         m_offerList.addItem(UIString(0xe6ce8669), 1);
         m_offerList.addItem(UIString(0xf6194eb1), 2);
         m_offerList.addItem(UIString(0x73639b6c), 3);
@@ -98,8 +100,8 @@ void UIScene_DLCMainMenu::tick()
 
 void UIScene_DLCMainMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_controlFocus),
-                                      0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId,
+                                      IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
                                       -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -111,41 +113,48 @@ std::wstring UIScene_DLCMainMenu::getMoviePath()
 void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                       bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_controlFocus, action, repeat, released, pressed);
-    if (action <= 3)
-        return;
-    if (action == 0x15)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
     {
+    case EControllerActions_MenuCancel:
         if (released)
         {
             cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
             commerce->ClearProductInfo();
             navigateBack();
         }
-        return;
+        break;
+    case EControllerActions_MenuOk:
+        if (released)
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
     }
-    if (action > 9 && action != 0x14)
-        return;
-    if (action == 0x14 && released)
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_DLCMainMenu::handlePress(int first, int second)
+void UIScene_DLCMainMenu::handlePress(int controlId, int childId)
 {
-    if (first == 0)
+    if (controlId == 0)
     {
         killTimer(0);
         int* data = new int[3]();
-        data[0] = m_controlFocus;
-        data[2] = second;
-        gConsoleUIController.NavigateToScene(m_controlFocus, static_cast<EUIScene>(0x20),
-                                             data, static_cast<EUILayer>(6),
-                                             static_cast<EUIGroup>(7));
+        data[0] = m_playerId;
+        data[2] = childId;
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_DLCOffersMenu,
+                                             data, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
     }
 }
 
 int UIScene_DLCMainMenu::getSceneType()
 {
-    return 0x2c;
+    return EUIScene_DLCMainMenu;
 }

@@ -47,7 +47,7 @@ public:
     void SetFontSizeOverride(int size);
     std::wstring GetPageText(bool secondPage);
     bool SetPageText(const std::wstring& text, int mode);
-    uint64_t SetFocusToBook(bool focus);
+    void SetFocusToBook(bool focus);
     bool GetBookHasFocus();
     virtual void OnFocusChange(bool focused);
     virtual void DoHorizontalResizeCheck();

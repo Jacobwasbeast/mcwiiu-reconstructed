@@ -18,9 +18,15 @@ public:
         eControllerStatus_SignedIn = 2
     };
 
-    typedef void (*SignInCallback)(void*, bool, int);
+    struct SignInInfo
+    {
+        int (*callback)(void* context, bool signedIn, int userIndex);
+        void* context;
+        bool onlineGame;
+        bool returnToHome;
+    };
 
-    UIScene_QuadrantSignin(int type, void* data, UILayer* layer);
+    UIScene_QuadrantSignin(int playerId, void* data, UILayer* layer);
     virtual ~UIScene_QuadrantSignin();
     virtual unsigned int mapElementsAndNames();
     void setControllerState(int controller, EControllerStatus status);
@@ -40,13 +46,9 @@ public:
 
 private:
     bool m_signInPending;
-    SignInCallback m_callback;
-    void* m_callbackData;
-    int m_callbackUserIndex;
-    bool m_returnToHome;
-    unsigned char m_callbackState[3];
+    SignInInfo m_signInInfo;
     EControllerStatus m_controllerStates[4];
-    unsigned char m_avatarPending[4];
+    bool m_avatarPending[4];
     UIControl m_controllerControls[4];
     UIControl_Label m_pressLabels[4];
     UIControl_Label m_gamerTagLabels[4];

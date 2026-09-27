@@ -1,4 +1,6 @@
 #include "game/ui/UIScene_HUD.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -8,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "game/core/BossEvent.hpp"
+#include "game/core/BossHealthOverlay.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ClientScoreboard.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -19,6 +23,7 @@
 #include "game/core/Gui.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/LerpingBossEvent.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/StringFormat.hpp"
@@ -46,47 +51,6 @@
 #include "game/world/generation/Player.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-
-namespace {
-
-int GetScoreboardCurrentRound(ClientScoreboard* scoreboard)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(scoreboard) + 0x30);
-}
-
-GhostController::GhostRecord* GetGhostLoadedRecord(GhostController* controller, int pad)
-{
-    return *reinterpret_cast<GhostController::GhostRecord**>(
-        reinterpret_cast<char*>(controller) + 0xd4 + pad * 4);
-}
-
-bool GetGhostRecordingSlotFlag1(GhostController* controller, int pad)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(controller) + 0x81 + pad);
-}
-
-bool GetGhostRecordingSlotFlag2(GhostController* controller, int pad)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(controller) + 0x78 + pad);
-}
-
-bool GetDirectionalDamageActive(LocalPlayer* player, int index)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(player) + 0x9ac + index);
-}
-
-bool GetSplitScreenDamageFlag(LocalPlayer* player)
-{
-    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(player) + 0x9b4);
-}
-
-bool GetLocalPlayerAltHudSizeFlag(MultiplayerLocalPlayer* player)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(player) + 0x908) != 0;
-}
-
-}
-
 UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer), m_splitScreen(false), m_animatedSplashIcon(-1),
       m_hudSize(-1), m_air(10), m_hudGameMode(-1), m_selectedLabelTicks(0),
@@ -102,7 +66,7 @@ UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
         m_messageLabels[i].init(UIString(L""));
     m_selectedLabel.init(UIString(L""));
     for (int i = 0; i < 4; ++i)
-        m_previousArmorIcons[i] = m_armorIcons[i] = !HideMainHUD();
+        m_armorIcons[i] = m_shownArmorIcons[i] = !HideMainHUD();
     m_healthVisible = !HideMainHUD();
     m_foodVisible = !HideMainHUD();
     m_airVisible = !HideMainHUD();
@@ -224,7 +188,12 @@ unsigned int UIScene_HUD::mapElementsAndNames()
 
 void UIScene_HUD::ShowArmorIcons(int armour, bool visible)
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->ShowArmorIcons(armour, visible);
+    if (armour < 4 && m_shownArmorIcons[armour] != visible)
+    {
+        m_shownArmorIcons[armour] = visible;
+        if (getFJ_Hud() != 0)
+            getFJ_Hud()->ShowArmorIcons(armour, visible);
+    }
 }
 
 bool UIScene_HUD::SORTBYTIMELEFT(MobEffectInstance* first, MobEffectInstance* second)
@@ -299,7 +268,56 @@ void UIScene_HUD::HideSelectedLabel()
 
 void UIScene_HUD::tick()
 {
-    UIScene::tick();
+    if (getFJ_Hud() != 0)
+        UIScene::tick();
+
+    if (m_movie == 0)
+        return;
+
+    if (!g_pApp->GetGameStarted())
+    {
+        SetNumBossBars(0);
+        if (m_selectedLabelTicks != 0)
+        {
+            m_selectedLabelTicks = 0;
+            HideSelectedLabel();
+        }
+        return;
+    }
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mLocalPlayers[getPad()] == 0 || minecraft->mGameModes[getPad()] == 0)
+        return;
+
+    if (m_armorIcons[0] != m_shownArmorIcons[0])
+        ShowArmorIcons(0, m_armorIcons[0]);
+    if (m_armorIcons[1] != m_shownArmorIcons[1])
+        ShowArmorIcons(1, m_armorIcons[1]);
+    if (m_armorIcons[2] != m_shownArmorIcons[2])
+        ShowArmorIcons(2, m_armorIcons[2]);
+    if (m_armorIcons[3] != m_shownArmorIcons[3])
+        ShowArmorIcons(3, m_armorIcons[3]);
+
+    updateEffectsDisplay();
+
+    boost::unordered_map<std::wstring, LerpingBossEvent*> bossEvents =
+        minecraft->mGui->getBossOverlay(getPad())->mBossEvents;
+    SetNumBossBars(bossEvents.size() > 5 ? 5 : static_cast<int>(bossEvents.size()));
+    if (bossEvents.size() == 0)
+        return;
+
+    int index = 0;
+    for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = bossEvents.begin();
+         it != bossEvents.end(); ++it, ++index)
+    {
+        if (index >= 5)
+            continue;
+        BossEvent* bossEvent = it->second;
+        std::wstring name = L10N::GetString(bossEvent->getNameId());
+        if (!bossEvent->getName().empty())
+            name = bossEvent->getName();
+        SetBossBar(index, bossEvent->getPercent(), name);
+    }
 }
 
 void UIScene_HUD::updateSafeZone()
@@ -463,14 +481,14 @@ void UIScene_HUD::InitMainHUD()
     SetRidingHorse(false, false, 0);
     SetRegenerationEffect(false);
     SetHealthAbsorb(0);
+    m_shownArmorIcons[0] = visible;
     m_armorIcons[0] = visible;
+    m_shownArmorIcons[1] = visible;
     m_armorIcons[1] = visible;
+    m_shownArmorIcons[2] = visible;
     m_armorIcons[2] = visible;
+    m_shownArmorIcons[3] = visible;
     m_armorIcons[3] = visible;
-    m_previousArmorIcons[0] = visible;
-    m_previousArmorIcons[1] = visible;
-    m_previousArmorIcons[2] = visible;
-    m_previousArmorIcons[3] = visible;
 }
 void UIScene_HUD::SetTooltipsEnabled(bool enabled) { if (getFJ_Hud() != 0) getFJ_Hud()->SetTooltipsEnabled(enabled); }
 void UIScene_HUD::handleReload()
@@ -517,10 +535,10 @@ void UIScene_HUD::handleReload()
     const unsigned int playerId = getPad();
     boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerId];
 
-    if (player != 0 && GetLocalPlayerAltHudSizeFlag(player.get()))
-        SetHudSize(GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x1c)));
+    if (player != 0 && player->mViewport != 0)
+        SetHudSize(GameSettings::GetGameSettings(playerId, eGameSetting_HUDSizeSplitscreen));
     else
-        SetHudSize(GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x1b)));
+        SetHudSize(GameSettings::GetGameSettings(playerId, eGameSetting_HUDSize));
 
     wchar_t* profileName = gProfile->GetMiiName(playerId);
     SetDisplayName(std::wstring(profileName));
@@ -533,7 +551,7 @@ void UIScene_HUD::handleReload()
 
     bool tooltipsEnabled = true;
     if (!gConsoleUIController.GetMenuDisplayed(playerId) &&
-        GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x11)) == 0)
+        GameSettings::GetGameSettings(playerId, eGameSetting_Tooltips) == 0)
         tooltipsEnabled = false;
     SetTooltipsEnabled(tooltipsEnabled);
 }
@@ -649,7 +667,7 @@ void UIScene_HUD::renderPlayerHealth()
         SetArmour(armour);
 
     boost::shared_ptr<Entity> vehicle = player->getVehicle();
-    if (vehicle == 0 || (vehicle->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+    if (vehicle == 0 || (vehicle->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         SetRidingHorse(false, false, 0);
         ShowFood(true);
@@ -682,7 +700,7 @@ void UIScene_HUD::renderVehicleHealth()
     if (player == 0)
         return;
     boost::shared_ptr<Entity> vehicle = player->getVehicle();
-    if (vehicle == 0 || (vehicle->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+    if (vehicle == 0 || (vehicle->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         SetRidingHorse(false, false, 0);
         ShowHorseHealth(false);
@@ -739,9 +757,9 @@ void UIScene_HUD::updateGameModePlayers()
     if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
     {
         GhostController* ghostController = minecraft->GetGhostController();
-        if (ghostController != 0 && !showNumPlayers && GetGhostLoadedRecord(ghostController, pad) != 0)
+        if (ghostController != 0 && !showNumPlayers && ghostController->mLoaded[pad] != 0)
         {
-            if (GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x2a)) != 0)
+            if (GameSettings::GetGameSettings(pad, eGameSetting_ShowGlideGhost) != 0)
                 showGhost = true;
         }
     }
@@ -850,16 +868,15 @@ void UIScene_HUD::updateFrameTick()
 
     MultiPlayerGameMode* gameMode = minecraft->mGameModes[pad];
     if (player->mViewport == 0)
-        SetHudSize(static_cast<int>(GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x1b))));
+        SetHudSize(static_cast<int>(GameSettings::GetGameSettings(pad, eGameSetting_HUDSize)));
     else
-        SetHudSize(static_cast<int>(GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x1c))));
+        SetHudSize(static_cast<int>(GameSettings::GetGameSettings(pad, eGameSetting_HUDSizeSplitscreen)));
 
-    if (gProfile != 0)
-        SetDisplayName(gProfile->GetGamertag(pad));
+    SetDisplayName(gProfile->GetMiiName(pad));
 
     bool tooltipsEnabled = true;
     if (gConsoleUIController.GetMenuDisplayed(pad) == 0 &&
-        GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x11)) == 0)
+        GameSettings::GetGameSettings(pad, eGameSetting_Tooltips) == 0)
         tooltipsEnabled = false;
     SetTooltipsEnabled(tooltipsEnabled);
 
@@ -929,7 +946,7 @@ void UIScene_HUD::updateFrameTick()
         }
         else
         {
-            if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+            if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
                 ShowExpBar(true);
             SetExpBarProgress(player->mExperienceProgress, player->getXpNeededForNextLevel());
             SetExpLevel(player->mExperienceLevel);
@@ -940,26 +957,24 @@ void UIScene_HUD::updateFrameTick()
         SetHorseJumpBarProgress(static_cast<float>(player->getJumpRidingScale()));
     }
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && !GetSplitScreenDamageFlag(player.get()))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        const MiniGameDef* miniGame = minecraft->GetMiniGame();
-        const int delay = static_cast<int>(miniGame->GetDamageIndicatorDelay());
-        for (int index = 0; index < 4; ++index)
+        if (!player->mDamageIndicatorAllDirections)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> local = minecraft->mLocalPlayers[index];
-            if (local == 0)
-                continue;
-            if (GetDirectionalDamageActive(local.get(), index * 2))
-                ShowDirectionalDamage(index * 2, delay, static_cast<float>(local->getDamageTaken()));
-            if (GetDirectionalDamageActive(local.get(), index * 2 + 1))
-                ShowDirectionalDamage(index * 2 + 1, delay, static_cast<float>(local->getDamageTaken()));
+            for (int segment = 0; segment < 8; ++segment)
+            {
+                if (player->mDamageIndicatorSegments[segment])
+                {
+                    ShowDirectionalDamage(segment, static_cast<int>(minecraft->GetMiniGame()->GetDamageIndicatorDelay()),
+                                          static_cast<float>(player->getDamageTaken()));
+                }
+            }
         }
-    }
-    else if (Minecraft::InMiniGame(eMiniGameId_Any, true) && GetSplitScreenDamageFlag(player.get()))
-    {
-        const MiniGameDef* miniGame = minecraft->GetMiniGame();
-        const int delay = static_cast<int>(miniGame->GetDamageIndicatorDelay());
-        ShowDirectionalDamage(8, delay, static_cast<float>(player->getDamageTaken()));
+        else
+        {
+            ShowDirectionalDamage(8, static_cast<int>(minecraft->GetMiniGame()->GetDamageIndicatorDelay()),
+                                  static_cast<float>(player->getDamageTaken()));
+        }
     }
 
     if (m_selectedLabelTicks != 0)
@@ -972,7 +987,7 @@ void UIScene_HUD::updateFrameTick()
         }
     }
 
-    unsigned int hudOpacity = GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x10));
+    unsigned int hudOpacity = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_InterfaceOpacity);
     if (hudOpacity < 0x50)
     {
         if (gConsoleUIController.GetMenuDisplayed(pad) != 0 && hudOpacity < 0xf)
@@ -1001,9 +1016,9 @@ void UIScene_HUD::updateFrameTick()
 
     if (g_pApp->GetGameStarted() == 0 ||
         gConsoleUIController.GetMenuDisplayed(pad) != 0 ||
-        gConsoleUIController.IsSceneInStack(pad, static_cast<EUIScene>(0x1f)) != 0 ||
-        g_pApp->GetXuiAction(pad) == 0x1f ||
-        GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x17)) == 0)
+        gConsoleUIController.IsSceneInStack(pad, EUIScene_ConnectingProgress) != 0 ||
+        g_pApp->GetXuiAction(pad) == eXuiAction_AutoSave ||
+        GameSettings::GetGameSettings(pad, eGameSetting_DisplayHUD) == 0)
     {
         SetVisible(false);
     }
@@ -1012,7 +1027,7 @@ void UIScene_HUD::updateFrameTick()
         SetVisible(true);
     }
 
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
     {
         m_comparisonScore = 0;
         m_personalBestTime = 0;
@@ -1041,12 +1056,12 @@ void UIScene_HUD::updateFrameTick()
             if (player->isSpectator())
             {
                 boost::shared_ptr<Entity> camera = player->GetCamera();
-                if (camera != 0 && (camera->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+                if (camera != 0 && (camera->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
                     glidePlayer = boost::static_pointer_cast<Player>(camera);
             }
 
             SetHudGameMode(2);
-            const int currentRound = scoreboard != 0 ? GetScoreboardCurrentRound(scoreboard) : 0;
+            const int currentRound = scoreboard != 0 ? scoreboard->mCurrentRound : 0;
             SetRoundNumber(static_cast<unsigned int>(currentRound + 1), miniGame->GetRoundCount(), true);
 
             double speed = 0.0;
@@ -1105,7 +1120,7 @@ void UIScene_HUD::updateFrameTick()
             else if (clientGameMode->IsRoundEnding())
             {
                 showTimer = false;
-                SetTime(L10N::GetString(0xf62114b0));
+                SetTime(L10N::GetString(IDS_DNF));
                 SetTimerIcon(0, 0);
             }
             else if (clientGameMode->IsWaitingToStart() || clientGameMode->IsRoundStarting())
@@ -1126,7 +1141,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 if (clientGameMode->IsRoundEnding())
                 {
-                    SetTime(L10N::GetString(0xf62114b0));
+                    SetTime(L10N::GetString(IDS_DNF));
                     SetTimerIcon(0, 0);
                 }
                 else
@@ -1156,18 +1171,18 @@ void UIScene_HUD::updateFrameTick()
                 if (ghostController != 0)
                 {
                     boost::shared_ptr<GhostPlayer> ghostPlayer = ghostController->getGhostPlayer(pad);
-                    GhostController::GhostRecord* ghostRecord = GetGhostLoadedRecord(ghostController, pad);
+                    GhostController::GhostRecord* ghostRecord = ghostController->mLoaded[pad];
                     const bool hasLifeSpan = scoreboard != 0 && scoreboard->GetLifeSpan(uid, -1) != 0;
                     if (ghostRecord != 0 &&
                         (ghostPlayer != 0 || hasLifeSpan) &&
-                        (GetGhostRecordingSlotFlag1(ghostController, pad) ||
+                        (ghostController->mRecordingSlotFlags2[pad] ||
                          ghostController->HasFinished(ghostRecord)))
                     {
                         int comparisonDelta = 0;
                         if (sortedPlayers.size() <= 1 || !hasLifeSpan)
                         {
-                            comparisonDelta = static_cast<int>(static_cast<unsigned int>(elapsedMs) - ghostRecord->mElapsedLow);
-                            m_comparisonScore = ghostRecord->mElapsedLow;
+                            comparisonDelta = static_cast<int>(elapsedMs - ghostRecord->mElapsed);
+                            m_comparisonScore = static_cast<unsigned int>(ghostRecord->mElapsed);
                         }
                         else if (!sortedPlayers.empty())
                         {
@@ -1407,7 +1422,7 @@ void UIScene_HUD::updateFrameTick()
             const MiniGameDef* miniGame = minecraft->GetMiniGame();
             if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
             {
-                const int currentRound = GetScoreboardCurrentRound(scoreboard);
+                const int currentRound = scoreboard->mCurrentRound;
                 if (currentRound == static_cast<int>(miniGame->GetFinalRoundIndex()))
                     ShowAnimatedSplash(L10N::GetString(0x3f46d5d3), true, 0);
                 else
@@ -1432,7 +1447,7 @@ void UIScene_HUD::updateFrameTick()
                 ShowAnimatedSplash(L10N::GetString(0xd2622bfa), true, 0);
             else
             {
-                std::wstring splash = L10N::GetString(0xa2a6c763);
+                std::wstring splash = L10N::GetString(IDS_MG_PLAYER_WON);
                 splash = replaceAll(splash, L"{*PLAYER*}", scoreboard->GetWinnerName(-1));
                 ShowAnimatedSplash(splash, true, 0);
             }
@@ -1443,10 +1458,10 @@ void UIScene_HUD::updateFrameTick()
             const MiniGameDef* miniGame = minecraft->GetMiniGame();
             if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
             {
-                if (GetScoreboardCurrentRound(scoreboard) != static_cast<int>(miniGame->GetFinalRoundIndex()))
+                if (scoreboard->mCurrentRound != static_cast<int>(miniGame->GetFinalRoundIndex()))
                 {
                     if (scoreboard->GetLifeSpan(uid, -1) == 0)
-                        ShowAnimatedSplash(L10N::GetString(0xf62114b0), true, 1);
+                        ShowAnimatedSplash(L10N::GetString(IDS_DNF), true, 1);
                     else
                         showTimedSplash(formatwstr(L"%02d:%02d.%03d",
                                                    scoreboard->GetLifeSpan(uid, -1) / 60000,
@@ -1458,7 +1473,7 @@ void UIScene_HUD::updateFrameTick()
                     ShowAnimatedSplash(L10N::GetString(0xd2622bfa), true, 1);
                 else
                 {
-                    std::wstring splash = L10N::GetString(0xa2a6c763);
+                    std::wstring splash = L10N::GetString(IDS_MG_PLAYER_WON);
                     splash = replaceAll(splash, L"{*PLAYER*}", scoreboard->GetGlideOverallWinner(miniGame->ArePointsActive()));
                     ShowAnimatedSplash(splash, true, 0);
                 }
@@ -1469,7 +1484,7 @@ void UIScene_HUD::updateFrameTick()
             }
             else if (scoreboard->GetLifeSpan(uid, -1) == 0)
             {
-                ShowAnimatedSplash(L10N::GetString(0xf62114b0), true, 1);
+                ShowAnimatedSplash(L10N::GetString(IDS_DNF), true, 1);
             }
             else
             {
@@ -1485,7 +1500,7 @@ void UIScene_HUD::updateFrameTick()
         GhostController* ghostController = minecraft->GetGhostController();
         if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && scoreboard != 0 && !player->isSpectator() &&
             scoreboard->GetLifeSpan(player->getSUID(), -1) != 0 &&
-            (ghostController == 0 || !GetGhostRecordingSlotFlag2(ghostController, pad)))
+            (ghostController == 0 || !ghostController->mRecordingActive[pad]))
         {
             StatsUID uid = player->getSUID();
             const MiniGameDef* miniGame = minecraft->GetMiniGame();
@@ -1564,13 +1579,13 @@ void UIScene_HUD::handleGameTick()
     const int playerId = m_playerId;
     if (minecraft->mLocalPlayers[playerId] && minecraft->mGameModes[playerId])
     {
-        m_layer->showComponent(playerId, static_cast<EUIScene>(0x31), true);
+        m_layer->showComponent(playerId, EUIScene_HUD, true);
         updateFrameTick();
         GetHudLoading();
     }
     else
     {
-        m_layer->showComponent(playerId, static_cast<EUIScene>(0x31), false);
+        m_layer->showComponent(playerId, EUIScene_HUD, false);
     }
 }
 void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewport)
@@ -1633,7 +1648,28 @@ void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewpor
     gFui->render(m_movie, 0.0f, static_cast<float>(movieY),
                  static_cast<float>(renderWidth), static_cast<float>(renderHeight));
 }
-void UIScene_HUD::updateViewportTouchOffset() { UIScene::updateViewportTouchOffset(); }
+void UIScene_HUD::updateViewportTouchOffset()
+{
+    const float half = 0.5f;
+    switch (m_layer->getViewport())
+    {
+    case 1:
+    case 5:
+        gConsoleUIController.updateViewportTouchOffset(0, -(int)(gConsoleUIController.m_screenHeight * half));
+        break;
+    case 6:
+        gConsoleUIController.updateViewportTouchOffset((int)(gConsoleUIController.m_screenWidth * half),
+                                                       -(int)(gConsoleUIController.m_screenHeight * half));
+        break;
+    case 4:
+    case 8:
+        gConsoleUIController.updateViewportTouchOffset((int)(gConsoleUIController.m_screenWidth * half), 0);
+        break;
+    default:
+        gConsoleUIController.updateViewportTouchOffset(0, 0);
+        break;
+    }
+}
 void UIScene_HUD::handleTimerComplete(int)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -1665,7 +1701,7 @@ void UIScene_HUD::handleTimerComplete(int)
     m_selectedLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(playerId)));
     m_selectedLabel.setLabel(UIString(gui->mSingleMessages[playerId]), false, false);
 }
-int UIScene_HUD::getSceneType() { return 0x31; }
+int UIScene_HUD::getSceneType() { return EUIScene_HUD; }
 bool UIScene_HUD::stealsFocus() { return false; }
 bool UIScene_HUD::hasFocus(int) { return false; }
 bool UIScene_HUD::hidesLowerScenes() { return false; }

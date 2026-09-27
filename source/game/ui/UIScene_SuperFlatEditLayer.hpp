@@ -26,10 +26,10 @@ public:
     enum ESnap
     {
         ESnap_None = 0,
-        ESnap_Left = 1,
-        ESnap_Right = 2,
-        ESnap_Up = 3,
-        ESnap_Down = 4
+        ESnap_Up = 1,
+        ESnap_Down = 2,
+        ESnap_Left = 3,
+        ESnap_Right = 4
     };
 
     enum EExit
@@ -57,8 +57,8 @@ public:
     void _init();
     virtual void updateTooltips();
     virtual void updateComponents();
-    int getSnap(float x, float y) const;
-    void dmouse(float& x, float& y, float& dx, float& dy);
+    ESnap getSnap(float x, float y) const;
+    void dmouse(float& moveX, float& moveY, float& directionX, float& directionY);
     void componentCentre(UIControl& control, float& x, float& y);
     void slotCentre(int slot, float& x, float& y);
     bool onRow(int slot, int row);
@@ -70,10 +70,10 @@ public:
     virtual void tick();
     virtual void handleReload();
     void exit(EExit result);
-    int getSnap(int action) const;
+    ESnap getSnap(int action) const;
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleSliderMove(int id, int value);
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
@@ -84,21 +84,19 @@ public:
     virtual int getSceneType();
 
 private:
-    int m_unknownC8;
-    float m_pointerScale;
-    int m_unknownD0;
-    int m_unknownD4;
+    ESnap m_pendingSnap;
+    _UIVec2D m_moveStartPosition;
+    int m_moveTicks;
     int m_maxLayerHeight;
     bool m_newLayer;
     int m_layerIndex;
     FlatLayerInfo m_layer;
     FlatGeneratorInfo m_generator;
     SuperflatMenu::CustomSuperflatBlocks* m_customBlocks;
-    float m_extentLeft;
-    float m_extentTop;
+    _UIVec2D m_pointerOffset;
     float m_listLeft;
-    float m_listTop;
     float m_listRight;
+    float m_listTop;
     float m_listBottom;
     _UIVec2D m_pointerPosition;
     int m_scrollPage;

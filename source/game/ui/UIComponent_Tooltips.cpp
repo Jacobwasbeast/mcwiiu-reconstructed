@@ -17,6 +17,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern CProfile* gProfile;
 
@@ -85,9 +86,9 @@ std::wstring UIComponent_Tooltips::getMoviePath()
 
 double UIComponent_Tooltips::getSafeZoneHalfWidth()
 {
-    if (gRenderer->IsWidescreen())
+    if (gRenderer->IsHiDef())
         return UIScene::getSafeZoneHalfWidth();
-    return (double)m_stageWidth * 0.075;
+    return m_stageWidth * 0.075f;
 }
 
 void UIComponent_Tooltips::updateSafeZone()
@@ -157,7 +158,7 @@ void UIComponent_Tooltips::tick()
     int pad = gProfile->GetPrimaryPad();
     if (pad >= 0)
     {
-        unsigned int level = GameSettings::GetGameSettings(pad, static_cast<eGameSetting>(0x10));
+        unsigned int level = GameSettings::GetGameSettings(pad, eGameSetting_InterfaceOpacity);
         if (level < 0x50)
         {
             if (gConsoleUIController.GetMenuDisplayed(m_playerId) != 0 && level < 0xf)
@@ -197,13 +198,13 @@ void UIComponent_Tooltips::tick()
 
 void UIComponent_Tooltips::render(int width, int height, C4JRender::eViewportType viewport)
 {
-    if (g_pApp->GetPrimaryUserIndex() != -1)
+    if (gProfile->GetLockedProfile() != -1)
     {
         if (gConsoleUIController.GetMenuDisplayed(m_playerId) == 0)
         {
-            if (GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x11)) == 0)
+            if (GameSettings::GetGameSettings(m_playerId, eGameSetting_Tooltips) == 0)
                 return;
-            if (GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x17)) == 0)
+            if (GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayHUD) == 0)
                 return;
         }
     }
@@ -214,56 +215,44 @@ void UIComponent_Tooltips::render(int width, int height, C4JRender::eViewportTyp
         return;
     }
 
-    int screenWidth = 0;
-    int screenHeight = 0;
-    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
-                                             screenWidth, screenHeight);
-
     switch (viewport)
     {
     case C4JRender::eViewportType_BottomHalf:
-        gConsoleUIController.setupRenderPosition(0, static_cast<int>(screenHeight * 0.5f));
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        gConsoleUIController.setupRenderPosition(0, static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
         break;
     case C4JRender::eViewportType_RightHalf:
     case C4JRender::eViewportType_TopRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f), 0);
-        break;
-    case C4JRender::eViewportType_BottomLeftQuarter:
-        gConsoleUIController.setupRenderPosition(0, static_cast<int>(screenHeight * 0.5f));
+        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f), 0);
         break;
     case C4JRender::eViewportType_BottomRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f),
-                                                 static_cast<int>(screenHeight * 0.5f));
+        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f),
+                                                 static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
         break;
     default:
         gConsoleUIController.setupRenderPosition(0, 0);
         break;
     }
 
-    if (viewport == C4JRender::eViewportType_FullScreen)
+    switch (viewport)
     {
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(height));
-    }
-    else if (viewport < C4JRender::eViewportType_LeftHalf)
-    {
-        gFui->render(m_movie, 0.0f, static_cast<float>(m_stageWidth / 2),
-                     static_cast<float>(screenWidth), static_cast<float>(height));
-    }
-    else if (viewport < C4JRender::eViewportType_TopLeftQuarter)
-    {
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(screenHeight));
-    }
-    else if (static_cast<int>(viewport) > C4JRender::eViewportType_BottomRightQuarter)
-    {
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(height));
-    }
-    else
-    {
-        gFui->render(m_movie, 0.0f, static_cast<float>(m_stageWidth / 2),
-                     static_cast<float>(width), static_cast<float>(height));
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+        gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
+        break;
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+        gFui->render(m_movie, 0.0f, 0, width, static_cast<int>(gConsoleUIController.getScreenHeight()));
+        break;
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        gFui->render(m_movie, 0.0f, m_stageHeight / 2, width, height);
+        break;
+    default:
+        gFui->render(m_movie, 0.0f, 0, width, height);
+        break;
     }
 }
 
@@ -552,7 +541,9 @@ void UIComponent_Tooltips::handleReload()
 void UIComponent_Tooltips::handleInput(int player, int action, bool repeat, bool released,
                                        bool pressed, bool& handled)
 {
-    UIScene::handleInput(player, action, repeat, released, pressed, handled);
+    if (action >= EControllerActions_MenuStickPress && action != EControllerActions_MenuOk && action != EControllerActions_MenuCancel)
+        return;
+    sendInputToMovie(action, repeat, released, pressed);
 }
 
 void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, int touchY,
@@ -564,14 +555,14 @@ void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, i
     if (gConsoleUIController.GetMenuDisplayed(gProfile->GetPrimaryPad()) == 0)
     {
         if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(),
-                                          static_cast<eGameSetting>(0x11)) == 0)
+                                          eGameSetting_Tooltips) == 0)
             return;
     }
 
     int player = (int)playerId;
     if (player == 4)
         player = 0;
-    unsigned int settingsValue = GameSettings::GetGameSettings(player, static_cast<eGameSetting>(7));
+    unsigned int settingsValue = GameSettings::GetGameSettings(player, eGameSetting_ControlScheme);
 
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
@@ -583,7 +574,7 @@ void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, i
     if (!pressed)
         return;
 
-    EControllerActions dynamicAction = (EControllerActions)0;
+    EControllerActions dynamicAction = EControllerActions_MenuA;
     if (gConsoleUIController.IsToolTipDynamic((unsigned int)player, (unsigned int)touchBox,
                                               dynamicAction))
     {
@@ -661,7 +652,7 @@ void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, i
 
 int UIComponent_Tooltips::getSceneType()
 {
-    return 0x46;
+    return EUIScene_Tooltips;
 }
 
 bool UIComponent_Tooltips::stealsFocus()

@@ -31,21 +31,21 @@ void UIControl_ButtonList::addItem(const std::wstring& label, int index)
         FJ_List_ListButton* listButton = node->asFJ_List_ListButton();
         if (listButton != NULL) {
             listButton->addNewItem(label, index);
-            addElement(static_cast<UIControl::eUIControlType>(1), -1);
+            addElement(UIControl::eUIControlType_Button, -1);
             return;
         }
 
         FJ_List_MenuButton* menuButton = node->asFJ_List_MenuButton();
         if (menuButton != NULL) {
             menuButton->addNewItem(std::wstring(label), index);
-            addElement(static_cast<UIControl::eUIControlType>(1), -1);
+            addElement(UIControl::eUIControlType_Button, -1);
             return;
         }
 
         FJ_List_ListButtonPlayerList* playerList = node->asFJ_List_ListButtonPlayerList();
         if (playerList != NULL) {
             playerList->addNewItem(label, index, 1, 1);
-            addElement(static_cast<UIControl::eUIControlType>(1), -1);
+            addElement(UIControl::eUIControlType_Button, -1);
             return;
         }
 
@@ -54,7 +54,7 @@ void UIControl_ButtonList::addItem(const std::wstring& label, int index)
             scoreBoard->addNewItem(label, index, 1, 1);
     }
 
-    addElement(static_cast<UIControl::eUIControlType>(1), -1);
+    addElement(UIControl::eUIControlType_Button, -1);
 }
 
 void UIControl_ButtonList::addItem(const std::wstring& label)

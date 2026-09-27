@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_ContainerMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
@@ -12,9 +13,13 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/ui/UILayer.hpp"
 
 namespace
 {
+const int PLAYER_INVENTORY_SLOTS = 36;
+
 struct _ContainerMenuArgs
 {
     boost::shared_ptr<Container> first;
@@ -24,8 +29,8 @@ struct _ContainerMenuArgs
 };
 }
 
-UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer),
+UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* layer)
+    : UIScene_AbstractContainerMenu(playerId, layer),
       m_largeChest(false),
       m_containerList(),
       m_chestLabel(),
@@ -38,60 +43,53 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void* data, UILayer* laye
 
     initialiseMovie();
 
-    const int openedSize = static_cast<int>(args->second->getContainerSize());
-    const std::wstring openedName = args->second->getName();
-    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[args->player];
-    AbstractContainerMenu* menu = 0;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<InteractionObject> interaction = boost::dynamic_pointer_cast<InteractionObject>(args->second);
+    const int typeId = interaction != NULL ? interaction->getTypeId(false) : -1;
+    const std::wstring customName = args->second->getCustomName();
+    AbstractContainerMenu* menu = NULL;
 
-    if (openedName.empty())
+    if (customName.empty())
     {
-        switch (openedSize)
-        {
-        case 0xd:
-            m_chestLabel.init(UIString(L10N::GetString(0xf1fc8097)));
-            break;
-        case 0xf:
-            m_chestLabel.init(UIString(L10N::GetString(0xdaf7bb26)));
-            break;
-        case 0xe:
-            m_chestLabel.init(UIString(L10N::GetString(0x68521aaf)));
-            break;
-        case 0x10:
-            m_chestLabel.init(UIString(L10N::GetString(0x917ea687)));
-            break;
-        case 0x15:
-            m_chestLabel.init(UIString(L10N::GetString(0x7b0460c8)));
-            menu = new ShulkerBoxMenu(args->first, args->second, player);
-            break;
-        default:
-            m_chestLabel.init(UIString(L10N::GetString(0x24fee045)));
-            break;
-        }
+        if (typeId == ClientboundContainerOpenPacket::BONUS_CHEST)
+            m_chestLabel.init(UIString(L10N::GetString(IDS_BONUS_CHEST)));
+        else if (typeId == ClientboundContainerOpenPacket::ENDER_CHEST)
+            m_chestLabel.init(UIString(L10N::GetString(IDS_TILE_ENDERCHEST)));
+        else if (typeId == ClientboundContainerOpenPacket::LARGE_CHEST)
+            m_chestLabel.init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
+        else if (typeId == ClientboundContainerOpenPacket::MINECART_CHEST)
+            m_chestLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
+        else if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
+            m_chestLabel.init(UIString(L10N::GetString(IDS_CONTAINER_SHULKER_BOX)));
+        else
+            m_chestLabel.init(UIString(L10N::GetString(IDS_CHEST)));
     }
     else
     {
-        m_chestLabel.init(UIString(openedName));
-        if (openedSize == 0x15)
-            menu = new ShulkerBoxMenu(args->first, args->second, player);
+        m_chestLabel.init(UIString(customName));
     }
 
-    if (menu == 0)
-        menu = new ChestMenu(args->first, args->second, player);
+    if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
+        menu = new ShulkerBoxMenu(args->first, args->second,
+                                  boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(minecraft->mLocalPlayers[playerId]));
+    if (menu == NULL)
+        menu = new ChestMenu(args->first, args->second,
+                             boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(minecraft->mLocalPlayers[playerId]));
 
-    m_sceneInterface->m_menu = menu;
-    if (Minecraft::GetInstance()->mGameModes[args->player] != 0)
+    if (minecraft->mGameModes[playerId] != NULL)
     {
-        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[args->player]->getTutorial();
-        if (tutorial != 0)
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[playerId]->getTutorial();
+        if (tutorial != NULL)
         {
             m_sceneInterface->m_previousTutorialState = tutorial->currentState;
-            tutorial->changeTutorialState(static_cast<eTutorial_State>(10), this);
+            tutorial->changeTutorialState(eTutorial_State_ContainerMenu, this);
         }
     }
-    const int containerSlots = openedSize == 0x15 ? 27 : (openedSize / 9) * 9;
+
+    const int containerSlots = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
     m_sceneInterface->Initialize(false, args->player, menu, true, containerSlots,
-                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0),
-                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(3), false);
+                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, containerSlots);
 
     delete args;
@@ -104,17 +102,17 @@ UIScene_ContainerMenu::~UIScene_ContainerMenu()
 unsigned int UIScene_ContainerMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2) ? 9U : 0U;
+    return section <= IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest ? 9U : 0U;
 }
 
 unsigned int UIScene_ContainerMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         return 1;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
         return GetInventoryRows();
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
         return static_cast<unsigned int>((GetBaseSlotCount() - 36) / 9);
     return 0;
 }
@@ -124,51 +122,51 @@ unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection result = section;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2),
+            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest,
                                state, x, y, 0, 0);
             return 2;
         }
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            result = m_inventorySmall ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1);
+            result = m_smallInventory ?
+                IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest :
+                IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
             updateSlotPosition(section, result, state, x, y, 0, 0);
             return result;
         }
     }
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0),
+            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
                                state, x, y, 0, 0);
             return 0;
         }
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2),
+            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest,
                                state, x, y, 0, 0);
             return 2;
         }
     }
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            result = m_inventorySmall ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1);
+            result = m_smallInventory ?
+                IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
             updateSlotPosition(section, result, state, x, y, 0, 0);
             return result;
         }
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0),
+            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
                                state, x, y, 0, 0);
             return 0;
         }
@@ -181,11 +179,11 @@ void UIScene_ContainerMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
     UIControl* control = 0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         control = &m_hotbarList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
         control = &m_inventoryList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
         control = &m_containerList;
     if (control != 0 && position != 0)
     {
@@ -199,20 +197,20 @@ void UIScene_ContainerMenu::GetItemScreenData(
     _UIVec2D* position, _UIVec2D* size)
 {
     UIControl* control = 0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         control = &m_hotbarList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
         control = &m_inventoryList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
         control = &m_containerList;
     if (control != 0 && position != 0 && size != 0)
     {
         const unsigned int columns = getSectionColumns(section);
         const unsigned int rows = getSectionRows(section);
-        position->x = static_cast<float>(slot % static_cast<int>(columns));
-        position->y = static_cast<float>(slot / static_cast<int>(columns));
-        size->x = static_cast<float>(control->getWidth() / columns);
-        size->y = static_cast<float>(control->getHeight() / rows);
+        size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
+        size->y = static_cast<float>(control->getHeight() / static_cast<float>(rows));
+        position->x = static_cast<float>(slot % static_cast<int>(columns)) * size->x;
+        position->y = static_cast<float>(slot / static_cast<int>(columns)) * size->y;
     }
 }
 
@@ -220,11 +218,11 @@ void UIScene_ContainerMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
     UIControl_SlotList* list = 0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         list = &m_hotbarList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
         list = &m_inventoryList;
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
         list = &m_containerList;
     if (wrap && list != 0)
         list->setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
@@ -233,9 +231,9 @@ void UIScene_ContainerMenu::setSectionSelectedSlot(
 int UIScene_ContainerMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         return GetBaseSlotCount() - 9;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
         return GetBaseSlotCount() - 36;
     return 0;
 }
@@ -271,24 +269,24 @@ void UIScene_ContainerMenu::handleReload()
 {
     const int count = GetBaseSlotCount();
     m_sceneInterface->Initialize(true, m_playerId, m_menu, true, count - 36,
-                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0),
-                                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(3), false);
+                                IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
+                                IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, count - 36);
 }
 
 UIControl* UIScene_ContainerMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         return &m_hotbarList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
         return &m_inventoryList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
         return &m_containerList;
     return 0;
 }
 
 int UIScene_ContainerMenu::getSceneType()
 {
-    return 9;
+    return EUIScene_ContainerMenu;
 }

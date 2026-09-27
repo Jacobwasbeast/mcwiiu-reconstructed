@@ -19,12 +19,8 @@ unsigned int FJ_InGameInfoMenu::getType() {
 
 void FJ_InGameInfoMenu::SetSafeZone(int top, int bottom, int left, int right) {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    FJ_FuiNodeStage* stage = getStage();
-    if (stage == 0) {
-        return;
-    }
-    double height = stage->getStageHeight();
+    double height = getStage()->getStageHeight();
     if (height == 360.0 || height == 540.0) {
-        setHeight(static_cast<float>(static_cast<double>(bottom) - 176.0));
+        setY(top);
     }
 }

@@ -22,15 +22,14 @@
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 extern "C" void OSReport(const char*, ...);
 #define SCENE_TRACE(step) OSReport("[boot][scene] %s\n", step)
 
 template <typename T>
 std::wstring _toString(T value);
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 UIScene::UIScene(int playerId, UILayer* layer)
     : m_moviePath(L""), m_movie(0), m_movieLoaded(false), m_itemRenderer(0),
@@ -140,18 +139,12 @@ void UIScene::updateViewportTouchOffset()
 
 double UIScene::getSafeZoneHalfHeight()
 {
-    int width;
-    int height;
-    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen, width, height);
-    return height * 0.05f;
+    return gConsoleUIController.getScreenHeight() * 0.05f;
 }
 
 double UIScene::getSafeZoneHalfWidth()
 {
-    int width;
-    int height;
-    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen, width, height);
-    return width * 0.05f;
+    return gConsoleUIController.getScreenWidth() * 0.05f;
 }
 
 unsigned int UIScene::mapElementsAndNames()
@@ -249,7 +242,7 @@ void UIScene::customDraw(const char*, fuiRect*)
 
 bool UIScene::allowRepeat(int action)
 {
-    return action > 3 && (action < 20 || action > 21);
+    return action >= EControllerActions_MenuUp && action != EControllerActions_MenuOk && action != EControllerActions_MenuCancel;
 }
 
 void UIScene::handleInput(int, int, bool, bool, bool, bool&)
@@ -386,8 +379,8 @@ void UIScene::tickTimers()
 void UIScene::navigateBack()
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-    gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0x53),
-                                      static_cast<EUILayer>(8));
+    gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
+                                      EUILayer_Count);
 }
 
 bool UIScene::hasRegisteredSubstitutionTexture(const std::wstring& name)
@@ -478,19 +471,19 @@ unsigned int UIScene::convertGameActionToFuiKeycode(int action)
     static const unsigned char secondActions[] = {5, 1, 2};
     static const unsigned char thirdActions[] = {12, 17, 18};
 
-    if (action >= 0 && action < 6)
+    if (action >= EControllerActions_MenuA && action <= EControllerActions_MenuDown)
         return firstActions[action];
-    if (action > 6 && action < 10)
+    if (action >= EControllerActions_MenuLeft && action <= EControllerActions_MenuPageDown)
         return secondActions[action - 7];
-    if (action == 12)
+    if (action == EControllerActions_MenuStickPress)
         return 100;
-    if (action >= 13 && action < 16)
+    if (action >= EControllerActions_MenuOtherStickPress && action <= EControllerActions_MenuOtherStickDown)
         return thirdActions[action - 13];
-    if (action == 20)
+    if (action == EControllerActions_MenuOk)
         return 0;
-    if (action == 21)
+    if (action == EControllerActions_MenuCancel)
         return 7;
-    if (action > 11)
+    if (action >= EControllerActions_MenuStickPress)
         return 100;
     return action;
 }

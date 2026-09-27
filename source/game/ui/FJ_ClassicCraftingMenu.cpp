@@ -29,6 +29,6 @@ void FJ_ClassicCraftingMenu::SetSafeZone(int top, int bottom, int left, int righ
     if (stageHeight != 360.0f && stageHeight != 540.0f)
         return;
 
-    setX(-static_cast<float>(right) - 176.0f);
-    setY(-static_cast<float>(top) - 176.0f);
+    setX(-right);
+    setY(top);
 }

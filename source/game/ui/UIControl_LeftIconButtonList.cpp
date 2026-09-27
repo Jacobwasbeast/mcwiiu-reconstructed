@@ -31,7 +31,7 @@ void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id,
 {
     static_cast<FJ_List_ListButtonIconLeft*>(m_fuiRenderNode->getFuiNode()->asFJ_List())
         ->addNewItem(label, id, textureName, std::wstring());
-    addElement((UIControl::eUIControlType)1, -1);
+    addElement(UIControl::eUIControlType_Button, -1);
 }
 
 void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id,
@@ -40,5 +40,5 @@ void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id,
 {
     static_cast<FJ_List_ListButtonIconLeft*>(m_fuiRenderNode->getFuiNode()->asFJ_List())
         ->addNewItem(label, id, textureName, textureName1);
-    addElement((UIControl::eUIControlType)1, -1);
+    addElement(UIControl::eUIControlType_Button, -1);
 }

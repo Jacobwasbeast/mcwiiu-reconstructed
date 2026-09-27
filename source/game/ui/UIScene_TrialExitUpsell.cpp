@@ -1,8 +1,12 @@
 #include "game/ui/UIScene_TrialExitUpsell.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/UnityClient6.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 UIScene_TrialExitUpsell::UIScene_TrialExitUpsell(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
@@ -16,7 +20,7 @@ UIScene_TrialExitUpsell::~UIScene_TrialExitUpsell()
 
 void UIScene_TrialExitUpsell::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x2686c8e5, 0x4f6bcf5, 0xc6058d6b,
+    gConsoleUIController.SetTooltips(0, IDS_EXIT_GAME, 0x4f6bcf5, IDS_UNLOCK_TITLE,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, false, false);
 }
@@ -30,7 +34,7 @@ void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat,
                                           bool pressed, bool&)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action == 20)
+    if (action == EControllerActions_MenuOk)
     {
         if (pressed)
         {
@@ -39,26 +43,31 @@ void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat,
             return;
         }
     }
-    else if (action == 21)
+    else if (action == EControllerActions_MenuCancel)
     {
         navigateBack();
         return;
     }
-    else if (action == 2)
+    else if (action == EControllerActions_MenuX)
     {
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        if (gProfile->IsSignedIn(playerId))
+        {
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            telemetryManagerInstance->RecordUpsellPresented(playerId, eSen_UpsellID_FullGame, 1);
+            gProfile->DisplayFullVersionPurchase(false, playerId, 1);
+        }
     }
 }
 
 void UIScene_TrialExitUpsell::handleAnimationEnd()
 {
-    gConsoleUIController.NavigateToScene(0, static_cast<EUIScene>(2), 0,
-                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(0, EUIScene_SaveMessage, 0,
+                                         EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
 int UIScene_TrialExitUpsell::getSceneType()
 {
-    return 0x22;
+    return EUIScene_TrialExitUpsell;
 }
 
 bool UIScene_TrialExitUpsell::hasFocus(int)

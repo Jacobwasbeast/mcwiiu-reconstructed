@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_HowToPlay.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -34,12 +35,13 @@
 #include "game/world/block/GrassBlock.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/SandBlock.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/StringUtils.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
 void replaceAll(std::wstring& result, const std::wstring& source,
                 const std::wstring& search, const std::wstring& replacement);
-void stripWhitespaceForHtml(std::wstring& text, bool collapse);
 
 namespace
 {
@@ -131,23 +133,23 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
 {
     initialiseMovie();
 
-    std::wstring repeated(L10N::GetString(0x14630b9e));
+    std::wstring repeated(L10N::GetString(IDS_INVENTORY));
 
     m_labels[0].init(UIString(repeated));
     m_labels[1].init(UIString(repeated));
-    m_labels[2].init(UIString(L10N::GetString(0x24fee045)));
+    m_labels[2].init(UIString(L10N::GetString(IDS_CHEST)));
     m_labels[3].init(UIString(repeated));
-    m_labels[4].init(UIString(L10N::GetString(0x68521aaf)));
-    m_labels[5].init(UIString(L10N::GetString(0x9f31c0ee)));
+    m_labels[4].init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
+    m_labels[5].init(UIString(L10N::GetString(IDS_FUEL)));
     m_labels[6].init(UIString(repeated));
-    m_labels[7].init(UIString(L10N::GetString(0x7d7816a1)));
-    m_labels[8].init(UIString(L10N::GetString(0x1b49a944)));
-    m_labels[9].init(UIString(L10N::GetString(0xe398f425)));
+    m_labels[7].init(UIString(L10N::GetString(IDS_INGREDIENT)));
+    m_labels[8].init(UIString(L10N::GetString(IDS_FURNACE)));
+    m_labels[9].init(UIString(L10N::GetString(IDS_DISPENSER)));
     m_labels[10].init(UIString(repeated));
     m_labels[11].init(UIString(L10N::GetString(0xfbc6e08)));
-    m_labels[12].init(UIString(L10N::GetString(0xf4bd500f)));
+    m_labels[12].init(UIString(L10N::GetString(IDS_ENCHANT)));
     m_labels[13].init(UIString(repeated));
-    m_labels[14].init(UIString(L10N::GetString(0xdf516f15)));
+    m_labels[14].init(UIString(L10N::GetString(IDS_BREWING_STAND)));
     m_labels[15].init(UIString(repeated));
     m_labels[16].init(UIString(repeated));
 
@@ -161,13 +163,13 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
 
     m_labels[18].init(UIString(L10N::GetString(0xc60bb915)));
     m_labels[19].init(UIString(repeated));
-    m_labels[20].init(UIString(L10N::GetString(0xf681ddf0)));
-    m_labels[21].init(UIString(L10N::GetString(0x3dbed919)));
+    m_labels[20].init(UIString(L10N::GetString(IDS_ITEM_EMERALD)));
+    m_labels[21].init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
 
     {
         std::wstring text(L10N::GetString(0x8c04d144));
         std::wstring result;
-        replaceAll(result, text, L"_VILLAGER_TYPE_", L10N::GetString(0x869e763f));
+        replaceAll(result, text, L"_VILLAGER_TYPE_", L10N::GetString(IDS_VILLAGER_CLERIC));
         text = result;
         std::wstring::size_type pos = text.find(L"%s");
         if (pos != std::wstring::npos)
@@ -177,9 +179,9 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
 
     m_labels[23].init(UIString(L10N::GetString(0xb3c82373)));
     m_labels[24].init(UIString(L10N::GetString(0x7b8c1d5d)));
-    m_labels[25].init(UIString(L10N::GetString(0x7c89fe37)));
+    m_labels[25].init(UIString(L10N::GetString(IDS_TILE_HOPPER)));
     m_labels[26].init(UIString(repeated));
-    m_labels[27].init(UIString(L10N::GetString(0x25cba5e1)));
+    m_labels[27].init(UIString(L10N::GetString(IDS_TILE_DROPPER)));
     m_labels[28].init(UIString(repeated));
 
     m_pageCount = 0;
@@ -192,16 +194,16 @@ UIScene_HowToPlay::~UIScene_HowToPlay()
 
 namespace
 {
-    static const unsigned int kHowToPlayTitleHash[36] = {
-        0x018d8ea9, 0x8758a585, 0x0433e4c6, 0x8941a6ad, 0xcef2334f, 0x5ceac414,
-        0x82ed3e7d, 0xddf4faf7, 0x8e8b1966, 0x2913d7cd, 0xbc353d00, 0xe160391d,
-        0x58ef7c86, 0xb6ab3c0f, 0xc6ebf0ec, 0xc6f80b3d, 0x186eb58e, 0x5ece0eed,
-        0xfcf1d650, 0x59f9a3a9, 0x730761ed, 0xdd493e2f, 0x2ff78ffc, 0x23733dbb,
-        0xdd5bbbbe, 0xe146e1c3, 0xd3c04577, 0xaa5bd119, 0xad1e1a90, 0xc81b96aa,
-        0x93eac97a, 0xe91b67db, 0xbe472149, 0x580332f6, 0x24c276da, 0x8c55bd04
+    static const unsigned int kHowToPlayTitleHash[EHowToPlayPage_Count] = {
+        0x018d8ea9, IDS_HOW_TO_PLAY_BASICS, IDS_HOW_TO_PLAY_MULTIPLAYER, IDS_HOW_TO_PLAY_HUD, 0xcef2334f, 0x5ceac414,
+        0x82ed3e7d, IDS_HOW_TO_PLAY_CREATIVE, IDS_HOW_TO_PLAY_INVENTORY, IDS_HOW_TO_PLAY_CHEST, 0xbc353d00, IDS_HOW_TO_PLAY_ENDERCHEST,
+        IDS_HOW_TO_PLAY_CRAFTING, IDS_HOW_TO_PLAY_CRAFT_TABLE, IDS_HOW_TO_PLAY_FURNACE, IDS_HOW_TO_PLAY_DISPENSER, IDS_HOW_TO_PLAY_BREWING, 0x5ece0eed,
+        IDS_HOW_TO_PLAY_ANVIL, 0x59f9a3a9, 0x730761ed, IDS_HOW_TO_PLAY_TRADING, IDS_HOW_TO_PLAY_HORSES, IDS_HOW_TO_PLAY_BEACONS,
+        IDS_HOW_TO_PLAY_FIREWORKS, IDS_HOW_TO_PLAY_BANNERS, IDS_HOW_TO_PLAY_HOPPERS, IDS_HOW_TO_PLAY_DROPPERS, 0xad1e1a90, 0xc81b96aa,
+        0x93eac97a, IDS_HOW_TO_PLAY_ELYTRA, IDS_HOW_TO_PLAY_OCEANS, IDS_HOW_TO_PLAY_OCEAN_MOBS, IDS_HOW_TO_PLAY_CONDUIT, 0x8c55bd04
     };
 
-    static const int kHowToPlayContentPage[36] = {
+    static const int kHowToPlayContentPage[EHowToPlayPage_Count] = {
         0x00, 0x01, 0x02, 0x03, 0x01, 0x02, 0x01, 0x04, 0x05, 0x06,
         0x07, 0x17, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x15, 0x0e,
         0x0f, 0x16, 0x18, 0x19, 0x01, 0x02, 0x1b, 0x1c, 0x10, 0x11,
@@ -217,9 +219,9 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
     std::wstring text(title == NULL ? L"" : title);
     text = gApp.FormatHTMLString(m_playerId, text, -1);
 
-    replaceAll(text, text, L"_KICK_PLAYER_DESCRIPTION_", L10N::GetString(0x1350b613));
+    replaceAll(text, text, L"_KICK_PLAYER_DESCRIPTION_", L10N::GetString(IDS_KICK_PLAYER_DESCRIPTION));
     replaceAll(text, text, L"_BACK_BUTTON_", L10N::GetString(0x3d497286));
-    replaceAll(text, text, L"_DISABLES_ACHIEVEMENTS_", L10N::GetString(0xbf244113));
+    replaceAll(text, text, L"_DISABLES_ACHIEVEMENTS_", L10N::GetString(IDS_HOST_OPTION_DISABLES_ACHIEVEMENTS));
     replaceAll(text, text, L"_PLATFORM_NAME_", L10N::GetString(0xed3c4bfb));
 
     if (!gConsoleUIController.UsingBitmapFont())
@@ -233,7 +235,7 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 
     wchar_t colorTag[64];
     std::swprintf(colorTag, 0x40, L"<font color=#%08x>",
-                  gApp.GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)));
+                  gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
     std::wstring coloured(colorTag);
     coloured += text;
 
@@ -261,9 +263,7 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 
 unsigned int UIScene_HowToPlay::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie == NULL ? NULL : m_movie->getRootNode();
-    if (root == NULL)
-        return 0;
+    fuiRenderNode* root = m_movie->getRootNode();
     static const char* const names[30] = {
         "Label1_5", "Label2_6", "Label1_6", "Label2_7", "Label1_7", "Label3_10",
         "Label4_10", "Label2_10", "Label1_10", "Label1_11", "Label2_11", "Label1_4",
@@ -325,13 +325,13 @@ unsigned int UIScene_HowToPlay::mapElementsAndNames()
 void UIScene_HowToPlay::updateTooltips()
 {
     int first = -1;
-    if (m_page == 0)
-        gConsoleUIController.SetTooltips(m_controlFocus, 0xa3ab7b4b, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    if (m_page == EHowToPlayPage_WhatsNew)
+        gConsoleUIController.SetTooltips(m_playerId, IDS_HOW_TO_PLAY_NEXT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     else
     {
-        if (m_page != 0x23)
-            first = 0xa3ab7b4b;
-        gConsoleUIController.SetTooltips(m_controlFocus, first, 0x4f6bcf5e, 0x403e4e5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+        if (m_page != EHowToPlayPage_HostOptions)
+            first = IDS_HOW_TO_PLAY_NEXT;
+        gConsoleUIController.SetTooltips(m_playerId, first, IDS_TOOLTIPS_BACK, 0x403e4e5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     }
 }
 
@@ -353,25 +353,25 @@ void UIScene_HowToPlay::handleReload()
 
 void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_controlFocus, action, repeat, released, pressed);
-    if (action == 0 && released)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    if (action == EControllerActions_MenuA && released)
     {
-        if (m_page != 0x23)
+        if (m_page != EHowToPlayPage_HostOptions)
             StartPage(static_cast<EHowToPlayPage>(m_page + 1));
         handled = true;
     }
-    else if (action == 2 && released)
+    else if (action == EControllerActions_MenuX && released)
     {
         if (m_pageCount <= m_page - 1)
             StartPage(static_cast<EHowToPlayPage>(m_page - 1));
         handled = true;
     }
-    else if (action == 0x15 && released)
+    else if (action == EControllerActions_MenuCancel && released)
     {
         navigateBack();
         handled = true;
     }
-    else if (action == 4 || action == 5 || action == 8 || action == 9)
+    else if (action == EControllerActions_MenuUp || action == EControllerActions_MenuDown || action == EControllerActions_MenuPageUp || action == EControllerActions_MenuPageDown)
         sendInputToMovie(action, repeat, released, pressed);
 }
 
@@ -388,7 +388,7 @@ void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
     {
         std::wstring text = variant == 2 ? L"elemental spirit animal" : (variant == 1 ? L"klaatu berata niktu" : L"the elder scrolls");
         minecraft->mFont->drawWordWrap(text, 0, 0, static_cast<int>(width),
-                                       gApp.GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)) | 0xff000000);
+                                       gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White) | 0xff000000);
     }
     GlStateManager::disableAlphaTest();
     GlStateManager::disableRescaleNormal();
@@ -399,7 +399,7 @@ void UIScene_HowToPlay::customDraw(const char* name, fuiRect* rect)
     int slot = -1;
     if (name != NULL)
         std::sscanf(name, "slot_%d", &slot);
-    if (m_page == 0x11 && name != NULL && std::strncmp(name, "px_", 3) == 0)
+    if (m_page == EHowToPlayPage_Enchanting && name != NULL && std::strncmp(name, "px_", 3) == 0)
         m_enchantmentBook.render(rect);
     if (slot >= 0 && slot < 3)
         customDrawEnchantmentFont(rect, slot);
@@ -407,7 +407,7 @@ void UIScene_HowToPlay::customDraw(const char* name, fuiRect* rect)
 
 int UIScene_HowToPlay::getSceneType()
 {
-    return 0x10;
+    return EUIScene_HowToPlay;
 }
 
 unsigned int UIScene_HowToPlay::getSubSceneType() const
@@ -415,7 +415,7 @@ unsigned int UIScene_HowToPlay::getSubSceneType() const
     return static_cast<unsigned int>(m_page);
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListAnvil__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListAnvil()
 {
     static CustomItem slots[3] = {
         makeItem(Items::ironIngot, 1, 150), makeItem(Items::ironIngot, 1, 0),
@@ -424,7 +424,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListAnvil__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListArmor__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListArmor()
 {
     static CustomItem slots[4] = {
         makeItem(Items::ironHelmet, 1, 0), makeItem(Items::ironChestplate, 1, 0),
@@ -433,7 +433,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListArmor__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListBeacon__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListBeacon()
 {
     static CustomItem slots[5] = {
         makeItem(Items::emerald, 1, 0), makeItem(Items::ironIngot, 1, 0),
@@ -443,7 +443,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListBeacon__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListBrewing__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListBrewing()
 {
     static CustomItem slots[5] = {
         makeItem(Items::glassBottle, 1, 0),
@@ -455,7 +455,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListBrewing__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListChestLarge__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListChestLarge()
 {
     static CustomItem slots[54] = {
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
@@ -483,7 +483,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListChestLarge__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListChestSmall__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListChestSmall()
 {
     static CustomItem slots[27] = {
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
@@ -501,7 +501,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListChestSmall__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListCreative__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListCreative()
 {
     static CustomItem slots[50] = {
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
@@ -537,7 +537,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListCreative__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListDispenser__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListDispenser()
 {
     static CustomItem slots[9] = {
         makeItem(Items::diamond, 64, 0), makeItem(Items::diamond, 64, 0),
@@ -548,7 +548,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListDispenser__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListEntchantment__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListEntchantment()
 {
     static CustomItem slots[2] = {
         makeItem(Items::bow, 1, 0), makeItem(Items::enchantedBook, 7, 4)
@@ -556,7 +556,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListEntchantment__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListFurnace__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListFurnace()
 {
     static CustomItem slots[3] = {
         makeBlock(Blocks::coal_ore, 61, 0), makeItem(Items::coal, 63, 0),
@@ -565,7 +565,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListFurnace__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListHopper__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListHopper()
 {
     static CustomItem slots[5] = {
         makeBlock(Blocks::iron_block, 3, 0), makeBlock(Blocks::iron_block, 1, 0),
@@ -575,7 +575,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListHopper__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListHotBar__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListHotBar()
 {
     static CustomItem slots[10] = {
         makeItem(Items::diamond, 1, 0), makeItem(Items::bow, 1, 0),
@@ -587,7 +587,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListHotBar__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListInventory__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListInventory()
 {
     static CustomItem slots[27] = {
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
@@ -618,7 +618,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListInventory__Fv()
     return slots;
 }
 
-const UIScene_HowToPlay::sCustomItems* SlotListTrading__Fv()
+const UIScene_HowToPlay::sCustomItems* SlotListTrading()
 {
     static CustomItem slots[9] = {
         makeItem(Items::emerald, 1, 0), makeItem(Items::emerald, 1, 0),

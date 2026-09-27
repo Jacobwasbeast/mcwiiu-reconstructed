@@ -19,10 +19,43 @@ struct fuiRect;
 
 enum EHowToPlayPage
 {
-    EHowToPlayPage_0 = 0,
-    EHowToPlayPage_1 = 1,
-    EHowToPlayPage_2 = 2,
-    EHowToPlayPage_3 = 3
+    EHowToPlayPage_WhatsNew,
+    EHowToPlayPage_Basics,
+    EHowToPlayPage_Multiplayer,
+    EHowToPlayPage_HUD,
+    EHowToPlayPage_BattleMiniGame,
+    EHowToPlayPage_TumbleMiniGame,
+    EHowToPlayPage_GlideMiniGame,
+    EHowToPlayPage_Creative,
+    EHowToPlayPage_Inventory,
+    EHowToPlayPage_Chest,
+    EHowToPlayPage_LargeChest,
+    EHowToPlayPage_EnderChest,
+    EHowToPlayPage_Crafting,
+    EHowToPlayPage_CraftingTable,
+    EHowToPlayPage_Furnace,
+    EHowToPlayPage_Dispenser,
+    EHowToPlayPage_Brewing,
+    EHowToPlayPage_Enchanting,
+    EHowToPlayPage_Anvil,
+    EHowToPlayPage_FarmingAnimals,
+    EHowToPlayPage_BreedingAnimals,
+    EHowToPlayPage_Trading,
+    EHowToPlayPage_Horses,
+    EHowToPlayPage_Beacons,
+    EHowToPlayPage_Fireworks,
+    EHowToPlayPage_Banners,
+    EHowToPlayPage_Hoppers,
+    EHowToPlayPage_Droppers,
+    EHowToPlayPage_NetherPortal,
+    EHowToPlayPage_TheEnd,
+    EHowToPlayPage_EndCities,
+    EHowToPlayPage_Elytra,
+    EHowToPlayPage_Oceans,
+    EHowToPlayPage_OceanMobs,
+    EHowToPlayPage_Conduit,
+    EHowToPlayPage_HostOptions,
+    EHowToPlayPage_Count
 };
 
 class UIScene_HowToPlay : public UIScene

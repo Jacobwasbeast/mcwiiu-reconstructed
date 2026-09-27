@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_EnchantingMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -19,6 +20,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/ui/UILayer.hpp"
 
 extern CMinecraftApp* g_pApp;
 
@@ -51,21 +53,21 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int type, void* data, UILayer* la
     if (!sceneData->name.empty())
         m_enchantLabel.init(UIString(sceneData->name));
     else
-        m_enchantLabel.init(UIString(L10N::GetString(0xf4bd500f)));
+        m_enchantLabel.init(UIString(L10N::GetString(IDS_ENCHANT)));
     if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
     {
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
         if (tutorial != 0)
         {
             sceneInterface->m_previousTutorialState = tutorial->currentState;
-            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x14), this);
+            tutorial->changeTutorialState(eTutorial_State_EnchantingMenu, this);
         }
     }
     EnchantmentMenu* menu = new EnchantmentMenu(sceneData->inventory, sceneData->level,
                                                   BlockPos(sceneData->x, sceneData->y, sceneData->z));
     static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(false, sceneData->playerIndex, menu, true, 2,
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x28), false);
+                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
     m_ingredientSlot.addSlots(0, 1);
     m_lapisSlot.addSlots(1, 1);
     g_pApp->SetRichPresenceContext(m_playerId, 10);
@@ -78,20 +80,20 @@ UIScene_EnchantingMenu::~UIScene_EnchantingMenu()
 
 bool UIScene_EnchantingMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section >= 0x23 && section <= 0x24;
+    return section >= IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem && section <= IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
 }
 
 unsigned int UIScene_EnchantingMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < 0x21 || section > 0x24) return 0;
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis) return 0;
     static const unsigned int columns[4] = { 1, 1, 1, 1 };
-    return columns[static_cast<int>(section) - 0x21];
+    return columns[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar];
 }
 
 unsigned int UIScene_EnchantingMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < 0x21 || section > 0x24) return 0;
-    if (section == 0x22) return static_cast<IUIScene_AbstractContainerMenu*>(this)->GetInventoryRows();
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis) return 0;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory) return static_cast<IUIScene_AbstractContainerMenu*>(this)->GetInventoryRows();
     return 1;
 }
 
@@ -101,104 +103,104 @@ unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int dx = 0;
-    switch (static_cast<int>(section))
+    switch (section)
     {
-    case 0x21:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            if (*x > 2) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
-            else if (*x > 1) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
-            else target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+            if (*x > 2) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
+            else if (*x > 1) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            else target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (m_inventorySmall == 0)
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            if (m_smallInventory == 0)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
             else if (*x > 2)
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x27);
+                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
             else if (*x > 1)
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
             else
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         }
         break;
-    case 0x22:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (*x > 2) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x27);
-            else if (*x > 1) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
-            else target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+            if (*x > 2) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
+            else if (*x > 1) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            else target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         }
         break;
-    case 0x23:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = m_inventorySmall != 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            target = m_smallInventory != 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         break;
-    case 0x24:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_inventorySmall != 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            target = m_smallInventory != 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
             dx = -2;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
             dx = -2;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
         break;
-    case 0x25:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x26);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
             dx = -7;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         break;
-    case 0x26:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x27);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         break;
-    case 0x27:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_inventorySmall != 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            target = m_smallInventory != 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
             dx = -7;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x26);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         break;
     default:
         break;
@@ -210,42 +212,93 @@ unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
 void UIScene_EnchantingMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    UIControl* control = controlForSection(section);
-    if (control != 0 && position != 0)
+    UIControl* control = NULL;
+    switch (section)
     {
-        position->x = static_cast<float>(control->getXPos());
-        position->y = static_cast<float>(control->getYPos());
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        control = &m_hotbarList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+        control = &m_ingredientSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        control = &m_lapisSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
+        control = &m_enchantmentButtons[0];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
+        control = &m_enchantmentButtons[1];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
+        control = &m_enchantmentButtons[2];
+        break;
+    default:
+        break;
     }
+    if (control == NULL)
+        return;
+    position->x = static_cast<float>(control->getXPos());
+    position->y = static_cast<float>(control->getYPos());
 }
 
 void UIScene_EnchantingMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    UIControl* control = controlForSection(section);
-    if (control == 0 || position == 0 || size == 0) return;
+    UIControl* control = NULL;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        control = &m_hotbarList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+        control = &m_ingredientSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        control = &m_lapisSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
+        control = &m_enchantmentButtons[0];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
+        control = &m_enchantmentButtons[1];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
+        control = &m_enchantmentButtons[2];
+        break;
+    default:
+        break;
+    }
+    if (control == NULL)
+        return;
+    const float width = static_cast<float>(control->getWidth());
+    const float height = static_cast<float>(control->getHeight());
     if (!IsSectionSlotList(section))
     {
         GetPositionOfSection(section, position);
-        size->x = static_cast<float>(control->getWidth());
-        size->y = static_cast<float>(control->getHeight());
+        size->x = width;
+        size->y = height;
         return;
     }
-    const unsigned int columns = getSectionColumns(section);
-    const unsigned int rows = getSectionRows(section);
-    if (columns == 0 || rows == 0) return;
-    const float width = static_cast<float>(control->getWidth()) / columns;
-    const float height = static_cast<float>(control->getHeight()) / rows;
-    position->x = static_cast<float>(slot % static_cast<int>(columns)) * width;
-    position->y = static_cast<float>(slot / static_cast<int>(columns)) * height;
-    size->x = width;
-    size->y = height;
+    const int rows = static_cast<int>(getSectionRows(section));
+    const int columns = static_cast<int>(getSectionColumns(section));
+    size->x = width / static_cast<float>(columns);
+    size->y = height / static_cast<float>(rows);
+    position->x = static_cast<float>(slot % columns) * size->x;
+    position->y = static_cast<float>(slot / columns) * size->y;
 }
 
 void UIScene_EnchantingMenu::handleOtherClicked(int button,
     IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
 {
-    if (section < 0x25 || section > 0x27) return;
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3) return;
     const int enchantment = getSectionStartOffset(section);
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft == 0 || minecraft->mGameModes[m_playerId] == 0) return;
@@ -254,25 +307,42 @@ void UIScene_EnchantingMenu::handleOtherClicked(int button,
 
 int UIScene_EnchantingMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < 0x21 || section > 0x24) return 0;
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis) return 0;
     static const int offsets[4] = { 0, 1, 0, 1 };
-    return offsets[static_cast<int>(section) - 0x21];
+    return offsets[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar];
 }
 
 void UIScene_EnchantingMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    if (!wrap) return;
-    UIControl* control = controlForSection(section);
-    UIControl_SlotList* list = dynamic_cast<UIControl_SlotList*>(control);
-    if (list != 0) list->setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
+    const int columns = static_cast<int>(getSectionColumns(section));
+    UIControl_SlotList* list = NULL;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        list = &m_hotbarList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+        list = &m_ingredientSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        list = &m_lapisSlot;
+        break;
+    default:
+        break;
+    }
+    if (wrap)
+        list->setHighlightSlot(direction * columns + slot);
 }
 
 std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < 0x25 || section > 0x27 || getMenu() == 0) return 0;
-    const int index = static_cast<int>(section) - 0x25;
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3 || getMenu() == 0) return 0;
+    const int index = static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
     const int cost = getMenu()->mCosts[index];
     Enchantment* enchantment = Enchantment::byId(getMenu()->mEnchantmentIds[index]);
     if (cost < 1 || enchantment == 0) return 0;
@@ -293,8 +363,8 @@ std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
 
 bool UIScene_EnchantingMenu::IsActiveButton(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < 0x25 || section > 0x27) return false;
-    return !m_enchantmentButtons[static_cast<int>(section) - 0x25].IsInactive();
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3) return false;
+    return !m_enchantmentButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1].IsInactive();
 }
 
 unsigned int UIScene_EnchantingMenu::overrideTooltips(
@@ -304,7 +374,7 @@ unsigned int UIScene_EnchantingMenu::overrideTooltips(
 {
     if (IsActiveButton(section))
     {
-        first = static_cast<EToolTipItem>(25);
+        first = eToolTipSelect;
         return 1;
     }
     return 0;
@@ -340,8 +410,8 @@ std::wstring UIScene_EnchantingMenu::getMoviePath()
 void UIScene_EnchantingMenu::handleReload()
 {
     static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(true, m_playerId, m_menu, true, 2,
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x28), false);
+                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
     m_enchantmentButtons[0].SetEnchantmentLevel(1);
     m_enchantmentButtons[1].SetEnchantmentLevel(2);
     m_enchantmentButtons[2].SetEnchantmentLevel(3);
@@ -351,25 +421,39 @@ void UIScene_EnchantingMenu::handleReload()
 
 UIControl* UIScene_EnchantingMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return controlForSection(section);
+    UIControl* control = NULL;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        control = &m_hotbarList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+        control = &m_ingredientSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        control = &m_lapisSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
+        control = &m_enchantmentButtons[0];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
+        control = &m_enchantmentButtons[1];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
+        control = &m_enchantmentButtons[2];
+        break;
+    default:
+        break;
+    }
+    return control;
 }
 
 EnchantmentMenu* UIScene_EnchantingMenu::getMenu()
 {
     return static_cast<EnchantmentMenu*>(m_menu);
-}
-
-UIControl* UIScene_EnchantingMenu::controlForSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
-{
-    if (section == 0x21) return &m_hotbarList;
-    if (section == 0x22) return &m_inventoryList;
-    if (section == 0x23) return &m_ingredientSlot;
-    if (section == 0x24) return &m_lapisSlot;
-    if (section == 0x25) return &m_enchantmentButtons[0];
-    if (section == 0x26) return &m_enchantmentButtons[1];
-    if (section == 0x27) return &m_enchantmentButtons[2];
-    return 0;
 }
 
 void UIScene_EnchantingMenu::customDraw(const char* name, fuiRect* rect)
@@ -393,5 +477,5 @@ void UIScene_EnchantingMenu::handleSectionClick(IUIScene_AbstractContainerMenu::
 
 int UIScene_EnchantingMenu::getSceneType()
 {
-    return 46;
+    return EUIScene_EnchantingMenu;
 }

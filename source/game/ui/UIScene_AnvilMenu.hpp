@@ -27,9 +27,9 @@ class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu,
     {
     public:
         typedef void (UIScene_AnvilMenu::*Func)();
-        NameUpdateAction(UIScene_AnvilMenu* scene, Func function)
-            : m_scene(scene), m_function(function) {}
+        NameUpdateAction(UIScene_AnvilMenu* scene, Func function) : m_scene(scene), m_function(function) {}
         virtual void Execute() { (m_scene->*m_function)(); }
+
     private:
         UIScene_AnvilMenu* m_scene;
         Func m_function;
@@ -48,16 +48,16 @@ public:
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                       IUIScene_AbstractContainerMenu::ETapState state,
-                                                       int* x, int* y);
+                                                      IUIScene_AbstractContainerMenu::ETapState state, int* x,
+                                                      int* y);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-                                    _UIVec2D* position, _UIVec2D* size);
+                                   _UIVec2D* position, _UIVec2D* size);
     virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
                                     int slot, bool pressed);
-    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                        int slot, int direction, bool wrap);
+    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                        int direction, bool wrap);
 
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
@@ -75,7 +75,7 @@ public:
     static int KeyboardCompleteCallback(void* data, bool accepted);
     void handleEditNamePressed();
     virtual void refreshContainer(AbstractContainerMenu* menu,
-                                  std::vector<not_null_ptr<ItemInstance> >* items);
+                                  std::vector<not_null_ptr<ItemInstance>>* items);
     virtual void slotChanged(AbstractContainerMenu* menu, int slot, not_null_ptr<ItemInstance> item);
     virtual void setContainerData(AbstractContainerMenu* menu, int id, int value);
     virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
@@ -97,7 +97,6 @@ private:
     NameUpdateAction m_nameUpdateAction;
     CensoredString* m_itemName;
     PendingNameInfo* m_pendingName;
-    bool m_editingName;
     bool m_crossVisible;
 };
 

@@ -1,7 +1,9 @@
 #include "game/ui/UIScene_LanguageSelector.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
@@ -35,8 +37,8 @@ UIScene_LanguageSelector::~UIScene_LanguageSelector()
 
 void UIScene_LanguageSelector::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), 0x8d6323ed,
-                                     0x4f6bcf5e, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), IDS_TOOLTIPS_SELECT,
+                                     IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, false, false);
 }
 
@@ -45,16 +47,16 @@ void UIScene_LanguageSelector::updateComponents()
     bool showSplitScreen = false;
     if (Minecraft::GetInstance()->mLevel == NULL)
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(66), true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
         showSplitScreen = true;
     }
     else
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(66), false);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
         if (g_pApp->GetLocalPlayerCount() == 1)
             showSplitScreen = true;
     }
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(67), showSplitScreen);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, showSplitScreen);
 }
 
 void UIScene_LanguageSelector::handleReload()
@@ -85,33 +87,32 @@ void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool re
                                            bool&)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action < 4)
-        return;
-    if (action > 5)
+    switch (action)
     {
-        if (action < 8)
-            return;
-        if (action > 9 && action != 20)
-        {
-            if (action != 21 || !pressed)
-                return;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed)
             navigateBack();
-            return;
-        }
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_LanguageSelector::handlePress(int first, int index)
+void UIScene_LanguageSelector::handlePress(int controlId, int childId)
 {
     static const unsigned char languages[] = {0, 1, 3, 5, 4, 6, 9, 2, 7, 8, 17, 16, 12};
     static const unsigned int locales[] = {0, 0, 0, 31, 0, 0, 0, 27, 0, 0, 0, 0, 0};
 
-    if (first == 0)
+    if (controlId == 0)
     {
-        gConsoleUIController.PlayUISFX(0);
-        GameSettings::SetMinecraftLanguage(m_playerId, languages[index]);
-        GameSettings::SetMinecraftLocale(m_playerId, static_cast<unsigned char>(locales[index]));
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        GameSettings::SetMinecraftLanguage(m_playerId, languages[childId]);
+        GameSettings::SetMinecraftLocale(m_playerId, static_cast<unsigned char>(locales[childId]));
         GameSettings::CheckGameSettingsChanged(true, m_playerId);
     }
 }
@@ -127,5 +128,5 @@ unsigned int UIScene_LanguageSelector::mapElementsAndNames()
 
 int UIScene_LanguageSelector::getSceneType()
 {
-    return 79;
+    return EUIScene_LanguageSelector;
 }

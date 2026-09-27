@@ -23,7 +23,7 @@ void UIControl_SaveList::addItem(const std::wstring& label, const std::wstring& 
 void UIControl_SaveList::addItem(const std::wstring& label, const std::wstring& textureName)
 {
     addItem(label, textureName, m_itemIndex);
-    addElement(static_cast<UIControl::eUIControlType>(1), -1);
+    addElement(UIControl::eUIControlType_Button, -1);
 }
 
 void UIControl_SaveList::setTextureName(int item, const std::wstring& textureName)

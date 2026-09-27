@@ -1,4 +1,5 @@
 #include "game/ui/AbstractContainerMenu.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -14,7 +15,7 @@
 #include "game/minigame/MiniGameDef.hpp"
 
 AbstractContainerMenu::AbstractContainerMenu()
-    : m_containerId(0), m_transactionId(0), m_quickcraftType(-1), m_quickcraftStatus(0), m_quickcraftActive(false), m_changed(false), m_data(0)
+    : m_containerId(0), m_transactionId(0), m_quickcraftType(-1), m_quickcraftStatus(0), m_quickcraftActive(false), m_uiQuickCraftActive(false), m_uiQuickCraftRemaining(0)
 {
 }
 
@@ -499,10 +500,10 @@ bool AbstractContainerMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance>, Sl
 void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player> player, Level* level, boost::shared_ptr<Container> container)
 {
     boost::shared_ptr<ServerPlayer> serverPlayer;
-    if (player->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    if (player->GetType() == EntityType::SERVER_PLAYER)
         serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
     if (!player->isAlive()
-        || (player->GetType() == ENTITY_TYPE_SERVER_PLAYER && serverPlayer->hasDisconnected()))
+        || (player->GetType() == EntityType::SERVER_PLAYER && serverPlayer->hasDisconnected()))
     {
         unsigned int i;
         for (i = 0; i < container->getContainerSize(); ++i)
@@ -663,7 +664,7 @@ int AbstractContainerMenu::getRedstoneSignalFromContainer(boost::shared_ptr<Cont
 
 int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
-    if ((entity->GetType() & ENTITY_TYPE_ENTITY) == ENTITY_TYPE_ENTITY)
+    if ((entity->GetType() & EntityType::ENTITY) == EntityType::ENTITY)
         return getRedstoneSignalFromContainer(boost::dynamic_pointer_cast<Container>(entity));
     return 0;
 }
@@ -672,10 +673,10 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     not_null_ptr<ItemInstance> preview = ItemInstance::EMPTY;
-    if (m_changed)
+    if (m_uiQuickCraftActive)
     {
         bool useCarried = false;
-        if (m_remoteSlots.size() != 0)
+        if (m_uiQuickCraftSlots.size() != 0)
         {
             not_null_ptr<ItemInstance> carried = minecraft->mLocalPlayers[playerIndex]->mInventory->getCarried();
             if (!carried->isEmpty() && slotIndex == -1) useCarried = true;
@@ -683,14 +684,14 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
         if (useCarried)
         {
             preview = minecraft->mLocalPlayers[playerIndex]->mInventory->getCarried()->copy();
-            preview->setCount(m_data);
+            preview->setCount(m_uiQuickCraftRemaining);
             preview->mUnknown = 1;
         }
         else if (slotIndex >= 0)
         {
             Slot* slot = getSlot(slotIndex);
             bool spread = false;
-            if (m_remoteSlots.find(slot) != m_remoteSlots.end())
+            if (m_uiQuickCraftSlots.find(slot) != m_uiQuickCraftSlots.end())
             {
                 not_null_ptr<ItemInstance> carried = minecraft->mLocalPlayers[playerIndex]->mInventory->getCarried();
                 if (!carried->isEmpty()) spread = true;
@@ -706,7 +707,7 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
                 if (placeable)
                 {
                     preview = minecraft->mLocalPlayers[playerIndex]->mInventory->getCarried()->copy();
-                    getQuickCraftSlotCount(&m_remoteSlots, 0, preview, slot->getItem()->getCount());
+                    getQuickCraftSlotCount(&m_uiQuickCraftSlots, 0, preview, slot->getItem()->getCount());
                     if (preview->getCount() > preview->getMaxStackSize())
                         preview->setCount(preview->getMaxStackSize());
                     if (slot->getMaxStackSize(preview) < preview->getCount())
@@ -719,7 +720,7 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
 }
 bool AbstractContainerMenu::IsSmallInventory()
 {
-    if (gApp.GetGameHostOption(eGameHostOption_32)
+    if (gApp.GetGameHostOption(eGameHostOption_All)
         && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
     {
         return true;

@@ -84,8 +84,8 @@
 #include "platform/wiiu/UIComponent_WiiUDRC.hpp"
 
 UILayer::UILayer(UIGroup* group)
-    : m_focusChanged(false), m_menuDisplayed(false), m_fullscreen(false), m_viewportChanged(false),
-      m_reloadPending(false), m_inputHandled(false), m_group(group)
+    : m_hasFocus(false), m_menuDisplayed(false), m_pauseMenuDisplayed(false), m_containerMenuDisplayed(false),
+      m_ignoreAutosaveMenuDisplayed(false), m_ignorePlayerJoinMenuDisplayed(false), m_group(group)
 {
 }
 
@@ -230,11 +230,11 @@ bool UILayer::updateFocusState(bool requestFocus)
     if (!requestFocus)
         requestFocus = m_group->RequestFocus(this);
 
-    m_fullscreen = false;
-    m_reloadPending = false;
-    m_viewportChanged = false;
+    m_pauseMenuDisplayed = false;
+    m_ignoreAutosaveMenuDisplayed = false;
+    m_containerMenuDisplayed = false;
     m_menuDisplayed = false;
-    m_inputHandled = false;
+    m_ignorePlayerJoinMenuDisplayed = false;
     bool granted = false;
 
     for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
@@ -270,25 +270,25 @@ bool UILayer::updateFocusState(bool requestFocus)
             (sceneType >= EUIScene_TradingMenu && sceneType <= EUIScene_AnvilMenu) ||
             (sceneType >= EUIScene_HopperMenu && sceneType <= EUIScene_HorseInventoryMenu) ||
             sceneType == EUIScene_WritableBookMenu)
-            m_reloadPending = true;
+            m_ignoreAutosaveMenuDisplayed = true;
 
         if (sceneType == EUIScene_PauseMenu)
-            m_fullscreen = true;
+            m_pauseMenuDisplayed = true;
 
         if ((sceneType >= EUIScene_CraftingMenu2x2 && sceneType <= EUIScene_DispenserMenu) ||
             sceneType == EUIScene_CreativeMenu ||
             (sceneType >= EUIScene_EnchantingMenu && sceneType <= EUIScene_BrewingStandMenu) ||
             (sceneType >= EUIScene_TradingMenu && sceneType <= EUIScene_AnvilMenu) ||
             (sceneType >= EUIScene_HopperMenu && sceneType <= EUIScene_HorseInventoryMenu))
-            m_viewportChanged = true;
+            m_containerMenuDisplayed = true;
 
         if (sceneType == EUIScene_FullscreenProgress || sceneType == EUIScene_PauseMenu ||
             sceneType == EUIScene_LeaderboardsMenu || sceneType == EUIScene_Credits ||
             sceneType == EUIScene_EndPoem || sceneType == EUIScene_MessageBox)
-            m_inputHandled = true;
+            m_ignorePlayerJoinMenuDisplayed = true;
     }
 
-    m_focusChanged = granted;
+    m_hasFocus = granted;
     return granted;
 }
 
@@ -306,9 +306,9 @@ void UILayer::closeAllScenes()
     }
 
     updateFocusState(false);
-    if (m_focusChanged)
+    if (m_hasFocus)
     {
-        m_focusChanged = false;
+        m_hasFocus = false;
         m_group->UpdateFocusState();
     }
 }
@@ -422,13 +422,13 @@ void UILayer::removeScene(UIScene* scene)
     m_pendingDestroy.push_back(scene);
     scene->handleDestroy();
 
-    bool focusChangedBefore = m_focusChanged;
+    bool focusChangedBefore = m_hasFocus;
     updateFocusState(false);
-    bool focusChangedAfter = m_focusChanged;
+    bool focusChangedAfter = m_hasFocus;
 
     if (focusChangedAfter || focusChangedBefore)
     {
-        m_focusChanged = false;
+        m_hasFocus = false;
         m_group->UpdateFocusState();
     }
 }
@@ -469,7 +469,7 @@ UIScene* UILayer::GetTopScene()
 
 bool UILayer::HasFocus(int controllerId)
 {
-    if (!m_focusChanged)
+    if (!m_hasFocus)
         return false;
 
     for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)

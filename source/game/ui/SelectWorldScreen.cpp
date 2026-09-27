@@ -12,32 +12,13 @@
 #include "game/ui/RenameWorldScreen.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/world/LevelSummary.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 std::wstring _toString(int value);
 std::wstring _toString(float value);
 
-struct FILETIME
-{
-    unsigned long low;
-    unsigned long high;
-};
-
-struct SYSTEMTIME
-{
-    unsigned short year;
-    unsigned short month;
-    unsigned short dayOfWeek;
-    unsigned short day;
-    unsigned short hour;
-    unsigned short minute;
-    unsigned short second;
-    unsigned short milliseconds;
-};
-
-unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime);
-
 SelectWorldScreen::SelectWorldScreen(Screen* parent)
-    : Screen(), mParent(parent), mTitle(L"Select_world"), mSelecting(false), mSelectedWorld(0),
+    : Screen(), mParent(parent), mTitle(L"Select world"), mSelecting(false), mSelectedWorld(0),
       mLevelList(NULL), mWorldSelectionList(NULL), mWorldName(), mConversion(), mConfirmingDelete(false),
       mRenameButton(NULL), mSelectButton(NULL), mDeleteButton(NULL)
 {
@@ -56,9 +37,9 @@ void SelectWorldScreen::loadLevelList()
 void SelectWorldScreen::init()
 {
     Language* language = Language::getInstance();
-    mTitle = language->getElement(std::wstring(L"selectWorld_title"));
-    mWorldName = language->getElement(std::wstring(L"selectWorld_world"));
-    mConversion = language->getElement(std::wstring(L"selectWorld_conversion"));
+    mTitle = language->getElement(std::wstring(L"selectWorld.title"));
+    mWorldName = language->getElement(std::wstring(L"selectWorld.world"));
+    mConversion = language->getElement(std::wstring(L"selectWorld.conversion"));
     loadLevelList();
     mWorldSelectionList = new WorldSelectionList(this);
     mWorldSelectionList->init(&mButtons, 4, 5);
@@ -74,7 +55,7 @@ std::wstring SelectWorldScreen::getWorldName(int index)
 {
     std::wstring name = mLevelList->at(index)->getLevelName();
     if (name.empty())
-        name = Language::getInstance()->getElement(std::wstring(L"selectWorld_world")) + L" " + _toString(index + 1);
+        name = Language::getInstance()->getElement(std::wstring(L"selectWorld.world")) + L" " + _toString(index + 1);
     return name;
 }
 
@@ -82,18 +63,18 @@ void SelectWorldScreen::postInit()
 {
     Language* language = Language::getInstance();
     mSelectButton = new Button(1, mWidth / 2 - 154, mHeight - 52, 150, 20,
-                               language->getElement(std::wstring(L"selectWorld_select")));
+                               language->getElement(std::wstring(L"selectWorld.select")));
     mButtons.push_back(mSelectButton);
     mRenameButton = new Button(6, mWidth / 2 - 154, mHeight - 28, 70, 20,
-                               language->getElement(std::wstring(L"selectWorld_rename")));
+                               language->getElement(std::wstring(L"selectWorld.rename")));
     mButtons.push_back(mRenameButton);
     mDeleteButton = new Button(2, mWidth / 2 - 74, mHeight - 28, 70, 20,
-                               language->getElement(std::wstring(L"selectWorld_delete")));
+                               language->getElement(std::wstring(L"selectWorld.delete")));
     mButtons.push_back(mDeleteButton);
     mButtons.push_back(new Button(3, mWidth / 2 + 4, mHeight - 52, 150, 20,
-                                  language->getElement(std::wstring(L"selectWorld_create"))));
+                                  language->getElement(std::wstring(L"selectWorld.create"))));
     mButtons.push_back(new Button(0, mWidth / 2 + 4, mHeight - 28, 150, 20,
-                                  language->getElement(std::wstring(L"gui_cancel"))));
+                                  language->getElement(std::wstring(L"gui.cancel"))));
     mSelectButton->mActive = false;
     mRenameButton->mActive = false;
     mDeleteButton->mActive = false;
@@ -126,13 +107,13 @@ void SelectWorldScreen::buttonClicked(Button* button)
         {
             mConfirmingDelete = true;
             Language* language = Language::getInstance();
-            std::wstring message = language->getElement(std::wstring(L"selectWorld_deleteQuestion"));
+            std::wstring message = language->getElement(std::wstring(L"selectWorld.deleteQuestion"));
             std::wstring warning = std::wstring(L"'") + name + L"'";
-            std::wstring title = language->getElement(std::wstring(L"selectWorld_deleteWarning"));
+            std::wstring title = language->getElement(std::wstring(L"selectWorld.deleteWarning"));
             std::wstring text = warning + L" " + title;
             ConfirmScreen* confirm = new ConfirmScreen(this, message, text,
-                language->getElement(std::wstring(L"selectWorld_deleteButton")),
-                language->getElement(std::wstring(L"gui_cancel")), mSelectedWorld);
+                language->getElement(std::wstring(L"selectWorld.deleteButton")),
+                language->getElement(std::wstring(L"gui.cancel")), mSelectedWorld);
             mMinecraft->setScreen(confirm);
         }
     }

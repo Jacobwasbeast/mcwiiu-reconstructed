@@ -23,7 +23,7 @@ public:
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void broadcastChanges();
     virtual void setData(int id, int value);
-    std::vector<EnchantmentInstance*>* getEnchantmentList(not_null_ptr<ItemInstance> item, int level, int slot);
+    std::vector<EnchantmentInstance*>* getEnchantmentList(not_null_ptr<ItemInstance> item, int enchantSlot, int cost);
     virtual void slotsChanged();
     virtual bool clickMenuButton(boost::shared_ptr<Player> player, int id);
     int getGoldCount();

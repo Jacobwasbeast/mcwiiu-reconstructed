@@ -12,7 +12,7 @@ FJ_DragonHealth::FJ_DragonHealth(fuiRenderNode* renderNode)
     initFiller();
     m_pLabel = getChildByName("DragonHealthLabel")->asFJ_Label();
     SetLabelAlignment(0);
-    m_pLabel->SetTextAlignment(static_cast<FJ_Label::ETextAlignment>(2));
+    m_pLabel->SetTextAlignment(FJ_Label::eTextAlignment_Center);
 }
 
 FJ_DragonHealth::~FJ_DragonHealth()

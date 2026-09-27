@@ -1,9 +1,20 @@
 #include "game/ui/UIScene_PauseMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 #include <vector>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/CTelemetryManager.hpp"
+#include "game/core/GameType.hpp"
+#include "game/core/UnityClient6.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
+#include "game/network/DisconnectPacket.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/PlayerUID.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CommonMasterGameMode.hpp"
@@ -27,76 +38,165 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/cCommerceNintendoWiiU.hpp"
+#include "game/core/GameSettings.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
-extern void Sleep(unsigned int milliseconds);
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 #define gGameNetworkManager CGameNetworkManager::sInstance
 
 void UIScene_PauseMenu::Init()
 {
-    m_buttonList.AddNewMenuButton(L10N::GetString(0xb9b3004c), 0);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    bool primaryPlayer = gProfile->GetPrimaryPad() == m_playerId;
+    g_pApp->GetLocalPlayerCount();
+
+    m_buttonList.AddNewMenuButton(L10N::GetString(IDS_RESUME_GAME), 0);
     m_buttonList.AddNewMenuButton(L10N::GetString(0x2b1e9f0e), 1);
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+
+    PlayerUID xuid(0);
+    gProfile->GetXUID(m_playerId, &xuid, false);
+    if ((xuid.flags & PlayerUID::FlagUuid) != 0 &&
+        (gProfile->GetPrimaryPad() == m_playerId || gProfile->IsHasAchievementsFile(m_playerId)))
     {
-        if (gGameNetworkManager.IsHost())
+        m_buttonList.AddNewMenuButton(L10N::GetString(IDS_ACHIEVEMENTS), 4);
+    }
+
+    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
+    {
+        if (primaryPlayer && gGameNetworkManager.IsHost())
         {
-            m_buttonList.AddNewMenuButton(L10N::GetString(0xfb98ec1c), 5);
+            m_buttonList.AddNewMenuButton(L10N::GetString(IDS_SAVE_GAME), 5);
             if (gApp.HasNoSpaceForSaveQuota())
                 m_buttonList.EnableItem(5, false, true);
         }
     }
     else
     {
+        ClientMasterGameMode* masterGameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+        const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
         MiniGamePlayerSettings settings;
         MiniGameDef::GetPlayerSettings(settings);
-        unsigned int firstMiniGameId = Minecraft::GetInstance()->GetFirstMiniGame()->GetId();
-        if (MiniGameDef::IsCustomGame(static_cast<EMiniGameId>(firstMiniGameId), settings))
+        std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
+        masterGameMode->GetUniquePlaylist(playlist);
+
+        bool multipleMaps = playlist.size() > 1;
+        bool multipleVariants = false;
+        if (Minecraft::InMiniGame(eMiniGameId_Lobby, true) && minecraft->GetMiniGame()->HasMultipleVariants() &&
+            Minecraft::GetInstance()->GetFirstMiniGame()->GetId() != eMiniGameId_Battle)
         {
-            if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == 1)
+            multipleVariants = true;
+        }
+        bool buildGame = Minecraft::InMiniGame(eMiniGameId_Build, true);
+        bool customGame = MiniGameDef::IsCustomGame(
+            static_cast<EMiniGameId>(Minecraft::GetInstance()->GetFirstMiniGame()->GetId()), settings);
+
+        if (multipleMaps || multipleVariants || buildGame)
+        {
+            if (!gGameNetworkManager.IsInPublicJoinableGame())
+            {
+                if (primaryPlayer && gGameNetworkManager.IsHost() && minecraft != NULL &&
+                    minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY)
+                {
+                    if (multipleMaps)
+                        m_buttonList.AddNewMenuButton(L10N::GetString(IDS_MG_SELECT_MAP), 8);
+                    else if (!customGame && multipleVariants &&
+                             ((gGameNetworkManager.IsHost() && !gGameNetworkManager.IsInPublicJoinableGame()) ||
+                              miniGame->GetHostOption(eCustomGameModeHostOption_EnableVoting)))
+                        m_buttonList.AddNewMenuButton(L10N::GetString(0x66f20471), 8);
+                    else if (buildGame)
+                        m_buttonList.AddNewMenuButton(L10N::GetString(0x66f20471), 8);
+                }
+            }
+            else if (multipleMaps)
+            {
+                m_buttonList.AddNewMenuButton(L10N::GetString(0x1a66548e), 8);
+            }
+            else if (!customGame && multipleVariants &&
+                     ((gGameNetworkManager.IsHost() && !gGameNetworkManager.IsInPublicJoinableGame()) ||
+                      miniGame->GetHostOption(eCustomGameModeHostOption_EnableVoting)))
+            {
+                m_buttonList.AddNewMenuButton(L10N::GetString(0x44c3150d), 8);
+            }
+            else if (buildGame)
+            {
+                m_buttonList.AddNewMenuButton(L10N::GetString(0x44c3150d), 8);
+            }
+        }
+
+        if (customGame)
+        {
+            if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == eMiniGameId_Battle)
                 m_buttonList.AddNewMenuButton(L10N::GetString(0xd9c9100d), 7);
-            else if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == 2)
+            else if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == eMiniGameId_Tumble)
                 m_buttonList.AddNewMenuButton(L10N::GetString(0x6044b44e), 7);
         }
     }
-    m_buttonList.AddNewMenuButton(L10N::GetString(0x2686c8e5), 6);
-    if (IsBanEnabled() == 0)
+
+    m_buttonList.AddNewMenuButton(L10N::GetString(IDS_EXIT_GAME), 6);
+    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0 ||
+        !gGameNetworkManager.IsInPublicJoinableGame() || gProfile->GetPrimaryPad() != m_playerId ||
+        !gGameNetworkManager.IsHost() || minecraft == NULL ||
+        minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY ||
+        gGameNetworkManager.GetOnlinePlayerCount() == 0)
+    {
         m_buttonList.EnableItem(6, true, true);
+        m_buttonList.SetItemOpacity(6, 1.0f, true);
+    }
     else
+    {
         m_buttonList.EnableItem(6, false, true);
-    m_buttonList.SetItemOpacity(6, IsBanEnabled() == 0 ? 1.0f : 0.3f, true);
+        m_buttonList.SetItemOpacity(6, 0.3f, true);
+    }
+    if (m_lastIndex >= 0)
+        m_buttonList.setCurrentSelection(m_lastIndex, false, true);
+
+    if (gGameNetworkManager.IsLocalGame() && gGameNetworkManager.GetPlayerCount() == 1)
+        g_pApp->SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer, reinterpret_cast<void*>(1));
 }
 
 void UIScene_PauseMenu::tick()
 {
     UIScene::tick();
-    if (gConsoleUIController.GetTopScene(m_playerId, static_cast<EUILayer>(6), static_cast<EUIGroup>(7)) != this)
+    if (gConsoleUIController.GetTopScene(m_playerId, EUILayer_Scene, EUIGroup_PlayerDefault) != this)
         return;
-    bool enabled = IsBanEnabled() == 0;
-    if (m_buttonList.IsEnabled(6) != enabled)
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0 ||
+        !gGameNetworkManager.IsInPublicJoinableGame() || gProfile->GetPrimaryPad() != m_playerId ||
+        !gGameNetworkManager.IsHost() || minecraft == NULL ||
+        minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY ||
+        gGameNetworkManager.GetOnlinePlayerCount() == 0)
     {
-        m_buttonList.EnableItem(6, enabled, true);
-        m_buttonList.SetItemOpacity(6, enabled ? 1.0f : 0.3f, true);
+        if (!m_buttonList.IsEnabled(6))
+        {
+            m_buttonList.EnableItem(6, true, true);
+            m_buttonList.SetItemOpacity(6, 1.0f, true);
+        }
+    }
+    else if (m_buttonList.IsEnabled(6))
+    {
+        m_buttonList.EnableItem(6, false, true);
+        m_buttonList.SetItemOpacity(6, 0.3f, true);
     }
 }
 
 void UIScene_PauseMenu::updateTooltips()
 {
-    bool host = gGameNetworkManager.IsHost() && m_playerId == g_pApp->GetPrimaryUserIndex();
-    int value = -1;
-    if (host && Minecraft::GetInstance() != NULL && Minecraft::GetInstance()->isClientSide())
-        value = gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(4)) ? 0x21c0a77d : 0x9eda23db;
-    if (gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(4)))
+    bool host = gGameNetworkManager.IsHost() && gProfile->GetPrimaryPad() == m_playerId;
+    int saveTooltip = -1;
+    if (gProfile->IsFullVersion() && host)
+        saveTooltip = gStorage->GetSaveDisabled() ? IDS_TOOLTIPS_SELECTDEVICE : IDS_TOOLTIPS_CHANGEDEVICE;
+    if (gConsoleUIController.IsSceneInStack(m_playerId, EUIScene_FullscreenProgress))
         gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     else
-        gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, value, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+        gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, saveTooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_PauseMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x48), true);
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), g_pApp->GetLocalPlayerCount() == 1);
+    m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+    m_layer->showComponent(m_playerId, EUIScene_MenuBackground, true);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, g_pApp->GetLocalPlayerCount() == 1);
 }
 
 void UIScene_PauseMenu::handlePreReload() {}
@@ -104,11 +204,12 @@ void UIScene_PauseMenu::handlePreReload() {}
 void UIScene_PauseMenu::handleReload()
 {
     updateTooltips();
-    unsigned int selection = m_buttonList.getCurrentSelection();
+    int focusIndex = m_focusIndex;
     Init();
+    m_focusIndex = focusIndex;
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
-    m_buttonList.setCurrentSelection(selection, false, true);
+    m_buttonList.setCurrentSelection(m_focusIndex, false, true);
 }
 
 std::wstring UIScene_PauseMenu::getMoviePath()
@@ -118,43 +219,96 @@ std::wstring UIScene_PauseMenu::getMoviePath()
 
 void UIScene_PauseMenu::handleFocusChange(int, int childFocus)
 {
-    m_buttonList.setCurrentSelection(m_buttonList.getListIndex(childFocus), false, true);
+    m_focusIndex = m_buttonList.getListIndex(childFocus);
 }
 
 void UIScene_PauseMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool&)
 {
-    if (!m_ignoreInput && action > 3)
+    if (m_ignoreInput || action < EControllerActions_MenuUp)
+        return;
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    switch (action)
     {
-        gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-        if (action < 6 || action == 0x14)
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        if (pressed)
+            sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed)
         {
-            if (pressed)
-                sendInputToMovie(action, repeat, released, pressed);
-        }
-        else if (action == 0x15 && pressed)
-        {
-            gConsoleUIController.PlayUISFX(NULL);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
             navigateBack();
         }
+        break;
     }
 }
 
-void UIScene_PauseMenu::handlePress(int, int item)
+void UIScene_PauseMenu::handlePress(int, int childId)
 {
     if (m_ignoreInput)
         return;
-    int index = m_buttonList.getListIndex(item);
-    if (index == 0) navigateBack();
-    else if (index == 1) gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0xf), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-    else if (index == 2) gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x16), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-    else if (index == 4) gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x51), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-    else if (index == 5) PerformActionSaveGame();
-    else if (index == 6)
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+    m_lastIndex = m_buttonList.getListIndex(childId);
+    switch (childId)
+    {
+    case 0:
+        navigateBack();
+        return;
+    case 1:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HelpAndOptionsMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        return;
+    case 2:
+    {
+        int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
+        if (gProfile->IsGuest(m_playerId))
+        {
+            gConsoleUIController.RequestAlertMessage(0x0e6bf122, static_cast<int>(0x8ba9896fU), parameters, 1,
+                                                      gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+            return;
+        }
+        if (gProfile->IsSignedInLive(m_playerId))
+        {
+            gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LeaderboardsMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+            return;
+        }
+        int errorParameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
+        gConsoleUIController.RequestErrorMessage(static_cast<int>(0x8a21894bU), static_cast<int>(0xc34c0b77U), errorParameters, 1,
+                                                  m_playerId, NULL, NULL, NULL, true);
+        return;
+    }
+    case 3:
+        break;
+    case 4:
+    {
+        if (!gProfile->IsGuest(m_playerId))
+        {
+            gConsoleUIController.NavigateToScene(m_playerId, EUIScene_AchievementsMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+            return;
+        }
+        int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
+        gConsoleUIController.RequestAlertMessage(0x0e6bf122, static_cast<int>(0x8ba9896fU), parameters, 1,
+                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+        return;
+    }
+    case 5:
+        PerformActionSaveGame();
+        return;
+    case 6:
         OpenExitGameDialog(m_playerId, reinterpret_cast<void*>(GetCallbackUniqueId()),
                            ExitGameDialogReturned, ExitGameSaveDialogReturned,
-                           EOpenExitGameDialog_0);
-    else if (index == 7) gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x14), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-    else if (index == 8) gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x3e), (void*)!gGameNetworkManager.IsInPublicJoinableGame(), static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                           EOpenExitGameDialog_ExitGame);
+        break;
+    case 7:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_InGameSettingsListMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        return;
+    case 8:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_MapVoteMenu,
+                                             reinterpret_cast<void*>(!gGameNetworkManager.IsInPublicJoinableGame()),
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
+        return;
+    }
 }
 
 void UIScene_PauseMenu::ShowScene(bool) {}
@@ -175,7 +329,7 @@ unsigned int UIScene_PauseMenu::BuyTexturePack_SignInReturned(void*, bool signed
 
 unsigned int UIScene_PauseMenu::IsBanEnabled()
 {
-    bool host = gGameNetworkManager.IsHost() && m_playerId == g_pApp->GetPrimaryUserIndex();
+    bool host = gGameNetworkManager.IsHost() && m_playerId == gProfile->GetPrimaryPad();
     return !gGameNetworkManager.IsLocalGame() && !host &&
            (Minecraft::GetInstance() == NULL || !Minecraft::InMiniGame(eMiniGameId_Any, true)) ? 1U : 0U;
 }
@@ -188,25 +342,30 @@ unsigned int UIScene_PauseMenu::mapElementsAndNames()
     return 1;
 }
 
-int UIScene_PauseMenu::getSceneType() { return 5; }
+int UIScene_PauseMenu::getSceneType() { return EUIScene_PauseMenu; }
 
 UIScene_PauseMenu::UIScene_PauseMenu(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer), m_buttonList(), m_ignoreInput(false)
+    : UIScene(sceneType, layer), m_buttonList()
 {
     initialiseMovie();
-    if (!Minecraft::GetInstance() || !Minecraft::GetInstance()->isClientSide())
+    m_unusedValue = 0;
+    m_lastIndex = -1;
+    m_ignoreInput = false;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (!gProfile->IsFullVersion())
         gConsoleUIController.ShowTrialTimer(false);
     Init();
     doHorizontalResizeCheck();
     gConsoleUIController.HidePressStart();
-    if (Minecraft::GetInstance() != NULL && Minecraft::GetInstance()->mGameModes[sceneType] != NULL)
+    telemetryManagerInstance->RecordPauseOrInactive(m_playerId);
+    if (minecraft != NULL && minecraft->mGameModes[sceneType] != NULL)
     {
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneType]->getTutorial();
         if (tutorial != NULL)
             tutorial->showTutorialPopup(false);
     }
-    m_buttonList.setCurrentSelection(0, false, true);
-    m_ignoreInput = false;
+    m_focusIndex = 0;
+    m_unusedFlag2 = false;
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -215,37 +374,32 @@ UIScene_PauseMenu::~UIScene_PauseMenu()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != NULL && minecraft->mGameModes[m_playerId] != NULL)
     {
-        Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_playerId]->getTutorial();
         if (tutorial != NULL)
             tutorial->showTutorialPopup(true);
     }
-    if (minecraft == NULL || !minecraft->isClientSide())
+    if (!gProfile->IsFullVersion())
         gConsoleUIController.ShowTrialTimer(true);
-    if (gGameNetworkManager.IsLocalGame())
-    {
-        if (minecraft != NULL && minecraft->mGameModes[m_playerId] != NULL)
-            g_pApp->SetXuiServerAction(m_playerId, static_cast<eXuiServerAction>(5), NULL);
-    }
-    if (m_layer != NULL)
-    {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x48), false);
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
-    }
+    if (gGameNetworkManager.IsLocalGame() && minecraft->mGameModes[m_playerId] != NULL)
+        g_pApp->SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer, NULL);
+    m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+    m_layer->showComponent(m_playerId, EUIScene_MenuBackground, false);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
-unsigned int UIScene_PauseMenu::SaveWorldThreadProc(void* context)
+int UIScene_PauseMenu::SaveWorldThreadProc(void* context)
 {
-    g_pApp->SetXuiServerAction(g_pApp->GetPrimaryUserIndex(), static_cast<eXuiServerAction>(context != NULL ? 3 : 2), NULL);
+    g_pApp->SetXuiServerAction(gProfile->GetPrimaryPad(),
+                               context != NULL ? eXuiServerAction_AutoSaveGame : eXuiServerAction_SaveGame, NULL);
     AABB::UseDefaultThreadStorage();
     Vec3::UseDefaultThreadStorage();
     Compression::UseDefaultThreadStorage();
-    if (Minecraft::GetInstance() != NULL && Minecraft::GetInstance()->isClientSide())
+    if (gProfile->IsFullVersion())
     {
         g_pApp->SetGameStarted(false);
-        while (g_pApp->GetXuiServerAction(g_pApp->GetPrimaryUserIndex()) != 0 && !g_pApp->GetGameStarted())
+        while (g_pApp->GetXuiServerAction(gProfile->GetPrimaryPad()) != eXuiServerAction_Idle && !MinecraftServer::s_haltRequested)
             Sleep(10);
-        if (!g_pApp->GetChangingSessionType())
+        if (!MinecraftServer::s_haltRequested && !g_pApp->GetChangingSessionType())
             g_pApp->SetGameStarted(true);
     }
     return g_pApp->GetChangingSessionType() ? 0x4c7 : 0;
@@ -253,18 +407,189 @@ unsigned int UIScene_PauseMenu::SaveWorldThreadProc(void* context)
 
 int UIScene_PauseMenu::NetworkErrorHandledDuringInvite(void*, int, C4JStorage::EMessageResult)
 {
+    gProfile->ClearGameUsers();
+    gProfile->SetLockedProfile(-1);
     gGameNetworkManager.WiiU_ClearIsHandlingBootInvite();
     return 0;
 }
 
-void UIScene_PauseMenu::_ExitWorld(void*)
+void UIScene_PauseMenu::_ExitWorld(void* context)
 {
-    if (gGameNetworkManager.IsNetworkThreadRunning())
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int exitTitle = minecraft->mProgressRenderer->getCurrentTitle();
+    int errorTitle = static_cast<int>(IDS_CONNECTION_LOST);
+    if (Minecraft::GetInstance()->isClientSide())
+        Minecraft::GetInstance()->SetupMiniGameInstance(*MiniGameDef::GetCustomGameModeById(eMiniGameId_Any, true), 0);
+
+    bool saveStats = true;
+    int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
+    if (minecraft->isClientSide() || gGameNetworkManager.IsInSession())
+    {
+        if (context == NULL)
+        {
+            exitTitle = IDS_EXITING_GAME;
+            minecraft->mProgressRenderer->progressStartNoAbort(IDS_EXITING_GAME);
+            for (int i = 0; i < 3; ++i)
+            {
+                if (minecraft->mLevels[i] != NULL)
+                    minecraft->mLevels[i]->disconnect(true);
+            }
+        }
+        else
+        {
+            int errorMessage;
+            if (gProfile->GetLiveConnectionStatus() != 0)
+            {
+                errorMessage = static_cast<int>(0x9d363c70);
+            }
+            else
+            {
+                switch (g_pApp->GetDisconnectReason())
+                {
+                case DisconnectPacket::eDisconnectReason_Quit:
+                    errorMessage = 0x5b106d79;
+                    break;
+                case DisconnectPacket::eDisconnectReason_KeepAliveTimeout:
+                    errorMessage = static_cast<int>(0xad3e1729);
+                    break;
+                case DisconnectPacket::eDisconnectReason_Kicked:
+                    errorMessage = static_cast<int>(0xf3a95051);
+                    break;
+                case DisconnectPacket::eDisconnectReason_GameFull:
+                    errorMessage = static_cast<int>(0xb86be603);
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_HostOutOfDate:
+                    errorMessage = static_cast<int>(0xb59cada7);
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_ClientOutOfDate:
+                    errorMessage = static_cast<int>(0xce44990b);
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:
+                    errorMessage = static_cast<int>(0xfb7f0496);
+                    errorTitle = IDS_CONNECTION_FAILED;
+                    break;
+                case DisconnectPacket::eDisconnectReason_NotFriendsWithPlayer:
+                    errorMessage = 0x4d669d55;
+                    errorTitle = IDS_CONNECTION_FAILED;
+                    break;
+                case DisconnectPacket::eDisconnectReason_NoMultiplayerPrivilege:
+                    errorMessage = 0x56604944;
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_LoginRejected:
+                    errorMessage = 0x00cf3f70;
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_NoOnlinePrivilege:
+                    errorMessage = static_cast<int>(0xf9885aff);
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_AgeRestricted:
+                    errorMessage = 0x3103be06;
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_StorageError:
+                    errorMessage = static_cast<int>(0x98521f17);
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                case DisconnectPacket::eDisconnectReason_ContentNotOwned:
+                    errorMessage = static_cast<int>(0xec3b3da6);
+                    errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+                    break;
+                default:
+                    errorMessage = IDS_CONNECTION_LOST_SERVER;
+                    break;
+                }
+            }
+            if (gProfile->IsSignedIn(gProfile->GetPrimaryPad()))
+                gConsoleUIController.RequestErrorMessage(errorTitle, errorMessage, parameters, 1, gProfile->GetPrimaryPad(),
+                                                          NULL, NULL, NULL, true);
+            for (int i = 0; i < 3; ++i)
+            {
+                if (minecraft->mLevels[i] != NULL)
+                    minecraft->mLevels[i]->disconnect(false);
+            }
+            exitTitle = -1;
+        }
+        MinecraftServer::HaltServer(false);
+        saveStats = false;
         gGameNetworkManager.LeaveGame(false);
+    }
+    else if (context != NULL && gProfile->IsSignedIn(gProfile->GetPrimaryPad()))
+    {
+        int errorMessage;
+        switch (g_pApp->GetDisconnectReason())
+        {
+        case DisconnectPacket::eDisconnectReason_Quit:
+            errorMessage = 0x5b106d79;
+            break;
+        case DisconnectPacket::eDisconnectReason_Kicked:
+            errorMessage = static_cast<int>(0xf3a95051);
+            break;
+        case DisconnectPacket::eDisconnectReason_GameFull:
+            errorMessage = static_cast<int>(0xb86be603);
+            errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+            break;
+        case DisconnectPacket::eDisconnectReason_HostOutOfDate:
+            errorMessage = static_cast<int>(0xb59cada7);
+            errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+            break;
+        case DisconnectPacket::eDisconnectReason_ClientOutOfDate:
+            errorMessage = static_cast<int>(0xce44990b);
+            errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+            break;
+        case DisconnectPacket::eDisconnectReason_HostSignedOut:
+            errorMessage = static_cast<int>(0xcc5a590f);
+            break;
+        case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:
+            errorMessage = static_cast<int>(0xfb7f0496);
+            errorTitle = IDS_CONNECTION_FAILED;
+            break;
+        case DisconnectPacket::eDisconnectReason_NotFriendsWithPlayer:
+            errorMessage = 0x4d669d55;
+            errorTitle = IDS_CONNECTION_FAILED;
+            break;
+        case DisconnectPacket::eDisconnectReason_AgeRestricted:
+            errorMessage = 0x3103be06;
+            break;
+        case DisconnectPacket::eDisconnectReason_StorageError:
+            errorMessage = static_cast<int>(0x98521f17);
+            errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+            break;
+        case DisconnectPacket::eDisconnectReason_ContentNotOwned:
+            errorMessage = static_cast<int>(0xec3b3da6);
+            errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
+            break;
+        default:
+            errorMessage = IDS_DISCONNECTED;
+            break;
+        }
+        gConsoleUIController.RequestErrorMessage(errorTitle, errorMessage, parameters, 1, 0xff,
+                                                  gGameNetworkManager.IsHandlingBootInvite() ? NetworkErrorHandledDuringInvite : NULL,
+                                                  NULL, NULL, true);
+        exitTitle = -1;
+    }
+
+    while (gGameNetworkManager.IsNetworkThreadRunning())
+        Sleep(1);
+    minecraft->setLevel(NULL, exitTitle, boost::shared_ptr<Player>(), saveStats, false);
+    telemetryManagerInstance->Flush();
+    gApp.mGameRuleManager.unloadCurrentGameRules();
+    MinecraftServer::s_haltRequested = false;
+    MinecraftServer::s_saveOnExitAnswered = false;
+    minecraft->mProgressRenderer->progressStart(IDS_EXITING_GAME);
+    while (gGameNetworkManager.IsInSession())
+        Sleep(1);
     g_pApp->SetChangingSessionType(false);
+    g_pApp->SetReallyChangingSessionType(false);
+    g_pApp->SetGameHostOption(eGameHostOption_MiniGame, 0);
+    Minecraft::GetInstance()->SetupMiniGameInstance(*MiniGameDef::GetCustomGameModeById(eMiniGameId_Any, true), 0);
 }
 
-unsigned int UIScene_PauseMenu::ExitWorldThreadProc(void* context)
+int UIScene_PauseMenu::ExitWorldThreadProc(void* context)
 {
     AABB::UseDefaultThreadStorage();
     Vec3::UseDefaultThreadStorage();
@@ -279,12 +604,12 @@ void UIScene_PauseMenu::OpenExitGameDialog(
     int (*saveCallback)(void*, int, C4JStorage::EMessageResult),
     EOpenExitGameDialog action)
 {
-    if (action != EOpenExitGameDialog_1 && player != g_pApp->GetPrimaryUserIndex())
+    if (action != EOpenExitGameDialog_JoinInvite && player != gProfile->GetPrimaryPad())
     {
-        g_pApp->SetAction(player, static_cast<eXuiAction>(0xb), NULL);
+        g_pApp->SetAction(player, eXuiAction_RemoveLocalPlayer, NULL);
         return;
     }
-    int parameters[3] = { static_cast<int>(0x4fcbc7e7U), static_cast<int>(0xb9a1bf4dU), 0x4940e70d };
+    int parameters[3] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK), 0x4940e70d };
     int message = 0xd5e33637;
     unsigned int parameterCount = 2;
     int (*selectedCallback)(void*, int, C4JStorage::EMessageResult) = callback;
@@ -295,7 +620,7 @@ void UIScene_PauseMenu::OpenExitGameDialog(
     }
     else if (gGameNetworkManager.IsHost())
     {
-        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+        if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
         {
             if (gStorage->GetSaveDisabled() || gApp.HasNoSpaceForSaveQuota())
             {
@@ -303,8 +628,8 @@ void UIScene_PauseMenu::OpenExitGameDialog(
             }
             else
             {
-                message = gGameNetworkManager.GetPlayerCount() > 1 ? 0x54b9ccf4 : 0xc85a78c0;
-                parameters[1] = 0x7bf1723b;
+                message = gGameNetworkManager.GetPlayerCount() > 1 ? 0x54b9ccf4 : IDS_CONFIRM_EXIT_GAME;
+                parameters[1] = IDS_EXIT_GAME_SAVE;
                 parameterCount = 3;
                 selectedCallback = saveCallback;
             }
@@ -314,92 +639,151 @@ void UIScene_PauseMenu::OpenExitGameDialog(
             message = 0x094d2642;
         }
     }
-    if (action == EOpenExitGameDialog_1)
+    if (action == EOpenExitGameDialog_JoinInvite)
         message = 0xae8aae0d;
-    gConsoleUIController.RequestAlertMessage(0x2686c8e5, message, parameters,
+    gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, message, parameters,
                                               parameterCount, player, selectedCallback,
                                               callbackData, NULL, true);
 }
 
-int UIScene_PauseMenu::WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::WarningTrialTexturePackReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
-    if (result == static_cast<C4JStorage::EMessageResult>(4) && context != NULL)
+    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context));
+    UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
+    if (result == C4JStorage::EMessageResult_Accept && gProfile->IsSignedIn(pad))
     {
-        int parameters[1];
-        parameters[0] = static_cast<int>(0xb9a1bf4dU);
-        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, parameters, 1,
-                                                  button, NULL, NULL, NULL, true);
+        int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
+        if (!gProfile->IsSignedInLive(pad))
+        {
+            gConsoleUIController.RequestErrorMessage(static_cast<int>(0x8a21894bU), static_cast<int>(0xc34c0b77U), parameters, 1,
+                                                      pad, NULL, NULL, NULL, true);
+        }
+        else
+        {
+            DLCPack* pack = Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getDLCPack();
+            if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(pack->GetPackId()))
+                gConsoleUIController.RequestErrorMessage(static_cast<int>(IDS_DLC_ALREADY_INSTALLED_TITLE), static_cast<int>(IDS_DLC_ALREADY_INSTALLED_TEXT), parameters, 1,
+                                                          pad, NULL, NULL, NULL, true);
+        }
     }
     return 0;
 }
 
-int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
     UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
-    if (result == static_cast<C4JStorage::EMessageResult>(5) && scene != NULL && scene->getSceneType() == 5)
-        g_pApp->SetAction(scene->getSubSceneType(), static_cast<eXuiAction>(1), NULL);
+    if (result == C4JStorage::EMessageResult_Decline && scene != NULL && scene->getSceneType() == 5)
+        g_pApp->SetAction(scene->getSubSceneType(), eXuiAction_SaveGame, NULL);
     return 0;
 }
 
-int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
-    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
+    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context));
     UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    if (result == C4JStorage::EMessageResult_Decline)
     {
         if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
             pauseMenu->SetIgnoreInput(true);
-        g_pApp->SetAction(button, static_cast<eXuiAction>(3), NULL);
+        gMinecraftServer->saveOnExit = true;
+        MinecraftServer::s_saveOnExitAnswered = true;
+        g_pApp->SetAction(pad, eXuiAction_ExitWorld, NULL);
+    }
+    else if (gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()))
+    {
+        int parameters[3] = { IDS_CONFIRM_CANCEL, IDS_EXIT_GAME_SAVE, 0x4940e70d };
+        int message = gGameNetworkManager.GetPlayerCount() < 2 ? static_cast<int>(IDS_CONFIRM_EXIT_GAME) : 0x54b9ccf4;
+        gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, message, parameters, 3, gProfile->GetPrimaryPad(),
+                                                  ExitGameSaveDialogReturned, context, NULL, true);
     }
     return 0;
 }
 
-int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
-    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
+    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context));
     UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    if (result == C4JStorage::EMessageResult_Decline)
     {
         if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
             pauseMenu->SetIgnoreInput(true);
-        g_pApp->SetAction(button, static_cast<eXuiAction>(3), NULL);
+        gMinecraftServer->saveOnExit = false;
+        MinecraftServer::s_saveOnExitAnswered = true;
+        g_pApp->SetAction(pad, eXuiAction_ExitWorld, NULL);
     }
-    return 0;
-}
-
-int UIScene_PauseMenu::ExitGameSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
-{
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    else if (gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()))
     {
-        UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
-        if (scene != NULL)
-            static_cast<UIScene_PauseMenu*>(scene)->PerformActionSaveGame();
+        int parameters[3] = { IDS_CONFIRM_CANCEL, IDS_EXIT_GAME_SAVE, 0x4940e70d };
+        int message = gGameNetworkManager.GetPlayerCount() < 2 ? static_cast<int>(IDS_CONFIRM_EXIT_GAME) : 0x54b9ccf4;
+        gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, message, parameters, 3, gProfile->GetPrimaryPad(),
+                                                  ExitGameSaveDialogReturned, context, NULL, true);
     }
     return 0;
 }
 
-int UIScene_PauseMenu::SaveGameDialogReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameSaveDialogReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
-        g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
+    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context));
+    UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
+    if (result == C4JStorage::EMessageResult_Decline)
+    {
+        TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
+        if (selected != TexturePackRepository::defaultTexturePack &&
+            !Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getDLCPack()->hasPurchasedPack())
+        {
+            int parameters[2] = { static_cast<int>(IDS_CONFIRM_OK), IDS_CONFIRM_CANCEL };
+            gConsoleUIController.RequestAlertMessage(0x3bb3096e, 0x0d52c2e3, parameters, 2, gProfile->GetPrimaryPad(),
+                                                      WarningTrialTexturePackReturned, context, NULL, true);
+            return 0;
+        }
+        bool saveExists;
+        gStorage->DoesSaveExist(&saveExists);
+        if (!saveExists)
+        {
+            MinecraftServer::s_saveOnExitAnswered = true;
+            gMinecraftServer->saveOnExit = true;
+            if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+                pauseMenu->SetIgnoreInput(true);
+            g_pApp->SetAction(pad, eXuiAction_ExitWorld, NULL);
+        }
+        else
+        {
+            int parameters[2] = { IDS_CONFIRM_CANCEL, static_cast<int>(IDS_CONFIRM_OK) };
+            gConsoleUIController.RequestAlertMessage(IDS_TITLE_SAVE_GAME, static_cast<int>(IDS_CONFIRM_SAVE_GAME), parameters, 2, gProfile->GetPrimaryPad(),
+                                                      ExitGameAndSaveReturned, context, NULL, true);
+        }
+    }
+    else if (result == C4JStorage::EMessageResult_ThirdOption)
+    {
+        int parameters[2] = { IDS_CONFIRM_CANCEL, static_cast<int>(IDS_CONFIRM_OK) };
+        gConsoleUIController.RequestAlertMessage(static_cast<int>(0xa3d4a110U), static_cast<int>(0xbb7e4722U), parameters, 2,
+                                                  gProfile->GetPrimaryPad(), ExitGameDeclineSaveReturned, context, NULL, true);
+    }
     return 0;
 }
 
-int UIScene_PauseMenu::EnableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::SaveGameDialogReturned(void*, int pad, C4JStorage::EMessageResult result)
 {
-    g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0x16), result != static_cast<C4JStorage::EMessageResult>(5));
+    if (result == C4JStorage::EMessageResult_Decline)
+        g_pApp->SetAction(pad, eXuiAction_SaveGame, NULL);
+    return 0;
+}
+
+int UIScene_PauseMenu::EnableAutosaveDialogReturned(void*, int pad, C4JStorage::EMessageResult result)
+{
+    g_pApp->SetGameHostOption(eGameHostOption_DisableSaving, result != C4JStorage::EMessageResult_Decline);
     gStorage->SetSaveDisabled(false);
-    g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
+    g_pApp->SetAction(pad, eXuiAction_SaveGame, NULL);
     return 0;
 }
 
-int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int pad, C4JStorage::EMessageResult result)
 {
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    if (result == C4JStorage::EMessageResult_Decline)
     {
-        g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0x16), 1);
+        g_pApp->SetGameHostOption(eGameHostOption_DisableSaving, 1);
         gStorage->SetSaveDisabled(false);
-        g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
+        g_pApp->SetAction(pad, eXuiAction_SaveGame, NULL);
     }
     return 0;
 }
@@ -407,10 +791,11 @@ int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int button, C4JStora
 void UIScene_PauseMenu::HandleDLCMountingComplete() {}
 void UIScene_PauseMenu::HandleDLCInstalled() { g_pApp->StartInstallDLCProcess(m_playerId); }
 
-int UIScene_PauseMenu::UnlockFullSaveReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::UnlockFullSaveReturned(void*, int, C4JStorage::EMessageResult result)
 {
-    if (result == static_cast<C4JStorage::EMessageResult>(4))
-        g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (result == C4JStorage::EMessageResult_Accept && gProfile->IsSignedInLive(minecraft->mPlayer->mPlayerIndex))
+        gProfile->DisplayFullVersionPurchase(false, minecraft->mPlayer->mPlayerIndex, 1);
     return 0;
 }
 
@@ -421,10 +806,10 @@ void UIScene_PauseMenu::PerformActionSaveGame()
         if (gProfile->IsSignedInLive(m_playerId))
         {
             int parameters[2];
-            parameters[0] = (int)0xb9a1bf4d;
-            parameters[1] = 0x4fcbc7e7;
+            parameters[0] = (int)IDS_CONFIRM_OK;
+            parameters[1] = IDS_CONFIRM_CANCEL;
             gConsoleUIController.RequestAlertMessage(
-                (int)0xc6058d6b, (int)0xc75616c3, parameters, 2, m_playerId,
+                (int)IDS_UNLOCK_TITLE, (int)0xc75616c3, parameters, 2, m_playerId,
                 UnlockFullSaveReturned, reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         }
         return;
@@ -437,8 +822,8 @@ void UIScene_PauseMenu::PerformActionSaveGame()
         if (!pack->hasPurchasedPack())
         {
             int parameters[2];
-            parameters[0] = (int)0xb9a1bf4d;
-            parameters[1] = 0x4fcbc7e7;
+            parameters[0] = (int)IDS_CONFIRM_OK;
+            parameters[1] = IDS_CONFIRM_CANCEL;
             gConsoleUIController.RequestAlertMessage(
                 0x3bb3096e, 0x0d52c2e3, parameters, 2, m_playerId,
                 WarningTrialTexturePackReturned,
@@ -451,16 +836,16 @@ void UIScene_PauseMenu::PerformActionSaveGame()
     bool saveExists = false;
     gStorage->DoesSaveExist(&saveExists);
     int parameters[2];
-    parameters[0] = 0x4fcbc7e7;
-    parameters[1] = (int)0xb9a1bf4d;
+    parameters[0] = IDS_CONFIRM_CANCEL;
+    parameters[1] = (int)IDS_CONFIRM_OK;
     if (saveExists)
     {
         gConsoleUIController.RequestAlertMessage(
-            0x3143fcab, (int)0xd66b8839, parameters, 2, m_playerId, SaveGameDialogReturned,
+            IDS_TITLE_SAVE_GAME, (int)IDS_CONFIRM_SAVE_GAME, parameters, 2, m_playerId, SaveGameDialogReturned,
             reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;
     }
-    g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(1), NULL);
+    g_pApp->SetAction(m_playerId, eXuiAction_SaveGame, NULL);
 }
 
 unsigned int UIScene_PauseMenu::SaveGame_SignInReturned(void* context, bool, int, int)

@@ -15,7 +15,7 @@ public:
     virtual ~FJ_Slider();
     uint8_t getEnabled();
     uint32_t getSliderCurrent();
-    virtual uint32_t getOldWidth();
+    virtual int getOldWidth();
     void UpdateSliderScaleMask();
     void SetSlider(int value);
     void ChangeState(int state);
@@ -26,7 +26,7 @@ public:
     static void _focusOutHandler(FJ_FuiNode* node, FJ_Event* event);
     void keyUpHandler(FJ_Event* event);
     static void _keyUpHandler(FJ_FuiNode* node, FJ_Event* event);
-    uint64_t MoveSlider(int amount);
+    void MoveSlider(int amount);
     void keyDownHandler(FJ_Event* event);
     static void _keyDownHandler(FJ_FuiNode* node, FJ_Event* event);
     void UpdateLabel();

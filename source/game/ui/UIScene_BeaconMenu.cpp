@@ -20,6 +20,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/ui/UILayer.hpp"
 
 #include <cstdio>
 
@@ -54,14 +55,14 @@ UIScene_BeaconMenu::UIScene_BeaconMenu(int type, void* data, UILayer* layer)
             if (tutorial != 0)
             {
                 m_previousTutorialState = tutorial->currentState;
-                tutorial->changeTutorialState(static_cast<eTutorial_State>(0x22), this);
+                tutorial->changeTutorialState(eTutorial_State_BeaconMenu, this);
             }
         }
         m_beaconContainer = sceneData->beacon;
         Initialize(false, sceneData->playerIndex,
                    new BeaconMenu(sceneData->inventory, sceneData->beacon), true, 1,
-                   static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38),
-                   static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x43), false);
+                   IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar,
+                   IUIScene_AbstractContainerMenu::ESceneSection_BeaconMax, false);
         m_activatorSlot.addSlots(0, 1);
         m_activatorList.addSlots(static_cast<unsigned int>(m_menu->m_slots.size()), 4);
         delete sceneData;
@@ -74,38 +75,38 @@ UIScene_BeaconMenu::~UIScene_BeaconMenu()
 
 bool UIScene_BeaconMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x37) &&
-           section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b);
+    return section > IUIScene_AbstractContainerMenu::ESceneSection_AnvilMax &&
+           section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1;
 }
 
 unsigned int UIScene_BeaconMenu::GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) ||
-        section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41))
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 ||
+        section > IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
         return 0;
-    return m_powerButtons[static_cast<int>(section) - 0x3b].GetData();
+    return m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1].GetData();
 }
 
 unsigned int UIScene_BeaconMenu::IsVisible(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section != static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41) ||
+    return section != IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2 ||
            GetPowerButtonId(section) != 0;
 }
 
 unsigned int UIScene_BeaconMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     static const unsigned char columns[] = { 9, 9, 1 };
-    if (section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38) ||
-        section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a))
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar ||
+        section > IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator)
         return 0;
-    return columns[static_cast<int>(section) - 0x38];
+    return columns[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar];
 }
 
 unsigned int UIScene_BeaconMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38)) return 1;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39)) return GetInventoryRows();
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a)) return 1;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar) return 1;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory) return GetInventoryRows();
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator) return 1;
     return 0;
 }
 
@@ -115,163 +116,162 @@ unsigned int UIScene_BeaconMenu::GetSectionAndSlotInDirection(
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int dx = 0;
-    const int value = static_cast<int>(section);
 
-    if (value == 0x38)
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            if (*x < 2) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b);
-            else if (*x < 5) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3c);
-            else if (*x < 9) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
-            else target = GetPowerButtonId(static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41)) > 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            if (*x < 2) target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1;
+            else if (*x < 5) target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2;
+            else if (*x < 9) target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
+            else target = GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2) > 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2 :
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (m_inventorySmall == 0)
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39);
+            if (m_smallInventory == 0)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory;
             else if (*x < 4)
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3f);
+                target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5;
             else if (*x > 6)
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42);
+                target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm;
             else
-                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a);
+                target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator;
         }
     }
-    else if (value == 0x39)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (*x < 4) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3f);
-            else if (*x > 6) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42);
-            else target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a);
+            if (*x < 4) target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5;
+            else if (*x > 6) target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm;
+            else target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator;
         }
     }
-    else if (value == 0x3a)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_inventorySmall != 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39);
+            target = m_smallInventory != 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory;
             dx = -5;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
                  state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm;
     }
-    else if (value == 0x3b)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3d);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar;
             dx = -1;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
                  state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3c);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2;
     }
-    else if (value == 0x3c)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3e);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar;
             dx = -3;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
                  state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1;
     }
-    else if (value == 0x3d)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3f);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = GetPowerButtonId(static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41)) > 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            target = GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2) > 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2 :
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3e);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4;
     }
-    else if (value == 0x3e)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3f);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3c);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3d);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
     }
-    else if (value == 0x3f)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_inventorySmall != 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39);
+            target = m_smallInventory != 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory;
             dx = -3;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3d);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3;
     }
-    else if (value == 0x40)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar;
             dx = -7;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3e);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3e);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = GetPowerButtonId(static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41)) > 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3d);
+            target = GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2) > 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2 :
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3;
     }
-    else if (value == 0x41)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar;
             dx = -8;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3d);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3;
     }
-    else if (value == 0x42)
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm)
     {
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_inventorySmall != 0 ?
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38) :
-                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39);
+            target = m_smallInventory != 0 ?
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar :
+                IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory;
             dx = -8;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
                  state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator;
     }
 
     updateSlotPosition(section, target, state, x, y, dx, 0);
@@ -316,45 +316,45 @@ void UIScene_BeaconMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::EScen
 unsigned int UIScene_BeaconMenu::GetPowerButtonTier(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     static const unsigned char tiers[] = { 1, 1, 2, 3, 3 };
-    if (section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3c) ||
-        section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42))
+    if (section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2 ||
+        section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm)
         return 0;
-    return tiers[static_cast<int>(section) - 0x3d];
+    return tiers[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3];
 }
 
 MobEffect* UIScene_BeaconMenu::GetPowerButtonEffect(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b)) return MobEffects::MOVEMENT_SPEED;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3c)) return MobEffects::DIG_SPEED;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3d)) return MobEffects::DAMAGE_RESISTANCE;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3e)) return MobEffects::JUMP;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3f)) return MobEffects::DAMAGE_BOOST;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40)) return MobEffects::REGENERATION;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41) && m_beaconContainer)
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1) return MobEffects::MOVEMENT_SPEED;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2) return MobEffects::DIG_SPEED;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3) return MobEffects::DAMAGE_RESISTANCE;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4) return MobEffects::JUMP;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5) return MobEffects::DAMAGE_BOOST;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1) return MobEffects::REGENERATION;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2 && m_beaconContainer)
         return MobEffect::byId(m_beaconContainer->getContainerData(1));
     return 0;
 }
 
 bool UIScene_BeaconMenu::IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) ||
-        section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41))
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 ||
+        section > IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
         return false;
-    return m_powerButtons[static_cast<int>(section) - 0x3b].IsButtonSelected() != 0;
+    return m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1].IsButtonSelected() != 0;
 }
 
 void UIScene_BeaconMenu::SetPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int i;
-    if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) &&
-        section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40))
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
+        section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1)
         for (i = 0; i < 5; ++i) m_powerButtons[i].SetButtonSelected(false);
-    else if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x40) &&
-             section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42))
+    else if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1 &&
+             section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm)
         for (i = 5; i < 7; ++i) m_powerButtons[i].SetButtonSelected(false);
-    if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) &&
-        section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41))
-        m_powerButtons[static_cast<int>(section) - 0x3b].SetButtonSelected(true);
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
+        section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
+        m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1].SetButtonSelected(true);
 }
 
 void UIScene_BeaconMenu::AddPowerButton(int id, int icon, int tier, int column, bool active, bool selected)
@@ -375,8 +375,8 @@ void UIScene_BeaconMenu::handleOtherClicked(int,
                                             IUIScene_AbstractContainerMenu::ESceneSection section,
                                             int, bool)
 {
-    if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) &&
-        section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42))
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
+        section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm)
     {
         if (IsPowerButtonSelected(section))
             return;
@@ -388,7 +388,7 @@ void UIScene_BeaconMenu::handleOtherClicked(int,
         if (tier < 3)
         {
             m_beaconContainer->setContainerData(1, effectId);
-            if (IsPowerButtonSelected(static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41)))
+            if (IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2))
                 m_beaconContainer->setContainerData(2, effectId);
         }
         else
@@ -405,7 +405,7 @@ void UIScene_BeaconMenu::handleOtherClicked(int,
         }
         return;
     }
-    if (section != static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42))
+    if (section != IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm)
         return;
 
     const int primaryId = m_beaconContainer->getContainerData(1);
@@ -430,18 +430,18 @@ void UIScene_BeaconMenu::handleOtherClicked(int,
 int UIScene_BeaconMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     static const unsigned char offsets[] = { 0x1c, 1, 0 };
-    return section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38) &&
-           section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a) ?
-           offsets[static_cast<int>(section) - 0x38] : 0;
+    return section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar &&
+           section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator ?
+           offsets[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar] : 0;
 }
 
 void UIScene_BeaconMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
     if (wrap)
     {
-        UIControl_SlotList* list = section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38) ?
-            &m_hotbarList : section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39) ?
-            &m_inventoryList : section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a) ?
+        UIControl_SlotList* list = section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar ?
+            &m_hotbarList : section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory ?
+            &m_inventoryList : section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator ?
             &m_activatorSlot : 0;
         if (list != 0) list->setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
     }
@@ -450,10 +450,10 @@ void UIScene_BeaconMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::
 std::vector<HtmlString>* UIScene_BeaconMenu::GetSectionHoverText(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) ||
-        section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41)) return 0;
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 ||
+        section > IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2) return 0;
     std::wstring suffix;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
     {
         if (GetPowerButtonId(section) == 0)
             return 0;
@@ -462,7 +462,7 @@ std::vector<HtmlString>* UIScene_BeaconMenu::GetSectionHoverText(
     MobEffect* effect = GetPowerButtonEffect(section);
     std::vector<HtmlString>* text = new std::vector<HtmlString>();
     text->push_back(HtmlString(std::wstring(L10N::GetString(effect->getDescriptionId(-1))) + suffix,
-                               static_cast<eMinecraftColour>(0x1b5), false, false, 0));
+                               eMinecraftColour_HTMLColor_White, false, false, 0));
     return text;
 }
 
@@ -496,8 +496,8 @@ std::wstring UIScene_BeaconMenu::getMoviePath()
 void UIScene_BeaconMenu::handleReload()
 {
     Initialize(true, m_playerId, m_menu, true, 1,
-               static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38),
-               static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x43), false);
+               IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_BeaconMax, false);
     m_activatorSlot.addSlots(0, 1);
     m_activatorList.addSlots(static_cast<unsigned int>(m_menu->m_slots.size()), 4);
 }
@@ -559,13 +559,13 @@ void UIScene_BeaconMenu::tick()
 
 UIControl* UIScene_BeaconMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38)) return &m_hotbarList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x39)) return &m_inventoryList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3a)) return &m_activatorSlot;
-    if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x3b) &&
-        section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x41))
-        return &m_powerButtons[static_cast<int>(section) - 0x3b];
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x42)) return &m_confirmButton;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar) return &m_hotbarList;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory) return &m_inventoryList;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator) return &m_activatorSlot;
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
+        section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
+        return &m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1];
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm) return &m_confirmButton;
     return 0;
 }
 
@@ -587,7 +587,7 @@ void UIScene_BeaconMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESce
 
 int UIScene_BeaconMenu::getSceneType()
 {
-    return 0x36;
+    return EUIScene_BeaconMenu;
 }
 
 unsigned int UIScene_BeaconMenu::GetBaseSlotCount()

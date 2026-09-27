@@ -9,7 +9,7 @@
 #include "game/ui/ScreenSizeCalculator.hpp"
 
 VideoSettingsScreen::VideoSettingsScreen(Screen* parentScreen, Options* options)
-    : Screen(), mParentScreen(parentScreen), mTitle(L"Video_Settings"), mOptions(options)
+    : Screen(), mParentScreen(parentScreen), mTitle(L"Video Settings"), mOptions(options)
 {
 }
 

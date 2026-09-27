@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_SaveMessage.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -14,21 +15,22 @@
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
+#include "game/core/GameSettings.hpp"
 
 UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer* layer)
     : UIScene(playerId, layer)
 {
     m_saveComplete = false;
     initialiseMovie();
-    layer->addComponent(playerId, (EUIScene)66, 0);
-    layer->addComponent(playerId, (EUIScene)67, 0);
+    layer->addComponent(playerId, EUIScene_Panorama, 0);
+    layer->addComponent(playerId, EUIScene_Logo, 0);
 
-    m_confirmButton.init(UIString(L10N::GetString(0xb9a1bf4d)), 0);
+    m_confirmButton.init(UIString(L10N::GetString(IDS_CONFIRM_OK)), 0);
     gApp.SetDRCIconEnabled(true);
 
     if (!gApp.HasNoSpaceForSaveQuota())
     {
-        m_descriptionLabel.init(UIString(L10N::GetString(0xcc4c87a5)));
+        m_descriptionLabel.init(UIString(L10N::GetString(IDS_SAVE_ICON_MESSAGE)));
     }
     else
     {
@@ -62,8 +64,8 @@ UIScene_SaveMessage::~UIScene_SaveMessage()
 {
     if (m_layer != 0)
     {
-        m_layer->removeComponent((EUIScene)66);
-        m_layer->removeComponent((EUIScene)67);
+        m_layer->removeComponent(EUIScene_Panorama);
+        m_layer->removeComponent(EUIScene_Logo);
     }
 }
 
@@ -80,7 +82,7 @@ unsigned int UIScene_SaveMessage::mapElementsAndNames()
 
 void UIScene_SaveMessage::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, -1, -1, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -94,8 +96,8 @@ void UIScene_SaveMessage::handleInput(int playerId, int action, bool repeat, boo
 {
     if (!m_saveComplete)
     {
-        gConsoleUIController.AnimateKeyPress(m_controlFocus, action, repeat, released, pressed);
-        if (action == 20)
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+        if (action == EControllerActions_MenuOk)
         {
             NQRNetworkManager::SafeToRespondToGameBootInvite(playerId);
             sendInputToMovie(action, repeat, released, pressed);
@@ -107,11 +109,11 @@ void UIScene_SaveMessage::handleTimerComplete(int timerId)
 {
 }
 
-void UIScene_SaveMessage::handlePress(int first, int second)
+void UIScene_SaveMessage::handlePress(int controlId, int)
 {
-    if (second == 0)
+    if (controlId == 0)
     {
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_saveComplete = true;
         bool ignoreInvite = gApp.getIgnoreMainMenuInputDuringInvite() != 0;
         gConsoleUIController.NavigateToHomeMenu(true);
@@ -121,7 +123,7 @@ void UIScene_SaveMessage::handlePress(int first, int second)
 
 int UIScene_SaveMessage::getSceneType()
 {
-    return 2;
+    return EUIScene_SaveMessage;
 }
 
 bool UIScene_SaveMessage::hasFocus(int sceneType)

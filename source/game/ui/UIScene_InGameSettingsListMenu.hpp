@@ -22,7 +22,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     virtual void handleReload();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
     virtual void handleSliderElementMove(int first, int second, int value);

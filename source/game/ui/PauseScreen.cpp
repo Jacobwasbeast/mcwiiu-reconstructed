@@ -93,7 +93,7 @@ void PauseScreen::render(int x, int y, float partialTick)
 {
     if (mTickCount < 20)
     {
-        float phase = (static_cast<float>(mTickCount % 10) - 176.0f + partialTick) / 10.0f * 3.1415927f;
+        float phase = (mTickCount % 10 + partialTick) / 10.0f * 3.1415927f;
         int color = static_cast<int>(255.0f * (Mth::sin(phase * 2.0f) * 0.2f + 0.8f));
         drawString(mFont, std::wstring(L"Saving level..."), 8, mHeight - 16,
                    (color << 16) | (color << 8) | color);

@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_ReinstallMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -6,6 +7,7 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/core/GameSettings.hpp"
 
 UIScene_ReinstallMenu::UIScene_ReinstallMenu(int type, void*, UILayer* layer)
     : UIScene(type, layer)
@@ -35,7 +37,7 @@ unsigned int UIScene_ReinstallMenu::mapElementsAndNames()
 
 void UIScene_ReinstallMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, (int)0x8d6323ed, 0x4f6bcf5e, 0x21c0a77d,
+    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, IDS_TOOLTIPS_SELECTDEVICE,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, false, false);
 }
@@ -45,13 +47,13 @@ void UIScene_ReinstallMenu::updateComponents()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mPendingLevelChange == 0)
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, true);
     }
     else
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, false);
     }
 }
 
@@ -66,12 +68,17 @@ void UIScene_ReinstallMenu::handleInput(int, int action, bool repeat, bool relea
                                         bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action > 3)
+    switch (action)
     {
-        if (action < 6 || action == 0x14)
-            sendInputToMovie(action, repeat, released, pressed);
-        else if (action == 0x15 && released && !repeat)
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (released && !repeat)
             navigateBack();
+        break;
     }
 }
 
@@ -81,5 +88,5 @@ void UIScene_ReinstallMenu::handlePress(int, int)
 
 int UIScene_ReinstallMenu::getSceneType()
 {
-    return 37;
+    return EUIScene_ReinstallMenu;
 }

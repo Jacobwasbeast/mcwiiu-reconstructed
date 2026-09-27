@@ -187,9 +187,9 @@ void FJ_HtmlText::_UpdateScrolling(FJ_FuiNode* node, FJ_Event* event)
     if (text != NULL) text->UpdateScrolling(event);
 }
 
-uint64_t FJ_HtmlText::keyDownHandler(FJ_Event* event)
+void FJ_HtmlText::keyDownHandler(FJ_Event* event)
 {
-    if (!m_bScrollingEnabled) return 0;
+    if (!m_bScrollingEnabled) return;
     FJ_FuiNodeStage* stage = getStage();
     bool focusChange = stage != NULL && stage->getFocus() != this;
     m_iFocusDirection = focusChange ? 1 : 0;
@@ -212,7 +212,7 @@ uint64_t FJ_HtmlText::keyDownHandler(FJ_Event* event)
         }
     } else {
         if (pageDown) directional = true;
-        if (!directional) return 0;
+        if (!directional) return;
         m_bScrollingUp = false;
         m_scrollDirection = 0;
         if (!m_scrollDirection && CanScroll(false)) {
@@ -228,7 +228,6 @@ uint64_t FJ_HtmlText::keyDownHandler(FJ_Event* event)
         }
     }
     HandleScrollListArrows(false);
-    return 0;
 }
 
 void FJ_HtmlText::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -304,9 +303,9 @@ void FJ_HtmlText::setVisible(bool visible)
 void FJ_HtmlText::UpdateScrollListArrows()
 {
     if (m_pUpArrow == NULL || m_pDownArrow == NULL || m_pText == NULL) return;
-    m_pUpArrow->setX(-(m_pUpArrow->getWidth() * 1.5f - (m_pText->getX() + static_cast<float>(m_iRealWidth) - 176.0f)));
+    m_pUpArrow->setX(-(m_pUpArrow->getWidth() * 1.5f - (m_pText->getX() + m_iRealWidth)));
     m_pUpArrow->setY(m_pText->getY() + m_fScrollBottom - m_fScrollTop + m_pUpArrow->getHeight() * 0.5f);
-    m_pDownArrow->setX(-(m_pDownArrow->getWidth() * 0.5f - (m_pText->getX() + static_cast<float>(m_iRealWidth) - 176.0f)));
+    m_pDownArrow->setX(-(m_pDownArrow->getWidth() * 0.5f - (m_pText->getX() + m_iRealWidth)));
     m_pDownArrow->setY(m_pUpArrow->getY());
 }
 

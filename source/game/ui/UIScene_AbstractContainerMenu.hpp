@@ -23,11 +23,11 @@ public:
     UIScene_AbstractContainerMenu(int type, UILayer* layer);
     virtual ~UIScene_AbstractContainerMenu();
 
-    virtual void PlatformInitialize(bool enabled, int playerIndex, int slotIndex);
-    virtual void InitDataAssociations(int playerIndex, AbstractContainerMenu* menu, int slotIndex);
-    virtual void setSectionFocus(IUIScene_AbstractContainerMenu::ESceneSection section, int direction);
-    virtual void setFocusToPointer(int pointer);
-    virtual void SetPointerText(std::vector<HtmlString>* text, bool visible);
+    virtual void PlatformInitialize(bool navigateBack, int pad, int startIndex);
+    virtual void InitDataAssociations(int pad, AbstractContainerMenu* menu, int startIndex);
+    virtual void setSectionFocus(IUIScene_AbstractContainerMenu::ESceneSection section, int pad);
+    virtual void setFocusToPointer(int pad);
+    virtual void SetPointerText(std::vector<HtmlString>* description, bool newSlot);
     virtual not_null_ptr<ItemInstance> getSlotItem(IUIScene_AbstractContainerMenu::ESceneSection section, int slot);
     virtual Slot* getSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot);
     virtual bool isSlotEmpty(IUIScene_AbstractContainerMenu::ESceneSection section, int slot);
@@ -47,13 +47,17 @@ public:
     virtual void updateTooltips();
 
 protected:
+    IUIScene_AbstractContainerMenu::ESceneSection m_focusSection;
+    bool m_ignoreInput;
+    int m_movieWidth;
+    int m_movieHeight;
     UIControl m_mainPanel;
     UIControl_SlotList m_hotbarList;
     UIControl_SlotList m_inventoryList;
     UIControl_Cursor m_cursor;
     UIControl_Label m_inventoryLabel;
-    UIControl_SlotList m_hotbarLabel;
-    UIControl_Label m_backgroundPanel;
+    UIControl_Label m_hotbarLabel;
+    UIControl m_backgroundPanel;
 };
 
 #endif

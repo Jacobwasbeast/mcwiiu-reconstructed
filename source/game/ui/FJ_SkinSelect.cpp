@@ -80,7 +80,7 @@ void FJ_SkinSelect::SetSafeZone(int top, int bottom, int left, int right)
     FJ_Document::SetSafeZone(top, bottom, left, right);
     const double stageHeight = getStage()->getStageHeight();
     if (stageHeight == 360.0 || stageHeight == 540.0)
-        setX(-static_cast<float>(top) - 176.0f);
+        setY(top);
 }
 
 void FJ_SkinSelect::CycleLeft()

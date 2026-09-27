@@ -1,4 +1,5 @@
 #include "game/ui/UIComponent_TutorialPopup.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 
@@ -20,8 +21,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
-
-void stripWhitespaceForHtml(std::wstring& text, bool collapse);
 
 UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callback, UILayer* layer)
     : UIScene(sceneType, layer), m_interactScene(0), m_previousInteractScene(0),
@@ -272,13 +271,13 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     }
     else
     {
-        titleText = L10N::GetString(0x63f2c751);
+        titleText = L10N::GetString(IDS_TUTORIAL_REMINDER);
         titleText += title;
     }
     stripWhitespaceForHtml(titleText, true);
 
     wchar_t colorTag[40];
-    swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(static_cast<eMinecraftColour>(437)));
+    swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
     std::wstring coloredTitle(colorTag);
     coloredTitle += titleText;
 
@@ -292,7 +291,7 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     m_titleLabel.setVisible(!description.empty());
     m_exitScreenshotControl.setVisible(showExitScreenshot);
 
-    m_hasDescription = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(14)) != 0;
+    m_hasDescription = GameSettings::GetGameSettings(m_playerId, eGameSetting_SplitscreenNicknames) != 0;
 
     FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
     popup->AdjustLayout(m_hasDescription && !m_containerMenuDisplayed);
@@ -376,7 +375,7 @@ void UIComponent_TutorialPopup::handleReload()
         }
     }
 
-    bool adjustSplit = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(14)) != 0 &&
+    bool adjustSplit = GameSettings::GetGameSettings(m_playerId, eGameSetting_SplitscreenNicknames) != 0 &&
                         !m_containerMenuDisplayed;
     FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
     popup->AdjustLayout(adjustSplit);
@@ -440,7 +439,7 @@ void UIComponent_TutorialPopup::handleTimerComplete(int timerId)
     }
 }
 
-int UIComponent_TutorialPopup::getSceneType() { return 25; }
+int UIComponent_TutorialPopup::getSceneType() { return EUIScene_TutorialPopup; }
 bool UIComponent_TutorialPopup::stealsFocus() { return false; }
 bool UIComponent_TutorialPopup::hasFocus(int) { return false; }
 bool UIComponent_TutorialPopup::hidesLowerScenes() { return false; }

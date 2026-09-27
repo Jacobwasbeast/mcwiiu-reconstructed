@@ -19,8 +19,8 @@ public:
     void UseIggyIcons();
     void addNewItem(const std::wstring& label, const std::wstring& secondaryText,
         int id, const std::wstring& textureName);
-    uint64_t SetLayerLabel(int index, const std::wstring& label);
-    uint64_t SetTextureName(int index, const std::wstring& textureName);
+    void SetLayerLabel(int index, const std::wstring& label);
+    void SetTextureName(int index, const std::wstring& textureName);
 
 private:
     bool m_useIggyIcons;

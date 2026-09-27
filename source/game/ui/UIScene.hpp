@@ -76,7 +76,7 @@ public:
     virtual void handlePreUnloadForReload();
     virtual void handlePreReload();
     virtual void handleReload();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleInitFocus(int focus, int childFocus);
     virtual void handleCheckboxToggled(int id, bool checked);

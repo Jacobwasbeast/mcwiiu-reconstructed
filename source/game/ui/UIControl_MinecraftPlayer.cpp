@@ -53,7 +53,7 @@ void UIControl_MinecraftPlayer::render(fuiRect* rect)
         float oldXRot = player->mXRot;
         float oldYBodyRot = player->mYBodyRot;
         float oldYHeadRot = player->mYHeadRot;
-        bool oldSharedFlag = player->getSharedFlag(0);
+        bool oldSharedFlag = player->getSharedFlag(Entity::FLAG_ONFIRE);
         bool oldFallFlyingStateDisabled = player->mFallFlyingStateDisabled;
 
         float bodyRotation = player->mYBodyRot;
@@ -83,7 +83,7 @@ void UIControl_MinecraftPlayer::render(fuiRect* rect)
         player->mXRot = oldXRot;
         player->mYBodyRot = oldYBodyRot;
         player->mYHeadRot = oldYHeadRot;
-        player->setSharedFlag(0, oldSharedFlag);
+        player->setSharedFlag(Entity::FLAG_ONFIRE, oldSharedFlag);
         player->disableFallFlyingState(!oldFallFlyingStateDisabled);
     }
 

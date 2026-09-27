@@ -26,7 +26,7 @@ void FJ_HorseInventoryMenu::SetInventoryType(int type)
     FJ_FuiNode* mainPanel = getChildByName("MainPanel");
     if (type == 0)
     {
-        FJ_FuiNode* carpetIcon = mainPanel->getChildByName("SlotTypes.SlotArmour_CarpetIcon");
+        FJ_FuiNode* carpetIcon = mainPanel->getChildByName("SlotTypes.SlotArmour.CarpetIcon");
         carpetIcon->setVisible(false);
         return;
     }
@@ -42,7 +42,7 @@ void FJ_HorseInventoryMenu::SetInventoryType(int type)
     {
         FJ_FuiNode* saddleType = mainPanel->getChildByName("SlotTypes.SlotSaddle");
         FJ_FuiNode* saddleSlot = mainPanel->getChildByName("SlotSaddle");
-        FJ_FuiNode* carpetIcon = mainPanel->getChildByName("SlotTypes.SlotArmour_CarpetIcon");
+        FJ_FuiNode* carpetIcon = mainPanel->getChildByName("SlotTypes.SlotArmour.CarpetIcon");
         saddleType->setVisible(false);
         mainPanel->removeChild(saddleSlot, true);
         carpetIcon->setVisible(false);
@@ -78,6 +78,6 @@ void FJ_HorseInventoryMenu::SetSafeZone(int top, int bottom, int left, int right
     if (height != 360.0 && height != 540.0)
         return;
 
-    setX(-static_cast<float>(right) - 176.0f);
-    setY(-static_cast<float>(top) - 176.0f);
+    setX(-right);
+    setY(top);
 }

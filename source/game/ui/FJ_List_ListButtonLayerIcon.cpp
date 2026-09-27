@@ -49,15 +49,14 @@ void FJ_List_ListButtonLayerIcon::addNewItem(const std::wstring& label,
     item->SetTextureName(itemTextureName, layerName);
 }
 
-uint64_t FJ_List_ListButtonLayerIcon::SetLayerLabel(int index, const std::wstring& label)
+void FJ_List_ListButtonLayerIcon::SetLayerLabel(int index, const std::wstring& label)
 {
     FJ_Button* item = static_cast<FJ_Button*>(ReturnItem(index));
     if (item != NULL)
         item->SetSecondaryText(label, false, false);
-    return 0;
 }
 
-uint64_t FJ_List_ListButtonLayerIcon::SetTextureName(int index,
+void FJ_List_ListButtonLayerIcon::SetTextureName(int index,
     const std::wstring& textureName)
 {
     FJ_ListButtonLayerIcon* item = static_cast<FJ_ListButtonLayerIcon*>(ReturnItem(index));
@@ -66,7 +65,6 @@ uint64_t FJ_List_ListButtonLayerIcon::SetTextureName(int index,
         std::wstring layerName(L"fourj.Button");
         item->SetTextureName(textureName, layerName);
     }
-    return 0;
 }
 
 FJ_List_ListButtonLayerIcon::~FJ_List_ListButtonLayerIcon()

@@ -49,10 +49,10 @@ void UIControl_LeaderboardList::setupTitles(const std::wstring& title,
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->SetupTitles(title, subtitle);
 }
 
-void UIControl_LeaderboardList::initLeaderboard(int firstValue, int spacing, int offset)
+void UIControl_LeaderboardList::initLeaderboard(int focusRank, int totalEntries, int numColumns)
 {
     FJ_LeaderboardList* list = m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList();
-    list->InitLeaderboard(firstValue, spacing, offset);
+    list->InitLeaderboard(focusRank, totalEntries, numColumns);
     if (!m_touchBoxAdded) {
         if (m_scene->getSceneType() == 4 || m_scene->getSceneType() == 6)
             gConsoleUIController.TouchBoxAdd(this, m_scene);
@@ -86,8 +86,7 @@ void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
     const std::wstring* fifthColumn = fifthColumnText.empty() ? 0 : &fifthColumnText;
     const std::wstring* sixthColumn = sixthColumnText.empty() ? 0 : &sixthColumnText;
     const std::wstring* seventhColumn = seventhColumnText.empty() ? 0 : &seventhColumnText;
-    __CPR220__AddDataSet__18FJJ_LeaderboardListFbiT2RCQ2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wT1PCQ2_3stdJ46JN66(
-        m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList(), loading, rank, value, gamertag,
+    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->AddDataSet(loading, rank, value, gamertag,
         complete, firstColumn, secondColumn, thirdColumn, fourthColumn, fifthColumn,
         sixthColumn, seventhColumn);
 }

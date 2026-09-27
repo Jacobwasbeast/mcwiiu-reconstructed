@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_MessageBox.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <string>
@@ -9,6 +10,8 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/core/GameSettings.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* layer)
     : UIScene(sceneType, layer), m_callback(0), m_callbackData(0), m_titleId(0),
@@ -53,18 +56,18 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
     document->AutoResize();
     m_callbackData = data->callbackData;
     m_callback = data->callback;
-    m_layer->addComponent(sceneType, static_cast<EUIScene>(0x48), 0);
+    m_layer->addComponent(sceneType, EUIScene_MenuBackground, 0);
     gConsoleUIController.HideChestRefillAnimation();
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
 UIScene_MessageBox::~UIScene_MessageBox()
 {
-    if (gConsoleUIController.GetWinUserIndex() != static_cast<unsigned int>(m_controlFocus)) {
-        gConsoleUIController.SetTooltips(m_controlFocus, -1, -1, -1, -1, -1, -1, -1, -1,
+    if (gProfile->GetPrimaryPad() != m_playerId) {
+        gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     }
-    m_layer->removeComponent(static_cast<EUIScene>(0x48));
+    m_layer->removeComponent(EUIScene_MenuBackground);
 }
 
 unsigned int UIScene_MessageBox::mapElementsAndNames()
@@ -95,8 +98,8 @@ std::wstring UIScene_MessageBox::getMoviePath()
 
 void UIScene_MessageBox::updateTooltips()
 {
-    int tooltip = m_alert ? 0xe21d8023 : -1;
-    gConsoleUIController.SetTooltips(m_controlFocus, 0x8d6323ed, tooltip, -1, -1, -1, -1,
+    int tooltip = m_alert ? IDS_TOOLTIPS_CANCEL : -1;
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, tooltip, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false,
                                      m_layer->IsFullscreenGroup());
 }
@@ -114,44 +117,50 @@ void UIScene_MessageBox::handleReload()
 void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool released,
                                      bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_controlFocus, action, repeat, released, pressed);
-    if (action > 3) {
-        if (action < 6 || action == 0x14) {
-            sendInputToMovie(action, repeat, released, pressed);
-        } else if (action == 0x15 && released && m_alert) {
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
+    {
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (released && m_alert)
+        {
             navigateBack();
-            if (m_callback != 0) {
-                (*m_callback)(m_callbackData, playerId, static_cast<C4JStorage::EMessageResult>(3));
-                handled = true;
-                return;
-            }
+            if (m_callback != 0)
+                (*m_callback)(m_callbackData, playerId, C4JStorage::EMessageResult_Cancelled);
         }
+        break;
     }
     handled = true;
 }
 
-bool UIScene_MessageBox::hasFocus(int sceneType)
+bool UIScene_MessageBox::hasFocus(int playerId)
 {
-    if (m_controlFocus != 0xff && gConsoleUIController.GetDRCEnabled())
-        return m_hasFocus && sceneType == m_controlFocus;
+    if (m_playerId != 0xff && gProfile->IsSignedIn(m_playerId))
+        return m_hasFocus && playerId == m_playerId;
     return m_hasFocus;
 }
 
 void UIScene_MessageBox::handlePress(int controlId, int)
 {
-    unsigned char result = 3;
+    C4JStorage::EMessageResult result = C4JStorage::EMessageResult_Cancelled;
     if (static_cast<unsigned int>(controlId) < 4) {
-        static const unsigned char results[4] = { 4, 5, 6, 7 };
+        static const C4JStorage::EMessageResult results[4] = {
+            C4JStorage::EMessageResult_Accept, C4JStorage::EMessageResult_Decline,
+            C4JStorage::EMessageResult_ThirdOption, C4JStorage::EMessageResult_FourthOption };
         result = results[controlId];
     }
     navigateBack();
     if (m_callback != 0)
-        (*m_callback)(m_callbackData, m_controlFocus, static_cast<C4JStorage::EMessageResult>(result));
+        (*m_callback)(m_callbackData, m_playerId, result);
 }
 
 int UIScene_MessageBox::getSceneType()
 {
-    return 75;
+    return EUIScene_MessageBox;
 }
 
 unsigned int UIScene_MessageBox::getSubSceneType() const

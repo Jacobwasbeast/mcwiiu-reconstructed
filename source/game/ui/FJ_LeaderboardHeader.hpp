@@ -8,8 +8,7 @@ class FJ_LeaderboardHeader : public FJ_FuiNode
 {
 protected:
     FJ_FuiNode* m_icons[7];
-    int m_firstEntryPos;
-    int m_entrySpacing;
+    int m_entryPositions[7];
     float m_rankTextWidth;
     float m_gamertagTextWidth;
     bool m_small;

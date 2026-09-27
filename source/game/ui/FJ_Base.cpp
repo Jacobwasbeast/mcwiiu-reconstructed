@@ -52,18 +52,17 @@ void FJ_Base::CheckLabelWidths(std::vector<std::wstring>& labels)
 FJ_FuiNode* FJ_Base::getObjListParent() { return m_objListParent; }
 uint32_t FJ_Base::getId() { return static_cast<uint32_t>(m_id); }
 
-uint64_t FJ_Base::LostFocus()
+void FJ_Base::LostFocus()
 {
     if (m_objListParent != 0 && m_objListParent->isFJ_List())
     {
         m_objListParent->asFJ_List()->LoseListFocus();
-        return 0;
+        return;
     }
     if (m_objListParent != 0)
     {
         m_objListParent->isFJ_List2D();
     }
-    return 0;
 }
 
 uint32_t FJ_Base::getNewWidth() { return static_cast<uint32_t>(m_newWidth); }
@@ -77,7 +76,7 @@ void FJ_Base::setId(int id) { m_id = id; }
 uint8_t FJ_Base::getLabelTooWide() { return m_labelTooWide ? 1 : 0; }
 int FJ_Base::getOldWidth() { return static_cast<int>(getWidth()); }
 
-uint64_t FJ_Base::CorrectPixelPosition()
+void FJ_Base::CorrectPixelPosition()
 {
     float x = getX();
     float y = getY();
@@ -89,7 +88,6 @@ uint64_t FJ_Base::CorrectPixelPosition()
     {
         setY(y < 0.0f ? std::ceil(y - 0.5f) : std::floor(y + 0.5f));
     }
-    return 0;
 }
 
 void FJ_Base::InitBase(const std::wstring& name, int id)

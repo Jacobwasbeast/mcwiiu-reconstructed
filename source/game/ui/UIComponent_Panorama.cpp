@@ -109,7 +109,7 @@ void UIComponent_Panorama::render(int width, int height, C4JRender::eViewportTyp
 
 int UIComponent_Panorama::getSceneType()
 {
-    return 66;
+    return EUIScene_Panorama;
 }
 
 bool UIComponent_Panorama::stealsFocus()

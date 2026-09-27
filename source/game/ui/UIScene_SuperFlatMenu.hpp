@@ -25,7 +25,12 @@ class SoundEvent;
 class UIScene_SuperFlatMenu : public UIScene
 {
 public:
-    enum eTabs { eTabLayers, eTabBiomes, eTabProperties };
+    enum eTabs
+    {
+        eTabLayers,
+        eTabBiomes,
+        eTabProperties
+    };
 
     class TickAction
     {
@@ -41,18 +46,19 @@ public:
         MethodAction(Func function);
         virtual ~MethodAction();
         virtual void Execute(UIScene_SuperFlatMenu* scene);
+
     private:
         Func m_function;
     };
 
-    template<class T>
-    class MethodActionArg1 : public TickAction
+    template<class T> class MethodActionArg1 : public TickAction
     {
     public:
         typedef void (UIScene_SuperFlatMenu::*Func)(T);
         MethodActionArg1(Func function, T value) : m_function(function), m_value(value) {}
         virtual ~MethodActionArg1() {}
         virtual void Execute(UIScene_SuperFlatMenu* scene) { (scene->*m_function)(m_value); }
+
     private:
         Func m_function;
         T m_value;
@@ -72,7 +78,8 @@ public:
     void UpdateParamsList();
     void LoadPreset(SuperflatConfig* config);
     void SetActiveTab(eTabs tab);
-    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat, bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat, bool released,
+                                  bool pressed);
     virtual UIControl* GetMainPanel();
     virtual void updateTooltips();
     virtual void updateComponents();
@@ -83,17 +90,17 @@ public:
     void UpdateParamHelpText();
     virtual void handleReload();
     void ExecuteOnTick(MethodAction::Func function);
-    template<class T>
-    void ExecuteOnTick(typename MethodActionArg1<T>::Func function, T value);
+    template<class T> void ExecuteOnTick(typename MethodActionArg1<T>::Func function, T value);
     void MoveCurrentLayer(int amount);
     void NavActiveTab(int direction);
-    static int CbGenerationWarning(void* context, int button, C4JStorage::EMessageResult result);
+    static int CbGenerationWarning(void* context, int pad, C4JStorage::EMessageResult result);
     void ReturnResults(bool accepted);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
-    static int CbLayerOperation(void* context, int button, C4JStorage::EMessageResult result);
+    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+                             bool& handled);
+    static int CbLayerOperation(void* context, int pad, C4JStorage::EMessageResult result);
     void ChangeBiome(int biome);
     void HandleChangeParamList(int index);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
     virtual void handleSliderElementMove(int first, int second, int value);
     virtual void handleSelectionChanged(int selection);

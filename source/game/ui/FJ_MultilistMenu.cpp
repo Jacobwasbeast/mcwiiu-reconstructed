@@ -54,7 +54,7 @@ void FJ_MultilistMenu::SetSafeZone(int top, int bottom, int left, int right)
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
 
-    setX(-static_cast<float>(right) - 176.0f);
+    setX(-right);
 }
 
 void FJ_MultilistMenu::DoVerticalResizeCheck()

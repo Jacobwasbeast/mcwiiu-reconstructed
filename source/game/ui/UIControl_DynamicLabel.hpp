@@ -11,10 +11,10 @@ public:
     int GetRealWidth();
     int GetRealHeight();
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
-    void addText(const std::wstring& text, bool setup);
+    virtual void addText(const std::wstring& text, bool setup);
     virtual void ReInit();
-    void SetupTouch();
-    void TouchScroll(int offset, bool active);
+    virtual void SetupTouch();
+    virtual void TouchScroll(int offset, bool active);
 };
 
 #endif

@@ -18,7 +18,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     virtual void tick();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
 
 private:

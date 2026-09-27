@@ -30,7 +30,7 @@ public:
     void InitScene();
     static FJ_HowToPlay* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
-    void SetSafeZone(int iLeft, int iTop, int iRight, int iBottom);
+    void SetSafeZone(int top, int bottom, int left, int right);
 };
 
 #endif

@@ -104,12 +104,12 @@ void FJ_GameModeScoreboard::handlePress(FJ_Event* event)
 void FJ_GameModeScoreboard::InitNumColumns(int numColumns)
 {
     FJ_FuiNode* panel = getChildByName(std::string("PanelScoreboard"));
-    FJ_FuiNode* listNode = getChildByName(std::string("PanelScoreboard_Scoreboard"));
+    FJ_FuiNode* listNode = getChildByName(std::string("PanelScoreboard.Scoreboard"));
     FJ_List_ListButtonScoreBoard* list = listNode->asFJ_List_ListButtonScoreBoard();
     int i;
     for (i = 0; i < numColumns; ++i)
     {
-        FJ_IconSlot* icon = static_cast<FJ_IconSlot*>(FJ_Factory::createObject("fourj_listClasses_FJ_IconSlot", m_pRenderNode, true, 0));
+        FJ_IconSlot* icon = static_cast<FJ_IconSlot*>(FJ_Factory::createObject("fourj.listClasses.FJ_IconSlot", m_pRenderNode, true, 0));
         icon->SetParams(list->GetButtonHeight(), false);
         icon->ShowSlotHolder(false);
         icon->Init(std::wstring(L""));

@@ -95,7 +95,7 @@ void FJ_Label::GetLabelTooWide(fuiRenderNodeEditText* textField)
     }
 }
 
-uint64_t FJ_Label::setAction(unsigned char action, char* value)
+void FJ_Label::setAction(unsigned char action, char* value)
 {
     if (action == 5)
     {
@@ -117,7 +117,6 @@ uint64_t FJ_Label::setAction(unsigned char action, char* value)
     {
         m_manualWordWrap = std::strcmp(value, "true") == 0;
     }
-    return (uint64_t)(unsigned long)this;
 }
 
 typedef std::vector<FJ_Label*> FJ_LabelVector;

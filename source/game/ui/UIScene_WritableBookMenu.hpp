@@ -50,7 +50,7 @@ public:
     int FormatAndDisplayText(EFormatTextType type);
     void SetFocusToBook(bool focus);
     void OnStopSigning();
-    static int ExitBookDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitBookDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
     unsigned int HandleCancel();
     bool GetBookHasFocus();
     static int KeyboardCompleteCallback(void* context, bool success);
@@ -64,8 +64,8 @@ public:
     bool appendPageToBook();
     void ScrollPageRight();
     void GetPageText();
-    void setCurrentPageText(std::wstring& text);
-    std::wstring getCurrentPageText();
+    virtual void setCurrentPageText(std::wstring& text);
+    virtual std::wstring getCurrentPageText();
     void RetrieveTitleText();
 
 private:

@@ -101,46 +101,46 @@ void UIComponent_Chat::render(int width, int height, C4JRender::eViewportType vi
         UIScene::render(width, height, viewport);
         return;
     }
-    int screenWidth;
-    int screenHeight;
-    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
-                                             screenWidth, screenHeight);
+
     switch (viewport)
     {
     case C4JRender::eViewportType_BottomHalf:
     case C4JRender::eViewportType_BottomLeftQuarter:
-        gConsoleUIController.setupRenderPosition(0, static_cast<int>(screenHeight * 0.5f));
+        gConsoleUIController.setupRenderPosition(0, static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
         break;
     case C4JRender::eViewportType_RightHalf:
     case C4JRender::eViewportType_TopRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f), 0);
+        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f), 0);
         break;
     case C4JRender::eViewportType_BottomRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f),
-                                                 static_cast<int>(screenHeight * 0.5f));
+        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f),
+                                                 static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
         break;
     default:
-        if (viewport > C4JRender::eViewportType_BottomRightQuarter)
-            gConsoleUIController.setupRenderPosition(0, 0);
-        else
-            gConsoleUIController.setupRenderPosition(viewport);
+        gConsoleUIController.setupRenderPosition(0, 0);
         break;
     }
-    if (viewport == C4JRender::eViewportType_FullScreen)
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(height));
-    else if (viewport < C4JRender::eViewportType_LeftHalf)
-        gFui->render(m_movie, 0.0f, static_cast<float>(m_stageWidth / 2),
-                     static_cast<float>(screenWidth), static_cast<float>(height));
-    else if (viewport < C4JRender::eViewportType_TopLeftQuarter)
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(screenHeight));
-    else if (viewport > C4JRender::eViewportType_BottomRightQuarter)
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(height));
-    else
-        gFui->render(m_movie, static_cast<float>(m_stageWidth / 2), 0.0f,
-                     static_cast<float>(width), static_cast<float>(height));
+
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+        gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
+        break;
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+        gFui->render(m_movie, 0.0f, 0, width, static_cast<int>(gConsoleUIController.getScreenHeight()));
+        break;
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        gFui->render(m_movie, 0.0f, m_stageHeight / 2, width, height);
+        break;
+    default:
+        gFui->render(m_movie, 0.0f, 0, width, height);
+        break;
+    }
 }
 
 void UIComponent_Chat::handleTimerComplete(int timerId)
@@ -187,7 +187,7 @@ void UIComponent_Chat::handleTimerComplete(int timerId)
 
 int UIComponent_Chat::getSceneType()
 {
-    return 36;
+    return EUIScene_Chat;
 }
 
 bool UIComponent_Chat::stealsFocus()

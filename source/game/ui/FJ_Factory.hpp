@@ -8,8 +8,8 @@ class FJ_Factory
 {
 public:
     static void initialise();
-    static FJ_FuiNode* createObject(const char* symbol, fuiRenderNode* parent,
-        bool createFromSymbol, const char* className);
+    static FJ_FuiNode* createObject(const char* symbol, fuiRenderNode* parent, bool createFromSymbol,
+                                    const char* className);
 };
 
 #endif

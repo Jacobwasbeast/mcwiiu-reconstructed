@@ -6,8 +6,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/SharedConstants.hpp"
 #include "game/core/GuiComponent.hpp"
-
-std::wstring trimString(const std::wstring& value);
+#include "game/core/StringUtils.hpp"
 
 NameEntryScreen::~NameEntryScreen()
 {

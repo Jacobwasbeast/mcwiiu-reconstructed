@@ -1,9 +1,11 @@
 #include "game/ui/UIScene_QuadrantSignin.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_QuadrantSignin.hpp"
 #include "game/ui/UILayer.hpp"
@@ -14,7 +16,7 @@
 
 namespace
 {
-unsigned int s_avatarName = 0;
+int s_avatarImageCount = 0;
 
 struct AvatarRequest
 {
@@ -28,31 +30,24 @@ FJ_QuadrantSignin* GetQuadrantDocument(fuiRenderNode* root)
 }
 }
 
-UIScene_QuadrantSignin::UIScene_QuadrantSignin(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_signInPending(false), m_callback(NULL), m_callbackData(NULL),
-      m_callbackUserIndex(0), m_returnToHome(false)
+UIScene_QuadrantSignin::UIScene_QuadrantSignin(int playerId, void* data, UILayer* layer)
+    : UIScene(playerId, layer), m_signInPending(false)
 {
     initialiseMovie();
-    int* values = static_cast<int*>(data);
-    if (values != NULL)
-    {
-        m_callback = (SignInCallback)(unsigned int)values[0];
-        m_callbackData = (void*)(unsigned int)values[1];
-        m_callbackUserIndex = values[2];
-    }
+    m_signInInfo = *static_cast<SignInInfo*>(data);
+    m_signInPending = false;
     _initQuadrants();
-    if (g_pInput != NULL && g_pInput->IsDRCConnected() != 0)
+    if (g_pInput->IsCircleCrossSwapped())
     {
         GetQuadrantDocument(m_movie->getRootNode())->SetABSwap(true);
         gApp.SetDRCIconEnabled(false);
-        layer->addComponent(type, static_cast<EUIScene>(0x48), NULL);
+        layer->addComponent(playerId, EUIScene_MenuBackground, NULL);
     }
 }
 
 UIScene_QuadrantSignin::~UIScene_QuadrantSignin()
 {
-    if (m_layer != NULL)
-        m_layer->removeComponent(static_cast<EUIScene>(0x48));
+    m_layer->removeComponent(EUIScene_MenuBackground);
 }
 
 unsigned int UIScene_QuadrantSignin::mapElementsAndNames()
@@ -90,40 +85,45 @@ void UIScene_QuadrantSignin::setControllerState(int controller, EControllerStatu
     if (m_controllerStates[controller] == status)
         return;
     m_controllerStates[controller] = status;
-    int frame = 0;
-    if (g_pInput != NULL && g_pInput->IsPadConnected(controller) == 0)
-        frame = g_pInput->IsPadLocked(controller) != 0 ? 2 : 1;
-    GetQuadrantDocument(m_movie->getRootNode())->SetControllerStatus(controller, status, frame);
+    if (g_pInput->IsPadDRCController(controller))
+    {
+        GetQuadrantDocument(m_movie->getRootNode())->SetControllerStatus(controller, status, 0);
+        return;
+    }
+    int controllerType = g_pInput->IsPadClassicController(controller) ? 2 : 1;
+    GetQuadrantDocument(m_movie->getRootNode())->SetControllerStatus(controller, status, controllerType);
 }
 
 void UIScene_QuadrantSignin::_initQuadrants()
 {
     for (int i = 0; i < 4; ++i)
     {
-        m_avatarPending[i] = 0;
-        m_connectControllerLabels[i].init(UIString(0x14b60640));
-        m_playerNumberLabels[i].init(UIString(L""));
+        m_avatarPending[i] = false;
+        m_pressLabels[i].init(UIString(0x14b60640));
+        m_connectControllerLabels[i].init(UIString(L""));
         m_accountTypeLabels[i].init(UIString(L""));
-        if (gProfile != NULL && gProfile->IsSignedIn(i))
+        m_controllerStates[i] = eControllerStatus_Disconnected;
+        if (gProfile->IsSignedIn(i))
         {
             setControllerState(i, eControllerStatus_SignedIn);
-            m_gamerTagLabels[i].init(UIString(gProfile->GetGamertag(i)));
+            m_gamerTagLabels[i].init(UIString(gProfile->GetMiiName(i)));
         }
-        else if (g_pInput == NULL || g_pInput->IsPadConnected(i) == 0)
-            setControllerState(i, eControllerStatus_Disconnected);
-        else
+        else if (g_pInput->IsPadConnected(i))
         {
             setControllerState(i, eControllerStatus_Connected);
             m_gamerTagLabels[i].init(UIString(L""));
+        }
+        else
+        {
+            setControllerState(i, eControllerStatus_Disconnected);
         }
     }
 }
 
 void UIScene_QuadrantSignin::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_controlFocus), 0x8ad40344,
-                                     0xe21d8023, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_CONTINUE, IDS_TOOLTIPS_CANCEL, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 bool UIScene_QuadrantSignin::hasFocus(int)
@@ -139,14 +139,13 @@ bool UIScene_QuadrantSignin::hidesLowerScenes()
 int UIScene_QuadrantSignin::AvatarReturned(void* context, unsigned char* data, unsigned int size)
 {
     AvatarRequest* request = static_cast<AvatarRequest*>(context);
-    if (request != NULL && data == NULL && size != 0)
+    if (data == NULL && size != 0)
     {
+        ++s_avatarImageCount;
         wchar_t name[32];
-        ++s_avatarName;
-        std::swprintf(name, 32, L"quadrantImage_%05u", s_avatarName);
-        std::wstring texture(name);
-        request->scene->registerSubstitutionTexture(texture, NULL, size, false);
-        request->scene->m_playerPictures[request->quadrant].setTextureName(texture, true);
+        std::swprintf(name, 32, L"quadrantImage_%05d", s_avatarImageCount);
+        request->scene->registerSubstitutionTexture(std::wstring(name), data, size, false);
+        request->scene->m_playerPictures[request->quadrant].setTextureName(std::wstring(name), true);
     }
     delete request;
     return 0;
@@ -156,41 +155,30 @@ void UIScene_QuadrantSignin::updateState()
 {
     for (int i = 0; i < 4; ++i)
     {
-        bool signedIn = gProfile != NULL && gProfile->IsSignedIn(i);
-        bool connected = g_pInput != NULL && g_pInput->IsPadConnected(i) != 0;
-        bool live = gProfile != NULL && gProfile->IsSignedInLive(i);
-        if (!signedIn || !connected || live)
+        if (!gProfile->IsSignedIn(i) || !g_pInput->IsPadConnected(i) || gProfile->IsSigningIn(i))
         {
-            if (!connected)
+            if (!g_pInput->IsPadConnected(i))
             {
                 setControllerState(i, eControllerStatus_Disconnected);
-                m_avatarPending[i] = 0;
-            }
-            else if (!signedIn)
-            {
-                setControllerState(i, eControllerStatus_Connected);
-                m_gamerTagLabels[i].setLabel(UIString(L""), false, false);
-                m_avatarPending[i] = 0;
             }
             else
             {
                 setControllerState(i, eControllerStatus_Connected);
                 m_gamerTagLabels[i].setLabel(UIString(L""), false, false);
-                m_avatarPending[i] = 0;
             }
+            m_avatarPending[i] = false;
+            continue;
         }
-        else
+
+        setControllerState(i, eControllerStatus_SignedIn);
+        m_gamerTagLabels[i].setLabel(UIString(gProfile->GetMiiName(i)), false, false);
+        if (!m_avatarPending[i])
         {
-            setControllerState(i, eControllerStatus_SignedIn);
-            m_gamerTagLabels[i].setLabel(UIString(gProfile->GetGamertag(i)), false, false);
-            if (m_avatarPending[i] == 0)
-            {
-                AvatarRequest* request = new AvatarRequest;
-                request->scene = this;
-                request->quadrant = i;
-                if (gProfile->GetProfileAvatar(i, AvatarReturned, request) != 0)
-                    m_avatarPending[i] = 1;
-            }
+            AvatarRequest* request = new AvatarRequest;
+            request->scene = this;
+            request->quadrant = i;
+            if (gProfile->GetProfileAvatar(i, AvatarReturned, request))
+                m_avatarPending[i] = true;
         }
     }
 }
@@ -206,17 +194,17 @@ void UIScene_QuadrantSignin::tick()
 
 std::wstring UIScene_QuadrantSignin::getMoviePath()
 {
-    return std::wstring(L"QuadrantSignin");
+    return L"QuadrantSignin";
 }
 
 int UIScene_QuadrantSignin::SignInReturned(void* context, bool, int, int)
 {
-    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
+    UIScene_QuadrantSignin* scene = static_cast<UIScene_QuadrantSignin*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (scene != NULL)
     {
-        UIScene_QuadrantSignin* quadrant = static_cast<UIScene_QuadrantSignin*>(scene);
-        quadrant->m_signInPending = false;
-        quadrant->updateState();
+        scene->m_signInPending = false;
+        scene->updateState();
     }
     return 0;
 }
@@ -227,43 +215,48 @@ void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, 
     handled = true;
     if (m_signInPending)
         return;
-    gConsoleUIController.AnimateKeyPress(m_controlFocus, action, repeat, released, pressed);
-    if (action > 3)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
     {
-        if (action < 6 && released)
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+        if (pressed)
             sendInputToMovie(action, repeat, released, pressed);
-        else if (action == 0x14 && released)
+        break;
+    case EControllerActions_MenuOk:
+        if (!pressed)
+            break;
+        m_signInPending = true;
+        if (gProfile->IsSignedIn(playerId))
         {
-            m_signInPending = true;
-            if (gProfile != NULL && gProfile->IsSignedIn(playerId))
-            {
-                gProfile->ResetProfileProcessState();
-                navigateBack();
-                if (m_callback != NULL)
-                    m_callback(m_callbackData, true, m_controlFocus);
-            }
-            else if (gProfile != NULL)
-            {
-                unsigned int callbackId = GetCallbackUniqueId();
-                gProfile->RequestSignInUI(false, false, false, false, true,
-                                          SignInReturned, (void*)callbackId, playerId);
-            }
-            else
-                m_signInPending = false;
+            gProfile->CancelProfileAvatarRequest();
+            navigateBack();
+            m_signInInfo.callback(m_signInInfo.context, true, m_playerId);
+            break;
         }
-        else if (action == 0x15 && released && g_pInput != NULL &&
-                 gProfile != NULL && playerId == gProfile->GetPrimaryPad())
+        gProfile->RequestSignInUI(false, false, false, false, true, SignInReturned,
+                                  reinterpret_cast<void*>(GetCallbackUniqueId()), playerId);
+        break;
+    case EControllerActions_MenuCancel:
+        if (!pressed)
+            break;
+        if (playerId == gProfile->GetPrimaryPad())
         {
             m_signInPending = true;
-            gProfile->ResetProfileProcessState();
-            if (m_returnToHome)
+            m_signInInfo.callback(m_signInInfo.context, false, playerId);
+            gProfile->CancelProfileAvatarRequest();
+            if (m_signInInfo.returnToHome)
+            {
                 gConsoleUIController.NavigateToHomeMenu(false);
-            else
-            {
-                gApp.SetDRCIconEnabled(true);
-                navigateBack();
+                break;
             }
+            gApp.SetDRCIconEnabled(true);
+            navigateBack();
+            break;
         }
+        if (gProfile->IsSignedIn(playerId))
+            gProfile->SignOutUser(playerId);
+        break;
     }
 }
 
@@ -274,5 +267,5 @@ void UIScene_QuadrantSignin::handleReload()
 
 int UIScene_QuadrantSignin::getSceneType()
 {
-    return 0x4a;
+    return EUIScene_QuadrantSignin;
 }

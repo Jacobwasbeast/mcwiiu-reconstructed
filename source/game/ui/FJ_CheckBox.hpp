@@ -22,7 +22,7 @@ public:
     void ChangeState(int state);
     void EnableCheckBox(bool enabled);
     uint8_t getChecked();
-    uint32_t getOldWidth();
+    virtual int getOldWidth();
     void focusInHandler(FJ_Event* event);
     static void _focusInHandler(FJ_FuiNode* node, FJ_Event* event);
     void focusOutHandler(FJ_Event* event);

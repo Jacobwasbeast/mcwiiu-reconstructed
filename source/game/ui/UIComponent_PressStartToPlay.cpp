@@ -1,4 +1,5 @@
 #include "game/ui/UIComponent_PressStartToPlay.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <string>
@@ -60,7 +61,7 @@ UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data,
     initialiseMovie();
     m_trialTimerLabel.init(UIString(L"PressStartToPlay"));
     m_trialTimerLabel.setVisible(false);
-    SetText(UIString(L10N::GetString(0x0bcc1ead)), false);
+    SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
     m_saveIcon.setVisible(false);
     m_playerNameLabel.init(UIString(L"PressStartToPlay"));
     m_mainPanel.setVisible(false);
@@ -86,7 +87,7 @@ unsigned char UIComponent_PressStartToPlay::GetHoldToShowAchievementsActive(bool
 unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bool repeat,
                                                        bool released, bool pressed, bool& handled)
 {
-    if (GetAchievementToastShowing(player) && (action == 0x25 || action == 3) && released && !repeat)
+    if (GetAchievementToastShowing(player) && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && released && !repeat)
     {
         m_holdToShowAchievements = true;
         m_holdActionCancelled = false;
@@ -94,7 +95,7 @@ unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bo
         handled = true;
         return 1;
     }
-    if (m_holdToShowAchievements && !handled && (action == 0x25 || action == 3) && pressed)
+    if (m_holdToShowAchievements && !handled && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && pressed)
     {
         if (m_holdToShowAchievementsActive)
         {
@@ -140,7 +141,7 @@ void UIComponent_PressStartToPlay::showSaveIcon(bool show)
 {
     m_showSaveIcon = show;
     if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie() &&
-        GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x27)))
+        GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplaySaveIcon))
         m_saveIcon.setVisible(show);
 }
 
@@ -171,13 +172,13 @@ void UIComponent_PressStartToPlay::SetText(UIString text, bool multiLine)
 
 void UIComponent_PressStartToPlay::showPressStart(int player, bool show)
 {
-    if (gConsoleUIController.IsSceneInStack(0xff, static_cast<EUIScene>(0x4b)))
+    if (gConsoleUIController.IsSceneInStack(0xff, EUIScene_MessageBox))
         return;
     m_showPressStart[player] = show;
     if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie())
     {
         if (!gApp.IsDrcPreventingSplitscreen())
-            SetText(UIString(L10N::GetString(0x0bcc1ead)), false);
+            SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
         else
             SetText(UIString(L10N::GetString(0x9a0686fb)), true);
         m_mainPanel.setVisible(show);
@@ -233,7 +234,7 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
         Toast toast;
         toast.title = L10N::GetString(info->title);
         std::wstring description = L10N::GetString(0x4523129e);
-        replaceAll(description, description, L"__CONTROLLER_VK_X__", L"__CONTROLLER_VK_Y__");
+        replaceAll(description, description, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}");
         toast.description = gApp.FormatHTMLString(achievement, description, -1);
         toast.gamerPic = texture;
         toast.achievementIcon = info->icon;
@@ -290,13 +291,13 @@ std::wstring UIComponent_PressStartToPlay::getMoviePath()
 
 void UIComponent_PressStartToPlay::handleReload()
 {
-    bool saveVisible = m_showSaveIcon && GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x27));
+    bool saveVisible = m_showSaveIcon && GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplaySaveIcon);
     m_saveIcon.setVisible(saveVisible);
     m_trialTimerLabel.setVisible(m_showAutosaveTimer);
     m_trialTimerLabel.setLabel(UIString(m_autosaveTimer), false, false);
     m_trialTimerLabel.setVisible(m_showTrialTimer);
     m_trialTimerLabel.setLabel(UIString(m_trialTimer), false, false);
-    SetText(UIString(L10N::GetString(0x0bcc1ead)), false);
+    SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
     bool any = false;
     for (int i = 0; i < 4; ++i)
     {
@@ -327,9 +328,9 @@ void UIComponent_PressStartToPlay::ShowAchievementMenu()
     m_holdToShowAchievements = false;
     if (g_pApp->GetGameStarted() != 0)
         gConsoleUIController.CloseAllPlayersScenes(false);
-    gConsoleUIController.NavigateToScene(m_player, static_cast<EUIScene>(0x51),
+    gConsoleUIController.NavigateToScene(m_player, EUIScene_AchievementsMenu,
                                          (void*)(unsigned int)m_achievement,
-                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                                         EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
 void UIComponent_PressStartToPlay::handleTimerComplete(int timerId)
@@ -394,7 +395,7 @@ void UIComponent_PressStartToPlay::tick()
 
 int UIComponent_PressStartToPlay::getSceneType()
 {
-    return 0x47;
+    return EUIScene_PressStartToPlay;
 }
 
 bool UIComponent_PressStartToPlay::stealsFocus()

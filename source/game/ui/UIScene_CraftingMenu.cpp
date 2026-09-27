@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_CraftingMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -10,16 +11,20 @@
 #include "game/core/Slot.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
+#include "game/ui/CraftingMenu.hpp"
 #include "game/ui/FJ_CraftingMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRect.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/core/GameSettings.hpp"
 
 #include <cstdio>
 
@@ -32,12 +37,12 @@ UIScene_CraftingMenu::_SlotInfo::~_SlotInfo()
 }
 
 UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), IUIScene_CraftingMenu(), m_touchDragging(false),
-      m_inventoryUpdatesDeferred(true)
+    : UIScene(type, layer), IUIScene_CraftingMenu(), m_inventoryUpdatesDeferred(true)
 {
+    _CraftingPanelScreenInput* input = static_cast<_CraftingPanelScreenInput*>(data);
     m_tabsDirty = false;
     m_lastPanelDisplay = -1;
-    IUIScene_CraftingMenu::Init(static_cast<_CraftingPanelScreenInput*>(data));
+    IUIScene_CraftingMenu::Init(input);
     initialiseMovie();
     static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->InitCraftingMenu(m_craftingMode);
     if (m_craftingMode == 0)
@@ -51,13 +56,23 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     m_descriptionText.init(UIString(L""));
     m_groupName.init(UIString(L""));
     SetItemName(L"");
-    m_inventoryLabel.init(UIString(L10N::GetString((int)0x14630b9eu)));
-    m_ingredientsLabel.init(UIString(L10N::GetString((int)0xcb14bd42u)));
-    m_previewLabel.init(UIString(L10N::GetString((int)0xd047a3ceu)));
-    m_spinnerTitle.init(UIString(L10N::GetString((int)0x7f57b5e0u)));
+    m_inventoryLabel.init(UIString(L10N::GetString(IDS_INVENTORY)));
+    m_ingredientsLabel.init(UIString(L10N::GetString(IDS_INGREDIENTS)));
+    m_previewLabel.init(UIString(L10N::GetString(IDS_PREVIEW)));
+    m_spinnerTitle.init(UIString(L10N::GetString(IDS_BANNER_CREATE_BANNER)));
+    m_touchDragging = false;
 
+    AbstractContainerMenu* menu;
     if (m_craftingMode == 0)
-        m_openMenu = m_player->mInventoryMenu;
+    {
+        menu = m_player->mInventoryMenu;
+    }
+    else
+    {
+        menu = new CraftingMenu(m_player->mInventory, m_player->mLevel, BlockPos(input->x, input->y, input->z));
+        Minecraft::GetInstance()->mLocalPlayers[m_playerId]->mContainerMenu = menu;
+    }
+    m_openMenu = menu;
 
     m_inventory.addSlots(0, 27);
     m_hotBar.addSlots(27, 9);
@@ -69,12 +84,32 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     m_tripleSpinnerSlots[2].addSlots(58, 1);
 
     if (m_craftingMode == 1)
-        m_lastRecipe = 9;
+    {
+        m_groupMap = &m_groupMap3x3[0][0];
+        m_ingredientSlotCount = 9;
+    }
     else
-        m_lastRecipe = 4;
+    {
+        m_ingredientSlotCount = 4;
+        m_groupMap = &m_groupMap2x2[0][0];
+    }
     m_horizontalSlotCount = 12;
     gApp.SetRichPresenceContext(m_playerId, 5);
     setGroupText(IUIScene_CraftingMenu::GetGroupNameText(IUIScene_CraftingMenu::getCurrentGroup()));
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mGameModes[m_playerId] != NULL)
+    {
+        Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
+        if (tutorial != NULL)
+        {
+            m_previousTutorialState = tutorial->currentState;
+            if (m_craftingMode == 0)
+                tutorial->changeTutorialState(eTutorial_State_CraftingMenu, this);
+            else
+                tutorial->changeTutorialState(eTutorial_State_CraftingTableMenu, this);
+        }
+    }
 
     m_ingredientSlots[0].addSlot(36);
     m_ingredientSlots[1].addSlot(37);
@@ -82,7 +117,7 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     m_ingredientSlots[3].addSlot(39);
     m_ingredientSlots[4].addSlot(40);
     m_craftingOutput.addSlot(41);
-    m_ingredientsLayout.addSlots(42, m_lastRecipe);
+    m_ingredientsLayout.addSlots(42, m_ingredientSlotCount);
     m_crafting3VSlots[0].addSlot(52);
     m_crafting3VSlots[1].addSlot(53);
     m_crafting3VSlots[2].addSlot(54);
@@ -94,13 +129,13 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     IUIScene_CraftingMenu::UpdateTabs(true);
     IUIScene_CraftingMenu::CheckRecipesAvailable();
     m_verticalSlots[0] = IUIScene_CraftingMenu::getCurrentVSlotMax();
-    m_verticalSlots[1] = 0;
     m_verticalSlots[2] = 1;
+    m_verticalSlots[1] = 0;
     IUIScene_CraftingMenu::UpdateHorizontalSlots();
     IUIScene_CraftingMenu::UpdateVerticalSlots();
     IUIScene_CraftingMenu::UpdateHighlight();
 
-    delete static_cast<_CraftingPanelScreenInput*>(data);
+    delete input;
 
     gConsoleUIController.OverrideSFX(m_playerId, 0, true);
     gConsoleUIController.OverrideSFX(m_playerId, 20, true);
@@ -111,13 +146,13 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     gConsoleUIController.OverrideSFX(m_playerId, 4, true);
     gConsoleUIController.OverrideSFX(m_playerId, 5, true);
 
-    for (int i = 0; i < 7; ++i)
-        m_tabItems[i] = ItemInstance::EMPTY;
+    for (int tab = 0; tab < 7; ++tab)
+        m_tabItems[tab] = ItemInstance::EMPTY;
 
     IUIScene_CraftingMenu::UpdateTooltips();
     addTimer(1, 100);
-    for (int i = 0; i < 13; ++i)
-        m_touchPanels[i].init(i);
+    for (int panel = 0; panel < 13; ++panel)
+        m_touchPanels[panel].init(panel);
     m_descriptionText.SetupTouch();
     m_descriptionTextTop.SetupTouch();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -479,11 +514,11 @@ void UIScene_CraftingMenu::updateVSlotPositions(int, int)
 
 void UIScene_CraftingMenu::UpdateMultiPanel(bool force)
 {
-    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->showPanelDisplay(m_tooltipPlayer);
-    if (force || m_lastPanelDisplay != m_tooltipPlayer)
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->showPanelDisplay(m_panelDisplay);
+    if (force || m_lastPanelDisplay != m_panelDisplay)
     {
         gConsoleUIController.TouchBoxRebuild(this);
-        m_lastPanelDisplay = m_tooltipPlayer;
+        m_lastPanelDisplay = m_panelDisplay;
     }
 }
 
@@ -517,7 +552,7 @@ void UIScene_CraftingMenu::handleDestroy()
         {
             Tutorial* tutorial = gameMode->getTutorial();
             if (tutorial != 0)
-                tutorial->changeTutorialState((eTutorial_State)m_tooltipState, 0);
+                tutorial->changeTutorialState(m_previousTutorialState, 0);
         }
     }
     if (minecraft->mGameModes[m_playerId] != 0)
@@ -556,7 +591,7 @@ void UIScene_CraftingMenu::handleReload()
     m_ingredientSlots[3].addSlot(39);
     m_ingredientSlots[4].addSlot(40);
     m_craftingOutput.addSlot(41);
-    m_ingredientsLayout.addSlots(42, m_lastRecipe);
+    m_ingredientsLayout.addSlots(42, m_ingredientSlotCount);
     m_crafting3VSlots[0].addSlot(52);
     m_crafting3VSlots[1].addSlot(53);
     m_crafting3VSlots[2].addSlot(54);
@@ -565,7 +600,7 @@ void UIScene_CraftingMenu::handleReload()
     m_crafting1VSlot.addSlot(52);
     m_craftingHSlots.addSlots(59, 12);
 
-    SetCraftingMenu(m_groupPage, 4, m_currentTab == 1);
+    SetCraftingMenu(m_groupCount, 4, m_currentTab == 1);
     showTabHighlight(m_currentGroup, true);
 
     bool spinner = IUIScene_CraftingMenu::isSpinnerGroup();
@@ -580,10 +615,10 @@ void UIScene_CraftingMenu::handleReload()
     ShowDescriptionPanel(spinner);
     IUIScene_CraftingMenu::UpdateTabs(false);
 
-    int panel = m_tooltipPlayer;
-    m_tooltipPlayer = (panel == 0);
+    int panel = m_panelDisplay;
+    m_panelDisplay = (panel == 0);
     UpdateMultiPanel(false);
-    m_tooltipPlayer = panel;
+    m_panelDisplay = panel;
     UpdateMultiPanel(false);
 
     m_horizontalSlot = 0;
@@ -683,7 +718,7 @@ void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
             partialTick = static_cast<float>(m_horizontalSlotItems[index - 59].displayValue) / 31.0f;
         }
     }
-    else if (index >= 42 && index < m_lastRecipe + 42)
+    else if (index >= 42 && index < m_ingredientSlotCount + 42)
     {
         if (m_ingredientSlotItems[index - 42].visible)
         {
@@ -937,7 +972,7 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
 void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action == 14 || action == 15)
+    if (action == EControllerActions_MenuOtherStickUp || action == EControllerActions_MenuOtherStickDown)
     {
         sendInputToMovie(action, repeat, released, pressed);
         return;
@@ -948,7 +983,7 @@ void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool releas
 
 bool UIScene_CraftingMenu::allowRepeat(int action)
 {
-    return action != 2;
+    return action != EControllerActions_MenuX;
 }
 
 void UIScene_CraftingMenu::handleInventoryUpdated(void*)

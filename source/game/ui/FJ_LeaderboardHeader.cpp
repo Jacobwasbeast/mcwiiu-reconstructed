@@ -1,4 +1,5 @@
 #include "game/ui/FJ_LeaderboardHeader.hpp"
+#include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
@@ -7,12 +8,10 @@
 #include <cstdio>
 
 FJ_LeaderboardHeader::FJ_LeaderboardHeader(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_firstEntryPos(0), m_entrySpacing(0),
-      m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f),
-      m_small(false), m_slotWidth(0), m_slotAreaWidth(0)
+    : FJ_FuiNode(pRenderNode), m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_small(false), m_slotWidth(0),
+      m_slotAreaWidth(0)
 {
-    int i;
-    for (i = 0; i < 7; ++i)
+    for (int i = 0; i < 7; ++i)
         m_icons[i] = NULL;
 }
 
@@ -27,35 +26,38 @@ FJ_LeaderboardHeader* FJ_LeaderboardHeader::Create(fuiRenderNode* pRenderNode)
 
 void FJ_LeaderboardHeader::Init(int count, FJ_FuiNode* parent, int x, int y)
 {
-    int i;
     char name[64];
-    for (i = 0; i < 7; ++i)
+    for (int i = 0; i < 7; ++i)
     {
-        std::sprintf(name, "Icon_%d", i + 1);
-        m_icons[i] = getChildByName(name)->asMovieClip();
+        std::sprintf(name, "Icon_%d", i);
+        m_icons[i] = getChildByName(std::string(name))->asMovieClip();
         parent->addChild(m_icons[i]);
         if (m_slotWidth == 0)
-            m_slotWidth = (int)m_icons[i]->getWidth();
+            m_slotWidth = static_cast<int>(m_icons[0]->getWidth());
         m_icons[i]->setScaleX(1.0f);
         m_icons[i]->setScaleY(1.0f);
-        m_icons[i]->gotoAndStop("SlotNormal");
+        m_icons[i]->gotoAndStop(std::string("SlotNormal"));
     }
-    m_slotAreaWidth = (int)m_icons[0]->getWidth();
-    int left = (int)m_icons[0]->getX();
-    int right = (int)m_icons[6]->getX();
-    m_entrySpacing = (right - left) / 6;
-    m_firstEntryPos = left + m_entrySpacing + ((right - left) - (count - 1) * m_entrySpacing) / count;
-    float scale = (float)(((right - left) - (count - 1) * m_entrySpacing) / count) * 0.5f;
-    m_entrySpacing = Math::round(scale);
-    for (i = 0; i < 7; ++i)
+
+    float iconY = static_cast<float>(static_cast<int>(m_icons[0]->getY()) + y);
+    m_slotAreaWidth = static_cast<int>(m_icons[0]->getWidth());
+    int left = static_cast<int>(m_icons[0]->getX());
+    int right = static_cast<int>(m_icons[6]->getX());
+    int spacing = (right - left) / 6;
+    int slotWidth = ((right - left) - (count - 1) * spacing) / count;
+    float halfSlotWidth = static_cast<float>(slotWidth) * 0.5f;
+    for (int i = 0; i < 7; ++i)
     {
-        if (i >= count)
-            m_icons[i]->setVisible(false);
+        if (i < count)
+        {
+            m_entryPositions[i] = Math::round(static_cast<float>(left + i * (spacing + slotWidth)) + halfSlotWidth);
+            m_icons[i]->setX(static_cast<float>(x + Math::round(static_cast<float>(m_entryPositions[i]) * getScaleX())));
+            m_icons[i]->setY(iconY);
+            m_icons[i]->setVisible(true);
+        }
         else
         {
-            m_icons[i]->setX((float)(x + Math::round((float)(m_firstEntryPos + i * m_entrySpacing - left) * getScaleX())));
-            m_icons[i]->setY((float)(m_icons[0]->getY() + y));
-            m_icons[i]->setVisible(true);
+            m_icons[i]->setVisible(false);
         }
     }
 }
@@ -71,7 +73,7 @@ void FJ_LeaderboardHeader::SetupHeaders(std::wstring rank, std::wstring gamertag
     rankText->setText(rank);
     rankText->setScaleX(1.0f / getScaleX());
     rankText->setScaleY(1.0f / getScaleY());
-    rankText->setX((m_rankTextWidth - rankText->getWidth()) * 0.5f);
+    rankText->setX(m_rankTextWidth * 0.5f - rankText->getWidth() * 0.5f);
     fuiRenderNodeEditText* gamertagText = static_cast<fuiRenderNodeEditText*>(gamertagContainer->getRenderNodeChildAt(0)->asEditText());
     if (m_gamertagTextWidth == 0.0f)
         m_gamertagTextWidth = gamertagText->getWidth();
@@ -79,7 +81,7 @@ void FJ_LeaderboardHeader::SetupHeaders(std::wstring rank, std::wstring gamertag
     gamertagText->setText(gamertag);
     gamertagText->setScaleX(1.0f / getScaleX());
     gamertagText->setScaleY(1.0f / getScaleY());
-    gamertagText->setX((m_gamertagTextWidth - gamertagText->getWidth()) * 0.5f);
+    gamertagText->setX(m_gamertagTextWidth * 0.5f - gamertagText->getWidth() * 0.5f);
 }
 
 fuiRenderNode* FJ_LeaderboardHeader::GetBitmapData(int type)
@@ -111,48 +113,49 @@ fuiRenderNode* FJ_LeaderboardHeader::GetBitmapData(int type)
 
 void FJ_LeaderboardHeader::SetupSlot(int slot, int type)
 {
-    FJ_FuiNode* control = getChildByName("SlotControl");
-    if (slot < 0 || slot >= 7)
-        return;
-    control = m_icons[slot]->getChildByName("SlotControl")->asMovieClip();
-    control->setWidth((float)m_slotWidth);
-    control->setHeight((float)m_slotWidth);
+    FJ_FuiNode* icon = m_icons[slot];
+    FJ_FuiNode* control = icon->getChildByName(std::string("SlotControl"))->asMovieClip();
+    icon->setWidth(static_cast<float>(m_slotWidth));
+    icon->setHeight(static_cast<float>(m_slotWidth));
     if (type == 0)
     {
         fuiRect rect;
         rect.xMin = control->getX();
-        rect.xMax = rect.xMin + control->getWidth();
         rect.yMin = control->getY();
+        rect.xMax = rect.xMin + control->getWidth();
         rect.yMax = rect.yMin + control->getHeight();
-        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(m_pRenderNode, &rect, "iggy_slot");
+        char name[64];
+        std::sprintf(name, "iggy_slot_%d", slot);
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
         renderNode->setAlpha(0.25f);
-        FJ_FuiNode* blank = new FJ_FuiNode(renderNode);
-        control->addChild(blank);
-        control->removeChild(control->getChildAt(0), true);
+        renderNode->setFuiNode(new FJ_FuiNode(renderNode));
+        icon->addChild(renderNode->getFuiNode());
+        icon->removeChild(control, true);
         return;
     }
+
     fuiRenderNode* bitmap = GetBitmapData(type);
     bitmap->setWidth(control->getWidth());
     bitmap->setHeight(control->getHeight());
     bitmap->setX(control->getX());
     bitmap->setY(control->getY());
-    control->addChild(bitmap);
-    control->removeChild(control->getChildAt(0), true);
+    icon->addChild(bitmap);
+    icon->removeChild(control, true);
 }
 
 unsigned int FJ_LeaderboardHeader::getFirstEntryPos()
 {
-    return (unsigned int)m_firstEntryPos;
+    return m_entryPositions[0];
 }
 
 int FJ_LeaderboardHeader::getEntrySpacing()
 {
-    return m_entrySpacing;
+    return m_entryPositions[1] - m_entryPositions[0];
 }
 
 unsigned int FJ_LeaderboardHeader::getIconHolderHalfWidth()
 {
-    return (unsigned int)Math::round((m_icons[0]->getWidth() * 0.5f) / getScaleX());
+    return Math::round(m_icons[0]->getWidth() * 0.5f / getScaleX());
 }
 
 void FJ_LeaderboardHeader::Destroy()

@@ -1,7 +1,9 @@
 #include "game/ui/UIScene_LoadMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -14,6 +16,9 @@
 #include "game/core/L10N.hpp"
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/StringConversion.hpp"
+#include "platform/wiiu/CStorage.hpp"
+#include "vendor/_SaveListDetails.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/ui/FJ_LoadMenu.hpp"
 #include "game/ui/UILayer.hpp"
@@ -33,10 +38,10 @@ namespace
 {
 struct LoadMenuSceneData
 {
-    int reserved0;
+    int playerId;
     int saveIndex;
     LevelGenerationOptions* generationOptions;
-    int reserved12;
+    _SaveListDetails* saveDetails;
     EMiniGameId miniGameId;
 };
 }
@@ -48,43 +53,43 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
       m_thumbnailPending(true), m_thumbnailLoaded(false), m_loadRequested(false),
       m_thumbnailStateUnknown(false), m_thumbnailFailed(false), m_updateInProgress(false),
       m_publicGamesAllowed(true),
-      m_focus(-1.0), m_childFocus(-1.0), m_resetNetherPending(false), m_updateEndPending(false),
+      m_focus(-1.0), m_childFocus(-1.0), m_resetNetherPending(true), m_updateEndPending(true),
       m_hasGameData(false), m_thumbnailData(NULL), m_thumbnailSize(0), m_thumbnailName()
 {
     initialiseMovie();
     m_description.init(UIString(L""));
-    m_createdMode.init(UIString(L10N::GetString(0x108a4753)));
+    m_createdMode.init(UIString(L10N::GetString(IDS_CREATED_IN_SURVIVAL)));
     m_publicGamesAllowed = true;
     m_updateInProgress = true;
     m_hasGameData = false;
     m_thumbnailFailed = false;
     m_thumbnailPending = true;
     m_loadRequested = false;
-    m_resetNetherPending = false;
-    m_updateEndPending = false;
+    m_resetNetherPending = true;
+    m_updateEndPending = true;
     m_thumbnailStateUnknown = false;
-    m_launchData.mFlag58 = false;
+    m_launchData.mMatchmaking = false;
 
     const LoadMenuSceneData* sceneData = static_cast<const LoadMenuSceneData*>(data);
-    const int miniGameId = sceneData != NULL ? static_cast<int>(sceneData->miniGameId) : 15;
-    m_launchData.mValue5C = miniGameId;
+    const EMiniGameId miniGameId = sceneData != NULL ? sceneData->miniGameId : eMiniGameId_Any;
+    m_launchData.mMiniGameId = miniGameId;
     const bool gameModeLobby = m_levelGenerationOptions != NULL &&
                                m_levelGenerationOptions->isGameModeLobby();
-    m_launchData.mFlag56 = false;
-    m_launchData.mFlag57 = false;
-    if (!gameModeLobby && miniGameId != 15 && miniGameId > 0)
-        m_launchData.mFlag57 = true;
-    if (gameModeLobby && miniGameId != 15 && miniGameId > 0)
-        m_launchData.mFlag56 = true;
+    m_launchData.mHostMiniGame = false;
+    m_launchData.mJoinMiniGame = false;
+    if (!gameModeLobby && miniGameId != eMiniGameId_Any && miniGameId > eMiniGameId_Lobby)
+        m_launchData.mJoinMiniGame = true;
+    if (gameModeLobby && miniGameId != eMiniGameId_Any && miniGameId > eMiniGameId_Lobby)
+        m_launchData.mHostMiniGame = true;
 
     m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
-    if (m_launchData.mFlag57)
-        m_launchData.mFlag0 = true;
+    if (m_launchData.mJoinMiniGame)
+        m_launchData.mOnlineGame = true;
     SetUpVariants();
 
     m_texturePackName.init(UIString(L""));
     m_texturePackDescription.init(UIString(L""));
-    if (m_launchData.mFlag56 || m_launchData.mFlag57)
+    if (m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame)
     {
         UpdateIfPublicGamesAllowed();
         m_gameTypeId = GameType::LOBBY->getId();
@@ -96,33 +101,56 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
     {
         m_state614 = 0;
         m_difficulty = GameSettings::GetGameSettings(m_playerId,
-                                                     static_cast<eGameSetting>(3));
+                                                     eGameSetting_Difficulty);
         wchar_t difficultyLabel[256];
-        std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(0xd324428d),
+        std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
                       L10N::GetString(Difficulty::byId(m_difficulty)->getKey()));
         m_difficultySlider.init(UIString(difficultyLabel), 2, 0, 3, m_difficulty, false, 10, 1);
         m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
-        m_gameModeSlider.init(UIString(L10N::GetString(0x9ba782a6)), 1, 0,
+        m_gameModeSlider.init(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), 1, 0,
                               GameType::ADVENTURE->getId(), GameType::SURVIVAL->getId(), false, 10,
                               1);
-        m_playButton.init(UIString(L10N::GetString(0xbe1d5b9e)), 3);
-        m_loadSettings.init(UIString(L10N::GetString(0x7be5c322)), 6);
+        m_playButton.init(UIString(L10N::GetString(IDS_MORE_OPTIONS)), 3);
+        m_loadSettings.init(UIString(L10N::GetString(IDS_LOAD)), 6);
         m_onlineGameCheckBox.SetEnable(true);
-        bool initialOnlineChecked = m_launchData.mFlag0;
+        bool initialOnlineChecked = m_launchData.mOnlineGame;
         if (!gProfile->IsSignedInLive(m_playerId))
             m_onlineGameCheckBox.SetEnable(false);
-        if (m_launchData.mFlag17)
+        if (m_launchData.mOnlineSettingChangedBySystem)
         {
             m_onlineGameCheckBox.SetEnable(false);
             initialOnlineChecked = false;
         }
-        m_onlineGameCheckBox.init(UIString(L10N::GetString(0x2c692b72)), 5,
+        m_onlineGameCheckBox.init(UIString(L10N::GetString(IDS_ONLINE_GAME)), 5,
                                   initialOnlineChecked);
 
-        if (m_levelGenerationOptions != NULL)
+        if (m_levelGenerationOptions == NULL)
+        {
+            if (sceneData->saveDetails != NULL)
+            {
+                wchar_t thumbnailName[64];
+                wcsncpy(thumbnailName, convUtf8ToWstring(sceneData->saveDetails->m_filename).c_str(), 32);
+                m_thumbnailName = thumbnailName;
+                if (sceneData->saveDetails->m_thumbnail == NULL)
+                {
+                    SAVE_DETAILS* saves = gStorage->ReturnSavesInfo();
+                    gStorage->LoadSaveDataThumbnail(&saves->saves[m_saveIndex], LoadSaveDataThumbnailReturned,
+                                                    reinterpret_cast<void*>(GetCallbackUniqueId()));
+                    m_loadRequested = true;
+                }
+                else
+                {
+                    m_thumbnailData = sceneData->saveDetails->m_thumbnail;
+                    m_thumbnailSize = sceneData->saveDetails->m_thumbnailSize;
+                    m_thumbnailLoaded = true;
+                }
+                m_gameName.init(UIString(sceneData->saveDetails->m_title));
+            }
+        }
+        else
         {
             m_gameName.init(UIString(m_levelGenerationOptions->getDisplayName()));
-            m_launchData.mValue1C = m_levelGenerationOptions->getTexturePackId();
+            m_launchData.mTexturePackId = m_levelGenerationOptions->getTexturePackId();
             if (m_levelGenerationOptions->requiresTexturePack())
                 m_texturePackList.setEnabled(false);
 
@@ -132,7 +160,7 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
 
             TexturePack* texturePack =
                 Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(
-                    m_launchData.mValue1C);
+                    m_launchData.mTexturePackId);
             if (texturePack != NULL)
             {
                 unsigned int iconSize = 0;
@@ -148,7 +176,7 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
                 }
             }
 
-            m_createdMode.setLabel(UIString(m_state62B ? 0x61833048 : 0x108a4753), false,
+            m_createdMode.setLabel(UIString(m_state62B ? IDS_CREATED_IN_CREATIVE : IDS_CREATED_IN_SURVIVAL), false,
                                    false);
         }
     }
@@ -174,22 +202,22 @@ void UIScene_LoadMenu::UpdateIfPublicGamesAllowed()
 {
     m_publicGamesAllowed = true;
     LaunchMoreOptionsMenuInitData* initData = &m_launchData;
-    if (!m_launchData.mFlag56 && !m_launchData.mFlag57)
+    if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame)
         return;
     MiniGameDef* game = MiniGameDef::GetCustomGameModeById(eMiniGameId_Lobby, true);
     if (!game->IsCRCValid())
     {
         m_publicGamesAllowed = false;
-        initData->mFlag58 = false;
+        initData->mMatchmaking = false;
         return;
     }
     if (m_publicGamesAllowed)
     {
-        game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(initData->mValue5C), true);
+        game = MiniGameDef::GetCustomGameModeById(initData->mMiniGameId, true);
         if (!game->IsCRCValid())
         {
             m_publicGamesAllowed = false;
-            initData->mFlag58 = false;
+            initData->mMatchmaking = false;
             return;
         }
         if (m_publicGamesAllowed)
@@ -215,25 +243,25 @@ void UIScene_LoadMenu::UpdateIfPublicGamesAllowed()
             }
         }
     }
-    initData->mFlag58 = false;
+    initData->mMatchmaking = false;
 }
 
 void UIScene_LoadMenu::UpdateDescriptionText()
 {
     const int childFocus = static_cast<int>(m_childFocus);
-    if (m_childFocus == -1.0 || (!m_launchData.mFlag56 && !m_launchData.mFlag57))
+    if (m_childFocus == -1.0 || (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame))
         return;
 
     int descriptionId = -1;
     if (childFocus == 3 || childFocus == 16 || childFocus == 17 || childFocus == 18)
     {
         descriptionId = static_cast<int>(GetVariantDesc(
-            static_cast<int>(m_launchData.mValue64), m_launchData.mFlag56));
+            static_cast<int>(m_launchData.mMatchmakingFilters[1]), m_launchData.mHostMiniGame));
     }
     else if (childFocus == 19)
     {
         descriptionId = static_cast<int>(GetVariantDesc(
-            2, m_launchData.mFlag56));
+            2, m_launchData.mHostMiniGame));
     }
 
     std::wstring description;
@@ -246,7 +274,7 @@ void UIScene_LoadMenu::UpdateDescriptionText()
     {
         wchar_t colourTag[64];
         std::swprintf(colourTag, 64, L"<font color=\"#%08x\">",
-                      g_pApp->GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)));
+                      g_pApp->GetHTMLColour(eMinecraftColour_HTMLColor_White));
         description.insert(0, colourTag);
         m_texturePackDescription.setLabel(UIString(description), false, false);
     }
@@ -273,70 +301,70 @@ void UIScene_LoadMenu::_initCustom()
     m_levelIcon.setTextureName(textureName, true);
     m_createdMode.init(UIString(L""));
 
-    if (initData->mFlag56)
+    if (initData->mHostMiniGame)
     {
         MiniGameDef* mode = MiniGameDef::GetCustomGameModeById(
-            static_cast<EMiniGameId>(initData->mValue5C), true);
-        mode->SetDefaultMatchmakingSearchData(initData->mFlag57, initData);
+            initData->mMiniGameId, true);
+        mode->SetDefaultMatchmakingSearchData(initData->mJoinMiniGame, initData);
         m_list.init(7);
         if (mode->HasTeamGameOption())
         {
-            bool teamChecked = initData->mPlayerSettings.Get(eCustomGameModeHostOption_IsTeams) != 0;
+            bool teamChecked = initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_IsTeams) != 0;
             m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0xef2a2f6a))), 9,
                                   teamChecked);
         }
 
-        bool allowOnlineExtras = initData->mFlag0 && m_onlineEnabled;
+        bool allowOnlineExtras = initData->mOnlineGame && m_onlineEnabled;
         bool signedInLive = gProfile->IsSignedInLive(m_playerId);
         if (!signedInLive)
             allowOnlineExtras = false;
-        if (initData->mFlag17)
+        if (initData->mOnlineSettingChangedBySystem)
             allowOnlineExtras = false;
 
-        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x2c692b72))), 5,
+        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(IDS_ONLINE_GAME))), 5,
                               allowOnlineExtras);
         m_list.EnableItem(5, m_onlineEnabled, true);
 
-        bool publicChecked = initData->mFlag58 && m_publicGamesAllowed;
+        bool publicChecked = initData->mMatchmaking && m_publicGamesAllowed;
         m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x3fc1a0bd))), 10,
                               publicChecked);
 
-        bool resetNetherChecked = initData->mFlag2 && allowOnlineExtras;
+        bool resetNetherChecked = initData->mAllowFriendsOfFriends && allowOnlineExtras;
         m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x4d7ec0cc))), 0xb,
                               resetNetherChecked);
 
         game = GetMiniGame();
-        if (game->GetId() == 3 && initData->mFlag56)
+        if (game->GetId() == 3 && initData->mHostMiniGame)
         {
             m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x2e1306d9))), 0x15,
-                                  initData->mFlag68);
+                                  initData->mTimeTrial);
         }
 
         game = GetMiniGame();
-        if (game->HasMultipleMaps() && initData->mValue5C != 2)
+        if (game->HasMultipleMaps() && initData->mMiniGameId != eMiniGameId_Tumble)
         {
-            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(0x88c46bf1))), 0xd, true);
+            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(IDS_MG_SELECT_MAPS))), 0xd, true);
             m_list.EnableItem(0xd, true, true);
         }
 
         game = GetMiniGame();
         if (game->HasGameVariants())
         {
-            int value = initData->mValue64;
+            int value = initData->mMatchmakingFilters[1];
             m_sizeLogic = SliderLogic(0x10, static_cast<int>(0x5bd476fb),
                                       eCustomGameModeHostOption_ModeVariant,
-                                      static_cast<EMiniGameId>(initData->mValue5C), true);
+                                      initData->mMiniGameId, true);
             m_sizeLogic.AddTo(m_list, value);
             int clamped = value - 1;
             if (clamped < 0)
                 clamped = 0;
-            initData->mPlayerSettings.Set(eCustomGameModeHostOption_GameVariant, clamped);
+            initData->mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, clamped);
         }
 
         game = GetMiniGame();
         if (game->GetId() != 3)
         {
-            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(0xbe1d5b9e))), 3, true);
+            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(IDS_MORE_OPTIONS))), 3, true);
             m_list.EnableItem(3, true, true);
         }
 
@@ -345,48 +373,48 @@ void UIScene_LoadMenu::_initCustom()
         bool enableTen = allowOnlineExtras && m_publicGamesAllowed;
         m_list.EnableItem(10, enableTen, true);
 
-        bool enableEleven = allowOnlineExtras && !initData->mFlag58;
+        bool enableEleven = allowOnlineExtras && !initData->mMatchmaking;
         m_list.EnableItem(0xb, enableEleven, true);
 
-        bool checkTen = allowOnlineExtras && initData->mFlag58 && m_publicGamesAllowed;
+        bool checkTen = allowOnlineExtras && initData->mMatchmaking && m_publicGamesAllowed;
         m_list.SetCheckboxValue(10, checkTen, true);
 
-        bool checkEleven = allowOnlineExtras && !initData->mFlag58 && initData->mFlag2;
+        bool checkEleven = allowOnlineExtras && !initData->mMatchmaking && initData->mAllowFriendsOfFriends;
         m_list.SetCheckboxValue(0xb, checkEleven, true);
     }
 
-    if (initData->mFlag57)
+    if (initData->mJoinMiniGame)
     {
         MiniGameDef* mode = MiniGameDef::GetCustomGameModeById(
-            static_cast<EMiniGameId>(initData->mValue5C), true);
-        mode->SetDefaultMatchmakingSearchData(initData->mFlag57, initData);
+            initData->mMiniGameId, true);
+        mode->SetDefaultMatchmakingSearchData(initData->mJoinMiniGame, initData);
 
         game = GetMiniGame();
         if (game->HasGameVariants())
         {
-            int value = initData->mValue64;
+            int value = initData->mMatchmakingFilters[1];
             m_sizeLogic = SliderLogic(0x10, static_cast<int>(0x5bd476fb),
                                       eCustomGameModeHostOption_ModeVariant,
-                                      static_cast<EMiniGameId>(initData->mValue5C), false);
+                                      initData->mMiniGameId, false);
             m_sizeLogic.AddTo(m_list, value);
             int clamped = value - 1;
             if (clamped < 0)
                 clamped = 0;
-            initData->mPlayerSettings.Set(eCustomGameModeHostOption_GameVariant, clamped);
+            initData->mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, clamped);
         }
 
         game = GetMiniGame();
-        if (game->GetId() != 3 && initData->mValue5C != 2)
+        if (game->GetId() != 3 && initData->mMiniGameId != eMiniGameId_Tumble)
         {
-            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(0xbe1d5b9e))), 3, true);
+            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(IDS_MORE_OPTIONS))), 3, true);
         }
 
         AddVariantButtons(false);
     }
 
-    if (!initData->mFlag56)
+    if (!initData->mHostMiniGame)
     {
-        if (!initData->mFlag57)
+        if (!initData->mJoinMiniGame)
         {
             int count = static_cast<int>(m_list.getItemCount());
             m_list.setCurrentSelection(count - 1, false, true);
@@ -415,10 +443,10 @@ void UIScene_LoadMenu::_initCustom()
     }
 }
 
-uint32_t UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data,
-                                                          unsigned int size)
+int UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size)
 {
-    UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(context);
+    UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context))));
     if (scene == NULL)
         return 0;
     if (data == NULL || size == 0)
@@ -438,8 +466,6 @@ uint32_t UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned
 unsigned int UIScene_LoadMenu::mapElementsAndNames()
 {
     IUIScene_StartGame::mapElementsAndNames();
-    if (m_movie == NULL)
-        return 0;
     fuiRenderNode* root = m_movie->getRootNode();
     m_mainPanel.setupControl(this, root, std::string("MainPanel"));
     m_gameName.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("GameName"));
@@ -470,7 +496,7 @@ unsigned int UIScene_LoadMenu::mapElementsAndNames()
 
 void UIScene_LoadMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
                                    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                    false, false);
 }
@@ -479,16 +505,16 @@ void UIScene_LoadMenu::updateComponents()
 {
     if (m_layer != NULL)
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), m_publicGamesAllowed);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, m_publicGamesAllowed);
     }
 }
 
 unsigned int UIScene_LoadMenu::getSubSceneType() const
 {
-    if (m_launchData.mValue5C == 0xf)
+    if (m_launchData.mMiniGameId == eMiniGameId_Any)
         return static_cast<unsigned int>(m_state62C);
-    return m_launchData.mFlag57 ? 3 : 2;
+    return m_launchData.mJoinMiniGame ? 3 : 2;
 }
 
 void UIScene_LoadMenu::tick()
@@ -496,26 +522,140 @@ void UIScene_LoadMenu::tick()
     m_updateInProgress = true;
     IUIScene_StartGame::tick();
     m_updateInProgress = false;
-    if (gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(0x2b)))
+    if (gConsoleUIController.IsSceneInStack(m_playerId, EUIScene_LaunchMoreOptionsMenu))
     {
         MiniGameDef* game = MiniGameDef::GetCustomGameModeById(
-            static_cast<EMiniGameId>(m_launchData.mValue5C), true);
-        if (game != NULL && game->HasGameVariants())
+            m_launchData.mMiniGameId, true);
+        if (game->HasGameVariants() && m_list.IsSlider(0x10))
         {
             int value = static_cast<int>(m_list.GetSliderValue(0x10));
-            if (value != m_launchData.mValue64)
+            if (value != m_launchData.mMatchmakingFilters[1])
             {
-                m_list.SetSliderValue(0x10, m_launchData.mValue64, true);
-                m_sizeLogic.Update(m_list, m_launchData.mValue64);
+                m_list.SetSliderValue(0x10, m_launchData.mMatchmakingFilters[1], true);
+                m_sizeLogic.Update(m_list, m_launchData.mMatchmakingFilters[1]);
             }
         }
     }
     if (m_loadRequested)
     {
         m_loadRequested = false;
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x4c), NULL,
-                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_Timer, NULL,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
     }
+
+    if (m_thumbnailFailed)
+    {
+        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_LoadCreateJoinMenu,
+                                          EUILayer_Count);
+        return;
+    }
+    if (!m_thumbnailLoaded)
+        return;
+
+    m_thumbnailLoaded = false;
+    m_levelIcon.setTextureName(m_thumbnailName, true);
+
+    CMinecraftApp::PngTagData tagData;
+    gApp.GetImageTextData(m_thumbnailData, m_thumbnailSize, &tagData);
+    tagData.flags |= CMinecraftApp::PngTagData::eFlag_NumLoads;
+    ++tagData.numLoads;
+    gApp.SetCurrentImageTextData(&tagData);
+
+    if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_TexturePack) != 0)
+        m_launchData.mTexturePackId = tagData.texturePack;
+
+    if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_Seed) == 0)
+    {
+        m_description.setLabel(UIString(L""), false, false);
+    }
+    else
+    {
+        wchar_t text[256];
+        swprintf(text, 256, L"%ls: %lli", L10N::GetString(IDS_SEED), tagData.seed);
+        m_description.setLabel(UIString(text), false, false);
+    }
+
+    if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_HostOptions) != 0)
+    {
+        unsigned int hostOptions = tagData.hostOptions;
+        m_launchData.mPvP = gApp.GetGameHostOption(hostOptions, eGameHostOption_PvP) != 0;
+        m_launchData.mTrustPlayers = gApp.GetGameHostOption(hostOptions, eGameHostOption_TrustPlayers) != 0;
+        m_launchData.mFireSpreads = gApp.GetGameHostOption(hostOptions, eGameHostOption_FireSpreads) != 0;
+        m_launchData.mTNT = gApp.GetGameHostOption(hostOptions, eGameHostOption_TNT) != 0;
+        m_launchData.mHostPrivileges = gApp.GetGameHostOption(hostOptions, eGameHostOption_CheatsEnabled) != 0;
+        m_launchData.mDisableSaving = gApp.GetGameHostOption(hostOptions, eGameHostOption_DisableSaving) != 0;
+        m_launchData.mCurrentWorldSize = gApp.GetGameHostOption(hostOptions, eGameHostOption_WorldSize);
+        m_launchData.mWorldSize = m_launchData.mCurrentWorldSize;
+        m_launchData.mMobGriefing = gApp.GetGameHostOption(hostOptions, eGameHostOption_MobGriefing) != 0;
+        m_launchData.mKeepInventory = gApp.GetGameHostOption(hostOptions, eGameHostOption_KeepInventory) != 0;
+        m_launchData.mDoMobSpawning = gApp.GetGameHostOption(hostOptions, eGameHostOption_DoMobSpawning) != 0;
+        m_launchData.mDoMobLoot = gApp.GetGameHostOption(hostOptions, eGameHostOption_DoMobLoot) != 0;
+        m_launchData.mDoTileDrops = gApp.GetGameHostOption(hostOptions, eGameHostOption_DoTileDrops) != 0;
+        m_launchData.mNaturalRegeneration = gApp.GetGameHostOption(hostOptions, eGameHostOption_NaturalRegeneration) != 0;
+        m_launchData.mDoDaylightCycle = gApp.GetGameHostOption(hostOptions, eGameHostOption_DoDaylightCycle) != 0;
+        m_launchData.mDoWeatherCycle = gApp.GetGameHostOption(hostOptions, eGameHostOption_DoWeatherCycle) != 0;
+        if (!m_launchData.mHostPrivileges)
+        {
+            m_launchData.mKeepInventory = false;
+            m_launchData.mMobGriefing = true;
+            m_launchData.mDoMobSpawning = true;
+            m_launchData.mDoDaylightCycle = true;
+        }
+        if (gApp.GetGameHostOption(hostOptions, eGameHostOption_WasntSaveOwner) != 0)
+            m_state629 = false;
+
+        m_state62B = gApp.GetGameHostOption(hostOptions, eGameHostOption_HasBeenInCreative) != 0;
+        m_createdMode.setLabel(UIString(L10N::GetString(m_state62B ? IDS_CREATED_IN_CREATIVE : IDS_CREATED_IN_SURVIVAL)), false, false);
+
+        unsigned int gameMode = gApp.GetGameHostOption(hostOptions, eGameHostOption_GameType);
+        if (gameMode == 1)
+        {
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_CREATIVE)), false, false);
+            m_isCreative = true;
+            m_gameTypeId = GameType::CREATIVE->getId();
+        }
+        else if (gameMode == 2)
+        {
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_ADVENTURE)), false, false);
+            m_isCreative = false;
+            m_gameTypeId = GameType::ADVENTURE->getId();
+        }
+        else
+        {
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), false, false);
+            m_isCreative = false;
+            m_gameTypeId = GameType::SURVIVAL->getId();
+        }
+        m_gameModeSlider.SetSliderValue(m_gameTypeId);
+
+        unsigned int onlineSetting = GameSettings::GetGameSettings(m_playerId, eGameSetting_Online);
+        if (gApp.GetGameHostOption(hostOptions, eGameHostOption_FriendsOfFriends) != 0 && !m_onlineEnabled
+            && onlineSetting == 0)
+        {
+            m_launchData.mAllowFriendsOfFriends = true;
+        }
+
+        m_difficulty = gApp.GetGameHostOption(eGameHostOption_Difficulty);
+        m_difficultySlider.SetSliderValue(m_difficulty);
+        m_difficultySlider.handleSliderMove(m_difficulty);
+        wchar_t text[256];
+        swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
+                 L10N::GetString(Difficulty::byId(m_difficulty)->getKey()));
+        m_difficultySlider.setLabel(UIString(text), false, false);
+    }
+
+    if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_ExtraData) != 0
+        && gApp.GetExtraGameData(tagData.extraData, eGameExtraData_SaveVersion) > EXTRA_DATA_SAVE_VERSION)
+    {
+        m_hasGameData = true;
+        m_loadSettings.setEnable(false, true);
+    }
+
+    m_selectedSlot = getCurrentTextureSelectorIndex(m_launchData.mTexturePackId);
+    UpdateTexturePackDescription(m_launchData.mTexturePackId);
+    m_texturePackList.selectSlot(m_selectedSlot);
+    gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(getSceneType()),
+                                      EUILayer_Count);
 }
 
 std::wstring UIScene_LoadMenu::getMoviePath()
@@ -526,7 +666,7 @@ std::wstring UIScene_LoadMenu::getMoviePath()
 void UIScene_LoadMenu::handleReload()
 {
     IUIScene_StartGame::handleReload();
-    if (m_launchData.mFlag56 || m_launchData.mFlag57)
+    if (m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame)
         _initCustom();
 }
 
@@ -536,7 +676,7 @@ void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool released,
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (m_actionPending)
         return;
-    if (action == 0x15 && released)
+    if (action == EControllerActions_MenuCancel && released)
     {
         if (g_pApp != NULL)
             g_pApp->SetCorruptSaveDeleted(false);
@@ -544,60 +684,60 @@ void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool released,
         handled = true;
         return;
     }
-    if (action >= 4 && action <= 0x14)
+    if (action >= EControllerActions_MenuUp && action <= EControllerActions_MenuOk)
         sendInputToMovie(action, repeat, released, pressed);
     handled = true;
 }
 
-void UIScene_LoadMenu::handlePress(int first, int second)
+void UIScene_LoadMenu::handlePress(int controlId, int childId)
 {
     if (m_actionPending)
         return;
-    gConsoleUIController.PlayUISFX(NULL);
-    if (m_launchData.mFlag56 || m_launchData.mFlag57)
-        first = second;
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+    if (m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame)
+        controlId = childId;
     LaunchMoreOptionsMenuInitData* initData = &m_launchData;
-    if (first == 3)
+    if (controlId == 3)
     {
-        if (!m_launchData.mFlag56)
+        if (!m_launchData.mHostMiniGame)
         {
             bool checked = m_onlineGameCheckBox.TouchIsChecked();
-            if (initData->mFlag0 != checked)
+            if (initData->mOnlineGame != checked)
             {
-                initData->mFlag0 = checked;
+                initData->mOnlineGame = checked;
                 if (!checked)
                 {
-                    initData->mFlag1 = false;
-                    initData->mFlag2 = false;
+                    initData->mInviteOnly = false;
+                    initData->mAllowFriendsOfFriends = false;
                 }
             }
         }
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x2b), initData,
-                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LaunchMoreOptionsMenu, initData,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    if (first == 4)
+    if (controlId == 4)
     {
-        gConsoleUIController.PlayUISFX(NULL);
-        UpdateCurrentTexturePack(second);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+        UpdateCurrentTexturePack(childId);
         return;
     }
-    if (first == 0xd)
+    if (controlId == 0xd)
     {
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x3f), initData,
-                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_MapSelectMenu, initData,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    if (first < 6 || (first > 6 && first < 0x11) || first > 0x14)
+    if (controlId < 6 || (controlId > 6 && controlId < 0x11) || controlId > 0x14)
         return;
 
-    if (m_launchData.mFlag56 || m_launchData.mFlag57)
+    if (m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame)
     {
-        if (!MiniGameDef::IsCustomGame(static_cast<EMiniGameId>(m_launchData.mValue5C),
+        if (!MiniGameDef::IsCustomGame(m_launchData.mMiniGameId,
                                        initData->mPlayerSettings))
             MasterGameMode::SetDefaults(*initData);
 
-        if (m_launchData.mFlag56 && m_launchData.mValue5C == 1 &&
+        if (m_launchData.mHostMiniGame && m_launchData.mMiniGameId == eMiniGameId_Battle &&
             GameSettings::GetBattleMiniGameMapSelection(m_playerId) != 0)
         {
             std::vector<LevelRules::LevelRulesetGroup*>& groups = initData->mLevelRulesetGroups;
@@ -617,9 +757,9 @@ void UIScene_LoadMenu::handlePress(int first, int second)
             }
             if (groups.empty())
             {
-                int messageParameter = static_cast<int>(0xb9a1bf4d);
+                int messageParameter = static_cast<int>(IDS_CONFIRM_OK);
                 gConsoleUIController.RequestAlertMessage(
-                    static_cast<int>(0xac598f61), static_cast<int>(0xb9bf8844),
+                    static_cast<int>(IDS_MG_NO_MAPS_SELECTED_TITLE), static_cast<int>(IDS_MG_NO_MAPS_SELECTED_TEXT),
                     &messageParameter, 1, static_cast<unsigned int>(m_playerId), 0, NULL, NULL,
                     true);
                 return;
@@ -627,27 +767,27 @@ void UIScene_LoadMenu::handlePress(int first, int second)
         }
     }
 
-    bool launchOnline = initData->mFlag0;
+    bool launchOnline = initData->mOnlineGame;
     if (!launchOnline)
     {
-        initData->mFlag1 = false;
-        initData->mFlag2 = false;
+        initData->mInviteOnly = false;
+        initData->mAllowFriendsOfFriends = false;
     }
-    else if (initData->mFlag1)
+    else if (initData->mInviteOnly)
     {
-        initData->mFlag1 = false;
-        initData->mFlag2 = false;
+        initData->mInviteOnly = false;
+        initData->mAllowFriendsOfFriends = false;
     }
-    if (!m_launchData.mFlag56)
+    if (!m_launchData.mHostMiniGame)
     {
         bool checked = m_onlineGameCheckBox.TouchIsChecked();
-        if (initData->mFlag0 != checked)
+        if (initData->mOnlineGame != checked)
         {
-            initData->mFlag0 = checked;
+            initData->mOnlineGame = checked;
             if (!checked)
             {
-                initData->mFlag1 = false;
-                initData->mFlag2 = false;
+                initData->mInviteOnly = false;
+                initData->mAllowFriendsOfFriends = false;
             }
         }
     }
@@ -656,7 +796,7 @@ void UIScene_LoadMenu::handlePress(int first, int second)
 
 void UIScene_LoadMenu::handleCheckboxToggled(int id, bool checked)
 {
-    gConsoleUIController.PlayUISFX(NULL);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     UIScene::handleCheckboxToggled(id, checked);
 }
 
@@ -664,33 +804,33 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
 {
     if (m_updateInProgress)
         return;
-    gConsoleUIController.PlayUISFX(NULL);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     if (second < 10)
     {
         if (second == 5)
         {
-            m_launchData.mFlag0 = checked;
+            m_launchData.mOnlineGame = checked;
             m_list.EnableItem(10, checked && m_publicGamesAllowed, false);
             if (GetMiniGame()->HasMultipleMaps())
                 m_list.EnableItem(0xd, true, false);
 
             bool allowOnline = checked && m_onlineEnabled &&
-                               gProfile->IsSignedInLive(m_playerId) && !m_launchData.mFlag17;
-            m_list.EnableItem(0xb, allowOnline && !m_launchData.mFlag58, false);
-            m_list.SetCheckboxValue(10, checked && m_launchData.mFlag58 && m_publicGamesAllowed,
+                               gProfile->IsSignedInLive(m_playerId) && !m_launchData.mOnlineSettingChangedBySystem;
+            m_list.EnableItem(0xb, allowOnline && !m_launchData.mMatchmaking, false);
+            m_list.SetCheckboxValue(10, checked && m_launchData.mMatchmaking && m_publicGamesAllowed,
                                     false);
-            m_list.SetCheckboxValue(0xb, checked && !m_launchData.mFlag58 && m_launchData.mFlag2,
+            m_list.SetCheckboxValue(0xb, checked && !m_launchData.mMatchmaking && m_launchData.mAllowFriendsOfFriends,
                                     false);
             return;
         }
         if (second == 8)
         {
-            m_launchData.mPlayerSettings.Set(eCustomGameModeHostOption(4), checked);
+            m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn, checked);
             return;
         }
         if (second == 9)
         {
-            m_launchData.mPlayerSettings.Set(eCustomGameModeHostOption(8), checked);
+            m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_IsTeams, checked);
             return;
         }
         return;
@@ -698,68 +838,68 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
 
     if (second < 0xb)
     {
-        m_launchData.mFlag58 = checked;
+        m_launchData.mMatchmaking = checked;
         if (checked)
-            m_launchData.mFlag0 = true;
+            m_launchData.mOnlineGame = true;
         if (GetMiniGame()->HasMultipleMaps())
             m_list.EnableItem(0xd, true, false);
 
-        bool allowOnline = m_launchData.mFlag0 && m_onlineEnabled &&
-                           gProfile->IsSignedInLive(m_playerId) && !m_launchData.mFlag17;
-        if (GetMiniGame()->GetId() == 3 && m_launchData.mFlag56)
+        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled &&
+                           gProfile->IsSignedInLive(m_playerId) && !m_launchData.mOnlineSettingChangedBySystem;
+        if (GetMiniGame()->GetId() == 3 && m_launchData.mHostMiniGame)
         {
             if (checked)
-                m_launchData.mFlag68 = false;
+                m_launchData.mTimeTrial = false;
             m_list.SetCheckboxValue(0x15,
-                                    !m_launchData.mFlag58 && !m_launchData.mFlag0 &&
-                                        m_launchData.mFlag68,
+                                    !m_launchData.mMatchmaking && !m_launchData.mOnlineGame &&
+                                        m_launchData.mTimeTrial,
                                     false);
         }
-        m_list.EnableItem(0xb, allowOnline && !m_launchData.mFlag58, false);
-        m_list.SetCheckboxValue(0xb, allowOnline && !m_launchData.mFlag58 && m_launchData.mFlag2,
+        m_list.EnableItem(0xb, allowOnline && !m_launchData.mMatchmaking, false);
+        m_list.SetCheckboxValue(0xb, allowOnline && !m_launchData.mMatchmaking && m_launchData.mAllowFriendsOfFriends,
                                 false);
         return;
     }
 
     if (second == 0xb)
     {
-        m_launchData.mFlag2 = checked;
+        m_launchData.mAllowFriendsOfFriends = checked;
         return;
     }
     if (second != 0x15)
         return;
 
-    m_launchData.mFlag68 = checked;
-    m_launchData.mPlayerSettings.Set(eCustomGameModeHostOption(0xe), checked);
-    bool allowOnline = m_launchData.mFlag0 && m_onlineEnabled &&
-                       gProfile->IsSignedInLive(m_playerId) && !m_launchData.mFlag17;
+    m_launchData.mTimeTrial = checked;
+    m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_TimeTrial, checked);
+    bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled &&
+                       gProfile->IsSignedInLive(m_playerId) && !m_launchData.mOnlineSettingChangedBySystem;
     m_list.EnableItem(5, !checked && m_onlineEnabled, false);
     m_list.EnableItem(10, !checked && allowOnline && m_publicGamesAllowed, false);
-    m_list.EnableItem(0xb, !checked && allowOnline && !m_launchData.mFlag58, false);
+    m_list.EnableItem(0xb, !checked && allowOnline && !m_launchData.mMatchmaking, false);
     m_list.SetCheckboxValue(5, !checked && allowOnline, false);
-    m_list.SetCheckboxValue(10, !checked && allowOnline && m_launchData.mFlag58 &&
+    m_list.SetCheckboxValue(10, !checked && allowOnline && m_launchData.mMatchmaking &&
                                     m_publicGamesAllowed,
                             false);
-    m_list.SetCheckboxValue(0xb, !checked && allowOnline && !m_launchData.mFlag58 &&
-                                    m_launchData.mFlag2,
+    m_list.SetCheckboxValue(0xb, !checked && allowOnline && !m_launchData.mMatchmaking &&
+                                    m_launchData.mAllowFriendsOfFriends,
                             false);
 }
 
 void UIScene_LoadMenu::handleSliderElementMove(int, int second, int value)
 {
-    gConsoleUIController.PlayUISFX(NULL);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
     if (second == 0xe)
     {
-        m_launchData.mValue60 = value;
+        m_launchData.mMatchmakingFilters[0] = value;
         m_seedLogic.Update(m_list, value);
     }
     else if (second == 0x10)
     {
-        m_launchData.mValue64 = value;
+        m_launchData.mMatchmakingFilters[1] = value;
         int variant = value - 1;
         if (variant < 0)
             variant = 0;
-        m_launchData.mPlayerSettings.Set(eCustomGameModeHostOption_GameVariant, variant);
+        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, variant);
         m_sizeLogic.Update(m_list, value);
         UpdateDescriptionText();
     }
@@ -768,23 +908,23 @@ void UIScene_LoadMenu::handleSliderElementMove(int, int second, int value)
 void UIScene_LoadMenu::handleGainFocus(bool hadFocus)
 {
     LaunchMoreOptionsMenuInitData* initData = &m_launchData;
-    if (hadFocus && !initData->mFlag56)
-        m_onlineGameCheckBox.setChecked(initData->mFlag0);
-    if (!initData->mFlag56 && !initData->mFlag57)
+    if (hadFocus && !initData->mHostMiniGame)
+        m_onlineGameCheckBox.setChecked(initData->mOnlineGame);
+    if (!initData->mHostMiniGame && !initData->mJoinMiniGame)
         return;
     UpdateIfPublicGamesAllowed();
-    if (initData->mFlag56)
+    if (initData->mHostMiniGame)
     {
-        bool allowOnlineExtras = initData->mFlag0 && m_onlineEnabled;
+        bool allowOnlineExtras = initData->mOnlineGame && m_onlineEnabled;
         if (!gProfile->IsSignedInLive(m_playerId))
             allowOnlineExtras = false;
-        if (initData->mFlag17)
+        if (initData->mOnlineSettingChangedBySystem)
             allowOnlineExtras = false;
-        if (!initData->mFlag68)
+        if (!initData->mTimeTrial)
         {
             m_list.EnableItem(10, allowOnlineExtras && m_publicGamesAllowed, true);
             m_list.SetCheckboxValue(
-                10, initData->mFlag0 && initData->mFlag58 && m_publicGamesAllowed, true);
+                10, initData->mOnlineGame && initData->mMatchmaking && m_publicGamesAllowed, true);
         }
     }
 }
@@ -793,7 +933,7 @@ void UIScene_LoadMenu::handleFocusChange(int focus, int childFocus)
 {
     m_focus = static_cast<double>(focus);
     m_childFocus = static_cast<double>(childFocus);
-    if (m_launchData.mFlag56 || m_launchData.mFlag57)
+    if (m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame)
         UpdateDescriptionText();
     if (focus == 7)
         m_list.updateChildFocus(childFocus);
@@ -801,19 +941,19 @@ void UIScene_LoadMenu::handleFocusChange(int focus, int childFocus)
 
 void UIScene_LoadMenu::handleTimerComplete(int timerId)
 {
-    if ((m_launchData.mFlag56 || m_launchData.mFlag57) && timerId == 0)
+    if ((m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame) && timerId == 0)
         handleGainFocus(false);
     IUIScene_StartGame::handleTimerComplete(timerId);
 }
 
 void UIScene_LoadMenu::checkDialogReturned(bool& value, C4JStorage::EMessageResult result)
 {
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    if (result == C4JStorage::EMessageResult_Decline)
     {
         checkStateAndStartGame();
         return;
     }
-    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    if (result == C4JStorage::EMessageResult_Accept)
     {
         value = false;
         checkStateAndStartGame();
@@ -833,7 +973,7 @@ uint32_t UIScene_LoadMenu::CheckResetNetherReturned(void* context, int,
     if (scene != NULL)
     {
         scene->m_resetNetherPending = false;
-        scene->checkDialogReturned(scene->m_launchData.mFlagD, result);
+        scene->checkDialogReturned(scene->m_launchData.mResetNether, result);
     }
     return 0;
 }
@@ -847,7 +987,7 @@ uint32_t UIScene_LoadMenu::CheckUpdateTheEndReturned(void* context, int,
     if (scene != NULL)
     {
         scene->m_updateEndPending = false;
-        scene->checkDialogReturned(scene->m_launchData.mFlagE, result);
+        scene->checkDialogReturned(scene->m_launchData.mResetEnd, result);
     }
     return 0;
 }
@@ -855,21 +995,21 @@ uint32_t UIScene_LoadMenu::CheckUpdateTheEndReturned(void* context, int,
 void UIScene_LoadMenu::checkStateAndStartGame()
 {
     LaunchMoreOptionsMenuInitData* initData = &m_launchData;
-    if (initData->mFlagD && m_resetNetherPending)
+    if (initData->mResetNether && m_resetNetherPending)
     {
-        int parameters[2] = { static_cast<int>(0x9405ecf0), static_cast<int>(0xc13fdfc6) };
+        int parameters[2] = { static_cast<int>(IDS_DONT_RESET_NETHER), static_cast<int>(IDS_RESET_NETHER) };
         gConsoleUIController.RequestAlertMessage(
-            static_cast<int>(0xe5d1250e), static_cast<int>(0x79240783), parameters, 2,
+            static_cast<int>(IDS_RESETNETHER_TITLE), static_cast<int>(IDS_RESETNETHER_TEXT), parameters, 2,
             static_cast<unsigned int>(m_playerId),
             reinterpret_cast<int (*)(void*, int, C4JStorage::EMessageResult)>(CheckResetNetherReturned),
             reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;
     }
-    if (initData->mFlagE && m_updateEndPending)
+    if (initData->mResetEnd && m_updateEndPending)
     {
-        int parameters[2] = { static_cast<int>(0x9dcd2f11), static_cast<int>(0xd75a3077) };
+        int parameters[2] = { static_cast<int>(IDS_DONT_RESET_THE_END), static_cast<int>(IDS_RESET_THE_END) };
         gConsoleUIController.RequestAlertMessage(
-            static_cast<int>(0x50d08380), static_cast<int>(0x6fdf0a5d), parameters, 2,
+            static_cast<int>(IDS_RESET_THE_END_TITLE), static_cast<int>(IDS_RESET_THE_END_TEXT), parameters, 2,
             static_cast<unsigned int>(m_playerId),
             reinterpret_cast<int (*)(void*, int, C4JStorage::EMessageResult)>(CheckUpdateTheEndReturned),
             reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
@@ -887,7 +1027,7 @@ UIControl* UIScene_LoadMenu::GetMainPanel()
 
 void UIScene_LoadMenu::SetEnablePlayGameButton(bool enabled)
 {
-    if (!m_launchData.mFlag56 && !m_launchData.mFlag57)
+    if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame)
         m_playButton.setEnable(enabled, true);
     else
     {
@@ -899,12 +1039,12 @@ void UIScene_LoadMenu::SetEnablePlayGameButton(bool enabled)
 
 void UIScene_LoadMenu::HandleSaveDeviceRemoved(int)
 {
-    if (!m_launchData.mFlag56 && !m_launchData.mFlag57 && m_movie != NULL)
+    if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame && m_movie != NULL)
         navigateBack();
 }
 
 int UIScene_LoadMenu::getSceneType()
 {
-    return 0x23;
+    return EUIScene_LoadMenu;
 }
 

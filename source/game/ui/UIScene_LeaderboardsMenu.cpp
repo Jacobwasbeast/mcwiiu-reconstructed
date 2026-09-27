@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_LeaderboardsMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <cstring>
@@ -52,11 +53,11 @@ UIScene_LeaderboardsMenu::UIScene_LeaderboardsMenu(int type, void* data, UILayer
     m_statsType = 0;
     SetLeaderboardHeader();
     m_readType = 0;
-    m_filterLabel.init(UIString(L10N::GetString(0x5589e932)));
-    m_entriesLabel.init(UIString(L10N::GetString(0x254b61c0)));
+    m_filterLabel.init(UIString(L10N::GetString(IDS_LEADERBOARD_FILTER)));
+    m_entriesLabel.init(UIString(L10N::GetString(IDS_LEADERBOARD_ENTRIES)));
     ReadStats(-1);
     addTimer(0, 100);
-    if (g_pApp->StartInstallDLCProcess(g_pApp->GetPrimaryUserIndex()) == 0)
+    if (g_pApp->StartInstallDLCProcess(gProfile->GetPrimaryPad()) == 0)
         g_pApp->getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Unknown,
                                                   &m_levelRuleGroups, false);
     m_result = static_cast<unsigned int>(-1);
@@ -406,13 +407,13 @@ void UIScene_LeaderboardsMenu::staticCtor()
         {4, 0x42511ff4, 0}, {4, 0x5f8f0bf7, 0}, {4, 0x6771baea, 0}, {4, 0xa506abee, 0}
     };
     const LeaderboardDescriptor second[] = {
-        {7, 0x40cdc147, 0}, {7, 0x93926fe4, 0}, {7, 0x7e732429, 0}, {7, 0xb203d3dd, 0}
+        {7, IDS_LEADERBOARD_MINING_BLOCKS_PEACEFUL, 0}, {7, IDS_LEADERBOARD_MINING_BLOCKS_EASY, 0}, {7, IDS_LEADERBOARD_MINING_BLOCKS_NORMAL, 0}, {7, IDS_LEADERBOARD_MINING_BLOCKS_HARD, 0}
     };
     const LeaderboardDescriptor third[] = {
-        {6, 0x0170b0d8, 0}, {6, 0x2a285bbb, 0}, {6, 0x896d8ee6, 0}, {6, 0x17517772, 0}
+        {6, IDS_LEADERBOARD_FARMING_PEACEFUL, 0}, {6, IDS_LEADERBOARD_FARMING_EASY, 0}, {6, IDS_LEADERBOARD_FARMING_NORMAL, 0}, {6, IDS_LEADERBOARD_FARMING_HARD, 0}
     };
     const LeaderboardDescriptor fourth[] = {
-        {0, 0xffffffff, 0}, {7, 0x56a47b1a, 0}, {7, 0x4e067c37, 0}, {7, 0xbc14f8d3, 0}
+        {0, 0xffffffff, 0}, {7, IDS_LEADERBOARD_KILLS_EASY, 0}, {7, IDS_LEADERBOARD_KILLS_NORMAL, 0}, {7, IDS_LEADERBOARD_KILLS_HARD, 0}
     };
     gLeaderboardDescriptors[0].assign(first, first + 4);
     gLeaderboardDescriptors[1].assign(second, second + 4);
@@ -440,17 +441,23 @@ void UIScene_LeaderboardsMenu::staticCtor()
 
 unsigned int UIScene_LeaderboardsMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie == NULL ? NULL : m_movie->getRootNode();
+    fuiRenderNode* root = m_movie->getRootNode();
     m_leaderboardList.setupControl(this, root, "Gamers");
+    m_controls.push_back(&m_leaderboardList);
     m_filterLabel.setupControl(this, root, "Filter");
+    m_controls.push_back(&m_filterLabel);
     m_leaderboardLabel.setupControl(this, root, "Leaderboard");
+    m_controls.push_back(&m_leaderboardLabel);
     m_entriesLabel.setupControl(this, root, "Entries");
+    m_controls.push_back(&m_entriesLabel);
     m_infoLabel.setupControl(this, root, "Info");
+    m_controls.push_back(&m_infoLabel);
     m_tabNavigation.setupControl(this, root, "TabNavigation");
+    m_controls.push_back(&m_tabNavigation);
     return 1;
 }
 
-int UIScene_LeaderboardsMenu::ExitLeaderboards(void* context, int button,
+int UIScene_LeaderboardsMenu::ExitLeaderboards(void* context, int pad,
                                                          C4JStorage::EMessageResult result)
 {
     static_cast<UIScene*>(context)->navigateBack();
@@ -459,14 +466,14 @@ int UIScene_LeaderboardsMenu::ExitLeaderboards(void* context, int button,
 
 void UIScene_LeaderboardsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), -1, 0x4f6bcf5e,
-        0x4990ea8c, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0);
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), -1, IDS_TOOLTIPS_BACK,
+        IDS_TOOLTIPS_CHANGE_FILTER, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0);
 }
 
 void UIScene_LeaderboardsMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), !g_pApp->GetGameStarted());
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
+    m_layer->showComponent(m_playerId, EUIScene_Panorama, !g_pApp->GetGameStarted());
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 void UIScene_LeaderboardsMenu::handleTimerComplete(int timerId)
@@ -477,10 +484,10 @@ void UIScene_LeaderboardsMenu::handleTimerComplete(int timerId)
         if (!gProfile->IsSignedInLive(static_cast<int>(primaryPad)))
         {
             int messageParameters[1];
-            messageParameters[0] = 0xb9a1bf4d;
+            messageParameters[0] = IDS_CONFIRM_OK;
             int messageId = CGameNetworkManager::sInstance.CorrectErrorIDS(0x16cb58e9);
             unsigned int userIndex = static_cast<unsigned int>(gProfile->GetPrimaryPad());
-            gConsoleUIController.RequestErrorMessage(0xf1c0f3d9, messageId, messageParameters, 1,
+            gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_LOST, messageId, messageParameters, 1,
                                                       userIndex, ExitLeaderboards, this, 0, true);
         }
     }
@@ -506,19 +513,19 @@ void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsRet
     SetLeaderboardTitleIcons();
     if (result == LeaderboardManager::eStatsReturn_Success && m_visibleRowCount != 0)
     {
-        m_leaderboardList.setupTitles(L10N::GetString(0x1a9067dc), L10N::GetString(0x143ee56c));
+        m_leaderboardList.setupTitles(L10N::GetString(IDS_LEADERBOARD_RANK), L10N::GetString(IDS_LEADERBOARD_GAMERTAG));
         if (!g_pApp->DebugSettingsOn() ||
             (GameSettings::GetGameSettingsDebugMask(-1, false) &
              0x10000) == 0)
         {
             wchar_t buf[40];
-            swprintf(buf, 40, L"%ls%i", L10N::GetString(0x254b61c0), m_numRows);
+            swprintf(buf, 40, L"%ls%i", L10N::GetString(IDS_LEADERBOARD_ENTRIES), m_numRows);
             m_entriesLabel.setLabel(UIString(buf), false, false);
         }
         else
         {
             wchar_t buf[40];
-            swprintf(buf, 40, L"%ls12345678", L10N::GetString(0x254b61c0));
+            swprintf(buf, 40, L"%ls12345678", L10N::GetString(IDS_LEADERBOARD_ENTRIES));
             m_entriesLabel.setLabel(UIString(buf), false, false);
         }
         m_infoLabel.setLabel(UIString(L""), false, false);
@@ -554,16 +561,16 @@ void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsRet
 
     m_leaderboardList.setupTitles(L"", L"");
     wchar_t buf[40];
-    swprintf(buf, 40, L"%ls0", L10N::GetString(0x254b61c0));
+    swprintf(buf, 40, L"%ls0", L10N::GetString(IDS_LEADERBOARD_ENTRIES));
     m_entriesLabel.setLabel(UIString(buf), false, false);
     if (result == LeaderboardManager::eStatsReturn_NoScores)
     {
-        m_infoLabel.setLabel(UIString(L10N::GetString(0xaab2b6dd)), false, false);
+        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_ERROR_NETWORK)), false, false);
         m_infoLabel.setVisible(true);
     }
     else
     {
-        m_infoLabel.setLabel(UIString(L10N::GetString(0x19fbbd01)), false, false);
+        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_NORESULTS)), false, false);
         m_infoLabel.setVisible(true);
     }
     m_leaderboardPopulated = true;
@@ -595,7 +602,7 @@ void UIScene_LeaderboardsMenu::handleReload()
 void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                            bool pressed, bool& handled)
 {
-    if (m_loading && action != 0x15)
+    if (m_loading && action != EControllerActions_MenuCancel)
         return;
 
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
@@ -604,21 +611,21 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
 
     switch (action)
     {
-    case 0:
-    case 3:
+    case EControllerActions_MenuA:
+    case EControllerActions_MenuY:
         handled = true;
         break;
-    case 1:
+    case EControllerActions_MenuB:
         break;
-    case 2:
+    case EControllerActions_MenuX:
         if (m_leaderboardPopulated && g_pLeaderboardManager->isIdle())
         {
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             if (m_readType == LeaderboardManager::eReadType_Friends)
             {
                 m_readType = LeaderboardManager::eReadType_MyScore;
                 wchar_t buf[40];
-                swprintf(buf, 40, L"%ls%ls", L10N::GetString(0x5589e932),
+                swprintf(buf, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
                          L10N::GetString(0x81f49d21));
                 m_filterLabel.setLabel(UIString(buf), false, false);
             }
@@ -626,7 +633,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
             {
                 m_readType = LeaderboardManager::eReadType_TopRank;
                 wchar_t buf[40];
-                swprintf(buf, 40, L"%ls%ls", L10N::GetString(0x5589e932),
+                swprintf(buf, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
                          L10N::GetString(0xdff993fa));
                 m_filterLabel.setLabel(UIString(buf), false, false);
             }
@@ -634,16 +641,16 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
             {
                 m_readType = LeaderboardManager::eReadType_Friends;
                 wchar_t buf[40];
-                swprintf(buf, 40, L"%ls%ls", L10N::GetString(0x5589e932),
+                swprintf(buf, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
                          L10N::GetString(0x1bcdeb3c));
                 m_filterLabel.setLabel(UIString(buf), false, false);
             }
             ReadStats(-1);
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         }
         handled = true;
         break;
-    case 4:
+    case EControllerActions_MenuUp:
         if (m_selectedEntry > 0)
         {
             --m_selectedEntry;
@@ -653,7 +660,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
         m_selectedEntry = 0;
         sendInputToMovie(action, repeat, released, pressed);
         return;
-    case 5:
+    case EControllerActions_MenuDown:
         if (static_cast<unsigned int>(m_selectedEntry + 1) < m_visibleRowCount)
         {
             ++m_selectedEntry;
@@ -664,14 +671,14 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
         }
         sendInputToMovie(action, repeat, released, pressed);
         return;
-    case 6:
-    case 7:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
         if (m_leaderboardPopulated && g_pLeaderboardManager->isIdle())
         {
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             m_statsIconsValid = false;
             int newStatsType = m_statsType;
-            if (action == 6)
+            if (action == EControllerActions_MenuRight)
             {
                 ++newStatsType;
                 if (newStatsType == 4)
@@ -692,17 +699,17 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
             m_leaderboardIndex = index;
             SetLeaderboardHeader();
             ReadStats(-1);
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
             handled = true;
             return;
         }
         handled = true;
         break;
-    case 8:
-    case 9:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
         if (m_leaderboardPopulated && g_pLeaderboardManager->isIdle())
         {
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             if (m_visibleRowCount < 0xb)
                 return;
             sendInputToMovie(action, repeat, released, pressed);
@@ -711,15 +718,15 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
         }
         handled = true;
         break;
-    case 10:
-    case 11:
+    case EControllerActions_MenuRightScroll:
+    case EControllerActions_MenuLeftScroll:
         if (m_leaderboardPopulated && g_pLeaderboardManager->isIdle())
         {
             unsigned int previousIndex = m_leaderboardIndex;
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             unsigned int listSize = static_cast<unsigned int>(gLeaderboardDescriptors[m_statsType].size());
             unsigned int newIndex = m_leaderboardIndex;
-            if (action == 10)
+            if (action == EControllerActions_MenuRightScroll)
             {
                 ++newIndex;
                 if (newIndex == listSize)
@@ -741,7 +748,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
                 m_tabNavigation.setVisible(true);
                 SetLeaderboardHeader();
                 ReadStats(-1);
-                gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
                 handled = true;
                 return;
             }
@@ -751,7 +758,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
         }
         handled = true;
         break;
-    case 0x15:
+    case EControllerActions_MenuCancel:
         navigateBack();
         handled = true;
         return;
@@ -807,7 +814,7 @@ void UIScene_LeaderboardsMenu::handleRequestMoreData(int id, bool forward)
 
 int UIScene_LeaderboardsMenu::getSceneType()
 {
-    return 0x16;
+    return EUIScene_LeaderboardsMenu;
 }
 
 bool UIScene_LeaderboardsMenu::hasFocus(int sceneType)

@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_NewUpdateMessage.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 #include <vector>
@@ -17,9 +18,9 @@ UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer
     : UIScene(sceneType, layer)
 {
     initialiseMovie();
-    layer->addComponent(sceneType, static_cast<EUIScene>(0x42), NULL);
-    layer->addComponent(sceneType, static_cast<EUIScene>(0x43), NULL);
-    m_acceptButton.init(UIString(L10N::GetString(static_cast<int>(0xd8a6b805))), 0);
+    layer->addComponent(sceneType, EUIScene_Panorama, NULL);
+    layer->addComponent(sceneType, EUIScene_Logo, NULL);
+    m_acceptButton.init(UIString(L10N::GetString(static_cast<int>(IDS_TOOLTIPS_ACCEPT))), 0);
 
     std::wstring text(L10N::GetString(static_cast<int>(0x31bf39b5)));
     text += L"\r\n";
@@ -46,8 +47,8 @@ UIScene_NewUpdateMessage::~UIScene_NewUpdateMessage()
 {
     if (m_layer != NULL)
     {
-        m_layer->removeComponent(static_cast<EUIScene>(0x42));
-        m_layer->removeComponent(static_cast<EUIScene>(0x43));
+        m_layer->removeComponent(EUIScene_Panorama);
+        m_layer->removeComponent(EUIScene_Logo);
     }
 }
 
@@ -64,7 +65,7 @@ unsigned int UIScene_NewUpdateMessage::mapElementsAndNames()
 
 void UIScene_NewUpdateMessage::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, -1, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -76,56 +77,54 @@ std::wstring UIScene_NewUpdateMessage::getMoviePath()
 void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool released,
                                            bool pressed, bool&)
 {
-    if (!m_ignoreInput)
+    if (m_ignoreInput)
+        return;
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
     {
-        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-        if (action < 8)
-        {
-            if (action == 1)
-            {
-                unsigned int value = GameSettings::GetGameSettings(
-                    m_playerId, static_cast<eGameSetting>(0x16));
-                if (value > 0)
-                    --value;
-                GameSettings::SetGameSettings(m_playerId, static_cast<eGameSetting>(0x16),
-                                              static_cast<unsigned char>(value));
-                GameSettings::SetGameSettings(m_playerId, static_cast<eGameSetting>(0x25), 1);
-                GameSettings::CheckGameSettingsChanged(true, m_playerId);
-                gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0),
-                                                   static_cast<EUILayer>(0x53));
-                return;
-            }
-            if (action < 4 || action > 5)
-                return;
-        }
-        else if (action > 9 && action < 0xe)
-            return;
-        else if (action > 0xf && action != 0x14)
-            return;
+    case EControllerActions_MenuB:
+    {
+        unsigned int value = GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage);
+        if (value > 0)
+            --value;
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage,
+                                      static_cast<unsigned char>(value));
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_UpdateMessageSeen, 1);
+        GameSettings::CheckGameSettingsChanged(true, m_playerId);
+        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None, EUILayer_Count);
+        break;
+    }
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+    case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, released, pressed);
+        break;
     }
 }
 
-void UIScene_NewUpdateMessage::handlePress(int, int second)
+void UIScene_NewUpdateMessage::handlePress(int controlId, int)
 {
-    if (second == 0)
+    if (controlId == 0)
     {
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         unsigned int value = GameSettings::GetGameSettings(
-            m_playerId, static_cast<eGameSetting>(0x16));
+            m_playerId, eGameSetting_DisplayUpdateMessage);
         if (value > 0)
             --value;
-        GameSettings::SetGameSettings(m_playerId, static_cast<eGameSetting>(0x16),
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage,
                                       static_cast<unsigned char>(value));
         GameSettings::CheckGameSettingsChanged(true, m_playerId);
-        gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0),
-                                           static_cast<EUILayer>(0x53));
+        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None, EUILayer_Count);
     }
 }
 
 int UIScene_NewUpdateMessage::getSceneType()
 {
-    return 77;
+    return EUIScene_EULA;
 }
 
 bool UIScene_NewUpdateMessage::hasFocus(int)

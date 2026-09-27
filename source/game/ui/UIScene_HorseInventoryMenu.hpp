@@ -57,7 +57,7 @@ private:
     boost::shared_ptr<AbstractHorse> m_horse;
     UIControl_SlotList m_saddleSlot;
     UIControl_SlotList m_armorSlot;
-    UIControl_SlotList m_inventoryList;
+    UIControl_SlotList m_donkeyInventoryList;
     UIControl_Label m_horseLabel;
     UIControl_MinecraftHorse m_horseControl;
 };

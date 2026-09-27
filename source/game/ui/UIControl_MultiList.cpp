@@ -5,9 +5,6 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-void __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
-    FJ_List_MultiList* list, int index, std::vector<std::wstring> labels);
-
 UIControl_MultiList::UIControl_MultiList()
 {
 }
@@ -19,19 +16,19 @@ UIControl_MultiList::~UIControl_MultiList()
 void UIControl_MultiList::AddNewButton(const std::wstring& label, int id, bool useEllipsis)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_Button(label, id, useEllipsis);
-    addElement((UIControl::eUIControlType)1, id);
+    addElement(UIControl::eUIControlType_Button, id);
 }
 
 void UIControl_MultiList::AddNewLabel(const std::wstring& label, int id)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_Label(label);
-    addElement((UIControl::eUIControlType)8, id);
+    addElement(UIControl::eUIControlType_Label, id);
 }
 
 void UIControl_MultiList::AddNewCheckbox(const std::wstring& label, int id, bool checked)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_CheckBox(label, id, checked);
-    addElement((UIControl::eUIControlType)2, id);
+    addElement(UIControl::eUIControlType_CheckBox, id);
 }
 
 void UIControl_MultiList::AddNewControllerButton(const std::wstring& label,
@@ -40,7 +37,7 @@ void UIControl_MultiList::AddNewControllerButton(const std::wstring& label,
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_ControllerButton(
         label, secondaryLabel, html, id);
-    addElement((UIControl::eUIControlType)1, id);
+    addElement(UIControl::eUIControlType_Button, id);
 }
 
 void UIControl_MultiList::AddNewSlider(const std::wstring& label, int id, int minValue,
@@ -49,7 +46,7 @@ void UIControl_MultiList::AddNewSlider(const std::wstring& label, int id, int mi
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_Slider(
         label, id, minValue, maxValue, value, repeat, repeatDelay, repeatStep);
-    addElement((UIControl::eUIControlType)15, id);
+    addElement(UIControl::eUIControlType_Slider, id);
 }
 
 void UIControl_MultiList::SetCheckboxValue(int id, bool checked, bool immediate)
@@ -64,20 +61,19 @@ void UIControl_MultiList::SetCheckboxValue(int id, bool checked, bool immediate)
 
 bool UIControl_MultiList::IsCheckbox(int id)
 {
-    return istype((UIControl::eUIControlType)2, id);
+    return istype(UIControl::eUIControlType_CheckBox, id);
 }
 
-uint64_t UIControl_MultiList::GetCheckboxValue(int id)
+bool UIControl_MultiList::GetCheckboxValue(int id)
 {
-    return (uint64_t)m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->GetCheckBox(
-        getListIndex(id)) << 32;
+    return m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->GetCheckBox(getListIndex(id));
 }
 
 void UIControl_MultiList::AddNewTextInput(const std::wstring& label, int id, int charLimit)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_TextInput(
         label, id, charLimit);
-    addElement((UIControl::eUIControlType)17, id);
+    addElement(UIControl::eUIControlType_TextInput, id);
 }
 
 uint32_t UIControl_MultiList::GetSliderValue(int id)
@@ -110,19 +106,18 @@ void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labe
         possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
 
     FJ_List_MultiList* list = m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList();
-    __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
-        list, firstLabel, possibleLabels);
+    list->SetPossibleLabels(firstLabel, possibleLabels);
 }
 
 void UIControl_MultiList::AddNewMenuButton(const std::wstring& label, int id)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_MenuButton(label, id);
-    addElement((UIControl::eUIControlType)1, id);
+    addElement(UIControl::eUIControlType_Button, id);
 }
 
-void UIControl_MultiList::IsSlider(int id)
+bool UIControl_MultiList::IsSlider(int id)
 {
-    istype((UIControl::eUIControlType)15, id);
+    return istype(UIControl::eUIControlType_Slider, id);
 }
 
 void UIControl_MultiList::HighlightItem(unsigned int id, bool update)

@@ -3,10 +3,36 @@
 
 #include "game/ui/UILayer.hpp"
 
-enum EUIGroup { EUIGroup_Unknown = 0 };
-enum EUILayer { EUILayer_Unknown = 0 };
+enum EUIGroup
+{
+    EUIGroup_DRC,
+    EUIGroup_Fullscreen,
+    EUIGroup_Player1,
+    EUIGroup_Player2,
+    EUIGroup_Player3,
+    EUIGroup_Player4,
+    EUIGroup_Count,
+    EUIGroup_PlayerDefault
+};
 
+enum EUILayer
+{
+    EUILayer_Debug,
+    EUILayer_Tooltips,
+    EUILayer_Alert,
+    EUILayer_Popup,
+    EUILayer_Fullscreen,
+    EUILayer_Tutorial,
+    EUILayer_Scene,
+    EUILayer_HUD,
+    EUILayer_Count
+};
+
+class UIComponent_PressStartToPlay;
+class UIComponent_Tooltips;
+class UIComponent_TutorialPopup;
 class UIComponent_WiiUDRC;
+class UIScene_HUD;
 
 class UIGroup
 {
@@ -32,7 +58,7 @@ public:
     void closeAllScenes();
     UIScene* GetTopScene(EUILayer layer);
     bool IsSceneInStack(EUIScene scene);
-    unsigned char GetMenuDisplayed();
+    bool GetMenuDisplayed();
     void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
     UIScene* getCurrentScene(int player);
     void showComponent(int player, EUIScene scene, EUILayer layer, bool show);
@@ -52,24 +78,22 @@ public:
     void handleUnlockFullVersion();
     void* getCommandBufferList();
 private:
-    UILayer* m_layers[8];
-    UIScene* m_component;
-    UIScene* m_componentSecondary;
-    UIScene* m_componentTertiary;
-    UIScene* m_componentQuaternary;
-    UIComponent_WiiUDRC* m_drcComponent;
+    UILayer* m_layers[EUILayer_Count];
+    UIComponent_Tooltips* m_tooltips;
+    UIComponent_TutorialPopup* m_tutorialPopup;
+    UIComponent_PressStartToPlay* m_pressStartToPlay;
+    UIScene_HUD* m_hud;
+    UIComponent_WiiUDRC* m_drc;
     int m_viewportType;
-    int m_group;
+    EUIGroup m_group;
     int m_player;
-    unsigned char m_menuDisplayed;
+    bool m_menuDisplayed;
     bool m_pauseMenuDisplayed;
     bool m_containerMenuDisplayed;
     bool m_ignoreAutosaveMenuDisplayed;
     bool m_ignorePlayerJoinMenuDisplayed;
-    unsigned char m_stackState5;
-    unsigned char m_unknown45[3];
-    int m_focusTimer;
-    int m_displayList;
+    int m_updateFocusStateCountdown;
+    int m_commandBufferList;
 };
 
 #endif

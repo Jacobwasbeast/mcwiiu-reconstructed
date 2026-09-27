@@ -10,7 +10,7 @@ FJ_BiomeSelectMenu::FJ_BiomeSelectMenu(fuiRenderNode* renderNode)
     : FJ_AbstractContainerDocument(renderNode), mNavigatorWidth(0.0f), mNavigatorHeight(0.0f),
       mNavigatorX(0.0f), mNavigatorY(0.0f)
 {
-    FJ_FuiNode* guide = getChildByName(std::string("MainPanel_NavigatorGuide"));
+    FJ_FuiNode* guide = getChildByName(std::string("MainPanel.NavigatorGuide"));
     if (guide != NULL)
     {
         mNavigatorWidth = guide->getWidth();
@@ -36,7 +36,7 @@ unsigned int FJ_BiomeSelectMenu::getType()
 
 void FJ_BiomeSelectMenu::SetMapNavigator(float scale, int x, int z)
 {
-    FJ_FuiNode* guide = getChildByName(std::string("MainPanel_NavigatorGuide"));
+    FJ_FuiNode* guide = getChildByName(std::string("MainPanel.NavigatorGuide"));
     guide->setWidth(static_cast<float>(Math::round(mNavigatorWidth / scale)));
     guide->setHeight(static_cast<float>(Math::round(mNavigatorHeight / scale)));
 

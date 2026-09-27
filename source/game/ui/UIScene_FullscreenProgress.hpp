@@ -5,6 +5,7 @@
 
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/ui/UIScene.hpp"
+#include "game/ui/UILayer.hpp"
 #include "game/ui/UIControl.hpp"
 #include "game/ui/UIControl_BitmapIcon.hpp"
 #include "game/ui/UIControl_Button.hpp"
@@ -13,6 +14,17 @@
 
 class C4JThreadImpl;
 class UILayer;
+
+struct FullscreenProgressState
+{
+    bool showConfirmation;
+    bool reservedFlag1;
+    bool reservedFlag2;
+    bool showTip;
+    int closeMode;
+    int playerId;
+    EUIScene backScene;
+};
 
 class UIScene_FullscreenProgress : public UIScene
 {
@@ -32,7 +44,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleTimerComplete(int timerId);
     void SetWasCancelled(bool cancelled);
     virtual bool isReadyToDelete();
@@ -42,13 +54,13 @@ public:
 private:
     C4JThreadImpl* m_thread;
     bool m_threadStarted;
-    void* m_progressData;
+    FullscreenProgressState* m_completionData;
     bool m_confirmationVisible;
-    void (*m_destroyCallback)(int);
-    void (*m_cancelCallback)(int);
-    int m_destroyCallbackData;
-    int m_cancelCallbackData;
-    bool m_threadReady;
+    int (*m_cancelFunc)(void*);
+    int (*m_completeFunc)(void*);
+    void* m_cancelFuncParam;
+    void* m_completeFuncParam;
+    bool m_waitForThreadToDelete;
     EMiniGameId m_miniGameId;
     bool m_miniGame;
     std::wstring m_titleText;

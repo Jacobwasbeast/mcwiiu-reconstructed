@@ -40,6 +40,8 @@ class AbstractContainerMenu
 {
     friend class ClientPacketListener;
     friend class IUIScene_AbstractContainerMenu;
+    friend class LocalPlayer;
+    friend class MultiplayerLocalPlayer;
     friend class ServerGamePacketListenerImpl;
     friend class ServerPlayer;
     friend class UIScene_AbstractContainerMenu;
@@ -100,19 +102,20 @@ public:
     bool IsSmallInventory();
     static bool matches(AbstractContainerMenu* first, AbstractContainerMenu* second);
 
-protected:
     ItemList m_items;
     std::vector<Slot*> m_slots;
     int m_containerId;
+
+protected:
     short m_transactionId;
     int m_quickcraftType;
     int m_quickcraftStatus;
     SlotSet m_quickcraftSlots;
     bool m_quickcraftActive;
     std::vector<net_minecraft_world_inventory::ContainerListener*> m_listeners;
-    bool m_changed;
-    int m_data;
-    SlotSet m_remoteSlots;
+    bool m_uiQuickCraftActive;
+    int m_uiQuickCraftRemaining;
+    SlotSet m_uiQuickCraftSlots;
     PlayerSet m_synched;
 };
 

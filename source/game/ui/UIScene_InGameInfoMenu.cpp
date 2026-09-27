@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_InGameInfoMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -14,15 +15,11 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/world/generation/Player.hpp"
 #include "vendor/_XPARTY_USER_INFO.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
-
-struct _XPARTY_USER_LIST
-{
-    unsigned int count;
-    _XPARTY_USER_INFO users[4];
-};
 
 struct InGamePlayerOptionsData
 {
@@ -31,14 +28,13 @@ struct InGamePlayerOptionsData
     unsigned int privileges;
 };
 
-extern unsigned int XPartyGetUserList(_XPARTY_USER_LIST* users);
 
 UIScene_InGameInfoMenu::UIScene_InGameInfoMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), IUIScene_PlayerList(), m_localPlayerIsModerator(false), m_players(),
       m_optionsButton(), m_playerList(), m_titleLabel()
 {
     initialiseMovie();
-    m_optionsButton.init(UIString(L10N::GetString(0x888510b3)), 0);
+    m_optionsButton.init(UIString(L10N::GetString(IDS_HOST_OPTIONS)), 0);
     m_titleLabel.init(UIString(L10N::GetString(0xfa81145)));
     m_playerList.init(1);
 
@@ -123,10 +119,10 @@ bool UIScene_InGameInfoMenu::hasSomethingToEdit(unsigned char smallId)
     INetworkPlayer* local = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(GetPad());
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
     if (local == player)
-        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf)) != 0;
+        return g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) != 0;
     if (player == NULL)
         return true;
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xc)) == 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) == 0)
         return true;
     if (local != NULL && local->IsHost())
         return true;
@@ -143,19 +139,19 @@ void UIScene_InGameInfoMenu::updateTooltips()
     _XPARTY_USER_LIST users;
     users.count = 0;
     if (XPartyGetUserList(&users) != 0 && users.count > 1 && !CGameNetworkManager::sInstance.IsLocalGame())
-        partyTooltip = static_cast<int>(0xe7e99795);
+        partyTooltip = static_cast<int>(IDS_TOOLTIPS_INVITE_PARTY);
     if (selected >= 0 && selected < GetPlayerCount())
     {
         PlayerInfo* info = GetPlayer(selected);
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(info->smallId);
         if (m_optionsButton.hasFocus())
-            tooltip = static_cast<int>(0x8d6323ed);
+            tooltip = static_cast<int>(IDS_TOOLTIPS_SELECT);
         else if (player != NULL && hasSomethingToEdit(info->smallId))
-            tooltip = static_cast<int>(0x6fb35f79);
+            tooltip = static_cast<int>(IDS_TOOLTIPS_PRIVILEGES);
         else if (player != NULL && !player->IsHost())
-            tooltip = static_cast<int>(0x3e96698f);
+            tooltip = static_cast<int>(IDS_TOOLTIPS_KICK);
     }
-    gConsoleUIController.SetTooltips(GetPad(), tooltip, static_cast<int>(0x4f6bcf5e), partyTooltip,
+    gConsoleUIController.SetTooltips(GetPad(), tooltip, static_cast<int>(IDS_TOOLTIPS_BACK), partyTooltip,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      false, false);
 }
@@ -208,7 +204,7 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
                                          bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(GetPad(), action, repeat, released, pressed);
-    if (action == 0x15 && pressed && !repeat)
+    if (action == EControllerActions_MenuCancel && pressed && !repeat)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
         navigateBack();
@@ -224,26 +220,26 @@ void UIScene_InGameInfoMenu::handleGainFocus(bool hadFocus)
             GetPad(), IUIScene_PlayerList::OnPlayerChanged, this);
 }
 
-void UIScene_InGameInfoMenu::handlePress(int first, int second)
+void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (first == 0)
+    if (controlId == 0)
     {
-        gConsoleUIController.NavigateToScene(GetPad(), static_cast<EUIScene>(0x28), NULL,
-                                             static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(GetPad(), EUIScene_InGameHostOptionsMenu, NULL,
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    if (first != 1 || second < 0 || second >= GetPlayerCount())
+    if (controlId != 1 || childId < 0 || childId >= GetPlayerCount())
         return;
-    PlayerInfo* info = GetPlayer(second);
+    PlayerInfo* info = GetPlayer(childId);
     if (info != NULL && m_localPlayerIsModerator && hasSomethingToEdit(info->smallId))
     {
         InGamePlayerOptionsData* data = new InGamePlayerOptionsData;
         data->playerId = GetPad();
         data->smallId = info->smallId;
         data->privileges = g_pApp->GetPlayerPrivileges(info->smallId);
-        gConsoleUIController.NavigateToScene(GetPad(), static_cast<EUIScene>(0x29), data,
-                                             static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(GetPad(), EUIScene_InGamePlayerOptionsMenu, data,
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
     }
 }
 
@@ -252,7 +248,7 @@ void UIScene_InGameInfoMenu::handleDestroy()
     CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(
         GetPad(), IUIScene_PlayerList::OnPlayerChanged, this);
     if (m_layer != NULL)
-        m_layer->showComponent(GetPad(), static_cast<EUIScene>(0x48), false);
+        m_layer->showComponent(GetPad(), EUIScene_MenuBackground, false);
 }
 
 void UIScene_InGameInfoMenu::handleFocusChange(int focus, int childFocus)
@@ -275,5 +271,5 @@ int UIScene_InGameInfoMenu::GetPad()
 
 int UIScene_InGameInfoMenu::getSceneType()
 {
-    return 30;
+    return EUIScene_InGameInfoMenu;
 }

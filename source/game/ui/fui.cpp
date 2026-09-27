@@ -404,13 +404,13 @@ fuiRenderNode* fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent
         {
             fuiTimelineAction& action = node->m_file->timelineActionData[timeline->timelineActionIndex + i];
             if (action.actionType == 0x1e)
-                timelineNode->addFrameAction(action.frameIndex, static_cast<fuiRenderNodeTimeline::eFrameActionType>(1), std::string("?"));
+                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_Stop, std::string("?"));
             else if (action.actionType == 0x1f)
-                timelineNode->addFrameAction(action.frameIndex, static_cast<fuiRenderNodeTimeline::eFrameActionType>(2), std::string(action.actionValue));
+                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStopLabel, std::string(action.actionValue));
             else if (action.actionType == 0x20)
-                timelineNode->addFrameAction(action.frameIndex, static_cast<fuiRenderNodeTimeline::eFrameActionType>(3), std::string(action.actionValue));
+                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndPlay, std::string(action.actionValue));
             else if (action.actionType == 0x21)
-                timelineNode->addFrameAction(action.frameIndex, static_cast<fuiRenderNodeTimeline::eFrameActionType>(0), std::string(action.actionValue));
+                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStop, std::string(action.actionValue));
         }
     }
 

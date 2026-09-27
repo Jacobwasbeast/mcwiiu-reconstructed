@@ -1,4 +1,5 @@
 #include "game/ui/SuperflatMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/ui/UIControl_MultiList.hpp"
 #include "game/core/L10N.hpp"
@@ -23,10 +24,16 @@
 #include <algorithm>
 #include <cstdio>
 #include <cwchar>
+#include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/BannerBlock.hpp"
+#include "game/world/block/HugeMushroomBlock.hpp"
+#include "game/item/Item.hpp"
+#include "game/ui/UIScene_CreativeMenu.hpp"
+#include "game/core/StringFormat.hpp"
 
-std::wstring formatwstr(const wchar_t* format, ...);
+Block** getBlackList();
+Block** getWhiteList();
 Block** getPlacementRestrictedList();
-long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum);
 
 SuperflatMenu::SliderLabelBehaviour::SliderLabelBehaviour(int name, unsigned int minimum, unsigned int maximum)
     : mName(name), mMinimum(minimum), mMaximum(maximum)
@@ -479,9 +486,22 @@ SuperflatMenu::BiomeInfo::~BiomeInfo()
 SuperflatMenu::CustomSuperflatBlocks::CustomSuperflatBlocks()
     : boost::unordered_map<int, not_null_ptr<ItemInstance> >(), mMaxId(0)
 {
-    addItem(0, new ItemInstance(Blocks::AIR, 1, 0));
-    addItem(1, new ItemInstance(Blocks::WATER, 1, 0));
+    addItem(0, new ItemInstance(Blocks::air, 1, 0));
+    addItem(1, new ItemInstance(Blocks::water, 1, 0));
     addItem(2, new ItemInstance(Blocks::lava, 1, 0));
+
+    int nextId = 3;
+    for (int group = 0; group < UIScene_CreativeMenu::ECreative_Inventory_Groups_Count; ++group)
+    {
+        const std::vector<const UIScene_CreativeMenu::ItemBuilder*>& builders = UIScene_CreativeMenu::s_groupItems[group];
+        for (std::vector<const UIScene_CreativeMenu::ItemBuilder*>::const_iterator it = builders.begin();
+             it != builders.end(); ++it)
+        {
+            not_null_ptr<ItemInstance> item = (*it)->build();
+            if (!item->isEmpty() && Block::byItem(item->getItem()) != NULL && addItem(nextId, item))
+                ++nextId;
+        }
+    }
 }
 
 SuperflatMenu::CustomSuperflatBlocks::~CustomSuperflatBlocks()
@@ -502,8 +522,30 @@ bool SuperflatMenu::CustomSuperflatBlocks::inlist(Block** list, Block* block)
 
 int SuperflatMenu::CustomSuperflatBlocks::addItem(int id, not_null_ptr<ItemInstance> itemValue)
 {
+    const int itemId = Item::getId(itemValue->getItem());
+    Block* block = Block::byId(itemId);
+    if (!Item::isItemABlock(itemId))
+        return 0;
+    if (block == NULL)
+        return 0;
+
+    const BlockState* state = block->getBlockState(itemValue->getAuxValue());
+    const bool listed = !inlist(getBlackList(), block)
+                        && (state->isSolidBlockingCubeAndNotSignalSource() || inlist(getWhiteList(), block));
+    if (!listed || dynamic_cast<HalfSlabBlock*>(block) != NULL || dynamic_cast<BannerBlock*>(block) != NULL)
+        return 0;
+
+    if (dynamic_cast<HugeMushroomBlock*>(block) != NULL)
+    {
+        HugeMushroomBlock::Variant* variant = state->getValue(HugeMushroomBlock::VARIANT);
+        if (variant != HugeMushroomBlock::Variant::ALL_OUTSIDE && variant != HugeMushroomBlock::Variant::STEM)
+            return 0;
+    }
+
+    if (mMaxId < id)
+        mMaxId = id;
     (*this)[id] = itemValue;
-    return id;
+    return 1;
 }
 
 int SuperflatMenu::CustomSuperflatBlocks::addItem(int id, ItemInstance* itemValue)
@@ -537,7 +579,7 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
     Block* current = Block::byId(ids[layer]);
     Block* above = Block::byId(ids[layer + 1]);
     Block* underneath = Block::byId(ids[below]);
-    if (current == Blocks::WATER)
+    if (current == Blocks::water)
     {
         if (underneath == Blocks::concrete_powder)
         {
@@ -551,8 +593,8 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
             return false;
         }
     }
-    if ((current == Blocks::lava && underneath == Blocks::WATER) ||
-        (current == Blocks::WATER && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
+    if ((current == Blocks::lava && underneath == Blocks::water) ||
+        (current == Blocks::water && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
     {
         ids[below] = Block::getId(Blocks::stone);
         data[below] = 0;
@@ -567,16 +609,16 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
             return true;
         }
     }
-    if (current == Blocks::AIR || current == Blocks::lava)
+    if (current == Blocks::air || current == Blocks::lava)
         return false;
-    if (static_cast<FireBlock*>(Blocks::FIRE)->getFlameOdds(current) < 1)
+    if (static_cast<FireBlock*>(Blocks::fire)->getFlameOdds(current) < 1)
         return false;
     int scan = below;
     int limit = layer - 3;
     for (; scan >= 0 && scan >= limit; --scan)
     {
         Block* scanned = Block::byId(ids[scan]);
-        if (scanned != Blocks::AIR)
+        if (scanned != Blocks::air)
         {
             if (scanned != Blocks::lava)
                 return false;
@@ -702,10 +744,10 @@ SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()
         { 21, static_cast<int>(0xcdc09066u), not_null_ptr<ItemInstance>() },
         { 6, static_cast<int>(0xdccb0c5eu), not_null_ptr<ItemInstance>() },
         { 3, static_cast<int>(0xb5196ce2u), not_null_ptr<ItemInstance>() },
-        { 0, static_cast<int>(0xb451512fu), not_null_ptr<ItemInstance>() },
-        { 40, static_cast<int>(0xdaccd491u), not_null_ptr<ItemInstance>() },
+        { 0, static_cast<int>(IDS_BIOME_DESC_OCEAN), not_null_ptr<ItemInstance>() },
+        { 40, static_cast<int>(IDS_BIOME_DESC_WARM_OCEAN), not_null_ptr<ItemInstance>() },
         { 42, static_cast<int>(0x5ecebfe6u), not_null_ptr<ItemInstance>() },
-        { 44, static_cast<int>(0x40917b04u), not_null_ptr<ItemInstance>() },
+        { 44, static_cast<int>(IDS_BIOME_DESC_COLD_OCEAN), not_null_ptr<ItemInstance>() },
         { 46, static_cast<int>(0x84809552u), not_null_ptr<ItemInstance>() },
         { 12, static_cast<int>(0xc36e4255u), not_null_ptr<ItemInstance>() },
         { 30, static_cast<int>(0x54e18948u), not_null_ptr<ItemInstance>() },
@@ -734,11 +776,11 @@ SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()
         items[6].mItem = createItem(Blocks::cocoa);
         items[7].mItem = createItem(Blocks::waterlily);
         items[8].mItem = createItem(Blocks::stone);
-        items[9].mItem = createItem(Blocks::WATER);
-        items[10].mItem = createItem(Blocks::WATER);
-        items[11].mItem = createItem(Blocks::WATER);
-        items[12].mItem = createItem(Blocks::WATER);
-        items[13].mItem = createItem(Blocks::WATER);
+        items[9].mItem = createItem(Blocks::water);
+        items[10].mItem = createItem(Blocks::water);
+        items[11].mItem = createItem(Blocks::water);
+        items[12].mItem = createItem(Blocks::water);
+        items[13].mItem = createItem(Blocks::water);
         items[14].mItem = createItem(Blocks::ice);
         items[15].mItem = createItem(Blocks::snow_layer);
         TypedBoxed<PlanksBlock::Variant*> leavesValue(PlanksBlock::Variant::SPRUCE);

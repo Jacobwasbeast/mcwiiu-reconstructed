@@ -19,6 +19,18 @@ struct SKIN_BOX;
 class UIScene_SkinSelectMenu : public UIScene
 {
 public:
+    enum ECharacter
+    {
+        eCharacter_Current,
+        eCharacter_Next1,
+        eCharacter_Next2,
+        eCharacter_Next3,
+        eCharacter_Previous1,
+        eCharacter_Previous2,
+        eCharacter_Previous3,
+        eCharacter_Count
+    };
+
     UIScene_SkinSelectMenu(int player, void* data, UILayer* layer);
     virtual ~UIScene_SkinSelectMenu();
 
@@ -31,7 +43,7 @@ public:
     virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     virtual void handleReload();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleAnimationEnd();
     virtual void HandleDLCMountingComplete();
@@ -68,37 +80,37 @@ public:
 
 private:
     IUIScene_DlcSelectMenu m_dlcScene;
-    UIControl_PlayerSkinPreview m_characterPreviews[7];
-    UIControl_Label m_skinTitle1;
-    UIControl_Label m_skinTitle2;
-    UIControl_Label m_packName;
-    UIControl_Label m_packType;
-    UIControl m_timer;
-    UIControl m_characterPanel;
-    UIControl_Touch m_touch;
-    UIControl_MultiList m_skinButtonList;
+    UIControl_PlayerSkinPreview m_characters[eCharacter_Count];
+    UIControl_Label m_labelSkinName;
+    UIControl_Label m_labelSkinOrigin;
+    UIControl_Label m_labelPackName;
+    UIControl_Label m_labelPackType;
+    UIControl m_controlCharacters;
+    UIControl m_controlTimer;
+    UIControl_Touch m_touchCharacters;
+    UIControl_MultiList m_packList;
     UIControl_BitmapIcon m_packIcon;
     std::vector<int> m_packIds;
     std::vector<int> m_newPackIds;
-    std::vector<int> m_selectedPackIds;
-    int m_activePackId;
-    int m_packTypeId;
-    int m_skinIndex;
-    int m_selectedSkinId;
-    std::wstring m_skinName;
-    std::wstring m_defaultSkinName;
-    std::wstring m_textureName;
-    std::vector<SKIN_BOX*>* m_skinBoxes;
-    bool m_characterFacing;
-    bool m_skinChanging;
-    bool m_favouriteChanged;
-    bool m_focusChanged;
-    bool m_packChanged;
-    bool m_dlcChanged;
-    bool m_hasSelectedPack;
-    int m_highlightedPackId;
-    int m_packButtonX;
-    bool m_inputPending;
+    std::vector<int> m_addedPackIds;
+    int m_selectedPackId;
+    unsigned int m_packIndex;
+    unsigned int m_skinIndex;
+    int m_originalSkinId;
+    std::wstring m_currentSkinPath;
+    std::wstring m_selectedSkinPath;
+    std::wstring m_selectedCapePath;
+    std::vector<SKIN_BOX*>* m_additionalSkinBoxes;
+    bool m_skinAnimating;
+    bool m_skinSliding;
+    bool m_noSkinsToShow;
+    bool m_skinUpdatePending;
+    bool m_packFocusChanged;
+    bool m_packListDirty;
+    bool m_hasTexturePackSkinPack;
+    int m_texturePackSkinPackId;
+    int m_touchStartX;
+    bool m_touchConsumed;
 };
 
 #endif

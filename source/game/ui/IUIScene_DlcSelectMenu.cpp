@@ -1,4 +1,5 @@
 #include "game/ui/IUIScene_DlcSelectMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -23,7 +24,7 @@ void IUIScene_DlcSelectMenu::tick()
 int IUIScene_DlcSelectMenu::MustSignInReturned(void*, int userIndex,
                                                C4JStorage::EMessageResult result)
 {
-    if (result == C4JStorage::EMessageResult_4)
+    if (result == C4JStorage::EMessageResult_Accept)
         CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex, NULL, NULL);
     return 0;
 }
@@ -39,7 +40,7 @@ int IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
                                                C4JStorage::EMessageResult result)
 {
     IUIScene_DlcSelectMenu* menu = static_cast<IUIScene_DlcSelectMenu*>(context);
-    if (result == C4JStorage::EMessageResult_4 &&
+    if (result == C4JStorage::EMessageResult_Accept &&
         gProfile->IsSignedIn(userIndex))
     {
         if (!gProfile->IsSignedInLive(userIndex))
@@ -50,8 +51,8 @@ int IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
                 (void*)gApp.GetCommerceInstance());
             if (!commerce->OwnsBundleContainingPack(menu->m_pack->GetPackId()))
             {
-                int messageParameter = (int)0xb9a1bf4d;
-                gConsoleUIController.RequestErrorMessage(0x9da04a9e, 0xcba57cf3,
+                int messageParameter = (int)IDS_CONFIRM_OK;
+                gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT,
                                                          &messageParameter, 1, userIndex,
                                                          NULL, NULL, NULL, true);
             }
@@ -64,7 +65,7 @@ int IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
 void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
                                              eDLCContentType contentType)
 {
-    int messageParameter = (int)0xb9a1bf4d;
+    int messageParameter = (int)IDS_CONFIRM_OK;
     if (gProfile->IsGuest(userIndex))
     {
         gConsoleUIController.RequestAlertMessage(0x0e6bf122, 0x8ba9896f,
@@ -92,7 +93,7 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
 
     m_purchasePending = true;
     handled = false;
-    int parameters[2] = { (int)0xb9a1bf4d, (int)0x4fcbc7e7 };
+    int parameters[2] = { (int)IDS_CONFIRM_OK, (int)IDS_CONFIRM_CANCEL };
     int selectedType = (int)m_contentType;
     if ((int)contentType != 0xb)
         selectedType = (int)contentType;

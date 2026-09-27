@@ -449,7 +449,7 @@ void FJ_CraftingMenu::SetSafeZone(int top, int bottom, int left, int right)
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
 
-    setX(-static_cast<float>(top) - 176.0f);
+    setY(top);
 }
 
 void FJ_CraftingMenu::SelectVerticalItem(int index) {

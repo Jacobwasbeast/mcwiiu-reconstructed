@@ -42,22 +42,22 @@ public:
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void updateViewportTouchOffset();
     unsigned int _SetTooltip(unsigned int index, int value);
-    void SetTooltipText(unsigned int player, int index);
-    void SetEnableTooltips(bool enabled);
-    void ShowTooltip(unsigned int player, bool visible);
+    virtual void SetTooltipText(unsigned int player, int index);
+    virtual void SetEnableTooltips(bool enabled);
+    virtual void ShowTooltip(unsigned int player, bool visible);
     unsigned int GetToolTipButton(unsigned int button);
     unsigned int _SetTooltip(unsigned int index, int type, int subtype, int textId,
                              bool& changed);
     unsigned int HandleToolTipButton(unsigned int player, EControllerActions action,
                                      unsigned int& button, int type);
     void UpdateControllerType(int controllerType);
-    void SetTooltips(int player, int* tooltips, bool visible);
-    void SetTooltips(int player, int first, int second, int third, int fourth,
+    virtual void SetTooltips(int player, int* tooltips, bool visible);
+    virtual void SetTooltips(int player, int first, int second, int third, int fourth,
                      int fifth, int sixth, int seventh, int eighth, int ninth,
                      int tenth, int eleventh, int twelfth, int thirteenth,
                      int fourteenth, int fifteenth, int sixteenth, bool visible);
-    void EnableTooltip(unsigned int player, bool enabled);
-    bool IsToolTipDynamic(unsigned int player, EControllerActions& action);
+    virtual void EnableTooltip(unsigned int player, bool enabled);
+    virtual bool IsToolTipDynamic(unsigned int player, EControllerActions& action);
     virtual void handleReload();
     virtual void handleInput(int player, int action, bool repeat, bool released,
                              bool pressed, bool& handled);

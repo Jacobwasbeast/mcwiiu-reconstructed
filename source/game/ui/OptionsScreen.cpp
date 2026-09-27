@@ -50,11 +50,11 @@ void OptionsScreen::init()
     }
 
     mButtons.push_back(new Button(101, mWidth / 2 - 100, mHeight / 6 + 108,
-                                  language->getElement(L"options_video")));
+                                  language->getElement(L"options.video")));
     mButtons.push_back(new Button(100, mWidth / 2 - 100, mHeight / 6 + 132,
-                                  language->getElement(L"options_controls")));
+                                  language->getElement(L"options.controls")));
     mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168,
-                                  language->getElement(L"gui_done")));
+                                  language->getElement(L"gui.done")));
 }
 
 void OptionsScreen::buttonClicked(Button* button)

@@ -41,7 +41,7 @@ public:
     void loadLevelList();
     std::wstring getWorldId(int index);
     std::wstring getWorldName(int index);
-    void postInit();
+    virtual void postInit();
     void worldSelected(int index);
 
 private:

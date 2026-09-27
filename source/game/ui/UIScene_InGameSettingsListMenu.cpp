@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_InGameSettingsListMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <string>
@@ -26,6 +27,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
@@ -55,13 +57,13 @@ UIScene_InGameSettingsListMenu::UIScene_InGameSettingsListMenu(int sceneType, vo
 {
     initialiseMovie();
     const MiniGameDef* firstMiniGame = Minecraft::GetInstance()->GetFirstMiniGame();
-    m_miniGameId = static_cast<EMiniGameId>(firstMiniGame->GetId());
+    m_miniGameId = firstMiniGame->GetId();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     m_customGame = miniGame->GetId() == eMiniGameId_Lobby;
-    m_launchData.mValue5C = m_miniGameId;
-    m_launchData.mFlag58 = CGameNetworkManager::sInstance.IsInPublicJoinableGame();
-    m_launchData.mFlag68 = miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0;
-    m_launchData.mValue18 = sceneType;
+    m_launchData.mMiniGameId = m_miniGameId;
+    m_launchData.mMatchmaking = CGameNetworkManager::sInstance.IsInPublicJoinableGame();
+    m_launchData.mTimeTrial = miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0;
+    m_launchData.mPad = sceneType;
     if (m_miniGameId == eMiniGameId_Battle)
         m_mapSelection = GameSettings::GetBattleMiniGameMapSelection(sceneType);
     else if (m_miniGameId == eMiniGameId_Glide)
@@ -98,8 +100,8 @@ void UIScene_InGameSettingsListMenu::EnableCustomOptions(bool enabled)
         m_multiList.EnableItem(13, enabled, true);
         m_multiList.EnableItem(14, enabled, true);
         if (!largeSession)
-            m_multiList.SetCheckboxValue(0, m_playerSettings.Get(eCustomGameModeHostOption_CentreSpawn) != 0, true);
-        m_multiList.SetCheckboxValue(5, m_playerSettings.Get(eCustomGameModeHostOption_NoSmallSkins) == 0, true);
+            m_multiList.SetCheckboxValue(0, m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_CentreSpawn) != 0, true);
+        m_multiList.SetCheckboxValue(5, m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0, true);
         m_multiList.SetCheckboxValue(11, m_playerSettings.mNaturalRegeneration, true);
         m_multiList.SetCheckboxValue(13, m_playerSettings.mSmallInventoryEnabled, true);
         m_multiList.SetCheckboxValue(14, m_playerSettings.mTakeEverythingEnabled, true);
@@ -125,7 +127,7 @@ void UIScene_InGameSettingsListMenu::Init()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     m_gameStarted = minecraft->mLevel != 0;
-    m_primaryPlayer = g_pApp->GetPrimaryUserIndex() == m_stageWidth;
+    m_primaryPlayer = gProfile->GetPrimaryPad() == m_playerId;
     m_host = CGameNetworkManager::sInstance.IsHost();
     bool canEdit = m_host && m_primaryPlayer;
 
@@ -135,7 +137,7 @@ void UIScene_InGameSettingsListMenu::Init()
 
     if (miniGame->HasMultipleMaps() && canEdit && m_customGame && m_miniGameId == eMiniGameId_Battle)
     {
-        m_multiList.AddNewButton(std::wstring(L10N::GetString(0x88c46bf1)), 1, true);
+        m_multiList.AddNewButton(std::wstring(L10N::GetString(IDS_MG_SELECT_MAPS)), 1, true);
         m_multiList.EnableItem(1, true, true);
     }
 
@@ -144,16 +146,16 @@ void UIScene_InGameSettingsListMenu::Init()
         m_roundLengthSlider = MultiListSliderLogic(2, 0x908811f4, eMiniGameId_Battle,
                                                    eCustomGameModeHostOption_RoundLength);
         m_roundLengthSlider.AddTo(m_multiList,
-                                  m_playerSettings.Get(eCustomGameModeHostOption_RoundLength));
+                                  m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_RoundLength));
     }
 
     if (miniGame->HasCentralSpawnOption())
         m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xef2a2f6a)), 0,
-            m_playerSettings.Get(eCustomGameModeHostOption_CentreSpawn) != 0);
+            m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_CentreSpawn) != 0);
 
     std::wstring livesLabel = m_playerSettings.mLivesPerRound == 0
-        ? makeTextLabel(0x8d5cbb71, 0x1d2ede0f)
-        : makeValueLabel(0x8d5cbb71, m_playerSettings.mLivesPerRound);
+        ? makeTextLabel(IDS_MG_LIVES_PER_ROUND, IDS_MG_INFINITE)
+        : makeValueLabel(IDS_MG_LIVES_PER_ROUND, m_playerSettings.mLivesPerRound);
     m_multiList.AddNewSlider(livesLabel, 8,
         miniGame->HasFeatureSupportForInfiniteLives() ? 0 : 1, 10,
         m_playerSettings.mLivesPerRound, false, 7, 3);
@@ -161,12 +163,12 @@ void UIScene_InGameSettingsListMenu::Init()
     m_gameVariantSlider = MultiListSliderLogic(4, 0x901c1fe8, m_miniGameId,
                                                eCustomGameModeHostOption_SpectateMode);
     m_gameVariantSlider.AddTo(m_multiList,
-                              m_playerSettings.Get(eCustomGameModeHostOption_SpectateMode));
+                              m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_SpectateMode));
 
     if (m_miniGameId == eMiniGameId_Battle)
     {
         m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xa329d6e9)), 5,
-            m_playerSettings.Get(eCustomGameModeHostOption_NoSmallSkins) == 0);
+            m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0);
 
         int lootSet = m_playerSettings.mLootSetId;
         if (m_customGame && m_playerSettings.mRandomLootSet)
@@ -211,7 +213,7 @@ void UIScene_InGameSettingsListMenu::Init()
                     arenaSize = index;
         }
         std::wstring arenaLabel = arenaSize == 0
-            ? makeTextLabel(0x36df2177, 0x74ae70e6)
+            ? makeTextLabel(0x36df2177, IDS_MG_AUTO)
             : std::wstring(L10N::GetString(0x36df2177)) + L" x " +
               _toString<float>(arenaSizeLabels[arenaSize]);
         m_multiList.AddNewSlider(arenaLabel, 16, 0, 5, arenaSize, true, 7, 3);
@@ -219,7 +221,7 @@ void UIScene_InGameSettingsListMenu::Init()
         int layerCount = m_playerSettings.mLayerCount.isSet() ? m_playerSettings.mLayerCount.get() : 0;
         std::wstring layerLabel = layerCount > 0
             ? makeValueLabel(0x50849384, layerCount)
-            : makeTextLabel(0x50849384, 0x74ae70e6);
+            : makeTextLabel(0x50849384, IDS_MG_AUTO);
         m_multiList.AddNewSlider(layerLabel, 17, 0, 8, layerCount, false, 7, 3);
         m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x40ea8efc)), 18,
                                    m_playerSettings.mSpectatorParticipation);
@@ -249,7 +251,7 @@ void UIScene_InGameSettingsListMenu::UpdateSettings(bool unavailable)
     m_multiList.clearList();
     Init();
     m_multiList.setCurrentSelection(activeItem, false, true);
-    int parameters[1] = { static_cast<int>(0xb9a1bf4d) };
+    int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
     if (unavailable)
     {
         gConsoleUIController.RequestAlertMessage(0x6abe4799, 0xd5232b99, parameters,
@@ -259,8 +261,8 @@ void UIScene_InGameSettingsListMenu::UpdateSettings(bool unavailable)
     }
     else
     {
-        gConsoleUIController.RequestAlertMessage(0x6abe4799, 0xba3da348, parameters,
-                                                  1, m_stageWidth, 0, 0, 0, true);
+        gConsoleUIController.RequestAlertMessage(0x6abe4799, IDS_MG_SETTINGS_UPDATED_MSG, parameters,
+                                                  1, m_playerId, 0, 0, 0, true);
     }
 }
 
@@ -271,8 +273,8 @@ void UIScene_InGameSettingsListMenu::tick()
 
 void UIScene_InGameSettingsListMenu::updateTooltips()
 {
-    int accept = m_host && m_primaryPlayer ? 0x8d6323ed : -1;
-    gConsoleUIController.SetTooltips(m_stageWidth, accept, 0x4f6bcf5e, -1, -1, -1, -1, -1,
+    int accept = m_host && m_primaryPlayer ? IDS_TOOLTIPS_SELECT : -1;
+    gConsoleUIController.SetTooltips(m_playerId, accept, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -286,13 +288,13 @@ void UIScene_InGameSettingsListMenu::updateComponents()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mLevel == 0)
     {
-        m_layer->showComponent(m_stageWidth, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_stageWidth, static_cast<EUIScene>(0x43), true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, true);
     }
     else
     {
-        m_layer->showComponent(m_stageWidth, static_cast<EUIScene>(0x42), false);
-        m_layer->showComponent(m_stageWidth, static_cast<EUIScene>(0x43),
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+        m_layer->showComponent(m_playerId, EUIScene_Logo,
                                g_pApp->GetLocalPlayerCount() == 1);
     }
 }
@@ -309,18 +311,18 @@ void UIScene_InGameSettingsListMenu::setGameSettings()
         (m_miniGameId != eMiniGameId_Battle && m_miniGameId != eMiniGameId_Tumble))
         return;
 
-    unsigned int hostOptions = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x20));
+    unsigned int hostOptions = g_pApp->GetGameHostOption(eGameHostOption_All);
     if (m_miniGameId == eMiniGameId_Battle)
     {
-        m_playerSettings.Set(eCustomGameModeHostOption_CentreSpawn,
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn,
                              static_cast<unsigned int>(m_multiList.GetCheckboxValue(0)));
-        m_playerSettings.Set(eCustomGameModeHostOption_NoSmallSkins,
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_NoSmallSkins,
                              static_cast<unsigned int>(m_multiList.GetCheckboxValue(5)) ^ 1);
         m_playerSettings.mNaturalRegeneration = m_multiList.GetCheckboxValue(11) != 0;
         m_playerSettings.mSmallInventoryEnabled = m_multiList.GetCheckboxValue(13) != 0;
         m_playerSettings.mTakeEverythingEnabled = m_multiList.GetCheckboxValue(14) != 0;
         m_playerSettings.mChestRefillEnabled = m_multiList.GetCheckboxValue(15) != 0;
-        g_pApp->SetGameHostOption(hostOptions, static_cast<eGameHostOption>(0x1d),
+        g_pApp->SetGameHostOption(hostOptions, eGameHostOption_NaturalRegeneration,
                                   m_playerSettings.mNaturalRegeneration);
     }
     else
@@ -332,9 +334,9 @@ void UIScene_InGameSettingsListMenu::setGameSettings()
     bool playerSettingsChanged = !(m_playerSettings == m_originalPlayerSettings);
     bool mapChanged = false;
     if (m_miniGameId == eMiniGameId_Battle)
-        mapChanged = GameSettings::GetBattleMiniGameMapSelection(m_stageWidth) != m_mapSelection;
+        mapChanged = GameSettings::GetBattleMiniGameMapSelection(m_playerId) != m_mapSelection;
     else if (m_miniGameId == eMiniGameId_Glide)
-        mapChanged = GameSettings::GetGlideMiniGameMapSelection(m_stageWidth) != m_mapSelection;
+        mapChanged = GameSettings::GetGlideMiniGameMapSelection(m_playerId) != m_mapSelection;
     else
         mapChanged = m_mapSelection != 0;
 
@@ -347,9 +349,9 @@ void UIScene_InGameSettingsListMenu::setGameSettings()
         gMinecraftServer->mPlayers->broadcastAll(miniGame->GetPlayerSettingsPacket());
     }
 
-    if (hostOptions != g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x20)))
+    if (hostOptions != g_pApp->GetGameHostOption(eGameHostOption_All))
     {
-        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_stageWidth);
+        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         if (connection != 0)
             connection->send(boost::shared_ptr<Packet>(new ServerSettingsChangedPacket(1, hostOptions)));
     }
@@ -358,8 +360,8 @@ void UIScene_InGameSettingsListMenu::setGameSettings()
 void UIScene_InGameSettingsListMenu::UpdateDescriptionText()
 {
     static const int descriptionIds[] = {
-        0x4f8bedac, 0x75cf2428, 0x4c17ef92, 0x18a5cddd, static_cast<int>(0xfe516d5e),
-        static_cast<int>(0xbe68971f), 0, 0, 0x42d4ae0f, 0x5e1bb988,
+        0x4f8bedac, 0x75cf2428, 0x4c17ef92, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT, static_cast<int>(0xfe516d5e),
+        static_cast<int>(0xbe68971f), 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, 0x5e1bb988,
         0x2a5c55c8, static_cast<int>(0xb66f0561), static_cast<int>(0xf7c16b2c),
         static_cast<int>(0xe7ba74fc), static_cast<int>(0xe8f6de23),
         static_cast<int>(0xbfd9bf09), 0x0d7dae19, 0x35ef3122,
@@ -375,7 +377,7 @@ void UIScene_InGameSettingsListMenu::UpdateDescriptionText()
     if (descriptionId != -1 && descriptionId != -2)
     {
         std::wstring source(L10N::GetString(descriptionId));
-        description = g_pApp->FormatHTMLString(m_stageWidth, source, -1);
+        description = g_pApp->FormatHTMLString(m_playerId, source, -1);
     }
 
     const MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(m_miniGameId, true);
@@ -386,7 +388,7 @@ void UIScene_InGameSettingsListMenu::UpdateDescriptionText()
 
     wchar_t colourTag[64];
     std::swprintf(colourTag, 64, L"<font color=\"#%08x\">",
-                  g_pApp->GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)));
+                  g_pApp->GetHTMLColour(eMinecraftColour_HTMLColor_White));
     description = std::wstring(colourTag) + description;
     m_description.setLabel(UIString(description), false, false);
 }
@@ -395,17 +397,30 @@ void UIScene_InGameSettingsListMenu::handleInput(int playerId, int action, bool 
                                                   bool released, bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (action < 4 || (action > 9 && action < 14) ||
-        (action > 15 && action != 20 && action != 21))
-        return;
-    if (action == 21 && released)
+    switch (action)
     {
-        setGameSettings();
-        navigateBack();
-        handled = true;
-        return;
+    case EControllerActions_MenuCancel:
+        if (released)
+        {
+            setGameSettings();
+            navigateBack();
+            handled = true;
+            break;
+        }
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
 void UIScene_InGameSettingsListMenu::handleFocusChange(int focus, int childFocus)
@@ -415,13 +430,13 @@ void UIScene_InGameSettingsListMenu::handleFocusChange(int focus, int childFocus
     UpdateDescriptionText();
 }
 
-void UIScene_InGameSettingsListMenu::handlePress(int, int second)
+void UIScene_InGameSettingsListMenu::handlePress(int, int childId)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (second == 1)
-        gConsoleUIController.NavigateToScene(m_stageWidth, static_cast<EUIScene>(0x3f),
-                                              &m_launchData, static_cast<EUILayer>(6),
-                                              static_cast<EUIGroup>(7));
+    if (childId == 1)
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_MapSelectMenu,
+                                              &m_launchData, EUILayer_Scene,
+                                              EUIGroup_PlayerDefault);
 }
 
 void UIScene_InGameSettingsListMenu::handleCheckboxElementToggled(int, int, bool)
@@ -436,15 +451,15 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
     switch (element)
     {
     case 2:
-        m_playerSettings.Set(eCustomGameModeHostOption_RoundLength, value);
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_RoundLength, value);
         m_roundLengthSlider.Update(m_multiList, value);
         return;
     case 3:
-        m_playerSettings.Set(eCustomGameModeHostOption_GameVariant, value);
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, value);
         m_maxPlayersSlider.Update(m_multiList, value);
         break;
     case 4:
-        m_playerSettings.Set(eCustomGameModeHostOption_SpectateMode, value);
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_SpectateMode, value);
         m_gameVariantSlider.Update(m_multiList, value);
         return;
     case 6:
@@ -470,8 +485,8 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
     case 8:
         m_playerSettings.mLivesPerRound = m_multiList.GetSliderValue(8);
         m_multiList.SetItemLabel(8, UIString(m_playerSettings.mLivesPerRound == 0
-            ? makeTextLabel(0x8d5cbb71, 0x1d2ede0f)
-            : makeValueLabel(0x8d5cbb71, m_playerSettings.mLivesPerRound)), false);
+            ? makeTextLabel(IDS_MG_LIVES_PER_ROUND, IDS_MG_INFINITE)
+            : makeValueLabel(IDS_MG_LIVES_PER_ROUND, m_playerSettings.mLivesPerRound)), false);
         UpdateDescriptionText();
         return;
     case 9:
@@ -498,7 +513,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         m_playerSettings.mArenaSizeMultiplier = sizeIndex == 0
             ? maybe<float>() : maybe<float>(arenaSizes[sizeIndex]);
         std::wstring label = sizeIndex == 0
-            ? makeTextLabel(0x36df2177, 0x74ae70e6)
+            ? makeTextLabel(0x36df2177, IDS_MG_AUTO)
             : std::wstring(L10N::GetString(0x36df2177)) + L" x " +
               _toString<float>(arenaSizeLabels[sizeIndex]);
         m_multiList.SetItemLabel(16, UIString(label), false);
@@ -511,7 +526,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         m_playerSettings.mLayerCount = layerCount == 0
             ? maybe<unsigned int>() : maybe<unsigned int>(layerCount);
         std::wstring label = layerCount == 0
-            ? makeTextLabel(0x50849384, 0x74ae70e6)
+            ? makeTextLabel(0x50849384, IDS_MG_AUTO)
             : makeValueLabel(0x50849384, layerCount);
         m_multiList.SetItemLabel(17, UIString(label), false);
         UpdateDescriptionText();
@@ -524,5 +539,5 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
 
 int UIScene_InGameSettingsListMenu::getSceneType()
 {
-    return 0x14;
+    return EUIScene_InGameSettingsListMenu;
 }

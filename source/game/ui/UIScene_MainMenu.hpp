@@ -39,7 +39,7 @@ public:
     void RunUnlockOrDLC(int playerId);
     static int UnlockFullGame_SignInReturned(void* context, bool signedIn, int userIndex,
                                              int playerIndex);
-    static int MustConnectReturnedNintendo(void* context, int button,
+    static int MustConnectReturnedNintendo(void* context, int pad,
                                             C4JStorage::EMessageResult result);
     static int MiniGamesUnlock_Returned(void* context, int playerId,
                                         C4JStorage::EMessageResult result);
@@ -53,10 +53,10 @@ public:
     void RunHelpAndOptions(int playerId);
     static int HelpAndOptions_SignInReturned(void* context, bool signedIn, int userIndex,
                                              int playerIndex);
-    static int ExitGameReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitGameReturned(void* context, int pad, C4JStorage::EMessageResult result);
     void RunAction(int playerId);
-    static int MustSignInReturned(void* context, int button, C4JStorage::EMessageResult result);
-    virtual void handlePress(int first, int second);
+    static int MustSignInReturned(void* context, int pad, C4JStorage::EMessageResult result);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleGainFocus(bool hadFocus);
     virtual bool hasFocus(int sceneType);
     virtual int getSceneType();
@@ -75,7 +75,7 @@ private:
     bool m_loading;
     bool m_showUpsell;
     bool m_signedIn;
-    bool m_unused;
+    bool m_miniGamesSelected;
     bool m_trial;
     float m_splashX;
     float m_splashY;

@@ -29,7 +29,7 @@ public:
     virtual void handleFocusChange(int, int);
     static void JoinGame(UIScene_JoinMenu*);
     static int WiiUDRCWarningReturned(void*, int, C4JStorage::EMessageResult);
-    static unsigned int StartGame_SignInReturned(void*, bool, int);
+    static int StartGame_SignInReturned(void* context, bool signedIn, int userIndex);
     void StartSharedLaunchFlow();
     virtual void handlePress(int, int);
     virtual int getSceneType();

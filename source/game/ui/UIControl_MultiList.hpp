@@ -65,14 +65,14 @@ public:
                       bool repeat, int repeatDelay, int repeatStep);
     void SetCheckboxValue(int id, bool checked, bool immediate);
     bool IsCheckbox(int id);
-    uint64_t GetCheckboxValue(int id);
+    bool GetCheckboxValue(int id);
     void AddNewTextInput(const std::wstring& label, int id, int charLimit);
     uint32_t GetSliderValue(int id);
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void setAllPossibleLabels(int firstLabel, unsigned int labelCount,
                                       wchar_t (*labels)[256]);
     void AddNewMenuButton(const std::wstring& label, int id);
-    void IsSlider(int id);
+    bool IsSlider(int id);
     void HighlightItem(unsigned int id, bool update);
     void SetSliderValue(int id, int value, bool immediate);
     void SetItemOpacity(int id, float opacity, bool immediate);

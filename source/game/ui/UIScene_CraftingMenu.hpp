@@ -93,7 +93,7 @@ private:
     _SlotInfo m_previewSlotItem;
     not_null_ptr<ItemInstance> m_tabItems[7];
     AbstractContainerMenu* m_openMenu;
-    int m_touchDragging;
+    bool m_touchDragging;
     bool m_inventoryUpdatesDeferred;
     UIControl m_mainPanel;
     UIControl m_descriptionPanel;

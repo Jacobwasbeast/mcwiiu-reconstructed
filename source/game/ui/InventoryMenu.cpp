@@ -20,6 +20,9 @@
 #include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
+const int InventoryMenu::INV_SLOT_START = 9;
+const int InventoryMenu::INV_SLOT_END = 36;
+
 static const EquipmentSlot* gInventoryMenuHead = NULL;
 static const EquipmentSlot* gInventoryMenuLegs = NULL;
 static const EquipmentSlot* gInventoryMenuChest = NULL;
@@ -310,5 +313,9 @@ InventoryMenu::OffhandSlot::~OffhandSlot()
 
 bool InventoryMenu::OffhandSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
-    return item != ItemInstance::EMPTY && !item->isEmpty();
+    if (item->isEmpty())
+        return false;
+    Item* itemType = item->getItem();
+    return itemType == Items::filledMap || itemType == Items::arrow || itemType == Items::tippedArrow
+        || itemType == Items::totemOfUndying;
 }

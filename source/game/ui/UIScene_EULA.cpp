@@ -1,8 +1,10 @@
 #include "game/ui/UIScene_EULA.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 #include <vector>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
@@ -14,9 +16,9 @@ UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer)
     : UIScene(sceneType, layer)
 {
     initialiseMovie();
-    layer->addComponent(sceneType, (EUIScene)66, 0);
-    layer->addComponent(sceneType, (EUIScene)67, 0);
-    m_acceptButton.init(UIString(L10N::GetString(0xd8a6b805)), 0);
+    layer->addComponent(sceneType, EUIScene_Panorama, 0);
+    layer->addComponent(sceneType, EUIScene_Logo, 0);
+    m_acceptButton.init(UIString(L10N::GetString(IDS_TOOLTIPS_ACCEPT)), 0);
 
     std::wstring text(L10N::GetString(0x8ff423f1));
     text.append(L"\r\n");
@@ -35,14 +37,14 @@ UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer)
     for (i = 0; i < lines.size(); ++i)
         m_eulaText.addText(lines[i], i == lines.size() - 1);
 
-    m_hasFocus = false;
+    m_ignoreInput = false;
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
 UIScene_EULA::~UIScene_EULA()
 {
-    m_layer->removeComponent((EUIScene)66);
-    m_layer->removeComponent((EUIScene)67);
+    m_layer->removeComponent(EUIScene_Panorama);
+    m_layer->removeComponent(EUIScene_Logo);
 }
 
 unsigned int UIScene_EULA::mapElementsAndNames()
@@ -57,7 +59,7 @@ unsigned int UIScene_EULA::mapElementsAndNames()
 
 void UIScene_EULA::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, -1, -1, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -69,28 +71,36 @@ std::wstring UIScene_EULA::getMoviePath()
 void UIScene_EULA::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                                bool& handled)
 {
-    if (!m_hasFocus)
+    if (m_ignoreInput)
+        return;
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
     {
-        gConsoleUIController.AnimateKeyPress(playerId, m_controlFocus, repeat, released, pressed);
-        if (action > 3 && (action < 6 || (action > 7 && (action < 10 ||
-            (action > 13 && (action < 16 || action == 20))))))
-            sendInputToMovie(action, repeat, released, pressed);
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
     }
 }
 
-void UIScene_EULA::handlePress(int first, int second)
+void UIScene_EULA::handlePress(int controlId, int childId)
 {
-    if (second == 0)
+    if (controlId == 0)
     {
-        gConsoleUIController.PlayUISFX(0);
-        GameSettings::SetGameSettings(0, (eGameSetting)30, 1);
-        gConsoleUIController.NavigateToScene(0, (EUIScene)2, 0, (EUILayer)6, (EUIGroup)7);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        GameSettings::SetGameSettings(0, eGameSetting_EULAAccepted, 1);
+        gConsoleUIController.NavigateToScene(0, EUIScene_SaveMessage, 0, EUILayer_Scene, EUIGroup_PlayerDefault);
     }
 }
 
 int UIScene_EULA::getSceneType()
 {
-    return 77;
+    return EUIScene_EULA;
 }
 
 bool UIScene_EULA::hasFocus(int controller)

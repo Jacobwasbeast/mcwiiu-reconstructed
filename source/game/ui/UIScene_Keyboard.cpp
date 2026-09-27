@@ -1,10 +1,12 @@
 #include "game/ui/UIScene_Keyboard.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/UIString.hpp"
+#include "game/core/GameSettings.hpp"
 
 UIScene_Keyboard::UIScene_Keyboard(int sceneType, void* sceneData, UILayer* layer)
     : UIScene(sceneType, layer), m_keyboardDone(false)
@@ -22,12 +24,12 @@ UIScene_Keyboard::UIScene_Keyboard(int sceneType, void* sceneData, UILayer* laye
     m_symbolsButton.init(UIString(L"Symbols"), -1);
     m_backspaceButton.init(UIString(L"Backspace"), -1);
 
-    layer->addComponent(sceneType, static_cast<EUIScene>(0x48), sceneData);
+    layer->addComponent(sceneType, EUIScene_MenuBackground, sceneData);
 }
 
 UIScene_Keyboard::~UIScene_Keyboard()
 {
-    m_layer->removeComponent(static_cast<EUIScene>(0x48));
+    m_layer->removeComponent(EUIScene_MenuBackground);
 }
 
 unsigned int UIScene_Keyboard::mapElementsAndNames()
@@ -58,13 +60,13 @@ unsigned int UIScene_Keyboard::mapElementsAndNames()
 
 void UIScene_Keyboard::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 bool UIScene_Keyboard::allowRepeat(int action)
 {
-    return action > 1 && action != 0x12 && (action < 0x14 || action > 0x15);
+    return action >= EControllerActions_MenuX && action != EControllerActions_MenuStart && action != EControllerActions_MenuOk && action != EControllerActions_MenuCancel;
 }
 
 void UIScene_Keyboard::handleInput(int, int, bool, bool, bool, bool&)
@@ -85,9 +87,9 @@ void UIScene_Keyboard::handleTimerComplete(int timerId)
     }
 }
 
-void UIScene_Keyboard::handlePress(int first, int)
+void UIScene_Keyboard::handlePress(int controlId, int)
 {
-    if (first == 0 && !m_keyboardDone)
+    if (controlId == 0 && !m_keyboardDone)
     {
         addTimer(0, 100);
         m_keyboardDone = true;
@@ -103,7 +105,7 @@ std::wstring UIScene_Keyboard::getMoviePath()
 
 int UIScene_Keyboard::getSceneType()
 {
-    return 0x49;
+    return EUIScene_Keyboard;
 }
 
 bool UIScene_Keyboard::hasFocus(int)

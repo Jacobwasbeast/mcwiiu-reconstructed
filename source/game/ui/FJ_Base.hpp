@@ -21,7 +21,7 @@ public:
     virtual ~FJ_Base();
     FJ_FuiNode* getObjListParent();
     uint32_t getId();
-    uint64_t LostFocus();
+    void LostFocus();
     uint32_t getNewWidth();
     void ResizingComplete();
     void ResetResizing();
@@ -30,9 +30,9 @@ public:
     void setListId(int id);
     void setPreScaleWidth(int width);
     void setId(int id);
-    uint8_t getLabelTooWide();
-    int getOldWidth();
-    uint64_t CorrectPixelPosition();
+    virtual uint8_t getLabelTooWide();
+    virtual int getOldWidth();
+    void CorrectPixelPosition();
     void InitBase(const std::wstring& name, int id);
     fuiRenderNodeEditText* GetTextField();
     void CheckLabelWidth(const std::wstring& label);

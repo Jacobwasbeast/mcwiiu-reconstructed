@@ -101,9 +101,9 @@ uint32_t FJ_CheckBox::getCurrentState()
     return static_cast<uint32_t>(m_currentState);
 }
 
-uint32_t FJ_CheckBox::getOldWidth()
+int FJ_CheckBox::getOldWidth()
 {
-    return static_cast<uint32_t>(m_oldWidth);
+    return m_oldWidth;
 }
 
 void FJ_CheckBox::focusInHandler(FJ_Event*)

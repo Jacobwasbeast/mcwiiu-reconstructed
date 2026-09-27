@@ -25,8 +25,7 @@ public:
     void UpdateIfPublicGamesAllowed();
     void UpdateDescriptionText();
     void _initCustom();
-    static uint32_t LoadSaveDataThumbnailReturned(void* context, unsigned char* data,
-                                                   unsigned int size);
+    static int LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size);
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();
     virtual void updateComponents();
@@ -36,7 +35,7 @@ public:
     virtual void handleReload();
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleCheckboxToggled(int id, bool checked);
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
     virtual void handleSliderElementMove(int first, int second, int value);

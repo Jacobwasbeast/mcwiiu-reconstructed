@@ -46,7 +46,7 @@ public:
     void setScoreboardType(int type);
     void initNumColumns(int columns);
     virtual void handleReload();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
     uint64_t CheckReloadMovie();
     virtual void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);

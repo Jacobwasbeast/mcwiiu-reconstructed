@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_CreateWorldMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 
@@ -23,34 +24,34 @@ UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILa
       m_keyboardActive(false)
 {
     initialiseMovie();
-    m_worldName.assign(L10N::GetString(0x860494ea));
+    m_worldName.assign(L10N::GetString(IDS_DEFAULT_WORLD_NAME));
     m_playerId = sceneType;
-    m_worldNameLabel.init(UIString(L10N::GetString(0x9db1d436)));
+    m_worldNameLabel.init(UIString(L10N::GetString(IDS_WORLD_NAME)));
     m_worldNameInput.init(UIString(m_worldName), 0);
     m_worldNameInput.SetCharLimit(0x19);
-    m_gameModeSlider.init(UIString(L10N::GetString(0x9ba782a6)), 1, 0,
+    m_gameModeSlider.init(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), 1, 0,
                           GameType::CREATIVE->getId(), GameType::SURVIVAL->getId(), false, 10, 1);
-    m_moreOptionsButton.init(UIString(L10N::GetString(0xbe1d5b9e)), 3);
-    m_playButton.init(UIString(L10N::GetString(0xb0b877e6)), 6);
+    m_moreOptionsButton.init(UIString(L10N::GetString(IDS_MORE_OPTIONS)), 3);
+    m_playButton.init(UIString(L10N::GetString(IDS_CREATE_NEW_WORLD)), 6);
     m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
     m_texturePackName.init(UIString(L""));
     m_texturePackDescription.init(UIString(L""));
-    m_launchData.mFlag3 = true;
-    m_difficulty = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(3));
+    m_launchData.mNewWorld = true;
+    m_difficulty = GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty);
     wchar_t difficultyLabel[256];
-    std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(0xd324428d),
+    std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
                   L10N::GetString(Difficulty::byId(m_difficulty)->getKey()));
     m_difficultySlider.init(UIString(difficultyLabel), 2, 0, 3, m_difficulty, false, 10, 1);
-    bool initialChecked = m_launchData.mFlag0;
+    bool initialChecked = m_launchData.mOnlineGame;
     m_onlineGameCheckBox.SetEnable(true);
-    if (!gProfile->IsSignedIn(m_playerId))
+    if (!gProfile->IsSignedInLive(m_playerId))
         m_onlineGameCheckBox.SetEnable(false);
-    if (m_launchData.mFlag17)
+    if (m_launchData.mOnlineSettingChangedBySystem)
     {
         m_onlineGameCheckBox.SetEnable(false);
         initialChecked = false;
     }
-    m_onlineGameCheckBox.init(UIString(L10N::GetString(0x2c692b72)), 5,
+    m_onlineGameCheckBox.init(UIString(L10N::GetString(IDS_ONLINE_GAME)), 5,
                               initialChecked);
     _init();
     if (data != NULL)
@@ -65,8 +66,6 @@ UIScene_CreateWorldMenu::~UIScene_CreateWorldMenu()
 unsigned int UIScene_CreateWorldMenu::mapElementsAndNames()
 {
     IUIScene_StartGame::mapElementsAndNames();
-    if (m_movie == NULL)
-        return 0;
     fuiRenderNode* root = m_mainPanel.getFuiRenderNode();
     m_worldNameLabel.setupControl(this, root, std::string("WorldName"));
     m_controls.push_back(&m_worldNameLabel);
@@ -89,7 +88,7 @@ unsigned int UIScene_CreateWorldMenu::mapElementsAndNames()
 
 void UIScene_CreateWorldMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -97,8 +96,8 @@ void UIScene_CreateWorldMenu::updateComponents()
 {
     if (m_layer != NULL)
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, false);
     }
 }
 
@@ -135,20 +134,26 @@ void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat,
     if (m_keyboardActive)
         return;
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (action < 4)
-        return;
-    if (action > 7 && action < 0xe)
-        return;
-    if (action > 0xf && action != 0x14)
+    switch (action)
     {
-        if (action != 0x15 || !pressed)
-            return;
-        navigateBack();
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
         handled = true;
-        return;
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
-    handled = true;
 }
 
 int UIScene_CreateWorldMenu::KeyboardCompleteWorldNameCallback(void* data, bool accepted)
@@ -171,33 +176,33 @@ int UIScene_CreateWorldMenu::KeyboardCompleteWorldNameCallback(void* data, bool 
     return 0;
 }
 
-void UIScene_CreateWorldMenu::handlePress(int first, int second)
+void UIScene_CreateWorldMenu::handlePress(int controlId, int childId)
 {
     if (m_keyboardActive)
         return;
-    gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-    if (first == 0)
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+    if (controlId == 0)
     {
         m_keyboardActive = true;
-        if (g_pInput != NULL && g_pInput->RequestKeyboard(L10N::GetString(0xb0b877e6),
+        if (g_pInput != NULL && g_pInput->RequestKeyboard(L10N::GetString(IDS_CREATE_NEW_WORLD),
                                                             m_worldName.c_str(), m_playerId, 0x19,
                                                             KeyboardCompleteWorldNameCallback, this,
                                                             C_4JInput::EKeyboardMode_0) != 0)
             m_keyboardActive = false;
     }
-    else if (first == 3)
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x2b),
-                                             &m_launchData, static_cast<EUILayer>(6),
-                                             static_cast<EUIGroup>(7));
-    else if (first == 4)
-        UpdateCurrentTexturePack(second);
-    else if (first == 6)
+    else if (controlId == 3)
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LaunchMoreOptionsMenu,
+                                             &m_launchData, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
+    else if (controlId == 4)
+        UpdateCurrentTexturePack(childId);
+    else if (controlId == 6)
         StartSharedLaunchFlow();
 }
 
 void UIScene_CreateWorldMenu::handleCheckboxToggled(int, bool)
 {
-    gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
 }
 
 void UIScene_CreateWorldMenu::checkStateAndStartGame()
@@ -212,5 +217,5 @@ void UIScene_CreateWorldMenu::SetEnablePlayGameButton(bool enable)
 
 int UIScene_CreateWorldMenu::getSceneType()
 {
-    return 0x1a;
+    return EUIScene_CreateWorldMenu;
 }

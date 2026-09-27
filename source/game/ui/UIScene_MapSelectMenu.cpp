@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_MapSelectMenu.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 
 #include <algorithm>
@@ -25,27 +26,25 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer), IUIScene_DlcSelectMenu((eDLCContentType)0),
+    : UIScene(sceneType, layer), IUIScene_DlcSelectMenu(eDLCContentType_Unknown),
       m_levelRuleGroups(), m_texturePackSelection(0),
       m_initData(static_cast<LaunchMoreOptionsMenuInitData*>(data)), m_generationOptions(NULL),
-      m_mapInfoPending(0), m_mapSelection(0), m_miniGameType(0), m_mapList(), m_mapListTitle(),
+      m_mapInfoPending(0), m_mapSelection(0), m_miniGameType(eMiniGameId_Lobby), m_mapList(), m_mapListTitle(),
       m_mapTitle(), m_mapDescription(), m_mapIcon()
 {
     initialiseMovie();
-    m_playerId = m_initData->mValue18;
-    m_miniGameType = m_initData->mValue5C;
-    LevelRules::ELevelRuleType ruleType = static_cast<LevelRules::ELevelRuleType>(0);
-    if (m_miniGameType >= 0 && m_miniGameType <= 4)
-        ruleType = static_cast<LevelRules::ELevelRuleType>(m_miniGameType);
-    if (m_initData->mFlag58 && !m_initData->mFlag68 &&
+    m_playerId = m_initData->mPad;
+    m_miniGameType = m_initData->mMiniGameId;
+    LevelRules::ELevelRuleType ruleType = LevelRules::GetRuleTypeForMiniGame(m_miniGameType);
+    if (m_initData->mMatchmaking && !m_initData->mTimeTrial &&
         !Minecraft::GetInstance()->GetMiniGame()->HasFeatureSeasonalMaps())
         gApp.getLevelRules()->getRulesByType(ruleType, &m_initData->mLevelRulesetGroups, true);
     gApp.getLevelRules()->getRulesByType(ruleType, &m_levelRuleGroups, false);
     std::sort(m_levelRuleGroups.begin(), m_levelRuleGroups.end(),
               LevelRules::LevelRulesetGroup::SortMapRules);
-    if (m_miniGameType == 1)
+    if (m_miniGameType == eMiniGameId_Battle)
         m_mapSelection = GameSettings::GetBattleMiniGameMapSelection(m_playerId);
-    else if (m_miniGameType == 3)
+    else if (m_miniGameType == eMiniGameId_Glide)
         m_mapSelection = GameSettings::GetGlideMiniGameMapSelection(m_playerId);
     else
         m_mapSelection = 0;
@@ -76,11 +75,11 @@ unsigned int UIScene_MapSelectMenu::mapElementsAndNames()
 void UIScene_MapSelectMenu::_init()
 {
     m_mapList.init(0);
-    m_mapListTitle.init(UIString(0x88c46bf1));
+    m_mapListTitle.init(UIString(IDS_MG_SELECT_MAPS));
     m_mapTitle.init(UIString(L" "));
     m_mapDescription.init(UIString(L" "));
     bool anySelected = false;
-    const bool useContextSelection = m_initData->mFlag58 && !m_initData->mFlag68;
+    const bool useContextSelection = m_initData->mMatchmaking && !m_initData->mTimeTrial;
     unsigned int i;
     for (i = 0; i < m_levelRuleGroups.size(); ++i)
     {
@@ -154,7 +153,7 @@ std::wstring UIScene_MapSelectMenu::getMoviePath()
 
 void UIScene_MapSelectMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, 0x8d6323ed, 0x4f6bcf5e, 0xb30cbafb, 0xd96891f0,
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, IDS_TOOLTIPS_SELECT_ALL, IDS_TOOLTIPS_UNSELECT_ALL,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      false, false);
     return;
@@ -162,7 +161,7 @@ void UIScene_MapSelectMenu::updateTooltips()
 
 void UIScene_MapSelectMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 void UIScene_MapSelectMenu::UpdateMapInfo()
@@ -237,77 +236,65 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
     if (m_purchasePending)
         return;
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action < 14)
+    switch (action)
     {
-        if (action < 2)
+    case EControllerActions_MenuX:
+        if (m_initData->mMatchmaking && !m_initData->mTimeTrial)
             return;
-        if (action == 2)
-        {
-            if (m_initData->mFlag58 && !m_initData->mFlag68)
-                return;
-            if (!released || repeat)
-                return;
-            unsigned int i;
-            for (i = 0; i < m_mapList.getItemCount(); ++i)
-                if (checkHasPurchased((int)i, false) != 0)
-                    m_mapList.SetCheckbox((int)i, true);
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-            return;
-        }
-        if (action != 3)
-        {
-            if (action > 5)
-                return;
-            sendInputToMovie(action, repeat, released, pressed);
-            return;
-        }
         if (!released || repeat)
             return;
-        if (m_initData->mFlag58 && !m_initData->mFlag68)
+        for (unsigned int i = 0; i < m_mapList.getItemCount(); ++i)
+            if (checkHasPurchased((int)i, false) != 0)
+                m_mapList.SetCheckbox((int)i, true);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        break;
+    case EControllerActions_MenuY:
+        if (!released || repeat)
             return;
-        unsigned int i;
-        for (i = 0; i < m_mapList.getItemCount(); ++i)
+        if (m_initData->mMatchmaking && !m_initData->mTimeTrial)
+            return;
+        for (unsigned int i = 0; i < m_mapList.getItemCount(); ++i)
             if (checkHasPurchased((int)i, false) != 0)
                 m_mapList.SetCheckbox((int)i, false);
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-        return;
-    }
-    if (action > 15)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuOk:
+        if (!released || repeat)
+            return;
+        if (checkHasPurchased((int)m_mapList.getCurrentSelection(), true) == 0)
+            return;
+        sendInputToMovie(EControllerActions_MenuOk, false, released, pressed);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        break;
+    case EControllerActions_MenuCancel:
     {
-        if (action == 20)
-        {
-            if (!released || repeat)
-                return;
-            if (checkHasPurchased((int)m_mapList.getCurrentSelection(), true) == 0)
-                return;
-            sendInputToMovie(20, false, released, pressed);
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-            return;
-        }
-        if (action != 21)
-            return;
         if (!released)
             return;
         unsigned int selection = 0;
         m_initData->mLevelRulesetGroups.clear();
-        unsigned int i;
-        for (i = 0; i < m_mapList.getItemCount(); ++i)
+        for (unsigned int i = 0; i < m_mapList.getItemCount(); ++i)
             if (m_mapList.GetCheckbox((int)i) != 0)
             {
                 const unsigned int themeId = m_levelRuleGroups.at(i)
                                                  ->rulesets.at(0)
                                                  ->getGenerationOptions()
                                                  ->getThemeId();
-                selection |= (themeId & 0x20) != 0 ? 0U : (1U << (themeId & 0x1f));
+                selection |= 1U << themeId;
                 m_initData->mLevelRulesetGroups.push_back(m_levelRuleGroups.at(i));
             }
         if (!m_initData->mLevelRulesetGroups.empty())
         {
             if (selection != m_mapSelection)
             {
-                if (m_miniGameType == 1)
+                if (m_miniGameType == eMiniGameId_Battle)
                     GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
-                else if (m_miniGameType == 3)
+                else if (m_miniGameType == eMiniGameId_Glide)
                     GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
                 m_mapSelection = selection;
             }
@@ -317,14 +304,14 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
             return;
         }
 
-        int messageParameter = (int)0xb9a1bf4d;
+        int messageParameter = (int)IDS_CONFIRM_OK;
         m_mapSelection = 0;
-        gConsoleUIController.RequestAlertMessage(0xac598f61, 0xb9bf8844, &messageParameter, 1,
+        gConsoleUIController.RequestAlertMessage(IDS_MG_NO_MAPS_SELECTED_TITLE, IDS_MG_NO_MAPS_SELECTED_TEXT, &messageParameter, 1,
                                                  m_playerId, NULL, NULL, NULL, true);
         handled = true;
-        return;
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
+    }
 }
 
 void UIScene_MapSelectMenu::handleFocusChange(int, int childFocus)
@@ -343,5 +330,5 @@ void UIScene_MapSelectMenu::handlePress(int, int)
 
 int UIScene_MapSelectMenu::getSceneType()
 {
-    return 0x3f;
+    return EUIScene_MapSelectMenu;
 }

@@ -1,22 +1,22 @@
 #ifndef GAME_UI_MENUBUILDER_HPP
 #define GAME_UI_MENUBUILDER_HPP
 
+#include <string>
 #include <vector>
 
-#include "game/item/FishFoodItem.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/ItemInstanceClonerBuilder.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/ui/UIScene_CreativeMenu.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 class BannerPattern;
-class Block;
-class BlockState;
 class DyeColor;
 class Item;
 class Potion;
-
-template <typename T>
-class AbstractProperty;
 
 class MenuBuilder
 {
@@ -24,47 +24,31 @@ public:
     template <typename T>
     void ITEM_AUX(Block* block, const AbstractProperty<T>* property, T value);
 
-    void ITEM_BLOCKSTATE(const BlockState* state);
-    void FIREWORK(unsigned char flight, int explosionType, int fadeType,
-                  bool flicker, bool trail, int secondExplosionType);
-    void ADD(const not_null_ptr<ItemInstance>& item);
-    void ITEM_AUX__tm__26_PQ2_11QuartzBlock7Variant(Block* block,
-                                                     const AbstractProperty<unsigned int>* property,
-                                                     unsigned int value);
-    void ITEM_AUX__tm__26_PQ2_11PlanksBlock7Variant(Block* block,
-                                                     const AbstractProperty<unsigned int>* property,
-                                                     unsigned int value);
-    void ITEM_AUX__tm__23_PQ2_9DirtBlock7Variant(Block* block,
-                                                  const AbstractProperty<unsigned int>* property,
-                                                  unsigned int value);
-    void ITEM_AUX__tm__29_PQ2_14StoneSlabBlock7Variant(Block* block,
-                                                        const AbstractProperty<unsigned int>* property,
-                                                        unsigned int value);
-    void ITEM_AUX__tm__32_PQ2_17NewStoneSlabBlock7Variant(Block* block,
-                                                            const AbstractProperty<unsigned int>* property,
-                                                            unsigned int value);
-    void ITEM_AUX__tm__34_PQ2_19PrismarineSlabBlock7Variant(Block* block,
-                                                              const AbstractProperty<unsigned int>* property,
-                                                              unsigned int value);
-    void ITEM_AUX__tm__2_b(Block* block, const AbstractProperty<bool>* property, unsigned char value);
-    void ITEM_AUX__tm__29_PQ2_14TallGrassBlock7Variant(Block* block,
-                                                        const AbstractProperty<unsigned int>* property,
-                                                        unsigned int value);
-    void ITEM_AUX__tm__25_PQ2_11FlowerBlock6Flower(Block* block,
-                                                   const AbstractProperty<unsigned int>* property,
-                                                   unsigned int value);
-    void ITEM_AUX__tm__31_PQ2_16DoublePlantBlock7Variant(Block* block,
-                                                          const AbstractProperty<unsigned int>* property,
-                                                          unsigned int value);
-    void BANNER(const DyeColor* color, const BannerPattern* pattern);
-    void ITEM_AUX__tm__32_PQ2_17HugeMushroomBlock7Variant(Block* block,
-                                                           const AbstractProperty<unsigned int>* property,
-                                                           unsigned int value);
-    void ITEM_AUX__tm__23_Q2_12FishFoodItem4Type(Item* item, FishFoodItem::Type* type);
-    void POTION(Item* item, Potion* potion);
+    template <typename T>
+    void ITEM_AUX(Item* item, T* type);
 
-public:
+    void ITEM_BLOCKSTATE(const BlockState* state);
+    void ADD(const not_null_ptr<ItemInstance>& item);
+    void BANNER(const DyeColor* color, const BannerPattern* pattern);
+    void FIREWORK(unsigned char type, int colour, int flight, bool flicker, bool trail, int fadeColour);
+    void POTION(Item* item, Potion* potion);
+    void DEBUG_SPAWN_EGG(const std::wstring& entityId, const std::wstring& debugTag);
+
     std::vector<const UIScene_CreativeMenu::ItemBuilder*>* mItems;
 };
+
+template <typename T>
+void MenuBuilder::ITEM_AUX(Block* block, const AbstractProperty<T>* property, T value)
+{
+    TypedBoxed<T> boxed(value);
+    ITEM_BLOCKSTATE(block->defaultBlockState()->setBoxedValue(property, &boxed));
+}
+
+template <typename T>
+void MenuBuilder::ITEM_AUX(Item* item, T* type)
+{
+    ItemInstance instance(item, 1, type->getData());
+    mItems->push_back(new ItemInstanceClonerBuilder(instance));
+}
 
 #endif

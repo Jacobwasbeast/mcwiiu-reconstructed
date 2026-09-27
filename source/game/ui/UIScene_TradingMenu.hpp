@@ -10,6 +10,7 @@
 #include "game/ui/UIControl_Label.hpp"
 #include "game/ui/UIControl_SlotList.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/minigame/Tutorial.hpp"
 
 class MerchantMenu;
 class MerchantRecipe;
@@ -63,7 +64,7 @@ private:
     int m_tradeRow;
     int m_tradeOffset;
     bool m_tradeFocusSet;
-    int m_tutorialHintValue;
+    eTutorial_State m_previousTutorialState;
     UIControl m_mainPanel;
     UIControl_SlotList m_tradingBar;
     UIControl_SlotList m_request1;

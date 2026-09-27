@@ -173,7 +173,7 @@ void FJ_BookAndQuillMenu::SetSafeZone(int top, int bottom, int left, int right)
     FJ_Document::SetSafeZone(top, bottom, left, right);
     double height = getStage()->getStageHeight();
     if (height == 360.0 || height == 540.0)
-        setY(-static_cast<float>(top) - 176.0f);
+        setY(top);
 }
 
 void FJ_BookAndQuillMenu::SetBookIsSigned()
@@ -220,7 +220,7 @@ bool FJ_BookAndQuillMenu::SetPageText(const std::wstring& text, int mode)
     return true;
 }
 
-uint64_t FJ_BookAndQuillMenu::SetFocusToBook(bool focus)
+void FJ_BookAndQuillMenu::SetFocusToBook(bool focus)
 {
     if (!m_bookIsSigned) {
         if (!focus)
@@ -231,7 +231,6 @@ uint64_t FJ_BookAndQuillMenu::SetFocusToBook(bool focus)
             SetBookFocus(true);
         }
     }
-    return (uint64_t)(unsigned long)this;
 }
 
 bool FJ_BookAndQuillMenu::GetBookHasFocus()

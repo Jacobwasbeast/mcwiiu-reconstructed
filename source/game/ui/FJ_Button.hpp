@@ -21,7 +21,7 @@ public:
     FJ_FuiNode* getObjListParent();
 
     void setButtonPressed(bool pressed);
-    void ChangeState(int state);
+    virtual void Init(const std::wstring& name, int id);
     void ToggleOutline(bool show);
     void focusInHandler(FJ_Event* event);
     static void _focusInHandler(FJ_FuiNode* node, FJ_Event* event);
@@ -34,14 +34,14 @@ public:
     void HideUntilInit();
     void HandleUpdateLabel(FJ_Event* event);
     static void _HandleUpdateLabel(FJ_FuiNode* node, FJ_Event* event);
-    virtual void Init(const std::wstring& name, int id);
+    virtual void ChangeState(int state);
     void SetKeyDownDelegate(void (*delegate)(FJ_FuiNode*, int), FJ_FuiNode* node);
     fuiRenderNodeEditText* GetSecondaryTextField();
     void SetSecondaryText(const std::wstring& text, bool html, bool autoSize);
-    void UpdateLabel();
+    virtual void UpdateLabel();
     virtual void SetLabel(const std::wstring& label);
     void AdjustDisabledTint();
-    void EnableButton(bool enabled);
+    virtual void EnableButton(bool enabled);
     virtual void GetLabelTooWide(fuiRenderNodeEditText* textField);
 
     bool getButtonPressed() { return m_buttonPressed; }

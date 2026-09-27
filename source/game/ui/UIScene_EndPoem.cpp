@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_EndPoem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 
@@ -15,10 +16,11 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/util/Random.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/StringUtils.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
-std::wstring escapeXML(const std::wstring& text);
 void replaceAll(std::wstring& result, const std::wstring& source,
                 const std::wstring& search, const std::wstring& replacement);
 
@@ -110,7 +112,7 @@ void UIScene_EndPoem::updateNoise()
 
 void UIScene_EndPoem::updateTooltips()
 {
-    int tooltip = m_finished ? -1 : static_cast<int>(0x8ad40344);
+    int tooltip = m_finished ? -1 : static_cast<int>(IDS_TOOLTIPS_CONTINUE);
     gConsoleUIController.SetTooltips(m_playerId, -1, tooltip, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, true);
 }
@@ -148,35 +150,36 @@ void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool re
     {
         gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
     }
-    if (action > 3)
+    switch (action)
     {
-        if (action < 14) return;
-        if (action > 15)
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+    {
+        if (!pressed) return;
+        m_finished = true;
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != NULL)
         {
-            if (action != 0x15 || !pressed) return;
-            m_finished = true;
-            Minecraft* minecraft = Minecraft::GetInstance();
-            if (minecraft != NULL)
+            for (int i = 0; i < 4; ++i)
             {
-                int i;
-                for (i = 0; i < 4; ++i)
+                if (minecraft->mLocalPlayers[i])
                 {
-                    if (minecraft->mLocalPlayers[i])
-                    {
-                        gApp.SetAction(i, static_cast<eXuiAction>(6), NULL);
-                    }
-                }
-                if (minecraft->mGameMode != NULL && minecraft->mGameMode->getTutorial() != NULL)
-                {
-                    minecraft->mGameMode->getTutorial()->showTutorialPopup(true);
+                    gApp.SetAction(i, eXuiAction_Respawn, NULL);
                 }
             }
-            updateTooltips();
-            navigateBack();
-            handled = true;
-            return;
+            if (minecraft->mGameMode != NULL && minecraft->mGameMode->getTutorial() != NULL)
+            {
+                minecraft->mGameMode->getTutorial()->showTutorialPopup(true);
+            }
         }
-        sendInputToMovie(action, repeat, released, pressed);
+        updateTooltips();
+        navigateBack();
+        handled = true;
+        break;
+    }
     }
 }
 
@@ -191,5 +194,5 @@ void UIScene_EndPoem::handleRequestMoreData(int id, bool)
 
 int UIScene_EndPoem::getSceneType()
 {
-    return 0x30;
+    return EUIScene_EndPoem;
 }

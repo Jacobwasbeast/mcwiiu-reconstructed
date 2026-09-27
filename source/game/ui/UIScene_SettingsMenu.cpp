@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_SettingsMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -22,11 +23,11 @@ UIScene_SettingsMenu::UIScene_SettingsMenu(int type, void*, UILayer* layer)
 
     bool destroyControls = Minecraft::GetInstance()->mPendingLevelChange == 0;
 
-    m_buttons[0].init(UIString((int)0xf2f331d5), 0);
-    m_buttons[1].init(UIString((int)0xe13a424a), 1);
-    m_buttons[4].init(UIString((int)0xc2b7bf99), 4);
-    m_buttons[5].init(UIString((int)0xfddfe517), 5);
-    m_buttons[6].init(UIString((int)0x337d5132), 6);
+    m_buttons[0].init(UIString((int)IDS_GAME_OPTIONS), 0);
+    m_buttons[1].init(UIString((int)IDS_AUDIO), 1);
+    m_buttons[4].init(UIString((int)IDS_GRAPHICS), 4);
+    m_buttons[5].init(UIString((int)IDS_USER_INTERFACE), 5);
+    m_buttons[6].init(UIString((int)IDS_RESET_TO_DEFAULTS), 6);
 
     removeControl(&m_buttons[2], false);
 
@@ -35,7 +36,7 @@ UIScene_SettingsMenu::UIScene_SettingsMenu(int type, void*, UILayer* layer)
         removeControl(&m_buttons[1], destroyControls);
         if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) ||
             Minecraft::GetInstance()->GetMiniGame()->GetHostOption(
-                static_cast<eCustomGameModeHostOption>(14)) == 0)
+                eCustomGameModeHostOption_TimeTrial) == 0)
             removeControl(&m_buttons[4], destroyControls);
     }
 
@@ -72,7 +73,7 @@ unsigned int UIScene_SettingsMenu::mapElementsAndNames()
 
 void UIScene_SettingsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, (int)0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -82,14 +83,14 @@ void UIScene_SettingsMenu::updateComponents()
     bool showComponents = true;
     if (Minecraft::GetInstance()->mPendingLevelChange != 0)
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
         showComponents = g_pApp->GetLocalPlayerCount() == 1;
     }
     else
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
     }
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), showComponents);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, showComponents);
 }
 
 void UIScene_SettingsMenu::handleReload()
@@ -102,7 +103,7 @@ void UIScene_SettingsMenu::handleReload()
         removeControl(&m_buttons[1], destroyControls);
         if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) ||
             Minecraft::GetInstance()->GetMiniGame()->GetHostOption(
-                static_cast<eCustomGameModeHostOption>(14)) == 0)
+                eCustomGameModeHostOption_TimeTrial) == 0)
             removeControl(&m_buttons[4], destroyControls);
     }
 
@@ -122,23 +123,28 @@ void UIScene_SettingsMenu::handleInput(int playerId, int action, bool repeat, bo
                                        bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action > 3)
+    switch (action)
     {
-        if (action < 6 || action == 0x14)
-            sendInputToMovie(action, repeat, released, pressed);
-        else if (action == 0x15 && released)
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (released)
         {
             GameSettings::CheckGameSettingsChanged(true, playerId);
             navigateBack();
         }
+        break;
     }
 }
 
 void UIScene_SettingsMenu::tick()
 {
     UIScene::tick();
-    if (gConsoleUIController.GetTopScene(m_playerId, static_cast<EUILayer>(6),
-                                         static_cast<EUIGroup>(7)) == this)
+    if (gConsoleUIController.GetTopScene(m_playerId, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault) == this)
     {
         unsigned char language = GameSettings::GetMinecraftLanguage(m_playerId);
         if (m_language != language)
@@ -154,7 +160,7 @@ int UIScene_SettingsMenu::ResetDefaultsDialogReturned(
 {
     UIScene_SettingsMenu* scene = static_cast<UIScene_SettingsMenu*>(
         gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
-    if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(5))
+    if (scene != NULL && result == C4JStorage::EMessageResult_Decline)
     {
         GameSettings::SetDefaultGameOptions(
             gStorage->GetDashboardProfileSettings(scene->m_playerId), scene->m_playerId, true);
@@ -163,27 +169,27 @@ int UIScene_SettingsMenu::ResetDefaultsDialogReturned(
     return 0;
 }
 
-void UIScene_SettingsMenu::handlePress(int, int action)
+void UIScene_SettingsMenu::handlePress(int controlId, int)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (action > 3)
+    if (controlId > 3)
     {
-        if (action < 5)
+        if (controlId < 5)
         {
             int* data = new int[2];
             data[0] = m_playerId;
             data[1] = 2;
-            gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
-                                                 static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
+                                                 EUILayer_Scene, EUIGroup_PlayerDefault);
             return;
         }
-        if (action != 5)
+        if (controlId != 5)
         {
-            if (action != 6)
+            if (controlId != 6)
                 return;
-            int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+            int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
             gConsoleUIController.RequestAlertMessage(
-                0x13efeffb, 0x5694645e, parameters, 2, m_playerId,
+                0x13efeffb, IDS_DEFAULTS_TEXT, parameters, 2, m_playerId,
                 ResetDefaultsDialogReturned,
                 (void*)static_cast<unsigned long>(GetCallbackUniqueId()), NULL,
                 true);
@@ -192,30 +198,30 @@ void UIScene_SettingsMenu::handlePress(int, int action)
         int* data = new int[2];
         data[0] = m_playerId;
         data[1] = 3;
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
-                                             static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    if (action == 0)
+    if (controlId == 0)
     {
         int* data = new int[2];
         data[0] = m_playerId;
         data[1] = 0;
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
-                                             static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
         resetHorizontalResizeCheck();
         return;
     }
-    if (action != 1)
+    if (controlId != 1)
         return;
     int* data = new int[2];
     data[0] = m_playerId;
     data[1] = 1;
-    gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
-                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
+                                         EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
 int UIScene_SettingsMenu::getSceneType()
 {
-    return 21;
+    return EUIScene_SettingsMenu;
 }

@@ -9,8 +9,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/data/LevelStorageSource.hpp"
 #include "game/util/Random.hpp"
-
-std::wstring trimString(const std::wstring& value);
+#include "game/core/StringUtils.hpp"
 
 template<typename T>
 T _fromString(const std::wstring& value);

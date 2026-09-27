@@ -24,7 +24,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     static int KeyboardCompleteCallback(void* data, bool accepted);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleDestroy();
     virtual int getSceneType();
 

@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_HowToPlayMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -9,6 +10,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/core/GameSettings.hpp"
 
 #include <stdint.h>
 
@@ -47,7 +49,7 @@ UIScene_HowToPlayMenu::~UIScene_HowToPlayMenu()
 
 void UIScene_HowToPlayMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -57,14 +59,14 @@ void UIScene_HowToPlayMenu::updateComponents()
     bool showSecond = true;
     if (Minecraft::GetInstance()->mPendingLevelChange == 0)
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
     }
     else
     {
-        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
         showSecond = g_pApp->GetLocalPlayerCount() == 1;
     }
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), showSecond);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, showSecond);
 }
 
 void UIScene_HowToPlayMenu::handleReload()
@@ -100,35 +102,34 @@ void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool relea
                                         bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action < 4)
-        return;
-    if (action > 5)
+    switch (action)
     {
-        if (action < 8)
-            return;
-        if (action > 9 && action != 0x14)
-        {
-            if (action != 0x15 || !pressed)
-                return;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed)
             navigateBack();
-            return;
-        }
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_HowToPlayMenu::handlePress(int first, int second)
+void UIScene_HowToPlayMenu::handlePress(int controlId, int childId)
 {
-    if (first != 0)
+    if (controlId != 0)
         return;
-    m_buttonList.setCurrentSelection(second, false, true);
+    m_buttonList.setCurrentSelection(childId, false, true);
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     const uint32_t sceneData = 0x80000000u |
-        (static_cast<uint32_t>(second) << 16) |
+        (static_cast<uint32_t>(childId) << 16) |
         static_cast<uint32_t>(static_cast<uint16_t>(m_playerId));
     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HowToPlay,
                                          reinterpret_cast<void*>(static_cast<uintptr_t>(sceneData)),
-                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                                         EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
 unsigned int UIScene_HowToPlayMenu::mapElementsAndNames()
@@ -141,5 +142,5 @@ unsigned int UIScene_HowToPlayMenu::mapElementsAndNames()
 
 int UIScene_HowToPlayMenu::getSceneType()
 {
-    return 0x11;
+    return EUIScene_HowToPlayMenu;
 }

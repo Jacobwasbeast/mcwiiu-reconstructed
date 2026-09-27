@@ -27,6 +27,40 @@
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/item/Enchantment.hpp"
+#include "game/item/EnchantmentInstance.hpp"
+#include "game/item/EnchantedBookItem.hpp"
+#include "game/item/FishFoodItem.hpp"
+#include "game/core/DyeColor.hpp"
+#include "game/core/Direction.hpp"
+#include "game/world/block/LeverBlock.hpp"
+#include "game/world/block/FlowerBlock.hpp"
+#include "game/world/block/SpongeBlock.hpp"
+#include "game/world/block/MappedRegistry.hpp"
+#include "game/util/ResourceLocation.hpp"
+#include "game/world/block/SandStoneBlock.hpp"
+#include "game/world/block/SandBlock.hpp"
+#include "game/world/block/RedSandStoneBlock.hpp"
+#include "game/world/block/StoneBlock.hpp"
+#include "game/world/block/QuartzBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/OldLogBlock.hpp"
+#include "game/world/block/NewLogBlock.hpp"
+#include "game/world/block/PrismarineBlock.hpp"
+#include "game/world/block/StoneBrickBlock.hpp"
+#include "game/world/block/MonsterEggBlock.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/StoneSlabBlock.hpp"
+#include "game/world/block/NewStoneSlabBlock.hpp"
+#include "game/world/block/WoodSlabBlock.hpp"
+#include "game/world/block/PrismarineSlabBlock.hpp"
+#include "game/world/block/SaplingBlock.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
+#include "game/world/block/NewLeafBlock.hpp"
+#include "game/world/block/TallGrassBlock.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/WallBlock.hpp"
+#include "game/world/block/HugeMushroomBlock.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -42,103 +76,120 @@ struct CreativeMenuSceneData
 }
 
 UIScene_CreativeMenu::TabSpec* UIScene_CreativeMenu::s_tabSpecs[8] = {};
-std::vector<const UIScene_CreativeMenu::ItemBuilder*> UIScene_CreativeMenu::s_groupItems[12];
-
-UIScene_CreativeMenu::ItemBuilder::ItemBuilder(const ItemInstance& value)
-    : item(value)
-{
-}
-
-UIScene_CreativeMenu::ItemBuilder::~ItemBuilder()
-{
-}
+std::vector<const UIScene_CreativeMenu::ItemBuilder*>
+    UIScene_CreativeMenu::s_groupItems[ECreative_Inventory_Groups_Count];
 
 
-UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int itemCount, int groupCount,
-                                       ECreative_Inventory_Groups* groups, int specialCount,
-                                       ECreative_Inventory_Groups* specialGroups, int extraCount,
+UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int titleStringId, int groupCount,
+                                       ECreative_Inventory_Groups* groups, int specialGroupCount,
+                                       ECreative_Inventory_Groups* specialGroups, int extraGroupCount,
                                        ECreative_Inventory_Groups* extraGroups)
-    : m_title(title == 0 ? L"" : title), m_itemCount(itemCount), m_groupCount(groupCount),
-      m_specialCount(specialCount), m_extraCount(extraCount), m_pageCount(0)
+    : m_title(title), m_titleStringId(titleStringId), m_groupCount(groupCount), m_groups(NULL),
+      m_specialGroupCount(specialGroupCount), m_specialGroups(NULL), m_extraGroupCount(extraGroupCount),
+      m_extraGroups(NULL), m_pageCount(0), m_itemsPerPage(0), m_itemCount(0), m_extraItemCount(0)
 {
-    if (groups != 0 && groupCount > 0)
-        m_groups.assign(groups, groups + groupCount);
-    if (specialGroups != 0 && specialCount > 0)
-        m_specialGroups.assign(specialGroups, specialGroups + specialCount);
-    if (extraGroups != 0 && extraCount > 0)
-        m_extraGroups.assign(extraGroups, extraGroups + extraCount);
-    int ordinaryTotal = 0;
-    for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_groups.begin();
-         it != m_groups.end(); ++it)
-        ordinaryTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
-    int specialTotal = 0;
-    for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_specialGroups.begin();
-         it != m_specialGroups.end(); ++it)
-        specialTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
-    m_pageCount = static_cast<int>(
-        std::ceil(static_cast<float>(ordinaryTotal) / static_cast<float>(50 - specialTotal)));
-}
+    if (groupCount > 0)
+    {
+        m_groups = new ECreative_Inventory_Groups[groupCount];
+        for (int i = 0; i < groupCount; ++i)
+        {
+            m_groups[i] = groups[i];
+            m_itemCount += s_groupItems[groups[i]].size();
+        }
+    }
 
-unsigned int UIScene_CreativeMenu::TabSpec::getPageCount()
-{
-    return static_cast<unsigned int>(m_pageCount);
-}
+    if (extraGroupCount > 0)
+    {
+        m_extraGroups = new ECreative_Inventory_Groups[extraGroupCount];
+        for (int i = 0; i < extraGroupCount; ++i)
+        {
+            m_extraGroups[i] = extraGroups[i];
+            m_extraItemCount += s_groupItems[extraGroups[i]].size();
+        }
+    }
 
-unsigned int UIScene_CreativeMenu::TabSpec::getTitleStringId()
-{
-    return static_cast<unsigned int>(m_itemCount);
-}
+    unsigned int specialItemCount = 0;
+    if (specialGroupCount > 0 && specialGroups != NULL)
+    {
+        m_specialGroups = new ECreative_Inventory_Groups[specialGroupCount];
+        for (int i = 0; i < specialGroupCount; ++i)
+        {
+            m_specialGroups[i] = specialGroups[i];
+            specialItemCount += s_groupItems[specialGroups[i]].size();
+        }
+    }
 
-unsigned int UIScene_CreativeMenu::TabSpec::getSpecialGroupCount()
-{
-    return static_cast<unsigned int>(m_specialCount);
+    m_itemsPerPage = ITEM_SLOT_COUNT - specialItemCount;
+    m_pageCount = static_cast<unsigned int>(
+        std::ceil(static_cast<float>(m_itemCount) / static_cast<float>(m_itemsPerPage)));
 }
 
 UIScene_CreativeMenu::TabSpec::~TabSpec()
 {
+    delete[] m_groups;
+    delete[] m_specialGroups;
+    delete[] m_extraGroups;
 }
 
-void UIScene_CreativeMenu::TabSpec::populateMenu(AbstractContainerMenu* menu, int page, unsigned int offset)
+unsigned int UIScene_CreativeMenu::TabSpec::getPageCount()
 {
-    if (menu == 0)
-        return;
-    unsigned int emitted = 0;
-    const unsigned int pageStart = offset;
+    return m_pageCount;
+}
 
-    if (page >= 0 && page < static_cast<int>(m_specialGroups.size()))
+void UIScene_CreativeMenu::TabSpec::populateMenu(AbstractContainerMenu* menu, int specialGroup, unsigned int page)
+{
+    int slot = 0;
+
+    if (m_specialGroupCount > 0 && m_specialGroups != NULL)
     {
-        const ECreative_Inventory_Groups group = m_specialGroups[page];
-        const std::vector<const ItemBuilder*>& specialItems = UIScene_CreativeMenu::s_groupItems[group];
-        for (std::vector<const ItemBuilder*>::const_iterator itemIt = specialItems.begin();
-             itemIt != specialItems.end(); ++itemIt)
+        const std::vector<const ItemBuilder*>& items = s_groupItems[m_specialGroups[specialGroup]];
+        for (std::vector<const ItemBuilder*>::const_iterator it = items.end();
+             it != items.begin() && slot < ITEM_SLOT_COUNT; --it)
         {
-            if (emitted >= 50)
-                break;
-            menu->setItem(++emitted, not_null_ptr<ItemInstance>(new ItemInstance((*itemIt)->item)));
+            ++slot;
+            menu->getSlot(slot)->set((*(it - 1))->build());
         }
     }
-    int extraTotal = 0;
-    for (std::vector<ECreative_Inventory_Groups>::const_iterator groupIt = m_extraGroups.begin();
-         groupIt != m_extraGroups.end(); ++groupIt)
-        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*groupIt].size());
-    const unsigned int ordinarySlots = static_cast<unsigned int>(std::max(1, 50 - extraTotal));
 
-    unsigned int skip = pageStart * ordinarySlots;
-    bool full = false;
-    for (std::vector<ECreative_Inventory_Groups>::const_iterator groupIt = m_groups.begin();
-         !full && groupIt != m_groups.end(); ++groupIt)
+    const unsigned int firstItem = page * m_itemsPerPage;
+    unsigned int itemsBefore = 0;
+    unsigned int itemIndex = 0;
+    int group = 0;
+    bool found = false;
+    for (; group < m_groupCount; ++group)
     {
-        const std::vector<const ItemBuilder*>& items = UIScene_CreativeMenu::s_groupItems[*groupIt];
-        for (std::vector<const ItemBuilder*>::const_iterator itemIt = items.begin();
-             itemIt != items.end(); ++itemIt)
+        const unsigned int groupSize = s_groupItems[m_groups[group]].size();
+        if (firstItem <= itemsBefore + groupSize)
         {
-            if (skip != 0) { --skip; continue; }
-            if (emitted >= 50) { full = true; break; }
-            menu->setItem(++emitted, not_null_ptr<ItemInstance>(new ItemInstance((*itemIt)->item)));
+            itemIndex = firstItem - itemsBefore;
+            found = true;
+            break;
+        }
+        itemsBefore += groupSize;
+    }
+
+    if (found)
+    {
+        for (; group < m_groupCount; ++group, itemIndex = 0)
+        {
+            const std::vector<const ItemBuilder*>& items = s_groupItems[m_groups[group]];
+            if (slot >= ITEM_SLOT_COUNT)
+                return;
+            do
+            {
+                menu->getSlot(slot)->set(items[itemIndex]->build());
+                ++slot;
+                ++itemIndex;
+                if (items.empty() || itemIndex >= items.size())
+                    break;
+                if (slot >= ITEM_SLOT_COUNT)
+                    return;
+            } while (true);
         }
     }
-    while (emitted < 50)
-        menu->setItem(emitted++, not_null_ptr<ItemInstance>(new ItemInstance(*ItemInstance::EMPTY)));
+
+    for (; slot < ITEM_SLOT_COUNT; ++slot)
+        menu->getSlot(slot)->remove(1);
 }
 
 UIScene_CreativeMenu::ItemPickerMenu::ItemPickerMenu(boost::shared_ptr<SimpleContainer> container,
@@ -184,15 +235,15 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
         new SimpleContainer(0, std::wstring(L""), false, 50));
     m_containerMenu = new ItemPickerMenu(container, sceneData->localPlayer->mInventory);
     m_sceneInterface->Initialize(false, sceneData->playerIndex, m_containerMenu, true, -1,
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20),
+                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax,
                                  sceneData->creative);
     m_inventoryLabel.setLabel(UIString(L""), false, false);
 
     for (int i = 0; i < 50; ++i)
-        m_hotbarList.addSlot(i);
+        m_containerList.addSlot(i);
     for (int i = 50; i < 59; ++i)
-        UIScene_AbstractContainerMenu::m_hotbarList.addSlot(i);
+        m_hotbarList.addSlot(i);
 
     if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
     {
@@ -201,7 +252,7 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
         if (tutorial != 0)
         {
             m_sceneInterface->m_previousTutorialState = tutorial->currentState;
-            tutorial->changeTutorialState(static_cast<eTutorial_State>(0xe), this);
+            tutorial->changeTutorialState(eTutorial_State_CreativeInventoryMenu, this);
         }
     }
 
@@ -218,8 +269,8 @@ UIScene_CreativeMenu::~UIScene_CreativeMenu()
 
 bool UIScene_CreativeMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x14) &&
-           section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x17);
+    return section > IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax &&
+           section < IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0;
 }
 
 unsigned int UIScene_CreativeMenu::CanHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -229,15 +280,15 @@ unsigned int UIScene_CreativeMenu::CanHaveFocus(IUIScene_AbstractContainerMenu::
 
 unsigned int UIScene_CreativeMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15)) return 9;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16)) return 10;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar) return 9;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector) return 10;
     return 0;
 }
 
 unsigned int UIScene_CreativeMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15)) return 1;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16)) return 5;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar) return 1;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector) return 5;
     return 0;
 }
 
@@ -246,12 +297,12 @@ unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_Abstrac
                                                                  int* x, int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection next = section;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15) &&
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar &&
         (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up))
-        next = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16);
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16) &&
+        next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector;
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector &&
              (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up))
-        next = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15);
+        next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
     m_sceneInterface->updateSlotPosition(section, next, state, x, y, 0, 0);
     return static_cast<unsigned int>(next);
 }
@@ -260,20 +311,20 @@ void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::
 {
     if (position == 0) return;
 
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15))
-    {
-        position->x = UIScene_AbstractContainerMenu::m_hotbarList.getXPos();
-        position->y = UIScene_AbstractContainerMenu::m_hotbarList.getYPos();
-    }
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16))
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
     {
         position->x = m_hotbarList.getXPos();
         position->y = m_hotbarList.getYPos();
     }
-    else if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x17) &&
-             section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x1f))
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
     {
-        UIControl_Touch& panel = m_touchPanels[section - 0x17];
+        position->x = m_containerList.getXPos();
+        position->y = m_containerList.getYPos();
+    }
+    else if (section >= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0 &&
+             section <= IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider)
+    {
+        UIControl_Touch& panel = m_touchPanels[section - IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0];
         position->x = panel.getXPos();
         position->y = panel.getYPos();
     }
@@ -360,7 +411,7 @@ void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
     _UIVec2D origin = { 0.0f, 0.0f };
     _UIVec2D size = { 0.0f, 0.0f };
     m_sceneInterface->GetItemScreenData(
-        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x1f), 0, &origin, &size);
+        IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider, 0, &origin, &size);
 
     float fraction = (position.y - origin.y) / size.y;
     if (fraction < 0.0f)
@@ -379,10 +430,10 @@ void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
 
 void UIScene_CreativeMenu::handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
 {
-    if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x17) &&
-        section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x1e))
-        switchTab(static_cast<ECreativeInventoryTabs>(section - 0x17));
-    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x1f))
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0 &&
+        section <= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab7)
+        switchTab(static_cast<ECreativeInventoryTabs>(section - IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0));
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider)
         ScrollBar(_UIVec2D());
     (void)button;
 }
@@ -395,7 +446,7 @@ void UIScene_CreativeMenu::handleAdditionalKeyPress(int key)
         if (key == 8)
         {
             const int nextGroup = m_tabPages[tab] + 1;
-            m_tabPages[tab] = nextGroup < static_cast<int>(s_tabSpecs[tab]->getSpecialGroupCount()) ? nextGroup : 0;
+            m_tabPages[tab] = nextGroup < s_tabSpecs[tab]->m_specialGroupCount ? nextGroup : 0;
             switchTab(static_cast<ECreativeInventoryTabs>(tab));
             return;
         }
@@ -445,7 +496,7 @@ void UIScene_CreativeMenu::handleAdditionalKeyPress(int key)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
         return;
     }
-    switchTab(static_cast<ECreativeInventoryTabs>(7));
+    switchTab(ECreativeInventoryTabs_Combat);
     gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
 }
 
@@ -493,7 +544,7 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
     int effectiveSlot = m_sceneInterface->getCurrentIndex(section);
     Minecraft* minecraft = Minecraft::GetInstance();
 
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16) && slot == 0)
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector && slot == 0)
     {
         const int playerId = getPad();
         Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
@@ -508,23 +559,23 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
         if (button == 1)
             newCarried->setCount(newCarried->getMaxStackSize());
 
-        m_sceneInterface->m_dragEnd = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15);
-        m_sceneInterface->m_dragStart = 5;
+        m_sceneInterface->m_currentSection = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
+        m_sceneInterface->m_tapState = IUIScene_AbstractContainerMenu::ETapState_NoMove;
 
         int emptySlot = 0;
         if (!getEmptyInventorySlot(newCarried, emptySlot))
             return;
 
-        m_sceneInterface->m_quickCraftRemaining = emptySlot;
-        m_sceneInterface->setSectionSelectedSlot(static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
-                                                  emptySlot, m_sceneInterface->m_quickCraftSlots, false);
+        m_sceneInterface->m_currentSlotX = emptySlot;
+        m_sceneInterface->setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
+                                                  emptySlot, m_sceneInterface->m_currentSlotY, false);
 
         effectiveSlot = m_sceneInterface->getCurrentIndex(
-            static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15));
+            IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
         slot = 0;
         button = 0;
     }
-    else if (section != static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15))
+    else if (section != IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
     {
         return;
     }
@@ -541,57 +592,156 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
 
 int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15)) return 50;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16)) return 0;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar) return 50;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector) return 0;
     return 0;
 }
 
-void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slotX, int slotY, bool pointer)
 {
-    if (wrap && (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15) ||
-                 section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16)))
-        m_containerList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
+    int columns = static_cast<int>(getSectionColumns(section));
+    UIControl_SlotList* list = NULL;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
+        list = &m_hotbarList;
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
+        list = &m_containerList;
+    if (pointer)
+        list->setHighlightSlot(slotY * columns + slotX);
 }
 
 unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection,
                                                      not_null_ptr<ItemInstance>, bool, bool, bool, int,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& first,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& second,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& third,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& fourth,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& fifth,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& sixth,
-                                                     IUIScene_AbstractContainerMenu::EToolTipItem& seventh)
+                                                     EToolTipItem& first,
+                                                     EToolTipItem& second,
+                                                     EToolTipItem& third,
+                                                     EToolTipItem& fourth,
+                                                     EToolTipItem& fifth,
+                                                     EToolTipItem& sixth,
+                                                     EToolTipItem& seventh)
 {
-    first = second = third = fourth = fifth = sixth = seventh = IUIScene_AbstractContainerMenu::EToolTipItem_None;
+    first = second = third = fourth = fifth = sixth = seventh = eToolTipNone;
     return 0;
-}
-
-namespace
-{
-    void AddCreativeBlock(MenuBuilder& builder, Block* block)
-    {
-        builder.ITEM_BLOCKSTATE(block->defaultBlockState());
-    }
-
-    void AddCreativeBlockItem(MenuBuilder& builder, Block* block, int aux)
-    {
-        builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, aux)));
-    }
 }
 
 void UIScene_CreativeMenu::staticCtor()
 {
     MenuBuilder builder;
-    builder.mItems = &s_groupItems[0];
-
-    AddCreativeBlock(builder, Blocks::stone);
-    AddCreativeBlock(builder, Blocks::grass);
-    AddCreativeBlock(builder, Blocks::grass_path);
-    AddCreativeBlock(builder, Blocks::dirt);
-    AddCreativeBlock(builder, Blocks::cobblestone);
-    AddCreativeBlock(builder, Blocks::sand);
-    AddCreativeBlock(builder, Blocks::sandstone);
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_BuildingBlocks];
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::grass->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::grass_path->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dirt->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::cobblestone->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::sand->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState());
+    builder.ITEM_AUX(Blocks::sandstone, SandStoneBlock::TYPE, SandStoneBlock::SMOOTH);
+    builder.ITEM_AUX(Blocks::sandstone, SandStoneBlock::TYPE, SandStoneBlock::CHISELED);
+    builder.ITEM_AUX(Blocks::sand, SandBlock::TYPE, SandBlock::Variant::RED_SAND);
+    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState());
+    builder.ITEM_AUX(Blocks::red_sandstone, RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::SMOOTH);
+    builder.ITEM_AUX(Blocks::red_sandstone, RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::CHISELED);
+    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::GRANITE);
+    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_GRANITE);
+    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE);
+    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_ANDESITE);
+    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::DIORITE);
+    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_DIORITE);
+    builder.ITEM_BLOCKSTATE(Blocks::coal_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dried_kelp_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::gold_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::iron_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::lapis_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::diamond_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::emerald_block->defaultBlockState());
+    builder.ITEM_AUX(Blocks::quartz_block, QuartzBlock::VARIANT, QuartzBlock::Variant::DEFAULT);
+    builder.ITEM_BLOCKSTATE(Blocks::coal_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::lapis_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::diamond_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::redstone_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::iron_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::gold_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::emerald_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::quartz_ore->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::nether_wart_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::bedrock->defaultBlockState());
+    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::OAK);
+    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
+    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA);
+    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::OAK);
+    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
+    builder.ITEM_AUX(Blocks::log2, NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA);
+    builder.ITEM_AUX(Blocks::log2, NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    builder.ITEM_BLOCKSTATE(Blocks::stripped_log_oak->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::stripped_log_spruce->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::stripped_log_birch->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::stripped_log_jungle->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::stripped_log_acacia->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::stripped_log_dark_oak->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::gravel->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::brick_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::mossy_cobblestone->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::obsidian->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::clay->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::ice->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::packed_ice->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::blue_ice->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::snow->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::netherrack->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::soul_sand->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::glowstone->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::magma->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::sea_lantern->defaultBlockState());
+    builder.ITEM_AUX(Blocks::prismarine, PrismarineBlock::VARIANT, PrismarineBlock::Variant::ROUGH);
+    builder.ITEM_AUX(Blocks::prismarine, PrismarineBlock::VARIANT, PrismarineBlock::Variant::BRICKS);
+    builder.ITEM_AUX(Blocks::prismarine, PrismarineBlock::VARIANT, PrismarineBlock::Variant::DARK);
+    builder.ITEM_BLOCKSTATE(Blocks::slime->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::spruce_fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::birch_fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::jungle_fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::acacia_fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dark_oak_fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::nether_brick_fence->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::iron_bars->defaultBlockState());
+    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT);
+    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY);
+    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED);
+    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED);
+    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE);
+    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::COBBLESTONE);
+    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONEBRICK);
+    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::MOSSY_STONEBRICK);
+    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CRACKED_STONEBRICK);
+    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CHISELED_STONEBRICK);
+    builder.ITEM_BLOCKSTATE(Blocks::mycelium->defaultBlockState());
+    builder.ITEM_AUX(Blocks::dirt, DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT);
+    builder.ITEM_AUX(Blocks::dirt, DirtBlock::VARIANT, DirtBlock::Variant::PODZOL);
+    builder.ITEM_BLOCKSTATE(Blocks::nether_brick->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::red_nether_brick->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::end_stone->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::end_bricks->defaultBlockState());
+    builder.ITEM_AUX(Blocks::quartz_block, QuartzBlock::VARIANT, QuartzBlock::Variant::CHISELED);
+    builder.ITEM_AUX(Blocks::quartz_block, QuartzBlock::VARIANT, QuartzBlock::Variant::LINES_Y);
+    builder.ITEM_BLOCKSTATE(Blocks::purpur_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::purpur_pillar->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::spruce_trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::birch_trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::jungle_trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::acacia_trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dark_oak_trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::iron_trapdoor->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::fence_gate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::spruce_fence_gate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::birch_fence_gate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::jungle_fence_gate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::acacia_fence_gate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dark_oak_fence_gate->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::spruceDoor, 1, 0)));
@@ -599,92 +749,329 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::jungleDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::acaciaDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::darkOakDoor, 1, 0)));
-    {
-        Block* stairsBlocks[] = {
-            Blocks::oak_stairs, Blocks::spruce_stairs, Blocks::jungle_stairs,
-            Blocks::acacia_stairs, Blocks::stone_stairs, Blocks::brick_stairs,
-            Blocks::stone_brick_stairs, Blocks::nether_brick_stairs,
-            Blocks::red_sandstone_stairs, Blocks::quartz_stairs,
-            Blocks::purpur_stairs, Blocks::prismarine_stairs
-        };
-        const int numValues = sizeof(stairsBlocks) / sizeof(stairsBlocks[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, stairsBlocks[i], 2);
-    }
-    {
-        int auxValues[] = {15, 11, 3, 13, 5, 6, 2, 10, 12, 4, 0, 7};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::stained_hardened_clay, auxValues[i]);
-    }
-    builder.mItems = &s_groupItems[1];
-    {
-        int auxValues[] = {9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::stained_glass, auxValues[i]);
-    }
-    {
-        int auxValues[] = {15, 11, 3, 9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::stained_glass_pane, auxValues[i]);
-    }
-    {
-        int auxValues[] = {0, 0, 2, 3, 4};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::coral, auxValues[i]);
-    }
-    {
-        int auxValues[] = {0, 0, 2, 3, 4};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::coral_fan, auxValues[i]);
-    }
-    {
-        int auxValues[] = {0, 0, 2, 3, 4};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::coral_fan_dead, auxValues[i]);
-    }
-    {
-        int auxValues[] = {0, 0, 2, 3, 4, 8, 9, 10, 11, 12};
-        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
-        for (int i = 0; i < numValues; ++i)
-            AddCreativeBlockItem(builder, Blocks::coral_block, auxValues[i]);
-    }
-    AddCreativeBlockItem(builder, Blocks::piston, 5);
-    AddCreativeBlockItem(builder, Blocks::sticky_piston, 5);
-    AddCreativeBlockItem(builder, Blocks::stone_button, 4);
-    AddCreativeBlockItem(builder, Blocks::wooden_button, 4);
-    AddCreativeBlockItem(builder, Blocks::acacia_button, 4);
-    AddCreativeBlockItem(builder, Blocks::birch_button, 4);
-    AddCreativeBlockItem(builder, Blocks::dark_oak_button, 4);
-    AddCreativeBlockItem(builder, Blocks::jungle_button, 4);
-    AddCreativeBlockItem(builder, Blocks::spruce_button, 4);
-    AddCreativeBlockItem(builder, Blocks::redstone_torch, 5);
-    builder.mItems = &s_groupItems[8];
-    builder.POTION(Items::potion, Potions::WATER);
-    builder.POTION(Items::potion, Potions::AWKWARD);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::STONE);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::SAND);
+    builder.ITEM_AUX(Blocks::stone_slab2, NewStoneSlabBlock::VARIANT, NewStoneSlabBlock::Variant::RED_SANDSTONE);
+    builder.ITEM_AUX(Blocks::wooden_slab, WoodSlabBlock::VARIANT, PlanksBlock::Variant::OAK);
+    builder.ITEM_AUX(Blocks::wooden_slab, WoodSlabBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    builder.ITEM_AUX(Blocks::wooden_slab, WoodSlabBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+    builder.ITEM_AUX(Blocks::wooden_slab, WoodSlabBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
+    builder.ITEM_AUX(Blocks::wooden_slab, WoodSlabBlock::VARIANT, PlanksBlock::Variant::ACACIA);
+    builder.ITEM_AUX(Blocks::wooden_slab, WoodSlabBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::COBBLESTONE);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::BRICK);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::SMOOTHBRICK);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::NETHERBRICK);
+    builder.ITEM_AUX(Blocks::stone_slab, StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::QUARTZ);
+    builder.ITEM_BLOCKSTATE(Blocks::purpur_slab->defaultBlockState());
+    builder.ITEM_AUX(Blocks::prismarine_slab, PrismarineSlabBlock::VARIANT, PrismarineSlabBlock::Variant::ROUGH);
+    builder.ITEM_AUX(Blocks::prismarine_slab, PrismarineSlabBlock::VARIANT, PrismarineSlabBlock::Variant::BRICKS);
+    builder.ITEM_AUX(Blocks::prismarine_slab, PrismarineSlabBlock::VARIANT, PrismarineSlabBlock::Variant::DARK);
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::oak_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::spruce_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::birch_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::jungle_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::acacia_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::dark_oak_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::brick_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_brick_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::nether_brick_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::sandstone_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_sandstone_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::quartz_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::purpur_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::prismarine_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::prismarine_bricks_stairs, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::dark_prismarine_stairs, 1, 2)));
+    builder.ITEM_BLOCKSTATE(Blocks::hardened_clay->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_hardened_clay, 1, 7)));
 
-    builder.mItems = &s_groupItems[1];
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Decoration];
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 1)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 2)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 4)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 5)));
+    builder.ITEM_BLOCKSTATE(Blocks::sponge->defaultBlockState());
+    builder.ITEM_AUX(Blocks::sponge, SpongeBlock::WET, true);
+    builder.ITEM_BLOCKSTATE(Blocks::melon_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::pumpkin->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::carved_pumpkin->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::lit_pumpkin->defaultBlockState());
+    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::OAK);
+    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::SPRUCE);
+    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::BIRCH);
+    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::JUNGLE);
+    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::ACACIA);
+    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::DARK_OAK);
+    builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK);
+    builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+    builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
+    builder.ITEM_AUX(Blocks::leaves2, NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA);
+    builder.ITEM_AUX(Blocks::leaves2, NewLeafBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    builder.ITEM_BLOCKSTATE(Blocks::vine->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::waterlily->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::torch, 1, 5)));
+    builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::DEAD_BUSH);
+    builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::GRASS);
+    builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::FERN);
+    builder.ITEM_BLOCKSTATE(Blocks::deadbush->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flowerPot, 1, 0)));
+    builder.ITEM_AUX(Blocks::yellow_flower, static_cast<FlowerBlock*>(Blocks::yellow_flower)->getFlowerProperty(), FlowerBlock::Flower::DANDELION);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::POPPY);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::BLUE_ORCHID);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ALLIUM);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::HOUSTONIA);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::RED_TULIP);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ORANGE_TULIP);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::WHITE_TULIP);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::PINK_TULIP);
+    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::OXEYE_DAISY);
+    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SUNFLOWER);
+    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SYRINGA);
+    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS);
+    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::FERN);
+    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::ROSE);
+    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::PAEONIA);
+    builder.ITEM_BLOCKSTATE(Blocks::brown_mushroom->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::red_mushroom->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::cactus->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::snow_layer->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::web->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::glass_pane->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::glass->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::painting, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::itemFrame, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::sign, 1, 0)));
+    builder.ITEM_BLOCKSTATE(Blocks::bookshelf->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::hay_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::bone_block->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::chorus_flower->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::chorus_plant->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::end_rod->defaultBlockState());
+    builder.ITEM_AUX(Blocks::cobblestone_wall, WallBlock::VARIANT, WallBlock::Variant::COBBLESTONE);
+    builder.ITEM_AUX(Blocks::cobblestone_wall, WallBlock::VARIANT, WallBlock::Variant::MOSSY);
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 7)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete_powder, 1, 7)));
+    builder.ITEM_BLOCKSTATE(Blocks::black_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::blue_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::light_blue_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::cyan_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::green_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::lime_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::pink_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::magenta_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::purple_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::red_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::brown_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::orange_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::yellow_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::white_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::silver_glazed_terracotta->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::gray_glazed_terracotta->defaultBlockState());
+    builder.BANNER(DyeColor::RED, NULL);
+    builder.BANNER(DyeColor::ORANGE, NULL);
+    builder.BANNER(DyeColor::YELLOW, NULL);
+    builder.BANNER(DyeColor::LIME, NULL);
+    builder.BANNER(DyeColor::LIGHT_BLUE, NULL);
+    builder.BANNER(DyeColor::CYAN, NULL);
+    builder.BANNER(DyeColor::BLUE, NULL);
+    builder.BANNER(DyeColor::PURPLE, NULL);
+    builder.BANNER(DyeColor::MAGENTA, NULL);
+    builder.BANNER(DyeColor::PINK, NULL);
+    builder.BANNER(DyeColor::WHITE, NULL);
+    builder.BANNER(DyeColor::GRAY, NULL);
+    builder.BANNER(DyeColor::SILVER, NULL);
+    builder.BANNER(DyeColor::BLACK, NULL);
+    builder.BANNER(DyeColor::GREEN, NULL);
+    builder.BANNER(DyeColor::BROWN, NULL);
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, 7)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carpet, 1, 7)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass, 1, 7)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 7)));
+    builder.ITEM_AUX(Blocks::red_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE);
+    builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE);
+    builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_INSIDE);
+    builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::STEM);
+    builder.ITEM_BLOCKSTATE(Blocks::sea_pickle->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::kelp, 1, 0)));
-    builder.mItems = &s_groupItems[2];
+    builder.ITEM_BLOCKSTATE(Blocks::sea_grass->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan_dead, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan_dead, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan_dead, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan_dead, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_fan_dead, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral_block, 1, 12)));
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Redstone];
+    builder.ITEM_BLOCKSTATE(Blocks::dispenser->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::noteblock->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::piston, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::sticky_piston, 1, 5)));
+    builder.ITEM_BLOCKSTATE(Blocks::tnt->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::lever, 1, LeverBlock::getLeverFacing(Direction::NORTH))));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_button, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wooden_button, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::spruce_button, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::birch_button, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::jungle_button, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::acacia_button, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::dark_oak_button, 1, 4)));
+    builder.ITEM_BLOCKSTATE(Blocks::stone_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::wooden_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::spruce_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::birch_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::jungle_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::acacia_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dark_oak_pressure_plate->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::redstone, 1, 0)));
+    builder.ITEM_BLOCKSTATE(Blocks::redstone_block->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::redstone_torch, 1, 5)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::repeater, 1, 0)));
+    builder.ITEM_BLOCKSTATE(Blocks::redstone_lamp->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::tripwire_hook->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::daylight_detector->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::dropper->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::hopper->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::comparator, 1, 0)));
-    builder.mItems = &s_groupItems[3];
+    builder.ITEM_BLOCKSTATE(Blocks::trapped_chest->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::heavy_weighted_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::light_weighted_pressure_plate->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::observer->defaultBlockState());
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Transport];
+    builder.ITEM_BLOCKSTATE(Blocks::rail->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::golden_rail->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::detector_rail->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::activator_rail->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::ladder->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::minecart, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chestMinecart, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::furnaceMinecart, 1, 0)));
@@ -698,43 +1085,518 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::jungleBoat, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::acaciaBoat, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::darkOakBoat, 1, 0)));
-    builder.mItems = &s_groupItems[11];
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Miscellaneous];
+    builder.ITEM_BLOCKSTATE(Blocks::chest->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::ender_chest->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::crafting_table->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::furnace->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::brewingStand, 1, 0)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::brewingStand, 1, 15)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 11)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 3)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 9)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 13)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 5)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 6)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 2)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 10)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 14)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 12)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 1)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 4)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 0)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 8)));
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 7)));
+    builder.ITEM_BLOCKSTATE(Blocks::enchanting_table->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::beacon->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::conduit->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::black_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::blue_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::light_blue_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::cyan_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::green_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::lime_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::pink_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::magenta_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::purple_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::red_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::brown_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::orange_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::yellow_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::white_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::silver_shulker_box->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::gray_shulker_box->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, 7)));
+    builder.ITEM_BLOCKSTATE(Blocks::end_portal_frame->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::endCrystal, 1, 0)));
+    builder.ITEM_BLOCKSTATE(Blocks::jukebox->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::anvil->defaultBlockState());
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::lavaBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::waterBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::milkBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::fishBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::salmonBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::pufferBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::tropicalBucket, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cauldron, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::snowball, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::paper, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::book, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::writableBook, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::enderPearl, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::enderEye, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::nameTag, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::netherStar, 1, 0)));
+    builder.ITEM_BLOCKSTATE(Blocks::mob_spawner->defaultBlockState());
+    builder.ITEM_BLOCKSTATE(Blocks::turtle_egg->defaultBlockState());
+    builder.DEBUG_SPAWN_EGG(L"creeper", L"");
+    builder.DEBUG_SPAWN_EGG(L"skeleton", L"");
+    builder.DEBUG_SPAWN_EGG(L"wither_skeleton", L"");
+    builder.DEBUG_SPAWN_EGG(L"stray", L"");
+    builder.DEBUG_SPAWN_EGG(L"spider", L"");
+    builder.DEBUG_SPAWN_EGG(L"cave_spider", L"");
+    builder.DEBUG_SPAWN_EGG(L"zombie", L"");
+    builder.DEBUG_SPAWN_EGG(L"zombie_villager", L"");
+    builder.DEBUG_SPAWN_EGG(L"husk", L"");
+    builder.DEBUG_SPAWN_EGG(L"drowned", L"");
+    builder.DEBUG_SPAWN_EGG(L"slime", L"");
+    builder.DEBUG_SPAWN_EGG(L"witch", L"");
+    builder.DEBUG_SPAWN_EGG(L"silverfish", L"");
+    builder.DEBUG_SPAWN_EGG(L"ghast", L"");
+    builder.DEBUG_SPAWN_EGG(L"zombie_pigman", L"");
+    builder.DEBUG_SPAWN_EGG(L"blaze", L"");
+    builder.DEBUG_SPAWN_EGG(L"magma_cube", L"");
+    builder.DEBUG_SPAWN_EGG(L"enderman", L"");
+    builder.DEBUG_SPAWN_EGG(L"endermite", L"");
+    builder.DEBUG_SPAWN_EGG(L"shulker", L"");
+    builder.DEBUG_SPAWN_EGG(L"guardian", L"");
+    builder.DEBUG_SPAWN_EGG(L"elder_guardian", L"");
+    builder.DEBUG_SPAWN_EGG(L"evocation_illager", L"");
+    builder.DEBUG_SPAWN_EGG(L"vex", L"");
+    builder.DEBUG_SPAWN_EGG(L"vindication_illager", L"");
+    builder.DEBUG_SPAWN_EGG(L"villager", L"");
+    builder.DEBUG_SPAWN_EGG(L"bat", L"");
+    builder.DEBUG_SPAWN_EGG(L"pig", L"");
+    builder.DEBUG_SPAWN_EGG(L"sheep", L"");
+    builder.DEBUG_SPAWN_EGG(L"cow", L"");
+    builder.DEBUG_SPAWN_EGG(L"mooshroom", L"");
+    builder.DEBUG_SPAWN_EGG(L"chicken", L"");
+    builder.DEBUG_SPAWN_EGG(L"rabbit", L"");
+    builder.DEBUG_SPAWN_EGG(L"squid", L"");
+    builder.DEBUG_SPAWN_EGG(L"fish", L"");
+    builder.DEBUG_SPAWN_EGG(L"salmon", L"");
+    builder.DEBUG_SPAWN_EGG(L"pufferfish", L"");
+    builder.DEBUG_SPAWN_EGG(L"tropicalfish", L"");
+    builder.DEBUG_SPAWN_EGG(L"parrot", L"");
+    builder.DEBUG_SPAWN_EGG(L"wolf", L"");
+    builder.DEBUG_SPAWN_EGG(L"ocelot", L"");
+    builder.DEBUG_SPAWN_EGG(L"polar_bear", L"");
+    builder.DEBUG_SPAWN_EGG(L"horse", L"");
+    builder.DEBUG_SPAWN_EGG(L"donkey", L"");
+    builder.DEBUG_SPAWN_EGG(L"mule", L"");
+    builder.DEBUG_SPAWN_EGG(L"skeleton_horse", L"");
+    builder.DEBUG_SPAWN_EGG(L"zombie_horse", L"");
+    builder.DEBUG_SPAWN_EGG(L"llama", L"");
+    builder.DEBUG_SPAWN_EGG(L"turtle", L"");
+    builder.DEBUG_SPAWN_EGG(L"dolphin", L"");
+    builder.DEBUG_SPAWN_EGG(L"phantom", L"");
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::record13, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordCat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordBlocks, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordChirp, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordFar, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordMall, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordMellohi, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordStal, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordStrad, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordWard, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::record11, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::recordWait, 1, 0)));
+    builder.FIREWORK(0, DyeColor::LIGHT_BLUE->getItemData(), 1, 1, 0, -1);
+    builder.FIREWORK(3, DyeColor::GREEN->getItemData(), 2, 0, 0, -1);
+    builder.FIREWORK(4, DyeColor::RED->getItemData(), 2, 0, 0, DyeColor::ORANGE->getItemData());
+    builder.FIREWORK(4, DyeColor::MAGENTA->getItemData(), 3, 1, 0, DyeColor::BLUE->getItemData());
+    builder.FIREWORK(2, DyeColor::YELLOW->getItemData(), 2, 0, 1, DyeColor::ORANGE->getItemData());
 
-    static ECreative_Inventory_Groups structures[] = {static_cast<ECreative_Inventory_Groups>(0)};
-    static ECreative_Inventory_Groups decoration[] = {static_cast<ECreative_Inventory_Groups>(1)};
-    static ECreative_Inventory_Groups redstone[] = {static_cast<ECreative_Inventory_Groups>(3), static_cast<ECreative_Inventory_Groups>(2)};
-    static ECreative_Inventory_Groups materials[] = {static_cast<ECreative_Inventory_Groups>(4)};
-    static ECreative_Inventory_Groups food[] = {static_cast<ECreative_Inventory_Groups>(5)};
-    static ECreative_Inventory_Groups tools[] = {static_cast<ECreative_Inventory_Groups>(6)};
-    static ECreative_Inventory_Groups brewing[] = {static_cast<ECreative_Inventory_Groups>(7), static_cast<ECreative_Inventory_Groups>(8), static_cast<ECreative_Inventory_Groups>(9), static_cast<ECreative_Inventory_Groups>(10)};
-    static ECreative_Inventory_Groups misc[] = {static_cast<ECreative_Inventory_Groups>(11)};
-    s_tabSpecs[0] = new TabSpec(L"Structures", 0x0FBC6E08, 1, structures, 0, 0, 0, 0);
-    s_tabSpecs[1] = new TabSpec(L"Decoration", static_cast<int>(0xAC698282), 1, decoration, 0, 0, 0, 0);
-    s_tabSpecs[2] = new TabSpec(L"RedstoneAndTransport", 0x060380CB, 2, redstone, 3, 0, 0, 0);
-    s_tabSpecs[3] = new TabSpec(L"Materials", 0x448C117B, 1, materials, 0, 0, 0, 0);
-    s_tabSpecs[4] = new TabSpec(L"Food", static_cast<int>(0xEF31F309), 1, food, 0, 0, 0, 0);
-    s_tabSpecs[5] = new TabSpec(L"Tools", static_cast<int>(0xAD2EBC52), 1, tools, 0, 0, 0, 0);
-    s_tabSpecs[6] = new TabSpec(L"Brewing", 0x50D06098, 4, brewing, 0, 0, 0, 0);
-    s_tabSpecs[7] = new TabSpec(L"Misc", static_cast<int>(0xBC0FD661), 1, misc, 0, 0, 0, 0);
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Food];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::apple, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenApple, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenApple, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::melon, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::rabbitStew, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::beetrootSoup, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bread, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookie, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookedFish, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::fish, 1, 0)));
+    builder.ITEM_AUX(Items::cookedFish, FishFoodItem::Type::SALMON);
+    builder.ITEM_AUX(Items::fish, FishFoodItem::Type::SALMON);
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::fish, 1, FishFoodItem::Type::CLOWNFISH->getData())));
+    builder.ITEM_AUX(Items::fish, FishFoodItem::Type::PUFFERFISH);
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookedPorkchop, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::porkchop, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookedBeef, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::beef, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookedChicken, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chicken, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookedMutton, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::mutton, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cookedRabbit, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::rabbit, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::rottenFlesh, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::spiderEye, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::potato, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bakedPotato, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::poisonousPotato, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::carrot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenCarrot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinPie, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::beetroot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chorusFruit, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::driedKelp, 1, 0)));
 
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_ToolsAndCombat];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::compass, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::leatherHelmet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::leatherChestplate, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::leatherLeggings, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::leatherBoots, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenSword, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenShovel, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenPickaxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenAxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenHoe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::map, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chainmailHelmet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chainmailChestplate, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chainmailLeggings, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chainmailBoots, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::stoneSword, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::stoneShovel, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::stonePickaxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::stoneAxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::stoneHoe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bow, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironHelmet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironChestplate, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironLeggings, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironBoots, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironSword, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironShovel, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironPickaxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironAxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironHoe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::arrow, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenHelmet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenChestplate, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenLeggings, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenBoots, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenSword, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenShovel, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenPickaxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenAxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenHoe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flintAndSteel, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondHelmet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondChestplate, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondLeggings, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondBoots, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondShovel, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondPickaxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondAxe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondHoe, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::fireCharge, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::clock, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::shears, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::fishingRod, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::carrotOnAStick, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::lead, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::totemOfUndying, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondHorseArmor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenHorseArmor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironHorseArmor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::leatherHorseArmor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::armorStand, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::turtleHelmet, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::trident, 1, 0)));
+    builder.POTION(Items::tippedArrow, Potions::NIGHT_VISION);
+    builder.POTION(Items::tippedArrow, Potions::INVISIBILITY);
+    builder.POTION(Items::tippedArrow, Potions::LEAPING);
+    builder.POTION(Items::tippedArrow, Potions::FIRE_RESISTANCE);
+    builder.POTION(Items::tippedArrow, Potions::SWIFTNESS);
+    builder.POTION(Items::tippedArrow, Potions::SLOWNESS);
+    builder.POTION(Items::tippedArrow, Potions::WATER_BREATHING);
+    builder.POTION(Items::tippedArrow, Potions::HEALING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::LONG_NIGHT_VISION);
+    builder.POTION(Items::tippedArrow, Potions::LONG_INVISIBILITY);
+    builder.POTION(Items::tippedArrow, Potions::LONG_LEAPING);
+    builder.POTION(Items::tippedArrow, Potions::LONG_FIRE_RESISTANCE);
+    builder.POTION(Items::tippedArrow, Potions::LONG_SWIFTNESS);
+    builder.POTION(Items::tippedArrow, Potions::LONG_SLOWNESS);
+    builder.POTION(Items::tippedArrow, Potions::LONG_WATER_BREATHING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::STRONG_LEAPING);
+    builder.POTION(Items::tippedArrow, Potions::STRONG_SWIFTNESS);
+    builder.POTION(Items::tippedArrow, Potions::STRONG_HEALING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+    builder.POTION(Items::tippedArrow, Potions::HARMING);
+
+    {
+        std::vector<int> enchantmentIds;
+        const boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >&
+            enchantments = Enchantment::enchantmentRegistry->mInverseRegistry;
+        for (boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>,
+                                  std::equal_to<Enchantment*> >::const_iterator it = enchantments.begin();
+             it != enchantments.end(); ++it)
+            enchantmentIds.push_back(Enchantment::enchantmentRegistry->getId(it->first));
+        std::sort(enchantmentIds.begin(), enchantmentIds.end());
+
+        for (std::vector<int>::const_iterator it = enchantmentIds.begin(); it != enchantmentIds.end(); ++it)
+        {
+            Enchantment* enchantment = Enchantment::byId(*it);
+            if (enchantment != NULL && enchantment->mCategory != NULL)
+                builder.ADD(EnchantedBookItem::createForEnchantment(
+                    new EnchantmentInstance(enchantment, enchantment->getMaxLevel())));
+        }
+    }
+
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Materials];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::coal, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::coal, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::diamond, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironIngot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldIngot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::quartz, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::brick, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::netherbrick, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::stick, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bowl, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::bone, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::string, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::feather, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flint, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::leather, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::rabbitHide, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::gunpowder, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::clayBall, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::glowstoneDust, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::prismarineCrystals, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::prismarineShard, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::nautilus, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::nautilusCore, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::wheatSeeds, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::melonSeeds, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::beetrootSeeds, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::wheat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::reeds, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::egg, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::sugar, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::slimeBall, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::blazeRod, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::goldNugget, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironNugget, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::shulkerShell, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::netherWart, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chorusFruitPopped, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::turtleShellPiece, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 7)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 8)));
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_BrewingIngredients];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::experienceBottle, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::dragonBreath, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ghastTear, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::fermentedSpiderEye, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::blazePowder, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::magmaCream, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::speckledMelon, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::rabbitFoot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::phantomMembrane, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::glassBottle, 1, 0)));
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Potions];
+    builder.POTION(Items::potion, Potions::WATER);
+    builder.POTION(Items::potion, Potions::AWKWARD);
+    builder.POTION(Items::potion, Potions::NIGHT_VISION);
+    builder.POTION(Items::potion, Potions::INVISIBILITY);
+    builder.POTION(Items::potion, Potions::LEAPING);
+    builder.POTION(Items::potion, Potions::FIRE_RESISTANCE);
+    builder.POTION(Items::potion, Potions::SWIFTNESS);
+    builder.POTION(Items::potion, Potions::SLOWNESS);
+    builder.POTION(Items::potion, Potions::WATER_BREATHING);
+    builder.POTION(Items::potion, Potions::HEALING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::WATER);
+    builder.POTION(Items::splashPotion, Potions::NIGHT_VISION);
+    builder.POTION(Items::splashPotion, Potions::INVISIBILITY);
+    builder.POTION(Items::splashPotion, Potions::LEAPING);
+    builder.POTION(Items::splashPotion, Potions::FIRE_RESISTANCE);
+    builder.POTION(Items::splashPotion, Potions::SWIFTNESS);
+    builder.POTION(Items::splashPotion, Potions::SLOWNESS);
+    builder.POTION(Items::splashPotion, Potions::WATER_BREATHING);
+    builder.POTION(Items::splashPotion, Potions::HEALING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::WATER);
+    builder.POTION(Items::lingeringPotion, Potions::NIGHT_VISION);
+    builder.POTION(Items::lingeringPotion, Potions::INVISIBILITY);
+    builder.POTION(Items::lingeringPotion, Potions::LEAPING);
+    builder.POTION(Items::lingeringPotion, Potions::FIRE_RESISTANCE);
+    builder.POTION(Items::lingeringPotion, Potions::SWIFTNESS);
+    builder.POTION(Items::lingeringPotion, Potions::SLOWNESS);
+    builder.POTION(Items::lingeringPotion, Potions::WATER_BREATHING);
+    builder.POTION(Items::lingeringPotion, Potions::HEALING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_LongPotions];
+    builder.POTION(Items::potion, Potions::LONG_NIGHT_VISION);
+    builder.POTION(Items::potion, Potions::LONG_INVISIBILITY);
+    builder.POTION(Items::potion, Potions::LONG_LEAPING);
+    builder.POTION(Items::potion, Potions::LONG_FIRE_RESISTANCE);
+    builder.POTION(Items::potion, Potions::LONG_SWIFTNESS);
+    builder.POTION(Items::potion, Potions::LONG_SLOWNESS);
+    builder.POTION(Items::potion, Potions::LONG_WATER_BREATHING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::LONG_NIGHT_VISION);
+    builder.POTION(Items::splashPotion, Potions::LONG_INVISIBILITY);
+    builder.POTION(Items::splashPotion, Potions::LONG_LEAPING);
+    builder.POTION(Items::splashPotion, Potions::LONG_FIRE_RESISTANCE);
+    builder.POTION(Items::splashPotion, Potions::LONG_SWIFTNESS);
+    builder.POTION(Items::splashPotion, Potions::LONG_SLOWNESS);
+    builder.POTION(Items::splashPotion, Potions::LONG_WATER_BREATHING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_NIGHT_VISION);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_INVISIBILITY);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_LEAPING);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_FIRE_RESISTANCE);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_SWIFTNESS);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_SLOWNESS);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_WATER_BREATHING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+
+    builder.mItems = &s_groupItems[ECreative_Inventory_Groups_StrongPotions];
+    builder.POTION(Items::potion, Potions::STRONG_LEAPING);
+    builder.POTION(Items::potion, Potions::STRONG_SWIFTNESS);
+    builder.POTION(Items::potion, Potions::STRONG_HEALING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::potion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::STRONG_LEAPING);
+    builder.POTION(Items::splashPotion, Potions::STRONG_SWIFTNESS);
+    builder.POTION(Items::splashPotion, Potions::STRONG_HEALING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::STRONG_LEAPING);
+    builder.POTION(Items::lingeringPotion, Potions::STRONG_SWIFTNESS);
+    builder.POTION(Items::lingeringPotion, Potions::STRONG_HEALING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
+
+    static ECreative_Inventory_Groups structuresGroups[] = {ECreative_Inventory_Groups_BuildingBlocks};
+    static ECreative_Inventory_Groups decorationGroups[] = {ECreative_Inventory_Groups_Decoration};
+    static ECreative_Inventory_Groups redstoneAndTransportGroups[] = {ECreative_Inventory_Groups_Transport,
+                                                                      ECreative_Inventory_Groups_Redstone};
+    static ECreative_Inventory_Groups materialsGroups[] = {ECreative_Inventory_Groups_Materials};
+    static ECreative_Inventory_Groups foodGroups[] = {ECreative_Inventory_Groups_Food};
+    static ECreative_Inventory_Groups toolsGroups[] = {ECreative_Inventory_Groups_ToolsAndCombat};
+    static ECreative_Inventory_Groups brewingGroups[] = {ECreative_Inventory_Groups_BrewingIngredients,
+                                                         ECreative_Inventory_Groups_Potions,
+                                                         ECreative_Inventory_Groups_LongPotions,
+                                                         ECreative_Inventory_Groups_StrongPotions};
+    static ECreative_Inventory_Groups miscGroups[] = {ECreative_Inventory_Groups_Miscellaneous};
+
+    s_tabSpecs[0] = new TabSpec(L"Structures", 0x0FBC6E08, 1, structuresGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[1] = new TabSpec(L"Decoration", static_cast<int>(0xAC698282), 1, decorationGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[2] = new TabSpec(L"RedstoneAndTransport", 0x060380CB, 2, redstoneAndTransportGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[3] = new TabSpec(L"Materials", 0x448C117B, 1, materialsGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[4] = new TabSpec(L"Food", static_cast<int>(0xEF31F329), 1, foodGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[5] = new TabSpec(L"Tools", static_cast<int>(0xAD2EBC52), 1, toolsGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[6] = new TabSpec(L"Brewing", 0x50D06098, 4, brewingGroups, 0, NULL, 0, NULL);
+    s_tabSpecs[7] = new TabSpec(L"Misc", static_cast<int>(0xBC0FD661), 1, miscGroups, 0, NULL, 0, NULL);
 }
 
 unsigned int UIScene_CreativeMenu::mapElementsAndNames()
@@ -753,8 +1615,8 @@ unsigned int UIScene_CreativeMenu::mapElementsAndNames()
     m_touchPanels[8].setupControl(this, mainNode, "TouchPanel_Slider");
     m_controls.push_back(&m_touchPanels[8]);
 
-    m_hotbarList.setupControl(this, mainNode, "containerList");
-    m_controls.push_back(&m_hotbarList);
+    m_containerList.setupControl(this, mainNode, "containerList");
+    m_controls.push_back(&m_containerList);
 
     return 1;
 }
@@ -767,14 +1629,14 @@ std::wstring UIScene_CreativeMenu::getMoviePath()
 void UIScene_CreativeMenu::handleReload()
 {
     m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, false, -1,
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20),
-                                 m_sceneInterface->m_canNavigateBack != 0);
+                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
+                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax,
+                                 m_sceneInterface->m_navigateBack != 0);
 
     for (int i = 0; i < 50; ++i)
-        m_hotbarList.addSlot(i);
+        m_containerList.addSlot(i);
     for (int i = 50; i < 59; ++i)
-        UIScene_AbstractContainerMenu::m_hotbarList.addSlot(i);
+        m_hotbarList.addSlot(i);
 
     const int previousTab = m_currentTab;
     m_currentTab = 8;
@@ -783,9 +1645,14 @@ void UIScene_CreativeMenu::handleReload()
 
 UIControl* UIScene_CreativeMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15)) return &m_hotbarList;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16)) return &m_containerList;
-    return 0;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
+        return &m_hotbarList;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
+        return &m_containerList;
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0 &&
+        section <= IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider)
+        return &m_touchPanels[section - IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0];
+    return NULL;
 }
 
 void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled)
@@ -872,5 +1739,5 @@ void UIScene_CreativeMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ES
 
 int UIScene_CreativeMenu::getSceneType()
 {
-    return 0x2a;
+    return EUIScene_CreativeMenu;
 }

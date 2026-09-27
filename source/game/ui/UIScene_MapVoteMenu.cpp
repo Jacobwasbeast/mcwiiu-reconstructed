@@ -1,7 +1,9 @@
 #include "game/ui/UIScene_MapVoteMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -16,6 +18,7 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/core/GameSettings.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -54,14 +57,12 @@ unsigned int UIScene_MapVoteMenu::mapElementsAndNames()
 void UIScene_MapVoteMenu::InitForMap()
 {
     m_mapList.init(0);
-    m_mapListTitle.init(UIString(0x0f7ae41a));
+    m_mapListTitle.init(UIString(IDS_MG_SELECT_MAP));
     ClientMasterGameMode* mode = Minecraft::GetInstance()->GetClientMasterGameMode();
     m_mapIds.clear();
-    LevelRules::ELevelRuleType type = (LevelRules::ELevelRuleType)Minecraft::GetMiniGameId();
-    if (Minecraft::GetMiniGameId() == 0 || Minecraft::GetMiniGameId() > 4)
-        type = (LevelRules::ELevelRuleType)0;
+    LevelRules::ELevelRuleType type = LevelRules::GetRuleTypeForMiniGame(Minecraft::GetMiniGameId());
     g_pApp->getLevelRules()->getRulesByType(type, &m_levelRuleGroups, false);
-    m_mapTitle.init(UIString(L10N::GetString(m_splitScreen ? 0xc88f6bdb : 0x0e5d7959)));
+    m_mapTitle.init(UIString(L10N::GetString(m_splitScreen ? IDS_MG_MAP_DESC : IDS_MG_MAP_VOTES)));
     m_mapDescription.init(UIString(L""));
     std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
     mode->GetUniquePlaylist(playlist);
@@ -91,7 +92,7 @@ void UIScene_MapVoteMenu::InitForVariant()
     m_mapListTitle.init(UIString(0x66f20471));
     Minecraft* minecraft = Minecraft::GetInstance();
     ClientMasterGameMode* mode = minecraft->GetClientMasterGameMode();
-    MiniGameDef* definition = MiniGameDef::GetCustomGameModeById((EMiniGameId)mode->GetNextGameMode(), true);
+    MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(mode->GetNextGameMode(), true);
     m_mapTitle.init(UIString(L10N::GetString(m_splitScreen ? 0xd5923bd8 : 0xbeee0712)));
     m_mapDescription.init(UIString(L"MapSelect"));
     int count = (int)definition->GetGameVariantCount() - 2;
@@ -99,7 +100,7 @@ void UIScene_MapVoteMenu::InitForVariant()
         count = definition->GetLootSetCount();
     for (int i = 0; i < count; ++i)
     {
-        std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
+        std::wstring icon = MiniGameDef::GetVariantIconPath(mode->GetNextGameMode(), i);
         if (g_pApp->hasArchiveFile(icon, false))
         {
             arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(icon, false);
@@ -124,7 +125,7 @@ void UIScene_MapVoteMenu::InitForTheme()
     m_mapDescription.init(UIString(L"MapSel"));
     for (unsigned int i = 0; i < 1; ++i)
     {
-        std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
+        std::wstring icon = MiniGameDef::GetVariantIconPath(mode->GetNextGameMode(), i);
         if (g_pApp->hasArchiveFile(icon, false))
         {
             arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(icon, false);
@@ -155,14 +156,14 @@ void UIScene_MapVoteMenu::Init()
 
 void UIScene_MapVoteMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips((unsigned int)m_playerId, 0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips((unsigned int)m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, false, false);
 }
 
 void UIScene_MapVoteMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 void UIScene_MapVoteMenu::handleReload()
@@ -178,9 +179,7 @@ void UIScene_MapVoteMenu::UpdateVotableInfo()
     int id = m_mapIds[selection];
     if (m_votableType == 0)
     {
-        LevelRules::ELevelRuleType type = (LevelRules::ELevelRuleType)Minecraft::GetMiniGameId();
-        if (Minecraft::GetMiniGameId() == 0 || Minecraft::GetMiniGameId() > 4)
-            type = (LevelRules::ELevelRuleType)0;
+        LevelRules::ELevelRuleType type = LevelRules::GetRuleTypeForMiniGame(Minecraft::GetMiniGameId());
         LevelGenerationOptions* options = g_pApp->getLevelRules()->getLevelGenFromUniqueId(type, id);
         if (options == 0)
         {
@@ -282,39 +281,45 @@ void UIScene_MapVoteMenu::handleInput(int playerId, int action, bool repeat, boo
                                       bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (action < 4 || (action > 7 && action < 14))
-        return;
-    if (action > 15 && action != 20 && action != 21)
-        return;
-    if (action == 21)
+    switch (action)
     {
-        if (!released)
-            return;
-        navigateBack();
-        handled = true;
-        return;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (released)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_MapVoteMenu::handlePress(int, int selection)
+void UIScene_MapVoteMenu::handlePress(int, int childId)
 {
-    gConsoleUIController.PlayUISFX(NULL);
-    if (selection < 0 || selection >= (int)m_mapIds.size())
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+    if (childId < 0 || childId >= (int)m_mapIds.size())
         return;
-    if (m_selectedVote == selection)
+    if (m_selectedVote == childId)
     {
         m_selectedVote = -1;
-        Minecraft::GetInstance()->GetClientMasterGameMode()->SetMapVote(m_playerId, m_mapIds[selection], true);
+        Minecraft::GetInstance()->GetClientMasterGameMode()->SetMapVote(m_playerId, m_mapIds[childId], true);
         return;
     }
     m_previousSelection = m_selectedVote;
-    m_selectedVote = selection;
+    m_selectedVote = childId;
     ClientMasterGameMode* mode = Minecraft::GetInstance()->GetClientMasterGameMode();
     if (m_votableType == 2)
-        mode->SetBuildOffThemeVote(m_playerId, m_mapIds[selection], 1);
+        mode->SetBuildOffThemeVote(m_playerId, m_mapIds[childId], 1);
     else
-        mode->SetMapVote(m_playerId, m_mapIds[selection], false);
+        mode->SetMapVote(m_playerId, m_mapIds[childId], false);
 }
 
 void UIScene_MapVoteMenu::handleFocusChange(int, int childFocus)
@@ -325,5 +330,5 @@ void UIScene_MapVoteMenu::handleFocusChange(int, int childFocus)
 
 int UIScene_MapVoteMenu::getSceneType()
 {
-    return 0x3e;
+    return EUIScene_MapVoteMenu;
 }

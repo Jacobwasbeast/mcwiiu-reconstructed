@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_ControlsMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <string>
@@ -19,6 +20,7 @@
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/core/GameSettings.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -36,17 +38,17 @@ UIScene_ControlsMenu::~UIScene_ControlsMenu()
     if (m_flags[2])
     {
         GameSettings::CheckGameSettingsChanged(true, m_playerId);
-        GameSettings::ActionGameSettings(m_playerId, (eGameSetting)0x29);
+        GameSettings::ActionGameSettings(m_playerId, eGameSetting_ControlMappings);
     }
 }
 
 std::wstring UIScene_ControlsMenu::GetControlsString(int player, EControllerActions action, bool& mapped)
 {
     std::wstring result;
-    if (GameSettings::GetInputButton(player, false, action) == 0 && action >= 0x20 && action < 0x39)
+    if (GameSettings::GetInputButton(player, false, action) == 0 && action >= EControllerActions_Jump && action <= EControllerActions_LookBehind)
     {
         result = L" ";
-        result += L10N::GetString(0x211cd1ad);
+        result += L10N::GetString(IDS_CONTROLS_NONE);
         mapped = false;
     }
     else
@@ -62,7 +64,7 @@ void UIScene_ControlsMenu::SetControlsHelp(int, int control, std::wstring help)
     UIString text(L"");
     if (!help.empty())
     {
-        HtmlString html(help, static_cast<eMinecraftColour>(0x1b5), false, false, 0);
+        HtmlString html(help, eMinecraftColour_HTMLColor_White, false, false, 0);
         std::wstring formatted = gApp.FormatHTMLString(m_playerId, html.ToString(), -1);
         text = UIString(formatted);
     }
@@ -87,93 +89,93 @@ void UIScene_ControlsMenu::Init(int player)
 
     bool mapped;
     std::wstring controlString;
-    m_controls.AddNewButton(L10N::GetString(0x337d5132), 0, true);
+    m_controlsList.AddNewButton(L10N::GetString(IDS_RESET_TO_DEFAULTS), EControl_ResetToDefaults, true);
 
-    m_controls.AddNewLabel(L" ", 0x1e);
-    m_controls.AddNewLabel(L10N::GetString(0x8eb977d2), 0x1e);
+    m_controlsList.AddNewLabel(L" ", EControl_Label);
+    m_controlsList.AddNewLabel(L10N::GetString(0x8eb977d2), EControl_Label);
 
-    m_controls.AddNewCheckbox(L10N::GetString(0xa1531e06), 1,
-                              GameSettings::GetGameSettings(player, (eGameSetting)8) != 0);
-    m_controls.AddNewCheckbox(L10N::GetString(0xfd098a4f), 2,
-                              GameSettings::GetGameSettings(player, (eGameSetting)9) != 0);
+    m_controlsList.AddNewCheckbox(L10N::GetString(IDS_INVERT_LOOK), EControl_InvertLook,
+                              GameSettings::GetGameSettings(player, eGameSetting_InvertLook) != 0);
+    m_controlsList.AddNewCheckbox(L10N::GetString(IDS_SOUTHPAW), EControl_SouthPaw,
+                              GameSettings::GetGameSettings(player, eGameSetting_SouthPaw) != 0);
 
-    controlString = GetControlsString((EControl)3, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x1c7a7950), controlString, mapped, 3);
-    controlString = GetControlsString((EControl)4, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x1eda7c36), controlString, mapped, 4);
+    controlString = GetControlsString(EControl_Look, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_LOOK), controlString, mapped, EControl_Look);
+    controlString = GetControlsString(EControl_Move, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_MOVE), controlString, mapped, EControl_Move);
 
-    m_controls.AddNewLabel(L" ", 0x1e);
-    m_controls.AddNewLabel(L10N::GetString(0x19988bba), 0x1e);
+    m_controlsList.AddNewLabel(L" ", EControl_Label);
+    m_controlsList.AddNewLabel(L10N::GetString(0x19988bba), EControl_Label);
 
-    controlString = GetControlsString((EControl)5, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x5617db3c), controlString, mapped, 5);
-    controlString = GetControlsString((EControl)6, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xe90d9e49), controlString, mapped, 6);
-    controlString = GetControlsString((EControl)7, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(isFlying ? 0x774c60ee : 0x3fef334d), controlString, mapped, 7);
-    controlString = GetControlsString((EControl)8, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x7a6ead8e), controlString, mapped, 8);
-    controlString = GetControlsString((EControl)9, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xc2695d1d), controlString, mapped, 9);
-    controlString = GetControlsString((EControl)0xa, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x4ef5d075), controlString, mapped, 0xa);
-    controlString = GetControlsString((EControl)0xb, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xc513139b), controlString, mapped, 0xb);
-    controlString = GetControlsString((EControl)0xc, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x72ab6b50), controlString, mapped, 0xc);
-    controlString = GetControlsString((EControl)0xd, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(isFlying ? 0x8efa4866 : 0x464be825), controlString, mapped, 0xd);
-    controlString = GetControlsString((EControl)0xe, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x75549fcd), controlString, mapped, 0xe);
-    controlString = GetControlsString((EControl)0xf, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x50c103af), controlString, mapped, 0xf);
-    controlString = GetControlsString((EControl)0x10, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x88874831), controlString, mapped, 0x10);
+    controlString = GetControlsString(EControl_Use, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_USE), controlString, mapped, EControl_Use);
+    controlString = GetControlsString(EControl_Action, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_ACTION), controlString, mapped, EControl_Action);
+    controlString = GetControlsString(EControl_Jump, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(isFlying ? 0x774c60ee : IDS_CONTROLS_JUMP), controlString, mapped, EControl_Jump);
+    controlString = GetControlsString(EControl_Drop, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_DROP), controlString, mapped, EControl_Drop);
+    controlString = GetControlsString(EControl_Inventory, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_INVENTORY), controlString, mapped, EControl_Inventory);
+    controlString = GetControlsString(EControl_Crafting, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_CRAFTING), controlString, mapped, EControl_Crafting);
+    controlString = GetControlsString(EControl_CycleHeldItemLeft, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0xc513139b), controlString, mapped, EControl_CycleHeldItemLeft);
+    controlString = GetControlsString(EControl_CycleHeldItemRight, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0x72ab6b50), controlString, mapped, EControl_CycleHeldItemRight);
+    controlString = GetControlsString(EControl_Sneak, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(isFlying ? 0x8efa4866 : IDS_CONTROLS_SNEAK), controlString, mapped, EControl_Sneak);
+    controlString = GetControlsString(EControl_Sprint, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_SPRINT), controlString, mapped, EControl_Sprint);
+    controlString = GetControlsString(EControl_PickBlock, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_PICKBLOCK), controlString, mapped, EControl_PickBlock);
+    controlString = GetControlsString(EControl_ChangeCameraMode, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0x88874831), controlString, mapped, EControl_ChangeCameraMode);
 
-    m_controls.AddNewLabel(L" ", 0x1e);
-    m_controls.AddNewLabel(L10N::GetString(0x4aebca1a), 0x1e);
+    m_controlsList.AddNewLabel(L" ", EControl_Label);
+    m_controlsList.AddNewLabel(L10N::GetString(0x4aebca1a), EControl_Label);
 
-    controlString = GetControlsString((EControl)0x11, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x880870a4), controlString, mapped, 0x11);
-    controlString = GetControlsString((EControl)0x12, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xdb0d0c07), controlString, mapped, 0x12);
-    controlString = GetControlsString((EControl)0x13, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xbfc2db62), controlString, mapped, 0x13);
-    controlString = GetControlsString((EControl)0x14, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x48a6649d), controlString, mapped, 0x14);
+    controlString = GetControlsString(EControl_FlyLeft, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0x880870a4), controlString, mapped, EControl_FlyLeft);
+    controlString = GetControlsString(EControl_FlyRight, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0xdb0d0c07), controlString, mapped, EControl_FlyRight);
+    controlString = GetControlsString(EControl_FlyUp, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0xbfc2db62), controlString, mapped, EControl_FlyUp);
+    controlString = GetControlsString(EControl_FlyDown, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0x48a6649d), controlString, mapped, EControl_FlyDown);
 
-    m_controls.AddNewLabel(L" ", 0x1e);
-    m_controls.AddNewLabel(L10N::GetString(0xd62470c6), 0x1e);
+    m_controlsList.AddNewLabel(L" ", EControl_Label);
+    m_controlsList.AddNewLabel(L10N::GetString(0xd62470c6), EControl_Label);
 
-    controlString = GetControlsString((EControl)0x19, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x2edff749), controlString, mapped, 0x19);
-    controlString = GetControlsString((EControl)0x1a, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xc9f98a25), controlString, mapped, 0x1a);
+    controlString = GetControlsString(EControl_ConfirmReady, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0x2edff749), controlString, mapped, EControl_ConfirmReady);
+    controlString = GetControlsString(EControl_Vote, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0xc9f98a25), controlString, mapped, EControl_Vote);
 
-    m_controls.AddNewLabel(L" ", 0x1e);
-    m_controls.AddNewLabel(L10N::GetString(0x1fd34dbd), 0x1e);
+    m_controlsList.AddNewLabel(L" ", EControl_Label);
+    m_controlsList.AddNewLabel(L10N::GetString(0x1fd34dbd), EControl_Label);
 
-    controlString = GetControlsString((EControl)0x15, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xbc932ff8), controlString, mapped, 0x15);
-    controlString = GetControlsString((EControl)0x16, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xea6bb036), controlString, mapped, 0x16);
-    controlString = GetControlsString((EControl)0x17, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xf4a1c60f), controlString, mapped, 0x17);
-    controlString = GetControlsString((EControl)0x18, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x6a023a0f), controlString, mapped, 0x18);
+    controlString = GetControlsString(EControl_SpectatePrevious, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(0xbc932ff8), controlString, mapped, EControl_SpectatePrevious);
+    controlString = GetControlsString(EControl_SpectateNext, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_SPECTATE_NEXT), controlString, mapped, EControl_SpectateNext);
+    controlString = GetControlsString(EControl_SpectateNoise, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_SPECTATE_NOISE), controlString, mapped, EControl_SpectateNoise);
+    controlString = GetControlsString(EControl_SpectateCancel, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_CONTROLS_SPECTATE_CANCEL), controlString, mapped, EControl_SpectateCancel);
 
-    m_controls.AddNewLabel(L" ", 0x1e);
-    m_controls.AddNewLabel(L10N::GetString(0x48a5d3ba), 0x1e);
+    m_controlsList.AddNewLabel(L" ", EControl_Label);
+    m_controlsList.AddNewLabel(L10N::GetString(0x48a5d3ba), EControl_Label);
 
-    controlString = GetControlsString((EControl)0x1b, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x7a8e2667), controlString, mapped, 0x1b);
-    controlString = GetControlsString((EControl)0x1c, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0xec79c513), controlString, mapped, 0x1c);
-    controlString = GetControlsString((EControl)0x1d, mapped);
-    m_controls.AddNewControllerButton(L10N::GetString(0x78d551aa), controlString, mapped, 0x1d);
+    controlString = GetControlsString(EControl_RestartSection, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_TOOLTIP_RESTART_SECTION), controlString, mapped, EControl_RestartSection);
+    controlString = GetControlsString(EControl_RestartRace, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_TOOLTIP_RESTART_RACE), controlString, mapped, EControl_RestartRace);
+    controlString = GetControlsString(EControl_LookBehind, mapped);
+    m_controlsList.AddNewControllerButton(L10N::GetString(IDS_TOOLTIP_LOOK_BEHIND), controlString, mapped, EControl_LookBehind);
 
-    m_controls.EnableItem(3, false, true);
-    m_controls.EnableItem(4, false, true);
+    m_controlsList.EnableItem(EControl_Look, false, true);
+    m_controlsList.EnableItem(EControl_Move, false, true);
 
     m_unknownD8 = 0;
     m_flags[8] = 0;
@@ -194,9 +196,11 @@ void UIScene_ControlsMenu::Init(int player)
 
 unsigned int UIScene_ControlsMenu::mapElementsAndNames()
 {
-    m_version.setupControl(this, m_movie->getRootNode(), std::string("Version"));
-    m_controls.setupControl(this, m_movie->getRootNode(), std::string("ControlsMultiList"));
-    m_controls.AddNewLabel(L"", 0);
+    fuiRenderNode* root = m_movie->getRootNode();
+    m_version.setupControl(this, root, std::string("Version"));
+    m_controls.push_back(&m_version);
+    m_controlsList.setupControl(this, root, std::string("ControlsMultiList"));
+    m_controls.push_back(&m_controlsList);
     return 1;
 }
 
@@ -207,10 +211,10 @@ void UIScene_ControlsMenu::updateTooltips()
         gConsoleUIController.SetTooltips(m_playerId, 0, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, true, false);
     }
-    else if (m_controls.getItemCount() > 0)
+    else if (m_controlsList.getItemCount() > 0)
     {
-        int tooltip = m_controls.IsEnabled(m_controls.getCurrentSelection()) ? 0x8d6323ed : -1;
-        gConsoleUIController.SetTooltips(m_playerId, tooltip, 0x4f6bcf5e, -1, -1, -1, -1,
+        int tooltip = m_controlsList.IsEnabled(m_controlsList.getCurrentSelection()) ? IDS_TOOLTIPS_SELECT : -1;
+        gConsoleUIController.SetTooltips(m_playerId, tooltip, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, true, false);
     }
 }
@@ -218,24 +222,28 @@ void UIScene_ControlsMenu::updateTooltips()
 void UIScene_ControlsMenu::updateComponents()
 {
     if (m_layer)
-        m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 unsigned char UIScene_ControlsMenu::GetControlsAction(EControl control)
 {
-    unsigned int id = (unsigned int)control;
-    if (id < 3 || id > 0x1d)
+    if (control < EControl_Look || control > EControl_LookBehind)
         return '=';
-    if (id == 3)
-        return GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) ? 0x1b : 0x1d;
-    if (id == 4)
-        return GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) ? 0x1d : 0x1b;
+    if (control == EControl_Look)
+        return GameSettings::GetGameSettings(m_playerId, eGameSetting_SouthPaw) ? 0x1b : 0x1d;
+    if (control == EControl_Move)
+        return GameSettings::GetGameSettings(m_playerId, eGameSetting_SouthPaw) ? 0x1d : 0x1b;
     static const unsigned char actions[] = {
-        0x21, 0x22, 0x20, 0x26, 0x25, 0x28, 0x23, 0x24, 0x27,
-        0x2e, 0x2f, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x30, 0x31,
-        0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+        EControllerActions_Use, EControllerActions_Action, EControllerActions_Jump, EControllerActions_Drop,
+        EControllerActions_Inventory, EControllerActions_Crafting, EControllerActions_CycleHeldItemLeft,
+        EControllerActions_CycleHeldItemRight, EControllerActions_Sneak, EControllerActions_Sprint,
+        EControllerActions_PickBlock, EControllerActions_ChangeCameraMode, EControllerActions_FlyLeft,
+        EControllerActions_FlyRight, EControllerActions_FlyUp, EControllerActions_FlyDown,
+        EControllerActions_SpectatePrevious, EControllerActions_SpectateNext, EControllerActions_SpectateNoise,
+        EControllerActions_SpectateCancel, EControllerActions_ConfirmReady, EControllerActions_Vote,
+        EControllerActions_RestartSection, EControllerActions_RestartRace, EControllerActions_LookBehind,
     };
-    return actions[id - 5];
+    return actions[control - EControl_Use];
 }
 
 std::wstring UIScene_ControlsMenu::GetControlsString(EControl control, bool& mapped)
@@ -249,34 +257,34 @@ std::wstring UIScene_ControlsMenu::GetControlsString(EControl control, bool& map
 
 void UIScene_ControlsMenu::UpdateControls(int player)
 {
-    m_controls.SetCheckboxValue(1, GameSettings::GetGameSettings(player, (eGameSetting)8) != 0, false);
-    m_controls.SetCheckboxValue(2, GameSettings::GetGameSettings(player, (eGameSetting)9) != 0, false);
+    m_controlsList.SetCheckboxValue(EControl_InvertLook, GameSettings::GetGameSettings(player, eGameSetting_InvertLook) != 0, false);
+    m_controlsList.SetCheckboxValue(EControl_SouthPaw, GameSettings::GetGameSettings(player, eGameSetting_SouthPaw) != 0, false);
     bool mapped;
     std::wstring controlString;
-    for (int i = 3; i <= 0x1d; ++i)
+    for (int i = EControl_Look; i <= EControl_LookBehind; ++i)
     {
-        controlString = GetControlsString((EControl)i, mapped);
-        m_controls.SetSecondaryLabel(i, UIString(controlString), true, mapped, false);
+        controlString = GetControlsString(static_cast<EControl>(i), mapped);
+        m_controlsList.SetSecondaryLabel(i, UIString(controlString), true, mapped, false);
     }
     m_flags[1] = 0;
 }
 
-int UIScene_ControlsMenu::ResetControlsWarningDialogReturned(void* context, int button,
+int UIScene_ControlsMenu::ResetControlsWarningDialogReturned(void* context, int pad,
                                                                         C4JStorage::EMessageResult result)
 {
     UIScene_ControlsMenu* scene = static_cast<UIScene_ControlsMenu*>(
         gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
     if (scene != NULL)
     {
-        if (result == static_cast<C4JStorage::EMessageResult>(4))
+        if (result == C4JStorage::EMessageResult_Accept)
         {
             GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_playerId),
                                              scene->m_playerId, true);
-            GameSettings::CheckGameSettingsChanged(true, button);
+            GameSettings::CheckGameSettingsChanged(true, pad);
             scene->UpdateControls(scene->m_playerId);
         }
-        else if (result == static_cast<C4JStorage::EMessageResult>(5) ||
-                 result == static_cast<C4JStorage::EMessageResult>(3))
+        else if (result == C4JStorage::EMessageResult_Decline ||
+                 result == C4JStorage::EMessageResult_Cancelled)
         {
             scene->navigateBack();
         }
@@ -288,16 +296,16 @@ unsigned int UIScene_ControlsMenu::CheckMapping(int player)
 {
     if (g_pInput->IsPadClassicController(player) == 0)
         return 0;
-    for (int control = 5; control <= 0x1d; control += 2)
+    for (int control = EControl_Use; control <= EControl_LookBehind; control += 2)
     {
-        int first = GameSettings::GetActionMapping(player, GetControlsAction((EControl)control) - 0x20);
-        int second = GameSettings::GetActionMapping(player, GetControlsAction((EControl)(control + 1)) - 0x20);
+        int first = GameSettings::GetActionMapping(player, GetControlsAction(static_cast<EControl>(control)) - EControllerActions_Jump);
+        int second = GameSettings::GetActionMapping(player, GetControlsAction(static_cast<EControl>(control + 1)) - EControllerActions_Jump);
         if ((first & 0xf) == 0xd || (first & 0xf) == 0xe || (second & 0xf) == 0xd ||
             (second & 0xf) == 0xe || ((first >> 4) & 0xff) == 0xd ||
             ((first >> 4) & 0xff) == 0xe || ((second >> 4) & 0xff) == 0xd ||
             ((second >> 4) & 0xff) == 0xe)
         {
-            int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+            int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
             gConsoleUIController.RequestAlertMessage(
                 0x8038cb11, 0x185bdd14, parameters, 2, m_playerId,
                 ResetControlsWarningDialogReturned,
@@ -319,7 +327,7 @@ void UIScene_ControlsMenu::tick()
         UpdateControls(m_playerId);
     if (m_flags[3])
     {
-        SetControlsHelp(m_playerId, m_controls.getCurrentSelection(), L10N::GetString(0x4add6081));
+        SetControlsHelp(m_playerId, m_controlsList.getCurrentSelection(), L10N::GetString(0x4add6081));
         m_flags[3] = 0;
     }
     if (m_flags[4])
@@ -337,41 +345,41 @@ std::wstring UIScene_ControlsMenu::getMoviePath()
 
 void UIScene_ControlsMenu::handleCheckboxElementToggled(int first, int second, bool checked)
 {
-    gConsoleUIController.PlayUISFX(0);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     if (second == 1)
-        GameSettings::SetGameSettings(m_playerId, (eGameSetting)8, checked);
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_InvertLook, checked);
     else if (second == 2)
     {
-        if ((GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) != 0) != checked)
+        if ((GameSettings::GetGameSettings(m_playerId, eGameSetting_SouthPaw) != 0) != checked)
             m_flags[1] = 1;
-        GameSettings::SetGameSettings(m_playerId, (eGameSetting)9, checked);
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_SouthPaw, checked);
     }
 }
 
-int UIScene_ControlsMenu::ResetDefaultsDialogReturned(void* context, int button,
+int UIScene_ControlsMenu::ResetDefaultsDialogReturned(void* context, int pad,
                                                                 C4JStorage::EMessageResult result)
 {
     UIScene_ControlsMenu* scene = static_cast<UIScene_ControlsMenu*>(
         gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
-    if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(5))
+    if (scene != NULL && result == C4JStorage::EMessageResult_Decline)
     {
         GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_playerId),
                                          scene->m_playerId, true);
-        GameSettings::CheckGameSettingsChanged(true, button);
+        GameSettings::CheckGameSettingsChanged(true, pad);
         scene->UpdateControls(scene->m_playerId);
     }
     return 0;
 }
 
-int UIScene_ControlsMenu::ControlsWarningDialogReturned(void* context, int button,
+int UIScene_ControlsMenu::ControlsWarningDialogReturned(void* context, int pad,
                                                                   C4JStorage::EMessageResult result)
 {
     UIScene_ControlsMenu* scene = static_cast<UIScene_ControlsMenu*>(
         gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
-    if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(4))
+    if (scene != NULL && result == C4JStorage::EMessageResult_Accept)
     {
-        GameSettings::CheckGameSettingsChanged(true, button);
-        GameSettings::ActionGameSettings(button, (eGameSetting)0x29);
+        GameSettings::CheckGameSettingsChanged(true, pad);
+        GameSettings::ActionGameSettings(pad, eGameSetting_ControlMappings);
         scene->m_flags[2] = 0;
         scene->navigateBack();
     }
@@ -386,29 +394,29 @@ void UIScene_ControlsMenu::handleReload()
 unsigned int UIScene_ControlsMenu::CheckControls(int player, EControl control)
 {
     unsigned char action = GetControlsAction(control);
-    int mapping = GameSettings::GetActionMapping(player, action - 0x20);
+    int mapping = GameSettings::GetActionMapping(player, action - EControllerActions_Jump);
 
     int groupFirst;
     int groupLast;
-    if (static_cast<unsigned int>((int)control - 5) < 0x10)
+    if (control >= EControl_Use && control <= EControl_FlyDown)
     {
-        groupFirst = 5;
-        groupLast = 0x14;
+        groupFirst = EControl_Use;
+        groupLast = EControl_FlyDown;
     }
-    else if (static_cast<unsigned int>((int)control - 0x19) < 2)
+    else if (control >= EControl_ConfirmReady && control <= EControl_Vote)
     {
-        groupFirst = 0x19;
-        groupLast = 0x1a;
+        groupFirst = EControl_ConfirmReady;
+        groupLast = EControl_Vote;
     }
-    else if (static_cast<unsigned int>((int)control - 0x15) < 4)
+    else if (control >= EControl_SpectatePrevious && control <= EControl_SpectateCancel)
     {
-        groupFirst = 0x15;
-        groupLast = 0x18;
+        groupFirst = EControl_SpectatePrevious;
+        groupLast = EControl_SpectateCancel;
     }
-    else if (static_cast<unsigned int>((int)control - 0x1b) < 3)
+    else if (control >= EControl_RestartSection && control <= EControl_LookBehind)
     {
-        groupFirst = 0x1b;
-        groupLast = 0x1d;
+        groupFirst = EControl_RestartSection;
+        groupLast = EControl_LookBehind;
     }
     else
     {
@@ -418,10 +426,10 @@ unsigned int UIScene_ControlsMenu::CheckControls(int player, EControl control)
     int conflicting = -1;
     for (int candidate = groupFirst; candidate <= groupLast; ++candidate)
     {
-        if (candidate == (int)control)
+        if (candidate == control)
             continue;
-        unsigned char candidateAction = GetControlsAction((EControl)candidate);
-        if (GameSettings::GetActionMapping(player, candidateAction - 0x20) == mapping)
+        unsigned char candidateAction = GetControlsAction(static_cast<EControl>(candidate));
+        if (GameSettings::GetActionMapping(player, candidateAction - EControllerActions_Jump) == mapping)
         {
             conflicting = candidate;
             break;
@@ -434,10 +442,10 @@ unsigned int UIScene_ControlsMenu::CheckControls(int player, EControl control)
     GameSettings::SetActionMapping(player, conflictingAction - 0x20, 0);
 
     std::wstring text = L" ";
-    text += L10N::GetString(0x211cd1ad);
-    m_controls.SetSecondaryLabel(conflicting, UIString(text), true, false, false);
-    m_controls.HighlightItem(conflicting, false);
-    SetControlsHelp(player, conflicting, L10N::GetString(0x23b1b1ae));
+    text += L10N::GetString(IDS_CONTROLS_NONE);
+    m_controlsList.SetSecondaryLabel(conflicting, UIString(text), true, false, false);
+    m_controlsList.HighlightItem(conflicting, false);
+    SetControlsHelp(player, conflicting, L10N::GetString(IDS_CONTROLS_BUTTON_ASSIGN_CONFLICT));
     return 1;
 }
 
@@ -449,9 +457,9 @@ void UIScene_ControlsMenu::HandleButtonEdit(int player, int action, bool repeat,
         if (!repeat && released && !pressed)
         {
             bool mapped = true;
-            int selection = m_controls.getCurrentSelection();
+            int selection = m_controlsList.getCurrentSelection();
             std::wstring controlString = GetControlsString((EControl)selection, mapped);
-            m_controls.SetSecondaryLabel(selection, UIString(controlString), true, mapped, false);
+            m_controlsList.SetSecondaryLabel(selection, UIString(controlString), true, mapped, false);
             m_flags[5] = 0;
             updateTooltips();
             m_unknownD4 = 0;
@@ -477,14 +485,14 @@ void UIScene_ControlsMenu::HandleButtonEdit(int player, int action, bool repeat,
         unsigned char mapping = (m_unknownD8 == 1)
             ? m_flags[8]
             : static_cast<unsigned char>(m_flags[9] | (m_flags[8] << 4));
-        int selection = m_controls.getCurrentSelection();
+        int selection = m_controlsList.getCurrentSelection();
         GameSettings::SetActionMapping(player, GetControlsAction((EControl)selection) - 0x20, mapping);
         GameSettings::SetSettingsChanged(player);
         m_flags[2] = 1;
 
         bool mapped = true;
         std::wstring controlString = GetControlsString((EControl)selection, mapped);
-        m_controls.SetSecondaryLabel(selection, UIString(controlString), true, mapped, false);
+        m_controlsList.SetSecondaryLabel(selection, UIString(controlString), true, mapped, false);
         updateTooltips();
         m_flags[5] = 0;
         m_flags[6] = 0;
@@ -568,8 +576,8 @@ void UIScene_ControlsMenu::HandleButtonEdit(int player, int action, bool repeat,
 
     std::wstring text = L"...";
     text += gApp.GetSingleActionReplacement(player, action);
-    int selection = m_controls.getCurrentSelection();
-    m_controls.SetSecondaryLabel(selection, UIString(text), true, true, false);
+    int selection = m_controlsList.getCurrentSelection();
+    m_controlsList.SetSecondaryLabel(selection, UIString(text), true, true, false);
     m_unknownD8 = m_unknownD8 + 1;
 }
 
@@ -581,11 +589,11 @@ unsigned int UIScene_ControlsMenu::CheckControlsOnExit(int player)
             continue;
         if (GameSettings::GetActionMapping(player, GetControlsAction((EControl)control) - 0x20) == 0)
         {
-            m_controls.SetSecondaryLabel(control, UIString(std::wstring(L10N::GetString(0x211cd1ad))),
+            m_controlsList.SetSecondaryLabel(control, UIString(std::wstring(L10N::GetString(IDS_CONTROLS_NONE))),
                                          true, false, false);
-            m_controls.HighlightItem(control, false);
-            SetControlsHelp(player, control, L10N::GetString(0x23b1b1ae));
-            int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+            m_controlsList.HighlightItem(control, false);
+            SetControlsHelp(player, control, L10N::GetString(IDS_CONTROLS_BUTTON_ASSIGN_CONFLICT));
+            int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
             gConsoleUIController.RequestAlertMessage(
                 0x9eaa5b0a, 0x9954ebe7, parameters, 2, m_playerId,
                 ControlsWarningDialogReturned,
@@ -605,47 +613,58 @@ void UIScene_ControlsMenu::handleInput(int player, int action, bool repeat, bool
         return;
     }
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action < 4 || (action > 9 && action < 0xe) || (action > 0xf && action != 0x14 && action != 0x15))
-        return;
-    if (action == 0x14)
+    switch (action)
     {
+    case EControllerActions_MenuOk:
         if (released)
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-        if (repeat)
-            return;
-        sendInputToMovie(action, false, released, pressed);
-        return;
-    }
-    if (action == 0x15 && released)
-    {
-        if (!CheckControlsOnExit(player))
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        if (!repeat)
+            sendInputToMovie(action, false, released, pressed);
+        break;
+    case EControllerActions_MenuCancel:
+        if (released)
         {
-            GameSettings::CheckGameSettingsChanged(true, player);
-            GameSettings::ActionGameSettings(player, (eGameSetting)0x29);
-            m_flags[2] = 0;
-            navigateBack();
+            if (!CheckControlsOnExit(player))
+            {
+                GameSettings::CheckGameSettingsChanged(true, player);
+                GameSettings::ActionGameSettings(player, eGameSetting_ControlMappings);
+                m_flags[2] = 0;
+                navigateBack();
+            }
+            break;
         }
-        return;
+        m_flags[3] = 1;
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+        m_flags[3] = 1;
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
     }
-    m_flags[3] = 1;
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_ControlsMenu::handlePress(int first, int second)
+void UIScene_ControlsMenu::handlePress(int controlId, int childId)
 {
-    gConsoleUIController.PlayUISFX(0);
-    if (second == 0)
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+    if (childId == 0)
     {
-        int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+        int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
         gConsoleUIController.RequestAlertMessage(
-            0x6ec67fa0, 0x432195fd, parameters, 2, m_playerId,
+            IDS_DEFAULTS_CONTROLS_TITLE, IDS_DEFAULTS_CONTROLS_TEXT, parameters, 2, m_playerId,
             ResetDefaultsDialogReturned,
             (void*)static_cast<unsigned long>(GetCallbackUniqueId()), NULL, true);
         return;
     }
-    if (static_cast<unsigned int>(second - 5) < 0x19)
+    if (static_cast<unsigned int>(childId - 5) < 0x19)
     {
-        m_controls.SetSecondaryLabel(second, UIString(std::wstring(L"...")), true, false, false);
+        m_controlsList.SetSecondaryLabel(childId, UIString(std::wstring(L"...")), true, false, false);
         m_flags[5] = 1;
         m_flags[3] = 1;
         updateTooltips();
@@ -654,11 +673,11 @@ void UIScene_ControlsMenu::handlePress(int first, int second)
 
 void UIScene_ControlsMenu::handleFocusChange(int focus, int childFocus)
 {
-    m_controls.updateChildFocus(childFocus);
+    m_controlsList.updateChildFocus(childFocus);
     updateTooltips();
 }
 
 int UIScene_ControlsMenu::getSceneType()
 {
-    return 0x12;
+    return EUIScene_ControlsMenu;
 }

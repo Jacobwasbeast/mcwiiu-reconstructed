@@ -24,6 +24,9 @@ public:
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     };
 
+    static const int INV_SLOT_START;
+    static const int INV_SLOT_END;
+
     InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player);
     virtual ~InventoryMenu();
 
@@ -40,7 +43,11 @@ public:
 
 private:
     Player* mPlayer;
+
+public:
     boost::shared_ptr<CraftingContainer> mCraftSlots;
+
+private:
     boost::shared_ptr<ResultContainer> mResultSlots;
     bool mActive;
 };

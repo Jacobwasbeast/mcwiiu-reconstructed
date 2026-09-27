@@ -30,7 +30,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     static int KeyboardCompleteWorldNameCallback(void* data, bool accepted);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleCheckboxToggled(int id, bool checked);
     void checkStateAndStartGame();
     void SetEnablePlayGameButton(bool enable);

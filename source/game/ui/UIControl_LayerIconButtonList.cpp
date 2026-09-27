@@ -31,7 +31,7 @@ void UIControl_LayerIconButtonList::AddNewItem(const std::wstring& label,
 {
     static_cast<FJ_List_ListButtonLayerIcon*>(m_fuiRenderNode->getFuiNode()->asFJ_List())
         ->addNewItem(label, secondaryText, id, textureName);
-    addElement((UIControl::eUIControlType)1, -1);
+    addElement(UIControl::eUIControlType_Button, -1);
 }
 
 void UIControl_LayerIconButtonList::SetLayerLabel(int index, const std::wstring& label)

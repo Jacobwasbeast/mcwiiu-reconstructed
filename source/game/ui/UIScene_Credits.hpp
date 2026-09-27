@@ -6,14 +6,7 @@
 
 #include "game/ui/UIScene.hpp"
 
-struct SCreditTextItemDef
-{
-    wchar_t* text;
-    int primaryId;
-    int secondaryId;
-    int type;
-};
-
+struct SCreditTextItemDef;
 class UILayer;
 
 class UIScene_Credits : public UIScene
@@ -21,13 +14,21 @@ class UIScene_Credits : public UIScene
 public:
     enum ECreditTextTypes
     {
-        ECreditTextTypes_0 = 0
+        ECreditTextTypes_Title = 0,
+        ECreditTextTypes_Role = 1,
+        ECreditTextTypes_Text = 3
     };
 
     enum ECreditIcons
     {
-        ECreditIcons_0 = 0
+        ECreditIcons_Iggy,
+        ECreditIcons_Miles,
+        ECreditIcons_Dolby,
+        ECreditIcons_Nintendo
     };
+
+    static const int CREDIT_TEXT_COUNT = 544;
+    static const int PRELOADED_CREDIT_COUNT = 20;
 
     UIScene_Credits(int type, void* data, UILayer* layer);
     virtual ~UIScene_Credits();
@@ -56,7 +57,14 @@ private:
     bool m_requestMoreData;
     std::vector<SCreditTextItemDef*> m_dlcCredits;
     std::vector<std::wstring> m_seenCreditText;
-    int m_unknownF0;
+};
+
+struct SCreditTextItemDef
+{
+    const wchar_t* text;
+    int primaryId;
+    int secondaryId;
+    UIScene_Credits::ECreditTextTypes type;
 };
 
 #endif

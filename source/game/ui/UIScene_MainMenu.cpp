@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_MainMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cstring>
 
@@ -14,6 +15,10 @@
 #include "game/core/GameType.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/User.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -32,6 +37,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/generation/LevelGenerators.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include "game/ui/UIScene_FullscreenProgress.hpp"
 #include "vendor/_LoadingInputParams.hpp"
 #include "vendor/_NetworkGameInitData.hpp"
 
@@ -41,40 +47,31 @@ extern CMinecraftApp* g_pApp;
 
 namespace
 {
-    static const EUIScene s_componentDRC = static_cast<EUIScene>(0x42);
-    static const EUIScene s_componentTV = static_cast<EUIScene>(0x43);
-    static unsigned int s_nextScene = 0x54;
+    static const EUIScene s_componentDRC = EUIScene_Panorama;
+    static const EUIScene s_componentTV = EUIScene_Logo;
+    static EUIScene s_nextScene = EUIScene_Count;
     static Random s_splashRandom;
 
-    struct FullscreenProgressState
-    {
-        bool showConfirmation;
-        bool unknownState1;
-        bool unknownState2;
-        bool showTip;
-        int closeMode;
-        int playerId;
-        EUIScene backScene;
-    };
 }
 
 UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer), m_button1(), m_button2(), m_button3(), m_button4(), m_button5(),
       m_button6(), m_button7(), m_buttonUpsell(), m_timer(), m_loading(false), m_showUpsell(false),
-      m_signedIn(false), m_unused(false), m_trial(false), m_splashX(0.0f), m_splashY(0.0f),
+      m_signedIn(false), m_miniGamesSelected(false), m_trial(false), m_splashX(0.0f), m_splashY(0.0f),
       m_splashWidth(0.0f), m_splashHeight(0.0f), m_splashes(), m_splash(), m_pendingAction(0)
 {
+    Entity::fjDebugCheckSmallIdLeaks();
     gApp.SetDRCIconEnabled(true);
     gApp.SetDRCCheckPlayerCountEnabled(true);
     initialiseMovie();
-    if (m_layer != NULL) {
-        m_layer->addComponent(sceneType, s_componentDRC, NULL);
-        m_layer->addComponent(sceneType, s_componentTV, NULL);
-    }
-    m_button1.init(UIString(0xfe3af6d9), 0);
-    m_button2.init(UIString(0x3c6fa355), 1);
-    m_button3.init(UIString(0x15087ad6), 2);
-    m_button4.init(UIString(0x31dacd58), 3);
+    layer->addComponent(sceneType, s_componentDRC, NULL);
+    layer->addComponent(sceneType, s_componentTV, NULL);
+    m_loading = false;
+    m_pendingAction = 0;
+    m_button1.init(UIString(IDS_PLAY_GAME), 0);
+    m_button2.init(UIString(IDS_MINI_GAMES), 1);
+    m_button3.init(UIString(IDS_LEADERBOARDS), 2);
+    m_button4.init(UIString(IDS_ACHIEVEMENTS), 3);
     m_button5.init(UIString(0x2b1e9f0e), 4);
     if (gProfile->IsFullVersion())
     {
@@ -83,10 +80,10 @@ UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
     }
     else
     {
-        m_button6.init(UIString(0x88e0c979), 5);
+        m_button6.init(UIString(IDS_UNLOCK_FULL_GAME), 5);
         m_showUpsell = true;
     }
-    m_button7.init(UIString(0x2686c8e5), 6);
+    m_button7.init(UIString(IDS_EXIT_GAME), 6);
     handleReload();
     doHorizontalResizeCheck();
     m_splash = L"Default Text";
@@ -104,7 +101,13 @@ UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
         }
         buffered.close();
     }
-    updateComponents();
+    m_loading = false;
+    m_signedIn = false;
+    m_trial = false;
+    m_miniGamesSelected = false;
+    gApp.setLevelGenerationOptions(NULL);
+    Minecraft::GetInstance()->SetupMiniGameInstance(*MiniGameDef::GetCustomGameModeById(eMiniGameId_Any, true), 0);
+    CGameNetworkManager::sInstance.ResetLeavingGame();
     gConsoleUIController.TouchBoxRebuild(this);
     gConsoleUIController.ResetSelectedItem();
 }
@@ -134,7 +137,7 @@ unsigned int UIScene_MainMenu::mapElementsAndNames()
 
 void UIScene_MainMenu::proceedToScene(int, EUIScene scene)
 {
-    s_nextScene = static_cast<unsigned int>(scene);
+    s_nextScene = scene;
 }
 
 void UIScene_MainMenu::handleReload()
@@ -145,12 +148,12 @@ void UIScene_MainMenu::handleReload()
 
 void UIScene_MainMenu::updateTooltips()
 {
-    UIScene* topScene = gConsoleUIController.GetTopScene(0, static_cast<EUILayer>(4),
-                                                          static_cast<EUIGroup>(7));
+    UIScene* topScene = gConsoleUIController.GetTopScene(0, EUILayer_Fullscreen,
+                                                          EUIGroup_PlayerDefault);
     if (!gConsoleUIController.IsShowingAlertMessage(0) &&
         !gConsoleUIController.IsShowingErrorMessage(0) && topScene != NULL &&
         topScene->getSceneType() == 3) {
-        int tooltip = m_loading ? -1 : 0x8d6323ed;
+        int tooltip = m_loading ? -1 : IDS_TOOLTIPS_SELECT;
         gConsoleUIController.SetTooltips(0, tooltip, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, false, false);
     }
@@ -209,19 +212,19 @@ std::wstring UIScene_MainMenu::getMoviePath()
 void UIScene_MainMenu::tick()
 {
     UIScene::tick();
-    if (s_nextScene != 0x54 && g_pApp->GetTMSAction(m_playerId) == 0) {
-        int playerId = gProfile->GetPrimaryPad();
-        if (!m_unused) {
-            gConsoleUIController.NavigateToScene(playerId, static_cast<EUIScene>(s_nextScene),
-                                                 0, static_cast<EUILayer>(6),
-                                                 static_cast<EUIGroup>(7));
+    if (s_nextScene != EUIScene_Count && g_pApp->GetTMSAction(m_playerId) == 0) {
+        int playerId = gProfile->GetLockedProfile();
+        if (!m_miniGamesSelected) {
+            gConsoleUIController.NavigateToScene(playerId, s_nextScene,
+                                                 0, EUILayer_Scene,
+                                                 EUIGroup_PlayerDefault);
         } else {
             gConsoleUIController.NavigateToScene(
-                playerId, static_cast<EUIScene>(s_nextScene),
-                reinterpret_cast<void*>(static_cast<int>(s_nextScene == 0x1b)),
-                static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                playerId, s_nextScene,
+                reinterpret_cast<void*>(s_nextScene == EUIScene_LoadCreateJoinMenu),
+                EUILayer_Scene, EUIGroup_PlayerDefault);
         }
-        s_nextScene = 0x54;
+        s_nextScene = EUIScene_Count;
     }
 
     if (m_showUpsell && gProfile->IsFullVersion()) {
@@ -234,19 +237,22 @@ void UIScene_MainMenu::tick()
 void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                    bool pressed, bool&)
 {
-    if (!gApp.getIgnoreMainMenuInputDuringInvite() && !m_loading && s_nextScene == 0x54) {
-        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-        if (action > 3) {
-            if (action > 5) {
-                if (action != 0x14)
-                    return;
-                if (!pressed)
-                    return;
-                gProfile->SetPrimaryPad(playerId);
-                gProfile->SetLockedProfile(-1);
-            }
-            sendInputToMovie(action, repeat, released, pressed);
-        }
+    if (gApp.getIgnoreMainMenuInputDuringInvite() || m_loading || s_nextScene != EUIScene_Count)
+        return;
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
+    {
+    case EControllerActions_MenuOk:
+        if (!pressed)
+            return;
+        gProfile->SetPrimaryPad(playerId);
+        gProfile->SetLockedProfile(-1);
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+        sendInputToMovie(action, repeat, released, pressed);
+        break;
     }
 }
 
@@ -264,12 +270,12 @@ void UIScene_MainMenu::PrepareToPlayGame(int playerId)
 void UIScene_MainMenu::RunPlayGameOffline(int playerId)
 {
     PrepareToPlayGame(playerId);
-    proceedToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x1b));
+    proceedToScene(gProfile->GetPrimaryPad(), EUIScene_LoadCreateJoinMenu);
 }
 
 void UIScene_MainMenu::RunLeaderboards(int playerId)
 {
-    int messageParameter = 0xb9a1bf4d;
+    int messageParameter = IDS_CONFIRM_OK;
     if (gProfile->IsGuest(playerId))
     {
         gConsoleUIController.RequestErrorMessage(0xe6bf122, 0x8ba9896f, &messageParameter, 1, 0xff,
@@ -284,7 +290,7 @@ void UIScene_MainMenu::RunLeaderboards(int playerId)
     }
     gProfile->SetLockedProfile(playerId);
     gProfile->QuerySigninStatus();
-    proceedToScene(playerId, static_cast<EUIScene>(0x16));
+    proceedToScene(playerId, EUIScene_LeaderboardsMenu);
 }
 
 int UIScene_MainMenu::Leaderboards_SignInReturned(void* context, bool signedIn, int userIndex,
@@ -311,13 +317,13 @@ int UIScene_MainMenu::Leaderboards_SignInReturned(void* context, bool signedIn, 
 
 void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
 {
-    int messageParameter = 0xb9a1bf4d;
+    int messageParameter = IDS_CONFIRM_OK;
     if (!gProfile->IsFullVersion())
     {
         if (gProfile->IsGuest(playerId))
         {
             m_loading = false;
-            gConsoleUIController.RequestErrorMessage(0xc6058d6b, 0xfa275479, &messageParameter, 1,
+            gConsoleUIController.RequestErrorMessage(IDS_UNLOCK_TITLE, IDS_UNLOCK_GUEST_TEXT, &messageParameter, 1,
                                                      playerId, NULL, NULL, NULL, true);
             return;
         }
@@ -353,7 +359,7 @@ void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
 
     gProfile->QuerySigninStatus();
     gProfile->SetLockedProfile(playerId);
-    proceedToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x2c));
+    proceedToScene(gProfile->GetPrimaryPad(), EUIScene_DLCMainMenu);
 }
 
 int UIScene_MainMenu::UnlockFullGame_SignInReturned(void* context, bool signedIn, int userIndex,
@@ -383,7 +389,7 @@ int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int userIndex,
                                                   C4JStorage::EMessageResult result)
 {
     UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
-    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    if (result == C4JStorage::EMessageResult_Accept)
     {
         if (scene->m_pendingAction == 1)
             CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
@@ -399,7 +405,7 @@ int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int userIndex,
     }
     else if (scene->m_pendingAction == 1)
     {
-        CreateLoad_SignInReturned(scene, result == static_cast<C4JStorage::EMessageResult>(5), 0, 0);
+        CreateLoad_SignInReturned(scene, result == C4JStorage::EMessageResult_Decline, 0, 0);
     }
     else
     {
@@ -415,7 +421,7 @@ int UIScene_MainMenu::MiniGamesUnlock_Returned(void* context, int playerId,
         gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (scene != NULL)
     {
-        if (result == static_cast<C4JStorage::EMessageResult>(4))
+        if (result == C4JStorage::EMessageResult_Accept)
             scene->RunUnlockOrDLC(playerId);
         else
             scene->m_loading = false;
@@ -431,9 +437,9 @@ void UIScene_MainMenu::LoadTrial()
     gStorage->ResetSaveData();
     gProfile->StartTrialGame();
     gStorage->SetSaveDisabled(true);
-    gApp.SetGameHostOption(static_cast<eGameHostOption>(0x17), 0);
-    gApp.SetGameHostOption(static_cast<eGameHostOption>(0x16), 1);
-    gApp.SetGameHostOption(static_cast<eGameHostOption>(6), GameType::SURVIVAL->getId());
+    gApp.SetGameHostOption(eGameHostOption_WasntSaveOwner, 0);
+    gApp.SetGameHostOption(eGameHostOption_DisableSaving, 1);
+    gApp.SetGameHostOption(eGameHostOption_GameType, GameType::SURVIVAL->getId());
     gStorage->SetSaveTitle(L"Tutorial");
     gApp.SetAutosaveTimerTime();
     CGameNetworkManager::sInstance.HostGame(0, false, true, 0, eMiniGameId_Any, 0, 0);
@@ -441,11 +447,11 @@ void UIScene_MainMenu::LoadTrial()
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
     initData->m_seed = 0;
-    initData->m_value2 = 0;
-    initData->m_value3 = gApp.GetGameHostOption(static_cast<eGameHostOption>(5)) |
-                         gApp.GetGameHostOption(static_cast<eGameHostOption>(0x16));
-    initData->m_value9 = gApp.GetGameHostOption(static_cast<eGameHostOption>(6));
-    initData->m_value5 = 0;
+    initData->m_saveData = 0;
+    initData->m_hostOptions = gApp.GetGameHostOption(eGameHostOption_Tutorial) |
+                         gApp.GetGameHostOption(eGameHostOption_DisableSaving);
+    initData->m_gameType = gApp.GetGameHostOption(eGameHostOption_GameType);
+    initData->m_levelGenerationOptions = 0;
 
     std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators()->getLevelGenerators();
     for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
@@ -453,38 +459,38 @@ void UIScene_MainMenu::LoadTrial()
     {
         if ((*it)->isTutorial())
         {
-            initData->m_value5 = *it;
+            initData->m_levelGenerationOptions = *it;
             break;
         }
     }
 
     _LoadingInputParams* loadingParams = new _LoadingInputParams();
-    loadingParams->m_firstParameter = &CGameNetworkManager::RunNetworkGameThreadProc;
-    loadingParams->m_secondParameter = initData;
+    loadingParams->m_threadProc = &CGameNetworkManager::RunNetworkGameThreadProc;
+    loadingParams->m_threadParam = initData;
 
     FullscreenProgressState* state = new FullscreenProgressState();
     state->showConfirmation = false;
-    state->backScene = static_cast<EUIScene>(0x53);
+    state->backScene = EUIScene_None;
     state->showTip = true;
-    state->unknownState1 = true;
-    state->unknownState2 = true;
+    state->reservedFlag1 = true;
+    state->reservedFlag2 = true;
     state->closeMode = 3;
-    loadingParams->m_thirdParameter = state;
+    loadingParams->m_completionData = state;
     state->playerId = gProfile->GetPrimaryPad();
 
     gConsoleUIController.ShowTrialTimer(true);
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(4),
-                                         loadingParams, static_cast<EUILayer>(6),
-                                         static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
+                                         loadingParams, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
 }
 
 void UIScene_MainMenu::RunPlayGame(int playerId)
 {
-    Minecraft::GetInstance();
+    Minecraft* minecraft = Minecraft::GetInstance();
     gApp.ReleaseSaveThumbnail();
     if (gProfile->IsGuest(playerId))
     {
-        int messageParameter = 0xb9a1bf4d;
+        int messageParameter = IDS_CONFIRM_OK;
         m_loading = false;
         gConsoleUIController.RequestErrorMessage(0xe6bf122, 0x8ba9896f, &messageParameter, 1, 0xff,
                                                  NULL, NULL, NULL, true);
@@ -496,6 +502,7 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
     {
         if (!gProfile->IsSignedInLive(playerId))
         {
+            minecraft->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
             int messageParameters[2] = { 0x51d141b, 0x3f0766c7 };
             m_pendingAction = 1;
             gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2,
@@ -503,22 +510,24 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
                                                      NULL, true);
             return;
         }
+        minecraft->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
         GameSettings::ApplyGameSettingsChanged(playerId);
-        proceedToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(0x1b));
+        proceedToScene(gProfile->GetPrimaryPad(), EUIScene_LoadCreateJoinMenu);
         return;
     }
 
-    if (m_unused)
+    if (m_miniGamesSelected)
     {
         int messageParameters[2];
-        messageParameters[0] = 0x88e0c979;
-        messageParameters[1] = 0x4fcbc7e7;
+        messageParameters[0] = IDS_UNLOCK_FULL_GAME;
+        messageParameters[1] = IDS_CONFIRM_CANCEL;
         gConsoleUIController.RequestErrorMessage(
-            0xc6058d6b, 0x1e1ffdaf, messageParameters, 2, gProfile->GetPrimaryPad(),
+            IDS_UNLOCK_TITLE, 0x1e1ffdaf, messageParameters, 2, gProfile->GetPrimaryPad(),
             MiniGamesUnlock_Returned, reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;
     }
 
+    Minecraft::GetInstance()->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
     LoadTrial();
 }
 
@@ -553,13 +562,13 @@ void UIScene_MainMenu::RunAchievements(int playerId)
 {
     if (gProfile->IsGuest(playerId))
     {
-        int messageParameter = 0xb9a1bf4d;
+        int messageParameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(0xe6bf122, 0x8ba9896f, &messageParameter, 1, 0xff,
                                                  NULL, NULL, NULL, true);
         return;
     }
     gProfile->SetLockedProfile(playerId);
-    proceedToScene(playerId, static_cast<EUIScene>(0x51));
+    proceedToScene(playerId, EUIScene_AchievementsMenu);
 }
 
 int UIScene_MainMenu::Achievements_SignInReturned(void* context, bool signedIn, int userIndex,
@@ -588,14 +597,14 @@ void UIScene_MainMenu::RunHelpAndOptions(int playerId)
 {
     if (gProfile->IsGuest(playerId))
     {
-        int messageParameter = 0xb9a1bf4d;
+        int messageParameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(0xe6bf122, 0x8ba9896f, &messageParameter, 1, 0xff,
                                                  NULL, NULL, NULL, true);
         return;
     }
     gProfile->QuerySigninStatus();
     gProfile->SetLockedProfile(playerId);
-    proceedToScene(playerId, static_cast<EUIScene>(0x0f));
+    proceedToScene(playerId, EUIScene_HelpAndOptionsMenu);
 }
 
 int UIScene_MainMenu::HelpAndOptions_SignInReturned(void* context, bool signedIn, int userIndex,
@@ -622,7 +631,7 @@ int UIScene_MainMenu::HelpAndOptions_SignInReturned(void* context, bool signedIn
 
 int UIScene_MainMenu::ExitGameReturned(void*, int, C4JStorage::EMessageResult result)
 {
-    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    if (result == C4JStorage::EMessageResult_Decline)
         gApp.ExitGame();
     return 0;
 }
@@ -643,7 +652,7 @@ int UIScene_MainMenu::MustSignInReturned(void* context, int userIndex,
                                          C4JStorage::EMessageResult result)
 {
     UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
-    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    if (result == C4JStorage::EMessageResult_Accept)
     {
         switch (scene->m_pendingAction)
         {
@@ -684,52 +693,52 @@ int UIScene_MainMenu::MustSignInReturned(void* context, int userIndex,
     return 0;
 }
 
-void UIScene_MainMenu::handlePress(int first, int)
+void UIScene_MainMenu::handlePress(int controlId, int)
 {
     int pad = gProfile->GetPrimaryPad();
-    switch (first) {
+    switch (controlId) {
     case 0:
         m_pendingAction = 1;
-        m_unused = false;
+        m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         break;
     case 1:
-        m_unused = true;
+        m_miniGamesSelected = true;
         m_pendingAction = 1;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         break;
     case 2:
-        m_unused = false;
+        m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 2;
         break;
     case 3:
-        m_unused = false;
+        m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 3;
         break;
     case 4:
-        m_unused = false;
+        m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 4;
         break;
     case 5:
-        m_unused = false;
+        m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 5;
         break;
     case 6:
         {
             int messageParameters[2];
-            messageParameters[0] = 0x4fcbc7e7;
-            messageParameters[1] = 0xb9a1bf4d;
-            m_unused = false;
+            messageParameters[0] = IDS_CONFIRM_CANCEL;
+            messageParameters[1] = IDS_CONFIRM_OK;
+            m_miniGamesSelected = false;
             gConsoleUIController.RequestErrorMessage(0x5d7629ce, 0xde9a48c3, messageParameters, 2,
                                                      0xff, ExitGameReturned, this, NULL, true);
         }
         return;
     default:
-        m_unused = false;
+        m_miniGamesSelected = false;
         return;
     }
 
@@ -739,8 +748,8 @@ void UIScene_MainMenu::handlePress(int first, int)
     }
 
     int messageParameters[2];
-    messageParameters[0] = 0x4fcbc7e7;
-    messageParameters[1] = 0xb9a1bf4d;
+    messageParameters[0] = IDS_CONFIRM_CANCEL;
+    messageParameters[1] = IDS_CONFIRM_OK;
     gConsoleUIController.RequestErrorMessage(0x14b60640, 0x221d8d9d, messageParameters, 2, pad,
                                              MustSignInReturned, this, NULL, true);
 }
@@ -749,7 +758,7 @@ void UIScene_MainMenu::handleGainFocus(bool hadFocus)
 {
     UIScene::handleGainFocus(hadFocus);
     gConsoleUIController.ShowPlayerDisplayname(false);
-    const bool noSceneChangePending = (s_nextScene == 0x54);
+    const bool noSceneChangePending = (s_nextScene == EUIScene_Count);
     m_loading = false;
     if (!noSceneChangePending)
         return;
@@ -816,7 +825,7 @@ bool UIScene_MainMenu::hasFocus(int)
 
 int UIScene_MainMenu::getSceneType()
 {
-    return 3;
+    return EUIScene_MainMenu;
 }
 
 unsigned int UIScene_MainMenu::getDefaultGtcButtons()

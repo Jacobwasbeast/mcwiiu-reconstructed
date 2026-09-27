@@ -15,7 +15,7 @@ public:
     virtual void SetLabel(const std::wstring& label);
     void Init(const std::wstring& label, int id);
     void RemotePressButton();
-    void UpdateLabel();
+    virtual void UpdateLabel();
     bool getUseHtmlText();
     void setUseHtmlText(bool useHtmlText);
 

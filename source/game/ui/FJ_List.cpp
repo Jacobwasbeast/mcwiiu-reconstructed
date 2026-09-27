@@ -104,7 +104,7 @@ void FJ_List::HandlePageUpDownNavigation(bool up)
     if (item >= 0 && static_cast<unsigned int>(item) < m_items.size()) HighlightItem(item, false);
 }
 
-uint64_t FJ_List::LoseListFocus()
+void FJ_List::LoseListFocus()
 {
     FJ_FuiNode* focus = getStage()->getFocus();
     if (!focus->isFJ_Base())
@@ -121,13 +121,12 @@ uint64_t FJ_List::LoseListFocus()
             {
                 if (m_background != 0)
                     m_background->gotoAndPlay(std::string("FadeOut"));
-                return 0;
+                return;
             }
         }
         if (focusedBase->getObjListParent() == 0 && m_background != 0)
             m_background->gotoAndPlay(std::string("FadeOut"));
     }
-    return 0;
 }
 
 int FJ_List::getINumButtons() { return static_cast<int>(m_items.size()); }
@@ -158,11 +157,10 @@ void FJ_List::SetListFocus()
 void FJ_List::focusInHandler(FJ_Event*) { SetListFocus(); }
 void FJ_List::_focusInHandler(FJ_FuiNode* node, FJ_Event* event) { static_cast<FJ_List*>(node)->focusInHandler(event); }
 
-uint64_t FJ_List::focusOutHandler(FJ_Event*)
+void FJ_List::focusOutHandler(FJ_Event*)
 {
-    if (m_items.empty()) return 0;
+    if (m_items.empty()) return;
     if (m_background != 0) m_background->gotoAndPlay(std::string("FadeOut"));
-    return 0;
 }
 
 void FJ_List::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event) { static_cast<FJ_List*>(node)->focusOutHandler(event); }
@@ -282,7 +280,7 @@ void FJ_List::HandleScrollListArrows(bool addArrows)
     m_downArrow->setVisible(m_topItem + m_maxItemsVisibleUp < static_cast<int>(m_items.size()));
 }
 
-uint64_t FJ_List::ScrollList(bool down, bool page, bool fromTouch)
+void FJ_List::ScrollList(bool down, bool page, bool fromTouch)
 {
     bool skipLabelChecks = false;
     if (!page)
@@ -373,14 +371,12 @@ uint64_t FJ_List::ScrollList(bool down, bool page, bool fromTouch)
     }
     if (!page)
         HandleScrollListArrows(false);
-    return 0;
 }
 
-uint64_t FJ_List::ItemFocusInHandler(FJ_Event* event)
+void FJ_List::ItemFocusInHandler(FJ_Event* event)
 {
     FJ_Base* item = event->m_pTarget->asFJ_Base();
     if (item != 0) { int old = m_activeItem; m_activeItem = item->getListId(); ScrollList(old > m_activeItem, false, false); }
-    return 0;
 }
 void FJ_List::_ItemFocusInHandler(FJ_FuiNode* node, FJ_Event* event) { static_cast<FJ_List*>(node)->ItemFocusInHandler(event); }
 
@@ -392,7 +388,7 @@ int FJ_List::GetListHeight()
     return result;
 }
 
-uint64_t FJ_List::UpdateTouchSize()
+void FJ_List::UpdateTouchSize()
 {
     FJ_FuiNode* background = getChildByName(std::string("ButtonListBackground"))->asMovieClip();
     if (background != 0)
@@ -400,7 +396,6 @@ uint64_t FJ_List::UpdateTouchSize()
         int height = GetListHeight() - m_verticalSpacing;
         background->setHeight(static_cast<float>(Math::round(static_cast<float>(height) / getScaleY())));
     }
-    return 0;
 }
 int FJ_List::GetListWidth()
 {
@@ -502,17 +497,15 @@ void FJ_List::removeAllItems()
     m_items.clear(); m_activeItem = 0; m_topItem = 0; HandleScrollListArrows(false);
 }
 
-uint64_t FJ_List::SetButtonLabel(int index, const std::wstring& label)
+void FJ_List::SetButtonLabel(int index, const std::wstring& label)
 {
     SetItemLabel(index, label);
-    return 0;
 }
 
-uint64_t FJ_List::SetItemAlpha(int index, float alpha)
+void FJ_List::SetItemAlpha(int index, float alpha)
 {
     if (index >= 0 && static_cast<unsigned int>(index) < m_items.size())
         m_items[index]->setAlpha(alpha);
-    return 0;
 }
 
 void FJ_List::SetItemLabel(int index, const std::wstring& label)
@@ -525,7 +518,7 @@ void FJ_List::SetItemLabel(int index, const std::wstring& label)
     }
 }
 
-uint64_t FJ_List::EnableItem(int index, bool enabled)
+void FJ_List::EnableItem(int index, bool enabled)
 {
     if (index >= 0 && static_cast<unsigned int>(index) < m_items.size())
     {
@@ -534,10 +527,9 @@ uint64_t FJ_List::EnableItem(int index, bool enabled)
         else if (item->isFJ_CheckBox()) item->asFJ_CheckBox()->EnableCheckBox(enabled);
         else if (item->isFJ_Slider()) item->asFJ_Slider()->EnableSlider(enabled);
     }
-    return 0;
 }
 
-uint64_t FJ_List::SetTouchFocus(int x, int y, bool focus)
+void FJ_List::SetTouchFocus(int x, int y, bool focus)
 {
     if (!focus)
     {
@@ -552,12 +544,12 @@ uint64_t FJ_List::SetTouchFocus(int x, int y, bool focus)
                 HighlightItem(static_cast<int>(i), false);
                 m_touchFocusY = y;
                 m_touchY = x;
-                return 0;
+                return;
             }
         }
         m_touchFocusY = y;
         m_touchY = x;
-        return 0;
+        return;
     }
 
     if (!m_items.empty() && static_cast<unsigned int>(m_maxItemsVisibleUp) < m_items.size() && !m_touchActive)
@@ -609,7 +601,6 @@ uint64_t FJ_List::SetTouchFocus(int x, int y, bool focus)
             m_touchActive = true;
         }
     }
-    return 0;
 }
 
 uint32_t FJ_List::CanTouchFocus(int, int y)
@@ -671,11 +662,10 @@ int FJ_List::GetActiveItem()
 }
 uint32_t FJ_List::GetTopItem() { return static_cast<uint32_t>(m_topItem); }
 
-uint64_t FJ_List::setAction(unsigned char action, char* value)
+void FJ_List::setAction(unsigned char action, char* value)
 {
     if (action == 10) m_checkboxTick = std::string(value) == "true";
     else if (action == 11) m_verticalSpacing = std::atoi(value);
     else if (action == 12) m_action.assign(value);
     else if (action == 13) m_initialized = std::string(value) == "true";
-    return 0;
 }

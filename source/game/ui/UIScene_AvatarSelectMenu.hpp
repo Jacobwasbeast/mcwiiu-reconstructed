@@ -41,7 +41,7 @@ public:
     virtual UIControl* GetMainPanel();
     virtual void tick();
     virtual std::wstring getMoviePath();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
     virtual unsigned int GetPad();
     virtual void SelectTab(int tab);

@@ -125,8 +125,8 @@ private:
     std::wstring m_cachedLabel;
     std::wstring m_animatedSplashText;
     int m_animatedSplashIcon;
-    bool m_previousArmorIcons[4];
     bool m_armorIcons[4];
+    bool m_shownArmorIcons[4];
     int m_hudSize;
     int m_air;
     bool m_armourVisible;

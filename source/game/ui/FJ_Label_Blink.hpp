@@ -24,7 +24,7 @@ public:
     void EnableBlink(bool enable);
     virtual void SetLabel(const std::wstring& label);
     virtual void GetLabelTooWide(fuiRenderNodeEditText* textField);
-    uint64_t setAction(unsigned char action, char* value);
+    void setAction(unsigned char action, char* value);
 
 protected:
     int m_blinkAlignment;

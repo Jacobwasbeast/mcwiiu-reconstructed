@@ -2,7 +2,7 @@
 #include "game/ui/fuiFile.hpp"
 
 fuiRenderNodeStage::fuiRenderNodeStage(fuiFile* file)
-    : fuiRenderNode(0, 0, 0, 0, (eFuiObjectType)0, 0, 0, 0, false, file), m_child(0)
+    : fuiRenderNode(0, 0, 0, 0, eFuiObjectType_None, 0, 0, 0, false, file), m_child(0)
 {
 }
 

@@ -68,27 +68,23 @@ void FJ_AbstractContainerDocument::HideInventory()
 
     if (mainPanel != 0 && inventory != 0 && hotbar != 0)
     {
-        fuiRect bounds;
-        mainPanel->getRenderNodeChildAt(0)->getParentSpaceBounds(&bounds);
-        float oldY = bounds.yMin;
+        int oldHeight = mainPanel->getRenderNodeChildAt(0)->getHeight();
 
-        FJ_FuiNode* backgroundPanel = mainPanel->getChildByName(std::string("BackgroundPanel"))->asMovieClip();
-        FJ_FuiNode* backgroundChild = backgroundPanel->getChildAt(0);
+        FJ_FuiNode* backgroundChild = FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0);
+        float removedHeight = inventory->getHeight() + (hotbar->getY() - (inventory->getY() + inventory->getHeight()));
         if (backgroundChild == 0)
         {
-            mainPanel->getChildAt(0)->decHeight(hotbar->getY() - inventory->getY());
+            mainPanel->getChildAt(0)->decHeight(removedHeight);
         }
         else
         {
-            backgroundPanel->getChildAt(0)->decHeight(hotbar->getY() - inventory->getY());
+            FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0)->decHeight(removedHeight);
         }
 
         hotbar->setY(inventory->getY());
         mainPanel->removeChild(inventory, true);
 
-        mainPanel->getRenderNodeChildAt(0)->getParentSpaceBounds(&bounds);
-        float newY = bounds.yMin;
-        float delta = (float)Math::round(((176.0f - oldY) - newY) * 0.5f);
-        incY(176.0f - delta);
+        float newHeight = mainPanel->getRenderNodeChildAt(0)->getHeight();
+        incY(Math::round((oldHeight - newHeight) * 0.5f));
     }
 }

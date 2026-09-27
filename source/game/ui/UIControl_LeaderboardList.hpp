@@ -13,7 +13,7 @@ public:
     void clearList();
     void init(int controlId);
     void setupTitles(const std::wstring& title, const std::wstring& subtitle);
-    void initLeaderboard(int firstValue, int spacing, int offset);
+    void initLeaderboard(int focusRank, int totalEntries, int numColumns);
     void setColumnIcon(int column, int icon);
     void addDataSet(bool loading, int rank, int value, const std::wstring& gamertag,
                     bool complete, const std::wstring& firstColumnText,

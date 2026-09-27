@@ -80,7 +80,7 @@ void FJ_InGamePlayerOptions::SetSafeZone(int top, int bottom, int left, int righ
     const double stageHeight = getStage()->getStageHeight();
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
-    setX(-static_cast<float>(top) - 176.0f);
+    setY(top);
 }
 
 void FJ_InGamePlayerOptions::SetPlayerIcon(int icon)

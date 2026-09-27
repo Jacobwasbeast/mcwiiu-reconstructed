@@ -14,8 +14,6 @@
 template<typename T>
 T _fromString(const std::wstring& value);
 
-std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
-
 JoinMultiplayerScreen::JoinMultiplayerScreen(Screen* parentScreen)
     : Screen(), mParentScreen(parentScreen), mEditBox(NULL)
 {

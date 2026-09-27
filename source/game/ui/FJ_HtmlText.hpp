@@ -50,7 +50,7 @@ public:
     void HandleScrollListArrows(bool positionArrows);
     void UpdateScrolling(FJ_Event* event);
     static void _UpdateScrolling(FJ_FuiNode* node, FJ_Event* event);
-    uint64_t keyDownHandler(FJ_Event* event);
+    void keyDownHandler(FJ_Event* event);
     static void _keyDownHandler(FJ_FuiNode* node, FJ_Event* event);
     uint64_t GetScrollTarget(bool up);
     void keyUpHandler(FJ_Event* event);

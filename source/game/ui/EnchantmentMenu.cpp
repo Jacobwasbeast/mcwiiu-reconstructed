@@ -148,143 +148,86 @@ void EnchantmentMenu::setData(int id, int value)
     }
 }
 
-std::vector<EnchantmentInstance*>* EnchantmentMenu::getEnchantmentList(not_null_ptr<ItemInstance> item, int level, int slot)
+std::vector<EnchantmentInstance*>* EnchantmentMenu::getEnchantmentList(not_null_ptr<ItemInstance> item, int enchantSlot, int cost)
 {
-    mRandom.setSeed(mEnchantmentSeed + static_cast<long long>(level));
-    return EnchantmentHelper::selectEnchantment(&mRandom, item, slot, false);
-}
-
-namespace
-{
-bool isBookshelfAt(Level* level, const BlockPos& pos)
-{
-    const BlockState* state = level->getBlockState(pos);
-    return state != 0 && state->getBlock() == Blocks::bookshelf;
-}
-
-int countEnchantmentBookshelves(Level* level, const BlockPos& tablePos)
-{
-    int bookshelfCount = 0;
-    int outerCount = 3;
-    int columnX = -1;
-    int bookshelfZ = -2;
-    while (outerCount != 0)
-    {
-        int scanX = -1;
-        while (true)
-        {
-            BlockPos columnPos = tablePos.offset(scanX, 0, columnX);
-            if (level->isEmptyBlock(columnPos) && level->isEmptyBlock(columnPos.above()))
-            {
-                const int doubledScanX = scanX << 1;
-                if (isBookshelfAt(level, tablePos.offset(doubledScanX, 0, bookshelfZ)))
-                    ++bookshelfCount;
-                if (isBookshelfAt(level, tablePos.offset(doubledScanX, 1, bookshelfZ)))
-                    ++bookshelfCount;
-                if (scanX != 0 && columnX != 0)
-                {
-                    if (isBookshelfAt(level, tablePos.offset(doubledScanX, 0, columnX)))
-                        ++bookshelfCount;
-                    if (isBookshelfAt(level, tablePos.offset(doubledScanX, 1, columnX)))
-                        ++bookshelfCount;
-                    if (isBookshelfAt(level, tablePos.offset(scanX, 0, bookshelfZ)))
-                        ++bookshelfCount;
-                    if (isBookshelfAt(level, tablePos.offset(scanX, 1, bookshelfZ)))
-                        ++bookshelfCount;
-                }
-            }
-            if (1 < scanX + 1)
-                break;
-            ++scanX;
-            if (columnX == 0 && scanX == 0)
-                scanX = 1;
-        }
-        --outerCount;
-        ++columnX;
-        bookshelfZ += 2;
-    }
-    return bookshelfCount;
-}
+    mRandom.setSeed(mEnchantmentSeed + static_cast<long long>(enchantSlot));
+    std::vector<EnchantmentInstance*>* results = EnchantmentHelper::selectEnchantment(&mRandom, item, cost, false);
+    if (results != NULL && item->getItem() == Items::book && results->size() > 1)
+        results->erase(results->begin() + mRandom.nextInt(static_cast<int>(results->size())));
+    return results;
 }
 
 void EnchantmentMenu::slotsChanged()
 {
     not_null_ptr<ItemInstance> item = mEnchantmentContainer->getItem(0);
-
     if (item->isEmpty() || !item->isEnchantable())
     {
-        mCosts[0] = 0;
-        mCosts[1] = 0;
-        mCosts[2] = 0;
-        mEnchantmentIds[0] = -1;
-        mEnchantmentIds[1] = -1;
-        mEnchantmentIds[2] = -1;
-        mEnchantmentLevels[0] = -1;
-        mEnchantmentLevels[1] = -1;
-        mEnchantmentLevels[2] = -1;
+        for (int slot = 0; slot < 3; ++slot)
+        {
+            mCosts[slot] = 0;
+            mEnchantmentIds[slot] = -1;
+            mEnchantmentLevels[slot] = -1;
+        }
         mDataChanged = true;
         return;
     }
-
     if (mLevel->mIsClientSide)
-    {
-        mCosts[0] = 0;
-        mCosts[1] = 0;
-        mCosts[2] = 0;
-        mEnchantmentIds[0] = -1;
-        mEnchantmentIds[1] = -1;
-        mEnchantmentIds[2] = -1;
-        mEnchantmentLevels[0] = -1;
-        mEnchantmentLevels[1] = -1;
-        mEnchantmentLevels[2] = -1;
-        mDataChanged = true;
         return;
-    }
 
-    const int bookshelfCount = countEnchantmentBookshelves(mLevel, mPosition);
+    int bookshelves = 0;
+    for (int dz = -1; dz <= 1; ++dz)
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            if (dx == 0 && dz == 0)
+                continue;
+            if (!mLevel->isEmptyBlock(mPosition.offset(dx, 0, dz)) || !mLevel->isEmptyBlock(mPosition.offset(dx, 1, dz)))
+                continue;
+            if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz * 2))->getBlock() == Blocks::bookshelf)
+                ++bookshelves;
+            if (mLevel->getBlockState(mPosition.offset(dx * 2, 1, dz * 2))->getBlock() == Blocks::bookshelf)
+                ++bookshelves;
+            if (dx != 0 && dz != 0)
+            {
+                if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz))->getBlock() == Blocks::bookshelf)
+                    ++bookshelves;
+                if (mLevel->getBlockState(mPosition.offset(dx * 2, 1, dz))->getBlock() == Blocks::bookshelf)
+                    ++bookshelves;
+                if (mLevel->getBlockState(mPosition.offset(dx, 0, dz * 2))->getBlock() == Blocks::bookshelf)
+                    ++bookshelves;
+                if (mLevel->getBlockState(mPosition.offset(dx, 1, dz * 2))->getBlock() == Blocks::bookshelf)
+                    ++bookshelves;
+            }
+        }
+
     mRandom.setSeed(mEnchantmentSeed);
-
-    mEnchantmentIds[0] = -1;
-    mEnchantmentLevels[0] = -1;
-    int cost = EnchantmentHelper::getEnchantmentCost(&mRandom, 0, bookshelfCount, item);
-    mCosts[0] = cost < 1 ? 0 : cost;
-
-    mEnchantmentIds[1] = -1;
-    mEnchantmentLevels[1] = -1;
-    cost = EnchantmentHelper::getEnchantmentCost(&mRandom, 1, bookshelfCount, item);
-    mCosts[1] = cost < 2 ? 0 : cost;
-
-    mEnchantmentIds[2] = -1;
-    mEnchantmentLevels[2] = -1;
-    cost = EnchantmentHelper::getEnchantmentCost(&mRandom, 2, bookshelfCount, item);
-    mCosts[2] = cost < 3 ? 0 : cost;
+    for (int slot = 0; slot < 3; ++slot)
+    {
+        const int cost = EnchantmentHelper::getEnchantmentCost(&mRandom, slot, bookshelves, item);
+        mEnchantmentIds[slot] = -1;
+        mEnchantmentLevels[slot] = -1;
+        mCosts[slot] = cost < slot + 1 ? 0 : cost;
+    }
 
     for (int slot = 0; slot < 3; ++slot)
     {
         if (mCosts[slot] <= 0)
             continue;
-
         std::vector<EnchantmentInstance*>* results = getEnchantmentList(item, slot, mCosts[slot]);
-        if (results != 0 && !results->empty())
+        if (results == NULL)
+            continue;
+        if (!results->empty())
         {
-            const int index = mRandom.nextInt(static_cast<int>(results->size()));
-            EnchantmentInstance* instance = (*results)[index];
+            EnchantmentInstance* instance = (*results)[mRandom.nextInt(static_cast<int>(results->size()))];
             mEnchantmentIds[slot] = Enchantment::getId(instance->enchantment);
             mEnchantmentLevels[slot] = instance->level;
         }
-        if (results != 0)
+        while (!results->empty())
         {
-            while (!results->empty())
-            {
-                EnchantmentInstance* instance = results->back();
-                results->pop_back();
-                if (instance != 0)
-                    delete instance;
-            }
-            delete results;
+            delete results->back();
+            results->pop_back();
         }
+        delete results;
     }
-
     mDataChanged = true;
     broadcastChanges();
 }
@@ -312,7 +255,7 @@ bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
         {
             player->onEnchantmentPerformed(lapisRequired);
 
-            if (item->getItem() == Items::enchantedBook)
+            if (item->getItem() == Items::book)
             {
                 not_null_ptr<ItemInstance> book(new ItemInstance(Items::enchantedBook));
                 mEnchantmentContainer->setItem(0, book);
@@ -377,7 +320,9 @@ void EnchantmentMenu::removed(boost::shared_ptr<Player> player)
 
 bool EnchantmentMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    return mEnchantmentContainer->stillValid(player);
+    if (mLevel->getBlockState(mPosition)->getBlock() != Blocks::enchanting_table)
+        return false;
+    return player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) <= 30.25f;
 }
 
 not_null_ptr<ItemInstance> EnchantmentMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)

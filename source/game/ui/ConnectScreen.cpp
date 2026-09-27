@@ -34,7 +34,7 @@ void ConnectScreen::keyPressed(wchar_t key, int action)
 void ConnectScreen::init()
 {
     mButtons.clear();
-    std::wstring label = Language::getInstance()->getElement(L"gui_cancel");
+    std::wstring label = Language::getInstance()->getElement(L"gui.cancel");
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132, label));
 }
 
@@ -55,13 +55,13 @@ void ConnectScreen::render(int x, int y, float partialTick)
     Language* language = Language::getInstance();
     if (mConnection == NULL)
     {
-        std::wstring message = language->getElement(L"connect_connecting");
+        std::wstring message = language->getElement(L"connect.connecting");
         drawCenteredString(mFont, message, mWidth / 2, mHeight / 2 - 50, 0xffffff);
         drawCenteredString(mFont, L"connect", mWidth / 2, mHeight / 2 - 10, 0xffffff);
     }
     else
     {
-        std::wstring message = language->getElement(L"connect_authorizing");
+        std::wstring message = language->getElement(L"connect.authorizing");
         drawCenteredString(mFont, message, mWidth / 2, mHeight / 2 - 50, 0xffffff);
         drawCenteredString(mFont, mConnection->mRemoteAddress, mWidth / 2, mHeight / 2 - 10, 0xffffff);
     }

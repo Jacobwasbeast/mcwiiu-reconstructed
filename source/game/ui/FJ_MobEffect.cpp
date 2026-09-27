@@ -52,14 +52,14 @@ void FJ_MobEffect::Init(const std::wstring& effectName, int iDuration)
     fuiRenderNodeEditText* pEffectNameText = static_cast<fuiRenderNodeEditText*>(pEffectName->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText());
     pEffectNameText->setScaleX(1.0f / pEffectName->getScaleX());
     pEffectNameText->setScaleY(1.0f / pEffectName->getScaleY());
-    pEffectNameText->setAutoSize(static_cast<TextFieldAutoSize>(1));
+    pEffectNameText->setAutoSize(TextFieldAutoSizeLeft);
     pEffectNameText->setText(effectName);
 
     FJ_FuiNode* pEffectDuration = getChildByName("EffectDuration")->asMovieClip();
     m_pDurationText = static_cast<fuiRenderNodeEditText*>(pEffectDuration->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText());
     m_pDurationText->setScaleX(1.0f / pEffectDuration->getScaleX());
     m_pDurationText->setScaleY(1.0f / pEffectDuration->getScaleY());
-    m_pDurationText->setAutoSize(static_cast<TextFieldAutoSize>(1));
+    m_pDurationText->setAutoSize(TextFieldAutoSizeLeft);
     SetDuration(iDuration);
 }
 

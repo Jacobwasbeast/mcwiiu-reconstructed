@@ -13,7 +13,7 @@ class UILayer;
 class UIScene_ContainerMenu : public UIScene_AbstractContainerMenu
 {
 public:
-    UIScene_ContainerMenu(int type, void* data, UILayer* layer);
+    UIScene_ContainerMenu(int playerId, void* data, UILayer* layer);
     virtual ~UIScene_ContainerMenu();
 
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);

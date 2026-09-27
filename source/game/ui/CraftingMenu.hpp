@@ -29,8 +29,9 @@ public:
     int getY();
     int getZ();
 
-private:
     boost::shared_ptr<CraftingContainer> m_craftSlots;
+
+private:
     boost::shared_ptr<ResultContainer> m_resultSlots;
     Level* m_level;
     BlockPos m_playerPos;

@@ -21,7 +21,7 @@ public:
                              bool& handled);
     void KeyboardDonePressed();
     virtual void handleTimerComplete(int timerId);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual std::wstring getMoviePath();
     virtual int getSceneType();
     virtual bool hasFocus(int sceneType);

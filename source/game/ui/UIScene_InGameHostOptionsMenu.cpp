@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_InGameHostOptionsMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cwchar>
 #include <string>
@@ -27,6 +28,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/core/GameSettings.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
@@ -55,51 +57,51 @@ UIScene_InGameHostOptionsMenu::~UIScene_InGameHostOptionsMenu()
 unsigned int UIScene_InGameHostOptionsMenu::getWeatherId(int weatherState)
 {
     if (weatherState == 1)
-        return 0xb05e725f;
+        return IDS_WEATHER_RAIN;
     if (weatherState == 2)
-        return 0xa8f9a6d7;
-    return 0xd885f542;
+        return IDS_WEATHER_THUNDER;
+    return IDS_WEATHER_CLEAR;
 }
 
 void UIScene_InGameHostOptionsMenu::Init()
 {
-    addHostCheckbox(&m_hostOptions, 0x1de3701, 0, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xe)) != 0);
-    addHostCheckbox(&m_hostOptions, 0xef311201, 1, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xd)) != 0);
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf)) != 0)
+    addHostCheckbox(&m_hostOptions, IDS_FIRE_SPREADS, 0, g_pApp->GetGameHostOption(eGameHostOption_FireSpreads) != 0);
+    addHostCheckbox(&m_hostOptions, IDS_TNT_EXPLODES, 1, g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0);
+    if (g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) != 0)
     {
-        addHostCheckbox(&m_hostOptions, 0x5e940e19, 2, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1e)) != 0);
-        addHostCheckbox(&m_hostOptions, 0x7a2d3b2, 3, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x19)) != 0);
-        addHostCheckbox(&m_hostOptions, 0x3decac90, 4, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1a)) != 0);
-        addHostCheckbox(&m_hostOptions, 0x2a7c56c4, 5, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x18)) != 0);
+        addHostCheckbox(&m_hostOptions, IDS_DAYLIGHT_CYCLE, 2, g_pApp->GetGameHostOption(eGameHostOption_DoDaylightCycle) != 0);
+        addHostCheckbox(&m_hostOptions, IDS_KEEP_INVENTORY, 3, g_pApp->GetGameHostOption(eGameHostOption_KeepInventory) != 0);
+        addHostCheckbox(&m_hostOptions, IDS_MOB_SPAWNING, 4, g_pApp->GetGameHostOption(eGameHostOption_DoMobSpawning) != 0);
+        addHostCheckbox(&m_hostOptions, IDS_MOB_GRIEFING, 5, g_pApp->GetGameHostOption(eGameHostOption_MobGriefing) != 0);
         addHostButton(&m_hostOptions, 0xd554d957, 0xc);
         addHostButton(&m_hostOptions, 0xc0d12a27, 0xd);
 
-        const Difficulty* difficulty = Difficulty::byId(g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0)));
+        const Difficulty* difficulty = Difficulty::byId(g_pApp->GetGameHostOption(eGameHostOption_Difficulty));
         wchar_t difficultyLabel[256];
-        swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(0xd324428d),
+        swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
                  L10N::GetString(difficulty->getKey()));
         m_hostOptions.AddNewSlider(std::wstring(difficultyLabel), 0xf, 0, 3,
-                                   g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0)), false, 7, 3);
+                                   g_pApp->GetGameHostOption(eGameHostOption_Difficulty), false, 7, 3);
 
-        const GameType* gameType = GameType::byId(g_pApp->GetGameHostOption(static_cast<eGameHostOption>(6)));
+        const GameType* gameType = GameType::byId(g_pApp->GetGameHostOption(eGameHostOption_GameType));
         m_hostOptions.AddNewSlider(std::wstring(L10N::GetString(gameType->getSliderLabel())), 0x10, 0,
-                                   GameType::ADVENTURE->getId(), g_pApp->GetGameHostOption(static_cast<eGameHostOption>(6)),
+                                   GameType::ADVENTURE->getId(), g_pApp->GetGameHostOption(eGameHostOption_GameType),
                                    false, 7, 3);
-        addHostButton(&m_hostOptions, 0x4c920637, 0xe);
+        addHostButton(&m_hostOptions, IDS_SET_WORLD_SPAWN, 0xe);
 
         Level* level = Minecraft::GetInstance()->getLevel(0);
         if (level != 0)
         {
             m_hostOptions.AddNewLabel(std::wstring(L" "), 0x12);
-            m_hostOptions.AddNewLabel(std::wstring(L10N::GetString(0x38c1c044)), 0x12);
+            m_hostOptions.AddNewLabel(std::wstring(L10N::GetString(IDS_WEATHER)), 0x12);
             m_hostOptions.AddNewSlider(std::wstring(L10N::GetString(getWeatherId(level->getWeatherState()))),
                                        0x11, 0, 2, level->getWeatherState(), false, 7, 3);
         }
-        addHostCheckbox(&m_hostOptions, 0xfaaaeb73, 9, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x15)) != 0);
+        addHostCheckbox(&m_hostOptions, IDS_WEATHER_CYCLE, 9, g_pApp->GetGameHostOption(eGameHostOption_DoWeatherCycle) != 0);
     }
-    addHostCheckbox(&m_hostOptions, 0x4aac0bc3, 6, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1b)) != 0);
-    addHostCheckbox(&m_hostOptions, 0x78e0a40d, 7, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1c)) != 0);
-    addHostCheckbox(&m_hostOptions, 0x6f7d8591, 8, g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1d)) != 0);
+    addHostCheckbox(&m_hostOptions, IDS_MOB_LOOT, 6, g_pApp->GetGameHostOption(eGameHostOption_DoMobLoot) != 0);
+    addHostCheckbox(&m_hostOptions, IDS_TILE_DROPS, 7, g_pApp->GetGameHostOption(eGameHostOption_DoTileDrops) != 0);
+    addHostCheckbox(&m_hostOptions, 0x6f7d8591, 8, g_pApp->GetGameHostOption(eGameHostOption_NaturalRegeneration) != 0);
 
     Level* level = Minecraft::GetInstance()->getLevel(0);
     bool hasMultiplePlayers = false;
@@ -109,13 +111,13 @@ void UIScene_InGameHostOptionsMenu::Init()
         hasMultiplePlayers = players->size() > 1;
         delete players;
     }
-    if (level != 0 && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf)) != 0 &&
+    if (level != 0 && g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) != 0 &&
         Player::getPlayerGamePrivilege(g_pApp->GetPlayerPrivileges(static_cast<unsigned char>(m_playerId)),
-                                       static_cast<Player::EPlayerGamePrivileges>(0x10)) != 0 &&
+                                       Player::ePlayerGamePrivilege_CanTeleport) != 0 &&
         hasMultiplePlayers)
     {
-        addHostButton(&m_hostOptions, 0xdd235a1d, 0xa);
-        addHostButton(&m_hostOptions, 0x4296e646, 0xb);
+        addHostButton(&m_hostOptions, IDS_TELEPORT_TO_PLAYER, 0xa);
+        addHostButton(&m_hostOptions, IDS_TELEPORT_TO_ME, 0xb);
     }
     if (m_movie != 0)
     {
@@ -128,7 +130,7 @@ void UIScene_InGameHostOptionsMenu::Init()
 
 void UIScene_InGameHostOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -148,29 +150,38 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
                                                 bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action <= 3)
-        return;
-    if (action < 10 || action == 0x14)
+    switch (action)
     {
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, released, pressed);
         return;
+    case EControllerActions_MenuCancel:
+        break;
+    default:
+        return;
     }
-    if (action != 0x15 || !pressed)
+    if (!pressed)
         return;
 
-    unsigned int options = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x20));
-    g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0xe), m_hostOptions.GetCheckboxValue(0));
-    g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0xd), m_hostOptions.GetCheckboxValue(1));
+    unsigned int options = g_pApp->GetGameHostOption(eGameHostOption_All);
+    g_pApp->SetGameHostOption(options, eGameHostOption_FireSpreads, m_hostOptions.GetCheckboxValue(0));
+    g_pApp->SetGameHostOption(options, eGameHostOption_TNT, m_hostOptions.GetCheckboxValue(1));
     bool settingsChanged = false;
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf)) != 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) != 0)
     {
-        g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x1e), m_hostOptions.GetCheckboxValue(2));
-        g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x19), m_hostOptions.GetCheckboxValue(3));
-        g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x1a), m_hostOptions.GetCheckboxValue(4));
-        g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x18), m_hostOptions.GetCheckboxValue(5));
-        g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x15), m_hostOptions.GetCheckboxValue(9));
+        g_pApp->SetGameHostOption(options, eGameHostOption_DoDaylightCycle, m_hostOptions.GetCheckboxValue(2));
+        g_pApp->SetGameHostOption(options, eGameHostOption_KeepInventory, m_hostOptions.GetCheckboxValue(3));
+        g_pApp->SetGameHostOption(options, eGameHostOption_DoMobSpawning, m_hostOptions.GetCheckboxValue(4));
+        g_pApp->SetGameHostOption(options, eGameHostOption_MobGriefing, m_hostOptions.GetCheckboxValue(5));
+        g_pApp->SetGameHostOption(options, eGameHostOption_DoWeatherCycle, m_hostOptions.GetCheckboxValue(9));
         int difficulty = static_cast<int>(m_hostOptions.GetSliderValue(0xf));
-        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0)) != difficulty)
+        if (g_pApp->GetGameHostOption(eGameHostOption_Difficulty) != difficulty)
         {
             ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
             if (connection != 0)
@@ -180,7 +191,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
             }
         }
         unsigned int gameType = static_cast<unsigned int>(m_hostOptions.GetSliderValue(0x10));
-        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(6)) != gameType)
+        if (g_pApp->GetGameHostOption(eGameHostOption_GameType) != gameType)
         {
             ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
             if (connection != 0)
@@ -204,10 +215,10 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
             }
         }
     }
-    g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x1b), m_hostOptions.GetCheckboxValue(6));
-    g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x1c), m_hostOptions.GetCheckboxValue(7));
-    g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x1d), m_hostOptions.GetCheckboxValue(8));
-    if (settingsChanged || options != g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x20)))
+    g_pApp->SetGameHostOption(options, eGameHostOption_DoMobLoot, m_hostOptions.GetCheckboxValue(6));
+    g_pApp->SetGameHostOption(options, eGameHostOption_DoTileDrops, m_hostOptions.GetCheckboxValue(7));
+    g_pApp->SetGameHostOption(options, eGameHostOption_NaturalRegeneration, m_hostOptions.GetCheckboxValue(8));
+    if (settingsChanged || options != g_pApp->GetGameHostOption(eGameHostOption_All))
     {
         ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         if (connection != 0)
@@ -215,30 +226,29 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
     }
     navigateBack();
     handled = true;
-    (void)playerId;
 }
 
-void UIScene_InGameHostOptionsMenu::handlePress(int, int second)
+void UIScene_InGameHostOptionsMenu::handlePress(int, int childId)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (second < 10 || second > 0xe)
+    if (childId < 10 || childId > 0xe)
         return;
-    if (second < 0xc)
+    if (childId < 0xc)
     {
         struct SceneData { int player; bool value; char padding[3]; };
         SceneData* data = new SceneData;
         data->player = m_playerId;
-        data->value = second == 10;
-        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x34), data,
-                                             static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        data->value = childId == 10;
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_TeleportMenu, data,
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
     ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
     if (connection == 0)
         return;
-    if (second == 0xc)
+    if (childId == 0xc)
         connection->send(TimeCommand::preparePacket(1000));
-    else if (second == 0xd)
+    else if (childId == 0xd)
         connection->send(TimeCommand::preparePacket(14000));
     else
         connection->send(boost::shared_ptr<Packet>(new GameCommandPacket(
@@ -257,7 +267,7 @@ void UIScene_InGameHostOptionsMenu::handleSliderElementMove(int, int element, in
     {
         const Difficulty* difficulty = Difficulty::byId(value);
         wchar_t label[256];
-        swprintf(label, 256, L"%ls: %ls", L10N::GetString(0xd324428d), L10N::GetString(difficulty->getKey()));
+        swprintf(label, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY), L10N::GetString(difficulty->getKey()));
         m_hostOptions.SetItemLabel(0xf, UIString(label), false);
     }
     else if (element < 0x11 && element > 0xf)
@@ -281,5 +291,5 @@ unsigned int UIScene_InGameHostOptionsMenu::mapElementsAndNames()
 
 int UIScene_InGameHostOptionsMenu::getSceneType()
 {
-    return 0x28;
+    return EUIScene_InGameHostOptionsMenu;
 }

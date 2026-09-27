@@ -54,7 +54,7 @@ void FireworksMenu::slotsChanged()
                                            &m_hasGunpowder,
                                            &m_hasFireworkCharge);
     not_null_ptr<ItemInstance> result =
-        Recipes::getInstance()->getItemFor(m_craftSlots, m_level, NULL,
+        Recipes::getInstance()->getItemFor(m_craftSlots, m_level, Recipes::mFireworksRecipe,
                                            Recipes::eRecipeCategory_Crafting);
     m_resultSlots->setItem(0, result);
 }

@@ -15,9 +15,6 @@ public:
 
     virtual void Init(const std::wstring& name, int id);
     void UseEllipsis(bool useEllipsis);
-
-private:
-    bool m_useEllipsis;
 };
 
 #endif

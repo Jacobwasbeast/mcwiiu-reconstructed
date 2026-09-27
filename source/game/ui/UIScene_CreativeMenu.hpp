@@ -10,6 +10,7 @@
 #include "game/ui/UIControl_SlotList.hpp"
 #include "game/ui/UIControl_Touch.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/not_null_ptr.hpp"
 
 class AbstractContainerMenu;
 class Inventory;
@@ -20,13 +21,12 @@ class UILayer;
 class UIScene_CreativeMenu : public UIScene_AbstractContainerMenu
 {
 public:
+    static const int ITEM_SLOT_COUNT = 50;
+
     class ItemBuilder
     {
     public:
-        ItemBuilder(const ItemInstance& item);
-        virtual ~ItemBuilder();
-
-        ItemInstance item;
+        virtual not_null_ptr<ItemInstance> build() const = 0;
     };
 
     enum ECreativeInventoryTabs
@@ -43,32 +43,44 @@ public:
 
     enum ECreative_Inventory_Groups
     {
-        ECreative_Inventory_Groups_None = -1
+        ECreative_Inventory_Groups_None = -1,
+        ECreative_Inventory_Groups_BuildingBlocks,
+        ECreative_Inventory_Groups_Decoration,
+        ECreative_Inventory_Groups_Redstone,
+        ECreative_Inventory_Groups_Transport,
+        ECreative_Inventory_Groups_Materials,
+        ECreative_Inventory_Groups_Food,
+        ECreative_Inventory_Groups_ToolsAndCombat,
+        ECreative_Inventory_Groups_BrewingIngredients,
+        ECreative_Inventory_Groups_Potions,
+        ECreative_Inventory_Groups_LongPotions,
+        ECreative_Inventory_Groups_StrongPotions,
+        ECreative_Inventory_Groups_Miscellaneous,
+        ECreative_Inventory_Groups_Count = 15
     };
 
     class TabSpec
     {
     public:
-        TabSpec(const wchar_t* title, int itemCount, int groupCount,
-                ECreative_Inventory_Groups* groups, int specialCount,
-                ECreative_Inventory_Groups* specialGroups, int extraCount,
+        TabSpec(const wchar_t* title, int titleStringId, int groupCount, ECreative_Inventory_Groups* groups,
+                int specialGroupCount, ECreative_Inventory_Groups* specialGroups, int extraGroupCount,
                 ECreative_Inventory_Groups* extraGroups);
-        unsigned int getPageCount();
-        unsigned int getTitleStringId();
-        unsigned int getSpecialGroupCount();
-        void populateMenu(AbstractContainerMenu* menu, int page, unsigned int offset);
         ~TabSpec();
+        unsigned int getPageCount();
+        void populateMenu(AbstractContainerMenu* menu, int specialGroup, unsigned int page);
 
-    private:
-        std::wstring m_title;
-        int m_itemCount;
+        const wchar_t* m_title;
+        int m_titleStringId;
         int m_groupCount;
-        std::vector<ECreative_Inventory_Groups> m_groups;
-        int m_specialCount;
-        std::vector<ECreative_Inventory_Groups> m_specialGroups;
-        int m_extraCount;
-        std::vector<ECreative_Inventory_Groups> m_extraGroups;
-        int m_pageCount;
+        ECreative_Inventory_Groups* m_groups;
+        int m_specialGroupCount;
+        ECreative_Inventory_Groups* m_specialGroups;
+        int m_extraGroupCount;
+        ECreative_Inventory_Groups* m_extraGroups;
+        unsigned int m_pageCount;
+        unsigned int m_itemsPerPage;
+        unsigned int m_itemCount;
+        unsigned int m_extraItemCount;
     };
 
     class ItemPickerMenu : public AbstractContainerMenu
@@ -120,13 +132,13 @@ public:
     virtual unsigned int overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
                                           not_null_ptr<ItemInstance> item, bool itemValid, bool canTake,
                                           bool canPlace, int count,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& first,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& second,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& third,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& fourth,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& fifth,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& sixth,
-                                          IUIScene_AbstractContainerMenu::EToolTipItem& seventh);
+                                          EToolTipItem& first,
+                                          EToolTipItem& second,
+                                          EToolTipItem& third,
+                                          EToolTipItem& fourth,
+                                          EToolTipItem& fifth,
+                                          EToolTipItem& sixth,
+                                          EToolTipItem& seventh);
     static void staticCtor();
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();
@@ -143,9 +155,8 @@ public:
     virtual int getSceneType();
 
 private:
-    UIControl_SlotList m_hotbarList;
-    UIControl_Touch m_touchPanels[9];
     UIControl_SlotList m_containerList;
+    UIControl_Touch m_touchPanels[9];
     int m_currentTab;
     int m_tabPages[8];
     int m_tabCurrentPages[8];
@@ -153,7 +164,9 @@ private:
     IUIScene_AbstractContainerMenu* m_sceneInterface;
 
     static TabSpec* s_tabSpecs[8];
-    static std::vector<const ItemBuilder*> s_groupItems[12];
+
+public:
+    static std::vector<const ItemBuilder*> s_groupItems[ECreative_Inventory_Groups_Count];
 
 };
 

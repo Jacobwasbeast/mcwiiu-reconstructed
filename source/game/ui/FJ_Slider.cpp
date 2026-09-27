@@ -33,7 +33,7 @@ uint32_t FJ_Slider::getCurrentState()
     return static_cast<uint32_t>(m_currentState);
 }
 
-uint32_t FJ_Slider::getOldWidth()
+int FJ_Slider::getOldWidth()
 {
     return m_wrapWidth;
 }
@@ -169,7 +169,7 @@ void FJ_Slider::_keyUpHandler(FJ_FuiNode* node, FJ_Event* event)
     static_cast<FJ_Slider*>(node)->keyUpHandler(event);
 }
 
-uint64_t FJ_Slider::MoveSlider(int amount)
+void FJ_Slider::MoveSlider(int amount)
 {
     const int oldValue = m_sliderCurrent;
     m_sliderCurrent += amount;
@@ -184,12 +184,11 @@ uint64_t FJ_Slider::MoveSlider(int amount)
         {
             UIScene* scene = getRoot()->m_pCallbackScene;
             scene->handleSliderElementMove(getObjListParent()->asFJ_Base()->getId(), getId(), m_sliderCurrent);
-            return 0;
+            return;
         }
         UIScene* scene = getRoot()->m_pCallbackScene;
         scene->handleSliderMove(getId(), m_sliderCurrent);
     }
-    return 0;
 }
 
 void FJ_Slider::keyDownHandler(FJ_Event* event)

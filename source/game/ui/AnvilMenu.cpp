@@ -16,8 +16,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/generation/Player.hpp"
-
-bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
+#include "game/core/StringUtils.hpp"
 
 AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
                      const BlockPos& position, boost::shared_ptr<Player> player)

@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_AchievementsMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <stdint.h>
 #include <cwchar>
@@ -13,6 +14,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "game/core/GameSettings.hpp"
 
 extern "C" void OSReport(const char*, ...);
 
@@ -186,7 +188,7 @@ UIScene_AchievementsMenu::UIScene_AchievementsMenu(int type, void* data, UILayer
         }
         registerTexture(id);
     }
-    m_titleLabel.init(UIString(0x31dacd58));
+    m_titleLabel.init(UIString(IDS_ACHIEVEMENTS));
     m_achievementName.init(UIString(L""));
     for (int i = 0; i < 93; ++i) {
         int id = s_achievementDisplayList[i];
@@ -206,7 +208,7 @@ UIScene_AchievementsMenu::~UIScene_AchievementsMenu()
 
 void UIScene_AchievementsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), -1, 0xe21d8023, 0xae01f627,
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), -1, IDS_TOOLTIPS_CANCEL, IDS_TOOLTIPS_SHOW_DESCRIPTION,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -228,7 +230,7 @@ void UIScene_AchievementsMenu::UpdateAchievementDetails()
     m_achievementName.setLabel(UIString(L10N::GetString(info->title)), false, false);
     std::vector<HtmlString> lines;
     if (m_showDescription)
-        lines.push_back(HtmlString(L10N::GetString(info->description), static_cast<eMinecraftColour>(437), false, false, 0));
+        lines.push_back(HtmlString(L10N::GetString(info->description), eMinecraftColour_HTMLColor_White, false, false, 0));
     SetAchievementDescription(&lines);
 }
 
@@ -248,12 +250,12 @@ unsigned int UIScene_AchievementsMenu::mapElementsAndNames()
 
 int UIScene_AchievementsMenu::getSceneType()
 {
-    return 0x51;
+    return EUIScene_AchievementsMenu;
 }
 
 void UIScene_AchievementsMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 std::wstring UIScene_AchievementsMenu::getMoviePath()
@@ -265,18 +267,25 @@ void UIScene_AchievementsMenu::handleInput(int playerId, int action, bool repeat
                                            bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (pressed) {
-        if (action == 2) {
+    if (pressed)
+    {
+        switch (action)
+        {
+        case EControllerActions_MenuX:
             m_updateDetails = true;
             m_showDescription = !m_showDescription;
-        } else if (action > 3) {
-            if (action < 10) {
-                sendInputToMovie(action, repeat, released, pressed);
-                handled = true;
-            } else if (action == 0x15) {
-                navigateBack();
-                handled = true;
-            }
+            break;
+        case EControllerActions_MenuUp:
+        case EControllerActions_MenuDown:
+        case EControllerActions_MenuRight:
+        case EControllerActions_MenuLeft:
+        case EControllerActions_MenuPageUp:
+        case EControllerActions_MenuPageDown:
+            sendInputToMovie(action, repeat, released, pressed);
+            break;
+        case EControllerActions_MenuCancel:
+            navigateBack();
+            break;
         }
     }
     handled = true;
@@ -305,7 +314,7 @@ void UIScene_AchievementsMenu::handleReload()
         int id = s_achievementDisplayList[i];
         registerTexture(id);
     }
-    m_titleLabel.init(UIString(0x31dacd58));
+    m_titleLabel.init(UIString(IDS_ACHIEVEMENTS));
     m_achievementName.init(UIString(L""));
     for (int i = 0; i < 93; ++i) {
         int id = s_achievementDisplayList[i];

@@ -132,14 +132,15 @@ void FJ_PressStartToPlay::ShowAchievementToast(const std::wstring& title, const 
         gamerPicture->SetTextureName(gamerPic);
         FJ_ListButtonAchievement* icon = m_achievementToast->getChildByName(std::string("AchievementIcon"))->asFJ_ListButtonAchievement();
         icon->SetTextureName(achievementIcon);
-        const float widest = pressButton->getWidth() > unlocked->getWidth() ? pressButton->getWidth() : unlocked->getWidth();
-        const float panelWidth = widest + static_cast<float>(m_achievementToastX * 2) - 176.0f - (gamerPicture->getWidth() - icon->getWidth());
         FJ_FuiNode* panel = m_achievementToast->getChildByName(std::string("AchievementPanel"));
-        panel->getChildAt(0)->setWidth(panelWidth);
-        icon->setX(widest + static_cast<float>(m_achievementToastX * 2) - 176.0f - gamerPicture->getX() - gamerPicture->getWidth());
-        unlocked->setX((panelWidth - unlocked->getWidth()) * 0.5f);
-        pressButton->setX((panelWidth - pressButton->getWidth()) * 0.5f);
-        panel->setX((getStage()->getStageWidth() - panel->getWidth()) * 0.5f);
+        FJ_FuiNode* iconNode = m_achievementToast->getChildByName(std::string("AchievementIcon"));
+        FJ_FuiNode* gamerPicNode = m_achievementToast->getChildByName(std::string("GamerPic"));
+        int widest = unlocked->getWidth() > pressButton->getWidth() ? unlocked->getWidth() : pressButton->getWidth();
+        panel->getChildAt(0)->setWidth(static_cast<float>(widest + m_achievementToastX * 2) - (gamerPicNode->getWidth() - iconNode->getWidth()));
+        iconNode->setX(static_cast<float>(widest + m_achievementToastX) + (static_cast<float>(m_achievementToastX) - (gamerPicNode->getX() + gamerPicNode->getWidth())));
+        unlocked->setX(m_achievementToast->getWidth() * 0.5f - unlocked->getWidth() * 0.5f);
+        pressButton->setX(m_achievementToast->getWidth() * 0.5f - pressButton->getWidth() * 0.5f);
+        m_achievementToast->setX(getStage()->getStageWidth() * 0.5f - m_achievementToast->getWidth() * 0.5f);
         gotoAndPlay(std::string("ShowToast"));
     }
 }

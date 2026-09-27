@@ -24,7 +24,7 @@ public:
                              bool& handled);
     virtual void handlePreUnloadForReload();
     virtual void handleReload();
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
     virtual void handleSliderElementMove(int first, int second, int value);
 

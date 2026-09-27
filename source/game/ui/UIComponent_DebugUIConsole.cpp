@@ -1,5 +1,6 @@
 #include "game/ui/UIComponent_DebugUIConsole.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/UILayer.hpp"
 
 UIComponent_DebugUIConsole::UIComponent_DebugUIConsole(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
@@ -64,7 +65,7 @@ std::wstring UIComponent_DebugUIConsole::getMoviePath()
 
 int UIComponent_DebugUIConsole::getSceneType()
 {
-    return 68;
+    return EUIScene_DebugUIConsole;
 }
 
 bool UIComponent_DebugUIConsole::stealsFocus()

@@ -9,6 +9,7 @@
 #include "game/ui/FJ_Intro.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern "C" void OSReport(const char*, ...);
 #define INTRO_TRACE(step) OSReport("[boot][intro_trace] %s\n", step)
@@ -49,13 +50,13 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool rele
                                 bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action != 20 || m_inputHandled)
+    if (action != EControllerActions_MenuOk || m_inputHandled)
         return;
 
     m_inputHandled = true;
     if (gApp.HasNoSpaceForSaveQuota() == 0)
     {
-        int primaryPlayer = g_pApp->GetPrimaryUserIndex();
+        int primaryPlayer = gProfile->GetPrimaryPad();
         uint32_t optionsStatus = g_pApp->GetOptionsCallbackStatus(primaryPlayer);
         if (optionsStatus == 0)
         {
@@ -65,17 +66,17 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool rele
         }
         if (optionsStatus == 4 || optionsStatus == 6)
         {
-            if (GameSettings::GetGameSettings(primaryPlayer, static_cast<eGameSetting>(0x1e)) == 0)
-                gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(0x4d), NULL,
-                                                      static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            if (GameSettings::GetGameSettings(primaryPlayer, eGameSetting_EULAAccepted) == 0)
+                gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+                                                      EUILayer_Scene, EUIGroup_PlayerDefault);
             else
-                gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(2), NULL,
-                                                      static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_SaveMessage, NULL,
+                                                      EUILayer_Scene, EUIGroup_PlayerDefault);
             g_introRunning = 1;
             return;
         }
-        gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(0x4d), NULL,
-                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
     }
     g_introRunning = 1;
 }
@@ -90,36 +91,36 @@ void UIScene_Intro::handleAnimationEnd()
     if (gApp.HasNoSpaceForSaveQuota() != 0)
         return;
 
-    int primaryPlayer = g_pApp->GetPrimaryUserIndex();
+    int primaryPlayer = gProfile->GetPrimaryPad();
     uint32_t optionsStatus = g_pApp->GetOptionsCallbackStatus(primaryPlayer);
     if (optionsStatus == 0)
     {
-        gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(2), NULL,
-                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_SaveMessage, NULL,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
     if (optionsStatus == 4 || optionsStatus == 6)
     {
-        if (GameSettings::GetGameSettings(primaryPlayer, static_cast<eGameSetting>(0x1e)) == 0)
+        if (GameSettings::GetGameSettings(primaryPlayer, eGameSetting_EULAAccepted) == 0)
         {
-            gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(0x4d), NULL,
-                                                  static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+            gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
             return;
         }
-        gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(2), NULL,
-                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_SaveMessage, NULL,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(0x4d), NULL,
-                                          static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+                                          EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
 void UIScene_Intro::handleGainFocus(bool)
 {
     if (!m_introFocus)
         return;
-    gConsoleUIController.NavigateToScene(0, static_cast<EUIScene>(3), NULL, static_cast<EUILayer>(6),
-                                          static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(0, EUIScene_MainMenu, NULL, EUILayer_Scene,
+                                          EUIGroup_PlayerDefault);
 }
 
 void UIScene_Intro::handleReload()
@@ -147,7 +148,7 @@ unsigned int UIScene_Intro::mapElementsAndNames()
 
 int UIScene_Intro::getSceneType()
 {
-    return 1;
+    return EUIScene_Intro;
 }
 
 bool UIScene_Intro::hasFocus(int)

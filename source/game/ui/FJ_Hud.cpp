@@ -1986,9 +1986,8 @@ void FJ_Hud::SetTimerIcon(int value, int time)
     FJ_FuiNode* clip = hudNode(this, 0x2ac)->getChildAt(0)->asMovieClip();
     FJ_FuiNode* minutesIcon = clip->getChildByName("minutes")->asMovieClip();
     FJ_FuiNode* secondsIcon = clip->getChildByName("seconds")->asMovieClip();
-    float minutesFrame = (176.0f - static_cast<float>(static_cast<unsigned int>(value))) / 60.0f * 12.0f;
-    float secondsFrame = (176.0f - static_cast<float>(static_cast<unsigned int>(time))) / 60.0f * 12.0f;
-    minutesIcon->gotoAndStop(static_cast<int>(minutesFrame) + 1);
+    float secondsFrame = time / 60.0f * 12.0f;
+    minutesIcon->gotoAndStop(static_cast<int>(value / 60.0f * 12.0f) + 1);
     secondsIcon->gotoAndStop(static_cast<int>(secondsFrame) + 1);
 }
 void FJ_Hud::SetScoreIcon(int value)

@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_DLCOffersMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -12,11 +13,11 @@
 #include "game/ui/UIControl_List.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/StringConversion.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
-
-std::wstring convUtf8ToWstring(const char* value);
 
 UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_catalogReady(false), m_purchasabilityChanged(false),
@@ -27,7 +28,7 @@ UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* laye
 {
     initialiseMovie();
     g_pApp->SetLiveLinkRequired(true);
-    m_titleLabel.init(UIString(0x65154db0));
+    m_titleLabel.init(UIString(IDS_DOWNLOADABLE_CONTENT_OFFERS));
     m_offerList.init(0);
     m_descriptionLabel.init(UIString(L" "));
     m_priceLabel.init(UIString(L" "));
@@ -121,20 +122,20 @@ uint32_t UIScene_DLCOffersMenu::UpdateDisplay(cProductInfo* product)
             if (imageData == NULL)
             {
                 m_banner.setTextureName(std::wstring(L"DLCOff"), true);
-                gConsoleUIController.RefreshTooltips(m_controlFocus);
+                gConsoleUIController.RefreshTooltips(m_playerId);
             }
             else
             {
                 registerSubstitutionTexture(banner, static_cast<unsigned char*>(imageData),
                                             imageSize, freeImageData);
                 m_banner.setTextureName(banner, true);
-                gConsoleUIController.RefreshTooltips(m_controlFocus);
+                gConsoleUIController.RefreshTooltips(m_playerId);
             }
         }
         else
         {
             m_banner.setTextureName(banner, true);
-            gConsoleUIController.RefreshTooltips(m_controlFocus);
+            gConsoleUIController.RefreshTooltips(m_playerId);
         }
         return 1;
     }
@@ -187,12 +188,12 @@ void UIScene_DLCOffersMenu::tick()
 
 void UIScene_DLCOffersMenu::updateTooltips()
 {
-    int tooltip = 0x8d6323ed;
+    int tooltip = IDS_TOOLTIPS_SELECT;
     if (m_unknownCallbackState && m_shouldNavigateBack)
-        tooltip = 0x6b5b6b53;
+        tooltip = IDS_TOOLTIPS_REINSTALL;
     else if (m_unknownCallbackState)
-        tooltip = 0x9302b074;
-    gConsoleUIController.SetTooltips(m_controlFocus, tooltip, 0x4f6bcf5e, -1, -1, -1, -1,
+        tooltip = IDS_TOOLTIPS_INSTALL;
+    gConsoleUIController.SetTooltips(m_playerId, tooltip, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
                                       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -205,34 +206,44 @@ void UIScene_DLCOffersMenu::handleInput(int playerId, int action, bool repeat, b
                                         bool pressed, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (action > 0xd && action != 0x14 && action != 0x15)
+    if (action >= EControllerActions_MenuOtherStickUp && action != EControllerActions_MenuOk &&
+        action != EControllerActions_MenuCancel)
         return;
-    if (action == 4 && pressed && m_productCount != 0 && !m_timer.getVisible() && m_selection != 0)
+    switch (action)
     {
-        --m_selection;
-        m_purchasabilityChanged = false;
-    }
-    else if (action == 5 && pressed && m_productCount != 0 && !m_timer.getVisible() &&
-             static_cast<unsigned int>(m_selection) < m_productCount - 1)
-    {
-        ++m_selection;
-        m_purchasabilityChanged = false;
-    }
-    else if (action == 0x15 && pressed)
-    {
-        navigateBack();
-        handled = true;
-        return;
+    case EControllerActions_MenuUp:
+        if (pressed && m_productCount != 0 && !m_timer.getVisible() && m_selection != 0)
+        {
+            --m_selection;
+            m_purchasabilityChanged = false;
+        }
+        break;
+    case EControllerActions_MenuDown:
+        if (pressed && m_productCount != 0 && !m_timer.getVisible() &&
+            static_cast<unsigned int>(m_selection) < m_productCount - 1)
+        {
+            ++m_selection;
+            m_purchasabilityChanged = false;
+        }
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed)
+        {
+            navigateBack();
+            handled = true;
+            return;
+        }
+        break;
     }
     sendInputToMovie(action, repeat, released, pressed);
 }
 
-void UIScene_DLCOffersMenu::handlePress(int first, int second)
+void UIScene_DLCOffersMenu::handlePress(int controlId, int childId)
 {
-    if (first == 0)
+    if (controlId == 0)
     {
         cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
-        commerce->PurchaseDLCByIndex(static_cast<unsigned int>(second), m_controlFocus);
+        commerce->PurchaseDLCByIndex(static_cast<unsigned int>(childId), m_playerId);
     }
 }
 
@@ -262,5 +273,5 @@ void UIScene_DLCOffersMenu::HandleDLCLicenseChange()
 
 int UIScene_DLCOffersMenu::getSceneType()
 {
-    return 0x20;
+    return EUIScene_DLCOffersMenu;
 }

@@ -240,7 +240,7 @@ void UIControl_PlayerSkinPreview::SetTexture(const std::wstring& texture, _TEXTU
     mTextureName = (int)textureName;
     unsigned int skinId = CMinecraftApp::getSkinIdFromPath(mTexturePath);
     mSkinAdjustments = Player::getSkinAdjustmentsById(skinId);
-    if (GameSettings::GetGameSettings((eGameSetting)0x19) == 0 &&
+    if (GameSettings::GetGameSettings(eGameSetting_CustomSkinAnim) == 0 &&
         (mSkinAdjustments.mGameFlags & 0x1f1f810) == 0)
     {
         mSkinAdjustments.mAnimFlags = 0;

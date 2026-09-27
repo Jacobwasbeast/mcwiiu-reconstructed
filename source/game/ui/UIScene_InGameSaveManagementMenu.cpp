@@ -1,321 +1,336 @@
 #include "game/ui/UIScene_InGameSaveManagementMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cstring>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/DLCManager.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
+#include "vendor/_SaveListDetails.hpp"
 
-std::wstring convUtf8ToWstring(const char* value);
+extern CConsoleMinecraftApp gApp;
+extern ConsoleUIController gConsoleUIController;
+extern CProfile* gProfile;
+extern CStorage* gStorage;
 
-namespace
-{
-    struct SaveListRecord
-    {
-        unsigned int thumbnail;
-        unsigned int thumbnailSize;
-        wchar_t title[64];
-        char filename[32];
-    };
-
-    static SaveListRecord* getSaveListRecord(unsigned char* details, int index)
-    {
-        return (SaveListRecord*)(details + index * 300);
-    }
-}
-
-UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int sceneType, void* sceneData,
-                                                                   UILayer* layer)
-    : UIScene(sceneType, layer), m_saveDetails(NULL), m_saveCount(0), m_saveList(),
-      m_saveListTitle(), m_saveTimer(), m_saveSizeBar(), m_action(0), m_deletePending(false),
-      m_saveInfoPending(false), m_thumbnailPending(false), m_thumbnailReturned(false),
-      m_currentSave(0), m_saveInfo(NULL), m_saveInfoReady(false), m_closeRequested(false),
-      m_saveOperation(0), m_focusSelection(0), m_focusChanged(false)
+UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int playerId, void*, UILayer* layer)
+    : UIScene(playerId, layer), m_saveListDetails(NULL), m_saveDetailsCount(0),
+      m_pendingAction(ePendingAction_None), m_ignoreInput(false), m_thumbnailsComplete(false),
+      m_thumbnailRequested(false), m_thumbnailReturned(false), m_nextThumbnail(0), m_saveDetails(NULL),
+      m_saveInfoReady(false), m_closing(false), m_saveListRefreshState(0), m_selectedSaveIndex(0),
+      m_selectionChanged(false)
 {
     initialiseMovie();
     m_saveList.init(0);
-    m_saveListTitle.init(UIString(L10N::GetString(0xfec9f75f)));
+    m_saveListTitle.init(UIString(L10N::GetString(IDS_SAVE_INCOMPLETE_DELETE_SAVES)));
     m_saveTimer.setVisible(true);
-    m_saveSizeBar.init(UIString(L"\\"), 1, 0, 0);
-    m_action = 0;
-    m_saveInfo = NULL;
-    m_saveInfoReady = false;
-    m_currentSave = 0;
-    m_saveCount = 0;
-    m_saveDetails = NULL;
-    m_saveInfoPending = false;
-    m_closeRequested = false;
-    m_saveOperation = 0;
-    m_thumbnailPending = false;
-    m_deletePending = false;
-    m_thumbnailReturned = false;
-    m_focusChanged = false;
-    gApp.EnterSaveNotificationSection();
-    if (gApp.StartInstallDLCProcess(sceneType) == 0 && gApp.DLCInstallPending() == 0)
+    m_saveSizeBar.init(UIString(L""), 1, 0, SAVE_DATA_QUOTA);
+    gStorage->ClearSavesInfo();
+    if (gApp.StartInstallDLCProcess(m_playerId) == 0 && gApp.DLCInstallPending() == 0)
     {
         Initialise();
-        if (!m_deletePending)
+        if (!m_ignoreInput)
             gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
     }
-    m_layer->addComponent(sceneType, (EUIScene)0x48, sceneData);
+    else
+    {
+        m_ignoreInput = true;
+    }
+    layer->addComponent(playerId, EUIScene_MenuBackground, NULL);
 }
 
 UIScene_InGameSaveManagementMenu::~UIScene_InGameSaveManagementMenu()
 {
-    if (m_layer != NULL)
-        m_layer->removeComponent((EUIScene)0x48);
-    if (m_saveDetails != NULL)
+    m_layer->removeComponent(EUIScene_MenuBackground);
+    if (m_saveListDetails != NULL)
     {
-        for (int i = 0; i < m_saveCount; ++i)
-            delete[] (unsigned char*)getSaveListRecord(m_saveDetails, i)->thumbnail;
-        delete[] m_saveDetails;
+        for (int i = 0; i < m_saveDetailsCount; ++i)
+            delete[] m_saveListDetails[i].m_thumbnail;
+        delete[] m_saveListDetails;
     }
     gApp.LeaveSaveNotificationSection();
+    gStorage->ContinueIncompleteOperation();
 }
 
 void UIScene_InGameSaveManagementMenu::GetSaveInfo()
 {
     m_saveInfoReady = false;
     m_saveList.clearList();
-    m_saveInfoPending = false;
-    m_saveOperation = 0;
+    m_saveListRefreshState = 0;
     m_saveTimer.setVisible(true);
-    m_saveInfo = (void*)(uintptr_t)gStorage->ReturnSavesInfo();
-    if (m_saveInfo == NULL)
+    m_saveDetails = gStorage->ReturnSavesInfo();
+    if (m_saveDetails == NULL)
         gStorage->GetSavesInfo(m_playerId, NULL, this, "save");
 }
 
 void UIScene_InGameSaveManagementMenu::Initialise()
 {
-    m_focusSelection = 0;
-    if (gStorage->GetSaveState() != 0)
+    m_selectedSaveIndex = 0;
+    if (gProfile->IsFullVersion())
     {
-        if (gStorage->ReturnSavesInfo() == 0)
-            gStorage->ClearSavesInfo();
+        if (!gStorage->GetSaveDisabled())
+            gStorage->EnoughSpaceForAMinSaveGame();
         GetSaveInfo();
     }
-    m_deletePending = false;
+    m_ignoreInput = false;
 }
 
 unsigned int UIScene_InGameSaveManagementMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_saveList.setupControl(this, root, std::string("SavesList"));
+    m_saveList.setupControl(this, root, "SavesList");
     m_controls.push_back(&m_saveList);
-    m_saveListTitle.setupControl(this, root, std::string("SavesListTitle"));
+    m_saveListTitle.setupControl(this, root, "SavesListTitle");
     m_controls.push_back(&m_saveListTitle);
-    m_saveTimer.setupControl(this, root, std::string("SavesTimer"));
+    m_saveTimer.setupControl(this, root, "SavesTimer");
     m_controls.push_back(&m_saveTimer);
-    m_saveSizeBar.setupControl(this, root, std::string("SaveSizeBar"));
+    m_saveSizeBar.setupControl(this, root, "SaveSizeBar");
     m_controls.push_back(&m_saveSizeBar);
     return 1;
 }
 
 void UIScene_InGameSaveManagementMenu::updateTooltips()
 {
-    int tooltip = (m_saveInfoReady && m_saveCount > 0) ? (int)0x0e3265e5 : -1;
-    gConsoleUIController.SetTooltips((unsigned int)m_playerId, tooltip, (int)0xaed18de8,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, false, m_layer->IsFullscreenGroup());
+    int deleteTooltip = m_saveInfoReady && m_saveDetailsCount > 0 ? IDS_TOOLTIPS_DELETESAVE : -1;
+    gConsoleUIController.SetTooltips(m_playerId, deleteTooltip, IDS_SAVE_INCOMPLETE_RETRY_SAVING, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, m_layer->IsFullscreenGroup());
 }
 
 void UIScene_InGameSaveManagementMenu::handleReload()
 {
-    m_action = 0;
-    m_currentSave = 0;
+    m_saveListRefreshState = 0;
+    m_nextThumbnail = 0;
     m_saveInfoReady = false;
-    m_saveOperation = 0;
-    m_thumbnailPending = false;
-    m_deletePending = false;
+    m_thumbnailRequested = false;
+    m_thumbnailsComplete = false;
+    m_ignoreInput = false;
 }
 
-void UIScene_InGameSaveManagementMenu::handleGainFocus(bool hadFocus)
+void UIScene_InGameSaveManagementMenu::handleGainFocus(bool navigatedBack)
 {
     updateTooltips();
-    if (hadFocus)
-        m_deletePending = false;
+    if (navigatedBack)
+        m_ignoreInput = false;
 }
 
-void UIScene_InGameSaveManagementMenu::handleInput(int playerId, int action, bool repeat,
-                                                   bool released, bool pressed, bool& handled)
+void UIScene_InGameSaveManagementMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
+                                                   bool& handled)
 {
-    if (m_deletePending || !m_saveInfoReady)
+    if (m_ignoreInput || !m_saveInfoReady)
         return;
-    gConsoleUIController.AnimateKeyPress((unsigned int)m_playerId, action, repeat, released,
-                                         pressed);
-    if (action < 4 || (action > 5 && action < 8))
-        return;
-    if (action > 9 && action != 0x14)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    switch (action)
     {
-        if (action != 0x15 || !released)
-            return;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        handled = true;
+        break;
+    case EControllerActions_MenuCancel:
+        if (!pressed)
+            break;
         navigateBack();
         handled = true;
-        return;
+        break;
     }
-    sendInputToMovie(action, repeat, released, pressed);
-    handled = true;
 }
 
-void UIScene_InGameSaveManagementMenu::handleFocusChange(int focus, int childFocus)
+void UIScene_InGameSaveManagementMenu::handleFocusChange(int, int childId)
 {
-    m_focusSelection = childFocus;
+    m_selectedSaveIndex = childId;
     if (m_saveInfoReady)
-        m_focusChanged = true;
-    UIScene::handleFocusChange(focus, childFocus);
+        m_selectionChanged = true;
+    updateTooltips();
 }
 
 void UIScene_InGameSaveManagementMenu::handleInitFocus(int, int)
 {
 }
 
-bool UIScene_InGameSaveManagementMenu::hasFocus(int sceneType)
+bool UIScene_InGameSaveManagementMenu::hasFocus(int playerId)
 {
-    return m_hasFocus && (sceneType == m_playerId || m_playerId == 0xff);
+    return m_hasFocus && (playerId == m_playerId || m_playerId == 0xff);
 }
 
-unsigned int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* context,
-                                                                              unsigned char* data,
-                                                                              unsigned int size)
+int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data,
+                                                                     unsigned int size)
 {
-    UIScene_InGameSaveManagementMenu* menu = (UIScene_InGameSaveManagementMenu*)context;
-    SaveListRecord* record = getSaveListRecord(menu->m_saveDetails, menu->m_currentSave);
+    UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
+    _SaveListDetails& details = menu->m_saveListDetails[menu->m_nextThumbnail];
     if (data == NULL || size == 0)
     {
         menu->m_thumbnailReturned = true;
-        record->thumbnail = 0;
-        record->thumbnailSize = 0;
+        details.m_thumbnail = NULL;
+        details.m_thumbnailSize = 0;
+        return 0;
     }
-    else
-    {
-        record->thumbnail = (unsigned int)(uintptr_t)new unsigned char[size];
-        std::memcpy((void*)(uintptr_t)record->thumbnail, data, size);
-        menu->m_thumbnailReturned = true;
-        record->thumbnailSize = size;
-    }
+    details.m_thumbnail = new unsigned char[size];
+    std::memcpy(details.m_thumbnail, data, size);
+    menu->m_thumbnailReturned = true;
+    details.m_thumbnailSize = size;
     return 0;
 }
 
 void UIScene_InGameSaveManagementMenu::tick()
 {
     UIScene::tick();
-    if (m_closeRequested && !m_thumbnailPending)
+    if (m_closing && !m_thumbnailRequested)
         navigateBack();
-    if (m_focusChanged && !m_thumbnailPending)
+
+    if (hasFocus(m_playerId))
     {
-        m_saveSizeBar.selectSave(m_focusSelection);
-        m_focusChanged = false;
-    }
-    if (gStorage->GetSaveState() != 0)
-    {
+        if (m_selectionChanged)
+        {
+            m_saveSizeBar.selectSave(m_selectedSaveIndex);
+            m_selectionChanged = false;
+        }
+
         if (!m_saveInfoReady)
         {
-            SAVE_DETAILS* details = (SAVE_DETAILS*)(uintptr_t)gStorage->ReturnSavesInfo();
-            if (details != NULL)
+            m_saveDetails = gStorage->ReturnSavesInfo();
+            if (m_saveDetails != NULL)
             {
-                m_saveInfoReady = true;
                 m_saveSizeBar.reset();
-                m_saveCount = details->count;
-                m_saveDetails = (unsigned char*)new unsigned char[m_saveCount * 300];
-                for (int i = 0; i < m_saveCount; ++i)
+                m_saveInfoReady = true;
+                if (m_saveListDetails != NULL)
                 {
-                    SaveListRecord* record = getSaveListRecord(m_saveDetails, i);
-                    record->thumbnail = 0;
-                    record->thumbnailSize = 0;
-                    std::memcpy(record->title, details->saves[i].title, 256);
-                    std::memcpy(record->filename, details->saves[i].filename, 32);
-                    m_saveSizeBar.addSave(details->saves[i].nandSize);
-                    m_saveList.addItem(std::wstring(record->title), std::wstring(L"Save"));
+                    for (int i = 0; i < m_saveDetails->count; ++i)
+                        delete[] m_saveListDetails[i].m_thumbnail;
+                    delete[] m_saveListDetails;
+                }
+                m_saveListDetails = new _SaveListDetails[m_saveDetails->count];
+                m_saveDetailsCount = m_saveDetails->count;
+                for (int i = 0; i < m_saveDetails->count; ++i)
+                {
+                    SAVE_INFO& save = m_saveDetails->saves[i];
+                    m_saveSizeBar.addSave(save.nandSize);
+                    m_saveList.addItem(std::wstring(save.title), L"");
+                    m_saveListDetails[i].m_saveIndex = i;
+                    std::memcpy(m_saveListDetails[i].m_title, save.title, sizeof(save.title));
+                    std::memcpy(m_saveListDetails[i].m_filename, save.filename, sizeof(save.filename));
                 }
                 m_saveTimer.setVisible(false);
             }
         }
-        if (m_saveInfoReady && !m_thumbnailPending && !m_thumbnailReturned &&
-            m_currentSave < (int)m_saveList.getItemCount())
+
+        if (m_saveInfoReady)
         {
-            m_thumbnailPending = true;
-            if (gStorage->LoadSaveDataThumbnail(&((SAVE_DETAILS*)m_saveInfo)->saves[m_currentSave],
-                                                (int (*)(void*, unsigned char*, unsigned int))LoadSaveDataThumbnailReturned,
-                                                this) != 0x15)
-                m_thumbnailReturned = true;
-        }
-        if (m_thumbnailReturned)
-        {
-            m_thumbnailReturned = false;
-            m_thumbnailPending = false;
-            SaveListRecord* record = getSaveListRecord(m_saveDetails, m_currentSave);
-            std::wstring texture = convUtf8ToWstring(record->filename);
-            if (record->thumbnail != 0)
-                registerSubstitutionTexture(texture, (unsigned char*)(uintptr_t)record->thumbnail,
-                                             record->thumbnailSize, false);
-            m_saveList.setTextureName(m_currentSave, texture);
-            ++m_currentSave;
+            if (!m_closing && !m_thumbnailRequested && !m_thumbnailsComplete)
+            {
+                if (m_nextThumbnail < static_cast<int>(m_saveList.getItemCount()))
+                {
+                    m_thumbnailRequested = true;
+                    SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
+                    if (gStorage->LoadSaveDataThumbnail(&details->saves[m_nextThumbnail],
+                                                        &LoadSaveDataThumbnailReturned,
+                                                        this) != C4JStorage::ESaveGame_GetThumbnail)
+                    {
+                        m_thumbnailsComplete = true;
+                        m_thumbnailRequested = false;
+                    }
+                }
+            }
+            else if (m_thumbnailReturned)
+            {
+                m_thumbnailReturned = false;
+                if (m_closing)
+                {
+                    m_thumbnailRequested = false;
+                }
+                else
+                {
+                    _SaveListDetails& details = m_saveListDetails[m_nextThumbnail];
+                    std::wstring name = convUtf8ToWstring(details.m_filename);
+                    if (details.m_thumbnail != NULL)
+                        registerSubstitutionTexture(name, details.m_thumbnail, details.m_thumbnailSize, false);
+                    m_saveList.setTextureName(m_nextThumbnail, name);
+                    ++m_nextThumbnail;
+                    if (m_nextThumbnail >= static_cast<int>(m_saveList.getItemCount()) ||
+                        gStorage->LoadSaveDataThumbnail(&gStorage->ReturnSavesInfo()->saves[m_nextThumbnail],
+                                                        &LoadSaveDataThumbnailReturned,
+                                                        this) != C4JStorage::ESaveGame_GetThumbnail)
+                    {
+                        m_thumbnailRequested = false;
+                        m_thumbnailsComplete = true;
+                    }
+                }
+            }
         }
     }
-    if (m_action == 2)
+
+    if (m_pendingAction == ePendingAction_RebuildSaveList)
     {
-        handleReload();
+        m_thumbnailRequested = false;
+        m_saveListRefreshState = 0;
+        m_ignoreInput = false;
+        m_thumbnailsComplete = false;
+        m_nextThumbnail = 0;
+        m_saveInfoReady = false;
         m_saveList.clearList();
-        m_action = 0;
+        m_pendingAction = ePendingAction_None;
     }
 }
 
 std::wstring UIScene_InGameSaveManagementMenu::getMoviePath()
 {
-    return std::wstring(L"SaveMenu");
+    return L"SaveMenu";
 }
 
-unsigned int UIScene_InGameSaveManagementMenu::DeleteSaveDataReturned(void* context, bool success)
+int UIScene_InGameSaveManagementMenu::DeleteSaveDataReturned(void* context, bool success)
 {
-    UIScene_InGameSaveManagementMenu* menu = (UIScene_InGameSaveManagementMenu*)context;
-    if (!success)
-        menu->m_deletePending = false;
+    UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
+    if (success)
+        menu->m_pendingAction = ePendingAction_RebuildSaveList;
     else
-        menu->m_action = 2;
+        menu->m_ignoreInput = false;
     menu->updateTooltips();
     return 0;
 }
 
-unsigned int UIScene_InGameSaveManagementMenu::DeleteSaveDialogReturned(void* context, int,
-                                                                        C4JStorage::EMessageResult result)
+int UIScene_InGameSaveManagementMenu::DeleteSaveDialogReturned(void* context, int, C4JStorage::EMessageResult result)
 {
-    UIScene_InGameSaveManagementMenu* menu = (UIScene_InGameSaveManagementMenu*)context;
-    if (result == (C4JStorage::EMessageResult)5 &&
-        (gApp.DebugSettingsOn() == 0 || gApp.GetLoadSavesFromFolderEnabled() == 0))
+    UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
+    if (result == C4JStorage::EMessageResult_Decline &&
+        (!gApp.DebugSettingsOn() || !gApp.GetLoadSavesFromFolderEnabled()))
     {
-        SAVE_DETAILS* details = (SAVE_DETAILS*)(uintptr_t)menu->m_saveInfo;
-        gStorage->DeleteSaveData(&details->saves[menu->m_focusSelection],
-                                 (int (*)(void*, bool))DeleteSaveDataReturned,
+        gStorage->DeleteSaveData(&menu->m_saveDetails->saves[menu->m_selectedSaveIndex], &DeleteSaveDataReturned,
                                  menu);
         menu->m_saveTimer.setVisible(true);
     }
     else
-        menu->m_deletePending = false;
+    {
+        menu->m_ignoreInput = false;
+    }
     return 0;
 }
 
-void UIScene_InGameSaveManagementMenu::handlePress(int first, int)
+void UIScene_InGameSaveManagementMenu::handlePress(int controlId, int)
 {
-    if (first == 0)
-    {
-        m_deletePending = true;
-        int parameters[2] = { (int)0x4fcbc7e7, (int)0xb9a1bf4d };
-        gConsoleUIController.RequestErrorMessage(0x0e3265e5, (int)0xc2cd9559, parameters, 2,
-                                                  (unsigned int)m_playerId,
-                                                  (int (*)(void*, int, C4JStorage::EMessageResult))DeleteSaveDialogReturned,
-                                                  this, NULL, true);
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-    }
+    if (controlId != 0)
+        return;
+    m_ignoreInput = true;
+    int options[2] = { IDS_CONFIRM_CANCEL, IDS_CONFIRM_OK };
+    gConsoleUIController.RequestErrorMessage(IDS_TOOLTIPS_DELETESAVE, IDS_TEXT_DELETE_SAVE, options, 2, m_playerId,
+                                             &DeleteSaveDialogReturned, this, NULL, true);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
 }
 
 int UIScene_InGameSaveManagementMenu::getSceneType()
 {
-    return 0x1b;
+    return EUIScene_LoadCreateJoinMenu;
 }
 
 bool UIScene_InGameSaveManagementMenu::hidesLowerScenes()

@@ -25,12 +25,12 @@ public:
     void SetTextAlignment(ETextAlignment alignment);
     void setUseHtmlText(bool useHtmlText);
     virtual unsigned int getType();
-    void Init(const std::wstring& label);
+    virtual void Init(const std::wstring& label);
     void ResetLabel();
     virtual void SetLabel(const std::wstring& label);
     int GetAverageCharHeight();
     virtual void GetLabelTooWide(fuiRenderNodeEditText* textField);
-    uint64_t setAction(unsigned char action, char* value);
+    void setAction(unsigned char action, char* value);
 
 protected:
     ETextAlignment m_textAlignment;

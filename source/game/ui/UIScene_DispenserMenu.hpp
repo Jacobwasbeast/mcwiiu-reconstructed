@@ -37,6 +37,7 @@ public:
     virtual int getSceneType();
 
 private:
+    int m_containerSize;
     UIControl_SlotList m_dispenserSlot;
     UIControl_Label m_dispenserLabel;
     IUIScene_AbstractContainerMenu* m_sceneInterface;

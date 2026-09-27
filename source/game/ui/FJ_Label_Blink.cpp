@@ -82,11 +82,10 @@ void FJ_Label_Blink::GetLabelTooWide(fuiRenderNodeEditText* textField)
     }
 }
 
-uint64_t FJ_Label_Blink::setAction(unsigned char action, char* value)
+void FJ_Label_Blink::setAction(unsigned char action, char* value)
 {
     if (action == 5)
     {
         m_blinkAlignment = std::atoi(value);
     }
-    return (uint64_t)(unsigned long)this;
 }

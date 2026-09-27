@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_DeathMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 #include <vector>
@@ -20,6 +21,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/core/GameSettings.hpp"
 
 UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
     : UIScene(playerId, layer), m_deathMenuActive(false), m_unknownStateA(false),
@@ -27,11 +29,11 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
 {
     initialiseMovie();
 
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
     {
         m_deathMenuActive = false;
-        m_exitButton.init(UIString(L10N::GetString(0x2686c8e5)), 1);
-        m_respawnButton.init(UIString(L10N::GetString(0x52841e60)), 0);
+        m_exitButton.init(UIString(L10N::GetString(IDS_EXIT_GAME)), 1);
+        m_respawnButton.init(UIString(L10N::GetString(IDS_RESPAWN)), 0);
         m_exitButton.setEnable(false, true);
         m_respawnButton.setEnable(false, true);
         addTimer(1, 1000);
@@ -45,7 +47,7 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
     }
 
     if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
-        m_titleLabel.setLabel(UIString(L10N::GetString(0x69c7eda4)), false, false);
+        m_titleLabel.setLabel(UIString(L10N::GetString(IDS_YOU_DIED)), false, false);
     else
         m_titleLabel.setLabel(UIString(L10N::GetString(0x7b5878dc)), false, false);
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -118,7 +120,7 @@ void UIScene_DeathMenu::handleTimerComplete(int timerId)
 {
     if (timerId == 0)
     {
-        g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(6), NULL);
+        g_pApp->SetAction(m_playerId, eXuiAction_Respawn, NULL);
         killTimer(0);
     }
     else if (timerId != 1)
@@ -130,8 +132,8 @@ void UIScene_DeathMenu::handleTimerComplete(int timerId)
 
 void UIScene_DeathMenu::updateTooltips()
 {
-    int tooltip = 0x8d6323ed;
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) != 0)
+    int tooltip = IDS_TOOLTIPS_SELECT;
+    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
         tooltip = -1;
     gConsoleUIController.SetTooltips(m_playerId, tooltip, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
@@ -147,17 +149,20 @@ std::wstring UIScene_DeathMenu::getMoviePath()
 void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                     bool pressed, bool& handled)
 {
-    if (!m_deathMenuActive)
+    if (m_deathMenuActive)
+        return;
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    switch (action)
     {
-        gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-        if (action > 3)
-        {
-            if (action < 6 || action == 0x14)
-                sendInputToMovie(action, repeat, released, pressed);
-            else if (action != 0x15)
-                return;
-            handled = true;
-        }
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, released, pressed);
+        handled = true;
+        break;
+    case EControllerActions_MenuCancel:
+        handled = true;
+        break;
     }
 }
 
@@ -166,27 +171,27 @@ void UIScene_DeathMenu::tick()
     UIScene::tick();
 }
 
-void UIScene_DeathMenu::handlePress(int, int action)
+void UIScene_DeathMenu::handlePress(int controlId, int)
 {
-    if (action == 0)
+    if (controlId == 0)
     {
         m_deathMenuActive = true;
-        g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(6), NULL);
+        g_pApp->SetAction(m_playerId, eXuiAction_Respawn, NULL);
     }
-    else if (action == 1)
+    else if (controlId == 1)
     {
         telemetryManagerInstance->RecordLevelExit(
-            m_playerId, static_cast<ESen_LevelExitStatus>(3));
+            m_playerId, eSen_LevelExitStatus_Quit);
         unsigned int callbackId = GetCallbackUniqueId();
         UIScene_PauseMenu::OpenExitGameDialog(
             m_playerId, reinterpret_cast<void*>(callbackId),
             UIScene_PauseMenu::ExitGameDialogReturned,
             UIScene_PauseMenu::ExitGameSaveDialogReturned,
-            static_cast<UIScene_PauseMenu::EOpenExitGameDialog>(0));
+            UIScene_PauseMenu::EOpenExitGameDialog_ExitGame);
     }
 }
 
 int UIScene_DeathMenu::getSceneType()
 {
-    return 0x18;
+    return EUIScene_DeathMenu;
 }

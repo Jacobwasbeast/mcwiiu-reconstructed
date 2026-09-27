@@ -4,11 +4,10 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <string>
 #include <vector>
-
-std::wstring convStringToWstring(const std::string& value);
 
 
 UIControl_Base::UIControl_Base()

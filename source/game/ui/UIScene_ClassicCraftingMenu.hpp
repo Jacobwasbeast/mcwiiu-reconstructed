@@ -3,11 +3,26 @@
 
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include "game/ui/UIScene_AbstractContainerMenu.hpp"
 #include "game/ui/UIControl_Label.hpp"
 #include "game/ui/UIControl_SlotList.hpp"
 
+class LocalPlayer;
 class UILayer;
+
+struct ClassicCraftingMenuInitData
+{
+    boost::shared_ptr<LocalPlayer> localPlayer;
+    bool splitscreen;
+    int player;
+    int x;
+    int y;
+    int z;
+    unsigned char fireworks;
+};
+
 class UIScene_ClassicCraftingMenu : public UIScene_AbstractContainerMenu
 {
 public:

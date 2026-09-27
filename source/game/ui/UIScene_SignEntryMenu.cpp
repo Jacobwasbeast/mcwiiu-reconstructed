@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_SignEntryMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <cstring>
 #include <string>
@@ -18,6 +19,7 @@
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "game/core/GameSettings.hpp"
 
 UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_sign(), m_selectedLine(0), m_confirmRequested(false),
@@ -26,19 +28,19 @@ UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* laye
     initialiseMovie();
     m_sign = *static_cast<boost::shared_ptr<SignBlockEntity>*>(data);
 
-    m_confirmButton.init(UIString(L10N::GetString(0x6d2a309c)), 4);
-    m_messageLabel.init(UIString(L10N::GetString(0x56c538)));
+    m_confirmButton.init(UIString(L10N::GetString(IDS_DONE)), 4);
+    m_messageLabel.init(UIString(L10N::GetString(IDS_EDIT_SIGN_MESSAGE)));
 
     for (int i = 0; i < 4; ++i)
         m_lineInputs[i].init(UIString(m_sign->mMessages[i]), i);
 
-    layer->addComponent(type, static_cast<EUIScene>(0x48), NULL);
+    layer->addComponent(type, EUIScene_MenuBackground, NULL);
 }
 
 UIScene_SignEntryMenu::~UIScene_SignEntryMenu()
 {
     if (m_layer != NULL)
-        m_layer->removeComponent(static_cast<EUIScene>(0x48));
+        m_layer->removeComponent(EUIScene_MenuBackground);
 }
 
 unsigned int UIScene_SignEntryMenu::mapElementsAndNames()
@@ -60,7 +62,7 @@ unsigned int UIScene_SignEntryMenu::mapElementsAndNames()
 
 void UIScene_SignEntryMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, (int)0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -113,24 +115,27 @@ void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, b
         return;
 
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (action <= 3)
-        return;
-
-    if (action < 6 || action == 0x14)
+    switch (action)
     {
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, released, pressed);
         handled = true;
-    }
-    else if (action == 0x15 && released)
-    {
-        std::wstring empty(L"");
-        m_sign->SetMessage(0, empty);
-        m_sign->SetMessage(1, empty);
-        m_sign->SetMessage(2, empty);
-        m_sign->SetMessage(3, empty);
-        navigateBack();
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-        handled = true;
+        break;
+    case EControllerActions_MenuCancel:
+        if (released)
+        {
+            std::wstring empty(L"");
+            m_sign->SetMessage(0, empty);
+            m_sign->SetMessage(1, empty);
+            m_sign->SetMessage(2, empty);
+            m_sign->SetMessage(3, empty);
+            navigateBack();
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+            handled = true;
+        }
+        break;
     }
 }
 
@@ -151,19 +156,19 @@ int UIScene_SignEntryMenu::KeyboardCompleteCallback(void* data, bool accepted)
     return 0;
 }
 
-void UIScene_SignEntryMenu::handlePress(int first, int)
+void UIScene_SignEntryMenu::handlePress(int controlId, int)
 {
-    if (first < 4)
+    if (controlId < 4)
     {
-        m_selectedLine = first;
+        m_selectedLine = controlId;
         m_keyboardActive = true;
-        if (g_pInput->RequestKeyboard(L10N::GetString(0x3121eb00),
+        if (g_pInput->RequestKeyboard(L10N::GetString(IDS_SIGN_TITLE),
                                       m_lineInputs[m_selectedLine].getLabel(), m_playerId, 0xf,
                                       KeyboardCompleteCallback, this,
                                       static_cast<C_4JInput::EKeyboardMode>(3)) != 0)
             m_keyboardActive = false;
     }
-    else if (first == 4)
+    else if (controlId == 4)
     {
         m_confirmRequested = true;
     }
@@ -176,5 +181,5 @@ void UIScene_SignEntryMenu::handleDestroy()
 
 int UIScene_SignEntryMenu::getSceneType()
 {
-    return 0x1d;
+    return EUIScene_SignEntryMenu;
 }

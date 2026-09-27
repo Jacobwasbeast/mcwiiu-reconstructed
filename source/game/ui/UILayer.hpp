@@ -90,7 +90,8 @@ enum EUIScene
     EUIScene_LanguageSelector = 0x4f,
     EUIScene_AvatarSelectMenu = 0x50,
     EUIScene_AchievementsMenu = 0x51,
-    EUIScene_None = 0x53
+    EUIScene_None = 0x53,
+    EUIScene_Count
 };
 
 class UILayer
@@ -137,12 +138,12 @@ private:
     std::vector<UIScene*> m_pendingDestroy;
     std::vector<UIScene*> m_pendingReload;
     boost::unordered_map<EUIScene, std::pair<int, bool> > m_componentStates;
-    bool m_focusChanged;
+    bool m_hasFocus;
     bool m_menuDisplayed;
-    bool m_fullscreen;
-    bool m_viewportChanged;
-    bool m_reloadPending;
-    bool m_inputHandled;
+    bool m_pauseMenuDisplayed;
+    bool m_containerMenuDisplayed;
+    bool m_ignoreAutosaveMenuDisplayed;
+    bool m_ignorePlayerJoinMenuDisplayed;
     int m_layerId;
     UIGroup* m_group;
 

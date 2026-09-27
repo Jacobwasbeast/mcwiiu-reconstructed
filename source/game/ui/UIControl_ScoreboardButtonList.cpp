@@ -68,7 +68,7 @@ void UIControl_ScoreboardButtonList::addItem(const std::wstring& label, int play
     {
         m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard()->addNewItem(
             label, m_itemIndex, playerIcon + 1, voipIcon + 1);
-        addElement(static_cast<UIControl::eUIControlType>(1), -1);
+        addElement(UIControl::eUIControlType_Button, -1);
         return;
     }
 

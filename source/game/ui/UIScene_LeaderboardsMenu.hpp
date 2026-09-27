@@ -65,7 +65,7 @@ public:
     void PopulateLeaderboard(LeaderboardManager::eStatsReturn result);
     void finishUpdatingLeaderboards();
     static void staticCtor();
-    static int ExitLeaderboards(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitLeaderboards(void* context, int pad, C4JStorage::EMessageResult result);
 
 private:
     unsigned int m_visibleRowCount;

@@ -7,8 +7,7 @@
 #include "game/core/Language.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/data/LevelStorageSource.hpp"
-
-std::wstring trimString(const std::wstring& value);
+#include "game/core/StringUtils.hpp"
 
 RenameWorldScreen::RenameWorldScreen(Screen* parentScreen, const std::wstring& levelId)
     : Screen(), mParentScreen(parentScreen), mEditBox(NULL), mLevelId(levelId)
@@ -71,9 +70,9 @@ void RenameWorldScreen::render(int x, int y, float partialTick)
 {
     Language* language = Language::getInstance();
     renderBackground();
-    drawCenteredString(mFont, language->getElement(std::wstring(L"selectWorld_renameTitle")),
+    drawCenteredString(mFont, language->getElement(std::wstring(L"selectWorld.renameTitle")),
                        mWidth / 2, mHeight / 4 - 40, 0xffffff);
-    drawString(mFont, language->getElement(std::wstring(L"selectWorld_enterName")),
+    drawString(mFont, language->getElement(std::wstring(L"selectWorld.enterName")),
                mWidth / 2 - 100, 47, 0xa0a0a0);
     mEditBox->render();
     Screen::render(x, y, partialTick);

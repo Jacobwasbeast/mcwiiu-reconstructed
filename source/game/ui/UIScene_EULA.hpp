@@ -15,12 +15,13 @@ public:
     virtual std::wstring getMoviePath();
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
-    virtual void handlePress(int first, int second);
+    virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
     virtual bool hasFocus(int controller);
     virtual unsigned int getDefaultGtcButtons();
 
 private:
+    bool m_ignoreInput;
     UIControl_Button m_acceptButton;
     UIControl_DynamicLabel m_eulaText;
 };
