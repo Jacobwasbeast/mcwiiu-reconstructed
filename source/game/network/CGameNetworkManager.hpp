@@ -90,11 +90,11 @@ public:
     void ResetLeavingGame();
     bool AlreadyInSession(const FriendPresence* presence);
     bool IsNetworkThreadRunning();
-    static void* RunNetworkGameThreadProc(void* data);
-    static void* ExitAndJoinFromInviteThreadProc(void* data);
+    static int RunNetworkGameThreadProc(void* data);
+    static int ExitAndJoinFromInviteThreadProc(void* data);
     int TryToConnectOnline(int (*callback)(void*, bool, int), void* data, bool showProgress);
     static bool _LeaveGame();
-    static void* ChangeSessionTypeThreadProc(void* data);
+    static int ChangeSessionTypeThreadProc(void* data);
     void SystemFlagSet(INetworkPlayer* player, int flag);
     bool SystemFlagGet(INetworkPlayer* player, int flag);
     void SystemFlagClearAll(INetworkPlayer* player);
@@ -177,7 +177,9 @@ private:
     std::vector<ClientPacketListener*> m_connections;
     unsigned char m_connectionsPadding[4];
     OSFastMutex m_connectionsMutex;
-    int m_unknown9c;
+
+public:
+    EMiniGameId m_joiningMiniGameId;
 };
 
 #endif

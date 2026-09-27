@@ -39,17 +39,17 @@ public:
     static void writeUtf(const std::wstring& text, DataOutputStream* output);
     static std::wstring readUtf(DataInputStream* input, int maxLength);
 
-protected:
+public:
     long long creationTime;
-    bool compressed;
+    bool shouldDelay;
 
 private:
     static void map(int packetId, bool clientbound, bool serverbound, bool sendToAnyClient, bool canBeDelayed, const std::type_info& type, boost::shared_ptr<Packet> (*create)(), std::wstring name);
     static boost::shared_ptr<Packet> getPacket(int packetId);
 };
 
-uint32_t packInt__FiUiT2(int32_t value, uint32_t offset, uint32_t width);
-int32_t unpackSigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width);
-uint32_t unpackUnsigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width);
+uint32_t packInt(int32_t value, uint32_t offset, uint32_t width);
+int32_t unpackSigned(uint32_t value, uint32_t offset, uint32_t width);
+uint32_t unpackUnsigned(uint32_t value, uint32_t offset, uint32_t width);
 
 #endif

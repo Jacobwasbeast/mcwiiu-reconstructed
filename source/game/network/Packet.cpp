@@ -133,8 +133,9 @@
 #include "game/network/UpdateProgressPacket.hpp"
 #include "game/network/VotePacket.hpp"
 #include "game/network/XZPacket.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
-int32_t getMaskInt__FUiT1(uint32_t offset, uint32_t width);
+int32_t getMaskInt(uint32_t offset, uint32_t width);
 
 typedef boost::shared_ptr<Packet> (*PacketFactory)();
 
@@ -146,7 +147,7 @@ static boost::unordered_set<int> sSendToAnyClientPacketIds;
 Packet::Packet()
 {
     creationTime = System::processTimeInMilliSecs();
-    compressed = false;
+    shouldDelay = false;
 }
 
 Packet::~Packet()
@@ -339,7 +340,7 @@ boost::shared_ptr<Packet> Packet::readPacket(DataInputStream* input, bool isServ
     if (!known)
     {
         protocolError = true;
-        gApp.SetAction(gApp.GetPrimaryUserIndex(), (eXuiAction)0x10, NULL);
+        gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ConnectionLost, NULL);
         return boost::shared_ptr<Packet>();
     }
 
@@ -412,21 +413,21 @@ bool Packet::tryReplaceDuplicatePacket(std::deque<boost::shared_ptr<Packet>, std
     return false;
 }
 
-uint32_t packInt__FiUiT2(int32_t value, uint32_t offset, uint32_t width)
+uint32_t packInt(int32_t value, uint32_t offset, uint32_t width)
 {
-    uint32_t mask = static_cast<uint32_t>(getMaskInt__FUiT1(offset, width));
+    uint32_t mask = static_cast<uint32_t>(getMaskInt(offset, width));
     return (static_cast<uint32_t>(value) << (offset & 0x3f)) & mask;
 }
 
-int32_t unpackSigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width)
+int32_t unpackSigned(uint32_t value, uint32_t offset, uint32_t width)
 {
     uint32_t rightShift = (0x20U - width) & 0x3f;
     uint32_t leftShift = (rightShift - offset) & 0x3f;
     return static_cast<int32_t>(value << leftShift) >> rightShift;
 }
 
-uint32_t unpackUnsigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width)
+uint32_t unpackUnsigned(uint32_t value, uint32_t offset, uint32_t width)
 {
-    uint32_t mask = static_cast<uint32_t>(getMaskInt__FUiT1(offset, width));
+    uint32_t mask = static_cast<uint32_t>(getMaskInt(offset, width));
     return (value >> (offset & 0x3f)) & mask;
 }

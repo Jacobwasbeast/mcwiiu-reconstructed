@@ -5,7 +5,7 @@
 #include "game/network/PacketListener.hpp"
 
 GameCommandPacket::GameCommandPacket()
-    : command(static_cast<EGameCommand>(0)), dataLength(0), data()
+    : command(eGameCommand_DefaultGameMode), dataLength(0), data()
 {
 }
 

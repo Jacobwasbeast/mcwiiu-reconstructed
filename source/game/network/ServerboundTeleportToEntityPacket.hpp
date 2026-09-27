@@ -9,6 +9,7 @@
 
 class DataInputStream;
 class DataOutputStream;
+class Entity;
 class PacketListener;
 class ServerLevel;
 class ServerPlayer;
@@ -25,7 +26,7 @@ public:
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
 
-    boost::shared_ptr<ServerPlayer> getEntity(ServerLevel* level);
+    boost::shared_ptr<Entity> getEntity(ServerLevel* level);
 
     static boost::shared_ptr<Packet> create();
 

@@ -80,7 +80,7 @@ public:
     void disconnect(DisconnectPacket::eDisconnectReason reason);
     void setShowOnMaps(bool show);
     bool isLocal();
-    void countDelayedPackets();
+    uint32_t countDelayedPackets();
     void queueSend(boost::shared_ptr<Packet> packet);
     void resetPosition();
     void teleport(double x, double y, double z, float yRot, float xRot,
@@ -144,6 +144,7 @@ public:
 
 private:
     friend class PlayerList;
+    friend class ServerPlayer;
     friend class ServerConnection;
     Connection* mConnection;
     bool mDisconnected;

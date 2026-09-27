@@ -1,4 +1,5 @@
 #include "game/network/PathNavigationListener.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Path.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -53,7 +54,7 @@ void PathNavigationListener::blockChanged(Level* level, const BlockPos& pos, con
 
 void PathNavigationListener::entityAdded(boost::shared_ptr<Entity> entity)
 {
-    if (entity && (entity->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+    if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         EnterCriticalSection(&mMutex);
         Mob* mob = static_cast<Mob*>(entity.get());
@@ -66,7 +67,7 @@ void PathNavigationListener::entityAdded(boost::shared_ptr<Entity> entity)
 
 void PathNavigationListener::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    if (entity && (entity->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+    if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         EnterCriticalSection(&mMutex);
         PathNavigation* navigation = static_cast<Mob*>(entity.get())->getNavigation();

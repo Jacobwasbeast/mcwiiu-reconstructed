@@ -4,6 +4,7 @@
 #include <vector>
 #include <boost/unordered_map.hpp>
 
+#include "game/network/ChunkHistory.hpp"
 #include "game/network/LevelListener.hpp"
 
 class BlockPos;
@@ -14,7 +15,7 @@ class SoundEvent;
 class Entity;
 class Player;
 
-class BlockChangeListener : public LevelListener
+class BlockChangeListener : public LevelListener, public ChunkHistory
 {
 public:
     class Chunk
@@ -38,10 +39,10 @@ public:
     virtual ~BlockChangeListener();
     static long long GetChunkKey(int x, int z);
     bool HasChunk(long long key) const;
-    const Chunk& GetChunk(long long key) const;
+    Chunk& GetChunk(long long key) const;
     Chunk& GetChunk(long long key);
-    int GetChangesForChunk(int x, int z) const;
-    bool ShouldLoadOnClient(int x, int z) const;
+    virtual std::vector<short>* GetChangesForChunk(int x, int z) const;
+    virtual bool ShouldLoadOnClient(int x, int z) const;
     Chunk& GetChunk(int x, int z, bool create);
     static int GetBlockKey(const BlockPos& pos);
     virtual void blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate);

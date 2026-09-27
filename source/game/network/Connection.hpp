@@ -29,7 +29,7 @@ public:
     static int runWrite(void*);
     void setListener(PacketListener*);
     void send(boost::shared_ptr<Packet>);
-    uint64_t queueSend(boost::shared_ptr<Packet>);
+    void queueSend(boost::shared_ptr<Packet>);
     void flush();
     void close(DisconnectPacket::eDisconnectReason);
     void tick();

@@ -14,7 +14,8 @@ class DataOutputStream;
 class Painting;
 class PacketListener;
 
-class ClientboundAddPaintingPacket : public Packet, public boost::enable_shared_from_this<ClientboundAddPaintingPacket>
+class ClientboundAddPaintingPacket : public Packet,
+                                     public boost::enable_shared_from_this<ClientboundAddPaintingPacket>
 {
 public:
     ClientboundAddPaintingPacket();
@@ -40,5 +41,4 @@ private:
     const Direction* direction;
     std::wstring motive;
 };
-
 #endif

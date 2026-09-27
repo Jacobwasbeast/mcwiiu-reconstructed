@@ -8,6 +8,11 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 
+namespace
+{
+const int MAX_CLIENT_LOADED_CHANGES = 20;
+}
+
 BlockChangeListener::BlockChangeListener(ServerLevel* level)
     : mLevel(level), mChunks(new boost::unordered_map<long long, Chunk>())
 {
@@ -29,17 +34,22 @@ bool BlockChangeListener::HasChunk(long long key) const
     return mChunks->find(key) != mChunks->end();
 }
 
-const BlockChangeListener::Chunk& BlockChangeListener::GetChunk(long long key) const
+BlockChangeListener::Chunk& BlockChangeListener::GetChunk(long long key) const
 {
     return mChunks->at(key);
 }
 
-int BlockChangeListener::GetChangesForChunk(int x, int z) const
+BlockChangeListener::Chunk& BlockChangeListener::GetChunk(long long key)
+{
+    return mChunks->at(key);
+}
+
+std::vector<short>* BlockChangeListener::GetChangesForChunk(int x, int z) const
 {
     long long key = GetChunkKey(x, z);
     if (!HasChunk(key))
-        return 0;
-    return static_cast<int>(mChunks->at(key).GetChanges().size());
+        return NULL;
+    return &GetChunk(key).GetChanges();
 }
 
 bool BlockChangeListener::ShouldLoadOnClient(int x, int z) const
@@ -47,7 +57,7 @@ bool BlockChangeListener::ShouldLoadOnClient(int x, int z) const
     long long key = GetChunkKey(x, z);
     if (!HasChunk(key))
         return true;
-    return mChunks->at(key).GetChangeCount() <= 20;
+    return GetChunk(key).GetChangeCount() <= MAX_CLIENT_LOADED_CHANGES;
 }
 
 BlockChangeListener::Chunk& BlockChangeListener::GetChunk(int x, int z, bool create)
@@ -67,7 +77,7 @@ int BlockChangeListener::GetBlockKey(const BlockPos& pos)
 void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState* newState, int, bool)
 {
     GetChunk(pos.x >> 4, pos.z >> 4, true).AddBlockChange(pos);
-    if (gMinecraftServer != NULL && newState != NULL && newState->getBlock() == Blocks::AIR)
+    if (gMinecraftServer != NULL && newState != NULL && newState->getBlock() == Blocks::air)
         gMinecraftServer->mMasterGameMode->BlockDestroyedAt(pos);
 }
 

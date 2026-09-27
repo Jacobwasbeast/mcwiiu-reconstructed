@@ -11,7 +11,7 @@ TextureAndGeometryPacket::TextureAndGeometryPacket()
     : textureName(L""), geometryId(0), data(NULL), length(0), additionalBoxes(NULL), additionalBoxCount(0),
       skinAdjustments()
 {
-    compressed = true;
+    shouldDelay = true;
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data,
@@ -19,7 +19,7 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     : textureName(textureName), geometryId(0), data(data), length(length), additionalBoxes(NULL),
       additionalBoxCount(0), skinAdjustments()
 {
-    compressed = true;
+    shouldDelay = true;
 
     std::wstring identifier = textureName.substr(7, textureName.length());
     std::wstring::size_type separator = identifier.find(L'.');
@@ -39,7 +39,7 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     : textureName(textureName), geometryId(0), data(data), length(length), additionalBoxes(NULL),
       additionalBoxCount(0), skinAdjustments()
 {
-    compressed = true;
+    shouldDelay = true;
 
     std::wstring identifier = textureName.substr(7, textureName.length());
     std::wstring::size_type separator = identifier.find(L'.');
@@ -53,7 +53,7 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     stream >> geometryId;
     geometryId |= 0x80000000u;
 
-    skinAdjustments = *skinFile->getSkinAdjustments();
+    skinAdjustments = skinFile->getSkinAdjustments();
     additionalBoxCount = skinFile->getAdditionalBoxesCount();
     if (additionalBoxCount != 0)
     {
@@ -72,7 +72,7 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     : textureName(textureName), geometryId(0), data(data), length(length), additionalBoxes(NULL),
       additionalBoxCount(0), skinAdjustments(skinAdjustments)
 {
-    compressed = true;
+    shouldDelay = true;
 
     std::wstring identifier = textureName.substr(7, textureName.length());
     std::wstring::size_type separator = identifier.find(L'.');

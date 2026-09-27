@@ -41,8 +41,8 @@ ClientboundAddPlayerPacket::ClientboundAddPlayerPacket(boost::shared_ptr<Player>
     mPlayerId = playerId;
     mProfileId = profileId;
     mPlayerIndex = (unsigned char)player->mPlayerIndex;
-    mSkinId = player->mField0x7dc;
-    mCapeId = player->mField0x7e0;
+    mSkinId = player->mCustomSkin;
+    mCapeId = player->mCustomCape;
     mPlayerPrivilege = player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All);
     mGameType = player->GetGameType();
     mEntityData = player->getEntityData();

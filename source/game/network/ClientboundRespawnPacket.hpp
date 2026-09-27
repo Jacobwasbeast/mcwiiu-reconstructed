@@ -18,8 +18,17 @@ class ClientboundRespawnPacket : public Packet, public boost::enable_shared_from
     friend class ClientPacketListener;
 public:
     ClientboundRespawnPacket();
-    ClientboundRespawnPacket(char dimension, long long seed, const GameType* gameType, const Difficulty* difficulty, LevelType* levelType, bool keepData, int gameMode, int previousGameMode, int difficultyId, int dimensionType, bool hardcore, unsigned char worldType, int viewDistance, int simulationDistance, bool debug, int entityId);
-    ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot, char dimension, long long seed, const GameType* gameType, const Difficulty* difficulty, LevelType* levelType, bool keepData, int gameMode, int previousGameMode, int difficultyId, int dimensionType, bool hardcore, unsigned char worldType, int viewDistance, int simulationDistance, bool debug, int entityId);
+    ClientboundRespawnPacket(char dimension, long long mapSeed, const GameType* playerGameType,
+                             const Difficulty* difficulty, LevelType* levelType, bool newSeaLevel,
+                             int newEntityId, int xzSize, int hellScale, int cloudHeight, bool modernEnd,
+                             unsigned char biomeScale, int biomeCentreXChunk, int biomeCentreZChunk,
+                             bool keepOldEntityData, int seaLevel);
+    ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot, char dimension,
+                             long long mapSeed, const GameType* playerGameType, const Difficulty* difficulty,
+                             LevelType* levelType, bool newSeaLevel, int newEntityId, int xzSize,
+                             int hellScale, int cloudHeight, bool modernEnd, unsigned char biomeScale,
+                             int biomeCentreXChunk, int biomeCentreZChunk, bool keepOldEntityData,
+                             int seaLevel);
     virtual ~ClientboundRespawnPacket();
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);
@@ -30,33 +39,33 @@ public:
     const GameType* getPlayerGameType();
     LevelType* getLevelType();
     bool shouldKeepOldEntityData() const;
-    unsigned char hasPositionAndRotation() const;
+    bool hasPositionAndRotation() const;
     virtual int getPacketId();
     static boost::shared_ptr<Packet> create();
 
 private:
-    long long seed;
-    char dimension;
-    int dimensionType;
-    int entityId;
-    unsigned char hardcore;
-    int gameMode;
-    short previousGameMode;
-    int difficultyId;
-    unsigned char worldType;
-    unsigned char keepData;
-    unsigned char debug;
-    int viewDistance;
-    int simulationDistance;
-    double x;
-    double y;
-    double z;
-    float yRot;
-    float xRot;
-    unsigned char positionAndRotation;
-    const Difficulty* difficulty;
-    const GameType* playerGameType;
-    LevelType* levelType;
+    long long m_mapSeed;
+    bool m_newSeaLevel;
+    int m_seaLevel;
+    int m_newEntityId;
+    int m_xzSize;
+    int m_hellScale;
+    int m_cloudHeight;
+    bool m_modernEnd;
+    unsigned char m_biomeScale;
+    int m_biomeCentreXChunk;
+    int m_biomeCentreZChunk;
+    double m_x;
+    double m_y;
+    double m_z;
+    float m_yRot;
+    float m_xRot;
+    bool m_keepOldEntityData;
+    char m_dimension;
+    const Difficulty* m_difficulty;
+    const GameType* m_playerGameType;
+    LevelType* m_levelType;
+    bool m_hasPositionAndRotation;
 };
 
 #endif

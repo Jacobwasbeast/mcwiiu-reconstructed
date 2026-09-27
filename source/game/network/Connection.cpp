@@ -198,14 +198,13 @@ void Connection::send(boost::shared_ptr<Packet> packet)
     LeaveCriticalSection(&m_queueMutex);
 }
 
-uint64_t Connection::queueSend(boost::shared_ptr<Packet> packet)
+void Connection::queueSend(boost::shared_ptr<Packet> packet)
 {
     if (!m_sendAndQuit) {
         EnterCriticalSection(&m_queueMutex);
         if (packet != 0) { m_bytesWritten += packet->getEstimatedSize() + 1; m_delayedQueue.push_back(packet); }
         LeaveCriticalSection(&m_queueMutex);
     }
-    return (uint64_t)(uintptr_t)this;
 }
 
 void Connection::flush()

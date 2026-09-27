@@ -1,4 +1,5 @@
 #include "game/network/ServerLevelListener.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <vector>
 
@@ -67,7 +68,7 @@ void ServerLevelListener::entityAdded(boost::shared_ptr<Entity> entity)
     mLevel->getTracker()->addEntity(entity);
     MemSect(0);
 
-    if (entity->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    if (entity->GetType() == EntityType::SERVER_PLAYER)
         mLevel->mDimension->onPlayerJoin(boost::static_pointer_cast<ServerPlayer>(entity));
 }
 
@@ -75,7 +76,7 @@ void ServerLevelListener::entityRemoved(boost::shared_ptr<Entity> entity)
 {
     mLevel->getTracker()->removeEntity(entity);
 
-    if (entity->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    if (entity->GetType() == EntityType::SERVER_PLAYER)
         mLevel->mDimension->onPlayerLeave(boost::static_pointer_cast<ServerPlayer>(entity));
 }
 

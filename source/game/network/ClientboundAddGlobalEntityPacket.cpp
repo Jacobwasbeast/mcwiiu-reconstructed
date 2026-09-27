@@ -1,4 +1,5 @@
 #include "game/network/ClientboundAddGlobalEntityPacket.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -17,7 +18,7 @@ ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket(boost::shared
       mX((int)std::floor(entity->mX * 32.0)),
       mY((int)std::floor(entity->mY * 32.0)),
       mZ((int)std::floor(entity->mZ * 32.0)),
-      mType(entity->GetType() == 0x0b000001ULL ? 1 : 0)
+      mType(entity->GetType() == EntityType::LIGHTNING_BOLT ? 1 : 0)
 {
 }
 

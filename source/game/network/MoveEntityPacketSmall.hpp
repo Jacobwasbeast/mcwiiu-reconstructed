@@ -8,13 +8,20 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
-namespace Pos {}
-namespace PosRot {}
-namespace Rot {}
+namespace Pos
+{
+}
+namespace PosRot
+{
+}
+namespace Rot
+{
+}
 
 class MoveEntityPacketSmall : public Packet, public boost::enable_shared_from_this<MoveEntityPacketSmall>
 {
     friend class ClientPacketListener;
+
 public:
     MoveEntityPacketSmall();
     explicit MoveEntityPacketSmall(int entityId);
@@ -31,6 +38,7 @@ public:
     class Pos;
     class PosRot;
     class Rot;
+
 protected:
     int mEntityId;
     signed char mXa;
@@ -45,22 +53,38 @@ protected:
 class MoveEntityPacketSmall::Pos : public MoveEntityPacketSmall
 {
 public:
-    Pos(); Pos(int entityId, signed char xa, signed char ya, signed char za, bool onGround); virtual ~Pos();
-    virtual int getPacketId(); virtual void read(DataInputStream* input); virtual void write(DataOutputStream* output); virtual int getEstimatedSize();
+    Pos();
+    Pos(int entityId, signed char xa, signed char ya, signed char za, bool onGround);
+    virtual ~Pos();
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual int getEstimatedSize();
     static boost::shared_ptr<Packet> create();
 };
 class MoveEntityPacketSmall::PosRot : public MoveEntityPacketSmall
 {
 public:
-    PosRot(); PosRot(int entityId, signed char xa, signed char ya, signed char za, signed char yRot, signed char xRot, bool onGround); virtual ~PosRot();
-    virtual int getPacketId(); virtual void read(DataInputStream* input); virtual void write(DataOutputStream* output); virtual int getEstimatedSize();
+    PosRot();
+    PosRot(int entityId, signed char xa, signed char ya, signed char za, signed char yRot, signed char xRot,
+           bool onGround);
+    virtual ~PosRot();
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual int getEstimatedSize();
     static boost::shared_ptr<Packet> create();
 };
 class MoveEntityPacketSmall::Rot : public MoveEntityPacketSmall
 {
 public:
-    Rot(); Rot(int entityId, signed char yRot, signed char xRot, bool onGround); virtual ~Rot();
-    virtual int getPacketId(); virtual void read(DataInputStream* input); virtual void write(DataOutputStream* output); virtual int getEstimatedSize();
+    Rot();
+    Rot(int entityId, signed char yRot, signed char xRot, bool onGround);
+    virtual ~Rot();
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual int getEstimatedSize();
     static boost::shared_ptr<Packet> create();
 };
 

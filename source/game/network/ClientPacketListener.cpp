@@ -1,4 +1,7 @@
 #include "game/network/ClientPacketListener.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/world/LevelEvent.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/network/Connection.hpp"
 #include "game/core/Socket.hpp"
 #include "game/data/SavedDataMemoryStorage.hpp"
@@ -110,6 +113,7 @@
 #include "game/core/LightningBolt.hpp"
 #include "game/core/Mth.hpp"
 #include "game/world/LevelSettings.hpp"
+#include "vendor/_ConnectionProgressParams.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/GameType.hpp"
@@ -146,6 +150,7 @@
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/item/MapItemSavedData.hpp"
 #include "game/ui/LocalMenuContainer.hpp"
+#include "game/world/block/LocalBlockInteraction.hpp"
 #include "game/entity/mob/HorseChest.hpp"
 #include "game/network/ChunkVisibilityAreaPacket.hpp"
 #include "game/network/ClientboundAddGlobalEntityPacket.hpp"
@@ -242,25 +247,12 @@
 #include "game/core/Team.hpp"
 #include "game/core/File.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #include <cmath>
 
-extern unsigned int GetTickCount();
-extern void instructionSynchronize();
 
 namespace
 {
-    const unsigned long long kCauldronBlockEntityTypeWiiU = 0x1000211ULL;
-const unsigned long long kConduitBlockEntityType = 0x1200212ULL;
-    const unsigned long long kBlockEntityTypeForPacket01 = 0x1200201ULL;
-const unsigned long long kBlockEntityTypeForPacket2 = 0x1000209ULL;
-const unsigned long long kBlockEntityTypeForPacket3 = 0x1e00204ULL;
-const unsigned long long kBlockEntityTypeForPacket4 = 0x1200207ULL;
-const unsigned long long kBlockEntityTypeForPacket5 = 0x100020dULL;
-const unsigned long long kBlockEntityTypeForPacket6 = 0x100020cULL;
-const unsigned long long kBlockEntityTypeForPacket8 = 0x1300201ULL;
-const unsigned long long kBlockEntityTypeForPacket9 = 0x1000202ULL;
-const unsigned long long kBlockEntityTypeForPacket10 = 0x120020fULL;
-const unsigned long long kBlockEntityTypeForPacket11 = 0x1000210ULL;
 }
 
 namespace
@@ -303,9 +295,9 @@ OSFastMutex ClientPacketListener::s_deferredLinkMutex;
 std::vector<ClientPacketListener::DeferredEntityLinkPacket> ClientPacketListener::s_deferredLinks;
 
 ClientPacketListener::ClientPacketListener(Minecraft* minecraft, Socket* socket, int playerId)
-    : m_closed(false), m_connection(0), mRemoteAddress(L""), m_suppressStartOnPosition(false),
-      m_minecraft(minecraft), m_level(0), m_started(false), m_playerId(playerId), m_random(),
-      m_savedDataStorage(0)
+    : m_closed(false), m_connection(0), mRemoteAddress(L""), m_createdOk(false), m_minecraft(minecraft),
+      m_level(0), m_started(false), m_suppressStartOnPosition(false), m_maxPlayers(20), m_random(),
+      m_destroyedBlocks(0), m_destroyedBlockCount(0), m_playerId(playerId), m_savedDataStorage(0)
 {
     InitializeCriticalSection(&m_mutex);
     m_savedDataStorage = new SavedDataMemoryStorage();
@@ -313,17 +305,19 @@ ClientPacketListener::ClientPacketListener(Minecraft* minecraft, Socket* socket,
         m_playerId = gProfile->GetPrimaryPad();
     if (socket == 0)
         socket = new Socket(false);
-    if (socket->mOpen)
-    {
+    m_createdOk = socket->mOpen;
+    if (m_createdOk)
         m_connection = new Connection(socket, std::wstring(L"Client"), this);
-    }
+    else
+        m_connection = 0;
 }
 
 ClientPacketListener::~ClientPacketListener()
 {
-    if (m_connection != 0)
-        delete m_connection;
+    delete m_connection;
     m_connection = 0;
+    delete m_savedDataStorage;
+    m_savedDataStorage = 0;
     DeleteCriticalSection(&m_mutex);
 }
 
@@ -352,7 +346,7 @@ void ClientPacketListener::handleBlockEntityDataInternal(
 
     if (type == 0xc)
     {
-        if (blockEntityTypeMatches(blockEntity.get(), kCauldronBlockEntityTypeWiiU))
+        if (blockEntityTypeMatches(blockEntity.get(), BlockEntityType::CAULDRON))
         {
             boost::shared_ptr<CauldronBlockEntity> cauldron =
                 boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
@@ -363,7 +357,7 @@ void ClientPacketListener::handleBlockEntityDataInternal(
 
     if (type == 0xd)
     {
-        if (blockEntityTypeMatches(blockEntity.get(), kConduitBlockEntityType))
+        if (blockEntityTypeMatches(blockEntity.get(), BlockEntityType::CONDUIT))
         {
             boost::shared_ptr<ConduitBlockEntity> conduit =
                 boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
@@ -378,34 +372,34 @@ void ClientPacketListener::handleBlockEntityDataInternal(
     case 0:
         break;
     case 1:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket01);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::MOB_SPAWNER);
         break;
     case 2:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket2);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::COMMAND);
         break;
     case 3:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket3);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::BEACON);
         break;
     case 4:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket4);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::SKULL);
         break;
     case 5:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket5);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::FLOWER_POT);
         break;
     case 6:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket6);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::BANNER);
         break;
     case 8:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket8);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::THE_END_GATEWAY_ENTITY);
         break;
     case 9:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket9);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::SIGN);
         break;
     case 10:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket10);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::SHULKER_BOX);
         break;
     case 11:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), kBlockEntityTypeForPacket11);
+        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::BED);
         break;
     default:
         break;
@@ -468,7 +462,7 @@ void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<Multiplayer
             continue;
         const bool granted = oldValue == 0;
         std::wstring message;
-        if (gApp.GetGameHostOption(eGameHostOption_12) == 0)
+        if (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) == 0)
         {
             switch (bit)
             {
@@ -484,7 +478,7 @@ void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<Multiplayer
         }
         if (bit == 4)
             message = L10N::GetString(granted ? 0x453A2722 : 0xA5DE08DC);
-        if (gApp.GetGameHostOption(eGameHostOption_15) != 0)
+        if (gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) != 0)
         {
             switch (bit)
             {
@@ -617,7 +611,7 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
                 packet->mIsFlat, packet->mLevelType, packet->mXZSize,
                 packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
                 packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance);
-            if (Minecraft::InMiniGame(static_cast<EMiniGameId>(0xf), true) &&
+            if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
                 !CGameNetworkManager::sInstance.IsHost())
             {
                 LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
@@ -667,13 +661,14 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
 
     uint32_t privileges = 0;
     Player::enableAllPlayerPrivileges(privileges, true);
-    localPlayer->setPlayerGamePrivilege(static_cast<Player::EPlayerGamePrivileges>(0x21), packet->mCurrentTick);
+    localPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mCurrentTick);
     if (networkPlayer != 0 && networkPlayer->IsHost())
-        Player::setPlayerGamePrivilege(privileges, static_cast<Player::EPlayerGamePrivileges>(0x22), 1);
+        Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_Moderator, 1);
     displayPrivilegeChanges(localPlayer, privileges);
 
-    GameSettings::SetGameSettingsDebugMask(
-        m_playerId, GameSettings::GetGameSettingsDebugMask(m_playerId, true));
+    GameSettings::SetGameSettingsDebugMask(gProfile->GetPrimaryPad(),
+                                           GameSettings::GetGameSettingsDebugMask(-1, true));
+    m_maxPlayers = packet->mMaxPlayers;
     if (m_minecraft->mGameModes[m_playerId] != 0)
         m_minecraft->mGameModes[m_playerId]->setLocalMode(gameType);
     localPlayer->UpdateSize();
@@ -686,8 +681,8 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
 
     gApp.SetFirstMiniGameType(static_cast<EMiniGameId>(packet->mDifficulty));
     m_minecraft->GetClientMasterGameMode()->Setup(static_cast<EMiniGameId>(packet->mDifficulty));
-    telemetryManagerInstance->RecordLevelStart(m_playerId, static_cast<ESen_FriendOrMatch>(1),
-        static_cast<ESen_CompeteOrCoop>(3), m_level->getDifficulty()->getId(),
+    telemetryManagerInstance->RecordLevelStart(m_playerId, eSen_FriendOrMatch_Friend,
+        eSen_CompeteOrCoop_Both, m_level->getDifficulty()->getId(),
         gApp.GetLocalPlayerCount(), CGameNetworkManager::sInstance.GetOnlinePlayerCount());
     telemetryManagerInstance->RecordMiniGameHostOptions(m_playerId,
         static_cast<EMiniGameId>(packet->mDifficulty));
@@ -891,7 +886,7 @@ void ClientPacketListener::handleSetEntityData(boost::shared_ptr<ClientboundSetE
     if (packet == 0)
         return;
     boost::shared_ptr<Entity> entity = resolveEntity(packet->getId());
-    if (entity == 0 || !Entity::instanceof(entity, 0x0C800000ULL))
+    if (entity == 0 || !Entity::instanceof(entity, EntityType::PLAYER))
         return;
     if (static_cast<int>(entity->GetType()) != packet->getEntityType())
         return;
@@ -927,7 +922,7 @@ void ClientPacketListener::handleAddPlayer(boost::shared_ptr<ClientboundAddPlaye
     remote->setXuid(packet->getPlayerId());
     remote->setId(static_cast<int>(packet->getEntityId()));
     remote->absMoveTo(x, y, z, yRot, xRot);
-    remote->setPlayerGamePrivilege(static_cast<Player::EPlayerGamePrivileges>(0x21), packet->mPlayerPrivilege);
+    remote->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mPlayerPrivilege);
     std::vector<DataItem*>* unpacked = packet->getUnpackedData();
     if (unpacked != 0)
         remote->getEntityData()->assignValues(unpacked);
@@ -986,7 +981,7 @@ void ClientPacketListener::handleMoveEntity(boost::shared_ptr<ClientboundMoveEnt
     float yRot = entity->mYRot;
     float xRot = entity->mXRot;
 
-    if ((entity->GetType() & 0xc000000) == 0xc000000)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
         if (livingEntity->isInterpolating())
@@ -996,7 +991,7 @@ void ClientPacketListener::handleMoveEntity(boost::shared_ptr<ClientboundMoveEnt
         }
     }
 
-    if ((entity->GetType() & 0xa800000) == 0xa800000)
+    if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
     {
         boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
         if (minecart->isInterpolating())
@@ -1223,8 +1218,8 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
                                 worldPos.x, worldPos.y, worldPos.z);
         Block* actual = chunk->getBlock(worldPos);
         const bool skipDirty =
-            (actual == Blocks::FLOWING_WATER && incoming == Blocks::WATER) ||
-            (actual == Blocks::WATER && incoming == Blocks::FLOWING_WATER) ||
+            (actual == Blocks::flowing_water && incoming == Blocks::water) ||
+            (actual == Blocks::water && incoming == Blocks::flowing_water) ||
             (actual == Blocks::flowing_lava && incoming == Blocks::lava) ||
             (actual == Blocks::lava && incoming == Blocks::lava) ||
             (actual == Blocks::lava && incoming == Blocks::flowing_lava);
@@ -1255,7 +1250,6 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
             std::vector<LevelChunk::BlockChange>* changes = packet->GetChanges();
             packet->SetChanges(NULL);
             level->ReloadChunk(chunkX, chunkZ, changes, true);
-            instructionSynchronize();
             return;
         }
 
@@ -1267,7 +1261,7 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
         {
             maxY = 256;
             if (m_level->getChunk(chunkX, chunkZ)->isEmpty())
-                static_cast<MultiPlayerLevel*>(m_level)->setChunkVisible(chunkX, chunkZ, true, false);
+                m_level->setChunkVisible(chunkX, chunkZ, true, false);
         }
 
         PIXBeginNamedEvent(90.0f, "Clear rest region");
@@ -1300,7 +1294,6 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
         PIXEndNamedEvent();
         Minecraft::GetInstance()->GetClientMasterGameMode()->RecievedBRUP();
     }
-    instructionSynchronize();
 }
 
 void ClientPacketListener::handleBlockUpdate(boost::shared_ptr<ClientboundBlockUpdatePacket> packet)
@@ -1328,13 +1321,13 @@ void ClientPacketListener::handleDisconnect(boost::shared_ptr<DisconnectPacket> 
     m_minecraft->mConnectionFailed[m_playerId] = true;
     m_minecraft->mDisconnectReasons[m_playerId] = packet->reason;
     g_pApp->SetDisconnectReason(packet->reason);
-    g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(3), (void*)1);
+    g_pApp->SetAction(m_playerId, eXuiAction_ExitWorld, (void*)1);
 }
 
 int ClientPacketListener::ExitGameAndSaveReturned(void* context, int result, C4JStorage::EMessageResult messageResult)
 {
-    if (messageResult == static_cast<C4JStorage::EMessageResult>(5))
-        gApp.SetAction(result, static_cast<eXuiAction>(1), NULL);
+    if (messageResult == C4JStorage::EMessageResult_Decline)
+        gApp.SetAction(result, eXuiAction_SaveGame, NULL);
     return 0;
 }
 
@@ -1346,7 +1339,7 @@ int ClientPacketListener::HostDisconnectReturned(void* context, int result, C4JS
         DLCPack* pack = selected->getDLCPack();
         if (pack != NULL && !pack->hasPurchasedPack())
         {
-            gApp.SetAction(result, static_cast<eXuiAction>(3), NULL);
+            gApp.SetAction(result, eXuiAction_ExitWorld, NULL);
             return 0;
         }
     }
@@ -1355,13 +1348,13 @@ int ClientPacketListener::HostDisconnectReturned(void* context, int result, C4JS
     gStorage->DoesSaveExist(&saveExists);
     if (!saveExists)
     {
-        gApp.SetAction(result, static_cast<eXuiAction>(3), NULL);
+        gApp.SetAction(result, eXuiAction_ExitWorld, NULL);
     }
     else
     {
-        int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+        int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
         gConsoleUIController.RequestAlertMessage(
-            0x3143fcab, static_cast<int>(0xd66b8839), parameters, 2, gApp.GetPrimaryUserIndex(),
+            IDS_TITLE_SAVE_GAME, static_cast<int>(IDS_CONFIRM_SAVE_GAME), parameters, 2, gProfile->GetPrimaryPad(),
             ExitGameAndSaveReturned, NULL, NULL, true);
     }
     return 0;
@@ -1381,14 +1374,14 @@ void ClientPacketListener::onDisconnect(DisconnectPacket::eDisconnectReason reas
          reason == DisconnectPacket::eDisconnectReason_SendQueueOverflow) &&
         IsPrimaryPlayer())
     {
-        int parameters[1] = { static_cast<int>(0xb9a1bf4d) };
+        int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
         gConsoleUIController.RequestErrorMessage(
-            0x3e0b4895, 0x10dab382, parameters, 1, gProfile->GetPrimaryPad(),
+            IDS_EXITING_GAME, IDS_GENERIC_ERROR, parameters, 1, gProfile->GetPrimaryPad(),
             HostDisconnectReturned, 0, 0, true);
         return;
     }
 
-    g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(3), (void*)1);
+    g_pApp->SetAction(m_playerId, eXuiAction_ExitWorld, (void*)1);
 }
 
 void ClientPacketListener::sendAndDisconnect(boost::shared_ptr<Packet> packet)
@@ -1404,30 +1397,65 @@ void ClientPacketListener::handleTakeItemEntity(boost::shared_ptr<ClientboundTak
     MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
     if (level == 0)
         return;
-    boost::shared_ptr<Entity> itemEntity = getEntity(packet->getItemId());
-    boost::shared_ptr<Entity> playerEntity = getEntity(packet->getPlayerId());
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(playerEntity);
+
+    boost::shared_ptr<Entity> from = getEntity(packet->getItemId());
+    boost::shared_ptr<LivingEntity> to = boost::dynamic_pointer_cast<LivingEntity>(getEntity(packet->getPlayerId()));
+
+    bool isLocalPlayer = false;
     for (int i = 0; i < 4; ++i)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = m_minecraft->mLocalPlayers[i];
-        if (localPlayer != 0 && localPlayer->getId() == packet->getPlayerId())
+        if (m_minecraft->mLocalPlayers[i] != 0 && m_minecraft->mLocalPlayers[i]->getId() == packet->getPlayerId())
         {
-            living = localPlayer;
+            to = m_minecraft->mLocalPlayers[i];
+            isLocalPlayer = true;
             break;
         }
     }
-    if (living == 0)
+
+    if (to == 0)
     {
         level->removeEntity(packet->getItemId());
         return;
     }
-    if (itemEntity != 0)
+    if (from == 0)
+        return;
+
+    if (isLocalPlayer)
     {
-        boost::shared_ptr<ItemPickupParticle> particle(
-            new ItemPickupParticle(level, itemEntity, living, -0.5f));
-        m_minecraft->mParticleEngine->add(particle.get());
-        level->removeEntity(packet->getItemId());
+        boost::shared_ptr<MultiplayerLocalPlayer> player = boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(to);
+        if (m_minecraft->mGameModes[player->mUserIndex] == 0)
+        {
+            level->removeEntity(packet->getItemId());
+            return;
+        }
+
+        if (from->GetType() == EntityType::EXPERIENCE_ORB)
+        {
+            level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::EXPERIENCE_ORB_PICKUP,
+                                  SoundSource::eSoundSource_Players, 0.1f,
+                                  ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false,
+                                  16.0f);
+        }
+        else
+        {
+            level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::ITEM_PICKUP,
+                                  SoundSource::eSoundSource_Players, 0.2f,
+                                  ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false,
+                                  16.0f);
+        }
+
+        if (from->GetType() == EntityType::ITEM_ENTITY)
+            boost::static_pointer_cast<ItemEntity>(from)->getItem()->setCount(packet->getAmount());
     }
+    else
+    {
+        level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::ITEM_PICKUP,
+                              SoundSource::eSoundSource_Players, 0.2f,
+                              ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false, 16.0f);
+    }
+
+    m_minecraft->mParticleEngine->add(new ItemPickupParticle(level, from, to, -0.5f));
+    level->removeEntity(packet->getItemId());
 }
 
 std::wstring ClientPacketListener::GetDisplayNameByGamertag(std::wstring gamertag)
@@ -1457,99 +1485,99 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     if (packet->strings.size() > 1)
         sourceName = GetDisplayNameByGamertag(packet->strings[1]);
 
-    switch (static_cast<int>(packet->message))
+    switch (packet->message)
     {
-    case 1:
-        text = L10N::GetString(0xd08616d9);
+    case ClientboundChatPacket::eChatPacketMessage_BedOccupied:
+        text = L10N::GetString(IDS_TILE_BED_OCCUPIED);
         break;
-    case 2:
-        text = L10N::GetString(0xfa2a57fa);
+    case ClientboundChatPacket::eChatPacketMessage_BedNoSleep:
+        text = L10N::GetString(IDS_TILE_BED_NO_SLEEP);
         break;
-    case 3:
-        text = L10N::GetString(0xe08b6a47);
+    case ClientboundChatPacket::eChatPacketMessage_BedNotValid:
+        text = L10N::GetString(IDS_TILE_BED_NOT_VALID);
         break;
-    case 4:
-        text = L10N::GetString(0x16c81b7f);
+    case ClientboundChatPacket::eChatPacketMessage_BedNotSafe:
+        text = L10N::GetString(IDS_TILE_BED_NOTSAFE);
         break;
-    case 5:
-        text = L10N::GetString(0xf084ec0c);
+    case ClientboundChatPacket::eChatPacketMessage_BedTooFarAway:
+        text = L10N::GetString(IDS_TILE_BED_TOO_FAR_AWAY);
         break;
-    case 6:
-        text = L10N::GetString(0x56c64197);
+    case ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep:
+        text = L10N::GetString(IDS_TILE_BED_PLAYERSLEEP);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
-    case 7:
-        text = L10N::GetString(0xfab38114);
+    case ClientboundChatPacket::eChatPacketMessage_BedMeSleep:
+        text = L10N::GetString(IDS_TILE_BED_MESLEEP);
         break;
-    case 8:
-        text = L10N::GetString(0x095fce8b);
+    case ClientboundChatPacket::eChatPacketMessage_PlayerLeft:
+        text = L10N::GetString(IDS_PLAYER_LEFT);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
-    case 9:
-        text = L10N::GetString(0x941d21c3);
+    case ClientboundChatPacket::eChatPacketMessage_PlayerJoined:
+        text = L10N::GetString(IDS_PLAYER_JOINED);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
-    case 10:
-        text = L10N::GetString(0x3677fa23);
+    case ClientboundChatPacket::eChatPacketMessage_PlayerKicked:
+        text = L10N::GetString(IDS_PLAYER_KICKED);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
-    case 11:
-        text = L10N::GetString(0x49b6297d);
+    case ClientboundChatPacket::eChatPacketMessage_PlayerVotedToKick:
+        text = L10N::GetString(IDS_PLAYER_VOTED_TO_KICK);
         replacements[L"{*PLAYER*}"] = playerName;
         replacements[L"{*PLAYER2*}"] = sourceName;
         replacements[L"{*COUNT*}"] = toString(packet->ints[0]);
         replacements[L"{*MAX_COUNT*}"] = toString(packet->ints[1]);
         break;
-    case 12:
+    case ClientboundChatPacket::eChatPacketMessage_InteractionNotAllowed:
         showMessage = false;
-        g_pApp->SetGlobalXuiAction(static_cast<eXuiAction>(0x21));
+        g_pApp->SetGlobalXuiAction(eXuiAction_LavaNearSpawn);
         break;
-    case 13:
+    case ClientboundChatPacket::eChatPacketMessage_DeathInFire:
         text = L10N::GetString(0xefc9fef0);
         replacePlayer = true;
         break;
-    case 14:
-    case 53:
+    case ClientboundChatPacket::eChatPacketMessage_DeathLightningBolt:
+    case ClientboundChatPacket::eChatPacketMessage_DeathLightningBoltAlternate:
         text = L10N::GetString(0xf4980932);
         replacePlayer = true;
         break;
-    case 15:
+    case ClientboundChatPacket::eChatPacketMessage_DeathOnFire:
         text = L10N::GetString(0xd711d936);
         replacePlayer = true;
         break;
-    case 16:
-        text = L10N::GetString(0x5eff1005);
+    case ClientboundChatPacket::eChatPacketMessage_DeathLava:
+        text = L10N::GetString(IDS_DEATH_LAVA);
         replacePlayer = true;
         break;
-    case 17:
+    case ClientboundChatPacket::eChatPacketMessage_DeathInWall:
         text = L10N::GetString(0x6ae921b6);
         replacePlayer = true;
         break;
-    case 19:
+    case ClientboundChatPacket::eChatPacketMessage_DeathDrown:
         text = L10N::GetString(0x576593ef);
         replacePlayer = true;
         break;
-    case 20:
+    case ClientboundChatPacket::eChatPacketMessage_DeathStarve:
         text = L10N::GetString(0xf244df30);
         replacePlayer = true;
         break;
-    case 21:
+    case ClientboundChatPacket::eChatPacketMessage_DeathCactus:
         text = L10N::GetString(0x2bf5a7dc);
         replacePlayer = true;
         break;
-    case 22:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFall:
         text = L10N::GetString(0xd63d2190);
         replacePlayer = true;
         break;
-    case 23:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFlyIntoWall:
         text = L10N::GetString(0x15c8f4ae);
         replacePlayer = true;
         break;
-    case 24:
+    case ClientboundChatPacket::eChatPacketMessage_DeathOutOfWorld:
         text = L10N::GetString(0x6f2c7352);
         replacePlayer = true;
         break;
-    case 25:
+    case ClientboundChatPacket::eChatPacketMessage_DeathCustom:
         if (packet->ints[0] == 0)
         {
             if (packet->strings[1].compare(L"") != 0)
@@ -1565,273 +1593,273 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         }
         replacePlayer = true;
         break;
-    case 26:
+    case ClientboundChatPacket::eChatPacketMessage_DeathGeneric:
         text = L10N::GetString(0xd98e2236);
         replacePlayer = true;
         break;
-    case 27:
-    case 40:
+    case ClientboundChatPacket::eChatPacketMessage_DeathExplosion:
+    case ClientboundChatPacket::eChatPacketMessage_DeathExplosionAlternate:
         text = L10N::GetString(0xb04cad6a);
         replacePlayer = true;
         break;
-    case 28:
-        text = L10N::GetString(0x189c795e);
+    case ClientboundChatPacket::eChatPacketMessage_DeathMagic:
+        text = L10N::GetString(IDS_DEATH_MAGIC);
         replacePlayer = true;
         break;
-    case 29:
+    case ClientboundChatPacket::eChatPacketMessage_DeathMob:
         text = L10N::GetString(0x4bec30bf);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 30:
-        text = L10N::GetString(0x3c5da2b4);
+    case ClientboundChatPacket::eChatPacketMessage_DeathPlayer:
+        text = L10N::GetString(IDS_DEATH_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 31:
+    case ClientboundChatPacket::eChatPacketMessage_DeathArrow:
         text = L10N::GetString(0x7a2a89ae);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 32:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFireball:
         text = L10N::GetString(0x0242d45c);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 33:
+    case ClientboundChatPacket::eChatPacketMessage_DeathThrown:
         text = L10N::GetString(0xb3fb4f7f);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 34:
+    case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic:
         text = L10N::GetString(0x3fc22003);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 35:
-        text = L10N::GetString(0x2dcf5941);
+    case ClientboundChatPacket::eChatPacketMessage_DeathDragonBreath:
+        text = L10N::GetString(IDS_DEATH_DRAGON_BREATH);
         replacePlayer = true;
         break;
-    case 36:
-        text = L10N::GetString(0x0d235d4b);
+    case ClientboundChatPacket::eChatPacketMessage_DeathAnvil:
+        text = L10N::GetString(IDS_DEATH_FALLING_ANVIL);
         replacePlayer = true;
         break;
-    case 37:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFallingBlock:
         text = L10N::GetString(0xa1216033);
         replacePlayer = true;
         break;
-    case 39:
+    case ClientboundChatPacket::eChatPacketMessage_DeathThorns:
         text = L10N::GetString(0x5ac8afbb);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 42:
+    case ClientboundChatPacket::eChatPacketMessage_DeathTrident:
         text = L10N::GetString(0x80d4c2e3);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 43:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellLadder:
         text = L10N::GetString(0x62f8280d);
         replacePlayer = true;
         break;
-    case 44:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellVines:
         text = L10N::GetString(0x461ba4e8);
         replacePlayer = true;
         break;
-    case 45:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellWater:
         text = L10N::GetString(0xc130636a);
         replacePlayer = true;
         break;
-    case 46:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellHigh:
         text = L10N::GetString(0x44e2dd06);
         replacePlayer = true;
         break;
-    case 47:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomed:
         text = L10N::GetString(0x8bc1a50e);
         replacePlayer = true;
         break;
-    case 48:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedBy:
         text = L10N::GetString(0x1ece8cfc);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 49:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem:
         text = L10N::GetString(0xd871bb46);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 50:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellFinished:
         text = L10N::GetString(0x7ba47e90);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 51:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFellFinishedItem:
         text = L10N::GetString(0x3ec0c74a);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 52:
+    case ClientboundChatPacket::eChatPacketMessage_DeathInFireFighting:
         text = L10N::GetString(0xc30a962c);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 54:
+    case ClientboundChatPacket::eChatPacketMessage_DeathOnFireFighting:
         text = L10N::GetString(0x48ffbd9a);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 55:
+    case ClientboundChatPacket::eChatPacketMessage_DeathLavaEscaping:
         text = L10N::GetString(0xe2b2d991);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 56:
+    case ClientboundChatPacket::eChatPacketMessage_DeathDrownEscaping:
         text = L10N::GetString(0xcf30befb);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 57:
+    case ClientboundChatPacket::eChatPacketMessage_DeathCactusEscaping:
         text = L10N::GetString(0x7ad1a880);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 58:
+    case ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy:
         text = L10N::GetString(0xaf29a206);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 59:
-        text = L10N::GetString(0x516db1a2);
+    case ClientboundChatPacket::eChatPacketMessage_DeathWither:
+        text = L10N::GetString(IDS_DEATH_WITHER);
         replacePlayer = true;
         break;
-    case 60:
+    case ClientboundChatPacket::eChatPacketMessage_DeathMobItem:
         text = L10N::GetString(0x31c3794e);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 61:
+    case ClientboundChatPacket::eChatPacketMessage_DeathArrowItem:
         text = L10N::GetString(0xf0eba2e4);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 62:
+    case ClientboundChatPacket::eChatPacketMessage_DeathFireballItem:
         text = L10N::GetString(0x31b789a6);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 63:
+    case ClientboundChatPacket::eChatPacketMessage_DeathThrownItem:
         text = L10N::GetString(0xe3be8e0d);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 64:
+    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloor:
         text = L10N::GetString(0x1a3b16db);
         replacePlayer = true;
         break;
-    case 65:
+    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping:
         text = L10N::GetString(0x9eeff8cf);
         replacePlayer = true;
         replaceSource = true;
         break;
-    case 66:
+    case ClientboundChatPacket::eChatPacketMessage_DeathTridentItem:
         text = L10N::GetString(0x64400f01);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 67:
+    case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem:
         text = L10N::GetString(0x06046121);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
-    case 68:
-        text = L10N::GetString(0xd3560061);
+    case ClientboundChatPacket::eChatPacketMessage_PlayerEnteredEnd:
+        text = L10N::GetString(IDS_PLAYER_ENTERED_END);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
-    case 69:
-        text = L10N::GetString(0x6e3a65e3);
+    case ClientboundChatPacket::eChatPacketMessage_PlayerLeftEnd:
+        text = L10N::GetString(IDS_PLAYER_LEFT_END);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
-    case 70:
+    case ClientboundChatPacket::eChatPacketMessage_MaxAnimals:
         text = L10N::GetString(0x9f8bffae);
         break;
-    case 71:
+    case ClientboundChatPacket::eChatPacketMessage_MaxChickens:
         text = L10N::GetString(0x82460728);
         break;
-    case 72:
+    case ClientboundChatPacket::eChatPacketMessage_MaxSquid:
         text = L10N::GetString(0x1e0d17d0);
         break;
-    case 73:
+    case ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms:
         text = L10N::GetString(0x3e35b6e8);
         break;
-    case 74:
+    case ClientboundChatPacket::eChatPacketMessage_MaxWolves:
         text = L10N::GetString(0x70edc806);
         break;
-    case 76:
+    case ClientboundChatPacket::eChatPacketMessage_MaxEnemies:
         text = L10N::GetString(0xa82b5a66);
         break;
-    case 77:
+    case ClientboundChatPacket::eChatPacketMessage_MaxVillagers:
         text = L10N::GetString(0x16972fbf);
         break;
-    case 78:
+    case ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities:
         text = L10N::GetString(0x1ee681ba);
         break;
-    case 79:
+    case ClientboundChatPacket::eChatPacketMessage_MaxArmorStands:
         text = L10N::GetString(0x8ecd701e);
         break;
-    case 80:
-        text = L10N::GetString(0xd97fdba2);
+    case ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful:
+        text = L10N::GetString(IDS_CANT_SPAWN_IN_PEACEFUL);
         break;
-    case 82:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals:
         text = L10N::GetString(0xb399bd15);
         break;
-    case 83:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBredChickens:
         text = L10N::GetString(0x99326383);
         break;
-    case 84:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms:
         text = L10N::GetString(0x00fe5875);
         break;
-    case 85:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBredWolves:
         text = L10N::GetString(0xec344e3d);
         break;
-    case 86:
-        text = L10N::GetString(0x3221ece8);
+    case ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom:
+        text = L10N::GetString(IDS_CANT_SHEAR_MOOSHROOM);
         break;
-    case 87:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBoats:
         text = L10N::GetString(0xb2145884);
         break;
-    case 88:
+    case ClientboundChatPacket::eChatPacketMessage_MaxMinecarts:
         text = L10N::GetString(0xb604aaff);
         break;
-    case 89:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBats:
         text = L10N::GetString(0xfab1deb6);
         break;
-    case 90:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBanners:
         text = L10N::GetString(0xfdf65c18);
         break;
-    case 91:
+    case ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals:
         text = L10N::GetString(0xc952e8b9);
         break;
-    case 92:
+    case ClientboundChatPacket::eChatPacketMessage_MaxBeacons:
         text = L10N::GetString(0xef12cc40);
         break;
-    case 93:
+    case ClientboundChatPacket::eChatPacketMessage_MaxDolphins:
         text = L10N::GetString(0xb714e0e2);
         break;
-    case 94:
+    case ClientboundChatPacket::eChatPacketMessage_MaxPhantoms:
         text = L10N::GetString(0x3dcd926b);
         break;
-    case 95:
+    case ClientboundChatPacket::eChatPacketMessage_MaxFishAndSquid:
         text = L10N::GetString(0x60a3835d);
         break;
-    case 96:
+    case ClientboundChatPacket::eChatPacketMessage_TeleportSuccess:
         text = L10N::GetString(0xce88d7b9);
         replacePlayer = true;
         if (packet->ints[0] == 0xc800001)
@@ -1847,15 +1875,15 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
                 g_pApp->getEntityName(static_cast<uint64_t>(static_cast<int64_t>(packet->ints[0])), auxValue);
         }
         break;
-    case 97:
+    case ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition:
         text = L10N::GetString(0x5c19fa7a);
         replacePlayer = true;
         break;
-    case 98:
+    case ClientboundChatPacket::eChatPacketMessage_TeleportedToYou:
         text = L10N::GetString(0x186485a6);
         replacePlayer = true;
         break;
-    case 99:
+    case ClientboundChatPacket::eChatPacketMessage_TimeSuccess:
     {
         const int time = packet->ints[0];
         if (time == 1000)
@@ -1928,40 +1956,40 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         break;
     case 113:
         singleMessage = true;
-        text = L10N::GetString(0xcfeb0335);
+        text = L10N::GetString(IDS_MG_SELECTING_MODE);
         break;
     case 114:
-        text = L10N::GetString(0x06e12057);
+        text = L10N::GetString(IDS_MG_WAITING_FOR_LOAD);
         singleMessage = true;
         break;
     case 115:
-        text = L10N::GetString(0x9760a9e7);
+        text = L10N::GetString(IDS_MG_ROUND_CHANGING);
         singleMessage = true;
         break;
     case 116:
-        text = L10N::GetString(0x52f1ef84);
+        text = L10N::GetString(IDS_MG_ROUND_STARTING);
         singleMessage = true;
         break;
     case 117:
-        text = L10N::GetString(0x7cccd9d4);
+        text = L10N::GetString(IDS_MG_ROUND_START);
         singleMessage = true;
         break;
     case 118:
-        text = L10N::GetString(0x69e5ca0b);
+        text = L10N::GetString(IDS_MG_ROUND_ENDING);
         singleMessage = true;
         break;
     case 119:
-        text = L10N::GetString(0xc4219de3);
+        text = L10N::GetString(IDS_MG_ROUND_END);
         singleMessage = true;
         break;
     case 120:
-        text = L10N::GetString(0xb0b23bcd);
+        text = L10N::GetString(IDS_MG_SPECTATING);
         singleMessage = true;
         break;
     case 121:
         if (packet->ints[0] != 1)
         {
-            text = L10N::GetString(0x5819df6f);
+            text = L10N::GetString(IDS_MG_LIVES_REMAINING);
             text.replace(text.find(L"%d"), 2, toString(packet->ints[0]));
         }
         else
@@ -1981,7 +2009,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         singleMessage = true;
         break;
     case 124:
-        text = L10N::GetString(0xf53f833a);
+        text = L10N::GetString(IDS_MG_INVULNERABILITY_OFF);
         singleMessage = true;
         break;
     case 125:
@@ -2067,7 +2095,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text = L10N::GetString(0x90c46bbb);
         break;
     case 140:
-        text = L10N::GetString(0xb7fc5190);
+        text = L10N::GetString(IDS_MG_TEAMS_DISABLED);
         break;
     case 141:
         text = L10N::GetString(0x40bc050c);
@@ -2082,7 +2110,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacements[L"{*TEAM*}"] = packet->strings[1];
         break;
     case 144:
-        text = L10N::GetString(0x05f0b230);
+        text = L10N::GetString(IDS_MG_INVITE_EXPIRED);
         replacements[L"{*PLAYER*}"] = packet->strings[0];
         break;
     case 145:
@@ -2095,16 +2123,16 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacements[L"{*TEAM*}"] = packet->strings[0];
         break;
     case 147:
-        text = L10N::GetString(0xe9d46798);
+        text = L10N::GetString(IDS_MG_LEAVING_TEAM_2);
         replacements[L"{*PLAYER*}"] = packet->strings[0];
         replacements[L"{*TEAM*}"] = packet->strings[1];
         break;
     case 148:
-        text = L10N::GetString(0x5bdbd6d3);
+        text = L10N::GetString(IDS_MG_LEAVING_TEAM_1);
         replacements[L"{*TEAM*}"] = packet->strings[0];
         break;
     case 149:
-        text = L10N::GetString(0x39b60856);
+        text = L10N::GetString(IDS_MG_LEFT_TEAM_1);
         replacements[L"{*TEAM*}"] = packet->strings[0];
         break;
     case 150:
@@ -2114,7 +2142,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacements[L"{*NUMBER*}"] = toString(packet->ints[0]);
         break;
     case 152:
-        text = L10N::GetString(0xbc3b07cd);
+        text = L10N::GetString(IDS_MG_FIGHT);
         break;
     case 153:
         text = L10N::GetString(0xd296c94c);
@@ -2144,7 +2172,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
             text = L10N::GetString(0x7ba47e90);
             break;
         case 60:
-            text = L10N::GetString(0x3c5da2b4);
+            text = L10N::GetString(IDS_DEATH_PLAYER);
             break;
         case 61:
             text = L10N::GetString(0x7a2a89ae);
@@ -2177,12 +2205,13 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     if (replaceItem)
         replacements[L"{*ITEM*}"] = packet->strings[2];
 
-    const bool deathMessage = packet->message > 12 && packet->message < 68;
+    const bool deathMessage = packet->message >= ClientboundChatPacket::eChatPacketMessage_DeathInFire
+        && packet->message <= ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem;
     const bool aboutThisPlayer = playerName.compare(gProfile->GetMiiName(m_playerId)) == 0;
     if (showMessage)
     {
         makeReplacements(replacements, text);
-        if (singleMessage && GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x26)) != 0)
+        if (singleMessage && GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayGameMessages) != 0)
             m_minecraft->mGui->setSingleMessage(text, m_playerId, singleMessageDuration);
         else
             m_minecraft->mGui->addMessage(text, m_playerId, deathMessage, aboutThisPlayer, false, false);
@@ -2267,8 +2296,8 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
     const bool publicJoinable = CGameNetworkManager::sInstance.IsInPublicJoinableGame();
     if (!CGameNetworkManager::sInstance.IsHost())
     {
-        gApp.SetExtraGameData(static_cast<eGameExtraData>(6), 0);
-        gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), packet->mHostPlayer);
+        gApp.SetExtraGameData(eGameExtraData_All, 0);
+        gApp.SetGameHostOption(eGameHostOption_All, packet->mHostPlayer);
         CGameNetworkManager::sInstance.ClearInviteInfo();
         if (gApp.GetTMSGlobalFileListRead() == 0)
         {
@@ -2313,11 +2342,11 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
 
     if (!IsPrimaryPlayer())
     {
-        int parameter = 0xb9a1bf4d;
+        int parameter = IDS_CONFIRM_OK;
         int title = secondaryMessageVariant ? 0x4d669d55 : static_cast<int>(0xf9885affu);
-        gConsoleUIController.RequestErrorMessage(0x85d6dc81, title, &parameter, 1,
+        gConsoleUIController.RequestErrorMessage(IDS_CANTJOIN_TITLE, title, &parameter, 1,
                                                  m_playerId, 0, 0, 0, true);
-        gApp.SetAction(m_playerId, static_cast<eXuiAction>(0xc), 0);
+        gApp.SetAction(m_playerId, eXuiAction_RemoveLocalPlayerNoStats, 0);
         return;
     }
 
@@ -2326,16 +2355,16 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
     if (secondaryMessageVariant != 0)
     {
         if (contentCheckResult == 0)
-            reason = static_cast<DisconnectPacket::eDisconnectReason>(0x19);
+            reason = DisconnectPacket::eDisconnectReason_NoMultiplayerPrivilege;
         else if (friendCheckResult != 0)
             reason = static_cast<DisconnectPacket::eDisconnectReason>(restrictionResult != 0 ? 0x16 : 0x18);
         else
-            reason = static_cast<DisconnectPacket::eDisconnectReason>(0x14);
+            reason = DisconnectPacket::eDisconnectReason_NotFriendsWithHost;
     }
     else
-        reason = static_cast<DisconnectPacket::eDisconnectReason>(0x1b);
+        reason = DisconnectPacket::eDisconnectReason_NoOnlinePrivilege;
     gApp.SetDisconnectReason(reason);
-    gApp.SetAction(gProfile->GetPrimaryPad(), static_cast<eXuiAction>(3), reinterpret_cast<void*>(1));
+    gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ExitWorld, reinterpret_cast<void*>(1));
 }
 
 void ClientPacketListener::close()
@@ -2453,7 +2482,7 @@ void ClientPacketListener::handleEntityLinkPacket(boost::shared_ptr<ClientboundS
     }
     if (source == 0)
         return;
-    if ((source->GetType() & 0xd000000) == 0xd000000)
+    if ((source->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(source);
         if (dest != 0)
@@ -2528,36 +2557,96 @@ void ClientPacketListener::handleSetExperience(boost::shared_ptr<ClientboundSetE
     boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
     if (player != 0)
         player->setExperienceValues(packet->getExperienceProgress(),
-                                    packet->getExperienceLevel(),
-                                    packet->getTotalExperience());
+                                    packet->getTotalExperience(),
+                                    packet->getExperienceLevel());
 }
 
 void ClientPacketListener::handleRespawn(boost::shared_ptr<ClientboundRespawnPacket> packet)
 {
-    if (!packet || m_minecraft == 0)
-        return;
+    if (packet->getDimension() != m_minecraft->mLocalPlayers[m_playerId]->mDimension ||
+        packet->m_mapSeed != m_minecraft->mLocalPlayers[m_playerId]->mLevel->getSeed())
+    {
+        const int oldDimension = m_minecraft->mLocalPlayers[m_playerId]->mDimension;
+        m_started = false;
 
-    const int oldPlayer = m_minecraft->getLocalPlayerIdx();
-    m_minecraft->setLocalPlayerIdx(m_playerId);
-    m_minecraft->respawnPlayer(m_playerId, packet->getDimension(), packet->getDimension(),
-                               packet->shouldKeepOldEntityData());
-    if (m_minecraft->mGameModes[m_playerId] != 0)
-        m_minecraft->mGameModes[m_playerId]->setLocalMode(packet->getPlayerGameType());
-
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player != 0) {
-        player->updateRichPresence();
-        if (packet->hasPositionAndRotation())
+        bool netherTransition = false;
+        if (m_minecraft->mLocalPlayers[m_playerId]->isAlive())
         {
-            player->fjResetBounceHeight();
-            player->absMoveTo(packet->x, packet->y, packet->z, packet->yRot, packet->xRot);
+            if (oldDimension == -1)
+                netherTransition = packet->getDimension() == 0;
+            else if (oldDimension == 0)
+                netherTransition = packet->getDimension() == -1;
         }
+        m_suppressStartOnPosition = netherTransition;
+        m_level->removeClientPacketListener(this, false);
+
+        MultiPlayerLevel* level = m_minecraft->getLevel(packet->getDimension());
+        if (level == NULL)
+        {
+            LevelSettings settings(packet->m_mapSeed, packet->getPlayerGameType(), false,
+                                   m_minecraft->mLevel->getLevelData()->isHardcore(), packet->m_newSeaLevel,
+                                   packet->getLevelType(), packet->m_xzSize, packet->m_hellScale,
+                                   packet->m_cloudHeight, packet->m_modernEnd, packet->m_biomeScale,
+                                   packet->m_biomeCentreXChunk, packet->m_biomeCentreZChunk);
+            level = new MultiPlayerLevel(this, &settings, packet->getDimension(), packet->getDifficulty(),
+                                         packet->m_seaLevel);
+            level->setSavedDataStorage(m_level->getSavedDataStorage());
+            level->mIsClientSide = true;
+        }
+        else
+        {
+            level->mConnections.push_back(this);
+        }
+
+        m_level->removeEntity(m_minecraft->mLocalPlayers[m_playerId]);
+        m_level = level;
+
+        boost::shared_ptr<MultiplayerLocalPlayer> activePlayer = m_minecraft->mPlayer;
+        m_minecraft->mPlayer = m_minecraft->mLocalPlayers[m_playerId];
+        m_minecraft->setLevel(level, -1, boost::shared_ptr<Player>(), true, false);
+        m_minecraft->mPlayer = activePlayer;
+
+        telemetryManagerInstance->RecordLevelExit(m_playerId, eSen_LevelExitStatus_Restarted);
+        m_minecraft->mLocalPlayers[m_playerId]->mDimension = packet->getDimension();
+
+        if (m_minecraft->mGameModes[m_playerId] != NULL)
+        {
+            Tutorial* tutorial = m_minecraft->mGameModes[m_playerId]->getTutorial();
+            if (tutorial != NULL)
+                tutorial->showTutorialPopup(false);
+        }
+        m_minecraft->mLocalPlayers[m_playerId]->updateRichPresence();
+
+        _ConnectionProgressParams* params = new _ConnectionProgressParams();
+        params->m_playerId = m_playerId;
+        if (packet->getDimension() == -1)
+            params->m_stringId = IDS_PROGRESS_ENTERING_NETHER;
+        else if (oldDimension == -1)
+            params->m_stringId = IDS_PROGRESS_LEAVING_NETHER;
+        else if (packet->getDimension() == 1)
+            params->m_stringId = IDS_PROGRESS_ENTERING_END;
+        else if (oldDimension == 1)
+            params->m_stringId = IDS_PROGRESS_LEAVING_END;
+        params->m_setFailTimer = false;
+        params->m_showTooltips = false;
+        gConsoleUIController.CloseUIScenes(m_playerId, false);
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_ConnectingProgress, params, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
+        gApp.SetAction(m_playerId, eXuiAction_CloseScenesOnConnect, NULL);
     }
-    gConsoleUIController.CloseUIScenes(m_playerId, false);
-    gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(3), 0,
-                                          static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-    gApp.SetAction(m_playerId, static_cast<eXuiAction>(0x0f), 0);
-    m_minecraft->setLocalPlayerIdx(oldPlayer);
+
+    const int activePlayerIdx = m_minecraft->getLocalPlayerIdx();
+    m_minecraft->setLocalPlayerIdx(m_playerId);
+    m_minecraft->respawnPlayer(m_minecraft->mLocalPlayers[m_playerId]->mUserIndex, packet->getDimension(),
+                               packet->m_newEntityId, packet->shouldKeepOldEntityData());
+    m_minecraft->mGameModes[m_playerId]->setLocalMode(packet->getPlayerGameType());
+    if (packet->hasPositionAndRotation())
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer> player = m_minecraft->mLocalPlayers[m_playerId];
+        player->fjResetBounceHeight();
+        player->absMoveTo(packet->m_x, packet->m_y, packet->m_z, packet->m_yRot, packet->m_xRot);
+    }
+    m_minecraft->setLocalPlayerIdx(activePlayerIdx);
 }
 
 void ClientPacketListener::handleExplosion(boost::shared_ptr<ClientboundExplodePacket> packet)
@@ -2583,63 +2672,79 @@ void ClientPacketListener::handleExplosion(boost::shared_ptr<ClientboundExplodeP
 
 void ClientPacketListener::handleContainerOpen(boost::shared_ptr<ClientboundContainerOpenPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player == 0)
-        return;
-    const int type = packet->getType();
-    if (type == 0)
+    boost::shared_ptr<MultiplayerLocalPlayer> player = m_minecraft->mLocalPlayers[m_playerId];
+    bool failed = false;
+
+    if (packet->getType() == ClientboundContainerOpenPacket::CONTAINER)
     {
-        boost::shared_ptr<SimpleContainer> container(
-            new SimpleContainer(packet->getTitle(), packet->getSize()));
-        if (player->openContainer(container) != 0 && player->mContainerMenu != 0)
+        boost::shared_ptr<SimpleContainer> container(new SimpleContainer(packet->getTitle(), packet->getSize()));
+        if (player->openContainer(container))
             player->mContainerMenu->m_containerId = packet->getContainerId();
-        return;
+        else
+            failed = true;
     }
-    if (type == 6)
+    else if (packet->getType() == ClientboundContainerOpenPacket::TRADER_NPC)
     {
-        boost::shared_ptr<Entity> entity = resolveEntity(packet->getEntityId());
-        boost::shared_ptr<Villager> villager = boost::dynamic_pointer_cast<Villager>(entity);
-        if (villager == 0)
-            return;
-        std::wstring name = packet->hasCustomName() ? packet->getTitle() : villager->getDisplayName();
-        boost::shared_ptr<ClientSideMerchant> merchant(new ClientSideMerchant(player, name));
+        boost::shared_ptr<Villager> villager = boost::dynamic_pointer_cast<Villager>(getEntity(packet->getEntityId()));
+        boost::shared_ptr<Player> trader = player;
+        boost::shared_ptr<ClientSideMerchant> merchant(new ClientSideMerchant(
+            trader, packet->hasCustomName() ? packet->getTitle() : villager->getDisplayName()));
         merchant->setVillager(villager);
-        player->openTrading(merchant, name, villager->getId());
-        if (player->mContainerMenu != 0)
+        const std::wstring name = packet->hasCustomName() ? packet->getTitle() : villager->getDisplayName();
+        if (player->openTrading(merchant, name, packet->getEntityId()))
             player->mContainerMenu->m_containerId = packet->getContainerId();
-        return;
+        else
+            failed = true;
     }
-    if (type == 11)
+    else if (packet->getType() == ClientboundContainerOpenPacket::HORSE)
     {
-        boost::shared_ptr<Entity> entity = resolveEntity(packet->getEntityId());
-        boost::shared_ptr<AbstractHorse> horse = boost::dynamic_pointer_cast<AbstractHorse>(entity);
-        if (horse == 0)
-            return;
-        std::wstring title = packet->hasCustomName() ? packet->getTitle() : horse->getDisplayName();
-        boost::shared_ptr<HorseChest> chest(
-            new HorseChest(packet->getEntityId(), title, packet->hasCustomName() != 0, packet->getSize()));
-        if (player->openHorseInventory(horse, chest) != 0 && player->mContainerMenu != 0)
-            player->mContainerMenu->m_containerId = packet->getContainerId();
-        return;
-    }
-    if (type != 12)
-    {
-        if (packet->isContainer())
+        boost::shared_ptr<Entity> entity = getEntity(packet->getEntityId());
+        if ((entity->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
         {
-            boost::shared_ptr<Entity> entity = resolveEntity(packet->getEntityId());
-            boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(entity);
-            if (container != 0 && player->openContainer(container) != 0 && player->mContainerMenu != 0)
+            boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
+            boost::shared_ptr<Container> chest(new HorseChest(0, packet->getTitle(), false, packet->getSize()));
+            if (player->openHorseInventory(horse, chest))
                 player->mContainerMenu->m_containerId = packet->getContainerId();
+            else
+                failed = true;
+        }
+    }
+    else if (packet->getType() != ClientboundContainerOpenPacket::FIREWORKS)
+    {
+        if (!packet->isContainer())
+        {
+            LocalBlockInteraction interaction(packet->getType(), packet->getTitle());
+            if (player->startBlockInteraction(interaction))
+                player->mContainerMenu->m_containerId = packet->getContainerId();
+            else
+                failed = true;
+        }
+        else
+        {
+            boost::shared_ptr<SimpleContainer> container(
+                new LocalMenuContainer(packet->getType(), packet->getTitle(), packet->getSize()));
+            if (player->openContainer(container))
+                player->mContainerMenu->m_containerId = packet->getContainerId();
+            else
+                failed = true;
+        }
+    }
+    else
+    {
+        if (player->openFireworks(static_cast<int>(player->mX), static_cast<int>(player->mY), static_cast<int>(player->mZ)))
+        {
+            player->mContainerMenu->m_containerId = packet->getContainerId();
             return;
         }
-        boost::shared_ptr<SimpleContainer> container(
-            new LocalMenuContainer(type, packet->getTitle(), packet->getSize()));
-        if (player->openContainer(boost::static_pointer_cast<Container>(container)) != 0
-            && player->mContainerMenu != 0)
-            player->mContainerMenu->m_containerId = packet->getContainerId();
+        failed = true;
     }
+
+    if (!failed)
+        return;
+    if (player->mContainerMenu == player->mInventoryMenu)
+        send(boost::shared_ptr<Packet>(new ServerboundContainerClosePacket(packet->getContainerId())));
+    else
+        gConsoleUIController.CloseUIScenes(m_playerId, false);
 }
 
 void ClientPacketListener::handleContainerSetSlot(boost::shared_ptr<ClientboundContainerSetSlotPacket> packet)
@@ -2736,7 +2841,7 @@ void ClientPacketListener::handleOpenSignEditor(boost::shared_ptr<ClientboundOpe
     if (packet == 0 || m_level == 0)
         return;
     boost::shared_ptr<BlockEntity> blockEntity = m_level->getBlockEntity(packet->getPos());
-    if (blockEntity == 0 || blockEntity->GetType() != 0x1000202)
+    if (blockEntity == 0 || blockEntity->GetType() != BlockEntityType::SIGN)
     {
         boost::shared_ptr<SignBlockEntity> newSign(new SignBlockEntity());
         newSign->setLevel(m_level);
@@ -2809,15 +2914,26 @@ void ClientPacketListener::handleBlockDestruction(boost::shared_ptr<ClientboundB
 
 void ClientPacketListener::handleBlockCollectionDestruction(boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet)
 {
-    if (packet == 0 || m_level == 0 || packet->progress >= 0)
+    if (m_level == 0)
         return;
+    if (packet->progress >= 0 && !packet->positions.empty())
+    {
+        delete[] m_destroyedBlocks;
+        m_destroyedBlockCount = static_cast<unsigned int>(packet->positions.size());
+        m_destroyedBlocks = new BlockPos[m_destroyedBlockCount];
+        Random random(0xABB);
+        for (unsigned int i = 0; i < packet->positions.size(); ++i)
+        {
+            m_destroyedBlocks[i] = packet->positions[i];
+            m_level->destroyBlockProgress(packet->sourceId - static_cast<int>(i), m_destroyedBlocks[i],
+                                          packet->progress + random.nextInt(4) - 1);
+        }
+        return;
+    }
     Random random(0xABB);
     for (unsigned int i = 0; i < packet->positions.size(); ++i)
-    {
-        random.nextInt(4);
-        m_level->destroyBlockProgress(packet->sourceId - static_cast<int>(i),
-                                      packet->positions[i], packet->progress);
-    }
+        m_level->destroyBlockProgress(packet->sourceId - static_cast<int>(i), m_destroyedBlocks[i],
+                                      packet->progress + random.nextInt(4) - 1);
 }
 
 bool ClientPacketListener::canHandleAsyncPackets()
@@ -2881,10 +2997,10 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
             for (int i = 0; i < 4; ++i)
             {
                 if (m_minecraft->mLocalPlayers[i] != 0)
-                    gApp.SetAction(i, static_cast<eXuiAction>(6), 0);
+                    gApp.SetAction(i, eXuiAction_Respawn, 0);
             }
         }
-        else if (!gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(0x30)))
+        else if (!gConsoleUIController.IsSceneInStack(m_playerId, EUIScene_EndPoem))
         {
             gConsoleUIController.SetWinUserIndex(static_cast<unsigned int>(packet->getPlayerIndex()));
             MultiPlayerGameMode* mode = m_minecraft->mGameModes[m_playerId];
@@ -2892,14 +3008,14 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                 mode->getTutorial()->showTutorialPopup(false);
             gConsoleUIController.CloseAllPlayersScenes(false);
             gConsoleUIController.NavigateToScene(
-                m_playerId, static_cast<EUIScene>(0x30), 0,
-                static_cast<EUILayer>(6), static_cast<EUIGroup>(1));
+                m_playerId, EUIScene_EndPoem, 0,
+                EUILayer_Scene, EUIGroup_Fullscreen);
         }
     }
     else if (event == 11 && !CGameNetworkManager::sInstance.IsHost() && IsPrimaryPlayer())
     {
         gApp.SetGameStarted(false);
-        gApp.SetAction(m_playerId, static_cast<eXuiAction>(0x1b), 0);
+        gApp.SetAction(m_playerId, eXuiAction_RemoteSave, 0);
     }
     else if (event == 12 && !CGameNetworkManager::sInstance.IsHost() && IsPrimaryPlayer())
         gApp.SetGameStarted(true);
@@ -2910,7 +3026,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
         const BlockPos pos(static_cast<int>(player->mX),
                            static_cast<int>(player->mY + eyeHeight),
                            static_cast<int>(player->mZ));
-        m_level->levelEvent(2005, pos, static_cast<int>(param));
+        m_level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, pos, static_cast<int>(param));
     }
     else if (event == 10 && m_level != 0 && m_minecraft->mLocalPlayers[m_playerId] != 0)
     {
@@ -2962,7 +3078,7 @@ void ClientPacketListener::handleUpdateMobEffect(boost::shared_ptr<ClientboundUp
     if (packet == 0)
         return;
     boost::shared_ptr<Entity> entity = resolveEntity(static_cast<int>(packet->getEntityId()));
-    if (entity == 0 || !Entity::instanceof(entity, 0x0C000000ULL))
+    if (entity == 0 || !Entity::instanceof(entity, EntityType::LIVING_ENTITY))
         return;
     boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
     if (living == 0)
@@ -3046,7 +3162,7 @@ void ClientPacketListener::handlePlayerInfo(boost::shared_ptr<PlayerInfoPacket> 
                              packet->mPrivileges, packet->mGameType);
 
     boost::shared_ptr<Entity> entity = getEntity(packet->mEntityId);
-    if (entity != 0 && (entity->GetType() & 0xc800000) == 0xc800000)
+    if (entity != 0 && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
         player->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mPrivileges);
@@ -3154,7 +3270,7 @@ void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCust
     ByteArrayInputStream byteStream(payload);
     DataInputStream input(&byteStream);
     const int containerId = input.readInt();
-    if (!gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(0x32)))
+    if (!gConsoleUIController.IsSceneInStack(m_playerId, EUIScene_TradingMenu))
     {
         byteStream.mBuffer.data = NULL;
         byteStream.mBuffer.length = 0;
@@ -3174,8 +3290,8 @@ void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCust
         byteStream.mPosition = 0;
         return;
     }
-    void* scene = gConsoleUIController.GetTopScene(m_playerId, static_cast<EUILayer>(6),
-                                                   static_cast<EUIGroup>(7));
+    void* scene = gConsoleUIController.GetTopScene(m_playerId, EUILayer_Scene,
+                                                   EUIGroup_PlayerDefault);
     if (scene == 0)
     {
         byteStream.mBuffer.data = NULL;
@@ -3222,9 +3338,9 @@ Connection* ClientPacketListener::getConnection() { return m_connection; }
 void ClientPacketListener::handleServerSettingsChanged(boost::shared_ptr<ServerSettingsChangedPacket> packet)
 {
     if (packet->mSetting == 0)
-        gApp.SetGameHostOption(static_cast<eGameHostOption>(4), packet->mValue);
+        gApp.SetGameHostOption(eGameHostOption_Gamertags, packet->mValue);
     else if (packet->mSetting == 1)
-        gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), packet->mValue);
+        gApp.SetGameHostOption(eGameHostOption_All, packet->mValue);
 }
 
 void ClientPacketListener::handleTexture(boost::shared_ptr<TexturePacket> packet)
@@ -3513,7 +3629,7 @@ void ClientPacketListener::handleUpdateAttributes(boost::shared_ptr<ClientboundU
     if (packet == 0)
         return;
     boost::shared_ptr<Entity> entity = resolveEntity(packet->getEntityId());
-    if (entity == 0 || !Entity::instanceof(entity, 0x0C800000ULL))
+    if (entity == 0 || !Entity::instanceof(entity, EntityType::PLAYER))
         return;
     if (static_cast<int>(entity->GetType()) != packet->getEntityType())
         return;
@@ -3564,7 +3680,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
     ClientMasterGameMode* master = m_minecraft->GetClientMasterGameMode();
     switch (packet->GetMessage())
     {
-    case 3:
+    case GameModePacket::eMessage_TransitionToRound:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3598,7 +3714,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 4:
+    case GameModePacket::eMessage_Transition:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3610,7 +3726,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->queueTransition(params);
         break;
     }
-    case 5:
+    case GameModePacket::eMessage_WaitForChunkLoading:
     {
         if (!IsPrimaryPlayer() || !CGameNetworkManager::sInstance.IsHost())
             break;
@@ -3623,7 +3739,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 7:
+    case GameModePacket::eMessage_RoundStart:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3631,7 +3747,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         packet->ReadPacket(data);
         break;
     }
-    case 9:
+    case GameModePacket::eMessage_SyncTeamInvite:
     {
         GameModePacket::SyncTeamInviteData data;
         packet->ReadPacket(data);
@@ -3640,7 +3756,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             player->GetLocalGameMode()->SyncTeamInvite(data.invite);
         break;
     }
-    case 10:
+    case GameModePacket::eMessage_RemoveTeamInvite:
     {
         GameModePacket::TeamIDData data;
         packet->ReadPacket(data);
@@ -3649,7 +3765,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             player->GetLocalGameMode()->RemoveTeamInvite(static_cast<unsigned int>(data.teamId));
         break;
     }
-    case 0xd:
+    case GameModePacket::eMessage_AddAreaBounds:
     {
         GameModePacket::AddAreaBoundsData data;
         packet->ReadPacket(data);
@@ -3665,7 +3781,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 0xe:
+    case GameModePacket::eMessage_SetAreaBounds:
     {
         GameModePacket::AddAreaBoundsData data;
         packet->ReadPacket(data);
@@ -3682,14 +3798,14 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 0xf:
+    case GameModePacket::eMessage_ClearAreaBounds:
     {
         MultiPlayerGameMode* mode = m_minecraft->mGameModes[m_playerId];
         if (mode != 0 && mode->getGameModeConstraints() != 0)
             mode->getGameModeConstraints()->ClearAllAreaConstraints();
         break;
     }
-    case 0x11:
+    case GameModePacket::eMessage_ChangeCustomGameMode:
     {
         if (!IsPrimaryPlayer() || CGameNetworkManager::sInstance.IsHost())
             break;
@@ -3732,7 +3848,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
                 {
                     std::vector<LevelRuleset*> rules;
                     gApp.getLevelRules()->getRulesByType(
-                        static_cast<LevelRules::ELevelRuleType>(data.gameMode), &rules, false);
+                        LevelRules::GetRuleTypeForMiniGame(static_cast<EMiniGameId>(data.gameMode)), &rules, false);
                     for (std::vector<LevelRuleset*>::iterator it = rules.begin();
                          it != rules.end(); ++it)
                     {
@@ -3757,7 +3873,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 0x12:
+    case GameModePacket::eMessage_SetNextCustomGameMode:
     {
         GameModePacket::ChangeCustomGameMode data;
         packet->ReadPacket(data);
@@ -3765,7 +3881,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         {
             std::vector<LevelRuleset*> rules;
             gApp.getLevelRules()->getRulesByType(
-                static_cast<LevelRules::ELevelRuleType>(data.gameMode), &rules, false);
+                LevelRules::GetRuleTypeForMiniGame(static_cast<EMiniGameId>(data.gameMode)), &rules, false);
             for (std::vector<LevelRuleset*>::iterator it = rules.begin(); it != rules.end(); ++it)
             {
                 LevelGenerationOptions* options = (*it)->getGenerationOptions();
@@ -3778,7 +3894,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 0x13:
+    case GameModePacket::eMessage_LockPlayerLocation:
     {
         GameModePacket::LockPlayerLocation data;
         packet->ReadPacket(data);
@@ -3787,7 +3903,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             player->SetPositionLocked(data.locked);
         break;
     }
-    case 0x14:
+    case GameModePacket::eMessage_ChestRefill:
     {
         GameModePacket::ChestRefill data;
         packet->ReadPacket(data);
@@ -3801,19 +3917,19 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             if (chest != 0)
                 chest->startRefilledAnimation();
         }
-        updateTutorialOnGameMode(static_cast<eTutorial_GameMode>(4));
+        updateTutorialOnGameMode(eTutorial_GameMode_ChestRefill);
         if (master != 0)
             master->OnChestRefill();
         break;
     }
-    case 0x15:
+    case GameModePacket::eMessage_Tutorial:
     {
         GameModePacket::TutorialGameModeData data;
         packet->ReadPacket(data);
         updateTutorialOnGameMode(static_cast<eTutorial_GameMode>(data.tutorial));
         break;
     }
-    case 0x16:
+    case GameModePacket::eMessage_Showdown:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3821,10 +3937,10 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->OnShowdown();
         if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
             gConsoleUIController.ShowTimedSplash(
-                m_playerId, L10N::GetString(static_cast<int>(0x3143fcab)), 3000);
+                m_playerId, L10N::GetString(static_cast<int>(IDS_TITLE_SAVE_GAME)), 3000);
         break;
     }
-    case 0x17:
+    case GameModePacket::eMessage_StateChange:
     {
         GameModePacket::StateChangeData data;
         packet->ReadPacket(data);
@@ -3832,7 +3948,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->OnStateChange(data.state);
         break;
     }
-    case 0x18:
+    case GameModePacket::eMessage_DeathPosition:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3845,7 +3961,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         }
         break;
     }
-    case 0x19:
+    case GameModePacket::eMessage_UpdateSeed:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3855,7 +3971,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->SetGeneratorSeed(data.getSeed(), static_cast<float>(data.getMapSizeMultiplier()));
         break;
     }
-    case 0x1a:
+    case GameModePacket::eMessage_UpdateTheme:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3865,7 +3981,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->SetCurrentTheme(data.getThemeData(), 0);
         break;
     }
-    case 0x1b:
+    case GameModePacket::eMessage_UpdateThemeId:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3875,7 +3991,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->SetCurrentTheme(data.themeId, data.previousThemeId);
         break;
     }
-    case 0x1c:
+    case GameModePacket::eMessage_UpdateStartTime:
     {
         if (!IsPrimaryPlayer())
             break;
@@ -3921,7 +4037,7 @@ void ClientPacketListener::handleMapSelectInfo(boost::shared_ptr<MapSelectInfoPa
         for (int i = 0; i < count; ++i)
             layerIds.push_back(input.readInt());
         gameMode->clearBuildOffVotes();
-        gameMode->mLayerIds = layerIds;
+        gameMode->mThemeWordIds = layerIds;
         gameMode->SetCurrentUniqueId(-1);
     }
 }

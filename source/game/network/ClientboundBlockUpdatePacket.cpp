@@ -10,13 +10,13 @@
 
 ClientboundBlockUpdatePacket::ClientboundBlockUpdatePacket()
 {
-    compressed = true;
+    shouldDelay = true;
     extraBlock = NULL;
 }
 
 ClientboundBlockUpdatePacket::ClientboundBlockUpdatePacket(Level* level, const BlockPos& pos)
 {
-    compressed = true;
+    shouldDelay = true;
     this->pos = pos;
     block = level->getBlockState(pos);
     extraBlock = level->getExtraBlockState(pos);

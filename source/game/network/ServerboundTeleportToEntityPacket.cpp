@@ -4,6 +4,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/world/generation/Player.hpp"
 
 ServerboundTeleportToEntityPacket::ServerboundTeleportToEntityPacket()
     : mPlayerUID(0)
@@ -29,7 +30,7 @@ void ServerboundTeleportToEntityPacket::handle(PacketListener* listener)
     listener->handleTeleportToEntityPacket(shared_from_this());
 }
 
-boost::shared_ptr<ServerPlayer> ServerboundTeleportToEntityPacket::getEntity(ServerLevel* level)
+boost::shared_ptr<Entity> ServerboundTeleportToEntityPacket::getEntity(ServerLevel* level)
 {
     return level->getPlayer(mPlayerUID);
 }

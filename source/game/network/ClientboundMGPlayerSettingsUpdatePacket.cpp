@@ -13,7 +13,7 @@ ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket
 ClientboundMGPlayerSettingsUpdatePacket::~ClientboundMGPlayerSettingsUpdatePacket() {}
 void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
 {
- mSettings.Set(eCustomGameModeHostOption_All, input->readVarInt());
+ mSettings.mHostOptions.Set(eCustomGameModeHostOption_All, input->readVarInt());
  mSettings.mPlayerAbilities.read(input);
     mSettings.mLivesPerRound = input->readVarInt();
     mSettings.mLootSetId = static_cast<unsigned int>(input->readInt());
@@ -45,13 +45,13 @@ void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
     mSettings.mSmallSkinsEnabled = input->readBoolean();
     mSettings.mRoundLength = input->readInt();
     mSettings.mMaxPlayers = input->readInt();
-    mSettings.mFriendlyFire = input->readBoolean();
+    mSettings.mCentralSpawnDisabled = input->readBoolean();
     mSettings.mTeamGame = input->readBoolean();
     mSettings.mSpectatorParticipation = input->readBoolean();
 }
 void ClientboundMGPlayerSettingsUpdatePacket::write(DataOutputStream* output)
 {
-    output->writeVarInt(mSettings.Get(eCustomGameModeHostOption_All));
+    output->writeVarInt(mSettings.mHostOptions.Get(eCustomGameModeHostOption_All));
     mSettings.mPlayerAbilities.write(output);
     output->writeVarInt(mSettings.mLivesPerRound);
     output->writeInt(static_cast<int>(mSettings.mLootSetId));
@@ -91,7 +91,7 @@ void ClientboundMGPlayerSettingsUpdatePacket::write(DataOutputStream* output)
     output->writeBoolean(mSettings.mSmallSkinsEnabled);
     output->writeInt(mSettings.mRoundLength);
     output->writeInt(mSettings.mMaxPlayers);
-    output->writeBoolean(mSettings.mFriendlyFire);
+    output->writeBoolean(mSettings.mCentralSpawnDisabled);
     output->writeBoolean(mSettings.mTeamGame);
     output->writeBoolean(mSettings.mSpectatorParticipation);
 }

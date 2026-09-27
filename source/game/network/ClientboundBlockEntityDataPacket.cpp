@@ -10,13 +10,13 @@
 ClientboundBlockEntityDataPacket::ClientboundBlockEntityDataPacket()
 {
     _init();
-    compressed = true;
+    shouldDelay = true;
 }
 
 ClientboundBlockEntityDataPacket::ClientboundBlockEntityDataPacket(const BlockPos& pos, int type, int dimension, CompoundTag* tag)
 {
     _init();
-    compressed = true;
+    shouldDelay = true;
     this->pos = pos;
     this->type = type;
     this->dimension = dimension;

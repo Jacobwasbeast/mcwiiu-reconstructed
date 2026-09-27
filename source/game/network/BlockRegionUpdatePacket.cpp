@@ -10,14 +10,13 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
-
-void MemSect(int section);
+#include "game/core/MemSect.hpp"
 
 BlockRegionUpdatePacket::BlockRegionUpdatePacket()
     : mX(0), mY(0), mZ(0), mWidth(0), mHeight(0), mDepth(0),
       mFullChunk(false), mChanges(new std::vector<LevelChunk::BlockChange>())
 {
-    compressed = true;
+    shouldDelay = true;
 }
 
 BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
@@ -27,7 +26,7 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
       mFullChunk(false), mHasBlockChanges(false),
       mChanges(new std::vector<LevelChunk::BlockChange>())
 {
-    compressed = true;
+    shouldDelay = true;
 
     if (level->mDimension->getType() == DimensionType::OVERWORLD)
         mDimension = 0;

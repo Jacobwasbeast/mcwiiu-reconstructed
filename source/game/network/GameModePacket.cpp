@@ -392,7 +392,7 @@ void GameModePacket::AddAreaBoundsData::WritePacket(boost::shared_ptr<GameModePa
 }
 
 GameModePacket::StateChangeData::StateChangeData()
-    : state(EGameModeStateDefault)
+    : state(eGameModeState_None)
 {
 }
 

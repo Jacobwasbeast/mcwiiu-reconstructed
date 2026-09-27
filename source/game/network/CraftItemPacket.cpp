@@ -9,10 +9,10 @@ CraftItemPacket::CraftItemPacket()
 {
 }
 
-CraftItemPacket::CraftItemPacket(int itemId, int count, short containerId)
-    : mStackedItems(), mItemIds(), mContainerId(containerId), mCraftType(static_cast<unsigned char>(count))
+CraftItemPacket::CraftItemPacket(int recipe, int craftType, short containerId)
+    : mStackedItems(), mItemIds(), mContainerId(containerId), mCraftType(static_cast<unsigned char>(craftType))
 {
-    mStackedItems.push_back(std::make_pair(itemId, -1));
+    mStackedItems.push_back(std::make_pair(recipe, -1));
 }
 
 CraftItemPacket::CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems, int craftType, short containerId)

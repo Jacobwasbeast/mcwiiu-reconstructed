@@ -7,7 +7,7 @@
 #include "game/network/PacketListener.hpp"
 
 UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket()
-    : mRuleType(static_cast<ConsoleGameRules::EGameRuleType>(16)), mDescription(), mItemId(0), mAuxValue(0), mDataTag(0), mPayload()
+    : mRuleType(ConsoleGameRules::eGameRuleType_LevelRules), mDescription(), mItemId(0), mAuxValue(0), mDataTag(0), mPayload()
 {
 }
 

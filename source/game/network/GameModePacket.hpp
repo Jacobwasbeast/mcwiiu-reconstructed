@@ -17,7 +17,17 @@ class TeamInvite;
 
 enum EGameModeState : int
 {
-    EGameModeStateDefault = 0
+    eGameModeState_None,
+    eGameModeState_LobbyCountdown,
+    eGameModeState_Lobby,
+    eGameModeState_SelectingGameRules,
+    eGameModeState_LoadingRound,
+    eGameModeState_WaitingToStart,
+    eGameModeState_RoundStarting,
+    eGameModeState_RoundPlaying,
+    eGameModeState_PostRound,
+    eGameModeState_RoundEnding,
+    eGameModeState_LoadingSubRound
 };
 
 class GameModePacket : public FlexiblePacket,
@@ -26,8 +36,34 @@ class GameModePacket : public FlexiblePacket,
 public:
     enum EMessage
     {
-        MessageUnknown = 0,
-        UpdateStartTime = 0x1C
+        eMessage_Follow = 0,
+        eMessage_StartSpectating = 1,
+        eMessage_SetCamera = 2,
+        eMessage_TransitionToRound = 3,
+        eMessage_Transition = 4,
+        eMessage_WaitForChunkLoading = 5,
+        eMessage_FinishedLoadingLocally = 6,
+        eMessage_RoundStart = 7,
+        eMessage_SendTeamInvite = 8,
+        eMessage_SyncTeamInvite = 9,
+        eMessage_RemoveTeamInvite = 10,
+        eMessage_AcceptTeamInvite = 11,
+        eMessage_AddAreaBounds = 13,
+        eMessage_SetAreaBounds = 14,
+        eMessage_ClearAreaBounds = 15,
+        eMessage_LeaveTeam = 16,
+        eMessage_ChangeCustomGameMode = 17,
+        eMessage_SetNextCustomGameMode = 18,
+        eMessage_LockPlayerLocation = 19,
+        eMessage_ChestRefill = 20,
+        eMessage_Tutorial = 21,
+        eMessage_Showdown = 22,
+        eMessage_StateChange = 23,
+        eMessage_DeathPosition = 24,
+        eMessage_UpdateSeed = 25,
+        eMessage_UpdateTheme = 26,
+        eMessage_UpdateThemeId = 27,
+        eMessage_UpdateStartTime = 28
     };
 
     class Data

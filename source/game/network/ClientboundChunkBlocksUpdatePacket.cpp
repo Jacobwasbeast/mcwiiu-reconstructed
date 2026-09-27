@@ -12,7 +12,7 @@
 
 ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket()
 {
-    compressed = true;
+    shouldDelay = true;
     x = 0;
     z = 0;
     count = 0;
@@ -22,7 +22,7 @@ ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket()
 ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket(
     int x, int z, arrayWithLength<short> changes, unsigned char count, Level* level)
 {
-    compressed = true;
+    shouldDelay = true;
     this->x = x;
     this->z = z;
     this->count = count;

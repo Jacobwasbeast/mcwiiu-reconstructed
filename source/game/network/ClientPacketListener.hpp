@@ -14,8 +14,10 @@
 
 class Minecraft;
 class Level;
+class MultiPlayerLevel;
 class Connection;
 class SavedDataMemoryStorage;
+class BlockPos;
 class ClientboundBlockEntityDataPacket;
 class ClientboundLoginPacket;
 class ClientboundAddEntityPacket;
@@ -240,14 +242,18 @@ private:
 
 public:
     std::wstring mRemoteAddress;
+    bool m_createdOk;
 
 private:
-    bool m_suppressStartOnPosition;
     Minecraft* m_minecraft;
-    Level* m_level;
+    MultiPlayerLevel* m_level;
     bool m_started;
-    int m_playerId;
+    bool m_suppressStartOnPosition;
+    int m_maxPlayers;
     Random m_random;
+    BlockPos* m_destroyedBlocks;
+    unsigned int m_destroyedBlockCount;
+    int m_playerId;
     SavedDataMemoryStorage* m_savedDataStorage;
 };
 

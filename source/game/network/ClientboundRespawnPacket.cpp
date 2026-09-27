@@ -8,17 +8,41 @@
 #include "game/world/LevelType.hpp"
 
 ClientboundRespawnPacket::ClientboundRespawnPacket()
-    : seed(0), dimension(-1), dimensionType(0), entityId(0), hardcore(0), gameMode(3), previousGameMode(0), difficultyId(0), worldType(1), keepData(1), debug(0), viewDistance(128), simulationDistance(0), x(0.0), y(0.0), z(0.0), yRot(0.0f), xRot(0.0f), positionAndRotation(0), difficulty(0), playerGameType(0), levelType(0)
+    : m_mapSeed(0), m_newSeaLevel(false), m_seaLevel(-1), m_newEntityId(0), m_xzSize(54), m_hellScale(3),
+      m_cloudHeight(128), m_modernEnd(true), m_biomeScale(0), m_biomeCentreXChunk(0), m_biomeCentreZChunk(0),
+      m_x(0.0), m_y(0.0), m_z(0.0), m_yRot(0.0f), m_xRot(0.0f), m_keepOldEntityData(true), m_dimension(0),
+      m_difficulty(NULL), m_playerGameType(NULL), m_levelType(NULL), m_hasPositionAndRotation(false)
 {
 }
 
-ClientboundRespawnPacket::ClientboundRespawnPacket(char dimension, long long seedValue, const GameType* gameType, const Difficulty* difficultyValue, LevelType* levelTypeValue, bool keep, int mode, int previousMode, int difficultyValueId, int type, bool hard, unsigned char world, int view, int simulation, bool debugValue, int entity)
-    : seed(seedValue), dimension(dimension), dimensionType(type), entityId(entity), hardcore(hard), gameMode(mode), previousGameMode((short)previousMode), difficultyId(difficultyValueId), worldType(world), keepData(keep), debug(debugValue), viewDistance(view), simulationDistance(simulation), x(0.0), y(0.0), z(0.0), yRot(0.0f), xRot(0.0f), positionAndRotation(0), difficulty(difficultyValue), playerGameType(gameType), levelType(levelTypeValue)
+ClientboundRespawnPacket::ClientboundRespawnPacket(char dimension, long long mapSeed, const GameType* playerGameType,
+                                                   const Difficulty* difficulty, LevelType* levelType,
+                                                   bool newSeaLevel, int newEntityId, int xzSize, int hellScale,
+                                                   int cloudHeight, bool modernEnd, unsigned char biomeScale,
+                                                   int biomeCentreXChunk, int biomeCentreZChunk,
+                                                   bool keepOldEntityData, int seaLevel)
+    : m_mapSeed(mapSeed), m_newSeaLevel(newSeaLevel), m_seaLevel(seaLevel), m_newEntityId(newEntityId),
+      m_xzSize(xzSize), m_hellScale(hellScale), m_cloudHeight(cloudHeight), m_modernEnd(modernEnd),
+      m_biomeScale(biomeScale), m_biomeCentreXChunk(biomeCentreXChunk), m_biomeCentreZChunk(biomeCentreZChunk),
+      m_x(0.0), m_y(0.0), m_z(0.0), m_yRot(0.0f), m_xRot(0.0f), m_keepOldEntityData(keepOldEntityData),
+      m_dimension(dimension), m_difficulty(difficulty), m_playerGameType(playerGameType), m_levelType(levelType),
+      m_hasPositionAndRotation(false)
 {
 }
 
-ClientboundRespawnPacket::ClientboundRespawnPacket(double xValue, double yValue, double zValue, float yRotation, float xRotation, char dimension, long long seedValue, const GameType* gameType, const Difficulty* difficultyValue, LevelType* levelTypeValue, bool keep, int mode, int previousMode, int difficultyValueId, int type, bool hard, unsigned char world, int view, int simulation, bool debugValue, int entity)
-    : seed(seedValue), dimension(dimension), dimensionType(type), entityId(entity), hardcore(hard), gameMode(mode), previousGameMode((short)previousMode), difficultyId(difficultyValueId), worldType(world), keepData(keep), debug(debugValue), viewDistance(view), simulationDistance(simulation), x(xValue), y(yValue), z(zValue), yRot(yRotation), xRot(xRotation), positionAndRotation(1), difficulty(difficultyValue), playerGameType(gameType), levelType(levelTypeValue)
+ClientboundRespawnPacket::ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot,
+                                                   char dimension, long long mapSeed,
+                                                   const GameType* playerGameType, const Difficulty* difficulty,
+                                                   LevelType* levelType, bool newSeaLevel, int newEntityId,
+                                                   int xzSize, int hellScale, int cloudHeight, bool modernEnd,
+                                                   unsigned char biomeScale, int biomeCentreXChunk,
+                                                   int biomeCentreZChunk, bool keepOldEntityData, int seaLevel)
+    : m_mapSeed(mapSeed), m_newSeaLevel(newSeaLevel), m_seaLevel(seaLevel), m_newEntityId(newEntityId),
+      m_xzSize(xzSize), m_hellScale(hellScale), m_cloudHeight(cloudHeight), m_modernEnd(modernEnd),
+      m_biomeScale(biomeScale), m_biomeCentreXChunk(biomeCentreXChunk), m_biomeCentreZChunk(biomeCentreZChunk),
+      m_x(x), m_y(y), m_z(z), m_yRot(yRot), m_xRot(xRot), m_keepOldEntityData(keepOldEntityData),
+      m_dimension(dimension), m_difficulty(difficulty), m_playerGameType(playerGameType), m_levelType(levelType),
+      m_hasPositionAndRotation(true)
 {
 }
 
@@ -33,71 +57,77 @@ void ClientboundRespawnPacket::handle(PacketListener* listener)
 
 void ClientboundRespawnPacket::read(DataInputStream* input)
 {
-    dimension = (char)input->readByte();
-    playerGameType = GameType::byId(input->readByte());
-    levelType = LevelType::getLevelType(Packet::readUtf(input, 16));
-    if (levelType == 0)
-        levelType = LevelType::DEFAULT;
-    seed = input->readLong();
-    difficulty = Difficulty::byId(input->readByte());
-    hardcore = input->readBoolean();
-    dimensionType = input->readInt();
-    gameMode = input->readInt();
-    worldType = input->readByte();
-    debug = input->readByte();
-    viewDistance = input->readInt();
-    simulationDistance = input->readInt();
-    keepData = input->readBoolean();
-    positionAndRotation = (unsigned char)input->readBoolean();
-    if (positionAndRotation)
+    m_dimension = input->readByte();
+    m_playerGameType = GameType::byId(input->readUnsignedByte());
+    m_levelType = LevelType::getLevelType(Packet::readUtf(input, 16));
+    if (m_levelType == NULL)
+        m_levelType = LevelType::DEFAULT;
+    m_mapSeed = input->readLong();
+    m_difficulty = Difficulty::byId(input->readUnsignedByte());
+    m_newSeaLevel = input->readBoolean();
+    m_newEntityId = input->readShort();
+    m_cloudHeight = input->readInt();
+    m_modernEnd = input->readBoolean();
+    m_biomeScale = input->readByte();
+    m_biomeCentreXChunk = input->readInt();
+    m_biomeCentreZChunk = input->readInt();
+    m_keepOldEntityData = input->read();
+    m_hasPositionAndRotation = input->readBoolean();
+    if (m_hasPositionAndRotation)
     {
-        x = input->readDouble();
-        y = input->readDouble();
-        z = input->readDouble();
-        yRot = input->readFloat();
-        xRot = input->readFloat();
+        m_x = input->readDouble();
+        m_y = input->readDouble();
+        m_z = input->readDouble();
+        m_xRot = input->readFloat();
+        m_yRot = input->readFloat();
     }
-    entityId = input->readInt();
+    m_seaLevel = input->readInt();
 }
 
 void ClientboundRespawnPacket::write(DataOutputStream* output)
 {
-    output->writeByte((unsigned char)dimension);
-    output->writeByte((unsigned char)playerGameType->getId());
-    Packet::writeUtf(levelType != 0 ? levelType->getGeneratorName() : std::wstring(), output);
-    output->writeLong(seed);
-    output->writeByte((unsigned char)difficulty->getId());
-    output->writeBoolean(hardcore != 0);
-    output->writeInt(dimensionType);
-    output->writeInt(gameMode);
-    output->writeByte(worldType);
-    output->writeByte(debug);
-    output->writeInt(viewDistance);
-    output->writeInt(simulationDistance);
-    output->writeBoolean(keepData != 0);
-    output->writeBoolean(positionAndRotation != 0);
-    if (positionAndRotation)
+    output->writeByte(m_dimension);
+    output->writeByte(m_playerGameType->getId());
+    if (m_levelType == NULL)
+        Packet::writeUtf(L"", output);
+    else
+        Packet::writeUtf(m_levelType->getGeneratorName(), output);
+    output->writeLong(m_mapSeed);
+    output->writeByte(m_difficulty->getId());
+    output->writeBoolean(m_newSeaLevel);
+    output->writeShort(static_cast<short>(m_newEntityId));
+    output->writeInt(m_cloudHeight);
+    output->writeBoolean(m_modernEnd);
+    output->writeByte(m_biomeScale);
+    output->writeInt(m_biomeCentreXChunk);
+    output->writeInt(m_biomeCentreZChunk);
+    output->write(m_keepOldEntityData);
+    output->writeBoolean(m_hasPositionAndRotation);
+    if (m_hasPositionAndRotation)
     {
-        output->writeDouble(x);
-        output->writeDouble(y);
-        output->writeDouble(z);
-        output->writeFloat(yRot);
-        output->writeFloat(xRot);
+        output->writeDouble(m_x);
+        output->writeDouble(m_y);
+        output->writeDouble(m_z);
+        output->writeFloat(m_xRot);
+        output->writeFloat(m_yRot);
     }
-    output->writeInt(entityId);
+    output->writeInt(m_seaLevel);
 }
 
 int ClientboundRespawnPacket::getEstimatedSize()
 {
-    return (levelType != 0 ? (int)levelType->getGeneratorName().size() : 0) + 18;
+    int levelTypeLength = 0;
+    if (m_levelType != NULL)
+        levelTypeLength = static_cast<int>(m_levelType->getGeneratorName().length());
+    return levelTypeLength + 18;
 }
 
-int ClientboundRespawnPacket::getDimension() { return (int)dimension; }
-const Difficulty* ClientboundRespawnPacket::getDifficulty() { return difficulty; }
-const GameType* ClientboundRespawnPacket::getPlayerGameType() { return playerGameType; }
-LevelType* ClientboundRespawnPacket::getLevelType() { return levelType; }
-bool ClientboundRespawnPacket::shouldKeepOldEntityData() const { return keepData == 1; }
-unsigned char ClientboundRespawnPacket::hasPositionAndRotation() const { return positionAndRotation; }
+int ClientboundRespawnPacket::getDimension() { return m_dimension; }
+const Difficulty* ClientboundRespawnPacket::getDifficulty() { return m_difficulty; }
+const GameType* ClientboundRespawnPacket::getPlayerGameType() { return m_playerGameType; }
+LevelType* ClientboundRespawnPacket::getLevelType() { return m_levelType; }
+bool ClientboundRespawnPacket::shouldKeepOldEntityData() const { return m_keepOldEntityData; }
+bool ClientboundRespawnPacket::hasPositionAndRotation() const { return m_hasPositionAndRotation; }
 int ClientboundRespawnPacket::getPacketId() { return 9; }
 
 boost::shared_ptr<Packet> ClientboundRespawnPacket::create()

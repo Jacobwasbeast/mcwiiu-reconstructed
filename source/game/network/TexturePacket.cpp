@@ -6,7 +6,7 @@
 
 TexturePacket::TexturePacket()
 {
-    compressed = true;
+    shouldDelay = true;
     textureName = L"";
     data = NULL;
     length = 0;
@@ -14,7 +14,7 @@ TexturePacket::TexturePacket()
 
 TexturePacket::TexturePacket(const std::wstring& textureName, unsigned char* data, unsigned int length)
 {
-    compressed = true;
+    shouldDelay = true;
     this->textureName = textureName;
     this->data = data;
     this->length = length;

@@ -17,7 +17,7 @@ class CraftItemPacket : public Packet, public boost::enable_shared_from_this<Cra
 {
 public:
     CraftItemPacket();
-    CraftItemPacket(int itemId, int count, short containerId);
+    CraftItemPacket(int recipe, int craftType, short containerId);
     CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems, int craftType, short containerId);
     CraftItemPacket(std::vector<int>& itemIds, short containerId);
     virtual ~CraftItemPacket();

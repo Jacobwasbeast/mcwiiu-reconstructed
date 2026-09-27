@@ -133,12 +133,12 @@ void ServerConnectionListener::sendPreLoginResponse()
     }
 
     const unsigned int hostOption = g_pApp != NULL
-        ? g_pApp->GetGameHostOption(eGameHostOption_32) : 0;
+        ? g_pApp->GetGameHostOption(eGameHostOption_All) : 0;
     unsigned int maxPlayers = CGameNetworkManager::sInstance.GetMaxPlayers();
     const MiniGameDef* miniGame = Minecraft::GetInstance() != NULL
         ? Minecraft::GetInstance()->GetMiniGame() : NULL;
     if (miniGame != NULL)
-        maxPlayers = miniGame->GetHostOption(static_cast<eCustomGameModeHostOption>(10));
+        maxPlayers = miniGame->GetHostOption(eCustomGameModeHostOption_All);
 
     const bool matchmakingEnabled = CGameNetworkManager::sInstance.IsMatchmakingEnabled();
     const EMiniGameId miniGameId = miniGame != NULL
@@ -149,7 +149,7 @@ void ServerConnectionListener::sendPreLoginResponse()
         playerUidArray,
         static_cast<unsigned int>(onlinePlayers.size()),
         guestFlags,
-        static_cast<unsigned int>(m_server->mLoginComparisonValue),
+        static_cast<unsigned int>(m_server->ugcPlayersVersion),
         uniqueMapName,
         hostOption,
         maxPlayers,
@@ -179,7 +179,7 @@ void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLo
 void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet)
 {
  #ifdef RECON_NATIVE
-    std::fprintf(stderr, "[handshake] login version=%x comparison=%d expected=%d\n", packet->mEntityId, packet->mViewDistance, m_server->mLoginComparisonValue);
+    std::fprintf(stderr, "[handshake] login version=%x comparison=%d expected=%d\n", packet->mEntityId, packet->mViewDistance, m_server->ugcPlayersVersion);
 #endif
     if (packet->mEntityId != 0x13C)
     {
@@ -190,7 +190,7 @@ void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPac
 
     if (m_server->getPlayers()->isXuidBanned(packet->mPlayerUID2))
     {
-        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x1A));
+        disconnect(DisconnectPacket::eDisconnectReason_LoginRejected);
         return;
     }
 
@@ -199,7 +199,7 @@ void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPac
 
 void ServerConnectionListener::handleAcceptedLogin(boost::shared_ptr<ClientboundLoginPacket> packet)
 {
-    if (packet->mViewDistance != m_server->mLoginComparisonValue)
+    if (packet->mViewDistance != m_server->ugcPlayersVersion)
     {
         sendPreLoginResponse();
         return;
@@ -230,7 +230,7 @@ void ServerConnectionListener::onDisconnect(DisconnectPacket::eDisconnectReason,
 void ServerConnectionListener::handleGetInfo(boost::shared_ptr<GetInfoPacket>)
 {
     boost::shared_ptr<Packet> packet(new DisconnectPacket(
-        static_cast<DisconnectPacket::eDisconnectReason>(0x0D)));
+        DisconnectPacket::eDisconnectReason_GameFull));
     m_connection->send(packet);
     m_connection->sendAndQuit();
     m_disconnected = true;

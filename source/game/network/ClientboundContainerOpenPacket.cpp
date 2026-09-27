@@ -155,7 +155,7 @@ int ClientboundContainerOpenPacket::getEntityId()
 
 uint32_t ClientboundContainerOpenPacket::isContainer()
 {
-    return mSize != 0;
+    return mSize > 0;
 }
 
 int ClientboundContainerOpenPacket::getPacketId()

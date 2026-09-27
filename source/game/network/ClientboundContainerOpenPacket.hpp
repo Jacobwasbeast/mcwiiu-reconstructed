@@ -41,6 +41,26 @@ public:
 
     static boost::shared_ptr<Packet> create();
 
+    static const int CONTAINER = 0;
+    static const int WORKBENCH = 1;
+    static const int FURNACE = 2;
+    static const int ENCHANTMENT = 4;
+    static const int BREWING_STAND = 5;
+    static const int TRADER_NPC = 6;
+    static const int BEACON = 7;
+    static const int HOPPER = 9;
+    static const int DROPPER = 10;
+    static const int HORSE = 11;
+    static const int FIREWORKS = 12;
+    static const int BONUS_CHEST = 13;
+    static const int LARGE_CHEST = 14;
+    static const int ENDER_CHEST = 15;
+    static const int MINECART_CHEST = 16;
+    static const int MINECART_HOPPER = 17;
+    static const int REPAIR_TABLE = 19;
+    static const int TRAP = 20;
+    static const int SHULKER_BOX = 21;
+
 private:
     int mContainerId;
     int mType;

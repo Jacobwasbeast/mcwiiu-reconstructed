@@ -11,7 +11,7 @@ ServerboundContainerClickPacket::ServerboundContainerClickPacket()
     slotNum = 0;
     buttonNum = 0;
     uid = 0;
-    clickType = (ClickType::eClickType)0;
+    clickType = ClickType::eClickType_Pickup;
     numSlots = 0;
 }
 
