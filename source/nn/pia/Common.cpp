@@ -1,10 +1,10 @@
 #include "nn/pia/Common.hpp"
+
+#include <nn/middleware.h>
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/ModuleStackChecker.hpp"
 #include "platform/wiiu/pead.hpp"
 #include "vendor/__N_14_common_Api_cpp_61832df6.hpp"
-
-extern void SetModuleId(const char* moduleId);
 
 namespace nn
 {

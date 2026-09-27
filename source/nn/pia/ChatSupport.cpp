@@ -1,7 +1,7 @@
 #include "nn/pia/ChatSupport.hpp"
-#include "nn/pia/chat/CodecFacade.hpp"
 
-extern void SetModuleId(const char* moduleId);
+#include <nn/middleware.h>
+#include "nn/pia/chat/CodecFacade.hpp"
 
 namespace nn
 {

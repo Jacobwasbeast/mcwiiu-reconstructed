@@ -24,7 +24,7 @@ Result Initialize()
     if (g_chatInitialized != 0)
         return 0x10c02;
 
-    pead::SafeStringBase<char> heapName("pia_chat_heap");
+    pead::SafeStringBase<char> heapName("pia chat heap");
     const ModuleType chatModule = static_cast<ModuleType>(0xb);
     common::HeapManager::Setup(chatModule, 0, heapName);
     g_chatInitialized = 1;
