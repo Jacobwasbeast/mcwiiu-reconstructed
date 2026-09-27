@@ -1,4 +1,5 @@
 #include "game/entity/ai/LlamaFollowCaravanGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -102,7 +103,7 @@ bool LlamaFollowCaravanGoal::canUse()
     mLlama->joinCaravan(closest);
     ++distance;
 
-    if (leashHolder && (leashHolder->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+    if (leashHolder && (leashHolder->GetType() & EntityType::PLAYER) == EntityType::PLAYER
         && distance > 4)
     {
         boost::static_pointer_cast<Player>(leashHolder)->awardStat(
@@ -190,5 +191,5 @@ void LlamaFollowCaravanGoal::tick()
 
 std::wstring LlamaFollowCaravanGoal::getName()
 {
-    return std::wstring(L"Follow_Caravan");
+    return std::wstring(L"Follow Caravan");
 }

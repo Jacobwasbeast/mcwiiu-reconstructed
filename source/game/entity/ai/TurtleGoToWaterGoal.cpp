@@ -44,7 +44,7 @@ bool TurtleGoToWaterGoal::canContinueToUse()
 bool TurtleGoToWaterGoal::isValidTarget(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlockState(pos)->getBlock();
-    return block == Blocks::WATER || block == Blocks::FLOWING_WATER;
+    return block == Blocks::water || block == Blocks::flowing_water;
 }
 
 std::wstring TurtleGoToWaterGoal::getName()

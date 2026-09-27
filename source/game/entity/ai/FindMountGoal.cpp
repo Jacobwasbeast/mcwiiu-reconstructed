@@ -1,4 +1,5 @@
 #include "game/entity/ai/FindMountGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -52,11 +53,11 @@ bool FindMountGoal::canUse()
         mMob->mLevel->getEntitiesOfClass(typeid(Mob), searchBox);
 
     const unsigned long long mountTypes[] = {
-        0x0D680004ULL, 0x5D560041ULL, 0x2D6A0000ULL, 0x2D698001ULL,
-        0x2D690001ULL, 0x5D550043ULL, 0x2D6A0001ULL, 0x2D698002ULL,
-        0x2D6C0001ULL, 0x2D680003ULL, 0x2D680002ULL, 0x2D690002ULL,
-        0x5D560040ULL, 0x0D6C0002ULL, 0x5D550040ULL, 0x2D690003ULL,
-        0x5D550042ULL
+        EntityType::CHICKEN, EntityType::CAVE_SPIDER, EntityType::COW, EntityType::DONKEY,
+        EntityType::HORSE, EntityType::HUSK, EntityType::MUSHROOM_COW, EntityType::MULE,
+        EntityType::OCELOT, EntityType::PIG, EntityType::SHEEP, EntityType::SKELETON_HORSE,
+        EntityType::SPIDER, EntityType::WOLF, EntityType::ZOMBIE, EntityType::ZOMBIE_HORSE,
+        EntityType::ZOMBIE_VILLAGER
     };
     double nearestDistance = -1.0;
     std::vector<boost::shared_ptr<Entity> >::iterator it;
@@ -64,16 +65,16 @@ bool FindMountGoal::canUse()
     {
         boost::shared_ptr<Entity> candidate = *it;
         unsigned long long type = candidate->GetType();
-        if ((type & 0x0D000000ULL) != 0x0D000000ULL || candidate->getId() == mMob->getId())
+        if ((type & EntityType::MOB) != EntityType::MOB || candidate->getId() == mMob->getId())
             continue;
 
         boost::shared_ptr<Mob> mount = boost::static_pointer_cast<Mob>(candidate);
         if (!mount->isAlive() || !mount->canAddPassenger(mMob->shared_from_this()) || mount->isSleeping())
             continue;
-        if ((type & 0x0D6C0000ULL) == 0x0D6C0000ULL &&
+        if ((type & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL &&
             boost::static_pointer_cast<TamableAnimal>(mount)->isTame())
             continue;
-        if ((type & 0x0D690000ULL) == 0x0D690000ULL &&
+        if ((type & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE &&
             boost::static_pointer_cast<AbstractHorse>(mount)->isTamed())
             continue;
         if (mount->isBaby() || (mAvoidWater && mount->isInWater()))

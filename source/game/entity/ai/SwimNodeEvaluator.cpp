@@ -102,7 +102,7 @@ const BlockPathTypes* SwimNodeEvaluator::isFree(int x, int y, int z)
 {
     for (int xx = x; xx < x + mEntityWidth; ++xx)
         for (int yy = y; yy < y + mEntityHeight; ++yy)
-            for (int zz = z; zz < z + mEntityY; ++zz)
+            for (int zz = z; zz < z + mEntityDepth; ++zz)
             {
                 const BlockPathTypes* type = getPathTypeAtPos(xx, yy, zz, true);
                 if (type != BlockPathTypes::WATER)

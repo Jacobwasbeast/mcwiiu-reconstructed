@@ -138,5 +138,5 @@ void JumpGoal::tick()
 
 std::wstring JumpGoal::getName()
 {
-    return std::wstring(L"Jump_Goal");
+    return std::wstring(L"Jump Goal");
 }

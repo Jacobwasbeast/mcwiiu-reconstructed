@@ -1,4 +1,5 @@
 #include "game/entity/ai/MobCanWearArmourEntitySelector.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -17,7 +18,7 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
     }
 
     const unsigned long long type = entity->GetType();
-    if ((type & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+    if ((type & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         return false;
     }
@@ -29,28 +30,28 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
         return false;
     }
 
-    if (type == ENTITY_TYPE_VILLAGER)
+    if (type == EntityType::VILLAGER)
     {
         return false;
     }
 
-    if ((type & ENTITY_TYPE_ZOMBIE) == ENTITY_TYPE_ZOMBIE ||
-        (type & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER)
+    if ((type & EntityType::ZOMBIE) == EntityType::ZOMBIE ||
+        (type & EntityType::MONSTER) == EntityType::MONSTER)
     {
         return true;
     }
 
-    if ((type & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
+    if ((type & EntityType::MOB) == EntityType::MOB)
     {
         return boost::static_pointer_cast<Mob>(livingEntity)->canPickUpLoot();
     }
 
-    if (type == ENTITY_TYPE_ARMOR_STAND)
+    if (type == EntityType::ARMOR_STAND)
     {
         return true;
     }
 
-    return (type & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER;
+    return (type & EntityType::PLAYER) == EntityType::PLAYER;
 }
 
 MobCanWearArmourEntitySelector::~MobCanWearArmourEntitySelector()

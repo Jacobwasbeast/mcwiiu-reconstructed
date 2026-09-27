@@ -1,4 +1,5 @@
 #include "game/entity/ai/ParentHorseSelector.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -7,7 +8,7 @@
 
 bool ParentHorseSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity->GetType() == ENTITY_TYPE_HORSE
+    return entity->GetType() == EntityType::HORSE
         && boost::static_pointer_cast<AbstractHorse>(entity)->isBred();
 }
 

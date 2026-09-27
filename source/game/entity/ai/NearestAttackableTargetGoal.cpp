@@ -1,4 +1,5 @@
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <typeinfo>
@@ -43,10 +44,10 @@ double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_
     if (item->getItem() == Items::skull)
     {
         int damage = item->getDamageValue();
-        bool disguisedAsSkeleton = mMob->GetType() == 0x5D540441ULL && damage == 0;
+        bool disguisedAsSkeleton = mMob->GetType() == EntityType::SKELETON && damage == 0;
         bool disguisedAsZombie =
-            (mMob->GetType() & ENTITY_TYPE_ZOMBIE) == ENTITY_TYPE_ZOMBIE && damage == 2;
-        bool disguisedAsCreeper = mMob->GetType() == 0x5D540041ULL && damage == 4;
+            (mMob->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE && damage == 2;
+        bool disguisedAsCreeper = mMob->GetType() == EntityType::CREEPER && damage == 4;
         if (disguisedAsSkeleton || disguisedAsZombie || disguisedAsCreeper)
             return 0.5;
     }

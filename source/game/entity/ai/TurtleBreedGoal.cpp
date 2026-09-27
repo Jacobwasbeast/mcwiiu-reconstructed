@@ -43,7 +43,7 @@ void TurtleBreedGoal::breed()
     mPartner.lock()->resetLove();
 
     Random* random = mAnimal->getRandom();
-    if (mLevel->getGameRules()->getBoolean(4))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
         boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
             mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ,

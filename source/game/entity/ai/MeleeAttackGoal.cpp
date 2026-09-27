@@ -1,4 +1,5 @@
 #include "game/entity/ai/MeleeAttackGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -55,7 +56,7 @@ bool MeleeAttackGoal::canUse()
 
     if (getAttackReachSqr(target) < mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ))
     {
-        if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
             && mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
             mMob->setTarget(boost::shared_ptr<LivingEntity>());
         return false;
@@ -74,7 +75,7 @@ bool MeleeAttackGoal::canContinueToUse()
 
     if (mMob->isWithinRestriction(BlockPos(target)))
     {
-        if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
             if (player->isSpectator() || player->isCreative()
@@ -96,7 +97,7 @@ void MeleeAttackGoal::start()
 void MeleeAttackGoal::stop()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (target && (target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if (target && (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
         if (player->isSpectator() || player->isCreative())
@@ -165,7 +166,7 @@ void MeleeAttackGoal::checkAndPerformAttack(boost::shared_ptr<LivingEntity> targ
 double MeleeAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntity> target)
 {
     Entity* reachEntity = mMob;
-    if (Entity::instanceof(mMob->getVehicle(), ENTITY_TYPE_MOB))
+    if (Entity::instanceof(mMob->getVehicle(), EntityType::MOB))
         reachEntity = mMob->getVehicle().get();
     double width = reachEntity->mBbWidth + reachEntity->mBbWidth;
     return width * width + target->mBbWidth;

@@ -1,4 +1,5 @@
 #include "game/entity/ai/FollowOwnerGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -36,7 +37,7 @@ bool FollowOwnerGoal::canUse()
         return false;
     }
 
-    if ((owner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(owner);
         if (player->isSpectator())

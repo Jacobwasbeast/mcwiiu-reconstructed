@@ -13,9 +13,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
 
 DrownedPathNavigation::DrownedPathNavigation(Mob* mob, Level* level)
     : GroundPathNavigation(mob, level, false),

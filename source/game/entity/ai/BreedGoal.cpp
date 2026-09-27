@@ -1,4 +1,5 @@
 #include "game/entity/ai/BreedGoal.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -112,7 +113,7 @@ void BreedGoal::breed()
     boost::shared_ptr<Animal> partner = mPartner.lock();
     mAnimal->setDespawnProtected();
     partner->setDespawnProtected();
-    if (!mLevel->canCreateMore(mAnimal->GetType(), 1))
+    if (!mLevel->canCreateMore(mAnimal->GetType(), Level::eSpawnType_Breed))
     {
         mAnimal->resetLove();
         partner->resetLove();
@@ -125,7 +126,7 @@ void BreedGoal::breed()
         child->setAge(-24000);
         child->setPos(mAnimal->mX, mAnimal->mY, mAnimal->mZ);
         mLevel->addEntity(child);
-        mLevel->broadcastEntityEvent(child, 12, 0);
+        mLevel->broadcastEntityEvent(child, EntityEvent::LOVE_HEARTS, 0);
     }
 
     mAnimal->resetLove();
@@ -153,7 +154,7 @@ void BreedGoal::breed()
                             arrayWithLength<int>());
     }
 
-    if (mLevel->getGameRules()->getBoolean(4))
+    if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
         boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
             mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ, random->nextInt(7) + 1));

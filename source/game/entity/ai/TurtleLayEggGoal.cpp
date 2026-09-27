@@ -13,6 +13,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/TurtleEggBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 TurtleLayEggGoal::TurtleLayEggGoal(Turtle* turtle, double speedModifier,
                                    double searchDistance)
@@ -110,8 +112,9 @@ void TurtleLayEggGoal::tick()
         level->playSound(boost::shared_ptr<Player>(), position, SoundEvents::TURTLE_LAY_EGG,
                          SoundSource::eSoundSource_Blocks, 0.3f,
                          level->mRandom->nextFloat() * 0.2f + 0.9f, 16.0f);
-        const BlockState* state = Blocks::turtle_egg->getBlockState(eggs);
-        level->setBlock(position, state, 3, false);
+        TypedBoxed<int> eggCount(eggs);
+        const BlockState* state = Blocks::turtle_egg->defaultBlockState()->setBoxedValue(TurtleEggBlock::EGG_COUNT, &eggCount);
+        level->setBlock(position, state, Block::UPDATE_ALL, false);
         mTurtle->setHasEgg(false);
         mTurtle->setIsLayingEgg(false);
     }

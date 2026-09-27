@@ -1,4 +1,5 @@
 #include "game/entity/ai/BreakDoorGoal.hpp"
+#include "game/world/LevelEvent.hpp"
 
 #include "game/core/Difficulty.hpp"
 #include "game/core/GameRules.hpp"
@@ -23,7 +24,7 @@ BreakDoorGoal::~BreakDoorGoal()
 bool BreakDoorGoal::canUse()
 {
     return DoorInteractGoal::canUse()
-        && mMob->mLevel->getGameRules()->getBoolean(1)
+        && mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING)
         && !DoorBlock::isOpen(mMob->mLevel, mDoorPos);
 }
 
@@ -51,7 +52,7 @@ void BreakDoorGoal::tick()
     DoorInteractGoal::tick();
 
     if (mMob->getRandom()->nextInt(20) == 0)
-        mMob->mLevel->levelEvent(1019, mDoorPos, 0);
+        mMob->mLevel->levelEvent(LevelEvent::SOUND_ZOMBIE_WOODEN_DOOR, mDoorPos, 0);
 
     ++mBreakingTime;
     int progress = (int)(((float)mBreakingTime / 240.0f) * 10.0f);
@@ -64,8 +65,8 @@ void BreakDoorGoal::tick()
     if (mBreakingTime == 240 && mMob->mLevel->getDifficulty() == Difficulty::HARD)
     {
         mMob->mLevel->removeBlock(mDoorPos);
-        mMob->mLevel->levelEvent(1021, mDoorPos, 0);
-        mMob->mLevel->levelEvent(2001, mDoorPos, Block::getId(mDoorBlock));
+        mMob->mLevel->levelEvent(LevelEvent::SOUND_ZOMBIE_DOOR_CRASH, mDoorPos, 0);
+        mMob->mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, mDoorPos, Block::getId(mDoorBlock));
     }
 }
 

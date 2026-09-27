@@ -4,6 +4,7 @@
 #include "game/core/Mth.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/Level.hpp"
@@ -28,7 +29,7 @@ BlockPos* BreathAirGoal::findAirInArea(const BlockPos& minPos, const BlockPos& m
             for (int y = minPos.y; y <= maxPos.y; ++y)
             {
                 BlockPos pos(x, y, z);
-                if (mDolphin->mLevel->getBlockState(pos)->getBlock() == Blocks::AIR)
+                if (mDolphin->mLevel->getBlockState(pos)->getMaterial() == Material::AIR)
                     return new BlockPos(pos);
             }
         }
@@ -65,7 +66,7 @@ void BreathAirGoal::tick()
     if (mDolphin->getNavigation()->isDone())
     {
         BlockPos pos(mDolphin);
-        if (mDolphin->mLevel->getBlockState(pos)->getBlock() != Blocks::AIR)
+        if (mDolphin->mLevel->getBlockState(pos)->getMaterial() != Material::AIR)
             findAirPosition();
     }
 

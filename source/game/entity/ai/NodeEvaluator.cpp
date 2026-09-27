@@ -4,6 +4,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/core/Mth.hpp"
 
 NodeEvaluator::NodeEvaluator()
 {
@@ -31,17 +32,9 @@ void NodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)
     mBlockStateMap.clear();
     mBlockPathTypeMap.clear();
     Node::ResetPool();
-    float width = mob->mBbWidth + 1.0f;
-    float height = mob->mBbHeight + 1.0f;
-    mEntityWidth = static_cast<int>(width);
-    if (static_cast<float>(mEntityWidth) > width)
-        --mEntityWidth;
-    mEntityHeight = static_cast<int>(height);
-    if (static_cast<float>(mEntityHeight) > height)
-        --mEntityHeight;
-    mEntityY = static_cast<int>(width);
-    if (width < static_cast<float>(mEntityY))
-        --mEntityY;
+    mEntityWidth = Mth::floor(mob->mBbWidth + 1.0f);
+    mEntityHeight = Mth::floor(mob->mBbHeight + 1.0f);
+    mEntityDepth = Mth::floor(mob->mBbWidth + 1.0f);
 }
 
 void NodeEvaluator::done()

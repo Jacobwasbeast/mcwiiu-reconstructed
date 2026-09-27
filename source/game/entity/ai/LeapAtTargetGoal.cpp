@@ -1,4 +1,5 @@
 #include "game/entity/ai/LeapAtTargetGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -42,7 +43,7 @@ bool LeapAtTargetGoal::canContinueToUse()
     {
         return false;
     }
-    if ((target->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    if ((target->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         return !mMob->mOnGround;
     }

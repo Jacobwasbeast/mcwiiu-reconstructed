@@ -1,4 +1,5 @@
 #include "game/entity/ai/LookControl.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <math.h>
 
@@ -24,7 +25,7 @@ void LookControl::setLookAt(boost::shared_ptr<Entity> entity, float yMaxRotation
 {
     mWantedX = entity->mX;
     mWantedZ = entity->mZ;
-    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         mWantedY = entity->mY + entity->getEyeHeight();
     }
@@ -74,7 +75,7 @@ float LookControl::rotlerp(float from, float to, float maxDelta)
 
 void LookControl::tick()
 {
-    if (mMob->GetType() == 0x5D540047ULL)
+    if (mMob->GetType() == EntityType::WITHER_BOSS)
     {
         return;
     }

@@ -20,7 +20,7 @@ public:
                                                     int sizeX, int sizeY, int sizeZ,
                                                     bool canOpenDoors, bool canPassDoors,
                                                     int& pathTypeFlags,
-                                                    const BlockPathTypes* preferred);
+                                                    const BlockPathTypes* pathType);
     virtual const BlockPathTypes* getBlockPathType(LevelSource* levelSource, int x, int y, int z);
 
     double inWaterDependentPosHeight(const BlockPos& pos);

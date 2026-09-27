@@ -1,4 +1,5 @@
 #include "game/entity/ai/SwimIdleGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cstdlib>
 #include <string>
@@ -69,21 +70,21 @@ void SwimIdleGoal::tick()
     mMob->mZd = 0.0;
 
     const unsigned long long type = mMob->GetType();
-    if ((type & 0x0D502000ULL) != 0x0D502000ULL
-        && (mMob->GetType() & 0x0D602000ULL) != 0x0D602000ULL)
+    if ((type & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL
+        && (mMob->GetType() & EntityType::AGABLE_WATER_ANIMAL) != EntityType::AGABLE_WATER_ANIMAL)
     {
         return;
     }
 
     boost::shared_ptr<WaterAnimal> waterAnimal =
         boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
-    if (waterAnimal->mSpeed > 0.0f)
+    if (waterAnimal->mSwimAmplitude > 0.0f)
     {
         const int id = mMob->getId();
         const float phase = static_cast<float>(std::abs(id) % 100);
         const float angle =
-            (static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mMovementSpeedScale;
-        const float swim = Mth::sin(angle) * waterAnimal->mSpeed;
+            (static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency;
+        const float swim = Mth::sin(angle) * waterAnimal->mSwimAmplitude;
         const float yaw = mMob->mYRot * 0.01745329238474369f;
         const float cosYaw = Mth::cos(yaw);
         const float sinYaw = Mth::sin(yaw);

@@ -1,4 +1,5 @@
 #include "game/entity/ai/LivingShulkerSelector.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/entity/mob/Entity.hpp"
 
@@ -6,7 +7,7 @@
 
 bool LivingShulkerSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity->GetType() == ENTITY_TYPE_SHULKER && entity->isAlive();
+    return entity->GetType() == EntityType::SHULKER && entity->isAlive();
 }
 
 LivingShulkerSelector::~LivingShulkerSelector()

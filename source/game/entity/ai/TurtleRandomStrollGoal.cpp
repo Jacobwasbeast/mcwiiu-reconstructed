@@ -1,4 +1,5 @@
 #include "game/entity/ai/TurtleRandomStrollGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/Turtle.hpp"
 
@@ -14,7 +15,7 @@ TurtleRandomStrollGoal::~TurtleRandomStrollGoal()
 bool TurtleRandomStrollGoal::canUse()
 {
     Turtle* turtle = static_cast<Turtle*>(mMob);
-    if ((turtle->GetType() != 0x2D680007ULL || !turtle->hasEgg() || turtle->hasGivenUpOnEgg())
+    if ((turtle->GetType() != EntityType::TURTLE || !turtle->hasEgg() || turtle->hasGivenUpOnEgg())
         && !turtle->isInWater())
     {
         return RandomStrollGoal::canUse();
@@ -24,5 +25,5 @@ bool TurtleRandomStrollGoal::canUse()
 
 std::wstring TurtleRandomStrollGoal::getName()
 {
-    return std::wstring(L"Turtle_Random_Stroll");
+    return std::wstring(L"Turtle Random Stroll");
 }

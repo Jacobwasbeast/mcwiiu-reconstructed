@@ -1,4 +1,5 @@
 #include "game/entity/ai/ShulkerDefenseAttackGoalPredicate.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -6,8 +7,8 @@
 
 bool ShulkerDefenseAttackGoalPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    return (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
-        && (entity->GetType() & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER;
+    return (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        && (entity->GetType() & EntityType::MONSTER) == EntityType::MONSTER;
 }
 
 ShulkerDefenseAttackGoalPredicate::~ShulkerDefenseAttackGoalPredicate()

@@ -1,4 +1,5 @@
 #include "game/entity/ai/FollowBoatGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -34,7 +35,7 @@ bool FollowBoatGoal::canUse()
         if (boat->getControllingPassenger())
         {
             boost::shared_ptr<Entity> passenger = boat->getControllingPassenger();
-            if ((passenger->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+            if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
             {
                 boost::shared_ptr<LivingEntity> livingPassenger =
                     boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
@@ -79,7 +80,7 @@ void FollowBoatGoal::start()
         if (boat->getControllingPassenger())
         {
             boost::shared_ptr<Entity> passenger = boat->getControllingPassenger();
-            if ((passenger->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+            if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
                 break;
         }
     }
@@ -129,5 +130,5 @@ void FollowBoatGoal::tick()
 
 std::wstring FollowBoatGoal::getName()
 {
-    return std::wstring(L"Follow_Boat");
+    return std::wstring(L"Follow Boat");
 }

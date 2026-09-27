@@ -35,5 +35,5 @@ bool TurtlePanicGoal::canUse()
 
 std::wstring TurtlePanicGoal::getName()
 {
-    return std::wstring(L"Turtle_Panic");
+    return std::wstring(L"Turtle Panic");
 }

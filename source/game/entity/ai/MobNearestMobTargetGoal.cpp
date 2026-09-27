@@ -1,4 +1,5 @@
 #include "game/entity/ai/MobNearestMobTargetGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <algorithm>
 #include <typeinfo>
@@ -64,7 +65,7 @@ bool MobNearestMobTargetGoal::canContinueToUse()
     if (mMob->distanceToSqr(target) > followDistance * followDistance)
         return false;
 
-    if (target->GetType() == 0x000000000C800001ULL)
+    if (target->GetType() == EntityType::SERVER_PLAYER)
     {
         boost::shared_ptr<ServerPlayer> player =
             boost::dynamic_pointer_cast<ServerPlayer>(target);

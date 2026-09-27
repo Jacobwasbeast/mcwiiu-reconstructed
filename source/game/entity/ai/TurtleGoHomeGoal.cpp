@@ -107,5 +107,5 @@ void TurtleGoHomeGoal::tick()
 
 std::wstring TurtleGoHomeGoal::getName()
 {
-    return std::wstring(L"Turtle_Go_Home");
+    return std::wstring(L"Turtle Go Home");
 }

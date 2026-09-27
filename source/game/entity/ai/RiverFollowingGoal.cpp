@@ -166,7 +166,7 @@ void RiverFollowingGoal::determineSteerDirection()
     bool groundBelow = groundHit != NULL && groundHit->mType != HitResult::MISS;
 
     BlockPos blockPos(mMob->getPos(0.0f));
-    if (!mMob->followsLeader() && level->getBlock(blockPos.above()) == Blocks::AIR)
+    if (!mMob->followsLeader() && level->getBlock(blockPos.above()) == Blocks::air)
     {
         if (groundBelow)
         {

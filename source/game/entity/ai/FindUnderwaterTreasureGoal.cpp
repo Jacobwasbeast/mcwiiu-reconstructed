@@ -1,4 +1,5 @@
 #include "game/entity/ai/FindUnderwaterTreasureGoal.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -6,8 +7,13 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Iterator.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
 
 FindUnderwaterTreasureGoal::FindUnderwaterTreasureGoal(PathfinderMob* mob, float speedModifier, int searchRadius, int maxDistance)
     : Goal(),
@@ -48,10 +54,38 @@ bool FindUnderwaterTreasureGoal::canInterrupt()
 
 void FindUnderwaterTreasureGoal::start()
 {
-    Vec3* position = mMob->getPos(0.0f);
-    BlockPos current(position);
-    delete mTreasurePos;
-    mTreasurePos = new BlockPos(current);
+    Level* level = mMob->mLevel;
+    if (!level->mIsClientSide)
+    {
+        BlockPos pos(mMob->getPos(0.0f));
+        BlockPos* ruin = level->findNearestMapFeature(L"Ruin", pos, false);
+        BlockPos* shipwreck = level->findNearestMapFeature(L"Shipwreck", pos, false);
+
+        BlockPos* chest = NULL;
+        Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(
+            BlockPos(Mth::floor(mMob->mX - mSearchRadius), Mth::floor(mMob->mY - 3.0), Mth::floor(mMob->mZ - mSearchRadius)),
+            BlockPos(Mth::floor(mMob->mX + mSearchRadius), Mth::floor(mMob->mY + 3.0), Mth::floor(mMob->mZ + mSearchRadius)));
+        while (positions->hasNext())
+        {
+            MutableBlockPos* current = positions->next();
+            if (Block::getId(level->getBlockState(*current)->getBlock()) == BlockId::CHEST)
+            {
+                chest = new BlockPos(*current);
+                break;
+            }
+        }
+        delete positions;
+
+        if (ruin == NULL)
+            mTreasurePos = shipwreck;
+        else if (shipwreck == NULL)
+            mTreasurePos = ruin;
+        else
+            mTreasurePos = pos.distSqr(*shipwreck) < pos.distSqr(*ruin) ? shipwreck : ruin;
+
+        if (mTreasurePos != NULL && chest != NULL && pos.distSqr(*mTreasurePos) < (double)(mSearchRadius * mSearchRadius))
+            mTreasurePos = chest;
+    }
 
     mTick = 10;
     mDistanceTravelled = 0;

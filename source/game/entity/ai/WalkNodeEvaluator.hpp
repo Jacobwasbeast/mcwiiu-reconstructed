@@ -27,10 +27,10 @@ public:
     const BlockPathTypes* getBlockPathType(Mob* mob, const BlockPos& pos);
     Node* getLandNode(int x, int y, int z, int verticalRange,
                       double maxFallDistance, const Direction* direction);
-    const BlockPathTypes* getBlockPathTypes(LevelSource* levelSource, int x, int y, int z,
+    virtual const BlockPathTypes* getBlockPathTypes(LevelSource* levelSource, int x, int y, int z,
                                              int sizeX, int sizeY, int sizeZ,
                                              bool canOpenDoors, bool canPassDoors,
-                                             int& pathTypeFlags, const BlockPathTypes* preferred);
+                                             int& pathTypeFlags, const BlockPathTypes* pathType);
     const BlockPathTypes* getBlockPathTypeRaw(LevelSource* levelSource, int x, int y, int z);
     const BlockPathTypes* checkNeighbourBlocks(LevelSource* levelSource, int x, int y, int z,
                                                 const BlockPathTypes* pathType);
@@ -38,8 +38,8 @@ public:
 protected:
     float mOldWaterCost;
 private:
-    bool mFlag0;
-    bool mFlag1;
+    bool mRailAtStart;
+    bool mRailBelowStart;
 
 protected:
     Entity* mEntity;

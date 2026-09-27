@@ -1,4 +1,5 @@
 #include "game/entity/ai/GroundPathNavigation.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -56,7 +57,7 @@ bool GroundPathNavigation::canUpdatePath()
     {
         if (!mMob->isInWater())
         {
-            if (mMob->GetType() != 0x5D540047ULL && !canSinkInWaterWalk())
+            if (mMob->GetType() != EntityType::WITHER_BOSS && !canSinkInWaterWalk())
             {
                 return false;
             }
@@ -74,7 +75,7 @@ int GroundPathNavigation::getSurfaceY()
                              static_cast<int>(std::floor(mMob->mZ)));
         int checks = 0;
         Block* block = mLevel->getBlock(pos);
-        while (block == Blocks::WATER || block == Blocks::FLOWING_WATER)
+        while (block == Blocks::water || block == Blocks::flowing_water)
         {
             ++y;
             pos.setY(y);

@@ -52,7 +52,7 @@ protected:
     boost::unordered_map<int, int> mBlockPathTypeMap;
     int mEntityWidth;
     int mEntityHeight;
-    int mEntityY;
+    int mEntityDepth;
     bool mCanPassDoors;
     bool mCanOpenDoors;
     bool mCanFloat;

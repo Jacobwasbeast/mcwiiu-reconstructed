@@ -1,4 +1,5 @@
 #include "game/entity/ai/FlyNodeEvaluator.hpp"
+#include "game/world/block/BlockId.hpp"
 
 #include <boost/unordered_set.hpp>
 
@@ -30,13 +31,13 @@ void FlyNodeEvaluator::done()
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, int x, int y, int z)
 {
-    return getBlockPathType(mLevelSource, x, y, z, mob, mEntityWidth, mEntityHeight, mEntityY,
+    return getBlockPathType(mLevelSource, x, y, z, mob, mEntityWidth, mEntityHeight, mEntityDepth,
                             isCanOpenDoors(), isCanPassDoors());
 }
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, const BlockPos& pos)
 {
-    return getBlockPathType(mLevelSource, pos.x, pos.y, pos.z, mob, mEntityWidth, mEntityHeight, mEntityY,
+    return getBlockPathType(mLevelSource, pos.x, pos.y, pos.z, mob, mEntityWidth, mEntityHeight, mEntityDepth,
                             isCanOpenDoors(), isCanPassDoors());
 }
 
@@ -52,7 +53,7 @@ Node* FlyNodeEvaluator::getStart()
         if (mMob->mZ < static_cast<double>(z)) --z;
 
         int blockId = mLevelSource->getBlockId(x, y, z);
-        while (blockId == 8 || blockId == 9)
+        while (blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER)
         {
             ++y;
             blockId = mLevelSource->getBlockId(x, y, z);
@@ -211,7 +212,7 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSourc
         return BlockPathTypes::FENCE;
 
     const BlockPathTypes* best = BlockPathTypes::BLOCKED;
-    for (int i = 0; i < 19; ++i)
+    for (int i = 0; i < static_cast<int>(sizeof(BlockPathTypes::VALUES) / sizeof(BlockPathTypes::VALUES[0])); ++i)
     {
         const BlockPathTypes* type = BlockPathTypes::VALUES[i];
         if ((pathTypeFlags & 1 << type->ordinal()) != 0)

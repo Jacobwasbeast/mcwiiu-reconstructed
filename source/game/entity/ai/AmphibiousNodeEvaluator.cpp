@@ -1,5 +1,8 @@
 #include "game/entity/ai/AmphibiousNodeEvaluator.hpp"
 
+#include <algorithm>
+
+#include "game/core/EntityType.hpp"
 #include "game/core/Node.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -8,6 +11,11 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/core/Direction.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 AmphibiousNodeEvaluator::AmphibiousNodeEvaluator(Entity* entity)
@@ -64,88 +72,97 @@ double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
 Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange,
                                                double maxFallDistance)
 {
+    Node* cachedNode = getNode(x, y, z);
+    if (cachedNode->hasAcceptedNode)
+        return cachedNode->acceptedNode;
+
     Node* node = NULL;
-    BlockPos position(x, y, z);
-    if (inWaterDependentPosHeight(position) - maxFallDistance > 1.125)
+    BlockPos pos(x, y, z);
+    if (inWaterDependentPosHeight(pos) - maxFallDistance > 1.125)
+    {
+        cachedNode->hasAcceptedNode = true;
+        cachedNode->acceptedNode = NULL;
         return NULL;
+    }
 
     const BlockPathTypes* type =
-        WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y, z, mMob, mEntityWidth,
-                                            mEntityHeight, mEntityY, isCanOpenDoors(),
-                                            isCanPassDoors());
+        WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y, z, mMob, mEntityWidth, mEntityHeight,
+                                            mEntityDepth, isCanOpenDoors(), isCanPassDoors());
     float malus = mMob->getPathfindingMalus(type);
+    const double halfWidth = mMob->mBbWidth * 0.5;
     if (malus >= 0.0f)
     {
-        node = NodeEvaluator::getNode(x, y, z);
+        node = getNode(x, y, z);
         node->type = type;
-        node->costMalus = node->costMalus < malus ? malus : node->costMalus;
+        node->costMalus = std::max(node->costMalus, malus);
     }
 
     if (type == BlockPathTypes::WATER || type == BlockPathTypes::WALKABLE)
     {
         if (y < mMob->mLevel->getSeaLevel() - 10 && node != NULL)
+            node->costMalus += 1.0f;
+        cachedNode->hasAcceptedNode = true;
+        cachedNode->acceptedNode = node;
+        return node;
+    }
+
+    if (node == NULL && verticalRange > 0 && type != BlockPathTypes::FENCE && type != BlockPathTypes::TRAPDOOR)
+        node = getAcceptedNode(x, y + 1, z, verticalRange - 1, maxFallDistance);
+
+    if (type == BlockPathTypes::OPEN)
+    {
+        AABB* box = AABB::newTemp(x - halfWidth + 0.5, y + 0.001, z - halfWidth + 0.5, x + halfWidth + 0.5,
+                                  static_cast<float>(y) + mMob->mBbHeight, z + halfWidth + 0.5);
+        if (mMob->mLevel->hasBlockCubes(box))
         {
-            node->costMalus = node->costMalus + 1.0f;
+            cachedNode->hasAcceptedNode = true;
+            cachedNode->acceptedNode = NULL;
+            return NULL;
+        }
+
+        const BlockPathTypes* below =
+            WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y - 1, z, mMob, mEntityWidth, mEntityHeight,
+                                                mEntityDepth, isCanOpenDoors(), isCanPassDoors());
+        if (below == BlockPathTypes::BLOCKED || below == BlockPathTypes::WATER)
+        {
+            node = getNode(x, y, z);
+            cachedNode->hasAcceptedNode = true;
+            cachedNode->acceptedNode = node;
+            node->type = below == BlockPathTypes::BLOCKED ? BlockPathTypes::WALKABLE : BlockPathTypes::WATER;
+            node->costMalus = std::max(node->costMalus, malus);
             return node;
         }
-    }
-    else
-    {
-        if (node == NULL && verticalRange > 0 && type != BlockPathTypes::FENCE &&
-            type != BlockPathTypes::TRAPDOOR)
-            node = getAcceptedNode(x, y + 1, z, verticalRange - 1, maxFallDistance);
 
-        if (type == BlockPathTypes::OPEN)
+        int fallDistance = 0;
+        while (y > 0 && type == BlockPathTypes::OPEN)
         {
-            const double halfWidth = mMob->mBbWidth * 0.5;
-            AABB* box = AABB::newTemp(x - halfWidth + 0.5, y + 0.001, z - halfWidth + 0.5,
-                                      x + halfWidth + 0.5, y + mMob->mBbHeight,
-                                      z + halfWidth + 0.5);
-            if (mMob->mLevel->hasBlockCubes(box))
+            --y;
+            if (fallDistance++ >= mMob->getMaxFallDistance())
+            {
+                cachedNode->hasAcceptedNode = true;
+                cachedNode->acceptedNode = NULL;
                 return NULL;
-
-            const BlockPathTypes* below =
-                WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y - 1, z, mMob, mEntityWidth,
-                                                    mEntityHeight, mEntityY, isCanOpenDoors(),
-                                                    isCanPassDoors());
-            if (below == BlockPathTypes::BLOCKED)
-            {
-                node = NodeEvaluator::getNode(x, y, z);
-                node->type = BlockPathTypes::WALKABLE;
-                node->costMalus = node->costMalus < malus ? malus : node->costMalus;
-                return node;
             }
-            if (below == BlockPathTypes::WATER)
+            type = WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y, z, mMob, mEntityWidth, mEntityHeight,
+                                                       mEntityDepth, false, false);
+            malus = mMob->getPathfindingMalus(type);
+            if (malus < 0.0f)
             {
-                node = NodeEvaluator::getNode(x, y, z);
-                node->type = BlockPathTypes::WATER;
-                node->costMalus = node->costMalus < malus ? malus : node->costMalus;
-                return node;
+                cachedNode->hasAcceptedNode = true;
+                cachedNode->acceptedNode = NULL;
+                return NULL;
             }
-
-            int fallDistance = 0;
-            while (y > 0 && type == BlockPathTypes::OPEN)
+            if (type != BlockPathTypes::OPEN)
             {
-                --y;
-                if (mMob->getMaxFallDistance() <= fallDistance)
-                    return NULL;
-                ++fallDistance;
-                type = WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y, z, mMob,
-                                                           mEntityWidth, mEntityHeight, mEntityY,
-                                                           false, false);
-                malus = mMob->getPathfindingMalus(type);
-                if (malus < 0.0f)
-                    return NULL;
-                if (type != BlockPathTypes::OPEN)
-                {
-                    node = NodeEvaluator::getNode(x, y, z);
-                    node->type = type;
-                    node->costMalus = node->costMalus < malus ? malus : node->costMalus;
-                    break;
-                }
+                node = getNode(x, y, z);
+                node->type = type;
+                node->costMalus = std::max(node->costMalus, malus);
             }
         }
     }
+
+    cachedNode->hasAcceptedNode = true;
+    cachedNode->acceptedNode = node;
     return node;
 }
 
@@ -186,34 +203,75 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* le
                                                                  int sizeZ, bool canOpenDoors,
                                                                  bool canPassDoors,
                                                                  int& pathTypeFlags,
-                                                                 const BlockPathTypes* preferred)
+                                                                 const BlockPathTypes* pathType)
 {
-    const BlockPathTypes* result = preferred;
-    pathTypeFlags = 0;
-    int dx, dy, dz;
-    for (dx = 0; dx < sizeX; ++dx)
-        for (dy = 0; dy < sizeY; ++dy)
-            for (dz = 0; dz < sizeZ; ++dz)
+    BlockPos mobPos(mMob);
+    for (int dx = 0; dx < sizeX; ++dx)
+        for (int dy = 0; dy < sizeY; ++dy)
+            for (int dz = 0; dz < sizeZ; ++dz)
             {
-                BlockPos pos(x + dx, y + dy, z + dz);
-                const BlockPathTypes* type = getBlockPathType(levelSource, pos.x, pos.y, pos.z);
-                pathTypeFlags |= 1 << (type->ordinal() & 31);
-                if (dx == 0 && dy == 0 && dz == 0) result = type;
-                mBlockPathTypeMap[pos.hashCode()] = 1 << (type->ordinal() & 31);
+                int key = BlockPos(x + dx, y + dy, z + dz).hashCode();
+                boost::unordered_map<int, int>::iterator cached = mBlockPathTypeMap.find(key);
+                if (cached != mBlockPathTypeMap.end())
+                {
+                    pathTypeFlags |= cached->second;
+                    continue;
+                }
+
+                const BlockPathTypes* type = getBlockPathType(levelSource, x + dx, y + dy, z + dz);
+                if (type == BlockPathTypes::RAIL
+                    && !levelSource->getBlockState(mobPos)->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
+                    && !levelSource->getBlockState(mobPos.below())->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
+                    type = BlockPathTypes::FENCE;
+
+                if (type == BlockPathTypes::DOOR_OPEN || type == BlockPathTypes::DOOR_WOOD_CLOSED
+                    || type == BlockPathTypes::DOOR_IRON_CLOSED)
+                {
+                    if (mMob->GetType() == EntityType::TURTLE)
+                        type = BlockPathTypes::BLOCKED;
+                    else if (type == BlockPathTypes::DOOR_WOOD_CLOSED && canOpenDoors && canPassDoors)
+                        type = BlockPathTypes::WALKABLE;
+                    else if (type == BlockPathTypes::DOOR_OPEN && !canPassDoors)
+                        type = BlockPathTypes::BLOCKED;
+                }
+                if (dx == 0 && dy == 0 && dz == 0)
+                    pathType = type;
+
+                pathTypeFlags |= 1 << type->ordinal();
+                mBlockPathTypeMap[key] = 1 << type->ordinal();
             }
-    return result;
+    return pathType;
 }
 
 const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z)
 {
     const BlockPathTypes* type = getBlockPathTypeRaw(levelSource, x, y, z);
-    if (type != BlockPathTypes::BLOCKED)
-        return checkNeighbourBlocks(levelSource, x, y, z, type);
-    static const int offsets[4][3] = {{0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}};
-    int i;
-    for (i = 0; i < 4; ++i)
-        if (getBlockPathTypeRaw(levelSource, x + offsets[i][0], y + offsets[i][1],
-                                z + offsets[i][2]) == BlockPathTypes::WATER)
-            return BlockPathTypes::WATER_BORDER;
-    return BlockPathTypes::BLOCKED;
+    if (type == BlockPathTypes::WATER)
+    {
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+             ++it)
+        {
+            const Direction* direction = *it;
+            if (getBlockPathTypeRaw(levelSource, x + direction->getStepX(), y + direction->getStepY(),
+                                    z + direction->getStepZ()) == BlockPathTypes::BLOCKED)
+                return BlockPathTypes::WATER_BORDER;
+        }
+        return BlockPathTypes::WATER;
+    }
+
+    if (type == BlockPathTypes::OPEN && y >= 1)
+    {
+        Block* blockBelow = levelSource->getBlockState(BlockPos(x, y - 1, z))->getBlock();
+        const BlockPathTypes* typeBelow = getBlockPathTypeRaw(levelSource, x, y - 1, z);
+        if (typeBelow == BlockPathTypes::WALKABLE || typeBelow == BlockPathTypes::OPEN
+            || typeBelow == BlockPathTypes::LAVA)
+            type = BlockPathTypes::OPEN;
+        else
+            type = BlockPathTypes::WALKABLE;
+        if (typeBelow == BlockPathTypes::DAMAGE_FIRE || blockBelow == Blocks::magma)
+            type = BlockPathTypes::DAMAGE_FIRE;
+        if (typeBelow == BlockPathTypes::DAMAGE_CACTUS)
+            type = BlockPathTypes::DAMAGE_CACTUS;
+    }
+    return checkNeighbourBlocks(levelSource, x, y, z, type);
 }

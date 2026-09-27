@@ -1,4 +1,6 @@
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/Path.hpp"
 #include "game/core/PathFinder.hpp"
 #include "game/core/Node.hpp"
@@ -223,7 +225,7 @@ void PathNavigation::doStuckDetection(Vec3* pos)
 void PathNavigation::updatePath()
 {
     Mob* pathOwner = mMob;
-    if (Entity::instanceof(mMob->getVehicle(), ENTITY_TYPE_MOB)) pathOwner = static_cast<Mob*>(mMob->getVehicle().get());
+    if (Entity::instanceof(mMob->getVehicle(), EntityType::MOB)) pathOwner = static_cast<Mob*>(mMob->getVehicle().get());
     PathNavigation* navigation = pathOwner->getNavigation();
     Vec3* mobPos;
     PathNavigation* mover;
@@ -282,7 +284,7 @@ void PathNavigation::trimPath()
     {
         Node* node = mPath->get(i);
         Node* next = i + 1 < size ? mPath->get(i + 1) : 0;
-        if (mLevel->getBlockId(node->x, node->y, node->z) == 0x76)
+        if (mLevel->getBlockId(node->x, node->y, node->z) == BlockId::CAULDRON)
         {
             mPath->set(i, node->cloneMove(node->x, node->y + 1, node->z));
             if (next != 0 && next->y <= node->y) mPath->set(i + 1, next->cloneMove(next->x, node->y + 1, next->z));

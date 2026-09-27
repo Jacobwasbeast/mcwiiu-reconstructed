@@ -1,4 +1,7 @@
 #include "game/entity/ai/TurtlePathNavigation.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/core/EntityType.hpp"
 
 #include "game/core/PathFinder.hpp"
 #include "game/core/Turtle.hpp"
@@ -28,10 +31,9 @@ bool TurtlePathNavigation::canUpdatePath()
 
 bool TurtlePathNavigation::isStableDestination(const BlockPos& pos)
 {
-    if (mMob->GetType() == 0x2D680007ULL &&
-        static_cast<Turtle*>(mMob)->isTravelling() &&
-        mMob->getRidingHeight() != 0.0)
-        return !mLevel->getBlockState(pos)->isSolid();
-
-    return mLevel->getBlockState(pos.below())->isSolid();
+    if (mMob->GetType() == EntityType::TURTLE) {
+        Turtle* turtle = static_cast<Turtle*>(mMob);
+        if (turtle->isTravelling() && turtle->isInWater()) return mLevel->getBlockState(pos)->getBlock() == Blocks::water;
+    }
+    return mLevel->getBlockState(pos.below())->getMaterial() != Material::AIR;
 }

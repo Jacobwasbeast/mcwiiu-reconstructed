@@ -1,4 +1,5 @@
 #include "game/entity/ai/TargetGoal.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 
@@ -58,7 +59,7 @@ bool TargetGoal::canContinueToUse()
     if (!target || !target->isAlive())
         return false;
 
-    if (mMob->GetType() == 0x5D540442ULL)
+    if (mMob->GetType() == EntityType::WITHER_SKELETON)
     {
         boost::shared_ptr<WitherBoss> parent =
             static_cast<WitherSkeleton*>(mMob)->getWitherParent();
@@ -82,7 +83,7 @@ bool TargetGoal::canContinueToUse()
             return false;
     }
 
-    if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL)
         {
@@ -147,7 +148,7 @@ bool TargetGoal::canAttack(Mob* mob, boost::shared_ptr<LivingEntity> target,
         }
     }
 
-    if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         if (!allowInvulnerablePlayers
             && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)

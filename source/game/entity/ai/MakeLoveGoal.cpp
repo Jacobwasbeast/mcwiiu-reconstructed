@@ -1,4 +1,6 @@
 #include "game/entity/ai/MakeLoveGoal.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <typeinfo>
 #include <vector>
@@ -92,7 +94,7 @@ void MakeLoveGoal::breed()
     mPartner->setAge(6000);
     mVillager->setAge(6000);
 
-    if (!mLevel->canCreateMore(0x000000000D600001ULL, 1))
+    if (!mLevel->canCreateMore(EntityType::VILLAGER, Level::eSpawnType_Breed))
         return;
 
     boost::shared_ptr<AgableMob> child = mVillager->getBreedOffspring(mPartner);
@@ -104,7 +106,7 @@ void MakeLoveGoal::breed()
     villager->setAge(-24000);
     villager->setPos(mVillager->mX, mVillager->mY, mVillager->mZ);
     mLevel->addEntity(villager);
-    mLevel->broadcastEntityEvent(villager, 12, 0);
+    mLevel->broadcastEntityEvent(villager, EntityEvent::LOVE_HEARTS, 0);
 }
 
 void MakeLoveGoal::tick()
@@ -118,7 +120,7 @@ void MakeLoveGoal::tick()
     }
 
     if (mVillager->getRandom()->nextInt(35) == 0)
-        mLevel->broadcastEntityEvent(mVillager->shared_from_this(), 12, 0);
+        mLevel->broadcastEntityEvent(mVillager->shared_from_this(), EntityEvent::LOVE_HEARTS, 0);
 }
 
 void MakeLoveGoal::setLevel(Level* level)
