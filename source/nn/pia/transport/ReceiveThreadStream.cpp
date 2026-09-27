@@ -58,7 +58,7 @@ Result ReceiveThreadStream::Initialize(common::IPacketInput* packetInput,
         return 0x10c02;
     if (packetInput == 0)
         return 0x10c07;
-    const Result result = InitializeCore("Pia_ReceiveThreadStream", priority,
+    const Result result = InitializeCore("Pia ReceiveThreadStream", priority,
                                          packetNum, latencyEntryNum,
                                          isPacketLossEnabled, 1);
     if (result != 0)

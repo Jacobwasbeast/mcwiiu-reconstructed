@@ -93,10 +93,10 @@ private:
     unsigned char* m_bulkBuffer;
     unsigned int m_activeStationBitmap;
     unsigned int m_bandwidthCheckedBitmap;
-    unsigned int m_measurementTime;
+    int m_measurementTime;
     unsigned int m_bulkPacketSize;
     unsigned int m_completionTimeout;
-    unsigned int m_measurementCount;
+    int m_measurementCount;
     SenderState m_senderState;
     common::Time m_senderStartTime;
     bool m_ackReceived;

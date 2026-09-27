@@ -1,6 +1,6 @@
 #include "nn/pia/transport/TransportSupport.hpp"
 
-extern void SetModuleId(const char* moduleId);
+#include <nn/middleware.h>
 
 namespace nn { namespace pia { namespace transport {
 

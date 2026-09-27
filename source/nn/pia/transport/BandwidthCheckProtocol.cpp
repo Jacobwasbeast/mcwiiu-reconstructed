@@ -455,13 +455,7 @@ int BandwidthCheckProtocol::getIpPacketSize(unsigned int payloadSize) const
 
 int BandwidthCheckProtocol::getSendPacketNumInMeasuringTime() const
 {
-    const float denominator = static_cast<float>(m_bulkPacketSize);
-    if (denominator == 0.0f)
-        return 1;
-    return static_cast<int>(1.2999999523162842f *
-        (((static_cast<float>(m_measurementTime) - 176.0f) * 0.125f) /
-         denominator) * ((static_cast<float>(m_measurementCount) - 176.0f) /
-                         1000.0f)) + 1;
+    return static_cast<int>(1.3f * (m_measurementTime * 0.125f / m_bulkPacketSize) * (m_measurementCount / 1000.0f)) + 1;
 }
 
 void BandwidthCheckProtocol::senderStateTransition()

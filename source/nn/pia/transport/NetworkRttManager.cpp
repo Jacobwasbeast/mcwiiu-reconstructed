@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include "nn/pia/HeapManager.hpp"
-#include "nn/pia/common/Common.hpp"
+#include "nn/pia/common/common.hpp"
 #include "nn/pia/transport/TransportSupport.hpp"
 
 namespace nn { namespace pia { namespace transport {
