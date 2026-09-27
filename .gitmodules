@@ -1,0 +1,4 @@
+[submodule "source/nn/ffl"]
+	path = source/nn/ffl
+	url = https://github.com/Jacobwasbeast/ffl.git
+	branch = wiiu-recon
