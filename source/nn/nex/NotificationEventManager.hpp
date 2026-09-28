@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_NOTIFICATIONEVENTMANAGER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_NOTIFICATIONEVENTMANAGER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <list>
 #include <set>
 
@@ -22,9 +22,9 @@ public:
     virtual void ProcessNotificationEvent(unsigned int uiPrincipalID, unsigned int uiConnectionID,
                                           const NotificationEvent& rEvent);
 
-    std::uint32_t RegisterNotificationEventHandler(NotificationEventHandler* pHandler);
-    std::uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* pHandler);
-    std::uint32_t IsEventValid(const NotificationEvent& rEvent);
+    uint32_t RegisterNotificationEventHandler(NotificationEventHandler* pHandler);
+    uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* pHandler);
+    uint32_t IsEventValid(const NotificationEvent& rEvent);
 
 private:
     std::set<NotificationEventHandler*> m_handlers;

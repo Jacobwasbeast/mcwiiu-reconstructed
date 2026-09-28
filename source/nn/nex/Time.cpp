@@ -7,11 +7,11 @@ namespace nn
 namespace nex
 {
 
-std::uint64_t g_lastTime;
+uint64_t g_lastTime;
 
-std::uint64_t Time::GetTime()
+uint64_t Time::GetTime()
 {
-    std::uint64_t time;
+    uint64_t time;
 
     if (g_systemClockCorrectionEnabled)
         time = SystemClock::GetTimeImpl(false);
@@ -22,24 +22,24 @@ std::uint64_t Time::GetTime()
     return time;
 }
 
-std::uint64_t Time::ConvertTimeoutToDeadline(std::uint32_t timeout)
+uint64_t Time::ConvertTimeoutToDeadline(uint32_t timeout)
 {
     if (timeout == 0xffffffffu)
         return 0;
 
-    return GetTime() + static_cast<std::uint64_t>(static_cast<std::int64_t>(static_cast<std::int32_t>(timeout)));
+    return GetTime() + static_cast<uint64_t>(static_cast<int64_t>(static_cast<int32_t>(timeout)));
 }
 
-std::int32_t Time::ConvertDeadlineToTimeout(Time deadline)
+int32_t Time::ConvertDeadlineToTimeout(Time deadline)
 {
-    std::uint64_t now;
+    uint64_t now;
 
     if (deadline.m_value == 0)
         return -1;
 
     now = GetTime();
     if (now < deadline.m_value)
-        return static_cast<std::int32_t>(deadline.m_value - now);
+        return static_cast<int32_t>(deadline.m_value - now);
 
     return 0;
 }

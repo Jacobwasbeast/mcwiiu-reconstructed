@@ -55,7 +55,7 @@ void Job::SetDefaultPostExecutionState()
     SetState(Complete);
 }
 
-std::uint32_t Job::SkipWaitDelayAtTermination()
+uint32_t Job::SkipWaitDelayAtTermination()
 {
     return 0;
 }
@@ -137,7 +137,7 @@ void Job::PerformExecution(const Time& rTime)
     ++m_nbExecutions;
 }
 
-bool Job::WaitForCompletion(std::uint32_t uiTimeout)
+bool Job::WaitForCompletion(uint32_t uiTimeout)
 {
     bool bCompleted = false;
 

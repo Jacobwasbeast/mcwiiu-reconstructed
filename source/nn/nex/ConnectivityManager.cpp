@@ -58,7 +58,7 @@ void ConnectivityManager::OnStartNATSession(CallContext* callContext)
     }
 
     CriticalSection& criticalSection = core->GetScheduler()->GetCriticalSection();
-    criticalSection.Enter();
+    ScopedCS lock(&criticalSection);
 
     CallContext* pendingContext = core->GetCallContextRegister()->GetCallContext(m_callContextId);
     m_callContextId = 0;
@@ -74,7 +74,6 @@ void ConnectivityManager::OnStartNATSession(CallContext* callContext)
         }
     }
 
-    criticalSection.Leave();
 }
 #endif
 

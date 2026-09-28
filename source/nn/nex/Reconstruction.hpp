@@ -1,7 +1,7 @@
 #ifndef SOURCE_NN_NEX_RECONSTRUCTION_HPP
 #define SOURCE_NN_NEX_RECONSTRUCTION_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/ConnectivityManager.hpp"
 #include "nn/nex/ProviderSupport.hpp"
@@ -57,8 +57,8 @@ private:
 class BackEndServices
 {
 public:
-    std::uint32_t RegisterNotificationEventHandler(NotificationEventHandler* handler);
-    std::uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* handler);
+    uint32_t RegisterNotificationEventHandler(NotificationEventHandler* handler);
+    uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* handler);
     Credentials* GetCredentials();
 
 private:

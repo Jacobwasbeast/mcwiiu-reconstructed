@@ -2,7 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_NEX_OUTPUTFORMAT_HPP
 
 #include <cstdarg>
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -47,10 +47,10 @@ public:
     static void PreparePrefix(wchar_t* buffer, unsigned int capacity, const wchar_t* format, ...);
 
 private:
-    std::uint32_t m_indent;
-    std::uint32_t m_field4;
+    uint32_t m_indent;
+    uint32_t m_field4;
     bool m_flags[10];
-    std::uint64_t m_startTime;
+    uint64_t m_startTime;
 };
 
 }

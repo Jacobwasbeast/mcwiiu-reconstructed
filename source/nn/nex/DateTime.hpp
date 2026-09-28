@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_DATETIME_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_DATETIME_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 struct OSCalendarTime;
 
@@ -15,13 +15,13 @@ class DateTime
 public:
     DateTime();
     DateTime(const DateTime& other);
-    DateTime(std::uint16_t year, std::uint8_t month, std::uint8_t day,
-        std::uint8_t hour, std::uint8_t minute, std::uint8_t second);
+    DateTime(uint16_t year, uint8_t month, uint8_t day,
+        uint8_t hour, uint8_t minute, uint8_t second);
     explicit DateTime(const OSCalendarTime& calendarTime);
 
-    explicit DateTime(std::uint64_t value)
-        : m_flags(static_cast<std::uint32_t>(value >> 32))
-        , m_packed(static_cast<std::uint32_t>(value))
+    explicit DateTime(uint64_t value)
+        : m_flags(static_cast<uint32_t>(value >> 32))
+        , m_packed(static_cast<uint32_t>(value))
     {
     }
 
@@ -36,35 +36,35 @@ public:
     bool operator>(const DateTime& other) const;
     bool operator<=(const DateTime& other) const;
     bool operator>=(const DateTime& other) const;
-    std::uint64_t operator-(const DateTime& other) const;
+    uint64_t operator-(const DateTime& other) const;
 
-    std::uint32_t GetYear() const;
-    std::uint32_t GetMonth() const;
-    std::uint32_t GetDay() const;
-    std::uint32_t GetHour() const;
-    std::uint32_t GetMinute() const;
-    std::uint8_t GetSecond() const;
+    uint32_t GetYear() const;
+    uint32_t GetMonth() const;
+    uint32_t GetDay() const;
+    uint32_t GetHour() const;
+    uint32_t GetMinute() const;
+    uint8_t GetSecond() const;
 
-    std::uint32_t IsLeapYear(std::int32_t year) const;
-    std::int32_t DateToDays(std::int32_t year, std::int32_t month, std::int32_t day) const;
-    void DaysToDate(std::int32_t days);
+    uint32_t IsLeapYear(int32_t year) const;
+    int32_t DateToDays(int32_t year, int32_t month, int32_t day) const;
+    void DaysToDate(int32_t days);
 
-    std::uint64_t ToEpochTime() const;
-    std::int64_t ToUnixEpochTime() const;
+    uint64_t ToEpochTime() const;
+    int64_t ToUnixEpochTime() const;
     OSCalendarTime ToCafeDateTime() const;
 
     bool IsValid() const;
     bool IsNever() const;
-    void Trace(std::uint64_t flags);
+    void Trace(uint64_t flags);
 
     static void GetSystemTime(DateTime& dateTime);
-    static DateTime FromEpochTime(std::int64_t epochTime);
-    static DateTime FromUnixEpochTime(std::int64_t epochTime);
-    static DateTime FromCustomEpochTime(std::int64_t epochTime, std::int32_t dayOffset);
+    static DateTime FromEpochTime(int64_t epochTime);
+    static DateTime FromUnixEpochTime(int64_t epochTime);
+    static DateTime FromCustomEpochTime(int64_t epochTime, int32_t dayOffset);
 
 private:
-    std::uint32_t m_flags;
-    std::uint32_t m_packed;
+    uint32_t m_flags;
+    uint32_t m_packed;
 };
 
 }

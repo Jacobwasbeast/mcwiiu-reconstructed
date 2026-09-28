@@ -11,7 +11,7 @@ namespace nex
 
 OutputFormat::OutputFormat()
     : m_indent(0), m_field4(0), m_flags(),
-      m_startTime(static_cast<std::uint32_t>(Time::GetTime()))
+      m_startTime(static_cast<uint32_t>(Time::GetTime()))
 {
 }
 

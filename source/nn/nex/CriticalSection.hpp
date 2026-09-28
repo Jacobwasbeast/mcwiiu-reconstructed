@@ -44,11 +44,29 @@ public:
     {
     }
 
-    virtual ~ForcedCriticalSection();
+    virtual ~ForcedCriticalSection() {}
 
     virtual void Enter();
     virtual void Leave();
     virtual bool IsForce() const;
+};
+
+class ScopedCS : public RootObject
+{
+public:
+    explicit ScopedCS(CriticalSection* criticalSection)
+        : m_criticalSection(criticalSection)
+    {
+        m_criticalSection->Enter();
+    }
+
+    ~ScopedCS()
+    {
+        m_criticalSection->Leave();
+    }
+
+private:
+    CriticalSection* m_criticalSection;
 };
 
 }

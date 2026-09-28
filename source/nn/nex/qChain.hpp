@@ -3,7 +3,7 @@
 
 #include <cstddef>
 #include <iterator>
-#include <type_traits>
+#include <boost/type_traits/remove_pointer.hpp>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -124,7 +124,7 @@ public:
         return position;
     }
 
-    iterator find(const typename std::remove_pointer<T>::type* element) const
+    iterator find(const typename boost::remove_pointer<T>::type* element) const
     {
         iterator position = begin();
         while (position != end() && *position != element)

@@ -14,27 +14,27 @@ HighResolutionClock::~HighResolutionClock()
 {
 }
 
-std::uint64_t HighResolutionClock::GetTickCount()
+uint64_t HighResolutionClock::GetTickCount()
 {
-    return static_cast<std::uint64_t>(OSGetTime());
+    return static_cast<uint64_t>(OSGetTime());
 }
 
-std::uint64_t HighResolutionClock::GetFrequency()
+uint64_t HighResolutionClock::GetFrequency()
 {
-    return static_cast<std::uint64_t>(OSGetSystemInfo()->busClockSpeed >> 2);
+    return static_cast<uint64_t>(OSGetSystemInfo()->busClockSpeed >> 2);
 }
 
-std::uint64_t HighResolutionClock::GetTime()
+uint64_t HighResolutionClock::GetTime()
 {
     return GetTickCount() * 1000 / GetFrequency();
 }
 
-std::uint64_t HighResolutionClock::GetLowResolutionTime()
+uint64_t HighResolutionClock::GetLowResolutionTime()
 {
     return GetTime();
 }
 
-std::uint64_t HighResolutionClock::GetHighResolutionTime()
+uint64_t HighResolutionClock::GetHighResolutionTime()
 {
     return GetTickCount() * 1000000 / GetFrequency();
 }

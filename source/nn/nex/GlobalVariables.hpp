@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_GLOBALVARIABLES_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_GLOBALVARIABLES_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <functional>
 #include <map>
 #include <utility>
@@ -49,7 +49,7 @@ public:
 
     static void AcquireInstance();
     static void ReleaseInstance();
-    static std::int32_t GetCount();
+    static int32_t GetCount();
     static void ClearCache();
     static void* GetThreadVariableListPtr();
 

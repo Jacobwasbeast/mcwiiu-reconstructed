@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTOREPERMISSION_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTOREPERMISSION_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/qVector.hpp"
@@ -25,9 +25,9 @@ public:
     static void Add(Message* pMessage, const _DDL_DataStorePermission& rSource);
     static void Extract(Message* pMessage, _DDL_DataStorePermission* pDestination);
 
-    std::uint8_t m_uiStructureVersion;
-    std::uint8_t m_uiPermission;
-    qVector<std::uint32_t> m_RecipientIds;
+    uint8_t m_uiStructureVersion;
+    uint8_t m_uiPermission;
+    qVector<uint32_t> m_RecipientIds;
 };
 
 }

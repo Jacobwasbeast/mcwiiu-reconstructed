@@ -45,22 +45,22 @@ NotificationEvent::~NotificationEvent()
 {
 }
 
-std::uint32_t NotificationEvent::GetType() const
+uint32_t NotificationEvent::GetType() const
 {
     return m_uiType;
 }
 
-std::uint32_t NotificationEvent::GetParam1() const
+uint32_t NotificationEvent::GetParam1() const
 {
     return m_uiParam1;
 }
 
-std::uint32_t NotificationEvent::GetParam2() const
+uint32_t NotificationEvent::GetParam2() const
 {
     return m_uiParam2;
 }
 
-std::uint32_t NotificationEvent::GetParam3() const
+uint32_t NotificationEvent::GetParam3() const
 {
     return m_uiParam3;
 }

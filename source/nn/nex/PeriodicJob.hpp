@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PERIODICJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PERIODICJOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/Job.hpp"
 
@@ -19,7 +19,7 @@ public:
     virtual ~PeriodicJob();
 
     virtual void SetDefaultPostExecutionState();
-    virtual std::uint32_t SkipWaitDelayAtTermination();
+    virtual uint32_t SkipWaitDelayAtTermination();
 
     void SetPeriod(int iPeriod)
     {

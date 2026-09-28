@@ -15,7 +15,7 @@ _Proto_NotificationProtocolServer::~_Proto_NotificationProtocolServer()
 void _Proto_NotificationProtocolServer::DispatchProtocolMessage(
     Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
 {
-    const std::uint16_t uiMethodID = static_cast<std::uint16_t>(ExtractMethodID(pRequest));
+    const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     if (uiMethodID == METHOD_PROCESS_NOTIFICATION_EVENT)
     {
         {

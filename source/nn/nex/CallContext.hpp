@@ -92,7 +92,7 @@ private:
         UserContext m_userContext;
     };
 
-    typedef std::list<InternalData, MemAllocator<InternalData>> CompletionCallbackList;
+    typedef std::list<InternalData, MemAllocator<InternalData> > CompletionCallbackList;
 
     unsigned int m_uiFlags;
     State m_state;

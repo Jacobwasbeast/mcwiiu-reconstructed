@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_ENDPOINT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_ENDPOINT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/StationURL.hpp"

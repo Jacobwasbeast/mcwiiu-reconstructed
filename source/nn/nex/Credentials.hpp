@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_CREDENTIALS_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_CREDENTIALS_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RefCountedObject.hpp"
 #include "nn/nex/String.hpp"
@@ -18,8 +18,8 @@ class Credentials : public RefCountedObject
 {
 public:
     Credentials();
-    Credentials(std::uint32_t value, StreamManager* streamManager);
-    ~Credentials() override;
+    Credentials(uint32_t value, StreamManager* streamManager);
+    ~Credentials();
 
     void Logout();
     StreamManager* MarkInvalid();
@@ -29,8 +29,8 @@ public:
     void SetSecureConnection(EndPoint* connection);
 
 private:
-    std::uint32_t m_value;
-    std::uint32_t m_state;
+    uint32_t m_value;
+    uint32_t m_state;
     String m_name;
     String m_description;
     StreamManager* m_streamManager;

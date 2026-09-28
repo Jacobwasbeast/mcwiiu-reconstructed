@@ -28,11 +28,11 @@ void ThreadVariableRoot::ClearValue()
 {
 }
 
-void ThreadVariableRoot::ClearValue(std::uint32_t)
+void ThreadVariableRoot::ClearValue(uint32_t)
 {
 }
 
-std::uint32_t ThreadVariableRoot::GetThreadID()
+uint32_t ThreadVariableRoot::GetThreadID()
 {
     return ObjectThreadRoot::GetCurrentThreadID();
 }

@@ -5,8 +5,8 @@ namespace nn
 namespace nex
 {
 
-DataStorePermission::DataStorePermission(std::uint8_t uiPermission,
-                                         const qVector<std::uint32_t>& rRecipientIds)
+DataStorePermission::DataStorePermission(uint8_t uiPermission,
+                                         const qVector<uint32_t>& rRecipientIds)
 {
     m_uiPermission = uiPermission;
     m_RecipientIds = rRecipientIds;

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_BUFFER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_BUFFER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RefCountedObject.hpp"
 
@@ -48,7 +48,7 @@ public:
     bool IsCheckSumValid(unsigned char uiSeed);
 
     String ToString() const;
-    void Trace(std::uint64_t uiFilter) const;
+    void Trace(uint64_t uiFilter) const;
 
     static unsigned int GetDefaultBufferSize();
     static void SetDefaultBufferSize(unsigned int uiSize);

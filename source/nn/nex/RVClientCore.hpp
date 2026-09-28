@@ -49,7 +49,7 @@ public:
 private:
     typedef std::pair<const unsigned short, ServerProtocol*> ServerProtocolEntry;
     typedef std::map<unsigned short, ServerProtocol*, std::less<unsigned short>,
-                     ProtocolRegistryAllocator<ServerProtocolEntry> > ServerProtocolMap;
+                     MemAllocator<ServerProtocolEntry> > ServerProtocolMap;
 
     static RVClientCore* s_pInstance;
 

@@ -44,10 +44,6 @@ bool CriticalSection::IsForce() const
     return false;
 }
 
-ForcedCriticalSection::~ForcedCriticalSection()
-{
-}
-
 void ForcedCriticalSection::Enter()
 {
     m_mutex.Lock();

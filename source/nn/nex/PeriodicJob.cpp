@@ -27,7 +27,7 @@ void PeriodicJob::SetDefaultPostExecutionState()
     SetToComplete();
 }
 
-std::uint32_t PeriodicJob::SkipWaitDelayAtTermination()
+uint32_t PeriodicJob::SkipWaitDelayAtTermination()
 {
     return m_iPeriod == 0;
 }

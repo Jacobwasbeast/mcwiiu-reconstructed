@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX__DDL_NOTIFICATIONEVENT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX__DDL_NOTIFICATIONEVENT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/String.hpp"
@@ -25,13 +25,13 @@ public:
     static void Add(Message* pMessage, const _DDL_NotificationEvent& rSource);
     static void Extract(Message* pMessage, _DDL_NotificationEvent* pDestination);
 
-    std::uint8_t m_uiStructureVersion;
-    std::uint32_t m_uiValue;
-    std::uint32_t m_uiType;
-    std::uint32_t m_uiParam1;
-    std::uint32_t m_uiParam2;
+    uint8_t m_uiStructureVersion;
+    uint32_t m_uiValue;
+    uint32_t m_uiType;
+    uint32_t m_uiParam1;
+    uint32_t m_uiParam2;
     String m_StringParam;
-    std::uint32_t m_uiParam3;
+    uint32_t m_uiParam3;
 };
 
 }

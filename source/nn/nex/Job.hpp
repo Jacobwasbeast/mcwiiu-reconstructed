@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_JOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RefCountedObject.hpp"
 #include "nn/nex/String.hpp"
@@ -49,7 +49,7 @@ public:
     virtual void AddActivity(const wchar_t* pActivity);
     virtual String GetTraceInfo() const;
     virtual void SetDefaultPostExecutionState();
-    virtual std::uint32_t SkipWaitDelayAtTermination();
+    virtual uint32_t SkipWaitDelayAtTermination();
     virtual void CancelJob();
     virtual void ProcessInTermination();
     virtual void ForceTerminate();
@@ -74,7 +74,7 @@ public:
     void Resume();
 
     void PerformExecution(const Time& rTime);
-    bool WaitForCompletion(std::uint32_t uiTimeout);
+    bool WaitForCompletion(uint32_t uiTimeout);
 
 protected:
     void ValidateTransition(State currentState, State newState);
@@ -93,7 +93,7 @@ private:
     JobType m_jobType;
     State m_state;
     int m_waitContext;
-    std::uint32_t m_nbExecutions;
+    uint32_t m_nbExecutions;
     Time m_executionTime;
     bool m_reserved1;
     bool m_reserved2;

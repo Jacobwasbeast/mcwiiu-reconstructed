@@ -1,6 +1,6 @@
 #ifndef SOURCE_NN_NEX_QRESULT_HPP
 #define SOURCE_NN_NEX_QRESULT_HPP
-#include <cstdint>
+#include <stdint.h>
 namespace nn
 {
 namespace nex
@@ -13,7 +13,7 @@ public:
     explicit qResult(const bool&);
     bool Equals(const int&) const;
     bool Equals(const bool&) const;
-    explicit operator bool() const;
+    operator bool() const;
     bool operator!() const;
     qResult& operator=(const qResult&);
     qResult& operator=(const bool&);

@@ -15,11 +15,7 @@ SingleThreadCallPolicy::SingleThreadCallPolicy()
 {
 }
 
-SingleThreadCallPolicy::~SingleThreadCallPolicy()
-{
-}
-
-void SingleThreadCallPolicy::SetMaximumRecursionLevel(std::uint32_t maximumRecursionLevel)
+void SingleThreadCallPolicy::SetMaximumRecursionLevel(uint32_t maximumRecursionLevel)
 {
     m_maximumRecursionLevel = maximumRecursionLevel;
 }

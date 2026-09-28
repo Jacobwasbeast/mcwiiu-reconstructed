@@ -12,7 +12,7 @@ namespace
 {
 
 TimeProvider* s_timeProvider = 0;
-std::int64_t s_correction = 0;
+int64_t s_correction = 0;
 bool s_initialized = false;
 CriticalSection s_criticalSection(1);
 
@@ -26,14 +26,14 @@ SystemClock::~SystemClock()
 
 void SystemClock::ApplyCorrection(Time reference, Time corrected)
 {
-    s_correction = static_cast<std::int64_t>(corrected - reference);
+    s_correction = static_cast<int64_t>(corrected - reference);
 }
 
-std::uint64_t SystemClock::GetTimeImplCorrectless()
+uint64_t SystemClock::GetTimeImplCorrectless()
 {
     if (!s_initialized)
     {
-        std::uint64_t raw;
+        uint64_t raw;
 
         s_initialized = true;
 
@@ -57,11 +57,11 @@ std::uint64_t SystemClock::GetTimeImplCorrectless()
     return HighResolutionClock::GetLowResolutionTime() + s_correction;
 }
 
-std::uint64_t SystemClock::GetTimeImpl(bool allowRetry)
+uint64_t SystemClock::GetTimeImpl(bool allowRetry)
 {
     static Time s_lastTime;
 
-    std::uint64_t raw;
+    uint64_t raw;
 
     if (s_timeProvider != 0)
         raw = s_timeProvider->GetTime();
@@ -78,9 +78,9 @@ std::uint64_t SystemClock::GetTimeImpl(bool allowRetry)
         return 1;
     }
 
-    if (s_correction >= 0 || raw >= static_cast<std::uint64_t>(-s_correction))
+    if (s_correction >= 0 || raw >= static_cast<uint64_t>(-s_correction))
     {
-        std::uint64_t now = raw + s_correction;
+        uint64_t now = raw + s_correction;
 
         if (now >= s_lastTime)
         {
@@ -103,10 +103,10 @@ std::uint64_t SystemClock::GetTimeImpl(bool allowRetry)
 
 void SystemClock::RegisterTimeProvider(TimeProvider* provider, bool applyCorrection)
 {
-    std::uint64_t sample;
-    std::uint64_t raw;
+    uint64_t sample;
+    uint64_t raw;
 
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
 
     if (g_systemClockCorrectionEnabled)
         sample = GetTimeImpl(false);
@@ -134,21 +134,19 @@ void SystemClock::RegisterTimeProvider(TimeProvider* provider, bool applyCorrect
     else
         g_lastTime = GetTimeImplCorrectless();
 
-    s_criticalSection.Leave();
 }
 
-std::uint64_t SystemClock::ProtectedGetTime()
+uint64_t SystemClock::ProtectedGetTime()
 {
-    std::uint64_t time;
+    uint64_t time;
 
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
 
     if (g_systemClockCorrectionEnabled)
         time = GetTimeImpl(true);
     else
         time = GetTimeImplCorrectless();
 
-    s_criticalSection.Leave();
     return time;
 }
 

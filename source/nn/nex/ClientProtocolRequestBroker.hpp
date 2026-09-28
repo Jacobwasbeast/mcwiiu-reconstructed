@@ -34,10 +34,10 @@ private:
     void ProcessMessageCore(CallProtocolMethodOperation*, EndPoint*, Buffer*);
     void DispatchCallToProtocol(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
     void ProcessLocalCallRequest(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
-    std::uint32_t m_serverTree;
-    std::uint32_t m_field48;
-    std::uint32_t m_field4c;
-    std::uint32_t m_currentEndPoint;
+    uint32_t m_serverTree;
+    uint32_t m_field48;
+    uint32_t m_field4c;
+    uint32_t m_currentEndPoint;
     SingleThreadCallPolicy m_callPolicy;
 };
 

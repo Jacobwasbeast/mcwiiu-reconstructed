@@ -11,7 +11,7 @@ namespace nex
 namespace
 {
 
-const std::uint8_t PERMISSION_MAX_STRUCTURE_VERSION = 0;
+const uint8_t PERMISSION_MAX_STRUCTURE_VERSION = 0;
 const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
@@ -42,14 +42,14 @@ void _DDL_DataStorePermission::Add(Message* pMessage, const _DDL_DataStorePermis
 
     if (!bCompactFormat)
     {
-        const std::uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const std::uint8_t uiMaxVersion = PERMISSION_MAX_STRUCTURE_VERSION;
+        const uint8_t uiVersion = rSource.m_uiStructureVersion;
+        const uint8_t uiMaxVersion = PERMISSION_MAX_STRUCTURE_VERSION;
 
         pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
 
         uiSizePosition = pMessage->GetLength();
 
-        const std::uint32_t uiSize = 0;
+        const uint32_t uiSize = 0;
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
     }
@@ -63,8 +63,8 @@ void _DDL_DataStorePermission::Add(Message* pMessage, const _DDL_DataStorePermis
 
         pMessage->SetLength(uiSizePosition);
 
-        const std::int32_t iSize =
-            static_cast<std::int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
+        const int32_t iSize =
+            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
         pMessage->SetLength(uiEndPosition);
@@ -77,7 +77,7 @@ void _DDL_DataStorePermission::Extract(Message* pMessage,
     pDestination->m_uiStructureVersion = 0;
 
     const bool bCompactFormat = pMessage->IsCompactFormat();
-    std::uint32_t uiSize = 0;
+    uint32_t uiSize = 0;
 
     if (!bCompactFormat)
     {

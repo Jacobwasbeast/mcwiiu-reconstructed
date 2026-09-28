@@ -20,11 +20,10 @@ WorkerThreads::~WorkerThreads()
 
 bool WorkerThreads::Start(unsigned int nbWorkers)
 {
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     if (m_state != STATE_STOPPED)
     {
-        m_criticalSection.Leave();
         return false;
     }
 
@@ -43,7 +42,6 @@ bool WorkerThreads::Start(unsigned int nbWorkers)
         m_workers.push_back(pWorker);
     }
 
-    m_criticalSection.Leave();
     return true;
 }
 

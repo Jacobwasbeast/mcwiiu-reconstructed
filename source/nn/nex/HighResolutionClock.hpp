@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_HIGHRESOLUTIONCLOCK_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_HIGHRESOLUTIONCLOCK_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -16,11 +16,11 @@ public:
     HighResolutionClock();
     virtual ~HighResolutionClock();
 
-    static std::uint64_t GetTickCount();
-    static std::uint64_t GetFrequency();
-    static std::uint64_t GetTime();
-    static std::uint64_t GetLowResolutionTime();
-    static std::uint64_t GetHighResolutionTime();
+    static uint64_t GetTickCount();
+    static uint64_t GetFrequency();
+    static uint64_t GetTime();
+    static uint64_t GetLowResolutionTime();
+    static uint64_t GetHighResolutionTime();
     static void DefaultToHighResolution();
 
     static bool s_defaultToHighResolution;

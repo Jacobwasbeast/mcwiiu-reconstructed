@@ -202,18 +202,16 @@ void Core::SetTerminateImmediately(bool bTerminateImmediately)
 
 void Core::SetTerminateImmediatelyCallback(TerminateImmediatelyCallback cbCallback, void* pContext)
 {
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
     m_cbTerminateImmediately = cbCallback;
     m_pTerminateImmediatelyContext = pContext;
-    m_criticalSection.Leave();
 }
 
 void Core::ResetTerminateImmediatelyCallback()
 {
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
     m_cbTerminateImmediately = 0;
     m_pTerminateImmediatelyContext = 0;
-    m_criticalSection.Leave();
 }
 
 }

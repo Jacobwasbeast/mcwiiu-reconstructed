@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_STEPSEQUENCEJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_STEPSEQUENCEJOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/Job.hpp"
 #include "nn/nex/RootObject.hpp"
@@ -53,12 +53,12 @@ public:
     void AddStepActivity();
 
 private:
-    std::uint64_t m_stepStartTime;
-    std::uint32_t m_executionCount;
+    uint64_t m_stepStartTime;
+    uint32_t m_executionCount;
     Step m_step;
 
 protected:
-    std::uint64_t m_traceData;
+    uint64_t m_traceData;
 };
 
 }

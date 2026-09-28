@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_BANDWIDTHCOUNTER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_BANDWIDTHCOUNTER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/String.hpp"
 #include "nn/nex/qChain.hpp"
@@ -17,7 +17,7 @@ public:
     typedef qChain<BandwidthCounter*, DefaultChainPolicy<BandwidthCounter*> > CounterList;
 
     explicit BandwidthCounter(const String& name);
-    ~BandwidthCounter();
+    virtual ~BandwidthCounter();
 
     void Reset();
     static void ResetAll();
@@ -38,7 +38,6 @@ private:
     unsigned int m_maximum;
     unsigned int m_total;
     unsigned int m_count;
-    std::uint32_t mVTable;
 };
 
 }}

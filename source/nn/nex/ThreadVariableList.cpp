@@ -42,7 +42,7 @@ void ThreadVariableList::AddVariable(ThreadVariableRoot* variable)
     if (!g_threadVariableListReady)
         return;
 
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     if (m_first == 0)
     {
@@ -57,7 +57,6 @@ void ThreadVariableList::AddVariable(ThreadVariableRoot* variable)
     m_last = variable;
     ++m_count;
 
-    m_criticalSection.Leave();
 }
 
 ThreadVariableList* ThreadVariableList::GetInstanceRef()
@@ -65,17 +64,16 @@ ThreadVariableList* ThreadVariableList::GetInstanceRef()
     return g_threadVariableList;
 }
 
-void ThreadVariableList::ClearValue(std::uint32_t value)
+void ThreadVariableList::ClearValue(uint32_t value)
 {
     if (!g_threadVariableListReady)
         return;
 
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     for (ThreadVariableRoot* variable = m_first; variable != 0; variable = variable->m_next)
         variable->ClearValue(value);
 
-    m_criticalSection.Leave();
 }
 
 void ThreadVariableList::RemoveVariable(ThreadVariableRoot* variable)
@@ -83,7 +81,7 @@ void ThreadVariableList::RemoveVariable(ThreadVariableRoot* variable)
     if (!g_threadVariableListReady)
         return;
 
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     ThreadVariableRoot* current = m_first;
     while (current != 0)
@@ -113,7 +111,6 @@ void ThreadVariableList::RemoveVariable(ThreadVariableRoot* variable)
         current = next;
     }
 
-    m_criticalSection.Leave();
 }
 
 void ThreadVariableList::ResetValues()
@@ -121,12 +118,11 @@ void ThreadVariableList::ResetValues()
     if (!g_threadVariableListReady)
         return;
 
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     for (ThreadVariableRoot* variable = m_first; variable != 0; variable = variable->m_next)
         variable->ResetValues();
 
-    m_criticalSection.Leave();
 }
 
 void ThreadVariableList::ClearValue()
@@ -134,12 +130,11 @@ void ThreadVariableList::ClearValue()
     if (!g_threadVariableListReady)
         return;
 
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     for (ThreadVariableRoot* variable = m_first; variable != 0; variable = variable->m_next)
         variable->ClearValue();
 
-    m_criticalSection.Leave();
 }
 
 }

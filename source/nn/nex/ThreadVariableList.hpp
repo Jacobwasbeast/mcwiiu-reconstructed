@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLELIST_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLELIST_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/RootObject.hpp"
@@ -21,7 +21,7 @@ public:
 
     void AddVariable(ThreadVariableRoot* variable);
     static ThreadVariableList* GetInstanceRef();
-    void ClearValue(std::uint32_t value);
+    void ClearValue(uint32_t value);
     void RemoveVariable(ThreadVariableRoot* variable);
     void ResetValues();
     void ClearValue();
@@ -29,7 +29,7 @@ public:
 private:
     ThreadVariableRoot* m_first;
     ThreadVariableRoot* m_last;
-    std::uint32_t m_count;
+    uint32_t m_count;
     ForcedCriticalSection m_criticalSection;
 };
 

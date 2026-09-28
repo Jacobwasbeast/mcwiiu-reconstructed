@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SINGLETHREADCALLPOLICY_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SINGLETHREADCALLPOLICY_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/CallPolicy.hpp"
 
@@ -14,21 +14,21 @@ class SingleThreadCallPolicy : public CallPolicy
 {
 public:
     SingleThreadCallPolicy();
-    virtual ~SingleThreadCallPolicy();
+    virtual ~SingleThreadCallPolicy() {}
 
-    void AcceptOneThread(std::uint32_t threadId);
+    void AcceptOneThread(uint32_t threadId);
     void AcceptAnyThread();
-    void SetMaximumRecursionLevel(std::uint32_t maximumRecursionLevel);
+    void SetMaximumRecursionLevel(uint32_t maximumRecursionLevel);
     bool CurrentThreadIsDispatchingJobs() const;
 
     virtual void BeginCallImpl();
     virtual void EndCallImpl();
 
 private:
-    std::uint32_t m_callDepth;
-    std::uint32_t m_threadId;
-    std::uint32_t m_maximumRecursionLevel;
-    std::uint32_t m_recursionLevel;
+    uint32_t m_callDepth;
+    uint32_t m_threadId;
+    uint32_t m_maximumRecursionLevel;
+    uint32_t m_recursionLevel;
 };
 
 }

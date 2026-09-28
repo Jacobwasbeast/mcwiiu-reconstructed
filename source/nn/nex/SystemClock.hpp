@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMCLOCK_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMCLOCK_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/Time.hpp"
@@ -22,9 +22,9 @@ public:
     virtual ~SystemClock();
 
     static void ApplyCorrection(Time reference, Time corrected);
-    static std::uint64_t GetTimeImplCorrectless();
-    static std::uint64_t GetTimeImpl(bool allowRetry);
-    static std::uint64_t ProtectedGetTime();
+    static uint64_t GetTimeImplCorrectless();
+    static uint64_t GetTimeImpl(bool allowRetry);
+    static uint64_t ProtectedGetTime();
     static void RegisterTimeProvider(TimeProvider* provider, bool applyCorrection);
     static void Reset();
 };

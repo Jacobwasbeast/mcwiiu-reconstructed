@@ -2,7 +2,7 @@
 
 namespace nn { namespace nex {
 
-MyNotificationEventHandler::MyNotificationEventHandler(std::uint32_t eventGroup, std::uint32_t eventType)
+MyNotificationEventHandler::MyNotificationEventHandler(uint32_t eventGroup, uint32_t eventType)
     : m_eventReady(false)
     , m_hasParam1(false)
     , m_hasUInt64Param1(false)
@@ -19,7 +19,7 @@ MyNotificationEventHandler::~MyNotificationEventHandler()
 {
 }
 
-void MyNotificationEventHandler::SetEventParam1(std::uint32_t value)
+void MyNotificationEventHandler::SetEventParam1(uint32_t value)
 {
     m_param1 = value;
     m_hasParam1 = true;
@@ -27,7 +27,7 @@ void MyNotificationEventHandler::SetEventParam1(std::uint32_t value)
     m_pendingEvents.clear();
 }
 
-void MyNotificationEventHandler::SetEventUInt64Param1(std::uint64_t value)
+void MyNotificationEventHandler::SetEventUInt64Param1(uint64_t value)
 {
     m_uint64Param1 = value;
     m_hasUInt64Param1 = true;
@@ -50,8 +50,8 @@ void MyNotificationEventHandler::ProcessNotificationEvent(const NotificationEven
 
     if (m_hasParam1 && event.GetParam1() != m_param1)
         return;
-    if (m_hasUInt64Param1 && (event.GetParam2() != static_cast<std::uint32_t>(m_uint64Param1 >> 32) ||
-                              event.GetParam3() != static_cast<std::uint32_t>(m_uint64Param1)))
+    if (m_hasUInt64Param1 && (event.GetParam2() != static_cast<uint32_t>(m_uint64Param1 >> 32) ||
+                              event.GetParam3() != static_cast<uint32_t>(m_uint64Param1)))
         return;
 
     m_event = event;

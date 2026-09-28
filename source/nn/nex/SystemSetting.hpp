@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMSETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMSETTING_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/String.hpp"
 #include "nn/nex/qChain.hpp"
@@ -26,7 +26,7 @@ public:
     const wchar_t* m_name;
     unsigned int m_value;
     bool m_state;
-    std::uint32_t mVTable;
+    uint32_t mVTable;
 
     bool CheckIfMutable() const;
     void SetValue(unsigned int value);

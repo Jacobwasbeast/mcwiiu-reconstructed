@@ -49,7 +49,7 @@ int Platform::Breakpoint()
     return 0;
 }
 
-std::int64_t Platform::GetTick()
+int64_t Platform::GetTick()
 {
     return OSGetTime();
 }

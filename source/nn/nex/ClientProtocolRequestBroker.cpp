@@ -56,7 +56,7 @@ Operation* ClientProtocolRequestBroker::GetCurrentOperation() const
 void ClientProtocolRequestBroker::ProcessMessage(CallProtocolMethodOperation* operation,
                                                   EndPoint* endPoint, Buffer* buffer)
 {
-    m_currentEndPoint = static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(endPoint));
+    m_currentEndPoint = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(endPoint));
     ProcessMessageCore(operation, endPoint, buffer);
     m_currentEndPoint = 0;
 }

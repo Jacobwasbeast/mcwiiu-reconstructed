@@ -1,7 +1,9 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_REFCOUNTEDOBJECT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_REFCOUNTEDOBJECT_HPP
 
-#include <cstdint>
+#include <stdint.h>
+
+#include <coreinit/atomic.h>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -18,17 +20,17 @@ public:
 
     void AddRef()
     {
-        __atomic_add_fetch(&m_refCount, 1u, __ATOMIC_SEQ_CST);
+        OSAddAtomic(&m_refCount, 1);
     }
     void ReleaseRef();
 
-    std::uint32_t GetRefCount() const
+    uint32_t GetRefCount() const
     {
-        return m_refCount;
+        return static_cast<uint32_t>(m_refCount);
     }
 
 private:
-    std::uint32_t m_refCount;
+    volatile int32_t m_refCount;
     bool m_disposing;
 };
 

@@ -12,15 +12,15 @@ namespace nex
 class NATProperties : public RootObject
 {
 public:
-    enum MappingProperties : int
+    enum MappingProperties
 {
 };
 
-    enum FilteringProperties : int
+    enum FilteringProperties
 {
 };
 
-    enum PortIncreaseProperties : int
+    enum PortIncreaseProperties
 {
 };
 

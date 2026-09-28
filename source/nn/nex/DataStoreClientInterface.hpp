@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_DATASTORECLIENTINTERFACE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_DATASTORECLIENTINTERFACE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <utility>
 
 #include "nn/nex/DataStoreMetaInfo.hpp"
@@ -81,7 +81,7 @@ public:
     virtual void CompletePostObject(ProtocolCallContext* pContext,
                                     const DataStoreCompletePostParamV1& rParam) = 0;
     virtual void CompleteSuspendedPostObject(ProtocolCallContext* pContext,
-                                             const qVector<std::uint64_t>& rDataIds) = 0;
+                                             const qVector<uint64_t>& rDataIds) = 0;
     virtual void PrepareUpdateObject(ProtocolCallContext* pContext,
                                      const DataStorePrepareUpdateParam& rParam,
                                      DataStoreReqUpdateInfo* pReqUpdateInfo) = 0;
@@ -95,7 +95,7 @@ public:
                          const DataStoreGetMetaParam& rParam,
                          DataStoreMetaInfo* pMetaInfo) = 0;
     virtual void GetMeta(ProtocolCallContext* pContext,
-                         const qVector<std::uint64_t>& rDataIds,
+                         const qVector<uint64_t>& rDataIds,
                          const DataStoreGetMetaParam& rParam,
                          qVector<DataStoreMetaInfo>* pMetaInfos,
                          qVector<qResult>* pResults) = 0;
@@ -129,19 +129,19 @@ public:
     virtual void GetRating(ProtocolCallContext* pContext,
                            const DataStoreRatingTarget& rTarget,
                            DataStoreRatingInfo* pRatingInfo,
-                           std::uint64_t uiAccessPassword) = 0;
+                           uint64_t uiAccessPassword) = 0;
     virtual void GetRating(ProtocolCallContext* pContext,
-                           const qVector<std::uint64_t>& rDataIds,
+                           const qVector<uint64_t>& rDataIds,
                            qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfos,
                            qVector<qResult>* pResults,
-                           std::uint64_t uiAccessPassword) = 0;
+                           uint64_t uiAccessPassword) = 0;
     virtual void ResetRating(ProtocolCallContext* pContext,
                              const DataStoreRatingTarget& rTarget,
-                             std::uint64_t uiUpdatePassword) = 0;
+                             uint64_t uiUpdatePassword) = 0;
     virtual void ResetRating(ProtocolCallContext* pContext,
-                             const std::uint64_t& rDataId) = 0;
+                             const uint64_t& rDataId) = 0;
     virtual void ResetRating(ProtocolCallContext* pContext,
-                             const qVector<std::uint64_t>& rDataIds,
+                             const qVector<uint64_t>& rDataIds,
                              bool bTransactional,
                              qVector<qResult>* pResults) = 0;
     virtual void GetSpecificMeta(ProtocolCallContext* pContext,
@@ -152,18 +152,18 @@ public:
                                  qVector<DataStoreSpecificMetaInfoV1>* pMetaInfos) = 0;
     virtual void PostMetaBinary(ProtocolCallContext* pContext,
                                 const DataStorePreparePostParam& rParam,
-                                std::uint64_t* pDataId) = 0;
+                                uint64_t* pDataId) = 0;
     virtual void PostMetaBinaryWithDataId(ProtocolCallContext* pContext,
-                                          std::uint64_t uiDataId,
+                                          uint64_t uiDataId,
                                           const DataStorePreparePostParam& rParam) = 0;
     virtual void PostMetaBinaryWithDataIds(ProtocolCallContext* pContext,
-                                           const qVector<std::uint64_t>& rDataIds,
+                                           const qVector<uint64_t>& rDataIds,
                                            const DataStorePreparePostParam& rParam,
                                            bool bTransactional,
                                            qVector<qResult>* pResults) = 0;
     virtual void PostMetaBinariesWithDataId(
         ProtocolCallContext* pContext,
-        const qVector<std::pair<std::uint64_t, DataStorePreparePostParam> >& rParams,
+        const qVector<std::pair<uint64_t, DataStorePreparePostParam> >& rParams,
         bool bTransactional,
         qVector<qResult>* pResults) = 0;
     virtual void TouchObject(ProtocolCallContext* pContext,
@@ -172,35 +172,35 @@ public:
                                   const DataStoreRatingTarget& rTarget,
                                   DataStoreRatingInfo* pRatingInfo,
                                   DataStoreRatingLog* pRatingLog,
-                                  std::uint64_t uiAccessPassword) = 0;
+                                  uint64_t uiAccessPassword) = 0;
     virtual void GetPersistenceInfo(ProtocolCallContext* pContext,
-                                    std::uint32_t uiOwnerId,
-                                    std::uint16_t uiPersistenceSlotId,
+                                    uint32_t uiOwnerId,
+                                    uint16_t uiPersistenceSlotId,
                                     DataStorePersistenceInfo* pInfo) = 0;
     virtual void GetPersistenceInfo(ProtocolCallContext* pContext,
-                                    std::uint32_t uiOwnerId,
-                                    qVector<std::uint16_t> persistenceSlotIds,
+                                    uint32_t uiOwnerId,
+                                    qVector<uint16_t> persistenceSlotIds,
                                     qVector<DataStorePersistenceInfo>* pInfos,
                                     qVector<qResult>* pResults) = 0;
     virtual void PerpetuateObject(ProtocolCallContext* pContext,
-                                  std::uint16_t uiPersistenceSlotId,
-                                  std::uint64_t uiDataId,
+                                  uint16_t uiPersistenceSlotId,
+                                  uint64_t uiDataId,
                                   bool bDeleteLastObject) = 0;
     virtual void UnperpetuateObject(ProtocolCallContext* pContext,
-                                    std::uint16_t uiPersistenceSlotId,
+                                    uint16_t uiPersistenceSlotId,
                                     bool bDeleteLastObject) = 0;
     virtual void GetPasswordInfo(ProtocolCallContext* pContext,
-                                 std::uint64_t uiDataId,
+                                 uint64_t uiDataId,
                                  DataStorePasswordInfo* pPasswordInfo) = 0;
     virtual void GetPasswordInfo(ProtocolCallContext* pContext,
-                                 const qVector<std::uint64_t>& rDataIds,
+                                 const qVector<uint64_t>& rDataIds,
                                  qVector<DataStorePasswordInfo>* pPasswordInfos,
                                  qVector<qResult>* pResults) = 0;
     virtual void GetObjectInfo(ProtocolCallContext* pContext,
-                               const qVector<std::uint64_t>& rDataIds,
+                               const qVector<uint64_t>& rDataIds,
                                qVector<DataStoreReqGetInfo>* pReqGetInfos,
                                qVector<qResult>* pResults) = 0;
-    virtual std::uint32_t GetMyPrincipalId() const = 0;
+    virtual uint32_t GetMyPrincipalId() const = 0;
     virtual bool IsCredentialsNeeded() const = 0;
 };
 

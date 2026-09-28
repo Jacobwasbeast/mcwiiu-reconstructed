@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_RESULTRANGE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_RESULTRANGE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/_DDL_ResultRange.hpp"
 
@@ -13,11 +13,11 @@ namespace nex
 class ResultRange : public _DDL_ResultRange
 {
 public:
-    ResultRange(std::uint32_t uiOffset = 0, std::uint32_t uiSize = 20);
+    ResultRange(uint32_t uiOffset = 0, uint32_t uiSize = 20);
     virtual ~ResultRange();
 
-    virtual std::uint32_t GetOffset() const;
-    virtual std::uint32_t GetSize() const;
+    virtual uint32_t GetOffset() const;
+    virtual uint32_t GetSize() const;
 };
 
 }

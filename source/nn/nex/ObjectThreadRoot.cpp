@@ -1,5 +1,6 @@
 #include "nn/nex/ObjectThreadRoot.hpp"
 
+#include <coreinit/atomic.h>
 #include <coreinit/thread.h>
 #include <cstring>
 
@@ -18,12 +19,12 @@ namespace nex
 namespace
 {
 
-const std::uint32_t INHERIT_THREAD_AFFINITY = 0x80000000u;
+const uint32_t INHERIT_THREAD_AFFINITY = 0x80000000u;
 
-std::uint32_t s_defaultStackSize = 0x8000;
-std::uint32_t s_defaultPriority = 17;
-std::uint32_t s_defaultThreadAffinity = 0;
-volatile std::int32_t s_nbAttachedThreads = 0;
+uint32_t s_defaultStackSize = 0x8000;
+uint32_t s_defaultPriority = 17;
+uint32_t s_defaultThreadAffinity = 0;
+volatile int32_t s_nbAttachedThreads = 0;
 
 }
 
@@ -46,7 +47,7 @@ ObjectThreadRoot::ObjectThreadRoot(const String& name)
 {
 }
 
-ObjectThreadRoot::ObjectThreadRoot(const String& name, std::uint32_t priority)
+ObjectThreadRoot::ObjectThreadRoot(const String& name, uint32_t priority)
     : m_name(name)
     , m_pThreadData(new ThreadData())
     , m_threadId(0)
@@ -89,17 +90,17 @@ ObjectThreadRoot::~ObjectThreadRoot()
     m_pThreadData = 0;
 }
 
-std::uint32_t ObjectThreadRoot::GetCurrentThreadID()
+uint32_t ObjectThreadRoot::GetCurrentThreadID()
 {
-    return reinterpret_cast<std::uint32_t>(OSGetCurrentThread());
+    return reinterpret_cast<uint32_t>(OSGetCurrentThread());
 }
 
-void ObjectThreadRoot::SetThreadAffinity(std::uint32_t affinity)
+void ObjectThreadRoot::SetThreadAffinity(uint32_t affinity)
 {
     OSSetThreadAffinity(OSGetCurrentThread(), affinity & 0xffffu);
 }
 
-bool ObjectThreadRoot::Launch(std::uint32_t stackSize)
+bool ObjectThreadRoot::Launch(uint32_t stackSize)
 {
     if (stackSize == 0)
         stackSize = s_defaultStackSize;
@@ -134,13 +135,13 @@ bool ObjectThreadRoot::LaunchImpl()
     {
         OSThread* pThread = SpecialNew<OSThread>(L"", 0);
 
-        m_threadId = reinterpret_cast<std::uint32_t>(pThread);
+        m_threadId = reinterpret_cast<uint32_t>(pThread);
         m_pThreadData->m_pThread = pThread;
     }
 
     m_pThreadData->m_bJoined = false;
 
-    std::uint32_t affinity = 0;
+    uint32_t affinity = 0;
 
     if (m_affinity != INHERIT_THREAD_AFFINITY)
         affinity = m_affinity & 0xffffu;
@@ -148,7 +149,7 @@ bool ObjectThreadRoot::LaunchImpl()
     if (!OSCreateThread(m_pThreadData->m_pThread,
             reinterpret_cast<OSThreadEntryPointFn>(&ObjectThreadProc), 0,
             reinterpret_cast<char*>(this), m_pThreadData->m_pStack + m_stackSize, m_stackSize,
-            static_cast<std::int32_t>(m_priority), static_cast<OSThreadAttributes>(affinity)))
+            static_cast<int32_t>(m_priority), static_cast<OSThreadAttributes>(affinity)))
     {
         SpecialDelete(m_pThreadData->m_pThread);
         m_pThreadData->m_pThread = 0;
@@ -174,7 +175,7 @@ int ObjectThreadRoot::ObjectThreadProc(int argc, void* argv)
     return 0;
 }
 
-bool ObjectThreadRoot::Wait(std::uint32_t timeout)
+bool ObjectThreadRoot::Wait(uint32_t timeout)
 {
     if (m_pThreadData->m_pThread == 0)
         return true;
@@ -232,12 +233,12 @@ bool ObjectThreadRoot::Wait(std::uint32_t timeout)
     return true;
 }
 
-void ObjectThreadRoot::SetPriority(std::uint32_t priority)
+void ObjectThreadRoot::SetPriority(uint32_t priority)
 {
     OSThread* pThread = m_pThreadData->m_pThread;
 
     m_priority = priority;
-    OSSetThreadPriority(pThread, static_cast<std::int32_t>(priority));
+    OSSetThreadPriority(pThread, static_cast<int32_t>(priority));
 }
 
 void ObjectThreadRoot::ReadyToRun()
@@ -245,15 +246,15 @@ void ObjectThreadRoot::ReadyToRun()
     m_bStarted = true;
 }
 
-void ObjectThreadRoot::Attach(std::uint32_t threadId)
+void ObjectThreadRoot::Attach(uint32_t threadId)
 {
     m_threadId = threadId;
-    __atomic_add_fetch(&s_nbAttachedThreads, 1, __ATOMIC_SEQ_CST);
+    OSAddAtomic(&s_nbAttachedThreads, 1);
 }
 
 void ObjectThreadRoot::Detach()
 {
-    __atomic_sub_fetch(&s_nbAttachedThreads, 1, __ATOMIC_SEQ_CST);
+    OSAddAtomic(&s_nbAttachedThreads, -1);
 }
 
 void ObjectThreadRoot::WrapExceptionHandling()

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_QBUFFER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_QBUFFER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RefCountedObject.hpp"
 
@@ -25,7 +25,7 @@ public:
     void push_back(const unsigned char* pData, unsigned int uiDataSize);
     void push_front(const unsigned char* pData, unsigned int uiDataSize);
 
-    void Trace(std::uint64_t uiFilter, bool bDumpContents);
+    void Trace(uint64_t uiFilter, bool bDumpContents);
 
     unsigned int size() const
     {

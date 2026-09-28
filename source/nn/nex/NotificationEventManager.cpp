@@ -27,21 +27,21 @@ NotificationEventManager* NotificationEventManager::Clone() const
     return new NotificationEventManager(const_cast<NotificationEventManager*>(this));
 }
 
-std::uint32_t NotificationEventManager::RegisterNotificationEventHandler(NotificationEventHandler* pHandler)
+uint32_t NotificationEventManager::RegisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
     if (pHandler == 0)
         return 0;
     return m_handlers.insert(pHandler).second ? 1u : 0u;
 }
 
-std::uint32_t NotificationEventManager::UnregisterNotificationEventHandler(NotificationEventHandler* pHandler)
+uint32_t NotificationEventManager::UnregisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
     if (pHandler == 0)
         return 0;
     return m_handlers.erase(pHandler) == 1 ? 1u : 0u;
 }
 
-std::uint32_t NotificationEventManager::IsEventValid(const NotificationEvent& rEvent)
+uint32_t NotificationEventManager::IsEventValid(const NotificationEvent& rEvent)
 {
     if (rEvent.GetType() / 1000 != 4)
         return 1;

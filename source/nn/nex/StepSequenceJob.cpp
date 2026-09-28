@@ -86,7 +86,7 @@ void StepSequenceJob::Execute()
         if (GetState() != Running)
             return;
 
-        std::uint32_t contextId = 0;
+        uint32_t contextId = 0;
         if (g_usingInstantiationContext)
             contextId = g_instantiationContextVariable->GetRef();
 

@@ -70,7 +70,7 @@ void ProfilingUnit::Log()
     Time::GetTime();
 }
 
-std::uint32_t ProfilingUnit::GetNbOccurences() const
+uint32_t ProfilingUnit::GetNbOccurences() const
 {
     return m_nbOccurences;
 }
@@ -80,7 +80,7 @@ const wchar_t* ProfilingUnit::GetName() const
     return m_name;
 }
 
-std::uint32_t ProfilingUnit::GetID() const
+uint32_t ProfilingUnit::GetID() const
 {
     return m_id;
 }

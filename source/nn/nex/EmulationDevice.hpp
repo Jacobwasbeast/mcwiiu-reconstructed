@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_EMULATIONDEVICE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_EMULATIONDEVICE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/nex/RootObject.hpp"
 
 namespace nn
@@ -29,10 +29,10 @@ public:
 
 private:
     bool m_enabled;
-    std::uint32_t m_field4;
-    std::uint32_t m_bandwidth;
-    std::uint32_t m_latency;
-    std::uint32_t m_jitter;
+    uint32_t m_field4;
+    uint32_t m_bandwidth;
+    uint32_t m_latency;
+    uint32_t m_jitter;
     float m_packetDropProbability;
 };
 

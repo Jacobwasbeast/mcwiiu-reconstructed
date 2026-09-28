@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLREQUESTBROKERINTERFACE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLREQUESTBROKERINTERFACE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/BandwidthCounterMap.hpp"
 #include "nn/nex/OperationManager.hpp"
@@ -17,15 +17,15 @@ extern unsigned int (*g_protocolCurrentCID)();
 
 struct GhsVTableEntry
 {
-    std::uint32_t adjustment;
-    std::uint32_t function;
+    uint32_t adjustment;
+    uint32_t function;
 };
 
 struct GhsVTable
 {
-    std::uint32_t header0;
-    std::uint32_t typeInfo;
-    std::uint32_t header2;
+    uint32_t header0;
+    uint32_t typeInfo;
+    uint32_t header2;
     GhsVTableEntry entries[14];
 };
 
@@ -59,16 +59,16 @@ public:
 
     const GhsVTable* GetTailVTable() const
     {
-        return reinterpret_cast<const GhsVTable*>(static_cast<std::uintptr_t>(mVTable));
+        return reinterpret_cast<const GhsVTable*>(static_cast<uintptr_t>(mVTable));
     }
 
 protected:
     friend class Protocol;
 
-    std::uint32_t m_reserved0;
+    uint32_t m_reserved0;
     BandwidthCounterMap m_bandwidthCounters;
     OperationManager m_operationManager;
-    std::uint32_t mVTable;
+    uint32_t mVTable;
 };
 
 }}

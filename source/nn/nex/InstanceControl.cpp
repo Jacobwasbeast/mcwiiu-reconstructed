@@ -11,7 +11,7 @@ CriticalSection g_instanceTableCriticalSection(2);
 
 InstanceControl::InstanceControl(unsigned int classId, unsigned int contextId)
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
 
     m_registered = false;
     if (g_instanceTable.AddInstance(this, classId, contextId))
@@ -22,69 +22,60 @@ InstanceControl::InstanceControl(unsigned int classId, unsigned int contextId)
         m_registered = true;
     }
 
-    g_instanceTableCriticalSection.Leave();
 }
 
 InstanceControl::~InstanceControl()
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
 
     if (m_registered)
         g_instanceTable.DelInstance(this, m_classId, m_contextId);
 
-    g_instanceTableCriticalSection.Leave();
 }
 
 void InstanceControl::SetDelegatorInstance(void* delegatorInstance)
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     m_delegatorInstance = delegatorInstance;
-    g_instanceTableCriticalSection.Leave();
 }
 
 int InstanceControl::GetHighestID()
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     int highestId = g_instanceTable.GetHighestID();
-    g_instanceTableCriticalSection.Leave();
     return highestId;
 }
 
 bool InstanceControl::ContextIsValid(unsigned int contextId)
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     bool valid = g_instanceTable.ContextIsValid(contextId);
-    g_instanceTableCriticalSection.Leave();
     return valid;
 }
 
 void InstanceControl::AllocateExtraContexts(unsigned int contextCount)
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     g_instanceTable.AllocateExtraContexts(contextCount);
-    g_instanceTableCriticalSection.Leave();
 }
 
 void InstanceControl::FreeExtraContexts()
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     g_instanceTable.FreeExtraContexts();
-    g_instanceTableCriticalSection.Leave();
 }
 
 bool InstanceControl::DeleteContext(unsigned int contextId)
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     bool deleted = g_instanceTable.DeleteContext(contextId);
-    g_instanceTableCriticalSection.Leave();
     return deleted;
 }
 
 unsigned int InstanceControl::FindInstanceContext(InstanceControl* instance, unsigned int classId)
 {
-    g_instanceTableCriticalSection.Enter();
+    ScopedCS lock(&g_instanceTableCriticalSection);
     unsigned int contextId = g_instanceTable.FindInstanceContext(instance, classId);
-    g_instanceTableCriticalSection.Leave();
     return contextId;
 }
 

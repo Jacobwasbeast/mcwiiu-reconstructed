@@ -29,15 +29,14 @@ const unsigned int PACKET_BUFFER_HEADER_MARGIN = 0x50;
 
 bool PacketBufferManager::IsEnablePacketBufferPool()
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
     const bool enabled = g_globalVariables->m_packetBufferPoolEnabled;
-    s_criticalSection.Leave();
     return enabled;
 }
 
 void PacketBufferManager::GetUnitHeapParam(qVector<UnitHeapParam>& rParams)
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
     if (!g_globalVariables->m_packetBufferParams.empty())
     {
         rParams = g_globalVariables->m_packetBufferParams;
@@ -48,7 +47,6 @@ void PacketBufferManager::GetUnitHeapParam(qVector<UnitHeapParam>& rParams)
         GetSimpleUnitHeapParam(0x4b000, 0x554, aParams);
         rParams = aParams;
     }
-    s_criticalSection.Leave();
 }
 
 bool PacketBufferManager::IsActiveNonStatic()
@@ -58,7 +56,7 @@ bool PacketBufferManager::IsActiveNonStatic()
 
 bool PacketBufferManager::IsActive()
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
 
     bool bActive = false;
     PacketBufferManager* pInstance = GetInstance();
@@ -66,7 +64,6 @@ bool PacketBufferManager::IsActive()
     if (pInstance != 0 && pInstance->IsActiveNonStatic())
         bActive = true;
 
-    s_criticalSection.Leave();
     return bActive;
 }
 
@@ -316,7 +313,7 @@ bool PacketBufferManager::IsAllocatable(unsigned int uiSize, unsigned int uiUnit
 
 void PacketBufferManager::GetUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rDebugInfo)
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
 
     rDebugInfo.clear();
 
@@ -325,12 +322,11 @@ void PacketBufferManager::GetUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rDebu
     if (pInstance != 0 && pInstance->m_pPacketBufferHeap != 0)
         pInstance->m_pPacketBufferHeap->GetDebugInfo(rDebugInfo);
 
-    s_criticalSection.Leave();
 }
 
 void PacketBufferManager::GetAllUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rDebugInfo)
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
 
     PacketBufferManager* pInstance = GetInstance();
 
@@ -350,7 +346,6 @@ void PacketBufferManager::GetAllUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rD
     rDebugInfo.insert(rDebugInfo.end(), aManagementObjectDebugInfo.begin(),
         aManagementObjectDebugInfo.end());
 
-    s_criticalSection.Leave();
 }
 
 void PacketBufferManager::Dump(unsigned long long)
@@ -372,7 +367,7 @@ void PacketBufferManager::Dump(unsigned long long)
 
 void PacketBufferManager::Initialize()
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
     if (m_iInitializeCount == 0 && IsEnablePacketBufferPool() && !IsActive())
     {
         qVector<UnitHeapParam> aParams;
@@ -400,14 +395,12 @@ void PacketBufferManager::Initialize()
         m_pfnAllocateManagementObject = PacketManagementObjectAllocate;
     }
     m_iInitializeCount = static_cast<int>(static_cast<unsigned int>(m_iInitializeCount) + 1u);
-    s_criticalSection.Leave();
 }
 
 void PacketBufferManager::Finalize()
 {
-    s_criticalSection.Enter();
+    ScopedCS lock(&s_criticalSection);
     --m_iInitializeCount;
-    s_criticalSection.Leave();
 }
 
 }

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_TIMEPROVIDER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_TIMEPROVIDER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn
 {
@@ -12,7 +12,7 @@ class TimeProvider
 {
 public:
     virtual ~TimeProvider();
-    virtual std::uint64_t GetTime() = 0;
+    virtual uint64_t GetTime() = 0;
 };
 
 }

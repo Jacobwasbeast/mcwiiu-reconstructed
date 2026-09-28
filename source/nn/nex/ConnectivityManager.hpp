@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_CONNECTIVITYMANAGER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_CONNECTIVITYMANAGER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/PseudoSingleton.hpp"
 
@@ -54,9 +54,9 @@ protected:
     unsigned short m_portNumber;
     unsigned short m_reservedPortNumber;
     ConnectivityTester* m_connectivityTester;
-    std::uint32_t m_callContextId;
-    std::uint32_t m_probeLifetime;
-    std::int32_t m_bossDaemonSuspendCount;
+    uint32_t m_callContextId;
+    uint32_t m_probeLifetime;
+    int32_t m_bossDaemonSuspendCount;
     bool m_packetBufferManagerInitialized;
 };
 

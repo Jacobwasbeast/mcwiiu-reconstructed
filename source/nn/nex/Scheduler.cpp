@@ -132,9 +132,8 @@ void Scheduler::Queue(Job* pJob, bool bFront)
         return;
     }
 
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
     QueueImpl(pJob, bFront);
-    m_queueCriticalSection.Leave();
 }
 
 void Scheduler::DeleteJob(Job* pJob)
@@ -165,8 +164,8 @@ void Scheduler::ProcessJob(Job* pJob, const Time& rDeadline)
 
 void Scheduler::SpecialDispatch(const Time& rDeadline)
 {
-    m_criticalSection.Enter();
-    m_specialCriticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
+    ScopedCS innerLock(&m_specialCriticalSection);
 
     JobChain::iterator position = m_specialDispatchJobs.begin();
 
@@ -182,8 +181,6 @@ void Scheduler::SpecialDispatch(const Time& rDeadline)
         ++position;
     }
 
-    m_specialCriticalSection.Leave();
-    m_criticalSection.Leave();
 }
 
 bool Scheduler::QueueNewlyReadyJobs()
@@ -192,8 +189,8 @@ bool Scheduler::QueueNewlyReadyJobs()
 
     const unsigned long long ullNow = Time::GetTime();
 
-    m_criticalSection.Enter();
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
+    ScopedCS innerLock(&m_queueCriticalSection);
 
     JobMap::iterator delayed = m_delayedJobs.begin();
 
@@ -251,8 +248,6 @@ bool Scheduler::QueueNewlyReadyJobs()
         }
     }
 
-    m_queueCriticalSection.Leave();
-    m_criticalSection.Leave();
 
     return bQueued;
 }
@@ -321,28 +316,25 @@ void Scheduler::DispatchImpl(Time deadline)
 
 unsigned int Scheduler::GetReadyQueueSize() const
 {
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
     const unsigned int uiSize = m_readyJobs.size();
-    m_queueCriticalSection.Leave();
     return uiSize;
 }
 
 unsigned int Scheduler::GetTotalQueueSize() const
 {
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
     const unsigned int uiReadySize = m_readyJobs.size();
     const unsigned int uiDelayedSize = m_delayedJobs.size();
     const unsigned int uiWaitingSize = m_waitingJobs.size();
-    m_queueCriticalSection.Leave();
     return uiReadySize + uiDelayedSize + uiWaitingSize;
 }
 
 bool Scheduler::GetTotalNumberOfJobs() const
 {
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
     const unsigned int uiQueueSize = GetTotalQueueSize();
     const bool bCurrentJobValid = m_bCurrentJobValid;
-    m_queueCriticalSection.Leave();
     return uiQueueSize + static_cast<unsigned int>(bCurrentJobValid) != 0;
 }
 
@@ -350,7 +342,7 @@ unsigned int Scheduler::GetNbSpecialJobs() const
 {
     unsigned int uiCount = 0;
 
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
 
     for (JobMap::const_iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end();
          ++delayed)
@@ -372,7 +364,6 @@ unsigned int Scheduler::GetNbSpecialJobs() const
             ++uiCount;
     }
 
-    m_queueCriticalSection.Leave();
 
     return uiCount;
 }
@@ -381,7 +372,7 @@ unsigned int Scheduler::GetOneTypeJobsCount(Job::JobType jobType) const
 {
     unsigned int uiCount = 0;
 
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
 
     for (JobChain::iterator ready = m_readyJobs.begin(); ready != m_readyJobs.end(); ++ready)
     {
@@ -403,7 +394,6 @@ unsigned int Scheduler::GetOneTypeJobsCount(Job::JobType jobType) const
             ++uiCount;
     }
 
-    m_queueCriticalSection.Leave();
 
     return uiCount;
 }
@@ -709,8 +699,8 @@ bool Scheduler::Cancel(Job* pJob)
 {
     bool bCancelled = false;
 
-    m_criticalSection.Enter();
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
+    ScopedCS innerLock(&m_queueCriticalSection);
 
     JobMap::iterator delayed = m_delayedJobs.begin();
     while (delayed != m_delayedJobs.end() && delayed->second != pJob)
@@ -753,15 +743,13 @@ bool Scheduler::Cancel(Job* pJob)
         }
     }
 
-    m_queueCriticalSection.Leave();
-    m_criticalSection.Leave();
 
     return bCancelled;
 }
 
 bool Scheduler::IsQueued(const Job* pJob) const
 {
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
 
     JobMap::const_iterator delayed = m_delayedJobs.begin();
     while (delayed != m_delayedJobs.end() && delayed->second != pJob)
@@ -769,29 +757,25 @@ bool Scheduler::IsQueued(const Job* pJob) const
 
     if (delayed != m_delayedJobs.end())
     {
-        m_queueCriticalSection.Leave();
         return true;
     }
 
     if (std::find(m_readyJobs.begin(), m_readyJobs.end(), pJob) != m_readyJobs.end())
     {
-        m_queueCriticalSection.Leave();
         return true;
     }
 
     if (std::find(m_waitingJobs.begin(), m_waitingJobs.end(), pJob) != m_waitingJobs.end())
     {
-        m_queueCriticalSection.Leave();
         return true;
     }
 
-    m_queueCriticalSection.Leave();
     return false;
 }
 
 void Scheduler::ClearAllQueues()
 {
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
 
     JobChain::iterator ready = m_readyJobs.begin();
     while (ready != m_readyJobs.end())
@@ -803,25 +787,23 @@ void Scheduler::ClearAllQueues()
 
     m_delayedJobs.clear();
 
-    m_queueCriticalSection.Leave();
 }
 
 void Scheduler::RegisterSpecialDispatchJob(Job* pJob, bool bFront)
 {
-    m_specialCriticalSection.Enter();
+    ScopedCS lock(&m_specialCriticalSection);
 
     if (bFront)
         m_specialDispatchJobs.push_front(pJob);
     else
         m_specialDispatchJobs.push_back(pJob);
 
-    m_specialCriticalSection.Leave();
 }
 
 void Scheduler::UnregisterSpecialDispatchJob(Job* pJob)
 {
-    m_criticalSection.Enter();
-    m_specialCriticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
+    ScopedCS innerLock(&m_specialCriticalSection);
 
     JobChain::iterator position =
         std::find(m_specialDispatchJobs.begin(), m_specialDispatchJobs.end(), pJob);
@@ -829,8 +811,6 @@ void Scheduler::UnregisterSpecialDispatchJob(Job* pJob)
     m_specialDispatchJobs.erase(position);
     DeleteJob(pJob);
 
-    m_specialCriticalSection.Leave();
-    m_criticalSection.Leave();
 }
 
 void Scheduler::WaitForAllJobsToComplete(unsigned int uiTimeout, bool bRequeueDelayedJobs)
@@ -955,7 +935,7 @@ void Scheduler::TerminateDOCoreJobs()
 
 void Scheduler::RequeueWaitingJob(Job* pJob, Time delay)
 {
-    m_queueCriticalSection.Enter();
+    ScopedCS lock(&m_queueCriticalSection);
 
     JobMap::iterator position = m_delayedJobs.begin();
     while (position != m_delayedJobs.end() && position->second != pJob)
@@ -971,7 +951,6 @@ void Scheduler::RequeueWaitingJob(Job* pJob, Time delay)
             Time(Time::GetTime() + static_cast<long long>(pJob->m_waitContext)), pJob));
     }
 
-    m_queueCriticalSection.Leave();
 }
 
 void Scheduler::ForceTerminateJobs()

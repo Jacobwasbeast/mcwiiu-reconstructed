@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_JOBCONNECTENDPOINT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_JOBCONNECTENDPOINT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <list>
 
 #include "nn/nex/CallContext.hpp"
@@ -33,7 +33,7 @@ public:
     virtual ~JobConnectEndPoint();
 
     virtual void CancelJob();
-    virtual void Trace(std::uint64_t uiFilter);
+    virtual void Trace(uint64_t uiFilter);
     virtual void ProcessInTermination();
     bool ConnectCancelled();
     virtual void TestSuspendedJobState();
@@ -67,17 +67,17 @@ private:
     EndPoint* m_pEndPoint;
     qResult m_result;
     ConnectionManager* m_pConnectionManager;
-    std::uint64_t m_unresolved98;
-    std::uint32_t m_timeout;
+    uint64_t m_unresolved98;
+    uint32_t m_timeout;
     qList<StepSequenceJob::Step> m_steps;
-    std::uint32_t m_unresolvedB0;
+    uint32_t m_unresolvedB0;
     CallContext m_callContext;
     CallContext m_natTraversalContext;
-    std::uint32_t m_unresolved168;
+    uint32_t m_unresolved168;
     Buffer* m_pRequestBuffer;
     Buffer* m_pResponseBuffer;
     EndPoint** m_ppEndPointOutput;
-    std::uint64_t m_natTraversalDeadline;
+    uint64_t m_natTraversalDeadline;
     URLList m_urls;
     bool m_isRouting;
     unsigned short m_originalPort;
@@ -85,7 +85,7 @@ private:
     bool m_flag194;
     bool m_cancelRequested;
     void* m_cancelTarget;
-    std::uint32_t m_unresolved19C;
+    uint32_t m_unresolved19C;
     bool m_flag1A0;
 };
 

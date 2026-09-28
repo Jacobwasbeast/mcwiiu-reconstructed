@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_DDLSERIALIZATION_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_DDLSERIALIZATION_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/Message.hpp"
 #include "nn/nex/qVector.hpp"
@@ -37,7 +37,7 @@ public:
 class _Type_uint16
 {
 public:
-    typedef std::uint16_t CPPType;
+    typedef uint16_t CPPType;
 
     static void Add(Message* pMessage, const CPPType& rSource)
     {
@@ -53,7 +53,7 @@ public:
 class _Type_uint32
 {
 public:
-    typedef std::uint32_t CPPType;
+    typedef uint32_t CPPType;
 
     static void Add(Message* pMessage, const CPPType& rSource)
     {
@@ -69,7 +69,7 @@ public:
 class _Type_uint64
 {
 public:
-    typedef std::uint64_t CPPType;
+    typedef uint64_t CPPType;
 
     static void Add(Message* pMessage, const CPPType& rSource)
     {
@@ -108,7 +108,7 @@ public:
 
     static void Add(Message* pMessage, const qVector<CPPType>& rSource)
     {
-        const std::uint32_t uiCount = static_cast<std::uint32_t>(rSource.size());
+        const uint32_t uiCount = static_cast<uint32_t>(rSource.size());
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCount), sizeof(uiCount), 1);
 
@@ -123,7 +123,7 @@ public:
     {
         pDestination->clear();
 
-        std::uint32_t uiCount = 0;
+        uint32_t uiCount = 0;
 
         if (!pMessage->ExtractPrimitive(&uiCount))
         {
@@ -132,7 +132,7 @@ public:
 
         pDestination->reserve(uiCount);
 
-        for (std::uint32_t uiIndex = 0; uiIndex < uiCount && !pMessage->HasError(); ++uiIndex)
+        for (uint32_t uiIndex = 0; uiIndex < uiCount && !pMessage->HasError(); ++uiIndex)
         {
             CPPType element;
 

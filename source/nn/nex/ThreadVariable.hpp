@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <functional>
 #include <map>
 #include <utility>
@@ -19,8 +19,8 @@ template <typename T>
 class ThreadVariable : public ThreadVariableRoot
 {
 public:
-    typedef std::map<std::uint32_t, T, std::less<std::uint32_t>,
-                     MemAllocator<std::pair<const std::uint32_t, T> > > ValueMap;
+    typedef std::map<uint32_t, T, std::less<uint32_t>,
+                     MemAllocator<std::pair<const uint32_t, T> > > ValueMap;
 
     explicit ThreadVariable(const T& defaultValue)
         : ThreadVariableRoot()
@@ -98,7 +98,7 @@ public:
         m_criticalSection.Leave();
     }
 
-    virtual void ClearValue(std::uint32_t threadId)
+    virtual void ClearValue(uint32_t threadId)
     {
         m_criticalSection.Enter();
 

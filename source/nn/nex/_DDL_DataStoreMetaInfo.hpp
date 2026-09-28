@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTOREMETAINFO_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTOREMETAINFO_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/DataStorePermission.hpp"
 #include "nn/nex/DataStoreRatingInfoWithSlot.hpp"
@@ -30,22 +30,22 @@ public:
     static void Add(Message* pMessage, const _DDL_DataStoreMetaInfo& rSource);
     static void Extract(Message* pMessage, _DDL_DataStoreMetaInfo* pDestination);
 
-    std::uint8_t m_uiStructureVersion;
-    std::uint64_t m_uiDataId;
-    std::uint32_t m_uiOwnerId;
-    std::uint32_t m_uiSize;
+    uint8_t m_uiStructureVersion;
+    uint64_t m_uiDataId;
+    uint32_t m_uiOwnerId;
+    uint32_t m_uiSize;
     String m_Name;
-    std::uint16_t m_uiDataType;
+    uint16_t m_uiDataType;
     qBuffer m_MetaBinary;
     DataStorePermission m_Permission;
     DataStorePermission m_DelPermission;
     DateTime m_CreatedTime;
     DateTime m_UpdatedTime;
-    std::uint16_t m_uiPeriod;
-    std::uint8_t m_uiStatus;
-    std::uint32_t m_uiReferredCnt;
-    std::uint32_t m_uiReferDataId;
-    std::uint32_t m_uiFlag;
+    uint16_t m_uiPeriod;
+    uint8_t m_uiStatus;
+    uint32_t m_uiReferredCnt;
+    uint32_t m_uiReferDataId;
+    uint32_t m_uiFlag;
     DateTime m_ReferredTime;
     DateTime m_ExpireTime;
     qVector<String> m_Tags;

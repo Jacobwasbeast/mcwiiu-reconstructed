@@ -12,7 +12,7 @@ namespace nex
 namespace
 {
 
-const std::uint8_t META_INFO_MAX_STRUCTURE_VERSION = 0;
+const uint8_t META_INFO_MAX_STRUCTURE_VERSION = 0;
 const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
@@ -68,14 +68,14 @@ void _DDL_DataStoreMetaInfo::Add(Message* pMessage, const _DDL_DataStoreMetaInfo
 
     if (!bCompactFormat)
     {
-        const std::uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const std::uint8_t uiMaxVersion = META_INFO_MAX_STRUCTURE_VERSION;
+        const uint8_t uiVersion = rSource.m_uiStructureVersion;
+        const uint8_t uiMaxVersion = META_INFO_MAX_STRUCTURE_VERSION;
 
         pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
 
         uiSizePosition = pMessage->GetLength();
 
-        const std::uint32_t uiSize = 0;
+        const uint32_t uiSize = 0;
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
     }
@@ -89,11 +89,11 @@ void _DDL_DataStoreMetaInfo::Add(Message* pMessage, const _DDL_DataStoreMetaInfo
     _DDL_DataStorePermission::Add(pMessage, rSource.m_Permission);
     _DDL_DataStorePermission::Add(pMessage, rSource.m_DelPermission);
 
-    const std::uint64_t uiCreatedTime = rSource.m_CreatedTime;
+    const uint64_t uiCreatedTime = rSource.m_CreatedTime;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCreatedTime), 8, 1);
 
-    const std::uint64_t uiUpdatedTime = rSource.m_UpdatedTime;
+    const uint64_t uiUpdatedTime = rSource.m_UpdatedTime;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiUpdatedTime), 8, 1);
 
@@ -103,11 +103,11 @@ void _DDL_DataStoreMetaInfo::Add(Message* pMessage, const _DDL_DataStoreMetaInfo
     pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiReferDataId), 4, 1);
     pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiFlag), 4, 1);
 
-    const std::uint64_t uiReferredTime = rSource.m_ReferredTime;
+    const uint64_t uiReferredTime = rSource.m_ReferredTime;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiReferredTime), 8, 1);
 
-    const std::uint64_t uiExpireTime = rSource.m_ExpireTime;
+    const uint64_t uiExpireTime = rSource.m_ExpireTime;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiExpireTime), 8, 1);
 
@@ -120,8 +120,8 @@ void _DDL_DataStoreMetaInfo::Add(Message* pMessage, const _DDL_DataStoreMetaInfo
 
         pMessage->SetLength(uiSizePosition);
 
-        const std::int32_t iSize =
-            static_cast<std::int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
+        const int32_t iSize =
+            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
         pMessage->SetLength(uiEndPosition);
@@ -133,7 +133,7 @@ void _DDL_DataStoreMetaInfo::Extract(Message* pMessage, _DDL_DataStoreMetaInfo* 
     pDestination->m_uiStructureVersion = 0;
 
     const bool bCompactFormat = pMessage->IsCompactFormat();
-    std::uint32_t uiSize = 0;
+    uint32_t uiSize = 0;
 
     if (!bCompactFormat)
     {
@@ -215,7 +215,7 @@ void _DDL_DataStoreMetaInfo::Extract(Message* pMessage, _DDL_DataStoreMetaInfo* 
         return;
     }
 
-    std::uint64_t uiCreatedTime = 0;
+    uint64_t uiCreatedTime = 0;
 
     pMessage->ExtractPrimitive(&uiCreatedTime);
     pDestination->m_CreatedTime = DateTime(uiCreatedTime);
@@ -225,7 +225,7 @@ void _DDL_DataStoreMetaInfo::Extract(Message* pMessage, _DDL_DataStoreMetaInfo* 
         return;
     }
 
-    std::uint64_t uiUpdatedTime = 0;
+    uint64_t uiUpdatedTime = 0;
 
     pMessage->ExtractPrimitive(&uiUpdatedTime);
     pDestination->m_UpdatedTime = DateTime(uiUpdatedTime);
@@ -270,7 +270,7 @@ void _DDL_DataStoreMetaInfo::Extract(Message* pMessage, _DDL_DataStoreMetaInfo* 
         return;
     }
 
-    std::uint64_t uiReferredTime = 0;
+    uint64_t uiReferredTime = 0;
 
     pMessage->ExtractPrimitive(&uiReferredTime);
     pDestination->m_ReferredTime = DateTime(uiReferredTime);
@@ -280,7 +280,7 @@ void _DDL_DataStoreMetaInfo::Extract(Message* pMessage, _DDL_DataStoreMetaInfo* 
         return;
     }
 
-    std::uint64_t uiExpireTime = 0;
+    uint64_t uiExpireTime = 0;
 
     pMessage->ExtractPrimitive(&uiExpireTime);
     pDestination->m_ExpireTime = DateTime(uiExpireTime);

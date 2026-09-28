@@ -34,7 +34,7 @@ void _Type_string::Add(Message* pMessage, const String& rSource)
     const wchar_t* pSource = rSource;
     if (pSource == 0)
     {
-        const std::uint16_t uiSize = 0;
+        const uint16_t uiSize = 0;
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), 2, 1);
         return;
     }
@@ -43,21 +43,21 @@ void _Type_string::Add(Message* pMessage, const String& rSource)
     {
         StringConverter converter(0);
         converter.Encode(pSource, false);
-        const std::uint16_t uiSize = static_cast<std::uint16_t>(converter.GetBufferSize());
+        const uint16_t uiSize = static_cast<uint16_t>(converter.GetBufferSize());
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), 2, 1);
         pMessage->Append(reinterpret_cast<const unsigned char*>(converter.GetBuffer()),
                          1, converter.GetBufferSize());
         return;
     }
 
-    const std::uint16_t uiSize = static_cast<std::uint16_t>(rSource.GetLength() + 1);
+    const uint16_t uiSize = static_cast<uint16_t>(rSource.GetLength() + 1);
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), 2, 1);
     pMessage->Append(reinterpret_cast<const unsigned char*>(pSource), 2, uiSize);
 }
 
 bool _Type_string::Extract(Message* pMessage, String* pDestination)
 {
-    std::uint16_t uiSize;
+    uint16_t uiSize;
     if (pMessage->ExtractPrimitive(&uiSize))
     {
         if (!pMessage->ValidateBufferLimit(uiSize))
@@ -94,11 +94,11 @@ bool _Type_string::Extract(Message* pMessage, String* pDestination)
 
 void _Type_qBuffer::Add(Message* pMessage, const qBuffer& rSource)
 {
-    std::uint16_t uiSize = 0;
+    uint16_t uiSize = 0;
 
     if (!rSource.empty())
     {
-        uiSize = static_cast<std::uint16_t>(rSource.size());
+        uiSize = static_cast<uint16_t>(rSource.size());
     }
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), sizeof(uiSize), 1);
@@ -111,7 +111,7 @@ void _Type_qBuffer::Add(Message* pMessage, const qBuffer& rSource)
 
 void _Type_qBuffer::Extract(Message* pMessage, qBuffer* pDestination)
 {
-    std::uint16_t uiSize = 0;
+    uint16_t uiSize = 0;
 
     pMessage->ExtractPrimitive(&uiSize);
 

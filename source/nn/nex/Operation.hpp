@@ -9,7 +9,9 @@ namespace nn { namespace nex {
 class Operation : public RootObject
 {
 public:
-    enum Event : unsigned int;
+    enum Event
+    {
+    };
 
     explicit Operation(unsigned int flags);
     virtual ~Operation();

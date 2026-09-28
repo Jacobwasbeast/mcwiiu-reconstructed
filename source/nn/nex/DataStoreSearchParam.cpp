@@ -17,11 +17,11 @@ DataStoreSearchParam::~DataStoreSearchParam()
 void DataStoreSearchParam::Reset()
 {
     m_uiSearchTarget = 1;
-    m_OwnerIds = qVector<std::uint32_t>();
+    m_OwnerIds = qVector<uint32_t>();
     m_uiOwnerType = 0;
-    m_DestinationIds = qVector<std::uint32_t>();
+    m_DestinationIds = qVector<uint32_t>();
     m_uiDataType = 0xFFFF;
-    m_DataTypes = qVector<std::uint16_t>();
+    m_DataTypes = qVector<uint16_t>();
     m_CreatedAfter = DateTime();
     m_CreatedBefore = DateTime();
     m_UpdatedAfter = DateTime();

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTORERATINGINFOWITHSLOT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTORERATINGINFOWITHSLOT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/DataStoreRatingInfo.hpp"
 #include "nn/nex/RootObject.hpp"
@@ -25,8 +25,8 @@ public:
     static void Add(Message* pMessage, const _DDL_DataStoreRatingInfoWithSlot& rSource);
     static void Extract(Message* pMessage, _DDL_DataStoreRatingInfoWithSlot* pDestination);
 
-    std::uint8_t m_uiStructureVersion;
-    std::int8_t m_iSlot;
+    uint8_t m_uiStructureVersion;
+    int8_t m_iSlot;
     DataStoreRatingInfo m_Rating;
 };
 

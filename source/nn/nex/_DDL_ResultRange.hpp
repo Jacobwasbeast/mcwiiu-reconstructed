@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX__DDL_RESULTRANGE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX__DDL_RESULTRANGE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -24,9 +24,9 @@ public:
     static void Add(Message* pMessage, const _DDL_ResultRange& rSource);
     static void Extract(Message* pMessage, _DDL_ResultRange* pDestination);
 
-    std::uint8_t m_uiStructureVersion;
-    std::uint32_t m_uiOffset;
-    std::uint32_t m_uiSize;
+    uint8_t m_uiStructureVersion;
+    uint32_t m_uiOffset;
+    uint32_t m_uiSize;
 };
 
 }

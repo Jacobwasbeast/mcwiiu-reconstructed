@@ -36,11 +36,11 @@ void _DDL_NotificationEvent::Add(Message* pMessage, const _DDL_NotificationEvent
 
     if (!bCompactFormat)
     {
-        const std::uint8_t uiVersion = 0;
+        const uint8_t uiVersion = 0;
         _Type_byte::Add(pMessage, uiVersion);
         uiSizePosition = pMessage->GetLength();
 
-        const std::uint32_t uiSize = 0;
+        const uint32_t uiSize = 0;
         _Type_uint32::Add(pMessage, uiSize);
     }
 
@@ -56,7 +56,7 @@ void _DDL_NotificationEvent::Add(Message* pMessage, const _DDL_NotificationEvent
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
 
-        const std::uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(std::uint32_t);
+        const uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(uint32_t);
         _Type_uint32::Add(pMessage, uiSize);
         pMessage->SetLength(uiEndPosition);
     }
@@ -67,7 +67,7 @@ void _DDL_NotificationEvent::Extract(Message* pMessage, _DDL_NotificationEvent* 
     pDestination->m_uiStructureVersion = 0;
 
     const bool bCompactFormat = pMessage->IsCompactFormat();
-    std::uint32_t uiSize = 0;
+    uint32_t uiSize = 0;
 
     if (!bCompactFormat)
     {

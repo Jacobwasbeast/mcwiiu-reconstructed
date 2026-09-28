@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTORESEARCHRESULT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX__DDL_DATASTORESEARCHRESULT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/DataStoreMetaInfo.hpp"
 #include "nn/nex/RootObject.hpp"
@@ -26,10 +26,10 @@ public:
     static void Add(Message* pMessage, const _DDL_DataStoreSearchResult& rSource);
     static void Extract(Message* pMessage, _DDL_DataStoreSearchResult* pDestination);
 
-    std::uint8_t m_uiStructureVersion;
-    std::uint32_t m_uiTotalCount;
+    uint8_t m_uiStructureVersion;
+    uint32_t m_uiTotalCount;
     qVector<DataStoreMetaInfo> m_Result;
-    std::uint8_t m_uiTotalCountType;
+    uint8_t m_uiTotalCountType;
 };
 
 }

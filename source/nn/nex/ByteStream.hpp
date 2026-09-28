@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_BYTESTREAM_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_BYTESTREAM_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/Buffer.hpp"
 #include "nn/nex/RootObject.hpp"
@@ -13,7 +13,7 @@ namespace nex
 
 class Time;
 
-void SetUnalignedNexNetworkOrder64(std::uint64_t uiValue, unsigned char* pDestination);
+void SetUnalignedNexNetworkOrder64(uint64_t uiValue, unsigned char* pDestination);
 
 class ByteStream : public RootObject
 {
@@ -51,8 +51,8 @@ public:
     ByteStream& operator>>(ByteStream& rStream);
     ByteStream& operator>>(bool& rValue);
 
-    static void TraceBytes(std::uint64_t uiFilter, unsigned char* pData, unsigned int uiSize);
-    void Trace(std::uint64_t uiFilter, bool bDumpContents);
+    static void TraceBytes(uint64_t uiFilter, unsigned char* pData, unsigned int uiSize);
+    void Trace(uint64_t uiFilter, bool bDumpContents);
 
     template <typename T>
     bool ExtractPrimitive(T* pValue)

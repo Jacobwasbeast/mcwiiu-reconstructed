@@ -11,7 +11,7 @@ namespace nex
 class CallPolicy : public RootObject
 {
 public:
-    virtual ~CallPolicy();
+    virtual ~CallPolicy() {}
 
     virtual void BeginCallImpl() = 0;
     virtual void EndCallImpl() = 0;

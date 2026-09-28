@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PROFILINGUNIT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PROFILINGUNIT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/String.hpp"
@@ -30,9 +30,9 @@ public:
     void IncTime(unsigned long long ullTime);
     void IncTime(unsigned long long ullTime, const wchar_t* pActivity);
 
-    std::uint32_t GetNbOccurences() const;
+    uint32_t GetNbOccurences() const;
     const wchar_t* GetName() const;
-    std::uint32_t GetID() const;
+    uint32_t GetID() const;
 
     unsigned long long GetTotalTime() const;
     unsigned long long GetMinTime() const;
@@ -67,13 +67,13 @@ private:
     unsigned long long m_maxTime;
     unsigned long long m_lastTime;
     Time m_lastResetTime;
-    std::uint32_t m_nbOccurences;
+    uint32_t m_nbOccurences;
     unsigned int m_traceMask;
     String m_name;
     bool m_bLoggingEnabled;
-    std::uint16_t m_reserved;
-    std::uint32_t m_id;
-    std::uint32_t m_nbLogs;
+    uint16_t m_reserved;
+    uint32_t m_id;
+    uint32_t m_nbLogs;
     unsigned int m_loggingFrequency;
     String m_lastActivity;
     String m_maxTimeActivity;

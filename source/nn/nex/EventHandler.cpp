@@ -46,18 +46,16 @@ EventHandler::~EventHandler()
 
 unsigned int EventHandler::GetEventIndex(Event* pEvent) const
 {
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     for (unsigned short index = 0; index < m_maxEvents; ++index)
     {
         if (m_pEvents[index] == pEvent)
         {
-            m_criticalSection.Leave();
             return index;
         }
     }
 
-    m_criticalSection.Leave();
     return 0;
 }
 
@@ -80,7 +78,7 @@ Event* EventHandler::CreateEventObject(unsigned int type, unsigned int context)
 {
     int slot;
 
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     for (slot = 0; slot < m_maxEvents; ++slot)
     {
@@ -95,25 +93,23 @@ Event* EventHandler::CreateEventObject(unsigned int type, unsigned int context)
 
     Event* pEvent = m_pEvents[slot];
 
-    m_criticalSection.Leave();
     return pEvent;
 }
 
 void EventHandler::DeleteEventObject(Event* pEvent)
 {
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     ResetEvent(pEvent);
     m_pEvents[GetEventIndex(pEvent)] = 0;
 
     delete pEvent;
 
-    m_criticalSection.Leave();
 }
 
 unsigned short EventHandler::GetSignaledEvent() const
 {
-    m_criticalSection.Enter();
+    ScopedCS lock(&m_criticalSection);
 
     for (unsigned int index = 0; index < m_nbEvents; ++index)
     {
@@ -122,20 +118,18 @@ unsigned short EventHandler::GetSignaledEvent() const
             unsigned short signaled =
                 static_cast<unsigned short>((index + s_nextEvent) % m_nbEvents);
 
-            m_criticalSection.Leave();
             return signaled;
         }
     }
 
     ++s_nextEvent;
 
-    m_criticalSection.Leave();
     return NO_SIGNALED_EVENT;
 }
 
 bool EventHandler::WaitForBoolEvent(unsigned int timeout, Event** ppEvent, bool bTimeOutAllowed) const
 {
-    const std::uint64_t started = Time::GetTime();
+    const uint64_t started = Time::GetTime();
 
     for (;;)
     {

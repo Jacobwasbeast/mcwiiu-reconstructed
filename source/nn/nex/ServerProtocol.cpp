@@ -5,7 +5,7 @@
 #include "nn/nex/StationURL.hpp"
 #include "nn/nex/InetAddress.hpp"
 
-#include <cstdint>
+#include <stdint.h>
 
 #include <cwchar>
 
@@ -64,7 +64,7 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
                                          int* pAttempt, EndPoint* pEndPoint)
 {
     SecurityContextManager* pSecurity = SecurityContextManager::GetInstance();
-    if (reinterpret_cast<std::intptr_t>(pEndPoint) == -8)
+    if (reinterpret_cast<intptr_t>(pEndPoint) == -8)
     {
         pSecurity->Push(GetCallerPID(), GetCallerCID(), pSecurity->GetCurrentAddress());
     }
@@ -86,7 +86,7 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
         SetIncomingConnection(pEndPoint);
     }
 
-    const bool bOldRVDDL = reinterpret_cast<std::intptr_t>(pEndPoint) != -8
+    const bool bOldRVDDL = reinterpret_cast<intptr_t>(pEndPoint) != -8
         && IsOldRVDDLVersion(pEndPoint);
     if (bOldRVDDL)
     {
@@ -118,7 +118,7 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
             DispatchProtocolMessage(pRequest, pResponse, pResponseRequired, pEndPoint);
     }
 
-    if (pEndPoint != 0 && reinterpret_cast<std::intptr_t>(pEndPoint) != -8)
+    if (pEndPoint != 0 && reinterpret_cast<intptr_t>(pEndPoint) != -8)
         SetIncomingConnection(0);
     pSecurity->Pop();
 

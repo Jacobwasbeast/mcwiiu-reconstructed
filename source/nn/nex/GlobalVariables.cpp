@@ -33,14 +33,13 @@ GlobalVariables::GlobalVariables()
 
 GlobalVariables::~GlobalVariables()
 {
-    g_globalVariablesCriticalSection.Enter();
+    ScopedCS lock(&g_globalVariablesCriticalSection);
     g_globalVariables = 0;
-    g_globalVariablesCriticalSection.Leave();
 }
 
 void GlobalVariables::AcquireInstance()
 {
-    g_globalVariablesCriticalSection.Enter();
+    ScopedCS lock(&g_globalVariablesCriticalSection);
 
     if (g_globalVariables == 0)
     {
@@ -52,20 +51,18 @@ void GlobalVariables::AcquireInstance()
         g_globalVariables->AddRef();
     }
 
-    g_globalVariablesCriticalSection.Leave();
 }
 
 void GlobalVariables::ReleaseInstance()
 {
-    g_globalVariablesCriticalSection.Enter();
+    ScopedCS lock(&g_globalVariablesCriticalSection);
 
     if (g_globalVariables == 0)
     {
-        g_globalVariablesCriticalSection.Leave();
         return;
     }
 
-    const std::uint32_t refCount = g_globalVariables->GetRefCount();
+    const uint32_t refCount = g_globalVariables->GetRefCount();
     g_globalVariables->ReleaseRef();
 
     if (refCount == 1)
@@ -75,13 +72,11 @@ void GlobalVariables::ReleaseInstance()
         g_threadVariableList = 0;
     }
 
-    g_globalVariablesCriticalSection.Leave();
 }
 
 void GlobalVariables::ClearCache()
 {
-    g_globalVariablesCriticalSection.Enter();
-    g_globalVariablesCriticalSection.Leave();
+    ScopedCS lock(&g_globalVariablesCriticalSection);
 }
 
 }

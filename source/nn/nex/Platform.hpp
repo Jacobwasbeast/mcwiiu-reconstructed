@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PLATFORM_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PLATFORM_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -23,10 +23,10 @@ public:
     static void Sleep(unsigned int milliseconds);
     static void YieldThread();
     static int Breakpoint();
-    static std::int64_t GetTick();
-    static std::uint64_t GetPlatformID();
-    static std::uint32_t GetProcessID();
-    static std::int64_t GetCurrentTimeMilli(std::int64_t time);
+    static int64_t GetTick();
+    static uint64_t GetPlatformID();
+    static uint32_t GetProcessID();
+    static int64_t GetCurrentTimeMilli(int64_t time);
 
     static void SetRandomNumberSeed(unsigned int seed);
     static unsigned int GetRandomSeed();

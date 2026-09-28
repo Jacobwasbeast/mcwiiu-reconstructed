@@ -17,7 +17,7 @@ Credentials::Credentials()
 {
 }
 
-Credentials::Credentials(std::uint32_t value, StreamManager* streamManager)
+Credentials::Credentials(uint32_t value, StreamManager* streamManager)
     : RefCountedObject()
     , m_value(value)
     , m_state(0)

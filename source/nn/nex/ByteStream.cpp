@@ -15,10 +15,10 @@ const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
 
 }
 
-void SetUnalignedNexNetworkOrder64(std::uint64_t uiValue, unsigned char* pDestination)
+void SetUnalignedNexNetworkOrder64(uint64_t uiValue, unsigned char* pDestination)
 {
-    const std::uint32_t uiLow = static_cast<std::uint32_t>(uiValue);
-    const std::uint32_t uiHigh = static_cast<std::uint32_t>(uiValue >> 32);
+    const uint32_t uiLow = static_cast<uint32_t>(uiValue);
+    const uint32_t uiHigh = static_cast<uint32_t>(uiValue >> 32);
 
     pDestination[0] = static_cast<unsigned char>(uiLow);
     pDestination[1] = static_cast<unsigned char>(uiLow >> 8);
@@ -155,7 +155,7 @@ void ByteStream::Extract(unsigned char* pData, unsigned int uiSize, unsigned int
 
 void ByteStream::Extract(Time* pTime)
 {
-    std::uint64_t uiValue = 0;
+    uint64_t uiValue = 0;
 
     if (ExtractPrimitive(&uiValue))
     {
@@ -186,7 +186,7 @@ ByteStream& ByteStream::operator>>(bool& rValue)
     return *this;
 }
 
-void ByteStream::TraceBytes(std::uint64_t uiFilter, unsigned char* pData, unsigned int uiSize)
+void ByteStream::TraceBytes(uint64_t uiFilter, unsigned char* pData, unsigned int uiSize)
 {
     StringStream stream;
 
@@ -206,7 +206,7 @@ void ByteStream::TraceBytes(std::uint64_t uiFilter, unsigned char* pData, unsign
     }
 }
 
-void ByteStream::Trace(std::uint64_t uiFilter, bool bDumpContents)
+void ByteStream::Trace(uint64_t uiFilter, bool bDumpContents)
 {
     if (m_pBuffer == 0 || !bDumpContents)
     {

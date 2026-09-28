@@ -20,21 +20,16 @@ BandwidthCounter::BandwidthCounter(const String& name)
     : m_pNext(0), m_pPrevious(0), m_name(name), m_minimum(0xffffffff),
       m_maximum(0), m_total(0), m_count(0)
 {
-    mVTable = 0x104AC7A8u;
-    g_bandwidthCounterLock.Enter();
+    ScopedCS lock(&g_bandwidthCounterLock);
     g_bandwidthCounters.push_back(this);
-    g_bandwidthCounterLock.Leave();
 }
 
 BandwidthCounter::~BandwidthCounter()
 {
-    g_bandwidthCounterLock.Enter();
-    CounterChain::iterator position = g_bandwidthCounters.begin();
-    while (position != g_bandwidthCounters.end() && *position != this)
-        ++position;
+    ScopedCS lock(&g_bandwidthCounterLock);
+    CounterChain::iterator position = std::find(g_bandwidthCounters.begin(), g_bandwidthCounters.end(), this);
     if (position != g_bandwidthCounters.end())
         g_bandwidthCounters.erase(position);
-    g_bandwidthCounterLock.Leave();
 }
 
 void BandwidthCounter::Reset()
@@ -47,11 +42,10 @@ void BandwidthCounter::Reset()
 
 void BandwidthCounter::ResetAll()
 {
-    g_bandwidthCounterLock.Enter();
+    ScopedCS lock(&g_bandwidthCounterLock);
     for (CounterChain::iterator it = g_bandwidthCounters.begin();
          it != g_bandwidthCounters.end(); ++it)
         (*it)->Reset();
-    g_bandwidthCounterLock.Leave();
 }
 
 void BandwidthCounter::Log()
@@ -60,14 +54,13 @@ void BandwidthCounter::Log()
 
 void BandwidthCounter::LogAll(bool activeOnly)
 {
-    g_bandwidthCounterLock.Enter();
+    ScopedCS lock(&g_bandwidthCounterLock);
     for (CounterChain::iterator it = g_bandwidthCounters.begin();
          it != g_bandwidthCounters.end(); ++it)
     {
         if (!activeOnly || (*it)->m_count != 0)
             (*it)->Log();
     }
-    g_bandwidthCounterLock.Leave();
 }
 
 void BandwidthCounter::operator+=(unsigned int size)

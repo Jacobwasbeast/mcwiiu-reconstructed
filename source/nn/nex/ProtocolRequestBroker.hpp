@@ -3,7 +3,7 @@
 
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
 #include "nn/nex/ProtocolRegistry.hpp"
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace nex {
 
@@ -38,17 +38,17 @@ protected:
     Operation* GetCurrentOperation() const;
     void TraceProtocols(unsigned long long);
     static bool SystemStateIsValid(bool);
-    std::uint32_t m_field44;
-    std::uint32_t m_field48;
-    std::uint32_t m_field4c;
-    std::uint32_t m_field50;
-    std::uint32_t m_field54;
-    std::uint32_t m_field58;
-    std::uint32_t m_field5c;
-    std::uint32_t m_field60;
-    std::uint32_t m_field64;
+    uint32_t m_field44;
+    uint32_t m_field48;
+    uint32_t m_field4c;
+    uint32_t m_field50;
+    uint32_t m_field54;
+    uint32_t m_field58;
+    uint32_t m_field5c;
+    uint32_t m_field60;
+    uint32_t m_field64;
     unsigned char m_padding68[84];
-    std::uint32_t m_fieldbc;
+    uint32_t m_fieldbc;
 };
 
 }}

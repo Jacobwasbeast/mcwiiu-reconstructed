@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLEROOT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLEROOT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -16,11 +16,11 @@ public:
     ThreadVariableRoot();
     virtual ~ThreadVariableRoot();
 
-    static std::uint32_t GetThreadID();
+    static uint32_t GetThreadID();
 
     virtual void ResetValues();
     virtual void ClearValue();
-    virtual void ClearValue(std::uint32_t threadId);
+    virtual void ClearValue(uint32_t threadId);
 
 protected:
     friend class ThreadVariableList;

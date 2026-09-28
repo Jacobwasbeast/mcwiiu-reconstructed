@@ -11,7 +11,7 @@ namespace nex
 namespace
 {
 
-const std::uint8_t SEARCH_PARAM_MAX_STRUCTURE_VERSION = 3;
+const uint8_t SEARCH_PARAM_MAX_STRUCTURE_VERSION = 3;
 const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
@@ -41,14 +41,14 @@ void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearc
 
     if (!bCompactFormat)
     {
-        const std::uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const std::uint8_t uiMaxVersion = SEARCH_PARAM_MAX_STRUCTURE_VERSION;
+        const uint8_t uiVersion = rSource.m_uiStructureVersion;
+        const uint8_t uiMaxVersion = SEARCH_PARAM_MAX_STRUCTURE_VERSION;
 
         pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
 
         uiSizePosition = pMessage->GetLength();
 
-        const std::uint32_t uiSize = 0;
+        const uint32_t uiSize = 0;
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
     }
@@ -59,19 +59,19 @@ void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearc
     _Type_qvector<_Type_uint32>::Add(pMessage, rSource.m_DestinationIds);
     pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiDataType), 2, 1);
 
-    const std::uint64_t uiCreatedAfter = rSource.m_CreatedAfter;
+    const uint64_t uiCreatedAfter = rSource.m_CreatedAfter;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCreatedAfter), 8, 1);
 
-    const std::uint64_t uiCreatedBefore = rSource.m_CreatedBefore;
+    const uint64_t uiCreatedBefore = rSource.m_CreatedBefore;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCreatedBefore), 8, 1);
 
-    const std::uint64_t uiUpdatedAfter = rSource.m_UpdatedAfter;
+    const uint64_t uiUpdatedAfter = rSource.m_UpdatedAfter;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiUpdatedAfter), 8, 1);
 
-    const std::uint64_t uiUpdatedBefore = rSource.m_UpdatedBefore;
+    const uint64_t uiUpdatedBefore = rSource.m_UpdatedBefore;
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiUpdatedBefore), 8, 1);
 
@@ -108,8 +108,8 @@ void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearc
 
     pMessage->SetLength(uiSizePosition);
 
-    const std::int32_t iSize =
-        static_cast<std::int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
+    const int32_t iSize =
+        static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
     pMessage->SetLength(uiEndPosition);
@@ -121,7 +121,7 @@ void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
     pDestination->m_uiStructureVersion = 0;
 
     const bool bCompactFormat = pMessage->IsCompactFormat();
-    std::uint32_t uiSize = 0;
+    uint32_t uiSize = 0;
 
     if (!bCompactFormat)
     {
@@ -182,7 +182,7 @@ void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
         return;
     }
 
-    std::uint64_t uiCreatedAfter = 0;
+    uint64_t uiCreatedAfter = 0;
 
     pMessage->ExtractPrimitive(&uiCreatedAfter);
     pDestination->m_CreatedAfter = DateTime(uiCreatedAfter);
@@ -192,7 +192,7 @@ void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
         return;
     }
 
-    std::uint64_t uiCreatedBefore = 0;
+    uint64_t uiCreatedBefore = 0;
 
     pMessage->ExtractPrimitive(&uiCreatedBefore);
     pDestination->m_CreatedBefore = DateTime(uiCreatedBefore);
@@ -202,7 +202,7 @@ void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
         return;
     }
 
-    std::uint64_t uiUpdatedAfter = 0;
+    uint64_t uiUpdatedAfter = 0;
 
     pMessage->ExtractPrimitive(&uiUpdatedAfter);
     pDestination->m_UpdatedAfter = DateTime(uiUpdatedAfter);
@@ -212,7 +212,7 @@ void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
         return;
     }
 
-    std::uint64_t uiUpdatedBefore = 0;
+    uint64_t uiUpdatedBefore = 0;
 
     pMessage->ExtractPrimitive(&uiUpdatedBefore);
     pDestination->m_UpdatedBefore = DateTime(uiUpdatedBefore);
