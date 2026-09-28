@@ -1,5 +1,6 @@
 #include "vendor/__N_19_OnlineCore_Blob_cpp_9428d484.hpp"
 #include <string.h>
+#include <wchar.h>
 
 void __N_19_OnlineCore_Blob_cpp_9428d484::_Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength)
 {

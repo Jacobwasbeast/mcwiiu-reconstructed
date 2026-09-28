@@ -28,13 +28,13 @@ namespace
 {
 bool OperationPostponed(const CallProtocolMethodOperation& operation)
 {
-    const std::uint8_t* bytes = reinterpret_cast<const std::uint8_t*>(&operation);
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&operation);
     return bytes[0x18] != 0;
 }
 
 int OperationWaitContext(const CallProtocolMethodOperation& operation)
 {
-    const std::uint8_t* bytes = reinterpret_cast<const std::uint8_t*>(&operation);
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&operation);
     int result = 0;
     std::memcpy(&result, bytes + 0x1C, sizeof(result));
     return result;
@@ -64,7 +64,7 @@ JobProcessProtocolEvent::~JobProcessProtocolEvent()
         m_pEndPoint->Close();
 }
 
-void JobProcessProtocolEvent::Trace(std::uint64_t)
+void JobProcessProtocolEvent::Trace(uint64_t)
 {
 }
 
@@ -93,7 +93,7 @@ void JobProcessProtocolMessage::Execute()
         SetToComplete();
 }
 
-void JobProcessProtocolMessage::Trace(std::uint64_t)
+void JobProcessProtocolMessage::Trace(uint64_t)
 {
 }
 

@@ -1,6 +1,9 @@
 #include "vendor/_TutorialPopupInfo.hpp"
 
+#include "game/item/ItemInstance.hpp"
+
 _TutorialPopupInfo::_TutorialPopupInfo()
-    : scene(0), title(L""), description(L""), iconItemId(-1), showIcon(false), useDescription(false), showTitle(true), showExitScreenshot(false), descriptionId(-1), reserved(0)
+    : scene(0), title(L""), description(L""), icon(ItemInstance::EMPTY), iconItemId(-1), iconAuxValue(0),
+      showIcon(false), showTitle(true), showExitScreenshot(false), displayTime(-1), tutorial(0)
 {
 }

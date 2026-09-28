@@ -44,7 +44,7 @@ public:
     };
 
     VoiceProtocol();
-    ~VoiceProtocol() override;
+    ~VoiceProtocol();
     Result Initialize(const Setting& setting);
     void ClearStreaming();
     Result AddConferenceClient(StationIndex stationIndex);

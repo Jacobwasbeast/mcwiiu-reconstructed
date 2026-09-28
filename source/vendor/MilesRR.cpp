@@ -5,6 +5,7 @@
 
 #include <coreinit/atomic.h>
 #include <coreinit/atomic64.h>
+#include <coreinit/cache.h>
 #include <coreinit/filesystem.h>
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/mutex.h>
@@ -251,7 +252,7 @@ extern "C" rrThread* rrThreadCurrent()
 
 extern "C" void rrAtomicMemoryBarrierFull()
 {
-    __sync_synchronize();
+    OSMemoryBarrier();
 }
 
 extern "C" unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* pTarget)
@@ -259,7 +260,7 @@ extern "C" unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* pTarg
     unsigned int uValue;
 
     uValue = *pTarget;
-    __sync_synchronize();
+    OSMemoryBarrier();
     return uValue;
 }
 
@@ -268,13 +269,13 @@ extern "C" unsigned long long rrAtomicLoadAcquire64(const volatile unsigned long
     unsigned long long uValue;
 
     uValue = *pTarget;
-    __sync_synchronize();
+    OSMemoryBarrier();
     return uValue;
 }
 
 extern "C" void rrAtomicStoreRelease32(volatile unsigned int* pTarget, unsigned int uValue)
 {
-    __sync_synchronize();
+    OSMemoryBarrier();
     *pTarget = uValue;
 }
 
@@ -285,7 +286,7 @@ extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* pTarget, unsign
 
     rrAtomicMemoryBarrierFull();
     OSCompareAndSwapAtomicEx(pTarget, uComparand, uNewValue, &uPrevious);
-    __sync_synchronize();
+    OSMemoryBarrier();
     return uPrevious;
 }
 
@@ -297,7 +298,7 @@ extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTa
 
     rrAtomicMemoryBarrierFull();
     OSCompareAndSwapAtomicEx64(pTarget, uComparand, uNewValue, &uPrevious);
-    __sync_synchronize();
+    OSMemoryBarrier();
     return uPrevious;
 }
 
@@ -305,9 +306,9 @@ extern "C" int rrAtomicAddExchange32(volatile int* pTarget, int iValue)
 {
     int iPrevious;
 
-    __sync_synchronize();
+    OSMemoryBarrier();
     iPrevious = OSAddAtomic(pTarget, iValue);
-    __sync_synchronize();
+    OSMemoryBarrier();
     return iPrevious;
 }
 
@@ -315,9 +316,9 @@ extern "C" long long rrAtomicAddExchange64(volatile long long* pTarget, long lon
 {
     long long lPrevious;
 
-    __sync_synchronize();
+    OSMemoryBarrier();
     lPrevious = OSAddAtomic64(pTarget, lValue);
-    __sync_synchronize();
+    OSMemoryBarrier();
     return lPrevious;
 }
 
