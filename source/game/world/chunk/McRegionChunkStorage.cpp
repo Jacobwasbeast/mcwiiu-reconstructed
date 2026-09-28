@@ -154,7 +154,7 @@ void McRegionChunkStorage::save(Level* level, LevelChunk* chunk)
 {
     level->checkSession();
     MemSect(0x1e);
-    PIXBeginNamedEvent(0.0f, "Getting output stream");
+    PIXBeginNamedEvent(0.0f, "Getting output stream\n");
     DataOutputStream* stream = gRegionFileCache._getChunkDataOutputStream(
         mSaveFile, mDirectory, chunk->x, chunk->z, true);
     PIXEndNamedEvent();

@@ -32,6 +32,8 @@ struct LongKeyEq
 
 class PlayerChunkMap
 {
+    friend class PlayerChunkContainer;
+
 public:
     struct PlayerChunkAddRequest
     {
@@ -51,7 +53,7 @@ public:
     typedef std::vector<PlayerChunkAddRequest> RequestVector;
     typedef boost::unordered_map<long long, PlayerChunkContainer*, LongKeyHash, LongKeyEq> ContainerMap;
 
-    PlayerChunkMap(ServerLevel* level, int viewDistance, int radius);
+    PlayerChunkMap(ServerLevel* level, int dimension, int viewDistance);
     virtual ~PlayerChunkMap();
 
     virtual PlayerChunkContainer* getOrCreateChunk(int x, int z);
@@ -77,7 +79,7 @@ public:
     void tick();
     static long long getKeyForChunk(int x, int z);
     PlayerChunkContainer* getChunkIfLoaded(int x, int z);
-    PlayerChunkContainer* getChunkAndRemovePlayer(int x, int z,
+    void getChunkAndRemovePlayer(int x, int z,
                                                    boost::shared_ptr<ServerPlayer> player,
                                                    bool send);
     void broadcastBlockUpdate(boost::shared_ptr<Packet> packet, int x, int y, int z);
@@ -92,16 +94,16 @@ public:
     void* getBlockRegionPacketsToBeSent();
     void PauseBlockUpdatePackets(bool pause);
 
-private:
+protected:
     PlayerVector mPlayers;
     ContainerMap mChunks;
-    ContainerVector mLoadedChunks;
-    ContainerVector mBlockUpdates;
+    ContainerVector mChangedChunks;
+    ContainerVector mAllChunks;
     RequestVector mAddRequests;
     int mTicksUntilNextUpdate;
     Level* mLevel;
     int mViewDistance;
-    int mRadius;
+    int mDimension;
     long long mLastUpdate;
     bool mShouldDropChunks;
     bool mPauseBlockUpdatePackets;

@@ -1,11 +1,13 @@
 #include "game/world/chunk/ClientChunkCache.hpp"
 
 #include <algorithm>
+#include <cstring>
 #include "game/client/render/GameRenderer.hpp"
 #include "game/core/Compression.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/System.hpp"
 #include "game/data/ElementStorage.hpp"
 #include "game/entity/mob/MobCategory.hpp"
@@ -34,135 +36,134 @@
 
 extern long InterlockedCompareExchangeRelease(volatile long* destination, long exchange, long comparand);
 
-ClientChunkCache::QueuedAction::QueuedAction()
-    : action(0), x(0), z(0), pos(0, 0), changes(0), packet()
+static const int SAVE_THREAD_STACK_SIZE = 0x100000;
+static const int MAX_DROPS_PER_TICK = 100;
+static const unsigned long long CHUNK_TICK_BUDGET_MS = 4;
+static const int MAX_LOCAL_PLAYERS = 4;
+
+ClientChunkCache::QueuedAction::QueuedAction(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet)
+    : packet(), pos(packet->getPos().x >> 4, packet->getPos().z >> 4)
 {
+    type = eType_BlockEntityData;
+    changes = NULL;
+    this->packet = packet;
 }
 
-ClientChunkCache::QueuedAction::QueuedAction(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& value)
-    : action(1), x(0), z(0), pos(0, 0), changes(0), packet(value)
+ClientChunkCache::QueuedAction::QueuedAction(int x, int z, const std::vector<LevelChunk::BlockChange>* changes)
+    : packet(), pos(x, z)
 {
-    if (value)
-    {
-        pos = ChunkPos(value->getPos());
-        x = pos.x;
-        z = pos.z;
-    }
-}
-
-ClientChunkCache::QueuedAction::QueuedAction(int chunkX, int chunkZ,
-                                              const std::vector<LevelChunk::BlockChange>* value)
-    : action(0), x(chunkX), z(chunkZ), pos(chunkX, chunkZ), changes(value), packet()
-{
+    this->changes = changes;
+    type = eType_ReLoad;
 }
 
 ClientChunkCache::QueuedAction& ClientChunkCache::QueuedAction::operator=(const QueuedAction& other)
 {
-    if (this != &other)
-    {
-        action = other.action;
-        x = other.x;
-        z = other.z;
-        pos = other.pos;
-        changes = other.changes;
-        packet = other.packet;
-    }
+    type = other.type;
+    packet = other.packet;
+    pos = other.pos;
+    changes = other.changes;
     return *this;
 }
 
 ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
-    : m_emptyChunk(0), m_waterChunk(0), m_storage(storage), m_level(level),
-      m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
-      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_pendingHostChunks(),
-      m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
+    : m_reloadPos(0, 0), m_reloadChanges(NULL)
 {
     MultiPlayerChunkCacheInit(level, storage);
 }
 
 ClientChunkCache::ClientChunkCache(Level* level)
-    : m_emptyChunk(0), m_waterChunk(0), m_storage(0), m_level(level),
-      m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
-      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_pendingHostChunks(),
-      m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
+    : m_reloadPos(0, 0), m_reloadChanges(NULL)
 {
-    MultiPlayerChunkCacheInit(level, 0);
+    MultiPlayerChunkCacheInit(level, NULL);
 }
 
 ClientChunkCache::~ClientChunkCache()
 {
-    for (std::vector<LevelChunk*>::iterator it = m_chunks.begin(); it != m_chunks.end(); ++it)
-    {
-        if (*it && *it != m_emptyChunk)
-            delete *it;
-    }
     delete m_emptyChunk;
     delete m_waterChunk;
+
+    for (int i = 0; i < m_xzSize * m_xzSize; ++i)
+    {
+        if (m_cache[i] != NULL)
+        {
+            delete m_cache[i];
+            m_cache[i] = NULL;
+        }
+    }
+    delete[] m_cache;
+    delete[] m_hasData;
+    DeleteCriticalSection(&m_csLoadCreate);
+
+    if (m_storage != NULL)
+    {
+        m_stopThread = true;
+        m_saveThread->WaitForCompletion(-1);
+        delete m_saveThread;
+        DeleteCriticalSection(&m_csSaveThread);
+        delete m_storage;
+    }
 }
 
 LevelChunk* ClientChunkCache::load(int x, int z, LevelChunk* chunk)
 {
-    if (!m_storage)
-        return 0;
+    if (m_storage == NULL)
+    {
+        return NULL;
+    }
     LevelChunk* loaded = m_storage->load(m_level, x, z, chunk);
-    if (loaded)
+    if (loaded != NULL)
+    {
         loaded->setLastSaveTime(m_level->getGameTime());
+    }
     return loaded;
 }
 
 void ClientChunkCache::reLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes)
 {
     if (!m_dimension->containsChunk(x, z))
-        return;
-    const unsigned int index = static_cast<unsigned int>((x + m_chunkRadius) * mLevelSize + z + m_chunkRadius);
-    if (index >= m_chunks.size())
-        return;
-    LevelChunk* old = m_chunks[index];
-    EnterCriticalSection(&m_saveDataCriticalSection);
-    LevelChunk* replacement = load(x, z, 0);
-    if (!replacement)
     {
-        LeaveCriticalSection(&m_saveDataCriticalSection);
         return;
     }
-    const long previous = InterlockedCompareExchangeRelease(
-        reinterpret_cast<volatile long*>(&m_chunks[index]), reinterpret_cast<long>(replacement),
-        reinterpret_cast<long>(old));
-    if (previous == reinterpret_cast<long>(old))
+
+    int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
+    LevelChunk* previous = m_cache[idx];
+    EnterCriticalSection(&m_csLoadCreate);
+    LevelChunk* chunk = load(x, z, NULL);
+    if (chunk != NULL)
     {
-        if (old)
+        if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
+                                              reinterpret_cast<long>(chunk),
+                                              reinterpret_cast<long>(previous)) == reinterpret_cast<long>(previous))
         {
-            old->unload(true, false);
-            replacement->swapEntities(old);
-            for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
+            if (previous != NULL)
             {
-                if (*it == old)
+                previous->unload(true, false);
+                chunk->swapEntities(previous);
+                std::vector<LevelChunk*>::iterator it =
+                    std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), previous);
+                if (it != m_loadedChunkList.end())
                 {
-                    m_loadedChunks.erase(it);
-                    break;
+                    m_loadedChunkList.erase(it);
                 }
+                GameRenderer::AddForDelete(previous);
+                GameRenderer::FinishedReassigning();
             }
-            GameRenderer::AddForDelete(old);
-            GameRenderer::FinishedReassigning();
-        }
-        replacement->load(true);
-        replacement->recalcHeightmapOnly();
-        if (m_level)
+            chunk->load(true);
+            chunk->recalcHeightmapOnly();
             m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
-        if (index < m_received.size())
-            m_received[index] = 1;
-        if (changes)
-        {
+            m_hasData[idx] = true;
             for (std::vector<LevelChunk::BlockChange>::const_iterator it = changes->begin(); it != changes->end(); ++it)
             {
-                replacement->setBlock(it->GetPos(), it->GetState());
-                replacement->setExtraBlock(it->GetPos(), it->GetExtraState());
+                chunk->setBlock(it->GetPos(), it->GetState());
+                chunk->setExtraBlock(it->GetPos(), it->GetExtraState());
             }
+            m_loadedChunkList.push_back(chunk);
+            LeaveCriticalSection(&m_csLoadCreate);
+            return;
         }
-        m_loadedChunks.push_back(replacement);
+        delete chunk;
     }
-    else
-        delete replacement;
-    LeaveCriticalSection(&m_saveDataCriticalSection);
+    LeaveCriticalSection(&m_csLoadCreate);
 }
 
 int ClientChunkCache::StorageThreadProc(void* argument)
@@ -173,20 +174,17 @@ int ClientChunkCache::StorageThreadProc(void* argument)
     AABB::CreateNewThreadStorage();
     Vec3::CreateNewThreadStorage();
     ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_ClientChunkStorage);
+
     while (!cache->m_stopThread)
     {
-        for (;;)
+        EnterCriticalSection(&cache->m_csSaveThread);
+        while (cache->m_reloadPending)
         {
-            EnterCriticalSection(&cache->m_threadCriticalSection);
-            if (!cache->m_reloadPending)
-                break;
-            const int x = cache->m_reloadX;
-            const int z = cache->m_reloadZ;
-            const std::vector<LevelChunk::BlockChange>* changes = cache->m_reloadChanges;
-            LeaveCriticalSection(&cache->m_threadCriticalSection);
-            cache->reLoad(x, z, changes);
-            delete changes;
-            cache->m_reloadChanges = 0;
+            ChunkPos pos = cache->m_reloadPos;
+            LeaveCriticalSection(&cache->m_csSaveThread);
+            cache->reLoad(pos.x, pos.z, cache->m_reloadChanges);
+            delete cache->m_reloadChanges;
+            cache->m_reloadChanges = NULL;
             cache->m_reloadPending = false;
             if (cache->m_stopThread)
             {
@@ -195,10 +193,12 @@ int ClientChunkCache::StorageThreadProc(void* argument)
                 ElementStorage::ReleaseThreadStorage();
                 return 0;
             }
+            EnterCriticalSection(&cache->m_csSaveThread);
         }
-        LeaveCriticalSection(&cache->m_threadCriticalSection);
-        C4JThreadImpl::Sleep(1);
+        LeaveCriticalSection(&cache->m_csSaveThread);
+        Sleep(1);
     }
+
     AABB::ReleaseThreadStorage();
     Vec3::ReleaseThreadStorage();
     ElementStorage::ReleaseThreadStorage();
@@ -207,20 +207,26 @@ int ClientChunkCache::StorageThreadProc(void* argument)
 
 void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* storage)
 {
-    m_level = level;
-    m_dimension = level ? level->mDimension : 0;
-    m_storage = storage;
-    mLevelSize = level->mDimension->getXZSize();
-    m_chunkRadius = mLevelSize / 2;
+    m_xzSize = level->mDimension->getXZSize();
+    mLevelSize = m_xzSize;
+    m_xzOffset = m_xzSize / 2;
+    m_hasData = new bool[m_xzSize * m_xzSize];
+    std::memset(m_hasData, 0, m_xzSize * m_xzSize);
     m_emptyChunk = new EmptyLevelChunk(level, 0, 0);
-    m_chunks.assign(mLevelSize * mLevelSize, static_cast<LevelChunk*>(0));
-    m_received.assign(mLevelSize * mLevelSize, static_cast<unsigned char>(0));
-    if (storage)
+    m_storage = storage;
+    m_reloadPending = false;
+    m_stopThread = false;
+
+    if (storage == NULL)
     {
-        InitializeCriticalSection(&m_threadCriticalSection);
-        m_storageThread = new C4JThreadImpl(&StorageThreadProc, this, "MultiPlayerChunkCache", 0x100000);
-        m_storageThread->SetProcessor(0);
-        m_storageThread->Run();
+        m_saveThread = NULL;
+    }
+    else
+    {
+        InitializeCriticalSection(&m_csSaveThread);
+        m_saveThread = new C4JThreadImpl(&StorageThreadProc, this, "MultiPlayerChunkCache", SAVE_THREAD_STACK_SIZE);
+        m_saveThread->SetProcessor(0);
+        m_saveThread->Run();
     }
 
     if (level->mDimension->getType() == DimensionType::OVERWORLD)
@@ -274,70 +280,77 @@ void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* sto
     }
     else
     {
-        m_waterChunk = 0;
+        m_waterChunk = NULL;
     }
-    InitializeCriticalSectionAndSpinCount(&m_saveDataCriticalSection, 4000);
-    m_initialized = true;
+
+    m_dimension = level->mDimension;
+    m_level = level;
+    m_cache = new LevelChunk*[m_xzSize * m_xzSize];
+    std::memset(m_cache, 0, m_xzSize * m_xzSize * sizeof(LevelChunk*));
+    InitializeCriticalSectionAndSpinCount(&m_csLoadCreate, 4000);
 }
 
-uint64_t ClientChunkCache::BlockUntilSafeToChangeSaveData(bool block)
+void ClientChunkCache::BlockUntilSafeToChangeSaveData(bool processQueue)
 {
-    if (!m_storage)
-        return 0;
-    for (;;)
+    if (m_storage == NULL)
     {
-        EnterCriticalSection(&m_threadCriticalSection);
-        const bool reloadPending = m_reloadPending;
-        LeaveCriticalSection(&m_threadCriticalSection);
-        if (!reloadPending)
-            break;
+        return;
     }
-    if (block)
+
+    bool reloadPending;
+    do
+    {
+        EnterCriticalSection(&m_csSaveThread);
+        reloadPending = m_reloadPending;
+        LeaveCriticalSection(&m_csSaveThread);
+    } while (reloadPending);
+
+    if (processQueue)
     {
         while (!m_queuedActions.empty())
         {
-            QueuedAction action = m_queuedActions.front();
-            if (action.action == 0)
+            QueuedAction& action = m_queuedActions.front();
+            if (action.type == QueuedAction::eType_ReLoad)
             {
-                reLoad(action.x, action.z, action.changes);
+                reLoad(action.pos.x, action.pos.z, action.changes);
                 delete action.changes;
             }
             else
+            {
                 ClientPacketListener::handleBlockEntityDataInternal(action.packet, m_level);
+            }
             m_queuedActions.erase(m_queuedActions.begin());
         }
     }
-    return static_cast<uint64_t>(m_queuedActions.size());
 }
 
 LevelChunk* ClientChunkCache::getChunkIfLoaded(int x, int z)
 {
-    const int diameter = mLevelSize;
-    const int localX = x + m_chunkRadius;
-    const int localZ = z + m_chunkRadius;
-    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
-        return 0;
-    const unsigned int index = static_cast<unsigned int>(localX * diameter + localZ);
-    if (index >= m_chunks.size())
-        return 0;
-    LevelChunk* chunk = m_chunks[index];
-    return chunk && chunk->isAt(x, z) ? chunk : 0;
+    if (!m_dimension->containsChunk(x, z))
+    {
+        return m_waterChunk != NULL ? m_waterChunk : m_emptyChunk;
+    }
+    return m_cache[(x + m_xzOffset) * m_xzSize + (z + m_xzOffset)];
 }
 
 LevelChunk* ClientChunkCache::getOrCreateChunk(int x, int z, bool)
 {
     LevelChunk* chunk = getChunkIfLoaded(x, z);
-    return chunk ? chunk : m_emptyChunk;
+    if (chunk == NULL)
+    {
+        return m_emptyChunk;
+    }
+    return chunk;
 }
 
 int ClientChunkCache::getLoadedChunksCount()
 {
-    return static_cast<int>(m_loadedChunks.size());
+    return 0;
 }
 
-bool ClientChunkCache::isChunkGeneratedAt(int x, int z)
+bool ClientChunkCache::isChunkGeneratedAt(int, int)
 {
-    return getChunkIfLoaded(x, z) != 0;
+    return false;
 }
 
 LevelChunk* ClientChunkCache::getChunkIfHasChunk(int x, int z)
@@ -345,289 +358,278 @@ LevelChunk* ClientChunkCache::getChunkIfHasChunk(int x, int z)
     return getChunk(x, z);
 }
 
-bool ClientChunkCache::hasChunk(int x, int z)
+bool ClientChunkCache::hasChunk(int, int)
 {
-    return reallyHasChunk(x, z);
+    return true;
 }
 
 bool ClientChunkCache::reallyHasChunk(int x, int z)
 {
-    const int diameter = mLevelSize;
-    const unsigned int index = static_cast<unsigned int>((x + m_chunkRadius) * diameter + z + m_chunkRadius);
-    if (index >= m_chunks.size() || !m_chunks[index])
+    if (!m_dimension->containsChunk(x, z))
+    {
+        return true;
+    }
+    int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
+    if (m_cache[idx] == NULL)
+    {
         return false;
-    return index < m_received.size() && m_received[index] != 0;
+    }
+    return m_hasData[idx];
 }
 
 void ClientChunkCache::unqueueForReLoad(int x, int z)
 {
-    EnterCriticalSection(&m_saveDataCriticalSection);
+    EnterCriticalSection(&m_csLoadCreate);
     for (std::vector<QueuedAction>::iterator it = m_queuedActions.begin(); it != m_queuedActions.end(); ++it)
     {
-        if (it->action == 0 && it->x == x && it->z == z)
+        if (it->type == QueuedAction::eType_ReLoad && it->pos.x == x && it->pos.z == z)
         {
             m_queuedActions.erase(it);
             break;
         }
     }
-    LeaveCriticalSection(&m_saveDataCriticalSection);
+    LeaveCriticalSection(&m_csLoadCreate);
 }
 
 void ClientChunkCache::drop(int x, int z, bool force)
 {
-    EnterCriticalSection(&m_saveDataCriticalSection);
-    std::deque<ChunkPos>::iterator pending = std::find(m_pendingHostChunks.begin(),
-                                                        m_pendingHostChunks.end(), ChunkPos(x, z));
-    if (pending != m_pendingHostChunks.end())
-        m_pendingHostChunks.erase(pending);
-    LeaveCriticalSection(&m_saveDataCriticalSection);
     LevelChunk* chunk = getOrCreateChunk(x, z, false);
-    if (!chunk)
-        return;
-    if (!force)
-    {
-        if (!chunk->isEmpty())
-        {
-            chunk->unload(false, true);
-            if (CGameNetworkManager::sInstance.IsHost())
-                chunk->dropLighting();
-            chunk->setLoaded(true);
-        }
-        m_unloadQueue.push_back(chunk);
-        return;
-    }
-    if (!m_dimension->containsChunk(x, z))
-        return;
-    unqueueForReLoad(x, z);
     if (!chunk->isEmpty())
     {
         chunk->unload(force, true);
         if (CGameNetworkManager::sInstance.IsHost())
+        {
             chunk->dropLighting();
+        }
         chunk->setLoaded(true);
     }
-    const int diameter = mLevelSize;
-    const int localX = x + m_chunkRadius;
-    const int localZ = z + m_chunkRadius;
-    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
-        return;
-    const unsigned int index = static_cast<unsigned int>(localX * diameter + localZ);
-    EnterCriticalSection(&m_saveDataCriticalSection);
-    const long previous = InterlockedCompareExchangeRelease(
-        reinterpret_cast<volatile long*>(&m_chunks[index]), 0, reinterpret_cast<long>(chunk));
-    if (previous == reinterpret_cast<long>(chunk))
+
+    if (!force)
     {
-        for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
+        if (chunk != NULL)
         {
-            if (*it == chunk)
-            {
-                m_loadedChunks.erase(it);
-                break;
-            }
+            m_toDrop.push_back(chunk);
+        }
+        return;
+    }
+
+    if (!m_dimension->containsChunk(x, z))
+    {
+        return;
+    }
+
+    unqueueForReLoad(x, z);
+    int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
+    EnterCriticalSection(&m_csLoadCreate);
+    if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]), 0,
+                                          reinterpret_cast<long>(chunk)) == reinterpret_cast<long>(chunk))
+    {
+        std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
+        if (it != m_loadedChunkList.end())
+        {
+            m_loadedChunkList.erase(it);
         }
         GameRenderer::AddForDelete(chunk);
         GameRenderer::FinishedReassigning();
-        LeaveCriticalSection(&m_saveDataCriticalSection);
+        LeaveCriticalSection(&m_csLoadCreate);
         m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
-        if (index < m_received.size())
-            m_received[index] = 0;
+        m_hasData[idx] = false;
         return;
     }
-    LeaveCriticalSection(&m_saveDataCriticalSection);
+    LeaveCriticalSection(&m_csLoadCreate);
 }
 
 void ClientChunkCache::dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force)
 {
-    for (int x = -m_chunkRadius; x < m_chunkRadius; ++x)
-        for (int z = -m_chunkRadius; z < m_chunkRadius; ++z)
+    for (int x = -m_xzSize / 2; x < m_xzSize / 2; ++x)
+    {
+        for (int z = -m_xzSize / 2; z < m_xzSize / 2; ++z)
+        {
             if (x < minX || x > maxX || z < minZ || z > maxZ)
+            {
                 drop(x, z, force);
+            }
+        }
+    }
 }
 
 LevelChunk* ClientChunkCache::create(int x, int z)
 {
     if (!m_dimension->containsChunk(x, z))
-        return m_waterChunk ? m_waterChunk : m_emptyChunk;
-    const int diameter = mLevelSize;
-    const int localX = x + m_chunkRadius;
-    const int localZ = z + m_chunkRadius;
-    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
-        return 0;
-    const unsigned int index = static_cast<unsigned int>(localX * diameter + localZ);
-    if (index >= m_chunks.size())
-        m_chunks.resize(index + 1, static_cast<LevelChunk*>(0));
-    LevelChunk* chunk = m_chunks[index];
-    if (!chunk)
     {
-        EnterCriticalSection(&m_saveDataCriticalSection);
-        if (CGameNetworkManager::sInstance.IsHost())
+        return m_waterChunk != NULL ? m_waterChunk : m_emptyChunk;
+    }
+
+    int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
+    LevelChunk* chunk = m_cache[idx];
+    if (chunk == NULL)
+    {
+        EnterCriticalSection(&m_csLoadCreate);
+        if (!CGameNetworkManager::sInstance.IsHost())
+        {
+            ChunkPrimer* primer = new ChunkPrimer(true, arrayWithLength<unsigned short>());
+            chunk = new LevelChunk(m_level, primer, x, z);
+            delete primer;
+            chunk->setSkyLightDataAllBright();
+        }
+        else
         {
             if (MinecraftServer::s_haltRequested)
             {
-                LeaveCriticalSection(&m_saveDataCriticalSection);
-                return 0;
+                LeaveCriticalSection(&m_csLoadCreate);
+                return NULL;
             }
             ServerLevel* serverLevel = gMinecraftServer->getLevel(m_level->mDimension->getType()->getId());
             LevelChunk* serverChunk = serverLevel->getChunkSource()->getChunkLoadedOrUnloaded(x, z);
             if (serverChunk->isEmpty())
             {
-                if (std::find(m_pendingHostChunks.begin(), m_pendingHostChunks.end(), ChunkPos(x, z)) ==
-                    m_pendingHostChunks.end())
-                    m_pendingHostChunks.push_back(ChunkPos(x, z));
-                LeaveCriticalSection(&m_saveDataCriticalSection);
+                LeaveCriticalSection(&m_csLoadCreate);
                 return m_emptyChunk;
             }
             chunk = new LevelChunk(m_level, x, z, serverChunk);
-            m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16),
-                                   BlockPos(x * 16 + 15, 255, z * 16 + 15));
-            m_received[index] = 1;
-        }
-        else
-        {
-            ChunkPrimer primer(true, arrayWithLength<unsigned short>());
-            chunk = new LevelChunk(m_level, &primer, x, z);
-            chunk->setSkyLightDataAllBright();
+            m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
+            m_hasData[idx] = true;
         }
         chunk->setLoaded(true);
-        if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_chunks[index]),
+        if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
                                               reinterpret_cast<long>(chunk), 0) != 0)
         {
-            LeaveCriticalSection(&m_saveDataCriticalSection);
+            LeaveCriticalSection(&m_csLoadCreate);
             delete chunk;
-            return m_chunks[index];
+            return m_cache[idx];
         }
-        m_loadedChunks.push_back(chunk);
-        LeaveCriticalSection(&m_saveDataCriticalSection);
+        m_loadedChunkList.push_back(chunk);
+        LeaveCriticalSection(&m_csLoadCreate);
     }
-    else if (!chunk->isLoaded() || chunk->isInvalid())
+    else if (!chunk->isLoaded() || chunk->mUnloaded)
+    {
         chunk->load(false);
+    }
+
     if (CGameNetworkManager::sInstance.IsHost() && !chunk->isEmpty())
     {
         chunk->recalcHeightmapOnly();
         if (chunk->hasLightingBeenDropped())
+        {
             chunk->reSyncLighting();
+        }
     }
     return chunk;
 }
 
 LevelChunk* ClientChunkCache::getChunk(int x, int z)
 {
-    LevelChunk* chunk = getChunkIfLoaded(x, z);
-    if (chunk)
-        return chunk;
-    return m_waterChunk ? m_waterChunk : m_emptyChunk;
+    if (!m_dimension->containsChunk(x, z))
+    {
+        if (m_waterChunk != NULL)
+        {
+            return m_waterChunk;
+        }
+    }
+    else
+    {
+        LevelChunk* chunk = m_cache[(x + m_xzOffset) * m_xzSize + (z + m_xzOffset)];
+        if (chunk != NULL)
+        {
+            return chunk;
+        }
+    }
+    return m_emptyChunk;
 }
 
 LevelChunk* ClientChunkCache::getChunkAt(const BlockPos& pos)
 {
-    return getChunk(pos.x >> 4, pos.z >> 4);
+    return getChunk(pos.x, pos.z);
 }
 
-void ClientChunkCache::save(bool, ProgressListener*)
+bool ClientChunkCache::save(bool, ProgressListener*)
 {
+    return true;
 }
 
 void ClientChunkCache::tick()
 {
-    EnterCriticalSection(&m_saveDataCriticalSection);
-    if (m_storage)
+    EnterCriticalSection(&m_csLoadCreate);
+
+    if (m_storage != NULL && !Minecraft::GetInstance()->GetClientMasterGameMode()->isNewLevelDataPending())
     {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
-        if (!gameMode->isNewLevelDataPending())
+        while (!m_queuedActions.empty())
         {
-            while (!m_queuedActions.empty())
+            int closestDistance = 0x7fffffff;
+            unsigned int closest = 0;
+            for (unsigned int i = 0; i < m_queuedActions.size(); ++i)
             {
-                int closestDistance = 0x7fffffff;
-                std::size_t selectedIndex = 0;
-                for (std::size_t i = 0; i < m_queuedActions.size(); ++i)
+                const QueuedAction& action = m_queuedActions[i];
+                int actionDistance = 0x7fffffff;
+                for (int playerIdx = 0; playerIdx < MAX_LOCAL_PLAYERS; ++playerIdx)
                 {
-                    const QueuedAction& action = m_queuedActions[i];
-                    int actionDistance = 0x7fffffff;
-                    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+                    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIdx];
+                    if (player != NULL)
                     {
-                        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerIndex];
-                        if (player)
+                        int distance = Mth::abs(Mth::floor(player->mX) - action.pos.x * 16) +
+                                       Mth::abs(Mth::floor(player->mZ) - action.pos.z * 16);
+                        if (distance < actionDistance)
                         {
-                            const int playerX = Mth::floor(player->mX);
-                            const int playerZ = Mth::floor(player->mZ);
-                            const int distance = Mth::abs(playerX - action.x * 16) +
-                                                 Mth::abs(playerZ - action.z * 16);
-                            if (distance < actionDistance)
-                                actionDistance = distance;
+                            actionDistance = distance;
                         }
                     }
-                    if (actionDistance < closestDistance)
-                    {
-                        closestDistance = actionDistance;
-                        selectedIndex = i;
-                    }
                 }
-
-                std::vector<QueuedAction>::iterator selected = m_queuedActions.begin() + selectedIndex;
-                if (selected->action != 0)
+                if (actionDistance < closestDistance)
                 {
-                    QueuedAction action = *selected;
-                    ClientPacketListener::handleBlockEntityDataInternal(action.packet, m_level);
-                    m_queuedActions.erase(selected);
-                    continue;
+                    closestDistance = actionDistance;
+                    closest = i;
                 }
-
-                EnterCriticalSection(&m_threadCriticalSection);
-                bool reloadScheduled = false;
-                if (!m_reloadPending)
-                {
-                    m_reloadPending = true;
-                    m_reloadX = selected->x;
-                    m_reloadZ = selected->z;
-                    m_reloadChanges = selected->changes;
-                    reloadScheduled = true;
-                }
-                LeaveCriticalSection(&m_threadCriticalSection);
-                if (reloadScheduled)
-                    m_queuedActions.erase(selected);
-                break;
             }
-        }
-    }
-    for (int processed = 0; processed < 100 && !m_unloadQueue.empty(); ++processed)
-    {
-        LevelChunk* chunk = m_unloadQueue.front();
-        m_unloadQueue.pop_front();
-        for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
-        {
-            if (*it == chunk)
+
+            QueuedAction& action = m_queuedActions[closest];
+            if (action.type != QueuedAction::eType_ReLoad)
             {
-                m_loadedChunks.erase(it);
-                break;
+                ClientPacketListener::handleBlockEntityDataInternal(action.packet, m_level);
+                m_queuedActions.erase(m_queuedActions.begin() + closest);
+                continue;
             }
+
+            EnterCriticalSection(&m_csSaveThread);
+            if (!m_reloadPending)
+            {
+                m_reloadPending = true;
+                m_reloadPos = action.pos;
+                m_reloadChanges = action.changes;
+                LeaveCriticalSection(&m_csSaveThread);
+                m_queuedActions.erase(m_queuedActions.begin() + closest);
+            }
+            else
+            {
+                LeaveCriticalSection(&m_csSaveThread);
+            }
+            break;
         }
     }
-    const uint64_t start = System::processTimeInMilliSecs();
-    std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin();
-    for (; it != m_loadedChunks.end(); ++it)
+
+    for (int dropped = 0; dropped < MAX_DROPS_PER_TICK && !m_toDrop.empty(); ++dropped)
     {
-        if (static_cast<int64_t>(System::processTimeInMilliSecs() - start) > 4)
-            break;
+        LevelChunk* chunk = m_toDrop.front();
+        m_toDrop.pop_front();
+        std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
+        if (it != m_loadedChunkList.end())
+        {
+            m_loadedChunkList.erase(it);
+        }
+    }
+
+    unsigned long long start = System::processTimeInMilliSecs();
+    std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin();
+    std::vector<LevelChunk*>::iterator end = m_loadedChunkList.end();
+    for (; it != end && System::processTimeInMilliSecs() - start <= CHUNK_TICK_BUDGET_MS; ++it)
+    {
         (*it)->tick(false);
     }
-    for (; it != m_loadedChunks.end(); ++it)
-        (*it)->tick(true);
-    LeaveCriticalSection(&m_saveDataCriticalSection);
-
-    if (CGameNetworkManager::sInstance.IsHost())
+    for (; it != end; ++it)
     {
-        std::vector<ChunkPos> retry;
-        EnterCriticalSection(&m_saveDataCriticalSection);
-        for (int count = 0; count < 4 && !m_pendingHostChunks.empty(); ++count)
-        {
-            retry.push_back(m_pendingHostChunks.front());
-            m_pendingHostChunks.pop_front();
-        }
-        LeaveCriticalSection(&m_saveDataCriticalSection);
-        for (std::vector<ChunkPos>::const_iterator pos = retry.begin(); pos != retry.end(); ++pos)
-            create(pos->x, pos->z);
+        (*it)->tick(true);
     }
+
+    LeaveCriticalSection(&m_csLoadCreate);
 }
 
 bool ClientChunkCache::shouldSave()
@@ -637,7 +639,10 @@ bool ClientChunkCache::shouldSave()
 
 std::wstring ClientChunkCache::gatherStats()
 {
-    return std::wstring(L"MultiplayerChunkCache_") + std::wstring();
+    EnterCriticalSection(&m_csLoadCreate);
+    int loadedCount = m_loadedChunkList.size();
+    LeaveCriticalSection(&m_csLoadCreate);
+    return L"MultiplayerChunkCache: " + _toString<int>(loadedCount);
 }
 
 std::vector<Biome::MobSpawnerData*>* ClientChunkCache::getMobsAt(MobCategory*, const BlockPos&)
@@ -647,12 +652,12 @@ std::vector<Biome::MobSpawnerData*>* ClientChunkCache::getMobsAt(MobCategory*, c
 
 BlockPos* ClientChunkCache::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)
 {
-    return 0;
+    return NULL;
 }
 
 int ClientChunkCache::getLoadedChunks()
 {
-    return static_cast<int>(m_loadedChunks.size());
+    return m_loadedChunkList.size();
 }
 
 void ClientChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int)
@@ -661,48 +666,44 @@ void ClientChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int)
 
 void ClientChunkCache::dataReceived(int x, int z)
 {
-    if (!m_dimension->containsChunk(x, z))
-        return;
-    const int diameter = mLevelSize;
-    const int localX = x + m_chunkRadius;
-    const int localZ = z + m_chunkRadius;
-    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
-        return;
-    const unsigned int index = static_cast<unsigned int>(localX * diameter + localZ);
-    if (index >= m_received.size())
-        m_received.resize(index + 1, static_cast<unsigned char>(0));
-    m_received[index] = 1;
+    if (m_dimension->containsChunk(x, z))
+    {
+        m_hasData[(x + m_xzOffset) * m_xzSize + (z + m_xzOffset)] = true;
+    }
 }
 
 void ClientChunkCache::queueBlockEntityDataPacket(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet)
 {
-    EnterCriticalSection(&m_saveDataCriticalSection);
+    EnterCriticalSection(&m_csLoadCreate);
     m_queuedActions.push_back(QueuedAction(packet));
-    LeaveCriticalSection(&m_saveDataCriticalSection);
+    LeaveCriticalSection(&m_csLoadCreate);
 }
 
 void ClientChunkCache::queueForReLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes, bool replace)
 {
     if (!m_dimension->containsChunk(x, z))
+    {
         return;
-    EnterCriticalSection(&m_saveDataCriticalSection);
+    }
+
+    EnterCriticalSection(&m_csLoadCreate);
     if (replace)
     {
-        for (std::vector<QueuedAction>::iterator it = m_queuedActions.begin(); it != m_queuedActions.end(); ++it)
+        for (unsigned int i = 0; i < m_queuedActions.size(); ++i)
         {
-            if (it->action == 0 && it->x == x && it->z == z)
+            QueuedAction& action = m_queuedActions[i];
+            if (action.type == QueuedAction::eType_ReLoad && action.pos.x == x && action.pos.z == z)
             {
-                const std::vector<LevelChunk::BlockChange>* previous = it->changes;
-                it->changes = changes;
-                if (previous)
-                    delete previous;
-                LeaveCriticalSection(&m_saveDataCriticalSection);
+                const std::vector<LevelChunk::BlockChange>* previous = action.changes;
+                action.changes = changes;
+                delete previous;
+                LeaveCriticalSection(&m_csLoadCreate);
                 return;
             }
         }
     }
     m_queuedActions.push_back(QueuedAction(x, z, changes));
-    LeaveCriticalSection(&m_saveDataCriticalSection);
+    LeaveCriticalSection(&m_csLoadCreate);
 }
 
 bool ClientChunkCache::mustQueueBlockEntityDataPackets()
@@ -712,5 +713,5 @@ bool ClientChunkCache::mustQueueBlockEntityDataPackets()
 
 LevelChunk** ClientChunkCache::getCache()
 {
-    return m_chunks.data();
+    return m_cache;
 }

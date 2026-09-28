@@ -24,17 +24,20 @@ public:
     class QueuedAction
     {
     public:
+        enum EType
+        {
+            eType_ReLoad,
+            eType_BlockEntityData
+        };
+
         QueuedAction(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet);
         QueuedAction(int x, int z, const std::vector<LevelChunk::BlockChange>* changes);
-        QueuedAction();
         QueuedAction& operator=(const QueuedAction& other);
 
-        int action;
-        int x;
-        int z;
+        EType type;
+        boost::shared_ptr<ClientboundBlockEntityDataPacket> packet;
         ChunkPos pos;
         const std::vector<LevelChunk::BlockChange>* changes;
-        boost::shared_ptr<ClientboundBlockEntityDataPacket> packet;
     };
 
     ClientChunkCache(Level* level, ChunkStorage* storage);
@@ -45,7 +48,7 @@ public:
     void reLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes);
     static int StorageThreadProc(void* argument);
     void MultiPlayerChunkCacheInit(Level* level, ChunkStorage* storage);
-    uint64_t BlockUntilSafeToChangeSaveData(bool block);
+    void BlockUntilSafeToChangeSaveData(bool block);
 
     virtual LevelChunk* getChunkIfLoaded(int x, int z);
     virtual LevelChunk* getOrCreateChunk(int x, int z, bool allowEmpty);
@@ -60,7 +63,7 @@ public:
     virtual LevelChunk* create(int x, int z);
     virtual LevelChunk* getChunk(int x, int z);
     virtual LevelChunk* getChunkAt(const BlockPos& pos);
-    virtual void save(bool force, ProgressListener* listener);
+    virtual bool save(bool force, ProgressListener* listener);
     virtual void tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
@@ -79,24 +82,21 @@ private:
     LevelChunk* m_emptyChunk;
     LevelChunk* m_waterChunk;
     ChunkStorage* m_storage;
-    Level* m_level;
-    ChunkPos m_spawnPos;
-    int m_chunkRadius;
-    bool m_initialized;
-    bool m_stopThread;
-    std::vector<LevelChunk*> m_loadedChunks;
-    std::vector<QueuedAction> m_queuedActions;
-    std::vector<LevelChunk*> m_chunks;
-    std::vector<unsigned char> m_received;
-    std::deque<LevelChunk*> m_unloadQueue;
-    std::deque<ChunkPos> m_pendingHostChunks;
-    C4JThreadImpl* m_storageThread;
-    OSFastMutex m_threadCriticalSection;
-    OSFastMutex m_saveDataCriticalSection;
-    bool m_reloadPending;
-    int m_reloadX;
-    int m_reloadZ;
+    C4JThreadImpl* m_saveThread;
+    ChunkPos m_reloadPos;
     const std::vector<LevelChunk::BlockChange>* m_reloadChanges;
+    bool m_reloadPending;
+    bool m_stopThread;
+    OSFastMutex m_csSaveThread;
+    std::vector<LevelChunk*> m_loadedChunkList;
+    std::vector<QueuedAction> m_queuedActions;
+    LevelChunk** m_cache;
+    std::deque<LevelChunk*> m_toDrop;
+    OSFastMutex m_csLoadCreate;
+    int m_xzSize;
+    int m_xzOffset;
+    bool* m_hasData;
+    Level* m_level;
     Dimension* m_dimension;
 };
 

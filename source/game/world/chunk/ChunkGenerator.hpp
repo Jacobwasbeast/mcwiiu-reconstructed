@@ -16,7 +16,7 @@ class ChunkGenerator
 public:
     int mLevelSize;
 
-    virtual ~ChunkGenerator();
+    virtual ~ChunkGenerator() {}
     virtual LevelChunk* createChunk(int chunkX, int chunkZ) = 0;
     virtual void postProcess(int chunkX, int chunkZ) = 0;
     virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ) = 0;

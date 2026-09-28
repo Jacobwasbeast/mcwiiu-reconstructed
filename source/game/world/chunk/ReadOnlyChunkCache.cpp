@@ -60,8 +60,9 @@ void ReadOnlyChunkCache::postProcess(ChunkSource*, int, int)
 {
 }
 
-void ReadOnlyChunkCache::save(bool, ProgressListener*)
+bool ReadOnlyChunkCache::save(bool, ProgressListener*)
 {
+    return true;
 }
 
 void ReadOnlyChunkCache::tick()

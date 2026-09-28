@@ -12,7 +12,7 @@ class ServerPlayer;
 class MinigamePlayerChunkMap : public PlayerChunkMap
 {
 public:
-    MinigamePlayerChunkMap(ServerLevel* level, int viewDistance, int radius);
+    MinigamePlayerChunkMap(ServerLevel* level, int dimension, int viewDistance);
     virtual ~MinigamePlayerChunkMap();
 
     void updatePlayerReferences(boost::shared_ptr<ServerPlayer> player);

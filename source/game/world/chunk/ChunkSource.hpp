@@ -18,7 +18,7 @@ class ChunkSource
 public:
     int mLevelSize;
 
-    virtual ~ChunkSource();
+    virtual ~ChunkSource() {}
     virtual LevelChunk* getChunkIfLoaded(int chunkX, int chunkZ) = 0;
     virtual LevelChunk* getOrCreateChunk(int chunkX, int chunkZ, bool allowEmpty) = 0;
     virtual void tick() = 0;
@@ -35,7 +35,7 @@ public:
     virtual void lightChunk(LevelChunk* chunk);
     virtual LevelChunk* create(int chunkX, int chunkZ) = 0;
     virtual void saveAllEntities();
-    virtual void save(bool force, ProgressListener* progressListener) = 0;
+    virtual bool save(bool force, ProgressListener* progressListener) = 0;
     virtual bool shouldSave() = 0;
     virtual LevelChunk** getCache();
     virtual void dataReceived(int chunkX, int chunkZ);

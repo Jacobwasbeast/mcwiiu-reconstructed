@@ -14,6 +14,8 @@ class ServerPlayer;
 
 class PlayerChunkContainer
 {
+    friend class PlayerChunkMap;
+
 public:
     PlayerChunkContainer(PlayerChunkMap* map, int x, int z);
     ~PlayerChunkContainer();
@@ -23,9 +25,9 @@ public:
     bool hasPlayer(boost::shared_ptr<ServerPlayer> player);
     void updateInhabitedTime();
     void remove(boost::shared_ptr<ServerPlayer> player, bool send);
-    void broadcast(boost::shared_ptr<Packet> packet);
+    bool broadcast(boost::shared_ptr<Packet> packet);
     void broadcast(boost::shared_ptr<BlockEntity> blockEntity);
-    void broadcastChanges(bool force);
+    bool broadcastChanges(bool allowRegionUpdate);
     void blockChanged(int x, int y, int z);
     void prioritiseBlockChanges();
     ChunkPos getPos();

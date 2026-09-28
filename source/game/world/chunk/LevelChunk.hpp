@@ -44,6 +44,7 @@ class LevelChunk
 public:
     friend class OldChunkStorage;
     friend class ServerChunkCache;
+    friend class ClientChunkCache;
 
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
@@ -54,6 +55,22 @@ public:
         BIOME_PRESENT_DEEP_OCEAN = 2,
         BIOME_PRESENT_SLIME_CHUNK = 4,
         BIOME_PRESENT_SWAMP = 8
+    };
+
+    enum TerrainPopulatedFlag
+    {
+        TERRAIN_POPULATED_SELF = 0x0002,
+        TERRAIN_POPULATED_WEST = 0x0004,
+        TERRAIN_POPULATED_NORTH = 0x0008,
+        TERRAIN_POPULATED_NORTH_WEST = 0x0010,
+        TERRAIN_POPULATED_SOUTH_WEST = 0x0020,
+        TERRAIN_POPULATED_SOUTH = 0x0040,
+        TERRAIN_POPULATED_SOUTH_EAST = 0x0080,
+        TERRAIN_POPULATED_EAST = 0x0100,
+        TERRAIN_POPULATED_NORTH_EAST = 0x0200,
+        TERRAIN_POPULATED_ALL_NEIGHBOURS = 0x03fe,
+        TERRAIN_POPULATED_FULL = 0x0400,
+        TERRAIN_POPULATED_ALL = 0x07fe
     };
     class BlockChange
     {
@@ -167,7 +184,7 @@ public:
     unsigned short setElement(int x, int y, int z, unsigned short element);
     unsigned short getChunkBlockData(int x, int y, int z);
     virtual int getData(const BlockPos& pos);
-    virtual bool setData(int x, int y, int z, int data, int flags, bool* changed);
+    virtual bool setData(int x, int y, int z, int data, int dataMask, bool* maskedChange);
     virtual void setBlock(const BlockPos& pos, const BlockState* state);
     virtual void setExtraBlock(const BlockPos& pos, const BlockState* state);
     virtual bool internalSetBlock(bool extra, const BlockPos& pos, const BlockState* state);
@@ -255,9 +272,9 @@ private:
     arrayWithLength<unsigned char> mBiomes;
     int mEntitySectionCount;
     ElementStorage* mElements;
+    bool mLoaded;
     unsigned char mPrecipitationHeightmap[256];
     unsigned char mBiomeFlags[128];
-    int mPrecipitationHeightmapMinimum;
 public:
     Level* level;
 private:
@@ -276,30 +293,33 @@ private:
     unsigned int mBiomePresent;
     BlockEntityMap mBlockEntityMap;
     std::vector<boost::shared_ptr<Entity> >** mEntitySections;
+protected:
     unsigned short mChunkFlags;
+private:
     unsigned short mChunkFlagsPadding;
     unsigned short* mServerChunkFlags;
     bool mPostProcess;
     bool mLightPopulated;
     bool mUnsaved;
-    bool mUnloaded;
+protected:
+    bool mDontSave;
+private:
     bool mLastSaveHadEntities;
-    bool mLoaded;
     unsigned short mEmissiveMaxHeight;
     int mEntityCount;
     int mLightCheckIndex;
     int mQueuedLightChecks;
     long long mLastSaveTime;
-    unsigned int mLowestHeightmap;
+    bool mReservedFlag;
+    int mLowestHeightmap;
     long long mInhabitedTime;
-    bool mInvalid;
+    bool mUnloaded;
     CompoundTag* mPendingBlockEntityTag;
-    bool mWillBeSaved;
+    bool mInvalid;
     int mCheckAllLight;
     int mChunkVersion;
     std::deque<BlockPos> mPendingBlockEntities;
     unsigned char mPostProcessFlags;
-    bool mPendingBlockEntitiesChanged;
     bool mLightingDropped;
     bool mOwnsBiomes;
 };

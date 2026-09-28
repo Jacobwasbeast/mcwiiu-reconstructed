@@ -7,7 +7,7 @@ class LevelChunk;
 class ChunkStorage
 {
 public:
-    virtual ~ChunkStorage();
+    virtual ~ChunkStorage() {}
 
     virtual LevelChunk* load(Level* level, int x, int z, LevelChunk* chunk) = 0;
     virtual void save(Level* level, LevelChunk* chunk) = 0;

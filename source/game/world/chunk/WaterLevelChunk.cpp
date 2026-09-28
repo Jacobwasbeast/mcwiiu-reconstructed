@@ -18,7 +18,8 @@ static long long signedProduct32(int lhs, int rhs)
 WaterLevelChunk::WaterLevelChunk(Level* level, ChunkPrimer* primer, int x, int z)
     : LevelChunk(level, primer, x, z)
 {
-    setUnsaved(true);
+    mDontSave = true;
+    mChunkFlags = TERRAIN_POPULATED_ALL;
 }
 
 WaterLevelChunk::~WaterLevelChunk()

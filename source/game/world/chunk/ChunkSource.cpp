@@ -2,10 +2,6 @@
 
 class Level;
 
-ChunkSource::~ChunkSource()
-{
-}
-
 void ChunkSource::flagPostProcessComplete(short index, int chunkX, int chunkZ)
 {
 }

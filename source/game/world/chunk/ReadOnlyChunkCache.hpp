@@ -24,7 +24,7 @@ public:
     LevelChunk* load(int x, int z);
     virtual LevelChunk* getChunk(int x, int z);
     virtual void postProcess(ChunkSource* source, int x, int z);
-    virtual void save(bool force, ProgressListener* listener);
+    virtual bool save(bool force, ProgressListener* listener);
     virtual void tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();

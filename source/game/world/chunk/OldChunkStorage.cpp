@@ -216,14 +216,14 @@ LevelChunk* OldChunkStorage::load(Level* level, CompoundTag* tag, LevelChunk* ch
     if (tag->get(L"TerrainPopulated") == NULL)
     {
         chunk->mChunkFlags = static_cast<unsigned short>(tag->getShort(L"TerrainPopulatedFlags"));
-        if ((chunk->mChunkFlags & 0x3fe) == 0x3fe)
-            chunk->mChunkFlags |= 0x400;
+        if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS) == LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS)
+            chunk->mChunkFlags |= LevelChunk::TERRAIN_POPULATED_FULL;
     }
     else
     {
         chunk->mChunkFlags = static_cast<unsigned short>(tag->getByte(L"TerrainPopulated"));
         if (static_cast<short>(chunk->mChunkFlags) > 0)
-            chunk->mChunkFlags = 0x7fe;
+            chunk->mChunkFlags = LevelChunk::TERRAIN_POPULATED_ALL;
     }
     if (tag->contains(L"Biomes"))
     {
@@ -470,8 +470,8 @@ LevelChunk* OldChunkStorage::load(Level* level, DataInputStream* stream, DataFix
     stream->readBytes(chunk->mHeightmap);
     chunk->recalcMinAndMaxHeights();
     chunk->mChunkFlags = static_cast<unsigned short>(stream->readUnsignedShort());
-    if ((chunk->mChunkFlags & 0x3fe) == 0x3fe)
-        chunk->mChunkFlags |= 0x400;
+    if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS) == LevelChunk::TERRAIN_POPULATED_ALL_NEIGHBOURS)
+        chunk->mChunkFlags |= LevelChunk::TERRAIN_POPULATED_FULL;
     stream->readBytes(chunk->mBiomes);
     chunk->updateBiomePresentFlags();
     CompoundTag* tag = fixer->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(stream));

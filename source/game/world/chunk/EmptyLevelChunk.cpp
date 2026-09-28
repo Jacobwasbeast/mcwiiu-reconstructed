@@ -12,6 +12,8 @@
 EmptyLevelChunk::EmptyLevelChunk(Level* level, int x, int z)
     : LevelChunk(level, x, z)
 {
+    mDontSave = true;
+    mChunkFlags = TERRAIN_POPULATED_ALL;
 }
 
 EmptyLevelChunk::~EmptyLevelChunk()

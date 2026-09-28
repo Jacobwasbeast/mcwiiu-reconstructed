@@ -19,6 +19,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/CompressedBlockStorage.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/data/SparseDataStorage.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
@@ -114,12 +115,12 @@ LevelChunk::~LevelChunk()
     if (!mOwnsBiomes)
         delete[] mBiomes.data;
     delete[] mHeightmap.data;
-    if (mEntitySections != NULL)
-    {
-        for (int i = 0; i < mEntitySectionCount; ++i)
-            delete mEntitySections[i];
-        delete[] mEntitySections;
-    }
+    EnterCriticalSection(&sLevelChunkEntityMutex);
+    for (int i = 0; i < mEntitySectionCount; ++i)
+        delete mEntitySections[i];
+    delete[] mEntitySections;
+    mEntitySections = NULL;
+    LeaveCriticalSection(&sLevelChunkEntityMutex);
 }
 int LevelChunk::BlockChange::GetPackedPos() const
 {
@@ -147,7 +148,7 @@ LevelChunk::ThreadStorage::ThreadStorage() : elementStorage(NULL), extraElementS
 
 bool LevelChunk::isReady()
 {
-    return mLightPopulated && (mChunkFlags & 0x400) != 0 && mPostProcess;
+    return mLightPopulated && (mChunkFlags & TERRAIN_POPULATED_FULL) != 0 && mPostProcess;
 }
 int LevelChunk::getBlockId(int x, int y, int z)
 {
@@ -235,8 +236,17 @@ BlockPos LevelChunk::getTopRainBlock(const BlockPos& pos)
 }
 void LevelChunk::updateBiomeFlags(int x, int z)
 {
-    unsigned int index = ((x >> 1) | (z << 3)) & 127;
-    mBiomeFlags[index] |= (unsigned char)(2 << ((x & 1) << 2));
+    unsigned int index = (x >> 1) | (z << 3);
+    int shift = (x & 1) << 2;
+    if ((mBiomeFlags[index] & (2 << shift)) != 0)
+        return;
+    Biome* biome = level->getBiome(BlockPos(this->x * 16 + x, 0, this->z * 16 + z));
+    if (biome->hasRain())
+        mBiomeFlags[index] |= (unsigned char)(8 << shift);
+    if (biome->hasSnow())
+        mBiomeFlags[index] |= (unsigned char)((4 << shift) | (2 << shift));
+    else
+        mBiomeFlags[index] |= (unsigned char)(2 << shift);
 }
 bool LevelChunk::biomeHasRain(int x, int z)
 {
@@ -254,7 +264,7 @@ long long LevelChunk::getInhabitedTime()
 }
 bool LevelChunk::isTerrainPopulated()
 {
-    return (mChunkFlags & 0x400) != 0;
+    return (mChunkFlags & TERRAIN_POPULATED_FULL) != 0;
 }
 bool LevelChunk::isRenderChunkEmpty(int section)
 {
@@ -366,7 +376,7 @@ void LevelChunk::setFromRawData(arrayWithLength<unsigned char> data)
     recalcHeightmapOnly();
     for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
         it->second->clearCache();
-    mChunkFlags = 0x400;
+    mChunkFlags = TERRAIN_POPULATED_FULL;
     mPostProcess = true;
 }
 void LevelChunk::getDataData(arrayWithLength<unsigned char> data)
@@ -601,21 +611,20 @@ void LevelChunk::init(Level* level, int x, int z)
         mPrecipitationHeightmap[i] = 255;
     for (int i = 0; i < 128; ++i)
         mBiomeFlags[i] = 0;
-    mPrecipitationHeightmapMinimum = 0;
     mMinHeight = 0;
-    mMaxHeight = 0;
+    mMaxHeight = 255;
     mHasGapsToCheck = false;
     mBiomePresent = 0;
-    mEntitySections = new std::vector<boost::shared_ptr<Entity>>*[mEntitySectionCount];
+    mEntitySections = new std::vector<boost::shared_ptr<Entity> >*[mEntitySectionCount];
     for (int i = 0; i < mEntitySectionCount; ++i)
-        mEntitySections[i] = new std::vector<boost::shared_ptr<Entity>>();
+        mEntitySections[i] = new std::vector<boost::shared_ptr<Entity> >();
     mChunkFlags = 0;
     mChunkFlagsPadding = 0;
     mServerChunkFlags = NULL;
     mPostProcess = false;
     mLightPopulated = false;
     mUnsaved = false;
-    mUnloaded = false;
+    mDontSave = false;
     mLastSaveHadEntities = false;
     mLoaded = false;
     mEmissiveMaxHeight = 0;
@@ -623,38 +632,20 @@ void LevelChunk::init(Level* level, int x, int z)
     mLightCheckIndex = 0;
     mQueuedLightChecks = 0;
     mLastSaveTime = 0;
-    mLowestHeightmap = 0;
+    mReservedFlag = true;
+    mLowestHeightmap = 256;
     mInhabitedTime = 0;
-    mInvalid = false;
+    mUnloaded = false;
     mPendingBlockEntityTag = NULL;
-    mWillBeSaved = false;
+    mInvalid = false;
     mCheckAllLight = 0;
     mChunkVersion = 0;
     mPostProcessFlags = 0;
-    mPendingBlockEntitiesChanged = false;
     mLightingDropped = false;
     mOwnsBiomes = false;
 
-    unsigned int xSquared = static_cast<unsigned int>(x) * static_cast<unsigned int>(x);
-    unsigned int zSquared = static_cast<unsigned int>(z) * static_cast<unsigned int>(z);
-    unsigned int xSquareTerm = xSquared * 0x4c1906U;
-    unsigned int xLinearTerm = static_cast<unsigned int>(x) * 0x5ac0dbU;
-    unsigned int zSquareTerm = zSquared * 0x4307a7U;
-    unsigned int zLinearTerm = static_cast<unsigned int>(z) * 0x5f24fU;
-    const auto signExtend = [](unsigned int value) -> long long {
-        return value < 0x80000000U ? static_cast<long long>(value)
-                                  : static_cast<long long>(value) - 0x100000000LL;
-    };
-    const unsigned long long chunkSeedBits = static_cast<unsigned long long>(level->getSeed())
-                                             + static_cast<unsigned long long>(signExtend(xSquareTerm))
-                                             + static_cast<unsigned long long>(signExtend(xLinearTerm))
-                                             + static_cast<unsigned long long>(signExtend(zSquareTerm))
-                                             + static_cast<unsigned long long>(signExtend(zLinearTerm));
-    const unsigned long long randomSeedBits = chunkSeedBits ^ 0x3ad8025fULL;
-    long long randomSeed;
-    static_assert(sizeof(randomSeed) == sizeof(randomSeedBits));
-    std::memcpy(&randomSeed, &randomSeedBits, sizeof(randomSeed));
-    Random random(randomSeed);
+    Random random(level->getSeed() + (long long)(x * x * 4987142) + (long long)(x * 5947611) +
+                  (long long)(z * z * 4392871) + (long long)(z * 389711) ^ 987234911);
     if (random.nextInt(10) == 0)
         mBiomePresent |= BIOME_PRESENT_SLIME_CHUNK;
 }
@@ -822,7 +813,7 @@ void LevelChunk::recalcHeightmap()
                 runningMin = height;
             if (runningMax < height)
                 runningMax = height;
-            if (height < (int)mLowestHeightmap)
+            if (height < mLowestHeightmap)
                 mLowestHeightmap = height;
             PIXEndNamedEvent();
             PIXBeginNamedEvent(0.0f, "LevelChunk::recalcHeightmap - RangedLoop - setSkyLight");
@@ -1112,7 +1103,7 @@ void LevelChunk::recalcHeight(int localX, int y, int localZ)
     level->lightColumnChanged(worldX, worldZ, lightColumnLow, oldHeight);
     int lowY = height < oldHeight ? height : oldHeight;
     int highY = height < oldHeight ? oldHeight : height;
-    if (height < (int)mLowestHeightmap)
+    if (height < mLowestHeightmap)
         mLowestHeightmap = height;
     if (level->mDimension->isHasSkyLight())
     {
@@ -1146,7 +1137,11 @@ Block* LevelChunk::getExtraBlock(const BlockPos& pos)
 }
 const BlockState* LevelChunk::getBlockState(int x, int y, int z)
 {
-    return Block::getStateByElementId((unsigned short)mElements->get(x, y, z, NULL));
+    if (isEmpty())
+        return Blocks::air->defaultBlockState();
+    if (y < 0)
+        return Block::getStateByElementId(0);
+    return Block::getStateByElementId((unsigned short)mElements->get(x & 15, y & 0xff, z & 15, NULL));
 }
 const BlockState* LevelChunk::getBlockState(const BlockPos& pos)
 {
@@ -1154,7 +1149,11 @@ const BlockState* LevelChunk::getBlockState(const BlockPos& pos)
 }
 const BlockState* LevelChunk::getExtraBlockState(const BlockPos& pos)
 {
-    return Block::getStateByElementId((unsigned short)mElements->getExtraElement(pos.x & 15, pos.y, pos.z & 15));
+    if (isEmpty())
+        return Blocks::air->defaultBlockState();
+    if (pos.y < 0)
+        return Block::getStateByElementId(0);
+    return Block::getStateByElementId((unsigned short)mElements->getExtraElement(pos.x & 15, pos.y & 0xff, pos.z & 15));
 }
 void LevelChunk::getBlockAndExtraId_NoLock(int x, int y, int z, int* blockId, int* extraBlockId)
 {
@@ -1190,13 +1189,24 @@ int LevelChunk::getData(const BlockPos& pos)
 {
     return getData(pos.x & 15, pos.y, pos.z & 15);
 }
-bool LevelChunk::setData(int x, int y, int z, int data, int flags, bool* changed)
+bool LevelChunk::setData(int x, int y, int z, int data, int dataMask, bool* maskedChange)
 {
-    unsigned short old = mElements->get(x, y, z, NULL);
-    mElements->set(x, y, z, (unsigned short)((old & 0xfff0) | (data & 15)));
-    if (changed != NULL)
-        *changed = old != mElements->get(x, y, z, NULL);
-    return old != mElements->get(x, y, z, NULL);
+    setUnsaved(true);
+    unsigned int old = mElements->get(x, y & 0xff, z, NULL);
+    *maskedChange = (dataMask & (old ^ data)) != 0;
+    mElements->set(x, y & 0xff, z, static_cast<unsigned short>((old & 0xff0) | data));
+
+    Block* block = Block::byId(old >> 4);
+    if (block->mBlockEntity)
+    {
+        boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(BlockPos(x, y, z), NO_CREATE);
+        if (blockEntity != NULL)
+        {
+            blockEntity->clearCache();
+            blockEntity->setData(data);
+        }
+    }
+    return true;
 }
 void LevelChunk::setBlock(const BlockPos& pos, const BlockState* state)
 {
@@ -1219,26 +1229,45 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     const BlockState* oldState = Block::getStateByElementId(oldValue);
     if (oldState == state)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
+        boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(pos, NO_CREATE);
+        if (blockEntity)
+            blockEntity->clearCache();
         return false;
     }
     Block* newBlock = state->getBlock();
     int newBlockId = Block::getId(newBlock);
-    unsigned char legacyData = (unsigned char)newBlock->convertBlockStateToLegacyData(state);
+    int data = newBlock->convertBlockStateToLegacyData(state);
     Block* oldBlock = oldState->getBlock();
     int oldLightBlock = getBlockState(pos)->getLightBlock();
     int oldExtraLightBlock = getExtraBlockState(pos)->getLightBlock();
     if (oldLightBlock < oldExtraLightBlock)
         oldLightBlock = oldExtraLightBlock;
     bool commandBlockChange = false;
-    int newLightBlock = 0;
     if (!extra)
     {
-        mElements->set(localX, pos.y, localZ, (unsigned short)((newBlockId << 4 | legacyData) & 0xffff));
+        mElements->set(localX, pos.y, localZ, (unsigned short)((newBlockId << 4 | data) & 0xffff));
         if (oldBlock != newBlock)
         {
-            int newLightEmission = newBlock->defaultBlockState()->getLightEmission();
-            if (0 < newLightEmission && mEmissiveMaxHeight < pos.y + 1)
+            bool oldWasWaterSource = oldBlock->mMaterial == Material::WATER &&
+                                     oldState->getValue(LiquidBlock::LEVEL) == 0;
+            if (!newBlock->canContainLiquid(state))
+            {
+                mElements->setExtraElement(localX, pos.y, localZ, 0);
+            }
+            else if (newBlock->mMaterial == Material::AIR)
+            {
+                unsigned short extraValue = mElements->getExtraElement(localX, pos.y, localZ);
+                if (extraValue != 0)
+                {
+                    mElements->set(localX, pos.y, localZ, extraValue);
+                    mElements->setExtraElement(localX, pos.y, localZ, 0);
+                }
+            }
+            else if (oldBlock->mMaterial->isLiquid() && oldWasWaterSource && !newBlock->mMaterial->isLiquid())
+            {
+                mElements->setExtraElement(localX, pos.y, localZ, oldValue);
+            }
+            if (0 < newBlock->defaultBlockState()->getLightEmission() && mEmissiveMaxHeight < pos.y + 1)
                 mEmissiveMaxHeight = (unsigned short)(pos.y + 1);
             if (level->mIsClientSide)
             {
@@ -1255,55 +1284,32 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
                 oldBlock->onRemove(level, pos, oldState);
             }
         }
-        PIXBeginNamedEvent(0.0f, "Updating lighting");
-        newLightBlock = getBlockState(pos)->getLightBlock();
-        int extraLightBlock = getExtraBlockState(pos)->getLightBlock();
-        if (newLightBlock < extraLightBlock)
-            newLightBlock = extraLightBlock;
-        if (!newBlock->canContainLiquid(state))
+    }
+    else if (newBlockId == BlockId::AIR ||
+             (newBlock->mMaterial->isLiquid() && newBlock->mMaterial == Material::WATER &&
+              newBlock->mMaterial != Material::AIR && newBlock->mMaterial != Material::LAVA))
+    {
+        mElements->setExtraElement(localX, pos.y, localZ, (unsigned short)((newBlockId << 4 | data) & 0xffff));
+    }
+    PIXBeginNamedEvent(0.0f, "Updating lighting");
+    int newLightBlock = getBlockState(pos)->getLightBlock();
+    int newExtraLightBlock = getExtraBlockState(pos)->getLightBlock();
+    if (newLightBlock < newExtraLightBlock)
+        newLightBlock = newExtraLightBlock;
+    if (0 < newLightBlock)
+    {
+        if (existingHeight <= pos.y)
         {
-            mElements->setExtraElement(localX, pos.y, localZ, 0);
-        }
-        if (0 < newLightBlock)
-        {
-            if (existingHeight <= pos.y)
-            {
-                PIXBeginNamedEvent(0.0f, "Recalc height 1");
-                recalcHeight(localX, pos.y + 1, localZ);
-                PIXEndNamedEvent();
-            }
-        }
-        else if (pos.y == existingHeight - 1)
-        {
-            PIXBeginNamedEvent(0.0f, "Recalc height 2");
-            recalcHeight(localX, pos.y, localZ);
+            PIXBeginNamedEvent(0.0f, "Recalc height 1");
+            recalcHeight(localX, pos.y + 1, localZ);
             PIXEndNamedEvent();
         }
     }
-    else
+    else if (pos.y == existingHeight - 1)
     {
-        if (newBlockId == BlockId::AIR)
-            mElements->setExtraElement(localX, pos.y, localZ, (unsigned short)(legacyData & 0xffff));
-        PIXBeginNamedEvent(0.0f, "Updating lighting");
-        newLightBlock = getBlockState(pos)->getLightBlock();
-        int extraLightBlock = getExtraBlockState(pos)->getLightBlock();
-        if (newLightBlock < extraLightBlock)
-            newLightBlock = extraLightBlock;
-        if (0 < newLightBlock)
-        {
-            if (existingHeight <= pos.y)
-            {
-                PIXBeginNamedEvent(0.0f, "Recalc height 1");
-                recalcHeight(localX, pos.y + 1, localZ);
-                PIXEndNamedEvent();
-            }
-        }
-        else if (pos.y == existingHeight - 1)
-        {
-            PIXBeginNamedEvent(0.0f, "Recalc height 2");
-            recalcHeight(localX, pos.y, localZ);
-            PIXEndNamedEvent();
-        }
+        PIXBeginNamedEvent(0.0f, "Recalc height 2");
+        recalcHeight(localX, pos.y, localZ);
+        PIXEndNamedEvent();
     }
     if (newLightBlock < oldLightBlock ||
         (oldLightBlock < newLightBlock &&
@@ -1315,7 +1321,9 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     }
     if (oldBlock->mBlockEntity && !commandBlockChange)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
+        boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(pos, NO_CREATE);
+        if (blockEntity)
+            blockEntity->clearCache();
     }
     PIXEndNamedEvent();
     if (!level->mIsClientSide && oldBlock != newBlock)
@@ -1326,18 +1334,24 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     {
         mElements->set(localX, pos.y & 0xff, localZ, 0);
     }
-    if (newBlock->mBlockEntity)
+    if (newBlock->mBlockEntity && !commandBlockChange)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
-        if (!pending)
+        boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(pos, NO_CREATE);
+        if (!blockEntity)
         {
-            boost::shared_ptr<BlockEntity> created = createBlockEntity(pos);
-            level->setBlockEntity(pos, created);
+            EntityBlock* entityBlock = dynamic_cast<EntityBlock*>(newBlock);
+            blockEntity = entityBlock->newBlockEntity(level, newBlock->convertBlockStateToLegacyData(state));
+            level->setBlockEntity(pos, blockEntity);
+        }
+        else
+        {
+            blockEntity->clearCache();
         }
     }
     setUnsaved(true);
     return true;
 }
+
 bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, bool update, bool extra)
 {
     int localX = x & 15;
@@ -1358,7 +1372,9 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
     const BlockState* oldState = Block::getStateByElementId(oldValue);
     if (oldBlockId == blockId && (oldValue & 0xf) == data)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
+        boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(pos, NO_CREATE);
+        if (blockEntity)
+            blockEntity->clearCache();
         return false;
     }
     Block* oldBlock = Block::byId(oldBlockId);
@@ -1387,9 +1403,24 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
     }
     if (mElements != NULL)
         mElements->set(localX, y, localZ, (unsigned short)((blockId << 4 | data) & 0xffff));
-    const BlockState* newState = newBlock->getBlockState(data);
-    if (!newBlock->canContainLiquid(newState))
+    bool oldWasWater = oldBlock->mMaterial == Material::WATER;
+    if (!newBlock->canContainLiquid(newBlock->getBlockState(data)))
+    {
         mElements->setExtraElement(localX, y, localZ, 0);
+    }
+    else if (blockId == BlockId::AIR)
+    {
+        unsigned short extraValue = mElements->getExtraElement(localX, y, localZ);
+        if (extraValue != 0)
+        {
+            mElements->set(localX, y, localZ, extraValue);
+            mElements->setExtraElement(localX, y, localZ, 0);
+        }
+    }
+    else if (oldBlock->mMaterial->isLiquid() && oldWasWater && !newBlock->mMaterial->isLiquid())
+    {
+        mElements->setExtraElement(localX, y, localZ, oldValue);
+    }
     int newLightEmission = newBlock->defaultBlockState()->getLightEmission();
     if (0 < newLightEmission && mEmissiveMaxHeight < y + 1)
         mEmissiveMaxHeight = (unsigned short)(y + 1);
@@ -1427,19 +1458,25 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
     {
         if (blockId < 1)
         {
-            if (0 < oldBlockId && oldBlock->mBlockEntity)
+            if (0 < oldBlockId && newBlock->mBlockEntity)
             {
-                boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
+                boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(pos, NO_CREATE);
+                if (blockEntity)
+                    blockEntity->clearCache();
             }
         }
         else if (newBlock->mBlockEntity && !commandBlockChange)
         {
-            boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
-            if (!pending)
+            boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(pos, NO_CREATE);
+            if (!blockEntity)
             {
                 EntityBlock* entityBlock = dynamic_cast<EntityBlock*>(newBlock);
-                boost::shared_ptr<BlockEntity> created = entityBlock->newBlockEntity(level, data);
-                level->setBlockEntity(pos, created);
+                blockEntity = entityBlock->newBlockEntity(level, data);
+                level->setBlockEntity(pos, blockEntity);
+            }
+            else
+            {
+                blockEntity->clearCache();
             }
         }
     }
@@ -1590,8 +1627,8 @@ void LevelChunk::removeEntity(boost::shared_ptr<Entity> entity, int section)
     if (section >= mEntitySectionCount)
         section = mEntitySectionCount - 1;
     EnterCriticalSection(&sLevelChunkEntityMutex);
-    std::vector<boost::shared_ptr<Entity>>& entities = *mEntitySections[section];
-    for (std::vector<boost::shared_ptr<Entity>>::iterator it = entities.begin(); it != entities.end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >& entities = *mEntitySections[section];
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
         if (it->get() == entity.get())
         {
@@ -1851,11 +1888,20 @@ void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
 }
 bool LevelChunk::containsPlayer()
 {
+    EnterCriticalSection(&sLevelChunkEntityMutex);
     for (int section = 0; section < mEntitySectionCount; ++section)
-        for (std::vector<boost::shared_ptr<Entity>>::const_iterator it = mEntitySections[section]->begin();
+    {
+        for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = mEntitySections[section]->begin();
              it != mEntitySections[section]->end(); ++it)
+        {
             if ((*it)->GetType() == EntityType::SERVER_PLAYER)
+            {
+                LeaveCriticalSection(&sLevelChunkEntityMutex);
                 return true;
+            }
+        }
+    }
+    LeaveCriticalSection(&sLevelChunkEntityMutex);
     return false;
 }
 bool LevelChunk::isUnloaded()
@@ -1867,8 +1913,8 @@ void LevelChunk::markUnsaved()
     mUnsaved = true;
 }
 void LevelChunk::getEntities(boost::shared_ptr<Entity> except, const AABB* box,
-                             std::vector<boost::shared_ptr<Entity>>& entities,
-                             const Predicate<boost::shared_ptr<Entity>>* predicate)
+                             std::vector<boost::shared_ptr<Entity> >& entities,
+                             const Predicate<boost::shared_ptr<Entity> >* predicate)
 {
     int first = (int)((box->mMinY - 2.0) * 0.0625);
     if ((box->mMinY - 2.0) * 0.0625 < first)
@@ -1882,8 +1928,8 @@ void LevelChunk::getEntities(boost::shared_ptr<Entity> except, const AABB* box,
         last = mEntitySectionCount - 1;
     for (int section = first; section <= last; ++section)
     {
-        std::vector<boost::shared_ptr<Entity>>& sectionEntities = *mEntitySections[section];
-        for (std::vector<boost::shared_ptr<Entity>>::iterator it = sectionEntities.begin(); it != sectionEntities.end();
+        std::vector<boost::shared_ptr<Entity> >& sectionEntities = *mEntitySections[section];
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = sectionEntities.begin(); it != sectionEntities.end();
              ++it)
         {
             boost::shared_ptr<Entity> entity = *it;
@@ -1893,9 +1939,9 @@ void LevelChunk::getEntities(boost::shared_ptr<Entity> except, const AABB* box,
                                 entity->mBoundingBox->mMaxZ) &&
                 (predicate == NULL || predicate->apply(entity)))
                 entities.push_back(entity);
-            std::vector<boost::weak_ptr<Entity>>* passengers = entity->getPassengers();
+            std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
             if (passengers != NULL)
-                for (std::vector<boost::weak_ptr<Entity>>::iterator passenger = passengers->begin();
+                for (std::vector<boost::weak_ptr<Entity> >::iterator passenger = passengers->begin();
                      passenger != passengers->end(); ++passenger)
                 {
                     boost::shared_ptr<Entity> passengerEntity = passenger->lock();
@@ -1910,8 +1956,8 @@ void LevelChunk::getEntities(boost::shared_ptr<Entity> except, const AABB* box,
     }
 }
 void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
-                                    std::vector<boost::shared_ptr<Entity>>& entities,
-                                    const Predicate<boost::shared_ptr<Entity>>* predicate, bool excludeInvisiblePlayers)
+                                    std::vector<boost::shared_ptr<Entity> >& entities,
+                                    const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers)
 {
     int first = (int)((box->mMinY - 2.0) * 0.0625);
     if ((box->mMinY - 2.0) * 0.0625 < first)
@@ -1950,8 +1996,8 @@ void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
 
     for (int section = first; section <= last; ++section)
     {
-        std::vector<boost::shared_ptr<Entity>>& sectionEntities = *mEntitySections[section];
-        for (std::vector<boost::shared_ptr<Entity>>::iterator it = sectionEntities.begin(); it != sectionEntities.end();
+        std::vector<boost::shared_ptr<Entity> >& sectionEntities = *mEntitySections[section];
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = sectionEntities.begin(); it != sectionEntities.end();
              ++it)
         {
             boost::shared_ptr<Entity> entity = *it;
@@ -1997,7 +2043,7 @@ int LevelChunk::countEntities()
 }
 bool LevelChunk::shouldSave(bool force)
 {
-    if (mUnloaded)
+    if (mDontSave)
         return false;
     if (!force)
         return (mLastSaveHadEntities && level->getGameTime() >= mLastSaveTime + 600) || mUnsaved;
@@ -2062,7 +2108,7 @@ int LevelChunk::setBlocksAndData(arrayWithLength<unsigned char> input, int x, in
         lightLava();
         recalcMinAndMaxHeights();
     }
-    mChunkFlags = 0x400;
+    mChunkFlags = TERRAIN_POPULATED_FULL;
     mPostProcess = true;
     return offset;
 }
@@ -2088,15 +2134,16 @@ void LevelChunk::postProcess()
 void LevelChunk::flagPostProcessComplete(short value)
 {
     mChunkFlags |= (unsigned short)value;
-    if ((mChunkFlags & 0x1e) == 0x1e)
+    if ((mChunkFlags & (TERRAIN_POPULATED_SELF | TERRAIN_POPULATED_WEST | TERRAIN_POPULATED_NORTH | TERRAIN_POPULATED_NORTH_WEST)) ==
+        (TERRAIN_POPULATED_SELF | TERRAIN_POPULATED_WEST | TERRAIN_POPULATED_NORTH | TERRAIN_POPULATED_NORTH_WEST))
     {
-        PIXBeginNamedEvent(0.0f, "Compressing lighting blocks");
+        PIXBeginNamedEvent(0.0f, "Compressing lighting/blocks");
         mElements->removeCompressionHeadroom();
         if (!isLowerBlockLightStorageCompressed())
             compressLighting();
         PIXEndNamedEvent();
     }
-    if (mChunkFlags == 0x3fe)
+    if (mChunkFlags == TERRAIN_POPULATED_ALL_NEIGHBOURS)
     {
         g_pApp->processSchematicsLighting(this);
         PIXBeginNamedEvent(0.0f, "Recheck gaps");
@@ -2106,26 +2153,26 @@ void LevelChunk::flagPostProcessComplete(short value)
         PIXBeginNamedEvent(0.0f, "Light lava (this)");
         lightLava();
         PIXEndNamedEvent();
-        mChunkFlags |= 0x400;
+        mChunkFlags |= TERRAIN_POPULATED_FULL;
     }
 }
 void LevelChunk::doPostProcess(ChunkSource* source, ChunkGenerator* generator)
 {
-    if ((mChunkFlags & 2) == 0)
+    if ((mChunkFlags & TERRAIN_POPULATED_SELF) == 0)
     {
         postProcess();
         generator->postProcess(x, z);
         markUnsaved();
-        mChunkFlags |= 2;
+        mChunkFlags |= TERRAIN_POPULATED_SELF;
         flagPostProcessComplete(0);
-        source->flagPostProcessComplete(4, x + 1, z);
-        source->flagPostProcessComplete(0x10, x + 1, z + 1);
-        source->flagPostProcessComplete(8, x, z + 1);
-        source->flagPostProcessComplete(0x200, x - 1, z + 1);
-        source->flagPostProcessComplete(0x100, x - 1, z);
-        source->flagPostProcessComplete(0x80, x - 1, z - 1);
-        source->flagPostProcessComplete(0x40, x, z - 1);
-        source->flagPostProcessComplete(0x20, x + 1, z - 1);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_WEST, x + 1, z);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_NORTH_WEST, x + 1, z + 1);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_NORTH, x, z + 1);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_NORTH_EAST, x - 1, z + 1);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_EAST, x - 1, z);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_SOUTH_EAST, x - 1, z - 1);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_SOUTH, x, z - 1);
+        source->flagPostProcessComplete(TERRAIN_POPULATED_SOUTH_WEST, x + 1, z - 1);
     }
     else if (generator->postProcessLoadedChunk(this, x, z))
         markUnsaved();
@@ -2416,12 +2463,11 @@ void LevelChunk::setChunkVersion(int version)
 }
 void LevelChunk::swapEntities(LevelChunk* chunk)
 {
-    if (chunk != NULL)
-    {
-        std::vector<boost::shared_ptr<Entity>>** sections = mEntitySections;
-        mEntitySections = chunk->mEntitySections;
-        chunk->mEntitySections = sections;
-    }
+    EnterCriticalSection(&sLevelChunkEntityMutex);
+    std::vector<boost::shared_ptr<Entity> >** sections = chunk->mEntitySections;
+    chunk->mEntitySections = mEntitySections;
+    mEntitySections = sections;
+    LeaveCriticalSection(&sLevelChunkEntityMutex);
 }
 int LevelChunk::PackBlockPos(const BlockPos& pos)
 {
