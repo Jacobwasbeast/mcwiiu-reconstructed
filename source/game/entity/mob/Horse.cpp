@@ -61,7 +61,7 @@ void Horse::create(Level* level) { new Horse(level); }
 
 HorseArmorItem* Horse::getArmorType()
 {
-    not_null_ptr<ItemInstance> item = getEntityData()->get(DATA_ARMOR);
+    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ARMOR);
     HorseArmorItem* armor = ARMOR_NONE;
     if (HorseArmorItem::isHorseArmor(item->getItem()))
         armor = static_cast<HorseArmorItem*>(item->getItem());
@@ -93,10 +93,10 @@ void Horse::staticCtor()
 void Horse::defineSynchedData()
 {
     AbstractHorse::defineSynchedData();
-    getEntityData()->createDateItem(DATA_VARIANT, 0);
-    getEntityData()->createDateItem(DATA_ARMOR, ItemInstance::EMPTY);
+    mEntityData->createDateItem(DATA_VARIANT, 0);
+    mEntityData->createDateItem(DATA_ARMOR, ItemInstance::EMPTY);
 }
-int Horse::getVariant() { return getEntityData()->get(DATA_VARIANT); }
+int Horse::getVariant() { return mEntityData->get(DATA_VARIANT); }
 
 void Horse::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -116,7 +116,7 @@ void Horse::clearLayeredTextureInfo()
 
 void Horse::setVariant(int variant)
 {
-    getEntityData()->set(DATA_VARIANT, variant, true);
+    mEntityData->set(DATA_VARIANT, variant, true);
     clearLayeredTextureInfo();
 }
 
@@ -175,7 +175,7 @@ bool Horse::isWearingDyedArmor()
 
 int Horse::getDyedArmorColor()
 {
-    not_null_ptr<ItemInstance> item = getEntityData()->get(DATA_ARMOR);
+    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ARMOR);
     return getArmorType()->getDyedColor(item);
 }
 
@@ -241,9 +241,9 @@ void Horse::tick()
 {
     PIXBeginNamedEvent(0.0f, "Horse tick");
     AbstractHorse::tick();
-    if (mLevel->mIsClientSide && getEntityData()->isDirty())
+    if (mLevel->mIsClientSide && mEntityData->isDirty())
     {
-        getEntityData()->clearDirty();
+        mEntityData->clearDirty();
         clearLayeredTextureInfo();
     }
     PIXEndNamedEvent();

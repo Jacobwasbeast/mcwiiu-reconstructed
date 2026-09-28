@@ -59,6 +59,7 @@ void SkeletonHorse::registerAttributes()
     AbstractHorse::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(15.0);
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
+    getAttribute(JUMP_STRENGTH)->setBaseValue(generateRandomJumpStrength());
 }
 
 void SkeletonHorse::registerGoals()

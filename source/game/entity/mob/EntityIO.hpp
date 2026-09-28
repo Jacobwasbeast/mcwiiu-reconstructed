@@ -63,12 +63,4 @@ public:
     static int eTypeToIoid(unsigned long long entityType);
 };
 
-namespace std
-{
-template<> struct hash<ResourceLocation>
-{
-    size_t operator()(const ResourceLocation& value) const { return boost::hash<ResourceLocation>()(value); }
-};
-}
-
 #endif

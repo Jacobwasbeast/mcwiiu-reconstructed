@@ -32,10 +32,6 @@ MobEffect::MobEffect(bool isHarmful, eMinecraftColour effectColor)
 {
 }
 
-MobEffect::~MobEffect()
-{
-}
-
 MobEffect* MobEffect::setIcon(EMobEffectIcon effectIcon)
 {
     icon = (unsigned int)effectIcon;
@@ -290,7 +286,7 @@ void MobEffect::staticCtor()
     effectCount = 0;
 
     MobEffect* effect = new MobEffect(false, eMinecraftColour_Effect_MovementSpeed);
-    effect->setDescriptionId(0xa549ae42);
+    effect->setDescriptionId(IDS_EFFECT_MOVESPEED);
     effect->setIcon(EMobEffectIcon_Speed);
     effect->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED, eMODIFIER_ID_PotionMoveSpeed,
                                  0.20000000298023224, 2);
@@ -298,14 +294,14 @@ void MobEffect::staticCtor()
     registerMobEffect(L"speed", effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_MovementSlowDown);
-    effect->setDescriptionId(0x25d65b68);
+    effect->setDescriptionId(IDS_EFFECT_MOVESLOWDOWN);
     effect->setIcon(EMobEffectIcon_Slowness);
     effect->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED, eMODIFIER_ID_PotionMoveSlowdown,
                                  -0.15000000596046448, 2);
     registerMobEffect(L"slowness", effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_DigSpeed);
-    effect->setDescriptionId(0x7df665f9);
+    effect->setDescriptionId(IDS_EFFECT_DIGSPEED);
     effect->setDurationModifier(1.5);
     effect->setIcon(EMobEffectIcon_Haste);
     effect->setBeneficial();
@@ -314,14 +310,14 @@ void MobEffect::staticCtor()
     registerMobEffect(L"haste", effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_DigSlowdown);
-    effect->setDescriptionId(0xf483c9eb);
+    effect->setDescriptionId(IDS_EFFECT_DIGSLOWDOWN);
     effect->setIcon(EMobEffectIcon_MiningFatigue);
     effect->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED, eMODIFIER_ID_PotionDigSpeed,
                                  -0.10000000149011612, 2);
     registerMobEffect(L"mining_fatigue", effect);
 
     effect = new AttackDamageMobEffect(false, eMinecraftColour_Effect_DamageBoost, 3.0);
-    effect->setDescriptionId(0x8708edca);
+    effect->setDescriptionId(IDS_EFFECT_DAMAGEBOOST);
     effect->setIcon(EMobEffectIcon_Strength);
     effect->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE, eMODIFIER_ID_PotionDamageBoost, 0.0, 0);
     effect->setBeneficial();
@@ -333,7 +329,7 @@ void MobEffect::staticCtor()
     registerMobEffect(L"instant_health", effect);
 
     effect = new InstantenousMobEffect(true, eMinecraftColour_Effect_Harm);
-    effect->setDescriptionId(0x21220fea);
+    effect->setDescriptionId(IDS_EFFECT_HARM);
     effect->setBeneficial();
     registerMobEffect(L"instant_damage", effect);
 
@@ -344,7 +340,7 @@ void MobEffect::staticCtor()
     registerMobEffect(L"jump_boost", effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Confusion);
-    effect->setDescriptionId(0x3d3be8ce);
+    effect->setDescriptionId(IDS_EFFECT_CONFUSION);
     effect->setDurationModifier(0.25);
     effect->setIcon(EMobEffectIcon_Nausea);
     registerMobEffect(L"nausea", effect);
@@ -451,7 +447,7 @@ void MobEffect::staticCtor()
     registerMobEffect(L"luck", effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_BadLuck);
-    effect->setDescriptionId(0xa35cc356);
+    effect->setDescriptionId(IDS_EFFECT_UNLUCK);
     effect->setIcon(EMobEffectIcon_Unluck);
     effect->addAttributeModifier(SharedMonsterAttributes::LUCK, eMODIFIER_ID_PotionLuck, -1.0, 0);
     registerMobEffect(L"unluck", effect);

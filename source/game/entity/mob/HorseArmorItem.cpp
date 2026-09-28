@@ -1,4 +1,5 @@
 #include "game/entity/mob/HorseArmorItem.hpp"
+#include "game/core/Color.hpp"
 #include "game/item/Items.hpp"
 
 #include "game/core/IconRegister.hpp"
@@ -102,17 +103,24 @@ bool HorseArmorItem::hasCustomColor(const not_null_ptr<ItemInstance>& itemInstan
 
 int HorseArmorItem::getDyedColor(not_null_ptr<ItemInstance> itemInstance) const
 {
-    if (!itemInstance->hasTag() || !itemInstance->getTag()->contains(HORSE_ARMOR_COLOR))
+    if (getTier() != 1)
     {
-        return -1;
+        return Color(255, 255, 255).getRGB();
     }
-    return itemInstance->getTag()->getInt(HORSE_ARMOR_COLOR);
+    if (itemInstance->hasTag() && itemInstance->getTag()->contains(HORSE_ARMOR_COLOR))
+    {
+        return itemInstance->getTag()->getInt(HORSE_ARMOR_COLOR);
+    }
+    return DEFAULT_LEATHER_COLOR;
 }
 
-int HorseArmorItem::getColor(not_null_ptr<ItemInstance> itemInstance, int auxValue)
+int HorseArmorItem::getColor(not_null_ptr<ItemInstance> itemInstance, int layer)
 {
-    int color = getDyedColor(itemInstance);
-    return color < 0 ? auxValue : color;
+    if (layer == 0)
+    {
+        return getDyedColor(itemInstance);
+    }
+    return Color(255, 255, 255).getRGB();
 }
 
 void HorseArmorItem::clearColor(const not_null_ptr<ItemInstance>& itemInstance)

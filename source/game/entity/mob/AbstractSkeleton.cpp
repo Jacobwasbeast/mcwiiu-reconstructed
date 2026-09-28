@@ -34,6 +34,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/SharedConstants.hpp"
@@ -78,12 +79,12 @@ void AbstractSkeleton::performRangedAttack(boost::shared_ptr<LivingEntity> targe
 
 bool AbstractSkeleton::isAggressive()
 {
-    return getEntityData()->get(DATA_ID_ATTACKING);
+    return mEntityData->get(DATA_ID_ATTACKING);
 }
 
 void AbstractSkeleton::setAggressive(bool aggressive)
 {
-    getEntityData()->set(DATA_ID_ATTACKING, aggressive, true);
+    mEntityData->set(DATA_ID_ATTACKING, aggressive, true);
 }
 
 void AbstractSkeleton::staticCtor()
@@ -98,18 +99,27 @@ void AbstractSkeleton::reassessWeaponGoal()
     mReassessWeaponGoal = false;
     if (mLevel == NULL || mLevel->mIsClientSide)
     {
+        return;
+    }
+
+    BlockPos pos(mX, mY, mZ);
+    if (!mLevel->hasChunkAt(pos) || !mLevel->getChunkAt(pos)->isTerrainPopulated())
+    {
         mReassessWeaponGoal = true;
         return;
     }
-    if (mMeleeGoal != NULL)
-        mGoalSelector.removeGoal(mMeleeGoal);
-    if (mBowGoal != NULL)
-        mGoalSelector.removeGoal(mBowGoal);
+
+    mGoalSelector.removeGoal(mMeleeGoal);
+    mGoalSelector.removeGoal(mBowGoal);
 
     not_null_ptr<ItemInstance> item = getMainHandItem();
-    if (!item->isEmpty() && item->getItem() == Items::bow && !isInWater())
+    if (item->getItem() == Items::bow && !isUnderLiquid(Material::WATER))
     {
-        int interval = mLevel->getDifficulty() == Difficulty::HARD ? 40 : 20;
+        int interval = 20;
+        if (mLevel->getDifficulty() != Difficulty::HARD)
+        {
+            interval = 40;
+        }
         mBowGoal->setMinAttackInterval(interval);
         mGoalSelector.addGoal(4, mBowGoal, false);
     }

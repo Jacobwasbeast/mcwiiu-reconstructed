@@ -8,10 +8,6 @@ ShoulderRidingEntity::ShoulderRidingEntity(Level* level)
 {
 }
 
-ShoulderRidingEntity::~ShoulderRidingEntity()
-{
-}
-
 bool ShoulderRidingEntity::setEntityOnShoulder(boost::shared_ptr<Player> player)
 {
     CompoundTag* tag = new CompoundTag();

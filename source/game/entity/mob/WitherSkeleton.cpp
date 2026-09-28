@@ -61,7 +61,7 @@ MobGroupData* WitherSkeleton::finalizeMobSpawn(const DifficultyInstance& difficu
 
 double WitherSkeleton::getEyeHeight()
 {
-    return 2.1;
+    return 2.1f;
 }
 
 bool WitherSkeleton::doHurtTarget(boost::shared_ptr<Entity> target)
@@ -104,7 +104,7 @@ void WitherSkeleton::die(const DamageSource* source)
         return;
 
     creeper->increaseDroppedSkulls();
-    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 1)), 1.2f);
+    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 1)), 0.0f);
 }
 
 void WitherSkeleton::tick()

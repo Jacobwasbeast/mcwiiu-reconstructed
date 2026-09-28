@@ -23,7 +23,7 @@ class AbstractChestedHorse : public AbstractHorse
 public:
     AbstractChestedHorse(Level* level);
     virtual unsigned long long GetType();
-    virtual ~AbstractChestedHorse();
+    virtual ~AbstractChestedHorse() {}
     virtual void defineSynchedData();
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);

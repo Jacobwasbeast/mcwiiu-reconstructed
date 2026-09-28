@@ -105,10 +105,6 @@ AbstractHorse::AbstractHorse(Level* level)
     mMaxUpStep = 1.0f;
 }
 
-AbstractHorse::~AbstractHorse()
-{
-}
-
 bool AbstractHorse::getFlag(int flag) { return (mEntityData->get(DATA_FLAGS) & flag) != 0; }
 bool AbstractHorse::isSaddled() { return getFlag(4); }
 

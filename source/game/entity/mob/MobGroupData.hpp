@@ -4,7 +4,7 @@
 class MobGroupData
 {
 public:
-    virtual ~MobGroupData();
+    virtual ~MobGroupData() {}
 
     virtual void emptyFunc();
 };

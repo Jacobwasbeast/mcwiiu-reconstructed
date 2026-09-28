@@ -42,10 +42,6 @@ Animal::Animal(Level* level) : AgableMob(level), mSpawnableBlock(Blocks::grass),
     mCategories |= EntityCategory::eEntityCategory_Animal;
 }
 
-Animal::~Animal()
-{
-}
-
 void Animal::staticCtor()
 {
     DATA_IN_LOVE = SynchedEntityData::defineId(EntityType::ANIMAL, EntityType::MOB,
@@ -460,7 +456,7 @@ unsigned int Animal::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     return AgableMob::GetInteractTooltip(holder);
 }
 
-bool Animal::isDespawnProtected() const
+bool Animal::isDespawnProtected()
 {
     return mDespawnProtected;
 }

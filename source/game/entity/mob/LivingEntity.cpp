@@ -53,6 +53,7 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/entity/mob/MobEffect.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/MobEffects.hpp"
@@ -157,6 +158,8 @@ LivingEntity::~LivingEntity()
 
     delete mAttributes;
     delete mCombatTracker;
+    delete[] mHandItems.items;
+    delete[] mArmorItems.items;
 
     if (mLastDamageSource)
     {
@@ -210,7 +213,7 @@ void LivingEntity::_init()
     mElytraCollisionDistance = 0.0;
     mThermalAreasChecked = false;
     mDeathMessageId = 0;
-    mDeathMessage.assign(L"", 0);
+    mDeathMessage = L"";
     mHurtByPlayerOnPeaceful = false;
     mLastHurtByPlayer.reset();
     mLastHurtByPlayerTime = 0;
@@ -2921,9 +2924,9 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         mZd = (double)Mth::clamp((float)mZd, -0.15000000596046448f, 0.15000000596046448f);
         mFallDistance = 0.0f;
 
-        if (mYd < -0.15000000596046448)
+        if (mYd < -0.15)
         {
-            mYd = -0.15000000596046448;
+            mYd = -0.15;
         }
 
         if (isSneaking() && (GetType() & EntityType::PLAYER) == EntityType::PLAYER && mYd < 0.0)
@@ -3489,17 +3492,18 @@ float LivingEntity::tickHeadTurn(float yBodyRot, float headTurnDelta)
     mYBodyRot = mYBodyRot + Mth::wrapDegrees(yBodyRot - mYBodyRot) * 0.30000001192092896f;
 
     float diff = Mth::wrapDegrees(mYRot - mYBodyRot);
-    bool turnedAround = !(diff >= -75.0f && diff < 90.0f);
+    bool turnedAround = !(diff >= -90.0f && diff < 90.0f);
 
     float clamped = diff;
 
-    if (clamped < -50.0f)
+    if (clamped < -75.0f)
     {
-        clamped = -50.0f;
+        clamped = -75.0f;
     }
-    else if (clamped > 50.0f)
+
+    if (clamped >= 75.0f)
     {
-        clamped = 50.0f;
+        clamped = 75.0f;
     }
 
     mYBodyRot = mYRot - clamped;
@@ -3621,9 +3625,9 @@ void LivingEntity::aiStep()
     }
     else if (!isEffectiveAi())
     {
-        mXd = mXd * 0.9800000190734863;
-        mYd = mYd * 0.9800000190734863;
-        mZd = mZd * 0.9800000190734863;
+        mXd = mXd * 0.98;
+        mYd = mYd * 0.98;
+        mZd = mZd * 0.98;
     }
 
     if (Mth::abs(mXd) < 5e-05)
@@ -3995,13 +3999,13 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
         return;
     }
 
-    if (itemInstance->getUseAnimation() == 2)
+    if (itemInstance->getUseAnimation() == UseAnim_drink)
     {
         playSound(SoundEvents::GENERIC_DRINK, 0.5f,
                   (float)(mRandom->nextFloat() * 0.10000000149011612 + 0.8999999761581421));
     }
 
-    if (itemInstance->getUseAnimation() != 1)
+    if (itemInstance->getUseAnimation() != UseAnim_eat)
     {
         return;
     }
@@ -4100,7 +4104,7 @@ bool LivingEntity::isBlocking()
         return false;
     }
 
-    return mUseItem->getUseAnimation() == 3;
+    return mUseItem->getUseAnimation() == UseAnim_block;
 }
 
 bool LivingEntity::isFallFlying()
@@ -4145,23 +4149,26 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
 
     if (mLevel->hasChunkAt(pos) && pos.y > 0)
     {
+        bool grounded = true;
         while (!mLevel->getBlockState(mTickCache, pos.below())->getMaterial()->blocksMotion())
         {
+            pos = pos.below();
             mY = mY - 1.0;
-
             if (pos.y < 1)
             {
+                grounded = false;
                 break;
             }
         }
 
-        setPos(mX, mY, mZ);
-
-        std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false);
-
-        if (collisions->empty() && !mLevel->containsAnyLiquid(mBoundingBox))
+        if (grounded)
         {
-            teleported = true;
+            setPos(mX, mY, mZ);
+            std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false);
+            if (collisions->empty() && !mLevel->containsAnyLiquid(mBoundingBox))
+            {
+                teleported = true;
+            }
         }
     }
 
@@ -4187,6 +4194,11 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
 
         mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd,
                             arrayWithLength<int>());
+    }
+
+    if ((GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
+    {
+        static_cast<PathfinderMob*>(this)->getNavigation()->stop();
     }
 
     return true;

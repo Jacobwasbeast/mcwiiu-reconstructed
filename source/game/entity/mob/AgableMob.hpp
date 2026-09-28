@@ -19,7 +19,7 @@ class AgableMob : public PathfinderMob
 {
 public:
     AgableMob(Level* level);
-    virtual ~AgableMob();
+    virtual ~AgableMob() {}
 
     static void staticCtor();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);

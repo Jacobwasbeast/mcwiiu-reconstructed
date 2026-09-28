@@ -9,6 +9,7 @@
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/core/DifficultyInstance.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/WeighedRandom.hpp"
@@ -68,18 +69,18 @@ void BaseMobSpawner::tick()
     }
     if (!hasMob())
         return;
-    Level* level = getLevel();
-    if (level == NULL)
-        return;
-    if (level->mIsClientSide)
+    BlockPos origin = getPos();
+    if (getLevel()->mIsClientSide)
     {
-        BlockPos pos = getPos();
-        level->addParticle(PARTICLE_SMOKE, pos.x + level->mRandom->nextFloat(), pos.y + level->mRandom->nextFloat(), pos.z + level->mRandom->nextFloat(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-        level->addParticle(PARTICLE_FLAME, pos.x + level->mRandom->nextFloat(), pos.y + level->mRandom->nextFloat(), pos.z + level->mRandom->nextFloat(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+        float x = static_cast<float>(origin.x) + getLevel()->mRandom->nextFloat();
+        float y = static_cast<float>(origin.y) + getLevel()->mRandom->nextFloat();
+        float z = static_cast<float>(origin.z) + getLevel()->mRandom->nextFloat();
+        getLevel()->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        getLevel()->addParticle(PARTICLE_FLAME, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         if (mDelay > 0)
             --mDelay;
         moSpin = mSpin;
-        mSpin = static_cast<double>(static_cast<int>(mSpin + 1000.0 / (mDelay + 200.0)) % 360);
+        mSpin = static_cast<double>(static_cast<int>(mSpin + 1000.0f / (static_cast<float>(mDelay) + 200.0f)) % 360);
         return;
     }
     if (mDelay == -1)
@@ -89,64 +90,52 @@ void BaseMobSpawner::tick()
         --mDelay;
         return;
     }
-    BlockPos origin = getPos();
     bool spawned = false;
     for (int i = 0; i < mSpawnCount; ++i)
     {
-        ListTag* position = mNextSpawnData->getTag()->fjSafeGetListTag(L"Pos", 6);
-        double x;
-        double y;
-        double z;
-        if (position == NULL || position->size() < 1)
+        CompoundTag* spawnTag = mNextSpawnData->getTag();
+        ListTag* position = spawnTag->fjSafeGetListTag(L"Pos", Tag::TAG_DOUBLE);
+        Level* level = getLevel();
+        int count = position->size();
+        double x = count >= 1 ? position->getDouble(0)
+                              : origin.x + (level->mRandom->nextDouble() - level->mRandom->nextDouble()) * mSpawnRange + 0.5;
+        double y = count >= 2 ? position->getDouble(1) : static_cast<double>(origin.y + level->mRandom->nextInt(3) - 1);
+        double z = count >= 3 ? position->getDouble(2)
+                              : origin.z + (level->mRandom->nextDouble() - level->mRandom->nextDouble()) * mSpawnRange + 0.5;
+        boost::shared_ptr<Entity> entity = OldChunkStorage::loadEntity(spawnTag, level, x, y, z, false);
+        if (entity == NULL)
+            return;
+
+        AABB* box = AABB::newTemp(origin.x, origin.y, origin.z, origin.x + 1, origin.y + 1, origin.z + 1)
+                        ->grow(mSpawnRange, mSpawnRange, mSpawnRange);
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity), box);
+        int nearby = static_cast<int>(entities->size());
+        delete entities;
+        if (nearby >= mMaxNearbyEntities || !level->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
         {
-            x = static_cast<double>(origin.x) + level->mRandom->nextDouble() * 2.0 * mSpawnRange - mSpawnRange;
+            broadcastEvent(2);
+            delay();
+            return;
         }
-        else
+
+        boost::shared_ptr<Mob> mob;
+        if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+            mob = boost::static_pointer_cast<Mob>(entity);
+        entity->moveTo(entity->mX, entity->mY, entity->mZ, level->mRandom->nextFloat() * 360.0f, 0.0f);
+        if (mob == NULL || (mob->checkSpawnRules() && mob->checkSpawnObstruction()))
         {
-            x = position->getDouble(0);
-        }
-        if (position == NULL || position->size() < 2)
-        {
-            y = static_cast<double>(origin.y) + level->mRandom->nextInt(3) - 1;
-        }
-        else
-        {
-            y = position->getDouble(1);
-        }
-        if (position == NULL || position->size() < 3)
-        {
-            z = static_cast<double>(origin.z) + level->mRandom->nextDouble() * 2.0 * mSpawnRange - mSpawnRange;
-        }
-        else
-        {
-            z = position->getDouble(2);
-        }
-        boost::shared_ptr<Entity> entity = OldChunkStorage::loadEntity(mNextSpawnData->getTag(), level, x, y, z, false);
-        if (entity)
-        {
-            AABB* box = AABB::newTemp(origin)->grow(static_cast<double>(mSpawnRange),
-                                                      static_cast<double>(mSpawnRange),
-                                                      static_cast<double>(mSpawnRange));
-            std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity), box);
-            int nearby = entities == NULL ? 0 : static_cast<int>(entities->size());
-            delete entities;
-            if (nearby < mMaxNearbyEntities)
+            if (mNextSpawnData->getTag()->size() == 1 && mNextSpawnData->getTag()->contains(L"id", Tag::TAG_STRING)
+                && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
             {
-                if (!level->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
-                {
-                    delay();
-                    return;
-                }
-                boost::shared_ptr<Mob> mob = boost::dynamic_pointer_cast<Mob>(entity);
-                if (mob)
-                {
-                    DifficultyInstance difficulty = level->getCurrentDifficultyAt(origin);
-                    mob->finalizeMobSpawn(difficulty, NULL, std::wstring());
-                }
-                OldChunkStorage::addEntityToWorld(entity, level);
-                level->levelEvent(LevelEvent::PARTICLES_MOBBLOCK_SPAWN, origin, 0);
-                spawned = true;
+                DifficultyInstance difficulty = level->getCurrentDifficultyAt(BlockPos(entity));
+                boost::static_pointer_cast<Mob>(entity)->finalizeMobSpawn(difficulty, NULL, std::wstring());
             }
+            OldChunkStorage::addEntityToWorld(entity, level);
+            level->levelEvent(LevelEvent::PARTICLES_MOBBLOCK_SPAWN, origin, 0);
+            mob->playAmbientSound();
+            if (mob != NULL)
+                mob->spawnAnim();
+            spawned = true;
         }
     }
     if (spawned)
@@ -175,9 +164,21 @@ void BaseMobSpawner::load(CompoundTag* tag)
             mSpawnPotentials.push_back(new SpawnData(list->getCompound(i)));
     }
     if (tag->contains(L"SpawnData", Tag::TAG_COMPOUND))
+    {
         setNextSpawnData(new SpawnData(1, tag->getCompound(L"SpawnData")));
+    }
     else if (!mSpawnPotentials.empty())
+    {
         setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, mSpawnPotentials.begin(), mSpawnPotentials.end())));
+    }
+    for (std::vector<SpawnData*>::iterator it = mSpawnPotentials.begin(); it != mSpawnPotentials.end(); ++it)
+    {
+        if (mNextSpawnData->getTag()->getString(L"id") == (*it)->getTag()->getString(L"id"))
+        {
+            setNextSpawnData(*it);
+            break;
+        }
+    }
     if (tag->contains(L"MinSpawnDelay", Tag::TAG_ANY_NUMERIC))
     {
         mMinSpawnDelay = tag->getShort(L"MinSpawnDelay");
@@ -191,7 +192,10 @@ void BaseMobSpawner::load(CompoundTag* tag)
     }
     if (tag->contains(L"SpawnRange", Tag::TAG_ANY_NUMERIC))
         mSpawnRange = tag->getShort(L"SpawnRange");
-    mDisplayEntity.reset();
+    if (getLevel() != NULL)
+    {
+        mDisplayEntity.reset();
+    }
 }
 
 CompoundTag* BaseMobSpawner::save(CompoundTag* tag)

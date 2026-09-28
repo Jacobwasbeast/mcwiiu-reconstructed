@@ -17,7 +17,7 @@ class Monster : public PathfinderMob
 {
 public:
     Monster(Level* level);
-    virtual ~Monster();
+    virtual ~Monster() {}
     virtual unsigned long long GetType();
     virtual void tick();
     virtual const SoundEvent* getSwimSound();

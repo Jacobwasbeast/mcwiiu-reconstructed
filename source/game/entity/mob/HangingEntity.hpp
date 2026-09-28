@@ -32,7 +32,7 @@ public:
 
     HangingEntity(Level* level);
     HangingEntity(Level* level, const BlockPos& pos);
-    virtual ~HangingEntity();
+    virtual ~HangingEntity() {}
 
     void _init(Level* level);
     virtual void defineSynchedData();

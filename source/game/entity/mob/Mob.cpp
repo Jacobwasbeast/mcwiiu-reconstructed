@@ -108,7 +108,10 @@ Mob::~Mob()
     delete mBodyControl;
     delete mNavigation;
     delete mSensing;
+    delete[] mAdditionalItems.items;
     delete[] mAdditionalDropChances;
+    delete[] mHandItems.items;
+    delete[] mArmorItems.items;
 }
 
 unsigned long long Mob::GetType()
@@ -168,7 +171,7 @@ void Mob::fjDerivedCtorCalls()
 void Mob::defineSynchedData()
 {
     LivingEntity::defineSynchedData();
-    getEntityData()->createDateItem(DATA_MOB_FLAGS_ID, (unsigned char)0);
+    mEntityData->createDateItem(DATA_MOB_FLAGS_ID, (unsigned char)0);
 }
 
 void Mob::registerGoals()
@@ -453,7 +456,7 @@ void Mob::addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType)
 
 bool Mob::isLeftHanded()
 {
-    return (getEntityData()->get(DATA_MOB_FLAGS_ID) & 2) != 0;
+    return (mEntityData->get(DATA_MOB_FLAGS_ID) & 2) != 0;
 }
 
 void Mob::addAdditonalSaveData(CompoundTag* tag)
@@ -528,8 +531,14 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
     }
 
     if (isNoAi())
-        tag->putBoolean(L"NoAI", true);
+        tag->putBoolean(L"NoAI", isNoAi());
 
+    if (mLootTable != NULL)
+    {
+        tag->putString(L"DeathLootTable", mLootTable->toString());
+        if (mLootTableSeed != 0)
+            tag->putLong(L"DeathLootTableSeed", mLootTableSeed);
+    }
 }
 
 void Mob::setPersistenceRequired(bool required)
@@ -859,31 +868,31 @@ void Mob::checkDespawn()
 
 void Mob::serverAiStep()
 {
-    PIXBeginNamedEvent(4.5f, "Tick target selector for %I64d", GetType());
+    PIXBeginNamedEvent(0.0f, "Tick target selector for %I64d", GetType());
     MemSect(0x33);
     ++mAmbientSoundTime;
 
-    PIXBeginNamedEvent(4.5f, "Check despawn");
+    PIXBeginNamedEvent(0.0f, "Check despawn");
     checkDespawn();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick sensing");
+    PIXBeginNamedEvent(0.0f, "Tick sensing");
     mSensing->tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick target selector");
+    PIXBeginNamedEvent(0.0f, "Tick target selector");
     mTargetSelector.tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick goal selectors");
+    PIXBeginNamedEvent(0.0f, "Tick goal selectors");
     mGoalSelector.tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick navigation");
+    PIXBeginNamedEvent(0.0f, "Tick navigation");
     mNavigation->tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick server ai mob step");
+    PIXBeginNamedEvent(0.0f, "Tick server ai mob step");
     customServerAiStep();
     PIXEndNamedEvent();
 
@@ -903,19 +912,19 @@ void Mob::serverAiStep()
         }
     }
 
-    PIXBeginNamedEvent(4.5f, "Tick look");
+    PIXBeginNamedEvent(0.0f, "Tick look");
     mLookControl->tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick move");
+    PIXBeginNamedEvent(0.0f, "Tick move");
     mMoveControl->tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Tick jump");
+    PIXBeginNamedEvent(0.0f, "Tick jump");
     mJumpControl->tick();
     PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(4.5f, "Consider extra wandering");
+    PIXBeginNamedEvent(0.0f, "Consider extra wandering");
     considerForExtraWandering(isDespawnProtected());
     PIXEndNamedEvent();
 
@@ -1384,23 +1393,23 @@ bool Mob::isEffectiveAi()
 
 void Mob::setNoAi(bool noAi)
 {
-    unsigned char flags = getEntityData()->get(DATA_MOB_FLAGS_ID);
-    getEntityData()->set(DATA_MOB_FLAGS_ID,
+    unsigned char flags = mEntityData->get(DATA_MOB_FLAGS_ID);
+    mEntityData->set(DATA_MOB_FLAGS_ID,
                          noAi ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe),
                          true);
 }
 
 void Mob::setLeftHanded(bool leftHanded)
 {
-    unsigned char flags = getEntityData()->get(DATA_MOB_FLAGS_ID);
-    getEntityData()->set(DATA_MOB_FLAGS_ID,
+    unsigned char flags = mEntityData->get(DATA_MOB_FLAGS_ID);
+    mEntityData->set(DATA_MOB_FLAGS_ID,
                          leftHanded ? (unsigned char)(flags | 2) : (unsigned char)(flags & 0xfd),
                          true);
 }
 
 bool Mob::isNoAi()
 {
-    return (getEntityData()->get(DATA_MOB_FLAGS_ID) & 1) != 0;
+    return (mEntityData->get(DATA_MOB_FLAGS_ID) & 1) != 0;
 }
 
 const HumanoidArm* Mob::getMainArm()

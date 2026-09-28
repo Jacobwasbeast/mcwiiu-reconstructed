@@ -354,34 +354,31 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                         {
                             mob->mRemoved = false;
                         }
+                        mMobCache.removeFromCache(mob);
+                        mob->setDespawnProtected();
+                        groupData = mob->finalizeMobSpawn(
+                            level->getCurrentDifficultyAt(BlockPos(boost::static_pointer_cast<Entity>(mob))),
+                            groupData, L"");
+                        groupDatas.insert(groupData);
+                        if (mob->checkSpawnObstruction())
+                        {
+                            level->addEntity(mob);
+                            ++instanceCount;
+                            ++clusterSize;
+                        }
                         else
                         {
-                            mMobCache.removeFromCache(mob);
-                            mob->setDespawnProtected();
-                            groupData = mob->finalizeMobSpawn(
-                                level->getCurrentDifficultyAt(BlockPos(boost::static_pointer_cast<Entity>(mob))),
-                                groupData, L"");
-                            groupDatas.insert(groupData);
-                            if (mob->checkSpawnObstruction())
-                            {
-                                level->addEntity(mob);
-                                ++instanceCount;
-                                ++clusterSize;
-                            }
-                            else
-                            {
-                                mob->remove();
-                            }
-                            if (instanceCount >= category->getMaxInstancesPerLevel())
-                            {
-                                categoryFull = true;
-                                break;
-                            }
-                            if (clusterSize >= mob->getMaxSpawnClusterSize())
-                            {
-                                chunkDone = true;
-                                break;
-                            }
+                            mob->remove();
+                        }
+                        if (instanceCount >= category->getMaxInstancesPerLevel())
+                        {
+                            categoryFull = true;
+                            break;
+                        }
+                        if (clusterSize >= mob->getMaxSpawnClusterSize())
+                        {
+                            chunkDone = true;
+                            break;
                         }
                     }
                     spawned += clusterSize;

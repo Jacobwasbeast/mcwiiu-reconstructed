@@ -57,7 +57,7 @@ public:
     static MappedRegistry<ResourceLocation, MobEffect*>* mobEffectRegistry;
 
     MobEffect(bool harmful, eMinecraftColour color);
-    virtual ~MobEffect();
+    virtual ~MobEffect() {}
 
     MobEffect* setIcon(EMobEffectIcon icon);
     MobEffect* setDescriptionId(int descriptionId);

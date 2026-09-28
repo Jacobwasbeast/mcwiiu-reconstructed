@@ -30,10 +30,6 @@ Monster::Monster(Level* level)
     mCategories |= EntityCategory::eEntityCategory_Monster;
 }
 
-Monster::~Monster()
-{
-}
-
 unsigned long long Monster::GetType()
 {
     return EntityType::MONSTER;
@@ -54,7 +50,7 @@ void Monster::aiStep()
 
 void Monster::tick()
 {
-    PIXBeginNamedEvent(4.5f, "Monster tick");
+    PIXBeginNamedEvent(0.0f, "Monster tick");
     Mob::tick();
     if (!mLevel->mIsClientSide)
     {
@@ -138,7 +134,7 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
 
 double Monster::getWalkTargetValue(const BlockPos& pos)
 {
-    return (double)(127.0f - (float)mLevel->getBrightness(pos));
+    return 0.5f - mLevel->getBrightness(pos);
 }
 
 bool Monster::isDarkEnoughToSpawn()

@@ -32,10 +32,6 @@ AgableMob::AgableMob(Level* level)
 {
 }
 
-AgableMob::~AgableMob()
-{
-}
-
 void AgableMob::staticCtor()
 {
     DATA_BABY_ID = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::MOB,
@@ -83,9 +79,9 @@ bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, Interaction
 
 bool AgableMob::holdingSpawnEggOfClass(const not_null_ptr<ItemInstance>& itemInstance, unsigned long long type)
 {
-    if (itemInstance->getItem() != Items::spawnEgg)
-        return false;
-    return SpawnEggItem::fjGetType(itemInstance) == type;
+    Item* item = itemInstance->getItem();
+    unsigned long long eggType = SpawnEggItem::fjGetType(itemInstance);
+    return item == Items::spawnEgg && type == eggType;
 }
 
 void AgableMob::defineSynchedData()

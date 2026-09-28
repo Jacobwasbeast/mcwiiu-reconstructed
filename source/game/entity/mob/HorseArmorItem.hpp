@@ -14,6 +14,8 @@ class TextureAtlasSprite;
 class HorseArmorItem : public Item
 {
 public:
+    static const int DEFAULT_LEATHER_COLOR = 0xA06540;
+
     HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash);
     HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash);
     HorseArmorItem(int tier, int protection);
@@ -31,7 +33,7 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
     bool hasCustomColor(const not_null_ptr<ItemInstance>& itemInstance);
     int getDyedColor(not_null_ptr<ItemInstance> itemInstance) const;
-    virtual int getColor(not_null_ptr<ItemInstance> itemInstance, int auxValue);
+    virtual int getColor(not_null_ptr<ItemInstance> itemInstance, int layer);
     void clearColor(const not_null_ptr<ItemInstance>& itemInstance);
     void setColor(const not_null_ptr<ItemInstance>& itemInstance, int color);
     bool isDyeable() const;

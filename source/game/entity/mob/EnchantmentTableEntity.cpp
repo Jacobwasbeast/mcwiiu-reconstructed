@@ -75,7 +75,7 @@ int EnchantmentTableEntity::getTypeId(bool large)
 
 InteractionObject::NameData EnchantmentTableEntity::GetNetworkNameData()
 {
-    return InteractionObject::NameData(mCustomName->raw(), std::wstring(), true, false);
+    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(), mCustomName->isChatCensored());
 }
 
 void EnchantmentTableEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,

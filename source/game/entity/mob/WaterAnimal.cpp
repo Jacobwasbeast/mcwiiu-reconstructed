@@ -24,10 +24,6 @@ WaterAnimal::WaterAnimal(Level* level)
     mSwimFrequency = 0.0f;
 }
 
-WaterAnimal::~WaterAnimal()
-{
-}
-
 bool WaterAnimal::isWaterMob()
 {
     return true;

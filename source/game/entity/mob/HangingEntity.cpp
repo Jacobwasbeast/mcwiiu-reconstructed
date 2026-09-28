@@ -37,10 +37,6 @@ HangingEntity::HangingEntity(Level* level, const BlockPos& pos)
     mPos = pos;
 }
 
-HangingEntity::~HangingEntity()
-{
-}
-
 void HangingEntity::_init(Level* level)
 {
     mTickCounter = 0;
@@ -228,9 +224,9 @@ boost::shared_ptr<ItemEntity> HangingEntity::spawnAtLocation(not_null_ptr<ItemIn
 {
     Vec3i normal = mDirection->getNormal();
     boost::shared_ptr<ItemEntity> item(new ItemEntity(mLevel,
-        mX + static_cast<double>(normal.x) * 0.15,
+        mX + (double)((float)normal.x * 0.15f),
         mY + static_cast<double>(yOffset),
-        mZ + static_cast<double>(normal.z) * 0.15,
+        mZ + (double)((float)normal.z * 0.15f),
         itemInstance));
     item->setDefaultPickUpDelay();
     mLevel->addEntity(item);
@@ -264,7 +260,22 @@ BlockPos HangingEntity::getPos()
 float HangingEntity::rotate(Rotation* rotation)
 {
     if (mDirection != NULL && mDirection->getAxis() != Direction::Axis::Y)
-        setDirection(rotation->rotate(mDirection));
+    {
+        switch (rotation->getType())
+        {
+        case Rotation::eTYPE_Clockwise90:
+            mDirection = mDirection->getClockWise();
+            break;
+        case Rotation::eTYPE_Clockwise180:
+            mDirection = mDirection->getOpposite();
+            break;
+        case Rotation::eTYPE_CounterClockwise90:
+            mDirection = mDirection->getCounterClockWise();
+            break;
+        default:
+            break;
+        }
+    }
     float result = Mth::wrapDegrees(mYRot);
     switch (rotation->getType())
     {

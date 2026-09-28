@@ -6,7 +6,7 @@
 namespace
 {
 
-boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> createPlacementTypes()
+boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementTypeCtor()
 {
     boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placements;
 
@@ -65,7 +65,7 @@ boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> createPlacemen
 }
 
 static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementType =
-    createPlacementTypes();
+    placementTypeCtor();
 
 Mob::SpawnPlacementType MobSpawnPlacements::getPlacementType(unsigned long long entityType)
 {

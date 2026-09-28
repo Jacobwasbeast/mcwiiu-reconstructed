@@ -72,10 +72,10 @@ void TamableAnimal::defineSynchedData()
 void TamableAnimal::addAdditonalSaveData(CompoundTag* tag)
 {
     Animal::addAdditonalSaveData(tag);
-    if (isTame())
-    {
+    if (getOwnerUUID().empty())
+        tag->putString(L"OwnerUUID", L"");
+    else
         tag->putString(L"OwnerUUID", getOwnerUUID());
-    }
 
     tag->putBoolean(L"Sitting", isSitting());
 }

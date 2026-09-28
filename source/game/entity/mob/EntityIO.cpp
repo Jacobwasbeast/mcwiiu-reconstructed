@@ -184,7 +184,12 @@ boost::shared_ptr<Entity> EntityIO::newEntity(unsigned long long entityType, Lev
         return boost::shared_ptr<Entity>();
     }
 
-    return boost::shared_ptr<Entity>((it->second)(level));
+    boost::shared_ptr<Entity> entity((it->second)(level));
+    if (entity->GetType() == EntityType::ENDER_DRAGON)
+    {
+        boost::static_pointer_cast<EnderDragon>(entity)->AddParts();
+    }
+    return entity;
 }
 
 ResourceLocation EntityIO::getKey(const boost::shared_ptr<Entity>& entity)

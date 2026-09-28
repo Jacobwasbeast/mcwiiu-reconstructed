@@ -8,7 +8,7 @@ class LivingEntity;
 class RangedAttackMob
 {
 public:
-    virtual ~RangedAttackMob();
+    virtual ~RangedAttackMob() {}
 
     virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor) = 0;
     virtual bool isAggressive() = 0;

@@ -35,7 +35,7 @@ class AbstractHorse : public Animal, public net_minecraft_world::ContainerListen
 {
 public:
     AbstractHorse(Level* level);
-    virtual ~AbstractHorse();
+    virtual ~AbstractHorse() {}
     bool getFlag(int flag);
     bool isSaddled();
     virtual void containerChanged(Container* container);

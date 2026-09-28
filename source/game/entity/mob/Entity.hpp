@@ -206,7 +206,7 @@ public:
     virtual void removePassenger(boost::shared_ptr<Entity> passenger);
     virtual bool canAddPassenger(boost::shared_ptr<Entity> passenger);
     virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
-    virtual double getPickRadius();
+    virtual float getPickRadius();
     virtual Vec3* getLookAngle();
     virtual phys::Vec2* getRotationVector();
     virtual Vec3* getForward();

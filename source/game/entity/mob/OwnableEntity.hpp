@@ -9,7 +9,7 @@ class LivingEntity;
 class OwnableEntity
 {
 public:
-    virtual ~OwnableEntity();
+    virtual ~OwnableEntity() {}
 
     virtual std::wstring getOwnerUUID() = 0;
     virtual boost::shared_ptr<LivingEntity> getOwner() = 0;

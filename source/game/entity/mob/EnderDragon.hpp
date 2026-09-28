@@ -8,11 +8,11 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/BossMob.hpp"
 #include "game/entity/mob/MultiEntityMob.hpp"
-#include "game/core/BinaryHeap.hpp"
-#include "game/util/Random.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class AABB;
+class AreaEffectCloud;
+class BinaryHeap;
 class BlockPos;
 class CompoundTag;
 class DamageSource;
@@ -42,6 +42,10 @@ public:
         ACTION_SITTING_ATTACKING = 7
     };
 
+    static const int POSITION_HISTORY_SIZE = 64;
+    static const int PATH_NODE_COUNT = 24;
+    static const int OUTER_RING_NODE_COUNT = 12;
+
     EnderDragon(Level* level);
     virtual ~EnderDragon();
     virtual std::wstring getDisplayName();
@@ -50,7 +54,7 @@ public:
     virtual int getDimension();
     virtual Level* getLevel();
     unsigned int getSynchedAction();
-    int setSynchedAction(EEnderdragonAction action, bool force);
+    bool setSynchedAction(EEnderdragonAction action, bool force);
     unsigned int findClosestNode(double x, double y, double z);
     unsigned int findClosestNode();
     double getHeadYRotDiff(float partialTicks);
@@ -59,9 +63,9 @@ public:
     Path* findPath(int start, int end, Node* target);
     void navigateToNextPathNode();
     void strafeAttackTarget();
-    unsigned int findNewTarget();
-    bool hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount);
-    void GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart> part, const EntityTooltipDataHolder& holder);
+    void findNewTarget();
+    virtual bool hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount);
+    virtual void GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart> part, const EntityTooltipDataHolder& holder);
     void AddParts();
     void onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const BlockPos& pos, const DamageSource* source);
     void _init();
@@ -74,7 +78,7 @@ public:
     double getTilt(float partialTicks);
     double getHeadYOffset(float partialTicks);
     double rotWrap(double angle);
-    bool checkCrystals();
+    void checkCrystals();
     void knockBack(std::vector<boost::shared_ptr<Entity> >* entities);
     void hurt(std::vector<boost::shared_ptr<Entity> >* entities);
     bool checkWalls(AABB* box);
@@ -100,29 +104,12 @@ public:
     static boost::shared_ptr<EnderDragon> create(Level* level);
     bool checkAttack();
 
-    float mFlapTime;
-    float mOldFlapTime;
-    int mDeathTime;
-    boost::shared_ptr<EnderCrystal> mBeamTarget;
-
-private:
-    double mPosHistory[64][3];
-    std::vector<boost::shared_ptr<Entity> > mParts;
-    BinaryHeap* mOpenSet;
-    Path* mPath;
-    EndDragonFight* mDragonFight;
-    int mDragonPhase;
-    int mTicksSinceDeath;
-    boost::shared_ptr<Entity> mTarget;
-    int mNearbyCrystal;
-    bool mDragonKilled;
-    bool mPreviouslyKilled;
-    bool mHasTarget;
-    bool mWasHurt;
-    int mHealth;
-    double mTargetX;
-    double mTargetY;
-    double mTargetZ;
+    double mXTarget;
+    double mYTarget;
+    double mZTarget;
+    double mPositions[POSITION_HISTORY_SIZE][3];
+    int mPosPointer;
+    std::vector<boost::shared_ptr<Entity> > mSubEntities;
     boost::shared_ptr<MultiEntityMobPart> mHead;
     boost::shared_ptr<MultiEntityMobPart> mNeck;
     boost::shared_ptr<MultiEntityMobPart> mBody;
@@ -131,8 +118,27 @@ private:
     boost::shared_ptr<MultiEntityMobPart> mTail3;
     boost::shared_ptr<MultiEntityMobPart> mWing1;
     boost::shared_ptr<MultiEntityMobPart> mWing2;
+    float mOldFlapTime;
+    float mFlapTime;
+    bool mNewTarget;
+    bool mInWall;
+    int mFireballCharge;
+    float mUnusedFloat;
+    bool mClockwise;
+    int mActionTicks;
     int mSittingDamageReceived;
-    bool mHurtWhilePerched;
+    int mFlameCount;
+    int mGrowlTime;
+    double mClientLerpReset;
+    arrayWithLength<Node*>* mNodes;
+    int mNodeAdjacency[PATH_NODE_COUNT];
+    BinaryHeap* mOpenSet;
+    Path* mPath;
+    boost::shared_ptr<Entity> mAttackTarget;
+    boost::shared_ptr<AreaEffectCloud> mFlameCloud;
+    int mDeathTime;
+    boost::shared_ptr<EnderCrystal> mNearestCrystal;
+    EndDragonFight* mDragonFight;
 };
 
 #endif

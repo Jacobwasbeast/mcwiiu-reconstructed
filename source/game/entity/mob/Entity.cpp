@@ -1997,16 +1997,16 @@ void Entity::doWaterSplashEffect()
 {
     boost::shared_ptr<Entity> source = shared_from_this();
 
-    if (isVehicle() && getVehicle())
+    if (isVehicle() && getControllingPassenger())
     {
-        source = getVehicle();
+        source = getControllingPassenger();
     }
 
     float volume = source == shared_from_this() ? 0.20000000298023224f : 0.8999999761581421f;
 
-    float speed = (float)sqrt(source->mXd * source->mXd * 0.20000000298023224
+    float speed = (float)sqrt(source->mXd * source->mXd * 0.2f
                               + source->mYd * source->mYd
-                              + source->mZd * source->mZd * 0.20000000298023224) * volume;
+                              + source->mZd * source->mZd * 0.2f) * volume;
 
     MemSect(31);
 
@@ -2036,7 +2036,7 @@ void Entity::doWaterSplashEffect()
                             mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
                             (double)(surfaceY + 1.0f),
                             mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
-                            mXd, mYd - (double)(mRandom->nextFloat() * volume), mZd,
+                            mXd, mYd - (double)(mRandom->nextFloat() * 0.2f), mZd,
                             arrayWithLength<int>());
     }
 
@@ -2444,15 +2444,13 @@ Vec3* Entity::calculateViewVector(float xRot, float yRot)
 
 Vec3* Entity::getViewVector(float partialTicks)
 {
-    float yRot = mYRot;
-    float xRot = mXRot;
-
-    if (partialTicks != 1.0f)
+    if (partialTicks == 1.0f)
     {
-        xRot = (xRot - mXRotO) * partialTicks + mXRotO;
-        yRot = (yRot - mYRotO) * partialTicks + mYRotO;
+        return calculateViewVector(mXRot, mYRot);
     }
 
+    float xRot = mXRotO + (mXRot - mXRotO) * partialTicks;
+    float yRot = mYRotO + (mYRot - mYRotO) * partialTicks;
     return calculateViewVector(xRot, yRot);
 }
 
@@ -2731,9 +2729,9 @@ void Entity::addDataWalkers(DataFixerUpper* dataFixerUpper)
 
 void Entity::load(CompoundTag* tag)
 {
-    ListTag* pos = tag->getList(std::wstring(L"Pos"), 6);
-    ListTag* motion = tag->getList(std::wstring(L"Motion"), 6);
-    ListTag* rotation = tag->getList(std::wstring(L"Rotation"), 5);
+    ListTag* pos = tag->fjSafeGetListTag(L"Pos", Tag::TAG_DOUBLE);
+    ListTag* motion = tag->fjSafeGetListTag(L"Motion", Tag::TAG_DOUBLE);
+    ListTag* rotation = tag->fjSafeGetListTag(L"Rotation", Tag::TAG_FLOAT);
 
     mXd = motion->getDouble(0);
     mYd = motion->getDouble(1);
@@ -3284,9 +3282,9 @@ void Entity::lerpTo(double x, double y, double z, float yRot, float xRot, int st
     setRot(yRot, xRot);
 }
 
-double Entity::getPickRadius()
+float Entity::getPickRadius()
 {
-    return 0.0;
+    return 0.0f;
 }
 
 Vec3* Entity::getLookAngle()
@@ -3310,34 +3308,34 @@ void Entity::handleInsidePortal(const BlockPos& pos)
     {
         mPortalCooldown = getDimensionChangingDelay();
     }
-    else
+
+    if (!mLevel->mIsClientSide && !(pos == mPortalEntrancePos))
     {
-        if (!mLevel->mIsClientSide && !(pos == mPortalEntrancePos))
-        {
-            mPortalEntrancePos = pos;
+        mPortalEntrancePos = pos;
 
-            BlockPattern::BlockPatternMatch* portal =
-                static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(mLevel, mPortalEntrancePos);
+        BlockPattern::BlockPatternMatch* portal =
+            static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(mLevel, mPortalEntrancePos);
 
-            double axis = portal->getForwards()->getAxis() == Direction::Axis::X
-                              ? (double)portal->getFrontTopLeft().z
-                              : (double)portal->getFrontTopLeft().x;
+        double axis = portal->getForwards()->getAxis() == Direction::Axis::X
+                          ? (double)portal->getFrontTopLeft().z
+                          : (double)portal->getFrontTopLeft().x;
+        double position = portal->getForwards()->getAxis() == Direction::Axis::X ? mZ : mX;
+        double edge = portal->getForwards()->getClockWise()->getAxisDirection() == Direction::AxisDirection::NEGATIVE
+                          ? 1.0
+                          : 0.0;
+        double across = Mth::pct(position - edge, axis, axis - (double)portal->getWidth());
 
-            double across = portal->getForwards()->getAxisDirection() == Direction::AxisDirection::NEGATIVE
-                                ? Mth::pct(mZ, axis, axis - (double)portal->getWidth())
-                                : Mth::pct(mX, axis, axis - (double)portal->getWidth());
+        double up = Mth::pct(mY - 1.0, (double)portal->getFrontTopLeft().y,
+                             (double)(portal->getFrontTopLeft().y - portal->getHeight()));
 
-            double up = Mth::pct(mY, (double)portal->getFrontTopLeft().y,
-                                 (double)(portal->getFrontTopLeft().y - portal->getHeight()));
+        delete mPortalEntranceOffset;
+        mPortalEntranceOffset = Vec3::newPermanent(std::abs(across), up, 0.0);
+        mPortalEntranceForwards = portal->getForwards();
 
-            mPortalEntranceOffset = Vec3::newPermanent(across, up, 0.0);
-            mPortalEntranceForwards = portal->getForwards();
-
-            delete portal;
-        }
-
-        mIsInsidePortal = true;
+        delete portal;
     }
+
+    mIsInsidePortal = true;
 }
 
 int Entity::getDimensionChangingDelay()
@@ -3662,7 +3660,7 @@ void Entity::onInsideBubbleColumn(bool down)
     }
     else
     {
-        mYd = mYd + 0.1 > 0.4 ? 0.4 : mYd + 0.1;
+        mYd = mYd + 0.3 > 0.4 ? 0.4 : mYd + 0.3;
     }
 
     mFallDistance = 0.0f;
@@ -4140,7 +4138,7 @@ void Entity::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 
 const Direction* Entity::getDirection()
 {
-    return Direction::from2DDataValue(Mth::absFloor((double)(mYRot / 360.0f * 4.0f) + 0.5) & 3);
+    return Direction::from2DDataValue(Mth::floor(mYRot * 4.0 / 360.0 + 0.5) & 3);
 }
 
 const Direction* Entity::getMotionDirection()
@@ -4528,12 +4526,15 @@ bool Entity::isImmersedInWater()
 {
     Vec3* pos = getPos(0.0f);
 
-    double half = mBoundingBox->getSize() * 0.5;
+    double size = mBoundingBox->getSize();
 
-    Block* top = mLevel->getBlock(BlockPos(Vec3::newTemp(pos->x, pos->y + half, pos->z)));
-    Block* bottom = mLevel->getBlock(BlockPos(Vec3::newTemp(pos->x, pos->y - half, pos->z)));
+    Vec3* bottomPos = Vec3::newTemp(pos->x, pos->y - size, pos->z);
+    Vec3* topPos = Vec3::newTemp(pos->x, pos->y + size, pos->z);
 
-    return top->mMaterial != Material::AIR && bottom->mMaterial != Material::AIR;
+    Material* topMaterial = mLevel->getBlock(BlockPos(topPos))->defaultBlockState()->getMaterial();
+    Material* bottomMaterial = mLevel->getBlock(BlockPos(bottomPos))->defaultBlockState()->getMaterial();
+
+    return topMaterial != Material::AIR && bottomMaterial != Material::AIR;
 }
 
 void Entity::tickLeash()

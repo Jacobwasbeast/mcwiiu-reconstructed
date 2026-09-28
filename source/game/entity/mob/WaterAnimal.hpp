@@ -15,7 +15,7 @@ class WaterAnimal : public PathfinderMob
 {
 public:
     WaterAnimal(Level* level);
-    virtual ~WaterAnimal();
+    virtual ~WaterAnimal() {}
 
     virtual bool isWaterMob();
     virtual bool checkSpawnRules();

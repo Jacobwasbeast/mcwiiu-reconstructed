@@ -70,8 +70,8 @@ void AgableWaterAnimal::aiStep()
     if (mOnGround && !isInWater())
     {
         mYd += 0.5;
-        mXd += (static_cast<double>(mRandom->nextFloat() * 2.0f) - 1.0) * 0.2;
-        mZd += (static_cast<double>(mRandom->nextFloat() * 2.0f) - 1.0) * 0.2;
+        mXd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.2f);
+        mZd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.2f);
         mOnGround = false;
         mYRot = mRandom->nextFloat() * 360.0f;
     }

@@ -6,7 +6,7 @@
 class BossMob
 {
 public:
-    virtual ~BossMob();
+    virtual ~BossMob() {}
 
     virtual float getMaxHealth() = 0;
     virtual float getHealth() = 0;

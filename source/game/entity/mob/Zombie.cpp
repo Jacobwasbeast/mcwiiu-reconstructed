@@ -25,6 +25,7 @@
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/MeleeAttackGoal.hpp"
 #include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
+#include "game/entity/ai/BreakDoorGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -56,7 +57,6 @@
 
 static const EntityDataAccessor<bool>* gZombieBabyId = NULL;
 static const EntityDataAccessor<bool>* gZombieAggressiveId = NULL;
-static const EntityDataAccessor<bool>* gZombieJockeyId = NULL;
 static const EntityDataAccessor<bool>* gZombieConvertingId = NULL;
 
 Attribute* Zombie::SPAWN_REINFORCEMENTS_CHANCE =
@@ -72,16 +72,14 @@ Zombie::ZombieGroupData::~ZombieGroupData()
 }
 
 Zombie::Zombie(Level* level)
-    : Monster(level), mBreakDoorGoal(NULL), mCanBreakDoors(false), mBaseWidth(0.6f),
-      mBaseHeight(1.95f), mIsJockey(false), mConversionTime(0), mWaterConversionTime(0)
+    : Monster(level)
 {
     fjDerivedCtorCalls();
     _init();
 }
 
 Zombie::Zombie(Level* level, bool initializeGoals)
-    : Monster(level), mBreakDoorGoal(NULL), mCanBreakDoors(false), mBaseWidth(0.6f),
-      mBaseHeight(1.95f), mIsJockey(false), mConversionTime(0), mWaterConversionTime(0)
+    : Monster(level)
 {
     _init();
     if (initializeGoals)
@@ -107,9 +105,11 @@ void Zombie::staticCtor()
 
 void Zombie::_init()
 {
+    mBaseWidth = -1.0f;
+    mBaseHeight = 0.0f;
     mCanBreakDoors = false;
-    mBaseWidth = 0.6f;
-    mBaseHeight = 1.95f;
+    mBreakDoorGoal = new BreakDoorGoal(this);
+    setSize(0.6f, 1.95f);
     mIsJockey = false;
     mConversionTime = 0;
     mWaterConversionTime = 0;
@@ -155,14 +155,9 @@ void Zombie::registerAttributes()
 void Zombie::defineSynchedData()
 {
     Monster::defineSynchedData();
-    if (mEntityData && gZombieBabyId)
-        getEntityData()->createDateItem(gZombieBabyId, false);
-    if (mEntityData && gZombieAggressiveId)
-        getEntityData()->createDateItem(gZombieAggressiveId, false);
-    if (mEntityData && gZombieJockeyId)
-        getEntityData()->createDateItem(gZombieJockeyId, false);
-    if (mEntityData && gZombieConvertingId)
-        getEntityData()->createDateItem(gZombieConvertingId, false);
+    getEntityData()->createDateItem(gZombieBabyId, false);
+    getEntityData()->createDateItem(gZombieAggressiveId, false);
+    getEntityData()->createDateItem(gZombieConvertingId, false);
 }
 
 void Zombie::setAggressive(bool aggressive)
@@ -219,8 +214,8 @@ void Zombie::setBaby(bool baby)
 
 void Zombie::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (gZombieBabyId && accessor && accessor->getId() == gZombieBabyId->getId())
-        setSize(0.6f, 1.95f);
+    if (accessor->getId() == gZombieBabyId->getId())
+        internalSetSize(isBaby() ? 0.5f : 1.0f);
     LivingEntity::onSyncedDataUpdated(accessor);
 }
 
@@ -597,7 +592,7 @@ void Zombie::die(const DamageSource* source)
     creeper->increaseDroppedSkulls();
     not_null_ptr<ItemInstance> skull = getSkull();
     if (!skull->isEmpty())
-        spawnAtLocation(skull, 1.65f);
+        spawnAtLocation(skull, 0.0f);
 }
 
 bool Zombie::startRiding(boost::shared_ptr<Entity> vehicle, bool force)

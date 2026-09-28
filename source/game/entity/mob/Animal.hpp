@@ -31,7 +31,7 @@ public:
     static const unsigned int MESSAGE_CHICKEN_LIMIT = 0x99326383U;
     static const unsigned int MESSAGE_MOB_LIMIT = 0xB399BD15U;
     Animal(Level* level);
-    virtual ~Animal();
+    virtual ~Animal() {}
     static void staticCtor();
     virtual void setDespawnProtected();
     virtual void defineSynchedData();
@@ -61,7 +61,7 @@ public:
     virtual bool canMate(const boost::shared_ptr<Animal>& other);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
-    virtual bool isDespawnProtected() const;
+    virtual bool isDespawnProtected();
     virtual void dropLeash(bool dropLeash, bool suppressDrops);
     virtual boost::shared_ptr<Entity> changeDimension(int dimension);
 protected:

@@ -1,5 +1,6 @@
 #include "game/entity/mob/PathfinderMob.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/core/Path.hpp"
@@ -7,6 +8,10 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/core/EntityType.hpp"
+#include "game/entity/mob/TamableAnimal.hpp"
+#include "game/util/Vec3.hpp"
 
 PathfinderMob::PathfinderMob(Level* level)
     : Mob(level),
@@ -95,50 +100,37 @@ bool PathfinderMob::hasRestriction()
 void PathfinderMob::tickLeash()
 {
     Entity::tickLeash();
-
-    if (!isLeashed())
+    if (!isLeashed() || getLeashHolder() == NULL || getLeashHolder()->mLevel != mLevel)
     {
         return;
     }
 
     boost::shared_ptr<Entity> holder = getLeashHolder();
-    if (!holder)
+    restrictTo(BlockPos(static_cast<int>(holder->mX), static_cast<int>(holder->mY), static_cast<int>(holder->mZ)), 5);
+    float distance = distanceTo(holder);
+
+    boost::shared_ptr<TamableAnimal> tamable;
+    if ((GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL)
     {
-        return;
+        tamable = boost::dynamic_pointer_cast<TamableAnimal>(shared_from_this());
     }
 
-    if (holder->GetType() == GetType())
+    if (tamable != NULL && tamable->isSitting())
     {
-        dropLeash(true, true);
-        return;
-    }
-
-    double distance = distanceTo(holder);
-    if (distance > 10.0)
-    {
-        dropLeash(true, true);
-        return;
-    }
-
-    if (distance > 6.0)
-    {
-        Vec3* direction = Vec3::newTemp(holder->mX - mX,
-                                         holder->mY - mY,
-                                         holder->mZ - mZ);
-        direction->normalize();
-        double amount = (float)(distance - 2.0);
-        if (amount < 0.0)
+        if (distance > 10.0f)
         {
-            amount = 0.0;
+            dropLeash(true, true);
         }
-        Vec3* movement = direction->scale(amount);
-        MoveControl* moveControl = static_cast<MoveControl*>(getMoveControl());
-        moveControl->setWantedPosition(mX + movement->x,
-                                       mY + movement->y,
-                                       mZ + movement->z,
-                                       followLeashSpeed());
+        return;
     }
-    else if (distance > 2.0)
+
+    onLeashDistance(distance);
+    if (distance > 10.0f)
+    {
+        dropLeash(true, true);
+        mGoalSelector.disableControlFlag(1);
+    }
+    else if (distance > 6.0f)
     {
         double x = (holder->mX - mX) / distance;
         double y = (holder->mY - mY) / distance;
@@ -149,11 +141,9 @@ void PathfinderMob::tickLeash()
     }
     else
     {
-        PathNavigation* navigation = getNavigation();
-        if (navigation != NULL)
-        {
-            navigation->stop();
-        }
+        mGoalSelector.enableControlFlag(1);
+        Vec3* offset = Vec3::newTemp(holder->mX - mX, holder->mY - mY, holder->mZ - mZ)->normalize()->scale(std::max(distance - 2.0f, 0.0f));
+        getNavigation()->moveTo(mX + offset->x, mY + offset->y, mZ + offset->z, followLeashSpeed());
     }
 }
 

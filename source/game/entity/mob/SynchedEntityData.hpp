@@ -25,18 +25,37 @@ public:
     ~SynchedEntityData();
 
     template <class T>
-    static const EntityDataAccessor<T>* defineId(unsigned long long entityType, unsigned long long parentEntityType, EntityDataSerializer<T>* serializer);
+    static const EntityDataAccessor<T>* defineId(unsigned long long entityType, unsigned long long parentEntityType, EntityDataSerializer<T>* serializer)
+    {
+        int id = defineIdInternal(entityType, parentEntityType);
+
+        sIdsByEntityType[entityType] = id;
+
+        if (serializer == NULL)
+        {
+            return NULL;
+        }
+
+        return serializer->createAccessor(id);
+    }
 
     template <class T>
     void createDateItem(const EntityDataAccessor<T>* accessor, T value);
 
     template <class T>
-    T get(const EntityDataAccessor<T>* accessor);
+    T get(const EntityDataAccessor<T>* accessor)
+    {
+        return static_cast<DataItem_Impl<T>*>(mItemsById[accessor->getId()])->getValue();
+    }
 
     template <class T>
     void set(const EntityDataAccessor<T>* accessor, T value, bool updateDirty);
     template <class T>
-    void markDirty(const EntityDataAccessor<T>* accessor);
+    void markDirty(const EntityDataAccessor<T>* accessor)
+    {
+        mItemsById[accessor->getId()]->setDirty(true);
+        mIsDirty = true;
+    }
 
     bool isDirty();
     bool isEmpty();
@@ -84,21 +103,6 @@ private:
 };
 
 template <class T>
-const EntityDataAccessor<T>* SynchedEntityData::defineId(unsigned long long entityType, unsigned long long parentEntityType, EntityDataSerializer<T>* serializer)
-{
-    int id = defineIdInternal(entityType, parentEntityType);
-
-    sIdsByEntityType[entityType] = id;
-
-    if (serializer == NULL)
-    {
-        return NULL;
-    }
-
-    return serializer->createAccessor(id);
-}
-
-template <class T>
 void SynchedEntityData::createDateItem(const EntityDataAccessor<T>* accessor, T value)
 {
     MemSect(17);
@@ -117,12 +121,6 @@ void SynchedEntityData::createDateItem(const EntityDataAccessor<T>* accessor, T 
 }
 
 template <class T>
-T SynchedEntityData::get(const EntityDataAccessor<T>* accessor)
-{
-    return static_cast<DataItem_Impl<T>*>(mItemsById[accessor->getId()])->getValue();
-}
-
-template <class T>
 void SynchedEntityData::set(const EntityDataAccessor<T>* accessor, T value, bool updateDirty)
 {
     DataItem_Impl<T>* item = static_cast<DataItem_Impl<T>*>(mItemsById[accessor->getId()]);
@@ -138,13 +136,6 @@ void SynchedEntityData::set(const EntityDataAccessor<T>* accessor, T value, bool
         item->setDirty(true);
         mIsDirty = true;
     }
-}
-
-template <class T>
-void SynchedEntityData::markDirty(const EntityDataAccessor<T>* accessor)
-{
-    mItemsById[accessor->getId()]->setDirty(true);
-    mIsDirty = true;
 }
 
 #endif

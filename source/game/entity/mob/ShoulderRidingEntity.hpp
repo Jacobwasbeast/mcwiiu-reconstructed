@@ -12,7 +12,7 @@ class ShoulderRidingEntity : public TamableAnimal
 {
 public:
     ShoulderRidingEntity(Level* level);
-    virtual ~ShoulderRidingEntity();
+    virtual ~ShoulderRidingEntity() {}
     bool setEntityOnShoulder(boost::shared_ptr<Player> player);
     virtual void tick();
     bool canSitOnShoulder();

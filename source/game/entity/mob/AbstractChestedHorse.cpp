@@ -30,14 +30,10 @@ AbstractChestedHorse::AbstractChestedHorse(Level* level)
 {
 }
 
-AbstractChestedHorse::~AbstractChestedHorse()
-{
-}
-
 void AbstractChestedHorse::defineSynchedData()
 {
     AbstractHorse::defineSynchedData();
-    getEntityData()->createDateItem(DATA_CHEST, false);
+    mEntityData->createDateItem(DATA_CHEST, false);
 }
 
 void AbstractChestedHorse::registerAttributes()
@@ -50,12 +46,12 @@ void AbstractChestedHorse::registerAttributes()
 
 bool AbstractChestedHorse::hasChest()
 {
-    return getEntityData()->get(DATA_CHEST);
+    return mEntityData->get(DATA_CHEST);
 }
 
 void AbstractChestedHorse::setChest(bool chest)
 {
-    getEntityData()->set(DATA_CHEST, chest, true);
+    mEntityData->set(DATA_CHEST, chest, true);
 }
 
 int AbstractChestedHorse::getInventorySize()
