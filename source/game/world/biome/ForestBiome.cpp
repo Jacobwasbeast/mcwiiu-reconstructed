@@ -38,10 +38,6 @@ ForestBiome::ForestBiome(EBiomeIDs biomeId, EType type, BiomeProperties* propert
         mDecorator->treesPerChunk = -999;
 }
 
-ForestBiome::~ForestBiome()
-{
-}
-
 AbstractTreeFeature* ForestBiome::getTreeFeature(Random& random)
 {
     if (mType == eType_Roofed)

@@ -7,7 +7,7 @@ class SavannaBiome : public Biome
 {
 public:
     SavannaBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~SavannaBiome();
+    virtual ~SavannaBiome() {}
 
     virtual AbstractTreeFeature* getTreeFeature(Random& random);
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);

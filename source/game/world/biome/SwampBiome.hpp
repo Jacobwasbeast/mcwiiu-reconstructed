@@ -20,6 +20,9 @@ public:
     virtual unsigned int getFoliageColor(const BlockPos& pos);
     virtual void buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise);
     virtual EBiomeBaseClass getBaseClass();
+
+private:
+    unsigned int mUnreferenced[3];
 };
 
 #endif

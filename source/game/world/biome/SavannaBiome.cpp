@@ -26,10 +26,6 @@ SavannaBiome::SavannaBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator->grassPerChunk = 20;
 }
 
-SavannaBiome::~SavannaBiome()
-{
-}
-
 AbstractTreeFeature* SavannaBiome::getTreeFeature(Random& random)
 {
     if (random.nextInt(5) > 0)

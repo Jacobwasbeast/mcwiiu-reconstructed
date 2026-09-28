@@ -20,7 +20,7 @@ public:
     };
 
     ForestBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties);
-    virtual ~ForestBiome();
+    virtual ~ForestBiome() {}
 
     virtual AbstractTreeFeature* getTreeFeature(Random& random);
     virtual FlowerBlock::Flower* getRandomFlower(Random& random, const BlockPos& pos);
