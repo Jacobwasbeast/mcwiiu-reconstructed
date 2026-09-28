@@ -35,7 +35,7 @@ public:
     virtual std::wstring toString() = 0;
     virtual unsigned char getId() = 0;
     virtual void print(const std::wstring& name, char* indent, std::wostream& out);
-    virtual ~Tag();
+    virtual ~Tag() {}
     virtual bool equals(Tag* other);
     virtual Tag* copy() = 0;
     virtual void stripEmptyChildren();

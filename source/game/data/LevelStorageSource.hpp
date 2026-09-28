@@ -15,7 +15,7 @@ class ProgressListener;
 class LevelStorageSource
 {
 public:
-    virtual ~LevelStorageSource();
+    virtual ~LevelStorageSource() {}
 
     virtual std::wstring getName() = 0;
     virtual boost::shared_ptr<LevelStorage> selectLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId, bool bCreateIfMissing) = 0;

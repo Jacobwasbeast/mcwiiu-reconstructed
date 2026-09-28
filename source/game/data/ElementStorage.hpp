@@ -40,7 +40,7 @@ public:
     ElementStorage(bool threaded, arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, unsigned int headroom);
     ElementStorage(bool threaded, arrayWithLength<unsigned short> elements, unsigned int headroom);
     ElementStorage(bool threaded, CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData);
-    ~ElementStorage();
+    ~ElementStorage() {}
     int getCriticalSectionIndex(bool mainThread);
     void getWriteLock(int reason);
     void releaseWriteLock();

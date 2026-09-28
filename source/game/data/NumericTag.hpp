@@ -6,7 +6,7 @@
 class NumericTag : public Tag
 {
 public:
-    virtual ~NumericTag();
+    virtual ~NumericTag() {}
 
     virtual long long getAsLong() = 0;
     virtual int getAsInt() = 0;

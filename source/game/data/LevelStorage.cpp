@@ -1,9 +1,5 @@
 #include "game/data/LevelStorage.hpp"
 
-LevelStorage::~LevelStorage()
-{
-}
-
 ConsoleSaveFile* LevelStorage::getSaveFile()
 {
     return NULL;

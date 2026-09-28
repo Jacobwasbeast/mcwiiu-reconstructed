@@ -13,7 +13,7 @@ class File;
 class ConsoleSaveFile
 {
 public:
-    virtual ~ConsoleSaveFile();
+    virtual ~ConsoleSaveFile() {}
 
     virtual FileEntry* createFile(const ConsoleSavePath& path) = 0;
     virtual void deleteFile(FileEntry* entry) = 0;

@@ -1,6 +1,6 @@
 #include "game/data/BitStorage.hpp"
 
-#include <cstdint>
+#include <stdint.h>
 
 int32_t getMaskInt(uint32_t offset, uint32_t width)
 {

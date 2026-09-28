@@ -43,17 +43,13 @@ public:
     static void tick();
 
 private:
-    int getDataSize(unsigned int planeCount);
+    int getDataSize(long long dataAndCount);
     void queueForDelete(unsigned char* data, int size);
-    void updateDataAndCount(unsigned char* data, unsigned int planeCount);
+    void updateDataAndCount(long long newDataAndCount);
     void getPlaneIndicesAndData(unsigned char** planeIndices, unsigned char** planeData);
     void addNewPlane(std::vector<int>& planes);
 
-    struct alignas(8) DataAndCount
-    {
-        unsigned int planeCount;
-        unsigned char* data;
-    } mDataAndCount;
+    long long mDataAndCount;
 };
 
 #endif

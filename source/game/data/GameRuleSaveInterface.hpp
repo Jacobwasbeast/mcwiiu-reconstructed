@@ -7,7 +7,7 @@
 class ConsoleGameRules
 {
 public:
-    enum EGameRuleType : int
+    enum EGameRuleType
     {
         eGameRuleType_Root = 0,
         eGameRuleType_MapOptions = 1,
@@ -89,7 +89,7 @@ public:
         eGameRuleType_Count = 77
     };
 
-    enum EGameRuleAttr : int
+    enum EGameRuleAttr
     {
         eGameRuleAttr_descriptionName = 0,
         eGameRuleAttr_promptName = 1,

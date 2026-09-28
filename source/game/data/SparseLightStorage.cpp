@@ -44,8 +44,7 @@ SparseLightStorage::SparseLightStorage(bool allBright)
 
     XMemSet(newData + PLANE_COUNT, 0, planeCount * PLANE_BYTES);
 
-    mDataAndCount.data = newData;
-    mDataAndCount.planeCount = (unsigned int)planeCount;
+    mDataAndCount = ((long long)planeCount << 32) | (unsigned int)newData;
 }
 
 SparseLightStorage::SparseLightStorage(bool allBright, bool compressed)
@@ -59,40 +58,37 @@ SparseLightStorage::SparseLightStorage(bool allBright, bool compressed)
         newData[plane] = (unsigned char)(allBright ? PLANE_ALL_BRIGHT : PLANE_ALL_DARK);
     }
 
-    mDataAndCount.data = newData;
-    mDataAndCount.planeCount = 0;
+    mDataAndCount = (unsigned int)newData;
 }
 
-int SparseLightStorage::getDataSize(unsigned int planeCount)
+int SparseLightStorage::getDataSize(long long dataAndCount)
 {
-    return (int)planeCount * PLANE_BYTES + PLANE_BYTES;
+    return (int)(dataAndCount >> 32) * PLANE_BYTES + PLANE_BYTES;
 }
 
 SparseLightStorage::SparseLightStorage(SparseLightStorage* other)
 {
-    unsigned char* sourceData = other->mDataAndCount.data;
-    unsigned int planeCount = other->mDataAndCount.planeCount;
+    long long otherDataAndCount = other->mDataAndCount;
+    unsigned char* sourceData = (unsigned char*)(unsigned int)otherDataAndCount;
 
-    int size = getDataSize(planeCount);
+    int size = getDataSize(otherDataAndCount);
 
     unsigned char* newData = (unsigned char*)malloc(size);
 
     sAllocatedBytes += size;
 
-    mDataAndCount.data = newData;
-    mDataAndCount.planeCount = planeCount;
+    mDataAndCount = (otherDataAndCount & 0xffffffff00000000LL) | (unsigned int)newData;
 
     XMemCpy(newData, sourceData, size);
 }
 
 SparseLightStorage::~SparseLightStorage()
 {
-    unsigned char* data = mDataAndCount.data;
+    unsigned char* data = (unsigned char*)(unsigned int)mDataAndCount;
 
-    int size = getDataSize(mDataAndCount.planeCount);
+    int size = getDataSize(mDataAndCount);
 
-    mDataAndCount.data = NULL;
-    mDataAndCount.planeCount = 0;
+    mDataAndCount = 0;
 
     free(data);
 
@@ -104,38 +100,17 @@ void SparseLightStorage::queueForDelete(unsigned char* data, int size)
     sPendingDeleteLists[sPendingDeleteList].Push(data);
 }
 
-void SparseLightStorage::updateDataAndCount(unsigned char* data, unsigned int planeCount)
+void SparseLightStorage::updateDataAndCount(long long newDataAndCount)
 {
-    static_assert(sizeof(void*) == sizeof(unsigned int), "SparseLightStorage requires the target 32-bit pointer ABI");
-    static_assert(sizeof(DataAndCount) == sizeof(long long), "SparseLightStorage data/count pair must be 64 bits");
-    static_assert(offsetof(DataAndCount, planeCount) == 0, "plane count must lead the published pair");
-    static_assert(offsetof(DataAndCount, data) == sizeof(unsigned int), "data pointer must follow plane count");
-
-    DataAndCount replacement;
-    replacement.planeCount = planeCount;
-    replacement.data = data;
-
-    long long expected;
-    long long exchange;
-    memcpy(&exchange, &replacement, sizeof(exchange));
-
-    for (;;)
+    long long lastDataAndCount;
+    int lastSize;
+    do
     {
-        DataAndCount observed;
-        memcpy(&observed, &mDataAndCount, sizeof(observed));
-        memcpy(&expected, &observed, sizeof(expected));
+        lastDataAndCount = mDataAndCount;
+        lastSize = getDataSize(lastDataAndCount);
+    } while (InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount) != lastDataAndCount);
 
-        unsigned char* oldData = observed.data;
-        int oldSize = getDataSize(observed.planeCount);
-        long long previous = InterlockedCompareExchangeRelease64(
-            reinterpret_cast<volatile long long*>(&mDataAndCount), exchange, expected);
-
-        if (previous == expected)
-        {
-            queueForDelete(oldData, oldSize);
-            return;
-        }
-    }
+    queueForDelete((unsigned char*)(unsigned int)lastDataAndCount, lastSize);
 }
 
 void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned int offset)
@@ -215,12 +190,12 @@ void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned i
         }
     }
 
-    updateDataAndCount(newData, (unsigned int)planeCount);
+    updateDataAndCount(((long long)planeCount << 32) | (unsigned int)newData);
 }
 
 void SparseLightStorage::getPlaneIndicesAndData(unsigned char** planeIndices, unsigned char** planeData)
 {
-    unsigned char* data = mDataAndCount.data;
+    unsigned char* data = (unsigned char*)(unsigned int)mDataAndCount;
 
     *planeIndices = data;
     *planeData = data + PLANE_COUNT;
@@ -297,11 +272,10 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
 {
     for (;;)
     {
-        DataAndCount observed;
-        memcpy(&observed, &mDataAndCount, sizeof(observed));
-        unsigned char* oldData = observed.data;
-        unsigned int oldPlaneCount = observed.planeCount;
-        int oldSize = getDataSize(oldPlaneCount);
+        long long lastDataAndCount = mDataAndCount;
+        unsigned char* oldData = (unsigned char*)(unsigned int)lastDataAndCount;
+        unsigned int oldPlaneCount = (unsigned int)(lastDataAndCount >> 32);
+        int oldSize = getDataSize(lastDataAndCount);
 
         unsigned int planeCount = oldPlaneCount;
 
@@ -350,18 +324,8 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
             }
         }
 
-        DataAndCount replacement;
-        replacement.planeCount = planeCount;
-        replacement.data = newData;
-
-        long long expected;
-        long long exchange;
-        memcpy(&expected, &observed, sizeof(expected));
-        memcpy(&exchange, &replacement, sizeof(exchange));
-
-        long long previous = InterlockedCompareExchangeRelease64(
-            reinterpret_cast<volatile long long*>(&mDataAndCount), exchange, expected);
-        if (previous == expected)
+        long long newDataAndCount = ((long long)planeCount << 32) | (unsigned int)newData;
+        if (InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount) == lastDataAndCount)
         {
             queueForDelete(oldData, oldSize);
             return;
@@ -424,7 +388,7 @@ void SparseLightStorage::setAllBright()
         newData[plane] = (unsigned char)PLANE_ALL_BRIGHT;
     }
 
-    updateDataAndCount(newData, 0);
+    updateDataAndCount((unsigned int)newData);
 }
 
 int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
@@ -500,11 +464,10 @@ void SparseLightStorage::staticCtor()
 
 unsigned int SparseLightStorage::compress()
 {
-    DataAndCount observed;
-    memcpy(&observed, &mDataAndCount, sizeof(observed));
-    unsigned char* oldData = observed.data;
-    unsigned int oldPlaneCount = observed.planeCount;
-    int oldSize = getDataSize(oldPlaneCount);
+    long long lastDataAndCount = mDataAndCount;
+    unsigned char* oldData = (unsigned char*)(unsigned int)lastDataAndCount;
+    unsigned int oldPlaneCount = (unsigned int)(lastDataAndCount >> 32);
+    int oldSize = getDataSize(lastDataAndCount);
 
     const unsigned char* oldPlaneData = oldData + PLANE_COUNT;
 
@@ -592,18 +555,8 @@ unsigned int SparseLightStorage::compress()
         }
     }
 
-    DataAndCount replacement;
-    replacement.planeCount = planeCount;
-    replacement.data = newData;
-
-    long long expected;
-    long long exchange;
-    memcpy(&expected, &observed, sizeof(expected));
-    memcpy(&exchange, &replacement, sizeof(exchange));
-
-    long long previous = InterlockedCompareExchangeRelease64(
-        reinterpret_cast<volatile long long*>(&mDataAndCount), exchange, expected);
-    if (previous != expected)
+    long long newDataAndCount = ((long long)planeCount << 32) | (unsigned int)newData;
+    if (InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount) != lastDataAndCount)
     {
         queueForDelete(newData, size);
         return planeCount;
@@ -615,7 +568,7 @@ unsigned int SparseLightStorage::compress()
 
 bool SparseLightStorage::isCompressed()
 {
-    return mDataAndCount.planeCount < PLANE_COUNT - 1;
+    return (int)(mDataAndCount >> 32) < PLANE_COUNT - 1;
 }
 
 int SparseLightStorage::getAllocatedBytes()
@@ -630,9 +583,10 @@ unsigned int SparseLightStorage::getRawDataMaxBytes()
 
 unsigned int SparseLightStorage::getRawData(unsigned char* buffer)
 {
-    unsigned int size = getDataSize(mDataAndCount.planeCount);
+    long long dataAndCount = mDataAndCount;
+    unsigned int size = getDataSize(dataAndCount);
 
-    memcpy(buffer, mDataAndCount.data, size);
+    memcpy(buffer, (unsigned char*)(unsigned int)dataAndCount, size);
 
     return size;
 }
@@ -645,7 +599,7 @@ void SparseLightStorage::setFromRawData(unsigned char* rawData, unsigned int siz
 
     memcpy(newData, rawData, size);
 
-    updateDataAndCount(newData, (size - PLANE_BYTES) / PLANE_BYTES);
+    updateDataAndCount(((long long)((size - PLANE_BYTES) / PLANE_BYTES) << 32) | (unsigned int)newData);
 }
 
 void SparseLightStorage::tick()
@@ -667,12 +621,13 @@ void SparseLightStorage::tick()
 
 void SparseLightStorage::write(DataOutputStream* out)
 {
-    out->writeInt((int)mDataAndCount.planeCount);
+    long long dataAndCount = mDataAndCount;
+    out->writeInt((int)(dataAndCount >> 32));
 
     arrayWithLength<unsigned char> data;
 
-    data.data = mDataAndCount.data;
-    data.length = getDataSize(mDataAndCount.planeCount);
+    data.data = (unsigned char*)(unsigned int)dataAndCount;
+    data.length = getDataSize(dataAndCount);
 
     out->write(data);
 }
@@ -771,7 +726,7 @@ void SparseLightStorage::read(DataInputStream* in, unsigned char* buffer)
         }
     }
 
-    updateDataAndCount(newData, (unsigned int)planeCount);
+    updateDataAndCount(((long long)planeCount << 32) | (unsigned int)newData);
 
     if (buffer == NULL)
     {

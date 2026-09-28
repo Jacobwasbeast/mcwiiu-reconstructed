@@ -8,7 +8,7 @@
 class DataFix
 {
 public:
-    virtual ~DataFix();
+    virtual ~DataFix() {}
     virtual int getVersion() = 0;
     virtual CompoundTag* fix(CompoundTag* tag) = 0;
 

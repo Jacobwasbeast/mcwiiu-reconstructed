@@ -1,9 +1,5 @@
 #include "game/data/ConsoleSaveFile.hpp"
 
-ConsoleSaveFile::~ConsoleSaveFile()
-{
-}
-
 void ConsoleSaveFile::tick()
 {
     return;

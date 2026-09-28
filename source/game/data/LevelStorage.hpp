@@ -21,7 +21,7 @@ class StructureManager;
 class LevelStorage
 {
 public:
-    virtual ~LevelStorage();
+    virtual ~LevelStorage() {}
 
     virtual LevelData* prepareLevel() = 0;
     virtual void checkSession() = 0;

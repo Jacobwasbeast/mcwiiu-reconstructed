@@ -52,10 +52,6 @@ ElementStorage::ElementStorage(bool threaded, CompressedBlockStorage* blocks, Co
     mCriticalSectionIndex = getCriticalSectionIndex(threaded);
 }
 
-ElementStorage::~ElementStorage()
-{
-}
-
 int ElementStorage::getCriticalSectionIndex(bool mainThread)
 {
     int value = std::rand() % 64;

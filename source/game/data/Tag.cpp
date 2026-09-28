@@ -44,10 +44,6 @@ Tag::Tag()
     }
 }
 
-Tag::~Tag()
-{
-}
-
 const wchar_t* Tag::getTagTypeName(unsigned char id)
 {
     if (id < NUM_TAG_TYPES)
