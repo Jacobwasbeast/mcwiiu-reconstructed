@@ -17,7 +17,7 @@ int FunctionLayerFill::UNIFORM(float)
 
 int FunctionLayerFill::ISLAND(float value)
 {
-    if (value < 0.1f)
+    if (value < 0.1)
         return 3;
     if (value >= 0.5f)
         return 1;

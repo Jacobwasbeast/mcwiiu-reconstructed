@@ -11,7 +11,7 @@ class HumanoidArmorLayer : public AbstractArmorLayer
 {
 public:
     HumanoidArmorLayer(LivingEntityRenderer* renderer);
-    virtual ~HumanoidArmorLayer();
+    virtual ~HumanoidArmorLayer() {}
 
     virtual void createArmorModels();
     virtual void setPartVisibility(Model* model, const EquipmentSlot* slot);

@@ -10,7 +10,7 @@ class LargeFeature
 {
 public:
     LargeFeature();
-    virtual ~LargeFeature();
+    virtual ~LargeFeature() {}
 
     virtual void apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer);
     virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ, ChunkPrimer* primer);

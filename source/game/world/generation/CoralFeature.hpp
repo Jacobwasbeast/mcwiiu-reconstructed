@@ -22,17 +22,17 @@ public:
     void _starFormation(Level*, Random&, const BlockPos&, const BlockState*, float, int, bool);
     void _starCorners(Level*, Random&, const BlockPos&, const BlockState*, float, int, bool);
     void _buildPlantArm(Level*, Random&, const BlockPos&, const BlockState*, std::vector<BlockPos>&,
-                        std::vector<std::pair<BlockPos, const Direction*>>&, const Direction*, bool);
+                        std::vector<std::pair<BlockPos, const Direction*> >&, const Direction*, bool);
     void _buildPlantLike(Level*, const BlockPos&, Random&, std::vector<BlockPos>&,
-                         std::vector<std::pair<BlockPos, const Direction*>>&, const BlockState*);
+                         std::vector<std::pair<BlockPos, const Direction*> >&, const BlockState*);
     void _buildSpire(Level*, const BlockPos&, Random&, std::vector<BlockPos>&,
-                     std::vector<std::pair<BlockPos, const Direction*>>&, const BlockState*);
+                     std::vector<std::pair<BlockPos, const Direction*> >&, const BlockState*);
     void _buildHand(Level*, const BlockPos&, Random&, std::vector<BlockPos>&,
-                    std::vector<std::pair<BlockPos, const Direction*>>&, const BlockState*);
+                    std::vector<std::pair<BlockPos, const Direction*> >&, const BlockState*);
     void _buildSmallClump(Level*, const BlockPos&, Random&, std::vector<BlockPos>&,
-                          std::vector<std::pair<BlockPos, const Direction*>>&, const BlockState*);
+                          std::vector<std::pair<BlockPos, const Direction*> >&, const BlockState*);
     void _placeCoral(Level*, const BlockPos&, Random&, std::vector<BlockPos>&,
-                     std::vector<std::pair<BlockPos, const Direction*>>&, int);
+                     std::vector<std::pair<BlockPos, const Direction*> >&, int);
     void _placeTopDecorations(Level*, const BlockPos&, Random&);
     bool _canPlaceHangOn(Level*, const BlockPos&);
     int _turnFacingIntoint(const Direction*);

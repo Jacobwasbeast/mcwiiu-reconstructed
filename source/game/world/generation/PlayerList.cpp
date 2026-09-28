@@ -1,4 +1,5 @@
 #include "game/world/generation/PlayerList.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -10,7 +11,9 @@
 #include <limits>
 #include <set>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/GameRulesInstance.hpp"
 #include "game/core/CTelemetryManager.hpp"
 #include "game/core/UnityClient6.hpp"
 #include "game/core/Settings.hpp"
@@ -42,6 +45,8 @@
 #include "game/network/ProgressListener.hpp"
 #include "game/network/ServerConnection.hpp"
 #include "game/network/ServerConnectionListener.hpp"
+#include "game/minigame/GameRuleDefinition.hpp"
+#include "game/network/INetworkPlayer.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
@@ -141,17 +146,18 @@ void relocateInvalidDimensionSpawn(PlayerList* playerList, boost::shared_ptr<Ser
 }
 
 PlayerList::PlayerList(MinecraftServer* server, MasterGameMode* gameMode)
-    : mServer(server), mGameMode(gameMode), mMaxPlayers(0), mViewDistance(10),
-      mMaxRange(0), mAllowCheatsForAllPlayers(false), mOverrideGameMode(NULL),
-      mUnknownState(0)
+    : mServer(server), mGameMode(gameMode), mPlayerIO(NULL), mUnknownState(false), mOverrideGameMode(NULL),
+      mAllowCheatsForAllPlayers(false), mViewDistance(10), mMaxRange(0)
 {
     mMaxPlayers = server->mSettings->getInt(eServerSetting_MaxPlayers, 20);
+    InitializeCriticalSection(&mPlayersToKickLock);
+    InitializeCriticalSection(&mListenersToCloseLock);
 }
 
 PlayerList::~PlayerList()
 {
-    mPlayers.clear();
-    mPendingPlayers.clear();
+    DeleteCriticalSection(&mPlayersToKickLock);
+    DeleteCriticalSection(&mListenersToCloseLock);
 }
 
 bool PlayerList::canReceiveAllPackets(const boost::shared_ptr<ServerPlayer>& player)
@@ -258,11 +264,7 @@ void PlayerList::broadcastAll(boost::shared_ptr<Packet> packet)
 
 void PlayerList::save(boost::shared_ptr<ServerPlayer> player)
 {
-    if (!player || !mLevelStorage)
-        return;
-    PlayerIO* playerIO = mLevelStorage->getPlayerIO();
-    if (playerIO)
-        playerIO->save(boost::static_pointer_cast<Player>(player));
+    mPlayerIO->save(boost::static_pointer_cast<Player>(player));
 }
 
 void PlayerList::saveAll(ProgressListener* listener, bool)
@@ -274,15 +276,11 @@ void PlayerList::saveAll(ProgressListener* listener, bool)
     for (it = mPlayers.begin(); it != mPlayers.end(); ++it)
         save(*it);
 
-    if (mLevelStorage)
+    if (mPlayerIO)
     {
-        PlayerIO* playerIO = mLevelStorage->getPlayerIO();
-        if (playerIO)
-        {
-            playerIO->saveMapIdLookup();
-            playerIO->saveAllCachedData();
-            playerIO->clearOldPlayerFiles();
-        }
+        mPlayerIO->saveMapIdLookup();
+        mPlayerIO->saveAllCachedData();
+        mPlayerIO->clearOldPlayerFiles();
     }
 }
 
@@ -352,13 +350,7 @@ void PlayerList::removeAll()
 
 CompoundTag* PlayerList::load(boost::shared_ptr<ServerPlayer> player)
 {
-    if (!player || !mLevelStorage)
-        return 0;
-    PlayerIO* playerIO = mLevelStorage->getPlayerIO();
-    if (!playerIO)
-        return 0;
-    CompoundTag* tag = playerIO->load(boost::static_pointer_cast<Player>(player));
-    return tag;
+    return mPlayerIO->load(boost::static_pointer_cast<Player>(player));
 }
 
 void PlayerList::validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> player)
@@ -716,8 +708,7 @@ void PlayerList::placeNewPlayer(Connection* connection, boost::shared_ptr<Server
 
 void PlayerList::setLevel(arrayWithLength<ServerLevel*> levels)
 {
-    if (levels.data != 0 && levels.length != 0 && levels.data[0] != 0)
-        mLevelStorage = levels.data[0]->getLevelStorage();
+    mPlayerIO = levels.data[0]->getLevelStorage()->getPlayerIO();
 }
 
 int PlayerList::getMaxRange()
@@ -748,6 +739,20 @@ boost::shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(ServerConnectionLi
         new ServerPlayer(mServer, mServer->getLevel(0), name, gameMode));
     newPlayer->setXuid(uid);
     newPlayer->mOnlineXuid = oldUid;
+
+    INetworkPlayer* networkPlayer = listener->m_connection->m_socket->getPlayer();
+    if (networkPlayer != NULL && !networkPlayer->IsHost())
+    {
+        newPlayer->enableAllPlayerPrivileges(gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0);
+    }
+
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+    if (ruleset != NULL)
+    {
+        newPlayer->mGameMode->setGameRules(static_cast<GameRulesInstance*>(GameRuleDefinition::generateNewGameRulesInstance(
+            GameRulesInstance::eGameRulesInstanceType_Player, ruleset, listener->m_connection)));
+        newPlayer->UpdateSize();
+    }
     return newPlayer;
 }
 
@@ -1122,41 +1127,72 @@ void PlayerList::toggleDimension(boost::shared_ptr<ServerPlayer> player, int dim
 
 void PlayerList::tick()
 {
-    for (std::deque<unsigned char>::iterator id = mPlayersToKick.begin();
-         id != mPlayersToKick.end(); ++id)
+    EnterCriticalSection(&mListenersToCloseLock);
+    while (!mListenersToClose.empty())
     {
-        INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(*id);
-        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-             it != mPlayers.end(); ++it)
+        unsigned char smallId = mListenersToClose.front();
+        mListenersToClose.pop_front();
+        boost::shared_ptr<ServerPlayer> closing;
+        for (unsigned int i = 0; i < mPlayers.size(); ++i)
         {
-            if (!*it || !(*it)->mConnection ||
-                (*it)->mConnection->getNetworkPlayer() != networkPlayer)
-                continue;
-            boost::shared_ptr<ServerPlayer> replacement = findAlivePlayerOnSystem(*it);
-            if (replacement)
-                replacement->enableAllPlayerPrivileges(false);
-            mBannedPlayers.push_back((*it)->mXuid);
-            (*it)->mDisconnected = true;
-            (*it)->mConnection->send(boost::shared_ptr<Packet>(
-                new DisconnectPacket(DisconnectPacket::eDisconnectReason_Kicked)));
-            (*it)->mConnection->disconnect(DisconnectPacket::eDisconnectReason_Kicked);
+            boost::shared_ptr<ServerPlayer> player = mPlayers.at(i);
+            if (player && player->mConnection && player->mConnection->mConnection
+                && player->mConnection->mConnection->m_socket
+                && player->mConnection->mConnection->m_socket->mPlayerId == smallId)
+            {
+                closing = player;
+                break;
+            }
         }
+        if (closing)
+            closing->mConnection->disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
     }
-    mPlayersToKick.clear();
+    LeaveCriticalSection(&mListenersToCloseLock);
 
-    for (std::deque<unsigned char>::iterator id = mListenersToClose.begin();
-         id != mListenersToClose.end(); ++id)
+    EnterCriticalSection(&mPlayersToKickLock);
+    while (!mPlayersToKick.empty())
     {
-        INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(*id);
-        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-             it != mPlayers.end(); ++it)
+        unsigned char smallId = mPlayersToKick.front();
+        mPlayersToKick.pop_front();
+        INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
+        if (networkPlayer == NULL || networkPlayer->IsLocal())
+            continue;
+
+        PlayerUID uid = networkPlayer->GetUID();
+        boost::shared_ptr<ServerPlayer> kicked;
+        for (unsigned int i = 0; i < mPlayers.size(); ++i)
         {
-            if (*it && (*it)->mConnection &&
-                (*it)->mConnection->getNetworkPlayer() == networkPlayer)
-                (*it)->mConnection->disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
+            boost::shared_ptr<ServerPlayer> player = mPlayers.at(i);
+            if (player && gProfile->AreXUIDSEqual(player->mOnlineXuid, uid))
+            {
+                kicked = player;
+                break;
+            }
+        }
+        if (kicked)
+        {
+            mBannedPlayers.push_back(kicked->mOnlineXuid);
+            kicked->enableAllPlayerPrivileges(false);
+            kicked->mConnection->mUseAltLeaveMessage = true;
+            kicked->mConnection->send(boost::shared_ptr<Packet>(
+                new DisconnectPacket(DisconnectPacket::eDisconnectReason_Kicked)));
         }
     }
-    mListenersToClose.clear();
+    LeaveCriticalSection(&mPlayersToKickLock);
+
+    for (int dimension = 0; dimension < 3; ++dimension)
+    {
+        for (unsigned int i = 0; i < mReceivingPlayers[dimension].size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = mReceivingPlayers[dimension][i];
+            if (player && player->mRemoved)
+            {
+                boost::shared_ptr<ServerPlayer> replacement = findAlivePlayerOnSystem(player);
+                if (replacement)
+                    mReceivingPlayers[dimension][i] = replacement;
+            }
+        }
+    }
 }
 
 bool PlayerList::isTrackingBlock(const BlockPos& pos, const Dimension* dimension)
@@ -1360,12 +1396,16 @@ int PlayerList::getPlayerCount(ServerLevel* level)
 
 void PlayerList::kickPlayerByShortId(unsigned char id)
 {
+    EnterCriticalSection(&mPlayersToKickLock);
     mPlayersToKick.push_back(id);
+    LeaveCriticalSection(&mPlayersToKickLock);
 }
 
 void PlayerList::closeServerGamePacketListenerImplBySmallId(unsigned char id)
 {
+    EnterCriticalSection(&mListenersToCloseLock);
     mListenersToClose.push_back(id);
+    LeaveCriticalSection(&mListenersToCloseLock);
 }
 
 bool PlayerList::isXuidBanned(PlayerUID uid)

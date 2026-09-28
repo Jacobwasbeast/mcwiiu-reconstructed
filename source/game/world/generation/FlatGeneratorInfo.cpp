@@ -17,19 +17,13 @@
 #include "game/world/generation/StrongholdFeature.hpp"
 #include "game/world/generation/VillageFeature.hpp"
 #include "game/core/StringFormat.hpp"
+#include <algorithm>
 
-long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum)
+long long getSpacingAndSeparationFromPercentage(int spacing, int separationPercent, int minimumSeparation)
 {
-    int adjustedPercentage = percentage < 100 ? percentage : 100;
-    if (adjustedPercentage < 16)
-        adjustedPercentage = 16;
-
-    int separation = (spacing * 5) / 100;
-    if (separation < maximum)
-        separation = maximum;
-
-    return (static_cast<long long>(adjustedPercentage) << 32) |
-           static_cast<unsigned int>(separation);
+    const int clampedSpacing = std::max(std::min(spacing, 100), 16);
+    const int separation = std::max((separationPercent * 5 * clampedSpacing) / 100, minimumSeparation);
+    return (static_cast<long long>(clampedSpacing) << 32) | static_cast<unsigned int>(separation);
 }
 
 FlatGeneratorInfo::FlatGeneratorInfo(SuperflatConfig* config) : mOwnsConfig(false), mConfig(config), mOwnedConfig() {}
@@ -197,18 +191,18 @@ std::wstring FlatGeneratorInfo::generateDescription()
         description += formatwstr(L"- %ls %ls<br />", layer.getHeightText().c_str(), layer.getNameText().c_str());
     }
     std::wstring features;
-    if (hasVillage()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x1a0175a8));
-    if (hasCaves()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x7d539616));
-    if (hasCanyons()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x6339594b));
-    if (hasMineshaft()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xb502a2bb));
-    if (hasStronghold()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x98925ce0));
-    if (hasBiomeSpecific()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x92176858));
-    if (hasDungeons()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x58eda210));
-    if (hasDecorations()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xf5ded1b6));
-    if (hasLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xedaa5ce4));
-    if (hasLavaLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xae1b1941));
-    if (hasOceanMonument()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xff686d36));
-    if (hasWoodlandMansion()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x9a333426));
+    if (hasVillage()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_VILLAGE));
+    if (hasCaves()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_CAVES));
+    if (hasCanyons()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_CANYONS));
+    if (hasMineshaft()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_MINESHAFT));
+    if (hasStronghold()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_STRONGHOLD));
+    if (hasBiomeSpecific()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_BIOMESPECIFIC));
+    if (hasDungeons()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_DUNGEON));
+    if (hasDecorations()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_DECORATION));
+    if (hasLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_LAKES));
+    if (hasLavaLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_LAVA_LAKES));
+    if (hasOceanMonument()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_OCEAN_MONUMENT));
+    if (hasWoodlandMansion()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_WOODLAND_MANSION));
     if (!features.empty())
     {
         description += formatwstr(L"<br />%ls:<br />", L10N::GetString(IDS_FEATURES));

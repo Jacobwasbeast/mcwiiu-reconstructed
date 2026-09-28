@@ -13,7 +13,7 @@ class CanAttackPlayerPredicate : public Predicate<boost::shared_ptr<Entity> >
 public:
     CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* goal);
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~CanAttackPlayerPredicate();
+    virtual ~CanAttackPlayerPredicate() {}
 
 private:
     MobNearestPlayerTargetGoal* mGoal;

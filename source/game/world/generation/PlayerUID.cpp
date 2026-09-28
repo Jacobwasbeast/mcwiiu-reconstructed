@@ -59,9 +59,11 @@ PlayerUID::PlayerUID(std::wstring uidString)
 std::wstring PlayerUID::UuidString() const
 {
     wchar_t text[40];
-    swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x",
+    swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
              uuid.data[0], uuid.data[1], uuid.data[2], uuid.data[3],
-             uuid.data[4], uuid.data[5], uuid.data[6], uuid.data[7]);
+             uuid.data[4], uuid.data[5], uuid.data[6], uuid.data[7],
+             uuid.data[8], uuid.data[9], uuid.data[10], uuid.data[11],
+             uuid.data[12], uuid.data[13], uuid.data[14], uuid.data[15]);
     return std::wstring(text);
 }
 

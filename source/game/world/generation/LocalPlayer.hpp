@@ -1,7 +1,7 @@
 #ifndef GAME_WORLD_GENERATION_LOCALPLAYER_HPP
 #define GAME_WORLD_GENERATION_LOCALPLAYER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -64,17 +64,17 @@ public:
     virtual boost::shared_ptr<Entity> changeDimension(int dimension);
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     virtual void closeContainer();
-    virtual boost::shared_ptr<ItemEntity> drop(bool dropAll) override;
-    not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item) override;
-    virtual void openTextEdit(boost::shared_ptr<SignBlockEntity> sign) override;
-    virtual void openCommandBlock(boost::shared_ptr<CommandBlockEntity> block) override;
+    virtual boost::shared_ptr<ItemEntity> drop(bool dropAll);
+    not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item);
+    virtual void openTextEdit(boost::shared_ptr<SignBlockEntity> sign);
+    virtual void openCommandBlock(boost::shared_ptr<CommandBlockEntity> block);
     virtual int openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int level);
     virtual int openContainer(boost::shared_ptr<Container> container);
     virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container);
     virtual int startBlockInteraction(InteractionObject& interaction);
     virtual void openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand);
-    virtual void crit(boost::shared_ptr<Entity> entity) override;
-    virtual void magicCrit(boost::shared_ptr<Entity> entity) override;
+    virtual void crit(boost::shared_ptr<Entity> entity);
+    virtual void magicCrit(boost::shared_ptr<Entity> entity);
     virtual void serverAiStep();
     virtual float tickHeadTurn(float yRot, float xRot);
     virtual void aiStep();
@@ -83,20 +83,20 @@ public:
     virtual unsigned long long sendPosition();
     virtual void displayClientMessage(int message, bool force);
     virtual void awardStat(Stat* stat, arrayWithLength<unsigned char> params);
-    virtual unsigned int GetThirdPersonView(bool) override;
-    virtual void SetThirdPersonView(int) override;
-    virtual unsigned int CanChangeThirdPersonView() override;
-    virtual void onCrafted(not_null_ptr<ItemInstance> item) override;
-    virtual void handleCollectItem(not_null_ptr<ItemInstance> item) override;
-    virtual void SpectatePlayerNext() override;
-    virtual void SpectatePlayerPrev() override;
-    virtual void StopSpectatingPlayer() override;
+    virtual unsigned int GetThirdPersonView(bool);
+    virtual void SetThirdPersonView(int);
+    virtual unsigned int CanChangeThirdPersonView();
+    virtual void onCrafted(not_null_ptr<ItemInstance> item);
+    virtual void handleCollectItem(not_null_ptr<ItemInstance> item);
+    virtual void SpectatePlayerNext();
+    virtual void SpectatePlayerPrev();
+    virtual void StopSpectatingPlayer();
     virtual const GameType* GetGameType();
     virtual void SetGameType(const GameType* gameType);
     virtual unsigned long long GetType();
 
     bool isHandsBusy();
-    unsigned long long SetSessionTimerStart();
+    void SetSessionTimerStart();
     bool IsWaitingForScoreboard();
     bool doesLevelAllowBlockToBreak(const BlockPos& pos);
     unsigned int pickBlock(bool);
@@ -115,11 +115,11 @@ public:
     virtual unsigned int getPermissionLevel();
     unsigned long long chat(const std::wstring&);
     bool swing(InteractionHand::EInteractionHand);
-    void respawn() override;
+    void respawn();
     void actuallyHurt(const DamageSource*, float);
     void clientSideCloseContainer();
     void hurtTo(float, TelemetryDamageSource);
-    void onUpdateAbilities() override;
+    void onUpdateAbilities();
     bool isLocalPlayer();
     void updateDamageIndicator(float, float, bool);
     double getJumpRidingScale();
@@ -145,10 +145,10 @@ public:
     bool isSolidBlock(int x, int y, int z);
     virtual void setAndBroadcastCustomSkin(unsigned int);
     MultiPlayerGameMode* GetLocalGameMode();
-    GameMode* GetGameMode() override;
+    GameMode* GetGameMode();
     virtual void setAndBroadcastCustomCape(unsigned int);
-    void OnEquipArmor(not_null_ptr<ItemInstance> item) override;
-    void OnTakeFromAnvil(not_null_ptr<ItemInstance> item) override;
+    void OnEquipArmor(not_null_ptr<ItemInstance> item);
+    void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);
     double getUnderwaterVisionClarity();
     void DoAutoAttackOnTouch(boost::shared_ptr<Entity>);
     double GetPercentageTraversed() const;
@@ -166,7 +166,9 @@ public:
 
 private:
     friend class Boat;
+    friend class GhostController;
     friend class Minecraft;
+    friend class MultiPlayerGameMode;
     friend class PlayerRenderer;
     friend class ItemInHandRenderer;
     friend class UIScene_HUD;
@@ -262,7 +264,8 @@ private:
     float mDamageTaken;
     bool mHasOpenedInventory;
     bool mWaitingForScoreboard;
-    double mSessionTimer;
+    float mSessionTimerStart;
+    float mChangeDimensionTimerStart;
     std::vector<ModelPart*> mAdditionalModelParts;
     float mWaterVisionClarity;
     float mWaterVisionClarityO;

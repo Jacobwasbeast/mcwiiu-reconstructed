@@ -20,7 +20,7 @@ FunctionPatchesLayerTheme::FunctionPatchesLayerTheme(unsigned int seed, double n
 
 const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise, int heightAboveSurface, bool)
 {
-    if (noise < 0.3f)
+    if (noise < 0.3)
     {
         return NULL;
     }
@@ -80,7 +80,7 @@ const BlockState* FunctionPatchesLayerTheme::SNOWLAYER_PATCHES(Random&, float no
 
 const BlockState* FunctionPatchesLayerTheme::TNT_TRAPS(Random&, float noise, int heightAboveSurface, bool)
 {
-    if (noise >= 0.6f)
+    if (noise >= 0.6)
     {
         int aboveSurface = ABOVE_SURFACE(1);
         if (heightAboveSurface < aboveSurface)

@@ -152,13 +152,68 @@ void MultiPlayerLevel::animateTickDoWork()
 
 void MultiPlayerLevel::removeAllPendingEntityRemovals()
 {
-    EntitySet pending = mPendingEntityAdditions;
-    mPendingEntityAdditions.clear();
-    for (EntitySet::iterator it = pending.begin(); it != pending.end(); ++it)
+    EnterCriticalSection(&mEntityMutex);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin(); it != mEntities.end();)
     {
-        if (mTrackedEntities.find(*it) != mTrackedEntities.end())
-            Level::removeEntity(*it);
+        if (std::find(mEntitiesToRemove.begin(), mEntitiesToRemove.end(), *it) != mEntitiesToRemove.end())
+        {
+            it = mEntities.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
+    LeaveCriticalSection(&mEntityMutex);
+
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntitiesToRemove.begin(); it != mEntitiesToRemove.end(); ++it)
+    {
+        boost::shared_ptr<Entity> entity = *it;
+        int chunkX = entity->mChunkX;
+        int chunkZ = entity->mChunkZ;
+        if (entity->mInChunk && hasChunk(chunkX, chunkZ, true))
+        {
+            getChunk(chunkX, chunkZ)->removeEntity(entity);
+        }
+    }
+
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntitiesToRemove.begin(); it != mEntitiesToRemove.end(); ++it)
+    {
+        entityRemoved(*it);
+    }
+    mEntitiesToRemove.clear();
+
+    EnterCriticalSection(&mEntityMutex);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin(); it != mEntities.end();)
+    {
+        boost::shared_ptr<Entity> entity = *it;
+        boost::shared_ptr<Entity> vehicle = entity->getVehicle();
+        if (vehicle != NULL)
+        {
+            if (!vehicle->mRemoved && vehicle->hasPassenger(entity))
+            {
+                ++it;
+                continue;
+            }
+            entity->stopRiding();
+        }
+
+        if (!entity->mRemoved)
+        {
+            ++it;
+            continue;
+        }
+
+        int chunkX = entity->mChunkX;
+        int chunkZ = entity->mChunkZ;
+        if (entity->mInChunk && hasChunk(chunkX, chunkZ, true))
+        {
+            getChunk(chunkX, chunkZ)->removeEntity(entity);
+        }
+        it = mEntities.erase(it);
+        entityRemoved(entity);
+    }
+    LeaveCriticalSection(&mEntityMutex);
 }
 
 void MultiPlayerLevel::playLocalSound(const BlockPos& pos, const SoundEvent* sound,
@@ -195,41 +250,93 @@ void MultiPlayerLevel::MultiPlayerLevelInit(ClientPacketListener* connection, Le
 
 void MultiPlayerLevel::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Sky color changing");
     setGameTime(getGameTime() + 1);
     if (getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))
+    {
         setDayTime(getDayTime() + 1);
-
-    int added = 0;
-    while (!mPendingEntityAdditions.empty() && added < 10)
-    {
-        EntitySet::iterator it = mPendingEntityAdditions.begin();
-        boost::shared_ptr<Entity> entity = *it;
-        mPendingEntityAdditions.erase(it);
-        if (mTrackedEntities.find(entity) != mTrackedEntities.end())
-            Level::addEntity(entity);
-        ++added;
     }
+    PIXEndNamedEvent();
 
-    std::vector<ClientPacketListener*> connections(mConnections);
-    for (std::vector<ClientPacketListener*>::iterator it = connections.begin();
-         it != connections.end(); ++it)
-        (*it)->tick();
-
-    for (std::vector<ResetInfo>::iterator it = mResetInfos.begin(); it != mResetInfos.end();)
+    PIXBeginNamedEvent(0.0f, "Entity re-entry");
+    EnterCriticalSection(&mEntityMutex);
+    for (int i = 0; i < 10 && !mPendingEntityAdditions.empty(); ++i)
     {
-        --it->delay;
-        if (it->delay == 0)
+        boost::shared_ptr<Entity> entity = *mPendingEntityAdditions.begin();
+        mPendingEntityAdditions.erase(mPendingEntityAdditions.begin());
+        if (std::find(mEntities.begin(), mEntities.end(), entity) == mEntities.end())
         {
-            setBlockAndUpdate(it->pos, it->state);
-            sendBlockUpdated(it->pos, NULL, NULL, 3, true);
-            it = mResetInfos.erase(it);
+            addEntity(entity);
         }
-        else
-            ++it;
     }
+    LeaveCriticalSection(&mEntityMutex);
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Connection ticking");
+    std::vector<ClientPacketListener*> connections(mConnections);
+    for (std::vector<ClientPacketListener*>::iterator it = connections.begin(); it != connections.end(); ++it)
+    {
+        (*it)->tick();
+    }
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Updating resets");
+    bool reset = false;
+    for (unsigned int i = 0; i < mResetInfos.size(); ++i)
+    {
+        ResetInfo& info = mResetInfos[i];
+        if (--info.delay == 0)
+        {
+            setBlockAndUpdate(info.pos, info.state);
+            sendBlockUpdated(info.pos, NULL, NULL, 3, true);
+            --i;
+            reset = true;
+        }
+    }
+    if (reset)
+    {
+        mResetInfos.erase(mResetInfos.begin(), mResetInfos.begin());
+    }
+    PIXEndNamedEvent();
 
     mClientChunkCache->tick();
-    Level::tick();
+    tickBlocks();
+
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        return;
+    }
+
+    int size = mDimension->getXZSize();
+    int halfSize = size / 2;
+    for (int i = 0; i < size; ++i)
+    {
+        if (mChunkTickX + 1 < size)
+        {
+            ++mChunkTickX;
+        }
+        else
+        {
+            mChunkTickX = 0;
+            if (mChunkTickZ + 1 < size)
+            {
+                ++mChunkTickZ;
+            }
+            else
+            {
+                mChunkTickZ = 0;
+            }
+        }
+
+        if (reallyHasChunk(mChunkTickX - halfSize, mChunkTickZ - halfSize))
+        {
+            LevelChunk* chunk = getChunk(mChunkTickX - halfSize, mChunkTickZ - halfSize);
+            chunk->compressLighting();
+            chunk->compressBlocks();
+            chunk->compressData();
+            break;
+        }
+    }
 }
 
 void MultiPlayerLevel::clearResetRegion(int minX, int minY, int minZ,

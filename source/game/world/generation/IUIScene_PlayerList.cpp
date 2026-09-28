@@ -70,7 +70,7 @@ void IUIScene_PlayerList::tick()
         {
             UIControl_ButtonList* list = GetPlayerList();
             if (list != NULL)
-                list->addItem(std::wstring(L"buckets_"), static_cast<int>(list->getItemCount()));
+                list->addItem(std::wstring(L""), static_cast<int>(list->getItemCount()));
         }
         else if (playerIndex >= 0)
         {

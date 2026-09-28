@@ -7,6 +7,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/Gui.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -51,16 +52,16 @@
 
 MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* connection, int userIndex,
                                          bool primaryPlayer, bool splitScreen)
-    : GameMode(), mDestroyBlockPos(-1, -1, -1), mDestroyProgress(0.0f), mDestroyTicks(0), mDestroyDelay(0),
-      mConnection(connection), mPlayerId(playerId), mGameModeConstraints(new GameModeConstraints(playerId)),
-      mTutorial(0), mTeamInvites(), mMissTime(5.0f), mTutorialsEnabled(false), mDestroying(false),
-      mSpectateSoundTime(System::processTimeInMilliSecs()), mCarriedItemSlot(0)
+    : GameMode(), mDestroying(false), mDestroyBlockPos(-1, -1, -1), mDestroyProgress(0.0f), mDestroyTicks(0),
+      mDestroyDelay(0), mConnection(connection), mPlayerId(playerId), mPrimaryPlayer(primaryPlayer),
+      mCarriedItemSlot(0), mGameModeConstraints(new GameModeConstraints(playerId)), mTutorial(0), mTeamInvites(),
+      mMissTime(5.0f), mSpectateSoundTime(System::processTimeInMilliSecs())
 {
     mDestroyItem = ItemInstance::EMPTY;
     mGameType = GameType::SURVIVAL;
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !splitScreen)
     {
-        if (primaryPlayer)
+        if (mPrimaryPlayer)
         {
             mTutorial = new FullTutorial(playerId, mGameModeConstraints, false);
             mMinecraft->playerStartedTutorial(playerId);
@@ -402,10 +403,11 @@ bool MultiPlayerGameMode::destroyBlock(const BlockPos& pos)
 
     return result;
 }
-void MultiPlayerGameMode::creativeDestroyBlock(Minecraft* minecraft, MultiPlayerGameMode*,
+void MultiPlayerGameMode::creativeDestroyBlock(Minecraft* minecraft, MultiPlayerGameMode* gameMode,
                                                const BlockPos& pos, const Direction* direction)
 {
-    minecraft->mLevel->extinguishFire(minecraft->mPlayer, pos, direction);
+    if (!minecraft->mLevel->extinguishFire(minecraft->mPlayer, pos, direction))
+        gameMode->destroyBlock(pos);
 }
 bool MultiPlayerGameMode::sameDestroyTarget(const BlockPos& pos)
 {
@@ -499,7 +501,10 @@ void MultiPlayerGameMode::stopDestroyBlock()
     mMinecraft->mLevel->destroyBlockProgress(mMinecraft->mPlayer->getId(), mDestroyBlockPos, -1);
     mMinecraft->mPlayer->resetAttackStrengthTicker();
 }
-Tutorial* MultiPlayerGameMode::getTutorial() { return mTutorial; }
+Tutorial* MultiPlayerGameMode::getTutorial()
+{
+    return GetTutorialsEnabled() ? mTutorial : NULL;
+}
 bool MultiPlayerGameMode::isDestroying() { return mDestroying; }
 void MultiPlayerGameMode::releaseUsingItem(boost::shared_ptr<Player> player)
 {
@@ -577,10 +582,14 @@ bool MultiPlayerGameMode::isCutScene() { return false; }
 
 void MultiPlayerGameMode::Follow(bool follow, bool immediate)
 {
-    if (!mConnection)
-        return;
+    Minecraft::GetInstance()->mLocalPlayers[mPlayerId]->Follow(follow);
+    if (!follow)
+        mMinecraft->mGui->clearMessages(mPlayerId);
     GameModePacket::FollowData data(follow, immediate);
-    mConnection->send(GameModePacket::Create(GameModePacket::eMessage_Follow, data));
+    Minecraft::GetInstance()->mLocalPlayers[mPlayerId]->mPacketListener->send(
+        GameModePacket::Create(GameModePacket::eMessage_Follow, data));
+    if (follow && getTutorial() != NULL && !Minecraft::GetInstance()->GetClientMasterGameMode()->IsRoundEnding())
+        getTutorial()->onGameModeChange(eTutorial_GameMode_Following);
 }
 void MultiPlayerGameMode::StartSpectating()
 {
@@ -721,7 +730,11 @@ void MultiPlayerGameMode::SetGameType(const GameType* gameType)
         player->UpdateSize();
 }
 const GameType* MultiPlayerGameMode::GetGameType() { return mGameType; }
-void MultiPlayerGameMode::setLocalMode(const GameType* gameType) { mGameType = gameType; }
+void MultiPlayerGameMode::setLocalMode(const GameType* gameType)
+{
+    mGameType = gameType;
+    mGameType->updatePlayerAbilities(&mMinecraft->mPlayer->mAbilities);
+}
 bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
 {
     if (!MayDestroy(pos))
@@ -908,7 +921,20 @@ bool MultiPlayerGameMode::CanSendInvite(std::wstring playerName, PlayerUID playe
     }
     return false;
 }
-bool MultiPlayerGameMode::CanLeaveTeam(PlayerUID) { return !isSpectator(); }
+bool MultiPlayerGameMode::CanLeaveTeam(PlayerUID uid)
+{
+    if (isSpectator())
+        return false;
+
+    Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
+    PlayerTeam* ownTeam = scoreboard->getPlayersTeam(GetPlayer()->mXuid);
+    PlayerTeam* otherTeam = scoreboard->getPlayersTeam(uid);
+    if (ownTeam == NULL || otherTeam == NULL)
+        return false;
+    if (GetPlayer()->mXuid == uid)
+        return false;
+    return ownTeam == otherTeam;
+}
 void MultiPlayerGameMode::AcceptTeamInvite(std::wstring playerName)
 {
     if (!mConnection)

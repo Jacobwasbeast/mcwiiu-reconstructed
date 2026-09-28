@@ -9,10 +9,6 @@ Feature::Feature(bool doBlockNotify)
 {
 }
 
-Feature::~Feature()
-{
-}
-
 void Feature::init()
 {
 }

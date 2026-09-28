@@ -44,10 +44,6 @@ TreeFeature::TreeFeature(bool doBlockNotify, int baseHeight,
 {
 }
 
-TreeFeature::~TreeFeature()
-{
-}
-
 void TreeFeature::staticCtor()
 {
     TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::OAK);

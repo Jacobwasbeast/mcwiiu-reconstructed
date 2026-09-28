@@ -20,7 +20,7 @@ public:
                                                                        BiomeSource::LayerOverrideSettings* overrideSettings);
 
     Layer(long long seed);
-    virtual ~Layer();
+    virtual ~Layer() {}
 
     virtual void init(long long seed);
     virtual void initRandom(long long x, long long z);

@@ -252,7 +252,16 @@ unsigned int VillagerGolem::getAttackAnimationTick()
 
 void VillagerGolem::offerFlower(bool offer)
 {
-    mOfferFlowerTick = offer ? 400 : 0;
+    if (offer)
+    {
+        mOfferFlowerTick = 400;
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::OFFER_FLOWER, 0);
+    }
+    else
+    {
+        mOfferFlowerTick = 0;
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::STOP_OFFER_FLOWER, 0);
+    }
 }
 
 const SoundEvent* VillagerGolem::getHurtSound(const DamageSource*)

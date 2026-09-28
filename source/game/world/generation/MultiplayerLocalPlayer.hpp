@@ -21,12 +21,11 @@ public:
     virtual ~MultiplayerLocalPlayer();
 
     MultiPlayerLevel* GetLevel();
-    virtual const GameType* GetGameType();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual void heal(float amount);
     virtual void tick();
     virtual boost::shared_ptr<ItemEntity> drop();
-    not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item) override;
+    not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item);
     virtual void respawn();
     virtual void actuallyHurt(const DamageSource* source, float damage);
     virtual void completeUsingItem();

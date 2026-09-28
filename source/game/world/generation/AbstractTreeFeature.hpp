@@ -15,7 +15,7 @@ class AbstractTreeFeature : public Feature
 public:
     AbstractTreeFeature(bool doBlockNotify, int baseHeight, const BlockState* trunkState,
                         const BlockState* leafState, bool hasVines);
-    virtual ~AbstractTreeFeature();
+    virtual ~AbstractTreeFeature() {}
 
     bool isFree(Block* block);
     virtual void postPlaceTree(Level* level, Random& random, const BlockPos& pos);

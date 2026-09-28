@@ -8,10 +8,6 @@ LargeFeature::LargeFeature()
     random = Random();
 }
 
-LargeFeature::~LargeFeature()
-{
-}
-
 void LargeFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     this->level = level;

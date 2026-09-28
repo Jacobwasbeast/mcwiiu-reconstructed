@@ -9,7 +9,7 @@ class Player;
 class PlayerIO
 {
 public:
-    virtual ~PlayerIO();
+    virtual ~PlayerIO() {}
 
     virtual void save(boost::shared_ptr<Player> player) = 0;
     virtual CompoundTag* load(boost::shared_ptr<Player> player) = 0;

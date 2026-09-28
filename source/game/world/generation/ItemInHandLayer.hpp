@@ -16,7 +16,7 @@ class ItemInHandLayer : public RenderLayer
 {
 public:
     ItemInHandLayer(LivingEntityRenderer* renderer);
-    virtual ~ItemInHandLayer();
+    virtual ~ItemInHandLayer() {}
 
     virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
                         float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,

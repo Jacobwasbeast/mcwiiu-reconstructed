@@ -8,6 +8,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/CriticalSection.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/world/LevelRules.hpp"
 
@@ -19,6 +20,7 @@ class Entity;
 class GameType;
 class Level;
 class LevelStorage;
+class PlayerIO;
 class MasterGameMode;
 class MinecraftServer;
 class Packet;
@@ -115,6 +117,8 @@ public:
 
 private:
     friend class MinecraftServer;
+    friend class PlayerChunkMap;
+    friend class PlayerChunkContainer;
     friend class EntityTracker;
     friend class MapItemSavedData;
     friend class TrackedEntity;
@@ -123,16 +127,17 @@ private:
     MasterGameMode* mGameMode;
     int mMaxPlayers;
     std::vector<PlayerUID> mBannedPlayers;
+    std::deque<unsigned char> mPlayersToKick;
+    OSFastMutex mPlayersToKickLock;
+    std::deque<unsigned char> mListenersToClose;
+    OSFastMutex mListenersToCloseLock;
+    PlayerIO* mPlayerIO;
+    bool mUnknownState;
+    GameType* mOverrideGameMode;
+    bool mAllowCheatsForAllPlayers;
     int mViewDistance;
     int mMaxRange;
     std::vector<boost::shared_ptr<ServerPlayer> > mReceivingPlayers[3];
-    std::vector<boost::shared_ptr<ServerPlayer> > mPendingPlayers;
-    std::deque<unsigned char> mPlayersToKick;
-    std::deque<unsigned char> mListenersToClose;
-    bool mAllowCheatsForAllPlayers;
-    GameType* mOverrideGameMode;
-    int mUnknownState;
-    boost::shared_ptr<LevelStorage> mLevelStorage;
 };
 
 #endif

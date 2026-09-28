@@ -59,12 +59,6 @@ MultiPlayerLevel* MultiplayerLocalPlayer::GetLevel()
     return dynamic_cast<MultiPlayerLevel*>(mLevel);
 }
 
-const GameType* MultiplayerLocalPlayer::GetGameType()
-{
-    MultiPlayerGameMode* gameMode = GetLocalGameMode();
-    return gameMode == NULL ? NULL : gameMode->GetGameType();
-}
-
 bool MultiplayerLocalPlayer::hurt(const DamageSource* source, float damage)
 {
     return false;

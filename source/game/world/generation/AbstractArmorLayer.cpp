@@ -30,10 +30,6 @@ AbstractArmorLayer::AbstractArmorLayer(LivingEntityRenderer* renderer)
     mColorSet = false;
 }
 
-AbstractArmorLayer::~AbstractArmorLayer()
-{
-}
-
 bool AbstractArmorLayer::usesInnerModel(const EquipmentSlot* slot)
 {
     return slot == EquipmentSlot::LEGS;

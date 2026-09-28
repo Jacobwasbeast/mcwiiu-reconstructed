@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <cstdint>
+#include <stdint.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -138,13 +138,16 @@ public:
     void RejectTeamInvite(std::wstring playerName);
 
 private:
+    bool mDestroying;
     BlockPos mDestroyBlockPos;
     not_null_ptr<ItemInstance> mDestroyItem;
     float mDestroyProgress;
-    short mDestroyTicks;
+    int mDestroyTicks;
     int mDestroyDelay;
     ClientPacketListener* mConnection;
     int mPlayerId;
+    bool mPrimaryPlayer;
+    int mCarriedItemSlot;
 
 protected:
     GameModeConstraints* mGameModeConstraints;
@@ -153,10 +156,7 @@ protected:
 private:
     std::vector<TeamInvite*> mTeamInvites;
     float mMissTime;
-    bool mTutorialsEnabled;
-    bool mDestroying;
     uint64_t mSpectateSoundTime;
-    int mCarriedItemSlot;
 };
 
 #endif

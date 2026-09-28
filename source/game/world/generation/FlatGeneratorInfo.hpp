@@ -21,7 +21,7 @@ class VillageFeature;
 class WoodlandMansionFeature;
 class FlatLayerInfo;
 
-long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum);
+long long getSpacingAndSeparationFromPercentage(int spacing, int separationPercent, int minimumSeparation);
 
 class FlatGeneratorInfo
 {

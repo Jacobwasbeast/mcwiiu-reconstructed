@@ -15,10 +15,6 @@ ItemInHandLayer::ItemInHandLayer(LivingEntityRenderer* renderer)
 {
 }
 
-ItemInHandLayer::~ItemInHandLayer()
-{
-}
-
 void ItemInHandLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float,
                              float, bool)
 {

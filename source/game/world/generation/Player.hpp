@@ -1,7 +1,7 @@
 #ifndef GAME_WORLD_GENERATION_PLAYER_HPP
 #define GAME_WORLD_GENERATION_PLAYER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -145,7 +145,7 @@ public:
     AbstractContainerMenu* mInventoryMenu;
     AbstractContainerMenu* mContainerMenu;
     FoodData mFoodData;
-    int32_t mField0x61c;
+    int32_t mJumpTriggerTime;
     float mPrevCameraYaw;
     float mCameraYaw;
     int32_t mTakeXpDelay;
@@ -184,7 +184,7 @@ public:
     float mExperienceProgress;
     boost::shared_ptr<FishingHook> mFishing;
     int32_t mEnchantmentSeed;
-    float mField0x734;
+    float mDefaultFlySpeed;
     ItemCooldowns* mField0x738;
     int32_t mLastLevelUpTime;
     std::wstring mName;
@@ -194,7 +194,7 @@ public:
     CameraController* mCameraController;
     bool mOwnsCameraController;
     uint8_t mField0x781;
-    uint8_t mField0x782;
+    bool mWasFallFlying;
     PlayerUID mXuid;
     PlayerUID mOnlineXuid;
     StatsUID mSuid;
@@ -213,11 +213,11 @@ public:
     uint8_t mEndZoneEffectShown;
     uint32_t mGamePrivileges;
     std::vector<ModelPart*>* mAdditionalModelParts;
-    uint8_t mField0x804;
-    uint8_t mField0x805;
+    bool mAdditionalModelPartsChecked;
+    bool mDLCSkinChecked;
     int32_t mPendingCameraId;
     boost::shared_ptr<Entity> mCamera;
-    bool mField0x814;
+    bool mPositionLocked;
     bool mField0x815;
     double mField0x818;
     double mLastLayerY;
@@ -304,7 +304,7 @@ public:
     void die(const DamageSource* source);
     const SoundEvent* getHurtSound(const DamageSource* source);
     const SoundEvent* getDeathSound();
-    boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> item, bool randomThrow);
+    boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> item, bool retainOwnership);
     virtual boost::shared_ptr<ItemEntity> drop(bool dropAll);
     virtual not_null_ptr<ItemInstance> reallyDrop(boost::shared_ptr<ItemEntity> item);
     float getDestroySpeed(const BlockState* state);
@@ -477,7 +477,7 @@ public:
     void stopSpinAttack();
     void AdvanceTimerAchievement(TimerAchievements achievement, int32_t ticks);
     void SetLastAteKelp(bool ate);
-    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams) override;
+    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams);
     uint64_t GetType();
     virtual uint64_t setCustomCape(uint32_t cape);
     virtual void handleCollectItem(not_null_ptr<ItemInstance> item);

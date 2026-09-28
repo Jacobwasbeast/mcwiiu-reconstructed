@@ -14,6 +14,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/DLCSkinFile.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/GameType.hpp"
@@ -22,12 +23,14 @@
 #include "game/client/render/PlayerRenderer.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/CombatTracker.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/ClientScoreboard.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 
 #include "game/world/Level.hpp"
 #include "game/core/FoodData.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/core/FoodConstants.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -35,6 +38,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/BedBlock.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
 #include "game/core/Direction.hpp"
 #include "game/entity/mob/Monster.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
@@ -75,6 +79,11 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/EntityIO.hpp"
+#include "game/world/generation/PlayerDataWalker.hpp"
+#include "game/data/DataFixerUpper.hpp"
+#include "game/data/DataFixTypes.hpp"
+#include "game/client/audio/ElytraOnPlayerSoundInstance.hpp"
+#include "game/core/Parrot.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/item/BowItem.hpp"
 #include "game/item/FishingRodItem.hpp"
@@ -477,26 +486,48 @@ void Player::updatePlayerSize()
 {
     float width;
     float height;
-    if (mField0x828 == 1) {
+    if (mField0x828 == 1)
+    {
         width = 0.3f;
         height = 0.3f;
-    } else if (mField0x828 == 2) {
+    }
+    else if (mField0x828 == 2)
+    {
         width = 0.0f;
         height = 0.0f;
-    } else if (isSpectator()) {
-        width = 0.6f;
-        height = 1.8f;
-    } else if (isSleeping()) {
-        width = 0.2f;
-        height = 0.2f;
-    } else if (isFallFlying() || isSwimming()) {
+    }
+    else if (isFallFlying())
+    {
         width = 0.6f;
         height = 0.6f;
-    } else {
+    }
+    else if (isSleeping())
+    {
+        width = 0.2f;
+        height = 0.2f;
+    }
+    else if (isSwimming() || getDamageNearbyMobs())
+    {
+        width = 0.6f;
+        height = 0.6f;
+    }
+    else
+    {
         width = 0.6f;
         height = isSneaking() ? 1.65f : 1.8f;
     }
-    setSize(width, height);
+
+    if (width == mBbWidth && height == mBbHeight)
+    {
+        return;
+    }
+
+    AABB* resized = AABB::newTemp(mBoundingBox->mMinX, mBoundingBox->mMinY, mBoundingBox->mMinZ,
+                                  mBoundingBox->mMinX + width, mBoundingBox->mMinY + height, mBoundingBox->mMinZ + width);
+    if (!mLevel->hasBlockCubes(resized) || isPassenger())
+    {
+        setSize(width, height);
+    }
 }
 
 void Player::playSound(const SoundEvent* sound, float volume, float pitch)
@@ -526,12 +557,12 @@ uint32_t Player::CanChangeThirdPersonView()
 
 bool Player::PositionLocked()
 {
-    return mField0x814;
+    return mPositionLocked;
 }
 
 void Player::SetPositionLocked(bool locked)
 {
-    mField0x814 = locked;
+    mPositionLocked = locked;
 }
 
 bool Player::TakeGlideCollisionDamage()
@@ -607,12 +638,53 @@ void Player::setPlayerGamePrivilege(uint32_t& privileges, EPlayerGamePrivileges 
 {
     if (privilege == ePlayerGamePrivilege_All) {
         privileges = enabled;
-    } else if (privilege < 0x20) {
-        const uint32_t mask = 1u << (privilege & 0x3f);
-        if (enabled) privileges |= mask;
-        else privileges &= ~mask;
+        return;
     }
+    if (privilege == ePlayerGamePrivilege_Moderator) {
+        if (enabled) {
+            setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_Op, 1);
+            setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleInvisible, 1);
+            setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleFly, 1);
+            setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleExhaustion, 1);
+            privileges |= 1u << ePlayerGamePrivilege_CanTeleport;
+            return;
+        }
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleInvisible, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleFly, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleExhaustion, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanTeleport, 0);
+        privileges &= ~(1u << ePlayerGamePrivilege_Op);
+        return;
+    }
+    if ((int)privilege > 0x1f)
+        return;
+    if (enabled) {
+        privileges |= 1u << privilege;
+        return;
+    }
+    switch (privilege) {
+    case ePlayerGamePrivilege_Op:
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleInvisible, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleFly, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanToggleExhaustion, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanTeleport, 0);
+        break;
+    case ePlayerGamePrivilege_CanToggleInvisible:
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_Invisible, 0);
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_Invulnerable, 0);
+        break;
+    case ePlayerGamePrivilege_CanToggleFly:
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_CanFly, 0);
+        break;
+    case ePlayerGamePrivilege_CanToggleExhaustion:
+        setPlayerGamePrivilege(privileges, ePlayerGamePrivilege_ExhaustionDisabled, 0);
+        break;
+    default:
+        break;
+    }
+    privileges &= ~(1u << privilege);
 }
+
 
 void Player::setPlayerGamePrivilege(EPlayerGamePrivileges privilege, uint32_t enabled)
 {
@@ -1042,8 +1114,7 @@ uint32_t Player::addItem(not_null_ptr<ItemInstance> item)
 
 double Player::getCurrentItemAttackStrengthDelay()
 {
-    AttributeInstance* attackSpeed = getAttribute(SharedMonsterAttributes::ATTACK_SPEED);
-    return attackSpeed == NULL ? 0.0 : 20.0 / attackSpeed->getValue();
+    return (float)(1.0 / getAttribute(SharedMonsterAttributes::ATTACK_SPEED)->getValue() * 20.0);
 }
 
 float Player::getSpeed()
@@ -1618,9 +1689,9 @@ bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 
 uint32_t Player::getModelName()
 {
-    _SkinAdjustments adjustments = getSkinAdjustmentsById(mCustomSkin);
-    if (static_cast<int32_t>(mCustomSkin) < 0)
-        return GetModelTypeFromAnimBitmask(adjustments.mAnimFlags);
+    int skinId = static_cast<int>(CMinecraftApp::getSkinIdFromPath(mSkinLocation));
+    if (skinId < 0 && gApp.IsFileInMemoryTextures(mSkinLocation))
+        return GetModelTypeFromAnimBitmask(gApp.GetSkinAdjustments(skinId).mAnimFlags);
     return GetModelTypeFromTextureId(getTexture());
 }
 
@@ -1633,8 +1704,8 @@ void Player::setCustomSkin(uint32_t skin)
     setPlayerDefaultSkin(defaultSkin);
     mCustomSkin = skin;
     mSkinLocation = CMinecraftApp::getSkinPathFromId(skin);
-    mField0x804 = 0;
-    mField0x805 = 0;
+    mAdditionalModelPartsChecked = 0;
+    mDLCSkinChecked = 0;
     SetAdditionalModelParts(NULL);
 }
 
@@ -1673,11 +1744,32 @@ uint64_t Player::setCustomCape(uint32_t cape)
 
 std::vector<ModelPart*>* Player::GetAdditionalModelParts()
 {
-    if (mAdditionalModelParts != NULL) return mAdditionalModelParts;
-    if (mField0x804 != 0) return NULL;
-    mAdditionalModelParts = g_pApp->GetAdditionalModelParts(static_cast<unsigned int>(mCustomSkin));
-    mField0x804 = 1;
-    if (mAdditionalModelParts != NULL) setSkinAdjustments(getSkinAdjustmentsById(mCustomSkin));
+    if (mAdditionalModelParts != NULL || mAdditionalModelPartsChecked)
+        return mAdditionalModelParts;
+
+    bool defaultSkin = mSkinLocation.substr(0, 3).compare(L"def") == 0;
+    mAdditionalModelParts = gApp.GetAdditionalModelParts(static_cast<unsigned int>(mCustomSkin));
+    if (mSkinLocation.empty() || defaultSkin || mAdditionalModelParts != NULL
+        || gApp.IsFileInMemoryTextures(mSkinLocation))
+    {
+        mAdditionalModelPartsChecked = true;
+    }
+    if (mAdditionalModelParts == NULL && !mDLCSkinChecked)
+    {
+        mDLCSkinChecked = true;
+        DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(gApp.mDLCManager.getSkinFile(mSkinLocation));
+        if (skinFile != NULL)
+        {
+            if (skinFile->getAdditionalBoxesCount() != 0)
+                mAdditionalModelParts = gApp.SetAdditionalSkinBoxes(mCustomSkin, skinFile->getAdditionalBoxes(),
+                                                                     skinFile->getSkinAdjustments());
+            gApp.SetSkinAdjustments(skinFile->m_fileID, skinFile->getSkinAdjustments());
+            mAdditionalModelPartsChecked = true;
+        }
+    }
+
+    if (mAdditionalModelPartsChecked)
+        setSkinAdjustments(getSkinAdjustmentsById(mCustomSkin));
     return mAdditionalModelParts;
 }
 
@@ -1751,11 +1843,29 @@ void Player::updateFrameTick()
 
 void Player::tickCamera()
 {
-    if (mPendingCameraId != -1 && !mCamera) mPendingCameraId = -1;
-    if (!isSpectator() && mCamera) StopSpectatingPlayer();
-    if (mCamera && mField0x814 && Minecraft::InMiniGame(eMiniGameId_Glide, true)) {
-        mYRot += Mth::clamp(Mth::wrapDegrees(mCamera->mYRot - mYRot), -2.25f, 2.25f);
+    if (mPendingCameraId != -1)
+    {
+        boost::shared_ptr<Entity> camera = mLevel->getEntity(mPendingCameraId);
+        if (camera != NULL)
+        {
+            mPendingCameraId = -1;
+            ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+            if (isSpectator() || gameMode->IsRoundEnding())
+            {
+                SetCamera(camera);
+            }
+        }
+    }
+
+    if (!isSpectator() && mCamera != NULL)
+    {
+        StopSpectatingPlayer();
+    }
+
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && mCamera != NULL)
+    {
         mXRot += Mth::clamp(Mth::wrapDegrees(mCamera->mXRot - mXRot), -2.25f, 2.25f);
+        mYRot += Mth::clamp(Mth::wrapDegrees(mCamera->mYRot - mYRot), -2.25f, 2.25f);
     }
 }
 
@@ -1830,13 +1940,13 @@ void Player::_init()
     mMinecartDistanceCm = 0;
     mBoatDistanceCm = 0;
     mPigDistanceCm = 0;
-    mField0x61c = 0;
+    mJumpTriggerTime = 0;
     mExperienceLevel = 0;
     mTotalExperience = 0;
     mExperienceProgress = 0.0f;
     mFishing.reset();
     mEnchantmentSeed = mRandom->nextInt();
-    mField0x734 = 0.02f;
+    mDefaultFlySpeed = 0.02f;
     mField0x738 = NULL;
     mLastLevelUpTime = 0;
     mName = L"";
@@ -1850,15 +1960,15 @@ void Player::_init()
     mOwnsCameraController = true;
     mWinnerParticleTicks = 0;
     mField0x781 = 0;
-    mField0x782 = 0;
+    mWasFallFlying = false;
     mDebugOptions = 0;
     mGamePrivileges = 0;
     mAdditionalModelParts = NULL;
-    mField0x804 = 0;
-    mField0x805 = 0;
+    mAdditionalModelPartsChecked = 0;
+    mDLCSkinChecked = 0;
     mPendingCameraId = -1;
     mCamera.reset();
-    mField0x814 = false;
+    mPositionLocked = false;
     mField0x815 = false;
     mField0x818 = 1.0;
     mLastLayerY = mY;
@@ -1878,7 +1988,7 @@ void Player::_init()
     mTimerAchievementTicks[0] = 0;
     mTimerAchievementTicks[1] = 0;
     mCategories |= EntityCategory::eEntityCategory_Player;
-    mInsomniaComponent = NULL;
+    mInsomniaComponent = new InsomniaComponent(this, 3.0f);
 }
 
 void Player::tick()
@@ -1886,7 +1996,7 @@ void Player::tick()
     if (!g_pApp->IsAppPaused())
         CheckTimerAchievements();
 
-    mField0x782 = isFallFlying();
+    mWasFallFlying = isFallFlying();
     isSpectator();
     if (mLevel->mIsClientSide)
         updateFrameTick();
@@ -2113,44 +2223,78 @@ void Player::rideTick()
 
 void Player::aiStep()
 {
-    if (mField0x61c > 0) --mField0x61c;
+    if (mJumpTriggerTime > 0)
+        --mJumpTriggerTime;
 
+    if (mLevel->getDifficulty() == Difficulty::PEACEFUL
+        && mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION))
+    {
+        if (getHealth() < getMaxHealth() && mTickCount % 20 * 12 == 0)
+            heal(1.0f);
+        if (mFoodData.needsFood() && mTickCount % 10 == 0)
+            mFoodData.setFoodLevel(mFoodData.getFoodLevel() + 1);
+    }
+
+    PIXBeginNamedEvent(0.0f, "Inventory tick");
     mInventory->tick();
-    LivingEntity::aiStep();
-
-    if (!mLevel->mIsClientSide) {
-        getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(mAbilities.getWalkingSpeed());
-    }
-
-    mFlyingSpeed = mField0x734;
-    if (isSprinting()) {
-        mFlyingSpeed += mField0x734 * 0.30000001192092896f;
-    }
+    PIXEndNamedEvent();
 
     mPrevCameraYaw = mCameraYaw;
-    double horizontalSpeedSq = mXd * mXd + mZd * mZd;
-    float horizontalSpeed = static_cast<float>(std::sqrt(horizontalSpeedSq));
-    if (horizontalSpeedSq < 9.999999747378752e-06) horizontalSpeed = 0.0f;
-    float verticalAngle = static_cast<float>(std::atan(-mYd * 0.20000000298023224)) * 15.0f;
-    if (horizontalSpeed > 0.10000000149011612f) horizontalSpeed = 0.10000000149011612f;
-    if (!mOnGround || getHealth() <= 0.0f) horizontalSpeed = 0.0f;
-    if (mOnGround || getHealth() <= 0.0f) verticalAngle = 0.0f;
-    mCameraYaw = (horizontalSpeed - mCameraYaw) * 0.4000000059604645f + mCameraYaw;
-    mBob = (verticalAngle - mBob) * 0.800000011920929f + mBob;
 
-    if (getHealth() > 0.0f && !isSpectator() && !isPassenger()) {
-        AABB* touchBox = mBoundingBox->grow(1.0, 0.5, 1.0);
-        std::vector<boost::shared_ptr<Entity> > nearby;
-        mLevel->getEntities(shared_from_this(), touchBox, &nearby);
-        for (unsigned int i = 0; i < nearby.size(); ++i) {
-            touch(nearby[i]);
+    PIXBeginNamedEvent(0.0f, "LivingEntity::aiStep");
+    LivingEntity::aiStep();
+    PIXEndNamedEvent();
+
+    AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
+    if (!mLevel->mIsClientSide)
+        speed->setBaseValue(mAbilities.getWalkingSpeed());
+
+    mFlyingSpeed = mDefaultFlySpeed;
+    if (isSprinting())
+        mFlyingSpeed += mDefaultFlySpeed * 0.3f;
+
+    setSpeed(static_cast<float>(speed->getValue()));
+
+    const double horizontalSpeedSq = mXd * mXd + mZd * mZd;
+    float horizontalSpeed = static_cast<float>(std::sqrt(horizontalSpeedSq));
+    if (horizontalSpeedSq < 9.999999747378752e-06)
+        horizontalSpeed = 0.0f;
+    float verticalAngle = static_cast<float>(std::atan(-mYd * 0.20000000298023224)) * 15.0f;
+    if (horizontalSpeed > 0.1f)
+        horizontalSpeed = 0.1f;
+    if (!mOnGround || getHealth() <= 0.0f)
+        horizontalSpeed = 0.0f;
+    if (mOnGround || getHealth() <= 0.0f)
+        verticalAngle = 0.0f;
+    mCameraYaw += (horizontalSpeed - mCameraYaw) * 0.4f;
+    mBob += (verticalAngle - mBob) * 0.8f;
+
+    if (getHealth() > 0.0f && !isSpectator())
+    {
+        PIXBeginNamedEvent(0.0f, "Touch nearby entities");
+        AABB* touchBox;
+        if (isPassenger() && !getVehicle()->mRemoved)
+            touchBox = mBoundingBox->minmax(getVehicle()->mBoundingBox)->grow(1.0, 0.0, 1.0);
+        else
+            touchBox = mBoundingBox->grow(1.0, 0.5, 1.0);
+
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(), touchBox, NULL);
+        if (entities != NULL)
+        {
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            {
+                if (!(*it)->mRemoved)
+                    touch(*it);
+            }
         }
+        PIXEndNamedEvent();
     }
 
     playShoulderEntityAmbientSound(getShoulderEntityLeft());
     playShoulderEntityAmbientSound(getShoulderEntityRight());
     if (!mLevel->mIsClientSide
-        && (mFallDistance > 0.5f || isInWater() || isPassenger() || mAbilities.mFlying)) {
+        && (mFallDistance > 0.5f || isInWater() || isPassenger() || mAbilities.mFlying))
+    {
         removeEntitiesOnShoulder();
     }
 
@@ -2176,8 +2320,10 @@ void Player::destroyVanishingCursedItems()
 
 void Player::addWalkers(DataFixerUpper* fixer)
 {
-    Entity::addDataWalkers(fixer);
-    ItemInstance::addDataWalkers(fixer);
+    std::vector<std::wstring>* itemFields = new std::vector<std::wstring>();
+    itemFields->push_back(L"Inventory");
+    itemFields->push_back(L"EnderItems");
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Player, new PlayerDataWalker(itemFields));
 }
 
 void Player::readAdditionalSaveData(CompoundTag* tag)
@@ -2301,19 +2447,20 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
     return dropped;
 }
 
-boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool randomThrow)
+boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool retainOwnership)
 {
-    return drop(item, randomThrow, false);
+    return drop(item, false, retainOwnership);
 }
 
 boost::shared_ptr<ItemEntity> Player::drop(bool dropAll)
 {
-    not_null_ptr<ItemInstance> selected = mInventory->getSelected();
-    if (selected->isEmpty()) return boost::shared_ptr<ItemEntity>();
-    int count = dropAll ? selected->getCount() : 1;
-    not_null_ptr<ItemInstance> dropped = selected->split(count);
-    if (selected->getCount() == 0) mInventory->removeItem(selected);
-    return drop(dropped, false, true);
+    int count = dropAll && !mInventory->getSelected()->isEmpty() ? mInventory->getSelected()->getCount() : 1;
+    not_null_ptr<ItemInstance> dropped = mInventory->removeItem(mInventory->m_selected, count);
+    if (mInventory->m_items[mInventory->m_selected]->isEmpty())
+    {
+        mInventory->OnRemove(mInventory->m_selected);
+    }
+    return drop(dropped, true);
 }
 
 not_null_ptr<ItemInstance> Player::reallyDrop(boost::shared_ptr<ItemEntity> item)
@@ -2428,8 +2575,29 @@ void Player::blockUsingShield(const boost::shared_ptr<LivingEntity>& attacker)
 
 void Player::actuallyHurt(const DamageSource* source, float damage)
 {
-    causeFoodExhaustion(source == NULL ? 0.0f : source->getFoodExhaustion());
-    LivingEntity::actuallyHurt(source, damage);
+    if (isInvulnerableTo(source))
+    {
+        return;
+    }
+
+    damage = getDamageAfterArmorAbsorb(source, damage);
+    damage = getDamageAfterMagicAbsorb(source, damage);
+    float originalDamage = damage;
+    damage = std::max(damage - getAbsorptionAmount(), 0.0f);
+    setAbsorptionAmount(getAbsorptionAmount() - (originalDamage - damage));
+    if (damage == 0.0f)
+    {
+        if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
+        {
+            getCombatTracker()->recordDamage(source, getHealth(), 0.0f);
+        }
+        return;
+    }
+
+    causeFoodExhaustion(source->getFoodExhaustion());
+    float health = getHealth();
+    setHealth(getHealth() - damage);
+    getCombatTracker()->recordDamage(source, health, damage);
 }
 
 void Player::checkRidingStatistiscs(double x, double y, double z)
@@ -2633,11 +2801,14 @@ void Player::travel(float x, float y, float z)
 
 void Player::playShoulderEntityAmbientSound(CompoundTag* tag)
 {
-    if (tag == NULL || tag->isEmpty()) return;
-    if (tag->contains(L"Silent") && tag->getBoolean(L"Silent")) return;
-    boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, mLevel);
-    boost::shared_ptr<Mob> mob = boost::dynamic_pointer_cast<Mob>(entity);
-    if (mob) mob->playAmbientSound();
+    if (tag == NULL || (tag->contains(L"Silent") && tag->getBoolean(L"Silent")))
+    {
+        return;
+    }
+    if (tag->getString(L"id") == EntityIO::getKey(EntityType::PARROT).toString())
+    {
+        Parrot::playAmbientSound(mLevel, shared_from_this());
+    }
 }
 
 void Player::respawnEntityOnShoulder(CompoundTag* tag)
@@ -2662,8 +2833,12 @@ void Player::removeEntitiesOnShoulder()
 void Player::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     LivingEntity::onSyncedDataUpdated(accessor);
-    if (accessor == DATA_SHOULDER_LEFT) playShoulderEntityAmbientSound(getShoulderEntityLeft());
-    if (accessor == DATA_SHOULDER_RIGHT) playShoulderEntityAmbientSound(getShoulderEntityRight());
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (accessor->getId() == DATA_SHARED_FLAGS_ID->getId() && isFallFlying() && !mWasFallFlying && mLevel->mIsClientSide)
+    {
+        ElytraOnPlayerSoundInstance* sound = new ElytraOnPlayerSoundInstance(boost::static_pointer_cast<Player>(shared_from_this()));
+        minecraft->mSoundEngine->ConsoleSoundEngine::play(sound);
+    }
 }
 
 void Player::remove()
@@ -2762,8 +2937,28 @@ void Player::stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpawn)
 
 BlockPos* Player::checkBedValidRespawnPosition(Level* level, const BlockPos& position, bool forced)
 {
-    const BlockState* state = level->getBlockState(position);
-    if (state->getBlock() == Blocks::bed || forced) return new BlockPos(position);
+    ChunkSource* chunkSource = level->getChunkSource();
+    chunkSource->create((position.x - 3) >> 4, (position.z - 3) >> 4);
+    chunkSource->create((position.x + 3) >> 4, (position.z - 3) >> 4);
+    chunkSource->create((position.x - 3) >> 4, (position.z + 3) >> 4);
+    chunkSource->create((position.x + 3) >> 4, (position.z + 3) >> 4);
+
+    if (level->getBlockState(position)->getBlock() == Blocks::bed)
+    {
+        return BedBlock::findStandUpPosition(level, position, 0);
+    }
+
+    if (!forced)
+    {
+        return NULL;
+    }
+
+    bool freeAtFeet = level->getBlockState(position)->getBlock()->isPossibleToRespawnInThis();
+    bool freeAtHead = level->getBlockState(position.above())->getBlock()->isPossibleToRespawnInThis();
+    if (freeAtFeet && freeAtHead)
+    {
+        return new BlockPos(position);
+    }
     return NULL;
 }
 
@@ -2961,7 +3156,7 @@ uint32_t Player::isAllowedToUse(Block* block)
     if (id == 0x17 || id == 0x36 || id == 0x3a || (id > 0x3c && id < 0x3f)
         || id == 0x45 || id == 0x4d || id == 0x60 || (id > 0x73 && id < 0x76)
         || id == 0x82 || id == 0x8a || id == 0x8f || (id > 0x90 && id < 0x93)
-        || (id > 0x97 && id < 0x98) || id == 0x9a || id == 0x9e || id == 0xa7
+        || (id > 0x94 && id < 0x98) || id == 0x9a || id == 0x9e || id == 0xa7
         || id == 0xb2 || (id > 0xda && id < 0xeb) || (id > 0x131 && id < 0x137))
         return 0;
     return isDoorOrGate ? 0 : 1;

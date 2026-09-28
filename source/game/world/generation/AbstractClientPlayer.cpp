@@ -20,10 +20,6 @@ AbstractClientPlayer::AbstractClientPlayer(Level* level, const std::wstring& nam
     mField0x738 = new ItemCooldowns();
 }
 
-AbstractClientPlayer::~AbstractClientPlayer()
-{
-}
-
 void AbstractClientPlayer::tick()
 {
     Player::tick();

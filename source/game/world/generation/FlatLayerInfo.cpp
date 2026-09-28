@@ -1,4 +1,5 @@
 #include "game/world/generation/FlatLayerInfo.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/StringConversion.hpp"
@@ -71,7 +72,7 @@ std::wstring FlatLayerInfo::getNameText() const
 {
     Block* block = getBlock();
     if (block == Blocks::air)
-        return std::wstring(L10N::GetString(0x2825E7E3));
+        return std::wstring(L10N::GetString(IDS_SUPERFLAT_AIR_LAYER));
     if (block == NULL)
         return std::wstring();
     ItemInstance item(block);
@@ -83,7 +84,7 @@ std::wstring FlatLayerInfo::getDescriptionText() const
 {
     Block* block = getBlock();
     if (block == Blocks::air)
-        return std::wstring(L10N::GetString(0xDDB4DEC5));
+        return std::wstring(L10N::GetString(IDS_SUPERFLAT_DESC_AIR_LAYER));
     if (block == NULL)
         return std::wstring();
     return std::wstring(L10N::GetString(block->getDescriptionId(-1)));

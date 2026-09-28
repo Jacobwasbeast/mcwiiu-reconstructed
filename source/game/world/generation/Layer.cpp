@@ -42,10 +42,6 @@ Layer::Layer(long long seed)
     baseSeed += seed;
 }
 
-Layer::~Layer()
-{
-}
-
 arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long seed,
                                                                    LevelType* levelType,
                                                                    SuperflatConfig* levelTypeOptions,

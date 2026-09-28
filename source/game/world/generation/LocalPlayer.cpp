@@ -784,7 +784,7 @@ void LocalPlayer::aiStep()
     Vec3* position = getPos(0.0f);
     const BlockPos currentBlock(position);
     const BlockPos aboveBlock(position->x, position->y + 1.0, position->z);
-    const BlockPos belowBlock(position->x, position->y - 1.1, position->z);
+    const BlockPos belowBlock(position->x, position->y - 1.1f, position->z);
     Material* currentMaterial = mLevel->getBlockState(currentBlock)->getMaterial();
     Material* aboveMaterial = mLevel->getBlockState(aboveBlock)->getMaterial();
     Material* belowMaterial = mLevel->getBlockState(belowBlock)->getMaterial();
@@ -795,7 +795,7 @@ void LocalPlayer::aiStep()
 
     if (isInWater() && !mAbilities.mFlying && !isSwimming() &&
         ((belowMaterial != Material::AIR && aboveMaterial != Material::AIR) ||
-         viewVector->y < -0.15) &&
+         viewVector->y < -0.15f) &&
         mLevel->mIsClientSide && isSprinting() && !stopForDirection && !isPassenger())
     {
         startSwimming();
@@ -819,11 +819,11 @@ void LocalPlayer::aiStep()
     {
         if (!mInput->mJumping)
         {
-            if (mField0x61c > 0 && mFlyTogglePending && !isSpectator())
+            if (mJumpTriggerTime > 0 && mFlyTogglePending && !isSpectator())
             {
                 mAbilities.mFlying = !mAbilities.mFlying;
                 onUpdateAbilities();
-                mField0x61c = 0;
+                mJumpTriggerTime = 0;
                 mFlyTogglePending = false;
                 if (mAbilities.mFlying)
                     mInput->mSneaking = false;
@@ -831,10 +831,10 @@ void LocalPlayer::aiStep()
         }
         else if (!wasJumping && autoJumpTime <= 0)
         {
-            if (mField0x61c == 0)
+            if (mJumpTriggerTime == 0)
             {
                 mFlyTogglePending = false;
-                mField0x61c = 10;
+                mJumpTriggerTime = 10;
             }
             else
             {
@@ -1086,7 +1086,7 @@ int LocalPlayer::openFireworks(int x, int y, int z)
 
 void LocalPlayer::displayClientMessage(int message, bool force)
 {
-    mWaitingForScoreboard = force;
+    mMinecraft->mGui->displayClientMessage(message, mUserIndex);
 }
 
 void LocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
@@ -1393,9 +1393,11 @@ bool LocalPlayer::isHandsBusy()
     return mHandsBusy;
 }
 
-unsigned long long LocalPlayer::SetSessionTimerStart()
+void LocalPlayer::SetSessionTimerStart()
 {
-    mSessionTimer = 0.0; return (unsigned long long)mSessionTimer;
+    float now = static_cast<float>(gApp.getAppTime());
+    mSessionTimerStart = now;
+    mChangeDimensionTimerStart = now;
 }
 
 bool LocalPlayer::IsWaitingForScoreboard()
@@ -1931,7 +1933,7 @@ void LocalPlayer::updateRichPresence()
 
 void LocalPlayer::ResetPercentageTraversed()
 {
-    mPercentageTraversed = 0.0;
+    mPercentageTraversed = -DBL_MAX;
 }
 
 void LocalPlayer::heal(float amount)
@@ -2318,19 +2320,19 @@ bool LocalPlayer::checkInBlock(double x, double y, double z)
             }
             if (freeAtAndAbove(pos.south()) && best > 1.0 - z)
             {
-                mZd = 0.1;
+                mZd = 0.1f;
             }
             else if (direction == 0)
             {
-                mXd = -0.1;
+                mXd = -0.1f;
             }
             else if (direction == 1)
             {
-                mXd = 0.1;
+                mXd = 0.1f;
             }
             else if (direction == 4)
             {
-                mZd = -0.1;
+                mZd = -0.1f;
             }
         }
     }
@@ -2652,22 +2654,20 @@ void LocalPlayer::OnTakeFromAnvil(not_null_ptr<ItemInstance> item)
 
 double LocalPlayer::getUnderwaterVisionClarity()
 {
-    const float current = mWaterVisionClarity;
-    if (current == mWaterVisionClarityO)
+    if (mWaterVisionClarity == mWaterVisionClarityO)
         return mWaterVisionClarityTarget;
-    double value = 1.0;
-    if (current >= 5.0f)
+
+    mWaterVisionClarityTarget = 1.0f;
+    if (mWaterVisionClarity < 5.0f)
     {
-        if (current < 10.0f)
-            value = Mth::Lerp(0.6, 1.0, static_cast<double>((current - 5.0f) / 5.0f));
+        mWaterVisionClarityTarget = Mth::Lerp(0.0f, 0.6f, mWaterVisionClarity / 5.0f);
     }
-    else
+    else if (mWaterVisionClarity < 10.0f)
     {
-        value = Mth::Lerp(3.0, 0.6, static_cast<double>(current / 5.0f));
+        mWaterVisionClarityTarget = Mth::Lerp(0.6f, 1.0f, (mWaterVisionClarity - 5.0f) / 5.0f);
     }
-    mWaterVisionClarityTarget = static_cast<float>(value);
-    mWaterVisionClarityO = current;
-    return value;
+    mWaterVisionClarityO = mWaterVisionClarity;
+    return mWaterVisionClarityTarget;
 }
 
 void LocalPlayer::DoAutoAttackOnTouch(boost::shared_ptr<Entity> entity)

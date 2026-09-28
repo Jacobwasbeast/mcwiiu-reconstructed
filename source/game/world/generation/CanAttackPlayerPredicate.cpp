@@ -53,6 +53,3 @@ bool CanAttackPlayerPredicate::apply(boost::shared_ptr<Entity> entity) const
                                  false, true);
 }
 
-CanAttackPlayerPredicate::~CanAttackPlayerPredicate()
-{
-}

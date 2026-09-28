@@ -237,7 +237,7 @@ void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
         }
         else
         {
-            map->setTranslatableName(0xadf9d986);
+            map->setTranslatableName(IDS_DESC_MAP);
         }
 
         not_null_ptr<ItemInstance> emerald(new ItemInstance(Items::emerald, value));
@@ -649,14 +649,14 @@ unsigned long long Villager::GetType()
 void Villager::defineSynchedData()
 {
     AgableMob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_PROFESSION, 0);
-    getEntityData()->createDateItem(DATA_CAREER, 0);
-    getEntityData()->createDateItem(DATA_TRADING, 0);
+    mEntityData->createDateItem(DATA_PROFESSION, 0);
+    mEntityData->createDateItem(DATA_CAREER, 0);
+    mEntityData->createDateItem(DATA_TRADING, 0);
 }
 
 int Villager::getProfession()
 {
-    int profession = getEntityData()->get(DATA_PROFESSION) % 6;
+    int profession = mEntityData->get(DATA_PROFESSION) % 6;
 
     if (profession < 0)
     {
@@ -668,27 +668,27 @@ int Villager::getProfession()
 
 void Villager::setProfession(int profession)
 {
-    getEntityData()->set(DATA_PROFESSION, profession, true);
+    mEntityData->set(DATA_PROFESSION, profession, true);
 }
 
 unsigned int Villager::getCareer()
 {
-    return getEntityData()->get(DATA_CAREER);
+    return mEntityData->get(DATA_CAREER);
 }
 
 void Villager::setCareer(int career)
 {
-    getEntityData()->set(DATA_CAREER, career, true);
+    mEntityData->set(DATA_CAREER, career, true);
 }
 
 unsigned int Villager::getTrading()
 {
-    return getEntityData()->get(DATA_TRADING);
+    return mEntityData->get(DATA_TRADING);
 }
 
 void Villager::setTrading(int trading)
 {
-    getEntityData()->set(DATA_TRADING, trading, true);
+    mEntityData->set(DATA_TRADING, trading, true);
 }
 
 bool Villager::isTrading()

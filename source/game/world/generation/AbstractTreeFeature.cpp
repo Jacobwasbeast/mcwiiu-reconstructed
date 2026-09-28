@@ -29,10 +29,6 @@ AbstractTreeFeature::AbstractTreeFeature(bool doBlockNotify, int baseHeight,
 {
 }
 
-AbstractTreeFeature::~AbstractTreeFeature()
-{
-}
-
 bool AbstractTreeFeature::isFree(Block* block)
 {
     Material* material = block->defaultBlockState()->getMaterial();

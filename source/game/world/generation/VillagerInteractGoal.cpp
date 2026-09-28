@@ -84,7 +84,7 @@ void VillagerInteractGoal::tick()
         boost::shared_ptr<ItemEntity> entity(new ItemEntity(
             mVillager->mLevel,
             mVillager->mX,
-            mVillager->mY - 1.65 + mVillager->getEyeHeight(),
+            mVillager->mY - 0.3f + mVillager->getEyeHeight(),
             mVillager->mZ,
             itemToThrow));
 

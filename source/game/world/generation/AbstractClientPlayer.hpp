@@ -12,7 +12,7 @@ class AbstractClientPlayer : public Player
 {
 public:
     AbstractClientPlayer(Level* level, const std::wstring& name);
-    virtual ~AbstractClientPlayer();
+    virtual ~AbstractClientPlayer() {}
 
     virtual void tick();
     virtual bool isPickable();

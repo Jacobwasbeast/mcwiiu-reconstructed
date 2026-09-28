@@ -12,10 +12,6 @@ HumanoidArmorLayer::HumanoidArmorLayer(LivingEntityRenderer* renderer)
     createArmorModels();
 }
 
-HumanoidArmorLayer::~HumanoidArmorLayer()
-{
-}
-
 void HumanoidArmorLayer::createArmorModels()
 {
     ModelDefinition definition;

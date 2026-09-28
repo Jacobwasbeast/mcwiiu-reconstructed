@@ -9,7 +9,7 @@ class Level;
 class StructureProcessor
 {
 public:
-    virtual ~StructureProcessor();
+    virtual ~StructureProcessor() {}
     virtual StructureTemplate::StructureBlockInfo* processBlock(Level* level, const BlockPos& position, StructureTemplate::StructureBlockInfo* blockInfo) = 0;
 };
 
