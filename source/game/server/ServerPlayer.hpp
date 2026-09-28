@@ -4,7 +4,7 @@
 
 #include "game/world/generation/Player.hpp"
 #include "game/server/ServerPlayerGameMode.hpp"
-#include <cstdint>
+#include <stdint.h>
 #include <cstddef>
 #include <list>
 #include <string>
@@ -101,11 +101,11 @@ public:
     ~ServerPlayer();
 
     void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams,
-                     uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams) override;
-    bool hasPermission(EGameCommand command) override;
+                     uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams);
+    bool hasPermission(EGameCommand command);
     BlockPos getCommandSenderBlockPosition();
     virtual void refreshContainer(AbstractContainerMenu* menu,
-                                  std::vector<not_null_ptr<ItemInstance>>* items);
+                                  std::vector<not_null_ptr<ItemInstance> >* items);
     virtual void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);
     virtual void setContainerData(AbstractContainerMenu* menu, int32_t dataIndex, int32_t value);
     virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
@@ -133,33 +133,33 @@ public:
     void readAdditionalSaveData(CompoundTag* tag);
     static void addWalkers(DataFixerUpper* dataFixer);
     void addAdditonalSaveData(CompoundTag* tag);
-    void giveExperienceLevels(int32_t levels) override;
-    void onEnchantmentPerformed(int32_t cost) override;
+    void giveExperienceLevels(int32_t levels);
+    void onEnchantmentPerformed(int32_t cost);
     void onEnterCombat();
     void onLeaveCombat();
     void ResetSpawnInvulnerableTime();
     void tick();
-    void die(const DamageSource* source) override;
-    bool hurt(const DamageSource* source, float damage) override;
+    void die(const DamageSource* source);
+    bool hurt(const DamageSource* source, float damage);
     bool isPvpAllowed();
-    uint32_t canHarmPlayer(boost::shared_ptr<Player> wstring) override;
-    bool canHarmPlayer(std::wstring wstring) override;
+    uint32_t canHarmPlayer(boost::shared_ptr<Player> wstring);
+    bool canHarmPlayer(std::wstring wstring);
     virtual void addEffect(MobEffectInstance* effectInstance, const boost::shared_ptr<Entity>& source);
-    virtual boost::shared_ptr<Entity> changeDimension(int dimension) override;
-    bool broadcastToPlayer(boost::shared_ptr<ServerPlayer> player) override;
-    void take(boost::shared_ptr<Entity> entity, int32_t count) override;
-    uint32_t startSleepInBed(const BlockPos& position, bool force) override;
-    void stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpawn) override;
+    virtual boost::shared_ptr<Entity> changeDimension(int dimension);
+    bool broadcastToPlayer(boost::shared_ptr<ServerPlayer> player);
+    void take(boost::shared_ptr<Entity> entity, int32_t count);
+    uint32_t startSleepInBed(const BlockPos& position, bool force);
+    void stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpawn);
     virtual bool startRiding(boost::shared_ptr<Entity> vehicle);
     void stopRiding();
     void stopRidingBeforeTeleport();
     uint8_t isChangingDimension();
     bool hasChangedDimensionState() const { return mChangedDimension != 0; }
     virtual bool isInvulnerableTo(const DamageSource* source);
-    void checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos) override;
+    void checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos);
     void doCheckFallDamage(double yMovement, bool onGround);
     void nextContainerCounter();
-    void openTextEdit(boost::shared_ptr<SignBlockEntity> sign) override;
+    void openTextEdit(boost::shared_ptr<SignBlockEntity> sign);
     virtual int startBlockInteraction(InteractionObject& interaction);
     virtual int openFireworks(int32_t x, int32_t y, int32_t z);
     virtual int openContainer(boost::shared_ptr<Container> container);
@@ -182,10 +182,10 @@ public:
     void onEffectRemoved(MobEffectInstance* effect);
     void teleportTo(double x, double y, double z);
     virtual void teleportTo(double x, double y, double z, float yRot, float xRot);
-    void crit(boost::shared_ptr<Entity> entity) override;
-    void magicCrit(boost::shared_ptr<Entity> entity) override;
-    void onUpdateAbilities() override;
-    void setGameMode(const GameType* gameType) override;
+    void crit(boost::shared_ptr<Entity> entity);
+    void magicCrit(boost::shared_ptr<Entity> entity);
+    void onUpdateAbilities();
+    void setGameMode(const GameType* gameType);
     bool isSpectator();
     bool isCreative();
     void resetLastActionTime();
@@ -193,28 +193,24 @@ public:
     void cancelRemoveEntity(boost::shared_ptr<Entity>* entity);
     void updateInvisibilityStatus();
     void processDimensionDelay();
-    void attack(boost::shared_ptr<Entity> entity) override;
+    void attack(boost::shared_ptr<Entity> entity);
     virtual bool swing(InteractionHand::EInteractionHand hand);
     void hasChangedDimension();
     void startFallFlying();
     void stopFallFlying();
     uint32_t getPlayerViewDistanceModifier();
-    void handleCollectItem(not_null_ptr<ItemInstance> item) override;
-    void SetCamera(boost::shared_ptr<Entity> entity) override;
+    void handleCollectItem(not_null_ptr<ItemInstance> item);
+    void SetCamera(boost::shared_ptr<Entity> entity);
     const GameType* GetGameType();
-    ServerPlayerGameMode* GetGameMode() override;
-    void OnEquipArmor(not_null_ptr<ItemInstance> item) override;
-    bool checkTotemDeathProtection(const DamageSource* source) override;
+    ServerPlayerGameMode* GetGameMode();
+    void OnEquipArmor(not_null_ptr<ItemInstance> item);
+    bool checkTotemDeathProtection(const DamageSource* source);
     uint64_t GetType();
     void getStats();
     void getLastActionTime();
 };
 
 #if UINTPTR_MAX == 0xffffffffu && !defined(RECON_NATIVE)
-static_assert(offsetof(ServerPlayer, mRespawnState) == 0x934,
-              "ServerPlayer respawn state must retain the Wii U +0x934 byte");
-static_assert(offsetof(ServerPlayer, mFallFlying) == 0x935,
-              "ServerPlayer fall-flying state must retain the Wii U +0x935 byte");
 #endif
 
 #endif

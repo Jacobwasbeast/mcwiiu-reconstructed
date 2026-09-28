@@ -1,54 +1,125 @@
 #include "game/server/ServerScoreboard.hpp"
 
+#include "game/core/DamageEvent.hpp"
 #include "game/core/GameStats.hpp"
 #include "game/core/MasterGameMode.hpp"
+#include "game/core/WeaponDamageStatTracker.hpp"
 #include "game/network/ClientboundSetPlayerTeamPacket.hpp"
 #include "game/network/ScoreboardPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/util/Math.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "game/world/generation/PlayerStats.hpp"
 
 #include <vector>
 
 ServerScoreboard::ServerScoreboard(MinecraftServer* server)
     : Scoreboard(), mServer(server), mPlayerStats()
 {
+    mPlayerStats = PlayerStatsMap();
 }
 
 ServerScoreboard::~ServerScoreboard()
 {
-    boost::unordered_map<StatsUID, Scoreboard::PlayerStats*, boost::hash<StatsUID>,
-                         std::equal_to<StatsUID> >::iterator it = mPlayerStats.begin();
-    while (it != mPlayerStats.end())
-    {
-        delete it->second;
-        ++it;
-    }
-    mPlayerStats.clear();
 }
 
 Scoreboard::PlayerStats* ServerScoreboard::GetPlayerStats(const StatsUID& suid, int round)
 {
-    boost::unordered_map<StatsUID, Scoreboard::PlayerStats*, boost::hash<StatsUID>,
-                         std::equal_to<StatsUID> >::iterator it = mPlayerStats.find(suid);
-    if (it == mPlayerStats.end())
-    {
-        Scoreboard::PlayerStats* stats = new Scoreboard::PlayerStats();
-        stats->setRecordSUID(suid);
-        mPlayerStats.insert(std::make_pair(suid, stats));
+    Scoreboard::PlayerStats* stats = new Scoreboard::PlayerStats();
+    GameStats& gameStats = mServer->mMasterGameMode->mGameStats;
+    ::PlayerStats* source = gameStats.GetPlayerStats(suid);
+    if (round == -1)
+        round = gameStats.mCurrentRound;
+    if (source == NULL)
         return stats;
+
+    stats->mName = source->mName;
+    stats->setRecordSUID(source->mStatsUID);
+    stats->mMedal = source->mAwardedMedal;
+    stats->mFavouriteWeapon = source->mWeaponDamage[0]->getValue();
+    stats->mWeaknessWeapon = source->mWeaponDamage[1]->getValue();
+
+    ::PlayerStats::RoundStats* sourceRound = source->getRoundStats(round);
+    Scoreboard::PlayerStats::_RoundStats& roundStats = stats->mRoundStats[round];
+    roundStats.mActive = sourceRound->mWon;
+    roundStats.mFinished = sourceRound->mParticipated;
+    roundStats.mPlacement = sourceRound->mLifeSpan;
+    roundStats.mScore = sourceRound->mKills;
+
+    int lives = sourceRound->getNumberLifeStats();
+    for (int life = 0; life < lives; ++life)
+    {
+        if (life == (int)roundStats.mPerLife.size())
+            roundStats.mPerLife.push_back(Scoreboard::PlayerStats::_PerLife());
+        roundStats.mPerLife[life].mKillerName = sourceRound->getLifeStats(life)->mKillerName;
     }
-    return it->second;
+
+    roundStats.mKillerWeapon = sourceRound->mFatalWeapon;
+    roundStats.mKills = Math::round(source->getDamageDealt(round));
+    roundStats.mDeaths = Math::round(source->getDamageTaken(round));
+    roundStats.mLives = sourceRound->mFatalDamage != NULL ? sourceRound->mFatalDamage->mDamageSource
+                                                          : Scoreboard::DAMAGE_SOURCE_UNKNOWN;
+    roundStats.mBlocksPlaced = sourceRound->mJumpCount;
+    roundStats.mMobKills = sourceRound->mTargetsReached;
+    roundStats.mBestTime = sourceRound->mTopSpeed;
+    roundStats.mItemsCollected = sourceRound->mPoints;
+    roundStats.mDistanceTravelled = sourceRound->mSequenceProgress;
+    roundStats.mBlocksMined = sourceRound->mUnbankedPoints;
+    roundStats.mTimePlayed = sourceRound->mLastBankedPoints;
+    roundStats.mTotalTime = sourceRound->mLastPointsAdded;
+    roundStats.mLastCheckpointId = sourceRound->mLastCheckpointID;
+    roundStats.mLapsCompleted = sourceRound->mLastCheckpointSequenceID;
+    roundStats.mLastCheckpointSequenceId = sourceRound->mLastBankedCheckpointID;
+    roundStats.mEndZoneEntered = sourceRound->mLapsCompleted;
+    roundStats.mCheckpointsPassed = sourceRound->mDeaths;
+    roundStats.mWinner = sourceRound->mReachedEnd;
+    roundStats.mDamageDealt = sourceRound->mBlocksPlaced.mCount;
+    roundStats.mDamageTaken = sourceRound->mBlocksDestroyed.mCount;
+    roundStats.mTimeAlive = sourceRound->mBlocksPresent.mCount;
+    roundStats.mLongestShot = sourceRound->mNearestDistance;
+    roundStats.mFallDistance = sourceRound->mProgress;
+    roundStats.mArrowsFired = source->getTotalDistanceMoved(round);
+
+    for (boost::unordered_map<int, int>::iterator it = sourceRound->mCheckpointTimes.begin();
+         it != sourceRound->mCheckpointTimes.end(); ++it)
+    {
+        roundStats.mCheckpointTimes[it->first] = it->second;
+    }
+
+    roundStats.mDeathsMelee = sourceRound->mScoresGiven[0];
+    roundStats.mKillsMelee = sourceRound->mScoresReceived[0];
+    roundStats.mDeathsRanged = sourceRound->mScoresGiven[1];
+    roundStats.mKillsRanged = sourceRound->mScoresReceived[1];
+    roundStats.mDeathsExplosive = sourceRound->mScoresGiven[2];
+    roundStats.mKillsExplosive = sourceRound->mScoresReceived[2];
+    roundStats.mDeathsOther = sourceRound->mScoresGiven[3];
+    roundStats.mKillsOther = sourceRound->mScoresReceived[3];
+    roundStats.mLastKillerName = gameStats.GetWinningThemeChoice();
+    roundStats.mLastVictimName = sourceRound->mThemeVote;
+    return stats;
 }
 
-void ServerScoreboard::OnPlayerStatsChanged(const StatsUID& suid, int round)
+void ServerScoreboard::OnPlayerStatsChanged(const StatsUID& suid, int life)
 {
-    Scoreboard::PlayerStats* stats = GetPlayerStats(suid, round);
-    if (stats != NULL)
+    Scoreboard::PlayerStats* stats = GetPlayerStats(suid, -1);
+    Scoreboard::PlayerStats* previous = mPlayerStats[suid];
+    int round = mServer->mMasterGameMode->mGameStats.mCurrentRound;
+    if (previous == NULL)
     {
-        stats->getRecord(Scoreboard::eStringArg_PlayerName, round, 0);
+        boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::ADD_PLAYER_STATS,
+            new ScoreboardPacket::AddPlayerStatsData(new Scoreboard::PlayerStats(*stats), round, life)));
+        gMinecraftServer->getPlayers()->broadcastAll(packet);
     }
+    else
+    {
+        boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::UPDATE_PLAYER_STATS,
+            new ScoreboardPacket::UpdatePlayerStatsData(new Scoreboard::PlayerStats(*stats), previous, round, life)));
+        gMinecraftServer->getPlayers()->broadcastAll(packet);
+    }
+    mPlayerStats[suid] = stats;
+    delete previous;
 }
 
 void ServerScoreboard::OnPlayerStatsRemoved(const StatsUID& suid, const std::wstring& name)
@@ -68,46 +139,23 @@ void ServerScoreboard::OnPlayerStatsRemoved(const StatsUID& suid, const std::wst
 void ServerScoreboard::SyncPlayerScores(std::vector<boost::shared_ptr<ServerPlayer> >* players,
                                         boost::shared_ptr<ServerPlayer> player)
 {
-    if (players == NULL || player == NULL || player->mConnection == NULL || mServer == NULL ||
-        mServer->mMasterGameMode == NULL)
+    unsigned int currentRound = mServer->mMasterGameMode->mGameStats.mCurrentRound;
+    for (unsigned int round = 0; round <= currentRound; ++round)
     {
-        return;
-    }
-
-    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-    for (; it != players->end(); ++it)
-    {
-        if (*it == NULL)
+        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
         {
-            continue;
-        }
-
-        StatsUID uid = (*it)->getSUID();
-        ::PlayerStats* gameStats = mServer->mMasterGameMode->mGameStats.GetPlayerStats(uid);
-        if (gameStats == NULL)
-        {
-            continue;
-        }
-
-        int rounds = gameStats->getTotalRounds();
-        for (int round = 0; round < rounds; ++round)
-        {
-            ::PlayerStats::RoundStats* roundStats = gameStats->getRoundStats(round);
-            if (roundStats == NULL)
-            {
+            if (mServer->mMasterGameMode->mGameStats.GetPlayerStats((*it)->getSUID()) == NULL)
                 continue;
-            }
 
-            int lives = roundStats->getNumberLifeStats();
-            for (int life = 0; life < lives; ++life)
+            Scoreboard::PlayerStats* stats = GetPlayerStats((*it)->getSUID(), round);
+            int lives = (int)stats->mRoundStats[round].mPerLife.size();
+            for (int life = 0; life <= lives; ++life)
             {
-                Scoreboard::PlayerStats* stats = GetPlayerStats(uid, round);
-                ScoreboardPacket::AddPlayerStatsData* data =
-                    new ScoreboardPacket::AddPlayerStatsData(stats, round, life);
-                boost::shared_ptr<Packet> packet(
-                    new ScoreboardPacket(ScoreboardPacket::ADD_PLAYER_STATS, data));
+                boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::ADD_PLAYER_STATS,
+                    new ScoreboardPacket::AddPlayerStatsData(new Scoreboard::PlayerStats(*stats), round, life)));
                 player->mConnection->send(packet);
             }
+            delete stats;
         }
     }
 }
@@ -140,9 +188,10 @@ void ServerScoreboard::removePlayerFromTeam(PlayerUID uid, PlayerTeam* pTeam)
 
 void ServerScoreboard::addPlayerToTeam(PlayerUID uid, PlayerTeam* pTeam)
 {
-    if (getPlayersTeam(uid) != NULL)
+    PlayerTeam* currentTeam = getPlayersTeam(uid);
+    if (currentTeam != NULL)
     {
-        Scoreboard::removePlayerFromTeam(uid, pTeam);
+        Scoreboard::removePlayerFromTeam(uid, currentTeam);
     }
     Scoreboard::addPlayerToTeam(uid, pTeam);
 
@@ -179,24 +228,20 @@ void ServerScoreboard::syncTeamChanges(PlayerTeam* pTeam)
 
 int ServerScoreboard::GetLastCheckpointID(const StatsUID& suid, int round)
 {
-    Scoreboard::PlayerStats* stats = GetPlayerStats(suid, round);
-    return stats == NULL ? 0 : stats->getRecord(Scoreboard::eIntArg_LastCheckpointId, round);
+    return gMinecraftServer->mMasterGameMode->mGameStats.GetLastCheckpointID(suid);
 }
 
 int ServerScoreboard::GetLapsCompleted(const StatsUID& suid, int round)
 {
-    Scoreboard::PlayerStats* stats = GetPlayerStats(suid, round);
-    return stats == NULL ? 0 : stats->getRecord(Scoreboard::eIntArg_LapsCompleted, round);
+    return gMinecraftServer->mMasterGameMode->mGameStats.GetLapsCompleted(suid);
 }
 
 bool ServerScoreboard::GetEndZoneEntered(const StatsUID& suid, int round)
 {
-    Scoreboard::PlayerStats* stats = GetPlayerStats(suid, round);
-    return stats != NULL && stats->getRecord(Scoreboard::eIntArg_EndZoneEntered, round) != 0;
+    return gMinecraftServer->mMasterGameMode->mGameStats.GetEndZoneEntered(suid);
 }
 
 int ServerScoreboard::GetLastCheckpointSequenceID(const StatsUID& suid, int round)
 {
-    Scoreboard::PlayerStats* stats = GetPlayerStats(suid, round);
-    return stats == NULL ? 0 : stats->getRecord(Scoreboard::eIntArg_LastCheckpointSequenceId, round);
+    return gMinecraftServer->mMasterGameMode->mGameStats.GetLastCheckpointSequenceID(suid);
 }

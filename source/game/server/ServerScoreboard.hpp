@@ -22,7 +22,7 @@ public:
     virtual ~ServerScoreboard();
 
     Scoreboard::PlayerStats* GetPlayerStats(const StatsUID& suid, int round);
-    void OnPlayerStatsChanged(const StatsUID& suid, int round);
+    void OnPlayerStatsChanged(const StatsUID& suid, int life);
     void OnPlayerStatsRemoved(const StatsUID& suid, const std::wstring& name);
     void SyncPlayerScores(std::vector<boost::shared_ptr<ServerPlayer> >* players,
                           boost::shared_ptr<ServerPlayer> player);
@@ -39,9 +39,11 @@ public:
     virtual int GetLastCheckpointSequenceID(const StatsUID& suid, int round);
 
 private:
+    typedef boost::unordered_map<StatsUID, Scoreboard::PlayerStats*, boost::hash<StatsUID>, std::equal_to<StatsUID> >
+        PlayerStatsMap;
+
     MinecraftServer* mServer;
-    boost::unordered_map<StatsUID, Scoreboard::PlayerStats*, boost::hash<StatsUID>,
-                         std::equal_to<StatsUID> > mPlayerStats;
+    PlayerStatsMap mPlayerStats;
 };
 
 #endif

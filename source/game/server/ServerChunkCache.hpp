@@ -1,5 +1,5 @@
-#ifndef GAME_SERVER_SERVERCHUNKCache_HPP
-#define GAME_SERVER_SERVERCHUNKCache_HPP
+#ifndef GAME_SERVER_SERVERCHUNKCACHE_HPP
+#define GAME_SERVER_SERVERCHUNKCACHE_HPP
 
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/core/CriticalSection.hpp"
@@ -9,6 +9,7 @@
 #include <string>
 
 class ServerLevel;
+class Dimension;
 class ChunkStorage;
 class ChunkGenerator;
 class LevelChunk;
@@ -20,6 +21,7 @@ class ProgressListener;
 class ServerChunkCache : public ChunkSource
 {
 public:
+    bool isCreatingOnRequest() const { return m_createOnRequest; }
     ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* generator);
     virtual ~ServerChunkCache();
     void dontDrop(int x, int z);
@@ -49,7 +51,7 @@ public:
     void save(LevelChunk* chunk);
     virtual void flagPostProcessComplete(short index, int x, int z);
     virtual void saveAllEntities();
-    virtual void save(bool force, ProgressListener* listener);
+    virtual bool save(bool force, ProgressListener* listener);
     virtual void tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
@@ -63,20 +65,19 @@ public:
     virtual LevelChunk** getCache();
 
 private:
-    OSFastMutex m_mutex;
-    ServerLevel* m_level;
-    ChunkStorage* m_storage;
-    ChunkGenerator* m_generator;
-    std::vector<LevelChunk*> m_chunks;
-    std::vector<LevelChunk*> m_unloadedChunks;
     LevelChunk* m_emptyChunk;
-    std::vector<LevelChunk*> m_loadedChunks;
-    std::deque<LevelChunk*> m_toSave;
-    int m_xCenter;
-    int m_zCenter;
-    int m_width;
-    int m_halfWidth;
-    bool m_saveAll;
+    ChunkGenerator* m_source;
+    ChunkStorage* m_storage;
+    bool m_createOnRequest;
+    LevelChunk** m_cache;
+    std::vector<LevelChunk*> m_loadedChunkList;
+    ServerLevel* m_level;
+    Dimension* m_dimension;
+    std::deque<LevelChunk*> m_toDrop;
+    LevelChunk** m_unloadedCache;
+    OSFastMutex m_csLoadCreate;
+    int m_xzSize;
+    int m_xzOffset;
     bool (*m_boundFunction)(void*, int, int);
     void* m_boundData;
 };

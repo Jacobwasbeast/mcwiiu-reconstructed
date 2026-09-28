@@ -124,124 +124,6 @@ namespace
 const int CHUNK_SIZE = 16;
 const int CHUNK_HEIGHT = 256;
 const int MAX_DELAYED_CHUNK_PACKETS = 3;
-
-static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource* source)
-{
-    player->mPvpState = 0;
-
-    if (source == DamageSource::FALL)
-        player->mPvpState = 0x19;
-    else if (source == DamageSource::IN_FIRE || source == DamageSource::ON_FIRE)
-        player->mPvpState = 0x1b;
-    else if (source == DamageSource::LAVA)
-        player->mPvpState = 0x1a;
-    else if (source == DamageSource::DROWN)
-        player->mPvpState = 0x1c;
-    else if (source == DamageSource::IN_WALL)
-        player->mPvpState = 0x1d;
-    else if (source == DamageSource::OUT_OF_WORLD || source == DamageSource::CREATIVE_PLAYER)
-        player->mPvpState = 0x1e;
-    else if (source == DamageSource::CACTUS)
-        player->mPvpState = 0x1f;
-    else
-    {
-        const EntityDamageSource* entitySource = dynamic_cast<const EntityDamageSource*>(source);
-        if (entitySource == NULL)
-            return;
-
-        boost::shared_ptr<Entity> attacker = entitySource->getEntity();
-        if (attacker == NULL)
-            return;
-        const unsigned long long entityType = attacker->GetType();
-        if (entityType == EntityType::PHANTOM)
-            player->mPvpState = 0x46;
-        else if (entityType == EntityType::PUFFERFISH)
-            return;
-        else if (entityType == EntityType::DOLPHIN)
-            player->mPvpState = 0x53;
-        else if (entityType == EntityType::VINDICATION_ILLAGER)
-            player->mPvpState = 0x52;
-        else if (entityType == EntityType::EVOCATION_ILLAGER || entityType == EntityType::EVOCATION_FANGS)
-            player->mPvpState = 0x51;
-        else if (entityType == EntityType::LLAMA_SPIT || entityType == EntityType::LLAMA)
-            player->mPvpState = 0x50;
-        else if (entityType == EntityType::SHULKER || entityType == EntityType::SHULKER_BULLET)
-            player->mPvpState = 0x4b;
-        else if (entityType == EntityType::POLAR_BEAR)
-            player->mPvpState = 0x4a;
-        else if (entityType == EntityType::FIREBALL)
-            player->mPvpState = 0x29;
-        else if (entityType == EntityType::PRIMED_TNT)
-            player->mPvpState = 0x22;
-        else if (entityType == EntityType::LIGHTNING_BOLT)
-            player->mPvpState = 0x45;
-        else if (entityType == EntityType::RABBIT)
-            player->mPvpState = 0x49;
-        else if (entityType == EntityType::ENDERMITE)
-            player->mPvpState = 0x48;
-        else if (entityType == EntityType::GUARDIAN)
-            player->mPvpState = 0x47;
-        else if (entityType == EntityType::ENDER_DRAGON)
-            player->mPvpState = 0x44;
-        else if (entityType == EntityType::SILVERFISH)
-            player->mPvpState = 0x43;
-        else if (entityType == EntityType::WITHER_BOSS)
-            player->mPvpState = 0x42;
-        else if (entityType == EntityType::MAGMA_CUBE)
-            player->mPvpState = 0x41;
-        else if (entityType == EntityType::BLAZE)
-            player->mPvpState = 0x40;
-        else if (entityType == EntityType::ENDER_MAN)
-            player->mPvpState = 0x3f;
-        else if (entityType == EntityType::WITCH)
-            player->mPvpState = 0x3e;
-        else if (entityType == EntityType::SLIME)
-            player->mPvpState = 0x28;
-        else if (entityType == EntityType::GHAST)
-            player->mPvpState = 0x29;
-        else if (entityType == EntityType::PIG_ZOMBIE)
-            player->mPvpState = 0x2a;
-        else if (entityType == EntityType::DROWNED || entityType == EntityType::HUSK || entityType == EntityType::ZOMBIE)
-            player->mPvpState = 0x25;
-        else if (entityType == EntityType::CAVE_SPIDER)
-            player->mPvpState = 0x3d;
-        else if (entityType == EntityType::SPIDER)
-            player->mPvpState = 0x27;
-        else if (entityType == EntityType::STRAY || entityType == EntityType::WITHER_SKELETON || entityType == EntityType::SKELETON)
-            player->mPvpState = 0x26;
-        else if (entityType == EntityType::CREEPER)
-            player->mPvpState = 0x23;
-        else if (entityType == EntityType::SNOW_MAN)
-            player->mPvpState = 0x3c;
-        else if (entityType == EntityType::VILLAGER_GOLEM)
-            player->mPvpState = 0x3b;
-        else if (entityType == EntityType::WOLF)
-            player->mPvpState = 0x24;
-        else if (entityType == EntityType::SERVER_PLAYER || entityType == EntityType::PLAYER)
-        {
-            player->mPvpState = 0x20;
-            boost::shared_ptr<Player> attackerPlayer = boost::static_pointer_cast<Player>(attacker);
-            not_null_ptr<ItemInstance> mainHand = attackerPlayer->getMainHandItem();
-            player->mCauseOfDeathId = 0;
-            if (!mainHand->isEmpty())
-                player->mCauseOfDeathId = Item::getId(mainHand->getItem());
-        }
-        else if (entityType == EntityType::TIPPABLE_ARROW || entityType == EntityType::ARROW)
-        {
-            boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
-            if (arrow->mOwner != NULL)
-            {
-                const unsigned long long ownerType = arrow->mOwner->GetType();
-                if (ownerType == EntityType::SERVER_PLAYER || ownerType == EntityType::PLAYER)
-                    player->mPvpState = 0x21;
-                else if (ownerType == EntityType::SKELETON)
-                    player->mPvpState = 0x26;
-            }
-        }
-        else
-            player->mPvpState = 0x54;
-    }
-}
 }
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
@@ -932,6 +814,7 @@ void ServerPlayer::tick()
         if (target && target->isSpectator())
         {
             SpectatePlayerChange(false);
+            updateClientsCameras();
         }
     }
 
@@ -1031,42 +914,156 @@ bool ServerPlayer::hurt(const DamageSource* source, float damage)
          source != DamageSource::OUT_OF_WORLD && source != DamageSource::CREATIVE_PLAYER))
         return false;
 
-    if (source != NULL)
+    if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
-        const EntityDamageSource* entitySource = dynamic_cast<const EntityDamageSource*>(source);
-        if (entitySource != NULL)
+        boost::shared_ptr<Entity> attacker = source->getDirectEntity();
+
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            !boost::static_pointer_cast<Player>(attacker)->canHarmPlayer(
+                boost::dynamic_pointer_cast<Player>(shared_from_this())))
+            return false;
+
+        if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW &&
+            !Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
         {
-            boost::shared_ptr<Entity> attacker = entitySource->getEntity();
+            boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
+            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+                !canHarmPlayer(boost::dynamic_pointer_cast<Player>(arrow->mOwner)))
+                return false;
+        }
+    }
 
-            if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-            {
-                boost::shared_ptr<Player> attackerPlayer = boost::static_pointer_cast<Player>(attacker);
-                if (!canHarmPlayer(attackerPlayer))
-                    return false;
-            }
+    bool hurt = Player::hurt(source, damage);
+    if (!hurt)
+        return hurt;
 
-            if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if (source == DamageSource::FALL)
+    {
+        mPvpState = 0x19;
+    }
+    else if (source == DamageSource::IN_FIRE || source == DamageSource::ON_FIRE)
+    {
+        mPvpState = 0x1b;
+    }
+    else if (source == DamageSource::LAVA)
+    {
+        mPvpState = 0x1a;
+    }
+    else if (source == DamageSource::DROWN)
+    {
+        mPvpState = 0x1c;
+    }
+    else if (source == DamageSource::IN_WALL)
+    {
+        mPvpState = 0x1d;
+    }
+    else if (source == DamageSource::OUT_OF_WORLD || source == DamageSource::CREATIVE_PLAYER)
+    {
+        mPvpState = 0x1e;
+    }
+    else if (source == DamageSource::CACTUS)
+    {
+        mPvpState = 0x1f;
+    }
+    else
+    {
+        mPvpState = 0;
+        boost::shared_ptr<Entity> attacker = source->getEntity();
+        if (attacker != NULL)
+        {
+            unsigned long long type = attacker->GetType();
+            if (type == EntityType::PHANTOM)
+                mPvpState = 0x46;
+            else if (type == EntityType::PUFFERFISH)
+                mPvpState = 0x54;
+            else if (type == EntityType::DOLPHIN)
+                mPvpState = 0x53;
+            else if (type == EntityType::VINDICATION_ILLAGER)
+                mPvpState = 0x52;
+            else if (type == EntityType::EVOCATION_ILLAGER || type == EntityType::EVOCATION_FANGS)
+                mPvpState = 0x51;
+            else if (type == EntityType::LLAMA_SPIT || type == EntityType::LLAMA)
+                mPvpState = 0x50;
+            else if (type == EntityType::SHULKER || type == EntityType::SHULKER_BULLET)
+                mPvpState = 0x4b;
+            else if (type == EntityType::POLAR_BEAR)
+                mPvpState = 0x4a;
+            else if (type == EntityType::FIREBALL)
+                mPvpState = 0x29;
+            else if (type == EntityType::TIPPABLE_ARROW || type == EntityType::ARROW)
             {
-                if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
+                if (boost::dynamic_pointer_cast<Arrow>(attacker)->mOwner != NULL)
                 {
-                    boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
-                    if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                    boost::shared_ptr<Entity> owner = boost::dynamic_pointer_cast<Arrow>(attacker)->mOwner;
+                    if (owner != NULL)
                     {
-                        boost::shared_ptr<Player> ownerPlayer = boost::dynamic_pointer_cast<Player>(arrow->mOwner);
-                        if (!canHarmPlayer(ownerPlayer))
-                            return false;
+                        unsigned long long ownerType = owner->GetType();
+                        if (ownerType == EntityType::SERVER_PLAYER || ownerType == EntityType::PLAYER)
+                            mPvpState = 0x21;
+                        else if (ownerType == EntityType::SKELETON)
+                            mPvpState = 0x26;
                     }
                 }
+            }
+            else if (type == EntityType::PRIMED_TNT)
+                mPvpState = 0x22;
+            else if (type == EntityType::LIGHTNING_BOLT)
+                mPvpState = 0x45;
+            else if (type == EntityType::RABBIT)
+                mPvpState = 0x49;
+            else if (type == EntityType::ENDERMITE)
+                mPvpState = 0x48;
+            else if (type == EntityType::GUARDIAN)
+                mPvpState = 0x47;
+            else if (type == EntityType::ENDER_DRAGON)
+                mPvpState = 0x44;
+            else if (type == EntityType::SILVERFISH)
+                mPvpState = 0x43;
+            else if (type == EntityType::WITHER_BOSS)
+                mPvpState = 0x42;
+            else if (type == EntityType::MAGMA_CUBE)
+                mPvpState = 0x41;
+            else if (type == EntityType::BLAZE)
+                mPvpState = 0x40;
+            else if (type == EntityType::ENDER_MAN)
+                mPvpState = 0x3f;
+            else if (type == EntityType::WITCH)
+                mPvpState = 0x3e;
+            else if (type == EntityType::SLIME)
+                mPvpState = 0x28;
+            else if (type == EntityType::GHAST)
+                mPvpState = 0x29;
+            else if (type == EntityType::PIG_ZOMBIE)
+                mPvpState = 0x2a;
+            else if (type == EntityType::DROWNED || type == EntityType::HUSK || type == EntityType::ZOMBIE)
+                mPvpState = 0x25;
+            else if (type == EntityType::CAVE_SPIDER)
+                mPvpState = 0x3d;
+            else if (type == EntityType::SPIDER)
+                mPvpState = 0x27;
+            else if (type == EntityType::STRAY || type == EntityType::WITHER_SKELETON || type == EntityType::SKELETON)
+                mPvpState = 0x26;
+            else if (type == EntityType::CREEPER)
+                mPvpState = 0x23;
+            else if (type == EntityType::SNOW_MAN)
+                mPvpState = 0x3c;
+            else if (type == EntityType::VILLAGER_GOLEM)
+                mPvpState = 0x3b;
+            else if (type == EntityType::WOLF)
+                mPvpState = 0x24;
+            else if (type == EntityType::SERVER_PLAYER || type == EntityType::PLAYER)
+            {
+                mCauseOfDeathId = 0;
+                mPvpState = 0x20;
+                boost::shared_ptr<Player> attackerPlayer = boost::static_pointer_cast<Player>(attacker);
+                if (attackerPlayer != NULL && !attackerPlayer->getMainHandItem()->isEmpty())
+                    mCauseOfDeathId = Item::getId(attackerPlayer->getMainHandItem()->getItem());
             }
         }
     }
 
-    if (!Player::hurt(source, damage))
-        return false;
-
-    setPvpStateFromDamageSource(this, source);
     source->sendDamageIndicatorUpdate(boost::static_pointer_cast<ServerPlayer>(shared_from_this()));
-    return true;
+    return hurt;
 }
 
 bool ServerPlayer::isPvpAllowed()
@@ -1223,6 +1220,7 @@ uint32_t ServerPlayer::startSleepInBed(const BlockPos& position, bool force)
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(self);
     boost::shared_ptr<Packet> packet(new ClientboundPlayerSleepPacket(player, position));
     getLevel()->getTracker()->broadcast(player, packet);
+    mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
     mConnection->send(packet);
     return BED_SLEEPING_OK;
 }
@@ -1680,7 +1678,7 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals;
         recipients = eRecipients_All;
         break;
-    case 0x99326383:
+    case IDS_MAX_CHICKENS_BRED:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredChickens;
         recipients = eRecipients_All;
         break;
@@ -1688,7 +1686,7 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms;
         recipients = eRecipients_All;
         break;
-    case 0xEC344E3D:
+    case IDS_MAX_WOLVES_BRED:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBredWolves;
         recipients = eRecipients_All;
         break;
@@ -1696,11 +1694,11 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom;
         recipients = eRecipients_All;
         break;
-    case 0xB2145884:
+    case IDS_MAX_BOATS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBoats;
         recipients = eRecipients_All;
         break;
-    case 0xB604AAFF:
+    case IDS_MAX_MINECARTS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMinecarts;
         recipients = eRecipients_All;
         break;
@@ -1708,15 +1706,15 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBats;
         recipients = eRecipients_All;
         break;
-    case 0xFDF65C18:
+    case IDS_MAX_BANNERS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBanners;
         recipients = eRecipients_All;
         break;
-    case 0xC952E8B9:
+    case IDS_MAX_ENDER_CRYSTALS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals;
         recipients = eRecipients_All;
         break;
-    case 0xEF12CC40:
+    case IDS_MAX_BEACONS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBeacons;
         recipients = eRecipients_All;
         break;

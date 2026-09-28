@@ -11,172 +11,185 @@
 #include "game/core/Compression.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "platform/wiiu/C4JEvent.hpp"
-#include <cstdint>
 #include <algorithm>
-#include <sstream>
+#include <cstring>
 
 extern long InterlockedCompareExchangeRelease(volatile long* destination, long exchange, long comparand);
 
-namespace
-{
-struct ServerChunkCacheSaveContext
+static const int MAX_DROPS_PER_TICK = 100;
+static const int SAVE_PROGRESS_INTERVAL = 10;
+
+struct ServerChunkCacheSaveThreadData
 {
     ServerChunkCache* cache;
     LevelChunk* chunk;
     bool saveEntities;
-    bool useDefaultThreadStorage;
-    C4JEvent* notifyEvent;
-    ChunkStorage* storage;
+    bool useSharedThreadStorage;
+    C4JEvent* notificationEvent;
+    C4JEvent* wakeEvent;
 };
-}
 
-ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* generator)
-    : m_level(level), m_storage(storage), m_generator(generator), m_chunks(0), m_unloadedChunks(), m_emptyChunk(0),
-      m_loadedChunks(), m_toSave(), m_xCenter(0), m_zCenter(0), m_width(generator->mLevelSize), m_halfWidth(generator->mLevelSize / 2), m_saveAll(false),
-      m_boundFunction(0), m_boundData(0)
+ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* source)
 {
-    mLevelSize = generator->mLevelSize;
-    InitializeCriticalSectionAndSpinCount(&m_mutex, 4000);
-    m_chunks.resize(m_width * m_width, 0);
-    m_unloadedChunks.resize(m_width * m_width, 0);
+    m_xzSize = source->mLevelSize;
+    mLevelSize = source->mLevelSize;
+    m_createOnRequest = false;
+    m_xzOffset = m_xzSize / 2;
     m_emptyChunk = new EmptyLevelChunk(level, 0, 0);
+    m_storage = storage;
+    m_dimension = level->mDimension;
+    m_source = source;
+    m_level = level;
+    m_cache = new LevelChunk*[m_xzSize * m_xzSize];
+    std::memset(m_cache, 0, m_xzSize * m_xzSize * sizeof(LevelChunk*));
+    m_unloadedCache = new LevelChunk*[m_xzSize * m_xzSize];
+    std::memset(m_unloadedCache, 0, m_xzSize * m_xzSize * sizeof(LevelChunk*));
+    m_boundFunction = NULL;
+    m_boundData = NULL;
+    InitializeCriticalSectionAndSpinCount(&m_csLoadCreate, 4000);
 }
 
 ServerChunkCache::~ServerChunkCache()
 {
-    if (m_storage)
-        m_storage->WaitForAll();
-
-    std::vector<LevelChunk*> deleted;
-    for (std::vector<LevelChunk*>::iterator i = m_loadedChunks.begin(); i != m_loadedChunks.end(); ++i)
-    {
-        if (*i && std::find(deleted.begin(), deleted.end(), *i) == deleted.end())
-        {
-            deleted.push_back(*i);
-            delete *i;
-        }
-    }
-    for (std::vector<LevelChunk*>::iterator i = m_unloadedChunks.begin(); i != m_unloadedChunks.end(); ++i)
-    {
-        if (*i && std::find(deleted.begin(), deleted.end(), *i) == deleted.end())
-        {
-            deleted.push_back(*i);
-            delete *i;
-        }
-    }
-    m_chunks.clear();
-    m_unloadedChunks.clear();
-    m_loadedChunks.clear();
-    m_toSave.clear();
-    delete m_generator;
-    m_generator = 0;
+    m_storage->WaitForAll();
     delete m_storage;
-    m_storage = 0;
-    DeleteCriticalSection(&m_mutex);
     delete m_emptyChunk;
-    m_emptyChunk = 0;
+    delete[] m_cache;
+    delete m_source;
+
+    for (int i = 0; i < m_xzSize * m_xzSize; ++i)
+    {
+        delete m_unloadedCache[i];
+    }
+    delete[] m_unloadedCache;
+
+    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
+    {
+        delete *it;
+    }
+
+    DeleteCriticalSection(&m_csLoadCreate);
 }
 
 int ServerChunkCache::computeIdx(int x, int z)
 {
-    return (x + m_halfWidth) * m_width + (z + m_halfWidth);
+    return (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
 }
 
 bool ServerChunkCache::inBounds(int x, int z)
 {
-    if (m_boundFunction)
-        return (*m_boundFunction)(m_boundData, x, z);
-    return m_level->mDimension->containsChunk(x, z);
+    if (m_boundFunction != NULL)
+    {
+        return m_boundFunction(m_boundData, x, z);
+    }
+    return m_dimension->containsChunk(x, z);
 }
 
 void ServerChunkCache::dontDrop(int x, int z)
 {
-    if (!inBounds(x, z))
-        return;
-    LevelChunk* chunk = m_chunks[computeIdx(x, z)];
-    m_toSave.erase(std::remove(m_toSave.begin(), m_toSave.end(), chunk), m_toSave.end());
+    LevelChunk* chunk = getChunk(x, z);
+    m_toDrop.erase(std::remove(m_toDrop.begin(), m_toDrop.end(), chunk), m_toDrop.end());
 }
 
 void ServerChunkCache::drop(int x, int z)
 {
-    if (!inBounds(x, z))
-        return;
-    const int index = computeIdx(x, z);
-    LevelChunk* chunk = m_chunks[index];
-    if (chunk)
-        m_toSave.push_back(chunk);
+    if (inBounds(x, z))
+    {
+        LevelChunk* chunk = m_cache[computeIdx(x, z)];
+        if (chunk != NULL)
+        {
+            m_toDrop.push_back(chunk);
+        }
+    }
 }
 
 void ServerChunkCache::invalidateChunksOutsideArea(int minX, int minZ, int maxX, int maxZ)
 {
-    for (int x = -m_halfWidth; x < m_halfWidth; ++x)
-        for (int z = -m_halfWidth; z < m_halfWidth; ++z)
-            if (x < minX || x > maxX || z < minZ || z > maxZ)
-            {
-                const int index = computeIdx(x, z);
-                LevelChunk* chunk = m_chunks[index];
-                if (chunk)
-                    chunk->SetInvalid(true);
-                if (m_unloadedChunks[index])
-                    m_unloadedChunks[index]->SetInvalid(true);
-            }
+    for (int i = 0; i < m_xzSize * m_xzSize; ++i)
+    {
+        LevelChunk* chunk = m_unloadedCache[i];
+        if (chunk != NULL && (chunk->x < minX || chunk->x > maxX || chunk->z < minZ || chunk->z > maxZ))
+        {
+            chunk->SetInvalid(true);
+        }
+    }
+
+    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
+    {
+        LevelChunk* chunk = *it;
+        if (chunk->x < minX || chunk->x > maxX || chunk->z < minZ || chunk->z > maxZ)
+        {
+            chunk->SetInvalid(true);
+        }
+    }
 }
 
 LevelChunk* ServerChunkCache::getChunkIfLoaded(int x, int z)
 {
-    return inBounds(x, z) ? m_chunks[computeIdx(x, z)] : m_emptyChunk;
+    if (!inBounds(x, z))
+    {
+        return m_emptyChunk;
+    }
+    return m_cache[computeIdx(x, z)];
 }
 
 LevelChunk* ServerChunkCache::getChunkIfLoadedOrInvalid(int x, int z)
 {
     if (!inBounds(x, z))
+    {
         return m_emptyChunk;
-    return m_chunks[computeIdx(x, z)];
+    }
+    return m_cache[computeIdx(x, z)];
 }
 
 LevelChunk* ServerChunkCache::getChunkIfHasChunk(int x, int z)
 {
     if (!inBounds(x, z))
+    {
         return m_emptyChunk;
-    LevelChunk* chunk = m_chunks[computeIdx(x, z)];
-    if (chunk != 0 && !chunk->isInvalid())
-        return chunk;
-    return 0;
+    }
+    LevelChunk* chunk = m_cache[computeIdx(x, z)];
+    if (chunk == NULL || chunk->mInvalid)
+    {
+        return NULL;
+    }
+    return chunk;
 }
 
 LevelChunk* ServerChunkCache::load(int x, int z, LevelChunk* chunk)
 {
-    if (!m_storage)
-        return 0;
-    const int index = computeIdx(x, z);
-    if (!chunk)
+    ChunkStorage* storage = m_storage;
+    int idx = computeIdx(x, z);
+    if (chunk == NULL)
     {
-        chunk = m_unloadedChunks[index];
-        m_unloadedChunks[index] = 0;
+        chunk = m_unloadedCache[idx];
+        m_unloadedCache[idx] = NULL;
     }
-    if (!chunk || chunk->isInvalid())
+    if (chunk == NULL || chunk->mInvalid)
     {
-        chunk = m_storage->load(m_level, x, z, chunk);
-        if (!chunk)
-            return 0;
+        chunk = storage->load(m_level, x, z, chunk);
+        if (chunk == NULL)
+        {
+            return NULL;
+        }
     }
     chunk->setLastSaveTime(m_level->getGameTime());
-    if (m_generator)
-        m_generator->postProcessLoadedChunk(chunk, x, z);
+    if (m_source != NULL)
+    {
+        m_source->postProcessLoadedChunk(chunk, x, z);
+    }
     return chunk;
 }
 
-void ServerChunkCache::updatePostProcessFlag(short index, int x, int z, int dx, int dz, LevelChunk* chunk)
+void ServerChunkCache::updatePostProcessFlag(short flag, int x, int z, int dx, int dz, LevelChunk* chunk)
 {
-    const int neighborX = x + dx;
-    const int neighborZ = z + dz;
-    if (!hasChunk(neighborX, neighborZ))
-        return;
-    LevelChunk* neighbor = getChunk(neighborX, neighborZ);
-    if (neighbor == m_emptyChunk ||
-        (neighbor != 0 && (neighbor->mChunkFlags & 2) != 0))
+    if (hasChunk(x + dx, z + dz))
     {
-        chunk->mChunkFlags |= static_cast<unsigned short>(index);
+        LevelChunk* neighbour = getChunk(x + dx, z + dz);
+        if (neighbour == m_emptyChunk || (neighbour->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) != 0)
+        {
+            chunk->mChunkFlags |= flag;
+        }
     }
 }
 
@@ -185,115 +198,141 @@ void ServerChunkCache::updatePostProcessFlags(int x, int z)
     LevelChunk* chunk = getChunk(x, z);
     if (chunk != m_emptyChunk)
     {
-        updatePostProcessFlag(8, x, z, 0, -1, chunk);
-        updatePostProcessFlag(0x10, x, z, -1, -1, chunk);
-        updatePostProcessFlag(4, x, z, -1, 0, chunk);
-        updatePostProcessFlag(0x20, x, z, -1, 1, chunk);
-        updatePostProcessFlag(0x40, x, z, 0, 1, chunk);
-        updatePostProcessFlag(0x80, x, z, 1, 1, chunk);
-        updatePostProcessFlag(0x100, x, z, 1, 0, chunk);
-        updatePostProcessFlag(0x200, x, z, 1, -1, chunk);
-        if ((chunk->mChunkFlags & 2) != 0)
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_NORTH, x, z, 0, -1, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_NORTH_WEST, x, z, -1, -1, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_WEST, x, z, -1, 0, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_SOUTH_WEST, x, z, -1, 1, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_SOUTH, x, z, 0, 1, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_SOUTH_EAST, x, z, 1, 1, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_EAST, x, z, 1, 0, chunk);
+        updatePostProcessFlag(LevelChunk::TERRAIN_POPULATED_NORTH_EAST, x, z, 1, -1, chunk);
+
+        if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) != 0)
         {
-            flagPostProcessComplete(4, x + 1, z);
-            flagPostProcessComplete(0x10, x + 1, z + 1);
-            flagPostProcessComplete(8, x, z + 1);
-            flagPostProcessComplete(0x200, x - 1, z + 1);
-            flagPostProcessComplete(0x100, x - 1, z);
-            flagPostProcessComplete(0x80, x - 1, z - 1);
-            flagPostProcessComplete(0x40, x, z - 1);
-            flagPostProcessComplete(0x20, x + 1, z - 1);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_WEST, x + 1, z);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_NORTH_WEST, x + 1, z + 1);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_NORTH, x, z + 1);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_NORTH_EAST, x - 1, z + 1);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_EAST, x - 1, z);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_SOUTH_EAST, x - 1, z - 1);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_SOUTH, x, z - 1);
+            flagPostProcessComplete(LevelChunk::TERRAIN_POPULATED_SOUTH_WEST, x + 1, z - 1);
         }
     }
     flagPostProcessComplete(0, x, z);
 }
 
-LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk* newChunk,
-                                                            LevelChunk* oldChunk, bool allowEmpty)
+LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk* chunk, LevelChunk* previous,
+                                                        bool allowEmpty)
 {
     if (!inBounds(x, z))
-        return m_emptyChunk;
-
-    const int index = computeIdx(x, z);
-    if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_chunks[index]),
-                                          reinterpret_cast<long>(newChunk),
-                                          reinterpret_cast<long>(oldChunk)) !=
-        reinterpret_cast<long>(oldChunk))
     {
-        newChunk->unload(true, true);
-        delete newChunk;
-        return m_chunks[index];
+        return m_emptyChunk;
     }
 
-    EnterCriticalSection(&m_mutex);
-    m_generator->lightChunk(newChunk);
+    int idx = computeIdx(x, z);
+    if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
+                                          reinterpret_cast<long>(chunk),
+                                          reinterpret_cast<long>(previous)) != reinterpret_cast<long>(previous))
+    {
+        chunk->unload(true, true);
+        delete chunk;
+        return m_cache[idx];
+    }
+
+    EnterCriticalSection(&m_csLoadCreate);
+
+    PIXBeginNamedEvent(0.0f, "Lighting chunk");
+    m_source->lightChunk(chunk);
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Post-processing");
     updatePostProcessFlags(x, z);
-    if (newChunk != oldChunk)
-        m_loadedChunks.push_back(newChunk);
+    if (chunk != previous)
+    {
+        m_loadedChunkList.push_back(chunk);
+    }
 
     if (!allowEmpty)
     {
-        newChunk->checkPostProcess(this, m_generator);
+        chunk->checkPostProcess(this, m_source);
     }
     else
     {
-        if ((newChunk->mChunkFlags & 2) == 0 && hasChunk(x + 1, z + 1) &&
+        if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 && hasChunk(x + 1, z + 1) &&
             hasChunk(x, z + 1) && hasChunk(x + 1, z))
-            gMinecraftServer->addPostProcessRequest(this, m_generator, x, z);
-
-        if (hasChunk(x - 1, z) && (getChunkIfLoaded(x - 1, z)->mChunkFlags & 2) == 0 &&
-            hasChunk(x - 1, z + 1) && hasChunk(x, z + 1))
-            gMinecraftServer->addPostProcessRequest(this, m_generator, x - 1, z);
-
-        if (hasChunk(x, z - 1) && (getChunkIfLoaded(x, z - 1)->mChunkFlags & 2) == 0 &&
+        {
+            gMinecraftServer->addPostProcessRequest(this, m_source, x, z);
+        }
+        if (hasChunk(x - 1, z) && (getChunk(x - 1, z)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
+            hasChunk(x - 1, z + 1) && hasChunk(x, z + 1) && hasChunk(x - 1, z))
+        {
+            gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z);
+        }
+        if (hasChunk(x, z - 1) && (getChunk(x, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
             hasChunk(x + 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x + 1, z))
-            gMinecraftServer->addPostProcessRequest(this, m_generator, x, z - 1);
-
-        if (hasChunk(x - 1, z - 1) && (getChunkIfLoaded(x - 1, z - 1)->mChunkFlags & 2) == 0 &&
+        {
+            gMinecraftServer->addPostProcessRequest(this, m_source, x, z - 1);
+        }
+        if (hasChunk(x - 1, z - 1) &&
+            (getChunk(x - 1, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
             hasChunk(x - 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x - 1, z))
-            gMinecraftServer->addPostProcessRequest(this, m_generator, x - 1, z - 1);
+        {
+            gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z - 1);
+        }
     }
+    PIXEndNamedEvent();
 
-    if (hasChunk(x - 1, z) && hasChunk(x - 2, z) && hasChunk(x - 1, z + 1) &&
-        hasChunk(x - 1, z - 1))
-        newChunk->checkChests(this, x - 1, z);
-    if (hasChunk(x, z + 1) && hasChunk(x, z + 2) && hasChunk(x - 1, z + 1) &&
-        hasChunk(x + 1, z + 1))
-        newChunk->checkChests(this, x, z + 1);
-    if (hasChunk(x + 1, z) && hasChunk(x + 2, z) && hasChunk(x + 1, z + 1) &&
-        hasChunk(x + 1, z - 1))
-        newChunk->checkChests(this, x + 1, z);
-    if (hasChunk(x, z - 1) && hasChunk(x, z - 2) && hasChunk(x - 1, z - 1) &&
-        hasChunk(x + 1, z - 1))
-        newChunk->checkChests(this, x, z - 1);
-    if (hasChunk(x - 1, z) && hasChunk(x + 1, z) && hasChunk(x, z - 1) &&
-        hasChunk(x, z + 1))
-        newChunk->checkChests(this, x, z);
+    PIXBeginNamedEvent(0.0f, "Checking chests");
+    if (hasChunk(x - 1, z) && hasChunk(x - 2, z) && hasChunk(x - 1, z + 1) && hasChunk(x - 1, z - 1))
+    {
+        chunk->checkChests(this, x - 1, z);
+    }
+    if (hasChunk(x, z + 1) && hasChunk(x, z + 2) && hasChunk(x - 1, z + 1) && hasChunk(x + 1, z + 1))
+    {
+        chunk->checkChests(this, x, z + 1);
+    }
+    if (hasChunk(x + 1, z) && hasChunk(x + 2, z) && hasChunk(x + 1, z + 1) && hasChunk(x + 1, z - 1))
+    {
+        chunk->checkChests(this, x + 1, z);
+    }
+    if (hasChunk(x, z - 1) && hasChunk(x, z - 2) && hasChunk(x - 1, z - 1) && hasChunk(x + 1, z - 1))
+    {
+        chunk->checkChests(this, x, z - 1);
+    }
+    if (hasChunk(x - 1, z) && hasChunk(x + 1, z) && hasChunk(x, z - 1) && hasChunk(x, z + 1))
+    {
+        chunk->checkChests(this, x, z);
+    }
+    PIXEndNamedEvent();
 
-    LeaveCriticalSection(&m_mutex);
-    return newChunk;
+    LeaveCriticalSection(&m_csLoadCreate);
+    return chunk;
 }
 
 LevelChunk* ServerChunkCache::getChunkIfGenerated(int x, int z, bool allowEmpty)
 {
     if (!inBounds(x, z))
-        return m_emptyChunk;
-
-    const int index = computeIdx(x, z);
-    LevelChunk* loaded = m_chunks[index];
-    LevelChunk* chunk = getChunkIfLoadedOrInvalid(x, z);
-    if (chunk == 0 || chunk == m_emptyChunk || chunk->isInvalid())
     {
-        EnterCriticalSection(&m_mutex);
+        return m_emptyChunk;
+    }
+
+    LevelChunk* previous = m_cache[computeIdx(x, z)];
+    LevelChunk* chunk = getChunkIfLoadedOrInvalid(x, z);
+    if (chunk == NULL || chunk == m_emptyChunk || chunk->mInvalid)
+    {
+        EnterCriticalSection(&m_csLoadCreate);
+        PIXBeginNamedEvent(0.0f, "Loading chunk");
         chunk = load(x, z, chunk);
-        if (chunk != 0)
+        PIXEndNamedEvent();
+        if (chunk == NULL)
         {
-            chunk->load(false);
-            LeaveCriticalSection(&m_mutex);
-            return updateCacheAndPostProcess(x, z, chunk, loaded, allowEmpty);
+            LeaveCriticalSection(&m_csLoadCreate);
+            return NULL;
         }
-        LeaveCriticalSection(&m_mutex);
-        return 0;
+        chunk->load(false);
+        LeaveCriticalSection(&m_csLoadCreate);
+        return updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
     }
     return chunk;
 }
@@ -301,75 +340,87 @@ LevelChunk* ServerChunkCache::getChunkIfGenerated(int x, int z, bool allowEmpty)
 LevelChunk* ServerChunkCache::getOrCreateChunk(int x, int z, bool allowEmpty)
 {
     if (!inBounds(x, z))
-        return m_emptyChunk;
-
-    const int index = computeIdx(x, z);
-    LevelChunk* oldChunk = m_chunks[index];
-    LevelChunk* chunk = getChunkIfGenerated(x, z, allowEmpty);
-    if (chunk == 0)
     {
-        EnterCriticalSection(&m_mutex);
-        const float pixColour = 0.0f;
-        PIXBeginNamedEvent(pixColour, "Creating chunk");
-        chunk = m_generator->createChunk(x, z);
+        return m_emptyChunk;
+    }
+
+    LevelChunk* previous = m_cache[computeIdx(x, z)];
+    LevelChunk* chunk = getChunkIfGenerated(x, z, allowEmpty);
+    if (chunk == NULL)
+    {
+        EnterCriticalSection(&m_csLoadCreate);
+        PIXBeginNamedEvent(0.0f, "Creating chunk");
+        chunk = m_source->createChunk(x, z);
         PIXEndNamedEvent();
         chunk->load(false);
-        LeaveCriticalSection(&m_mutex);
-        chunk = updateCacheAndPostProcess(x, z, chunk, oldChunk, allowEmpty);
+        LeaveCriticalSection(&m_csLoadCreate);
+        chunk = updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
     }
     return chunk;
 }
 
 int ServerChunkCache::getLoadedChunksCount()
 {
-    return (int)m_loadedChunks.size();
+    return m_loadedChunkList.size();
 }
 
 bool ServerChunkCache::hasChunk(int x, int z)
 {
     if (!inBounds(x, z))
+    {
         return true;
-    LevelChunk* chunk = m_chunks[computeIdx(x, z)];
-    return chunk != 0 && !chunk->isInvalid();
+    }
+    LevelChunk* chunk = m_cache[computeIdx(x, z)];
+    return chunk != NULL && !chunk->mInvalid;
 }
 
 bool ServerChunkCache::isChunkGeneratedAt(int x, int z)
 {
-    if (!inBounds(x, z))
-        return false;
-    LevelChunk* chunk = m_chunks[computeIdx(x, z)];
-    return chunk != 0 && !chunk->isEmpty();
+    LevelChunk* chunk = m_cache[computeIdx(x, z)];
+    return inBounds(x, z) && chunk != NULL && !chunk->isEmpty();
 }
 
 std::vector<LevelChunk*>& ServerChunkCache::getLoadedChunkList()
 {
-    return m_loadedChunks;
+    return m_loadedChunkList;
 }
 
 LevelChunk* ServerChunkCache::create(int x, int z, bool allowEmpty)
 {
     if (!inBounds(x, z))
-        return m_emptyChunk;
-
-    const int index = computeIdx(x, z);
-    LevelChunk* oldChunk = m_chunks[index];
-    if (oldChunk != 0 && oldChunk->x == x && oldChunk->z == z
-        && !oldChunk->isInvalid())
-        return oldChunk;
-
-    EnterCriticalSection(&m_mutex);
-    LevelChunk* chunk = load(x, z, oldChunk);
-    if (chunk == 0)
     {
-        if (m_generator == 0)
-            chunk = m_emptyChunk;
-        else
-            chunk = m_generator->createChunk(x, z);
+        return m_emptyChunk;
     }
-    if (chunk != 0)
+
+    LevelChunk* previous = m_cache[computeIdx(x, z)];
+    if (previous != NULL && previous->x == x && previous->z == z && !previous->mInvalid)
+    {
+        return previous;
+    }
+
+    EnterCriticalSection(&m_csLoadCreate);
+    PIXBeginNamedEvent(0.0f, "Loading chunk");
+    LevelChunk* chunk = load(x, z, previous);
+    PIXEndNamedEvent();
+    if (chunk == NULL)
+    {
+        if (m_source == NULL)
+        {
+            chunk = m_emptyChunk;
+        }
+        else
+        {
+            PIXBeginNamedEvent(0.0f, "Getting chunk from source");
+            chunk = m_source->createChunk(x, z);
+            PIXEndNamedEvent();
+        }
+    }
+    if (chunk != NULL)
+    {
         chunk->load(false);
-    LeaveCriticalSection(&m_mutex);
-    return updateCacheAndPostProcess(x, z, chunk, oldChunk, allowEmpty);
+    }
+    LeaveCriticalSection(&m_csLoadCreate);
+    return updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
 }
 
 LevelChunk* ServerChunkCache::create(int x, int z)
@@ -381,143 +432,224 @@ LevelChunk* ServerChunkCache::getChunk(int x, int z)
 {
     if (inBounds(x, z))
     {
-        LevelChunk* chunk = m_chunks[computeIdx(x, z)];
-        if (chunk != 0 && !chunk->isInvalid())
+        LevelChunk* chunk = m_cache[computeIdx(x, z)];
+        if (chunk != NULL && !chunk->mInvalid)
+        {
             return chunk;
-        if (m_level->isFindingSpawn() || m_saveAll)
+        }
+        if (m_level->isFindingSpawn() || m_createOnRequest)
+        {
             return create(x, z);
+        }
     }
     return m_emptyChunk;
 }
 
 LevelChunk* ServerChunkCache::getChunkLoadedOrUnloaded(int x, int z)
 {
-    if (!inBounds(x, z))
-        return m_emptyChunk;
-    const int index = computeIdx(x, z);
-    LevelChunk* chunk = m_chunks[index];
-    if (chunk == 0)
-        chunk = m_unloadedChunks[index];
-    if (chunk != 0 && !chunk->isInvalid())
-        return chunk;
-    if (m_level->isFindingSpawn() || m_saveAll)
-        return create(x, z);
+    if (inBounds(x, z))
+    {
+        int idx = computeIdx(x, z);
+        LevelChunk* chunk = m_cache[idx];
+        if (chunk == NULL)
+        {
+            chunk = m_unloadedCache[idx];
+        }
+        if (chunk != NULL && !chunk->mInvalid)
+        {
+            return chunk;
+        }
+        if (m_level->isFindingSpawn() || m_createOnRequest)
+        {
+            return create(x, z);
+        }
+    }
     return m_emptyChunk;
 }
 
 void ServerChunkCache::saveEntities(LevelChunk* chunk)
 {
-    if (m_storage != 0 && chunk != 0)
-        m_storage->saveEntities(m_level, chunk);
+    m_storage->saveEntities(m_level, chunk);
 }
+
 void ServerChunkCache::save(LevelChunk* chunk)
 {
-    if (m_storage != 0)
+    if (m_storage != NULL)
     {
         chunk->setLastSaveTime(m_level->getGameTime());
         m_storage->save(m_level, chunk);
     }
 }
-void ServerChunkCache::flagPostProcessComplete(short index, int x, int z)
+
+void ServerChunkCache::flagPostProcessComplete(short flag, int x, int z)
 {
-    if (!hasChunk(x, z))
-        return;
-    LevelChunk* chunk = m_level->getChunk(x, z);
-    if (chunk != 0 && chunk != m_emptyChunk)
-        chunk->flagPostProcessComplete(index);
-}
-void ServerChunkCache::saveAllEntities()
-{
-    EnterCriticalSection(&m_mutex);
-    for (std::vector<LevelChunk*>::iterator i = m_loadedChunks.begin(); i != m_loadedChunks.end(); ++i)
-        saveEntities(*i);
-    if (m_storage != 0)
-        m_storage->flush();
-    LeaveCriticalSection(&m_mutex);
+    if (hasChunk(x, z))
+    {
+        LevelChunk* chunk = m_level->getChunk(x, z);
+        if (chunk != m_emptyChunk)
+        {
+            chunk->flagPostProcessComplete(flag);
+        }
+    }
 }
 
-void ServerChunkCache::save(bool force, ProgressListener* listener)
+void ServerChunkCache::saveAllEntities()
 {
-    EnterCriticalSection(&m_mutex);
-    int count = 0;
-    int completed = 0;
-    if (listener)
+    PIXBeginNamedEvent(0.0f, "Save all entities");
+
+    PIXBeginNamedEvent(0.0f, "saving to NBT");
+    EnterCriticalSection(&m_csLoadCreate);
+    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
     {
-        for (std::vector<LevelChunk*>::iterator i = m_loadedChunks.begin(); i != m_loadedChunks.end(); ++i)
-            if (*i && (*i)->shouldSave(force))
-                ++count;
+        m_storage->saveEntities(m_level, *it);
     }
-    const int quadrants[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
-    for (int quadrant = 0; quadrant < (force ? 4 : 1); ++quadrant)
+    LeaveCriticalSection(&m_csLoadCreate);
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Flushing");
+    m_storage->flush();
+    PIXEndNamedEvent();
+
+    PIXEndNamedEvent();
+}
+
+bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
+{
+    EnterCriticalSection(&m_csLoadCreate);
+
+    int saveTotal = 0;
+    if (progressListener != NULL)
     {
-        for (std::vector<LevelChunk*>::iterator i = m_loadedChunks.begin(); i != m_loadedChunks.end(); ++i)
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
         {
-            LevelChunk* chunk = *i;
-            if (chunk == 0 || (!force && !chunk->shouldSave(false)))
-                continue;
-            if (force && ((chunk->x < 0) != (quadrants[quadrant][0] < 0) ||
-                          (chunk->z < 0) != (quadrants[quadrant][1] < 0)))
-                continue;
-            if (force)
+            if ((*it)->shouldSave(force))
+            {
+                ++saveTotal;
+            }
+        }
+    }
+
+    int saveCount = 0;
+    if (!force)
+    {
+        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+        {
+            LevelChunk* chunk = m_loadedChunkList[i];
+            if (chunk->shouldSave(false))
+            {
+                save(chunk);
+                chunk->setUnsaved(false);
+                LeaveCriticalSection(&m_csLoadCreate);
+                return false;
+            }
+        }
+    }
+    else
+    {
+        std::vector<LevelChunk*> sortedChunkList;
+        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+        {
+            if (m_loadedChunkList[i]->x < 0 && m_loadedChunkList[i]->z < 0)
+            {
+                sortedChunkList.push_back(m_loadedChunkList[i]);
+            }
+        }
+        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+        {
+            if (m_loadedChunkList[i]->x >= 0 && m_loadedChunkList[i]->z < 0)
+            {
+                sortedChunkList.push_back(m_loadedChunkList[i]);
+            }
+        }
+        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+        {
+            if (m_loadedChunkList[i]->x >= 0 && m_loadedChunkList[i]->z >= 0)
+            {
+                sortedChunkList.push_back(m_loadedChunkList[i]);
+            }
+        }
+        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+        {
+            if (m_loadedChunkList[i]->x < 0 && m_loadedChunkList[i]->z >= 0)
+            {
+                sortedChunkList.push_back(m_loadedChunkList[i]);
+            }
+        }
+
+        int progress = 0;
+        for (unsigned int i = 0; i < sortedChunkList.size(); ++i)
+        {
+            LevelChunk* chunk = sortedChunkList[i];
+            if (!chunk->mDontSave)
+            {
                 saveEntities(chunk);
+            }
             if (chunk->shouldSave(force))
             {
                 save(chunk);
                 chunk->setUnsaved(false);
-                if (listener && count != 0 && (++completed % 10) == 0)
-                    listener->progressStagePercentage(completed * 100 / count);
+                if (progressListener != NULL)
+                {
+                    ++saveCount;
+                    progress += 100;
+                    if (saveCount % SAVE_PROGRESS_INTERVAL == 0)
+                    {
+                        progressListener->progressStagePercentage(progress / saveTotal);
+                    }
+                }
             }
+            m_storage->WaitIfTooManyQueuedChunks();
+        }
+        m_storage->WaitForAll();
+
+        if (m_storage != NULL)
+        {
+            m_storage->flush();
         }
     }
-    if (m_storage != 0)
-        m_storage->flush();
-    LeaveCriticalSection(&m_mutex);
+
+    LeaveCriticalSection(&m_csLoadCreate);
+    return true;
 }
 
 void ServerChunkCache::tick()
 {
-    if (!shouldSave())
-        return;
-    for (int i = 0; i < 50; ++i)
+    if (m_level->noSave)
     {
-        if (!m_toSave.empty())
-        {
-            LevelChunk* chunk = m_toSave.front();
-            if (!chunk->isUnloaded() && !chunk->containsPlayer())
-            {
-                save(chunk);
-                saveEntities(chunk);
-                chunk->unload(true, true);
-                std::vector<LevelChunk*>::iterator loaded = std::find(m_loadedChunks.begin(), m_loadedChunks.end(), chunk);
-                if (loaded != m_loadedChunks.end())
-                    m_loadedChunks.erase(loaded);
-                const int index = computeIdx(chunk->x, chunk->z);
-                m_unloadedChunks[index] = chunk;
-                m_chunks[index] = 0;
-            }
-            m_toSave.pop_front();
-
-            if (!m_toSave.empty())
-            {
-                chunk = m_toSave.front();
-                if (!chunk->isUnloaded() && !chunk->containsPlayer())
-                {
-                    save(chunk);
-                    saveEntities(chunk);
-                    chunk->unload(true, true);
-                    std::vector<LevelChunk*>::iterator loaded = std::find(m_loadedChunks.begin(), m_loadedChunks.end(), chunk);
-                    if (loaded != m_loadedChunks.end())
-                        m_loadedChunks.erase(loaded);
-                    const int index = computeIdx(chunk->x, chunk->z);
-                    m_unloadedChunks[index] = chunk;
-                    m_chunks[index] = 0;
-                }
-                m_toSave.pop_front();
-            }
-        }
+        return;
     }
-    if (m_storage)
+
+    for (int i = 0; i < MAX_DROPS_PER_TICK; ++i)
+    {
+        if (m_toDrop.empty())
+        {
+            continue;
+        }
+
+        LevelChunk* chunk = m_toDrop.front();
+        if (!chunk->isUnloaded() && !chunk->containsPlayer())
+        {
+            save(chunk);
+            saveEntities(chunk);
+            chunk->unload(true, true);
+
+            std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
+            if (it != m_loadedChunkList.end())
+            {
+                m_loadedChunkList.erase(it);
+            }
+
+            int idx = computeIdx(chunk->x, chunk->z);
+            m_unloadedCache[idx] = chunk;
+            m_cache[idx] = NULL;
+        }
+        m_toDrop.pop_front();
+    }
+
+    if (m_storage != NULL)
+    {
         m_storage->tick();
+    }
 }
 
 bool ServerChunkCache::shouldSave()
@@ -532,16 +664,18 @@ std::wstring ServerChunkCache::gatherStats()
 
 std::vector<Biome::MobSpawnerData*>* ServerChunkCache::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
-    return m_generator->getMobsAt(category, pos);
+    return m_source->getMobsAt(category, pos);
 }
 
-BlockPos* ServerChunkCache::findNearestMapFeature(Level* level, const std::wstring& feature,
-                                                  const BlockPos& pos, bool takeBlock)
+BlockPos* ServerChunkCache::findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos,
+                                                  bool takeBlock)
 {
-    return m_generator->findNearestMapFeature(level, feature, pos, takeBlock);
+    return m_source->findNearestMapFeature(level, feature, pos, takeBlock);
 }
 
-void ServerChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int) {}
+void ServerChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int)
+{
+}
 
 LevelChunk* ServerChunkCache::getChunkAt(const BlockPos& pos)
 {
@@ -550,51 +684,41 @@ LevelChunk* ServerChunkCache::getChunkAt(const BlockPos& pos)
 
 unsigned int ServerChunkCache::runSaveThreadProc(void* data)
 {
-    ServerChunkCacheSaveContext* context = static_cast<ServerChunkCacheSaveContext*>(data);
-    if (context == 0)
-        return 0;
+    ServerChunkCacheSaveThreadData* threadData = static_cast<ServerChunkCacheSaveThreadData*>(data);
 
-    if (!context->useDefaultThreadStorage)
+    if (!threadData->useSharedThreadStorage)
     {
         Compression::CreateNewThreadStorage();
         OldChunkStorage::CreateNewThreadStorage();
-        if (context->storage != 0)
-            context->storage->WaitIfTooManyQueuedChunks();
     }
     else
     {
         Compression::UseDefaultThreadStorage();
         OldChunkStorage::UseDefaultThreadStorage();
-        if (context->storage != 0)
-            context->storage->WaitIfTooManyQueuedChunks();
     }
+    threadData->wakeEvent->WaitForSignal(-1);
 
-    if (context->chunk != 0)
+    while (threadData->chunk != NULL)
     {
-        const float pixColour = 0.0f;
-        do
+        PIXBeginNamedEvent(0.0f, "Saving entities");
+        if (threadData->saveEntities)
         {
-            if (context->saveEntities)
-            {
-                PIXBeginNamedEvent(pixColour, "Saving entities");
-                context->cache->saveEntities(context->chunk);
-                PIXEndNamedEvent();
-            }
-            PIXBeginNamedEvent(pixColour, "Saving chunk");
-            context->cache->save(context->chunk);
-            context->chunk->setUnsaved(false);
-            PIXEndNamedEvent();
-            PIXBeginNamedEvent(pixColour, "Notifying and waiting for next chunk");
-            if (context->notifyEvent != 0)
-                context->notifyEvent->Set();
-            if (context->storage != 0)
-                context->storage->WaitIfTooManyQueuedChunks();
-            PIXEndNamedEvent();
+            threadData->cache->saveEntities(threadData->chunk);
         }
-        while (context->chunk != 0);
+        PIXEndNamedEvent();
+
+        PIXBeginNamedEvent(0.0f, "Saving chunk");
+        threadData->cache->save(threadData->chunk);
+        threadData->chunk->setUnsaved(false);
+        PIXEndNamedEvent();
+
+        PIXBeginNamedEvent(0.0f, "Notifying and waiting for next chunk");
+        threadData->notificationEvent->Set();
+        threadData->wakeEvent->WaitForSignal(-1);
+        PIXEndNamedEvent();
     }
 
-    if (!context->useDefaultThreadStorage)
+    if (!threadData->useSharedThreadStorage)
     {
         Compression::ReleaseThreadStorage();
         OldChunkStorage::ReleaseThreadStorage();
@@ -604,7 +728,7 @@ unsigned int ServerChunkCache::runSaveThreadProc(void* data)
 
 int ServerChunkCache::getLoadedChunks()
 {
-    return getLoadedChunksCount();
+    return getLoadedChunkList().size();
 }
 
 void ServerChunkCache::setOverrideBoundFunction(bool (*function)(void*, int, int), void* data)
@@ -615,5 +739,5 @@ void ServerChunkCache::setOverrideBoundFunction(bool (*function)(void*, int, int
 
 LevelChunk** ServerChunkCache::getCache()
 {
-    return m_chunks.data();
+    return m_cache;
 }

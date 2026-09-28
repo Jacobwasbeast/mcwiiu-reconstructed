@@ -250,7 +250,7 @@ void MinecraftServer::postProcessTerminate(ProgressRenderer* progressRenderer)
     unsigned int initialRequests = gMinecraftServer->postProcessRequests.size();
     LeaveCriticalSection(&gMinecraftServer->postProcessCritSec);
 
-    while (postProcessThread->WaitForCompletion(50) == 0x102)
+    while (postProcessThread->WaitForCompletion(50) == C4JEvent::WaitTimeout)
     {
         EnterCriticalSection(&gMinecraftServer->postProcessCritSec);
         unsigned int remainingRequests = gMinecraftServer->postProcessRequests.size();
