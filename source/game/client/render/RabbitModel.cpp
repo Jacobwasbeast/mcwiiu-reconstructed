@@ -113,7 +113,9 @@ RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-RabbitModel::~RabbitModel() = default;
+RabbitModel::~RabbitModel()
+{
+}
 
 void RabbitModel::setRotation(ModelPartSkin* part, float x, float y, float z)
 {

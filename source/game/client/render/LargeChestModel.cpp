@@ -34,7 +34,4 @@ LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition)
 
 LargeChestModel::~LargeChestModel()
 {
-    delete mLid;
-    delete mLock;
-    delete mBottom;
 }

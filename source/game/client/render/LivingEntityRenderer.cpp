@@ -43,10 +43,6 @@ LivingEntityRenderer::LivingEntityRenderer(EntityRenderDispatcher* dispatcher, M
     mShadowRadius = shadowRadius;
 }
 
-LivingEntityRenderer::~LivingEntityRenderer()
-{
-}
-
 bool LivingEntityRenderer::addLayer(RenderLayer* layer)
 {
     mLayers.push_back(layer);

@@ -11,18 +11,18 @@ class ByteBuffer;
 class Texture
 {
 public:
-    Texture(const std::wstring& name, int type, int width, int height, int filter, int format,
+    Texture(const std::wstring& name, int type, int width, int height, int wrap, int format,
             int minFilter, int magFilter, BufferedImage* image, bool mipmap);
-    Texture(const std::wstring& name, int type, int width, int height, int depth, int filter,
+    Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap,
             int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
     ~Texture();
 
-    void _init(const std::wstring& name, int type, int width, int height, int filter, int format,
-               int minFilter, int magFilter, bool mipmap);
+    void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
+               int format, int minFilter, int magFilter, bool mipmap);
     void updateOnGPU();
     static unsigned int crispBlend(int first, int second);
     void transferFromImage(BufferedImage* image);
-    void _init(const std::wstring& name, int type, int width, int height, int depth, int filter,
+    void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
                int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
     unsigned int getData(unsigned int mipLevel);
     unsigned int getHeight();
@@ -31,8 +31,8 @@ public:
     unsigned int getManagerId();
     unsigned int getGlId();
     void bind(int textureUnit);
-    Texture(const std::wstring& name, int type, int width, int height, int filter, int format,
-            int minFilter, int magFilter, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap,
+            int format, int minFilter, int magFilter, bool mipmap);
     Rect2i* getRect();
     void fill(const Rect2i* rect, int color);
     void writeAsBMP(const std::wstring& fileName);
@@ -49,21 +49,20 @@ private:
     int m_type;
     int m_width;
     int m_height;
-    int m_format;
-    int m_filter;
     int m_depth;
+    int m_format;
+    int m_target;
     int m_minFilter;
     int m_magFilter;
-    int m_target;
+    int m_wrap;
     bool m_mipmap;
-    bool m_hasMipmaps;
-    bool m_immediateUpdate;
     std::wstring m_name;
     Rect2i* m_rect;
+    bool m_valid;
+    bool m_immediateUpdate;
+    bool m_updated;
     unsigned int m_mipLevels;
     ByteBuffer* m_data[10];
-    bool m_dirty;
-    bool m_gpuSynced;
     bool m_gpuAllocated;
 };
 

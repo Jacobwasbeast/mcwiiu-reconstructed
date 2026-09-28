@@ -15,7 +15,6 @@ LeashKnotModel::LeashKnotModel(int xTexOffs, int yTexOffs, int texWidth, int tex
 
 LeashKnotModel::~LeashKnotModel()
 {
-    delete mKnot;
 }
 
 void LeashKnotModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeight)

@@ -105,38 +105,33 @@ void textureGenerateMipLevel(ByteBuffer* previous, unsigned int previousWidth, u
 
 }
 
-Texture::Texture(const std::wstring& name, int type, int width, int height, int filter, int format,
+Texture::Texture(const std::wstring& name, int type, int width, int height, int wrap, int format,
                  int minFilter, int magFilter, BufferedImage* image, bool mipmap)
-    : Texture(name, type, width, height, 1, filter, format, minFilter, magFilter, image, mipmap)
 {
+    _init(name, type, width, height, 1, wrap, format, minFilter, magFilter, image, mipmap);
 }
 
-Texture::Texture(const std::wstring& name, int type, int width, int height, int depth, int filter,
+Texture::Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap,
                  int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap)
-    : m_glId(0), m_managerId(0), m_type(0), m_width(0), m_height(0), m_format(0), m_filter(0),
-      m_depth(0), m_minFilter(0), m_magFilter(0), m_target(1), m_mipmap(false), m_hasMipmaps(false),
-      m_immediateUpdate(false), m_name(), m_rect(NULL), m_mipLevels(1), m_dirty(false),
-      m_gpuSynced(false), m_gpuAllocated(false)
 {
-    for (int i = 0; i < 10; ++i) m_data[i] = NULL;
-    _init(name, type, width, height, depth, filter, format, minFilter, magFilter, image, mipmap);
+    _init(name, type, width, height, depth, wrap, format, minFilter, magFilter, image, mipmap);
 }
 
 Texture::~Texture()
 {
-    if (m_glId != (unsigned int)-1) GlStateManager::deleteTexture((int)m_glId);
-    for (int i = 0; i < 10; ++i) delete m_data[i];
     delete m_rect;
+    m_rect = NULL;
+    for (int i = 0; i < 10; ++i)
+    {
+        delete m_data[i];
+        m_data[i] = NULL;
+    }
+    if ((int)m_glId >= 0)
+        GlStateManager::deleteTexture((int)m_glId);
 }
 
-void Texture::_init(const std::wstring& name, int type, int width, int height, int filter, int format,
-                    int minFilter, int magFilter, bool mipmap)
-{
-    _init(name, type, width, height, 1, filter, format, minFilter, magFilter, NULL, mipmap);
-}
-
-void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int filter,
-                    int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap)
+void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
+                    int format, int minFilter, int magFilter, bool mipmap)
 {
     m_name = name;
     m_type = type;
@@ -144,18 +139,18 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     m_height = height;
     m_depth = depth;
     m_format = format;
-    m_filter = filter;
     m_minFilter = minFilter;
     m_magFilter = magFilter;
-    m_target = 1;
-    m_mipmap = mipmap;
-    m_hasMipmaps = mipmap || (minFilter != 0 && minFilter != 1) || (magFilter != 0 && magFilter != 1);
-    m_gpuAllocated = false;
-    m_gpuSynced = false;
+    m_wrap = wrap;
     m_immediateUpdate = false;
+    for (int i = 0; i < 10; ++i)
+        m_data[i] = NULL;
+    m_gpuAllocated = false;
     m_rect = new Rect2i(0, 0, width, height);
+    m_target = 1;
+    m_mipmap = mipmap || (minFilter != 0 && minFilter != 1) || (magFilter != 0 && magFilter != 1);
     m_mipLevels = 1;
-    if (m_hasMipmaps)
+    if (m_mipmap)
     {
         unsigned int widthLevels = 1;
         unsigned int heightLevels = 1;
@@ -164,25 +159,39 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
         m_mipLevels = std::min(5u, std::min(widthLevels, heightLevels));
     }
     if (type == 2)
+    {
         m_glId = (unsigned int)-1;
+    }
     else
     {
         m_glId = (unsigned int)GlStateManager::genTexture();
         GlStateManager::bindTexture((int)m_glId);
         GlStateManager::texParameteri(m_target, 1, minFilter);
         GlStateManager::texParameteri(m_target, 2, magFilter);
-        GlStateManager::texParameteri(m_target, 3, filter);
-        GlStateManager::texParameteri(m_target, 4, filter);
+        GlStateManager::texParameteri(m_target, 3, wrap);
+        GlStateManager::texParameteri(m_target, 4, wrap);
     }
     m_managerId = TextureManager::getInstance()->createTextureID();
+}
+
+void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
+                    int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap)
+{
+    _init(name, type, width, height, depth, wrap, format, minFilter, magFilter, mipmap);
     if (image != NULL)
     {
+        m_valid = true;
         transferFromImage(image);
-        if (type != 2) updateOnGPU();
+        if (type != 2)
+        {
+            updateOnGPU();
+            m_immediateUpdate = false;
+        }
+        return;
     }
-    else if (width != -1 && height != -1)
+    if (width != -1 && height != -1)
     {
-        if (m_hasMipmaps) m_mipLevels = 5;
+        if (m_mipmap) m_mipLevels = 5;
         for (unsigned int level = 0; level < m_mipLevels; ++level)
         {
             const unsigned int size = (width >> level) * (height >> level) * depth * 4;
@@ -195,7 +204,13 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
             m_data[level]->limit(size);
             delete[] bytes.data;
         }
+        if (m_immediateUpdate)
+            updateOnGPU();
+        else
+            m_updated = false;
+        return;
     }
+    m_valid = false;
 }
 
 unsigned int Texture::crispBlend(int first, int second)
@@ -242,9 +257,9 @@ void Texture::transferFromImage(BufferedImage* image)
     m_data[0]->limit(count * 4);
     delete[] bytes.data;
 
-    if (m_hasMipmaps || image->getData(1) != NULL)
+    if (m_mipmap || image->getData(1) != NULL)
     {
-        m_hasMipmaps = true;
+        m_mipmap = true;
         unsigned int level;
         for (level = 1; level <= 4; ++level)
         {
@@ -280,7 +295,7 @@ void Texture::transferFromImage(BufferedImage* image)
     }
     else
     {
-        m_gpuSynced = false;
+        m_updated = false;
     }
 }
 
@@ -289,7 +304,7 @@ void Texture::updateOnGPU()
     unsigned int level;
 
     m_data[0]->flip();
-    if (m_hasMipmaps && m_mipLevels > 1) {
+    if (m_mipmap && m_mipLevels > 1) {
         for (level = 1; level < m_mipLevels; ++level) {
             if (m_data[level] == NULL)
                 break;
@@ -299,25 +314,24 @@ void Texture::updateOnGPU()
     if (!m_gpuAllocated) {
         gRenderer->TextureSetTextureLevels((int)m_mipLevels);
         gRenderer->TextureData(m_width, m_height, m_data[0]->getBuffer(), 0, C4JRender::eTextureFormat_RGBA8);
-        if (m_hasMipmaps && m_mipLevels > 1) {
+        if (m_mipmap && m_mipLevels > 1) {
             for (level = 1; level < m_mipLevels; ++level) {
                 gRenderer->TextureData(m_width >> level, m_height >> level, m_data[level]->getBuffer(), (int)level,
                                        C4JRender::eTextureFormat_RGBA8);
             }
         }
-        m_gpuSynced = true;
+        m_updated = true;
         m_gpuAllocated = true;
     } else {
         gRenderer->TextureDataUpdate(0, 0, m_width, m_height, m_data[0]->getBuffer(), 0);
-        if (m_hasMipmaps && gRenderer->TextureGetTextureLevels() > 1 && m_mipLevels > 1) {
+        if (m_mipmap && gRenderer->TextureGetTextureLevels() > 1 && m_mipLevels > 1) {
             for (level = 1; level < m_mipLevels; ++level) {
                 gRenderer->TextureDataUpdate(0, 0, m_width >> level, m_height >> level, m_data[level]->getBuffer(),
                                              (int)level);
             }
         }
-        m_gpuSynced = true;
+        m_updated = true;
     }
-    m_dirty = false;
 }
 
 unsigned int Texture::getData(unsigned int mipLevel) { return (unsigned int)m_data[mipLevel]; }
@@ -355,11 +369,10 @@ void Texture::blit(int x, int y, Texture* texture, bool flip)
         }
     }
 
-    m_dirty = true;
     if (m_immediateUpdate)
         updateOnGPU();
     else
-        m_gpuSynced = false;
+        m_updated = false;
 }
 
 void Texture::bind(int textureUnit)
@@ -367,5 +380,5 @@ void Texture::bind(int textureUnit)
     GlStateManager::enableTexture();
     GlStateManager::activeTexture(textureUnit);
     GlStateManager::bindTexture((int)m_glId);
-    if (!m_gpuSynced) updateOnGPU();
+    if (!m_updated) updateOnGPU();
 }

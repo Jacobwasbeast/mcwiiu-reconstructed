@@ -14,34 +14,40 @@
 ArmorStandModel::ArmorStandModel(float scale, const ModelDefinition& definition)
     : ArmorStandArmorModel(scale, 64, 64, definition)
 {
+    delete mHead;
     mHead = new ModelPartSkin(this, 0, 0, NULL);
     mHead->addBox(-1.0f, -7.0f, -1.0f, 2, 7, 2, scale);
     mHead->setPos(0.0f, 0.0f, 0.0f);
 
+    delete mBody;
     mBody = new ModelPartSkin(this, 0, 26, NULL);
-    mBody->addBox(-6.0f, -7.0f, -1.5f, 12, 3, 3, scale);
+    mBody->addBox(-6.0f, 0.0f, -1.5f, 12, 3, 3, scale);
     mBody->setPos(0.0f, 0.0f, 0.0f);
 
+    delete mRightArm;
     mRightArm = new ModelPartSkin(this, 24, 0, NULL);
-    mRightArm->addBox(-2.0f, -2.0f, -2.0f, 2, 12, 2, scale);
+    mRightArm->addBox(-2.0f, -2.0f, -1.0f, 2, 12, 2, scale);
     mRightArm->setPos(-5.0f, 2.0f, 0.0f);
 
-    mLeftArm = new ModelPartSkin(this, 32, 0, NULL);
+    delete mLeftArm;
+    mLeftArm = new ModelPartSkin(this, 32, 16, NULL);
     mLeftArm->mMirror = true;
-    mLeftArm->addBox(0.0f, -2.0f, -2.0f, 2, 12, 2, scale);
+    mLeftArm->addBox(0.0f, -2.0f, -1.0f, 2, 12, 2, scale);
     mLeftArm->setPos(5.0f, 2.0f, 0.0f);
 
+    delete mRightLeg;
     mRightLeg = new ModelPartSkin(this, 8, 0, NULL);
-    mRightLeg->addBox(-2.0f, -2.0f, -2.0f, 2, 11, 2, scale);
-    mRightLeg->setPos(-1.9f, 9.0f, 0.0f);
+    mRightLeg->addBox(-1.0f, 0.0f, -1.0f, 2, 11, 2, scale);
+    mRightLeg->setPos(-1.9f, 12.0f, 0.0f);
 
+    delete mLeftLeg;
     mLeftLeg = new ModelPartSkin(this, 40, 16, NULL);
     mLeftLeg->mMirror = true;
-    mLeftLeg->addBox(0.0f, -2.0f, -2.0f, 2, 11, 2, scale);
-    mLeftLeg->setPos(1.9f, 9.0f, 0.0f);
+    mLeftLeg->addBox(-1.0f, 0.0f, -1.0f, 2, 11, 2, scale);
+    mLeftLeg->setPos(1.9f, 12.0f, 0.0f);
 
-    mRightArm->addChild(mRightLeg);
-    mLeftArm->addChild(mLeftLeg);
+    mRightArm->addChild(mRightItem);
+    mLeftArm->addChild(mLeftItem);
 
     mArmorStandBody = new ModelPartSkin(this, 16, 0, NULL);
     mArmorStandBody->addBox(-3.0f, 3.0f, -1.0f, 2, 7, 2, scale);
@@ -56,10 +62,10 @@ ArmorStandModel::ArmorStandModel(float scale, const ModelDefinition& definition)
     mArmorStandLeftArm->addBox(-4.0f, 10.0f, -1.0f, 8, 2, 2, scale);
     mArmorStandLeftArm->setPos(0.0f, 0.0f, 0.0f);
 
-    mArmorStandBase = new ModelPartSkin(this, 32, 32, NULL);
-    mArmorStandBase->addBox(-6.0f, 0.0f, -6.0f, 12, 1, 12, scale);
+    mArmorStandBase = new ModelPartSkin(this, 0, 32, NULL);
+    mArmorStandBase->addBox(-6.0f, 11.0f, -6.0f, 12, 1, 12, scale);
     mArmorStandBase->setPos(0.0f, 12.0f, 0.0f);
-    mHead->mShow = false;
+    mHat->mShow = false;
     compileSkinnedDrawlist();
 }
 

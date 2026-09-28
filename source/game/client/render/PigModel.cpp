@@ -7,7 +7,7 @@ PigModel::PigModel(const ModelDefinition& modelDefinition)
 {
     if (!modelDefinition.DoesOverrideModel())
     {
-        mHead->texOffs(16, 16)->addBox(-0.8f, 0.0f, -9.0f, 4, 3, 1, 0.0f);
+        mHead->texOffs(16, 16)->addBox(-2.0f, 0.0f, -9.0f, 4, 3, 1, 0.0f);
         mYHeadOffs = 4.0f;
         compileSkinnedDrawlist();
     }
@@ -23,7 +23,7 @@ PigModel::PigModel(float scale, const ModelDefinition& modelDefinition)
 {
     if (!modelDefinition.DoesOverrideModel())
     {
-        mHead->texOffs(16, 16)->addBox(-0.8f, 0.0f, -9.0f, 4, 3, 1, scale);
+        mHead->texOffs(16, 16)->addBox(-2.0f, 0.0f, -9.0f, 4, 3, 1, scale);
         mYHeadOffs = 4.0f;
         compileSkinnedDrawlist();
     }

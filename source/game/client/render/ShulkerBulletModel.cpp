@@ -17,7 +17,9 @@ ShulkerBulletModel::ShulkerBulletModel(const ModelDefinition& modelDefinition)
     mBase->compile(0.0625f);
 }
 
-ShulkerBulletModel::~ShulkerBulletModel() = default;
+ShulkerBulletModel::~ShulkerBulletModel()
+{
+}
 
 void ShulkerBulletModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {

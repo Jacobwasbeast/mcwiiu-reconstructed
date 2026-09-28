@@ -17,10 +17,6 @@ HumanoidMobRenderer::HumanoidMobRenderer(EntityRenderDispatcher* dispatcher, Hum
     addLayer(new ItemInHandLayer(this));
 }
 
-HumanoidMobRenderer::~HumanoidMobRenderer()
-{
-}
-
 const ResourceLocation* HumanoidMobRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
     return &HUMANOID_LOCATION;

@@ -10,12 +10,12 @@
 EvocationFangsRenderer::EvocationFangsRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mModel = new EvocationFangsModel(ModelDefinition());
+    mFangsModel = new EvocationFangsModel(ModelDefinition());
 }
 
 EvocationFangsRenderer::~EvocationFangsRenderer()
 {
-    delete mModel;
+    delete mFangsModel;
 }
 
 void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
@@ -30,9 +30,9 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
         return;
     }
 
-    if (progress > 0.9)
+    if (progress > 0.9f)
     {
-        scale = static_cast<float>((1.0 - progress) / 0.1);
+        scale = static_cast<float>((1.0 - progress) / 0.1f);
         scale += scale;
     }
 
@@ -44,7 +44,7 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     GlStateManager::rotatef(90.0F - fangs->mYRot, 0.0F, 1.0F, 0.0F);
     GlStateManager::scalef(-scale, -scale, scale);
     GlStateManager::translatef(0.0F, -0.625F, 0.0F);
-    mModel->render(entity, static_cast<float>(progress), 0.5F, 1.75F, fangs->mYRot,
+    mFangsModel->render(entity, static_cast<float>(progress), 0.5F, 1.75F, fangs->mYRot,
                    fangs->mXRot, 0.03125F, true);
     GlStateManager::popMatrix();
     GlStateManager::enableCull();

@@ -17,7 +17,7 @@ class AbstractHorseModel : public Model
 public:
     AbstractHorseModel(bool horse, const ModelDefinition& modelDefinition);
 
-    virtual ~AbstractHorseModel();
+    virtual ~AbstractHorseModel() {}
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks);

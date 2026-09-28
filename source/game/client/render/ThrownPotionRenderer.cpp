@@ -6,7 +6,7 @@
 #include "game/item/ThrownPotion.hpp"
 
 ThrownPotionRenderer::ThrownPotionRenderer(EntityRenderDispatcher* dispatcher)
-    : ThrownItemRenderer(dispatcher, Items::splashPotion)
+    : ThrownItemRenderer(dispatcher, Items::potion)
 {
 }
 

@@ -10,7 +10,7 @@ class ChestModel : public Model
 public:
     ChestModel(const ModelDefinition& modelDefinition);
 
-    virtual ~ChestModel();
+    virtual ~ChestModel() {}
 
     void render(bool useDisplayList);
 

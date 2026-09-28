@@ -16,7 +16,7 @@ HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, d
                                              double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
     , textureManager(textures)
-    , size(1.75f - (float)za * 0.5f)
+    , size(1.0f - (float)xa * 0.5f)
 {
     lifetime = random.nextInt(4) + 6;
 

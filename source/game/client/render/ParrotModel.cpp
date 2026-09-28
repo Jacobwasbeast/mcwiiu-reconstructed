@@ -65,7 +65,7 @@ ParrotModel::ParrotModel(const ModelDefinition& modelDefinition)
         mBodyDefaultY = 16.5f;
         mLeg1DefaultY = 22.0f;
         mTailDefaultY = 21.07f;
-        mBodyDefaultXRot = 0.4937f;
+        mBodyDefaultXRot = 0.4927f;
         mHeadDefaultY = 15.69f;
         mLeg1DefaultXRot = -0.0299f;
         mWing1DefaultYRot = 0.0f;

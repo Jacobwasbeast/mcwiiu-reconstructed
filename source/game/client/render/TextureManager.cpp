@@ -81,10 +81,10 @@ void TextureManager::registerTexture(Texture* texture)
 }
 
 Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height,
-                                       int format, int filter, int wrap, int target, bool mipmap,
+                                       int wrap, int format, int minFilter, int magFilter, bool mipmap,
                                        BufferedImage* image)
 {
-    Texture* texture = new Texture(name, type, width, height, format, filter, wrap, target, image, mipmap);
+    Texture* texture = new Texture(name, type, width, height, wrap, format, minFilter, magFilter, image, mipmap);
     registerTexture(texture);
     return texture;
 }

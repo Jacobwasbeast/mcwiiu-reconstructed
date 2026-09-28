@@ -13,7 +13,7 @@ class VillagerModel : public Model
 public:
     VillagerModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition);
     VillagerModel(float scale, const ModelDefinition& modelDefinition);
-    virtual ~VillagerModel();
+    virtual ~VillagerModel() {}
     void _init(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition);
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);

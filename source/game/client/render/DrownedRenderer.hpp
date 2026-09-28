@@ -11,6 +11,7 @@ class LivingEntity;
 class Model;
 class ModelDefinition;
 class ResourceLocation;
+class ZombieArmorLayer;
 
 class DrownedRenderer : public HumanoidMobRenderer
 {
@@ -23,6 +24,9 @@ public:
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
                                 float rotationYaw, float partialTicks);
+
+private:
+    ZombieArmorLayer* mArmorLayer;
 };
 
 #endif

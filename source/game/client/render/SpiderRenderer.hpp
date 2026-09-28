@@ -19,7 +19,7 @@ class SpiderRenderer : public MobRenderer
 {
 public:
     SpiderRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~SpiderRenderer();
+    virtual ~SpiderRenderer() {}
 
     virtual double getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

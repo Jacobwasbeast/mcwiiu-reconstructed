@@ -14,11 +14,11 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
 
         mHead = new ModelPartSkin(this, 0, 0, NULL);
         mHead->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale);
-        mHead->setPos(0.0f, (float)(18 - legHeight), 0.0f);
+        mHead->setPos(0.0f, (float)(18 - legHeight), -6.0f);
 
         mBody = new ModelPartSkin(this, 28, 8, NULL);
         mBody->addBox(-5.0f, -10.0f, -7.0f, 10, 16, 8, scale);
-        mBody->setPos(0.0f, (float)(17 - legHeight), 0.0f);
+        mBody->setPos(0.0f, (float)(17 - legHeight), 2.0f);
 
         mLeg0 = new ModelPartSkin(this, 0, 16, NULL);
         mLeg0->addBox(-2.0f, 0.0f, -2.0f, 4, legHeight, 4, scale);
@@ -42,19 +42,17 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
         mYHeadOffs = -4.0f;
         mZHeadOffs = 4.0f;
 
-        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
-        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
-        mLeg0 = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
-        mLeg1 = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, 0.0f, NULL);
-        mLeg2 = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, 0.0f, NULL);
-        mLeg3 = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, 0.0f, NULL);
+        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, scale, NULL);
+        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, scale, NULL);
+        mLeg0 = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, scale, NULL);
+        mLeg1 = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, scale, NULL);
+        mLeg2 = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, scale, NULL);
+        mLeg3 = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, scale, NULL);
         mHasOverriddenParts = true;
     }
 
     compileSkinnedDrawlist();
 }
-
-QuadrupedModel::~QuadrupedModel() = default;
 
 void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                             float ageInTicks, float netHeadYaw, float headPitch, float scale,

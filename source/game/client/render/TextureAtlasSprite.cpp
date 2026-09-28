@@ -33,7 +33,7 @@ void TextureAtlasSprite::init(Texture* source,std::vector<Texture*>* frames,int 
  mV0=(float)y/(float)source->getHeight(); mV1=(float)(y+height)/(float)source->getHeight();
  mUScale=(float)width*0.0625f; mVScale=(float)height*0.0625f;
  delete mOwnTexture; mOwnTexture=0;
- mOwnTexture=new Texture(source->m_name,2,width,height,source->m_depth,source->m_filter,source->m_format,source->m_minFilter,source->m_magFilter,0,source->m_hasMipmaps);
+ mOwnTexture=new Texture(source->m_name,2,width,height,source->m_depth,source->m_wrap,source->m_format,source->m_minFilter,source->m_magFilter,0,source->m_mipmap);
 }
 
 void TextureAtlasSprite::replaceWith(TextureAtlasSprite* sprite) {

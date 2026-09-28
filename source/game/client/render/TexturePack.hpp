@@ -21,7 +21,7 @@ public:
     {
     }
 
-    virtual ~TexturePack();
+    virtual ~TexturePack() {}
 
     virtual bool hasData() = 0;
     virtual bool hasValidData() = 0;

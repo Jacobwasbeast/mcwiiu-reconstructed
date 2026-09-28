@@ -21,7 +21,7 @@ struct D3DXIMAGE_INFO;
 struct _XSOCIAL_PREVIEWIMAGE;
 struct MEMHeapHeader;
 
-class Renderer
+class Renderer : public C4JRender
 {
 public:
     struct _Vec4

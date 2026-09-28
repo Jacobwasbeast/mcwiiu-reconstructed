@@ -951,8 +951,8 @@ void TextureAtlas::makeTextureAnimated(TexturePack* pack,
 
 void TextureAtlas::stitch()
 {
-    for (TextureAtlasSprite* sprite : mAnimatedSprites)
-        sprite->freeFrameTextures();
+    for (std::vector<TextureAtlasSprite*>::iterator it = mAnimatedSprites.begin(); it != mAnimatedSprites.end(); ++it)
+        (*it)->freeFrameTextures();
     loadUVs();
     Minecraft* minecraft = Minecraft::GetInstance();
     if (mIconType == 0)
@@ -991,18 +991,18 @@ void TextureAtlas::stitch()
     mStitchedTexture->transferFromImage(image);
     delete image;
     TextureManager::getInstance()->registerName(mName, mStitchedTexture);
-    for (auto& entry : mSprites)
+    for (boost::unordered_map<std::wstring, TextureAtlasSprite*>::iterator it = mSprites.begin(); it != mSprites.end(); ++it)
     {
-        TextureAtlasSprite* sprite = entry.second;
-        const int x = static_cast<int>(std::lround(sprite->getU0(false) * mStitchedTexture->getWidth()));
-        const int y = static_cast<int>(std::lround(sprite->getV0(false) * mStitchedTexture->getHeight()));
-        const int width = static_cast<int>(std::lround(sprite->getU1(false) * mStitchedTexture->getWidth())) - x;
-        const int height = static_cast<int>(std::lround(sprite->getV1(false) * mStitchedTexture->getHeight())) - y;
+        TextureAtlasSprite* sprite = it->second;
+        int x = (int)(sprite->getU0(false) * mStitchedTexture->getWidth());
+        int y = (int)(sprite->getV0(false) * mStitchedTexture->getHeight());
+        int width = (int)(sprite->getU1(false) * mStitchedTexture->getWidth()) - x;
+        int height = (int)(sprite->getV1(false) * mStitchedTexture->getHeight()) - y;
         sprite->init(mStitchedTexture, 0, x, y, width, height, false);
     }
     MemSect(52);
-    for (auto& entry : mSprites)
-        makeTextureAnimated(pack, entry.second);
+    for (boost::unordered_map<std::wstring, TextureAtlasSprite*>::iterator it = mSprites.begin(); it != mSprites.end(); ++it)
+        makeTextureAnimated(pack, it->second);
     MemSect(0);
     mStitchedTexture->updateOnGPU();
 }

@@ -22,10 +22,6 @@ ResourceLocation BlockEntityRenderer::BREAKING_LOCATIONS[10] = {
     ResourceLocation((_TEXTURE_NAME)145)
 };
 
-BlockEntityRenderer::~BlockEntityRenderer()
-{
-}
-
 Font* BlockEntityRenderer::getFont()
 {
     return mDispatcher->getFont();

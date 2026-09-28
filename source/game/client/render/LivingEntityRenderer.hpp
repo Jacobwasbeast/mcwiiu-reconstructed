@@ -14,7 +14,7 @@ class LivingEntityRenderer : public EntityRenderer
 {
 public:
     LivingEntityRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius);
-    virtual ~LivingEntityRenderer();
+    virtual ~LivingEntityRenderer() {}
 
     bool addLayer(RenderLayer* layer);
     bool removeLayer(RenderLayer* layer);

@@ -9,49 +9,53 @@
 #include "game/entity/mob/Entity.hpp"
 
 PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition)
-    : QuadrupedModel(12, 1.0f, modelDefinition)
+    : QuadrupedModel(12, 0.0f, modelDefinition)
 {
     if (!modelDefinition.DoesOverrideModel())
     {
         mTexWidth = 128;
         mTexHeight = 64;
 
+        delete mHead;
         mHead = new ModelPartSkin(this, 0, 0, NULL);
         mHead->addBox(-3.5f, -3.0f, -3.0f, 7, 7, 7, 0.0f);
-        mHead->texOffs(0, 44)->addBox(-2.5f, 1.0f, -6.0f, 5, 3, 3, 0.0f);
-        mHead->texOffs(26, 0)->addBox(-4.0f, -4.0f, -1.0f, 2, 2, 1, 0.0f);
-        mHead->addBoxMapTex(2.5f, -4.0f, -1.0f, 2, 2, 1, 26, 0, true, 0.0f);
         mHead->setPos(0.0f, 10.0f, -16.0f);
+        mHead->texOffs(0, 44)->addBox(-2.5f, 1.0f, -6.0f, 5, 3, 3, 0.0f);
+        mHead->texOffs(26, 0)->addBox(-4.5f, -4.0f, -1.0f, 2, 2, 1, 0.0f);
+        mHead->addBoxMapTex(2.5f, -4.0f, -1.0f, 2, 2, 1, 26, 0, true, 0.0f);
 
+        delete mBody;
         mBody = new ModelPartSkin(this);
-        mBody->texOffs(19, 0);
-        mBody->addBox(-5.0f, -13.0f, -7.0f, 14, 14, 11, 0.0f);
-        mBody->texOffs(39, 0);
-        mBody->addBox(-4.0f, -25.0f, -7.0f, 12, 12, 10, 0.0f);
-        mBody->setPos(-2.0f, 9.0f, -1.9f);
+        mBody->texOffs(0, 19)->addBox(-5.0f, -13.0f, -7.0f, 14, 14, 11, 0.0f);
+        mBody->texOffs(39, 0)->addBox(-4.0f, -25.0f, -7.0f, 12, 12, 10, 0.0f);
+        mBody->setPos(-2.0f, 9.0f, 12.0f);
 
+        delete mLeg0;
         mLeg0 = new ModelPartSkin(this, 50, 22, NULL);
         mLeg0->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 8, 0.0f);
         mLeg0->setPos(-3.5f, 14.0f, 6.0f);
 
+        delete mLeg1;
         mLeg1 = new ModelPartSkin(this, 50, 22, NULL);
         mLeg1->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 8, 0.0f);
         mLeg1->setPos(3.5f, 14.0f, 6.0f);
 
+        delete mLeg2;
         mLeg2 = new ModelPartSkin(this, 50, 40, NULL);
         mLeg2->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 6, 0.0f);
         mLeg2->setPos(-2.5f, 14.0f, -7.0f);
 
+        delete mLeg3;
         mLeg3 = new ModelPartSkin(this, 50, 40, NULL);
         mLeg3->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 6, 0.0f);
         mLeg3->setPos(2.5f, 14.0f, -7.0f);
 
-        mLeg2->mZ = mLeg2->mZ - 3.5f;
-        mLeg0->mZ = mLeg0->mZ + 3.5f;
-        mLeg1->mZ = mLeg1->mZ - 3.5f;
-        mLeg3->mZ = mLeg3->mZ + 3.5f;
-        mLeg1->mY = mLeg1->mY - 4.0f;
-        mLeg3->mY = mLeg3->mY - 4.0f;
+        mLeg0->mX -= 1.0f;
+        mLeg1->mX += 1.0f;
+        mLeg2->mX -= 1.0f;
+        mLeg3->mX += 1.0f;
+        mLeg2->mZ -= 1.0f;
+        mLeg3->mZ -= 1.0f;
         mZHeadOffs += 2.0f;
     }
 

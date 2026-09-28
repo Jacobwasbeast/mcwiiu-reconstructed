@@ -14,7 +14,7 @@ class HumanoidMobRenderer : public MobRenderer
 {
 public:
     HumanoidMobRenderer(EntityRenderDispatcher* dispatcher, HumanoidModel* model, float shadowRadius);
-    virtual ~HumanoidMobRenderer();
+    virtual ~HumanoidMobRenderer() {}
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void translateWeaponItem();

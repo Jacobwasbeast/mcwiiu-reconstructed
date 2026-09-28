@@ -13,7 +13,7 @@ class AbstractHorseRenderer : public MobRenderer
 {
 public:
     AbstractHorseRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius);
-    virtual ~AbstractHorseRenderer();
+    virtual ~AbstractHorseRenderer() {}
 
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
 

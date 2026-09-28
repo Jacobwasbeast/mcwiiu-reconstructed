@@ -15,10 +15,6 @@ VillagerModel::VillagerModel(float scale, const ModelDefinition& modelDefinition
     _init(scale, 0.0f, 64, 64, modelDefinition);
 }
 
-VillagerModel::~VillagerModel()
-{
-}
-
 void VillagerModel::_init(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition)
 {
     if (!modelDefinition.DoesOverrideModel())

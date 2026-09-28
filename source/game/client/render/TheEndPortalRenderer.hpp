@@ -12,7 +12,7 @@ class TheEndPortalRenderer : public BlockEntityRenderer
 {
 public:
     TheEndPortalRenderer();
-    virtual ~TheEndPortalRenderer();
+    virtual ~TheEndPortalRenderer() {}
 
     virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
 

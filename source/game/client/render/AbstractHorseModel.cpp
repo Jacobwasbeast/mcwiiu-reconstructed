@@ -221,10 +221,6 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
     }
 }
 
-AbstractHorseModel::~AbstractHorseModel()
-{
-}
-
 float AbstractHorseModel::rotlerp(float from, float to, float delta)
 {
     float difference = to - from;

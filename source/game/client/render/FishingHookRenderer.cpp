@@ -3,14 +3,21 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/EntityRenderDispatcher.hpp"
+#include "game/client/render/GameRenderer.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/projectile/FishingHook.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/util/Vec3.hpp"
+
+static ResourceLocation FISHING_HOOK_LOCATION((_TEXTURE_NAME)20);
 
 FishingHookRenderer::FishingHookRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
@@ -26,72 +33,100 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
 {
     boost::shared_ptr<FishingHook> hook = boost::static_pointer_cast<FishingHook>(entity);
     boost::shared_ptr<Player> owner = hook->getOwner();
+    if (!owner || mSolidRender)
+        return;
 
-    if (owner)
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((float)x, (float)y, (float)z);
+    GlStateManager::enableRescaleNormal();
+    GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+    bindTexture(entity);
+    Tesselator* tesselator = Tesselator::getInstance();
+    BufferBuilder* builder = tesselator->getBuilder();
+
+    float u0 = 0.0625f;
+    float u1 = 0.125f;
+    float v0 = 0.125f;
+    float v1 = 0.1875f;
+    float r = 1.0f;
+    float xo = 0.5f;
+    float yo = 0.5f;
+    GlStateManager::rotatef(180.0f - mDispatcher->mCameraYRot, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-((hook->getOwner()->GetThirdPersonView(false) == 2 ? -1.0f : 1.0f) * mDispatcher->mCameraXRot),
+                            1.0f, 0.0f, 0.0f);
+    if (mSolidRender)
+        GlStateManager::enableColorMaterial();
+    builder->begin();
+    builder->normal(0.0f, 1.0f, 0.0f);
+    builder->vertexUV(0.0f - xo, 0.0f - yo, 0.0f, u0, v1);
+    builder->vertexUV(r - xo, 0.0f - yo, 0.0f, u1, v1);
+    builder->vertexUV(r - xo, r - yo, 0.0f, u1, v0);
+    builder->vertexUV(0.0f - xo, r - yo, 0.0f, u0, v0);
+    tesselator->end();
+    if (mSolidRender)
+        GlStateManager::disableColorMaterial();
+    GlStateManager::disableRescaleNormal();
+    GlStateManager::popMatrix();
+
+    float attackAnim = owner->getAttackAnim(partialTick);
+    float swing = Mth::sin(Mth::sqrt(attackAnim) * 3.1415927f);
+    float bodyRot = (owner->mYBodyRotO + (owner->mYBodyRot - owner->mYBodyRotO) * partialTick) * 0.017453292f;
+    double sinRot = Mth::sin(bodyRot);
+    double cosRot = Mth::cos(bodyRot);
+    double handX;
+    double handY;
+    double handZ;
+    double eyeOffset;
+    if (owner->GetThirdPersonView(false) <= 0 && owner == Minecraft::GetInstance()->mPlayer)
     {
-        Entity* ownerEntity = (Entity*)owner.get();
-
-        GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x, (float)y, (float)z);
-        GlStateManager::enableRescaleNormal();
-        GlStateManager::scalef(0.5F, 0.5F, 0.5F);
-        bindTexture(entity);
-
-        Tesselator* tesselator = Tesselator::getInstance();
-        BufferBuilder* builder = tesselator->getBuilder();
-        GlStateManager::rotatef(180.0F - hook->mYRot, 0.0F, 1.0F, 0.0F);
-        builder->begin();
-        builder->normal(0.5F, 1.75F, 0.5F);
-        builder->vertexUV(-0.5F, -0.5F, 0.5F, 0.0625F, 0.1875F);
-        builder->vertexUV(1.25F, -0.5F, 0.5F, 0.125F, 0.1875F);
-        builder->vertexUV(1.25F, 1.25F, 0.5F, 0.125F, 0.0625F);
-        builder->vertexUV(-0.5F, 1.25F, 0.5F, 0.0625F, 0.0625F);
-        tesselator->end();
-        GlStateManager::disableRescaleNormal();
-        GlStateManager::popMatrix();
-
-        Vec3* view = ownerEntity->getViewVector(partialTick);
-        float horizontal = Mth::sqrt((float)(view->x * view->x + view->z * view->z));
-        float vertical = Mth::sqrt((float)(view->x * view->x + view->y * view->y + view->z * view->z));
-        double handX = ownerEntity->mXo + (ownerEntity->mX - ownerEntity->mXo) * (double)partialTick;
-        double handY = ownerEntity->mYo + (ownerEntity->mY - ownerEntity->mYo) * (double)partialTick;
-        double handZ = ownerEntity->mZo + (ownerEntity->mZ - ownerEntity->mZo) * (double)partialTick;
-        double rotation = (double)(ownerEntity->mYRotO +
-                                   (ownerEntity->mYRot - ownerEntity->mYRotO) * partialTick) * 0.01745329238474369;
-        float handOffset = -0.045F;
-        if (horizontal > 0.0F)
-        {
-            handX += (double)(Mth::cos((float)rotation) * handOffset);
-            handZ += (double)(Mth::sin((float)rotation) * handOffset);
-        }
-        handY += (double)ownerEntity->getEyeHeight() - 0.1;
-
-        double lineX = handX - (hook->mXo + (hook->mX - hook->mXo) * (double)partialTick);
-        double lineY = handY - (hook->mYo + (hook->mY - hook->mYo) * (double)partialTick);
-        double lineZ = handZ - (hook->mZo + (hook->mZ - hook->mZo) * (double)partialTick);
-
-        GlStateManager::disableTexture();
-        GlStateManager::disableLighting();
-        builder->begin(5);
-        builder->color(0);
-        for (int segment = 0; segment <= 16; ++segment)
-        {
-            double fraction = (double)segment / 16.0;
-            double sag = fraction * fraction + fraction;
-            builder->vertex((float)(x + lineX * fraction),
-                            (float)(y + lineY * fraction + sag * 0.25 - 1.0),
-                            (float)(z + lineZ * fraction));
-        }
-        tesselator->end();
-        GlStateManager::enableLighting();
-        GlStateManager::enableTexture();
+        float fov = (float)Minecraft::GetInstance()->mGameRenderer->GetFovVal() / 100.0f;
+        float sideOffset = -0.37f;
+        boost::shared_ptr<LocalPlayer> localPlayer = boost::dynamic_pointer_cast<LocalPlayer>(owner);
+        if (localPlayer && (localPlayer->mViewport == 3 || localPlayer->mViewport == 4 || !gRenderer->IsWidescreen()))
+            sideOffset = -0.165f;
+        Vec3* offset = Vec3::newTemp((double)(sideOffset * fov), -0.045 * (double)fov, 0.4);
+        offset = offset->xRot(-(owner->mXRotO + (owner->mXRot - owner->mXRotO) * partialTick) * 0.017453292f);
+        offset->yRot(-(owner->mYRotO + (owner->mYRot - owner->mYRotO) * partialTick) * 0.017453292f);
+        offset->yRot(swing * 0.5f);
+        offset = offset->xRot(swing * 0.7f);
+        handX = owner->mXo + (owner->mX - owner->mXo) * (double)partialTick + offset->x;
+        handY = owner->mYo + (owner->mY - owner->mYo) * (double)partialTick + offset->y;
+        handZ = owner->mZo + (owner->mZ - owner->mZo) * (double)partialTick + offset->z;
+        eyeOffset = owner->getEyeHeight();
+    }
+    else
+    {
+        handX = owner->mXo + (owner->mX - owner->mXo) * (double)partialTick - cosRot * 0.35 - sinRot * 0.8;
+        handY = owner->mYo + (owner->mY - owner->mYo) * (double)partialTick + owner->getEyeHeight() - 0.45;
+        handZ = owner->mZo + (owner->mZ - owner->mZo) * (double)partialTick - sinRot * 0.35 + cosRot * 0.8;
+        eyeOffset = owner->isSneaking() ? -0.1875 : 0.0;
     }
 
+    double hookX = hook->mXo + (hook->mX - hook->mXo) * (double)partialTick;
+    double hookY = hook->mYo + (hook->mY - hook->mYo) * (double)partialTick + 0.25;
+    double hookZ = hook->mZo + (hook->mZ - hook->mZo) * (double)partialTick;
+    double lineX = (double)(float)(handX - hookX);
+    double lineY = (double)(float)(handY - hookY) + eyeOffset;
+    double lineZ = (double)(float)(handZ - hookZ);
+
+    GlStateManager::disableTexture();
+    GlStateManager::disableLighting();
+    builder->begin(5);
+    builder->color(0);
+    for (int i = 0; i <= 16; ++i)
+    {
+        float fraction = (float)i / 16.0f;
+        builder->vertex((float)(x + lineX * (double)fraction),
+                        (float)(y + lineY * (double)(fraction * fraction + fraction) * 0.5 + 0.25),
+                        (float)(z + lineZ * (double)fraction));
+    }
+    tesselator->end();
+    GlStateManager::enableLighting();
+    GlStateManager::enableTexture();
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
-const ResourceLocation* FishingHookRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+const ResourceLocation* FishingHookRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location((_TEXTURE_NAME)20);
-    return &location;
+    return &FISHING_HOOK_LOCATION;
 }

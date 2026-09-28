@@ -32,9 +32,9 @@ BubbleParticle::BubbleParticle(Level* level,
     setMiscTex(32);
     setSize(0.02f, 0.02f);
     size *= random.nextFloat() * 0.6f + 0.2f;
-    xd = xa * 0.2 + (Math::random() * 2.0 - 1.0) * 0.02;
-    yd = ya * 0.2 + (Math::random() * 2.0 - 1.0) * 0.02;
-    zd = za * 0.2 + (Math::random() * 2.0 - 1.0) * 0.02;
+    xd = xa * 0.2 + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
+    yd = ya * 0.2 + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
+    zd = za * 0.2 + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
     lifetime = (int)(8.0 / (Math::random() * 0.8 + 0.2));
 
     BlockPos pos(x, y, z);

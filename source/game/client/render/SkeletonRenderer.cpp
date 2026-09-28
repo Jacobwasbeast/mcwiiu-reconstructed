@@ -23,10 +23,6 @@ SkeletonRenderer::SkeletonRenderer(EntityRenderDispatcher* dispatcher, SkeletonM
     addLayer(new SkeletonArmorLayer(this));
 }
 
-SkeletonRenderer::~SkeletonRenderer()
-{
-}
-
 void SkeletonRenderer::translateWeaponItem()
 {
     GlStateManager::translatef(0.09375f, 0.1875f, 0.0f);

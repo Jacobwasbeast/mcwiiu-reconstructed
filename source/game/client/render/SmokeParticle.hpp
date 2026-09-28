@@ -9,7 +9,7 @@ class SmokeParticle : public Particle
 public:
     SmokeParticle(Level* level, double x, double y, double z, double xa, double ya, double za);
     SmokeParticle(Level* level, double x, double y, double z, double xa, double ya, double za, float scale);
-    virtual ~SmokeParticle();
+    virtual ~SmokeParticle() {}
     virtual uint64_t GetType();
     void init(Level* level, double x, double y, double z, double xa, double ya, double za, float scale);
     virtual void tick();

@@ -13,6 +13,9 @@ EnchantmentTableParticle::EnchantmentTableParticle(Level* level, double x, doubl
     , mOriginY(y)
     , mOriginZ(z)
 {
+    xd = xa;
+    yd = ya;
+    zd = za;
     xo = x + xa;
     yo = y + ya;
     zo = z + za;
@@ -26,6 +29,7 @@ EnchantmentTableParticle::EnchantmentTableParticle(Level* level, double x, doubl
     gCol = (float)((colour >> 8) & 255) / 255.0f * colourScale;
     bCol = (float)(colour & 255) / 255.0f * colourScale;
     size = random.nextFloat() * 0.5f + 0.2f;
+    mOriginalSize = size;
     lifetime = (int)(Math::random() * 10.0) + 30;
     setMiscTex((int)(Math::random() * 26.0) + 225);
 }
@@ -66,7 +70,8 @@ void EnchantmentTableParticle::tick()
     unsigned int currentAge = (unsigned int)age;
     float progress = (float)currentAge / (float)lifetime;
     float remaining = 1.0f - progress;
-    float drop = remaining * remaining;
+    float drop = 1.0f - remaining;
+    drop *= drop;
     drop *= drop;
     xo = x;
     yo = y;

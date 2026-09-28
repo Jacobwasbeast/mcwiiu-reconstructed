@@ -14,7 +14,7 @@ class QuadrupedModel : public Model
 {
 public:
     QuadrupedModel(int legHeight, float scale, const ModelDefinition& modelDefinition);
-    virtual ~QuadrupedModel();
+    virtual ~QuadrupedModel() {}
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

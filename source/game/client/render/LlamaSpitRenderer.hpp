@@ -7,8 +7,8 @@
 
 class Entity;
 class EntityRenderDispatcher;
-class LlamaSpitModel;
 class ModelDefinition;
+class LlamaSpitModel;
 class ResourceLocation;
 
 class LlamaSpitRenderer : public EntityRenderer
@@ -20,6 +20,9 @@ public:
                         float yaw, float partialTick);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
+
+private:
+    LlamaSpitModel* mSpitModel;
 };
 
 #endif

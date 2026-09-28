@@ -63,7 +63,7 @@ void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         double targetZ = (double)beamTarget->z + 0.5;
         GlStateManager::multiTexCoord2f(0.0F, 0.0F);
         EnderDragonRenderer::renderCrystalBeams(
-            x + targetX - crystal->mX, y - 0.3 + animation * 0.4 + targetY - crystal->mY,
+            x + targetX - crystal->mX, y - 0.3 + animation * 0.4f + targetY - crystal->mY,
             z + targetZ - crystal->mZ, partialTick, targetX, targetY, targetZ,
             crystal->mTickCount, crystal->mX, crystal->mY, crystal->mZ);
     }

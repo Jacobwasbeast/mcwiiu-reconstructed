@@ -25,7 +25,7 @@ public:
     void registerName(const std::wstring& name, Texture* texture);
     void registerTexture(Texture* texture);
     Texture* createTexture(const std::wstring& name, int type, int width, int height,
-                           int format, int filter, int wrap, int target, bool mipmap,
+                           int wrap, int format, int minFilter, int magFilter, bool mipmap,
                            BufferedImage* image);
     std::wstring getTextureNameFromPath(const std::wstring& path);
     bool isAnimation(const std::wstring& name, TexturePack* texturePack);

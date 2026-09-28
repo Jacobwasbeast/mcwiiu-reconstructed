@@ -6,7 +6,7 @@ class BufferedImage;
 class MemTextureProcessor
 {
 public:
-    virtual ~MemTextureProcessor();
+    virtual ~MemTextureProcessor() {}
 
     virtual BufferedImage* process(BufferedImage* image) = 0;
 };

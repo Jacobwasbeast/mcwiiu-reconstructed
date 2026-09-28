@@ -15,7 +15,7 @@ public:
     typedef boost::unordered_map<std::wstring, ModelPartDefinition> ModelPartMap;
 
     ModelDefinition();
-    ~ModelDefinition();
+    ~ModelDefinition() {}
 
     bool hasModelPart(const std::wstring& partName) const;
     const ModelPartDefinition& getModelPart(const std::wstring& partName) const;

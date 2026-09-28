@@ -1,4 +1,5 @@
 #include "game/client/render/DefaultTexturePack.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <string>
 
@@ -47,7 +48,7 @@ void DefaultTexturePack::loadName()
 
 void DefaultTexturePack::loadDescription()
 {
-    m_desc1 = L10N::GetString(0x8b1d2c06);
+    m_desc1 = L10N::GetString(IDS_DEFAULT_TEXTUREPACK);
 }
 
 void DefaultTexturePack::loadCustomModels()
@@ -62,7 +63,7 @@ void DefaultTexturePack::loadCustomModels()
         OSReport("[native] optional default texture-pack models.bin unavailable; continuing without custom models\n");
         return;
 #else
-        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed ", 191);
+        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default colours table", 191);
 #endif
     }
     else
@@ -111,7 +112,7 @@ std::wstring DefaultTexturePack::getName()
 
 std::wstring DefaultTexturePack::getDesc1()
 {
-    return L10N::GetString(0x8b1d2c06);
+    return L10N::GetString(IDS_DEFAULT_TEXTUREPACK);
 }
 
 InputStream* DefaultTexturePack::getResourceImplementation(const std::wstring& fileName)

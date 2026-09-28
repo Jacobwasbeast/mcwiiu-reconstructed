@@ -20,10 +20,6 @@ ZombieRenderer::ZombieRenderer(EntityRenderDispatcher* dispatcher)
     addLayer(new ZombieArmorLayer(this, EntityType::ZOMBIE));
 }
 
-ZombieRenderer::~ZombieRenderer()
-{
-}
-
 const ResourceLocation* ZombieRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
     return &sZombieLocation;
@@ -44,5 +40,5 @@ void ZombieRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
 
 Model* ZombieRenderer::createModel(const ModelDefinition& definition)
 {
-    return new HumanoidModel(definition, 0.0F, 0.0F, 64, 32, false, true, true);
+    return new ZombieModel(definition);
 }

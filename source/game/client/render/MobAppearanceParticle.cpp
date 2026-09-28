@@ -12,7 +12,7 @@
 #include "game/entity/mob/MobEffects.hpp"
 
 MobAppearanceParticle::MobAppearanceParticle(Level* level, double x, double y, double z)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0), guardian(NULL), guardianReference()
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
 }
 
@@ -33,8 +33,7 @@ void MobAppearanceParticle::tick()
     {
         boost::shared_ptr<ElderGuardian> newGuardian(new ElderGuardian(level));
         newGuardian->setGhost();
-        guardianReference = newGuardian;
-        guardian = newGuardian.get();
+        guardian = newGuardian;
     }
 }
 
@@ -88,7 +87,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
     GlStateManager::scalef(scale, scale, scale);
     guardian->mYRotO = guardian->mYRot = 0.0f;
     guardian->mYHeadRotO = guardian->mYHeadRot = 0.0f;
-    boost::shared_ptr<Entity> renderEntity = guardianReference;
+    boost::shared_ptr<Entity> renderEntity = guardian;
     dispatcher->render(renderEntity, 0.0, 0.0, 0.0, 0.0f, partialTicks,
                        false, false, true, false);
     GlStateManager::popMatrix();

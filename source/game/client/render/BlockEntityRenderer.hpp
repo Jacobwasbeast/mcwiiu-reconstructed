@@ -15,7 +15,7 @@ class TexturePack;
 class BlockEntityRenderer
 {
 public:
-    virtual ~BlockEntityRenderer();
+    virtual ~BlockEntityRenderer() {}
     virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
                         int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
     virtual void onNewLevel(Level* pLevel);

@@ -119,22 +119,22 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
             if (player->getUseItemRemainingTicks() > 0)
             {
                 int useAnimation = mainHandItem->getUseAnimation();
-                if (useAnimation == 3)
+                if (useAnimation == UseAnim_block)
                 {
                     mainHandPose = HumanoidModel::eArmPose_Block;
                 }
-                else if (useAnimation == 4)
+                else if (useAnimation == UseAnim_bow)
                 {
                     mainHandPose = HumanoidModel::eArmPose_BowAndArrow;
                 }
-                else if (useAnimation == 5)
+                else if (useAnimation == UseAnim_spear)
                 {
                     mainHandPose = HumanoidModel::eArmPose_ThrowSpear;
                     model->mSpearThrowProgress = Mth::clamp(
                         (float)(mainHandItem->getUseDuration() - player->getUseItemRemainingTicks()) / 10.0f,
                         0.0f, 1.0f);
                 }
-                else if (useAnimation == 1 || useAnimation == 2)
+                else if (useAnimation == UseAnim_eat || useAnimation == UseAnim_drink)
                 {
                     float remainingTicks =
                         (float)player->getUseItemRemainingTicks() - partialTicks + 1.0f;
@@ -150,7 +150,7 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
             offhandPose = HumanoidModel::eArmPose_Item;
             if (player->getUseItemRemainingTicks() > 0)
             {
-                if (offhandItem->getUseAnimation() == 3)
+                if (offhandItem->getUseAnimation() == UseAnim_block)
                 {
                     offhandPose = HumanoidModel::eArmPose_Block;
                 }

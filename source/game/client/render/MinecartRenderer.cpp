@@ -22,10 +22,6 @@ MinecartRenderer::MinecartRenderer(EntityRenderDispatcher* dispatcher)
     mModel = new MinecartModel(definition);
 }
 
-MinecartRenderer::~MinecartRenderer()
-{
-}
-
 void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                               float yaw, float partialTick)
 {

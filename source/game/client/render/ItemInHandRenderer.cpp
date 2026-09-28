@@ -13,6 +13,7 @@
 #include "game/core/ColourTable.hpp"
 #include "game/core/Direction.hpp"
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/item/Enchantments.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/MemoryTracker.hpp"
@@ -540,13 +541,13 @@ void ItemInHandRenderer::renderOneHandedMap(float equip, const HumanoidArm* arm,
     GlStateManager::popMatrix();
 }
 
-void ItemInHandRenderer::renderTwoHandedMap(float partialTick, float equipProgress, float swingProgress)
+void ItemInHandRenderer::renderTwoHandedMap(float pitch, float equipProgress, float swingProgress)
 {
     float swingRoot = Mth::sqrt(swingProgress);
     float swing = Mth::sin(swingProgress * 3.1415927f);
     float swingRootSin = Mth::sin(swingRoot * 3.1415927f);
     GlStateManager::translatef(0.0f, swing * 0.085f, swingRootSin * -0.17f);
-    float mapTilt = calculateMapTilt(partialTick);
+    float mapTilt = calculateMapTilt(pitch);
     GlStateManager::translatef(0.0f, mapTilt * -0.5f + equipProgress * -1.2f + 0.1f, -0.72f);
     GlStateManager::rotatef(mapTilt * -85.0f, 1.0f, 0.0f, 0.0f);
     renderMapHands();
@@ -590,181 +591,164 @@ void ItemInHandRenderer::applyItemArmTransform(const HumanoidArm* arm, float equ
     GlStateManager::translatef((float)side * 0.56f, -0.52f + equipProgress * -0.6f, -0.72f);
 }
 
-void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player, float partialTick,
-                                           InteractionHand::EInteractionHand hand, float equipProgress,
-                                           not_null_ptr<ItemInstance> item, float swingProgress)
+void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player, float partialTick, float pitch,
+                                           InteractionHand::EInteractionHand hand, float swingProgress,
+                                           not_null_ptr<ItemInstance> item, float equipProgress)
 {
     bool mainHand = hand == InteractionHand::eInteractionHand_MainHand;
-    const HumanoidArm* arm = player->getMainArm();
-    if (!mainHand)
-    {
-        arm = arm->getOpposite();
-    }
-    float side = 0.0f;
-    float depth = 0.0f;
-    bool flipSide = false;
+    const HumanoidArm* arm;
     if (mainHand)
+        arm = player->getMainArm();
+    else
+        arm = player->getMainArm()->getOpposite();
+
+    float offsetX = 0.0f;
+    float offsetY = 0.0f;
+    bool splitScreenVertical = false;
+    if (player->mViewport == 2 || player->mViewport == 1)
     {
-        side = 0.0f;
-        depth = 0.0f;
-        if (player->mViewport == 2)
-        {
-            flipSide = true;
-            depth = 0.07999999821186066f;
-        }
-        else if (player->mViewport != 1)
-        {
-            if (player->mViewport != 3 && player->mViewport != 4 && gRenderer->IsWidescreen())
-            {
-                side = 0.0f;
-            }
-            else if (arm != HumanoidArm::LEFT)
-            {
-                side = -0.30000001192092896f;
-            }
-            else
-            {
-                depth = 0.30000001192092896f;
-            }
-        }
+        splitScreenVertical = true;
+        offsetY = 0.08f;
     }
+    else if (player->mViewport == 3 || player->mViewport == 4 || !gRenderer->IsWidescreen())
+    {
+        if (arm == HumanoidArm::LEFT)
+            offsetX = 0.3f;
+        else
+            offsetX = -0.3f;
+    }
+
     GlStateManager::pushMatrix();
     if (item->isEmpty())
     {
         if (mainHand && !player->isInvisible())
         {
-            GlStateManager::translatef(side, depth, 0.0f);
+            GlStateManager::translatef(offsetX, offsetY, 0.0f);
             renderPlayerArm(equipProgress, swingProgress, arm);
         }
         GlStateManager::popMatrix();
         return;
     }
+
     if (item->getItem() == Items::filledMap)
     {
-        if (flipSide)
-        {
-            GlStateManager::translatef(0.0f, 0.0f, -0.30000001192092896f);
-        }
+        if (splitScreenVertical)
+            GlStateManager::translatef(0.0f, 0.0f, -0.3f);
         if (mainHand && mOffHandItem->isEmpty())
         {
-            renderTwoHandedMap(partialTick, equipProgress, swingProgress);
-            GlStateManager::popMatrix();
-            return;
-        }
-        GlStateManager::translatef(side, depth, 0.0f);
-        renderOneHandedMap(equipProgress, arm, swingProgress, item);
-        GlStateManager::popMatrix();
-        return;
-    }
-    bool rightArm = arm == HumanoidArm::RIGHT;
-    if (player->isUsingItem() && player->getUsedItemHand() == hand)
-    {
-        int animation = item->getUseAnimation();
-        if (animation == 0)
-        {
-            GlStateManager::translatef(side, depth, 0.0f);
-            applyItemArmTransform(arm, equipProgress);
-        }
-        else if (animation < 3)
-        {
-            applyEatTransform(partialTick, arm, item);
-            applyItemArmTransform(arm, equipProgress);
-        }
-        else if (animation == 3)
-        {
-            applyItemArmTransform(arm, equipProgress);
-            Item* useItem = item->getItem();
-            if (useItem == Items::ironSword || useItem == Items::woodenSword || useItem == Items::stoneSword
-                || useItem == Items::diamondSword || useItem == Items::goldenSword)
-            {
-                float blockSide = rightArm ? 1.0f : -1.0f;
-                GlStateManager::translatef(blockSide * 0.07999999821186066f, 0.07999999821186066f, 0.0f);
-                GlStateManager::rotatef(-80.0f, 1.0f, 0.0f, 0.0f);
-                GlStateManager::rotatef(blockSide * 10.0f, 0.0f, 0.0f, 1.0f);
-                GlStateManager::rotatef(blockSide * -0.27856820821762085f, 0.0f, 1.0f, 0.0f);
-            }
-        }
-        else if (animation == 4)
-        {
-            GlStateManager::translatef(side, depth, 0.0f);
-            applyItemArmTransform(arm, equipProgress);
-            float blockSide = rightArm ? 1.0f : -1.0f;
-            GlStateManager::translatef(blockSide * -0.27856820821762085f, 0.18344387412071228f, -13.9350004196167f);
-            GlStateManager::rotatef(35.29999923706055f, 1.0f, 0.0f, 0.0f);
-            GlStateManager::rotatef(blockSide * -9.78499984741211f, 0.0f, 1.0f, 0.0f);
-            GlStateManager::rotatef(blockSide * 1.2999999523162842f, 0.0f, 0.0f, 1.0f);
-            float useDuration = (float)item->getUseDuration();
-            float remaining = (float)player->getUseItemRemainingTicks() - partialTick + 1.0f;
-            float draw = (useDuration - remaining) / (float)BowItem::GetMaxBowDuration();
-            float power = (draw * draw + draw + draw) / 3.0f;
-            if (power > 1.0f)
-            {
-                if (0.004000000189989805f < power)
-                {
-                    float pull = Mth::sin((remaining - 0.004000000189989805f) * 0.004000000189989805f);
-                    float offset = pull * (power - 0.004000000189989805f);
-                    GlStateManager::translatef(offset, offset * 0.03999999910593033f, offset);
-                }
-                power = 1.0f;
-            }
-            else if (0.004000000189989805f < power)
-            {
-                float pull = Mth::sin((remaining - 0.004000000189989805f) * 0.004000000189989805f);
-                float offset = pull * (1.0f - 0.004000000189989805f);
-                GlStateManager::translatef(offset, offset * 0.03999999910593033f, offset);
-            }
-            GlStateManager::translatef(power, power, power * 0.5128204822540283f + 1.0f);
-            GlStateManager::scalef(1.0f, 1.0f, power * 0.20000000298023224f + 1.0f);
-            GlStateManager::rotatef(blockSide * 45.0f, 0.0f, -1.0f, 0.0f);
-        }
-        else if (animation == 5)
-        {
-            applyItemArmTransform(arm, equipProgress);
-            float useDuration = (float)item->getUseDuration();
-            float remaining = (float)player->getUseItemRemainingTicks() - partialTick + 1.0f;
-            float draw = (useDuration - remaining) / 10.0f;
-            float power = Mth::clamp(draw, 0.0f, 1.0f);
-            GlStateManager::translatef(0.0f, 0.8500000238418579f, 0.0f);
-            GlStateManager::translatef(0.0f, 0.0f, power * 0.30000001192092896f + 0.05000000074505806f);
-            GlStateManager::rotatef(-60.0f, 1.0f, 0.0f, 0.0f);
-            GlStateManager::rotatef(15.0f, 0.0f, 1.0f, 0.0f);
-            if (0.004000000189989805f < power)
-            {
-                float pull = Mth::sin((remaining - 0.004000000189989805f) * 0.004000000189989805f);
-                GlStateManager::translatef(0.0f, pull * 0.46875f * (power - 0.004000000189989805f), 0.0f);
-            }
-        }
-    }
-    else
-    {
-        if (!player->isHandsBusy())
-        {
-            if (equipProgress == 0.0f)
-            {
-                GlStateManager::translatef(side, depth, 0.0f);
-            }
-            float swingRoot = Mth::sqrt(swingProgress);
-            float swingSin = Mth::sin(swingRoot * 3.1415927f);
-            float swingSin2 = Mth::sin(swingRoot * 6.2831854820251465f);
-            float swingRoll = Mth::sin(swingProgress * 3.1415927f);
-            GlStateManager::translatef((rightArm ? 1.0f : -1.0f) * (-0.4000000059604645f * swingSin),
-                                       0.20000000298023224f * swingSin2, 27.0f * swingRoll);
-            applyItemArmTransform(arm, equipProgress);
-            applyItemArmAttackTransform(arm, swingProgress);
+            renderTwoHandedMap(pitch, equipProgress, swingProgress);
         }
         else
         {
+            GlStateManager::translatef(offsetX, offsetY, 0.0f);
+            renderOneHandedMap(equipProgress, arm, swingProgress, item);
+        }
+        GlStateManager::popMatrix();
+        return;
+    }
+
+    bool rightArm = arm == HumanoidArm::RIGHT;
+    if (player->isUsingItem() && player->getUsedItemHand() == hand)
+    {
+        int side = rightArm ? 1 : -1;
+        switch (item->getUseAnimation())
+        {
+        case UseAnim_none:
+            GlStateManager::translatef(offsetX, offsetY, 0.0f);
             applyItemArmTransform(arm, equipProgress);
-            GlStateManager::translatef(0.25f, 1.0f, -0.5f);
-            GlStateManager::rotatef(20.0f, 0.0f, 1.0f, 0.0f);
-            GlStateManager::rotatef(-80.0f, 1.0f, 0.0f, 0.0f);
-            GlStateManager::rotatef(-135.0f, 0.0f, 0.0f, 1.0f);
-            GlStateManager::scalef(2.5f, 2.5f, 2.5f);
+            break;
+        case UseAnim_eat:
+        case UseAnim_drink:
+            applyEatTransform(partialTick, arm, item);
+            applyItemArmTransform(arm, equipProgress);
+            break;
+        case UseAnim_block:
+        {
+            applyItemArmTransform(arm, equipProgress);
+            Item* blockingItem = item->getItem();
+            if (blockingItem == Items::woodenSword || blockingItem == Items::stoneSword
+                || blockingItem == Items::ironSword || blockingItem == Items::goldenSword
+                || blockingItem == Items::diamondSword)
+            {
+                GlStateManager::translatef((float)side * -0.2f, 0.08f, 0.0f);
+                GlStateManager::rotatef(-80.0f, 1.0f, 0.0f, 0.0f);
+                GlStateManager::rotatef((float)side * 10.0f, 0.0f, 1.0f, 0.0f);
+                GlStateManager::rotatef((float)side * 60.0f, 0.0f, 0.0f, 1.0f);
+            }
+            break;
+        }
+        case UseAnim_bow:
+        {
+            GlStateManager::translatef(offsetX, offsetY, 0.0f);
+            applyItemArmTransform(arm, equipProgress);
+            GlStateManager::translatef((float)side * -0.2785682f, 0.18344387f, 0.15731531f);
+            GlStateManager::rotatef(-13.935f, 1.0f, 0.0f, 0.0f);
+            GlStateManager::rotatef((float)side * 35.3f, 0.0f, 1.0f, 0.0f);
+            GlStateManager::rotatef((float)side * -9.785f, 0.0f, 0.0f, 1.0f);
+            float drawTime = (float)item->getUseDuration()
+                             - ((float)mMinecraft->mPlayer->getUseItemRemainingTicks() - partialTick + 1.0f);
+            float power = drawTime / (float)BowItem::GetMaxBowDuration();
+            power = (power * power + power * 2.0f) / 3.0f;
+            if (power > 1.0f)
+                power = 1.0f;
+            if (power > 0.1f)
+            {
+                float pull = Mth::sin((drawTime - 0.1f) * 1.3f);
+                float shake = pull * (power - 0.1f);
+                GlStateManager::translatef(shake * 0.0f, shake * 0.004f, shake * 0.0f);
+            }
+            GlStateManager::translatef(power * 0.0f, power * 0.0f, power * 0.04f);
+            GlStateManager::scalef(1.0f, 1.0f, 1.0f + power * 0.2f);
+            GlStateManager::rotatef((float)side * 45.0f, 0.0f, -1.0f, 0.0f);
+            break;
+        }
+        case UseAnim_spear:
+        {
+            applyItemArmTransform(arm, equipProgress);
+            EnchantmentHelper::getEnchantmentLevel(Enchantments::RIPTIDE, player);
+            float drawTime = (float)item->getUseDuration()
+                             - ((float)mMinecraft->mPlayer->getUseItemRemainingTicks() - partialTick + 1.0f);
+            float power = Mth::clamp(drawTime / 10.0f, 0.0f, 1.0f);
+            GlStateManager::translatef(0.0f, 0.85f, 0.0f);
+            GlStateManager::translatef(0.0f, 0.0f, power * 0.3f - 0.2f);
+            GlStateManager::rotatef(-60.0f, 1.0f, 0.0f, 0.0f);
+            GlStateManager::rotatef(-10.0f, 0.0f, 1.0f, 0.0f);
+            if (power > 0.1f)
+            {
+                float pull = Mth::sin((drawTime - 0.1f) * 1.3f);
+                GlStateManager::translatef(0.0f, pull * 0.01f * (power - 0.1f), 0.0f);
+            }
+            break;
+        }
+        default:
+            break;
         }
     }
-    ItemTransforms::TransformType transform = rightArm ? ItemTransforms::FIRST_PERSON_RIGHT_HAND
-                                                       : ItemTransforms::FIRST_PERSON_LEFT_HAND;
-    renderItem(player, item, transform, !rightArm, 0, true);
+    else if (player->isHandsBusy())
+    {
+        applyItemArmTransform(arm, equipProgress);
+        GlStateManager::translatef(0.25f, 1.0f, -0.5f);
+        GlStateManager::rotatef(20.0f, 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(-90.0f, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(-45.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager::scalef(2.5f, 2.5f, 2.5f);
+    }
+    else
+    {
+        if (swingProgress == 0.0f)
+            GlStateManager::translatef(offsetX, offsetY, 0.0f);
+        float swingX = -0.4f * Mth::sin(Mth::sqrt(swingProgress) * 3.1415927f);
+        float swingY = 0.2f * Mth::sin(Mth::sqrt(swingProgress) * 6.2831855f);
+        float swingZ = -0.2f * Mth::sin(swingProgress * 3.1415927f);
+        int side = rightArm ? 1 : -1;
+        GlStateManager::translatef((float)side * swingX, swingY, swingZ);
+        applyItemArmTransform(arm, equipProgress);
+        applyItemArmAttackTransform(arm, swingProgress);
+    }
+
+    renderItem(player, item,
+               rightArm ? ItemTransforms::FIRST_PERSON_RIGHT_HAND : ItemTransforms::FIRST_PERSON_LEFT_HAND,
+               !rightArm, 0, true);
     GlStateManager::popMatrix();
 }
 
@@ -814,8 +798,8 @@ void ItemInHandRenderer::render(float partialTick)
         float mainSwing = player->mSwingingArm == InteractionHand::eInteractionHand_MainHand
                               ? attackProgress
                               : 0.0f;
-        renderArmWithItem(player, partialTick, InteractionHand::eInteractionHand_MainHand, mainEquip,
-                          mMainHandItem, mainSwing);
+        renderArmWithItem(player, partialTick, pitch, InteractionHand::eInteractionHand_MainHand, mainSwing,
+                          mMainHandItem, mainEquip);
     }
     if (renderOffHand)
     {
@@ -834,8 +818,8 @@ void ItemInHandRenderer::render(float partialTick)
         float offSwing = player->mSwingingArm == InteractionHand::eInteractionHand_OffHand
                              ? attackProgress
                              : 0.0f;
-        renderArmWithItem(player, partialTick, InteractionHand::eInteractionHand_OffHand, offEquip,
-                          mOffHandItem, offSwing);
+        renderArmWithItem(player, partialTick, pitch, InteractionHand::eInteractionHand_OffHand, offSwing,
+                          mOffHandItem, offEquip);
     }
     GlStateManager::disableRescaleNormal();
     Lighting::turnOff();

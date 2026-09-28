@@ -9,7 +9,9 @@ SilverfishRenderer::SilverfishRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-SilverfishRenderer::~SilverfishRenderer() = default;
+SilverfishRenderer::~SilverfishRenderer()
+{
+}
 
 double SilverfishRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 {

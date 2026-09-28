@@ -6,21 +6,8 @@
 
 SpellParticle::SpellParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
-    : SpellParticle(level, x, y, z, xa, ya, za, makeInitialVelocity())
-{
-}
-
-SpellParticle::InitialVelocity SpellParticle::makeInitialVelocity()
-{
-    double x = (0.5 - Math::random()) * 128.0;
-    double y = Math::random() * 255.0;
-    double z = (0.5 - Math::random()) * 128.0;
-    return {x, y, z};
-}
-
-SpellParticle::SpellParticle(Level* level, double x, double y, double z,
-                             double xa, double ya, double za, InitialVelocity velocity)
-    : Particle(level, x, y, z, velocity.x, velocity.y, velocity.z),
+    : Particle(level, x, y, z, (0.5 - Math::random()) * 128.0, Math::random() * 255.0,
+               (0.5 - Math::random()) * 128.0),
       baseTex(0)
 {
     yd *= static_cast<double>(0.2f);

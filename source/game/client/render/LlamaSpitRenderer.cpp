@@ -11,13 +11,13 @@ static ResourceLocation LLAMA_SPIT_LOCATION;
 LlamaSpitRenderer::LlamaSpitRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mModel = new LlamaSpitModel(ModelDefinition());
+    mSpitModel = new LlamaSpitModel(ModelDefinition());
 }
 
 LlamaSpitRenderer::~LlamaSpitRenderer()
 {
-    if (mModel != NULL)
-        delete mModel;
+    if (mSpitModel != NULL)
+        delete mSpitModel;
 }
 
 void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
@@ -39,7 +39,7 @@ void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
 
-    mModel->render(entity, partialTick, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, false);
+    mSpitModel->render(entity, partialTick, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, false);
 
     if (mSolidRender)
     {
@@ -58,5 +58,5 @@ const ResourceLocation* LlamaSpitRenderer::getTextureLocation(boost::shared_ptr<
 
 Model* LlamaSpitRenderer::createModel(const ModelDefinition& definition)
 {
-    return new LlamaSpitModel(0.0F, definition);
+    return new LlamaSpitModel(definition);
 }

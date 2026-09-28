@@ -18,10 +18,6 @@ MobRenderer::MobRenderer(EntityRenderDispatcher* dispatcher, Model* model, float
 {
 }
 
-MobRenderer::~MobRenderer()
-{
-}
-
 bool MobRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
 {
     if (!LivingEntityRenderer::shouldShowName(entity))

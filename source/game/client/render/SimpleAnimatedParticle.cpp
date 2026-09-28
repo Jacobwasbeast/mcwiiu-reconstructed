@@ -10,10 +10,6 @@ SimpleAnimatedParticle::SimpleAnimatedParticle(Level* level, double x, double y,
     setMiscTex(texture);
 }
 
-SimpleAnimatedParticle::~SimpleAnimatedParticle()
-{
-}
-
 void SimpleAnimatedParticle::setColor(int color)
 {
     Particle::setColor((float)((color >> 16) & 0xff) / 255.0f,

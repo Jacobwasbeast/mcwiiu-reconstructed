@@ -91,18 +91,18 @@ void EnderDragonRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
 {
     boost::shared_ptr<EnderDragon> dragon = boost::static_pointer_cast<EnderDragon>(entity);
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
-    if (dragon->mBeamTarget && !dragon->mBeamTarget->showsBottom())
+    if (dragon->mNearestCrystal && !dragon->mNearestCrystal->mRemoved)
     {
         bindTexture(&END_CRYSTAL_BEAM_LOCATION);
-        float animation = std::sin(((float)dragon->mBeamTarget->mTickCount + partialTick) * 0.2f) * 0.5f + 0.5f;
+        float animation = std::sin(((float)dragon->mNearestCrystal->mTickCount + partialTick) * 0.2f) * 0.5f + 0.5f;
         animation = (animation * animation + animation) * 0.2f;
         double delta = (double)(1.0f - partialTick);
         renderCrystalBeams(x, y, z, partialTick,
                            (dragon->mXo - dragon->mX) * delta + dragon->mX,
                            (dragon->mYo - dragon->mY) * delta + dragon->mY,
                            (dragon->mZo - dragon->mZ) * delta + dragon->mZ,
-                           dragon->mTickCount, dragon->mBeamTarget->mX,
-                           dragon->mBeamTarget->mY + animation, dragon->mBeamTarget->mZ);
+                           dragon->mTickCount, dragon->mNearestCrystal->mX,
+                           dragon->mNearestCrystal->mY + animation, dragon->mNearestCrystal->mZ);
     }
 }
 

@@ -86,10 +86,6 @@ GameRuleDefinition* TextureThemeRuleDefinition::addChild(ConsoleGameRules::EGame
     return GameRuleDefinition::addChild(type);
 }
 
-TextureThemeRuleDefinition::BlockStackGetter::~BlockStackGetter()
-{
-}
-
 std::vector<std::wstring> TextureThemeRuleDefinition::BlockStackGetter::getColours() const
 {
     std::vector<std::wstring> colours = stringSplit(mColours, L',');

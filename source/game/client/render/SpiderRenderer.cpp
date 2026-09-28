@@ -20,10 +20,6 @@ SpiderRenderer::SpiderRenderer(EntityRenderDispatcher* dispatcher)
     addLayer(mSpiderEyesLayer);
 }
 
-SpiderRenderer::~SpiderRenderer()
-{
-}
-
 double SpiderRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 {
     return 180.0;

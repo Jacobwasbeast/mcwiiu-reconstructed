@@ -17,10 +17,6 @@ SmokeParticle::SmokeParticle(Level* level, double x, double y, double z, double 
     init(level, x, y, z, xa, ya, za, scale);
 }
 
-SmokeParticle::~SmokeParticle()
-{
-}
-
 void SmokeParticle::init(Level* level, double x, double y, double z, double xa, double ya, double za, float scale)
 {
     xd = xd * 0.1 + xa;

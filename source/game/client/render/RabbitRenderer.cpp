@@ -12,7 +12,9 @@ RabbitRenderer::RabbitRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-RabbitRenderer::~RabbitRenderer() = default;
+RabbitRenderer::~RabbitRenderer()
+{
+}
 
 const ResourceLocation* RabbitRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {

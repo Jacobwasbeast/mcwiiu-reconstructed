@@ -39,8 +39,7 @@ public:
     };
 
 private:
-    ElderGuardian* guardian;
-    boost::shared_ptr<ElderGuardian> guardianReference;
+    boost::shared_ptr<ElderGuardian> guardian;
 };
 
 #endif

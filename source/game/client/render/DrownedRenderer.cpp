@@ -17,11 +17,13 @@ static ResourceLocation DROWNED_LOCATION;
 DrownedRenderer::DrownedRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new DrownedModel(ModelDefinition()), 0.5F)
 {
-    addLayer(new ZombieArmorLayer(this, EntityType::DROWNED));
+    mArmorLayer = new ZombieArmorLayer(this, EntityType::DROWNED);
+    addLayer(mArmorLayer);
 }
 
 DrownedRenderer::~DrownedRenderer()
 {
+    delete mArmorLayer;
 }
 
 void DrownedRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)

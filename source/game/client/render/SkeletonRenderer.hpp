@@ -17,7 +17,7 @@ class SkeletonRenderer : public HumanoidMobRenderer
 public:
     SkeletonRenderer(EntityRenderDispatcher* dispatcher);
     SkeletonRenderer(EntityRenderDispatcher* dispatcher, SkeletonModel* model);
-    virtual ~SkeletonRenderer();
+    virtual ~SkeletonRenderer() {}
 
     virtual void translateWeaponItem();
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

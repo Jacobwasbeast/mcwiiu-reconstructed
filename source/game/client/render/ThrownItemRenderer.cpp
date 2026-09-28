@@ -16,10 +16,6 @@ ThrownItemRenderer::ThrownItemRenderer(EntityRenderDispatcher* dispatcher, Item*
 {
 }
 
-ThrownItemRenderer::~ThrownItemRenderer()
-{
-}
-
 void ThrownItemRenderer::renderIcon(Tesselator* tesselator, TextureAtlasSprite* sprite)
 {
     BufferBuilder* builder = tesselator->getBuilder();

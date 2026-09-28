@@ -23,10 +23,6 @@ ZombieModel::ZombieModel(C4JRender::eVertexType vertexType, C4JRender::ePixelSha
 {
 }
 
-ZombieModel::~ZombieModel()
-{
-}
-
 void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);

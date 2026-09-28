@@ -10,10 +10,6 @@ AbstractHorseRenderer::AbstractHorseRenderer(EntityRenderDispatcher* dispatcher,
     mScale = shadowRadius;
 }
 
-AbstractHorseRenderer::~AbstractHorseRenderer()
-{
-}
-
 void AbstractHorseRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     GlStateManager::scalef(mScale, mScale, mScale);

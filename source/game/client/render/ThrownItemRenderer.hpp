@@ -17,7 +17,7 @@ class ThrownItemRenderer : public EntityRenderer
 {
 public:
     ThrownItemRenderer(EntityRenderDispatcher* dispatcher, Item* item);
-    virtual ~ThrownItemRenderer();
+    virtual ~ThrownItemRenderer() {}
     void renderIcon(Tesselator* tesselator, TextureAtlasSprite* sprite);
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

@@ -42,23 +42,23 @@ BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
 {
     GlStateManager::enableLighting();
 
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Sign)] = new SignRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::MobSpawner)] = new MobSpawnerRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Piston)] = new PistonHeadRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Chest)] = new ChestRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::EnderChest)] = new EnderChestRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::EnchantTable)] = new EnchantTableRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::EndPortal)] = new TheEndPortalRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::EndGateway)] = new TheEndGatewayRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Skull)] = new SkullBlockRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Furnace)] = NULL;
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Beacon)] = new BeaconRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Banner)] = new BannerRenderer();
+    (*this)[BlockEntityType::SIGN] = new SignRenderer();
+    (*this)[BlockEntityType::MOB_SPAWNER] = new MobSpawnerRenderer();
+    (*this)[BlockEntityType::PISTON_MOVING] = new PistonHeadRenderer();
+    (*this)[BlockEntityType::CHEST] = new ChestRenderer();
+    (*this)[BlockEntityType::ENDER_CHEST] = new EnderChestRenderer();
+    (*this)[BlockEntityType::ENCHANTMENT_TABLE_ENTITY] = new EnchantTableRenderer();
+    (*this)[BlockEntityType::THE_END_PORTAL] = new TheEndPortalRenderer();
+    (*this)[BlockEntityType::THE_END_GATEWAY_ENTITY] = new TheEndGatewayRenderer();
+    (*this)[BlockEntityType::SKULL] = new SkullBlockRenderer();
+    (*this)[BlockEntityType::FURNACE] = NULL;
+    (*this)[BlockEntityType::BEACON] = new BeaconRenderer();
+    (*this)[BlockEntityType::BANNER] = new BannerRenderer();
     ModelDefinition shulkerModelDefinition;
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::ShulkerBox)] =
+    (*this)[BlockEntityType::SHULKER_BOX] =
         new ShulkerBoxRenderer(new ShulkerModel(shulkerModelDefinition));
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Bed)] = new BedRenderer();
-    (*this)[static_cast<unsigned long long>(BlockEntityRendererType::Conduit)] = new ConduitRenderer();
+    (*this)[BlockEntityType::BED] = new BedRenderer();
+    (*this)[BlockEntityType::CONDUIT] = new ConduitRenderer();
 
     GlStateManager::disableLighting();
     for (iterator it = begin(); it != end(); ++it)
@@ -138,7 +138,7 @@ void BlockEntityRenderDispatcher::prepare(Level* level, Textures* textures, Font
     mX = (camera->mX - camera->mXOld) * partialTicks + camera->mXOld;
     mY = (camera->mY - camera->mYOld) * partialTicks + camera->mYOld;
     mZ = (camera->mZ - camera->mZOld) * partialTicks + camera->mZOld;
-    static_cast<SignRenderer*>((*this)[static_cast<unsigned long long>(BlockEntityRendererType::Sign)])->tick();
+    static_cast<SignRenderer*>((*this)[BlockEntityType::SIGN])->tick();
 }
 
 void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
@@ -149,7 +149,7 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
     if (renderer != NULL)
     {
         if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureCustomBeacons()
-            && blockEntity->GetType() == static_cast<unsigned long long>(BlockEntityRendererType::Beacon))
+            && blockEntity->GetType() == BlockEntityType::BEACON)
         {
             static_cast<BeaconRenderer*>(renderer)->renderSpecialBeamDirection(
                 blockEntity, x, y, z, mX, mY, mZ, a, breakProgress, bTranslucent, alpha,

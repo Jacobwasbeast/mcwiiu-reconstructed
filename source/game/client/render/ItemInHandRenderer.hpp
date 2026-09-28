@@ -49,7 +49,7 @@ public:
     void applyEatTransform(float, const HumanoidArm*, not_null_ptr<ItemInstance>);
     void applyItemArmAttackTransform(const HumanoidArm*, float);
     void applyItemArmTransform(const HumanoidArm*, float);
-    void renderArmWithItem(boost::shared_ptr<LocalPlayer>, float, InteractionHand::EInteractionHand, float,
+    void renderArmWithItem(boost::shared_ptr<LocalPlayer>, float, float, InteractionHand::EInteractionHand, float,
                            not_null_ptr<ItemInstance>, float);
     void render(float);
     void renderTex(TextureAtlasSprite*);

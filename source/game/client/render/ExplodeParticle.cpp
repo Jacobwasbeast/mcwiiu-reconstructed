@@ -9,9 +9,9 @@
 ExplodeParticle::ExplodeParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
-    xd = xa + (Math::random() * 2.0 - 1.0) * 0.05;
-    yd = ya + (Math::random() * 2.0 - 1.0) * 0.05;
-    zd = za + (Math::random() * 2.0 - 1.0) * 0.05;
+    xd = xa + (double)((float)(Math::random() * 2.0 - 1.0) * 0.05f);
+    yd = ya + (double)((float)(Math::random() * 2.0 - 1.0) * 0.05f);
+    zd = za + (double)((float)(Math::random() * 2.0 - 1.0) * 0.05f);
 
     const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Explode);
     const float red = ((float)((colour >> 16) & 255)) / 255.0f;

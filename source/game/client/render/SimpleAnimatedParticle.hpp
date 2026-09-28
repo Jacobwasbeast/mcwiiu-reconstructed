@@ -8,7 +8,7 @@ class SimpleAnimatedParticle : public Particle
 public:
     SimpleAnimatedParticle(Level* level, double x, double y, double z,
                            int texture, int frameCount, float verticalSpeed);
-    virtual ~SimpleAnimatedParticle();
+    virtual ~SimpleAnimatedParticle() {}
     void setColor(int color);
     void setFadeColor(int color);
     virtual bool isTransparent();

@@ -13,7 +13,7 @@ class MobRenderer : public LivingEntityRenderer
 {
 public:
     MobRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius);
-    virtual ~MobRenderer();
+    virtual ~MobRenderer() {}
 
     virtual bool shouldShowName(boost::shared_ptr<Entity>& entity);
     virtual bool shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,

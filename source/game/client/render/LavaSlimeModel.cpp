@@ -58,11 +58,6 @@ LavaSlimeModel::LavaSlimeModel(const ModelDefinition& modelDefinition)
 
 LavaSlimeModel::~LavaSlimeModel()
 {
-    for (int i = 0; i < 8; ++i)
-    {
-        delete mBodyCubes[i];
-    }
-    delete mInsideCube;
 }
 
 void LavaSlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)

@@ -42,14 +42,14 @@ public:
     virtual void freeFrameTextures();
     virtual unsigned int hasOwnData();
 
-private:
+protected:
     friend class TextureAtlas;
     std::wstring mName;
     std::wstring mParent;
     Texture* mSource;
     std::vector<Texture*>* mFrames;
     Texture* mOwnTexture;
-    std::vector<std::pair<int, int>>* mAnimationFrames;
+    std::vector<std::pair<int, int> >* mAnimationFrames;
     int mFlags;
     bool mInterpolated;
     bool mRotated;

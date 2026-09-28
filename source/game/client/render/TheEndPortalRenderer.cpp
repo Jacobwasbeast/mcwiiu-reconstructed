@@ -29,10 +29,6 @@ TheEndPortalRenderer::TheEndPortalRenderer()
     mBuffer = MemoryTracker::createFloatBuffer(16);
 }
 
-TheEndPortalRenderer::~TheEndPortalRenderer()
-{
-}
-
 FloatBuffer* TheEndPortalRenderer::getBuffer(float x, float y, float z, float w)
 {
     mBuffer->clear();

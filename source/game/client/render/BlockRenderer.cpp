@@ -996,11 +996,11 @@ void BlockRenderer::tesselateCrossTexture(TextureAtlasSprite* texture, TextureAt
     float overlayV0 = (float)overlay->getV0(true);
     float overlayV1 = (float)overlay->getV1(true);
     float y1 = y + scale;
-    float radius = 0.45f * scale;
-    float x0 = x + 0.5f - radius;
-    float x1 = x + 0.5f + radius;
-    float z0 = z + 0.5f - radius;
-    float z1 = z + 0.5f + radius;
+    float radius = 0.45 * scale;
+    float x0 = x + 0.5 - radius;
+    float x1 = x + 0.5 + radius;
+    float z0 = z + 0.5 - radius;
+    float z1 = z + 0.5 + radius;
     builder->vertexUV(x0, y1, z0, u0, v0);
     builder->vertexUV(x0, y, z0, u0, v1);
     builder->vertexUV(x1, y, z1, u1, v1);
@@ -3335,36 +3335,53 @@ bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPo
     bool bottom = state->shouldRenderFace(mLevelSource, pos, Direction::DOWN);
     const Direction* sides[4] = { Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
     bool visibleSides[4];
-    bool rendered = top || bottom;
     for (int i = 0; i < 4; ++i)
-    {
         visibleSides[i] = state->shouldRenderFace(mLevelSource, pos, sides[i]);
-        rendered = rendered || visibleSides[i];
-    }
-    if (!rendered)
+    const int buckets[4] = { 2, 4, 5, 3 };
+    if (!top && !bottom && !visibleSides[0] && !visibleSides[1] && !visibleSides[2] && !visibleSides[3])
         return false;
 
-    Material* material = state->getMaterial();
+    bool rendered = false;
+    Material* material = block->mMaterial;
     float height[4] = {
         getWaterHeight(pos, material),
         getWaterHeight(pos.south(), material),
         getWaterHeight(pos.offset(1, 0, 1), material),
         getWaterHeight(pos.east(), material)
     };
-    const float inset = 0.0009765625f;
-    for (int i = 0; i < 4; ++i)
-        height[i] -= inset;
+    int level = state->getValue(LiquidBlock::LEVEL);
 
+    float maxHeight = height[0];
+    for (int i = 1; i < 4; ++i)
+    {
+        if (maxHeight < height[i])
+            maxHeight = height[i];
+    }
+    if (maxHeight <= 0.9375f)
+    {
+        const BlockPos neighbours[4] = { pos.north(), pos.south(), pos.west(), pos.east() };
+        for (int i = 0; i < 4; ++i)
+        {
+            if (mLevelSource->getBlockState(neighbours[i])->getBlock() == Blocks::farmland)
+                visibleSides[i] = false;
+        }
+    }
+
+    const float inset = 0.0009765625f;
     float x = (float)pos.x;
     float y = (float)pos.y;
     float z = (float)pos.z;
-    if (top)
+    Block* blockAbove = Block::byId(LiquidBlock::getLiquidElement(mLevelSource, pos.above()) >> 4);
+    if (blockAbove->mMaterial != block->mMaterial || mRenderAllFaces)
     {
+        rendered = true;
         float slope = (float)LiquidBlock::getSlopeAngle(mLevelSource, pos, material, state);
         TextureAtlasSprite* texture = getTexture(state, slope <= -999.0f ? Direction::UP : Direction::NORTH);
+        for (int i = 0; i < 4; ++i)
+            height[i] -= inset;
         float u[4];
         float v[4];
-        if (slope <= -999.0f)
+        if (slope < -999.0f)
         {
             u[0] = (float)texture->getU0(true); v[0] = (float)texture->getV0(true);
             u[1] = u[0]; v[1] = (float)texture->getV1(true);
@@ -3373,87 +3390,98 @@ bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPo
         }
         else
         {
-            float sine = (float)std::sin(slope) * 0.25f;
-            float cosine = (float)std::cos(slope) * 0.25f;
+            float sine = Mth::sin(slope) * 0.25f;
+            float cosine = Mth::cos(slope) * 0.25f;
             u[0] = (float)texture->getU(8.0f + (-cosine - sine) * 16.0f); v[0] = (float)texture->getV(8.0f + (-cosine + sine) * 16.0f);
             u[1] = (float)texture->getU(8.0f + (-cosine + sine) * 16.0f); v[1] = (float)texture->getV(8.0f + (cosine + sine) * 16.0f);
             u[2] = (float)texture->getU(8.0f + (cosine + sine) * 16.0f); v[2] = (float)texture->getV(8.0f + (cosine - sine) * 16.0f);
             u[3] = (float)texture->getU(8.0f + (cosine - sine) * 16.0f); v[3] = (float)texture->getV(8.0f + (-cosine - sine) * 16.0f);
         }
         builder->tex2(getLightColor(block, mLevelSource, pos));
-        builder->bucket(0);
+        builder->bucket(level == 0 ? 1 : 0);
         builder->color(red, green, blue, alpha);
         builder->vertexUV(x, y + height[0], z, u[0], v[0]);
         builder->vertexUV(x, y + height[1], z + 1.0f, u[1], v[1]);
         builder->vertexUV(x + 1.0f, y + height[2], z + 1.0f, u[2], v[2]);
         builder->vertexUV(x + 1.0f, y + height[3], z, u[3], v[3]);
+        builder->bucket(6);
         if (static_cast<LiquidBlock*>(block)->shouldRenderBackwardUpFace(mLevelSource, pos.above()))
         {
-            builder->bucket(6);
             builder->vertexUV(x, y + height[0], z, u[0], v[0]);
             builder->vertexUV(x + 1.0f, y + height[3], z, u[3], v[3]);
             builder->vertexUV(x + 1.0f, y + height[2], z + 1.0f, u[2], v[2]);
             builder->vertexUV(x, y + height[1], z + 1.0f, u[1], v[1]);
         }
     }
-    if (bottom)
+    if (bottom || mRenderAllFaces)
     {
         builder->tex2(getLightColor(block, mLevelSource, pos.below()));
-        builder->color(red * 0.5f, green * 0.5f, blue * 0.5f, alpha * 0.75f);
+        builder->color(red * 0.5f, green * 0.5f, blue * 0.5f, (float)(alpha * 0.75));
         renderFaceDown(state, x, y + inset, z, getTexture(block, Direction::DOWN));
+        rendered = true;
     }
-    const int buckets[4] = { 2, 4, 5, 3 };
     for (int i = 0; i < 4; ++i)
     {
-        if (!visibleSides[i])
+        BlockPos neighbour = pos.relative(sides[i]);
+        int adjacentId = Block::getId(mLevelSource->getBlock(neighbour));
+        bool stillSide = adjacentId == BlockId::GLASS || adjacentId == BlockId::ICE ||
+                         adjacentId == BlockId::STAINED_GLASS || adjacentId == BlockId::SLIME;
+        TextureAtlasSprite* texture = getTexture(state, stillSide ? Direction::UP : Direction::from3DDataValue(i + 2));
+        float sideAlpha = stillSide ? alpha * 0.75f : alpha;
+        if (!visibleSides[i] && !mRenderAllFaces)
             continue;
-        BlockPos neighbor = pos.relative(sides[i]);
-        int adjacentId = Block::getId(mLevelSource->getBlockState(neighbor)->getBlock());
-        bool stillSide = adjacentId == 0x14 || adjacentId == 0x4f || adjacentId == 0x5f || adjacentId == 0xa5;
-        TextureAtlasSprite* texture = getTexture(state, stillSide ? Direction::UP : sides[i]);
-        float shade = i < 2 ? 0.8f : 0.6f;
-        builder->tex2(getLightColor(block, mLevelSource, neighbor));
-        builder->bucket(buckets[i]);
-        builder->color(red * shade, green * shade, blue * shade, alpha * (stillSide ? 0.75f : 1.0f));
-        float textureScale = stillSide ? 1.0f : 0.5f;
-        float vInset = 0.01f / (float)texture->getWidth();
-        if (stillSide)
-            vInset *= 0.5f;
-        float u0 = (float)texture->getU(0.0f);
-        float u1 = (float)texture->getU(16.0f * textureScale);
-        texture->adjustU(u0, u1);
-        float vBottom = (float)texture->getV(16.0f * textureScale) - vInset;
+
+        rendered = true;
         int first = i == 0 ? 0 : i == 1 ? 2 : i == 2 ? 1 : 3;
         int second = i == 0 ? 3 : i == 1 ? 1 : i == 2 ? 0 : 2;
-        float vFirst = (float)texture->getV((1.0f - height[first]) * 16.0f * textureScale) + vInset;
-        float vSecond = (float)texture->getV((1.0f - height[second]) * 16.0f * textureScale) + vInset;
+        float x0;
+        float z0;
+        float x1;
+        float z1;
         if (i == 0)
         {
-            builder->vertexUV(x, y + height[first], z + inset, u0, vFirst);
-            builder->vertexUV(x + 1.0f, y + height[second], z + inset, u1, vSecond);
-            builder->vertexUV(x + 1.0f, y, z + inset, u1, vBottom);
-            builder->vertexUV(x, y, z + inset, u0, vBottom);
+            x0 = x; z0 = z + inset; x1 = x + 1.0f; z1 = z0;
         }
         else if (i == 1)
         {
-            builder->vertexUV(x + 1.0f, y + height[first], z + 1.0f - inset, u0, vFirst);
-            builder->vertexUV(x, y + height[second], z + 1.0f - inset, u1, vSecond);
-            builder->vertexUV(x, y, z + 1.0f - inset, u1, vBottom);
-            builder->vertexUV(x + 1.0f, y, z + 1.0f - inset, u0, vBottom);
+            x0 = x + 1.0f; z0 = z + 1.0f - inset; x1 = x; z1 = z0;
         }
         else if (i == 2)
         {
-            builder->vertexUV(x + inset, y + height[first], z + 1.0f, u0, vFirst);
-            builder->vertexUV(x + inset, y + height[second], z, u1, vSecond);
-            builder->vertexUV(x + inset, y, z, u1, vBottom);
-            builder->vertexUV(x + inset, y, z + 1.0f, u0, vBottom);
+            x0 = x + inset; z0 = z + 1.0f; x1 = x0; z1 = z;
         }
         else
         {
-            builder->vertexUV(x + 1.0f - inset, y + height[first], z, u0, vFirst);
-            builder->vertexUV(x + 1.0f - inset, y + height[second], z + 1.0f, u1, vSecond);
-            builder->vertexUV(x + 1.0f - inset, y, z + 1.0f, u1, vBottom);
-            builder->vertexUV(x + 1.0f - inset, y, z, u0, vBottom);
+            x0 = x + 1.0f - inset; z0 = z; x1 = x0; z1 = z + 1.0f;
+        }
+
+        float textureScale = stillSide ? 1.0f : 0.5f;
+        float u0 = (float)texture->getU(0.0f);
+        float u1 = (float)texture->getU(16.0f * textureScale);
+        texture->adjustU(u0, u1);
+        float vFirst = (float)texture->getV((1.0f - height[first]) * 16.0f * textureScale);
+        float vSecond = (float)texture->getV((1.0f - height[second]) * 16.0f * textureScale);
+        float vBottom = (float)texture->getV(16.0f * textureScale);
+        float vInset = 0.01f / (float)texture->getWidth();
+        if (stillSide)
+            vInset *= 0.5f;
+        vBottom -= vInset;
+
+        builder->tex2(getLightColor(block, mLevelSource, neighbour));
+        float shade = i < 2 ? 0.8f : 0.6f;
+        builder->bucket(buckets[i]);
+        builder->color(red * shade, green * shade, blue * shade, sideAlpha);
+        builder->vertexUV(x0, y + height[first], z0, u0, vFirst + vInset);
+        builder->vertexUV(x1, y + height[second], z1, u1, vSecond + vInset);
+        builder->vertexUV(x1, y, z1, u1, vBottom);
+        builder->vertexUV(x0, y, z0, u0, vBottom);
+        if (!stillSide)
+        {
+            builder->bucket(buckets[(i + 2) % 4]);
+            builder->vertexUV(x0, y, z0, u0, vBottom);
+            builder->vertexUV(x1, y, z1, u1, vBottom);
+            builder->vertexUV(x1, y + height[second], z1, u1, vSecond + vInset);
+            builder->vertexUV(x0, y + height[first], z0, u0, vFirst + vInset);
         }
     }
     return rendered;

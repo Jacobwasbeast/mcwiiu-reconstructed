@@ -32,10 +32,6 @@ ChestModel::ChestModel(const ModelDefinition&)
     mBottom->compile(0.0625f);
 }
 
-ChestModel::~ChestModel()
-{
-}
-
 void ChestModel::render(bool useDisplayList)
 {
     mLock->mXRot = mLid->mXRot;

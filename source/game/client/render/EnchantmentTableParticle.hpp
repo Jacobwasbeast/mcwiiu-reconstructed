@@ -26,6 +26,7 @@ public:
     };
 
 private:
+    float mOriginalSize;
     double mOriginX;
     double mOriginY;
     double mOriginZ;

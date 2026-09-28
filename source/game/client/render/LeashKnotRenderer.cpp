@@ -10,12 +10,12 @@ static ResourceLocation LEASH_KNOT_LOCATION;
 LeashKnotRenderer::LeashKnotRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mModel = new LeashKnotModel(ModelDefinition());
+    mKnotModel = new LeashKnotModel(ModelDefinition());
 }
 
 LeashKnotRenderer::~LeashKnotRenderer()
 {
-    delete mModel;
+    delete mKnotModel;
 }
 
 void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
@@ -35,7 +35,7 @@ void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
 
-    mModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, true);
+    mKnotModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, true);
 
     if (mSolidRender)
     {
@@ -52,7 +52,7 @@ const ResourceLocation* LeashKnotRenderer::getTextureLocation(boost::shared_ptr<
     return &LEASH_KNOT_LOCATION;
 }
 
-Model* LeashKnotRenderer::createModel(const ModelDefinition&)
+Model* LeashKnotRenderer::createModel(const ModelDefinition& definition)
 {
-    return new LeashKnotModel(0, 0, 32, 32);
+    return new LeashKnotModel(definition);
 }

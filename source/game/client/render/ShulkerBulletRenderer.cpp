@@ -13,7 +13,7 @@ static ResourceLocation SHULKER_BULLET_LOCATION;
 ShulkerBulletRenderer::ShulkerBulletRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mModel = new ShulkerBulletModel(ModelDefinition());
+    mBulletModel = new ShulkerBulletModel(ModelDefinition());
 }
 
 ShulkerBulletRenderer::~ShulkerBulletRenderer()
@@ -47,12 +47,12 @@ void ShulkerBulletRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
 
     bindTexture(entity);
-    mModel->render(entity, 0.0F, 0.0F, 0.0F, yRot, xRot, 0.03125F, true);
+    mBulletModel->render(entity, 0.0F, 0.0F, 0.0F, yRot, xRot, 0.03125F, true);
 
     GlStateManager::enableBlend();
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 0.5F);
     GlStateManager::scalef(1.5F, 1.5F, 1.5F);
-    mModel->render(entity, 0.0F, 0.0F, 0.0F, yRot, xRot, 0.03125F, true);
+    mBulletModel->render(entity, 0.0F, 0.0F, 0.0F, yRot, xRot, 0.03125F, true);
     GlStateManager::disableBlend();
     GlStateManager::popMatrix();
 

@@ -1093,7 +1093,7 @@ void GameRenderer::bobHurt(float partialTick)
     static const float kHurtBobScale = 14.0f;
     static const float kPi = 3.1415927410125732f;
 
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
+    boost::shared_ptr<Entity> cameraEntity = getCamera();
     if ((cameraEntity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
         return;
 
@@ -1134,7 +1134,7 @@ void GameRenderer::bobView(float partialTick)
     static const float kPi = 3.1415927410125732f;
     static const float kRollOffset = 0.2f;
 
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
+    boost::shared_ptr<Entity> cameraEntity = getCamera();
     if ((cameraEntity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         return;
 
@@ -1194,7 +1194,7 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     static const float kFallFlightYawScale = 0.5f;
     static const float kFallFlightAlignmentScale = 0.25f;
 
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
+    boost::shared_ptr<Entity> cameraEntity = getCamera();
     boost::shared_ptr<LivingEntity> living =
         boost::static_pointer_cast<LivingEntity>(cameraEntity);
     LivingEntity* entity = living.get();
@@ -1588,7 +1588,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mPlayer;
     MultiplayerLocalPlayer* player = localPlayer.get();
-    boost::shared_ptr<Entity> camera = Minecraft::GetInstance()->getCameraEntity();
+    boost::shared_ptr<Entity> camera = getCamera();
 
     bool holdingMap = false;
     if (camera->GetType() == EntityType::LOCAL_PLAYER)
@@ -1659,7 +1659,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     if ((camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living =
-            boost::static_pointer_cast<LivingEntity>(mMinecraft->getCameraEntity());
+            boost::static_pointer_cast<LivingEntity>(getCamera());
         AbstractClientPlayer* clientPlayer = dynamic_cast<AbstractClientPlayer*>(living.get());
         if (clientPlayer != NULL && clientPlayer->isSpectator())
             spectatorHandEffect = true;
@@ -2896,7 +2896,7 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
         return;
     }
 
-    if (!ghostController->mRecordingSlotFlags2[trackIndex])
+    if (!ghostController->mPlaybackActive[trackIndex])
     {
         return;
     }
@@ -2904,8 +2904,8 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
     float playbackFraction = kOne;
     unsigned int sampleIndex = ghostController->getPlaybackIndex(record, playbackFraction);
 
-    Vec3* samplePos = reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetPosAtIndex(sampleIndex)));
-    Vec3* sampleRot = reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetRotAtIndex(sampleIndex)));
+    Vec3* samplePos = record->GetPosAtIndex(sampleIndex);
+    Vec3* sampleRot = record->GetRotAtIndex(sampleIndex);
     double sampleVelocity = record->GetVelocityAtIndex(sampleIndex);
 
     Vec3* renderPos = samplePos;
@@ -2914,10 +2914,10 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
     const unsigned int sampleCount = static_cast<unsigned int>(record->NumSamples());
     if (sampleIndex + 1U < sampleCount)
     {
-        Vec3* nextRot = reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetRotAtIndex(sampleIndex + 1U)));
+        Vec3* nextRot = record->GetRotAtIndex(sampleIndex + 1U);
         const double nextVelocity = record->GetVelocityAtIndex(sampleIndex + 1U);
         Vec3* nextPos =
-            reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetPosAtIndex(sampleIndex + 1U)));
+            record->GetPosAtIndex(sampleIndex + 1U);
 
         renderPos = samplePos->interpolateTo(nextPos, static_cast<double>(playbackFraction));
         renderRot = sampleRot->interpolateTo(nextRot, static_cast<double>(playbackFraction));
@@ -2930,7 +2930,7 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
             Vec3* delta = Vec3::newTemp(renderPos->x - samplePos->x, renderPos->y - samplePos->y,
                                         renderPos->z - samplePos->z);
             delta->normalize();
-            const double lift = std::pow(-delta->y, kPowBase);
+            const double lift = std::pow(-delta->y, (double)kPowBase);
             flyAmount = kOne - static_cast<float>(lift);
         }
     }
@@ -3021,110 +3021,67 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
 
 void GameRenderer::renderGhostPath(float partialTick, boost::shared_ptr<Entity> entity)
 {
-    static const float kZero = 0.0f;
-    static const float kOne = 1.0f;
-    static const float kHalf = 0.5f;
-    static const float kLineWidth = 0.5f;
-    static const float kVelocityScale = 0.125f;
-    static const float kMaxDistance = 10.0f;
-    static const float kAlphaScale = 255.0f;
-    static const float kAlphaFactor = 0.04f;
-    static const float kGapDistance = 20.0f;
-    static const unsigned int kBatchSize = 1000U;
-
-    ColourTable* colourTable = mMinecraft->getColourTable();
-    const int startColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Slow);
-    const int middleColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Medium);
-    const int endColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Fast);
+    const int startColour = mMinecraft->getColourTable()->getColour(eMinecraftColour_Glide_Ghost_Slow);
+    const int middleColour = mMinecraft->getColourTable()->getColour(eMinecraftColour_Glide_Ghost_Medium);
+    const int endColour = mMinecraft->getColourTable()->getColour(eMinecraftColour_Glide_Ghost_Fast);
 
     GhostController* ghostController = mMinecraft->GetGhostController();
     if (ghostController == NULL)
-    {
         return;
-    }
 
-    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
-    const int trackIndex = player->mUserIndex;
-    GhostController::GhostRecord* record = ghostController->mLoaded[trackIndex];
-    if (record == NULL || !record->HasRecording())
-    {
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
+    GhostController::GhostRecord* record = ghostController->mLoaded[localPlayer->mUserIndex];
+    if (record == NULL || !record->HasRecording() || !ghostController->mPlaybackActive[localPlayer->mUserIndex])
         return;
-    }
-
-    if (!ghostController->mRecordingSlotFlags2[trackIndex])
-    {
-        return;
-    }
-
-    const unsigned int sampleCount = static_cast<unsigned int>(record->NumSamples());
-    if (sampleCount == 0U)
-    {
-        return;
-    }
 
     std::vector<PositionStruct> positions;
-    std::vector<int> colors;
+    std::vector<int> colours;
     std::vector<int> alphas;
-    positions.reserve(sampleCount);
-    colors.reserve(sampleCount);
-    alphas.reserve(sampleCount);
+    positions.reserve(record->NumSamples());
+    colours.reserve(record->NumSamples());
+    alphas.reserve(record->NumSamples());
 
-    const double cameraX = (player->mX - player->mXOld) * partialTick + player->mXOld;
-    const double cameraY = (player->mY - player->mYOld) * partialTick + player->mYOld;
-    const double cameraZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
-
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+    double cameraX = (player->mX - player->mXOld) * partialTick + player->mXOld;
+    double cameraY = (player->mY - player->mYOld) * partialTick + player->mYOld;
+    double cameraZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(static_cast<float>(-cameraX), static_cast<float>(-cameraY),
-                               static_cast<float>(-cameraZ));
+    GlStateManager::translatef(-(float)cameraX, -(float)cameraY, -(float)cameraZ);
 
-    Vec3* playerPos = Vec3::newTemp(player->mX, player->mY, player->mZ);
-
-    for (unsigned int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex)
+    for (unsigned int i = 0; i < record->NumSamples(); ++i)
     {
-        const float velocityAlpha = Mth::clamp(
-            static_cast<float>(record->GetVelocityAtIndex(sampleIndex) * kVelocityScale), kZero, kOne);
-        const int blendedColour =
-            ColourTable::LinearBlend(startColour, middleColour, endColour, velocityAlpha);
-
-        Vec3* samplePos = reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetPosAtIndex(sampleIndex)));
-        const float distance =
-            Mth::clamp(static_cast<float>(playerPos->distanceTo(samplePos)), kZero, kMaxDistance);
-        int alpha = static_cast<int>(kAlphaScale * distance * kAlphaFactor);
-
-        if (sampleIndex != 0U && sampleIndex + 1U < sampleCount)
+        float velocity = Mth::clamp((float)(record->GetVelocityAtIndex(i) * 0.125f), 0.0f, 1.0f);
+        int colour = ColourTable::LinearBlend(startColour, middleColour, endColour, velocity);
+        Vec3* position = record->GetPosAtIndex(i);
+        double distance = Mth::clamp(position->distanceTo(player->getPos(1.0f)), 0.0, 10.0);
+        int alpha = (int)(255.0 * distance * 0.04);
+        if (i != 0 && i + 1 < record->NumSamples())
         {
-            Vec3* previousPos =
-                reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetPosAtIndex(sampleIndex - 1U)));
-            Vec3* nextPos = reinterpret_cast<Vec3*>(static_cast<uintptr_t>(record->GetPosAtIndex(sampleIndex + 1U)));
-            if (previousPos->distanceTo(samplePos) > kGapDistance
-                || samplePos->distanceTo(nextPos) > kGapDistance)
+            if (record->GetPosAtIndex(i - 1)->distanceTo(position) > 20.0 ||
+                position->distanceTo(record->GetPosAtIndex(i + 1)) > 20.0)
             {
                 alpha = 0;
             }
         }
-
-        PositionStruct position;
-        position.x = static_cast<float>(samplePos->x);
-        position.y = static_cast<float>(samplePos->y);
-        position.z = static_cast<float>(samplePos->z);
-        positions.push_back(position);
-        colors.push_back(blendedColour);
         alphas.push_back(alpha);
+        colours.push_back(colour);
+        PositionStruct linePosition;
+        linePosition.x = (float)position->x;
+        linePosition.y = (float)position->y;
+        linePosition.z = (float)position->z;
+        positions.push_back(linePosition);
 
-        if (positions.size() == kBatchSize)
+        if (positions.size() == 1000)
         {
-            LevelRenderer::renderLine(&positions, &colors, &alphas, kLineWidth);
-            positions.clear();
-            colors.clear();
+            LevelRenderer::renderLine(&positions, &colours, &alphas, 0.5f);
+            colours.clear();
             alphas.clear();
+            positions.clear();
         }
     }
 
-    if (positions.size() > 1U)
-    {
-        LevelRenderer::renderLine(&positions, &colors, &alphas, kLineWidth);
-    }
-
+    if (positions.size() > 1)
+        LevelRenderer::renderLine(&positions, &colours, &alphas, 0.5f);
     GlStateManager::popMatrix();
 }
 

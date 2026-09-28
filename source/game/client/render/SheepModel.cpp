@@ -35,7 +35,9 @@ SheepModel::SheepModel(const ModelDefinition& modelDefinition)
     }
 }
 
-SheepModel::~SheepModel() = default;
+SheepModel::~SheepModel()
+{
+}
 
 void SheepModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                  float limbSwingAmount, float partialTicks)

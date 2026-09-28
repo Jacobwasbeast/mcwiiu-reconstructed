@@ -1,9 +1,5 @@
 #include "game/client/render/TexturePack.hpp"
 
-TexturePack::~TexturePack()
-{
-}
-
 bool TexturePack::hasAudio()
 {
     return m_bHasAudio;

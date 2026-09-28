@@ -1,3 +1,5 @@
 #include "game/client/render/SFontData.hpp"
 
-SFontData::~SFontData() = default;
+SFontData::~SFontData()
+{
+}

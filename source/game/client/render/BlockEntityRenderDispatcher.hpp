@@ -14,25 +14,6 @@ class TexturePack;
 class Textures;
 class Entity;
 
-enum class BlockEntityRendererType : unsigned long long
-{
-    Sign = BlockEntityType::SIGN,
-    MobSpawner = BlockEntityType::MOB_SPAWNER,
-    Piston = BlockEntityType::PISTON_MOVING,
-    Chest = BlockEntityType::CHEST,
-    EnderChest = BlockEntityType::ENDER_CHEST,
-    EnchantTable = BlockEntityType::ENCHANTMENT_TABLE_ENTITY,
-    EndPortal = BlockEntityType::THE_END_PORTAL,
-    EndGateway = BlockEntityType::THE_END_GATEWAY_ENTITY,
-    Skull = BlockEntityType::SKULL,
-    Furnace = BlockEntityType::FURNACE,
-    Beacon = BlockEntityType::BEACON,
-    Banner = BlockEntityType::BANNER,
-    ShulkerBox = BlockEntityType::SHULKER_BOX,
-    Bed = BlockEntityType::BED,
-    Conduit = BlockEntityType::CONDUIT
-};
-
 class BlockEntityRenderDispatcher : public boost::unordered_map<unsigned long long, BlockEntityRenderer*>
 {
 public:

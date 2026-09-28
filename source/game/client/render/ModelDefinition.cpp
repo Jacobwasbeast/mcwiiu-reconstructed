@@ -12,10 +12,6 @@ ModelDefinition::ModelDefinition()
     mTextureHeight = 0;
 }
 
-ModelDefinition::~ModelDefinition()
-{
-}
-
 bool ModelDefinition::hasModelPart(const std::wstring& partName) const
 {
     return mModelParts.find(partName) != mModelParts.end();

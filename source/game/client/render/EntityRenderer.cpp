@@ -39,10 +39,6 @@ EntityRenderer::EntityRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-EntityRenderer::~EntityRenderer()
-{
-}
-
 bool EntityRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z)
 {
     AABB* box = entity->getBoundingBoxForCulling()->grow(0.5);
@@ -285,14 +281,14 @@ void EntityRenderer::renderBlockShadow(const BlockState* state, double x, double
         return;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     Level* level = getLevel();
-    float shade = (float)(alpha - (y - ((double)pos.y + offsetY)) * 0.5) * 0.5F;
+    double shade = (alpha - (y - ((double)pos.y + offsetY)) * 0.5) * 0.5;
     shade *= level->getBrightness(pos);
-    if (shade < 0.0F)
+    if (shade < 0.0)
         return;
-    if (shade > 1.0F)
-        shade = 1.0F;
+    if (shade > 1.0)
+        shade = 1.0;
 
-    builder->color(1.0F, 1.0F, 1.0F, shade);
+    builder->color(1.0F, 1.0F, 1.0F, (float)shade);
     const AABB* shape = state->getShape(level, pos);
     double minX = (double)pos.x + shape->mMinX + offsetX;
     double maxX = (double)pos.x + shape->mMaxX + offsetX;

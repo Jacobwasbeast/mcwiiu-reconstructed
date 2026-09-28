@@ -25,10 +25,6 @@ WaterDropParticle::WaterDropParticle(Level* level, double x, double y, double z)
     lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2));
 }
 
-WaterDropParticle::~WaterDropParticle()
-{
-}
-
 void WaterDropParticle::tick()
 {
     xo = x;

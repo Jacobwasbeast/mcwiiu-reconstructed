@@ -20,7 +20,7 @@ public:
     ZombieModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& definition);
     ZombieModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType, const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned);
 
-    virtual ~ZombieModel();
+    virtual ~ZombieModel() {}
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual std::wstring getName();

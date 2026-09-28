@@ -20,9 +20,8 @@
 static ResourceLocation FIREBALL_LOCATION;
 
 FireballRenderer::FireballRenderer(EntityRenderDispatcher* dispatcher,
-                                   float shadowRadius)
-    : EntityRenderer(dispatcher) {
-    mShadowRadius = shadowRadius;
+                                   float scale)
+    : EntityRenderer(dispatcher), mScale(scale) {
 }
 
 FireballRenderer::~FireballRenderer() {
@@ -37,7 +36,7 @@ void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     mDispatcher->mTextures->bindTexture(mDispatcher->mTextures->getTextureLocation(1));
     GlStateManager::translatef((float)x, (float)y, (float)z);
     GlStateManager::enableRescaleNormal();
-    GlStateManager::scalef(mShadowRadius, mShadowRadius, mShadowRadius);
+    GlStateManager::scalef(mScale, mScale, mScale);
 
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();

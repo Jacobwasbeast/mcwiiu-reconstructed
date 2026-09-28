@@ -17,7 +17,7 @@ class MinecartRenderer : public EntityRenderer
 {
 public:
     MinecartRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~MinecartRenderer();
+    virtual ~MinecartRenderer() {}
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

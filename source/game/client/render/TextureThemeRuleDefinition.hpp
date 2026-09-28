@@ -18,7 +18,7 @@ public:
     {
     public:
         virtual void getStack(TextureTheme::BlockStack& stack) = 0;
-        virtual ~BlockStackGetter();
+        virtual ~BlockStackGetter() {}
         std::vector<std::wstring> getColours() const;
 
     protected:

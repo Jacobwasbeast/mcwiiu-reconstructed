@@ -16,8 +16,8 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
+#include "game/core/XLanguage.hpp"
 
-unsigned int XGetLanguage();
 
 static ResourceLocation SIGN_LOCATION((_TEXTURE_NAME)12);
 
@@ -40,7 +40,8 @@ void SignRenderer::CensorString(std::wstring& text)
     if (text.compare(0, text.size(), L" ", 1) != 0)
     {
         unsigned int language = XGetLanguage();
-        if (language == 2 || language == 7 || language == 8 || language == 17)
+        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE ||
+            language == XC_LANGUAGE_ZH_HANS)
             text = L"Censored";
         else
             text = L10N::GetString(0x62950b66);
@@ -163,7 +164,8 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
                 {
                     if (!sign->IsVerified())
                     {
-                        if (mLanguage == 2 || mLanguage == 7 || mLanguage == 8 || mLanguage == 17)
+                        if (mLanguage == XC_LANGUAGE_JAPANESE || mLanguage == XC_LANGUAGE_KOREAN || mLanguage == XC_LANGUAGE_TCHINESE ||
+                            mLanguage == XC_LANGUAGE_ZH_HANS)
                             text = L"Awaiting Approval";
                         else
                             text = L10N::GetString(0xad36b773);
@@ -178,7 +180,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
                     CensorString(text);
                 }
 
-                if (line == sign->mUnknown)
+                if (line == sign->mSelectedLine)
                     text = L"> " + text + L" <";
 
                 rendered &= font->drawNoBeginEndBuilder(text, -font->width(text) / 2,

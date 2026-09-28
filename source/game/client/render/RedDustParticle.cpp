@@ -10,7 +10,9 @@ RedDustParticle::RedDustParticle(Level* level, double x, double y, double z,
     init(level, x, y, z, 1.0f, red, green, blue);
 }
 
-RedDustParticle::~RedDustParticle() = default;
+RedDustParticle::~RedDustParticle()
+{
+}
 
 void RedDustParticle::init(Level* level, double x, double y, double z,
                            float alpha, float red, float green, float blue)
@@ -29,7 +31,8 @@ void RedDustParticle::init(Level* level, double x, double y, double z,
     const float particleSize = Particle::size * 0.75f * alpha;
     Particle::size = particleSize;
     size = particleSize;
-    lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2) * alpha);
+    lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2));
+    lifetime = (int)((float)lifetime * alpha);
     setMiscTex(7 - (age << 3) / lifetime);
 }
 
