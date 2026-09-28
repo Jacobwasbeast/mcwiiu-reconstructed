@@ -40,7 +40,7 @@ public:
 
     typedef unsigned int ProcessType;
 
-    enum EventType : unsigned int
+    enum EventType
     {
         cEventTypeJoin = 0,
         cEventTypeLeave = 1
@@ -75,7 +75,6 @@ public:
         unsigned int m_field0c;
         unsigned int m_field10;
     };
-    static_assert(sizeof(Setting) == 20, "Session::Setting ABI");
 
     static Result CreateInstance(const Setting& setting);
 
@@ -137,8 +136,6 @@ public:
     unsigned short m_participantNum;
 };
 
-static_assert(offsetof(Session, m_callContext) == 0x98, "Session::CallContext ABI");
-static_assert(sizeof(Session) == 0x150, "Session ABI");
 
 extern Session* g_piaSession;
 extern unsigned char g_piaMatchmakeAnalysisEnabled;

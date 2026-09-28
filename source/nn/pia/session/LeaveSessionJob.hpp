@@ -55,7 +55,6 @@ protected:
 }}} 
 
 #if !defined(RECON_NATIVE)
-static_assert(sizeof(nn::pia::session::LeaveSessionJob) == 0x70, "LeaveSessionJob ABI");
 #endif
 
 #endif

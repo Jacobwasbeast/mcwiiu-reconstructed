@@ -10,7 +10,7 @@ namespace nn { namespace pia { namespace session {
 
 DestroySessionJob::DestroySessionJob()
     : common::StepSequenceJob(), m_callerContext(0), m_callContext(), m_startTick(0), m_endTick(0),
-      m_isSingleStation(false), m_padding{0, 0, 0, 0, 0, 0, 0}
+      m_isSingleStation(false), m_padding()
 {
 }
 

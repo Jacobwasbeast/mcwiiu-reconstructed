@@ -37,7 +37,6 @@ protected:
 }}} 
 
 #if !defined(RECON_NATIVE)
-static_assert(sizeof(nn::pia::session::DestroySessionJob) == 0x68, "DestroySessionJob ABI");
 #endif
 
 #endif

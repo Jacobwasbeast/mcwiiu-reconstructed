@@ -23,7 +23,7 @@ static unsigned int finishIfSessionFailed(Session* session)
 
 LeaveSessionJob::LeaveSessionJob()
     : common::StepSequenceJob(), m_callerContext(0), m_callContext(),
-      m_startTick(0), m_endTick(0), m_isSingleStation(false), m_padding{0, 0, 0},
+      m_startTick(0), m_endTick(0), m_isSingleStation(false), m_padding(),
       m_field64(0), m_migrationStartTick(0), m_migrationEndTick(0)
 {
 }

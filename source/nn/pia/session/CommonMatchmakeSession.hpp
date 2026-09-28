@@ -1,7 +1,7 @@
 #ifndef NN_PIA_SESSION_COMMONMATCHMAKESESSION_HPP
 #define NN_PIA_SESSION_COMMONMATCHMAKESESSION_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/pia/Common.hpp"
 
 namespace nn { namespace pia { namespace session {

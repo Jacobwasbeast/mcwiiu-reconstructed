@@ -15,7 +15,7 @@ template <>
 class SessionInfoList<lan::LanSessionInfoPrivate> : public ISessionInfoList
 {
 public:
-    ~SessionInfoList() override;
+    ~SessionInfoList();
 
     ISessionInfo* const* Begin() const;
     ISessionInfo** Begin();

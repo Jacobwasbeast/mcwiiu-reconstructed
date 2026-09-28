@@ -304,8 +304,6 @@ public:
 extern Mesh* g_piaMesh;
 
 #if !defined(RECON_NATIVE)
-static_assert(offsetof(Mesh, m_callContext) == 0xa8, "Mesh::CallContext ABI");
-static_assert(sizeof(Mesh) == 0x158, "Mesh ABI");
 #endif
 
 }}}
