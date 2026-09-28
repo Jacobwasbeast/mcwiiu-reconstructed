@@ -14,7 +14,7 @@ class GameCommandPacket;
 class GameModeCommand : public Command
 {
 public:
-    virtual ~GameModeCommand();
+    virtual ~GameModeCommand() {}
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -12,10 +12,6 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/Level.hpp"
 
-GameModeCommand::~GameModeCommand()
-{
-}
-
 EGameCommand GameModeCommand::getId()
 {
     return eGameCommand_GameMode;

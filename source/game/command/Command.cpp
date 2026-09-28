@@ -11,10 +11,6 @@ Command::Command()
 {
 }
 
-Command::~Command()
-{
-}
-
 int Command::getPermissionLevel()
 {
     return 4;

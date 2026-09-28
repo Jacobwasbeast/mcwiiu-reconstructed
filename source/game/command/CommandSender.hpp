@@ -18,7 +18,7 @@ class Vec3;
 class CommandSender
 {
 public:
-    virtual ~CommandSender();
+    virtual ~CommandSender() {}
 
     virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams) = 0;
     virtual bool hasPermission(EGameCommand command) = 0;

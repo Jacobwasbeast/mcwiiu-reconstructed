@@ -19,7 +19,7 @@ class Command
 {
 public:
     Command();
-    virtual ~Command();
+    virtual ~Command() {}
 
     virtual EGameCommand getId() = 0;
     virtual int getPermissionLevel();
