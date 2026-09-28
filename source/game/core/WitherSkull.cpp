@@ -34,7 +34,9 @@ WitherSkull::WitherSkull(Level* level, double x, double y, double z, double xd, 
     fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
-WitherSkull::~WitherSkull() = default;
+WitherSkull::~WitherSkull()
+{
+}
 void WitherSkull::create(Level* level)
 {
     new WitherSkull(level);
@@ -99,7 +101,6 @@ void WitherSkull::onHit(const HitResult* result)
 }
 void WitherSkull::defineSynchedData()
 {
-    Fireball::defineSynchedData();
     mEntityData->createDateItem(DATA_DANGEROUS, false);
 }
 bool WitherSkull::shouldBurn() { return false; }

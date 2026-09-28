@@ -262,7 +262,7 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
                 const unsigned int lifeSpan = scoreboard->GetBestLifeSpan(uid, &round);
                 if (scoreboard->GetEndZoneEntered(uid, round))
                     return UIScene_HUD::formatTime(lifeSpan, false);
-                if ((gameMode->IsWaitingToStart() || gameMode->IsRoundStarting()) && scoreboard->mNextTeamIndex == 0)
+                if ((gameMode->IsWaitingToStart() || gameMode->IsRoundStarting()) && scoreboard->mCurrentRound == 0)
                     return L"---";
                 return L10N::GetString(IDS_DNF);
             }

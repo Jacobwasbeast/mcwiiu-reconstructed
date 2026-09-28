@@ -8,7 +8,7 @@ public:
     virtual double getY() = 0;
     virtual double getZ() = 0;
 
-    virtual ~Position();
+    virtual ~Position() {}
 };
 
 #endif

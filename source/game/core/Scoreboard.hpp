@@ -24,10 +24,10 @@ class PlayerTeam;
 class Potion;
 class ServerPlayer;
 
-class Scoreboard : public boost::unordered_map<std::wstring, PlayerTeam*>
+class Scoreboard
 {
 public:
-    typedef boost::unordered_map<PlayerUID, PlayerTeam*, boost::hash<PlayerUID>, std::equal_to<PlayerUID>>
+    typedef boost::unordered_map<PlayerUID, PlayerTeam*, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >
         PlayerTeamByUIDMap;
 
     enum EDamageSource
@@ -129,7 +129,7 @@ public:
 
         uint32_t GetKey() const;
         bool HasItem() const;
-        void GetItem() const;
+        Item* GetItem() const;
         not_null_ptr<ItemInstance> GetItemInstance() const;
 
         int mItemId;
@@ -270,8 +270,9 @@ public:
     static EDamageSource GetDamageSource(const DamageSource* pSource);
     static Potion* GetPotionByDamageSource(EDamageSource damageSource);
 
+    boost::unordered_map<std::wstring, PlayerTeam*> mTeamsByName;
     PlayerTeamByUIDMap mTeamsByPlayer;
-    int mNextTeamIndex;
+    int mCurrentRound;
 };
 
 #endif

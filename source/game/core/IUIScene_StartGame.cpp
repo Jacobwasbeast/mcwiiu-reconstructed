@@ -367,7 +367,7 @@ void IUIScene_StartGame::_init()
 void IUIScene_StartGame::RequestPrivMessageBox()
 {
     int parameters[1];
-    parameters[0] = -0x465E40B3;
+    parameters[0] = IDS_CONFIRM_OK;
     if (m_launchData.mJoinMiniGame)
     {
         gConsoleUIController.RequestAlertMessage(0x456F1349, 0x2FAC754A, parameters, 1,
@@ -414,7 +414,7 @@ void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
         return;
     }
     int parameters[1];
-    parameters[0] = -0x465E40B3;
+    parameters[0] = IDS_CONFIRM_OK;
     if (result == 2)
     {
         gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, -0x479419FD, parameters, 1,
@@ -702,7 +702,7 @@ int IUIScene_StartGame::StartGame_SignInReturned(void* context, bool signedIn, i
     {
         scene->m_actionPending = false;
         int parameters[1];
-        parameters[0] = -0x465E40B3;
+        parameters[0] = IDS_CONFIRM_OK;
         gConsoleUIController.RequestAlertMessage(-0x75DE76B5, -0x47C8FDB2, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return 0;
@@ -770,7 +770,7 @@ void IUIScene_StartGame::handleSliderMove(int id, int value)
         m_gameModeSlider.handleSliderMove(value);
         if (value == 0)
         {
-            m_gameModeSlider.setLabel(UIString(L10N::GetString(-0x64587D5A)), false, false);
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), false, false);
             m_isCreative = false;
             m_gameTypeId = GameType::SURVIVAL->getId();
             return;
@@ -786,7 +786,7 @@ void IUIScene_StartGame::handleSliderMove(int id, int value)
         {
             return;
         }
-        m_gameModeSlider.setLabel(UIString(L10N::GetString(-0x066EACA8)), false, false);
+        m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_ADVENTURE)), false, false);
         m_isCreative = false;
         m_gameTypeId = GameType::ADVENTURE->getId();
         return;
@@ -801,7 +801,7 @@ void IUIScene_StartGame::handleSliderMove(int id, int value)
                                           static_cast<unsigned char>(value));
         }
         wchar_t buffer[256];
-        swprintf(buffer, 0x100, L"%ls: %ls", L10N::GetString(-0x2CDBBD73),
+        swprintf(buffer, 0x100, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
                  L10N::GetString(Difficulty::byId(value)->getKey()));
         m_difficultySlider.setLabel(UIString(buffer), false, false);
     }
@@ -956,7 +956,7 @@ int IUIScene_StartGame::TexturePackDialogReturned(void* context, int userIndex,
     if (result == C4JStorage::EMessageResult_Accept && gProfile->IsSignedIn(userIndex))
     {
         int parameters[1];
-        parameters[0] = -0x465E40B3;
+        parameters[0] = IDS_CONFIRM_OK;
         if (!gProfile->IsSignedInLive(userIndex))
         {
             gConsoleUIController.RequestErrorMessage(-0x75DE76B5, -0x3CB3F489, parameters, 1,
@@ -964,7 +964,7 @@ int IUIScene_StartGame::TexturePackDialogReturned(void* context, int userIndex,
         }
         else if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(scene->m_launchData.mTexturePackId))
         {
-            gConsoleUIController.RequestErrorMessage(-0x625FB562, -0x345A830D, parameters, 1,
+            gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, parameters, 1,
                                                      userIndex, NULL, NULL, NULL, true);
         }
     }
@@ -979,7 +979,7 @@ int IUIScene_StartGame::TexturePackDialogBattleMiniGameReturned(void* context, i
     if (result == C4JStorage::EMessageResult_Accept && gProfile->IsSignedIn(userIndex))
     {
         int parameters[1];
-        parameters[0] = -0x465E40B3;
+        parameters[0] = IDS_CONFIRM_OK;
         if (!gProfile->IsSignedInLive(userIndex))
         {
             gConsoleUIController.RequestErrorMessage(-0x75DE76B5, -0x3CB3F489, parameters, 1,
@@ -987,7 +987,7 @@ int IUIScene_StartGame::TexturePackDialogBattleMiniGameReturned(void* context, i
         }
         else if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(scene->m_launchData.mTexturePackId))
         {
-            gConsoleUIController.RequestErrorMessage(-0x625FB562, -0x345A830D, parameters, 1,
+            gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, parameters, 1,
                                                      userIndex, NULL, NULL, NULL, true);
         }
     }
@@ -1026,7 +1026,7 @@ void IUIScene_StartGame::CheckPermissionsAndContinue(bool fromLoad)
     {
         m_actionPending = false;
         int parameters[1];
-        parameters[0] = -0x465E40B3;
+        parameters[0] = IDS_CONFIRM_OK;
         gConsoleUIController.RequestAlertMessage(-0x75DE76B5, -0x47C8FDB2, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return;
@@ -1139,7 +1139,7 @@ void IUIScene_StartGame::StartSharedLaunchFlow()
                 !m_texturePackParentPack->hasPurchasedPack())
             {
                 int parameters[2];
-                parameters[0] = -0x465E40B3;
+                parameters[0] = IDS_CONFIRM_OK;
                 parameters[1] = IDS_CONFIRM_CANCEL;
                 if (m_launchData.mHostMiniGame)
                 {
@@ -1198,7 +1198,7 @@ int IUIScene_StartGame::LoadDataComplete(void* context)
     int parameters[2];
     parameters[0] = IDS_CONFIRM_CANCEL;
     scene->m_actionPending = false;
-    parameters[1] = -0x465E40B3;
+    parameters[1] = IDS_CONFIRM_OK;
     gConsoleUIController.RequestAlertMessage(-0x75879076, -0x637D3399, parameters, 2,
                                              scene->m_playerId, DeleteSaveDialogReturned, scene,
                                              NULL, true);
@@ -1247,14 +1247,14 @@ int IUIScene_StartGame::CheckCreativeReturned(void* context, int,
 void IUIScene_StartGame::LaunchGame()
 {
     int parameters[2];
-    parameters[0] = -0x465E40B3;
+    parameters[0] = IDS_CONFIRM_OK;
     parameters[1] = IDS_CONFIRM_CANCEL;
     bool creativeConfirmed = false;
     if (!m_isCreative)
     {
         if (m_state62C)
         {
-            gConsoleUIController.RequestAlertMessage(-0x20B338A6, 0x7BC65289, parameters, 2,
+            gConsoleUIController.RequestAlertMessage(IDS_TITLE_START_GAME, 0x7BC65289, parameters, 2,
                                                      m_playerId, CheckCreativeReturned, this, NULL,
                                                      true);
             return;
@@ -1262,7 +1262,7 @@ void IUIScene_StartGame::LaunchGame()
         creativeConfirmed = false;
         if (m_state62B)
         {
-            gConsoleUIController.RequestAlertMessage(-0x20B338A6, -0x0057B1B1, parameters, 2,
+            gConsoleUIController.RequestAlertMessage(IDS_TITLE_START_GAME, -0x0057B1B1, parameters, 2,
                                                      m_playerId, CheckCreativeReturned, this, NULL,
                                                      true);
             return;
@@ -1273,7 +1273,7 @@ void IUIScene_StartGame::LaunchGame()
         creativeConfirmed = m_state62B;
         if (!creativeConfirmed || m_state62C)
         {
-            gConsoleUIController.RequestAlertMessage(-0x20B338A6, -0x6FF856BB, parameters, 2,
+            gConsoleUIController.RequestAlertMessage(IDS_TITLE_START_GAME, -0x6FF856BB, parameters, 2,
                                                      m_playerId, CheckCreativeReturned, this, NULL,
                                                      true);
             return;
@@ -1281,14 +1281,14 @@ void IUIScene_StartGame::LaunchGame()
     }
     if (m_launchData.mFlatWorld && !creativeConfirmed)
     {
-        gConsoleUIController.RequestAlertMessage(-0x20B338A6, -0x6C429A80, parameters, 2,
+        gConsoleUIController.RequestAlertMessage(IDS_TITLE_START_GAME, -0x6C429A80, parameters, 2,
                                                  m_playerId, CheckCreativeReturned, this, NULL,
                                                  true);
         return;
     }
     if (m_launchData.mHostPrivileges)
     {
-        gConsoleUIController.RequestAlertMessage(-0x20B338A6, 0x020D77D5, parameters, 2,
+        gConsoleUIController.RequestAlertMessage(IDS_TITLE_START_GAME, 0x020D77D5, parameters, 2,
                                                  m_playerId, CheckCreativeReturned, this, NULL,
                                                  true);
         return;

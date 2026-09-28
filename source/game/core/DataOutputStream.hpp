@@ -17,7 +17,7 @@ class DataOutputStream : public OutputStream, public DataOutput
 {
 public:
     DataOutputStream(OutputStream* out);
-    virtual ~DataOutputStream();
+    virtual ~DataOutputStream() {}
 
     virtual void write(unsigned int value);
     virtual void write(arrayWithLength<unsigned char> data);
@@ -50,6 +50,8 @@ public:
     void writeVarIntArray(arrayWithLength<int> values);
 
 private:
+    friend class Connection;
+
     OutputStream* mOut;
     int mWritten;
 };

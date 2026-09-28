@@ -102,8 +102,6 @@ NetherBridgePieces::NetherBridgePiece::NetherBridgePiece()
 {
 }
 
-NetherBridgePieces::NetherBridgePiece::~NetherBridgePiece() { }
-
 bool NetherBridgePieces::NetherBridgePiece::isOkBox(BoundingBox* box, StartPiece* start)
 {
     if (box == NULL)

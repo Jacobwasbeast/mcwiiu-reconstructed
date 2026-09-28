@@ -18,7 +18,7 @@ class Fish : public WaterAnimal
 {
 public:
     Fish(Level* level, bool deferredInit);
-    virtual ~Fish();
+    virtual ~Fish() {}
 
     void _init();
     virtual void baseTick();

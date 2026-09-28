@@ -1,7 +1,7 @@
 #ifndef GAME_CORE_VOTEABLE_HPP
 #define GAME_CORE_VOTEABLE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <map>
 #include <utility>
 

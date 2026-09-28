@@ -31,7 +31,7 @@ CAchievements::CAchievements(int iQuad)
     else
     {
         std::wstring uid = mPlayerUID.toString();
-        gProfile->DebugPrintf("<CAchievements> Creating achievements for '%ls', iQuad=%i, slot=%i",
+        gProfile->DebugPrintf("<CAchievements> Creating achievements for '%ls', iQuad=%i, slot=%i.\n",
                               uid.c_str(), iQuad, mSlotId);
         std::sprintf(mFilename, "ach_%ls", uid.c_str());
         StartRead();

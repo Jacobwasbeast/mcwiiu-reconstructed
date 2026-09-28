@@ -248,77 +248,78 @@ void Options::save()
 void Options::setKey(int index, int key)
 {
     mKeyMappings[index]->mKey = key;
+    save();
 }
 
 void Options::set(const Option* option, float value)
 {
-    if (option == Option::getItem(0))
+    if (option == Option::music)
     {
         mMusicVolume = value;
         mMinecraft->mSoundEngine->updateMusicVolume(value);
     }
-    if (option == Option::getItem(1))
+    if (option == Option::sound)
     {
         mSoundVolume = value;
         mMinecraft->mSoundEngine->updateSoundEffectVolume(value);
     }
-    if (option == Option::getItem(3)) mSensitivity = value;
-    if (option == Option::getItem(13)) mFov = value;
-    if (option == Option::getItem(14)) mGamma = value;
+    if (option == Option::sensitivity) mSensitivity = value;
+    if (option == Option::fov) mFov = value;
+    if (option == Option::gamma) mGamma = value;
 }
 
 void Options::toggle(const Option* option, int amount)
 {
-    if (option == Option::getItem(2)) mInvertYMouse = !mInvertYMouse;
-    if (option == Option::getItem(4)) mViewDistance = (mViewDistance + amount) & 3;
-    if (option == Option::getItem(12)) mGuiScale = (mGuiScale + amount) & 3;
-    if (option == Option::getItem(16)) mParticles = (mParticles + amount) % 3;
-    if (option == Option::getItem(5)) mViewBobbing = amount != 0;
-    if (option == Option::getItem(15)) mClouds = !mClouds;
-    if (option == Option::getItem(7))
+    if (option == Option::invertMouse) mInvertYMouse = !mInvertYMouse;
+    if (option == Option::renderDistance) mViewDistance = (mViewDistance + amount) & 3;
+    if (option == Option::guiScale) mGuiScale = (mGuiScale + amount) & 3;
+    if (option == Option::particles) mParticles = (mParticles + amount) % 3;
+    if (option == Option::viewBobbing) mViewBobbing = amount != 0;
+    if (option == Option::renderClouds) mClouds = !mClouds;
+    if (option == Option::advancedOpengl)
     {
         mAdvancedOpengl = !mAdvancedOpengl;
         mMinecraft->mLevelRenderer->allChanged();
     }
-    if (option == Option::getItem(6))
+    if (option == Option::anaglyph)
     {
         mAnaglyph3d = !mAnaglyph3d;
         mMinecraft->mTextures->reloadAll();
     }
-    if (option == Option::getItem(8)) mFpsLimit = (mFpsLimit + amount + 3) % 3;
-    if (option == Option::getItem(9)) mDifficulty = amount & 3;
-    if (option == Option::getItem(10))
+    if (option == Option::framerateLimit) mFpsLimit = (mFpsLimit + amount + 3) % 3;
+    if (option == Option::difficulty) mDifficulty = amount & 3;
+    if (option == Option::graphics)
     {
         mFancyGraphics = !mFancyGraphics;
         mMinecraft->mLevelRenderer->allChanged();
     }
-    if (option == Option::getItem(11))
+    if (option == Option::ambientOcclusion)
     {
         mAmbientOcclusion = !mAmbientOcclusion;
         mMinecraft->mLevelRenderer->allChanged();
     }
-    if (option == Option::getItem(17)) mAutoJump = !mAutoJump;
+    if (option == Option::autoJump) mAutoJump = !mAutoJump;
 }
 
-double Options::getProgressValue(const Option* option)
+float Options::getProgressValue(const Option* option)
 {
-    if (option == Option::getItem(13)) return mFov;
-    if (option == Option::getItem(14)) return mGamma;
-    if (option == Option::getItem(0)) return mMusicVolume;
-    if (option == Option::getItem(1)) return mSoundVolume;
-    if (option == Option::getItem(3)) return mSensitivity;
-    return 0.0;
+    if (option == Option::fov) return mFov;
+    if (option == Option::gamma) return mGamma;
+    if (option == Option::music) return mMusicVolume;
+    if (option == Option::sound) return mSoundVolume;
+    if (option == Option::sensitivity) return mSensitivity;
+    return 0.0f;
 }
 
 bool Options::getBooleanValue(const Option* option)
 {
-    if (option == Option::getItem(2)) return mInvertYMouse;
-    if (option == Option::getItem(5)) return mViewBobbing;
-    if (option == Option::getItem(6)) return mAnaglyph3d;
-    if (option == Option::getItem(7)) return mAdvancedOpengl;
-    if (option == Option::getItem(11)) return mAmbientOcclusion;
-    if (option == Option::getItem(15)) return mClouds;
-    if (option == Option::getItem(17)) return mAutoJump;
+    if (option == Option::invertMouse) return mInvertYMouse;
+    if (option == Option::viewBobbing) return mViewBobbing;
+    if (option == Option::anaglyph) return mAnaglyph3d;
+    if (option == Option::advancedOpengl) return mAdvancedOpengl;
+    if (option == Option::ambientOcclusion) return mAmbientOcclusion;
+    if (option == Option::renderClouds) return mClouds;
+    if (option == Option::autoJump) return mAutoJump;
     return false;
 }
 
@@ -331,37 +332,37 @@ std::wstring Options::getMessage(const Option* option)
     {
         if (option->isBoolean())
             return caption + language->getElement(getBooleanValue(option) ? L"options.on" : L"options.off");
-        if (option == Option::getItem(4)) return caption + language->getElement(renderDistanceNames[mViewDistance]);
-        if (option == Option::getItem(9)) return caption + language->getElement(difficultyNames[mDifficulty]);
-        if (option == Option::getItem(12)) return caption + language->getElement(guiScaleNames[mGuiScale]);
-        if (option == Option::getItem(16)) return caption + language->getElement(particleNames[mParticles]);
-        if (option == Option::getItem(8)) return caption + I18n::get(framerateNames[mFpsLimit]);
-        if (option == Option::getItem(10))
+        if (option == Option::renderDistance) return caption + language->getElement(renderDistanceNames[mViewDistance]);
+        if (option == Option::difficulty) return caption + language->getElement(difficultyNames[mDifficulty]);
+        if (option == Option::guiScale) return caption + language->getElement(guiScaleNames[mGuiScale]);
+        if (option == Option::particles) return caption + language->getElement(particleNames[mParticles]);
+        if (option == Option::framerateLimit) return caption + I18n::get(framerateNames[mFpsLimit]);
+        if (option == Option::graphics)
             return caption + language->getElement(mFancyGraphics ? L"options.graphics.fancy" : L"options.graphics.fast");
         return caption;
     }
 
-    double value = getProgressValue(option);
-    if (option == Option::getItem(3))
+    float value = getProgressValue(option);
+    if (option == Option::sensitivity)
     {
-        if (value == 0.0) return caption + language->getElement(L"options.sensitivity.min");
-        if (value == 1.0) return caption + language->getElement(L"options.sensitivity.max");
-        return caption + _toString<int>(static_cast<int>(value * 200.0)) + L"%";
+        if (value == 0.0f) return caption + language->getElement(L"options.sensitivity.min");
+        if (value == 1.0f) return caption + language->getElement(L"options.sensitivity.max");
+        return caption + _toString<int>(static_cast<int>(value * 200.0f)) + L"%";
     }
-    if (option == Option::getItem(13))
+    if (option == Option::fov)
     {
-        if (value == 0.0) return caption + language->getElement(L"options.fov.min");
-        if (value == 1.0) return caption + language->getElement(L"options.fov.max");
-        return caption + _toString<int>(static_cast<int>(value * 40.0 + 70.0));
+        if (value == 0.0f) return caption + language->getElement(L"options.fov.min");
+        if (value == 1.0f) return caption + language->getElement(L"options.fov.max");
+        return caption + _toString<int>(static_cast<int>(value * 40.0f + 70.0f));
     }
-    if (option != Option::getItem(14))
+    if (option != Option::gamma)
     {
-        if (value == 0.0) return caption + language->getElement(L"options.off");
-        return caption + _toString<int>(static_cast<int>(value * 100.0)) + L"%";
+        if (value == 0.0f) return caption + language->getElement(L"options.off");
+        return caption + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
     }
-    if (value == 0.0) return caption + language->getElement(L"options.gamma.min");
-    if (value == 1.0) return caption + language->getElement(L"options.gamma.max");
-    return caption + L"+" + _toString<int>(static_cast<int>(value * 100.0)) + L"%";
+    if (value == 0.0f) return caption + language->getElement(L"options.gamma.min");
+    if (value == 1.0f) return caption + language->getElement(L"options.gamma.max");
+    return caption + L"+" + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
 }
 
 double Options::readFloat(std::wstring value)

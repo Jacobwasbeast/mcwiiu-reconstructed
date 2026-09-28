@@ -8,7 +8,7 @@ class TextureAtlasSprite;
 class IconRegister
 {
 public:
-    virtual ~IconRegister();
+    virtual ~IconRegister() {}
 
     virtual TextureAtlasSprite* registerIcon(const std::wstring& iconName) = 0;
     virtual int getIconType() = 0;

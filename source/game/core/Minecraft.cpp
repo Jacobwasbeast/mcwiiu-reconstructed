@@ -6,11 +6,6 @@
 #include <wchar.h>
 #include <cmath>
 
-Textures* Minecraft::getTextureManager()
-{
-    return mTextures;
-}
-
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvent.hpp"
@@ -1041,10 +1036,10 @@ bool Minecraft::InMiniGame(EMiniGameId miniGameId, bool includeNextGameMode)
 
 EMiniGameId Minecraft::GetMiniGameId()
 {
-    EMiniGameId id = static_cast<EMiniGameId>(GetInstance()->GetMiniGame()->GetId());
-    if (id == eMiniGameId_Lobby)
+    const MiniGameDef* miniGame = GetInstance()->GetMiniGame();
+    if (miniGame->GetId() == eMiniGameId_Lobby)
         return GetInstance()->GetClientMasterGameMode()->GetNextGameMode();
-    return id;
+    return miniGame->GetId();
 }
 
 void Minecraft::SetupMiniGameInstance(const MiniGameDef& miniGame, int variant)
@@ -1757,7 +1752,8 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     mOptions->mHotbarScroll += (float)hotbarScroll * 0.25f;
             }
 
-            if (g_pInput->ButtonDown(playerIdx, EControllerActions_PickBlock))
+            bool pickBlock = g_pInput->ButtonDown(playerIdx, EControllerActions_PickBlock);
+            if (pickBlock)
                 mPlayer->handleMouseClick(2);
 
             if (!mPlayer->isUsingItem())
@@ -1913,6 +1909,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             }
 
             InMiniGame(eMiniGameId_Tumble, true);
+            bool selectedItemChanged = false;
             if (touching && gConsoleUIController.GetQuickSelectVisible(playerIdx))
             {
                 int hotBarX = gConsoleUIController.GetHotBarX(playerIdx);
@@ -1926,41 +1923,50 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     if (slot > 8)
                         slot = 8;
                     mPlayer->mInventory->m_selected = slot;
+                    selectedItemChanged = true;
                 }
             }
-
-            std::wstring itemName(L"");
-            boost::shared_ptr<ItemInstance> mainHandItem = mPlayer->getMainHandItem();
-            if (mainHandItem && !mainHandItem->isEmpty())
+            if (!selectedItemChanged)
             {
-                if ((mPlayer->mButtonsDown & 0x40) == 0 || mainHandItem->getCount() != 1)
-                    itemName = mainHandItem->getHoverName();
-
-                std::vector<HtmlString>* tooltipLines = mainHandItem->getTooltipLines(mPlayer, false);
-                if (!tooltipLines->empty())
-                {
-                    tooltipLines->at(0).mColour = static_cast<eMinecraftColour>(mainHandItem->getRarity());
-                    if (mainHandItem->hasCustomHoverName())
-                        tooltipLines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
-                }
-
-                for (int line = (int)tooltipLines->size() - 1; line >= 0; --line)
-                {
-                    tooltipLines->at(line).mIndent = false;
-                    stripWhitespaceForHtml(tooltipLines->at(line).mText, true);
-                    if (tooltipLines->at(line).mText == L"")
-                        tooltipLines->erase(tooltipLines->begin() + line);
-                }
-
-                if (tooltipLines->size() > 4)
-                    tooltipLines->push_back(HtmlString(L"...", eMinecraftColour_NOTSET, false, false, 0));
-
-                gConsoleUIController.SetSelectedItem(playerIdx, itemName, HtmlString::Compose(tooltipLines));
-                delete tooltipLines;
+                selectedItemChanged = hotbarScroll != 0 || (mPlayer->mButtonsDown & 0x40) != 0
+                    || (pickBlock && mPlayer->mInventory->hasPickedItem());
             }
-            else
+
+            if (selectedItemChanged)
             {
-                gConsoleUIController.SetSelectedItem(playerIdx, L"", L"");
+                std::wstring itemName(L"");
+                boost::shared_ptr<ItemInstance> mainHandItem = mPlayer->getMainHandItem();
+                if (mainHandItem && !mainHandItem->isEmpty())
+                {
+                    if ((mPlayer->mButtonsDown & 0x40) == 0 || mainHandItem->getCount() != 1)
+                        itemName = mainHandItem->getHoverName();
+
+                    std::vector<HtmlString>* tooltipLines = mainHandItem->getTooltipLines(mPlayer, false);
+                    if (!tooltipLines->empty())
+                    {
+                        tooltipLines->at(0).mColour = static_cast<eMinecraftColour>(mainHandItem->getRarity());
+                        if (mainHandItem->hasCustomHoverName())
+                            tooltipLines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
+                    }
+
+                    for (int line = (int)tooltipLines->size() - 1; line >= 0; --line)
+                    {
+                        tooltipLines->at(line).mIndent = false;
+                        stripWhitespaceForHtml(tooltipLines->at(line).mText, true);
+                        if (tooltipLines->at(line).mText == L"")
+                            tooltipLines->erase(tooltipLines->begin() + line);
+                    }
+
+                    if (tooltipLines->size() > 4)
+                        tooltipLines->push_back(HtmlString(L"...", eMinecraftColour_NOTSET, false, false, 0));
+
+                    gConsoleUIController.SetSelectedItem(playerIdx, itemName, HtmlString::Compose(tooltipLines));
+                    delete tooltipLines;
+                }
+                else
+                {
+                    gConsoleUIController.SetSelectedItem(playerIdx, L"", L"");
+                }
             }
         }
     }
@@ -2463,7 +2469,7 @@ void Minecraft::run_middle()
     gFancyGraphics = mOptions->mFancyGraphics;
 
     PIXBeginNamedEvent(0.0f, "Sound engine update");
-    mSoundEngine->tick(&mLocalPlayers[0], mTimer->renderPartialTicks);
+    mSoundEngine->tick(reinterpret_cast<boost::shared_ptr<Mob>*>(mLocalPlayers), mTimer->renderPartialTicks);
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "Light update");
@@ -2585,19 +2591,35 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
     PlayerUID suid(0);
     gProfile->GetXUID(playerIdx, &xuid, false);
     gProfile->GetXUID(playerIdx, &suid, true);
+    newPlayer->mIsGuest = gProfile->IsGuest(playerIdx);
     newPlayer->setXuid(xuid);
     newPlayer->mSuid = suid;
+    newPlayer->mDisplayName = gProfile->GetDisplayName(playerIdx);
 
     if (oldPlayer->IsSpectatingOtherPlayer())
         newPlayer->SetCamera(oldPlayer->GetCamera());
 
+    if (!newPlayer->mIsGuest)
+        newPlayer->setUUID(newPlayer->mDisplayName);
+
     newPlayer->mUserIndex = oldPlayer->mUserIndex;
+    newPlayer->mViewport = oldPlayer->mViewport;
+    newPlayer->mPlayerIndex = oldPlayer->mPlayerIndex;
 
     newPlayer->setCustomSkin(oldPlayer->mCustomSkin);
     newPlayer->setPlayerDefaultSkin(oldPlayer->mField0x7d8);
     newPlayer->setCustomCape(oldPlayer->mCustomCape);
+    newPlayer->mSessionTimerStart = oldPlayer->mSessionTimerStart;
+    newPlayer->mChangeDimensionTimerStart = oldPlayer->mChangeDimensionTimerStart;
     newPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All,
                                       oldPlayer->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All));
+    newPlayer->SetThirdPersonView(oldPlayer->GetThirdPersonView(true));
+    if (oldPlayer->getHealth() > 0.0f && oldPlayer->mY > -64.0 && !InMiniGame(eMiniGameId_Any, true))
+        newPlayer->mInventory->m_selected = oldPlayer->mInventory->m_selected;
+
+    int skinId = static_cast<int>(CMinecraftApp::getSkinIdFromPath(newPlayer->mSkinLocation));
+    if (skinId < 0)
+        newPlayer->setSkinAdjustments(Player::getSkinAdjustmentsById(skinId));
     newPlayer->mDimension = dimension;
     mCameraEntity = newPlayer;
 
@@ -2611,6 +2633,8 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
     {
         storeExtraLocalPlayer(playerIdx);
     }
+
+    newPlayer->mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
 
     newPlayer->resetPos();
     mLevel->addEntity(newPlayer);

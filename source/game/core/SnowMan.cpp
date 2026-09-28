@@ -65,8 +65,8 @@ void SnowMan::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
     double dx = target->mX - mX;
     double dz = target->mZ - mZ;
     double targetY = target->mY + target->getEyeHeight() - 1.1;
-    double distance = Mth::sqrt(dx * dx + dz * dz);
-    snowball->shoot(dx, targetY - snowball->mY + distance * 0.2, dz, 1.6f, 12.0f);
+    float distance = Mth::sqrt(dx * dx + dz * dz) * 0.2f;
+    snowball->shoot(dx, targetY - snowball->mY + distance, dz, 1.6f, 12.0f);
     playSound(SoundEvents::SNOWMAN_SHOOT, 1.0f,
               1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
     mLevel->addEntity(snowball);
@@ -112,12 +112,12 @@ void SnowMan::registerAttributes()
 void SnowMan::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_PUMPKIN, static_cast<unsigned char>(16));
+    mEntityData->createDateItem(DATA_PUMPKIN, static_cast<unsigned char>(16));
 }
 
 bool SnowMan::hasPumpkin()
 {
-    return (getEntityData()->get(DATA_PUMPKIN) & 16) != 0;
+    return (mEntityData->get(DATA_PUMPKIN) & 16) != 0;
 }
 
 void SnowMan::addAdditonalSaveData(CompoundTag* tag)
@@ -128,8 +128,8 @@ void SnowMan::addAdditonalSaveData(CompoundTag* tag)
 
 void SnowMan::setPumpkin(bool pumpkin)
 {
-    unsigned char flags = getEntityData()->get(DATA_PUMPKIN);
-    getEntityData()->set(DATA_PUMPKIN, pumpkin ? static_cast<unsigned char>(flags | 16) : static_cast<unsigned char>(flags & 239), true);
+    unsigned char flags = mEntityData->get(DATA_PUMPKIN);
+    mEntityData->set(DATA_PUMPKIN, pumpkin ? static_cast<unsigned char>(flags | 16) : static_cast<unsigned char>(flags & 239), true);
 }
 
 void SnowMan::readAdditionalSaveData(CompoundTag* tag)

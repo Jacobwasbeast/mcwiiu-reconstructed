@@ -8,7 +8,7 @@
 class XmlValue : public XmlConstruct
 {
 public:
-    virtual ~XmlValue();
+    virtual ~XmlValue() {}
     virtual bool isString() const;
     virtual std::wstring asString() const;
 private:

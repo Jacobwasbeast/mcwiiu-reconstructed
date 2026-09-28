@@ -48,8 +48,8 @@ void Bat::staticCtor()
 
 void Bat::setResting(bool resting)
 {
-    unsigned char flags = getEntityData()->get(DATA_ID_FLAGS);
-    getEntityData()->set(DATA_ID_FLAGS,
+    unsigned char flags = mEntityData->get(DATA_ID_FLAGS);
+    mEntityData->set(DATA_ID_FLAGS,
                          resting ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe),
                          true);
 }
@@ -57,7 +57,7 @@ void Bat::setResting(bool resting)
 void Bat::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_ID_FLAGS, (unsigned char)0);
+    mEntityData->createDateItem(DATA_ID_FLAGS, (unsigned char)0);
 }
 
 float Bat::getSoundVolume()
@@ -108,7 +108,7 @@ void Bat::registerAttributes()
 
 bool Bat::isResting()
 {
-    return (getEntityData()->get(DATA_ID_FLAGS) & 1) != 0;
+    return (mEntityData->get(DATA_ID_FLAGS) & 1) != 0;
 }
 
 void Bat::tick()
@@ -234,13 +234,13 @@ void Bat::addDataWalkers(DataFixerUpper* fixer)
 void Bat::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    getEntityData()->set(DATA_ID_FLAGS, tag->getByte(L"BatFlags"), true);
+    mEntityData->set(DATA_ID_FLAGS, tag->getByte(L"BatFlags"), true);
 }
 
 void Bat::addAdditonalSaveData(CompoundTag* tag)
 {
     Mob::addAdditonalSaveData(tag);
-    tag->putByte(L"BatFlags", getEntityData()->get(DATA_ID_FLAGS));
+    tag->putByte(L"BatFlags", mEntityData->get(DATA_ID_FLAGS));
 }
 
 bool Bat::checkSpawnRules()

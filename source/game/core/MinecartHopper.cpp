@@ -246,7 +246,7 @@ void MinecartHopper::destroy(const DamageSource* source)
 {
     MinecartContainer::destroy(source);
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
-        spawnAtLocation(Item::byBlock(Blocks::hopper), 1, 4.5f);
+        spawnAtLocation(Item::byBlock(Blocks::hopper), 1, 0.0f);
 }
 
 void MinecartHopper::addAdditonalSaveData(CompoundTag* tag)

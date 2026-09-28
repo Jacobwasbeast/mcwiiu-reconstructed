@@ -12,10 +12,6 @@ AbstractIllager::AbstractIllager(Level* level)
 {
 }
 
-AbstractIllager::~AbstractIllager()
-{
-}
-
 void AbstractIllager::staticCtor()
 {
     DATA_ILLAGER_FLAGS = SynchedEntityData::defineId(EntityType::ABSTRACT_ILLAGER,
@@ -26,22 +22,22 @@ void AbstractIllager::staticCtor()
 void AbstractIllager::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_ILLAGER_FLAGS, (unsigned char)0);
+    mEntityData->createDateItem(DATA_ILLAGER_FLAGS, (unsigned char)0);
 }
 
 bool AbstractIllager::getIllagerFlag(int flag)
 {
-    return (getEntityData()->get(DATA_ILLAGER_FLAGS) & flag) != 0;
+    return (mEntityData->get(DATA_ILLAGER_FLAGS) & flag) != 0;
 }
 
 void AbstractIllager::setIllagerFlag(int flag, bool value)
 {
-    unsigned char flags = getEntityData()->get(DATA_ILLAGER_FLAGS);
+    unsigned char flags = mEntityData->get(DATA_ILLAGER_FLAGS);
     if (value)
         flags = (unsigned char)(flags | flag);
     else
         flags = (unsigned char)(flags & ~flag);
-    getEntityData()->set(DATA_ILLAGER_FLAGS, flags, true);
+    mEntityData->set(DATA_ILLAGER_FLAGS, flags, true);
 }
 
 EMobType AbstractIllager::getMobType()

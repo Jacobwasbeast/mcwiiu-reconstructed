@@ -4,16 +4,22 @@
 
 #include "game/client/render/Texture.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
+#include "game/util/Math.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 CompassAtlasSprite::CompassAtlasSprite()
     : TextureAtlasSprite(L"compass", L"compass", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mFrameCount(255), mParent(0), mAngle(1.0), mTargetAngle(1.0)
+      mPlayerIndex(255), mParent(0), mAngle(0.0), mAngleDelta(0.0)
 {
 }
 
-CompassAtlasSprite::CompassAtlasSprite(int frameCount, CompassAtlasSprite* parent)
+CompassAtlasSprite::CompassAtlasSprite(int playerIndex, CompassAtlasSprite* parent)
     : TextureAtlasSprite(L"compass", L"compass", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mFrameCount(frameCount), mParent(parent), mAngle(1.0), mTargetAngle(1.0)
+      mPlayerIndex(playerIndex), mParent(parent), mAngle(0.0), mAngleDelta(0.0)
 {
 }
 
@@ -21,53 +27,62 @@ CompassAtlasSprite::~CompassAtlasSprite()
 {
 }
 
-void CompassAtlasSprite::updateFromPosition(Level* level, double x, double y, double z,
-                                             bool hasLevel, bool force)
+void CompassAtlasSprite::updateFromPosition(Level* level, double x, double z, double yRot, bool noJitter, bool instant)
 {
+    const double pi = Mth::PI;
     double target = 0.0;
-    if (hasLevel)
-        target = std::atan2(z, x);
-    if (!force)
+    if (level != NULL && !noJitter)
     {
-        double delta = target - mAngle;
-        while (delta < -3.1415927410125732)
-            delta += 6.2831854820251465;
-        while (delta >= 3.1415927410125732)
-            delta -= 6.2831854820251465;
-        if (delta < -1.0)
-            delta = -1.0;
-        if (delta > 1.0)
-            delta = 1.0;
-        mTargetAngle = (mAngle + delta * 0.2);
-        mAngle = mTargetAngle;
+        BlockPos spawn = level->getSharedSpawnPos();
+        double facing = ((static_cast<double>(static_cast<int>(yRot) % 360) - 90.0) * pi) / 180.0;
+        target = -(facing - std::atan2(static_cast<double>(spawn.z) - z, static_cast<double>(spawn.x) - x));
+        if (!level->mDimension->isNaturalDimension())
+        {
+            double random = Math::random();
+            target = random * pi + random * pi;
+        }
+    }
+
+    if (instant)
+    {
+        mAngle = target;
     }
     else
-        mAngle = target;
+    {
+        double delta = target - mAngle;
+        while (delta < -pi)
+        {
+            delta += pi * 2.0;
+        }
+        while (delta >= pi)
+        {
+            delta -= pi * 2.0;
+        }
+        mAngleDelta = (Mth::clamp(delta, -1.0, 1.0) * 0.1 + mAngleDelta) * 0.8;
+        mAngle += mAngleDelta;
+    }
 
-    Texture* destination = getSource();
-    if (!destination)
-        return;
-    int count = getFrameCount();
-    if (count <= 0)
-        return;
-    int frame = (int)((mAngle / 6.2831854820251465 + 1.0) * (double)count);
-    frame %= count;
-    if (frame < 0)
-        frame += count;
-    Texture* image = getFrame(frame);
-    if (image)
-        destination->blit((int)getX(), (int)getY(), image, false);
+    CompassAtlasSprite* frameSource = mParent != NULL ? mParent : this;
+    unsigned int frameCount = frameSource->mFrames == NULL ? 0 : frameSource->mFrames->size();
+    int frame = static_cast<unsigned int>((mAngle / (pi * 2.0) + 1.0) * static_cast<double>(frameCount)) % frameCount;
+    if (frame != mFrame)
+    {
+        mFrame = frame;
+        frameSource->mSource->blit(mX, mY, frameSource->mFrames->at(frame), mRotated);
+    }
 }
 
 void CompassAtlasSprite::cycleFrames()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (mFrameCount < 4 && minecraft)
+    if (mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
     {
-        updateFromPosition(0, 0.0, 0.0, 0.0, false, false);
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[mPlayerIndex];
+        updateFromPosition(player->mLevel, player->mX, player->mZ, player->mYRot, false, false);
         return;
     }
-    updateFromPosition(0, 0.0, 0.0, 0.0, false, true);
+    mFrame = 1;
+    updateFromPosition(NULL, 0.0, 0.0, 0.0, false, false);
 }
 
 unsigned int CompassAtlasSprite::getSourceWidth() const

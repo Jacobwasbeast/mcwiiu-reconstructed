@@ -18,7 +18,7 @@ class Slot
 
 public:
     Slot(boost::shared_ptr<Container> container, int index, int x, int y);
-    virtual ~Slot();
+    virtual ~Slot() {}
 
     void onQuickCraft(not_null_ptr<ItemInstance> oldItem,
                               not_null_ptr<ItemInstance> newItem);

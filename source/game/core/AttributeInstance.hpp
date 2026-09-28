@@ -9,7 +9,7 @@
 class AttributeInstance
 {
 public:
-    virtual ~AttributeInstance();
+    virtual ~AttributeInstance() {}
 
     virtual Attribute* getAttribute() = 0;
     virtual double getBaseValue() = 0;

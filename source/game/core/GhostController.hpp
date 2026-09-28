@@ -47,7 +47,7 @@ public:
         long long mElapsed;
         GhostRecord(Vec3*);
         ~GhostRecord();
-        unsigned int GetPosAtIndex(unsigned int);
+        Vec3* GetPosAtIndex(unsigned int);
         bool HasRecording() const;
         void ResetHasRecording();
         void AddSample(double, double, double, float, float, float);
@@ -56,17 +56,16 @@ public:
         void AddSample(const GhostRecordSample&);
         void WriteStartPos(DataOutputStream*);
         void WriteSampleAtIndex(unsigned int, DataOutputStream*);
-        unsigned int GetRotAtIndex(unsigned int);
+        Vec3* GetRotAtIndex(unsigned int);
         double GetVelocityAtIndex(unsigned int);
     };
     struct TrackHeader
     {
         unsigned int time;
         unsigned short score;
-        bool completed;
-        bool recorded;
-        unsigned int rank;
-        TrackHeader();
+        bool timeRecorded;
+        bool scoreRecorded;
+        TrackHeader() : time(0), score(0), timeRecorded(false), scoreRecorded(false) {}
     };
     struct GhostLoadSaveOperation
     {
@@ -80,7 +79,10 @@ public:
         EOpType type;
         int track;
         GhostRecord* record;
-        GhostLoadSaveOperation(EOpType, int, GhostRecord*);
+        GhostLoadSaveOperation(EOpType opType, int opTrack, GhostRecord* opRecord)
+            : type(opType), track(opTrack), record(opRecord)
+        {
+        }
     };
     GhostController(int, const std::wstring&, bool);
     ~GhostController();
@@ -94,8 +96,8 @@ public:
     void createGhostPlayers();
     void startPlayback();
     boost::shared_ptr<GhostPlayer> getGhostPlayer(int);
-    std::vector<boost::shared_ptr<GhostPlayer>> getGhostPlayers();
-    std::vector<boost::shared_ptr<Player>> getPlayers();
+    std::vector<boost::shared_ptr<GhostPlayer> > getGhostPlayers();
+    std::vector<boost::shared_ptr<Player> > getPlayers();
     void stopPlayback();
     void stopRecording(int);
     void UpdateGhostRecord(int, long long);
@@ -110,7 +112,7 @@ public:
     void LoadGhostHeader(int, void*, unsigned int);
     static int LoadGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
     unsigned int LoadGhostHeaderOp(int);
-    unsigned int GetTrackHeader(int, int) const;
+    TrackHeader GetTrackHeader(int, int) const;
     void SaveGhostRecord(int, GhostRecord*);
     void AddGhostRecord(int, GhostRecord*, bool);
     void AddLoadedGhostRecord(int, void*, unsigned int);
@@ -124,34 +126,38 @@ public:
     void tick();
     bool canBeDeleted();
     void setDone();
-    unsigned int finaliseRecording(int, bool);
+    bool finaliseRecording(int, bool);
     int RecordTime(int, int, unsigned int);
     int RecordScore(int, int, unsigned short, unsigned int);
     static void DisableSaving(void*, int, C4JStorage::EMessageResult);
 
 private:
+    static const int NO_OPERATION = 6;
+
+    boost::unordered_map<int, TrackHeader> mTrackHeaders[4];
+    long long mLastSampleTime;
+    long long mPlaybackStartTime;
+    long long mSuspendedTime;
+    bool mRecordingActive[4];
+    bool mRecordingPending[4];
+    bool mAnyRecordingActive;
+    bool mPlaybackActive[4];
+    unsigned int mPlaybackIndex;
+    unsigned char* mSaveBuffer;
+    unsigned int mSaveBufferSize;
+    void* mLoadBuffer;
+    unsigned int mLoadBufferSize;
     int mGameMode;
     std::wstring mLevelName;
-    bool mSaving;
-    bool mDone;
-    bool mPlayback;
-    long long mLastTick;
-    long long mPlaybackTime;
-    unsigned int mPlaybackIndex;
-    long long mLastRecordingChangeTime;
+    bool mTimed;
     GhostRecord* mRecording[4];
     GhostRecord* mLoaded[4];
-    bool mRecordingActive[4];
-    bool mRecordingSlotFlags1[4];
-    bool mAnyRecordingActive;
-    bool mRecordingSlotFlags2[4];
-    void* mSaveHeaderBuffer;
-    unsigned int mSaveHeaderLength;
-    int mSaveHeaderStatus;
-    boost::unordered_map<int, TrackHeader> mTrackHeaders[4];
-    bool mTrackHeaderEverSaved[4];
+    boost::shared_ptr<GhostPlayer> mGhostPlayers[4];
+    bool mTrackHeaderSaved[4];
+    bool mDone;
+    bool mSavingDisabled;
     std::deque<GhostLoadSaveOperation> mQueue;
     OSFastMutex mQueueLock;
-    boost::shared_ptr<GhostPlayer> mGhostPlayers[4];
+    int mCurrentOperation;
 };
 #endif

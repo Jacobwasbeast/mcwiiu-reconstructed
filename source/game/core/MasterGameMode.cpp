@@ -171,7 +171,7 @@ int MasterGameMode::GetPlayerCount(bool excludeSpectators, bool readyOnly)
     return GetPlayers(excludeSpectators, readyOnly).size();
 }
 
-unsigned long long MasterGameMode::GetCurrentTimeMillis()
+long long MasterGameMode::GetCurrentTimeMillis()
 {
     return System::processTimeInMilliSecs();
 }
@@ -2578,8 +2578,8 @@ void MasterGameMode::OnServerResume(long long suspendedTime)
     GhostController* ghostController = Minecraft::GetInstance()->GetGhostController();
     if (ghostController != NULL)
     {
-        ghostController->mLastTick += suspendedTime;
-        ghostController->mPlaybackTime += suspendedTime;
+        ghostController->mPlaybackStartTime += suspendedTime;
+        ghostController->mSuspendedTime += suspendedTime;
     }
 
     Minecraft::GetInstance()->GetClientMasterGameMode()->SetLocalRoundTimeStartOverride(mGameStats.GetStartTime());
@@ -2616,7 +2616,7 @@ ChunkHistory* MasterGameMode::GetChunkHistory() const
 
 int MasterGameMode::GetRoundTime()
 {
-    return static_cast<int>(floorf(static_cast<float>(GetCurrentTimeMillis() - mRoundStartTime) / 1000.0f));
+    return static_cast<unsigned int>(floorf(static_cast<float>(GetCurrentTimeMillis() - mRoundStartTime) / 1000.0f));
 }
 
 int MasterGameMode::GetPostGameTime()

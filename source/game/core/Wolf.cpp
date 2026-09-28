@@ -120,8 +120,8 @@ void Wolf::registerAttributes()
 }
 void Wolf::setAngry(bool angry)
 {
-    unsigned char flags = getEntityData()->get(DATA_FLAGS);
-    getEntityData()->set(DATA_FLAGS, angry ? static_cast<unsigned char>(flags | 2)
+    unsigned char flags = mEntityData->get(DATA_FLAGS);
+    mEntityData->set(DATA_FLAGS, angry ? static_cast<unsigned char>(flags | 2)
                                            : static_cast<unsigned char>(flags & 0xfd), true);
 }
 void Wolf::setTarget(boost::shared_ptr<LivingEntity> target)
@@ -134,26 +134,25 @@ void Wolf::setTarget(boost::shared_ptr<LivingEntity> target)
 }
 void Wolf::customServerAiStep()
 {
-    TamableAnimal::customServerAiStep();
-    getEntityData()->set(DATA_HEALTH_ID, getHealth(), true);
+    mEntityData->set(DATA_HEALTH_ID, getHealth(), true);
 }
 void Wolf::defineSynchedData()
 {
     TamableAnimal::defineSynchedData();
-    getEntityData()->createDateItem(DATA_HEALTH_ID, 1.0f);
-    getEntityData()->createDateItem(DATA_INTERESTED, false);
-    getEntityData()->createDateItem(DATA_COLLAR_COLOR, DyeColor::RED->getItemData());
+    mEntityData->createDateItem(DATA_HEALTH_ID, 1.0f);
+    mEntityData->createDateItem(DATA_INTERESTED, false);
+    mEntityData->createDateItem(DATA_COLLAR_COLOR, DyeColor::RED->getItemData());
 }
 void Wolf::playStepSound(const BlockPos&, Block*) { playSound(SoundEvents::WOLF_STEP, 0.15f, 1.0f); }
-bool Wolf::isAngry() { return (getEntityData()->get(DATA_FLAGS) & 2) != 0; }
-const DyeColor* Wolf::getCollarColor() { return DyeColor::byItemData(getEntityData()->get(DATA_COLLAR_COLOR)); }
+bool Wolf::isAngry() { return (mEntityData->get(DATA_FLAGS) & 2) != 0; }
+const DyeColor* Wolf::getCollarColor() { return DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR)); }
 void Wolf::addAdditonalSaveData(CompoundTag* tag)
 {
     TamableAnimal::addAdditonalSaveData(tag);
     tag->putBoolean(L"Angry", isAngry());
     tag->putByte(L"CollarColor", static_cast<unsigned char>(getCollarColor()->getItemData()));
 }
-void Wolf::setCollarColor(const DyeColor* color) { if (color != NULL) getEntityData()->set(DATA_COLLAR_COLOR, color->getItemData(), true); }
+void Wolf::setCollarColor(const DyeColor* color) { if (color != NULL) mEntityData->set(DATA_COLLAR_COLOR, color->getItemData(), true); }
 void Wolf::readAdditionalSaveData(CompoundTag* tag)
 {
     TamableAnimal::readAdditionalSaveData(tag);
@@ -190,7 +189,7 @@ void Wolf::aiStep()
     if (!mLevel->mIsClientSide && getTarget() == NULL && isAngry())
         setAngry(false);
 }
-bool Wolf::isInterested() { return getEntityData()->get(DATA_INTERESTED); }
+bool Wolf::isInterested() { return mEntityData->get(DATA_INTERESTED); }
 void Wolf::tick()
 {
     PIXBeginNamedEvent(0.0f, "Wolf tick");
@@ -271,18 +270,29 @@ double Wolf::getHeadRollAngle(float partialTick)
     return static_cast<double>(((mInterestedAngle - mInterestedAngleO) * partialTick + mInterestedAngleO) * 0.15f * 3.14159265358979323846f);
 }
 double Wolf::getEyeHeight() { return static_cast<double>(mBbHeight * 0.8f); }
-int Wolf::getMaxHeadXRot() { return isInWaterRainOrBubble() ? 20 : Mob::getMaxHeadXRot(); }
+int Wolf::getMaxHeadXRot() { return isSitting() ? 20 : Mob::getMaxHeadXRot(); }
 bool Wolf::hurt(const DamageSource* source, float damage)
 {
-    if (source == NULL)
+    if (isTame())
+    {
+        boost::shared_ptr<Entity> direct = source->getDirectEntity();
+        if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        {
+            if (!boost::static_pointer_cast<Player>(direct)->canHarmPlayer(getOwnerUUID()))
+                return false;
+        }
+    }
+
+    if (isInvulnerableTo(source))
         return false;
+
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker != NULL && attacker->GetType() == EntityType::WOLF && isTame())
-        return false;
-    const bool hurt = Animal::hurt(source, damage);
-    if (hurt && getTarget() == NULL)
-        setAngry(true);
-    return hurt;
+    if (mSitGoal != NULL)
+        mSitGoal->wantToSit(false);
+    if (attacker && (attacker->GetType() & EntityType::PLAYER) != EntityType::PLAYER
+        && (attacker->GetType() & EntityType::ARROW) != EntityType::ARROW)
+        damage = (damage + 1.0f) * 0.5f;
+    return Animal::hurt(source, damage);
 }
 bool Wolf::doHurtTarget(boost::shared_ptr<Entity> target)
 {
@@ -525,7 +535,7 @@ boost::shared_ptr<AgableMob> Wolf::getBreedOffspring(boost::shared_ptr<AgableMob
     }
     return boost::static_pointer_cast<AgableMob>(offspring);
 }
-bool Wolf::setIsInterested(bool interested) { getEntityData()->set(DATA_INTERESTED, interested, true); return interested; }
+bool Wolf::setIsInterested(bool interested) { mEntityData->set(DATA_INTERESTED, interested, true); return interested; }
 bool Wolf::canMate(const boost::shared_ptr<Animal>& other)
 {
     boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(other);
@@ -543,7 +553,7 @@ bool Wolf::canBeLeashed(const boost::shared_ptr<Player>& player) { return !isAng
 unsigned long long Wolf::GetType() { return EntityType::WOLF; }
 int Wolf::getMaxSpawnClusterSize()
 {
-    return Mob::getMaxSpawnClusterSize();
+    return 4;
 }
 
 Wolf::WolfAvoidEntityGoal::WolfAvoidEntityGoal(Wolf* wolf, const std::type_info& avoidType, float maxDistance, double walkSpeed, double sprintSpeed)

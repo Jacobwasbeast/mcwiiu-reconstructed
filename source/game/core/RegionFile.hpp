@@ -17,8 +17,8 @@ public:
         virtual void close();
 
     private:
-        int mX;
         RegionFile* mRegion;
+        int mX;
         int mZ;
         bool mCompressed;
     };
@@ -29,7 +29,7 @@ public:
     DataInputStream* getChunkDataInputStream(int x, int z, bool* compressed);
     DataOutputStream* getChunkDataOutputStream(int x, int z, bool compressed);
     void* GetThreadCompressedDataStorage();
-    void write(int sector, unsigned char* data, int length, unsigned int offset, bool compressed, bool rle,
+    void write(int sector, unsigned char* data, int length, unsigned int compressedLength, bool rle, bool compressed,
                bool deleteData);
     void zero(int sector, int length);
     void insertInitialSectors();
@@ -53,10 +53,7 @@ private:
     unsigned int* mTimestamps;
     std::vector<bool>* mUsedSectors;
     int mSizeDelta;
-    int mUnknown28;
-    int mUnknown32;
-    int mUnknown36;
+    long long mLastModified;
     bool mNewFile;
-    int mUnknown44;
 };
 #endif

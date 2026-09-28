@@ -1,4 +1,5 @@
 #include "game/core/ExplorationMapFunction.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -56,7 +57,7 @@ unsigned int ExplorationMapFunction::getTranslatableName(const std::wstring& des
     {
         return 0xd2f653b5;
     }
-    return 0xadf9d986;
+    return IDS_DESC_MAP;
 }
 
 not_null_ptr<ItemInstance> ExplorationMapFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,

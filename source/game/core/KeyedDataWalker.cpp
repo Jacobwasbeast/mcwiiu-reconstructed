@@ -24,10 +24,6 @@ KeyedDataWalker::KeyedDataWalker(unsigned long long type)
     }
 }
 
-KeyedDataWalker::~KeyedDataWalker()
-{
-}
-
 CompoundTag* KeyedDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
     ResourceLocation location(tag->getString(std::wstring(L"id")));

@@ -10,10 +10,6 @@ LeaderboardManager::LeaderboardManager()
     m_uid = PlayerUID(0);
 }
 
-LeaderboardManager::~LeaderboardManager()
-{
-}
-
 void LeaderboardManager::zeroReadParameters()
 {
     m_eReadType = eReadType_None;

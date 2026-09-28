@@ -2,7 +2,7 @@
 #define GAME_CORE_CTELEMETRYMANAGER_HPP
 
 #include <cstddef>
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -209,24 +209,12 @@ public:
     int GetLevelExitProgressStat1();
     int GetLevelExitProgressStat2();
 
-    std::uint32_t mUnknown0;
+    uint32_t mUnknown0;
     float mInitialiseTime;
     bool mLevelStarted;
     float mLevelStartTime[4];
     int mMultiplayerInstanceId;
     int mLevelInstanceId;
 };
-
-static_assert(sizeof(CTelemetryManager) == 40, "CTelemetryManager Wii U object size");
-
-template <typename Return, typename... Arguments>
-Return CTelemetryManagerDispatch(CTelemetryManager* manager, unsigned int slot,
-                                 Arguments... arguments)
-{
-    typedef Return (*Function)(CTelemetryManager*, Arguments...);
-    const CTelemetryManagerVTableEntry& entry = manager->GetVTable()->slots[slot];
-    Function function = reinterpret_cast<Function>(static_cast<std::uintptr_t>(entry.function));
-    return function(manager, arguments...);
-}
 
 #endif

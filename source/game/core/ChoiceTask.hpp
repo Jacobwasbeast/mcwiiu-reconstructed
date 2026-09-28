@@ -10,7 +10,7 @@ public:
     ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled,
                int firstInput, int secondInput, eTutorial_CompletionAction completionAction,
                ETelemetryChallenges telemetryChallenge);
-    virtual ~ChoiceTask();
+    virtual ~ChoiceTask() {}
 
     virtual int getPromptId();
     virtual bool isCompleted();

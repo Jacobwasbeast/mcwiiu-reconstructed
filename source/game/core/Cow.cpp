@@ -35,7 +35,9 @@ Cow::Cow(Level* level, bool callDerivedCtor)
     setSize(0.9f, 1.4f);
 }
 
-Cow::~Cow() = default;
+Cow::~Cow()
+{
+}
 
 void Cow::addDataWalkers(DataFixerUpper* fixer)
 {
@@ -129,7 +131,7 @@ boost::shared_ptr<AgableMob> Cow::getBreedOffspring(boost::shared_ptr<AgableMob>
 
 double Cow::getEyeHeight()
 {
-    return isBaby() ? (double)mBbHeight : 1.3;
+    return isBaby() ? mBbHeight : 1.3f;
 }
 
 unsigned int Cow::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

@@ -27,7 +27,7 @@ float DifficultyInstance::calculateDifficulty(const Difficulty* difficulty, long
     bool hard = difficulty == Difficulty::HARD;
 
     float scale = 0.75f;
-    float timeFactor = Mth::clamp(((float)levelTime - 72000.0f) / 1440000.0f, 0.0f, 1.0f) * 0.25f;
+    float timeFactor = Mth::clamp(((float)levelTime + -72000.0f) / 1440000.0f, 0.0f, 1.0f) * 0.25f;
     scale += timeFactor;
 
     float bonus = 0.0f;

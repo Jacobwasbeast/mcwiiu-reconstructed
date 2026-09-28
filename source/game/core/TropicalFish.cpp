@@ -32,14 +32,16 @@ static const std::wstring TROPICAL_FISH_PATTERN_A_HASHES[6] = { L"pa1", L"pa2", 
 static const std::wstring TROPICAL_FISH_PATTERN_B_HASHES[6] = { L"pb1", L"pb2", L"pb3", L"pb4", L"pb5", L"pb6" };
 
 TropicalFish::TropicalFish(Level* level)
-    : Fish(level, true), mLayeredTextureHashName(),
-      mLayeredTextureLayers(2, true)
+    : Fish(level, true)
 {
+    fjDerivedCtorCalls();
+    mLayeredTextureHashName = L"";
+    mLayeredTextureLayers = arrayWithLength<int>(2, true);
+    mSwimAmplitude = 0.01f;
+    mSwimFrequency = 0.02f;
+    mWaterValueC = 12.0f;
     mLayeredTextureLayers.data[0] = -1;
     mLayeredTextureLayers.data[1] = -1;
-    fjDerivedCtorCalls();
-    mSwimAmplitude = 0.02f;
-    mSwimFrequency = 0.01f;
     setSize(0.4f, 0.4f);
 }
 
@@ -70,20 +72,20 @@ void TropicalFish::tick()
     PIXEndNamedEvent();
 }
 
-int TropicalFish::getVariant() { return getEntityData()->get(DATA_VARIANT); }
-int TropicalFish::getBaseVariant() { return getVariant() & 1; }
-int TropicalFish::getMarkVariant() { return (getVariant() >> 8) % 6; }
+int TropicalFish::getVariant() { return mEntityData->get(DATA_VARIANT); }
+int TropicalFish::getBaseVariant() { return mEntityData->get(DATA_VARIANT) & 1; }
+int TropicalFish::getMarkVariant() { return (mEntityData->get(DATA_VARIANT) >> 8 & 0xff) % 6; }
 
 void TropicalFish::setVariant(int variant)
 {
-    getEntityData()->set(DATA_VARIANT, variant, true);
+    mEntityData->set(DATA_VARIANT, variant, true);
     clearLayeredTextureInfo();
 }
 
-int TropicalFish::getColor() { return getEntityData()->get(DATA_COLOR); }
-int TropicalFish::getColor1() { return getColor() % 15; }
-int TropicalFish::getColor2() { return (getColor() >> 8) % 15; }
-void TropicalFish::setColor(int color) { getEntityData()->set(DATA_COLOR, color, true); }
+int TropicalFish::getColor() { return mEntityData->get(DATA_COLOR); }
+int TropicalFish::getColor1() { return (mEntityData->get(DATA_COLOR) & 0xff) % 15; }
+int TropicalFish::getColor2() { return (mEntityData->get(DATA_COLOR) >> 8 & 0xff) % 15; }
+void TropicalFish::setColor(int color) { mEntityData->set(DATA_COLOR, color, true); }
 
 void TropicalFish::rebuildLayeredTextureInfo()
 {
@@ -132,8 +134,8 @@ void TropicalFish::registerAttributes()
 void TropicalFish::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_VARIANT, 0);
-    getEntityData()->createDateItem(DATA_COLOR, 0);
+    mEntityData->createDateItem(DATA_VARIANT, 0);
+    mEntityData->createDateItem(DATA_COLOR, 0);
 }
 
 void TropicalFish::addAdditonalSaveData(CompoundTag* tag)

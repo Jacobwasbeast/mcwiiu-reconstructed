@@ -46,7 +46,7 @@ public:
     void processSchematicsLighting(LevelChunk* chunk);
     unsigned int loadGameRulesPack(File* file);
     void loadDefaultGameRules();
-    LevelGenerators* getLevelGenerators();
+    std::vector<LevelGenerationOptions*>* getLevelGenerators();
     LevelRuleset* getGameRuleDefinitions();
     const wchar_t* GetGameRulesString(const std::wstring& key);
     void readHeader(DLCGameRulesHeader* header);

@@ -17,10 +17,6 @@ IntegerCondition::IntegerCondition(const XmlObject& object)
         _init(object, EOperator_LessThan);
 }
 
-IntegerCondition::~IntegerCondition()
-{
-}
-
 void IntegerCondition::_init(const XmlObject& object, EOperator op)
 {
     maybe<int> value = object[L"value"].maybeInt();

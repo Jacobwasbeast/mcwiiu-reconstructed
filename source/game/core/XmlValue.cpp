@@ -1,12 +1,5 @@
 #include "game/core/XmlValue.hpp"
 
-XmlValue::~XmlValue()
-{
-    if (m_value.capacity() > 7)
-        m_value.shrink_to_fit();
-    m_value.clear();
-}
-
 bool XmlValue::isString() const
 {
     return m_isString;

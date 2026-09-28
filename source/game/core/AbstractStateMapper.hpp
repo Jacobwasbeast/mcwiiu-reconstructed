@@ -17,7 +17,7 @@ class Property;
 class AbstractStateMapper : public StateMapper
 {
 public:
-    virtual ~AbstractStateMapper();
+    virtual ~AbstractStateMapper() {}
 
     virtual boost::unordered_map<const BlockState*, ModelResourceLocation*>* mapStates(Block* block);
     virtual ModelResourceLocation* getLocation(const BlockState* state) = 0;

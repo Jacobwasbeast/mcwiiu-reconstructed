@@ -17,10 +17,6 @@ DataInputStream::DataInputStream(InputStream* stream)
     mChildStream = stream;
 }
 
-DataInputStream::~DataInputStream()
-{
-}
-
 int DataInputStream::read()
 {
     return mChildStream->read();

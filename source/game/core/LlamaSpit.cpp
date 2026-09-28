@@ -1,4 +1,5 @@
 #include "game/core/LlamaSpit.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -37,6 +38,11 @@ LlamaSpit::LlamaSpit(Level* level, double x, double y, double z, double xd, doub
     Entity::fjDerivedCtorCalls();
     _init();
     setPos(x, y, z);
+    for (int i = 0; i < 7; ++i)
+    {
+        double scale = 0.4 + 0.1 * i;
+        level->addParticle(PARTICLE_SPIT, x, y, z, xd * scale, yd, zd * scale, arrayWithLength<int>());
+    }
     mXd = xd;
     mYd = yd;
     mZd = zd;

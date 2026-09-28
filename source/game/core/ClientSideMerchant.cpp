@@ -1,6 +1,6 @@
 #include "game/core/ClientSideMerchant.hpp"
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "game/item/MerchantContainer.hpp"
 #include "game/item/MerchantRecipe.hpp"

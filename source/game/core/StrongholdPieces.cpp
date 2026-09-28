@@ -73,8 +73,6 @@ StrongholdPieces::StrongholdPiece::StrongholdPiece()
 {
 }
 
-StrongholdPieces::StrongholdPiece::~StrongholdPiece() { }
-
 bool StrongholdPieces::StrongholdPiece::isOkBox(BoundingBox* box, StartPiece* start)
 {
     if (box == NULL)

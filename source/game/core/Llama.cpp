@@ -12,6 +12,7 @@
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/LlamaSpit.hpp"
 #include "game/core/Mth.hpp"
+#include <algorithm>
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/ai/BreedGoal.hpp"
@@ -81,7 +82,7 @@ bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 }
 
 Llama::Llama(Level* level)
-    : AbstractChestedHorse(level), mDidSpit(false), mStrength(1), mVariant(0), mCaravanHead(), mCaravanTail()
+    : AbstractChestedHorse(level), mDidSpit(false), mCaravanHead(), mCaravanTail()
 {
     AbstractHorse::fjDerivedCtorCalls();
     setSize(0.9f, 1.87f);
@@ -91,12 +92,12 @@ Llama::~Llama() { }
 void Llama::create(Level* level) { new Llama(level); }
 const DyeColor* Llama::getSwag()
 {
-    if (getEntityData() == NULL || DATA_SWAG == NULL)
+    if (mEntityData == NULL || DATA_SWAG == NULL)
     {
         return NULL;
     }
 
-    int blockData = getEntityData()->get(DATA_SWAG);
+    int blockData = mEntityData->get(DATA_SWAG);
     return blockData == -1 ? NULL : DyeColor::byBlockData(blockData);
 }
 void Llama::containerChanged(Container* container)
@@ -136,11 +137,7 @@ void Llama::staticCtor()
 }
 void Llama::setStrength(int strength)
 {
-    mStrength = strength < 1 ? 1 : (strength > 5 ? 5 : strength);
-    if (getEntityData() != NULL && DATA_STRENGTH != NULL)
-    {
-        getEntityData()->set(DATA_STRENGTH, mStrength, true);
-    }
+    mEntityData->set(DATA_STRENGTH, std::max(1, std::min(strength, 5)), true);
 }
 void Llama::setRandomStrength() {
     int maxStrength = mRandom->nextFloat() < 0.04f ? 5 : 3;
@@ -148,12 +145,11 @@ void Llama::setRandomStrength() {
 }
 int Llama::getStrength()
 {
-    return getEntityData() != NULL && DATA_STRENGTH != NULL ? getEntityData()->get(DATA_STRENGTH) : mStrength;
+    return mEntityData->get(DATA_STRENGTH);
 }
 int Llama::getVariant()
 {
-    int variant = getEntityData() != NULL && DATA_VARIANT != NULL ? getEntityData()->get(DATA_VARIANT) : mVariant;
-    return variant < 0 ? 0 : (variant > 3 ? 3 : variant);
+    return Mth::clamp(mEntityData->get(DATA_VARIANT), 0, 3);
 }
 void Llama::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -170,11 +166,7 @@ void Llama::addAdditonalSaveData(CompoundTag* tag)
 }
 void Llama::setVariant(int variant)
 {
-    mVariant = variant;
-    if (getEntityData() != NULL && DATA_VARIANT != NULL)
-    {
-        getEntityData()->set(DATA_VARIANT, variant, true);
-    }
+    mEntityData->set(DATA_VARIANT, variant, true);
 }
 void Llama::readAdditionalSaveData(CompoundTag* tag)
 {
@@ -210,9 +202,9 @@ void Llama::registerAttributes()
 void Llama::defineSynchedData()
 {
     AbstractChestedHorse::defineSynchedData();
-    getEntityData()->createDateItem(DATA_STRENGTH, 0);
-    getEntityData()->createDateItem(DATA_SWAG, -1);
-    getEntityData()->createDateItem(DATA_VARIANT, 0);
+    mEntityData->createDateItem(DATA_STRENGTH, 0);
+    mEntityData->createDateItem(DATA_SWAG, -1);
+    mEntityData->createDateItem(DATA_VARIANT, 0);
 }
 int Llama::getInventorySize()
 {
@@ -437,7 +429,7 @@ void Llama::setSwag(const DyeColor* color)
     {
         blockData = color->getBlockData();
     }
-    getEntityData()->set(DATA_SWAG, blockData, true);
+    mEntityData->set(DATA_SWAG, blockData, true);
 }
 
 void Llama::setSwagByItem(const not_null_ptr<ItemInstance>& item)

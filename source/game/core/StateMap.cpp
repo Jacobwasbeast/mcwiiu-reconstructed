@@ -2,7 +2,9 @@
 
 #include "game/world/block/BlockState.hpp"
 
-StateMap::~StateMap() = default;
+StateMap::~StateMap()
+{
+}
 
 ModelResourceLocation* StateMap::getLocation(const BlockState* state)
 {

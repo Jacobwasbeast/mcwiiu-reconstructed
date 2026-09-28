@@ -9,10 +9,10 @@ class CompassAtlasSprite : public TextureAtlasSprite
 {
 public:
     CompassAtlasSprite();
-    CompassAtlasSprite(int frameCount, CompassAtlasSprite* parent);
+    CompassAtlasSprite(int playerIndex, CompassAtlasSprite* parent);
     virtual ~CompassAtlasSprite();
 
-    void updateFromPosition(Level* level, double x, double y, double z, bool hasLevel, bool force);
+    void updateFromPosition(Level* level, double x, double z, double yRot, bool noJitter, bool instant);
     virtual void cycleFrames();
     virtual unsigned int getSourceWidth() const;
     virtual unsigned int getSourceHeight() const;
@@ -21,11 +21,10 @@ public:
     virtual unsigned int hasOwnData();
 
 private:
-    int mFrameCount;
+    int mPlayerIndex;
     CompassAtlasSprite* mParent;
-    unsigned char mReserved[4];
     double mAngle;
-    double mTargetAngle;
+    double mAngleDelta;
 };
 
 #endif

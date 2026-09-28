@@ -12,10 +12,6 @@ JumpControl::JumpControl(Mob* mob)
     }
 }
 
-JumpControl::~JumpControl()
-{
-}
-
 void JumpControl::jump()
 {
     mJump = true;

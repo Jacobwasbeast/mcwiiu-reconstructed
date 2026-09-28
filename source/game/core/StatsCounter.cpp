@@ -2,6 +2,10 @@
 
 #include "game/core/Stat.hpp"
 #include "game/core/Stats.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
 
@@ -12,8 +16,6 @@ extern CStorage* gStorage;
 
 namespace
 {
-    boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> > gLeaderboardBoards;
-
     void putValues(boost::unordered_map<unsigned int, unsigned int>& values, unsigned int a, unsigned int b,
                    unsigned int c, unsigned int d)
     {
@@ -57,6 +59,8 @@ namespace
     }
 }
 
+boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> > StatsCounter::statBoards;
+
 StatsCounter::StatsCounter()
     : mSavePending(0), mSaveDelay(0), mLeaderboardPending(), mLeaderboardDelay(0)
 {
@@ -64,20 +68,182 @@ StatsCounter::StatsCounter()
 
 void StatsCounter::setupStatBoards()
 {
-    if (Stat::stats == NULL)
-    {
-        return;
-    }
+    statBoards[Stats::killsZombie][0] = eLeaderboard0;
+    statBoards[Stats::killsZombie][1] = eLeaderboard1;
+    statBoards[Stats::killsZombie][2] = eLeaderboard2;
+    statBoards[Stats::killsZombie][3] = eLeaderboard3;
 
-    std::vector<Stat*>::const_iterator it;
-    for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
-    {
-        boost::unordered_map<unsigned int, LEADERBOARD_FLAG>& board = gLeaderboardBoards[*it];
-        board[0] = eLeaderboard0;
-        board[1] = eLeaderboard1;
-        board[2] = eLeaderboard2;
-        board[3] = eLeaderboard3;
-    }
+    statBoards[Stats::killsSkeleton][0] = eLeaderboard0;
+    statBoards[Stats::killsSkeleton][1] = eLeaderboard1;
+    statBoards[Stats::killsSkeleton][2] = eLeaderboard2;
+    statBoards[Stats::killsSkeleton][3] = eLeaderboard3;
+
+    statBoards[Stats::killsCreeper][0] = eLeaderboard0;
+    statBoards[Stats::killsCreeper][1] = eLeaderboard1;
+    statBoards[Stats::killsCreeper][2] = eLeaderboard2;
+    statBoards[Stats::killsCreeper][3] = eLeaderboard3;
+
+    statBoards[Stats::killsSpider][0] = eLeaderboard0;
+    statBoards[Stats::killsSpider][1] = eLeaderboard1;
+    statBoards[Stats::killsSpider][2] = eLeaderboard2;
+    statBoards[Stats::killsSpider][3] = eLeaderboard3;
+
+    statBoards[Stats::killsSpiderJockey][0] = eLeaderboard0;
+    statBoards[Stats::killsSpiderJockey][1] = eLeaderboard1;
+    statBoards[Stats::killsSpiderJockey][2] = eLeaderboard2;
+    statBoards[Stats::killsSpiderJockey][3] = eLeaderboard3;
+
+    statBoards[Stats::killsZombiePigman][0] = eLeaderboard0;
+    statBoards[Stats::killsZombiePigman][1] = eLeaderboard1;
+    statBoards[Stats::killsZombiePigman][2] = eLeaderboard2;
+    statBoards[Stats::killsZombiePigman][3] = eLeaderboard3;
+
+    statBoards[Stats::killsNetherZombiePigman][0] = eLeaderboard0;
+    statBoards[Stats::killsNetherZombiePigman][1] = eLeaderboard1;
+    statBoards[Stats::killsNetherZombiePigman][2] = eLeaderboard2;
+    statBoards[Stats::killsNetherZombiePigman][3] = eLeaderboard3;
+
+    statBoards[Stats::killsSlime][0] = eLeaderboard0;
+    statBoards[Stats::killsSlime][1] = eLeaderboard1;
+    statBoards[Stats::killsSlime][2] = eLeaderboard2;
+    statBoards[Stats::killsSlime][3] = eLeaderboard3;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][3] = eLeaderboard7;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][3] = eLeaderboard7;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][3] = eLeaderboard7;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][3] = eLeaderboard7;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][3] = eLeaderboard7;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][3] = eLeaderboard7;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][3] = eLeaderboard7;
+
+    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][0] = eLeaderboard12;
+    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][1] = eLeaderboard13;
+    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][2] = eLeaderboard14;
+    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][3] = eLeaderboard15;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][0] = eLeaderboard12;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][1] = eLeaderboard13;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][2] = eLeaderboard14;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][3] = eLeaderboard15;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][0] = eLeaderboard12;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][1] = eLeaderboard13;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][2] = eLeaderboard14;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][3] = eLeaderboard15;
+
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][0] = eLeaderboard12;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][1] = eLeaderboard13;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][2] = eLeaderboard14;
+    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][3] = eLeaderboard15;
+
+    statBoards[Stats::cowsMilked][0] = eLeaderboard12;
+    statBoards[Stats::cowsMilked][1] = eLeaderboard13;
+    statBoards[Stats::cowsMilked][2] = eLeaderboard14;
+    statBoards[Stats::cowsMilked][3] = eLeaderboard15;
+
+    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][0] = eLeaderboard12;
+    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][1] = eLeaderboard13;
+    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][2] = eLeaderboard14;
+    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][3] = eLeaderboard15;
+
+    statBoards[Stats::walkOneM][0] = eLeaderboard16;
+    statBoards[Stats::walkOneM][1] = eLeaderboard17;
+    statBoards[Stats::walkOneM][2] = eLeaderboard18;
+    statBoards[Stats::walkOneM][3] = eLeaderboard19;
+
+    statBoards[Stats::fallOneM][0] = eLeaderboard16;
+    statBoards[Stats::fallOneM][1] = eLeaderboard17;
+    statBoards[Stats::fallOneM][2] = eLeaderboard18;
+    statBoards[Stats::fallOneM][3] = eLeaderboard19;
+
+    statBoards[Stats::minecartOneM][0] = eLeaderboard16;
+    statBoards[Stats::minecartOneM][1] = eLeaderboard17;
+    statBoards[Stats::minecartOneM][2] = eLeaderboard18;
+    statBoards[Stats::minecartOneM][3] = eLeaderboard19;
+
+    statBoards[Stats::boatOneM][0] = eLeaderboard16;
+    statBoards[Stats::boatOneM][1] = eLeaderboard17;
+    statBoards[Stats::boatOneM][2] = eLeaderboard18;
+    statBoards[Stats::boatOneM][3] = eLeaderboard19;
+
+    statBoards[Stats::mg03BestTime][4] = eLeaderboard37;
+    statBoards[Stats::mg03BestTime][5] = eLeaderboard38;
+    statBoards[Stats::mg03BestTime][6] = eLeaderboard39;
+    statBoards[Stats::mg03BestTime][7] = eLeaderboard40;
+    statBoards[Stats::mg03BestTime][8] = eLeaderboard41;
+    statBoards[Stats::mg03BestTime][9] = eLeaderboard42;
+    statBoards[Stats::mg03BestTime][10] = eLeaderboard43;
+    statBoards[Stats::mg03BestTime][11] = eLeaderboard44;
+    statBoards[Stats::mg03BestTime][12] = eLeaderboard45;
+    statBoards[Stats::mg03BestTime][13] = eLeaderboard46;
+    statBoards[Stats::mg03BestTime][14] = eLeaderboard47;
+    statBoards[Stats::mg03BestTime][15] = eLeaderboard48;
+
+    statBoards[Stats::mg03BestTimeScoreChallenge][4] = eLeaderboard25;
+    statBoards[Stats::mg03BestTimeScoreChallenge][5] = eLeaderboard26;
+    statBoards[Stats::mg03BestTimeScoreChallenge][6] = eLeaderboard27;
+    statBoards[Stats::mg03BestTimeScoreChallenge][7] = eLeaderboard28;
+    statBoards[Stats::mg03BestTimeScoreChallenge][8] = eLeaderboard29;
+    statBoards[Stats::mg03BestTimeScoreChallenge][8] = eLeaderboard30;
+    statBoards[Stats::mg03BestTimeScoreChallenge][10] = eLeaderboard31;
+    statBoards[Stats::mg03BestTimeScoreChallenge][11] = eLeaderboard32;
+    statBoards[Stats::mg03BestTimeScoreChallenge][12] = eLeaderboard33;
+    statBoards[Stats::mg03BestTimeScoreChallenge][13] = eLeaderboard34;
+    statBoards[Stats::mg03BestTimeScoreChallenge][14] = eLeaderboard35;
+    statBoards[Stats::mg03BestTimeScoreChallenge][15] = eLeaderboard36;
+
+    statBoards[Stats::mg03Score][4] = eLeaderboard25;
+    statBoards[Stats::mg03Score][5] = eLeaderboard26;
+    statBoards[Stats::mg03Score][6] = eLeaderboard27;
+    statBoards[Stats::mg03Score][7] = eLeaderboard28;
+    statBoards[Stats::mg03Score][8] = eLeaderboard29;
+    statBoards[Stats::mg03Score][9] = eLeaderboard30;
+    statBoards[Stats::mg03Score][10] = eLeaderboard31;
+    statBoards[Stats::mg03Score][11] = eLeaderboard32;
+    statBoards[Stats::mg03Score][12] = eLeaderboard33;
+    statBoards[Stats::mg03Score][13] = eLeaderboard34;
+    statBoards[Stats::mg03Score][14] = eLeaderboard35;
+    statBoards[Stats::mg03Score][15] = eLeaderboard36;
+
+    statBoards[Stats::mg03RingCount][4] = eLeaderboard25;
+    statBoards[Stats::mg03RingCount][5] = eLeaderboard26;
+    statBoards[Stats::mg03RingCount][6] = eLeaderboard27;
+    statBoards[Stats::mg03RingCount][7] = eLeaderboard28;
+    statBoards[Stats::mg03RingCount][8] = eLeaderboard29;
+    statBoards[Stats::mg03RingCount][8] = eLeaderboard30;
+    statBoards[Stats::mg03RingCount][10] = eLeaderboard31;
+    statBoards[Stats::mg03RingCount][11] = eLeaderboard32;
+    statBoards[Stats::mg03RingCount][12] = eLeaderboard33;
+    statBoards[Stats::mg03RingCount][13] = eLeaderboard34;
+    statBoards[Stats::mg03RingCount][14] = eLeaderboard35;
+    statBoards[Stats::mg03RingCount][15] = eLeaderboard36;
 }
 
 unsigned int StatsCounter::isLargeStat(Stat* stat)
@@ -132,8 +298,8 @@ unsigned long long StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned i
 
     mSavePending = 1;
     boost::unordered_map<Stat*, boost::unordered_map<unsigned int, LEADERBOARD_FLAG> >::iterator boardIt =
-        gLeaderboardBoards.find(stat);
-    if (boardIt != gLeaderboardBoards.end())
+        statBoards.find(stat);
+    if (boardIt != statBoards.end())
     {
         LEADERBOARD_FLAG flag = boardIt->second[static_cast<unsigned int>(subtype)];
         mLeaderboardPending[static_cast<unsigned int>(flag)] = true;

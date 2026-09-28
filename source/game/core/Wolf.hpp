@@ -71,7 +71,7 @@ public:
     virtual bool hurt(const DamageSource* source, float damage);
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual void setTame(bool tame);
-    virtual void tame(boost::shared_ptr<Player> player, bool success, bool broadcast);
+    void tame(boost::shared_ptr<Player> player, bool success, bool broadcast);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual double getTailAngle();

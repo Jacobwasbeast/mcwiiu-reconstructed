@@ -6,7 +6,7 @@
 #include <vector>
 #include <deque>
 #include <cstddef>
-#include <cstdint>
+#include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -132,7 +132,7 @@ public:
 
     std::vector<boost::shared_ptr<ServerPlayer> > GetPlayers(bool excludeSpectators, bool readyOnly);
     int GetPlayerCount(bool excludeSpectators, bool readyOnly);
-    unsigned long long GetCurrentTimeMillis();
+    long long GetCurrentTimeMillis();
     bool HasTimer(ETimerID timer);
     void KillTimer(ETimerID timer);
     void ResetRoundTime();
@@ -295,7 +295,7 @@ private:
     static std::map<EInternalGameModeState, EGameModeState> sStateMap;
     static bool sLobbyTimerNeedsReset;
 
-    unsigned long long mRoundStartTime;
+    long long mRoundStartTime;
     unsigned long long mShowdownStartTime;
     unsigned long long mPostRoundStartTime;
     boost::unordered_map<ETimerID, _TimerInfo> mTimers;

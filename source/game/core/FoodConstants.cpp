@@ -2,6 +2,12 @@
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 
+static const float MAX_SATURATION = 20.0f;
+static const float START_SATURATION = MAX_SATURATION / 4;
+static const float SATURATION_FLOOR = MAX_SATURATION / 8;
+static const float EXHAUSTION_JUMP = 0.05f;
+static const float EXHAUSTION_SPRINT_JUMP = EXHAUSTION_JUMP * 4;
+
 uint32_t FoodConstants::MaxFood()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -16,39 +22,39 @@ uint32_t FoodConstants::MaxFood()
 
 double FoodConstants::StartSaturation()
 {
-    const double value = 5.0;
+    const float value = START_SATURATION;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getStartSaturation((float)value);
+            return miniGame->getStartSaturation(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionHeal()
 {
-    const double value = 6.0;
+    const float value = 6.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionHeal((float)value);
+            return miniGame->getExhaustionHeal(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionDrop()
 {
-    const double value = 4.0;
+    const float value = 4.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionDrop((float)value);
+            return miniGame->getExhaustionDrop(value);
     }
     return value;
 }
@@ -79,13 +85,13 @@ uint32_t FoodConstants::HealthTickCountSaturated()
 
 double FoodConstants::MaxSaturation()
 {
-    const double value = 20.0;
+    const float value = MAX_SATURATION;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getMaxSaturation((float)value);
+            return miniGame->getMaxSaturation(value);
     }
     return value;
 }
@@ -128,143 +134,143 @@ uint32_t FoodConstants::SprintLevel()
 
 double FoodConstants::ExhaustionJump()
 {
-    const double value = 0.05;
+    const float value = EXHAUSTION_JUMP;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionJump((float)value);
+            return miniGame->getExhaustionJump(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionSprintJump()
 {
-    const double value = 0.2;
+    const float value = EXHAUSTION_SPRINT_JUMP;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionSprintJump((float)value);
+            return miniGame->getExhaustionSprintJump(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionMine()
 {
-    const double value = 0.005;
+    const float value = 0.005f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionMine((float)value);
+            return miniGame->getExhaustionMine(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionAttack()
 {
-    const double value = 0.1;
+    const float value = 0.1f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionAttack((float)value);
+            return miniGame->getExhaustionAttack(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionWalk()
 {
-    const double value = 0.0;
+    const float value = 0.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionWalk((float)value);
+            return miniGame->getExhaustionWalk(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionSneak()
 {
-    const double value = 0.0;
+    const float value = 0.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionSneak((float)value);
+            return miniGame->getExhaustionSneak(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionSprint()
 {
-    const double value = 0.1;
+    const float value = 0.1f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionSprint((float)value);
+            return miniGame->getExhaustionSprint(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionSwim()
 {
-    const double value = 0.01;
+    const float value = 0.01f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionSwim((float)value);
+            return miniGame->getExhaustionSwim(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionIdle()
 {
-    const double value = 0.0;
+    const float value = 0.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionIdle((float)value);
+            return miniGame->getExhaustionIdle(value);
     }
     return value;
 }
 
 double FoodConstants::SaturationFloor()
 {
-    const double value = 0.0;
+    const float value = SATURATION_FLOOR;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getSaturationFloor((float)value);
+            return miniGame->getSaturationFloor(value);
     }
     return value;
 }
 
 double FoodConstants::ExhaustionDamage()
 {
-    const double value = 0.1;
+    const float value = 0.1f;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionDamage((float)value);
+            return miniGame->getExhaustionDamage(value);
     }
     return value;
 }

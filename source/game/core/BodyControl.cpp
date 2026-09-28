@@ -16,10 +16,6 @@ BodyControl::BodyControl(LivingEntity* mob)
 {
 }
 
-BodyControl::~BodyControl()
-{
-}
-
 float BodyControl::clamp(float base, float value, float maxDifference)
 {
     float difference = Mth::wrapDegrees(base - value);

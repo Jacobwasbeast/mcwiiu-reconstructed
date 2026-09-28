@@ -49,7 +49,9 @@ Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
-Spider::~Spider() = default;
+Spider::~Spider()
+{
+}
 
 void Spider::create(Level* level)
 {
@@ -93,7 +95,7 @@ PathNavigation* Spider::createNavigation(Level* level)
 void Spider::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(SPIDER_DATA_FLAGS, (unsigned char)0);
+    mEntityData->createDateItem(SPIDER_DATA_FLAGS, (unsigned char)0);
 }
 
 void Spider::tick()
@@ -133,14 +135,14 @@ bool Spider::canBeAffected(MobEffectInstance* effect)
 
 bool Spider::isClimbing()
 {
-    return (getEntityData()->get(SPIDER_DATA_FLAGS) & 1) != 0;
+    return (mEntityData->get(SPIDER_DATA_FLAGS) & 1) != 0;
 }
 
 void Spider::setClimbing(bool climbing)
 {
-    unsigned char flags = getEntityData()->get(SPIDER_DATA_FLAGS);
+    unsigned char flags = mEntityData->get(SPIDER_DATA_FLAGS);
     flags = climbing ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe);
-    getEntityData()->set(SPIDER_DATA_FLAGS, flags, true);
+    mEntityData->set(SPIDER_DATA_FLAGS, flags, true);
 }
 
 MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
@@ -198,7 +200,7 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     return result;
 }
 
-double Spider::getEyeHeight() { return 0.65; }
+double Spider::getEyeHeight() { return 0.65f; }
 unsigned long long Spider::GetType() { return EntityType::SPIDER; }
 
 Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
@@ -206,7 +208,9 @@ Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
 {
 }
 
-Spider::SpiderAttackGoal::~SpiderAttackGoal() = default;
+Spider::SpiderAttackGoal::~SpiderAttackGoal()
+{
+}
 
 bool Spider::SpiderAttackGoal::canContinueToUse()
 {
@@ -244,7 +248,9 @@ Spider::SpiderTargetGoal::SpiderTargetGoal(Spider* spider, const std::type_info&
 {
 }
 
-Spider::SpiderTargetGoal::~SpiderTargetGoal() = default;
+Spider::SpiderTargetGoal::~SpiderTargetGoal()
+{
+}
 
 bool Spider::SpiderTargetGoal::canUse()
 {

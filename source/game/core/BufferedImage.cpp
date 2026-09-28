@@ -152,7 +152,7 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
     }
     else
     {
-        gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load", 0x137);
+        gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture data", 0x137);
     }
 }
 

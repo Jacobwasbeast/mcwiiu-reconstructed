@@ -24,7 +24,9 @@ DLCFile::DLCFile(DLCManager::EDLCType type, const std::wstring& path)
     }
 }
 
-DLCFile::~DLCFile() = default;
+DLCFile::~DLCFile()
+{
+}
 
 void DLCFile::addData(unsigned char* pData, unsigned int size)
 {

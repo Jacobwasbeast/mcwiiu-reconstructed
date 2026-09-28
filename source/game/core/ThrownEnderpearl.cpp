@@ -13,6 +13,7 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/WorldBorder.hpp"
 
 ThrownEnderpearl::ThrownEnderpearl(Level* level)
@@ -62,6 +63,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
         DamageSource* damage = DamageSource::CreateThrown(
             shared_from_this(), boost::static_pointer_cast<Entity>(owner));
         result->mEntity->hurt(damage, 0.0f);
+        delete damage;
     }
 
     if (result->mType == HitResult::BLOCK && mLevel != NULL)
@@ -98,7 +100,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
 
     if (mLevel != NULL && !mLevel->mIsClientSide)
     {
-        if (!mLevel->getWorldBorder()->isWithinBounds(BlockPos(this)))
+        if (!mLevel->mDimension->getPlayerConstraints(BlockPos(this))->shrink(1.0)->contains(BlockPos(this)))
         {
             remove();
             return true;

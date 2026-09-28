@@ -135,7 +135,7 @@ public:
     virtual int getMaxHeadXRot();
     virtual int getMaxHeadYRot();
     virtual void push(boost::shared_ptr<Entity> entity);
-    virtual double getPickRadius();
+    virtual float getPickRadius();
     virtual bool hasValidInterpolationPositions();
     virtual ResourceLocation* getDefaultLootTable();
     virtual const DyeColor* getColor();

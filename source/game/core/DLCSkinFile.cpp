@@ -15,12 +15,12 @@ extern CConsoleMinecraftApp gApp;
 DLCSkinFile::DLCSkinFile(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_Skin, path), mLocKeySet(false), mSkinAdjustments(), mFree(false), mAdditionalBoxes()
 {
-    mDisplayName = L"buckets_";
-    mThemeName = L"buckets_";
-    mLocKey = L"buckets_";
-    mDisplayNameID = L"buckets_";
-    mThemeNameID = L"buckets_";
-    mCapePath = L"buckets_";
+    mDisplayName = L"";
+    mThemeName = L"";
+    mLocKey = L"";
+    mDisplayNameID = L"";
+    mThemeNameID = L"";
+    mCapePath = L"";
 }
 
 DLCSkinFile::~DLCSkinFile()

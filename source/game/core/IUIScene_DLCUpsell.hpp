@@ -6,6 +6,8 @@
 class IUIScene_DLCUpsell
 {
 public:
+    virtual void SetIgnoreInput(bool ignore) = 0;
+
     static int NotOnlineDialogCallback(void* context, int userIndex,
                                        C4JStorage::EMessageResult result);
     void ShowNotOnlineDialog(int userIndex);

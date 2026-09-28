@@ -49,6 +49,7 @@ public:
     friend class GameRuleDefinition;
     friend class CompoundGameRuleDefinition;
     friend class CollectItemRuleDefinition;
+    friend class CompleteAllRuleDefinition;
 
 private:
     typedef boost::unordered_map<std::wstring, _ValueType> ParameterMap;

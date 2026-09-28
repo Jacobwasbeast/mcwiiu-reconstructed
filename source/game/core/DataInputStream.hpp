@@ -19,7 +19,7 @@ class DataInputStream : public InputStream, public DataInput
 {
 public:
     DataInputStream(InputStream* stream);
-    virtual ~DataInputStream();
+    virtual ~DataInputStream() {}
 
     virtual int read();
     virtual int read(arrayWithLength<unsigned char> buffer);

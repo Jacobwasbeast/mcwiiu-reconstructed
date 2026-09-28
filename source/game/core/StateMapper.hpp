@@ -10,7 +10,7 @@ class ModelResourceLocation;
 class StateMapper
 {
 public:
-    virtual ~StateMapper();
+    virtual ~StateMapper() {}
 
     virtual boost::unordered_map<const BlockState*, ModelResourceLocation*>* mapStates(Block* block) = 0;
 };

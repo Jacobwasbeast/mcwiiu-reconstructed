@@ -454,11 +454,11 @@ void Stats::buildAdditionalStats()
         stat->postConstruct(true);
     }
 
-    itemStat = (new ItemStat(statId++, L"itemCrafted.porkchop", Item::getId(Items::porkchop)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"itemCrafted.porkchop", Item::getId(Items::cookedPorkchop)))->setExtended();
     itemCraftedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"itemEaten.porkchop", Item::getId(Items::porkchop)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"itemEaten.porkchop", Item::getId(Items::cookedPorkchop)))->setExtended();
     blockPlacedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 

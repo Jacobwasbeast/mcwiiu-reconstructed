@@ -8,7 +8,16 @@ class File;
 class XmlChild;
 class XmlObject;
 
+#define RAPIDXML_NO_EXCEPTIONS
+#define RAPIDXML_STATIC_POOL_SIZE 1024
 #include <rapidxml.hpp>
+
+namespace rapidxml
+{
+inline void parse_error_handler(const char* what, void* where)
+{
+}
+}
 
 class XmlParser
 {

@@ -59,7 +59,6 @@ public:
 
 private:
     friend bool pathCmp(DLCFile* file);
-    static bool compareFilePath(DLCFile* file);
 
     std::vector<DLCFile*> m_files[DLCManager::eDLCType_NumTypes];
     std::vector<DLCPack*> m_childPacks;

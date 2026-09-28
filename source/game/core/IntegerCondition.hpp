@@ -22,7 +22,7 @@ class IntegerCondition : public GameCondition
 {
 public:
     IntegerCondition(const XmlObject& object);
-    virtual ~IntegerCondition();
+    virtual ~IntegerCondition() {}
 
     void _init(const XmlObject& object, EOperator op);
     static std::pair<bool, EOperator> parseOperator(std::wstring name);

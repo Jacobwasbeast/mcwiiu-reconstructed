@@ -103,10 +103,6 @@ IGameRuleAttribute::IGameRuleAttribute()
 {
 }
 
-IGameRuleAttribute::~IGameRuleAttribute()
-{
-}
-
 int IGameRuleAttribute::attributeIdFromName(const std::wstring& name)
 {
     int remaining = 13;

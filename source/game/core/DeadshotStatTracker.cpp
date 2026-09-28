@@ -4,7 +4,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/StatsUID.hpp"
 #include "game/item/Item.hpp"
-#include "game/item/Items.hpp"
+#include "game/item/ItemId.hpp"
 
 DeadshotStatTracker::DeadshotStatTracker(const StatsUID& statsUID)
     : StatTracker<bool>(statsUID, false)
@@ -24,7 +24,7 @@ void DeadshotStatTracker::update(const DamageEvent* damageEvent)
     }
 
     if (isTracking(damageEvent->mAttacker)
-        && damageEvent->mWeapon.mItemId == Item::getId(Items::snowball)
+        && damageEvent->mWeapon.mItemId == ItemId::SNOWBALL
         && damageEvent->mVictim != StatsUID::EMPTY_SUID() && damageEvent->mFallDistance > 0.0f)
     {
         mFallCount = damageEvent->mFallCount;

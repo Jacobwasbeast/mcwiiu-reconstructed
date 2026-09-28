@@ -21,13 +21,13 @@
 
 const EntityDataAccessor<bool>* MinecartFurnace::DATA_HAS_FUEL = NULL;
 
-MinecartFurnace::MinecartFurnace(Level* level) : Minecart(level), mFuel(0), mPushX(0.25), mPushZ(0.25)
+MinecartFurnace::MinecartFurnace(Level* level) : Minecart(level), mFuel(0), mPushX(0.0), mPushZ(0.0)
 {
     fjDerivedCtorCalls();
 }
 
 MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z), mFuel(0), mPushX(0.25), mPushZ(0.25)
+    : Minecart(level, x, y, z), mFuel(0), mPushX(0.0), mPushZ(0.0)
 {
     fjDerivedCtorCalls();
 }
@@ -64,17 +64,17 @@ const Minecart::Type* MinecartFurnace::getType()
 void MinecartFurnace::defineSynchedData()
 {
     Minecart::defineSynchedData();
-    getEntityData()->createDateItem(DATA_HAS_FUEL, false);
+    mEntityData->createDateItem(DATA_HAS_FUEL, false);
 }
 
 void MinecartFurnace::setHasFuel(bool hasFuelValue)
 {
-    getEntityData()->set(DATA_HAS_FUEL, hasFuelValue, true);
+    mEntityData->set(DATA_HAS_FUEL, hasFuelValue, true);
 }
 
 bool MinecartFurnace::hasFuel()
 {
-    return getEntityData()->get(DATA_HAS_FUEL);
+    return mEntityData->get(DATA_HAS_FUEL);
 }
 
 void MinecartFurnace::tick()

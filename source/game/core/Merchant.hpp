@@ -17,7 +17,7 @@ class Player;
 class Merchant
 {
 public:
-    virtual ~Merchant();
+    virtual ~Merchant() {}
     virtual void setTradingPlayer(const boost::shared_ptr<Player>& player) = 0;
     virtual boost::shared_ptr<Player> getTradingPlayer() = 0;
     virtual MerchantRecipeList* getOffers(const boost::shared_ptr<Player>& player) = 0;

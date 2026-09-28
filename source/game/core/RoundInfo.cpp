@@ -1,21 +1,18 @@
 #include "game/core/RoundInfo.hpp"
 #include "game/util/Random.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
-#include <sstream>
-
-void CreateRoundGuid(std::wstring& guid)
+std::wstring CreateRoundGuid()
 {
     Random random;
-    std::wostringstream stream;
-    stream << random.nextInt();
-    guid = stream.str();
+    return _toString<int>(random.nextInt());
 }
 
 RoundInfo::RoundInfo()
 {
-    mRoundId = L"buckets_";
-    mSubRoundId = L"buckets_";
+    mRoundId = L"";
+    mSubRoundId = L"";
     mCurrentSubRoundNumber = -1;
     mThemeId = -1;
     mThemeSubId = -1;
@@ -33,14 +30,14 @@ void RoundInfo::reset()
 
 void RoundInfo::startNewRound()
 {
-    CreateRoundGuid(mRoundId);
-    CreateRoundGuid(mSubRoundId);
+    mRoundId = CreateRoundGuid();
+    mSubRoundId = CreateRoundGuid();
     mCurrentSubRoundNumber = 0;
 }
 
 void RoundInfo::startNewSubRound()
 {
-    CreateRoundGuid(mSubRoundId);
+    mSubRoundId = CreateRoundGuid();
     ++mCurrentSubRoundNumber;
 }
 

@@ -1,9 +1,5 @@
 #include "game/core/Synth.hpp"
 
-Synth::~Synth()
-{
-}
-
 arrayWithLength<double> Synth::create(int width, int height)
 {
     arrayWithLength<double> values(width * height, true);

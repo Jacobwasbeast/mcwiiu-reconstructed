@@ -38,11 +38,10 @@ public:
         ESchematicMirror mMirror;
         int mMinChunkX;
         int mMaxChunkX;
+        int mCurrentChunkX;
         int mMinChunkZ;
         int mMaxChunkZ;
-        int mCurrentChunkX;
         int mCurrentChunkZ;
-        int mChunkCount;
         int mWidth;
         int mHeight;
         int mDepth;

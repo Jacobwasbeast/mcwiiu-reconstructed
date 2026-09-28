@@ -35,9 +35,10 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/util/AABB.hpp"
-#include "game/util/Mth.hpp"
+#include "game/core/Mth.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/core/XLanguage.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
@@ -45,7 +46,6 @@
 #include "game/core/MemSect.hpp"
 
 float gGuiScreenScale = 1.0f;
-unsigned int XGetLanguage();
 
 namespace
 {
@@ -414,8 +414,8 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                 if (!player->isFallFlying()) {
                     GlStateManager::translatef(0.0f, -1.62f, 0.0f);
                 } else {
-                    const float pitch = static_cast<float>(fclamp(player->mXRot, -90.0f, 90.0f));
-                    GlStateManager::translatef(0.0f, 1.62f * (pitch / 90.0f), 0.0f);
+                    const double pitch = Mth::clamp(static_cast<double>(player->mXRot), -90.0, 90.0);
+                    GlStateManager::translatef(0.0f, 1.62f * static_cast<float>(pitch / 90.0), 0.0f);
                 }
                 dispatcher->mCameraYRot = 180.0f;
                 dispatcher->mRenderName = true;
@@ -537,7 +537,8 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
     boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
     BOOST_ASSERT(player.get() != 0);
     const unsigned int language = XGetLanguage();
-    const bool narrowGlyphs = language != 2 && (language < 7 || language > 8);
+    const bool narrowGlyphs = language != XC_LANGUAGE_JAPANESE && language != XC_LANGUAGE_KOREAN &&
+                              language != XC_LANGUAGE_TCHINESE;
     unsigned int maxLength;
     if (static_cast<unsigned int>(player->mViewport) < 3) {
         if (narrowGlyphs) {

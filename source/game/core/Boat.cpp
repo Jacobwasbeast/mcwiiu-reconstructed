@@ -150,14 +150,14 @@ bool Boat::makeStepSound()
 
 void Boat::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_HURT_TIME, 0);
-    getEntityData()->createDateItem(DATA_HURT_DIR, 1);
-    getEntityData()->createDateItem(DATA_DAMAGE, 0.0f);
-    getEntityData()->createDateItem(DATA_TYPE, static_cast<int>(OAK));
-    getEntityData()->createDateItem(DATA_PADDLE_LEFT, false);
-    getEntityData()->createDateItem(DATA_PADDLE_RIGHT, false);
-    getEntityData()->createDateItem(DATA_BUBBLE_TIME, 0);
-    getEntityData()->createDateItem(DATA_SINKING, false);
+    mEntityData->createDateItem(DATA_HURT_TIME, 0);
+    mEntityData->createDateItem(DATA_HURT_DIR, 1);
+    mEntityData->createDateItem(DATA_DAMAGE, 0.0f);
+    mEntityData->createDateItem(DATA_TYPE, static_cast<int>(OAK));
+    mEntityData->createDateItem(DATA_PADDLE_LEFT, false);
+    mEntityData->createDateItem(DATA_PADDLE_RIGHT, false);
+    mEntityData->createDateItem(DATA_BUBBLE_TIME, 0);
+    mEntityData->createDateItem(DATA_SINKING, false);
 }
 
 AABB* Boat::getCollideAgainstBox(boost::shared_ptr<Entity> entity)
@@ -184,7 +184,7 @@ double Boat::getRideHeight()
 
 Boat::Type Boat::getType()
 {
-    return static_cast<Type>(getEntityData()->get(DATA_TYPE));
+    return static_cast<Type>(mEntityData->get(DATA_TYPE));
 }
 
 Item* Boat::getDropItem()
@@ -257,12 +257,12 @@ bool Boat::hurt(const DamageSource* source, float damage)
 
 int Boat::getBubbleTime()
 {
-    return getEntityData()->get(DATA_BUBBLE_TIME);
+    return mEntityData->get(DATA_BUBBLE_TIME);
 }
 
 void Boat::setBubbleTime(int time)
 {
-    getEntityData()->set(DATA_BUBBLE_TIME, time, true);
+    mEntityData->set(DATA_BUBBLE_TIME, time, true);
 }
 
 void Boat::onAboveBubbleCol(bool down)
@@ -479,7 +479,7 @@ const SoundEvent* Boat::getPaddleSound()
 
 bool Boat::getIsSinking()
 {
-    return getEntityData()->get(DATA_SINKING);
+    return mEntityData->get(DATA_SINKING);
 }
 
 void Boat::tickLerp()
@@ -501,8 +501,8 @@ void Boat::tickLerp()
 
 void Boat::setPaddleState(bool left, bool right)
 {
-    getEntityData()->set(DATA_PADDLE_LEFT, left, true);
-    getEntityData()->set(DATA_PADDLE_RIGHT, right, true);
+    mEntityData->set(DATA_PADDLE_LEFT, left, true);
+    mEntityData->set(DATA_PADDLE_RIGHT, right, true);
 }
 
 bool Boat::findBlockHeightOnPlane(const AABB* box, float& height, BlockPos& pos)
@@ -646,12 +646,12 @@ void Boat::controlBoat()
 bool Boat::getPaddleState(int paddle)
 {
     const EntityDataAccessor<bool>* accessor = paddle == 0 ? DATA_PADDLE_LEFT : DATA_PADDLE_RIGHT;
-    return getEntityData()->get(accessor) && getControllingPassenger() != NULL;
+    return mEntityData->get(accessor) && getControllingPassenger() != NULL;
 }
 
 void Boat::setIsSinking(bool sinking)
 {
-    getEntityData()->set(DATA_SINKING, sinking, true);
+    mEntityData->set(DATA_SINKING, sinking, true);
 }
 
 void Boat::tickBubbleColumn()
@@ -881,7 +881,7 @@ void Boat::addAdditonalSaveData(CompoundTag* tag)
 
 void Boat::setType(Type type)
 {
-    getEntityData()->set(DATA_TYPE, static_cast<int>(type), true);
+    mEntityData->set(DATA_TYPE, static_cast<int>(type), true);
 }
 
 void Boat::readAdditionalSaveData(CompoundTag* tag)
@@ -986,22 +986,22 @@ void Boat::checkFallDamage(double y, bool onGround, Block* block, const BlockPos
 
 void Boat::setDamage(float damage)
 {
-    getEntityData()->set(DATA_DAMAGE, damage, true);
+    mEntityData->set(DATA_DAMAGE, damage, true);
 }
 
 float Boat::getDamage()
 {
-    return getEntityData()->get(DATA_DAMAGE);
+    return mEntityData->get(DATA_DAMAGE);
 }
 
 void Boat::setHurtTime(int time)
 {
-    getEntityData()->set(DATA_HURT_TIME, time, true);
+    mEntityData->set(DATA_HURT_TIME, time, true);
 }
 
 int Boat::getHurtTime()
 {
-    return getEntityData()->get(DATA_HURT_TIME);
+    return mEntityData->get(DATA_HURT_TIME);
 }
 
 float Boat::getBubbleAngle(float partialTicks)
@@ -1011,12 +1011,12 @@ float Boat::getBubbleAngle(float partialTicks)
 
 void Boat::setHurtDir(int direction)
 {
-    getEntityData()->set(DATA_HURT_DIR, direction, true);
+    mEntityData->set(DATA_HURT_DIR, direction, true);
 }
 
 int Boat::getHurtDir()
 {
-    return getEntityData()->get(DATA_HURT_DIR);
+    return mEntityData->get(DATA_HURT_DIR);
 }
 
 bool Boat::canAddPassenger(boost::shared_ptr<Entity> entity)

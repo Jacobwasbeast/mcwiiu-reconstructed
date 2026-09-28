@@ -1,4 +1,5 @@
 #include "game/core/RangedAttribute.hpp"
+#include "game/core/Mth.hpp"
 
 RangedAttribute::RangedAttribute(Attribute* parentAttribute, eATTRIBUTE_ID id, double defaultValue, double minValue, double maxValue)
     : BaseAttribute(parentAttribute, id, defaultValue),
@@ -13,15 +14,7 @@ RangedAttribute::~RangedAttribute()
 
 double RangedAttribute::sanitizeValue(double value)
 {
-    if (value < this->minValue)
-    {
-        return this->minValue;
-    }
-    if (value > this->maxValue)
-    {
-        return this->maxValue;
-    }
-    return value;
+    return Mth::clamp(value, this->minValue, this->maxValue);
 }
 
 double RangedAttribute::getMinValue()

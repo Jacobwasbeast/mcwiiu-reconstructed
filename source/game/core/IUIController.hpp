@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "game/core/GameSettings.hpp"
+
 #include "game/ui/UIGroup.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIScene.hpp"
@@ -11,7 +13,6 @@
 class SoundEvent;
 class Tutorial;
 class _TutorialPopupInfo;
-enum EControllerActions : int;
 
 class IUIController
 {
@@ -23,7 +24,7 @@ public:
         RESOLUTION_DISABLE_FLAG_SAVING
     };
 
-    virtual ~IUIController();
+    virtual ~IUIController() {}
 
     virtual void tick() = 0;
     virtual bool requestResolutionChange(int resolution) = 0;

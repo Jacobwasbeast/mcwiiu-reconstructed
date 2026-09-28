@@ -7,7 +7,7 @@ class BaseAttribute : public Attribute
 {
 public:
     BaseAttribute(Attribute* parentAttribute, eATTRIBUTE_ID id, double defaultValue);
-    virtual ~BaseAttribute();
+    virtual ~BaseAttribute() {}
 
     virtual eATTRIBUTE_ID getId();
     virtual double getDefaultValue();

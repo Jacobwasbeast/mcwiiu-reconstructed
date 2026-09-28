@@ -12,6 +12,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/server/ServerLevel.hpp"
 
 EvocationFangs::EvocationFangs(Level* level) : Entity(level, true), mWarmupDelay(0), mSentSpikeEvent(false),
     mLifeTicks(0), mClientSideAttack(false), mOwner(), mOwnerUUID()
@@ -53,6 +54,13 @@ void EvocationFangs::setOwner(const boost::shared_ptr<LivingEntity>& owner)
 
 boost::shared_ptr<LivingEntity> EvocationFangs::getOwner()
 {
+    ServerLevel* serverLevel = dynamic_cast<ServerLevel*>(mLevel);
+    if (mOwner.lock() == NULL && mOwnerUUID.compare(L"") != 0 && serverLevel != NULL)
+    {
+        boost::shared_ptr<Entity> entity = serverLevel->getEntityByUUID(mOwnerUUID);
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            mOwner = boost::static_pointer_cast<LivingEntity>(entity);
+    }
     return mOwner.lock();
 }
 

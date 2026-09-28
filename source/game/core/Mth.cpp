@@ -1,7 +1,7 @@
 #include "game/core/Mth.hpp"
 
 #include <cmath>
-#include <cstdint>
+#include <stdint.h>
 #include <math.h>
 #include <utility>
 
@@ -76,30 +76,12 @@ float Mth::cached_atan(int y, int x)
 
 float Mth::sin(float radians)
 {
-    static const float kInt32Min = -2147483648.0f;
-    static const float kInt32UpperBound = 2147483648.0f;
-    static const uint32_t kPpcIntegerIndefinite = 0x80000000u;
-    static const uint32_t kPpcMaximum = 0x7fffffffu;
-
     if (sSinTable == NULL)
     {
         init();
     }
 
-    const float scaled = radians * 10430.378f;
-    uint32_t convertedBits;
-
-    if (std::isnan(scaled))
-        convertedBits = kPpcIntegerIndefinite;
-    else if (scaled >= kInt32UpperBound)
-        convertedBits = kPpcMaximum;
-    else if (scaled < kInt32Min)
-        convertedBits = kPpcIntegerIndefinite;
-    else
-        convertedBits = static_cast<uint32_t>(static_cast<int32_t>(scaled));
-
-    const uint32_t index = convertedBits & 0xffffu;
-    return sSinTable[index];
+    return sSinTable[(int)(radians * 10430.378f) & 65535];
 }
 
 float Mth::cos(float radians)

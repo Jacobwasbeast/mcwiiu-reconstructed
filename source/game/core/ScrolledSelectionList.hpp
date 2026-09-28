@@ -38,19 +38,18 @@ protected:
     int top;
     int bottom;
     int right;
-    int selectedItem;
+    int left;
     int slotHeight;
     int scrollUpButtonId;
     int scrollDownButtonId;
     float initialClickY;
     float scrollMultiplier;
     float amountScrolled;
-    int lastClicked;
-    int headerHeight;
-    int scrollPosition;
+    int selectedElement;
+    long long lastClicked;
     bool renderSelection;
     bool renderHeaderEnabled;
-    int selectedElement;
+    int headerPadding;
 };
 
 #endif

@@ -14,7 +14,7 @@ public:
     class OptionalDispenseItemBehavior : public DefaultDispenseItemBehavior
     {
     public:
-        virtual ~OptionalDispenseItemBehavior();
+        virtual ~OptionalDispenseItemBehavior() {}
         virtual void playSound(BlockSource*, DefaultDispenseItemBehavior::eOUTCOME);
     };
 

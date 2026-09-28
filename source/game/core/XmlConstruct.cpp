@@ -3,10 +3,6 @@
 
 template<typename T> T _fromString(const std::wstring& text);
 
-XmlConstruct::~XmlConstruct()
-{
-}
-
 std::wstring XmlConstruct::asString() const
 {
     return L"";

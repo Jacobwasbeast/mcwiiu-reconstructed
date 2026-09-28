@@ -96,7 +96,6 @@ public:
     int GetChosenBuildOffTheme(const StatsUID& suid, int round);
     int GetDesiredBuildOffTheme(const StatsUID& suid, int round);
 
-    int mCurrentRound;
     PlayerStatsMap mPlayerStats;
 };
 

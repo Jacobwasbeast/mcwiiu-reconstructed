@@ -9,7 +9,7 @@ public:
     class Type
     {
     public:
-        enum EType : int
+        enum EType
         {
             eType_Float, eType_UnsignedByte, eType_Byte, eType_UnsignedShort,
             eType_Short, eType_UnsignedInt, eType_Int
@@ -36,7 +36,7 @@ public:
     class Usage
     {
     public:
-        enum EUsage : int
+        enum EUsage
         {
             eUsage_Position, eUsage_Normal, eUsage_Color, eUsage_Uv,
             eUsage_BoneMatrix, eUsage_BlendWeight, eUsage_Padding

@@ -35,7 +35,7 @@ ArchiveFile::ArchiveFile(File file)
     m_data = NULL;
     m_cachedData = false;
     File::operator=(file);
-    if (!file.exists()) gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load ", 0x54);
+    if (!file.exists()) gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load archive file", 0x54);
     FileInputStream input(file);
     DataInputStream stream(&input);
     _readHeader(&stream);
@@ -104,7 +104,7 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
     boost::unordered_map<std::wstring, _MetaData*>::iterator found = m_files.find(name);
     if (found == m_files.end())
     {
-        gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to find ", 0xB1, name.c_str(), getPath().c_str());
+        gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to find %ls in %ls", 0xB1, name.c_str(), getPath().c_str());
         return result;
     }
     _MetaData* metadata = found->second;
@@ -120,12 +120,12 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if (file == INVALID_HANDLE_VALUE)
         {
-            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load ", 0xFD, name.c_str(),
-                                getPath().c_str());
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load archive %ls to find %ls", 0xFD,
+                                getPath().c_str(), name.c_str());
         }
         else if (SetFilePointer(file, metadata->offset, NULL, 0) == 0)
         {
-            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set file pointer %ls", 0xF5, name.c_str());
             CloseHandle(file);
         }
         else
@@ -134,7 +134,7 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
             unsigned int bytesRead = 0;
             if (ReadFile(file, result.data, metadata->size, &bytesRead, NULL) == 0)
             {
-                gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to read ", 0xEE, name.c_str(),
+                gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to read %ls from %ls", 0xEE, name.c_str(),
                                     getPath().c_str());
             }
             CloseHandle(file);

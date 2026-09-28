@@ -76,11 +76,7 @@ void EditBox::mouseClicked(int button, int x, int y)
 {
     bool focused = mActive && mX <= x && x < mX + mWidth
         && mY <= y && y < mY + mHeight;
-    if (focused && !mFocused)
-    {
-        mTickCount = 0;
-    }
-    mFocused = focused;
+    focus(focused);
 }
 
 void EditBox::render()

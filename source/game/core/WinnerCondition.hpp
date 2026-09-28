@@ -11,7 +11,7 @@ class WinnerCondition : public MultiConditionMedal::MultiCondition
 {
 public:
     WinnerCondition();
-    virtual ~WinnerCondition();
+    virtual ~WinnerCondition() {}
 
     virtual bool canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const;
 };

@@ -19,26 +19,20 @@ void Node::ResetPool()
 
 unsigned int Node::createHash(int x, int y, int z)
 {
-    unsigned int result = 0;
-    if (x < 0)
-        result = 0x80000000u;
-    if (z < 0)
-        result |= 0x8000u;
-    return (static_cast<unsigned int>(z) << 24) | ((static_cast<unsigned int>(x) & 0x7fffu) << 8) |
-           (static_cast<unsigned int>(y) & 0xffu) | result;
+    return (y & 0xff) | ((x & 0x7fff) << 8) | ((z & 0x7fff) << 24) | (x < 0 ? 0x80000000 : 0) | (z < 0 ? 0x8000 : 0);
 }
 
 void Node::_init()
 {
-    walkedDistance = 4.5f;
-    type = 0;
+    walkedDistance = 0.0f;
+    type = BlockPathTypes::BLOCKED;
     acceptedNode = 0;
     heapIdx = -1;
     closed = false;
-    cost = 4.5f;
+    cost = 0.0f;
     hasAcceptedNode = false;
     cameFrom = 0;
-    costMalus = 4.5f;
+    costMalus = 0.0f;
 }
 
 Node::Node(int xValue, int yValue, int zValue) : x(xValue), y(yValue), z(zValue), hash(createHash(xValue, yValue, zValue))
@@ -62,7 +56,7 @@ Node::Node(const Node& node)
 
 Node* Node::GetNodeFromPool(int xValue, int yValue, int zValue)
 {
-    Node* node;
+    Node* node = NULL;
     if (!usePool)
         node = new Node(xValue, yValue, zValue);
     else if (poolSize < 1024)
@@ -91,6 +85,11 @@ Node* Node::GetNodeFromPool(int xValue, int yValue, int zValue)
         {
             node = new Node(xValue, yValue, zValue);
             allocated.push_back(node);
+            node->x = xValue;
+            node->y = yValue;
+            node->z = zValue;
+            node->hash = createHash(xValue, yValue, zValue);
+            node->_init();
             ++poolSize;
         }
     }

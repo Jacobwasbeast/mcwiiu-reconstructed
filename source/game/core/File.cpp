@@ -107,10 +107,6 @@ File::File(const File& parent, const std::wstring& child)
     mPath = parent.getPath() + L'\\' + child;
 }
 
-File::~File()
-{
-}
-
 std::wstring File::getPath() const
 {
     return mPath;

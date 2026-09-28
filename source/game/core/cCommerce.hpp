@@ -12,7 +12,9 @@ class cCommerce
 public:
     enum eDLCCatalogState
     {
-        eDLCCatalogState_Unknown = 0
+        eDLCCatalogState_Unknown = 0,
+        eDLCCatalogState_Retrieved = 1,
+        eDLCCatalogState_LogInFailed = 2
     };
 
     cCommerce();

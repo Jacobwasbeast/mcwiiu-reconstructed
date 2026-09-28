@@ -1,9 +1,10 @@
 #ifndef GAME_CORE_PERLINNOISE_HPP
 #define GAME_CORE_PERLINNOISE_HPP
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/Synth.hpp"
 class ImprovedNoise;
 class Random;
-class PerlinNoise
+class PerlinNoise : public Synth
 {
 public:
     PerlinNoise(int levels);

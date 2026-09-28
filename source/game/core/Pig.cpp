@@ -117,7 +117,7 @@ void Pig::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     if (DATA_BOOST_TIME != NULL && accessor->getId() == DATA_BOOST_TIME->getId()
         && mLevel->mIsClientSide)
     {
-        int boostTime = getEntityData()->get(DATA_BOOST_TIME);
+        int boostTime = mEntityData->get(DATA_BOOST_TIME);
         if (boostTime < 1 || boostTime == mBoostTotalTime)
         {
             mBoostTotalTime = 0;
@@ -139,8 +139,8 @@ void Pig::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 void Pig::defineSynchedData()
 {
     Animal::defineSynchedData();
-    if (DATA_SADDLE != NULL) getEntityData()->createDateItem(DATA_SADDLE, false);
-    if (DATA_BOOST_TIME != NULL) getEntityData()->createDateItem(DATA_BOOST_TIME, 0);
+    if (DATA_SADDLE != NULL) mEntityData->createDateItem(DATA_SADDLE, false);
+    if (DATA_BOOST_TIME != NULL) mEntityData->createDateItem(DATA_BOOST_TIME, 0);
 }
 
 void Pig::addDataWalkers(DataFixerUpper* fixer)
@@ -150,7 +150,7 @@ void Pig::addDataWalkers(DataFixerUpper* fixer)
 
 bool Pig::hasSaddle()
 {
-    return DATA_SADDLE != NULL && getEntityData()->get(DATA_SADDLE);
+    return DATA_SADDLE != NULL && mEntityData->get(DATA_SADDLE);
 }
 
 void Pig::addAdditonalSaveData(CompoundTag* tag)
@@ -161,7 +161,7 @@ void Pig::addAdditonalSaveData(CompoundTag* tag)
 
 void Pig::setSaddle(bool saddled)
 {
-    if (DATA_SADDLE != NULL) getEntityData()->set(DATA_SADDLE, saddled, true);
+    if (DATA_SADDLE != NULL) mEntityData->set(DATA_SADDLE, saddled, true);
 }
 
 void Pig::readAdditionalSaveData(CompoundTag* tag)
@@ -308,7 +308,7 @@ void Pig::travel(float xxa, float yya, float zza)
             mBoosting = false;
             mBoostTotalTime = 0;
             mBoostStartTime = 0;
-            getEntityData()->set(DATA_BOOST_TIME, 0, true);
+            mEntityData->set(DATA_BOOST_TIME, 0, true);
         }
         else
         {
@@ -349,7 +349,7 @@ bool Pig::boost()
         mBoostTime = 0;
         mBoostTotalTime = mRandom->nextInt(0x231) + 0x8c;
         mBoostStartTime = System::processTimeInMilliSecs();
-        if (DATA_BOOST_TIME != NULL) getEntityData()->set(DATA_BOOST_TIME, mBoostTotalTime, true);
+        if (DATA_BOOST_TIME != NULL) mEntityData->set(DATA_BOOST_TIME, mBoostTotalTime, true);
         return true;
     }
     return false;

@@ -571,9 +571,9 @@ void GameRuleManager::loadDefaultGameRules()
     }
 }
 
-LevelGenerators* GameRuleManager::getLevelGenerators()
+std::vector<LevelGenerationOptions*>* GameRuleManager::getLevelGenerators()
 {
-    return mLevelGenerators;
+    return mLevelGenerators->getLevelGenerators();
 }
 
 LevelRuleset* GameRuleManager::getGameRuleDefinitions()

@@ -8,7 +8,7 @@ class Level;
 class Location : public Position
 {
 public:
-    virtual ~Location();
+    virtual ~Location() {}
 
     virtual Level* getWorld() = 0;
 };

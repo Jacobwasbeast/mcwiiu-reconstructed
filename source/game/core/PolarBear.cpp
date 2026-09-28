@@ -129,12 +129,12 @@ ResourceLocation* PolarBear::getDefaultLootTable()
 void PolarBear::defineSynchedData()
 {
     Animal::defineSynchedData();
-    getEntityData()->createDateItem(DATA_STANDING, false);
+    mEntityData->createDateItem(DATA_STANDING, false);
 }
 
 bool PolarBear::isStanding()
 {
-    return getEntityData()->get(DATA_STANDING);
+    return mEntityData->get(DATA_STANDING);
 }
 
 void PolarBear::tick()
@@ -165,7 +165,7 @@ bool PolarBear::doHurtTarget(boost::shared_ptr<Entity> target)
 
 void PolarBear::setStanding(bool standing)
 {
-    getEntityData()->set(DATA_STANDING, standing, true);
+    mEntityData->set(DATA_STANDING, standing, true);
 }
 
 double PolarBear::getStandingAnimationScale(float partialTick)

@@ -20,7 +20,7 @@ class CoralFan : public Bush
 {
 public:
     CoralFan();
-    virtual ~CoralFan();
+    virtual ~CoralFan() {}
 
     virtual int getColor(const BlockState* state);
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);

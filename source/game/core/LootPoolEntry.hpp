@@ -33,6 +33,8 @@ public:
     LootTableEntry* mEntry;
     int mWeight;
     int mQuality;
+protected:
+    LootPoolEntry() {}
 };
 
 #endif

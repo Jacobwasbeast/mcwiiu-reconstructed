@@ -5,10 +5,6 @@ Golem::Golem(Level* level)
 {
 }
 
-Golem::~Golem()
-{
-}
-
 void Golem::causeFallDamage(float, float)
 {
 }

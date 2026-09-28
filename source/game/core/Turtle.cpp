@@ -1,4 +1,5 @@
 #include "game/core/Turtle.hpp"
+#include <float.h>
 #include "game/world/block/Material.hpp"
 #include "game/world/block/BlockId.hpp"
 #include "game/core/StringIds.hpp"
@@ -343,7 +344,7 @@ bool Turtle::canBeLeashed(const boost::shared_ptr<Player>& player)
 
 void Turtle::thunderHit(const LightningBolt* lightning)
 {
-    Entity::thunderHit(lightning);
+    hurt(DamageSource::LIGHTNING_BOLT, FLT_MAX);
 }
 
 void Turtle::die(const DamageSource* source)

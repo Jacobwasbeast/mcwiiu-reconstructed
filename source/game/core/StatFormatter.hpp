@@ -6,7 +6,7 @@
 class StatFormatter
 {
 public:
-    virtual ~StatFormatter();
+    virtual ~StatFormatter() {}
 
     virtual std::wstring format(int value) = 0;
 };

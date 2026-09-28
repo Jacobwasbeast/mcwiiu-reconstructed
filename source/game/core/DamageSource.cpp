@@ -118,8 +118,6 @@ DamageSource::DamageSource(const DamageSource& source)
 {
 }
 
-DamageSource::~DamageSource() { }
-
 bool DamageSource::equals(const DamageSource* source) const { return message == source->message && deathMessage == source->deathMessage; }
 
 EntityDamageSource* DamageSource::CreateMobAttack(boost::shared_ptr<LivingEntity> entity)

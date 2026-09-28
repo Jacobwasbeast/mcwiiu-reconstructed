@@ -16,10 +16,6 @@ Slot::Slot(boost::shared_ptr<Container> container, int index, int x, int y)
 {
 }
 
-Slot::~Slot()
-{
-}
-
 void Slot::onQuickCraft(not_null_ptr<ItemInstance> oldItem, not_null_ptr<ItemInstance> newItem)
 {
     int oldCount = oldItem->getCount();

@@ -28,7 +28,7 @@ public:
     CombatEntry* GetKnockoffEntry();
     eLOCATION getFallLocation(CombatEntry* entry);
     boost::shared_ptr<ClientboundChatPacket> getDeathMessagePacket();
-    void recordDamage(const DamageSource* source, float damage, float fallDistance);
+    void recordDamage(const DamageSource* source, float healthBeforeDamage, float damage);
     boost::shared_ptr<LivingEntity> getKiller();
     int getCombatDuration();
     LivingEntity* getMob();
@@ -44,8 +44,8 @@ private:
     int mLastDamageTime;
     int mCombatStartTime;
     int mCombatEndTime;
-    bool mTakingDamage;
     bool mInCombat;
+    bool mTakingDamage;
     int mPreparedStatus;
 };
 

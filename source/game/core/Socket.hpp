@@ -1,16 +1,19 @@
 #ifndef GAME_CORE_SOCKET_HPP
 #define GAME_CORE_SOCKET_HPP
-#include <deque>
+#include <queue>
 #include "game/core/InputStream.hpp"
 #include "game/core/OutputStream.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+class C4JEventImpl;
 class INetworkPlayer;
 class ServerConnection;
 class Socket
 {
+    friend class Connection;
     friend class ServerGamePacketListenerImpl;
     friend class ClientPacketListener;
+    friend class PlayerList;
 
 public:
     class SocketInputStreamLocal : public InputStream
@@ -28,8 +31,8 @@ public:
         virtual void flush();
 
     private:
-        int mIndex;
         bool mOpen;
+        int mIndex;
     };
     class SocketInputStreamNetwork : public InputStream
     {
@@ -44,8 +47,8 @@ public:
         virtual void flush();
 
     private:
-        int mIndex;
         bool mOpen;
+        int mIndex;
         Socket* mSocket;
     };
     class SocketOutputStream : public OutputStream
@@ -68,8 +71,8 @@ public:
         virtual void flush();
 
     private:
-        int mIndex;
         bool mOpen;
+        int mIndex;
     };
     class SocketOutputStreamNetwork : public SocketOutputStream
     {
@@ -84,12 +87,12 @@ public:
         virtual void flush();
 
     private:
-        int mIndex;
         bool mOpen;
+        int mIndex;
         Socket* mSocket;
     };
-    Socket(bool);
-    Socket(INetworkPlayer*, bool, bool);
+    Socket(bool response);
+    Socket(INetworkPlayer* player, bool response, bool hostLocal);
     INetworkPlayer* getPlayer();
     void setPlayer(INetworkPlayer*);
     static void Initialise(ServerConnection*);
@@ -106,14 +109,13 @@ private:
     bool mLocal;
     bool mNetwork;
     int mIndex;
-    std::deque<unsigned char> mQueues[2];
+    std::queue<unsigned char> mQueues[2];
     OSFastMutex mMutexes[2];
     InputStream* mInputStreams[2];
     OutputStream* mOutputStreams[2];
-    bool mInputClosed[2];
-    bool mOutputClosed[2];
+    bool mClosed[2];
     unsigned char mPlayerId;
-    void* mEvent;
+    C4JEventImpl* mCloseEvent;
     bool mOpen;
     static ServerConnection* sConnection;
 };

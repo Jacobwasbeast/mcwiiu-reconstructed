@@ -75,11 +75,6 @@ ImprovedNoise::ImprovedNoise(Random* random)
     init(random);
 }
 
-ImprovedNoise::ImprovedNoise()
-    : p(NULL), pLength(0), pMask(0), xo(0.0), yo(0.0), zo(0.0)
-{
-}
-
 ImprovedNoise::~ImprovedNoise()
 {
     delete[] p;

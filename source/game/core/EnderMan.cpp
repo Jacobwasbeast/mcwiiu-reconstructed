@@ -1,4 +1,5 @@
 #include "game/core/EnderMan.hpp"
+#include "game/entity/mob/IndirectEntityDamageSource.hpp"
 #include "game/core/IsLookingAtMePredicate.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/EntityType.hpp"
@@ -116,8 +117,8 @@ void EnderMan::setTarget(boost::shared_ptr<LivingEntity> target)
 void EnderMan::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_CARRIED_BLOCK, (const BlockState*)NULL);
-    getEntityData()->createDateItem(DATA_CREEPY, false);
+    mEntityData->createDateItem(DATA_CARRIED_BLOCK, (const BlockState*)NULL);
+    mEntityData->createDateItem(DATA_CREEPY, false);
 }
 
 void EnderMan::playCreepySound()
@@ -135,7 +136,7 @@ void EnderMan::playCreepySound()
 
 bool EnderMan::isCreepy()
 {
-    return getEntityData()->get(DATA_CREEPY);
+    return mEntityData->get(DATA_CREEPY);
 }
 
 void EnderMan::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
@@ -152,7 +153,7 @@ void EnderMan::addDataWalkers(DataFixerUpper* fixer)
 
 const BlockState* EnderMan::getCarryingBlock()
 {
-    return getEntityData()->get(DATA_CARRIED_BLOCK);
+    return mEntityData->get(DATA_CARRIED_BLOCK);
 }
 
 void EnderMan::addAdditonalSaveData(CompoundTag* tag)
@@ -168,7 +169,7 @@ void EnderMan::addAdditonalSaveData(CompoundTag* tag)
 
 void EnderMan::setCarryingBlock(const BlockState* state)
 {
-    getEntityData()->set(DATA_CARRIED_BLOCK, state, true);
+    mEntityData->set(DATA_CARRIED_BLOCK, state, true);
 }
 
 void EnderMan::readAdditionalSaveData(CompoundTag* tag)
@@ -199,7 +200,7 @@ bool EnderMan::isLookingAtMe(boost::shared_ptr<Player> player)
 
 double EnderMan::getEyeHeight()
 {
-    return 2.55;
+    return 2.55f;
 }
 
 void EnderMan::aiStep()
@@ -233,9 +234,11 @@ bool EnderMan::teleport(double x, double y, double z)
 
 bool EnderMan::teleport()
 {
-    return randomTeleport(mX + (mRandom->nextDouble() - 0.5) * 64.0,
-                          mY + (mRandom->nextInt(64) - 32),
-                          mZ + (mRandom->nextDouble() - 0.5) * 64.0);
+    double range = getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->getValue();
+    double x = mX + (mRandom->nextDouble() - 0.5) * range;
+    double y = mY + std::floor((mRandom->nextDouble() - 0.5) * range);
+    double z = mZ + (mRandom->nextDouble() - 0.5) * range;
+    return teleport(x, y, z);
 }
 
 void EnderMan::customServerAiStep()
@@ -290,9 +293,21 @@ bool EnderMan::hurt(const DamageSource* source, float damage)
 {
     if (isInvulnerableTo(source))
         return false;
-    if (!mLevel->mIsClientSide)
+
+    if (dynamic_cast<const IndirectEntityDamageSource*>(source) != NULL)
+    {
+        for (int attempt = 0; attempt < 64; ++attempt)
+        {
+            if (teleport())
+                return true;
+        }
+        return false;
+    }
+
+    bool hurt = Monster::hurt(source, damage);
+    if (!mLevel->mIsClientSide && mRandom->rollPercentageChance(90) && isAlive())
         teleport();
-    return LivingEntity::hurt(source, damage);
+    return hurt;
 }
 
 void EnderMan::create(Level* level) { new EnderMan(level); }

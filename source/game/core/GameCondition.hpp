@@ -8,7 +8,7 @@ class MasterGameMode;
 class GameCondition
 {
 public:
-    virtual ~GameCondition();
+    virtual ~GameCondition() {}
     virtual bool IsSatisfied(MasterGameMode* gameMode) const = 0;
     virtual unsigned char GetMessage() const = 0;
     virtual void AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const = 0;

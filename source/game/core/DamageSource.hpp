@@ -48,7 +48,7 @@ public:
 
     DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage);
     DamageSource(const DamageSource& source);
-    virtual ~DamageSource();
+    virtual ~DamageSource() {}
     bool equals(const DamageSource* source) const;
     static EntityDamageSource* CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
     void setProjectile();

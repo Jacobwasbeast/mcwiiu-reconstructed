@@ -29,10 +29,6 @@ static const unsigned int ATTRIBUTE_NAMES[eATTRIBUTE_ID_Count] =
     kNameFlyingSpeed
 };
 
-Attribute::~Attribute()
-{
-}
-
 int Attribute::getName(eATTRIBUTE_ID id)
 {
     return ATTRIBUTE_NAMES[id];

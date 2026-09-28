@@ -44,6 +44,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/entity/ai/DolphinPathNavigation.hpp"
 #include "game/entity/ai/WaterBoundPathNavigation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
@@ -256,7 +257,7 @@ void Dolphin::registerAttributes()
 
 PathNavigation* Dolphin::createNavigation(Level* level)
 {
-    return new WaterBoundPathNavigation(this, level, true, true);
+    return new DolphinPathNavigation(this, level);
 }
 
 bool Dolphin::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)

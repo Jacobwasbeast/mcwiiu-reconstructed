@@ -8,7 +8,7 @@
 class XmlConstruct
 {
 public:
-    virtual ~XmlConstruct();
+    virtual ~XmlConstruct() {}
 
     virtual std::wstring asString() const;
     virtual std::wstring asString(const std::wstring& defaultValue) const;

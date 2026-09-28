@@ -29,7 +29,7 @@ public:
     {
     public:
         explicit SpellcasterUseSpellGoal(SpellcasterIllager* spellcaster);
-        virtual ~SpellcasterUseSpellGoal();
+        virtual ~SpellcasterUseSpellGoal() {}
         virtual bool canUse();
         virtual bool canContinueToUse();
         virtual bool canInterrupt();
@@ -51,7 +51,7 @@ public:
     };
 
     explicit SpellcasterIllager(Level* level);
-    virtual ~SpellcasterIllager();
+    virtual ~SpellcasterIllager() {}
 
     static void staticCtor();
     virtual void defineSynchedData();

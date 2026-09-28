@@ -16,7 +16,7 @@ public:
     File(const std::wstring& path);
     File(const std::wstring& parent, const std::wstring& child);
     File(const File& parent, const std::wstring& child);
-    ~File();
+    ~File() {}
     std::wstring getPath() const;
     bool exists() const;
     bool isDirectory() const;

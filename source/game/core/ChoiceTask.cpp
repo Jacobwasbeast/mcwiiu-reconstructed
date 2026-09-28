@@ -26,10 +26,6 @@ ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool
     tutorial->addMessage(promptId, false, 3);
 }
 
-ChoiceTask::~ChoiceTask()
-{
-}
-
 void ChoiceTask::sendTelemetry()
 {
     Minecraft* minecraft = Minecraft::GetInstance();

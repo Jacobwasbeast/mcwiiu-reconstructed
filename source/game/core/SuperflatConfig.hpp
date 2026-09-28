@@ -16,7 +16,7 @@ class SuperflatConfig
 {
 public:
     SuperflatConfig();
-    ~SuperflatConfig();
+    ~SuperflatConfig() {}
     bool hasParam(unsigned char parameter);
     SuperflatConfig* setDisplayname(const std::wstring& name);
     bool hasOption(unsigned char parameter, unsigned char option);

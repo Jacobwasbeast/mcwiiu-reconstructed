@@ -21,7 +21,7 @@ enum eATTRIBUTE_ID
 class Attribute
 {
 public:
-    virtual ~Attribute();
+    virtual ~Attribute() {}
 
     virtual eATTRIBUTE_ID getId() = 0;
     virtual double sanitizeValue(double value) = 0;

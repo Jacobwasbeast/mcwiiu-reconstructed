@@ -27,11 +27,17 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockTransaction.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/SignBlockEntity.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+static const int SCHEMATIC_WORLD_HEIGHT = 256;
 
 ConsoleSchematicFile::PasteData::PasteData()
     : mLevel(NULL), mArea(NULL), mRotation(eSchematicRotation_0), mMirror(eSchematicMirror_None),
-      mMinChunkX(0), mMaxChunkX(0), mMinChunkZ(0), mMaxChunkZ(0),
-      mCurrentChunkX(0), mCurrentChunkZ(0), mChunkCount(0), mWidth(0), mHeight(0), mDepth(0),
+      mMinChunkX(0), mMaxChunkX(0), mCurrentChunkX(0), mMinChunkZ(0), mMaxChunkZ(0), mCurrentChunkZ(0),
+      mWidth(0), mHeight(0), mDepth(0),
       mElements(), mExtraElements(), mData(), mExtraData(), mBlockEntities(), mEntities(),
       mNamedPositions(), mUpdatedNames(), mIncludeAir(false), mIncludeSpecial(false)
 {
@@ -1132,37 +1138,55 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
 {
     for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = paste->mBlockEntities.begin(); it != paste->mBlockEntities.end(); ++it)
     {
-        double x;
-        double z;
-        schematicCoordToChunkCoord(paste->mArea, it->first->x, it->first->z, paste->mRotation, paste->mMirror, x, z);
-        BlockPos pos(x, paste->mArea->mMinY + it->first->y, z);
-        if (chunkArea->contains(pos))
+        double x = it->first->x;
+        double y = it->first->y + static_cast<int>(std::floor(paste->mArea->mMinY));
+        double z = it->first->z;
+        schematicCoordToChunkCoord(paste->mArea, x, z, paste->mRotation, paste->mMirror, x, z);
+        if (chunkArea->containsIncludingLowerBound(Vec3::newTemp(x + 0.01, y + 0.01, z + 0.01)))
         {
-            CompoundTag* tag = it->second->copy();
-            tag->putInt(L"x", pos.x);
-            tag->putInt(L"y", pos.y);
-            tag->putInt(L"z", pos.z);
-            boost::shared_ptr<BlockEntity> blockEntity = BlockEntity::loadStatic(level, tag);
-            if (blockEntity) chunk->addBlockEntity(blockEntity);
-            delete tag;
+            boost::shared_ptr<BlockEntity> blockEntity = BlockEntity::loadStatic(level, it->second);
+            if (blockEntity)
+            {
+                boost::shared_ptr<SignBlockEntity> sign = boost::dynamic_pointer_cast<SignBlockEntity>(blockEntity);
+                if (sign)
+                {
+                    sign->SetVerified(true);
+                    sign->SetCensored(false);
+                    sign->setCreatedByHostPlayer(true);
+                    sign->setCreatedByRestrictedPlayer(false);
+                }
+                blockEntity->setPosition(BlockPos(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z)));
+                chunk->addBlockEntity(blockEntity);
+                blockEntity->setChanged();
+            }
         }
     }
 
     for (std::vector<std::pair<Vec3*, CompoundTag*> >::iterator it = paste->mEntities.begin(); it != paste->mEntities.end(); ++it)
     {
-        double x;
-        double z;
-        schematicCoordToChunkCoord(paste->mArea, it->first->x, it->first->z, paste->mRotation, paste->mMirror, x, z);
-        double y = paste->mArea->mMinY + it->first->y;
-        if (chunkArea->contains(x, y, z))
+        double x = it->first->x;
+        double y = it->first->y + paste->mArea->mMinY;
+        double z = it->first->z;
+        schematicCoordToChunkCoord(paste->mArea, x, z, paste->mRotation, paste->mMirror, x, z);
+        if (!chunkArea->containsIncludingLowerBound(Vec3::newTemp(x + 0.01, y + 0.01, z + 0.01)))
+            continue;
+
+        CompoundTag* tag = it->second;
+        boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, chunk->level);
+        if (entity->GetType() == EntityType::PAINTING)
         {
-            boost::shared_ptr<Entity> entity = EntityIO::newEntity(it->second, level);
-            if (entity)
-            {
-                entity->setPos(x, y, z);
-                level->addEntity(entity);
-            }
+            boost::shared_ptr<Painting> painting = boost::dynamic_pointer_cast<Painting>(entity);
+            painting->setPos(x, y, z);
+            painting->setDirection(Direction::from2DDataValue(tag->getByte(L"Facing")));
+            offsetPainting(level, painting, paste->mRotation, paste->mMirror);
         }
+        else
+        {
+            entity->absMoveTo(x, y, z, entity->mYRot, entity->mXRot);
+        }
+        entity->setLevel(chunk->level);
+        entity->setDespawnProtected();
+        chunk->level->addEntity(entity);
     }
 }
 
@@ -1269,12 +1293,12 @@ void ConsoleSchematicFile::_applySchematicData(Level* level, AABB* area, ESchema
     mPasteData.mLevel = level;
     mPasteData.mArea->set(area);
     mPasteData.mRotation = rotate ? rotation : eSchematicRotation_0;
-    mPasteData.mMirror = (ESchematicMirror)mPasteState;
-    mPasteData.mMinChunkX = (int)area->mMinX >> 4;
-    mPasteData.mMaxChunkX = (int)area->mMaxX >> 4;
-    mPasteData.mMinChunkZ = (int)area->mMinZ >> 4;
-    mPasteData.mMaxChunkZ = (int)area->mMaxZ >> 4;
+    mPasteData.mMirror = rotate ? (ESchematicMirror)mPasteState : eSchematicMirror_None;
+    mPasteData.mMinChunkX = (int)std::floor(area->mMinX) >> 4;
+    mPasteData.mMaxChunkX = (int)std::floor(area->mMaxX) >> 4;
     mPasteData.mCurrentChunkX = mPasteData.mMinChunkX;
+    mPasteData.mMinChunkZ = (int)std::floor(area->mMinZ) >> 4;
+    mPasteData.mMaxChunkZ = (int)std::floor(area->mMaxZ) >> 4;
     mPasteData.mCurrentChunkZ = mPasteData.mMinChunkZ;
     mPasteData.mWidth = width;
     mPasteData.mHeight = height;
@@ -1367,6 +1391,34 @@ void ConsoleSchematicFile::tick()
 
     if (mPasteData.mCurrentChunkX > mPasteData.mMaxChunkX || mPasteData.mCurrentChunkZ > mPasteData.mMaxChunkZ)
     {
+        for (int x = (int)std::floor(mPasteData.mArea->mMinX); x < (int)std::floor(mPasteData.mArea->mMaxX); ++x)
+        {
+            for (int y = (int)std::floor(mPasteData.mArea->mMinY); y < (int)std::floor(mPasteData.mArea->mMaxY); ++y)
+            {
+                if (y >= SCHEMATIC_WORLD_HEIGHT)
+                    continue;
+
+                for (int z = (int)std::floor(mPasteData.mArea->mMinZ); z < (int)std::floor(mPasteData.mArea->mMaxZ); ++z)
+                {
+                    BlockPos pos(x, y, z);
+                    if (mPasteData.mMirror == eSchematicMirror_None && mPasteData.mRotation == eSchematicRotation_0)
+                        continue;
+
+                    std::vector<const Property*> properties(mPasteData.mLevel->getBlockState(pos)->getProperties());
+                    for (std::vector<const Property*>::iterator it = properties.begin(); it != properties.end(); ++it)
+                    {
+                        const DirectionProperty* property = dynamic_cast<const DirectionProperty*>(*it);
+                        if (property == NULL)
+                            continue;
+
+                        const Direction* direction =
+                            HandleRotation(mPasteData.mLevel->getBlockState(pos)->getValue(property), mPasteData.mMirror, eSchematicRotation_0);
+                        TypedBoxed<const Direction*> boxed(direction);
+                        mPasteData.mLevel->setBlockAndUpdate(pos, mPasteData.mLevel->getBlockState(pos)->setBoxedValue(property, &boxed));
+                    }
+                }
+            }
+        }
         mHasCopy = false;
         return;
     }
@@ -1385,7 +1437,7 @@ void ConsoleSchematicFile::tick()
         int maxY = (int)std::floor(mPasteData.mArea->mMaxY);
         for (int x = (int)minX; x < (int)minX + 16; ++x)
         {
-            for (int y = minY; y <= maxY && y < 0x100; ++y)
+            for (int y = minY; y <= maxY && y < SCHEMATIC_WORLD_HEIGHT; ++y)
             {
                 for (int z = (int)minZ; z < (int)minZ + 16; ++z)
                 {

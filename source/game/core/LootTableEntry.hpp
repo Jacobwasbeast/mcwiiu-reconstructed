@@ -5,13 +5,14 @@
 #include <vector>
 
 #include "game/item/not_null_ptr.hpp"
+#include "game/core/LootPoolEntry.hpp"
 
 class ItemInstance;
 class LootTable;
 class LootTableContext;
 class Random;
 
-class LootTableEntry
+class LootTableEntry : public LootPoolEntry
 {
 public:
     LootTableEntry(LootTable* lootTable);
@@ -21,10 +22,6 @@ public:
                                  LootTableContext& context);
 
 private:
-    uint32_t mUnknown04;
-    uint32_t mUnknown08;
-    uint32_t mUnknown0C;
-    uint32_t mUnknown10;
     LootTable* mLootTable;
 };
 

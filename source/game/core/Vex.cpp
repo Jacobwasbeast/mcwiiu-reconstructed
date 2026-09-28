@@ -145,7 +145,7 @@ MobGroupData* Vex::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGro
 void Vex::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 {
     Mob::populateDefaultEquipmentSlots(difficulty);
-    setDropChance(EquipmentSlot::MAINHAND, 1.65f);
+    setDropChance(EquipmentSlot::MAINHAND, 0.0f);
 }
 unsigned long long Vex::GetType() { return EntityType::VEX; }
 
@@ -153,7 +153,9 @@ Vex::VexChargeAttackGoal::VexChargeAttackGoal(Vex* value) : Goal(), owner(value)
 {
     setRequiredControlFlags(1);
 }
-Vex::VexChargeAttackGoal::~VexChargeAttackGoal() = default;
+Vex::VexChargeAttackGoal::~VexChargeAttackGoal()
+{
+}
 bool Vex::VexChargeAttackGoal::canUse()
 {
     if (owner->getMoveControl()->hasWanted()) return false;
@@ -197,7 +199,9 @@ std::wstring Vex::VexChargeAttackGoal::getName() { return L"Vex Charging Attack"
 
 Vex::VexCopyOwnerTargetGoal::VexCopyOwnerTargetGoal(PathfinderMob* value)
     : TargetGoal(value, false) {}
-Vex::VexCopyOwnerTargetGoal::~VexCopyOwnerTargetGoal() = default;
+Vex::VexCopyOwnerTargetGoal::~VexCopyOwnerTargetGoal()
+{
+}
 bool Vex::VexCopyOwnerTargetGoal::canUse()
 {
     Vex* vex = static_cast<Vex*>(mMob);
@@ -216,7 +220,9 @@ void Vex::VexCopyOwnerTargetGoal::start()
 std::wstring Vex::VexCopyOwnerTargetGoal::getName() { return L"Vex Copy Owner Target"; }
 
 Vex::VexMoveControl::VexMoveControl(Vex* value) : MoveControl(value) {}
-Vex::VexMoveControl::~VexMoveControl() = default;
+Vex::VexMoveControl::~VexMoveControl()
+{
+}
 void Vex::VexMoveControl::tick()
 {
     Vex* vex = static_cast<Vex*>(mMob);
@@ -256,7 +262,9 @@ Vex::VexRandomMoveGoal::VexRandomMoveGoal(Vex* value) : Goal(), owner(value)
 {
     setRequiredControlFlags(1);
 }
-Vex::VexRandomMoveGoal::~VexRandomMoveGoal() = default;
+Vex::VexRandomMoveGoal::~VexRandomMoveGoal()
+{
+}
 bool Vex::VexRandomMoveGoal::canUse()
 { return !owner->getMoveControl()->hasWanted() && owner->mRandom->nextInt(7) == 0; }
 bool Vex::VexRandomMoveGoal::canContinueToUse() { return false; }

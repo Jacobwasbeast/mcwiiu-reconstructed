@@ -22,7 +22,9 @@ VindicationIllager::VindicationIllager(Level* level) : AbstractIllager(level)
     mJohnny = false;
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
-VindicationIllager::~VindicationIllager() = default;
+VindicationIllager::~VindicationIllager()
+{
+}
 VindicationIllager* VindicationIllager::create(Level* level) { return new VindicationIllager(level); }
 void VindicationIllager::addDataWalkers(DataFixerUpper* fixer)
 { Mob::addDataWalkers(fixer, EntityType::VINDICATION_ILLAGER); }
@@ -54,7 +56,7 @@ void VindicationIllager::registerAttributes()
 void VindicationIllager::defineSynchedData()
 {
     Mob::defineSynchedData();
-    getEntityData()->createDateItem(DATA_ILLAGER_FLAGS, (unsigned char)0);
+    mEntityData->createDateItem(DATA_ILLAGER_FLAGS, (unsigned char)0);
 }
 EMobType VindicationIllager::getMobType() { return MOB_TYPE_ILLAGER; }
 ResourceLocation* VindicationIllager::getDefaultLootTable()
@@ -91,7 +93,7 @@ void VindicationIllager::customServerAiStep()
     Mob::customServerAiStep();
     setAggressive(getTarget() != 0);
 }
-bool VindicationIllager::isAlliedTo(const boost::shared_ptr<Entity>& entity)
+bool VindicationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
@@ -122,7 +124,9 @@ bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity>
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* mob)
     : NearestAttackableTargetGoal(mob, typeid(Entity), 0, true, false,
                                   new LIVING_ENTITY_SELECTOR(), false, true) {}
-VindicationIllager::VindicatorJohnnyAttackGoal::~VindicatorJohnnyAttackGoal() = default;
+VindicationIllager::VindicatorJohnnyAttackGoal::~VindicatorJohnnyAttackGoal()
+{
+}
 bool VindicationIllager::VindicatorJohnnyAttackGoal::canUse()
 {
     VindicationIllager* illager = static_cast<VindicationIllager*>(mMob);

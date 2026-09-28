@@ -332,8 +332,8 @@ void Guardian::aiStep()
         if (mOnGround)
         {
             mYd += 0.5;
-            mXd += (double)((mRandom->nextFloat() * 2.0f) - 1.0f) * 0.4;
-            mZd += (double)((mRandom->nextFloat() * 2.0f) - 1.0f) * 0.4;
+            mXd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.4f);
+            mZd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.4f);
             mHasImpulse = true;
             mOnGround = false;
             mYRot = mRandom->nextFloat() * 360.0f;

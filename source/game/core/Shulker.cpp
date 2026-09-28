@@ -50,8 +50,9 @@ AttributeModifier* Shulker::COVERED_ARMOR_MODIFIER =
     (new AttributeModifier(eMODIFIER_ID_ArmorBonus, 20.0, 0))->setSerialize(false);
 
 Shulker::ShulkerAttackGoal::ShulkerAttackGoal(Shulker* shulker)
-    : Goal(), mShulker(shulker), mAttackTime(0)
+    : Goal(), mShulker(shulker)
 {
+    setRequiredControlFlags(3);
 }
 
 Shulker::ShulkerAttackGoal::~ShulkerAttackGoal()
@@ -164,7 +165,7 @@ Shulker::ShulkerNearestAttackGoal::~ShulkerNearestAttackGoal()
 
 bool Shulker::ShulkerNearestAttackGoal::canUse()
 {
-    return mShulker != NULL && mShulker->mLevel != NULL && !NearestAttackableTargetGoal::canUse();
+    return mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL && NearestAttackableTargetGoal::canUse();
 }
 
 AABB* Shulker::ShulkerNearestAttackGoal::getTargetSearchArea(double distance)
@@ -738,9 +739,9 @@ void Shulker::push(boost::shared_ptr<Entity> entity)
 {
 }
 
-double Shulker::getPickRadius()
+float Shulker::getPickRadius()
 {
-    return 0.0;
+    return 0.0f;
 }
 
 bool Shulker::hasValidInterpolationPositions()

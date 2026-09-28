@@ -64,7 +64,6 @@ public:
     virtual bool isSilkTouchable();
 
 private:
-    TextureAtlasSprite* mCarriedIcon;
     TextureAtlasSprite* mDoubleTallTopIcon;
     TextureAtlasSprite* mDoubleTallBottomIcon;
 };

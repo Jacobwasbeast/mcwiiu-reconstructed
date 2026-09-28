@@ -36,7 +36,7 @@ public:
         MapSelectInfo(const MapSelectInfo& other);
         int uniqueId;
         std::wstring name;
-        int mapSize;
+        int texturePackId;
     };
 
     ClientMasterGameMode();
@@ -53,7 +53,7 @@ public:
     void OnStateChange(EGameModeState state);
     virtual void OnExitedGame();
     void ClearPlaylist();
-    void AddMapToPlaylist(int uniqueId, const std::wstring& name, int mapSize);
+    void AddMapToPlaylist(int uniqueId, const std::wstring& name, int texturePackId);
     void SetMapVote(int playerIndex, int vote, bool remove);
     unsigned int GetMapVote(int playerIndex, int vote);
     void GetUniquePlaylist(std::vector<MapSelectInfo>& playlist);

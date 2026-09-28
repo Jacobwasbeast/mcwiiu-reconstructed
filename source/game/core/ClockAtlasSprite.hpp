@@ -7,7 +7,7 @@ class ClockAtlasSprite : public TextureAtlasSprite
 {
 public:
     ClockAtlasSprite();
-    ClockAtlasSprite(int frame, ClockAtlasSprite* parent);
+    ClockAtlasSprite(int playerIndex, ClockAtlasSprite* parent);
     virtual ~ClockAtlasSprite();
     virtual void cycleFrames();
     virtual unsigned int getSourceWidth() const;
@@ -18,7 +18,7 @@ public:
 private:
     double mLastTime;
     double mRotation;
-    int mDimension;
+    int mPlayerIndex;
     ClockAtlasSprite* mParent;
 };
 

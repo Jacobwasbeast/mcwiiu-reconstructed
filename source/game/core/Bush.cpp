@@ -31,10 +31,6 @@ Bush::Bush(Material* material, const MaterialColor* materialColor)
     _init();
 }
 
-Bush::~Bush()
-{
-}
-
 void Bush::_init()
 {
     setTicking(true);

@@ -3,22 +3,22 @@
 #include "game/core/Button.hpp"
 
 ScrolledSelectionList::ScrolledSelectionList(Minecraft* minecraft, int width, int height, int top, int bottom, int slotHeight)
-    : minecraft(minecraft), width(width), height(height), top(top), bottom(bottom), right(width), selectedItem(0),
+    : minecraft(minecraft), width(width), height(height), top(top), bottom(bottom), right(width), left(0),
       slotHeight(slotHeight), scrollUpButtonId(0), scrollDownButtonId(0), initialClickY(0.0f),
-      scrollMultiplier(0.0f), amountScrolled(0.0f), lastClicked(0), headerHeight(0), scrollPosition(0),
-      renderSelection(false), renderHeaderEnabled(false), selectedElement(0)
+      scrollMultiplier(0.0f), amountScrolled(0.0f), selectedElement(0), lastClicked(0),
+      renderSelection(false), renderHeaderEnabled(false), headerPadding(0)
 {
 }
 
 int ScrolledSelectionList::getMaxPosition()
 {
-    return getNumberOfItems() * slotHeight + selectedElement;
+    return getNumberOfItems() * slotHeight + headerPadding;
 }
 
 int ScrolledSelectionList::getItemAtPosition(int x, int y)
 {
     int center = width / 2;
-    int relativeY = (y - top) - selectedElement + (int)amountScrolled - 4;
+    int relativeY = (y - top) - headerPadding + (int)amountScrolled - 4;
     int item = relativeY / slotHeight;
     if (x >= center - 110 && x <= center + 110 && item >= 0 && relativeY >= 0 && item < getNumberOfItems())
     {

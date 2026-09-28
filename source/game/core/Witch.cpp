@@ -162,13 +162,12 @@ void Witch::aiStep()
 void Witch::handleEntityEvent(unsigned char event, int data)
 {
     if (event == EntityEvent::WITCH_HAT_MAGIC) {
-        for (int i = 0; i < 10 + getRandom()->nextInt(35); ++i) {
-            const double spread = 0.13;
+        for (int i = 0; i < mRandom->nextInt(35) + 10; ++i) {
             mLevel->addParticle(PARTICLE_WITCH_MAGIC,
-                                mX + getRandom()->nextGaussian() * spread,
-                                mY + mBbHeight + 0.5 + getRandom()->nextGaussian() * spread,
-                                mZ + getRandom()->nextGaussian() * spread,
-                                0.0001, 0.0001, 0.0001,
+                                mX + mRandom->nextGaussian() * 0.13f,
+                                mRandom->nextGaussian() * 0.13f + mBoundingBox->mMaxY + 0.5,
+                                mZ + mRandom->nextGaussian() * 0.13f,
+                                0.0, 0.0, 0.0,
                                 arrayWithLength<int>());
         }
     } else {
@@ -182,11 +181,11 @@ float Witch::getDamageAfterMagicAbsorb(const DamageSource* source, float damage)
     boost::shared_ptr<Entity> attacker = source->getEntity();
     boost::shared_ptr<Entity> self = shared_from_this();
     if (attacker == self)
-        result = 1.65f;
+        result = 0.0f;
     if (source->isMagic())
         result *= 0.15f;
     return result;
 }
 ResourceLocation* Witch::getDefaultLootTable() { return &BuiltInLootTables::WITCH; }
-double Witch::getEyeHeight() { return 1.62; }
+double Witch::getEyeHeight() { return 1.62f; }
 unsigned long long Witch::GetType() { return EntityType::WITCH; }

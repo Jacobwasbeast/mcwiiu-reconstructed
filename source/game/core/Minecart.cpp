@@ -1059,32 +1059,32 @@ void Minecart::lerpMotion(double xd, double yd, double zd)
 
 void Minecart::setDamage(float damage)
 {
-    getEntityData()->set(DATA_ID_DAMAGE, damage, true);
+    mEntityData->set(DATA_ID_DAMAGE, damage, true);
 }
 
 float Minecart::getDamage()
 {
-    return getEntityData()->get(DATA_ID_DAMAGE);
+    return mEntityData->get(DATA_ID_DAMAGE);
 }
 
 void Minecart::setHurtTime(int hurtTime)
 {
-    getEntityData()->set(DATA_ID_HURT_TIME, hurtTime, true);
+    mEntityData->set(DATA_ID_HURT_TIME, hurtTime, true);
 }
 
 int Minecart::getHurtTime()
 {
-    return getEntityData()->get(DATA_ID_HURT_TIME);
+    return mEntityData->get(DATA_ID_HURT_TIME);
 }
 
 void Minecart::setHurtDir(int hurtDir)
 {
-    getEntityData()->set(DATA_ID_HURT_DIR, hurtDir, true);
+    mEntityData->set(DATA_ID_HURT_DIR, hurtDir, true);
 }
 
 int Minecart::getHurtDir()
 {
-    return getEntityData()->get(DATA_ID_HURT_DIR);
+    return mEntityData->get(DATA_ID_HURT_DIR);
 }
 
 const BlockState* Minecart::getDisplayBlockState()

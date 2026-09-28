@@ -4,7 +4,7 @@
 class Reader
 {
 public:
-    virtual ~Reader();
+    virtual ~Reader() {}
 
     virtual void close() = 0;
     virtual int read() = 0;

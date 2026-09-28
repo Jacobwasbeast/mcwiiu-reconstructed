@@ -1,5 +1,11 @@
 #include "game/core/Ghast.hpp"
+#include "game/core/Difficulty.hpp"
+#include "game/core/EServerSetting.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/core/Settings.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -91,6 +97,8 @@ bool Ghast::hurt(const DamageSource* source, float damage)
         if (owner && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             LivingEntity::hurt(source, 1000.0f);
+            boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(source->getEntity());
+            player->awardStat(GenericStats::ghast(), GenericStats::param_ghast());
             return true;
         }
     }
@@ -141,14 +149,20 @@ void Ghast::readAdditionalSaveData(CompoundTag* tag)
         mExplosionPower = tag->getInt(std::wstring(L"ExplosionPower"));
 }
 
-double Ghast::getEyeHeight() { return 2.6; }
+double Ghast::getEyeHeight() { return 2.6f; }
 
 void Ghast::tick()
 {
     Mob::tick();
-    if (mLevel->getDifficulty() == NULL)
-        return;
-    static_cast<MoveControl*>(getMoveControl())->tick();
+    if (!mLevel->mIsClientSide)
+    {
+        if (mLevel->getDifficulty() == Difficulty::PEACEFUL
+            || Minecraft::GetInstance()->isTutorial()
+            || !gMinecraftServer->mSettings->getBoolean(eServerSetting_SpawnMonsters, true))
+        {
+            remove();
+        }
+    }
 }
 
 unsigned long long Ghast::GetType() { return EntityType::GHAST; }
@@ -161,18 +175,17 @@ Ghast::GhastLookGoal::~GhastLookGoal() {}
 bool Ghast::GhastLookGoal::canUse() { return true; }
 void Ghast::GhastLookGoal::tick()
 {
-    boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
-    if (target && mGhast->distanceToSqr(target) < 64.0 * 64.0)
+    if (!mGhast->getTarget())
     {
-        float angle = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * 57.2957763671875f;
-        mGhast->mYRot = angle;
-        mGhast->mYHeadRot = angle;
+        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(mGhast->mXd, mGhast->mZd) * 57.2957763671875f;
+        return;
     }
-    else
+
+    boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
+    double distance = 64.0;
+    if (target->distanceToSqr(mGhast->shared_from_this()) < distance * distance)
     {
-        float angle = -(float)std::atan2(mGhast->mXd, mGhast->mZd) * 57.2957763671875f;
-        mGhast->mYRot = angle;
-        mGhast->mYHeadRot = angle;
+        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * 57.2957763671875f;
     }
 }
 std::wstring Ghast::GhastLookGoal::getName() { return L"GhastLook"; }

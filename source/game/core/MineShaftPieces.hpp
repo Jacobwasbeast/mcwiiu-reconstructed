@@ -26,7 +26,7 @@ public:
     public:
         MineShaftPiece(int genDepth, MineShaftFeature::MineShaftType type);
         MineShaftPiece();
-        virtual ~MineShaftPiece();
+        virtual ~MineShaftPiece() {}
 
         const BlockState* getPlanksBlock();
         const BlockState* getFenceBlock();

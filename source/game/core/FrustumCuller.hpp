@@ -1,10 +1,12 @@
 #ifndef GAME_CORE_FRUSTUMCULLER_HPP
 #define GAME_CORE_FRUSTUMCULLER_HPP
 
+#include "game/core/Culler.hpp"
+
 class AABB;
 class FrustumData;
 
-class FrustumCuller
+class FrustumCuller : public Culler
 {
 public:
     FrustumCuller(FrustumData* frustumData);

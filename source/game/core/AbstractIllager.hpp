@@ -17,7 +17,7 @@ class AbstractIllager : public Monster
 {
 public:
     AbstractIllager(Level* level);
-    virtual ~AbstractIllager();
+    virtual ~AbstractIllager() {}
 
     static void staticCtor();
     virtual void defineSynchedData();

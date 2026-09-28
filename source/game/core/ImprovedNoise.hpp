@@ -2,10 +2,11 @@
 #define GAME_CORE_IMPROVEDNOISE_HPP
 
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/Synth.hpp"
 
 class Random;
 
-class ImprovedNoise
+class ImprovedNoise : public Synth
 {
 public:
     ImprovedNoise();

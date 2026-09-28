@@ -276,12 +276,15 @@ void DispenserBootstrap::StaticCtor()
             }
             const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
             Position* position = DispenserBlock::getDispensePosition(source);
-            boost::shared_ptr<SmallFireball> fireball(new SmallFireball(level,
-                position->getX() + direction->getStepX() * 0.3, position->getY() + direction->getStepY() * 0.3,
-                position->getZ() + direction->getStepZ() * 0.3,
-                direction->getStepX() + level->mRandom->nextGaussian() * 0.05,
-                direction->getStepY() + level->mRandom->nextGaussian() * 0.05,
-                direction->getStepZ() + level->mRandom->nextGaussian() * 0.05));
+            double x = position->getX() + (double)((float)direction->getStepX() * 0.3f);
+            double y = position->getY() + (double)((float)direction->getStepX() * 0.3f);
+            double z = position->getZ() + (double)((float)direction->getStepZ() * 0.3f);
+            delete position;
+            Random* random = level->mRandom;
+            double xd = random->nextGaussian() * 0.05 + direction->getStepX();
+            double yd = random->nextGaussian() * 0.05 + direction->getStepY();
+            double zd = random->nextGaussian() * 0.05 + direction->getStepZ();
+            boost::shared_ptr<SmallFireball> fireball(new SmallFireball(level, x, y, z, xd, yd, zd));
             level->addEntity(fireball);
             item->shrink(1);
             outcome = eOUTCOME_Success;
@@ -554,10 +557,6 @@ not_null_ptr<ItemInstance> DispenserBootstrap::BoatDispenseBehavior::execute(Blo
 void DispenserBootstrap::BoatDispenseBehavior::playSound(BlockSource* source, eOUTCOME outcome)
 {
     DefaultDispenseItemBehavior::playSound(source, outcome);
-}
-
-DispenserBootstrap::OptionalDispenseItemBehavior::~OptionalDispenseItemBehavior()
-{
 }
 
 void DispenserBootstrap::OptionalDispenseItemBehavior::playSound(BlockSource* source, eOUTCOME outcome)

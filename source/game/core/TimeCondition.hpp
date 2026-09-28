@@ -13,7 +13,7 @@ class TimeCondition : public IntegerCondition
 public:
     TimeCondition(const XmlObject& object);
     TimeCondition(int offset);
-    virtual ~TimeCondition();
+    virtual ~TimeCondition() {}
 
     virtual void AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const;
     virtual unsigned int GetThreshold(MasterGameMode* gameMode) const;

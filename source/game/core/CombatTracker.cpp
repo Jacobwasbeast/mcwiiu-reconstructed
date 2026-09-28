@@ -5,6 +5,7 @@
 #include "game/network/ClientboundChatPacket.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -16,7 +17,7 @@
 
 CombatTracker::CombatTracker(LivingEntity* mob)
     : mMob(mob), mLastDamageTime(0), mCombatStartTime(0), mCombatEndTime(0),
-      mTakingDamage(false), mInCombat(false), mPreparedStatus(0)
+      mInCombat(false), mTakingDamage(false), mPreparedStatus(0)
 {
 }
 
@@ -189,13 +190,13 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
         knockoffAttacker->getNetworkName()));
 }
 
-void CombatTracker::recordDamage(const DamageSource* source, float damage, float fallDistance)
+void CombatTracker::recordDamage(const DamageSource* source, float healthBeforeDamage, float damage)
 {
     recheckStatus();
     prepareForDamage();
 
-    CombatEntry* entry = new CombatEntry(source, mMob->mTickCount, mMob->getHealth(), damage,
-                                         static_cast<eLOCATION>(mPreparedStatus), fallDistance);
+    CombatEntry* entry = new CombatEntry(source, mMob->mTickCount, healthBeforeDamage, damage,
+                                         static_cast<eLOCATION>(mPreparedStatus), mMob->mFallDistance);
 
     if (mEntries.size() > 3)
     {
@@ -212,6 +213,27 @@ void CombatTracker::recordDamage(const DamageSource* source, float damage, float
         mCombatStartTime = mMob->mTickCount;
         mCombatEndTime = mMob->mTickCount;
         mInCombat = true;
+        mMob->onEnterCombat();
+    }
+
+    if ((mMob->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        Player* player = static_cast<Player*>(mMob);
+        bool killed = healthBeforeDamage - damage <= 0.0f;
+        boost::shared_ptr<ClientboundChatPacket> deathMessage;
+        if (killed)
+        {
+            deathMessage = getDeathMessagePacket();
+        }
+        GameMode* gameMode = player->GetGameMode();
+        if (gameMode != NULL)
+        {
+            gameMode->RecordDamage(mMob->shared_from_this(), entry, deathMessage);
+        }
+        if (killed)
+        {
+            gameMode->RecordDeath(mMob->shared_from_this());
+        }
     }
 }
 

@@ -34,7 +34,7 @@ class GameMode
 {
 public:
     GameMode();
-    virtual ~GameMode();
+    virtual ~GameMode() {}
 
     virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction) = 0;
     virtual void tick() = 0;
@@ -112,8 +112,8 @@ public:
         int recipe, boost::shared_ptr<Inventory> inventory);
 
 protected:
-    const GameType* mGameType;
     Minecraft* mMinecraft;
+    const GameType* mGameType;
 };
 
 #endif

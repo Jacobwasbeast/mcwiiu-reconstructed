@@ -231,7 +231,7 @@ std::wstring Direction::getName() const
 
 const Direction* Direction::getOpposite() const
 {
-    return BY_3D_DATA[Mth::abs(oppositeIndex % 6)];
+    return from3DDataValue(oppositeIndex);
 }
 
 const Direction* Direction::getClockWise() const
@@ -276,12 +276,7 @@ const Direction* Direction::getCounterClockWise() const
 
 double Direction::toYRot() const
 {
-    return static_cast<double>(static_cast<float>(get3DDataValue() & 3) * 90.0f);
-}
-
-Vec3i Direction::getNormal() const
-{
-    return *normal;
+    return (float)(data3D & 3) * 90.0f;
 }
 
 std::wstring Direction::toString() const

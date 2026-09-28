@@ -8,10 +8,6 @@ BaseAttribute::BaseAttribute(Attribute* parentAttribute, eATTRIBUTE_ID id, doubl
 {
 }
 
-BaseAttribute::~BaseAttribute()
-{
-}
-
 eATTRIBUTE_ID BaseAttribute::getId()
 {
     return this->id;

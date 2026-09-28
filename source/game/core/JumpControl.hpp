@@ -8,7 +8,7 @@ class JumpControl
 public:
     explicit JumpControl(Mob* mob);
 
-    virtual ~JumpControl();
+    virtual ~JumpControl() {}
     virtual void tick();
 
     void jump();

@@ -5,7 +5,9 @@ DLCBehavioursFile::DLCBehavioursFile(const std::wstring& path)
 {
 }
 
-DLCBehavioursFile::~DLCBehavioursFile() = default;
+DLCBehavioursFile::~DLCBehavioursFile()
+{
+}
 
 void DLCBehavioursFile::addData(unsigned char* pData, unsigned int size)
 {

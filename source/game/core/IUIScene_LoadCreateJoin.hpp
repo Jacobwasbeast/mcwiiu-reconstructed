@@ -6,6 +6,7 @@
 #include <coreinit/fastmutex.h>
 #include "game/core/FileHeader.hpp"
 #include "game/core/IUIPartial_OnlineRestricted.hpp"
+#include "game/core/IUIScene_DLCUpsell.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 class File;
@@ -19,7 +20,7 @@ struct JoinSceneData
     int userIndex;
     bool miniGames;
 };
-class IUIScene_LoadCreateJoin : public virtual IUIPartial_OnlineRestricted
+class IUIScene_LoadCreateJoin : public IUIScene_DLCUpsell, public IUIPartial_OnlineRestricted
 {
 public:
     enum EPendingAction

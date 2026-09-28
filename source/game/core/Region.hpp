@@ -4,10 +4,10 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/chunk/array2DWithLength.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/block/BlockPos.hpp"
 
 class Block;
 class BlockEntity;
-class BlockPos;
 class BlockState;
 class Biome;
 class BiomeSource;
@@ -62,11 +62,9 @@ public:
     virtual void setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states);
     unsigned int elementToBlockId(unsigned short element);
     unsigned int elementToData(unsigned short element);
-    LevelChunk* getLevelChunk(const BlockPos& pos);
+    LevelChunk* getLevelChunk(const BlockPos& pos) { return mChunks->data[(pos.x >> 4) - mMinChunkX]->data[(pos.z >> 4) - mMinChunkZ]; }
 
 private:
-    LevelChunk* getChunk(int x, int z) const;
-
     int mMinChunkX;
     int mMinChunkZ;
     array2DWithLength<LevelChunk*>* mChunks;

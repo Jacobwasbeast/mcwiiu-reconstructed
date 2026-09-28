@@ -45,6 +45,3 @@ Predicate<boost::shared_ptr<Entity> >* CanAttackPredicate::copy() const
     return new CanAttackPredicate(mGoal);
 }
 
-CanAttackPredicate::~CanAttackPredicate()
-{
-}

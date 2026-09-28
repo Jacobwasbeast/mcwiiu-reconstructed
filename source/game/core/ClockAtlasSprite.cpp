@@ -1,25 +1,21 @@
 #include "game/core/ClockAtlasSprite.hpp"
 #include "game/client/render/Texture.hpp"
 #include "game/util/Math.hpp"
-
-static double clampClockValue(double value, double minimum, double maximum)
-{
-    if (value < minimum)
-        return minimum;
-    if (value > maximum)
-        return maximum;
-    return value;
-}
+#include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 ClockAtlasSprite::ClockAtlasSprite()
     : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mLastTime(1.0), mRotation(1.0), mDimension(255), mParent(0)
+      mLastTime(0.0), mRotation(0.0), mPlayerIndex(255), mParent(0)
 {
 }
 
-ClockAtlasSprite::ClockAtlasSprite(int frame, ClockAtlasSprite* parent)
+ClockAtlasSprite::ClockAtlasSprite(int playerIndex, ClockAtlasSprite* parent)
     : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mLastTime(1.0), mRotation(1.0), mDimension(frame), mParent(parent)
+      mLastTime(0.0), mRotation(0.0), mPlayerIndex(playerIndex), mParent(parent)
 {
 }
 
@@ -29,28 +25,43 @@ ClockAtlasSprite::~ClockAtlasSprite()
 
 void ClockAtlasSprite::cycleFrames()
 {
-    double time = Math::random() - mLastTime;
-    while (time < -0.5)
-        time += 1.0;
-    while (time >= 0.5)
-        time -= 1.0;
-    time = clampClockValue(time, -1.0, 1.0);
-    mRotation = (time * 0.1 + mRotation) * 0.8;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    double time = 0.0;
+    if (mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[mPlayerIndex];
+        time = player->mLevel->getTimeOfDay(1.0f);
+        if (!player->mLevel->mDimension->isNaturalDimension())
+        {
+            time = Math::random();
+        }
+    }
+    else
+    {
+        mFrame = 1;
+    }
+
+    double delta = time - mLastTime;
+    while (delta < -0.5)
+    {
+        delta += 1.0;
+    }
+    while (delta >= 0.5)
+    {
+        delta -= 1.0;
+    }
+    delta = Mth::clamp(delta, -1.0, 1.0);
+    mRotation = (delta * 0.1 + mRotation) * 0.8;
     mLastTime += mRotation;
 
-    ClockAtlasSprite* frameSource = mParent != 0 ? mParent : this;
-    int frameCount = frameSource->getFrames();
-    if (frameCount <= 0)
-        return;
-
-    double frameValue = (mLastTime + 1.0) * (double)frameCount;
-    int frame = (int)frameValue % frameCount;
-    if (frame < 0)
-        frame += frameCount;
-    Texture* source = getSource();
-    Texture* texture = frameSource->getFrame(frame);
-    if (source != 0 && texture != 0)
-        source->blit((int)getX(), (int)getY(), texture, false);
+    ClockAtlasSprite* frameSource = mParent != NULL ? mParent : this;
+    unsigned int frameCount = frameSource->mFrames == NULL ? 0 : frameSource->mFrames->size();
+    int frame = static_cast<unsigned int>((mLastTime + 1.0) * static_cast<double>(frameCount)) % frameCount;
+    if (frame != mFrame)
+    {
+        mFrame = frame;
+        frameSource->mSource->blit(mX, mY, frameSource->mFrames->at(frame), mRotated);
+    }
 }
 
 unsigned int ClockAtlasSprite::getSourceWidth() const

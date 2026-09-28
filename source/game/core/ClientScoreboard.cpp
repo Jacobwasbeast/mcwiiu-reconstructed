@@ -60,7 +60,7 @@ static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints
 }
 
 ClientScoreboard::ClientScoreboard()
-    : Scoreboard(), mCurrentRound(0), mPlayerStats()
+    : Scoreboard(), mPlayerStats()
 {
 }
 
@@ -587,19 +587,23 @@ void ClientScoreboard::GetPlayersSortedByPoints(std::list<std::pair<std::wstring
     }
 }
 
+namespace
+{
+struct PositionEntry
+{
+    std::wstring name;
+    int placement;
+    double order;
+    unsigned int tie;
+};
+}
+
 void ClientScoreboard::GetPlayersSortedByPosition(std::list<std::pair<std::wstring, int> >& players, int round)
 {
     if (round == -1)
     {
         round = mCurrentRound;
     }
-    struct PositionEntry
-    {
-        std::wstring name;
-        int placement;
-        double order;
-        unsigned int tie;
-    };
     std::list<PositionEntry> entries;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)

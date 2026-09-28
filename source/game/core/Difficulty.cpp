@@ -1,9 +1,10 @@
 #include "game/core/Difficulty.hpp"
+#include "game/core/StringIds.hpp"
 
-const Difficulty* Difficulty::PEACEFUL = new Difficulty(0, 0x4E52B99A);
-const Difficulty* Difficulty::EASY = new Difficulty(1, 0xB558EFD9);
-const Difficulty* Difficulty::NORMAL = new Difficulty(2, 0x5D131124);
-const Difficulty* Difficulty::HARD = new Difficulty(3, 0xF70F3270);
+const Difficulty* Difficulty::PEACEFUL = new Difficulty(0, IDS_DIFFICULTY_TITLE_PEACEFUL);
+const Difficulty* Difficulty::EASY = new Difficulty(1, IDS_DIFFICULTY_TITLE_EASY);
+const Difficulty* Difficulty::NORMAL = new Difficulty(2, IDS_DIFFICULTY_TITLE_NORMAL);
+const Difficulty* Difficulty::HARD = new Difficulty(3, IDS_DIFFICULTY_TITLE_HARD);
 
 const Difficulty* Difficulty::BY_ID[4] = { PEACEFUL, EASY, NORMAL, HARD };
 

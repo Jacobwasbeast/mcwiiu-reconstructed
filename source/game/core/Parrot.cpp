@@ -64,22 +64,26 @@ boost::unordered_map<unsigned long long, const SoundEvent*> gImitatedSounds;
 const EntityDataAccessor<int>* Parrot::DATA_VARIANT = NULL;
 Item* Parrot::POISONOUS_FOOD = NULL;
 arrayWithLength<Item*> Parrot::TAME_FOOD;
+Predicate<boost::shared_ptr<Entity> >* Parrot::CAN_MIMIC = NULL;
 
 Parrot::Parrot(Level* level)
-    : ShoulderRidingEntity(level), mFlap(0.0f), mFlapSpeed(0.0f), mOFlapSpeed(0.0f),
-      mOFlap(0.0f), mFlapping(1.0f), mRecordPlayingNearby(false), mRecordPosition(NULL),
-      mFlyingNavigation(NULL), mVariant(0)
+    : ShoulderRidingEntity(level)
 {
     fjDerivedCtorCalls();
     _init();
     setSize(0.5f, 0.9f);
+    mRecordPosition = NULL;
     delete mMoveControl;
     mMoveControl = new FlyingMoveControl(this);
 }
 
 Parrot::~Parrot()
 {
-    delete mRecordPosition;
+    if (mRecordPosition != NULL)
+    {
+        delete mRecordPosition;
+        mRecordPosition = NULL;
+    }
 }
 
 void Parrot::create(Level* level)
@@ -109,9 +113,8 @@ bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
     if (entity->isSilent() || level->mRandom->nextInt(50) != 0)
         return false;
 
-    NotParrotPredicate predicate;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Mob), entity->mBoundingBox->grow(20.0), &predicate, false);
+        level->getEntitiesOfClass(typeid(Mob), entity->mBoundingBox->grow(20.0), CAN_MIMIC, false);
     if (!entities->empty())
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(
@@ -164,6 +167,7 @@ void Parrot::staticCtor()
 {
     DATA_VARIANT = SynchedEntityData::defineId<int>(EntityType::PARROT, EntityType::TAMABLE_ANIMAL,
                                                     EntityDataSerializers::INT);
+    CAN_MIMIC = new NotParrotPredicate();
     POISONOUS_FOOD = Items::cookie;
     static Item* tameFood[] = { Items::wheatSeeds, Items::melonSeeds, Items::pumpkinSeeds, Items::beetrootSeeds };
     TAME_FOOD = arrayWithLength<Item*>(tameFood, 4);
@@ -199,9 +203,7 @@ void Parrot::staticCtor()
 
 void Parrot::setVariant(int variant)
 {
-    mVariant = variant < 0 ? 0 : (variant > 4 ? 4 : variant);
-    if (mEntityData != NULL && DATA_VARIANT != NULL)
-        mEntityData->set(DATA_VARIANT, mVariant, true);
+    mEntityData->set(DATA_VARIANT, variant, true);
 }
 
 MobGroupData* Parrot::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
@@ -228,10 +230,10 @@ void Parrot::registerGoals()
 void Parrot::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttributes()->registerAttribute(SharedMonsterAttributes::FLYING_SPEED);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(6.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
-    getAttribute(SharedMonsterAttributes::FLYING_SPEED)->setBaseValue(0.4);
-    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(12.0);
+    getAttribute(SharedMonsterAttributes::FLYING_SPEED)->setBaseValue(0.4f);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2f);
 }
 
 PathNavigation* Parrot::createNavigation(Level* level)
@@ -253,8 +255,7 @@ void Parrot::calculateFlapping()
     mOFlap = mFlap;
     mOFlapSpeed = mFlapSpeed;
     mFlapSpeed += (mOnGround ? -1.0f : 4.0f) * 0.3f;
-    if (mFlapSpeed < 0.0f) mFlapSpeed = 0.0f;
-    if (mFlapSpeed > 1.0f) mFlapSpeed = 1.0f;
+    mFlapSpeed = Mth::clamp(mFlapSpeed, 0.0f, 1.0f);
     if (!mOnGround && mFlapping < 1.0f) mFlapping = 1.0f;
     mFlapping *= 0.9f;
     if (!mOnGround && mYd < 0.0) mYd *= 0.6;
@@ -276,12 +277,9 @@ void Parrot::aiStep()
 
 void Parrot::setRecordPlayingNearby(const BlockPos& pos, bool playing)
 {
+    delete mRecordPosition;
+    mRecordPosition = new BlockPos(pos);
     mRecordPlayingNearby = playing;
-    if (playing)
-    {
-        delete mRecordPosition;
-        mRecordPosition = new Vec3i(pos);
-    }
 }
 
 bool Parrot::isPartyParrot()
@@ -394,11 +392,8 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
         return IDS_TOOLTIPS_UNLEASH;
 
     not_null_ptr<ItemInstance> item = holder.m_pItemInstance;
-    if (item->getItem() == NULL)
+    if (item->getItem() == POISONOUS_FOOD)
         return IDS_NONE;
-
-    boost::shared_ptr<Player> player(holder.m_pPlayer,
-                                     (Player*)holder.m_pPlayer.get());
 
     if (!isBaby())
     {
@@ -406,17 +401,11 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
         {
             if (item->hasCustomHoverName())
             {
-                bool showRename = true;
-                if (isTame())
-                {
-                    if (hasCustomName() && item->getHoverName() == getCustomName())
-                        showRename = false;
-                }
-                if (showRename)
+                if (!hasCustomName() || item->getHoverName() != getCustomName())
                     return IDS_TOOLTIPS_NAME;
             }
 
-            if (!isOwnedBy(player))
+            if (!isOwnedBy(holder.m_pPlayer))
                 return IDS_NONE;
             if (isSitting())
                 return IDS_TOOLTIPS_FOLLOWME;
@@ -436,7 +425,7 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     if (Item::getId(item->getItem()) == ItemId::LEAD && !isLeashed())
         return IDS_TOOLTIPS_LEASH;
 
-    if (!isOwnedBy(player))
+    if (!isOwnedBy(holder.m_pPlayer))
         return IDS_NONE;
     if (isSitting())
         return IDS_TOOLTIPS_FOLLOWME;
@@ -523,22 +512,32 @@ void Parrot::doPush(boost::shared_ptr<Entity> entity)
 
 bool Parrot::hurt(const DamageSource* source, float damage)
 {
-    if (isInvulnerableTo(source)) return false;
-    if (getSitGoal() != NULL)
-        getSitGoal()->wantToSit(false);
+    if (isTame())
+    {
+        boost::shared_ptr<Entity> direct = source->getDirectEntity();
+        if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        {
+            if (!boost::static_pointer_cast<Player>(direct)->canHarmPlayer(getOwnerUUID()))
+                return false;
+        }
+    }
+
+    if (isInvulnerableTo(source))
+        return false;
+    if (mSitGoal != NULL)
+        mSitGoal->wantToSit(false);
     return Animal::hurt(source, damage);
 }
 
 int Parrot::getVariant()
 {
-    return mEntityData != NULL && DATA_VARIANT != NULL ? mEntityData->get(DATA_VARIANT) : mVariant;
+    return Mth::clamp(mEntityData->get(DATA_VARIANT), 0, 4);
 }
 
 void Parrot::defineSynchedData()
 {
     TamableAnimal::defineSynchedData();
-    if (mEntityData != NULL && DATA_VARIANT != NULL)
-        mEntityData->createDateItem(DATA_VARIANT, 0);
+    mEntityData->createDateItem(DATA_VARIANT, 0);
 }
 
 void Parrot::addAdditonalSaveData(CompoundTag* tag)
@@ -568,6 +567,3 @@ bool Parrot::NotParrotPredicate::apply(boost::shared_ptr<Entity> entity) const
     return entity != NULL && Parrot::getImitatedSound(entity->GetType()) != NULL;
 }
 
-Parrot::NotParrotPredicate::~NotParrotPredicate()
-{
-}

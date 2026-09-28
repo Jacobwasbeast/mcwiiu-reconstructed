@@ -5,9 +5,10 @@
 #include <vector>
 
 #include "game/core/ColourTable.hpp"
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-class DyeColor
+class DyeColor : public StringRepresentable
 {
 public:
     static const DyeColor* WHITE;

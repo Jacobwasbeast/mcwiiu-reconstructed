@@ -11,7 +11,7 @@ class KeyedDataWalker : public DataWalker
 {
 public:
     explicit KeyedDataWalker(unsigned long long type);
-    virtual ~KeyedDataWalker();
+    virtual ~KeyedDataWalker() {}
 
     virtual CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version);
 

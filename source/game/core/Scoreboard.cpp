@@ -20,9 +20,9 @@
 #include "game/world/generation/PlayerTeam.hpp"
 
 Scoreboard::Scoreboard()
-    : boost::unordered_map<std::wstring, PlayerTeam*>(11),
+    : mTeamsByName(11),
       mTeamsByPlayer(11),
-      mNextTeamIndex(0)
+      mCurrentRound(0)
 {
 }
 
@@ -33,9 +33,9 @@ Scoreboard::~Scoreboard()
 
 PlayerTeam* Scoreboard::getPlayerTeam(const std::wstring& name)
 {
-    iterator team = find(name);
+    boost::unordered_map<std::wstring, PlayerTeam*>::iterator team = mTeamsByName.find(name);
 
-    if (team != end())
+    if (team != mTeamsByName.end())
     {
         return team->second;
     }
@@ -49,8 +49,8 @@ PlayerTeam* Scoreboard::addPlayerTeam(const std::wstring& name)
 
     if (pTeam == NULL)
     {
-        pTeam = new PlayerTeam(this, name, size());
-        (*this)[name] = pTeam;
+        pTeam = new PlayerTeam(this, name, mTeamsByName.size());
+        mTeamsByName[name] = pTeam;
         onTeamAdded(pTeam);
     }
 
@@ -59,11 +59,11 @@ PlayerTeam* Scoreboard::addPlayerTeam(const std::wstring& name)
 
 void Scoreboard::removePlayerTeam(PlayerTeam* pTeam)
 {
-    iterator team = find(pTeam->getName());
+    boost::unordered_map<std::wstring, PlayerTeam*>::iterator team = mTeamsByName.find(pTeam->getName());
 
-    if (team != end())
+    if (team != mTeamsByName.end())
     {
-        erase(team);
+        mTeamsByName.erase(team);
 
         typedef boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >
             PlayerSet;
@@ -82,9 +82,9 @@ void Scoreboard::removePlayerTeam(PlayerTeam* pTeam)
 
 void Scoreboard::removeAllPlayerTeams()
 {
-    while (size() != 0)
+    while (mTeamsByName.size() != 0)
     {
-        removePlayerTeam(begin()->second);
+        removePlayerTeam(mTeamsByName.begin()->second);
     }
 }
 
@@ -136,9 +136,9 @@ void Scoreboard::removePlayerFromTeam(PlayerUID uid, PlayerTeam* pTeam)
 std::vector<PlayerTeam*>* Scoreboard::getPlayerTeams()
 {
     std::vector<PlayerTeam*>* pTeams = new std::vector<PlayerTeam*>();
-    pTeams->reserve(size());
+    pTeams->reserve(mTeamsByName.size());
 
-    for (iterator team = begin(); team != end(); ++team)
+    for (boost::unordered_map<std::wstring, PlayerTeam*>::iterator team = mTeamsByName.begin(); team != mTeamsByName.end(); ++team)
     {
         pTeams->push_back(team->second);
     }
@@ -148,7 +148,7 @@ std::vector<PlayerTeam*>* Scoreboard::getPlayerTeams()
 
 PlayerTeam* Scoreboard::getTeamByIndex(int index) const
 {
-    for (const_iterator team = begin(); team != end(); ++team)
+    for (boost::unordered_map<std::wstring, PlayerTeam*>::const_iterator team = mTeamsByName.begin(); team != mTeamsByName.end(); ++team)
     {
         PlayerTeam* pTeam = team->second;
 
@@ -259,9 +259,9 @@ bool Scoreboard::Weapon::HasItem() const
     return mItemId != -1;
 }
 
-void Scoreboard::Weapon::GetItem() const
+Item* Scoreboard::Weapon::GetItem() const
 {
-    Item::byId(mItemId);
+    return Item::byId(mItemId);
 }
 
 not_null_ptr<ItemInstance> Scoreboard::Weapon::GetItemInstance() const

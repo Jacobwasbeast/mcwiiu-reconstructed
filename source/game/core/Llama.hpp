@@ -123,8 +123,6 @@ private:
     static const EntityDataAccessor<int>* DATA_VARIANT;
 
     bool mDidSpit;
-    int mStrength;
-    int mVariant;
     boost::weak_ptr<Llama> mCaravanHead;
     boost::weak_ptr<Llama> mCaravanTail;
 };

@@ -16,10 +16,6 @@ DataOutputStream::DataOutputStream(OutputStream* out)
     mWritten = 0;
 }
 
-DataOutputStream::~DataOutputStream()
-{
-}
-
 void DataOutputStream::write(unsigned int value)
 {
     mOut->write(value);

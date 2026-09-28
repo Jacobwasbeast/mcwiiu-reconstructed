@@ -19,6 +19,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/client/audio/SoundEvents.hpp"
@@ -70,7 +71,7 @@ const BlockState* MinecartTNT::getDefaultDisplayBlockState()
 
 void MinecartTNT::tick()
 {
-    PIXBeginNamedEvent(4.5f, "Minecart tnt tick");
+    PIXBeginNamedEvent(0.0f, "Minecart tnt tick");
     Minecart::tick();
 
     if (mFuse >= 0)
@@ -195,25 +196,20 @@ bool MinecartTNT::isPrimed()
 
 float MinecartTNT::getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos)
 {
-    if (ignoreExplosion())
+    if (isPrimed() && (BaseRailBlock::isRail(level->getBlock(pos)) || BaseRailBlock::isRail(level, pos.above())) &&
+        !isUnderLiquid(Material::WATER))
     {
-        const BlockState* state = level->getBlockState(pos);
-        if (BaseRailBlock::isRail(state) || BaseRailBlock::isRail(level, pos.above()))
-        {
-            if (!isInvulnerableTo(NULL))
-                return 4.5;
-        }
+        return 0.0f;
     }
     return Entity::getBlockExplosionResistance(explosion, level, pos);
 }
 
 bool MinecartTNT::shouldBlockExplode(Explosion* explosion, Level* level, const BlockPos& pos, float radius)
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) == 0 || BaseRailBlock::isRail(level->getBlock(pos)) ||
+        BaseRailBlock::isRail(level, pos.above()))
     {
-        const BlockState* state = level->getBlockState(pos);
-        if (BaseRailBlock::isRail(state) || BaseRailBlock::isRail(level, pos.above()))
-            return false;
+        return false;
     }
     return Entity::shouldBlockExplode(explosion, level, pos, radius);
 }

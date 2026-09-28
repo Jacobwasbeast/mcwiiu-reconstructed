@@ -9,7 +9,7 @@ struct PlayerUID;
 class DataOutput
 {
 public:
-    virtual ~DataOutput();
+    virtual ~DataOutput() {}
 
     virtual void write(unsigned int value) = 0;
     virtual void write(arrayWithLength<unsigned char> data) = 0;

@@ -8,14 +8,10 @@ TimerBasedCondition::TimerBasedCondition(const XmlObject& object)
 {
 }
 
-TimerBasedCondition::~TimerBasedCondition()
-{
-}
-
 bool TimerBasedCondition::UpdateMessage(MasterGameMode* gameMode, int message) const
 {
     if (!gameMode->HasTimer(static_cast<MasterGameMode::ETimerID>(GetTimerID())))
-        GameCondition::UpdateMessage(gameMode, message);
+        SetUpTimer(gameMode, message);
     return true;
 }
 
@@ -41,5 +37,5 @@ unsigned char TimerBasedCondition::GetMessage() const
 
 bool TimerBasedCondition::CanStartTimer(MasterGameMode* gameMode) const
 {
-    return gameMode->GetState() != 0;
+    return GetValue(gameMode) > 0;
 }

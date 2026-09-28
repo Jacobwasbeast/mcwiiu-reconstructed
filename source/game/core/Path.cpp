@@ -1,6 +1,4 @@
-#define private public
 #include "game/core/Node.hpp"
-#undef private
 #include "game/core/Path.hpp"
 #include "game/entity/mob/Entity.hpp"
 

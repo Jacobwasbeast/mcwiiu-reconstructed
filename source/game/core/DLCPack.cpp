@@ -26,14 +26,10 @@
 bool pathCmp(DLCFile* file);
 unsigned int g_pathCompareTlsIndex = TlsAlloc();
 
-bool DLCPack::compareFilePath(DLCFile* file)
-{
-    return file->m_path == *static_cast<std::wstring*>(TlsGetValue(g_pathCompareTlsIndex));
-}
-
 bool pathCmp(DLCFile* file)
 {
-    return DLCPack::compareFilePath(file);
+    std::wstring* path = static_cast<std::wstring*>(TlsGetValue(g_pathCompareTlsIndex));
+    return *path == file->getPath();
 }
 
 DLCPack::DLCPack(const std::wstring& name, unsigned int licenseMask)
@@ -152,7 +148,7 @@ void DLCPack::UpdateLanguage()
     if (!m_files[DLCManager::eDLCType_Localisation].empty())
     {
         DLCFile* file = getFile(DLCManager::eDLCType_Localisation,
-                                m_files[DLCManager::eDLCType_Localisation][0]->m_path,
+                                m_files[DLCManager::eDLCType_Localisation][0]->getPath(),
                                 true, true);
         static_cast<DLCLocalisationFile*>(file)->getStringTable()->ReloadStringTable();
     }
@@ -217,7 +213,7 @@ DLCFile* DLCPack::addFile(DLCManager::EDLCType type, const std::wstring& name)
     {
     case DLCManager::eDLCType_Skin:
     case DLCManager::eDLCType_Cape:
-        replaceAll(path, name, L"\\", L"/");
+        path = replaceAll(name, L"\\", L"/");
         {
             std::vector<std::wstring> parts = stringSplit(path, L'/');
             path = parts.back();
@@ -349,8 +345,7 @@ int DLCPack::getFileIndexAt(DLCManager::EDLCType type, const std::wstring& name,
     int i;
     for (i = 0; i < static_cast<int>(m_files[type].size()); ++i)
     {
-        DLCFile* file = m_files[type][i];
-        if (file != NULL && file->m_path == name)
+        if (m_files[type][i]->getPath() == name)
         {
             found = true;
             return i;

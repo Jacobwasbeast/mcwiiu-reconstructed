@@ -66,7 +66,7 @@ public:
     public:
         NetherBridgePiece(int depth);
         NetherBridgePiece();
-        virtual ~NetherBridgePiece();
+        virtual ~NetherBridgePiece() {}
         static bool isOkBox(BoundingBox* box, StartPiece* start);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
         virtual void addAdditionalSaveData(DataOutputStream* output);

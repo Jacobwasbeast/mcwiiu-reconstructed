@@ -70,7 +70,7 @@ void Chicken::registerGoals()
     mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, FOOD_ITEMS, false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.1), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
-    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 4.0f), true);
+    mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
     mGoalSelector.addGoal(7, new RandomLookAroundGoal(this), true);
 }
 

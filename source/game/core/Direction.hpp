@@ -9,18 +9,13 @@
 
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Predicate.hpp"
+#include "game/core/StringRepresentable.hpp"
 
 class BlockPos;
 class LivingEntity;
 class Random;
 class Vec3;
 class Vec3i;
-class StringRepresentable
-{
-public:
-    virtual std::wstring toString() const = 0;
-    virtual std::wstring getSerializedName() const = 0;
-};
 class Direction : public StringRepresentable
 {
 public:
@@ -188,5 +183,7 @@ private:
 };
 
 bool isNotUp(const Direction* direction);
+
+#include "game/util/Vec3i.hpp"
 
 #endif

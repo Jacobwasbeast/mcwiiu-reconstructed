@@ -49,7 +49,9 @@ Creeper::Creeper(Level* level) : Monster(level)
     setSize(0.6f, 1.7f);
 }
 
-Creeper::~Creeper() = default;
+Creeper::~Creeper()
+{
+}
 
 void Creeper::staticCtor()
 {
@@ -102,9 +104,9 @@ void Creeper::causeFallDamage(float fallDistance, float damageMultiplier)
 void Creeper::defineSynchedData()
 {
     Monster::defineSynchedData();
-    getEntityData()->createDateItem(DATA_SWELL_DIR, -1);
-    getEntityData()->createDateItem(DATA_IS_POWERED, false);
-    getEntityData()->createDateItem(DATA_IS_IGNITED, false);
+    mEntityData->createDateItem(DATA_SWELL_DIR, -1);
+    mEntityData->createDateItem(DATA_IS_POWERED, false);
+    mEntityData->createDateItem(DATA_IS_IGNITED, false);
 }
 
 void Creeper::addDataWalkers(DataFixerUpper* fixer)
@@ -114,7 +116,7 @@ void Creeper::addDataWalkers(DataFixerUpper* fixer)
 
 bool Creeper::isIgnited()
 {
-    return getEntityData()->get(DATA_IS_IGNITED);
+    return mEntityData->get(DATA_IS_IGNITED);
 }
 
 void Creeper::addAdditonalSaveData(CompoundTag* tag)
@@ -128,13 +130,13 @@ void Creeper::addAdditonalSaveData(CompoundTag* tag)
 
 void Creeper::ignite()
 {
-    getEntityData()->set(DATA_IS_IGNITED, true, true);
+    mEntityData->set(DATA_IS_IGNITED, true, true);
 }
 
 void Creeper::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    getEntityData()->set(DATA_IS_POWERED, tag->getBoolean(L"powered"), true);
+    mEntityData->set(DATA_IS_POWERED, tag->getBoolean(L"powered"), true);
     if (tag->contains(L"Fuse", Tag::TAG_ANY_NUMERIC)) mMaxSwell = tag->getShort(L"Fuse");
     if (tag->contains(L"ExplosionRadius", Tag::TAG_ANY_NUMERIC)) mExplosionRadius = tag->getByte(L"ExplosionRadius");
     if (tag->getBoolean(L"ignited")) ignite();
@@ -142,12 +144,12 @@ void Creeper::readAdditionalSaveData(CompoundTag* tag)
 
 int Creeper::getSwellDir()
 {
-    return getEntityData()->get(DATA_SWELL_DIR);
+    return mEntityData->get(DATA_SWELL_DIR);
 }
 
 void Creeper::setSwellDir(int swellDir)
 {
-    getEntityData()->set(DATA_SWELL_DIR, swellDir, true);
+    mEntityData->set(DATA_SWELL_DIR, swellDir, true);
 }
 
 void Creeper::spawnLingeringCloud()
@@ -254,7 +256,7 @@ bool Creeper::doHurtTarget(boost::shared_ptr<Entity> target) { return true; }
 
 bool Creeper::isPowered()
 {
-    return getEntityData()->get(DATA_IS_POWERED);
+    return mEntityData->get(DATA_IS_POWERED);
 }
 
 float Creeper::getSwelling(float partialTicks)
@@ -267,7 +269,7 @@ ResourceLocation* Creeper::getDefaultLootTable() { return &BuiltInLootTables::CR
 void Creeper::thunderHit(const LightningBolt* lightning)
 {
     Entity::thunderHit(lightning);
-    getEntityData()->set(DATA_IS_POWERED, true, true);
+    mEntityData->set(DATA_IS_POWERED, true, true);
 }
 
 unsigned int Creeper::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

@@ -186,9 +186,9 @@ void ExperienceOrb::tick()
     double friction = 0.9800000190734863;
     if (mOnGround)
     {
-        int x = Mth::floor((float)mX);
-        int y = Mth::floor((float)mBoundingBox->mMinY) - 1;
-        int z = Mth::floor((float)mZ);
+        int x = Mth::floor(mX);
+        int y = Mth::floor(mBoundingBox->mMinY) - 1;
+        int z = Mth::floor(mZ);
         friction = (double)mLevel->getBlockState(BlockPos(x, y, z))->getBlock()->mFriction
                  * 0.9800000190734863;
     }

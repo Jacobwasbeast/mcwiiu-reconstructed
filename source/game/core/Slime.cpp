@@ -1,4 +1,5 @@
 #include "game/core/Slime.hpp"
+#include "game/entity/mob/MobCategory.hpp"
 #include "game/util/AABB.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/client/render/ParticleType.hpp"
@@ -226,16 +227,25 @@ void Slime::remove()
         int count = 2 + mRandom->nextInt(3);
         for (int i = 0; i < count; ++i)
         {
+            if (i > 0 && static_cast<unsigned int>(mLevel->countInstanceOf(EntityType::SLIME, true, NULL, NULL))
+                >= MobCategory::SLIME->getMaxInstancesPerLevel())
+            {
+                break;
+            }
+
+            float offsetX = (static_cast<float>(i % 2) - 0.5f) * static_cast<float>(size) * 0.25f;
+            float offsetZ = (static_cast<float>(i / 2) - 0.5f) * static_cast<float>(size) * 0.25f;
             boost::shared_ptr<Slime> child = createChild();
             if (hasCustomName())
+            {
                 child->setCustomName(getCustomName(), getOwnerUUID(), wasNamedByRestrictedPlayer());
+            }
             else
+            {
                 child->setPersistenceRequired(true);
+            }
             child->setSize(size / 2, true);
-            child->moveTo(mX + (((double)(i % 2)) - 0.5) * (double)size * 0.25,
-                          mY + 0.5,
-                          mZ + (((double)(i / 2)) - 0.5) * (double)size * 0.25,
-                          mRandom->nextFloat() * 360.0f, 0.0f);
+            child->moveTo(mX + offsetX, mY + 0.5, mZ + offsetZ, static_cast<float>(mRandom->nextFloat() * 360.0), 0.0f);
             mLevel->addEntity(child);
         }
     }
@@ -377,6 +387,7 @@ const SoundEvent* Slime::getJumpSound()
 Slime::SlimeAttackGoal::SlimeAttackGoal(Slime* slime)
     : mSlime(slime), mGrowTiredTimer(0)
 {
+    setRequiredControlFlags(2);
 }
 
 Slime::SlimeAttackGoal::~SlimeAttackGoal()
@@ -465,7 +476,6 @@ bool Slime::SlimeKeepOnJumpingGoal::canUse()
 
 void Slime::SlimeKeepOnJumpingGoal::tick()
 {
-    static_cast<JumpControl*>(mSlime->getJumpControl())->jump();
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setWantedMovement(1.0);
 }
 
@@ -475,7 +485,7 @@ std::wstring Slime::SlimeKeepOnJumpingGoal::getName()
 }
 
 Slime::SlimeMoveControl::SlimeMoveControl(Slime* slime)
-    : MoveControl(slime), mYRot(0.0f), mJumpDelay(0), mSlime(slime), mWasOnGround(false)
+    : MoveControl(slime), mYRot(180.0f * slime->mYRot / Mth::PI), mJumpDelay(0), mSlime(slime), mWasOnGround(false)
 {
 }
 

@@ -78,7 +78,7 @@ public:
 
         StrongholdPiece(int depth);
         StrongholdPiece();
-        virtual ~StrongholdPiece();
+        virtual ~StrongholdPiece() {}
         static bool isOkBox(BoundingBox* box, StartPiece* start);
         SmallDoorType randomSmallDoor(Random& random);
         virtual void addAdditionalSaveData(DataOutputStream* output);

@@ -25,8 +25,6 @@ SpellcasterIllager::SpellcasterIllager(Level* level)
 {
 }
 
-SpellcasterIllager::~SpellcasterIllager() = default;
-
 void SpellcasterIllager::staticCtor()
 {
     DATA_ID = SynchedEntityData::defineId<unsigned char>(EntityType::SPELLCASTER_ILLAGER,
@@ -37,7 +35,7 @@ void SpellcasterIllager::staticCtor()
 void SpellcasterIllager::defineSynchedData()
 {
     AbstractIllager::defineSynchedData();
-    getEntityData()->createDateItem(DATA_ID, (unsigned char)0);
+    mEntityData->createDateItem(DATA_ID, (unsigned char)0);
 }
 
 void SpellcasterIllager::readAdditionalSaveData(CompoundTag* tag)
@@ -56,7 +54,7 @@ bool SpellcasterIllager::isCastingSpell()
 {
     if (mLevel->mIsClientSide)
     {
-        return getEntityData()->get(DATA_ID) != 0;
+        return mEntityData->get(DATA_ID) != 0;
     }
     return mSpellTicks > 0;
 }
@@ -78,7 +76,7 @@ const SpellcasterIllager::IllagerSpell* SpellcasterIllager::getCurrentSpell()
     {
         return mCurrentSpell;
     }
-    return IllagerSpell::byId(getEntityData()->get(DATA_ID));
+    return IllagerSpell::byId(mEntityData->get(DATA_ID));
 }
 
 void SpellcasterIllager::customServerAiStep()
@@ -127,10 +125,6 @@ SpellcasterIllager::SpellcasterUseSpellGoal::SpellcasterUseSpellGoal(Spellcaster
     : Goal(), mSpellcaster(spellcaster), mSpellWarmup(0), mNextAttackTickCount(0)
 {
     setRequiredControlFlags(3);
-}
-
-SpellcasterIllager::SpellcasterUseSpellGoal::~SpellcasterUseSpellGoal()
-{
 }
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canUse()

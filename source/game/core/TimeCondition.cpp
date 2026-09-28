@@ -29,10 +29,6 @@ TimeCondition::TimeCondition(const XmlObject& object)
         m_offset = offset.get();
 }
 
-TimeCondition::~TimeCondition()
-{
-}
-
 void TimeCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
     params->push_back(GetValue(gameMode));

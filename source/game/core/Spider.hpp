@@ -80,9 +80,6 @@ public:
                                            const std::wstring& name);
     virtual double getEyeHeight();
     virtual unsigned long long GetType();
-
-private:
-    unsigned char mPathfinderMobTail[0x28];
 };
 
 #endif

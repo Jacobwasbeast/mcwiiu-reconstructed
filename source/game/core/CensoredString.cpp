@@ -2,7 +2,9 @@
 
 #include <cwchar>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/core/L10N.hpp"
 
 static const std::wstring& EmptyCensoredString()
@@ -126,12 +128,13 @@ void CensoredString::set(const std::wstring& value, const std::wstring& uuid, bo
 
 uint32_t CensoredString::checkParentalFilter()
 {
-    bool censored = false;
-    if (g_pApp != NULL && !g_pApp->IsUUIDLocal(m_uuid) &&
-        (g_pApp->IsConsoleChatCensored() || m_chatCensored))
-        censored = true;
+    bool censored = !gApp.IsUUIDLocal(m_uuid) && (gApp.IsConsoleChatCensored() || m_chatCensored);
     bool blocked = !m_uuidLocal && censored;
-    return (!blocked || !censored) ? 1 : 0;
+    if (CGameNetworkManager::sInstance.IsHost() && blocked)
+        return 0;
+    if (!CGameNetworkManager::sInstance.IsHost() && censored)
+        return 0;
+    return 1;
 }
 
 std::wstring CensoredString::raw()

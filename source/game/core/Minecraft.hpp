@@ -187,8 +187,8 @@ public:
     ColourTable* getColourTable();
     MaterialTable* getMaterialTable();
     StructureManager* getStructureManager();
-    Textures* getTextureManager();
-    FrameTimer* getFrameTimer();
+    Textures* getTextureManager() { return mTextures; }
+    FrameTimer* getFrameTimer() { return mFrameTimer; }
     double getFrameTime();
     BlockRenderDispatcher* getBlockRenderer();
     ItemRenderer* getItemRenderer();

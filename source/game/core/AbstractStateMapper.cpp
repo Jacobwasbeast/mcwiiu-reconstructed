@@ -4,17 +4,14 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 
-AbstractStateMapper::~AbstractStateMapper()
-{
-}
-
 boost::unordered_map<const BlockState*, ModelResourceLocation*>* AbstractStateMapper::mapStates(Block* block)
 {
-    const std::vector<const BlockState*>& states = block->getBlockStateDefinition()->getPossibleBlockStates();
+    const arrayWithLength<BlockStateDefinition::BlockStateImpl*>* states =
+        block->getBlockStateDefinition()->getPossibleBlockStates();
 
-    for (unsigned int i = 0; i < states.size(); i++)
+    for (unsigned int i = 0; i < states->length; i++)
     {
-        mStateLocations[states[i]] = getLocation(states[i]);
+        mStateLocations[states->data[i]] = getLocation(states->data[i]);
     }
 
     return &mStateLocations;

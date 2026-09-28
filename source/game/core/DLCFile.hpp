@@ -11,6 +11,7 @@ class DLCFile
 {
     friend class UIScene_SkinSelectMenu;
     friend class DLCPack;
+    friend class Player;
 
 public:
     DLCFile(DLCManager::EDLCType type, const std::wstring& path);
@@ -21,6 +22,7 @@ public:
     virtual void addParameter(DLCManager::EDLCParameterType parameter, const std::wstring& value);
     virtual std::wstring getParameterAsString(DLCManager::EDLCParameterType parameter, const std::wstring& name);
     virtual bool getParameterAsBool(DLCManager::EDLCParameterType parameter);
+    std::wstring getPath() { return m_path; }
 
 protected:
     DLCPack* m_pPack;

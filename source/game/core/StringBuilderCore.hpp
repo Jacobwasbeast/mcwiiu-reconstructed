@@ -6,7 +6,7 @@
 class StringBuilderCore
 {
 public:
-    virtual ~StringBuilderCore();
+    virtual ~StringBuilderCore() {}
 
     virtual std::wstring getString() = 0;
 };

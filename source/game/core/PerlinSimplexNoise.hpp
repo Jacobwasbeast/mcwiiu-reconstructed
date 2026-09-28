@@ -2,11 +2,12 @@
 #define GAME_CORE_PERLINSIMPLEXNOISE_HPP
 
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/Synth.hpp"
 
 class Random;
 class SimplexNoise;
 
-class PerlinSimplexNoise
+class PerlinSimplexNoise : public Synth
 {
 public:
     PerlinSimplexNoise(int levels);

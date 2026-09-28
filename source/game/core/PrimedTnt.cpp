@@ -27,10 +27,13 @@ PrimedTnt::PrimedTnt(Level* level, double x, double y, double z, boost::shared_p
     _init();
     setPos(x, y, z);
     const double angle = Math::random() * 6.2831854820251465;
-    mXd = -std::sin(angle) * 0.02;
+    mXd = -(std::sin((float)angle) * 0.02f);
     mYd = 0.2;
-    mZd = -std::cos(angle) * 0.02;
+    mZd = -(std::cos((float)angle) * 0.02f);
     setFuse(80);
+    mXo = x;
+    mYo = y;
+    mZo = z;
     mOwner = owner;
 }
 
@@ -60,13 +63,13 @@ void PrimedTnt::_init()
 
 void PrimedTnt::setFuse(int fuse)
 {
-    getEntityData()->set(DATA_FUSE_ID, fuse, true);
+    mEntityData->set(DATA_FUSE_ID, fuse, true);
     mLife = fuse;
 }
 
 void PrimedTnt::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_FUSE_ID, 80);
+    mEntityData->createDateItem(DATA_FUSE_ID, 80);
 }
 
 bool PrimedTnt::makeStepSound()
@@ -101,17 +104,17 @@ void PrimedTnt::tick()
     mZo = mZ;
     if (!isNoGravity())
     {
-        mYd -= 0.04;
+        mYd -= 0.04f;
     }
     move(eMoverType_Self, mXd, mYd, mZd, false);
-    mXd *= 0.98;
-    mYd *= 0.98;
-    mZd *= 0.98;
+    mXd *= 0.98f;
+    mYd *= 0.98f;
+    mZd *= 0.98f;
     if (mOnGround)
     {
-        mXd *= 0.7;
+        mXd *= 0.7f;
         mYd *= -0.5;
-        mZd *= 0.7;
+        mZd *= 0.7f;
     }
     --mLife;
     if (mLife <= 0)
@@ -157,7 +160,7 @@ double PrimedTnt::getEyeHeight()
 
 int PrimedTnt::getFuse()
 {
-    return getEntityData()->get(DATA_FUSE_ID);
+    return mEntityData->get(DATA_FUSE_ID);
 }
 
 void PrimedTnt::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)

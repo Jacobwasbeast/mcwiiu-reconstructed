@@ -4,7 +4,7 @@
 class Behavior
 {
 public:
-    virtual ~Behavior();
+    virtual ~Behavior() {}
 };
 
 #endif

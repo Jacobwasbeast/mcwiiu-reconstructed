@@ -13,7 +13,7 @@ class TimerBasedCondition : public TimeCondition
 public:
     TimerBasedCondition(const XmlObject& object);
     TimerBasedCondition(int offset);
-    virtual ~TimerBasedCondition();
+    virtual ~TimerBasedCondition() {}
     virtual unsigned char GetMessage() const;
 
     virtual bool UpdateMessage(MasterGameMode* gameMode, int message) const;

@@ -12,7 +12,7 @@ Giant::Giant(Level* level)
     : Monster(level)
 {
     fjDerivedCtorCalls();
-    setSize(mBbWidth * 6.0f, mBbHeight * 4.0f);
+    setSize(mBbWidth * 6.0f, mBbHeight * 6.0f);
 }
 
 Giant::~Giant()

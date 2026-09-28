@@ -20,12 +20,8 @@ public:
     virtual std::wstring getName() const;
     virtual unsigned int getSourceWidth() const;
     virtual unsigned int getSourceHeight() const;
-    virtual void cycleFrames();
-    virtual int getFrames();
     virtual unsigned int getFlags() const;
     virtual void setFlags(int);
-    virtual void freeFrameTextures();
-    virtual unsigned int hasOwnData();
 private:
     TextureAtlasSprite* mSprite;
     bool mFlipU;

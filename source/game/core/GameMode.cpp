@@ -27,11 +27,7 @@
 #include "game/world/generation/Player.hpp"
 
 GameMode::GameMode()
-    : mGameType(NULL), mMinecraft(Minecraft::GetInstance())
-{
-}
-
-GameMode::~GameMode()
+    : mMinecraft(Minecraft::GetInstance()), mGameType(NULL)
 {
 }
 

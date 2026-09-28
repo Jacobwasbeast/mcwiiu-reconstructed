@@ -38,11 +38,12 @@ public:
     static const EntityDataAccessor<int>* DATA_VARIANT;
     static Item* POISONOUS_FOOD;
     static arrayWithLength<Item*> TAME_FOOD;
+    static Predicate<boost::shared_ptr<Entity> >* CAN_MIMIC;
     class NotParrotPredicate : public Predicate<boost::shared_ptr<Entity> >
     {
     public:
         virtual bool apply(boost::shared_ptr<Entity> entity) const;
-        virtual ~NotParrotPredicate();
+        virtual ~NotParrotPredicate() {}
     };
 
     Parrot(Level* level);
@@ -103,9 +104,9 @@ public:
 private:
     float mFlapping;
     bool mRecordPlayingNearby;
-    Vec3i* mRecordPosition;
+    BlockPos* mRecordPosition;
     FlyingPathNavigation* mFlyingNavigation;
-    int mVariant;
+    int mReserved;
 };
 
 #endif

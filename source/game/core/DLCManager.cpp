@@ -344,11 +344,11 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
 
             swprintf(messageText, 132, L"%ls\n\n%%ls", pFirstCorruptPack->getName().c_str());
 
-            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0xA69E5B0D, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, messageText, true);
+            gConsoleUIController.RequestErrorMessage(IDS_CORRUPT_DLC_TITLE, IDS_CORRUPT_DLC, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, messageText, true);
         }
         else
         {
-            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0x75E79C02, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+            gConsoleUIController.RequestErrorMessage(IDS_CORRUPT_DLC_TITLE, 0x75E79C02, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         }
     }
 

@@ -203,7 +203,7 @@ void cCommerce::SetDLCCatalogListRetrieved(bool retrieved)
     {
         return;
     }
-    this->SetDLCCatalogState(static_cast<eDLCCatalogState>(1));
+    this->SetDLCCatalogState(eDLCCatalogState_Retrieved);
 }
 
 void cCommerce::SetDLCCatalogListInfoRetrieved(bool retrieved)

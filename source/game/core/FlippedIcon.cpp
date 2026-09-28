@@ -77,16 +77,6 @@ unsigned int FlippedIcon::getSourceHeight() const
     return mSprite->getSourceHeight();
 }
 
-void FlippedIcon::cycleFrames()
-{
-    mSprite->cycleFrames();
-}
-
-int FlippedIcon::getFrames()
-{
-    return mSprite->getFrames();
-}
-
 unsigned int FlippedIcon::getFlags() const
 {
     return mSprite->getFlags();
@@ -97,12 +87,3 @@ void FlippedIcon::setFlags(int flags)
     mSprite->setFlags(flags);
 }
 
-void FlippedIcon::freeFrameTextures()
-{
-    mSprite->freeFrameTextures();
-}
-
-unsigned int FlippedIcon::hasOwnData()
-{
-    return mSprite->hasOwnData();
-}

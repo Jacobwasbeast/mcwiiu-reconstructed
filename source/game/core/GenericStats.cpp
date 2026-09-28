@@ -5,10 +5,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 
-GenericStats::~GenericStats()
-{
-}
-
 Stat* GenericStats::openInventory()
 {
     return gStats->get_achievement(eAward_OpenInventory);

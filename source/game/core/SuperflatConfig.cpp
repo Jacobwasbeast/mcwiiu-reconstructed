@@ -14,8 +14,6 @@ SuperflatConfig::SuperflatConfig()
     clear();
 }
 
-SuperflatConfig::~SuperflatConfig() = default;
-
 bool SuperflatConfig::hasParam(unsigned char parameter)
 {
     return mOptions.find(parameter) != mOptions.end();

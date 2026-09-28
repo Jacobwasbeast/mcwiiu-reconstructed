@@ -6,7 +6,7 @@
 class ConsoleInputSource
 {
 public:
-    virtual ~ConsoleInputSource();
+    virtual ~ConsoleInputSource() {}
     virtual void info(const std::wstring& message) = 0;
     virtual void warn(const std::wstring& message) = 0;
     virtual std::wstring getConsoleName() = 0;

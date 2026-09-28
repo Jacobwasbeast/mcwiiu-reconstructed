@@ -71,7 +71,7 @@ public:
         explicit SlimeMoveControl(Slime* slime);
         virtual ~SlimeMoveControl();
         void setDirection(float yRot, bool jump);
-        virtual void setWantedMovement(double speed);
+        void setWantedMovement(double speed);
         virtual void tick();
 
     private:

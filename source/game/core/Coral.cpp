@@ -26,10 +26,11 @@ AbstractProperty<int>* Coral::VARIANT = static_cast<AbstractProperty<int>*>(Inte
 
 namespace
 {
-    std::wstring CORAL_ICON_NAMES[5] =
-    {
-        L"coral_plant_blue", L"coral_plant_pink", L"coral_plant_purple", L"coral_plant_red", L"coral_plant_yellow"
-    };
+    std::wstring TEXTURE_BLUE = L"coral_plant_blue";
+    std::wstring TEXTURE_PINK = L"coral_plant_pink";
+    std::wstring TEXTURE_PURPLE = L"coral_plant_purple";
+    std::wstring TEXTURE_RED = L"coral_plant_red";
+    std::wstring TEXTURE_YELLOW = L"coral_plant_yellow";
 
     const AABB* CORAL_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
 }
@@ -45,7 +46,9 @@ Coral::Coral()
     }
 }
 
-Coral::~Coral() = default;
+Coral::~Coral()
+{
+}
 
 int Coral::getColor(const BlockState* state)
 {
@@ -103,10 +106,11 @@ TextureAtlasSprite* Coral::getTexture(const Direction* direction, const BlockSta
 
 void Coral::registerIcons(IconRegister* iconRegister)
 {
-    for (int i = 0; i < 5; ++i)
-    {
-        mIcons[i] = iconRegister->registerIcon(CORAL_ICON_NAMES[i]);
-    }
+    mIcons[0] = iconRegister->registerIcon(TEXTURE_BLUE);
+    mIcons[1] = iconRegister->registerIcon(TEXTURE_PINK);
+    mIcons[2] = iconRegister->registerIcon(TEXTURE_PURPLE);
+    mIcons[3] = iconRegister->registerIcon(TEXTURE_RED);
+    mIcons[4] = iconRegister->registerIcon(TEXTURE_YELLOW);
 }
 
 int Coral::convertBlockStateToLegacyData(const BlockState* state)
@@ -122,17 +126,19 @@ const BlockState* Coral::getBlockState(int data)
 
 int Coral::getDescriptionId(int auxValue)
 {
-    static const int DESCRIPTION_IDS[5] =
+    switch (auxValue)
     {
-        0, 0x1A417707, 0x1B1CB5E5, 0x27B09D40, static_cast<int>(0xA76B491FU)
-    };
-
-    if (auxValue != 0 && static_cast<unsigned int>(auxValue) < 5U)
-    {
-        return DESCRIPTION_IDS[auxValue];
+    case 1:
+        return IDS_TILE_CORAL_PINK;
+    case 2:
+        return IDS_TILE_CORAL_PURPLE;
+    case 3:
+        return IDS_TILE_CORAL_RED;
+    case 4:
+        return IDS_TILE_CORAL_YELLOW;
+    default:
+        return IDS_TILE_CORAL_BLUE;
     }
-
-    return 0x25D640BD;
 }
 
 int Coral::getUseDescriptionId(int auxValue)

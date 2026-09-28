@@ -74,7 +74,7 @@ public:
 
     LeaderboardManager();
 
-    virtual ~LeaderboardManager();
+    virtual ~LeaderboardManager() {}
     virtual void zeroReadParameters();
     virtual void Tick() = 0;
     virtual bool OpenSession() = 0;

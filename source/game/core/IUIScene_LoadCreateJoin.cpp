@@ -305,8 +305,8 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
         };
         static const MiniGameButton buttons[] = {
             { 0x42e0ac30, L"BattleModeIcon", eMiniGameId_Battle },
-            { 0xb4e81b6b, L"MG02icon", eMiniGameId_Tumble },
-            { 0x8ee5a102, L"MG03icon", eMiniGameId_Glide },
+            { IDS_MINI_GAME_02, L"MG02icon", eMiniGameId_Tumble },
+            { IDS_MINI_GAME_03, L"MG03icon", eMiniGameId_Glide },
         };
         m_matchmakingButtonCount = 0;
         ShowSaveListTimer(false);
@@ -330,7 +330,7 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
             SetCreateListIcon(0, file.data, file.length, L"CreateWorldIcon");
     }
 
-    std::vector<LevelGenerationOptions*>* generators = g_pApp->getLevelGenerators()->getLevelGenerators();
+    std::vector<LevelGenerationOptions*>* generators = g_pApp->getLevelGenerators();
     for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin(); it != generators->end(); ++it)
     {
         LevelGenerationOptions* options = *it;
@@ -735,7 +735,7 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
 void IUIScene_LoadCreateJoin::LoadGameMode(EMiniGameId gameMode)
 {
     LevelGenerationOptions* lobbyOptions = 0;
-    std::vector<LevelGenerationOptions*>* generators = g_pApp->getLevelGenerators()->getLevelGenerators();
+    std::vector<LevelGenerationOptions*>* generators = g_pApp->getLevelGenerators();
     if (generators != 0)
     {
         for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();

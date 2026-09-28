@@ -53,7 +53,7 @@ enum eGameSetting
     eGameSetting_AutoJump,
     eGameSetting_SkinAdjustments
 };
-enum EControllerActions : int
+enum EControllerActions
 {
     EControllerActions_MenuA = 0,
     EControllerActions_MenuB,
@@ -126,23 +126,8 @@ class GameSettings
     unsigned char mGamma;
     unsigned char mSkinFlags;
     unsigned short mPackedSettings;
-    unsigned int mUnknown0x0C;
-    unsigned int mTutorialFlags;
-    unsigned int mUnknown0x10;
-    unsigned int mUnknown0x14;
-    unsigned int mUnknown0x18;
-    unsigned int mUnknown0x1c;
-    unsigned int mUnknown0x20;
-    unsigned int mUnknown0x24;
-    unsigned int mUnknown0x28;
-    unsigned int mUnknown0x2c;
-    unsigned int mUnknown0x30;
-    unsigned int mUnknown0x34;
-    unsigned int mUnknown0x38;
-    unsigned int mUnknown0x3c;
-    unsigned int mUnknown0x40;
-    unsigned int mUnknown0x44;
-    unsigned int mUnknown0x48;
+    unsigned int mUnknown0x08;
+    unsigned char mTutorialFlags[64];
     unsigned int mSkinId;
     unsigned char mInterfaceSensitivity;
     unsigned char mInterfaceOpacity;
@@ -162,7 +147,7 @@ class GameSettings
     unsigned char mHostOptionVersion;
     unsigned char mReserved4[3];
     unsigned int mBattleMiniGameMap;
-    unsigned int mUnknownA0;
+    unsigned int mLoggingMask;
     unsigned char mActionMappings[25];
     unsigned char mUnknownBD;
     unsigned char mUnknownBE;

@@ -30,6 +30,7 @@ class CommonMasterGameMode
     friend class PlayerStats;
     friend class PlayersEnteredVolumeCondition;
     friend class ServerGamePacketListenerImpl;
+    friend class UIScene_MapVoteMenu;
 public:
     CommonMasterGameMode();
     virtual ~CommonMasterGameMode();

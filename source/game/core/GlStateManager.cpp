@@ -850,11 +850,7 @@ void GlStateManager::tearDownSolidRenderingTextureCombine()
 
 void GlStateManager::color3f(float red, float green, float blue)
 {
-    color->red = red;
-    color->green = green;
-    color->blue = blue;
-    color->alpha = 1.0f;
-    gRenderer->StateSetColour(red, green, blue, 1.0f);
+    color4f(red, green, blue, 1.0f);
 }
 
 void GlStateManager::color4f(float red, float green, float blue, float alpha)

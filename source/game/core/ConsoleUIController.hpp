@@ -2,7 +2,7 @@
 #define GAME_CORE_CONSOLEUICONTROLLER_HPP
 
 #include <string>
-#include <cstdint>
+#include <stdint.h>
 #include <vector>
 #include <boost/unordered_map.hpp>
 
@@ -80,19 +80,13 @@ public:
         wchar_t* overrideText;
         unsigned int buttonFlags;
         bool blocking;
-
-        _MessageBoxData()
-            : titleId(0), messageId(0), messageParameters(0), parameterCount(0), userIndex(0),
-              callback(0), callbackData(0), overrideText(0), buttonFlags(0), blocking(false) {}
     };
 
-    struct _QueuedMessageBoxData : _MessageBoxData
+    struct _QueuedMessageBoxData
     {
+        _MessageBoxData info;
         unsigned int queuedUserIndex;
         EUILayer layer;
-
-        _QueuedMessageBoxData() : queuedUserIndex(0), layer(EUILayer_Debug) {}
-        ~_QueuedMessageBoxData() { delete[] messageParameters; }
     };
 
     ConsoleUIController();
@@ -121,10 +115,10 @@ public:
     bool TouchBoxHit(UIScene* scene, int x, int y);
     void TouchBoxesClear(UIScene* scene);
     void TouchBoxRebuild(UIScene* scene);
-    void SendTouchInput(unsigned int playerId, unsigned int action, bool repeat, bool released,
-                        bool pressed);
-    void HandleTouchInput(unsigned int playerId, unsigned int action, bool repeat, bool released,
-                          bool pressed);
+    void SendTouchInput(unsigned int playerId, unsigned int action, bool pressed, bool repeat,
+                        bool released);
+    void HandleTouchInput(unsigned int playerId, unsigned int action, bool pressed, bool repeat,
+                          bool released);
     void updateViewportTouchOffset(C4JRender::eViewportType viewport);
     void updateViewportTouchOffset(int x, int y);
     void SetMenuDisplayed(int playerId, bool displayed);
@@ -132,9 +126,9 @@ public:
     bool handleKeyPress(unsigned int key, unsigned int character);
     bool handleInput();
     void tickInput();
-    static unsigned int reloadSkinThreadProc(void* context);
+    static int reloadSkinThreadProc(void* context);
     void ReloadSkin();
-    _CachedMovieData& getMovieData(const std::wstring& path);
+    arrayWithLength<unsigned char> getMovieData(const std::wstring& path);
     void getRenderDimensions(C4JRender::eViewportType viewport, int& width, int& height);
     float getScreenWidth() const { return m_screenWidth; }
     float getScreenHeight() const { return m_screenHeight; }
@@ -154,7 +148,7 @@ public:
     UIScene* GetSceneFromCallbackId(unsigned int callbackId);
     void EnterCallbackIdCriticalSection();
     void LeaveCallbackIdCriticalSection();
-    void AnimateKeyPress(int playerId, int action, bool repeat, bool released, bool pressed);
+    void AnimateKeyPress(int playerId, int action, bool repeat, bool pressed, bool released);
     void OverrideSFX(int playerId, int action, bool enabled);
     void ResetPressStartToPlayUIComponents();
     void ClearPressStart();
@@ -295,83 +289,65 @@ private:
     UIScene* m_debugConsole;
     int m_layoutWord;
     OSFastMutex m_renderMutex;
+    OSFastMutex m_messageBoxMutex;
     OSFastMutex m_touchMutex;
-    OSFastMutex m_skinMutex;
     int m_actionTimer[9][0x18];
     float m_screenWidth;
     float m_screenHeight;
     bool m_initialized;
-    unsigned char m_paddingA[3];
     int m_renderOffsetX;
     int m_renderOffsetY;
-    int m_lastViewport;
-    bool m_viewportPositionDirty;
     OSFastMutex m_fontMutex;
     int m_currentFont;
     EFont m_pendingFont;
     bool m_cleanupOnReload;
     bool m_autoCleanupOnReload;
     bool m_fontChangePending;
-    unsigned char m_layoutFlags;
     UITTFFont* m_font;
     UITTFFont* m_oldFont;
     fuiBitmapFont* m_bitmapFont;
     fuiBitmapFont* m_bitmapFontAlt;
+    unsigned int m_resolutionDisableFlags;
     std::vector<UIELEMENT*> m_touchBoxes[EUIGroup_Count][EUILayer_Count][EUIScene_None];
     int m_touchHoldPad;
     bool m_touchHeld;
-    unsigned char m_paddingB[3];
     int m_touchX;
     int m_touchY;
     bool m_rebuildingTouchBoxes;
-    unsigned char m_paddingC[3];
     int m_skinScenes[11];
-    int m_resolution;
-    int m_requestedResolution;
-    unsigned int m_resolutionDisableFlags;
-    bool m_homeMenuPending;
-    unsigned int m_lastInputTime;
-    unsigned int m_trialTimerLimit;
-    unsigned int m_trialTimerValue;
-    unsigned int m_trialTimerTick;
-    unsigned int m_autosaveTimerTick;
     bool m_menuDisplayed[4];
     bool m_menuDisplayPending[4];
     int m_menuDisplayDelay[4];
     bool m_playerFlags[6];
-    unsigned char m_paddingD[2];
-    int m_selectedPlayer;
-    int m_selectedX;
-    int m_selectedY;
-    bool m_selectedItemVisible;
-    unsigned char m_paddingE[3];
-    std::wstring m_selectedItemName;
-    std::wstring m_selectedItemDescription;
+    unsigned int m_pressStartPlaying;
+
+public:
+    unsigned int m_pressStartBlocked;
+
+private:
+    int m_lastViewport;
+    bool m_viewportPositionDirty;
     boost::unordered_map<std::wstring, _TextureDetail> m_substitutionTextures;
     boost::unordered_map<std::wstring, _CachedMovieData> m_movieCache;
     std::vector<_QueuedMessageBoxData*> m_queuedMessageBoxes;
     unsigned int m_winUserIndex;
-    bool m_skinThreadExpected;
-    unsigned char m_paddingF[3];
+    bool m_inputSuspended;
     C4JThread* m_skinThread;
     OSFastMutex m_skinThreadMutex;
-    boost::unordered_map<unsigned int, UIScene*> m_callbackScenes;
-    OSFastMutex m_callbackMutex;
-    int m_nextCallbackId;
-    int m_touchOffsetX;
-    int m_touchOffsetY;
-    UIELEMENT* m_touchElement;
-    UIELEMENT* m_lastTouchElement;
-    UIGroup* m_groups[EUIGroup_Count];
-    int m_lastUISFXTimeHigh;
-    unsigned int m_lastUISFXTimeLow;
-    int m_pressStartPlaying;
-    int m_pressStartBlocked;
-    bool m_fullscreenMenuDisplayed;
+    bool m_homeMenuPending;
+    unsigned int m_lastInputTime;
+    unsigned long long m_lastUISFXTime;
     int m_customDrawLeft;
     int m_customDrawTop;
     int m_customDrawRight;
     int m_customDrawBottom;
+    boost::unordered_map<unsigned int, UIScene*> m_callbackScenes;
+    OSFastMutex m_callbackMutex;
+    int m_touchOffsetX;
+    int m_touchOffsetY;
+    UIELEMENT* m_touchPressElement;
+    UIELEMENT* m_touchCurrentElement;
+    UIGroup* m_groups[EUIGroup_Count];
 };
 
 extern OSFastMutex g_uiCriticalSection;

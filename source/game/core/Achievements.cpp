@@ -289,9 +289,9 @@ void Achievements::staticCtor()
 
     cupid = (new Achievement(63, L"cupid", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
-    youWontLikeMeWhenImHungry = (new Achievement(64, L"youWontLikeMeWhenImHungry", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
+    youWontLikeMeWhenImHungry = (new Achievement(64, L"youWontLikeMeWhenImHungry,", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
-    mine = (new Achievement(65, L"mine", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
+    mine = (new Achievement(65, L"mine,", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
     theEndAgain = (new Achievement(66, L"theEndAgain", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 

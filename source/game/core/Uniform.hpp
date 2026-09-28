@@ -39,7 +39,6 @@ public:
     virtual void setMat4x4(float, float, float, float, float, float, float, float, float, float, float, float,
                            float, float, float, float);
     static int getTypeFromString(const std::wstring&);
-    static Uniform* safeFallback();
     void setLocation(int);
     std::wstring getName();
     void set(int, float);
@@ -55,15 +54,13 @@ public:
     void markDirty();
 
 private:
-    explicit Uniform(bool inert);
     int mLocation;
     int mCount;
     int mType;
     IntBuffer* mIntBuffer;
     FloatBuffer* mFloatBuffer;
     std::wstring mName;
-    Effect* mEffect;
     bool mDirty;
-    bool mInert;
+    Effect* mEffect;
 };
 #endif

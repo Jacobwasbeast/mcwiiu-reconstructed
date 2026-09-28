@@ -55,8 +55,22 @@ public:
         eLeaderboard33 = 33,
         eLeaderboard34 = 34,
         eLeaderboard35 = 35,
-        eLeaderboard36 = 36
+        eLeaderboard36 = 36,
+        eLeaderboard37 = 37,
+        eLeaderboard38 = 38,
+        eLeaderboard39 = 39,
+        eLeaderboard40 = 40,
+        eLeaderboard41 = 41,
+        eLeaderboard42 = 42,
+        eLeaderboard43 = 43,
+        eLeaderboard44 = 44,
+        eLeaderboard45 = 45,
+        eLeaderboard46 = 46,
+        eLeaderboard47 = 47,
+        eLeaderboard48 = 48
     };
+
+    static boost::unordered_map<Stat*, boost::unordered_map<unsigned int, LEADERBOARD_FLAG> > statBoards;
 
     StatsCounter();
     static void setupStatBoards();

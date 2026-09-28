@@ -9,7 +9,7 @@ struct PlayerUID;
 class DataInput
 {
 public:
-    virtual ~DataInput();
+    virtual ~DataInput() {}
 
     virtual int read() = 0;
     virtual int read(arrayWithLength<unsigned char> buffer) = 0;

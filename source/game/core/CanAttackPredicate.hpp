@@ -15,7 +15,7 @@ public:
 
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
     virtual Predicate<boost::shared_ptr<Entity> >* copy() const;
-    virtual ~CanAttackPredicate();
+    virtual ~CanAttackPredicate() {}
 
 private:
     MobNearestMobTargetGoal* mGoal;

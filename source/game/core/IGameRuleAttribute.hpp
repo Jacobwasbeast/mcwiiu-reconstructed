@@ -9,7 +9,7 @@ class IGameRuleAttribute
 {
 public:
     IGameRuleAttribute();
-    virtual ~IGameRuleAttribute();
+    virtual ~IGameRuleAttribute() {}
 
     virtual void setValue(const std::wstring& value) = 0;
     virtual void save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface) = 0;

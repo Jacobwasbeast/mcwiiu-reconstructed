@@ -8,7 +8,7 @@ class BodyControl
 public:
     BodyControl(LivingEntity* mob);
 
-    virtual ~BodyControl();
+    virtual ~BodyControl() {}
     virtual void clientTick();
 
 protected:

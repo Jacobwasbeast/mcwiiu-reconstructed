@@ -59,12 +59,12 @@ int WaitForNextState(void* context)
 }
 
 ClientMasterGameMode::MapSelectInfo::MapSelectInfo()
-    : uniqueId(0), name(), mapSize(0)
+    : uniqueId(0), name(), texturePackId(0)
 {
 }
 
 ClientMasterGameMode::MapSelectInfo::MapSelectInfo(const MapSelectInfo& other)
-    : uniqueId(other.uniqueId), name(other.name), mapSize(other.mapSize)
+    : uniqueId(other.uniqueId), name(other.name), texturePackId(other.texturePackId)
 {
 }
 
@@ -343,7 +343,7 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
     {
         MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(Minecraft::GetInstance()->mLevel);
         ClientScoreboard* scoreboard = level->GetClientScoreboard();
-        scoreboard->mNextTeamIndex = 0;
+        scoreboard->mCurrentRound = 0;
         Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
         if (voteable != NULL)
             voteable->clearVotes();
@@ -412,12 +412,12 @@ void ClientMasterGameMode::ClearPlaylist()
     mVoteables->getVoteable(Voteables::eVoteable_Map)->clearVotes();
 }
 
-void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& name, int mapSize)
+void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& name, int texturePackId)
 {
     MapSelectInfo info;
     info.uniqueId = uniqueId;
     info.name = name;
-    info.mapSize = mapSize;
+    info.texturePackId = texturePackId;
     mPlaylist.push_back(info);
 }
 

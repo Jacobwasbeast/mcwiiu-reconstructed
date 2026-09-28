@@ -3,12 +3,14 @@
 
 
 #include <algorithm>
-#include <cstdint>
+#include <stdint.h>
+#include <climits>
 #include <cstring>
 #include <cwchar>
 
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvent.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/CFontData.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
@@ -18,10 +20,13 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/XLanguage.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/PerformanceTimer.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/System.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -48,6 +53,7 @@
 #include "game/ui/fuiBitmapFont.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "platform/wiiu/C4JThread.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
@@ -62,6 +68,8 @@ extern "C" void OSReport(const char*, ...);
 OSFastMutex g_uiCriticalSection;
 ConsoleUIController gConsoleUIController;
 
+static unsigned int s_trialTimerValue = 0;
+static unsigned int s_trialTimerLimitSecs = 0;
 static bool s_uiCriticalSectionInitialized = false;
 
 void PopupToast(void* context, int playerId, int achievementId, int imageId, int value)
@@ -71,38 +79,59 @@ void PopupToast(void* context, int playerId, int achievementId, int imageId, int
 }
 
 ConsoleUIController::ConsoleUIController()
-    : m_debugConsole(0), m_layoutWord(0), m_screenWidth(0.0f), m_screenHeight(0.0f),
-      m_initialized(false), m_renderOffsetX(0), m_renderOffsetY(0), m_lastViewport(-1),
-      m_viewportPositionDirty(true), m_currentFont(0),
-      m_pendingFont(EFont_None), m_cleanupOnReload(false), m_autoCleanupOnReload(true),
-      m_fontChangePending(false), m_layoutFlags(0), m_font(0), m_oldFont(0),
-      m_bitmapFont(0), m_bitmapFontAlt(0), m_touchHoldPad(0), m_touchHeld(false), m_touchX(0), m_touchY(0),
-      m_rebuildingTouchBoxes(false), m_skinScenes(), m_resolution(0), m_requestedResolution(0),
-      m_resolutionDisableFlags(0), m_homeMenuPending(false), m_lastInputTime(0), m_trialTimerLimit(0),
-      m_trialTimerValue(0), m_trialTimerTick(0), m_autosaveTimerTick(0),
-      m_selectedPlayer(0), m_selectedX(0), m_selectedY(0), m_selectedItemVisible(false),
-      m_winUserIndex(0), m_skinThreadExpected(false), m_skinThread(0), m_nextCallbackId(0),
-      m_touchOffsetX(0), m_touchOffsetY(0), m_touchElement(0), m_lastTouchElement(0),
-      m_lastUISFXTimeHigh(0), m_lastUISFXTimeLow(0),
-      m_pressStartPlaying(0), m_pressStartBlocked(0), m_fullscreenMenuDisplayed(false),
-      m_customDrawLeft(0), m_customDrawTop(0), m_customDrawRight(0), m_customDrawBottom(0)
 {
-    std::memset(m_actionTimer, 0, sizeof(m_actionTimer));
-    std::memset(m_menuDisplayed, 0, sizeof(m_menuDisplayed));
-    std::memset(m_menuDisplayPending, 0, sizeof(m_menuDisplayPending));
-    std::memset(m_menuDisplayDelay, 0, sizeof(m_menuDisplayDelay));
-    std::memset(m_playerFlags, 0, sizeof(m_playerFlags));
-    std::memset(m_groups, 0, sizeof(m_groups));
-    InitializeCriticalSection(&m_renderMutex);
-    InitializeCriticalSection(&m_touchMutex);
-    InitializeCriticalSection(&m_skinMutex);
+    m_pendingFont = EFont_None;
+    m_oldFont = 0;
+    m_homeMenuPending = false;
+    m_font = 0;
+    s_trialTimerValue = 0;
+    m_skinThread = 0;
+    m_currentFont = 0;
+    m_bitmapFontAlt = 0;
+    m_cleanupOnReload = false;
+    m_autoCleanupOnReload = true;
+    m_bitmapFont = 0;
+    m_debugConsole = 0;
     InitializeCriticalSection(&m_fontMutex);
-    InitializeCriticalSection(&m_skinThreadMutex);
+    m_initialized = false;
+    m_screenHeight = 720.0f;
+    m_fontChangePending = false;
+    m_screenWidth = 1280.0f;
+    for (int i = 0; i < 11; ++i)
+        m_skinScenes[i] = 0;
+    for (int pad = 0; pad < 4; ++pad)
+    {
+        m_menuDisplayed[pad] = false;
+        m_menuDisplayDelay[pad] = 0;
+        m_menuDisplayPending[pad] = false;
+        for (int action = 0; action < 0x18; ++action)
+            m_actionTimer[pad][action] = 0;
+    }
+    for (int i = 0; i < 6; ++i)
+        m_playerFlags[i] = false;
+    m_lastUISFXTime = 0;
+    m_pressStartPlaying = 0;
+    m_lastInputTime = 0;
+    m_lastViewport = 0;
+    m_viewportPositionDirty = false;
+    m_winUserIndex = 0;
+    InitializeCriticalSection(&m_renderMutex);
+    InitializeCriticalSection(&m_messageBoxMutex);
     InitializeCriticalSection(&m_callbackMutex);
+    InitializeCriticalSection(&m_skinThreadMutex);
+    InitializeCriticalSection(&m_touchMutex);
+    m_inputSuspended = false;
+    m_touchHeld = false;
+    m_rebuildingTouchBoxes = false;
+    m_touchX = 0;
+    m_touchY = 0;
+    m_touchOffsetX = 0;
+    m_touchOffsetY = 0;
     if (!s_uiCriticalSectionInitialized) {
         InitializeCriticalSection(&g_uiCriticalSection);
         s_uiCriticalSectionInitialized = true;
     }
+    m_resolutionDisableFlags = 0;
 }
 
 ConsoleUIController::~ConsoleUIController()
@@ -111,7 +140,7 @@ ConsoleUIController::~ConsoleUIController()
 
 EUIGroup ConsoleUIController::GetGroup(int playerId)
 {
-    if (playerId >= 0 && playerId != 0xff)
+    if (playerId != 0xff && playerId >= 0)
         return static_cast<EUIGroup>(EUIGroup_Player1 + playerId);
     return EUIGroup_Fullscreen;
 }
@@ -130,7 +159,10 @@ UIGroup* ConsoleUIController::groupForPlayer(int playerId, bool forceGlobal)
 
 UIScene* ConsoleUIController::playerComponent(unsigned int playerId, EUIScene scene)
 {
-    UIGroup* playerGroup = groupForPlayer((int)playerId, false);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    UIGroup* playerGroup = m_groups[groupId];
     return playerGroup == 0 ? 0 : playerGroup->FindScene(scene);
 }
 
@@ -172,49 +204,52 @@ int ConsoleUIController::TextureSubstitutionCreateCallbackFui(void* context,
     ConsoleUIController* controller = static_cast<ConsoleUIController*>(context);
     boost::unordered_map<std::wstring, _TextureDetail>::iterator found =
         controller->m_substitutionTextures.find(name);
-    if (found == controller->m_substitutionTextures.end()) {
-        OSReport("[fui-subst] NOT_FOUND name=%ls\n", name.c_str());
+    if (found == controller->m_substitutionTextures.end())
         return -1;
+    if (found->second.textureLoaded) {
+        *width = 64;
+        *height = 64;
+        return found->second.texture;
     }
-    _TextureDetail& detail = found->second;
-    *width = 64;
-    *height = 64;
-    if (detail.textureLoaded)
-        return detail.texture;
-    if (detail.data == 0) {
+    if (found->second.data == 0) {
+        *width = 64;
+        *height = 64;
         *hasAlpha = true;
-        return (int)detail.size;
+        return (int)found->second.size;
     }
-    BufferedImage image(detail.data, detail.size);
-    if (image.getData() == 0) {
-        OSReport("[fui-subst] DECODE_FAIL name=%ls size=%u\n", name.c_str(), detail.size);
+    BufferedImage image(found->second.data, found->second.size);
+    if (image.getData() == 0)
         return -1;
-    }
     image.preMultiplyAlpha();
     int texture = Minecraft::GetInstance()->getTextureManager()->getTexture(
         &image, C4JRender::eTextureFormat_RGBA8, false);
     GlStateManager::bindTexture(texture);
     GlStateManager::texParameteri(0, 1, 1);
+    *width = 64;
+    *height = 64;
     return texture;
 }
 
 void ConsoleUIController::TextureSubstitutionDestroyCallbackFui(int texture)
 {
-    if (texture >= 0)
-        Minecraft::GetInstance()->getTextureManager()->releaseTexture(texture);
+    Minecraft::GetInstance()->getTextureManager()->releaseTexture(texture);
 }
 
 ConsoleUIController::EFont ConsoleUIController::getFontForLanguage(int language)
 {
-    if (language == 2)
+    switch (language)
+    {
+    case XC_LANGUAGE_JAPANESE:
         return EFont_Japanese;
-    if (language == 7)
-        return EFont_Korean;
-    if (language == 8)
-        return EFont_ChineseTraditional;
-    if (language == 0x11)
+    case XC_LANGUAGE_ZH_HANS:
         return EFont_ChineseSimplified;
-    return EFont_Bitmap;
+    case XC_LANGUAGE_TCHINESE:
+        return EFont_ChineseTraditional;
+    case XC_LANGUAGE_KOREAN:
+        return EFont_Korean;
+    default:
+        return EFont_Bitmap;
+    }
 }
 
 UITTFFont* ConsoleUIController::createFont(EFont font)
@@ -345,39 +380,50 @@ void ConsoleUIController::loadSkins()
 
 void ConsoleUIController::renderScenes()
 {
+    PIXBeginNamedEvent(0.0f, "Rendering FUI scenes");
     if (!gApp.GetGameStarted())
     {
+        PIXBeginNamedEvent(0.0f, "Rendering fullscreen scenes");
         m_groups[EUIGroup_Fullscreen]->render();
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(0.0f, "Rendering DRC scenes");
         gRenderer->StartDRCFrame(GetDRCEnabled());
         gFui->setScreenSize(854.0f, 480.0f);
-        if (!GetDRCEnabled())
-        {
-            const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-            gRenderer->SetClearColour(clearColour);
-            gRenderer->Clear(3);
-        }
     }
     else
     {
         if (!m_groups[EUIGroup_Fullscreen]->hidesLowerScenes())
         {
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", EUIGroup_Player1);
             m_groups[EUIGroup_Player1]->render();
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", EUIGroup_Player2);
             m_groups[EUIGroup_Player2]->render();
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", EUIGroup_Player3);
             m_groups[EUIGroup_Player3]->render();
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", EUIGroup_Player4);
             m_groups[EUIGroup_Player4]->render();
+            PIXEndNamedEvent();
         }
+        PIXBeginNamedEvent(0.0f, "Rendering fullscreen scenes");
         m_groups[EUIGroup_Fullscreen]->render();
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(0.0f, "Rendering DRC scenes");
         gRenderer->StartDRCFrame(GetDRCEnabled());
         gFui->setScreenSize(854.0f, 480.0f);
-        if (!GetDRCEnabled())
-        {
-            const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-            gRenderer->SetClearColour(clearColour);
-            gRenderer->Clear(3);
-        }
+    }
+    if (!GetDRCEnabled())
+    {
+        const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        gRenderer->SetClearColour(clearColour);
+        gRenderer->Clear(3);
     }
     m_groups[EUIGroup_DRC]->render();
     gFui->setScreenSize(1280.0f, 720.0f);
+    PIXEndNamedEvent();
+    PIXEndNamedEvent();
 }
 
 void ConsoleUIController::render()
@@ -399,7 +445,7 @@ void ConsoleUIController::setCleanupOnReload(bool cleanupOnReload)
 
 bool ConsoleUIController::PendingFontChange()
 {
-    return getFontForLanguage((int)g_pInput->GetLanguageType()) != m_currentFont;
+    return getFontForLanguage(XGetLanguage()) != m_currentFont;
 }
 
 bool ConsoleUIController::UsingBitmapFont()
@@ -409,27 +455,25 @@ bool ConsoleUIController::UsingBitmapFont()
 
 void ConsoleUIController::registerSubstitutionTexture(const std::wstring& name, int texture)
 {
-    _TextureDetail& detail = m_substitutionTextures[name];
-    ++detail.referenceCount;
-    if (detail.referenceCount == 1) {
-        detail.texture = texture;
-        detail.textureLoaded = true;
+    if (m_substitutionTextures.find(name) != m_substitutionTextures.end()) {
+        ++m_substitutionTextures[name].referenceCount;
+        return;
     }
+    m_substitutionTextures[name].referenceCount = 1;
+    m_substitutionTextures[name].texture = texture;
+    m_substitutionTextures[name].textureLoaded = true;
 }
 
 void ConsoleUIController::registerSubstitutionTexture(const std::wstring& name, unsigned char* data,
                                                        unsigned int size, bool deleteData)
 {
-    boost::unordered_map<std::wstring, _TextureDetail>::iterator found =
-        m_substitutionTextures.find(name);
-    if (found == m_substitutionTextures.end()) {
-        _TextureDetail& detail = m_substitutionTextures[name];
-        detail.referenceCount = 1;
-        detail.data = data;
-        detail.size = size;
-        detail.textureLoaded = false;
+    if (m_substitutionTextures.find(name) == m_substitutionTextures.end()) {
+        m_substitutionTextures[name].referenceCount = 1;
+        m_substitutionTextures[name].data = data;
+        m_substitutionTextures[name].size = size;
+        m_substitutionTextures[name].textureLoaded = false;
     } else {
-        ++found->second.referenceCount;
+        ++m_substitutionTextures[name].referenceCount;
         if (deleteData)
             delete[] data;
     }
@@ -441,48 +485,54 @@ void ConsoleUIController::unregisterSubstitutionTexture(const std::wstring& name
         m_substitutionTextures.find(name);
     if (found == m_substitutionTextures.end())
         return;
-    if (--found->second.referenceCount < 1) {
+    --m_substitutionTextures[name].referenceCount;
+    if (m_substitutionTextures[name].referenceCount < 1) {
         if (deleteData)
             delete[] found->second.data;
         m_substitutionTextures.erase(found);
     }
 }
 
-ConsoleUIController::_CachedMovieData& ConsoleUIController::getMovieData(const std::wstring& path)
+arrayWithLength<unsigned char> ConsoleUIController::getMovieData(const std::wstring& path)
 {
-    unsigned long long expiry = System::processTimeInMilliSecs() + 60000;
+    unsigned long long now = System::processTimeInMilliSecs();
     boost::unordered_map<std::wstring, _CachedMovieData>::iterator found = m_movieCache.find(path);
     if (found == m_movieCache.end()) {
-        arrayWithLength<unsigned char> data = gApp.getArchiveFile(path, false);
-        m_movieCache[path] = _CachedMovieData(data, expiry);
-    } else {
-        found->second.expiryTime = expiry;
+        _CachedMovieData cached;
+        cached.data = gApp.getArchiveFile(path, false);
+        cached.expiryTime = now + 60000;
+        m_movieCache[path] = cached;
+        return cached.data;
     }
-    return m_movieCache[path];
+    found->second.expiryTime = now + 60000;
+    return found->second.data;
 }
 
 void ConsoleUIController::getRenderDimensions(C4JRender::eViewportType viewport, int& width,
                                                int& height)
 {
-    if (viewport == C4JRender::eViewportType_FullScreen) {
+    switch (viewport) {
+    case C4JRender::eViewportType_FullScreen:
         width = (int)m_screenWidth;
         height = (int)m_screenHeight;
-    } else if (viewport == C4JRender::eViewportType_TopHalf ||
-               viewport == C4JRender::eViewportType_BottomHalf) {
-        width = (int)m_screenWidth;
-        height = (int)m_screenHeight / 2;
-    } else if (viewport == C4JRender::eViewportType_LeftHalf ||
-               viewport == C4JRender::eViewportType_RightHalf) {
-        width = (int)m_screenWidth / 2;
-        height = (int)m_screenHeight;
-    } else {
-        width = (int)m_screenWidth / 2;
-        height = (int)m_screenHeight / 2;
+        break;
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        width = (int)(m_screenWidth * 0.5f);
+        height = (int)(m_screenHeight * 0.5f);
+        break;
     }
 }
 
 void ConsoleUIController::setupRenderPosition(int x, int y)
 {
+    m_viewportPositionDirty = true;
     m_renderOffsetX = x;
     m_renderOffsetY = y;
     gFui->setOrigin((float)x, (float)y);
@@ -496,21 +546,28 @@ void ConsoleUIController::updateViewportTouchOffset(int x, int y)
 
 void ConsoleUIController::SetTutorialVisible(int playerId, bool visible)
 {
-    UIComponent_TutorialPopup* popup = groupForPlayer(playerId, false)->m_tutorialPopup;
-    if (popup != 0)
-        popup->SetVisible(visible);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    if (m_groups[groupId]->getTutorialPopup() != 0)
+        m_groups[groupId]->getTutorialPopup()->SetVisible(visible);
 }
 
 void ConsoleUIController::SetTutorial(int playerId, Tutorial* tutorial)
 {
-    UIComponent_TutorialPopup* popup = groupForPlayer(playerId, false)->m_tutorialPopup;
-    if (popup != 0)
-        popup->m_tutorial = tutorial;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    if (m_groups[groupId]->getTutorialPopup() != 0)
+        m_groups[groupId]->getTutorialPopup()->m_tutorial = tutorial;
 }
 
 bool ConsoleUIController::IsPauseMenuDisplayed(int playerId)
 {
-    return groupForPlayer(playerId, false)->m_pauseMenuDisplayed;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    return m_groups[groupId]->m_pauseMenuDisplayed;
 }
 
 bool ConsoleUIController::GetMenuDisplayed(int playerId)
@@ -520,8 +577,11 @@ bool ConsoleUIController::GetMenuDisplayed(int playerId)
 
 void ConsoleUIController::SetTutorialDescription(int playerId, _TutorialPopupInfo* popupInfo)
 {
-    UIGroup* playerGroup = groupForPlayer(playerId, false);
-    UIComponent_TutorialPopup* popup = playerGroup->m_tutorialPopup;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    UIGroup* playerGroup = m_groups[groupId];
+    UIComponent_TutorialPopup* popup = playerGroup->getTutorialPopup();
     if (popup != 0) {
         popup->m_containerMenuDisplayed = playerGroup->m_containerMenuDisplayed;
         popup->SetTutorialDescription(popupInfo);
@@ -530,9 +590,9 @@ void ConsoleUIController::SetTutorialDescription(int playerId, _TutorialPopupInf
 
 void ConsoleUIController::RemoveInteractSceneReference(int playerId, UIScene* scene)
 {
-    UIComponent_TutorialPopup* popup = groupForPlayer(playerId, false)->m_tutorialPopup;
-    if (popup != 0)
-        popup->RemoveInteractSceneReference(scene);
+    UIGroup* group = m_groups[GetGroup(playerId)];
+    if (group->getTutorialPopup() != 0)
+        group->getTutorialPopup()->RemoveInteractSceneReference(scene);
 }
 
 void ConsoleUIController::updateViewportTouchOffset(C4JRender::eViewportType viewport)
@@ -609,10 +669,13 @@ void ConsoleUIController::setupRenderPosition(C4JRender::eViewportType viewport)
 
 void ConsoleUIController::setupCustomDrawGameState()
 {
-    m_customDrawLeft = 0x7fffffff;
-    m_customDrawTop = 0x7fffffff;
-    m_customDrawRight = -0x7fffffff;
-    m_customDrawBottom = -0x7fffffff;
+    m_customDrawLeft = INT_MAX;
+    m_customDrawBottom = INT_MIN;
+    m_customDrawTop = INT_MAX;
+    m_customDrawRight = INT_MIN;
+    gRenderer->StartFrame();
+    gRenderer->Set_matrixDirty();
+    PIXBeginNamedEvent(0.0f, "Final setup");
     GlStateManager::matrixMode(1);
     GlStateManager::loadIdentity();
     GlStateManager::ortho(0.0, m_screenWidth, m_screenHeight, 0.0, 1000.0, 3000.0);
@@ -622,10 +685,12 @@ void ConsoleUIController::setupCustomDrawGameState()
     GlStateManager::enableDepthTest();
     GlStateManager::depthFunc(3);
     GlStateManager::depthMask(true);
+    PIXEndNamedEvent();
 }
 
 void ConsoleUIController::endCustomDrawGameState()
 {
+    gRenderer->Clear(1);
     GlStateManager::depthMask(false);
     GlStateManager::disableAlphaTest();
 }
@@ -674,6 +739,13 @@ void ConsoleUIController::setFullscreenMenuDisplayed(bool displayed)
 bool ConsoleUIController::NavigateToScene(int playerId, EUIScene scene, void* sceneData,
                                           EUILayer layer, EUIGroup groupId)
 {
+    static bool updateMessageShown = false;
+    if (scene == EUIScene_LoadCreateJoinMenu && !updateMessageShown &&
+        GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_DisplayUpdateMessage) != 0)
+    {
+        scene = EUIScene_NewUpdateMessage;
+        updateMessageShown = true;
+    }
     if (GetMenuDisplayed(playerId))
     {
         unsigned int sceneValue = (unsigned int)scene;
@@ -756,22 +828,29 @@ bool ConsoleUIController::NavigateToScene(int playerId, EUIScene scene, void* sc
 bool ConsoleUIController::NavigateBack(int playerId, bool closeCurrent, EUIScene scene,
                                        EUILayer layer)
 {
+    bool result = false;
+    bool gameStarted = gApp.GetGameStarted();
     bool navigated = m_groups[EUIGroup_Fullscreen]->NavigateBack(playerId, scene, layer);
-    if (!gApp.GetGameStarted() && !m_groups[EUIGroup_Fullscreen]->GetMenuDisplayed())
-        SetMenuDisplayed(0xff, false);
-    if (!navigated && playerId >= 0 && playerId != 0xff) {
-        UIGroup* playerGroup = m_groups[GetGroup(playerId)];
-        navigated = playerGroup->NavigateBack(playerId, scene, layer);
-        if (!playerGroup->GetMenuDisplayed()) {
+    if (!gameStarted) {
+        result = navigated;
+        if (!m_groups[EUIGroup_Fullscreen]->GetMenuDisplayed())
+            SetMenuDisplayed(0xff, false);
+    } else if (!navigated && playerId != 0xff && playerId >= 0) {
+        m_groups[EUIGroup_Player1 + playerId]->NavigateBack(playerId, scene, layer);
+        if (!m_groups[EUIGroup_Player1 + playerId]->GetMenuDisplayed()) {
             Tooltips::ForceTooltipReload(playerId);
             SetMenuDisplayed(playerId, false);
         }
     } else if (!m_groups[EUIGroup_Fullscreen]->GetMenuDisplayed()) {
         setFullscreenMenuDisplayed(false);
-        FixupMenuDisplayedAfterNavigateBack();
+        SetMenuDisplayed(0, m_groups[EUIGroup_Player1]->GetMenuDisplayed());
+        SetMenuDisplayed(1, m_groups[EUIGroup_Player2]->GetMenuDisplayed());
+        SetMenuDisplayed(2, m_groups[EUIGroup_Player3]->GetMenuDisplayed());
+        SetMenuDisplayed(3, m_groups[EUIGroup_Player4]->GetMenuDisplayed());
     }
-    return navigated;
+    return result;
 }
+
 
 void ConsoleUIController::FixupMenuDisplayedAfterNavigateBack()
 {
@@ -847,10 +926,10 @@ void ConsoleUIController::CloseUIScenes(int playerId, bool immediate)
     playerGroup->closeAllScenes();
     playerGroup->ClearTooltips();
     Tooltips::ForceTooltipReload(playerId);
-    if (playerGroup->m_tutorialPopup != 0)
+    if (playerGroup->getTutorialPopup() != 0)
     {
         _TutorialPopupInfo popupInfo;
-        playerGroup->m_tutorialPopup
+        playerGroup->getTutorialPopup()
             ->SetTutorialDescription(&popupInfo);
     }
     if (groupId == EUIGroup_Fullscreen)
@@ -892,24 +971,35 @@ void ConsoleUIController::CloseAllPlayersScenes(bool immediate)
 
 bool ConsoleUIController::IsSceneInStack(int playerId, EUIScene scene)
 {
-    return groupForPlayer(playerId, false)->IsSceneInStack(scene);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    return m_groups[groupId]->IsSceneInStack(scene);
 }
 
 bool ConsoleUIController::IsContainerMenuDisplayed(int playerId)
 {
-    return groupForPlayer(playerId, false)->m_containerMenuDisplayed;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    return m_groups[groupId]->m_containerMenuDisplayed;
 }
 
 bool ConsoleUIController::IsIgnorePlayerJoinMenuDisplayed(int playerId)
 {
-    return groupForPlayer(playerId, false)->m_ignorePlayerJoinMenuDisplayed;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    return m_groups[groupId]->m_ignorePlayerJoinMenuDisplayed;
 }
 
 bool ConsoleUIController::IsIgnoreAutosaveMenuDisplayed(int playerId)
 {
-    UIGroup* playerGroup = groupForPlayer(playerId, false);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
     return m_groups[EUIGroup_Fullscreen]->m_ignoreAutosaveMenuDisplayed ||
-           (playerGroup != m_groups[EUIGroup_Fullscreen] && playerGroup->m_ignoreAutosaveMenuDisplayed);
+           (groupId != EUIGroup_Fullscreen && m_groups[groupId]->m_ignoreAutosaveMenuDisplayed);
 }
 
 void ConsoleUIController::SetIgnoreAutosaveMenuDisplayed(int playerId, bool ignore)
@@ -931,33 +1021,37 @@ void ConsoleUIController::CheckMenuDisplayed()
     }
 }
 
-void ConsoleUIController::AnimateKeyPress(int playerId, int action, bool repeat, bool released,
-                                          bool pressed)
+void ConsoleUIController::AnimateKeyPress(int playerId, int action, bool repeat, bool pressed,
+                                          bool released)
 {
-    if (!released)
+    if (!pressed)
         return;
     UIGroup* group = (!gApp.GetGameStarted() || playerId == 0xff || playerId > 3)
         ? m_groups[EUIGroup_Fullscreen] : m_groups[playerId + 2];
-    UIComponent_Tooltips* tooltips = group->m_tooltips;
+    UIComponent_Tooltips* tooltips = group->getTooltips();
     if (tooltips != 0) {
         bool handled = false;
-        tooltips->handleInput(playerId, action, repeat, released, pressed, handled);
+        tooltips->handleInput(playerId, action, repeat, pressed, released, handled);
     }
 }
 
 void ConsoleUIController::OverrideSFX(int playerId, int action, bool enabled)
 {
-    UIComponent_Tooltips* tooltips = groupForPlayer(playerId, false)->m_tooltips;
-    if (tooltips != 0)
-        tooltips->overrideSFX(playerId, action, enabled);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    if (m_groups[groupId]->getTooltips() != 0)
+        m_groups[groupId]->getTooltips()->overrideSFX(playerId, action, enabled);
 }
 
 void ConsoleUIController::SetTooltipText(unsigned int playerId, unsigned int tooltipIndex,
                                          int textId)
 {
-    UIComponent_Tooltips* tooltips = groupForPlayer((int)playerId, false)->m_tooltips;
-    if (tooltips != 0)
-        tooltips->SetTooltipText(tooltipIndex, textId);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getTooltips() != 0)
+        m_groups[groupId]->getTooltips()->SetTooltipText(tooltipIndex, textId);
 }
 
 void ConsoleUIController::SetEnableTooltips(unsigned int playerId, bool enable)
@@ -965,16 +1059,17 @@ void ConsoleUIController::SetEnableTooltips(unsigned int playerId, bool enable)
     int groupId = 1;
     if (gApp.GetGameStarted())
         groupId = GetGroup((int)playerId);
-    UIComponent_Tooltips* tooltips = m_groups[groupId]->m_tooltips;
-    if (tooltips != 0)
-        tooltips->SetEnableTooltips(enable);
+    if (m_groups[groupId]->getTooltips() != 0)
+        m_groups[groupId]->getTooltips()->SetEnableTooltips(enable);
 }
 
 void ConsoleUIController::ShowTooltip(unsigned int playerId, unsigned int tooltipIndex, bool show)
 {
-    UIComponent_Tooltips* tooltips = groupForPlayer((int)playerId, false)->m_tooltips;
-    if (tooltips != 0)
-        tooltips->ShowTooltip(tooltipIndex, show);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getTooltips() != 0)
+        m_groups[groupId]->getTooltips()->ShowTooltip(tooltipIndex, show);
 }
 
 void ConsoleUIController::SetTooltips(unsigned int playerId, int* tooltips, bool show,
@@ -982,9 +1077,11 @@ void ConsoleUIController::SetTooltips(unsigned int playerId, int* tooltips, bool
 {
     if (IsReloadingSkin())
         return;
-    UIComponent_Tooltips* component = groupForPlayer((int)playerId, useGlobalGroup)->m_tooltips;
-    if (component != 0)
-        component->SetTooltips((int)playerId, tooltips, show);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted() && !useGlobalGroup)
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getTooltips() != 0)
+        m_groups[groupId]->getTooltips()->SetTooltips((int)playerId, tooltips, show);
 }
 
 void ConsoleUIController::SetTooltips(unsigned int playerId, int tooltip0, int tooltip1,
@@ -999,7 +1096,10 @@ void ConsoleUIController::SetTooltips(unsigned int playerId, int tooltip0, int t
         tooltip2 = -1;
     if (tooltip3 == IDS_TOOLTIPS_VIEW_GAMERCARD || tooltip3 == IDS_TOOLTIPS_VIEW_GAMERPROFILE)
         tooltip3 = -1;
-    UIComponent_Tooltips* component = groupForPlayer((int)playerId, useGlobalGroup)->m_tooltips;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted() && !useGlobalGroup)
+        groupId = GetGroup((int)playerId);
+    UIComponent_Tooltips* component = m_groups[groupId]->getTooltips();
     if (component != 0)
         component->SetTooltips((int)playerId, tooltip0, tooltip1, tooltip2, tooltip3, tooltip4,
                                tooltip5, tooltip6, tooltip7, tooltip8, tooltip9, tooltip10,
@@ -1009,16 +1109,22 @@ void ConsoleUIController::SetTooltips(unsigned int playerId, int tooltip0, int t
 void ConsoleUIController::EnableTooltip(unsigned int playerId, unsigned int tooltipIndex,
                                         bool enable)
 {
-    UIComponent_Tooltips* tooltips = groupForPlayer((int)playerId, false)->m_tooltips;
-    if (tooltips != 0)
-        tooltips->EnableTooltip(tooltipIndex, enable);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getTooltips() != 0)
+        m_groups[groupId]->getTooltips()->EnableTooltip(tooltipIndex, enable);
 }
 
 bool ConsoleUIController::IsToolTipDynamic(unsigned int playerId, unsigned int tooltipIndex,
                                            EControllerActions& action)
 {
-    UIComponent_Tooltips* tooltips = groupForPlayer((int)playerId, false)->m_tooltips;
-    return tooltips != 0 && tooltips->IsToolTipDynamic(tooltipIndex, action);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getTooltips() != 0)
+        return m_groups[groupId]->getTooltips()->IsToolTipDynamic(tooltipIndex, action);
+    return false;
 }
 
 void ConsoleUIController::RefreshTooltips(unsigned int playerId)
@@ -1027,28 +1133,32 @@ void ConsoleUIController::RefreshTooltips(unsigned int playerId)
 
 void ConsoleUIController::DisplayGamertag(unsigned int playerId, bool show)
 {
-    UIGroup* group = m_groups[playerId + 2];
-    UIScene_HUD* hud = group->m_hud;
-    if (hud != 0)
-        hud->ShowDisplayName(show);
+    if (!GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames))
+        show = false;
+    UIGroup** group = &m_groups[playerId + EUIGroup_Player1];
+    if ((*group)->getHUD() != 0)
+        (*group)->getHUD()->ShowDisplayName(show);
+    if (gApp.GetLocalPlayerCount() > 1 && (*group)->getTutorialPopup() != 0 &&
+        !(*group)->m_containerMenuDisplayed)
+        (*group)->getTutorialPopup()->UpdateTutorialPopup();
 }
 
 void ConsoleUIController::SetSelectedItem(unsigned int playerId, const std::wstring& itemName,
                                           const std::wstring& itemDescription)
 {
-    m_selectedPlayer = (int)playerId;
-    m_selectedItemName = itemName;
-    m_selectedItemDescription = itemDescription;
-    m_selectedItemVisible = true;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getHUD() != 0)
+        m_groups[groupId]->getHUD()->SetSelectedLabel(itemDescription);
 }
 
 void ConsoleUIController::ResetSelectedItem()
 {
     for (int i = 0; i < 6; ++i)
     {
-        UIScene_HUD* hud = m_groups[i]->m_hud;
-        if (hud != 0)
-            hud->SetSelectedLabel(std::wstring());
+        if (m_groups[i]->getHUD() != 0)
+            m_groups[i]->getHUD()->SetSelectedLabel(L"");
     }
 }
 
@@ -1058,38 +1168,63 @@ void ConsoleUIController::UpdateSelectedItemPos(unsigned int playerId)
 
 int ConsoleUIController::GetHotBarX(unsigned int playerId)
 {
-    UIScene_HUD* hud = groupForPlayer((int)playerId, false)->m_hud;
-    return hud == 0 ? 0 : hud->GetHotBarX();
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    int value = 0;
+    if (m_groups[groupId]->getHUD() != 0)
+        value = m_groups[groupId]->getHUD()->GetHotBarX();
+    return value;
 }
 
 int ConsoleUIController::GetHotBarY(unsigned int playerId)
 {
-    UIScene_HUD* hud = groupForPlayer((int)playerId, false)->m_hud;
-    return hud == 0 ? 0 : hud->GetHotBarY();
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    int value = 0;
+    if (m_groups[groupId]->getHUD() != 0)
+        value = m_groups[groupId]->getHUD()->GetHotBarY();
+    return value;
 }
 
 int ConsoleUIController::GetHotBarWidth(unsigned int playerId)
 {
-    UIScene_HUD* hud = groupForPlayer((int)playerId, false)->m_hud;
-    return hud == 0 ? 0 : hud->GetHotBarWidth();
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    int value = 0;
+    if (m_groups[groupId]->getHUD() != 0)
+        value = m_groups[groupId]->getHUD()->GetHotBarWidth();
+    return value;
 }
 
 int ConsoleUIController::GetHotBarHeight(unsigned int playerId)
 {
-    UIScene_HUD* hud = groupForPlayer((int)playerId, false)->m_hud;
-    return hud == 0 ? 0 : hud->GetHotBarHeight();
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    int value = 0;
+    if (m_groups[groupId]->getHUD() != 0)
+        value = m_groups[groupId]->getHUD()->GetHotBarHeight();
+    return value;
 }
 
 bool ConsoleUIController::GetQuickSelectVisible(unsigned int playerId)
 {
-    UIScene_HUD* hud = groupForPlayer((int)playerId, false)->m_hud;
-    return hud != 0 && hud->GetQuickSelectVisible();
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup((int)playerId);
+    if (m_groups[groupId]->getHUD() != 0)
+        return m_groups[groupId]->getHUD()->m_quickSelectVisible;
+    return false;
 }
 
 bool ConsoleUIController::GetDRCEnabled()
 {
-    UIComponent_WiiUDRC* drc = m_groups[EUIGroup_DRC]->m_drc;
-    return drc != 0 && drc->m_drcOutputEnabled;
+    if (m_groups[EUIGroup_DRC]->getDRC() != 0)
+        return m_groups[EUIGroup_DRC]->getDRC()->m_drcOutputEnabled;
+    return false;
 }
 
 void ConsoleUIController::HandleDLCMountingComplete()
@@ -1122,7 +1257,10 @@ void ConsoleUIController::HandleTMSBanFileRetrieved(int fileId)
 
 void ConsoleUIController::HandleInventoryUpdated(int playerId)
 {
-    groupForPlayer(playerId, false)->HandleMessage(EUIMessage_Unknown, 0);
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted() && playerId != 0xff && playerId >= 0)
+        groupId = EUIGroup_Player1 + playerId;
+    m_groups[groupId]->HandleMessage(EUIMessage_Unknown, 0);
 }
 
 void ConsoleUIController::HandleGameTick()
@@ -1130,9 +1268,8 @@ void ConsoleUIController::HandleGameTick()
     tickInput();
     if (!IsExpectingOrReloadingSkin()) {
         for (int i = 0; i < 6; ++i) {
-            UIScene_HUD* hud = m_groups[i]->m_hud;
-            if (hud != 0)
-                hud->handleGameTick();
+            if (m_groups[i]->getHUD() != 0)
+                m_groups[i]->getHUD()->handleGameTick();
         }
     }
 }
@@ -1144,20 +1281,29 @@ void ConsoleUIController::HandleSaveDeviceRemoved(int deviceIndex)
 
 bool ConsoleUIController::IsTutorialVisible(int playerId)
 {
-    UIComponent_TutorialPopup* popup = groupForPlayer(playerId, false)->m_tutorialPopup;
-    return popup != 0 && popup->IsVisible();
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    if (m_groups[groupId]->getTutorialPopup() != 0)
+        return m_groups[groupId]->getTutorialPopup()->IsVisible();
+    return false;
 }
 
 void ConsoleUIController::UpdatePlayerBasePositions()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    for (int player = 0; player < 4; ++player) {
-        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[player];
-        C4JRender::eViewportType viewport = localPlayer != 0
-                                                 ? static_cast<C4JRender::eViewportType>(localPlayer->mViewport)
-                                                 : C4JRender::eViewportType_FullScreen;
-        m_groups[player + 2]->SetViewportType(viewport);
-        SetMenuDisplayed(player, viewport != C4JRender::eViewportType_FullScreen);
+    for (int i = 0; i < 4; ++i) {
+        if (minecraft->mLocalPlayers[i] != 0) {
+            if (minecraft->mLocalPlayers[i]->mViewport != C4JRender::eViewportType_FullScreen)
+                DisplayGamertag(i, true);
+            else
+                DisplayGamertag(i, false);
+            m_groups[EUIGroup_Player1 + i]->SetViewportType(
+                static_cast<C4JRender::eViewportType>(minecraft->mLocalPlayers[i]->mViewport));
+        } else {
+            m_groups[EUIGroup_Player1 + i]->SetViewportType(C4JRender::eViewportType_FullScreen);
+            DisplayGamertag(i, false);
+        }
     }
 }
 
@@ -1167,9 +1313,8 @@ void ConsoleUIController::SetEmptyQuadrantLogo(int quadrant)
 
 void ConsoleUIController::ResetPressStartToPlayUIComponents()
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        component->ResetUIComponents();
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->ResetUIComponents();
 }
 
 void ConsoleUIController::HideAllGameUIElements()
@@ -1183,61 +1328,59 @@ void ConsoleUIController::ShowOtherPlayersBaseScene(unsigned int playerId, bool 
 
 void ConsoleUIController::ShowTrialTimer(bool show)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        component->showTrialTimer(show);
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showTrialTimer(show);
 }
 
 void ConsoleUIController::SetTrialTimerLimitSecs(unsigned int limitSecs)
 {
-    m_trialTimerLimit = limitSecs;
+    s_trialTimerLimitSecs = limitSecs;
 }
 
 void ConsoleUIController::UpdateTrialTimer(unsigned int playerId)
 {
     unsigned int elapsed = (unsigned int)gApp.getTrialTimer();
-    if (elapsed > m_trialTimerLimit)
-        elapsed = m_trialTimerLimit;
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0) {
+    if (elapsed > s_trialTimerLimitSecs)
+        elapsed = s_trialTimerLimitSecs;
+    unsigned int remaining = s_trialTimerLimitSecs - elapsed;
+    if (remaining < 180) {
         wchar_t timer[20];
-        if (m_trialTimerLimit - elapsed < 180) {
-            unsigned int remaining = m_trialTimerLimit - elapsed;
-            swprintf(timer, 20, L"%d:%02d", remaining / 60, remaining % 60);
-            component->setTrialTimer(std::wstring(timer));
-        } else {
-            component->setTrialTimer(L"");
-        }
+        swprintf(timer, 20, L"%d:%02d", remaining / 60, remaining % 60);
+        if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+            m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->setTrialTimer(timer);
+    } else {
+        if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() == 0)
+            return;
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->setTrialTimer(L"");
     }
-    if (elapsed == m_trialTimerLimit && !GetMenuDisplayed((int)playerId)) {
-        NavigateToScene((int)playerId, EUIScene_PauseMenu, 0, EUILayer_Scene,
-                        EUIGroup_PlayerDefault);
+    if (remaining == 0 && !gConsoleUIController.GetMenuDisplayed((int)playerId)) {
+        gConsoleUIController.NavigateToScene((int)playerId, EUIScene_PauseMenu, 0, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
         gApp.SetAction((int)playerId, eXuiAction_TrialOver, 0);
     }
 }
 
 void ConsoleUIController::ReduceTrialTimerValue()
 {
-    unsigned int elapsed = (unsigned int)gApp.getTrialTimer();
-    if (elapsed > m_trialTimerLimit)
-        elapsed = m_trialTimerLimit;
-    m_trialTimerLimit -= elapsed;
+    unsigned int elapsed = (unsigned int)(int)gApp.getTrialTimer();
+    if (elapsed > s_trialTimerLimitSecs)
+        elapsed = s_trialTimerLimitSecs;
+    s_trialTimerLimitSecs -= elapsed;
 }
 
 void ConsoleUIController::ShowAutosaveCountdownTimer(bool show)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        component->showAutosaveTimer(show);
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showTrialTimer(show);
 }
 
 void ConsoleUIController::UpdateAutosaveCountdownTimer(unsigned int remainingSecs)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
+    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->getPressStartToPlay();
     if (component != 0) {
         wchar_t text[100];
         swprintf(text, 100, L10N::GetString(0x2a1b8f34), remainingSecs);
-        component->setAutosaveTimer(std::wstring(text));
+        component->setTrialTimer(text);
     }
 }
 
@@ -1245,60 +1388,54 @@ void ConsoleUIController::ShowSavingMessage(unsigned int playerId,
                                              C4JStorage::ESavingMessage message)
 {
     static const bool visible[3] = { false, true, true };
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0 && (unsigned int)message < 3)
-        component->showSaveIcon(visible[(unsigned int)message]);
+    bool show = false;
+    if ((unsigned int)message < 3)
+        show = visible[(unsigned int)message];
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showSaveIcon(show);
 }
 
 void ConsoleUIController::ShowChestRefillAnimation(bool show)
 {
-    if (m_groups[EUIGroup_Fullscreen]->IsSceneInStack(EUIScene_MessageBox))
-        return;
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0) {
+    if (!m_groups[EUIGroup_Fullscreen]->IsSceneInStack(EUIScene_MessageBox) && m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0) {
         int yOffset = 0;
-        UIScene_HUD* hud = m_groups[EUIGroup_Player1]->m_hud;
-        if (!show && hud != 0)
-            yOffset = hud->GetStatusEffectsYOffset();
-        component->ShowChestRefillAnimation(show, yOffset);
+        if (!show)
+            yOffset = m_groups[EUIGroup_Player1]->getHUD()->GetStatusEffectsYOffset();
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->ShowChestRefillAnimation(show, yOffset);
     }
 }
 
 void ConsoleUIController::HideChestRefillAnimation()
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        component->HideChestRefillAnimation();
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->HideChestRefillAnimation();
 }
 
 void ConsoleUIController::ShowTimedSplash(unsigned int playerId, const std::wstring& text,
                                           unsigned int durationMs)
 {
-    UIScene_HUD* hud = m_groups[GetGroup((int)playerId)]->m_hud;
-    if (hud != 0)
-        hud->showTimedSplash(text, durationMs, 1);
+    if (m_groups[GetGroup((int)playerId)]->getHUD() != 0)
+        m_groups[GetGroup((int)playerId)]->getHUD()->showTimedSplash(text, durationMs, 1);
 }
 
 void ConsoleUIController::ShowPlayerDisplayname(bool show)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        component->showPlayerDisplayName(false);
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPlayerDisplayName(false);
 }
 
 bool ConsoleUIController::PressStartPlaying(unsigned int playerId)
 {
-    return (m_pressStartPlaying & (1 << playerId)) != 0;
+    return (m_pressStartPlaying >> playerId) & 1;
 }
 
 void ConsoleUIController::ShowPressStart(unsigned int playerId)
 {
     unsigned int mask = 1 << playerId;
-    if ((m_pressStartBlocked & mask) == 0) {
+    if ((m_pressStartBlocked & mask) == 0 && gStorage->GetSaveState() != C4JStorage::ESaveGame_SaveIncompleteWaiting) {
         m_pressStartPlaying |= mask;
-        UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-        if (component != 0)
-            component->showPressStart((int)playerId, true);
+        if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+            m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPressStart((int)playerId, true);
     }
 }
 
@@ -1310,10 +1447,12 @@ void ConsoleUIController::ClearPressStart()
 void ConsoleUIController::HidePressStart()
 {
     ClearPressStart();
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        for (int player = 0; player < 4; ++player)
-            component->showPressStart(player, false);
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0) {
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPressStart(0, false);
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPressStart(1, false);
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPressStart(2, false);
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPressStart(3, false);
+    }
 }
 
 void ConsoleUIController::SetAchievementUnlocked(int playerId, int achievementId, int imageId,
@@ -1323,27 +1462,23 @@ void ConsoleUIController::SetAchievementUnlocked(int playerId, int achievementId
     if ((m_pressStartBlocked & mask) != 0)
         return;
     m_pressStartPlaying |= mask;
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    if (component != 0)
-        component->SetAchievementUnlocked(playerId, achievementId);
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->SetAchievementUnlocked(playerId, achievementId);
 }
 
 bool ConsoleUIController::GetAchievementToastShowing(int playerId)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    return component != 0 && component->GetAchievementToastShowing(playerId);
+    return m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->GetAchievementToastShowing(playerId);
 }
 
 bool ConsoleUIController::GetHoldToShowAchievementsActive(bool includeCancelled)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    return component != 0 && component->GetHoldToShowAchievementsActive(includeCancelled);
+    return m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->GetHoldToShowAchievementsActive(includeCancelled);
 }
 
 bool ConsoleUIController::GetHoldActionCancelled(int playerId)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
-    return component != 0 && component->GetHoldActionCancelled(playerId);
+    return m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->GetHoldActionCancelled(playerId);
 }
 
 struct ProfileSignInMenuData
@@ -1381,7 +1516,7 @@ void ConsoleUIController::RequestAlertMessage(
     void* callbackData, wchar_t* overrideText, bool blocking)
 {
     RequestMessageBox(titleId, messageId, messageParameters, parameterCount, userIndex,
-                      callback, callbackData, overrideText, 0, true, blocking);
+                      callback, callbackData, overrideText, 0, false, blocking);
 }
 
 int ConsoleUIController::RequestErrorMessage(
@@ -1416,15 +1551,15 @@ int ConsoleUIController::RequestMessageBox(
         return NavigateToScene((int)userIndex, EUIScene_MessageBox, &data,
                                alert ? EUILayer_Alert : EUILayer_Popup, groupId) ? 2 : 1;
     }
-    _QueuedMessageBoxData* queued = new _QueuedMessageBoxData;
-    static_cast<_MessageBoxData&>(*queued) = data;
-    queued->queuedUserIndex = userIndex;
+    _QueuedMessageBoxData* queued = new _QueuedMessageBoxData();
+    queued->info = data;
+    queued->info.messageParameters = new int[parameterCount];
+    std::memcpy(queued->info.messageParameters, messageParameters, parameterCount * sizeof(int));
     queued->layer = EUILayer_Alert;
-    queued->messageParameters = new int[parameterCount];
-    std::memcpy(queued->messageParameters, messageParameters, parameterCount * sizeof(int));
-    EnterCriticalSection(&m_skinMutex);
+    queued->queuedUserIndex = userIndex;
+    EnterCriticalSection(&m_messageBoxMutex);
     m_queuedMessageBoxes.push_back(queued);
-    LeaveCriticalSection(&m_skinMutex);
+    LeaveCriticalSection(&m_messageBoxMutex);
     return 1;
 }
 
@@ -1445,12 +1580,18 @@ void ConsoleUIController::RequestUGCMessageBox(
 
 bool ConsoleUIController::IsShowingErrorMessage(int playerId)
 {
-    return groupForPlayer(playerId, false)->GetTopScene(EUILayer_Alert) != 0;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    return m_groups[groupId]->GetTopScene(EUILayer_Alert) != 0;
 }
 
 bool ConsoleUIController::IsShowingAlertMessage(int playerId)
 {
-    return groupForPlayer(playerId, false)->GetTopScene(EUILayer_Popup) != 0;
+    int groupId = EUIGroup_Fullscreen;
+    if (gApp.GetGameStarted())
+        groupId = GetGroup(playerId);
+    return m_groups[groupId]->GetTopScene(EUILayer_Popup) != 0;
 }
 
 void ConsoleUIController::SetWinUserIndex(unsigned int userIndex)
@@ -1510,7 +1651,7 @@ void ConsoleUIController::clearResolutionChangeDisableFlag(eRESOLUTION_DISABLE_F
     m_resolutionDisableFlags &= ~(1u << (unsigned int)flag);
 }
 
-unsigned int ConsoleUIController::reloadSkinThreadProc(void* context)
+int ConsoleUIController::reloadSkinThreadProc(void* context)
 {
     ConsoleUIController* controller = static_cast<ConsoleUIController*>(context);
     EnterCriticalSection(&g_uiCriticalSection);
@@ -1521,7 +1662,7 @@ unsigned int ConsoleUIController::reloadSkinThreadProc(void* context)
     controller->m_groups[EUIGroup_Player4]->ReloadAll();
     controller->m_groups[EUIGroup_Fullscreen]->ReloadAll();
     controller->m_groups[EUIGroup_DRC]->ReloadAll();
-    controller->SetEnableTooltips(0, false);
+    controller->NavigateBack(0, false, EUIScene_None, EUILayer_Tooltips);
     LeaveCriticalSection(&g_uiCriticalSection);
     return 0;
 }
@@ -1534,7 +1675,7 @@ void ConsoleUIController::ReloadSkin()
     m_groups[EUIGroup_Player2]->DestroyAll();
     m_groups[EUIGroup_Player3]->DestroyAll();
     m_groups[EUIGroup_Player4]->DestroyAll();
-    for (int i = 0; i < 11; ++i)
+    for (int i = 10; i >= 0; --i)
     {
         if (m_skinScenes[i] != 0)
         {
@@ -1542,8 +1683,9 @@ void ConsoleUIController::ReloadSkin()
             m_skinScenes[i] = 0;
         }
     }
-    NavigateToScene(0, EUIScene_Timer, 0,
-                   EUILayer_Tooltips, EUIGroup_Fullscreen);
+    m_skinThread = new C4JThreadImpl(reloadSkinThreadProc, this, "Reload skin thread", 0);
+    m_skinThread->SetProcessor(0);
+    gConsoleUIController.NavigateToScene(0, EUIScene_Timer, (void*)1, EUILayer_Tooltips, EUIGroup_Fullscreen);
 }
 
 void ConsoleUIController::StartReloadSkinThread()
@@ -1555,41 +1697,51 @@ void ConsoleUIController::StartReloadSkinThread()
 bool ConsoleUIController::IsReloadingSkin()
 {
     EnterCriticalSection(&m_skinThreadMutex);
-    bool result = m_skinThreadExpected || m_skinThread != 0;
+    bool reloading = false;
+    if (m_skinThread != 0 && (!m_skinThread->hasStarted() || m_skinThread->isRunning()))
+        reloading = true;
     LeaveCriticalSection(&m_skinThreadMutex);
-    return result;
+    return reloading;
 }
 
 bool ConsoleUIController::IsExpectingOrReloadingSkin()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mTexturePackRepository->needsUIUpdate())
+    if (Minecraft::GetInstance()->mTexturePackRepository->getSelected()->isLoadingData())
         return true;
-    return IsReloadingSkin() || PendingFontChange();
+    if (Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate())
+        return true;
+    if (IsReloadingSkin())
+        return true;
+    return PendingFontChange();
 }
 
 void ConsoleUIController::CleanUpSkinReload()
 {
     EnterCriticalSection(&m_skinThreadMutex);
+    delete m_skinThread;
     m_skinThread = 0;
     LeaveCriticalSection(&m_skinThreadMutex);
 
-    EnterCriticalSection(&m_touchMutex);
+    if (Minecraft::GetInstance()->mTexturePackRepository->getSelected() != TexturePackRepository::defaultTexturePack)
+        Minecraft::GetInstance()->mTexturePackRepository->getSelected()->hasAudio();
+
+    EnterCriticalSection(&m_messageBoxMutex);
     for (std::vector<_QueuedMessageBoxData*>::iterator it = m_queuedMessageBoxes.begin();
          it != m_queuedMessageBoxes.end(); ++it)
     {
         _QueuedMessageBoxData* queued = *it;
-        NavigateToScene(queued->queuedUserIndex, EUIScene_MessageBox, queued,
-                        queued->layer, EUIGroup_Fullscreen);
+        gConsoleUIController.NavigateToScene(queued->queuedUserIndex, EUIScene_MessageBox, queued,
+                                             queued->layer, EUIGroup_Fullscreen);
+        delete[] queued->info.messageParameters;
         delete queued;
     }
     m_queuedMessageBoxes.clear();
-    LeaveCriticalSection(&m_touchMutex);
+    LeaveCriticalSection(&m_messageBoxMutex);
 }
 
 void ConsoleUIController::tickInput()
 {
-    if (!m_skinThreadExpected)
+    if (!m_inputSuspended)
     {
         handleInput();
         ++m_lastInputTime;
@@ -1602,9 +1754,9 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
     if (character == 0x14)
     {
         bool newTouch = false;
+        bool touchPressed = false;
         bool touchRepeat = false;
         bool touchReleased = false;
-        bool touchPressed = false;
         if (m_touchHeld && key > 4 && g_pInput->ButtonPressed((int)key, 0x14, 0) != 0)
             m_touchHeld = false;
         unsigned short* touchData = g_pInput->GetTouchPadData((int)key, C_4JInput::ETouchType_0, true);
@@ -1623,8 +1775,8 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
             {
                 if (!m_touchHeld)
                 {
-                    m_touchElement = 0;
-                    m_lastTouchElement = 0;
+                    m_touchPressElement = 0;
+                    m_touchCurrentElement = 0;
                     UIGroup* touchGroup = m_groups[EUIGroup_Fullscreen];
                     UIScene* touchScene = touchGroup->getCurrentScene((int)key);
                     if (touchScene == 0)
@@ -1635,11 +1787,11 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                     bool hitFound = false;
                     if (touchScene != 0)
                         hitFound = TouchBoxHit(touchScene, touchX, touchY);
-                    if (!hitFound && touchGroup->m_tooltips != 0)
-                        hitFound = TouchBoxHit(touchGroup->m_tooltips, touchX, touchY);
+                    if (!hitFound && touchGroup->getTooltips() != 0)
+                        hitFound = TouchBoxHit(touchGroup->getTooltips(), touchX, touchY);
                     if (hitFound)
                     {
-                        touchRepeat = true;
+                        touchPressed = true;
                         m_touchHoldPad = (int)key;
                         newTouch = true;
                         m_touchHeld = true;
@@ -1658,8 +1810,8 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                     bool hitFound = false;
                     if (touchScene != 0)
                         hitFound = TouchBoxHit(touchScene, touchX, touchY);
-                    if (!hitFound && touchGroup->m_tooltips != 0)
-                        hitFound = TouchBoxHit(touchGroup->m_tooltips, touchX, touchY);
+                    if (!hitFound && touchGroup->getTooltips() != 0)
+                        hitFound = TouchBoxHit(touchGroup->getTooltips(), touchX, touchY);
                     if (hitFound)
                     {
                         newTouch = true;
@@ -1667,8 +1819,8 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                         if (m_actionTimer[key][0x14] != 0 &&
                             (unsigned int)m_actionTimer[key][0x14] < now)
                         {
-                            touchReleased = true;
                             touchRepeat = true;
+                            touchPressed = true;
                             m_actionTimer[key][0x14] = now + 100;
                         }
                     }
@@ -1678,10 +1830,10 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
             {
                 newTouch = true;
                 m_touchHeld = false;
-                touchPressed = true;
+                touchReleased = true;
                 m_actionTimer[key][0x14] = 0;
             }
-            HandleTouchInput(key, 0x14, touchRepeat, touchReleased, touchPressed);
+            HandleTouchInput(key, 0x14, touchPressed, touchRepeat, touchReleased);
             if (newTouch)
                 return newTouch;
         }
@@ -1717,11 +1869,11 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
         return handled;
 
     UIComponent_PressStartToPlay* pressStart =
-        m_groups[EUIGroup_Fullscreen]->m_pressStartToPlay;
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay();
     unsigned int toastShowing = pressStart->GetAchievementToastShowing((int)key);
     if ((toastShowing != 0 || pressStart->GetHoldToShowAchievementsActive(false)) &&
         !IsSceneInStack((int)key, EUIScene_PauseMenu) &&
-        !pressStart->handleHold((int)key, (int)character, repeatFired, buttonReleased, buttonPressed,
+        !pressStart->handleHold((int)key, (int)character, repeatFired, buttonPressed, buttonReleased,
                                 handled))
     {
         buttonPressed = true;
@@ -1729,11 +1881,11 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
 
     if (!handled)
     {
-        m_groups[EUIGroup_Fullscreen]->handleInput((int)key, (int)character, repeatFired, buttonReleased, buttonPressed,
+        m_groups[EUIGroup_Fullscreen]->handleInput((int)key, (int)character, repeatFired, buttonPressed, buttonReleased,
                                  handled);
         if (!handled && key < 4)
-            m_groups[2 + key]->handleInput((int)key, (int)character, repeatFired, buttonReleased,
-                                           buttonPressed, handled);
+            m_groups[2 + key]->handleInput((int)key, (int)character, repeatFired, buttonPressed,
+                                           buttonReleased, handled);
     }
     return handled;
 }
@@ -1752,9 +1904,8 @@ bool ConsoleUIController::handleInput()
     {
         if (g_pInput->IsPadConnected(pad) != 0 && g_pInput->IsPadDRCController(pad) != 0)
         {
-            UIComponent_WiiUDRC* drc = m_groups[EUIGroup_DRC]->m_drc;
-            if (drc != 0)
-                drc->handleDRCTouchInput((unsigned int)pad);
+            if (m_groups[EUIGroup_DRC]->getDRC() != 0)
+                m_groups[EUIGroup_DRC]->getDRC()->handleDRCTouchInput((unsigned int)pad);
         }
         if (!gApp.GetGameStarted() || gApp.m_signInResult != 0)
         {
@@ -1771,18 +1922,14 @@ bool ConsoleUIController::handleInput()
 void ConsoleUIController::tick()
 {
     SetupFont();
-    if ((m_homeMenuPending || m_cleanupOnReload) && !IsReloadingSkin()) {
-        CleanUpSkinReload();
+    if ((m_homeMenuPending || m_cleanupOnReload) && !gConsoleUIController.IsReloadingSkin()) {
+        gConsoleUIController.CleanUpSkinReload();
         if (!m_homeMenuPending && CGameNetworkManager::sInstance.IsInSession()) {
             if (m_autoCleanupOnReload)
-                CloseAllPlayersScenes(false);
+                gConsoleUIController.CloseAllPlayersScenes(false);
         } else if (g_introRunning != 0) {
-            NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_MainMenu, 0,
-                            EUILayer_Scene, EUIGroup_PlayerDefault);
-            updateCurrentFont();
-            m_autoCleanupOnReload = true;
-            m_homeMenuPending = false;
-            m_cleanupOnReload = false;
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_MainMenu, 0,
+                                                 EUILayer_Scene, EUIGroup_PlayerDefault);
         }
         updateCurrentFont();
         m_autoCleanupOnReload = true;
@@ -1791,22 +1938,18 @@ void ConsoleUIController::tick()
     }
     for (int i = 0; i < 6; ++i) {
         if (m_playerFlags[i]) {
-            if (m_groups[i] != 0) {
-                m_groups[i]->closeAllScenes();
-                m_groups[i]->ClearTooltips();
-            }
+            m_groups[i]->closeAllScenes();
+            m_groups[i]->ClearTooltips();
             m_playerFlags[i] = false;
         }
     }
     if (m_lastInputTime == 0)
         tickInput();
     m_lastInputTime = 0;
-    if (gFui != 0)
-        gFui->dispatchEnterFrameEvent();
+    gFui->dispatchEnterFrameEvent();
     for (int i = 0; i < 6; ++i)
-        if (m_groups[i] != 0)
-            m_groups[i]->tick();
-    if (!IsReloadingSkin()) {
+        m_groups[i]->tick();
+    if (!gConsoleUIController.IsReloadingSkin()) {
         const unsigned long long now = System::processTimeInMilliSecs();
         for (boost::unordered_map<std::wstring, _CachedMovieData>::iterator it = m_movieCache.begin();
              it != m_movieCache.end();) {
@@ -1819,205 +1962,407 @@ void ConsoleUIController::tick()
             }
         }
     }
-    if (gFui != 0)
-        gFui->tick();
+    gFui->tick();
 }
 
-void ConsoleUIController::SendTouchInput(unsigned int playerId, unsigned int action, bool repeat,
-                                         bool released, bool pressed)
+void ConsoleUIController::SendTouchInput(unsigned int playerId, unsigned int action, bool pressed,
+                                         bool repeat, bool released)
 {
     bool handled = false;
-    if (m_groups[EUIGroup_Fullscreen] != 0)
-        m_groups[EUIGroup_Fullscreen]->handleInput((int)playerId, (int)action, repeat, released, pressed, handled);
-    if (!handled && playerId < 4 && m_groups[GetGroup((int)playerId)] != 0)
-        m_groups[GetGroup((int)playerId)]->handleInput((int)playerId, (int)action,
-                                                       repeat, released, pressed, handled);
+    m_groups[EUIGroup_Fullscreen]->handleInput((int)playerId, (int)action, repeat, pressed, released, handled);
+    if (!handled && playerId < 4)
+        m_groups[EUIGroup_Player1 + playerId]->handleInput((int)playerId, (int)action, repeat, pressed,
+                                                           released, handled);
 }
 
-void ConsoleUIController::HandleTouchInput(unsigned int playerId, unsigned int action, bool repeat,
-                                           bool released, bool pressed)
+void ConsoleUIController::HandleTouchInput(unsigned int playerId, unsigned int action, bool pressed,
+                                           bool repeat, bool released)
 {
     if (m_rebuildingTouchBoxes)
         return;
-    if (pressed)
-        m_touchHeld = true;
+
+    if (!pressed && !repeat && !released)
+    {
+        if (!m_touchHeld || m_touchPressElement == 0)
+            return;
+        UIControl::eUIControlType type = m_touchPressElement->control->m_controlType;
+        if (type != UIControl::eUIControlType_Slider && type != UIControl::eUIControlType_ButtonList &&
+            type != UIControl::eUIControlType_LeftIconButtonList && type != UIControl::eUIControlType_LayerIconButtonList &&
+            type != UIControl::eUIControlType_CheckboxButtonList && type != UIControl::eUIControlType_MultiList &&
+            type != UIControl::eUIControlType_TexturePackList && type != UIControl::eUIControlType_DynamicLabel &&
+            type != UIControl::eUIControlType_HTMLLabel && type != UIControl::eUIControlType_LeaderboardList &&
+            type != UIControl::eUIControlType_AchievementsList && type != UIControl::eUIControlType_Touch)
+            return;
+        repeat = true;
+    }
+
+    unsigned short* touch = g_pInput->GetTouchPadData(playerId, C_4JInput::ETouchType_0, true);
+    int x = touch[0];
+    int y = touch[1];
     if (released)
-        m_touchHeld = false;
-    if (m_touchElement != 0)
     {
-        UIControl* control = m_touchElement->control;
-        const int x = m_touchX - m_touchElement->left;
-        const int y = m_touchY - m_touchElement->top;
-        if (dynamic_cast<UIControl_DynamicLabel*>(control) != 0)
-            static_cast<UIControl_DynamicLabel*>(control)->TouchScroll(y, m_touchHeld);
-        else if (dynamic_cast<UIControl_HTMLLabel*>(control) != 0)
-            static_cast<UIControl_HTMLLabel*>(control)->TouchScroll(y, m_touchHeld);
-        else if (dynamic_cast<UIControl_LeaderboardList*>(control) != 0)
-            static_cast<UIControl_LeaderboardList*>(control)->SetTouchFocus(x, y, m_touchHeld);
-        else if (dynamic_cast<UIControl_Slider*>(control) != 0 && m_touchElement->right > m_touchElement->left)
-            static_cast<UIControl_Slider*>(control)->SetSliderTouchPos(
-                (float)x / (float)(m_touchElement->right - m_touchElement->left));
-        else if (dynamic_cast<UIControl_TexturePackList*>(control) != 0)
+        x = m_touchX;
+        y = m_touchY;
+    }
+    else
+    {
+        m_touchX = x;
+        m_touchY = y;
+    }
+
+    if (!repeat)
+    {
+        if (pressed && !released)
         {
-            UIControl_TexturePackList* list = static_cast<UIControl_TexturePackList*>(control);
-            if (list->CanTouchTrigger(x, y) != 0)
-                list->SetTouchFocus(x, y, m_touchHeld);
+            UIELEMENT* element = m_touchPressElement;
+            UIControl* control = element->control;
+            switch (control->m_controlType)
+            {
+            case UIControl::eUIControlType_Button:
+            case UIControl::eUIControlType_CheckBox:
+            case UIControl::eUIControlType_TextInput:
+                control->m_scene->SetFocusToElement(control->m_controlId);
+                return;
+            case UIControl::eUIControlType_DynamicLabel:
+                static_cast<UIControl_DynamicLabel*>(control)->TouchScroll(y, true);
+                return;
+            case UIControl::eUIControlType_HTMLLabel:
+                static_cast<UIControl_HTMLLabel*>(control)->TouchScroll(y, true);
+                return;
+            case UIControl::eUIControlType_LeaderboardList:
+                static_cast<UIControl_LeaderboardList*>(control)->SetTouchFocus(x, y, false);
+                return;
+            case UIControl::eUIControlType_Slider:
+                control->m_scene->SetFocusToElement(control->m_controlId);
+                SendTouchInput(playerId, action, pressed, repeat, false);
+                return;
+            case UIControl::eUIControlType_TexturePackList:
+                control->m_scene->SetFocusToElement(control->m_controlId);
+                static_cast<UIControl_TexturePackList*>(control)->SetTouchFocus(x - m_touchPressElement->left,
+                                                                                 y - m_touchPressElement->top, false);
+                return;
+            case UIControl::eUIControlType_Touch:
+                control->m_scene->handleTouchInput(playerId, x, y, control->m_controlId, pressed, false, false);
+                return;
+            case UIControl::eUIControlType_ButtonList:
+            case UIControl::eUIControlType_CheckboxButtonList:
+            case UIControl::eUIControlType_LayerIconButtonList:
+            case UIControl::eUIControlType_LeftIconButtonList:
+            case UIControl::eUIControlType_MultiList:
+            {
+                float panelX;
+                UIControl* panel = control->m_scene->GetMainPanel();
+                if (panel == 0)
+                {
+                    panelX = control->getXPos();
+                }
+                else
+                {
+                    panelX = control->m_scene->GetMainPanel()->getXPos();
+                    y -= (int)control->m_scene->GetMainPanel()->getYPos();
+                }
+                UIControl_List* list = static_cast<UIControl_List*>(control);
+                if (m_touchPressElement->control->m_controlType != UIControl::eUIControlType_MultiList ||
+                    list->CanTouchFocus(x - (int)panelX, y))
+                    list->SetTouchFocus(x - (int)panelX, y, false);
+                return;
+            }
+            case UIControl::eUIControlType_AchievementsList:
+            {
+                UIControl* panel = control->m_scene->GetMainPanel();
+                if (panel == 0)
+                {
+                    x -= (int)control->getXPos();
+                }
+                else
+                {
+                    x -= (int)control->m_scene->GetMainPanel()->getXPos();
+                    y -= (int)control->m_scene->GetMainPanel()->getYPos();
+                }
+                UIControl_GridList* list = static_cast<UIControl_GridList*>(control);
+                if (list->CanTouchFocus(x, y))
+                    list->SetTouchFocus(x, y, false);
+                return;
+            }
+            default:
+                SendTouchInput(playerId, action, pressed, repeat, released);
+                return;
+            }
         }
-        else if (dynamic_cast<UIControl_CheckBox*>(control) != 0)
+    }
+    else
+    {
+        UIELEMENT* element = m_touchPressElement;
+        UIControl* control = element->control;
+        switch (control->m_controlType)
         {
-            UIControl_CheckBox* box = static_cast<UIControl_CheckBox*>(control);
-            if (pressed && box->IsEnabled() != 0)
-                box->setChecked(box->IsChecked() == 0);
+        case UIControl::eUIControlType_CheckBox:
+        case UIControl::eUIControlType_TextInput:
+            repeat = false;
+            pressed = false;
+            break;
+        case UIControl::eUIControlType_DynamicLabel:
+            static_cast<UIControl_DynamicLabel*>(control)->TouchScroll(y, true);
+            pressed = false;
+            repeat = false;
+            break;
+        case UIControl::eUIControlType_HTMLLabel:
+            static_cast<UIControl_HTMLLabel*>(control)->TouchScroll(y, true);
+            pressed = false;
+            repeat = false;
+            break;
+        case UIControl::eUIControlType_LeaderboardList:
+            static_cast<UIControl_LeaderboardList*>(control)->SetTouchFocus(x, y, true);
+            break;
+        case UIControl::eUIControlType_Slider:
+        {
+            UIControl_Slider* slider = static_cast<UIControl_Slider*>(control);
+            slider->SetSliderTouchPos(((float)x - element->left) / slider->GetRealWidth());
+            break;
         }
-        else if (dynamic_cast<UIControl_List*>(control) != 0)
+        case UIControl::eUIControlType_TexturePackList:
+            static_cast<UIControl_TexturePackList*>(control)->SetTouchFocus(x - element->left, y - element->top, true);
+            break;
+        case UIControl::eUIControlType_Touch:
+            pressed = false;
+            control->m_scene->handleTouchInput(playerId, x, y, control->m_controlId, pressed, repeat, released);
+            repeat = false;
+            break;
+        case UIControl::eUIControlType_ButtonList:
+        case UIControl::eUIControlType_CheckboxButtonList:
+        case UIControl::eUIControlType_LayerIconButtonList:
+        case UIControl::eUIControlType_LeftIconButtonList:
+        case UIControl::eUIControlType_MultiList:
         {
+            float panelX;
+            UIControl* panel = control->m_scene->GetMainPanel();
+            if (panel == 0)
+            {
+                panelX = control->getXPos();
+            }
+            else
+            {
+                panelX = control->m_scene->GetMainPanel()->getXPos();
+                y -= (int)control->m_scene->GetMainPanel()->getYPos();
+            }
+            x -= (int)panelX;
             UIControl_List* list = static_cast<UIControl_List*>(control);
-            if (list->CanTouchFocus(x, y) != 0)
-                list->SetTouchFocus(x, y, m_touchHeld);
+            if (m_touchPressElement->control->m_controlType != UIControl::eUIControlType_MultiList ||
+                list->CanTouchFocus(x, y))
+                list->SetTouchFocus(x, y, true);
+            break;
         }
-        else if (dynamic_cast<UIControl_GridList*>(control) != 0)
+        case UIControl::eUIControlType_AchievementsList:
         {
+            UIControl* panel = control->m_scene->GetMainPanel();
+            if (panel == 0)
+            {
+                x -= (int)control->getXPos();
+            }
+            else
+            {
+                x -= (int)control->m_scene->GetMainPanel()->getXPos();
+                y -= (int)control->m_scene->GetMainPanel()->getYPos();
+            }
             UIControl_GridList* list = static_cast<UIControl_GridList*>(control);
-            if (list->CanTouchFocus(x, y) != 0)
-                list->SetTouchFocus(x, y, m_touchHeld);
+            if (list->CanTouchFocus(x, y))
+                list->SetTouchFocus(x, y, true);
+            break;
+        }
+        default:
+            break;
         }
     }
-    if (m_lastTouchElement != 0 && m_lastTouchElement->control != 0)
+
+    if (released)
     {
-        UIControl* control = m_lastTouchElement->control;
-        const int x = m_touchX - m_lastTouchElement->left;
-        const int y = m_touchY - m_lastTouchElement->top;
-        bool triggered = false;
-        if (dynamic_cast<UIControl_TexturePackList*>(control) != 0)
-            triggered = static_cast<UIControl_TexturePackList*>(control)->CanTouchTrigger(x, y) != 0;
-        else if (dynamic_cast<UIControl_List*>(control) != 0)
-            triggered = static_cast<UIControl_List*>(control)->CanTouchTrigger(x, y);
-        else if (dynamic_cast<UIControl_GridList*>(control) != 0)
-            triggered = static_cast<UIControl_GridList*>(control)->CanTouchTrigger(x, y);
-        if (triggered)
-            pressed = true;
+        std::string controlName = m_touchPressElement->control->m_name;
+        UIELEMENT* element = m_touchPressElement;
+        UIControl* control = element->control;
+        switch (control->m_controlType)
+        {
+        case UIControl::eUIControlType_Button:
+        case UIControl::eUIControlType_TextInput:
+            if (m_touchCurrentElement != 0 && control == m_touchCurrentElement->control)
+                pressed = true;
+            break;
+        case UIControl::eUIControlType_CheckBox:
+        {
+            UIControl_CheckBox* checkBox = static_cast<UIControl_CheckBox*>(control);
+            if (m_touchCurrentElement != 0 && control == m_touchCurrentElement->control && checkBox->IsEnabled())
+                checkBox->setChecked(!checkBox->IsChecked());
+            released = false;
+            break;
+        }
+        case UIControl::eUIControlType_DynamicLabel:
+            static_cast<UIControl_DynamicLabel*>(control)->TouchScroll(y, false);
+            break;
+        case UIControl::eUIControlType_HTMLLabel:
+            static_cast<UIControl_HTMLLabel*>(control)->TouchScroll(y, false);
+            break;
+        case UIControl::eUIControlType_TexturePackList:
+            if (m_touchCurrentElement != 0 && control == m_touchCurrentElement->control &&
+                static_cast<UIControl_TexturePackList*>(control)->CanTouchTrigger(x - element->left, y - element->top))
+                pressed = true;
+            break;
+        case UIControl::eUIControlType_Touch:
+            if (m_touchCurrentElement != 0 && control == m_touchCurrentElement->control)
+                control->m_scene->handleTouchInput(playerId, x, y, control->m_controlId, pressed, repeat, released);
+            released = false;
+            break;
+        case UIControl::eUIControlType_ButtonList:
+        case UIControl::eUIControlType_CheckboxButtonList:
+        case UIControl::eUIControlType_LayerIconButtonList:
+        case UIControl::eUIControlType_LeftIconButtonList:
+        case UIControl::eUIControlType_MultiList:
+            if (m_touchCurrentElement != 0 && control == m_touchCurrentElement->control)
+            {
+                UIControl_List* list = static_cast<UIControl_List*>(control);
+                bool triggered;
+                if (control->m_scene->GetMainPanel() == 0)
+                {
+                    triggered = list->CanTouchTrigger(x - (int)control->getXPos(), y);
+                }
+                else
+                {
+                    float panelX = control->m_scene->GetMainPanel()->getXPos();
+                    float panelY = control->m_scene->GetMainPanel()->getYPos();
+                    triggered = list->CanTouchTrigger(x - (int)panelX, y - (int)panelY);
+                }
+                if (triggered)
+                    pressed = true;
+            }
+            break;
+        case UIControl::eUIControlType_AchievementsList:
+            if (m_touchCurrentElement != 0 && control == m_touchCurrentElement->control)
+            {
+                UIControl_GridList* list = static_cast<UIControl_GridList*>(control);
+                bool triggered;
+                if (control->m_scene->GetMainPanel() != 0)
+                {
+                    float panelX = control->m_scene->GetMainPanel()->getXPos();
+                    float panelY = control->m_scene->GetMainPanel()->getYPos();
+                    triggered = list->CanTouchTrigger(x - (int)panelX, y - (int)panelY);
+                }
+                else
+                {
+                    triggered = list->CanTouchTrigger(x - (int)control->getXPos(), y);
+                }
+                if (triggered)
+                    pressed = true;
+            }
+            break;
+        default:
+            break;
+        }
     }
-    if (repeat || released || pressed)
-        SendTouchInput(playerId, action, repeat, released, pressed);
+
+    if (pressed || repeat || released)
+        SendTouchInput(playerId, action, pressed, repeat, released);
 }
 
 void ConsoleUIController::TouchBoxAdd(UIControl* control, UIScene* scene)
 {
-    if (control == 0 || scene == 0)
-        return;
-    scene->updateViewportTouchOffset();
-    m_touchElement = 0;
+    EUILayer layer = (EUILayer)scene->m_layer->m_layerId;
+    EUIGroup group = scene->m_layer->m_group->m_group;
+    EUIScene sceneType = (EUIScene)scene->getSceneType();
+    TouchBoxAdd(control, group, layer, sceneType, scene->GetMainPanel());
 }
 
 void ConsoleUIController::TouchBoxAdd(UIControl* control, EUIGroup groupId, EUILayer layer,
                                       EUIScene scene, UIControl* parent)
 {
-    UIELEMENT* elem = new UIELEMENT;
-    elem->control = control;
-    double width = control->getWidth();
-    double height = control->getHeight();
-    double parentX = 0.0;
-    double parentY = 0.0;
+    UIELEMENT* element = new UIELEMENT;
+    element->control = control;
+    float width = control->getWidth();
+    float height = control->getHeight();
+    float parentX = 0.0f;
+    float parentY = 0.0f;
     if (parent != 0)
     {
         parentX = parent->getXPos();
         parentY = parent->getYPos();
     }
-    if (dynamic_cast<UIControl_Slider*>(control) != 0)
+    if (control->m_controlType == UIControl::eUIControlType_Slider)
     {
         width = static_cast<UIControl_Slider*>(control)->GetRealWidth();
     }
-    else if (dynamic_cast<UIControl_TexturePackList*>(control) != 0)
+    else if (control->m_controlType == UIControl::eUIControlType_TexturePackList)
     {
         height = static_cast<UIControl_TexturePackList*>(control)->GetRealHeight();
     }
-    else if (dynamic_cast<UIControl_DynamicLabel*>(control) != 0)
+    else if (control->m_controlType == UIControl::eUIControlType_DynamicLabel)
     {
-        UIControl_DynamicLabel* label = static_cast<UIControl_DynamicLabel*>(control);
-        width = label->GetRealWidth();
-        height = label->GetRealHeight();
+        width = static_cast<UIControl_DynamicLabel*>(control)->GetRealWidth();
+        height = static_cast<UIControl_DynamicLabel*>(control)->GetRealHeight();
     }
-    else if (dynamic_cast<UIControl_HTMLLabel*>(control) != 0)
+    else if (control->m_controlType == UIControl::eUIControlType_HTMLLabel)
     {
-        UIControl_HTMLLabel* label = static_cast<UIControl_HTMLLabel*>(control);
-        width = label->GetRealWidth();
-        height = label->GetRealHeight();
+        width = static_cast<UIControl_HTMLLabel*>(control)->GetRealWidth();
+        height = static_cast<UIControl_HTMLLabel*>(control)->GetRealHeight();
     }
-    int left = (int)(control->getXPos() + parentX + m_touchOffsetX);
-    int top = (int)(control->getYPos() + parentY + m_touchOffsetY);
-    int right = (int)(control->getXPos() + width + parentX + m_touchOffsetX);
-    int bottom = (int)(control->getYPos() + height + parentY + m_touchOffsetY);
-    elem->left = left;
-    elem->top = top;
-    elem->right = right;
-    elem->bottom = bottom;
-    if (left != right && top != bottom)
+    control->m_scene->updateViewportTouchOffset();
+    element->left = (int)(control->getXPos() + parentX + m_touchOffsetX);
+    element->top = (int)(control->getYPos() + parentY + m_touchOffsetY);
+    element->right = (int)(control->getXPos() + width + parentX + m_touchOffsetX);
+    element->bottom = (int)(control->getYPos() + height + parentY + m_touchOffsetY);
+    if (element->left != element->right && element->top != element->bottom)
     {
         EnterCriticalSection(&m_touchMutex);
-        m_touchBoxes[(int)groupId][(int)layer][(int)scene].push_back(elem);
+        m_touchBoxes[groupId][layer][scene].push_back(element);
         LeaveCriticalSection(&m_touchMutex);
     }
 }
 
 void ConsoleUIController::PlayUISFX(const SoundEvent* soundEvent)
 {
-    const unsigned long long now = System::processTimeInMilliSecs();
-    const unsigned int nowLow = static_cast<unsigned int>(now);
-    const int nowHigh = static_cast<int>(now >> 32);
-    if (nowHigh != m_lastUISFXTimeHigh + (int)(nowLow < m_lastUISFXTimeLow) ||
-        nowLow - m_lastUISFXTimeLow > 9)
+    unsigned long long now = System::processTimeInMilliSecs();
+    if (now - m_lastUISFXTime > 9)
     {
-        m_lastUISFXTimeHigh = nowHigh;
-        m_lastUISFXTimeLow = nowLow;
-        Minecraft::GetInstance()->mSoundEngine->playUI(soundEvent, 1.0f, 1.0f);
+        m_lastUISFXTime = now;
+        if (soundEvent == SoundEvents::UI_PRESS)
+            Minecraft::GetInstance()->mSoundEngine->playUI(soundEvent, 0.5f, 1.0f);
+        else
+            Minecraft::GetInstance()->mSoundEngine->playUI(soundEvent, 1.0f, 1.0f);
     }
 }
 
 bool ConsoleUIController::TouchBoxHit(UIScene* scene, int x, int y)
 {
-    int groupId = 0;
-    int layerId = 0;
-    for (int groupIndex = 0; groupIndex < EUIGroup_Count; ++groupIndex) {
-        UIGroup* group = m_groups[groupIndex];
-        if (group == 0)
-            continue;
-        for (int layerIndex = 0; layerIndex < EUILayer_Count; ++layerIndex) {
-            if (group->m_layers[layerIndex] == scene->m_layer) {
-                groupId = group->m_group;
-                layerId = layerIndex;
-                goto foundTouchBoxBucket;
-            }
-        }
-    }
-foundTouchBoxBucket:
-    const int sceneId = scene->getSceneType();
-    if (x == 0xc && y == 0x2c4) {
+    EUIGroup group = scene->m_layer->m_group->m_group;
+    int layer = scene->m_layer->m_layerId;
+    EUIScene sceneType = (EUIScene)scene->getSceneType();
+    if (x == 12 && y == 708)
+    {
         x = m_touchX;
         y = m_touchY;
-    } else {
+    }
+    else
+    {
         m_touchX = x;
         m_touchY = y;
     }
     EnterCriticalSection(&m_touchMutex);
-    std::vector<UIELEMENT*>& touchBoxes = m_touchBoxes[groupId][layerId][sceneId];
-    for (std::vector<UIELEMENT*>::iterator it = touchBoxes.begin(); it != touchBoxes.end(); ++it) {
-        UIELEMENT* element = *it;
-        if (element == 0 || element->control == 0)
-            continue;
-        if (!element->control->getVisible())
-            continue;
-        if (element->left > x || x > element->right)
-            continue;
-        if (element->top > y || y > element->bottom)
-            continue;
-        if (!m_touchHeld)
-            m_lastTouchElement = element;
-        m_touchElement = element;
-        LeaveCriticalSection(&m_touchMutex);
-        return true;
+    if (m_touchBoxes[group][layer][sceneType].size() > 0)
+    {
+        std::vector<UIELEMENT*>::iterator itEnd = m_touchBoxes[group][layer][sceneType].end();
+        for (std::vector<UIELEMENT*>::iterator it = m_touchBoxes[group][layer][sceneType].begin(); it != itEnd; ++it)
+        {
+            UIELEMENT* element = *it;
+            if (element != 0 && element->control != 0 && !element->control->m_removed &&
+                element->control->getVisible() && x >= element->left && x <= element->right &&
+                y >= element->top && y <= element->bottom)
+            {
+                if (!m_touchHeld)
+                    m_touchPressElement = element;
+                m_touchCurrentElement = element;
+                LeaveCriticalSection(&m_touchMutex);
+                return true;
+            }
+        }
     }
     LeaveCriticalSection(&m_touchMutex);
-    m_touchElement = 0;
+    m_touchCurrentElement = 0;
     return false;
 }
 
@@ -2025,96 +2370,100 @@ void ConsoleUIController::TouchBoxesClear(UIScene* scene)
 {
     EnterCriticalSection(&m_touchMutex);
     m_touchHeld = false;
-    int groupId = 0;
-    int layerId = 0;
-    for (int groupIndex = 0; groupIndex < EUIGroup_Count; ++groupIndex) {
-        UIGroup* group = m_groups[groupIndex];
-        if (group == 0)
-            continue;
-        for (int layerIndex = 0; layerIndex < EUILayer_Count; ++layerIndex) {
-            if (group->m_layers[layerIndex] == scene->m_layer) {
-                groupId = group->m_group;
-                layerId = layerIndex;
-                goto foundTouchBoxBucket;
-            }
-        }
-    }
-foundTouchBoxBucket:
-    {
-        const int sceneId = scene->getSceneType();
-        std::vector<UIELEMENT*>& touchBoxes = m_touchBoxes[groupId][layerId][sceneId];
-        for (std::vector<UIELEMENT*>::iterator it = touchBoxes.begin(); it != touchBoxes.end(); ++it)
-            delete *it;
-        touchBoxes.clear();
-    }
+    EUIGroup group = scene->m_layer->m_group->m_group;
+    int layer = scene->m_layer->m_layerId;
+    std::vector<UIELEMENT*>& touchBoxes = m_touchBoxes[group][layer][scene->getSceneType()];
+    std::vector<UIELEMENT*>::iterator itEnd = touchBoxes.end();
+    for (std::vector<UIELEMENT*>::iterator it = touchBoxes.begin(); it != itEnd; ++it)
+        delete *it;
+    touchBoxes.clear();
     LeaveCriticalSection(&m_touchMutex);
 }
 
 void ConsoleUIController::TouchBoxRebuild(UIScene* scene)
 {
+    EUIGroup group = scene->m_layer->m_group->m_group;
+    int layer = scene->m_layer->m_layerId;
+    EUIScene sceneType = (EUIScene)scene->getSceneType();
+    bool touchHeld = false;
+    if (m_touchHeld && m_touchPressElement != 0 &&
+        m_touchPressElement->control->m_scene->m_layer->m_layerId != layer)
+        touchHeld = m_touchHeld;
     m_rebuildingTouchBoxes = true;
-    TouchBoxesClear(scene);
-    int groupId = 0;
-    int layerId = 0;
-    for (int groupIndex = 0; groupIndex < EUIGroup_Count; ++groupIndex) {
-        UIGroup* group = m_groups[groupIndex];
-        if (group == 0)
-            continue;
-        for (int layerIndex = 0; layerIndex < EUILayer_Count; ++layerIndex) {
-            if (group->m_layers[layerIndex] == scene->m_layer) {
-                groupId = group->m_group;
-                layerId = layerIndex;
-                goto foundTouchBoxRebuildGroup;
-            }
-        }
-    }
-foundTouchBoxRebuildGroup:
+    m_touchHeld = false;
+    gConsoleUIController.TouchBoxesClear(scene);
+    std::vector<UIControl*>::iterator itEnd = scene->m_controls.end();
+    for (std::vector<UIControl*>::iterator it = scene->m_controls.begin(); it != itEnd; ++it)
     {
-        const int sceneId = scene->getSceneType();
-        for (std::vector<UIControl*>::iterator it = scene->m_controls.begin();
-             it != scene->m_controls.end(); ++it)
+        UIControl* control = *it;
+        switch (control->m_controlType)
         {
-            UIControl* control = *it;
-            bool interactive = dynamic_cast<UIControl_CheckBox*>(control) != 0 ||
-                                dynamic_cast<UIControl_DynamicLabel*>(control) != 0 ||
-                                dynamic_cast<UIControl_HTMLLabel*>(control) != 0 ||
-                                dynamic_cast<UIControl_LeaderboardList*>(control) != 0 ||
-                                dynamic_cast<UIControl_Slider*>(control) != 0 ||
-                                dynamic_cast<UIControl_TexturePackList*>(control) != 0 ||
-                                dynamic_cast<UIControl_List*>(control) != 0 ||
-                                dynamic_cast<UIControl_GridList*>(control) != 0;
-            if (interactive && control->getVisible())
+        case UIControl::eUIControlType_Button:
+        case UIControl::eUIControlType_CheckBox:
+        case UIControl::eUIControlType_DynamicLabel:
+        case UIControl::eUIControlType_HTMLLabel:
+        case UIControl::eUIControlType_LeaderboardList:
+        case UIControl::eUIControlType_Slider:
+        case UIControl::eUIControlType_TextInput:
+        case UIControl::eUIControlType_TexturePackList:
+        case UIControl::eUIControlType_Touch:
+        case UIControl::eUIControlType_ButtonList:
+        case UIControl::eUIControlType_CheckboxButtonList:
+        case UIControl::eUIControlType_LayerIconButtonList:
+        case UIControl::eUIControlType_LeftIconButtonList:
+        case UIControl::eUIControlType_MultiList:
+        case UIControl::eUIControlType_AchievementsList:
+            if (control->getVisible())
             {
-                control->UpdateControl();
-                TouchBoxAdd(control, static_cast<EUIGroup>(groupId), static_cast<EUILayer>(layerId), static_cast<EUIScene>(sceneId), 0);
+                if (control->m_controlType == UIControl::eUIControlType_MultiList)
+                {
+                    (*it)->UpdateControl();
+                    gConsoleUIController.TouchBoxAdd(control, group, (EUILayer)layer, sceneType, scene->GetMainPanel());
+                }
+                else
+                {
+                    control->UpdateControl();
+                    gConsoleUIController.TouchBoxAdd(control, group, (EUILayer)layer, sceneType, scene->GetMainPanel());
+                }
             }
+            break;
+        default:
+            break;
         }
     }
     m_rebuildingTouchBoxes = false;
+    m_touchHeld = touchHeld;
 }
 
 void ConsoleUIController::NavigateToHomeMenu(bool immediate)
 {
-    CloseAllPlayersScenes(false);
+    gConsoleUIController.CloseAllPlayersScenes(false);
     gApp.SetLiveLinkRequired(false);
-    gApp.setIgnoreMainMenuInputDuringInvite(false);
-
     Minecraft* minecraft = Minecraft::GetInstance();
+    gApp.setIgnoreMainMenuInputDuringInvite(false);
+    TexturePack* previousPack = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
+    previousPack->hasAudio();
     minecraft->mTexturePackRepository->selectTexturePackById(0, false);
     if (!immediate)
     {
         minecraft->mSoundEngine->SetStreamingSounds(0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18,
                                                      0x1b, 0x1c, 0x1f, 0x20, 0x29, 0x2a, 0x2a, 0x3e,
                                                      0x44, 0x57);
+        minecraft->mSoundEngine->playStreaming(NULL, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, false, false,
+                                               ConsoleSoundEngine::eAudioDelayType_Random);
     }
+    previousPack->hasAudio();
+    gStorage->UnmountInstalledDLC("TPACK");
+    CGameNetworkManager::sInstance.ForceFriendsSessionRefresh();
     if (minecraft->mTexturePackRepository->needsUIUpdate())
     {
         m_homeMenuPending = true;
         return;
     }
-    NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_MainMenu, 0, EUILayer_Scene,
-                    EUIGroup_PlayerDefault);
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_MainMenu, 0, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
 }
+
 
 UIScene* ConsoleUIController::FindScene(EUIScene scene)
 {

@@ -15,6 +15,8 @@ public:
     friend class Minecraft;
     friend class GameRenderer;
     friend class BlockRenderer;
+    friend class Font;
+    friend class GameSettings;
 
     class Option
     {
@@ -63,7 +65,7 @@ public:
     void setKey(int index, int key);
     void set(const Option* option, float value);
     void toggle(const Option* option, int amount);
-    double getProgressValue(const Option* option);
+    float getProgressValue(const Option* option);
     bool getBooleanValue(const Option* option);
     std::wstring getMessage(const Option* option);
     double readFloat(std::wstring value);

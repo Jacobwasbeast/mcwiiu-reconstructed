@@ -7,7 +7,7 @@
 class LocatableSource : public Location, public Source
 {
 public:
-    virtual ~LocatableSource();
+    virtual ~LocatableSource() {}
 };
 
 #endif

@@ -25,7 +25,7 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
     int parentHeight = (height >> 2) + 2;
     arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
 
-    PIXBeginNamedEvent(1.65f, "VoronoiZoom::getArea");
+    PIXBeginNamedEvent(0.0f, "VoronoiZoom::getArea");
 
     int gridWidth = (parentWidth - 1) << 2;
     int gridHeight = (parentHeight - 1) << 2;

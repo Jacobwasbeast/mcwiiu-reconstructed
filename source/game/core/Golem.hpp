@@ -11,7 +11,7 @@ class Golem : public PathfinderMob
 {
 public:
     Golem(Level* level);
-    virtual ~Golem();
+    virtual ~Golem() {}
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);

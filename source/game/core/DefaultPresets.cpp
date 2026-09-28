@@ -22,7 +22,7 @@ void DefaultPresets::makePreset(SuperflatConfig* config, Preset preset)
         info.addLayer(FlatLayerInfo(1, Blocks::bedrock));
         break;
     case TUNNELERS_DREAM:
-        info.setDisplayname(0x1D3AAD7A);
+        info.setDisplayname(IDS_PRESET_TUNNELERS_DREAM);
         info.setBiome(Biome::EXTREME_HILLS->id);
         info.setDungeons(true);
         info.setDecorations(true);

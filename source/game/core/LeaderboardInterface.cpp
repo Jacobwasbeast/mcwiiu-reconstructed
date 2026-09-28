@@ -80,13 +80,7 @@ void LeaderboardInterface::ReadStats_Friends(LeaderboardReadListener* pReadListe
     m_uid = uid;
     m_uiStartRank = uiStartRank;
     m_uiNumRows = uiNumRows;
-
-    tryOpenSession();
-
-    if (m_bRequestPending)
-    {
-        m_bRequestPending = !callManager();
-    }
+    tick();
 }
 
 void LeaderboardInterface::ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows)
@@ -98,13 +92,7 @@ void LeaderboardInterface::ReadStats_MyScore(LeaderboardReadListener* pReadListe
     m_eStatsType = eStatsType;
     m_uid = uid;
     m_uiNumRows = uiNumRows;
-
-    tryOpenSession();
-
-    if (m_bRequestPending)
-    {
-        m_bRequestPending = !callManager();
-    }
+    tick();
 }
 
 void LeaderboardInterface::ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows)

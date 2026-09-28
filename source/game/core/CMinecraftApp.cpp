@@ -1,6 +1,8 @@
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/VirtualPadKeys.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/core/XLanguage.hpp"
 #include "game/core/EntityType.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
@@ -106,15 +108,15 @@ CMinecraftApp* g_pApp = &gApp;
 static Random sTipRandom;
 static bool s_pendingDlcInstallTip;
 
-namespace
-{
-
 struct BANNEDLISTDATA
 {
     PlayerUID playerUid;
     char levelId[14];
     char padding[2];
 };
+
+namespace
+{
 
 struct ContainerMenuInitData
 {
@@ -222,13 +224,6 @@ FullscreenProgressState* NewFullscreenProgressState(bool showTip, int closeMode,
     state->playerId = playerId;
     state->backScene = EUIScene_None;
     return state;
-}
-
-std::vector<BANNEDLISTDATA*>& BannedLevelListAt(CMinecraftApp* minecraftApp, int player)
-{
-    std::vector<BANNEDLISTDATA*>** lists =
-        reinterpret_cast<std::vector<BANNEDLISTDATA*>**>(reinterpret_cast<char*>(minecraftApp) + 0x1ac);
-    return *lists[player];
 }
 
 int DisconnectMessageForReason(unsigned int reason)
@@ -363,65 +358,86 @@ unsigned int CMinecraftApp::_TipData::getNextTip()
     return tip;
 }
 CMinecraftApp::CMinecraftApp()
-    : mPrimaryPlayerUID(0), mDebugUIFocussed(false), mGameStarted(false), mAppPaused(false),
-      mChangingSessionType(false), mReallyChangingSessionType(false), mGameMode(0), mHostOptions(0),
-      mLoadSavesFromFolderEnabled(false), mDisconnectReason(0), mGlobalXuiAction(eXuiAction_Idle),
-      mLiveLinkRequired(false), mDebugInputEnabled(false), mTrialTimerStart(0.0f),
-      mTrialPausedTime(0.0f), mLastPerformanceCounter(0), mAccumulatedPerformanceCounter(0),
-      mAppTime(0.0f), mFrameTime(0.0f), mPerformanceCounterScale(0.0f),
-      mDLCInstallProcessCompleted(false), mDLCInstallPending(false), mDLCInstallCount(0),
-      mDLCInstallIndex(0), mAutosaveTime(0),
-      mNewDLCAvailable(false), mDLCOffersRetrievedValue(0), mExtraGameData(0),
-      mCorruptSaveDeleted(false), mResetNether(false), mResetEnd(false),
-      mRequiredTexturePackID(0), mFirstMiniGameType(eMiniGameId_Lobby),
-      mMediaArchive(NULL), mSaveNotificationCount(0), mDLCDownloadQueueResetFlag(false)
 {
-    InitializeCriticalSection(&mPendingActionsMutex);
-    InitializeCriticalSection(&mSaveNotificationMutex);
-    InitializeCriticalSection(&mActionMutex);
-    InitializeCriticalSection(&mTerrainFeaturePositionsMutex);
-    InitializeCriticalSection(&mMemoryTextureMutex);
-    InitializeCriticalSection(&mMemoryTPDMutex);
+    for (int player = 0; player < 4; ++player)
+    {
+        mXuiActions[player].action = eXuiAction_Idle;
+        mXuiActions[player].param = NULL;
+        mTMSActions[player] = 0;
+        if (XUserGetSigninInfo(player, 2, &mSignInInfo[player]) < 0)
+        {
+            static_cast<PlayerUID&>(mSignInInfo[player]) = PlayerUID(0);
+            mSignInInfo[player].dwInfoFlags = 0;
+        }
+        mBanListRead[player] = false;
+        SetBanListCheck(player, false);
+        mOpacityTimer[player] = 0;
+    }
+    mLiveLinkRequired = false;
+    mDebugInputEnabled = false;
+    mAppPaused = false;
+    mGameMode = 0;
+    mGlobalXuiAction = eXuiAction_Idle;
+    mUnusedGameModeFlags[0] = false;
+    mDisconnectReason = 0;
+    mUnusedServerActionWord = 0;
+    mLoadSavesFromFolderEnabled = false;
+    mUnusedStartedFlag = false;
+    mChangingSessionType = false;
+    mGameStarted = false;
+    mReallyChangingSessionType = false;
+    mUnusedBannedListFlag = false;
+    mPrimaryPlayerUID = PlayerUID(0);
+    mUnusedClearedWords[0] = 0;
+    mUnusedClearedWords[1] = 0;
+    mUnusedClearedWords[2] = 0;
+    mUnusedClearedWords[3] = 0;
+    mDLCInstallIndex = 0;
+    mUnusedDLCInstallFlag = false;
+    mDLCInstallPending = false;
+    mAutosaveTime = 0;
+    mDLCInstallProcessCompleted = false;
+    mDLCInstallCount = 0;
+    mTrialPausedTime = 0.0f;
+    std::memset(mUniqueMapName, 0, sizeof(mUniqueMapName));
+    mUnusedNewDLCFlag = false;
+    mNewDLCAvailable = false;
+    std::memset(mPlayerIds, 0, sizeof(mPlayerIds));
+    mDLCDownloadQueueResetFlag = true;
+    mDLCOffersRetrievedValue = 0;
+    InitializeCriticalSection(&mDLCRetrieveMutex);
+    mUnusedBanListFlag = false;
+    mUnusedDLCQueueFlags[1] = true;
+    mUnusedDLCQueueFlags[0] = true;
+    InitializeCriticalSection(&mDLCDownloadQueueMutex);
     InitializeCriticalSection(&mAdditionalModelPartsMutex);
     InitializeCriticalSection(&mAdditionalSkinBoxesMutex);
     InitializeCriticalSection(&mSkinAdjustmentsMutex);
-    InitializeCriticalSection(&mDLCRetrieveMutex);
-    InitializeCriticalSection(&mDLCDownloadQueueMutex);
-    SetBanListCheck(0, false);
-    SetBanListCheck(1, false);
-    SetBanListCheck(2, false);
-    SetBanListCheck(3, false);
-    std::fill(mOpacityTimer, mOpacityTimer + 4, 0);
-    std::fill(mOptionsCallbackStatus, mOptionsCallbackStatus + 4, 0);
-    std::fill(mPlayerIds, mPlayerIds + 8, 0);
-    std::fill(mPlayerPrivileges, mPlayerPrivileges + 8, 0);
-    std::fill(mPlayerGameTypes, mPlayerGameTypes + 8, 0);
-    std::fill(mBanListRead, mBanListRead + 4, false);
-    std::fill(mBanListBuffers, mBanListBuffers + 4, static_cast<unsigned char*>(NULL));
-    std::memset(mUniqueMapName, 0, sizeof(mUniqueMapName));
+    InitializeCriticalSection(&mUnusedMutex);
+    InitializeCriticalSection(&mMemoryTextureMutex);
+    InitializeCriticalSection(&mMemoryTPDMutex);
+    InitializeCriticalSection(&mActionMutex);
+    InitializeCriticalSection(&mPendingActionsMutex);
+    InitializeCriticalSection(&mTerrainFeaturePositionsMutex);
+    InitializeCriticalSection(&mSaveNotificationMutex);
+    mUnusedGameModeFlags[2] = true;
+    mDebugUIFocussed = false;
+    mResetEnd = false;
+    mOptionsCallbackStatus[0] = 0;
+    mOptionsCallbackStatus[1] = 0;
+    mOptionsCallbackStatus[2] = 0;
+    mOptionsCallbackStatus[3] = 0;
+    mResetNether = false;
+    mRequiredTexturePackID = 0;
+    mSaveNotificationCount = 0;
+    for (int player = 0; player < 4; ++player)
+        mBannedListData[player] = new std::vector<BANNEDLISTDATA*>();
     LocaleAndLanguageInit();
+    mTutorialModes[PlayerUID(0)] = false;
+    mFirstMiniGameType = eMiniGameId_Lobby;
 }
 CMinecraftApp::~CMinecraftApp()
 {
-    delete mMediaArchive;
-    mMediaArchive = NULL;
-    for (int player = 0; player < 4; ++player)
-    {
-        if (mBanListBuffers[player] != NULL)
-        {
-            delete[] mBanListBuffers[player];
-            mBanListBuffers[player] = NULL;
-        }
-    }
-    DeleteCriticalSection(&mSaveNotificationMutex);
-    DeleteCriticalSection(&mActionMutex);
-    DeleteCriticalSection(&mPendingActionsMutex);
-    DeleteCriticalSection(&mTerrainFeaturePositionsMutex);
-    DeleteCriticalSection(&mMemoryTextureMutex);
-    DeleteCriticalSection(&mMemoryTPDMutex);
-    DeleteCriticalSection(&mAdditionalModelPartsMutex);
-    DeleteCriticalSection(&mAdditionalSkinBoxesMutex);
-    DeleteCriticalSection(&mSkinAdjustmentsMutex);
 }
 void CMinecraftApp::SetGameHostOption(unsigned int& options, eGameHostOption option, unsigned int value)
 {
@@ -461,7 +477,7 @@ void CMinecraftApp::SetGameHostOption(unsigned int& options, eGameHostOption opt
 }
 void CMinecraftApp::SetGameHostOption(eGameHostOption option, unsigned int value)
 {
-    SetGameHostOption(mHostOptions, option, value);
+    SetGameHostOption(mCurrentImageTextData.hostOptions, option, value);
 }
 void CMinecraftApp::SetXuiServerAction(int player, eXuiServerAction action, void* param)
 {
@@ -508,7 +524,7 @@ uint32_t CMinecraftApp::GetGameHostOption(unsigned int options, eGameHostOption 
 }
 uint32_t CMinecraftApp::GetGameHostOption(eGameHostOption option)
 {
-    return GetGameHostOption(mHostOptions, option);
+    return GetGameHostOption(mCurrentImageTextData.hostOptions, option);
 }
 uint32_t CMinecraftApp::GetOptionsCallbackStatus(int32_t player)
 {
@@ -595,7 +611,7 @@ uint32_t CMinecraftApp::IsActionPending(int player, eXuiAction action)
         LeaveCriticalSection(&mPendingActionsMutex);
         return 1;
     }
-    for (std::vector<XuiActionData>::const_iterator it = mPendingActions[player].begin();
+    for (std::vector<XuiActionAndParam>::const_iterator it = mPendingActions[player].begin();
          it != mPendingActions[player].end(); ++it)
         if (it->action == action)
         {
@@ -646,7 +662,7 @@ void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param
     {
         if (action == eXuiAction_Idle)
         {
-            std::vector<XuiActionData>& pending = mPendingActions[player];
+            std::vector<XuiActionAndParam>& pending = mPendingActions[player];
             if (!pending.empty())
             {
                 EnterCriticalSection(&mPendingActionsMutex);
@@ -660,7 +676,7 @@ void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param
         else if (currentAction != eXuiAction_Idle && !isValidStateTransition(currentAction, action))
         {
             EnterCriticalSection(&mPendingActionsMutex);
-            XuiActionData entry;
+            XuiActionAndParam entry;
             entry.action = action;
             entry.param = param;
             mPendingActions[player].push_back(entry);
@@ -683,15 +699,15 @@ void CMinecraftApp::SetBanListCheck(int32_t player, bool check)
 }
 void CMinecraftApp::InvalidateBannedList(int32_t player)
 {
-    if (player < 0 || player >= 4 || !mBanListRead[player])
+    if (!mBanListRead[player])
         return;
     mBanListRead[player] = false;
     SetBanListCheck(player, false);
-    mBanListEntries[player].clear();
-    if (mBanListBuffers[player] != NULL)
+    mBannedListData[player]->clear();
+    if (mBanListBuffers[player].data != NULL)
     {
-        delete[] mBanListBuffers[player];
-        mBanListBuffers[player] = NULL;
+        delete[] mBanListBuffers[player].data;
+        mBanListBuffers[player].data = NULL;
     }
 }
 void CMinecraftApp::ClearAndResetDLCDownloadQueue()
@@ -1279,7 +1295,7 @@ void CMinecraftApp::SetExtraGameData(unsigned int& options, eGameExtraData type,
 }
 void CMinecraftApp::SetExtraGameData(eGameExtraData type, unsigned int value)
 {
-    SetExtraGameData(mExtraGameData, type, value);
+    SetExtraGameData(mCurrentImageTextData.extraData, type, value);
 }
 void CMinecraftApp::SetTutorialMode(bool tutorial, const boost::shared_ptr<Player>& player)
 {
@@ -1308,7 +1324,7 @@ int CMinecraftApp::RemoteSaveThreadProc(void* context)
 
     Minecraft* minecraft = Minecraft::GetInstance();
     ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
-    progressRenderer->progressStartNoAbort(static_cast<int>(0x5aaa2e05));
+    progressRenderer->progressStartNoAbort(static_cast<int>(IDS_PROGRESS_HOST_SAVING));
     progressRenderer->progressStage(-1);
     progressRenderer->progressStagePercentage(0);
 
@@ -1988,7 +2004,7 @@ uint32_t CMinecraftApp::StartInstallDLCProcess(int32_t pad)
     gStorage->GetInstalledDLC(pad, DLCInstalledCallback, this);
     return 1;
 }
-LevelGenerators* CMinecraftApp::getLevelGenerators()
+std::vector<LevelGenerationOptions*>* CMinecraftApp::getLevelGenerators()
 {
     return mGameRuleManager.getLevelGenerators();
 }
@@ -2004,75 +2020,194 @@ void CMinecraftApp::ClearTerrainFeaturePosition()
 }
 void CMinecraftApp::LocaleAndLanguageInit()
 {
-    static const struct { int id; const wchar_t* tag; } languageEntries[] = {
-        {28, L"zh-CHT"},
-        {27, L"cs-CS"},
-        {29, L"la-LAS"},
-        {0, L"en-EN"},
-        {1, L"en-US"},
-        {2, L"en-GB"},
-        {3, L"en-IE"},
-        {4, L"en-AU"},
-        {5, L"en-NZ"},
-        {6, L"en-CA"},
-        {7, L"ja-JP"},
-        {8, L"de-DE"},
-        {9, L"de-AT"},
-        {10, L"fr-FR"},
-        {11, L"fr-CA"},
-        {12, L"es-ES"},
-        {13, L"es-MX"},
-        {14, L"it-IT"},
-        {15, L"ko-KR"},
-        {16, L"pt-PT"},
-        {17, L"pt-BR"},
-        {18, L"ru-RU"},
-        {19, L"nl-NL"},
-        {20, L"fi-FI"},
-        {21, L"sv-SV"},
-        {22, L"da-DA"},
-        {23, L"no-NO"},
-        {24, L"pl-PL"},
-        {25, L"tr-TR"},
-        {26, L"el-EL"},
-        {30, L"zh-SG"},
-        {31, L"zh-CN"},
-        {32, L"zh-HK"},
-        {33, L"zh-TW"},
-        {34, L"nl-BE"},
-        {35, L"da-DK"},
-        {36, L"fr-BE"},
-        {37, L"fr-CH"},
-        {38, L"de-CH"},
-        {39, L"nb-NO"},
-        {40, L"en-GR"},
-        {41, L"en-HK"},
-        {42, L"en-SA"},
-        {43, L"en-HU"},
-        {44, L"en-IN"},
-        {45, L"en-IL"},
-        {46, L"en-SG"},
-        {47, L"en-SK"},
-        {48, L"en-ZA"},
-        {49, L"en-CZ"},
-        {50, L"en-AE"},
-        {51, L"es-AR"},
-        {52, L"es-CL"},
-        {53, L"es-CO"},
-        {54, L"es-US"},
-        {55, L"sv-SE"},
-        {56, L"cs-CZ"},
-        {57, L"el-GR"},
-        {58, L"nn-NO"},
-        {59, L"sk-SK"},
-        {60, L"zh-HANS"},
-        {61, L"zh-HANT"}
-    };
-    for (const auto& languageEntry : languageEntries)
-    {
-        mLocaleToString[languageEntry.id] = languageEntry.tag;
-        mStringToLocale[languageEntry.tag] = languageEntry.id;
-    }
+    mLocaleToString[eMCLang_zhCHT] = L"zh-CHT";
+    mLocaleToString[eMCLang_csCS] = L"cs-CS";
+    mLocaleToString[eMCLang_laLAS] = L"la-LAS";
+    mLocaleToString[eMCLang_enEN] = L"en-EN";
+    mLocaleToString[eMCLang_enUS] = L"en-US";
+    mLocaleToString[eMCLang_enGB] = L"en-GB";
+    mLocaleToString[eMCLang_enIE] = L"en-IE";
+    mLocaleToString[eMCLang_enAU] = L"en-AU";
+    mLocaleToString[eMCLang_enNZ] = L"en-NZ";
+    mLocaleToString[eMCLang_enCA] = L"en-CA";
+    mLocaleToString[eMCLang_jaJP] = L"ja-JP";
+    mLocaleToString[eMCLang_deDE] = L"de-DE";
+    mLocaleToString[eMCLang_deAT] = L"de-AT";
+    mLocaleToString[eMCLang_frFR] = L"fr-FR";
+    mLocaleToString[eMCLang_frCA] = L"fr-CA";
+    mLocaleToString[eMCLang_esES] = L"es-ES";
+    mLocaleToString[eMCLang_esMX] = L"es-MX";
+    mLocaleToString[eMCLang_itIT] = L"it-IT";
+    mLocaleToString[eMCLang_koKR] = L"ko-KR";
+    mLocaleToString[eMCLang_ptPT] = L"pt-PT";
+    mLocaleToString[eMCLang_ptBR] = L"pt-BR";
+    mLocaleToString[eMCLang_ruRU] = L"ru-RU";
+    mLocaleToString[eMCLang_nlNL] = L"nl-NL";
+    mLocaleToString[eMCLang_fiFI] = L"fi-FI";
+    mLocaleToString[eMCLang_svSV] = L"sv-SV";
+    mLocaleToString[eMCLang_daDA] = L"da-DA";
+    mLocaleToString[eMCLang_noNO] = L"no-NO";
+    mLocaleToString[eMCLang_plPL] = L"pl-PL";
+    mLocaleToString[eMCLang_trTR] = L"tr-TR";
+    mLocaleToString[eMCLang_elEL] = L"el-EL";
+    mLocaleToString[eMCLang_zhSG] = L"zh-SG";
+    mLocaleToString[eMCLang_zhCN] = L"zh-CN";
+    mLocaleToString[eMCLang_zhHK] = L"zh-HK";
+    mLocaleToString[eMCLang_zhTW] = L"zh-TW";
+    mLocaleToString[eMCLang_nlBE] = L"nl-BE";
+    mLocaleToString[eMCLang_daDK] = L"da-DK";
+    mLocaleToString[eMCLang_frBE] = L"fr-BE";
+    mLocaleToString[eMCLang_frCH] = L"fr-CH";
+    mLocaleToString[eMCLang_deCH] = L"de-CH";
+    mLocaleToString[eMCLang_nbNO] = L"nb-NO";
+    mLocaleToString[eMCLang_enGR] = L"en-GR";
+    mLocaleToString[eMCLang_enHK] = L"en-HK";
+    mLocaleToString[eMCLang_enSA] = L"en-SA";
+    mLocaleToString[eMCLang_enHU] = L"en-HU";
+    mLocaleToString[eMCLang_enIN] = L"en-IN";
+    mLocaleToString[eMCLang_enIL] = L"en-IL";
+    mLocaleToString[eMCLang_enSG] = L"en-SG";
+    mLocaleToString[eMCLang_enSK] = L"en-SK";
+    mLocaleToString[eMCLang_enZA] = L"en-ZA";
+    mLocaleToString[eMCLang_enCZ] = L"en-CZ";
+    mLocaleToString[eMCLang_enAE] = L"en-AE";
+    mLocaleToString[eMCLang_esAR] = L"es-AR";
+    mLocaleToString[eMCLang_esCL] = L"es-CL";
+    mLocaleToString[eMCLang_esCO] = L"es-CO";
+    mLocaleToString[eMCLang_esUS] = L"es-US";
+    mLocaleToString[eMCLang_svSE] = L"sv-SE";
+    mLocaleToString[eMCLang_csCZ] = L"cs-CZ";
+    mLocaleToString[eMCLang_elGR] = L"el-GR";
+    mLocaleToString[eMCLang_nnNO] = L"nn-NO";
+    mLocaleToString[eMCLang_skSK] = L"sk-SK";
+    mLocaleToString[eMCLang_zhHANS] = L"zh-HANS";
+    mLocaleToString[eMCLang_zhHANT] = L"zh-HANT";
+
+    mStringToLocale[L"zh-CHT"] = eMCLang_zhCHT;
+    mStringToLocale[L"cs-CS"] = eMCLang_csCS;
+    mStringToLocale[L"la-LAS"] = eMCLang_laLAS;
+    mStringToLocale[L"en-EN"] = eMCLang_enEN;
+    mStringToLocale[L"en-US"] = eMCLang_enUS;
+    mStringToLocale[L"en-GB"] = eMCLang_enGB;
+    mStringToLocale[L"en-IE"] = eMCLang_enIE;
+    mStringToLocale[L"en-AU"] = eMCLang_enAU;
+    mStringToLocale[L"en-NZ"] = eMCLang_enNZ;
+    mStringToLocale[L"en-CA"] = eMCLang_enCA;
+    mStringToLocale[L"ja-JP"] = eMCLang_jaJP;
+    mStringToLocale[L"de-DE"] = eMCLang_deDE;
+    mStringToLocale[L"de-AT"] = eMCLang_deAT;
+    mStringToLocale[L"fr-FR"] = eMCLang_frFR;
+    mStringToLocale[L"fr-CA"] = eMCLang_frCA;
+    mStringToLocale[L"es-ES"] = eMCLang_esES;
+    mStringToLocale[L"es-MX"] = eMCLang_esMX;
+    mStringToLocale[L"it-IT"] = eMCLang_itIT;
+    mStringToLocale[L"ko-KR"] = eMCLang_koKR;
+    mStringToLocale[L"pt-PT"] = eMCLang_ptPT;
+    mStringToLocale[L"pt-BR"] = eMCLang_ptBR;
+    mStringToLocale[L"ru-RU"] = eMCLang_ruRU;
+    mStringToLocale[L"nl-NL"] = eMCLang_nlNL;
+    mStringToLocale[L"fi-FI"] = eMCLang_fiFI;
+    mStringToLocale[L"sv-SV"] = eMCLang_svSV;
+    mStringToLocale[L"da-DA"] = eMCLang_daDA;
+    mStringToLocale[L"no-NO"] = eMCLang_noNO;
+    mStringToLocale[L"pl-PL"] = eMCLang_plPL;
+    mStringToLocale[L"tr-TR"] = eMCLang_trTR;
+    mStringToLocale[L"el-EL"] = eMCLang_elEL;
+    mStringToLocale[L"zh-SG"] = eMCLang_zhSG;
+    mStringToLocale[L"zh-CN"] = eMCLang_zhCN;
+    mStringToLocale[L"zh-HK"] = eMCLang_zhHK;
+    mStringToLocale[L"zh-TW"] = eMCLang_zhTW;
+    mStringToLocale[L"nl-BE"] = eMCLang_nlBE;
+    mStringToLocale[L"da-DK"] = eMCLang_daDK;
+    mStringToLocale[L"fr-BE"] = eMCLang_frBE;
+    mStringToLocale[L"fr-CH"] = eMCLang_frCH;
+    mStringToLocale[L"de-CH"] = eMCLang_deCH;
+    mStringToLocale[L"nb-NO"] = eMCLang_nbNO;
+    mStringToLocale[L"en-GR"] = eMCLang_enGR;
+    mStringToLocale[L"en-HK"] = eMCLang_enHK;
+    mStringToLocale[L"en-SA"] = eMCLang_enSA;
+    mStringToLocale[L"en-HU"] = eMCLang_enHU;
+    mStringToLocale[L"en-IN"] = eMCLang_enIN;
+    mStringToLocale[L"en-IL"] = eMCLang_enIL;
+    mStringToLocale[L"en-SG"] = eMCLang_enSG;
+    mStringToLocale[L"en-SK"] = eMCLang_enSK;
+    mStringToLocale[L"en-ZA"] = eMCLang_enZA;
+    mStringToLocale[L"en-CZ"] = eMCLang_enCZ;
+    mStringToLocale[L"en-AE"] = eMCLang_enAE;
+    mStringToLocale[L"es-AR"] = eMCLang_esAR;
+    mStringToLocale[L"es-CL"] = eMCLang_esCL;
+    mStringToLocale[L"es-CO"] = eMCLang_esCO;
+    mStringToLocale[L"es-US"] = eMCLang_esUS;
+    mStringToLocale[L"sv-SE"] = eMCLang_svSE;
+    mStringToLocale[L"cs-CZ"] = eMCLang_csCZ;
+    mStringToLocale[L"el-GR"] = eMCLang_elGR;
+    mStringToLocale[L"nn-NO"] = eMCLang_nnNO;
+    mStringToLocale[L"sk-SK"] = eMCLang_skSK;
+    mStringToLocale[L"zh-HANS"] = eMCLang_zhHANS;
+    mStringToLocale[L"zh-HANT"] = eMCLang_zhHANT;
+
+    mStringToXcLocale[L"zh-CHT"] = XC_LOCALE_CHINA;
+    mStringToXcLocale[L"cs-CS"] = XC_LOCALE_CHINA;
+    mStringToXcLocale[L"en-EN"] = XC_LOCALE_UNITED_STATES;
+    mStringToXcLocale[L"en-US"] = XC_LOCALE_UNITED_STATES;
+    mStringToXcLocale[L"en-GB"] = XC_LOCALE_GREAT_BRITAIN;
+    mStringToXcLocale[L"en-IE"] = XC_LOCALE_IRELAND;
+    mStringToXcLocale[L"en-AU"] = XC_LOCALE_AUSTRALIA;
+    mStringToXcLocale[L"en-NZ"] = XC_LOCALE_NEW_ZEALAND;
+    mStringToXcLocale[L"en-CA"] = XC_LOCALE_CANADA;
+    mStringToXcLocale[L"ja-JP"] = XC_LOCALE_JAPAN;
+    mStringToXcLocale[L"de-DE"] = XC_LOCALE_GERMANY;
+    mStringToXcLocale[L"de-AT"] = XC_LOCALE_AUSTRIA;
+    mStringToXcLocale[L"fr-FR"] = XC_LOCALE_FRANCE;
+    mStringToXcLocale[L"fr-CA"] = XC_LOCALE_CANADA;
+    mStringToXcLocale[L"es-ES"] = XC_LOCALE_SPAIN;
+    mStringToXcLocale[L"es-MX"] = XC_LOCALE_MEXICO;
+    mStringToXcLocale[L"it-IT"] = XC_LOCALE_ITALY;
+    mStringToXcLocale[L"ko-KR"] = XC_LOCALE_KOREA;
+    mStringToXcLocale[L"pt-PT"] = XC_LOCALE_PORTUGAL;
+    mStringToXcLocale[L"pt-BR"] = XC_LOCALE_BRAZIL;
+    mStringToXcLocale[L"ru-RU"] = XC_LOCALE_RUSSIAN_FEDERATION;
+    mStringToXcLocale[L"nl-NL"] = XC_LOCALE_NETHERLANDS;
+    mStringToXcLocale[L"fi-FI"] = XC_LOCALE_FINLAND;
+    mStringToXcLocale[L"sv-SV"] = XC_LOCALE_SWEDEN;
+    mStringToXcLocale[L"da-DA"] = XC_LOCALE_DENMARK;
+    mStringToXcLocale[L"no-NO"] = XC_LOCALE_NORWAY;
+    mStringToXcLocale[L"pl-PL"] = XC_LOCALE_POLAND;
+    mStringToXcLocale[L"tr-TR"] = XC_LOCALE_TURKEY;
+    mStringToXcLocale[L"el-EL"] = XC_LOCALE_GREECE;
+    mStringToXcLocale[L"la-LAS"] = XC_LOCALE_LATIN_AMERICA;
+    mStringToXcLocale[L"zh-SG"] = XC_LOCALE_SINGAPORE;
+    mStringToXcLocale[L"zh-CN"] = XC_LOCALE_CHINA;
+    mStringToXcLocale[L"zh-HK"] = XC_LOCALE_HONG_KONG;
+    mStringToXcLocale[L"zh-TW"] = XC_LOCALE_TAIWAN;
+    mStringToXcLocale[L"nl-BE"] = XC_LOCALE_BELGIUM;
+    mStringToXcLocale[L"da-DK"] = XC_LOCALE_DENMARK;
+    mStringToXcLocale[L"fr-BE"] = XC_LOCALE_BELGIUM;
+    mStringToXcLocale[L"fr-CH"] = XC_LOCALE_SWITZERLAND;
+    mStringToXcLocale[L"de-CH"] = XC_LOCALE_SWITZERLAND;
+    mStringToXcLocale[L"nb-NO"] = XC_LOCALE_NORWAY;
+    mStringToXcLocale[L"en-GR"] = XC_LOCALE_GREECE;
+    mStringToXcLocale[L"en-HK"] = XC_LOCALE_HONG_KONG;
+    mStringToXcLocale[L"en-SA"] = XC_LOCALE_SAUDI_ARABIA;
+    mStringToXcLocale[L"en-HU"] = XC_LOCALE_HUNGARY;
+    mStringToXcLocale[L"en-IN"] = XC_LOCALE_INDIA;
+    mStringToXcLocale[L"en-IL"] = XC_LOCALE_ISRAEL;
+    mStringToXcLocale[L"en-SG"] = XC_LOCALE_SINGAPORE;
+    mStringToXcLocale[L"en-SK"] = XC_LOCALE_SLOVAK_REPUBLIC;
+    mStringToXcLocale[L"en-ZA"] = XC_LOCALE_SOUTH_AFRICA;
+    mStringToXcLocale[L"en-CZ"] = XC_LOCALE_CZECH_REPUBLIC;
+    mStringToXcLocale[L"en-AE"] = XC_LOCALE_UNITED_ARAB_EMIRATES;
+    mStringToXcLocale[L"ja-IP"] = XC_LOCALE_JAPAN;
+    mStringToXcLocale[L"es-AR"] = XC_LOCALE_ARGENTINA;
+    mStringToXcLocale[L"es-CL"] = XC_LOCALE_CHILE;
+    mStringToXcLocale[L"es-CO"] = XC_LOCALE_COLOMBIA;
+    mStringToXcLocale[L"es-US"] = XC_LOCALE_UNITED_STATES;
+    mStringToXcLocale[L"sv-SE"] = XC_LOCALE_SWEDEN;
+    mStringToXcLocale[L"cs-CZ"] = XC_LOCALE_CZECH_REPUBLIC;
+    mStringToXcLocale[L"el-GR"] = XC_LOCALE_GREECE;
+    mStringToXcLocale[L"sk-SK"] = XC_LOCALE_SLOVAK_REPUBLIC;
+    mStringToXcLocale[L"zh-HANS"] = XC_LOCALE_CHINA;
+    mStringToXcLocale[L"zh-HANT"] = XC_LOCALE_CHINA;
 }
 void CMinecraftApp::HandleButtonPresses()
 {
@@ -2199,7 +2334,7 @@ bool CMinecraftApp::LoadCrafting3x3Menu(int player, boost::shared_ptr<LocalPlaye
         data->y = y;
         data->player = player;
         data->z = z;
-        data->fireworks = 0;
+        data->fireworks = false;
         data->x = x;
         data->splitscreen = GetLocalPlayerCount() > 1;
         return gConsoleUIController.NavigateToScene(player, EUIScene_ClassicCraftingMenu, data, EUILayer_Scene,
@@ -2210,7 +2345,7 @@ bool CMinecraftApp::LoadFireworksMenu(int player, boost::shared_ptr<LocalPlayer>
 {
     ClassicCraftingMenuInitData* data = new ClassicCraftingMenuInitData();
     data->localPlayer = localPlayer;
-    data->fireworks = 1;
+    data->fireworks = true;
     data->player = player;
     data->x = x;
     data->y = y;
@@ -2503,7 +2638,10 @@ void CMinecraftApp::SetNewDLCAvailable(bool available)
 void CMinecraftApp::UpsellDLC(int userIndex, DLCPack* pack, int (*callback)(void*, int, int), IUIScene_DLCUpsell* scene)
 {
     if (gProfile->IsSignedIn(userIndex) && !gProfile->IsSignedInLive(userIndex))
+    {
+        scene->SetIgnoreInput(false);
         scene->ShowNotOnlineDialog(userIndex);
+    }
 }
 void CMinecraftApp::StoreLaunchData()
 {
@@ -2590,38 +2728,26 @@ bool CMinecraftApp::DefaultCapeExists()
 }
 void CMinecraftApp::RemoveLevelFromBannedLevelList(int player, PlayerUID uid, char* levelId)
 {
-    std::vector<BANNEDLISTDATA*>& bannedList = BannedLevelListAt(this, player);
+    std::vector<BANNEDLISTDATA*>& bannedList = *mBannedListData[player];
     for (std::vector<BANNEDLISTDATA*>::iterator it = bannedList.begin(); it != bannedList.end();)
     {
         BANNEDLISTDATA* entry = *it;
-        if (entry == NULL)
+        if (entry == NULL || !IsEqualXUID(entry->playerUid, uid) || std::strcmp(entry->levelId, levelId) != 0)
         {
             ++it;
             continue;
         }
-
-        if (!IsEqualXUID(entry->playerUid, uid) || std::strcmp(entry->levelId, levelId) != 0)
-        {
-            ++it;
-            continue;
-        }
-
         telemetryManagerInstance->RecordUnBanLevel(player);
         it = bannedList.erase(it);
     }
 
-    if (mBanListBuffers[player] != NULL)
+    const unsigned int count = static_cast<unsigned int>(bannedList.size());
+    if (count * sizeof(BANNEDLISTDATA) != 0)
     {
-        delete[] mBanListBuffers[player];
-        mBanListBuffers[player] = NULL;
-    }
-
-    if (!bannedList.empty())
-    {
-        const size_t bufferSize = bannedList.size() * sizeof(BANNEDLISTDATA);
-        mBanListBuffers[player] = new unsigned char[bufferSize];
-        for (size_t i = 0; i < bannedList.size(); ++i)
-            std::memcpy(mBanListBuffers[player] + i * sizeof(BANNEDLISTDATA), bannedList[i], sizeof(BANNEDLISTDATA));
+        BANNEDLISTDATA* data = new BANNEDLISTDATA[count];
+        for (unsigned int i = 0; i < count; ++i)
+            std::memcpy(&data[i], bannedList.at(i), sizeof(BANNEDLISTDATA));
+        delete[] data;
     }
 }
 void CMinecraftApp::SetUniqueMapName(char* name)
@@ -2717,39 +2843,74 @@ unsigned int CMinecraftApp::GetHTMLColor(eMinecraftColour colour)
 }
 std::wstring CMinecraftApp::GetSingleActionReplacement(int32_t pad, uint32_t buttons)
 {
-    static const struct ActionIcon { uint32_t mask; const wchar_t* name; } icons[] = {
-        {0x00000001, L"ActionBottom"}, {0x00000002, L"ActionRight"},
-        {0x00000004, L"ActionLeft"}, {0x00000008, L"ActionTop"},
-        {0x0030c000, L"LeftStick"}, {0x000f0000, L"RightStick"},
-        {0x00001000, L"DPadLeft"}, {0x00002000, L"DPadRight"},
-        {0x00000400, L"DPadUp"}, {0x00000800, L"DPadDown"},
-        {0x00800000, L"TriggerL"}, {0x00400000, L"TriggerR"},
-        {0x00000040, L"ShoulderR"}, {0x00000080, L"ShoulderL"},
-        {0x00000020, L"SystemSelect"}, {0x00000010, L"SystemStart"},
-        {0x00000100, L"RightStickButton"}, {0x00000200, L"LeftStickButton"}
-    };
-    const wchar_t* action = 0;
-    for (unsigned int i = 0; i < sizeof(icons) / sizeof(icons[0]); ++i) {
-        if ((buttons & icons[i].mask) != 0) {
-            action = icons[i].name;
-            break;
-        }
-    }
-    if (action == 0)
-        return std::wstring(L" ") + L10N::GetString(IDS_CONTROLS_NONE);
+    std::wstring button = L"";
+    std::wstring controller = L"";
+    std::wstring size = L"";
+    int iconSize = 30;
+    bool found = true;
+    if ((buttons & 0x1) != 0)
+        button = L"ActionBottom";
+    else if ((buttons & 0x2) != 0)
+        button = L"ActionRight";
+    else if ((buttons & 0x4) != 0)
+        button = L"ActionLeft";
+    else if ((buttons & 0x8) != 0)
+        button = L"ActionTop";
+    else if ((buttons & 0x30c000) != 0)
+        button = L"LeftStick";
+    else if ((buttons & 0xf0000) != 0)
+        button = L"RightStick";
+    else if ((buttons & 0x1000) != 0)
+        button = L"DPadLeft";
+    else if ((buttons & 0x2000) != 0)
+        button = L"DPadRight";
+    else if ((buttons & 0x400) != 0)
+        button = L"DPadUp";
+    else if ((buttons & 0x800) != 0)
+        button = L"DPadDown";
+    else if ((buttons & 0x800000) != 0)
+        button = L"TriggerL";
+    else if ((buttons & 0x400000) != 0)
+        button = L"TriggerR";
+    else if ((buttons & 0x40) != 0)
+        button = L"ShoulderR";
+    else if ((buttons & 0x80) != 0)
+        button = L"ShoulderL";
+    else if ((buttons & 0x20) != 0)
+        button = L"SystemSelect";
+    else if ((buttons & 0x10) != 0)
+        button = L"SystemStart";
+    else if ((buttons & 0x100) != 0)
+        button = L"RightStickButton";
+    else if ((buttons & 0x200) != 0)
+        button = L"LeftStickButton";
+    else
+        found = false;
 
-    const wchar_t* controller = L"_CTRL_1";
-    if (pad != 4 && g_pInput != 0 &&
-        !g_pInput->IsPadDRCController(pad) &&
-        g_pInput->IsPadClassicController(pad))
-        controller = L"_CTRL_2";
-    const wchar_t* size = GetLocalPlayerCount() > 1 ? L"_Small" : L"";
-    wchar_t image[128];
-    const int imageSize = GetLocalPlayerCount() > 1 ? 20 : 30;
-    swprintf(image, sizeof(image) / sizeof(image[0]),
-             L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>",
-             action, controller, size, imageSize, imageSize);
-    return std::wstring(image);
+    if (GetLocalPlayerCount() > 1)
+    {
+        size = L"_Small";
+        iconSize = 20;
+    }
+
+    if (!g_pInput->IsPadDRCController(pad) && pad != 4)
+    {
+        if (g_pInput->IsPadClassicController(pad))
+            controller = L"_CTRL_2";
+    }
+    else
+    {
+        controller = L"_CTRL_1";
+    }
+
+    if (found)
+    {
+        wchar_t image[128];
+        swprintf(image, 128, L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>", button.c_str(),
+                 controller.c_str(), size.c_str(), iconSize, iconSize);
+        return image;
+    }
+    return std::wstring(L" ") + L10N::GetString(IDS_CONTROLS_NONE);
 }
 std::wstring CMinecraftApp::GetActionReplacement(int32_t controllerIndex, uint8_t actionMask)
 {
@@ -2780,22 +2941,22 @@ std::wstring CMinecraftApp::GetActionReplacement(int32_t controllerIndex, uint8_
 std::wstring CMinecraftApp::GetVKReplacement(int32_t player, uint32_t key, bool fullSize)
 {
     const wchar_t* action = NULL;
-    if (key >= 0x5820 && key <= 0x5827)
+    if (key >= VK_PAD_LTHUMB_UP && key <= VK_PAD_LTHUMB_DOWNLEFT)
         action = L"LeftStickNavigate";
-    else if (key >= 0x5830 && key <= 0x5837)
+    else if (key >= VK_PAD_RTHUMB_UP && key <= VK_PAD_RTHUMB_DOWNLEFT)
         action = L"RightStickButton";
     else
     {
         switch (key)
         {
-        case 0x5800: action = g_pInput->IsCircleCrossSwapped() ? L"ActionRight" : L"ActionBottom"; break;
-        case 0x5801: action = g_pInput->IsCircleCrossSwapped() ? L"ActionBottom" : L"ActionRight"; break;
-        case 0x5802: action = L"ActionLeft"; break;
-        case 0x5803: action = L"ActionTop"; break;
-        case 0x5804: action = L"ShoulderR"; break;
-        case 0x5805: action = L"ShoulderL"; break;
-        case 0x5806: action = L"TriggerL"; break;
-        case 0x5807: action = L"TriggerR"; break;
+        case VK_PAD_A: action = g_pInput->IsCircleCrossSwapped() ? L"ActionRight" : L"ActionBottom"; break;
+        case VK_PAD_B: action = g_pInput->IsCircleCrossSwapped() ? L"ActionBottom" : L"ActionRight"; break;
+        case VK_PAD_X: action = L"ActionLeft"; break;
+        case VK_PAD_Y: action = L"ActionTop"; break;
+        case VK_PAD_RSHOULDER: action = L"ShoulderR"; break;
+        case VK_PAD_LSHOULDER: action = L"ShoulderL"; break;
+        case VK_PAD_LTRIGGER: action = L"TriggerL"; break;
+        case VK_PAD_RTRIGGER: action = L"TriggerR"; break;
         }
     }
     if (action == NULL)
@@ -2870,17 +3031,17 @@ std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& val
         bool virtualKey;
     };
     const ControllerToken controllerTokens[] = {
-        { L"{*CONTROLLER_MENU_NAVIGATE*}", 0x5823, true },
-        { L"{*CONTROLLER_VK_A*}", 0x5800, true },
-        { L"{*CONTROLLER_VK_B*}", 0x5801, true },
-        { L"{*CONTROLLER_VK_X*}", 0x5802, true },
-        { L"{*CONTROLLER_VK_Y*}", 0x5803, true },
-        { L"{*CONTROLLER_VK_LB*}", 0x5805, true },
-        { L"{*CONTROLLER_VK_RB*}", 0x5804, true },
-        { L"{*CONTROLLER_VK_LS*}", 0x5820, true },
-        { L"{*CONTROLLER_VK_RS*}", 0x5830, true },
-        { L"{*CONTROLLER_VK_LT*}", 0x5806, true },
-        { L"{*CONTROLLER_VK_RT*}", 0x5807, true },
+        { L"{*CONTROLLER_MENU_NAVIGATE*}", VK_PAD_LTHUMB_LEFT, true },
+        { L"{*CONTROLLER_VK_A*}", VK_PAD_A, true },
+        { L"{*CONTROLLER_VK_B*}", VK_PAD_B, true },
+        { L"{*CONTROLLER_VK_X*}", VK_PAD_X, true },
+        { L"{*CONTROLLER_VK_Y*}", VK_PAD_Y, true },
+        { L"{*CONTROLLER_VK_LB*}", VK_PAD_LSHOULDER, true },
+        { L"{*CONTROLLER_VK_RB*}", VK_PAD_RSHOULDER, true },
+        { L"{*CONTROLLER_VK_LS*}", VK_PAD_LTHUMB_UP, true },
+        { L"{*CONTROLLER_VK_RS*}", VK_PAD_RTHUMB_UP, true },
+        { L"{*CONTROLLER_VK_LT*}", VK_PAD_LTRIGGER, true },
+        { L"{*CONTROLLER_VK_RT*}", VK_PAD_RTRIGGER, true },
         { L"{*CONTROLLER_ACTION_JUMP*}", 0x20, false },
         { L"{*CONTROLLER_ACTION_SNEAK*}", 0x27, false },
         { L"{*CONTROLLER_ACTION_USE*}", 0x21, false },
@@ -2907,10 +3068,11 @@ std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& val
         { L"{*CONTROLLER_ACTION_RESTART_SECTION*}", 0x36, false },
         { L"{*CONTROLLER_ACTION_RESTART_RACE*}", 0x37, false },
         { L"{*CONTROLLER_ACTION_LOOK_BEHIND*}", 0x38, false },
-        { L"{*CONTROLLER_VK_START*}", 0x5814, true },
+        { L"{*CONTROLLER_VK_START*}", VK_PAD_START, true },
     };
-    for (const ControllerToken& token : controllerTokens)
+    for (unsigned int i = 0; i < sizeof(controllerTokens) / sizeof(controllerTokens[0]); ++i)
     {
+        const ControllerToken& token = controllerTokens[i];
         const std::wstring replacement = token.virtualKey
             ? GetVKReplacement(player, token.action, false)
             : GetActionReplacement(player, static_cast<unsigned char>(token.action));
@@ -2920,11 +3082,10 @@ std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& val
     result = replaceAll(result, L"{*ICON_SHANK_01*}", GetIconReplacement(1));
     result = replaceAll(result, L"{*ICON_SHANK_03*}", GetIconReplacement(3));
     result = replaceAll(result, L"{*ICON_ARMOR_01*}", GetIconReplacement(4));
-    result = replaceAll(result, L"{*CONTROLLER_VK_BACK*}", L10N::GetString(0x3d497286));
-    result = replaceAll(result, L"{*PLATFORM_NAME*}", L10N::GetString(0xed3c4bfb));
-    extern unsigned int XGetLanguage();
+    result = replaceAll(result, L"{*CONTROLLER_VK_BACK*}", L10N::GetString(IDS_BACK_BUTTON));
+    result = replaceAll(result, L"{*PLATFORM_NAME*}", L10N::GetString(IDS_PLATFORM_NAME));
     const unsigned int language = XGetLanguage();
-    if (language == 2 || language == 7 || language == 8)
+    if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE)
         result = replaceAll(result, L"&nbsp;", L"");
     return result;
 }
@@ -3000,7 +3161,7 @@ uint32_t CMinecraftApp::GetExtraGameData(unsigned int& options, eGameExtraData t
 }
 uint32_t CMinecraftApp::GetExtraGameData(eGameExtraData type)
 {
-    return GetExtraGameData(mExtraGameData, type);
+    return GetExtraGameData(mCurrentImageTextData.extraData, type);
 }
 void CMinecraftApp::SetResetNether(bool reset)
 {
@@ -3394,13 +3555,13 @@ std::wstring CMinecraftApp::getEntityName(uint64_t entityType, int32_t auxValue)
     if (entityType == EntityType::ZOMBIE_VILLAGER)
         return L10N::GetString(IDS_ZOMBIE_VILLAGER);
     if (entityType == EntityType::VINDICATION_ILLAGER)
-        return L10N::GetString(0xF3D4F291);
+        return L10N::GetString(IDS_VINDICATION_ILLAGER);
     if (entityType == EntityType::VEX)
         return L10N::GetString(IDS_VEX);
     if (entityType == EntityType::EVOCATION_FANGS)
         return L"";
     if (entityType == EntityType::EVOCATION_ILLAGER)
-        return L10N::GetString(0xD9AA9869);
+        return L10N::GetString(IDS_EVOCATION_ILLAGER);
     if (entityType == EntityType::PARROT)
         return L10N::GetString(IDS_PARROT);
     if (entityType == EntityType::SHULKER)
@@ -3450,7 +3611,7 @@ std::wstring CMinecraftApp::getEntityName(uint64_t entityType, int32_t auxValue)
     if (entityType == EntityType::ENDER_MAN)
         return L10N::GetString(IDS_ENDERMAN);
     if (entityType == EntityType::PIG_ZOMBIE)
-        return L10N::GetString(0xF566D3CC);
+        return L10N::GetString(IDS_PIGZOMBIE);
     if (entityType == EntityType::DROWNED)
         return L10N::GetString(IDS_DROWNED);
     if (entityType == EntityType::HUSK)
@@ -3462,7 +3623,7 @@ std::wstring CMinecraftApp::getEntityName(uint64_t entityType, int32_t auxValue)
     if (entityType == EntityType::SPIDER)
         return L10N::GetString(IDS_SPIDER);
     if (entityType == EntityType::STRAY)
-        return L10N::GetString(0xC9DE5707);
+        return L10N::GetString(IDS_STRAY_SKELETON);
     if (entityType == EntityType::WITHER_SKELETON)
         return L10N::GetString(IDS_WITHER_SKELETON);
     if (entityType == EntityType::SKELETON)
@@ -3584,7 +3745,26 @@ void CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes,
 }
 std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, std::vector<SKIN_BOX*>* boxes, _SkinAdjustments adjustments)
 {
-    return 0;
+    const EPlayerModelType modelType = static_cast<EPlayerModelType>(
+        Player::GetModelTypeFromAnimBitmask(adjustments.mAnimFlags));
+    PlayerModel* model = Minecraft::GetInstance()->getEntityRenderDispatcher()->getPlayerRenderer(modelType)->getModel();
+    std::vector<ModelPart*>* modelParts = new std::vector<ModelPart*>();
+
+    EnterCriticalSection(&mAdditionalModelPartsMutex);
+    EnterCriticalSection(&mAdditionalSkinBoxesMutex);
+    if (model != NULL)
+    {
+        for (std::vector<SKIN_BOX*>::iterator it = boxes->begin(); it != boxes->end(); ++it)
+        {
+            model->SetSkinAdjustments(adjustments);
+            modelParts->push_back(model->AddOrRetrievePart(*it, skinId));
+        }
+    }
+    mAdditionalModelParts.insert(std::make_pair(skinId, modelParts));
+    mAdditionalSkinBoxes.insert(std::make_pair(skinId, boxes));
+    LeaveCriticalSection(&mAdditionalSkinBoxesMutex);
+    LeaveCriticalSection(&mAdditionalModelPartsMutex);
+    return modelParts;
 }
 std::vector<ModelPart*>* CMinecraftApp::GetAdditionalModelParts(unsigned int value)
 {
@@ -3656,208 +3836,154 @@ void CMinecraftApp::GetFileFromTPD(eTPDFileType type, unsigned char* source, uns
 }
 void CMinecraftApp::getLocale(std::vector<std::wstring>& localeNames)
 {
-    extern unsigned int XGetLanguage();
-    extern int XGetLocale();
-
-    std::vector<int> localeIds;
-    const unsigned int language = XGetLanguage();
-    bool finalizeEarly = false;
-
-    if (language < 0xF1)
+    std::vector<eMCLang> languages;
+    switch (XGetLanguage())
     {
-        switch (language)
+    case XC_LANGUAGE_ENGLISH:
+        switch (XGetLocale())
         {
-        case 0:
-            break;
-        case 1:
-        {
-            unsigned int localeValue = static_cast<unsigned int>(XGetLocale());
-            if (localeValue < 0x18)
-            {
-                if (localeValue != 1 && localeValue != 5 && localeValue != 9)
-                {
-                    if (localeValue < 0xE)
-                        break;
-                    if (localeValue > 0x12)
-                    {
-                        localeIds.push_back(1);
-                        localeIds.push_back(0);
-                        finalizeEarly = true;
-                        break;
-                    }
-                }
-            }
-            else if (localeValue != 0x18 &&
-                (localeValue < 0x1C ||
-                 ((localeValue > 0x1E && localeValue != 0x23) &&
-                  (localeValue < 0x29 || localeValue > 0x2B))))
-            {
-                break;
-            }
-            if (!finalizeEarly)
-                localeIds.push_back(2);
-            break;
-        }
-        case 2:
-            localeIds.push_back(7);
-            break;
-        case 3:
-        {
-            const int localeValue = XGetLocale();
-            if (localeValue == 2)
-                localeIds.push_back(9);
-            else if (localeValue == 0x21)
-                localeIds.push_back(0x26);
-            else
-            {
-                localeIds.push_back(8);
-                break;
-            }
-            localeIds.push_back(8);
-            break;
-        }
-        case 4:
-        {
-            const int localeValue = XGetLocale();
-            if (localeValue == 3)
-                localeIds.push_back(0x24);
-            else if (localeValue == 5)
-                localeIds.push_back(0xB);
-            else if (localeValue == 0x21)
-                localeIds.push_back(0x25);
-            else
-            {
-                localeIds.push_back(10);
-                break;
-            }
-            localeIds.push_back(10);
-            break;
-        }
-        case 5:
-        {
-            const unsigned int localeValue = static_cast<unsigned int>(XGetLocale());
-            if (localeValue < 0x24)
-            {
-                if (localeValue != 6 && localeValue != 8 && localeValue != 0x16)
-                {
-                    localeIds.push_back(0xC);
-                    break;
-                }
-                localeIds.push_back(0x1D);
-                localeIds.push_back(0xD);
-            }
-            else if (localeValue == 0x24 || localeValue == 0x28 || localeValue == 0xF0)
-            {
-                localeIds.push_back(0x1D);
-                localeIds.push_back(0xD);
-            }
-            localeIds.push_back(0xC);
-            break;
-        }
-        case 6:
-            localeIds.push_back(0xE);
-            break;
-        case 7:
-            localeIds.push_back(0xF);
-            break;
-        case 8:
-        {
-            const int localeValue = XGetLocale();
-            if (localeValue == 0xF)
-            {
-                localeIds.push_back(0x20);
-                localeIds.push_back(0x21);
-            }
-            else if (localeValue == 0x22)
-            {
-                localeIds.push_back(0x21);
-                localeIds.push_back(0x20);
-            }
-            else
-            {
-                localeIds.push_back(0x3D);
-                localeIds.push_back(0x1C);
-                break;
-            }
-            localeIds.push_back(0x3D);
-            localeIds.push_back(0x1C);
-            break;
-        }
-        case 9:
-            if (XGetLocale() == 4)
-                localeIds.push_back(0x11);
-            localeIds.push_back(0x10);
-            break;
-        case 10:
-            break;
-        case 0xB:
-            localeIds.push_back(0x18);
-            break;
-        case 0xC:
-            localeIds.push_back(0x12);
-            break;
-        case 0xD:
-            localeIds.push_back(0x15);
-            localeIds.push_back(0x37);
-            break;
-        case 0xE:
-            localeIds.push_back(0x19);
-            break;
-        case 0xF:
-            localeIds.push_back(0x27);
-            localeIds.push_back(0x17);
-            localeIds.push_back(0x3A);
-            break;
-        case 0x10:
-            if (XGetLocale() == 3)
-                localeIds.push_back(0x22);
-            localeIds.push_back(0x13);
-            break;
-        case 0x11:
-            localeIds.push_back(0x3C);
+        case XC_LOCALE_AUSTRALIA:
+        case XC_LOCALE_CANADA:
+        case XC_LOCALE_CZECH_REPUBLIC:
+        case XC_LOCALE_GREECE:
+        case XC_LOCALE_HONG_KONG:
+        case XC_LOCALE_HUNGARY:
+        case XC_LOCALE_INDIA:
+        case XC_LOCALE_IRELAND:
+        case XC_LOCALE_NEW_ZEALAND:
+        case XC_LOCALE_SINGAPORE:
+        case XC_LOCALE_SLOVAK_REPUBLIC:
+        case XC_LOCALE_SOUTH_AFRICA:
+        case XC_LOCALE_GREAT_BRITAIN:
+        case XC_LOCALE_SAUDI_ARABIA:
+        case XC_LOCALE_ISRAEL:
+        case XC_LOCALE_UNITED_ARAB_EMIRATES:
+            languages.push_back(eMCLang_enGB);
             break;
         default:
             break;
         }
+        break;
+    case XC_LANGUAGE_JAPANESE:
+        languages.push_back(eMCLang_jaJP);
+        break;
+    case XC_LANGUAGE_GERMAN:
+        switch (XGetLocale())
+        {
+        case XC_LOCALE_AUSTRIA: languages.push_back(eMCLang_deAT); break;
+        case XC_LOCALE_SWITZERLAND: languages.push_back(eMCLang_deCH); break;
+        default: break;
+        }
+        languages.push_back(eMCLang_deDE);
+        break;
+    case XC_LANGUAGE_FRENCH:
+        switch (XGetLocale())
+        {
+        case XC_LOCALE_BELGIUM: languages.push_back(eMCLang_frBE); break;
+        case XC_LOCALE_CANADA: languages.push_back(eMCLang_frCA); break;
+        case XC_LOCALE_SWITZERLAND: languages.push_back(eMCLang_frCH); break;
+        default: break;
+        }
+        languages.push_back(eMCLang_frFR);
+        break;
+    case XC_LANGUAGE_SPANISH:
+        switch (XGetLocale())
+        {
+        case XC_LOCALE_CHILE:
+        case XC_LOCALE_COLOMBIA:
+        case XC_LOCALE_MEXICO:
+        case XC_LOCALE_UNITED_STATES:
+        case XC_LOCALE_ARGENTINA:
+        case XC_LOCALE_LATIN_AMERICA:
+            languages.push_back(eMCLang_laLAS);
+            languages.push_back(eMCLang_esMX);
+            break;
+        default:
+            break;
+        }
+        languages.push_back(eMCLang_esES);
+        break;
+    case XC_LANGUAGE_ITALIAN:
+        languages.push_back(eMCLang_itIT);
+        break;
+    case XC_LANGUAGE_KOREAN:
+        languages.push_back(eMCLang_koKR);
+        break;
+    case XC_LANGUAGE_TCHINESE:
+        switch (XGetLocale())
+        {
+        case XC_LOCALE_HONG_KONG:
+            languages.push_back(eMCLang_zhHK);
+            languages.push_back(eMCLang_zhTW);
+            break;
+        case XC_LOCALE_TAIWAN:
+            languages.push_back(eMCLang_zhTW);
+            languages.push_back(eMCLang_zhHK);
+            break;
+        default:
+            break;
+        }
+        languages.push_back(eMCLang_zhHANT);
+        languages.push_back(eMCLang_zhCHT);
+        break;
+    case XC_LANGUAGE_PORTUGUESE:
+        if (XGetLocale() == XC_LOCALE_BRAZIL)
+            languages.push_back(eMCLang_ptBR);
+        languages.push_back(eMCLang_ptPT);
+        break;
+    case XC_LANGUAGE_SCHINESE:
+        break;
+    case XC_LANGUAGE_POLISH:
+        languages.push_back(eMCLang_plPL);
+        break;
+    case XC_LANGUAGE_RUSSIAN:
+        languages.push_back(eMCLang_ruRU);
+        break;
+    case XC_LANGUAGE_SWEDISH:
+        languages.push_back(eMCLang_svSV);
+        languages.push_back(eMCLang_svSE);
+        break;
+    case XC_LANGUAGE_TURKISH:
+        languages.push_back(eMCLang_trTR);
+        break;
+    case XC_LANGUAGE_NORWEGIAN:
+        languages.push_back(eMCLang_nbNO);
+        languages.push_back(eMCLang_noNO);
+        languages.push_back(eMCLang_nnNO);
+        break;
+    case XC_LANGUAGE_DUTCH:
+        if (XGetLocale() == XC_LOCALE_BELGIUM)
+            languages.push_back(eMCLang_nlBE);
+        languages.push_back(eMCLang_nlNL);
+        break;
+    case XC_LANGUAGE_ZH_HANS:
+        languages.push_back(eMCLang_zhHANS);
+        break;
+    case XC_LANGUAGE_FINNISH:
+        languages.push_back(eMCLang_fiFI);
+        break;
+    case XC_LANGUAGE_GREEK:
+        languages.push_back(eMCLang_elEL);
+        languages.push_back(eMCLang_elGR);
+        languages.push_back(eMCLang_enGR);
+        languages.push_back(eMCLang_enGB);
+        break;
+    case XC_LANGUAGE_DANISH:
+        languages.push_back(eMCLang_daDA);
+        languages.push_back(eMCLang_daDK);
+        break;
+    case XC_LANGUAGE_CZECH:
+        languages.push_back(eMCLang_csCZ);
+        languages.push_back(eMCLang_enCZ);
+        break;
+    default:
+        break;
     }
-    else if (language < 0xF2)
-    {
-        localeIds.push_back(0x14);
-    }
-    else if (language == 0xF2)
-    {
-        localeIds.push_back(0x1A);
-        localeIds.push_back(0x39);
-        localeIds.push_back(0x28);
-        localeIds.push_back(2);
-    }
-    else if (language < 0xF4)
-    {
-        localeIds.push_back(0x16);
-        localeIds.push_back(0x23);
-    }
-    else if (language == 0xF4)
-    {
-        localeIds.push_back(0x38);
-        localeIds.push_back(0x31);
-    }
-    else
-    {
-        localeIds.push_back(1);
-        localeIds.push_back(0);
-        finalizeEarly = true;
-    }
+    languages.push_back(eMCLang_enUS);
+    languages.push_back(eMCLang_enEN);
 
-    if (!finalizeEarly)
-    {
-        localeIds.push_back(1);
-        localeIds.push_back(0);
-    }
-
-    for (size_t index = 0; index < localeIds.size(); ++index)
-    {
-        localeNames.push_back(mLocaleToString[localeIds[index]]);
-    }
+    for (unsigned int i = 0; i < languages.size(); ++i)
+        localeNames.push_back(mLocaleToString[languages.at(i)]);
 }
 void CMinecraftApp::SetFirstMiniGameType(EMiniGameId type)
 {

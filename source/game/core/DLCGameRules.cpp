@@ -5,4 +5,6 @@ DLCGameRules::DLCGameRules(const std::wstring& path)
 {
 }
 
-DLCGameRules::~DLCGameRules() = default;
+DLCGameRules::~DLCGameRules()
+{
+}

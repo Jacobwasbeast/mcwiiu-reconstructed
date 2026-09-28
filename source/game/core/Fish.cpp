@@ -35,10 +35,6 @@ Fish::Fish(Level* level, bool deferredInit)
     mRandom->setSeed(static_cast<long long>(getId()) + 1);
 }
 
-Fish::~Fish()
-{
-}
-
 void Fish::_init()
 {
     mSwimAmplitude = 0.01f;
@@ -56,7 +52,7 @@ void Fish::baseTick()
 {
     WaterAnimal::baseTick();
     mSwimRotationOld = mSwimRotation;
-    mSwimRotation += 1.0f + 0.2f;
+    mSwimRotation = mSwimRotation + 1.0f + 0.2f;
 }
 
 void Fish::registerGoals()

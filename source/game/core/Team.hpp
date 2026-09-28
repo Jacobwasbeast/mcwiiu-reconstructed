@@ -19,7 +19,7 @@ public:
         HIDE_FOR_OWN_TEAM
     };
 
-    virtual ~Team();
+    virtual ~Team() {}
 
     virtual bool isAlliedTo(Team* other);
 

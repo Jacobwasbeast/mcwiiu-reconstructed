@@ -28,7 +28,7 @@ const AABB* SeaGrass::SHAPE = AABB::newPermanent(0.10000000149011612, 0.0, 0.100
                                                  0.800000011920929, 0.8999999761581421);
 
 SeaGrass::SeaGrass()
-    : Bush(Material::REPLACEABLE_PLANT), mCarriedIcon(NULL), mDoubleTallTopIcon(NULL), mDoubleTallBottomIcon(NULL)
+    : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
     TypedBoxed<int> type(TYPE_SINGLE);

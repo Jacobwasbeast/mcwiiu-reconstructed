@@ -4,11 +4,11 @@
 #include <string>
 
 #include "game/core/Vertex.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class BufferBuilder;
 class ModelPart;
 class _Polygon;
-template <class T> class arrayWithLength;
 
 class Cube
 {
@@ -27,6 +27,11 @@ public:
     void renderSkinned(BufferBuilder* buffer, float scale, int boneIndex);
     Cube* setId(const std::wstring& id);
 
+private:
+    arrayWithLength<Vertex*> mVertices;
+    arrayWithLength<_Polygon*> mPolygons;
+
+public:
     float mX0;
     float mY0;
     float mZ0;
@@ -35,10 +40,6 @@ public:
     float mZ1;
 
 private:
-    Vertex** mVertices;
-    int mVertexCount;
-    _Polygon** mPolygons;
-    int mPolygonCount;
     int mTexU;
     int mTexV;
     std::wstring mId;

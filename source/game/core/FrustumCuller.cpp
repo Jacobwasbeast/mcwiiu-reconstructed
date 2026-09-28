@@ -26,60 +26,12 @@ bool FrustumCuller::isVisible(AABB* boundingBox)
 
 bool FrustumCuller::cubeInFrustum(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    x0 -= xOffset;
-    y0 -= yOffset;
-    z0 -= zOffset;
-    x1 -= xOffset;
-    y1 -= yOffset;
-    z1 -= zOffset;
-
-    for (int i = 0; i < 6; i++)
-    {
-        float* plane = frustumData->frustum[i];
-
-        if (frustumData->discriminant(plane, x0, y0, z0) <= 0.0 &&
-            frustumData->discriminant(plane, x1, y0, z0) <= 0.0 &&
-            frustumData->discriminant(plane, x0, y1, z0) <= 0.0 &&
-            frustumData->discriminant(plane, x1, y1, z0) <= 0.0 &&
-            frustumData->discriminant(plane, x0, y0, z1) <= 0.0 &&
-            frustumData->discriminant(plane, x1, y0, z1) <= 0.0 &&
-            frustumData->discriminant(plane, x0, y1, z1) <= 0.0 &&
-            frustumData->discriminant(plane, x1, y1, z1) <= 0.0)
-        {
-            return false;
-        }
-    }
-
-    return true;
+    return frustumData->cubeInFrustum(x0 - xOffset, y0 - yOffset, z0 - zOffset, x1 - xOffset, y1 - yOffset, z1 - zOffset);
 }
 
 bool FrustumCuller::cubeFullyInFrustum(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    x0 -= xOffset;
-    y0 -= yOffset;
-    z0 -= zOffset;
-    x1 -= xOffset;
-    y1 -= yOffset;
-    z1 -= zOffset;
-
-    for (int i = 0; i < 6; i++)
-    {
-        float* plane = frustumData->frustum[i];
-
-        if (frustumData->discriminant(plane, x0, y0, z0) <= 0.0 ||
-            frustumData->discriminant(plane, x1, y0, z0) <= 0.0 ||
-            frustumData->discriminant(plane, x0, y1, z0) <= 0.0 ||
-            frustumData->discriminant(plane, x1, y1, z0) <= 0.0 ||
-            frustumData->discriminant(plane, x0, y0, z1) <= 0.0 ||
-            frustumData->discriminant(plane, x1, y0, z1) <= 0.0 ||
-            frustumData->discriminant(plane, x0, y1, z1) <= 0.0 ||
-            frustumData->discriminant(plane, x1, y1, z1) <= 0.0)
-        {
-            return false;
-        }
-    }
-
-    return true;
+    return frustumData->cubeFullyInFrustum(x0 - xOffset, y0 - yOffset, z0 - zOffset, x1 - xOffset, y1 - yOffset, z1 - zOffset);
 }
 
 void FrustumCuller::prepare(double x, double y, double z)
