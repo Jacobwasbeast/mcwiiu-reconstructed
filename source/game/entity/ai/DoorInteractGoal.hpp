@@ -13,7 +13,7 @@ class DoorInteractGoal : public Goal
 {
 public:
     DoorInteractGoal(Mob* mob);
-    virtual ~DoorInteractGoal();
+    virtual ~DoorInteractGoal() {}
     Block* getDoorBlock(const BlockPos& pos);
     virtual bool canUse();
     virtual bool canContinueToUse();

@@ -15,7 +15,7 @@ class WaterBoundPathNavigation : public PathNavigation
 {
 public:
     WaterBoundPathNavigation(Mob* mob, Level* level, bool createPathFinder, bool allowBreaching);
-    virtual ~WaterBoundPathNavigation();
+    virtual ~WaterBoundPathNavigation() {}
 
     virtual PathFinder* createPathFinder();
     virtual void updatePath();

@@ -74,7 +74,7 @@ bool JumpGoal::canUse()
 bool JumpGoal::canContinueToUse()
 {
     if (mMob->mYd * mMob->mYd < 0.03 && mMob->mXRot != 0.0f && std::fabs(mMob->mXRot) < 10.0f
-        && mMob->getNavigation()->isDone())
+        && mMob->isInWater())
     {
         return false;
     }

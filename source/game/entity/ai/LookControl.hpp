@@ -11,7 +11,7 @@ class LookControl
 {
 public:
     explicit LookControl(Mob* mob);
-    virtual ~LookControl();
+    virtual ~LookControl() {}
     virtual void tick();
 
     void setLookAt(boost::shared_ptr<Entity> entity, float yMaxRotationIncrease, float xMaxRotationIncrease);

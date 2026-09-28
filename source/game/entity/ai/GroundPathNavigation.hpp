@@ -15,7 +15,7 @@ class GroundPathNavigation : public PathNavigation
 {
 public:
     GroundPathNavigation(Mob* mob, Level* level, bool createPathFinder);
-    virtual ~GroundPathNavigation();
+    virtual ~GroundPathNavigation() {}
 
     virtual NodeEvaluator* getNodeEvaluator();
     virtual PathFinder* createPathFinder();

@@ -22,10 +22,6 @@ SkeletonTrapGoal::SkeletonTrapGoal(SkeletonHorse* horse)
 {
 }
 
-SkeletonTrapGoal::~SkeletonTrapGoal()
-{
-}
-
 bool SkeletonTrapGoal::canUse()
 {
     return mHorse->mLevel->hasNearPlayer(mHorse->mX, mHorse->mY, mHorse->mZ, 10.0);

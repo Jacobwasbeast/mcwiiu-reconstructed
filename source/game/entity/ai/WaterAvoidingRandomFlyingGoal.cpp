@@ -51,7 +51,7 @@ Vec3* WaterAvoidingRandomFlyingGoal::getTreePos()
                 below.move(Direction::DOWN);
                 Block* block = mMob->mLevel->getBlockState(below)->getBlock();
                 if ((LeafBlock::isLeaves(block)
-                     || block == Blocks::grass || block == Blocks::dirt)
+                     || block == Blocks::log || block == Blocks::log2)
                     && mMob->mLevel->isEmptyBlock(candidate)
                     && mMob->mLevel->isEmptyBlock(candidate.above()))
                 {

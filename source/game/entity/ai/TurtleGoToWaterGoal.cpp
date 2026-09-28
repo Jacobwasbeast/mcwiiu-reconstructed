@@ -49,5 +49,5 @@ bool TurtleGoToWaterGoal::isValidTarget(Level* level, const BlockPos& pos)
 
 std::wstring TurtleGoToWaterGoal::getName()
 {
-    return std::wstring(L"Turtle_Goto_Water");
+    return std::wstring(L"Turtle Goto Water");
 }

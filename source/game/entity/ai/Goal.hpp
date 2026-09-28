@@ -15,7 +15,7 @@ public:
     };
 
     Goal();
-    virtual ~Goal();
+    virtual ~Goal() {}
 
     virtual bool canUse() = 0;
     virtual bool canContinueToUse();

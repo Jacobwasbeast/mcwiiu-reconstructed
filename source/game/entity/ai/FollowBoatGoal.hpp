@@ -8,7 +8,7 @@
 #include "game/entity/ai/Goal.hpp"
 
 class Dolphin;
-class Entity;
+class LivingEntity;
 
 class FollowBoatGoal : public Goal
 {
@@ -27,7 +27,7 @@ private:
     int mSearchDistance;
     int mMaxDistance;
     int mCooldown;
-    boost::weak_ptr<Entity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
     int mState;
     Dolphin* mDolphin;
 };

@@ -19,7 +19,9 @@ TakeFlowerGoal::TakeFlowerGoal(Villager* villager)
     setRequiredControlFlags(3);
 }
 
-TakeFlowerGoal::~TakeFlowerGoal() = default;
+TakeFlowerGoal::~TakeFlowerGoal()
+{
+}
 
 bool TakeFlowerGoal::canUse()
 {

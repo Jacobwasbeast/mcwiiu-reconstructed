@@ -20,8 +20,6 @@ WaterBoundPathNavigation::WaterBoundPathNavigation(Mob* mob, Level* level, bool 
         mPathFinder = this->createPathFinder();
 }
 
-WaterBoundPathNavigation::~WaterBoundPathNavigation() = default;
-
 PathFinder* WaterBoundPathNavigation::createPathFinder()
 {
     return new PathFinder(&mNodeEvaluator);

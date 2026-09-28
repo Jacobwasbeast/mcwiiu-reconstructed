@@ -9,10 +9,6 @@ Goal::Goal()
     }
 }
 
-Goal::~Goal()
-{
-}
-
 bool Goal::canContinueToUse()
 {
     return canUse();

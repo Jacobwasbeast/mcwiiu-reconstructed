@@ -17,7 +17,9 @@ TurtleBreedGoal::TurtleBreedGoal(Turtle* turtle, double speedModifier)
 {
 }
 
-TurtleBreedGoal::~TurtleBreedGoal() = default;
+TurtleBreedGoal::~TurtleBreedGoal()
+{
+}
 
 bool TurtleBreedGoal::canUse()
 {

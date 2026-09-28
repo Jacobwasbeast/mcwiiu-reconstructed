@@ -17,10 +17,6 @@ LookControl::LookControl(Mob* mob)
 {
 }
 
-LookControl::~LookControl()
-{
-}
-
 void LookControl::setLookAt(boost::shared_ptr<Entity> entity, float yMaxRotationIncrease, float xMaxRotationIncrease)
 {
     mWantedX = entity->mX;
@@ -61,7 +57,15 @@ void LookControl::setLookRotation(const Vec3* rotation, float yMaxRotationIncrea
 
 float LookControl::rotlerp(float from, float to, float maxDelta)
 {
-    float delta = Mth::wrapDegrees(to - from);
+    float delta = to - from;
+    while (delta < -180.0f)
+    {
+        delta += 360.0f;
+    }
+    while (delta >= 180.0f)
+    {
+        delta -= 360.0f;
+    }
     if (delta > maxDelta)
     {
         delta = maxDelta;

@@ -40,8 +40,9 @@ bool MoveToWaterGoal::canContinueToUse()
 
 void MoveToWaterGoal::stop()
 {
-    if (mMob->getNavigation()->isDone())
-        mMob->getNavigation()->stop();
+    PathNavigation* navigation = mMob->getNavigation();
+    if (navigation != NULL)
+        navigation->stop();
     else
         mMob->getMoveControl()->wait();
 }

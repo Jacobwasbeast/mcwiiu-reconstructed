@@ -26,10 +26,6 @@ GroundPathNavigation::GroundPathNavigation(Mob* mob, Level* level, bool createPa
     }
 }
 
-GroundPathNavigation::~GroundPathNavigation()
-{
-}
-
 NodeEvaluator* GroundPathNavigation::getNodeEvaluator()
 {
     return &mNodeEvaluator;
@@ -218,9 +214,17 @@ bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, 
                 if (xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z) >= 0.0)
                 {
                     const BlockPathTypes* type = mNodeEvaluator.getBlockPathType(
+                        mLevel, ix, y - 1, iz, static_cast<Mob*>(mMob), sizeX, sizeY, sizeZ, true, true);
+                    if ((type == BlockPathTypes::WATER && !canSinkInWaterWalk()) || type == BlockPathTypes::LAVA
+                        || type == BlockPathTypes::OPEN)
+                    {
+                        return false;
+                    }
+                    type = mNodeEvaluator.getBlockPathType(
                         mLevel, ix, y, iz, static_cast<Mob*>(mMob), sizeX, sizeY, sizeZ, true, true);
                     float malus = static_cast<Mob*>(mMob)->getPathfindingMalus(type);
-                    if (malus < 0.0F || malus >= 8.0F)
+                    if (malus < 0.0F || malus >= 8.0F || type == BlockPathTypes::DAMAGE_FIRE
+                        || type == BlockPathTypes::DANGER_FIRE || type == BlockPathTypes::DAMAGE_OTHER)
                     {
                         return false;
                     }

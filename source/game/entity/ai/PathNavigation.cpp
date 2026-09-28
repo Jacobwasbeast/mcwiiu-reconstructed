@@ -19,7 +19,7 @@
 #include <cmath>
 
 PathNavigation::PathNavigation(Mob* mob, Level* level)
-    : mPath(0), mMob(mob), mLevel(level), mTick(0), mSpeedModifier(1.0), mFollowRange(mob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)), mTargetPos(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPath(0), mPathFinder(0)
+    : mPath(0), mMob(mob), mLevel(level), mSpeedModifier(1.0), mFollowRange(mob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)), mTick(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPos(0), mPathFinder(0)
 {
 }
 

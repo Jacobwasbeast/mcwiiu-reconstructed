@@ -13,7 +13,7 @@ class RandomStrollGoal : public Goal
 public:
     RandomStrollGoal(PathfinderMob* mob, double speedModifier);
     RandomStrollGoal(PathfinderMob* mob, double speedModifier, int interval);
-    virtual ~RandomStrollGoal();
+    virtual ~RandomStrollGoal() {}
     void _init(PathfinderMob* mob, double speedModifier, int interval);
     virtual bool canUse();
     virtual bool canContinueToUse();

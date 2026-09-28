@@ -23,10 +23,6 @@ DoorInteractGoal::DoorInteractGoal(Mob* mob)
     mDoorPos = BlockPos::ZERO;
 }
 
-DoorInteractGoal::~DoorInteractGoal()
-{
-}
-
 Block* DoorInteractGoal::getDoorBlock(const BlockPos& pos)
 {
     const BlockState* state = mMob->mLevel->getBlockState(pos);

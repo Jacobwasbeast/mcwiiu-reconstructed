@@ -20,10 +20,6 @@ RandomStrollGoal::RandomStrollGoal(PathfinderMob* mob, double speedModifier, int
     _init(mob, speedModifier, interval);
 }
 
-RandomStrollGoal::~RandomStrollGoal()
-{
-}
-
 void RandomStrollGoal::_init(PathfinderMob* mob, double speedModifier, int interval)
 {
     mMob = mob;

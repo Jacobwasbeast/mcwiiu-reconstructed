@@ -31,7 +31,7 @@ TurtleLayEggGoal::~TurtleLayEggGoal()
 
 bool TurtleLayEggGoal::isNearHome()
 {
-    BlockPos position(mTurtle->getPos(1.65f));
+    BlockPos position(mTurtle->getPos(0.0f));
     BlockPos home = mTurtle->getHomePos();
     return position.distSqr((double)home.x, (double)home.y, (double)home.z) < mSearchDistanceSquared;
 }
@@ -95,7 +95,7 @@ void TurtleLayEggGoal::tick()
     MoveToBlockGoal::tick();
 
     Level* level = mTurtle->mLevel;
-    BlockPos position(mTurtle->getPos(1.65f));
+    BlockPos position(mTurtle->getPos(0.0f));
     if (!isNearHome())
         return;
 

@@ -15,7 +15,7 @@ public:
     };
 
     explicit MoveControl(Mob* mob);
-    virtual ~MoveControl();
+    virtual ~MoveControl() {}
 
     void copyFrom(MoveControl* other);
     void wait();

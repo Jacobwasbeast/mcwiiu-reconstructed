@@ -27,10 +27,6 @@ MoveControl::MoveControl(Mob* mob)
 {
 }
 
-MoveControl::~MoveControl()
-{
-}
-
 void MoveControl::copyFrom(MoveControl* other)
 {
     mWantedX = other->mWantedX;

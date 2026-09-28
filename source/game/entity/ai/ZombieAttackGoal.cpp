@@ -2,7 +2,9 @@
 
 #include "game/entity/mob/Zombie.hpp"
 
-ZombieAttackGoal::~ZombieAttackGoal() = default;
+ZombieAttackGoal::~ZombieAttackGoal()
+{
+}
 
 void ZombieAttackGoal::start()
 {

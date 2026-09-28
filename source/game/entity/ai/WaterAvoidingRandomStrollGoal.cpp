@@ -18,10 +18,6 @@ WaterAvoidingRandomStrollGoal::WaterAvoidingRandomStrollGoal(PathfinderMob* mob,
 {
 }
 
-WaterAvoidingRandomStrollGoal::~WaterAvoidingRandomStrollGoal()
-{
-}
-
 Vec3* WaterAvoidingRandomStrollGoal::getPosition()
 {
     boost::shared_ptr<PathfinderMob> mob = boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());

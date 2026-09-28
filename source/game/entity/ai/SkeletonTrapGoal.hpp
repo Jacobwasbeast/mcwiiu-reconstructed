@@ -16,7 +16,7 @@ class SkeletonTrapGoal : public Goal
 {
 public:
     SkeletonTrapGoal(SkeletonHorse* horse);
-    virtual ~SkeletonTrapGoal();
+    virtual ~SkeletonTrapGoal() {}
     virtual bool canUse();
     virtual void tick();
     virtual std::wstring getName();

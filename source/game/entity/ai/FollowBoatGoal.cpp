@@ -5,6 +5,10 @@
 #include <vector>
 
 #include "game/core/Boat.hpp"
+#include "game/core/Dolphin.hpp"
+#include "game/core/Direction.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -23,42 +27,35 @@ FollowBoatGoal::~FollowBoatGoal()
 
 bool FollowBoatGoal::canUse()
 {
-    Entity* dolphin = (Entity*)mDolphin;
-    AABB* searchBox = dolphin->mBoundingBox->grow(5.0);
     std::vector<boost::shared_ptr<Entity> >* boats =
-        dolphin->mLevel->getEntitiesOfClass(typeid(Boat), searchBox);
-    bool found = false;
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = boats->begin(); it != boats->end(); ++it)
+        mDolphin->mLevel->getEntitiesOfClass(typeid(Boat), mDolphin->mBoundingBox->grow(5.0));
+    bool boatMoving = false;
+    for (unsigned int i = 0; i < boats->size(); ++i)
     {
-        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(*it);
-        if (boat->getControllingPassenger())
+        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(boats->at(i));
+        if (boat->getControllingPassenger() != NULL
+            && (boat->getControllingPassenger()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
-            boost::shared_ptr<Entity> passenger = boat->getControllingPassenger();
-            if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            boost::shared_ptr<LivingEntity> passenger = boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
+            if (Mth::abs(passenger->mXxa) > 0.0f || Mth::abs(passenger->mZza) > 0.0f)
             {
-                boost::shared_ptr<LivingEntity> livingPassenger =
-                    boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
-                if (Mth::abs((float)livingPassenger->mXd) > 0.0f ||
-                    Mth::abs((float)livingPassenger->mZd) > 0.0f)
-                {
-                    found = true;
-                    break;
-                }
+                boatMoving = true;
             }
+            break;
         }
     }
     delete boats;
-    return mTarget.expired() && found;
+    return mTarget.expired() && boatMoving;
 }
 
 bool FollowBoatGoal::canContinueToUse()
 {
-    boost::shared_ptr<Entity> target = mTarget.lock();
-    if (!target || !target->isPassenger())
+    boost::shared_ptr<LivingEntity> target = mTarget.lock();
+    if (target == NULL || !target->isPassenger())
+    {
         return false;
-    return Mth::abs((float)target->mXd) > 0.0f ||
-           Mth::abs((float)target->mZd) > 0.0f;
+    }
+    return Mth::abs(target->mXxa) > 0.0f || Mth::abs(target->mZza) > 0.0f;
 }
 
 bool FollowBoatGoal::canInterrupt()
@@ -68,27 +65,21 @@ bool FollowBoatGoal::canInterrupt()
 
 void FollowBoatGoal::start()
 {
-    Entity* dolphin = (Entity*)mDolphin;
-    AABB* searchBox = dolphin->mBoundingBox->grow(5.0);
     std::vector<boost::shared_ptr<Entity> >* boats =
-        dolphin->mLevel->getEntitiesOfClass(typeid(Boat), searchBox);
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    boost::shared_ptr<Boat> boat;
-    for (it = boats->begin(); it != boats->end(); ++it)
+        mDolphin->mLevel->getEntitiesOfClass(typeid(Boat), mDolphin->mBoundingBox->grow(5.0));
+    for (unsigned int i = 0; i < boats->size(); ++i)
     {
-        boat = boost::static_pointer_cast<Boat>(*it);
-        if (boat->getControllingPassenger())
+        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(boats->at(i));
+        if (boat->getControllingPassenger() != NULL
+            && (boat->getControllingPassenger()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
-            boost::shared_ptr<Entity> passenger = boat->getControllingPassenger();
-            if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-                break;
+            mTarget = boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
+            break;
         }
     }
-    if (it != boats->end())
-        mTarget = boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
-    delete boats;
     mCooldown = 0;
     mState = 0;
+    delete boats;
 }
 
 void FollowBoatGoal::stop()
@@ -99,32 +90,49 @@ void FollowBoatGoal::stop()
 
 void FollowBoatGoal::tick()
 {
-    Entity* dolphin = (Entity*)mDolphin;
-    boost::shared_ptr<Entity> target = mTarget.lock();
-    if (!target)
-        return;
-    bool moving = Mth::abs((float)target->mXd) > 0.0f ||
-                  Mth::abs((float)target->mZd) > 0.0f;
-    float speed = mState == 1 && moving ? 0.2f : 0.15f;
-    dolphin->moveRelative((float)dolphin->mXd, (float)dolphin->mYd,
-                          (float)dolphin->mZd, speed);
-    dolphin->move(eMoverType_Self, dolphin->mXd, dolphin->mYd, dolphin->mZd, false);
-    dolphin->mXd *= 0.9;
-    dolphin->mYd *= 0.9;
-    dolphin->mZd *= 0.9;
-    if (--mCooldown >= 1)
-        return;
-    mCooldown = 10;
-    double distance = dolphin->distanceTo(target);
-    if (mState == 0 && distance < (double)mSearchDistance)
+    boost::shared_ptr<LivingEntity> target = mTarget.lock();
+    if (target == NULL)
     {
-        mCooldown = 0;
-        mState = 1;
+        return;
     }
-    else if (mState == 1 && (double)mMaxDistance < distance)
+
+    bool targetMoving = Mth::abs(target->mXxa) > 0.0f || Mth::abs(target->mZza) > 0.0f;
+    float speed = 0.15f;
+    if (mState == 1)
     {
-        mCooldown = 0;
-        mState = 0;
+        speed = targetMoving ? 0.2f : 0.0f;
+    }
+    mDolphin->moveRelative(mDolphin->mXxa, mDolphin->mYya, mDolphin->mZza, speed);
+    mDolphin->move(eMoverType_Self, mDolphin->mXd, mDolphin->mYd, mDolphin->mZd, false);
+    mDolphin->mXd *= 0.9f;
+    mDolphin->mYd *= 0.9f;
+    mDolphin->mZd *= 0.9f;
+
+    if (--mCooldown > 0)
+    {
+        return;
+    }
+    mCooldown = 10;
+
+    if (mState == 0)
+    {
+        BlockPos behind = BlockPos(target).relative(target->getDirection()->getOpposite()).offset(0, -1, 0);
+        mDolphin->getNavigation()->moveTo(behind.x, behind.y, behind.z, 1.0);
+        if (mDolphin->distanceTo(target) < static_cast<float>(mSearchDistance))
+        {
+            mCooldown = 0;
+            mState = 1;
+        }
+    }
+    else if (mState == 1)
+    {
+        BlockPos ahead = BlockPos(target).relative(target->getMotionDirection(), 10);
+        mDolphin->getNavigation()->moveTo(ahead.x, ahead.y - 1, ahead.z, 1.0);
+        if (mDolphin->distanceTo(target) > static_cast<float>(mMaxDistance))
+        {
+            mCooldown = 0;
+            mState = 0;
+        }
     }
 }
 

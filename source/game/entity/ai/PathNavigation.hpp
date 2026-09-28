@@ -20,10 +20,9 @@ public:
     Path* mPath;
     Mob* mMob;
     Level* mLevel;
-    int mTick;
     double mSpeedModifier;
     AttributeInstance* mFollowRange;
-    BlockPos* mTargetPos;
+    int mTick;
     int mLastStuckCheck;
     Vec3* mLastStuckCheckPos;
     Vec3* mLastTargetPos;
@@ -34,7 +33,7 @@ public:
     float mMaxDistanceToWaypoint;
     bool mHasDelayedRecomputation;
     long long mLastRecomputeTime;
-    Path* mTargetPath;
+    BlockPos* mTargetPos;
     PathFinder* mPathFinder;
 
     PathNavigation(Mob* mob, Level* level);

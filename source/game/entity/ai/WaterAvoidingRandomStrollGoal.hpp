@@ -11,7 +11,7 @@ class WaterAvoidingRandomStrollGoal : public RandomStrollGoal
 public:
     WaterAvoidingRandomStrollGoal(PathfinderMob* mob, double speedModifier);
     WaterAvoidingRandomStrollGoal(PathfinderMob* mob, double speedModifier, float probability);
-    virtual ~WaterAvoidingRandomStrollGoal();
+    virtual ~WaterAvoidingRandomStrollGoal() {}
     virtual Vec3* getPosition();
 
 private:

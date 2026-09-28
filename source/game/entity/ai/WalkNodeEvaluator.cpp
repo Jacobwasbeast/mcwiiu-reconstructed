@@ -25,7 +25,7 @@
 #include "game/core/Node.hpp"
 
 WalkNodeEvaluator::WalkNodeEvaluator(Entity* entity)
-    : NodeEvaluator(), mOldWaterCost(1.65f), mRailAtStart(false), mRailBelowStart(false), mEntity(entity)
+    : NodeEvaluator(), mOldWaterCost(0.0f), mRailAtStart(false), mRailBelowStart(false), mEntity(entity)
 {
 }
 
