@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "game/core/Mth.hpp"
+#include "game/util/Math.hpp"
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/core/WeighedTreasure.hpp"
@@ -50,7 +51,7 @@ const std::wstring SPECTATOR_TEAM_NAME = L"s";
 GameModeUtilities::Position::Position() : x(0.0), z(0.0), y(0.0) {}
 
 GameModeUtilities::Position::Position(double xValue, double zValue)
-    : x(xValue), z(zValue), y(Random().nextDouble() * 360.0) {}
+    : x(xValue), z(zValue), y(Math::random() * 360.0) {}
 
 void GameModeUtilities::Position::randomize(Random* random, double minX, double minZ,
                                             double maxX, double maxZ)

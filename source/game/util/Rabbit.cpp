@@ -519,7 +519,7 @@ void Rabbit::setRabbitType(int type)
             setCustomName(L"entity.KillerBunny.name", L"", false);
         }
     }
-    getEntityData()->set(DATA_RABBIT_TYPE, type, true);
+    mEntityData->set(DATA_RABBIT_TYPE, type, true);
 }
 
 void Rabbit::readAdditionalSaveData(CompoundTag* tag)

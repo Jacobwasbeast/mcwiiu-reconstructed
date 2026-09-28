@@ -1,6 +1,8 @@
 #include "game/util/phys__Vec2.hpp"
 #include "platform/wiiu/TLSStorageCafe.hpp"
 
+#include <stddef.h>
+
 #include <math.h>
 
 static const int TEMP_POOL_SIZE = 1024;

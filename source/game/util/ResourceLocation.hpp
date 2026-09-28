@@ -8,7 +8,7 @@
 
 #include "game/world/biome/arrayWithLength.hpp"
 
-enum _TEXTURE_NAME : int
+enum _TEXTURE_NAME
 {
 };
 
