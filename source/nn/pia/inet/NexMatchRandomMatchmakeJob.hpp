@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHRANDOMMATCHMAKEJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHRANDOMMATCHMAKEJOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace pia { namespace inet {
 struct nn_pia_Result;
@@ -37,7 +37,7 @@ public:
     uint32_t SetNextStepAtWaitLeaveMesh();
 
 private:
-    std::uint64_t state_;
+    uint64_t state_;
 };
 
 }}}

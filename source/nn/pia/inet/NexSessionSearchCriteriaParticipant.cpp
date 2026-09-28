@@ -2,7 +2,9 @@
 
 namespace nn { namespace pia { namespace inet {
 
-NexSessionSearchCriteriaParticipant::~NexSessionSearchCriteriaParticipant() = default;
+NexSessionSearchCriteriaParticipant::~NexSessionSearchCriteriaParticipant()
+{
+}
 
 const unsigned long long* NexSessionSearchCriteriaParticipant::GetParticipantPrincipalId() const
 {

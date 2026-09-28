@@ -10,7 +10,7 @@ void NexUpdateCommunitySetting::Reset()
     communityId = 0;
     minParticipantNum = static_cast<unsigned short>(-1);
     maxParticipantNum = static_cast<unsigned short>(-1);
-    for (unsigned int& attribute : attributes) attribute = 0;
+    for (unsigned int i = 0; i < sizeof(attributes) / sizeof(attributes[0]); ++i) attributes[i] = 0;
     description.Clear();
     communityUserPassword.Clear();
     applicationDataSize = 0;

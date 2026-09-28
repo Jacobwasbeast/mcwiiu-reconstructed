@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNETWORKFACTORY_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNETWORKFACTORY_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace pia { namespace inet {
 struct ConnectStationJob;
@@ -103,7 +103,7 @@ public:
     uint32_t IsBitRateCheckPermitted();
 
 private:
-    std::uint64_t state_;
+    uint64_t state_;
 };
 
 }}}

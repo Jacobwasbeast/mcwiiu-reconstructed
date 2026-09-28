@@ -2,7 +2,9 @@
 
 namespace nn { namespace pia { namespace inet {
 
-NexSessionSearchCriteriaOwner::~NexSessionSearchCriteriaOwner() = default;
+NexSessionSearchCriteriaOwner::~NexSessionSearchCriteriaOwner()
+{
+}
 
 nn::pia::common::Result NexSessionSearchCriteriaOwner::SetResultRange(uint32_t offset, uint32_t size)
 {

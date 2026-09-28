@@ -39,9 +39,8 @@ NexSessionSearchCriteria::NexSessionSearchCriteria()
     m_resultRangeSize = 100;
     for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
     {
-        m_additionalScoreBasedParameterValues[i].m_words[0] = 0;
-        m_additionalScoreBasedParameterValues[i].m_words[1] = 0;
-        m_additionalScoreBasedParameterValues[i].m_words[2] = 0;
+        m_additionalScoreBasedParameterValues[i].m_uint64Value = 0;
+        m_additionalScoreBasedParameterValues[i].m_type = 0;
     }
 }
 
@@ -150,10 +149,7 @@ void NexSessionSearchCriteria::Copy(const NexSessionSearchCriteria& other)
     for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
     {
         m_additionalScoreBasedParameterValueKey[i].Copy(other.m_additionalScoreBasedParameterValueKey[i]);
-        m_additionalScoreBasedParameterValues[i].m_words[0] = other.m_additionalScoreBasedParameterValues[i].m_words[0];
-        m_additionalScoreBasedParameterValues[i].m_words[1] = other.m_additionalScoreBasedParameterValues[i].m_words[1];
-        m_additionalScoreBasedParameterValues[i].m_words[2] = other.m_additionalScoreBasedParameterValues[i].m_words[2];
-        m_additionalScoreBasedParameterValues[i].m_words[3] = other.m_additionalScoreBasedParameterValues[i].m_words[3];
+        m_additionalScoreBasedParameterValues[i] = other.m_additionalScoreBasedParameterValues[i];
     }
     m_additionalScoreBasedParameterStringKey.Copy(other.m_additionalScoreBasedParameterStringKey);
     m_additionalScoreBasedParameterString.Copy(other.m_additionalScoreBasedParameterString);
@@ -203,9 +199,8 @@ void NexSessionSearchCriteria::Reset()
     for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
     {
         m_additionalScoreBasedParameterValueKey[i].Clear();
-        m_additionalScoreBasedParameterValues[i].m_words[0] = 0;
-        m_additionalScoreBasedParameterValues[i].m_words[1] = 0;
-        m_additionalScoreBasedParameterValues[i].m_words[2] = 0;
+        m_additionalScoreBasedParameterValues[i].m_uint64Value = 0;
+        m_additionalScoreBasedParameterValues[i].m_type = 0;
     }
     m_additionalScoreBasedParameterStringKey.Clear();
     m_additionalScoreBasedParameterString.Clear();

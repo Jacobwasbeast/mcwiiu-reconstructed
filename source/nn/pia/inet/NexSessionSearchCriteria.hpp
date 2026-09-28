@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXSESSIONSEARCHCRITERIA_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXSESSIONSEARCHCRITERIA_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/pia/common/FixedString.hpp"
 #include "nn/pia/common/InetAddress.hpp"

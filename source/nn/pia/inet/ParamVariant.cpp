@@ -4,9 +4,8 @@ namespace nn { namespace pia { namespace inet {
 
 ParamVariant::ParamVariant()
 {
-    m_words[0] = 0;
-    m_words[1] = 0;
-    m_words[2] = 0;
+    m_uint64Value = 0;
+    m_type = 0;
 }
 
 }}}

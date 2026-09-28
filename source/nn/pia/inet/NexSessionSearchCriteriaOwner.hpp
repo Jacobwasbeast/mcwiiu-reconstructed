@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXSESSIONSEARCHCRITERIAOWNER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXSESSIONSEARCHCRITERIAOWNER_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
 namespace nn

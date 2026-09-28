@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATSERVERADDRESSRESOLVEJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATSERVERADDRESSRESOLVEJOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace pia { namespace inet {
 
@@ -20,7 +20,7 @@ public:
     uint32_t StepComplete();
 
 private:
-    std::uint64_t state_;
+    uint64_t state_;
 };
 
 }}}

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATRELAYINTERFACE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATRELAYINTERFACE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace pia { namespace inet {
 struct CallContext;
@@ -32,7 +32,7 @@ public:
     void ReportNATTraversalResultDetail(uint32_t* a1, bool* a2, uint32_t a3, uint32_t* a4);
 
 private:
-    std::uint64_t state_;
+    uint64_t state_;
 };
 
 }}}

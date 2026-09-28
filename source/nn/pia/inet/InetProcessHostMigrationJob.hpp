@@ -62,7 +62,7 @@ private:
     int m_reselectDeadlineHigh;
     int m_reselectDeadlineLow;
     int m_newHost;
-    std::list<nn::nex::StationURL, nn::nex::MemAllocator<nn::nex::StationURL>>* m_stationUrls;
+    std::list<nn::nex::StationURL, nn::nex::MemAllocator<nn::nex::StationURL> >* m_stationUrls;
     unsigned char m_stationUrlStorage[0x80];
     unsigned char m_migrationMode;
     unsigned char m_hostChanged;

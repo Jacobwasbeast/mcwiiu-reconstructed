@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXSESSIONINFO_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXSESSIONINFO_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/DateTime.hpp"
 #include "nn/pia/inet/SessionType.hpp"

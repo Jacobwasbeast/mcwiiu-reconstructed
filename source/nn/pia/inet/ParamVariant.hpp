@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_PARAM_VARIANT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_PARAM_VARIANT_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace pia { namespace inet {
 
@@ -15,7 +15,14 @@ public:
 private:
     friend class NexSessionSearchCriteria;
 
-    std::uint32_t m_words[4];
+    union
+    {
+        unsigned long long m_uint64Value;
+        long long m_int64Value;
+        unsigned int m_uint32Value;
+        int m_int32Value;
+    };
+    unsigned int m_type;
 };
 
 }}}

@@ -10,12 +10,14 @@ const Result cResultBufferTooSmall = static_cast<Result>(0x10c04);
 
 NexSessionInfo::NexSessionInfo() : game_mode_(0), session_id_(0),
     current_participant_num_(0), min_participant_num_(0), max_participant_num_(0),
-    opened_(false), attributes_{}, application_data_{}, application_data_size_(0),
+    opened_(false), attributes_(), application_data_(), application_data_size_(0),
     user_password_enabled_(false), system_password_enabled_(false), session_type_(cSessionType_Normal),
     auto_close_session_(false), host_principal_id_(0), target_principal_id_(0),
     selection_priority_(0), started_time_(), community_id_(0) {}
 
-NexSessionInfo::~NexSessionInfo() = default;
+NexSessionInfo::~NexSessionInfo()
+{
+}
 
 uint32_t NexSessionInfo::GetGameMode() const
 {
@@ -54,7 +56,7 @@ uint8_t NexSessionInfo::IsOpened() const
 
 Result NexSessionInfo::GetApplicationData(void* buffer, unsigned int bufferSize) const
 {
-    if (buffer == nullptr) return cResultInvalidArgument;
+    if (buffer == NULL) return cResultInvalidArgument;
     if (bufferSize < application_data_size_) return cResultBufferTooSmall;
     std::memcpy(buffer, application_data_, application_data_size_);
     return 0;
@@ -67,7 +69,7 @@ uint32_t NexSessionInfo::GetApplicationDataSize() const
 
 Result NexSessionInfo::GetAttribute(unsigned char index, unsigned int* value) const
 {
-    if (value == nullptr || index >= 6) return cResultInvalidArgument;
+    if (value == NULL || index >= 6) return cResultInvalidArgument;
     *value = attributes_[index];
     return 0;
 }
@@ -119,7 +121,7 @@ void NexSessionInfo::Clear()
     opened_ = user_password_enabled_ = system_password_enabled_ = auto_close_session_ = false;
     session_type_ = cSessionType_Normal; host_principal_id_ = target_principal_id_ = 0;
     selection_priority_ = 0; application_data_size_ = 0;
-    for (uint32_t& attribute : attributes_) attribute = 0;
+    for (unsigned int i = 0; i < sizeof(attributes_) / sizeof(attributes_[0]); ++i) attributes_[i] = 0;
     started_time_ = common::DateTime();
     std::memset(application_data_, 0, sizeof(application_data_));
 }
@@ -166,7 +168,7 @@ void NexSessionInfo::SetAttribute(uint8_t index, uint32_t value)
 
 Result NexSessionInfo::SetApplicationData(const void* data, unsigned int size)
 {
-    if (data != nullptr && size <= sizeof(application_data_)) {
+    if (data != NULL && size <= sizeof(application_data_)) {
         std::memset(application_data_, 0, sizeof(application_data_));
         std::memcpy(application_data_, data, size);
         application_data_size_ = size;
