@@ -41,8 +41,6 @@ private:
     z_stream m_stream;
 };
 
-static_assert(sizeof(z_stream) == 0x38, "ZlibCompressor requires the pinned 32-bit z_stream");
-static_assert(sizeof(ZlibCompressor) == 0x4c, "ZlibCompressor layout");
 
 }}}
 

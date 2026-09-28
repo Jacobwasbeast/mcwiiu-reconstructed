@@ -11,10 +11,6 @@ StationAddress::StationAddress(const StationAddress& other)
 {
 }
 
-StationAddress::~StationAddress()
-{
-}
-
 Result StationAddress::SetInetAddress(const InetAddress& address)
 {
     InetAddress::operator=(address);

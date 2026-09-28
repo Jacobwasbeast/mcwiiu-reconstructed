@@ -10,7 +10,7 @@ class StationAddress : public InetAddress
 public:
     StationAddress();
     StationAddress(const StationAddress& other);
-    virtual ~StationAddress();
+    virtual ~StationAddress() {}
     Result SetInetAddress(const InetAddress& address);
     void Clear();
     Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;

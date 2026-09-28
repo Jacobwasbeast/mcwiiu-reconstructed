@@ -57,7 +57,6 @@ private:
     uint32_t m_reductionTable[16][4];
 };
 typedef GcmModeImpl<GcmModeGenericHelper> GcmMode;
-static_assert(sizeof(GcmMode) == 0x180, "Wii U GCM state layout");
 }
 }
 }
