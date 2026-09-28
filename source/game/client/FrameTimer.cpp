@@ -13,14 +13,14 @@ void FindFrameBoundary(BcfStream* stream)
         stream->pendingBytes = 0;
     }
 
-    std::uint32_t candidates[8] = {};
-    std::uint32_t candidateCount = 0;
-    std::uint32_t available = stream->bufferLength;
+    uint32_t candidates[8] = {};
+    uint32_t candidateCount = 0;
+    uint32_t available = stream->bufferLength;
 
     for (;;)
     {
-        std::uint32_t scan = stream->scanStart;
-        std::uint32_t candidateBase = 0;
+        uint32_t scan = stream->scanStart;
+        uint32_t candidateBase = 0;
         int bytesRead;
 
         if (available < 5)
@@ -51,13 +51,13 @@ void FindFrameBoundary(BcfStream* stream)
             candidateBase = 0x40000;
             do
             {
-                std::uint8_t* header = stream->buffer + scan - 4;
-                const std::uint16_t marker =
-                    static_cast<std::uint16_t>(header[0]) |
-                    (static_cast<std::uint16_t>(header[1]) << 8);
-                const std::uint32_t frameLength =
-                    static_cast<std::uint32_t>(header[2]) |
-                    (static_cast<std::uint32_t>(header[3]) << 8);
+                uint8_t* header = stream->buffer + scan - 4;
+                const uint16_t marker =
+                    static_cast<uint16_t>(header[0]) |
+                    (static_cast<uint16_t>(header[1]) << 8);
+                const uint32_t frameLength =
+                    static_cast<uint32_t>(header[2]) |
+                    (static_cast<uint32_t>(header[3]) << 8);
 
                 if (marker == 0x9999 && frameLength <= stream->scanStart)
                 {
@@ -72,11 +72,11 @@ void FindFrameBoundary(BcfStream* stream)
                     }
                     else
                     {
-                        std::uint8_t* nextHeader =
+                        uint8_t* nextHeader =
                             header + frameLength + 4;
-                        const std::uint16_t nextMarker =
-                            static_cast<std::uint16_t>(nextHeader[0]) |
-                            (static_cast<std::uint16_t>(nextHeader[1]) << 8);
+                        const uint16_t nextMarker =
+                            static_cast<uint16_t>(nextHeader[0]) |
+                            (static_cast<uint16_t>(nextHeader[1]) << 8);
                         if (nextMarker == 0x9999)
                         {
                             std::memmove(stream->buffer,
@@ -126,24 +126,24 @@ void FindFrameBoundary(BcfStream* stream)
         stream->bufferLength += bytesRead;
         available = stream->bufferLength;
 
-        for (std::uint32_t i = 0; i < candidateCount; ++i)
+        for (uint32_t i = 0; i < candidateCount; ++i)
         {
-            const std::uint32_t candidate = candidates[i];
-            const std::uint32_t frameLength = candidate & 0xffff;
-            const std::uint32_t candidateOffset = candidate >> 16;
+            const uint32_t candidate = candidates[i];
+            const uint32_t frameLength = candidate & 0xffff;
+            const uint32_t candidateOffset = candidate >> 16;
             if (stream->scanStart <= candidateOffset)
             {
-                const std::uint32_t frameStart =
+                const uint32_t frameStart =
                     candidateOffset + frameLength - stream->scanStart;
                 if (frameStart + 4 >= available)
                 {
                     continue;
                 }
-                std::uint8_t* header = stream->buffer +
+                uint8_t* header = stream->buffer +
                     frameStart;
-                const std::uint16_t marker =
-                    static_cast<std::uint16_t>(header[0]) |
-                    (static_cast<std::uint16_t>(header[1]) << 8);
+                const uint16_t marker =
+                    static_cast<uint16_t>(header[0]) |
+                    (static_cast<uint16_t>(header[1]) << 8);
                 if (marker == 0x9999)
                 {
                     std::memmove(stream->buffer,
