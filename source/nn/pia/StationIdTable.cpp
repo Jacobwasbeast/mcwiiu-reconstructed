@@ -68,8 +68,8 @@ Result StationIdTable::Initialize(unsigned int count)
     return 0;
 }
 
-Result StationIdTable::Add(std::uint64_t stationId, StationIndex index,
-                            std::uint64_t uniqueId)
+Result StationIdTable::Add(uint64_t stationId, StationIndex index,
+                            uint64_t uniqueId)
 {
     common::ListNode* node = m_availableEntries.PopBackNode();
     if (node == 0)
@@ -77,7 +77,7 @@ Result StationIdTable::Add(std::uint64_t stationId, StationIndex index,
     Entry* entry = reinterpret_cast<Entry*>(node);
     std::memset(entry, 0, sizeof(Entry));
     entry->stationId = stationId;
-    entry->stationIndex = static_cast<std::uint32_t>(index);
+    entry->stationIndex = static_cast<uint32_t>(index);
     entry->uniqueId = uniqueId;
     m_entries.InsertBeforeNode(m_entries.Sentinel(), node);
     ++m_entryNum;
@@ -86,7 +86,7 @@ Result StationIdTable::Add(std::uint64_t stationId, StationIndex index,
 }
 
 StationIdTable::Entry* StationIdTable::FindByStationIdCore(
-    std::uint64_t stationId) const
+    uint64_t stationId) const
 {
     const common::ListNode* head = m_entries.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
@@ -105,14 +105,14 @@ StationIdTable::Entry* StationIdTable::FindByStationIndexCore(
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
         Entry* entry = reinterpret_cast<Entry*>(node);
-        if (entry->stationIndex == static_cast<std::uint32_t>(index))
+        if (entry->stationIndex == static_cast<uint32_t>(index))
             return entry;
     }
     return 0;
 }
 
 StationIdTable::Entry* StationIdTable::FindByUniqueIdCore(
-    std::uint64_t uniqueId) const
+    uint64_t uniqueId) const
 {
     const common::ListNode* head = m_entries.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
@@ -135,7 +135,7 @@ Result StationIdTable::Copy(Entry* destination, const Entry* source) const
 }
 
 Result StationIdTable::FindByStationId(Entry* entry,
-                                       std::uint64_t stationId) const
+                                       uint64_t stationId) const
 {
     return Copy(entry, FindByStationIdCore(stationId));
 }
@@ -147,7 +147,7 @@ Result StationIdTable::FindByStationIndex(Entry* entry,
 }
 
 Result StationIdTable::FindByUniqueId(Entry* entry,
-                                      std::uint64_t uniqueId) const
+                                      uint64_t uniqueId) const
 {
     return Copy(entry, FindByUniqueIdCore(uniqueId));
 }
@@ -163,12 +163,12 @@ void StationIdTable::RemoveCore(Entry* entry)
     ++m_availableEntryNum;
 }
 
-void StationIdTable::RemoveByStationId(std::uint64_t stationId)
+void StationIdTable::RemoveByStationId(uint64_t stationId)
 {
     RemoveCore(FindByStationIdCore(stationId));
 }
 
-void StationIdTable::SetJoinEventNotifiedByStationId(std::uint64_t stationId,
+void StationIdTable::SetJoinEventNotifiedByStationId(uint64_t stationId,
                                                      bool notified)
 {
     Entry* entry = FindByStationIdCore(stationId);
@@ -192,7 +192,7 @@ bool StationIdTable::IsJoinEventNotifiedByStationIndex(
 }
 
 bool StationIdTable::IsJoinEventNotifiedByStationId(
-    std::uint64_t stationId) const
+    uint64_t stationId) const
 {
     Entry* entry = FindByStationIdCore(stationId);
     return entry != 0 && entry->joinEventNotified;
@@ -210,7 +210,7 @@ void StationIdTable::SetAvailableEntryNum(unsigned int count)
 }
 
 
-StationIndex StationIdTable::FindUnsafe(std::uint64_t stationId) const
+StationIndex StationIdTable::FindUnsafe(uint64_t stationId) const
 {
     Entry* entry = FindByStationIdCore(stationId);
     return entry != 0 ? static_cast<StationIndex>(entry->stationIndex)

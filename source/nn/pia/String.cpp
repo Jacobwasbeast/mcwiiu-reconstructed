@@ -1,6 +1,6 @@
 #include "nn/pia/String.hpp"
 
-#include <cstdint>
+#include <stdint.h>
 #include <cstdio>
 
 namespace nn { namespace pia { namespace common {
@@ -44,7 +44,7 @@ Result String::SetString(const void* text, unsigned int, EncodingType encoding)
     }
     else if (encoding == EncodingType_Utf16)
     {
-        const std::uint16_t* value = static_cast<const std::uint16_t*>(text);
+        const uint16_t* value = static_cast<const uint16_t*>(text);
         while (*value != 0)
         {
             ++value;
@@ -160,7 +160,7 @@ unsigned int String::CalcBytes(const void* text, EncodingType encoding)
         return bytes;
     }
 
-    const std::uint16_t* value = static_cast<const std::uint16_t*>(text);
+    const uint16_t* value = static_cast<const uint16_t*>(text);
     while (*value != 0)
     {
         ++value;

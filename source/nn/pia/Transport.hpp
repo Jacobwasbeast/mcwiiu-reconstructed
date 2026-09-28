@@ -1,6 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_HPP
-#include <cstdint>
+#include <stdint.h>
 #include "nn/pia.h"
 #include "nn/pia/StationIdTable.hpp"
 #include "nn/pia/common/CryptoSetting.hpp"
@@ -41,10 +41,10 @@ public:
     Result GetLocalStationConnectionInfo(StationConnectionInfo* stationConnectionInfo);
     Result GetHostStationConnectionInfo(StationConnectionInfo* stationConnectionInfo);
     void SetMonitoringNetworkRtt(bool isSessionBegin);
-    Result ConvertToStationIndex(StationIndex*, std::uint64_t) const;
-    StationIndex ConvertToStationIndexUnsafe(std::uint64_t stationId) const;
-    Result ConvertToStationId(std::uint64_t* stationId, StationIndex stationIndex) const;
-    std::uint64_t ConvertToStationIdUnsafe(StationIndex stationIndex) const;
+    Result ConvertToStationIndex(StationIndex*, uint64_t) const;
+    StationIndex ConvertToStationIndexUnsafe(uint64_t stationId) const;
+    Result ConvertToStationId(uint64_t* stationId, StationIndex stationIndex) const;
+    uint64_t ConvertToStationIdUnsafe(StationIndex stationIndex) const;
     void SetTransportStatus(Result transportStatus);
     void Trace(unsigned long long value) const;
 
@@ -68,9 +68,9 @@ public:
     StationIdTable* m_stationIdTable;
     unsigned int m_stationConnectionState;
     Result m_transportStatus;
-    std::uint64_t m_localStationId;
+    uint64_t m_localStationId;
 };
 extern Transport* g_piaTransport;
-StationIndex Conv2StationIndex(std::uint64_t);
+StationIndex Conv2StationIndex(uint64_t);
 }}}
 #endif

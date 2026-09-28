@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_STATION_ID_TABLE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_STATION_ID_TABLE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/pia/Common.hpp"
 #include "nn/pia/ListBase.hpp"
@@ -15,9 +15,9 @@ public:
     struct Entry
     {
         common::ListNode node;
-        std::uint64_t stationId;
-        std::uint32_t stationIndex;
-        std::uint64_t uniqueId;
+        uint64_t stationId;
+        uint32_t stationIndex;
+        uint64_t uniqueId;
         bool joinEventNotified;
     };
 
@@ -26,37 +26,37 @@ public:
     void Clear();
     Result Finalize();
     Result Initialize(unsigned int);
-    Result Add(std::uint64_t, StationIndex, std::uint64_t);
-    Result FindByStationId(Entry*, std::uint64_t) const;
+    Result Add(uint64_t, StationIndex, uint64_t);
+    Result FindByStationId(Entry*, uint64_t) const;
     Result FindByStationIndex(Entry*, StationIndex) const;
-    Result FindByUniqueId(Entry*, std::uint64_t) const;
-    void RemoveByStationId(std::uint64_t);
+    Result FindByUniqueId(Entry*, uint64_t) const;
+    void RemoveByStationId(uint64_t);
     void RemoveByStationIndex(StationIndex);
-    void RemoveByUniqueId(std::uint64_t);
+    void RemoveByUniqueId(uint64_t);
     Entry* FindUnsafe(StationIndex) const;
-    StationIndex FindUnsafe(std::uint64_t stationId) const;
-    void SetJoinEventNotifiedByStationId(std::uint64_t, bool);
+    StationIndex FindUnsafe(uint64_t stationId) const;
+    void SetJoinEventNotifiedByStationId(uint64_t, bool);
     void SetJoinEventNotifiedByStationIndex(StationIndex, bool);
     bool IsJoinEventNotifiedByStationIndex(StationIndex) const;
-    bool IsJoinEventNotifiedByStationId(std::uint64_t) const;
+    bool IsJoinEventNotifiedByStationId(uint64_t) const;
     unsigned int GetEntryNum() const;
     void SetAvailableEntryNum(unsigned int);
-    void Trace(std::uint64_t) const;
+    void Trace(uint64_t) const;
 
 private:
-    Entry* FindByStationIdCore(std::uint64_t) const;
+    Entry* FindByStationIdCore(uint64_t) const;
     Entry* FindByStationIndexCore(StationIndex) const;
-    Entry* FindByUniqueIdCore(std::uint64_t) const;
+    Entry* FindByUniqueIdCore(uint64_t) const;
     void RemoveCore(Entry*);
     Result Copy(Entry*, const Entry*) const;
 
     common::ListBase m_entries;
     common::ListBase m_availableEntries;
-    std::uint32_t m_entryOffset;
-    std::uint32_t m_entryNum;
-    std::uint32_t m_maxEntryNum;
+    uint32_t m_entryOffset;
+    uint32_t m_entryNum;
+    uint32_t m_maxEntryNum;
     Entry* m_storage;
-    std::uint32_t m_availableEntryNum;
+    uint32_t m_availableEntryNum;
 };
 
 }}}

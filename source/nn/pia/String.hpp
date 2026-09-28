@@ -2,7 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_STRING_HPP
 
 #include <cstdarg>
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/pia/Common.hpp"
 
@@ -191,8 +191,8 @@ Result FixedString<LengthT>::SetString(const void* text, unsigned int length, En
     {
         if (encoding == EncodingType_Utf16)
         {
-            const std::uint16_t* value = static_cast<const std::uint16_t*>(text);
-            std::uint16_t* buffer = reinterpret_cast<std::uint16_t*>(m_buffer);
+            const uint16_t* value = static_cast<const uint16_t*>(text);
+            uint16_t* buffer = reinterpret_cast<uint16_t*>(m_buffer);
             while (*value != 0 && index < ((m_bufferSize >> 1) & 0x7ffffffe))
             {
                 buffer[index >> 1] = *value;

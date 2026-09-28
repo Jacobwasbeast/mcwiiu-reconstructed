@@ -211,7 +211,7 @@ void Transport::updateTransportAnalyzer()
 }
 
 Result Transport::ConvertToStationIndex(StationIndex* index,
-                                         std::uint64_t stationId) const
+                                         uint64_t stationId) const
 {
     if (index == 0)
         return static_cast<Result>(0x10c07);
@@ -231,12 +231,12 @@ Result Transport::ConvertToStationIndex(StationIndex* index,
     *index = entry.stationIndex;
     return 0;
 }
-StationIndex Transport::ConvertToStationIndexUnsafe(std::uint64_t stationId) const
+StationIndex Transport::ConvertToStationIndexUnsafe(uint64_t stationId) const
 {
     return m_stationIdTable->FindUnsafe(stationId);
 }
 
-StationIndex Conv2StationIndex(std::uint64_t stationId)
+StationIndex Conv2StationIndex(uint64_t stationId)
 {
     StationIndex index;
     if (g_piaTransport != 0 &&
