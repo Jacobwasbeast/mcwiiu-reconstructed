@@ -2,7 +2,8 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_NAT_NATPROBEREQUESTLIST_HPP
 
 #include <cstddef>
-#include <type_traits>
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/common/Memory.hpp"
@@ -27,7 +28,7 @@ private:
     struct PoolNode
     {
         common::ListNode node;
-        typename std::aligned_storage<sizeof(NatProbeRequest), alignof(NatProbeRequest)>::type value;
+        boost::aligned_storage<sizeof(NatProbeRequest), boost::alignment_of<NatProbeRequest>::value>::type value;
     };
     common::ListBase m_active;
     common::ListBase m_free;

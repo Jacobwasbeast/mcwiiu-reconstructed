@@ -50,7 +50,7 @@ common::Result NatProbeData::Deserialize(const unsigned char* buffer, unsigned i
     return 0;
 }
 
-void NatProbeData::Trace(std::uint64_t) const
+void NatProbeData::Trace(uint64_t) const
 {
 }
 

@@ -2,7 +2,8 @@
 
 #include <cstddef>
 #include <new>
-#include <type_traits>
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 
 #include "nn/pia/common/Memory.hpp"
 #include "nn/pia/nat/NatProbe.hpp"
@@ -12,7 +13,7 @@ namespace nn { namespace pia { namespace nat {
 struct NatProbeList::ProbeRecord
 {
     common::ListNode node;
-    typename std::aligned_storage<sizeof(NatProbe), alignof(NatProbe)>::type probeStorage;
+    boost::aligned_storage<sizeof(NatProbe), boost::alignment_of<NatProbe>::value>::type probeStorage;
 
     NatProbe* Probe()
     {

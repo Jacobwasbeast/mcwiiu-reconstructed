@@ -2,7 +2,8 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_NAT_NATTRAVERSALTIMELIST_HPP
 
 #include <cstddef>
-#include <type_traits>
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/nat/NatTraversalTime.hpp"
@@ -23,8 +24,7 @@ private:
     struct PoolNode
     {
         common::ListNode node;
-        typename std::aligned_storage<sizeof(NatTraversalTime),
-                                      alignof(NatTraversalTime)>::type value;
+        boost::aligned_storage<sizeof(NatTraversalTime), boost::alignment_of<NatTraversalTime>::value>::type value;
     };
 
     common::ListBase m_active;
