@@ -30,8 +30,8 @@ private:
     int absoluteMaxSize;
     double centerX;
     double centerZ;
-    double oldSize;
     double newSize;
+    double oldSize;
     long long lerpTime;
     int warningTime;
     int warningBlocks;

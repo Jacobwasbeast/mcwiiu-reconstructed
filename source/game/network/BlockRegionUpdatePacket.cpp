@@ -105,13 +105,13 @@ BlockRegionUpdatePacket::~BlockRegionUpdatePacket()
 
 void BlockRegionUpdatePacket::read(DataInputStream* input)
 {
-    unsigned int flags = input->readUnsignedByte();
+    unsigned int flags = input->readByte();
     mX = input->readInt();
     mY = input->readShort();
     mZ = input->readInt();
-    mWidth = input->readUnsignedByte() + 1;
-    mHeight = input->readUnsignedByte() + 1;
-    mDepth = input->readUnsignedByte() + 1;
+    mWidth = input->readByte() + 1;
+    mHeight = input->readByte() + 1;
+    mDepth = input->readByte() + 1;
     mFullChunk = (flags & 1) != 0;
     mHasBlockChanges = (flags & 4) != 0;
     if ((flags & 2) != 0)
@@ -125,13 +125,13 @@ void BlockRegionUpdatePacket::read(DataInputStream* input)
     {
         mData.data = NULL;
         mData.length = 0;
-        changeCount = input->readUnsignedShort();
+        changeCount = input->readChar();
         mChanges->reserve(changeCount);
     }
     else
     {
         arrayWithLength<unsigned char> compressedData(mSize, true);
-        bool readComplete = input->readFully(compressedData);
+        bool readComplete = input->readBytes(compressedData);
         unsigned int rawSize = mWidth * mHeight * mDepth * 5;
         if (mFullChunk)
             rawSize = LevelChunk::getRawDataMaxBytes();
@@ -141,7 +141,7 @@ void BlockRegionUpdatePacket::read(DataInputStream* input)
             Compression::getCompression()->DecompressLZXRLE(mData.data, &outputSize,
                                                              compressedData.data, mSize);
         delete[] compressedData.data;
-        changeCount = input->readUnsignedShort();
+        changeCount = input->readChar();
         mChanges->reserve(changeCount);
     }
 
@@ -169,8 +169,8 @@ void BlockRegionUpdatePacket::write(DataOutputStream* output)
     output->writeByte(static_cast<unsigned char>((mDepth - 1) & 0xff));
     output->writeInt(mSize | (mDimension << 30));
     output->write(mData, 0, mSize);
-    char changeCount = (char)mChanges->size();
-    output->writeUnsignedShort((unsigned short)changeCount);
+    const unsigned char changeCount = static_cast<unsigned char>(mChanges->size());
+    output->writeChar(changeCount);
     for (std::vector<LevelChunk::BlockChange>::const_iterator it = mChanges->begin();
          it != mChanges->end(); ++it)
     {

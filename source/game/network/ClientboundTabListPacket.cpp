@@ -5,12 +5,7 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundTabListPacket::ClientboundTabListPacket()
-    : header(), footer(), headerFadeIn(0), headerFadeOut(7), footerFadeIn(0), footerFadeOut(7)
-{
-}
-
-ClientboundTabListPacket::ClientboundTabListPacket(const std::wstring& header)
-    : header(header), footer(), headerFadeIn(0), headerFadeOut(7), footerFadeIn(0), footerFadeOut(7)
+    : header(), footer()
 {
 }
 
@@ -37,7 +32,6 @@ void ClientboundTabListPacket::write(DataOutputStream* output)
 
 void ClientboundTabListPacket::handle(PacketListener* listener)
 {
-    listener->handleTabListCustomisation(shared_from_this());
 }
 
 boost::shared_ptr<Packet> ClientboundTabListPacket::create()

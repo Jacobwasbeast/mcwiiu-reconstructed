@@ -50,6 +50,7 @@ private:
     IQNetPlayer* m_qNetPlayer;
     Socket* m_socket;
     int m_acksOutstanding;
+    CPlatformNetworkManager* m_platformNetworkManager;
     uint64_t m_lastChunkPacketTime;
 };
 

@@ -7,12 +7,12 @@
 
 ClientboundSetBorderPacket::ClientboundSetBorderPacket()
     : type(SET_SIZE), absoluteMaxSize(0), centerX(0.0), centerZ(0.0),
-      oldSize(0.0), newSize(0.0), lerpTime(0), warningTime(0), warningBlocks(0) {
+      newSize(0.0), oldSize(0.0), lerpTime(0), warningTime(0), warningBlocks(0) {
 }
 
 ClientboundSetBorderPacket::ClientboundSetBorderPacket(WorldBorder* border, Type packetType)
     : type(packetType), absoluteMaxSize(0), centerX(0.0), centerZ(0.0),
-      oldSize(0.0), newSize(0.0), lerpTime(0), warningTime(0), warningBlocks(0) {
+      newSize(0.0), oldSize(0.0), lerpTime(0), warningTime(0), warningBlocks(0) {
     if (border == 0) return;
     absoluteMaxSize = border->getAbsoluteMaxSize();
     centerX = border->getCenterX();
@@ -32,7 +32,7 @@ void ClientboundSetBorderPacket::handle(PacketListener* listener) {
 }
 
 void ClientboundSetBorderPacket::read(DataInputStream* input) {
-    type = static_cast<Type>(input->readVarInt());
+    type = static_cast<Type>(input->readInt());
     if (type == SET_SIZE) { newSize = input->readDouble(); }
     else if (type == LERP_SIZE) { oldSize = input->readDouble(); newSize = input->readDouble(); lerpTime = input->readVarLong(); }
     else if (type == SET_CENTER) { centerX = input->readDouble(); centerZ = input->readDouble(); }
@@ -42,7 +42,7 @@ void ClientboundSetBorderPacket::read(DataInputStream* input) {
 }
 
 void ClientboundSetBorderPacket::write(DataOutputStream* output) {
-    output->writeVarInt(static_cast<int>(type));
+    output->writeInt(static_cast<int>(type));
     if (type == SET_SIZE) { output->writeDouble(newSize); }
     else if (type == LERP_SIZE) { output->writeDouble(oldSize); output->writeDouble(newSize); output->writeVarLong(lerpTime); }
     else if (type == SET_CENTER) { output->writeDouble(centerX); output->writeDouble(centerZ); }

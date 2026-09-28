@@ -29,7 +29,7 @@ void ServerboundPlayerActionPacket::read(DataInputStream* input)
 {
     mAction = static_cast<Action>(input->readInt());
     mPos = input->readBlockPos();
-    mDirection = Direction::from3DDataValue(input->readByte());
+    mDirection = Direction::from3DDataValue(input->readUnsignedByte());
     mUseTime = input->readInt();
 }
 

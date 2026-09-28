@@ -22,7 +22,7 @@ public:
     void sendPreLoginResponse();
     void handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket> packet);
     void handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet);
-    void handleAcceptedLogin(boost::shared_ptr<ClientboundLoginPacket> packet);
+    virtual void handleAcceptedLogin(boost::shared_ptr<ClientboundLoginPacket> packet);
     virtual void onDisconnect(DisconnectPacket::eDisconnectReason reason, void* userData);
     virtual void handleGetInfo(boost::shared_ptr<GetInfoPacket> packet);
     virtual void handleKeepAlive(boost::shared_ptr<ServerboundKeepAlivePacket> packet);
@@ -33,13 +33,14 @@ public:
     std::wstring getName();
 
 private:
+    friend class PlayerList;
     Connection* m_connection;
-    MinecraftServer* m_server;
-    std::wstring m_name;
-    unsigned int m_tickCount;
     bool m_disconnected;
-    int m_pendingPacketKind;
-    boost::shared_ptr<Packet> m_pendingPacket;
+    MinecraftServer* m_server;
+    int m_tickCount;
+    std::wstring m_name;
+    boost::shared_ptr<ClientboundLoginPacket> m_acceptedLogin;
+    std::wstring m_loginKey;
 };
 
 #endif

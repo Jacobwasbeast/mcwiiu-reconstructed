@@ -10,7 +10,7 @@ class Socket;
 class INetworkPlayer
 {
 public:
-    virtual ~INetworkPlayer();
+    virtual ~INetworkPlayer() {}
 
     virtual unsigned char GetSmallId() = 0;
     virtual void SendData(INetworkPlayer* pTo, const void* pData, int iSize, bool bReliable, bool bRequiresAck) = 0;

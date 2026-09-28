@@ -16,7 +16,7 @@ namespace net_minecraft_world_inventory
 class ContainerListener
 {
 public:
-    virtual ~ContainerListener();
+    virtual ~ContainerListener() {}
 
     virtual void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items) = 0;
     virtual void slotChanged(AbstractContainerMenu* menu, int slotIndex, not_null_ptr<ItemInstance> item) = 0;

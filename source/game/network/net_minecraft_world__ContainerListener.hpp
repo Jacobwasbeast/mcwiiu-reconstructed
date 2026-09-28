@@ -9,7 +9,7 @@ namespace net_minecraft_world
 class ContainerListener
 {
 public:
-    virtual ~ContainerListener();
+    virtual ~ContainerListener() {}
 
     virtual void containerChanged(Container* container) = 0;
 };

@@ -3,9 +3,9 @@
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
-#include <vector>
 
 #include "game/network/Packet.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 class DataInputStream;
@@ -17,7 +17,7 @@ class ClientboundBlockCollectionDestructionPacket : public Packet, public boost:
 {
 public:
     ClientboundBlockCollectionDestructionPacket();
-    ClientboundBlockCollectionDestructionPacket(int sourceId, std::vector<BlockPos> positions, int progress);
+    ClientboundBlockCollectionDestructionPacket(int sourceId, arrayWithLength<BlockPos> positions, int progress);
     virtual ~ClientboundBlockCollectionDestructionPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
@@ -29,8 +29,8 @@ public:
 private:
     friend class ClientPacketListener;
     int sourceId;
-    std::vector<BlockPos> positions;
     int progress;
+    arrayWithLength<BlockPos> positions;
 };
 
 #endif

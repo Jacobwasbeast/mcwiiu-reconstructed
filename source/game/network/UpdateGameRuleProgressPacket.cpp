@@ -50,7 +50,7 @@ void UpdateGameRuleProgressPacket::read(DataInputStream* input)
     if (payloadLength > 0)
     {
         mPayload = arrayWithLength<unsigned char>(static_cast<unsigned int>(payloadLength), true);
-        input->readFully(mPayload);
+        input->readBytes(mPayload);
     }
 }
 
@@ -62,7 +62,7 @@ void UpdateGameRuleProgressPacket::write(DataOutputStream* output)
     output->writeByte(mAuxValue);
     output->writeInt(mDataTag);
     output->writeInt(static_cast<int>(mPayload.length));
-    output->write(mPayload);
+    output->writeBytes(mPayload);
 }
 
 void UpdateGameRuleProgressPacket::handle(PacketListener* listener)

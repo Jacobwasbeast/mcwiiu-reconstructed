@@ -26,7 +26,7 @@ void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
     mSettings.mTakeEverythingEnabled = input->readBoolean();
     mSettings.mChestRefillEnabled = input->readBoolean();
 
-    unsigned char tntFlags = input->readUnsignedByte();
+    unsigned char tntFlags = input->readByte();
     mSettings.mCanTntDestroyBlocks = (tntFlags & 1)
         ? maybe<bool>((tntFlags & 2) != 0) : maybe<bool>();
 

@@ -27,11 +27,12 @@ ClientboundContainerSetContentPacket::ClientboundContainerSetContentPacket(
 
 ClientboundContainerSetContentPacket::~ClientboundContainerSetContentPacket()
 {
+    delete[] items.items;
 }
 
 void ClientboundContainerSetContentPacket::read(DataInputStream* input)
 {
-    containerId = input->readUnsignedByte();
+    containerId = input->readByte();
 
     int count = input->readShort();
     items = NonNullList<not_null_ptr<ItemInstance> >::withSize(count, ItemInstance::EMPTY);

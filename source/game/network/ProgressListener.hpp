@@ -6,7 +6,7 @@
 class ProgressListener
 {
 public:
-    virtual ~ProgressListener();
+    virtual ~ProgressListener() {}
 
     virtual void progressStagePercentage(int percentage) = 0;
     virtual void progressStart(int titleId) = 0;

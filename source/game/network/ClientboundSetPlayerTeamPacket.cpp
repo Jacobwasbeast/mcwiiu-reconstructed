@@ -73,16 +73,16 @@ int ClientboundSetPlayerTeamPacket::getPacketId()
 void ClientboundSetPlayerTeamPacket::read(DataInputStream* input)
 {
     mName = Packet::readUtf(input, 256);
-    mMethod = input->readUnsignedByte();
+    mMethod = input->readByte();
     mPlayers.clear();
     if (mMethod == 0 || mMethod == 2)
     {
         mOptions = input->readInt();
-        mNameTagVisibility = input->readUnsignedByte();
+        mNameTagVisibility = input->readByte();
     }
     if (mMethod == 0 || mMethod == 3 || mMethod == 4)
     {
-        unsigned int count = input->readUnsignedByte();
+        unsigned int count = input->readByte();
         for (unsigned int i = 0; i < count; ++i)
             mPlayers.push_back(input->readPlayerUID());
     }

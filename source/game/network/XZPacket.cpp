@@ -30,14 +30,14 @@ void XZPacket::handle(PacketListener* listener)
 
 void XZPacket::read(DataInputStream* input)
 {
-    mMode = static_cast<char>(input->readByte());
+    mMode = static_cast<char>(input->readChar());
     mX = input->readInt();
     mZ = input->readInt();
 }
 
 void XZPacket::write(DataOutputStream* output)
 {
-    output->writeByte(static_cast<unsigned char>(mMode));
+    output->writeChar(static_cast<wchar_t>(mMode));
     output->writeInt(mX);
     output->writeInt(mZ);
 }

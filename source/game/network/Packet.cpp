@@ -150,10 +150,6 @@ Packet::Packet()
     shouldDelay = false;
 }
 
-Packet::~Packet()
-{
-}
-
 void Packet::map(int packetId, bool clientbound, bool serverbound, bool sendToAnyClient, bool canBeDelayed, const std::type_info& type, boost::shared_ptr<Packet> (*create)(), std::wstring name)
 {
     sPacketFactories.insert(std::pair<const int, PacketFactory>(packetId, create));

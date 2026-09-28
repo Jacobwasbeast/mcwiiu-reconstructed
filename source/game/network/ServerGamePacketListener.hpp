@@ -44,7 +44,7 @@ public:
 class ServerGamePacketListener : public PacketListener, public ConsoleListener
 {
 public:
-    virtual ~ServerGamePacketListener();
+    virtual ~ServerGamePacketListener() {}
 
     virtual void handleAnimate(boost::shared_ptr<ServerboundSwingPacket> packet);
     virtual void handleChat(boost::shared_ptr<ServerboundChatPacket> packet);

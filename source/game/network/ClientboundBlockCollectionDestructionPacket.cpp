@@ -5,41 +5,34 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundBlockCollectionDestructionPacket::ClientboundBlockCollectionDestructionPacket()
-    : sourceId(0), positions(), progress(0)
-{
-}
-
-ClientboundBlockCollectionDestructionPacket::ClientboundBlockCollectionDestructionPacket(int sourceId, std::vector<BlockPos> positions, int progress)
-    : sourceId(sourceId), positions(positions), progress(progress)
+    : sourceId(0), progress(0), positions()
 {
 }
 
 ClientboundBlockCollectionDestructionPacket::~ClientboundBlockCollectionDestructionPacket()
 {
+    delete[] positions.data;
 }
 
 void ClientboundBlockCollectionDestructionPacket::read(DataInputStream* input)
 {
     sourceId = input->readInt();
-    progress = input->readByte();
-    int count = input->readVarInt();
-    positions.clear();
-    positions.resize(count);
-    for (int i = 0; i < count; ++i)
-    {
-        positions[i] = input->readBlockPos();
-    }
+    progress = input->readUnsignedByte();
+    const unsigned int count = input->readUnsignedShort();
+    if (count == 0)
+        return;
+    positions = arrayWithLength<BlockPos>(new BlockPos[count], count);
+    for (unsigned short i = 0; i < count; ++i)
+        positions.data[i] = input->readBlockPos();
 }
 
 void ClientboundBlockCollectionDestructionPacket::write(DataOutputStream* output)
 {
-    output->writeVarInt(sourceId);
-    output->writeByte((unsigned char)progress);
-    output->writeVarInt((int)positions.size());
-    for (std::vector<BlockPos>::const_iterator it = positions.begin(); it != positions.end(); ++it)
-    {
-        output->writeBlockPos(*it);
-    }
+    output->writeInt(sourceId);
+    output->writeByte(static_cast<unsigned char>(progress));
+    output->writeShort(static_cast<short>(positions.length));
+    for (unsigned short i = 0; i < positions.length; ++i)
+        output->writeBlockPos(positions.data[i]);
 }
 
 void ClientboundBlockCollectionDestructionPacket::handle(PacketListener* listener)
@@ -49,7 +42,7 @@ void ClientboundBlockCollectionDestructionPacket::handle(PacketListener* listene
 
 int ClientboundBlockCollectionDestructionPacket::getEstimatedSize()
 {
-    return (int)positions.size() * 8 + 7;
+    return positions.length * 8 + 7;
 }
 
 int ClientboundBlockCollectionDestructionPacket::getPacketId()

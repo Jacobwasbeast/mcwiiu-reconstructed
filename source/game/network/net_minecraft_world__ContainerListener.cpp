@@ -3,8 +3,4 @@
 namespace net_minecraft_world
 {
 
-ContainerListener::~ContainerListener()
-{
-}
-
 }

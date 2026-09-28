@@ -69,7 +69,7 @@ void ClientboundUpdateAttributesPacket::read(DataInputStream* input) {
 }
 
 void ClientboundUpdateAttributesPacket::write(DataOutputStream* output) {
-    output->writeShort(static_cast<short>(entityId));
+    output->writeUnsignedShort(static_cast<unsigned short>(entityId));
     output->writeInt(entityType);
     output->writeByte(static_cast<unsigned char>(values.size()));
     for (boost::unordered_set<AttributeSnapshot*>::iterator it = values.begin(); it != values.end(); ++it) {

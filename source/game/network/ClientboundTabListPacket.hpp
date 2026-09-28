@@ -26,10 +26,6 @@ public:
 private:
     std::wstring header;
     std::wstring footer;
-    int headerFadeIn;
-    int headerFadeOut;
-    int footerFadeIn;
-    int footerFadeOut;
 };
 
 #endif

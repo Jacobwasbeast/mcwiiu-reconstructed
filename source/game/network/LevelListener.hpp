@@ -17,7 +17,7 @@ class SoundEvent;
 class LevelListener
 {
 public:
-    virtual ~LevelListener();
+    virtual ~LevelListener() {}
 
     virtual void blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate) = 0;
     virtual void blockLightChanged(const BlockPos& pos) = 0;

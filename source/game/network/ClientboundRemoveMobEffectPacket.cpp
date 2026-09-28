@@ -22,7 +22,7 @@ ClientboundRemoveMobEffectPacket::~ClientboundRemoveMobEffectPacket()
 void ClientboundRemoveMobEffectPacket::read(DataInputStream* input)
 {
     entityId = input->readVarInt();
-    effect = MobEffect::byId(input->readByte());
+    effect = MobEffect::byId(input->readUnsignedByte());
 }
 
 void ClientboundRemoveMobEffectPacket::write(DataOutputStream* output)

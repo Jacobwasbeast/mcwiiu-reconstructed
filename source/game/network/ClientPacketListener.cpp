@@ -1517,7 +1517,7 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
             return;
         }
 
-        PIXBeginNamedEvent(90.0f, "Handle block region update");
+        PIXBeginNamedEvent(0.0f, "Handle block region update");
         level->StopReloadChunk(chunkX, chunkZ);
 
         int maxY = packet->mY + packet->mHeight;
@@ -1528,13 +1528,13 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
                 m_level->setChunkVisible(chunkX, chunkZ, true, false);
         }
 
-        PIXBeginNamedEvent(90.0f, "Clear rest region");
+        PIXBeginNamedEvent(0.0f, "Clear rest region");
         level->clearResetRegion(packet->mX, packet->mY, packet->mZ,
                                 packet->mX + packet->mWidth - 1, maxY - 1,
                                 packet->mZ + packet->mDepth - 1);
         PIXEndNamedEvent();
 
-        PIXBeginNamedEvent(90.0f, "setBlocksAndData");
+        PIXBeginNamedEvent(0.0f, "setBlocksAndData");
         if (packet->mFullChunk)
             level->setFromRawData(packet->mX / 16, packet->mZ / 16, packet->mData);
         else
@@ -1543,7 +1543,7 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
                                     packet->mData, false);
         PIXEndNamedEvent();
 
-        PIXBeginNamedEvent(90.0f, "removeUnusedBlockEntitiesInRegion");
+        PIXBeginNamedEvent(0.0f, "removeUnusedBlockEntitiesInRegion");
         level->removeUnusedBlockEntitiesInRegion(packet->mX, packet->mY, packet->mZ,
                                                   packet->mX + packet->mWidth, maxY,
                                                   packet->mZ + packet->mDepth);
@@ -1551,7 +1551,7 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
 
         if (packet->mFullChunk)
         {
-            PIXBeginNamedEvent(90.0f, "dataReceivedForChunk");
+            PIXBeginNamedEvent(0.0f, "dataReceivedForChunk");
             level->dataReceivedForChunk(chunkX, chunkZ);
             PIXEndNamedEvent();
         }
@@ -1797,16 +1797,16 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         g_pApp->SetGlobalXuiAction(eXuiAction_LavaNearSpawn);
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathInFire:
-        text = L10N::GetString(0xefc9fef0);
+        text = L10N::GetString(IDS_DEATH_INFIRE);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathLightningBolt:
     case ClientboundChatPacket::eChatPacketMessage_DeathLightningBoltAlternate:
-        text = L10N::GetString(0xf4980932);
+        text = L10N::GetString(IDS_DEATH_LIGHTNINGBOLT);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathOnFire:
-        text = L10N::GetString(0xd711d936);
+        text = L10N::GetString(IDS_DEATH_ONFIRE);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathLava:
@@ -1814,27 +1814,27 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathInWall:
-        text = L10N::GetString(0x6ae921b6);
+        text = L10N::GetString(IDS_DEATH_INWALL);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathDrown:
-        text = L10N::GetString(0x576593ef);
+        text = L10N::GetString(IDS_DEATH_DROWN);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathStarve:
-        text = L10N::GetString(0xf244df30);
+        text = L10N::GetString(IDS_DEATH_STARVE);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathCactus:
-        text = L10N::GetString(0x2bf5a7dc);
+        text = L10N::GetString(IDS_DEATH_CACTUS);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFall:
-        text = L10N::GetString(0xd63d2190);
+        text = L10N::GetString(IDS_DEATH_FALL);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFlyIntoWall:
-        text = L10N::GetString(0x15c8f4ae);
+        text = L10N::GetString(IDS_DEATH_FLY_INTO_WALL);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathOutOfWorld:
@@ -1858,12 +1858,12 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathGeneric:
-        text = L10N::GetString(0xd98e2236);
+        text = L10N::GetString(IDS_DEATH_GENERIC);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathExplosion:
     case ClientboundChatPacket::eChatPacketMessage_DeathExplosionAlternate:
-        text = L10N::GetString(0xb04cad6a);
+        text = L10N::GetString(IDS_DEATH_EXPLOSION);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathMagic:
@@ -1871,7 +1871,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathMob:
-        text = L10N::GetString(0x4bec30bf);
+        text = L10N::GetString(IDS_DEATH_MOB);
         replacePlayer = true;
         replaceSource = true;
         break;
@@ -1881,22 +1881,22 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathArrow:
-        text = L10N::GetString(0x7a2a89ae);
+        text = L10N::GetString(IDS_DEATH_ARROW);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFireball:
-        text = L10N::GetString(0x0242d45c);
+        text = L10N::GetString(IDS_DEATH_FIREBALL);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathThrown:
-        text = L10N::GetString(0xb3fb4f7f);
+        text = L10N::GetString(IDS_DEATH_THROWN);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic:
-        text = L10N::GetString(0x3fc22003);
+        text = L10N::GetString(IDS_DEATH_INDIRECT_MAGIC);
         replacePlayer = true;
         replaceSource = true;
         break;
@@ -1909,16 +1909,16 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFallingBlock:
-        text = L10N::GetString(0xa1216033);
+        text = L10N::GetString(IDS_DEATH_FALLING_TILE);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathThorns:
-        text = L10N::GetString(0x5ac8afbb);
+        text = L10N::GetString(IDS_DEATH_THORNS);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathTrident:
-        text = L10N::GetString(0x80d4c2e3);
+        text = L10N::GetString(IDS_DEATH_TRIDENT);
         replacePlayer = true;
         replaceSource = true;
         break;
@@ -1975,22 +1975,22 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathLavaEscaping:
-        text = L10N::GetString(0xe2b2d991);
+        text = L10N::GetString(IDS_DEATH_LAVA_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathDrownEscaping:
-        text = L10N::GetString(0xcf30befb);
+        text = L10N::GetString(IDS_DEATH_DROWN_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathCactusEscaping:
-        text = L10N::GetString(0x7ad1a880);
+        text = L10N::GetString(IDS_DEATH_CACTUS_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy:
-        text = L10N::GetString(0xaf29a206);
+        text = L10N::GetString(IDS_DEATH_EXPLOSION_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
@@ -1999,46 +1999,46 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathMobItem:
-        text = L10N::GetString(0x31c3794e);
+        text = L10N::GetString(IDS_DEATH_PLAYER_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathArrowItem:
-        text = L10N::GetString(0xf0eba2e4);
+        text = L10N::GetString(IDS_DEATH_ARROW_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFireballItem:
-        text = L10N::GetString(0x31b789a6);
+        text = L10N::GetString(IDS_DEATH_FIREBALL_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathThrownItem:
-        text = L10N::GetString(0xe3be8e0d);
+        text = L10N::GetString(IDS_DEATH_THROWN_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathHotFloor:
-        text = L10N::GetString(0x1a3b16db);
+        text = L10N::GetString(IDS_DEATH_HOT_FLOOR);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping:
-        text = L10N::GetString(0x9eeff8cf);
+        text = L10N::GetString(IDS_DEATH_HOT_FLOOR_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathTridentItem:
-        text = L10N::GetString(0x64400f01);
+        text = L10N::GetString(IDS_DEATH_TRIDENT_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem:
-        text = L10N::GetString(0x06046121);
+        text = L10N::GetString(IDS_DEATH_INDIRECT_MAGIC_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
@@ -2085,34 +2085,34 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text = L10N::GetString(0xb399bd15);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredChickens:
-        text = L10N::GetString(0x99326383);
+        text = L10N::GetString(IDS_MAX_CHICKENS_BRED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms:
         text = L10N::GetString(0x00fe5875);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredWolves:
-        text = L10N::GetString(0xec344e3d);
+        text = L10N::GetString(IDS_MAX_WOLVES_BRED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom:
         text = L10N::GetString(IDS_CANT_SHEAR_MOOSHROOM);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBoats:
-        text = L10N::GetString(0xb2145884);
+        text = L10N::GetString(IDS_MAX_BOATS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxMinecarts:
-        text = L10N::GetString(0xb604aaff);
+        text = L10N::GetString(IDS_MAX_MINECARTS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBats:
         text = L10N::GetString(0xfab1deb6);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBanners:
-        text = L10N::GetString(0xfdf65c18);
+        text = L10N::GetString(IDS_MAX_BANNERS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals:
-        text = L10N::GetString(0xc952e8b9);
+        text = L10N::GetString(IDS_MAX_ENDER_CRYSTALS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBeacons:
-        text = L10N::GetString(0xef12cc40);
+        text = L10N::GetString(IDS_MAX_BEACONS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxDolphins:
         text = L10N::GetString(0xb714e0e2);
@@ -2269,7 +2269,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         break;
     case 123:
         singleMessageDuration = 60;
-        text = L10N::GetString(0x464a6890);
+        text = L10N::GetString(IDS_MG03_CHECKPOINT);
         singleMessage = true;
         break;
     case 124:
@@ -2346,7 +2346,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         break;
     case 136:
         singleMessage = true;
-        text = L10N::GetString(0x6acb714a);
+        text = L10N::GetString(IDS_MG_WAITING_FOR_READY);
         replacements[L"{*QUANTITY*}"] = toString(packet->ints[0]);
         break;
     case 137:
@@ -2419,7 +2419,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text.replace(text.find(L"%d"), 2, toString(packet->ints[1]));
         break;
     case 155:
-        text = L10N::GetString(0x6a14e1e7);
+        text = L10N::GetString(IDS_SPECTATE_NO_PLAYER);
         break;
     default:
         text = playerName;
@@ -2439,16 +2439,16 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
             text = L10N::GetString(IDS_DEATH_PLAYER);
             break;
         case 61:
-            text = L10N::GetString(0x7a2a89ae);
+            text = L10N::GetString(IDS_DEATH_ARROW);
             break;
         case 62:
-            text = L10N::GetString(0x0242d45c);
+            text = L10N::GetString(IDS_DEATH_FIREBALL);
             break;
         case 63:
-            text = L10N::GetString(0xb3fb4f7f);
+            text = L10N::GetString(IDS_DEATH_THROWN);
             break;
         case 67:
-            text = L10N::GetString(0x3fc22003);
+            text = L10N::GetString(IDS_DEATH_INDIRECT_MAGIC);
             break;
         default:
             break;
@@ -3262,22 +3262,22 @@ void ClientPacketListener::handleBlockCollectionDestruction(boost::shared_ptr<Cl
 {
     if (m_level == 0)
         return;
-    if (packet->progress >= 0 && !packet->positions.empty())
+    if (packet->progress >= 0 && packet->positions.length != 0)
     {
         delete[] m_destroyedBlocks;
-        m_destroyedBlockCount = static_cast<unsigned int>(packet->positions.size());
+        m_destroyedBlockCount = packet->positions.length;
         m_destroyedBlocks = new BlockPos[m_destroyedBlockCount];
         Random random(0xABB);
-        for (unsigned int i = 0; i < packet->positions.size(); ++i)
+        for (unsigned int i = 0; i < packet->positions.length; ++i)
         {
-            m_destroyedBlocks[i] = packet->positions[i];
+            m_destroyedBlocks[i] = packet->positions.data[i];
             m_level->destroyBlockProgress(packet->sourceId - static_cast<int>(i), m_destroyedBlocks[i],
                                           packet->progress + random.nextInt(4) - 1);
         }
         return;
     }
     Random random(0xABB);
-    for (unsigned int i = 0; i < packet->positions.size(); ++i)
+    for (unsigned int i = 0; i < packet->positions.length; ++i)
         m_level->destroyBlockProgress(packet->sourceId - static_cast<int>(i), m_destroyedBlocks[i],
                                       packet->progress + random.nextInt(4) - 1);
 }
@@ -4226,7 +4226,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             {
                 if (data.customGameMode == -1)
                 {
-                    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators()->getLevelGenerators();
+                    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators();
                     for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
                          it != generators->end(); ++it)
                     {
@@ -4336,7 +4336,7 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         {
             std::wstring text = L10N::GetString(0x7ABF0862);
             if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
-                text = L10N::GetString(0x553A9C24);
+                text = L10N::GetString(IDS_MG03_HURRY_UP);
             gConsoleUIController.ShowTimedSplash(m_playerId, text, 60);
         }
         break;
@@ -4413,8 +4413,8 @@ void ClientPacketListener::handleMapSelectInfo(boost::shared_ptr<MapSelectInfoPa
         {
             const int uniqueId = input.readInt();
             const std::wstring name = input.readUTF();
-            const int mapSize = input.readInt();
-            gameMode->AddMapToPlaylist(uniqueId, name, mapSize);
+            const int texturePackId = input.readInt();
+            gameMode->AddMapToPlaylist(uniqueId, name, texturePackId);
         }
     }
     else if (miniGameType == 4)

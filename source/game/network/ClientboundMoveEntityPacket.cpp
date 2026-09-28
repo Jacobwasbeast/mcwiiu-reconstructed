@@ -25,7 +25,7 @@ int ClientboundMoveEntityPacket::getPacketId()
 
 void ClientboundMoveEntityPacket::read(DataInputStream* input)
 {
-    mEntityId = input->readInt();
+    mEntityId = input->readShort();
 }
 
 void ClientboundMoveEntityPacket::write(DataOutputStream* output)

@@ -6,7 +6,7 @@
 class LeaderboardReadListener
 {
 public:
-    virtual ~LeaderboardReadListener();
+    virtual ~LeaderboardReadListener() {}
 
     virtual bool OnStatsReadComplete(LeaderboardManager::eStatsReturn eResult, int iUserIndex, LeaderboardManager::ReadView readView) = 0;
 };

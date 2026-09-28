@@ -91,7 +91,7 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
 
     for (unsigned int i = 0; i < count; ++i)
     {
-        unsigned int value = input->readUnsignedByte();
+        unsigned int value = input->readByte();
         bool newY = (value & 128) != 0;
 
         if ((value & 64) != 0)
@@ -101,7 +101,7 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
             unsigned int part;
             do
             {
-                part = input->readUnsignedByte();
+                part = input->readByte();
                 previousElement |= (part & 127) << shift;
                 shift += 7;
             }
@@ -118,10 +118,10 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
 
         elements.data[i] = previousElement;
 
-        unsigned int xz = input->readUnsignedByte();
+        unsigned int xz = input->readByte();
         if (newY)
         {
-            previousPosition = static_cast<unsigned short>((xz << 8) | input->readUnsignedByte());
+            previousPosition = static_cast<unsigned short>((xz << 8) | input->readByte());
         }
         else
         {
@@ -152,17 +152,17 @@ void ClientboundChunkBlocksUpdatePacket::write(DataOutputStream* output)
         if (element == 0)
         {
             value |= 32;
-            output->writeByte(static_cast<unsigned char>(value | (element & 15)));
-            output->writeByte(static_cast<unsigned char>(packedPosition >> 8));
+            output->write(value | (element & 15));
+            output->write(packedPosition >> 8);
         }
         else if (((element ^ previousElement) & 0xfffffff0) == 0)
         {
-            output->writeByte(static_cast<unsigned char>(value | (element & 15)));
-            output->writeByte(static_cast<unsigned char>(packedPosition >> 8));
+            output->write(value | (element & 15));
+            output->write(packedPosition >> 8);
         }
         else
         {
-            output->writeByte(static_cast<unsigned char>(value | 64 | (element & 63)));
+            output->write(value | 64 | (element & 63));
             unsigned int remaining = element >> 6;
             do
             {
@@ -172,15 +172,15 @@ void ClientboundChunkBlocksUpdatePacket::write(DataOutputStream* output)
                 {
                     part |= 128;
                 }
-                output->writeByte(static_cast<unsigned char>(part));
+                output->write(part);
             }
             while (remaining != 0);
-            output->writeByte(static_cast<unsigned char>(packedPosition >> 8));
+            output->write(packedPosition >> 8);
         }
 
         if (y != previousY)
         {
-            output->writeByte(static_cast<unsigned char>(y));
+            output->write(y);
         }
 
         previousY = y;

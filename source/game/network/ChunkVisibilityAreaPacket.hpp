@@ -13,7 +13,7 @@ class ChunkVisibilityAreaPacket : public Packet, public boost::enable_shared_fro
 {
 public:
     ChunkVisibilityAreaPacket();
-    ChunkVisibilityAreaPacket(int minX, int minZ, int maxX, int maxZ,
+    ChunkVisibilityAreaPacket(int minX, int maxX, int minZ, int maxZ,
                               bool visible, bool loaded, bool outside);
     virtual ~ChunkVisibilityAreaPacket();
     virtual void read(DataInputStream* input);
@@ -27,8 +27,8 @@ public:
 
 private:
     int minX;
-    int minZ;
     int maxX;
+    int minZ;
     int maxZ;
     bool visible;
     bool loaded;

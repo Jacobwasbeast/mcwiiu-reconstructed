@@ -132,7 +132,7 @@ class XZPacket;
 class PacketListener
 {
 public:
-    virtual ~PacketListener();
+    virtual ~PacketListener() {}
 
     virtual void onUnhandledPacket(boost::shared_ptr<Packet> packet);
     virtual void onDisconnect(DisconnectPacket::eDisconnectReason reason, void* userData);

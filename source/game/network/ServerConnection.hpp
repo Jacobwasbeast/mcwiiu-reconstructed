@@ -29,6 +29,7 @@ public:
     void handleServerSettingsChanged(boost::shared_ptr<ServerSettingsChangedPacket> packet);
 
 private:
+    int mUnused;
     int mConnectionCount;
     OSFastMutex mCriticalSection;
     std::vector<boost::shared_ptr<ServerConnectionListener> > mListeners;

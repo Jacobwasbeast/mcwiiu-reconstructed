@@ -37,7 +37,7 @@ void TexturePacket::handle(PacketListener* listener)
 void TexturePacket::read(DataInputStream* input)
 {
     textureName = Packet::readUtf(input, 32767);
-    length = input->readInt();
+    length = input->readShort();
     if (length != 0)
     {
         data = new unsigned char[length];

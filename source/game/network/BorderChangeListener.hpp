@@ -6,7 +6,7 @@ class WorldBorder;
 class BorderChangeListener
 {
 public:
-    virtual ~BorderChangeListener();
+    virtual ~BorderChangeListener() {}
 
     virtual void onBorderSizeSet(WorldBorder* border, double size) = 0;
     virtual void onBorderSizeLerping(WorldBorder* border, double oldSize, double newSize, long long timeMs) = 0;

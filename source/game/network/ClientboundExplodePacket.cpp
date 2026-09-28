@@ -7,9 +7,9 @@
 
 ClientboundExplodePacket::ClientboundExplodePacket()
 {
-    x = 0.6;
-    y = 0.6;
-    z = 0.6;
+    x = 0.0;
+    y = 0.0;
+    z = 0.0;
     power = 0.0f;
     knockbackOnly = false;
     knockbackX = 0.0f;
@@ -45,9 +45,9 @@ void ClientboundExplodePacket::read(DataInputStream* input)
     knockbackOnly = input->readBoolean();
     if (!knockbackOnly)
     {
-        x = input->readDouble();
-        y = input->readDouble();
-        z = input->readDouble();
+        x = input->readFloat();
+        y = input->readFloat();
+        z = input->readFloat();
         power = input->readFloat();
         int count = input->readInt();
         for (int i = 0; i < count; ++i)
@@ -68,9 +68,9 @@ void ClientboundExplodePacket::write(DataOutputStream* output)
     output->writeBoolean(knockbackOnly);
     if (!knockbackOnly)
     {
-        output->writeDouble(x);
-        output->writeDouble(y);
-        output->writeDouble(z);
+        output->writeFloat((float)x);
+        output->writeFloat((float)y);
+        output->writeFloat((float)z);
         output->writeFloat(power);
         output->writeInt((int)toBlow.size());
         for (std::vector<BlockPos, std::allocator<BlockPos> >::const_iterator it = toBlow.begin(); it != toBlow.end(); ++it)

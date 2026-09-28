@@ -1,6 +1,3 @@
-#ifdef RECON_NATIVE
-#include <cstdio>
-#endif
 #include "game/network/ServerConnectionListener.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/Connection.hpp"
@@ -27,9 +24,13 @@
 extern CMinecraftApp* g_pApp;
 
 ServerConnectionListener::ServerConnectionListener(MinecraftServer* server, Socket* socket, const std::wstring& name)
-    : PacketListener(), m_connection(new Connection(socket, name, this)), m_server(server), m_name(name), m_tickCount(0), m_disconnected(false),
-      m_pendingPacketKind(0), m_pendingPacket()
+    : PacketListener(), m_disconnected(false), m_tickCount(0), m_name(L"")
 {
+    m_acceptedLogin = boost::shared_ptr<ClientboundLoginPacket>();
+    m_loginKey = L"";
+    m_server = server;
+    m_connection = new Connection(socket, name, this);
+    m_connection->m_fakeLag = 0;
 }
 
 ServerConnectionListener::~ServerConnectionListener()
@@ -40,9 +41,6 @@ ServerConnectionListener::~ServerConnectionListener()
 
 void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
-#ifdef RECON_NATIVE
-    std::fprintf(stderr, "[handshake] server login rejected reason=%d\n", reason);
-#endif
     boost::shared_ptr<Packet> packet(new DisconnectPacket(reason));
     m_connection->send(packet);
     m_connection->sendAndQuit();
@@ -51,16 +49,13 @@ void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason re
 
 void ServerConnectionListener::tick()
 {
-    if (m_pendingPacketKind != 0)
+    if (m_acceptedLogin != NULL)
     {
-        boost::shared_ptr<Packet> packet = m_pendingPacket;
-        m_pendingPacketKind = 0;
-        m_pendingPacket.reset();
-        if (packet)
-            send(packet);
+        handleAcceptedLogin(m_acceptedLogin);
+        m_acceptedLogin = boost::shared_ptr<ClientboundLoginPacket>();
     }
 
-    unsigned int previousTickCount = m_tickCount;
+    int previousTickCount = m_tickCount;
     ++m_tickCount;
     if (previousTickCount != 600)
     {
@@ -162,9 +157,6 @@ void ServerConnectionListener::sendPreLoginResponse()
 
 void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket> packet)
 {
- #ifdef RECON_NATIVE
-    std::fprintf(stderr, "[handshake] prelogin protocol=%x nameLength=%u\n", packet->protocolVersion, unsigned(packet->name.size()));
-#endif
     if (packet->protocolVersion != 0x881)
     {
         disconnect(static_cast<DisconnectPacket::eDisconnectReason>(
@@ -178,9 +170,6 @@ void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLo
 
 void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet)
 {
- #ifdef RECON_NATIVE
-    std::fprintf(stderr, "[handshake] login version=%x comparison=%d expected=%d\n", packet->mEntityId, packet->mViewDistance, m_server->ugcPlayersVersion);
-#endif
     if (packet->mEntityId != 0x13C)
     {
         disconnect(static_cast<DisconnectPacket::eDisconnectReason>(

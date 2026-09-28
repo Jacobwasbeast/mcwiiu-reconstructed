@@ -32,7 +32,7 @@ void FlexiblePacket::read(DataInputStream* input)
 
     if (boolCount != 0)
     {
-        unsigned int bits = input->readInt();
+        unsigned int bits = input->readByte();
 
         for (unsigned int i = 0; i < boolCount; ++i)
         {
@@ -75,7 +75,7 @@ void FlexiblePacket::write(DataOutputStream* output)
             }
         }
 
-        output->writeInt(bits);
+        output->writeByte(bits);
     }
 
     for (unsigned int i = 0; i < floats.size(); ++i)

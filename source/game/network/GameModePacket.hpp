@@ -15,7 +15,7 @@ class DataOutputStream;
 class PacketListener;
 class TeamInvite;
 
-enum EGameModeState : int
+enum EGameModeState
 {
     eGameModeState_None,
     eGameModeState_LobbyCountdown,

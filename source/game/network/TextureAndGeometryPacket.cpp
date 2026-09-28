@@ -115,7 +115,7 @@ void TextureAndGeometryPacket::read(DataInputStream* input)
 {
     textureName = Packet::readUtf(input, 32767);
     geometryId = input->readInt();
-    length = input->readInt();
+    length = input->readShort();
     if (length != 0)
     {
         data = new unsigned char[length];
@@ -139,14 +139,14 @@ void TextureAndGeometryPacket::read(DataInputStream* input)
     skinAdjustments.mLeg0Y = input->readFloat();
     skinAdjustments.mTool0Y = input->readFloat();
 
-    additionalBoxCount = input->readInt();
+    additionalBoxCount = input->readShort();
     if (additionalBoxCount != 0)
     {
         additionalBoxes = new SKIN_BOX[additionalBoxCount];
         unsigned int index = 0;
         while (index < additionalBoxCount)
         {
-            additionalBoxes[index].id = input->readInt();
+            additionalBoxes[index].id = input->readShort();
             additionalBoxes[index].x = input->readFloat();
             additionalBoxes[index].y = input->readFloat();
             additionalBoxes[index].z = input->readFloat();
@@ -156,7 +156,7 @@ void TextureAndGeometryPacket::read(DataInputStream* input)
             additionalBoxes[index].xTexOffs = input->readFloat();
             additionalBoxes[index].yTexOffs = input->readFloat();
             additionalBoxes[index].armourFlags = input->readInt();
-            additionalBoxes[index].mirror = input->readInt();
+            additionalBoxes[index].mirror = input->readShort();
             ++index;
         }
     }

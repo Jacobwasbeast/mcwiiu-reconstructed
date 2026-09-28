@@ -24,10 +24,6 @@
 #include "game/network/ServerboundTeleportToEntityPacket.hpp"
 #include "game/network/ServerboundUseItemPacket.hpp"
 
-ServerGamePacketListener::~ServerGamePacketListener()
-{
-}
-
 void ServerGamePacketListener::handleAnimate(boost::shared_ptr<ServerboundSwingPacket> packet)
 {
     onUnhandledPacket(packet);

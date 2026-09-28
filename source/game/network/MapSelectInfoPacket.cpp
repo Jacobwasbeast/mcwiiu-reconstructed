@@ -22,7 +22,7 @@ MapSelectInfoPacket::~MapSelectInfoPacket()
 
 void MapSelectInfoPacket::read(DataInputStream* input)
 {
-    unsigned int length = static_cast<unsigned int>(input->readUnsignedShort());
+    unsigned int length = static_cast<unsigned int>(input->readShort());
     mSize = length;
     if (length - 1 < 0x7ffe)
     {
@@ -33,7 +33,7 @@ void MapSelectInfoPacket::read(DataInputStream* input)
         arrayWithLength<unsigned char> data;
         data.data = mData;
         data.length = mLength;
-        input->read(data);
+        input->readBytes(data);
     }
 }
 
@@ -45,7 +45,7 @@ void MapSelectInfoPacket::write(DataOutputStream* output)
         arrayWithLength<unsigned char> data;
         data.data = mData;
         data.length = mLength;
-        output->write(data);
+        output->writeBytes(data);
     }
 }
 

@@ -74,9 +74,12 @@ void ClientboundMapItemDataPacket::read(DataInputStream* input)
         mHeight = input->readByte();
         mStartX = input->readByte();
         mStartY = input->readByte();
-        mColors.length = (unsigned int)input->readInt();
-        mColors.data = new unsigned char[mColors.length]();
-        input->readFully(mColors);
+        const int length = input->readInt();
+        if (length >= 0)
+        {
+            mColors = arrayWithLength<unsigned char>(length, true);
+            input->readBytes(mColors);
+        }
     }
 }
 
@@ -105,7 +108,7 @@ void ClientboundMapItemDataPacket::write(DataOutputStream* output)
         output->writeByte((unsigned char)mStartX);
         output->writeByte((unsigned char)mStartY);
         output->writeInt((int)mColors.length);
-        output->write(mColors);
+        output->writeBytes(mColors);
     }
 }
 

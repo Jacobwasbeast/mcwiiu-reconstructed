@@ -2,7 +2,7 @@
 #define GAME_NETWORK_PACKET_HPP
 
 #include <deque>
-#include <cstdint>
+#include <stdint.h>
 #include <memory>
 #include <string>
 #include <typeinfo>
@@ -18,7 +18,7 @@ class Packet
 {
 public:
     Packet();
-    virtual ~Packet();
+    virtual ~Packet() {}
 
     virtual int getPacketId() = 0;
     virtual void read(DataInputStream* input) = 0;

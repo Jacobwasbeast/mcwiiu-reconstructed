@@ -24,7 +24,7 @@ boost::shared_ptr<Packet> ServerboundContainerClosePacket::create()
 
 void ServerboundContainerClosePacket::read(DataInputStream* input)
 {
-    mContainerId = input->readUnsignedByte();
+    mContainerId = input->readByte();
 }
 
 void ServerboundContainerClosePacket::write(DataOutputStream* output)

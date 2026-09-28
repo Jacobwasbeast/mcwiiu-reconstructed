@@ -1,5 +1,7 @@
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/core/UnityClient6.hpp"
+#include "game/core/CTelemetryManager.hpp"
 #include "game/core/Socket.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "platform/wiiu/C4JEventImpl.hpp"
@@ -51,6 +53,7 @@
 #include "game/data/SparseDataStorage.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
 #include "vendor/_NetworkGameInitData.hpp"
 #include "game/ui/UIScene_FullscreenProgress.hpp"
@@ -109,6 +112,7 @@ bool CGameNetworkManager::JoinGameFromInviteInfo(int userIndex, int mask, const 
     bool joining = m_platform->JoinGameFromInviteInfo(userIndex, mask, presence);
     if (joining)
     {
+        telemetryManagerInstance->PrepareMiniGameHostOptions(userIndex, NULL, eTelemetryJoinMethod_Invite);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(true);
     }
     return joining;
@@ -469,7 +473,7 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
     }
     else
     {
-        gConsoleUIController.StartReloadSkinThread();
+        telemetryManagerInstance->SetMultiplayerInstanceId(telemetryManagerInstance->GenerateMultiplayerInstanceId());
         selectedTexturePack = minecraft->mTexturePackRepository->getSelected();
     }
 
@@ -925,10 +929,6 @@ void CGameNetworkManager::ServerReady() { if (m_serverReadyEvent) m_serverReadyE
 void CGameNetworkManager::ServerStopped() { if (m_serverStoppedEvent) m_serverStoppedEvent->Set(); }
 void CGameNetworkManager::ServerStoppedWait()
 {
-    if (!m_serverStoppedEvent)
-    {
-        return;
-    }
     if (!C4JThread::isMainThread())
     {
         m_serverStoppedEvent->WaitForSignal(-1);
@@ -937,10 +937,16 @@ void CGameNetworkManager::ServerStoppedWait()
     unsigned int result;
     do
     {
-        result = m_serverStoppedEvent->WaitForSignal(0x14);
+        gRenderer->StartFrame();
+        result = m_serverStoppedEvent->WaitForSignal(20);
+        gProfile->Tick();
+        gStorage->Tick();
+        g_pInput->Tick();
+        gRenderer->Tick();
         gConsoleUIController.tick();
         gConsoleUIController.render();
-    } while (result == 0x102);
+        gRenderer->Present();
+    } while (result == C4JEvent::WaitTimeout);
 }
 void CGameNetworkManager::ServerStoppedDestroy() { delete m_serverStoppedEvent; m_serverStoppedEvent = 0; }
 bool CGameNetworkManager::ServerStoppedValid() { return m_serverStoppedEvent != 0; }
@@ -1254,7 +1260,7 @@ unsigned int CallbackAcquiredForeground(void*)
         CommerceAppletGetReturnCode();
         cCommerceNintendo* commerce = static_cast<cCommerceNintendo*>(
             reinterpret_cast<void*>(gApp.GetCommerceInstance()));
-        commerce->SetProcessState((cCommerceNintendo::eCommerce_Process_State)11);
+        commerce->SetProcessState(cCommerceNintendo::eCommerce_Process_State_ForegroundAcquired);
     }
     CGameNetworkManager::sInstance.WiiU_AcquiredForeground();
     return 0;

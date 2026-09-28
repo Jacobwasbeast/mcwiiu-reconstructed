@@ -131,10 +131,6 @@ static void dispatchUnhandled(PacketListener* listener, const boost::shared_ptr<
     listener->onUnhandledPacket(base);
 }
 
-PacketListener::~PacketListener()
-{
-}
-
 void PacketListener::onUnhandledPacket(boost::shared_ptr<Packet> packet)
 {
 }

@@ -37,10 +37,10 @@ int CraftItemPacket::getPacketId()
 void CraftItemPacket::read(DataInputStream* input)
 {
     mContainerId = input->readShort();
-    mCraftType = input->readByte();
-    unsigned char stackedItems = input->readByte();
+    mCraftType = input->read();
+    const bool stackedItems = input->readBoolean();
     int itemCount = input->readInt();
-    if (stackedItems == 0)
+    if (!stackedItems)
     {
         for (int index = 0; index < itemCount; ++index)
         {
@@ -61,10 +61,10 @@ void CraftItemPacket::read(DataInputStream* input)
 void CraftItemPacket::write(DataOutputStream* output)
 {
     output->writeShort(mContainerId);
-    output->writeByte(mCraftType);
+    output->write(mCraftType);
     if (!mStackedItems.empty())
     {
-        output->writeByte(1);
+        output->writeBoolean(true);
         output->writeInt(static_cast<int>(mStackedItems.size()));
         for (std::vector<std::pair<int, int> >::const_iterator it = mStackedItems.begin(); it != mStackedItems.end(); ++it)
         {
@@ -74,7 +74,7 @@ void CraftItemPacket::write(DataOutputStream* output)
     }
     else
     {
-        output->writeByte(0);
+        output->writeBoolean(false);
         output->writeInt(static_cast<int>(mItemIds.size()));
         for (std::vector<int>::const_iterator it = mItemIds.begin(); it != mItemIds.end(); ++it)
         {
