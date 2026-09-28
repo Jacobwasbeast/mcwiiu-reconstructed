@@ -27,7 +27,7 @@ public:
 class LevelSource
 {
 public:
-    virtual ~LevelSource();
+    virtual ~LevelSource() {}
 
     virtual boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos) = 0;
     virtual int getLightColor(const BlockPos& pos, int lightValue, int cacheIndex) = 0;

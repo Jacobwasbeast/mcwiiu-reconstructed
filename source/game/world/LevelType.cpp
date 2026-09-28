@@ -26,15 +26,11 @@ void LevelType::_init(int id, const std::wstring& generatorName, int version)
 
 LevelType::LevelType(int id, const std::wstring& generatorName, int version)
 {
-    mDefaultVersion = 7;
-    mValue = 0;
     _init(id, generatorName, version);
 }
 
 LevelType::LevelType(int id, const std::wstring& generatorName)
 {
-    mValue = 0;
-    mDefaultVersion = 7;
     _init(id, generatorName, 0);
 }
 

@@ -121,14 +121,9 @@ private:
     long long mGameTime;
     long long mDayTime;
     long long mLastPlayed;
-    int mSpawnXStronghold;
-    int mSpawnYStronghold;
-    int mSpawnZStronghold;
-    bool mHasStronghold;
-    int mXStrongholdEndPortal;
-    int mZStrongholdEndPortal;
-    bool mHasStrongholdEndPortal;
     long long mSizeOnDisk;
+    CompoundTag* mLoadedPlayerTag;
+    std::wstring mLevelName;
     int mVersion;
     int mClearWeatherTime;
     bool mRaining;
@@ -150,11 +145,16 @@ private:
     int mXZSize;
     int mHellScale;
     bool mModernEnd;
+    int mSpawnXStronghold;
+    int mSpawnYStronghold;
+    int mSpawnZStronghold;
+    bool mHasStronghold;
+    int mXStrongholdEndPortal;
+    int mZStrongholdEndPortal;
+    bool mHasStrongholdEndPortal;
     unsigned char mBiomeScale;
     int mBiomeCentreXChunk;
     int mBiomeCentreZChunk;
-    CompoundTag* mLoadedPlayerTag;
-    std::wstring mLevelName;
     GameRules mGameRules;
 };
 

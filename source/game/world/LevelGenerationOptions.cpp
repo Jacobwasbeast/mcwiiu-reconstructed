@@ -51,7 +51,7 @@ LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
     mLoadedData = false;
     mBaseSaveData = NULL;
     mBaseSaveDataSize = 0;
-    mBaseSaveRoot = L"buckets_";
+    mBaseSaveRoot = L"";
     mHasLevelSeed = false;
     mLevelSeed = 0;
     mUseFlatWorld = false;

@@ -1,38 +1,41 @@
 #include "game/world/LevelData.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/core/System.hpp"
 #include "game/data/ByteArrayTag.hpp"
 #include "game/world/LevelSettings.hpp"
 
+static const int LEVEL_MAX_WIDTH = 54;
+static const int LEVEL_MIN_WIDTH = 54;
+static const int HELL_LEVEL_MAX_SCALE = 3;
+static const int HELL_LEVEL_MIN_SCALE = 3;
+static const int HELL_LEVEL_MAX_WIDTH = 18;
+
 LevelData::LevelData()
-    : mSeed(0), mGeneratorType(0), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0),
-      mGameTime(0), mDayTime(0), mLastPlayed(0), mSpawnXStronghold(0), mSpawnYStronghold(0),
-      mSpawnZStronghold(0), mHasStronghold(false), mXStrongholdEndPortal(0), mZStrongholdEndPortal(0),
-      mHasStrongholdEndPortal(false), mSizeOnDisk(0), mVersion(0), mClearWeatherTime(0), mRaining(false),
-      mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
-      mGenerateMapFeatures(false), mHardcore(false), mAllowCommands(false),
-      mInitialized(false), mDifficulty(Difficulty::NORMAL), mDifficultyLocked(false), mCloudHeight(128),
-      mUseNewSeaLevel(false), mHasBeenInCreative(false), mSpawnBonusChest(false),
-      mXZSize(0), mHellScale(0), mModernEnd(false), mBiomeScale(0),
-      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mLoadedPlayerTag(0),
-      mLevelName(), mGameRules()
+    : mSeed(0), mGeneratorType(0), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0), mGameTime(0),
+      mDayTime(0), mLastPlayed(0), mSizeOnDisk(0), mLoadedPlayerTag(0), mLevelName(), mVersion(0),
+      mClearWeatherTime(0), mRaining(false), mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
+      mGenerateMapFeatures(false), mHardcore(false), mAllowCommands(false), mInitialized(false),
+      mDifficulty(Difficulty::NORMAL), mDifficultyLocked(false), mCloudHeight(128), mUseNewSeaLevel(false),
+      mHasBeenInCreative(false), mSpawnBonusChest(false), mXZSize(0), mHellScale(0), mModernEnd(true),
+      mSpawnXStronghold(0), mSpawnYStronghold(0), mSpawnZStronghold(0), mHasStronghold(false),
+      mXStrongholdEndPortal(0), mZStrongholdEndPortal(0), mHasStrongholdEndPortal(false), mBiomeScale(0),
+      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mGameRules()
 {
 }
 
 LevelData::LevelData(CompoundTag* tag)
     : mSeed(0), mGeneratorType(LevelType::DEFAULT), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0),
-      mGameTime(0), mDayTime(0), mLastPlayed(0), mSpawnXStronghold(0), mSpawnYStronghold(0),
-      mSpawnZStronghold(0), mHasStronghold(false), mXStrongholdEndPortal(0), mZStrongholdEndPortal(0),
-      mHasStrongholdEndPortal(false), mSizeOnDisk(0), mVersion(0), mClearWeatherTime(0), mRaining(false),
-      mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
-      mGenerateMapFeatures(true), mHardcore(false), mAllowCommands(false),
-      mInitialized(false), mDifficulty(0), mDifficultyLocked(false), mCloudHeight(128),
-      mUseNewSeaLevel(false), mHasBeenInCreative(false), mSpawnBonusChest(false),
-      mXZSize(0), mHellScale(0), mModernEnd(false), mBiomeScale(0),
-      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mLoadedPlayerTag(0),
-      mLevelName(), mGameRules()
+      mGameTime(0), mDayTime(0), mLastPlayed(0), mSizeOnDisk(0), mLoadedPlayerTag(0), mLevelName(), mVersion(0),
+      mClearWeatherTime(0), mRaining(false), mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
+      mGenerateMapFeatures(true), mHardcore(false), mAllowCommands(false), mInitialized(false), mDifficulty(0),
+      mDifficultyLocked(false), mCloudHeight(128), mUseNewSeaLevel(false), mHasBeenInCreative(false),
+      mSpawnBonusChest(false), mXZSize(0), mHellScale(0), mModernEnd(false), mSpawnXStronghold(0),
+      mSpawnYStronghold(0), mSpawnZStronghold(0), mHasStronghold(false), mXStrongholdEndPortal(0),
+      mZStrongholdEndPortal(0), mHasStrongholdEndPortal(false), mBiomeScale(0), mBiomeCentreXChunk(0),
+      mBiomeCentreZChunk(0), mGameRules()
 {
     mSeed = tag->getLong(L"RandomSeed");
 
@@ -211,11 +214,26 @@ LevelData::LevelData(CompoundTag* tag)
         mModernEnd = tag->getBoolean(L"ModernEnd");
     }
 
-    if (mXZSize > 54) mXZSize = 54;
-    if (mXZSize < 54) mXZSize = 54;
-    if (mHellScale > 3) mHellScale = 3;
-    if (mHellScale < 3) mHellScale = 3;
-    for (; mXZSize / mHellScale > 18 && mHellScale < 3; ++mHellScale) { }
+    if (mXZSize > LEVEL_MAX_WIDTH)
+    {
+        mXZSize = LEVEL_MAX_WIDTH;
+    }
+    if (mXZSize < LEVEL_MIN_WIDTH)
+    {
+        mXZSize = LEVEL_MIN_WIDTH;
+    }
+    if (mHellScale > HELL_LEVEL_MAX_SCALE)
+    {
+        mHellScale = HELL_LEVEL_MAX_SCALE;
+    }
+    if (mHellScale < HELL_LEVEL_MIN_SCALE)
+    {
+        mHellScale = HELL_LEVEL_MIN_SCALE;
+    }
+    while (mXZSize / mHellScale > HELL_LEVEL_MAX_WIDTH && mHellScale < HELL_LEVEL_MAX_SCALE)
+    {
+        ++mHellScale;
+    }
 
     if (!tag->contains(L"BiomeScale"))
     {
@@ -235,31 +253,45 @@ LevelData::LevelData(CompoundTag* tag)
 }
 
 LevelData::LevelData(LevelSettings* settings, const std::wstring& name)
-    : mSeed(settings->getSeed()), mGeneratorType(settings->getLevelType()), mGeneratorOptions(settings->getLevelTypeOptions()),
-      mXSpawn(0), mYSpawn(0), mZSpawn(0),
-      mGameTime(static_cast<long long>(0xFFFFFFFFu) << 32), mDayTime(static_cast<long long>(0xFFFFFFFFu) << 32),
-      mLastPlayed(0), mSpawnXStronghold(0), mSpawnYStronghold(0), mSpawnZStronghold(0),
-      mHasStronghold(false), mXStrongholdEndPortal(0), mZStrongholdEndPortal(0),
-      mHasStrongholdEndPortal(false), mSizeOnDisk(0), mVersion(0), mClearWeatherTime(0), mRaining(false),
-      mRainTime(0), mThundering(false), mThunderTime(0), mGameType(settings->getGameType()),
+    : mSeed(settings->getSeed()), mGeneratorType(settings->getLevelType()),
+      mGeneratorOptions(settings->getLevelTypeOptions()), mXSpawn(0), mYSpawn(0), mZSpawn(0),
+      mGameTime(-1), mDayTime(-1),
+      mLastPlayed(0), mSizeOnDisk(0), mLoadedPlayerTag(0), mLevelName(name), mVersion(0), mClearWeatherTime(0),
+      mRaining(false), mRainTime(0), mThundering(false), mThunderTime(0), mGameType(settings->getGameType()),
       mGenerateMapFeatures(settings->isGenerateMapFeatures()), mHardcore(settings->isHardcore()),
       mAllowCommands(settings->getAllowCommands()), mInitialized(false), mDifficulty(0), mDifficultyLocked(false),
       mCloudHeight(settings->getCloudHeight()), mUseNewSeaLevel(settings->useNewSeaLevel()),
-      mHasBeenInCreative(settings->getGameType() == GameType::CREATIVE), mSpawnBonusChest(settings->hasStartingBonusItems()),
-      mXZSize(0), mHellScale(0), mModernEnd(false), mBiomeScale(0),
-      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mLoadedPlayerTag(0),
-      mLevelName(name), mGameRules()
+      mHasBeenInCreative(settings->getGameType() == GameType::CREATIVE),
+      mSpawnBonusChest(settings->hasStartingBonusItems()), mXZSize(0), mHellScale(0), mModernEnd(false),
+      mSpawnXStronghold(0), mSpawnYStronghold(0), mSpawnZStronghold(0), mHasStronghold(false),
+      mXStrongholdEndPortal(0), mZStrongholdEndPortal(0), mHasStrongholdEndPortal(false), mBiomeScale(0),
+      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mGameRules()
 {
     int xzSize = settings->getXZSize();
     int hellScale = settings->getHellScale();
     bool modernEnd = settings->getModernEnd();
 
-    if (xzSize > 54) xzSize = 54;
-    if (xzSize < 54) xzSize = 54;
-    if (hellScale > 3) hellScale = 3;
-    if (hellScale < 3) hellScale = 3;
+    if (xzSize > LEVEL_MAX_WIDTH)
+    {
+        xzSize = LEVEL_MAX_WIDTH;
+    }
+    if (xzSize < LEVEL_MIN_WIDTH)
+    {
+        xzSize = LEVEL_MIN_WIDTH;
+    }
+    if (hellScale > HELL_LEVEL_MAX_SCALE)
+    {
+        hellScale = HELL_LEVEL_MAX_SCALE;
+    }
+    if (hellScale < HELL_LEVEL_MIN_SCALE)
+    {
+        hellScale = HELL_LEVEL_MIN_SCALE;
+    }
     mXZSize = xzSize;
-    for (; xzSize / hellScale > 18 && hellScale < 3; ++hellScale) { }
+    while (xzSize / hellScale > HELL_LEVEL_MAX_WIDTH && hellScale < HELL_LEVEL_MAX_SCALE)
+    {
+        ++hellScale;
+    }
     mHellScale = hellScale;
     mModernEnd = modernEnd;
 
@@ -270,22 +302,22 @@ LevelData::LevelData(LevelSettings* settings, const std::wstring& name)
 
 LevelData::LevelData(LevelData* other)
     : mSeed(other->mSeed), mGeneratorType(other->mGeneratorType), mGeneratorOptions(other->mGeneratorOptions),
-      mXSpawn(other->mXSpawn), mYSpawn(other->mYSpawn), mZSpawn(other->mZSpawn),
-      mGameTime(other->mGameTime), mDayTime(other->mDayTime), mLastPlayed(other->mLastPlayed),
-      mSpawnXStronghold(other->mSpawnXStronghold), mSpawnYStronghold(other->mSpawnYStronghold),
-      mSpawnZStronghold(other->mSpawnZStronghold), mHasStronghold(other->mHasStronghold),
-      mXStrongholdEndPortal(other->mXStrongholdEndPortal), mZStrongholdEndPortal(other->mZStrongholdEndPortal),
-      mHasStrongholdEndPortal(other->mHasStrongholdEndPortal), mSizeOnDisk(other->mSizeOnDisk),
-      mVersion(other->mVersion), mClearWeatherTime(other->mClearWeatherTime), mRaining(other->mRaining),
-      mRainTime(other->mRainTime), mThundering(other->mThundering), mThunderTime(other->mThunderTime),
-      mGameType(other->mGameType), mGenerateMapFeatures(other->mGenerateMapFeatures),
-      mHardcore(other->mHardcore), mAllowCommands(other->mAllowCommands), mInitialized(other->mInitialized),
-      mDifficulty(other->mDifficulty), mDifficultyLocked(other->mDifficultyLocked), mCloudHeight(other->mCloudHeight),
+      mXSpawn(other->mXSpawn), mYSpawn(other->mYSpawn), mZSpawn(other->mZSpawn), mGameTime(other->mGameTime),
+      mDayTime(other->mDayTime), mLastPlayed(other->mLastPlayed), mSizeOnDisk(other->mSizeOnDisk),
+      mLoadedPlayerTag(other->mLoadedPlayerTag), mLevelName(other->mLevelName), mVersion(other->mVersion),
+      mClearWeatherTime(other->mClearWeatherTime), mRaining(other->mRaining), mRainTime(other->mRainTime),
+      mThundering(other->mThundering), mThunderTime(other->mThunderTime), mGameType(other->mGameType),
+      mGenerateMapFeatures(other->mGenerateMapFeatures), mHardcore(other->mHardcore),
+      mAllowCommands(other->mAllowCommands), mInitialized(other->mInitialized), mDifficulty(other->mDifficulty),
+      mDifficultyLocked(other->mDifficultyLocked), mCloudHeight(other->mCloudHeight),
       mUseNewSeaLevel(other->mUseNewSeaLevel), mHasBeenInCreative(other->mHasBeenInCreative),
       mSpawnBonusChest(other->mSpawnBonusChest), mXZSize(other->mXZSize), mHellScale(other->mHellScale),
-      mModernEnd(other->mModernEnd), mBiomeScale(other->mBiomeScale),
-      mBiomeCentreXChunk(other->mBiomeCentreXChunk), mBiomeCentreZChunk(other->mBiomeCentreZChunk),
-      mLoadedPlayerTag(other->mLoadedPlayerTag), mLevelName(other->mLevelName), mGameRules()
+      mModernEnd(other->mModernEnd), mSpawnXStronghold(other->mSpawnXStronghold),
+      mSpawnYStronghold(other->mSpawnYStronghold), mSpawnZStronghold(other->mSpawnZStronghold),
+      mHasStronghold(other->mHasStronghold), mXStrongholdEndPortal(other->mXStrongholdEndPortal),
+      mZStrongholdEndPortal(other->mZStrongholdEndPortal), mHasStrongholdEndPortal(other->mHasStrongholdEndPortal),
+      mBiomeScale(other->mBiomeScale), mBiomeCentreXChunk(other->mBiomeCentreXChunk),
+      mBiomeCentreZChunk(other->mBiomeCentreZChunk), mGameRules()
 {
 }
 
@@ -466,7 +498,11 @@ bool LevelData::isInitialized() { return mInitialized; }
 void LevelData::setInitialized(bool value) { mInitialized = value; }
 GameRules* LevelData::getGameRules() { return &mGameRules; }
 const Difficulty* LevelData::getDifficulty() { return mDifficulty; }
-void LevelData::setDifficulty(const Difficulty* difficulty) { mDifficulty = difficulty; }
+void LevelData::setDifficulty(const Difficulty* difficulty)
+{
+    mDifficulty = difficulty;
+    gApp.SetGameHostOption(eGameHostOption_Difficulty, difficulty->getId());
+}
 int LevelData::getCloudHeight() { return mCloudHeight; }
 void LevelData::setCloudHeight(int value) { mCloudHeight = value; }
 bool LevelData::isDifficultyLocked() { return mDifficultyLocked; }

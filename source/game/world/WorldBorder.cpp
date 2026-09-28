@@ -7,14 +7,12 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-WorldBorder::WorldBorder(Level* level)
-    : m_level(level), m_size(5.9999968E7), m_lerpTarget(m_size), m_centerX(0.0), m_centerZ(0.0),
-      m_lerpEnd(0), m_lerpStart(0), m_absoluteMaxSize(30000000), m_damageSafeZone(5.0),
-      m_damagePerBlock(0.2), m_warningTime(15), m_warningBlocks(5)
+WorldBorder::WorldBorder(Level*)
+    : m_centerX(0.0), m_centerZ(0.0), m_size(60000000.0), m_lerpTarget(60000000.0), m_lerpEnd(0), m_lerpStart(0),
+      m_absoluteMaxSize(30000000), m_damagePerBlock(0.2), m_damageSafeZone(5.0), m_warningTime(15),
+      m_warningBlocks(5)
 {
 }
-
-WorldBorder::~WorldBorder() {}
 
 int WorldBorder::getStatus()
 {
@@ -29,10 +27,13 @@ void WorldBorder::setSize(double size)
 {
     m_size = size;
     m_lerpTarget = size;
-    m_lerpStart = 0;
-    m_lerpEnd = 0;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
-        if (*it != NULL) (*it)->onBorderSizeSet(this, size);
+    m_lerpEnd = System::processTimeInMilliSecs();
+    m_lerpStart = m_lerpEnd;
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    {
+        (*it)->onBorderSizeSet(this, size);
+    }
 }
 
 double WorldBorder::getSize()
@@ -51,7 +52,8 @@ double WorldBorder::getMaxZ() { return std::min(static_cast<double>(m_absoluteMa
 
 bool WorldBorder::isWithinBounds(const BlockPos& pos)
 {
-    return isWithinBounds(static_cast<double>(pos.x) + 0.5, static_cast<double>(pos.z) + 0.5);
+    return static_cast<double>(pos.x + 1) > getMinX() && static_cast<double>(pos.x) < getMaxX()
+        && static_cast<double>(pos.z + 1) > getMinZ() && static_cast<double>(pos.z) < getMaxZ();
 }
 
 bool WorldBorder::isWithinBounds(AABB* box)

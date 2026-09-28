@@ -21,7 +21,7 @@ NetherDimension::~NetherDimension()
 
 void NetherDimension::init()
 {
-    mBiomeSource = new FixedBiomeSource(Biome::HELL, 4.5f);
+    mBiomeSource = new FixedBiomeSource(Biome::HELL, 0.0f);
     mHasCeiling = 1;
     mUltraWarm = 1;
 }

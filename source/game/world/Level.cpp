@@ -2971,7 +2971,7 @@ float Level::getSkyDarken(float partialTick)
 
 int Level::getMoonPhase()
 {
-    return (int)((mLevelData->getDayTime() / 24000) % 8);
+    return mDimension->getMoonPhase(mLevelData->getDayTime());
 }
 
 float Level::getMoonBrightness()
@@ -3042,12 +3042,14 @@ const Difficulty* Level::getDifficulty()
 
 DifficultyInstance Level::getCurrentDifficultyAt(const BlockPos& pos)
 {
+    float moonBrightness = 0.0f;
     long long inhabitedTime = 0;
     if (hasChunkAt(pos))
     {
+        moonBrightness = getMoonBrightness();
         inhabitedTime = getChunkAt(pos)->getInhabitedTime();
     }
-    return DifficultyInstance(getDifficulty(), mLevelData->getDayTime(), inhabitedTime, getMoonBrightness());
+    return DifficultyInstance(getDifficulty(), getDayTime(), inhabitedTime, moonBrightness);
 }
 
 int Level::getSkyDarken()
@@ -3764,7 +3766,9 @@ bool Level::isConsideredSolidBlock(int x, int y, int z)
 
 void Level::updateSkyBrightness()
 {
-    mSkyDarken = static_cast<int>(getOldSkyDarken(0.0f));
+    int skyDarken = getOldSkyDarken(1.0f);
+    if (skyDarken != mSkyDarken)
+        mSkyDarken = skyDarken;
 }
 
 int Level::getAboveTopSolidBlock(const BlockPos& pos, bool, bool)
@@ -4303,7 +4307,13 @@ std::vector<boost::shared_ptr<Player> >* Level::getNearbyPlayers(boost::shared_p
 
 bool Level::hasNearPlayer(double x, double y, double z, double distance)
 {
-    return getNearestPlayer(x, y, z, distance, true, -1.0) != NULL;
+    for (unsigned int i = 0; i < mPlayers.size(); ++i)
+    {
+        double distanceSqr = mPlayers.at(i)->distanceToSqr(x, y, z);
+        if (distance < 0.0 || distanceSqr < distance * distance)
+            return true;
+    }
+    return false;
 }
 
 boost::shared_ptr<Player> Level::getNearestAttackablePlayer(
@@ -5268,13 +5278,13 @@ bool Level::canProvideSupport(const BlockPos& pos, const Direction* direction,
 
 bool Level::isTouchingMaterial(const BlockPos& pos, const Material* material)
 {
-    return getBlockState(pos)->getMaterial() == material
-        || getBlockState(pos.above())->getMaterial() == material
-        || getBlockState(pos.below())->getMaterial() == material
-        || getBlockState(pos.relative(Direction::NORTH))->getMaterial() == material
-        || getBlockState(pos.relative(Direction::SOUTH))->getMaterial() == material
-        || getBlockState(pos.relative(Direction::WEST))->getMaterial() == material
-        || getBlockState(pos.relative(Direction::EAST))->getMaterial() == material;
+    return getLiquidBlock(pos)->mMaterial == material
+        || getLiquidBlock(pos.above())->mMaterial == material
+        || getLiquidBlock(pos.north())->mMaterial == material
+        || getLiquidBlock(pos.east())->mMaterial == material
+        || getLiquidBlock(pos.south())->mMaterial == material
+        || getLiquidBlock(pos.west())->mMaterial == material
+        || getLiquidBlock(pos.below())->mMaterial == material;
 }
 
 int Level::countInstanceOf(unsigned long long type, bool exact,
@@ -5369,6 +5379,8 @@ double Level::getSeenPercent(Vec3* source, AABB* box)
     double xStep = 1.0 / ((box->mMaxX - box->mMinX) * 2.0 + 1.0);
     double yStep = 1.0 / ((box->mMaxY - box->mMinY) * 2.0 + 1.0);
     double zStep = 1.0 / ((box->mMaxZ - box->mMinZ) * 2.0 + 1.0);
+    if (xStep < 0.0 || yStep < 0.0 || zStep < 0.0)
+        return 0.0f;
     int visible = 0;
     int total = 0;
     for (double x = 0.0; x <= 1.0; x += xStep)
@@ -5380,16 +5392,18 @@ double Level::getSeenPercent(Vec3* source, AABB* box)
                 Vec3* target = Vec3::newTemp(box->mMinX + (box->mMaxX - box->mMinX) * x,
                                              box->mMinY + (box->mMaxY - box->mMinY) * y,
                                              box->mMinZ + (box->mMaxZ - box->mMinZ) * z);
-                if (clip(target, source) == NULL)
-                {
+                HitResult* hit = clip(target, source);
+                if (hit == NULL)
                     ++visible;
-                }
+                else
+                    delete hit;
                 ++total;
             }
         }
     }
-    return total == 0 ? 0.0 : static_cast<double>(visible) / total;
+    return (float)visible / (float)total;
 }
+
 
 bool Level::extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos,
                            const Direction* direction)

@@ -32,8 +32,6 @@ private:
     void _init(int id, const std::wstring& generatorName, int version);
     int mId;
     std::wstring mGeneratorName;
-    int mValue;
-    int mDefaultVersion;
     int mVersion;
     bool mSelectableByUser;
     bool mHasReplacement;

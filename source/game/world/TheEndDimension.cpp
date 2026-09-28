@@ -94,7 +94,7 @@ ChunkGenerator* TheEndDimension::createRandomLevelGenerator() const
 
 double TheEndDimension::getTimeOfDay(long long time, float partialTick) const
 {
-    return 0.5;
+    return 0.0;
 }
 
 float* TheEndDimension::getSunriseColor(float celestialAngle, float timeOfDay)

@@ -16,22 +16,21 @@ class WorldBorder
 {
 private:
     std::vector<BorderChangeListener*> m_listeners;
-    Level* m_level;
-    double m_size;
-    double m_lerpTarget;
     double m_centerX;
     double m_centerZ;
+    double m_size;
+    double m_lerpTarget;
     long long m_lerpEnd;
     long long m_lerpStart;
     int m_absoluteMaxSize;
-    double m_damageSafeZone;
     double m_damagePerBlock;
+    double m_damageSafeZone;
     int m_warningTime;
     int m_warningBlocks;
 
 public:
     explicit WorldBorder(Level* level);
-    ~WorldBorder();
+    ~WorldBorder() {}
     int getStatus();
     std::vector<BorderChangeListener*>& getListeners();
     void setSize(double size);
