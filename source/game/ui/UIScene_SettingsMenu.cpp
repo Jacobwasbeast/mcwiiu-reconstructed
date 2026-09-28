@@ -119,19 +119,19 @@ std::wstring UIScene_SettingsMenu::getMoviePath()
     return std::wstring(L"SettingsMenuSplit");
 }
 
-void UIScene_SettingsMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                       bool pressed, bool& handled)
+void UIScene_SettingsMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                       bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             GameSettings::CheckGameSettingsChanged(true, playerId);
             navigateBack();
@@ -189,7 +189,7 @@ void UIScene_SettingsMenu::handlePress(int controlId, int)
                 return;
             int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
             gConsoleUIController.RequestAlertMessage(
-                0x13efeffb, IDS_DEFAULTS_TEXT, parameters, 2, m_playerId,
+                IDS_DEFAULTS_TITLE, IDS_DEFAULTS_TEXT, parameters, 2, m_playerId,
                 ResetDefaultsDialogReturned,
                 (void*)static_cast<unsigned long>(GetCallbackUniqueId()), NULL,
                 true);

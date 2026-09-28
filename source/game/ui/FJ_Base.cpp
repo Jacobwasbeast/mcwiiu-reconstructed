@@ -118,7 +118,7 @@ fuiRenderNodeEditText* FJ_Base::GetTextField()
     if (timelineNode == 0)
         return 0;
     fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
-    return static_cast<fuiRenderNodeEditText*>(timeline->getChildAt(0)->asEditText());
+    return timeline->getChildAt(0)->asEditText();
 }
 
 void FJ_Base::CheckLabelWidth(const std::wstring& label)
@@ -431,7 +431,7 @@ void FJ_Base::SetLabel(const std::wstring& label)
     }
 }
 
-int FJ_Base::GetLabel() { return (int)(intptr_t)&m_label; }
+const std::wstring& FJ_Base::GetLabel() { return m_label; }
 
 void FJ_Base::SetTextOnly(const std::wstring& text)
 {
@@ -441,15 +441,16 @@ void FJ_Base::SetTextOnly(const std::wstring& text)
 
 void FJ_Base::GetLabelTooWide(fuiRenderNodeEditText* field)
 {
-    int required = m_maxLabelWidth;
-    int fieldWidth = static_cast<int>(field->m_textWidth);
-    if (required < fieldWidth) required = fieldWidth;
-    int width = static_cast<int>(getWidth());
-    if (m_newWidth < width) m_newWidth = width;
-    if (m_newWidth < required) m_newWidth = required;
-    if (!m_labelOverflowResolved && getWidth() < static_cast<float>(required))
+    int widest = m_maxLabelWidth;
+    if (static_cast<float>(widest) <= field->m_textWidth)
+        widest = static_cast<int>(field->m_textWidth);
+    float required = static_cast<float>(widest);
+    int width = required <= getWidth() ? static_cast<int>(getWidth()) : static_cast<int>(required);
+    if (m_newWidth < width)
+        m_newWidth = width;
+    if (!m_labelOverflowResolved && getWidth() < required)
     {
-        m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8f);
+        m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8);
         m_labelTooWide = true;
         m_labelOverflowResolved = true;
     }

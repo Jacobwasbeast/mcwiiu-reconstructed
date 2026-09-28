@@ -41,12 +41,12 @@ FJ_FuiNode* FJ_FuiNodeStage::getFocus()
     return m_pFocus;
 }
 
-double FJ_FuiNodeStage::getStageHeight()
+float FJ_FuiNodeStage::getStageHeight()
 {
     return static_cast<fuiRenderNodeStage*>(m_pRenderNode)->getStageHeight();
 }
 
-double FJ_FuiNodeStage::getStageWidth()
+float FJ_FuiNodeStage::getStageWidth()
 {
     return static_cast<fuiRenderNodeStage*>(m_pRenderNode)->getStageWidth();
 }

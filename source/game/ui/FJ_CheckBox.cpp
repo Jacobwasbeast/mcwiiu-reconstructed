@@ -39,10 +39,6 @@ FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
     m_labelWidth = static_cast<int>(GetTextField()->getWidth());
 }
 
-FJ_CheckBox::~FJ_CheckBox()
-{
-}
-
 void FJ_CheckBox::UpdateCheckBox()
 {
     getChildByName(std::string("CheckBoxTick"))->asMovieClip()->setVisible(m_checked);

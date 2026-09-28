@@ -7,7 +7,7 @@ class UIControl_Cursor : public UIControl_Base
 {
 public:
     UIControl_Cursor();
-    virtual ~UIControl_Cursor();
+    virtual ~UIControl_Cursor() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
 };
 

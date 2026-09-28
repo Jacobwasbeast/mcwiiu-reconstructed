@@ -318,7 +318,7 @@ void UIScene_TradingMenu::updateDisplay()
         {
             MerchantRecipe* recipe = m_trades[m_tradeRow + m_tradeOffset].first;
 
-            std::wstring villagerText = L10N::GetString(0x8c04d144);
+            std::wstring villagerText = L10N::GetString(IDS_VILLAGER_OFFERS_ITEM);
             villagerText = replaceAll(villagerText, std::wstring(L"{*VILLAGER_TYPE*}"), merchant->getDisplayName());
             not_null_ptr<ItemInstance> sellItem = recipe->getSellItem();
             villagerText.replace(villagerText.find(L"%s"), 2, sellItem->getHoverName());
@@ -576,11 +576,11 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
     return 1;
 }
 
-void UIScene_TradingMenu::handleInput(int, int action, bool repeat, bool released,
-                                      bool pressed, bool& handled)
+void UIScene_TradingMenu::handleInput(int, int action, bool repeat, bool pressed,
+                                      bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (released)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+    if (pressed)
         handled = handleKeyDown(m_playerId, action, repeat) != 0;
 }
 

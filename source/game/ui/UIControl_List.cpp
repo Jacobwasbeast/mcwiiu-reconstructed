@@ -55,9 +55,9 @@ void UIControl_List::updateChildFocus(int index)
     m_currentSelection = index;
 }
 
-unsigned int UIControl_List::getItemCount()
+int UIControl_List::getItemCount()
 {
-    return (unsigned int)m_itemIndex;
+    return m_itemIndex;
 }
 
 unsigned int UIControl_List::getCurrentSelection() const
@@ -67,7 +67,7 @@ unsigned int UIControl_List::getCurrentSelection() const
 
 void UIControl_List::init(int controlId)
 {
-    m_controlType = static_cast<UIControl::eUIControlType>(controlId);
+    m_controlId = controlId;
     FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
     list->Init(controlId);
     int sceneType = m_scene->getSceneType();
@@ -152,7 +152,7 @@ void UIControl_List::remElement(int index)
 void UIControl_List::ReInit()
 {
     UIControl::ReInit();
-    init(m_controlType);
+    init(m_controlId);
     clearElements();
     m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
 }
@@ -223,10 +223,6 @@ bool UIControl_List::CanTouchTrigger(int x, int y)
     if (node->isFJ_List())
         return node->asFJ_List()->CanTouchTrigger(x, y);
     return false;
-}
-
-UIControl_List::GenericPendingUpdate::~GenericPendingUpdate()
-{
 }
 
 UIControl_List::PendingRemoveItem::~PendingRemoveItem()

@@ -18,10 +18,6 @@ Screen::Screen()
     mSelectedButton = NULL;
 }
 
-Screen::~Screen()
-{
-}
-
 void Screen::render(int x, int y, float partialTick)
 {
     for (std::vector<Button*>::iterator it = mButtons.begin(); it != mButtons.end(); ++it)

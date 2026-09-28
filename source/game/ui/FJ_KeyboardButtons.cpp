@@ -10,10 +10,6 @@ FJ_KeyboardButtons::FJ_KeyboardButtons(fuiRenderNode* renderNode)
     m_keyboardHeight = static_cast<int>(getHeight());
 }
 
-FJ_KeyboardButtons::~FJ_KeyboardButtons()
-{
-}
-
 void FJ_KeyboardButtons::Init(const std::wstring& label, int id)
 {
     SetLabelAlignment(2);

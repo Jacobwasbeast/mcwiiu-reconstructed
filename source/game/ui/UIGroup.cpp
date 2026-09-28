@@ -272,13 +272,13 @@ bool UIGroup::GetMenuDisplayed()
     return m_menuDisplayed;
 }
 
-void UIGroup::handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIGroup::handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
         return;
     for (int i = 0; i < EUILayer_Count; ++i)
     {
-        m_layers[i]->handleInput(player, action, repeat, released, pressed, handled);
+        m_layers[i]->handleInput(player, action, repeat, pressed, released, handled);
         if (handled)
             return;
     }

@@ -50,10 +50,6 @@ unsigned int UIControl_ScoreboardButtonList::PendingSetSlotsText::OnTick()
     return 1;
 }
 
-UIControl_ScoreboardButtonList::~UIControl_ScoreboardButtonList()
-{
-}
-
 void UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                   const std::string& name)
 {

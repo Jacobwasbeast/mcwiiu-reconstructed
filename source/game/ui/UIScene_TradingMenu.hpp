@@ -46,8 +46,8 @@ public:
     virtual void tick();
     void moveSelector(bool right);
     int handleKeyDown(int playerId, int action, bool repeat);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released,
-                             bool pressed, bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed,
+                             bool released, bool& handled);
     virtual void customDraw(const char* name, fuiRect* rect);
     void handleInventoryUpdated(void* data);
     virtual void HandleMessage(EUIMessage message, void* data);

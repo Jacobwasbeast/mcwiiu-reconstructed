@@ -15,8 +15,6 @@ public:
     static FJ_ListButtonScoreBoard* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 
-private:
-    bool m_small;
 };
 
 #endif

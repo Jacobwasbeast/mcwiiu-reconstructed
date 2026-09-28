@@ -7,7 +7,7 @@ class UIControl_CheckBox : public UIControl_Base
 {
 public:
     UIControl_CheckBox();
-    virtual ~UIControl_CheckBox();
+    virtual ~UIControl_CheckBox() {}
     unsigned char IsEnabled();
     void setChecked(bool checked);
     unsigned int IsChecked();

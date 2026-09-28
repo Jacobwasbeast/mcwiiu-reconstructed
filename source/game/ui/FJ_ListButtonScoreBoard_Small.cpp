@@ -4,8 +4,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_ListButtonScoreBoard_Small::FJ_ListButtonScoreBoard_Small(fuiRenderNode* renderNode)
-    : FJ_ListButtonScoreBoard(renderNode), m_small(true)
+    : FJ_ListButtonScoreBoard(renderNode)
 {
+    m_small = true;
 }
 
 FJ_ListButtonScoreBoard_Small::~FJ_ListButtonScoreBoard_Small()

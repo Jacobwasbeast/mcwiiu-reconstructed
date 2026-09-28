@@ -42,12 +42,12 @@ fuiRenderNode* fuiRenderNodeStage::findNode(const char* name)
     return m_child->findNode(name);
 }
 
-double fuiRenderNodeStage::getStageWidth()
+float fuiRenderNodeStage::getStageWidth()
 {
     return m_file->getStageWidth();
 }
 
-double fuiRenderNodeStage::getStageHeight()
+float fuiRenderNodeStage::getStageHeight()
 {
     return m_file->getStageHeight();
 }

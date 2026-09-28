@@ -33,10 +33,8 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
     : UIScene_AbstractContainerMenu(playerId, layer),
       m_largeChest(false),
       m_containerList(),
-      m_chestLabel(),
-      m_sceneInterface(0)
+      m_chestLabel()
 {
-    m_sceneInterface = this;
 
     _ContainerMenuArgs* args = static_cast<_ContainerMenuArgs*>(data);
     m_largeChest = args->second->getContainerSize() > 27;
@@ -81,13 +79,13 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[playerId]->getTutorial();
         if (tutorial != NULL)
         {
-            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_ContainerMenu, this);
         }
     }
 
     const int containerSlots = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
-    m_sceneInterface->Initialize(false, args->player, menu, true, containerSlots,
+    Initialize(false, args->player, menu, true, containerSlots,
                                  IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, containerSlots);
@@ -268,7 +266,7 @@ std::wstring UIScene_ContainerMenu::getMoviePath()
 void UIScene_ContainerMenu::handleReload()
 {
     const int count = GetBaseSlotCount();
-    m_sceneInterface->Initialize(true, m_playerId, m_menu, true, count - 36,
+    Initialize(true, m_playerId, m_menu, true, count - 36,
                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, count - 36);

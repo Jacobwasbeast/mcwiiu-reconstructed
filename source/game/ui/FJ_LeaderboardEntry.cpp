@@ -30,8 +30,8 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
 
     FJ_FuiNode* rankContainer = getChildByName("RankContainer")->getChildAt(0)->asMovieClip();
     FJ_FuiNode* gamertagContainer = getChildByName("GamertagContainer")->getChildAt(0)->asMovieClip();
-    m_rankText = static_cast<fuiRenderNodeEditText*>(rankContainer->getRenderNodeChildAt(0)->asEditText());
-    m_gamertagText = static_cast<fuiRenderNodeEditText*>(gamertagContainer->getRenderNodeChildAt(0)->asEditText());
+    m_rankText = rankContainer->getRenderNodeChildAt(0)->asEditText();
+    m_gamertagText = gamertagContainer->getRenderNodeChildAt(0)->asEditText();
     m_rankTextWidth = m_rankText->getWidth();
     m_gamertagTextWidth = m_gamertagText->getWidth();
 
@@ -40,7 +40,7 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     {
         std::sprintf(name, "FJ_Column_%d", i);
         FJ_FuiNode* column = getChildByName(name)->getChildAt(0)->asMovieClip();
-        m_columnText[i] = static_cast<fuiRenderNodeEditText*>(column->getRenderNodeChildAt(0)->asEditText());
+        m_columnText[i] = column->getRenderNodeChildAt(0)->asEditText();
         addChild(m_columnText[i]);
         m_columnText[i]->setX(column->getX());
         m_columnText[i]->setY(column->getY());
@@ -50,10 +50,6 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     ChangeState(0);
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
-}
-
-FJ_LeaderboardEntry::~FJ_LeaderboardEntry()
-{
 }
 
 FJ_LeaderboardEntry* FJ_LeaderboardEntry::Create(fuiRenderNode* pRenderNode)

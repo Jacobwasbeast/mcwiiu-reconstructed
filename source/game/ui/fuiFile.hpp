@@ -60,8 +60,8 @@ struct fuiFile
     fuiRenderNode* findNode(const char* name);
     void setVisible(const char* name, bool visible);
     void setCustomDrawCallback(void (*callback)(void*, const char*, fuiRect*), void* context);
-    double getStageWidth();
-    double getStageHeight();
+    float getStageWidth();
+    float getStageHeight();
     void setIndex(int value);
     void play(const char* name);
     void stop(const char* name);

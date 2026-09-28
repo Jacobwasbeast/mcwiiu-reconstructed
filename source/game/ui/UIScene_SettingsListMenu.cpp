@@ -160,7 +160,7 @@ void UIScene_SettingsListMenu::Init()
         if (showOnlineOptions)
         {
             addCheckbox(m_multiList, playerId, 0x9791b32b, 18, eGameSetting_ShowGlideGhost, false);
-            addCheckbox(m_multiList, playerId, 0xce0f55b3, 19, eGameSetting_ShowGlideGhostPath, false);
+            addCheckbox(m_multiList, playerId, IDS_MG03_SHOW_GHOST_PATH, 19, eGameSetting_ShowGlideGhostPath, false);
         }
     }
     else if (m_settingsMode == 3)
@@ -194,7 +194,7 @@ void UIScene_SettingsListMenu::Init()
         {
             int value = static_cast<int>(GameSettings::GetGameSettings(
                 playerId, eGameSetting_HUDSize));
-            m_multiList.AddNewSlider(makeValueLabel(0x36cb3767, value, false), 31, 1, 3,
+            m_multiList.AddNewSlider(makeValueLabel(IDS_SLIDER_UISIZE, value, false), 31, 1, 3,
                                       value + 1, false, 7, 3);
             value = static_cast<int>(GameSettings::GetGameSettings(
                 playerId, eGameSetting_HUDSizeSplitscreen));
@@ -295,10 +295,10 @@ std::wstring UIScene_SettingsListMenu::getMoviePath()
                                              : std::wstring(L"MultilistMenuSplit");
 }
 
-void UIScene_SettingsListMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                           bool pressed, bool& handled)
+void UIScene_SettingsListMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                           bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -310,10 +310,10 @@ void UIScene_SettingsListMenu::handleInput(int playerId, int action, bool repeat
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             setGameSettings();
             navigateBack();
@@ -381,7 +381,7 @@ void UIScene_SettingsListMenu::handleSliderElementMove(int, int id, int value)
     }
     else if (id == 31)
     {
-        m_multiList.SetItemLabel(31, UIString(makeValueLabel(0x36cb3767, value, false)), false);
+        m_multiList.SetItemLabel(31, UIString(makeValueLabel(IDS_SLIDER_UISIZE, value, false)), false);
         int oldValue = static_cast<int>(GameSettings::GetGameSettings(
             m_playerId, eGameSetting_HUDSize));
         if (value != oldValue + 1)

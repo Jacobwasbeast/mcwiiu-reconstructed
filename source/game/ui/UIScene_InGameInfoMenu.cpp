@@ -200,17 +200,17 @@ std::wstring UIScene_InGameInfoMenu::getMoviePath()
     return std::wstring(g_pApp->GetLocalPlayerCount() < 2 ? L"InGameInfoMenu" : L"InGameInfoMenuSplit");
 }
 
-void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                         bool pressed, bool& handled)
+void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                         bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(GetPad(), action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(GetPad(), action, repeat, pressed, released);
     if (action == EControllerActions_MenuCancel && pressed && !repeat)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
         navigateBack();
         return;
     }
-    UIScene::handleInput(playerId, action, repeat, released, pressed, handled);
+    UIScene::handleInput(playerId, action, repeat, pressed, released, handled);
 }
 
 void UIScene_InGameInfoMenu::handleGainFocus(bool hadFocus)

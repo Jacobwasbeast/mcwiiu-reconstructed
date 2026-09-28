@@ -68,8 +68,6 @@ public:
 
 protected:
     bool m_checkboxTick;
-
-private:
     int m_verticalSpacing;
     std::string m_action;
     bool m_initialized;

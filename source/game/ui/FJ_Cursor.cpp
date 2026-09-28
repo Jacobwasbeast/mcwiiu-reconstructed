@@ -14,41 +14,32 @@ FJ_Cursor::FJ_Cursor(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_Cursor::~FJ_Cursor()
-{
-}
-
 void FJ_Cursor::TopAlignPanel()
 {
-    FJ_FuiNode* parent = getParent();
-    if (parent == 0 || parent->getParent() == 0)
-        return;
-    int panelBottom = (int)(parent->getY() + getY() - m_textPanel->getHeight());
-    FJ_Document* document = parent->getParent()->asFJ_Document();
-    int safeTop = document->getISafeZoneTop();
-    m_topAlignment = panelBottom < safeTop ? safeTop - panelBottom : 0;
+    int panelBottom = (int)(getParent()->getY() + getY() - m_textPanel->getHeight());
+    int safeTop = static_cast<FJ_Document*>(getParent()->getParent())->getISafeZoneTop();
+    m_topAlignment = panelBottom <= safeTop ? safeTop - panelBottom : 0;
 }
 
 void FJ_Cursor::AlignPanel(bool bRight)
 {
     std::pair<float, float> boundaries = m_textField->getCharBoundaries(0);
-    float textWidth = boundaries.second - boundaries.first;
-    const float scale = 0.5f;
-    const float cursorScale = 0.35f;
+    int textWidth = static_cast<int>(boundaries.second - boundaries.first);
 
     if (bRight)
     {
-        m_textPanel->setX((float)Math::round(m_textPanel->getWidth() * scale * 0.8f));
+        m_textPanel->setX((float)Math::round(m_textPanel->getWidth() * 0.5f * 0.8f));
         m_textPanel->setY((float)m_topAlignment - m_textPanel->getHeight());
-        m_textField->setX((float)Math::round(textWidth * cursorScale + m_textPanel->getX()));
-        m_textField->setY((float)Math::round(textWidth * scale + m_textPanel->getY()));
+        m_textField->setX((float)Math::round((float)textWidth * 0.35f + m_textPanel->getX()));
+        m_textField->setY((float)Math::round((float)textWidth * 0.5f + m_textPanel->getY()));
         return;
     }
 
-    m_textPanel->setX((float)(-Math::round(m_pointerTextPanel->getWidth() * scale) - m_textPanel->getWidth()));
+    m_textPanel->setX((float)-Math::round(m_pointerTextPanel->getWidth() * 0.5f * 0.8f) -
+                      m_textPanel->getChildAt(0)->getWidth());
     m_textPanel->setY((float)m_topAlignment - m_textPanel->getHeight());
-    m_textField->setX((float)Math::round(textWidth * 1.675f + m_textPanel->getX()));
-    m_textField->setY((float)Math::round((float)m_textPanel->getY() + textWidth * scale));
+    m_textField->setX((float)Math::round(textWidth * 0.35 + m_textPanel->getX()));
+    m_textField->setY((float)Math::round(m_textPanel->getY() + (float)(textWidth / 2)));
 }
 
 void FJ_Cursor::UpdatePanelAlignment()

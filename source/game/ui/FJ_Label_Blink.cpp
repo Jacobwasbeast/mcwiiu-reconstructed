@@ -12,10 +12,6 @@ FJ_Label_Blink::FJ_Label_Blink(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_Blink::~FJ_Label_Blink()
-{
-}
-
 void FJ_Label_Blink::UpdateLabel()
 {
     setWidth(m_objectWidth);

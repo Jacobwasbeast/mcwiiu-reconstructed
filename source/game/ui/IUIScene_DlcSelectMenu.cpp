@@ -99,7 +99,7 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
         selectedType = (int)contentType;
     if (selectedType == 1)
     {
-        gConsoleUIController.RequestAlertMessage(0x3c4392b7, 0xaa7803b0, parameters, 2,
+        gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_DLC_TITLE, IDS_UNLOCK_DLC_SKIN, parameters, 2,
                                                   userIndex, UnlockPackReturned, this, NULL, true);
     }
     else

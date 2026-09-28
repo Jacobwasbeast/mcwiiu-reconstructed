@@ -51,7 +51,7 @@ public:
     virtual void handleGainFocus(bool navigatedBack);
     virtual void handleLoseFocus();
     virtual UIControl* GetMainPanel();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleDestroy();
     virtual void handleReload();
@@ -62,7 +62,7 @@ public:
     virtual void HandleDLCInstalled();
     virtual void HandleSaveDeviceRemoved(int deviceIndex);
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool repeat, bool released, bool pressed);
+                                  bool pressed, bool repeat, bool released);
     virtual void SelectTab(int tab);
     virtual void SetMatchesAvailable(bool available);
     virtual void SetHideLoadTab();

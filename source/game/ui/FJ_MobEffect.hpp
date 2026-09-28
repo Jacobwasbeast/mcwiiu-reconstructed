@@ -11,7 +11,7 @@ class FJ_MobEffect : public FJ_FuiNode
 {
 public:
     FJ_MobEffect(fuiRenderNode* pRenderNode);
-    virtual ~FJ_MobEffect();
+    virtual ~FJ_MobEffect() {}
 
     void SetupEffectType(int iEffectType);
     std::wstring GetFormattedTime(int iDuration);

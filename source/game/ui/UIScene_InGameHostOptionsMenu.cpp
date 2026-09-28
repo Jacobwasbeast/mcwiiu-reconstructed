@@ -146,10 +146,10 @@ std::wstring UIScene_InGameHostOptionsMenu::getMoviePath()
                                                std::wstring(L"InGameHostOptionsSplit");
 }
 
-void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                                bool pressed, bool& handled)
+void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                                bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -159,7 +159,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         return;
     case EControllerActions_MenuCancel:
         break;

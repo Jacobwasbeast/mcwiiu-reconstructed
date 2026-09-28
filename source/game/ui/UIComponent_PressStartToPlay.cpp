@@ -12,6 +12,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/ui/FJ_PressStartToPlay.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UIScene_AchievementsMenu.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -20,23 +21,16 @@
 
 namespace
 {
-void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search,
-                const std::wstring& replacement)
-{
-    result = source;
-    std::wstring::size_type position = 0;
-    while ((position = result.find(search, position)) != std::wstring::npos)
-    {
-        result.replace(position, search.length(), replacement);
-        ++position;
-    }
-}
-
 struct AvatarRequest
 {
+    AvatarRequest(UIComponent_PressStartToPlay* scene, int player, int achievement)
+        : scene(scene), player(player), achievement(achievement)
+    {
+    }
+
     UIComponent_PressStartToPlay* scene;
-    int achievement;
     int player;
+    int achievement;
 };
 
 FJ_PressStartToPlay* GetDocument(fuiRenderNode* root)
@@ -54,9 +48,9 @@ UIComponent_PressStartToPlay::Toast::Toast(const Toast& other)
 UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_showSaveIcon(false), m_showAutosaveTimer(false),
       m_showTrialTimer(false), m_showPressStart(), m_trialTimer(), m_autosaveTimer(),
-      m_trialTimerLabel(), m_playerNameLabel(), m_saveIcon(), m_mainPanel(), m_player(0),
-      m_achievementToastShowing(false), m_achievement(0), m_holdToShowAchievements(false),
-      m_holdActionCancelled(false), m_holdToShowAchievementsActive(false), m_achievementToasts()
+      m_trialTimerLabel(), m_playerNameLabel(), m_saveIcon(), m_mainPanel(), m_achievement(0),
+      m_achievementToastShowing(false), m_player(0), m_holdToShowAchievements(false),
+      m_holdActionCancelled(false), m_holdCancelPending(false), m_achievementToasts()
 {
     initialiseMovie();
     m_trialTimerLabel.init(UIString(L"PressStartToPlay"));
@@ -72,22 +66,22 @@ UIComponent_PressStartToPlay::~UIComponent_PressStartToPlay()
 {
 }
 
-unsigned int UIComponent_PressStartToPlay::GetAchievementToastShowing(int player)
+bool UIComponent_PressStartToPlay::GetAchievementToastShowing(int player)
 {
-    return (m_achievementToastShowing || m_holdToShowAchievementsActive) && player == m_achievement;
+    return (m_achievementToastShowing || m_holdToShowAchievements) && player == m_player;
 }
 
-unsigned char UIComponent_PressStartToPlay::GetHoldToShowAchievementsActive(bool includeCancelled)
+bool UIComponent_PressStartToPlay::GetHoldToShowAchievementsActive(bool includeCancelled)
 {
     if (includeCancelled)
-        m_holdActionCancelled = true;
+        m_holdCancelPending = includeCancelled;
     return m_holdToShowAchievements;
 }
 
 unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bool repeat,
-                                                       bool released, bool pressed, bool& handled)
+                                                       bool pressed, bool released, bool& handled)
 {
-    if (GetAchievementToastShowing(player) && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && released && !repeat)
+    if (GetAchievementToastShowing(player) && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && pressed && !repeat)
     {
         m_holdToShowAchievements = true;
         m_holdActionCancelled = false;
@@ -95,11 +89,11 @@ unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bo
         handled = true;
         return 1;
     }
-    if (m_holdToShowAchievements && !handled && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && pressed)
+    if (m_holdToShowAchievements && !handled && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && released)
     {
-        if (m_holdToShowAchievementsActive)
+        if (m_holdCancelPending)
         {
-            m_holdToShowAchievementsActive = false;
+            m_holdCancelPending = false;
             m_holdActionCancelled = true;
         }
         m_holdToShowAchievements = false;
@@ -119,8 +113,7 @@ void UIComponent_PressStartToPlay::HideChestRefillAnimation()
 void UIComponent_PressStartToPlay::ResetUIComponents()
 {
     m_achievementToastShowing = false;
-    if (hasMovie())
-        GetDocument(m_movie->getRootNode())->HideChestRefillAnimation();
+    HideChestRefillAnimation();
 }
 
 void UIComponent_PressStartToPlay::showTrialTimer(bool show)
@@ -222,19 +215,19 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
 
     if (data == 0 && size != 0)
     {
-        scene->m_player = player;
         scene->m_achievement = achievement;
-        scene->registerTexture(player);
+        scene->m_player = player;
+        scene->registerTexture(achievement);
         wchar_t suffix[32];
-        std::swprintf(suffix, 32, L"%d", achievement);
+        std::swprintf(suffix, 32, L"%d", player);
         std::wstring texture(L"PlayerIcon");
         texture += suffix;
         scene->registerSubstitutionTexture(texture, 0, size, true);
-        AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(player);
+        AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(achievement);
         Toast toast;
         toast.title = L10N::GetString(info->title);
         std::wstring description = L10N::GetString(0x4523129e);
-        replaceAll(description, description, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}");
+        description = replaceAll(description, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}");
         toast.description = gApp.FormatHTMLString(achievement, description, -1);
         toast.gamerPic = texture;
         toast.achievementIcon = info->icon;
@@ -246,27 +239,20 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
     return 0;
 }
 
-void UIComponent_PressStartToPlay::SetAchievementUnlocked(int achievement, int player)
+void UIComponent_PressStartToPlay::SetAchievementUnlocked(int player, int achievement)
 {
-    AvatarRequest* request = new AvatarRequest;
-    request->scene = this;
-    request->achievement = achievement;
-    request->player = player;
-    if (gProfile != 0)
-        gProfile->GetProfileAvatar(player, AvatarReturned, request);
-    else
-        delete request;
+    gProfile->GetProfileAvatar(player, AvatarReturned, new AvatarRequest(this, player, achievement));
 }
 
-unsigned char UIComponent_PressStartToPlay::GetHoldActionCancelled(int player)
+bool UIComponent_PressStartToPlay::GetHoldActionCancelled(int player)
 {
     if (GetAchievementToastShowing(player))
     {
-        unsigned char cancelled = m_holdActionCancelled;
+        bool cancelled = m_holdActionCancelled;
         m_holdActionCancelled = false;
         return cancelled;
     }
-    return 0;
+    return false;
 }
 
 unsigned int UIComponent_PressStartToPlay::mapElementsAndNames()

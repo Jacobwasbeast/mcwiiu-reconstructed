@@ -78,8 +78,8 @@ public:
     void UpdateParamsList();
     void LoadPreset(SuperflatConfig* config);
     void SetActiveTab(eTabs tab);
-    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat, bool released,
-                                  bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed, bool repeat,
+                                  bool released);
     virtual UIControl* GetMainPanel();
     virtual void updateTooltips();
     virtual void updateComponents();
@@ -95,7 +95,7 @@ public:
     void NavActiveTab(int direction);
     static int CbGenerationWarning(void* context, int pad, C4JStorage::EMessageResult result);
     void ReturnResults(bool accepted);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     static int CbLayerOperation(void* context, int pad, C4JStorage::EMessageResult result);
     void ChangeBiome(int biome);

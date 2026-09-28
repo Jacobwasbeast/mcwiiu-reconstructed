@@ -49,8 +49,6 @@ FJ_Button::FJ_Button(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
 }
 
-FJ_Button::~FJ_Button() {}
-
 FJ_FuiNode* FJ_Button::getObjListParent()
 {
     return m_objListParent;
@@ -177,7 +175,7 @@ fuiRenderNodeEditText* FJ_Button::GetSecondaryTextField()
         return 0;
     fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
     m_hasSecondaryText = true;
-    return static_cast<fuiRenderNodeEditText*>(timeline->getChildAt(0)->asEditText());
+    return timeline->getChildAt(0)->asEditText();
 }
 
 void FJ_Button::SetSecondaryText(const std::wstring& text, bool html, bool autoSize)
@@ -263,18 +261,17 @@ void FJ_Button::EnableButton(bool enabled)
 void FJ_Button::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
     int widest = m_maxLabelWidth;
-    int fieldWidth = static_cast<int>(textField->getWidth());
-    if (widest < fieldWidth)
-        widest = fieldWidth;
-    int scaledWidth = static_cast<int>(static_cast<float>(widest) * 1.26f);
+    if (static_cast<float>(widest) <= textField->getWidth())
+        widest = static_cast<int>(textField->getWidth());
+    int scaledWidth = static_cast<int>(widest * 1.26);
     if (m_newWidth < scaledWidth)
         m_newWidth = scaledWidth;
     if (!m_labelTooWide && m_preScaleWidth < scaledWidth)
     {
         m_labelTooWide = true;
-        if (!m_labelOverflowResolved && m_preScaleWidth < static_cast<int>(static_cast<float>(widest) * 1.05f))
+        if (!m_labelOverflowResolved && m_preScaleWidth < static_cast<int>(widest * 1.05))
         {
-            m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8f);
+            m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8);
             m_labelOverflowResolved = true;
         }
     }

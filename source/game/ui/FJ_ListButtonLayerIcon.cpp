@@ -13,10 +13,6 @@ FJ_ListButtonLayerIcon::FJ_ListButtonLayerIcon(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_ListButtonLayerIcon::~FJ_ListButtonLayerIcon()
-{
-}
-
 void FJ_ListButtonLayerIcon::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);

@@ -9,7 +9,8 @@ class FJ_Event;
 class FJ_FuiNode;
 class fuiRenderNode;
 
-class FJ_CraftingMenu : public FJ_Document {
+class FJ_CraftingMenu : public FJ_Document
+{
 public:
     FJ_CraftingMenu(fuiRenderNode* renderNode);
     virtual ~FJ_CraftingMenu();
@@ -34,7 +35,6 @@ public:
     void UpdateTabs(FJ_Event* event);
     void SetActiveTab(int tab, int subtab);
     void ShowIngredient(int index, bool show);
-    static void _UpdateTabs(FJ_FuiNode* node, FJ_Event* event);
 
 private:
     int m_craftingType;

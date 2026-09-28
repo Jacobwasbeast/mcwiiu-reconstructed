@@ -113,7 +113,7 @@ std::wstring UIScene_SuperFlatPresets::GetDisplayName(int index) const
         return L"[UNKNOWN_PRESET]";
 
     static const unsigned int displayNames[] = {
-        IDS_PRESET_CLASSIC_FLAT, 0x1D3AAD7A, IDS_PRESET_WATER_WORLD, IDS_PRESET_OVERWORLD,
+        IDS_PRESET_CLASSIC_FLAT, IDS_PRESET_TUNNELERS_DREAM, IDS_PRESET_WATER_WORLD, IDS_PRESET_OVERWORLD,
         IDS_PRESET_SNOWY_KINGDOM, IDS_PRESET_DESERT, IDS_PRESET_REDSTONE_READY
     };
     if (defaultId < static_cast<int>(sizeof(displayNames) / sizeof(displayNames[0])))
@@ -201,34 +201,34 @@ void UIScene_SuperFlatPresets::HandlePresetListPress(int function)
     {
         int parameters[2] = { static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL) };
         m_selectedPreset = selection;
-        gConsoleUIController.RequestAlertMessage(IDS_SUPERFLAT_LOAD_PRESET, 0xCD41C121, parameters, 2,
+        gConsoleUIController.RequestAlertMessage(IDS_SUPERFLAT_LOAD_PRESET, IDS_SUPERFLAT_UNSAVED_CONFIGURATION_LOAD_MESSAGE, parameters, 2,
                                                   m_playerId, LoadConfirmMessageCallback, this, 0, true);
     }
 }
 
-void UIScene_SuperFlatPresets::handleInput(int, int action, bool repeat, bool released, bool pressed,
+void UIScene_SuperFlatPresets::handleInput(int, int action, bool repeat, bool pressed, bool released,
                                            bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuX:
     case EControllerActions_MenuY:
-        if (released)
+        if (pressed)
         {
             HandlePresetListPress(action);
             handled = true;
         }
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             navigateBack();
             handled = true;
         }
         break;
     default:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }

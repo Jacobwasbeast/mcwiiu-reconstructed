@@ -20,7 +20,7 @@ private:
 
 public:
     FJ_Cursor(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Cursor();
+    virtual ~FJ_Cursor() {}
     virtual void ASConstructor();
 
     void TopAlignPanel();

@@ -12,7 +12,7 @@ class FJ_ListButtonIconLeft : public FJ_Button
 {
 public:
     explicit FJ_ListButtonIconLeft(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonIconLeft();
+    virtual ~FJ_ListButtonIconLeft() {}
 
     void Init(const std::wstring& name, int id);
     void SetSlotID(int slotId, bool hasSlot);

@@ -33,11 +33,11 @@ public:
     virtual void SetFocusToElement(int focus);
     virtual void handleTimerComplete(int timerId);
     virtual void updateTooltips();
-    virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleDestroy();
     virtual void handlePreReload();
     virtual void handleReload();
-    virtual void handleTouchInput(unsigned int player, int action, int x, int y, bool repeat, bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int touchBox, bool pressed, bool repeat, bool released);
 
     void HandleFontSizeOverride();
     void SetBookIsSigned();

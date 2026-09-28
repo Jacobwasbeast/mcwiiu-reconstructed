@@ -49,7 +49,7 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
     if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
         m_titleLabel.setLabel(UIString(L10N::GetString(IDS_YOU_DIED)), false, false);
     else
-        m_titleLabel.setLabel(UIString(L10N::GetString(0x7b5878dc)), false, false);
+        m_titleLabel.setLabel(UIString(L10N::GetString(IDS_MG03_YOU_CRASHED)), false, false);
     Minecraft* minecraft = Minecraft::GetInstance();
     Gui* gui = minecraft->mGui;
 
@@ -146,18 +146,18 @@ std::wstring UIScene_DeathMenu::getMoviePath()
     return std::wstring(L"DeathMenuSplit");
 }
 
-void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                    bool pressed, bool& handled)
+void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                    bool released, bool& handled)
 {
     if (m_deathMenuActive)
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuCancel:

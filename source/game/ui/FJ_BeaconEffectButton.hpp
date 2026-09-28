@@ -10,7 +10,7 @@ private:
 
 public:
     FJ_BeaconEffectButton(fuiRenderNode* pRenderNode);
-    virtual ~FJ_BeaconEffectButton();
+    virtual ~FJ_BeaconEffectButton() {}
     void ChangeState(int state);
     void SetIcon(int icon);
 };

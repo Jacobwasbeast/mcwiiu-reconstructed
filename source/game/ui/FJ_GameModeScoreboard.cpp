@@ -83,7 +83,7 @@ void FJ_GameModeScoreboard::SetScoreboardType(int type)
 void FJ_GameModeScoreboard::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    const double stageHeight = getStage()->getStageHeight();
+    const float stageHeight = getStage()->getStageHeight();
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
     setX(static_cast<float>(-right - 176));

@@ -21,8 +21,8 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "game/core/XLanguage.hpp"
 
-extern unsigned int XGetLanguage();
 
 struct LeaderboardDescriptor
 {
@@ -89,9 +89,26 @@ unsigned int UIScene_LeaderboardsMenu::GetEntryStartIndex()
 
 unsigned int UIScene_LeaderboardsMenu::LanguageUsesCommaRadix(int language)
 {
-    return (language > 2 && language < 6) || language == 9 ||
-           (language >= 11 && language < 14) || (language > 14 && language < 17) ||
-           (language > 240 && language < 246);
+    switch (language)
+    {
+    case XC_LANGUAGE_GERMAN:
+    case XC_LANGUAGE_FRENCH:
+    case XC_LANGUAGE_SPANISH:
+    case XC_LANGUAGE_PORTUGUESE:
+    case XC_LANGUAGE_POLISH:
+    case XC_LANGUAGE_RUSSIAN:
+    case XC_LANGUAGE_SWEDISH:
+    case XC_LANGUAGE_NORWEGIAN:
+    case XC_LANGUAGE_DUTCH:
+    case XC_LANGUAGE_FINNISH:
+    case XC_LANGUAGE_GREEK:
+    case XC_LANGUAGE_DANISH:
+    case XC_LANGUAGE_CZECH:
+    case XC_LANGUAGE_SLOVAK:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 void UIScene_LeaderboardsMenu::CopyLeaderboardEntry(LeaderboardManager::ReadScore* score,
@@ -599,14 +616,14 @@ void UIScene_LeaderboardsMenu::handleReload()
     navigateBack();
 }
 
-void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                           bool pressed, bool& handled)
+void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                           bool released, bool& handled)
 {
     if (m_loading && action != EControllerActions_MenuCancel)
         return;
 
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (!released)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+    if (!pressed)
         return;
 
     switch (action)
@@ -634,7 +651,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
                 m_readType = LeaderboardManager::eReadType_TopRank;
                 wchar_t buf[40];
                 swprintf(buf, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
-                         L10N::GetString(0xdff993fa));
+                         L10N::GetString(IDS_LEADERBOARD_FILTER_OVERALL));
                 m_filterLabel.setLabel(UIString(buf), false, false);
             }
             else if (m_readType == LeaderboardManager::eReadType_TopRank)
@@ -642,7 +659,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
                 m_readType = LeaderboardManager::eReadType_Friends;
                 wchar_t buf[40];
                 swprintf(buf, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
-                         L10N::GetString(0x1bcdeb3c));
+                         L10N::GetString(IDS_LEADERBOARD_FILTER_FRIENDS));
                 m_filterLabel.setLabel(UIString(buf), false, false);
             }
             ReadStats(-1);
@@ -654,11 +671,11 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
         if (m_selectedEntry > 0)
         {
             --m_selectedEntry;
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
             return;
         }
         m_selectedEntry = 0;
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         return;
     case EControllerActions_MenuDown:
         if (static_cast<unsigned int>(m_selectedEntry + 1) < m_visibleRowCount)
@@ -669,7 +686,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
         {
             m_selectedEntry = static_cast<int>(m_visibleRowCount) - 1;
         }
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         return;
     case EControllerActions_MenuRight:
     case EControllerActions_MenuLeft:
@@ -712,7 +729,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
             gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             if (m_visibleRowCount < 0xb)
                 return;
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
             handled = true;
             return;
         }

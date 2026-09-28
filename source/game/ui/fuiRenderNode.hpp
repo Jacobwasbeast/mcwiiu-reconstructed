@@ -10,6 +10,7 @@ class FJ_FuiNode;
 class FJ_Factory;
 class fui;
 struct fuiFile;
+class fuiRenderNodeEditText;
 class fuiRenderNodeStage;
 
 class fuiRenderNode
@@ -99,7 +100,7 @@ public:
     void popFilterFlags();
     void setRendererColour();
     unsigned char getCurrentFilterFlags();
-    fuiRenderNode* asEditText();
+    fuiRenderNodeEditText* asEditText();
     fuiRect getGlobalBounds() const;
     void setGlobalBounds(const fuiRect&);
     fuiRenderNode* asShape();

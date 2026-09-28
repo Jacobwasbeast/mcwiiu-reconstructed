@@ -74,12 +74,12 @@ std::wstring UIScene_NewUpdateMessage::getMoviePath()
     return L"EULA";
 }
 
-void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool released,
-                                           bool pressed, bool&)
+void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool pressed,
+                                           bool released, bool&)
 {
     if (m_ignoreInput)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuB:
@@ -101,7 +101,7 @@ void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool re
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }

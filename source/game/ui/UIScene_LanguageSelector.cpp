@@ -83,10 +83,10 @@ std::wstring UIScene_LanguageSelector::getMoviePath()
     return std::wstring(L"LanguagesMenuSplit");
 }
 
-void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool released, bool pressed,
+void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool pressed, bool released,
                                            bool&)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -94,7 +94,7 @@ void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool re
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
         if (pressed)

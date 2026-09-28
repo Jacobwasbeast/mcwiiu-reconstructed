@@ -48,7 +48,7 @@ public:
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleReload();
     virtual void handleSelectionChanged(int selection);

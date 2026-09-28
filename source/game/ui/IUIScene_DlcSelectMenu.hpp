@@ -11,7 +11,12 @@ class UIScene_MapSelectMenu;
 
 enum eDLCContentType
 {
-    eDLCContentType_Unknown = 0
+    eDLCContentType_MapPack = 0,
+    eDLCContentType_SkinPack = 1,
+    eDLCContentType_TexturePack = 2,
+    eDLCContentType_MashupPack = 3,
+    eDLCContentType_BundlePack = 4,
+    eDLCContentType_All = 11
 };
 
 class IUIScene_DlcSelectMenu

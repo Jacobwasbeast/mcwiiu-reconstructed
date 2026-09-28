@@ -1356,9 +1356,9 @@ void IUIScene_CraftingMenu::DisplayIngredients()
             else if (itemId == Block::getId(Blocks::sandstone))
                 descriptionId = IDS_ANY_SANDSTONE;
             else if (itemId == Block::getId(Blocks::red_sandstone))
-                descriptionId = 0xF36C79ED;
+                descriptionId = IDS_ANY_REDSANDSTONE;
             else if (itemId == Block::getId(Blocks::stonebrick))
-                descriptionId = 0xD2631070;
+                descriptionId = IDS_ANY_STONE_BRICK;
             else if (itemId == Block::getId(Blocks::quartz_block))
                 descriptionId = IDS_ANY_QUARTZ_BLOCK;
             else if (itemId == Block::getId(Blocks::stone))

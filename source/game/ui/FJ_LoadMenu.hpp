@@ -22,8 +22,9 @@ public:
     virtual unsigned int getType();
 
 private:
-    int m_listHeight;
+    int m_unused;
     bool m_customLoadMenu;
+    int m_listHeight;
     int m_iconY;
 };
 

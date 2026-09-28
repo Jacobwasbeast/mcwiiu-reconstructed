@@ -1,5 +1,6 @@
 #include "game/ui/fui.hpp"
 
+#include <climits>
 #include <cstring>
 
 #include "game/client/render/Renderer.hpp"
@@ -350,7 +351,7 @@ void fui::setCustomTextureFn(int (*textureFunction)(void*, const std::wstring&, 
 uint32_t fui::getCustomTexture(const std::wstring& name, unsigned int* width, unsigned int* height, bool* hasAlpha)
 {
     if (m_customTextureFunction == NULL)
-        return UINT32_MAX;
+        return UINT_MAX;
     return m_customTextureFunction(m_customTextureContext, name, width, height, hasAlpha);
 }
 

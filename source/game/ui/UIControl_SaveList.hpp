@@ -8,7 +8,7 @@
 class UIControl_SaveList : public UIControl_ButtonList
 {
 public:
-    virtual ~UIControl_SaveList();
+    virtual ~UIControl_SaveList() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addItem(const std::wstring& label, const std::wstring& textureName, int index);
     void addItem(const std::wstring& label, const std::wstring& textureName);

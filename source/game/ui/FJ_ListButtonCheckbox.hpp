@@ -13,7 +13,7 @@ class FJ_ListButtonCheckbox : public FJ_Button
 {
 public:
     explicit FJ_ListButtonCheckbox(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonCheckbox();
+    virtual ~FJ_ListButtonCheckbox() {}
 
     void SetCheckBox(bool checked);
     void HandleTriggerCheckBox(int id);

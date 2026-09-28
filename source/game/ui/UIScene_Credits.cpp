@@ -16,9 +16,9 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/XLanguage.hpp"
 
 extern ConsoleUIController gConsoleUIController;
-extern unsigned int XGetLanguage();
 
 namespace
 {
@@ -717,8 +717,8 @@ void UIScene_Credits::addCreditLine(const std::wstring& text)
     {
         useShortLine = true;
     }
-    unsigned int maximum = (XGetLanguage() == 2 ||
-                            (XGetLanguage() > 6 && XGetLanguage() < 9) ||
+    unsigned int maximum = (XGetLanguage() == XC_LANGUAGE_JAPANESE ||
+                            XGetLanguage() == XC_LANGUAGE_KOREAN || XGetLanguage() == XC_LANGUAGE_TCHINESE ||
                             !useShortLine) ? 55 : 45;
     std::wstring remaining = text;
     while (remaining.size() > maximum)
@@ -842,19 +842,19 @@ std::wstring UIScene_Credits::getMoviePath()
     return L"Credits";
 }
 
-void UIScene_Credits::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+void UIScene_Credits::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                                   bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
-        if (pressed && !released)
+        if (pressed && !repeat)
             navigateBack();
         break;
     }

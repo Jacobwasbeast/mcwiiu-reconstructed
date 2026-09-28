@@ -52,7 +52,7 @@ void UIScene_PauseMenu::Init()
     g_pApp->GetLocalPlayerCount();
 
     m_buttonList.AddNewMenuButton(L10N::GetString(IDS_RESUME_GAME), 0);
-    m_buttonList.AddNewMenuButton(L10N::GetString(0x2b1e9f0e), 1);
+    m_buttonList.AddNewMenuButton(L10N::GetString(IDS_HELP_AND_OPTIONS), 1);
 
     PlayerUID xuid(0);
     gProfile->GetXUID(m_playerId, &xuid, false);
@@ -129,7 +129,7 @@ void UIScene_PauseMenu::Init()
             if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == eMiniGameId_Battle)
                 m_buttonList.AddNewMenuButton(L10N::GetString(0xd9c9100d), 7);
             else if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == eMiniGameId_Tumble)
-                m_buttonList.AddNewMenuButton(L10N::GetString(0x6044b44e), 7);
+                m_buttonList.AddNewMenuButton(L10N::GetString(IDS_MG02_SETTINGS), 7);
         }
     }
 
@@ -222,18 +222,18 @@ void UIScene_PauseMenu::handleFocusChange(int, int childFocus)
     m_focusIndex = m_buttonList.getListIndex(childFocus);
 }
 
-void UIScene_PauseMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool&)
+void UIScene_PauseMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool&)
 {
     if (m_ignoreInput || action < EControllerActions_MenuUp)
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOk:
         if (pressed)
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
         if (pressed)
@@ -606,6 +606,7 @@ void UIScene_PauseMenu::OpenExitGameDialog(
 {
     if (action != EOpenExitGameDialog_JoinInvite && player != gProfile->GetPrimaryPad())
     {
+        telemetryManagerInstance->RecordLevelExit(player, eSen_LevelExitStatus_Completed);
         g_pApp->SetAction(player, eXuiAction_RemoveLocalPlayer, NULL);
         return;
     }

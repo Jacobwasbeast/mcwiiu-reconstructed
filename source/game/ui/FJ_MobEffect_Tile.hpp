@@ -7,7 +7,7 @@ class FJ_MobEffect_Tile : public FJ_FuiNode
 {
 public:
     FJ_MobEffect_Tile(fuiRenderNode* pRenderNode);
-    virtual ~FJ_MobEffect_Tile();
+    virtual ~FJ_MobEffect_Tile() {}
     void Init();
     void SetupEffectType(int iEffectType);
     void SetEffectAlpha(float fAlpha);

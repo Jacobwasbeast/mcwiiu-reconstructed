@@ -65,6 +65,7 @@ public:
         float boundaryXMax;
         float boundaryYMin;
         float boundaryYMax;
+        int unused;
         std::vector<fuiFontSet::FontVert> bitmapGlyphVerts[4];
         std::vector<fuiFontSet::FontVert> shadowBitmapGlyphVerts[4];
         std::vector<fuiFontSet::FontVert> fontGlyphVerts[4];

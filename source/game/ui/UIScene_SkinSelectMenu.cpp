@@ -32,7 +32,7 @@ static const int s_defaultSkinNameIds[19] = {
     -1,
     0x4d50fa0f, 0x274e7fa6, 0x014c053d, (int)0xdb498ad4, (int)0xb547106b, (int)0x8f449602,
     0x69421b99, 0x433fa130, 0x7d64cd57, 0x576252ee, (int)0xcb2bd086, (int)0xf12e4aef,
-    0x7f26dbb4, (int)0xa529561d, 0x3321e6e2, 0x5924614b, 0x0d1f6c79, (int)0xe71cf210
+    IDS_DEFAULT_SKIN12, (int)0xa529561d, 0x3321e6e2, 0x5924614b, 0x0d1f6c79, (int)0xe71cf210
 };
 
 static const int s_newestSkinPackIds[12] = {
@@ -40,7 +40,7 @@ static const int s_newestSkinPackIds[12] = {
 };
 
 UIScene_SkinSelectMenu::UIScene_SkinSelectMenu(int player, void* data, UILayer* layer)
-    : UIScene(player, layer), m_dlcScene(static_cast<eDLCContentType>(1))
+    : UIScene(player, layer), m_dlcScene(eDLCContentType_SkinPack)
 {
     initialiseMovie();
     m_packList.init(0);
@@ -190,7 +190,7 @@ void UIScene_SkinSelectMenu::setActivePackIndex()
         {
             if (skinFile != NULL)
             {
-                std::wstring skinPath = skinFile->m_path;
+                std::wstring skinPath = skinFile->getPath();
                 if (skinPath.compare(m_currentSkinPath) == 0)
                 {
                     m_packIndex = 1;
@@ -279,7 +279,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
     if (m_dlcScene.m_pack != NULL)
     {
         skinFile = static_cast<DLCSkinFile*>(m_dlcScene.m_pack->getSkinFile(m_skinIndex));
-        m_selectedSkinPath = skinFile->m_path;
+        m_selectedSkinPath = skinFile->getPath();
         m_selectedCapePath = skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
         m_additionalSkinBoxes = skinFile->getAdditionalBoxes();
         skinName = skinFile->getParameterAsString(DLCManager::eDLCParameterType_DisplayName, L"");
@@ -355,7 +355,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                 }
                 else
                 {
-                    m_selectedSkinPath = skinFile->m_path;
+                    m_selectedSkinPath = skinFile->getPath();
                     m_selectedCapePath = skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
                     m_additionalSkinBoxes = skinFile->getAdditionalBoxes();
                     skinName = skinFile->getParameterAsString(DLCManager::eDLCParameterType_DisplayName, L"");
@@ -461,7 +461,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         if (m_dlcScene.m_pack != NULL)
         {
             otherSkinFile = static_cast<DLCSkinFile*>(m_dlcScene.m_pack->getSkinFile(nextIndex));
-            otherSkinPath = otherSkinFile->m_path;
+            otherSkinPath = otherSkinFile->getPath();
             otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
             otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
             backupTexture = static_cast<_TEXTURE_NAME>(0x25);
@@ -488,7 +488,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                 }
                 else if (otherSkinFile != NULL)
                 {
-                    otherSkinPath = otherSkinFile->m_path;
+                    otherSkinPath = otherSkinFile->getPath();
                     otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
                     otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
                     backupTexture = static_cast<_TEXTURE_NAME>(0x25);
@@ -519,7 +519,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         if (m_dlcScene.m_pack != NULL)
         {
             otherSkinFile = static_cast<DLCSkinFile*>(m_dlcScene.m_pack->getSkinFile(previousIndex));
-            otherSkinPath = otherSkinFile->m_path;
+            otherSkinPath = otherSkinFile->getPath();
             otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
             otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
             backupTexture = static_cast<_TEXTURE_NAME>(0x25);
@@ -546,7 +546,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                 }
                 else if (otherSkinFile != NULL)
                 {
-                    otherSkinPath = otherSkinFile->m_path;
+                    otherSkinPath = otherSkinFile->getPath();
                     otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
                     otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
                     backupTexture = static_cast<_TEXTURE_NAME>(0x25);
@@ -895,7 +895,7 @@ void UIScene_SkinSelectMenu::updateTooltips()
             DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(m_dlcScene.m_pack->getSkinFile(m_skinIndex));
             if (skinFile != NULL)
             {
-                if (IsFavoriteSkin(m_playerId, static_cast<int>(CMinecraftApp::getSkinIdFromPath(skinFile->m_path))) != 0)
+                if (IsFavoriteSkin(m_playerId, static_cast<int>(CMinecraftApp::getSkinIdFromPath(skinFile->getPath()))) != 0)
                     favouriteTooltip = IDS_TOOLTIPS_FAVORITE_REMOVE;
                 if (!m_dlcScene.m_pack->hasPurchasedPack() && !skinFile->isFree())
                     favouriteTooltip = -1;
@@ -975,7 +975,7 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
                     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
                     return;
                 }
-                GameSettings::SetPlayerSkin(pad, skinFile->m_path);
+                GameSettings::SetPlayerSkin(pad, skinFile->getPath());
                 GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
                 m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
                 m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
@@ -1007,7 +1007,7 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
         }
         else
         {
-            GameSettings::SetPlayerSkin(pad, skinFile->m_path);
+            GameSettings::SetPlayerSkin(pad, skinFile->getPath());
             GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
             setCharacterSelected(true);
             m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
@@ -1018,7 +1018,7 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
     }
     else
     {
-        m_dlcScene.tryPurchaseDlc(m_playerId, handled, static_cast<eDLCContentType>(0xb));
+        m_dlcScene.tryPurchaseDlc(m_playerId, handled, eDLCContentType_All);
     }
 
     if (handled)
@@ -1116,7 +1116,7 @@ void UIScene_SkinSelectMenu::InputActionFavorite(unsigned int player)
         DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(m_dlcScene.m_pack->getSkinFile(m_skinIndex));
         if (m_dlcScene.m_pack->hasPurchasedPack() || (skinFile != NULL && skinFile->isFree()))
         {
-            SetFavoriteSkin(m_playerId, static_cast<int>(CMinecraftApp::getSkinIdFromPath(skinFile->m_path)));
+            SetFavoriteSkin(m_playerId, static_cast<int>(CMinecraftApp::getSkinIdFromPath(skinFile->getPath())));
             updateTooltips();
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         }
@@ -1129,8 +1129,8 @@ void UIScene_SkinSelectMenu::InputActionFavorite(unsigned int player)
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
 }
 
-void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bool released,
-                                         bool pressed, bool& handled)
+void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bool pressed,
+                                         bool released, bool& handled)
 {
     if (m_dlcScene.m_purchasePending)
         return;
@@ -1138,9 +1138,9 @@ void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bo
     switch (action)
     {
     case EControllerActions_MenuY:
-        if (released)
+        if (pressed)
         {
-            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
             InputActionFavorite(static_cast<unsigned int>(player));
             handled = true;
             return;
@@ -1150,43 +1150,43 @@ void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bo
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
-        if (released)
+        if (pressed)
         {
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
             handled = true;
             return;
         }
         break;
     case EControllerActions_MenuRight:
-        if (released && !m_skinSliding)
+        if (pressed && !m_skinSliding)
         {
-            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
             gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             m_skinIndex = getNextSkinIndex(m_skinIndex);
             m_skinSliding = true;
             m_skinAnimating = true;
             m_characters[eCharacter_Current].SetFacing(UIControl_PlayerSkinPreview::eFacingLeft, true);
             m_characters[eCharacter_Next1].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, true);
-            sendInputToMovie(7, repeat, released, pressed);
+            sendInputToMovie(7, repeat, pressed, released);
             return;
         }
         break;
     case EControllerActions_MenuLeft:
-        if (released && !m_skinSliding)
+        if (pressed && !m_skinSliding)
         {
-            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
             gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
             m_skinIndex = static_cast<unsigned int>(getPreviousSkinIndex(m_skinIndex));
             m_skinAnimating = true;
             m_skinSliding = true;
             m_characters[eCharacter_Current].SetFacing(UIControl_PlayerSkinPreview::eFacingRight, true);
             m_characters[eCharacter_Previous1].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, true);
-            sendInputToMovie(6, repeat, released, pressed);
+            sendInputToMovie(6, repeat, pressed, released);
             return;
         }
         break;
     case EControllerActions_MenuOtherStickPress:
-        if (released)
+        if (pressed)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
             m_characters[eCharacter_Current].mRotation = 0;
@@ -1195,51 +1195,51 @@ void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bo
         }
         break;
     case EControllerActions_MenuOtherStickUp:
-        if (released)
+        if (pressed)
         {
             m_characters[eCharacter_Current].CyclePreviousAnimation();
             return;
         }
         break;
     case EControllerActions_MenuOtherStickDown:
-        if (released)
+        if (pressed)
             m_characters[eCharacter_Current].CycleNextAnimation();
         break;
     case EControllerActions_MenuOtherStickLeft:
-        if (released)
+        if (pressed)
         {
             m_characters[eCharacter_Current].mRotateForward = true;
             return;
         }
-        if (pressed)
+        if (released)
         {
             m_characters[eCharacter_Current].mRotateForward = false;
             return;
         }
         break;
     case EControllerActions_MenuOtherStickRight:
-        if (released)
+        if (pressed)
         {
             m_characters[eCharacter_Current].mRotateBackward = true;
             return;
         }
-        if (pressed)
+        if (released)
         {
             m_characters[eCharacter_Current].mRotateBackward = false;
             return;
         }
         break;
     case EControllerActions_MenuOk:
-        if (released)
+        if (pressed)
         {
             InputActionOK(static_cast<unsigned int>(player));
             return;
         }
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
-            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
             GameSettings::CheckGameSettingsChanged(true, player);
             navigateBack();
             return;
@@ -1302,10 +1302,10 @@ void UIScene_SkinSelectMenu::HandleDLCLicenseChange()
 }
 
 void UIScene_SkinSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY,
-                                              int touchBox, bool repeat, bool released,
-                                              bool pressed)
+                                              int touchBox, bool pressed, bool repeat,
+                                              bool released)
 {
-    if (repeat)
+    if (pressed)
     {
         if (touchBox == 10 &&
             (m_packIndex != 1 || GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0))
@@ -1316,9 +1316,9 @@ void UIScene_SkinSelectMenu::handleTouchInput(unsigned int playerId, int touchX,
         return;
     }
 
-    if (!released)
+    if (!repeat)
     {
-        if (pressed && touchBox == 10 && !m_touchConsumed)
+        if (released && touchBox == 10 && !m_touchConsumed)
             InputActionOK(playerId);
         return;
     }

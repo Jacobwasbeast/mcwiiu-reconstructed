@@ -19,7 +19,7 @@ public:
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void tick();
     static int ResetDefaultsDialogReturned(void* context, int pad,

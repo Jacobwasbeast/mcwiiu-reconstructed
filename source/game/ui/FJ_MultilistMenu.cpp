@@ -32,8 +32,7 @@ void FJ_MultilistMenu::handleCheckboxToggled(FJ_Event* event)
 
 void FJ_MultilistMenu::_handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event)
 {
-    if (node != NULL)
-        static_cast<FJ_MultilistMenu*>(node)->handleCheckboxToggled(event);
+    static_cast<FJ_MultilistMenu*>(node)->handleCheckboxToggled(event);
 }
 
 FJ_Document* FJ_MultilistMenu::Create(fuiRenderNode* renderNode)
@@ -50,7 +49,7 @@ void FJ_MultilistMenu::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
-    const double stageHeight = getStage()->getStageHeight();
+    const float stageHeight = getStage()->getStageHeight();
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
 
@@ -177,7 +176,7 @@ void FJ_MultilistMenu::HideDescription()
     if (multiList == NULL || backgroundList == NULL)
         return;
 
-    const double stageWidth = getStage()->getStageWidth();
+    const float stageWidth = getStage()->getStageWidth();
     const float offset = static_cast<float>(static_cast<int>((stageWidth - multiList->getWidth()) * 0.5));
     multiList->setX(offset);
     backgroundList->setX(offset);

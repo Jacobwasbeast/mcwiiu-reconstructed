@@ -28,8 +28,8 @@ public:
     virtual void tick();
     virtual void updateTooltips();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released,
-                             bool pressed, bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed,
+                             bool released, bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleSelectionChanged(int selection);
     virtual void handleFocusChange(int focus, int childFocus);
@@ -38,20 +38,24 @@ public:
     virtual int getSceneType();
 
 private:
-    bool m_catalogReady;
-    bool m_purchasabilityChanged;
-    bool m_shouldNavigateBack;
-    bool m_unknownCallbackState;
+    bool m_isStandardDefinition;
+    bool m_alreadyInstalled;
+    bool m_installable;
+    bool m_navigateBack;
     UIControl_DLCButtonList m_offerList;
     UIControl_Label m_titleLabel;
     UIControl_Label m_priceLabel;
     UIControl_HTMLLabel m_descriptionLabel;
     UIControl_BitmapIcon m_banner;
     UIControl m_timer;
+    int m_unknown364;
+    int m_unknown368;
+    bool m_waitingForCatalog;
+    bool m_displayUpdated;
     int m_category;
     int m_selection;
     unsigned int m_productCount;
-    bool m_initialised;
+    bool m_populatePending;
     cProductInfo* m_products;
 };
 

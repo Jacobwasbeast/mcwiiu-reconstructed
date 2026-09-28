@@ -6,20 +6,16 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 
+class FJ_DynamicHtmlText;
 class FJ_Event;
 class fuiRenderNode;
 
-bool LoadHowToPlayPage(class FJ_HowToPlay* pNode, int iPage, std::vector<std::wstring>& pages);
-
 class FJ_HowToPlay : public FJ_FuiNode
 {
-    friend bool LoadHowToPlayPage(FJ_HowToPlay* pNode, int iPage, std::vector<std::wstring>& pages);
-
     int m_page;
-    std::string m_dynamicHtmlTextName;
-    std::vector<std::wstring> m_pages;
+    std::wstring m_text;
     bool m_initialized;
-    FJ_FuiNode* m_dynamicHtmlText;
+    FJ_DynamicHtmlText* m_dynamicHtmlText;
 
 public:
     FJ_HowToPlay(fuiRenderNode* pRenderNode);
@@ -27,6 +23,7 @@ public:
 
     static void _init(FJ_FuiNode* pNode, FJ_Event* pEvent);
     void init(FJ_Event* pEvent);
+    bool LoadHowToPlayPage(int page, std::vector<std::wstring>& pages);
     void InitScene();
     static FJ_HowToPlay* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

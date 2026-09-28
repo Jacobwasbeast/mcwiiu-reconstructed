@@ -31,10 +31,7 @@ void FJ_SuperFlatMenu::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();
     if (checkBox != NULL)
-    {
-        FJ_Base* listItem = static_cast<FJ_Base*>(checkBox->getObjListParent());
-        m_pCallbackScene->handleCheckboxElementToggled(listItem->getId(), checkBox->getId(), checkBox->getId());
-    }
+        m_pCallbackScene->handlePress(static_cast<FJ_Base*>(checkBox->getObjListParent())->getId(), checkBox->getId());
 }
 
 void FJ_SuperFlatMenu::_handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event)
@@ -56,87 +53,71 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
 
     if (!m_helpTextSet)
     {
-        static_cast<FJ_HtmlText*>(layersHelp->asFJ_HtmlText())->SetLabel(L"");
-        static_cast<FJ_HtmlText*>(biomesHelp->asFJ_HtmlText())->SetLabel(L"");
-        static_cast<FJ_HtmlText*>(propertiesHelp->asFJ_HtmlText())->SetLabel(L"");
+        layersHelp->asFJ_HtmlText()->Init(L"");
+        biomesHelp->asFJ_HtmlText()->Init(L"");
+        propertiesHelp->asFJ_HtmlText()->Init(L"");
         m_helpTextSet = true;
     }
 
-    FJ_FuiNode* active = layers;
-    FJ_FuiNode* activeList = layersList;
-    int focus = m_layersFocus;
-    if (tab == 1)
+    FJ_FuiNode* activeTab;
+    int focus;
+    switch (tab)
     {
-        active = biomes;
-        activeList = biomesList;
-        focus = m_biomesFocus;
-        layers->setVisible(false);
-        biomes->setVisible(true);
-        properties->setVisible(false);
-        layersHelp->setVisible(layers->isVisible());
-        biomesHelp->setVisible(biomes->isVisible());
-        propertiesHelp->setVisible(properties->isVisible());
-        layersList->setVisible(layers->isVisible());
-        biomesList->setVisible(biomes->isVisible());
-        propertiesList->setVisible(properties->isVisible());
-        gotoAndStop("Biomes");
-    }
-    else if (tab == 2)
-    {
-        active = properties;
-        activeList = propertiesList;
-        focus = m_propertiesFocus;
-        layers->setVisible(false);
-        biomes->setVisible(false);
-        properties->setVisible(true);
-        layersHelp->setVisible(layers->isVisible());
-        biomesHelp->setVisible(biomes->isVisible());
-        propertiesHelp->setVisible(properties->isVisible());
-        layersList->setVisible(layers->isVisible());
-        biomesList->setVisible(biomes->isVisible());
-        propertiesList->setVisible(properties->isVisible());
-        gotoAndStop("Properties");
-    }
-    else if (tab == 0)
-    {
+    case 0:
         layers->setVisible(true);
         biomes->setVisible(false);
         properties->setVisible(false);
-        layersHelp->setVisible(layers->isVisible());
-        biomesHelp->setVisible(biomes->isVisible());
-        propertiesHelp->setVisible(properties->isVisible());
-        layersList->setVisible(layers->isVisible());
-        biomesList->setVisible(biomes->isVisible());
-        propertiesList->setVisible(properties->isVisible());
+        activeTab = layers;
+        focus = m_layersFocus;
         gotoAndStop("Layers");
-    }
-    else
-    {
-        m_currentTab = tab;
+        break;
+    case 1:
+        layers->setVisible(false);
+        biomes->setVisible(true);
+        properties->setVisible(false);
+        activeTab = biomes;
+        focus = m_biomesFocus;
+        gotoAndStop("Biomes");
+        break;
+    case 2:
+        layers->setVisible(false);
+        biomes->setVisible(false);
+        properties->setVisible(true);
+        activeTab = properties;
+        focus = m_propertiesFocus;
+        gotoAndStop("Properties");
+        break;
+    default:
         m_activeTab = tab;
+        m_currentTab = tab;
         return;
     }
+    layersList->setVisible(layers->isVisible());
+    biomesList->setVisible(biomes->isVisible());
+    propertiesList->setVisible(properties->isVisible());
+    layersHelp->setVisible(layers->isVisible());
+    biomesHelp->setVisible(biomes->isVisible());
+    propertiesHelp->setVisible(properties->isVisible());
 
-    FJ_FuiNode* focusNode = getStage()->getFocus();
-    if (focusNode->isFJ_Base())
+    if (getStage()->getFocus()->isFJ_Base() && m_currentTab != tab)
     {
-        FJ_Base* focusedBase = static_cast<FJ_Base*>(focusNode->asFJ_Base());
         if (m_currentTab == 0)
-            m_layersFocus = focusedBase->getId();
+            m_layersFocus = getStage()->getFocus()->asFJ_Base()->getId();
         else if (m_currentTab == 1)
-            m_biomesFocus = focusedBase->getId();
+            m_biomesFocus = getStage()->getFocus()->asFJ_Base()->getId();
         else if (m_currentTab == 2)
-            m_propertiesFocus = focusedBase->getId();
+            m_propertiesFocus = getStage()->getFocus()->asFJ_Base()->getId();
     }
 
-    removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
-    activeList->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+    m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+    m_root = activeTab;
+    m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
     SetFocus(focus);
     if (focus >= 0)
-        setVisible(true);
+        OnFocusChange(true);
 
-    m_currentTab = tab;
     m_activeTab = tab;
+    m_currentTab = tab;
 }
 
 FJ_SuperFlatMenu* FJ_SuperFlatMenu::Create(fuiRenderNode* renderNode)

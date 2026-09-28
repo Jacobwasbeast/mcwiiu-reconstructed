@@ -9,10 +9,6 @@ UIControl_MultiList::UIControl_MultiList()
 {
 }
 
-UIControl_MultiList::~UIControl_MultiList()
-{
-}
-
 void UIControl_MultiList::AddNewButton(const std::wstring& label, int id, bool useEllipsis)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->addNewItem_Button(label, id, useEllipsis);

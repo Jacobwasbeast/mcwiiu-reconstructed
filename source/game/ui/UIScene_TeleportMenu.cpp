@@ -166,10 +166,10 @@ std::wstring UIScene_TeleportMenu::getMoviePath()
                                                std::wstring(L"InGameTeleportMenuSplit");
 }
 
-void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
+void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
                                        bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -177,10 +177,10 @@ void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool releas
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
-        if (released && !repeat)
+        if (pressed && !repeat)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
             navigateBack();

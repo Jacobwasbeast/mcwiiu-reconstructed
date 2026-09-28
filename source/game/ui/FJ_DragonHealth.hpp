@@ -12,7 +12,7 @@ class FJ_DragonHealth : public FJ_ProgressBar
 {
 public:
     explicit FJ_DragonHealth(fuiRenderNode* renderNode);
-    virtual ~FJ_DragonHealth();
+    virtual ~FJ_DragonHealth() {}
     virtual void Init(const std::wstring& label);
     virtual void SetLabel(const std::wstring& label);
 

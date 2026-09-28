@@ -9,6 +9,7 @@
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/ui/UIScene_HowToPlay.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/core/GameSettings.hpp"
 
@@ -17,29 +18,43 @@
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
 
+static const unsigned int s_howToPlayMenuLabels[33] = {
+    IDS_HOW_TO_PLAY_MENU_WHATSNEW, IDS_HOW_TO_PLAY_MENU_BASICS, IDS_HOW_TO_PLAY_MENU_MULTIPLAYER, IDS_HOW_TO_PLAY_MENU_HUD,
+    IDS_HOW_TO_PLAY_MENU_MG01, IDS_HOW_TO_PLAY_MENU_MG02, IDS_HOW_TO_PLAY_MENU_MG03, IDS_HOW_TO_PLAY_MENU_CREATIVE,
+    IDS_HOW_TO_PLAY_MENU_INVENTORY, IDS_HOW_TO_PLAY_MENU_CHESTS, IDS_HOW_TO_PLAY_MENU_CRAFTING, IDS_HOW_TO_PLAY_MENU_FURNACE,
+    IDS_HOW_TO_PLAY_MENU_DISPENSER, IDS_HOW_TO_PLAY_MENU_BREWING, IDS_HOW_TO_PLAY_MENU_ENCHANTMENT, IDS_HOW_TO_PLAY_MENU_ANVIL,
+    IDS_HOW_TO_PLAY_MENU_FARMANIMALS, IDS_HOW_TO_PLAY_MENU_BREEDANIMALS, IDS_HOW_TO_PLAY_MENU_TRADING, IDS_HOW_TO_PLAY_MENU_HORSES,
+    IDS_HOW_TO_PLAY_MENU_BEACONS, IDS_HOW_TO_PLAY_MENU_FIREWORKS, IDS_HOW_TO_PLAY_MENU_BANNERS, IDS_HOW_TO_PLAY_MENU_HOPPERS,
+    IDS_HOW_TO_PLAY_MENU_DROPPERS, IDS_HOW_TO_PLAY_MENU_NETHERPORTAL, IDS_HOW_TO_PLAY_MENU_THEEND, IDS_HOW_TO_PLAY_MENU_ENDCITIES,
+    IDS_HOW_TO_PLAY_MENU_ELYTRA, IDS_HOW_TO_PLAY_MENU_OCEANS, IDS_HOW_TO_PLAY_MENU_OCEAN_MOBS, IDS_HOW_TO_PLAY_MENU_CONDUIT,
+    IDS_HOW_TO_PLAY_MENU_HOSTOPTIONS
+};
+
+static const EHowToPlayPage s_howToPlayMenuPages[33] = {
+    EHowToPlayPage_WhatsNew, EHowToPlayPage_Basics, EHowToPlayPage_Multiplayer, EHowToPlayPage_HUD,
+    EHowToPlayPage_BattleMiniGame, EHowToPlayPage_TumbleMiniGame, EHowToPlayPage_GlideMiniGame, EHowToPlayPage_Creative,
+    EHowToPlayPage_Inventory, EHowToPlayPage_Chest, EHowToPlayPage_Crafting, EHowToPlayPage_Furnace,
+    EHowToPlayPage_Dispenser, EHowToPlayPage_Brewing, EHowToPlayPage_Enchanting, EHowToPlayPage_Anvil,
+    EHowToPlayPage_FarmingAnimals, EHowToPlayPage_BreedingAnimals, EHowToPlayPage_Trading, EHowToPlayPage_Horses,
+    EHowToPlayPage_Beacons, EHowToPlayPage_Fireworks, EHowToPlayPage_Banners, EHowToPlayPage_Hoppers,
+    EHowToPlayPage_Droppers, EHowToPlayPage_NetherPortal, EHowToPlayPage_TheEnd, EHowToPlayPage_EndCities,
+    EHowToPlayPage_Elytra, EHowToPlayPage_Oceans, EHowToPlayPage_OceanMobs, EHowToPlayPage_Conduit,
+    EHowToPlayPage_HostOptions
+};
+
 UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
 {
-    static const unsigned int labels[32] = {
-        0x0ad78575, 0x4e09b239, 0xa1bfe39a, 0xfe7ebcc1,
-        0x665939c3, 0xf451ca88, 0x1a5444f1, 0x5d603ceb,
-        0xa89bcc3a, 0x9bfe8c42, 0xf8fe2a8a, 0xae9ec2e0,
-        0xdc9bf801, 0x95ea9872, 0x6c8abc81, 0x55175d0c,
-        0xc5e8da45, 0x68b19531, 0xccd04093, 0x0b54d580,
-        0x74c4b1e7, 0x0b9c0e92, 0xc48a1dcf, 0x97d17f3b,
-        0xd554b135, 0x07ff49bc, 0x90785456, 0x670457b6,
-        0x3fe78b47, 0x6533d815, 0x7ee2ae4a, 0x6ef61516
-    };
     initialiseMovie();
     m_buttonList.init(0);
     for (int i = 0; i < 16; ++i)
     {
-        m_buttonList.addItem(std::wstring(L10N::GetString(static_cast<int>(labels[i * 2]))), i * 2);
-        m_buttonList.addItem(std::wstring(L10N::GetString(static_cast<int>(labels[i * 2 + 1]))), i * 2 + 1);
+        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2]), i * 2);
+        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2 + 1]), i * 2 + 1);
     }
-    m_buttonList.addItem(std::wstring(L10N::GetString(static_cast<int>(0xf3d9c148))), 32);
-    m_buttonList.setCurrentSelection(0, false, true);
+    m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[32]), 32);
     doHorizontalResizeCheck();
+    m_selectedItem = 0;
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -71,23 +86,13 @@ void UIScene_HowToPlayMenu::updateComponents()
 
 void UIScene_HowToPlayMenu::handleReload()
 {
-    static const unsigned int labels[32] = {
-        0x0ad78575, 0x4e09b239, 0xa1bfe39a, 0xfe7ebcc1,
-        0x665939c3, 0xf451ca88, 0x1a5444f1, 0x5d603ceb,
-        0xa89bcc3a, 0x9bfe8c42, 0xf8fe2a8a, 0xae9ec2e0,
-        0xdc9bf801, 0x95ea9872, 0x6c8abc81, 0x55175d0c,
-        0xc5e8da45, 0x68b19531, 0xccd04093, 0x0b54d580,
-        0x74c4b1e7, 0x0b9c0e92, 0xc48a1dcf, 0x97d17f3b,
-        0xd554b135, 0x07ff49bc, 0x90785456, 0x670457b6,
-        0x3fe78b47, 0x6533d815, 0x7ee2ae4a, 0x6ef61516
-    };
     for (int i = 0; i < 16; ++i)
     {
-        m_buttonList.addItem(std::wstring(L10N::GetString(static_cast<int>(labels[i * 2]))), i * 2);
-        m_buttonList.addItem(std::wstring(L10N::GetString(static_cast<int>(labels[i * 2 + 1]))), i * 2 + 1);
+        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2]), i * 2);
+        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2 + 1]), i * 2 + 1);
     }
-    m_buttonList.addItem(std::wstring(L10N::GetString(static_cast<int>(0xf3d9c148))), 32);
-    m_buttonList.setCurrentSelection(m_buttonList.getCurrentSelection(), false, true);
+    m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[32]), 32);
+    m_buttonList.setCurrentSelection(m_selectedItem, false, true);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
 }
@@ -98,10 +103,10 @@ std::wstring UIScene_HowToPlayMenu::getMoviePath()
                                              : std::wstring(L"HowToPlayMenuSplit");
 }
 
-void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
+void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
                                         bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -109,7 +114,7 @@ void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool relea
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
         if (pressed)
@@ -120,16 +125,16 @@ void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool relea
 
 void UIScene_HowToPlayMenu::handlePress(int controlId, int childId)
 {
-    if (controlId != 0)
-        return;
-    m_buttonList.setCurrentSelection(childId, false, true);
-    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    const uint32_t sceneData = 0x80000000u |
-        (static_cast<uint32_t>(childId) << 16) |
-        static_cast<uint32_t>(static_cast<uint16_t>(m_playerId));
-    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HowToPlay,
-                                         reinterpret_cast<void*>(static_cast<uintptr_t>(sceneData)),
-                                         EUILayer_Scene, EUIGroup_PlayerDefault);
+    if (controlId == 0)
+    {
+        m_selectedItem = childId;
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        const uint32_t sceneData = (s_howToPlayMenuPages[childId] << 16) | 0x80000000u |
+                                   static_cast<int16_t>(m_playerId);
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HowToPlay,
+                                             reinterpret_cast<void*>(static_cast<uintptr_t>(sceneData)),
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
+    }
 }
 
 unsigned int UIScene_HowToPlayMenu::mapElementsAndNames()

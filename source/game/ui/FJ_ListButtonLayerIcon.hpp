@@ -11,7 +11,7 @@ class FJ_ListButtonLayerIcon : public FJ_Button
 {
 public:
     explicit FJ_ListButtonLayerIcon(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonLayerIcon();
+    virtual ~FJ_ListButtonLayerIcon() {}
 
     void Init(const std::wstring& name, int id);
     void SetSlotID(int slotId, bool visible);

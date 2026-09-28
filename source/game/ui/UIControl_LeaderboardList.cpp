@@ -15,10 +15,6 @@ UIControl_LeaderboardList::UIControl_LeaderboardList()
 {
 }
 
-UIControl_LeaderboardList::~UIControl_LeaderboardList()
-{
-}
-
 void UIControl_LeaderboardList::clearList()
 {
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->ResetLeaderboard();
@@ -40,7 +36,7 @@ void UIControl_LeaderboardList::init(int controlId)
 void UIControl_LeaderboardList::ReInit()
 {
     UIControl::ReInit();
-    init(m_controlType);
+    init(m_controlId);
 }
 
 void UIControl_LeaderboardList::setupTitles(const std::wstring& title,

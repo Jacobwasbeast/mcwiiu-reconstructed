@@ -1,9 +1,5 @@
 #include "game/ui/UIControl_DynamicButtonList.hpp"
 
-UIControl_DynamicButtonList::~UIControl_DynamicButtonList()
-{
-}
-
 void UIControl_DynamicButtonList::tick()
 {
     UIControl_List::tick();

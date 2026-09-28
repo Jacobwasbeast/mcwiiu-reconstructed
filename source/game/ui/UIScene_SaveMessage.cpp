@@ -91,16 +91,16 @@ std::wstring UIScene_SaveMessage::getMoviePath()
     return std::wstring(L"SaveMessage");
 }
 
-void UIScene_SaveMessage::handleInput(int playerId, int action, bool repeat, bool released,
-                                      bool pressed, bool& handled)
+void UIScene_SaveMessage::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                      bool released, bool& handled)
 {
     if (!m_saveComplete)
     {
-        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
         if (action == EControllerActions_MenuOk)
         {
             NQRNetworkManager::SafeToRespondToGameBootInvite(playerId);
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
         }
     }
 }

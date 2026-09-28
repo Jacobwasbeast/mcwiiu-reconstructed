@@ -4,13 +4,9 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_SaveList::~UIControl_SaveList()
-{
-}
-
 void UIControl_SaveList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = static_cast<UIControl::eUIControlType>(14);
+    m_controlType = UIControl::eUIControlType_SaveList;
     UIControl_ButtonList::setupControl(scene, node, name);
 }
 

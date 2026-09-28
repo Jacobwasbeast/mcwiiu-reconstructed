@@ -34,7 +34,7 @@ public:
     virtual void tick();
     virtual void handleDestroy();
     virtual void handleReload();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleTimerComplete(int timerId);
@@ -42,8 +42,8 @@ public:
     virtual void handleSliderElementMove(int first, int second, int value);
     virtual void handleGainFocus(bool hadFocus);
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
-    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
-                                  bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual int getSceneType();
 

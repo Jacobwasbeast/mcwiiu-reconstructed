@@ -11,8 +11,9 @@
 
 fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphChar)
     : fuiFontSet(fontData.fontName.c_str()), UIBitmapFont(fontData),
-      m_textureIndex(0), m_registered(false), m_missingGlyphChar(missingGlyphChar)
+      m_missingGlyphChar(missingGlyphChar)
 {
+    m_sFontData = &fontData;
     BufferedImage image(fontData.textureFileName, true, true, L"");
 
     m_textureIndex = static_cast<unsigned int>(gRenderer->TextureCreate());
@@ -33,6 +34,7 @@ fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphCha
     gRenderer->TextureSetTextureLevels(1);
     gRenderer->TextureData(static_cast<int>(image.getWidth()), static_cast<int>(image.getHeight()), image.getData(), 0,
                            C4JRender::eTextureFormat_RGBA8);
+    m_registered = false;
 }
 
 int fuiBitmapFont::getTextureIndex(float fontSize, int ttfIndex)
@@ -71,16 +73,14 @@ void fuiBitmapFont::getGlyphTexPos(unsigned short codepoint, float& texX, float&
     int column = 0;
     fontData->getPos(glyphId, row, column);
 
-    const SFontData& data = getFontData()->getFontData();
-    texX = static_cast<float>(column * static_cast<int>(data.glyphWidth)) / static_cast<float>(data.imageWidth);
-    texY = static_cast<float>(row * static_cast<int>(data.glyphHeight)) / static_cast<float>(data.imageHeight);
+    texX = static_cast<float>(column * static_cast<int>(m_sFontData->glyphWidth)) / static_cast<float>(m_sFontData->imageWidth);
+    texY = static_cast<float>(row * static_cast<int>(m_sFontData->glyphHeight)) / static_cast<float>(m_sFontData->imageHeight);
 }
 
 void fuiBitmapFont::getGlyphWidthHeight(float& texWidth, float& texHeight)
 {
-    const SFontData& data = getFontData()->getFontData();
-    texWidth = static_cast<float>(data.glyphWidth) / static_cast<float>(data.imageWidth);
-    texHeight = static_cast<float>(data.glyphHeight) / static_cast<float>(data.imageHeight);
+    texWidth = static_cast<float>(m_sFontData->glyphWidth) / static_cast<float>(m_sFontData->imageWidth);
+    texHeight = static_cast<float>(m_sFontData->glyphHeight) / static_cast<float>(m_sFontData->imageHeight);
 }
 
 float fuiBitmapFont::renderGlyph(unsigned short codepoint, float x, float y, float fontSize, unsigned int colour,

@@ -15,10 +15,6 @@ FJ_Label::FJ_Label(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label::~FJ_Label()
-{
-}
-
 FJ_Base* FJ_Label::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label(renderNode);

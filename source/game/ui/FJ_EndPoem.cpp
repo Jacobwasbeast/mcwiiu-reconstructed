@@ -1,21 +1,36 @@
 #include "game/ui/FJ_EndPoem.hpp"
 
+#include <cmath>
 #include <cstdio>
 
+#include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
-#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/UIScene.hpp"
-#include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRect.hpp"
+#include "game/util/Math.hpp"
 
 FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), tilePrototype(0), scrollDirection(false), waitingForLabel(false), tileCount(0), tileColumns(0), tileRows(0), currentLabel(0), scrollState(0), textNodes(), labelIndices(), hasFinished(false)
+    : FJ_Document(renderNode)
+    , m_tilePrototype(NULL)
+    , m_tileCount(0)
+    , m_tileColumns(0)
+    , m_tileRows(0)
+    , m_moveTiles(false)
+    , m_textNodeCount(0)
+    , m_lastLabelShown(false)
+    , m_lastLabel(0)
+    , m_scrollSpeed(0)
+    , m_appending(false)
 {
 }
 
 FJ_EndPoem::~FJ_EndPoem()
 {
+    removeEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling);
 }
 
 FJ_Document* FJ_EndPoem::Create(fuiRenderNode* renderNode)
@@ -35,47 +50,100 @@ void FJ_EndPoem::RequestNextLabel(int label)
 
 void FJ_EndPoem::UpdateTileBackground()
 {
-    if (textNodes.empty())
+    if (m_tileCount == 0)
     {
-        tileCount = 0;
-        return;
-    }
-    tileCount = static_cast<int>(textNodes.size());
-    if (tileColumns == 0)
-    {
-        FJ_FuiNodeStage* stage = getStage();
-        const float width = tilePrototype == 0 ? 1.0f : tilePrototype->getWidth();
-        const float height = tilePrototype == 0 ? 1.0f : tilePrototype->getHeight();
-        tileColumns = width > 0.0f ? static_cast<int>(stage->getStageWidth() / width) + 1 : 1;
-        tileRows = height > 0.0f ? static_cast<int>(stage->getStageHeight() / height) + 1 : 1;
-    }
-    if (scrollDirection)
-    {
-        std::vector<FJ_FuiNode*>::iterator it;
-        for (it = textNodes.begin(); it != textNodes.end(); ++it)
+        m_tileColumns = (int)ceilf(getStage()->getStageWidth() / m_tilePrototype->getWidth());
+        int rows = (int)ceilf(getStage()->getStageHeight() / m_tilePrototype->getHeight());
+        m_tileRows = rows + 1;
+        int tileCount = (rows + 1) * m_tileColumns;
+        if (tileCount > 48)
+            tileCount = 48;
+        m_tileCount = tileCount;
+        for (int i = 0; i < m_tileCount; ++i)
         {
-            if (*it != 0)
+            FJ_FuiNode* tile = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
+            tile->setX((i % m_tileColumns) * m_tilePrototype->getWidth());
+            tile->setY((i / m_tileColumns) * m_tilePrototype->getHeight());
+            m_tiles[i] = tile;
+            addChildAt(tile, 0);
+        }
+    }
+    else
+    {
+        m_moveTiles = !m_moveTiles;
+        if (m_moveTiles)
+        {
+            for (int i = 0; i < m_tileCount; ++i)
             {
-                (*it)->incY(1.0f);
+                m_tiles[i]->decY(1.0f);
+                if (m_tiles[i]->getY() + m_tiles[i]->getHeight() < 0.0f)
+                    m_tiles[i]->incY(m_tileRows * m_tilePrototype->getHeight());
             }
         }
     }
-    scrollDirection = !scrollDirection;
 }
 
-void FJ_EndPoem::UpdateScrolling(FJ_Event*)
+void FJ_EndPoem::UpdateScrolling(FJ_Event* event)
 {
-    if (textNodes.empty())
+    if (m_scrollSpeed > 0)
     {
-        return;
-    }
-    const float distance = scrollState < 0 ? -1.0f : 1.0f;
-    std::vector<FJ_FuiNode*>::iterator it;
-    for (it = textNodes.begin(); it != textNodes.end(); ++it)
-    {
-        if (*it != 0)
+        if (m_lastLabel != 0 && !m_visibleNodes.empty() && m_visibleLabels.back() < m_lastLabel)
+            m_lastLabelShown = false;
+        if (!m_lastLabelShown)
         {
-            (*it)->incY(distance);
+            if (m_visibleNodes.empty())
+            {
+                m_appending = true;
+                RequestNextLabel(0);
+            }
+            else if (m_visibleNodes.back()->getY() + m_visibleNodes.back()->getHeight() < getStage()->getStageHeight())
+            {
+                m_appending = true;
+                RequestNextLabel(m_visibleLabels.back() + 1);
+            }
+        }
+    }
+    else if (!m_visibleNodes.empty())
+    {
+        if (m_visibleNodes.front()->getY() > 0.0f && m_visibleLabels.front() > 0)
+        {
+            m_appending = false;
+            RequestNextLabel(m_visibleLabels.front() - 1);
+        }
+    }
+
+    bool scroll = true;
+    if (m_scrollSpeed > 0 && m_lastLabelShown && !m_visibleNodes.empty() &&
+        m_visibleNodes.back()->getY() + m_visibleNodes.back()->getHeight() * 0.5f < getStage()->getStageHeight() * 0.5f)
+    {
+        scroll = false;
+    }
+    if (scroll)
+    {
+        for (unsigned int i = 0; i < m_visibleNodes.size(); ++i)
+            m_visibleNodes[i]->decY((float)Math::round(1.0f) * m_scrollSpeed);
+    }
+
+    if (m_visibleNodes.empty())
+    {
+        m_lastLabelShown = false;
+    }
+    else
+    {
+        if (m_scrollSpeed > 0 && m_visibleNodes.front()->getY() + m_visibleNodes.front()->getHeight() < 0.0f)
+        {
+            m_visibleNodes.front()->asFJ_Base()->SetLabel(L"");
+            m_visibleNodes.front()->setVisible(false);
+            m_visibleNodes.erase(m_visibleNodes.begin());
+            m_visibleLabels.erase(m_visibleLabels.begin());
+        }
+        if (m_scrollSpeed < 0 && m_visibleNodes.back()->getY() > getStage()->getStageHeight())
+        {
+            m_visibleNodes.back()->asFJ_Base()->SetLabel(L"");
+            m_visibleNodes.back()->setVisible(false);
+            m_visibleNodes.back()->setY(-getStage()->getStageHeight());
+            m_visibleNodes.pop_back();
+            m_visibleLabels.pop_back();
         }
     }
     UpdateTileBackground();
@@ -83,83 +151,106 @@ void FJ_EndPoem::UpdateScrolling(FJ_Event*)
 
 void FJ_EndPoem::_UpdateScrolling(FJ_FuiNode* node, FJ_Event* event)
 {
-    if (node != 0)
-    {
-        static_cast<FJ_EndPoem*>(node)->UpdateScrolling(event);
-    }
+    static_cast<FJ_EndPoem*>(node)->UpdateScrolling(event);
 }
 
-void FJ_EndPoem::keyUpHandler(FJ_Event*)
+void FJ_EndPoem::keyUpHandler(FJ_Event* event)
 {
-    scrollState = 1;
+    m_scrollSpeed = 1;
 }
 
 void FJ_EndPoem::_keyUpHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    if (node != 0)
-    {
-        static_cast<FJ_EndPoem*>(node)->keyUpHandler(event);
-    }
+    static_cast<FJ_EndPoem*>(node)->keyUpHandler(event);
 }
 
 void FJ_EndPoem::init(FJ_Event* event)
 {
-    FJ_Document::init(event);
-    tilePrototype = getChildByName(std::string("DirtTile"));
-    textNodes.clear();
-    labelIndices.clear();
-    int i;
-    for (i = 0; i < 20; ++i)
+    m_lastLabel = 0;
+    m_lastLabelShown = false;
+    m_textNodeCount = 0;
+    m_appending = true;
+    m_scrollSpeed = 1;
+    addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
+    getStage()->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
+    getStage()->addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
+    for (int i = 0; i < 20; ++i)
     {
-        char name[32];
-        std::sprintf(name, "EndPoemText_%d", i);
-        FJ_FuiNode* node = getChildByName(std::string(name));
-        if (node != 0)
+        char name[64];
+        sprintf(name, "EndPoemText_%d", i);
+        FJ_FuiNode* node = getChildByName(name);
+        if (node != NULL)
         {
-            textNodes.push_back(node);
-            labelIndices.push_back(i);
-            node->setVisible(false);
+            m_textNodes[i] = node;
+            fuiRect rect = getRect(this);
+            m_textNodes[i]->setX(Math::round(getStage()->getStageWidth() * 0.5f - m_textNodes[i]->getWidth() * 0.5f +
+                                             rect.xMin));
+            m_textNodes[i]->setY(-getStage()->getStageHeight());
+            m_textNodes[i]->setVisible(false);
+            ++m_textNodeCount;
         }
     }
-    tileCount = static_cast<int>(textNodes.size());
-    tileColumns = 0;
-    tileRows = 0;
-    currentLabel = 0;
-    scrollState = 0;
-    waitingForLabel = false;
-    hasFinished = false;
-    UpdateTileBackground();
+    m_tilePrototype = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
 }
 
-unsigned int FJ_EndPoem::SetNextLabel(const std::wstring& label, int index, bool append)
+unsigned int FJ_EndPoem::SetNextLabel(const std::wstring& label, int index, bool lastLabel)
 {
-    if (index < 0 || index >= static_cast<int>(textNodes.size()))
+    unsigned int added = 0;
+    if (m_appending)
     {
-        return 0;
+        m_lastLabelShown = lastLabel;
+        m_lastLabel = index;
     }
-    FJ_FuiNode* node = textNodes[index];
-    if (node == 0)
+
+    std::wstring text = label;
+    if (text.empty())
+        text = L" ";
+
+    for (int i = 0; i < m_textNodeCount; ++i)
     {
-        return 0;
+        if (m_textNodes[i]->getY() + m_textNodes[i]->getHeight() < 0.0f)
+        {
+            m_textNodes[i]->setVisible(true);
+            m_textNodes[i]->asFJ_Base()->SetLabel(text);
+            if (!m_appending)
+            {
+                m_visibleNodes.insert(m_visibleNodes.begin(), m_textNodes[i]);
+                m_visibleLabels.insert(m_visibleLabels.begin(), index);
+            }
+            else
+            {
+                m_visibleNodes.push_back(m_textNodes[i]);
+                m_visibleLabels.push_back(index);
+            }
+            added = 1;
+            if (m_visibleNodes.size() != 0)
+            {
+                if (!m_appending)
+                {
+                    if (m_visibleNodes.size() > 1)
+                        m_visibleNodes.front()->setY(m_visibleNodes[1]->getY() - m_visibleNodes.front()->getHeight());
+                }
+                else if (m_visibleNodes.size() != 1)
+                {
+                    m_visibleNodes.back()->setY(m_visibleNodes[m_visibleNodes.size() - 2]->getY() +
+                                                m_visibleNodes[m_visibleNodes.size() - 2]->getHeight());
+                }
+                else
+                {
+                    m_visibleNodes.back()->setY(getStage()->getStageHeight());
+                }
+            }
+            break;
+        }
     }
-    if (!append || !waitingForLabel)
-    {
-        node->asFJ_Base()->SetLabel(label.empty() ? std::wstring(L" ") : label);
-    }
-    node->setVisible(true);
-    currentLabel = index;
-    waitingForLabel = false;
-    return 1;
+    return added;
 }
 
 void FJ_EndPoem::keyDownHandler(FJ_Event* event)
 {
-    if (event == 0)
-    {
-        return;
-    }
-    if (event->m_eType == eFJEventType_KeyDown)
-    {
-        scrollState = 3;
-    }
+    int keyCode = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
+    if (keyCode == 3 || keyCode == 17)
+        m_scrollSpeed = -3;
+    if (keyCode == 4 || keyCode == 18)
+        m_scrollSpeed = 3;
 }

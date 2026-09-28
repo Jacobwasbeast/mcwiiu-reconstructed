@@ -1,6 +1,4 @@
-#define private public
 #include "game/ui/FJ_List_ListButtonPlayerList.hpp"
-#undef private
 
 #include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_ListButtonPlayerList.hpp"

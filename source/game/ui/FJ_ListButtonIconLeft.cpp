@@ -13,10 +13,6 @@ FJ_ListButtonIconLeft::FJ_ListButtonIconLeft(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ListButtonIconLeft::~FJ_ListButtonIconLeft()
-{
-}
-
 void FJ_ListButtonIconLeft::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);

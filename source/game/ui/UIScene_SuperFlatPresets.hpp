@@ -35,7 +35,7 @@ public:
     SuperflatConfig* GetSuperflatConfig(int index) const;
     static int LoadConfirmMessageCallback(void* data, int unknown, C4JStorage::EMessageResult result);
     void HandlePresetListPress(int function);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handlePress(int controlId, int childId);

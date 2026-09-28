@@ -13,17 +13,20 @@ class fuiRenderNode;
 class FJ_EndPoem : public FJ_Document
 {
 private:
-    FJ_FuiNode* tilePrototype;
-    bool scrollDirection;
-    bool waitingForLabel;
-    int tileCount;
-    int tileColumns;
-    int tileRows;
-    int currentLabel;
-    int scrollState;
-    std::vector<FJ_FuiNode*> textNodes;
-    std::vector<int> labelIndices;
-    bool hasFinished;
+    FJ_FuiNode* m_textNodes[20];
+    FJ_FuiNode* m_tiles[48];
+    FJ_FuiNode* m_tilePrototype;
+    int m_tileCount;
+    int m_tileColumns;
+    int m_tileRows;
+    bool m_moveTiles;
+    int m_textNodeCount;
+    std::vector<FJ_FuiNode*> m_visibleNodes;
+    std::vector<int> m_visibleLabels;
+    bool m_lastLabelShown;
+    int m_lastLabel;
+    int m_scrollSpeed;
+    bool m_appending;
 
 public:
     explicit FJ_EndPoem(fuiRenderNode* renderNode);
@@ -37,7 +40,7 @@ public:
     virtual void keyUpHandler(FJ_Event* event);
     static void _keyUpHandler(FJ_FuiNode* node, FJ_Event* event);
     virtual void init(FJ_Event* event);
-    unsigned int SetNextLabel(const std::wstring& label, int index, bool append);
+    unsigned int SetNextLabel(const std::wstring& label, int index, bool lastLabel);
     virtual void keyDownHandler(FJ_Event* event);
 };
 

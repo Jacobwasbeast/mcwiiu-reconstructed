@@ -45,7 +45,7 @@ public:
     virtual void handleReload();
     virtual std::wstring getMoviePath();
     virtual void handleFocusChange(int focus, int childFocus);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void ShowScene(bool show);
     virtual void SetIgnoreInput(bool ignore);

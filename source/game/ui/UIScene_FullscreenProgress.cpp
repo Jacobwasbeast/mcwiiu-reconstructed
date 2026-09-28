@@ -357,15 +357,15 @@ std::wstring UIScene_FullscreenProgress::getMoviePath()
     return L"FullscreenProgress";
 }
 
-void UIScene_FullscreenProgress::handleInput(int playerId, int action, bool repeat, bool released,
-                                             bool pressed, bool& handled)
+void UIScene_FullscreenProgress::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                             bool released, bool& handled)
 {
-    if (action == EControllerActions_MenuOk && released)
+    if (action == EControllerActions_MenuOk && pressed)
     {
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         return;
     }
-    if ((action == EControllerActions_MenuB || action == EControllerActions_MenuCancel) && released && m_cancelFunc != NULL && !m_wasCancelled)
+    if ((action == EControllerActions_MenuB || action == EControllerActions_MenuCancel) && pressed && m_cancelFunc != NULL && !m_wasCancelled)
     {
         m_wasCancelled = true;
         m_cancelFunc(m_cancelFuncParam);

@@ -72,7 +72,7 @@ UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
     m_button2.init(UIString(IDS_MINI_GAMES), 1);
     m_button3.init(UIString(IDS_LEADERBOARDS), 2);
     m_button4.init(UIString(IDS_ACHIEVEMENTS), 3);
-    m_button5.init(UIString(0x2b1e9f0e), 4);
+    m_button5.init(UIString(IDS_HELP_AND_OPTIONS), 4);
     if (gProfile->IsFullVersion())
     {
         m_button6.init(UIString(0xe6987a73), 5);
@@ -234,12 +234,12 @@ void UIScene_MainMenu::tick()
     }
 }
 
-void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                   bool pressed, bool&)
+void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                   bool released, bool&)
 {
     if (gApp.getIgnoreMainMenuInputDuringInvite() || m_loading || s_nextScene != EUIScene_Count)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuOk:
@@ -247,11 +247,11 @@ void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool r
             return;
         gProfile->SetPrimaryPad(playerId);
         gProfile->SetLockedProfile(-1);
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }
@@ -455,7 +455,7 @@ void UIScene_MainMenu::LoadTrial()
     initData->m_gameType = gApp.GetGameHostOption(eGameHostOption_GameType);
     initData->m_levelGenerationOptions = 0;
 
-    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators()->getLevelGenerators();
+    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators();
     for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
          it != generators->end(); ++it)
     {

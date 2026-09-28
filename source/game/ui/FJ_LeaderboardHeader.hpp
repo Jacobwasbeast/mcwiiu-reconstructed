@@ -17,7 +17,7 @@ protected:
 
 public:
     FJ_LeaderboardHeader(fuiRenderNode* pRenderNode);
-    virtual ~FJ_LeaderboardHeader();
+    virtual ~FJ_LeaderboardHeader() {}
     static FJ_LeaderboardHeader* Create(fuiRenderNode* pRenderNode);
     void Init(int count, FJ_FuiNode* parent, int x, int y);
     void SetupHeaders(std::wstring rank, std::wstring gamertag);

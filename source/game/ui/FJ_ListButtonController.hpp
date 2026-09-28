@@ -10,7 +10,7 @@ class FJ_ListButtonController : public FJ_Button
 {
 public:
     explicit FJ_ListButtonController(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonController();
+    virtual ~FJ_ListButtonController() {}
     double getOriginalHeight();
     virtual void Init(const std::wstring& name, int id);
 

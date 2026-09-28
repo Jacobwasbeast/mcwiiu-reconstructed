@@ -13,7 +13,7 @@ class FJ_LabelOutline : public FJ_Base
 {
 public:
     explicit FJ_LabelOutline(fuiRenderNode* renderNode);
-    virtual ~FJ_LabelOutline();
+    virtual ~FJ_LabelOutline() {}
     virtual void SetLabel(const std::wstring& label);
     void Init(const std::wstring& label);
 

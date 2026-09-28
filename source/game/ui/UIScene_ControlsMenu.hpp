@@ -70,19 +70,28 @@ public:
                                                       C4JStorage::EMessageResult result);
     virtual void handleReload();
     unsigned int CheckControls(int player, EControl control);
-    void HandleButtonEdit(int player, int action, bool repeat, bool released, bool pressed);
+    void HandleButtonEdit(int player, int action, bool repeat, bool pressed, bool released);
     unsigned int CheckControlsOnExit(int player);
-    virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual int getSceneType();
 
 private:
-    unsigned char m_flags[10];
-    int m_unknownD4;
-    int m_unknownD8;
-    int m_unknownDC;
+    bool m_isFlying;
+    bool m_updateControls;
+    bool m_mappingsChanged;
+    bool m_showAssignHelp;
+    bool m_clearHelp;
+    bool m_editingButton;
+    bool m_unusedEditFlag;
+    bool m_checkMapping;
+    unsigned char m_firstButton;
+    unsigned char m_secondButton;
+    unsigned int m_firstButtonMask;
+    int m_buttonCount;
+    int m_lastEditAction;
     UIControl_Label m_version;
     UIControl_MultiList m_controlsList;
 };

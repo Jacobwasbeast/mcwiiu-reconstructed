@@ -17,6 +17,9 @@ public:
     static FJ_List2D* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 
+private:
+    int m_unknown184;
+    int m_unknown188;
 };
 
 #endif

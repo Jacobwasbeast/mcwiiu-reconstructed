@@ -426,14 +426,14 @@ UIControl* UIScene_LoadCreateJoinMenu::GetMainPanel()
     return &m_loadTab;
 }
 
-void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                                              bool& handled)
 {
     if (m_ignoreInput)
         return;
     if (!m_miniGames && !m_saveInfoReady)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (!pressed)
         return;
 
@@ -445,7 +445,7 @@ void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repe
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     default:
@@ -537,9 +537,9 @@ void UIScene_LoadCreateJoinMenu::HandleSaveDeviceRemoved(int)
         m_saveDeviceRemoved = true;
 }
 
-void UIScene_LoadCreateJoinMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool repeat, bool, bool)
+void UIScene_LoadCreateJoinMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool pressed, bool, bool)
 {
-    if (!repeat || touchBox < 4 || touchBox > 6)
+    if (!pressed || touchBox < 4 || touchBox > 6)
         return;
     int tab = touchBox - 4;
     if (GetHideLoadTab())

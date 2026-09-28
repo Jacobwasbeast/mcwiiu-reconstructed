@@ -7,7 +7,7 @@ class FJ_ProgressBar : public FJ_Base
 {
 public:
     explicit FJ_ProgressBar(fuiRenderNode* renderNode);
-    virtual ~FJ_ProgressBar();
+    virtual ~FJ_ProgressBar() {}
 
     virtual void InitBarType();
     virtual void GetBarFiller();

@@ -13,6 +13,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/Font.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/item/Item.hpp"
@@ -45,8 +46,6 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-void replaceAll(std::wstring& result, const std::wstring& source,
-                const std::wstring& search, const std::wstring& replacement);
 
 template <class T>
 const UIScene_HowToPlay::sCustomItems SLOT(T item, int count, int auxValue)
@@ -126,15 +125,15 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
         m_labels[17].init(UIString(text));
     }
 
-    m_labels[18].init(UIString(L10N::GetString(0xc60bb915)));
+    m_labels[18].init(UIString(L10N::GetString(IDS_REPAIR_AND_NAME)));
     m_labels[19].init(UIString(repeated));
     m_labels[20].init(UIString(L10N::GetString(IDS_ITEM_EMERALD)));
     m_labels[21].init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
 
     {
-        std::wstring text(L10N::GetString(0x8c04d144));
+        std::wstring text(L10N::GetString(IDS_VILLAGER_OFFERS_ITEM));
         std::wstring result;
-        replaceAll(result, text, L"_VILLAGER_TYPE_", L10N::GetString(IDS_VILLAGER_CLERIC));
+        result = replaceAll(text, L"_VILLAGER_TYPE_", L10N::GetString(IDS_VILLAGER_CLERIC));
         text = result;
         std::wstring::size_type pos = text.find(L"%s");
         if (pos != std::wstring::npos)
@@ -160,12 +159,12 @@ UIScene_HowToPlay::~UIScene_HowToPlay()
 namespace
 {
     static const unsigned int kHowToPlayTitleHash[EHowToPlayPage_Count] = {
-        0x018d8ea9, IDS_HOW_TO_PLAY_BASICS, IDS_HOW_TO_PLAY_MULTIPLAYER, IDS_HOW_TO_PLAY_HUD, 0xcef2334f, 0x5ceac414,
-        0x82ed3e7d, IDS_HOW_TO_PLAY_CREATIVE, IDS_HOW_TO_PLAY_INVENTORY, IDS_HOW_TO_PLAY_CHEST, 0xbc353d00, IDS_HOW_TO_PLAY_ENDERCHEST,
-        IDS_HOW_TO_PLAY_CRAFTING, IDS_HOW_TO_PLAY_CRAFT_TABLE, IDS_HOW_TO_PLAY_FURNACE, IDS_HOW_TO_PLAY_DISPENSER, IDS_HOW_TO_PLAY_BREWING, 0x5ece0eed,
-        IDS_HOW_TO_PLAY_ANVIL, 0x59f9a3a9, 0x730761ed, IDS_HOW_TO_PLAY_TRADING, IDS_HOW_TO_PLAY_HORSES, IDS_HOW_TO_PLAY_BEACONS,
-        IDS_HOW_TO_PLAY_FIREWORKS, IDS_HOW_TO_PLAY_BANNERS, IDS_HOW_TO_PLAY_HOPPERS, IDS_HOW_TO_PLAY_DROPPERS, 0xad1e1a90, 0xc81b96aa,
-        0x93eac97a, IDS_HOW_TO_PLAY_ELYTRA, IDS_HOW_TO_PLAY_OCEANS, IDS_HOW_TO_PLAY_OCEAN_MOBS, IDS_HOW_TO_PLAY_CONDUIT, 0x8c55bd04
+        0x018d8ea9, IDS_HOW_TO_PLAY_BASICS, IDS_HOW_TO_PLAY_MULTIPLAYER, IDS_HOW_TO_PLAY_HUD, 0xcef2334f, IDS_HOW_TO_PLAY_MG02,
+        IDS_HOW_TO_PLAY_MG03, IDS_HOW_TO_PLAY_CREATIVE, IDS_HOW_TO_PLAY_INVENTORY, IDS_HOW_TO_PLAY_CHEST, IDS_HOW_TO_PLAY_LARGECHEST, IDS_HOW_TO_PLAY_ENDERCHEST,
+        IDS_HOW_TO_PLAY_CRAFTING, IDS_HOW_TO_PLAY_CRAFT_TABLE, IDS_HOW_TO_PLAY_FURNACE, IDS_HOW_TO_PLAY_DISPENSER, IDS_HOW_TO_PLAY_BREWING, IDS_HOW_TO_PLAY_ENCHANTMENT,
+        IDS_HOW_TO_PLAY_ANVIL, 0x59f9a3a9, IDS_HOW_TO_PLAY_BREEDANIMALS, IDS_HOW_TO_PLAY_TRADING, IDS_HOW_TO_PLAY_HORSES, IDS_HOW_TO_PLAY_BEACONS,
+        IDS_HOW_TO_PLAY_FIREWORKS, IDS_HOW_TO_PLAY_BANNERS, IDS_HOW_TO_PLAY_HOPPERS, IDS_HOW_TO_PLAY_DROPPERS, IDS_HOW_TO_PLAY_NETHERPORTAL, IDS_HOW_TO_PLAY_THEEND,
+        IDS_HOW_TO_PLAY_ENDCITIES, IDS_HOW_TO_PLAY_ELYTRA, IDS_HOW_TO_PLAY_OCEANS, IDS_HOW_TO_PLAY_OCEAN_MOBS, IDS_HOW_TO_PLAY_CONDUIT, IDS_HOW_TO_PLAY_HOSTOPTIONS
     };
 
     static const int kHowToPlayContentPage[EHowToPlayPage_Count] = {
@@ -184,16 +183,16 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
     std::wstring text(title == NULL ? L"" : title);
     text = gApp.FormatHTMLString(m_playerId, text, -1);
 
-    replaceAll(text, text, L"_KICK_PLAYER_DESCRIPTION_", L10N::GetString(IDS_KICK_PLAYER_DESCRIPTION));
-    replaceAll(text, text, L"_BACK_BUTTON_", L10N::GetString(0x3d497286));
-    replaceAll(text, text, L"_DISABLES_ACHIEVEMENTS_", L10N::GetString(IDS_HOST_OPTION_DISABLES_ACHIEVEMENTS));
-    replaceAll(text, text, L"_PLATFORM_NAME_", L10N::GetString(0xed3c4bfb));
+    text = replaceAll(text, L"_KICK_PLAYER_DESCRIPTION_", L10N::GetString(IDS_KICK_PLAYER_DESCRIPTION));
+    text = replaceAll(text, L"_BACK_BUTTON_", L10N::GetString(IDS_BACK_BUTTON));
+    text = replaceAll(text, L"_DISABLES_ACHIEVEMENTS_", L10N::GetString(IDS_HOST_OPTION_DISABLES_ACHIEVEMENTS));
+    text = replaceAll(text, L"_PLATFORM_NAME_", L10N::GetString(IDS_PLATFORM_NAME));
 
     if (!gConsoleUIController.UsingBitmapFont())
     {
-        replaceAll(text, text, L"(C)", L"©");
-        replaceAll(text, text, L"®", L"(R)");
-        replaceAll(text, text, L"–", L"-");
+        text = replaceAll(text, L"(C)", L"©");
+        text = replaceAll(text, L"®", L"(R)");
+        text = replaceAll(text, L"–", L"-");
     }
 
     stripWhitespaceForHtml(text, true);
@@ -215,12 +214,8 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
     }
     pages.push_back(coloured.substr(start, coloured.length() - start));
 
-    if (m_movie != NULL && m_movie->getRootNode() != NULL)
-    {
-        FJ_HowToPlay* node = dynamic_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode());
-        if (node != NULL)
-            LoadHowToPlayPage(node, kHowToPlayContentPage[m_page], pages);
-    }
+    static_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode())
+        ->LoadHowToPlayPage(kHowToPlayContentPage[page], pages);
 
     updateTooltips();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -229,60 +224,75 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 unsigned int UIScene_HowToPlay::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    static const char* const names[30] = {
-        "Label1_5", "Label2_6", "Label1_6", "Label2_7", "Label1_7", "Label3_10",
-        "Label4_10", "Label2_10", "Label1_10", "Label1_11", "Label2_11", "Label1_4",
-        "Label1_13", "Label2_13", "Label1_12", "Label2_12", "Label3_21", "Label2_21",
-        "Label1_21", "Label3_22", NULL, "Label4_22", "Label2_22", "Label1_22",
-        "Label1_25", "Label2_25", "Label1_27", "Label2_27", "Label1_28", "Label2_28"
-    };
     m_dynamicHtmlText.setupControl(this, root, "DynamicHtmlText");
-    m_container.setupControl(this, root, "HowToPlayContainer_13");
-    m_enchantmentBook.setupControl(this, m_container.getFuiRenderNode(), "iggy_EnchantmentBook");
-    m_enchantmentBooks[0].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_1");
-    m_enchantmentBooks[1].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_2");
-    m_enchantmentBooks[2].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_3");
-    int i;
-    for (i = 0; i < 30; ++i)
-    {
-        if (names[i] == NULL)
-            continue;
-        m_labels[i].setupControl(this, root, names[i]);
-    }
     m_controls.push_back(&m_dynamicHtmlText);
+    m_container.setupControl(this, root, "HowToPlayContainer_13");
     m_controls.push_back(&m_container);
+    m_enchantmentBook.setupControl(this, m_container.getFuiRenderNode(), "iggy_EnchantmentBook");
     m_controls.push_back(&m_enchantmentBook);
+    m_enchantmentBooks[0].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_1");
     m_controls.push_back(&m_enchantmentBooks[0]);
+    m_enchantmentBooks[1].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_2");
     m_controls.push_back(&m_enchantmentBooks[1]);
+    m_enchantmentBooks[2].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_3");
     m_controls.push_back(&m_enchantmentBooks[2]);
+    m_labels[8].setupControl(this, root, "Label1_10");
     m_controls.push_back(&m_labels[8]);
+    m_labels[7].setupControl(this, root, "Label2_10");
     m_controls.push_back(&m_labels[7]);
+    m_labels[5].setupControl(this, root, "Label3_10");
     m_controls.push_back(&m_labels[5]);
+    m_labels[6].setupControl(this, root, "Label4_10");
     m_controls.push_back(&m_labels[6]);
+    m_labels[4].setupControl(this, root, "Label1_7");
     m_controls.push_back(&m_labels[4]);
+    m_labels[3].setupControl(this, root, "Label2_7");
     m_controls.push_back(&m_labels[3]);
+    m_labels[11].setupControl(this, root, "Label1_4");
     m_controls.push_back(&m_labels[11]);
+    m_labels[2].setupControl(this, root, "Label1_6");
     m_controls.push_back(&m_labels[2]);
+    m_labels[1].setupControl(this, root, "Label2_6");
     m_controls.push_back(&m_labels[1]);
+    m_labels[0].setupControl(this, root, "Label1_5");
     m_controls.push_back(&m_labels[0]);
+    m_labels[9].setupControl(this, root, "Label1_11");
     m_controls.push_back(&m_labels[9]);
+    m_labels[10].setupControl(this, root, "Label2_11");
     m_controls.push_back(&m_labels[10]);
+    m_labels[12].setupControl(this, root, "Label1_13");
     m_controls.push_back(&m_labels[12]);
+    m_labels[13].setupControl(this, root, "Label2_13");
     m_controls.push_back(&m_labels[13]);
+    m_labels[14].setupControl(this, root, "Label1_12");
     m_controls.push_back(&m_labels[14]);
+    m_labels[15].setupControl(this, root, "Label2_12");
     m_controls.push_back(&m_labels[15]);
+    m_labels[23].setupControl(this, root, "Label1_22");
     m_controls.push_back(&m_labels[23]);
+    m_labels[22].setupControl(this, root, "Label2_22");
     m_controls.push_back(&m_labels[22]);
+    m_labels[19].setupControl(this, root, "Label3_22");
     m_controls.push_back(&m_labels[19]);
+    m_labels[21].setupControl(this, root, "Label4_22");
     m_controls.push_back(&m_labels[21]);
+    m_labels[18].setupControl(this, root, "Label1_21");
     m_controls.push_back(&m_labels[18]);
+    m_labels[17].setupControl(this, root, "Label2_21");
     m_controls.push_back(&m_labels[17]);
+    m_labels[16].setupControl(this, root, "Label3_21");
     m_controls.push_back(&m_labels[16]);
+    m_labels[24].setupControl(this, root, "Label1_25");
     m_controls.push_back(&m_labels[24]);
+    m_labels[25].setupControl(this, root, "Label2_25");
     m_controls.push_back(&m_labels[25]);
+    m_labels[26].setupControl(this, root, "Label1_27");
     m_controls.push_back(&m_labels[26]);
+    m_labels[27].setupControl(this, root, "Label2_27");
     m_controls.push_back(&m_labels[27]);
+    m_labels[28].setupControl(this, root, "Label1_28");
     m_controls.push_back(&m_labels[28]);
+    m_labels[29].setupControl(this, root, "Label2_28");
     m_controls.push_back(&m_labels[29]);
     return 1;
 }
@@ -302,72 +312,81 @@ void UIScene_HowToPlay::updateTooltips()
 
 std::wstring UIScene_HowToPlay::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() < 2 ? L"HowToPlay" : L"HowToPlaySplit";
+    if (gApp.GetLocalPlayerCount() < 2)
+        return L"HowToPlay";
+    else
+        return L"HowToPlaySplit";
 }
 
 void UIScene_HowToPlay::handleReload()
 {
-    if (m_movie != NULL && m_movie->getRootNode() != NULL)
-    {
-        FJ_HowToPlay* node = dynamic_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode());
-        if (node != NULL)
-            node->InitScene();
-    }
+    static_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode())->InitScene();
     StartPage(static_cast<EHowToPlayPage>(m_page));
 }
 
-void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action == EControllerActions_MenuA && released)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+    if (action == EControllerActions_MenuA && pressed)
     {
         if (m_page != EHowToPlayPage_HostOptions)
+        {
             StartPage(static_cast<EHowToPlayPage>(m_page + 1));
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        }
         handled = true;
     }
-    else if (action == EControllerActions_MenuX && released)
+    else if (action == EControllerActions_MenuX && pressed)
     {
         if (m_pageCount <= m_page - 1)
+        {
             StartPage(static_cast<EHowToPlayPage>(m_page - 1));
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        }
         handled = true;
     }
-    else if (action == EControllerActions_MenuCancel && released)
+    else if (action == EControllerActions_MenuCancel && pressed)
     {
         navigateBack();
         handled = true;
     }
     else if (action == EControllerActions_MenuUp || action == EControllerActions_MenuDown || action == EControllerActions_MenuPageUp || action == EControllerActions_MenuPageDown)
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
 }
 
 void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
 {
-    if (rect == NULL)
-        return;
-    const float width = static_cast<float>(m_enchantmentBooks[0].getWidth());
-    const float height = static_cast<float>(m_enchantmentBooks[0].getHeight());
+    unsigned int colour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText);
+    unsigned int focusColour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus);
+    unsigned int disabledColour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextDisabled);
+    const double width = m_enchantmentBooks[0].getWidth();
+    const double height = m_enchantmentBooks[0].getHeight();
     GlStateManager::scalef((rect->xMax - rect->xMin) / width, (rect->yMax - rect->yMin) / height, 1.0F);
-    GlStateManager::enableAlphaTest();
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft != NULL && minecraft->mFont != NULL)
+    float scale;
+    if (m_movieResolution == 0)
     {
-        std::wstring text = variant == 2 ? L"elemental spirit animal" : (variant == 1 ? L"klaatu berata niktu" : L"the elder scrolls");
-        minecraft->mFont->drawWordWrap(text, 0, 0, static_cast<int>(width),
-                                       gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White) | 0xff000000);
+        scale = 3.0F;
+        GlStateManager::scalef(scale, scale, scale);
     }
+    else
+    {
+        scale = 2.0F;
+        GlStateManager::scalef(scale, scale, scale);
+    }
+
+    std::wstring names[3] = { L"the elder scrolls", L"klaatu berata niktu", L"elemental spirit animal" };
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    GlStateManager::enableAlphaTest();
+    GlStateManager::alphaFunc(4, 0.1F);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (variant == 2)
+        colour = disabledColour;
+    else if (variant == 1)
+        colour = focusColour;
+    minecraft->mAlternateFont->drawWordWrap(names[variant], 0, 0, static_cast<int>(width / scale), colour | 0xff000000,
+                                   static_cast<int>(height / scale));
     GlStateManager::disableAlphaTest();
     GlStateManager::disableRescaleNormal();
-}
-
-void UIScene_HowToPlay::customDraw(const char* name, fuiRect* rect)
-{
-    int slot = -1;
-    if (name != NULL)
-        std::sscanf(name, "slot_%d", &slot);
-    if (m_page == EHowToPlayPage_Enchanting && name != NULL && std::strncmp(name, "px_", 3) == 0)
-        m_enchantmentBook.render(rect);
-    if (slot >= 0 && slot < 3)
-        customDrawEnchantmentFont(rect, slot);
 }
 
 int UIScene_HowToPlay::getSceneType()
@@ -689,4 +708,83 @@ const UIScene_HowToPlay::sCustomItems* SlotListCreative()
         SLOT(Blocks::brick_block, 1, 0)
     };
     return slots;
+}
+
+void UIScene_HowToPlay::customDraw(const char* name, fuiRect* rect)
+{
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    int slot = -1;
+    std::sscanf(name, "slot_%d", &slot);
+    if (slot >= 0)
+    {
+        if (slot < 10 && SlotListHotBar()[slot].m_count > 0)
+            item = SlotListHotBar()[slot].GetItemInstance();
+
+        if (m_page != EHowToPlayPage_Creative && m_page != EHowToPlayPage_HUD && slot >= 9 && slot < 36 &&
+            SlotListInventory()[slot - 9].m_count > 0)
+            item = SlotListInventory()[slot - 9].GetItemInstance();
+
+        const sCustomItems* slots = NULL;
+        int index = slot - 36;
+        switch (m_page)
+        {
+        case EHowToPlayPage_Creative:
+            index = slot - 9;
+            slots = SlotListCreative();
+            break;
+        case EHowToPlayPage_Inventory:
+            slots = SlotListArmor();
+            break;
+        case EHowToPlayPage_Chest:
+            slots = SlotListChestSmall();
+            break;
+        case EHowToPlayPage_LargeChest:
+            slots = SlotListChestLarge();
+            break;
+        case EHowToPlayPage_Furnace:
+            slots = SlotListFurnace();
+            break;
+        case EHowToPlayPage_Dispenser:
+            slots = SlotListDispenser();
+            break;
+        case EHowToPlayPage_Brewing:
+            slots = SlotListBrewing();
+            break;
+        case EHowToPlayPage_Enchanting:
+            slots = SlotListEntchantment();
+            break;
+        case EHowToPlayPage_Anvil:
+            slots = SlotListAnvil();
+            break;
+        case EHowToPlayPage_Trading:
+            slots = SlotListTrading();
+            break;
+        case EHowToPlayPage_Beacons:
+            slots = SlotListBeacon();
+            break;
+        case EHowToPlayPage_Hoppers:
+            slots = SlotListHopper();
+            break;
+        case EHowToPlayPage_Droppers:
+            slots = SlotListDispenser();
+            break;
+        default:
+            break;
+        }
+        if (slots != NULL && index >= 0 && slots[index].m_count > 0)
+            item = slots[index].GetItemInstance();
+    }
+
+    slot = -1;
+    if (m_page == EHowToPlayPage_Enchanting)
+    {
+        if (std::strcmp(name, "EnchantmentBook") == 0)
+            m_enchantmentBook.render(rect);
+        std::sscanf(name, "slot_Button_%d", &slot);
+        if (slot >= 0)
+            customDrawEnchantmentFont(rect, slot - 1);
+    }
+
+    if (!item->isEmpty())
+        customDrawSlotControlFui(rect, m_playerId, item, 1.0f, item->getItem()->isFoil(item), true, false);
 }

@@ -8,8 +8,6 @@ FJ_ListButtonPlayerList::FJ_ListButtonPlayerList(fuiRenderNode* renderNode)
     m_voipIcon = getChildByName(std::string("VOIP"))->asMovieClip();
 }
 
-FJ_ListButtonPlayerList::~FJ_ListButtonPlayerList() {}
-
 void FJ_ListButtonPlayerList::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);

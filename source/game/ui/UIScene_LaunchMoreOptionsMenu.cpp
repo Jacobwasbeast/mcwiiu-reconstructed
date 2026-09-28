@@ -47,7 +47,7 @@ static std::wstring makeArenaSizeLabel(int value)
     wchar_t display[64];
     wchar_t text[256];
     std::swprintf(display, 64, L"%g", displayValues[value]);
-    std::swprintf(text, 256, L"%ls: x%ls", L10N::GetString(0x36df2177), display);
+    std::swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE), display);
     return std::wstring(text);
 }
 
@@ -208,7 +208,7 @@ void UIScene_LaunchMoreOptionsMenu::_init()
 
     if (!custom && !joining)
     {
-        m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(0xa60b975e)), 0x34);
+        m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_CREATE_NEW_WORLD_SEED)), 0x34);
         m_worldOptionsList.AddNewTextInput(m_initData->mSeed, 0x16, 0x3c);
         m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(0xae4164b2)), 0x34);
         m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FIND_BALANCED)), 0x17,
@@ -245,7 +245,7 @@ void UIScene_LaunchMoreOptionsMenu::_init()
         MiniGameDef* game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(miniGameId), true);
         if (game->HasGameVariants())
         {
-            m_foodBalance = SliderLogic(0x1d, 0x5bd476fb, eCustomGameModeHostOption_ModeVariant,
+            m_foodBalance = SliderLogic(0x1d, IDS_MG_OPTION_GAME_VARIANT, eCustomGameModeHostOption_ModeVariant,
                                          static_cast<EMiniGameId>(miniGameId), !joining);
             m_foodBalance.AddTo(m_gameOptionsList, m_initData->mMatchmakingFilters[1]);
             int modeVariant = m_initData->mMatchmakingFilters[1] - 1;
@@ -260,12 +260,12 @@ void UIScene_LaunchMoreOptionsMenu::_init()
         }
         if (game->HasRoundLengthOption())
         {
-            m_lootSet = SliderLogic(0x1c, 0x908811f4, eCustomGameModeHostOption_MapVariant,
+            m_lootSet = SliderLogic(0x1c, IDS_MG_OPTION_ROUND_LENGTH, eCustomGameModeHostOption_MapVariant,
                                     static_cast<EMiniGameId>(miniGameId), !joining);
             m_lootSet.AddTo(m_gameOptionsList, m_initData->mMatchmakingFilters[0]);
         }
         if (game->HasCentralSpawnOption())
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xef2a2f6a)), 0x1a,
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG_OPTION_CENTRE_SPAWN)), 0x1a,
                                              m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_CentreSpawn) != 0);
         if (miniGameId == eMiniGameId_Battle || miniGameId == eMiniGameId_Tumble)
         {
@@ -279,7 +279,7 @@ void UIScene_LaunchMoreOptionsMenu::_init()
             m_gameOptionsList.AddNewSlider(livesLabel, 0x22,
                                            miniGame->HasFeatureSupportForInfiniteLives() ? 0 : 1,
                                            10, lives, false, 7, 3);
-            m_worldType = SliderLogic(0x1e, 0x901c1fe8,
+            m_worldType = SliderLogic(0x1e, IDS_MG_OPTION_SPECTATE_MODE,
                                      eCustomGameModeHostOption_SpectateMode,
                                      static_cast<EMiniGameId>(miniGameId), false);
             m_worldType.AddTo(m_gameOptionsList,
@@ -324,24 +324,24 @@ void UIScene_LaunchMoreOptionsMenu::_init()
                     arenaSize = 5;
             }
             const std::wstring arenaLabel = !m_initData->mPlayerSettings.mArenaSizeMultiplier.isSet()
-                ? makeTextLabel(0x36df2177, IDS_MG_AUTO)
+                ? makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)
                 : makeArenaSizeLabel(arenaSize);
             m_gameOptionsList.AddNewSlider(arenaLabel, 0x2b, 0, 5, arenaSize, true, 7, 3);
 
             const int layerCount = m_initData->mPlayerSettings.mLayerCount.isSet()
                 ? static_cast<int>(m_initData->mPlayerSettings.mLayerCount.get()) : 0;
             const std::wstring layerLabel = layerCount < 1
-                ? makeTextLabel(0x50849384, IDS_MG_AUTO)
-                : makeValueLabel(0x50849384, layerCount);
+                ? makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO)
+                : makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount);
             m_gameOptionsList.AddNewSlider(layerLabel, 0x2c, 0, 8, layerCount, false, 7, 3);
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x40ea8efc)), 0x2a,
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG02_SPECTATOR_PARTICIPATION)), 0x2a,
                                              m_initData->mPlayerSettings.mSpectatorParticipation);
         }
     }
     else
     {
         m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_ONLINE_GAME)), 0, m_initData->mOnlineGame);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x4d7ec0cc)), 2, m_initData->mAllowFriendsOfFriends);
+        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_ALLOWFRIENDSOFFRIENDS)), 2, m_initData->mAllowFriendsOfFriends);
         m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_PLAYER_VS_PLAYER)), 3, m_initData->mPvP);
         m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_HOST_PRIVILEGES)), 7, m_initData->mHostPrivileges);
         m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_DAYLIGHT_CYCLE)), 0x12, m_initData->mDoDaylightCycle);
@@ -461,7 +461,7 @@ int UIScene_LaunchMoreOptionsMenu::HandleRequestKeyboard()
     m_seed.assign(m_initData->mSeed);
     if (m_seed == L" ")
         m_seed.assign(L"");
-    const wchar_t* title = L10N::GetString(0xa60b975e);
+    const wchar_t* title = L10N::GetString(IDS_CREATE_NEW_WORLD_SEED);
     g_pInput->RequestKeyboard(title, m_seed.c_str(), m_playerId, 0x3c,
                               KeyboardCompleteSeedCallback, this,
                               C_4JInput::EKeyboardMode_0);
@@ -534,12 +534,12 @@ void UIScene_LaunchMoreOptionsMenu::handleReload()
     }
 }
 
-void UIScene_LaunchMoreOptionsMenu::handleInput(int, int action, bool repeat, bool released,
-                                                bool pressed, bool& handled)
+void UIScene_LaunchMoreOptionsMenu::handleInput(int, int action, bool repeat, bool pressed,
+                                                bool released, bool& handled)
 {
     if (m_keyboardActive)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -551,12 +551,12 @@ void UIScene_LaunchMoreOptionsMenu::handleInput(int, int action, bool repeat, bo
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuRightScroll:
     case EControllerActions_MenuLeftScroll:
-        if (released)
+        if (pressed)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
             m_menuType = m_menuType == 0;
@@ -566,7 +566,7 @@ void UIScene_LaunchMoreOptionsMenu::handleInput(int, int action, bool repeat, bo
         }
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             if (m_initData->mHostMiniGame || m_initData->mJoinMiniGame)
                 MasterGameMode::SaveDefaults(*m_initData);
@@ -746,7 +746,7 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         if (arenaSize == 0)
         {
             m_initData->mPlayerSettings.mArenaSizeMultiplier = maybe<float>();
-            m_gameOptionsList.SetItemLabel(0x2b, UIString(makeTextLabel(0x36df2177, IDS_MG_AUTO)), false);
+            m_gameOptionsList.SetItemLabel(0x2b, UIString(makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)), false);
         }
         else
         {
@@ -763,12 +763,12 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         if (layerCount == 0)
         {
             m_initData->mPlayerSettings.mLayerCount = maybe<unsigned int>();
-            m_gameOptionsList.SetItemLabel(0x2c, UIString(makeTextLabel(0x50849384, IDS_MG_AUTO)), false);
+            m_gameOptionsList.SetItemLabel(0x2c, UIString(makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO)), false);
         }
         else
         {
             m_initData->mPlayerSettings.mLayerCount = maybe<unsigned int>(static_cast<unsigned int>(layerCount));
-            m_gameOptionsList.SetItemLabel(0x2c, UIString(makeValueLabel(0x50849384, layerCount)), false);
+            m_gameOptionsList.SetItemLabel(0x2c, UIString(makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount)), false);
         }
         UpdateDescriptionText();
         break;
@@ -931,13 +931,13 @@ void UIScene_LaunchMoreOptionsMenu::handleCheckboxElementToggled(int, int second
     UpdateDescriptionText();
 }
 
-void UIScene_LaunchMoreOptionsMenu::handleTouchInput(unsigned int, int action, int, int, bool repeat,
-                                                     bool, bool pressed)
+void UIScene_LaunchMoreOptionsMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool pressed,
+                                                     bool, bool)
 {
-    if (pressed && action > 0x33 && action < 0x36)
+    if (pressed && (unsigned int)touchBox > 0x33 && (unsigned int)touchBox < 0x36)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
-        bool world = action == 0x34;
+        bool world = touchBox == 0x34;
         if (m_menuType != static_cast<int>(world))
         {
             m_menuType = world;
@@ -946,7 +946,6 @@ void UIScene_LaunchMoreOptionsMenu::handleTouchInput(unsigned int, int action, i
         }
         gConsoleUIController.TouchBoxRebuild(this);
     }
-    (void)repeat;
 }
 
 UIControl* UIScene_LaunchMoreOptionsMenu::GetMainPanel()

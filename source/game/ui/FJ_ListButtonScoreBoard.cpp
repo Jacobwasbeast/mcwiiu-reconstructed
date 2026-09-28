@@ -7,15 +7,12 @@
 #include "game/ui/FJ_IconSlot.hpp"
 
 FJ_ListButtonScoreBoard::FJ_ListButtonScoreBoard(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_playerIcons(NULL), m_voipIcon(NULL), m_numIcons(0),
-      m_externalHighlight(NULL)
+    : FJ_Button(renderNode)
 {
-    m_playerIcons = getChildByName(std::string("PlayerIcons"))->asMovieClip();
-    m_voipIcon = getChildByName(std::string("VOIP"))->asMovieClip();
-}
-
-FJ_ListButtonScoreBoard::~FJ_ListButtonScoreBoard()
-{
+    m_playerIcons = getChildByName("PlayerIcons")->asMovieClip();
+    m_voipIcon = getChildByName("VOIP")->asMovieClip();
+    m_externalHighlight = NULL;
+    m_numIcons = 0;
 }
 
 void FJ_ListButtonScoreBoard::Init(const std::wstring& name, int id)
@@ -32,17 +29,17 @@ void FJ_ListButtonScoreBoard::Init(const std::wstring& name, int id)
 
 void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlightWidth)
 {
-    setWidth(getWidth() - static_cast<float>(numIcons) * (getHeight() + 2.0f));
+    setWidth(getWidth() - numIcons * getHeight() - numIcons * 2);
 
     int i;
     for (i = 0; i < numIcons; ++i)
     {
         FJ_IconSlot* slot = static_cast<FJ_IconSlot*>(FJ_Factory::createObject(
             "fourj.listClasses.FJ_IconSlot", m_pRenderNode, true, NULL));
-        slot->SetParams(static_cast<int>(getHeight()), false);
+        slot->SetParams(getHeight(), m_small);
         slot->Init(std::wstring(L""));
         slot->ShowSlotHolder(false);
-        slot->setX(getX() + getWidth() + static_cast<float>(i) * (slot->getWidth() + 2.0f));
+        slot->setX(i * slot->getWidth() + (getX() + getWidth()) + (i * 2 + 2));
         slot->setY(getY());
         m_objects.push_back(slot);
         getParent()->addChild(slot);
@@ -59,7 +56,7 @@ void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlight
     FJ_FuiNode* highlight = FJ_Factory::createObject(
         "fourj.Misc.FJ_ExternalHighlight", m_pRenderNode, true, NULL);
     highlight->setX(-static_cast<float>(highlightWidth) / getScaleX());
-    highlight->setY(0.5f);
+    highlight->setY(0.0f);
     highlight->setScaleX(highlight->getScaleX() / getScaleX());
     highlight->setScaleY(highlight->getScaleY() / getScaleY());
     highlight->getChildAt(0)->setWidth(static_cast<float>(width));
@@ -71,7 +68,7 @@ void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlight
     m_externalHighlight = FJ_Factory::createObject(
         "fourj.Misc.FJ_ExternalHighlight", m_pRenderNode, true, NULL);
     m_externalHighlight->setX(-static_cast<float>(highlightWidth) / getScaleX());
-    m_externalHighlight->setY(0.5f);
+    m_externalHighlight->setY(0.0f);
     m_externalHighlight->setScaleX(m_externalHighlight->getScaleX() / getScaleX());
     m_externalHighlight->setScaleY(m_externalHighlight->getScaleY() / getScaleY());
     m_externalHighlight->getChildAt(0)->setWidth(static_cast<float>(width));
@@ -92,7 +89,7 @@ void FJ_ListButtonScoreBoard::SetVOIPIcon(int frame)
 
 void FJ_ListButtonScoreBoard::SetSlotText(int slot, const std::wstring& text)
 {
-    if (slot >= 0 && slot < static_cast<int>(m_objects.size()))
+    if (static_cast<unsigned int>(slot) < m_objects.size())
         m_objects[slot]->asFJ_IconSlot()->SetLabel(text);
 }
 
@@ -105,7 +102,7 @@ void FJ_ListButtonScoreBoard::ChangeState(int state)
 {
     if (m_externalHighlight != NULL)
     {
-        if ((state == 0 || state == 1 || state == 3) && getLabelTooWide())
+        if ((state == 0 || state == 1 || state == 3) && getEnabled())
         {
             m_externalHighlight->setVisible(true);
             FJ_Button::ChangeState(state);

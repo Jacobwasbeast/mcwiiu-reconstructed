@@ -61,8 +61,8 @@ const wchar_t* UIControl_Base::getLabel()
 {
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (!node->isFJ_Base())
-        return L"buckets_";
-    return ((std::wstring*)(long)node->asFJ_Base()->GetLabel())->c_str();
+        return L"";
+    return node->asFJ_Base()->GetLabel().c_str();
 }
 
 void UIControl_Base::setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256])

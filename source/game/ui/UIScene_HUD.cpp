@@ -14,6 +14,7 @@
 #include "game/core/BossHealthOverlay.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ClientScoreboard.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/FoodData.hpp"
@@ -28,16 +29,20 @@
 #include "game/core/Mth.hpp"
 #include "game/core/StringFormat.hpp"
 #include "game/core/StringUtils.hpp"
+#include "game/core/Slot.hpp"
 #include "game/core/System.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/FJ_Hud.hpp"
+#include "game/ui/InventoryMenu.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -367,18 +372,69 @@ std::wstring UIScene_HUD::getMoviePath()
     return std::wstring(L"HUDSplit");
 }
 
-void UIScene_HUD::customDraw(const char* name, fuiRect*)
+void UIScene_HUD::customDraw(const char* name, fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mLocalPlayers[getPad()] != 0 && minecraft->mGameModes[getPad()] != 0)
+    if (minecraft->mLocalPlayers[m_playerId] == NULL || minecraft->mGameModes[m_playerId] == NULL)
+        return;
+
+    int slot = -1;
+    bool armorSlot = false;
+    std::sscanf(name, "slot_%d", &slot);
+    if (slot == -1)
     {
-        int slot = -1;
-        std::sscanf(name, "slot_%d", &slot);
-        int armorSlot = -1;
-        std::sscanf(name, "armor_slot_%d", &armorSlot);
-        int pickupSlot = -1;
-        std::sscanf(name, "pickup_slot_%d", &pickupSlot);
+        std::sscanf(name, "armor_slot_%d", &slot);
+        if (slot != -1)
+        {
+            armorSlot = true;
+        }
+        else
+        {
+            std::sscanf(name, "pickup_slot_%d", &slot);
+            if (slot == -1)
+                return;
+        }
     }
+
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    if (armorSlot)
+    {
+        item = minecraft->mLocalPlayers[m_playerId]->mInventoryMenu->getSlot(InventoryMenu::ARMOR_SLOT_START + slot)->getItem();
+        bool hidden = false;
+        if (!item->isEmpty() && HideMainHUD())
+            hidden = true;
+        m_armorIcons[slot] = hidden;
+    }
+    else
+    {
+        item = minecraft->mLocalPlayers[m_playerId]->mInventoryMenu->getSlot(InventoryMenu::USE_ROW_SLOT_START + slot)->getItem();
+    }
+
+    if (item->isEmpty())
+        return;
+
+    unsigned int opacity = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_InterfaceOpacity);
+    float alpha;
+    if (opacity < 80)
+    {
+        unsigned int timer = gApp.GetOpacityTimer(m_playerId);
+        if (timer == 0)
+            alpha = 0.01f * (float)opacity;
+        else if (timer < 10)
+            alpha = 0.01f * -((10.0f - (float)timer) * ((80.0f - (float)opacity) / 10.0f) - 80.0f);
+        else
+            alpha = 0.8f;
+    }
+    else
+    {
+        alpha = 0.01f * (float)opacity;
+    }
+
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mPlayer;
+    if (static_cast<unsigned int>(m_playerId) < 4)
+        minecraft->mPlayer = minecraft->mLocalPlayers[m_playerId];
+    customDrawSlotControlFui(rect, m_playerId, item, alpha, item->getItem()->isFoil(item), true, false);
+    minecraft->mPlayer = player;
 }
 
 void UIScene_HUD::SetHudSize(int size)
@@ -438,9 +494,30 @@ bool UIScene_HUD::ShowHudComponent(bool wasVisible, bool visible)
     return visible;
 }
 
-void UIScene_HUD::ShowHealth(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowHealth(visible); }
-void UIScene_HUD::ShowFood(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowFood(visible); }
-void UIScene_HUD::ShowArmour(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowArmour(visible); }
+void UIScene_HUD::ShowHealth(bool visible)
+{
+    if (HideMainHUD())
+        visible = false;
+    m_healthVisible = ShowHudComponent(m_healthVisible, visible);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowHealth(m_healthVisible);
+}
+void UIScene_HUD::ShowFood(bool visible)
+{
+    if (HideMainHUD())
+        visible = false;
+    m_foodVisible = ShowHudComponent(m_foodVisible, visible);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowFood(m_foodVisible);
+}
+void UIScene_HUD::ShowArmour(bool visible)
+{
+    if (HideMainHUD())
+        visible = false;
+    m_armourVisible = ShowHudComponent(m_armourVisible, visible);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowArmour(m_armourVisible);
+}
 void UIScene_HUD::ShowArmorBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowArmorBar(visible); }
 void UIScene_HUD::ShowQuickSelect(bool visible)
 {
@@ -456,17 +533,32 @@ void UIScene_HUD::ShowQuickSelect(bool visible)
         getFJ_Hud()->ShowQuickSelect(quickSelectVisible);
 }
 
-bool UIScene_HUD::GetQuickSelectVisible() const
-{
-    return m_quickSelectVisible;
-}
-
 void UIScene_HUD::ShowExpBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowExpBar(visible); }
 void UIScene_HUD::ShowHorseHealth(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowHorseHealth(visible); }
-void UIScene_HUD::ShowAir(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowAir(visible); }
-void UIScene_HUD::SetRidingHorse(bool riding, bool showJump, int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetRidingHorse(riding, showJump, health); }
-void UIScene_HUD::SetRegenerationEffect(bool enabled) { if (getFJ_Hud() != 0) getFJ_Hud()->SetRegenerationEffect(enabled); }
-void UIScene_HUD::SetHealthAbsorb(int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHealthAbsorb(true, health); }
+void UIScene_HUD::ShowAir(bool visible)
+{
+    if (HideMainHUD())
+        visible = false;
+    m_airVisible = ShowHudComponent(m_airVisible, visible);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowAir(m_airVisible);
+}
+void UIScene_HUD::SetRidingHorse(bool riding, bool showJump, int health)
+{
+    if (HideMainHUD())
+        showJump = false;
+    m_ridingHorse = riding;
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetRidingHorse(riding, showJump, health);
+}
+void UIScene_HUD::SetRegenerationEffect(bool enabled)
+{
+    if (HideMainHUD())
+        enabled = false;
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetRegenerationEffect(enabled);
+}
+void UIScene_HUD::SetHealthAbsorb(int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHealthAbsorb(health > 0, health); }
 void UIScene_HUD::InitMainHUD()
 {
     const bool visible = !HideMainHUD();
@@ -557,7 +649,7 @@ void UIScene_HUD::handleReload()
 }
 
 unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_playerId); }
-void UIScene_HUD::SetOpacity(float opacity) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAlpha(opacity); }
+void UIScene_HUD::SetOpacity(float opacity) { setOpacity(opacity); }
 void UIScene_HUD::SetVisible(bool visible) { setVisible(visible); }
 unsigned char UIScene_HUD::GetHudLoading() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHudLoading(); }
 void UIScene_HUD::SetExpBarProgress(float progress, int) { if (getFJ_Hud() != 0) getFJ_Hud()->SetExpBarProgress(progress); }
@@ -598,8 +690,20 @@ void UIScene_HUD::ShowCrosshair(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud(
 void UIScene_HUD::SetFoodSaturationLevel(int level) { if (getFJ_Hud() != 0) getFJ_Hud()->SetFoodSaturationLevel(level); }
 void UIScene_HUD::SetHorseHealth(int health, bool highlight) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHorseHealth(health, highlight); }
 void UIScene_HUD::SetHorseJumpBarProgress(float progress) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHorseJumpBarProgress(progress); }
-void UIScene_HUD::ShowDisplayName(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowGameModePlayers(visible); }
-void UIScene_HUD::SetHudGameMode(int gameMode) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHudGameMode(gameMode); }
+void UIScene_HUD::ShowDisplayName(bool visible)
+{
+    m_displayNameVisible = visible;
+    if (m_splitScreen)
+        m_displayName.setVisible(visible);
+}
+void UIScene_HUD::SetHudGameMode(int gameMode)
+{
+    if (m_hudGameMode == gameMode)
+        return;
+    m_hudGameMode = gameMode;
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetHudGameMode(gameMode);
+}
 void UIScene_HUD::SetGameModePlayerState(int player, eGameModePlayerState state, bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->SetGameModePlayerState(player, (int)state, visible); }
 void UIScene_HUD::SetGameModeNumPlayers(int count, bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->SetGameModeNumPlayers(count, visible); }
 int UIScene_HUD::GetHotBarX() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarX(); }
@@ -608,7 +712,47 @@ int UIScene_HUD::GetHotBarWidth() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->G
 int UIScene_HUD::GetHotBarHeight() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarHeight(); }
 void UIScene_HUD::ShowDirectionalDamage(int direction, int ticks, float alpha) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowDirectionalDamage(direction, ticks, alpha); }
 void UIScene_HUD::SetAnimatedSplashTexture(const std::wstring& texture) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAnimatedSplashTexture(texture); }
-void UIScene_HUD::SetAnimatedSplashIcon(int icon) { std::wstring texture; if (icon == 2) texture = L"Graphics/GameModeGraphics/AwardIcon.png"; SetAnimatedSplashTexture(texture); }
+void UIScene_HUD::SetAnimatedSplashIcon(int icon)
+{
+    std::wstring texture = L"";
+    bool found;
+    if (icon == 0)
+    {
+        texture = Minecraft::GetInstance()->GetMiniGame()->getIcon();
+        found = gApp.hasArchiveFile(texture, false);
+    }
+    else if (icon == 2 && Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
+             Minecraft::GetInstance()->mLocalPlayers[getPad()]->GetGameType() != GameType::LOBBY)
+    {
+        if (Minecraft::GetInstance()->GetClientMasterGameMode()->GetMiniGame()->ArePointsActive())
+        {
+            texture = L"Graphics\\GameModeGraphics\\ScoreIcon.png";
+            found = gApp.hasArchiveFile(texture, false);
+        }
+        else
+        {
+            texture = L"Graphics\\GameModeGraphics\\TimeIcon.png";
+            found = gApp.hasArchiveFile(texture, false);
+        }
+    }
+    else
+    {
+        texture = L"Graphics\\GameModeGraphics\\AwardIcon.png";
+        found = gApp.hasArchiveFile(texture, false);
+    }
+
+    if (!found)
+    {
+        SetAnimatedSplashTexture(L"");
+    }
+    else
+    {
+        arrayWithLength<unsigned char> file = gApp.getArchiveFile(texture, false);
+        if (file.data != NULL && file.length != 0)
+            registerSubstitutionTexture(texture, file.data, file.length, true);
+        SetAnimatedSplashTexture(texture);
+    }
+}
 void UIScene_HUD::ShowAnimatedSplash(const std::wstring& label, bool visible, int icon)
 {
     if (m_animatedSplashText != label || m_animatedSplashVisible != visible)
@@ -639,7 +783,13 @@ void UIScene_HUD::AnimateCheckpoint(unsigned int index) { if (getFJ_Hud() != 0) 
 void UIScene_HUD::SetPositions(unsigned int position, const std::wstring& label, bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->SetPosition((int)position, label, visible); }
 void UIScene_HUD::SetSpeedometer(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetSpeedometer((int)value); }
 void UIScene_HUD::SetScoreIcon(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetScoreIcon((int)value); }
-unsigned int UIScene_HUD::GetStatusEffectsYOffset() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetStatusEffectsYOffset(); }
+unsigned int UIScene_HUD::GetStatusEffectsYOffset()
+{
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+    if (player != 0 && !player->getActiveEffects()->empty())
+        return getFJ_Hud()->GetStatusEffectsYOffset();
+    return 0;
+}
 void UIScene_HUD::renderPlayerHealth()
 {
     ShowHealth(true);
@@ -711,28 +861,28 @@ void UIScene_HUD::renderVehicleHealth()
     SetHorseHealth((int)std::ceil(livingVehicle->getHealth()), false);
     ShowHorseHealth(true);
 }
-std::wstring UIScene_HUD::formatTime(long long time, bool showHours)
+std::wstring UIScene_HUD::formatTime(long long time, bool hundredths)
 {
-    wchar_t text[32];
-    unsigned int milliseconds = (unsigned int)(time % 1000);
-    unsigned int seconds = (unsigned int)((time / 1000) % 60);
-    unsigned int minutes = (unsigned int)((time / 60000) % 60);
-
-    if (showHours)
+    unsigned int seconds = (unsigned int)(time / 1000) % 60;
+    int minutes = (int)((time / 60000) % 60);
+    std::wstring text = L"";
+    if (hundredths)
     {
-        unsigned int hours = (unsigned int)(time / 3600000);
-        std::swprintf(text, 32, L"%u:%02u:%02u", hours, minutes, seconds);
-    }
-    else if (milliseconds == 0)
-    {
-        std::swprintf(text, 32, L"%u:%02u", minutes, seconds);
+        int centiseconds = (int)((time % 1000) / 10);
+        if (minutes != 0)
+            text = formatwstr(L"%d:%.2d.%.2d", minutes, seconds, centiseconds);
+        else
+            text = formatwstr(L"%d.%.2d", seconds, centiseconds);
     }
     else
     {
-        std::swprintf(text, 32, L"%u:%02u.%03u", minutes, seconds, milliseconds);
+        int milliseconds = (int)(time % 1000);
+        if (minutes != 0)
+            text = formatwstr(L"%d:%.2d.%.3d", minutes, seconds, milliseconds);
+        else
+            text = formatwstr(L"%d.%.3d", seconds, milliseconds);
     }
-
-    return std::wstring(text);
+    return text;
 }
 void UIScene_HUD::updateGameModePlayers()
 {
@@ -856,7 +1006,26 @@ void UIScene_HUD::updateGameModePlayers()
     m_ghostPlayerSlot = networkPlayerCount;
     SetGameModePlayerState(networkPlayerCount, static_cast<eGameModePlayerState>(9), true);
 }
-void UIScene_HUD::ClearGlideHUD(int) { ShowScore(false); ShowExpBar(false); SetHudGameMode(1); ShowGameModePlayers(true); updateGameModePlayers(); SetRoundNumber(0, 0, false); }
+void UIScene_HUD::ClearGlideHUD(int player)
+{
+    ShowScore(false);
+    m_lastCheckpointIds[player] = 0;
+    m_levelGenerationId = 0xffffffff;
+    ShowExpBar(false);
+    SetHudGameMode(1);
+    ShowGameModePlayers(true);
+    updateGameModePlayers();
+    SetRoundNumber(0, 0, false);
+    if (m_checkpointsInitialised)
+    {
+        ClearCheckpointPositions();
+        m_lastCheckpointIds[3] = 0;
+        m_lastCheckpointIds[0] = 0;
+        m_lastCheckpointIds[2] = 0;
+        m_lastCheckpointIds[1] = 0;
+        m_checkpointsInitialised = false;
+    }
+}
 void UIScene_HUD::showTimedSplash(const std::wstring& label, unsigned int duration, int icon) { ShowAnimatedSplash(label, true, (int)duration); SetAnimatedSplashIcon(icon); }
 void UIScene_HUD::updateFrameTick()
 {
@@ -1175,7 +1344,7 @@ void UIScene_HUD::updateFrameTick()
                     const bool hasLifeSpan = scoreboard != 0 && scoreboard->GetLifeSpan(uid, -1) != 0;
                     if (ghostRecord != 0 &&
                         (ghostPlayer != 0 || hasLifeSpan) &&
-                        (ghostController->mRecordingSlotFlags2[pad] ||
+                        (ghostController->mPlaybackActive[pad] ||
                          ghostController->HasFinished(ghostRecord)))
                     {
                         int comparisonDelta = 0;
@@ -1204,7 +1373,7 @@ void UIScene_HUD::updateFrameTick()
                         if (ahead)
                         {
                             positionLabel = formatwstr(L"%ls %ls", formatTime(m_comparisonScore, true).c_str(),
-                                                       L10N::GetString(0x72cede7d));
+                                                       L10N::GetString(IDS_MG03_GHOST));
                         }
                         else if (comparisonDelta < 0)
                         {
@@ -1229,7 +1398,7 @@ void UIScene_HUD::updateFrameTick()
                         else
                         {
                             SetPositions(1, formatwstr(L"%ls %ls", formatTime(m_comparisonScore, true).c_str(),
-                                                       L10N::GetString(0x72cede7d)), true);
+                                                       L10N::GetString(IDS_MG03_GHOST)), true);
                         }
                         positionSlot = 2;
                     }
@@ -1248,17 +1417,17 @@ void UIScene_HUD::updateFrameTick()
                 {
                     if (sortedPlayers.size() <= 1)
                     {
-                        SetPositions(0, formatwstr(L"%d %ls", bestScore, L10N::GetString(0x72cede7d)), true);
+                        SetPositions(0, formatwstr(L"%d %ls", bestScore, L10N::GetString(IDS_MG03_GHOST)), true);
                     }
                     else if (static_cast<unsigned int>(sortedPlayers.front().second) > bestScore)
                     {
                         SetPositions(0, formatwstr(L"%d %ls", sortedPlayers.front().second,
                                                    sortedPlayers.front().first.c_str()), true);
-                        SetPositions(1, formatwstr(L"%d %ls", bestScore, L10N::GetString(0x72cede7d)), true);
+                        SetPositions(1, formatwstr(L"%d %ls", bestScore, L10N::GetString(IDS_MG03_GHOST)), true);
                     }
                     else
                     {
-                        SetPositions(0, formatwstr(L"%d %ls", bestScore, L10N::GetString(0x72cede7d)), true);
+                        SetPositions(0, formatwstr(L"%d %ls", bestScore, L10N::GetString(IDS_MG03_GHOST)), true);
                         SetPositions(1, formatwstr(L"%d %ls", sortedPlayers.front().second,
                                                      sortedPlayers.front().first.c_str()), true);
                     }
@@ -1358,7 +1527,7 @@ void UIScene_HUD::updateFrameTick()
                             SetWrongWay(L"");
                         else if (!m_wrongWayVisible)
                         {
-                            SetWrongWay(L10N::GetString(0xe39432b1));
+                            SetWrongWay(L10N::GetString(IDS_MG03_WRONG_WAY));
                             m_wrongWayVisible = true;
                         }
                     }
@@ -1424,7 +1593,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 const int currentRound = scoreboard->mCurrentRound;
                 if (currentRound == static_cast<int>(miniGame->GetFinalRoundIndex()))
-                    ShowAnimatedSplash(L10N::GetString(0x3f46d5d3), true, 0);
+                    ShowAnimatedSplash(L10N::GetString(IDS_MG03_ROUND_FINAL), true, 0);
                 else
                 {
                     std::wstring splash = L10N::GetString(0x91a1400c);
@@ -1434,7 +1603,7 @@ void UIScene_HUD::updateFrameTick()
             }
             else
             {
-                ShowAnimatedSplash(L10N::GetString(0xab5ed6f8), true, 0);
+                ShowAnimatedSplash(L10N::GetString(IDS_MG03_ROUND_SOLO), true, 0);
             }
         }
         m_resultSplashShown = false;
@@ -1528,7 +1697,7 @@ void UIScene_HUD::updateFrameTick()
                 }
                 else
                 {
-                    showTimedSplash(L10N::GetString(0x58973d2d), 0x3c, 2);
+                    showTimedSplash(L10N::GetString(IDS_MG03_PERSONAL_BEST), 0x3c, 2);
                     m_resultSplashShown = true;
                     m_displayFlag = true;
                 }
@@ -1551,7 +1720,7 @@ void UIScene_HUD::updateFrameTick()
             }
             else
             {
-                showTimedSplash(L10N::GetString(0x58973d2d), 0x3c, 2);
+                showTimedSplash(L10N::GetString(IDS_MG03_PERSONAL_BEST), 0x3c, 2);
                 m_resultSplashShown = true;
                 m_displayFlag = true;
             }

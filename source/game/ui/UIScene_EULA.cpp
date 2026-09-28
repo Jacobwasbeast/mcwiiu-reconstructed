@@ -20,7 +20,7 @@ UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer)
     layer->addComponent(sceneType, EUIScene_Logo, 0);
     m_acceptButton.init(UIString(L10N::GetString(IDS_TOOLTIPS_ACCEPT)), 0);
 
-    std::wstring text(L10N::GetString(0x8ff423f1));
+    std::wstring text(L10N::GetString(IDS_EULA));
     text.append(L"\r\n");
     std::vector<std::wstring> lines;
     std::wstring::size_type start = 0;
@@ -68,12 +68,12 @@ std::wstring UIScene_EULA::getMoviePath()
     return std::wstring(L"EULA");
 }
 
-void UIScene_EULA::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+void UIScene_EULA::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                                bool& handled)
 {
     if (m_ignoreInput)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -83,7 +83,7 @@ void UIScene_EULA::handleInput(int playerId, int action, bool repeat, bool relea
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }

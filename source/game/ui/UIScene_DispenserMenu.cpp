@@ -30,10 +30,8 @@ struct DispenserMenuArgs
 }
 
 UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_dispenserSlot(), m_dispenserLabel(), m_sceneInterface(0)
+    : UIScene_AbstractContainerMenu(type, layer), m_dispenserSlot(), m_dispenserLabel()
 {
-    m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(
-        static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
 
     DispenserMenuArgs* args = static_cast<DispenserMenuArgs*>(data);
@@ -50,7 +48,7 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
         m_dispenserLabel.init(UIString(name));
     }
 
-    m_sceneInterface->m_menu = new TrapMenu(args->inventory, args->container);
+    m_menu = new TrapMenu(args->inventory, args->container);
     m_containerSize = static_cast<int>(args->container->getContainerSize());
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mGameModes[args->player] != 0)
@@ -58,11 +56,11 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
         Tutorial* tutorial = minecraft->mGameModes[args->player]->getTutorial();
         if (tutorial != 0)
         {
-            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_DispenserMenu, this);
         }
     }
-    m_sceneInterface->Initialize(false, args->player, m_sceneInterface->m_menu, true,
+    Initialize(false, args->player, m_menu, true,
                                 m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
                                 IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
     m_dispenserSlot.addSlots(0, 9);
@@ -110,41 +108,41 @@ unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(
 
     if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
-        m_sceneInterface->updateSlotPosition(section, dispenser, state, x, y, 3, 0);
+        updateSlotPosition(section, dispenser, state, x, y, 3, 0);
         return dispenser;
     }
     if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        const bool smallInventory = m_sceneInterface->m_smallInventory != 0;
+        const bool smallInventory = m_smallInventory != 0;
         const IUIScene_AbstractContainerMenu::ESceneSection target =
             smallInventory ? dispenser : inventory;
-        m_sceneInterface->updateSlotPosition(section, target, state, x, y,
+        updateSlotPosition(section, target, state, x, y,
                                              smallInventory ? 3 : 0, 0);
         return target;
     }
     if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
-        m_sceneInterface->updateSlotPosition(section, hotbar, state, x, y, 0, 0);
+        updateSlotPosition(section, hotbar, state, x, y, 0, 0);
         return hotbar;
     }
     if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        m_sceneInterface->updateSlotPosition(section, dispenser, state, x, y, 3, 0);
+        updateSlotPosition(section, dispenser, state, x, y, 3, 0);
         return dispenser;
     }
     if (section == dispenser && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
         const IUIScene_AbstractContainerMenu::ESceneSection target =
-            m_sceneInterface->m_smallInventory ? hotbar : inventory;
-        m_sceneInterface->updateSlotPosition(section, target, state, x, y, -3, 0);
+            m_smallInventory ? hotbar : inventory;
+        updateSlotPosition(section, target, state, x, y, -3, 0);
         return target;
     }
     if (section == dispenser && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        m_sceneInterface->updateSlotPosition(section, hotbar, state, x, y, -3, 0);
+        updateSlotPosition(section, hotbar, state, x, y, -3, 0);
         return hotbar;
     }
-    m_sceneInterface->updateSlotPosition(section, section, state, x, y, 0, 0);
+    updateSlotPosition(section, section, state, x, y, 0, 0);
     return section;
 }
 
@@ -235,7 +233,7 @@ std::wstring UIScene_DispenserMenu::getMoviePath()
 
 void UIScene_DispenserMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true,
+    Initialize(true, m_playerId, m_menu, true,
                                 m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
                                 IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
     m_dispenserSlot.addSlots(0, 9);

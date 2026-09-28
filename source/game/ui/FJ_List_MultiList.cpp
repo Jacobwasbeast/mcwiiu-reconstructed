@@ -1,4 +1,3 @@
-#define private public
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/FJ_ListButton.hpp"
 #include "game/ui/FJ_MenuButton.hpp"
@@ -6,7 +5,6 @@
 #include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_Slider.hpp"
 #include "game/ui/FJ_TextInput.hpp"
-#undef private
 
 #include "game/ui/FJ_List_MultiList.hpp"
 #include "game/ui/FJ_Factory.hpp"

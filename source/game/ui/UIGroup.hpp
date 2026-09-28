@@ -59,7 +59,7 @@ public:
     UIScene* GetTopScene(EUILayer layer);
     bool IsSceneInStack(EUIScene scene);
     bool GetMenuDisplayed();
-    void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
+    void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     UIScene* getCurrentScene(int player);
     void showComponent(int player, EUIScene scene, EUILayer layer, bool show);
     UIScene* addComponent(int player, EUIScene scene, EUILayer layer);
@@ -77,6 +77,11 @@ public:
     bool HasFocus(int player);
     void handleUnlockFullVersion();
     void* getCommandBufferList();
+    UIComponent_Tooltips* getTooltips() { return m_tooltips; }
+    UIComponent_TutorialPopup* getTutorialPopup() { return m_tutorialPopup; }
+    UIComponent_PressStartToPlay* getPressStartToPlay() { return m_pressStartToPlay; }
+    UIScene_HUD* getHUD() { return m_hud; }
+    UIComponent_WiiUDRC* getDRC() { return m_drc; }
 private:
     UILayer* m_layers[EUILayer_Count];
     UIComponent_Tooltips* m_tooltips;

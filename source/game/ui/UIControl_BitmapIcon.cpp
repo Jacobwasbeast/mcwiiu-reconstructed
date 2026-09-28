@@ -11,10 +11,6 @@ UIControl_BitmapIcon::UIControl_BitmapIcon()
     m_textureName = L"";
 }
 
-UIControl_BitmapIcon::~UIControl_BitmapIcon()
-{
-}
-
 void UIControl_BitmapIcon::setTextureName(const std::wstring& textureName, bool immediate)
 {
     m_textureName.assign(textureName, 0, std::wstring::npos);

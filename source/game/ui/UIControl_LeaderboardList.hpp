@@ -7,7 +7,7 @@ class UIControl_LeaderboardList : public UIControl_Base
 {
 public:
     UIControl_LeaderboardList();
-    virtual ~UIControl_LeaderboardList();
+    virtual ~UIControl_LeaderboardList() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
     void clearList();

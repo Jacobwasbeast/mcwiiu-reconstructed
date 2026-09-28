@@ -8,6 +8,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/StringUtils.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -66,18 +67,49 @@ void UIComponent_TutorialPopup::setupIconHolder(EIcons icon)
     m_iconHolder = icon;
 }
 
-void UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item, int itemId,
-                                         int descriptionId, bool showIcon,
-                                         const wchar_t* image)
+std::wstring UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item, int itemId,
+                                                 int auxValue, bool showIcon,
+                                                 const wchar_t* image)
 {
     std::wstring text(image);
     bool usesIconHolderPreset = false;
+    bool parseImage = false;
 
     if (itemId == -1)
     {
         m_showIcon = showIcon;
+        parseImage = item->isEmpty();
+    }
 
-        if (text.find(L"{*CraftingTableIcon*}") != std::wstring::npos)
+    if (parseImage)
+    {
+        m_icon = ItemInstance::EMPTY;
+        std::wstring openTag(L"{*ICON*}");
+        std::wstring closeTag(L"{*/ICON*}");
+        int iconStart = text.find(openTag);
+        int idStart = iconStart + openTag.length();
+        if (iconStart > 0 && idStart < static_cast<int>(text.length()))
+        {
+            int iconEnd = text.find(closeTag, idStart);
+            if (idStart < iconEnd && iconEnd < static_cast<int>(text.length()))
+            {
+                std::wstring idText = text.substr(idStart, iconEnd - idStart);
+                std::vector<std::wstring> idParts = stringSplit(idText, L':');
+                int iconId = _fromString<int>(idParts[0]);
+                int iconAuxValue = 0;
+                if (idParts.size() >= 2)
+                    iconAuxValue = _fromString<int>(idParts[1]);
+                ItemInstance* icon;
+                if (Item::byId(iconId) != 0)
+                    icon = new ItemInstance(Item::byId(iconId), 1);
+                else
+                    icon = new ItemInstance(Block::byId(iconId), 1);
+                icon->setAuxValue(iconAuxValue);
+                m_icon = not_null_ptr<ItemInstance>(icon);
+                text.replace(iconStart, (iconEnd - iconStart) + closeTag.length(), L"");
+            }
+        }
+        else if (text.find(L"{*CraftingTableIcon*}") != std::wstring::npos)
         {
             m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::crafting_table, 1, 0));
         }
@@ -180,26 +212,18 @@ void UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item, int it
         {
             Item* fallbackItem = Item::byId(itemId);
             if (fallbackItem == 0)
-            {
                 m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Block::byId(itemId), 1));
-            }
             else
-            {
                 m_icon = not_null_ptr<ItemInstance>(new ItemInstance(fallbackItem, 1));
-            }
+            m_icon->setAuxValue(auxValue);
         }
     }
 
-    if (!usesIconHolderPreset)
-    {
-        if (!m_icon->isEmpty())
-        {
-            setupIconHolder(EIcons_None);
-        }
-        m_icon->setAuxValue(descriptionId);
-    }
+    if (!usesIconHolderPreset && !m_icon->isEmpty())
+        setupIconHolder(EIcons_None);
 
     m_iconHolderControl.setVisible(usesIconHolderPreset || !m_icon->isEmpty());
+    return text;
 }
 
 std::wstring UIComponent_TutorialPopup::_SetImage(std::wstring& image)
@@ -234,7 +258,7 @@ void UIComponent_TutorialPopup::ParseDescription(int, std::wstring& description)
 
 void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstring& title,
                                                 const std::wstring& description, bool showTitle,
-                                                bool showExitScreenshot, int descriptionId)
+                                                bool showExitScreenshot, int displayTime)
 {
     m_interactScene = scene;
     m_description = description;
@@ -259,7 +283,7 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     }
     else
     {
-        addTimer(0, descriptionId < 0 ? 7000 : descriptionId);
+        addTimer(0, displayTime < 0 ? 7000 : displayTime);
         m_showTitleTimer = showTitle;
         m_showExitScreenshot = showExitScreenshot;
     }
@@ -299,18 +323,16 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
 
 void UIComponent_TutorialPopup::SetTutorialDescription(_TutorialPopupInfo* info)
 {
-    if (info == 0)
-        return;
     m_interactScene = info->scene;
-    std::wstring title(info->title == 0 ? L"" : info->title);
-    std::wstring description(info->description == 0 ? L"" : info->description);
-    _SetIcon(not_null_ptr<ItemInstance>(info->icon.get()), info->iconItemId,
-             info->descriptionId, info->showIcon, title.c_str());
-    title = _SetImage(title);
-    ParseDescription(info->descriptionId, title);
+    std::wstring text = _SetIcon(info->icon, info->iconItemId, info->iconAuxValue, info->showIcon, info->title);
+    text = _SetImage(text);
+    ParseDescription(m_playerId, text);
     std::wstring formattedTitle = gApp.FormatHTMLString(m_playerId, m_title, -1);
-    _SetDescription(info->scene, formattedTitle, description, info->showTitle,
-                    info->showExitScreenshot, info->descriptionId);
+    if (formattedTitle.empty())
+        _SetDescription(info->scene, L"", L"", info->showTitle, info->showExitScreenshot, info->displayTime);
+    else
+        _SetDescription(info->scene, formattedTitle, info->description, info->showTitle,
+                        info->showExitScreenshot, info->displayTime);
 }
 
 void UIComponent_TutorialPopup::RemoveInteractSceneReference(UIScene* scene)

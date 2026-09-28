@@ -17,10 +17,6 @@ FJ_ListButtonCheckbox::FJ_ListButtonCheckbox(fuiRenderNode* renderNode)
     SetKeyDownDelegate(_HandleTriggerCheckBox, this);
 }
 
-FJ_ListButtonCheckbox::~FJ_ListButtonCheckbox()
-{
-}
-
 void FJ_ListButtonCheckbox::SetCheckBox(bool checked)
 {
     FJ_FuiNode* checkBoxTick = getChildByName(std::string("CheckBoxTick"))->asMovieClip();

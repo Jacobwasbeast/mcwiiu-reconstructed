@@ -106,20 +106,25 @@ void UIScene_HelpAndOptionsMenu::handleReload()
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-void UIScene_HelpAndOptionsMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_HelpAndOptionsMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action < EControllerActions_MenuUp)
-        return;
-    if (action == EControllerActions_MenuCancel)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+    switch (action)
     {
-        if (pressed && !released)
+    case EControllerActions_MenuOk:
+        if (pressed)
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        sendInputToMovie(action, repeat, pressed, released);
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+        sendInputToMovie(action, repeat, pressed, released);
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed && !repeat)
             navigateBack();
-        return;
+        break;
     }
-    if (action == EControllerActions_MenuOk && pressed)
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    sendInputToMovie(action, repeat, released, pressed);
 }
 
 void UIScene_HelpAndOptionsMenu::handlePress(int controlId, int)

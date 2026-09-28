@@ -13,7 +13,7 @@ class FJ_LeaderboardEntry : public FJ_FuiNode
 {
 public:
     FJ_LeaderboardEntry(fuiRenderNode* pRenderNode);
-    virtual ~FJ_LeaderboardEntry();
+    virtual ~FJ_LeaderboardEntry() {}
 
     static FJ_LeaderboardEntry* Create(fuiRenderNode* pRenderNode);
 

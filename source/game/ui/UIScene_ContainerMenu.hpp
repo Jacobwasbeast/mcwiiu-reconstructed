@@ -40,7 +40,6 @@ private:
     bool m_largeChest;
     UIControl_SlotList m_containerList;
     UIControl_Label m_chestLabel;
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
 };
 
 #endif

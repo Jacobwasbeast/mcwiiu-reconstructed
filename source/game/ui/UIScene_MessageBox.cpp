@@ -114,19 +114,19 @@ void UIScene_MessageBox::handleReload()
     document->AutoResize();
 }
 
-void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool released,
-                                     bool pressed, bool& handled)
+void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                     bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
-        if (released && m_alert)
+        if (pressed && m_alert)
         {
             navigateBack();
             if (m_callback != 0)

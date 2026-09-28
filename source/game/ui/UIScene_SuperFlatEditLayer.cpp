@@ -580,20 +580,20 @@ UIScene_SuperFlatEditLayer::ESnap UIScene_SuperFlatEditLayer::getSnap(int action
     }
 }
 
-void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuRight:
     case EControllerActions_MenuLeft:
-        if (released && m_moveTicks == 0)
+        if (pressed && m_moveTicks == 0)
             m_pendingSnap = getSnap(action);
         return;
     case EControllerActions_MenuOtherStickUp:
-        if (!released)
+        if (!pressed)
             return;
         m_scrollPage = m_scrollPage - 1 < 0 ? 0 : m_scrollPage - 1;
         updateScrollCurrentPage(m_scrollPage);
@@ -601,7 +601,7 @@ void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repe
             SetPointerText(m_customBlocks->item(getSlotId(m_pointerPosition)));
         break;
     case EControllerActions_MenuOtherStickDown:
-        if (!released)
+        if (!pressed)
             return;
         m_scrollPage = m_scrollPage + 1 > 4 ? 4 : m_scrollPage + 1;
         updateScrollCurrentPage(m_scrollPage);
@@ -610,7 +610,7 @@ void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repe
         break;
     case EControllerActions_MenuOk:
     {
-        if (!released)
+        if (!pressed)
             return;
         int component = getComponentByLocation(m_pointerPosition);
         if (component == 2)
@@ -633,12 +633,12 @@ void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repe
         break;
     }
     case EControllerActions_MenuCancel:
-        if (!released)
+        if (!pressed)
             return;
         exit(EExit_Cancel);
         break;
     default:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         return;
     }
     handled = true;
@@ -686,19 +686,19 @@ void UIScene_SuperFlatEditLayer::customDraw(const char* name, fuiRect* rect)
 }
 
 void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int playerId, int touchX, int touchY,
-                                                  int touchBox, bool repeat, bool released,
-                                                  bool pressed)
+                                                  int touchBox, bool pressed, bool repeat,
+                                                  bool released)
 {
     if (touchBox == 4)
     {
-        if (repeat || released)
+        if (pressed || repeat)
         {
             setNewPointerPos(static_cast<float>(touchX) - m_mainPanel.getXPos(),
                              static_cast<float>(touchY) - m_mainPanel.getYPos());
         }
         else
         {
-            if (!pressed)
+            if (!released)
                 return;
             not_null_ptr<ItemInstance> item = m_customBlocks->item(getSlotId(m_pointerPosition));
             if (!item->isEmpty())
@@ -717,7 +717,7 @@ void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int playerId, int tou
         }
     }
 
-    if (released && touchBox == 3)
+    if (repeat && touchBox == 3)
     {
         float position = (static_cast<float>(touchY) - m_sliderTouch.getYPos() - m_mainPanel.getYPos()) /
                          m_sliderTouch.getHeight();

@@ -9,10 +9,6 @@ FJ_ListButtonDLC::FJ_ListButtonDLC(fuiRenderNode* renderNode)
     m_tickNode->setVisible(false);
 }
 
-FJ_ListButtonDLC::~FJ_ListButtonDLC()
-{
-}
-
 void FJ_ListButtonDLC::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);

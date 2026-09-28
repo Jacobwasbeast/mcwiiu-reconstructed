@@ -175,7 +175,7 @@ const wchar_t* fuiRenderNodeEditText::parseHTMLString(const wchar_t* text, std::
     }
     if (*text == L'<')
         return getHtmlTag(text, result);
-    result->assign(L"", 0);
+    *result = L"";
     return text;
 }
 
@@ -641,9 +641,9 @@ bool fuiRenderNodeEditText::renderWord(std::wstring& word, RenderStringStateData
 
 void fuiRenderNodeEditText::renderString(const std::wstring& text, RenderStringStateData& state)
 {
-    m_tag.assign(L"", 0);
-    m_attribute.assign(L"", 0);
-    m_word.assign(L"", 0);
+    m_tag = L"";
+    m_attribute = L"";
+    m_word = L"";
 
     const wchar_t* cursor = text.c_str();
     if (!state.measure)

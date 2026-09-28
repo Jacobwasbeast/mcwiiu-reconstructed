@@ -10,6 +10,23 @@ class INetworkPlayer;
 class UIScene_InGamePlayerOptionsMenu : public UIScene
 {
 public:
+    enum EPlayerOption
+    {
+        ePlayerOption_BuildAndMine,
+        ePlayerOption_UseDoorsAndSwitches,
+        ePlayerOption_OpenContainers,
+        ePlayerOption_AttackPlayers,
+        ePlayerOption_AttackAnimals,
+        ePlayerOption_Moderator,
+        ePlayerOption_Teleport,
+        ePlayerOption_Fly,
+        ePlayerOption_DisableExhaustion,
+        ePlayerOption_Invisible,
+        ePlayerOption_Kick,
+        ePlayerOption_GameMode,
+        ePlayerOption_SetSpawn
+    };
+
     UIScene_InGamePlayerOptionsMenu(int sceneType, void* data, UILayer* layer);
     void resetCheatCheckboxes();
     static void OnPlayerChanged(void* context, INetworkPlayer* player, bool added);
@@ -20,7 +37,7 @@ public:
     virtual void tick();
     virtual void handleTimerComplete(int timerId);
     virtual void updateTooltips();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleDestroy();
     virtual void handleReload();

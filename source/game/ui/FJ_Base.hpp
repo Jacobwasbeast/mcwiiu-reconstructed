@@ -42,7 +42,7 @@ public:
     uint64_t DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
     uint64_t DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
     virtual void SetLabel(const std::wstring& label);
-    int GetLabel();
+    const std::wstring& GetLabel();
     void SetTextOnly(const std::wstring& text);
     virtual void GetLabelTooWide(fuiRenderNodeEditText* textField);
     virtual void SetNewObjectWidth(int width);
@@ -50,6 +50,8 @@ public:
     virtual void HandleCharInput(unsigned int character);
     virtual uint32_t getType();
 protected:
+    friend class FJ_BookAndQuillMenu;
+
     std::string m_navLinkName[4];
     int m_id;
     int m_labelAlignment;

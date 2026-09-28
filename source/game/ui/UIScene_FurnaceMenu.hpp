@@ -42,7 +42,6 @@ public:
     virtual int getSceneType();
 
 private:
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
     boost::shared_ptr<Container> m_container;
     UIControl_SlotList m_fuelSlot;
     UIControl_SlotList m_ingredientSlot;

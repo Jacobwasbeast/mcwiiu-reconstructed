@@ -26,13 +26,11 @@ struct UIScene_BrewingStandMenuData
 };
 
 UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_container(),
+    : UIScene_AbstractContainerMenu(type, layer), m_container(),
       m_bottleSlots(), m_ingredientSlot(), m_brewingPlate(), m_brewingStandLabel(),
       m_brewingArrow(), m_brewingBubbles(), m_brewingPlateBar()
 {
     UIScene_BrewingStandMenuData* sceneData = static_cast<UIScene_BrewingStandMenuData*>(data);
-    m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(
-        static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
     m_brewingArrow.init(UIString(L""), 0, 0, 400, 0);
     m_brewingBubbles.init(UIString(L""), 0, 0, 30, 0);
@@ -49,13 +47,13 @@ UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
         if (tutorial != 0)
         {
-            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_BrewingMenu, this);
         }
     }
 
     BrewingStandMenu* menu = new BrewingStandMenu(sceneData->inventory, sceneData->container);
-    m_sceneInterface->Initialize(false, sceneData->playerIndex, menu, true, 5,
+    Initialize(false, sceneData->playerIndex, menu, true, 5,
                                  IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
     m_bottleSlots[0].addSlots(0, 1);
@@ -90,7 +88,7 @@ unsigned int UIScene_BrewingStandMenu::getSectionRows(
         section > IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel)
         return 0;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory)
-        return m_sceneInterface->GetInventoryRows();
+        return GetInventoryRows();
     return 1;
 }
 
@@ -112,7 +110,7 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (m_sceneInterface->m_smallInventory == 0)
+            if (m_smallInventory == 0)
                 target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             else if (*x > 1)
                 target = *x < 4 ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1 :
@@ -140,7 +138,7 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_sceneInterface->m_smallInventory != 0 ?
+            target = m_smallInventory != 0 ?
                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar :
                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             dx = -3;
@@ -155,7 +153,7 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_sceneInterface->m_smallInventory != 0 ?
+            target = m_smallInventory != 0 ?
                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar :
                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             dx = -4;
@@ -170,7 +168,7 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_sceneInterface->m_smallInventory != 0 ?
+            target = m_smallInventory != 0 ?
                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar :
                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             dx = -5;
@@ -204,7 +202,7 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
     default:
         break;
     }
-    m_sceneInterface->updateSlotPosition(section, target, state, x, y, dx, 0);
+    updateSlotPosition(section, target, state, x, y, dx, 0);
     return target;
 }
 
@@ -314,7 +312,7 @@ std::wstring UIScene_BrewingStandMenu::getMoviePath()
 
 void UIScene_BrewingStandMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_playerId, m_menu, true, 5,
+    Initialize(true, m_playerId, m_menu, true, 5,
                                  IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
     m_ingredientSlot.addSlots(3, 1);

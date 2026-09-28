@@ -12,7 +12,7 @@ class FJ_Slider : public FJ_Base
 {
 public:
     explicit FJ_Slider(fuiRenderNode* renderNode);
-    virtual ~FJ_Slider();
+    virtual ~FJ_Slider() {}
     uint8_t getEnabled();
     uint32_t getSliderCurrent();
     virtual int getOldWidth();

@@ -7,10 +7,6 @@ FJ_BeaconEffectButton::FJ_BeaconEffectButton(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_BeaconEffectButton::~FJ_BeaconEffectButton()
-{
-}
-
 void FJ_BeaconEffectButton::ChangeState(int state)
 {
     static const char* stateLabels[] = {"Default", "Active", "Focused", "Selected"};

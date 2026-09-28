@@ -2,12 +2,13 @@
 #define GAME_UI_UICOMPONENT_TOOLTIPS_HPP
 
 #include <string>
+
+#include "game/core/GameSettings.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UIControl_Touch.hpp"
 
 class UILayer;
-enum EControllerActions : int;
 
 class UIComponent_Tooltips : public UIScene
 {
@@ -30,12 +31,12 @@ public:
     UIComponent_Tooltips(int sceneType, void* data, UILayer* layer);
     virtual ~UIComponent_Tooltips();
 
-    void overrideSFX(int first, int second, bool enabled);
+    void overrideSFX(int pad, int action, bool enabled);
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();
     virtual double getSafeZoneHalfWidth();
     virtual void updateSafeZone();
-    void _SetTooltip(unsigned int index, int type, int subtype, const UIString& text,
+    void _SetTooltip(unsigned int index, int type, int subtype, UIString text,
                      bool enabled, bool force);
     void _Relayout();
     virtual void tick();
@@ -59,10 +60,10 @@ public:
     virtual void EnableTooltip(unsigned int player, bool enabled);
     virtual bool IsToolTipDynamic(unsigned int player, EControllerActions& action);
     virtual void handleReload();
-    virtual void handleInput(int player, int action, bool repeat, bool released,
-                             bool pressed, bool& handled);
+    virtual void handleInput(int player, int action, bool repeat, bool pressed,
+                             bool released, bool& handled);
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool repeat, bool released, bool pressed);
+                                  bool pressed, bool repeat, bool released);
     virtual int getSceneType();
     virtual bool stealsFocus();
     virtual bool hasFocus(int sceneType);
@@ -70,16 +71,10 @@ public:
 
 private:
     bool m_splitTooltips;
-    bool m_tooltipsEnabled;
-    int m_controllerType;
-    UILayer* m_tooltipLayer;
-    int m_safeZoneWidth;
-    int m_safeZoneHeight;
-    bool m_touchVisible;
-    int m_activeTooltip;
     _TooltipValues m_tooltipValues[16];
+    int m_controllerType;
     UIControl_Touch m_touchControls[16];
-    unsigned char m_touchState[212];
+    bool m_overrideSFX[4][23];
 };
 
 #endif

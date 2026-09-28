@@ -14,10 +14,6 @@ FJ_Slider::FJ_Slider(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Slider::~FJ_Slider()
-{
-}
-
 uint8_t FJ_Slider::getEnabled()
 {
     return m_enabled;

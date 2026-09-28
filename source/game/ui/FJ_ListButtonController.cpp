@@ -5,10 +5,6 @@ FJ_ListButtonController::FJ_ListButtonController(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ListButtonController::~FJ_ListButtonController()
-{
-}
-
 double FJ_ListButtonController::getOriginalHeight()
 {
     return static_cast<double>(m_originalHeight);

@@ -15,10 +15,6 @@ UIControl_HTMLLabel::UIControl_HTMLLabel()
 {
 }
 
-UIControl_HTMLLabel::~UIControl_HTMLLabel()
-{
-}
-
 int UIControl_HTMLLabel::GetRealWidth()
 {
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();

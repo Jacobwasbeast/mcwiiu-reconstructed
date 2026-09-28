@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_AvatarSelectMenu.hpp"
+#include "game/core/StringIds.hpp"
 #include <cwchar>
 #include <cstring>
 #include <string>
@@ -18,10 +19,8 @@ extern CInput* g_pInput;
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 
-static unsigned int s_avatarSelectSignInMask = 0;
-
 UIScene_AvatarSelectMenu::TabControls::TabControls()
-    : UIControl(), m_list(), m_title(), m_timer(), m_miis()
+    : m_tab(), m_list(), m_title(), m_timer(), m_miis()
 {
 }
 
@@ -31,69 +30,80 @@ void UIScene_AvatarSelectMenu::TabControls::ShowTimer(bool show)
 }
 
 UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILayer* layer)
-    : UIScene(player, layer), m_userTabTouch(), m_favouriteTabTouch(), m_guestTabTouch(),
-      m_currentTab(0), m_initialised(false), m_unknown1(false), m_navigateBack(false),
-      m_userControls(), m_favouriteControls(), m_guestControls(), m_miisAdded(false),
-      m_userFocus(0), m_favouriteFocus(0), m_guestFocus(0), m_pad(0), m_choice(0), m_activeTab(0)
+    : UIScene(player, layer), m_userTabTouch(), m_favouriteTabTouch(), m_guestTabTouch(), m_userControls(),
+      m_favouriteControls(), m_guestControls()
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
+    m_userControls.m_owner = this;
+    m_pad = player;
+    m_guestControls.m_owner = this;
+    m_favouriteControls.m_owner = this;
     m_userControls.m_list.init(0);
     m_favouriteControls.m_list.init(1);
     m_guestControls.m_list.init(2);
     m_userControls.m_title.init(UIString(0xc835d6e5));
-    m_favouriteControls.m_title.init(UIString(0x9917e6e4));
-    m_guestControls.m_title.init(UIString(0x9dba0db5));
+    m_favouriteControls.m_title.init(UIString(IDS_FAVOURITE_MIIS));
+    m_guestControls.m_title.init(UIString(IDS_GUEST_MIIS));
     m_userControls.m_timer.setVisible(false);
     m_favouriteControls.m_timer.setVisible(false);
     m_guestControls.m_timer.setVisible(false);
-    for (int i = 0; i < 4; ++i)
+    m_miisAdded = false;
+    m_initialised = false;
+    m_unknown1 = false;
+    m_navigateBack = false;
+    m_currentTab = 0;
+
+    int choice = 0;
+    for (int pad = 0; pad < 4; ++pad)
     {
-        if (gProfile->IsSignedIn(i))
+        if (!gProfile->IsSignedIn(pad))
         {
-            m_pad = i;
-            m_choice = i;
-            gConsoleUIController.HidePressStart();
-            m_userTabTouch.init(3);
-            m_favouriteTabTouch.init(4);
-            m_guestTabTouch.init(5);
-            gConsoleUIController.TouchBoxRebuild(this);
+            choice = pad;
             break;
         }
     }
+    m_choice = choice;
+    gConsoleUIController.m_pressStartBlocked |= 1 << m_choice;
+    gConsoleUIController.HidePressStart();
+    m_userTabTouch.init(3);
+    m_favouriteTabTouch.init(4);
+    m_guestTabTouch.init(5);
+    gConsoleUIController.TouchBoxRebuild(this);
+    m_activeTab = 0;
 }
 
 UIScene_AvatarSelectMenu::~UIScene_AvatarSelectMenu()
 {
-    s_avatarSelectSignInMask &= ~(1 << m_choice);
+    gConsoleUIController.m_pressStartBlocked &= ~(1 << m_choice);
 }
 
 unsigned int UIScene_AvatarSelectMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_userControls.setupControl(this, root, "UserTab");
-    m_controls.push_back(&m_userControls);
-    m_userControls.m_list.setupControl(this, m_userControls.getFuiRenderNode(), "UserList");
+    m_userControls.m_tab.setupControl(this, root, "UserTab");
+    m_controls.push_back(&m_userControls.m_tab);
+    m_userControls.m_list.setupControl(this, m_userControls.m_tab.getFuiRenderNode(), "UserList");
     m_controls.push_back(&m_userControls.m_list);
-    m_userControls.m_timer.setupControl(this, m_userControls.getFuiRenderNode(), "UserTimer");
+    m_userControls.m_timer.setupControl(this, m_userControls.m_tab.getFuiRenderNode(), "UserTimer");
     m_controls.push_back(&m_userControls.m_timer);
-    m_userTabTouch.setupControl(this, m_userControls.getFuiRenderNode(), "TouchTabUser");
+    m_userTabTouch.setupControl(this, m_userControls.m_tab.getFuiRenderNode(), "TouchTabUser");
     m_controls.push_back(&m_userTabTouch);
-    m_favouriteControls.setupControl(this, root, "FavouriteTab");
-    m_controls.push_back(&m_favouriteControls);
-    m_favouriteControls.m_list.setupControl(this, m_favouriteControls.getFuiRenderNode(), "FavouriteList");
+    m_favouriteControls.m_tab.setupControl(this, root, "FavouriteTab");
+    m_controls.push_back(&m_favouriteControls.m_tab);
+    m_favouriteControls.m_list.setupControl(this, m_favouriteControls.m_tab.getFuiRenderNode(), "FavouriteList");
     m_controls.push_back(&m_favouriteControls.m_list);
-    m_favouriteControls.m_timer.setupControl(this, m_favouriteControls.getFuiRenderNode(), "FavouriteTimer");
+    m_favouriteControls.m_timer.setupControl(this, m_favouriteControls.m_tab.getFuiRenderNode(), "FavouriteTimer");
     m_controls.push_back(&m_favouriteControls.m_timer);
-    m_favouriteTabTouch.setupControl(this, m_favouriteControls.getFuiRenderNode(), "TouchTabFavourite");
+    m_favouriteTabTouch.setupControl(this, m_favouriteControls.m_tab.getFuiRenderNode(), "TouchTabFavourite");
     m_controls.push_back(&m_favouriteTabTouch);
-    m_guestControls.setupControl(this, root, "GuestTab");
-    m_controls.push_back(&m_guestControls);
-    m_guestControls.m_list.setupControl(this, m_guestControls.getFuiRenderNode(), "GuestTabList");
+    m_guestControls.m_tab.setupControl(this, root, "GuestTab");
+    m_controls.push_back(&m_guestControls.m_tab);
+    m_guestControls.m_list.setupControl(this, m_guestControls.m_tab.getFuiRenderNode(), "GuestTabList");
     m_controls.push_back(&m_guestControls.m_list);
-    m_guestControls.m_timer.setupControl(this, m_guestControls.getFuiRenderNode(), "GuestTimer");
+    m_guestControls.m_timer.setupControl(this, m_guestControls.m_tab.getFuiRenderNode(), "GuestTimer");
     m_controls.push_back(&m_guestControls.m_timer);
-    m_guestTabTouch.setupControl(this, m_guestControls.getFuiRenderNode(), "TouchTabGuest");
+    m_guestTabTouch.setupControl(this, m_guestControls.m_tab.getFuiRenderNode(), "TouchTabGuest");
     m_controls.push_back(&m_guestTabTouch);
     m_userControls.m_title.setupControl(this, root, "UserTabTitle");
     m_controls.push_back(&m_userControls.m_title);
@@ -169,11 +179,11 @@ unsigned int UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
     return 0;
 }
 
-void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    if (m_initialised || !released)
+    if (m_initialised || !pressed)
         return;
-    gConsoleUIController.AnimateKeyPress(m_pad, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_pad, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -181,7 +191,7 @@ void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool re
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     default:
@@ -192,19 +202,28 @@ void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool re
 
 void UIScene_AvatarSelectMenu::handleFocusChange(int focus, int childFocus)
 {
-    if (focus == 0) m_userFocus = childFocus;
-    else if (focus == 1) m_favouriteFocus = childFocus;
-    else if (focus == 2) m_guestFocus = childFocus;
-    else updateTooltips();
+    switch (focus)
+    {
+    case 0:
+        m_userFocus = childFocus;
+        break;
+    case 1:
+        m_favouriteFocus = childFocus;
+        break;
+    case 2:
+        m_guestFocus = childFocus;
+        break;
+    }
+    updateTooltips();
 }
 
 void UIScene_AvatarSelectMenu::handleInitFocus(int, int) {}
 
 void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY,
-                                               int touchBox, bool repeat, bool released,
-                                               bool pressed)
+                                               int touchBox, bool pressed, bool repeat,
+                                               bool released)
 {
-    if (repeat && touchBox > 2 && touchBox < 6 && m_activeTab != touchBox - 3)
+    if (pressed && touchBox > 2 && touchBox < 6 && m_activeTab != touchBox - 3)
     {
         m_activeTab = touchBox - 3;
         updateTooltips();
@@ -214,9 +233,9 @@ void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touch
 
 UIControl* UIScene_AvatarSelectMenu::GetMainPanel()
 {
-    if (m_activeTab == 1) return &m_favouriteControls;
-    if (m_activeTab == 2) return &m_guestControls;
-    return &m_userControls;
+    if (m_activeTab == 1) return &m_favouriteControls.m_tab;
+    if (m_activeTab == 2) return &m_guestControls.m_tab;
+    return &m_userControls.m_tab;
 }
 
 void UIScene_AvatarSelectMenu::tick()
@@ -244,11 +263,21 @@ std::wstring UIScene_AvatarSelectMenu::getMoviePath() { return std::wstring(L"Av
 
 void UIScene_AvatarSelectMenu::handlePress(int controlId, int childId)
 {
-    MiiDataEntry* mii = NULL;
-    if (controlId == 0 && childId >= 0 && childId < (int)m_userControls.m_miis.size()) mii = m_userControls.m_miis[childId];
-    else if (controlId == 1 && childId >= 0 && childId < (int)m_favouriteControls.m_miis.size()) mii = m_favouriteControls.m_miis[childId];
-    else if (controlId == 2 && childId >= 0 && childId < (int)m_guestControls.m_miis.size()) mii = m_guestControls.m_miis[childId];
-    gApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
+    switch (controlId)
+    {
+    case 0:
+        gApp.RequestSignInUIWiiUReturnedSelected(m_userControls.m_miis[childId], m_choice, m_pad);
+        break;
+    case 1:
+        gApp.RequestSignInUIWiiUReturnedSelected(m_favouriteControls.m_miis[childId], m_choice, m_pad);
+        break;
+    case 2:
+        gApp.RequestSignInUIWiiUReturnedSelected(m_guestControls.m_miis[childId], m_choice, m_pad);
+        break;
+    default:
+        gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
+        break;
+    }
     navigateBack();
 }
 

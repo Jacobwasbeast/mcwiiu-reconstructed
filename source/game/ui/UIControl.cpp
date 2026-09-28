@@ -3,23 +3,13 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl::UIControl()
-    : m_controlId(0),
-      m_controlType(eUIControlType_Unknown),
-      m_flag(false),
-      m_name("buckets_"),
+    : m_controlType(eUIControlType_Unknown),
+      m_removed(false),
+      m_name(""),
       m_fuiRenderNode(0),
       m_scene(0),
-      m_x(0.0f),
-      m_y(0.0f),
-      m_width(0.0f),
-      m_height(0.0f),
       m_opacity(1.0f),
-      m_visible(true),
-      m_renderState(false)
-{
-}
-
-UIControl::~UIControl()
+      m_visible(true)
 {
 }
 
@@ -36,24 +26,24 @@ void UIControl::setVisible(bool visible)
     }
 }
 
-double UIControl::getWidth()
+float UIControl::getWidth()
 {
-    return (double)m_width;
+    return m_width;
 }
 
-double UIControl::getHeight()
+float UIControl::getHeight()
 {
-    return (double)m_height;
+    return m_height;
 }
 
-double UIControl::getXPos()
+float UIControl::getXPos()
 {
-    return (double)m_x;
+    return m_x;
 }
 
-double UIControl::getYPos()
+float UIControl::getYPos()
 {
-    return (double)m_y;
+    return m_y;
 }
 
 bool UIControl::getVisible()
@@ -143,7 +133,7 @@ UIControl& UIControl::operator=(const UIControl& other)
 {
     m_controlType = other.m_controlType;
     m_controlId = other.m_controlId;
-    m_flag = other.m_flag;
+    m_removed = other.m_removed;
     m_name = other.m_name;
     m_fuiRenderNode = other.m_fuiRenderNode;
     m_scene = other.m_scene;

@@ -24,8 +24,8 @@
 #include "platform/wiiu/CInput.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/StringUtils.hpp"
+#include "game/core/XLanguage.hpp"
 
-extern unsigned int XGetLanguage();
 extern std::wstring _toString(int value);
 extern ConsoleUIController gConsoleUIController;
 
@@ -43,7 +43,7 @@ UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer
 
     wchar_t signButtonLabels[2][256];
     wchar_t doneButtonLabels[2][256];
-    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(0xdb6de516));
+    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
     swprintf(signButtonLabels[1], 256, L"%ls", L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE));
     m_signButton.setAllPossibleLabels(0, 2, signButtonLabels);
     swprintf(doneButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_DONE));
@@ -55,7 +55,7 @@ UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer
     if (!m_canEdit)
         SetBookIsSigned();
     else
-        m_signButton.init(UIString(L10N::GetString(0xdb6de516)), 0);
+        m_signButton.init(UIString(L10N::GetString(IDS_TITLE_BOOK_SIGN)), 0);
     m_pageLabel.init(UIString(L""));
 
     doHorizontalResizeCheck();
@@ -103,7 +103,7 @@ unsigned int UIScene_WritableBookMenu::mapElementsAndNames()
 
 void UIScene_WritableBookMenu::HandleFontSizeOverride()
 {
-    if (XGetLanguage() == 0x11 && !gRenderer->IsWidescreen())
+    if (XGetLanguage() == XC_LANGUAGE_ZH_HANS && !gRenderer->IsWidescreen())
     {
         FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
         menu->SetFontSizeOverride(11);
@@ -232,7 +232,7 @@ void UIScene_WritableBookMenu::handlePreReload()
     wchar_t signButtonLabels[2][256];
     wchar_t doneButtonLabels[2][256];
 
-    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(0xdb6de516));
+    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
     swprintf(signButtonLabels[1], 256, L"%ls", L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE));
     m_signButton.setAllPossibleLabels(0, 2, signButtonLabels);
 
@@ -307,7 +307,7 @@ void UIScene_WritableBookMenu::OnStopSigning()
 {
     m_signing = false;
     m_pageLabel.setVisible(true);
-    m_signButton.setLabel(UIString(L10N::GetString(0xdb6de516)), false, false);
+    m_signButton.setLabel(UIString(L10N::GetString(IDS_TITLE_BOOK_SIGN)), false, false);
     m_doneButton.setLabel(UIString(L10N::GetString(IDS_DONE)), false, false);
     doHorizontalResizeCheck();
     m_caretPosition = static_cast<int>(m_pageText.size());
@@ -502,15 +502,15 @@ void UIScene_WritableBookMenu::ScrollPageRight()
     updateTooltips();
 }
 
-void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuRight:
         if (GetBookHasFocus())
         {
-            if (!released && !repeat)
+            if (!pressed && !repeat)
                 return;
             int caret = m_caretPosition;
             if (!m_unused)
@@ -531,12 +531,12 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
             SetCaretPosition(m_caretPosition);
             break;
         }
-        UIScene::sendInputToMovie(action, repeat, released, pressed);
+        UIScene::sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuLeft:
         if (GetBookHasFocus())
         {
-            if (!released && !repeat)
+            if (!pressed && !repeat)
                 return;
             int caret = m_caretPosition - 1;
             if (caret > -1)
@@ -546,24 +546,24 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
             SetCaretPosition(m_caretPosition);
             break;
         }
-        UIScene::sendInputToMovie(action, repeat, released, pressed);
+        UIScene::sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
-        UIScene::sendInputToMovie(action, repeat, released, pressed);
+        UIScene::sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuRightScroll:
-        if (released)
+        if (pressed)
             ScrollPageRight();
         break;
     case EControllerActions_MenuLeftScroll:
-        if (released)
+        if (pressed)
             ScrollPageLeft();
         break;
     case EControllerActions_MenuOk:
-        if (!released)
+        if (!pressed)
             return;
         if (!GetBookHasFocus())
         {
@@ -596,7 +596,7 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
         }
         break;
     case EControllerActions_MenuCancel:
-        if (!released)
+        if (!pressed)
             return;
         HandleCancel();
         break;
@@ -606,10 +606,10 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
     handled = true;
 }
 
-void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int action, int, int, bool, bool, bool pressed)
+void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool, bool, bool released)
 {
-    if (!pressed) return;
-    if (action == 2)
+    if (!released) return;
+    if (touchBox == 2)
     {
         if (m_canEdit)
         {
@@ -625,8 +625,8 @@ void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int action, int, i
         }
         return;
     }
-    if (action == 3) ScrollPageLeft();
-    else if (action == 4) ScrollPageRight();
+    if (touchBox == 3) ScrollPageLeft();
+    else if (touchBox == 4) ScrollPageRight();
 }
 
 void UIScene_WritableBookMenu::SetFocusToElement(int focus)

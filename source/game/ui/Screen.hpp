@@ -15,7 +15,7 @@ class Screen : public GuiComponent
 {
 public:
     Screen();
-    virtual ~Screen();
+    virtual ~Screen() {}
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

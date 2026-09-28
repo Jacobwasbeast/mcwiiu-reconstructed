@@ -7,7 +7,7 @@ class UIControl_SlotList : public UIControl_Base
 {
 public:
     UIControl_SlotList();
-    virtual ~UIControl_SlotList();
+    virtual ~UIControl_SlotList() {}
     void addSlot(unsigned int slot);
     void addSlots(unsigned int firstSlot, int count);
     void setSlotHighlighted(int slot, bool highlighted);

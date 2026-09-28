@@ -9,9 +9,10 @@ class fuiRenderNode;
 class FJ_ListButton : public FJ_Button
 {
     friend class fuiRenderNodeTimeline;
+    friend class FJ_List_MultiList;
 public:
     explicit FJ_ListButton(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButton();
+    virtual ~FJ_ListButton() {}
 
     virtual void Init(const std::wstring& name, int id);
     void UseEllipsis(bool useEllipsis);

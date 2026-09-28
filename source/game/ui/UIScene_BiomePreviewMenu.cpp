@@ -451,14 +451,14 @@ void UIScene_BiomePreviewMenu::handleNavigate(ENavDir direction)
     }
 }
 
-void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                            bool pressed, bool& handled)
+void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                            bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuX:
-        if (released)
+        if (pressed)
         {
             EnterCriticalSection(&mCriticalSection);
             mOverrideSettings.GenerateNewSeed();
@@ -474,33 +474,33 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         }
         break;
     case EControllerActions_MenuUp:
-        if (released)
+        if (pressed)
         {
             handleNavigate(NAV_UP);
             handled = true;
         }
         break;
     case EControllerActions_MenuDown:
-        if (released)
+        if (pressed)
         {
             handleNavigate(NAV_DOWN);
             handled = true;
         }
         break;
     case EControllerActions_MenuRight:
-        if (released)
+        if (pressed)
             handleNavigate(NAV_RIGHT);
         handled = true;
         break;
     case EControllerActions_MenuLeft:
-        if (released)
+        if (pressed)
         {
             handleNavigate(NAV_LEFT);
             handled = true;
         }
         break;
     case EControllerActions_MenuPageUp:
-        if (!released)
+        if (!pressed)
             return;
         if (!repeat)
         {
@@ -511,7 +511,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         handled = true;
         break;
     case EControllerActions_MenuPageDown:
-        if (!released)
+        if (!pressed)
             return;
         if (!repeat)
         {
@@ -522,7 +522,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         handled = true;
         break;
     case EControllerActions_MenuRightScroll:
-        if (!released)
+        if (!pressed)
             return;
         if (!repeat)
         {
@@ -533,7 +533,7 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         handled = true;
         break;
     case EControllerActions_MenuLeftScroll:
-        if (!released)
+        if (!pressed)
             return;
         if (!repeat)
         {
@@ -544,14 +544,14 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
         handled = true;
         break;
     case EControllerActions_MenuOk:
-        if (released)
+        if (pressed)
         {
             navigateBack();
             handled = true;
         }
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             navigateBack();
             handled = true;

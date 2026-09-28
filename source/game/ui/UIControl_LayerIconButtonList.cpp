@@ -9,10 +9,6 @@ UIControl_LayerIconButtonList::UIControl_LayerIconButtonList()
 {
 }
 
-UIControl_LayerIconButtonList::~UIControl_LayerIconButtonList()
-{
-}
-
 void UIControl_LayerIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
     const std::string& name)
 {

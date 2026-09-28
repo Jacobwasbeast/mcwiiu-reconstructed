@@ -12,7 +12,7 @@ class UIControl_ButtonList : public UIControl_List
 {
 public:
     UIControl_ButtonList();
-    virtual ~UIControl_ButtonList();
+    virtual ~UIControl_ButtonList() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addItem(const std::wstring& label, int index);
     void addItem(const std::wstring& label);

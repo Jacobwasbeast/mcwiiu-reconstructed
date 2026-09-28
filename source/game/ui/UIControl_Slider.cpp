@@ -20,10 +20,6 @@ UIControl_Slider::UIControl_Slider()
     m_minimum = 0;
 }
 
-UIControl_Slider::~UIControl_Slider()
-{
-}
-
 void UIControl_Slider::init(UIString label, int controlId, int minimum, int maximum, int value,
                             bool repeat, int repeatDelay, int repeatStep)
 {

@@ -36,7 +36,6 @@ public:
     virtual void handleTimerComplete(int timerId);
     virtual int getSceneType();
 private:
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
     int* m_effectDurations;
     UIControl_SlotList m_armorList;
     UIControl_SlotList m_craftingList;

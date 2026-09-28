@@ -14,10 +14,6 @@ UIControl_SpaceIndicatorBar::UIControl_SpaceIndicatorBar()
 {
 }
 
-UIControl_SpaceIndicatorBar::~UIControl_SpaceIndicatorBar()
-{
-}
-
 void UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Progress;

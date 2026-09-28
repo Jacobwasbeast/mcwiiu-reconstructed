@@ -8,10 +8,6 @@ FJ_MenuButton::FJ_MenuButton(fuiRenderNode* renderNode)
 {
 }
 
-FJ_MenuButton::~FJ_MenuButton()
-{
-}
-
 void FJ_MenuButton::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(2);

@@ -3,6 +3,7 @@
 #include <string>
 
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 
 FJ_HtmlText_WithPanel_Small::~FJ_HtmlText_WithPanel_Small()
 {

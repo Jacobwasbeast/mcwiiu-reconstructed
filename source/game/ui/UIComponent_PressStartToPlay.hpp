@@ -32,9 +32,9 @@ public:
 
     UIComponent_PressStartToPlay(int type, void* data, UILayer* layer);
     virtual ~UIComponent_PressStartToPlay();
-    unsigned int GetAchievementToastShowing(int player);
-    unsigned char GetHoldToShowAchievementsActive(bool includeCancelled);
-    unsigned int handleHold(int player, int action, bool repeat, bool released, bool pressed,
+    bool GetAchievementToastShowing(int player);
+    bool GetHoldToShowAchievementsActive(bool includeCancelled);
+    unsigned int handleHold(int player, int action, bool repeat, bool pressed, bool released,
                             bool& handled);
     void HideChestRefillAnimation();
     void ResetUIComponents();
@@ -48,8 +48,8 @@ public:
     void registerTexture(int achievement);
     void ShowAchievementToast(const Toast& toast);
     static int AvatarReturned(void* context, unsigned char* data, unsigned int size);
-    void SetAchievementUnlocked(int achievement, int player);
-    unsigned char GetHoldActionCancelled(int player);
+    void SetAchievementUnlocked(int player, int achievement);
+    bool GetHoldActionCancelled(int player);
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();
     virtual void handleReload();
@@ -76,12 +76,12 @@ private:
     UIControl_Label m_playerNameLabel;
     UIControl m_saveIcon;
     UIControl m_mainPanel;
-    int m_player;
-    bool m_achievementToastShowing;
     int m_achievement;
+    bool m_achievementToastShowing;
+    int m_player;
     bool m_holdToShowAchievements;
     bool m_holdActionCancelled;
-    bool m_holdToShowAchievementsActive;
+    bool m_holdCancelPending;
     std::vector<Toast> m_achievementToasts;
 };
 

@@ -13,14 +13,16 @@ class UILayer;
 class UIScene_AvatarSelectMenu : public UIScene
 {
 public:
-    class TabControls : public UIControl
+    class TabControls
     {
     public:
         TabControls();
         virtual void ShowTimer(bool show);
+        UIControl m_tab;
         UIControl_SaveList m_list;
         UIControl_Label m_title;
         UIControl m_timer;
+        UIScene_AvatarSelectMenu* m_owner;
         std::vector<MiiDataEntry*> m_miis;
     };
 
@@ -34,10 +36,10 @@ public:
     virtual void handleGainFocus(bool hadFocus);
     virtual void handleTimerComplete(int timerId);
     unsigned int handleKeyDown(int player, int action, bool repeat);
-    virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleInitFocus(int focus, int childFocus);
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool repeat, bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed, bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual void tick();
     virtual std::wstring getMoviePath();

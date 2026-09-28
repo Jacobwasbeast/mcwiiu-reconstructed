@@ -14,7 +14,7 @@ class FJ_ListButtonAchievement : public FJ_Base
 {
 public:
     FJ_ListButtonAchievement(fuiRenderNode* pRenderNode);
-    virtual ~FJ_ListButtonAchievement();
+    virtual ~FJ_ListButtonAchievement() {}
 
     void EnableButton(bool enabled);
     void focusInHandler(FJ_Event* pEvent);

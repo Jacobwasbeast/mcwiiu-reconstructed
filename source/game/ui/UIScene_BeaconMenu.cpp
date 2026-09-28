@@ -10,6 +10,8 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/Item.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/Packet.hpp"
@@ -572,11 +574,34 @@ UIControl* UIScene_BeaconMenu::getSection(IUIScene_AbstractContainerMenu::EScene
 void UIScene_BeaconMenu::customDraw(const char* name, fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    const int player = getPad();
-    if (minecraft->mLocalPlayers[player] != 0 && minecraft->mGameModes[player] != 0)
+    if (minecraft->mLocalPlayers[m_playerId] == NULL || minecraft->mGameModes[m_playerId] == NULL)
+        return;
+
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    int slotId = -1;
+    std::sscanf(name, "slot_%d", &slotId);
+    if (slotId >= 0 && static_cast<unsigned int>(slotId) >= m_menu->m_slots.size())
     {
-        int slot;
-        std::sscanf(name, "slot_%d", &slot);
+        switch (slotId - m_menu->m_slots.size())
+        {
+        case 0:
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald));
+            break;
+        case 1:
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::diamond));
+            break;
+        case 2:
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::goldIngot));
+            break;
+        case 3:
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::ironIngot));
+            break;
+        }
+        if (!item->isEmpty())
+            customDrawSlotControlFui(rect, m_playerId, item, 1.0f, item->getItem()->isFoil(item), true, false);
+    }
+    else
+    {
         UIScene_AbstractContainerMenu::customDraw(name, rect);
     }
 }

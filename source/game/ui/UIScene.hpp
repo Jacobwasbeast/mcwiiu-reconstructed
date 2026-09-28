@@ -28,6 +28,7 @@ class UIScene
     friend class ConsoleUIController;
     friend class UILayer;
     friend class UIControl_Touch;
+    friend class UIControl_EnchantmentButton;
 
 public:
     struct _TimerInfo
@@ -70,7 +71,7 @@ public:
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual bool allowRepeat(int action);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleDestroy();
     virtual void handlePreUnloadForReload();
@@ -95,7 +96,7 @@ public:
     virtual void HandleSaveDeviceRemoved(int deviceIndex);
     virtual void handleUnlockFullVersion();
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool repeat, bool released, bool pressed);
+                                  bool pressed, bool repeat, bool released);
     virtual bool isReadyToDelete();
 
     static void customDrawFui(void* context, const char* name, fuiRect* rect);
@@ -110,7 +111,7 @@ public:
     void addTimer(int timerId, int duration);
     void killTimer(int timerId);
     unsigned int convertGameActionToFuiKeycode(int action);
-    void sendInputToMovie(int action, bool repeat, bool released, bool pressed);
+    void sendInputToMovie(int action, bool repeat, bool pressed, bool released);
     unsigned int GetCallbackUniqueId();
     bool controlHasFocus(int focus);
     unsigned int getControlChildFocus();

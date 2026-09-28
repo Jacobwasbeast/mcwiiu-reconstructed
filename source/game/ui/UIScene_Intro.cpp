@@ -46,10 +46,10 @@ std::wstring UIScene_Intro::getMoviePath()
     return std::wstring(L"Intro");
 }
 
-void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                                 bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (action != EControllerActions_MenuOk || m_inputHandled)
         return;
 
@@ -128,9 +128,9 @@ void UIScene_Intro::handleReload()
     setIntroPlatform();
 }
 
-void UIScene_Intro::handleTouchInput(unsigned int playerId, int, int, int, bool, bool, bool pressed)
+void UIScene_Intro::handleTouchInput(unsigned int playerId, int, int, int, bool, bool, bool released)
 {
-    if (pressed)
+    if (released)
     {
         bool handled = false;
         handleInput(playerId, 20, false, true, false, handled);

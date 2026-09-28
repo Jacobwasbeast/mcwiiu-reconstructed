@@ -1,6 +1,4 @@
-#define private public
 #include "game/ui/FJ_List_ListButtonAchievement.hpp"
-#undef private
 
 #include <cstdio>
 

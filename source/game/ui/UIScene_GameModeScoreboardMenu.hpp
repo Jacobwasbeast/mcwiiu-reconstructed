@@ -41,7 +41,7 @@ public:
     virtual void handleGainFocus(bool hadFocus);
     virtual UIControl* GetMainPanel();
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleDestroy();
     void setScoreboardType(int type);
     void initNumColumns(int columns);
@@ -64,7 +64,9 @@ public:
     void ShowTitleSlot(int index, bool show);
 
 private:
-    PlayerUID m_playerUid;
+    EScoreboardType m_scoreboardType;
+    bool m_statsPending;
+    StatsUID m_selectedUid;
     unsigned char m_localPlayerCanModerate;
     unsigned char m_canKickPlayers;
     unsigned char m_canVoteToKick;

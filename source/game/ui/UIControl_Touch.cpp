@@ -12,27 +12,22 @@ UIControl_Touch::UIControl_Touch()
 {
 }
 
-UIControl_Touch::~UIControl_Touch()
-{
-}
-
 void UIControl_Touch::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Touch;
     UIControl_Base::setupControl(scene, node, name);
 }
 
-void UIControl_Touch::init(int controlType)
+void UIControl_Touch::init(int controlId)
 {
-    int layerId = m_scene != 0 ? m_scene->m_layer->m_layerId : 0;
-    m_controlType = static_cast<UIControl::eUIControlType>(controlType);
-    if (layerId == 2 || layerId == 4 || layerId == 6 || layerId == 7) {
+    m_controlId = controlId;
+    int layerId = m_scene->m_layer->m_layerId;
+    if (layerId == 2 || layerId == 4 || (layerId >= 6 && layerId <= 7))
         gConsoleUIController.TouchBoxAdd(this, m_scene);
-    }
 }
 
 void UIControl_Touch::ReInit()
 {
     UIControl::ReInit();
-    init(m_controlType);
+    init(m_controlId);
 }

@@ -251,27 +251,19 @@ void fuiRenderNodeTimeline::handleConstruction()
         {
             if (type == 0x1e)
             {
-                std::string value;
-                value.assign("", 0);
-                addFrameAction(action->frameIndex, eFrameActionType_Stop, value);
+                addFrameAction(action->frameIndex, eFrameActionType_Stop, "");
             }
             else if (type < 0x20)
             {
-                std::string value;
-                value.assign(action->actionValue, std::strlen(action->actionValue));
-                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStopLabel, value);
+                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStopLabel, action->actionValue);
             }
             else if (type == 0x20)
             {
-                std::string value;
-                value.assign(action->actionValue, std::strlen(action->actionValue));
-                addFrameAction(action->frameIndex, eFrameActionType_GotoAndPlay, value);
+                addFrameAction(action->frameIndex, eFrameActionType_GotoAndPlay, action->actionValue);
             }
             else if (type == 0x21)
             {
-                std::string value;
-                value.assign(action->actionValue, std::strlen(action->actionValue));
-                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStop, value);
+                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStop, action->actionValue);
             }
             else
             {

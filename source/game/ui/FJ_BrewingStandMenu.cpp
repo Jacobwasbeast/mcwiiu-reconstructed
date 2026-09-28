@@ -24,7 +24,7 @@ void FJ_BrewingStandMenu::SetSafeZone(int top, int bottom, int left, int right)
     FJ_Document::SetSafeZone(top, bottom, left, right);
     FJ_FuiNodeStage* stage = getStage();
     if (stage == NULL) return;
-    const double height = stage->getStageHeight();
+    const float height = stage->getStageHeight();
     if (height != 360.0 && height != 540.0) return;
     setX(static_cast<float>(-right));
     setY(static_cast<float>(bottom));

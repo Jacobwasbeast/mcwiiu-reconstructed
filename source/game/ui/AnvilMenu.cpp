@@ -1,4 +1,5 @@
 #include "game/ui/AnvilMenu.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/RepairResultSlot.hpp"
 #include "game/data/ListTag.hpp"
@@ -44,7 +45,7 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
                       const BlockPos& position, boost::shared_ptr<Player> player)
 {
     mResultSlots = boost::shared_ptr<ResultContainer>(new ResultContainer());
-    mInputSlots = boost::shared_ptr<RepairContainer>(new RepairContainer(this, 0xc60bb915, true, 2));
+    mInputSlots = boost::shared_ptr<RepairContainer>(new RepairContainer(this, IDS_REPAIR_AND_NAME, true, 2));
     mLevel = level;
     mPosition = position;
     mRepairCost = 0;

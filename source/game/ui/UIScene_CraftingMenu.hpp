@@ -39,11 +39,11 @@ public:
     virtual UIControl* GetMainPanel();
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual bool allowRepeat(int action);
-    virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleDestroy();
     virtual void handleReload();
     virtual void handleTouchBoxRebuild();
-    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int control, bool repeat, bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int control, bool pressed, bool repeat, bool released);
 
     virtual int getPad();
     void hideAllHSlots();

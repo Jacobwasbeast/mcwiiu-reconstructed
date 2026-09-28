@@ -24,16 +24,16 @@ UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void* data, U
     initialiseMovie();
 
     ClassicCraftingMenuInitData* sceneData = static_cast<ClassicCraftingMenuInitData*>(data);
-    const bool fireworks = sceneData->fireworks != 0;
+    m_fireworks = sceneData->fireworks;
     const int player = sceneData->player;
-    if (fireworks)
-        m_titleLabel.init(UIString(L10N::GetString(0xb9c0e92)));
-    else
+    if (!m_fireworks)
         m_titleLabel.init(UIString(L10N::GetString(IDS_CONTROLS_CRAFTING)));
+    else
+        m_titleLabel.init(UIString(L10N::GetString(IDS_HOW_TO_PLAY_MENU_FIREWORKS)));
 
     Minecraft* minecraft = Minecraft::GetInstance();
     const BlockPos position(sceneData->x, sceneData->y, sceneData->z);
-    AbstractContainerMenu* menu = fireworks
+    AbstractContainerMenu* menu = m_fireworks
         ? static_cast<AbstractContainerMenu*>(new FireworksMenu(
               sceneData->localPlayer->mInventory, minecraft->mLevel, position))
         : static_cast<AbstractContainerMenu*>(new CraftingMenu(
@@ -47,7 +47,7 @@ UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void* data, U
         {
             m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(
-                fireworks ? eTutorial_State_FireworksMenu : eTutorial_State_SurvivalCrafting, this);
+                m_fireworks ? eTutorial_State_FireworksMenu : eTutorial_State_SurvivalCrafting, this);
         }
     }
 

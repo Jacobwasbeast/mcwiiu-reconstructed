@@ -12,6 +12,8 @@ class MobEffectInstance;
 
 class UIScene_HUD : public UIScene
 {
+    friend class ConsoleUIController;
+
 public:
     enum eGameModePlayerState
     {
@@ -45,7 +47,6 @@ public:
     void ShowArmour(bool visible);
     void ShowArmorBar(bool visible);
     void ShowQuickSelect(bool visible);
-    bool GetQuickSelectVisible() const;
     void ShowExpBar(bool visible);
     void ShowHorseHealth(bool visible);
     void ShowAir(bool visible);
@@ -102,7 +103,7 @@ public:
     unsigned int GetStatusEffectsYOffset();
     void renderPlayerHealth();
     void renderVehicleHealth();
-    static std::wstring formatTime(long long time, bool showHours);
+    static std::wstring formatTime(long long time, bool hundredths);
     void updateGameModePlayers();
     void ClearGlideHUD(int value);
     void showTimedSplash(const std::wstring& label, unsigned int duration, int icon);

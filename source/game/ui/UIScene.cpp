@@ -422,10 +422,9 @@ void UIScene::loadMovie()
     }
 
     SCENE_TRACE("loadMovie: path built");
-    ConsoleUIController::_CachedMovieData& movieData =
-        gConsoleUIController.getMovieData(path.c_str());
+    arrayWithLength<unsigned char> movieData = gConsoleUIController.getMovieData(path.c_str());
     SCENE_TRACE("loadMovie: movieData fetched");
-    m_movie = (fuiFile*)gFui->load(movieData.data, true, gFui->getResolution());
+    m_movie = (fuiFile*)gFui->load(movieData, true, gFui->getResolution());
     SCENE_TRACE("loadMovie: fui LOADED");
     m_movie->getRootNode()->getFuiNode()->setCallbackScene(this);
     SCENE_TRACE("loadMovie: callbackScene set");
@@ -488,7 +487,7 @@ unsigned int UIScene::convertGameActionToFuiKeycode(int action)
     return action;
 }
 
-void UIScene::sendInputToMovie(int action, bool, bool, bool pressed)
+void UIScene::sendInputToMovie(int action, bool, bool pressed, bool)
 {
     if (m_movie != 0)
         gFui->dispatchKeyboardEvent(m_movie, !pressed, convertGameActionToFuiKeycode(action));
@@ -611,7 +610,7 @@ void UIScene::removeControl(UIControl_Base* control, bool destroy)
     static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->RemoveObject(name, destroy);
     control->removeUINodeRef();
     UpdateSceneControls();
-    control->m_flag = true;
+    control->m_removed = true;
     gConsoleUIController.TouchBoxRebuild(control->m_scene);
 }
 

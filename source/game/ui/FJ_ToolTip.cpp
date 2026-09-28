@@ -68,7 +68,7 @@ fuiRenderNodeEditText* FJ_ToolTip::GetSecondaryTextField()
         fuiRenderNodeTimeline* timeline =
             static_cast<fuiRenderNodeTimeline*>(child->m_pRenderNode->asTimeline());
         if (timeline != NULL)
-            field = static_cast<fuiRenderNodeEditText*>(timeline->getChildAt(0)->asEditText());
+            field = timeline->getChildAt(0)->asEditText();
     }
     return field;
 }

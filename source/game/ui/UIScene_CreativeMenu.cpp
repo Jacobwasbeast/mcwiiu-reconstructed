@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_CreativeMenu.hpp"
+#include "game/core/VirtualPadKeys.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -223,8 +224,9 @@ bool UIScene_CreativeMenu::ItemPickerMenu::doQuickMoveLoop()
 }
 
 UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_currentTab(8), m_containerMenu(0),
-      m_sceneInterface(this)
+    : UIScene_AbstractContainerMenu(type, layer), m_containerMenu(0), m_currentTab(8),
+      m_restoreSelectorPending(false), m_savedSlotX(0), m_savedSlotY(0), m_emptySlotX(0), m_emptySlotY(0),
+      m_unreferencedFlag(true)
 {
     std::fill(m_tabPages, m_tabPages + 8, 0);
     std::fill(m_tabCurrentPages, m_tabCurrentPages + 8, 0);
@@ -234,7 +236,7 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
     boost::shared_ptr<SimpleContainer> container(
         new SimpleContainer(0, std::wstring(L""), false, 50));
     m_containerMenu = new ItemPickerMenu(container, sceneData->localPlayer->mInventory);
-    m_sceneInterface->Initialize(false, sceneData->playerIndex, m_containerMenu, true, -1,
+    Initialize(false, sceneData->playerIndex, m_containerMenu, true, -1,
                                  IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax,
                                  sceneData->creative);
@@ -251,7 +253,7 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
         Tutorial* tutorial = gameMode->getTutorial();
         if (tutorial != 0)
         {
-            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_CreativeInventoryMenu, this);
         }
     }
@@ -303,7 +305,7 @@ unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_Abstrac
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector &&
              (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up))
         next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
-    m_sceneInterface->updateSlotPosition(section, next, state, x, y, 0, 0);
+    updateSlotPosition(section, next, state, x, y, 0, 0);
     return static_cast<unsigned int>(next);
 }
 
@@ -350,13 +352,13 @@ unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
     Minecraft* minecraft = Minecraft::GetInstance();
     for (int index = 50; index < 59; ++index)
     {
-        Slot* slot = m_sceneInterface->m_menu->getSlot(index);
+        Slot* slot = m_menu->getSlot(index);
         not_null_ptr<ItemInstance> item = slot->getItem();
         if (!item->isEmpty())
         {
             not_null_ptr<ItemInstance> copy = item->copy();
             slot->set(ItemInstance::EMPTY);
-            const int itemsSize = static_cast<int>(m_sceneInterface->m_menu->getItems()->size());
+            const int itemsSize = static_cast<int>(m_menu->getItems()->size());
             minecraft->mGameModes[key]->handleCreativeModeItemAdd(copy, (index - itemsSize) + 45);
         }
     }
@@ -410,7 +412,7 @@ void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
 {
     _UIVec2D origin = { 0.0f, 0.0f };
     _UIVec2D size = { 0.0f, 0.0f };
-    m_sceneInterface->GetItemScreenData(
+    GetItemScreenData(
         IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider, 0, &origin, &size);
 
     float fraction = (position.y - origin.y) / size.y;
@@ -541,37 +543,37 @@ int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item,
 void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
                                                  int slot, int button)
 {
-    int effectiveSlot = m_sceneInterface->getCurrentIndex(section);
+    int effectiveSlot = getCurrentIndex(section);
     Minecraft* minecraft = Minecraft::GetInstance();
 
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector && slot == 0)
     {
-        const int playerId = getPad();
-        Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
-        Slot* hotbarSlot = m_sceneInterface->m_menu->getSlot(effectiveSlot);
-        not_null_ptr<ItemInstance> heldItem = hotbarSlot->getItem();
-        if (heldItem->isEmpty())
+        Inventory* inventory = minecraft->mLocalPlayers[getPad()]->mInventory.get();
+        not_null_ptr<ItemInstance> carried = inventory->getCarried();
+        not_null_ptr<ItemInstance> selected = m_menu->getSlot(effectiveSlot)->getItem();
+        int found = 0;
+        if (!selected->isEmpty())
+        {
+            inventory->setCarried(selected->copy());
+            carried = inventory->getCarried();
+            if (button == 1)
+                carried->setCount(carried->getMaxStackSize());
+
+            m_currentSection = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
+            m_savedSlotX = m_currentSlotX;
+            m_tapState = IUIScene_AbstractContainerMenu::ETapState_NoMove;
+            m_savedSlotY = m_currentSlotY;
+            found = getEmptyInventorySlot(carried, m_emptySlotX);
+            m_currentSlotX = m_emptySlotX;
+            m_restoreSelectorPending = true;
+            m_currentSlotY = m_emptySlotY;
+        }
+        if (found == 0)
             return;
 
-        not_null_ptr<ItemInstance> newCarried = heldItem->copy();
-        inventory->setCarried(newCarried);
-        newCarried = inventory->getCarried();
-        if (button == 1)
-            newCarried->setCount(newCarried->getMaxStackSize());
-
-        m_sceneInterface->m_currentSection = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
-        m_sceneInterface->m_tapState = IUIScene_AbstractContainerMenu::ETapState_NoMove;
-
-        int emptySlot = 0;
-        if (!getEmptyInventorySlot(newCarried, emptySlot))
-            return;
-
-        m_sceneInterface->m_currentSlotX = emptySlot;
-        m_sceneInterface->setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
-                                                  emptySlot, m_sceneInterface->m_currentSlotY, false);
-
-        effectiveSlot = m_sceneInterface->getCurrentIndex(
-            IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
+        setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
+                               m_currentSlotX, m_currentSlotY, false);
+        effectiveSlot = getCurrentIndex(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
         slot = 0;
         button = 0;
     }
@@ -582,12 +584,23 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
 
     const int playerId = getPad();
     boost::shared_ptr<Player> player = minecraft->mLocalPlayers[playerId];
-    m_sceneInterface->m_menu->clicked(effectiveSlot, slot,
-                                      static_cast<ClickType::eClickType>(button != 0), player);
+    m_menu->clicked(effectiveSlot, slot, static_cast<ClickType::eClickType>(button != 0), player);
 
-    const int itemsSize = static_cast<int>(m_sceneInterface->m_menu->getItems()->size());
+    const int itemsSize = static_cast<int>(m_menu->getItems()->size());
     minecraft->mGameModes[playerId]->handleCreativeModeItemAdd(
-        m_sceneInterface->m_menu->getSlot(effectiveSlot)->getItem(), (effectiveSlot - itemsSize) + 45);
+        m_menu->getSlot(effectiveSlot)->getItem(), (effectiveSlot - itemsSize) + 45);
+
+    if (m_restoreSelectorPending)
+    {
+        m_emptySlotX = m_currentSlotX;
+        m_tapState = IUIScene_AbstractContainerMenu::ETapState_NoMove;
+        m_emptySlotY = m_currentSlotY;
+        m_currentSlotX = m_savedSlotX;
+        m_currentSection = IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector;
+        m_currentSlotY = m_savedSlotY;
+        minecraft->mLocalPlayers[getPad()]->mInventory->setCarried(ItemInstance::EMPTY);
+        m_restoreSelectorPending = false;
+    }
 }
 
 int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -1628,10 +1641,10 @@ std::wstring UIScene_CreativeMenu::getMoviePath()
 
 void UIScene_CreativeMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, false, -1,
+    Initialize(true, m_playerId, m_menu, false, -1,
                                  IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax,
-                                 m_sceneInterface->m_navigateBack != 0);
+                                 m_navigateBack != 0);
 
     for (int i = 0; i < 50; ++i)
         m_containerList.addSlot(i);
@@ -1655,57 +1668,58 @@ UIControl* UIScene_CreativeMenu::getSection(IUIScene_AbstractContainerMenu::ESce
     return NULL;
 }
 
-void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    if (released)
+    if (repeat)
         return;
 
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action < 0x5804)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, false, pressed, released);
+    if (action < VK_PAD_RSHOULDER)
     {
-        UIScene_AbstractContainerMenu::handleInput(playerId, action, false, released, pressed, handled);
-        return;
+        UIScene_AbstractContainerMenu::handleInput(playerId, action, false, pressed, released, handled);
     }
-    if (action < 0x5806)
+    else if (action < VK_PAD_LTRIGGER)
     {
-        if (!pressed)
-            return;
-        const int direction = action == 0x5804 ? 1 : -1;
-        int tab = m_currentTab + direction + 8;
-        tab -= ((tab >> 31) & 7) + tab & 0xfffffff8;
-        switchTab(static_cast<ECreativeInventoryTabs>(tab));
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
-        return;
+        if (pressed)
+        {
+            switchTab(static_cast<ECreativeInventoryTabs>(
+                (m_currentTab + (action == VK_PAD_RSHOULDER ? 1 : -1) + ECreativeInventoryTabs_COUNT) %
+                ECreativeInventoryTabs_COUNT));
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+        }
     }
-    if (action == 0x5806)
+    else if (action == VK_PAD_LTRIGGER)
     {
-        if (!pressed)
-            return;
-        int nextPage = m_tabCurrentPages[m_currentTab] + 1;
-        if (nextPage >= static_cast<int>(s_tabSpecs[m_currentTab]->getPageCount()))
-            nextPage = 0;
-        m_tabCurrentPages[m_currentTab] = nextPage;
-        switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
-        return;
+        if (pressed)
+        {
+            int nextPage = m_tabCurrentPages[m_currentTab] + 1;
+            if (nextPage >= static_cast<int>(s_tabSpecs[m_currentTab]->getPageCount()))
+                nextPage = 0;
+            m_tabCurrentPages[m_currentTab] = nextPage;
+            switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
+        }
     }
-    UIScene_AbstractContainerMenu::handleInput(playerId, action, false, released, pressed, handled);
+    else
+    {
+        UIScene_AbstractContainerMenu::handleInput(playerId, action, false, pressed, released, handled);
+    }
 }
 
-void UIScene_CreativeMenu::handleTouchInput(unsigned int, int action, int, int y, bool, bool released, bool pressed)
+void UIScene_CreativeMenu::handleTouchInput(unsigned int, int, int touchY, int touchBox, bool, bool repeat,
+                                            bool released)
 {
-    if (pressed && action < 8)
+    if (released && (unsigned int)touchBox < 8)
     {
-        switchTab(static_cast<ECreativeInventoryTabs>(action));
+        switchTab(static_cast<ECreativeInventoryTabs>(touchBox));
         gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
     }
-    if (released && action == 8)
+    if (repeat && touchBox == 8)
     {
         TabSpec* spec = s_tabSpecs[m_currentTab];
         if (spec->getPageCount() > 1)
         {
-            float fraction = static_cast<float>(
-                (static_cast<double>(y) - m_containerList.getYPos() - m_mainPanel.getYPos()) /
-                m_containerList.getHeight());
+            float fraction = (static_cast<float>(touchY) - m_containerList.getYPos() - m_mainPanel.getYPos()) /
+                             m_containerList.getHeight();
             if (fraction > 1.0f)
                 fraction = 1.0f;
             else if (fraction < 0.0f)

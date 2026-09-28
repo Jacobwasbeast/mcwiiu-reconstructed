@@ -24,7 +24,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
     virtual void handleReload();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleGainFocus(bool hadFocus);
     virtual void handlePress(int controlId, int childId);

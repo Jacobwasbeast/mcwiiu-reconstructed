@@ -20,7 +20,7 @@ public:
     virtual void tick();
     virtual void updateTooltips();
     virtual void updateComponents();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handlePreUnloadForReload();
     virtual void handleReload();

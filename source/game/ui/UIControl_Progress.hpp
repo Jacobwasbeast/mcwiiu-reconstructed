@@ -7,7 +7,7 @@ class UIControl_Progress : public UIControl_Base
 {
 public:
     UIControl_Progress();
-    virtual ~UIControl_Progress();
+    virtual ~UIControl_Progress() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void init(UIString label, int controlId, int minimum, int maximum, int progress);
     void setProgress(int progress);

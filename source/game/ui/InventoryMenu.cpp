@@ -20,8 +20,10 @@
 #include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
+const int InventoryMenu::ARMOR_SLOT_START = 5;
 const int InventoryMenu::INV_SLOT_START = 9;
 const int InventoryMenu::INV_SLOT_END = 36;
+const int InventoryMenu::USE_ROW_SLOT_START = 36;
 
 static const EquipmentSlot* gInventoryMenuHead = NULL;
 static const EquipmentSlot* gInventoryMenuLegs = NULL;

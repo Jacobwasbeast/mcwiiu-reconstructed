@@ -32,7 +32,7 @@ public:
     virtual void tick();
     virtual void handleReload();
     int checkHasPurchased(int index, bool tryPurchase);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handlePress(int controlId, int childId);
@@ -40,7 +40,6 @@ public:
 
 private:
     std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
-    unsigned int m_texturePackSelection;
     LaunchMoreOptionsMenuInitData* m_initData;
     LevelGenerationOptions* m_generationOptions;
     unsigned char m_mapInfoPending;

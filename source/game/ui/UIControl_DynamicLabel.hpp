@@ -7,7 +7,7 @@ class UIControl_DynamicLabel : public UIControl_Label
 {
 public:
     UIControl_DynamicLabel();
-    virtual ~UIControl_DynamicLabel();
+    virtual ~UIControl_DynamicLabel() {}
     int GetRealWidth();
     int GetRealHeight();
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);

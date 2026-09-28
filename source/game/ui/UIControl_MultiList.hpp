@@ -55,7 +55,7 @@ public:
     };
 
     UIControl_MultiList();
-    virtual ~UIControl_MultiList();
+    virtual ~UIControl_MultiList() {}
     void AddNewButton(const std::wstring& label, int id, bool useEllipsis);
     void AddNewLabel(const std::wstring& label, int id);
     void AddNewCheckbox(const std::wstring& label, int id, bool checked);

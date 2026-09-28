@@ -9,14 +9,10 @@ UIControl_LeftIconButtonList::UIControl_LeftIconButtonList()
 {
 }
 
-UIControl_LeftIconButtonList::~UIControl_LeftIconButtonList()
-{
-}
-
 void UIControl_LeftIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {
-    m_controlType = static_cast<UIControl::eUIControlType>(0x1a);
+    m_controlType = UIControl::eUIControlType_LeftIconButtonList;
     UIControl_List::setupControl(scene, node, name);
 }
 

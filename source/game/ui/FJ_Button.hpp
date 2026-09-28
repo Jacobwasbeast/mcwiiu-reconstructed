@@ -17,7 +17,7 @@ class FJ_Button : public FJ_Base
 {
 public:
     explicit FJ_Button(fuiRenderNode* renderNode);
-    virtual ~FJ_Button();
+    virtual ~FJ_Button() {}
     FJ_FuiNode* getObjListParent();
 
     void setButtonPressed(bool pressed);

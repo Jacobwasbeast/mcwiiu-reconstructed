@@ -14,7 +14,7 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
     labelContainer->setX(0.0f);
     labelContainer->setY(0.0f);
 
-    m_labelText = static_cast<fuiRenderNodeEditText*>(labelContainer->getRenderNodeChildByName(std::string("FJ_Label"))->asEditText());
+    m_labelText = labelContainer->getRenderNodeChildByName(std::string("FJ_Label"))->asEditText();
     m_labelText->setAutoSize(TextFieldAutoSizeLeft);
 
     int i;
@@ -25,7 +25,7 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
         fuiRenderNode* outline = labelContainer->getRenderNodeChildByName(std::string(name));
         if (outline != 0)
         {
-            fuiRenderNodeEditText* text = static_cast<fuiRenderNodeEditText*>(outline->asEditText());
+            fuiRenderNodeEditText* text = outline->asEditText();
             m_outlineText.push_back(text);
             text->setAutoSize(TextFieldAutoSizeLeft);
             m_outlineX.push_back(text->getX());
@@ -35,7 +35,7 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
         outline = labelContainer->getRenderNodeChildByName(std::string(name));
         if (outline != 0)
         {
-            fuiRenderNodeEditText* text = static_cast<fuiRenderNodeEditText*>(outline->asEditText());
+            fuiRenderNodeEditText* text = outline->asEditText();
             m_outlineText.push_back(text);
             text->setAutoSize(TextFieldAutoSizeLeft);
             m_outlineX.push_back(text->getX());
@@ -45,10 +45,6 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
     m_halfWidth = static_cast<int>(getWidth() * 0.5f);
     m_labelX = static_cast<int>(m_labelText->getX());
     m_centreLabel = true;
-}
-
-FJ_LabelOutline::~FJ_LabelOutline()
-{
 }
 
 void FJ_LabelOutline::Init(const std::wstring& label)

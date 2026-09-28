@@ -20,7 +20,7 @@ public:
     };
 
     explicit FJ_Label(fuiRenderNode* renderNode);
-    virtual ~FJ_Label();
+    virtual ~FJ_Label() {}
     static FJ_Base* Create(fuiRenderNode* renderNode);
     void SetTextAlignment(ETextAlignment alignment);
     void setUseHtmlText(bool useHtmlText);

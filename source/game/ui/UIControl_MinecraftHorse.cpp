@@ -10,7 +10,7 @@ UIControl_MinecraftHorse::UIControl_MinecraftHorse()
     : mScreenWidth(0.0f), mScreenHeight(0.0f), mScaledWidth(0.0f), mScaledHeight(0.0f)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    m_controlType = static_cast<UIControl::eUIControlType>(0x0b);
+    m_controlType = UIControl::eUIControlType_MinecraftHorse;
     mScreenWidth = (float)minecraft->mWidth;
     mScreenHeight = (float)minecraft->mHeight;
     ScreenSizeCalculator sizeCalculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);

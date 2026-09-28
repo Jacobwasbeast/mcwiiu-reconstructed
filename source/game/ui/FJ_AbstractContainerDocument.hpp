@@ -11,7 +11,7 @@ class FJ_AbstractContainerDocument : public FJ_Document
 {
 public:
     explicit FJ_AbstractContainerDocument(fuiRenderNode* renderNode);
-    virtual ~FJ_AbstractContainerDocument();
+    virtual ~FJ_AbstractContainerDocument() {}
     void handleMouseMove(FJ_Event* event);
     static void _handleMouseMove(FJ_FuiNode* node, FJ_Event* event);
     virtual void init(FJ_Event* event);

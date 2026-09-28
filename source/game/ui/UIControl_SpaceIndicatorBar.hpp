@@ -9,7 +9,7 @@ class UIControl_SpaceIndicatorBar : public UIControl_Base
 {
 public:
     UIControl_SpaceIndicatorBar();
-    virtual ~UIControl_SpaceIndicatorBar();
+    virtual ~UIControl_SpaceIndicatorBar() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void setSaveSize(long long size);
     void setSaveGameOffset(float offset);

@@ -15,10 +15,6 @@ FJ_DragonHealth::FJ_DragonHealth(fuiRenderNode* renderNode)
     m_pLabel->SetTextAlignment(FJ_Label::eTextAlignment_Center);
 }
 
-FJ_DragonHealth::~FJ_DragonHealth()
-{
-}
-
 void FJ_DragonHealth::Init(const std::wstring& label)
 {
     m_pLabel->Init(label);

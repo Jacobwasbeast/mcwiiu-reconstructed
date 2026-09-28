@@ -27,13 +27,13 @@ public:
 
     void SetVisible(bool visible);
     void setupIconHolder(EIcons icon);
-    void _SetIcon(not_null_ptr<ItemInstance> item, int itemId, int descriptionId,
-                  bool showIcon, const wchar_t* image);
+    std::wstring _SetIcon(not_null_ptr<ItemInstance> item, int itemId, int auxValue,
+                          bool showIcon, const wchar_t* image);
     std::wstring _SetImage(std::wstring& image);
     void ParseDescription(int player, std::wstring& description);
     void _SetDescription(UIScene* scene, const std::wstring& title,
                          const std::wstring& description, bool showTitle,
-                         bool showExitScreenshot, int descriptionId);
+                         bool showExitScreenshot, int displayTime);
     void SetTutorialDescription(_TutorialPopupInfo* info);
     void RemoveInteractSceneReference(UIScene* scene);
     void UpdateTutorialPopup();

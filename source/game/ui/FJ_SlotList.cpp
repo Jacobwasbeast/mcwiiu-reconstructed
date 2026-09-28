@@ -6,8 +6,7 @@
 #include "game/util/Math.hpp"
 
 FJ_SlotList::FJ_SlotList(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_slotSize(50), m_slotVisible(false),
-      m_rows(0), m_columns(0), m_loaded(false)
+    : FJ_FuiNode(pRenderNode), m_slotSize(50), m_slotVisible(false), m_loaded(false)
 {
 }
 
@@ -48,16 +47,6 @@ void FJ_SlotList::Init()
     removeChild(background, true);
 }
 
-int FJ_SlotList::getRows()
-{
-    return m_rows;
-}
-
-int FJ_SlotList::getColumns()
-{
-    return m_columns;
-}
-
 void FJ_SlotList::Clear()
 {
     if (m_slots.empty())
@@ -82,20 +71,14 @@ void FJ_SlotList::addSlot(int slot, bool highlighted, bool visible)
     if (m_slots.size() >= (unsigned int)(m_rows * m_columns))
         return;
 
-    FJ_FuiNode* container = FJ_Factory::createObject(
-        "fourj.listClasses.FJ_SlotList", m_pRenderNode, true, NULL);
-    FJ_FuiNode* parent = getParent();
-    int index = parent->getChildIndex(this);
-    parent->addChildAt(container, index);
+    FJ_FuiNode* container = FJ_Factory::createObject("", m_pRenderNode, true, NULL);
+    getParent()->addChildAt(container, getParent()->getChildIndex(this));
 
     FJ_SlotList_Slot* slotNode = static_cast<FJ_SlotList_Slot*>(FJ_Factory::createObject(
         "fourj.listClasses.FJ_SlotList_Slot", m_pRenderNode, true, NULL));
     slotNode->SetParams(m_slotSize, m_slotVisible);
-    unsigned int count = (unsigned int)m_slots.size();
-    int column = m_columns != 0 ? (int)(count % (unsigned int)m_columns) : 0;
-    int row = m_columns != 0 ? (int)(count / (unsigned int)m_columns) : 0;
-    container->setX(getX() + (float)(column * m_slotSize));
-    container->setY(getY() + (float)(row * m_slotSize));
+    container->setX(getX() + (float)(int)(m_slots.size() % (unsigned int)m_columns * m_slotSize));
+    container->setY(getY() + (float)(int)(m_slots.size() / (unsigned int)m_columns * m_slotSize));
     container->addChild(slotNode);
     slotNode->SetSlotID(slot);
     m_slots.push_back(slotNode);

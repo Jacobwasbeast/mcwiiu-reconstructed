@@ -38,7 +38,8 @@ public:
         ECreativeInventoryTabs_Miscellaneous = 4,
         ECreativeInventoryTabs_Food = 5,
         ECreativeInventoryTabs_Tools = 6,
-        ECreativeInventoryTabs_Combat = 7
+        ECreativeInventoryTabs_Combat = 7,
+        ECreativeInventoryTabs_COUNT = 8
     };
 
     enum ECreative_Inventory_Groups
@@ -144,10 +145,10 @@ public:
     virtual std::wstring getMoviePath();
     virtual void handleReload();
     virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
-    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
-                                  bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual void handleTouchBoxRebuild();
     virtual void handleTimerComplete(int timerId);
@@ -155,13 +156,18 @@ public:
     virtual int getSceneType();
 
 private:
-    UIControl_SlotList m_containerList;
-    UIControl_Touch m_touchPanels[9];
+    AbstractContainerMenu* m_containerMenu;
     int m_currentTab;
     int m_tabPages[8];
     int m_tabCurrentPages[8];
-    AbstractContainerMenu* m_containerMenu;
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
+    UIControl_SlotList m_containerList;
+    UIControl_Touch m_touchPanels[9];
+    bool m_restoreSelectorPending;
+    int m_savedSlotX;
+    int m_savedSlotY;
+    int m_emptySlotX;
+    int m_emptySlotY;
+    bool m_unreferencedFlag;
 
     static TabSpec* s_tabSpecs[8];
 

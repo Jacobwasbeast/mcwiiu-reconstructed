@@ -267,7 +267,7 @@ std::wstring UIScene_ConnectingProgress::getMoviePath()
 }
 
 void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repeat,
-                                             bool released, bool pressed, bool& handled)
+                                             bool pressed, bool released, bool& handled)
 {
     if (!m_showTooltips)
     {
@@ -276,7 +276,7 @@ void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repe
     }
     else
     {
-        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
         switch (action)
         {
         case EControllerActions_MenuUp:
@@ -294,8 +294,8 @@ void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repe
         }
     }
 
-    if (released)
-        sendInputToMovie(action, repeat, released, pressed);
+    if (pressed)
+        sendInputToMovie(action, repeat, pressed, released);
 }
 
 void UIScene_ConnectingProgress::handlePress(int controlId, int)

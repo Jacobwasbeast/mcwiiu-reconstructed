@@ -36,6 +36,7 @@ public:
     void LoadTTFFallbackFont();
 
 private:
+    SFontData* m_sFontData;
     unsigned int m_textureIndex;
     bool m_registered;
     unsigned short m_missingGlyphChar;

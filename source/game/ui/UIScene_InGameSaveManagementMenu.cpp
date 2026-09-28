@@ -123,12 +123,12 @@ void UIScene_InGameSaveManagementMenu::handleGainFocus(bool navigatedBack)
         m_ignoreInput = false;
 }
 
-void UIScene_InGameSaveManagementMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
+void UIScene_InGameSaveManagementMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
                                                    bool& handled)
 {
     if (m_ignoreInput || !m_saveInfoReady)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -136,7 +136,7 @@ void UIScene_InGameSaveManagementMenu::handleInput(int, int action, bool repeat,
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuCancel:

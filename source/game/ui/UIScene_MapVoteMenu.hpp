@@ -27,7 +27,7 @@ public:
     void UpdateVotableInfo();
     virtual void tick();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
@@ -37,11 +37,10 @@ private:
     bool m_splitScreen;
     int m_votableType;
     std::vector<int> m_mapIds;
-    std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
-    std::wstring m_defaultTexture;
     int m_selectedVote;
     int m_previousSelection;
-    int m_updateVoteInfo;
+    bool m_updateVoteInfo;
+    std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
     std::wstring m_voteTallyText;
     UIControl_CheckboxButtonList m_mapList;
     UIControl_Label m_mapListTitle;

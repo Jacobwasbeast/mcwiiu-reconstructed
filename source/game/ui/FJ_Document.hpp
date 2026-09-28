@@ -14,7 +14,7 @@ class FJ_Document : public FJ_FuiNode
 {
 public:
     FJ_Document(fuiRenderNode* renderNode);
-    virtual ~FJ_Document();
+    virtual ~FJ_Document() {}
 
     int getISafeZoneTop();
     int getISafeZoneBottom();
@@ -52,8 +52,8 @@ protected:
     int m_safeZoneRight;
     FJ_FuiNode* m_root;
     FJ_FuiNode* m_focus;
-    int m_horizontalResize;
-    int m_horizontalOffset;
+    int m_focusParentId;
+    int m_focusChildId;
     bool m_focusChange;
 };
 

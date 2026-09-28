@@ -20,7 +20,7 @@ struct ClassicCraftingMenuInitData
     int x;
     int y;
     int z;
-    unsigned char fireworks;
+    bool fireworks;
 };
 
 class UIScene_ClassicCraftingMenu : public UIScene_AbstractContainerMenu
@@ -43,6 +43,7 @@ public:
     virtual int getSceneType();
 
 private:
+    bool m_fireworks;
     UIControl_SlotList m_resultSlot;
     UIControl_SlotList m_craftingSlots;
     UIControl_Label m_titleLabel;

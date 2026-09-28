@@ -258,14 +258,14 @@ void fuiFile::setCustomDrawCallback(void (*callback)(void*, const char*, fuiRect
     customDrawContext = context;
 }
 
-double fuiFile::getStageWidth()
+float fuiFile::getStageWidth()
 {
-    return (double)(header.stageRect.xMax - header.stageRect.xMin);
+    return header.stageRect.xMax - header.stageRect.xMin;
 }
 
-double fuiFile::getStageHeight()
+float fuiFile::getStageHeight()
 {
-    return (double)(header.stageRect.yMax - header.stageRect.yMin);
+    return header.stageRect.yMax - header.stageRect.yMin;
 }
 
 void fuiFile::setIndex(int value)

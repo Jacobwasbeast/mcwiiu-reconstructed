@@ -7,10 +7,6 @@ UIControl_CheckboxButtonList::UIControl_CheckboxButtonList()
 {
 }
 
-UIControl_CheckboxButtonList::~UIControl_CheckboxButtonList()
-{
-}
-
 void UIControl_CheckboxButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {

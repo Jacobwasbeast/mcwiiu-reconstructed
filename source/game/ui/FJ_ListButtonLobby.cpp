@@ -11,10 +11,6 @@ FJ_ListButtonLobby::FJ_ListButtonLobby(fuiRenderNode* renderNode)
     m_readySlot = getChildByName(std::string("ReadySlot"))->asMovieClip();
 }
 
-FJ_ListButtonLobby::~FJ_ListButtonLobby()
-{
-}
-
 void FJ_ListButtonLobby::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);

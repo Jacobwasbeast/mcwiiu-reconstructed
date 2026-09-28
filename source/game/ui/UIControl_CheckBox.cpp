@@ -12,10 +12,6 @@ UIControl_CheckBox::UIControl_CheckBox()
 {
 }
 
-UIControl_CheckBox::~UIControl_CheckBox()
-{
-}
-
 unsigned char UIControl_CheckBox::IsEnabled()
 {
     return m_enabled;
@@ -45,7 +41,7 @@ void UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const
 void UIControl_CheckBox::init(UIString label, int id, bool checked)
 {
     m_label = label;
-    m_controlType = static_cast<UIControl::eUIControlType>(id);
+    m_controlId = id;
     m_checked = checked;
     m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->Init(label.getString(), id, checked);
 
@@ -76,5 +72,5 @@ void UIControl_CheckBox::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, (int)m_controlType, m_checked);
+    init(label, m_controlId, m_checked);
 }

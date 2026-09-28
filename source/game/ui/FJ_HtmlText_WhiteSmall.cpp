@@ -4,6 +4,7 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 
 FJ_HtmlText_WhiteSmall::~FJ_HtmlText_WhiteSmall()
 {

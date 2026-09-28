@@ -12,10 +12,6 @@ UIControl_DynamicLabel::UIControl_DynamicLabel()
 {
 }
 
-UIControl_DynamicLabel::~UIControl_DynamicLabel()
-{
-}
-
 int UIControl_DynamicLabel::GetRealWidth()
 {
     return (int)static_cast<FJ_DynamicHtmlText*>(m_fuiRenderNode->getFuiNode())->GetRealWidth();

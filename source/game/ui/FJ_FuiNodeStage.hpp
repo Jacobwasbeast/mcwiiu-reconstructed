@@ -15,8 +15,8 @@ public:
     void removeFocus(FJ_FuiNode* pNode);
     void setFocus(FJ_FuiNode* pNode);
     FJ_FuiNode* getFocus();
-    double getStageHeight();
-    double getStageWidth();
+    float getStageHeight();
+    float getStageWidth();
 };
 
 #endif

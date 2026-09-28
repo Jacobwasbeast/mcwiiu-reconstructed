@@ -52,6 +52,7 @@ private:
         float alphaMultiply;
     };
 
+    unsigned int m_unknown0[16];
     fuiMatrix m_matrixStack[10];
     int m_matrixDepth;
     ColorState m_colorStack[10];

@@ -73,8 +73,8 @@ void UIScene_JoinMenu::AddDescriptionForOption(std::vector<HtmlString>& descript
     {
         state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = IDS_LABEL_DIFFICULTY;
-        value = L10N::GetString(state == 1 ? 0xb558efd9 : state == 2 ? 0x5d131124 :
-                                state == 3 ? 0xf70f3270 : 0x4e52b99a);
+        value = L10N::GetString(state == 1 ? IDS_DIFFICULTY_TITLE_EASY : state == 2 ? IDS_DIFFICULTY_TITLE_NORMAL :
+                                state == 3 ? IDS_DIFFICULTY_TITLE_HARD : IDS_DIFFICULTY_TITLE_PEACEFUL);
     }
     else if (option == eGameHostOption_Gamertags)
     {
@@ -224,27 +224,27 @@ std::wstring UIScene_JoinMenu::getMoviePath()
 {
     return std::wstring(L"JoinMenu");
 }
-void UIScene_JoinMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_JoinMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_joining)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuOk:
         if (getControlFocus() != 1)
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             navigateBack();
             handled = true;

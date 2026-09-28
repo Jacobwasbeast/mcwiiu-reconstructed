@@ -805,9 +805,9 @@ void UIScene_CraftingMenu::handleTouchBoxRebuild()
 }
 
 void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY, int control,
-                                            bool repeat, bool released, bool pressed)
+                                            bool pressed, bool repeat, bool released)
 {
-    if (repeat)
+    if (pressed)
     {
         if (control == 12)
             m_touchScrollY = touchY;
@@ -842,7 +842,7 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         return;
     }
 
-    if (released)
+    if (repeat)
     {
         if (control == 12 && m_touchDragging)
         {
@@ -863,7 +863,7 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         return;
     }
 
-    if (!pressed)
+    if (!released)
         return;
 
     if (control >= 0 && control < 7)
@@ -969,15 +969,15 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
     IUIScene_CraftingMenu::UpdateHighlight();
 }
 
-void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (action == EControllerActions_MenuOtherStickUp || action == EControllerActions_MenuOtherStickDown)
     {
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         return;
     }
-    if (released)
+    if (pressed)
         handled = IUIScene_CraftingMenu::handleKeyDown(m_playerId, action, repeat);
 }
 

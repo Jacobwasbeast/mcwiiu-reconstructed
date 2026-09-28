@@ -11,7 +11,7 @@ class FJ_EnchantingButton : public FJ_Base
 {
 public:
     explicit FJ_EnchantingButton(fuiRenderNode* pRenderNode);
-    virtual ~FJ_EnchantingButton();
+    virtual ~FJ_EnchantingButton() {}
 
     void HandleUpdateLabel(FJ_Event* pEvent);
     static void _HandleUpdateLabel(FJ_FuiNode* pNode, FJ_Event* pEvent);

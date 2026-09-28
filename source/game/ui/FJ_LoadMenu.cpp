@@ -13,20 +13,8 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-static FJ_FuiNode* child(FJ_FuiNode* node, const char* name)
-{
-    return node->getChildByName(std::string(name));
-}
-
-static void hideAndRemove(FJ_FuiNode* parent, const char* name)
-{
-    FJ_FuiNode* node = child(parent, name);
-    node->setVisible(false);
-    parent->removeChild(node, true);
-}
-
 FJ_LoadMenu::FJ_LoadMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_listHeight(0), m_customLoadMenu(false), m_iconY(0)
+    : FJ_Document(renderNode), m_unused(0), m_customLoadMenu(false), m_iconY(0)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }
@@ -58,99 +46,95 @@ void FJ_LoadMenu::init(FJ_Event* event)
 void FJ_LoadMenu::InitCustomLoadMenu()
 {
     m_customLoadMenu = true;
-    FJ_FuiNode* mainPanel = child(this, "MainPanel");
-    FJ_FuiNode* multiList = child(mainPanel, "MultiList");
-    m_listHeight = static_cast<int>(multiList->getHeight());
+    FJ_FuiNode* mainPanel = getChildByName("MainPanel");
+    m_listHeight = (int)mainPanel->getChildByName("MultiList")->getHeight();
 
-    hideAndRemove(mainPanel, "Seed");
-    hideAndRemove(mainPanel, "GameModeToggle");
-    hideAndRemove(mainPanel, "Difficulty");
-    hideAndRemove(mainPanel, "TexturePackSelector");
-    hideAndRemove(mainPanel, "TexturePackSelectorBackground");
-    hideAndRemove(mainPanel, "CheckboxOnline");
-    hideAndRemove(mainPanel, "MoreOptions");
-    hideAndRemove(mainPanel, "LoadSettings");
-    FJ_FuiNode* icon = child(mainPanel, "Icon");
-    icon->setVisible(false);
-    m_iconY = static_cast<int>(icon->getY());
-    mainPanel->removeChild(icon, true);
-    hideAndRemove(mainPanel, "TexturePackName");
+    mainPanel->getChildByName("Seed")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("Seed"), true);
+    mainPanel->getChildByName("GameModeToggle")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("GameModeToggle"), true);
+    mainPanel->getChildByName("Difficulty")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("Difficulty"), true);
+    mainPanel->getChildByName("TexturePackSelector")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("TexturePackSelector"), true);
+    mainPanel->getChildByName("TexturePackSelectorBackground")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("TexturePackSelectorBackground"), true);
+    mainPanel->getChildByName("CheckboxOnline")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("CheckboxOnline"), true);
+    mainPanel->getChildByName("MoreOptions")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("MoreOptions"), true);
+    mainPanel->getChildByName("LoadSettings")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("LoadSettings"), true);
+    mainPanel->getChildByName("Icon")->setVisible(false);
+    m_iconY = (int)mainPanel->getChildByName("Icon")->getY();
+    mainPanel->removeChild(mainPanel->getChildByName("Icon"), true);
+    mainPanel->getChildByName("TexturePackName")->setVisible(false);
+    mainPanel->removeChild(mainPanel->getChildByName("TexturePackName"), true);
 
-    multiList->setTabIndex(1);
+    mainPanel->getChildByName("MultiList")->setTabIndex(1);
     SetFocus(-1);
 }
 
 void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
 {
-    FJ_FuiNode* mainPanel = child(this, "MainPanel");
-    FJ_FuiNode* comparisonPic = child(mainPanel, "ComparisonPic");
-    FJ_FuiNode* levelIcon = child(mainPanel, "LevelIcon");
-    FJ_List_MultiList* multiList = static_cast<FJ_List_MultiList*>(child(mainPanel, "MultiList")->asFJ_List_MultiList());
-    FJ_FuiNode* descriptionNode = child(mainPanel, "TexturePackDescription");
-    FJ_HtmlText* description = static_cast<FJ_HtmlText*>(descriptionNode->asFJ_HtmlText());
+    FJ_FuiNode* mainPanel = getChildByName("MainPanel");
+    FJ_FuiNode* comparisonPic = mainPanel->getChildByName("ComparisonPic");
+    FJ_FuiNode* levelIcon = mainPanel->getChildByName("LevelIcon");
+    FJ_List_MultiList* multiList = mainPanel->getChildByName("MultiList")->asFJ_List_MultiList();
+    FJ_HtmlText* description = mainPanel->getChildByName("TexturePackDescription")->asFJ_HtmlText();
+
     int listHeight = multiList->GetListHeight();
-    int availableHeight = m_listHeight - listHeight;
-    float reclaimedHeight = static_cast<float>(availableHeight);
-    float listOffset = reclaimedHeight * 0.5f;
-    int halfOffset = Math::round(listOffset);
-    int descriptionOffset = static_cast<int>(comparisonPic->getY() - halfOffset - (m_iconY + halfOffset) - m_iconY);
-    float descriptionHeight = static_cast<float>(description->GetRealHeight());
-    float descriptionY = descriptionNode->getY();
-    float comparisonY = comparisonPic->getY();
-    descriptionHeight = static_cast<float>(static_cast<int>(descriptionHeight + comparisonY - (descriptionY + descriptionHeight)));
-    descriptionHeight += levelIcon->getHeight() - reclaimedHeight;
-    descriptionNode->setHeight(descriptionHeight);
+    int textY = m_iconY;
+    int spareHeight = m_listHeight - multiList->GetListHeight();
+    int descriptionHeight =
+        (int)(description->GetRealHeight() + (comparisonPic->getY() - (description->getY() + description->GetRealHeight())));
+    float reclaimedHeight = (float)spareHeight;
+    float offset = reclaimedHeight * 0.5f;
+    int availableHeight =
+        (int)(comparisonPic->getY() - Math::round(offset) - (textY + Math::round(offset)) - textY);
+    description->setHeight(descriptionHeight + levelIcon->getHeight() - reclaimedHeight);
 
     if (description->GetNumberOfLines() < 3)
     {
-        float textY = comparisonPic->getY();
-        float textHeight = comparisonPic->getHeight();
-        float listY = levelIcon->getY();
-        int optimalHeight = description->GetOptimalHeight(-1);
-        float textBottom = static_cast<float>(optimalHeight) + comparisonPic->getHeight();
-        float adjustment = static_cast<float>(static_cast<int>(textY + textHeight - listY) - static_cast<int>(textBottom));
-        reclaimedHeight = adjustment;
-        child(mainPanel, "MultiList")->incY(static_cast<float>(m_listHeight - listHeight) - adjustment);
-        listOffset = adjustment * 0.5f;
+        reclaimedHeight = (float)((int)(comparisonPic->getY() + comparisonPic->getHeight() - levelIcon->getY()) -
+                                  (int)(description->GetOptimalHeight(-1) + comparisonPic->getHeight()));
+        multiList->incY((float)m_listHeight - listHeight - reclaimedHeight);
+        offset = reclaimedHeight * 0.5f;
     }
-    else
+    else if (availableHeight < (int)description->GetOptimalHeight(-1))
     {
-        int optimalHeight = description->GetOptimalHeight(-1);
-        if (descriptionOffset < optimalHeight)
-        {
-            availableHeight -= optimalHeight - descriptionOffset;
-            reclaimedHeight = static_cast<float>(availableHeight);
-            child(mainPanel, "MultiList")->incY(static_cast<float>(m_listHeight - listHeight) - static_cast<float>(availableHeight));
-            listOffset = static_cast<float>(availableHeight) * 0.5f;
-        }
+        spareHeight -= description->GetOptimalHeight(-1) - availableHeight;
+        reclaimedHeight = (float)spareHeight;
+        multiList->incY(m_listHeight - listHeight - spareHeight);
+        offset = reclaimedHeight * 0.5f;
     }
 
-    child(mainPanel, "Background")->getChildAt(0)->decHeight(reclaimedHeight);
-    int roundedOffset = Math::round(listOffset);
-    child(mainPanel, "Background")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "GameName")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "CreatedMode")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "LevelIcon")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "LevelIconSlot")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "MultiList")->incY(static_cast<float>(roundedOffset));
-    child(mainPanel, "TextPanel")->getChildAt(0)->decHeight(reclaimedHeight);
-    child(mainPanel, "TextPanel")->incY(static_cast<float>(roundedOffset));
-    descriptionNode->setY(static_cast<float>(m_iconY + roundedOffset));
+    mainPanel->getChildByName("Background")->getChildAt(0)->decHeight(reclaimedHeight);
+    mainPanel->getChildByName("Background")->incY(Math::round(offset));
+    mainPanel->getChildByName("GameName")->incY(Math::round(offset));
+    mainPanel->getChildByName("CreatedMode")->incY(Math::round(offset));
+    mainPanel->getChildByName("LevelIcon")->incY(Math::round(offset));
+    mainPanel->getChildByName("LevelIconSlot")->incY(Math::round(offset));
+    mainPanel->getChildByName("MultiList")->incY(Math::round(offset));
+    mainPanel->getChildByName("TextPanel")->getChildAt(0)->decHeight(reclaimedHeight);
+    mainPanel->getChildByName("TextPanel")->incY(Math::round(offset));
+    description->setY(textY + Math::round(offset));
 
     if (!comparison)
     {
-        child(mainPanel, "ComparisonPic")->decY(static_cast<float>(roundedOffset));
-        child(mainPanel, "ComparisonPicBG")->decY(static_cast<float>(roundedOffset));
-        descriptionNode->setScaleY(1.0f);
-        descriptionNode->setHeight(static_cast<float>(description->GetOptimalHeight(-1)));
+        mainPanel->getChildByName("ComparisonPic")->decY(Math::round(offset));
+        mainPanel->getChildByName("ComparisonPicBG")->decY(Math::round(offset));
+        description->setScaleY(1.0f);
+        description->setHeight(description->GetOptimalHeight(-1));
     }
     else
     {
-        descriptionNode->setScaleY(1.0f);
-        FJ_FuiNode* panelItem = child(mainPanel, "TextPanel")->getChildAt(0);
-        descriptionNode->setHeight(panelItem->getHeight() - static_cast<float>(m_iconY << 1));
-        hideAndRemove(mainPanel, "ComparisonPic");
-        hideAndRemove(mainPanel, "ComparisonPicBG");
+        description->setScaleY(1.0f);
+        description->setHeight(mainPanel->getChildByName("TextPanel")->getChildAt(0)->getHeight() - textY * 2);
+        mainPanel->getChildByName("ComparisonPic")->setVisible(false);
+        mainPanel->removeChild(mainPanel->getChildByName("ComparisonPic"), true);
+        mainPanel->getChildByName("ComparisonPicBG")->setVisible(false);
+        mainPanel->removeChild(mainPanel->getChildByName("ComparisonPicBG"), true);
     }
 }
 

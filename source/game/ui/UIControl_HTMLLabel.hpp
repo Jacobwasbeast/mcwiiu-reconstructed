@@ -7,7 +7,7 @@ class UIControl_HTMLLabel : public UIControl_Label
 {
 public:
     UIControl_HTMLLabel();
-    virtual ~UIControl_HTMLLabel();
+    virtual ~UIControl_HTMLLabel() {}
 
     int GetRealWidth();
     int GetRealHeight();

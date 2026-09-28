@@ -13,7 +13,7 @@ protected:
 
 public:
     UIControl_BitmapIcon();
-    virtual ~UIControl_BitmapIcon();
+    virtual ~UIControl_BitmapIcon() {}
     void setTextureName(const std::wstring& textureName, bool immediate);
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void tick();

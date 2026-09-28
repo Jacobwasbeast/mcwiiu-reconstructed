@@ -17,12 +17,11 @@ public:
     int m_iTopMargin;
     int m_iLabelSpacing;
     float m_fScrollSpeed;
-    FJ_FuiNode* m_pLabels[20];
+    FJ_Label* m_pLabels[20];
     FJ_FuiNode* m_pContentContainer;
     std::vector<std::wstring> m_text;
     std::vector<FJ_Label*> m_labels;
     std::vector<int> m_labelTextIndices;
-    int m_iUnknown;
     int m_iCharacterHeight;
     int m_iContentHeight;
     int m_iTargetScrollPosition;
@@ -66,8 +65,8 @@ public:
     void Reload(float width, float height);
     void SetupList();
     void AddText(const std::wstring& text, bool setup);
-    double GetRealWidth();
-    double GetRealHeight();
+    float GetRealWidth();
+    float GetRealHeight();
     void TouchScroll(int offset, bool active);
 };
 

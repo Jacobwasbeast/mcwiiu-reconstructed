@@ -60,7 +60,7 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
     initialiseMovie();
     m_editName.init(UIString(m_itemName->get()), 0);
     m_editName.SetCharLimit(0x1e);
-    m_anvilLabel.init(UIString(L10N::GetString(0xc60bb915)));
+    m_anvilLabel.init(UIString(L10N::GetString(IDS_REPAIR_AND_NAME)));
 
     Minecraft* minecraft = Minecraft::GetInstance();
     MultiPlayerGameMode* gameMode = minecraft->mGameModes[type];

@@ -19,7 +19,7 @@ class FJ_TextInput : public FJ_Base
 {
 public:
     explicit FJ_TextInput(fuiRenderNode* renderNode);
-    virtual ~FJ_TextInput();
+    virtual ~FJ_TextInput() {}
 
     static FJ_Base* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

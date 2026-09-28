@@ -117,7 +117,7 @@ public:
     bool hidesLowerScenes();
     bool isComponentVisible(EUIScene scene);
     void removeComponent(EUIScene scene);
-    void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
+    void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     UIScene* getCurrentScene(int controllerId);
     bool IsFullscreenGroup();
     C4JRender::eViewportType getViewport();
@@ -147,6 +147,7 @@ private:
     int m_layerId;
     UIGroup* m_group;
 
+    friend class ConsoleUIController;
     friend class UIGroup;
     friend class UIControl_Touch;
 };

@@ -8,10 +8,6 @@ UIControl_SlotList::UIControl_SlotList()
 {
 }
 
-UIControl_SlotList::~UIControl_SlotList()
-{
-}
-
 void UIControl_SlotList::addSlot(unsigned int slot)
 {
     if (m_fuiRenderNode == NULL)

@@ -14,7 +14,7 @@ class fuiRenderNode;
 class FJ_List2D : public FJ_Base
 {
     friend class FJ_AchievementsMenu;
-private:
+protected:
     typedef void (*FJ_ScrollDelegateType)(FJ_FuiNode*);
 
     bool m_outline;

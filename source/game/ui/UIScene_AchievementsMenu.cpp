@@ -263,10 +263,10 @@ std::wstring UIScene_AchievementsMenu::getMoviePath()
     return g_pApp->GetLocalPlayerCount() < 2 ? L"AchievementsMenu" : L"AchievementsMenuSplit";
 }
 
-void UIScene_AchievementsMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                           bool pressed, bool& handled)
+void UIScene_AchievementsMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                           bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (pressed)
     {
         switch (action)
@@ -281,7 +281,7 @@ void UIScene_AchievementsMenu::handleInput(int playerId, int action, bool repeat
         case EControllerActions_MenuLeft:
         case EControllerActions_MenuPageUp:
         case EControllerActions_MenuPageDown:
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
             break;
         case EControllerActions_MenuCancel:
             navigateBack();

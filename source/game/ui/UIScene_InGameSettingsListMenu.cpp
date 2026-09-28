@@ -143,14 +143,14 @@ void UIScene_InGameSettingsListMenu::Init()
 
     if (miniGame->HasRoundLengthOption())
     {
-        m_roundLengthSlider = MultiListSliderLogic(2, 0x908811f4, eMiniGameId_Battle,
+        m_roundLengthSlider = MultiListSliderLogic(2, IDS_MG_OPTION_ROUND_LENGTH, eMiniGameId_Battle,
                                                    eCustomGameModeHostOption_RoundLength);
         m_roundLengthSlider.AddTo(m_multiList,
                                   m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_RoundLength));
     }
 
     if (miniGame->HasCentralSpawnOption())
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xef2a2f6a)), 0,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG_OPTION_CENTRE_SPAWN)), 0,
             m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_CentreSpawn) != 0);
 
     std::wstring livesLabel = m_playerSettings.mLivesPerRound == 0
@@ -160,7 +160,7 @@ void UIScene_InGameSettingsListMenu::Init()
         miniGame->HasFeatureSupportForInfiniteLives() ? 0 : 1, 10,
         m_playerSettings.mLivesPerRound, false, 7, 3);
 
-    m_gameVariantSlider = MultiListSliderLogic(4, 0x901c1fe8, m_miniGameId,
+    m_gameVariantSlider = MultiListSliderLogic(4, IDS_MG_OPTION_SPECTATE_MODE, m_miniGameId,
                                                eCustomGameModeHostOption_SpectateMode);
     m_gameVariantSlider.AddTo(m_multiList,
                               m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_SpectateMode));
@@ -213,17 +213,17 @@ void UIScene_InGameSettingsListMenu::Init()
                     arenaSize = index;
         }
         std::wstring arenaLabel = arenaSize == 0
-            ? makeTextLabel(0x36df2177, IDS_MG_AUTO)
-            : std::wstring(L10N::GetString(0x36df2177)) + L" x " +
+            ? makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)
+            : std::wstring(L10N::GetString(IDS_MG02_LAYER_SCALE)) + L" x " +
               _toString<float>(arenaSizeLabels[arenaSize]);
         m_multiList.AddNewSlider(arenaLabel, 16, 0, 5, arenaSize, true, 7, 3);
 
         int layerCount = m_playerSettings.mLayerCount.isSet() ? m_playerSettings.mLayerCount.get() : 0;
         std::wstring layerLabel = layerCount > 0
-            ? makeValueLabel(0x50849384, layerCount)
-            : makeTextLabel(0x50849384, IDS_MG_AUTO);
+            ? makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount)
+            : makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO);
         m_multiList.AddNewSlider(layerLabel, 17, 0, 8, layerCount, false, 7, 3);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x40ea8efc)), 18,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG02_SPECTATOR_PARTICIPATION)), 18,
                                    m_playerSettings.mSpectatorParticipation);
     }
 
@@ -254,14 +254,14 @@ void UIScene_InGameSettingsListMenu::UpdateSettings(bool unavailable)
     int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
     if (unavailable)
     {
-        gConsoleUIController.RequestAlertMessage(0x6abe4799, 0xd5232b99, parameters,
+        gConsoleUIController.RequestAlertMessage(IDS_MG_SETTINGS_UPDATED_TITLE, 0xd5232b99, parameters,
                                                   0, 0, 0, 0, 0, false);
         m_multiList.EnableItem(0, false, true);
         m_multiList.SetCheckboxValue(0, false, true);
     }
     else
     {
-        gConsoleUIController.RequestAlertMessage(0x6abe4799, IDS_MG_SETTINGS_UPDATED_MSG, parameters,
+        gConsoleUIController.RequestAlertMessage(IDS_MG_SETTINGS_UPDATED_TITLE, IDS_MG_SETTINGS_UPDATED_MSG, parameters,
                                                   1, m_playerId, 0, 0, 0, true);
     }
 }
@@ -394,20 +394,20 @@ void UIScene_InGameSettingsListMenu::UpdateDescriptionText()
 }
 
 void UIScene_InGameSettingsListMenu::handleInput(int playerId, int action, bool repeat,
-                                                  bool released, bool pressed, bool& handled)
+                                                  bool pressed, bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             setGameSettings();
             navigateBack();
             handled = true;
             break;
         }
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
@@ -418,7 +418,7 @@ void UIScene_InGameSettingsListMenu::handleInput(int playerId, int action, bool 
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }
@@ -513,8 +513,8 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         m_playerSettings.mArenaSizeMultiplier = sizeIndex == 0
             ? maybe<float>() : maybe<float>(arenaSizes[sizeIndex]);
         std::wstring label = sizeIndex == 0
-            ? makeTextLabel(0x36df2177, IDS_MG_AUTO)
-            : std::wstring(L10N::GetString(0x36df2177)) + L" x " +
+            ? makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)
+            : std::wstring(L10N::GetString(IDS_MG02_LAYER_SCALE)) + L" x " +
               _toString<float>(arenaSizeLabels[sizeIndex]);
         m_multiList.SetItemLabel(16, UIString(label), false);
         UpdateDescriptionText();
@@ -526,8 +526,8 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         m_playerSettings.mLayerCount = layerCount == 0
             ? maybe<unsigned int>() : maybe<unsigned int>(layerCount);
         std::wstring label = layerCount == 0
-            ? makeTextLabel(0x50849384, IDS_MG_AUTO)
-            : makeValueLabel(0x50849384, layerCount);
+            ? makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO)
+            : makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount);
         m_multiList.SetItemLabel(17, UIString(label), false);
         UpdateDescriptionText();
         return;

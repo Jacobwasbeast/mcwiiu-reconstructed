@@ -26,10 +26,6 @@ FJ_EnchantingButton::FJ_EnchantingButton(fuiRenderNode* pRenderNode)
     m_state = 0;
 }
 
-FJ_EnchantingButton::~FJ_EnchantingButton()
-{
-}
-
 void FJ_EnchantingButton::HandleUpdateLabel(FJ_Event*)
 {
     SetLabel(m_label);

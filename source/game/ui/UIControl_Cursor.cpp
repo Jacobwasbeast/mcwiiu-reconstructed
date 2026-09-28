@@ -7,10 +7,6 @@ UIControl_Cursor::UIControl_Cursor()
 {
 }
 
-UIControl_Cursor::~UIControl_Cursor()
-{
-}
-
 void UIControl_Cursor::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Cursor;

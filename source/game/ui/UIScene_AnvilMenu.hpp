@@ -75,7 +75,7 @@ public:
     static int KeyboardCompleteCallback(void* data, bool accepted);
     void handleEditNamePressed();
     virtual void refreshContainer(AbstractContainerMenu* menu,
-                                  std::vector<not_null_ptr<ItemInstance>>* items);
+                                  std::vector<not_null_ptr<ItemInstance> >* items);
     virtual void slotChanged(AbstractContainerMenu* menu, int slot, not_null_ptr<ItemInstance> item);
     virtual void setContainerData(AbstractContainerMenu* menu, int id, int value);
     virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);

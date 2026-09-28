@@ -526,7 +526,7 @@ void UILayer::removeComponent(EUIScene scene)
     }
 }
 
-void UILayer::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled)
+void UILayer::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_scenes.empty())
         return;
@@ -534,11 +534,11 @@ void UILayer::handleInput(int playerId, int action, bool repeat, bool released, 
     for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
     {
         UIScene* scene = *it;
-        if (scene->hasFocus(playerId))
+        if (scene->hasFocus(playerId) && scene->m_tickedLastFrame)
         {
             if (repeat && !scene->allowRepeat(action))
                 return;
-            scene->handleInput(playerId, action, repeat, released, pressed, handled);
+            scene->handleInput(playerId, action, repeat, pressed, released, handled);
         }
 
         handled = handled || scene->hidesLowerScenes() || scene->blocksInput();

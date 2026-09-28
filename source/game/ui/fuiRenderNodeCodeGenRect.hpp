@@ -19,6 +19,7 @@ public:
     void setTexture(unsigned int textureWidth, unsigned int textureHeight, int textureId, bool textureAlpha);
 
 private:
+    int mUnusedE4;
     int mTextureId;
     unsigned char mCustomTexture;
     unsigned char mTextureAlpha;

@@ -11,6 +11,8 @@ class fuiRenderNode;
 
 class FJ_SlotList : public FJ_FuiNode
 {
+    friend class FJ_CraftingMenu;
+    friend class FJ_TradingMenu;
     friend class fuiRenderNodeTimeline;
 private:
     int m_slotSize;
@@ -34,9 +36,9 @@ public:
     bool SetSlotRedBox(int slot, bool show);
     bool SetSlotHighlight(int slot, bool highlighted);
     virtual void setVisible(bool visible);
-    int getRows();
-    int getColumns();
-    bool getLoaded();
+    int getRows() { return m_rows; }
+    int getColumns() { return m_columns; }
+    bool getLoaded() { return m_loaded; }
     void ShowSlot(int slot, bool visible);
 };
 

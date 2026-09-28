@@ -89,7 +89,7 @@ void UIControl_GridList::clearList()
 
 void UIControl_GridList::init(int controlId)
 {
-    m_controlType = static_cast<UIControl::eUIControlType>(controlId);
+    m_controlId = controlId;
     FJ_List2D* list = m_fuiRenderNode->getFuiNode()->asFJ_List2D();
     list->Init(controlId);
     int sceneType = m_scene->getSceneType();
@@ -100,7 +100,7 @@ void UIControl_GridList::init(int controlId)
 void UIControl_GridList::ReInit()
 {
     UIControl::ReInit();
-    init(m_controlType);
+    init(m_controlId);
     clearElements();
     m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
 }

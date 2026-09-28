@@ -17,8 +17,8 @@ public:
     virtual void preRender();
     virtual void render(fuiRect* rect, fuiMatrix* matrix);
     virtual fuiRenderNode* findNode(const char* name);
-    double getStageWidth();
-    double getStageHeight();
+    float getStageWidth();
+    float getStageHeight();
 };
 
 #endif

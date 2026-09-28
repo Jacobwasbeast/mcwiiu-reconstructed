@@ -12,7 +12,7 @@ class FJ_ListButtonScoreBoard : public FJ_Button
 {
 public:
     explicit FJ_ListButtonScoreBoard(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonScoreBoard();
+    virtual ~FJ_ListButtonScoreBoard() {}
 
     virtual void Init(const std::wstring& name, int id);
     void SetNumIcons(int numIcons, int width, int highlightWidth);
@@ -21,6 +21,9 @@ public:
     void SetSlotText(int slot, const std::wstring& text);
     void SetSlotTextureName(int slot, const std::wstring& textureName);
     virtual void ChangeState(int state);
+
+protected:
+    bool m_small;
 
 private:
     FJ_FuiNode* m_playerIcons;

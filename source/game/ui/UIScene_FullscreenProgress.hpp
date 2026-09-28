@@ -42,7 +42,7 @@ public:
     virtual void handleDestroy();
     virtual void tick();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleTimerComplete(int timerId);

@@ -73,7 +73,6 @@ void UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* no
                                                 const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_EnchantmentButton;
-    m_controlId = 1;
     UIControl_Button::setupControl(scene, node, name);
 }
 
@@ -146,8 +145,10 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
 {
     UIScene_EnchantingMenu* scene = static_cast<UIScene_EnchantingMenu*>(m_scene);
     EnchantmentMenu* menu = scene->getMenu();
+    GlStateManager::scalef((rect->xMax - rect->xMin) / m_width,
+                           (rect->yMax - rect->yMin) / m_height, 1.0F);
     float scale;
-    if (scene->getPad() == 0)
+    if (scene->m_movieResolution == 0)
     {
         scale = gApp.GetLocalPlayerCount() < 2 ? 3.5F : 3.0F;
     }
@@ -155,9 +156,6 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
     {
         scale = gApp.GetLocalPlayerCount() < 2 ? 2.5F : 2.0F;
     }
-
-    GlStateManager::scalef((rect->xMax - rect->xMin) / m_width,
-                           (rect->yMax - rect->yMin) / m_height, 1.0F);
     GlStateManager::scalef(scale, scale, scale);
     const int level = menu->mCosts[m_index];
     const int goldCount = menu->getGoldCount();
@@ -179,9 +177,9 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
         {
             colour = m_focus ? m_focusColour : m_colour;
         }
-        Minecraft::GetInstance()->mFont->drawWordWrap(
+        minecraft->mAlternateFont->drawWordWrap(
             m_name, 0, 0, (int)(m_width / scale),
-            colour);
+            colour, (int)(m_height / scale));
         GlStateManager::disableAlphaTest();
     }
     GlStateManager::disableRescaleNormal();

@@ -10,7 +10,7 @@ class FJ_ListButtonPlayerList : public FJ_Button
 {
 public:
     explicit FJ_ListButtonPlayerList(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonPlayerList();
+    virtual ~FJ_ListButtonPlayerList() {}
 
     void Init(const std::wstring& name, int id);
     void SetPlayerIcon(int frame);

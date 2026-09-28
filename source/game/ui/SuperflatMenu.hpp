@@ -1,6 +1,7 @@
 #ifndef GAME_UI_SUPERFLATMENU_HPP
 #define GAME_UI_SUPERFLATMENU_HPP
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <boost/unordered_map.hpp>
@@ -21,9 +22,9 @@ public:
     public:
         SliderLabelBehaviour(int name, unsigned int minimum, unsigned int maximum);
         virtual std::wstring GetLabel(int value) = 0;
-        int mName;
         unsigned int mMinimum;
         unsigned int mMaximum;
+        int mName;
     };
     class CategoricalLabelBehaviour : public SliderLabelBehaviour
     {
@@ -41,19 +42,21 @@ public:
         NumericalLabelBehaviour(int name, const std::wstring& label, double scale, unsigned int minimum, unsigned int maximum);
         NumericalLabelBehaviour(int name, const std::wstring& label, unsigned int minimum, unsigned int maximum);
         virtual std::wstring GetLabel(int value);
+        enum EType
+        {
+            eType_Integer,
+            eType_Decimal
+        };
         int mType;
         double mScale;
-        short mPrecision;
-        int mFormatString;
-        int mLabel;
-        int mUnused;
+        std::wstring mFormat;
     };
     class Mapping;
     class Param
     {
     public:
         typedef Mapping* (*MappingFactory)(int, UIControl_MultiList*);
-        Param(bool terminal, bool parent, int name, int desc, int minimum, int maximum, MappingFactory factory, SliderLabelBehaviour* behaviour);
+        Param(bool terminal, bool parent, int name, int desc, int minimum, int maximum, MappingFactory* factory, SliderLabelBehaviour* behaviour);
         std::wstring getLabel(int value) const;
         int getName() const;
         bool isTerminal() const;
@@ -63,7 +66,7 @@ public:
         int getMinValue() const;
         int getMaxValue() const;
         MappingFactory getFunc() const;
-        static Param Parent(MappingFactory factory, int name, int desc);
+        static Param Parent(MappingFactory* factory, int name, int desc);
         static Param Child(SliderLabelBehaviour* behaviour, int name);
         static Param Terminal();
         bool mTerminal;
@@ -72,7 +75,7 @@ public:
         int mDesc;
         int mMinValue;
         int mMaxValue;
-        MappingFactory mFactory;
+        MappingFactory* mFactory;
         SliderLabelBehaviour* mBehaviour;
     };
     class Mapping
@@ -82,21 +85,20 @@ public:
         {
         public:
             Sub(Mapping* mapping);
-            ~Sub();
+            virtual ~Sub();
             void setEnabled(bool enabled);
             void update();
             void setPosition(int position);
             int getPosition();
-            bool mEnabled;
+            int mIndex;
             Mapping* mMapping;
             int mPosition;
-            bool mActive;
-            int mSlider;
+            bool mEnabled;
         };
         Mapping(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info) = 0;
         virtual void read(FlatGeneratorInfo& info) = 0;
-        virtual ~Mapping();
+        virtual ~Mapping() {}
         bool isChecked();
         void updateChildren();
         void setChecked(bool checked);
@@ -258,6 +260,10 @@ public:
         int mMaxId;
     };
     static BiomeInfo* getBiomeInfoA();
+
+    static const int PARAM_COUNT = 26;
+    static Param params[PARAM_COUNT];
+    static std::wstring labelSeparator;
 };
 
 #endif

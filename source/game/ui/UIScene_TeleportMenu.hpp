@@ -32,7 +32,7 @@ public:
     virtual void handleReload();
     virtual void tick();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleGainFocus(bool hadFocus);
     virtual void handlePress(int controlId, int childId);

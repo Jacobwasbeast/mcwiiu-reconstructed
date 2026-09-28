@@ -13,7 +13,7 @@ class UIControl_Slider : public UIControl_Base
 {
 public:
     UIControl_Slider();
-    virtual ~UIControl_Slider();
+    virtual ~UIControl_Slider() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
     virtual void setFocus(bool focus);

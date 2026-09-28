@@ -7,10 +7,6 @@ UIControl_AchievementsList::UIControl_AchievementsList()
 {
 }
 
-UIControl_AchievementsList::~UIControl_AchievementsList()
-{
-}
-
 void UIControl_AchievementsList::setupControl(UIScene* scene, fuiRenderNode* node,
                                               const std::string& name)
 {

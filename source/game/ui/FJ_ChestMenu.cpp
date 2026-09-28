@@ -27,7 +27,7 @@ void FJ_ChestMenu::SetSafeZone(int top, int bottom, int left, int right)
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
     FJ_FuiNodeStage* stage = getStage();
-    double height = stage->getStageHeight();
+    float height = stage->getStageHeight();
     if (height == 360.0 || height == 540.0)
     {
         setX(-static_cast<float>(right));

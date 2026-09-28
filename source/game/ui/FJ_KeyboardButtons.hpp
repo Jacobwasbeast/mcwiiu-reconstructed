@@ -10,7 +10,7 @@ class FJ_KeyboardButtons : public FJ_Button
 {
 public:
     explicit FJ_KeyboardButtons(fuiRenderNode* renderNode);
-    virtual ~FJ_KeyboardButtons();
+    virtual ~FJ_KeyboardButtons() {}
 
     virtual void SetLabel(const std::wstring& label);
     void Init(const std::wstring& label, int id);

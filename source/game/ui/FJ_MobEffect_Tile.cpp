@@ -9,10 +9,6 @@ FJ_MobEffect_Tile::FJ_MobEffect_Tile(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_MobEffect_Tile::~FJ_MobEffect_Tile()
-{
-}
-
 void FJ_MobEffect_Tile::Init()
 {
     FJ_FuiNode* pPanel = getChildByName("PointerTextPanel")->asMovieClip();

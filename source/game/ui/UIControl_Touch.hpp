@@ -8,9 +8,9 @@ class UIControl_Touch : public UIControl_Base
 {
 public:
     UIControl_Touch();
-    virtual ~UIControl_Touch();
+    virtual ~UIControl_Touch() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
-    void init(int controlType);
+    void init(int controlId);
     virtual void ReInit();
 };
 

@@ -108,23 +108,23 @@ std::wstring UIScene_SignEntryMenu::getMoviePath()
     return std::wstring(L"SignEntryMenuSplit");
 }
 
-void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                        bool pressed, bool& handled)
+void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                        bool released, bool& handled)
 {
     if (m_confirmRequested || m_keyboardActive)
         return;
 
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             std::wstring empty(L"");
             m_sign->SetMessage(0, empty);

@@ -11,10 +11,6 @@ UIControl_Progress::UIControl_Progress()
     m_controlType = UIControl::eUIControlType_Progress;
 }
 
-UIControl_Progress::~UIControl_Progress()
-{
-}
-
 void UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node,
                                       const std::string& name)
 {

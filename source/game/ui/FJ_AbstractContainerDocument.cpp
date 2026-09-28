@@ -12,10 +12,6 @@ FJ_AbstractContainerDocument::FJ_AbstractContainerDocument(fuiRenderNode* render
 {
 }
 
-FJ_AbstractContainerDocument::~FJ_AbstractContainerDocument()
-{
-}
-
 void FJ_AbstractContainerDocument::handleMouseMove(FJ_Event* event)
 {
     if (event == 0)
@@ -36,10 +32,7 @@ void FJ_AbstractContainerDocument::handleMouseMove(FJ_Event* event)
 
 void FJ_AbstractContainerDocument::_handleMouseMove(FJ_FuiNode* node, FJ_Event* event)
 {
-    if (node != 0)
-    {
-        static_cast<FJ_AbstractContainerDocument*>(node)->handleMouseMove(event);
-    }
+    static_cast<FJ_AbstractContainerDocument*>(node)->handleMouseMove(event);
 }
 
 void FJ_AbstractContainerDocument::init(FJ_Event* event)

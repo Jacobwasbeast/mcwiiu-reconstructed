@@ -3,14 +3,23 @@
 #include <string>
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_ToolTip.hpp"
 
+static std::string s_toolTipNames[16] = {
+    "ToolTip_0", "ToolTip_1", "ToolTip_2", "ToolTip_3",
+    "ToolTip_4", "ToolTip_5", "ToolTip_6", "ToolTip_7",
+    "ToolTip_8", "ToolTip_9", "ToolTip_10", "ToolTip_11",
+    "ToolTip_12", "ToolTip_13", "ToolTip_14", "ToolTip_15"
+};
+
 FJ_ToolTips::FJ_ToolTips(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_useTouchControls(0),
-      m_touchControlsAvailable(false)
+    : FJ_Document(renderNode)
 {
+    m_touchControlsAvailable = false;
+    m_useTouchControls = 0;
 }
 
 FJ_ToolTips::~FJ_ToolTips()
@@ -29,80 +38,98 @@ unsigned int FJ_ToolTips::getType()
 
 void FJ_ToolTips::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    node->asFJ_Document()->keyDownHandler(event);
+    static_cast<FJ_ToolTips*>(node)->keyDownHandler(event);
 }
 
 void FJ_ToolTips::init(FJ_Event*)
 {
-    static const char* const names[16] = {
-        "ToolTip_0", "ToolTip_1", "ToolTip_2", "ToolTip_3",
-        "ToolTip_4", "ToolTip_5", "ToolTip_6", "ToolTip_7",
-        "ToolTip_8", "ToolTip_9", "ToolTip_10", "ToolTip_11",
-        "ToolTip_12", "ToolTip_13", "ToolTip_14", "ToolTip_15"
-    };
-    static const char* const touchNames[16] = {
-        "Touch_0", "Touch_1", "Touch_2", "Touch_3",
-        "Touch_4", "Touch_5", "Touch_6", "Touch_7",
-        "Touch_8", "Touch_9", "Touch_10", "Touch_11",
-        "Touch_12", "Touch_13", "Touch_14", "Touch_15"
-    };
     m_toolTipSuffix.assign(L"  ");
-    for (int i = 0; i < 16; i += 2)
+    for (int i = 0; i < 16; ++i)
     {
-        FJ_FuiNode* first = getChildByName(std::string(names[i]));
-        m_toolTipNodes.push_back(first);
-        static_cast<FJ_ToolTip*>(first)->Init(std::wstring(), i, false, -1, -1);
-        FJ_FuiNode* second = getChildByName(std::string(names[i + 1]));
-        m_toolTipNodes.push_back(second);
-        static_cast<FJ_ToolTip*>(second)->Init(std::wstring(), i + 1, false, -1, -1);
+        m_toolTipNodes.push_back(getChildByName(s_toolTipNames[i]));
+        static_cast<FJ_ToolTip*>(m_toolTipNodes[i])->Init(L"", i, false, -1, -1);
     }
     getStage()->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
     m_touchControlsAvailable = false;
-    FJ_FuiNode* firstTouchNode = getChildByName(std::string(touchNames[0]));
-    if (firstTouchNode != 0)
+    if (getChildByName("Touch_0") != 0)
     {
-        for (int i = 0; i < 16; ++i)
-        {
-            m_touchNodes.push_back(getChildByName(std::string(touchNames[i])));
-        }
+        m_touchNodes.push_back(getChildByName("Touch_0"));
+        m_touchNodes.push_back(getChildByName("Touch_1"));
+        m_touchNodes.push_back(getChildByName("Touch_2"));
+        m_touchNodes.push_back(getChildByName("Touch_3"));
+        m_touchNodes.push_back(getChildByName("Touch_4"));
+        m_touchNodes.push_back(getChildByName("Touch_5"));
+        m_touchNodes.push_back(getChildByName("Touch_6"));
+        m_touchNodes.push_back(getChildByName("Touch_7"));
+        m_touchNodes.push_back(getChildByName("Touch_8"));
+        m_touchNodes.push_back(getChildByName("Touch_9"));
+        m_touchNodes.push_back(getChildByName("Touch_10"));
+        m_touchNodes.push_back(getChildByName("Touch_11"));
+        m_touchNodes.push_back(getChildByName("Touch_12"));
+        m_touchNodes.push_back(getChildByName("Touch_13"));
+        m_touchNodes.push_back(getChildByName("Touch_14"));
+        m_touchNodes.push_back(getChildByName("Touch_15"));
         m_touchControlsAvailable = true;
     }
 }
 
 void FJ_ToolTips::UpdateControllerType(int controllerType)
 {
-    for (std::vector<FJ_FuiNode*>::iterator it = m_toolTipNodes.begin(); it != m_toolTipNodes.end(); ++it)
-    {
-        static_cast<FJ_ToolTip*>(*it)->UpdateControllerType(controllerType);
-    }
+    for (int i = 0; i < 16; ++i)
+        static_cast<FJ_ToolTip*>(m_toolTipNodes[i])->UpdateControllerType(controllerType);
 }
 
 void FJ_ToolTips::keyDownHandler(FJ_Event* event)
 {
-    int index;
-    switch (event->m_eType)
+    switch (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode)
     {
-    case 0: index = 0; break;
-    case 1: index = 4; break;
-    case 2: index = 5; break;
+    case 0:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[0])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[0])->Animate();
+        break;
+    case 1:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[4])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[4])->Animate();
+        break;
+    case 2:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[5])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[5])->Animate();
+        break;
     case 3:
     case 4:
     case 5:
-    case 6: index = 15; break;
-    case 7: index = 1; break;
-    case 8: index = 2; break;
-    case 9: index = 3; break;
-    case 10: index = 7; break;
-    case 11: index = 6; break;
-    case 12: index = 9; break;
-    case 13: index = 10; break;
-    default: return;
-    }
-
-    FJ_ToolTip* toolTip = static_cast<FJ_ToolTip*>(m_toolTipNodes[index]);
-    if (toolTip->IsSingleButtonToolTip())
-    {
-        toolTip->Animate();
+    case 6:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[15])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[15])->Animate();
+        break;
+    case 7:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[1])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[1])->Animate();
+        break;
+    case 8:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[2])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[2])->Animate();
+        break;
+    case 9:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[3])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[3])->Animate();
+        break;
+    case 10:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[7])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[7])->Animate();
+        break;
+    case 11:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[6])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[6])->Animate();
+        break;
+    case 12:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[9])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[9])->Animate();
+        break;
+    case 13:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[10])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[10])->Animate();
+        break;
     }
 }
 
@@ -110,10 +137,9 @@ void FJ_ToolTips::SetToolTip(int index, int type, int subtype, const std::wstrin
 {
     if (index < 16)
     {
-        FJ_ToolTip* toolTip = static_cast<FJ_ToolTip*>(m_toolTipNodes[index]);
-        toolTip->setVisible(visible);
-        toolTip->SetType(type, subtype);
-        toolTip->SetLabel(text + m_toolTipSuffix);
+        m_toolTipNodes[index]->setVisible(visible);
+        static_cast<FJ_ToolTip*>(m_toolTipNodes[index])->SetType(type, subtype);
+        static_cast<FJ_ToolTip*>(m_toolTipNodes[index])->SetLabel(text + m_toolTipSuffix);
     }
     m_toolTipIndex = index;
 }
@@ -122,47 +148,45 @@ void FJ_ToolTips::UpdateLayout()
 {
     int bottom = getISafeZoneBottom();
     if (bottom == 0)
-    {
         bottom = 2;
-    }
     int left = getISafeZoneLeft();
+    fuiRect firstRect = m_toolTipNodes[0]->getRect(m_toolTipNodes[0]);
+    int y = static_cast<int>(getStage()->getStageHeight() - m_toolTipNodes[0]->getHeight() - bottom - firstRect.yMin);
     if (left == 0)
-    {
         left = 2;
-    }
-
-    FJ_FuiNode* firstNode = m_toolTipNodes[0];
-    fuiRect firstRect = firstNode->getRect(firstNode);
-    const float stageHeight = static_cast<float>(getStage()->getStageHeight());
-    const float y = (stageHeight - firstNode->getHeight()) - static_cast<float>(bottom) - firstRect.yMin;
 
     for (int i = 0; i < 16; ++i)
     {
-        FJ_FuiNode* node = m_toolTipNodes[i];
-        if (!node->isVisible())
+        if (m_toolTipNodes[i]->isVisible())
         {
+            m_toolTipNodes[i]->setX(left);
+            m_toolTipNodes[i]->setY(y);
             if (m_touchControlsAvailable)
             {
-                FJ_FuiNode* touchNode = m_touchNodes[i];
-                touchNode->setX(-1.0f);
-                touchNode->setY(-1.0f);
-                touchNode->setWidth(1.0f);
-                touchNode->setHeight(1.0f);
+                m_touchNodes[i]->setVisible(true);
+                m_touchNodes[i]->setX(left);
+                m_touchNodes[i]->setY(y - m_toolTipNodes[i]->getHeight());
+                m_touchNodes[i]->setWidth(m_toolTipNodes[i]->getWidth());
+                fuiRect rect = m_toolTipNodes[i]->getRect(m_toolTipNodes[i]);
+                m_touchNodes[i]->setHeight(m_toolTipNodes[i]->getHeight() * 2 + rect.yMin);
             }
-            continue;
+
+            bool emptyLabel = false;
+            if (static_cast<FJ_ToolTip*>(m_toolTipNodes[i])->GetLabel().length() == 2)
+            {
+                static_cast<FJ_ToolTip*>(m_toolTipNodes[i])->SetLabel(L"oo");
+                emptyLabel = true;
+            }
+            left += static_cast<int>(m_toolTipNodes[i]->getWidth());
+            if (emptyLabel)
+                static_cast<FJ_ToolTip*>(m_toolTipNodes[i])->SetLabel(m_toolTipSuffix);
         }
-        node->setX(static_cast<float>(left));
-        node->setY(y);
-        if (m_touchControlsAvailable)
+        else if (m_touchControlsAvailable)
         {
-            FJ_FuiNode* touchNode = m_touchNodes[i];
-            touchNode->setVisible(true);
-            touchNode->setX(static_cast<float>(left));
-            touchNode->setY(y - node->getHeight());
-            touchNode->setWidth(node->getWidth());
-            fuiRect touchRect = node->getRect(touchNode);
-            touchNode->setHeight(node->getHeight() * 2.0f + touchRect.yMax);
+            m_touchNodes[i]->setX(-1.0f);
+            m_touchNodes[i]->setY(-1.0f);
+            m_touchNodes[i]->setWidth(1.0f);
+            m_touchNodes[i]->setHeight(1.0f);
         }
-        left += static_cast<int>(node->getWidth());
     }
 }

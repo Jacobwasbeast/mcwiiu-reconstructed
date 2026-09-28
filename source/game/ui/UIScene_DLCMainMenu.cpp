@@ -91,10 +91,10 @@ void UIScene_DLCMainMenu::tick()
         m_initialized = true;
         m_timer.setVisible(false);
         m_offerList.addItem(UIString(IDS_MAP_PACKS), 0);
-        m_offerList.addItem(UIString(0xe6ce8669), 1);
-        m_offerList.addItem(UIString(0xf6194eb1), 2);
-        m_offerList.addItem(UIString(0x73639b6c), 3);
-        m_offerList.addItem(UIString(0x500dc372), 4);
+        m_offerList.addItem(UIString(IDS_DLC_MENU_SKINPACKS), 1);
+        m_offerList.addItem(UIString(IDS_DLC_MENU_TEXTUREPACKS), 2);
+        m_offerList.addItem(UIString(IDS_DLC_MENU_MASHUPPACKS), 3);
+        m_offerList.addItem(UIString(IDS_DLC_MENU_BUNDLEPACKS), 4);
     }
 }
 
@@ -110,14 +110,14 @@ std::wstring UIScene_DLCMainMenu::getMoviePath()
     return std::wstring(L"DLCMainMenu");
 }
 
-void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                      bool pressed, bool& handled)
+void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                      bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuCancel:
-        if (released)
+        if (pressed)
         {
             cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
             commerce->ClearProductInfo();
@@ -125,9 +125,9 @@ void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, boo
         }
         break;
     case EControllerActions_MenuOk:
-        if (released)
+        if (pressed)
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
@@ -135,7 +135,7 @@ void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, boo
     case EControllerActions_MenuLeft:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }

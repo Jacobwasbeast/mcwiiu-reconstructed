@@ -15,10 +15,6 @@ UIControl_Button::UIControl_Button()
 {
 }
 
-UIControl_Button::~UIControl_Button()
-{
-}
-
 void UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Button;

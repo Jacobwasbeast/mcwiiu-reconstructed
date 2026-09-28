@@ -13,10 +13,6 @@ UIControl_TextInput::UIControl_TextInput()
 {
 }
 
-UIControl_TextInput::~UIControl_TextInput()
-{
-}
-
 void UIControl_TextInput::SetCharLimit(int limit)
 {
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();

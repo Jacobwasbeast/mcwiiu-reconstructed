@@ -15,7 +15,7 @@ class FJ_CheckBox : public FJ_Base
 {
 public:
     explicit FJ_CheckBox(fuiRenderNode* renderNode);
-    virtual ~FJ_CheckBox();
+    virtual ~FJ_CheckBox() {}
 
     void UpdateCheckBox();
     void SetCheckBox(bool checked);

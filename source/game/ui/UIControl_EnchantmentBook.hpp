@@ -13,7 +13,7 @@ class UIControl_EnchantmentBook : public UIControl
 {
 public:
     UIControl_EnchantmentBook();
-    virtual ~UIControl_EnchantmentBook();
+    virtual ~UIControl_EnchantmentBook() {}
 
     void tickBook();
     void render(fuiRect* rect);

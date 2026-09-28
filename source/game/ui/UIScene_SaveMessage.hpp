@@ -14,7 +14,7 @@ public:
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleTimerComplete(int timerId);
     virtual void handlePress(int controlId, int childId);

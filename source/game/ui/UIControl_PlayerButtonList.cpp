@@ -22,10 +22,6 @@ unsigned int UIControl_PlayerButtonList::PendingAddItem::OnTick()
     return 1;
 }
 
-UIControl_PlayerButtonList::~UIControl_PlayerButtonList()
-{
-}
-
 void UIControl_PlayerButtonList::setVOIPIcon(int item, int icon)
 {
     if (m_scene->hasMovie() == false)
@@ -54,7 +50,7 @@ void UIControl_PlayerButtonList::addItem(const std::wstring& label, int playerIc
 void UIControl_PlayerButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                               const std::string& name)
 {
-    m_controlType = static_cast<UIControl::eUIControlType>(0x1d);
+    m_controlType = UIControl::eUIControlType_PlayerButtonList;
     UIControl_ButtonList::setupControl(scene, node, name);
 }
 

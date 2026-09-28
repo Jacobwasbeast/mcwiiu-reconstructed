@@ -17,7 +17,7 @@ public:
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();
     virtual bool allowRepeat(int action);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     void KeyboardDonePressed();
     virtual void handleTimerComplete(int timerId);

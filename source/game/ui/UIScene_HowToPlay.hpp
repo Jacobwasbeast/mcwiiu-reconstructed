@@ -85,7 +85,7 @@ public:
     virtual void updateTooltips();
     virtual std::wstring getMoviePath();
     virtual void handleReload();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     void customDrawEnchantmentFont(fuiRect* rect, int variant);
     virtual void customDraw(const char* name, fuiRect* rect);

@@ -54,29 +54,72 @@ unsigned int UIScene_QuadrantSignin::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    static const char* controllers[4] = { "Controller1", "Controller2", "Controller3", "Controller4" };
-    static const char* press[4] = { "PressLabel", "PressLabel", "PressLabel", "PressLabel" };
-    static const char* gamerTags[4] = { "GamerTag", "GamerTag", "GamerTag", "GamerTag" };
-    static const char* accountTypes[4] = { "AccountType", "AccountType", "AccountType", "AccountType" };
-    static const char* playerNumbers[4] = { "PlayerNumber", "PlayerNumber", "PlayerNumber", "PlayerNumber" };
-    static const char* connectLabels[4] = { "ConnectControllerLabel", "ConnectControllerLabel", "ConnectControllerLabel", "ConnectControllerLabel" };
-    for (int i = 0; i < 4; ++i)
-    {
-        m_controllerControls[i].setupControl(this, root, std::string(controllers[i]));
-        m_pressLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(press[i]));
-        m_gamerTagLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(gamerTags[i]));
-        m_accountTypeLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(accountTypes[i]));
-        m_playerNumberLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(playerNumbers[i]));
-        m_playerPictures[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string("PlayerPic"));
-        m_connectControllerLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(connectLabels[i]));
-        m_controls.push_back(&m_controllerControls[i]);
-        m_controls.push_back(&m_pressLabels[i]);
-        m_controls.push_back(&m_gamerTagLabels[i]);
-        m_controls.push_back(&m_accountTypeLabels[i]);
-        m_controls.push_back(&m_playerNumberLabels[i]);
-        m_controls.push_back(&m_playerPictures[i]);
-        m_controls.push_back(&m_connectControllerLabels[i]);
-    }
+    fuiRenderNode* controller;
+
+    m_controllerControls[0].setupControl(this, root, "Controller1");
+    m_controls.push_back(&m_controllerControls[0]);
+    controller = m_controllerControls[0].getFuiRenderNode();
+    m_pressLabels[0].setupControl(this, controller, "PressLabel");
+    m_controls.push_back(&m_pressLabels[0]);
+    m_gamerTagLabels[0].setupControl(this, controller, "GamerTag");
+    m_controls.push_back(&m_gamerTagLabels[0]);
+    m_accountTypeLabels[0].setupControl(this, controller, "AccountType");
+    m_controls.push_back(&m_accountTypeLabels[0]);
+    m_playerNumberLabels[0].setupControl(this, controller, "PlayerNumber");
+    m_controls.push_back(&m_playerNumberLabels[0]);
+    m_playerPictures[0].setupControl(this, controller, "PlayerPic");
+    m_controls.push_back(&m_playerPictures[0]);
+    m_connectControllerLabels[0].setupControl(this, controller, "ConnectControllerLabel");
+    m_controls.push_back(&m_connectControllerLabels[0]);
+
+    m_controllerControls[1].setupControl(this, root, "Controller2");
+    m_controls.push_back(&m_controllerControls[1]);
+    controller = m_controllerControls[1].getFuiRenderNode();
+    m_pressLabels[1].setupControl(this, controller, "PressLabel");
+    m_controls.push_back(&m_pressLabels[1]);
+    m_gamerTagLabels[1].setupControl(this, controller, "GamerTag");
+    m_controls.push_back(&m_gamerTagLabels[1]);
+    m_accountTypeLabels[1].setupControl(this, controller, "AccountType");
+    m_controls.push_back(&m_accountTypeLabels[1]);
+    m_playerNumberLabels[1].setupControl(this, controller, "PlayerNumber");
+    m_controls.push_back(&m_playerNumberLabels[1]);
+    m_playerPictures[1].setupControl(this, controller, "PlayerPic");
+    m_controls.push_back(&m_playerPictures[1]);
+    m_connectControllerLabels[1].setupControl(this, controller, "ConnectControllerLabel");
+    m_controls.push_back(&m_connectControllerLabels[1]);
+
+    m_controllerControls[2].setupControl(this, root, "Controller3");
+    m_controls.push_back(&m_controllerControls[2]);
+    controller = m_controllerControls[2].getFuiRenderNode();
+    m_pressLabels[2].setupControl(this, controller, "PressLabel");
+    m_controls.push_back(&m_pressLabels[2]);
+    m_gamerTagLabels[2].setupControl(this, controller, "GamerTag");
+    m_controls.push_back(&m_gamerTagLabels[2]);
+    m_accountTypeLabels[2].setupControl(this, controller, "AccountType");
+    m_controls.push_back(&m_accountTypeLabels[2]);
+    m_playerNumberLabels[2].setupControl(this, controller, "PlayerNumber");
+    m_controls.push_back(&m_playerNumberLabels[2]);
+    m_playerPictures[2].setupControl(this, controller, "PlayerPic");
+    m_controls.push_back(&m_playerPictures[2]);
+    m_connectControllerLabels[2].setupControl(this, controller, "ConnectControllerLabel");
+    m_controls.push_back(&m_connectControllerLabels[2]);
+
+    m_controllerControls[3].setupControl(this, root, "Controller4");
+    m_controls.push_back(&m_controllerControls[3]);
+    controller = m_controllerControls[3].getFuiRenderNode();
+    m_pressLabels[3].setupControl(this, controller, "PressLabel");
+    m_controls.push_back(&m_pressLabels[3]);
+    m_gamerTagLabels[3].setupControl(this, controller, "GamerTag");
+    m_controls.push_back(&m_gamerTagLabels[3]);
+    m_accountTypeLabels[3].setupControl(this, controller, "AccountType");
+    m_controls.push_back(&m_accountTypeLabels[3]);
+    m_playerNumberLabels[3].setupControl(this, controller, "PlayerNumber");
+    m_controls.push_back(&m_playerNumberLabels[3]);
+    m_playerPictures[3].setupControl(this, controller, "PlayerPic");
+    m_controls.push_back(&m_playerPictures[3]);
+    m_connectControllerLabels[3].setupControl(this, controller, "ConnectControllerLabel");
+    m_controls.push_back(&m_connectControllerLabels[3]);
+
     return 1;
 }
 
@@ -209,19 +252,19 @@ int UIScene_QuadrantSignin::SignInReturned(void* context, bool, int, int)
     return 0;
 }
 
-void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, bool released,
-                                         bool pressed, bool& handled)
+void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                         bool released, bool& handled)
 {
     handled = true;
     if (m_signInPending)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
         if (pressed)
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuOk:
         if (!pressed)

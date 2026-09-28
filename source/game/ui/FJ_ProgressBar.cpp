@@ -12,10 +12,6 @@ FJ_ProgressBar::FJ_ProgressBar(fuiRenderNode* renderNode)
     InitBarType();
 }
 
-FJ_ProgressBar::~FJ_ProgressBar()
-{
-}
-
 void FJ_ProgressBar::InitBarType()
 {
     m_barType = true;

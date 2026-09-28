@@ -11,7 +11,7 @@ class FJ_ListButtonDLC : public FJ_Button
 {
 public:
     explicit FJ_ListButtonDLC(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonDLC();
+    virtual ~FJ_ListButtonDLC() {}
 
     virtual void Init(const std::wstring& name, int id);
     void ShowTick(bool show);

@@ -15,10 +15,6 @@ FJ_ListButtonAchievement::FJ_ListButtonAchievement(fuiRenderNode* pRenderNode)
     m_highlight->setVisible(false);
 }
 
-FJ_ListButtonAchievement::~FJ_ListButtonAchievement()
-{
-}
-
 void FJ_ListButtonAchievement::EnableButton(bool enabled)
 {
     gotoAndStop(enabled ? "Button_Enabled" : "Button_Disabled");

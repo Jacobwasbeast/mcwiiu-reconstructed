@@ -25,12 +25,11 @@ struct FurnaceMenuData
 };
 
 UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_container(),
+    : UIScene_AbstractContainerMenu(type, layer), m_container(),
       m_fuelSlot(), m_ingredientSlot(), m_resultSlot(), m_furnaceLabel(),
       m_ingredientLabel(), m_fuelLabel(), m_furnaceFire(), m_furnaceArrow()
 {
     FurnaceMenuData* input = static_cast<FurnaceMenuData*>(data);
-    m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(this);
     initialiseMovie();
 
     m_container = input->container;
@@ -50,13 +49,13 @@ UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[input->player]->getTutorial();
         if (tutorial != 0)
         {
-            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_FurnaceMenu, this);
         }
     }
 
     FurnaceMenu* menu = new FurnaceMenu(input->inventory, input->container);
-    m_sceneInterface->Initialize(false, input->player, menu, true, 3,
+    Initialize(false, input->player, menu, true, 3,
                                  IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_FurnaceMax, false);
     m_fuelSlot.addSlots(1, 1);
@@ -85,7 +84,7 @@ unsigned int UIScene_FurnaceMenu::getSectionRows(
     if (section < IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult)
         return 0;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory)
-        return m_sceneInterface->GetInventoryRows();
+        return GetInventoryRows();
     return 1;
 }
 
@@ -96,14 +95,14 @@ unsigned int UIScene_FurnaceMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     if (section < IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult)
     {
-        m_sceneInterface->updateSlotPosition(section, section, state, x, y, 0, 0);
+        updateSlotPosition(section, section, state, x, y, 0, 0);
         return section;
     }
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        if (m_sceneInterface->m_smallInventory == 0)
+        if (m_smallInventory == 0)
         {
-            m_sceneInterface->updateSlotPosition(section,
+            updateSlotPosition(section,
                 IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory, state,
                 x, y, 0, 0);
             return static_cast<unsigned int>(5);
@@ -127,21 +126,21 @@ unsigned int UIScene_FurnaceMenu::GetSectionAndSlotInDirection(
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel && state == IUIScene_AbstractContainerMenu::ETapState_Up)
         target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = m_sceneInterface->m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar : IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
+        target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar : IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult && state == IUIScene_AbstractContainerMenu::ETapState_Up)
         target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = m_sceneInterface->m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar : IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
+        target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar : IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
     else if ((state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right) && (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult))
         target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient;
     if (target == section && state != IUIScene_AbstractContainerMenu::ETapState_Left && state != IUIScene_AbstractContainerMenu::ETapState_Right)
-        m_sceneInterface->updateSlotPosition(section, section, state, x, y, 0, 0);
+        updateSlotPosition(section, section, state, x, y, 0, 0);
     else
     {
         int horizontalOffset = 0;
         if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient || section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) horizontalOffset = -3;
         else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) horizontalOffset = -7;
-        m_sceneInterface->updateSlotPosition(section, target, state, x, y, horizontalOffset, 0);
+        updateSlotPosition(section, target, state, x, y, horizontalOffset, 0);
     }
     return static_cast<unsigned int>(target);
 }
@@ -242,7 +241,7 @@ std::wstring UIScene_FurnaceMenu::getMoviePath()
 
 void UIScene_FurnaceMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true, 3,
+    Initialize(true, m_playerId, m_menu, true, 3,
                                  IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_FurnaceMax, false);
     m_fuelSlot.addSlots(1, 1);

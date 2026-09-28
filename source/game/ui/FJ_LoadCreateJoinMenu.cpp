@@ -142,7 +142,7 @@ void FJ_LoadCreateJoinMenu::SetActiveTab(int tab)
         getStage()->setFocus(joinList);
 #endif
     if (focusId >= 0)
-        setVisible(true);
+        OnFocusChange(true);
 
     if (tab == 2)
         getChildByName("JoinGameTabTitle")->asFJ_Label_Blink()->EnableBlink(false);

@@ -1,78 +1,99 @@
 #include "game/ui/FJ_QuadrantSignin.hpp"
+
+#include <string>
+
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_QuadrantSignin::FJ_QuadrantSignin(fuiRenderNode* renderNode) : FJ_Document(renderNode), mABSwap(false)
+static std::string s_controllerNames[4] = { "Controller1", "Controller2", "Controller3", "Controller4" };
+static std::string s_controllerStatusNames[5] = { "ConnectController", "PressToJoin", "PlayerDetails",
+                                                  "PlayerLoggedIn_ConnectController", "PlayerLoggedIn_NoController" };
+
+FJ_QuadrantSignin::FJ_QuadrantSignin(fuiRenderNode* renderNode)
+    : FJ_Document(renderNode)
 {
-    mControllers[0] = 0;
-    mControllers[1] = 0;
-    mControllers[2] = 0;
-    mControllers[3] = 0;
 }
-FJ_QuadrantSignin::~FJ_QuadrantSignin() {}
-FJ_Document* FJ_QuadrantSignin::Create(fuiRenderNode* renderNode) { return new FJ_QuadrantSignin(renderNode); }
-unsigned int FJ_QuadrantSignin::getType() { return 24; }
+
+FJ_QuadrantSignin::~FJ_QuadrantSignin()
+{
+}
+
+FJ_Document* FJ_QuadrantSignin::Create(fuiRenderNode* renderNode)
+{
+    return new FJ_QuadrantSignin(renderNode);
+}
+
+unsigned int FJ_QuadrantSignin::getType()
+{
+    return 24;
+}
+
 void FJ_QuadrantSignin::_init(FJ_FuiNode* node, FJ_Event* event)
 {
-    FJ_Document* document = dynamic_cast<FJ_Document*>(node);
-    if (document != 0) document->init(event);
+    static_cast<FJ_QuadrantSignin*>(node)->init(event);
 }
+
 void FJ_QuadrantSignin::ShowControllerTimer(int controller, bool visible)
 {
-    if (controller < 0 || controller >= 4 || mControllers[controller] == 0) return;
-    FJ_FuiNode* timer = mControllers[controller]->getChildByName("Timer");
-    if (timer != 0) timer->setVisible(visible);
+    mControllers[controller]->getChildByName("Timer")->setVisible(visible);
 }
+
 void FJ_QuadrantSignin::SetControllerStatus(int controller, int status, int frame)
 {
-    static const char* const stateNames[] = { "ConnectController", "PressToJoin", "PlayerDetails" };
-    mControllers[controller]->gotoAndStop(stateNames[status]);
-    FJ_FuiNode* controllers = mControllers[controller]->getChildByName("Controllers");
-    controllers->getChildAt(0)->gotoAndStop(frame + 1);
-
+    mControllers[controller]->gotoAndStop(s_controllerStatusNames[status]);
+    mControllers[controller]->getChildByName("Controllers")->getChildAt(0)->gotoAndStop(frame + 1);
     if (status == 1)
     {
-        FJ_FuiNode* graphic = mControllers[controller]->getChildByName("ButtonGraphic");
-        graphic->gotoAndStop(mABSwap ? "StopX" : "StopO");
+        if (mABSwap)
+            mControllers[controller]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
+        else
+            mControllers[controller]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
     }
-
     ShowControllerTimer(controller, false);
 }
+
 void FJ_QuadrantSignin::ShowTimerAnimation(FJ_Event* event)
 {
-    if (event != 0 && event->m_pTarget != 0) event->m_pTarget->gotoAndStop("StopO");
+    event->m_pTarget->getParent()->getChildByName("Timer")->setVisible(true);
 }
+
 void FJ_QuadrantSignin::_ShowTimerAnimation(FJ_FuiNode* node, FJ_Event* event)
 {
-    if (node != 0)
-    {
-        FJ_QuadrantSignin* document = dynamic_cast<FJ_QuadrantSignin*>(node->getParent());
-        if (document != 0) document->ShowTimerAnimation(event);
-    }
+    static_cast<FJ_QuadrantSignin*>(node)->ShowTimerAnimation(event);
 }
+
 void FJ_QuadrantSignin::init(FJ_Event* event)
 {
-    FJ_Document::init(event);
-    mControllers[0] = getChildByName("Controller0");
-    mControllers[1] = getChildByName("Controller1");
-    mControllers[2] = getChildByName("Controller2");
-    mControllers[3] = getChildByName("Controller3");
     for (int i = 0; i < 4; ++i)
     {
+        mControllers[i] = getChildByName(s_controllerNames[i]);
         ShowControllerTimer(i, false);
         SetControllerStatus(i, 0, 1);
+        mControllers[i]->getChildByName("ButtonGraphic")->addEventListener(eFJEventType_ShowTimerAnimation, this, _ShowTimerAnimation, false);
     }
+    mABSwap = false;
 }
+
 void FJ_QuadrantSignin::SetABSwap(bool swap)
 {
     mABSwap = swap;
-    for (int i = 0; i < 4; ++i)
+    if (!swap)
     {
-        FJ_FuiNode* graphic = mControllers[i]->getChildByName("ButtonGraphic");
-        graphic->gotoAndStop(swap ? "StopO" : "StopX");
+        mControllers[0]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+        mControllers[1]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+        mControllers[2]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+        mControllers[3]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+    }
+    else
+    {
+        mControllers[0]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
+        mControllers[1]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
+        mControllers[2]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
+        mControllers[3]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
     }
 }
+
 void FJ_QuadrantSignin::JoinButtonPressed(int controller)
 {
     SetControllerStatus(controller, 1, 1);

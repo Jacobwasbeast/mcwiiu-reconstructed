@@ -33,9 +33,8 @@ struct HopperMenuSceneData
 }
 
 UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_hopperSlot(), m_hopperLabel(), m_sceneInterface(0)
+    : UIScene_AbstractContainerMenu(type, layer), m_hopperSlot(), m_hopperLabel()
 {
-    m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(this);
     initialiseMovie();
 
     HopperMenuSceneData* sceneData = static_cast<HopperMenuSceneData*>(data);
@@ -60,7 +59,7 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
         Tutorial* tutorial = gameMode->getTutorial();
         if (tutorial != 0)
         {
-            m_sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_HopperMenu, this);
         }
     }
@@ -71,7 +70,7 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
         Minecraft::GetInstance()->mLocalPlayers[sceneData->playerIndex];
     HopperMenu* menu = new HopperMenu(playerInventory, sceneData->container, player);
     m_containerSize = static_cast<int>(sceneData->container->getContainerSize());
-    m_sceneInterface->Initialize(false, sceneData->playerIndex, menu, true, m_containerSize,
+    Initialize(false, sceneData->playerIndex, menu, true, m_containerSize,
                                  IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
     m_hopperSlot.addSlots(0, 9);
@@ -119,41 +118,41 @@ unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
 
     if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
-        m_sceneInterface->updateSlotPosition(section, hopper, state, x, y, 2, 0);
+        updateSlotPosition(section, hopper, state, x, y, 2, 0);
         return hopper;
     }
     if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        const bool smallInventory = m_sceneInterface->m_smallInventory != 0;
+        const bool smallInventory = m_smallInventory != 0;
         const IUIScene_AbstractContainerMenu::ESceneSection target =
             smallInventory ? hopper : inventory;
-        m_sceneInterface->updateSlotPosition(section, target, state, x, y,
+        updateSlotPosition(section, target, state, x, y,
                                               smallInventory ? 2 : 0, 0);
         return target;
     }
     if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
-        m_sceneInterface->updateSlotPosition(section, hotbar, state, x, y, 0, 0);
+        updateSlotPosition(section, hotbar, state, x, y, 0, 0);
         return hotbar;
     }
     if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        m_sceneInterface->updateSlotPosition(section, hopper, state, x, y, 2, 0);
+        updateSlotPosition(section, hopper, state, x, y, 2, 0);
         return hopper;
     }
     if (section == hopper && state == IUIScene_AbstractContainerMenu::ETapState_Down)
     {
         const IUIScene_AbstractContainerMenu::ESceneSection target =
-            m_sceneInterface->m_smallInventory ? hotbar : inventory;
-        m_sceneInterface->updateSlotPosition(section, target, state, x, y, -2, 0);
+            m_smallInventory ? hotbar : inventory;
+        updateSlotPosition(section, target, state, x, y, -2, 0);
         return target;
     }
     if (section == hopper && state == IUIScene_AbstractContainerMenu::ETapState_Up)
     {
-        m_sceneInterface->updateSlotPosition(section, hotbar, state, x, y, -2, 0);
+        updateSlotPosition(section, hotbar, state, x, y, -2, 0);
         return hotbar;
     }
-    m_sceneInterface->updateSlotPosition(section, section, state, x, y, 0, 0);
+    updateSlotPosition(section, section, state, x, y, 0, 0);
     return section;
 }
 
@@ -229,7 +228,7 @@ std::wstring UIScene_HopperMenu::getMoviePath()
 
 void UIScene_HopperMenu::handleReload()
 {
-    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, true,
+    Initialize(true, m_playerId, m_menu, true,
                                  m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
     m_hopperSlot.addSlots(0, 9);

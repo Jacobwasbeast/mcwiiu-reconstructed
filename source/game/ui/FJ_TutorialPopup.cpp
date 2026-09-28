@@ -62,7 +62,7 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
     setY(0.0f);
     if (reposition)
     {
-        double stageHeight = getStage()->getStageHeight();
+        float stageHeight = getStage()->getStageHeight();
         if (stageHeight == 360.0 || stageHeight == 540.0)
             setY((float)Math::round((float)m_titleHeight * 1.4f));
     }

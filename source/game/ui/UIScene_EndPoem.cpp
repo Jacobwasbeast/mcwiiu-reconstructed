@@ -17,52 +17,55 @@
 #include "game/world/generation/Player.hpp"
 #include "game/util/Random.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StringUtils.hpp"
+#include "game/client/render/Font.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
-void replaceAll(std::wstring& result, const std::wstring& source,
-                const std::wstring& search, const std::wstring& replacement);
-
 UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
-    : UIScene(type, layer), m_text(), m_noiseLengths(), m_finished(false), m_currentLabel(0), m_labels()
+    : UIScene(type, layer), m_poemText(), m_noisyText(), m_noiseLengths(), m_labels()
 {
     initialiseMovie();
+    m_finished = false;
 
-    m_text += L10N::GetString(0x47630c46);
-    m_text += L10N::GetString(0x69414293);
-    m_text += L10N::GetString(0x433ec82a);
-    m_text += L" ";
-    gApp.FormatHTMLString(m_playerId, m_text, static_cast<int>(0xff000000));
+    m_poemText += L10N::GetString(0x47630c46);
+    m_poemText += L10N::GetString(0x69414293);
+    m_poemText += L10N::GetString(0x433ec82a);
+    m_poemText += L" ";
+    m_poemText = gApp.FormatHTMLString(m_playerId, m_poemText, static_cast<int>(0xff000000));
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    std::wstring playerName;
-    unsigned int userIndex = gConsoleUIController.GetWinUserIndex();
-    if (minecraft != NULL && userIndex < 4 && minecraft->mLocalPlayers[userIndex])
-    {
-        playerName = escapeXML(minecraft->mLocalPlayers[userIndex]->getName());
-    }
-    replaceAll(m_text, m_text, L"{*PLAYER*}", playerName);
+    std::wstring playerName = L"";
+    if (minecraft->mLocalPlayers[gConsoleUIController.GetWinUserIndex()] == NULL)
+        playerName = escapeXML(minecraft->mLocalPlayers[gProfile->GetPrimaryPad()]->getDisplayName());
+    else
+        playerName = escapeXML(minecraft->mLocalPlayers[gConsoleUIController.GetWinUserIndex()]->getDisplayName());
+    m_poemText = replaceAll(m_poemText, L"{*PLAYER*}", playerName);
 
     Random random(0x7bf7d3LL);
-    std::wstring::size_type position = m_text.find(L"{*NOISE*}");
-    while (position != std::wstring::npos)
+    const wchar_t* noiseTag = L"{*NOISE*}";
+    for (int position = m_poemText.find(noiseTag); position != -1;
+         position = m_poemText.find(noiseTag, position + 1))
     {
         m_noiseLengths.push_back(random.nextInt(4) + 3);
-        position = m_text.find(L"{*NOISE*}", position + 1);
     }
 
     updateNoise();
 
-    std::wstring::size_type start = 0;
-    position = m_text.find(L"<br /><br />", start);
-    while (position != std::wstring::npos)
+    m_labels = std::vector<std::wstring>();
+    int start = 0;
+    int end;
+    int next = 0;
+    do
     {
-        m_labels.push_back(m_text.substr(start, position - start));
-        start = position + 12;
-        position = m_text.find(L"<br /><br />", start);
-    }
-    m_labels.push_back(m_text.substr(start));
+        end = next;
+        m_labels.push_back(m_noisyText.substr(start, end - start));
+        next = m_noisyText.find(L"<br /><br />", end + 12);
+        start = end;
+    } while (next != -1);
+    m_labels.push_back(m_noisyText.substr(end, m_noisyText.length() - end));
     m_currentLabel = 0;
 }
 
@@ -73,40 +76,58 @@ UIScene_EndPoem::~UIScene_EndPoem()
 void UIScene_EndPoem::updateNoise()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    Random random(0x7bf7d3LL);
-    std::wstring noise = L"{*NOISE*}";
-    std::wstring::size_type position = m_text.find(noise);
-    std::vector<int>::const_iterator count = m_noiseLengths.begin();
-    const wchar_t* characters = L"!\"#$%&'()*+,-./0123456789:;<=>?@";
-
-    while (position != std::wstring::npos && count != m_noiseLengths.end())
+    m_noisyText = m_poemText;
+    std::wstring noise = L"";
+    Random* random = minecraft->mFont->mRandom;
+    std::wstring noiseTag = L"{*NOISE*}";
+    std::vector<int>::iterator length = m_noiseLengths.begin();
+    int position = m_noisyText.find(noiseTag);
+    while (position != -1 && length != m_noiseLengths.end())
     {
-        std::wstring replacement;
-        int length = *count++;
-        int i;
-        for (i = 0; i < length; ++i)
+        int count = *length++;
+        noise = L"";
+        for (int i = 0; i < count; ++i)
         {
-            wchar_t character = characters[random.nextInt(static_cast<int>(std::wcslen(characters)))];
-            if (character == L'<') replacement += L"&lt;";
-            else if (character == L'>') replacement += L"&gt;";
-            else if (character == L'\"') replacement += L"&quot;";
-            else if (character == L'&') replacement += L"&amp;";
-            else if (character == L'\\') replacement += L"\\\\";
-            else if (character == L'{') replacement += L"}";
-            else replacement += character;
+            wchar_t character;
+            if (!gConsoleUIController.UsingBitmapFont())
+            {
+                static std::wstring noiseCharacters = L"!\"#$%&'()*+,-./0123456789:;<=>?@[\\]^_'|}~";
+                character = noiseCharacters[random->nextInt(noiseCharacters.length())];
+            }
+            else
+            {
+                character = ALLOWED_CHARACTERS[random->nextInt(ALLOWED_CHARACTERS.length())];
+            }
+            std::wstring characterText = L"";
+            characterText += character;
 
-            int colour = 0x199;
-            int colourChoice = random.nextInt(2);
-            if (colourChoice == 1) colour = 0x19a;
-            else if (colourChoice == 2) colour = 0x19b;
-            wchar_t colourText[64];
-            std::swprintf(colourText, 64, L"<font color=\"#%08x\" shadowcolor=\"#%08x\">",
-                          gApp.GetHTMLColour(static_cast<eMinecraftColour>(colour)),
-                          gApp.GetHTMLColour(static_cast<eMinecraftColour>(colour)));
-            replacement += colourText;
+            if (character == L'<')
+                characterText = L"&lt;";
+            else if (character == L'>')
+                characterText = L"&gt;";
+            else if (character == L'"')
+                characterText = L"&quot;";
+            else if (character == L'&')
+                characterText = L"&amp;";
+            else if (character == L'\\')
+                characterText = L"\\\\";
+            else if (character == L'{')
+                characterText = L"}";
+
+            eMinecraftColour colour = eMinecraftColour_HTMLColor_8;
+            int colourChoice = random->nextInt(2);
+            if (colourChoice == 1)
+                colour = eMinecraftColour_HTMLColor_9;
+            else if (colourChoice == 2)
+                colour = eMinecraftColour_HTMLColor_a;
+
+            wchar_t formatted[64] = {};
+            swprintf(formatted, 64, L"<font color=\"#%08x\" shadowcolor=\"#80000000\">%ls</font>",
+                     gApp.GetHTMLColour(colour), characterText.c_str());
+            noise += formatted;
         }
-        m_text.replace(position, noise.size(), replacement);
-        position = m_text.find(noise, position + replacement.size());
+        m_noisyText.replace(position, noiseTag.length(), noise);
+        position = m_noisyText.find(noiseTag, position + 1);
     }
 }
 
@@ -125,55 +146,47 @@ std::wstring UIScene_EndPoem::getMoviePath()
 void UIScene_EndPoem::tick()
 {
     UIScene::tick();
-    if (m_currentLabel >= 0 && m_currentLabel < static_cast<int>(m_labels.size()))
+    if (m_currentLabel >= 0 && static_cast<unsigned int>(m_currentLabel) < m_labels.size())
     {
         std::wstring label = m_labels[m_currentLabel];
-        if (m_movie != NULL && m_movie->getRootNode() != NULL)
-        {
-            FJ_EndPoem* poem = static_cast<FJ_EndPoem*>(
-                m_movie->getRootNode()->getFuiNode()->asFJ_Document());
-            if (poem != NULL)
-            {
-                poem->SetNextLabel(label, m_currentLabel,
-                                   m_currentLabel == static_cast<int>(m_labels.size()) - 1);
-                m_currentLabel = -1;
-            }
-        }
+        FJ_EndPoem* poem = static_cast<FJ_EndPoem*>(m_movie->getRootNode()->getFuiNode());
+        poem->SetNextLabel(label, m_currentLabel, m_currentLabel == static_cast<int>(m_labels.size()) - 1);
+        m_currentLabel = -1;
     }
 }
 
-void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                                   bool& handled)
 {
-    if (m_finished) return;
+    if (m_finished)
+        return;
     if (pressed)
-    {
-        gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    }
+        gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
+
     switch (action)
     {
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     case EControllerActions_MenuCancel:
     {
-        if (!pressed) return;
+        if (!pressed)
+            return;
         m_finished = true;
         Minecraft* minecraft = Minecraft::GetInstance();
-        if (minecraft != NULL)
+        for (int i = 0; i < 4; ++i)
         {
-            for (int i = 0; i < 4; ++i)
-            {
-                if (minecraft->mLocalPlayers[i])
-                {
-                    gApp.SetAction(i, eXuiAction_Respawn, NULL);
-                }
-            }
-            if (minecraft->mGameMode != NULL && minecraft->mGameMode->getTutorial() != NULL)
-            {
-                minecraft->mGameMode->getTutorial()->showTutorialPopup(true);
-            }
+            if (minecraft->mLocalPlayers[i] != NULL)
+                gApp.SetAction(i, eXuiAction_Respawn, NULL);
+        }
+        if (minecraft->mGameModes[gProfile->GetPrimaryPad()] != NULL)
+        {
+            Tutorial* tutorial = minecraft->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
+            if (tutorial != NULL)
+                tutorial->showTutorialPopup(true);
         }
         updateTooltips();
         navigateBack();

@@ -30,10 +30,10 @@ std::wstring UIScene_TrialExitUpsell::getMoviePath()
     return L"TrialExitUpsell";
 }
 
-void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat, bool released,
-                                          bool pressed, bool&)
+void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                          bool released, bool&)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (action == EControllerActions_MenuOk)
     {
         if (pressed)

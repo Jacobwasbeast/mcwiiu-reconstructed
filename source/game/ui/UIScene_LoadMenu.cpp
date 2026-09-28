@@ -310,7 +310,7 @@ void UIScene_LoadMenu::_initCustom()
         if (mode->HasTeamGameOption())
         {
             bool teamChecked = initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_IsTeams) != 0;
-            m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0xef2a2f6a))), 9,
+            m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(IDS_MG_OPTION_CENTRE_SPAWN))), 9,
                                   teamChecked);
         }
 
@@ -330,7 +330,7 @@ void UIScene_LoadMenu::_initCustom()
                               publicChecked);
 
         bool resetNetherChecked = initData->mAllowFriendsOfFriends && allowOnlineExtras;
-        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x4d7ec0cc))), 0xb,
+        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(IDS_ALLOWFRIENDSOFFRIENDS))), 0xb,
                               resetNetherChecked);
 
         game = GetMiniGame();
@@ -351,7 +351,7 @@ void UIScene_LoadMenu::_initCustom()
         if (game->HasGameVariants())
         {
             int value = initData->mMatchmakingFilters[1];
-            m_sizeLogic = SliderLogic(0x10, static_cast<int>(0x5bd476fb),
+            m_sizeLogic = SliderLogic(0x10, static_cast<int>(IDS_MG_OPTION_GAME_VARIANT),
                                       eCustomGameModeHostOption_ModeVariant,
                                       initData->mMiniGameId, true);
             m_sizeLogic.AddTo(m_list, value);
@@ -393,7 +393,7 @@ void UIScene_LoadMenu::_initCustom()
         if (game->HasGameVariants())
         {
             int value = initData->mMatchmakingFilters[1];
-            m_sizeLogic = SliderLogic(0x10, static_cast<int>(0x5bd476fb),
+            m_sizeLogic = SliderLogic(0x10, static_cast<int>(IDS_MG_OPTION_GAME_VARIANT),
                                       eCustomGameModeHostOption_ModeVariant,
                                       initData->mMiniGameId, false);
             m_sizeLogic.AddTo(m_list, value);
@@ -670,13 +670,13 @@ void UIScene_LoadMenu::handleReload()
         _initCustom();
 }
 
-void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool released,
-                                   bool pressed, bool& handled)
+void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool pressed,
+                                   bool released, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (m_actionPending)
         return;
-    if (action == EControllerActions_MenuCancel && released)
+    if (action == EControllerActions_MenuCancel && pressed)
     {
         if (g_pApp != NULL)
             g_pApp->SetCorruptSaveDeleted(false);
@@ -685,7 +685,7 @@ void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool released,
         return;
     }
     if (action >= EControllerActions_MenuUp && action <= EControllerActions_MenuOk)
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
     handled = true;
 }
 

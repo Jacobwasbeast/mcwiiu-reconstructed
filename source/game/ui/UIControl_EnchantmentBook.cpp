@@ -18,7 +18,7 @@
 
 UIControl_EnchantmentBook::UIControl_EnchantmentBook()
 {
-    m_controlId = 5;
+    m_controlType = UIControl::eUIControlType_EnchantmentBook;
     mBookModel = NULL;
     mBookTick = 0;
     mBookOpen = 0.0F;
@@ -28,10 +28,6 @@ UIControl_EnchantmentBook::UIControl_EnchantmentBook()
     mBookRotation = 0.0F;
     mBookRotationPrev = 0.0F;
     mItemInstance = ItemInstance::EMPTY;
-}
-
-UIControl_EnchantmentBook::~UIControl_EnchantmentBook()
-{
 }
 
 void UIControl_EnchantmentBook::tickBook()

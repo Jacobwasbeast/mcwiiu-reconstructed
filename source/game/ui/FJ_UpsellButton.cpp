@@ -11,10 +11,6 @@ FJ_UpsellButton::FJ_UpsellButton(fuiRenderNode* renderNode)
     m_resizing = true;
 }
 
-FJ_UpsellButton::~FJ_UpsellButton()
-{
-}
-
 void FJ_UpsellButton::Init(const std::wstring& name, int id)
 {
     FJ_Base::SetLabelAlignment(2);

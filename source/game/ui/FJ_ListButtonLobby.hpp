@@ -11,7 +11,7 @@ class FJ_ListButtonLobby : public FJ_Button
 {
 public:
     explicit FJ_ListButtonLobby(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonLobby();
+    virtual ~FJ_ListButtonLobby() {}
 
     virtual void Init(const std::wstring& name, int id);
     void SetPlayerIcon(int icon);

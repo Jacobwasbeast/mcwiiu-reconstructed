@@ -4,6 +4,7 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 
 FJ_HtmlText_WhiteNormal::FJ_HtmlText_WhiteNormal(fuiRenderNode* pRenderNode)
     : FJ_HtmlText(pRenderNode)
@@ -17,7 +18,7 @@ FJ_HtmlText_WhiteNormal::~FJ_HtmlText_WhiteNormal()
 void FJ_HtmlText_WhiteNormal::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));
-    fuiRenderNode* textField = textContainer->getChildAt(0)->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
+    fuiRenderNodeEditText* textField = textContainer->getChildAt(0)->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
     m_pText = textField;
     addChild(m_pText);
     removeChild(textContainer, true);

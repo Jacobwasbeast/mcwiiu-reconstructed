@@ -128,12 +128,12 @@ void UIScene_CreateWorldMenu::handleGainFocus(bool hadFocus)
         m_onlineGameCheckBox.setChecked(false);
 }
 
-void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat, bool released,
-                                          bool pressed, bool& handled)
+void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
+                                          bool released, bool& handled)
 {
     if (m_keyboardActive)
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -143,7 +143,7 @@ void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat,
     case EControllerActions_MenuOtherStickUp:
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         break;
     case EControllerActions_MenuCancel:

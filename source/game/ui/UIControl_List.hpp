@@ -15,7 +15,7 @@ public:
     {
     public:
         GenericPendingUpdate(int item) : m_item(item) {}
-        virtual ~GenericPendingUpdate();
+        virtual ~GenericPendingUpdate() {}
         virtual unsigned int OnTick() = 0;
     protected:
         int m_item;
@@ -85,7 +85,7 @@ public:
     unsigned int GetTopItem();
     void setCurrentSelection(int selection, bool update, bool immediate);
     void updateChildFocus(int index);
-    unsigned int getItemCount();
+    int getItemCount();
     unsigned int getCurrentSelection() const;
     void init(int controlId);
     int getListIndex(int index);

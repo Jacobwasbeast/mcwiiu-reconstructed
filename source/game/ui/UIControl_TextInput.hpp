@@ -7,7 +7,7 @@ class UIControl_TextInput : public UIControl_Base
 {
 public:
     UIControl_TextInput();
-    virtual ~UIControl_TextInput();
+    virtual ~UIControl_TextInput() {}
     void SetCharLimit(int limit);
     void init(UIString label, int id);
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);

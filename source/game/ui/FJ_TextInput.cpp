@@ -20,10 +20,6 @@ FJ_TextInput::FJ_TextInput(fuiRenderNode* renderNode)
 {
 }
 
-FJ_TextInput::~FJ_TextInput()
-{
-}
-
 FJ_Base* FJ_TextInput::Create(fuiRenderNode* renderNode)
 {
     return new FJ_TextInput(renderNode);
@@ -254,7 +250,7 @@ void FJ_TextInput::Init(std::wstring name, int id)
             if (timelineNode != 0)
             {
                 fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
-                m_pTextField = static_cast<fuiRenderNodeEditText*>(timeline->getChildAt(0)->asEditText());
+                m_pTextField = timeline->getChildAt(0)->asEditText();
             }
         }
     }

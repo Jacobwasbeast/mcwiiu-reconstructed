@@ -39,7 +39,6 @@ private:
     int m_containerSize;
     UIControl_SlotList m_hopperSlot;
     UIControl_Label m_hopperLabel;
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
 };
 
 #endif

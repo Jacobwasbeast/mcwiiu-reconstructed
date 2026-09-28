@@ -134,20 +134,40 @@ void UIScene_SuperFlatMenu::PopulateBiomesList()
 
 int UIScene_SuperFlatMenu::ParentParam(int index)
 {
-    if (index < 0)
-        return -1;
-    return index;
+    for (int i = index; i >= 0; --i)
+    {
+        if (SuperflatMenu::params[i].isParent())
+            return i;
+    }
+    return -1;
 }
 
 void UIScene_SuperFlatMenu::CreateParamMappings()
 {
-    m_paramMappings.clear();
+    for (int i = 0; !SuperflatMenu::params[i].isTerminal(); ++i)
+    {
+        if (SuperflatMenu::params[i].isParent())
+            m_paramMappings[i] = SuperflatMenu::params[i].getFunc()(i, &m_propertiesList);
+        else
+            m_paramMappings[i] = m_paramMappings[ParentParam(i)];
+    }
 }
 
 void UIScene_SuperFlatMenu::PopulateParamsList()
 {
-    CreateParamMappings();
-    m_propertiesList.clearList();
+    int index = 0;
+    for (SuperflatMenu::Param* param = SuperflatMenu::params; !param->isTerminal(); ++param, ++index)
+    {
+        if (param->isParent())
+        {
+            m_propertiesList.AddNewCheckbox(L10N::GetString(param->getName()), index, false);
+        }
+        else if (param->isChild())
+        {
+            m_propertiesList.AddNewSlider(L"", index, param->getMinValue(), param->getMaxValue(), param->getMinValue(),
+                                          false, 7, 3);
+        }
+    }
 }
 
 void UIScene_SuperFlatMenu::_init()
@@ -215,6 +235,11 @@ void UIScene_SuperFlatMenu::UpdateBiomesList()
 
 void UIScene_SuperFlatMenu::UpdateParamsList()
 {
+    for (int i = 0; !SuperflatMenu::params[i].isTerminal(); ++i)
+    {
+        if (SuperflatMenu::params[i].isParent())
+            m_paramMappings[i]->readConfig(m_generatorInfo);
+    }
 }
 
 void UIScene_SuperFlatMenu::LoadPreset(SuperflatConfig* config)
@@ -235,16 +260,15 @@ void UIScene_SuperFlatMenu::SetActiveTab(eTabs tab)
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-void UIScene_SuperFlatMenu::handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
-                                             bool released, bool pressed)
+void UIScene_SuperFlatMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool pressed, bool, bool)
 {
-    if (pressed && !m_editingLayer && action > 2 && action < 6)
+    if (pressed && !m_editingLayer && (unsigned int)touchBox > 2 && (unsigned int)touchBox < 6)
     {
-        if (m_activeTab != action - 3)
+        if (m_activeTab != touchBox - 3)
         {
-            m_activeTab = static_cast<eTabs>(action - 3);
+            m_activeTab = static_cast<eTabs>(touchBox - 3);
             updateTooltips();
-            SetActiveTab(static_cast<eTabs>(action - 3));
+            SetActiveTab(static_cast<eTabs>(m_activeTab));
         }
     }
 }
@@ -279,7 +303,7 @@ void UIScene_SuperFlatMenu::updateTooltips()
             if (m_editingLayer)
             {
                 gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_PLACE, IDS_TOOLTIPS_BACK, -1, tooltipIdForSecondaryAction, IDS_TOOLTIPS_PAGE_UP,
-                    IDS_TOOLTIPS_PAGE_DOWN, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1, -1, -1, -1, -1, -1, 0x4eb3a99c, false, false);
+                    IDS_TOOLTIPS_PAGE_DOWN, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1, -1, -1, -1, -1, -1, IDS_TOOLTIPS_MOVE_UPDOWN, false, false);
                 return;
             }
             tooltipIdForPrimaryAction = IDS_SUPERFLAT_ADD_LAYER;
@@ -345,6 +369,20 @@ void UIScene_SuperFlatMenu::UpdateBiomeHelpText()
 
 void UIScene_SuperFlatMenu::UpdateParamHelpText()
 {
+    const int selection = m_propertiesList.getCurrentSelection();
+    const int parent = ParentParam(selection);
+    m_propertiesHelpTitle.setLabel(UIString(SuperflatMenu::params[parent].getName()), false, false);
+
+    std::wstring text(L"");
+    text.append(L10N::GetString(SuperflatMenu::params[parent].getDesc()));
+    if (parent != selection)
+    {
+        text.append(L"\n\n");
+        text.append(L10N::GetString(SuperflatMenu::params[selection].getName()));
+        text.append(L"\n\n");
+        text.append(L10N::GetString(SuperflatMenu::params[selection].getDesc()));
+    }
+    m_propertiesHelp.setLabel(UIString(text), false, false);
 }
 
 void UIScene_SuperFlatMenu::handleReload()
@@ -461,14 +499,14 @@ void UIScene_SuperFlatMenu::ReturnResults(bool accepted)
     navigateBack();
 }
 
-void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                                         bool& handled)
 {
     if (m_generating)
         return;
     if (!m_tickActions.empty())
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuX:
@@ -503,7 +541,7 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
                 MoveCurrentLayer(10);
             return;
         }
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         return;
     case EControllerActions_MenuB:
@@ -512,7 +550,7 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
     case EControllerActions_MenuOtherStickUp:
         if (!m_editingLayer)
         {
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
             handled = true;
         }
         return;
@@ -529,7 +567,7 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
     case EControllerActions_MenuOtherStickDown:
         if (!m_editingLayer)
         {
-            sendInputToMovie(action, repeat, released, pressed);
+            sendInputToMovie(action, repeat, pressed, released);
             handled = true;
         }
         break;
@@ -541,7 +579,7 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
             updateTooltips();
             return;
         }
-        sendInputToMovie(action, repeat, released, pressed);
+        sendInputToMovie(action, repeat, pressed, released);
         handled = true;
         return;
     case EControllerActions_MenuCancel:

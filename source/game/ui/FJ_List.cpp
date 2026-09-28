@@ -254,12 +254,8 @@ void FJ_List::GetMaxItemsVisibleUp()
 
 std::wstring FJ_List::GetItemLabel(int index)
 {
-    if (index < 0 || static_cast<unsigned int>(index) >= m_items.size()) return std::wstring(L" ");
-    FJ_Base* base = m_items[static_cast<unsigned int>(index)]->asFJ_Base();
-    if (base == 0) return std::wstring(L" ");
-    const std::wstring* label = reinterpret_cast<const std::wstring*>(
-        static_cast<uintptr_t>(base->GetLabel()));
-    return label == 0 ? std::wstring(L" ") : *label;
+    if (static_cast<unsigned int>(index) >= m_items.size()) return std::wstring(L" ");
+    return m_items[index]->asFJ_Base()->GetLabel();
 }
 
 void FJ_List::HandleScrollListArrows(bool addArrows)

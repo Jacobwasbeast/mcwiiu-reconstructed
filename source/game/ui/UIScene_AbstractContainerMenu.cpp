@@ -302,13 +302,13 @@ void UIScene_AbstractContainerMenu::customDraw(const char* name, fuiRect* rect)
     }
 }
 
-void UIScene_AbstractContainerMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
+void UIScene_AbstractContainerMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
                                                 bool& handled)
 {
     if (m_ignoreInput)
         return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (released)
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+    if (pressed)
         handled = handleKeyDown(m_playerId, action, repeat);
 }
 

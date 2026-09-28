@@ -2,9 +2,8 @@
 
 #include "game/core/IdsStringBuilder.hpp"
 #include "game/core/StringConversion.hpp"
+#include "game/core/XLanguage.hpp"
 
-extern unsigned int XGetLanguage();
-extern int XGetLocale();
 
 static unsigned int gCurrentLanguage = static_cast<unsigned int>(-1);
 static unsigned int gCurrentLocale = static_cast<unsigned int>(-1);

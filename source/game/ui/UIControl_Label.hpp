@@ -7,7 +7,7 @@ class UIControl_Label : public UIControl_Base
 {
 public:
     UIControl_Label();
-    virtual ~UIControl_Label();
+    virtual ~UIControl_Label() {}
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void init(UIString label);
     virtual void ReInit();

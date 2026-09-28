@@ -9,7 +9,7 @@ UIControl_LobbyButtonList::~UIControl_LobbyButtonList()
 
 void UIControl_LobbyButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = static_cast<UIControl::eUIControlType>(0x1b);
+    m_controlType = UIControl::eUIControlType_LobbyButtonList;
     UIControl_ButtonList::setupControl(scene, node, name);
 }
 

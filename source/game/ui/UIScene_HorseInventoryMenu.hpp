@@ -51,7 +51,6 @@ public:
     virtual int getSceneType();
 
 private:
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
     boost::shared_ptr<Container> m_container;
     boost::shared_ptr<Container> m_playerInventory;
     boost::shared_ptr<AbstractHorse> m_horse;

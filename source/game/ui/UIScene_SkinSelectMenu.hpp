@@ -40,7 +40,7 @@ public:
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleReload();
     virtual void handlePress(int controlId, int childId);
@@ -50,7 +50,7 @@ public:
     virtual void HandleDLCInstalled();
     virtual void HandleDLCLicenseChange();
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool repeat, bool released, bool pressed);
+                                  bool pressed, bool repeat, bool released);
     virtual int getSceneType();
 
     void setCharacterLocked(bool locked);

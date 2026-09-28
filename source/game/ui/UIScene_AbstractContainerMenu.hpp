@@ -38,7 +38,7 @@ public:
     virtual void tick();
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual bool doesSectionTreeHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getPad();

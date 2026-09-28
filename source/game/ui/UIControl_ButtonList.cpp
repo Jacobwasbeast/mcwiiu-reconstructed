@@ -13,14 +13,10 @@ UIControl_ButtonList::UIControl_ButtonList()
 {
 }
 
-UIControl_ButtonList::~UIControl_ButtonList()
-{
-}
-
 void UIControl_ButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                         const std::string& name)
 {
-    m_controlType = UIControl::eUIControlType_Button;
+    m_controlType = UIControl::eUIControlType_ButtonList;
     UIControl_List::setupControl(scene, node, name);
 }
 

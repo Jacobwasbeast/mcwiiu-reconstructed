@@ -44,7 +44,7 @@ unsigned int FJ_AnvilMenu::getType()
 void FJ_AnvilMenu::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    const double stageHeight = getStage()->getStageHeight();
+    const float stageHeight = getStage()->getStageHeight();
     if (stageHeight != 360.0 && stageHeight != 540.0)
         return;
     setX(-right);

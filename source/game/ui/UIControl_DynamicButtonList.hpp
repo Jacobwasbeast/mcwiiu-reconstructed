@@ -9,7 +9,7 @@
 class UIControl_DynamicButtonList : public UIControl_ButtonList
 {
 public:
-    virtual ~UIControl_DynamicButtonList();
+    virtual ~UIControl_DynamicButtonList() {}
     virtual void tick();
     void addItem(UIString label, int index);
     virtual void removeItem(int index, bool removeNow);

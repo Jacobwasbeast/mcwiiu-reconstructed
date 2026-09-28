@@ -18,14 +18,15 @@ public:
     virtual void updateTooltips();
     virtual std::wstring getMoviePath();
     virtual void tick();
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
     virtual void handleDestroy();
     virtual void handleRequestMoreData(int id, bool forward);
     virtual int getSceneType();
 
 private:
-    std::wstring m_text;
+    std::wstring m_poemText;
+    std::wstring m_noisyText;
     std::vector<int> m_noiseLengths;
     bool m_finished;
     int m_currentLabel;

@@ -2,6 +2,7 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fui.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/ui/fuiRenderNodeStage.hpp"
 #include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/client/render/Renderer.hpp"
@@ -357,7 +358,7 @@ unsigned char fuiRenderNode::getCurrentFilterFlags()
     return gFui->m_filterStack[gFui->m_filterDepth];
 }
 
-fuiRenderNode* fuiRenderNode::asEditText()
+fuiRenderNodeEditText* fuiRenderNode::asEditText()
 {
-    return m_type == eFuiObjectType_EditText ? this : 0;
+    return m_type == eFuiObjectType_EditText ? static_cast<fuiRenderNodeEditText*>(this) : 0;
 }

@@ -15,7 +15,7 @@ class FJ_Label_Blink : public FJ_Base
 {
 public:
     explicit FJ_Label_Blink(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_Blink();
+    virtual ~FJ_Label_Blink() {}
 
     void UpdateLabel();
     void HandleUpdateLabel(FJ_Event* event);

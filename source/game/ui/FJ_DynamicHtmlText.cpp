@@ -12,10 +12,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_DynamicHtmlText::FJ_DynamicHtmlText(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_text(), m_labels(), m_labelTextIndices()
+    : FJ_FuiNode(pRenderNode)
 {
     m_pHtmlTextPanel = NULL;
-    m_pContentContainer = NULL;
 }
 
 FJ_FuiNode* FJ_DynamicHtmlText::Create(fuiRenderNode* pRenderNode)
@@ -30,9 +29,6 @@ FJ_DynamicHtmlText::~FJ_DynamicHtmlText()
     if (m_pDownArrow != NULL && m_pDownArrow->getParent() != NULL)
         m_pDownArrow->getParent()->removeChild(m_pDownArrow, true);
     removeEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling);
-    m_labelTextIndices.clear();
-    m_labels.clear();
-    m_text.clear();
 }
 
 int FJ_DynamicHtmlText::getActiveLabelHeight() const
@@ -47,41 +43,52 @@ void FJ_DynamicHtmlText::UpdateTouchFlickScrolling()
 {
     if (m_bTouchScrolling || !m_bTouchFlick)
         return;
-    if (m_iFlickOffset < 1) {
-        if (m_iFlickOffset >= -1) {
-            m_iScrollDirection = 0;
-            m_iTouchStart = 0;
-            m_iCurrentTouchPosition = 0;
-            m_bTouchFlick = false;
-            if (m_pUpArrow != NULL) m_pUpArrow->ChangeState(0);
-            if (m_pDownArrow != NULL) m_pDownArrow->ChangeState(3);
-            return;
-        }
-        m_iFlickOffset += 5;
-        if (m_iFlickOffset > 0) m_iFlickOffset = 0;
-        if (m_iScrollDirection != -1) {
-            if (m_pUpArrow != NULL) m_pUpArrow->ChangeState(2);
-            if (m_pDownArrow != NULL) m_pDownArrow->ChangeState(3);
-        }
-        if (m_pUpArrow != NULL && m_pUpArrow->isVisible()) {
-            m_iScrollDirection = -1;
-            m_iTouchScroll = -1;
-            m_iTargetDirection = -1;
-            return;
-        }
-    } else {
+
+    if (m_iFlickOffset > 0)
+    {
         m_iFlickOffset -= 5;
-        if (m_iFlickOffset < 0) m_iFlickOffset = 0;
-        if (m_iScrollDirection != 1) {
-            if (m_pDownArrow != NULL) m_pDownArrow->ChangeState(5);
-            if (m_pUpArrow != NULL) m_pUpArrow->ChangeState(0);
+        if (m_iFlickOffset < 0)
+            m_iFlickOffset = 0;
+        if (m_iScrollDirection != 1)
+        {
+            m_pDownArrow->ChangeState(5);
+            m_pUpArrow->ChangeState(0);
         }
-        if (m_pDownArrow != NULL && m_pDownArrow->isVisible()) {
+        if (m_pDownArrow->isVisible())
+        {
             m_iScrollDirection = 1;
             m_iTouchScroll = 1;
             m_iTargetDirection = 1;
             return;
         }
+    }
+    else if (m_iFlickOffset < 0)
+    {
+        m_iFlickOffset += 5;
+        if (m_iFlickOffset > 0)
+            m_iFlickOffset = 0;
+        if (m_iScrollDirection != -1)
+        {
+            m_pUpArrow->ChangeState(2);
+            m_pDownArrow->ChangeState(3);
+        }
+        if (m_pUpArrow->isVisible())
+        {
+            m_iScrollDirection = -1;
+            m_iTouchScroll = -1;
+            m_iTargetDirection = -1;
+            return;
+        }
+    }
+    else
+    {
+        m_iScrollDirection = 0;
+        m_iTouchStart = 0;
+        m_iCurrentTouchPosition = 0;
+        m_bTouchFlick = false;
+        m_pUpArrow->ChangeState(0);
+        m_pDownArrow->ChangeState(3);
+        return;
     }
     m_iScrollDirection = 0;
     m_iCurrentTouchPosition = m_iTouchStart;
@@ -89,53 +96,52 @@ void FJ_DynamicHtmlText::UpdateTouchFlickScrolling()
 
 unsigned int FJ_DynamicHtmlText::SetNextLabel(int index, bool append)
 {
-    FJ_FuiNode* labelNode = m_pLabels[0];
     int slot = 0;
-    if (isVisible()) {
-        while (slot < 20 && m_pLabels[slot] != NULL && m_pLabels[slot]->isVisible())
-            ++slot;
-        if (slot >= 20) return 0;
-        labelNode = m_pLabels[slot];
+    FJ_Label* label = m_pLabels[slot];
+    while (label->isVisible())
+    {
+        if (++slot >= 20)
+            return 0;
+        label = m_pLabels[slot];
     }
-    if (labelNode == NULL) return 0;
-    labelNode->setVisible(true);
-    static_cast<FJ_Label*>(labelNode)->SetLabel(m_text[index]);
-    if (append) {
-        if (!m_labels.empty()) {
-            FJ_FuiNode* previous = m_labels.back();
-            labelNode->setY(previous->getY() + previous->getHeight());
-        } else {
-            labelNode->setY(0.0f);
-        }
-        m_labels.push_back(static_cast<FJ_Label*>(labelNode));
+
+    label->setVisible(true);
+    label->SetLabel(m_text[index]);
+    if (append)
+    {
+        if (!m_labels.empty())
+            label->setY(m_labels.back()->getY() + m_labels.back()->getHeight());
+        else
+            label->setY(0.0f);
+        m_labels.push_back(label);
         m_labelTextIndices.push_back(index);
         return 1;
     }
-    if (!m_labels.empty()) {
-        FJ_FuiNode* previous = m_labels.front();
-        labelNode->setY(static_cast<float>(Math::round(static_cast<float>(previous->getY() - labelNode->getHeight()))));
-    }
-    m_labels.insert(m_labels.begin(), static_cast<FJ_Label*>(labelNode));
+
+    if (!m_labels.empty())
+        label->setY(Math::round(m_labels.front()->getY() - label->getHeight()));
+    m_labels.insert(m_labels.begin(), label);
     m_labelTextIndices.insert(m_labelTextIndices.begin(), index);
     return 1;
 }
 
 void FJ_DynamicHtmlText::HandleScrollListArrows(bool positionArrows)
 {
-    if (positionArrows) {
-        if (getParent() != NULL) {
-            getParent()->addChild(m_pUpArrow);
-            getParent()->addChild(m_pDownArrow);
-        }
-        m_pUpArrow->setX(-(m_pUpArrow->getWidth() * 1.5f - ((getX() - static_cast<float>(m_iTopMargin)) + m_fRealWidth)));
-        m_pUpArrow->setY((getY() - static_cast<float>(m_iTopMargin) * 0.5f) + m_fRealHeight + m_pUpArrow->getHeight() * 0.5f);
-        m_pDownArrow->setX(-(m_pUpArrow->getWidth() * 0.5f - ((getX() - static_cast<float>(m_iTopMargin)) + m_fRealWidth)));
+    if (positionArrows)
+    {
+        getParent()->addChild(m_pUpArrow);
+        getParent()->addChild(m_pDownArrow);
+        m_pUpArrow->setX(Math::round(((getX() - m_iTopMargin) + m_fRealWidth) - m_pUpArrow->getWidth() * 1.5));
+        m_pUpArrow->setY(Math::round((getY() - m_iTopMargin * 0.5) + m_fRealHeight + m_pUpArrow->getHeight() * 0.5f));
+        m_pDownArrow->setX(Math::round(((getX() - m_iTopMargin) + m_fRealWidth) - m_pUpArrow->getWidth() * 0.5f));
         m_pDownArrow->setY(m_pUpArrow->getY());
+        m_pUpArrow->ChangeState(0);
+        m_pDownArrow->ChangeState(3);
     }
 
     bool reachedLastText = false;
-    if (m_labels.back()->getY() + m_labels.back()->getHeight() +
-        static_cast<float>(m_iTopMargin) + static_cast<float>(m_iLabelSpacing) < m_fRealHeight) {
+    if (m_labels.back()->getY() + m_labels.back()->getHeight() + m_iLabelSpacing + m_iTopMargin < m_fRealHeight)
+    {
         if (m_labelTextIndices.back() == static_cast<int>(m_text.size()) - 1)
             reachedLastText = true;
     }
@@ -322,8 +328,7 @@ void FJ_DynamicHtmlText::UpdateScrolling(FJ_Event*)
 
 void FJ_DynamicHtmlText::_UpdateScrolling(FJ_FuiNode* node, FJ_Event* event)
 {
-    FJ_DynamicHtmlText* text = node->asFJ_DynamicHtmlText();
-    if (text != NULL) text->UpdateScrolling(event);
+    node->asFJ_DynamicHtmlText()->UpdateScrolling(event);
 }
 
 void FJ_DynamicHtmlText::Init()
@@ -358,51 +363,48 @@ void FJ_DynamicHtmlText::Init()
     m_scrollRect.xMin = 0.0f;
     m_scrollRect.xMax = m_fRealWidth;
     m_scrollRect.yMin = 0.0f;
-    m_scrollRect.yMax = m_fRealHeight - static_cast<float>(Math::round(m_iTopMargin * 1.4f));
+    m_scrollRect.yMax = m_fRealHeight - static_cast<float>(Math::round(m_iTopMargin * 1.4));
     m_pContentContainer->setScrollRect(m_scrollRect);
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < 20; ++i)
+    {
         char name[64];
         std::sprintf(name, "FJ_HtmlLabel_%d", i);
-        FJ_FuiNode* label = getChildByName(std::string(name));
-        m_pLabels[i] = label;
-        if (label != NULL) {
-            m_pContentContainer->addChild(label);
-            static_cast<FJ_Label*>(label)->ResetLabel();
-            label->setWidth(m_fRealWidth - (float)(m_iTopMargin * 2));
+        FJ_Label* label = getChildByName(name)->asFJ_Label();
+        m_pContentContainer->addChild(label);
+        if (label != NULL)
+        {
+            m_pLabels[i] = label;
+            label->ResetLabel();
+            label->setWidth(m_fRealWidth - m_iTopMargin * 2);
             label->setX(0.0f);
             label->setY(0.0f);
             label->setVisible(false);
-            static_cast<FJ_Label*>(label)->SetLabel(std::wstring());
+            label->SetLabel(L"");
         }
     }
 }
 
 void FJ_DynamicHtmlText::ASConstructor()
 {
-    m_bAtEnd = false;
-    m_iTopMargin = 20;
-    m_iCharacterHeight = 0;
+    m_bTouchScrolling = false;
     m_iLabelSpacing = 10;
-    m_iTargetScrollPosition = 0;
+    m_iTopMargin = 20;
     m_bTouchFlick = false;
-    m_iScrollDelay = 0;
-    m_iFlickDelay = 0;
-    m_iTargetDirection = 0;
-    m_iCurrentTouchPosition = 0;
-    m_iTouchScroll = 0;
-    m_iTouchStart = 0;
-    m_iFlickOffset = 0;
     m_iScrollDirection = 0;
-    m_bListReady = false;
+    m_iTargetDirection = 0;
+    m_iTouchScroll = 0;
+    m_iCurrentTouchPosition = 0;
     m_bKeyboardScroll = false;
+    m_iTouchStart = 0;
+    m_iCharacterHeight = 0;
+    m_iFlickOffset = 0;
     m_pUpArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
     m_pDownArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
     Init();
-    FJ_FuiNodeStage* stage = getStage();
-    stage->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
-    stage->addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
+    getStage()->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
+    getStage()->addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
     m_fScrollSpeed = 1.0f;
-    if (stage->getStageHeight() == 540.0 || stage->getStageHeight() == 1080.0)
+    if (getStage()->getStageHeight() == 1080.0f || getStage()->getStageHeight() == 540.0f)
         m_fScrollSpeed = 1.5f;
 }
 
@@ -446,22 +448,20 @@ void FJ_DynamicHtmlText::keyDownHandler(FJ_Event* event)
 
 void FJ_DynamicHtmlText::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    FJ_DynamicHtmlText* text = node->asFJ_DynamicHtmlText();
-    if (text != NULL) text->keyDownHandler(event);
+    static_cast<FJ_DynamicHtmlText*>(node)->keyDownHandler(event);
 }
 
-void FJ_DynamicHtmlText::keyUpHandler(FJ_Event*)
+void FJ_DynamicHtmlText::keyUpHandler(FJ_Event* event)
 {
     m_iScrollDirection = 0;
     m_bKeyboardScroll = false;
-    if (m_pUpArrow != NULL) m_pUpArrow->ChangeState(0);
-    if (m_pDownArrow != NULL) m_pDownArrow->ChangeState(3);
+    m_pUpArrow->ChangeState(0);
+    m_pDownArrow->ChangeState(3);
 }
 
 void FJ_DynamicHtmlText::_keyUpHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    FJ_DynamicHtmlText* text = node->asFJ_DynamicHtmlText();
-    if (text != NULL) text->keyUpHandler(event);
+    static_cast<FJ_DynamicHtmlText*>(node)->keyUpHandler(event);
 }
 
 unsigned int FJ_DynamicHtmlText::getType()
@@ -472,16 +472,20 @@ unsigned int FJ_DynamicHtmlText::getType()
 void FJ_DynamicHtmlText::setVisible(bool visible)
 {
     FJ_FuiNode::setVisible(visible);
-    if (!visible) {
+    if (!visible)
+    {
         removeEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling);
         for (int i = 0; i < 20; ++i)
-            if (m_pLabels[i] != NULL) m_pLabels[i]->setVisible(false);
+            m_pLabels[i]->setVisible(false);
     }
-    if (m_pHtmlTextPanel != NULL) m_pHtmlTextPanel->setVisible(visible);
-    if (m_pContentContainer != NULL) m_pContentContainer->setVisible(visible);
-    if (m_pUpArrow != NULL) m_pUpArrow->setVisible(visible);
-    if (m_pDownArrow != NULL) m_pDownArrow->setVisible(visible);
-    if (visible) HandleScrollListArrows(false);
+    if (m_pHtmlTextPanel != NULL)
+        m_pHtmlTextPanel->setVisible(visible);
+    if (m_pUpArrow != NULL)
+        m_pUpArrow->setVisible(visible);
+    if (m_pDownArrow != NULL)
+        m_pDownArrow->setVisible(visible);
+    if (visible)
+        HandleScrollListArrows(false);
 }
 
 void FJ_DynamicHtmlText::Reload(float width, float height)
@@ -496,16 +500,17 @@ void FJ_DynamicHtmlText::Reload(float width, float height)
     }
     m_pContentContainer->setX(getX() + (float)m_iTopMargin);
     m_pContentContainer->setY(getY() + (float)m_iTopMargin);
-    m_scrollRect.xMax = m_scrollRect.xMin + width;
-    m_scrollRect.yMax = m_scrollRect.yMin + m_fRealHeight - static_cast<float>(Math::round(static_cast<double>(m_iTopMargin) * 1.4));
+    m_scrollRect.xMax = m_scrollRect.xMin + m_fRealWidth;
+    m_scrollRect.yMax = m_scrollRect.yMin + (m_fRealHeight - Math::round(m_iTopMargin * 1.4));
     m_pContentContainer->setScrollRect(m_scrollRect);
-    for (int i = 0; i < 20; ++i) {
-        static_cast<FJ_Label*>(m_pLabels[i])->ResetLabel();
-        m_pLabels[i]->setWidth(width - (float)(m_iTopMargin * 2));
+    for (int i = 0; i < 20; ++i)
+    {
+        m_pLabels[i]->ResetLabel();
+        m_pLabels[i]->setWidth(m_fRealWidth - m_iTopMargin * 2);
         m_pLabels[i]->setX(0.0f);
         m_pLabels[i]->setY(0.0f);
         m_pLabels[i]->setVisible(false);
-        static_cast<FJ_Label*>(m_pLabels[i])->SetLabel(std::wstring());
+        m_pLabels[i]->SetLabel(L"");
     }
     m_iCharacterHeight = 0;
     m_iScrollDirection = 0;
@@ -527,22 +532,22 @@ void FJ_DynamicHtmlText::Reload(float width, float height)
 
 void FJ_DynamicHtmlText::SetupList()
 {
+    unsigned int added = 0;
     bool exhausted = false;
-    for (;;) {
-        if (m_text.empty() || m_text.size() <= m_labels.size()) {
+    do
+    {
+        if (added < m_text.size())
+        {
+            SetNextLabel(m_labels.size(), true);
+            ++added;
+        }
+        else
+        {
             exhausted = true;
-        } else {
-            SetNextLabel(static_cast<int>(m_labels.size()), true);
         }
-
-        bool full = m_fRealHeight <= m_labels.back()->getY() + m_labels.back()->getHeight() +
-            static_cast<float>(m_iTopMargin * 2);
-        if (full || exhausted) {
-            m_bListReady = true;
-            m_bAtEnd = exhausted;
-            return;
-        }
-    }
+    } while (m_labels.back()->getY() + m_labels.back()->getHeight() + m_iTopMargin * 2 < m_fRealHeight && !exhausted);
+    m_bListReady = true;
+    m_bAtEnd = exhausted;
 }
 
 void FJ_DynamicHtmlText::AddText(const std::wstring& text, bool setup)
@@ -556,14 +561,14 @@ void FJ_DynamicHtmlText::AddText(const std::wstring& text, bool setup)
     }
 }
 
-double FJ_DynamicHtmlText::GetRealWidth()
+float FJ_DynamicHtmlText::GetRealWidth()
 {
-    return (double)m_fRealWidth;
+    return m_fRealWidth;
 }
 
-double FJ_DynamicHtmlText::GetRealHeight()
+float FJ_DynamicHtmlText::GetRealHeight()
 {
-    return (double)m_fRealHeight;
+    return m_fRealHeight;
 }
 
 void FJ_DynamicHtmlText::TouchScroll(int offset, bool active)
