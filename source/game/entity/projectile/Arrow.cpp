@@ -36,8 +36,6 @@ Arrow::Arrow(Level* level, double x, double y, double z)
     _init();
 }
 
-Arrow::~Arrow() = default;
-
 void Arrow::addDataWalkers(DataFixerUpper*, unsigned long long)
 {
 }

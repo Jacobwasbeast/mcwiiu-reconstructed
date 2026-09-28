@@ -78,10 +78,9 @@ void TippableArrow::updateColor()
         return;
     }
 
-    std::vector<MobEffectInstance*> effects;
-    PotionUtils::getAllEffects(mPotion, &effects);
-    effects.insert(effects.end(), mEffects.begin(), mEffects.end());
-    mEntityData->set(DATA_EFFECT_COLOR_ID, PotionUtils::getColor(&effects), true);
+    std::vector<MobEffectInstance*>* allEffects = PotionUtils::getAllEffects(mPotion, &mEffects);
+    mEntityData->set(DATA_EFFECT_COLOR_ID, PotionUtils::getColor(allEffects), true);
+    delete allEffects;
 }
 
 void TippableArrow::setFixedColor(int color)
@@ -121,14 +120,17 @@ void TippableArrow::setEffectsFromItem(const not_null_ptr<ItemInstance>& itemIns
 void TippableArrow::addEffect(MobEffectInstance* effect)
 {
     mEffects.push_back(effect);
-    if (mPotion == Potions::EMPTY && mEffects.begin() == mEffects.end())
-        getEntityData()->set(DATA_EFFECT_COLOR_ID, -1, true);
+    boost::shared_ptr<SynchedEntityData> entityData = getEntityData();
+    if (mPotion == Potions::EMPTY && mEffects.empty())
+    {
+        entityData->set(DATA_EFFECT_COLOR_ID, -1, true);
+    }
     else
     {
-        std::vector<MobEffectInstance*> effects;
-        PotionUtils::getAllEffects(mPotion, &effects);
-        effects.insert(effects.end(), mEffects.begin(), mEffects.end());
-        getEntityData()->set(DATA_EFFECT_COLOR_ID, PotionUtils::getColor(&effects), true);
+        std::vector<MobEffectInstance*>* allEffects = PotionUtils::getAllEffects(mPotion, &mEffects);
+        int color = PotionUtils::getColor(allEffects);
+        delete allEffects;
+        entityData->set(DATA_EFFECT_COLOR_ID, color, true);
     }
 }
 
@@ -172,11 +174,12 @@ void TippableArrow::tick()
         else if (mInGroundTime % 5 == 0)
             makeParticle(1);
     }
-    else if (mInGround && !mEffects.empty() && mInGroundTime > 599)
+    else if (mInGround && mInGroundTime != 0 && !mEffects.empty() && mInGroundTime >= 600)
     {
+        mLevel->broadcastEntityEvent(shared_from_this(), 0, 0);
         mEffects.clear();
         mPotion = Potions::EMPTY;
-        updateColor();
+        mEntityData->set(DATA_EFFECT_COLOR_ID, -1, true);
     }
 }
 
@@ -204,18 +207,33 @@ void TippableArrow::addAdditonalSaveData(CompoundTag* tag)
 void TippableArrow::readAdditionalSaveData(CompoundTag* tag)
 {
     Arrow::readAdditionalSaveData(tag);
-    if (tag->contains(L"Potion", Tag::TAG_STRING))
-        mPotion = PotionUtils::getPotion(tag);
-    std::vector<MobEffectInstance*>* effects = PotionUtils::getCustomEffects(tag);
-    if (effects != NULL)
+    if (tag->contains(PotionUtils::TAG_POTION, Tag::TAG_STRING))
     {
-        for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
-            addEffect(*it);
-        delete effects;
+        mPotion = PotionUtils::getPotion(tag);
     }
-    updateColor();
+
+    std::vector<MobEffectInstance*>* customEffects = PotionUtils::getCustomEffects(tag);
+    for (std::vector<MobEffectInstance*>::iterator it = customEffects->begin(); it != customEffects->end(); ++it)
+    {
+        addEffect(*it);
+    }
+    delete customEffects;
+
+    if (mPotion != Potions::EMPTY || !mEffects.empty())
+    {
+        std::vector<MobEffectInstance*>* allEffects = PotionUtils::getAllEffects(mPotion, &mEffects);
+        mEntityData->set(DATA_EFFECT_COLOR_ID, PotionUtils::getColor(allEffects), true);
+        delete allEffects;
+    }
+
     if (tag->contains(L"Color", Tag::TAG_ANY_NUMERIC))
+    {
         setFixedColor(tag->getInt(L"Color"));
+    }
+    else
+    {
+        updateColor();
+    }
 }
 
 void TippableArrow::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& entity)

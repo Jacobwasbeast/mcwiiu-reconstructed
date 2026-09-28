@@ -1,8 +1,9 @@
 #include "game/entity/projectile/ArrowInfiniteEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/MendingEnchantment.hpp"
 
-static const int ARROW_INFINITY_DESCRIPTION_ID = static_cast<int>(0xd251ec6a);
+static const int ARROW_INFINITY_DESCRIPTION_ID = static_cast<int>(IDS_ENCHANTMENT_ARROW_INFINITE);
 
 ArrowInfiniteEnchantment::ArrowInfiniteEnchantment(const Rarity* rarity,
                                                    arrayWithLength<const EquipmentSlot*> slots)
@@ -35,4 +36,6 @@ bool ArrowInfiniteEnchantment::checkCompatibility(const Enchantment* other) cons
     return Enchantment::checkCompatibility(other);
 }
 
-ArrowInfiniteEnchantment::~ArrowInfiniteEnchantment() = default;
+ArrowInfiniteEnchantment::~ArrowInfiniteEnchantment()
+{
+}

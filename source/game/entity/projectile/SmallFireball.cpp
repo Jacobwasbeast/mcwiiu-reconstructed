@@ -14,7 +14,7 @@ SmallFireball::SmallFireball(Level* level)
     : Fireball(level)
 {
     fjDerivedCtorCalls();
-    setSize(1.0f, 1.75f);
+    setSize(0.3125f, 0.3125f);
 }
 
 SmallFireball::SmallFireball(Level* level, boost::shared_ptr<LivingEntity> owner,
@@ -22,7 +22,7 @@ SmallFireball::SmallFireball(Level* level, boost::shared_ptr<LivingEntity> owner
     : Fireball(level, owner, xd, yd, zd)
 {
     fjDerivedCtorCalls();
-    setSize(1.0f, 1.75f);
+    setSize(0.3125f, 0.3125f);
 }
 
 SmallFireball::SmallFireball(Level* level, double x, double y, double z,
@@ -30,7 +30,7 @@ SmallFireball::SmallFireball(Level* level, double x, double y, double z,
     : Fireball(level, x, y, z, xd, yd, zd)
 {
     fjDerivedCtorCalls();
-    setSize(1.0f, 1.75f);
+    setSize(0.3125f, 0.3125f);
 }
 
 SmallFireball::~SmallFireball()

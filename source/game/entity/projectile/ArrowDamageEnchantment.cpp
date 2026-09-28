@@ -1,11 +1,12 @@
 #include "game/entity/projectile/ArrowDamageEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 
 ArrowDamageEnchantment::ArrowDamageEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BOW, slots)
 {
-    setDescriptionId(0xd7f074af);
+    setDescriptionId(IDS_ENCHANTMENT_ARROW_DAMAGE);
 }
 
 int ArrowDamageEnchantment::getMinCost(int level)

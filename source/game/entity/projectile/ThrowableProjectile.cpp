@@ -61,7 +61,7 @@ void ThrowableProjectile::shoot(double x, double y, double z, float velocity, fl
     float horizontal = (float)std::sqrt(x * x + z * z);
     mYRot = (float)(std::atan2(x, z) * 57.2957763671875);
     mYRotO = mYRot;
-    mXRot = (float)(std::atan2(y, horizontal) * 57.2957763671875);
+    mXRot = (float)(std::atan2(y, (double)horizontal) * 57.2957763671875);
     mXRotO = mXRot;
     mLife = 0;
 }

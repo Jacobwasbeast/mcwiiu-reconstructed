@@ -18,7 +18,7 @@ public:
     Arrow(Level* level);
     Arrow(Level* level, boost::shared_ptr<LivingEntity> owner);
     Arrow(Level* level, double x, double y, double z);
-    virtual ~Arrow();
+    virtual ~Arrow() {}
 
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long version);
     static void addDataWalkers(DataFixerUpper* fixer);

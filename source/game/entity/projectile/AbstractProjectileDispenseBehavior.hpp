@@ -14,7 +14,7 @@ class Projectile;
 class AbstractProjectileDispenseBehavior : public DefaultDispenseItemBehavior
 {
 public:
-    virtual ~AbstractProjectileDispenseBehavior();
+    virtual ~AbstractProjectileDispenseBehavior() {}
 
     virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource,
                                                 not_null_ptr<ItemInstance> itemInstance,

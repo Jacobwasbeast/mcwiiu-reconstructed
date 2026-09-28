@@ -1,10 +1,11 @@
 #include "game/entity/projectile/ArrowFireEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 
 namespace
 {
-const int ARROW_FIRE_DESCRIPTION_ID = 0x0EA75E04;
+const int ARROW_FIRE_DESCRIPTION_ID = IDS_ENCHANTMENT_ARROW_FIRE;
 }
 
 ArrowFireEnchantment::ArrowFireEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)

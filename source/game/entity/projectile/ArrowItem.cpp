@@ -7,7 +7,9 @@ ArrowItem::ArrowItem()
 {
 }
 
-ArrowItem::~ArrowItem() = default;
+ArrowItem::~ArrowItem()
+{
+}
 
 boost::shared_ptr<Arrow> ArrowItem::createArrow(Level* level,
                                                 not_null_ptr<ItemInstance> itemInstance,

@@ -24,7 +24,7 @@ public:
     Fireball(Level* level);
     Fireball(Level* level, double x, double y, double z, double xd, double yd, double zd);
     Fireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd);
-    virtual ~Fireball();
+    virtual ~Fireball() {}
 
     virtual bool shouldTick();
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long type);
@@ -37,7 +37,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual bool isPickable();
-    virtual double getPickRadius();
+    virtual float getPickRadius();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual float getBrightness();
     virtual int getLightColor();

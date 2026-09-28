@@ -71,8 +71,6 @@ AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level,
         mPickup = ePickup_Allowed;
 }
 
-AbstractRotatedItemProjectile::~AbstractRotatedItemProjectile() = default;
-
 void AbstractRotatedItemProjectile::doPostHurtEffects(
     const boost::shared_ptr<LivingEntity>& entity)
 {

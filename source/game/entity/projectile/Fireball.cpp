@@ -81,8 +81,6 @@ Fireball::Fireball(Level* level, boost::shared_ptr<LivingEntity> owner, double x
     }
 }
 
-Fireball::~Fireball() = default;
-
 bool Fireball::shouldTick()
 {
     return true;
@@ -245,9 +243,9 @@ bool Fireball::isPickable()
     return true;
 }
 
-double Fireball::getPickRadius()
+float Fireball::getPickRadius()
 {
-    return static_cast<double>(1.0);
+    return 1.0f;
 }
 
 bool Fireball::hurt(const DamageSource* source, float)

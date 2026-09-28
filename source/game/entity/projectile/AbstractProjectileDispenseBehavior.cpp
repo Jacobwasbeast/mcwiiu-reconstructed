@@ -16,10 +16,6 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 
-AbstractProjectileDispenseBehavior::~AbstractProjectileDispenseBehavior()
-{
-}
-
 not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
     BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
     DefaultDispenseItemBehavior::eOUTCOME& outcome)
@@ -33,7 +29,7 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
         boost::shared_ptr<Projectile> projectile = getProjectile(level, position, itemInstance);
         const Vec3i normal = direction->getNormal();
 
-        projectile->shoot((double)normal.x, (double)normal.y + 0.1, (double)normal.z,
+        projectile->shoot((double)normal.x, (double)((float)normal.y + 0.1f), (double)normal.z,
                           (float)getPower(), (float)getUncertainty());
         boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(projectile);
         level->addEntity(entity);
@@ -65,5 +61,5 @@ double AbstractProjectileDispenseBehavior::getUncertainty()
 
 double AbstractProjectileDispenseBehavior::getPower()
 {
-    return 1.1;
+    return 1.1f;
 }

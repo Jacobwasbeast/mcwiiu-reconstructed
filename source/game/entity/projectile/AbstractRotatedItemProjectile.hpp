@@ -36,7 +36,7 @@ public:
     AbstractRotatedItemProjectile(Level* level);
     AbstractRotatedItemProjectile(Level* level, double x, double y, double z);
     AbstractRotatedItemProjectile(Level* level, boost::shared_ptr<LivingEntity> owner);
-    virtual ~AbstractRotatedItemProjectile();
+    virtual ~AbstractRotatedItemProjectile() {}
 
     static void staticCtor();
 
