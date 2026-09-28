@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHUPDATESESSIONSETTINGJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHUPDATESESSIONSETTINGJOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn { namespace pia { namespace lan {
 

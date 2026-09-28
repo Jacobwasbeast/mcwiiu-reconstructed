@@ -123,22 +123,26 @@ Result LanOutputStream::SendToMulti(const void* data, unsigned int size,
     return started ? result : 0;
 }
 
+namespace
+{
+Result TraceSendResult(const common::Packet& packet, Result result)
+{
+    if (result != 0)
+        packet.Trace(result == 0x10c07 ? 0 : 0x02000000, result == 0x10c07);
+    return result;
+}
+}
+
 Result LanOutputStream::Write(const common::Packet& packet)
 {
     if (*reinterpret_cast<const unsigned char*>(this) == 0)
         return 0;
     common::InetAddress address;
-    const auto traceFailure = [&packet](Result result)
-    {
-        if (result != 0)
-            packet.Trace(result == 0x10c07 ? 0 : 0x02000000, result == 0x10c07);
-        return result;
-    };
     if (packet.m_stationIndex != 0xff)
         address = packet.m_field5f4;
     if (address.IsValid())
     {
-        return traceFailure(SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));
+        return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));
     }
     common::SockAddrIn addresses[32];
     const int count = CreateMulticastAddressArray(addresses, packet.m_stationBitmap);
@@ -150,15 +154,15 @@ Result LanOutputStream::Write(const common::Packet& packet)
         socketAddress.SetSockAddrIn(addresses[0]);
         common::InetAddress address;
         socketAddress.GetInetAddress(&address);
-        return traceFailure(SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));
+        return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));
     }
     if (IsDestinationAddressIndividual(addresses, count) == false || m_protocol == 0 ||
         !m_protocol->IsRelayEnabled())
-        return traceFailure(SendToMulti(packet.m_packetData.m_data, packet.m_size, addresses, count));
+        return TraceSendResult(packet, SendToMulti(packet.m_packetData.m_data, packet.m_size, addresses, count));
     common::InetAddress relay(*reinterpret_cast<const common::InetAddress*>(
         reinterpret_cast<const unsigned char*>(m_protocol) + 0x1c));
     relay.m_port = 40000;
-    return traceFailure(SendTo(packet.m_packetData.m_data, packet.m_size, relay, packet.m_field600));
+    return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, relay, packet.m_field600));
 }
 
 void LanOutputStream::RegisterLanProtocol(LanProtocol* protocol)

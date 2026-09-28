@@ -4,11 +4,7 @@
 namespace nn { namespace pia { namespace lan {
 
 LanMessage::LanMessage()
-    : m_messageType(0), m_payload{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-{
-}
-
-LanMessage::~LanMessage()
+    : m_messageType(0), m_payload()
 {
 }
 

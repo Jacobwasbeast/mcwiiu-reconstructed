@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANSESSIONMESSAGE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANSESSIONMESSAGE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/pia/lan/LanMessage.hpp"
 

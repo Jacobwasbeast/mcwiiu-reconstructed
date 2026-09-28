@@ -23,7 +23,7 @@ uint32_t LanMatchBrowseMatchmakeJob::BrowseMatchmake()
     const uint32_t session = *reinterpret_cast<const uint32_t*>(m_storage + 0x5c);
     if (session == 0)
         return 0x01000000u;
-    auto* matchmake = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(session));
+    LanMatchmakeSession* matchmake = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(session));
     const uint64_t result = matchmake->BrowseMatchmakeSession(
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(m_storage + 0x40)),
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(m_storage + 0x48)));
@@ -43,7 +43,7 @@ uint32_t LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake()
     const uint32_t session = *reinterpret_cast<const uint32_t*>(m_storage + 0x5c);
     if (session != 0)
     {
-        auto* matchmake = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(session));
+        LanMatchmakeSession* matchmake = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(session));
         const uint32_t result = matchmake->WaitBrowseMatchmakeSession();
         if (result != 0)
             return 0x01000000u;
@@ -66,7 +66,7 @@ uint32_t LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo()
     const uint32_t session = *reinterpret_cast<const uint32_t*>(m_storage + 0x5c);
     if (session != 0)
     {
-        auto* matchmake = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(session));
+        LanMatchmakeSession* matchmake = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(session));
         const uint32_t result = matchmake->WaitRequestSessionInfo();
         if (result != 0)
             return 0x01000000u;
@@ -91,7 +91,7 @@ uint64_t LanMatchBrowseMatchmakeJob::StartupImpl(uint32_t a1, uint32_t a2, uint3
     std::memcpy(m_storage + 0x5c, &a2, sizeof(a2));
     if (a2 != 0)
     {
-        auto* session = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(a2));
+        LanMatchmakeSession* session = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(a2));
         const uint32_t registered = session->RegisterSearchCriteria(
             reinterpret_cast<void*>(static_cast<uintptr_t>(a3)), 1);
         if (registered == 0)

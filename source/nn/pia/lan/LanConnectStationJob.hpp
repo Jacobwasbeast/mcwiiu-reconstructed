@@ -10,10 +10,10 @@ class LanConnectStationJob : public transport::ConnectStationJob
 {
 public:
     LanConnectStationJob();
-    ~LanConnectStationJob() override;
+    ~LanConnectStationJob();
     int StartupImpl(common::CallContext* context, transport::Station* station,
-                    const transport::StationConnectionInfo& info, bool secure) override;
-    void Trace(unsigned long long value) const override;
+                    const transport::StationConnectionInfo& info, bool secure);
+    void Trace(unsigned long long value) const;
     unsigned int TryCurrentAddress();
 
 private:

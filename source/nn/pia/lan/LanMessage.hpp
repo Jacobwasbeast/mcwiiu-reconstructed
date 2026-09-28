@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMESSAGE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMESSAGE_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace nn
 {
@@ -14,7 +14,7 @@ class LanMessage
 {
 public:
     LanMessage();
-    ~LanMessage();
+    ~LanMessage() {}
     virtual void Serialize(unsigned char* buffer, unsigned int* size) const;
     virtual void Deserialize(const unsigned char* buffer);
     virtual void Trace(unsigned long long value);

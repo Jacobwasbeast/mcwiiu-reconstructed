@@ -26,8 +26,8 @@ public:
     void Copy(const LanUpdateSessionSetting& other);
     LanUpdateSessionSetting(const LanUpdateSessionSetting& other);
     LanUpdateSessionSetting& operator=(const LanUpdateSessionSetting& other);
-    void Reset() override;
-    void Trace(unsigned long long value) const override;
+    void Reset();
+    void Trace(unsigned long long value) const;
 private:
     unsigned short m_minParticipantNum;
     unsigned short m_maxParticipantNum;

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_PROCESS_HOST_MIGRATION_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_PROCESS_HOST_MIGRATION_JOB_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/CallContext.hpp"

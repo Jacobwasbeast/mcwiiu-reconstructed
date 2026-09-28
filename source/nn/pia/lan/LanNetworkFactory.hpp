@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANNETWORKFACTORY_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANNETWORKFACTORY_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include "nn/pia/session/SessionNetworkFactory.hpp"
 #include "nn/pia/lan/LanConnectStationJob.hpp"
 
@@ -53,13 +53,13 @@ public:
     virtual ~LanNetworkFactory();
     uint32_t CreateSelf();
     uint64_t DeleteSelf(transport::NetworkFactory*);
-    void CreateProtocols() override;
+    void CreateProtocols();
     LanInputStream* CreateInputStream();
     LanOutputStream* CreateOutputStream();
     void DeleteInputStream(LanInputStream*);
     void DeleteOutputStream(LanOutputStream*);
     LanConnectStationJob* CreateConnectStationJob();
-    void DeleteConnectStationJob(transport::ConnectStationJob*) override;
+    void DeleteConnectStationJob(transport::ConnectStationJob*);
     session::CreateMeshJob* CreateCreateMeshJob();
     session::JoinMeshJob* CreateJoinMeshJob();
     session::LeaveMeshJob* CreateLeaveMeshJob();
@@ -101,10 +101,10 @@ public:
     uint32_t GetBrowseCommunityInfoListSizeMax() const;
     uint32_t GetMtuSizeMax() const;
     uint32_t GetMtuSizeMin() const;
-    int GetDefaultRttInitialPulseInterval() const override;
-    bool IsMultiCandidatePermitted() const override;
-    bool IsJointSessionPermitted() const override;
-    bool IsMultiplayerPermitted() const override;
+    int GetDefaultRttInitialPulseInterval() const;
+    bool IsMultiCandidatePermitted() const;
+    bool IsJointSessionPermitted() const;
+    bool IsMultiplayerPermitted() const;
 };
 }
 }

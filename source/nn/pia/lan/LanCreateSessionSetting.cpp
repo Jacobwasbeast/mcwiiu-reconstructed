@@ -21,7 +21,7 @@ bool LanCreateSessionSetting::IsSetApplicationData() const { return (stateFlags 
 void LanCreateSessionSetting::SetOpenSession(bool value) { openSession = value; stateFlags |= cLanSettingOpenSession; }
 bool LanCreateSessionSetting::IsOpenSession() const { return openSession; }
 bool LanCreateSessionSetting::IsSetOpenSession() const { return (stateFlags & cLanSettingOpenSession) != 0; }
-void LanCreateSessionSetting::Reset() { session::CreateSessionSetting::Reset(); gameMode = 0; sessionType = cLanSessionTypeInvalid; for (unsigned int& attribute : attributes) attribute = 0; std::memset(applicationData, 0, sizeof(applicationData)); applicationDataSize = 0; openSession = false; stateFlags = 0; }
+void LanCreateSessionSetting::Reset() { session::CreateSessionSetting::Reset(); gameMode = 0; sessionType = cLanSessionTypeInvalid; for (unsigned int i = 0; i < sizeof(attributes) / sizeof(attributes[0]); ++i) attributes[i] = 0; std::memset(applicationData, 0, sizeof(applicationData)); applicationDataSize = 0; openSession = false; stateFlags = 0; }
 void LanCreateSessionSetting::Trace(unsigned long long value) const { session::CreateSessionSetting::Trace(value); }
 void LanCreateSessionSetting::Copy(const LanCreateSessionSetting& other) { gameMode = other.gameMode; sessionType = other.sessionType; std::memcpy(attributes, other.attributes, sizeof(attributes)); std::memcpy(applicationData, other.applicationData, sizeof(applicationData)); applicationDataSize = other.applicationDataSize; openSession = other.openSession; stateFlags = other.stateFlags; }
 LanCreateSessionSetting& LanCreateSessionSetting::operator=(const LanCreateSessionSetting& other) { if (this != &other) Copy(other); return *this; }

@@ -14,7 +14,7 @@ public:
     virtual ~LanHostMessage();
     void Serialize(unsigned char* buffer, unsigned int* size) const;
     void Deserialize(const unsigned char* buffer);
-    unsigned int GetSerializedSize() const override;
+    unsigned int GetSerializedSize() const;
 
 private:
     unsigned int messageType;
