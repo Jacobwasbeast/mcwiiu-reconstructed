@@ -24,8 +24,8 @@ namespace pia
 namespace chat
 {
 
-CodecFacade* g_codecFacade = nullptr;
-void* g_codecStorage = nullptr;
+CodecFacade* g_codecFacade = NULL;
+void* g_codecStorage = NULL;
 
 CodecFacade::CodecFacade()
     : m_state(0)

@@ -8,8 +8,8 @@ namespace
 {
     const unsigned int DECODER_QUEUE_MAX = 15;
 
-    _udp_packet* s_decoderHead = nullptr;
-    _udp_packet* s_decoderTail = nullptr;
+    _udp_packet* s_decoderHead = NULL;
+    _udp_packet* s_decoderTail = NULL;
     unsigned int s_decoderCounts[DECODER_QUEUE_MAX] = { 0 };
 
     OSFastMutex s_decoderMutex;
