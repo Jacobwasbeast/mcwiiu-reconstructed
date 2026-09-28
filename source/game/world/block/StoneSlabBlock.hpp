@@ -54,7 +54,7 @@ public:
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
-    virtual ~StoneSlabBlock();
+    virtual ~StoneSlabBlock() {}
     virtual void DerivedInit();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getSpawnResourcesAuxValue(const BlockState* state);

@@ -25,7 +25,7 @@ public:
     static AbstractProperty<int>* LEVEL;
 
     LiquidBlock(Material* material);
-    virtual ~LiquidBlock();
+    virtual ~LiquidBlock() {}
 
     virtual bool isLiquidBlock();
     static double getHeightFromData(int data);
@@ -78,7 +78,7 @@ public:
     static TextureAtlasSprite* getTexture(const std::wstring& name);
 
 private:
-    TextureAtlasSprite* mFlowIcon;
+    TextureAtlasSprite* mIcons[2];
 };
 
 #endif

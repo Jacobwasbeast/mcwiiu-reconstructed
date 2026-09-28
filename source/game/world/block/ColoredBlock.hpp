@@ -19,7 +19,7 @@ class ColoredBlock : public Block
 {
 public:
     ColoredBlock(Material* material);
-    virtual ~ColoredBlock();
+    virtual ~ColoredBlock() {}
     static void blockStaticCtor();
 
     static EnumProperty<const DyeColor*>* COLOR;

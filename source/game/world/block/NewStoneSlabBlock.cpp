@@ -64,10 +64,6 @@ NewStoneSlabBlock::NewStoneSlabBlock()
 {
 }
 
-NewStoneSlabBlock::~NewStoneSlabBlock()
-{
-}
-
 void NewStoneSlabBlock::DerivedInit()
 {
     HalfSlabBlock::DerivedInit();
@@ -91,7 +87,7 @@ void NewStoneSlabBlock::DerivedInit()
 void NewStoneSlabBlock::blockStaticCtor()
 {
     Variant::RED_SANDSTONE = new Variant(
-        0, L"red_sandstone", 0x4E7D3907, SandBlock::Variant::byData(1)->getMaterialColor());
+        0, L"red_sandstone", IDS_TILE_STONESLAB_REDSANDSTONE, SandBlock::Variant::byData(1)->getMaterialColor());
 
     boost::unordered_set<Variant*> values;
     values.insert(Variant::RED_SANDSTONE);
@@ -111,8 +107,7 @@ Item* NewStoneSlabBlock::getResource(const BlockState* state, Random* random, in
 
 not_null_ptr<ItemInstance> NewStoneSlabBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    int data = state->getValue(VARIANT)->getData();
-    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_slab2, 1, data));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::stone_slab2)));
 }
 
 int NewStoneSlabBlock::getAuxName(int auxValue)

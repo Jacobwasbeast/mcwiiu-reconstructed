@@ -30,7 +30,7 @@ public:
     PurpurSlabBlock();
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
-    virtual ~PurpurSlabBlock();
+    virtual ~PurpurSlabBlock() {}
     virtual void DerivedInit();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);

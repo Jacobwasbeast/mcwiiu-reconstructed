@@ -71,9 +71,9 @@ std::wstring PrismarineSlabBlock::Variant::getSerializedName() const
 
 void PrismarineSlabBlock::blockStaticCtor()
 {
-    Variant::ROUGH = new Variant(0, L"prismarine_slab", IDS_TILE_SLAB_PRISMARINE, 0x546d89cd, L"prismarine_rough");
-    Variant::BRICKS = new Variant(1, L"prismarine_bricks_slab", IDS_TILE_SLAB_PRISMARINE_BRICKS, 0x546d89cd, L"prismarine_bricks");
-    Variant::DARK = new Variant(2, L"dark_prismarine_slab", IDS_TILE_SLAB_DARK_PRISMARINE, 0x546d89cd, L"prismarine_dark");
+    Variant::ROUGH = new Variant(0, L"prismarine_slab", IDS_TILE_SLAB_PRISMARINE, IDS_DESC_SLAB_PRISMARINE, L"prismarine_rough");
+    Variant::BRICKS = new Variant(1, L"prismarine_bricks_slab", IDS_TILE_SLAB_PRISMARINE_BRICKS, IDS_DESC_SLAB_PRISMARINE, L"prismarine_bricks");
+    Variant::DARK = new Variant(2, L"dark_prismarine_slab", IDS_TILE_SLAB_DARK_PRISMARINE, IDS_DESC_SLAB_PRISMARINE, L"prismarine_dark");
     gPrismarineSlabVariants[0] = Variant::ROUGH;
     gPrismarineSlabVariants[1] = Variant::BRICKS;
     gPrismarineSlabVariants[2] = Variant::DARK;
@@ -88,10 +88,6 @@ void PrismarineSlabBlock::blockStaticCtor()
 
 PrismarineSlabBlock::PrismarineSlabBlock()
     : HalfSlabBlock(Material::STONE)
-{
-}
-
-PrismarineSlabBlock::~PrismarineSlabBlock()
 {
 }
 

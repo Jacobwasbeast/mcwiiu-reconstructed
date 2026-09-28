@@ -14,7 +14,7 @@ public:
     DirectionalBlock(Material* material);
     DirectionalBlock(Material* material, const MaterialColor* materialColor);
 
-    virtual ~DirectionalBlock();
+    virtual ~DirectionalBlock() {}
 
     static void blockStaticCtor();
 };

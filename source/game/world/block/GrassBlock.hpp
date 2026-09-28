@@ -51,7 +51,6 @@ public:
     static TextureAtlasSprite* getSideTextureOverlay();
 
 private:
-    TextureAtlasSprite* mSideIcon;
     TextureAtlasSprite* mTopIcon;
     TextureAtlasSprite* mSnowSideIcon;
     TextureAtlasSprite* mSideOverlayIcon;

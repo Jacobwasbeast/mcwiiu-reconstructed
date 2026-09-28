@@ -23,7 +23,7 @@ public:
     BlockEntity();
 
     virtual unsigned long long GetType() = 0;
-    virtual ~BlockEntity();
+    virtual ~BlockEntity() {}
     virtual Level* getLevel();
     virtual void setLevel(Level* level);
     virtual bool hasLevel();

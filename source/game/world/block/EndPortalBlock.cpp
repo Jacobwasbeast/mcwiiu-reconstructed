@@ -128,9 +128,9 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
 
 void EndPortalBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
-    double x = static_cast<double>(pos.x) + random->nextFloat();
-    double y = static_cast<double>(pos.y) + 0.8;
-    double z = static_cast<double>(pos.z) + random->nextFloat();
+    double x = (float)pos.x + random->nextFloat();
+    double y = (float)pos.y + 0.8f;
+    double z = (float)pos.z + random->nextFloat();
     level->addParticle(PARTICLE_END_PORTAL, x, y, z, 0.0, 0.0, 0.0,
                        arrayWithLength<int>());
 }

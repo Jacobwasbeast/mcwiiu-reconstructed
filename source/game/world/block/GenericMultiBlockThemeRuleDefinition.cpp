@@ -3,10 +3,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 
-GenericMultiBlockThemeRuleDefinition::~GenericMultiBlockThemeRuleDefinition()
-{
-}
-
 GameRuleDefinition* GenericMultiBlockThemeRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     if (type == ConsoleGameRules::eGameRuleType_BlockDef)

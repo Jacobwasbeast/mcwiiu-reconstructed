@@ -4,8 +4,6 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/chunk/array2DWithLength.hpp"
 
-#include "game/core/IllegalArgumentException.hpp"
-
 BlockPatternBuilder::BlockPatternBuilder()
     : mPattern(),
       mLookup(11)
@@ -37,17 +35,6 @@ void BlockPatternBuilder::ensureAllCharactersMatched()
         {
             unmatchedCharacters.push_back(it->first);
         }
-    }
-
-    if (!unmatchedCharacters.empty())
-    {
-        std::wstring message;
-        for (std::vector<wchar_t>::const_iterator it = unmatchedCharacters.begin();
-             it != unmatchedCharacters.end(); ++it)
-        {
-            message += *it;
-        }
-        throw IllegalArgumentException(message);
     }
 }
 

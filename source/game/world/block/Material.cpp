@@ -60,10 +60,6 @@ Material::Material(const MaterialColor* color)
     submerged = false;
 }
 
-Material::~Material()
-{
-}
-
 Material* Material::replaceable()
 {
     canBeReplaced = true;

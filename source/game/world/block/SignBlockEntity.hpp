@@ -53,13 +53,14 @@ public:
 
 private:
     std::wstring mCreatedPlayer;
+    bool mEditable;
     bool mVerified;
     bool mCensored;
     bool mCreatedByRestrictedPlayer;
     bool mCreatedByHostPlayer;
 
 public:
-    int mUnknown;
+    int mSelectedLine;
     std::wstring mMessages[4];
 
 private:

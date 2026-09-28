@@ -76,13 +76,9 @@ bool SnowLayerBlock::mayPlace(Level* level, const BlockPos& pos)
     return block == this && below->getValue(LAYERS) == 8;
 }
 
-void SnowLayerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
+void SnowLayerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
-    if (!canSurvive(level, pos, state))
-    {
-        spawnResources(level, pos, state, 0);
-        level->removeBlock(pos);
-    }
+    FallingBlock::neighborChanged(state, level, pos, block, fromPos);
 }
 
 bool SnowLayerBlock::isWaterBlocking() const { return false; }
@@ -119,7 +115,7 @@ int SnowLayerBlock::melt(Level* level, const BlockPos& pos, int amount)
         level->removeBlock(pos);
         return 1;
     }
-    level->setBlock(pos, getBlockState(layers - amount), Block::UPDATE_ALL, false);
+    level->setBlock(pos, buildSnowBlock(level, pos, -amount, 1), Block::UPDATE_ALL, false);
     return 0;
 }
 

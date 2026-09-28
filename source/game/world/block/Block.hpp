@@ -381,7 +381,7 @@ public:
     int mDescriptionId;
     int mUseDescriptionId;
     TextureAtlasSprite* mIcon;
-    int mRenderLayer;
+    TextureAtlasSprite* mCarriedIcon;
     EBlockType mBlockType;
 };
 

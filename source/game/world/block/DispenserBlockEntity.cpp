@@ -26,6 +26,7 @@ DispenserBlockEntity::DispenserBlockEntity()
 
 DispenserBlockEntity::~DispenserBlockEntity()
 {
+    delete[] mItems.items;
 }
 
 BlockEntity* DispenserBlockEntity::create()

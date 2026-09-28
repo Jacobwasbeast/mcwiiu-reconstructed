@@ -25,7 +25,7 @@ class SignBlock : public BaseEntityBlock
 {
 public:
     SignBlock();
-    virtual ~SignBlock();
+    virtual ~SignBlock() {}
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

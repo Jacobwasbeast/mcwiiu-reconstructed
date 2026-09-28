@@ -124,15 +124,15 @@ void DoublePlantBlock::blockStaticCtor()
         VARIANTS[0] = new Variant(0, L"sunflower", static_cast<int>(IDS_TILE_SUNFLOWER),
                                   static_cast<int>(IDS_DESC_SUNFLOWER), sVariantTextures[0]);
         VARIANTS[1] = new Variant(1, L"syringa", static_cast<int>(IDS_TILE_LILAC),
-                                  static_cast<int>(0x6a2ec061), sVariantTextures[1]);
+                                  static_cast<int>(IDS_DESC_LILAC), sVariantTextures[1]);
         VARIANTS[2] = new Variant(2, L"double_grass", static_cast<int>(IDS_TILE_TALL_GRASS_DOUBLE),
                                   static_cast<int>(IDS_DESC_TALL_GRASS_DOUBLE), sVariantTextures[2]);
         VARIANTS[3] = new Variant(3, L"double_fern", static_cast<int>(IDS_TILE_FERN_LARGE),
-                                  static_cast<int>(0xf5dafd9f), sVariantTextures[3]);
+                                  static_cast<int>(IDS_DESC_FERN_LARGE), sVariantTextures[3]);
         VARIANTS[4] = new Variant(4, L"double_rose", static_cast<int>(IDS_TILE_ROSE_BUSH),
-                                  static_cast<int>(0xb6fac4d2), sVariantTextures[4]);
+                                  static_cast<int>(IDS_DESC_ROSE_BUSH), sVariantTextures[4]);
         VARIANTS[5] = new Variant(5, L"paeonia", static_cast<int>(IDS_TILE_PEONY),
-                                  static_cast<int>(0x6a49a77f), sVariantTextures[5]);
+                                  static_cast<int>(IDS_DESC_PEONY), sVariantTextures[5]);
         gDoublePlantGrass = VARIANTS[2];
         gDoublePlantFern = VARIANTS[3];
         Variant::SUNFLOWER = VARIANTS[0];
@@ -311,9 +311,9 @@ bool DoublePlantBlock::playerWillDestroy(Level* level, const BlockPos& pos, cons
     }
     return Block::playerWillDestroy(level, pos, state, player);
 }
-not_null_ptr<ItemInstance> DoublePlantBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
+not_null_ptr<ItemInstance> DoublePlantBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, state->getValue(VARIANT)->getData()));
+    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, getType(level, pos, state)->getData()));
 }
 const BlockState* DoublePlantBlock::getBlockState(int data)
 {

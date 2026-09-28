@@ -42,10 +42,6 @@ ButtonBlock::ButtonBlock(bool wooden, Material* material)
     setTicking(true);
 }
 
-ButtonBlock::~ButtonBlock()
-{
-}
-
 void ButtonBlock::blockStaticCtor()
 {
     FACING = DirectionalBlock::FACING;

@@ -9,7 +9,7 @@ class Level;
 class EntityBlock
 {
 public:
-    virtual ~EntityBlock();
+    virtual ~EntityBlock() {}
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data) = 0;
 };

@@ -112,7 +112,7 @@ public:
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
-    virtual ~FlowerBlock();
+    virtual ~FlowerBlock() {}
     virtual void DerivedInit();
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

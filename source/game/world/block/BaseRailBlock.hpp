@@ -76,7 +76,7 @@ public:
     };
 
     BaseRailBlock(bool isPowered);
-    virtual ~BaseRailBlock();
+    virtual ~BaseRailBlock() {}
     static bool isRail(const Block* block);
     static bool isRail(Level* level, const BlockPos& pos);
     static bool isRail(const BlockState* state);

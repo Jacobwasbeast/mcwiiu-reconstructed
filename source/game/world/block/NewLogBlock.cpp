@@ -136,36 +136,17 @@ bool NewLogBlock::isStrippable()
 
 const BlockState* NewLogBlock::getStrippedBlock(const BlockState* state)
 {
-    int woodType = getWoodType(state);
-    const BlockState* strippedState;
-    if (woodType == 4)
-    {
-        strippedState = Blocks::stripped_log_acacia->defaultBlockState();
-    }
-    else if (woodType == 5)
-    {
-        strippedState = Blocks::stripped_log_dark_oak->defaultBlockState();
-    }
-    else
-    {
-        return state;
-    }
-    if (strippedState == NULL)
-    {
-        return state;
-    }
-    BlockStateDefinition* axisDefinition = RotatedPillarBlock::createBlockStateDefinition();
-    const Property* axisProperty = axisDefinition->getProperties()[0];
+    const BlockState* stripped = getWoodType(state) == 4 ? Blocks::stripped_log_acacia->defaultBlockState()
+                                                         : Blocks::stripped_log_dark_oak->defaultBlockState();
+
     unsigned int axisId = state->getValue(AXIS)->getId();
-    if (axisId == 3)
-    {
-        delete axisDefinition;
-        return strippedState;
-    }
-    Direction::Axis* directionAxis = axisId == 0 ? Direction::Axis::X :
-        axisId == 1 ? Direction::Axis::Y : Direction::Axis::Z;
-    TypedBoxed<Direction::Axis*> axis(directionAxis);
-    const BlockState* result = strippedState->setBoxedValue(axisProperty, &axis);
-    delete axisDefinition;
-    return result;
+    Direction::Axis* axis;
+    if (axisId == 0)
+        axis = Direction::Axis::X;
+    else if (axisId == 1)
+        axis = Direction::Axis::Y;
+    else
+        axis = Direction::Axis::Z;
+    TypedBoxed<Direction::Axis*> boxedAxis(axis);
+    return stripped->setBoxedValue(gRotatedPillarBlockAxisProperty, &boxedAxis);
 }

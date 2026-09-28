@@ -21,7 +21,7 @@ class DiodeBlock : public HorizontalDirectionalBlock
 {
 public:
     DiodeBlock(bool on);
-    virtual ~DiodeBlock();
+    virtual ~DiodeBlock() {}
     virtual bool isCubeShaped(const BlockState*);
     virtual EBlockRenderShape getRenderShape(const BlockState*);
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);

@@ -1,4 +1,5 @@
 #include "game/world/block/DaylightDetectorBlock.hpp"
+#include "game/client/audio/SoundType.hpp"
 #include "game/core/StringIds.hpp"
 
 #include "game/core/Boxed.hpp"
@@ -35,6 +36,8 @@ DaylightDetectorBlock::DaylightDetectorBlock(bool inverted)
     DerivedInit();
     TypedBoxed<int> boxed(0);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(gDaylightDetectorPower, &boxed));
+    setDestroyTime(0.2f);
+    setSoundType(SoundType::WOOD);
 }
 
 DaylightDetectorBlock::~DaylightDetectorBlock()

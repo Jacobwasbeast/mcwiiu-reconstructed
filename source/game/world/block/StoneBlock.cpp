@@ -49,14 +49,14 @@ std::wstring StoneBlock::Variant::getName() { return mName; }
 void StoneBlock::blockStaticCtor()
 {
     Variant::STONE = new Variant(0, MaterialColor::STONE, L"stone", IDS_TILE_STONE, IDS_DESC_STONE, L"stone", true);
-    Variant::GRANITE = new Variant(1, MaterialColor::DIRT, L"granite", 0x19244f91, 0x91114554, L"stone_granite", true);
-    Variant::SMOOTH_GRANITE = new Variant(2, MaterialColor::DIRT, L"smooth_granite", 0x567cedee, 0x25e3fdc3,
+    Variant::GRANITE = new Variant(1, MaterialColor::DIRT, L"granite", IDS_TILE_STONE_GRANITE, IDS_DESC_STONE_GRANITE, L"stone_granite", true);
+    Variant::SMOOTH_GRANITE = new Variant(2, MaterialColor::DIRT, L"smooth_granite", IDS_TILE_STONE_GRANITE_POLISHED, IDS_DESC_STONE_GRANITE_POLISHED,
                                           L"stone_granite_smooth", false);
-    Variant::DIORITE = new Variant(3, MaterialColor::QUARTZ, L"diorite", 0x77f221b3, 0x05e93db6, L"stone_diorite", true);
-    Variant::SMOOTH_DIORITE = new Variant(4, MaterialColor::QUARTZ, L"smooth_diorite", 0xf1c0b35c, 0x2a4cccf1,
+    Variant::DIORITE = new Variant(3, MaterialColor::QUARTZ, L"diorite", IDS_TILE_STONE_DIORITE, IDS_DESC_STONE_DIORITE, L"stone_diorite", true);
+    Variant::SMOOTH_DIORITE = new Variant(4, MaterialColor::QUARTZ, L"smooth_diorite", IDS_TILE_STONE_DIORITE_POLISHED, IDS_DESC_STONE_DIORITE_POLISHED,
                                           L"stone_diorite_smooth", false);
-    Variant::ANDESITE = new Variant(5, MaterialColor::STONE, L"andesite", 0xbd013dc6, 0xf2a753fb, L"stone_andesite", true);
-    Variant::SMOOTH_ANDESITE = new Variant(6, MaterialColor::STONE, L"smooth_andesite", 0x1bb05261, 0x47be1614,
+    Variant::ANDESITE = new Variant(5, MaterialColor::STONE, L"andesite", IDS_TILE_STONE_ANDESITE, IDS_DESC_STONE_ANDESITE, L"stone_andesite", true);
+    Variant::SMOOTH_ANDESITE = new Variant(6, MaterialColor::STONE, L"smooth_andesite", IDS_TILE_STONE_ANDESITE_POLISHED, IDS_DESC_STONE_ANDESITE_POLISHED,
                                            L"stone_andesite_smooth", false);
     Variant::BY_DATA[0] = Variant::STONE;
     Variant::BY_DATA[1] = Variant::GRANITE;

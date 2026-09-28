@@ -16,7 +16,7 @@ class BaseCommandBlock : public CommandSender
 {
 public:
     BaseCommandBlock();
-    virtual ~BaseCommandBlock();
+    virtual ~BaseCommandBlock() {}
     virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage, int*, unsigned int, std::wstring*,
                              unsigned int);
     virtual bool hasPermission(EGameCommand);

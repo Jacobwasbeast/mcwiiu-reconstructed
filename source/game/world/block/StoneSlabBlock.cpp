@@ -59,13 +59,13 @@ std::wstring StoneSlabBlock::Variant::getSerializedName() const { return mName; 
 void StoneSlabBlock::blockStaticCtor()
 {
     Variant::STONE = new Variant(0, MaterialColor::STONE, L"stone", IDS_TILE_STONESLAB_STONE);
-    Variant::SAND = new Variant(1, MaterialColor::SAND, L"sandstone", 0xEE811877);
-    Variant::WOOD = new Variant(2, MaterialColor::WOOD, L"wood_old", 0xB795E14C);
+    Variant::SAND = new Variant(1, MaterialColor::SAND, L"sandstone", IDS_TILE_STONESLAB_SAND);
+    Variant::WOOD = new Variant(2, MaterialColor::WOOD, L"wood_old", IDS_TILE_STONESLAB_WOOD);
     Variant::COBBLESTONE = new Variant(3, MaterialColor::STONE, L"cobblestone", 0xA1DC2A82);
-    Variant::BRICK = new Variant(4, MaterialColor::COLOR_RED, L"brick", 0xA365F71E);
-    Variant::SMOOTHBRICK = new Variant(5, MaterialColor::STONE, L"stone_brick", 0xF272D1EC);
-    Variant::NETHERBRICK = new Variant(6, MaterialColor::NETHER, L"nether_brick", 0xA5251116);
-    Variant::QUARTZ = new Variant(7, MaterialColor::QUARTZ, L"quartz", 0x28C9DFC6);
+    Variant::BRICK = new Variant(4, MaterialColor::COLOR_RED, L"brick", IDS_TILE_STONESLAB_BRICK);
+    Variant::SMOOTHBRICK = new Variant(5, MaterialColor::STONE, L"stone_brick", IDS_TILE_STONESLAB_SMOOTHBRICK);
+    Variant::NETHERBRICK = new Variant(6, MaterialColor::NETHER, L"nether_brick", IDS_TILE_STONESLAB_NETHERBRICK);
+    Variant::QUARTZ = new Variant(7, MaterialColor::QUARTZ, L"quartz", IDS_TILE_STONESLAB_QUARTZ);
     gStoneSlabVariants[0] = Variant::STONE;
     gStoneSlabVariants[1] = Variant::SAND;
     gStoneSlabVariants[2] = Variant::WOOD;
@@ -88,8 +88,6 @@ StoneSlabBlock::StoneSlabBlock()
     : HalfSlabBlock(Material::STONE)
 {
 }
-
-StoneSlabBlock::~StoneSlabBlock() {}
 
 void StoneSlabBlock::DerivedInit()
 {

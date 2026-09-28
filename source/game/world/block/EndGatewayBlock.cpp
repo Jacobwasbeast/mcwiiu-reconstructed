@@ -68,7 +68,7 @@ void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPo
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (blockEntity.get() == NULL
-        || blockEntity->GetType() != static_cast<unsigned long long>(BlockEntityRendererType::EndGateway))
+        || blockEntity->GetType() != BlockEntityType::THE_END_GATEWAY_ENTITY)
         return;
 
     boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);

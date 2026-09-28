@@ -1,4 +1,5 @@
 #include "game/world/block/LogBlock.hpp"
+#include "game/world/block/RotatedPillarBlock.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <boost/unordered_set.hpp>
@@ -28,7 +29,7 @@ LogBlock::LogAxis* LogBlock::Y = NULL;
 LogBlock::LogAxis* LogBlock::Z = NULL;
 LogBlock::LogAxis* LogBlock::NONE = NULL;
 EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
-static const int gLogDescriptionIds[4] = { 0x0B851C01, (int)0x7D86FA86, (int)0xBB86EB26, 0x635D7533 };
+static const int gLogDescriptionIds[4] = { IDS_TILE_LOG_OAK, (int)IDS_TILE_LOG_SPRUCE, (int)IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE };
 
 LogBlock::LogAxis::LogAxis(const std::wstring& name)
     : mName(name)
@@ -93,10 +94,6 @@ LogBlock::LogBlock()
     setSoundType(SoundType::WOOD);
 }
 
-LogBlock::~LogBlock()
-{
-}
-
 void LogBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     if (!level->hasChunksAt(pos.offset(-5, -5, -5), pos.offset(5, 5, 5)))
@@ -155,11 +152,27 @@ bool LogBlock::isStrippable()
 
 const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
 {
-    unsigned int id = convertBlockStateToLegacyData(state);
-    Block* stripped = id == 0 ? Blocks::stripped_log_oak : id == 1 ? Blocks::stripped_log_spruce : id == 2 ? Blocks::stripped_log_birch : Blocks::stripped_log_jungle;
-    if (stripped == NULL) return state;
-    TypedBoxed<LogAxis*> axis(state->getValue(AXIS));
-    return stripped->defaultBlockState()->setBoxedValue(AXIS, &axis);
+    unsigned int woodType = getWoodType(state);
+    const BlockState* stripped;
+    if (woodType == 0)
+        stripped = Blocks::stripped_log_oak->defaultBlockState();
+    else if (woodType == 1)
+        stripped = Blocks::stripped_log_spruce->defaultBlockState();
+    else if (woodType < 3)
+        stripped = Blocks::stripped_log_birch->defaultBlockState();
+    else
+        stripped = Blocks::stripped_log_jungle->defaultBlockState();
+
+    unsigned int axisId = state->getValue(AXIS)->getId();
+    Direction::Axis* axis;
+    if (axisId == 0)
+        axis = Direction::Axis::X;
+    else if (axisId == 1)
+        axis = Direction::Axis::Y;
+    else
+        axis = Direction::Axis::Z;
+    TypedBoxed<Direction::Axis*> boxedAxis(axis);
+    return stripped->setBoxedValue(gRotatedPillarBlockAxisProperty, &boxedAxis);
 }
 
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

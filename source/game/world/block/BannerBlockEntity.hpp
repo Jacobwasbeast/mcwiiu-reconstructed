@@ -50,11 +50,12 @@ public:
     const DyeColor* getBaseColor();
     static bool fjCanAddPatternsToItem(const not_null_ptr<ItemInstance>& item);
 private:
+    std::wstring mName;
     const DyeColor* mBaseColor;
     ListTag* mPatterns;
-    bool mPatternListCreated;
-    std::vector<const BannerPattern*> mPatternList;
-    std::vector<const DyeColor*> mColorList;
+    bool mPatternDataSet;
+    std::vector<const BannerPattern*>* mPatternList;
+    std::vector<const DyeColor*>* mColorList;
     std::wstring mTextureHashName;
     boost::shared_ptr<CensoredString> mCustomName;
 };

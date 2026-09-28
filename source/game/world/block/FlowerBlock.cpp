@@ -29,43 +29,43 @@ FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::YELLOW = new FlowerBlo
 FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::RED = new FlowerBlock::FlowerCategory();
 
 FlowerBlock::Flower* FlowerBlock::Flower::DANDELION = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", IDS_TILE_DANDELION, 0x6E24D1FC,
+    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", IDS_TILE_DANDELION, IDS_DESC_DANDELION,
     L"flower_dandelion", FlowerBlock::Flower::FLOWER_DANDELION);
 
 FlowerBlock::Flower* FlowerBlock::Flower::POPPY = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 0, L"poppy", IDS_TILE_POPPY, 0xD92B6BAC,
+    FlowerBlock::FlowerCategory::RED, 0, L"poppy", IDS_TILE_POPPY, IDS_DESC_POPPY,
     L"flower_rose", FlowerBlock::Flower::FLOWER_POPPY);
 
 FlowerBlock::Flower* FlowerBlock::Flower::BLUE_ORCHID = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", IDS_TILE_BLUE_ORCHID, 0x03E7FB19,
+    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", IDS_TILE_BLUE_ORCHID, IDS_DESC_ORCHID,
     L"flower_blue_orchid", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
 
 FlowerBlock::Flower* FlowerBlock::Flower::ALLIUM = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 2, L"allium", IDS_TILE_ALLIUM, 0x525F4042,
+    FlowerBlock::FlowerCategory::RED, 2, L"allium", IDS_TILE_ALLIUM, IDS_DESC_ALLIUM,
     L"flower_alium", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
 
 FlowerBlock::Flower* FlowerBlock::Flower::HOUSTONIA = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", IDS_TILE_AZURE_BLUET, 0x9045632E,
+    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", IDS_TILE_AZURE_BLUET, IDS_DESC_AZURE_BLUET,
     L"flower_houstonia", FlowerBlock::Flower::FLOWER_HOUSTONIA);
 
 FlowerBlock::Flower* FlowerBlock::Flower::RED_TULIP = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", IDS_TILE_TULIP_RED, 0x3C6AF79A,
+    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", IDS_TILE_TULIP_RED, IDS_DESC_TULIP_RED,
     L"flower_tulip_red", FlowerBlock::Flower::FLOWER_RED_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::ORANGE_TULIP = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 5, L"orange_tulip", IDS_TILE_TULIP_ORANGE, 0xBA461B69,
+    FlowerBlock::FlowerCategory::RED, 5, L"orange_tulip", IDS_TILE_TULIP_ORANGE, IDS_DESC_TULIP_ORANGE,
     L"flower_tulip_orange", FlowerBlock::Flower::FLOWER_ORANGE_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::WHITE_TULIP = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 6, L"white_tulip", IDS_TILE_TULIP_WHITE, 0x80ACBF76,
+    FlowerBlock::FlowerCategory::RED, 6, L"white_tulip", IDS_TILE_TULIP_WHITE, IDS_DESC_TULIP_WHITE,
     L"flower_tulip_white", FlowerBlock::Flower::FLOWER_WHITE_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::PINK_TULIP = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", IDS_TILE_TULIP_PINK, 0xF6E94C7D,
+    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", IDS_TILE_TULIP_PINK, IDS_DESC_TULIP_PINK,
     L"flower_tulip_pink", FlowerBlock::Flower::FLOWER_PINK_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::OXEYE_DAISY = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", IDS_TILE_OXEYE_DAISY, 0x1CDA9744,
+    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", IDS_TILE_OXEYE_DAISY, IDS_DESC_DAISY,
     L"flower_oxeye_daisy", FlowerBlock::Flower::FLOWER_OXEYE_DAISY);
 
 FlowerBlock::Flower* FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_COUNT] =
@@ -201,10 +201,6 @@ FlowerBlock::FlowerCategoryPredicate::~FlowerCategoryPredicate()
 
 FlowerBlock::FlowerBlock()
     : mTypeProperty(NULL)
-{
-}
-
-FlowerBlock::~FlowerBlock()
 {
 }
 

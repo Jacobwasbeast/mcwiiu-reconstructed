@@ -1,4 +1,5 @@
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/FireBlock.hpp"
 
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/world/block/Block.hpp"
@@ -617,4 +618,5 @@ void Blocks::staticInit()
     bark_dark_oak = get(L"bark_dark_oak");
     bark_oak = get(L"bark_oak");
 
+    FireBlock::staticCtor();
 }

@@ -52,7 +52,7 @@ RepeaterBlock::~RepeaterBlock()
 
 std::wstring RepeaterBlock::getName()
 {
-    return L10N::GetString(0xb97b9d5d);
+    return L10N::GetString(IDS_ITEM_DIODE);
 }
 
 const BlockState* RepeaterBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -138,14 +138,15 @@ void RepeaterBlock::animateTick(const BlockState* state, Level* level, const Blo
     if (!mOn)
         return;
     const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    double x = pos.x + 0.5 + (random->nextFloat() - 0.5) * 0.2;
-    double y = pos.y + 0.4;
-    double z = pos.z + 0.5 + (random->nextFloat() - 0.5) * 0.2;
+    double x = (double)((float)pos.x + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
+    double y = (double)((float)pos.y + 0.4f) + (double)(random->nextFloat() - 0.5f) * 0.2;
+    double z = (double)((float)pos.z + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
     float offset = -5.0f;
     if (random->nextBoolean()) offset = (float)(state->getValue(DELAY) * 2 - 1);
-    x += offset * 0.0625f * facing->getNormal().x;
-    z += offset * 0.0625f * facing->getNormal().z;
-    level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+    offset /= 16.0f;
+    double xOffset = (double)(offset * (float)facing->getNormal().x);
+    double zOffset = (double)(offset * (float)facing->getNormal().z);
+    level->addParticle(PARTICLE_RED_DUST, x + xOffset, y, z + zOffset, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
 void RepeaterBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)

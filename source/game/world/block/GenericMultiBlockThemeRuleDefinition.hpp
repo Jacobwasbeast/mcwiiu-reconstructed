@@ -30,7 +30,7 @@ public:
         int mBlockAux;
     };
 
-    virtual ~GenericMultiBlockThemeRuleDefinition();
+    virtual ~GenericMultiBlockThemeRuleDefinition() {}
 
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
 

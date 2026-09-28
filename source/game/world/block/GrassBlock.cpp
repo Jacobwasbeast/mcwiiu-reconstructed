@@ -255,7 +255,7 @@ TextureAtlasSprite* GrassBlock::getTexture(const Direction* direction, const Blo
         return mTopIcon;
     if (direction == Direction::DOWN)
         return Blocks::dirt->getTexture(direction);
-    return mSideIcon;
+    return mIcon;
 }
 
 TextureAtlasSprite* GrassBlock::getTexture(LevelSource* levelSource, const BlockPos& pos,
@@ -267,13 +267,13 @@ TextureAtlasSprite* GrassBlock::getTexture(LevelSource* levelSource, const Block
         return Blocks::dirt->getTexture(direction);
     Material* aboveMaterial = levelSource->getBlockState(pos.above())->getBlock()->mMaterial;
     if (aboveMaterial != Material::TOP_SNOW && aboveMaterial != Material::SNOW)
-        return mSideIcon;
+        return mIcon;
     return mSnowSideIcon;
 }
 
 void GrassBlock::registerIcons(IconRegister* iconRegister)
 {
-    mSideIcon = iconRegister->registerIcon(L"grass_side");
+    mIcon = iconRegister->registerIcon(L"grass_side");
     mTopIcon = iconRegister->registerIcon(L"grass_top");
     mSnowSideIcon = iconRegister->registerIcon(L"snow_side");
     mSideOverlayIcon = iconRegister->registerIcon(L"grass_side_overlay");
@@ -281,5 +281,5 @@ void GrassBlock::registerIcons(IconRegister* iconRegister)
 
 TextureAtlasSprite* GrassBlock::getSideTextureOverlay()
 {
-    return Blocks::grass == NULL ? NULL : static_cast<GrassBlock*>(Blocks::grass)->mSideOverlayIcon;
+    return static_cast<GrassBlock*>(Blocks::grass)->mSideOverlayIcon;
 }

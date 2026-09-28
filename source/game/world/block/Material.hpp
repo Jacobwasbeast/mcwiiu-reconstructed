@@ -47,7 +47,7 @@ public:
     static Material* STRUCTURAL_AIR;
 
     Material(const MaterialColor* color);
-    virtual ~Material();
+    virtual ~Material() {}
 
     static void staticCtor();
 

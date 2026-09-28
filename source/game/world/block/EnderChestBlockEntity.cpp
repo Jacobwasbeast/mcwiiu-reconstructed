@@ -108,12 +108,7 @@ bool EnderChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
 
 InteractionObject::NameData EnderChestBlockEntity::GetNetworkNameData()
 {
-    std::wstring name;
-    if (mName)
-    {
-        name = mName->raw();
-    }
-    return InteractionObject::NameData(name, std::wstring(), true, false);
+    return InteractionObject::NameData(mName->raw(), mName->getUUID(), mName->isUUIDLocal(), mName->isChatCensored());
 }
 
 boost::shared_ptr<BlockEntity> EnderChestBlockEntity::clone()

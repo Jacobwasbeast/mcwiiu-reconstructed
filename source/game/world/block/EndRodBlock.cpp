@@ -102,7 +102,7 @@ void EndRodBlock::animateTick(const BlockState* state, Level* level, const Block
     double x = static_cast<double>(pos.x) + 0.55 - static_cast<double>(random->nextFloat() * 0.1F);
     double y = static_cast<double>(pos.y) + 0.55 - static_cast<double>(random->nextFloat() * 0.1F);
     double z = static_cast<double>(pos.z) + 0.55 - static_cast<double>(random->nextFloat() * 0.1F);
-    double spread = 0.4 - static_cast<double>((random->nextFloat() + random->nextFloat()) * 0.4F);
+    double spread = 0.4F - (random->nextFloat() + random->nextFloat()) * 0.4F;
     if (random->nextInt(5) == 0)
     {
         level->addParticle(PARTICLE_END_ROD,

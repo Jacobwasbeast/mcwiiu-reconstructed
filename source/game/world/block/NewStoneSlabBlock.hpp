@@ -41,7 +41,7 @@ public:
     };
 
     NewStoneSlabBlock();
-    virtual ~NewStoneSlabBlock();
+    virtual ~NewStoneSlabBlock() {}
     virtual void DerivedInit();
     static void blockStaticCtor();
 

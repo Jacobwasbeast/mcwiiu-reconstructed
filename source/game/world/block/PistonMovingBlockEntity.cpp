@@ -1,4 +1,5 @@
 #include "game/world/block/PistonMovingBlockEntity.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 #include "game/world/block/BlockId.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -22,7 +23,7 @@
 #include "game/world/block/PistonBaseBlock.hpp"
 #include "game/world/block/PistonHeadBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-static const Direction* gPistonNoClipDirection = NULL;
+static unsigned int gPistonNoClipTlsIndex = TlsAlloc();
 PistonMovingBlockEntity::PistonMovingBlockEntity(const BlockState* state, const Direction* direction, bool extending, bool source, CompoundTag* blockEntityTag)
     : BlockEntity(), mMovedState(state), mDirection(direction), mExtending(extending), mSourcePiston(source), mBlockEntityTag(blockEntityTag), mProgress(0.0f), mLastProgress(0.0f)
 {
@@ -92,12 +93,12 @@ bool PistonMovingBlockEntity::isExtending()
 
 void PistonMovingBlockEntity::NOCLIP_set(const Direction* direction)
 {
-    gPistonNoClipDirection = direction;
+    TlsSetValue(gPistonNoClipTlsIndex, const_cast<Direction*>(direction));
 }
 
 const Direction* PistonMovingBlockEntity::NOCLIP_get()
 {
-    return gPistonNoClipDirection;
+    return static_cast<const Direction*>(TlsGetValue(gPistonNoClipTlsIndex));
 }
 
 const BlockState* PistonMovingBlockEntity::getBlockState()

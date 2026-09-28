@@ -115,10 +115,12 @@ bool TrapDoorBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
     return true;
 }
 
-void TrapDoorBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
+void TrapDoorBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos&)
 {
     if (level->mIsClientSide) return;
     bool powered = level->hasNeighborSignal(pos);
+    if (!powered && !block->defaultBlockState()->isSignalSource())
+        return;
     if (powered != state->getValue(OPEN))
     {
         TypedBoxed<bool> open(powered);

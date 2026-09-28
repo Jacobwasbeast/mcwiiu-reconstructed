@@ -20,7 +20,7 @@ public:
     HalfSlabBlock(Material* material);
     HalfSlabBlock(Material* material, const MaterialColor* materialColor);
     virtual bool isTopSolidBlocking(const BlockState* state);
-    virtual ~HalfSlabBlock();
+    virtual ~HalfSlabBlock() {}
     virtual void DerivedInit();
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);

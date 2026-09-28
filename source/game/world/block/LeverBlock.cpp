@@ -351,52 +351,125 @@ const BlockState* LeverBlock::mirror(const BlockState* state, Mirror* mirror)
 
 const BlockState* LeverBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (rotation->getType() == Rotation::eTYPE_None) return state;
-    int data = state->getValue(FACING)->getData();
-    LeverDirection* result;
-    if (rotation->getType() == Rotation::eTYPE_Clockwise180)
+    switch (rotation->getType())
     {
-        switch (data)
+    case Rotation::eTYPE_Clockwise180:
+        switch (state->getValue(FACING)->getData())
         {
-        case 1: result = LeverDirection::WEST; break;
-        case 2: result = LeverDirection::EAST; break;
-        case 3: result = LeverDirection::NORTH; break;
-        case 4: result = LeverDirection::SOUTH; break;
-        default: return state;
-        }
-    }
-    else if (rotation->getType() == Rotation::eTYPE_Clockwise90)
-    {
-        switch (data)
+        case 1:
         {
-        case 0: result = LeverDirection::DOWN_Z; break;
-        case 1: result = LeverDirection::SOUTH; break;
-        case 2: result = LeverDirection::NORTH; break;
-        case 3: result = LeverDirection::WEST; break;
-        case 4: result = LeverDirection::EAST; break;
-        case 5: result = LeverDirection::UP_X; break;
-        case 6: result = LeverDirection::UP_Z; break;
-        case 7: result = LeverDirection::DOWN_X; break;
-        default: return state;
+            TypedBoxed<LeverDirection*> value(LeverDirection::WEST);
+            return state->setBoxedValue(FACING, &value);
         }
-    }
-    else
-    {
-        switch (data)
+        case 2:
         {
-        case 0: result = LeverDirection::DOWN_Z; break;
-        case 1: result = LeverDirection::NORTH; break;
-        case 2: result = LeverDirection::SOUTH; break;
-        case 3: result = LeverDirection::EAST; break;
-        case 4: result = LeverDirection::WEST; break;
-        case 5: result = LeverDirection::UP_X; break;
-        case 6: result = LeverDirection::UP_Z; break;
-        case 7: result = LeverDirection::DOWN_X; break;
-        default: return state;
+            TypedBoxed<LeverDirection*> value(LeverDirection::EAST);
+            return state->setBoxedValue(FACING, &value);
         }
+        case 3:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::NORTH);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::SOUTH);
+            return state->setBoxedValue(FACING, &value);
+        }
+        default:
+            return state;
+        }
+    case Rotation::eTYPE_CounterClockwise90:
+        switch (state->getValue(FACING)->getData())
+        {
+        case 0:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::DOWN_Z);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 1:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::NORTH);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 2:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::SOUTH);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::EAST);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::WEST);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 5:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::UP_X);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 6:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::UP_Z);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::DOWN_X);
+            return state->setBoxedValue(FACING, &value);
+        }
+        }
+    case Rotation::eTYPE_Clockwise90:
+        switch (state->getValue(FACING)->getData())
+        {
+        case 0:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::DOWN_Z);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 1:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::SOUTH);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 2:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::NORTH);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 3:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::WEST);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 4:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::EAST);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 5:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::UP_X);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 6:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::UP_Z);
+            return state->setBoxedValue(FACING, &value);
+        }
+        case 7:
+        {
+            TypedBoxed<LeverDirection*> value(LeverDirection::DOWN_X);
+            return state->setBoxedValue(FACING, &value);
+        }
+        }
+    default:
+        return state;
     }
-    TypedBoxed<LeverDirection*> facing(result);
-    return state->setBoxedValue(FACING, &facing);
 }
 
 BlockStateDefinition* LeverBlock::createBlockStateDefinition()

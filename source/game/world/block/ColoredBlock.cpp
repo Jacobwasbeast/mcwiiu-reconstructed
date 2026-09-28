@@ -40,10 +40,6 @@ ColoredBlock::ColoredBlock(Material* material)
     }
 }
 
-ColoredBlock::~ColoredBlock()
-{
-}
-
 int ColoredBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
     return state->getValue(COLOR)->getBlockData();

@@ -26,10 +26,6 @@ BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Materia
     setTicking(true);
 }
 
-BasePressurePlateBlock::~BasePressurePlateBlock()
-{
-}
-
 const AABB* BasePressurePlateBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     if (getSignalForState(state) > 0)

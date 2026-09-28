@@ -20,6 +20,3 @@ DirectionalBlock::DirectionalBlock(Material* material, const MaterialColor* mate
 {
 }
 
-DirectionalBlock::~DirectionalBlock()
-{
-}

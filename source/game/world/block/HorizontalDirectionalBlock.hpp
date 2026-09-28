@@ -10,7 +10,7 @@ class HorizontalDirectionalBlock : public Block
 public:
     HorizontalDirectionalBlock(Material* material);
     HorizontalDirectionalBlock(Material* material, const MaterialColor* materialColor);
-    virtual ~HorizontalDirectionalBlock();
+    virtual ~HorizontalDirectionalBlock() {}
 
     static void blockStaticCtor();
 

@@ -24,7 +24,7 @@ class BasePressurePlateBlock : public Block
 public:
     BasePressurePlateBlock(const std::wstring& name, Material* material);
     BasePressurePlateBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor);
-    virtual ~BasePressurePlateBlock();
+    virtual ~BasePressurePlateBlock() {}
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual int getTickDelay(Level* level);

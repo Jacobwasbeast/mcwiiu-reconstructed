@@ -14,7 +14,7 @@ public:
 
     FallingBlock();
     FallingBlock(Material* material);
-    virtual ~FallingBlock();
+    virtual ~FallingBlock() {}
 
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);

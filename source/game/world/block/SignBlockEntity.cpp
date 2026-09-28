@@ -32,9 +32,9 @@ struct _STRING_VERIFY_RESPONSE
 };
 
 SignBlockEntity::SignBlockEntity()
-    : mCreatedPlayer(), mVerified(true), mCensored(false),
+    : mCreatedPlayer(), mEditable(true), mVerified(true), mCensored(false),
       mCreatedByRestrictedPlayer(false), mCreatedByHostPlayer(true),
-      mUnknown(-1), mUniqueId(0), mTextCacheIndex(0), mTextCacheEnabled(true)
+      mSelectedLine(-1), mUniqueId(0), mTextCacheIndex(0), mTextCacheEnabled(true)
 {
     setUniqueId();
 }
@@ -137,7 +137,7 @@ void SignBlockEntity::setLevelForLoading(Level* level)
 
 void SignBlockEntity::load(CompoundTag* tag)
 {
-    mVerified = false;
+    mEditable = false;
     BlockEntity::load(tag);
     for (int line = 0; line < 4; ++line)
     {

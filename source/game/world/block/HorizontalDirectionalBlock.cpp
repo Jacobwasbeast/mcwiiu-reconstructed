@@ -16,10 +16,6 @@ HorizontalDirectionalBlock::HorizontalDirectionalBlock(Material* material, const
 {
 }
 
-HorizontalDirectionalBlock::~HorizontalDirectionalBlock()
-{
-}
-
 void HorizontalDirectionalBlock::blockStaticCtor()
 {
     FACING_PROPERTY = FACING;

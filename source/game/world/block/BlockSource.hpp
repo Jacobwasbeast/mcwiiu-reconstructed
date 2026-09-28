@@ -13,7 +13,7 @@ class BlockPos;
 class BlockSource : public LocatableSource
 {
 public:
-    virtual ~BlockSource();
+    virtual ~BlockSource() {}
 
     virtual double getX() = 0;
     virtual double getY() = 0;

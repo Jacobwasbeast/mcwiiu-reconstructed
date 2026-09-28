@@ -55,10 +55,6 @@ CropBlock::CropBlock(bool derivedInit)
     sendBlockData(15);
 }
 
-CropBlock::~CropBlock()
-{
-}
-
 bool CropBlock::isMaxAge(const BlockState* state)
 {
     return getAge(state) >= getMaxAge();

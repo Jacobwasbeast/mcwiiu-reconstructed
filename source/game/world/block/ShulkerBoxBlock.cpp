@@ -221,8 +221,8 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
     if (totalItems - displayedItems > 0)
     {
-        std::wstring moreText = L10N::GetString(0xfcb7d502);
-        replaceAll(moreText, moreText, L"%s", L"%d");
+        std::wstring moreText = L10N::GetString(IDS_SHULKER_BOX_MORE);
+        moreText = replaceAll(moreText, L"%s", L"%d");
         moreText = formatwstr(moreText.c_str(), totalItems - displayedItems);
         lines->push_back(HtmlString(moreText, eMinecraftColour_NOTSET, true, false, 0));
     }

@@ -13,6 +13,7 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Iterator.hpp"
@@ -20,8 +21,7 @@
 BlockDegradeRoutine::BlockDegradeRoutine(ServerLevel* level, DegradationSequenceRuleDefinition* definition)
     : mLevel(level),
       mDefinition(definition),
-      mActionTime(0),
-      mActionDelay(0),
+      mNextActionTime(0),
       mAction(&BlockDegradeRoutine::Action_Wait)
 {
     std::vector<GameRuleDefinition*> children;
@@ -40,11 +40,10 @@ BlockDegradeRoutine::BlockDegradeRoutine(ServerLevel* level, DegradationSequence
     }
 }
 
-void BlockDegradeRoutine::setNextAction(Action action, unsigned int time, unsigned int delay)
+void BlockDegradeRoutine::setNextAction(Action action, long long nextActionTime)
 {
     mAction = action;
-    mActionTime = time;
-    mActionDelay = delay;
+    mNextActionTime = nextActionTime;
 }
 
 void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
@@ -57,13 +56,13 @@ void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
     bounds->set(cache->getCurrentBounds());
     bounds->mMaxY += 2.0;
 
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), bounds);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), bounds);
     unsigned int entityCount = entities->size();
     delete entities;
 
     if (entityCount != 0)
     {
-        setNextAction(&BlockDegradeRoutine::Action_Wait, (unsigned int)time, (unsigned int)ticks + 400);
+        setNextAction(&BlockDegradeRoutine::Action_Wait, ticks + 400);
         return;
     }
 
@@ -74,20 +73,21 @@ void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
     {
         std::vector<BlockPos> positions;
         Iterator<BlockPos*>* it = currentCache->iterator();
+        BlockPos* pos = it->next();
         while (it->hasNext())
         {
-            BlockPos* pos = it->next();
             if (currentCache->inLayer(*pos))
                 positions.push_back(*pos);
+            it->next();
         }
         mBlocks = arrayWithLength<BlockPos>(positions);
         delete it;
     }
     delete currentCache;
-    rule->NextBlocks(currentCache, mBlocks);
+    rule->ClearCaches();
 
     mProgress = 11;
-    setNextAction(&BlockDegradeRoutine::Action_Break, (unsigned int)time, (unsigned int)ticks + 500);
+    setNextAction(&BlockDegradeRoutine::Action_Break, ticks + 500);
 }
 
 void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
@@ -105,7 +105,7 @@ void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
         if (mProgress > 10)
             mProgress = 10;
 
-        setNextAction(&BlockDegradeRoutine::Action_Break, (unsigned int)time, (unsigned int)ticks + 400);
+        setNextAction(&BlockDegradeRoutine::Action_Break, ticks + 400);
         return;
     }
 
@@ -117,7 +117,7 @@ void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
     }
 
     mProgress = 1;
-    setNextAction(&BlockDegradeRoutine::Action_Wait, (unsigned int)time, (unsigned int)ticks + 100);
+    setNextAction(&BlockDegradeRoutine::Action_Wait, ticks + 100);
 }
 
 BlockDegradeRoutine::LayerCache* BlockDegradeRoutine::getCacheFor(const std::wstring& name) const

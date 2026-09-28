@@ -1,4 +1,5 @@
 #include "game/world/block/BlockItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundType.hpp"
@@ -138,7 +139,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
         {
             if (mBlock == Blocks::beacon)
             {
-                player->displayClientMessage((int)0xef12cc40, true);
+                player->displayClientMessage((int)IDS_MAX_BEACONS, true);
                 currentlyPlacingBlockPlayer.reset();
                 return InteractionResult::eInteractionResult_Fail;
             }

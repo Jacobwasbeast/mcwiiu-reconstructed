@@ -63,8 +63,9 @@ int OreBlock::getResourceCountForLootBonus(int lootBonus, Random* random)
 {
     if (lootBonus > 0)
     {
-        const std::vector<const BlockState*>& states = getBlockStateDefinition()->getPossibleBlockStates();
-        if (getResource(states[0], random, lootBonus) != Item::byBlock(this))
+        const arrayWithLength<BlockStateDefinition::BlockStateImpl*>* states =
+            getBlockStateDefinition()->getPossibleBlockStates();
+        if (getResource(states->data[0], random, lootBonus) != Item::byBlock(this))
         {
             int multiplier = random->nextInt(lootBonus + 2) - 1;
             if (multiplier < 0)

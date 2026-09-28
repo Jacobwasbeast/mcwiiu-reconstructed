@@ -22,7 +22,7 @@ class RotatedPillarBlock : public Block
 public:
     RotatedPillarBlock(Material* material);
     RotatedPillarBlock(Material* material, const MaterialColor* materialColor);
-    virtual ~RotatedPillarBlock();
+    virtual ~RotatedPillarBlock() {}
 
     static void blockStaticCtor();
     static bool isOfThisClass(int data);

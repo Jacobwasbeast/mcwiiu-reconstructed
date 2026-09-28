@@ -9,11 +9,14 @@
 #include "game/item/PotionUtils.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/item/ContainerHelper.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Potion.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
@@ -27,6 +30,7 @@ CauldronBlockEntity::CauldronBlockEntity()
 
 CauldronBlockEntity::~CauldronBlockEntity()
 {
+    delete[] mItems.items;
 }
 
 BlockEntity* CauldronBlockEntity::create()
@@ -171,21 +175,20 @@ void CauldronBlockEntity::setCustomColor(const int& color)
 
 int CauldronBlockEntity::getPotionColor() const
 {
-    Potion* potion = Potion::byName(mPotionId);
-    return potion == NULL ? 0 : PotionUtils::getColor(potion);
+    return MobEffectInstance::getColorValue(&Potion::byName(mPotionId)->getEffects());
 }
 
 int CauldronBlockEntity::getCustomColor() const { return mCustomColor; }
 
 int CauldronBlockEntity::getColor() const
 {
-    if (mPotionId != L"minecraft:water")
+    if (getPotionId() != L"")
     {
         return getPotionColor();
     }
     if (mHasCustomColor)
     {
-        return mCustomColor;
+        return getCustomColor();
     }
     return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Cauldron_Water);
 }
@@ -277,7 +280,7 @@ void CauldronBlockEntity::tick() { BlockEntity::tick(); }
 
 boost::shared_ptr<Packet> CauldronBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 12, 0, getUpdateTag()));
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 12, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* CauldronBlockEntity::getUpdateTag()

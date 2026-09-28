@@ -25,7 +25,7 @@ public:
     static AbstractProperty<int>* AGE;
 
     explicit CropBlock(bool derivedInit);
-    virtual ~CropBlock();
+    virtual ~CropBlock() {}
 
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);

@@ -3,6 +3,8 @@
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <cstring>
+
 #include "game/core/Direction.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -18,6 +20,8 @@
 #include "game/ui/BrewingStandMenu.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BrewingStandBlock.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/generation/Player.hpp"
 
 BrewingStandBlockEntity::BrewingStandBlockEntity()
@@ -32,6 +36,8 @@ BrewingStandBlockEntity::BrewingStandBlockEntity()
 
 BrewingStandBlockEntity::~BrewingStandBlockEntity()
 {
+    delete[] mLastPotionBits.data;
+    delete[] mItems.items;
 }
 
 std::wstring BrewingStandBlockEntity::getName()
@@ -202,9 +208,7 @@ int BrewingStandBlockEntity::getTypeId(bool large)
 
 InteractionObject::NameData BrewingStandBlockEntity::GetNetworkNameData()
 {
-    return InteractionObject::NameData(getName(), mCustomName ? mCustomName->raw() : std::wstring(),
-                                       mCustomName ? mCustomName->checkParentalFilter() != 0 : false,
-                                       false);
+    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(), mCustomName->isChatCensored());
 }
 
 arrayWithLength<int> BrewingStandBlockEntity::getSlotsForFace(const Direction* face)
@@ -336,6 +340,35 @@ void BrewingStandBlockEntity::tick()
         mLastIngredientItem = mItems[3]->getItem();
         setChanged();
     }
+
+    if (mLevel->mIsClientSide)
+    {
+        return;
+    }
+
+    arrayWithLength<unsigned char> potionBits = getPotionBits();
+    if (potionBits.length == mLastPotionBits.length
+        && memcmp(potionBits.data, mLastPotionBits.data, potionBits.length) == 0)
+    {
+        delete[] potionBits.data;
+        return;
+    }
+
+    delete[] mLastPotionBits.data;
+    mLastPotionBits = potionBits;
+    const BlockState* state = mLevel->getBlockState(getBlockPos());
+    if (dynamic_cast<BrewingStandBlock*>(state->getBlock()) == NULL)
+    {
+        return;
+    }
+
+    TypedBoxed<bool> bottle0(potionBits.data[0] != 0);
+    state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_0, &bottle0);
+    TypedBoxed<bool> bottle1(potionBits.data[1] != 0);
+    state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_1, &bottle1);
+    TypedBoxed<bool> bottle2(potionBits.data[2] != 0);
+    state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_2, &bottle2);
+    mLevel->setBlock(mPos, state, 2, false);
 }
 
 void BrewingStandBlockEntity::load(CompoundTag* tag)

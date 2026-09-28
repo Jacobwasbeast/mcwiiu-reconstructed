@@ -46,7 +46,7 @@ bool LeafBlock::isLeaves(Block* block)
 void LeafBlock::DerivedInit()
 {
     Block::DerivedInit();
-    mFancy = false;
+    mIgnoreSimilarity = false;
     mLeafDistance = NULL;
     setTicking(true);
     setLightEmission(0.2f);
@@ -247,12 +247,12 @@ int LeafBlock::getLootDropChance(const BlockState* state)
 
 bool LeafBlock::isSolidRender(const BlockState* state) const
 {
-    return !mFancy;
+    return !mIgnoreSimilarity;
 }
 
 void LeafBlock::setFancy(bool fancy)
 {
-    mFancy = fancy;
+    mIgnoreSimilarity = fancy;
     Block::ThreadStorage* storage = static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX));
     storage->mFastGraphics = !fancy;
 }
@@ -269,7 +269,7 @@ bool LeafBlock::isViewBlocking(const BlockState* state)
 
 bool LeafBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    if (!mFancy && levelSource->getBlock(pos.relative(direction)) == this)
+    if (!mIgnoreSimilarity && levelSource->getBlock(pos.relative(direction)) == this)
         return false;
     return Block::shouldRenderFace(state, levelSource, pos, direction);
 }

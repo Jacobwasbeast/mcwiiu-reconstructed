@@ -9,7 +9,7 @@ class TorchBlock : public Block
 {
 public:
     TorchBlock();
-    virtual ~TorchBlock();
+    virtual ~TorchBlock() {}
 
     static void blockStaticCtor();
     static bool isTorch(int data);

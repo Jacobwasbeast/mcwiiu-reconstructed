@@ -96,10 +96,6 @@ BaseRailBlock::BaseRailBlock(bool isPowered)
     setThickness(0.07f);
 }
 
-BaseRailBlock::~BaseRailBlock()
-{
-}
-
 bool BaseRailBlock::isRail(const Block* block)
 {
     return block == Blocks::rail || block == Blocks::golden_rail || block == Blocks::detector_rail

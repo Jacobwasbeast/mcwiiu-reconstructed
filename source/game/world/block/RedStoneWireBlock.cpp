@@ -103,6 +103,7 @@ RedStoneWireBlock::RedStoneWireBlock()
     state = state->setBoxedValue(SOUTH, &none);
     state = state->setBoxedValue(WEST, &none);
     registerDefaultState(state->setBoxedValue(POWER, &power));
+    setThickness(0.07f);
 }
 
 RedStoneWireBlock::~RedStoneWireBlock()

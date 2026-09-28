@@ -38,13 +38,8 @@ AbstractProperty<int>* LiquidBlock::LEVEL =
 
 LiquidBlock::LiquidBlock(Material* material) : Block(material)
 {
-    mFlowIcon = NULL;
     mBlockType = EBLOCK_TYPE_LIQUID;
     setTicking(true);
-}
-
-LiquidBlock::~LiquidBlock()
-{
 }
 
 bool LiquidBlock::isLiquidBlock()
@@ -516,21 +511,21 @@ void LiquidBlock::registerIcons(IconRegister* iconRegister)
 {
     if (mMaterial == Material::LAVA)
     {
-        mIcon = iconRegister->registerIcon(L"lava");
-        mFlowIcon = iconRegister->registerIcon(L"lava_flow");
+        mIcons[0] = iconRegister->registerIcon(L"lava");
+        mIcons[1] = iconRegister->registerIcon(L"lava_flow");
     }
     else
     {
-        mIcon = iconRegister->registerIcon(L"water");
-        mFlowIcon = iconRegister->registerIcon(L"water_flow");
+        mIcons[0] = iconRegister->registerIcon(L"water");
+        mIcons[1] = iconRegister->registerIcon(L"water_flow");
     }
 }
 
 TextureAtlasSprite* LiquidBlock::getTexture(const Direction* direction, const BlockState*)
 {
     if (direction == Direction::UP || direction == Direction::DOWN)
-        return mIcon;
-    return mFlowIcon;
+        return mIcons[0];
+    return mIcons[1];
 }
 
 double LiquidBlock::getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)

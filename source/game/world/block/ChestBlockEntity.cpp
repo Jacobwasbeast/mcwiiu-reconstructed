@@ -58,6 +58,7 @@ ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool isBonusChest)
 
 ChestBlockEntity::~ChestBlockEntity()
 {
+    delete[] mItems.items;
 }
 
 BlockEntity* ChestBlockEntity::create()
@@ -213,7 +214,10 @@ CompoundTag* ChestBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     mCustomName->saveToTag(tag);
-    ContainerHelper::saveAllItems(tag, mItems);
+    if (!trySaveLootTable(tag))
+    {
+        ContainerHelper::saveAllItems(tag, mItems);
+    }
     tag->putBoolean(L"bonus", mIsBonusChest);
     return tag;
 }
@@ -500,13 +504,14 @@ void ChestBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 
 boost::shared_ptr<BlockEntity> ChestBlockEntity::clone()
 {
-    boost::shared_ptr<ChestBlockEntity> result(new ChestBlockEntity((ChestBlock::Type)getType(), mIsBonusChest));
-    result->setItems(mItems);
-    result->mOpenCount = mOpenCount;
-    result->mOpen = mOpen;
-    result->mOpenOld = mOpenOld;
-    result->mTickCount = mTickCount;
-    return result;
+    boost::shared_ptr<ChestBlockEntity> copy(new ChestBlockEntity());
+    BlockEntity::clone(copy);
+    for (unsigned int i = 0; i < mItems.size(); ++i)
+    {
+        copy->mItems[i] = mItems[i]->copy();
+    }
+    copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    return copy;
 }
 
 void ChestBlockEntity::startRefilledAnimation()

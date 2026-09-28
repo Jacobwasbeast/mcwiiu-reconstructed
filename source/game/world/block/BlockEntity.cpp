@@ -50,10 +50,6 @@ BlockEntity::BlockEntity()
     mPos = BlockPos::ZERO;
 }
 
-BlockEntity::~BlockEntity()
-{
-}
-
 void BlockEntity::rotate(Rotation* rotation)
 {
 }

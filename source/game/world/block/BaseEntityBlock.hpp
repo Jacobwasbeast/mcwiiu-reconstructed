@@ -18,7 +18,7 @@ class BaseEntityBlock : public Block, public EntityBlock
 public:
     BaseEntityBlock(Material* material);
     BaseEntityBlock(Material* material, const MaterialColor* materialColor);
-    virtual ~BaseEntityBlock();
+    virtual ~BaseEntityBlock() {}
 
     bool isCactus(Level* level, const BlockPos& pos, const Direction* direction);
     bool touchesCactus(Level* level, const BlockPos& pos);

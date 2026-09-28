@@ -24,10 +24,6 @@ FallingBlock::FallingBlock(Material* material)
     mBlockType = EBLOCK_TYPE_FALLING;
 }
 
-FallingBlock::~FallingBlock()
-{
-}
-
 void FallingBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
     level->addToTickNextTick(pos, this, getTickDelay(level));

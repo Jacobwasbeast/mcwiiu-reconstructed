@@ -30,6 +30,7 @@ HopperBlockEntity::HopperBlockEntity()
 
 HopperBlockEntity::~HopperBlockEntity()
 {
+    delete[] mItems.items;
 }
 
 BlockEntity* HopperBlockEntity::create()
@@ -67,22 +68,16 @@ bool HopperBlockEntity::isEmpty()
 
 not_null_ptr<ItemInstance> HopperBlockEntity::removeItem(unsigned int slot, int count)
 {
-    if (slot >= mItems.size())
-        return ItemInstance::EMPTY;
-    not_null_ptr<ItemInstance> result = ContainerHelper::removeItem(mItems, slot, count);
-    if (!result->isEmpty())
-        setChanged();
-    return result;
+    unpackLootTable(boost::shared_ptr<Player>());
+    return ContainerHelper::removeItem(getItems(), slot, count);
 }
 
 void HopperBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (slot >= mItems.size())
-        return;
+    unpackLootTable(boost::shared_ptr<Player>());
+    getItems()[slot] = itemInstance;
     if (itemInstance->getCount() > getMaxStackSize())
         itemInstance->setCount(getMaxStackSize());
-    mItems[slot] = itemInstance;
-    setChanged();
 }
 
 int HopperBlockEntity::getMaxStackSize()
@@ -138,7 +133,7 @@ boost::shared_ptr<BlockEntity> HopperBlockEntity::clone()
 {
     boost::shared_ptr<HopperBlockEntity> result(new HopperBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
+    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         if (!mItems[i]->isEmpty())
@@ -160,8 +155,12 @@ void HopperBlockEntity::load(CompoundTag* tag)
 
 CompoundTag* HopperBlockEntity::save(CompoundTag* tag)
 {
-    LockableContainerBlockEntity::save(tag);
-    ContainerHelper::saveAllItems(tag, mItems);
+    BlockEntity::save(tag);
+    mCustomName->saveToTag(tag);
+    if (!trySaveLootTable(tag))
+    {
+        ContainerHelper::saveAllItems(tag, mItems);
+    }
     tag->putInt(L"TransferCooldown", mCooldown);
     return tag;
 }
@@ -327,30 +326,20 @@ not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Contain
 bool HopperBlockEntity::tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction)
 {
     not_null_ptr<ItemInstance> item = container->getItem(slot);
-    if (!canTakeItemFromContainer(container, item, slot, direction))
-        return false;
-    Container* destination = dynamic_cast<Container*>(hopper);
-    if (destination == NULL)
-        return false;
-    for (unsigned int i = 0; i < destination->getContainerSize(); ++i)
+    if (item->isEmpty() || !canTakeItemFromContainer(container, item, slot, direction))
     {
-        not_null_ptr<ItemInstance> existing = destination->getItem(i);
-        if (existing->isEmpty())
-        {
-            destination->setItem(i, item);
-            break;
-        }
-        if (canMergeItems(existing, item))
-        {
-            int amount = std::min(item->getCount(), existing->getMaxStackSize() - existing->getCount());
-            existing->grow(amount);
-            item->shrink(amount);
-            if (item->isEmpty())
-                break;
-        }
+        return false;
     }
-    container->setItem(slot, item);
-    return true;
+
+    not_null_ptr<ItemInstance> original = item->copy();
+    not_null_ptr<ItemInstance> remainder = addItem(container, hopper, container->removeItem(slot, 1), NULL);
+    if (remainder->isEmpty())
+    {
+        container->setChanged();
+        return true;
+    }
+    container->setItem(slot, original);
+    return false;
 }
 
 bool HopperBlockEntity::addItem(Container*, Container* destination, const boost::shared_ptr<ItemEntity>& entity)

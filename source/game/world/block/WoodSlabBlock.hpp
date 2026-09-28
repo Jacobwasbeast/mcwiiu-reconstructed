@@ -33,7 +33,7 @@ public:
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual int getDescriptionId(int auxValue);
-    virtual ~WoodSlabBlock();
+    virtual ~WoodSlabBlock() {}
     virtual void DerivedInit();
     static void blockStaticCtor();
 

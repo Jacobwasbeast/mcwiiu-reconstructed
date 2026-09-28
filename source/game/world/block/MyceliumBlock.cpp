@@ -92,9 +92,9 @@ void MyceliumBlock::animateTick(const BlockState* state, Level* level, const Blo
     if (random->nextInt(10) == 0)
     {
         level->addParticle(PARTICLE_TOWN_AURA,
-                           static_cast<double>(pos.x) + random->nextFloat(),
-                           static_cast<double>(pos.y) + 1.1,
-                           static_cast<double>(pos.z) + random->nextFloat(),
+                           (double)((float)pos.x + random->nextFloat()),
+                           (double)((float)pos.y + 1.1f),
+                           (double)((float)pos.z + random->nextFloat()),
                            0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }

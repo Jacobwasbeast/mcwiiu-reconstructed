@@ -70,16 +70,25 @@ unsigned int BeaconBlockEntity::BeaconBeamSection::getHeight()
 }
 
 BeaconBlockEntity::BeaconBlockEntity()
-    : LockableContainerBlockEntity(), WorldlyContainer(),
-      mBeamSections(), mItem(), mLastBeamBlockCount(-1), mName(new CensoredString()), mPrimaryPower(NULL),
-      mSecondaryPower(NULL), mLevels(-1), mNextClientSideUpdate(0),
-      mClientSideScale(0.0F), mActive(false), mBeamDirection(0), mBeamLength(0), mTickCount(0)
 {
+    mPrimaryPower = NULL;
+    mSecondaryPower = NULL;
+    mNextClientSideUpdate = 0;
+    mLevels = -1;
+    mClientSideScale = 0.0F;
+    mActive = false;
+    mItem = ItemInstance::EMPTY;
+    mName = boost::shared_ptr<CensoredString>(new CensoredString());
+    mBeamSections = std::vector<BeaconBeamSection>();
+    mBeamDirection = 0;
+    mBeamLength = 0;
+    mLastBeamBlockCount = -1;
     mBeamRebuildTicks = 15;
     for (int i = 0; i < 16; ++i)
     {
         mBeamColorCounts[i] = 0;
     }
+    mTickCount = 0;
 }
 
 BeaconBlockEntity::~BeaconBlockEntity()

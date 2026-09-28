@@ -23,10 +23,6 @@ HalfTransparentBlock::HalfTransparentBlock(const std::wstring& iconName, Materia
     mTextureName = iconName;
 }
 
-HalfTransparentBlock::~HalfTransparentBlock()
-{
-}
-
 bool HalfTransparentBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
     const BlockState* neighbourState = levelSource->getBlockState(pos.relative(direction));

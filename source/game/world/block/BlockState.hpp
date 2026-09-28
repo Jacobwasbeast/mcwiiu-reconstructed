@@ -41,19 +41,16 @@ public:
     virtual int hashCode() const = 0;
 
     template <typename T>
-    T getValue(const AbstractProperty<T>* property) const;
+    T getValue(const AbstractProperty<T>* property) const
+    {
+        TypedBoxed<T>* boxed = static_cast<TypedBoxed<T>*>(getBoxedValue(property));
+        TypedBoxed<T>* value = boxed->isA(typeid(T)) ? boxed : NULL;
+        return value->getValue();
+    }
 
     int mElementId;
 };
 
 boost::shared_ptr<ItemInstance> createItem(const BlockState* state);
-
-template <typename T>
-T BlockState::getValue(const AbstractProperty<T>* property) const
-{
-    TypedBoxed<T>* boxed = static_cast<TypedBoxed<T>*>(getBoxedValue(property));
-    TypedBoxed<T>* value = boxed->isA(typeid(T)) ? boxed : NULL;
-    return value->getValue();
-}
 
 #endif

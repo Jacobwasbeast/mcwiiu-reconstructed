@@ -20,10 +20,10 @@ template <class T>
 class TypedBoxed : public Boxed
 {
 public:
-    TypedBoxed(const T& value);
-    virtual ~TypedBoxed();
+    TypedBoxed(const T& value) : Boxed(&typeid(T)), mValue(value) {}
+    virtual ~TypedBoxed() {}
 
-    const T& getValue() const;
+    const T& getValue() const { return this->mValue; }
 
     virtual unsigned int hashOf() const;
     virtual bool operator==(const Boxed* other) const;
@@ -33,24 +33,6 @@ public:
 private:
     T mValue;
 };
-
-template <class T>
-TypedBoxed<T>::TypedBoxed(const T& value)
-    : Boxed(&typeid(T)),
-      mValue(value)
-{
-}
-
-template <class T>
-TypedBoxed<T>::~TypedBoxed()
-{
-}
-
-template <class T>
-const T& TypedBoxed<T>::getValue() const
-{
-    return this->mValue;
-}
 
 template <class T>
 unsigned int TypedBoxed<T>::hashOf() const

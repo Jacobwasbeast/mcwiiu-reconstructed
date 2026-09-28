@@ -14,7 +14,7 @@ class XboxStructureActionPlaceBlock : public GameRuleDefinition
 {
 public:
     XboxStructureActionPlaceBlock();
-    virtual ~XboxStructureActionPlaceBlock();
+    virtual ~XboxStructureActionPlaceBlock() {}
 
     uint32_t placeBlockInLevel(StructurePiece* structurePiece, Level* level, BoundingBox* box);
     virtual ConsoleGameRules::EGameRuleType getActionType();

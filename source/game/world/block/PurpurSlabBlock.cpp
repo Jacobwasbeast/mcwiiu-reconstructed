@@ -49,10 +49,6 @@ PurpurSlabBlock::PurpurSlabBlock()
 {
 }
 
-PurpurSlabBlock::~PurpurSlabBlock()
-{
-}
-
 void PurpurSlabBlock::DerivedInit()
 {
     HalfSlabBlock::DerivedInit();

@@ -69,8 +69,8 @@ boost::shared_ptr<Packet> MobSpawnerBlockEntity::getUpdatePacket()
 
 CompoundTag* MobSpawnerBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
+    CompoundTag* tag = save(new CompoundTag());
+    delete tag->get(L"SpawnPotentials");
     tag->remove(L"SpawnPotentials");
     return tag;
 }

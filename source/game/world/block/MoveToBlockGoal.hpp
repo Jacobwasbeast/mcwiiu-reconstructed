@@ -14,7 +14,7 @@ class MoveToBlockGoal : public Goal
 public:
     MoveToBlockGoal(PathfinderMob* mob, double speedModifier, int searchRange,
                     int verticalSearchStart, double maxStayDistance);
-    virtual ~MoveToBlockGoal();
+    virtual ~MoveToBlockGoal() {}
 
     virtual bool canUse();
     virtual bool canContinueToUse();

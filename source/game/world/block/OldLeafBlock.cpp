@@ -58,16 +58,24 @@ OldLeafBlock::~OldLeafBlock() {}
 
 int OldLeafBlock::getColor(const BlockState* state)
 {
-    PlanksBlock::Variant* variant = state->getValue(VARIANT);
-    if (variant == PlanksBlock::Variant::byData(1)) return FoliageColor::getEvergreenColor();
-    if (variant == PlanksBlock::Variant::byData(2)) return FoliageColor::getBirchColor();
+    if (state->getBlock() == this)
+    {
+        PlanksBlock::Variant* variant = state->getValue(VARIANT);
+        if (variant == PlanksBlock::Variant::byData(1)) return FoliageColor::getEvergreenColor();
+        if (variant == PlanksBlock::Variant::byData(2)) return FoliageColor::getBirchColor();
+    }
     return LeafBlock::getColor(state);
 }
 
 int OldLeafBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex)
 {
     const BlockState* state = levelSource->getBlockState(pos);
-    if (state != NULL && state->getBlock() == this) return getColor(state);
+    if (state->getBlock() == this)
+    {
+        PlanksBlock::Variant* variant = state->getValue(VARIANT);
+        if (variant == PlanksBlock::Variant::byData(1)) return FoliageColor::getEvergreenColor();
+        if (variant == PlanksBlock::Variant::byData(2)) return FoliageColor::getBirchColor();
+    }
     return LeafBlock::getColor(levelSource, pos, tintIndex);
 }
 

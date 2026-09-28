@@ -16,8 +16,6 @@
 static const AABB* gDiodeShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
 
 DiodeBlock::DiodeBlock(bool on) : HorizontalDirectionalBlock(Material::DECORATION), mOn(on) {}
-DiodeBlock::~DiodeBlock() {}
-
 const AABB* DiodeBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return gDiodeShape; }
 bool DiodeBlock::isCubeShaped(const BlockState*) { return false; }
 

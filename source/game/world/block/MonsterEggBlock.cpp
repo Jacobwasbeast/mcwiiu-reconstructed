@@ -22,15 +22,15 @@
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::STONE =
     new MonsterEggBlock::Variant(0, L"stone", IDS_TILE_STONE_SILVERFISH);
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::COBBLESTONE =
-    new MonsterEggBlock::Variant(1, L"cobblestone", 0xD8B28C61);
+    new MonsterEggBlock::Variant(1, L"cobblestone", IDS_TILE_STONE_SILVERFISH_COBBLESTONE);
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::STONEBRICK =
-    new MonsterEggBlock::Variant(2, L"stone_brick", 0x097EADE2);
+    new MonsterEggBlock::Variant(2, L"stone_brick", IDS_TILE_STONE_SILVERFISH_STONE_BRICK);
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::MOSSY_STONEBRICK =
-    new MonsterEggBlock::Variant(3, L"mossy_brick", 0x12B53EDE);
+    new MonsterEggBlock::Variant(3, L"mossy_brick", IDS_TILE_STONE_SILVERFISH_MOSSY_STONE_BRICK);
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::CRACKED_STONEBRICK =
-    new MonsterEggBlock::Variant(4, L"cracked_brick", 0x881C257C);
+    new MonsterEggBlock::Variant(4, L"cracked_brick", IDS_TILE_STONE_SILVERFISH_CRACKED_STONE_BRICK);
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::CHISELED_STONEBRICK =
-    new MonsterEggBlock::Variant(5, L"chiseled_brick", 0x1DB92A74);
+    new MonsterEggBlock::Variant(5, L"chiseled_brick", IDS_TILE_STONE_SILVERFISH_CHISELED_STONE_BRICK);
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::VALUES[6] = {
     MonsterEggBlock::Variant::STONE,
     MonsterEggBlock::Variant::COBBLESTONE,
@@ -115,7 +115,7 @@ MonsterEggBlock::MonsterEggBlock()
     : Block(Material::CLAY)
 {
     DerivedInit();
-    setDestroyTime(4.5f);
+    setDestroyTime(0.0f);
 }
 
 MonsterEggBlock::~MonsterEggBlock()

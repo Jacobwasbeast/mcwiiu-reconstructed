@@ -112,17 +112,17 @@ public:
 
 private:
     std::vector<BeaconBeamSection> mBeamSections;
-    not_null_ptr<ItemInstance> mItem;
     short mLastBeamBlockCount;
     short mBeamColorCounts[16];
     short mBeamRebuildTicks;
-    boost::shared_ptr<CensoredString> mName;
-    MobEffect* mPrimaryPower;
-    MobEffect* mSecondaryPower;
-    int mLevels;
     long long mNextClientSideUpdate;
     float mClientSideScale;
     bool mActive;
+    int mLevels;
+    MobEffect* mPrimaryPower;
+    MobEffect* mSecondaryPower;
+    not_null_ptr<ItemInstance> mItem;
+    boost::shared_ptr<CensoredString> mName;
     unsigned int mBeamDirection;
     int mBeamLength;
     int mTickCount;

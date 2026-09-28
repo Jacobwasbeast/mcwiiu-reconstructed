@@ -41,10 +41,6 @@ RotatedPillarBlock::RotatedPillarBlock(Material* material, const MaterialColor* 
 {
 }
 
-RotatedPillarBlock::~RotatedPillarBlock()
-{
-}
-
 const BlockState* RotatedPillarBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     if (rotation->getType() == Rotation::eTYPE_Clockwise90 ||

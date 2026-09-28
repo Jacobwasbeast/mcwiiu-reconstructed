@@ -59,9 +59,9 @@ SaplingBlock::~SaplingBlock() {}
 
 bool SaplingBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool) { return true; }
 
-bool SaplingBlock::isBonemealSuccess(Level*, Random* random, const BlockPos&, const BlockState*)
+bool SaplingBlock::isBonemealSuccess(Level* level, Random*, const BlockPos&, const BlockState*)
 {
-    return ((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative() || random->nextFloat() < 0.45f;
+    return ((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative() || (double)level->mRandom->nextFloat() < 0.45;
 }
 
 bool SaplingBlock::isSapling(Level* level, const BlockPos& pos, PlanksBlock::Variant* variant)

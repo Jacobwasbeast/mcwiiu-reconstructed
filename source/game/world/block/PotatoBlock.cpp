@@ -34,6 +34,8 @@ static const AABB* SHAPE_BY_AGE[8] =
 PotatoBlock::PotatoBlock()
     : CropBlock(false)
 {
+    ClearDerivedInit();
+    CropBlock::DerivedInit();
 }
 
 PotatoBlock::~PotatoBlock()

@@ -49,7 +49,7 @@ public:
     };
 
     LogBlock();
-    virtual ~LogBlock();
+    virtual ~LogBlock() {}
 
     static void blockStaticCtor();
 

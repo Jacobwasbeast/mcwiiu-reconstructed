@@ -71,10 +71,6 @@ HalfSlabBlock::HalfSlabBlock(Material* material, const MaterialColor* materialCo
     _init();
 }
 
-HalfSlabBlock::~HalfSlabBlock()
-{
-}
-
 void HalfSlabBlock::_init()
 {
     mBlockType = EBLOCK_TYPE_SLAB;

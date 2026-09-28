@@ -142,7 +142,7 @@ int CoralBlock::getDescriptionId(int auxValue)
     {
         return DESCRIPTION_IDS[auxValue - 4];
     }
-    return 0x916FF93B;
+    return IDS_TILE_CORAL_BLOCK_BLUE;
 }
 
 int CoralBlock::getUseDescriptionId(int auxValue)

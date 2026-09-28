@@ -1,4 +1,5 @@
 #include "game/world/block/Predicates.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/world/block/WoodSlabBlock.hpp"
 
 #include <typeinfo>
@@ -22,8 +23,8 @@
 
 EnumProperty<PlanksBlock::Variant*>* WoodSlabBlock::VARIANT = NULL;
 static const int gWoodSlabDescriptionIds[6] = {
-    (int)0xDE25DD5A, (int)0x74EF0A65, (int)0x26F5D1DD,
-    (int)0xE0B76C20, (int)0x5C9C0D57, (int)0x1C5A6EC1
+    (int)IDS_TILE_STONESLAB_OAK, (int)IDS_TILE_STONESLAB_SPRUCE, (int)IDS_TILE_STONESLAB_BIRCH,
+    (int)IDS_TILE_STONESLAB_JUNGLE, (int)IDS_TILE_STONESLAB_ACACIA, (int)IDS_TILE_STONESLAB_DARK_OAK
 };
 
 void WoodSlabBlock::blockStaticCtor()
@@ -40,10 +41,6 @@ void WoodSlabBlock::blockStaticCtor()
 
 WoodSlabBlock::WoodSlabBlock()
     : HalfSlabBlock(Material::WOOD)
-{
-}
-
-WoodSlabBlock::~WoodSlabBlock()
 {
 }
 

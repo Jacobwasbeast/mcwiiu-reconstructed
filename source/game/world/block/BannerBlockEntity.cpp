@@ -12,15 +12,21 @@
 #include "game/item/BannerItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/world/Level.hpp"
 
 BannerBlockEntity::BannerBlockEntity()
-    : BlockEntity(), mBaseColor(DyeColor::BLACK), mPatterns(NULL), mPatternListCreated(false),
-      mPatternList(), mColorList(), mTextureHashName(L""), mCustomName(new CensoredString())
+    : BlockEntity(), mName(), mBaseColor(DyeColor::BLACK), mPatterns(NULL), mPatternDataSet(false),
+      mPatternList(NULL), mColorList(NULL), mTextureHashName(L""), mCustomName(new CensoredString())
 {
 }
 
 BannerBlockEntity::~BannerBlockEntity()
 {
+    delete mPatternList;
+    delete mColorList;
     delete mPatterns;
 }
 
@@ -47,7 +53,11 @@ std::wstring BannerBlockEntity::getDisplayName()
 const DyeColor* BannerBlockEntity::getColor(const not_null_ptr<ItemInstance>& item)
 {
     CompoundTag* tag = static_cast<CompoundTag*>(item->getTagElement(L"BlockEntityTag"));
-    return tag != NULL && tag->contains(L"Base") ? DyeColor::byItemData(tag->getInt(L"Base")) : DyeColor::WHITE;
+    if (tag != NULL && tag->contains(L"Base"))
+    {
+        return DyeColor::byItemData(tag->getInt(L"Base"));
+    }
+    return DyeColor::BLACK;
 }
 
 void BannerBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,
@@ -58,15 +68,22 @@ void BannerBlockEntity::setCustomName(const std::wstring& name, const std::wstri
 
 void BannerBlockEntity::setItemValues(not_null_ptr<ItemInstance> item, bool useBannerItemColor)
 {
+    delete mPatterns;
     mPatterns = NULL;
     CompoundTag* tag = static_cast<CompoundTag*>(item->getTagElement(L"BlockEntityTag"));
     if (tag != NULL && tag->contains(L"Patterns", Tag::TAG_LIST))
-        mPatterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
+    {
+        mPatterns = static_cast<ListTag*>(tag->getList(L"Patterns", Tag::TAG_COMPOUND)->copy());
+    }
     mBaseColor = useBannerItemColor ? getColor(item) : BannerItem::getColor(item);
-    mPatternList.clear();
-    mColorList.clear();
+
+    delete mPatternList;
+    delete mColorList;
+    mColorList = NULL;
+    mPatternList = NULL;
     mTextureHashName = L"";
-    mPatternListCreated = true;
+    mPatternDataSet = true;
+
     std::wstring name = item->hasCustomHoverName() ? item->getHoverNameUnfiltered() : L"";
     setCustomName(name, item->getOwnerUUID(), item->wasCreatedByRestrictedPlayer(), item->wasCreatedOnHost());
 }
@@ -80,9 +97,13 @@ ItemInstance* BannerBlockEntity::addTags(ItemInstance* item, int color, ListTag*
         item->addTagElement(L"BlockEntityTag", tag);
     }
     if (!tag->contains(L"Base"))
+    {
         tag->putInt(L"Base", color);
+    }
     if (patterns != NULL)
-        tag->put(L"Patterns", patterns);
+    {
+        tag->put(L"Patterns", patterns->copy());
+    }
     return item;
 }
 
@@ -103,7 +124,10 @@ CompoundTag* BannerBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putInt(L"Base", mBaseColor->getItemData());
-    if (mPatterns != NULL) tag->put(L"Patterns", mPatterns);
+    if (mPatterns != NULL)
+    {
+        tag->put(L"Patterns", mPatterns->copy());
+    }
     mCustomName->saveToTag(tag);
     return tag;
 }
@@ -111,7 +135,10 @@ CompoundTag* BannerBlockEntity::save(CompoundTag* tag)
 void BannerBlockEntity::addTags(CompoundTag* tag, int color, ListTag* patterns)
 {
     tag->putInt(L"Base", color);
-    if (patterns != NULL) tag->put(L"Patterns", patterns);
+    if (patterns != NULL)
+    {
+        tag->put(L"Patterns", patterns->copy());
+    }
 }
 
 void BannerBlockEntity::load(CompoundTag* tag)
@@ -119,16 +146,20 @@ void BannerBlockEntity::load(CompoundTag* tag)
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
     mBaseColor = DyeColor::byItemData(tag->getInt(L"Base"));
-    mPatterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
-    mPatternList.clear();
-    mColorList.clear();
+    mPatterns = static_cast<ListTag*>(tag->getList(L"Patterns", Tag::TAG_COMPOUND)->copy());
+
+    delete mPatternList;
+    delete mColorList;
+    mColorList = NULL;
+    mPatternList = NULL;
     mTextureHashName = L"";
-    mPatternListCreated = true;
+    mPatternDataSet = true;
 }
 
 boost::shared_ptr<Packet> BannerBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 6, 0, getUpdateTag()));
+    int dimension = mLevel->mDimension->getType()->getId();
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 6, dimension, getUpdateTag()));
 }
 
 CompoundTag* BannerBlockEntity::getUpdateTag()
@@ -145,48 +176,61 @@ const DyeColor* BannerBlockEntity::getBaseColor(const not_null_ptr<ItemInstance>
 
 int BannerBlockEntity::getPatternCount(const not_null_ptr<ItemInstance>& item)
 {
-    CompoundTag* tag = static_cast<CompoundTag*>(item->getTagElement(L"BlockEntityTag"));
-    return tag == NULL || !tag->contains(L"Patterns", Tag::TAG_LIST) ? 0 : tag->getList(L"Patterns", Tag::TAG_COMPOUND)->size();
+    CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(L"BlockEntityTag"));
+    if (tag != NULL && tag->contains(L"Patterns"))
+    {
+        return tag->getList(L"Patterns", Tag::TAG_COMPOUND)->size();
+    }
+    return 0;
 }
 
 void BannerBlockEntity::createPatternList()
 {
-    if (mPatternListCreated) return;
-    mPatternList.clear();
-    mColorList.clear();
-    mPatternList.push_back(BannerPattern::byHash(L"b"));
-    mColorList.push_back(mBaseColor);
-    mTextureHashName = L"b";
-    if (mPatterns != NULL)
+    if (mPatternList != NULL && mColorList != NULL && !mTextureHashName.empty())
     {
-        for (int i = 0; i < mPatterns->size(); ++i)
+        return;
+    }
+
+    if (!mPatternDataSet)
+    {
+        mTextureHashName = L"";
+        return;
+    }
+
+    mPatternList = new std::vector<const BannerPattern*>();
+    mColorList = new std::vector<const DyeColor*>();
+    mPatternList->push_back(BannerPattern::BASE);
+    mColorList->push_back(mBaseColor);
+    mTextureHashName = static_cast<wchar_t>(mBaseColor->getItemData());
+    if (mPatterns == NULL)
+    {
+        return;
+    }
+
+    for (int i = 0; i < mPatterns->size(); ++i)
+    {
+        CompoundTag* patternTag = mPatterns->getCompound(i);
+        const BannerPattern* pattern = BannerPattern::byHash(patternTag->getString(L"Pattern"));
+        if (pattern != NULL)
         {
-            CompoundTag* tag = mPatterns->getCompound(i);
-            BannerPattern* pattern = BannerPattern::byHash(tag->getString(L"Pattern"));
-            if (pattern != NULL)
-            {
-                mPatternList.push_back(pattern);
-                mColorList.push_back(DyeColor::byItemData(tag->getInt(L"Color")));
-                mTextureHashName += pattern->getHashname();
-                wchar_t number[16];
-                swprintf(number, 16, L"%d", tag->getInt(L"Color"));
-                mTextureHashName += number;
-            }
+            mPatternList->push_back(pattern);
+            int color = patternTag->getInt(L"Color");
+            mColorList->push_back(DyeColor::byItemData(color));
+            mTextureHashName += pattern->getHashname() + _toString<int>(color);
         }
     }
-    mPatternListCreated = true;
 }
 
 std::vector<const BannerPattern*>* BannerBlockEntity::getPatterns()
 {
     createPatternList();
-    return &mPatternList;
+    return mPatternList;
 }
 
 std::vector<const DyeColor*>* BannerBlockEntity::getColors()
 {
     createPatternList();
-    return &mColorList;
+    return mColorList;
 }
 
 std::wstring BannerBlockEntity::getTextureHashName()
@@ -199,7 +243,7 @@ void BannerBlockEntity::fjAddPatternToItem(const not_null_ptr<ItemInstance>& ite
                                            const BannerPattern* pattern, const DyeColor* color)
 {
     CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(L"BlockEntityTag"));
-    ListTag* patterns = tag->contains(L"Patterns", Tag::TAG_LIST) ? tag->getList(L"Patterns", Tag::TAG_COMPOUND) : new ListTag(10);
+    ListTag* patterns = tag->contains(L"Patterns", Tag::TAG_LIST) ? tag->getList(L"Patterns", Tag::TAG_COMPOUND) : new ListTag(0);
     if (!tag->contains(L"Patterns", Tag::TAG_LIST)) tag->put(L"Patterns", patterns);
     if (patterns->size() < 6)
     {
@@ -215,24 +259,25 @@ void BannerBlockEntity::removeLastPattern(not_null_ptr<ItemInstance> item)
     CompoundTag* tag = static_cast<CompoundTag*>(item->getTagElement(L"BlockEntityTag"));
     if (tag == NULL || !tag->contains(L"Patterns", Tag::TAG_LIST)) return;
     ListTag* patterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
-    if (patterns->size() == 0) return;
+    if (patterns->isEmpty())
+    {
+        return;
+    }
     patterns->remove(patterns->size() - 1);
-    if (patterns->isEmpty()) item->getTag()->remove(L"BlockEntityTag");
-    addTags(item, getBaseColor(item)->getItemData(), NULL);
+    if (patterns->isEmpty())
+    {
+        item->getTag()->remove(L"BlockEntityTag");
+        if (item->getTag()->isEmpty())
+        {
+            item->setTag(NULL);
+            addTags(item, DyeColor::byItemData(item->getAuxValue())->getItemData(), NULL);
+        }
+    }
 }
 
 boost::shared_ptr<BlockEntity> BannerBlockEntity::clone()
 {
-    boost::shared_ptr<BannerBlockEntity> result(new BannerBlockEntity());
-    BlockEntity::clone(result);
-    result->mBaseColor = mBaseColor;
-    result->mPatterns = mPatterns;
-    result->mPatternListCreated = mPatternListCreated;
-    result->mPatternList = mPatternList;
-    result->mColorList = mColorList;
-    result->mTextureHashName = mTextureHashName;
-    result->mCustomName = mCustomName;
-    return result;
+    return boost::shared_ptr<BlockEntity>();
 }
 
 unsigned long long BannerBlockEntity::GetType()

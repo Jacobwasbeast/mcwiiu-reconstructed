@@ -33,6 +33,7 @@ FurnaceBlockEntity::FurnaceBlockEntity()
 
 FurnaceBlockEntity::~FurnaceBlockEntity()
 {
+    delete[] mItems.items;
 }
 
 BlockEntity* FurnaceBlockEntity::create()
@@ -229,7 +230,7 @@ int FurnaceBlockEntity::getTypeId(bool large)
 
 InteractionObject::NameData FurnaceBlockEntity::GetNetworkNameData()
 {
-    return InteractionObject::NameData(getName(), std::wstring(), false, false);
+    return InteractionObject::NameData(mName->raw(), mName->getUUID(), mName->isUUIDLocal(), mName->isChatCensored());
 }
 
 std::wstring FurnaceBlockEntity::getDisplayName()
@@ -287,6 +288,7 @@ void FurnaceBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 void FurnaceBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
+    delete[] mItems.items;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mLitTime = tag->getShort(L"BurnTime");

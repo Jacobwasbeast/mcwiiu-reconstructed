@@ -29,10 +29,6 @@ MoveToBlockGoal::MoveToBlockGoal(PathfinderMob* mob, double speedModifier,
     setRequiredControlFlags(5);
 }
 
-MoveToBlockGoal::~MoveToBlockGoal()
-{
-}
-
 bool MoveToBlockGoal::findNearestBlock()
 {
     BlockPos origin(mMob);

@@ -31,16 +31,6 @@ BlockStateDefinition::BlockStateDefinition(Block* block)
     mStates.data = new BlockStateImpl*[1];
     mStates.data[0] = state;
     mStates.length = 1;
-
-    mPossibleStates.push_back(state);
-}
-
-BlockStateDefinition::BlockStateDefinition(Block* block, const Property** properties, unsigned int count)
-{
-    mStates.data = NULL;
-    mStates.length = 0;
-
-    _init(block, properties, count);
 }
 
 void BlockStateDefinition::_init(Block* block, const Property** properties, unsigned int count)
@@ -107,8 +97,6 @@ void BlockStateDefinition::_init(Block* block, const Property** properties, unsi
 
         statesByValues[values] = state;
         mStates.data[data] = state;
-
-        mPossibleStates.push_back(state);
     }
 
     delete iterator;
@@ -121,9 +109,9 @@ BlockStateDefinition::BlockStateImpl* BlockStateDefinition::any()
     return mStates.data[0];
 }
 
-const std::vector<const BlockState*>& BlockStateDefinition::getPossibleBlockStates() const
+const arrayWithLength<BlockStateDefinition::BlockStateImpl*>* BlockStateDefinition::getPossibleBlockStates() const
 {
-    return mPossibleStates;
+    return &mStates;
 }
 
 Block* BlockStateDefinition::getBlock() const

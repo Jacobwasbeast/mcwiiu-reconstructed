@@ -21,12 +21,22 @@
 #include "game/world/block/BlockPattern.hpp"
 #include "game/world/block/BlockPatternBuilder.hpp"
 #include "game/world/block/BlockStatePredicate.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/item/ItemId.hpp"
+
+bool pumpkinsPredicate_apply(const BlockState* state)
+{
+    return state != NULL
+        && (state->getBlock() == Blocks::pumpkin || state->getBlock() == Blocks::lit_pumpkin || Blocks::carved_pumpkin != NULL);
+}
+
+static Predicate<const BlockState*>* sPumpkinsPredicate =
+    new Predicates<const BlockState*>::FunctionPredicate(pumpkinsPredicate_apply);
 
 PumpkinBlock::PumpkinBlock()
     : HorizontalDirectionalBlock(Material::VEGETABLE, MaterialColor::COLOR_ORANGE),
@@ -53,7 +63,7 @@ void PumpkinBlock::getOrCreateSnowGolemFull()
     {
         static std::wstring rows[3] = { L"^", L"#", L"#" };
         mSnowGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'^', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::carved_pumpkin)))
+            ->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate))
             ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
             ->build(NULL, NULL);
     }
@@ -73,7 +83,7 @@ void PumpkinBlock::getOrCreateIronGolemFull()
     {
         static std::wstring rows[3] = { L"~^~", L"###", L"~#~" };
         mIronGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'^', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::carved_pumpkin)))
+            ->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate))
             ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
             ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
             ->build(NULL, NULL);

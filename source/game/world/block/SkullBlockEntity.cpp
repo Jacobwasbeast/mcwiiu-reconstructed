@@ -5,6 +5,8 @@
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 
 SkullBlockEntity::SkullBlockEntity()
@@ -97,7 +99,7 @@ double SkullBlockEntity::getMouthAnimation(float partialTick)
 
 boost::shared_ptr<Packet> SkullBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 4, 0, getUpdateTag()));
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 4, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* SkullBlockEntity::getUpdateTag()

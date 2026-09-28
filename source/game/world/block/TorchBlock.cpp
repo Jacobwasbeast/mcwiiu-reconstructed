@@ -36,10 +36,6 @@ TorchBlock::TorchBlock()
     setTicking(true);
 }
 
-TorchBlock::~TorchBlock()
-{
-}
-
 void TorchBlock::blockStaticCtor()
 {
     FACING = DirectionProperty::create(L"facing", new Predicates<const Direction*>::FunctionPredicate(DirectionProperty::NOT_DOWN));

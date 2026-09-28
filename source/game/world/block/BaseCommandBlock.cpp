@@ -6,7 +6,6 @@ BaseCommandBlock::BaseCommandBlock()
     mSuccessCount = 0;
     mTrackOutput = true;
 }
-BaseCommandBlock::~BaseCommandBlock() = default;
 unsigned int BaseCommandBlock::getSuccessCount() { return (unsigned int)mSuccessCount; }
 std::wstring BaseCommandBlock::getLastOutput() { return mLastOutput; }
 CompoundTag* BaseCommandBlock::save(CompoundTag* tag) {

@@ -1,4 +1,5 @@
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
+#include "game/core/LockCode.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/world/block/ShulkerBoxBlock.hpp"
@@ -60,6 +61,7 @@ ShulkerBoxBlockEntity::ShulkerBoxBlockEntity()
 
 ShulkerBoxBlockEntity::~ShulkerBoxBlockEntity()
 {
+    delete[] mItems.items;
 }
 
 BlockEntity* ShulkerBoxBlockEntity::create()
@@ -192,7 +194,7 @@ arrayWithLength<int> ShulkerBoxBlockEntity::getSlotsForFace(const Direction* fac
 bool ShulkerBoxBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
                                                     const Direction* face)
 {
-    return canPlaceItem(slot, item);
+    return dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) == NULL;
 }
 
 bool ShulkerBoxBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
@@ -228,14 +230,15 @@ bool ShulkerBoxBlockEntity::shouldDrop()
 
 CompoundTag* ShulkerBoxBlockEntity::saveToTag(CompoundTag* tag)
 {
-    ContainerHelper::saveAllItems(tag, mItems);
-    if (mColor != NULL)
+    if (!trySaveLootTable(tag))
     {
-        tag->putInt(L"Color", mColor->getItemData());
+        ContainerHelper::saveAllItems(tag, mItems, false);
     }
-    tag->putByte(L"AnimationStatus", static_cast<unsigned char>(mAnimationStatus));
-    tag->putFloat(L"Progress", mProgress);
-    tag->putFloat(L"ProgressOld", mProgressOld);
+    mCustomName->saveToTag(tag);
+    if (!tag->contains(L"Lock") && isLocked())
+    {
+        getLockKeyCode()->addTag(tag);
+    }
     return tag;
 }
 
@@ -358,30 +361,24 @@ void ShulkerBoxBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 
 void ShulkerBoxBlockEntity::loadFromTag(CompoundTag* tag)
 {
-    ContainerHelper::loadAllItems(tag, mItems);
-    if (tag->contains(L"Color", Tag::TAG_INT))
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
+    if (!tryLoadLootTable(tag) && tag->contains(L"Items", Tag::TAG_LIST))
     {
-        mColor = DyeColor::byItemData(tag->getInt(L"Color"));
+        ContainerHelper::loadAllItems(tag, mItems);
     }
-    if (tag->contains(L"AnimationStatus", Tag::TAG_BYTE))
-    {
-        mAnimationStatus = tag->getByte(L"AnimationStatus");
-    }
-    mProgress = tag->getFloat(L"Progress");
-    mProgressOld = tag->getFloat(L"ProgressOld");
+    mCustomName->loadFromTag(tag);
 }
 
 void ShulkerBoxBlockEntity::load(CompoundTag* tag)
 {
-    BlockEntity::load(tag);
+    LockableContainerBlockEntity::load(tag);
     loadFromTag(tag);
 }
 
 CompoundTag* ShulkerBoxBlockEntity::save(CompoundTag* tag)
 {
-    BlockEntity::save(tag);
-    saveToTag(tag);
-    return tag;
+    LockableContainerBlockEntity::save(tag);
+    return saveToTag(tag);
 }
 
 NonNullList<not_null_ptr<ItemInstance> > ShulkerBoxBlockEntity::getItems()
@@ -407,6 +404,7 @@ boost::shared_ptr<Packet> ShulkerBoxBlockEntity::getUpdatePacket()
 boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()
 {
     boost::shared_ptr<ShulkerBoxBlockEntity> result(new ShulkerBoxBlockEntity());
+    BlockEntity::clone(result);
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         result->mItems[i] = mItems[i]->copy();
@@ -418,7 +416,7 @@ boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()
     result->mProgressOld = mProgressOld;
     result->mColor = mColor;
     result->mDestroyedByCreativePlayer = mDestroyedByCreativePlayer;
-    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
+    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     return result;
 }
 

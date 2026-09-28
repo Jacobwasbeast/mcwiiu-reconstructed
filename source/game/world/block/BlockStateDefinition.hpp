@@ -94,9 +94,15 @@ public:
     };
 
     explicit BlockStateDefinition(Block* block);
-    BlockStateDefinition(Block* block, const Property** properties, unsigned int count);
+    BlockStateDefinition(Block* block, const Property** properties, unsigned int count)
+    {
+        mStates.data = NULL;
+        mStates.length = 0;
+
+        _init(block, properties, count);
+    }
     BlockStateImpl* any();
-    const std::vector<const BlockState*>& getPossibleBlockStates() const;
+    const arrayWithLength<BlockStateImpl*>* getPossibleBlockStates() const;
     Block* getBlock() const;
     const std::vector<const Property*>& getProperties() const;
     std::vector<const std::vector<Boxed*>*>* getPropertyValues();
@@ -114,7 +120,6 @@ private:
     arrayWithLength<BlockStateImpl*> mStates;
     unsigned char* mBitOffsets;
     unsigned short* mBitMasks;
-    std::vector<const BlockState*> mPossibleStates;
 };
 
 #endif

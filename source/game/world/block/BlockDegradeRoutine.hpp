@@ -50,7 +50,7 @@ public:
 
     BlockDegradeRoutine(ServerLevel* level, DegradationSequenceRuleDefinition* definition);
 
-    void setNextAction(Action action, unsigned int time, unsigned int delay);
+    void setNextAction(Action action, long long nextActionTime);
     void Action_Wait(long long time, long long ticks);
     void Action_Break(long long time, long long ticks);
     LayerCache* getCacheFor(const std::wstring& name) const;
@@ -62,8 +62,7 @@ private:
     std::deque<Info> mActions;
     unsigned int mProgress;
     arrayWithLength<BlockPos> mBlocks;
-    unsigned int mActionTime;
-    unsigned int mActionDelay;
+    long long mNextActionTime;
     Action mAction;
 };
 

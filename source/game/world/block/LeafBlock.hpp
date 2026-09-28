@@ -55,7 +55,6 @@ public:
     virtual int getWoodType(const BlockState* state) = 0;
 
 private:
-    bool mFancy;
     int* mLeafDistance;
     TextureAtlasSprite* mIcons[12];
 };

@@ -212,5 +212,5 @@ void CommandBlockEntity::updateNamedPosition(const std::wstring& name, const std
 
 unsigned long long CommandBlockEntity::GetType()
 {
-    return BLOCK_ENTITY_TYPE;
+    return BlockEntityType::COMMAND;
 }

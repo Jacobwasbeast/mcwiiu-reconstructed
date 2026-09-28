@@ -120,7 +120,7 @@ void SandBlock::blockStaticCtor()
         return;
     }
 
-    gSandVariants[0] = new Variant(0, L"sand", IDS_TILE_SAND, 0x2C05FE82, MaterialColor::SAND,
+    gSandVariants[0] = new Variant(0, L"sand", IDS_TILE_SAND, IDS_DESC_SAND, MaterialColor::SAND,
                                    -2370656);
     gSandVariants[1] = new Variant(1, L"red_sand", IDS_TILE_SAND_RED, IDS_DESC_SAND_RED,
                                    MaterialColor::COLOR_ORANGE, -5679071);

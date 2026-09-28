@@ -1,4 +1,5 @@
 #include "game/world/block/BannerBlock.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/Direction.hpp"
 #include "game/core/L10N.hpp"
@@ -23,10 +24,6 @@ BannerBlock::BannerBlock()
 {
 }
 
-BannerBlock::~BannerBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> BannerBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BannerBlockEntity> entity(new BannerBlockEntity());
@@ -41,7 +38,7 @@ void BannerBlock::blockStaticCtor()
 
 std::wstring BannerBlock::getName()
 {
-    return std::wstring(L10N::GetString(0x25a2bc32));
+    return std::wstring(L10N::GetString(IDS_TILE_WALL_BANNER));
 }
 
 const AABB* BannerBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)

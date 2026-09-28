@@ -150,11 +150,11 @@ void DirtBlock::blockStaticCtor()
         return;
     }
 
-    Variant::DIRT = new Variant(0, L"dirt", IDS_TILE_DIRT, 0x5437FAF1, MaterialColor::DIRT,
+    Variant::DIRT = new Variant(0, L"dirt", IDS_TILE_DIRT, IDS_DESC_DIRT, MaterialColor::DIRT,
                                 L"dirt", L"", L"");
-    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", IDS_TILE_DIRT_COARSE, 0x935970C7, MaterialColor::DIRT,
+    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", IDS_TILE_DIRT_COARSE, IDS_DESC_DIRT_COARSE, MaterialColor::DIRT,
                                        L"coarse_dirt", L"", L"");
-    Variant::PODZOL = new Variant(2, L"podzol", 0x64186D51, 0x8FB42134, MaterialColor::PODZOL,
+    Variant::PODZOL = new Variant(2, L"podzol", IDS_TILE_DIRT_PODZOL, IDS_DESC_DIRT_PODZOL, MaterialColor::PODZOL,
                                   L"dirt", L"dirt_podzol_top", L"dirt_podzol_side");
 
     gVariantsByData[0] = Variant::DIRT;

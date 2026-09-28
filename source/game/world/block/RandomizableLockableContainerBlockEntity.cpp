@@ -72,6 +72,11 @@ void RandomizableLockableContainerBlockEntity::setItem(unsigned int slot, not_nu
     boost::shared_ptr<Player> player;
     unpackLootTable(player);
     getItems()[slot] = itemInstance;
+    if (itemInstance->getCount() > getMaxStackSize())
+    {
+        itemInstance->setCount(getMaxStackSize());
+    }
+    setChanged();
 }
 
 bool RandomizableLockableContainerBlockEntity::stillValid(boost::shared_ptr<Player> player)

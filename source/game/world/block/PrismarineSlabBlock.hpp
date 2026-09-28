@@ -55,7 +55,7 @@ public:
     static EnumProperty<Variant*>* VARIANT;
 
     PrismarineSlabBlock();
-    virtual ~PrismarineSlabBlock();
+    virtual ~PrismarineSlabBlock() {}
     static void blockStaticCtor();
     virtual void DerivedInit();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
