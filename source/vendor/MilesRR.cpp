@@ -211,7 +211,7 @@ extern "C" void Platform_SeekFromBeginning(MilesFile* pFile, unsigned int uPosit
                  FS_ERROR_FLAG_NONE);
 }
 
-int TlsSetValue(int iIndex, void* pValue)
+void TlsSetValue(int iIndex, void* pValue)
 {
     OSSetThreadSpecific((OSThreadSpecificID)iIndex, pValue);
 }
