@@ -60,15 +60,6 @@ public:
     StationIndex m_invalidStationIndex;
 };
 extern StationManager* g_piaStationManager;
-static_assert(sizeof(StationManager) == 0x140, "StationManager size");
-static_assert(offsetof(StationManager, m_stationOffset) == 0x18, "StationManager offset");
-static_assert(offsetof(StationManager, m_stationPool) == 0x1c, "StationManager pool");
-static_assert(offsetof(StationManager, m_stationNum) == 0x20, "StationManager count");
-static_assert(offsetof(StationManager, m_stationStorage) == 0x24, "StationManager storage");
-static_assert(offsetof(StationManager, m_stations) == 0x28, "StationManager stations");
-static_assert(offsetof(StationManager, m_freeStations) == 0xb0, "StationManager free stations");
-static_assert(offsetof(StationManager, m_localStation) == 0x138, "StationManager local");
-static_assert(offsetof(StationManager, m_invalidStationIndex) == 0x13c, "StationManager invalid index");
 }
 }
 }

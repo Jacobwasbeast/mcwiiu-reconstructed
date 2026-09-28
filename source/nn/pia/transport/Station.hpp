@@ -24,7 +24,9 @@ class Station
 public:
     struct IdentificationToken;
     struct PlayerInfo;
-    enum StationState : unsigned int;
+    enum StationState
+    {
+    };
     Station();
     virtual ~Station();
     Result Initialize(NetworkFactory* networkFactory, StationProtocol* stationProtocol, RttProtocol* rttProtocol);

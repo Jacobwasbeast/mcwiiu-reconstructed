@@ -45,7 +45,6 @@ private:
 };
 #pragma pack(pop)
 
-static_assert(sizeof(StationConnectionInfoTable) == 432, "StationConnectionInfoTable layout");
 extern StationConnectionInfoTable* g_stationConnectionInfoTable;
 
 }}}

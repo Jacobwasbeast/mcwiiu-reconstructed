@@ -360,7 +360,7 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
             ::nn::pia::StationIndex stationIndex = 0xfd;
             if (pead::BitFlagUtil::countOnBit(selected) == 1)
             {
-                stationIndex = static_cast<::nn::pia::StationIndex>(
+                stationIndex = static_cast< ::nn::pia::StationIndex>(
                     pead::BitFlagUtil::countOnBit((selected & (0u - selected)) - 1u));
                 if (manager->GetStationAddress(&address, stationIndex) != 0)
                     continue;

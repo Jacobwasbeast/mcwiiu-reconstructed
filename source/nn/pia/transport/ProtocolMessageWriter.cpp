@@ -47,16 +47,16 @@ void ProtocolMessageWriter::AddMessageBuffer(common::Packet* packet, void* buffe
 void ProtocolMessageWriter::Commit()
 {
     const unsigned short messageSize = static_cast<unsigned short>(m_messageSize);
-    const unsigned long long source = m_source;
-    const unsigned short protocolId = m_protocolId;
-    unsigned char headerFields[3];
-    memcpy(headerFields, m_field12, sizeof(headerFields));
-
-    const auto writeHeader = [&](MessageBuffer& messageBuffer)
+    const unsigned int copySize = ((m_messageSize + 23U) & ~3U) + 4U;
+    unsigned int bufferIndex = 0;
+    do
     {
+        MessageBuffer& messageBuffer = m_messageBuffers[bufferIndex];
+        if (bufferIndex != 0)
+            memmove(messageBuffer.m_buffer, m_messageBuffers[0].m_buffer, copySize);
         unsigned char* buffer = static_cast<unsigned char*>(messageBuffer.m_buffer);
         if (buffer == 0)
-            return;
+            continue;
         buffer[0] = static_cast<unsigned char>(messageBuffer.m_field10 |
             (messageBuffer.m_field11 ? 2 : 0) | (m_isReliable ? 4 : 0) |
             (m_isPriority ? 8 : 0));
@@ -66,20 +66,12 @@ void ProtocolMessageWriter::Commit()
         {
             buffer[3 + index] = static_cast<unsigned char>(
                 messageBuffer.m_destinationStationId >> (56 - index * 8));
-            buffer[11 + index] = static_cast<unsigned char>(source >> (56 - index * 8));
+            buffer[11 + index] = static_cast<unsigned char>(m_source >> (56 - index * 8));
         }
-        buffer[19] = static_cast<unsigned char>(protocolId >> 8);
-        buffer[20] = static_cast<unsigned char>(protocolId);
-        memcpy(buffer + 21, headerFields, sizeof(headerFields));
-    };
-
-    writeHeader(m_messageBuffers[0]);
-    const unsigned int copySize = ((m_messageSize + 23U) & ~3U) + 4U;
-    for (unsigned int index = 1; index < m_messageBufferNum; ++index)
-    {
-        memmove(m_messageBuffers[index].m_buffer, m_messageBuffers[0].m_buffer, copySize);
-        writeHeader(m_messageBuffers[index]);
-    }
+        buffer[19] = static_cast<unsigned char>(m_protocolId >> 8);
+        buffer[20] = static_cast<unsigned char>(m_protocolId);
+        memcpy(buffer + 21, m_field12, sizeof(m_field12));
+    } while (++bufferIndex < m_messageBufferNum);
     if (m_priority != 0)
     {
         for (unsigned int index = 0; index < m_messageBufferNum; ++index)

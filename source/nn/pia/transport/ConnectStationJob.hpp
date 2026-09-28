@@ -16,7 +16,7 @@ public:
     int Startup(common::CallContext* context, Station* station,
                 const StationConnectionInfo& info, bool secure, int timeoutMsec);
     void Cleanup();
-    void Trace(unsigned long long value) const override;
+    void Trace(unsigned long long value) const;
     virtual int StartupImpl(common::CallContext* context, Station* station,
                             const StationConnectionInfo& info, bool secure);
     virtual void CleanupImpl();

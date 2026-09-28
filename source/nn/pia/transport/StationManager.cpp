@@ -1,6 +1,8 @@
 #include "nn/pia/transport/StationManager.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/Common.hpp"
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/transport/TransportSupport.hpp"
@@ -15,7 +17,7 @@ namespace {
 void* g_stationManagerStorage = 0;
 struct StationPoolEntry {
     common::ListNode node;
-    alignas(Station) unsigned char station[sizeof(Station)];
+    boost::aligned_storage<sizeof(Station), boost::alignment_of<Station>::value>::type station;
 };
 }
 static Station* stationAt(common::ListNode* node) { return reinterpret_cast<Station*>(reinterpret_cast<unsigned char*>(node) + offsetof(StationPoolEntry, station)); }
