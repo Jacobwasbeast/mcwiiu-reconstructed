@@ -11,7 +11,7 @@ public:
     {
     }
 
-    virtual ~TutorialConstraint();
+    virtual ~TutorialConstraint() {}
 
     virtual int getType() = 0;
     virtual void tick(int playerId);

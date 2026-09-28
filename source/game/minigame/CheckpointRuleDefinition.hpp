@@ -1,7 +1,7 @@
 #ifndef GAME_MINIGAME_CHECKPOINTRULEDEFINITION_HPP
 #define GAME_MINIGAME_CHECKPOINTRULEDEFINITION_HPP
 
-#include <cstdint>
+#include <stdint.h>
 #include <string>
 #include <vector>
 

@@ -1,4 +1,5 @@
 #include "game/minigame/MiniGameMedals.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/core/FastestTimeAndHightestScoreInARoundCondition.hpp"
 #include "game/core/FinishCourseWithDamageTakenCondition.hpp"
@@ -86,8 +87,8 @@ void MiniGameMedals::staticCtor()
 
     MedalAdder battleMedals(&nextMedalId, &gBattleMedals, &gAllMiniGameMedals);
 
-    battleMedals.addMedal(new MostKillsMedal(0x373F0289, 1.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
-    battleMedals.addMedal(new LeastKillsMedal(0xE148AA03, 15.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
+    battleMedals.addMedal(new MostKillsMedal(IDS_MEDAL_MOST_KILLS, 1.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
+    battleMedals.addMedal(new LeastKillsMedal(IDS_MEDAL_LEAST_KILLS, 15.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new SniperMedal(0xFA877DCF, 15.0f, 625));
     battleMedals.addMedal(new AmphibiousMedal(0x5BA330E9, 1.0f, 3125, GameMedal::OPERATOR_AT_LEAST, true, false));
     GameMedal* medal = new FallKillMedal(0x3990407B, 1.0f, 3125);
@@ -132,16 +133,16 @@ void MiniGameMedals::staticCtor()
     battleMedals.addMedal(new HoarderMedal(0xBB274286, 5.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new TreasureHunterMedal(0x483C96F0, 3.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new SplashPotionMedal(0x02C0E252, 1.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
-    battleMedals.addMedal(new SneakingMedal(0x8A6A9582, 2.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
+    battleMedals.addMedal(new SneakingMedal(IDS_MEDAL_MOST_SNEAKING, 2.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new UnderwaterMedal(0xE268EF55, 10.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new DistanceMedal(0x15F4E5E1, 100.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new ClimbingMedal(0xF14B91A1, 10.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
     battleMedals.addMedal(new DistanceMedal(0x8AF1D99B, 100.0f, 25, GameMedal::OPERATOR_AT_MOST, true, false));
-    battleMedals.addMedal(new LifeSpanMedal(0xBF5D3CB3, 120.0f, 25, GameMedal::OPERATOR_AT_MOST));
-    medal = new ConsolationMedal(0xB377B243, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
+    battleMedals.addMedal(new LifeSpanMedal(IDS_MEDAL_SHORTEST_LIFE, 120.0f, 25, GameMedal::OPERATOR_AT_MOST));
+    medal = new ConsolationMedal(IDS_MEDAL_CONSOLATION_1, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     battleMedals.addMedal(medal);
-    medal = new ConsolationMedal(0x41704308, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
+    medal = new ConsolationMedal(IDS_MEDAL_CONSOLATION_2, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     battleMedals.addMedal(medal);
     medal = new ConsolationMedal(0x6772BD71, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
@@ -166,7 +167,7 @@ void MiniGameMedals::staticCtor()
     tumbleMedals.addMedal(new PodiumPlaceMostBlocksDestroyedMedal(PodiumPlaceMostBlocksDestroyedMedal::PODIUM_FIRST, 0x03AD6CD5, 1.0f, 625, GameMedal::OPERATOR_AT_LEAST));
     tumbleMedals.addMedal(new PodiumPlaceMostBlocksDestroyedMedal(PodiumPlaceMostBlocksDestroyedMedal::PODIUM_SECOND, 0xDA364E83, 1.0f, 625, GameMedal::OPERATOR_AT_LEAST));
     tumbleMedals.addMedal(new PodiumPlaceMostBlocksDestroyedMedal(PodiumPlaceMostBlocksDestroyedMedal::PODIUM_THIRD, 0x2493FAEE, 1.0f, 625, GameMedal::OPERATOR_AT_LEAST));
-    tumbleMedals.addMedal(new JumpsMedal(0xDE128049, 5.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
+    tumbleMedals.addMedal(new JumpsMedal(IDS_MEDAL_MOST_JUMPS, 5.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false));
     medal = new FirstDeathWithoutBlockDestructionMedal(0xB64A8AB1, 1.0f, 125, GameMedal::OPERATOR_AT_LEAST, true, false);
     medal->SetCanMultiAward(true);
     tumbleMedals.addMedal(medal);
@@ -194,16 +195,16 @@ void MiniGameMedals::staticCtor()
     tumbleMedals.addMedal(medal);
     tumbleMedals.addMedal(new DistanceMedal(0x15F4E5E1, 25.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
     tumbleMedals.addMedal(new DistanceMedal(0x8AF1D99B, 100.0f, 25, GameMedal::OPERATOR_AT_MOST, true, false));
-    tumbleMedals.addMedal(new SneakingMedal(0x8A6A9582, 2.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
+    tumbleMedals.addMedal(new SneakingMedal(IDS_MEDAL_MOST_SNEAKING, 2.0f, 25, GameMedal::OPERATOR_AT_LEAST, true, false));
 
     MedalAdder glideMedals(&nextMedalId, &gGlideMedals, &gAllMiniGameMedals);
 
-    glideMedals.addMedal((new MultiConditionMedal(0xFDC49843, 25, new TotalDeathsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true)))
+    glideMedals.addMedal((new MultiConditionMedal(IDS_MG03_MEDAL_DEATHS, 25, new TotalDeathsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
     glideMedals.addMedal((new MultiConditionMedal(0x79CA8ED4, 625, new TotalDeathsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true)))
         ->addExtraCondition(new WinnerCondition())
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
-    conditionMedal = new MultiConditionMedal(0x98BCFDC3, 625, new TotalPointsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true));
+    conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_POINTS, 625, new TotalPointsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true));
     conditionMedal->addExtraCondition(new VariantCondition(1));
     conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
@@ -211,9 +212,9 @@ void MiniGameMedals::staticCtor()
     conditionMedal = new MultiConditionMedal(0xEAA09456, 625, new HasSpawnedAtAllCheckpointsCondition());
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
-    glideMedals.addMedal((new MultiConditionMedal(0x48AAC91F, 125, new TotalDamageTakenCondition(10.0f, GameMedal::OPERATOR_AT_MOST, true)))
+    glideMedals.addMedal((new MultiConditionMedal(IDS_MG03_MEDAL_DAMAGE, 125, new TotalDamageTakenCondition(10.0f, GameMedal::OPERATOR_AT_MOST, true)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
-    glideMedals.addMedal((new MultiConditionMedal(0x01B69514, 25, new TotalThermalsEnteredCondition(0.0f, GameMedal::OPERATOR_AT_MOST, true)))
+    glideMedals.addMedal((new MultiConditionMedal(IDS_MG03_MEDAL_THERMALS, 25, new TotalThermalsEnteredCondition(0.0f, GameMedal::OPERATOR_AT_MOST, true)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
     glideMedals.addMedal((new MultiConditionMedal(0xC6338D98, 625, new TotalDamageTakenCondition(10.0f, GameMedal::OPERATOR_AT_MOST, true)))
         ->addExtraCondition(new WinnerCondition())
@@ -221,10 +222,10 @@ void MiniGameMedals::staticCtor()
     conditionMedal = new MultiConditionMedal(0xE4CE5068, 3125, new FinishCourseWithDamageTakenCondition(0.0f));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
-    conditionMedal = new MultiConditionMedal(0x5C9FCE59, 625, new FinishCourseWithDamageTakenCondition(1.0f));
+    conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_1_DAMAGE, 625, new FinishCourseWithDamageTakenCondition(1.0f));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
-    conditionMedal = new MultiConditionMedal(0xB87442AA, 625, new FinishCourseWithDamageTakenCondition(2.0f));
+    conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_2_DAMAGE, 625, new FinishCourseWithDamageTakenCondition(2.0f));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
 
@@ -234,7 +235,7 @@ void MiniGameMedals::staticCtor()
         RingsMedal::eRingAmountMost,
         RingsMedal::eRingAmountAll
     };
-    medal = new RingsMedal(0xDC31EA7F, 125, ringAmounts1, GameMedal::OPERATOR_AT_LEAST);
+    medal = new RingsMedal(IDS_MG03_MEDAL_RINGS_LARGE, 125, ringAmounts1, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     glideMedals.addMedal(medal);
 
@@ -254,7 +255,7 @@ void MiniGameMedals::staticCtor()
         RingsMedal::eRingAmountMost,
         RingsMedal::eRingAmountMost
     };
-    medal = new RingsMedal(0x3B1C2825, 3125, ringAmounts3, GameMedal::OPERATOR_AT_LEAST);
+    medal = new RingsMedal(IDS_MG03_MEDAL_RINGS_SMALL, 3125, ringAmounts3, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     glideMedals.addMedal(medal);
 
@@ -292,7 +293,7 @@ void MiniGameMedals::staticCtor()
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
     glideMedals.addMedal((new MultiConditionMedal(0xC9E72AE0, 25, new TimeSpentCondition(1000.0f, eTimeSpentCategory_GoingBackwards, GameMedal::OPERATOR_AT_LEAST, true)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
-    glideMedals.addMedal((new MultiConditionMedal(0x920E2221, 25, new TimeSpentCondition(1.0f, eTimeSpentCategory_InWater, GameMedal::OPERATOR_AT_LEAST, true)))
+    glideMedals.addMedal((new MultiConditionMedal(IDS_MG03_MEDAL_WATER, 25, new TimeSpentCondition(1.0f, eTimeSpentCategory_InWater, GameMedal::OPERATOR_AT_LEAST, true)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
     glideMedals.addMedal((new MultiConditionMedal(0xC8D305C9, 25, new TimeSpentCondition(1.0f, eTimeSpentCategory_NearBlocks, GameMedal::OPERATOR_AT_LEAST, true)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
@@ -304,7 +305,7 @@ void MiniGameMedals::staticCtor()
     conditionMedal->addExtraCondition(new VariantCondition(1));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
-    conditionMedal = new MultiConditionMedal(0xE27A7A72, 3125, new WonByAmountCondition(1000.0f, GameMedal::OPERATOR_AT_MOST));
+    conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_CLOSE, 3125, new WonByAmountCondition(1000.0f, GameMedal::OPERATOR_AT_MOST));
     conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
@@ -323,10 +324,10 @@ void MiniGameMedals::staticCtor()
         ->addExtraCondition(new WinnerCondition()));
     glideMedals.addMedal((new MultiConditionMedal(0x8FDDCE64, 25, new NotFastestTimeButWonAnywayCondition()))
         ->addExtraCondition(new VariantCondition(1)));
-    medal = new ConsolationMedal(0x45C19F25, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
+    medal = new ConsolationMedal(IDS_MG03_MEDAL_CONSOLATION_1, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     glideMedals.addMedal(medal);
-    medal = new ConsolationMedal(0x6BC4198E, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
+    medal = new ConsolationMedal(IDS_MG03_MEDAL_CONSOLATION_2, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     glideMedals.addMedal(medal);
     medal = new ConsolationMedal(0x91C693F7, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);

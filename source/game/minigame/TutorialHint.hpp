@@ -32,7 +32,7 @@ public:
     TutorialHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
                  eHintType type, bool allowFade, bool repeatMessage,
                  int minimumDisplayTime);
-    virtual ~TutorialHint();
+    virtual ~TutorialHint() {}
 
     virtual int startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state);
     virtual unsigned int destroyBlock(Block* block);

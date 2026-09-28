@@ -16,7 +16,9 @@ ScoreRingRuleDefinition::ScoreRingRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mZ);
 }
 
-ScoreRingRuleDefinition::~ScoreRingRuleDefinition() = default;
+ScoreRingRuleDefinition::~ScoreRingRuleDefinition()
+{
+}
 
 ConsoleGameRules::EGameRuleType ScoreRingRuleDefinition::getActionType()
 {

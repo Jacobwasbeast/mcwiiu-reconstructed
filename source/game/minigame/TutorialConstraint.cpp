@@ -1,9 +1,5 @@
 #include "game/minigame/TutorialConstraint.hpp"
 
-TutorialConstraint::~TutorialConstraint()
-{
-}
-
 void TutorialConstraint::tick(int playerId)
 {
 }

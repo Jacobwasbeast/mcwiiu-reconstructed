@@ -1,6 +1,8 @@
 #include "game/minigame/CompleteAllRuleDefinition.hpp"
 
 #include "game/core/GameRule.hpp"
+#include "game/network/Connection.hpp"
+#include "game/network/UpdateGameRuleProgressPacket.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/StringUtils.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -22,22 +24,39 @@ void CompleteAllRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* ch
 
 void CompleteAllRuleDefinition::updateStatus(GameRule* rule)
 {
-    if (rule == NULL)
+    struct ProgressData
+    {
+        int goal;
+        int progress;
+    };
+
+    ProgressData data;
+    data.goal = 0;
+    data.progress = 0;
+    for (GameRule::ParameterMap::iterator it = rule->mParameters.begin(); it != rule->mParameters.end(); ++it)
+    {
+        if (it->second.bIsGameRule)
+        {
+            data.goal += it->second.pGameRule->getGameRuleDefinition()->getGoal();
+            data.progress += it->second.pGameRule->getGameRuleDefinition()->getProgress(it->second.pGameRule);
+        }
+    }
+
+    if (rule->mConnection == NULL)
     {
         return;
     }
-    std::vector<GameRuleDefinition*> children;
-    CompoundGameRuleDefinition::getChildren(&children);
-    bool complete = true;
-    for (std::vector<GameRuleDefinition*>::const_iterator it = children.begin(); it != children.end(); ++it)
+
+    int icon = -1;
+    int auxValue = 0;
+    if (mCompletedChild != NULL)
     {
-        if (*it == NULL || !(*it)->getComplete(rule))
-        {
-            complete = false;
-            break;
-        }
+        icon = mCompletedChild->getIcon();
+        auxValue = mCompletedChild->getAuxValue();
+        mCompletedChild = NULL;
     }
-    setComplete(rule, complete);
+    rule->mConnection->send(boost::shared_ptr<Packet>(new UpdateGameRuleProgressPacket(
+        getActionType(), mDescriptionName, icon, auxValue, 0, &data, sizeof(data))));
 }
 
 bool CompleteAllRuleDefinition::onUseBlock(GameRule* rule, int blockId, int x, int y, int z)

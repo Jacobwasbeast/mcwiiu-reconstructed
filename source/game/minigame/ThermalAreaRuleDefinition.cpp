@@ -35,7 +35,9 @@ ThermalAreaRuleDefinition::ThermalAreaRuleDefinition()
     mUseCount = 0;
 }
 
-ThermalAreaRuleDefinition::~ThermalAreaRuleDefinition() = default;
+ThermalAreaRuleDefinition::~ThermalAreaRuleDefinition()
+{
+}
 
 bool ThermalAreaRuleDefinition::getConditionsMet(boost::shared_ptr<Entity> entity)
 {

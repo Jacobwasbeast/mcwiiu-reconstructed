@@ -15,7 +15,9 @@ TargetAreaRuleDefinition::TargetAreaRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_points, &mPointValue);
 }
 
-TargetAreaRuleDefinition::~TargetAreaRuleDefinition() = default;
+TargetAreaRuleDefinition::~TargetAreaRuleDefinition()
+{
+}
 
 ConsoleGameRules::EGameRuleType TargetAreaRuleDefinition::getActionType()
 {

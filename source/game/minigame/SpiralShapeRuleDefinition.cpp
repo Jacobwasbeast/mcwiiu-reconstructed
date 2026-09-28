@@ -19,7 +19,9 @@ SpiralShapeRuleDefinition::SpiralShapeRuleDefinition()
     angle->setMax(360.0);
 }
 
-SpiralShapeRuleDefinition::~SpiralShapeRuleDefinition() = default;
+SpiralShapeRuleDefinition::~SpiralShapeRuleDefinition()
+{
+}
 
 ConsoleGameRules::EGameRuleType SpiralShapeRuleDefinition::getActionType()
 {

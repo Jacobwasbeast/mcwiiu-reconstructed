@@ -15,10 +15,6 @@ TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, in
     tutorial->addMessage(description, repeatMessage && hintType != HINT_CREATE_ITEM_SELECTED, 3);
 }
 
-TutorialHint::~TutorialHint()
-{
-}
-
 int TutorialHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
 {
     if (type == HINT_START_DESTROY_BLOCK)

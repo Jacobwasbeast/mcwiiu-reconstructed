@@ -32,7 +32,7 @@ WeaponMedal::~WeaponMedal()
 
 bool WeaponMedal::IncludeDamage(const DamageEvent* damageEvent) const
 {
-    Item* item = Item::byId(damageEvent->mWeapon.mItemId);
+    Item* item = damageEvent->mWeapon.GetItem();
 
     if (mItem == NULL)
     {

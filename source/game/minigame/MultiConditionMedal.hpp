@@ -10,7 +10,7 @@ public:
     {
     public:
         MultiCondition(float target, GameMedal::EOperator op, bool bestOnly);
-        virtual ~MultiCondition();
+        virtual ~MultiCondition() {}
 
         virtual bool canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const;
         virtual double getScore(const GameMedal* medal, PlayerStats* playerStats) const;

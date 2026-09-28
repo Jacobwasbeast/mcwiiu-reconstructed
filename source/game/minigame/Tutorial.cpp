@@ -1,4 +1,6 @@
 #include "game/minigame/Tutorial.hpp"
+
+#include <algorithm>
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -54,7 +56,7 @@ namespace
     long long gTutorialDayTime = 8000;
     unsigned int gTutorialMessageRepeatTime = gTutorialVisibleTime + gTutorialMessageRepeatDelay;
     std::vector<int> gTutorialCompletionIds;
-    static const int gTutorialCompletionIdValues[] = { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70, 72, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 101, 102, 103, 104, 105, 107, 106, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 32, 188, 190, 191, 192, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 34, 36, 29, 31, 33, 35, 189, 8, 193, 194, 195, 309, 310, 311, 312, 313, 308, 196, 100, 64, 314, 315, 316, 317, 318, 319, 149, 150, 151, 152, 153, 197, 198, 199, 200, 38, 39, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 383, 384 };
+    static const int gTutorialCompletionIdValues[] = { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70, 72, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 101, 102, 103, 104, 105, 107, 106, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 32, 188, 190, 191, 192, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 34, 36, 29, 31, 33, 35, 189, 8, 193, 194, 195, 309, 310, 311, 312, 313, 308, 320, 321, 322, 323, 324, 325, 326, 327, 330, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 196, 100, 64, 314, 315, 316, 317, 318, 319, 149, 150, 151, 152, 153, 197, 198, 199, 200, 38, 39, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 383, 384 };
 }
 
 Tutorial::PopupMessageDetails::PopupMessageDetails()
@@ -121,9 +123,11 @@ unsigned int Tutorial::getCompleted(int completionId)
     {
         ++index;
         if (*it == completionId)
-            return index < 0x200 ? (GameSettings::GetTutorialCompletionFlag(playerId, static_cast<int>(index)) ? 1U : 0U) : 0U;
+            break;
     }
-    return 0;
+    if (index >= 0x200)
+        return 0;
+    return GameSettings::GetTutorialCompletionFlag(playerId, static_cast<int>(index));
 }
 
 unsigned int Tutorial::isHintCompleted(eTutorial_Hint hint)
@@ -509,24 +513,24 @@ void Tutorial::AddHints()
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Conduit, this, conduitStates, 1, NULL, 0, -1, -1, false));
     const BlockState* carvedPumpkinStates[] = { Blocks::carved_pumpkin->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_CarvedPumpkin, this, carvedPumpkinStates, 1, NULL, 0, -1, -1, false));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Squid, this, 0x8311C378, IDS_SQUID, EntityType::SQUID));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Cow, this, 0x6DFF13B9, IDS_COW, EntityType::COW));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Sheep, this, 0x184D1C09, IDS_SHEEP, EntityType::SHEEP));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Chicken, this, 0x6CAF5F1B, IDS_CHICKEN, EntityType::CHICKEN));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Pig, this, 0xFFD20CD4, IDS_PIG, EntityType::PIG));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Squid, this, IDS_DESC_SQUID, IDS_SQUID, EntityType::SQUID));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Cow, this, IDS_DESC_COW, IDS_COW, EntityType::COW));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Sheep, this, IDS_DESC_SHEEP, IDS_SHEEP, EntityType::SHEEP));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Chicken, this, IDS_DESC_CHICKEN, IDS_CHICKEN, EntityType::CHICKEN));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Pig, this, IDS_DESC_PIG, IDS_PIG, EntityType::PIG));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Wolf, this, IDS_DESC_WOLF, IDS_WOLF, EntityType::WOLF));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Creeper, this, 0x3E4CD914, IDS_CREEPER, EntityType::CREEPER));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Skeleton, this, 0x7D30125B, IDS_SKELETON, EntityType::SKELETON));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Spider, this, 0x4029D63B, IDS_SPIDER, EntityType::SPIDER));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Zombie, this, 0x45497554, IDS_ZOMBIE, EntityType::ZOMBIE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_PigZombie, this, 0xD2243BD2, 0xF566D3CC, EntityType::PIG_ZOMBIE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Ghast, this, 0x2E34B42B, IDS_GHAST, EntityType::GHAST));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Creeper, this, IDS_DESC_CREEPER, IDS_CREEPER, EntityType::CREEPER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Skeleton, this, IDS_DESC_SKELETON, IDS_SKELETON, EntityType::SKELETON));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Spider, this, IDS_DESC_SPIDER, IDS_SPIDER, EntityType::SPIDER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Zombie, this, IDS_DESC_ZOMBIE, IDS_ZOMBIE, EntityType::ZOMBIE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_PigZombie, this, IDS_DESC_PIGZOMBIE, IDS_PIGZOMBIE, EntityType::PIG_ZOMBIE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Ghast, this, IDS_DESC_GHAST, IDS_GHAST, EntityType::GHAST));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Slime, this, IDS_DESC_SLIME, IDS_SLIME, EntityType::SLIME));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EnderMan, this, 0x576863C8, IDS_ENDERMAN, EntityType::ENDER_MAN));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EnderMan, this, IDS_DESC_ENDERMAN, IDS_ENDERMAN, EntityType::ENDER_MAN));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Silverfish, this, IDS_DESC_SILVERFISH, IDS_SILVERFISH, EntityType::SILVERFISH));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_CaveSpider, this, 0xB0C858E5, IDS_CAVE_SPIDER, EntityType::CAVE_SPIDER));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MushroomCow, this, 0xF541B352, 0x2775807C, EntityType::MUSHROOM_COW));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_SnowMan, this, 0xDBD1B7DD, 0x55D2D0E3, EntityType::SNOW_MAN));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_CaveSpider, this, IDS_DESC_CAVE_SPIDER, IDS_CAVE_SPIDER, EntityType::CAVE_SPIDER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MushroomCow, this, IDS_DESC_MUSHROOM_COW, IDS_MUSHROOM_COW, EntityType::MUSHROOM_COW));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_SnowMan, this, IDS_DESC_SNOWMAN, IDS_SNOWMAN, EntityType::SNOW_MAN));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_VillagerGolem, this, IDS_DESC_IRONGOLEM, IDS_IRONGOLEM, EntityType::VILLAGER_GOLEM));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EnderDragon, this, IDS_DESC_ENDERDRAGON, IDS_ENDERDRAGON, EntityType::ENDER_DRAGON));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Blaze, this, IDS_DESC_BLAZE, IDS_BLAZE, EntityType::BLAZE));
@@ -536,51 +540,51 @@ void Tutorial::AddHints()
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_WitherBoss, this, IDS_DESC_WITHER, IDS_WITHER, EntityType::WITHER_BOSS));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_WitherSkeleton, this, IDS_DESC_WITHER_SKELETON, IDS_WITHER_SKELETON, EntityType::WITHER_SKELETON));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Witch, this, 0xE6AF0FB, IDS_WITCH, EntityType::WITCH));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Bat, this, 0x48211895, IDS_BAT, EntityType::BAT));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Horse, this, 0x3C0567A9, IDS_HORSE, EntityType::HORSE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Guardian, this, 0xB34C27D1, IDS_GUARDIAN, EntityType::GUARDIAN));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Bat, this, IDS_DESC_BAT, IDS_BAT, EntityType::BAT));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Horse, this, IDS_DESC_HORSE, IDS_HORSE, EntityType::HORSE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Guardian, this, IDS_DESC_GUARDIAN, IDS_GUARDIAN, EntityType::GUARDIAN));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Rabbit, this, IDS_DESC_RABBIT, IDS_RABBIT, EntityType::RABBIT));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Endermite, this, IDS_DESC_ENDERMITE, IDS_ENDERMITE, EntityType::ENDERMITE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_PolarBear, this, 0xA657167E, IDS_POLARBEAR, EntityType::POLAR_BEAR));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Shulker, this, 0xA4CA6434, IDS_SHULKER, EntityType::SHULKER));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Stray, this, 0x3D28EFA9, 0xC9DE5707, EntityType::STRAY));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_PolarBear, this, IDS_DESC_POLARBEAR, IDS_POLARBEAR, EntityType::POLAR_BEAR));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Shulker, this, IDS_DESC_SHULKER, IDS_SHULKER, EntityType::SHULKER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Stray, this, IDS_DESC_STRAY_SKELETON, IDS_STRAY_SKELETON, EntityType::STRAY));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Husk, this, 0xC1C90A7, IDS_HUSK, EntityType::HUSK));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_SkeletonHorse, this, 0x5844482F, IDS_SKELETON_HORSE, EntityType::SKELETON_HORSE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ZombieHorse, this, 0x6231F2C0, IDS_ZOMBIE_HORSE, EntityType::ZOMBIE_HORSE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Painting, this, 0xE2BB6816, IDS_ITEM_PAINTING, EntityType::PAINTING));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_SkeletonHorse, this, IDS_DESC_SKELETON_HORSE, IDS_SKELETON_HORSE, EntityType::SKELETON_HORSE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ZombieHorse, this, IDS_DESC_ZOMBIE_HORSE, IDS_ZOMBIE_HORSE, EntityType::ZOMBIE_HORSE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Painting, this, IDS_DESC_PICTURE, IDS_ITEM_PAINTING, EntityType::PAINTING));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ItemFrame, this, IDS_DESC_ITEMFRAME, IDS_ITEM_ITEMFRAME, EntityType::ITEM_FRAME));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartRideable, this, 0xDF071B81, IDS_ITEM_MINECART, EntityType::MINECART_RIDEABLE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartChest, this, 0x3ED319BA, IDS_ITEM_MINECART_CHEST, EntityType::MINECART_CHEST));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartFurnace, this, 0xBB5D88CB, IDS_ITEM_MINECART_FURNACE, EntityType::MINECART_FURNACE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartRideable, this, IDS_DESC_MINECART, IDS_ITEM_MINECART, EntityType::MINECART_RIDEABLE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartChest, this, IDS_DESC_MINECARTWITHCHEST, IDS_ITEM_MINECART_CHEST, EntityType::MINECART_CHEST));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartFurnace, this, IDS_DESC_MINECARTWITHFURNACE, IDS_ITEM_MINECART_FURNACE, EntityType::MINECART_FURNACE));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartHopper, this, IDS_DESC_MINECART_HOPPER, IDS_ITEM_MINECART_HOPPER, EntityType::MINECART_HOPPER));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_MinecartTnt, this, IDS_DESC_MINECART_TNT, IDS_ITEM_MINECART_TNT, EntityType::MINECART_TNT));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Boat, this, 0x1BAB2B22, IDS_ITEM_BOAT_OAK, EntityType::BOAT));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Boat, this, IDS_DESC_BOAT, IDS_ITEM_BOAT_OAK, EntityType::BOAT));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ArmorStand, this, IDS_DESC_ARMORSTAND, IDS_ARMORSTAND, EntityType::ARMOR_STAND));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_LeashFenceKnotEntity, this, 0x729DE426, IDS_ITEM_LEAD, EntityType::LEASH_FENCE_KNOT_ENTITY));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EnderCrystal, this, 0xD396A19A, IDS_ITEM_END_CRYSTAL, EntityType::ENDER_CRYSTAL));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_LeashFenceKnotEntity, this, IDS_DESC_LEAD, IDS_ITEM_LEAD, EntityType::LEASH_FENCE_KNOT_ENTITY));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EnderCrystal, this, IDS_DESC_ITEM_END_CRYSTAL, IDS_ITEM_END_CRYSTAL, EntityType::ENDER_CRYSTAL));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Llama, this, IDS_DESC_LLAMA, IDS_LLAMA, EntityType::LLAMA));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Parrot, this, IDS_DESC_PARROT, IDS_PARROT, EntityType::PARROT));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Mule, this, 0x317E6BC3, IDS_MULE, EntityType::MULE));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Donkey, this, 0x4F219CD8, IDS_DONKEY, EntityType::DONKEY));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Mule, this, IDS_DESC_MULE, IDS_MULE, EntityType::MULE));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Donkey, this, IDS_DESC_DONKEY, IDS_DONKEY, EntityType::DONKEY));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Vex, this, IDS_DESC_VEX, IDS_VEX, EntityType::VEX));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EvocationIllager, this, 0xA2978A87, 0xD9AA9869, EntityType::EVOCATION_ILLAGER));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_VindicationIllager, this, 0x3AE301AF, 0xF3D4F291, EntityType::VINDICATION_ILLAGER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_EvocationIllager, this, IDS_DESC_EVOCATION_ILLAGER, IDS_EVOCATION_ILLAGER, EntityType::EVOCATION_ILLAGER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_VindicationIllager, this, IDS_DESC_VINDICATION_ILLAGER, IDS_VINDICATION_ILLAGER, EntityType::VINDICATION_ILLAGER));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ElderGuardian, this, IDS_DESC_ELDER_GUARDIAN, IDS_ELDER_GUARDIAN, EntityType::ELDER_GUARDIAN));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ZombieVillager, this, 0x5DCF8BDD, IDS_ZOMBIE_VILLAGER, EntityType::ZOMBIE_VILLAGER));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_ZombieVillager, this, IDS_DESC_ZOMBIE_VILLAGER, IDS_ZOMBIE_VILLAGER, EntityType::ZOMBIE_VILLAGER));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Turtle, this, IDS_DESC_TURTLE, IDS_TURTLE, EntityType::TURTLE));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Dolphin, this, IDS_DESC_DOLPHIN, IDS_DOLPHIN, EntityType::DOLPHIN));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Fish, this, 0x33D9E792, IDS_COD, EntityType::FISH));
-    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Fish, this, 0x9D69BB40, IDS_SALMON, EntityType::SALMON));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Fish, this, IDS_DESC_COD, IDS_COD, EntityType::FISH));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Fish, this, IDS_DESC_SALMON, IDS_SALMON, EntityType::SALMON));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Fish, this, IDS_DESC_PUFFERFISH, IDS_PUFFERFISH, EntityType::PUFFERFISH));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Fish, this, IDS_DESC_TROPICALFISH, IDS_TROPICALFISH, EntityType::TROPICAL_FISH));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Drowned, this, IDS_DESC_DROWNED, IDS_DROWNED, EntityType::DROWNED));
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtEntityHint(eTutorial_Hint_Phantom, this, 0x1D435D3, IDS_PHANTOM, EntityType::PHANTOM));
     Item* shovelItems[] = { Items::woodenShovel, Items::stoneShovel, Items::ironShovel, Items::goldenShovel, Items::diamondShovel };
-    addHintIfIncomplete(eTutorial_State_Gameplay, new DiggerItemHint(eTutorial_Hint_Shovel, this, 0x6B4D1717, shovelItems, 5));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new DiggerItemHint(eTutorial_Hint_Shovel, this, IDS_TUTORIAL_HINT_DIGGER_ITEM_SHOVEL, shovelItems, 5));
     Item* axeItems[] = { Items::woodenAxe, Items::stoneAxe, Items::ironAxe, Items::goldenAxe, Items::diamondAxe };
-    addHintIfIncomplete(eTutorial_State_Gameplay, new DiggerItemHint(eTutorial_Hint_Axe, this, 0x70599EAB, axeItems, 5));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new DiggerItemHint(eTutorial_Hint_Axe, this, IDS_TUTORIAL_HINT_DIGGER_ITEM_HATCHET, axeItems, 5));
     Item* pickaxeItems[] = { Items::woodenPickaxe, Items::stonePickaxe, Items::ironPickaxe, Items::goldenPickaxe, Items::diamondPickaxe };
-    addHintIfIncomplete(eTutorial_State_Gameplay, new DiggerItemHint(eTutorial_Hint_Pickaxe, this, 0xC5B6F219, pickaxeItems, 5));
+    addHintIfIncomplete(eTutorial_State_Gameplay, new DiggerItemHint(eTutorial_Hint_Pickaxe, this, IDS_TUTORIAL_HINT_DIGGER_ITEM_PICKAXE, pickaxeItems, 5));
     addHint(eTutorial_State_CraftingMenu, new TutorialHint(eTutorial_Hint_General, this, 0xDBD723F6, TutorialHint::HINT_CREATE_ITEM_SELECTED, true, true, -1));
     addHint(eTutorial_State_CraftingTableMenu, new TutorialHint(eTutorial_Hint_General, this, 0xDBD723F6, TutorialHint::HINT_CREATE_ITEM_SELECTED, true, true, -1));
 }
@@ -632,13 +636,13 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
         goto check_state_2;
     create_state_2:
     compound_2 = new ProcedureCompoundTask(this);
-    compound_2->AddTask(new ChoiceTask(this, 0x9A252193, 0x7F0C21BA, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x5)));
+    compound_2->AddTask(new ChoiceTask(this, IDS_TUTORIAL_TASK_CRAFT_OVERVIEW, 0x7F0C21BA, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x5)));
     compound_2->AddTask(new InfoTask(this, 0x27A2B969, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_2->AddTask(new InfoTask(this, 0xA42613B4, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_2->AddTask(new InfoTask(this, 0x723936AB, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_2->AddTask(new InfoTask(this, 0x1F10DDC2, 0xA0D0169C, false, 2, eTelemetryChallenges_None));
+    compound_2->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_CRAFT_CREATE, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_2->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_CRAFT_CRAFT_TABLE, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_2->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_CRAFT_INVENTORY, 0xA0D0169C, false, 2, eTelemetryChallenges_None));
     compound_2->AddTask(new InfoTask(this, 0xB135E36, 0xFC8730E4, false, 2, eTelemetryChallenges_None));
-    compound_2->AddTask(new InfoTask(this, 0x3AF6EF3E, 0xAF244F78, false, 2, eTelemetryChallenges_None));
+    compound_2->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_CRAFT_INGREDIENTS, 0xAF244F78, false, 2, eTelemetryChallenges_None));
     addTask(eTutorial_State_CraftingMenu, compound_2);
     if (!enabledValue)
         goto check_state_4;
@@ -646,8 +650,8 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
     compound_3 = new ProcedureCompoundTask(this);
     compound_3->AddTask(new ChoiceTask(this, 0x6CE6D19, 0x4C0CF470, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x6)));
     compound_3->AddTask(new InfoTask(this, 0x9BB6558D, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_3->AddTask(new InfoTask(this, 0xC6B63D93, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_3->AddTask(new InfoTask(this, 0x5466C434, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_3->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_FURNACE_FUELS, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_3->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_FURNACE_INGREDIENTS, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_FurnaceMenu, compound_3);
     if (!enabledValue)
         goto check_state_0x12;
@@ -664,8 +668,8 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
         goto check_state_0x14;
     create_state_0x14:
     compound_5 = new ProcedureCompoundTask(this);
-    compound_5->AddTask(new ChoiceTask(this, 0x18A28D4E, 0x690D3FD7, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x15)));
-    compound_5->AddTask(new InfoTask(this, 0xD1EDBF15, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_5->AddTask(new ChoiceTask(this, IDS_TUTORIAL_TASK_ENCHANTING_MENU_OVERVIEW, 0x690D3FD7, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x15)));
+    compound_5->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_ENCHANTING_MENU_START, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_5->AddTask(new InfoTask(this, 0xCA85FE57, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_5->AddTask(new InfoTask(this, 0x244CF0FE, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_5->AddTask(new InfoTask(this, 0x731167E6, 0x3F9463F, true, 0, eTelemetryChallenges_None));
@@ -679,7 +683,7 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
     compound_6->AddTask(new InfoTask(this, 0xC9DE21A, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_6->AddTask(new InfoTask(this, 0x4F577027, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_6->AddTask(new InfoTask(this, 0x5E84B4A1, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_6->AddTask(new InfoTask(this, 0x87DCC839, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_6->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_ANVIL_MENU_ENCHANT, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_6->AddTask(new InfoTask(this, 0x190AE839, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_6->AddTask(new InfoTask(this, 0x67CD9B1F, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_6->AddTask(new InfoTask(this, 0x51ED81D1, 0x3F9463F, true, 0, eTelemetryChallenges_None));
@@ -688,30 +692,30 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
         goto check_state_0x19;
     create_state_0x19:
     compound_7 = new ProcedureCompoundTask(this);
-    compound_7->AddTask(new ChoiceTask(this, 0x821611E6, 0x789B40B7, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x30)));
+    compound_7->AddTask(new ChoiceTask(this, IDS_TUTORIAL_TASK_TRADING_MENU_OVERVIEW, 0x789B40B7, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x30)));
     compound_7->AddTask(new InfoTask(this, 0x54091CCD, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_7->AddTask(new InfoTask(this, 0xB7242ECF, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_7->AddTask(new InfoTask(this, 0x7C03162F, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_7->AddTask(new InfoTask(this, 0x7B8B7B8F, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    compound_7->AddTask(new InfoTask(this, 0x4896FB7B, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    compound_7->AddTask(new InfoTask(this, IDS_TUTORIAL_TASK_TRADING_MENU_TRADE, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_TradingMenu, compound_7);
     if (!enabledValue)
         goto check_state_0x1D;
     create_state_0x1D:
-    addTask(eTutorial_State_Horse, new HorseChoiceTask(this, 0x4DCDE902, 0x80BBE3E3, 0xDB419510, 0xE9B948F4, 0x7595B01B, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x32)));
-    addTask(eTutorial_State_Horse, new InfoTask(this, 0x8DFE2C47, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_Horse, new HorseChoiceTask(this, IDS_TUTORIAL_TASK_HORSE_OVERVIEW, IDS_TUTORIAL_TASK_DONKEY_OVERVIEW, IDS_TUTORIAL_TASK_MULE_OVERVIEW, IDS_TUTORIAL_TASK_LLAMA_OVERVIEW, 0x7595B01B, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x32)));
+    addTask(eTutorial_State_Horse, new InfoTask(this, IDS_TUTORIAL_TASK_HORSE_INTRO, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_Horse, new InfoTask(this, 0xCE6D12A7, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_Horse, new InfoTask(this, 0xFB9D6DB1, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_Horse, new InfoTask(this, 0x86C858BB, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_Horse, new InfoTask(this, 0x32AEB3B, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    addTask(eTutorial_State_Horse, new InfoTask(this, 0xD0B71241, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    addTask(eTutorial_State_Horse, new InfoTask(this, 0xB916B23D, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_Horse, new InfoTask(this, IDS_TUTORIAL_TASK_HORSE_SADDLES, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_Horse, new InfoTask(this, IDS_TUTORIAL_TASK_HORSE_SADDLEBAGS, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_Horse, new InfoTask(this, 0x3ED848DD, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     if (!enabledValue)
         goto check_state_0x1E;
     create_state_0x1E:
     compound_9 = new ProcedureCompoundTask(this);
-    compound_9->AddTask(new ChoiceTask(this, 0x7C8AEDB6, 0xEB9A80F7, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x33)));
+    compound_9->AddTask(new ChoiceTask(this, IDS_TUTORIAL_TASK_HORSE_MENU_OVERVIEW, 0xEB9A80F7, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x33)));
     compound_9->AddTask(new InfoTask(this, 0xE4582E6F, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_9->AddTask(new InfoTask(this, 0xAC55BC2F, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_9->AddTask(new InfoTask(this, 0xAD1032A9, 0x3F9463F, true, 0, eTelemetryChallenges_None));
@@ -720,7 +724,7 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
         goto check_state_0x24;
     create_state_0x24:
     compound_10 = new ProcedureCompoundTask(this);
-    compound_10->AddTask(new ChoiceTask(this, 0xECBB7BAC, 0xB0ED8A95, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x35)));
+    compound_10->AddTask(new ChoiceTask(this, IDS_TUTORIAL_TASK_FIREWORK_MENU_OVERVIEW, 0xB0ED8A95, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x35)));
     compound_10->AddTask(new InfoTask(this, 0x8C159652, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_10->AddTask(new InfoTask(this, 0xFE1D058D, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_10->AddTask(new InfoTask(this, 0x22299E7D, 0x3F9463F, true, 0, eTelemetryChallenges_None));
@@ -735,7 +739,7 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
         goto check_state_0x22;
     create_state_0x22:
     compound_11 = new ProcedureCompoundTask(this);
-    compound_11->AddTask(new ChoiceTask(this, 0x6FF43521, 0xBA245C8, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x37)));
+    compound_11->AddTask(new ChoiceTask(this, IDS_TUTORIAL_TASK_BEACON_MENU_OVERVIEW, 0xBA245C8, true, 0, 1, eTutorial_CompletionAction_CompleteState, static_cast<ETelemetryChallenges>(0x37)));
     compound_11->AddTask(new InfoTask(this, 0x934C3015, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_11->AddTask(new InfoTask(this, 0xF87CF280, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     compound_11->AddTask(new InfoTask(this, 0xC6447326, 0x3F9463F, true, 0, eTelemetryChallenges_None));
@@ -743,26 +747,26 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
     if (!enabledValue)
         goto check_state_5;
     create_state_5:
-    addTask(eTutorial_State_RidingMinecart, new ChoiceTask(this, 0x97628A42, 0x16DFAE83, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x8)));
-    addTask(eTutorial_State_RidingMinecart, new InfoTask(this, 0x6D8D73AC, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    addTask(eTutorial_State_RidingMinecart, new InfoTask(this, 0xF965D585, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_RidingMinecart, new ChoiceTask(this, IDS_TUTORIAL_TASK_MINECART_OVERVIEW, 0x16DFAE83, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x8)));
+    addTask(eTutorial_State_RidingMinecart, new InfoTask(this, IDS_TUTORIAL_TASK_MINECART_RAILS, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_RidingMinecart, new InfoTask(this, IDS_TUTORIAL_TASK_MINECART_POWERED_RAILS, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_RidingMinecart, new InfoTask(this, 0x5C8E319F, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     if (!enabledValue)
         goto check_state_6;
     create_state_6:
-    addTask(eTutorial_State_RidingBoat, new ChoiceTask(this, 0x25C06AF9, 0x811A4288, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x9)));
+    addTask(eTutorial_State_RidingBoat, new ChoiceTask(this, IDS_TUTORIAL_TASK_BOAT_OVERVIEW, 0x811A4288, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x9)));
     addTask(eTutorial_State_RidingBoat, new InfoTask(this, 0xE6A88FAF, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     if (!enabledValue)
         goto check_state_7;
     create_state_7:
-    addTask(eTutorial_State_Fishing, new ChoiceTask(this, 0x2C532B5D, 0x1B284F34, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x7)));
-    addTask(eTutorial_State_Fishing, new InfoTask(this, 0xC7681D23, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    addTask(eTutorial_State_Fishing, new InfoTask(this, 0x4F274F92, 0x3F9463F, true, 0, eTelemetryChallenges_None));
-    addTask(eTutorial_State_Fishing, new InfoTask(this, 0x314B8DCE, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_Fishing, new ChoiceTask(this, IDS_TUTORIAL_TASK_FISHING_OVERVIEW, 0x1B284F34, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0x7)));
+    addTask(eTutorial_State_Fishing, new InfoTask(this, IDS_TUTORIAL_TASK_FISHING_CAST, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_Fishing, new InfoTask(this, IDS_TUTORIAL_TASK_FISHING_FISH, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_Fishing, new InfoTask(this, IDS_TUTORIAL_TASK_FISHING_USES, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     if (!enabledValue)
         goto check_state_8;
     create_state_8:
-    addTask(eTutorial_State_NameTag, new InfoTask(this, 0xAD017F4C, 0x3F9463F, true, 0x3A, eTelemetryChallenges_None));
+    addTask(eTutorial_State_NameTag, new InfoTask(this, IDS_TUTORIAL_TASK_NAMETAG_OVERVIEW, 0x3F9463F, true, 0x3A, eTelemetryChallenges_None));
     if (!enabledValue)
         goto check_state_9;
     goto add_state_9;
@@ -816,7 +820,7 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
         goto add_state_9;
     goto add_state_f;
     add_state_9:
-    addTask(eTutorial_State_Bed, new ChoiceTask(this, 0xA76E95BA, 0x2C631D03, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0xA)));
+    addTask(eTutorial_State_Bed, new ChoiceTask(this, IDS_TUTORIAL_TASK_BED_OVERVIEW, 0x2C631D03, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0xA)));
     addTask(eTutorial_State_Bed, new InfoTask(this, 0x54D286F0, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_Bed, new InfoTask(this, 0xA62DA153, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     if (enabledValue)
@@ -824,8 +828,8 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
     add_state_f:
     if (!isStateCompleted(eTutorial_State_FoodBar))
     {
-    addTask(eTutorial_State_FoodBar, new ChoiceTask(this, 0x82BFAADD, 0x2B6F086C, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0xD)));
-    addTask(eTutorial_State_FoodBar, new InfoTask(this, 0x67613737, 0x3F9463F, true, 0, eTelemetryChallenges_None));
+    addTask(eTutorial_State_FoodBar, new ChoiceTask(this, IDS_TUTORIAL_TASK_FOOD_BAR_OVERVIEW, 0x2B6F086C, true, 0, 1, eTutorial_CompletionAction_CompleteStateAndConstraints, static_cast<ETelemetryChallenges>(0xD)));
+    addTask(eTutorial_State_FoodBar, new InfoTask(this, IDS_TUTORIAL_TASK_FOOD_BAR_DEPLETE, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_FoodBar, new InfoTask(this, 0xD756C6A6, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     addTask(eTutorial_State_FoodBar, new InfoTask(this, 0x642C1BB4, 0x3F9463F, true, 0, eTelemetryChallenges_None));
     }
@@ -842,6 +846,7 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
         {
             _TutorialPopupInfo info;
             info.scene = currentScene;
+            info.tutorial = this;
             gConsoleUIController.SetTutorialDescription(playerId, &info);
         }
         delete currentMessage;
@@ -896,9 +901,11 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
         info.description = description.c_str();
         info.icon = details->itemInstance;
         info.iconItemId = details->itemId;
+        info.iconAuxValue = details->itemAuxValue;
         info.showTitle = details->repeat;
         info.showExitScreenshot = details->unknown;
-        info.descriptionId = details->state;
+        info.displayTime = details->state;
+        info.tutorial = this;
         gConsoleUIController.SetTutorialDescription(playerId, &info);
     }
 
@@ -910,10 +917,16 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
 
 void Tutorial::setCompleted(int completionId)
 {
-    if (getCompleted(completionId) == 0)
+    unsigned int index = static_cast<unsigned int>(-1);
+    for (std::vector<int>::const_iterator it = gTutorialCompletionIds.begin();
+         it != gTutorialCompletionIds.end(); ++it)
     {
-        completedStates.push_back((eTutorial_State)completionId);
+        ++index;
+        if (*it == completionId)
+            break;
     }
+    if (index < 0x200)
+        GameSettings::SetTutorialCompletionFlag(playerId, static_cast<int>(index));
 }
 
 void Tutorial::setHintCompleted(eTutorial_Hint hint)
@@ -921,13 +934,15 @@ void Tutorial::setHintCompleted(eTutorial_Hint hint)
     setCompleted((int)hint);
 }
 
-unsigned int Tutorial::setHintCompleted(TutorialHint* hint)
+void Tutorial::setHintCompleted(TutorialHint* hint)
 {
-    if (hint == NULL)
+    if (hint->hint != eTutorial_Hint_General)
     {
-        return 0;
+        setHintCompleted(hint->hint);
+        std::vector<TutorialHint*>& hints = stateHints[currentState];
+        hints.erase(std::find(hints.begin(), hints.end(), hint));
+        delete hint;
     }
-    return 1;
 }
 
 int Tutorial::setMessage(TutorialHint* hint, PopupMessageDetails* details)
@@ -1288,18 +1303,53 @@ void Tutorial::setStateCompleted(eTutorial_State state)
 
 void Tutorial::changeTutorialState(eTutorial_State state, UIScene* scene)
 {
-    if (currentState == state)
+    if (state == currentState)
     {
+        if (scene == NULL)
+            gConsoleUIController.RemoveInteractSceneReference(playerId, currentScene);
         currentScene = scene;
         return;
     }
-    setMessage((PopupMessageDetails*)NULL);
-    currentScene = scene;
-    currentState = state;
-    if (gameModeConstraints != NULL)
+
+    if (!enabled && GameSettings::GetGameSettings(playerId, eGameSetting_Hints) == 0)
+        return;
+
+    if (state != eTutorial_State_Gameplay && stateTasks[state].empty() &&
+        !gConsoleUIController.GetMenuDisplayed(playerId))
+        return;
+
+    TutorialTask* task = currentTask[currentState];
+    if (task != NULL)
     {
-        gameModeConstraints->SetCurrentState(currentState);
+        if (task->isCompleted())
+        {
+            std::vector<TutorialTask*>& tasks = stateTasks[currentState];
+            tasks.erase(std::find(tasks.begin(), tasks.end(), task));
+            if (tasks.empty())
+            {
+                currentTask[currentState] = NULL;
+                task = NULL;
+            }
+            else
+            {
+                task = tasks.front();
+                currentTask[currentState] = task;
+                task->setAsCurrentTask(true);
+            }
+        }
+        if (task != NULL)
+            task->onStateChange(state);
     }
+    setMessage((PopupMessageDetails*)NULL);
+
+    if (scene == NULL)
+        gConsoleUIController.RemoveInteractSceneReference(playerId, currentScene);
+    currentScene = scene;
+
+    for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin(); it < stateTasks[state].end(); ++it)
+        (*it)->onStateChange(state);
+    currentState = state;
+    gameModeConstraints->SetCurrentState(state);
     popupPending = false;
     stateChanged = true;
 }
@@ -1572,7 +1622,7 @@ unsigned int Tutorial::onSelectedItemChanged(not_null_ptr<ItemInstance> item)
         changeTutorialState(eTutorial_State_Fishing, NULL);
         return 0;
     }
-    if (itemType == Items::carrotOnAStick)
+    if (itemType == Items::nameTag)
     {
         changeTutorialState(eTutorial_State_NameTag, NULL);
         return 0;
@@ -1697,13 +1747,9 @@ void Tutorial::onGameModeChange(eTutorial_GameMode newGameMode)
     hintShown = false;
 }
 
-unsigned int Tutorial::staticCtor()
+void Tutorial::staticCtor()
 {
-    if (gTutorialCompletionIds.empty())
-    {
-        const unsigned int count = sizeof(gTutorialCompletionIdValues) / sizeof(gTutorialCompletionIdValues[0]);
-        for (unsigned int i = 0; i < count; ++i)
-            gTutorialCompletionIds.push_back(gTutorialCompletionIdValues[i]);
-    }
-    return 0;
+    const unsigned int count = sizeof(gTutorialCompletionIdValues) / sizeof(gTutorialCompletionIdValues[0]);
+    for (unsigned int i = 0; i < count; ++i)
+        gTutorialCompletionIds.push_back(gTutorialCompletionIdValues[i]);
 }

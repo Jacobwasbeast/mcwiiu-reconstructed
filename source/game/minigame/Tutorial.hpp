@@ -415,7 +415,7 @@ public:
     unsigned int setMessage(PopupMessageDetails* details);
     void setCompleted(int completionId);
     void setHintCompleted(eTutorial_Hint hint);
-    unsigned int setHintCompleted(TutorialHint* hint);
+    void setHintCompleted(TutorialHint* hint);
     int setMessage(TutorialHint* hint, PopupMessageDetails* details);
     unsigned int isSelectedItemState();
     virtual void tick();
@@ -446,7 +446,7 @@ public:
     unsigned int onRideEntity(boost::shared_ptr<Entity> entity);
     void onEffectChanged(MobEffect* effect, bool added);
     void onGameModeChange(eTutorial_GameMode gameMode);
-    static unsigned int staticCtor();
+    static void staticCtor();
 
     std::vector<TutorialTask*>* getTasks();
     int getCurrentTaskIndex();

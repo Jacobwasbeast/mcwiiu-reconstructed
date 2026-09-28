@@ -5,7 +5,9 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-ScoreImprovementMedal::~ScoreImprovementMedal() = default;
+ScoreImprovementMedal::~ScoreImprovementMedal()
+{
+}
 
 double ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
 {

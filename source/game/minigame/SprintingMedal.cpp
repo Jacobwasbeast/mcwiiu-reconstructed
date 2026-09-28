@@ -2,7 +2,9 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-SprintingMedal::~SprintingMedal() = default;
+SprintingMedal::~SprintingMedal()
+{
+}
 
 double SprintingMedal::GetScore(PlayerStats* playerStats) const
 {

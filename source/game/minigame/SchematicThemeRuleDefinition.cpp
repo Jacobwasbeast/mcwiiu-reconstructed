@@ -6,7 +6,9 @@
 #include "game/core/SchematicTheme.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
-SchematicThemeRuleDefinition::SchematicThemeRuleDefinition() = default;
+SchematicThemeRuleDefinition::SchematicThemeRuleDefinition()
+{
+}
 
 SchematicThemeRuleDefinition::~SchematicThemeRuleDefinition()
 {
@@ -66,7 +68,9 @@ SchematicThemeRuleDefinition::AssetRuleDef::AssetRuleDef()
     width->setMax(128);
 }
 
-SchematicThemeRuleDefinition::AssetRuleDef::~AssetRuleDef() = default;
+SchematicThemeRuleDefinition::AssetRuleDef::~AssetRuleDef()
+{
+}
 
 ConsoleGameRules::EGameRuleType SchematicThemeRuleDefinition::AssetRuleDef::getActionType()
 {
