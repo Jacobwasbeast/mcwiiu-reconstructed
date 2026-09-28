@@ -21,7 +21,7 @@ public:
     virtual float getY();
     virtual float getZ();
     virtual SoundInstance::EAttenuation getAttenuation();
-    virtual ~AbstractSoundInstance();
+    virtual ~AbstractSoundInstance() {}
 
 protected:
     SoundSource::ESoundSource source;

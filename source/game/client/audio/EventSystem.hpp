@@ -1,15 +1,15 @@
 #ifndef GAME_CLIENT_AUDIO_EVENTSYSTEM_HPP
 #define GAME_CLIENT_AUDIO_EVENTSYSTEM_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 class EventSystem
 {
 public:
     struct Handle
     {
-        std::uint32_t index;
-        std::uint32_t generation;
+        uint32_t index;
+        uint32_t generation;
     };
 
     unsigned char m_reserved[0x58];

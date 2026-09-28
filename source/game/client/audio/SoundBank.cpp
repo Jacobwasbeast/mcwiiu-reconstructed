@@ -2,23 +2,23 @@
 
 #include "game/util/LegacyUtilityFunctions.hpp"
 
-#include <cstdint>
+#include <stdint.h>
 
-std::int32_t FindAsset(
-    SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, std::int32_t count)
+int32_t FindAsset(
+    SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, int32_t count)
 {
     while (count != 0)
     {
-        const std::int32_t midpoint = count / 2;
+        const int32_t midpoint = count / 2;
         SoundBank::AssetEntry* entry = entries + midpoint;
         const char* entryName = reinterpret_cast<const char*>(soundBank) + entry->nameOffset;
         const char* searchName = name;
-        std::int32_t comparison = 0;
+        int32_t comparison = 0;
 
         while (true)
         {
-            const std::int32_t entryCharacter = ourtoupper(*entryName);
-            const std::int32_t searchCharacter = ourtoupper(*searchName);
+            const int32_t entryCharacter = ourtoupper(*entryName);
+            const int32_t searchCharacter = ourtoupper(*searchName);
 
             if (searchCharacter < entryCharacter)
             {
@@ -32,7 +32,7 @@ std::int32_t FindAsset(
             }
             if (entryCharacter == 0)
             {
-                return static_cast<std::int32_t>(reinterpret_cast<std::uintptr_t>(entry));
+                return static_cast<int32_t>(reinterpret_cast<uintptr_t>(entry));
             }
 
             ++entryName;

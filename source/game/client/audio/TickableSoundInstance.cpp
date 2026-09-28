@@ -9,6 +9,3 @@ TickableSoundInstance::TickableSoundInstance(const TickableSoundInstance& other)
 {
 }
 
-TickableSoundInstance::~TickableSoundInstance()
-{
-}

@@ -26,10 +26,6 @@ AbstractSoundInstance::AbstractSoundInstance(const AbstractSoundInstance& other)
 {
 }
 
-AbstractSoundInstance::~AbstractSoundInstance()
-{
-}
-
 const SoundEvent* AbstractSoundInstance::getSound()
 {
     return this->sound;

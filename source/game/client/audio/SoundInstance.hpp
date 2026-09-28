@@ -32,7 +32,7 @@ public:
     {
     }
 
-    virtual ~SoundInstance();
+    virtual ~SoundInstance() {}
 
     virtual SoundInstance* getDRCClone() const = 0;
     virtual const SoundEvent* getSound() = 0;

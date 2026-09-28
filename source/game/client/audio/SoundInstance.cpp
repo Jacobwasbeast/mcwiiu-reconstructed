@@ -2,10 +2,6 @@
 
 const SoundInstance::EAttenuation SoundInstance::DEFAULT_ATTENUATION = eAttenuation_Linear;
 
-SoundInstance::~SoundInstance()
-{
-}
-
 void SoundInstance::setSIState(eSoundState state)
 {
     this->state = state;

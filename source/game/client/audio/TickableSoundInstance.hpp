@@ -12,7 +12,7 @@ public:
     virtual bool isStopped() = 0;
     virtual void stop() = 0;
     virtual void tick() = 0;
-    virtual ~TickableSoundInstance();
+    virtual ~TickableSoundInstance() {}
 };
 
 #endif

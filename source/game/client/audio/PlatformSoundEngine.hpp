@@ -9,7 +9,7 @@ public:
     typedef void (*UpdateSoundCallback)(void* userData, void* soundInstance, bool* is3D, int soundType, float* x, float* y, float* z, float* volume);
     typedef bool (*RouteToDRCCallback)(void* userData, void* soundInstance);
 
-    virtual ~PlatformSoundEngine();
+    virtual ~PlatformSoundEngine() {}
 
     virtual void init(char* soundBankPath, SoundBankLoadedCallback soundBankLoaded) = 0;
     virtual void tick(void* userData, float listenerX, float listenerY, float listenerZ, float listenerForwardX, float listenerForwardY, float listenerForwardZ, ConfigureSoundCallback configureSound, UpdateSoundCallback updateSound, RouteToDRCCallback routeToDRC, bool* systemMusicPlaying) = 0;

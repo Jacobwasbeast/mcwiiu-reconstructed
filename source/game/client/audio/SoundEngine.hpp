@@ -3,23 +3,36 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/client/audio/ConsoleSoundEngine.hpp"
+class C4JThreadImpl;
 class File;
+class Mob;
 class Options;
 class Random;
 class SoundEvent;
 class SoundInstance;
-class MultiplayerLocalPlayer;
 class PlatformSoundEngine;
 struct AudioInfo
 {
-    unsigned char padding0[12];
-    float distance;
-    float playbackRate;
+    float x;
+    float y;
+    float z;
+    float volume;
+    float pitch;
     const SoundEvent* soundEvent;
-    unsigned char padding1;
-    unsigned char routeToDRC;
-    unsigned char padding2[2];
+    bool is3D;
+    bool isUI;
+    bool routeToDRC;
     SoundInstance* instance;
+};
+struct ListenerInfo
+{
+    bool valid;
+    float x;
+    float y;
+    float z;
+    float forwardX;
+    float forwardY;
+    float forwardZ;
 };
 struct SoundTrack
 {
@@ -31,17 +44,34 @@ class SoundEngine : public ConsoleSoundEngine
 public:
     enum eMusicType
     {
-        eMusicType_Overworld,
         eMusicType_Nether,
-        eMusicType_End,
+        eMusicType_1,
         eMusicType_Menu,
-        eMusicType_Boss,
-        eMusicType_5,
-        eMusicType_6,
-        eMusicType_7,
-        eMusicType_8,
-        eMusicType_9,
-        eMusicType_None
+        eMusicType_3,
+        eMusicType_End,
+        eMusicType_Creative,
+        eMusicType_Battle,
+        eMusicType_Tumble,
+        eMusicType_Glide,
+        eMusicType_Build,
+        eMusicType_Overworld
+    };
+    enum eMusicStreamState
+    {
+        eMusicStreamState_Idle,
+        eMusicStreamState_Stop,
+        eMusicStreamState_Stopping,
+        eMusicStreamState_Opening,
+        eMusicStreamState_OpeningCancel,
+        eMusicStreamState_Play,
+        eMusicStreamState_Playing,
+        eMusicStreamState_Completed
+    };
+    enum
+    {
+        STREAM_FIRST_CD = 87,
+        STREAM_COUNT = 99,
+        MAX_LISTENERS = 4
     };
     SoundEngine();
     virtual ~SoundEngine();
@@ -60,7 +90,7 @@ public:
                                ConsoleSoundEngine::eAudioDelayType);
     virtual void playUI(const SoundEvent*, float, float);
     void updateMusicVolume(float);
-    static unsigned int OpenStreamThreadProc(void*);
+    static int OpenStreamThreadProc(void*);
     double getDistanceScaler(AudioInfo*);
     static void UpdateSound(void*, void*, bool*, int, float*, float*, float*, float*);
     static void ConfigureSound(void*, void*, bool*, float*, float*, float*, float*, float*, float*);
@@ -69,7 +99,7 @@ public:
     virtual void init(Options*);
     static bool RouteToDRC(void*, void*);
     void updateMiles();
-    virtual void tick(boost::shared_ptr<MultiplayerLocalPlayer>*, float);
+    virtual void tick(boost::shared_ptr<Mob>*, float);
     virtual void add(const std::wstring&, File*);
     virtual void addMusic(const std::wstring&, File*);
     virtual void addStreaming(const std::wstring&, File*);
@@ -78,65 +108,45 @@ public:
     void updateSoundEffectVolume(float);
     bool isStreamingWavebankReady();
 
+    static char m_szMusicPath[8];
+    static const char* m_szStreamFileA[STREAM_COUNT];
+
 private:
-    unsigned char m_listenerEnabled;
-    float m_listenerX;
-    float m_listenerY;
-    float m_listenerZ;
-    float m_listenerForwardX;
-    float m_listenerForwardY;
-    float m_listenerForwardZ;
-    unsigned char m_musicListenerEnabled;
-    float m_musicX;
-    float m_musicY;
-    float m_musicZ;
-    float m_musicForwardX;
-    float m_musicForwardY;
-    float m_musicForwardZ;
-    unsigned char m_thirdListenerEnabled;
-    float m_thirdX;
-    float m_thirdY;
-    float m_thirdZ;
-    float m_thirdForwardX;
-    float m_thirdForwardY;
-    float m_thirdForwardZ;
-    unsigned char m_streamListenerEnabled;
-    float m_streamListenerX;
-    float m_streamListenerY;
-    float m_streamListenerZ;
-    float m_streamListenerForwardX;
-    float m_streamListenerForwardY;
-    float m_streamListenerForwardZ;
-    int m_activeListenerCount;
+    ListenerInfo m_listeners[MAX_LISTENERS];
+    int m_validListenerCount;
     Random* m_random;
-    int m_musicTrack;
-    int m_musicDelayTicks;
-    unsigned char m_musicActive;
-    unsigned char m_musicActivePadding[3];
-    int m_musicPlayState;
-    int m_musicPlayAux;
-    int m_musicDelayReset;
-    float m_streamingX;
-    float m_streamingY;
-    float m_streamingZ;
-    float m_streamingVolume;
-    float m_streamingPitch;
-    float m_streamingField14;
-    unsigned char m_streamingIs3D;
-    unsigned char m_streamingPayloadPadding[3];
-    SoundInstance* m_streamingInstance;
-    unsigned char m_platformPadding2[36];
+    int m_musicID;
+    int m_musicDelay;
+    bool m_waitingForMusicStartEvent;
+    int m_streamState;
+    int m_streamType;
+    int m_fadeOutTicks;
+    AudioInfo m_streamingAudioInfo;
+    std::wstring m_unusedString;
     PlatformSoundEngine* m_platformSoundEngine;
-    void* m_openStreamThread;
-    char m_streamPathBuffer[184];
-    int m_currentTrack;
-    unsigned char m_currentTrackPadding[24];
-    void* m_platformState;
-    unsigned char m_platformStatePadding[132];
-    int m_trackRanges[18];
-    int m_trackCount;
-    unsigned char* m_trackUsed;
-    SoundTrack* m_trackData;
-    int m_streamingTrackIndex;
+    C4JThreadImpl* m_openStreamThread;
+    char m_streamName[256];
+    int m_overworldFirst;
+    int m_overworldLast;
+    int m_netherFirst;
+    int m_netherLast;
+    int m_endFirst;
+    int m_endLast;
+    int m_creativeFirst;
+    int m_creativeLast;
+    int m_menuFirst;
+    int m_menuLast;
+    int m_battleFirst;
+    int m_battleLast;
+    int m_tumbleFirst;
+    int m_tumbleLast;
+    int m_glideFirst;
+    int m_glideLast;
+    int m_buildFirst;
+    int m_buildLast;
+    int m_firstCDTrack;
+    unsigned char* m_trackPlayed;
+    SoundTrack* m_tracks;
+    int m_lastTrack;
 };
 #endif
