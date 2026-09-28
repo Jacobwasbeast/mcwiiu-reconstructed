@@ -4,7 +4,7 @@
 class C4JEventQueue
 {
 public:
-    virtual ~C4JEventQueue();
+    virtual ~C4JEventQueue() {}
     virtual void setProcessor(int processor) = 0;
     virtual void setPriority(int priority) = 0;
     virtual void sendEvent(void* event) = 0;

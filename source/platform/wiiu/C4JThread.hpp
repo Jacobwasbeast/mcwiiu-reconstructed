@@ -6,7 +6,7 @@
 class C4JThread
 {
 public:
-    virtual ~C4JThread();
+    virtual ~C4JThread() {}
     virtual void Run() = 0;
     virtual uint8_t isRunning() = 0;
     virtual uint8_t hasStarted() = 0;

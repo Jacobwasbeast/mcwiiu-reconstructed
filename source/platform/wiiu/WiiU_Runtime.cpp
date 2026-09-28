@@ -117,7 +117,8 @@ void* operator new(std::size_t size)
         {
             return address;
         }
-        std::new_handler handler = std::get_new_handler();
+        std::new_handler handler = std::set_new_handler(0);
+        std::set_new_handler(handler);
         if (handler == 0)
         {
             return 0;
@@ -126,7 +127,7 @@ void* operator new(std::size_t size)
     }
 }
 
-void operator delete(void* address) noexcept
+void operator delete(void* address) throw()
 {
     if (address != 0)
     {
@@ -139,7 +140,7 @@ void* operator new[](std::size_t size)
     return ::operator new(size);
 }
 
-void operator delete[](void* address) noexcept
+void operator delete[](void* address) throw()
 {
     ::operator delete(address);
 }

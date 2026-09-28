@@ -46,6 +46,8 @@ static bool s_cancelConnect;
 static bool s_appSuspended;
 static bool s_handlingBootInvite;
 
+bool NQRNetworkManager_WiiU::s_applicationConnected;
+
 extern "C" void checkPiaCoreToUse();
 
 static nn::nex::DataStoreClientInterface* s_dataStoreClient;
@@ -266,7 +268,7 @@ NQRNetworkManager_WiiU::NQRNetworkManager_WiiU(INQRNetworkManagerListener* liste
     : m_friendPresenceUpdated(false), m_connectThread(NULL), m_tickEvent(NULL), m_tickThread(NULL),
       m_listener(listener), m_internalState(eNQRNetworkManagerInternalState_Uninitialised),
       m_state(eNQRNetworkManagerState_Uninitialised), m_initialised(false), m_host(false),
-      m_receiving(false), m_searchCriteria(NULL), m_lastNetworkError(0), m_applicationConnected(false), m_online(false),
+      m_receiving(false), m_searchCriteria(NULL), m_lastNetworkError(0), m_online(false),
       m_sessionId(0), m_localStationId(0), m_hostStationId(0), m_matchmaking(false), m_localGame(false), m_roomAttributes(NULL), m_roomAttributeCount(0), m_roomPlayerMask(0), m_roomPlayerCount(1), m_localPlayerCount(0), m_localPlayersJoined(0), m_friendSearchBusy(false),
       m_friendPresenceCount(0), m_nextSmallId(0),
       m_nexContext(NULL), m_nexAsyncProcess(eNEXAsyncProcess_None), m_pendingSessionId(0),
@@ -310,7 +312,7 @@ int NQRNetworkManager_WiiU::ConnectOnlineNintendo_Returned(void* context, bool c
     NQRNetworkManager_WiiU* manager = static_cast<NQRNetworkManager_WiiU*>(context);
     if (manager != NULL)
     {
-        manager->m_applicationConnected = connected;
+        s_applicationConnected = connected;
         if (connected)
             manager->InitialiseAfterOnline();
         else
@@ -698,7 +700,7 @@ void NQRNetworkManager_WiiU::SetState(eNQRNetworkManagerInternalState state)
 void NQRNetworkManager_WiiU::TickSendQueue()
 {
     EnterCriticalSection(&m_sendQueueMutex);
-    if (!m_sendQueue.empty() && m_applicationConnected)
+    if (!m_sendQueue.empty() && s_applicationConnected)
         m_sendQueue.pop_front();
     LeaveCriticalSection(&m_sendQueueMutex);
 }
@@ -707,7 +709,7 @@ void NQRNetworkManager_WiiU::Pia_InitializeCommon(unsigned char*, unsigned int, 
 {
     m_host = host;
     m_online = online;
-    m_applicationConnected = true;
+    s_applicationConnected = true;
     AddConnectedStation(stationId);
 }
 
@@ -786,9 +788,9 @@ void NQRNetworkManager_WiiU::InitialiseAfterOnline()
 
 void NQRNetworkManager_WiiU::OnlineCheck()
 {
-    if (m_applicationConnected && !m_initialised)
+    if (s_applicationConnected && !m_initialised)
         InitialiseAfterOnline();
-    else if (!m_applicationConnected && m_initialised)
+    else if (!s_applicationConnected && m_initialised)
         SetApplicationDisconnected();
 }
 
@@ -810,7 +812,7 @@ void NQRNetworkManager_WiiU::FriendPresenceLoginCallback(nn::Result result, void
         if (!online || result != 0)
         {
             s_networkManager->m_lastNetworkError = static_cast<int>(s_lastPiaErrorCode);
-            s_networkManager->m_applicationConnected = false;
+            s_applicationConnected = false;
         }
         s_networkManager->m_friendPresenceUpdated = true;
     }
@@ -841,7 +843,7 @@ void NQRNetworkManager_WiiU::Session_FinalizePiaSession()
 
 void NQRNetworkManager_WiiU::Inet_FinalizePiaInet()
 {
-    m_applicationConnected = false;
+    s_applicationConnected = false;
 }
 
 void NQRNetworkManager_WiiU::Pia_FinalizeCommon()
@@ -875,7 +877,7 @@ void NQRNetworkManager_WiiU::UpdateApplicationConnected()
 {
     if (s_appSuspended)
         return;
-    if (!m_applicationConnected && m_state != eNQRNetworkManagerState_Idle)
+    if (!s_applicationConnected && m_state != eNQRNetworkManagerState_Idle)
     {
         m_lastNetworkError = 1;
         Pia_Shutdown();
@@ -1301,7 +1303,7 @@ void NQRNetworkManager_WiiU::TryToConnectOnline()
 {
     if (!s_cancelConnect)
     {
-        m_applicationConnected = true;
+        s_applicationConnected = true;
         ConnectOnlineNintendo_Returned(this, true, 0);
     }
 }
@@ -1913,13 +1915,13 @@ int NQRNetworkManager_WiiU::GetJoiningReadyPercentage()
 
 void NQRNetworkManager_WiiU::SetApplicationDisconnected()
 {
-    m_applicationConnected = false;
+    s_applicationConnected = false;
     m_online = false;
 }
 
 void NQRNetworkManager_WiiU::Pia_ShutdownForLan()
 {
-    m_applicationConnected = false;
+    s_applicationConnected = false;
     m_online = false;
     m_leaveRequested = true;
 }

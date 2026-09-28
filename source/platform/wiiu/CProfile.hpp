@@ -39,7 +39,7 @@ enum eUpsellResponse
     eUpsellResponse_None = 0
 };
 
-class CProfile
+class C_4JProfile
 {
 public:
     typedef int (*SignInUIHandler)(void*, bool, int, int);
@@ -56,6 +56,110 @@ public:
     typedef void (*UpsellHandler)(void*, eUpsellType, eUpsellResponse, int);
     typedef int (*SignInChoicesHandler)(int);
 
+    struct ProfileSignInEntry
+    {
+        int quadrant;
+        MiiDataEntry* mii;
+        bool online;
+        bool guest;
+    };
+
+    virtual void Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*) = 0;
+    virtual int GetLockedProfile() = 0;
+    virtual void SetLockedProfile(int) = 0;
+    virtual bool IsSignedIn(int) = 0;
+    virtual bool IsSignedInLive(int) = 0;
+    virtual bool IsSigningIn(int) = 0;
+    virtual bool IsGuest(int) = 0;
+    virtual int RequestSignInUI(bool, bool, bool, bool, bool, SignInUIHandler, void*, int) = 0;
+    virtual int SignInUser(MiiDataEntry*, int) = 0;
+    virtual void SignOutUser(FFLCreateID&) = 0;
+    virtual void SignOutUser(int) = 0;
+    virtual void SetUserSigningIn(int, bool) = 0;
+    virtual int DisplayOfflineProfile(OfflineProfileHandler, void*, int) = 0;
+    virtual void RequestConvertOfflineToGuestUI(OfflineProfileHandler, SignInUIHandler, void*, int) = 0;
+    virtual void SetPrimaryPlayerChanged(bool) = 0;
+    virtual int QuerySigninStatus() = 0;
+    virtual void GetXUID(int, PlayerUID*, bool) = 0;
+    virtual bool AreXUIDSEqual(PlayerUID, PlayerUID) = 0;
+    virtual bool AllowedToPlayMultiplayer(int) = 0;
+    virtual void StartTrialGame() = 0;
+    virtual void AllowedPlayerCreatedContent(int, bool, int*, int*) = 0;
+    virtual bool CanViewPlayerCreatedContent(int, bool, PlayerUID*, unsigned int) = 0;
+    virtual bool GetProfileAvatar(int, AvatarHandler, void*) = 0;
+    virtual void CancelProfileAvatarRequest() = 0;
+    virtual void SetGetStringFunc(GetStringHandler) = 0;
+    virtual void SetPlayerListTitleID(int) = 0;
+    virtual void SetFatalTrophyErrorID(int) = 0;
+    virtual int GetPrimaryPad() = 0;
+    virtual void SetPrimaryPad(int) = 0;
+    virtual void ClearGameUsers() = 0;
+    virtual wchar_t* GetMiiName(int) = 0;
+    virtual wchar_t* GetGamertag(int) = 0;
+    virtual std::wstring GetDisplayName(int) = 0;
+    virtual char* GetNetworkAccountID() = 0;
+    virtual bool IsFullVersion() = 0;
+    virtual void SetFullVersion(bool) = 0;
+    virtual void SetSignInChangeCallback(SignInChangeHandler, void*) = 0;
+    virtual void SetSignInChoicesComplete(bool, int, int) = 0;
+    virtual void SetNotificationsCallback(NotificationsHandler, void*) = 0;
+    virtual bool RegionIsNorthAmerica() = 0;
+    virtual bool LocaleIsUSorCanada() = 0;
+    virtual int GetLiveConnectionStatus() = 0;
+    virtual bool IsSystemUIDisplayed() = 0;
+    virtual void SetProfileReadErrorCallback(ProfileReadErrorHandler, void*) = 0;
+    virtual void ResetProfileProcessState() = 0;
+    virtual void Tick() = 0;
+    virtual void RegisterAward(int, int, eAwardType, int, int) = 0;
+    virtual int GetAwardId(int) = 0;
+    virtual eAwardType GetAwardType(int) = 0;
+    virtual bool CanBeAwarded(int, int) = 0;
+    virtual void Award(int, int, bool) = 0;
+    virtual bool IsAwardsFlagSet(int, int) = 0;
+    virtual void SetOnAwardHandler(AwardHandler, void*) = 0;
+    virtual void Terminate() = 0;
+    virtual void RichPresenceRegisterPresenceString(int, int) = 0;
+    virtual void RichPresenceRegisterContext(int, int) = 0;
+    virtual void RichPresenceRegisterContextString(int, int, int) = 0;
+    virtual void RichPresenceInit(int, int) = 0;
+    virtual void SetRichPresenceContextValue(int, int, int) = 0;
+    virtual void SetCurrentGameActivity(int, int, bool) = 0;
+    virtual void SetRichPresenceSettingFn(RichPresenceSettingHandler) = 0;
+    virtual void SetRichPresenceGameModeData(nn::fp::GameMode&) = 0;
+    virtual void SetFriendPresenceChangeCallback(FriendPresenceHandler, void*) = 0;
+    virtual void SetRichPresenceGetStringCallback(RichPresenceStringHandler) = 0;
+    virtual void SetFriendPresenceOnline(bool) = 0;
+    virtual void DisplayFullVersionPurchase(bool, int, int) = 0;
+    virtual void SetUpsellCallback(UpsellHandler, void*) = 0;
+    virtual void SetDebugFullOverride(bool) = 0;
+    virtual void SetNetworkStatus(bool) = 0;
+    virtual void SetNetworkStatusWithoutSigninChange(bool) = 0;
+    virtual void TryToConnectOnline() = 0;
+    virtual unsigned int GetSignedInUsersMask() = 0;
+    virtual void RefreshChatAndContentRestrictions(ProfileReadErrorHandler, void*) = 0;
+    virtual bool GetChatAndContentRestrictions(int, bool, bool*, bool*, int*) = 0;
+    virtual void SetServiceID(char*) = 0;
+    virtual void HandleNetworkTicket(int, void*) = 0;
+    virtual void SetMinimumAge(int) = 0;
+    virtual unsigned int getUserID(int) = 0;
+    virtual int getQuadrant(ACTUuid&) = 0;
+    virtual void SetSignInChoicesCallback(SignInChoicesHandler) = 0;
+    virtual std::vector<ProfileSignInEntry>* GetSignInEntries() = 0;
+    virtual void LoadAllMiiData() = 0;
+    virtual void FreeAllMiiData() = 0;
+    virtual int GetNumSysUserMiis() = 0;
+    virtual int GetNumFavouriteMiis() = 0;
+    virtual int GetNumGuestMiis() = 0;
+    virtual MiiDataEntry* GetSysUserMiiData(int) = 0;
+    virtual MiiDataEntry* GetFavouriteMiiData(int) = 0;
+    virtual MiiDataEntry* GetGuestMiiData(int) = 0;
+    virtual bool IsHasAchievementsFile(int) = 0;
+    virtual void GetLocalPlayerInfo(nn::pia::transport::Station::PlayerInfo*, int) = 0;
+};
+
+class CProfile : public C_4JProfile
+{
+public:
     enum EProfileProcessState
     {
         eProfileProcessState_Idle = 0,
@@ -91,14 +195,6 @@ public:
     struct CONTEXTVAL : public boost::unordered_map<int, int>
     {
         CONTEXTVAL();
-    };
-
-    struct ProfileSignInEntry
-    {
-        int quadrant;
-        MiiDataEntry* mii;
-        bool online;
-        bool guest;
     };
 
     struct AwardManagerTask
@@ -334,15 +430,12 @@ private:
     std::vector<ProfileSignInEntry> mSignInEntries;
     int mLockedProfile;
     std::deque<int> mSignOutQueue;
-    int mSignInRequestState;
-    int mSignInRequestResult;
     SignInUIHandler mSignInUIHandler;
     SignInChoicesHandler mSignInChoicesHandler;
     void* mSignInUIContext;
-    int mRequestedSignInQuadrant;
+    unsigned int mSignInReserved;
     bool mSignInChoicesPending;
     bool mSignInChoicesAccepted;
-    unsigned char mSignInChoicesAlignment[2];
     int mSignInChoice;
     int mSignInChoiceExtra;
     OfflineProfileHandler mOfflineProfileHandler;

@@ -366,7 +366,6 @@ unsigned long long CStorage::InitialiseProfileData(unsigned short version, unsig
     FSSetStateChangeNotification(&m_profileClient, &notification);
 
     m_profileInitialised = false;
-    m_profileUpdateRequired = false;
     m_optionsIcon = NULL;
     m_optionsIconSize = 0;
     m_profileResult = 0;
@@ -1600,7 +1599,7 @@ void CStorage::DLCOnCreate()
     m_dlcMountNameData = 0;
     m_dlcMountState = 0;
     std::memset(m_dlcProductCode, 0, sizeof(m_dlcProductCode));
-    std::memset(m_productUpgradeKey, 0, 15);
+    std::memset(m_productUpgradeKey, 0, sizeof(m_productUpgradeKey));
 }
 void CStorage::TickDLC()
 {

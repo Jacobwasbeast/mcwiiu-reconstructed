@@ -219,6 +219,7 @@ public:
     void Pia_SignalJoinSession();
     void SetLocalPlayersAndSync();
     static void ClearIsHandlingBootInvite();
+    static bool s_applicationConnected;
     void SetNQRPresenceInfoFromExtData(PresenceSyncInfo* presenceInfo, void* extData);
     void UpdateRichPresenceCustomData(void* extData, unsigned int extDataSize);
     static void MatchmakingExtDataUpdatedCallback(bool success, void* context);
@@ -284,7 +285,6 @@ private:
     bool m_receiving;
     void* m_searchCriteria;
     int m_lastNetworkError;
-    bool m_applicationConnected;
     bool m_online;
     int m_sessionId;
     unsigned long long m_localStationId;

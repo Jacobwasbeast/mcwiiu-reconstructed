@@ -1,7 +1,7 @@
 #include "platform/wiiu/CProfile.hpp"
 
 #include <cstdarg>
-#include <cstdint>
+#include <stdint.h>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
@@ -13,10 +13,10 @@
 
 #include "game/core/CAchievements.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 #if defined(RECON_NATIVE)
 #include "local_network.hpp"
-#include "platform/wiiu/WiiU_Runtime.hpp"
 #endif
 
 namespace nn
@@ -41,26 +41,6 @@ void stateChangeCallback(FSClient*, FSVolumeState, void*);
 CProfile* gProfile;
 
 static char sCountryCodeData[0x300];
-
-static std::u16string ToUtf16(const wchar_t* source)
-{
-    std::u16string result;
-    if (source == NULL)
-        return result;
-    for (const wchar_t* current = source; *current != L'\0'; ++current)
-    {
-        uint32_t codePoint = static_cast<uint32_t>(*current);
-        if (codePoint <= 0xffff)
-            result.push_back(static_cast<char16_t>(codePoint));
-        else if (codePoint <= 0x10ffff)
-        {
-            codePoint -= 0x10000;
-            result.push_back(static_cast<char16_t>(0xd800 + (codePoint >> 10)));
-            result.push_back(static_cast<char16_t>(0xdc00 + (codePoint & 0x3ff)));
-        }
-    }
-    return result;
-}
 
 PlayerUID getPlayerUID(int quadrant, bool includeOffline)
 {
@@ -189,12 +169,9 @@ CProfile::CProfile()
       mRequestFromGame(false),
       mRequestExtra(false),
       mLockedProfile(-1),
-      mSignInRequestState(0),
-      mSignInRequestResult(0),
       mSignInUIHandler(NULL),
       mSignInUIContext(NULL),
       mSignInChoicesHandler(NULL),
-      mRequestedSignInQuadrant(-1),
       mSignInChoicesPending(false),
       mSignInChoicesAccepted(false),
       mSignInChoice(0),
@@ -348,7 +325,6 @@ int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool for
     mRequestFromGame = fromGame;
     mSignInUIHandler = handler;
     mSignInUIContext = context;
-    mRequestedSignInQuadrant = quadrant;
     mSignInChoicesHandler(quadrant);
     return 0;
 }
@@ -948,29 +924,56 @@ void CProfile::SetPresenceString(int presence)
     }
 
     unsigned long long now = getSystemMilliseconds();
-    unsigned int gameModeKind;
-    std::memcpy(&gameModeKind, mGameModeData, sizeof(gameModeKind));
-    unsigned int interval = gameModeKind == 1 ? 120000 : 600000;
-    if (now - mLastPresenceUpdate <= interval && !mGameModeUpdateReady)
+    unsigned int interval = 600000;
+    if (reinterpret_cast<nn::fp::GameMode*>(mGameModeData)->joinAvailabilityFlag == 1)
+        interval = 120000;
+    long long elapsed = now - mLastPresenceUpdate;
+    if (elapsed <= interval && !mGameModeUpdateReady)
     {
-        if (!mPresenceUpdateDelay && !mPresenceUpdatePending)
+        if (!mPresenceUpdatePending)
+        {
+            DebugPrintf("Setting m_bPresenceUpdatePending = true - %ls %.02f secs since the last one\n",
+                        text.c_str(), (float)elapsed / 1000.0f);
             mPresenceUpdatePending = true;
+        }
         return;
     }
 
     nn::Result result;
-    std::u16string utf16Text = ToUtf16(text.c_str());
-    if (mGameModeUpdateReady || mPresenceUpdateDelay)
-        result = nn::fp::UpdateGameMode((nn::fp::GameMode*)mGameModeData, utf16Text.c_str(), 0);
+    if (!mGameModeUpdateReady && !mPresenceUpdateDelay)
+    {
+        DebugPrintf("nn::fp::UpdateGameModeDescription");
+        result = nn::fp::UpdateGameModeDescription(reinterpret_cast<const char16_t*>(text.c_str()));
+    }
     else
-        result = nn::fp::UpdateGameModeDescription(utf16Text.c_str());
+    {
+        DebugPrintf("nn::fp::UpdateGameMode - %ls\n", text.c_str());
+        result = nn::fp::UpdateGameMode(reinterpret_cast<nn::fp::GameMode*>(mGameModeData),
+                                        reinterpret_cast<const char16_t*>(text.c_str()), 0);
+    }
     if (result.IsSuccess())
     {
+        DebugPrintf(" succeeded %.02f secs since the last one\n", (float)elapsed / 1000.0f);
         mLastPresenceUpdate = now;
         mPresenceUpdatePending = false;
         mGameModeUpdateReady = false;
         mPresenceUpdateDelay = false;
         mCurrentPresenceString = text;
+    }
+    else
+    {
+        DebugPrintf("Failed!!!!\n");
+    }
+    unsigned int resultValue = static_cast<NNResult>(result).value;
+    unsigned int level = (resultValue >> 27) & 3;
+    unsigned int moduleMask = level == 3 ? 0x07f00000 : 0x1ff00000;
+    unsigned int descriptionMask = level == 3 ? 0x3ff : 0xfffff;
+    if ((resultValue & moduleMask) == 0x00c00000 && (resultValue & descriptionMask) > 0x31ff &&
+        (resultValue & descriptionMask) < 0x1f400)
+    {
+        unsigned int errorCode = nn::fp::ResultToErrorCode(result);
+        gProfile->DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n", "SetPresenceString", 197,
+                              errorCode / 10000, errorCode % 10000);
     }
 }
 
@@ -1278,7 +1281,7 @@ void CProfile::Award(int quadrant, int achievementId, bool)
     if (achievementId < 0 || achievementId >= 128 || achievements == NULL)
     {
         std::wstring uidString = uid.toString();
-        DebugPrintf("<CProfile::IsAwardsFlagSet> Cannot award trophy.Player '%ls', iQuad=%i, iAward=%i, pAch=%p.",
+        DebugPrintf("<CProfile::IsAwardsFlagSet> Cannot award trophy.Player '%ls', iQuad=%i, iAward=%i, pAch=%p.\n",
                     uidString.c_str(), quadrant, achievementId, achievements);
         return;
     }

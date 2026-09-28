@@ -12,7 +12,7 @@ public:
         Mode1 = 1
     };
 
-    virtual ~C4JEventArray();
+    virtual ~C4JEventArray() {}
     virtual void Set(int index) = 0;
     virtual void Clear(int index) = 0;
     virtual uint64_t SetAll() = 0;

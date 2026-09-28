@@ -168,8 +168,7 @@ int main()
     gApp.InitTime();
     BOOT_TRACE("time init done");
     static unsigned int s_profileDefaults[5];
-    static unsigned int s_profileGameData[0x1e60 / 4];
-    gProfile->Initialise(L"", L"", 0x22, 5, 4, s_profileDefaults, 0x1e60, s_profileGameData);
+    gProfile->Initialise(L"", L"", 0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
     BOOT_TRACE("profile initialised");
     gProfile->SetSignInChoicesCallback(CConsoleMinecraftApp::RequestSignInUIChoices);
     gProfile->SetNotificationsCallback(
@@ -193,7 +192,7 @@ int main()
         L"DefaultSaveThumbnail64x64.png", false);
     if (gStorage != 0)
     {
-        gStorage->InitialiseProfileData(0x22, 5, 4, s_profileDefaults, 0x1e60, s_profileGameData);
+        gStorage->InitialiseProfileData(0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
         gStorage->SetDefaultOptionsCallback(
             CMinecraftApp::DefaultOptionsCallback, &gApp);
         gStorage->SetOptionsDataCallback(
@@ -338,11 +337,11 @@ int main()
         gRenderer->Set_matrixDirty();
         gConsoleUIController.CheckMenuDisplayed();
         PIXBeginNamedEvent(timingColour, "Profile load check");
-        if (s_profileGameData[0] != 0)
+        if (gApp.mGameDefinedDataChangedBitmask != 0)
         {
             for (int player = 0; player < 4; ++player)
             {
-                if ((s_profileGameData[0] & (1u << player)) != 0)
+                if ((gApp.mGameDefinedDataChangedBitmask & (1u << player)) != 0)
                 {
                     unsigned char* data = gStorage->GetGameDefinedProfileData(player);
                     GameSettings::ClearGameSettingsChangedFlag(player);
@@ -351,7 +350,7 @@ int main()
                     minecraft->mStats[player]->parse(data);
                 }
             }
-            s_profileGameData[0] = 0;
+            gApp.mGameDefinedDataChangedBitmask = 0;
         }
         PIXEndNamedEvent();
         PIXBeginNamedEvent(timingColour, "Network manager do work #2");

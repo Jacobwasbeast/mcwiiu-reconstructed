@@ -32,14 +32,14 @@ unsigned int C4JEventImpl::WaitForSignal(int timeout)
     {
         OSWaitEvent(&m_event);
         --m_waitCount;
-        return 0;
+        return WaitSignalled;
     }
 
     int result = OSWaitEventWithTimeout(&m_event, static_cast<unsigned long long>(timeout) * 1000000ULL);
     --m_waitCount;
     if (result != 0)
     {
-        return 0;
+        return WaitSignalled;
     }
-    return 0x102;
+    return WaitTimeout;
 }

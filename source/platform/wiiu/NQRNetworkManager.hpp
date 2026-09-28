@@ -27,8 +27,10 @@ public:
         TargetDeque() {}
         ~TargetDeque() {}
 
-        TargetDeque(const TargetDeque&) = delete;
-        TargetDeque& operator=(const TargetDeque&) = delete;
+    private:
+        TargetDeque(const TargetDeque&);
+        TargetDeque& operator=(const TargetDeque&);
+    public:
 
         bool empty() const { return m_values.empty(); }
         void push_back(const T& value) { m_values.push_back(value); }

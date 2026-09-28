@@ -1,6 +1,8 @@
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/XLanguage.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -152,6 +154,22 @@ static unsigned char s_predictStack[0x20000];
 static CInput* s_inputInstance = 0;
 unsigned int g_inputPlatformFlag = 0;
 
+enum
+{
+    SCI_CAFE_LANGUAGE_JAPANESE = 0,
+    SCI_CAFE_LANGUAGE_ENGLISH = 1,
+    SCI_CAFE_LANGUAGE_FRENCH = 2,
+    SCI_CAFE_LANGUAGE_GERMAN = 3,
+    SCI_CAFE_LANGUAGE_ITALIAN = 4,
+    SCI_CAFE_LANGUAGE_SPANISH = 5,
+    SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE = 6,
+    SCI_CAFE_LANGUAGE_KOREAN = 7,
+    SCI_CAFE_LANGUAGE_DUTCH = 8,
+    SCI_CAFE_LANGUAGE_PORTUGUESE = 9,
+    SCI_CAFE_LANGUAGE_RUSSIAN = 10,
+    SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE = 11
+};
+
 static unsigned int s_xLanguage = 0xff;
 static unsigned int s_xLocale = 0xff;
 
@@ -187,30 +205,46 @@ unsigned int XGetLanguage()
         return language;
     if (s_xLanguage == 0xff && SCIGetCafeLanguage(&s_xLanguage) != 1)
         s_xLanguage = 0xff;
-    if (s_xLanguage == 0)
-        return 2;
-    if (s_xLanguage < 2)
-        return 1;
-    if (s_xLanguage < 0xc)
+    switch (s_xLanguage)
     {
-        static const unsigned char languageMap[] = { 0, 0, 4, 3, 6, 5, 0x11, 7, 0x10, 9, 0xc, 8 };
-        return languageMap[s_xLanguage];
+    case SCI_CAFE_LANGUAGE_JAPANESE: return XC_LANGUAGE_JAPANESE;
+    case SCI_CAFE_LANGUAGE_ENGLISH: return XC_LANGUAGE_ENGLISH;
+    case SCI_CAFE_LANGUAGE_FRENCH: return XC_LANGUAGE_FRENCH;
+    case SCI_CAFE_LANGUAGE_GERMAN: return XC_LANGUAGE_GERMAN;
+    case SCI_CAFE_LANGUAGE_ITALIAN: return XC_LANGUAGE_ITALIAN;
+    case SCI_CAFE_LANGUAGE_SPANISH: return XC_LANGUAGE_SPANISH;
+    case SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE: return XC_LANGUAGE_ZH_HANS;
+    case SCI_CAFE_LANGUAGE_KOREAN: return XC_LANGUAGE_KOREAN;
+    case SCI_CAFE_LANGUAGE_DUTCH: return XC_LANGUAGE_DUTCH;
+    case SCI_CAFE_LANGUAGE_PORTUGUESE: return XC_LANGUAGE_PORTUGUESE;
+    case SCI_CAFE_LANGUAGE_RUSSIAN: return XC_LANGUAGE_RUSSIAN;
+    case SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE: return XC_LANGUAGE_TCHINESE;
+    default: return XC_LANGUAGE_ENGLISH;
     }
-    return 1;
 }
 
 int XGetLocale()
 {
-    unsigned int minecraftLocale = GameSettings::GetMinecraftLocale(0);
+    int minecraftLocale = GameSettings::GetMinecraftLocale(0);
     if (minecraftLocale != 0)
         return minecraftLocale;
     if (s_xLocale == 0xff && SCIGetCafeLanguage(&s_xLocale) != 1)
         s_xLocale = 0xff;
-    if (s_xLocale > 0xb)
-        return 0x24;
-    static const unsigned char localeMap[] = { 0x14, 0x24, 0x16, 0x0d, 0x13, 0x05,
-                                               0x25, 0x04, 0x04, 0x0d, 0x1b, 0x22 };
-    return localeMap[s_xLocale];
+    switch (s_xLocale)
+    {
+    case SCI_CAFE_LANGUAGE_JAPANESE: return XC_LOCALE_JAPAN;
+    case SCI_CAFE_LANGUAGE_FRENCH: return gApp.IsAmericanSKU() ? XC_LOCALE_CANADA : XC_LOCALE_FRANCE;
+    case SCI_CAFE_LANGUAGE_GERMAN: return XC_LOCALE_GERMANY;
+    case SCI_CAFE_LANGUAGE_ITALIAN: return XC_LOCALE_ITALY;
+    case SCI_CAFE_LANGUAGE_SPANISH: return gApp.IsAmericanSKU() ? XC_LOCALE_MEXICO : XC_LOCALE_SPAIN;
+    case SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE: return XC_LOCALE_CHINA;
+    case SCI_CAFE_LANGUAGE_KOREAN: return XC_LOCALE_KOREA;
+    case SCI_CAFE_LANGUAGE_DUTCH: return XC_LOCALE_NETHERLANDS;
+    case SCI_CAFE_LANGUAGE_PORTUGUESE: return gApp.IsAmericanSKU() ? XC_LOCALE_BRAZIL : XC_LOCALE_PORTUGAL;
+    case SCI_CAFE_LANGUAGE_RUSSIAN: return XC_LOCALE_RUSSIAN_FEDERATION;
+    case SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE: return XC_LOCALE_TAIWAN;
+    default: return XC_LOCALE_UNITED_STATES;
+    }
 }
 
 static int GetStickValue(float value)
@@ -1191,7 +1225,7 @@ unsigned int CInput::UsingRemoteVita()
 {
     return 0;
 }
-unsigned int CInput::VerifyStrings(wchar_t** strings, int (*callback)(void*, _STRING_VERIFY_RESPONSE*), void* context)
+unsigned int CInput::VerifyStrings(wchar_t**, int, int (*)(void*, _STRING_VERIFY_RESPONSE*), void*)
 {
     return 1;
 }
@@ -1359,13 +1393,13 @@ unsigned int CInput::RequestKeyboard(const wchar_t* title, const wchar_t* initia
 {
     if (keyboardState != eKeyboardProcessState_0)
     {
-        s_inputInstance->DebugPrintf("CInput::RequestKeyboard: Ignored a keyboard request while keyboard is active");
+        s_inputInstance->DebugPrintf("CInput::RequestKeyboard: Ignored a keyboard request while keyboard is active\n");
         return 1;
     }
 
     SetKeyboardMode(eKeyboardProcessState_1);
     const wchar_t* diagnosticText = initialText == 0 ? L"" : initialText;
-    s_inputInstance->DebugPrintf("CInput::RequestKeyboard: Opening keyboard : maxChars - %d init s", maximumLength, diagnosticText);
+    s_inputInstance->DebugPrintf("CInput::RequestKeyboard: Opening keyboard : maxChars - %d init str - %ls\n", maximumLength, diagnosticText);
     keyboardCallback = callback;
     keyboardMaximumLength = maximumLength;
     keyboardContext = context;

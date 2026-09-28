@@ -5,6 +5,7 @@
 
 #include "platform/wiiu/cCommerceNintendo.hpp"
 
+#include <coreinit/thread.h>
 #include <nn/result.h>
 #include <nn/ac.h>
 
@@ -22,7 +23,66 @@ namespace nn
             unsigned char m_data[64];
         };
 
-        class Item;
+        class Price
+        {
+        public:
+            const Money* GetSalesPrice() const
+                asm("GetSalesPrice__Q3_2nn2ec5PriceCFv");
+        };
+
+        class DateTime
+        {
+        public:
+            DateTime()
+                asm("__ct__Q3_2nn2ec8DateTimeFv");
+            long long operator-(const DateTime&) const
+                asm("__mi__Q3_2nn2ec8DateTimeCFRCQ3_2nn2ec8DateTime");
+        private:
+            unsigned char m_data[8];
+        };
+
+        class Aoc
+        {
+        public:
+            uint32_t GetNumContents() const
+                asm("GetNumContents__Q3_2nn2ec3AocCFv");
+            const uint16_t* GetContentIndexes() const
+                asm("GetContentIndexes__Q3_2nn2ec3AocCFv");
+            uint64_t GetDataSize() const
+                asm("GetDataSize__Q3_2nn2ec3AocCFv");
+            bool IsInstalled() const
+                asm("IsInstalled__Q3_2nn2ec3AocCFv");
+        };
+
+        enum SalesStatus
+        {
+            SalesStatus_2 = 2,
+            SalesStatus_3 = 3
+        };
+
+        class Item
+        {
+        public:
+            SalesStatus GetSalesStatus() const
+                asm("GetSalesStatus__Q3_2nn2ec4ItemCFv");
+            const char* GetAttribute(const char*) const
+                asm("GetAttribute__Q3_2nn2ec4ItemCFPCc");
+            uint32_t CheckPurchasable() const
+                asm("CheckPurchasable__Q3_2nn2ec4ItemCFv");
+            uint32_t CheckDownloadable() const
+                asm("CheckDownloadable__Q3_2nn2ec4ItemCFv");
+            DateTime GetReleaseDate() const
+                asm("GetReleaseDate__Q3_2nn2ec4ItemCFv");
+            const Aoc* GetAoc() const
+                asm("GetAoc__Q3_2nn2ec4ItemCFv");
+            const Price* GetPrice() const
+                asm("GetPrice__Q3_2nn2ec4ItemCFv");
+            const char* GetName() const
+                asm("GetName__Q3_2nn2ec4ItemCFv");
+            const char* GetDescription() const
+                asm("GetDescription__Q3_2nn2ec4ItemCFv");
+        };
+
         class Query;
         enum SalesStatusFilter
         {
@@ -34,12 +94,15 @@ namespace nn
         public:
             Item* GetItem(uint32_t)
                 asm("GetItem__Q3_2nn2ec8ItemListFUi");
+            uint32_t GetNumItems() const
+                asm("GetNumItems__Q3_2nn2ec8ItemListCFv");
         };
 
         class ShoppingCatalog : public ItemList
         {
         public:
             ShoppingCatalog();
+            ~ShoppingCatalog();
             uint32_t GetTotal() const
                 asm("GetTotal__Q3_2nn2ec15ShoppingCatalogCFv");
             uint32_t RetrieveAocs(const Query*, uint32_t, uint32_t)
@@ -55,15 +118,6 @@ namespace nn
             ~Query();
             uint32_t SetSalesStatusFilter(nn::ec::SalesStatusFilter)
                 asm("SetSalesStatusFilter__Q3_2nn2ec5QueryFQ3_2nn2ec17SalesStatusFilter");
-        };
-
-        class DateTime
-        {
-        public:
-            DateTime()
-                asm("__ct__Q3_2nn2ec8DateTimeFv");
-            long long operator-(const DateTime&) const
-                asm("__mi__Q3_2nn2ec8DateTimeCFRCQ3_2nn2ec8DateTime");
         };
 
         uint32_t SynchronizeAocRights()
@@ -101,7 +155,7 @@ public:
     void GetBalance();
     virtual unsigned int LogIn();
     void Init();
-    void LoggedIn();
+    unsigned char LoggedIn();
     unsigned int Purchase(unsigned int index);
     unsigned int ReDownload(unsigned int index);
     static int GetShoppingCatalog_threadEntry(int argumentCount, void* argument);
@@ -125,14 +179,12 @@ public:
     const wchar_t* GeteCommerceErrorString(nn::Result& result);
 
 private:
-    unsigned char m_prefixData[32];
+    OSThread m_catalogThread;
     CatalogRecord* m_catalogData;
-    unsigned char m_catalogStateData[0x684];
     nn::ec::Money m_balance;
     nn::ec::ShoppingCatalog m_shoppingCatalog;
-    uint32_t m_errorCode;
+    uint32_t m_lastResult;
     bool m_errorOccurred;
-    unsigned char m_tailData[7];
 };
 
 #endif

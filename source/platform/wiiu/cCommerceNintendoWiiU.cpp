@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <coreinit/memdefaultheap.h>
 #include <nn/act.h>
 #include <nsysnet/nssl.h>
 #include <curl/curl.h>
@@ -13,9 +14,23 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/cDLCInfo.hpp"
 #include "game/core/cProductInfo.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/ui/IUIScene_DlcSelectMenu.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
+#include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
 
 extern cProductInfo* g_pDLCProductInfo;
+
+static const uint32_t s_resultAlreadyOwned = 0xA1607E80;
+static const uint32_t s_resultStillPurchasable = 0xA1607F00;
+static const uint32_t s_resultAlreadyDownloaded = 0xA1608200;
+static const unsigned int s_ignoredErrorDescriptionFirst = 27008;
+static const unsigned int s_ignoredErrorDescriptionEnd = 27136;
+static const unsigned int s_serverErrorDescriptionFirst = 256000;
+static const unsigned int s_serverErrorDescriptionEnd = 384000;
+static const long long s_newDLCPeriodSeconds = 30 * 24 * 60 * 60;
+static const unsigned int s_catalogThreadStackSize = 0x10000;
 
 namespace nn
 {
@@ -25,6 +40,8 @@ namespace nn
             asm("__ct__Q3_2nn2ec5MoneyFPCcN21");
         extern "C" void ShoppingCatalog_import_ctor(ShoppingCatalog*)
             asm("__ct__Q3_2nn2ec15ShoppingCatalogFv");
+        extern "C" void ShoppingCatalog_import_dtor(ShoppingCatalog*, unsigned int)
+            asm("__dt__Q3_2nn2ec15ShoppingCatalogFv");
         extern "C" void Query_import_ctor(Query*)
             asm("__ct__Q3_2nn2ec5QueryFv");
         extern "C" void Query_import_dtor(Query*, unsigned int)
@@ -40,6 +57,11 @@ namespace nn
             ShoppingCatalog_import_ctor(this);
         }
 
+        ShoppingCatalog::~ShoppingCatalog()
+        {
+            ShoppingCatalog_import_dtor(this, 2);
+        }
+
         Query::Query()
         {
             Query_import_ctor(this);
@@ -52,9 +74,23 @@ namespace nn
     }
 }
 
-cCommerceNintendoWiiU::cCommerceNintendoWiiU()
-    : m_catalogData(NULL), m_balance(NULL, NULL, NULL), m_errorCode(0), m_errorOccurred(false)
+static inline bool IsFailure(uint32_t result)
 {
+    return (result & 0x80000000U) != 0;
+}
+
+static inline bool IsEcErrorInRange(const nn::Result& result, unsigned int first, unsigned int end)
+{
+    return result.GetModule() == nn::Result::RESULT_MODULE_NN_EC && result.GetDescription() >= first &&
+           result.GetDescription() < end;
+}
+
+cCommerceNintendoWiiU::cCommerceNintendoWiiU()
+    : m_balance(NULL, NULL, NULL), m_lastResult(0xFFFFFFFF)
+{
+    m_balance = nn::ec::Money(NULL, NULL, NULL);
+    m_catalogData = NULL;
+    m_errorOccurred = false;
 }
 
 cCommerceNintendoWiiU::~cCommerceNintendoWiiU()
@@ -71,27 +107,27 @@ unsigned int cCommerceNintendoWiiU::LogIn()
     if (nn::act::IsNetworkAccount())
     {
         uint32_t result = nn::ac::Connect();
-        if (result & 0x80000000U)
+        if (IsFailure(result))
         {
-            m_errorCode = result;
+            m_lastResult = result;
             m_errorOccurred = true;
             return 0;
         }
         result = nn::ec::Login();
-        if ((result & 0x80000000U) == 0)
+        if (!IsFailure(result))
         {
             result = nn::ec::SynchronizeAocRights();
             GetBalance();
-            if ((result & 0x80000000U) == 0)
+            if (!IsFailure(result))
             {
                 SetLoggedIn(true);
                 SetFirstLogIn(false);
                 return 1;
             }
         }
-        else if (GetFirstLogIn() == 0)
+        else if (!GetFirstLogIn())
         {
-            m_errorCode = result;
+            m_lastResult = result;
             m_errorOccurred = true;
         }
         else
@@ -104,44 +140,63 @@ unsigned int cCommerceNintendoWiiU::LogIn()
 
 void cCommerceNintendoWiiU::Init()
 {
-    if (GetCommerceInitialised() == 0 && (nn::ac::Connect() & 0x80000000U) == 0 && NSSLInit())
+    if (!GetCommerceInitialised() && !IsFailure(nn::ac::Connect()) && NSSLInit() == 0)
     {
-        curl_global_init(3);
+        curl_global_init(CURL_GLOBAL_ALL);
         nn::act::Initialize();
         nn::ec::Initialize(0x104);
         SetCommerceInitialised(true);
     }
 }
 
-void cCommerceNintendoWiiU::LoggedIn()
+unsigned char cCommerceNintendoWiiU::LoggedIn()
 {
-    GetLoggedIn();
+    return GetLoggedIn();
 }
 
 unsigned int cCommerceNintendoWiiU::Purchase(unsigned int index)
 {
-    if (!GetLoggedIn())
+    if (!LoggedIn())
     {
-        AttemptLogIn();
-        if (!GetLoggedIn())
+        if (!LogIn())
         {
-            SetProcessState((cCommerceNintendo::eCommerce_Process_State)4);
-            SetShoppingCatalogState((cCommerceNintendo::eCommerce_ShoppingCatalogState)2);
+            SetProcessState(eCommerce_Process_State_LogInFailed);
+            SetDLCCatalogState(cCommerce::eDLCCatalogState_LogInFailed);
             return 1;
         }
-        SetShoppingCatalogState((cCommerceNintendo::eCommerce_ShoppingCatalogState)1);
+        SetShoppingCatalogState(eCommerce_ShoppingCatalogState_Retrieving);
         GetShoppingCatalog();
     }
     nn::ec::SynchronizeAocRights();
-    if (index < m_shoppingCatalog.GetTotal())
+    if (index < m_shoppingCatalog.GetNumItems() && m_shoppingCatalog.GetNumItems() != 0)
     {
         nn::ec::Item* item = m_shoppingCatalog.GetItem(index);
-        if ((nn::ec::applet::Purchase(item, NULL) & 0x80000000U) != 0)
+        item->GetSalesStatus();
+        item->GetAttribute("DLCType");
+        uint32_t result = item->CheckPurchasable();
+        if (!IsFailure(result))
         {
-            uint32_t result = nn::ec::applet::Download(item);
-            if ((result & 0x80000000U) == 0)
-                return 1;
-            m_errorCode = result;
+            nn::ec::applet::Purchase(m_shoppingCatalog.GetItem(index), NULL);
+        }
+        else if (result == s_resultAlreadyOwned)
+        {
+            result = m_shoppingCatalog.GetItem(index)->CheckDownloadable();
+            if (!IsFailure(result))
+            {
+                result = nn::ec::applet::Download(m_shoppingCatalog.GetItem(index));
+                if (!IsFailure(result))
+                    return 1;
+            }
+            else if (result == s_resultAlreadyDownloaded)
+            {
+                return 0;
+            }
+            m_lastResult = result;
+            m_errorOccurred = true;
+        }
+        else
+        {
+            m_lastResult = result;
             m_errorOccurred = true;
         }
     }
@@ -154,15 +209,17 @@ unsigned int cCommerceNintendoWiiU::ReDownload(unsigned int index)
     nn::ec::Query query;
     query.SetSalesStatusFilter(nn::ec::SalesStatusFilter_0);
     m_shoppingCatalog.RetrieveAocs(&query, 0, 100);
-    if (m_shoppingCatalog.GetTotal() != 0)
+    if (m_shoppingCatalog.GetNumItems() != 0)
     {
-        nn::ec::Item* item = m_shoppingCatalog.GetItem(index);
-        uint32_t result = nn::ec::applet::Download(item);
-        if ((result & 0x80000000U) == 0)
+        uint32_t result = m_shoppingCatalog.GetItem(index)->CheckDownloadable();
+        if (!IsFailure(result))
+        {
+            nn::ec::applet::Download(m_shoppingCatalog.GetItem(index));
             return 1;
-        if (result == 0xa1608200U)
+        }
+        if (result == s_resultAlreadyDownloaded)
             return 0;
-        m_errorCode = result;
+        m_lastResult = result;
         m_errorOccurred = true;
     }
     return 1;
@@ -170,87 +227,107 @@ unsigned int cCommerceNintendoWiiU::ReDownload(unsigned int index)
 
 int cCommerceNintendoWiiU::GetShoppingCatalog_threadEntry(int, void* argument)
 {
-    cCommerceNintendoWiiU* commerce = (cCommerceNintendoWiiU*)argument;
+    cCommerceNintendoWiiU* commerce = static_cast<cCommerceNintendoWiiU*>(argument);
     if (!commerce->GetLoggedIn())
     {
-        commerce->AttemptLogIn();
-        if (!commerce->GetLoggedIn())
+        if (!commerce->LogIn())
         {
-            commerce->SetProcessState((cCommerceNintendo::eCommerce_Process_State)4);
-            commerce->SetShoppingCatalogState((cCommerceNintendo::eCommerce_ShoppingCatalogState)2);
+            commerce->SetProcessState(eCommerce_Process_State_LogInFailed);
+            commerce->SetDLCCatalogState(cCommerce::eDLCCatalogState_LogInFailed);
             return 0;
         }
     }
-    commerce->SetShoppingCatalogState((cCommerceNintendo::eCommerce_ShoppingCatalogState)1);
+    else
+    {
+        commerce->GetFirstLogIn();
+    }
+    commerce->SetShoppingCatalogState(eCommerce_ShoppingCatalogState_Retrieving);
     commerce->GetShoppingCatalog();
     return 0;
 }
 
 void cCommerceNintendoWiiU::LaunchThread_GetShoppingCatalog()
 {
-    static OSThread thread;
-    if (C4JThreadImpl::OSCreateThread4J(&thread, GetShoppingCatalog_threadEntry, 0, this,
-                                        NULL, 0x10000, 0x10, 0xc) != 0)
-        OSResumeThread(&thread);
+    char* stack = static_cast<char*>(MEMAllocFromDefaultHeap(s_catalogThreadStackSize));
+    if (C4JThreadImpl::OSCreateThread4J(&m_catalogThread, GetShoppingCatalog_threadEntry, 0, this,
+                                        stack + s_catalogThreadStackSize, s_catalogThreadStackSize, 0x10,
+                                        OS_THREAD_ATTRIB_AFFINITY_CPU2 | OS_THREAD_ATTRIB_DETACHED))
+        OSResumeThread(&m_catalogThread);
 }
 
 void cCommerceNintendoWiiU::ClearShoppingCatalogRetrieved()
 {
-    SetShoppingCatalogState(cCommerceNintendo::eCommerce_ShoppingCatalogState_Unknown);
+    SetShoppingCatalogState(eCommerce_ShoppingCatalogState_Unknown);
     if (m_catalogData != NULL)
     {
         std::free(m_catalogData);
         m_catalogData = NULL;
-        cCommerce* commerce = (cCommerce*)gApp.GetCommerceInstance();
-        commerce->SetDLCCatalogListRetrieved(false);
-        commerce->SetDLCCatalogListInfoRetrieved(false);
+        static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->SetDLCCatalogListRetrieved(false);
+        static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->SetDLCCatalogListInfoRetrieved(false);
     }
     SetItemCount(0);
 }
 
 void cCommerceNintendoWiiU::tick()
 {
-    if (GetNetworkConnected())
+    if (!NQRNetworkManager_WiiU::s_applicationConnected || CGameNetworkManager::sInstance.usingLanMode())
     {
-        SetNetworkConnected(false);
-        ClearShoppingCatalogRetrieved();
-        SetProcessState(cCommerceNintendo::eCommerce_Process_State_Unknown);
-        SetLoggedIn(false);
+        if (GetNetworkConnected())
+        {
+            SetNetworkConnected(false);
+            ClearShoppingCatalogRetrieved();
+            SetProcessState(eCommerce_Process_State_Unknown);
+            SetLoggedIn(false);
+        }
     }
     else
     {
+        if (!GetNetworkConnected())
+            SetFirstLogIn(true);
         SetNetworkConnected(true);
-        if (GetProcessState() == 2)
+        switch (GetProcessState())
         {
-            SetProcessState((cCommerceNintendo::eCommerce_Process_State)3);
+        case eCommerce_Process_State_Unknown:
+            if (NQRNetworkManager_WiiU::s_applicationConnected && GetCommerceInitialised())
+                SetProcessState(eCommerce_Process_State_GetCatalog);
+            break;
+        case eCommerce_Process_State_GetCatalog:
+            SetProcessState(eCommerce_Process_State_GettingCatalog);
             LaunchThread_GetShoppingCatalog();
-        }
-        else if (GetProcessState() == 6)
-        {
+            break;
+        case eCommerce_Process_State_CatalogRefreshed:
             gConsoleUIController.HandleDLCLicenseChange();
-            SetProcessState((cCommerceNintendo::eCommerce_Process_State)7);
-        }
-        else if (GetProcessState() == 11)
-        {
+            SetProcessState(eCommerce_Process_State_CatalogReady);
+            break;
+        case eCommerce_Process_State_ForegroundAcquired:
             ClearShoppingCatalogRetrieved();
             nn::ec::SynchronizeAocRights();
+            C_AOC::getInstance()->m_eState = C_AOC::eAOCState_Start;
             C_AOC::getInstance()->Init();
             LaunchThread_GetShoppingCatalog();
-            SetProcessState((cCommerceNintendo::eCommerce_Process_State)5);
-        }
-        else if (GetCommerceInitialised())
-        {
-            SetProcessState((cCommerceNintendo::eCommerce_Process_State)2);
+            SetProcessState(eCommerce_Process_State_RefreshingCatalog);
+            break;
+        default:
+            break;
         }
     }
+
     if (m_errorOccurred)
     {
         m_errorOccurred = false;
-        nn::Result result;
-        NNResult rawResult = {static_cast<int32_t>(m_errorCode)};
-        result = rawResult;
-        gConsoleUIController.RequestErrorMessage(0, 0, NULL, 0, 0, NULL, NULL, NULL, false);
-        nn::ec::GetErrorCode(result);
+        NNResult rawResult = {static_cast<int32_t>(m_lastResult)};
+        nn::Result result(rawResult);
+        if (IsEcErrorInRange(result, s_ignoredErrorDescriptionFirst, s_ignoredErrorDescriptionEnd))
+            return;
+        if (IsEcErrorInRange(result, s_serverErrorDescriptionFirst, s_serverErrorDescriptionEnd))
+        {
+            wchar_t errorCode[10];
+            wchar_t errorMessage[512];
+            nn::ec::GetLastServerErrorMessage(errorCode, errorMessage);
+            g_pInput->RequestErrorViewer(0, errorCode, errorMessage, NULL, NULL);
+            return;
+        }
+        g_pInput->RequestErrorViewer(0, nn::ec::GetErrorCode(result), NULL, NULL);
     }
 }
 
@@ -258,27 +335,27 @@ unsigned int cCommerceNintendoWiiU::PurchaseDLC(DLC_INFO* info)
 {
     if (info == NULL)
         return 0;
-    return Purchase(info->CatalogIndex);
+    if (!info->Purchased)
+        return Purchase(info->CatalogIndex);
+    return ReDownload(info->CatalogIndex);
 }
 
 unsigned int cCommerceNintendoWiiU::PurchaseDLCByIndex(unsigned int index, int controllerId)
 {
-    cDLCInfo* dlcInfo = (cDLCInfo*)gApp.GetDLCInfoInstance();
-    DLC_INFO* info = dlcInfo->GetDLCInfoByIndex(index);
-    unsigned int result = PurchaseDLC(info);
+    unsigned int result = PurchaseDLC(static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
+                                          ->GetDLCInfoForPackID(g_pDLCProductInfo[index].GetPackID()));
     if (result == 0)
     {
         int parameter = IDS_CONFIRM_OK;
-        gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, &parameter, 1,
-                                                  controllerId, NULL, NULL, NULL, true);
+        gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT,
+                                                 &parameter, 1, controllerId, NULL, NULL, NULL, true);
     }
     return result;
 }
 
 unsigned int cCommerceNintendoWiiU::PurchaseDLCByPackID(unsigned int packId)
 {
-    cDLCInfo* dlcInfo = (cDLCInfo*)gApp.GetDLCInfoInstance();
-    return PurchaseDLC(dlcInfo->GetDLCInfoForPackID(packId));
+    return PurchaseDLC(static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())->GetDLCInfoForPackID(packId));
 }
 
 int cCommerceNintendoWiiU::OrderSortFunction(const void* first, const void* second)
@@ -287,38 +364,56 @@ int cCommerceNintendoWiiU::OrderSortFunction(const void* first, const void* seco
 }
 
 unsigned int cCommerceNintendoWiiU::GetDLCProductInfo(cProductInfo** productInfo, unsigned int* count,
-                                                      unsigned int category, bool includeUnavailable)
+                                                      unsigned int category, bool)
 {
-    if (GetShoppingCatalogState() == 0)
+    unsigned int productCount = 0;
+    CatalogRecord* catalog = GetCommerceInfo();
+    if (catalog == NULL)
     {
         *count = 0;
         *productInfo = NULL;
         return 0;
     }
 
-    (void)includeUnavailable;
-
-    CatalogRecord* catalog = GetCommerceInfo();
+    ClearProductInfo();
     unsigned int itemCount = GetItemCount();
-    unsigned int productCount = 0;
-    cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance());
-
     if (itemCount != 0)
     {
         g_pDLCProductInfo = new cProductInfo[itemCount];
-        for (unsigned int index = 0; index < itemCount; ++index)
+        if (category == eDLCContentType_All)
         {
-            CatalogRecord& entry = catalog[index];
-            DLC_INFO* info = dlcInfo->GetDLCInfoByCatalogIndex(entry.catalogIndex);
-            if (info != NULL && (category == 0xb || info->ContentType == static_cast<int>(category)))
+            for (unsigned int index = 0; index < itemCount; ++index)
             {
-                g_pDLCProductInfo[productCount].Init(entry.canPurchase, entry.canPurchase, 0, entry.name,
-                                                  entry.description, entry.price, "", "",
-                                                  info->BannerName, info->PackID, info->SortIndex);
-                ++productCount;
+                DLC_INFO* info = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
+                                     ->GetDLCInfoByCatalogIndex(catalog[index].catalogIndex);
+                if (info != NULL)
+                {
+                    g_pDLCProductInfo[productCount].Init(catalog[index].canPurchase, catalog[index].canPurchase, 0,
+                                                         catalog[index].name, catalog[index].description,
+                                                         catalog[index].price, "", "", info->BannerName,
+                                                         info->PackID, info->SortIndex);
+                    ++productCount;
+                }
             }
+            qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
         }
-        qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
+        else
+        {
+            for (unsigned int index = 0; index < itemCount; ++index)
+            {
+                DLC_INFO* info = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
+                                     ->GetDLCInfoByCatalogIndex(catalog[index].catalogIndex);
+                if (info != NULL && info->ContentType == static_cast<int>(category))
+                {
+                    g_pDLCProductInfo[productCount].Init(catalog[index].canPurchase, catalog[index].canPurchase, 0,
+                                                         catalog[index].name, catalog[index].description,
+                                                         catalog[index].price, "", "", info->BannerName,
+                                                         info->PackID, info->SortIndex);
+                    ++productCount;
+                }
+            }
+            qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
+        }
     }
 
     SetPurchasabilityUpdated(false);
@@ -331,7 +426,7 @@ void cCommerceNintendoWiiU::SetDLCCatalogState(cCommerce::eDLCCatalogState state
 {
     cCommerce::SetDLCCatalogState(state);
     if (state == cCommerce::eDLCCatalogState_Unknown)
-        SetProcessState(cCommerceNintendo::eCommerce_Process_State_Unknown);
+        SetProcessState(eCommerce_Process_State_Unknown);
 }
 
 unsigned int cCommerceNintendoWiiU::AttemptLogIn()
@@ -344,19 +439,73 @@ void cCommerceNintendoWiiU::GetShoppingCatalog()
     nn::ec::Query query;
     query.SetSalesStatusFilter(nn::ec::SalesStatusFilter_0);
     uint32_t result = m_shoppingCatalog.RetrieveAocs(&query, 0, 100);
-    if (result & 0x80000000U)
+    if (IsFailure(result))
     {
-        m_errorCode = result;
+        m_lastResult = result;
         m_errorOccurred = true;
         return;
     }
+
+    unsigned int recordCount = 0;
     unsigned int total = m_shoppingCatalog.GetTotal();
     m_catalogData = static_cast<CatalogRecord*>(std::calloc(total * sizeof(CatalogRecord), 1));
-    SetProcessState((cCommerceNintendo::eCommerce_Process_State)(GetProcessState() == 5 ? 6 : 7));
-    SetShoppingCatalogState((cCommerceNintendo::eCommerce_ShoppingCatalogState)2);
-    cCommerce* commerce = (cCommerce*)gApp.GetCommerceInstance();
-    commerce->SetDLCCatalogListRetrieved(true);
-    commerce->SetDLCCatalogListInfoRetrieved(true);
+    for (unsigned int index = 0; index < total; ++index)
+    {
+        nn::ec::Item* item = m_shoppingCatalog.GetItem(index);
+        nn::ec::SalesStatus salesStatus = item->GetSalesStatus();
+        if (salesStatus != nn::ec::SalesStatus_2 && salesStatus != nn::ec::SalesStatus_3)
+            continue;
+
+        nn::ec::DateTime releaseDate;
+        uint32_t purchasable = item->CheckPurchasable();
+        if (!IsFailure(purchasable) || purchasable == s_resultStillPurchasable)
+        {
+            m_catalogData[recordCount].canPurchase = true;
+            releaseDate = item->GetReleaseDate();
+        }
+        else if (purchasable == s_resultAlreadyOwned)
+        {
+            m_catalogData[recordCount].canPurchase = false;
+            releaseDate = item->GetReleaseDate();
+        }
+        else
+        {
+            continue;
+        }
+
+        if (salesStatus == nn::ec::SalesStatus_2)
+        {
+            nn::ec::DateTime serverTime;
+            nn::ec::GetServerTime(&serverTime);
+            if (serverTime - releaseDate <= s_newDLCPeriodSeconds)
+                gApp.SetNewDLCAvailable(true);
+        }
+
+        m_catalogData[recordCount].catalogIndex = index;
+        const nn::ec::Aoc* aoc = item->GetAoc();
+        unsigned int contentCount = aoc->GetNumContents();
+        const uint16_t* contentIndexes = aoc->GetContentIndexes();
+        CatalogRecord& record = m_catalogData[recordCount];
+        record.contentCount = contentCount;
+        for (unsigned int content = 0; content < contentCount; ++content)
+            record.contentIndexes[content] = contentIndexes[content] - 16;
+
+        const nn::ec::Money* price = item->GetPrice()->GetSalesPrice();
+        std::strncpy(m_catalogData[recordCount].name, item->GetName(), sizeof(record.name));
+        std::strncpy(m_catalogData[recordCount].description, item->GetDescription(), sizeof(record.description));
+        std::strncpy(m_catalogData[recordCount].price, price->GetAmount(), sizeof(record.price));
+        aoc->GetDataSize();
+        m_catalogData[recordCount].installed = aoc->IsInstalled();
+        ++recordCount;
+    }
+
+    SetProcessState(GetProcessState() == eCommerce_Process_State_RefreshingCatalog
+                        ? eCommerce_Process_State_CatalogRefreshed
+                        : eCommerce_Process_State_CatalogReady);
+    SetShoppingCatalogState(eCommerce_ShoppingCatalogState_Retrieved);
+    static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->SetDLCCatalogListRetrieved(true);
+    static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->SetDLCCatalogListInfoRetrieved(true);
+    SetItemCount(recordCount);
 }
 
 cCommerceNintendo::CatalogRecord* cCommerceNintendoWiiU::GetCommerceInfo()

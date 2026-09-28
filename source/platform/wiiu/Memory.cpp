@@ -1,6 +1,6 @@
 #include "game/core/XMem.hpp"
 
-#include <cstdint>
+#include <stdint.h>
 #include <cstdlib>
 #include <cstring>
 

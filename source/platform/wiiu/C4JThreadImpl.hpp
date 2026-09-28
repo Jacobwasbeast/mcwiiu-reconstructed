@@ -5,10 +5,11 @@
 #include <coreinit/thread.h>
 
 #include "platform/wiiu/C4JEventImpl.hpp"
+#include "platform/wiiu/C4JThread.hpp"
 
 void Sleep(unsigned int milliseconds);
 
-class C4JThreadImpl
+class C4JThreadImpl : public C4JThread
 {
 public:
     C4JThreadImpl(int (*entry)(void*), void* argument, const char* name, int stackSize);

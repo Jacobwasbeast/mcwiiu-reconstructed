@@ -2,10 +2,6 @@
 
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-C4JThread::~C4JThread()
-{
-}
-
 void C4JThread::Sleep(int milliseconds)
 {
     C4JThreadImpl::Sleep(milliseconds);

@@ -25,7 +25,7 @@ extern OSMessageQueue gMainMessageQueue;
 extern OSMessage gMainMessageBuffer;
 
 extern OSFastMutex gMainMutex;
-static unsigned char s_altMainStopRequested;
+unsigned char s_altMainStopRequested;
 
 void altMain()
 {

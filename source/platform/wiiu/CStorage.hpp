@@ -25,51 +25,10 @@ struct CONTENT_DATA
     char path[640];
     int index;
 };
-struct SAVE_INFO
-{
-    char filename[32];
-    wchar_t title[128];
-    unsigned int timeHigh;
-    unsigned int timeLow;
-    unsigned char* thumbnail;
-    unsigned int thumbnailSize;
-    unsigned int nandSize;
-    unsigned int reserved;
-};
 
-struct SAVE_DETAILS
-{
-    int count;
-    int nandSize;
-    SAVE_INFO* saves;
-    int reserved;
-};
-typedef FSDirectoryEntry FSDirEntry;
-
-class CStorage
+class CStorage : public C4JStorage
 {
 public:
-    typedef int (*SavingMessageCallback)(void*, C4JStorage::ESavingMessage, int);
-    typedef void (*IncompleteSaveCallback)(void*, C4JStorage::ESaveIncompleteType);
-    typedef unsigned int (*DefaultOptionsCallback)(void*, C4JStorage::PROFILESETTINGS*, int);
-    typedef unsigned int (*OptionsDataCallback)(void*, int, unsigned short, C4JStorage::eOptionsCallback);
-    typedef unsigned int (*OldProfileVersionCallback)(void*, unsigned char*, unsigned short, int);
-    typedef int (*GenericDataCallback)(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
-    typedef int (*SaveCallback)(void*, bool);
-    typedef int (*LoadCallback)(void*, bool, bool);
-    typedef int (*SavesInfoCallback)(void*, SAVE_DETAILS*, bool);
-    typedef int (*RenameCallback)(void*, bool, C4JStorage::ESaveGameState);
-    typedef int (*CopyCallback)(void*, bool, C4JStorage::ESaveGameState);
-    typedef bool (*CopyProgressCallback)(void*, int);
-    typedef bool (*DirectoryOpenCallback)(const char*, int*);
-    typedef bool (*DirectoryReadCallback)(int*, FSDirEntry*);
-    typedef bool (*DirectoryCloseCallback)(int*);
-    typedef int (*DLCOffersCallback)(void*, unsigned int, unsigned int, int);
-    typedef int (*OffersCallback)(void*, int, unsigned int, unsigned int);
-    typedef int (*InstalledDLCCallback)(void*, int, int);
-    typedef int (*DLCMountCallback)(void*, int, unsigned int, unsigned int);
-    typedef void (*DLCUpgradeCallback)(void*, bool);
-
     struct DriveMapping
     {
         std::string drive;
@@ -289,7 +248,6 @@ private:
     OSThread m_profileDeleteThreads[4];
     unsigned char* m_profileReadBuffers[4];
     unsigned char* m_profileBuffers[4];
-    unsigned int m_profileReserved0;
     bool m_profileInitialised;
     unsigned short m_profileVersion;
     unsigned int m_profileCount;
@@ -333,7 +291,6 @@ private:
     unsigned int* m_genericReadSize;
     void** m_genericReadData;
     std::wstring m_genericFilename;
-    unsigned int m_genericThreadReserved[2];
     OSThread m_genericThread;
     FSClient m_genericClient;
     FSCmdBlock m_genericCommandBlock;
@@ -347,28 +304,24 @@ private:
     int m_dlcState;
     std::vector<CONTENT_DATA> m_installedContent;
     unsigned int m_dlcReserved2;
-    unsigned int m_dlcReserved3;
     int m_dlcMountState;
     DLCMountCallback m_dlcMountCallback;
     void* m_dlcMountContext;
     std::string m_dlcMountName;
-    unsigned int m_dlcMountNameReserved[2];
     unsigned int m_mountedDLCIndex;
     unsigned int m_dlcMountResult;
     char m_defaultDLCMountName[40];
     unsigned int m_dlcMountNameData;
     std::vector<DriveMapping> m_mountedDrives;
-    unsigned int m_mountedDrivesReserved;
     char m_dlcProductCode[16];
-    char m_productUpgradeKey[16];
-    unsigned char m_dlcThreadContext[52];
+    char m_productUpgradeKey[60];
+    unsigned int m_dlcReserved3[2];
     OSThread m_dlcThread;
     DirectoryOpenCallback m_openDir;
     DirectoryReadCallback m_readDir;
     DirectoryCloseCallback m_closeDir;
     int m_dlcDirectory;
     FSDirEntry m_dlcDirectoryEntry;
-    unsigned int m_layoutReserved;
 };
 
 #endif

@@ -20,12 +20,21 @@ public:
 
     enum eCommerce_Process_State
     {
-        eCommerce_Process_State_Unknown = 0
+        eCommerce_Process_State_Unknown = 0,
+        eCommerce_Process_State_GetCatalog = 2,
+        eCommerce_Process_State_GettingCatalog = 3,
+        eCommerce_Process_State_LogInFailed = 4,
+        eCommerce_Process_State_RefreshingCatalog = 5,
+        eCommerce_Process_State_CatalogRefreshed = 6,
+        eCommerce_Process_State_CatalogReady = 7,
+        eCommerce_Process_State_ForegroundAcquired = 11
     };
 
     enum eCommerce_ShoppingCatalogState
     {
-        eCommerce_ShoppingCatalogState_Unknown = 0
+        eCommerce_ShoppingCatalogState_Unknown = 0,
+        eCommerce_ShoppingCatalogState_Retrieving = 1,
+        eCommerce_ShoppingCatalogState_Retrieved = 2
     };
 
     cCommerceNintendo();
