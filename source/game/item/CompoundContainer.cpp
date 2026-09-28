@@ -3,18 +3,29 @@
 #include "game/core/L10N.hpp"
 #include "game/core/LockCode.hpp"
 #include "game/ui/ChestMenu.hpp"
+#include "game/item/Inventory.hpp"
 
 CompoundContainer::CompoundContainer(int id, boost::shared_ptr<LockableContainer> first,
     boost::shared_ptr<LockableContainer> second)
-    : mId(id), mFirst(first), mSecond(second)
 {
-    if (mFirst->isLocked())
+    mId = id;
+    if (first == NULL)
     {
-        mSecond->setLocked(mFirst->getLockKeyCode());
+        first = second;
     }
-    else if (mSecond->isLocked())
+    if (second == NULL)
     {
-        mFirst->setLocked(mSecond->getLockKeyCode());
+        second = first;
+    }
+    mFirst = first;
+    mSecond = second;
+    if (first->isLocked())
+    {
+        second->setLocked(first->getLockKeyCode());
+    }
+    else if (second->isLocked())
+    {
+        first->setLocked(second->getLockKeyCode());
     }
 }
 
@@ -208,6 +219,5 @@ int CompoundContainer::getTypeId(bool large)
 AbstractContainerMenu* CompoundContainer::createMenu(boost::shared_ptr<Inventory> inventory,
     boost::shared_ptr<Player> player)
 {
-    return new ChestMenu(boost::shared_ptr<Container>(mFirst),
-        boost::shared_ptr<Container>(mSecond), player);
+    return new ChestMenu(inventory, shared_from_this(), player);
 }

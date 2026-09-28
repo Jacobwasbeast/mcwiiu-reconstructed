@@ -1,4 +1,5 @@
 #include "game/item/TridentImpalerEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/EnchantmentCategory.hpp"
@@ -7,7 +8,7 @@ TridentImpalerEnchantment::TridentImpalerEnchantment(const Rarity* rarity,
                                                      arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
-    setDescriptionId((int)0x2ed5652c);
+    setDescriptionId(IDS_ENCHANTMENT_IMPALER);
 }
 
 TridentImpalerEnchantment::~TridentImpalerEnchantment()

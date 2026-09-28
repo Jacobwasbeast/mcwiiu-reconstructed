@@ -1,4 +1,5 @@
 #include "game/item/SweepingEdgeEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 
@@ -29,7 +30,7 @@ int SweepingEdgeEnchantment::getMaxCost(int level)
 
 int SweepingEdgeEnchantment::getDescriptionId()
 {
-    return 0x7C8A12EF;
+    return IDS_ENCHANTMENT_DIGGING;
 }
 
 SweepingEdgeEnchantment::~SweepingEdgeEnchantment()

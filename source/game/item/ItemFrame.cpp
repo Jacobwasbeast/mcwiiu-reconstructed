@@ -76,9 +76,9 @@ void ItemFrame::defineSynchedData()
     getEntityData()->createDateItem(DATA_ROTATION, 0);
 }
 
-double ItemFrame::getPickRadius()
+float ItemFrame::getPickRadius()
 {
-    return 0.0;
+    return 0.0f;
 }
 
 not_null_ptr<ItemInstance> ItemFrame::getItem()
@@ -269,25 +269,19 @@ void ItemFrame::readAdditionalSaveData(CompoundTag* tag)
 
 boost::shared_ptr<ItemFrame> ItemFrame::fjGetItemFrameForPos(Level* level, const BlockPos& pos)
 {
-    if (level == NULL)
-        return boost::shared_ptr<ItemFrame>();
-    AABB area(pos.x - 1.0, pos.y - 1.0, pos.z - 1.0,
-              pos.x + 2.0, pos.y + 2.0, pos.z + 2.0);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(ItemFrame), &area);
-    boost::shared_ptr<ItemFrame> found;
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    AABB* area = AABB::newTemp(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)->expand(0.5, 0.5, 0.5)->move(pos);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(ItemFrame), area);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        boost::shared_ptr<ItemFrame> frame = boost::dynamic_pointer_cast<ItemFrame>(*it);
-        if (frame && frame->getPos().equals(pos))
+        boost::shared_ptr<ItemFrame> frame = boost::static_pointer_cast<ItemFrame>(*it);
+        if (frame->getPos() == pos)
         {
-            found = frame;
-            break;
+            delete entities;
+            return frame;
         }
     }
     delete entities;
-    return found;
+    return boost::shared_ptr<ItemFrame>();
 }
 
 bool ItemFrame::fjTryAwardMapRoom(const boost::shared_ptr<Player>& player)

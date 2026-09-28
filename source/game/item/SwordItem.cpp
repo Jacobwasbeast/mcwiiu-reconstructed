@@ -92,7 +92,7 @@ bool SwordItem::isHandEquipped()
 
 int SwordItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 3;
+    return UseAnim_block;
 }
 
 int SwordItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)

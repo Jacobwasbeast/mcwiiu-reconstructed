@@ -642,20 +642,13 @@ int ItemInstance::getDescriptionId(int auxValue)
 
 std::wstring ItemInstance::toString()
 {
-    std::wstring value(L"ItemInstance{");
-    const int descriptionId = getDescriptionId(mAuxValue);
-    wchar_t description[32];
-    std::swprintf(description, 32, L"%d", descriptionId);
-    value += description;
-    value += L",Count=";
-    wchar_t digits[16];
-    std::swprintf(digits, 16, L"%d", mCount);
-    value += digits;
-    value += L",Damage=";
-    std::swprintf(digits, 16, L"%d", mAuxValue);
-    value += digits;
-    value += L"}";
-    return value;
+    std::wostringstream stream;
+    stream.setf(std::ios::dec, std::ios::basefield);
+    not_null_ptr<ItemInstance> self;
+    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+    const wchar_t* description = getItem()->getDescription(self);
+    stream << mCount << L"x" << description << L"@" << mAuxValue;
+    return stream.str();
 }
 
 void ItemInstance::inventoryTick(Level* level, boost::shared_ptr<Entity> entity, int slot, bool selected)
@@ -781,7 +774,7 @@ int ItemInstance::getUseAnimation() const
 {
     not_null_ptr<const ItemInstance> self;
     static_cast<boost::shared_ptr<const ItemInstance>&>(self) = shared_from_this();
-    return mItem != 0 ? mItem->getUseAnimation(self) : 0;
+    return mItem != 0 ? mItem->getUseAnimation(self) : UseAnim_none;
 }
 
 void ItemInstance::releaseUsing(Level* level, boost::shared_ptr<LivingEntity> entity, int duration)
@@ -868,13 +861,14 @@ std::wstring ItemInstance::getHoverName()
         return getHoverNameUnfiltered();
     }
     std::wstring name = display->getString(L"Name");
-    std::wstring ownerUUID = getOwnerUUID();
+    std::wstring ownerUUID = mTag->getString(L"ownerID");
     bool restricted = wasCreatedByRestrictedPlayer();
-    bool createdOnHost = wasCreatedOnHost();
-    mCensorshipInfo->set(name, ownerUUID, restricted, createdOnHost);
+    mCensorshipInfo->set(name, ownerUUID, restricted, mTag->getByte(L"createdOnHost") != 0);
     if (mCensorshipInfo->checkParentalFilter() == 0)
     {
-        return getHoverNameUnfiltered();
+        not_null_ptr<ItemInstance> self;
+        static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+        return getItem()->getName(self);
     }
     return mCensorshipInfo->get();
 }
@@ -938,14 +932,20 @@ bool ItemInstance::wasCreatedOnHost()
 
 void ItemInstance::resetHoverName()
 {
-    if (mTag != 0 && mTag->contains(L"display", Tag::TAG_COMPOUND))
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(L"display"));
+    if (display != 0)
     {
-        CompoundTag* display = mTag->getCompound(L"display");
-        if (display != 0)
+        display->remove(L"Name");
+        if (display->isEmpty())
         {
-            display->remove(L"Name");
+            display->remove(L"display");
         }
     }
+    if (mTag != 0 && mTag->isEmpty())
+    {
+        mTag = 0;
+    }
+    setCensorshipInfo(L"", false);
 }
 
 bool ItemInstance::hasCustomHoverName()
@@ -960,30 +960,26 @@ bool ItemInstance::hasCustomHoverName()
 
 boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ItemInstance::getAttributeModifiers(const EquipmentSlot* slot)
 {
-    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers =
-        mItem != 0 ? mItem->getDefaultAttributeModifiers(slot)
-                   : new boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>();
-    if (mTag == 0 || !mTag->contains(L"AttributeModifiers", Tag::TAG_LIST))
+    if (!hasTag() || !mTag->contains(L"AttributeModifiers", Tag::TAG_LIST))
     {
-        return modifiers;
+        return getItem()->getDefaultAttributeModifiers(slot);
     }
+
+    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers = new boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>();
     ListTag* entries = mTag->getList(L"AttributeModifiers", Tag::TAG_COMPOUND);
-    if (entries == 0)
-        return modifiers;
     for (int i = 0; i < entries->size(); ++i)
     {
         CompoundTag* entry = entries->getCompound(i);
-        if (entry == 0)
-            continue;
-        if (entry->contains(L"Slot", Tag::TAG_STRING) && slot != 0 && entry->getString(L"Slot") != slot->getName())
+        AttributeModifier* modifier = SharedMonsterAttributes::loadAttributeModifier(entry);
+        if (modifier == 0)
         {
             continue;
         }
-        AttributeModifier* modifier = SharedMonsterAttributes::loadAttributeModifier(entry);
-        if (modifier == 0)
+        if (entry->contains(L"Slot", Tag::TAG_STRING) && entry->getString(L"Slot") != slot->getName())
+        {
             continue;
-        eATTRIBUTE_ID id = static_cast<eATTRIBUTE_ID>(entry->getInt(L"ID"));
-        (*modifiers)[id] = modifier;
+        }
+        modifiers->emplace(static_cast<eATTRIBUTE_ID>(entry->getInt(L"ID")), modifier);
     }
     return modifiers;
 }

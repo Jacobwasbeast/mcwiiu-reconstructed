@@ -295,11 +295,11 @@ Recipes::Recipes()
     buildRecipeIngredientsArray();
 }
 
-Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, _va_struct* arguments)
+Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, va_list arguments)
 {
     std::wstring pattern;
     boost::unordered_map<wchar_t, ItemInstance*> ingredientMap;
-    const wchar_t* format = va_arg(arguments->arguments, const wchar_t*);
+    const wchar_t* format = va_arg(arguments, const wchar_t*);
     int width = 0;
     int height = 0;
     wchar_t ingredientKey = 0;
@@ -325,21 +325,21 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, _va_struct*
         case L'a':
         case L's':
         {
-            const wchar_t* row = va_arg(arguments->arguments, const wchar_t*);
+            const wchar_t* row = va_arg(arguments, const wchar_t*);
             width = static_cast<int>(std::wcslen(row));
             ++height;
             pattern.append(row);
             break;
         }
         case L'b':
-            baseItemType = va_arg(arguments->arguments, int);
+            baseItemType = va_arg(arguments, int);
             break;
         case L'c':
-            ingredientKey = static_cast<wchar_t>(va_arg(arguments->arguments, int));
+            ingredientKey = static_cast<wchar_t>(va_arg(arguments, int));
             break;
         case L'g':
         {
-            wchar_t groupCode = static_cast<wchar_t>(va_arg(arguments->arguments, int));
+            wchar_t groupCode = static_cast<wchar_t>(va_arg(arguments, int));
             if (groupCode >= L'0' && groupCode <= L'5')
             {
                 group = static_cast<Recipe::_eGroupType>(groupCode - L'0');
@@ -361,17 +361,17 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, _va_struct*
             break;
         }
         case L'i':
-            ingredientMap.insert(std::make_pair(ingredientKey, new ItemInstance(va_arg(arguments->arguments, Item*))));
+            ingredientMap.insert(std::make_pair(ingredientKey, new ItemInstance(va_arg(arguments, Item*))));
             break;
         case L't':
-            ingredientMap.insert(std::make_pair(ingredientKey, new ItemInstance(va_arg(arguments->arguments, Block*), 1, -1)));
+            ingredientMap.insert(std::make_pair(ingredientKey, new ItemInstance(va_arg(arguments, Block*), 1, -1)));
             break;
         case L'v':
-            achievementId = va_arg(arguments->arguments, int);
+            achievementId = va_arg(arguments, int);
             break;
         case L'w':
         {
-            std::wstring* rows = va_arg(arguments->arguments, std::wstring*);
+            std::wstring* rows = va_arg(arguments, std::wstring*);
             while (!rows->empty())
             {
                 width = static_cast<int>(rows->size());
@@ -382,7 +382,7 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, _va_struct*
             break;
         }
         case L'z':
-            ingredientMap.insert(std::make_pair(ingredientKey, va_arg(arguments->arguments, ItemInstance*)));
+            ingredientMap.insert(std::make_pair(ingredientKey, va_arg(arguments, ItemInstance*)));
             break;
         default:
             break;
@@ -406,26 +406,26 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, _va_struct*
 
 Recipe* Recipes::addShapedRecipe(ItemInstance* result, ...)
 {
-    _va_struct arguments;
-    va_start(arguments.arguments, result);
-    Recipe* recipe = addShapedRecipe(result, 0, &arguments);
-    va_end(arguments.arguments);
+    va_list arguments;
+    va_start(arguments, result);
+    Recipe* recipe = addShapedRecipe(result, 0, arguments);
+    va_end(arguments);
     return recipe;
 }
 
 Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, ...)
 {
-    _va_struct arguments;
-    va_start(arguments.arguments, category);
-    Recipe* recipe = addShapedRecipe(result, category, &arguments);
-    va_end(arguments.arguments);
+    va_list arguments;
+    va_start(arguments, category);
+    Recipe* recipe = addShapedRecipe(result, category, arguments);
+    va_end(arguments);
     return recipe;
 }
 
-void Recipes::addShapelessRecipe(ItemInstance* result, int category, _va_struct* arguments)
+void Recipes::addShapelessRecipe(ItemInstance* result, int category, va_list arguments)
 {
     std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>();
-    const wchar_t* format = va_arg(arguments->arguments, const wchar_t*);
+    const wchar_t* format = va_arg(arguments, const wchar_t*);
     int achievementId = -1;
     Recipe::_eGroupType group = Recipe::eGroupType_Miscellaneous;
     Item* resultItem = result->getItem();
@@ -446,11 +446,11 @@ void Recipes::addShapelessRecipe(ItemInstance* result, int category, _va_struct*
         switch (*type)
         {
         case L'b':
-            baseItemType = va_arg(arguments->arguments, int);
+            baseItemType = va_arg(arguments, int);
             break;
         case L'g':
         {
-            wchar_t groupCode = static_cast<wchar_t>(va_arg(arguments->arguments, int));
+            wchar_t groupCode = static_cast<wchar_t>(va_arg(arguments, int));
             if (groupCode >= L'0' && groupCode <= L'5')
             {
                 group = static_cast<Recipe::_eGroupType>(groupCode - L'0');
@@ -472,16 +472,16 @@ void Recipes::addShapelessRecipe(ItemInstance* result, int category, _va_struct*
             break;
         }
         case L'i':
-            ingredients->push_back(new ItemInstance(va_arg(arguments->arguments, Item*)));
+            ingredients->push_back(new ItemInstance(va_arg(arguments, Item*)));
             break;
         case L't':
-            ingredients->push_back(new ItemInstance(va_arg(arguments->arguments, Block*), 1, -1));
+            ingredients->push_back(new ItemInstance(va_arg(arguments, Block*), 1, -1));
             break;
         case L'v':
-            achievementId = va_arg(arguments->arguments, int);
+            achievementId = va_arg(arguments, int);
             break;
         case L'z':
-            ingredients->push_back(va_arg(arguments->arguments, ItemInstance*)->copy_not_shared());
+            ingredients->push_back(va_arg(arguments, ItemInstance*)->copy_not_shared());
             break;
         default:
             break;
@@ -496,18 +496,18 @@ void Recipes::addShapelessRecipe(ItemInstance* result, int category, _va_struct*
 
 void Recipes::addShapelessRecipe(ItemInstance* result, ...)
 {
-    _va_struct arguments;
-    va_start(arguments.arguments, result);
-    addShapelessRecipe(result, 0, &arguments);
-    va_end(arguments.arguments);
+    va_list arguments;
+    va_start(arguments, result);
+    addShapelessRecipe(result, 0, arguments);
+    va_end(arguments);
 }
 
 void Recipes::addShapelessRecipe(ItemInstance* result, int category, ...)
 {
-    _va_struct arguments;
-    va_start(arguments.arguments, category);
-    addShapelessRecipe(result, category, &arguments);
-    va_end(arguments.arguments);
+    va_list arguments;
+    va_start(arguments, category);
+    addShapelessRecipe(result, category, arguments);
+    va_end(arguments);
 }
 
 void Recipes::buildRecipeIngredientsArray()

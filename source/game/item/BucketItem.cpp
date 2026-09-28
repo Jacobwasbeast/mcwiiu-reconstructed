@@ -913,7 +913,7 @@ int BucketItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
 
 int BucketItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return mFillType == MILK ? 2 : 0;
+    return mFillType == MILK ? UseAnim_drink : UseAnim_none;
 }
 
 unsigned int BucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
@@ -934,7 +934,7 @@ unsigned int BucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 }
 
 static const int TROPICAL_FISH_COLOR_NAMES[15] = {
-    static_cast<int>(0x8A9C9A3E), 0x2FF565B1, 0x40A2DD6C, 0x6DBC7AE0, static_cast<int>(0xA94584ED),
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_WHITE), IDS_DESC_TROPICAL_COLOR_ORANGE, IDS_DESC_TROPICAL_COLOR_MAGENTA, IDS_DESC_TROPICAL_COLOR_SKY, static_cast<int>(IDS_DESC_TROPICAL_COLOR_YELLOW),
     0x4E44ECC4, static_cast<int>(0xB03701A2), static_cast<int>(0xD02C583C), static_cast<int>(0xF41C4A76),
     static_cast<int>(0xF6303EFD), static_cast<int>(0xFF2145A5), 0x59210C0F, static_cast<int>(0xA6E7677F),
     0x3538B71A, 0x4A597242,
@@ -966,7 +966,7 @@ std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
     }
 
     if (fishBucket && !customName.empty() && !censored)
-        return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}", customName);
+        return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}", customName);
 
     if (mFillType != TROPICAL || tag == NULL)
         return Item::getName(itemInstance);
@@ -985,7 +985,7 @@ std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
     int schoolName = getSchoolName(baseColor, patternColor, variant & 1, pattern);
     if (schoolName != -1)
     {
-        return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}",
+        return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}",
                           L10N::GetString(schoolName));
     }
 
@@ -994,12 +994,12 @@ std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
     {
         std::wstring fishName = replaceAll(L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]),
                                            L"{*COLOR_0*}", baseName);
-        return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}", fishName);
+        return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}", fishName);
     }
 
     std::wstring patternName = L10N::GetString(TROPICAL_FISH_COLOR_NAMES[patternColor]);
     std::wstring fishName = L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]);
     fishName = replaceAll(fishName, L"{*COLOR_0*}", baseName);
     fishName = replaceAll(fishName, L"{*COLOR_1*}", patternName);
-    return replaceAll(L10N::GetString(static_cast<int>(0xFF6AA873)), L"{*CUSTOM_FISH*}", fishName);
+    return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}", fishName);
 }

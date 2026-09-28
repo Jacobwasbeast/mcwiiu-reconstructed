@@ -13,7 +13,7 @@ class ShapedRecipe : public Recipe
 {
 public:
     ShapedRecipe(int width, int height, ItemInstance** ingredients, ItemInstance* result, int group);
-    virtual ~ShapedRecipe();
+    virtual ~ShapedRecipe() {}
 
     virtual bool matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level);
     virtual not_null_ptr<ItemInstance> assemble(boost::shared_ptr<CraftingContainer> craftingContainer);

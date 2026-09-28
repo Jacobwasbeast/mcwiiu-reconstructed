@@ -28,9 +28,10 @@ void Containers::dropItemStack(Level* level, double x, double y, double z, not_n
             x + (double)xOffset,
             y + (double)yOffset,
             z + (double)zOffset, split));
-        itemEntity->mXd = randomGenerator.nextGaussian() * 0.05;
-        itemEntity->mYd = randomGenerator.nextGaussian() * 0.05 + 0.2;
-        itemEntity->mZd = randomGenerator.nextGaussian() * 0.05;
+        const float speed = 0.05f;
+        itemEntity->mXd = (float)randomGenerator.nextGaussian() * speed;
+        itemEntity->mYd = (float)randomGenerator.nextGaussian() * speed + 0.2f;
+        itemEntity->mZd = (float)randomGenerator.nextGaussian() * speed;
         level->addEntity(itemEntity);
     }
 }

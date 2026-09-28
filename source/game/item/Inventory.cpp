@@ -25,6 +25,9 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/network/ClientboundContainerSetSlotPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
 
 Inventory::Inventory(Player* player)
     : m_items(NonNullList<not_null_ptr<ItemInstance> >::withSize(INVENTORY_SIZE, ItemInstance::EMPTY)),
@@ -44,6 +47,9 @@ Inventory::Inventory(Player* player)
 
 Inventory::~Inventory()
 {
+    delete[] m_items.items;
+    delete[] m_armor.items;
+    delete[] m_offhand.items;
 }
 
 std::wstring Inventory::getName()
@@ -429,6 +435,7 @@ void Inventory::placeItemBackInInventory(Level* level, not_null_ptr<ItemInstance
     {
         return;
     }
+
     while (!item->isEmpty())
     {
         int slot = getSlotWithRemainingSpace(item);
@@ -439,19 +446,14 @@ void Inventory::placeItemBackInInventory(Level* level, not_null_ptr<ItemInstance
         if (slot == -1)
         {
             m_player->drop(item, false);
-            return;
+            break;
         }
 
-        not_null_ptr<ItemInstance> current = getItem(slot);
-        int currentCount = current->isEmpty() ? 0 : current->getCount();
-        int room = current->isEmpty() ? item->getMaxStackSize()
-                                      : current->getMaxStackSize() - currentCount;
-        room = std::min(room, getMaxStackSize() - currentCount);
-        not_null_ptr<ItemInstance> part = item->split(std::min(room, item->getCount()));
-        if (!add(slot, part))
+        int space = item->getMaxStackSize() - getItem(slot)->getCount();
+        if (add(slot, item->split(space)))
         {
-            m_player->drop(item, false);
-            return;
+            static_cast<ServerPlayer*>(m_player)->mConnection->send(
+                boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-2, slot, getItem(slot))));
         }
     }
 }

@@ -10,6 +10,7 @@ ResultContainer::ResultContainer()
 
 ResultContainer::~ResultContainer()
 {
+    delete[] items.items;
 }
 
 unsigned int ResultContainer::getContainerSize()

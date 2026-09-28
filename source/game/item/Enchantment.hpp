@@ -60,7 +60,7 @@ public:
     virtual void doPostHurt(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<Entity> attacker, int level);
     virtual bool isTreasureOnly();
     virtual bool isCurse();
-    virtual ~Enchantment();
+    virtual ~Enchantment() {}
 
     const EnchantmentCategory* mCategory;
 

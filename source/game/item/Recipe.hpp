@@ -55,7 +55,7 @@ public:
     {
     }
 
-    virtual ~Recipe();
+    virtual ~Recipe() {}
     virtual bool matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level) = 0;
     virtual not_null_ptr<ItemInstance> assemble(boost::shared_ptr<CraftingContainer> craftingContainer) = 0;
     virtual int size() = 0;

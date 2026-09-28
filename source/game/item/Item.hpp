@@ -39,6 +39,16 @@ class Player;
 class Rarity;
 class TextureAtlasSprite;
 
+enum UseAnim
+{
+    UseAnim_none,
+    UseAnim_eat,
+    UseAnim_drink,
+    UseAnim_block,
+    UseAnim_bow,
+    UseAnim_spear
+};
+
 class Item
 {
 public:
@@ -84,7 +94,7 @@ public:
     virtual not_null_ptr<ItemInstance> getDefaultInstance();
     virtual bool verifyTagAfterLoad(CompoundTag* tag);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~Item();
+    virtual ~Item() {}
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                        Level* level,
                        const BlockPos& pos,

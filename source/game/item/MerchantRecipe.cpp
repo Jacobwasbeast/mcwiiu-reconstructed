@@ -42,7 +42,6 @@ void MerchantRecipe::_init(not_null_ptr<ItemInstance> buyA, not_null_ptr<ItemIns
     mUses = 0;
     mMaxUses = 7;
     mRewardExp = true;
-    mDeprecated = false;
 }
 
 void MerchantRecipe::load(CompoundTag* tag)
@@ -77,7 +76,6 @@ void MerchantRecipe::load(CompoundTag* tag)
     {
         mRewardExp = true;
     }
-    mDeprecated = false;
 }
 
 not_null_ptr<ItemInstance> MerchantRecipe::getBuyAItem() { return mBuyA; }
@@ -104,8 +102,8 @@ int MerchantRecipe::getUses() { return mUses; }
 int MerchantRecipe::getMaxUses() { return mMaxUses; }
 void MerchantRecipe::increaseUses() { ++mUses; }
 void MerchantRecipe::increaseMaxUses(int amount) { mMaxUses += amount; }
-bool MerchantRecipe::isDeprecated() { return mDeprecated || mUses >= mMaxUses; }
-void MerchantRecipe::enforceDeprecated() { mDeprecated = true; }
+bool MerchantRecipe::isDeprecated() { return mUses >= mMaxUses || mSell->isEmpty(); }
+void MerchantRecipe::enforceDeprecated() { mUses = mMaxUses; }
 bool MerchantRecipe::shouldRewardExp() { return mRewardExp; }
 CompoundTag* MerchantRecipe::createTag()
 {

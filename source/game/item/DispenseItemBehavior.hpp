@@ -10,7 +10,7 @@ class ItemInstance;
 class DispenseItemBehavior : public Behavior
 {
 public:
-    virtual ~DispenseItemBehavior();
+    virtual ~DispenseItemBehavior() {}
 
     virtual not_null_ptr<ItemInstance> dispense(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance) = 0;
 };

@@ -24,13 +24,16 @@ static arrayWithLength<T> makeColorArray(T* values, unsigned int count)
     return arrayWithLength<T>(result);
 }
 
-ItemColors::ItemColors() : mItemColorIds() {}
+ItemColors::ItemColors()
+{
+    mItemColorIds = new IdMapper<ItemColor*>();
+}
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Item*> items)
 {
     for (unsigned int i = 0; i < items.length; ++i)
     {
-        mItemColorIds.addMapping(color, Item::getId(items.data[i]));
+        mItemColorIds->addMapping(color, Item::getId(items.data[i]));
     }
 }
 
@@ -38,7 +41,7 @@ void ItemColors::registerColor(ItemColor* color, arrayWithLength<Block*> blocks)
 {
     for (unsigned int i = 0; i < blocks.length; ++i)
     {
-        mItemColorIds.addMapping(color, Item::getId(Item::byBlock(blocks.data[i])));
+        mItemColorIds->addMapping(color, Item::getId(Item::byBlock(blocks.data[i])));
     }
 }
 
@@ -194,6 +197,6 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
 
 int ItemColors::getColor(not_null_ptr<ItemInstance> item, int layer)
 {
-    ItemColor* color = mItemColorIds.byId(Item::getId(item->getItem()));
+    ItemColor* color = mItemColorIds->byId(Item::getId(item->getItem()));
     return color == NULL ? -1 : color->getColor(item, layer);
 }

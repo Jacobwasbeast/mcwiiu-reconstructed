@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
 #include "game/entity/mob/Entity.hpp"
@@ -92,7 +93,7 @@ private:
     int mDurationOnUse;
     float mRadiusOnUse;
     float mRadiusPerTick;
-    boost::shared_ptr<LivingEntity> mOwner;
+    boost::weak_ptr<LivingEntity> mOwner;
     std::wstring mOwnerUUID;
 };
 

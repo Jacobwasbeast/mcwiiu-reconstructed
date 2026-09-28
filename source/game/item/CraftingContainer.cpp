@@ -13,6 +13,7 @@ CraftingContainer::CraftingContainer(AbstractContainerMenu* menu, unsigned int w
 
 CraftingContainer::~CraftingContainer()
 {
+    delete[] mItems.items;
 }
 
 std::wstring CraftingContainer::getName()

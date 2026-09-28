@@ -42,7 +42,6 @@ private:
     int mUses;
     int mMaxUses;
     bool mRewardExp;
-    bool mDeprecated;
 };
 
 #endif

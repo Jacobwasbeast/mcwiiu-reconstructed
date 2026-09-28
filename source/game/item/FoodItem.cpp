@@ -108,7 +108,7 @@ int FoodItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
 
 int FoodItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 1;
+    return UseAnim_eat;
 }
 
 InteractionResultHolder FoodItem::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)

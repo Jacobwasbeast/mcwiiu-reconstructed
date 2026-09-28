@@ -117,7 +117,7 @@ int PotionItem::getUseDuration(not_null_ptr<ItemInstance>)
 
 int PotionItem::getUseAnimation(not_null_ptr<const ItemInstance>) const
 {
-    return 2;
+    return UseAnim_drink;
 }
 
 InteractionResultHolder PotionItem::use(Level*, boost::shared_ptr<Player> player,

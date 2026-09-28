@@ -27,7 +27,7 @@ public:
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual void registerIcons(IconRegister* iconRegister);
-    virtual TextureAtlasSprite* getLayerIcon(int auxValue, not_null_ptr<ItemInstance> itemInstance);
+    virtual TextureAtlasSprite* getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> itemInstance);
     virtual TextureAtlasSprite* getIcon(not_null_ptr<ItemInstance> itemInstance);
     virtual int GetArmorType();
     virtual bool isValidRepairItem(not_null_ptr<ItemInstance> itemInstance,

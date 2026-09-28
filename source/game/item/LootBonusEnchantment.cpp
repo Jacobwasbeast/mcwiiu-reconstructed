@@ -1,4 +1,5 @@
 #include "game/item/LootBonusEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
@@ -10,15 +11,15 @@ LootBonusEnchantment::LootBonusEnchantment(const Rarity* rarity,
 {
     if (category == EnchantmentCategory::WEAPON)
     {
-        setDescriptionId((int)0xda6036a5);
+        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS_DIGGER);
     }
     else if (category == EnchantmentCategory::DIGGER)
     {
-        setDescriptionId((int)0x797d9c28);
+        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS);
     }
     else
     {
-        setDescriptionId((int)0x8e00390d);
+        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS_FISHING_ROD);
     }
 }
 

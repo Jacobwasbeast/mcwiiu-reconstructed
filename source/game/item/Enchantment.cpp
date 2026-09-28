@@ -54,10 +54,6 @@ Enchantment::Enchantment(const Rarity* rarity, const EnchantmentCategory* catego
     mSlots = slots;
 }
 
-Enchantment::~Enchantment()
-{
-}
-
 Enchantment* Enchantment::byId(int id)
 {
     return enchantmentRegistry->byId(id);

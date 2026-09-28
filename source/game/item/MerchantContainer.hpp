@@ -44,12 +44,11 @@ public:
     bool isPaymentSlot(int slot);
 
 private:
-    NonNullList<not_null_ptr<ItemInstance> > mItems;
     boost::shared_ptr<Merchant> mMerchant;
+    NonNullList<not_null_ptr<ItemInstance> > mItems;
     boost::shared_ptr<Player> mTradingPlayer;
-    MerchantRecipeList* mOffers;
-    int mSelectionHint;
     MerchantRecipe* mActiveRecipe;
+    int mSelectionHint;
 };
 
 #endif

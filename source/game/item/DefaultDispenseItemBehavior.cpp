@@ -15,10 +15,6 @@
 #include "game/world/block/DispenserBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-DefaultDispenseItemBehavior::~DefaultDispenseItemBehavior()
-{
-}
-
 not_null_ptr<ItemInstance> DefaultDispenseItemBehavior::dispense(BlockSource* blockSource,
                                                                  not_null_ptr<ItemInstance> itemInstance)
 {

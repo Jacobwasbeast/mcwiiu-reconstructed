@@ -1,4 +1,5 @@
 #include "game/item/BannerItem.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
 #include "game/client/audio/SoundSource.hpp"
@@ -102,7 +103,7 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
         if (blockEntity.get() == NULL || blockEntity->GetType() != BlockEntityType::BANNER)
         {
-            player->displayClientMessage((int)0xfdf65c18, true);
+            player->displayClientMessage((int)IDS_MAX_BANNERS, true);
             return InteractionResult::eInteractionResult_Fail;
         }
 

@@ -151,7 +151,7 @@ InteractionResultHolder BoatItem::use(Level* level,
     }
     else if (!level->mIsClientSide)
     {
-        player->displayClientMessage(0xB2145884, true);
+        player->displayClientMessage(IDS_MAX_BOATS, true);
     }
 
     delete hit;

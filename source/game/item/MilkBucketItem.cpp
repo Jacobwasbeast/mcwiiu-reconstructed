@@ -59,7 +59,7 @@ int MilkBucketItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
 
 int MilkBucketItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 2;
+    return UseAnim_drink;
 }
 
 InteractionResultHolder MilkBucketItem::use(Level* level,

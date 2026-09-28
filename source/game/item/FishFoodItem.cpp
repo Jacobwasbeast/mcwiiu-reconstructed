@@ -1,4 +1,5 @@
 #include "game/item/FishFoodItem.hpp"
+#include "game/core/StringIds.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -10,10 +11,10 @@
 #include "game/world/Level.hpp"
 
 FishFoodItem::Type* gFishFoodTypes[4] = {
-    new FishFoodItem::Type(0, 0xFB51767E, 0x224B0B42, 0x692511AB, 0x51994487, 2, 0.6f, 5, 0.8f, L"fishRaw", L"fishCooked"),
-    new FishFoodItem::Type(1, 0x5619AFE4, 0x9ADFD818, 0x44A3F851, 0xE7AF7DDD, 2, 0.8f, 6, 1.0f, L"fish_salmon_raw", L"fish_salmon_cooked"),
+    new FishFoodItem::Type(0, 0xFB51767E, IDS_DESC_FISH_COD_RAW, IDS_ITEM_FISH_COD_COOKED, IDS_DESC_FISH_COD_COOKED, 2, 0.6f, 5, 0.8f, L"fishRaw", L"fishCooked"),
+    new FishFoodItem::Type(1, IDS_ITEM_FISH_SALMON_RAW, IDS_DESC_FISH_SALMON_RAW, IDS_ITEM_FISH_SALMON_COOKED, IDS_DESC_FISH_SALMON_COOKED, 2, 0.8f, 6, 1.0f, L"fish_salmon_raw", L"fish_salmon_cooked"),
     new FishFoodItem::Type(2, 0x0B072C6C, 0xCC0E58F0, 1, 0.8f, L"fish_clownfish_raw"),
-    new FishFoodItem::Type(3, 0x60C4EC20, 0x1F16945C, 1, 0.8f, L"fish_pufferfish_raw")
+    new FishFoodItem::Type(3, IDS_ITEM_FISH_PUFFERFISH_RAW, IDS_DESC_FISH_PUFFERFISH_RAW, 1, 0.8f, L"fish_pufferfish_raw")
 };
 FishFoodItem::Type* gPufferfishFoodType = gFishFoodTypes[3];
 FishFoodItem::Type* FishFoodItem::Type::COD = gFishFoodTypes[0];

@@ -1,4 +1,5 @@
 #include "game/item/DamageEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <boost/pointer_cast.hpp>
@@ -16,7 +17,7 @@ static const int MIN_COST[3] = { 1, 5, 5 };
 static const int LEVEL_COST[3] = { 11, 8, 8 };
 static const int LEVEL_COST_SPAN[3] = { 20, 20, 20 };
 static const int DESCRIPTION_IDS[3] = {
-    (int)0xCA0651FF, (int)0xBD9225A1, 0x0C99DAC4
+    (int)IDS_ENCHANTMENT_DAMAGE_ALL, (int)0xBD9225A1, IDS_ENCHANTMENT_DAMAGE_ARTHROPODS
 };
 
 DamageEnchantment::DamageEnchantment(const Rarity* rarity, int type,

@@ -19,7 +19,7 @@ void ShieldItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
 int ShieldItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 3;
+    return UseAnim_block;
 }
 
 int ShieldItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)

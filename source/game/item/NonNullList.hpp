@@ -12,17 +12,27 @@ public:
 
     static NonNullList<T> withSize(unsigned int size, const T& defaultValue);
 
-    unsigned int size() const;
+    unsigned int size() const
+    {
+        return length;
+    }
 
-    T& operator[](unsigned int index);
-    const T& operator[](unsigned int index) const;
+    T& operator[](unsigned int index)
+    {
+        return items[index];
+    }
 
-private:
-    NonNullList(T* items, unsigned int length, const T& defaultValue);
+    const T& operator[](unsigned int index) const
+    {
+        return items[index];
+    }
 
     T* items;
     unsigned int length;
     T defaultValue;
+
+private:
+    NonNullList(T* items, unsigned int length, const T& defaultValue);
 };
 
 template <class T>
@@ -61,24 +71,6 @@ NonNullList<T> NonNullList<T>::withSize(unsigned int size, const T& defaultValue
     }
 
     return NonNullList<T>(items, size, defaultValue);
-}
-
-template <class T>
-unsigned int NonNullList<T>::size() const
-{
-    return length;
-}
-
-template <class T>
-T& NonNullList<T>::operator[](unsigned int index)
-{
-    return items[index];
-}
-
-template <class T>
-const T& NonNullList<T>::operator[](unsigned int index) const
-{
-    return items[index];
 }
 
 #endif

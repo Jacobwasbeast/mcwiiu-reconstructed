@@ -40,7 +40,7 @@ int GoldenAppleItem::getUseDescriptionId(int auxValue)
 {
     if (auxValue != 0)
     {
-        return (int)0x5cf7965c;
+        return (int)IDS_DESC_ENCHANTED_GOLDENAPPLE;
     }
     return (int)IDS_DESC_GOLDENAPPLE;
 }

@@ -6,10 +6,6 @@ Container::Container()
 {
 }
 
-Container::~Container()
-{
-}
-
 bool Container::isFull()
 {
     for (unsigned int slot = 0; slot < getContainerSize(); ++slot)

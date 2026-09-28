@@ -13,7 +13,7 @@ class Container : public virtual Nameable
 {
 public:
     Container();
-    virtual ~Container();
+    virtual ~Container() {}
 
     virtual unsigned int getContainerSize() = 0;
     virtual bool isEmpty() = 0;

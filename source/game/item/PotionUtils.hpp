@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+#include "game/core/CriticalSection.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -38,6 +40,18 @@ public:
     static not_null_ptr<ItemInstance> setCustomEffects(not_null_ptr<ItemInstance> item, std::vector<MobEffectInstance*>* effects);
     static not_null_ptr<ItemInstance> setPotionAndCustomEffects(not_null_ptr<ItemInstance> target, not_null_ptr<ItemInstance> source);
     static void setPotionName(not_null_ptr<ItemInstance> item, const std::wstring& name);
+
+private:
+    struct PotionCacheEntry
+    {
+        PotionCacheEntry() : isFoil(false) {}
+
+        bool isFoil;
+    };
+
+    static boost::unordered_map<std::wstring, PotionCacheEntry> potionCache;
+    static OSFastMutex potionCacheLock;
+    static bool potionCacheLockInitialised;
 };
 
 #endif

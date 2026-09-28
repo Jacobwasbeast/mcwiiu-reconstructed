@@ -13,7 +13,7 @@
 class ItemInstance;
 class Player;
 
-class SimpleContainer : public Container
+class SimpleContainer : public virtual Container
 {
 public:
     SimpleContainer(int id, const std::wstring& name, bool hasCustomName, int size);

@@ -103,6 +103,7 @@ public:
 
 private:
     friend class Minecraft;
+    friend class Player;
     friend class ServerGamePacketListenerImpl;
     friend class MultiPlayerGameMode;
     friend class Gui;

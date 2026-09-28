@@ -2,6 +2,7 @@
 #define GAME_ITEM_COMPOUNDCONTAINER_HPP
 
 #include <string>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "game/item/LockableContainer.hpp"
@@ -12,7 +13,8 @@ class Inventory;
 class ItemInstance;
 class Player;
 
-class CompoundContainer : public LockableContainer
+class CompoundContainer : public LockableContainer,
+                          public boost::enable_shared_from_this<CompoundContainer>
 {
 public:
     CompoundContainer(int id, boost::shared_ptr<LockableContainer> first,

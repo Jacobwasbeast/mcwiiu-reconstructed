@@ -246,7 +246,7 @@ int BowItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
 
 int BowItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 4;
+    return UseAnim_bow;
 }
 
 InteractionResultHolder BowItem::fjUseWithProjectile(Level* level,
@@ -338,8 +338,8 @@ unsigned int BowItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 
     if (tooltipData.m_pPlayer->isUsingItem())
     {
-        return 0xEC754EE9;
+        return IDS_TOOLTIPS_RELEASE_BOW;
     }
 
-    return 0x4381BCF0;
+    return IDS_TOOLTIPS_DRAW_BOW;
 }

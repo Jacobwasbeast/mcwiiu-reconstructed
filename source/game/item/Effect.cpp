@@ -2,7 +2,10 @@
 
 #include "game/core/GlStateManager.hpp"
 #include "game/core/ProgramManager.hpp"
+#include "game/core/DummyUniform.hpp"
 #include "game/core/Uniform.hpp"
+
+static DummyUniform* sDummyUniform = new DummyUniform();
 
 void Effect::destroy()
 {
@@ -47,7 +50,7 @@ Uniform* Effect::safeGetUniform(const std::wstring& name)
     Uniform* uniform = getUniform(name);
     if (uniform != 0)
         return uniform;
-    return Uniform::safeFallback();
+    return sDummyUniform;
 }
 
 void Effect::setSampler(std::wstring name, RenderTarget* target)

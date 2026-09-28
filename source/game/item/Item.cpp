@@ -159,7 +159,7 @@ const Item::Tier* Item::Tier::GOLD = new Item::Tier(0, 32, 12.0f, 0.0f, 22, 4);
 Random* Item::random = new Random();
 
 static const int LOG_BLOCK_NAME_IDS[] = {
-    0x0B851C01, 0x7D86FA86, 0xBB86EB26, 0x635D7533, 0xF11C45A4, 0x98793762
+    IDS_TILE_LOG_OAK, IDS_TILE_LOG_SPRUCE, IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE, IDS_TILE_LOG_ACACIA, IDS_TILE_LOG_DARK_OAK
 };
 
 static const int WOOL_BLOCK_NAME_IDS[] = {
@@ -172,33 +172,33 @@ static const int QUARTZ_BLOCK_NAME_IDS[] = {
 };
 
 static const int STAINED_CLAY_BLOCK_NAME_IDS[] = {
-    0x5366E34F, 0x2767F1BB, 0xD7228303, 0x2BA187F6, 0xFEE55BFE, 0x8CFEA0D6, 0x401911F5, 0x2D51BCB7,
-    0x4FEE910D, 0x883B0C24, 0xB1E87A05, 0x57114E5C, 0x63D1E61F, 0xACB66EF5, 0xD5D0D890, 0xCEB2BF07
+    IDS_TILE_STAINED_CLAY_BLACK, IDS_TILE_STAINED_CLAY_RED, IDS_TILE_STAINED_CLAY_GREEN, IDS_TILE_STAINED_CLAY_BROWN, IDS_TILE_STAINED_CLAY_BLUE, IDS_TILE_STAINED_CLAY_PURPLE, IDS_TILE_STAINED_CLAY_CYAN, IDS_TILE_STAINED_CLAY_SILVER,
+    IDS_TILE_STAINED_CLAY_GRAY, IDS_TILE_STAINED_CLAY_PINK, IDS_TILE_STAINED_CLAY_LIME, IDS_TILE_STAINED_CLAY_YELLOW, IDS_TILE_STAINED_CLAY_LIGHT_BLUE, IDS_TILE_STAINED_CLAY_MAGENTA, IDS_TILE_STAINED_CLAY_ORANGE, IDS_TILE_STAINED_CLAY_WHITE
 };
 
 static const int WOOL_CARPET_BLOCK_NAME_IDS[] = {
-    IDS_TILE_CARPET_BLACK, IDS_TILE_CARPET_RED, IDS_TILE_CARPET_GREEN, IDS_TILE_CARPET_BROWN, IDS_TILE_CARPET_BLUE, IDS_TILE_CARPET_PURPLE, IDS_TILE_CARPET_CYAN, 0xF7A53C3E,
+    IDS_TILE_CARPET_BLACK, IDS_TILE_CARPET_RED, IDS_TILE_CARPET_GREEN, IDS_TILE_CARPET_BROWN, IDS_TILE_CARPET_BLUE, IDS_TILE_CARPET_PURPLE, IDS_TILE_CARPET_CYAN, IDS_TILE_CARPET_SILVER,
     IDS_TILE_CARPET_GRAY, IDS_TILE_CARPET_PINK, IDS_TILE_CARPET_LIME, IDS_TILE_CARPET_YELLOW, IDS_TILE_CARPET_LIGHT_BLUE, IDS_TILE_CARPET_MAGENTA, IDS_TILE_CARPET_ORANGE, IDS_TILE_CARPET_WHITE
 };
 
 static const int STAINED_GLASS_BLOCK_NAME_IDS[] = {
-    IDS_TILE_STAINED_GLASS_BLACK, IDS_TILE_STAINED_GLASS_RED, IDS_TILE_STAINED_GLASS_GREEN, IDS_TILE_STAINED_GLASS_BROWN, IDS_TILE_STAINED_GLASS_BLUE, IDS_TILE_STAINED_GLASS_PURPLE, IDS_TILE_STAINED_GLASS_CYAN, 0xD9C1E722,
+    IDS_TILE_STAINED_GLASS_BLACK, IDS_TILE_STAINED_GLASS_RED, IDS_TILE_STAINED_GLASS_GREEN, IDS_TILE_STAINED_GLASS_BROWN, IDS_TILE_STAINED_GLASS_BLUE, IDS_TILE_STAINED_GLASS_PURPLE, IDS_TILE_STAINED_GLASS_CYAN, IDS_TILE_STAINED_GLASS_SILVER,
     IDS_TILE_STAINED_GLASS_GRAY, IDS_TILE_STAINED_GLASS_PINK, IDS_TILE_STAINED_GLASS_LIME, IDS_TILE_STAINED_GLASS_YELLOW, IDS_TILE_STAINED_GLASS_LIGHT_BLUE, IDS_TILE_STAINED_GLASS_MAGENTA, IDS_TILE_STAINED_GLASS_ORANGE, IDS_TILE_STAINED_GLASS_WHITE
 };
 
 static const int STAINED_GLASS_PANE_BLOCK_NAME_IDS[] = {
-    0xAACD630F, 0xFD174B7B, 0x31036BC3, 0x07B97AB6, 0x3A9A663E, 0x61ADDA16, 0x7E488535, 0xB5F2CFF7,
-    0x8E1E044D, 0x70728664, 0x1C56FE45, 0x60E0979C, 0xD965D95F, 0x9E0869B5, 0x02F273D0, 0xA85048C7
+    IDS_TILE_STAINED_GLASS_PANE_BLACK, IDS_TILE_STAINED_GLASS_PANE_RED, IDS_TILE_STAINED_GLASS_PANE_GREEN, IDS_TILE_STAINED_GLASS_PANE_BROWN, IDS_TILE_STAINED_GLASS_PANE_BLUE, IDS_TILE_STAINED_GLASS_PANE_PURPLE, IDS_TILE_STAINED_GLASS_PANE_CYAN, IDS_TILE_STAINED_GLASS_PANE_SILVER,
+    IDS_TILE_STAINED_GLASS_PANE_GRAY, IDS_TILE_STAINED_GLASS_PANE_PINK, IDS_TILE_STAINED_GLASS_PANE_LIME, IDS_TILE_STAINED_GLASS_PANE_YELLOW, 0xD965D95F, IDS_TILE_STAINED_GLASS_PANE_MAGENTA, IDS_TILE_STAINED_GLASS_PANE_ORANGE, IDS_TILE_STAINED_GLASS_PANE_WHITE
 };
 
 static const int CONCRETE_BLOCK_NAME_IDS[] = {
-    IDS_TILE_CONCRETE_BLACK, IDS_TILE_CONCRETE_RED, IDS_TILE_CONCRETE_GREEN, IDS_TILE_CONCRETE_BROWN, IDS_TILE_CONCRETE_BLUE, IDS_TILE_CONCRETE_PURPLE, IDS_TILE_CONCRETE_CYAN, 0x5D78FF60,
+    IDS_TILE_CONCRETE_BLACK, IDS_TILE_CONCRETE_RED, IDS_TILE_CONCRETE_GREEN, IDS_TILE_CONCRETE_BROWN, IDS_TILE_CONCRETE_BLUE, IDS_TILE_CONCRETE_PURPLE, IDS_TILE_CONCRETE_CYAN, IDS_TILE_CONCRETE_SILVER,
     IDS_TILE_CONCRETE_GRAY, IDS_TILE_CONCRETE_PINK, IDS_TILE_CONCRETE_LIME, IDS_TILE_CONCRETE_YELLOW, IDS_TILE_CONCRETE_LIGHT_BLUE, IDS_TILE_CONCRETE_MAGENTA, IDS_TILE_CONCRETE_ORANGE, IDS_TILE_CONCRETE_WHITE
 };
 
 static const int CONCRETE_POWDER_BLOCK_NAME_IDS[] = {
-    IDS_TILE_CONCRETE_POWDER_BLACK, IDS_TILE_CONCRETE_POWDER_RED, IDS_TILE_CONCRETE_POWDER_GREEN, IDS_TILE_CONCRETE_POWDER_BROWN, IDS_TILE_CONCRETE_POWDER_BLUE, IDS_TILE_CONCRETE_POWDER_PURPLE, IDS_TILE_CONCRETE_POWDER_CYAN, 0xF2E161B4,
-    IDS_TILE_CONCRETE_POWDER_GRAY, IDS_TILE_CONCRETE_POWDER_PINK, IDS_TILE_CONCRETE_POWDER_LIME, IDS_TILE_CONCRETE_POWDER_YELLOW, 0x89B703CC, IDS_TILE_CONCRETE_POWDER_MAGENTA, IDS_TILE_CONCRETE_POWDER_ORANGE, IDS_TILE_CONCRETE_POWDER_WHITE
+    IDS_TILE_CONCRETE_POWDER_BLACK, IDS_TILE_CONCRETE_POWDER_RED, IDS_TILE_CONCRETE_POWDER_GREEN, IDS_TILE_CONCRETE_POWDER_BROWN, IDS_TILE_CONCRETE_POWDER_BLUE, IDS_TILE_CONCRETE_POWDER_PURPLE, IDS_TILE_CONCRETE_POWDER_CYAN, IDS_TILE_CONCRETE_POWDER_SILVER,
+    IDS_TILE_CONCRETE_POWDER_GRAY, IDS_TILE_CONCRETE_POWDER_PINK, IDS_TILE_CONCRETE_POWDER_LIME, IDS_TILE_CONCRETE_POWDER_YELLOW, IDS_TILE_CONCRETE_POWDER_LIGHT_BLUE, IDS_TILE_CONCRETE_POWDER_MAGENTA, IDS_TILE_CONCRETE_POWDER_ORANGE, IDS_TILE_CONCRETE_POWDER_WHITE
 };
 
 Item::Tier::Tier(int level, int uses, float speed, float attackDamageBonus, int enchantmentValue, int ordinalValue)
@@ -307,10 +307,6 @@ Item::Item()
 
     addProperty(ResourceLocation(L"lefthanded"), LEFT_HANDED_PROPERTY);
     addProperty(ResourceLocation(L"cooldown"), COOLDOWN_PROPERTY);
-}
-
-Item::~Item()
-{
 }
 
 void Item::addProperty(ResourceLocation location, const ItemPropertyFunction* function)
@@ -992,7 +988,7 @@ bool Item::isComplex()
 
 int Item::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 0;
+    return UseAnim_none;
 }
 
 int Item::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
@@ -1558,28 +1554,28 @@ void Item::staticCtor()
         (new ShovelItem(Tier::IRON))->setIconName(L"shovelIron")->setBaseItemTypeAndMaterial(2, 3)->setDescriptionId(IDS_ITEM_SHOVEL_IRON, IDS_DESC_SHOVEL));
 
     registerItem(257, L"iron_pickaxe",
-        (new PickaxeItem(Tier::IRON))->setIconName(L"pickaxeIron")->setBaseItemTypeAndMaterial(3, 3)->setDescriptionId(IDS_ITEM_PICKAXE_IRON, 0x8161B947));
+        (new PickaxeItem(Tier::IRON))->setIconName(L"pickaxeIron")->setBaseItemTypeAndMaterial(3, 3)->setDescriptionId(IDS_ITEM_PICKAXE_IRON, IDS_DESC_PICKAXE));
 
     registerItem(258, L"iron_axe",
-        (new AxeItem(Tier::IRON))->setIconName(L"hatchetIron")->setBaseItemTypeAndMaterial(4, 3)->setDescriptionId(0xC55D95AC, 0x4D38CA25));
+        (new AxeItem(Tier::IRON))->setIconName(L"hatchetIron")->setBaseItemTypeAndMaterial(4, 3)->setDescriptionId(IDS_ITEM_HATCHET_IRON, IDS_DESC_HATCHET));
 
     registerItem(259, L"flint_and_steel",
-        (new FlintAndSteelItem())->setIconName(L"flintAndSteel")->setBaseItemTypeAndMaterial(28, 26)->setDescriptionId(IDS_ITEM_FLINT_AND_STEEL, 0x46397603));
+        (new FlintAndSteelItem())->setIconName(L"flintAndSteel")->setBaseItemTypeAndMaterial(28, 26)->setDescriptionId(IDS_ITEM_FLINT_AND_STEEL, IDS_DESC_FLINTANDSTEEL));
 
     registerItem(260, L"apple",
         (new FoodItem(4, 0.3f, false))->setIconName(L"apple")->setDescriptionId(IDS_ITEM_APPLE, IDS_DESC_APPLE));
 
     registerItem(261, L"bow",
-        (new BowItem())->setIconName(L"bow")->setBaseItemTypeAndMaterial(24, 17)->setDescriptionId(IDS_ITEM_BOW, 0x07341480));
+        (new BowItem())->setIconName(L"bow")->setBaseItemTypeAndMaterial(24, 17)->setDescriptionId(IDS_ITEM_BOW, IDS_DESC_BOW));
 
     registerItem(262, L"arrow",
-        (new ArrowItem())->setIconName(L"arrow")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_ARROW, 0x57C4CE0B)->SetPreferInventory(true)->setAllowOffhand(true));
+        (new ArrowItem())->setIconName(L"arrow")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_ARROW, IDS_DESC_ARROW)->SetPreferInventory(true)->setAllowOffhand(true));
 
     registerItem(263, L"coal",
-        (new CoalItem())->setIconName(L"coal")->setBaseItemTypeAndMaterial(31, 49)->setDescriptionId(IDS_ITEM_COAL, 0xE13DA78B));
+        (new CoalItem())->setIconName(L"coal")->setBaseItemTypeAndMaterial(31, 49)->setDescriptionId(IDS_ITEM_COAL, IDS_DESC_COAL));
 
     registerItem(264, L"diamond",
-        (new Item())->setIconName(L"diamond")->setBaseItemTypeAndMaterial(31, 5)->setDescriptionId(IDS_ITEM_DIAMOND, 0x1FCFAFCD));
+        (new Item())->setIconName(L"diamond")->setBaseItemTypeAndMaterial(31, 5)->setDescriptionId(IDS_ITEM_DIAMOND, IDS_DESC_DIAMONDS));
 
     registerItem(265, L"iron_ingot",
         (new Item())->setIconName(L"ingotIron")->setBaseItemTypeAndMaterial(31, 3)->setDescriptionId(IDS_ITEM_INGOT_IRON, IDS_DESC_INGOT));
@@ -1588,169 +1584,169 @@ void Item::staticCtor()
         (new Item())->setIconName(L"ingotGold")->setBaseItemTypeAndMaterial(31, 4)->setDescriptionId(IDS_ITEM_INGOT_GOLD, IDS_DESC_INGOT));
 
     registerItem(267, L"iron_sword",
-        (new SwordItem(Tier::IRON))->setIconName(L"swordIron")->setBaseItemTypeAndMaterial(1, 3)->setDescriptionId(IDS_ITEM_SWORD_IRON, 0x5DE5CBCF));
+        (new SwordItem(Tier::IRON))->setIconName(L"swordIron")->setBaseItemTypeAndMaterial(1, 3)->setDescriptionId(IDS_ITEM_SWORD_IRON, IDS_DESC_SWORD));
 
     registerItem(268, L"wooden_sword",
-        (new SwordItem(Tier::WOOD))->setIconName(L"swordWood")->setBaseItemTypeAndMaterial(1, 1)->setDescriptionId(IDS_ITEM_SWORD_WOOD, 0x5DE5CBCF));
+        (new SwordItem(Tier::WOOD))->setIconName(L"swordWood")->setBaseItemTypeAndMaterial(1, 1)->setDescriptionId(IDS_ITEM_SWORD_WOOD, IDS_DESC_SWORD));
 
     registerItem(269, L"wooden_shovel",
         (new ShovelItem(Tier::WOOD))->setIconName(L"shovelWood")->setBaseItemTypeAndMaterial(2, 1)->setDescriptionId(IDS_ITEM_SHOVEL_WOOD, IDS_DESC_SHOVEL));
 
     registerItem(270, L"wooden_pickaxe",
-        (new PickaxeItem(Tier::WOOD))->setIconName(L"pickaxeWood")->setBaseItemTypeAndMaterial(3, 1)->setDescriptionId(IDS_ITEM_PICKAXE_WOOD, 0x8161B947));
+        (new PickaxeItem(Tier::WOOD))->setIconName(L"pickaxeWood")->setBaseItemTypeAndMaterial(3, 1)->setDescriptionId(IDS_ITEM_PICKAXE_WOOD, IDS_DESC_PICKAXE));
 
     registerItem(271, L"wooden_axe",
-        (new AxeItem(Tier::WOOD))->setIconName(L"hatchetWood")->setBaseItemTypeAndMaterial(4, 1)->setDescriptionId(0x27EAFCDD, 0x4D38CA25));
+        (new AxeItem(Tier::WOOD))->setIconName(L"hatchetWood")->setBaseItemTypeAndMaterial(4, 1)->setDescriptionId(IDS_ITEM_HATCHET_WOOD, IDS_DESC_HATCHET));
 
     registerItem(272, L"stone_sword",
-        (new SwordItem(Tier::STONE))->setIconName(L"swordStone")->setBaseItemTypeAndMaterial(1, 2)->setDescriptionId(IDS_ITEM_SWORD_STONE, 0x5DE5CBCF));
+        (new SwordItem(Tier::STONE))->setIconName(L"swordStone")->setBaseItemTypeAndMaterial(1, 2)->setDescriptionId(IDS_ITEM_SWORD_STONE, IDS_DESC_SWORD));
 
     registerItem(273, L"stone_shovel",
         (new ShovelItem(Tier::STONE))->setIconName(L"shovelStone")->setBaseItemTypeAndMaterial(2, 2)->setDescriptionId(IDS_ITEM_SHOVEL_STONE, IDS_DESC_SHOVEL));
 
     registerItem(274, L"stone_pickaxe",
-        (new PickaxeItem(Tier::STONE))->setIconName(L"pickaxeStone")->setBaseItemTypeAndMaterial(3, 2)->setDescriptionId(IDS_ITEM_PICKAXE_STONE, 0x8161B947));
+        (new PickaxeItem(Tier::STONE))->setIconName(L"pickaxeStone")->setBaseItemTypeAndMaterial(3, 2)->setDescriptionId(IDS_ITEM_PICKAXE_STONE, IDS_DESC_PICKAXE));
 
     registerItem(275, L"stone_axe",
-        (new AxeItem(Tier::STONE))->setIconName(L"hatchetStone")->setBaseItemTypeAndMaterial(4, 2)->setDescriptionId(0x38C2FBED, 0x4D38CA25));
+        (new AxeItem(Tier::STONE))->setIconName(L"hatchetStone")->setBaseItemTypeAndMaterial(4, 2)->setDescriptionId(IDS_ITEM_HATCHET_STONE, IDS_DESC_HATCHET));
 
     registerItem(276, L"diamond_sword",
-        (new SwordItem(Tier::DIAMOND))->setIconName(L"swordDiamond")->setBaseItemTypeAndMaterial(1, 5)->setDescriptionId(IDS_ITEM_SWORD_DIAMOND, 0x5DE5CBCF));
+        (new SwordItem(Tier::DIAMOND))->setIconName(L"swordDiamond")->setBaseItemTypeAndMaterial(1, 5)->setDescriptionId(IDS_ITEM_SWORD_DIAMOND, IDS_DESC_SWORD));
 
     registerItem(277, L"diamond_shovel",
         (new ShovelItem(Tier::DIAMOND))->setIconName(L"shovelDiamond")->setBaseItemTypeAndMaterial(2, 5)->setDescriptionId(IDS_ITEM_SHOVEL_DIAMOND, IDS_DESC_SHOVEL));
 
     registerItem(278, L"diamond_pickaxe",
-        (new PickaxeItem(Tier::DIAMOND))->setIconName(L"pickaxeDiamond")->setBaseItemTypeAndMaterial(3, 5)->setDescriptionId(IDS_ITEM_PICKAXE_DIAMOND, 0x8161B947));
+        (new PickaxeItem(Tier::DIAMOND))->setIconName(L"pickaxeDiamond")->setBaseItemTypeAndMaterial(3, 5)->setDescriptionId(IDS_ITEM_PICKAXE_DIAMOND, IDS_DESC_PICKAXE));
 
     registerItem(279, L"diamond_axe",
-        (new AxeItem(Tier::DIAMOND))->setIconName(L"hatchetDiamond")->setBaseItemTypeAndMaterial(4, 5)->setDescriptionId(0x962A37C2, 0x4D38CA25));
+        (new AxeItem(Tier::DIAMOND))->setIconName(L"hatchetDiamond")->setBaseItemTypeAndMaterial(4, 5)->setDescriptionId(IDS_ITEM_HATCHET_DIAMOND, IDS_DESC_HATCHET));
 
     registerItem(280, L"stick",
-        (new Item())->setIconName(L"stick")->handEquipped()->setDescriptionId(IDS_ITEM_STICK, 0x3F88E88C)->setBaseItemTypeAndMaterial(48, 1));
+        (new Item())->setIconName(L"stick")->handEquipped()->setDescriptionId(IDS_ITEM_STICK, IDS_DESC_STICK)->setBaseItemTypeAndMaterial(48, 1));
 
     registerItem(281, L"bowl",
         (new Item())->setIconName(L"bowl")->setBaseItemTypeAndMaterial(26, 1)->setDescriptionId(IDS_ITEM_BOWL, IDS_DESC_BOWL)->setMaxStackSize(64));
 
     registerItem(282, L"mushroom_stew",
-        (new BowlFoodItem(6))->setIconName(L"mushroomStew")->setBaseItemTypeAndMaterial(39, 0)->setDescriptionId(IDS_ITEM_MUSHROOM_STEW, 0xF87FB06B));
+        (new BowlFoodItem(6))->setIconName(L"mushroomStew")->setBaseItemTypeAndMaterial(39, 0)->setDescriptionId(IDS_ITEM_MUSHROOM_STEW, IDS_DESC_MUSHROOMSTEW));
 
     registerItem(283, L"golden_sword",
-        (new SwordItem(Tier::GOLD))->setIconName(L"swordGold")->setBaseItemTypeAndMaterial(1, 4)->setDescriptionId(IDS_ITEM_SWORD_GOLD, 0x5DE5CBCF));
+        (new SwordItem(Tier::GOLD))->setIconName(L"swordGold")->setBaseItemTypeAndMaterial(1, 4)->setDescriptionId(IDS_ITEM_SWORD_GOLD, IDS_DESC_SWORD));
 
     registerItem(284, L"golden_shovel",
         (new ShovelItem(Tier::GOLD))->setIconName(L"shovelGold")->setBaseItemTypeAndMaterial(2, 4)->setDescriptionId(IDS_ITEM_SHOVEL_GOLD, IDS_DESC_SHOVEL));
 
     registerItem(285, L"golden_pickaxe",
-        (new PickaxeItem(Tier::GOLD))->setIconName(L"pickaxeGold")->setBaseItemTypeAndMaterial(3, 4)->setDescriptionId(IDS_ITEM_PICKAXE_GOLD, 0x8161B947));
+        (new PickaxeItem(Tier::GOLD))->setIconName(L"pickaxeGold")->setBaseItemTypeAndMaterial(3, 4)->setDescriptionId(IDS_ITEM_PICKAXE_GOLD, IDS_DESC_PICKAXE));
 
     registerItem(286, L"golden_axe",
-        (new AxeItem(Tier::GOLD))->setIconName(L"hatchetGold")->setBaseItemTypeAndMaterial(4, 4)->setDescriptionId(0xA0C4155E, 0x4D38CA25));
+        (new AxeItem(Tier::GOLD))->setIconName(L"hatchetGold")->setBaseItemTypeAndMaterial(4, 4)->setDescriptionId(IDS_ITEM_HATCHET_GOLD, IDS_DESC_HATCHET));
 
     registerItem(287, L"string",
-        (new BlockPlanterItem(Blocks::tripwire))->setIconName(L"string")->setDescriptionId(IDS_ITEM_STRING, 0xC6844E97));
+        (new BlockPlanterItem(Blocks::tripwire))->setIconName(L"string")->setDescriptionId(IDS_ITEM_STRING, IDS_DESC_STRING));
 
     registerItem(288, L"feather",
-        (new Item())->setIconName(L"feather")->setDescriptionId(IDS_ITEM_FEATHER, 0xF3341313));
+        (new Item())->setIconName(L"feather")->setDescriptionId(IDS_ITEM_FEATHER, IDS_DESC_FEATHER));
 
     registerItem(289, L"gunpowder",
-        (new Item())->setIconName(L"sulphur")->setDescriptionId(0x4BF44373, 0xF7E6C72F));
+        (new Item())->setIconName(L"sulphur")->setDescriptionId(IDS_ITEM_SULPHUR, IDS_DESC_SULPHUR));
 
     registerItem(290, L"wooden_hoe",
-        (new HoeItem(Tier::WOOD))->setIconName(L"hoeWood")->setBaseItemTypeAndMaterial(5, 1)->setDescriptionId(IDS_ITEM_HOE_WOOD, 0x6166FAC8));
+        (new HoeItem(Tier::WOOD))->setIconName(L"hoeWood")->setBaseItemTypeAndMaterial(5, 1)->setDescriptionId(IDS_ITEM_HOE_WOOD, IDS_DESC_HOE));
 
     registerItem(291, L"stone_hoe",
-        (new HoeItem(Tier::STONE))->setIconName(L"hoeStone")->setBaseItemTypeAndMaterial(5, 2)->setDescriptionId(IDS_ITEM_HOE_STONE, 0x6166FAC8));
+        (new HoeItem(Tier::STONE))->setIconName(L"hoeStone")->setBaseItemTypeAndMaterial(5, 2)->setDescriptionId(IDS_ITEM_HOE_STONE, IDS_DESC_HOE));
 
     registerItem(292, L"iron_hoe",
-        (new HoeItem(Tier::IRON))->setIconName(L"hoeIron")->setBaseItemTypeAndMaterial(5, 3)->setDescriptionId(IDS_ITEM_HOE_IRON, 0x6166FAC8));
+        (new HoeItem(Tier::IRON))->setIconName(L"hoeIron")->setBaseItemTypeAndMaterial(5, 3)->setDescriptionId(IDS_ITEM_HOE_IRON, IDS_DESC_HOE));
 
     registerItem(293, L"diamond_hoe",
-        (new HoeItem(Tier::DIAMOND))->setIconName(L"hoeDiamond")->setBaseItemTypeAndMaterial(5, 5)->setDescriptionId(IDS_ITEM_HOE_DIAMOND, 0x6166FAC8));
+        (new HoeItem(Tier::DIAMOND))->setIconName(L"hoeDiamond")->setBaseItemTypeAndMaterial(5, 5)->setDescriptionId(IDS_ITEM_HOE_DIAMOND, IDS_DESC_HOE));
 
     registerItem(294, L"golden_hoe",
-        (new HoeItem(Tier::GOLD))->setIconName(L"hoeGold")->setBaseItemTypeAndMaterial(5, 4)->setDescriptionId(IDS_ITEM_HOE_GOLD, 0x6166FAC8));
+        (new HoeItem(Tier::GOLD))->setIconName(L"hoeGold")->setBaseItemTypeAndMaterial(5, 4)->setDescriptionId(IDS_ITEM_HOE_GOLD, IDS_DESC_HOE));
 
     registerItem(295, L"wheat_seeds",
-        (new SeedItem(Blocks::wheat, Blocks::farmland))->setIconName(L"seeds")->setDescriptionId(0x95C975B2, 0x999D8B6E));
+        (new SeedItem(Blocks::wheat, Blocks::farmland))->setIconName(L"seeds")->setDescriptionId(IDS_ITEM_WHEAT_SEEDS, IDS_DESC_WHEAT_SEEDS));
 
     registerItem(296, L"wheat",
-        (new Item())->setIconName(L"wheat")->setBaseItemTypeAndMaterial(31, 53)->setDescriptionId(IDS_ITEM_WHEAT, 0x9CB06D4D));
+        (new Item())->setIconName(L"wheat")->setBaseItemTypeAndMaterial(31, 53)->setDescriptionId(IDS_ITEM_WHEAT, IDS_DESC_WHEAT));
 
     registerItem(297, L"bread",
-        (new FoodItem(5, 0.6f, false))->setIconName(L"bread")->setDescriptionId(IDS_ITEM_BREAD, 0x791B364A));
+        (new FoodItem(5, 0.6f, false))->setIconName(L"bread")->setDescriptionId(IDS_ITEM_BREAD, IDS_DESC_BREAD));
 
     registerItem(298, L"leather_helmet",
-        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::HEAD))->setIconName(L"helmetCloth")->setBaseItemTypeAndMaterial(7, 6)->setDescriptionId(0xF761EBF0, 0xB114599B));
+        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::HEAD))->setIconName(L"helmetCloth")->setBaseItemTypeAndMaterial(7, 6)->setDescriptionId(IDS_ITEM_HELMET_CLOTH, IDS_DESC_HELMET_LEATHER));
 
     registerItem(299, L"leather_chestplate",
-        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::CHEST))->setIconName(L"chestplateCloth")->setBaseItemTypeAndMaterial(8, 6)->setDescriptionId(0xEABFA580, 0x05E7B53B));
+        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::CHEST))->setIconName(L"chestplateCloth")->setBaseItemTypeAndMaterial(8, 6)->setDescriptionId(IDS_ITEM_CHESTPLATE_CLOTH, IDS_DESC_CHESTPLATE_LEATHER));
 
     registerItem(300, L"leather_leggings",
-        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::LEGS))->setIconName(L"leggingsCloth")->setBaseItemTypeAndMaterial(9, 6)->setDescriptionId(0x25CD26DF, 0x0F1B63F4));
+        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::LEGS))->setIconName(L"leggingsCloth")->setBaseItemTypeAndMaterial(9, 6)->setDescriptionId(IDS_ITEM_LEGGINGS_CLOTH, IDS_DESC_LEGGINGS_LEATHER));
 
     registerItem(301, L"leather_boots",
-        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::FEET))->setIconName(L"bootsCloth")->setBaseItemTypeAndMaterial(10, 6)->setDescriptionId(0x92747ED8, 0xCF27E723));
+        (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::FEET))->setIconName(L"bootsCloth")->setBaseItemTypeAndMaterial(10, 6)->setDescriptionId(IDS_ITEM_BOOTS_CLOTH, IDS_DESC_BOOTS_LEATHER));
 
     registerItem(302, L"chainmail_helmet",
-        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::HEAD))->setIconName(L"helmetChain")->setBaseItemTypeAndMaterial(7, 7)->setDescriptionId(IDS_ITEM_HELMET_CHAIN, 0xCEB3986D));
+        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::HEAD))->setIconName(L"helmetChain")->setBaseItemTypeAndMaterial(7, 7)->setDescriptionId(IDS_ITEM_HELMET_CHAIN, IDS_DESC_HELMET_CHAIN));
 
     registerItem(303, L"chainmail_chestplate",
-        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::CHEST))->setIconName(L"chestplateChain")->setBaseItemTypeAndMaterial(8, 7)->setDescriptionId(IDS_ITEM_CHESTPLATE_CHAIN, 0x4028FB8D));
+        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::CHEST))->setIconName(L"chestplateChain")->setBaseItemTypeAndMaterial(8, 7)->setDescriptionId(IDS_ITEM_CHESTPLATE_CHAIN, IDS_DESC_CHESTPLATE_CHAIN));
 
     registerItem(304, L"chainmail_leggings",
-        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::LEGS))->setIconName(L"leggingsChain")->setBaseItemTypeAndMaterial(9, 7)->setDescriptionId(IDS_ITEM_LEGGINGS_CHAIN, 0x36108302));
+        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::LEGS))->setIconName(L"leggingsChain")->setBaseItemTypeAndMaterial(9, 7)->setDescriptionId(IDS_ITEM_LEGGINGS_CHAIN, IDS_DESC_LEGGINGS_CHAIN));
 
     registerItem(305, L"chainmail_boots",
-        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::FEET))->setIconName(L"bootsChain")->setBaseItemTypeAndMaterial(10, 7)->setDescriptionId(IDS_ITEM_BOOTS_CHAIN, 0x8F8739A5));
+        (new ArmorItem(ArmorItem::ArmorMaterial::CHAIN, 1, EquipmentSlot::FEET))->setIconName(L"bootsChain")->setBaseItemTypeAndMaterial(10, 7)->setDescriptionId(IDS_ITEM_BOOTS_CHAIN, IDS_DESC_BOOTS_CHAIN));
 
     registerItem(306, L"iron_helmet",
-        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::HEAD))->setIconName(L"helmetIron")->setBaseItemTypeAndMaterial(7, 3)->setDescriptionId(IDS_ITEM_HELMET_IRON, 0xACDE6D0A));
+        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::HEAD))->setIconName(L"helmetIron")->setBaseItemTypeAndMaterial(7, 3)->setDescriptionId(IDS_ITEM_HELMET_IRON, IDS_DESC_HELMET_IRON));
 
     registerItem(307, L"iron_chestplate",
-        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::CHEST))->setIconName(L"chestplateIron")->setBaseItemTypeAndMaterial(8, 3)->setDescriptionId(IDS_ITEM_CHESTPLATE_IRON, 0x09958B2A));
+        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::CHEST))->setIconName(L"chestplateIron")->setBaseItemTypeAndMaterial(8, 3)->setDescriptionId(IDS_ITEM_CHESTPLATE_IRON, IDS_DESC_CHESTPLATE_IRON));
 
     registerItem(308, L"iron_leggings",
-        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::LEGS))->setIconName(L"leggingsIron")->setBaseItemTypeAndMaterial(9, 3)->setDescriptionId(IDS_ITEM_LEGGINGS_IRON, 0x0FA8857D));
+        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::LEGS))->setIconName(L"leggingsIron")->setBaseItemTypeAndMaterial(9, 3)->setDescriptionId(IDS_ITEM_LEGGINGS_IRON, IDS_DESC_LEGGINGS_IRON));
 
     registerItem(309, L"iron_boots",
-        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::FEET))->setIconName(L"bootsIron")->setBaseItemTypeAndMaterial(10, 3)->setDescriptionId(IDS_ITEM_BOOTS_IRON, 0xD0506AE2));
+        (new ArmorItem(ArmorItem::ArmorMaterial::IRON, 2, EquipmentSlot::FEET))->setIconName(L"bootsIron")->setBaseItemTypeAndMaterial(10, 3)->setDescriptionId(IDS_ITEM_BOOTS_IRON, IDS_DESC_BOOTS_IRON));
 
     registerItem(310, L"diamond_helmet",
-        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::HEAD))->setIconName(L"helmetDiamond")->setBaseItemTypeAndMaterial(7, 5)->setDescriptionId(IDS_ITEM_HELMET_DIAMOND, 0x1348B454));
+        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::HEAD))->setIconName(L"helmetDiamond")->setBaseItemTypeAndMaterial(7, 5)->setDescriptionId(IDS_ITEM_HELMET_DIAMOND, IDS_DESC_HELMET_DIAMOND));
 
     registerItem(311, L"diamond_chestplate",
-        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::CHEST))->setIconName(L"chestplateDiamond")->setBaseItemTypeAndMaterial(8, 5)->setDescriptionId(IDS_ITEM_CHESTPLATE_DIAMOND, 0x4FC26274));
+        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::CHEST))->setIconName(L"chestplateDiamond")->setBaseItemTypeAndMaterial(8, 5)->setDescriptionId(IDS_ITEM_CHESTPLATE_DIAMOND, IDS_DESC_CHESTPLATE_DIAMOND));
 
     registerItem(312, L"diamond_leggings",
-        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::LEGS))->setIconName(L"leggingsDiamond")->setBaseItemTypeAndMaterial(9, 5)->setDescriptionId(IDS_ITEM_LEGGINGS_DIAMOND, 0x475471AB));
+        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::LEGS))->setIconName(L"leggingsDiamond")->setBaseItemTypeAndMaterial(9, 5)->setDescriptionId(IDS_ITEM_LEGGINGS_DIAMOND, IDS_DESC_LEGGINGS_DIAMOND));
 
     registerItem(313, L"diamond_boots",
-        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::FEET))->setIconName(L"bootsDiamond")->setBaseItemTypeAndMaterial(10, 5)->setDescriptionId(IDS_ITEM_BOOTS_DIAMOND, 0xB58229BC));
+        (new ArmorItem(ArmorItem::ArmorMaterial::DIAMOND, 3, EquipmentSlot::FEET))->setIconName(L"bootsDiamond")->setBaseItemTypeAndMaterial(10, 5)->setDescriptionId(IDS_ITEM_BOOTS_DIAMOND, IDS_DESC_BOOTS_DIAMOND));
 
     registerItem(314, L"golden_helmet",
-        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::HEAD))->setIconName(L"helmetGold")->setBaseItemTypeAndMaterial(7, 4)->setDescriptionId(IDS_ITEM_HELMET_GOLD, 0x96B464F8));
+        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::HEAD))->setIconName(L"helmetGold")->setBaseItemTypeAndMaterial(7, 4)->setDescriptionId(IDS_ITEM_HELMET_GOLD, IDS_DESC_HELMET_GOLD));
 
     registerItem(315, L"golden_chestplate",
-        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::CHEST))->setIconName(L"chestplateGold")->setBaseItemTypeAndMaterial(8, 4)->setDescriptionId(IDS_ITEM_CHESTPLATE_GOLD, 0xCAE9EF98));
+        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::CHEST))->setIconName(L"chestplateGold")->setBaseItemTypeAndMaterial(8, 4)->setDescriptionId(IDS_ITEM_CHESTPLATE_GOLD, IDS_DESC_CHESTPLATE_GOLD));
 
     registerItem(316, L"golden_leggings",
-        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::LEGS))->setIconName(L"leggingsGold")->setBaseItemTypeAndMaterial(9, 4)->setDescriptionId(IDS_ITEM_LEGGINGS_GOLD, 0x09C244BF));
+        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::LEGS))->setIconName(L"leggingsGold")->setBaseItemTypeAndMaterial(9, 4)->setDescriptionId(IDS_ITEM_LEGGINGS_GOLD, IDS_DESC_LEGGINGS_GOLD));
 
     registerItem(317, L"golden_boots",
-        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::FEET))->setIconName(L"bootsGold")->setBaseItemTypeAndMaterial(10, 4)->setDescriptionId(IDS_ITEM_BOOTS_GOLD, 0x27F702C0));
+        (new ArmorItem(ArmorItem::ArmorMaterial::GOLD, 4, EquipmentSlot::FEET))->setIconName(L"bootsGold")->setBaseItemTypeAndMaterial(10, 4)->setDescriptionId(IDS_ITEM_BOOTS_GOLD, IDS_DESC_BOOTS_GOLD));
 
     registerItem(318, L"flint",
         (new Item())->setIconName(L"flint")->setDescriptionId(IDS_ITEM_FLINT, IDS_DESC_FLINT));
 
     registerItem(319, L"porkchop",
-        (new FoodItem(3, 0.3f, true))->setIconName(L"porkchopRaw")->setDescriptionId(IDS_ITEM_PORKCHOP_RAW, 0x3A857AE3));
+        (new FoodItem(3, 0.3f, true))->setIconName(L"porkchopRaw")->setDescriptionId(IDS_ITEM_PORKCHOP_RAW, IDS_DESC_PORKCHOP_RAW));
 
     registerItem(320, L"cooked_porkchop",
-        (new FoodItem(8, 0.8f, true))->setIconName(L"porkchopCooked")->setDescriptionId(IDS_ITEM_PORKCHOP_COOKED, 0x3351245E));
+        (new FoodItem(8, 0.8f, true))->setIconName(L"porkchopCooked")->setDescriptionId(IDS_ITEM_PORKCHOP_COOKED, IDS_DESC_PORKCHOP_COOKED));
 
     registerItem(321, L"painting",
-        (new HangingEntityItem(168296449))->setIconName(L"painting")->setBaseItemTypeAndMaterial(34, 6)->setDescriptionId(IDS_ITEM_PAINTING, 0xE2BB6816));
+        (new HangingEntityItem(EntityType::PAINTING))->setIconName(L"painting")->setBaseItemTypeAndMaterial(34, 6)->setDescriptionId(IDS_ITEM_PAINTING, IDS_DESC_PICTURE));
 
     GoldenAppleItem* goldenApple = new GoldenAppleItem(4, 1.2f, false);
     goldenApple->setCanAlwaysEat();
@@ -1758,12 +1754,12 @@ void Item::staticCtor()
         goldenApple->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(IDS_ITEM_APPLE_GOLD));
 
     registerItem(323, L"sign",
-        (new SignItem())->setIconName(L"sign")->setBaseItemTypeAndMaterial(34, 1)->setDescriptionId(IDS_ITEM_SIGN, 0xB6286B39));
+        (new SignItem())->setIconName(L"sign")->setBaseItemTypeAndMaterial(34, 1)->setDescriptionId(IDS_ITEM_SIGN, IDS_DESC_SIGN));
 
     registerItem(324, L"wooden_door",
-        (new DoorItem(Blocks::wooden_door))->setIconName(L"doorWood")->setBaseItemTypeAndMaterial(6, 1)->setDescriptionId(0x3C9F77B1, IDS_DESC_DOOR_WOOD));
+        (new DoorItem(Blocks::wooden_door))->setIconName(L"doorWood")->setBaseItemTypeAndMaterial(6, 1)->setDescriptionId(IDS_ITEM_DOOR_OAKWOOD, IDS_DESC_DOOR_WOOD));
 
-    Item* bucket = (new BucketItem(BucketItem::EMPTY))->setMaxStackSize(16)->setIconName(L"bucket")->setBaseItemTypeAndMaterial(26, 24)->setDescriptionId(IDS_ITEM_BUCKET, 0xD5C581EC);
+    Item* bucket = (new BucketItem(BucketItem::EMPTY))->setMaxStackSize(16)->setIconName(L"bucket")->setBaseItemTypeAndMaterial(26, 24)->setDescriptionId(IDS_ITEM_BUCKET, IDS_DESC_BUCKET);
     registerItem(325, L"bucket",
         bucket);
 
@@ -1774,40 +1770,40 @@ void Item::staticCtor()
         (new BucketItem(BucketItem::LAVA))->setIconName(L"bucketLava")->setDescriptionId(IDS_ITEM_BUCKET_LAVA, IDS_DESC_BUCKET_LAVA)->setCraftingRemainingItem(bucket));
 
     registerItem(328, L"minecart",
-        (new MinecartItem(new Minecart::Type(0)))->setIconName(L"minecart")->setDescriptionId(IDS_ITEM_MINECART, 0xDF071B81));
+        (new MinecartItem(new Minecart::Type(0)))->setIconName(L"minecart")->setDescriptionId(IDS_ITEM_MINECART, IDS_DESC_MINECART));
 
     registerItem(329, L"saddle",
-        (new SaddleItem())->setIconName(L"saddle")->setDescriptionId(IDS_ITEM_SADDLE, 0xB6415569));
+        (new SaddleItem())->setIconName(L"saddle")->setDescriptionId(IDS_ITEM_SADDLE, IDS_DESC_SADDLE));
 
     registerItem(330, L"iron_door",
         (new DoorItem(Blocks::iron_door))->setIconName(L"doorIron")->setBaseItemTypeAndMaterial(6, 3)->setDescriptionId(IDS_ITEM_DOOR_IRON, IDS_DESC_DOOR_IRON));
 
     registerItem(331, L"redstone",
-        (new RedStoneDustItem())->setIconName(L"redstone")->setBaseItemTypeAndMaterial(31, 48)->setDescriptionId(IDS_ITEM_REDSTONE, 0x83B8379B));
+        (new RedStoneDustItem())->setIconName(L"redstone")->setBaseItemTypeAndMaterial(31, 48)->setDescriptionId(IDS_ITEM_REDSTONE, IDS_DESC_REDSTONE_DUST));
 
     registerItem(332, L"snowball",
         (new SnowballItem())->setIconName(L"snowball")->setDescriptionId(IDS_ITEM_SNOWBALL, IDS_DESC_SNOWBALL));
 
     registerItem(333, L"boat",
-        (new BoatItem(Boat::OAK))->setIconName(L"boat")->setDescriptionId(IDS_ITEM_BOAT_OAK, 0x1BAB2B22)->setBaseItemTypeAndMaterial(55, 63));
+        (new BoatItem(Boat::OAK))->setIconName(L"boat")->setDescriptionId(IDS_ITEM_BOAT_OAK, IDS_DESC_BOAT)->setBaseItemTypeAndMaterial(55, 63));
 
     registerItem(334, L"leather",
-        (new Item())->setIconName(L"leather")->setDescriptionId(IDS_ITEM_LEATHER, 0xCB787D79)->setBaseItemTypeAndMaterial(53, 0));
+        (new Item())->setIconName(L"leather")->setDescriptionId(IDS_ITEM_LEATHER, IDS_DESC_LEATHER)->setBaseItemTypeAndMaterial(53, 0));
 
     registerItem(335, L"milk_bucket",
         (new BucketItem(BucketItem::MILK))->setIconName(L"milk")->setDescriptionId(IDS_ITEM_BUCKET_MILK, IDS_DESC_BUCKET_MILK)->setCraftingRemainingItem(bucket));
 
     registerItem(336, L"brick",
-        (new Item())->setIconName(L"brick")->setDescriptionId(IDS_ITEM_BRICK, 0x043FC433));
+        (new Item())->setIconName(L"brick")->setDescriptionId(IDS_ITEM_BRICK, IDS_DESC_BRICK));
 
     registerItem(337, L"clay_ball",
-        (new Item())->setIconName(L"clay")->setDescriptionId(IDS_ITEM_CLAY, 0xA273EEED));
+        (new Item())->setIconName(L"clay")->setDescriptionId(IDS_ITEM_CLAY, IDS_DESC_CLAY));
 
     registerItem(338, L"reeds",
-        (new BlockPlanterItem(Blocks::reeds))->setIconName(L"reeds")->setDescriptionId(0x15F282BB, 0x298FE4B7));
+        (new BlockPlanterItem(Blocks::reeds))->setIconName(L"reeds")->setDescriptionId(IDS_ITEM_REEDS, IDS_DESC_REEDS));
 
     registerItem(339, L"paper",
-        (new Item())->setIconName(L"paper")->setBaseItemTypeAndMaterial(46, 50)->setDescriptionId(IDS_ITEM_PAPER, 0xA5BBD614));
+        (new Item())->setIconName(L"paper")->setBaseItemTypeAndMaterial(46, 50)->setDescriptionId(IDS_ITEM_PAPER, IDS_DESC_PAPER));
 
     registerItem(340, L"book",
         (new BookItem())->setIconName(L"book")->setBaseItemTypeAndMaterial(46, 51)->setDescriptionId(IDS_ITEM_BOOK, IDS_DESC_BOOK));
@@ -1816,31 +1812,31 @@ void Item::staticCtor()
         (new Item())->setBaseItemTypeAndMaterial(31, 57)->setIconName(L"slimeball")->setDescriptionId(IDS_ITEM_SLIMEBALL, IDS_DESC_SLIMEBALL));
 
     registerItem(342, L"chest_minecart",
-        (new MinecartItem(new Minecart::Type(1)))->setIconName(L"minecart_chest")->setDescriptionId(IDS_ITEM_MINECART_CHEST, 0x3ED319BA));
+        (new MinecartItem(new Minecart::Type(1)))->setIconName(L"minecart_chest")->setDescriptionId(IDS_ITEM_MINECART_CHEST, IDS_DESC_MINECARTWITHCHEST));
 
     registerItem(343, L"furnace_minecart",
-        (new MinecartItem(new Minecart::Type(2)))->setIconName(L"minecart_furnace")->setDescriptionId(IDS_ITEM_MINECART_FURNACE, 0xBB5D88CB));
+        (new MinecartItem(new Minecart::Type(2)))->setIconName(L"minecart_furnace")->setDescriptionId(IDS_ITEM_MINECART_FURNACE, IDS_DESC_MINECARTWITHFURNACE));
 
     registerItem(344, L"egg",
-        (new EggItem())->setIconName(L"egg")->setDescriptionId(IDS_ITEM_EGG, 0x7E0AC927));
+        (new EggItem())->setIconName(L"egg")->setDescriptionId(IDS_ITEM_EGG, IDS_DESC_EGG));
 
     registerItem(345, L"compass",
-        (new CompassItem())->setIconName(L"compass")->setBaseItemTypeAndMaterial(25, 19)->setDescriptionId(IDS_ITEM_COMPASS, 0xDA63BBF2));
+        (new CompassItem())->setIconName(L"compass")->setBaseItemTypeAndMaterial(25, 19)->setDescriptionId(IDS_ITEM_COMPASS, IDS_DESC_COMPASS));
 
     registerItem(346, L"fishing_rod",
         (new FishingRodItem())->setIconName(L"fishingRod")->setBaseItemTypeAndMaterial(37, 1)->setDescriptionId(IDS_ITEM_FISHING_ROD, IDS_DESC_FISHINGROD));
 
     registerItem(347, L"clock",
-        (new ClockItem())->setIconName(L"clock")->setBaseItemTypeAndMaterial(25, 20)->setDescriptionId(IDS_ITEM_CLOCK, 0x6B05B9D2));
+        (new ClockItem())->setIconName(L"clock")->setBaseItemTypeAndMaterial(25, 20)->setDescriptionId(IDS_ITEM_CLOCK, IDS_DESC_CLOCK));
 
     registerItem(348, L"glowstone_dust",
-        (new Item())->setIconName(L"yellowDust")->setDescriptionId(0xD8D0E583, 0x2C633DEF));
+        (new Item())->setIconName(L"yellowDust")->setDescriptionId(IDS_ITEM_YELLOW_DUST, IDS_DESC_YELLOW_DUST));
 
     registerItem(349, L"fish",
-        (new FishFoodItem(false))->setIconName(L"fishRaw")->setDescriptionId(0xFB51769E, 0x224B0B42)->setStackedByData(true));
+        (new FishFoodItem(false))->setIconName(L"fishRaw")->setDescriptionId(IDS_ITEM_FISH_COD_RAW, IDS_DESC_FISH_COD_RAW)->setStackedByData(true));
 
     registerItem(350, L"cooked_fish",
-        (new FishFoodItem(true))->setIconName(L"fishCooked")->setDescriptionId(0x692511AB, 0x51994487)->setStackedByData(true));
+        (new FishFoodItem(true))->setIconName(L"fishCooked")->setDescriptionId(IDS_ITEM_FISH_COD_COOKED, IDS_DESC_FISH_COD_COOKED)->setStackedByData(true));
 
     registerItem(351, L"dye",
         (new DyeItem())->setIconName(L"dyePowder")->setBaseItemTypeAndMaterial(18, 12)->setDescriptionId(IDS_ITEM_DYE_POWDER, -1));
@@ -1849,28 +1845,28 @@ void Item::staticCtor()
         (new Item())->setIconName(L"bone")->setDescriptionId(IDS_ITEM_BONE, IDS_DESC_BONE)->handEquipped());
 
     registerItem(353, L"sugar",
-        (new Item())->setIconName(L"sugar")->setDescriptionId(IDS_ITEM_SUGAR, 0x14DD1B10));
+        (new Item())->setIconName(L"sugar")->setDescriptionId(IDS_ITEM_SUGAR, IDS_DESC_SUGAR));
 
     registerItem(354, L"cake",
-        (new BlockPlanterItem(Blocks::cake))->setIconName(L"cake")->setDescriptionId(IDS_ITEM_CAKE, 0x1BA88C3E));
+        (new BlockPlanterItem(Blocks::cake))->setIconName(L"cake")->setDescriptionId(IDS_ITEM_CAKE, IDS_DESC_CAKE));
 
     registerItem(355, L"bed",
         (new BedItem())->setMaxStackSize(1)->setIconName(L"bed")->setBaseItemTypeAndMaterial(58, 71)->setDescriptionId(IDS_ITEM_BED, IDS_DESC_BED));
 
     registerItem(356, L"repeater",
-        (new BlockPlanterItem(Blocks::unpowered_repeater))->setIconName(L"diode")->setDescriptionId(0xB97B9D5D, IDS_DESC_REDSTONEREPEATER)->setBaseItemTypeAndMaterial(59, 0));
+        (new BlockPlanterItem(Blocks::unpowered_repeater))->setIconName(L"diode")->setDescriptionId(IDS_ITEM_DIODE, IDS_DESC_REDSTONEREPEATER)->setBaseItemTypeAndMaterial(59, 0));
 
     registerItem(357, L"cookie",
-        (new FoodItem(2, 0.1f, false))->setIconName(L"cookie")->setDescriptionId(IDS_ITEM_COOKIE, 0x566BFA2E));
+        (new FoodItem(2, 0.1f, false))->setIconName(L"cookie")->setDescriptionId(IDS_ITEM_COOKIE, IDS_DESC_COOKIE));
 
     registerItem(358, L"filled_map",
-        (new MapItem())->setIconName(L"map")->setBaseItemTypeAndMaterial(25, 21)->setDescriptionId(IDS_ITEM_MAP, 0xADF9D986)->setAllowOffhand(true));
+        (new MapItem())->setIconName(L"map")->setBaseItemTypeAndMaterial(25, 21)->setDescriptionId(IDS_ITEM_MAP, IDS_DESC_MAP)->setAllowOffhand(true));
 
     registerItem(359, L"shears",
         (new ShearsItem())->setIconName(L"shears")->setBaseItemTypeAndMaterial(28, 27)->setDescriptionId(IDS_ITEM_SHEARS, IDS_DESC_SHEEP_HARVEST_COBWEB_LEAVE_SEAGRAS_BLOCK_DESCRIPTION));
 
     registerItem(360, L"melon",
-        (new FoodItem(2, 0.3f, false))->setIconName(L"melon")->setDescriptionId(IDS_ITEM_MELON_SLICE, 0x2F0A0A78));
+        (new FoodItem(2, 0.3f, false))->setIconName(L"melon")->setDescriptionId(IDS_ITEM_MELON_SLICE, IDS_DESC_MELON_SLICE));
 
     registerItem(361, L"pumpkin_seeds",
         (new SeedItem(Blocks::pumpkin_stem, Blocks::farmland))->setIconName(L"seeds_pumpkin")->setBaseItemTypeAndMaterial(33, 22)->setDescriptionId(IDS_ITEM_PUMPKIN_SEEDS, IDS_DESC_PUMPKIN_SEEDS));
@@ -1879,19 +1875,19 @@ void Item::staticCtor()
         (new SeedItem(Blocks::melon_stem, Blocks::farmland))->setIconName(L"seeds_melon")->setBaseItemTypeAndMaterial(33, 37)->setDescriptionId(IDS_ITEM_MELON_SEEDS, IDS_DESC_MELON_SEEDS));
 
     registerItem(363, L"beef",
-        (new FoodItem(3, 0.3f, true))->setIconName(L"beefRaw")->setDescriptionId(IDS_ITEM_BEEF_RAW, 0x93F6A0CD));
+        (new FoodItem(3, 0.3f, true))->setIconName(L"beefRaw")->setDescriptionId(IDS_ITEM_BEEF_RAW, IDS_DESC_BEEF_RAW));
 
     registerItem(364, L"cooked_beef",
-        (new FoodItem(8, 0.8f, true))->setIconName(L"beefCooked")->setDescriptionId(0x19A67FAC, 0xBAF03780));
+        (new FoodItem(8, 0.8f, true))->setIconName(L"beefCooked")->setDescriptionId(IDS_ITEM_BEEF_COOKED, IDS_DESC_BEEF_COOKED));
 
     registerItem(365, L"chicken",
-        (new FoodItem(2, 0.3f, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.3f)->setIconName(L"chickenRaw")->setDescriptionId(IDS_ITEM_CHICKEN_RAW, 0xFDE89328));
+        (new FoodItem(2, 0.3f, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.3f)->setIconName(L"chickenRaw")->setDescriptionId(IDS_ITEM_CHICKEN_RAW, IDS_DESC_CHICKEN_RAW));
 
     registerItem(366, L"cooked_chicken",
-        (new FoodItem(6, 0.6f, true))->setIconName(L"chickenCooked")->setDescriptionId(IDS_ITEM_CHICKEN_COOKED, 0x7AB879ED));
+        (new FoodItem(6, 0.6f, true))->setIconName(L"chickenCooked")->setDescriptionId(IDS_ITEM_CHICKEN_COOKED, IDS_DESC_CHICKEN_COOKED));
 
     registerItem(367, L"rotten_flesh",
-        (new FoodItem(4, 0.1f, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.8f)->setIconName(L"rottenFlesh")->setDescriptionId(IDS_ITEM_ROTTEN_FLESH, 0x75420D7F));
+        (new FoodItem(4, 0.1f, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.8f)->setIconName(L"rottenFlesh")->setDescriptionId(IDS_ITEM_ROTTEN_FLESH, IDS_DESC_ROTTEN_FLESH));
 
     registerItem(368, L"ender_pearl",
         (new EnderpearlItem())->setIconName(L"enderPearl")->setDescriptionId(IDS_ITEM_ENDER_PEARL, IDS_DESC_ENDER_PEARL));
@@ -1903,15 +1899,15 @@ void Item::staticCtor()
         (new Item())->setIconName(L"ghastTear")->setDescriptionId(IDS_ITEM_GHAST_TEAR, IDS_DESC_GHAST_TEAR));
 
     registerItem(371, L"gold_nugget",
-        (new Item())->setIconName(L"goldNugget")->setBaseItemTypeAndMaterial(31, 4)->setDescriptionId(IDS_ITEM_GOLD_NUGGET, 0xD366D7E7));
+        (new Item())->setIconName(L"goldNugget")->setBaseItemTypeAndMaterial(31, 4)->setDescriptionId(IDS_ITEM_GOLD_NUGGET, IDS_DESC_GOLD_NUGGET));
 
     registerItem(372, L"nether_wart",
-        (new SeedItem(Blocks::nether_wart, Blocks::soul_sand))->setIconName(L"netherStalkSeeds")->setDescriptionId(0xFB353413, 0x5B73F84F));
+        (new SeedItem(Blocks::nether_wart, Blocks::soul_sand))->setIconName(L"netherStalkSeeds")->setDescriptionId(IDS_ITEM_NETHER_STALK_SEEDS, IDS_DESC_NETHER_STALK_SEEDS));
 
     registerItem(373, L"potion",
-        (new PotionItem())->setIconName(L"potion")->setDescriptionId(IDS_ITEM_POTION, 0xBA18E901));
+        (new PotionItem())->setIconName(L"potion")->setDescriptionId(IDS_ITEM_POTION, IDS_DESC_POTION));
 
-    Item* glassBottle = (new BottleItem())->setIconName(L"glassBottle")->setBaseItemTypeAndMaterial(26, 34)->setDescriptionId(IDS_ITEM_GLASS_BOTTLE, 0x5B174183);
+    Item* glassBottle = (new BottleItem())->setIconName(L"glassBottle")->setBaseItemTypeAndMaterial(26, 34)->setDescriptionId(IDS_ITEM_GLASS_BOTTLE, IDS_DESC_GLASS_BOTTLE);
     registerItem(374, L"glass_bottle",
         glassBottle);
 
@@ -1919,31 +1915,31 @@ void Item::staticCtor()
         (new FoodItem(2, 0.8f, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 1.0f)->setIconName(L"spiderEye")->setDescriptionId(IDS_ITEM_SPIDER_EYE, IDS_DESC_SPIDER_EYE));
 
     registerItem(376, L"fermented_spider_eye",
-        (new Item())->setIconName(L"fermentedSpiderEye")->setDescriptionId(IDS_ITEM_FERMENTED_SPIDER_EYE, 0x83378EC0));
+        (new Item())->setIconName(L"fermentedSpiderEye")->setDescriptionId(IDS_ITEM_FERMENTED_SPIDER_EYE, IDS_DESC_FERMENTED_SPIDER_EYE));
 
     registerItem(377, L"blaze_powder",
-        (new Item())->setIconName(L"blazePowder")->setDescriptionId(IDS_ITEM_BLAZE_POWDER, 0xDF506406));
+        (new Item())->setIconName(L"blazePowder")->setDescriptionId(IDS_ITEM_BLAZE_POWDER, IDS_DESC_BLAZE_POWDER));
 
     registerItem(378, L"magma_cream",
-        (new Item())->setIconName(L"magmaCream")->setDescriptionId(IDS_ITEM_MAGMA_CREAM, 0x5BB12FE2));
+        (new Item())->setIconName(L"magmaCream")->setDescriptionId(IDS_ITEM_MAGMA_CREAM, IDS_DESC_MAGMA_CREAM));
 
     registerItem(379, L"brewing_stand",
-        (new BlockPlanterItem(Blocks::brewing_stand))->setIconName(L"brewingStand")->setBaseItemTypeAndMaterial(30, 35)->setDescriptionId(IDS_ITEM_BREWING_STAND, 0x8DAD714B));
+        (new BlockPlanterItem(Blocks::brewing_stand))->setIconName(L"brewingStand")->setBaseItemTypeAndMaterial(30, 35)->setDescriptionId(IDS_ITEM_BREWING_STAND, IDS_DESC_BREWING_STAND));
 
     registerItem(380, L"cauldron",
-        (new BlockPlanterItem(Blocks::cauldron))->setIconName(L"cauldron")->setBaseItemTypeAndMaterial(26, 3)->setDescriptionId(IDS_ITEM_CAULDRON, 0x92B04126));
+        (new BlockPlanterItem(Blocks::cauldron))->setIconName(L"cauldron")->setBaseItemTypeAndMaterial(26, 3)->setDescriptionId(IDS_ITEM_CAULDRON, IDS_DESC_CAULDRON));
 
     registerItem(381, L"ender_eye",
         (new EnderEyeItem())->setIconName(L"eyeOfEnder")->setBaseItemTypeAndMaterial(25, 33)->setDescriptionId(IDS_ITEM_EYE_OF_ENDER, IDS_DESC_EYE_OF_ENDER));
 
     registerItem(382, L"speckled_melon",
-        (new Item())->setIconName(L"speckledMelon")->setBaseItemTypeAndMaterial(38, 37)->setDescriptionId(0x83DF6357, 0xE080A7FB));
+        (new Item())->setIconName(L"speckledMelon")->setBaseItemTypeAndMaterial(38, 37)->setDescriptionId(IDS_ITEM_SPECKLED_MELON, IDS_DESC_SPECKLED_MELON));
 
     registerItem(383, L"spawn_egg",
-        (new SpawnEggItem())->setIconName(L"monsterPlacer")->setDescriptionId(0x9FA6F429, 0x16B8B295));
+        (new SpawnEggItem())->setIconName(L"monsterPlacer")->setDescriptionId(IDS_ITEM_MONSTER_SPAWNER, IDS_DESC_MONSTER_SPAWNER));
 
     registerItem(384, L"experience_bottle",
-        (new ExperienceBottleItem())->setIconName(L"expBottle")->setDescriptionId(0x8EAA3E30, 0xC511BB2C));
+        (new ExperienceBottleItem())->setIconName(L"expBottle")->setDescriptionId(IDS_ITEM_EXP_BOTTLE, IDS_DESC_EXP_BOTTLE));
 
     registerItem(385, L"fire_charge",
         (new FireChargeItem())->setIconName(L"fireball")->setBaseItemTypeAndMaterial(23, 38)->setDescriptionId(IDS_ITEM_FIREBALL, IDS_DESC_FIREBALL));
@@ -1955,10 +1951,10 @@ void Item::staticCtor()
         (new WrittenBookItem())->setIconName(L"writtenBook")->setDescriptionId(IDS_ITEM_WRITTEN_BOOK, IDS_DESC_WRITTENBOOK)->setMaxStackSize(16));
 
     registerItem(388, L"emerald",
-        (new Item())->setIconName(L"emerald")->setBaseItemTypeAndMaterial(31, 44)->setDescriptionId(IDS_ITEM_EMERALD, 0x25A6420C));
+        (new Item())->setIconName(L"emerald")->setBaseItemTypeAndMaterial(31, 44)->setDescriptionId(IDS_ITEM_EMERALD, IDS_DESC_EMERALD));
 
     registerItem(389, L"item_frame",
-        (new HangingEntityItem(168296450))->setIconName(L"frame")->setBaseItemTypeAndMaterial(34, 34)->setDescriptionId(IDS_ITEM_ITEMFRAME, IDS_DESC_ITEMFRAME));
+        (new HangingEntityItem(EntityType::ITEM_FRAME))->setIconName(L"frame")->setBaseItemTypeAndMaterial(34, 34)->setDescriptionId(IDS_ITEM_ITEMFRAME, IDS_DESC_ITEMFRAME));
 
     registerItem(390, L"flower_pot",
         (new BlockPlanterItem(Blocks::flower_pot))->setIconName(L"flowerPot")->setDescriptionId(IDS_FLOWERPOT, IDS_DESC_FLOWERPOT)->setBaseItemTypeAndMaterial(53, 0));
@@ -1967,43 +1963,43 @@ void Item::staticCtor()
         (new SeedFoodItem(3, 0.6f, Blocks::carrots, Blocks::farmland))->setIconName(L"carrots")->setDescriptionId(IDS_CARROTS, IDS_DESC_CARROTS));
 
     registerItem(392, L"potato",
-        (new SeedFoodItem(1, 0.3f, Blocks::potatoes, Blocks::farmland))->setIconName(L"potato")->setDescriptionId(IDS_POTATO, 0x6FE336FB));
+        (new SeedFoodItem(1, 0.3f, Blocks::potatoes, Blocks::farmland))->setIconName(L"potato")->setDescriptionId(IDS_POTATO, IDS_DESC_POTATO));
 
     registerItem(393, L"baked_potato",
-        (new FoodItem(5, 0.6f, false))->setIconName(L"potatoBaked")->setDescriptionId(IDS_ITEM_POTATO_BAKED, 0xCF1F0015));
+        (new FoodItem(5, 0.6f, false))->setIconName(L"potatoBaked")->setDescriptionId(IDS_ITEM_POTATO_BAKED, IDS_DESC_POTATO_BAKED));
 
     registerItem(394, L"poisonous_potato",
-        (new FoodItem(2, 0.3f, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 0.6f)->setIconName(L"potatoPoisonous")->setDescriptionId(IDS_ITEM_POTATO_POISONOUS, 0xC8C7EDE9));
+        (new FoodItem(2, 0.3f, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 0.6f)->setIconName(L"potatoPoisonous")->setDescriptionId(IDS_ITEM_POTATO_POISONOUS, IDS_DESC_POTATO_POISONOUS));
 
     registerItem(395, L"map",
-        (new EmptyMapItem())->setIconName(L"map_empty")->setBaseItemTypeAndMaterial(25, 21)->setDescriptionId(IDS_ITEM_MAP_EMPTY, 0x8842D8BC));
+        (new EmptyMapItem())->setIconName(L"map_empty")->setBaseItemTypeAndMaterial(25, 21)->setDescriptionId(IDS_ITEM_MAP_EMPTY, IDS_DESC_MAP_EMPTY));
 
     registerItem(396, L"golden_carrot",
         (new FoodItem(6, 1.2f, false))->setIconName(L"carrotGolden")->setBaseItemTypeAndMaterial(38, 47)->setDescriptionId(IDS_ITEM_CARROT_GOLDEN, IDS_DESC_CARROT_GOLDEN));
 
     registerItem(397, L"skull",
-        (new SkullItem())->setIconName(L"")->setDescriptionId(IDS_ITEM_SKULL, 0x896AE85F));
+        (new SkullItem())->setIconName(L"")->setDescriptionId(IDS_ITEM_SKULL, IDS_DESC_SKULL));
 
     registerItem(398, L"carrot_on_a_stick",
         (new CarrotOnAStickItem())->setIconName(L"carrotOnAStick")->setBaseItemTypeAndMaterial(37, 47)->setDescriptionId(IDS_ITEM_CARROT_ON_A_STICK, IDS_DESC_CARROT_ON_A_STICK));
 
     registerItem(399, L"nether_star",
-        (new SimpleFoiledItem())->setIconName(L"nether_star")->setDescriptionId(IDS_NETHER_STAR, 0xC21DEE99));
+        (new SimpleFoiledItem())->setIconName(L"nether_star")->setDescriptionId(IDS_NETHER_STAR, IDS_DESC_NETHER_STAR));
 
     registerItem(400, L"pumpkin_pie",
-        (new FoodItem(8, 0.3f, false))->setIconName(L"pumpkinPie")->setDescriptionId(IDS_ITEM_PUMPKIN_PIE, 0x857DE8BD));
+        (new FoodItem(8, 0.3f, false))->setIconName(L"pumpkinPie")->setDescriptionId(IDS_ITEM_PUMPKIN_PIE, IDS_DESC_PUMPKIN_PIE));
 
     registerItem(401, L"fireworks",
         (new FireworksItem())->setIconName(L"fireworks")->setBaseItemTypeAndMaterial(44, 0)->setDescriptionId(IDS_FIREWORKS, IDS_DESC_FIREWORKS));
 
     registerItem(402, L"firework_charge",
-        (new FireworkChargeItem())->setIconName(L"fireworks_charge")->setBaseItemTypeAndMaterial(44, 0)->setDescriptionId(0x12DAE0F3, 0x4C040C0D));
+        (new FireworkChargeItem())->setIconName(L"fireworks_charge")->setBaseItemTypeAndMaterial(44, 0)->setDescriptionId(IDS_FIREWORKS_CHARGE, IDS_DESC_FIREWORKS_CHARGE));
 
     registerItem(403, L"enchanted_book",
         (new EnchantedBookItem())->setIconName(L"enchantedBook")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_ENCHANTED_BOOK, IDS_DESC_ENCHANTED_BOOK));
 
     registerItem(404, L"comparator",
-        (new BlockPlanterItem(Blocks::unpowered_comparator))->setIconName(L"comparator")->setDescriptionId(IDS_ITEM_COMPARATOR, 0xF7057FE0)->setBaseItemTypeAndMaterial(59, 0));
+        (new BlockPlanterItem(Blocks::unpowered_comparator))->setIconName(L"comparator")->setDescriptionId(IDS_ITEM_COMPARATOR, IDS_DESC_COMPARATOR)->setBaseItemTypeAndMaterial(59, 0));
 
     registerItem(405, L"netherbrick",
         (new Item())->setIconName(L"netherbrick")->setDescriptionId(IDS_ITEM_NETHERBRICK, IDS_DESC_ITEM_NETHERBRICK));
@@ -2021,10 +2017,10 @@ void Item::staticCtor()
         (new Item())->setIconName(L"prismarine_shard")->setDescriptionId(IDS_ITEM_PRISMARINE_SHARD, IDS_DESC_PRISMARINE_SHARD)->setBaseItemTypeAndMaterial(13, 0));
 
     registerItem(410, L"prismarine_crystals",
-        (new Item())->setIconName(L"prismarine_crystals")->setDescriptionId(IDS_ITEM_PRISMARINE_CRYSTALS, 0x47DB5008)->setBaseItemTypeAndMaterial(13, 0));
+        (new Item())->setIconName(L"prismarine_crystals")->setDescriptionId(IDS_ITEM_PRISMARINE_CRYSTALS, IDS_DESC_PRISMARINE_CRYSTALS)->setBaseItemTypeAndMaterial(13, 0));
 
     registerItem(411, L"rabbit",
-        (new FoodItem(3, 0.3f, true))->setIconName(L"rabbit_raw")->setDescriptionId(IDS_ITEM_RABBIT_RAW, 0x2E4841C7)->setBaseItemTypeAndMaterial(53, 0));
+        (new FoodItem(3, 0.3f, true))->setIconName(L"rabbit_raw")->setDescriptionId(IDS_ITEM_RABBIT_RAW, IDS_DESC_RABBIT_RAW)->setBaseItemTypeAndMaterial(53, 0));
 
     registerItem(412, L"cooked_rabbit",
         (new FoodItem(5, 0.6f, true))->setIconName(L"rabbit_cooked")->setDescriptionId(IDS_ITEM_RABBIT_COOKED, IDS_DESC_RABBIT_COOKED));
@@ -2033,66 +2029,66 @@ void Item::staticCtor()
         (new BowlFoodItem(10))->setBaseItemTypeAndMaterial(39, 0)->setIconName(L"rabbit_stew")->setDescriptionId(IDS_ITEM_RABBIT_STEW, IDS_DESC_RABBIT_STEW));
 
     registerItem(414, L"rabbit_foot",
-        (new Item())->setIconName(L"rabbit_foot")->setDescriptionId(IDS_ITEM_RABBIT_FOOT, 0x09EA74D9));
+        (new Item())->setIconName(L"rabbit_foot")->setDescriptionId(IDS_ITEM_RABBIT_FOOT, IDS_DESC_RABBIT_FOOT));
 
     registerItem(415, L"rabbit_hide",
-        (new Item())->setIconName(L"rabbit_hide")->setDescriptionId(IDS_ITEM_RABBIT_HIDE, 0x75867C83));
+        (new Item())->setIconName(L"rabbit_hide")->setDescriptionId(IDS_ITEM_RABBIT_HIDE, IDS_DESC_RABBIT_HIDE));
 
     registerItem(416, L"armor_stand",
         (new ArmorStandItem())->setBaseItemTypeAndMaterial(34, 1)->setDescriptionId(IDS_ITEM_ARMOR_STAND, IDS_DESC_ARMORSTAND)->setIconName(L"wooden_armorstand")->setMaxStackSize(16));
 
     registerItem(417, L"iron_horse_armor",
-        (new HorseArmorItem(2, 5, 105, L"meo"))->setIconName(L"iron_horse_armor")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_IRON_HORSE_ARMOR, 0x37AF95D0));
+        (new HorseArmorItem(2, 5, 105, L"meo"))->setIconName(L"iron_horse_armor")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_IRON_HORSE_ARMOR, IDS_DESC_IRON_HORSE_ARMOR));
 
     registerItem(418, L"golden_horse_armor",
-        (new HorseArmorItem(3, 7, 104, L"goo"))->setIconName(L"gold_horse_armor")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_GOLD_HORSE_ARMOR, 0x3E6173E2));
+        (new HorseArmorItem(3, 7, 104, L"goo"))->setIconName(L"gold_horse_armor")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_GOLD_HORSE_ARMOR, IDS_DESC_GOLD_HORSE_ARMOR));
 
     registerItem(419, L"diamond_horse_armor",
-        (new HorseArmorItem(4, 11, 103, L"dio"))->setIconName(L"diamond_horse_armor")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_DIAMOND_HORSE_ARMOR, 0xD59E460E));
+        (new HorseArmorItem(4, 11, 103, L"dio"))->setIconName(L"diamond_horse_armor")->setMaxStackSize(1)->setDescriptionId(IDS_ITEM_DIAMOND_HORSE_ARMOR, IDS_DESC_DIAMOND_HORSE_ARMOR));
 
     registerItem(420, L"lead",
-        (new LeadItem())->setIconName(L"lead")->setBaseItemTypeAndMaterial(25, 0)->setDescriptionId(IDS_ITEM_LEAD, 0x729DE426));
+        (new LeadItem())->setIconName(L"lead")->setBaseItemTypeAndMaterial(25, 0)->setDescriptionId(IDS_ITEM_LEAD, IDS_DESC_LEAD));
 
     registerItem(421, L"name_tag",
-        (new NameTagItem())->setIconName(L"name_tag")->setDescriptionId(IDS_ITEM_NAME_TAG, 0xBB06F9B0));
+        (new NameTagItem())->setIconName(L"name_tag")->setDescriptionId(IDS_ITEM_NAME_TAG, IDS_DESC_NAME_TAG));
 
     registerItem(422, L"command_block_minecart",
         (new MinecartItem(new Minecart::Type(6)))->setIconName(L"minecart_command_block")->setDescriptionId(IDS_ITEM_MINECART_COMMAND));
 
     registerItem(423, L"mutton",
-        (new FoodItem(2, 0.3f, true))->setIconName(L"mutton_raw")->setDescriptionId(IDS_ITEM_MUTTON_RAW, 0x432B18A0));
+        (new FoodItem(2, 0.3f, true))->setIconName(L"mutton_raw")->setDescriptionId(IDS_ITEM_MUTTON_RAW, IDS_DESC_MUTTON_RAW));
 
     registerItem(424, L"cooked_mutton",
-        (new FoodItem(6, 0.8f, true))->setIconName(L"mutton_cooked")->setDescriptionId(IDS_ITEM_MUTTON_COOKED, 0xCB2E65B5));
+        (new FoodItem(6, 0.8f, true))->setIconName(L"mutton_cooked")->setDescriptionId(IDS_ITEM_MUTTON_COOKED, IDS_DESC_MUTTON_COOKED));
 
     registerItem(425, L"banner",
         (new BannerItem())->setIconName(L"cookie")->setBaseItemTypeAndMaterial(54, 0)->setDescriptionId(IDS_ITEM_BANNER));
 
     registerItem(426, L"end_crystal",
-        (new EndCrystalItem())->setDescriptionId(IDS_ITEM_END_CRYSTAL, 0xD396A19A));
+        (new EndCrystalItem())->setDescriptionId(IDS_ITEM_END_CRYSTAL, IDS_DESC_ITEM_END_CRYSTAL));
 
     registerItem(427, L"spruce_door",
-        (new DoorItem(Blocks::spruce_door))->setIconName(L"door_spruce")->setBaseItemTypeAndMaterial(6, 39)->setDescriptionId(0xB9F7283E, IDS_DESC_DOOR_WOOD));
+        (new DoorItem(Blocks::spruce_door))->setIconName(L"door_spruce")->setBaseItemTypeAndMaterial(6, 39)->setDescriptionId(IDS_ITEM_DOOR_SPRUCEWOOD, IDS_DESC_DOOR_WOOD));
 
     registerItem(428, L"birch_door",
-        (new DoorItem(Blocks::birch_door))->setIconName(L"door_birch")->setBaseItemTypeAndMaterial(6, 40)->setDescriptionId(0x915B72F6, IDS_DESC_DOOR_WOOD));
+        (new DoorItem(Blocks::birch_door))->setIconName(L"door_birch")->setBaseItemTypeAndMaterial(6, 40)->setDescriptionId(IDS_ITEM_DOOR_BIRCHWOOD, IDS_DESC_DOOR_WOOD));
 
     registerItem(429, L"jungle_door",
-        (new DoorItem(Blocks::jungle_door))->setIconName(L"door_jungle")->setBaseItemTypeAndMaterial(6, 41)->setDescriptionId(0x52AF79BB, IDS_DESC_DOOR_WOOD));
+        (new DoorItem(Blocks::jungle_door))->setIconName(L"door_jungle")->setBaseItemTypeAndMaterial(6, 41)->setDescriptionId(IDS_ITEM_DOOR_JUNGLEWOOD, IDS_DESC_DOOR_WOOD));
 
     registerItem(430, L"acacia_door",
-        (new DoorItem(Blocks::acacia_door))->setIconName(L"door_acacia")->setBaseItemTypeAndMaterial(6, 42)->setDescriptionId(0xF59508EC, IDS_DESC_DOOR_WOOD));
+        (new DoorItem(Blocks::acacia_door))->setIconName(L"door_acacia")->setBaseItemTypeAndMaterial(6, 42)->setDescriptionId(IDS_ITEM_DOOR_ACACIAWOOD, IDS_DESC_DOOR_WOOD));
 
     registerItem(431, L"dark_oak_door",
-        (new DoorItem(Blocks::dark_oak_door))->setIconName(L"door_dark_oak")->setBaseItemTypeAndMaterial(6, 43)->setDescriptionId(0x7BF6657D, IDS_DESC_DOOR_WOOD));
+        (new DoorItem(Blocks::dark_oak_door))->setIconName(L"door_dark_oak")->setBaseItemTypeAndMaterial(6, 43)->setDescriptionId(IDS_ITEM_DOOR_DARKOAKWOOD, IDS_DESC_DOOR_WOOD));
 
     ChorusFruitItem* chorusFruit = new ChorusFruitItem(4, 0.3f);
     chorusFruit->setCanAlwaysEat();
     registerItem(432, L"chorus_fruit",
-        chorusFruit->setIconName(L"chorus_fruit")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT, 0x75B20FC3));
+        chorusFruit->setIconName(L"chorus_fruit")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT, IDS_DESC_ITEM_CHORUS_FRUIT));
 
     registerItem(433, L"chorus_fruit_popped",
-        (new Item())->setIconName(L"chorus_fruit_popped")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT_POPPED, 0xFD12A3EA));
+        (new Item())->setIconName(L"chorus_fruit_popped")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT_POPPED, IDS_DESC_ITEM_CHORUS_FRUIT_POPPED));
 
     registerItem(434, L"beetroot",
         (new FoodItem(1, 0.6f, false))->setIconName(L"beetroot")->setDescriptionId(IDS_ITEM_BEETROOT, IDS_DESC_ITEM_BEETROOT));
@@ -2101,46 +2097,46 @@ void Item::staticCtor()
         (new SeedItem(Blocks::beetroots, Blocks::farmland))->setIconName(L"beetroot_seeds")->setBaseItemTypeAndMaterial(33, 0)->setDescriptionId(IDS_ITEM_BEETROOT_SEEDS, IDS_DESC_ITEM_BEETROOT_SEEDS));
 
     registerItem(436, L"beetroot_soup",
-        (new BowlFoodItem(6))->setIconName(L"beetroot_soup")->setBaseItemTypeAndMaterial(39, 0)->setDescriptionId(IDS_ITEM_BEETROOT_SOUP, 0x2ADE8F66));
+        (new BowlFoodItem(6))->setIconName(L"beetroot_soup")->setBaseItemTypeAndMaterial(39, 0)->setDescriptionId(IDS_ITEM_BEETROOT_SOUP, IDS_DESC_ITEM_BEETROOT_SOUP));
 
     registerItem(437, L"dragon_breath",
         (new Item())->setIconName(L"dragon_breath")->setCraftingRemainingItem(glassBottle)->setDescriptionId(IDS_ITEM_DRAGON_BREATH, IDS_DESC_ITEM_DRAGON_BREATH));
 
     registerItem(438, L"splash_potion",
-        (new SplashPotionItem())->setIconName(L"splash_potion")->setDescriptionId(IDS_ITEM_SPLASH_POTION, 0xA22445C1));
+        (new SplashPotionItem())->setIconName(L"splash_potion")->setDescriptionId(IDS_ITEM_SPLASH_POTION, IDS_DESC_ITEM_SPLASH_POTION));
 
     registerItem(439, L"spectral_arrow",
-        (new SpectralArrowItem())->setIconName(L"spectral_arrow")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_SPECTRAL_ARROW, 0xFF7B7200)->setAllowOffhand(true));
+        (new SpectralArrowItem())->setIconName(L"spectral_arrow")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_SPECTRAL_ARROW, IDS_DESC_ITEM_SPECTRAL_ARROW)->setAllowOffhand(true));
 
     registerItem(440, L"tipped_arrow",
         (new ArrowItem())->setIconName(L"tipped_arrow_base")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_TIPPED_ARROW, IDS_DESC_ITEM_TIPPED_ARROW_GENERIC)->setAllowOffhand(true));
 
     registerItem(441, L"lingering_potion",
-        (new LingeringPotionItem())->setIconName(L"lingering_potion")->setDescriptionId(IDS_ITEM_LINGERING_POTION, 0xC459779F));
+        (new LingeringPotionItem())->setIconName(L"lingering_potion")->setDescriptionId(IDS_ITEM_LINGERING_POTION, IDS_DESC_ITEM_LINGERING_POTION));
 
     registerItem(443, L"elytra",
-        (new ElytraItem())->setIconName(L"elytra")->setDescriptionId(IDS_ITEM_ELYTRA, 0xB80B655F));
+        (new ElytraItem())->setIconName(L"elytra")->setDescriptionId(IDS_ITEM_ELYTRA, IDS_DESC_ITEM_ELYTRA));
 
     registerItem(444, L"spruce_boat",
-        (new BoatItem(Boat::SPRUCE))->setIconName(L"spruce_boat")->setBaseItemTypeAndMaterial(55, 64)->setDescriptionId(IDS_ITEM_BOAT_SPRUCE, 0x5061F0B5));
+        (new BoatItem(Boat::SPRUCE))->setIconName(L"spruce_boat")->setBaseItemTypeAndMaterial(55, 64)->setDescriptionId(IDS_ITEM_BOAT_SPRUCE, IDS_DESC_ITEM_BOAT_SPRUCE));
 
     registerItem(445, L"birch_boat",
-        (new BoatItem(Boat::BIRCH))->setIconName(L"birch_boat")->setBaseItemTypeAndMaterial(55, 65)->setDescriptionId(IDS_ITEM_BOAT_BIRCH, 0xC2D7D60D));
+        (new BoatItem(Boat::BIRCH))->setIconName(L"birch_boat")->setBaseItemTypeAndMaterial(55, 65)->setDescriptionId(IDS_ITEM_BOAT_BIRCH, IDS_DESC_ITEM_BOAT_BIRCH));
 
     registerItem(446, L"jungle_boat",
-        (new BoatItem(Boat::JUNGLE))->setIconName(L"jungle_boat")->setBaseItemTypeAndMaterial(55, 66)->setDescriptionId(IDS_ITEM_BOAT_JUNGLE, 0x8D796B10));
+        (new BoatItem(Boat::JUNGLE))->setIconName(L"jungle_boat")->setBaseItemTypeAndMaterial(55, 66)->setDescriptionId(IDS_ITEM_BOAT_JUNGLE, IDS_DESC_ITEM_BOAT_JUNGLE));
 
     registerItem(447, L"acacia_boat",
-        (new BoatItem(Boat::ACACIA))->setIconName(L"acacia_boat")->setBaseItemTypeAndMaterial(55, 67)->setDescriptionId(IDS_ITEM_BOAT_ACACIA, 0x1B9311E7));
+        (new BoatItem(Boat::ACACIA))->setIconName(L"acacia_boat")->setBaseItemTypeAndMaterial(55, 67)->setDescriptionId(IDS_ITEM_BOAT_ACACIA, IDS_DESC_ITEM_BOAT_ACACIA));
 
     registerItem(448, L"dark_oak_boat",
-        (new BoatItem(Boat::DARK_OAK))->setIconName(L"dark_oak_boat")->setBaseItemTypeAndMaterial(55, 68)->setDescriptionId(IDS_ITEM_BOAT_DARK_OAK, 0x8C104A11));
+        (new BoatItem(Boat::DARK_OAK))->setIconName(L"dark_oak_boat")->setBaseItemTypeAndMaterial(55, 68)->setDescriptionId(IDS_ITEM_BOAT_DARK_OAK, IDS_DESC_ITEM_BOAT_DARK_OAK));
 
     registerItem(449, L"totem_of_undying",
         (new Item())->setIconName(L"totem")->setDescriptionId(IDS_ITEM_TOTEM_OF_UNDYING, IDS_DESC_TOTEM_OF_UNDYING)->setMaxStackSize(1)->setAllowOffhand(true));
 
     registerItem(450, L"shulker_shell",
-        (new Item())->setIconName(L"shulker_shell")->setDescriptionId(IDS_ITEM_SHULKER_SHELL, 0x541139C5));
+        (new Item())->setIconName(L"shulker_shell")->setDescriptionId(IDS_ITEM_SHULKER_SHELL, IDS_DESC_SHULKER_SHELL));
 
     registerItem(452, L"iron_nugget",
         (new Item())->setIconName(L"iron_nugget")->setBaseItemTypeAndMaterial(31, 3)->setDescriptionId(IDS_ITEM_IRON_NUGGET, IDS_DESC_IRON_NUGGET));
@@ -2150,24 +2146,24 @@ void Item::staticCtor()
     leatherHorseArmorDefense[1] = 210;
 
     registerItem(453, L"leather_horse_armor",
-        (new HorseArmorItem(1, 3, leatherHorseArmorDefense, 2, L"lee"))->setIconName(LEATHER_HORSE_ARMOR_ICON_NAME)->setMaxStackSize(1)->setBaseItemTypeAndMaterial(60, 6)->setDescriptionId(IDS_ITEM_LEATHER_HORSE_ARMOR, 0x41A31661));
+        (new HorseArmorItem(1, 3, leatherHorseArmorDefense, 2, L"lee"))->setIconName(LEATHER_HORSE_ARMOR_ICON_NAME)->setMaxStackSize(1)->setBaseItemTypeAndMaterial(60, 6)->setDescriptionId(IDS_ITEM_LEATHER_HORSE_ARMOR, IDS_DESC_LEATHER_HORSE_ARMOR));
 
     registerItem(454, L"trident",
-        (new TridentItem())->setIconName(L"trident")->setDescriptionId(IDS_ITEM_TRIDENT, 0x18914E64));
+        (new TridentItem())->setIconName(L"trident")->setDescriptionId(IDS_ITEM_TRIDENT, IDS_DESC_ITEM_TRIDENT));
 
     registerItem(455, L"turtle_shell_piece",
-        (new Item())->setIconName(L"turtle_shell_piece")->setDescriptionId(0x999CE804, 0xBA1D8B28));
+        (new Item())->setIconName(L"turtle_shell_piece")->setDescriptionId(IDS_ITEM_TURTLE_SHELL_PIECE, IDS_DESC_TURTLE_SHELL_PIECE));
 
     registerItem(456, L"turtle_helmet",
-        (new ArmorItem(ArmorItem::ArmorMaterial::TURTLE, 5, EquipmentSlot::HEAD))->setIconName(L"turtle_helmet")->setBaseItemTypeAndMaterial(7, 72)->setDescriptionId(0x1552F892, 0x7340A73C));
+        (new ArmorItem(ArmorItem::ArmorMaterial::TURTLE, 5, EquipmentSlot::HEAD))->setIconName(L"turtle_helmet")->setBaseItemTypeAndMaterial(7, 72)->setDescriptionId(IDS_ITEM_HELMET_TURTLE, IDS_DESC_ITEM_HELMET_TURTLE));
 
     registerItem(457, L"kelp",
-        (new BlockPlanterItem(Blocks::kelp))->setIconName(L"kelp")->setDescriptionId(IDS_ITEM_KELP, 0xEBBD31AA));
+        (new BlockPlanterItem(Blocks::kelp))->setIconName(L"kelp")->setDescriptionId(IDS_ITEM_KELP, IDS_DESC_ITEM_KELP));
 
     FoodItem* driedKelp = new FoodItem(1, 0.1f, false);
     driedKelp->setIsFastFood();
     registerItem(458, L"dried_kelp",
-        driedKelp->setIconName(L"dried_kelp")->setBaseItemTypeAndMaterial(31, 73)->setDescriptionId(IDS_ITEM_DRIED_KELP, 0x240F411B));
+        driedKelp->setIconName(L"dried_kelp")->setBaseItemTypeAndMaterial(31, 73)->setDescriptionId(IDS_ITEM_DRIED_KELP, IDS_DESC_ITEM_DRIED_KELP));
 
     registerItem(459, L"fish_bucket",
         (new BucketItem(BucketItem::FISH))->setIconName(L"bucketFish")->setDescriptionId(IDS_ITEM_BUCKET_COD, IDS_DESC_BUCKET_COD)->setCraftingRemainingItem(bucket));
@@ -2176,58 +2172,58 @@ void Item::staticCtor()
         (new BucketItem(BucketItem::SALMON))->setIconName(L"bucketSalmon")->setDescriptionId(IDS_ITEM_BUCKET_SALMON, IDS_DESC_BUCKET_SALMON)->setCraftingRemainingItem(bucket));
 
     registerItem(461, L"puffer_bucket",
-        (new BucketItem(BucketItem::PUFFER))->setIconName(L"bucketPuffer")->setDescriptionId(IDS_ITEM_BUCKET_PUFFER, 0xF9C79911)->setCraftingRemainingItem(bucket));
+        (new BucketItem(BucketItem::PUFFER))->setIconName(L"bucketPuffer")->setDescriptionId(IDS_ITEM_BUCKET_PUFFER, IDS_DESC_BUCKET_PUFFER)->setCraftingRemainingItem(bucket));
 
     registerItem(462, L"tropical_bucket",
         (new BucketItem(BucketItem::TROPICAL))->setIconName(L"bucketTropical")->setDescriptionId(IDS_ITEM_BUCKET_TROPICAL, IDS_DESC_BUCKET_TROPICAL)->setCraftingRemainingItem(bucket));
 
     registerItem(463, L"nautilus_core",
-        (new Item())->setIconName(L"nautilus_core")->setDescriptionId(0x3982DB07, 0x5988048B));
+        (new Item())->setIconName(L"nautilus_core")->setDescriptionId(IDS_ITEM_NAUTILUS_CORE, IDS_DESC_NAUTILUS_CORE));
 
     registerItem(464, L"nautilus",
-        (new Item())->setIconName(L"nautilus")->setDescriptionId(IDS_ITEM_NAUTILUS, 0x3AFE27FF)->setAllowOffhand(true));
+        (new Item())->setIconName(L"nautilus")->setDescriptionId(IDS_ITEM_NAUTILUS, IDS_DESC_NAUTILUS)->setAllowOffhand(true));
 
     registerItem(465, L"phantom_membrane",
-        (new Item())->setIconName(L"phantom_membrane")->setDescriptionId(IDS_ITEM_PHANTOM_MEMBRANE, 0x82C2ECDB));
+        (new Item())->setIconName(L"phantom_membrane")->setDescriptionId(IDS_ITEM_PHANTOM_MEMBRANE, IDS_DESC_PHANTOM_MEMBRANE));
 
     registerItem(2255, L"debug_fourj_item",
         (new DebugFourjItem())->setIconName(L"barrier"));
 
     registerItem(2256, L"record_13",
-        (new RecordItem(L"13", 0xC04578A7, SoundEvents::RECORD_13))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"13", 0xC04578A7, SoundEvents::RECORD_13))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2257, L"record_cat",
-        (new RecordItem(L"cat", 0xB4B22E0C, SoundEvents::RECORD_CAT))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"cat", 0xB4B22E0C, SoundEvents::RECORD_CAT))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2258, L"record_blocks",
-        (new RecordItem(L"blocks", 0x92253055, SoundEvents::RECORD_BLOCKS))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"blocks", 0x92253055, SoundEvents::RECORD_BLOCKS))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2259, L"record_chirp",
-        (new RecordItem(L"chirp", 0xB4B7037A, SoundEvents::RECORD_CHIRP))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"chirp", 0xB4B7037A, SoundEvents::RECORD_CHIRP))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2260, L"record_far",
-        (new RecordItem(L"far", 0x088245C3, SoundEvents::RECORD_FAR))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"far", 0x088245C3, SoundEvents::RECORD_FAR))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2261, L"record_mall",
-        (new RecordItem(L"mall", 0xAF7708A8, SoundEvents::RECORD_MALL))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"mall", 0xAF7708A8, SoundEvents::RECORD_MALL))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2262, L"record_mellohi",
-        (new RecordItem(L"mellohi", 0x7DE96171, SoundEvents::RECORD_MELLOHI))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"mellohi", 0x7DE96171, SoundEvents::RECORD_MELLOHI))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2263, L"record_stal",
-        (new RecordItem(L"stal", 0xD6E3ADD6, SoundEvents::RECORD_STAL))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"stal", 0xD6E3ADD6, SoundEvents::RECORD_STAL))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2264, L"record_strad",
-        (new RecordItem(L"strad", 0xDF75129F, SoundEvents::RECORD_STRAD))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"strad", 0xDF75129F, SoundEvents::RECORD_STRAD))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2265, L"record_ward",
-        (new RecordItem(L"ward", 0x7A19C56F, SoundEvents::RECORD_WARD))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"ward", 0x7A19C56F, SoundEvents::RECORD_WARD))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2266, L"record_11",
-        (new RecordItem(L"11", 0x9F3EF366, SoundEvents::RECORD_11))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"11", 0x9F3EF366, SoundEvents::RECORD_11))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     registerItem(2267, L"record_wait",
-        (new RecordItem(L"where are we now", 0x51B5A3DD, SoundEvents::RECORD_WAIT))->setDescriptionId(0xD4B0C693, 0xD8DB7EFF));
+        (new RecordItem(L"where are we now", 0x51B5A3DD, SoundEvents::RECORD_WAIT))->setDescriptionId(IDS_ITEM_RECORD, IDS_DESC_RECORD));
 
     Items::staticCtor();
 }

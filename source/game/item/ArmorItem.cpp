@@ -227,11 +227,6 @@ ArmorItem::~ArmorItem()
 {
 }
 
-const EquipmentSlot* ArmorItem::getSlot()
-{
-    return mSlot;
-}
-
 int ArmorItem::getEnchantmentValue()
 {
     return mMaterial->getEnchantmentValue();

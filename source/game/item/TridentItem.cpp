@@ -46,7 +46,7 @@ TridentItem::~TridentItem()
 
 int TridentItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return 5;
+    return UseAnim_spear;
 }
 
 int TridentItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)

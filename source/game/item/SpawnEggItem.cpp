@@ -1,4 +1,6 @@
 #include "game/item/SpawnEggItem.hpp"
+
+#include "game/core/StringUtils.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -29,10 +31,11 @@
 #include "game/core/HitResult.hpp"
 
 SpawnEggItem::SpawnEggItem()
-    : Item(), mOverlayIcon(NULL)
+    : Item()
 {
-    mMaxStackSize = 64;
-    mStackedByData = true;
+    setMaxStackSize(64);
+    setStackedByData(true);
+    mOverlayIcon = NULL;
 }
 
 SpawnEggItem::~SpawnEggItem()
@@ -62,18 +65,15 @@ ResourceLocation SpawnEggItem::getNamedIdFrom(not_null_ptr<ItemInstance> itemIns
 
 std::wstring SpawnEggItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    ResourceLocation entityType = getNamedIdFrom(itemInstance);
-    int displayId = EntityIO::getNameDisplayId(entityType.toString());
     std::wstring name = getDescription();
+    int displayId = EntityIO::getNameDisplayId(getNamedIdFrom(itemInstance).toString());
     if (displayId == -1 || displayId == -2)
     {
-        return L"{*CREATURE*}";
+        name = replaceAll(name, L"{*CREATURE*}", L"");
     }
-    std::wstring creature = L"{*CREATURE*}";
-    std::wstring::size_type position = name.find(creature);
-    if (position != std::wstring::npos)
+    else
     {
-        name.replace(position, creature.size(), L10N::GetString(displayId));
+        name = replaceAll(name, L"{*CREATURE*}", L10N::GetString(displayId));
     }
     return name;
 }

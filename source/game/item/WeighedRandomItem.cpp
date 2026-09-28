@@ -5,6 +5,3 @@ WeighedRandomItem::WeighedRandomItem(int weight)
 {
 }
 
-WeighedRandomItem::~WeighedRandomItem()
-{
-}

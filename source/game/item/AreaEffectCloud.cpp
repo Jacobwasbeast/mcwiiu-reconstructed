@@ -1,5 +1,6 @@
 #include "game/item/AreaEffectCloud.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/core/Mth.hpp"
 
 #include "game/client/render/ParticleType.hpp"
@@ -75,7 +76,7 @@ void AreaEffectCloud::_init()
     mDurationOnUse = 0;
     mRadiusOnUse = 0;
     mRadiusPerTick = 0.0f;
-    mPotion = NULL;
+    mPotion = Potions::EMPTY;
     mDuration = 600;
     mWaitTime = 20;
     mFixedColor = 0;
@@ -84,11 +85,11 @@ void AreaEffectCloud::_init()
 
 void AreaEffectCloud::updateColor()
 {
-    if (mPotion != NULL || !mEffects.empty())
+    if (mPotion != Potions::EMPTY || !mEffects.empty())
     {
-        std::vector<MobEffectInstance*> effects;
-        PotionUtils::getAllEffects(mPotion, &effects);
-        getEntityData()->set(DATA_COLOR, PotionUtils::getColor(&effects), true);
+        std::vector<MobEffectInstance*>* allEffects = PotionUtils::getAllEffects(mPotion, &mEffects);
+        getEntityData()->set(DATA_COLOR, PotionUtils::getColor(allEffects), true);
+        delete allEffects;
         return;
     }
     getEntityData()->set(DATA_COLOR, 0, true);
@@ -101,7 +102,16 @@ float AreaEffectCloud::getRadius()
 
 boost::shared_ptr<LivingEntity> AreaEffectCloud::getOwner()
 {
-    return mOwner;
+    ServerLevel* serverLevel = dynamic_cast<ServerLevel*>(mLevel);
+    if (mOwner.lock() == NULL && !mOwnerUUID.empty() && serverLevel != NULL)
+    {
+        boost::shared_ptr<Entity> entity = serverLevel->getEntityByUUID(mOwnerUUID);
+        if (entity != NULL && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            mOwner = boost::static_pointer_cast<LivingEntity>(entity);
+        }
+    }
+    return mOwner.lock();
 }
 
 void AreaEffectCloud::applyMobEffects()
@@ -318,48 +328,42 @@ void AreaEffectCloud::generateParticles()
 
 void AreaEffectCloud::suckInNearbyPlayers()
 {
-    if (mLevel == NULL || mBoundingBox == NULL)
+    AABB* searchArea = mBoundingBox->expand(4.0, 4.0, 4.0)->expand(-4.0, -4.0, -4.0);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(), searchArea, NULL);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        return;
-    }
-
-    std::vector<boost::shared_ptr<Entity> > entities;
-    AABB* searchArea = mBoundingBox->grow(4.0, 4.0, 4.0);
-    mLevel->getEntities(boost::shared_ptr<Entity>(), searchArea, &entities);
-
-    const double radius = static_cast<double>(getRadius());
-    const boost::shared_ptr<LivingEntity> owner = getOwner();
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin();
-         it != entities.end(); ++it)
-    {
-        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
-        if (!player || player->mRemoved || player == owner)
+        if (((*it)->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         {
             continue;
         }
 
-        const double dx = player->mX - mX;
-        const double dy = (player->mY + player->mBbHeight) - mY;
-        const double dz = player->mZ - mZ;
-        const double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-        if (distance <= 0.0 || distance >= radius)
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
+        if (player->isSpectator() || (player->isCreative() && player->mAbilities.mFlying) || player == getOwner())
         {
             continue;
         }
 
-        const double strength = -0.05 * std::min(1.0, (radius - distance) * 0.25);
-        player->mXd += dx / distance * strength;
-        player->mYd += dy / distance * strength;
-        player->mZd += dz / distance * strength;
+        double pull = -(Mth::clamp((4.0 - player->distanceTo(mX, mY, mZ)) * 0.25, 0.0, 1.0) * 0.05);
+        double dx = player->mX - mX;
+        double dy = (player->mY + player->getEyeHeight()) - mY;
+        double dz = player->mZ - mZ;
+        double distance = std::sqrt(dz * dz + dx * dx + dy * dy);
+        if (distance == 0.0)
+        {
+            continue;
+        }
+        player->mXd += dx / distance * pull;
+        player->mYd += dy / distance * pull;
+        player->mZd += dz / distance * pull;
     }
 }
 
 void AreaEffectCloud::defineSynchedData()
 {
     getEntityData()->createDateItem(DATA_COLOR, 0);
-    getEntityData()->createDateItem(DATA_RADIUS, 3.0f);
+    getEntityData()->createDateItem(DATA_RADIUS, 0.5f);
     getEntityData()->createDateItem(DATA_WAITING, false);
-    getEntityData()->createDateItem(DATA_PARTICLE, static_cast<int>(ePARTICLE_DRAGON_BREATH));
+    getEntityData()->createDateItem(DATA_PARTICLE, static_cast<int>(PARTICLE_MOB_SPELL->getId()));
     getEntityData()->createDateItem(DATA_PARTICLE_PARAM_1, 0);
     getEntityData()->createDateItem(DATA_PARTICLE_PARAM_2, 0);
     getEntityData()->createDateItem(DATA_PARTICLE_RATE, 0);

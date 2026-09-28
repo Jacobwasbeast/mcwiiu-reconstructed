@@ -12,6 +12,9 @@
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 
 const std::wstring PotionUtils::TAG_POTION(L"Potion");
+boost::unordered_map<std::wstring, PotionUtils::PotionCacheEntry> PotionUtils::potionCache;
+OSFastMutex PotionUtils::potionCacheLock;
+bool PotionUtils::potionCacheLockInitialised = false;
 static const std::wstring customEffectsKey(L"CustomPotionEffects");
 
 not_null_ptr<ItemInstance> PotionUtils::setPotion(not_null_ptr<ItemInstance> item, Potion* potion)
@@ -146,11 +149,33 @@ void PotionUtils::addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<
 
 bool PotionUtils::isFoil(not_null_ptr<ItemInstance> item)
 {
-    if (item->getTag() == NULL || !item->getTag()->contains(TAG_POTION)) return false;
+    if (!potionCacheLockInitialised)
+    {
+        InitializeCriticalSection(&potionCacheLock);
+        potionCacheLockInitialised = true;
+    }
+
+    if (item->getTag() == NULL || !item->getTag()->contains(TAG_POTION))
+    {
+        return false;
+    }
+
+    std::wstring potionName = item->getTag()->getString(TAG_POTION);
+    EnterCriticalSection(&potionCacheLock);
+    boost::unordered_map<std::wstring, PotionCacheEntry>::iterator cached = potionCache.find(potionName);
+    if (cached != potionCache.end())
+    {
+        bool isFoil = cached->second.isFoil;
+        LeaveCriticalSection(&potionCacheLock);
+        return isFoil;
+    }
+
     std::vector<MobEffectInstance*>* effects = getMobEffects(item);
-    bool result = !effects->empty();
+    bool isFoil = effects != NULL && !effects->empty();
     delete effects;
-    return result;
+    potionCache[potionName].isFoil = isFoil;
+    LeaveCriticalSection(&potionCacheLock);
+    return isFoil;
 }
 
 std::vector<MobEffectInstance*>* PotionUtils::getAllEffects(Potion* potion, std::vector<MobEffectInstance*>* effects)

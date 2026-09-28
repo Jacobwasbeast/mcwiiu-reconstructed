@@ -27,11 +27,6 @@ class TippedArrowRecipe;
 class ToolRecipies;
 class WeaponRecipies;
 
-struct _va_struct
-{
-    va_list arguments;
-};
-
 class Recipes
 {
 public:
@@ -46,10 +41,10 @@ public:
     };
 
     Recipes();
-    Recipe* addShapedRecipe(ItemInstance* result, int category, _va_struct* arguments);
+    Recipe* addShapedRecipe(ItemInstance* result, int category, va_list arguments);
     Recipe* addShapedRecipe(ItemInstance* result, ...);
     Recipe* addShapedRecipe(ItemInstance* result, int category, ...);
-    void addShapelessRecipe(ItemInstance* result, int category, _va_struct* arguments);
+    void addShapelessRecipe(ItemInstance* result, int category, va_list arguments);
     void addShapelessRecipe(ItemInstance* result, ...);
     void addShapelessRecipe(ItemInstance* result, int category, ...);
     void buildRecipeIngredientsArray();

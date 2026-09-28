@@ -106,7 +106,7 @@ void WrittenBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     std::wstring author = tag->getString(L"author");
     if (!author.empty())
     {
-        std::wstring line = L10N::GetString(0xf68c61db);
+        std::wstring line = L10N::GetString(IDS_BOOK_BY_AUTHOR);
         line.replace(line.find(L"%s"), 2, author);
         lines->push_back(HtmlString(line, eMinecraftColour_NOTSET, false, false, 0));
     }

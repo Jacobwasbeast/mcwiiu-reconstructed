@@ -6,7 +6,7 @@ class WeighedRandomItem
 public:
     WeighedRandomItem(int weight);
 
-    virtual ~WeighedRandomItem();
+    virtual ~WeighedRandomItem() {}
 
     int weight;
 };

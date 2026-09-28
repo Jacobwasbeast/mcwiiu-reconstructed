@@ -18,6 +18,7 @@ SimpleContainer::SimpleContainer(const std::wstring& name, int size)
 
 SimpleContainer::~SimpleContainer()
 {
+    delete[] mItems.items;
 }
 
 void SimpleContainer::_init(int id, const std::wstring& name, bool hasCustomName, int size)

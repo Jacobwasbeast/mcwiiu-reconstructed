@@ -29,7 +29,7 @@ public:
     static unsigned long long staticCtor();
     void _init();
     virtual void defineSynchedData();
-    virtual double getPickRadius();
+    virtual float getPickRadius();
     not_null_ptr<ItemInstance> getItem();
     void setItem(not_null_ptr<ItemInstance> item, bool updateNeighbours);
     void setItem(not_null_ptr<ItemInstance> item);

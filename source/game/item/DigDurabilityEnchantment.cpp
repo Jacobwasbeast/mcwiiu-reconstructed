@@ -30,7 +30,7 @@ int DigDurabilityEnchantment::getMaxLevel()
 
 bool DigDurabilityEnchantment::canEnchant(not_null_ptr<ItemInstance> item)
 {
-    return item->isDamageableItem();
+    return item->isDamageableItem() || Enchantment::canEnchant(item);
 }
 
 bool DigDurabilityEnchantment::shouldIgnoreDurabilityDrop(not_null_ptr<ItemInstance> item,

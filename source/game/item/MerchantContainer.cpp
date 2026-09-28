@@ -6,18 +6,17 @@
 #include "game/core/Merchant.hpp"
 
 MerchantContainer::MerchantContainer(boost::shared_ptr<Player> player, boost::shared_ptr<Merchant> merchant)
-    : Container(), mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY)),
-      mMerchant(merchant), mTradingPlayer(player), mOffers(0), mSelectionHint(0), mActiveRecipe(0)
 {
-    if (mMerchant)
-    {
-        mOffers = mMerchant->getOffers(player);
-        mMerchant->setTradingPlayer(player);
-    }
+    mTradingPlayer = player;
+    mMerchant = merchant;
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY);
+    mSelectionHint = 0;
+    mActiveRecipe = 0;
 }
 
 MerchantContainer::~MerchantContainer()
 {
+    delete[] mItems.items;
 }
 
 std::wstring MerchantContainer::getName()
@@ -37,55 +36,57 @@ bool MerchantContainer::hasCustomName()
 
 std::wstring MerchantContainer::getDisplayName()
 {
+    if (hasCustomName())
+        return getCustomName();
     return getName();
 }
 
 void MerchantContainer::updateSellItem()
 {
     mActiveRecipe = 0;
-    mItems[2] = ItemInstance::EMPTY;
-    if (mOffers == 0)
-    {
-        return;
-    }
-
     not_null_ptr<ItemInstance> first = mItems[0];
     not_null_ptr<ItemInstance> second = mItems[1];
     if (first->isEmpty())
     {
-        first = mItems[1];
+        first = second;
         second = ItemInstance::EMPTY;
     }
 
     if (first->isEmpty())
     {
         setItem(2, ItemInstance::EMPTY);
-        return;
     }
-
-    MerchantRecipe* recipe = mOffers->getRecipeFor(first, second, mSelectionHint);
-    if (recipe != 0 && !recipe->isDeprecated())
+    else
     {
-        mActiveRecipe = recipe;
-        setItem(2, recipe->getSellItem()->copy());
-        return;
+        MerchantRecipeList* offers = mMerchant->getOffers(mTradingPlayer);
+        if (offers != 0)
+        {
+            MerchantRecipe* recipe = offers->getRecipeFor(first, second, mSelectionHint);
+            if (recipe != 0 && !recipe->isDeprecated())
+            {
+                mActiveRecipe = recipe;
+                setItem(2, recipe->getSellItem()->copy());
+            }
+            else if (second->isEmpty())
+            {
+                setItem(2, ItemInstance::EMPTY);
+            }
+            else
+            {
+                recipe = offers->getRecipeFor(second, first, mSelectionHint);
+                if (recipe == 0 || recipe->isDeprecated())
+                {
+                    setItem(2, ItemInstance::EMPTY);
+                }
+                else
+                {
+                    mActiveRecipe = recipe;
+                    setItem(2, recipe->getSellItem()->copy());
+                }
+            }
+        }
     }
-
-    if (second->isEmpty())
-    {
-        setItem(2, ItemInstance::EMPTY);
-        return;
-    }
-
-    recipe = mOffers->getRecipeFor(second, first, mSelectionHint);
-    if (recipe == 0 || recipe->isDeprecated())
-    {
-        setItem(2, ItemInstance::EMPTY);
-        return;
-    }
-
-    mActiveRecipe = recipe;
-    setItem(2, recipe->getSellItem()->copy());
+    mMerchant->notifyTradeUpdated(getItem(2));
 }
 
 void MerchantContainer::setSelectionHint(int hint)

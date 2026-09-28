@@ -134,7 +134,7 @@ void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
     if (fireworks->contains(std::wstring(L"Flight"), 99))
     {
-        std::wstring flight(L10N::GetString(0xA774ACD3));
+        std::wstring flight(L10N::GetString(IDS_ITEM_FIREWORKS_FLIGHT));
         flight += L" ";
         flight += _toString(static_cast<int>(fireworks->getByte(std::wstring(L"Flight"))));
         lines->push_back(HtmlString(flight, eMinecraftColour_NOTSET, false, false, 0));

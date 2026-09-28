@@ -1,4 +1,5 @@
 #include "game/item/DiggingEnchantment.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -6,7 +7,7 @@
 DiggingEnchantment::DiggingEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::DIGGER, slots)
 {
-    setDescriptionId((int)0x7c8a12ef);
+    setDescriptionId(IDS_ENCHANTMENT_DIGGING);
 }
 
 DiggingEnchantment::~DiggingEnchantment()

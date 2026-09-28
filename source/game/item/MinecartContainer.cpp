@@ -34,6 +34,7 @@ MinecartContainer::MinecartContainer(Level* level)
 
 MinecartContainer::~MinecartContainer()
 {
+    delete[] mItems.items;
 }
 
 void MinecartContainer::_init()

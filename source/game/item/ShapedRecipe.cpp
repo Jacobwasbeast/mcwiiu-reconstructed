@@ -23,10 +23,6 @@ ShapedRecipe::ShapedRecipe(int width, int height, ItemInstance** ingredients, It
     }
 }
 
-ShapedRecipe::~ShapedRecipe()
-{
-}
-
 ItemInstance* ShapedRecipe::getResultItem()
 {
     return mResult;

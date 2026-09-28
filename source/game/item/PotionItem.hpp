@@ -1,7 +1,7 @@
 #ifndef GAME_ITEM_POTIONITEM_HPP
 #define GAME_ITEM_POTIONITEM_HPP
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "game/item/Item.hpp"
 #include "game/core/InteractionResultHolder.hpp"

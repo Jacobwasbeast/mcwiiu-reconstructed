@@ -85,7 +85,7 @@ void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target,
     {
         if (attacker)
         {
-            EntityDamageSource* damageSource = DamageSource::CreateThorns(attacker);
+            EntityDamageSource* damageSource = DamageSource::CreateThorns(target);
             attacker->hurt(damageSource, (float)getDamage(level, random));
             delete damageSource;
             attacker->playSound(SoundEvents::ENCHANT_THORNS_HIT, 0.5f, 1.0f);

@@ -22,7 +22,7 @@ public:
 
     static const unsigned int MAX_PROJECTILES = 300;
 
-    virtual ~DefaultDispenseItemBehavior();
+    virtual ~DefaultDispenseItemBehavior() {}
 
     virtual not_null_ptr<ItemInstance> dispense(BlockSource* blockSource,
                                                 not_null_ptr<ItemInstance> itemInstance);
