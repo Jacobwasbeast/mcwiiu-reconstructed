@@ -9,6 +9,7 @@
 #include "game/entity/mob/BossMob.hpp"
 #include "game/entity/mob/MultiEntityMob.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/entity/mob/Enemy.hpp"
 
 class AABB;
 class AreaEffectCloud;
@@ -27,7 +28,7 @@ class MultiEntityMobPart;
 class SoundEvent;
 class Vec3;
 
-class EnderDragon : public Mob, public BossMob, public MultiEntityMob
+class EnderDragon : public Mob, public BossMob, public MultiEntityMob, public Enemy
 {
 public:
     enum EEnderdragonAction

@@ -7,6 +7,7 @@
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/entity/mob/Creature.hpp"
 
 class Block;
 class BlockPos;
@@ -19,7 +20,7 @@ template <class T> class EntityDataAccessor;
 
 extern const unsigned long long EntityType::ANIMAL;
 
-class Animal : public AgableMob
+class Animal : public AgableMob, public Creature
 {
 public:
     

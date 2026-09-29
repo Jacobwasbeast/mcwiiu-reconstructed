@@ -113,6 +113,9 @@ namespace
     typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
     typedef boost::unordered_map<unsigned long long, int> TypeIds;
 
+    const ResourceLocation sLightningBolt(std::wstring(L"LightningBolt"));
+    const ResourceLocation sPlayer(std::wstring(L"Player"));
+
     TypeKeys sTypeKeys;
     KeysByType sKeysByType;
     Creators sCreators;
@@ -209,7 +212,7 @@ std::wstring EntityIO::getTranslationName(boost::shared_ptr<Entity> entity)
     {
         return sTranslationNames[found->second];
     }
-    return std::wstring(L"boost::detail");
+    return std::wstring(L"");
 }
 
 unsigned long long EntityIO::byId(int id)
@@ -244,8 +247,7 @@ boost::unordered_set<ResourceLocation>* EntityIO::getAllEntityTypes()
 
 bool EntityIO::isValidEntityType(const ResourceLocation& location)
 {
-    ResourceLocation defaultLocation;
-    return location.equals(&defaultLocation) || sEntityTypes.find(location) != sEntityTypes.end();
+    return sPlayer.equals(&location) || sEntityTypes.find(location) != sEntityTypes.end();
 }
 
 boost::shared_ptr<Entity> EntityIO::newEntity(CompoundTag* tag, Level* level)
@@ -298,9 +300,8 @@ bool EntityIO::isEntityOfType(boost::shared_ptr<Entity> entity, const ResourceLo
         return key.equals(&location);
     }
     return (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-        ? ResourceLocation(std::wstring(L"Player")).equals(&location)
-        : (entity->GetType() == EntityType::LIGHTNING_BOLT
-           && ResourceLocation(std::wstring(L"LightningBolt")).equals(&location));
+        ? sPlayer.equals(&location)
+        : (entity->GetType() == EntityType::LIGHTNING_BOLT && sLightningBolt.equals(&location));
 }
 
 int EntityIO::getNameDisplayId(const std::wstring& name)

@@ -466,6 +466,7 @@ void Entity::_init(bool createEntityData, Level* level)
     mHasImpulse = false;
     mIsInsidePortal = false;
     mPortalTime = 0;
+    mPortalCooldown = 0;
     mDimension = 0;
     mPortalEntranceOffset = NULL;
     mPortalEntranceForwards = NULL;
@@ -487,10 +488,6 @@ void Entity::_init(bool createEntityData, Level* level)
     mPistonDeltas[2] = 0.0;
     mPistonDeltaCount = 3;
     mPistonDeltasGameTime = 0;
-
-    mAllSlots = NULL;
-    mAllSlotCount = 0;
-    mAllSlotsOwner.reset();
 
     mLeashed = false;
     mLeashInfoTag = NULL;
@@ -514,7 +511,7 @@ Entity::~Entity()
     delete mRandom;
     delete mBoundingBox;
     delete mCommandStats;
-    delete[] mAllSlots;
+    delete[] mAllSlots.items;
     delete[] mPistonDeltas;
     delete mWaterCheckBox;
 
@@ -768,7 +765,7 @@ void Entity::DamageNearbyMobs()
             stopSpinAttack();
         }
     }
-    else if (mOnGround)
+    else if (mHorizontalCollision)
     {
         setDamageNearbyMobs(false);
         stopSpinAttack();
@@ -880,7 +877,7 @@ void Entity::baseTick()
     {
         bool portalsEnabled = true;
 
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
             portalsEnabled = !Minecraft::GetInstance()->GetMiniGame()->ArePortalsDisabled();
         }
@@ -1667,7 +1664,7 @@ void Entity::checkInsideBlocks()
     BlockPos from(box->mMinX + 0.001, box->mMinY + 0.001, box->mMinZ + 0.001);
     BlockPos to(box->mMaxX - 0.001, box->mMaxY - 0.001, box->mMaxZ - 0.001);
 
-    bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
+    bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
 
     if (!mLevel->hasChunksAt(from, to))
     {
@@ -1701,7 +1698,7 @@ void Entity::onInsideBlock(const BlockState* state)
 
 _SkinAdjustments Entity::getSkinAdjustments()
 {
-    if (GameSettings::GetGameSettings(eGameSetting_SkinAdjustments) == 0
+    if (GameSettings::GetGameSettings(eGameSetting_CustomSkinAnim) == 0
         && (mCategories & 0x1F1F810) == 0)
     {
         return _SkinAdjustments();
@@ -2716,6 +2713,15 @@ bool Entity::save(CompoundTag* tag)
         return false;
     }
 
+    std::set<boost::shared_ptr<Entity> >* players = getIndirectPassengers(EntityType::SERVER_PLAYER);
+    size_t playerCount = players->size();
+    delete players;
+
+    if (playerCount == 1)
+    {
+        return false;
+    }
+
     tag->putString(std::wstring(L"id"), id);
     saveWithoutId(tag);
 
@@ -2929,14 +2935,14 @@ bool Entity::isInWall()
 
     BlockPos lastPos((int)0x80000000, (int)0x80000000, (int)0x80000000);
 
-    bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
+    bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
 
     for (int i = 0; i < 8; i++)
     {
-        int x = Mth::absFloor(mX + (double)(((float)(i % 2) - 0.5f) * width));
-        int y = Mth::absFloor(mY + (double)(((float)((i / 4) % 2) - 0.5f) * 0.10000000149011612f)
+        int x = Mth::floor(mX + (double)(((float)(i % 2) - 0.5f) * width));
+        int y = Mth::floor(mY + (double)(((float)((i / 4) % 2) - 0.5f) * 0.10000000149011612f)
                            + (double)eyeHeight);
-        int z = Mth::absFloor(mZ + (double)(((float)((i / 2) % 2) - 0.5f) * width));
+        int z = Mth::floor(mZ + (double)(((float)((i / 2) % 2) - 0.5f) * width));
 
         BlockPos pos(x, y, z);
 
@@ -3362,45 +3368,34 @@ void Entity::animateHurt()
 {
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Entity::getHandSlots()
+NonNullList<not_null_ptr<ItemInstance> > Entity::getHandSlots()
 {
-    return new std::vector<boost::shared_ptr<ItemInstance> >();
+    return NonNullList<not_null_ptr<ItemInstance> >();
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Entity::getArmorSlots()
+NonNullList<not_null_ptr<ItemInstance> > Entity::getArmorSlots()
 {
-    return new std::vector<boost::shared_ptr<ItemInstance> >();
+    return NonNullList<not_null_ptr<ItemInstance> >();
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Entity::getAllSlots()
+NonNullList<not_null_ptr<ItemInstance> > Entity::getAllSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* hands = getHandSlots();
-    std::vector<boost::shared_ptr<ItemInstance> >* armor = getArmorSlots();
+    NonNullList<not_null_ptr<ItemInstance> > hands = getHandSlots();
+    NonNullList<not_null_ptr<ItemInstance> > armor = getArmorSlots();
 
-    if (mAllSlotCount == 0)
+    if (mAllSlots.size() == 0)
     {
-        delete[] mAllSlots;
-
-        mAllSlotCount = (int)(hands->size() + armor->size());
-        mAllSlots = new not_null_ptr<ItemInstance>[mAllSlotCount];
+        delete[] mAllSlots.items;
+        mAllSlots = NonNullList<not_null_ptr<ItemInstance> >::withSize(hands.size() + armor.size(), ItemInstance::EMPTY);
     }
 
-    std::vector<boost::shared_ptr<ItemInstance> >* all =
-        new std::vector<boost::shared_ptr<ItemInstance> >();
+    unsigned int index = 0;
+    for (unsigned int i = 0; i < hands.size(); ++i)
+        mAllSlots[index++] = hands[i];
+    for (unsigned int i = 0; i < armor.size(); ++i)
+        mAllSlots[index++] = armor[i];
 
-    for (std::vector<boost::shared_ptr<ItemInstance> >::iterator it = hands->begin();
-         it != hands->end(); ++it)
-    {
-        all->push_back(*it);
-    }
-
-    for (std::vector<boost::shared_ptr<ItemInstance> >::iterator it = armor->begin();
-         it != armor->end(); ++it)
-    {
-        all->push_back(*it);
-    }
-
-    return all;
+    return mAllSlots;
 }
 
 void Entity::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance)

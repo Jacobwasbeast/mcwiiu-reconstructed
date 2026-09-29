@@ -144,7 +144,7 @@ void EnchantmentTableEntity::tick()
     while (delta < -3.1415927F)
         delta += 6.2831855F;
     mBookRotationAngle = delta * 0.4F + rotation;
-    mBookOpen = Mth::clamp(mBookOpen, -1.0F, 1.0F);
+    mBookOpen = Mth::clamp(mBookOpen, 0.0F, 1.0F);
     ++mTickCount;
     float targetDelta = Mth::clamp((mBookRotationTarget - mBookRotationOld) * 0.4F,
                                    -0.2F, 0.2F);

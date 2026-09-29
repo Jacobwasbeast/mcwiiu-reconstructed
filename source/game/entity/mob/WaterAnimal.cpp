@@ -88,6 +88,7 @@ void WaterAnimal::aiStep()
         mYRot = mRandom->nextFloat() * 360.0f;
         mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(this), getFlopSound(),
                           SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
+        mOnGround = false;
     }
 }
 

@@ -97,7 +97,8 @@ unsigned int LookAtEntityHint::onLookAtEntity(boost::shared_ptr<Entity> entity)
     unsigned long long type = entity->GetType();
     if ((type & EntityType::HANGING_ENTITY) != EntityType::HANGING_ENTITY &&
         (type & EntityType::MINECART) != EntityType::MINECART &&
-        type != EntityType::ARMOR_STAND && type != EntityType::ENDER_CRYSTAL)
+        type != EntityType::BOAT && type != EntityType::ARMOR_STAND &&
+        type != EntityType::ENDER_CRYSTAL)
     {
         return tutorial->setMessage(this, details);
     }

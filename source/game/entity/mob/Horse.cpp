@@ -341,11 +341,11 @@ unsigned int Horse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
     {
         if (!player->isSneaking() || !isTamed())
         {
-            if (!item->hasCustomHoverName())
+            if (item->hasCustomHoverName() && (!hasCustomName() || item->getHoverName() != getCustomName()))
+                return IDS_TOOLTIPS_NAME;
+            if (!isTamed() || !getPassengers()->empty())
                 return IDS_NONE;
-            if (hasCustomName() && item->getHoverName() == getCustomName())
-                return IDS_NONE;
-            return IDS_TOOLTIPS_NAME;
+            return IDS_TOOLTIPS_MOUNT;
         }
     }
 
@@ -365,20 +365,9 @@ unsigned int Horse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
         return IDS_NONE;
     }
 
-    bool openInventory = true;
-    if (!player->isSneaking())
-    {
-        if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
-            openInventory = false;
-    }
-    else if (isVehicle())
-    {
-        if (!mobInteract(player, InteractionHand::eInteractionHand_MainHand))
-        {
-            if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
-                openInventory = false;
-        }
-    }
+    bool openInventory = player->isSneaking() && (!isVehicle() || hasPassenger(player)) && isTamed();
+    if (!openInventory && ((itemId == ItemId::SADDLE && !isSaddled()) || (wearsArmor() && horseArmor)))
+        openInventory = true;
 
     if (openInventory)
         return IDS_TOOLTIPS_OPEN;

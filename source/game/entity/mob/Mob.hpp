@@ -131,8 +131,8 @@ public:
     virtual bool canPickUpLoot();
     virtual void setCanPickUpLoot(bool canPickUp);
     int getMaxFallDistance();
-    std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
-    std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
+    NonNullList<not_null_ptr<ItemInstance> > getHandSlots();
+    NonNullList<not_null_ptr<ItemInstance> > getArmorSlots();
     static Item* getEquipmentForSlot(const EquipmentSlot* slot, int tier);
     virtual bool isPersistenceRequired();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);

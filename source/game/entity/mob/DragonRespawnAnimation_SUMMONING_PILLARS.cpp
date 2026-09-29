@@ -31,15 +31,13 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
 
             if (tick % 40 == 0)
             {
-                BlockPos beamTarget(static_cast<int>(spike.getCenterX()),
-                    static_cast<int>(spike.getHeight()) + 1,
-                    static_cast<int>(spike.getCenterZ()));
-
                 std::vector<boost::shared_ptr<EnderCrystal> >::iterator it =
                     crystals->begin();
                 while (it != crystals->end())
                 {
-                    it->get()->setBeamTarget(&beamTarget);
+                    it->get()->setBeamTarget(new BlockPos(static_cast<int>(spike.getCenterX()),
+                        static_cast<int>(spike.getHeight()) + 1,
+                        static_cast<int>(spike.getCenterZ())));
                     ++it;
                 }
             }
@@ -71,6 +69,12 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
                     level->removeBlock(*positions->next());
                 }
                 delete positions;
+
+                level->explode(boost::shared_ptr<Entity>(),
+                    static_cast<double>(static_cast<float>(spike.getCenterX()) + 0.5f),
+                    static_cast<double>(spike.getHeight()),
+                    static_cast<double>(static_cast<float>(spike.getCenterZ()) + 0.5f),
+                    5.0f, true, true, false, false, false, -1.0f);
 
                 SpikeFeature feature;
                 SpikeFeature::EndSpike featureSpike(spike);

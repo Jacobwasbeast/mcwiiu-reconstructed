@@ -193,7 +193,7 @@ void TheEndGatewayEntity::triggerCooldown()
     if (mLevel != NULL && !mLevel->mIsClientSide)
     {
         mCooldown = 40;
-        mLevel->setBlockAndUpdate(getBlockPos(), getBlock()->defaultBlockState());
+        mLevel->blockEvent(getBlockPos(), getBlock(), 1, 0);
         setChanged();
     }
 }

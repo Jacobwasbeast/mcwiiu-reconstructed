@@ -282,9 +282,10 @@ void Mob::baseTick()
     }
 }
 
-void Mob::playHurtSound(const DamageSource*)
+void Mob::playHurtSound(const DamageSource* source)
 {
     resetAmbientSoundTime();
+    LivingEntity::playHurtSound(source);
 }
 
 void Mob::resetAmbientSoundTime()
@@ -378,6 +379,7 @@ void Mob::tick()
                 if (entities->size() < 2)
                 {
                     setLeader(false);
+                    mFlockSize = 0;
                 }
                 delete entities;
             }
@@ -390,8 +392,7 @@ void Mob::tick()
 
 float Mob::tickHeadTurn(float, float headTurnDelta)
 {
-    if (mLookControl != NULL)
-        mLookControl->tick();
+    mBodyControl->clientTick();
     return headTurnDelta;
 }
 
@@ -428,11 +429,11 @@ void Mob::dropEquipment(bool hitByPlayer, int lootingLevel)
                            : mArmorDropChances[slot->getIndex()];
         if (item->isEmpty() || EnchantmentHelper::hasVanishingCurse(item))
             continue;
-        if (!hitByPlayer && chance <= 0.2f)
+        if (!hitByPlayer && chance <= 1.0f)
             continue;
-        if (mRandom->nextFloat() >= chance - lootingLevel * 0.01f)
+        if (mRandom->nextFloat() - lootingLevel * 0.01f >= chance)
             continue;
-        if (chance > 0.2f && item->isDamageableItem())
+        if (chance <= 1.0f && item->isDamageableItem())
         {
             int bound = item->getMaxDamage() - 3;
             if (bound < 1)
@@ -691,7 +692,7 @@ void Mob::aiStep()
     if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
         return;
 
-    AABB* searchBox = mBoundingBox->grow(1.0, 0.25, 1.0);
+    AABB* searchBox = mBoundingBox->grow(1.0, 0.0, 1.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
@@ -844,7 +845,7 @@ void Mob::checkDespawn()
     if (isPersistenceRequired())
         return;
 
-    boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 128.0, -1.0);
+    boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), -1.0, -1.0);
     if (!player)
         return;
 
@@ -870,7 +871,7 @@ void Mob::serverAiStep()
 {
     PIXBeginNamedEvent(0.0f, "Tick target selector for %I64d", GetType());
     MemSect(0x33);
-    ++mAmbientSoundTime;
+    ++mNoActionTime;
 
     PIXBeginNamedEvent(0.0f, "Check despawn");
     checkDespawn();
@@ -948,7 +949,7 @@ int Mob::getMaxHeadYRot()
 
 float Mob::rotlerp(float from, float to, float max)
 {
-    float delta = to - from;
+    float delta = Mth::wrapDegrees(to - from);
     if (delta > max)
         delta = max;
     if (delta < -max)
@@ -1018,7 +1019,7 @@ int Mob::getMaxSpawnClusterSize()
 
 int Mob::getMaxFallDistance()
 {
-    if (!getVehicle())
+    if (!getTarget())
         return 3;
 
     int fallDistance = (int)-(getMaxHealth() * 0.33f - getHealth());
@@ -1029,22 +1030,14 @@ int Mob::getMaxFallDistance()
     return fallDistance + 3;
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Mob::getHandSlots()
+NonNullList<not_null_ptr<ItemInstance> > Mob::getHandSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* items =
-        new std::vector<boost::shared_ptr<ItemInstance> >();
-    items->push_back(mHandItems[0]);
-    items->push_back(mHandItems[1]);
-    return items;
+    return mHandItems;
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Mob::getArmorSlots()
+NonNullList<not_null_ptr<ItemInstance> > Mob::getArmorSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* items =
-        new std::vector<boost::shared_ptr<ItemInstance> >();
-    for (unsigned int i = 0; i < mArmorItems.size(); ++i)
-        items->push_back(mArmorItems[i]);
-    return items;
+    return mArmorItems;
 }
 
 void Mob::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
@@ -1136,6 +1129,7 @@ void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
         ServerLevel* serverLevel = static_cast<ServerLevel*>(mLevel);
         LootTableContext::Builder builder(serverLevel);
         builder.mThisEntity = shared_from_this();
+        builder.mDamageSource = NULL;
         LootTableContext context = builder.build();
 
         std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(mRandom, context);

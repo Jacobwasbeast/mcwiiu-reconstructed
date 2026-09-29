@@ -184,7 +184,7 @@ void AbstractSkeleton::aiStep()
             && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) + (brightness - 0.4f)
             && mLevel->canSeeSky(pos))
         {
-            not_null_ptr<ItemInstance> item = getMainHandItem();
+            not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::HEAD);
             if (!item->isEmpty())
             {
                 if (item->isDamageableItem())
@@ -193,7 +193,7 @@ void AbstractSkeleton::aiStep()
                     if (item->getDamageValue() >= item->getMaxDamage())
                     {
                         breakItem(item);
-                        setItemSlot(EquipmentSlot::MAINHAND, ItemInstance::EMPTY);
+                        setItemSlot(EquipmentSlot::HEAD, ItemInstance::EMPTY);
                     }
                 }
             }
@@ -217,7 +217,7 @@ void AbstractSkeleton::rideTick()
     if (vehicle.get() != NULL && (vehicle->GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
     {
         boost::shared_ptr<PathfinderMob> pathfinder = boost::static_pointer_cast<PathfinderMob>(getVehicle());
-        mYRot = pathfinder->mYRot;
+        mYBodyRot = pathfinder->mYBodyRot;
     }
 }
 

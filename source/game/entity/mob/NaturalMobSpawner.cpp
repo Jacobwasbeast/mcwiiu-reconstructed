@@ -73,13 +73,13 @@ BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chu
 
 bool NaturalMobSpawner::isValidEmptyUnderWaterSpawnBlock(const BlockState* state)
 {
-    return !state->isSolid() && !state->getMaterial()->isSolid() && state->getMaterial()->isLiquid()
+    return !state->isSolidBlockingCube() && !state->isSignalSource() && state->getMaterial()->isLiquid()
         && !BaseRailBlock::isRail(state);
 }
 
 bool NaturalMobSpawner::isValidEmptySpawnBlock(const BlockState* state)
 {
-    return !state->isSolid() && !state->getMaterial()->isSolid() && !state->getMaterial()->isLiquid()
+    return !state->isSolidBlockingCube() && !state->isSignalSource() && !state->getMaterial()->isLiquid()
         && !BaseRailBlock::isRail(state);
 }
 

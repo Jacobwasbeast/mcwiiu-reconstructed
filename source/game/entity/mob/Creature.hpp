@@ -3,8 +3,6 @@
 
 class Creature
 {
-public:
-    virtual ~Creature() {}
 };
 
 #endif

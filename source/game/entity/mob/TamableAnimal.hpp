@@ -43,7 +43,7 @@ public:
     virtual boost::shared_ptr<LivingEntity> getOwner();
     virtual bool isOwnedBy(boost::shared_ptr<LivingEntity> entity);
     virtual SitGoal* getSitGoal();
-    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<LivingEntity> target);
+    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner);
     virtual Team* getTeam();
     virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);
     virtual void die(const DamageSource* source);

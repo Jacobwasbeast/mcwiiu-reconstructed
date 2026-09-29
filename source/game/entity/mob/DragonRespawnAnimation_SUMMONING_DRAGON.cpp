@@ -1,6 +1,7 @@
 #include "game/entity/mob/DragonRespawnAnimation_SUMMONING_DRAGON.hpp"
 #include "game/world/LevelEvent.hpp"
 
+#include "game/core/EnderCrystal.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -16,11 +17,10 @@ void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level,
         {
             if (tick == 0)
             {
-                BlockPos beamTarget(0, 128, 0);
                 std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
                 while (it != crystals->end())
                 {
-                    it->get()->setBeamTarget(&beamTarget);
+                    it->get()->setBeamTarget(new BlockPos(0, 128, 0));
                     ++it;
                 }
             }
@@ -44,9 +44,10 @@ void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level,
     std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
     while (it != crystals->end())
     {
-        EnderCrystal* crystal = it->get();
+        boost::shared_ptr<EnderCrystal> crystal = *it;
         crystal->setBeamTarget(NULL);
-
+        level->explode(crystal, crystal->mX, crystal->mY, crystal->mZ, 6.0f, false, true, false, false, false,
+                       -1.0f);
         crystal->remove();
         ++it;
     }

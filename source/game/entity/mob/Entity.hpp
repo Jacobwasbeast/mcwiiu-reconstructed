@@ -17,6 +17,8 @@
 #include "game/entity/mob/EntityCategory.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
 #include "game/entity/mob/MoverType.hpp"
+#include "game/item/NonNullList.hpp"
+#include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
@@ -215,9 +217,9 @@ public:
     virtual void lerpMotion(double xd, double yd, double zd);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual void animateHurt();
-    virtual std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
-    virtual std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
-    virtual std::vector<boost::shared_ptr<ItemInstance> >* getAllSlots();
+    virtual NonNullList<not_null_ptr<ItemInstance> > getHandSlots();
+    virtual NonNullList<not_null_ptr<ItemInstance> > getArmorSlots();
+    virtual NonNullList<not_null_ptr<ItemInstance> > getAllSlots();
     virtual void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance);
     virtual bool isOnFire();
     virtual bool isPassenger();
@@ -521,6 +523,7 @@ public:
     float mEyeHeightO;
     float mSwimAmount;
     float mSwimAmountO;
+    bool mReserved0x178;
     bool mWasOnFire;
     int mFireTransitionStartTick;
     double mVehicleXRotDelta;
@@ -575,9 +578,7 @@ public:
     std::wstring mUUID;
     std::wstring mStringUUID;
     CommandStats* mCommandStats;
-    not_null_ptr<ItemInstance>* mAllSlots;
-    int mAllSlotCount;
-    boost::shared_ptr<ItemInstance> mAllSlotsOwner;
+    NonNullList<not_null_ptr<ItemInstance> > mAllSlots;
     bool mGlowing;
     bool mIgnoreVerticalCollision;
     bool mIgnorePortals;

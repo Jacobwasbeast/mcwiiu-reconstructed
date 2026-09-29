@@ -167,7 +167,7 @@ void ItemEntity::mergeWithNeighbours()
 {
     if (mLevel == NULL || mBoundingBox == NULL)
         return;
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.5, 0.5, 0.5));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.5, 0.0, 0.5));
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {

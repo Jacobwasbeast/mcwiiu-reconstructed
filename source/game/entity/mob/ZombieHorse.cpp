@@ -133,14 +133,21 @@ unsigned int ZombieHorse::GetInteractTooltip(const EntityTooltipDataHolder& tool
         boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                          (Player*)tooltipData.m_pPlayer.get());
 
-        if (itemId == ItemId::SPAWN_EGG && SpawnEggItem::fjGetType(item) == GetType())
-            return IDS_TOOLTIPS_PLACE;
+        if (itemId == ItemId::SPAWN_EGG)
+        {
+            if (SpawnEggItem::fjGetType(item) == EntityType::ZOMBIE_HORSE)
+                return IDS_TOOLTIPS_PLACE;
+            if (isLeashedToPlayer(player))
+                return IDS_TOOLTIPS_UNLEASH;
+            return IDS_NONE;
+        }
         if (isLeashedToPlayer(player))
             return IDS_TOOLTIPS_UNLEASH;
         if (itemId == ItemId::LEAD)
         {
             if (!isLeashed())
                 return IDS_TOOLTIPS_LEASH;
+            return IDS_NONE;
         }
         else if (itemId == ItemId::NAME_TAG)
         {

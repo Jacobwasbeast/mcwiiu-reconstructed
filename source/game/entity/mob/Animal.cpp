@@ -334,7 +334,7 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
                     return false;
                 }
             }
-            else if ((GetType() & EntityType::MOB) != 0)
+            else if ((GetType() & EntityType::CREATURE_CATEGORY) != 0)
             {
                 if (!mLevel->canCreateMore(GetType(), Level::eSpawnType_Breed))
                 {

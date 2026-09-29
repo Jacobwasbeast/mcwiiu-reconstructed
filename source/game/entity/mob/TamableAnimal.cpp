@@ -188,16 +188,21 @@ SitGoal* TamableAnimal::getSitGoal()
     return mSitGoal;
 }
 
-bool TamableAnimal::wantsToAttack(boost::shared_ptr<LivingEntity> owner,
-                                  boost::shared_ptr<LivingEntity> target)
+bool TamableAnimal::wantsToAttack(boost::shared_ptr<LivingEntity> target,
+                                  boost::shared_ptr<LivingEntity> owner)
 {
     return true;
 }
 
 Team* TamableAnimal::getTeam()
 {
-    boost::shared_ptr<LivingEntity> owner = getOwner();
-    return owner != NULL ? owner->getTeam() : LivingEntity::getTeam();
+    if (isTame())
+    {
+        boost::shared_ptr<LivingEntity> owner = getOwner();
+        if (owner != NULL)
+            return owner->getTeam();
+    }
+    return LivingEntity::getTeam();
 }
 
 bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)

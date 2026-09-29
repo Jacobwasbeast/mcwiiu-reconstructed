@@ -52,6 +52,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/RemoveBlockGoal.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/core/RangedAttribute.hpp"
 #include "game/core/BaseAttributeMap.hpp"
 
@@ -224,7 +225,7 @@ void Zombie::aiStep()
     if (!mLevel->mIsClientSide && mLevel->isDay() && isSunSensitive() && getBrightness() > 0.5f &&
         mRandom->nextFloat() * 30.0f < (getBrightness() - 0.4f) * 2.0f)
     {
-        BlockPos pos(mX, mY + getRidingHeight(), mZ);
+        BlockPos pos(mX, mY + getEyeHeight(), mZ);
         if (mLevel->canSeeSky(pos))
         {
             not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
@@ -234,15 +235,18 @@ void Zombie::aiStep()
             {
                 helmet->setAuxValue(helmet->getDamageValue() + mRandom->nextInt(2));
                 if (helmet->getDamageValue() >= helmet->getMaxDamage())
-                    setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance()));
+                {
+                    breakItem(helmet);
+                    setItemSlot(EquipmentSlot::HEAD, ItemInstance::EMPTY);
+                }
             }
         }
     }
     Monster::aiStep();
     if (isBaby())
-        setSpeed(0.5f);
+        internalSetSize(0.5f);
     else
-        setSpeed(1.0f);
+        internalSetSize(1.0f);
 }
 
 bool Zombie::hurt(const DamageSource* source, float damage)
@@ -539,17 +543,33 @@ void Zombie::startConverting(int conversionTime)
 
 void Zombie::waterCheck()
 {
-    if (isInWater())
+    if (mLevel->mIsClientSide)
+        return;
+    if (GetType() != EntityType::ZOMBIE && GetType() != EntityType::HUSK)
+        return;
+    if (isUnderLiquid(Material::WATER))
+    {
         ++mWaterConversionTime;
+        if (!isConverting() && mWaterConversionTime > 599)
+            startConverting(300);
+    }
     else
+    {
         mWaterConversionTime = 0;
-    if (!isConverting() && mWaterConversionTime > 599)
-        startConverting(300);
+    }
 }
 
 void Zombie::tick()
 {
     waterCheck();
+    if (!mLevel->mIsClientSide && isConverting())
+    {
+        --mConversionTime;
+        if (mConversionTime < 1)
+        {
+            finishConversion();
+        }
+    }
     Monster::tick();
 }
 

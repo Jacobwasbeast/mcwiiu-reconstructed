@@ -14,7 +14,7 @@ void DragonRespawnAnimation_START::tick(ServerLevel* level,
     std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
     while (it != crystals->end())
     {
-        it->get()->setBeamTarget(&beamTarget);
+        it->get()->setBeamTarget(new BlockPos(beamTarget));
         ++it;
     }
 

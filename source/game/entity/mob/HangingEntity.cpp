@@ -203,7 +203,11 @@ void HangingEntity::move(MoverType type, double x, double y, double z, bool push
 
 void HangingEntity::push(double x, double y, double z)
 {
-    move(eMoverType_Self, x, y, z, false);
+    if (!mLevel->mIsClientSide && !mRemoved && x * x + y * y + z * z > 0.0)
+    {
+        remove();
+        dropItem(boost::shared_ptr<Entity>());
+    }
 }
 
 void HangingEntity::addAdditonalSaveData(CompoundTag* tag)

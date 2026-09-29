@@ -269,8 +269,8 @@ public:
     BaseAttributeMap* mAttributes;
     CombatTracker* mCombatTracker;
     boost::unordered_map<MobEffect*, MobEffectInstance*> mActiveEffects;
-    NonNullList<not_null_ptr<ItemInstance> > mHandItems;
-    NonNullList<not_null_ptr<ItemInstance> > mArmorItems;
+    NonNullList<not_null_ptr<ItemInstance> > mLastHandItems;
+    NonNullList<not_null_ptr<ItemInstance> > mLastArmorItems;
     bool mSwinging;
     InteractionHand::EInteractionHand mSwingingArm;
     int mSwingTime;

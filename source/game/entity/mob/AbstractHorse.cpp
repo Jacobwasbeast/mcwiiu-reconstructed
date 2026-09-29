@@ -145,7 +145,7 @@ void AbstractHorse::stand()
 
 void AbstractHorse::onPlayerJump(int jump)
 {
-    if (!isSaddled() && GetType() != EntityType::MULE)
+    if (!isSaddled() && GetType() != EntityType::SKELETON_HORSE)
         return;
     if (jump < 0)
     {
@@ -164,7 +164,7 @@ void AbstractHorse::onPlayerJump(int jump)
     mJumpRidingScale = 0.4f * (float)jump / 90.0f + 0.4f;
 }
 
-bool AbstractHorse::canJump() { return isSaddled() || GetType() == EntityType::MULE; }
+bool AbstractHorse::canJump() { return isSaddled() || GetType() == EntityType::SKELETON_HORSE; }
 double AbstractHorse::getJumpRidingScale() { return mJumpRidingScale; }
 void AbstractHorse::setJumpRidingScale(float scale) { mJumpRidingScale = scale; }
 
@@ -370,7 +370,7 @@ void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
     if (block->mMaterial == Material::AIR || isSilent())
         return;
 
-    const SoundType* soundType = block->mSoundType;
+    const SoundType* soundType = block->getSoundType();
     mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
                       getSoundSource(), soundType->getVolume() * 0.5f,
                       soundType->getPitch() * 0.75f, 16.0f);
@@ -800,7 +800,7 @@ bool AbstractHorse::tameWithName(const boost::shared_ptr<Player>& player)
 void AbstractHorse::travel(float x, float y, float z)
 {
     if (!isVehicle() || !canBeControlledByRider()
-        || (!isSaddled() && GetType() != EntityType::MULE))
+        || (!isSaddled() && GetType() != EntityType::SKELETON_HORSE))
     {
         mFlyingSpeed = 0.02f;
         LivingEntity::travel(x, y, z);
@@ -1005,7 +1005,7 @@ void AbstractHorse::setOffspringAttributes(const boost::shared_ptr<AgableMob>& o
 
 bool AbstractHorse::canBeControlledByRider()
 {
-    if ((!isTamed() || !isSaddled()) && GetType() != EntityType::MULE)
+    if ((!isTamed() || !isSaddled()) && GetType() != EntityType::SKELETON_HORSE)
         return false;
     return Entity::instanceof(getControllingPassenger(), EntityType::LIVING_ENTITY);
 }

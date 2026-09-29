@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/PathfinderMob.hpp"
+#include "game/entity/mob/Creature.hpp"
 
 class PathNavigation;
 class Level;
@@ -11,7 +12,7 @@ class Player;
 class SoundEvent;
 class WaterBoundPathNavigation;
 
-class WaterAnimal : public PathfinderMob
+class WaterAnimal : public PathfinderMob, public Creature
 {
 public:
     WaterAnimal(Level* level);

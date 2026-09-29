@@ -5,6 +5,7 @@
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
+#include "game/entity/mob/Enemy.hpp"
 
 class BlockPos;
 class DamageSource;
@@ -13,7 +14,7 @@ class Player;
 class SoundEvent;
 class Entity;
 
-class Monster : public PathfinderMob
+class Monster : public PathfinderMob, public Enemy
 {
 public:
     Monster(Level* level);

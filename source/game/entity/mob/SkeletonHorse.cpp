@@ -235,27 +235,28 @@ bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player,
 
 unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
+    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
+    unsigned int itemId = Item::getId(item->getItem());
     if (!tooltipData.m_bAllowedToInteract)
         return IDS_NONE;
 
-    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-    unsigned int itemId = Item::getId(item->getItem());
-    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
     boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                      (Player*)tooltipData.m_pPlayer.get());
 
-    if (itemId == ItemId::LEAD)
+    if (hasPassenger(EntityType::SKELETON))
     {
         if (isLeashedToPlayer(player))
             return IDS_TOOLTIPS_UNLEASH;
-        if (isLeashed())
+        if (itemId != ItemId::LEAD)
             return IDS_NONE;
-        return IDS_TOOLTIPS_LEASH;
+        return isLeashed() ? IDS_NONE : IDS_TOOLTIPS_LEASH;
     }
+
+    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
 
     if (itemId == ItemId::SPAWN_EGG)
     {
-        if (SpawnEggItem::fjGetType(item) == GetType())
+        if (SpawnEggItem::fjGetType(item) == EntityType::SKELETON_HORSE)
             return IDS_TOOLTIPS_PLACE;
         if (isLeashedToPlayer(player))
             return IDS_TOOLTIPS_UNLEASH;
@@ -265,43 +266,42 @@ unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& to
     if (isLeashedToPlayer(player))
         return IDS_TOOLTIPS_UNLEASH;
 
-    if (itemId == ItemId::NAME_TAG)
+    if (itemId == ItemId::LEAD)
+        return isLeashed() ? IDS_NONE : IDS_TOOLTIPS_LEASH;
+
+    if (itemId == ItemId::NAME_TAG
+        && !(player->isSneaking() && isTamed() && !hasPassenger(EntityType::SKELETON)))
     {
-        if (!player->isSneaking() || !isTamed())
+        if (item->hasCustomHoverName())
         {
-            if (!item->hasCustomHoverName())
-                return IDS_NONE;
             if (hasCustomName() && item->getHoverName() == getCustomName())
                 return IDS_NONE;
             return IDS_TOOLTIPS_NAME;
         }
-        if (!item->hasCustomHoverName())
-        {
-            if (getPassengers()->empty())
-                return IDS_TOOLTIPS_MOUNT;
+        if (!isTamed())
             return IDS_NONE;
-        }
-        if (hasCustomName() && item->getHoverName() == getCustomName())
-            return IDS_NONE;
-        return IDS_TOOLTIPS_NAME;
+        return getPassengers()->empty() ? IDS_TOOLTIPS_MOUNT : IDS_NONE;
     }
 
     if (isBaby())
         return IDS_NONE;
 
-    bool openInventory = true;
-    if (!player->isSneaking())
+    if (!isTamed())
     {
-        if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
-            openInventory = false;
+        if (!item->isEmpty() || isVehicle() || !getPassengers()->empty())
+            return IDS_NONE;
+        return IDS_TOOLTIPS_TAME;
     }
-    else if (isVehicle())
+
+    bool openInventory = false;
+    if (!hasPassenger(EntityType::SKELETON))
     {
-        if (!mobInteract(player, InteractionHand::eInteractionHand_MainHand))
-        {
-            if ((itemId != ItemId::SADDLE || isSaddled()) && (!wearsArmor() || !horseArmor))
-                openInventory = false;
-        }
+        if (player->isSneaking() && (!isVehicle() || hasPassenger(player)) && isTamed())
+            openInventory = true;
+        else if (itemId == ItemId::SADDLE && !isSaddled())
+            openInventory = true;
+        else if (wearsArmor() && horseArmor)
+            openInventory = true;
     }
 
     if (openInventory)

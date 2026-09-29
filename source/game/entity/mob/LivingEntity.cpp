@@ -158,8 +158,8 @@ LivingEntity::~LivingEntity()
 
     delete mAttributes;
     delete mCombatTracker;
-    delete[] mHandItems.items;
-    delete[] mArmorItems.items;
+    delete[] mLastHandItems.items;
+    delete[] mLastArmorItems.items;
 
     if (mLastDamageSource)
     {
@@ -174,8 +174,8 @@ void LivingEntity::_init()
 {
     mAttributes = NULL;
     mCombatTracker = new CombatTracker(this);
-    mHandItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
-    mArmorItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
+    mLastHandItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
+    mLastArmorItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
     mSwinging = false;
     mSwingTime = 0;
     mRemoveArrowTime = 0;
@@ -514,21 +514,21 @@ void LivingEntity::baseTick()
         clearFire();
     }
 
-    bool invulnerablePlayer = false;
+    bool instabuildPlayer = false;
 
     if (isPlayer)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
 
-        if (player->mAbilities.mInvulnerable)
+        if (player->mAbilities.mInstabuild)
         {
-            invulnerablePlayer = true;
+            instabuildPlayer = true;
         }
     }
 
     if (isAlive())
     {
-        bool canBreatheNow = invulnerablePlayer || canBreathe();
+        bool canBreatheNow = instabuildPlayer || canBreathe();
         int airSupply = getAirSupply();
         int maxAirSupply = getMaxAirSupply();
 
@@ -617,7 +617,7 @@ void LivingEntity::baseTick()
         --mHurtTime;
     }
 
-    if (mInvulnerableTime > 0 && GetType() != EntityType::LOCAL_PLAYER)
+    if (mInvulnerableTime > 0 && GetType() != EntityType::SERVER_PLAYER)
     {
         --mInvulnerableTime;
     }
@@ -1279,7 +1279,7 @@ void LivingEntity::setHealth(float health)
 
 bool LivingEntity::hurt(const DamageSource* source, float damage)
 {
-    if ((isInvulnerable() && !source->isBypassInvul())
+    if ((isInvulnerableTo(source) && !source->isBypassInvul())
         || g_pApp->IsAppPaused()
         || (mLevel->mIsClientSide && dynamic_cast<const EntityDamageSource*>(source) == NULL))
     {
@@ -1864,7 +1864,7 @@ float LivingEntity::getDamageAfterMagicAbsorb(const DamageSource* source, float 
         return 0.0f;
     }
 
-    int protection = EnchantmentHelper::getDamageProtection(mArmorItems, source);
+    int protection = EnchantmentHelper::getDamageProtection(getArmorSlots(), source);
 
     if (protection > 0)
     {
@@ -1876,7 +1876,7 @@ float LivingEntity::getDamageAfterMagicAbsorb(const DamageSource* source, float 
 
 void LivingEntity::actuallyHurt(const DamageSource* source, float damage)
 {
-    if (isInvulnerable() && !source->isBypassInvul())
+    if (isInvulnerableTo(source) && !source->isBypassInvul())
     {
         return;
     }
@@ -2423,14 +2423,14 @@ float LivingEntity::getFrictionForTravel()
 
 bool LivingEntity::shouldApplyWaterGravity()
 {
-    if ((GetType() & EntityType::VILLAGER) != EntityType::VILLAGER
+    if ((GetType() & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL
         && GetType() != EntityType::DOLPHIN
-        && GetType() != EntityType::RABBIT)
+        && GetType() != EntityType::TURTLE)
     {
         return true;
     }
 
-    return isImmersedInWater();
+    return !isImmersedInWater();
 }
 
 void LivingEntity::activateElytraSpeedBoost(double boost)
@@ -2823,7 +2823,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         {
             float depthFactor = (float)depthStrider / 3.0f;
             waterSlowdown += (0.546000063419342f - waterSlowdown) * depthFactor;
-            moveSpeed += ((float)(getSpeed() * 1.75) - moveSpeed) * depthFactor;
+            moveSpeed += ((float)getSpeed() - moveSpeed) * depthFactor;
         }
 
         if (skeletonHorseWithPlayerPassenger)
@@ -3275,11 +3275,11 @@ void LivingEntity::updateEquipmentSlots()
 
         if (slot->getType() == EquipmentSlot::HAND)
         {
-            previous = mHandItems[slot->getIndex()];
+            previous = mLastHandItems[slot->getIndex()];
         }
         else
         {
-            previous = mArmorItems[slot->getIndex()];
+            previous = mLastArmorItems[slot->getIndex()];
         }
 
         not_null_ptr<ItemInstance> current = getItemSlot(slot);
@@ -3304,11 +3304,11 @@ void LivingEntity::updateEquipmentSlots()
 
         if (slot->getType() == EquipmentSlot::HAND)
         {
-            mHandItems[slot->getIndex()] = current->isEmpty() ? ItemInstance::EMPTY : current->copy();
+            mLastHandItems[slot->getIndex()] = current->isEmpty() ? ItemInstance::EMPTY : current->copy();
         }
         else
         {
-            mArmorItems[slot->getIndex()] = current->isEmpty() ? ItemInstance::EMPTY : current->copy();
+            mLastArmorItems[slot->getIndex()] = current->isEmpty() ? ItemInstance::EMPTY : current->copy();
         }
     }
 }
@@ -3370,15 +3370,15 @@ void LivingEntity::tick()
     {
         if (!mSwimSoundPlayed)
         {
-            if (BubbleColumnSegment::getFlowDownward(state))
+            if (state->getValue(BubbleColumnSegment::DRAG))
             {
-                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_UPWARDS_INSIDE,
-                                       getSoundSource(), 1.0f, 1.0f, false, 16.0f);
+                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_INSIDE,
+                                       SoundSource::eSoundSource_Players, 0.9f, 1.0f, false, 16.0f);
             }
             else
             {
-                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_INSIDE,
-                                       getSoundSource(), 1.0f, 1.0f, false, 16.0f);
+                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_UPWARDS_INSIDE,
+                                       SoundSource::eSoundSource_Players, 0.9f, 1.0f, false, 16.0f);
             }
         }
 
@@ -3546,7 +3546,7 @@ void LivingEntity::updateFallFlying()
         {
             flying = true;
 
-            if ((mTickCount + 1) % 20 == 0)
+            if ((mFallFlyTicks + 1) % 20 == 0)
             {
                 chest->hurtAndBreak(1, boost::static_pointer_cast<LivingEntity>(shared_from_this()));
             }

@@ -153,10 +153,10 @@ void PathfinderMob::onLeashDistance(float)
 
 double PathfinderMob::followLeashSpeed()
 {
-    return 0.9;
+    return 1.0;
 }
 
 bool PathfinderMob::couldWander()
 {
-    return mTickCount < 100 || Entity::couldWander();
+    return mNoActionTime < 100 || isExtraWanderingEnabled();
 }
