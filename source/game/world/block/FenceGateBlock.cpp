@@ -187,7 +187,7 @@ int FenceGateBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int FenceGateBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    return (tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy ? IDS_TOOLTIPS_USE : Block::GetInteractTooltip(tooltipData);
+    return (tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace ? IDS_TOOLTIPS_USE : Block::GetInteractTooltip(tooltipData);
 }
 
 bool FenceGateBlock::canContainLiquid(const BlockState*) const { return true; }

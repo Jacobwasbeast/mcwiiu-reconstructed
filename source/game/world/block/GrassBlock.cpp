@@ -204,7 +204,7 @@ unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
     case 273:
     case 277:
     case 284:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bIsInside)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_DIG_PATH;
         break;
     case 290:
@@ -212,7 +212,7 @@ unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
     case 292:
     case 293:
     case 294:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bIsInside)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_TILL;
         break;
     case 351:

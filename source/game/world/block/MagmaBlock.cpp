@@ -124,11 +124,11 @@ void MagmaBlock::animateTick(const BlockState*, Level* level, const BlockPos& po
         return;
 
     level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.014, 0.014, 0.014, arrayWithLength<int>());
+                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
     level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.014, 0.014, 0.014, arrayWithLength<int>());
+                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
     level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.014, 0.014, 0.014, arrayWithLength<int>());
+                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
     level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.014, 0.014, 0.014, arrayWithLength<int>());
+                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
 }

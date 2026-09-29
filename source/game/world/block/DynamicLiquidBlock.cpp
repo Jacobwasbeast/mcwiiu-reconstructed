@@ -95,11 +95,11 @@ bool DynamicLiquidBlock::_canSpreadTo(Level* level, const BlockPos& pos, const B
     return false;
 }
 
-void DynamicLiquidBlock::_spread(Level* level, const BlockPos& pos, int depth, bool remove)
+void DynamicLiquidBlock::_spread(Level* level, const BlockPos& pos, int depth, bool extraLayer)
 {
     unsigned short element = static_cast<unsigned short>((getCraftingMaterial() == Material::LAVA ? 10 : 8) << 4);
     element = static_cast<unsigned short>(element | depth);
-    LiquidBlock::setLiquidElement(level, pos, element, remove, 3);
+    LiquidBlock::setLiquidElement(level, pos, element, extraLayer, 3);
     level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
@@ -110,21 +110,25 @@ void DynamicLiquidBlock::_trySpreadTo(Level* level, const BlockPos& pos, const B
     {
         return;
     }
-    const BlockState* state = level->getBlockState(pos);
-    bool remove = true;
-    if (getCraftingMaterial() == Material::LAVA)
+    bool extraLayer = false;
+    Block* block = level->getBlock(pos);
+    if (block->mMaterial != Material::AIR)
     {
-        state->getBlock()->handleRain(level, pos);
-        _spread(level, pos, depth, false);
-        return;
+        extraLayer = true;
+        if (mMaterial == Material::LAVA)
+        {
+            fizz(level, pos);
+            _spread(level, pos, depth, false);
+            return;
+        }
+        if (block->waterSpreadCausesSpawn())
+        {
+            extraLayer = false;
+            level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(level->getBlockState(pos)));
+            block->spawnResources(level, pos, level->getBlockState(pos), 0);
+        }
     }
-    if (!state->getBlock()->isLiquidBlock())
-    {
-        level->destroyBlock(pos, true);
-        level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
-        remove = false;
-    }
-    _spread(level, pos, depth, remove);
+    _spread(level, pos, depth, extraLayer);
 }
 
 int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int distance, int directionIndex)
@@ -412,7 +416,7 @@ void DynamicLiquidBlock::tick(Level* level, const BlockPos& pos, const BlockStat
 
 void DynamicLiquidBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!isTicking())
+    if (!updateLiquid(level, pos, state))
     {
         level->addToTickNextTick(pos, this, getTickDelay(level));
     }

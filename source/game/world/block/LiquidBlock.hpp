@@ -72,7 +72,7 @@ public:
     static double getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     static double getLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
-    static void setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool remove, int flags);
+    static void setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool extraLayer, int flags);
     void trySpreadFire(Level* level, const BlockPos& pos, Random* random);
     static LiquidBlock* getStaticLiquid(Material* material);
     static TextureAtlasSprite* getTexture(const std::wstring& name);

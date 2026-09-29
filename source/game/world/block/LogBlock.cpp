@@ -178,7 +178,7 @@ const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int id = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e) && !tooltipData.m_bCanPlace && !Minecraft::InMiniGame(eMiniGameId_Any, true)) return IDS_TOOLTIPS_STRIP;
+    if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e) && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && !Minecraft::InMiniGame(eMiniGameId_Any, true)) return IDS_TOOLTIPS_STRIP;
     return Block::GetInteractTooltip(tooltipData);
 }
 

@@ -21,7 +21,6 @@
 
 namespace
 {
-const unsigned long long PORTAL_EXCLUDED_ENTITY_TYPE = EntityType::ENTITY | 3ULL;
 const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE =
     static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 6);
 }
@@ -82,7 +81,7 @@ int EndPortalBlock::getResourceCount(Random*)
 void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                   const boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() == PORTAL_EXCLUDED_ENTITY_TYPE)
+    if (entity->GetType() == EntityType::EXPERIENCE_ORB)
         return;
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)

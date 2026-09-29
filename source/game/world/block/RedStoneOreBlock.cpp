@@ -164,7 +164,7 @@ void RedStoneOreBlock::animateTick(const BlockState*, Level* level, const BlockP
 unsigned int RedStoneOreBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
-        && tooltipData.m_bIsInside)
+        && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_USE;
     }

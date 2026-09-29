@@ -128,7 +128,7 @@ unsigned int CakeBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 {
     if (!tooltipData.m_pPlayer->mAbilities.mInstabuild
         && tooltipData.m_pPlayer->getFoodData()->needsFood()
-        && tooltipData.m_bUseItem && tooltipData.m_bIsInside)
+        && tooltipData.m_bUseBlock && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_EAT;
     return Block::GetInteractTooltip(tooltipData);
 }

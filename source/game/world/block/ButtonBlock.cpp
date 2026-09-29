@@ -264,7 +264,7 @@ int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int ButtonBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside) return IDS_TOOLTIPS_USE;
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace) return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 

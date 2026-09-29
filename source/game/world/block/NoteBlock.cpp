@@ -1,4 +1,5 @@
 #include "game/world/block/NoteBlock.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -85,7 +86,7 @@ void NoteBlock::attack(Level* level, const BlockPos& pos, boost::shared_ptr<Play
 
 unsigned int NoteBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_CHANGEPITCH;
     }
@@ -94,11 +95,12 @@ unsigned int NoteBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 unsigned int NoteBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.m_bIsInside && !Minecraft::InMiniGame(eMiniGameId_Lobby, true))
+    if (!tooltipData.m_bCanDestroy)
     {
-        return IDS_NONE;
+        if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true))
+            return IDS_NONE;
     }
-    if (tooltipData.m_bIsInside)
+    else if (tooltipData.m_pPlayer->mAbilities.mInstabuild)
     {
         return IDS_TOOLTIPS_MINE;
     }
@@ -117,7 +119,7 @@ const SoundEvent* NoteBlock::getInstrument(int instrument)
 bool NoteBlock::triggerEvent(const BlockState*, Level* level, const BlockPos& pos, int instrument, int eventParam)
 {
     double pitch = std::pow(2.0, ((double)eventParam - 12.0) / 12.0);
-    level->playSoundToAllPlayers(pos, getInstrument(instrument), SoundSource::eSoundSource_Blocks,
+    level->playSound(boost::shared_ptr<Player>(), pos, getInstrument(instrument), SoundSource::eSoundSource_Blocks,
                                  3.0f, (float)pitch, 64.0f);
     arrayWithLength<int> params;
     level->addParticle(PARTICLE_NOTE, (double)pos.x + 0.5, (double)pos.y + 1.2,

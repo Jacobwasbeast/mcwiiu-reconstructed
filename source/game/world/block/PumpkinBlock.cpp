@@ -285,7 +285,7 @@ void PumpkinBlock::registerIcons(IconRegister* iconRegister)
 unsigned int PumpkinBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if (this == Blocks::pumpkin && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::SHEARS
-        && !tooltipData.m_bUseItem)
+        && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
         return IDS_TOOLTIPS_CARVE;
     return Block::GetInteractTooltip(tooltipData);
 }

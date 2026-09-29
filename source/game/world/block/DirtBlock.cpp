@@ -223,7 +223,7 @@ unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (itemId >= kFirstHoeItemId && itemId <= kLastHoeItemId)
     {
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
-            && tooltipData.m_bIsInside
+            && tooltipData.m_bCanPlace
             && tooltipData.m_pBlockState->getValue(VARIANT) != Variant::PODZOL)
         {
             return kHoeTooltip;

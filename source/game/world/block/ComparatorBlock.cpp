@@ -224,7 +224,7 @@ void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, cons
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     boost::shared_ptr<ComparatorBlockEntity> comparator = boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
     if (comparator) comparator->setOutputSignal(output);
-    if (oldOutput == output && state->getValue(MODE) != ComparatorMode::SUBTRACT) return;
+    if (oldOutput == output && state->getValue(MODE) != ComparatorMode::COMPARE) return;
 
     bool shouldOn = shouldTurnOn(level, pos, state);
     bool currentOn = isOn(state);
@@ -247,8 +247,12 @@ void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, cons
 
 void ComparatorBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (mOn) refreshOutputState(level, pos, state);
-    DiodeBlock::tick(level, pos, state, NULL);
+    if (mOn)
+    {
+        TypedBoxed<bool> powered(true);
+        level->setBlock(pos, getOffBlock(state)->setBoxedValue(sPoweredProperty, &powered), Block::UPDATE_INVISIBLE, false);
+    }
+    refreshOutputState(level, pos, state);
 }
 
 void ComparatorBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -261,6 +265,7 @@ void ComparatorBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
 {
     Block::onRemove(level, pos, state);
     level->removeBlockEntity(pos);
+    updateNeighborsInFront(level, pos, state);
 }
 
 bool ComparatorBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos, int eventId, int eventParam)
@@ -295,7 +300,7 @@ int ComparatorBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int ComparatorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_bUseItem && tooltipData.m_bCanPlace) return IDS_TOOLTIPS_USE;
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace) return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 

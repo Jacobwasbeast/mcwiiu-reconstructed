@@ -81,7 +81,7 @@ int RailBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int RailBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int tooltip = Block::GetInteractTooltip(tooltipData);
-    if (tooltipData.m_bIsInside
+    if (tooltipData.m_bCanPlace
         && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
     {
         return IDS_TOOLTIPS_PLACE;

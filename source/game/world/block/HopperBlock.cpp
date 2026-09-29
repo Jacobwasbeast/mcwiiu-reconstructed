@@ -154,12 +154,12 @@ void HopperBlock::neighborChanged(const BlockState* state, Level* level, const B
 
 void HopperBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<HopperBlockEntity> hopper = boost::dynamic_pointer_cast<HopperBlockEntity>(blockEntity);
-    if (hopper)
+    boost::shared_ptr<HopperBlockEntity> hopper =
+        boost::dynamic_pointer_cast<HopperBlockEntity>(level->getBlockEntity(pos));
+    if (hopper != NULL)
     {
         Containers::dropContents(level, pos, boost::static_pointer_cast<Container>(hopper));
-        level->removeBlockEntity(pos);
+        level->updateNeighbourForOutputSignal(pos, this);
     }
     BaseEntityBlock::onRemove(level, pos, state);
 }
@@ -206,7 +206,7 @@ int HopperBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int HopperBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_bUseItem || tooltipData.m_bCanPlace)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_OPEN;
     }

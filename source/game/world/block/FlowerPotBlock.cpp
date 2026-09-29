@@ -465,7 +465,7 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
         && convertBlockStateToLegacyData(tooltipData.m_pBlockState) == 0)
     {
         int id = Item::getId(tooltipData.m_pItemInstance->getItem());
-        if (tooltipData.m_bUseItem && id < 256)
+        if (tooltipData.m_bUseBlock && id < 256)
         {
             switch (id)
             {

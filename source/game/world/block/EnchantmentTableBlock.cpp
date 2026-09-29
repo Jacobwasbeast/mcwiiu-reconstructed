@@ -56,41 +56,34 @@ void EnchantmentTableBlock::animateTick(const BlockState* state, Level* level, c
     {
         for (int z = -2; z <= 2; ++z)
         {
-            if (random->nextInt(16) == 0)
+            if (x > -2 && x < 2 && z == -1)
             {
-                BlockPos bookshelfPos = pos.offset(x, 0, z);
-                if (level->getBlockState(bookshelfPos)->getBlock() == Blocks::bookshelf)
+                z = 2;
+            }
+
+            if (random->nextInt(16) != 0)
+            {
+                continue;
+            }
+
+            for (int y = 0; y <= 1; ++y)
+            {
+                if (level->getBlockState(pos.offset(x, y, z))->getBlock() != Blocks::bookshelf)
                 {
-                    BlockPos particlePos = bookshelfPos.offset(x / 2, 0, z / 2);
-                    if (level->isEmptyBlock(particlePos))
-                    {
-                        double particleX = (double)pos.x + 0.5 + (double)x + (double)random->nextFloat();
-                        double particleY = (double)pos.y + 2.0;
-                        double particleZ = (double)pos.z + 0.5 + (double)z + (double)random->nextFloat();
-                        level->addParticle(PARTICLE_ENCHANTMENT_TABLE, particleX, particleY, particleZ,
-                                           (double)x + (double)random->nextFloat() - 0.5,
-                                           -0.5 - (double)random->nextFloat(),
-                                           (double)z + (double)random->nextFloat() - 0.5,
-                                           arrayWithLength<int>());
-                    }
+                    continue;
                 }
 
-                bookshelfPos = pos.offset(x, 1, z);
-                if (level->getBlockState(bookshelfPos)->getBlock() == Blocks::bookshelf)
+                if (!level->isEmptyBlock(pos.offset(x / 2, 0, z / 2)))
                 {
-                    BlockPos particlePos = bookshelfPos.offset(x / 2, 0, z / 2);
-                    if (level->isEmptyBlock(particlePos))
-                    {
-                        double particleX = (double)pos.x + 0.5 + (double)x + (double)random->nextFloat();
-                        double particleY = (double)pos.y + 2.0;
-                        double particleZ = (double)pos.z + 0.5 + (double)z + (double)random->nextFloat();
-                        level->addParticle(PARTICLE_ENCHANTMENT_TABLE, particleX, particleY, particleZ,
-                                           (double)x + (double)random->nextFloat() - 0.5,
-                                           -(double)random->nextFloat(),
-                                           (double)z + (double)random->nextFloat() - 0.5,
-                                           arrayWithLength<int>());
-                    }
+                    break;
                 }
+
+                const float xa = (float)x + random->nextFloat();
+                const float ya = (float)y - random->nextFloat() - 1.0f;
+                const float za = (float)z + random->nextFloat();
+                level->addParticle(PARTICLE_ENCHANTMENT_TABLE, (double)pos.x + 0.5, (double)pos.y + 2.0,
+                                   (double)pos.z + 0.5, (double)xa - 0.5, (double)ya, (double)za - 0.5,
+                                   arrayWithLength<int>());
             }
         }
     }
@@ -171,7 +164,7 @@ void EnchantmentTableBlock::registerIcons(IconRegister* iconRegister)
 
 unsigned int EnchantmentTableBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_USE;
     }

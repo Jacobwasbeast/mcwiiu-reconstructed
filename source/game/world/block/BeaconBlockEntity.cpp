@@ -650,7 +650,7 @@ CompoundTag* BeaconBlockEntity::getUpdateTag()
 
 double BeaconBlockEntity::getViewDistance()
 {
-    return 256.0;
+    return 65536.0;
 }
 
 void BeaconBlockEntity::load(CompoundTag* tag)

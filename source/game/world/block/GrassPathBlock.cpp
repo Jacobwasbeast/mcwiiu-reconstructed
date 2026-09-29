@@ -114,7 +114,7 @@ unsigned int GrassPathBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
     int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
     if (itemId > 0x121 && itemId < 0x127
         && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
-        && tooltipData.m_bIsInside)
+        && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_TILL;
     }

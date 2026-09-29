@@ -46,13 +46,13 @@ const BlockState* PressurePlateBlock::setSignalForState(const BlockState* state,
 void PressurePlateBlock::playOnSound(Level* level, const BlockPos& pos)
 {
     const SoundEvent* sound = mSoundType == SoundType::WOOD ? SoundEvents::WOOD_PRESSUREPLATE_CLICK_ON : SoundEvents::STONE_PRESSUREPLATE_CLICK_ON;
-    level->playSoundToAllPlayers(pos, sound, SoundSource::eSoundSource_Blocks, 0.3f, mSoundType == SoundType::WOOD ? 0.8f : 0.6f, 16.0f);
+    level->playSound(boost::shared_ptr<Player>(), pos, sound, SoundSource::eSoundSource_Blocks, 0.3f, mSoundType == SoundType::WOOD ? 0.8f : 0.6f, 16.0f);
 }
 
 void PressurePlateBlock::playOffSound(Level* level, const BlockPos& pos)
 {
     const SoundEvent* sound = mSoundType == SoundType::WOOD ? SoundEvents::WOOD_PRESSUREPLATE_CLICK_OFF : SoundEvents::STONE_PRESSUREPLATE_CLICK_OFF;
-    level->playSoundToAllPlayers(pos, sound, SoundSource::eSoundSource_Blocks, 0.3f, mSoundType == SoundType::WOOD ? 0.7f : 0.5f, 16.0f);
+    level->playSound(boost::shared_ptr<Player>(), pos, sound, SoundSource::eSoundSource_Blocks, 0.3f, mSoundType == SoundType::WOOD ? 0.7f : 0.5f, 16.0f);
 }
 
 int PressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)

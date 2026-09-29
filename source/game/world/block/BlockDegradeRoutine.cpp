@@ -16,6 +16,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Iterator.hpp"
 
 BlockDegradeRoutine::BlockDegradeRoutine(ServerLevel* level, DegradationSequenceRuleDefinition* definition)
@@ -166,7 +167,7 @@ bool BlockDegradeRoutine::LayerCache::isBroken(const BlockPos& pos)
         return true;
 
     Block* block = mLevel->getBlock(pos);
-    bool broken = block == NULL;
+    bool broken = block == Blocks::air;
     if (broken)
         setBroken(&pos, 1);
     return broken;

@@ -35,7 +35,7 @@ public:
                           const Direction* direction);
     bool _canSpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
                       const Direction* direction);
-    void _spread(Level* level, const BlockPos& pos, int depth, bool remove);
+    void _spread(Level* level, const BlockPos& pos, int depth, bool extraLayer);
     void _trySpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
                       const Direction* direction, int depth);
     int _getSlopeDistance(Level* level, const BlockPos& pos, int distance, int directionIndex);

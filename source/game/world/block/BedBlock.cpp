@@ -212,15 +212,18 @@ void BedBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entit
 
 void BedBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> entity)
 {
-    if (!entity->mOnGround)
+    if (entity->isSneaking())
     {
-        if (entity->mYd < 0.0)
-            entity->mYd = -entity->mYd * 0.66;
-        entity->lerpMotion(entity->mXd, entity->mYd, entity->mZd);
-        if (!entity->mOnGround)
-            entity->mYd *= 0.8;
+        Block::updateEntityAfterFallOn(level, entity);
     }
-    Block::updateEntityAfterFallOn(level, entity);
+    else if (entity->mYd < 0.0)
+    {
+        entity->mYd = -entity->mYd * 0.66;
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+        {
+            entity->mYd *= 0.8;
+        }
+    }
 }
 
 void BedBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
@@ -452,9 +455,9 @@ EBlockFaceShape BedBlock::getBlockFaceShape(LevelSource* levelSource, const Bloc
 
 unsigned int BedBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_bIsInside)
+    if (tooltipData.m_bCanPlace)
     {
-        if (tooltipData.m_bUseItem)
+        if (tooltipData.m_bUseBlock)
         {
             return IDS_TOOLTIPS_SLEEP;
         }

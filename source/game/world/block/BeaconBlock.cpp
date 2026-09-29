@@ -132,7 +132,7 @@ EBlockRenderShape BeaconBlock::getRenderShape(const BlockState*)
 
 unsigned int BeaconBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }

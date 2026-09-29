@@ -171,9 +171,9 @@ int TrapDoorBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int TrapDoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.m_bIsInside) return IDS_NONE;
+    if (!tooltipData.m_bCanPlace) return IDS_NONE;
     if (mMaterial == Material::METAL && tooltipData.m_pItemInstance->isEmpty()) return IDS_NONE;
-    if (mMaterial != Material::METAL && (tooltipData.m_bCanPlace || tooltipData.m_bUseItem) && tooltipData.m_pItemInstance->isEmpty()) return IDS_TOOLTIPS_USE;
+    if (mMaterial != Material::METAL && (tooltipData.m_bUseItemOnBlock || tooltipData.m_bUseBlock) && tooltipData.m_pItemInstance->isEmpty()) return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 

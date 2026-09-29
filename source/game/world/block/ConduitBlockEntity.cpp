@@ -234,8 +234,8 @@ void ConduitBlockEntity::_applyEffects()
         AABB* area = AABB::newTemp((double)mPos.x, (double)mPos.y, (double)mPos.z,
                                     (double)(mPos.x + 1), (double)(mPos.y + 1), (double)(mPos.z + 1));
         area = area->grow((double)mEffectRange);
-        area = area->expand(1.0, (double)mLevel->getMaxBuildHeight(), 1.0);
-        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), area);
+        area = area->expand(0.0, (double)mLevel->getMaxBuildHeight(), 0.0);
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), area);
         std::vector<boost::shared_ptr<Entity> >::iterator it;
         for (it = entities->begin(); it != entities->end(); ++it)
         {

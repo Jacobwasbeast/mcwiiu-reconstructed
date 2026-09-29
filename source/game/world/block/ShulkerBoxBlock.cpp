@@ -171,7 +171,7 @@ void ShulkerBoxBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
             }
             Block::popResource(level, pos, item);
         }
-        level->removeBlockEntity(pos);
+        level->updateNeighbourForOutputSignal(pos, state->getBlock());
     }
     BaseEntityBlock::onRemove(level, pos, state);
 }
@@ -313,7 +313,7 @@ EBlockFaceShape ShulkerBoxBlock::getBlockFaceShape(LevelSource* levelSource, con
 
 unsigned int ShulkerBoxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_OPEN;
     return Block::GetInteractTooltip(tooltipData);
 }

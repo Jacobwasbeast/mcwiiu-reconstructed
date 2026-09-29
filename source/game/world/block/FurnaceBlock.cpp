@@ -170,11 +170,15 @@ void FurnaceBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockSta
 
 void FurnaceBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!mLit)
+    if (!sKeepInventory)
     {
-        boost::shared_ptr<FurnaceBlockEntity> furnace = boost::dynamic_pointer_cast<FurnaceBlockEntity>(level->getBlockEntity(pos));
-        if (furnace != NULL) Containers::dropContents(level, pos, furnace);
-        level->removeBlockEntity(pos);
+        boost::shared_ptr<FurnaceBlockEntity> furnace =
+            boost::dynamic_pointer_cast<FurnaceBlockEntity>(level->getBlockEntity(pos));
+        if (furnace != NULL)
+        {
+            Containers::dropContents(level, pos, furnace);
+            level->updateNeighbourForOutputSignal(pos, this);
+        }
     }
     BaseEntityBlock::onRemove(level, pos, state);
 }
@@ -220,7 +224,7 @@ int FurnaceBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int FurnaceBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bCanPlace || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside) return IDS_TOOLTIPS_USE;
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace) return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 

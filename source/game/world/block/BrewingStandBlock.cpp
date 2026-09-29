@@ -178,7 +178,7 @@ int BrewingStandBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int BrewingStandBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bCanPlace || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }

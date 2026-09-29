@@ -1,6 +1,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/world/block/BlockId.hpp"
+#include "game/item/ItemId.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <limits>
@@ -578,146 +579,95 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
 {
     if (!Item::isItemABlock(Item::getId(tooltipData.m_pItemInstance->getItem())))
     {
-        int blockId = Item::getBlockId(tooltipData.m_pItemInstance->getItem());
-
-        switch (blockId)
+        switch (Item::getId(tooltipData.m_pItemInstance->getItem()))
         {
-        case BlockId::SAPLING:
-        case BlockId::TALLGRASS:
-        case BlockId::DEADBUSH:
-        case BlockId::PISTON:
-        case BlockId::PISTON_HEAD:
-        case BlockId::GOLD_BLOCK:
-        case BlockId::IRON_BLOCK:
-        case BlockId::DOUBLE_STONE_SLAB:
-        case BlockId::STONE_SLAB:
-        case BlockId::BRICK_BLOCK:
-        case BlockId::TNT:
-        case BlockId::BOOKSHELF:
-        case BlockId::MOSSY_COBBLESTONE:
-        case BlockId::OBSIDIAN:
-        case BlockId::TORCH:
-        case BlockId::CACTUS:
-        case BlockId::REEDS:
-        case BlockId::CARROTS:
-        case BlockId::POTATOES:
-        case BlockId::DOUBLE_PLANT:
-        case BlockId::SEA_GRASS:
-        case BlockId::SEA_PICKLE:
-            if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-            {
-                return IDS_TOOLTIPS_PLANT;
-            }
+        case ItemId::FLINT_AND_STEEL:
+        case ItemId::FIRE_CHARGE:
+            if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !tooltipData.m_bCanPlace)
+                return IDS_NONE;
+            return IDS_TOOLTIPS_IGNITE;
 
+        case ItemId::WHEAT_SEEDS:
+        case ItemId::REEDS:
+        case ItemId::PUMPKIN_SEEDS:
+        case ItemId::MELON_SEEDS:
+        case ItemId::NETHER_WART:
+        case ItemId::CARROT:
+        case ItemId::POTATO:
+        case ItemId::BEETROOT_SEEDS:
+        case ItemId::KELP:
+            break;
+
+        case ItemId::PAINTING:
+        case ItemId::ITEM_FRAME:
+            if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success)
+                return IDS_NONE;
+            return IDS_TOOLTIPS_HANG;
+
+        case ItemId::WATER_BUCKET:
+        case ItemId::LAVA_BUCKET:
+        case ItemId::FISH_BUCKET:
+        case ItemId::SALMON_BUCKET:
+        case ItemId::PUFFER_BUCKET:
+        case ItemId::TROPICAL_BUCKET:
+            if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !tooltipData.m_bCanPlace)
+                return IDS_NONE;
+            return IDS_TOOLTIPS_EMPTY;
+
+        case ItemId::DYE:
+            if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+                return IDS_NONE;
+            if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 12)
+                return IDS_TOOLTIPS_PLANT;
+            return IDS_NONE;
+
+        case ItemId::FIREWORKS:
+            if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !tooltipData.m_bCanPlace)
+                return IDS_NONE;
+            return 0x568A07BEu;
+
+        case ItemId::LEAD:
+            if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace
+                && LeadItem::bindPlayerMobsTest(tooltipData.m_pPlayer, tooltipData.m_pLevel, BlockPos(tooltipData.m_pPlayer)))
+                return IDS_TOOLTIPS_ATTACH;
             return IDS_NONE;
 
         default:
-            break;
-        }
-
-        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
             return IDS_NONE;
         }
 
-        return IDS_TOOLTIPS_PLACE;
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && tooltipData.m_bCanPlace)
+            return IDS_TOOLTIPS_PLANT;
+        return IDS_NONE;
     }
 
-    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-
-    switch (itemId)
+    switch (Item::getBlockId(tooltipData.m_pItemInstance->getItem()))
     {
-    case 0x103:
-    case 0x181:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
-            return IDS_NONE;
-        }
-
-        return IDS_TOOLTIPS_IGNITE;
-
-    case 0x127:
-    case 0x152:
-    case 0x169:
-    case 0x16A:
-    case 0x174:
-    case 0x187:
-    case 0x188:
-        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
+    case BlockId::SAPLING:
+    case BlockId::TALLGRASS:
+    case BlockId::DEADBUSH:
+    case BlockId::YELLOW_FLOWER:
+    case BlockId::RED_FLOWER:
+    case BlockId::BROWN_MUSHROOM:
+    case BlockId::RED_MUSHROOM:
+    case BlockId::CACTUS:
+    case BlockId::REEDS:
+    case BlockId::CARROTS:
+    case BlockId::POTATOES:
+    case BlockId::DOUBLE_PLANT:
+    case BlockId::SEA_GRASS:
+    case BlockId::SEA_PICKLE:
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_PLANT;
-        }
-
-        return IDS_NONE;
-
-    case 0x141:
-    case 0x185:
-        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success)
-        {
-            return IDS_NONE;
-        }
-
-        return IDS_TOOLTIPS_HANG;
-
-    case 0x146:
-    case 0x147:
-    case 0x1CB:
-    case 0x1CC:
-    case 0x1CD:
-    case 0x1CE:
-        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
-            return IDS_NONE;
-        }
-
-        return IDS_TOOLTIPS_EMPTY;
-
-    case 0x15F:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
-        {
-            return IDS_NONE;
-        }
-
-        if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 12)
-        {
-            return IDS_TOOLTIPS_PLANT;
-        }
-
-        return IDS_NONE;
-
-    case 0x191:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
-            return IDS_NONE;
-        }
-
-        return 0x568A07BEu;
-
-    case 0x1A4:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
-            if (LeadItem::bindPlayerMobsTest(tooltipData.m_pPlayer, tooltipData.m_pLevel, BlockPos(tooltipData.m_pPlayer)))
-            {
-                return IDS_TOOLTIPS_ATTACH;
-            }
-        }
-
-        return IDS_NONE;
-
-    case 0x1B3:
-    case 0x1C9:
-        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
-        {
-            return IDS_TOOLTIPS_PLANT;
-        }
-
         return IDS_NONE;
 
     default:
         break;
     }
 
-    return IDS_NONE;
+    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !tooltipData.m_bCanPlace)
+        return IDS_NONE;
+    return IDS_TOOLTIPS_PLACE;
 }
 
 unsigned int Block::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -1245,7 +1195,7 @@ void Block::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
         return;
     }
 
-    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         return;
     }
@@ -2079,7 +2029,7 @@ void Block::staticCtor()
         (new StoneButtonBlock())->setIconName(L"stone")->setDestroyTime(0.5f)->setSoundType(SoundType::STONE)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_BUTTON_STONE, IDS_DESC_BUTTON)->setBaseItemTypeAndMaterial(35, 2));
 
     registerBlock(78, L"snow_layer",
-        (new SnowLayerBlock())->setIconName(L"snow")->setDestroyTime(0.1f)->setSoundType(SoundType::SNOW)->sendBlockData(15)->setLightBlock(0)->setNameAndDescriptionId(IDS_TILE_SNOW, 0xAF5216FB)->setBaseItemTypeAndMaterial(13, 16));
+        (new SnowLayerBlock())->setIconName(L"snow")->setDestroyTime(0.1f)->setSoundType(SoundType::SNOW)->sendBlockData(15)->setLightBlock(0)->setNameAndDescriptionId(IDS_TILE_SNOW, IDS_DESC_TOP_SNOW)->setBaseItemTypeAndMaterial(13, 16));
 
     registerBlock(79, L"ice",
         (new IceBlock(0))->setIconName(L"ice")->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(IDS_TILE_ICE, IDS_DESC_ICE));
@@ -2121,7 +2071,7 @@ void Block::staticCtor()
         (new PortalBlock())->setDestroyTime(-1.0f)->setIconName(L"portal")->setSoundType(SoundType::GLASS)->setLightEmission(0.75f)->setNameAndDescriptionId(IDS_TILE_PORTAL, IDS_DESC_PORTAL));
 
     registerBlock(91, L"lit_pumpkin",
-        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setLightEmission(1.0f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LIT_PUMPKIN, 0x0C9D5FB8)->setBaseItemTypeAndMaterial(23, 22));
+        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setLightEmission(1.0f)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LIT_PUMPKIN, IDS_DESC_JACKOLANTERN)->setBaseItemTypeAndMaterial(23, 22));
 
     registerBlock(92, L"cake",
         (new CakeBlock())->setIconName(L"cake")->setDestroyTime(0.5f)->setSoundType(SoundType::CLOTH)->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CAKE, IDS_DESC_CAKE));
@@ -2553,52 +2503,52 @@ void Block::staticCtor()
         (new ShulkerBoxBlock(DyeColor::BLACK))->setIconName(L"shulker_top")->setDestroyTime(2.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_SHULKER_BOX_BLACK, IDS_TILE_SHULKER_BOX_DESC)->setBaseItemTypeAndMaterial(36, 70));
 
     registerBlock(235, L"white_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::WHITE))->setIconName(L"glazed_terracotta_white")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_WHITE, 0xF6F96D7A));
+        (new GlazedTerracottaBlock(DyeColor::WHITE))->setIconName(L"glazed_terracotta_white")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_WHITE, IDS_TILE_GLAZED_TERRACOTTA_WHITE_DESC));
 
     registerBlock(236, L"orange_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::ORANGE))->setIconName(L"glazed_terracotta_orange")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_ORANGE, 0x9C676ADD));
+        (new GlazedTerracottaBlock(DyeColor::ORANGE))->setIconName(L"glazed_terracotta_orange")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_ORANGE, IDS_TILE_GLAZED_TERRACOTTA_ORANGE_DESC));
 
     registerBlock(237, L"magenta_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::MAGENTA))->setIconName(L"glazed_terracotta_magenta")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_MAGENTA, 0x07B8DD58));
+        (new GlazedTerracottaBlock(DyeColor::MAGENTA))->setIconName(L"glazed_terracotta_magenta")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_MAGENTA, IDS_TILE_GLAZED_TERRACOTTA_MAGENTA_DESC));
 
     registerBlock(238, L"light_blue_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::LIGHT_BLUE))->setIconName(L"glazed_terracotta_light_blue")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_LIGHT_BLUE, 0xE208E89A));
+        (new GlazedTerracottaBlock(DyeColor::LIGHT_BLUE))->setIconName(L"glazed_terracotta_light_blue")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_LIGHT_BLUE, IDS_TILE_GLAZED_TERRACOTTA_LIGHT_BLUE_DESC));
 
     registerBlock(239, L"yellow_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::YELLOW))->setIconName(L"glazed_terracotta_yellow")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_YELLOW, 0x72A370E1));
+        (new GlazedTerracottaBlock(DyeColor::YELLOW))->setIconName(L"glazed_terracotta_yellow")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_YELLOW, IDS_TILE_GLAZED_TERRACOTTA_YELLOW_DESC));
 
     registerBlock(240, L"lime_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::LIME))->setIconName(L"glazed_terracotta_lime")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_LIME, 0x79FFC770));
+        (new GlazedTerracottaBlock(DyeColor::LIME))->setIconName(L"glazed_terracotta_lime")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_LIME, IDS_TILE_GLAZED_TERRACOTTA_LIME_DESC));
 
     registerBlock(241, L"pink_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::PINK))->setIconName(L"glazed_terracotta_pink")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_PINK, 0xC6FF4459));
+        (new GlazedTerracottaBlock(DyeColor::PINK))->setIconName(L"glazed_terracotta_pink")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_PINK, IDS_TILE_GLAZED_TERRACOTTA_PINK_DESC));
 
     registerBlock(242, L"gray_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::GRAY))->setIconName(L"glazed_terracotta_gray")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_GRAY, 0x73EE9DF8));
+        (new GlazedTerracottaBlock(DyeColor::GRAY))->setIconName(L"glazed_terracotta_gray")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_GRAY, IDS_TILE_GLAZED_TERRACOTTA_GRAY_DESC));
 
     registerBlock(243, L"silver_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::SILVER))->setIconName(L"glazed_terracotta_silver")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_SILVER, 0xD76A52D2));
+        (new GlazedTerracottaBlock(DyeColor::SILVER))->setIconName(L"glazed_terracotta_silver")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_SILVER, IDS_TILE_GLAZED_TERRACOTTA_SILVER_DESC));
 
     registerBlock(244, L"cyan_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::CYAN))->setIconName(L"glazed_terracotta_cyan")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_CYAN, 0xAAA0EDC0));
+        (new GlazedTerracottaBlock(DyeColor::CYAN))->setIconName(L"glazed_terracotta_cyan")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_CYAN, IDS_TILE_GLAZED_TERRACOTTA_CYAN_DESC));
 
     registerBlock(245, L"purple_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::PURPLE))->setIconName(L"glazed_terracotta_purple")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_PURPLE, 0xFCB294EB));
+        (new GlazedTerracottaBlock(DyeColor::PURPLE))->setIconName(L"glazed_terracotta_purple")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_PURPLE, IDS_TILE_GLAZED_TERRACOTTA_PURPLE_DESC));
 
     registerBlock(246, L"blue_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::BLUE))->setIconName(L"glazed_terracotta_blue")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BLUE, 0x7166AA73));
+        (new GlazedTerracottaBlock(DyeColor::BLUE))->setIconName(L"glazed_terracotta_blue")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BLUE, IDS_TILE_GLAZED_TERRACOTTA_BLUE_DESC));
 
     registerBlock(247, L"brown_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::BROWN))->setIconName(L"glazed_terracotta_brown")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BROWN, 0x4B91AC93));
+        (new GlazedTerracottaBlock(DyeColor::BROWN))->setIconName(L"glazed_terracotta_brown")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BROWN, IDS_TILE_GLAZED_TERRACOTTA_BROWN_DESC));
 
     registerBlock(248, L"green_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::GREEN))->setIconName(L"glazed_terracotta_green")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_GREEN, 0x7009291E));
+        (new GlazedTerracottaBlock(DyeColor::GREEN))->setIconName(L"glazed_terracotta_green")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_GREEN, IDS_TILE_GLAZED_TERRACOTTA_GREEN_DESC));
 
     registerBlock(249, L"red_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::RED))->setIconName(L"glazed_terracotta_red")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_RED, 0x717E54F6));
+        (new GlazedTerracottaBlock(DyeColor::RED))->setIconName(L"glazed_terracotta_red")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_RED, IDS_TILE_GLAZED_TERRACOTTA_RED_DESC));
 
     registerBlock(250, L"black_glazed_terracotta",
-        (new GlazedTerracottaBlock(DyeColor::BLACK))->setIconName(L"glazed_terracotta_black")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BLACK, 0x34A78CE2));
+        (new GlazedTerracottaBlock(DyeColor::BLACK))->setIconName(L"glazed_terracotta_black")->setNameAndDescriptionId(IDS_TILE_GLAZED_TERRACOTTA_BLACK, IDS_TILE_GLAZED_TERRACOTTA_BLACK_DESC));
 
     registerBlock(251, L"concrete",
         (new ColoredBlock(Material::STONE))->setDestroyTime(1.8f)->setSoundType(SoundType::STONE)->setIconName(L"concrete")->setNameAndDescriptionId(IDS_TILE_CONCRETE_BLACK, IDS_TILE_CONCRETE_DESC));
@@ -2691,7 +2641,7 @@ void Block::staticCtor()
         (new StrippedLogBlock())->setIconTopName(L"stripped_log_acacia_top")->setIconName(L"stripped_log_acacia")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_ACACIA, IDS_DESC_STRIPPED_LOG_ACACIA));
 
     registerBlock(299, L"stripped_log_dark_oak",
-        (new StrippedLogBlock())->setIconTopName(L"stripped_log_dark_oak_top")->setIconName(L"stripped_log_dark_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_DARK_OAK, 0xA6578CB5));
+        (new StrippedLogBlock())->setIconTopName(L"stripped_log_dark_oak_top")->setIconName(L"stripped_log_dark_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_DARK_OAK, IDS_DESC_STRIPPED_LOG_DARK_OAK));
 
     registerBlock(300, L"stripped_log_oak",
         (new StrippedLogBlock())->setIconTopName(L"stripped_log_oak_top")->setIconName(L"stripped_log_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_OAK, IDS_DESC_STRIPPED_LOG_OAK));

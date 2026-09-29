@@ -187,7 +187,7 @@ void LeafBlock::animateTick(const BlockState* state, Level* level, const BlockPo
     {
         arrayWithLength<int> parameters;
         level->addParticle(PARTICLE_DRIP_WATER, pos.x + random->nextFloat(), pos.y - 0.05,
-                           pos.z + random->nextFloat(), 0.014, 0.014, 0.014, parameters);
+                           pos.z + random->nextFloat(), 0.0, 0.0, 0.0, parameters);
     }
 }
 

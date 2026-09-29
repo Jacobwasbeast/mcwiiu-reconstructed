@@ -546,11 +546,11 @@ EBlockFaceShape LiquidBlock::getBlockFaceShape(LevelSource*, const BlockState*, 
     return BLOCK_FACE_UNDEFINED;
 }
 
-void LiquidBlock::setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool remove, int flags)
+void LiquidBlock::setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool extraLayer, int flags)
 {
     const BlockState* state = Block::getStateByElementId(elementId);
-    if (remove)
-        level->removeBlock(pos);
+    if (extraLayer)
+        level->setExtraBlock(pos, state, flags, false);
     else
         level->setBlock(pos, state, flags, false);
 }

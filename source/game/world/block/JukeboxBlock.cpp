@@ -24,7 +24,7 @@
 #include "game/ui/BlockTooltipDataHolder.hpp"
 static AbstractProperty<bool>* gJukeboxHasRecord = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_record"));
 JukeboxBlock::JukeboxBlock()
-    : BaseEntityBlock(Material::WOOD), mTopIcon(NULL)
+    : BaseEntityBlock(Material::WOOD, MaterialColor::DIRT), mTopIcon(NULL)
 {
     DerivedInit();
     TypedBoxed<bool> value(false);
@@ -141,12 +141,12 @@ unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tool
         !tooltipData.m_pItemInstance->isEmpty())
     {
         int id = Item::VALIDgetId(tooltipData.m_pItemInstance->getItem());
-        if (id >= 2256 && id < 2268 && tooltipData.m_bCanPlace && tooltipData.m_bIsInside)
+        if (id >= 2256 && id < 2268 && tooltipData.m_bUseBlock && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_PLAY;
     }
 
     if (tooltipData.m_pBlockState != NULL &&
-        tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bIsInside)
+        tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_EJECT;
 
     return Block::GetInteractTooltip(tooltipData);

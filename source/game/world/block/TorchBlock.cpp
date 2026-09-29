@@ -66,7 +66,7 @@ bool TorchBlock::canStandOn(Level* level, const BlockPos& pos)
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
     bool notEndGateway = block != Blocks::end_gateway;
-    if (state->isSolidBlockingBlock()) return notEndGateway;
+    if (state->isTopSolidBlocking()) return notEndGateway;
 
     bool canStand = dynamic_cast<FenceBlock*>(block) != NULL || block == Blocks::sea_lantern ||
                     block == Blocks::glowstone || block == Blocks::ice || block == Blocks::beacon ||

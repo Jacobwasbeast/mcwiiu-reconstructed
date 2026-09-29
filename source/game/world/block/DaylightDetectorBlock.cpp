@@ -165,7 +165,7 @@ int DaylightDetectorBlock::convertBlockStateToLegacyData(const BlockState* state
 
 unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_bUseItem || tooltipData.m_bCanPlace)
+    if (tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock)
     {
         if (!tooltipData.m_pPlayer->GetGameMode()->isAdventure())
         {
@@ -177,7 +177,7 @@ unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHol
 
 unsigned int DaylightDetectorBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_bCanPlace && tooltipData.m_bIsInside)
+    if (tooltipData.m_bCanDestroy && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_MINE;
     return IDS_NONE;
 }

@@ -15,10 +15,10 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 GlazedTerracottaBlock::GlazedTerracottaBlock(const DyeColor* dyeColor)
-    : HorizontalDirectionalBlock(Material::CLAY, MaterialColor::getDyeMaterial(dyeColor))
+    : HorizontalDirectionalBlock(Material::STONE, MaterialColor::getDyeMaterial(dyeColor))
 {
     DerivedInit();
-    setDestroyTime(0.075f);
+    setDestroyTime(1.4f);
     setSoundType(SoundType::STONE);
 }
 

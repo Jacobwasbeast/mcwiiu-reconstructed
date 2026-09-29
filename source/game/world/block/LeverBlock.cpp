@@ -339,7 +339,7 @@ int LeverBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int LeverBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }

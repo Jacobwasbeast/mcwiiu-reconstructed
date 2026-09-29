@@ -37,7 +37,7 @@ void CarriedBlockLayer::render(boost::shared_ptr<LivingEntity>& entity, float, f
     GlStateManager::translatef(0.0F, 0.6875F, -0.75F);
     GlStateManager::rotatef(20.0F, 1.0F, 0.0F, 0.0F);
     GlStateManager::rotatef(45.0F, 0.0F, 1.0F, 0.0F);
-    GlStateManager::translatef(-0.25F, 0.1875F, -0.1875F);
+    GlStateManager::translatef(0.25F, 0.1875F, 0.25F);
     GlStateManager::scalef(-0.5F, -0.5F, 0.5F);
 
     int lightColor = enderman->getLightColor();

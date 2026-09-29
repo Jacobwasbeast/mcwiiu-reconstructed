@@ -152,7 +152,7 @@ void RepeaterBlock::animateTick(const BlockState* state, Level* level, const Blo
 void RepeaterBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     Block::onRemove(level, pos, state);
-    level->removeBlockEntity(pos);
+    updateNeighborsInFront(level, pos, state);
 }
 
 const BlockState* RepeaterBlock::getBlockState(int data)
@@ -174,7 +174,7 @@ int RepeaterBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int RepeaterBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }

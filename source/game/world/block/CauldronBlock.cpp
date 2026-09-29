@@ -497,7 +497,7 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
     case 262:
     {
         bool canTip = false;
-        if (data.m_bUseItem && data.m_bIsInside && data.m_pItemInstance->getAuxValue() == 0 && !empty && hasPotion
+        if (data.m_bUseBlock && data.m_bCanPlace && data.m_pItemInstance->getAuxValue() == 0 && !empty && hasPotion
             && cauldron->getPotionId().compare(L"") != 0 && cauldron->getPotionId().compare(L"empty") != 0
             && cauldron->getPotionId().compare(L"water") != 0 && cauldron->getPotionId().compare(L"mundane") != 0
             && cauldron->getPotionId().compare(L"thick") != 0 && cauldron->getPotionId().compare(L"awkward") != 0)
@@ -512,7 +512,7 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
     case 299:
     case 300:
     case 301:
-        if (data.m_bUseItem && data.m_bIsInside && !empty && hasWater)
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
         {
             ArmorItem* armor = static_cast<ArmorItem*>(data.m_pItemInstance->getItem());
             if (armor->mRenderIndex != 0)
@@ -524,11 +524,11 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
         }
         return IDS_NONE;
     case 325:
-        if (data.m_bUseItem && data.m_bIsInside && full && hasWater)
+        if (data.m_bUseBlock && data.m_bCanPlace && full && hasWater)
             return IDS_TOOLTIPS_COLLECT;
         return IDS_NONE;
     case 326:
-        if (!data.m_bUseItem || !data.m_bIsInside
+        if (!data.m_bUseBlock || !data.m_bCanPlace
             || data.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || defaultTooltip != IDS_TOOLTIPS_EMPTY)
         {
             return defaultTooltip;
@@ -546,22 +546,22 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
         }
         return IDS_NONE;
     case 351:
-        if (data.m_bUseItem && data.m_bIsInside && !empty && hasWater)
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
             return IDS_TOOLTIPS_MIX;
         return IDS_NONE;
     case 374:
-        if (data.m_bUseItem && data.m_bIsInside && waterLevel >= 2)
+        if (data.m_bUseBlock && data.m_bCanPlace && waterLevel >= 2)
             return IDS_TOOLTIPS_COLLECT;
         return IDS_NONE;
     case 425:
-        if (data.m_bUseItem && data.m_bIsInside && !empty && hasWater
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater
             && BannerBlockEntity::getPatternCount(data.m_pItemInstance) >= 1)
         {
             return IDS_TOOLTIPS_CLEAN;
         }
         return defaultTooltip;
     case 453:
-        if (data.m_bUseItem && data.m_bIsInside && !empty && hasWater)
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
         {
             HorseArmorItem* horseArmor = static_cast<HorseArmorItem*>(data.m_pItemInstance->getItem());
             if (!hasClearWater)
@@ -579,7 +579,7 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
     case 438:
     case 441:
     {
-        if (!data.m_bUseItem || !data.m_bIsInside)
+        if (!data.m_bUseBlock || !data.m_bCanPlace)
             return IDS_NONE;
         std::wstring potionId = PotionUtils::getPotionID(data.m_pItemInstance);
         if (potionId.compare(L"water") == 0)

@@ -249,22 +249,22 @@ float ShulkerBoxBlockEntity::getProgress(float partialTick)
 
 AABB* ShulkerBoxBlockEntity::getBoundingBox(const Direction* direction)
 {
-    float progress = getProgress(1.0f);
-    double x = direction == NULL ? 0.0 : direction->getAxisDirection()->getStep() == 0 ? 0.0 : progress * direction->getAxisDirection()->getStep();
-    return AABB::newTemp(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)->expand(x, x, x);
+    float offset = 0.5f * getProgress(1.0f);
+    return Block::FULL_BLOCK_SHAPE->expand(offset * direction->getStepX(), offset * direction->getStepY(),
+                                           offset * direction->getStepZ());
 }
 
 AABB* ShulkerBoxBlockEntity::getBoundingBox(const BlockState* state)
 {
-    return getBoundingBox(Direction::UP);
+    return getBoundingBox(state->getValue(DirectionalBlock::FACING_PROPERTY));
 }
 
 AABB* ShulkerBoxBlockEntity::getTopBoundingBox(const Direction* direction)
 {
     const Direction* opposite = direction->getOpposite();
-    return getBoundingBox(direction)->contract(-static_cast<double>(opposite->getStepX()),
-                                                -static_cast<double>(opposite->getStepY()),
-                                                -static_cast<double>(opposite->getStepZ()));
+    return getBoundingBox(direction)->contract(static_cast<double>(opposite->getStepX()),
+                                                static_cast<double>(opposite->getStepY()),
+                                                static_cast<double>(opposite->getStepZ()));
 }
 
 void ShulkerBoxBlockEntity::moveCollidedEntities()
@@ -393,6 +393,8 @@ void ShulkerBoxBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > it
 
 const DyeColor* ShulkerBoxBlockEntity::getColor()
 {
+    if (mColor == NULL)
+        mColor = ShulkerBoxBlock::getColorFromBlock(getBlock());
     return mColor;
 }
 

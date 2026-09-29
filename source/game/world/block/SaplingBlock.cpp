@@ -249,7 +249,7 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
 
 void SaplingBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
-    if (((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative()) growTree(level, pos, state, random, true);
+    if (((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative()) growTree(level, pos, state, random, false);
     else advanceTree(level, pos, state, random);
 }
 

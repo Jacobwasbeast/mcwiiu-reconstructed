@@ -360,11 +360,11 @@ unsigned int DoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     unsigned int tooltip = Block::GetInteractTooltip(tooltipData);
     if (mMaterial == Material::METAL)
     {
-        if (!tooltipData.m_bUseItem && !tooltipData.m_bCanDestroy) return tooltip;
+        if (!tooltipData.m_bUseBlock && !tooltipData.m_bUseItemOnBlock) return tooltip;
         if (tooltip == kDoorTooltipMetalLocked || tooltip == kDoorTooltipUnavailable)
             return kDoorTooltipUnavailable;
     }
-    if (!tooltipData.m_bUseItem && !tooltipData.m_bCanDestroy) return tooltip;
+    if (!tooltipData.m_bUseBlock && !tooltipData.m_bUseItemOnBlock) return tooltip;
     return kDoorTooltipInteract;
 }
 const BlockState* DoorBlock::rotate(const BlockState* state, Rotation* rotation)

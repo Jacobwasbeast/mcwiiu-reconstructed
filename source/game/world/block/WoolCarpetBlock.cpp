@@ -103,7 +103,7 @@ void WoolCarpetBlock::neighborChanged(const BlockState* state, Level* level, con
 
 bool WoolCarpetBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 {
-    return !level->isSolidBlockingBlock(pos.below());
+    return !level->isEmptyBlock(pos.below());
 }
 
 bool WoolCarpetBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,
