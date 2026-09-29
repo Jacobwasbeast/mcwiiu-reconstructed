@@ -818,7 +818,7 @@ void ServerGamePacketListenerImpl::handleClientCommand(boost::shared_ptr<Serverb
     if (mPlayer->mRespawnState)
     {
         PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
-        mPlayer = players->respawn(mPlayer, mPlayer->mFallFlying ? 0 : mPlayer->mDimension, true);
+        mPlayer = players->respawn(mPlayer, mPlayer->mWonGame ? 0 : mPlayer->mDimension, true);
         mPlayer->mRespawnState = false;
     }
     else if (mPlayer->mChangedDimension || mPlayer->getHealth() <= 0.0f)

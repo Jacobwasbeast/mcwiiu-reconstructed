@@ -1066,12 +1066,14 @@ void ClientPacketListener::handleSetEntityMotion(boost::shared_ptr<ClientboundSe
     if (level == 0)
         return;
     boost::shared_ptr<Entity> entity = level->getEntity(packet->getId());
-    if (entity != 0)
-    {
-        entity->mXd = static_cast<double>(packet->getXa()) / 8000.0;
-        entity->mYd = static_cast<double>(packet->getYa()) / 8000.0;
-        entity->mZd = static_cast<double>(packet->getZa()) / 8000.0;
-    }
+    if (entity == 0)
+        return;
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && boost::static_pointer_cast<Player>(entity)->isFallFlying())
+        return;
+    entity->lerpMotion(static_cast<double>(packet->getXa()) / 8000.0,
+                       static_cast<double>(packet->getYa()) / 8000.0,
+                       static_cast<double>(packet->getZa()) / 8000.0);
 }
 
 void ClientPacketListener::handleSetEntityData(boost::shared_ptr<ClientboundSetEntityDataPacket> packet)
@@ -2126,7 +2128,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     case ClientboundChatPacket::eChatPacketMessage_TeleportSuccess:
         text = L10N::GetString(0xce88d7b9);
         replacePlayer = true;
-        if (packet->ints[0] == 0xc800001)
+        if (packet->ints[0] == (int)EntityType::SERVER_PLAYER)
         {
             replacements[L"{*DESTINATION*}"] = sourceName;
         }
@@ -2460,7 +2462,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
 
     if (replaceSource)
     {
-        if (packet->ints[0] == 0xc800001)
+        if (packet->ints[0] == (int)EntityType::SERVER_PLAYER)
             replacements[L"{*SOURCE*}"] = sourceName;
         else
             replacements[L"{*SOURCE*}"] = packet->getMobCustomName(m_level);
@@ -2507,17 +2509,19 @@ void ClientPacketListener::handleAnimate(boost::shared_ptr<ClientboundAnimatePac
         return;
     const int action = packet->getAction();
     const bool local = isLocalPlayer(packet->getId()) != 0;
-    if ((action == 0 || action == 3) && !local)
+    if (action == 0 && !local)
     {
-        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-        if (living != 0)
-            living->animateHurt();
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            boost::static_pointer_cast<LivingEntity>(entity)->swing(InteractionHand::eInteractionHand_MainHand);
+    }
+    else if (action == 3 && !local)
+    {
+        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            boost::static_pointer_cast<LivingEntity>(entity)->swing(InteractionHand::eInteractionHand_OffHand);
     }
     else if (action == 1 && !local)
     {
-        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-        if (living != 0)
-            living->swing(InteractionHand::eInteractionHand_MainHand);
+        entity->animateHurt();
     }
     else if (action == 2)
     {
@@ -2755,6 +2759,14 @@ void ClientPacketListener::handleEntityLinkPacket(boost::shared_ptr<ClientboundS
             mob->setLeashedTo(dest, false);
         else
             mob->dropLeash(false, false);
+    }
+    else if (source->GetType() == EntityType::BOAT)
+    {
+        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(source);
+        if (dest != 0)
+            boat->setLeashedTo(dest, false);
+        else
+            boat->dropLeash(false, false);
     }
 }
 
@@ -3293,7 +3305,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
     const float param = packet->getParam();
     const int ticks = static_cast<int>(floorf(param + 0.5f));
 
-    if (event == 1)
+    if (event == ClientboundGameEventPacket::START_RAINING)
     {
         if (m_level != 0)
         {
@@ -3303,7 +3315,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                 m_level->tickWeather(true);
         }
     }
-    else if (event == 2)
+    else if (event == ClientboundGameEventPacket::STOP_RAINING)
     {
         if (m_level != 0)
         {
@@ -3313,7 +3325,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                 m_level->tickWeather(true);
         }
     }
-    else if (event == 8)
+    else if (event == ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE)
     {
         if (m_level != 0)
         {
@@ -3323,7 +3335,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                 m_level->tickWeather(true);
         }
     }
-    else if (event == 3)
+    else if (event == ClientboundGameEventPacket::CHANGE_GAME_MODE)
     {
         const GameType* gameType = GameType::byId(ticks);
         boost::shared_ptr<AbstractClientPlayer> target;
@@ -3335,7 +3347,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
         if (target != 0)
             target->SetGameType(gameType);
     }
-    else if (event == 4)
+    else if (event == ClientboundGameEventPacket::WIN_GAME)
     {
         if (!gApp.GetGameStarted())
         {
@@ -3360,7 +3372,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                                                  EUILayer_Scene, EUIGroup_Fullscreen);
         }
     }
-    else if (event == 11)
+    else if (event == ClientboundGameEventPacket::START_SAVING)
     {
         if (!CGameNetworkManager::sInstance.IsHost() && IsPrimaryPlayer())
         {
@@ -3368,12 +3380,12 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
             gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_RemoteSave, 0);
         }
     }
-    else if (event == 12)
+    else if (event == ClientboundGameEventPacket::STOP_SAVING)
     {
         if (!CGameNetworkManager::sInstance.IsHost() && IsPrimaryPlayer())
             gApp.SetGameStarted(true);
     }
-    else if (event == 6)
+    else if (event == ClientboundGameEventPacket::ARROW_HIT_PLAYER)
     {
         if (m_level != 0)
         {
@@ -3383,12 +3395,12 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                                     false, 16.0f);
         }
     }
-    else if (event == 7)
+    else if (event == ClientboundGameEventPacket::RAIN_LEVEL_CHANGE)
     {
         if (m_level != 0)
             m_level->setRainLevel(param);
     }
-    else if (event == 10)
+    else if (event == ClientboundGameEventPacket::GUARDIAN_ELDER_EFFECT)
     {
         if (m_level != 0)
         {
@@ -3398,7 +3410,7 @@ void ClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEven
                                     SoundSource::eSoundSource_Hostile, 1.0f, 1.0f, false, 16.0f);
         }
     }
-    else if (event == 0)
+    else if (event == ClientboundGameEventPacket::NO_RESPAWN_BLOCK_AVAILABLE)
     {
         m_minecraft->mLocalPlayers[m_playerId]->displayClientMessage(IDS_TILE_BED_NOT_VALID, true);
     }
