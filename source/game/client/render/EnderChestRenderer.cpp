@@ -9,7 +9,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-static ResourceLocation ENDER_CHEST_LOCATION((_TEXTURE_NAME)56);
+static ResourceLocation ENDER_CHEST_LOCATION(TN_ITEM_ENDERCHEST);
 
 EnderChestRenderer::EnderChestRenderer()
     : mChestModel(ModelDefinition())

@@ -6,7 +6,7 @@
 #include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
 
-static ResourceLocation HUMANOID_LOCATION;
+static ResourceLocation HUMANOID_LOCATION(TN_MOB_STEVE);
 
 HumanoidMobRenderer::HumanoidMobRenderer(EntityRenderDispatcher* dispatcher, HumanoidModel* model,
                                          float shadowRadius)

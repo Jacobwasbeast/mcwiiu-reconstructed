@@ -14,7 +14,7 @@
 #include "game/world/generation/EnderEyesLayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-static ResourceLocation ENDERMAN_LOCATION((_TEXTURE_NAME)49);
+static ResourceLocation ENDERMAN_LOCATION(TN_MOB_ENDERMAN);
 
 EndermanRenderer::EndermanRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new EndermanModel(0.0F, ModelDefinition()), 0.5F)

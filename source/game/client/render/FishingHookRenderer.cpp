@@ -17,7 +17,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/util/Vec3.hpp"
 
-static ResourceLocation FISHING_HOOK_LOCATION((_TEXTURE_NAME)20);
+static ResourceLocation FISHING_HOOK_LOCATION(TN_PARTICLES);
 
 FishingHookRenderer::FishingHookRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

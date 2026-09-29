@@ -6,7 +6,7 @@
 #include "game/core/Squid.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SQUID_LOCATION((_TEXTURE_NAME)25);
+static ResourceLocation SQUID_LOCATION(TN_MOB_SQUID);
 
 SquidRenderer::SquidRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new SquidModel(ModelDefinition()), 0.7F)

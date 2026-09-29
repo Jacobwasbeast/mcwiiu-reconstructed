@@ -16,8 +16,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-static ResourceLocation END_SKY_LOCATION((_TEXTURE_NAME)74);
-static ResourceLocation END_PORTAL_LOCATION((_TEXTURE_NAME)75);
+static ResourceLocation END_SKY_LOCATION(TN_MISC_TUNNEL);
+static ResourceLocation END_PORTAL_LOCATION(TN_MISC_PARTICLEFIELD);
 
 static Random RANDOM(31100LL);
 

@@ -7,10 +7,15 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/LlamaDecorLayer.hpp"
 
-static ResourceLocation LLAMA_TEXTURES[4];
+static ResourceLocation LLAMA_TEXTURES[4] = {
+    ResourceLocation(TN_MOB_LLAMA_LLAMA_CREAMY),
+    ResourceLocation(TN_MOB_LLAMA_LLAMA_WHITE),
+    ResourceLocation(TN_MOB_LLAMA_LLAMA_BROWN),
+    ResourceLocation(TN_MOB_LLAMA_LLAMA_GRAY)
+};
 
 LlamaRenderer::LlamaRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new LlamaModel(3.0F, ModelDefinition()), 0.7F)
+    : MobRenderer(dispatcher, new LlamaModel(0.0F, ModelDefinition()), 0.7F)
 {
     addLayer(new LlamaDecorLayer(this));
 }
@@ -28,5 +33,5 @@ const ResourceLocation* LlamaRenderer::getTextureLocation(boost::shared_ptr<Enti
 
 Model* LlamaRenderer::createModel(const ModelDefinition& definition)
 {
-    return new LlamaModel(3.0F, definition);
+    return new LlamaModel(0.0F, definition);
 }

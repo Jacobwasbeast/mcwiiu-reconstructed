@@ -2,7 +2,7 @@
 
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SPECTRAL_ARROW_LOCATION;
+static ResourceLocation SPECTRAL_ARROW_LOCATION(TN_ITEM_SPECTRAL_ARROW);
 
 SpectralArrowRenderer::SpectralArrowRenderer(EntityRenderDispatcher* dispatcher)
     : ArrowRenderer(dispatcher)

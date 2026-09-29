@@ -5,7 +5,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation WITHER_SKELETON_LOCATION;
+static ResourceLocation WITHER_SKELETON_LOCATION(TN_MOB_SKELETON_WITHER);
 
 WitherSkeletonRenderer::WitherSkeletonRenderer(EntityRenderDispatcher* dispatcher)
     : SkeletonRenderer(dispatcher, new SkeletonModel(SkeletonModel::eSkeletonType_WitherSkeleton, ModelDefinition()))

@@ -4,12 +4,14 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/DolphinCarryingItemLayer.hpp"
 
-static ResourceLocation DOLPHIN_LOCATION;
+static ResourceLocation DOLPHIN_LOCATION(TN_MOB_DOLPHIN);
 
 DolphinRenderer::DolphinRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new DolphinModel(ModelDefinition()), 0.7F)
 {
+    addLayer(new DolphinCarryingItemLayer(this));
 }
 
 DolphinRenderer::~DolphinRenderer()

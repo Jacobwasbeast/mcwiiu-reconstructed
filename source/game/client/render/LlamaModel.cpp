@@ -36,17 +36,37 @@ LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
         mChest1 = new ModelPartSkin(this, 45, 28, NULL);
         mChest1->addBox(-3.0f, 0.0f, 0.0f, 8, 8, 3, scale);
         mChest1->setPos(-8.5f, 3.0f, 3.0f);
-        mChest1->mXRot = 1.5707964f;
+        mChest1->mYRot = 1.5707964f;
 
-        mChest2 = new ModelPartSkin(this, 45, 28, NULL);
+        mChest2 = new ModelPartSkin(this, 45, 41, NULL);
         mChest2->addBox(-3.0f, 0.0f, 0.0f, 8, 8, 3, scale);
         mChest2->setPos(5.5f, 3.0f, 3.0f);
-        mChest2->mXRot = 1.5707964f;
+        mChest2->mYRot = 1.5707964f;
 
-        mLeg0->mY -= 1.0f;
-        mLeg1->mY += 1.0f;
-        mLeg2->mY -= 1.0f;
-        mLeg3->mY += 1.0f;
+        delete mLeg0;
+        mLeg0 = new ModelPartSkin(this, 29, 29, NULL);
+        mLeg0->addBox(-2.0f, 0.0f, -2.0f, 4, 14, 4, scale);
+        mLeg0->setPos(-2.5f, 10.0f, 6.0f);
+
+        delete mLeg1;
+        mLeg1 = new ModelPartSkin(this, 29, 29, NULL);
+        mLeg1->addBox(-2.0f, 0.0f, -2.0f, 4, 14, 4, scale);
+        mLeg1->setPos(2.5f, 10.0f, 6.0f);
+
+        delete mLeg2;
+        mLeg2 = new ModelPartSkin(this, 29, 29, NULL);
+        mLeg2->addBox(-2.0f, 0.0f, -2.0f, 4, 14, 4, scale);
+        mLeg2->setPos(-2.5f, 10.0f, -4.0f);
+
+        delete mLeg3;
+        mLeg3 = new ModelPartSkin(this, 29, 29, NULL);
+        mLeg3->addBox(-2.0f, 0.0f, -2.0f, 4, 14, 4, scale);
+        mLeg3->setPos(2.5f, 10.0f, -4.0f);
+
+        mLeg0->mX -= 1.0f;
+        mLeg1->mX += 1.0f;
+        mLeg2->mX -= 1.0f;
+        mLeg3->mX += 1.0f;
         mLeg2->mZ -= 1.0f;
         mLeg3->mZ -= 1.0f;
         mZHeadOffs += 2.0f;

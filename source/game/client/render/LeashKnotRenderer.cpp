@@ -5,7 +5,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation LEASH_KNOT_LOCATION;
+static ResourceLocation LEASH_KNOT_LOCATION(TN_ITEM_LEAD_KNOT);
 
 LeashKnotRenderer::LeashKnotRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

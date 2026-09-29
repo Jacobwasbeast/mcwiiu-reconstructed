@@ -9,7 +9,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation ENDER_CRYSTAL_LOCATION;
+static ResourceLocation ENDER_CRYSTAL_LOCATION(TN_MOB_ENDERDRAGON_CRYSTAL);
 
 EnderCrystalRenderer::EnderCrystalRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

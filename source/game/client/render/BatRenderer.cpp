@@ -9,7 +9,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation BAT_LOCATION;
+static ResourceLocation BAT_LOCATION(TN_MOB_BAT);
 
 BatRenderer::BatRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new BatModel(ModelDefinition()), 0.25F)

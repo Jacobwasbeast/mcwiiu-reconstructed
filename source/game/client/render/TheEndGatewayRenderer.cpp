@@ -12,7 +12,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-static ResourceLocation END_GATEWAY_BEAM_LOCATION((_TEXTURE_NAME)86);
+static ResourceLocation END_GATEWAY_BEAM_LOCATION(TN_MISC_BEACON_BEAM);
 
 TheEndGatewayRenderer::~TheEndGatewayRenderer()
 {

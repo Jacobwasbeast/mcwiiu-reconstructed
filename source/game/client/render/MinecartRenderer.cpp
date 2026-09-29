@@ -5,6 +5,7 @@
 #include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/MinecartModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/Textures.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Minecart.hpp"
@@ -27,20 +28,20 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 {
     boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
     GlStateManager::pushMatrix();
-    EntityRenderer::postRender(entity, x, y, z, yaw, partialTick, false);
+    bindTexture(entity);
 
-    int id = minecart->getId();
-    unsigned int hash = (unsigned int)(id * 0x1D66F537) * (unsigned int)(id * 0x1D66F537) * 0x5CB26D1U
-                      + (unsigned int)(id * -0x1361C0D1);
-    float offsetX = (float)((hash >> 16) & 7) * 0.125F;
-    float offsetY = (float)((hash >> 20) & 7) * 0.125F;
-    float offsetZ = (float)((hash >> 24) & 7) * 0.125F;
+    long long seed = (int)((unsigned int)minecart->getId() * 493286711U);
+    seed = seed * seed * 4392167121LL + seed * 98761LL;
+    float offsetX = (((float)(seed >> 16 & 7) + 0.5F) / 8.0F - 0.5F) * 0.004F;
+    float offsetY = (((float)(seed >> 20 & 7) + 0.5F) / 8.0F - 0.5F) * 0.004F;
+    float offsetZ = (((float)(seed >> 24 & 7) + 0.5F) / 8.0F - 0.5F) * 0.004F;
     GlStateManager::translatef(offsetX, offsetY, offsetZ);
 
     double renderX = minecart->mXo + (minecart->mX - minecart->mXo) * partialTick;
     double renderY = minecart->mYo + (minecart->mY - minecart->mYo) * partialTick;
     double renderZ = minecart->mZo + (minecart->mZ - minecart->mZo) * partialTick;
     Vec3* trackPosition = minecart->getPos(renderX, renderY, renderZ);
+    float pitch = minecart->mXRotO + (minecart->mXRot - minecart->mXRotO) * partialTick;
     if (trackPosition != NULL)
     {
         Vec3* frontPosition = minecart->getPosOffs(renderX, renderY, renderZ, 0.3);
@@ -52,23 +53,18 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
         x += trackPosition->x - renderX;
         y += (frontPosition->y + backPosition->y) * 0.5 - renderY;
         z += trackPosition->z - renderZ;
-        Vec3 direction(-frontPosition->x + backPosition->x,
-                       -frontPosition->y + backPosition->y,
-                       -frontPosition->z + backPosition->z);
-        if (direction.length() != 0.0)
+        Vec3* direction = backPosition->add(-frontPosition->x, -frontPosition->y, -frontPosition->z);
+        if (direction->length() != 0.0)
         {
-            direction.normalize();
-            yaw = (float)(std::atan2(direction.z, direction.x) * 180.0 / 3.14159265358979323846);
-            float pitch = (float)(std::atan(direction.y) * 180.0 / 3.14159265358979323846);
-            GlStateManager::translatef((float)x, (float)y + 0.375F, (float)z);
-            GlStateManager::rotatef(180.0F - yaw, 0.0F, 1.0F, 0.0F);
-            GlStateManager::rotatef(-pitch, 1.0F, 0.0F, 0.0F);
+            direction = direction->normalize();
+            yaw = (float)(std::atan2(direction->z, direction->x) * 180.0 / 3.1415927410125732);
+            pitch = (float)(std::atan(direction->y) * 73.0);
         }
-        else
-            GlStateManager::translatef((float)x, (float)y + 0.375F, (float)z);
     }
-    else
-        GlStateManager::translatef((float)x, (float)y + 0.375F, (float)z);
+
+    GlStateManager::translatef((float)x, (float)y + 0.375F, (float)z);
+    GlStateManager::rotatef(180.0F - yaw, 0.0F, 1.0F, 0.0F);
+    GlStateManager::rotatef(-pitch, 0.0F, 0.0F, 1.0F);
 
     float hurtTime = (float)minecart->getHurtTime() - partialTick;
     float damage = minecart->getDamage() - partialTick;
@@ -80,6 +76,7 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
                                  1.0F, 0.0F, 0.0F);
     }
 
+    int displayOffset = minecart->getDisplayOffset();
     if (mSolidRender)
     {
         GlStateManager::enableColorMaterial();
@@ -87,12 +84,21 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     }
 
     const BlockState* state = minecart->getDisplayBlockState();
-    if (state != NULL && state->getRenderShape() != BLOCK_RENDER_INVISIBLE)
+    if (state->getBlock()->defaultBlockState()->getRenderShape() != BLOCK_RENDER_INVISIBLE)
+    {
+        GlStateManager::pushMatrix();
+        bindTexture(&BLOCKS_LOCATION);
+        GlStateManager::scalef(0.75F, 0.75F, 0.75F);
+        GlStateManager::translatef(0.0F, (float)displayOffset * 0.0625F, 0.0F);
         renderMinecartContents(minecart, partialTick, state);
+        GlStateManager::popMatrix();
+        GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        bindTexture(entity);
+    }
 
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     static_cast<MinecartModel*>(mModel)->render(entity, 0.0F, 0.0F, -0.1F, 0.0F, 0.0F,
-                                                0.0625F, false);
+                                                0.0625F, true);
     GlStateManager::popMatrix();
 
     if (mSolidRender)
@@ -106,7 +112,7 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
 const ResourceLocation* MinecartRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location((_TEXTURE_NAME)11);
+    static ResourceLocation location(TN_ITEM_CART);
     return &location;
 }
 
@@ -114,7 +120,6 @@ void MinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart>, float
                                               const BlockState* state)
 {
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(0.0F, -0.5F, 0.0F);
     Minecraft::GetInstance()->getBlockRenderer()->renderSingleBlock(state, 1.0F, 1.0F, true);
     GlStateManager::popMatrix();
 }

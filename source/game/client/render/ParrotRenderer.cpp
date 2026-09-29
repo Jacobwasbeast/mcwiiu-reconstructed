@@ -13,11 +13,11 @@
 #include "game/world/generation/Player.hpp"
 
 ResourceLocation PARROT_LOCATIONS[5] = {
-    ResourceLocation((_TEXTURE_NAME)202),
-    ResourceLocation((_TEXTURE_NAME)203),
-    ResourceLocation((_TEXTURE_NAME)204),
-    ResourceLocation((_TEXTURE_NAME)205),
-    ResourceLocation((_TEXTURE_NAME)206)
+    ResourceLocation(TN_MOB_PARROT_PARROT_RED_BLUE),
+    ResourceLocation(TN_MOB_PARROT_PARROT_BLUE),
+    ResourceLocation(TN_MOB_PARROT_PARROT_GREEN),
+    ResourceLocation(TN_MOB_PARROT_PARROT_YELLOW_BLUE),
+    ResourceLocation(TN_MOB_PARROT_PARROT_GREY)
 };
 
 ParrotRenderer::ParrotRenderer(EntityRenderDispatcher* dispatcher)

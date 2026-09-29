@@ -4,7 +4,7 @@
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation HUSK_LOCATION;
+static ResourceLocation HUSK_LOCATION(TN_MOB_ZOMBIE_HUSK);
 
 HuskRenderer::HuskRenderer(EntityRenderDispatcher* dispatcher)
     : ZombieRenderer(dispatcher)

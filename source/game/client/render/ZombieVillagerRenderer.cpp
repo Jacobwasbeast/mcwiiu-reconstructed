@@ -8,12 +8,12 @@
 #include "game/world/generation/VillagerArmorLayer.hpp"
 #include "game/world/generation/ZombieVillager.hpp"
 
-static ResourceLocation ZOMBIE_VILLAGER_LOCATION;
-static ResourceLocation ZOMBIE_VILLAGER_FARMER_LOCATION;
-static ResourceLocation ZOMBIE_VILLAGER_LIBRARIAN_LOCATION;
-static ResourceLocation ZOMBIE_VILLAGER_PRIEST_LOCATION;
-static ResourceLocation ZOMBIE_VILLAGER_SMITH_LOCATION;
-static ResourceLocation ZOMBIE_VILLAGER_BUTCHER_LOCATION;
+static ResourceLocation ZOMBIE_VILLAGER_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_VILLAGER);
+static ResourceLocation ZOMBIE_VILLAGER_FARMER_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_FARMER);
+static ResourceLocation ZOMBIE_VILLAGER_LIBRARIAN_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_LIBRARIAN);
+static ResourceLocation ZOMBIE_VILLAGER_PRIEST_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_PRIEST);
+static ResourceLocation ZOMBIE_VILLAGER_SMITH_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_SMITH);
+static ResourceLocation ZOMBIE_VILLAGER_BUTCHER_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_BUTCHER);
 
 ZombieVillagerRenderer::ZombieVillagerRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new VillagerZombieModel(ModelDefinition()), 0.5F)

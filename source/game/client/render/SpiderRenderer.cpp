@@ -11,7 +11,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/SpiderEyesLayer.hpp"
 
-static ResourceLocation SPIDER_LOCATION;
+static ResourceLocation SPIDER_LOCATION(TN_MOB_SPIDER);
 
 SpiderRenderer::SpiderRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new SpiderModel(ModelDefinition()), 1.0F)

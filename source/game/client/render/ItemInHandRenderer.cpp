@@ -45,8 +45,8 @@
 namespace
 {
 int sItemRenderDisplayLists[5] = {-1, -1, -1, -1, -1};
-static ResourceLocation WATER_OVERLAY_LOCATION((_TEXTURE_NAME)15);
-static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)13);
+static ResourceLocation WATER_OVERLAY_LOCATION(TN_MISC_WATER);
+static ResourceLocation MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
 
 PlayerRenderer* getPlayerRenderer(EntityRenderDispatcher* dispatcher, boost::shared_ptr<LocalPlayer> player)
 {
@@ -455,19 +455,19 @@ void ItemInHandRenderer::renderMapHands()
 void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const HumanoidArm* arm)
 {
     float side = arm == HumanoidArm::LEFT ? -1.0f : 1.0f;
-    float swingRoot = Mth::sqrt(swing);
-    float swingSin = Mth::sin(swingRoot * 3.1415927f);
+    float swingRoot = std::sqrt(swing);
+    float swingSin = std::sin(swingRoot * 3.1415927f);
     float swingBob = -0.30000001192092896f * swingSin;
-    float swingSin2 = Mth::sin(swingRoot * 3.1415927f + swingRoot * 3.1415927f);
+    float swingSin2 = std::sin(swingRoot * 3.1415927f + swingRoot * 3.1415927f);
     float swingDrop = 0.4000000059604645f * swingSin2;
-    float swingRoll = Mth::sin(swing * 3.1415927f);
+    float swingRoll = std::sin(swing * 3.1415927f);
     GlStateManager::translatef(side * (swingBob + 0.64000004529953f),
                                equip * -0.6000000238418579f + swingDrop - 0.6000000238418579f,
                                -0.4000000059604645f * swingRoll - 0.7199999690055847f);
     GlStateManager::rotatef(side * 45.0f, 0.0f, 1.0f, 0.0f);
-    float swingRootSin = Mth::sin(swingRoot * 3.1415927f);
+    float swingRootSin = std::sin(swingRoot * 3.1415927f);
     GlStateManager::rotatef(side * swingRootSin * 70.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(side * Mth::sin(swing * swing * 3.1415927f) * -20.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(side * std::sin(swing * swing * 3.1415927f) * -20.0f, 0.0f, 0.0f, 1.0f);
     boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
     bindPlayerSkin(mMinecraft->mTextures, player);
     GlStateManager::translatef(-side, 3.5999999046325684f, 3.5f);
@@ -895,7 +895,7 @@ void ItemInHandRenderer::renderFire()
     float u1 = (float)sprite->getU1(true);
     float v1 = (float)sprite->getV1(true);
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(-0.24f, 0.0f, 0.0f);
+    GlStateManager::translatef(0.24f, -0.3f, 0.0f);
     GlStateManager::rotatef(-10.0f, 0.0f, 1.0f, 0.0f);
     builder->begin();
     builder->vertexUV(-0.5f, -0.5f, -0.5f, u1, v1);
@@ -905,8 +905,8 @@ void ItemInHandRenderer::renderFire()
     builder->end();
     GlStateManager::popMatrix();
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(0.24f, 0.0f, 0.0f);
-    GlStateManager::rotatef(15.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::translatef(-0.24f, -0.3f, 0.0f);
+    GlStateManager::rotatef(10.0f, 0.0f, 1.0f, 0.0f);
     builder->begin();
     builder->vertexUV(-0.5f, -0.5f, -0.5f, u1, v1);
     builder->vertexUV(0.5f, -0.5f, -0.5f, u0, v1);

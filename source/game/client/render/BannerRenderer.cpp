@@ -17,7 +17,7 @@
 #include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
 
-static ResourceLocation* BANNER_LOCATION = new ResourceLocation((_TEXTURE_NAME)146);
+static ResourceLocation* BANNER_LOCATION = new ResourceLocation(TN_ITEM_BANNER_BANNER_BASE);
 static int BANNER_PATTERN_TEXTURES[2] = {146, 147};
 static ResourceLocation* BANNER_PATTERN_LOCATION =
     new ResourceLocation(arrayWithLength<int>(BANNER_PATTERN_TEXTURES, 2));

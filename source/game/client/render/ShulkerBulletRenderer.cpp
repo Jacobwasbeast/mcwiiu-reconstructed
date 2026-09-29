@@ -8,7 +8,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SHULKER_BULLET_LOCATION;
+static ResourceLocation SHULKER_BULLET_LOCATION(TN_MOB_SHULKER_SPARK);
 
 ShulkerBulletRenderer::ShulkerBulletRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

@@ -42,7 +42,7 @@
 
 extern Renderer* gRenderer;
 
-ResourceLocation ItemRenderer::ENCHANT_GLINT_LOCATION((_TEXTURE_NAME)72);
+ResourceLocation ItemRenderer::ENCHANT_GLINT_LOCATION(TN_BLUR_MISC_GLINT);
 
 static int sFoilList = -1;
 static const int sPotionStrengthBarWidths[] = { 3, 6, 9, 11 };
@@ -484,7 +484,7 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
             GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
             Model* model = renderer->getModel();
             boost::shared_ptr<Entity> tridentEntity = boost::static_pointer_cast<Entity>(entity);
-            ResourceLocation texture((_TEXTURE_NAME)230);
+            ResourceLocation texture(TN_ITEM_TRIDENT);
             minecraft->mTextures->bindTexture(&texture);
             model->render(tridentEntity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, true);
             if (item->hasFoil())

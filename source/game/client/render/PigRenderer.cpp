@@ -9,7 +9,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/PigSaddleLayer.hpp"
 
-static ResourceLocation PIG_LOCATION;
+static ResourceLocation PIG_LOCATION(TN_MOB_PIG);
 
 PigRenderer::PigRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new PigModel(ModelDefinition()), 0.7F)

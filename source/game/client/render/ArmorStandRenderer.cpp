@@ -14,7 +14,7 @@
 #include "game/world/generation/ElytraLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
 
-static ResourceLocation ARMOR_STAND_LOCATION((_TEXTURE_NAME)121);
+static ResourceLocation ARMOR_STAND_LOCATION(TN_ITEM_ARMORSTAND_WOOD);
 
 ArmorStandRenderer::ArmorStandRenderer(EntityRenderDispatcher* dispatcher)
     : LivingEntityRenderer(dispatcher, new ArmorStandModel(0.0f, ModelDefinition()), 0.0f)

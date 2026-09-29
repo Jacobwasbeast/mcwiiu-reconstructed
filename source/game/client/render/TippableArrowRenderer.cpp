@@ -3,8 +3,8 @@
 #include "game/entity/projectile/TippableArrow.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation TIPPABLE_ARROW_LOCATION;
-static ResourceLocation TIPPED_ARROW_LOCATION;
+static ResourceLocation TIPPABLE_ARROW_LOCATION(TN_ITEM_ARROWS);
+static ResourceLocation TIPPED_ARROW_LOCATION(TN_ITEM_TIPPED_ARROW);
 
 TippableArrowRenderer::TippableArrowRenderer(EntityRenderDispatcher* dispatcher)
     : ArrowRenderer(dispatcher)

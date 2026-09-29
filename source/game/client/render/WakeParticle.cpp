@@ -19,6 +19,7 @@ WakeParticle::WakeParticle(Level* level, double x, double y, double z,
     xd = xa;
     yd = ya;
     zd = za;
+    gravity = 0.0f;
 }
 
 WakeParticle::~WakeParticle()
@@ -30,14 +31,16 @@ void WakeParticle::tick()
     xo = x;
     yo = y;
     zo = z;
-    y -= gravity;
+    yd -= gravity;
     move(xd, yd, zd);
-    xd *= 0.98;
-    yd *= 0.98;
-    zd *= 0.98;
-    setLocationFromBoundingbox();
-    setMiscTex(((60 - age) & ~3) + 19);
-    if (age++ >= lifetime)
+    xd *= 0.98f;
+    yd *= 0.98f;
+    zd *= 0.98f;
+    int frame = 60 - lifetime;
+    float size = (float)frame * 0.001f;
+    setSize(size, size);
+    setMiscTex(frame % 4 + 19);
+    if (lifetime-- <= 0)
     {
         remove();
     }

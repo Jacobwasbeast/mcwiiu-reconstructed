@@ -17,9 +17,9 @@
 #include "game/world/generation/EnderDragonDeathLayer.hpp"
 #include "game/world/generation/EnderDragonEyesLayer.hpp"
 
-ResourceLocation END_CRYSTAL_BEAM_LOCATION;
-static ResourceLocation ENDER_DRAGON_EXPLODING_LOCATION;
-static ResourceLocation ENDER_DRAGON_LOCATION;
+ResourceLocation END_CRYSTAL_BEAM_LOCATION(TN_MOB_ENDERDRAGON_BEAM);
+static ResourceLocation ENDER_DRAGON_EXPLODING_LOCATION(TN_MOB_ENDERDRAGON_SHUFFLE);
+static ResourceLocation ENDER_DRAGON_LOCATION(TN_MOB_ENDERDRAGON_ENDER);
 static float beamRotation;
 
 EnderDragonRenderer::EnderDragonRenderer(EntityRenderDispatcher* dispatcher)

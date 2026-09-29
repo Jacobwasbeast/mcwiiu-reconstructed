@@ -10,8 +10,8 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/WitherArmorLayer.hpp"
 
-static ResourceLocation WITHER_LOCATION;
-static ResourceLocation WITHER_INVULNERABLE_LOCATION;
+static ResourceLocation WITHER_LOCATION(TN_MOB_WITHER_WITHER);
+static ResourceLocation WITHER_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
 
 WitherBossRenderer::WitherBossRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new WitherBossModel(0.0F, ModelDefinition()), 1.0F)

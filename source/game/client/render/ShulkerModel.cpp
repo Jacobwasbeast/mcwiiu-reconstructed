@@ -26,11 +26,11 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
         mLid = new ModelPart(this);
         mBase = new ModelPart(this);
         mHead = new ModelPart(this);
-        mLid->texOffs(0, 0)->addBox(-16.0f, -8.0f, -16.0f, 16, 12, 16);
+        mLid->texOffs(0, 0)->addBox(-8.0f, -16.0f, -8.0f, 16, 12, 16);
         mLid->setPos(0.0f, 24.0f, 0.0f);
-        mBase->texOffs(0, 28)->addBox(-16.0f, -16.0f, -16.0f, 16, 8, 16);
+        mBase->texOffs(0, 28)->addBox(-8.0f, -8.0f, -8.0f, 16, 8, 16);
         mBase->setPos(0.0f, 24.0f, 0.0f);
-        mHead->texOffs(0, 116)->addBox(-3.0f, -4.0f, -3.0f, 6, 6, 6);
+        mHead->texOffs(0, 116)->addBox(-3.0f, 0.0f, -3.0f, 6, 6, 6);
         mHead->setPos(0.0f, 12.0f, 0.0f);
         mLid->compile(0.0625f);
         mBase->compile(0.0625f);

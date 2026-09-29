@@ -13,12 +13,12 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/SkullBlockEntity.hpp"
 
-static ResourceLocation SKULL_TEXTURE_0((_TEXTURE_NAME)34);
-static ResourceLocation SKULL_TEXTURE_1((_TEXTURE_NAME)82);
-static ResourceLocation SKULL_TEXTURE_2((_TEXTURE_NAME)32);
-static ResourceLocation SKULL_TEXTURE_3((_TEXTURE_NAME)37);
-static ResourceLocation SKULL_TEXTURE_4((_TEXTURE_NAME)29);
-static ResourceLocation SKULL_TEXTURE_5((_TEXTURE_NAME)59);
+static ResourceLocation SKULL_TEXTURE_0(TN_MOB_SKELETON);
+static ResourceLocation SKULL_TEXTURE_1(TN_MOB_SKELETON_WITHER);
+static ResourceLocation SKULL_TEXTURE_2(TN_MOB_ZOMBIE);
+static ResourceLocation SKULL_TEXTURE_3(TN_MOB_STEVE);
+static ResourceLocation SKULL_TEXTURE_4(TN_MOB_CREEPER);
+static ResourceLocation SKULL_TEXTURE_5(TN_MOB_ENDERDRAGON_ENDER);
 
 SkullBlockRenderer* SkullBlockRenderer::instance = NULL;
 
@@ -62,8 +62,8 @@ SkullBlockRenderer::~SkullBlockRenderer()
 }
 
 void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction* direction,
-                                     float rotation, float mouthAnimation, int skullType,
-                                     int destroyStage, float scale, bool useDisplayList)
+                                     float rotation, float headPitch, int skullType,
+                                     int destroyStage, float animationTime, bool useDisplayList)
 {
     Model* model = NULL;
     if (skullType == 4)
@@ -104,7 +104,7 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
         GlStateManager::disableCull();
     }
 
-    if (direction == NULL)
+    if (direction == Direction::UP)
     {
         GlStateManager::translatef(x + 0.5F, y, z + 0.5F);
         GlStateManager::enableRescaleNormal();
@@ -116,7 +116,13 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
         const float offset = 0.25F;
         unsigned int data = direction->get3DDataValue();
         if (data < 2)
-            GlStateManager::translatef(x + 0.26F, y + offset, z + 0.26F);
+        {
+            GlStateManager::translatef(x + 0.26F, y + offset, z + 0.5F);
+            rotation = 90.0F;
+            GlStateManager::enableRescaleNormal();
+            GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
+            GlStateManager::enableAlphaTest();
+        }
         else if (data == 2)
         {
             GlStateManager::translatef(x + 0.5F, y + offset, z + 0.74F);
@@ -135,7 +141,7 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
         else if (data == 4)
         {
             GlStateManager::translatef(x + 0.74F, y + offset, z + 0.5F);
-            rotation = -90.0F;
+            rotation = 270.0F;
             GlStateManager::enableRescaleNormal();
             GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
             GlStateManager::enableAlphaTest();
@@ -151,7 +157,7 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
     }
 
     boost::shared_ptr<Entity> entity;
-    model->render(entity, mouthAnimation, 0.0F, 0.0F, rotation, scale, 0.0625F, useDisplayList);
+    model->render(entity, animationTime, 0.0F, 0.0F, rotation, headPitch, 0.0625F, useDisplayList);
     GlStateManager::popMatrix();
     if (destroyStage >= 0)
     {
@@ -169,10 +175,9 @@ void SkullBlockRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     const Direction* direction = Direction::from3DDataValue(skull->getData() & 7);
     if (skull->isRenderReady())
     {
-        float mouthAnimation = (float)skull->getMouthAnimation(partialTicks);
-        float rotation = (float)(skull->getRotation() * 360 - 180) * 0.0625F;
-        renderSkull((float)x, (float)y, (float)z, direction, rotation, mouthAnimation,
-                    skull->getSkullType(), breakProgress, alpha, bUseDisplayList);
+        float rotation = (float)(skull->getRotation() * 360) * 0.0625F;
+        renderSkull((float)x, (float)y, (float)z, direction, rotation, 0.0F,
+                    skull->getSkullType(), breakProgress, partialTicks, bUseDisplayList);
     }
 }
 

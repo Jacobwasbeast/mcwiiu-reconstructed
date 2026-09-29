@@ -6,8 +6,8 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation WITHER_SKULL_LOCATION;
-static ResourceLocation WITHER_SKULL_INVULNERABLE_LOCATION;
+static ResourceLocation WITHER_SKULL_LOCATION(TN_MOB_WITHER_WITHER);
+static ResourceLocation WITHER_SKULL_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
 
 WitherSkullRenderer::WitherSkullRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher), mWitherSkullModel(new SkeletonHeadModel(ModelDefinition()))

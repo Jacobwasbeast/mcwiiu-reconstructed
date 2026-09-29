@@ -7,9 +7,9 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation FISH_TEXTURE;
-static ResourceLocation PUFFERFISH_TEXTURE;
-static ResourceLocation SALMON_TEXTURE;
+static ResourceLocation FISH_TEXTURE(TN_MOB_FISH_COD);
+static ResourceLocation PUFFERFISH_TEXTURE(TN_MOB_FISH_PUFFERFISH);
+static ResourceLocation SALMON_TEXTURE(TN_MOB_FISH_SALMON);
 
 FishRenderer::FishRenderer(EntityRenderDispatcher* dispatcher, FishType fishType, float shadowRadius)
     : MobRenderer(dispatcher, new FishModel(ModelDefinition(), fishType, 0), shadowRadius), mFishType(fishType)

@@ -12,7 +12,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/ZombieArmorLayer.hpp"
 
-static ResourceLocation sZombieLocation((_TEXTURE_NAME)32);
+static ResourceLocation sZombieLocation(TN_MOB_ZOMBIE);
 
 ZombieRenderer::ZombieRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new ZombieModel(ModelDefinition()), 0.5F)

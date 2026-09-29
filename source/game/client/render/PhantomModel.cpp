@@ -55,12 +55,12 @@ void PhantomModel::createModelParts(const ModelDefinition& modelDefinition)
     else
     {
         mPhantomParts[0] = new ModelPartSkin(this, 0, 8, NULL);
-        mPhantomParts[0]->addBox(-3.0f, -2.0f, -1.0f, 5, 3, 9);
+        mPhantomParts[0]->addBox(-3.0f, -2.0f, -8.0f, 5, 3, 9);
         mPhantomParts[0]->mXRot = -0.1f;
 
         mPhantomParts[1] = new ModelPartSkin(this, 23, 12, NULL);
         mPhantomParts[1]->addBox(0.0f, 0.0f, 0.0f, 6, 2, 9);
-        mPhantomParts[1]->setPos(2.0f, -0.1f, -2.0f);
+        mPhantomParts[1]->setPos(2.0f, -2.0f, -8.0f);
         mPhantomParts[1]->mZRot = 0.1f;
 
         mPhantomParts[2] = new ModelPartSkin(this, 16, 24, NULL);
@@ -71,7 +71,7 @@ void PhantomModel::createModelParts(const ModelDefinition& modelDefinition)
         mPhantomParts[3] = new ModelPartSkin(this, 23, 12, NULL);
         mPhantomParts[3]->mirror();
         mPhantomParts[3]->addBox(-6.0f, 0.0f, 0.0f, 6, 2, 9);
-        mPhantomParts[3]->setPos(-3.0f, -0.1f, -2.0f);
+        mPhantomParts[3]->setPos(-3.0f, -2.0f, -8.0f);
         mPhantomParts[3]->mZRot = -0.1f;
 
         mPhantomParts[4] = new ModelPartSkin(this, 16, 24, NULL);
@@ -81,13 +81,13 @@ void PhantomModel::createModelParts(const ModelDefinition& modelDefinition)
         mPhantomParts[4]->mZRot = -0.1f;
 
         mPhantomParts[5] = new ModelPartSkin(this, 0, 0, NULL);
-        mPhantomParts[5]->addBox(-4.0f, -1.0f, -1.0f, 7, 3, 5);
+        mPhantomParts[5]->addBox(-4.0f, -2.0f, -5.0f, 7, 3, 5);
         mPhantomParts[5]->setPos(0.0f, 1.0f, -7.0f);
         mPhantomParts[5]->mXRot = 0.2f;
 
         mPhantomParts[6] = new ModelPartSkin(this, 3, 20, NULL);
-        mPhantomParts[6]->addBox(-3.0f, 0.0f, 0.0f, 3, 2, 6);
-        mPhantomParts[6]->setPos(0.0f, -1.0f, 1.0f);
+        mPhantomParts[6]->addBox(-2.0f, 0.0f, 0.0f, 3, 2, 6);
+        mPhantomParts[6]->setPos(0.0f, -2.0f, 1.0f);
 
         mPhantomParts[7] = new ModelPartSkin(this, 4, 29, NULL);
         mPhantomParts[7]->addBox(-1.0f, 0.0f, 0.0f, 1, 1, 6);
@@ -127,11 +127,11 @@ void PhantomModel::createInvisibleModelParts(const ModelDefinition& modelDefinit
     else
     {
         mPhantomParts[8] = new ModelPartSkin(this, 0, 8, &mInvisibleParts);
-        mPhantomParts[8]->addBox(-3.0f, -2.0f, -1.0f, 5, 3, 9);
+        mPhantomParts[8]->addBox(-3.0f, -2.0f, -8.0f, 5, 3, 9);
         mPhantomParts[8]->mXRot = -0.1f;
         mPhantomParts[9] = new ModelPartSkin(this, 23, 12, &mInvisibleParts);
         mPhantomParts[9]->addBox(0.0f, 0.0f, 0.0f, 6, 2, 9);
-        mPhantomParts[9]->setPos(2.0f, -0.1f, -2.0f);
+        mPhantomParts[9]->setPos(2.0f, -2.0f, -8.0f);
         mPhantomParts[9]->mZRot = 0.1f;
         mPhantomParts[10] = new ModelPartSkin(this, 16, 24, &mInvisibleParts);
         mPhantomParts[10]->addBox(0.0f, 0.0f, 0.0f, 13, 1, 9);
@@ -140,7 +140,7 @@ void PhantomModel::createInvisibleModelParts(const ModelDefinition& modelDefinit
         mPhantomParts[11] = new ModelPartSkin(this, 23, 12, &mInvisibleParts);
         mPhantomParts[11]->mirror();
         mPhantomParts[11]->addBox(-6.0f, 0.0f, 0.0f, 6, 2, 9);
-        mPhantomParts[11]->setPos(-3.0f, -0.1f, -2.0f);
+        mPhantomParts[11]->setPos(-3.0f, -2.0f, -8.0f);
         mPhantomParts[11]->mZRot = -0.1f;
         mPhantomParts[12] = new ModelPartSkin(this, 16, 24, &mInvisibleParts);
         mPhantomParts[12]->mirror();
@@ -148,12 +148,12 @@ void PhantomModel::createInvisibleModelParts(const ModelDefinition& modelDefinit
         mPhantomParts[12]->setPos(-6.0f, 0.0f, 0.0f);
         mPhantomParts[12]->mZRot = -0.1f;
         mPhantomParts[13] = new ModelPartSkin(this, 0, 0, &mInvisibleParts);
-        mPhantomParts[13]->addBox(-4.0f, -1.0f, -1.0f, 7, 3, 5);
+        mPhantomParts[13]->addBox(-4.0f, -2.0f, -5.0f, 7, 3, 5);
         mPhantomParts[13]->setPos(0.0f, 1.0f, -7.0f);
         mPhantomParts[13]->mXRot = 0.2f;
         mPhantomParts[14] = new ModelPartSkin(this, 3, 20, &mInvisibleParts);
-        mPhantomParts[14]->addBox(-3.0f, 0.0f, 0.0f, 3, 2, 6);
-        mPhantomParts[14]->setPos(0.0f, -1.0f, 1.0f);
+        mPhantomParts[14]->addBox(-2.0f, 0.0f, 0.0f, 3, 2, 6);
+        mPhantomParts[14]->setPos(0.0f, -2.0f, 1.0f);
         mPhantomParts[15] = new ModelPartSkin(this, 4, 29, &mInvisibleParts);
         mPhantomParts[15]->addBox(-1.0f, 0.0f, 0.0f, 1, 1, 6);
         mPhantomParts[15]->setPos(0.0f, 0.5f, 6.0f);

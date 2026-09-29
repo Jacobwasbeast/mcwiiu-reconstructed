@@ -9,7 +9,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/ZombieArmorLayer.hpp"
 
-static ResourceLocation PIG_ZOMBIE_LOCATION;
+static ResourceLocation PIG_ZOMBIE_LOCATION(TN_MOB_PIGZOMBIE);
 
 PigZombieRenderer::PigZombieRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new PigZombieModel(ModelDefinition()), 0.5F)

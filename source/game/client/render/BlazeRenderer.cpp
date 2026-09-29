@@ -6,7 +6,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation BLAZE_LOCATION((_TEXTURE_NAME)60);
+static ResourceLocation BLAZE_LOCATION(TN_MOB_FIRE);
 
 BlazeRenderer::BlazeRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new BlazeModel(ModelDefinition()), 0.5F)

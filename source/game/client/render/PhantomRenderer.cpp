@@ -8,7 +8,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-static ResourceLocation PHANTOM_LOCATION;
+static ResourceLocation PHANTOM_LOCATION(TN_MOB_PHANTOM);
 
 PhantomRenderer::PhantomRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new PhantomModel(ModelDefinition()), 0.5F)

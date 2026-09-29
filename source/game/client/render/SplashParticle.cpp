@@ -7,6 +7,7 @@ SplashParticle::SplashParticle(Level* level, double x, double y, double z,
                                double xa, double ya, double za)
     : WaterDropParticle(level, x, y, z)
 {
+    gravity = 0.04f;
     setMiscTex(16);
 
     if (Mth::almostEquals(ya, 0.0, 2.2204460492503131e-16) &&

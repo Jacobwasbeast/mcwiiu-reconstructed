@@ -15,6 +15,9 @@ WaterCurrentDownParticle::WaterCurrentDownParticle(Level* level, double x, doubl
 {
     setMiscTex(32);
     lifetime = (int)(Math::random() * 60.0) + 30;
+    xd = 0.0;
+    yd = -0.05;
+    zd = 0.0;
     setSize(0.02f, 0.02f);
     size *= random.nextFloat() * 0.6f + 0.2f;
     gravity = 0.002f;

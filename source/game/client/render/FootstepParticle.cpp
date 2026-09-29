@@ -12,7 +12,7 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static ResourceLocation FOOTPRINT_LOCATION((_TEXTURE_NAME)16);
+static ResourceLocation FOOTPRINT_LOCATION(TN_MISC_FOOTPRINT);
 
 FootstepParticle::FootstepParticle(Textures* textures, Level* level, double x, double y, double z)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)

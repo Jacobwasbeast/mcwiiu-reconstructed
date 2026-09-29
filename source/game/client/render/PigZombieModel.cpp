@@ -96,6 +96,9 @@ void PigZombieModel::init(const ModelDefinition& definition, float scale, bool a
         mLeftItem->setPos(mRightItem->mX, mRightItem->mY, mRightItem->mZ);
     }
 
+    mRightArm->addChild(mRightItem);
+    mLeftArm->addChild(mLeftItem);
+
     compileSkinnedDrawlist();
 
     builder->useDefaultShaders();

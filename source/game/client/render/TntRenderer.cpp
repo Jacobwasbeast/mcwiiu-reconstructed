@@ -12,7 +12,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
-static ResourceLocation TNT_LOCATION;
+static ResourceLocation TNT_LOCATION(TN_BLOCK_ATLAS);
 
 TntRenderer::TntRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

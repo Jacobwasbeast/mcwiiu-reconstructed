@@ -34,7 +34,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)13);
+static ResourceLocation MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
 
 ItemFrameRenderer::ItemFrameRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher),
@@ -185,7 +185,7 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::disableColorMaterial();
     }
     GlStateManager::popMatrix();
-    GlStateManager::translatef(0.0f, 0.0f, -0.4375f);
+    GlStateManager::translatef(0.0f, 0.0f, 0.4375f);
     drawItem(itemFrame);
     GlStateManager::popMatrix();
     const Direction* direction = itemFrame->getDirection();

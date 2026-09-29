@@ -11,7 +11,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BedBlockEntity.hpp"
 
-static ResourceLocation BED_TEXTURE((_TEXTURE_NAME)207);
+static ResourceLocation BED_TEXTURE(TN_ITEM_BED);
 
 BedRenderer::BedRenderer()
 {

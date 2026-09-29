@@ -25,6 +25,7 @@
 #include "game/world/LevelData.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/BiomeSource.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
@@ -826,7 +827,7 @@ namespace
 {
 bool isPickableEntity_apply(boost::shared_ptr<Entity> entity)
 {
-    return isPickable_apply(entity);
+    return entity->isPickable();
 }
 
 Predicate<boost::shared_ptr<Entity> >* getPickEntityPredicate()
@@ -918,16 +919,20 @@ void GameRenderer::pick(float partialTick)
     Entity* cameraRaw = cameraEntity.get();
     Vec3* eyePosition = cameraRaw->getEyePosition(partialTick);
 
-    double entityReach = pickRange;
-    if (mMinecraft->mGameMode->hasFarPickRange())
-    {
-        entityReach = kCreativePickRange;
-    }
+    const bool beyondSurvivalReach = pickRange > kPickDistanceCompare;
+    const bool farPickRange = mMinecraft->mGameMode->hasFarPickRange();
+    const double entityReach = farPickRange ? kCreativePickRange : pickRange;
 
+    double blockHitDistance = entityReach;
     if (mMinecraft->mHitResult != NULL)
     {
-        entityReach = eyePosition->distanceTo(mMinecraft->mHitResult->mLocation);
+        blockHitDistance = eyePosition->distanceTo(mMinecraft->mHitResult->mLocation);
     }
+
+    Vec3* viewVector = cameraRaw->getViewVector(1.0f);
+    Vec3* rayEnd = eyePosition->add(viewVector->x * entityReach,
+                                    viewVector->y * entityReach,
+                                    viewVector->z * entityReach);
 
     pointedEntity.reset();
 
@@ -942,7 +947,6 @@ void GameRenderer::pick(float partialTick)
         return;
     }
 
-    Vec3* viewVector = cameraRaw->getViewVector(partialTick);
     AABB* searchBox = cameraRaw->mBoundingBox->expand(viewVector->x * entityReach,
                                                       viewVector->y * entityReach,
                                                       viewVector->z * entityReach)
@@ -951,47 +955,46 @@ void GameRenderer::pick(float partialTick)
     std::vector<boost::shared_ptr<Entity> >* entities =
         level->getEntities(cameraEntity, searchBox, entityPredicate, NULL);
 
-    Entity* closestEntity = NULL;
-    boost::shared_ptr<Entity> closestEntityShared;
-    Vec3* closestHitLocation = NULL;
-    double closestDistance = entityReach;
-
-    Vec3* rayEnd = Vec3::newTemp(eyePosition->x + viewVector->x * entityReach,
-                                 eyePosition->y + viewVector->y * entityReach,
-                                 eyePosition->z + viewVector->z * entityReach);
+    Vec3* entityHitLocation = NULL;
+    double closestDistance = blockHitDistance;
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> candidate = *it;
         Entity* candidateRaw = candidate.get();
-        if (candidateRaw == NULL)
-        {
-            continue;
-        }
 
         AABB* grownBox = candidateRaw->mBoundingBox->grow(candidateRaw->getPickRadius());
         HitResult* clipHit = grownBox->clip(eyePosition, rayEnd);
-        const bool eyeInside = grownBox->contains(eyePosition);
-        if (!eyeInside && clipHit != NULL)
+        if (grownBox->contains(eyePosition))
+        {
+            if (closestDistance >= kNoHitDistance)
+            {
+                pointedEntity = candidate;
+                entityHitLocation = clipHit == NULL ? eyePosition : clipHit->mLocation;
+                closestDistance = kNoHitDistance;
+            }
+        }
+        else if (clipHit != NULL)
         {
             const double hitDistance = eyePosition->distanceTo(clipHit->mLocation);
             if (hitDistance < closestDistance || closestDistance == kNoHitDistance)
             {
                 boost::shared_ptr<Entity> candidateRoot = candidateRaw->getRootVehicle();
                 boost::shared_ptr<Entity> cameraRoot = cameraRaw->getRootVehicle();
-                if (candidateRoot.get() != cameraRoot.get())
+                if (candidateRoot.get() == cameraRoot.get())
                 {
-                    closestEntity = candidateRaw;
-                    closestEntityShared = candidate;
-                    closestHitLocation = clipHit->mLocation;
-                    closestDistance = hitDistance;
+                    if (closestDistance == kNoHitDistance)
+                    {
+                        pointedEntity = candidate;
+                        entityHitLocation = clipHit->mLocation;
+                    }
                 }
-                else if (closestDistance == kNoHitDistance)
+                else
                 {
-                    closestEntity = candidateRaw;
-                    closestEntityShared = candidate;
-                    closestHitLocation = clipHit->mLocation;
+                    pointedEntity = candidate;
+                    entityHitLocation = clipHit->mLocation;
+                    closestDistance = hitDistance;
                 }
             }
         }
@@ -1001,36 +1004,31 @@ void GameRenderer::pick(float partialTick)
         }
     }
 
-    if (closestEntity != NULL)
+    if (pointedEntity.get() == NULL)
     {
-        if (mMinecraft->mHitResult == NULL && pickRange > kPickDistanceCompare)
+        return;
+    }
+
+    if (!farPickRange && beyondSurvivalReach &&
+        eyePosition->distanceTo(entityHitLocation) > kPickDistanceCompare)
+    {
+        pointedEntity.reset();
+        deleteHitResult(mMinecraft->mHitResult);
+        mMinecraft->mHitResult =
+            new HitResult(HitResult::MISS, entityHitLocation, NULL, BlockPos(entityHitLocation));
+        return;
+    }
+
+    if (closestDistance < blockHitDistance || mMinecraft->mHitResult == NULL)
+    {
+        deleteHitResult(mMinecraft->mHitResult);
+        mMinecraft->mHitResult = new HitResult(pointedEntity, entityHitLocation);
+
+        const unsigned long long entityType = pointedEntity->GetType();
+        if ((entityType & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY ||
+            entityType == EntityType::ITEM_FRAME)
         {
-            const double blockPickDistance = eyePosition->distanceTo(closestHitLocation);
-            if (blockPickDistance > kPickDistanceCompare)
-            {
-                deleteHitResult(mMinecraft->mHitResult);
-                mMinecraft->mHitResult =
-                    new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos());
-                closestHitLocation = NULL;
-                closestEntity = NULL;
-                closestEntityShared.reset();
-            }
-        }
-
-        if (closestEntity != NULL &&
-            (closestDistance < entityReach || mMinecraft->mHitResult == NULL))
-        {
-            pointedEntity = closestEntityShared;
-
-            deleteHitResult(mMinecraft->mHitResult);
-            mMinecraft->mHitResult = new HitResult(closestEntityShared, closestHitLocation);
-
-            const unsigned long long entityType = closestEntity->GetType();
-            if ((entityType & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY ||
-                entityType == EntityType::ITEM_FRAME)
-            {
-                minecraftPointedEntityShared = closestEntityShared;
-            }
+            minecraftPointedEntityShared = pointedEntity;
         }
     }
 }
@@ -2462,46 +2460,45 @@ void GameRenderer::prepareAndRenderClouds(LevelRenderer* levelRenderer, float pa
     GlStateManager::popMatrix();
 }
 
+static ResourceLocation sThermalTexture(TN_ENVIRONMENT_THERMAL_1);
+static ResourceLocation sThermalTintedTexture(TN_ENVIRONMENT_THERMAL_2);
+static ResourceLocation sBoostArrowTexture(TN_ENVIRONMENT_BOOSTARROW);
+static float sOutlineX[8];
+static float sOutlineY[8];
+static float sOutlineZ[8];
+static float sHeadX[8];
+static float sHeadY[8];
+static float sHeadZ[8];
+static double sEdgeLengths[8];
+static const float COLUMN_ALPHAS[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
+static const float COLUMN_BAND_HEIGHTS[3] = { 0.125f, 0.5f, 0.375f };
+static const float ARROW_ALPHAS[4] = { 0.0f, 1.0f, 0.5f, 0.0f };
+
 void GameRenderer::renderThermal(Culler* culler, float partialTick)
 {
     LevelRuleset* ruleset = g_pApp->getGameRuleDefinitions();
-    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) || ruleset == NULL || culler == NULL)
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) || ruleset == NULL)
     {
         return;
     }
 
     FrustumCuller* frustumCuller = reinterpret_cast<FrustumCuller*>(culler);
-    FrustumData* frustumData = frustumCuller->frustumData;
-    if (frustumData == NULL)
-    {
-        return;
-    }
-
     const double negXOffset = -frustumCuller->xOffset;
     const double negYOffset = -frustumCuller->yOffset;
     const double negZOffset = -frustumCuller->zOffset;
-
     float clipPlanes[24];
-    float* clipPlane = clipPlanes;
     for (int planeIndex = 0; planeIndex < 6; ++planeIndex)
     {
-        float* frustumPlane = frustumData->frustum[planeIndex];
-        const float planeOffset =
-            static_cast<float>(negXOffset * frustumPlane[0] + negYOffset * frustumPlane[1] +
-                               negZOffset * frustumPlane[2] + frustumPlane[3]);
-        clipPlane[0] = frustumPlane[0];
-        clipPlane[1] = frustumPlane[1];
-        clipPlane[2] = frustumPlane[2];
-        clipPlane[3] = planeOffset;
-        clipPlane += 4;
+        const float* frustumPlane = frustumCuller->frustumData->frustum[planeIndex];
+        clipPlanes[planeIndex * 4 + 0] = frustumPlane[0];
+        clipPlanes[planeIndex * 4 + 1] = frustumPlane[1];
+        clipPlanes[planeIndex * 4 + 2] = frustumPlane[2];
+        clipPlanes[planeIndex * 4 + 3] = static_cast<float>(frustumPlane[2] * negZOffset + frustumPlane[1] * negYOffset
+                                                            + frustumPlane[0] * negXOffset + frustumPlane[3]);
     }
 
-    static ResourceLocation sThermalDefault(static_cast<_TEXTURE_NAME>(0xab));
-    static ResourceLocation sThermalTinted(static_cast<_TEXTURE_NAME>(0xac));
-    static ResourceLocation sThermalBoost(static_cast<_TEXTURE_NAME>(0xad));
-    const ResourceLocation* boundThermalTexture = &sThermalDefault;
-
-    mMinecraft->mTextures->bindTexture(&sThermalDefault);
+    const ResourceLocation* boundTexture = &sThermalTexture;
+    mMinecraft->mTextures->bindTexture(&sThermalTexture);
     GlStateManager::disableFog();
     GlStateManager::disableLighting();
     GlStateManager::disableCull();
@@ -2509,66 +2506,19 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
     GlStateManager::blendFunc(4, 5);
     GlStateManager::depthMask(false);
 
-    Tesselator* tesselator = Tesselator::getInstance();
-    BufferBuilder* builder = tesselator->getBuilder();
-
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     boost::shared_ptr<Entity> camera = getCamera();
-
-    const float cameraX =
-        static_cast<float>((camera->mX - camera->mXo) * partialTick + camera->mXo);
-    const float cameraY =
-        static_cast<float>((camera->mY - camera->mYo) * partialTick + camera->mYo);
-    const float cameraZ =
-        static_cast<float>((camera->mZ - camera->mZo) * partialTick + camera->mZo);
-    builder->offset(-cameraX, -cameraY, -cameraZ);
+    builder->offset(-static_cast<float>((camera->mX - camera->mXOld) * partialTick + camera->mXOld),
+                    -static_cast<float>((camera->mY - camera->mYOld) * partialTick + camera->mYOld),
+                    -static_cast<float>((camera->mZ - camera->mZOld) * partialTick + camera->mZOld));
 
     std::vector<ThermalAreaRuleDefinition*> thermalAreas;
     ruleset->getThermalAreas(&thermalAreas);
 
-    static const float kThermalCompareZero = 0.0f;
-    static const float kAreaExpandFactor = 0.7f;
-    static const float kBlockScale = 0.0625f;
-    static const float kTwoPi = 6.2831854820251465f;
-    static const float kCornerCount = 4.0f;
-    static const float kPerimeterDivisor = 2.0f;
-    static const float kPhaseScale = 0.125f;
-    static const float kAngleStepScale = 2.132499933242798f;
-    static const double kAlphaReference = 1.0;
-    static const float kThermalPhaseStepNegative = -1.0f;
-    static const float kThermalPhaseStepPositive = 1.0f;
-    static const float kWidthExpand = 4.0f;
-    static const float kDepthPad = 5.0f;
-    static const float kCornerScale = 1.5f;
-    static const float kCornerScaleAlt = -2.5f;
-    static const float kPerimeterScale = 0.25f;
-    static const float kBlockOffset = 1.25f;
-    static const float kRainPhaseMul = 0.03333333507180214f;
-    static const float kRainPhaseAdd = 0.125f;
-    static const float kEdgeStep = 0.125f;
-    static const float kEdgeStepHalf = 0.375f;
-
-    float thermalVertsX[16];
-    float thermalVertsY[16];
-    float thermalVertsZ[16];
-    float thermalInnerX[16];
-    float thermalInnerY[16];
-    float thermalInnerZ[16];
-    double edgeLengths[16];
-
-    const int rainTime = static_cast<int>(mTickCount);
-    const float rainPhaseBase = static_cast<float>(rainTime) + partialTick;
-
-    for (std::vector<ThermalAreaRuleDefinition*>::iterator areaIt = thermalAreas.begin();
-         areaIt != thermalAreas.end(); ++areaIt)
+    for (std::vector<ThermalAreaRuleDefinition*>::iterator it = thermalAreas.begin(); it != thermalAreas.end(); ++it)
     {
-        ThermalAreaRuleDefinition* rule = *areaIt;
-        if (!rule->isEnabled())
-        {
-            continue;
-        }
-
-        boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-        if (!rule->getConditionsMet(cameraEntity))
+        ThermalAreaRuleDefinition* rule = *it;
+        if (!rule->isEnabled() || !rule->getConditionsMet(mMinecraft->mCameraEntity))
         {
             continue;
         }
@@ -2579,280 +2529,226 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
             continue;
         }
 
-        const double liftForce = rule->getLiftForceModifier();
-        const double liftSpeed = rule->getLiftSpeed();
-        const double maxHeight = rule->getMaxHeight();
-        const double speedBoost = rule->getElytraSpeedBoost();
-
-        if (!rule->isEnabled() || liftForce <= kThermalCompareZero)
+        if (rule->getElytraSpeedBoost() <= 0.0 && rule->getLiftSpeed() >= 0.0)
         {
-            if (!rule->isEnabled() || kThermalCompareZero <= liftSpeed)
+            const float radiusX = static_cast<float>(static_cast<int>(area->mMaxX - area->mMinX)) * 0.5f;
+            const float radiusZ = static_cast<float>(static_cast<int>(area->mMaxZ - area->mMinZ)) * 0.5f;
+            const float centerX = static_cast<float>(area->mMinX + radiusX);
+            const float centerZ = static_cast<float>(area->mMinZ + radiusZ);
+            for (int corner = 0; corner < 8; ++corner)
             {
-                const double expandX = static_cast<double>(static_cast<float>((area->mMaxX - area->mMinX) * kBlockScale));
-                const double expandZ = static_cast<double>(static_cast<float>((area->mMaxZ - area->mMinZ) * kBlockScale));
-                const double centerX = static_cast<double>(static_cast<float>(area->mMinX + expandX));
-                const double centerZ = static_cast<double>(static_cast<float>(area->mMinZ + expandZ));
-
-                for (int corner = 0; corner < 8; ++corner)
-                {
-                    const float angle = kTwoPi * (static_cast<float>(corner) - 2.0f) * kAngleStepScale;
-                    const float cosAngle = cosf(angle);
-                    const float sinAngle = sinf(angle);
-                    thermalVertsX[corner] = static_cast<float>(expandX * cosAngle + centerX);
-                    thermalVertsZ[corner] = static_cast<float>(expandZ * sinAngle + centerZ);
-                    const float angle2 = kTwoPi * (static_cast<float>(corner + 1) - 2.0f) * kAngleStepScale;
-                    thermalVertsX[corner + 8] = static_cast<float>(expandX * cosf(angle2) + centerX);
-                    thermalVertsZ[corner + 8] = static_cast<float>(expandZ * sinf(angle2) + centerZ);
-                }
-
-                double perimeter = 0.0;
-                for (int edge = 0; edge < 8; ++edge)
-                {
-                    const int next = (edge + 1) % 8;
-                    const double edgeLength =
-                        sqrt((thermalVertsX[next] - thermalVertsX[edge]) *
-                                 (thermalVertsX[next] - thermalVertsX[edge]) +
-                             (thermalVertsZ[next] - thermalVertsZ[edge]) *
-                                 (thermalVertsZ[next] - thermalVertsZ[edge]));
-                    edgeLengths[edge] = edgeLength;
-                    perimeter += edgeLength;
-                }
-
-                const double perimeterAvg = perimeter / kPerimeterDivisor;
-                const int blockX = static_cast<int>(area->mMinX + 0.5);
-                const int blockZ = static_cast<int>(area->mMinZ + 0.5);
-                const int seed = blockX * blockX * 0xC31 + blockX * 0x2B24ABB ^
-                                 blockZ * blockZ * 0x66397 + blockZ * 0x35C1;
-                mRandom.setSeed(seed);
-
-                const float rainPhase = rainPhaseBase * kRainPhaseMul + static_cast<float>(mRandom.nextDouble());
-                const float rainOffset = static_cast<float>(mRandom.nextDouble() + rainPhaseBase * mRandom.nextGaussian() * 0.01f);
-                builder->begin();
-
-                if (!rule->isEnabled() || speedBoost <= kAlphaReference)
-                {
-                    if (!rule->isEnabled() || maxHeight <= kThermalCompareZero)
-                    {
-                        if (rule->isEnabled() && liftSpeed != kThermalCompareZero)
-                        {
-                            Minecraft::GetInstance()->getColourTable()->getColour(
-                                eMinecraftColour_Thermal_Constant);
-                            boundThermalTexture = &sThermalTinted;
-                        }
-                    }
-                    else
-                    {
-                        Minecraft::GetInstance()->getColourTable()->getColour(
-                            eMinecraftColour_Thermal_ConstantToHeight);
-                        boundThermalTexture = &sThermalTinted;
-                    }
-                }
-                else
-                {
-                    Minecraft::GetInstance()->getColourTable()->getColour(
-                        eMinecraftColour_Thermal_Lift);
-                    boundThermalTexture = &sThermalDefault;
-                }
-
-                if (boundThermalTexture != &sThermalDefault)
-                {
-                    mMinecraft->mTextures->bindTexture(boundThermalTexture);
-                }
-
-                BlockPos samplePos(area->mMinX, area->mMinY, area->mMinZ);
-                const int brightness = mMinecraft->mLevel->getLightColor(samplePos, 0, -1);
-                const int lightValue = brightness * 3 + 0xF000F0;
-                const int lightIndex = lightValue / 4;
-
-                const double spanX = static_cast<double>(static_cast<float>(area->mMaxX - area->mMinX));
-                const double spanOffset = rainOffset;
-                double rowPhase = static_cast<double>(static_cast<float>(mRandom.nextDouble() * kRainPhaseAdd + rainPhase * kPhaseScale));
-                double rowOffset = spanOffset;
-
-                for (int edge = 0; edge < 8; ++edge)
-                {
-                    const int next = (edge + 1) % 8;
-                    const double edgeLength = edgeLengths[edge];
-                    const double xBase = static_cast<double>(static_cast<float>(area->mMinX + spanX * kEdgeStep + area->mMinX));
-                    const double zBase = rowOffset;
-                    const double yCoord = static_cast<double>(static_cast<float>(rowPhase));
-                    const double xNext = static_cast<double>(static_cast<float>(xBase + spanX * kEdgeStepHalf));
-                    builder->blockRainQuad(
-                        static_cast<float>(xBase), static_cast<float>(thermalVertsX[edge]),
-                        static_cast<float>(thermalVertsZ[edge]), static_cast<float>(rainPhaseBase), static_cast<float>(zBase),
-                        static_cast<float>(xNext), static_cast<float>(thermalVertsX[next]),
-                        static_cast<float>(thermalVertsZ[next]), static_cast<float>(rainPhaseBase), static_cast<float>(yCoord),
-                        static_cast<float>(zBase), static_cast<float>(thermalVertsX[next]),
-                        static_cast<float>(thermalVertsZ[next]), static_cast<float>(rainPhaseBase), static_cast<float>(yCoord + edgeLength / perimeterAvg),
-                        static_cast<float>(xBase), static_cast<float>(thermalVertsX[edge]),
-                        static_cast<float>(thermalVertsZ[edge]), static_cast<float>(rainPhaseBase), static_cast<float>(yCoord + edgeLength / perimeterAvg),
-                        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, lightIndex);
-                    rowPhase += edgeLength / perimeterAvg;
-                }
-
-                builder->end();
+                const float angle = Mth::PI * 2.0f * static_cast<float>(corner) * 0.125f;
+                sOutlineX[corner] = radiusX * cosf(angle) + centerX;
+                sOutlineZ[corner] = radiusZ * sinf(angle) + centerZ;
             }
-            else
+
+            double perimeter = 0.0;
+            for (int corner = 0; corner < 8; ++corner)
             {
-                const float expandX = static_cast<float>((area->mMaxX - area->mMinX - kBlockScale) * kAreaExpandFactor);
-                const float expandZ = static_cast<float>((area->mMaxZ - area->mMinZ - kBlockScale) * kAreaExpandFactor);
-                const float expandInnerX = expandX * kAreaExpandFactor;
-                const float expandInnerZ = expandZ * kAreaExpandFactor;
-                AABB* centerBox = area;
-                Vec3* center = area->getCenter();
-                const float centerX = static_cast<float>(center->x);
-                const float centerY = static_cast<float>(center->y);
-                const float centerZ = static_cast<float>(center->z);
-                const float centerW = static_cast<float>(centerBox->mMaxZ);
+                const int next = corner + 1 < 8 ? corner + 1 : 0;
+                const double dx = sOutlineX[next] - sOutlineX[corner];
+                const double dz = sOutlineZ[next] - sOutlineZ[corner];
+                sEdgeLengths[corner] = sqrt(dx * dx + dz * dz);
+                perimeter += sEdgeLengths[corner];
+            }
+            const double segments = static_cast<double>(Math::round(perimeter / 3.059999942779541));
+            const int seedX = static_cast<int>(area->mMinX);
+            const int seedZ = static_cast<int>(area->mMinZ);
+            mRandom.setSeed(static_cast<long long>((seedX * seedX * 0xC31 + seedX * 0x2B24ABB)
+                                                   ^ (seedZ * seedZ * 0x66397 + seedZ * 0x35C1)));
+            const float segmentLength = static_cast<float>(perimeter / segments);
+            const float time = static_cast<float>(static_cast<int>(mTickCount)) + partialTick;
+            double u = mRandom.nextDouble() + time * 0.011111111f;
+            const double vStart = -(mRandom.nextDouble() + time * 0.0055555557f);
+            builder->begin();
 
-                const unsigned int boostDirection = rule->getBoostDirection();
-                int cornerCount = 2;
-                int cornerIndex = 0;
-                int edgeIndex = 8;
-                int stepIndex = 1;
+            int colour = 0;
+            const ResourceLocation* texture = &sThermalTexture;
+            if (rule->getLiftForceModifier() > 1.0)
+            {
+                colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Lift);
+            }
+            else if (rule->getMaxHeight() > 0.0)
+            {
+                colour = Minecraft::GetInstance()->getColourTable()->getColour(
+                    eMinecraftColour_Thermal_ConstantToHeight);
+                texture = &sThermalTintedTexture;
+            }
+            else if (rule->getLiftSpeed() != 0.0)
+            {
+                colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Constant);
+                texture = &sThermalTintedTexture;
+            }
+            if (texture != boundTexture)
+            {
+                boundTexture = texture;
+                mMinecraft->mTextures->bindTexture(texture);
+            }
+            const float red = static_cast<float>((colour >> 16) & 0xFF) / 255.0f;
+            const float green = static_cast<float>((colour >> 8) & 0xFF) / 255.0f;
+            const float blue = static_cast<float>(colour & 0xFF) / 255.0f;
 
-                if (boostDirection < 2)
-                {
-                    thermalVertsY[0] = centerY - expandInnerX;
-                    thermalVertsY[4] = centerY + expandInnerX;
-                    thermalInnerZ[0] = centerW + expandInnerZ;
-                    thermalInnerZ[4] = centerW - expandInnerZ * kCornerScaleAlt;
-                    thermalInnerY[0] = expandInnerX * kCornerScale + centerY;
-                    thermalInnerZ[8] = centerW + expandInnerZ * kCornerScaleAlt;
-                }
-                else if (boostDirection < 4)
-                {
-                    thermalVertsY[0] = centerY - expandInnerX;
-                    thermalVertsY[4] = centerY + expandInnerX;
-                    thermalInnerY[0] = expandInnerX * kCornerScale + centerY;
-                    thermalVertsX[0] = centerX + expandZ;
-                    thermalVertsX[4] = centerX - expandZ;
-                    thermalInnerX[0] = centerX + expandZ * kCornerScaleAlt;
-                    thermalVertsX[8] = centerX - expandZ * kCornerScaleAlt;
-                }
-                else if (boostDirection < 6)
-                {
-                    thermalVertsY[0] = centerY - expandInnerX;
-                    thermalVertsY[4] = centerY + expandInnerX;
-                    thermalInnerZ[0] = centerW + expandInnerZ;
-                    thermalInnerZ[4] = centerW - expandInnerZ * kCornerScaleAlt;
-                    thermalInnerY[0] = expandInnerX * kCornerScale + centerY;
-                    thermalInnerZ[8] = centerW + expandInnerZ * kCornerScaleAlt;
-                }
-                else if (boostDirection < 8)
-                {
-                    thermalVertsY[0] = centerY - expandInnerX;
-                    thermalVertsY[4] = centerY + expandInnerX;
-                    thermalInnerY[0] = expandInnerX * kCornerScale + centerY;
-                    thermalVertsX[0] = centerX + expandZ;
-                    thermalVertsX[4] = centerX - expandZ;
-                    thermalInnerX[0] = centerX + expandZ * kCornerScaleAlt;
-                    thermalVertsX[8] = centerX - expandZ * kCornerScaleAlt;
-                }
+            const int lightColor = mMinecraft->mLevel->getLightColor(BlockPos(area->mMinX, area->mMinY, area->mMinZ), 0, -1);
+            const int light = (lightColor * 3 + 0xF000F0) / 4;
+            const double vSpan = ((area->mMaxY - area->mMinY) * 0.0625 + vStart) - vStart;
+            const float height = static_cast<float>(static_cast<int>(area->mMaxY - area->mMinY));
 
-                double perimeter = 0.0;
-                for (int loop = 0; loop < cornerCount; ++loop)
+            for (int corner = 0; corner < 8; ++corner)
+            {
+                const int next = corner + 1 < 8 ? corner + 1 : 0;
+                const double nextU = u + sEdgeLengths[corner] / segmentLength;
+                const float u0 = static_cast<float>(u);
+                const float u1 = static_cast<float>(nextU);
+                float y0 = static_cast<float>(area->mMinY);
+                float v0 = static_cast<float>(vStart);
+                for (int band = 0; band < 3; ++band)
                 {
-                    const int next = (cornerIndex + 1) % 4;
-                    double edgeLength;
-                    if (boostDirection < 2)
+                    const float y1 = height * COLUMN_BAND_HEIGHTS[band] + y0;
+                    const float v1 = v0 + static_cast<float>(vSpan * COLUMN_BAND_HEIGHTS[band]);
+                    builder->blockRainQuad(sOutlineX[corner], y0, sOutlineZ[corner], u0, v0,
+                                           sOutlineX[next], y0, sOutlineZ[next], u1, v0,
+                                           sOutlineX[next], y1, sOutlineZ[next], u1, v1,
+                                           sOutlineX[corner], y1, sOutlineZ[corner], u0, v1,
+                                           red, green, blue, COLUMN_ALPHAS[band],
+                                           red, green, blue, COLUMN_ALPHAS[band + 1], light);
+                    y0 = y1;
+                    v0 = v1;
+                }
+                u = nextU;
+            }
+            builder->end();
+            continue;
+        }
+
+        const float width = static_cast<float>((area->mMaxX - area->mMinX) - 0.0625);
+        const float halfHeight = static_cast<float>((area->mMaxY - area->mMinY) - 0.0625) * 0.5f;
+        const float depth = static_cast<float>((area->mMaxZ - area->mMinZ) - 0.0625);
+        const float halfDepth = depth * 0.5f;
+        const float halfWidth = width * 0.5f;
+        const float centerX = static_cast<float>(area->getCenter()->x);
+        const float centerY = static_cast<float>(area->getCenter()->y);
+        const float centerZ = static_cast<float>(area->getCenter()->z);
+        const unsigned int boostDirection = rule->getBoostDirection();
+        const bool alongX = boostDirection <= 1 || (boostDirection >= 4 && boostDirection <= 5);
+        const bool alongZ = (boostDirection >= 2 && boostDirection <= 3) || (boostDirection >= 6 && boostDirection <= 7);
+
+        if (alongX || alongZ)
+        {
+            sOutlineY[0] = centerY - halfHeight;
+            sOutlineY[1] = centerY - halfHeight;
+            sOutlineY[2] = centerY + halfHeight;
+            sOutlineY[3] = centerY + halfHeight;
+            sHeadY[0] = centerY - halfHeight;
+            sHeadY[1] = centerY - halfHeight;
+            sHeadY[2] = halfHeight * 1.5f + centerY;
+            sHeadY[3] = halfHeight * 1.5f + centerY;
+        }
+        if (alongX)
+        {
+            sOutlineZ[0] = centerZ - halfDepth;
+            sOutlineZ[1] = centerZ + halfDepth;
+            sOutlineZ[2] = centerZ + halfDepth;
+            sOutlineZ[3] = centerZ - halfDepth;
+            sHeadZ[0] = centerZ - halfDepth * 1.5f;
+            sHeadZ[1] = centerZ + halfDepth * 1.5f;
+            sHeadZ[2] = centerZ + halfDepth * 1.5f;
+            sHeadZ[3] = centerZ - halfDepth * 1.5f;
+        }
+        else if (alongZ)
+        {
+            sOutlineX[0] = centerX - halfWidth;
+            sOutlineX[1] = centerX + halfWidth;
+            sOutlineX[2] = centerX + halfWidth;
+            sOutlineX[3] = centerX - halfWidth;
+            sHeadX[0] = centerX - halfWidth * 1.5f;
+            sHeadX[1] = centerX + halfWidth * 1.5f;
+            sHeadX[2] = centerX + halfWidth * 1.5f;
+            sHeadX[3] = centerX - halfWidth * 1.5f;
+        }
+
+        const int seedX = static_cast<int>(area->mMinX + 0.03125);
+        const int seedZ = static_cast<int>(area->mMinZ + 0.03125);
+        mRandom.setSeed(static_cast<long long>((seedX * seedX * 0xC31 + seedX * 0x2B24ABB)
+                                               ^ (seedZ * seedZ * 0x66397 + seedZ * 0x35C1)));
+        const float time = static_cast<float>(static_cast<int>(mTickCount)) + partialTick;
+        const double scroll = mRandom.nextDouble() + time * 0.033333335f;
+        builder->begin();
+
+        int colour;
+        if (boostDirection >= 4 && boostDirection <= 7)
+        {
+            colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Speedboost2);
+        }
+        else
+        {
+            colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Speedboost);
+        }
+        if (boundTexture != &sBoostArrowTexture)
+        {
+            boundTexture = &sBoostArrowTexture;
+            mMinecraft->mTextures->bindTexture(&sBoostArrowTexture);
+        }
+        const float red = static_cast<float>((colour >> 16) & 0xFF) / 255.0f;
+        const float green = static_cast<float>((colour >> 8) & 0xFF) / 255.0f;
+        const float blue = static_cast<float>(colour & 0xFF) / 255.0f;
+
+        const int lightColor = mMinecraft->mLevel->getLightColor(BlockPos(area->mMinX, area->mMinY, area->mMinZ), 0, -1);
+        const int light = (lightColor * 3 + 0xF000F0) / 4;
+        const bool forwards = boostDirection == 1 || boostDirection == 3 || boostDirection == 5 || boostDirection == 7;
+        const float scrollStep = forwards ? 1.0f : -1.0f;
+        const bool headAtStart = boostDirection == 0 || boostDirection == 2 || (boostDirection >= 4 && boostDirection <= 7);
+        const bool headAtEnd = boostDirection == 1 || boostDirection == 3 || (boostDirection >= 4 && boostDirection <= 7);
+
+        if (alongX || alongZ)
+        {
+            for (int side = 0; side < 4; ++side)
+            {
+                const int next = side + 1 < 4 ? side + 1 : 0;
+                float start = static_cast<float>((alongX ? area->mMinX : area->mMinZ) - 4.0);
+                float v0 = static_cast<float>(scroll);
+                for (int segment = 0; segment < 3; ++segment)
+                {
+                    const float end = start + (segment == 1 ? (alongX ? width : depth) : 4.0f);
+                    const float v1 = v0 + scrollStep;
+                    const int alphaStart = forwards ? 3 - segment : segment;
+                    const int alphaEnd = forwards ? 3 - (segment + 1) : segment + 1;
+                    const bool headStart = headAtStart && segment == 0;
+                    const bool headEnd = headAtEnd && segment == 2;
+                    if (alongX)
                     {
-                        edgeLength = sqrt((thermalVertsY[next] - thermalVertsY[cornerIndex]) *
-                                              (thermalVertsY[next] - thermalVertsY[cornerIndex]) +
-                                          (thermalInnerZ[next] - thermalInnerZ[cornerIndex]) *
-                                              (thermalInnerZ[next] - thermalInnerZ[cornerIndex]));
-                    }
-                    else if (boostDirection < 6)
-                    {
-                        edgeLength = sqrt((thermalVertsX[next] - thermalVertsX[cornerIndex]) *
-                                              (thermalVertsX[next] - thermalVertsX[cornerIndex]) +
-                                          (thermalVertsY[next] - thermalVertsY[cornerIndex]) *
-                                              (thermalVertsY[next] - thermalVertsY[cornerIndex]));
+                        const float* startY = headStart ? sHeadY : sOutlineY;
+                        const float* startZ = headStart ? sHeadZ : sOutlineZ;
+                        const float* endY = headEnd ? sHeadY : sOutlineY;
+                        const float* endZ = headEnd ? sHeadZ : sOutlineZ;
+                        builder->blockRainQuad(start, startY[side], startZ[side], 0.0f, v0,
+                                               start, startY[next], startZ[next], 1.0f, v0,
+                                               end, endY[next], endZ[next], 1.0f, v1,
+                                               end, endY[side], endZ[side], 0.0f, v1,
+                                               red, green, blue, ARROW_ALPHAS[alphaStart],
+                                               red, green, blue, ARROW_ALPHAS[alphaEnd], light);
                     }
                     else
                     {
-                        edgeLength = edgeLengths[edgeIndex / 16];
+                        const float* startX = headStart ? sHeadX : sOutlineX;
+                        const float* startY = headStart ? sHeadY : sOutlineY;
+                        const float* endX = headEnd ? sHeadX : sOutlineX;
+                        const float* endY = headEnd ? sHeadY : sOutlineY;
+                        builder->blockRainQuad(startX[side], startY[side], start, 0.0f, v0,
+                                               startX[next], startY[next], start, 1.0f, v0,
+                                               endX[next], endY[next], end, 1.0f, v1,
+                                               endX[side], endY[side], end, 0.0f, v1,
+                                               red, green, blue, ARROW_ALPHAS[alphaStart],
+                                               red, green, blue, ARROW_ALPHAS[alphaEnd], light);
                     }
-                    edgeLengths[edgeIndex] = edgeLength;
-                    perimeter += edgeLength;
-                    edgeIndex += 16;
-                    cornerIndex += 2;
-                    stepIndex += 2;
+                    start = end;
+                    v0 = v1;
                 }
-
-                const int blockX = static_cast<int>(area->mMinX + 0.5);
-                const int blockZ = static_cast<int>(area->mMinZ + 0.5);
-                const int seed = blockX * blockX * 0xC31 + blockX * 0x2B24ABB ^
-                                 blockZ * blockZ * 0x66397 + blockZ * 0x35C1;
-                mRandom.setSeed(seed);
-
-                const float rainPhase = rainPhaseBase + static_cast<float>(mRandom.nextDouble());
-                const float rainOffset = -static_cast<float>(mRandom.nextDouble() + rainPhaseBase * kPhaseScale);
-                builder->begin();
-
-                if (boostDirection < 4 || boostDirection > 7)
-                {
-                    Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Speedboost);
-                }
-                else
-                {
-                    Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Speedboost2);
-                }
-
-                if (boundThermalTexture != &sThermalBoost)
-                {
-                    boundThermalTexture = &sThermalBoost;
-                    mMinecraft->mTextures->bindTexture(boundThermalTexture);
-                }
-
-                BlockPos samplePos(area->mMinX, area->mMinY, area->mMinZ);
-                const int brightness = mMinecraft->mLevel->getLightColor(samplePos, 0, -1);
-                const int lightValue = brightness * 3 + 0xF000F0;
-                const int lightIndex = lightValue / 4;
-
-                const float spanX = static_cast<float>(area->mMaxX - area->mMinX);
-                const float spanZ = static_cast<float>(area->mMaxZ - area->mMinZ);
-                float rowPhase = static_cast<float>(rainOffset);
-                float rowOffset = static_cast<float>(area->mMinZ - kBlockScale);
-
-                for (int edge = 0; edge < 4; ++edge)
-                {
-                    const int next = (edge + 1) % 4;
-                    for (int slice = 0; slice < 3; ++slice)
-                    {
-                        const float phaseStep = (boostDirection & 1U) != 0
-                                                     ? kThermalPhaseStepPositive
-                                                     : kThermalPhaseStepNegative;
-                        const float phaseTop = rowPhase + phaseStep;
-                        if (boostDirection == 0)
-                        {
-                            builder->blockRainQuad(
-                                spanX, thermalInnerY[edge], thermalInnerZ[edge], rainPhaseBase, rowPhase,
-                                spanX, thermalInnerY[next], thermalInnerZ[next], rainPhaseBase, phaseTop,
-                                spanX, thermalInnerY[next], thermalInnerZ[next], rainPhaseBase, phaseTop,
-                                spanX, thermalInnerY[edge], thermalInnerZ[edge], rainPhaseBase, rowPhase,
-                                1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, lightIndex);
-                        }
-                        else
-                        {
-                            builder->blockRainQuad(
-                                thermalVertsX[edge], thermalVertsY[edge], rowOffset, rainPhaseBase, rowPhase,
-                                thermalVertsX[next], thermalVertsY[next], rowOffset, rainPhaseBase, phaseTop,
-                                thermalVertsX[next], thermalVertsY[next], rowOffset, rainPhaseBase, phaseTop,
-                                thermalVertsX[edge], thermalVertsY[edge], rowOffset, rainPhaseBase, rowPhase,
-                                1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, lightIndex);
-                        }
-                        rowPhase = phaseTop;
-                    }
-                    rowOffset += static_cast<float>(edgeLengths[edge] / (perimeter * kPerimeterScale));
-                }
-
-                builder->end();
             }
         }
+        builder->end();
     }
 
-    builder->offset(cameraX, cameraY, cameraZ);
+    builder->offset(0.0f, 0.0f, 0.0f);
     GlStateManager::disableLighting();
     GlStateManager::enableTexture();
     GlStateManager::depthMask(true);
@@ -2993,8 +2889,8 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
     GlStateManager::cullFace(1);
     Tesselator::getInstance()->end();
 
-    static ResourceLocation sGhostBodyTexture(static_cast<_TEXTURE_NAME>(0xAE));
-    static ResourceLocation sGhostElytraTexture(static_cast<_TEXTURE_NAME>(0xA8));
+    static ResourceLocation sGhostBodyTexture(TN_MOB_GLIDE_GHOST);
+    static ResourceLocation sGhostElytraTexture(TN_ITEM_ELYTRA);
     mMinecraft->mTextures->bindTexture(&sGhostBodyTexture);
     humanoidModel->overrideRender(kModelScale, true);
     mMinecraft->mTextures->bindTexture(&sGhostElytraTexture);
@@ -3122,16 +3018,16 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     const float alphaRef = 0.01f;
     GlStateManager::alphaFunc(4, alphaRef);
 
-    static ResourceLocation snowLocation(static_cast<_TEXTURE_NAME>(6));
-    static ResourceLocation rainLocation(static_cast<_TEXTURE_NAME>(7));
+    static ResourceLocation snowLocation(TN_ENVIRONMENT_RAIN);
+    static ResourceLocation rainLocation(TN_ENVIRONMENT_SNOW);
 
     MemSect(0x1f);
     mMinecraft->mTextures->bindTexture(&rainLocation);
     MemSect(0);
 
-    const double cameraOldX = camera->mXo;
-    const double cameraOldY = camera->mYo;
-    const double cameraOldZ = camera->mZo;
+    const double cameraOldX = camera->mXOld;
+    const double cameraOldY = camera->mYOld;
+    const double cameraOldZ = camera->mZOld;
     const float cameraX = static_cast<float>((camera->mX - cameraOldX) * partialTick + cameraOldX);
     const float cameraY = static_cast<float>((camera->mY - cameraOldY) * partialTick + cameraOldY);
     const float cameraZ = static_cast<float>((camera->mZ - cameraOldZ) * partialTick + cameraOldZ);
@@ -3236,8 +3132,8 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                         (static_cast<double>(dropSeed) + static_cast<double>(partialTick)) * 0.03125 *
                         (mRandom.nextDouble() + 3.0);
 
-                    const float dx = static_cast<float>((blockX - 0.5f) - cameraBlockX);
-                    const float dz = static_cast<float>((blockZ - 0.5f) - cameraBlockZ);
+                    const double dx = static_cast<double>(blockX + 0.5f) - camera->mX;
+                    const double dz = static_cast<double>(blockZ + 0.5f) - camera->mZ;
                     const float dist = Mth::sqrt(dx * dx + dz * dz) / static_cast<float>(renderRadius);
                     const float alpha =
                         (-(dist * dist - 1.0f) * 0.5f + 0.5f) * rainLevel * rainLevel;
@@ -3298,9 +3194,9 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             const double rainOffsetB = rainRandomB +
                 static_cast<double>(rainTickPhase * static_cast<float>(rainGaussianB) * 0.001f);
 
-            const float dx = static_cast<float>((blockX - 0.5f) - cameraBlockX);
-            const float dz = static_cast<float>((blockZ - 0.5f) - cameraBlockZ);
-            const float dist = static_cast<float>(std::sqrt(dx * dx + dz * dz) / renderRadius);
+            const double dx = static_cast<double>(blockX + 0.5f) - camera->mX;
+            const double dz = static_cast<double>(blockZ + 0.5f) - camera->mZ;
+            const float dist = static_cast<float>(std::sqrt(dx * dx + dz * dz)) / static_cast<float>(renderRadius);
             builder->offset(negCameraX, negCameraY, negCameraZ);
 
             BlockPos lightPos(blockX, renderY, blockZ);
@@ -3369,7 +3265,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     setupFog(-1, partialTick);
     mMinecraft->mLevelRenderer->renderSky(partialTick);
 
-    if (mMinecraft->mTexturePackRepository->getSelectedId() == 0x402)
+    if (mMinecraft->mTexturePackRepository->getSelected()->getId() == 0x402)
     {
         mMinecraft->mLevelRenderer->renderHaloRing(partialTick);
     }
@@ -3383,9 +3279,9 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
 
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
     Entity* camera = cameraEntity.get();
-    const double cameraX = (camera->mX - camera->mXo) * partialTick + camera->mXo;
-    const double cameraY = (camera->mY - camera->mYo) * partialTick + camera->mYo;
-    const double cameraZ = (camera->mZ - camera->mZo) * partialTick + camera->mZo;
+    const double cameraX = (camera->mX - camera->mXOld) * partialTick + camera->mXOld;
+    const double cameraY = (camera->mY - camera->mYOld) * partialTick + camera->mYOld;
+    const double cameraZ = (camera->mZ - camera->mZOld) * partialTick + camera->mZOld;
     frustumCuller.prepare(cameraX, cameraY, cameraZ);
 
     Culler* culler = reinterpret_cast<Culler*>(&frustumCuller);
@@ -3404,7 +3300,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     setupFog(0, partialTick);
     GlStateManager::enableFog();
 
-    static ResourceLocation sTerrainTexture(static_cast<_TEXTURE_NAME>(0xf1));
+    static ResourceLocation sTerrainTexture(TN_BLOCK_ATLAS);
     MemSect(0x1f);
     mMinecraft->mTextures->bindTexture(&sTerrainTexture);
     MemSect(0);
@@ -3648,7 +3544,7 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
     const int screenHeight = static_cast<int>(calculator.getHeight());
 
     int fpsCap = fjGetFpsCap(mMinecraft->mOptions != NULL
-                                 ? *reinterpret_cast<int*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x18)
+                                 ? mMinecraft->mOptions->mFpsLimit
                                  : 0);
     const int averageFps = Minecraft::getAverageFps();
     if (averageFps < fpsCap)
@@ -3696,34 +3592,33 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
 
 int GameRenderer::shouldRenderBlockOutline()
 {
-    if (!mRenderBlockOutline || mMinecraft == NULL ||
-        (mMinecraft->mOptions != NULL && mMinecraft->mOptions->mHideGui))
+    if (!mRenderBlockOutline)
         return 0;
+
     boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    if (!camera)
-        return 0;
-    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(camera);
-    if (mMinecraft->mGameMode != NULL &&
-        mMinecraft->mGameMode->GetGameType() == GameType::SPECTATOR)
-        return 0;
-    if (player && player->mAbilities.mFlying)
-        return 0;
-    if (mMinecraft->mHitResult == NULL || mMinecraft->mHitResult->mType != HitResult::BLOCK ||
-        mMinecraft->mLevel == NULL)
-        return 0;
-    BlockPos pos = mMinecraft->mHitResult->getBlockPos();
-    Block* block = mMinecraft->mLevel->getBlock(pos);
-    if (block == NULL)
-        return 0;
-    if (player && player->mInventory != NULL) {
-        not_null_ptr<ItemInstance> held = player->mInventory->getSelected();
-        ItemInstance* item = held.get();
-        if (item != NULL && !item->isEmpty() &&
-            (item->hasAdventureModeBreakTagForBlock(block) ||
-             item->hasAdventureModePlaceTagForBlock(block)))
-            return 1;
+    bool render = (camera->GetType() & EntityType::PLAYER) == EntityType::PLAYER && !mMinecraft->mOptions->mHideGui;
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(camera);
+    if (render && !player->mAbilities.mMayBuild)
+    {
+        not_null_ptr<ItemInstance> item = player->getMainHandItem();
+        const HitResult* hit = mMinecraft->mHitResult;
+        if (hit != NULL && hit->mType == HitResult::BLOCK)
+        {
+            BlockPos pos = hit->getBlockPos();
+            Block* block = mMinecraft->mLevel->getBlockState(pos)->getBlock();
+            if (mMinecraft->mGameMode->GetGameType() == GameType::SPECTATOR)
+            {
+                render = block->mBlockEntity
+                    && (mMinecraft->mLevel->getBlockEntity(pos)->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER;
+            }
+            else
+            {
+                render = !item->isEmpty()
+                    && (item->hasAdventureModeBreakTagForBlock(block) || item->hasAdventureModePlaceTagForBlock(block));
+            }
+        }
     }
-    return 1;
+    return render ? 1 : 0;
 }
 
 void GameRenderer::resetData()

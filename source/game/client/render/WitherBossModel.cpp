@@ -58,13 +58,15 @@ WitherBossModel::WitherBossModel(float scale, const ModelDefinition& modelDefini
         mHeads[0] = new ModelPartSkin(this, 0, 0, NULL);
         mHeads[0]->addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8, scale);
 
-        mHeads[1] = new ModelPartSkin(this, 0, 0, NULL);
+        mHeads[1] = new ModelPartSkin(this, 32, 0, NULL);
         mHeads[1]->addBox(-4.0f, -4.0f, -4.0f, 6, 6, 6, scale);
-        mHeads[1]->setPos(-8.0f, 4.0f, 0.0f);
+        mHeads[1]->mX = -8.0f;
+        mHeads[1]->mY = 4.0f;
 
-        mHeads[2] = new ModelPartSkin(this, 0, 0, NULL);
+        mHeads[2] = new ModelPartSkin(this, 32, 0, NULL);
         mHeads[2]->addBox(-4.0f, -4.0f, -4.0f, 6, 6, 6, scale);
-        mHeads[2]->setPos(8.0f, 4.0f, 0.0f);
+        mHeads[2]->mX = 10.0f;
+        mHeads[2]->mY = 4.0f;
 
         compileSkinnedDrawlist();
         builder->useDefaultShaders();

@@ -13,9 +13,9 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/WolfCollarLayer.hpp"
 
-static ResourceLocation WOLF_LOCATION;
-static ResourceLocation WOLF_ANGRY_LOCATION;
-static ResourceLocation WOLF_TAME_LOCATION;
+static ResourceLocation WOLF_LOCATION(TN_MOB_WOLF);
+static ResourceLocation WOLF_ANGRY_LOCATION(TN_MOB_WOLF_ANGRY);
+static ResourceLocation WOLF_TAME_LOCATION(TN_MOB_WOLF_TAME);
 
 WolfRenderer::WolfRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
     : MobRenderer(dispatcher, model, shadowRadius), mCollarLayer(new WolfCollarLayer(this))

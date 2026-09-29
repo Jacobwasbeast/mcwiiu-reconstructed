@@ -21,12 +21,12 @@
 #include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/Villager.hpp"
 
-static ResourceLocation VILLAGER_LOCATION((_TEXTURE_NAME)62);
-static ResourceLocation FARMER_LOCATION((_TEXTURE_NAME)63);
-static ResourceLocation LIBRARIAN_LOCATION((_TEXTURE_NAME)64);
-static ResourceLocation PRIEST_LOCATION((_TEXTURE_NAME)65);
-static ResourceLocation SMITH_LOCATION((_TEXTURE_NAME)66);
-static ResourceLocation BUTCHER_LOCATION((_TEXTURE_NAME)67);
+static ResourceLocation VILLAGER_LOCATION(TN_MOB_VILLAGER_VILLAGER);
+static ResourceLocation FARMER_LOCATION(TN_MOB_VILLAGER_FARMER);
+static ResourceLocation LIBRARIAN_LOCATION(TN_MOB_VILLAGER_LIBRARIAN);
+static ResourceLocation PRIEST_LOCATION(TN_MOB_VILLAGER_PRIEST);
+static ResourceLocation SMITH_LOCATION(TN_MOB_VILLAGER_SMITH);
+static ResourceLocation BUTCHER_LOCATION(TN_MOB_VILLAGER_BUTCHER);
 
 VillagerRenderer::VillagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new VillagerModel(0.0F, ModelDefinition()), 0.5F)

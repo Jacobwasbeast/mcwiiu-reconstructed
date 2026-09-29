@@ -10,16 +10,16 @@
 #include "game/world/block/BlockPos.hpp"
 
 ResourceLocation BlockEntityRenderer::BREAKING_LOCATIONS[10] = {
-    ResourceLocation((_TEXTURE_NAME)136),
-    ResourceLocation((_TEXTURE_NAME)137),
-    ResourceLocation((_TEXTURE_NAME)138),
-    ResourceLocation((_TEXTURE_NAME)139),
-    ResourceLocation((_TEXTURE_NAME)140),
-    ResourceLocation((_TEXTURE_NAME)141),
-    ResourceLocation((_TEXTURE_NAME)142),
-    ResourceLocation((_TEXTURE_NAME)143),
-    ResourceLocation((_TEXTURE_NAME)144),
-    ResourceLocation((_TEXTURE_NAME)145)
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_0),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_1),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_2),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_3),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_4),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_5),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_6),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_7),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_8),
+    ResourceLocation(TN_TEXTURES_DESTROY_STAGE_9)
 };
 
 Font* BlockEntityRenderer::getFont()

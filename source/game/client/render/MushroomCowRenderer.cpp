@@ -5,7 +5,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/MushroomCowMushroomLayer.hpp"
 
-static ResourceLocation MUSHROOM_COW_LOCATION;
+static ResourceLocation MUSHROOM_COW_LOCATION(TN_MOB_REDCOW);
 
 MushroomCowRenderer::MushroomCowRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new CowModel(ModelDefinition()), 0.7f)

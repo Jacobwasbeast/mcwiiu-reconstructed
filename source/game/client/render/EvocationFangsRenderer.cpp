@@ -43,7 +43,7 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     GlStateManager::translatef(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
     GlStateManager::rotatef(90.0F - fangs->mYRot, 0.0F, 1.0F, 0.0F);
     GlStateManager::scalef(-scale, -scale, scale);
-    GlStateManager::translatef(0.0F, -0.625F, 0.0F);
+    GlStateManager::translatef(0.0F, -0.626F, 0.0F);
     mFangsModel->render(entity, static_cast<float>(progress), 0.5F, 1.75F, fangs->mYRot,
                    fangs->mXRot, 0.03125F, true);
     GlStateManager::popMatrix();
@@ -53,7 +53,7 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
 
 const ResourceLocation* EvocationFangsRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation location((_TEXTURE_NAME)197);
+    static ResourceLocation location(TN_MOB_ILLAGER_FANGS);
     return &location;
 }
 

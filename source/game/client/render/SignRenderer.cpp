@@ -19,7 +19,7 @@
 #include "game/core/XLanguage.hpp"
 
 
-static ResourceLocation SIGN_LOCATION((_TEXTURE_NAME)12);
+static ResourceLocation SIGN_LOCATION(TN_ITEM_SIGN);
 
 SignRenderer::SignRenderer()
     : mTextCacheCount(0), mCensorText(false)

@@ -9,8 +9,8 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation VEX_LOCATION((_TEXTURE_NAME)199);
-static ResourceLocation VEX_CHARGING_LOCATION((_TEXTURE_NAME)200);
+static ResourceLocation VEX_LOCATION(TN_MOB_ILLAGER_VEX);
+static ResourceLocation VEX_CHARGING_LOCATION(TN_MOB_ILLAGER_VEX_CHARGING);
 
 VexRenderer::VexRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new VexModel(ModelDefinition()), 0.3F)

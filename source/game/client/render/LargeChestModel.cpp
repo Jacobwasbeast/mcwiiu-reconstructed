@@ -8,7 +8,7 @@ LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition)
 {
     mLid = new ModelPart(this, 0, 0);
     mLid->setTexSize(128, 64);
-    mLid->addBox(3.0f, -5.0f, -14.0f, 30, 5, 14, 0.0f);
+    mLid->addBox(0.0f, -5.0f, -14.0f, 30, 5, 14, 0.0f);
     mLid->mX = 1.0f;
     mLid->mY = 7.0f;
     mLid->mZ = 15.0f;
@@ -20,9 +20,9 @@ LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition)
     mLock->mY = 7.0f;
     mLock->mZ = 15.0f;
 
-    mBottom = new ModelPart(this, 0, 0);
+    mBottom = new ModelPart(this, 0, 19);
     mBottom->setTexSize(128, 64);
-    mBottom->addBox(3.0f, 0.0f, 0.0f, 30, 10, 14, 0.0f);
+    mBottom->addBox(0.0f, 0.0f, 0.0f, 30, 10, 14, 0.0f);
     mBottom->mX = 1.0f;
     mBottom->mY = 6.0f;
     mBottom->mZ = 1.0f;

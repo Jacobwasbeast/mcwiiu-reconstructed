@@ -20,7 +20,7 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
 
-static ResourceLocation SHULKER_BOX_LOCATION;
+static ResourceLocation SHULKER_BOX_LOCATION(TN_MOB_SHULKER_ENDERGOLEM);
 
 ShulkerBoxRenderer::ShulkerBoxRenderer(ShulkerModel* model)
     : mModel(model), mShulkerModel(model)

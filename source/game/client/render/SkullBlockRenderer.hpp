@@ -24,7 +24,7 @@ public:
     virtual ~SkullBlockRenderer();
 
     void renderSkull(float x, float y, float z, const Direction* direction, float rotation,
-                     float mouthAnimation, int skullType, int destroyStage, float scale,
+                     float headPitch, int skullType, int destroyStage, float animationTime,
                      bool useDisplayList);
     virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
                         float partialTicks, int breakProgress, bool bTranslucent, float alpha,

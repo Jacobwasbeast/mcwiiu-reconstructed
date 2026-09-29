@@ -8,7 +8,7 @@
 #include "game/world/generation/ItemInHandLayer.hpp"
 #include "game/world/generation/ZombieArmorLayer.hpp"
 
-static ResourceLocation GIANT_LOCATION;
+static ResourceLocation GIANT_LOCATION(TN_ITEM_ARROWS);
 
 GiantMobRenderer::GiantMobRenderer(EntityRenderDispatcher* dispatcher, float shadowRadius)
     : MobRenderer(dispatcher, new ZombieModel(ModelDefinition()), shadowRadius * 0.5F)

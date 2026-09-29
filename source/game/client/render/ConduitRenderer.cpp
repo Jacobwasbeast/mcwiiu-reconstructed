@@ -14,12 +14,12 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/ConduitBlockEntity.hpp"
 
-static ResourceLocation SHELL_TEXTURE((_TEXTURE_NAME)233);
-static ResourceLocation ACTIVE_SHELL_TEXTURE((_TEXTURE_NAME)234);
-static ResourceLocation WIND_TEXTURE((_TEXTURE_NAME)235);
-static ResourceLocation VERTICAL_WIND_TEXTURE((_TEXTURE_NAME)236);
-static ResourceLocation CLOSED_EYE_TEXTURE((_TEXTURE_NAME)237);
-static ResourceLocation OPEN_EYE_TEXTURE((_TEXTURE_NAME)238);
+static ResourceLocation SHELL_TEXTURE(TN_ITEM_CONDUIT_CONDUIT_BASE);
+static ResourceLocation ACTIVE_SHELL_TEXTURE(TN_ITEM_CONDUIT_CONDUIT_CAGE);
+static ResourceLocation WIND_TEXTURE(TN_ITEM_CONDUIT_CONDUIT_WIND_HORIZONTAL);
+static ResourceLocation VERTICAL_WIND_TEXTURE(TN_ITEM_CONDUIT_CONDUIT_WIND_VERTICAL);
+static ResourceLocation CLOSED_EYE_TEXTURE(TN_ITEM_CONDUIT_CONDUIT_CLOSED);
+static ResourceLocation OPEN_EYE_TEXTURE(TN_ITEM_CONDUIT_CONDUIT_OPEN);
 
 ConduitRenderer::ConduitRenderer()
 {

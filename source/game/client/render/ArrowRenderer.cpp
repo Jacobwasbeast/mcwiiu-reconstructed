@@ -9,7 +9,7 @@
 #include "game/entity/projectile/Arrow.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation ARROW_LOCATION((_TEXTURE_NAME)208);
+static ResourceLocation ARROW_LOCATION(TN_ITEM_FIREWORK);
 
 ArrowRenderer::ArrowRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

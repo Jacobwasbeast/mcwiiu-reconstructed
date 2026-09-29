@@ -32,8 +32,8 @@ void BubblePopParticle::tick()
     yo = y;
     zo = z;
 
-    y -= gravity;
-    setPos(x, y, z);
+    yd -= gravity;
+    move(xd, yd, zd);
 
     if (age++ >= lifetime)
     {
@@ -44,14 +44,14 @@ void BubblePopParticle::tick()
     int frame = age * 5 / lifetime;
     if (frame < 5)
     {
-        int frameX = frame & 0x0f;
-        int frameY = frame >> 4;
+        int frameX = frame % 16;
+        int frameY = frame / 16;
         uvs = TextureUVCoordinateSet(frameX * 0.0625f + 0.375f,
                                      frameY * 0.0625f - 0.625f,
                                      (frameX + 2) * 0.0625f + 0.375f,
                                      (frameY + 2) * 0.0625f - 0.625f,
-                                     1,
-                                     1,
+                                     16,
+                                     16,
                                      1.0f);
     }
 }

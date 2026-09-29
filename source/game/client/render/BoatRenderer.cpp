@@ -18,12 +18,12 @@
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation BOAT_TEXTURES[6] = {
-    ResourceLocation((_TEXTURE_NAME)149),
-    ResourceLocation((_TEXTURE_NAME)150),
-    ResourceLocation((_TEXTURE_NAME)151),
-    ResourceLocation((_TEXTURE_NAME)152),
-    ResourceLocation((_TEXTURE_NAME)153),
-    ResourceLocation((_TEXTURE_NAME)154)
+    ResourceLocation(TN_ITEM_BOAT_BOAT_OAK),
+    ResourceLocation(TN_ITEM_BOAT_BOAT_SPRUCE),
+    ResourceLocation(TN_ITEM_BOAT_BOAT_BIRCH),
+    ResourceLocation(TN_ITEM_BOAT_BOAT_JUNGLE),
+    ResourceLocation(TN_ITEM_BOAT_BOAT_ACACIA),
+    ResourceLocation(TN_ITEM_BOAT_BOAT_DARKOAK)
 };
 
 BoatRenderer::BoatRenderer(EntityRenderDispatcher* dispatcher)

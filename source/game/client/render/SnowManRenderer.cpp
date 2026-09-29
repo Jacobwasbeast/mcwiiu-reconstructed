@@ -6,7 +6,7 @@
 #include "game/world/generation/SnowManHeadLayer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SNOWMAN_LOCATION;
+static ResourceLocation SNOWMAN_LOCATION(TN_MOB_SNOWMAN);
 
 SnowManRenderer::SnowManRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new SnowManModel(ModelDefinition()), 0.5f)

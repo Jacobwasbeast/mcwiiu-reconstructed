@@ -857,7 +857,7 @@ void BlockRenderer::renderSouth(const BlockState*, double x, double y, double z,
         x0 = x1;
         x1 = value;
     }
-    builder->bucket(3);
+    builder->bucket(4);
     if (!mEnableAO)
     {
         builder->vertexUV(x0, y1, zz, faceU[0], faceV[0]);
@@ -909,7 +909,7 @@ void BlockRenderer::renderWest(const BlockState*, double x, double y, double z, 
         z0 = z1;
         z1 = value;
     }
-    builder->bucket(4);
+    builder->bucket(5);
     if (!mEnableAO)
     {
         builder->vertexUV(xx, y1, z1, faceU[0], faceV[0]);
@@ -961,7 +961,7 @@ void BlockRenderer::renderEast(const BlockState*, double x, double y, double z, 
         z0 = z1;
         z1 = value;
     }
-    builder->bucket(5);
+    builder->bucket(3);
     if (!mEnableAO)
     {
         builder->vertexUV(xx, y0, z1, faceU[0], faceV[0]);
@@ -1311,29 +1311,41 @@ bool BlockRenderer::tesselateBlockInWorldWithAmbienceOcclusionTexLighting(
     if (faceFlags == 0 || (faceFlags == 1 && pos.y == 0))
         return false;
 
+    TextureAtlasSprite* leafTexture = NULL;
+    if (block == Blocks::leaves || block == Blocks::leaves2)
+    {
+        leafTexture = getTexture(state, mLevelSource, pos, NULL);
+    }
+
     mEnableAO = true;
     int lightColor = getLightColor(block, mLevelSource, pos);
-    bool useColor = block != Blocks::grass;
+    Tesselator::getInstance()->getBuilder()->tex2(0xf000f);
+
+    bool useColor = true;
+    if (leafTexture == NULL ? getTexture(block, Direction::UP)->getFlags() == 2 : hasFixedTexture())
+    {
+        useColor = false;
+    }
 
     if ((faceFlags & 1) != 0)
     {
         AOCalculate(block, mLevelSource, pos, Direction::eDirection_Down,
                     mMinY <= 0.0f, lightColor, useColor, red, green, blue, false);
         renderFaceDown(state, pos.x, pos.y, pos.z,
-                       getTexture(state, mLevelSource, pos, Direction::DOWN));
+                       (leafTexture != NULL ? leafTexture : getTexture(state, mLevelSource, pos, Direction::DOWN)));
     }
     if ((faceFlags & 2) != 0)
     {
         AOCalculate(block, mLevelSource, pos, Direction::eDirection_Up,
                     mMaxY >= 1.0f, lightColor, true, red, green, blue, false);
         renderFaceUp(state, pos.x, pos.y, pos.z,
-                     getTexture(state, mLevelSource, pos, Direction::UP));
+                     (leafTexture != NULL ? leafTexture : getTexture(state, mLevelSource, pos, Direction::UP)));
     }
     if ((faceFlags & 4) != 0)
     {
         AOCalculate(block, mLevelSource, pos, Direction::eDirection_North,
                     mMinZ <= 0.0f, lightColor, useColor, red, green, blue, partialBounds);
-        TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::NORTH);
+        TextureAtlasSprite* texture = (leafTexture != NULL ? leafTexture : getTexture(state, mLevelSource, pos, Direction::NORTH));
         renderNorth(state, pos.x, pos.y, pos.z, texture);
         if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
@@ -1352,7 +1364,7 @@ bool BlockRenderer::tesselateBlockInWorldWithAmbienceOcclusionTexLighting(
     {
         AOCalculate(block, mLevelSource, pos, Direction::eDirection_South,
                     mMaxZ >= 1.0f, lightColor, useColor, red, green, blue, partialBounds);
-        TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::SOUTH);
+        TextureAtlasSprite* texture = (leafTexture != NULL ? leafTexture : getTexture(state, mLevelSource, pos, Direction::SOUTH));
         renderSouth(state, pos.x, pos.y, pos.z, texture);
         if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
@@ -1371,7 +1383,7 @@ bool BlockRenderer::tesselateBlockInWorldWithAmbienceOcclusionTexLighting(
     {
         AOCalculate(block, mLevelSource, pos, Direction::eDirection_West,
                     mMinX <= 0.0f, lightColor, useColor, red, green, blue, partialBounds);
-        TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::WEST);
+        TextureAtlasSprite* texture = (leafTexture != NULL ? leafTexture : getTexture(state, mLevelSource, pos, Direction::WEST));
         renderWest(state, pos.x, pos.y, pos.z, texture);
         if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
@@ -1390,7 +1402,7 @@ bool BlockRenderer::tesselateBlockInWorldWithAmbienceOcclusionTexLighting(
     {
         AOCalculate(block, mLevelSource, pos, Direction::eDirection_East,
                     mMaxX >= 1.0f, lightColor, useColor, red, green, blue, partialBounds);
-        TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::EAST);
+        TextureAtlasSprite* texture = (leafTexture != NULL ? leafTexture : getTexture(state, mLevelSource, pos, Direction::EAST));
         renderEast(state, pos.x, pos.y, pos.z, texture);
         if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {

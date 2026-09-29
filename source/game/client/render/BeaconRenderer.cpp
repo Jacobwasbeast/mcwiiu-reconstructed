@@ -13,7 +13,7 @@
 #include <vector>
 #include <cmath>
 
-static ResourceLocation BEAM_LOCATION((_TEXTURE_NAME)86);
+static ResourceLocation BEAM_LOCATION(TN_MISC_BEACON_BEAM);
 
 BeaconRenderer::~BeaconRenderer()
 {

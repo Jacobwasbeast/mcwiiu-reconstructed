@@ -13,7 +13,7 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
         mZHeadOffs = 4.0f;
 
         mHead = new ModelPartSkin(this, 0, 0, NULL);
-        mHead->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale);
+        mHead->addBox(-4.0f, -4.0f, -8.0f, 8, 8, 8, scale);
         mHead->setPos(0.0f, (float)(18 - legHeight), -6.0f);
 
         mBody = new ModelPartSkin(this, 28, 8, NULL);
@@ -22,19 +22,19 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
 
         mLeg0 = new ModelPartSkin(this, 0, 16, NULL);
         mLeg0->addBox(-2.0f, 0.0f, -2.0f, 4, legHeight, 4, scale);
-        mLeg0->setPos(-3.0f, (float)(18 - legHeight), 7.0f);
+        mLeg0->setPos(-3.0f, (float)(24 - legHeight), 7.0f);
 
         mLeg1 = new ModelPartSkin(this, 0, 16, NULL);
         mLeg1->addBox(-2.0f, 0.0f, -2.0f, 4, legHeight, 4, scale);
-        mLeg1->setPos(3.0f, (float)(18 - legHeight), 7.0f);
+        mLeg1->setPos(3.0f, (float)(24 - legHeight), 7.0f);
 
         mLeg2 = new ModelPartSkin(this, 0, 16, NULL);
         mLeg2->addBox(-2.0f, 0.0f, -2.0f, 4, legHeight, 4, scale);
-        mLeg2->setPos(-3.0f, (float)(18 - legHeight), -5.0f);
+        mLeg2->setPos(-3.0f, (float)(24 - legHeight), -5.0f);
 
         mLeg3 = new ModelPartSkin(this, 0, 16, NULL);
         mLeg3->addBox(-2.0f, 0.0f, -2.0f, 4, legHeight, 4, scale);
-        mLeg3->setPos(3.0f, (float)(18 - legHeight), -5.0f);
+        mLeg3->setPos(3.0f, (float)(24 - legHeight), -5.0f);
     }
     else
     {

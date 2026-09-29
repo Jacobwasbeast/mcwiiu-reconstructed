@@ -18,7 +18,7 @@
 #include "game/world/generation/StrayClothingLayer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation STRAY_LOCATION;
+static ResourceLocation STRAY_LOCATION(TN_MOB_SKELETON_STRAY);
 
 StrayRenderer::StrayRenderer(EntityRenderDispatcher* dispatcher)
     : SkeletonRenderer(dispatcher, new SkeletonModel(SkeletonModel::eSkeletonType_Stray, ModelDefinition()))

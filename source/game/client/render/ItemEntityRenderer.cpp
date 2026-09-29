@@ -28,7 +28,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 
-static ResourceLocation ITEMS_LOCATION((_TEXTURE_NAME)1);
+static ResourceLocation ITEMS_LOCATION(TN_MISC_FOLIAGECOLOR);
 
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher), mItemRenderer(itemRenderer), mRandom(), mItemFrame(false), mIsGui3d(true)

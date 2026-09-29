@@ -6,10 +6,10 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/ChestBlockEntity.hpp"
 
-static ResourceLocation CHEST_LOCATION((_TEXTURE_NAME)54);
-static ResourceLocation LARGE_CHEST_LOCATION((_TEXTURE_NAME)55);
-static ResourceLocation TRAPPED_CHEST_LOCATION((_TEXTURE_NAME)57);
-static ResourceLocation LARGE_TRAPPED_CHEST_LOCATION((_TEXTURE_NAME)58);
+static ResourceLocation CHEST_LOCATION(TN_ITEM_CHEST);
+static ResourceLocation LARGE_CHEST_LOCATION(TN_ITEM_LARGECHEST);
+static ResourceLocation TRAPPED_CHEST_LOCATION(TN_MOB_REDCOW);
+static ResourceLocation LARGE_TRAPPED_CHEST_LOCATION(TN_MOB_SNOWMAN);
 
 ChestRenderer::ChestRenderer()
 {

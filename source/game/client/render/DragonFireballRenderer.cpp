@@ -9,7 +9,7 @@
 #include "game/core/Options.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation DRAGON_FIREBALL_LOCATION;
+static ResourceLocation DRAGON_FIREBALL_LOCATION(TN_MOB_ENDERDRAGON_DRAGON_FIREBALL);
 
 DragonFireballRenderer::DragonFireballRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

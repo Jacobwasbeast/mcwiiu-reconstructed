@@ -15,7 +15,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-static ResourceLocation ILLUSION_ILLAGER_LOCATION((_TEXTURE_NAME)201);
+static ResourceLocation ILLUSION_ILLAGER_LOCATION(TN_MOB_ILLAGER_ILLUSIONIST);
 
 IllusionIllagerRenderer::IllusionIllagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)

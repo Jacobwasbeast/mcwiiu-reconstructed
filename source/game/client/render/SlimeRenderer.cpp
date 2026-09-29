@@ -10,7 +10,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/SlimeOuterLayer.hpp"
 
-static ResourceLocation SLIME_LOCATION;
+static ResourceLocation SLIME_LOCATION(TN_MOB_SLIME);
 
 SlimeRenderer::SlimeRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new SlimeModel(16, ModelDefinition()), 0.25f)

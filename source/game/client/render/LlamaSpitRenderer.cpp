@@ -6,7 +6,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation LLAMA_SPIT_LOCATION;
+static ResourceLocation LLAMA_SPIT_LOCATION(TN_MOB_LLAMA_SPIT);
 
 LlamaSpitRenderer::LlamaSpitRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

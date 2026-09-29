@@ -42,6 +42,7 @@
 #include "game/core/System.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Dimension.hpp"
@@ -1068,6 +1069,14 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             {
                 renderable = true;
             }
+            else if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+            {
+                boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+                if (mob->isLeashed() && mob->getLeashHolder() != NULL)
+                {
+                    renderable = culler->isVisible(mob->getLeashHolder()->mBoundingBox);
+                }
+            }
         }
         PIXEndNamedEvent();
 
@@ -1351,9 +1360,9 @@ int LevelRenderer::renderChunks(int first, int count, int layer, double partialT
 
     boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
 
-    double camX = (camera->mX - camera->mXo) * partialTick + camera->mXo;
-    double camY = (camera->mY - camera->mYo) * partialTick + camera->mYo;
-    double camZ = (camera->mZ - camera->mZo) * partialTick + camera->mZo;
+    double camX = (camera->mX - camera->mXOld) * partialTick + camera->mXOld;
+    double camY = (camera->mY - camera->mYOld) * partialTick + camera->mYOld;
+    double camZ = (camera->mZ - camera->mZOld) * partialTick + camera->mZOld;
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef(-(float)camX, -(float)camY, -(float)camZ);
@@ -1453,7 +1462,7 @@ void LevelRenderer::renderSky(float partialTick)
         Lighting::turnOff();
         GlStateManager::depthMask(false);
 
-        static ResourceLocation sEndSkyLocation((_TEXTURE_NAME)0x4a);
+        static ResourceLocation sEndSkyLocation(TN_MISC_TUNNEL);
         mTextures->bindTexture(&sEndSkyLocation);
 
         BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -1615,8 +1624,8 @@ void LevelRenderer::renderSky(float partialTick)
     GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(level->getTimeOfDay(partialTick) * 360.0f, 1.0f, 0.0f, 0.0f);
 
-    static ResourceLocation sSunLocation((_TEXTURE_NAME)0x2e);
-    static ResourceLocation sMoonPhasesLocation((_TEXTURE_NAME)0x4c);
+    static ResourceLocation sSunLocation(TN_TERRAIN_SUN);
+    static ResourceLocation sMoonPhasesLocation(TN_TERRAIN_MOON_PHASES);
 
     if (sunAngleDegrees <= 125.0f || 235.0f <= sunAngleDegrees)
     {
@@ -1742,7 +1751,7 @@ void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, 
     static float sCloudDriftAccum = 0.0f;
     static float sCloudPrevTime = -1.0f;
     static bool sCloudDriftLatched = false;
-    static ResourceLocation sAdvancedCloudsLocation((_TEXTURE_NAME)5);
+    static ResourceLocation sAdvancedCloudsLocation(TN_ENVIRONMENT_CLOUDS);
 
     GlStateManager::multiTexCoord2f(0.0f, 0.0f);
     gRenderer->StateSetEnableViewportClipPlanes(true);
@@ -1991,7 +2000,7 @@ void LevelRenderer::renderClouds(float partialTick, int pass, double x, double y
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
-    static ResourceLocation sCloudsLocation((_TEXTURE_NAME)5);
+    static ResourceLocation sCloudsLocation(TN_ENVIRONMENT_CLOUDS);
     mTextures->bindTexture(&sCloudsLocation);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
@@ -2282,7 +2291,7 @@ unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
     return 0;
 }
 
-static ResourceLocation sHitOverlayLocation((_TEXTURE_NAME)0xf1);
+static ResourceLocation sHitOverlayLocation(TN_BLOCK_ATLAS);
 
 void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult* hit, int pass, not_null_ptr<ItemInstance> item, float partialTick)
 {
@@ -2316,9 +2325,9 @@ void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult*
 
 void LevelRenderer::renderDestroyAnimation(Tesselator* tesselator, boost::shared_ptr<Player> player, float partialTick)
 {
-    double camX = (player->mX - player->mXo) * partialTick + player->mXo;
-    double camY = (player->mY - player->mYo) * partialTick + player->mYo;
-    double camZ = (player->mZ - player->mZo) * partialTick + player->mZo;
+    double camX = (player->mX - player->mXOld) * partialTick + player->mXOld;
+    double camY = (player->mY - player->mYOld) * partialTick + player->mYOld;
+    double camZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
     int userIndex = mMinecraft->mPlayer->mUserIndex;
 
     BufferBuilder* builder = tesselator->getBuilder();
@@ -2423,9 +2432,9 @@ void LevelRenderer::renderHitOutline(boost::shared_ptr<Player> player, const Hit
         const BlockState* state = mMinecraft->mLevel->getBlockState(hit->getBlockPos());
         Block* block = state->getBlock();
 
-        double camX = (player->mX - player->mXo) * partialTick + player->mXo;
-        double camY = (player->mY - player->mYo) * partialTick + player->mYo;
-        double camZ = (player->mZ - player->mZo) * partialTick + player->mZo;
+        double camX = (player->mX - player->mXOld) * partialTick + player->mXOld;
+        double camY = (player->mY - player->mYOld) * partialTick + player->mYOld;
+        double camZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
 
         AABB* box = block->getOutlineAABB(state, mLevels[userIndex], hit->getBlockPos())
                         ->grow(0.0020000000949949026, 0.0020000000949949026, 0.0020000000949949026)

@@ -12,7 +12,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/SheepFurLayer.hpp"
 
-static ResourceLocation SHEEP_LOCATION;
+static ResourceLocation SHEEP_LOCATION(TN_MOB_SHEEP);
 
 SheepRenderer::SheepRenderer(EntityRenderDispatcher* dispatcher, Model*, Model*, float)
     : MobRenderer(dispatcher, new SheepModel(ModelDefinition()), 0.7F),

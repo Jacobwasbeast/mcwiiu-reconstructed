@@ -7,7 +7,7 @@
 #include "game/world/generation/ItemInHandLayer.hpp"
 #include "game/world/generation/SkeletonArmorLayer.hpp"
 
-static ResourceLocation SKELETON_LOCATION;
+static ResourceLocation SKELETON_LOCATION(TN_MOB_SKELETON);
 
 SkeletonRenderer::SkeletonRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new SkeletonModel(SkeletonModel::eSkeletonType_Skeleton, ModelDefinition()), 0.5f)

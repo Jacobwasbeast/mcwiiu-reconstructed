@@ -4,7 +4,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation COW_LOCATION((_TEXTURE_NAME)22);
+static ResourceLocation COW_LOCATION(TN_MOB_COW);
 
 CowRenderer::CowRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
     : MobRenderer(dispatcher, model, shadowRadius)

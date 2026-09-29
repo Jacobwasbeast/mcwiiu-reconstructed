@@ -52,7 +52,7 @@ ChickenModel::ChickenModel(const ModelDefinition& modelDefinition)
         mWing0->setPos(-4.0f, 13.0f, 0.0f);
 
         mWing1 = new ModelPartSkin(this, 24, 13, NULL);
-        mWing1->addBox(0.0f, 0.0f, -3.0f, 1, 4, 6);
+        mWing1->addBox(-1.0f, 0.0f, -3.0f, 1, 4, 6);
         mWing1->setPos(4.0f, 13.0f, 0.0f);
 
         compileSkinnedDrawlist();

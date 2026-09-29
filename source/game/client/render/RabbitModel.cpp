@@ -34,8 +34,8 @@ RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
     {
         setMapTex(L"head.main", 0, 0);
         setMapTex(L"head.nose", 0, 24);
-        setMapTex(L"head.ear1", 0, 16);
-        setMapTex(L"head.ear2", 6, 16);
+        setMapTex(L"head.ear1", 0, 10);
+        setMapTex(L"head.ear2", 6, 10);
 
         mRearFootLeft = new ModelPartSkin(this, 26, 24, NULL);
         mRearFootLeft->addBox(-1.0f, 5.5f, -3.7f, 2, 1, 7);
@@ -104,7 +104,7 @@ RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
         setRotation(mTail, -0.3490659f, 0.0f, 0.0f);
 
         mNose = new ModelPartSkin(this, 32, 9, NULL);
-        mNose->addBox(-0.5f, -2.5f, -5.5f, 3, 3, 2);
+        mNose->addBox(-0.5f, -2.5f, -5.5f, 1, 1, 1);
         mNose->setPos(0.0f, 16.0f, -1.0f);
         mNose->mMirror = true;
         setRotation(mNose, 0.0f, 0.0f, 0.0f);

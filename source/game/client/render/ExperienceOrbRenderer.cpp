@@ -12,7 +12,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation sExperienceOrbTexture((_TEXTURE_NAME)53);
+static ResourceLocation sExperienceOrbTexture(TN_ITEM_XPORB);
 
 ExperienceOrbRenderer::ExperienceOrbRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
@@ -53,7 +53,7 @@ void ExperienceOrbRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     int red = (int)((Mth::sin(angle) + 1.0F) * 0.5F * 255.0F);
     int blue = (int)((Mth::sin(angle + 4.1887903F) + 1.0F) * 0.1F * 255.0F);
     float scale = 0.3F;
-    GlStateManager::translatef(0.5F, 0.1F, 0.5F);
+    GlStateManager::translatef(0.0F, 0.1F, 0.0F);
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
     GlStateManager::rotatef(-mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
     GlStateManager::scalef(scale, scale, scale);

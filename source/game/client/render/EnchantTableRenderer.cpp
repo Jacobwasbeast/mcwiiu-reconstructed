@@ -9,7 +9,7 @@
 #include "game/entity/mob/EnchantmentTableEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation BOOK_TEXTURE((_TEXTURE_NAME)53);
+static ResourceLocation BOOK_TEXTURE(TN_ITEM_XPORB);
 
 EnchantTableRenderer::EnchantTableRenderer()
     : mBookModel(new BookModel(ModelDefinition()))

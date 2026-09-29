@@ -5,14 +5,19 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
+#include "game/client/render/Tesselator.hpp"
+#include "game/core/BufferBuilder.hpp"
 #include "game/core/MagmaCube.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
 LavaSlimeModel::LavaSlimeModel(const ModelDefinition& modelDefinition)
 {
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
     if (modelDefinition.DoesOverrideModel())
     {
         mHasOverriddenParts = true;
+        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_MagmaCube);
 
         mBodyCubes[0] = new ModelPartSkin(this, L"bodyCube_0", modelDefinition, NULL, 0.0f, NULL);
         mBodyCubes[1] = new ModelPartSkin(this, L"bodyCube_1", modelDefinition, NULL, 0.0f, NULL);
@@ -26,6 +31,7 @@ LavaSlimeModel::LavaSlimeModel(const ModelDefinition& modelDefinition)
         mInsideCube = new ModelPartSkin(this, L"insideCube", modelDefinition, NULL, 0.0f, NULL);
 
         compileSkinnedDrawlist();
+        builder->useDefaultShaders();
     }
     else
     {
@@ -53,6 +59,7 @@ LavaSlimeModel::LavaSlimeModel(const ModelDefinition& modelDefinition)
         mInsideCube->addBox(-2.0f, 18.0f, -2.0f, 4, 4, 4);
 
         compileSkinnedDrawlist();
+        builder->useDefaultShaders();
     }
 }
 

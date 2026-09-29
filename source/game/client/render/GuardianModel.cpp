@@ -3,6 +3,8 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
+#include "game/client/render/Tesselator.hpp"
+#include "game/core/BufferBuilder.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Vec3.hpp"
@@ -12,6 +14,8 @@
 
 GuardianModel::GuardianModel(const ModelDefinition& modelDefinition)
 {
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
     if (modelDefinition.DoesOverrideModel())
     {
         mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
@@ -44,7 +48,9 @@ GuardianModel::GuardianModel(const ModelDefinition& modelDefinition)
             mHead->addChild(mSpikeParts[i]);
         }
 
+        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Guardian);
         compileSkinnedDrawlist();
+        builder->useDefaultShaders();
     }
     else
     {
@@ -84,6 +90,7 @@ GuardianModel::GuardianModel(const ModelDefinition& modelDefinition)
         mTailParts[1]->addChild(mTailParts[2]);
 
         compileSkinnedDrawlist();
+        builder->useDefaultShaders();
     }
 }
 

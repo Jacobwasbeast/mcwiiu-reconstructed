@@ -6,8 +6,8 @@
 #include "game/core/Ghast.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation GHAST_LOCATION((_TEXTURE_NAME)30);
-static ResourceLocation GHAST_SHOOTING_LOCATION((_TEXTURE_NAME)31);
+static ResourceLocation GHAST_LOCATION(TN_MOB_GHAST);
+static ResourceLocation GHAST_SHOOTING_LOCATION(TN_MOB_GHAST_FIRE);
 
 GhastRenderer::GhastRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new GhastModel(ModelDefinition()), 0.5F)

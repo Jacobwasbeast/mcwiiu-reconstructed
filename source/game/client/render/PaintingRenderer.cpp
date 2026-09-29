@@ -13,7 +13,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/Level.hpp"
 
-static ResourceLocation PAINTING_LOCATION((_TEXTURE_NAME)4);
+static ResourceLocation PAINTING_LOCATION(TN_ART_KZ);
 
 PaintingRenderer::PaintingRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher), mRandom(new Random())

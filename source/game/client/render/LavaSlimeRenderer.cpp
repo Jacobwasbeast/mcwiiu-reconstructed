@@ -7,7 +7,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation LAVA_SLIME_LOCATION;
+static ResourceLocation LAVA_SLIME_LOCATION(TN_MOB_LAVA);
 
 LavaSlimeRenderer::LavaSlimeRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new LavaSlimeModel(ModelDefinition()), 0.25F)

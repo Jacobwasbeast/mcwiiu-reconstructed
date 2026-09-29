@@ -5,7 +5,16 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/util/Rabbit.hpp"
 
-static ResourceLocation RABBIT_TEXTURES[8];
+static ResourceLocation RABBIT_TEXTURES[8] = {
+    ResourceLocation(TN_MOB_RABBIT_BROWN),
+    ResourceLocation(TN_MOB_RABBIT_WHITE),
+    ResourceLocation(TN_MOB_RABBIT_BLACK),
+    ResourceLocation(TN_MOB_RABBIT_GOLD),
+    ResourceLocation(TN_MOB_RABBIT_SALT),
+    ResourceLocation(TN_MOB_RABBIT_WHITE_SPLOTCHED),
+    ResourceLocation(TN_MOB_RABBIT_TOAST),
+    ResourceLocation(TN_MOB_RABBIT_CAERBANNOG)
+};
 
 RabbitRenderer::RabbitRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new RabbitModel(ModelDefinition()), 0.3f)

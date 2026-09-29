@@ -3,7 +3,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation CAVE_SPIDER_LOCATION;
+static ResourceLocation CAVE_SPIDER_LOCATION(TN_MOB_CAVESPIDER);
 
 CaveSpiderRenderer::CaveSpiderRenderer(EntityRenderDispatcher* dispatcher)
     : SpiderRenderer(dispatcher)

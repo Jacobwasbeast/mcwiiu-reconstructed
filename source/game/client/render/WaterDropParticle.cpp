@@ -1,9 +1,12 @@
 #include "game/client/render/WaterDropParticle.hpp"
 #include "game/core/EntityType.hpp"
 
-#include <cmath>
-
+#include "game/core/Mth.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/LiquidBlock.hpp"
@@ -35,13 +38,12 @@ void WaterDropParticle::tick()
     xd *= 0.98;
     yd *= 0.98;
     zd *= 0.98;
-    --lifetime;
-    if (lifetime < 1)
+    if (lifetime-- <= 0)
         remove();
 
     if (onGround)
     {
-        if (random.nextDouble() < 0.5)
+        if (Math::random() < 0.5)
             remove();
         xd *= 0.7;
         zd *= 0.7;
@@ -49,15 +51,20 @@ void WaterDropParticle::tick()
 
     BlockPos position(x, y, z);
     const BlockState* state = level->getBlockState(position);
-    if ((state->getMaterial()->isLiquid() || state->getMaterial()->isSolid()) &&
-        state->getBlock()->isLiquidBlock())
-    {
-        double height = LiquidBlock::getHeightFromData(
-            state->getBlock()->convertBlockStateToLegacyData(state));
-        double surface = std::floor(y) + 1.0 - height;
-        if (y < surface)
-            remove();
-    }
+    Material* material = state->getMaterial();
+    if (state->getBlock()->ParticlesSurviveWithin())
+        return;
+    if (!material->isLiquid() && !material->isSolid())
+        return;
+
+    double surface;
+    if (state->getBlock()->isLiquidBlock())
+        surface = 1.0f - LiquidBlock::getHeightFromData(state->getValue(LiquidBlock::LEVEL));
+    else
+        surface = state->getShape(level, position)->mMaxY;
+
+    if (y < Mth::floor(y) + surface)
+        remove();
 }
 
 uint64_t WaterDropParticle::GetType()

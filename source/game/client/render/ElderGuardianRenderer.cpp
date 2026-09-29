@@ -3,7 +3,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation ELDER_GUARDIAN_LOCATION;
+static ResourceLocation ELDER_GUARDIAN_LOCATION(TN_MOB_GUARDIAN_ELDER);
 
 ElderGuardianRenderer::ElderGuardianRenderer(EntityRenderDispatcher* dispatcher)
     : GuardianRenderer(dispatcher)

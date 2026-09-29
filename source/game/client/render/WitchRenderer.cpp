@@ -10,7 +10,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/WitchItemLayer.hpp"
 
-static ResourceLocation WITCH_LOCATION((_TEXTURE_NAME)106);
+static ResourceLocation WITCH_LOCATION(TN_MOB_WITCH);
 
 WitchRenderer::WitchRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new WitchModel(0.0F, ModelDefinition()), 0.5F)

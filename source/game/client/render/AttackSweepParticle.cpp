@@ -8,7 +8,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation PARTICLES_LOCATION((_TEXTURE_NAME)52);
+static ResourceLocation PARTICLES_LOCATION(TN_MISC_EXPLOSION);
 
 AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
                                          double x, double y, double z,

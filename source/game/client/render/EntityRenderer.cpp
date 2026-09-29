@@ -32,7 +32,7 @@
 #include "game/world/block/Iterator.hpp"
 #include "game/world/generation/Player.hpp"
 
-static ResourceLocation sShadowTexture(static_cast<_TEXTURE_NAME>(3));
+static ResourceLocation sShadowTexture(TN_CLAMP_MISC_SHADOW);
 
 EntityRenderer::EntityRenderer(EntityRenderDispatcher* dispatcher)
     : mDispatcher(dispatcher), mShadowRadius(0.0F), mShadowStrength(1.0F), mSolidRender(false), mModel(NULL), mOriginalModel(NULL)
@@ -73,40 +73,40 @@ void EntityRenderer::render(AABB* box, double x, double y, double z)
 {
     GlStateManager::disableTexture();
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->color(1.0F, 1.0F, 1.0F, 1.0F);
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     builder->begin();
     builder->offset((float)x, (float)y, (float)z);
 
     builder->normal(0.0F, 0.0F, -1.0F);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
     builder->normal(0.0F, 0.0F, 1.0F);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMaxZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMaxZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
     builder->normal(0.0F, -1.0F, 0.0F);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
     builder->normal(0.0F, 1.0F, 0.0F);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
     builder->normal(-1.0F, 0.0F, 0.0F);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
     builder->normal(1.0F, 0.0F, 0.0F);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
 
     builder->offset(0.0F, 0.0F, 0.0F);
     builder->end();

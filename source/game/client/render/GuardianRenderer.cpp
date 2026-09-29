@@ -17,8 +17,8 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/util/Vec3.hpp"
 
-static ResourceLocation GUARDIAN_LOCATION((_TEXTURE_NAME)125);
-static ResourceLocation GUARDIAN_BEAM_LOCATION((_TEXTURE_NAME)127);
+static ResourceLocation GUARDIAN_LOCATION(TN_MOB_GUARDIAN);
+static ResourceLocation GUARDIAN_BEAM_LOCATION(TN_MOB_GUARDIAN_BEAM);
 
 GuardianRenderer::GuardianRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new GuardianModel(ModelDefinition()), 0.5f)

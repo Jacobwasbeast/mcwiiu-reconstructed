@@ -10,7 +10,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation EXPLOSION_LOCATION((_TEXTURE_NAME)52);
+static ResourceLocation EXPLOSION_LOCATION(TN_MISC_EXPLOSION);
 
 HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, double x, double y, double z,
                                              double xa, double ya, double za)

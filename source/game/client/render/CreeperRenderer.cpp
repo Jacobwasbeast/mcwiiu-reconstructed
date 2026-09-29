@@ -11,7 +11,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/CreeperPowerLayer.hpp"
 
-static ResourceLocation CREEPER_LOCATION;
+static ResourceLocation CREEPER_LOCATION(TN_MOB_CREEPER);
 
 CreeperRenderer::CreeperRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new CreeperModel(ModelDefinition()), 0.5F)

@@ -4,7 +4,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation ENDERMITE_LOCATION;
+static ResourceLocation ENDERMITE_LOCATION(TN_MOB_ENDERMITE);
 
 EndermiteRenderer::EndermiteRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new EndermiteModel(ModelDefinition()), 0.3F)

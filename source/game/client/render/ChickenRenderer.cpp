@@ -6,7 +6,7 @@
 #include "game/core/Mth.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation CHICKEN_LOCATION((_TEXTURE_NAME)21);
+static ResourceLocation CHICKEN_LOCATION(TN_MOB_CHICKEN);
 
 ChickenRenderer::ChickenRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
     : MobRenderer(dispatcher, model, shadowRadius)

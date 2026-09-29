@@ -66,7 +66,7 @@
 
 namespace
 {
-ResourceLocation particleTexture((_TEXTURE_NAME)20);
+ResourceLocation particleTexture(TN_PARTICLES);
 }
 
 template <typename T>

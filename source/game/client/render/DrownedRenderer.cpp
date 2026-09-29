@@ -12,7 +12,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/ZombieArmorLayer.hpp"
 
-static ResourceLocation DROWNED_LOCATION;
+static ResourceLocation DROWNED_LOCATION(TN_MOB_ZOMBIE_DROWNED);
 
 DrownedRenderer::DrownedRenderer(EntityRenderDispatcher* dispatcher)
     : HumanoidMobRenderer(dispatcher, new DrownedModel(ModelDefinition()), 0.5F)

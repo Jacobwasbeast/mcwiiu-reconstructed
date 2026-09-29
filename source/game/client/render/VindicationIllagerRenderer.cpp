@@ -10,7 +10,7 @@
 #include "game/core/VindicationIllager.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation vindicationIllagerLocation((_TEXTURE_NAME)198);
+static ResourceLocation vindicationIllagerLocation(TN_MOB_ILLAGER_VINDICATOR);
 
 VindicationIllagerRenderer::VindicationIllagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)

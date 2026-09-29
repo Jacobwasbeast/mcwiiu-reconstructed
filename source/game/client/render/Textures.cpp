@@ -5,6 +5,7 @@
 
 #include "game/core/BufferedImage.hpp"
 #include "game/core/ByteBuffer.hpp"
+#include "game/core/Options.hpp"
 #include "game/core/FoliageColor.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/GrassColor.hpp"
@@ -23,8 +24,8 @@
 #include "game/item/ItemInstance.hpp"
 
 static int sIndexedTextures[256];
-ResourceLocation BLOCKS_LOCATION((_TEXTURE_NAME)241);
-ResourceLocation ITEM_LOCATION((_TEXTURE_NAME)240);
+ResourceLocation BLOCKS_LOCATION(TN_BLOCK_ATLAS);
+ResourceLocation ITEM_LOCATION(TN_ITEM_ATLAS);
 static bool sTextureMipmap = true;
 
 namespace
@@ -228,7 +229,7 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
     int height = (int)image->getHeight();
     arrayWithLength<int> pixels((unsigned int)(width * height), true);
     image->getRGB(0, 0, width, height, pixels, 0, width, 0);
-    if (mOptions != NULL && *(reinterpret_cast<unsigned char*>(mOptions) + 0x15) != 0)
+    if (mOptions != NULL && mOptions->mAnaglyph3d)
     {
         pixels = anaglyph(pixels);
     }
@@ -629,7 +630,7 @@ void Textures::bind(int texture)
 
 void Textures::bindTexture(const std::wstring& name)
 {
-    bind(loadTexture((_TEXTURE_NAME)0xf2, name));
+    bind(loadTexture(TN_UNINDEXED, name));
 }
 
 int Textures::loadTexture(int textureName)
@@ -652,7 +653,7 @@ void Textures::bindTexture(const ResourceLocation* location)
 {
     if (location == NULL) return;
     if (location->isPreloaded()) bind(loadTexture(location->getTexture()));
-    else bind(loadTexture((_TEXTURE_NAME)0xf2, location->getPath()));
+    else bind(loadTexture(TN_UNINDEXED, location->getPath()));
 }
 
 void Textures::bindTextureLayers(const ResourceLocation* location)
@@ -791,10 +792,10 @@ int Textures::loadMemTexture(const std::wstring& name, const std::wstring& path)
     {
         if (!g_pApp->IsFileInMemoryTextures(name))
         {
-            return path.empty() ? -1 : loadTexture((_TEXTURE_NAME)0xf2, path);
+            return path.empty() ? -1 : loadTexture(TN_UNINDEXED, path);
         }
         texture = (MemTexture*)addMemTexture(name, NULL);
-        if (texture == NULL) return path.empty() ? -1 : loadTexture((_TEXTURE_NAME)0xf2, path);
+        if (texture == NULL) return path.empty() ? -1 : loadTexture(TN_UNINDEXED, path);
     }
     MemTextureFields& fields = memTextureFields(texture);
     fields.m_textureFormat = 0;
@@ -822,7 +823,7 @@ int Textures::loadMemTexture(const std::wstring& name, const std::wstring& path)
         }
     }
     if (result >= 0) return result;
-    return path.empty() ? -1 : loadTexture((_TEXTURE_NAME)0xf2, path);
+    return path.empty() ? -1 : loadTexture(TN_UNINDEXED, path);
 }
 
 int Textures::loadMemTexture(const std::wstring& name, int texture)
@@ -976,8 +977,8 @@ void Textures::reloadAll()
     freeStitch();
     loadIndexedTextures();
     mTexturePixels.clear();
-    GrassColor::init(loadTexturePixels((_TEXTURE_NAME)0, L"misc/grasscolor"));
-    FoliageColor::init(loadTexturePixels((_TEXTURE_NAME)1, L"misc/foliagecolor"));
+    GrassColor::init(loadTexturePixels(TN_MISC_GRASSCOLOR, L"misc/grasscolor"));
+    FoliageColor::init(loadTexturePixels(TN_MISC_FOLIAGECOLOR, L"misc/foliagecolor"));
     stitch();
     if (mTexturePackRepository != NULL) mTexturePackRepository->clearInvalidTexturePacks();
 }

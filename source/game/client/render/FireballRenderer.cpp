@@ -17,7 +17,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/FireBlock.hpp"
 
-static ResourceLocation FIREBALL_LOCATION;
+static ResourceLocation FIREBALL_LOCATION(TN_ITEM_ATLAS);
 
 FireballRenderer::FireballRenderer(EntityRenderDispatcher* dispatcher,
                                    float scale)
