@@ -13,12 +13,12 @@ FullTutorialActiveTask::~FullTutorialActiveTask()
 
 bool FullTutorialActiveTask::isCompleted()
 {
-    return completed;
+    return activated;
 }
 
 eTutorial_CompletionAction FullTutorialActiveTask::getCompletionAction()
 {
-    if (!tutorial->enabled)
+    if (!tutorial->completed)
     {
         return eTutorial_CompletionAction_None;
     }

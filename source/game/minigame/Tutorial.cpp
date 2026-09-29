@@ -61,7 +61,7 @@ namespace
 
 Tutorial::PopupMessageDetails::PopupMessageDetails()
     : titleId(-1), messageId(-1), promptId(-1), title(), message(), itemDescription(),
-      itemInstance(), displayTime(-1), priority(0), repeat(true), unknown(false),
+      itemInstance(ItemInstance::EMPTY), displayTime(-1), priority(0), repeat(true), unknown(false),
       displayed(false), allowFade(false), isItem(false), force(false), state(-1)
 {
 }
@@ -1509,11 +1509,9 @@ unsigned int Tutorial::itemDamaged(not_null_ptr<ItemInstance> item)
 
 void Tutorial::handleUIInput(int input)
 {
-    if (popupPending && currentMessage != NULL)
-    {
-        currentMessage->displayed = true;
-        popupPending = false;
-    }
+    if (popupPending || currentTask[currentState] == NULL)
+        return;
+    currentTask[currentState]->handleUIInput(input);
 }
 
 void Tutorial::createItemSelected(not_null_ptr<ItemInstance> item, bool selected)
@@ -1580,7 +1578,7 @@ unsigned int Tutorial::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
 unsigned int Tutorial::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
                                unsigned int exactCount)
 {
-    if (!enabled)
+    if (!popupPending)
     {
         for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
              it != stateHints[currentState].end(); ++it)
@@ -1633,7 +1631,7 @@ unsigned int Tutorial::onSelectedItemChanged(not_null_ptr<ItemInstance> item)
 
 void Tutorial::onLookAt(const BlockState* state)
 {
-    if (!enabled)
+    if (!popupPending)
     {
         bool handled = false;
         for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
@@ -1652,15 +1650,20 @@ void Tutorial::onLookAt(const BlockState* state)
 
 void Tutorial::onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (level == NULL || state == NULL)
+    if (!popupPending && state->getBlock() == Blocks::skull)
     {
-        popupPending = false;
+        for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+             it != stateHints[currentState].end(); ++it)
+        {
+            if ((*it)->onLookAtSkull(level, pos, state) != 0)
+                break;
+        }
     }
 }
 
 unsigned int Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
-    if (!enabled)
+    if (!popupPending)
     {
         bool hintHandled = false;
         for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
@@ -1678,11 +1681,11 @@ unsigned int Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
             if ((entityType & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE
                 && entityType != EntityType::SKELETON_HORSE
                 && entityType != EntityType::ZOMBIE_HORSE
-                && (!splitScreen || hintShown))
+                && (!enabled || completed))
             {
                 boost::shared_ptr<AbstractHorse> horse =
                     boost::static_pointer_cast<AbstractHorse>(entity);
-                if (!horse->isTamed())
+                if (!horse->isBaby())
                     changeTutorialState(eTutorial_State_Horse, NULL);
             }
         }
