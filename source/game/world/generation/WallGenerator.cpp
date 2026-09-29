@@ -56,7 +56,7 @@ WallGenerator::WallGenerator(Random random, std::vector<AABB*>* areas,
             ++wall;
         }
     }
-    mBounds = mBounds->grow(2.0, 1.0, 2.0);
+    mBounds = mBounds->grow(2.0, 0.0, 2.0);
 }
 
 WallGenerator::~WallGenerator()

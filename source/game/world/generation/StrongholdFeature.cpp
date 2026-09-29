@@ -22,10 +22,6 @@ StrongholdFeature::StrongholdFeature()
     : StructureFeature()
 {
     _init();
-    mDistance = 32.0;
-    mVariant = 3;
-    mPositions.push_back(NULL);
-    mPositionsGenerated = false;
 }
 
 StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
@@ -34,9 +30,12 @@ StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
     _init();
     FlatGeneratorInfo info(config);
     mDistance = static_cast<double>(info.getStrongholdDistance());
-    mPositions.resize(info.getStrongholdCount(), NULL);
+    mPositions.clear();
+    for (int i = 0; i < info.getStrongholdCount(); ++i)
+    {
+        mPositions.push_back(NULL);
+    }
     mVariant = 1;
-    mPositionsGenerated = false;
 }
 
 void StrongholdFeature::_init()
@@ -47,12 +46,16 @@ void StrongholdFeature::_init()
         for (int index = 0; index < 8; ++index)
         {
             Biome* biome = Biome::getBiomes()[group * 8 + index];
-            if (biome != NULL && biome->getDepth() > 1.25f)
+            if (biome != NULL && biome->getDepth() > 0.0f)
             {
                 mAllowedBiomes.push_back(biome);
             }
         }
     }
+    mDistance = 32.0;
+    mVariant = 3;
+    mPositions.push_back(NULL);
+    mPositionsGenerated = false;
 }
 
 StrongholdFeature::~StrongholdFeature()

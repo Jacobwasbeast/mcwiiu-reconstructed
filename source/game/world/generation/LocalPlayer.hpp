@@ -172,6 +172,7 @@ private:
     friend class PlayerRenderer;
     friend class ItemInHandRenderer;
     friend class UIScene_HUD;
+    friend class Voteable;
     friend class Tooltips;
     friend class MultiplayerLocalPlayer;
 
@@ -230,7 +231,7 @@ private:
     unsigned int mLastSingleFlyButtons[2];
     unsigned int mFlyButtonsDown[2];
     unsigned int mFlyButtons[2];
-    int mDestroyTicks;
+    int mMissTime;
     int mLastAttackTick;
     int mLastUseTick;
     bool mReserved0x93c;

@@ -15,7 +15,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation WITHER_ARMOR_LOCATION;
+static ResourceLocation WITHER_ARMOR_LOCATION(TN_MOB_WITHER_WITHER_ARMOR);
 
 WitherArmorLayer::WitherArmorLayer(WitherBossRenderer* renderer)
     : mRenderer(renderer)

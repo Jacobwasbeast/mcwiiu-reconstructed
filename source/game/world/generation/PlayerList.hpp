@@ -74,9 +74,8 @@ public:
     std::vector<boost::shared_ptr<ServerPlayer> >* getPlayers();
     boost::shared_ptr<ServerPlayer> respawn(boost::shared_ptr<ServerPlayer> player,
                                             int dimension, bool conqueredEnd);
-    boost::shared_ptr<Entity> repositionAcrossDimension(boost::shared_ptr<Entity> entity,
-                                                        int dimension, ServerLevel* from,
-                                                        ServerLevel* to);
+    void repositionAcrossDimension(boost::shared_ptr<Entity> entity, int lastDimension,
+                                   ServerLevel* oldLevel, ServerLevel* newLevel);
     void sendAllPlayerInfo(boost::shared_ptr<ServerPlayer> player);
     void toggleDimension(boost::shared_ptr<ServerPlayer> player, int dimension);
     void tick();

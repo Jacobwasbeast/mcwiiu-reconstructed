@@ -9,7 +9,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation ENDER_EYES_LOCATION;
+static ResourceLocation ENDER_EYES_LOCATION(TN_MOB_ENDERMAN_EYES);
 
 EnderEyesLayer::EnderEyesLayer(EndermanRenderer* renderer)
     : mRenderer(renderer)

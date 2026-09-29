@@ -11,7 +11,24 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation LLAMA_DECOR_TEXTURES[16];
+static ResourceLocation LLAMA_DECOR_TEXTURES[16] = {
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_WHITE),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_ORANGE),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_MAGENTA),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_LIGHT_BLUE),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_YELLOW),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_LIME),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_PINK),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_GRAY),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_SILVER),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_CYAN),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_PURPLE),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_BLUE),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_BROWN),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_GREEN),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_RED),
+    ResourceLocation(TN_MOB_LLAMA_DECOR_DECOR_BLACK)
+};
 
 LlamaDecorLayer::LlamaDecorLayer(LlamaRenderer* renderer)
     : mRenderer(renderer)

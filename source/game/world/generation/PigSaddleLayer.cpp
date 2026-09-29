@@ -11,7 +11,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation PIG_SADDLE_LOCATION;
+static ResourceLocation PIG_SADDLE_LOCATION(TN_MOB_SADDLE);
 
 PigSaddleLayer::PigSaddleLayer(PigRenderer* renderer)
 {

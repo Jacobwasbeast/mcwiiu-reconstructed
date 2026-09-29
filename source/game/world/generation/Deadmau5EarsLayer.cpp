@@ -39,10 +39,10 @@ void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
         GlStateManager::rotatef(yaw, 0.0f, 1.0f, 0.0f);
         GlStateManager::rotatef(xRot, 1.0f, 0.0f, 0.0f);
         GlStateManager::translatef(0.375f * (float)side, 0.0f, 0.0f);
-        GlStateManager::translatef(0.0f, 0.5f, 0.0f);
+        GlStateManager::translatef(0.0f, -0.375f, 0.0f);
         GlStateManager::rotatef(-xRot, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(-yaw, 0.0f, 1.0f, 0.0f);
-        GlStateManager::scalef(0.0625f, 0.0625f, 0.0625f);
+        GlStateManager::scalef(1.3333334f, 1.3333334f, 1.3333334f);
         model->renderEars(0.0625f);
         GlStateManager::popMatrix();
     }

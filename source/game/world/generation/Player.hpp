@@ -399,8 +399,8 @@ public:
     not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
     void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item);
     uint32_t addItem(not_null_ptr<ItemInstance> item);
-    std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
-    std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
+    NonNullList<not_null_ptr<ItemInstance> > getHandSlots();
+    NonNullList<not_null_ptr<ItemInstance> > getArmorSlots();
     uint32_t setEntityOnShoulder(CompoundTag* tag);
     bool isInvisibleTo(boost::shared_ptr<Player> player);
     bool isPushedByWater();

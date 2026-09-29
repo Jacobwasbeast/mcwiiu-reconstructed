@@ -10,17 +10,18 @@
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/SkeletonModel.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/client/render/ZombieModel.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation STRAY_CLOTHING_LOCATION;
+static ResourceLocation STRAY_CLOTHING_LOCATION(TN_MOB_SKELETON_STRAY_OVERLAY);
 
 StrayClothingLayer::StrayClothingLayer(LivingEntityRenderer* renderer)
     : mRenderer(renderer)
 {
     ModelDefinition modelDefinition;
-    mModel = new ZombieModel(0.25f, false, modelDefinition);
+    mModel = new SkeletonModel(0.25f, true, modelDefinition);
     mOriginalModel = NULL;
 }
 

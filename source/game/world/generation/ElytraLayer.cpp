@@ -16,7 +16,7 @@
 #include "game/world/generation/AbstractArmorLayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-static ResourceLocation ELYTRA_LOCATION;
+static ResourceLocation ELYTRA_LOCATION(TN_ITEM_ELYTRA);
 
 ElytraLayer::ElytraLayer(LivingEntityRenderer* renderer)
     : mRenderer(renderer), mElytraModel(new ElytraModel(ModelDefinition()))

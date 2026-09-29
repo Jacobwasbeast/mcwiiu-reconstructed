@@ -13,12 +13,11 @@ FlatLayerInfo::FlatLayerInfo(int height, Block* block)
 {
     _init(height, block);
 }
-FlatLayerInfo::FlatLayerInfo(int version, int height, int blockId)
+FlatLayerInfo::FlatLayerInfo(int height, int blockId, int data)
 {
     Block* block = Block::byId(blockId);
     _init(height, block);
-    mBlockState = block->getBlockState(0);
-    mVersion = version;
+    mBlockState = block->getBlockState(data);
 }
 FlatLayerInfo::FlatLayerInfo(int version, int height, Block* block)
 {
@@ -75,9 +74,9 @@ std::wstring FlatLayerInfo::getNameText() const
         return std::wstring(L10N::GetString(IDS_SUPERFLAT_AIR_LAYER));
     if (block == NULL)
         return std::wstring();
-    ItemInstance item(block);
-    item.setAuxValue(getData());
-    return item.getHoverName();
+    not_null_ptr<ItemInstance> item(new ItemInstance(block));
+    item->setAuxValue(getData());
+    return item->getHoverName();
 }
 
 std::wstring FlatLayerInfo::getDescriptionText() const

@@ -12,7 +12,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-static ResourceLocation WOLF_COLLAR_LOCATION;
+static ResourceLocation WOLF_COLLAR_LOCATION(TN_MOB_WOLF_COLLAR);
 
 WolfCollarLayer::WolfCollarLayer(WolfRenderer* renderer)
     : mRenderer(renderer)

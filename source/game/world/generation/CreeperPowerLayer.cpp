@@ -15,7 +15,7 @@
 #include "game/client/render/TexturePack.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation CREEPER_ARMOR_LOCATION;
+static ResourceLocation CREEPER_ARMOR_LOCATION(TN_ARMOR_POWER);
 
 CreeperPowerLayer::CreeperPowerLayer(CreeperRenderer* renderer)
     : mRenderer(renderer), mOriginalModel(NULL)

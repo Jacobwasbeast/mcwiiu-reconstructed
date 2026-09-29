@@ -31,8 +31,7 @@ IUIScene_PlayerList::~IUIScene_PlayerList()
     DeleteCriticalSection(&mCriticalSection);
 }
 
-uint32_t IUIScene_PlayerList::KickPlayerReturned(void* context, int playerIndex,
-                                                  C4JStorage::EMessageResult result)
+int IUIScene_PlayerList::KickPlayerReturned(void* context, int playerIndex, C4JStorage::EMessageResult result)
 {
     unsigned char smallId = *static_cast<unsigned char*>(context);
     delete static_cast<unsigned char*>(context);

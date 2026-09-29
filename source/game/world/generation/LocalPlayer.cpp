@@ -19,6 +19,7 @@
 #include "game/client/audio/RidingMinecartSoundInstance.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/network/ClientPacketListener.hpp"
+#include "game/network/ClientboundSoundPacket.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/network/ServerboundContainerClosePacket.hpp"
@@ -187,7 +188,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dim
     }
 
     mFlyButtonsDown[1] = 0;
-    mDestroyTicks = 0;
+    mMissTime = 0;
     mFlyButtons[0] = 0;
     mButtonsDown = 0;
     mLastSingleFlyButtons[0] = 0;
@@ -205,7 +206,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dim
     mFlyButtons[1] = 0;
     mReserved0x93c = false;
     mThirdPersonView = 0;
-    mWasOnFire = false;
+    mReserved0x178 = false;
     mLastUseTick = 0;
     SetSessionTimerStart();
     for (int i = 0; i < 8; ++i)
@@ -240,7 +241,7 @@ BlockPos LocalPlayer::getCommandSenderBlockPosition()
 
 bool LocalPlayer::hurt(const DamageSource* source, float damage)
 {
-    mDamageTaken += damage; return Player::hurt(source, damage);
+    return false;
 }
 
 void LocalPlayer::tick()
@@ -511,7 +512,7 @@ void LocalPlayer::openCommandBlock(boost::shared_ptr<CommandBlockEntity> block)
 
 int LocalPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int level)
 {
-    const int result = static_cast<int>(g_pApp->LoadTradingMenu(mPlayerIndex, mInventory, merchant, mLevel, name));
+    const int result = static_cast<int>(g_pApp->LoadTradingMenu(mUserIndex, mInventory, merchant, mLevel, name));
     if (result != 0)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     return result;
@@ -523,21 +524,21 @@ int LocalPlayer::openContainer(boost::shared_ptr<Container> container)
     const int typeId = interaction != NULL ? interaction->getTypeId(false) : ClientboundContainerOpenPacket::CONTAINER;
     int result;
     if (typeId == ClientboundContainerOpenPacket::CONTAINER)
-        result = static_cast<int>(g_pApp->LoadContainerMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadContainerMenu(mUserIndex, mInventory, container));
     else if (typeId == ClientboundContainerOpenPacket::HOPPER)
-        result = static_cast<int>(g_pApp->LoadHopperMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadHopperMenu(mUserIndex, mInventory, container));
     else if (typeId == ClientboundContainerOpenPacket::FURNACE)
-        result = static_cast<int>(g_pApp->LoadFurnaceMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadFurnaceMenu(mUserIndex, mInventory, container));
     else if (typeId == ClientboundContainerOpenPacket::BREWING_STAND)
-        result = static_cast<int>(g_pApp->LoadBrewingStandMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadBrewingStandMenu(mUserIndex, mInventory, container));
     else if (typeId == ClientboundContainerOpenPacket::BEACON)
-        result = static_cast<int>(g_pApp->LoadBeaconMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadBeaconMenu(mUserIndex, mInventory, container));
     else if (typeId == ClientboundContainerOpenPacket::TRAP || typeId == ClientboundContainerOpenPacket::DROPPER)
-        result = static_cast<int>(g_pApp->LoadTrapMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadTrapMenu(mUserIndex, mInventory, container));
     else if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
-        result = static_cast<int>(g_pApp->LoadShulkerBoxMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadShulkerBoxMenu(mUserIndex, mInventory, container));
     else
-        result = static_cast<int>(g_pApp->LoadContainerMenu(mPlayerIndex, mInventory, container));
+        result = static_cast<int>(g_pApp->LoadContainerMenu(mUserIndex, mInventory, container));
     if (result != 0)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     return result;
@@ -545,7 +546,7 @@ int LocalPlayer::openContainer(boost::shared_ptr<Container> container)
 
 int LocalPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container)
 {
-    const int result = (int)g_pApp->LoadHorseMenu(mPlayerIndex, mInventory, container, horse);
+    const int result = (int)g_pApp->LoadHorseMenu(mUserIndex, mInventory, container, horse);
     if (result != 0)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     return result;
@@ -557,15 +558,15 @@ int LocalPlayer::startBlockInteraction(InteractionObject& interaction)
     if (interaction.getTypeId(false) == ClientboundContainerOpenPacket::WORKBENCH)
     {
         boost::shared_ptr<LocalPlayer> self = boost::dynamic_pointer_cast<LocalPlayer>(shared_from_this());
-        result = (int)g_pApp->LoadCrafting3x3Menu(mPlayerIndex, self, (int)mX, (int)mY, (int)mZ);
+        result = (int)g_pApp->LoadCrafting3x3Menu(mUserIndex, self, (int)mX, (int)mY, (int)mZ);
     }
     else if (interaction.getTypeId(false) == ClientboundContainerOpenPacket::ENCHANTMENT)
     {
-        result = (int)g_pApp->LoadEnchantingMenu(mPlayerIndex, mInventory, (int)mX, (int)mY, (int)mZ, mLevel, interaction.getDisplayName());
+        result = (int)g_pApp->LoadEnchantingMenu(mUserIndex, mInventory, (int)mX, (int)mY, (int)mZ, mLevel, interaction.getDisplayName());
     }
     else if (interaction.getTypeId(false) == ClientboundContainerOpenPacket::REPAIR_TABLE)
     {
-        result = (int)g_pApp->LoadRepairingMenu(mPlayerIndex, mInventory, mLevel, (int)mX, (int)mY, (int)mZ);
+        result = (int)g_pApp->LoadRepairingMenu(mUserIndex, mInventory, mLevel, (int)mX, (int)mY, (int)mZ);
     }
     else
     {
@@ -581,12 +582,12 @@ void LocalPlayer::openItemInstanceGui(not_null_ptr<ItemInstance> item, Interacti
     Item* book = item->getItem();
     if (book == Items::writtenBook)
     {
-        if (!g_pApp->LoadWritingBookMenu(mPlayerIndex, item, false))
+        if (!g_pApp->LoadWritingBookMenu(mUserIndex, item, false))
             return;
     }
     else if (book == Items::writableBook)
     {
-        g_pApp->LoadWritingBookMenu(mPlayerIndex, item, true);
+        g_pApp->LoadWritingBookMenu(mUserIndex, item, true);
     }
     else
     {
@@ -693,8 +694,8 @@ void LocalPlayer::aiStep()
         mIsInsidePortal = false;
     }
 
-    if (mPortalTime > 0)
-        --mPortalTime;
+    if (mPortalCooldown > 0)
+        --mPortalCooldown;
 
     const bool wasJumping = mInput->mJumping;
     const bool wasSneaking = mInput->mSneaking;
@@ -726,7 +727,7 @@ void LocalPlayer::aiStep()
     }
 
     const double edgeOffset = static_cast<double>(mBbWidth) * 0.35;
-    const double edgeY = mBoundingBox->mMinY + 1.75;
+    const double edgeY = mBoundingBox->mMinY + 0.5;
     checkInBlock(mX - edgeOffset, edgeY, mZ + edgeOffset);
     checkInBlock(mX - edgeOffset, edgeY, mZ - edgeOffset);
     checkInBlock(mX + edgeOffset, edgeY, mZ - edgeOffset);
@@ -969,7 +970,7 @@ void LocalPlayer::aiStep()
                 if ((mFlyButtons[0] & 0x2000) != 0)
                     verticalSpeed = -0.1f;
                 mFlyMotionY = verticalSpeed;
-                move(eMoverType_Self, 0.0, verticalSpeed, 0.0, false);
+                Entity::move(eMoverType_Self, 0.0, verticalSpeed, 0.0, false);
             }
             else
             {
@@ -991,7 +992,7 @@ void LocalPlayer::aiStep()
                 mFlyMotionX *= speed;
                 mFlyMotionY *= speed;
                 mFlyMotionZ *= speed;
-                move(eMoverType_Self, mFlyMotionX, mFlyMotionY, mFlyMotionZ, false);
+                Entity::move(eMoverType_Self, mFlyMotionX, mFlyMotionY, mFlyMotionZ, false);
             }
 
             mFallDistance = 0.0f;
@@ -1078,7 +1079,7 @@ void LocalPlayer::move(MoverType type, double xa, double ya, double za, bool col
 int LocalPlayer::openFireworks(int x, int y, int z)
 {
     boost::shared_ptr<LocalPlayer> self = boost::static_pointer_cast<LocalPlayer>(shared_from_this());
-    const int result = static_cast<int>(g_pApp->LoadFireworksMenu(mPlayerIndex, self, x, y, z));
+    const int result = static_cast<int>(g_pApp->LoadFireworksMenu(mUserIndex, self, x, y, z));
     if (result != 0)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     return result;
@@ -1312,9 +1313,9 @@ void LocalPlayer::onCrafted(not_null_ptr<ItemInstance> item)
     if (item->getItem()->IsArmor() && static_cast<ArmorItem*>(item->getItem())->hasCustomColor(item))
         awardStat(gStats->get_armourDyed(Item::VALIDgetId(item->getItem())), GenericStats::param_noArgs());
 
-    if (mMinecraft->mGameModes[mPlayerIndex] != NULL)
+    if (mMinecraft->mGameModes[mUserIndex] != NULL)
     {
-        Tutorial* tutorial = mMinecraft->mGameModes[mPlayerIndex]->getTutorial();
+        Tutorial* tutorial = mMinecraft->mGameModes[mUserIndex]->getTutorial();
         if (tutorial != NULL)
             tutorial->onCrafted(item);
     }
@@ -1337,12 +1338,12 @@ void LocalPlayer::handleCollectItem(not_null_ptr<ItemInstance> item)
                     auxValueCount += count;
             }
         }
-        Tutorial* tutorial = mMinecraft->mGameModes[mPlayerIndex]->getTutorial();
+        Tutorial* tutorial = mMinecraft->mGameModes[mUserIndex]->getTutorial();
         if (tutorial != NULL)
             tutorial->onTake(item, itemCount, auxValueCount);
     }
-    if (gConsoleUIController.IsContainerMenuDisplayed(mPlayerIndex))
-        gConsoleUIController.HandleInventoryUpdated(mPlayerIndex);
+    if (gConsoleUIController.IsContainerMenuDisplayed(mUserIndex))
+        gConsoleUIController.HandleInventoryUpdated(mUserIndex);
 }
 
 void LocalPlayer::SpectatePlayerNext()
@@ -1363,8 +1364,8 @@ void LocalPlayer::StopSpectatingPlayer()
 
     GetLocalGameMode()->Follow(false, false);
     SetCamera(boost::shared_ptr<Entity>());
-    if (SpectateAsOtherEntity() && mMinecraft->mGameModes[mPlayerIndex]->getTutorial() != NULL)
-        mMinecraft->mGameModes[mPlayerIndex]->getTutorial()->onGameModeChange(eTutorial_GameMode_SpectatingAsMob);
+    if (SpectateAsOtherEntity() && mMinecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
+        mMinecraft->mGameModes[mUserIndex]->getTutorial()->onGameModeChange(eTutorial_GameMode_SpectatingAsMob);
 }
 
 const GameType* LocalPlayer::GetGameType()
@@ -1531,16 +1532,20 @@ unsigned char LocalPlayer::handleMouseClick(int button)
 
     if (button == 0)
     {
-        if (mLastAttackTick > 0)
+        if (mMissTime > 0)
             return 0;
 
-        if (hitResult == NULL)
+        if (hitResult == NULL || hitResult->mType == HitResult::MISS)
         {
             if (gameMode->hasMissTime())
-                mLastAttackTick = 10;
+                mMissTime = 10;
             resetAttackStrengthTicker();
             if (swing(hand))
+            {
                 playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
+                mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+                    SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, mX, mY, mZ, 0.6f, 1.0f)));
+            }
             return 0;
         }
 
@@ -1550,7 +1555,7 @@ unsigned char LocalPlayer::handleMouseClick(int button)
             if (!doesLevelAllowBlockToBreak(pos))
             {
                 if (gameMode->hasMissTime())
-                    mLastAttackTick = 10;
+                    mMissTime = 10;
                 resetAttackStrengthTicker();
             }
             else
@@ -1835,10 +1840,10 @@ unsigned long long LocalPlayer::handleMouseDown(int button, bool pressed)
     {
         if (!pressed)
         {
-            mDestroyTicks = 0;
+            mMissTime = 0;
         }
 
-        if (button != 0 || mDestroyTicks < 1)
+        if (button != 0 || mMissTime < 1)
         {
             if (pressed)
             {
@@ -2141,7 +2146,10 @@ void LocalPlayer::respawn()
 
 void LocalPlayer::actuallyHurt(const DamageSource* source, float amount)
 {
-    mDamageTaken += amount; Player::actuallyHurt(source, amount);
+    if (isInvulnerableTo(source))
+        return;
+    setHealth(getHealth() - amount);
+    mDamageTaken = amount;
 }
 
 void LocalPlayer::clientSideCloseContainer()
@@ -2150,10 +2158,10 @@ void LocalPlayer::clientSideCloseContainer()
     mInventory->setCarried(empty);
     Player::closeContainer();
     mMinecraft->setScreen(NULL);
-    if (gConsoleUIController.IsContainerMenuDisplayed(mPlayerIndex))
+    if (gConsoleUIController.IsContainerMenuDisplayed(mUserIndex))
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-        gConsoleUIController.CloseUIScenes(mPlayerIndex, false);
+        gConsoleUIController.CloseUIScenes(mUserIndex, false);
     }
 }
 

@@ -164,9 +164,9 @@ void MultiplayerLocalPlayer::actuallyHurt(const DamageSource* source, float dama
 void MultiplayerLocalPlayer::completeUsingItem()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (!mUseItem->isEmpty() && minecraft->mGameModes[mPlayerIndex] != NULL)
+    if (!mUseItem->isEmpty() && minecraft->mGameModes[mUserIndex] != NULL)
     {
-        Tutorial* tutorial = minecraft->mGameModes[mPlayerIndex]->getTutorial();
+        Tutorial* tutorial = minecraft->mGameModes[mUserIndex]->getTutorial();
         if (tutorial != NULL)
             tutorial->completeUsingItem(mUseItem);
     }
@@ -178,24 +178,24 @@ void MultiplayerLocalPlayer::completeUsingItem()
 void MultiplayerLocalPlayer::onEffectAdded(MobEffectInstance* effect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mPlayerIndex] != NULL && minecraft->mGameModes[mPlayerIndex]->getTutorial() != NULL)
-        minecraft->mGameModes[mPlayerIndex]->getTutorial()->onEffectChanged(effect->getEffect(), false);
+    if (minecraft->mGameModes[mUserIndex] != NULL && minecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
+        minecraft->mGameModes[mUserIndex]->getTutorial()->onEffectChanged(effect->getEffect(), false);
     LivingEntity::onEffectAdded(effect);
 }
 
 void MultiplayerLocalPlayer::onEffectUpdated(MobEffectInstance* effect, bool attributesChanged)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mPlayerIndex] != NULL && minecraft->mGameModes[mPlayerIndex]->getTutorial() != NULL)
-        minecraft->mGameModes[mPlayerIndex]->getTutorial()->onEffectChanged(effect->getEffect(), false);
+    if (minecraft->mGameModes[mUserIndex] != NULL && minecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
+        minecraft->mGameModes[mUserIndex]->getTutorial()->onEffectChanged(effect->getEffect(), false);
     LivingEntity::onEffectUpdated(effect, attributesChanged);
 }
 
 void MultiplayerLocalPlayer::onEffectRemoved(MobEffectInstance* effect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mPlayerIndex] != NULL && minecraft->mGameModes[mPlayerIndex]->getTutorial() != NULL)
-        minecraft->mGameModes[mPlayerIndex]->getTutorial()->onEffectChanged(effect->getEffect(), true);
+    if (minecraft->mGameModes[mUserIndex] != NULL && minecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
+        minecraft->mGameModes[mUserIndex]->getTutorial()->onEffectChanged(effect->getEffect(), true);
     LivingEntity::onEffectRemoved(effect);
 }
 
@@ -279,7 +279,7 @@ bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool
             else if (type == EntityType::BOAT)
                 challenge = 0x11;
         }
-        telemetryManagerInstance->RecordEnemyKilledOrOvercome(mPlayerIndex, (int)mX, (int)mY, (int)mZ, 0, 0, 0,
+        telemetryManagerInstance->RecordEnemyKilledOrOvercome(mUserIndex, (int)mX, (int)mY, (int)mZ, 0, 0, 0,
                                                               static_cast<ETelemetryChallenges>(challenge));
     }
     else if (wasRiding)
@@ -290,17 +290,17 @@ bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool
     updateRichPresence();
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mPlayerIndex] != NULL)
+    if (minecraft->mGameModes[mUserIndex] != NULL)
     {
         if (!wasRiding)
         {
-            Tutorial* tutorial = riding ? minecraft->mGameModes[mPlayerIndex]->getTutorial() : NULL;
+            Tutorial* tutorial = riding ? minecraft->mGameModes[mUserIndex]->getTutorial() : NULL;
             if (tutorial != NULL)
                 tutorial->onRideEntity(vehicle);
         }
         else if (!riding)
         {
-            Tutorial* tutorial = minecraft->mGameModes[mPlayerIndex]->getTutorial();
+            Tutorial* tutorial = minecraft->mGameModes[mUserIndex]->getTutorial();
             if (tutorial != NULL)
                 tutorial->changeTutorialState(eTutorial_State_Gameplay, NULL);
         }
@@ -325,7 +325,7 @@ void MultiplayerLocalPlayer::setAndBroadcastCustomSkin(unsigned int skin)
 
     boost::shared_ptr<Entity> entity = shared_from_this();
     mPacketListener->send(boost::shared_ptr<Packet>(
-        new TextureAndGeometryChangePacket(entity, GameSettings::GetPlayerSkinName(mPlayerIndex))));
+        new TextureAndGeometryChangePacket(entity, GameSettings::GetPlayerSkinName(mUserIndex))));
 }
 
 void MultiplayerLocalPlayer::setAndBroadcastCustomCape(unsigned int cape)
@@ -337,5 +337,5 @@ void MultiplayerLocalPlayer::setAndBroadcastCustomCape(unsigned int cape)
 
     boost::shared_ptr<Entity> entity = shared_from_this();
     mPacketListener->send(boost::shared_ptr<Packet>(new TextureChangePacket(
-        entity, TextureChangePacket::eTextureChangeType_Cape, GameSettings::GetPlayerCapeName(mPlayerIndex))));
+        entity, TextureChangePacket::eTextureChangeType_Cape, GameSettings::GetPlayerCapeName(mUserIndex))));
 }

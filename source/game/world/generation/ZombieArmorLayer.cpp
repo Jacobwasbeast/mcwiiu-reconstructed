@@ -18,27 +18,20 @@ ZombieArmorLayer::~ZombieArmorLayer()
 
 void ZombieArmorLayer::createArmorModels()
 {
-    if (mModelArmorInner != NULL)
-    {
-        static_cast<HumanoidModel*>(mModelArmorInner)->mHead->compile(3.0f);
-    }
-
-    if (mModelArmor != NULL)
-    {
-        static_cast<HumanoidModel*>(mModelArmor)->mHead->compile(3.0f);
-    }
+    delete mModelArmorInner;
+    delete mModelArmor;
 
     ModelDefinition innerDefinition;
     ModelDefinition outerDefinition;
 
     if (mEntityType == EntityType::DROWNED)
     {
-        mModelArmorInner = new ZombieModel(0.75f, false, innerDefinition);
-        mModelArmor = new ZombieModel(1.25f, false, outerDefinition);
+        mModelArmorInner = new ZombieModel(0.75f, true, innerDefinition);
+        mModelArmor = new ZombieModel(1.25f, true, outerDefinition);
     }
     else
     {
-        mModelArmorInner = new ZombieModel(0.5f, false, innerDefinition);
-        mModelArmor = new ZombieModel(1.0f, false, outerDefinition);
+        mModelArmorInner = new ZombieModel(0.5f, true, innerDefinition);
+        mModelArmor = new ZombieModel(1.0f, true, outerDefinition);
     }
 }

@@ -1,4 +1,6 @@
 #include "game/world/generation/Player.hpp"
+#include "game/core/Minecart.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
 #include "game/entity/projectile/Arrow.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -79,6 +81,7 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/TamableAnimal.hpp"
 #include "game/world/generation/PlayerDataWalker.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/data/DataFixTypes.hpp"
@@ -1197,7 +1200,8 @@ void Player::onChangedBlock(const BlockPos& position)
 void Player::serverAiStep()
 {
     LivingEntity::serverAiStep();
-    mSpeed = getSpeed();
+    updateSwingTime();
+    mYHeadRot = mYRot;
 }
 
 bool Player::IsCreativeFlying()
@@ -1330,6 +1334,9 @@ float Player::getDestroySpeed(const BlockState* state)
 
 void Player::jumpFromGround()
 {
+    GameMode* gameMode = GetGameMode();
+    if (gameMode != NULL)
+        gameMode->RecordJump();
     LivingEntity::jumpFromGround();
     causeFoodExhaustion(static_cast<float>(isSprinting()
         ? FoodConstants::ExhaustionSprintJump() : FoodConstants::ExhaustionJump()));
@@ -1597,22 +1604,16 @@ uint32_t Player::getCapeIdFromPath(const std::wstring& path)
     return (id & 0x7fffffff) | (downloadable ? 0x80000000 : 0);
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Player::getHandSlots()
+NonNullList<not_null_ptr<ItemInstance> > Player::getHandSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* items = new std::vector<boost::shared_ptr<ItemInstance> >();
-    items->push_back(getMainHandItem());
-    items->push_back(getOffhandItem());
-    return items;
+    mField0x76c[0] = getMainHandItem();
+    mField0x76c[1] = getOffhandItem();
+    return mField0x76c;
 }
 
-std::vector<boost::shared_ptr<ItemInstance> >* Player::getArmorSlots()
+NonNullList<not_null_ptr<ItemInstance> > Player::getArmorSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* items = new std::vector<boost::shared_ptr<ItemInstance> >();
-    items->push_back(mInventory->getArmor(0));
-    items->push_back(mInventory->getArmor(1));
-    items->push_back(mInventory->getArmor(2));
-    items->push_back(mInventory->getArmor(3));
-    return items;
+    return mInventory->m_armor;
 }
 
 double Player::getEyeHeight()
@@ -1776,7 +1777,7 @@ std::vector<ModelPart*>* Player::GetAdditionalModelParts()
 void Player::tickArmor()
 {
     not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
-    if (!helmet->isEmpty() && helmet->getItem() == Items::turtleHelmet && !isInWater()) {
+    if (!helmet->isEmpty() && helmet->getItem() == Items::turtleHelmet && !headInWater()) {
         addEffect(new MobEffectInstance(MobEffects::WATER_BREATHING, 200, 0, false, false),
                   boost::shared_ptr<Entity>());
     }
@@ -2314,7 +2315,7 @@ void Player::destroyVanishingCursedItems()
     for (unsigned int i = 0; i < mInventory->getContainerSize(); ++i) {
         not_null_ptr<ItemInstance> item = mInventory->getItem(i);
         if (!item->isEmpty() && EnchantmentHelper::hasVanishingCurse(item))
-            mInventory->removeItem(i, item->getCount());
+            mInventory->removeItemNoUpdate(i);
     }
 }
 
@@ -2508,7 +2509,7 @@ const SoundEvent* Player::getHurtSound(const DamageSource* source)
 bool Player::hurt(const DamageSource* source, float damage)
 {
     boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    if (damage == 0.0f && Minecraft::InMiniGame(eMiniGameId_Glide, true) && directEntity)
+    if (damage == 0.0f && Minecraft::InMiniGame(eMiniGameId_Any, true) && directEntity)
     {
         unsigned long long type = directEntity->GetType();
         if (type == EntityType::FISHING_HOOK || type == EntityType::SNOWBALL || type == EntityType::THROWN_EGG
@@ -2816,6 +2817,8 @@ void Player::respawnEntityOnShoulder(CompoundTag* tag)
     if (mLevel->mIsClientSide || tag == NULL || tag->isEmpty()) return;
     boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, mLevel);
     if (!entity) return;
+    if (Entity::instanceof(entity, EntityType::TAMABLE_ANIMAL))
+        boost::static_pointer_cast<TamableAnimal>(entity)->setOwnerUUID(getUUID());
     entity->setPos(mX, mY + 0.699999988079071, mZ);
     mLevel->addEntity(entity);
 }
@@ -3181,33 +3184,99 @@ uint32_t Player::isAllowedToUse(not_null_ptr<ItemInstance> item)
 
 bool Player::isAllowedToInteract(boost::shared_ptr<Entity> entity)
 {
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true)) {
-        if (!entity) return false;
-        if (entity->GetType() == EntityType::ARMOR_STAND) return false;
+    bool allowed = true;
+
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && entity->GetType() == EntityType::ARMOR_STAND)
+    {
+        return false;
     }
-    if (!entity) return false;
-    if (g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0) return true;
-    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-    if (player) {
-        if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) != 0) return true;
-        return getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) == 0
-            && getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) == 0;
+
+    if (g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) == 0)
+    {
+        if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
+        {
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) == 0)
+            {
+                boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
+                const Minecart::Type* type = minecart->getType();
+                if (type->mId == Minecart::Type::CHEST->mId || type->mId == Minecart::Type::HOPPER->mId)
+                {
+                    allowed = false;
+                }
+            }
+        }
+        else if ((entity->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+        {
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) == 0)
+            {
+                boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
+                bool ownedByOther = false;
+                if (horse->isTamed() && horse->getOwnerUUID().compare(getUUID()) != 0)
+                {
+                    ownedByOther = true;
+                }
+                allowed = !ownedByOther;
+            }
+        }
+        else if (entity->GetType() == EntityType::ARMOR_STAND)
+        {
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) != 0)
+            {
+                return true;
+            }
+            allowed = false;
+        }
+        else
+        {
+            const unsigned int cannotBuild = getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild);
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) == 0)
+            {
+                return cannotBuild == 0;
+            }
+            allowed = false;
+        }
     }
-    return getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) == 0;
+
+    return allowed;
 }
 
 uint32_t Player::isAllowedToHurtEntity(boost::shared_ptr<Entity> entity)
 {
-    if (!entity) return 0;
-    unsigned long long type = entity->GetType();
-    if (!isAllowedToMine() || g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0) {
-        if (type == 0xc000001 || type == 0xa080003 || type == 0xa080002
-            || type == 0xa080001 || type == 0xa080000 || type == 0x8000008) return 0;
+    const unsigned long long type = entity->GetType();
+    uint32_t allowed = 1;
+
+    if (!isAllowedToMine() || g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
+    {
+        if (type == EntityType::ARMOR_STAND || type == EntityType::LEASH_FENCE_KNOT_ENTITY
+            || type == EntityType::ITEM_FRAME || type == EntityType::PAINTING
+            || type == EntityType::HANGING_ENTITY || type == EntityType::BOAT)
+        {
+            return 0;
+        }
+        if ((type & EntityType::MINECART) == EntityType::MINECART)
+        {
+            return 0;
+        }
     }
-    if ((type & 0xd680000) == 0xd680000) return isAllowedToAttackAnimals();
-    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-    if (player) return isAllowedToAttackPlayers() && !player->mAbilities.mInstabuild && !player->isSpectator();
-    return 1;
+
+    if ((type & EntityType::ANIMAL) == EntityType::ANIMAL)
+    {
+        allowed = isAllowedToAttackAnimals();
+    }
+    else if ((type & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> target = boost::dynamic_pointer_cast<Player>(entity);
+        allowed = 0;
+        if (isAllowedToAttackPlayers() && g_pApp->GetGameHostOption(eGameHostOption_PvP) != 0
+            && (GetGameMode() == NULL || GetGameType() != GameType::LOBBY)
+            && !Minecraft::InMiniGame(eMiniGameId_Glide, true)
+            && !target->mAbilities.mInstabuild && !target->isSpectator())
+        {
+            allowed = 1;
+        }
+    }
+
+    return allowed;
 }
 
 uint32_t Player::SpectateAsSkull()

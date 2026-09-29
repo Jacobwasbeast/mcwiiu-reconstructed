@@ -45,7 +45,7 @@ void ArrowLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, f
         {
             GlStateManager::pushMatrix();
             Cube* cube = modelPart->mCubes.at(random.nextInt(static_cast<int>(modelPart->mCubes.size())));
-            modelPart->translateTo(scale);
+            modelPart->translateTo(0.0625f);
 
             float x = random.nextFloat();
             float y = random.nextFloat();

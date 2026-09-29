@@ -55,7 +55,7 @@ MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* con
     : GameMode(), mDestroying(false), mDestroyBlockPos(-1, -1, -1), mDestroyProgress(0.0f), mDestroyTicks(0),
       mDestroyDelay(0), mConnection(connection), mPlayerId(playerId), mPrimaryPlayer(primaryPlayer),
       mCarriedItemSlot(0), mGameModeConstraints(new GameModeConstraints(playerId)), mTutorial(0), mTeamInvites(),
-      mMissTime(5.0f), mSpectateSoundTime(System::processTimeInMilliSecs())
+      mSpectateSoundAllowance(5.0f), mSpectateSoundTime(System::processTimeInMilliSecs())
 {
     mDestroyItem = ItemInstance::EMPTY;
     mGameType = GameType::SURVIVAL;
@@ -263,7 +263,7 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItemOn(
 
 bool MultiPlayerGameMode::hasMissTime()
 {
-    return mMissTime > 0.0f;
+    return !isCreative();
 }
 
 void MultiPlayerGameMode::attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity)
@@ -543,11 +543,11 @@ bool MultiPlayerGameMode::SpectateSoundEnabled()
 }
 double MultiPlayerGameMode::CalcSpectateSoundAllowance()
 {
-    const uint64_t now = System::processTimeInMilliSecs();
-    const double elapsed = static_cast<double>(now - mSpectateSoundTime);
-    double allowance = static_cast<double>(mMissTime) + elapsed * 10.0 / 8000.0;
-    if (allowance > 10.0)
-        allowance = 10.0;
+    const long long now = System::processTimeInMilliSecs();
+    const float elapsed = static_cast<float>(now - static_cast<long long>(mSpectateSoundTime));
+    const float allowance = mSpectateSoundAllowance + static_cast<float>(elapsed * 5.0) / 8000.0f;
+    if (allowance > 5.0f)
+        return 5.0;
     return allowance;
 }
 bool MultiPlayerGameMode::CanMakeSpectateSound()
@@ -570,7 +570,7 @@ void MultiPlayerGameMode::MakeSpectateSound()
         sound = SoundEvents::BAT_AMBIENT;
     if (!sound || !mConnection)
         return;
-    mMissTime = static_cast<float>(CalcSpectateSoundAllowance() - 1.0);
+    mSpectateSoundAllowance = static_cast<float>(CalcSpectateSoundAllowance() - 1.0);
     mSpectateSoundTime = System::processTimeInMilliSecs();
     mConnection->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
         sound, SoundSource::eSoundSource_Master, player->mX, player->mY, player->mZ, 0.5f, 0.0f)));
@@ -773,7 +773,7 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
 
     return handled;
 }
-double MultiPlayerGameMode::getPickRange() { return hasFarPickRange() ? 5.0 : 4.5; }
+double MultiPlayerGameMode::getPickRange() { return isCreative() ? 5.0 : 4.5; }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleTakeAllInvenetory(
     int containerId, int button, int start, int count, boost::shared_ptr<Player> player)
 {

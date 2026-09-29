@@ -18,7 +18,7 @@
 #include "game/util/ResourceLocation.hpp"
 
 static std::map<std::wstring, ResourceLocation> sArmorLocations;
-static ResourceLocation ENCHANT_LOCATION;
+static ResourceLocation ENCHANT_LOCATION(TN_BLUR_MISC_GLINT);
 
 AbstractArmorLayer::AbstractArmorLayer(LivingEntityRenderer* renderer)
     : mRenderer(renderer)

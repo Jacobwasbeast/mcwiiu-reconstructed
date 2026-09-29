@@ -155,7 +155,7 @@ protected:
 
 private:
     std::vector<TeamInvite*> mTeamInvites;
-    float mMissTime;
+    float mSpectateSoundAllowance;
     uint64_t mSpectateSoundTime;
 };
 

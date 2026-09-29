@@ -46,8 +46,8 @@ void RemotePlayer::tick()
     mBedOffsetY = 0;
     AbstractClientPlayer::tick();
 
-    double horizontalDistance = std::sqrt((mX - mXOld) * (mX - mXOld)
-        + (mZ - mZOld) * (mZ - mZOld));
+    double horizontalDistance = std::sqrt((mX - mXo) * (mX - mXo)
+        + (mZ - mZo) * (mZ - mZo));
     mAnimationSpeedOld = mAnimationSpeed;
     float targetSpeed = (float)(horizontalDistance * 4.0);
     if (targetSpeed > 1.0f)

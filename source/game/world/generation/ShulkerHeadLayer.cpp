@@ -10,7 +10,7 @@
 #include "game/core/Shulker.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SHULKER_LOCATION;
+static ResourceLocation SHULKER_LOCATION(TN_MOB_SHULKER_ENDERGOLEM);
 
 ShulkerHeadLayer::ShulkerHeadLayer(ShulkerRenderer* renderer)
     : mRenderer(renderer)
@@ -33,7 +33,7 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     {
     case 1:
         GlStateManager::rotatef(180.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::translatef(0.0f, 0.5f, 0.0f);
+        GlStateManager::translatef(0.0f, -2.0f, 0.0f);
         break;
     case 2:
         GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);

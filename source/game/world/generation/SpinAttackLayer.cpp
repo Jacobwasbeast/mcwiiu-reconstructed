@@ -9,7 +9,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SPIN_ATTACK_LOCATION;
+static ResourceLocation SPIN_ATTACK_LOCATION(TN_ITEM_TRIDENT_RIPTIDE);
 
 SpinAttackLayer::SpinAttackLayer(LivingEntityRenderer* renderer)
     : mRenderer(renderer)

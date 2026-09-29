@@ -8,7 +8,7 @@ class FlatLayerInfo
 public:
     FlatLayerInfo();
     FlatLayerInfo(int height, Block* block);
-    FlatLayerInfo(int version, int height, int blockId);
+    FlatLayerInfo(int height, int blockId, int data);
     FlatLayerInfo(int version, int height, Block* block);
     FlatLayerInfo(int version, int height, Block* block, int data);
     unsigned int getStart() const;

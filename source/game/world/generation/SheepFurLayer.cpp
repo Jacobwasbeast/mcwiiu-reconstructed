@@ -9,7 +9,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SHEEP_FUR_LOCATION;
+static ResourceLocation SHEEP_FUR_LOCATION(TN_MOB_SHEEP_FUR);
 
 SheepFurLayer::SheepFurLayer(SheepRenderer* renderer)
     : mRenderer(renderer)

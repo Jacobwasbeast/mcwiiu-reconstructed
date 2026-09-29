@@ -1,4 +1,5 @@
 #include "game/world/generation/VillagerGolem.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
@@ -313,10 +314,11 @@ bool VillagerGolem::hurt(const DamageSource* source, float damage)
 
 unsigned int VillagerGolem::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance->getItem() != NULL && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::LEAD)
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::LEAD)
     {
-        boost::shared_ptr<Village> village = getVillage();
-        if (village && tooltipData.m_bAllowedToInteract)
+        if (!isLeashed())
+            return IDS_TOOLTIPS_LEASH;
+        if (getLeashHolder().get() == static_cast<Entity*>(tooltipData.m_pPlayer.get()))
             return IDS_TOOLTIPS_UNLEASH;
     }
     return IDS_NONE;

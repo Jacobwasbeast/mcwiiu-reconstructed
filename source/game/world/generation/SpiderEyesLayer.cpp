@@ -9,7 +9,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation SPIDER_EYES_LOCATION;
+static ResourceLocation SPIDER_EYES_LOCATION(TN_MOB_SPIDER_EYES);
 
 SpiderEyesLayer::SpiderEyesLayer(SpiderRenderer* renderer)
     : mRenderer(renderer)

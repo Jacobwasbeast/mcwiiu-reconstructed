@@ -21,6 +21,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/PortalForcer.hpp"
+#include "game/server/ServerChunkCache.hpp"
 #include "game/data/LevelStorage.hpp"
 #include "game/world/generation/PlayerIO.hpp"
 #include "game/item/Inventory.hpp"
@@ -337,15 +338,8 @@ void PlayerList::remove(boost::shared_ptr<ServerPlayer> player)
 
 void PlayerList::removeAll()
 {
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-         it != mPlayers.end(); ++it)
-    {
-        if (*it && (*it)->mConnection)
-            (*it)->mConnection->disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
-    }
-    mPlayers.clear();
-    for (int group = 0; group < 3; ++group)
-        mReceivingPlayers[group].clear();
+    for (unsigned int i = 0; i < mPlayers.size(); ++i)
+        mPlayers[i]->mConnection->disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
 }
 
 CompoundTag* PlayerList::load(boost::shared_ptr<ServerPlayer> player)
@@ -439,11 +433,11 @@ void PlayerList::sendLevelInfo(boost::shared_ptr<ServerPlayer> player, ServerLev
         new ClientboundSetTimePacket(gameTime, dayTime, daylightCycle)));
     if (level->isRaining())
     {
-        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(1, 0.0f)));
+        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::START_RAINING, 0.0f)));
     }
     else
     {
-        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(2, 0.0f)));
+        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_RAINING, 0.0f)));
     }
     player->mConnection->send(boost::shared_ptr<Packet>(
         new ClientboundSetSpawnPositionPacket(level->getSharedSpawnPos())));
@@ -951,64 +945,81 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
     return replacement;
 }
 
-boost::shared_ptr<Entity> PlayerList::repositionAcrossDimension(boost::shared_ptr<Entity> entity,
-                                                                int dimension, ServerLevel* oldLevel,
-                                                                ServerLevel* newLevel)
+void PlayerList::repositionAcrossDimension(boost::shared_ptr<Entity> entity, int lastDimension,
+                                           ServerLevel* oldLevel, ServerLevel* newLevel)
 {
-    if (!entity || !oldLevel || !newLevel)
-        return entity;
-
+    const double originalX = entity->mX;
+    const double originalZ = entity->mZ;
     double x = entity->mX;
     double z = entity->mZ;
-    const int currentDimension = entity->mDimension;
+    const float rotation = entity->mYRot;
     const double scale = static_cast<double>(newLevel->getLevelData()->getHellScale());
-    if (currentDimension == -1)
+
+    if (entity->mDimension == -1)
     {
         x /= scale;
         z /= scale;
+        entity->moveTo(x, entity->mY, z, entity->mYRot, entity->mXRot);
+        if (entity->isAlive())
+        {
+            oldLevel->tick(entity, false);
+        }
     }
-    else if (currentDimension == 0)
+    else if (entity->mDimension == 0)
     {
         x *= scale;
         z *= scale;
-    }
-
-    newLevel->clampWithinLevelBounds(x, z, 0.0);
-    entity->moveTo(x, entity->mY, z, entity->mYRot, entity->mXRot);
-
-    if (dimension == 1)
-    {
-        BlockPos spawn = newLevel->getSharedSpawnPos();
-        entity->moveTo(spawn, entity->mYRot, entity->mXRot);
-    }
-    else if (dimension != -1 && dimension != 0)
-    {
-        BlockPos* spawn = newLevel->getDimensionSpecificSpawn();
-        if (spawn != NULL)
-            entity->moveTo(*spawn, entity->mYRot, entity->mXRot);
-    }
-
-    if (currentDimension == -1 || currentDimension == 0)
-        newLevel->getPortalForcer()->force(entity, 0.0f,
-                                            static_cast<int>(entity->mX) >> 4,
-                                            static_cast<int>(entity->mZ) >> 4);
-
-    newLevel->getChunkSource()->create(static_cast<int>(entity->mX) >> 4,
-                                       static_cast<int>(entity->mZ) >> 4);
-
-    boost::shared_ptr<ServerPlayer> serverPlayer =
-        boost::dynamic_pointer_cast<ServerPlayer>(entity);
-    if (serverPlayer)
-    {
-        removePlayerFromReceiving(serverPlayer, false, currentDimension);
-        addPlayerToReceiving(serverPlayer, false);
+        entity->moveTo(x, entity->mY, z, entity->mYRot, entity->mXRot);
+        if (entity->isAlive())
+        {
+            oldLevel->tick(entity, false);
+        }
     }
     else
     {
-        oldLevel->removeEntityImmediately(entity);
-        newLevel->addEntity(entity);
+        BlockPos spawn;
+        if (lastDimension == 1)
+        {
+            spawn = newLevel->getSharedSpawnPos();
+        }
+        else
+        {
+            spawn = *newLevel->getDimensionSpecificSpawn();
+        }
+        x = static_cast<double>(spawn.x);
+        entity->mY = static_cast<double>(spawn.y);
+        z = static_cast<double>(spawn.z);
+        entity->moveTo(x, entity->mY, z, 90.0f, 0.0f);
+        if (entity->isAlive())
+        {
+            oldLevel->tick(entity, false);
+        }
     }
-    return entity;
+
+    if (entity->GetType() == EntityType::SERVER_PLAYER)
+    {
+        boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(entity);
+        removePlayerFromReceiving(serverPlayer, false, lastDimension);
+        addPlayerToReceiving(serverPlayer, false);
+    }
+
+    if (lastDimension != 1)
+    {
+        newLevel->clampWithinLevelBounds(x, z, 0.0);
+        if (entity->isAlive())
+        {
+            entity->moveTo(x, entity->mY, z, entity->mYRot, entity->mXRot);
+            ServerChunkCache* chunkCache = static_cast<ServerChunkCache*>(newLevel->getChunkSource());
+            chunkCache->m_createOnRequest = true;
+            newLevel->getPortalForcer()->force(entity, rotation, static_cast<int>(originalX),
+                                               static_cast<int>(originalZ));
+            chunkCache->m_createOnRequest = false;
+            newLevel->addEntity(entity);
+            newLevel->tick(entity, false);
+        }
+    }
+
+    entity->setLevel(newLevel);
 }
 
 void PlayerList::sendAllPlayerInfo(boost::shared_ptr<ServerPlayer> player)

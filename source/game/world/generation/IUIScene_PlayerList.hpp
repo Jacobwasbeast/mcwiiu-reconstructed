@@ -26,8 +26,7 @@ public:
     IUIScene_PlayerList();
     virtual ~IUIScene_PlayerList();
 
-    static uint32_t KickPlayerReturned(void* context, int playerIndex,
-                                       C4JStorage::EMessageResult result);
+    static int KickPlayerReturned(void* context, int playerIndex, C4JStorage::EMessageResult result);
     static void OnPlayerChanged(void* context, INetworkPlayer* player, bool added);
 
     virtual void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);
