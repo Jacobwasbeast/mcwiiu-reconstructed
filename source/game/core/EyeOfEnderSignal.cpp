@@ -82,7 +82,7 @@ void EyeOfEnderSignal::lerpMotion(double xd, double yd, double zd)
     mXd = xd;
     mYd = yd;
     mZd = zd;
-    if (mXRot == 0.0f && mYRot == 0.0f)
+    if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = std::sqrt(xd * xd + zd * zd);
         mYRot = static_cast<float>(std::atan2(xd, zd) * 57.2957763671875);
@@ -94,9 +94,9 @@ void EyeOfEnderSignal::lerpMotion(double xd, double yd, double zd)
 
 void EyeOfEnderSignal::tick()
 {
-    mXo = mX;
-    mYo = mY;
-    mZo = mZ;
+    mXOld = mX;
+    mYOld = mY;
+    mZOld = mZ;
     Entity::tick();
 
     mX += mXd;

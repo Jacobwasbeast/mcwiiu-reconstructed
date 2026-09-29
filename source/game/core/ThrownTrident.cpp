@@ -119,7 +119,7 @@ void ThrownTrident::tick()
         double scale = static_cast<double>(getLoyaltyLevel());
         mY += direction->y * 0.015 * scale;
         if (mLevel->mIsClientSide)
-            mYo = mY;
+            mYOld = mY;
         if (mReturnTimer == 0)
         {
             playSound(SoundEvents::TRIDENT_RETURN, 1.0f, 1.0f);

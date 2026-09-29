@@ -38,7 +38,7 @@
 const EntityDataAccessor<bool>* PolarBear::DATA_STANDING = NULL;
 
 PolarBear::PolarBear(Level* level)
-    : Animal(level), mStandingScale(0.0f), mStandingScaleO(0.0f), mWarningSoundTicks(0)
+    : Animal(level), mStandingScaleO(0.0f), mStandingScale(0.0f), mWarningSoundTicks(0)
 {
     fjDerivedCtorCalls();
     setSize(1.3f, 1.4f);
@@ -87,9 +87,10 @@ void PolarBear::registerAttributes()
 {
     Mob::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(30.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.25);
-    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(20.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.25);
+    getAttributes()->registerAttribute(SharedMonsterAttributes::ATTACK_DAMAGE);
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
 }
 
 const SoundEvent* PolarBear::getAmbientSound()
@@ -352,8 +353,7 @@ PolarBear::PolarBearPanicGoal::~PolarBearPanicGoal()
 
 bool PolarBear::PolarBearPanicGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (target.get() == NULL && !mMob->isOnFire())
+    if (!mMob->isBaby() && !mMob->isOnFire())
     {
         return false;
     }

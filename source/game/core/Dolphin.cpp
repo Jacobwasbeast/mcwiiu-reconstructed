@@ -49,6 +49,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/biome/Biome.hpp"
 
 Dolphin::Dolphin(Level* level)
     : AgableWaterAnimal(level), mTreasureTime(0), mBlowholeCooldown(0), mTreasureGoal(NULL)
@@ -131,8 +132,10 @@ void Dolphin::tick()
 bool Dolphin::isPushedByWater() { return false; }
 bool Dolphin::isInSpawnableOcean()
 {
-    BlockPos pos(shared_from_this());
-    return mLevel->isWaterAt(pos);
+    Biome* biome = mLevel->getBiome(BlockPos(shared_from_this()));
+    return biome == Biome::OCEAN || biome == Biome::DEEP_OCEAN || biome == Biome::COLD_OCEAN
+        || biome == Biome::DEEP_COLD_OCEAN || biome == Biome::LUKEWARM_OCEAN || biome == Biome::DEEP_LUKEWARM_OCEAN
+        || biome == Biome::WARM_OCEAN || biome == Biome::DEEP_WARM_OCEAN;
 }
 
 bool Dolphin::checkSpawnRules()

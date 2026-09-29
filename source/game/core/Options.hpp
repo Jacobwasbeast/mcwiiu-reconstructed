@@ -17,6 +17,7 @@ public:
     friend class BlockRenderer;
     friend class Font;
     friend class GameSettings;
+    friend class Textures;
 
     class Option
     {

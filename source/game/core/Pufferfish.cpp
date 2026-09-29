@@ -35,7 +35,10 @@ Pufferfish::Pufferfish(Level* level)
       mLastStingSoundTime(0),
       mStingSoundDelay(2)
 {
-    setSize(0.5f, 0.5f);
+    mSwimAmplitude = 0.02f;
+    mSwimFrequency = 0.01f;
+    mWaterValueC = 6.0f;
+    setSize(0.8f, 0.8f);
     fjDerivedCtorCalls();
 }
 
@@ -175,7 +178,7 @@ void Pufferfish::baseTick()
 bool Pufferfish::hurt(const DamageSource* source, float damage)
 {
     bool result = LivingEntity::hurt(source, damage);
-    if (getHealth() < 1.0f && mPuffState == PUFFED_STATE_SMALL)
+    if (getHealth() > 0.0f && mPuffState == PUFFED_STATE_SMALL)
         setNextPuffedState(PUFFED_STATE_MEDIUM, 1);
     return result;
 }

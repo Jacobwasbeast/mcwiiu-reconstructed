@@ -4,6 +4,7 @@
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -79,22 +80,21 @@ bool MinecartFurnace::hasFuel()
 
 void MinecartFurnace::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Minecart furnace tick");
     Minecart::tick();
     if (mFuel > 0)
-    {
         --mFuel;
-        if (mFuel == 0)
-        {
-            mPushX = 0.25;
-            mPushZ = 0.25;
-        }
+    if (mFuel <= 0)
+    {
+        mPushX = 0.0;
+        mPushZ = 0.0;
     }
     setHasFuel(mFuel > 0);
     if (hasFuel() && mRandom->nextInt(4) == 0)
     {
-        mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + 0.8, mY + 0.8, mZ + 0.8,
-            0.25, 0.25, 0.25, arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX, mY + 0.8, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
+    PIXEndNamedEvent();
 }
 
 double MinecartFurnace::getMaxSpeed()
@@ -148,9 +148,9 @@ void MinecartFurnace::applyNaturalSlowdown()
         const double length = Mth::sqrt(pushLength);
         mPushX /= length;
         mPushZ /= length;
-        mYd *= 0.25;
-        mXd = mXd * 0.8 + mPushX;
-        mZd = mZd * 0.8 + mPushZ;
+        mYd *= 0.0;
+        mXd = mXd * 0.800000011920929 + mPushX;
+        mZd = mZd * 0.800000011920929 + mPushZ;
     }
     Minecart::applyNaturalSlowdown();
 }
@@ -162,7 +162,7 @@ bool MinecartFurnace::interact(const boost::shared_ptr<Player>& player, Interact
     {
         if (item->getItem() == Items::coal && mFuel + 3600 < 32001)
         {
-            if (!mHasImpulse)
+            if (!player->mAbilities.mInstabuild)
             {
                 item->shrink(1);
             }

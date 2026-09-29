@@ -2,5 +2,5 @@
 
 #include "game/util/ResourceLocation.hpp"
 
-ResourceLocation UnityClient13TextureLocation_0x7A((_TEXTURE_NAME)0x7A);
-ResourceLocation UnityClient13TextureLocation_0x7B((_TEXTURE_NAME)0x7B);
+ResourceLocation UnityClient13TextureLocation_0x7A(TN_FONT_DEFAULT);
+ResourceLocation UnityClient13TextureLocation_0x7B(TN_FONT_ALTERNATE);

@@ -124,14 +124,14 @@ Item* Silverfish::getDeathLoot()
 void Silverfish::tick()
 {
     PIXBeginNamedEvent(0.0f, "Silverfish tick");
-    mYBodyRotO = mYBodyRot;
+    mYBodyRot = mYRot;
     Monster::tick();
     PIXEndNamedEvent();
 }
 
 void Silverfish::setYBodyRot(float yBodyRot)
 {
-    mYBodyRot = yBodyRot;
+    mYRot = yBodyRot;
     LivingEntity::setYBodyRot(yBodyRot);
 }
 

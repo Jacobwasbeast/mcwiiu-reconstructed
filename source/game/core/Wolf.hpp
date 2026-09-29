@@ -81,7 +81,7 @@ public:
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool setIsInterested(bool interested);
     virtual bool canMate(const boost::shared_ptr<Animal>& other);
-    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<LivingEntity> target);
+    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual unsigned long long GetType();
     bool isWet();

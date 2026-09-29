@@ -111,7 +111,7 @@ void InfoTask::setAsCurrentTask(bool currentTask)
 
 void InfoTask::handleUIInput(int input)
 {
-    if (!preCompletionEnabled || completedInputs.empty())
+    if (!activated || completedInputs.empty())
     {
         return;
     }

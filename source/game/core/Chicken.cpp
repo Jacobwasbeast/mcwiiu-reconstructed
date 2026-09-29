@@ -82,7 +82,7 @@ void Chicken::staticCtor()
 
 double Chicken::getEyeHeight()
 {
-    return static_cast<double>(mEyeHeight);
+    return static_cast<double>(mBbHeight);
 }
 
 void Chicken::registerAttributes()

@@ -39,7 +39,7 @@ bool GameMode::isSurvival()
 bool GameMode::isCreative()
 {
     return mGameType->isCreative()
-        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && GetPlayer()->mAbilities.mMayBuild);
+        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && GetPlayer()->mAbilities.mInstabuild);
 }
 
 bool GameMode::isAdventure()

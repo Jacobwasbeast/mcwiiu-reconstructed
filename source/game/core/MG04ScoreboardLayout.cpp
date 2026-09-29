@@ -171,15 +171,18 @@ unsigned int MG04ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
     return 0xffffffffu;
 }
 
-std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID&, const EScoreboardType& type)
+std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type)
 {
-    if (type == EScoreboardType_Scoreboard)
-        return std::wstring(L"");
-    if (column >= 0 && column < 3)
+    if (type != EScoreboardType_Scoreboard)
     {
-        std::wstringstream text;
-        text << column;
-        return text.str();
+        ClientScoreboard* scoreboard =
+            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+        if (column == 0)
+            return _toString<unsigned short>(scoreboard->GetVotesReceived(uid, -1)[1]);
+        if (column == 1)
+            return _toString<unsigned short>(scoreboard->GetVotesReceived(uid, -1)[2]);
+        if (column == 2)
+            return _toString<unsigned short>(scoreboard->GetVotesReceived(uid, -1)[3]);
     }
     return std::wstring(L"");
 }

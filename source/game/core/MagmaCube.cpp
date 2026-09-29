@@ -114,13 +114,13 @@ void MagmaCube::decreaseSquish()
 
 void MagmaCube::jumpFromGround()
 {
-    mOnGround = true;
+    mHasImpulse = true;
     mYd = (double)(getSize() * 0.1f + 0.42f);
 }
 
 void MagmaCube::jumpInLava()
 {
-    mOnGround = true;
+    mHasImpulse = true;
     mYd = (double)(getSize() * 0.05f + 0.22f);
 }
 

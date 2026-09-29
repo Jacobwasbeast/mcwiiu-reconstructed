@@ -46,7 +46,7 @@ void ThrownEnderpearl::create(Level* level)
 void ThrownEnderpearl::PlayTeleportSound()
 {
     if (mLevel != NULL)
-        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
+        mLevel->playSound(boost::shared_ptr<Player>(), mXo, mYo, mZo,
             SoundEvents::ENDERMEN_TELEPORT, getSoundSource(), 1.0f, 1.0f, 16.0f);
 }
 
@@ -135,7 +135,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
                     }
 
                     if (owner->isPassenger())
-                        owner->stopRiding();
+                        owner->stopRidingBeforeTeleport();
                     owner->teleportTo(mX, mY, mZ);
                     PlayTeleportSound();
                     owner->mFallDistance = 0.0f;

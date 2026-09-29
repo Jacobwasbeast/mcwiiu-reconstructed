@@ -7,6 +7,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/MoveControl.hpp"
+#include "game/entity/mob/Enemy.hpp"
 
 class CompoundTag;
 class DamageSource;
@@ -20,7 +21,7 @@ class Random;
 class SoundEvent;
 template<class T> class EntityDataAccessor;
 
-class Slime : public Mob
+class Slime : public Mob, public Enemy
 {
 public:
     class SlimeAttackGoal : public Goal
@@ -121,6 +122,7 @@ public:
     static void create(Level* level);
     void _init();
     void registerGoals();
+    using Entity::setSize;
     virtual void setSize(int size, bool reset);
     virtual int getSize();
     static void addDataWalkers(DataFixerUpper* fixer);

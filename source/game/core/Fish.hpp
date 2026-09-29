@@ -45,7 +45,7 @@ public:
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
 
-private:
+protected:
     friend class FishModel;
     float mSwimRotation;
     float mSwimRotationOld;

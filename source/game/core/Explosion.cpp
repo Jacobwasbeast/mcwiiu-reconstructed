@@ -128,7 +128,7 @@ void Explosion::explode()
 
             for (step = 0; step < pushSteps; step++)
             {
-                pos = pos.subtract(Vec3i(push->x, push->y, push->z));
+                pos.subtract(Vec3i(push->x, push->y, push->z));
 
                 mX = (double)pos.x;
                 mY = (double)pos.y;

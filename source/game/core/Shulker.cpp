@@ -217,7 +217,7 @@ void Shulker::ShulkerPeekGoal::stop()
 {
     boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
     if (target.get() == NULL)
-        mShulker->setTarget(boost::shared_ptr<LivingEntity>());
+        mShulker->setRawPeekAmount(0);
 }
 
 void Shulker::ShulkerPeekGoal::tick()

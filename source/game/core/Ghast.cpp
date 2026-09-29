@@ -31,7 +31,7 @@
 
 static const EntityDataAccessor<bool>* DATA_CHARGING = NULL;
 
-Ghast::Ghast(Level* level) : FlyingMob(level), mExplosionPower(1), mUnused(0)
+Ghast::Ghast(Level* level) : FlyingMob(level), mUnused(0), mExplosionPower(1)
 {
     Mob::fjDerivedCtorCalls();
     _init();
@@ -247,6 +247,7 @@ void Ghast::GhastShootFireballGoal::tick()
             double yd = (target->mY + (double)(target->mBbHeight * 0.5f)) - (0.5 + (mGhast->mY + (double)(mGhast->mBbHeight * 0.5f)));
             double zd = target->mZ - (mGhast->mZ + viewVector->z * 4.0);
             LargeFireball* fireball = new LargeFireball(mGhast->mLevel, owner, xd, yd, zd);
+            fireball->mExplosionPower = mGhast->getExplosionPower();
             fireball->mX = viewVector->x * 4.0 + mGhast->mX;
             fireball->mY = mGhast->mY + (double)(mGhast->mBbHeight * 0.5f) + 0.5;
             fireball->mZ = viewVector->z * 4.0 + mGhast->mZ;

@@ -82,7 +82,7 @@ void CompassAtlasSprite::cycleFrames()
         return;
     }
     mFrame = 1;
-    updateFromPosition(NULL, 0.0, 0.0, 0.0, false, false);
+    updateFromPosition(NULL, 0.0, 0.0, 0.0, false, true);
 }
 
 unsigned int CompassAtlasSprite::getSourceWidth() const

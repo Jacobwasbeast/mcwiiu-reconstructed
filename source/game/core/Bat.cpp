@@ -149,7 +149,7 @@ void Bat::customServerAiStep()
         else
         {
             if (mRandom->nextInt(200) == 0)
-                mYRot = (float)mRandom->nextInt(360);
+                mYHeadRot = (float)mRandom->nextInt(360);
             boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 4.0, -1.0);
             if (player)
             {
@@ -192,7 +192,7 @@ void Bat::customServerAiStep()
     mYd = (yDirection * 0.7f - mYd) * 0.1f + mYd;
     mZd = (zDirection * 0.5f - mZd) * 0.1f + mZd;
     mYRot += Mth::wrapDegrees((float)(std::atan2(mZd, mXd) * 57.2957763671875 - 90.0f - mYRot));
-    mFlyingSpeed = 0.5f;
+    mZza = 0.5f;
     if (mRandom->nextInt(100) == 0 &&
         mLevel->getBlockState(above)->getBlock()->isSolidBlockingCubeAndNotSignalSource(
             mLevel->getBlockState(above)))

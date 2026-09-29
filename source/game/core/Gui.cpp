@@ -49,9 +49,9 @@ float gGuiScreenScale = 1.0f;
 
 namespace
 {
-ResourceLocation guiPumpkinOverlayTexture(static_cast<_TEXTURE_NAME>(2));
-ResourceLocation guiThermalOverlayTexture(static_cast<_TEXTURE_NAME>(171));
-ResourceLocation guiThermalLiftOverlayTexture(static_cast<_TEXTURE_NAME>(172));
+ResourceLocation guiPumpkinOverlayTexture(TN_BLUR_MISC_PUMPKINBLUR);
+ResourceLocation guiThermalOverlayTexture(TN_ENVIRONMENT_THERMAL_1);
+ResourceLocation guiThermalLiftOverlayTexture(TN_ENVIRONMENT_THERMAL_2);
 }
 
 Gui::Gui(Minecraft* minecraft)
@@ -507,12 +507,11 @@ void Gui::tick()
         if (mSingleMessageTime[i] > 0) {
             --mSingleMessageTime[i];
         }
-        if (mSingleMessageTime[i] == 0) {
-            mSingleMessages[i].clear();
-        }
-        std::vector<GuiMessage>::iterator it;
-        for (it = mMessages[i].begin(); it != mMessages[i].end(); ++it) {
-            ++it->age;
+        if (!gConsoleUIController.GetMenuDisplayed(i)) {
+            std::vector<GuiMessage>::iterator it;
+            for (it = mMessages[i].begin(); it != mMessages[i].end(); ++it) {
+                ++it->age;
+            }
         }
     }
 }

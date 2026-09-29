@@ -150,9 +150,9 @@ void CameraController::insertNode(int index, double x, double y, double z, doubl
         if (mNodes.size() > 2)
         {
             Vec3* nextPosition = mNodes[2].position;
-            double controlLength = nextPosition->vectorTo(mNodes[0].position)->length() * 0.2;
-            if (controlLength > 0.25)
-                controlLength = 0.25;
+            double controlLength = nextPosition->vectorTo(mNodes[0].position)->length() * 0.25;
+            if (controlLength > 4.0)
+                controlLength = 4.0;
             Vec3* nextControl = nextPosition->add(mNodes[3].position->vectorTo(nextPosition)->normalize()->multiply(controlLength));
             SplineNode nextControlNode = { Vec3::newPermanent(nextControl), Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f };
             mNodes.insert(mNodes.begin() + 2, nextControlNode);
@@ -161,9 +161,9 @@ void CameraController::insertNode(int index, double x, double y, double z, doubl
         return;
     }
     Vec3* direction = position->vectorTo(mNodes[index - 2].position);
-    double controlLength = direction->length() * 0.2;
-    if (controlLength > 0.25)
-        controlLength = 0.25;
+    double controlLength = direction->length() * 0.25;
+    if (controlLength > 4.0)
+        controlLength = 4.0;
     Vec3* firstControl = position->add(direction->normalize()->multiply(controlLength));
     Vec3* secondDirection = firstControl->vectorTo(position)->normalize()->multiply(controlLength);
     Vec3* secondControl = position->add(secondDirection);

@@ -85,11 +85,11 @@ bool Phantom::checkSpawnRules()
             int until = insomnia->getTicksUntilInsomnia();
             if (timer < 1)
                 timer = 1;
-            if (until <= mRandom->nextInt(timer))
+            if (until <= mLevel->mRandom->nextInt(timer))
             {
-                BlockPos offset(mRandom->nextInt(21) - 10,
-                                mRandom->nextInt(15) + 20,
-                                mRandom->nextInt(21) - 10);
+                BlockPos offset(mLevel->mRandom->nextInt(21) - 10,
+                                mLevel->mRandom->nextInt(15) + 20,
+                                mLevel->mRandom->nextInt(21) - 10);
                 BlockPos spawnPos(playerPos + offset);
                 setPos((double)spawnPos.x, (double)spawnPos.y, (double)spawnPos.z);
                 bool result = Monster::checkSpawnRules();

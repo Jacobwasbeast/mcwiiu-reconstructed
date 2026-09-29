@@ -4,6 +4,7 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/Stray.hpp"
@@ -107,10 +108,8 @@ void Spider::tick()
 void Spider::registerAttributes()
 {
     Monster::registerAttributes();
-    AttributeInstance* health = getAttribute(NULL);
-    if (health != NULL) health->setBaseValue(16.0);
-    AttributeInstance* speed = getAttribute(NULL);
-    if (speed != NULL) speed->setBaseValue(0.3);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(16.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.30000001192092896);
 }
 
 const SoundEvent* Spider::getAmbientSound() { return SoundEvents::SPIDER_AMBIENT; }

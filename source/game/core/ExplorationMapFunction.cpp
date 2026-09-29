@@ -65,7 +65,7 @@ not_null_ptr<ItemInstance> ExplorationMapFunction::apply(const not_null_ptr<Item
 {
     boost::shared_ptr<Entity> entity = context.getEntity(LootTableContext::THIS);
     Level* level = entity ? entity->mLevel : context.mLevel;
-    Vec3* position = Vec3::newTemp(0.0, 128.0, 0.0);
+    Vec3* position = Vec3::newTemp(0.0, 0.0, 0.0);
     if (entity)
     {
         position = entity->getPos(0.0f);

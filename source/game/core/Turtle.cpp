@@ -223,7 +223,7 @@ void Turtle::tick()
     }
     else if (++mLayEggTime % 5 == 0 && mLevel != NULL)
     {
-        BlockPos pos(getPos(1.0f));
+        BlockPos pos(getPos(0.0f));
         BlockPos below = pos.below();
         const BlockState* state = mLevel->getBlockState(below);
         if (state != NULL && Block::getIdWithData(state) == Block::getId(Blocks::sand))

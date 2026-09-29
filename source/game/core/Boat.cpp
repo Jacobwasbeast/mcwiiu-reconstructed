@@ -950,7 +950,7 @@ unsigned int Boat::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
 
 unsigned int Boat::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_bAllowedToInteract ? IDS_TOOLTIPS_MINE : IDS_NONE;
+    return tooltipData.m_bAllowedToHurt ? IDS_TOOLTIPS_MINE : IDS_NONE;
 }
 
 void Boat::checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos)

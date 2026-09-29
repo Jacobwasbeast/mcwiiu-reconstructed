@@ -38,6 +38,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/Llama.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
 #include "game/core/Turtle.hpp"
 #include "game/entity/ai/PreySelector.hpp"
 #include "game/entity/mob/AbstractSkeleton.hpp"
@@ -179,15 +180,18 @@ ResourceLocation* Wolf::getDefaultLootTable() { return &BuiltInLootTables::WOLF;
 void Wolf::aiStep()
 {
     Animal::aiStep();
-    if (!mLevel->mIsClientSide && isTame() && !mIsShaking &&
-        getTarget() == NULL && isInWaterRainOrBubble()) {
+    if (!mLevel->mIsClientSide && mIsWet && !mIsShaking && !isPathFinding() && mOnGround) {
         mIsShaking = true;
         mShakeAnim = 0.0f;
         mShakeAnimO = 0.0f;
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SHAKE_WETNESS, 0);
     }
-    if (!mLevel->mIsClientSide && getTarget() == NULL && isAngry())
-        setAngry(false);
+    if (!mLevel->mIsClientSide)
+    {
+        boost::shared_ptr<LivingEntity> target = getTarget();
+        if ((target == NULL || !target->isAlive()) && isAngry())
+            setAngry(false);
+    }
 }
 bool Wolf::isInterested() { return mEntityData->get(DATA_INTERESTED); }
 void Wolf::tick()
@@ -538,15 +542,41 @@ boost::shared_ptr<AgableMob> Wolf::getBreedOffspring(boost::shared_ptr<AgableMob
 bool Wolf::setIsInterested(bool interested) { mEntityData->set(DATA_INTERESTED, interested, true); return interested; }
 bool Wolf::canMate(const boost::shared_ptr<Animal>& other)
 {
-    boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(other);
-    return wolf != NULL && isTame() && wolf->isTame() && isInLove() && wolf->isInLove();
+    if (other.get() == this || !isTame() || other->GetType() != EntityType::WOLF)
+        return false;
+    boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(other);
+    if (!wolf->isTame() || wolf->isSitting())
+        return false;
+    return isInLove() && wolf->isInLove();
 }
-bool Wolf::wantsToAttack(boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<LivingEntity> target)
+bool Wolf::wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner)
 {
-    if (owner == NULL || target == NULL) return false;
-    if (target->GetType() == EntityType::PLAYER && owner->GetType() == EntityType::PLAYER) return false;
-    boost::shared_ptr<TamableAnimal> tamable = boost::dynamic_pointer_cast<TamableAnimal>(target);
-    if (tamable != NULL && tamable->isTame() && tamable->isOwnedBy(owner)) return false;
+    if (target->GetType() == EntityType::CREEPER || target->GetType() == EntityType::GHAST)
+    {
+        return false;
+    }
+
+    if (target->GetType() == EntityType::WOLF)
+    {
+        boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(target);
+        if (wolf->isTame() && wolf->getOwner() == owner)
+        {
+            return false;
+        }
+    }
+
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && !boost::static_pointer_cast<Player>(owner)->canHarmPlayer(boost::static_pointer_cast<Player>(target)))
+    {
+        return false;
+    }
+
+    if (target->GetType() == EntityType::ABSTRACT_HORSE)
+    {
+        return !boost::static_pointer_cast<AbstractHorse>(target)->isTamed();
+    }
+
     return true;
 }
 bool Wolf::canBeLeashed(const boost::shared_ptr<Player>& player) { return !isAngry() && TamableAnimal::canBeLeashed(player); }

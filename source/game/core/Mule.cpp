@@ -11,6 +11,7 @@
 #include "game/item/SpawnEggItem.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/item/ItemId.hpp"
 #include "game/world/block/BlockId.hpp"
 
@@ -67,58 +68,72 @@ unsigned int Mule::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
     if (!tooltipData.m_bAllowedToInteract)
         return IDS_NONE;
 
-    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-    unsigned int itemId = Item::getId(item->getItem());
-    bool food = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
-             || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
-    boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
-                                     (Player*)tooltipData.m_pPlayer.get());
+    int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
+    bool horseFood = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
+                     || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
 
     if (itemId == ItemId::SPAWN_EGG)
     {
-        if (SpawnEggItem::fjGetType(item) != GetType() && isLeashedToPlayer(player))
+        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) != EntityType::MULE
+            && isLeashedToPlayer(tooltipData.m_pPlayer))
             return IDS_TOOLTIPS_UNLEASH;
         return IDS_NONE;
     }
 
-    if (isLeashedToPlayer(player))
+    if (isLeashedToPlayer(tooltipData.m_pPlayer))
         return IDS_TOOLTIPS_UNLEASH;
 
-    if (itemId == ItemId::LEAD && !isLeashed())
-        return IDS_TOOLTIPS_LEASH;
-
-    if (itemId == ItemId::NAME_TAG && (!player->isSneaking() || !isTamed()))
+    if (itemId == ItemId::LEAD)
     {
-        if (!item->hasCustomHoverName())
+        if (!isLeashed())
+            return IDS_TOOLTIPS_LEASH;
+        if (!getPassengers()->empty() || !isTamed())
             return IDS_NONE;
-        if (hasCustomName() && item->getHoverName() == getCustomName())
+        return IDS_TOOLTIPS_MOUNT;
+    }
+
+    if (itemId == ItemId::NAME_TAG && (!tooltipData.m_pPlayer->isSneaking() || !isTamed()))
+    {
+        if (tooltipData.m_pItemInstance->hasCustomHoverName()
+            && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0))
+            return IDS_TOOLTIPS_NAME;
+        if (!isTamed() || !getPassengers()->empty())
             return IDS_NONE;
-        return IDS_TOOLTIPS_NAME;
+        return IDS_TOOLTIPS_MOUNT;
     }
 
     if (isBaby())
-        return food ? IDS_TOOLTIPS_FEED : IDS_NONE;
+        return horseFood ? IDS_TOOLTIPS_FEED : IDS_NONE;
 
     if (!isTamed())
     {
-        if (food)
-            return IDS_TOOLTIPS_FEED;
-        if (item->isEmpty() && getPassengers()->empty())
+        if (!tooltipData.m_pItemInstance->isEmpty())
+        {
+            if (horseFood && itemId != BlockId::HAY_BLOCK)
+                return IDS_TOOLTIPS_FEED;
+        }
+        else if (getPassengers()->empty())
+        {
             return IDS_TOOLTIPS_TAME;
+        }
         return IDS_NONE;
     }
 
-    if (player->isSneaking())
+    bool open = tooltipData.m_pPlayer->isSneaking()
+                && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed();
+    if (!open && itemId == ItemId::SADDLE && !isSaddled())
+        open = true;
+    if (open)
         return IDS_TOOLTIPS_OPEN;
+
     if (itemId == BlockId::CHEST && !hasChest())
         return IDS_TOOLTIPS_ATTACH;
-    if (itemId == ItemId::SADDLE && !isSaddled())
-        return IDS_TOOLTIPS_OPEN;
-    if (food && itemId != BlockId::HAY_BLOCK)
-        return IDS_TOOLTIPS_FEED;
+
+    if (horseFood && getHealth() < getMaxHealth())
+        return IDS_TOOLTIPS_HEAL;
+
     if (getPassengers()->empty())
         return IDS_TOOLTIPS_MOUNT;
-
     return IDS_NONE;
 }
 

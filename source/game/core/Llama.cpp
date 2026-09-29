@@ -49,7 +49,7 @@ const EntityDataAccessor<int>* Llama::DATA_SWAG = NULL;
 const EntityDataAccessor<int>* Llama::DATA_VARIANT = NULL;
 
 Llama::LlamaDefendTargetGoal::LlamaDefendTargetGoal(Llama* llama)
-    : NearestAttackableTargetGoal(llama, typeid(LivingEntity), 10, true, false, NULL, false, false) { }
+    : NearestAttackableTargetGoal(llama, typeid(Wolf), 16, false, true, NULL, false, false) { }
 Llama::LlamaDefendTargetGoal::~LlamaDefendTargetGoal() { }
 bool Llama::LlamaDefendTargetGoal::canUse()
 {
@@ -178,6 +178,7 @@ void Llama::readAdditionalSaveData(CompoundTag* tag)
         not_null_ptr<ItemInstance> item(new ItemInstance(tag->getCompound(L"DecorItem")));
         mInventory->setItem(1, item);
     }
+    updateEquipment();
 }
 void Llama::registerGoals()
 {
@@ -381,25 +382,19 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
 
     if (itemId == ItemId::NAME_TAG && (!player->isSneaking() || !isTamed()))
     {
-        if (!item->hasCustomHoverName())
+        if (item->hasCustomHoverName() && (!hasCustomName() || item->getHoverName() != getCustomName()))
+            return IDS_TOOLTIPS_NAME;
+        if (!isTamed() || !getPassengers()->empty())
             return IDS_NONE;
-        if (hasCustomName() && item->getHoverName() == getCustomName())
-            return IDS_NONE;
-        return IDS_TOOLTIPS_NAME;
+        return IDS_TOOLTIPS_MOUNT;
     }
 
     if (!isBaby())
     {
         if (isTamed())
         {
-            if (player->isSneaking()
-                && (!player->isVehicle()
-                    || mobInteract(player, InteractionHand::eInteractionHand_MainHand)))
-            {
-                return getPassengers()->empty() ? IDS_TOOLTIPS_MOUNT : IDS_NONE;
-            }
-
-            if (itemId == ItemId::SADDLE && !isSaddled())
+            if ((player->isSneaking() && (!isVehicle() || hasPassenger(player)) && isTamed())
+                || (itemId == ItemId::SADDLE && !isSaddled()))
                 return IDS_TOOLTIPS_OPEN;
             if (itemId == BlockId::CHEST && !hasChest())
                 return IDS_TOOLTIPS_ATTACH;
@@ -519,7 +514,7 @@ void Llama::causeFallDamage(float fallDistance, float damageMultiplier)
     if (block->mMaterial == Material::AIR || isSilent())
         return;
 
-    const SoundType* soundType = block->mSoundType;
+    const SoundType* soundType = block->getSoundType();
     mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
                       getSoundSource(), soundType->getVolume() * 0.5f,
                       soundType->getPitch() * 0.75f, 16.0f);

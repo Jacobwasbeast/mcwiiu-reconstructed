@@ -39,10 +39,10 @@ void GuiComponent::fill(int x0, int y0, int x1, int y1, int color)
     GlStateManager::blendFunc(4, 5);
     GlStateManager::color4f(red, green, blue, alpha);
     builder->begin();
-    builder->vertex(static_cast<float>(x0), static_cast<float>(y1), 0.5f);
-    builder->vertex(static_cast<float>(x1), static_cast<float>(y1), 0.5f);
-    builder->vertex(static_cast<float>(x1), static_cast<float>(y0), 0.5f);
-    builder->vertex(static_cast<float>(x0), static_cast<float>(y0), 0.5f);
+    builder->vertex(static_cast<float>(x0), static_cast<float>(y1), 0.0f);
+    builder->vertex(static_cast<float>(x1), static_cast<float>(y1), 0.0f);
+    builder->vertex(static_cast<float>(x1), static_cast<float>(y0), 0.0f);
+    builder->vertex(static_cast<float>(x0), static_cast<float>(y0), 0.0f);
     builder->end();
     GlStateManager::enableTexture();
     GlStateManager::disableBlend();

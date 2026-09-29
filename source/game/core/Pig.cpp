@@ -333,12 +333,12 @@ void Pig::travel(float xxa, float yya, float zza)
         mZd = 0.0;
     }
 
-    mAnimStepO = mAnimStep;
+    mAnimationSpeedOld = mAnimationSpeed;
     float movement = static_cast<float>(
         std::sqrt((mX - mXo) * (mX - mXo) + (mZ - mZo) * (mZ - mZo))) * 4.0f;
     movement = std::min(movement, 1.0f);
-    mAnimStep += (movement - mAnimStep) * 0.4f;
-    mWalkDist += mAnimStep;
+    mAnimationSpeed += (movement - mAnimationSpeed) * 0.4f;
+    mAnimationPosition += mAnimationSpeed;
 }
 
 bool Pig::boost()

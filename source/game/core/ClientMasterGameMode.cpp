@@ -19,6 +19,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/RegionFileCache.hpp"
 #include "game/core/StringFormat.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/core/Team.hpp"
 #include "game/core/UnityClient6.hpp"
@@ -84,8 +85,7 @@ ClientMasterGameMode::ClientMasterGameMode()
       mBRUPsRemaining(0),
       mBRUPCount(0),
       mLoadedChunkCount(0),
-      mChunkLoadProgress(0),
-      mLastChunkLoadProgress(0x7fffffff)
+      mSubRoundLoadStartTime(0x7fffffff)
 {
     mVoteables = new ClientVoteables();
     mVoteables->addVoteable(new Voteable(Voteables::eVoteable_Map, false, true));
@@ -123,6 +123,8 @@ void ClientMasterGameMode::OnRoundWaitingToStart()
 {
     mLocalChunksLoaded = false;
     mPlayerProgress.clear();
+    mLocalRoundTimeStart = 0;
+    mSubRoundLoadStartTime = 0x7fffffff;
 
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
@@ -388,9 +390,7 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
                                              params, EUILayer_Scene,
                                              EUIGroup_PlayerDefault);
 
-        const long long now = System::processTimeInMilliSecs();
-        mLoadedChunkCount = static_cast<int>(now >> 32);
-        mLastChunkLoadProgress = static_cast<int>(now);
+        mSubRoundLoadStartTime = System::processTimeInMilliSecs();
         mLocalChunksLoaded = false;
         mServerIsWaitingOnChunkLoading = false;
         return;
@@ -821,7 +821,7 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
     Level* level = minecraft->getLevel(0);
     bool allLoaded = true;
 
-    mChunkLoadProgress = 0;
+    mLoadedChunkCount = 0;
     for (std::vector<AABB*>::const_iterator areaIt = mActiveChunkAreas.begin();
          areaIt != mActiveChunkAreas.end() && allLoaded; ++areaIt)
     {
@@ -843,7 +843,7 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
                     allLoaded = false;
                     break;
                 }
-                ++mChunkLoadProgress;
+                ++mLoadedChunkCount;
             }
         }
     }
@@ -919,13 +919,14 @@ void ClientMasterGameMode::updateProgressRenderer()
     if (miniGame->GetId() == 1)
     {
         int progress = 0;
-        AABB* area = GetLayerAABB(0);
-        if (area != NULL)
+        if (!mActiveChunkAreas.empty())
         {
-            const int volume = static_cast<int>((area->mMaxX - area->mMinX) * (area->mMaxY - area->mMinY) * (area->mMaxZ - area->mMinZ));
-            if (volume > 0)
+            const AABB* area = mActiveChunkAreas.at(0);
+            const int area2D = (static_cast<int>(area->mMaxX) - static_cast<int>(area->mMinX)) *
+                               (static_cast<int>(area->mMaxZ) - static_cast<int>(area->mMinZ));
+            if (area2D > 0)
             {
-                progress = (mChunkLoadProgress * 100) / volume;
+                progress = (mLoadedChunkCount * 100) / area2D;
                 if (progress > 99)
                 {
                     renderer->progressStage(0xd56bcda0);
@@ -941,31 +942,22 @@ void ClientMasterGameMode::updateProgressRenderer()
     if (miniGame->GetId() != 2)
         return;
     const int layerCount = static_cast<int>(GetLayerCount());
-    if (mLocalRoundTimeStart == 0 && mLastChunkLoadProgress == 0x7fffffff)
+    if (mSubRoundLoadStartTime == 0x7fffffff)
     {
         renderer->progressStage(0xd5ac1bc8);
         renderer->progressStagePercentage(0);
         return;
     }
-    const long long now = System::processTimeInMilliSecs();
-    unsigned int progress = static_cast<unsigned int>(((now - mLocalRoundTimeStart) * 100) / (layerCount * 1500 + 1500));
-    if (progress < 100U)
-    {
-        renderer->progressStage(0xd5ac1bc8);
-        int display = static_cast<int>(progress);
-        if (display < 0)
-            display = 0;
-        if (display > 80)
-            display = 80;
-        renderer->progressStagePercentage(display);
-        return;
-    }
-    renderer->progressStage(0xebb9a246);
-    int display = static_cast<int>(progress);
-    if (display > 100)
-        display = 100;
-    display = (display * 80) / 100;
-    renderer->progressStagePercentage(display);
+    const int elapsed = static_cast<int>(System::processTimeInMilliSecs() - mSubRoundLoadStartTime);
+    const int progress = static_cast<int>(static_cast<unsigned int>(elapsed * 100) /
+                                          static_cast<unsigned int>(layerCount * 1500 + 1500));
+    renderer->progressStage(progress < 100 ? 0xd5ac1bc8 : 0xebb9a246);
+    float percent = static_cast<float>(progress);
+    if (percent < 0.0f)
+        percent = 0.0f;
+    else if (percent > 100.0f)
+        percent = 100.0f;
+    renderer->progressStagePercentage(Mth::floor((percent / 100.0f) * 80.0f));
 }
 void ClientMasterGameMode::Tick()
 {

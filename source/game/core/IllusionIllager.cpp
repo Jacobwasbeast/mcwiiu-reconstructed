@@ -93,7 +93,7 @@ void IllusionIllager::registerAttributes()
 {
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
-    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(18.0);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(18.0);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(32.0);
 }
 
@@ -193,8 +193,10 @@ bool IllusionIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
-    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-    return living && living->getTeam() == NULL && getTeam() == NULL;
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY
+        || boost::static_pointer_cast<LivingEntity>(entity)->getMobType() != MOB_TYPE_ILLAGER)
+        return false;
+    return getTeam() == NULL && entity->getTeam() == NULL;
 }
 const SoundEvent* IllusionIllager::getAmbientSound() { return SoundEvents::ILLUSION_ILLAGER_AMBIENT; }
 const SoundEvent* IllusionIllager::getDeathSound() { return SoundEvents::ILLUSION_ILLAGER_DEATH; }

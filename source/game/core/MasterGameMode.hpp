@@ -291,6 +291,7 @@ private:
     friend class PlayersEnteredVolumeCondition;
     friend class ServerPlayerGameMode;
     friend class ServerScoreboard;
+    friend class UIScene_InGameSettingsListMenu;
 
     static std::map<EInternalGameModeState, EGameModeState> sStateMap;
     static bool sLobbyTimerNeedsReset;

@@ -155,7 +155,7 @@ boost::shared_ptr<LivingEntity> PrimedTnt::getOwner()
 
 double PrimedTnt::getEyeHeight()
 {
-    return 1.0;
+    return 0.0;
 }
 
 int PrimedTnt::getFuse()

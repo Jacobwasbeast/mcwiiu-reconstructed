@@ -1,6 +1,7 @@
 #include "game/core/MinecartTNT.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
+#include "game/entity/projectile/Arrow.hpp"
 #include "game/core/EntityType.hpp"
 
 #include <cmath>
@@ -88,7 +89,7 @@ void MinecartTNT::tick()
         }
     }
 
-    if (mOnGround && mXd * mXd + mZd * mZd >= 0.01)
+    if (mHorizontalCollision && mXd * mXd + mZd * mZd >= 0.01)
     {
         explode(mXd * mXd + mZd * mZd);
     }
@@ -98,9 +99,13 @@ void MinecartTNT::tick()
 bool MinecartTNT::hurt(const DamageSource* source, float damage)
 {
     boost::shared_ptr<Entity> entity = source->getDirectEntity();
-    if (entity && entity->isOnFire())
+    if (entity && (entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
     {
-        explode(entity->mXd * mXd + entity->mYd * mYd + entity->mZd * mZd);
+        boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
+        if (arrow->isOnFire())
+        {
+            explode(arrow->mXd * arrow->mXd + arrow->mYd * arrow->mYd + arrow->mZd * arrow->mZd);
+        }
     }
     return Minecart::hurt(source, damage);
 }

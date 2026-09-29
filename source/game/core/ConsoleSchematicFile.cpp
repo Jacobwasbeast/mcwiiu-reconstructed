@@ -1255,7 +1255,10 @@ long long ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB* ar
                     {
                         chunk->level->checkLight(LightLayer::SKY, pos, true, false);
                     }
-                    chunk->getBlock(BlockPos(x - chunkMinX, y, z - chunkMinZ));
+                    if (chunk->getBlock(BlockPos(x - chunkMinX, y, z - chunkMinZ))->defaultBlockState()->getLightEmission() != 0)
+                    {
+                        chunk->level->checkLight(LightLayer::BLOCK, pos, true, true);
+                    }
                 }
             }
         }

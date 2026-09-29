@@ -112,7 +112,7 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double 
     Node* start = mNodeEvaluator->getStart();
     BlockPos mobPos(mob->mX, mob->mY, mob->mZ);
     Block* block = levelSource->getBlock(mobPos);
-    if (block->instanceof(EBLOCK_TYPE_RAIL))
+    if (block->instanceof(EBLOCK_TYPE_FENCE))
     {
         int mobX = (int)floor(mob->mX + 0.5);
         int mobZ = (int)floor(mob->mZ + 0.5);

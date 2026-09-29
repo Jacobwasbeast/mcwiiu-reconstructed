@@ -1227,7 +1227,7 @@ int CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int p
     if (result == C4JStorage::EMessageResult_Decline)
     {
         if (gMinecraftServer != NULL)
-            *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(gMinecraftServer) + 0x148) = 0;
+            gMinecraftServer->saveOnExit = false;
         g_pApp->SetAction(pad, eXuiAction_ExitAndJoinFromInvite, NULL);
     }
     return 0;

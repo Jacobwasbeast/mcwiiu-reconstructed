@@ -118,33 +118,32 @@ int EvocationIllager::EvokerAttackSpellGoal::getCastingTime() { return 40; }
 int EvocationIllager::EvokerAttackSpellGoal::getCastingInterval() { return 100; }
 const SoundEvent* EvocationIllager::EvokerAttackSpellGoal::getSpellPrepareSound() { return SoundEvents::EVOCATION_ILLAGER_PREPARE_ATTACK; }
 SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerAttackSpellGoal::getSpell() { return gSpell2; }
-void EvocationIllager::EvokerAttackSpellGoal::createSpellEntity(double x, double y, double z, double yRot, float xRot, int warmupDelay)
+void EvocationIllager::EvokerAttackSpellGoal::createSpellEntity(double x, double z, double minY, double maxY, float yRot, int warmupDelay)
 {
-    BlockPos pos(x, yRot, y);
-    double searchY = yRot;
-    double minSearchY = std::floor(z) - 1.0;
-    for (;;)
+    BlockPos pos(x, maxY, z);
+    double yOffset = 0.0;
+    Level* level = mSpellcaster->mLevel;
+    do
     {
-        if (!mSpellcaster->mLevel->isSolidBlockingBlockInLoadedChunk(pos, true))
+        if (!level->isSolidBlockingBlockInLoadedChunk(pos, true)
+            && level->isSolidBlockingBlockInLoadedChunk(pos.below(), true))
         {
-            BlockPos ground = pos.below();
-            if (mSpellcaster->mLevel->isSolidBlockingBlockInLoadedChunk(ground, true))
+            if (!level->isEmptyBlock(pos))
             {
-                if (!mSpellcaster->mLevel->isEmptyBlock(pos))
+                const AABB* shape = level->getBlockState(pos)->getClipAABB(level, pos);
+                if (shape != NULL)
                 {
-                    mSpellcaster->mLevel->getBlockState(pos);
+                    yOffset = shape->mMaxY;
                 }
-                boost::shared_ptr<LivingEntity> owner =
-                    boost::static_pointer_cast<LivingEntity>(mSpellcaster->shared_from_this());
-                mSpellcaster->mLevel->addEntity(boost::shared_ptr<Entity>(new EvocationFangs(
-                    mSpellcaster->mLevel, x, searchY, y, static_cast<float>(xRot), warmupDelay, owner)));
-                return;
             }
+            boost::shared_ptr<LivingEntity> owner =
+                boost::static_pointer_cast<LivingEntity>(mSpellcaster->shared_from_this());
+            level->addEntity(boost::shared_ptr<Entity>(new EvocationFangs(
+                level, x, static_cast<double>(pos.y) + yOffset, z, yRot, warmupDelay, owner)));
+            return;
         }
         pos = pos.below();
-        searchY -= 1.0;
-        if (searchY < minSearchY) return;
-    }
+    } while (static_cast<double>(pos.y) >= std::floor(minY) - 1.0);
 }
 void EvocationIllager::EvokerAttackSpellGoal::performSpellCasting()
 {

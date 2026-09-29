@@ -45,7 +45,7 @@ void Fish::_init()
     mSwimRotationOld = 0.0f;
     mSwimFlag = false;
     mSwimSpeed = 1.0f;
-    mNoActionTime = mRandom->nextInt(4, 8);
+    mMaxFlockSize = mRandom->nextInt(4, 8);
 }
 
 void Fish::baseTick()

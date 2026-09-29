@@ -25,7 +25,7 @@ public:
         virtual std::wstring getName();
         virtual int getCastingTime();
         virtual int getCastingInterval();
-        void createSpellEntity(double x, double y, double z, double yRot, float xRot, int warmupDelay);
+        void createSpellEntity(double x, double z, double minY, double maxY, float yRot, int warmupDelay);
         virtual void performSpellCasting();
         virtual const SoundEvent* getSpellPrepareSound();
         virtual IllagerSpell* getSpell();

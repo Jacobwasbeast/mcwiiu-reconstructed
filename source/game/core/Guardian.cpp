@@ -199,7 +199,7 @@ double Guardian::getWalkTargetValue(const BlockPos& pos)
 {
     if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER)
     {
-        return (double)(float)(mLevel->getSeaLevel() + 9.5f);
+        return (double)(mLevel->getBrightness(pos) + 9.5f);
     }
     return Monster::getWalkTargetValue(pos);
 }
@@ -302,6 +302,7 @@ void Guardian::aiStep()
             if (target != NULL)
             {
                 getLookControl()->setLookAt(target, 90.0f, 90.0f);
+                getLookControl()->tick();
 
                 double scale = getAttackAnimationScale(0.0f);
                 double dx = target->mX - mX;
@@ -342,6 +343,11 @@ void Guardian::aiStep()
     else
     {
         setAirSupply(300);
+    }
+
+    if (hasActiveAttackTarget())
+    {
+        mYRot = mYHeadRot;
     }
 
     Monster::aiStep();
@@ -571,17 +577,18 @@ void Guardian::GuardianMoveControl::tick()
         double distance = std::sqrt(dz * dz + dx * dx + dy * dy);
         double angle = std::atan2(dz, dx);
         float newYRot = rotlerp(mGuardian->mYRot,
-            (float)(angle * 57.29577951308232) - 90.0f, 30.0f);
-        mGuardian->setRot(newYRot, mGuardian->mXRot);
+            (float)(angle * 57.2957763671875f) - 90.0f, 30.0f);
+        mGuardian->mYRot = newYRot;
+        mGuardian->mYBodyRot = newYRot;
 
         float speed = mGuardian->getSpeed();
         double attributeSpeed = mGuardian->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
-        mGuardian->setSpeed((float)((getSpeedModifier() * attributeSpeed - speed) * 0.125 + speed));
+        mGuardian->setSpeed((float)((float)((float)(getSpeedModifier() * attributeSpeed) - speed) * 0.125f + speed));
 
         int wiggle = mGuardian->mTickCount + mGuardian->getId();
         double wag1 = std::sin((double)wiggle * 0.5) * 0.05;
-        float cosYRot = std::cos((double)mGuardian->mYRot * 57.29577951308232);
-        float sinYRot = std::sin((double)mGuardian->mYRot * 57.29577951308232);
+        float cosYRot = cosf((float)(mGuardian->mYRot * 57.2957763671875f));
+        float sinYRot = sinf((float)(mGuardian->mYRot * 57.2957763671875f));
         mGuardian->mXd += wag1 * cosYRot;
         mGuardian->mZd += wag1 * sinYRot;
 

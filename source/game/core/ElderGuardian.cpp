@@ -106,7 +106,7 @@ void ElderGuardian::customServerAiStep()
                 player->getEffect(effect)->getDuration() < 1200)
             {
                 player->mConnection->send(boost::shared_ptr<Packet>(
-                    new ClientboundGameEventPacket(10, 0.25f)));
+                    new ClientboundGameEventPacket(ClientboundGameEventPacket::GUARDIAN_ELDER_EFFECT, 0.0f)));
                 player->addEffect(new MobEffectInstance(effect, 6000, 2),
                                   boost::shared_ptr<Entity>());
             }

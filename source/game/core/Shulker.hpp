@@ -9,6 +9,7 @@
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/core/BodyControl.hpp"
+#include "game/entity/mob/Enemy.hpp"
 
 class AABB;
 class AttributeModifier;
@@ -27,7 +28,7 @@ class MobGroupData;
 class SoundEvent;
 template <class T> class EntityDataAccessor;
 
-class Shulker : public Golem
+class Shulker : public Golem, public Enemy
 {
 public:
     class ShulkerAttackGoal : public Goal

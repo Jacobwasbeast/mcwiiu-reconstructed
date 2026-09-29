@@ -144,8 +144,9 @@ bool EnderCrystal::hurt(const DamageSource* source, float damage)
     if (!mRemoved && !mLevel->mIsClientSide)
     {
         remove();
-        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(eGameHostOption_TNT) && !source->isExplosion())
-            mLevel->explode(shared_from_this(), mX, mY, mZ, 6.0f, false, false, true, false, false, -1.0f);
+        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(eGameHostOption_TNT)
+            && mLevel->explodeNextEnderCrystal() && !source->isExplosion())
+            mLevel->explode(shared_from_this(), mX, mY, mZ, 6.0f, false, true, false, false, false, -1.0f);
         onDestroyedBy(source);
     }
     return true;

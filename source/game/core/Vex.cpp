@@ -46,20 +46,20 @@ void Vex::staticCtor()
 void Vex::move(MoverType operation, double x, double y, double z, bool force)
 {
     Entity::move(operation, x, y, z, false);
-    setMoving(true);
+    checkInsideBlocks();
 }
 void Vex::tick()
 {
     setNoGravity(true);
+    mNoPhysics = true;
     Monster::tick();
-    setNoGravity(false);
+    mNoPhysics = false;
     if (hasLimitedLife)
     {
-        if (limitedLife > 0) --limitedLife;
-        if (limitedLife == 0)
+        if (--limitedLife <= 0)
         {
             limitedLife = 20;
-            hurt(DamageSource::OUT_OF_WORLD, 1.0f);
+            hurt(DamageSource::STARVE, 1.0f);
         }
     }
 }
@@ -175,7 +175,7 @@ void Vex::VexChargeAttackGoal::start()
     Vec3* eye = target->getEyePosition(1.0f);
     owner->getMoveControl()->setWantedPosition(eye->x, eye->y, eye->z, 1.0);
     owner->setIsCharging(true);
-    owner->playSound(SoundEvents::VEX_CHARGE, 1.0f, 1.875f);
+    owner->playSound(SoundEvents::VEX_CHARGE, 1.0f, 1.0f);
 }
 void Vex::VexChargeAttackGoal::stop() { owner->setIsCharging(false); }
 void Vex::VexChargeAttackGoal::tick()
@@ -248,14 +248,14 @@ void Vex::VexMoveControl::tick()
         const float rotation = static_cast<float>(-std::atan2(vex->mXd, vex->mZd)
                                                    * 57.2957763671875f);
         vex->mYRot = rotation;
-        vex->mYHeadRot = rotation;
+        vex->mYBodyRot = rotation;
         return;
     }
     const float rotation = static_cast<float>(-std::atan2(target->mX - vex->mX,
                                                            target->mZ - vex->mZ)
                                                * 57.2957763671875f);
     vex->mYRot = rotation;
-    vex->mYHeadRot = rotation;
+    vex->mYBodyRot = rotation;
 }
 
 Vex::VexRandomMoveGoal::VexRandomMoveGoal(Vex* value) : Goal(), owner(value)

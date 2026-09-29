@@ -85,16 +85,25 @@ void Salmon::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     if (scale == SMALL)
     {
         setSize(0.5f, 0.5f);
+        mSwimSpeed = 0.5f;
+        mSwimFlag = true;
+        mSwimTicks = 24;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(2.0);
     }
     else if (scale == MEDIUM)
     {
         setSize(1.0f, 1.0f);
+        mSwimTicks = 1;
+        mSwimFlag = false;
+        mSwimSpeed = 1.0f;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(3.0);
     }
     else if (scale == LARGE)
     {
         setSize(1.5f, 1.5f);
+        mSwimTicks = -7;
+        mSwimFlag = true;
+        mSwimSpeed = 1.5f;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(5.0);
     }
 }
@@ -103,7 +112,7 @@ void Salmon::defineSynchedData()
 {
     Mob::defineSynchedData();
     if (mEntityData != NULL && DATA_ID_SCALE != NULL)
-        mEntityData->createDateItem(DATA_ID_SCALE, static_cast<unsigned char>(SMALL));
+        mEntityData->createDateItem(DATA_ID_SCALE, static_cast<unsigned char>(MEDIUM));
 }
 
 void Salmon::registerGoals()

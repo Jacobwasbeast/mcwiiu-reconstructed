@@ -44,7 +44,6 @@ public:
 
     void swap(Slot* other);
 
-protected:
     int mSlot;
     boost::shared_ptr<Container> mContainer;
     int mIndex;

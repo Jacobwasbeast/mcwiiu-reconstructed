@@ -8,7 +8,7 @@
 DelayedRelease::DelayedRelease(Level* level, boost::shared_ptr<Entity> entity, int delay)
     : Entity(level, true)
 {
-    moveTo(entity->mX, entity->mY, entity->mZ, 0.25f, 0.25f);
+    moveTo(entity->mX, entity->mY, entity->mZ, 0.0f, 0.0f);
     mEntity = entity;
     mDelay = delay;
 }

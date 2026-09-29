@@ -6,6 +6,7 @@
 
 #include "game/entity/mob/AgableWaterAnimal.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/entity/mob/Creature.hpp"
 
 class PathNavigation;
 class CompoundTag;
@@ -23,7 +24,7 @@ class WaterBoundPathNavigation;
 class Player;
 template <class T> class not_null_ptr;
 
-class Dolphin : public AgableWaterAnimal
+class Dolphin : public AgableWaterAnimal, public Creature
 {
 public:
     Dolphin(Level* level);

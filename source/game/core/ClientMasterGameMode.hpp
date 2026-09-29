@@ -143,8 +143,7 @@ private:
     int mBRUPsRemaining;
     int mBRUPCount;
     int mLoadedChunkCount;
-    int mChunkLoadProgress;
-    int mLastChunkLoadProgress;
+    long long mSubRoundLoadStartTime;
 };
 
 #endif

@@ -43,7 +43,7 @@ void CaveSpider::addDataWalkers(DataFixerUpper* fixer)
 void CaveSpider::registerAttributes()
 {
     Spider::registerAttributes();
-    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(12.0);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(12.0);
 }
 
 bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)

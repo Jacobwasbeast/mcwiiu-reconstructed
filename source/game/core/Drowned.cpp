@@ -106,7 +106,7 @@ bool Drowned::checkSpawnRules()
         mLevel->containsAnysolidBlocking(mBoundingBox))
         return false;
     BlockPos pos(mX, mBoundingBox->mMinY, mZ);
-    return mLevel->getBrightness(pos) >= 0.25f;
+    return getWalkTargetValue(pos) >= 0.0f;
 }
 
 bool Drowned::checkSpawnObstruction()
@@ -127,7 +127,8 @@ void Drowned::aiStep()
     boost::shared_ptr<LivingEntity> target = getTarget();
     if (!target)
     {
-        setAggressive(false);
+        if (!mRangedAttackGoal || !mRangedAttackGoal->canContinueToUse())
+            setAggressive(false);
         return;
     }
     setAggressive(true);
@@ -137,9 +138,8 @@ void Drowned::aiStep()
         not_null_ptr<ItemInstance> item = getMainHandItem();
         if (item->getItem() == Items::trident)
             mRangedAttackGoal = new RangedAttackGoal(this, this, 1.0, 20, 60, 10.0f);
-    }
-    if (!mRangedAttackGoal)
         return;
+    }
 
     double distance = distanceToSqr(boost::static_pointer_cast<Entity>(target));
     if (!mIsRangedAttacking && distance >= 25.0)

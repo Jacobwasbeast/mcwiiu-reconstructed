@@ -502,8 +502,8 @@ void Minecraft::init()
     mAlternateFont =
         new Font(mOptions, L"font/alternate", mTextures, false, &UnityClient13TextureLocation_0x7B, 0x10, 0x10, 8, 8, NULL);
 
-    GrassColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(0), L"misc/grasscolor"));
-    FoliageColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(1), L"misc/foliagecolor"));
+    GrassColor::init(mTextures->loadTexturePixels(TN_MISC_GRASSCOLOR, L"misc/grasscolor"));
+    FoliageColor::init(mTextures->loadTexturePixels(TN_MISC_FOLIAGECOLOR, L"misc/foliagecolor"));
     Biome::generateColoursDebugOutput();
 
     mTerrainAtlas = new TextureAtlas(0, L"terrain", L"textures/blocks/", NULL, true);
@@ -752,7 +752,7 @@ void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_p
 
     if (level == NULL)
     {
-        mLevelSource->requiresConversion(NULL, std::wstring());
+        mLevelSource->clearAll();
         mPlayer.reset();
 
         for (int i = 0; i < 4; ++i)
@@ -1500,7 +1500,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
 
     if (mScreen != NULL)
     {
-        mPlayer->mDestroyTicks = 10000;
+        mPlayer->mMissTime = 10000;
         mPlayer->mLastAttackTick = mTicks + 10000;
         mPlayer->mLastUseTick = mTicks + 10000;
         mScreen->updateEvents();
@@ -1797,19 +1797,16 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 mGameMode->releaseUsingItem(mPlayer);
             }
 
-            if (mPlayer->mDestroyTicks > 0)
-                --mPlayer->mDestroyTicks;
+            if (mPlayer->mMissTime > 0)
+                --mPlayer->mMissTime;
 
-            bool openInventory = false;
-            if ((mPlayer->mButtonsDown & 0x20) == 0)
+            bool achievementsIdle = false;
+            if ((mPlayer->mButtonsDown & 0x20) != 0)
             {
-                openInventory = gConsoleUIController.GetHoldActionCancelled(playerIdx);
+                achievementsIdle = !gConsoleUIController.GetHoldToShowAchievementsActive(true) &&
+                                   !gConsoleUIController.GetAchievementToastShowing(playerIdx);
             }
-            else if (!gConsoleUIController.GetHoldToShowAchievementsActive(true) &&
-                     !gConsoleUIController.GetAchievementToastShowing(playerIdx))
-            {
-                openInventory = !gConsoleUIController.GetHoldActionCancelled(playerIdx);
-            }
+            bool openInventory = gConsoleUIController.GetHoldActionCancelled(playerIdx) || achievementsIdle;
 
             if (openInventory && !(mGameMode->isInputAllowed(EControllerActions_Use) &&
                                    g_pInput->ButtonDown(playerIdx, EControllerActions_Use)))
@@ -1817,7 +1814,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 if (mPlayer->mHasOpenedInventory && mGameMode->isInputAllowed(EControllerActions_Inventory))
                 {
                     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                    if (mGameMode->isServerControlledInventory())
+                    if (!mGameMode->isServerControlledInventory())
                         gApp.LoadInventoryMenu(playerIdx, mPlayer, false);
                     else
                         mPlayer->sendOpenInventory();
@@ -1971,8 +1968,13 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         }
     }
 
-    if (mPlayer && !mPlayer->isUsingItem())
-        mLevel->ensureAdded(mPlayer);
+    if (mLevel != NULL && mPlayer)
+    {
+        if (++mFrameNumber == 30)
+            mFrameNumber = 0;
+        else if (mFrameNumber % 30 == playerIdx * 7 + 7)
+            mLevel->ensureAdded(mPlayer);
+    }
 
     PIXBeginNamedEvent(0.0f, "Game renderer tick");
     if (!mAppPaused)
@@ -2087,7 +2089,6 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         }
     }
 
-    ++mTicks;
     Tooltips::DisplayTooltips(playerIdx);
 }
 
@@ -2146,7 +2147,7 @@ void Minecraft::run_middle()
 
                 if (autosaveAllowed)
                 {
-                    if (gApp.AutosaveDue())
+                    if (!gApp.AutosaveDue())
                     {
                         unsigned int seconds = gApp.SecondsToAutosave();
                         if (seconds <= 5)

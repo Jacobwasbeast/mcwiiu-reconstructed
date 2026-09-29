@@ -321,16 +321,17 @@ bool Squid::SquidRandomMovementGoal::canUse()
 
 void Squid::SquidRandomMovementGoal::tick()
 {
-    if (mSquid->getAirSupply() < 101)
+    if (mSquid->getNoActionTime() > 100)
     {
         mSquid->setMovementVector(0.0f, 0.0f, 0.0f);
     }
-    else if (mSquid->getRandom()->nextInt(50) == 0 || !mSquid->hasMovementVector())
+    else if (mSquid->getRandom()->nextInt(50) == 0 || !mSquid->mIsInWater || !mSquid->hasMovementVector())
     {
         float angle = mSquid->getRandom()->nextFloat() * 6.2831855f;
-        mSquid->setMovementVector(std::cos(angle) * 0.2f,
-                                  mSquid->getRandom()->nextFloat() * 0.2f - 0.1f,
-                                  std::sin(angle) * 0.2f);
+        float x = Mth::cos(angle) * 0.2f;
+        float y = mSquid->getRandom()->nextFloat() * 0.2f - 0.1f;
+        float z = Mth::sin(angle) * 0.2f;
+        mSquid->setMovementVector(x, y, z);
     }
 }
 

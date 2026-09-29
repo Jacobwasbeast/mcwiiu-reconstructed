@@ -71,8 +71,8 @@ public:
 
     unsigned char setBit(unsigned char value, int bit, bool enabled);
     void setShowArms(bool showArms);
-    std::vector<boost::shared_ptr<ItemInstance> >* getHandSlots();
-    std::vector<boost::shared_ptr<ItemInstance> >* getArmorSlots();
+    NonNullList<not_null_ptr<ItemInstance> > getHandSlots();
+    NonNullList<not_null_ptr<ItemInstance> > getArmorSlots();
     not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
     virtual void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item);
     bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);

@@ -122,8 +122,7 @@ void Voteable::setVoteAndSync(int playerId, int voteableId, char vote)
     if (mAllowMultipleVotes) {
         gMinecraftServer->getPlayers()->broadcastAll(packet);
     } else {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        minecraft->getConnection(0)->send(packet);
+        Minecraft::GetInstance()->mPlayer->mPacketListener->send(packet);
     }
 }
 

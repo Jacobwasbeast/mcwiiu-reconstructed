@@ -7,6 +7,7 @@
 #include "game/entity/mob/FlyingMob.hpp"
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/MoveControl.hpp"
+#include "game/entity/mob/Enemy.hpp"
 
 class CompoundTag;
 class DamageSource;
@@ -16,7 +17,7 @@ class Level;
 class Random;
 class SoundEvent;
 
-class Ghast : public FlyingMob
+class Ghast : public FlyingMob, public Enemy
 {
 public:
     class GhastLookGoal : public Goal
@@ -98,8 +99,8 @@ public:
     virtual unsigned long long GetType();
 
 private:
-    int mExplosionPower;
     int mUnused;
+    int mExplosionPower;
 };
 
 #endif

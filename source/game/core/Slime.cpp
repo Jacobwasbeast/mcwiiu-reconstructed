@@ -254,9 +254,9 @@ void Slime::remove()
 
 void Slime::push(boost::shared_ptr<Entity> entity)
 {
-    if (isDealsDamage())
-        dealDamage(boost::shared_ptr<LivingEntity>(entity, dynamic_cast<LivingEntity*>(entity.get())));
     Entity::push(entity);
+    if (entity->GetType() == EntityType::VILLAGER_GOLEM && isDealsDamage())
+        dealDamage(boost::static_pointer_cast<LivingEntity>(entity));
 }
 
 void Slime::playerTouch(boost::shared_ptr<Player> player)
@@ -420,8 +420,8 @@ void Slime::SlimeAttackGoal::tick()
     if (target)
     {
         mSlime->lookAt(target, 10.0f, 10.0f);
-        mSlime->getMoveControl()->setWantedPosition(target->mX, target->mY, target->mZ, 1.0);
     }
+    static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setDirection(mSlime->mYRot, mSlime->isDealsDamage());
 }
 
 std::wstring Slime::SlimeAttackGoal::getName()
@@ -508,6 +508,7 @@ void Slime::SlimeMoveControl::setWantedMovement(double speed)
 void Slime::SlimeMoveControl::tick()
 {
     mSlime->mYRot = rotlerp(mSlime->mYRot, mYRot, 30.0f);
+    mSlime->mYHeadRot = mSlime->mYRot;
     mSlime->mYBodyRot = mSlime->mYRot;
     if (mOperation != MOVE_TO)
     {
@@ -518,7 +519,13 @@ void Slime::SlimeMoveControl::tick()
     mSlime->setSpeed((float)(mSpeedModifier * mSlime->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
     if (mSlime->mOnGround)
     {
-        if (mJumpDelay-- <= 0)
+        if (mJumpDelay-- > 0)
+        {
+            mSlime->mXxa = 0.0f;
+            mSlime->mZza = 0.0f;
+            mSlime->setSpeed(0.0f);
+        }
+        else
         {
             mJumpDelay = mSlime->getJumpDelay();
             if (mWasOnGround)

@@ -101,8 +101,8 @@ public:
 
 private:
     static const EntityDataAccessor<bool>* DATA_STANDING;
-    float mStandingScale;
     float mStandingScaleO;
+    float mStandingScale;
     int mWarningSoundTicks;
 };
 

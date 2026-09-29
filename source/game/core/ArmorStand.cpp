@@ -225,21 +225,13 @@ void ArmorStand::setShowArms(bool showArms)
 {
     mEntityData->set(DATA_FLAGS, setBit(mEntityData->get(DATA_FLAGS), 4, showArms), true);
 }
-std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getHandSlots()
+NonNullList<not_null_ptr<ItemInstance> > ArmorStand::getHandSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* items =
-        new std::vector<boost::shared_ptr<ItemInstance> >();
-    items->push_back(mHandItems[0]);
-    items->push_back(mHandItems[1]);
-    return items;
+    return mHandItems;
 }
-std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getArmorSlots()
+NonNullList<not_null_ptr<ItemInstance> > ArmorStand::getArmorSlots()
 {
-    std::vector<boost::shared_ptr<ItemInstance> >* items =
-        new std::vector<boost::shared_ptr<ItemInstance> >();
-    for (unsigned int i = 0; i < mArmorItems.size(); ++i)
-        items->push_back(mArmorItems[i]);
-    return items;
+    return mArmorItems;
 }
 not_null_ptr<ItemInstance> ArmorStand::getItemSlot(const EquipmentSlot* slot)
 {
@@ -790,7 +782,7 @@ void ArmorStand::setInvisible(bool invisible)
 }
 bool ArmorStand::isBaby() { return isSmall(); }
 void ArmorStand::kill() { remove(); }
-bool ArmorStand::ignoreExplosion() { return true; }
+bool ArmorStand::ignoreExplosion() { return isInvisible(); }
 int ArmorStand::getPistonPushReaction() { return isMarker() ? 3 : Entity::getPistonPushReaction(); }
 bool ArmorStand::isAffectedByPotions() { return false; }
 void ArmorStand::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
