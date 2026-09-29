@@ -256,16 +256,9 @@ void EnchantmentHelper::doPostHurtEffects(const boost::shared_ptr<LivingEntity>&
 
     if (target.get() != NULL)
     {
-        std::vector<boost::shared_ptr<ItemInstance> >* slots = target->getAllSlots();
-
-        for (std::vector<boost::shared_ptr<ItemInstance> >::const_iterator it = slots->begin();
-             it != slots->end();
-             ++it)
-        {
-            runIterationOnItem(sPostHurtIteration, not_null_ptr<ItemInstance>(*it));
-        }
-
-        delete slots;
+        NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
+        for (unsigned int i = 0; i < slots.size(); ++i)
+            runIterationOnItem(sPostHurtIteration, slots[i]);
     }
 
     if (attacker.get() != NULL
@@ -286,16 +279,9 @@ void EnchantmentHelper::doPostDamageEffects(const boost::shared_ptr<LivingEntity
         return;
     }
 
-    std::vector<boost::shared_ptr<ItemInstance> >* slots = target->getAllSlots();
-
-    for (std::vector<boost::shared_ptr<ItemInstance> >::const_iterator it = slots->begin();
-         it != slots->end();
-         ++it)
-    {
-        runIterationOnItem(sPostDamageIteration, not_null_ptr<ItemInstance>(*it));
-    }
-
-    delete slots;
+    NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
+    for (unsigned int i = 0; i < slots.size(); ++i)
+        runIterationOnItem(sPostDamageIteration, slots[i]);
 
     if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {

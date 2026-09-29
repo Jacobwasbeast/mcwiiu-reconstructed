@@ -1,4 +1,5 @@
 #include "game/item/WrittenBookItem.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <string>
@@ -10,7 +11,13 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/data/StringTag.hpp"
+#include "game/core/Slot.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/network/ClientboundContainerSetSlotPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/item/WritableBookItem.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
@@ -146,6 +153,14 @@ void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInsta
         pages->set(i, new StringTag(pages->getString(i)));
     }
     tag->put(L"pages", pages);
+
+    if (player->GetType() == EntityType::SERVER_PLAYER && player->getMainHandItem() == itemInstance)
+    {
+        boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
+        Slot* slot = player->mContainerMenu->getSlotFor(player->mInventory, player->mInventory->m_selected);
+        serverPlayer->mConnection->send(
+            boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
+    }
 }
 
 InteractionResultHolder WrittenBookItem::use(Level* level,

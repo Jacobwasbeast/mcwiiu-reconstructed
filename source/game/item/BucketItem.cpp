@@ -107,23 +107,22 @@ bool BucketItem::isFishBucket()
 
 bool BucketItem::supportsEntityType(const unsigned long long& type, int& variant) const
 {
-    unsigned int id = static_cast<unsigned int>(type);
-    if (id == 0x0d502002U)
+    if (type == EntityType::FISH)
     {
         variant = 2;
         return true;
     }
-    if (id == 0x0d502003U)
+    if (type == EntityType::PUFFERFISH)
     {
         variant = 5;
         return true;
     }
-    if (id == 0x0d502004U)
+    if (type == EntityType::SALMON)
     {
         variant = 3;
         return true;
     }
-    if (id == 0x0d502005U)
+    if (type == EntityType::TROPICAL_FISH)
     {
         variant = 4;
         return true;

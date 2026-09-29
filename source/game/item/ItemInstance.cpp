@@ -955,7 +955,7 @@ bool ItemInstance::hasCustomHoverName()
         return false;
     }
     CompoundTag* display = mTag->getCompound(L"display");
-    return display != 0 && display->contains(L"Name");
+    return display != 0 && display->contains(L"Name", Tag::TAG_STRING);
 }
 
 boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ItemInstance::getAttributeModifiers(const EquipmentSlot* slot)
