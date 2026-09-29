@@ -42,7 +42,6 @@
 #include <nn/erreula/erreula_cpp.h>
 #include <cwchar>
 
-extern "C" void OSReport(const char*, ...);
 extern "C" void OSBlockThreadsOnExit();
 extern "C" int OSResumeThread(OSThread* thread);
 extern "C" void OSInitMessageQueue(OSMessageQueue*, OSMessage*, int);
@@ -97,16 +96,12 @@ static unsigned char s_trialTimerShown = 1;
 static OSThread gMainThread;
 static unsigned char gMainThreadStack[0x20000];
 
-#define BOOT_TRACE(step) OSReport("[boot] %s\n", step)
-
 int main()
 {
     OSBlockThreadsOnExit();
-    BOOT_TRACE("main entered");
     ShutdownManager::Initialise();
     CGameNetworkManager::sInstance.WiiU_SetBootFromFriendList();
 
-    BOOT_TRACE("shutdown+network init");
     OSInitMessageQueue(&gMainMessageQueue, &gMainMessageBuffer, 1);
     InitializeCriticalSection(&gMainMutex);
     C4JThreadImpl::OSCreateThread4J(&gMainThread, altMainThread, 0, 0,
@@ -115,32 +110,25 @@ int main()
     OSResumeThread(&gMainThread);
     C4JThreadImpl::SetMainThreadID();
     Compression::CreateNewThreadStorage();
-    BOOT_TRACE("alt-main thread created");
     gRenderer->Initialise();
     g_pInput->Initialise(1, 0x3d, 0x17);
 
-    BOOT_TRACE("renderer initialised");
     DefineActions();
     g_pInput->SetJoypadMapArraySetupComplete();
     g_pInput->SetKeyRepeatRate(0.5f, 0.8f);
     g_pInput->SetDeadzoneAndMovementRange(0, 20000, 0x7fff);
-    BOOT_TRACE("input configured");
     ProcUIInitEx(SaveCallback, 0);
     ProcUIRegisterCallback(0, CallbackAcquiredForeground, 0, 100);
     ProcUIRegisterCallback(1, CallbackReleaseForeground, 0, 100);
     ProcUIRegisterCallback(5, CallbackHomebuttonDenied, 0, 100);
-    BOOT_TRACE("procui callbacks registered");
     nn::ac::Initialize();
     WiiUInitialise();
 
-    BOOT_TRACE("wiiu initialised");
     gApp.loadMediaArchive();
-    BOOT_TRACE("media archive loaded");
     gApp.InitialiseDLCInfo();
     if (gApp.ReadProductCodes() == 0)
         gApp.FatalLoadError(L"ReadProductCodes failed");
 
-    BOOT_TRACE("product codes read");
     int productSku = gApp.GetProductSKU();
     if (productSku == 0)
         gProfile->SetPlayerListTitleID(7);
@@ -148,11 +136,9 @@ int main()
         gProfile->SetPlayerListTitleID(10);
     else if (productSku == 2)
         gProfile->SetPlayerListTitleID(0);
-    BOOT_TRACE("sku resolved");
     L10N::loadStringTable();
     g_pInput->SetCircleCrossSwapped(true);
 
-    BOOT_TRACE("string table loaded");
     int uiWidth = 640;
     int uiHeight = 480;
     if (productSku == 1)
@@ -160,20 +146,14 @@ int main()
         uiWidth = 1280;
         uiHeight = 720;
     }
-    BOOT_TRACE("ui size chosen");
     gConsoleUIController.init(uiWidth, uiHeight);
-    BOOT_TRACE("CONSOLE UI INIT DONE");
     gApp.CommerceInit();
-    BOOT_TRACE("commerce init done");
     gApp.InitTime();
-    BOOT_TRACE("time init done");
     static unsigned int s_profileDefaults[5];
     gProfile->Initialise(L"", L"", 0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
-    BOOT_TRACE("profile initialised");
     gProfile->SetSignInChoicesCallback(CConsoleMinecraftApp::RequestSignInUIChoices);
     gProfile->SetNotificationsCallback(
         reinterpret_cast<CProfile::NotificationsHandler>(PopupToast), 0);
-    BOOT_TRACE("profile callbacks set");
     RegisterAwardsWithProfileManager();
 
     bool noSpaceForSaveQuota = false;
@@ -215,34 +195,23 @@ int main()
         gStorage->SetDLCPackageRoot("DLCDrive");
     }
 
-    BOOT_TRACE("storage configured");
     gProfile->SetUpsellCallback(
         reinterpret_cast<CProfile::UpsellHandler>(CMinecraftApp::UpsellReturnedCallback), &gApp);
-    BOOT_TRACE("upsell callback set");
     gApp.SetRichPresenceContext(0, 0);
 
-    BOOT_TRACE("rich presence set");
     Tesselator::CreateNewThreadStorage(0x100000);
-    BOOT_TRACE("tesselator storage");
     AABB::CreateNewThreadStorage();
     Vec3::CreateNewThreadStorage();
     phys::Vec2::CreateNewThreadStorage();
-    BOOT_TRACE("vec storage");
     IntCache::CreateNewThreadStorage();
     OldChunkStorage::CreateNewThreadStorage();
-    BOOT_TRACE("chunk storage");
     Level::enableLightingCache();
-    BOOT_TRACE("lighting cache enabled");
     Block::CreateNewThreadStorage();
     FireworksRecipe::CreateNewThreadStorage();
-    BOOT_TRACE("fireworks storage");
     LevelChunk::CreateNewThreadStorage();
-    BOOT_TRACE("levelchunk storage");
     ElementStorage::staticCtor();
-    BOOT_TRACE("elementstorage staticCtor");
     ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_Main);
 
-    BOOT_TRACE("about to call Minecraft::main");
     Minecraft::main();
     Minecraft* minecraft = Minecraft::GetInstance();
     gApp.InitGameSettings();

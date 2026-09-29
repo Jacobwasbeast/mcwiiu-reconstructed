@@ -157,7 +157,7 @@ public:
     virtual void SetSaveUniqueFilename(char*) = 0;
     virtual int GetSaveUniqueFileDir(char*) = 0;
     virtual unsigned long long SetSaveTitle(const wchar_t*) = 0;
-    virtual unsigned long long AllocateSaveData(unsigned int) = 0;
+    virtual void* AllocateSaveData(unsigned int) = 0;
     virtual void SetSaveDataSize(unsigned int) = 0;
     virtual void GetDefaultSaveImage(unsigned char**, unsigned int*) = 0;
     virtual void GetDefaultSaveThumbnail(unsigned char**, unsigned int*) = 0;

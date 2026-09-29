@@ -884,13 +884,13 @@ unsigned long long CStorage::SetSaveTitle(const wchar_t* title)
 #endif
     return 0;
 }
-unsigned long long CStorage::AllocateSaveData(unsigned int size)
+void* CStorage::AllocateSaveData(unsigned int size)
 {
     MEMFreeToDefaultHeap(m_saveData);
     m_saveData = (unsigned char*)MEMAllocFromDefaultHeapEx((size + 0x3fU) & ~0x3fU, 64);
     if (m_saveData != NULL)
         m_saveSize = size;
-    return 0;
+    return m_saveData;
 }
 void CStorage::SetSaveDataSize(unsigned int size) { m_saveSize = size; }
 void CStorage::GetDefaultSaveImage(unsigned char** data, unsigned int* size)
