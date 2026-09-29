@@ -24,7 +24,7 @@ DragonFireball::DragonFireball(Level* level)
     : Fireball(level)
 {
     fjDerivedCtorCalls();
-    setSize(1.0f, 0.4f);
+    setSize(1.0f, 1.0f);
 }
 
 DragonFireball::DragonFireball(Level* level, boost::shared_ptr<LivingEntity> owner,
@@ -32,7 +32,7 @@ DragonFireball::DragonFireball(Level* level, boost::shared_ptr<LivingEntity> own
     : Fireball(level, owner, xd, yd, zd)
 {
     fjDerivedCtorCalls();
-    setSize(1.0f, 0.4f);
+    setSize(1.0f, 1.0f);
 }
 
 DragonFireball::DragonFireball(Level* level, double x, double y, double z,
@@ -40,7 +40,7 @@ DragonFireball::DragonFireball(Level* level, double x, double y, double z,
     : Fireball(level, x, y, z, xd, yd, zd)
 {
     fjDerivedCtorCalls();
-    setSize(1.0f, 0.4f);
+    setSize(1.0f, 1.0f);
 }
 
 DragonFireball::~DragonFireball()

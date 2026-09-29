@@ -25,7 +25,6 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual unsigned long long GetType();
 
-private:
     int mExplosionPower;
 };
 

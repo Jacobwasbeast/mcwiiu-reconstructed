@@ -119,10 +119,10 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
     mYd = y;
     mZd = z;
     double horizontal = std::sqrt(x * x + z * z);
-    mYRot = static_cast<float>(std::atan2(x, z) * 57.2957763671875);
+    mYRot = static_cast<float>(std::atan2(x, z)) * 57.2957763671875f;
     mYRotO = mYRot;
     mLife = 0;
-    mXRot = static_cast<float>(std::atan2(y, horizontal) * 57.2957763671875);
+    mXRot = static_cast<float>(std::atan2(y, horizontal)) * 57.2957763671875f;
     mXRotO = mXRot;
     fjSanitisePosAndVel(this);
 }
@@ -267,9 +267,9 @@ void AbstractRotatedItemProjectile::tick()
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
-        mYRot = static_cast<float>(std::atan2(mXd, mZd) * 57.2957763671875);
+        mYRot = static_cast<float>(std::atan2(mXd, mZd)) * 57.2957763671875f;
         mYRotO = mYRot;
-        mXRot = static_cast<float>(std::atan2(mYd, horizontal) * 57.2957763671875);
+        mXRot = atan2f(static_cast<float>(mYd), static_cast<float>(horizontal)) * 57.2957763671875f;
         mXRotO = mXRot;
     }
 
@@ -357,10 +357,10 @@ void AbstractRotatedItemProjectile::tick()
     mZ += mZd;
     double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
     if (isNoPhysics())
-        mYRot = static_cast<float>(std::atan2(-mXd, -mZd) * 57.2957763671875);
+        mYRot = static_cast<float>(std::atan2(-mXd, -mZd)) * 57.2957763671875f;
     else
-        mYRot = static_cast<float>(std::atan2(mXd, mZd) * 57.2957763671875);
-    mXRot = static_cast<float>(std::atan2(mYd, horizontal) * 57.2957763671875);
+        mYRot = static_cast<float>(std::atan2(mXd, mZd)) * 57.2957763671875f;
+    mXRot = atan2f(static_cast<float>(mYd), static_cast<float>(horizontal)) * 57.2957763671875f;
 
     while (mXRot - mXRotO < -180.0f)
         mXRotO -= 360.0f;
@@ -397,7 +397,7 @@ void AbstractRotatedItemProjectile::tick()
         double y = mY;
         double z = mZ;
         mLevel->clampWithinLevelBounds(x, z, 0.0);
-        mLevel->clampWithinLevelHeight(y, mBbWidth);
+        mLevel->clampWithinLevelHeight(y, mBbHeight);
         if (x != mX || y != mY || z != mZ)
         {
             setPos(x, y, z);
@@ -421,8 +421,8 @@ void AbstractRotatedItemProjectile::lerpMotion(double xd, double yd, double zd)
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = Mth::sqrt(xd * xd + zd * zd);
-        mXRot = static_cast<float>(std::atan2(yd, horizontal) * 57.2957763671875);
-        mYRot = static_cast<float>(std::atan2(xd, zd) * 57.2957763671875);
+        mXRot = atan2f(static_cast<float>(yd), static_cast<float>(horizontal)) * 57.2957763671875f;
+        mYRot = static_cast<float>(std::atan2(xd, zd)) * 57.2957763671875f;
         mXRotO = mXRot;
         mYRotO = mYRot;
         moveTo(mX, mY, mZ, mYRot, mXRot);

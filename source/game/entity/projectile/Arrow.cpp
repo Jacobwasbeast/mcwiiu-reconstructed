@@ -117,7 +117,7 @@ void Arrow::onHitEntity(const HitResult* result)
         mXd *= -0.1f;
         mYd *= -0.1f;
         mZd *= -0.1f;
-        mInGroundTime = 0;
+        mFlightTime = 0;
         mYRot += 180.0f;
         mYRotO += 180.0f;
         setCritArrow(false);
@@ -153,7 +153,7 @@ void Arrow::onHitEntity(const HitResult* result)
         if (mOwner != NULL && entity != mOwner && mOwner->GetType() == EntityType::SERVER_PLAYER)
         {
             boost::static_pointer_cast<ServerPlayer>(mOwner)->mConnection->send(
-                boost::shared_ptr<Packet>(new ClientboundGameEventPacket(13, 0.0f)));
+                boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::SUCCESSFUL_ARROW_HIT, 0.0f)));
         }
     }
 
