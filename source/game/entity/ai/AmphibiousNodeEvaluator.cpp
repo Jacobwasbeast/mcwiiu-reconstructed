@@ -42,12 +42,13 @@ void AmphibiousNodeEvaluator::done()
 
 Node* AmphibiousNodeEvaluator::getStart()
 {
-    int x = static_cast<int>(mMob->mX);
-    int y = static_cast<int>(mMob->mY + 0.5);
-    int z = static_cast<int>(mMob->mZ);
-    if (mMob->mX < static_cast<double>(x)) --x;
-    if (mMob->mY + 0.5 < static_cast<double>(y)) --y;
-    if (mMob->mZ < static_cast<double>(z)) --z;
+    const AABB* box = mMob->mBoundingBox;
+    int x = static_cast<int>(box->mMinX);
+    int y = static_cast<int>(box->mMinY + 0.5);
+    int z = static_cast<int>(box->mMinZ);
+    if (box->mMinX < static_cast<double>(x)) --x;
+    if (box->mMinY + 0.5 < static_cast<double>(y)) --y;
+    if (box->mMinZ < static_cast<double>(z)) --z;
     return NodeEvaluator::getNode(x, y, z);
 }
 
@@ -66,7 +67,9 @@ double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
 {
     if (mMob->isInWater())
         return static_cast<double>(pos.y) + 0.5;
-    return static_cast<double>(pos.y) - 0.3;
+    BlockPos below = pos.below();
+    return static_cast<double>(pos.y)
+           - (1.0 - getBlockState(mEntity->mTickCache, mLevelSource, below)->getShape(mLevelSource, below)->mMaxY);
 }
 
 Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange,

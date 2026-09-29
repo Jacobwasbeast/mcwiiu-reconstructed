@@ -1,5 +1,4 @@
 #include "game/entity/ai/BreedGoal.hpp"
-#include "game/entity/mob/EntityEvent.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -121,37 +120,36 @@ void BreedGoal::breed()
     }
 
     boost::shared_ptr<AgableMob> child = mAnimal->getBreedOffspring(partner);
-    if (child)
-    {
-        child->setAge(-24000);
-        child->setPos(mAnimal->mX, mAnimal->mY, mAnimal->mZ);
-        mLevel->addEntity(child);
-        mLevel->broadcastEntityEvent(child, EntityEvent::LOVE_HEARTS, 0);
-    }
-
-    mAnimal->resetLove();
-    partner->resetLove();
 
     boost::shared_ptr<Player> player = mAnimal->getLoveCause();
     if (!player)
         player = partner->getLoveCause();
     if (player)
     {
-        player->awardStat(gStats->get_breedEntity(mAnimal->GetType()),
-                          GenericStats::param_breedEntity(mAnimal->GetType()));
+        player->awardStat(gStats->get_breedEntity(child->GetType()),
+                          GenericStats::param_breedEntity(child->GetType()));
     }
+
+    mAnimal->setAge(6000);
+    partner->setAge(6000);
+    mAnimal->resetLove();
+    partner->resetLove();
+    child->setAge(-24000);
+    child->moveTo(mAnimal->mX, mAnimal->mY, mAnimal->mZ, 0.0f, 0.0f);
+    child->setDespawnProtected();
+    mLevel->addEntity(child);
 
     Random* random = mAnimal->getRandom();
     for (int i = 0; i < 7; ++i)
     {
-        mLevel->addParticle(PARTICLE_HEART,
-                            mAnimal->mX + (random->nextDouble() * 2.0 - 1.0) * mAnimal->mBbWidth,
-                            mAnimal->mY + random->nextDouble() * mAnimal->mBbHeight,
-                            mAnimal->mZ + (random->nextDouble() * 2.0 - 1.0) * mAnimal->mBbWidth,
-                            random->nextGaussian() * 0.02,
-                            random->nextGaussian() * 0.02,
-                            random->nextGaussian() * 0.02,
-                            arrayWithLength<int>());
+        double xa = random->nextGaussian() * 0.02;
+        double ya = random->nextGaussian() * 0.02;
+        double za = random->nextGaussian() * 0.02;
+        double xOffset = random->nextDouble() * mAnimal->mBbWidth * 2.0 - mAnimal->mBbWidth;
+        double yOffset = random->nextDouble() * mAnimal->mBbHeight + 0.5;
+        double zOffset = random->nextDouble() * mAnimal->mBbWidth * 2.0 - mAnimal->mBbWidth;
+        mLevel->addParticle(PARTICLE_HEART, mAnimal->mX + xOffset, mAnimal->mY + yOffset, mAnimal->mZ + zOffset,
+                            xa, ya, za, arrayWithLength<int>());
     }
 
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))

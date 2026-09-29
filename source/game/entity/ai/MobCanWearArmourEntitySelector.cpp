@@ -36,7 +36,7 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
     }
 
     if ((type & EntityType::ZOMBIE) == EntityType::ZOMBIE ||
-        (type & EntityType::MONSTER) == EntityType::MONSTER)
+        (type & EntityType::ABSTRACT_SKELETON) == EntityType::ABSTRACT_SKELETON)
     {
         return true;
     }

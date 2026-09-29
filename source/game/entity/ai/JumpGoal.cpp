@@ -24,7 +24,7 @@ JumpGoal::~JumpGoal()
 
 bool JumpGoal::isObstacle()
 {
-    const Direction* direction = mMob->getDirection();
+    const Direction* direction = mMob->getMotionDirection();
     const Vec3i normal = direction->getNormal();
     BlockPos position(mMob);
     Level* level = mMob->mLevel;
@@ -53,7 +53,7 @@ bool JumpGoal::canUse()
     {
         return false;
     }
-    const Direction* direction = mMob->getDirection();
+    const Direction* direction = mMob->getMotionDirection();
     BlockPos position(mMob);
     bool clear = true;
     for (int distance = 1; distance <= 5; ++distance)
@@ -88,7 +88,7 @@ bool JumpGoal::canInterrupt()
 
 void JumpGoal::start()
 {
-    const Direction* direction = mMob->getDirection();
+    const Direction* direction = mMob->getMotionDirection();
     const Vec3i normal = direction->getNormal();
     mMob->mXd += static_cast<double>(normal.x) * 0.6;
     mMob->mYd += 0.7;

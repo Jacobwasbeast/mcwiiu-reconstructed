@@ -104,7 +104,7 @@ void MakeLoveGoal::breed()
     mPartner->setWillingToBreed(false);
     mVillager->setWillingToBreed(false);
     villager->setAge(-24000);
-    villager->setPos(mVillager->mX, mVillager->mY, mVillager->mZ);
+    villager->moveTo(mVillager->mX, mVillager->mY, mVillager->mZ, 0.0f, 0.0f);
     mLevel->addEntity(villager);
     mLevel->broadcastEntityEvent(villager, EntityEvent::LOVE_HEARTS, 0);
 }

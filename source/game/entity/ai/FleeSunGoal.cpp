@@ -5,10 +5,12 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Material.hpp"
 
 FleeSunGoal::FleeSunGoal(PathfinderMob* mob, double speedModifier)
     : Goal(),
@@ -29,8 +31,7 @@ FleeSunGoal::~FleeSunGoal()
 Vec3* FleeSunGoal::getHidePos()
 {
     Random* random = mMob->getRandom();
-    Entity* entity = (Entity*)mMob;
-    BlockPos origin(entity->mX, entity->mY, entity->mZ);
+    BlockPos origin(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ);
     for (int attempt = 0; attempt < 5; ++attempt)
     {
         BlockPos candidate = origin.offset(random->nextInt(20) - 10,
@@ -51,11 +52,10 @@ Vec3* FleeSunGoal::getHidePos()
 
 bool FleeSunGoal::canUse()
 {
-    Entity* entity = (Entity*)mMob;
-    if (!mLevel->isDay() || !mMob->couldWander() || entity->isInWaterOrRain())
+    if (!mLevel->isDay() || !mMob->isOnFire() || mMob->isUnderLiquid(Material::WATER))
         return false;
 
-    BlockPos pos(entity->mX, entity->mY, entity->mZ);
+    BlockPos pos(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ);
     if (!mLevel->canSeeSky(pos))
         return false;
 

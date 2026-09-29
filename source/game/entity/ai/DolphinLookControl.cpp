@@ -21,9 +21,9 @@ void DolphinLookControl::tick()
     {
         if (mMob->getNavigation()->isDone())
         {
-            mMob->mXRot = rotlerp(mMob->mXRot, 5.0f, 0.1f);
+            mMob->mXRot = rotlerp(mMob->mXRot, 0.0f, 5.0f);
         }
-        mMob->mYRot = rotlerp(mMob->mYRot, mMob->mYRotO, mYMax);
+        mMob->mYHeadRot = rotlerp(mMob->mYHeadRot, mMob->mYBodyRot, mYMax);
     }
     else
     {
@@ -32,19 +32,19 @@ void DolphinLookControl::tick()
         double z = mWantedZ - mMob->mZ;
         double y = mWantedY - (mMob->mY + mMob->getEyeHeight());
         double horizontalDistance = Mth::sqrt(x * x + z * z);
-        float wantedYRot = (float)(::atan2(z, x) * 57.2957763671875) - 70.0f;
-        float wantedXRot = (float)(-(::atan2(y, horizontalDistance) * 57.2957763671875 - 10.0));
+        float wantedYRot = (float)::atan2(z, x) * 57.2957763671875f + -70.0f;
+        float wantedXRot = -((float)::atan2(y, horizontalDistance) * 57.2957763671875f - 10.0f);
         mMob->mXRot = rotlerp(mMob->mXRot, wantedXRot, mXMax);
-        mMob->mYRot = rotlerp(mMob->mYRot, wantedYRot, mYMax);
+        mMob->mYHeadRot = rotlerp(mMob->mYHeadRot, wantedYRot, mYMax);
     }
 
-    float yRotDifference = Mth::wrapDegrees(mMob->mYRot - mMob->mYRotO);
-    if (yRotDifference > (float)mMaxYRotFromCenter)
+    float yRotDifference = Mth::wrapDegrees(mMob->mYHeadRot - mMob->mYBodyRot);
+    if (yRotDifference < (float)(-mMaxYRotFromCenter))
     {
-        mMob->mYRot += 4.0f;
+        mMob->mYBodyRot -= 4.0f;
     }
-    else
+    else if (yRotDifference > (float)mMaxYRotFromCenter)
     {
-        mMob->mYRot -= 4.0f;
+        mMob->mYBodyRot += 4.0f;
     }
 }

@@ -51,7 +51,7 @@ bool GroundPathNavigation::canUpdatePath()
 {
     if (!mMob->mOnGround && (!canFloat() || !isInLiquid()))
     {
-        if (!mMob->isInWater())
+        if (!mMob->isPassenger())
         {
             if (mMob->GetType() != EntityType::WITHER_BOSS && !canSinkInWaterWalk())
             {
@@ -143,7 +143,7 @@ void GroundPathNavigation::trimPath()
     {
         return;
     }
-    BlockPos pos(mMob->mX, mMob->mY + 0.5, mMob->mZ);
+    BlockPos pos(mMob->mX, mMob->mBoundingBox->mMinY + 0.5, mMob->mZ);
     if (mLevel->canSeeSky(pos))
     {
         return;

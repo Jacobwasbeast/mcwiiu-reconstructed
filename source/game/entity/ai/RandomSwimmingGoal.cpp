@@ -127,7 +127,7 @@ Vec3* RandomSwimmingGoal::getPosition()
         return NULL;
     }
 
-    Vec3* delta = target->subtract(entity->getPos(1.0f));
+    Vec3* delta = target->subtract(entity->getPos(0.0f));
     const double horizontalDistance = std::sqrt(delta->x * delta->x + delta->z * delta->z);
     const double angle = Math::wrapDegrees(-std::atan2(delta->y, horizontalDistance));
     BlockPos destination((int)target->x, (int)std::ceil(target->y), (int)target->z);

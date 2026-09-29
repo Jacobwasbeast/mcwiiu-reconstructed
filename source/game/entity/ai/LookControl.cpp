@@ -88,14 +88,13 @@ void LookControl::tick()
     {
         if (!mHasWantedRotation)
         {
-            mMob->mYRot = rotlerp(mMob->mYRot, mMob->mYRotO, 10.0f);
-            mMob->mXRot = rotlerp(mMob->mXRot, mMob->mXRotO, 10.0f);
+            mMob->mYHeadRot = rotlerp(mMob->mYHeadRot, mMob->mYBodyRot, 10.0f);
         }
         else
         {
             mHasWantedRotation = false;
             mMob->mXRot = Mth::clampRotateDegrees(mMob->mXRot, mWantedRotation->x, mXMax);
-            mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, mWantedRotation->y, mYMax);
+            mMob->mYHeadRot = Mth::clampRotateDegrees(mMob->mYHeadRot, mWantedRotation->y, mYMax);
             delete mWantedRotation;
             mWantedRotation = NULL;
         }
@@ -110,19 +109,19 @@ void LookControl::tick()
         float wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
         float wantedXRot = (float)(-(atan2(dy, horizontal) * 57.2957763671875));
         mMob->mXRot = rotlerp(mMob->mXRot, wantedXRot, mXMax);
-        mMob->mYRot = rotlerp(mMob->mYRot, wantedYRot, mYMax);
+        mMob->mYHeadRot = rotlerp(mMob->mYHeadRot, wantedYRot, mYMax);
     }
 
-    float delta = Mth::wrapDegrees(mMob->mYRot - mMob->mYRotO);
+    float delta = Mth::wrapDegrees(mMob->mYHeadRot - mMob->mYBodyRot);
     if (!mMob->getNavigation()->isDone())
     {
         if (delta < -75.0f)
         {
-            mMob->mYRot = mMob->mYRotO - 75.0f;
+            mMob->mYHeadRot = mMob->mYBodyRot - 75.0f;
         }
         if (delta > 75.0f)
         {
-            mMob->mYRot = mMob->mYRotO + 75.0f;
+            mMob->mYHeadRot = mMob->mYBodyRot + 75.0f;
         }
     }
 }

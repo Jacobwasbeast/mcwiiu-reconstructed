@@ -65,7 +65,7 @@ boost::shared_ptr<AbstractHorse> SkeletonTrapGoal::createHorse(const DifficultyI
     boost::shared_ptr<SkeletonHorse> horse(new SkeletonHorse(mHorse->mLevel));
     horse->finalizeMobSpawn(difficulty, NULL, std::wstring());
     horse->setPos(mHorse->mX, mHorse->mY, mHorse->mZ);
-    horse->mNoActionTime = 60;
+    horse->mInvulnerableTime = 60;
     horse->setPersistenceRequired(true);
     horse->setTamed(true);
     horse->setAge(0);
@@ -96,9 +96,9 @@ void SkeletonTrapGoal::tick()
         horse = createHorse(difficulty);
         skeleton = createSkeleton(difficulty, horse);
         static_cast<Entity*>(skeleton.get())->startRiding(horse);
-        horse->setPos(mHorse->mX + mHorse->getRandom()->nextGaussian() * 0.5,
-                      mHorse->mY + 1.75,
-                      mHorse->mZ + mHorse->getRandom()->nextGaussian() * 0.5);
+        double pushX = mHorse->getRandom()->nextGaussian() * 0.5;
+        double pushZ = mHorse->getRandom()->nextGaussian() * 0.5;
+        horse->push(pushX, 0.0, pushZ);
     }
 }
 

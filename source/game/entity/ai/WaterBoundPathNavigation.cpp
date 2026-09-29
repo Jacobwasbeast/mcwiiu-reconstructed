@@ -45,7 +45,7 @@ void WaterBoundPathNavigation::updatePath()
     float distance = width <= 0.75f ? 0.75f - width * 0.5f : width * 0.5f;
     double motionLength = Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mYd * mMob->mYd + mMob->mZd * mMob->mZd);
     if (Mth::abs(mMob->mXd) > speed || Mth::abs(mMob->mZd) > speed)
-        distance = distance * (float)(motionLength * 0.4);
+        distance = distance * ((float)motionLength * 6.0f);
 
     if (Mth::abs(mMob->mX - (currentPos->x + 0.5)) < distance &&
         Mth::abs(mMob->mZ - (currentPos->z + 0.5)) < distance &&

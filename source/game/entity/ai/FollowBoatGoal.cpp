@@ -84,7 +84,6 @@ void FollowBoatGoal::start()
 
 void FollowBoatGoal::stop()
 {
-    mState = 0;
     mTarget.reset();
 }
 

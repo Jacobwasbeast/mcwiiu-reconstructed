@@ -37,14 +37,10 @@ bool HurtByTargetGoal::canUse()
     if (mMob->getLastHurtByMobTimestamp() == mTimestamp)
         return false;
 
-    boost::shared_ptr<LivingEntity> attacker = mMob->getLastHurtByMob();
-    if (!attacker)
+    if (!canAttack(mMob->getLastHurtByMob(), false))
         return false;
 
-    if (!canAttack(attacker, false))
-        return false;
-
-    return !mMob->mRemoved;
+    return !mMob->mHurtByPlayerOnPeaceful;
 }
 
 void HurtByTargetGoal::alertOthers()
