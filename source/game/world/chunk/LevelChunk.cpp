@@ -1640,7 +1640,7 @@ void LevelChunk::removeEntity(boost::shared_ptr<Entity> entity, int section)
 }
 bool LevelChunk::isSkyLit(const BlockPos& pos)
 {
-    return getBrightness(LightLayer::SKY, pos) > 0;
+    return pos.y >= mHeightmap.data[((pos.z & 15) << 4) | (pos.x & 15)];
 }
 boost::shared_ptr<BlockEntity> LevelChunk::createBlockEntity(const BlockPos& pos)
 {

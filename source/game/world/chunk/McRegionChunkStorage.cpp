@@ -74,7 +74,7 @@ void McRegionChunkStorage::runSaveThreadProc(void*)
             if (stream != NULL)
             {
                 PIXBeginNamedEvent(0.0f, "Saving chunk");
-                stream->flush();
+                stream->close();
                 stream->deleteChildStream();
                 PIXEndNamedEvent();
                 delete stream;
