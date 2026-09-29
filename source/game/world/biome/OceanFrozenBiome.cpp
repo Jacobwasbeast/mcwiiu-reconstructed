@@ -108,7 +108,7 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
     float icebergTop = 0.0F;
     float icebergBottom = 0.0F;
 
-    if (height > 0.7F)
+    if (height > 1.8F)
     {
         double width = mIcebergsNoise2->getValue((double)x * 0.9765625, (double)z * 0.9765625);
         float thickness = (float)(height * height) * 0.8F;
