@@ -68,7 +68,11 @@ private:
     LevelChunk* m_emptyChunk;
     ChunkGenerator* m_source;
     ChunkStorage* m_storage;
+
+public:
     bool m_createOnRequest;
+
+private:
     LevelChunk** m_cache;
     std::vector<LevelChunk*> m_loadedChunkList;
     ServerLevel* m_level;

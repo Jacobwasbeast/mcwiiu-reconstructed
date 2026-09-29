@@ -442,7 +442,7 @@ void ServerLevel::save(bool force, ProgressListener* progressListener, bool auto
         return;
 
     if (progressListener != NULL)
-        progressListener->progressStartNoAbort(autosave ? static_cast<int>(0x5015737c)
+        progressListener->progressStartNoAbort(autosave ? static_cast<int>(IDS_PROGRESS_AUTOSAVING_LEVEL)
                                                         : static_cast<int>(IDS_PROGRESS_SAVING_LEVEL));
     PIXBeginNamedEvent(0.0f, "Saving level data");
     saveLevelData();
@@ -1498,25 +1498,25 @@ void ServerLevel::tickWeather(bool blockEvents)
     Level::tickWeather(blockEvents);
 
     if (mOldRainLevel != mRainLevel)
-        serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(7, mRainLevel)),
+        serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::RAIN_LEVEL_CHANGE, mRainLevel)),
                                       mDimension->getType()->getId());
     if (wasThundering != isThundering() || mOldThunderLevel != mThunderLevel)
-        serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(8, mThunderLevel)),
+        serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE, mThunderLevel)),
                                       mDimension->getType()->getId());
 
     if (wasRaining == isRaining())
         return;
     if (wasRaining)
         serverPlayers()->broadcastAll(
-            boost::shared_ptr<Packet>(new ClientboundGameEventPacket(2, blockEvents ? 1.0f : 0.0f)),
+            boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_RAINING, blockEvents ? 1.0f : 0.0f)),
             mDimension->getType()->getId());
     else
         serverPlayers()->broadcastAll(
-            boost::shared_ptr<Packet>(new ClientboundGameEventPacket(1, blockEvents ? 1.0f : 0.0f)),
+            boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::START_RAINING, blockEvents ? 1.0f : 0.0f)),
             mDimension->getType()->getId());
-    serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(7, mRainLevel)),
+    serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::RAIN_LEVEL_CHANGE, mRainLevel)),
                                   mDimension->getType()->getId());
-    serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(8, mThunderLevel)),
+    serverPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE, mThunderLevel)),
                                   mDimension->getType()->getId());
 }
 

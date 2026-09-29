@@ -58,6 +58,7 @@
 #include "game/core/LockCode.hpp"
 #include "game/core/Merchant.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelEvent.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/client/render/LevelRenderer.hpp"
@@ -136,7 +137,7 @@ ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const st
       mLastSentFood(-99999999), mLastSentSaturationWasZero(true), mLastSentTotalExperience(-99999999),
       mSpawnInvulnerableTime(0), mLastActionTime(0), mLastChunkSendingTick(0), mSharedState(),
       mChangingDimension(0), mFallStartPosition(NULL), mDisconnected(false), mContainerCounter(0),
-      mIsChangingQuantityOnly(false), latency(0), mRespawnState(false), mFallFlying(0),
+      mIsChangingQuantityOnly(false), latency(0), mRespawnState(false), mWonGame(false),
       mChangedDimension(0), mCauseOfDeathId(-1), mPlayerWeaponId(-1), mChunkRadius(0)
 {
     LivingEntity::fjDerivedCtorCalls();
@@ -475,6 +476,9 @@ void ServerPlayer::doTickB()
     if (health != mLastSentHealth || food != mLastSentFood ||
         saturationIsZero != mLastSentSaturationWasZero)
     {
+        boost::shared_ptr<LivingEntity> killCredit = getKillCredit();
+        if (killCredit == NULL || (killCredit->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+            mCauseOfDeathId = -1;
         TelemetryDamageSource damageSource = {
             static_cast<ETelemetryChallenges>(mPvpState), mCauseOfDeathId, mPlayerWeaponId
         };
@@ -531,8 +535,7 @@ void ServerPlayer::doTick(bool tickFrame, bool sendChunks, bool ignorePortals)
 
 void ServerPlayer::initMenu()
 {
-    if (mInventoryMenu != NULL)
-        mInventoryMenu->addSlotListener(this);
+    mContainerMenu->addSlotListener(this);
 }
 
 boost::shared_ptr<ServerPlayer> ServerPlayer::SpectatePlayerChange(bool previous)
@@ -629,6 +632,7 @@ void ServerPlayer::refreshContainer(AbstractContainerMenu* menu)
 
 void ServerPlayer::resetSentInfo()
 {
+    mLastSentHealth = -100000000.0f;
 }
 
 int32_t ServerPlayer::getFlagIndexForChunk(int32_t x, int32_t z, int32_t dimension)
@@ -1123,21 +1127,18 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
 
     const int oldDimension = mDimension;
     if (oldDimension == 1 && dimension == 1)
-        awardStat(GenericStats::winGame(), GenericStats::param_winGame());
-    else if (oldDimension == 0 && dimension == 1)
-        awardStat(GenericStats::theEnd(), GenericStats::param_theEnd());
-
-    if (oldDimension == 1 && dimension == 1)
     {
+        awardStat(GenericStats::winGame(), GenericStats::param_winGame());
         assert(mConnection != NULL);
         INetworkPlayer* networkPlayer = mConnection->getNetworkPlayer();
-        const float playerIndex = static_cast<float>(networkPlayer->GetSmallId());
         if (mRespawnState == false)
         {
+            mLevel->removeEntity(shared_from_this());
             mRespawnState = true;
-            *reinterpret_cast<uint8_t*>(reinterpret_cast<char*>(this) + 0x935) = 1;
+            mWonGame = true;
+            const float playerIndex = static_cast<float>(networkPlayer->GetSmallId());
             mConnection->send(boost::shared_ptr<Packet>(
-                new ClientboundGameEventPacket(4, playerIndex)));
+                new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME, playerIndex)));
 
             PlayerList* playerList = mServer->getPlayers();
             std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
@@ -1156,21 +1157,23 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
                     continue;
                 player->mRespawnState = true;
                 player->mConnection->send(boost::shared_ptr<Packet>(
-                    new ClientboundGameEventPacket(4, playerIndex)));
+                    new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME, playerIndex)));
             }
         }
+        return shared_from_this();
     }
 
     if (oldDimension == 0 && dimension == 1)
     {
+        awardStat(GenericStats::theEnd(), GenericStats::param_theEnd());
         assert(mConnection != NULL);
         ServerLevel* destination = mServer->getLevel(1);
         BlockPos* spawn = destination->getDimensionSpecificSpawn();
         if (spawn != NULL)
         {
-            const double spawnX = static_cast<double>(static_cast<uint32_t>(spawn->x));
-            const double spawnY = static_cast<double>(static_cast<uint32_t>(spawn->y));
-            const double spawnZ = static_cast<double>(static_cast<uint32_t>(spawn->z));
+            const double spawnX = static_cast<double>(spawn->x);
+            const double spawnY = static_cast<double>(spawn->y);
+            const double spawnZ = static_cast<double>(spawn->z);
             mConnection->teleport(spawnX, spawnY, spawnZ,
                                   0.0f, 0.0f, true, true);
         }
@@ -1182,7 +1185,7 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
 
     assert(mConnection != NULL);
     mConnection->send(boost::shared_ptr<Packet>(
-        new ClientboundLevelEventPacket(0, BlockPos(), 0x408, false)));
+        new ClientboundLevelEventPacket(LevelEvent::SOUND_PORTAL_TRAVEL, BlockPos::ZERO, 0, false)));
 
     mLastSentHealth = -1.0f;
     mLastSentFood = -1;
@@ -1299,6 +1302,17 @@ void ServerPlayer::checkFallDamage(double, bool, Block*, const BlockPos&)
 void ServerPlayer::doCheckFallDamage(double yMovement, bool onGround)
 {
     BlockPos pos(mX, mY - 0.2, mZ);
+    if (!onGround)
+    {
+        if (mFallStartPosition == NULL)
+            mFallStartPosition = new BlockPos(pos);
+    }
+    else if (mFallStartPosition != NULL)
+    {
+        GetGameMode()->RecordLanding(pos);
+        delete mFallStartPosition;
+        mFallStartPosition = NULL;
+    }
     Block* block = mLevel->getBlock(pos);
     if (block == Blocks::air)
     {
@@ -1539,7 +1553,7 @@ void ServerPlayer::broadcastCarriedItem()
 
 void ServerPlayer::setPlayerInput(float xxa, float zza, bool jumping, bool sneaking)
 {
-    if (mConnection && mConnection->isLocal())
+    if (isPassenger())
     {
         if (xxa >= -1.0f && xxa <= 1.0f)
             mXxa = xxa;
@@ -1863,7 +1877,10 @@ void ServerPlayer::magicCrit(boost::shared_ptr<Entity> entity)
 void ServerPlayer::onUpdateAbilities()
 {
     if (mConnection != NULL)
+    {
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundPlayerAbilitiesPacket(&mAbilities, getId())));
+        updateInvisibilityStatus();
+    }
 }
 
 void ServerPlayer::setGameMode(const GameType* gameType)
@@ -1954,7 +1971,7 @@ void ServerPlayer::startFallFlying()
 
 void ServerPlayer::stopFallFlying()
 {
-    mFallFlying = 0;
+    setSharedFlag(FLAG_FALL_FLYING, true);
     setSharedFlag(FLAG_FALL_FLYING, false);
 }
 

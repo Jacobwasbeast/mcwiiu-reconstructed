@@ -89,7 +89,7 @@ public:
     bool mIsChangingQuantityOnly;
     int32_t latency;
     bool mRespawnState;
-    uint8_t mFallFlying;
+    bool mWonGame;
     uint8_t mChangedDimension;
     int32_t mPvpState;
     int32_t mCauseOfDeathId;

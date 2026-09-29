@@ -79,22 +79,13 @@ boost::shared_ptr<ServerPlayer> ServerPlayerGameMode::getServerPlayer() const
 }
 int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
 {
-    mPreviousDestroyPos = pos;
-    boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
-    if (!serverPlayer || mLevel == 0)
-        return 0;
-
-    boost::shared_ptr<Player> player = serverPlayer;
-    not_null_ptr<ItemInstance> item = player->mInventory->getSelected();
     const BlockState* state = mLevel->getBlockState(pos);
-    Block* block = state->getBlock();
-
-    int result = block->playerWillDestroy(mLevel, pos, state, player) ? 1 : 0;
-    if (result == 0 && player->canDestroy(state))
+    int result = state->getBlock()->playerWillDestroy(mLevel, pos, state, getServerPlayer()) ? 1 : 0;
+    if (result == 0)
     {
-        boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(pos);
-        block->playerDestroy(mLevel, player, pos, state, blockEntity, item);
-        result = 1;
+        result = mLevel->removeBlock(pos) ? 1 : 0;
+        if (result != 0)
+            state->getBlock()->destroy(mLevel, pos, state);
     }
     return result;
 }
@@ -157,23 +148,16 @@ int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
     else
     {
         not_null_ptr<ItemInstance> item = player->getMainHandItem();
-        not_null_ptr<ItemInstance> toolCopy;
-        bool hasCopy = false;
+        not_null_ptr<ItemInstance> toolCopy = ItemInstance::EMPTY;
         if (!item->isEmpty())
-        {
             toolCopy = item->copy();
-            hasCopy = true;
-        }
 
         bool canDestroy = player->canDestroy(state);
         if (!item->isEmpty())
             item->mineBlock(mLevel, state, pos, player);
 
         if (result != 0 && canDestroy)
-        {
-            if (hasCopy)
-                block->playerDestroy(mLevel, player, pos, state, blockEntity, toolCopy);
-        }
+            block->playerDestroy(mLevel, player, pos, state, blockEntity, toolCopy);
     }
 
     return result;
@@ -453,7 +437,7 @@ void ServerPlayerGameMode::SetGameType(const GameType* gameType)
     PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->getPlayers() : NULL;
 
     boost::shared_ptr<ClientboundGameEventPacket> packet(
-        new ClientboundGameEventPacket(3, static_cast<float>(gameType->getId()),
+        new ClientboundGameEventPacket(ClientboundGameEventPacket::CHANGE_GAME_MODE, static_cast<float>(gameType->getId()),
                                        mPlayer->mPlayerIndex));
     players->broadcastAll(packet);
 
@@ -806,7 +790,7 @@ void ServerPlayerGameMode::RecordLayerTime()
         return;
 
     AABB* layerAabb = masterGameMode->GetLayerAABB(layer);
-    const bool nearCentre = IsNearCentreOf(layerAabb, player.get(), 0.5, 1.875, player->mY);
+    const bool nearCentre = IsNearCentreOf(layerAabb, player.get(), 0.5, 1.0, 0.5);
     layerTimeMs = System::processTimeInMilliSecs();
     masterGameMode->mGameStats.RecordTimeOnLayer(player->getSUID(), layer, nearCentre);
 }

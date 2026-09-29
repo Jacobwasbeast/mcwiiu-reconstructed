@@ -1027,14 +1027,14 @@ void MinecraftServer::run(long long seed, void* argument)
 
 void MinecraftServer::broadcastStartSavingPacket()
 {
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(11, 0.0f)));
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::START_SAVING, 0.0f)));
 }
 
 void MinecraftServer::broadcastStopSavingPacket()
 {
     if (s_haltRequested)
         return;
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(12, 0.0f)));
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_SAVING, 0.0f)));
 }
 
 unsigned long long MinecraftServer::main(long long seed, void* argument)
