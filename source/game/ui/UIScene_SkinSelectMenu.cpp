@@ -271,7 +271,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
     std::wstring skinName = L"";
     std::wstring skinOrigin = L"";
     DLCSkinFile* skinFile = NULL;
-    _TEXTURE_NAME backupTexture = static_cast<_TEXTURE_NAME>(0x25);
+    _TEXTURE_NAME backupTexture = TN_MOB_STEVE;
 
     m_noSkinsToShow = false;
     setCharacterSelected(false);
@@ -464,7 +464,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
             otherSkinPath = otherSkinFile->getPath();
             otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
             otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
-            backupTexture = static_cast<_TEXTURE_NAME>(0x25);
+            backupTexture = TN_MOB_STEVE;
         }
         else
         {
@@ -491,7 +491,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                     otherSkinPath = otherSkinFile->getPath();
                     otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
                     otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
-                    backupTexture = static_cast<_TEXTURE_NAME>(0x25);
+                    backupTexture = TN_MOB_STEVE;
                 }
             }
         }
@@ -522,7 +522,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
             otherSkinPath = otherSkinFile->getPath();
             otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
             otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
-            backupTexture = static_cast<_TEXTURE_NAME>(0x25);
+            backupTexture = TN_MOB_STEVE;
         }
         else
         {
@@ -549,7 +549,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                     otherSkinPath = otherSkinFile->getPath();
                     otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
                     otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
-                    backupTexture = static_cast<_TEXTURE_NAME>(0x25);
+                    backupTexture = TN_MOB_STEVE;
                 }
             }
         }

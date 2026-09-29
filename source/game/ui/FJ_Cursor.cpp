@@ -46,7 +46,7 @@ void FJ_Cursor::UpdatePanelAlignment()
 {
     if (!m_textField->getText().empty())
     {
-        float right = getX() + getWidth() + (float)m_panelAlignment;
+        float right = getX() + getWidth() + (float)m_panelOffsetX;
         float stageWidth = (float)getStage()->getStageWidth();
         FJ_FuiNode* parent = getParent();
         if (parent != 0)
@@ -92,6 +92,6 @@ void FJ_Cursor::ASConstructor()
     m_pointerTextPanel = getChildByName(std::string("iggy_pointerIcon"))->asMovieClip();
     m_cursorImage = getChildByName(std::string("CursorImage"))->asMovieClip();
     m_topAlignment = 0;
-    m_panelAlignment = 0;
+    m_panelOffsetX = 0;
     SetLabel(std::wstring(L""));
 }

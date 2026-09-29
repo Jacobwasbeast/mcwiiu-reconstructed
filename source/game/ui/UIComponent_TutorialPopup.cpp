@@ -8,6 +8,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/StringUtils.hpp"
 #include "game/item/Item.hpp"
@@ -21,6 +22,8 @@
 #include "game/ui/UIString.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
 
 UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callback, UILayer* layer)
@@ -313,9 +316,8 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     m_descriptionLabel.setLabel(UIString(coloredTitle), true, false);
     m_titleLabel.setLabel(UIString(description), true, false);
     m_titleLabel.setVisible(!description.empty());
-    m_exitScreenshotControl.setVisible(showExitScreenshot);
 
-    m_hasDescription = GameSettings::GetGameSettings(m_playerId, eGameSetting_SplitscreenNicknames) != 0;
+    m_hasDescription = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
 
     FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
     popup->AdjustLayout(m_hasDescription && !m_containerMenuDisplayed);
@@ -343,7 +345,7 @@ void UIComponent_TutorialPopup::RemoveInteractSceneReference(UIScene* scene)
 
 void UIComponent_TutorialPopup::UpdateTutorialPopup()
 {
-    bool splitScreen = GameSettings::GetGameSettings(0, eGameSetting_SkinAdjustments) != 0;
+    bool splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
     if (m_splitScreen != splitScreen)
     {
         m_splitScreen = splitScreen;
@@ -433,17 +435,35 @@ void UIComponent_TutorialPopup::UpdateInteractScenePosition(bool visible)
 {
     if (m_interactScene == 0)
         return;
-    if (m_previousInteractScene == 0 ||
-        m_interactScene->getSceneType() != m_previousInteractScene->getSceneType() ||
-        m_interactScenePosition != visible)
+
+    bool craftingMenu = m_interactScene->getSceneType() == EUIScene_CraftingMenu2x2
+        || m_interactScene->getSceneType() == EUIScene_CraftingMenu;
+    int sceneType = m_interactScene->getSceneType();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+    if (player->mViewport >= C4JRender::eViewportType_LeftHalf
+        && (craftingMenu || sceneType == EUIScene_CreativeMenu || sceneType == EUIScene_TradingMenu))
+        return;
+
+    if (m_previousInteractScene == m_interactScene)
     {
+        if (m_interactScenePosition == visible)
+            return;
         if (!visible)
-            slideRight();
-        else
-            slideLeft();
-        m_interactScenePosition = visible;
-        m_previousInteractScene = m_interactScene;
+        {
+            m_interactScene->slideRight();
+            m_interactScenePosition = false;
+            m_previousInteractScene = m_interactScene;
+            return;
+        }
     }
+    else if (!visible)
+    {
+        return;
+    }
+
+    m_interactScene->slideLeft();
+    m_interactScenePosition = visible;
+    m_previousInteractScene = m_interactScene;
 }
 
 void UIComponent_TutorialPopup::handleTimerComplete(int timerId)

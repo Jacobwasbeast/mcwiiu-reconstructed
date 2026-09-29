@@ -281,60 +281,47 @@ void UIScene_LeaderboardsMenu::RetrieveStats()
     }
 
     unsigned int previousStart = static_cast<unsigned int>(m_startRank);
+    unsigned int readCount = m_loadedRowCount;
     unsigned int firstVisible = GetEntryStartIndex();
-    unsigned int replaceStart = firstVisible;
+    if (previousStart < firstVisible && previousStart == 1)
+    {
+        readCount = firstVisible;
+        m_loadedRowCount = firstVisible;
+        firstVisible = GetEntryStartIndex();
+    }
+
     bool trimFront = false;
     bool trimBack = false;
-    unsigned int loadedCount = static_cast<unsigned int>(m_entries.size());
-    bool underCapacity = loadedCount + replaceStart < 0x65;
-    unsigned int insertRank;
+    const bool overCapacity = static_cast<unsigned int>(m_entries.size()) + readCount >= 0x65;
+    unsigned int insertRank = 0;
     if (previousStart < firstVisible)
     {
-        if (underCapacity)
-        {
-            insertRank = loadedCount;
-        }
-        else
-        {
+        if (overCapacity)
             trimBack = true;
-            m_startRank = 0;
-            insertRank = loadedCount;
-        }
     }
     else
     {
-        insertRank = loadedCount;
-        if (!underCapacity)
+        insertRank = static_cast<unsigned int>(m_entries.size());
+        if (overCapacity)
             trimFront = true;
-        m_startRank = static_cast<int>(insertRank);
     }
+    m_startRank = static_cast<int>(insertRank);
 
-    if (replaceStart != 0)
+    for (unsigned int i = 0; i < m_loadedRowCount; ++i)
     {
-        unsigned int inserted = 0;
-        unsigned int rank = insertRank;
-        unsigned int scoreIndex = 0;
-        while (true)
-        {
-            m_entries.insert(m_entries.begin() + rank, LeaderboardEntry());
-            CopyLeaderboardEntry(&m_pReadScores[scoreIndex], static_cast<int>(rank),
-                                  static_cast<LeaderboardManager::EStatsType>(m_statsType));
-            ++rank;
-            ++inserted;
-            ++scoreIndex;
-            if (inserted >= m_loadedRowCount)
-                break;
-        }
+        m_entries.insert(m_entries.begin() + insertRank + i, LeaderboardEntry());
+        CopyLeaderboardEntry(&m_pReadScores[i], static_cast<int>(insertRank + i),
+                              static_cast<LeaderboardManager::EStatsType>(m_statsType));
     }
 
     if (trimFront)
     {
-        m_entries.erase(m_entries.begin(), m_entries.begin() + 0x4b);
+        m_entries.erase(m_entries.begin(), m_entries.begin() + 15);
         m_startRank -= m_numRows;
     }
     else if (trimBack)
     {
-        m_entries.erase(m_entries.end() - 0x4b, m_entries.end());
+        m_entries.erase(m_entries.end() - 15, m_entries.end());
     }
 }
 

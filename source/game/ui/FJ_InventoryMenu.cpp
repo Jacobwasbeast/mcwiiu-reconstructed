@@ -55,16 +55,16 @@ void FJ_InventoryMenu::init(FJ_Event* event)
 {
     FJ_AbstractContainerDocument::init(event);
     InitEffectsGroup();
-    getChildByName(std::string("MainPanel"))->asMovieClip();
-    getChildByName(std::string("EquipmentHolder"))->asMovieClip();
-    getChildByName(std::string("Slot_Head"))->asMovieClip();
-    getChildByName(std::string("Slot_Body"))->asMovieClip();
-    getChildByName(std::string("Slot_Legs"))->asMovieClip();
-    getChildByName(std::string("Slot_Feet"))->asMovieClip();
-    m_armorSlots[0] = getChildByName(std::string("Icon_Head"))->asMovieClip();
-    m_armorSlots[1] = getChildByName(std::string("Icon_Body"))->asMovieClip();
-    m_armorSlots[2] = getChildByName(std::string("Icon_Legs"))->asMovieClip();
-    m_armorSlots[3] = getChildByName(std::string("Icon_Feet"))->asMovieClip();
+    FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"))->asMovieClip();
+    FJ_FuiNode* equipment = mainPanel->getChildByName(std::string("EquipmentHolder"))->asMovieClip();
+    FJ_FuiNode* headSlot = equipment->getChildByName(std::string("Slot_Head"))->asMovieClip();
+    FJ_FuiNode* bodySlot = equipment->getChildByName(std::string("Slot_Body"))->asMovieClip();
+    FJ_FuiNode* legsSlot = equipment->getChildByName(std::string("Slot_Legs"))->asMovieClip();
+    FJ_FuiNode* feetSlot = equipment->getChildByName(std::string("Slot_Feet"))->asMovieClip();
+    m_armorSlots[0] = headSlot->getChildByName(std::string("Icon_Head"))->asMovieClip();
+    m_armorSlots[1] = bodySlot->getChildByName(std::string("Icon_Body"))->asMovieClip();
+    m_armorSlots[2] = legsSlot->getChildByName(std::string("Icon_Legs"))->asMovieClip();
+    m_armorSlots[3] = feetSlot->getChildByName(std::string("Icon_Feet"))->asMovieClip();
 }
 
 void FJ_InventoryMenu::SetSafeZone(int top, int bottom, int left, int right)

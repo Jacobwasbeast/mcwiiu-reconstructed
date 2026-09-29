@@ -484,13 +484,27 @@ void FJ_List::addNewListItem(FJ_Base* item, const std::wstring& label, int id)
 
 void FJ_List::removeAllItems()
 {
-    FJ_FuiNodeStage* stage = getStage();
+    bool hadFocus = false;
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        if (stage != 0 && stage->getFocus() == m_items[i]) stage->removeFocus(m_items[i]);
-        if (m_items[i]->getParent() != 0) m_items[i]->getParent()->removeChild(m_items[i], true);
+        if (getStage()->getFocus() == m_items[i])
+        {
+            hadFocus = true;
+            getStage()->removeFocus(m_items[i]);
+        }
+        if (m_items[i]->isFJ_Base())
+        {
+            for (unsigned int j = 0; j < m_items[i]->asFJ_Base()->m_objects.size(); ++j)
+                getParent()->removeChild(m_items[i]->asFJ_Base()->m_objects[j], true);
+        }
+        getParent()->removeChild(m_items[i], true);
     }
-    m_items.clear(); m_activeItem = 0; m_topItem = 0; HandleScrollListArrows(false);
+    m_activeItem = 0;
+    m_items.clear();
+    m_topItem = 0;
+    HandleScrollListArrows(false);
+    if (hadFocus)
+        getStage()->setFocus(this);
 }
 
 void FJ_List::SetButtonLabel(int index, const std::wstring& label)
@@ -629,23 +643,33 @@ void FJ_List::FixNavigation(FJ_FuiNode* node)
 }
 void FJ_List::RemoveItem(int index)
 {
-    if (index < 0 || static_cast<unsigned int>(index) >= m_items.size())
+    if (static_cast<unsigned int>(index) >= m_items.size())
         return;
     FixNavigation(m_items[index]);
-    if (m_items[index]->getParent() != 0)
-        m_items[index]->getParent()->removeChild(m_items[index], true);
+    if (m_items[index]->isFJ_Base())
+    {
+        for (unsigned int i = 0; i < m_items[index]->asFJ_Base()->m_objects.size(); ++i)
+            getParent()->removeChild(m_items[index]->asFJ_Base()->m_objects[i], true);
+    }
+    getParent()->removeChild(m_items[index], true);
     m_items.erase(m_items.begin() + index);
     for (unsigned int i = 0; i < m_items.size(); ++i)
+        m_items[i]->asFJ_Base()->setListId(static_cast<int>(i));
+
+    if (!m_items.empty())
     {
-        FJ_Base* item = m_items[i]->asFJ_Base();
-        if (item != 0)
-            item->setListId(static_cast<int>(i));
+        if (m_topItem > 0 &&
+            (m_activeItem > index || static_cast<unsigned int>(m_topItem + m_maxItemsVisibleUp) > m_items.size()))
+            --m_topItem;
+        ScrollList(true, true, false);
     }
-    if (m_activeItem >= static_cast<int>(m_items.size()))
-        m_activeItem = static_cast<int>(m_items.size()) - 1;
-    if (m_activeItem < 0) m_activeItem = 0;
-    if (index <= m_topItem && m_topItem > 0) --m_topItem;
-    ScrollList(true, true, false);
+    if (index <= m_activeItem)
+    {
+        if (m_activeItem > 0)
+            --m_activeItem;
+        if (static_cast<unsigned int>(m_activeItem) < m_items.size())
+            getStage()->setFocus(m_items[m_activeItem]);
+    }
     HandleScrollListArrows(true);
 }
 FJ_FuiNode* FJ_List::ReturnItem(int index) { return index >= 0 && static_cast<unsigned int>(index) < m_items.size() ? m_items[index] : 0; }

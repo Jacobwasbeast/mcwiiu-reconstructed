@@ -21,10 +21,10 @@ public:
     const BlockState* m_pBlockState;
     BlockPos m_blockPos;
     InteractionResult::EInteractionResult m_eInteractionResult;
-    bool m_bUseItem;
+    bool m_bUseBlock;
     bool m_bCanDestroy;
+    bool m_bUseItemOnBlock;
     bool m_bCanPlace;
-    bool m_bIsInside;
 
     BlockTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer,
                            MultiPlayerLevel* pLevel,
@@ -32,10 +32,10 @@ public:
                            const BlockState* pBlockState,
                            BlockPos blockPos,
                            InteractionResult::EInteractionResult eInteractionResult,
-                           bool bUseItem,
-                           bool bCanPlace,
+                           bool bUseBlock,
+                           bool bUseItemOnBlock,
                            bool bCanDestroy,
-                           bool bIsInside);
+                           bool bCanPlace);
 };
 
 #endif

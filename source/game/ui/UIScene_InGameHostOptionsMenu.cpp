@@ -7,6 +7,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/command/DefaultGameModeCommand.hpp"
 #include "game/command/GameDifficultyCommand.hpp"
 #include "game/command/TimeCommand.hpp"
 #include "game/command/WeatherCommand.hpp"
@@ -196,10 +197,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
             ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
             if (connection != 0)
             {
-                arrayWithLength<unsigned char> data(1, false);
-                data.data[0] = static_cast<unsigned char>(gameType);
-                connection->send(boost::shared_ptr<Packet>(
-                    new GameCommandPacket(eGameCommand_DefaultGameMode, data)));
+                connection->send(DefaultGameModeCommand::preparePacket(static_cast<unsigned char>(gameType)));
                 settingsChanged = true;
             }
         }

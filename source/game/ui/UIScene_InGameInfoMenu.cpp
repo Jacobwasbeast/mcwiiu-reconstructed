@@ -13,6 +13,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "vendor/_XPARTY_USER_INFO.hpp"
 #include "game/core/GameSettings.hpp"
@@ -30,7 +31,7 @@ struct InGamePlayerOptionsData
 
 
 UIScene_InGameInfoMenu::UIScene_InGameInfoMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), IUIScene_PlayerList(), m_localPlayerIsModerator(false), m_players(),
+    : UIScene(type, layer), IUIScene_PlayerList(), m_isHost(false), m_players(),
       m_optionsButton(), m_playerList(), m_titleLabel()
 {
     initialiseMovie();
@@ -53,9 +54,11 @@ UIScene_InGameInfoMenu::UIScene_InGameInfoMenu(int type, void* data, UILayer* la
     }
     CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(
         GetPad(), IUIScene_PlayerList::OnPlayerChanged, this);
-    boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->GetPlayerByPlayerIndex(GetPad());
-    m_localPlayerIsModerator = localPlayer != 0 && localPlayer->isModerator();
-    if (!m_localPlayerIsModerator)
+    INetworkPlayer* localNetworkPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(GetPad());
+    m_isHost = false;
+    if (localNetworkPlayer != NULL)
+        m_isHost = localNetworkPlayer->IsHost();
+    if (!m_isHost && !Minecraft::GetInstance()->mLocalPlayers[GetPad()]->isModerator())
         removeControl(&m_optionsButton, false);
     updateTooltips();
     gConsoleUIController.HidePressStart();
@@ -170,12 +173,10 @@ unsigned int UIScene_InGameInfoMenu::mapElementsAndNames()
 
 void UIScene_InGameInfoMenu::handleReload()
 {
-    UIScene::handleReload();
-    for (std::vector<PlayerInfo*>::iterator it = m_players.begin(); it != m_players.end(); ++it)
-        delete *it;
-    m_players.clear();
-    m_playerList.clearList();
     int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    for (unsigned int i = 0; i < m_players.size(); ++i)
+        delete m_players[i];
+    m_players.clear();
     for (int i = 0; i < playerCount; ++i)
     {
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerByIndex(i);
@@ -188,11 +189,17 @@ void UIScene_InGameInfoMenu::handleReload()
                                  static_cast<int>(info->voiceStatus), true);
         }
     }
-    boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->GetPlayerByPlayerIndex(GetPad());
-    m_localPlayerIsModerator = localPlayer != 0 && localPlayer->isModerator();
-    if (!m_localPlayerIsModerator)
+
+    INetworkPlayer* localNetworkPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(GetPad());
+    m_isHost = false;
+    if (localNetworkPlayer != NULL)
+        m_isHost = localNetworkPlayer->IsHost();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[GetPad()];
+    if (!m_isHost && !localPlayer->isModerator())
         removeControl(&m_optionsButton, false);
     updateTooltips();
+    if (controlHasFocus(1))
+        m_playerList.setCurrentSelection(getControlChildFocus(), false, true);
 }
 
 std::wstring UIScene_InGameInfoMenu::getMoviePath()
@@ -204,13 +211,25 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
                                          bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(GetPad(), action, repeat, pressed, released);
-    if (action == EControllerActions_MenuCancel && pressed && !repeat)
+    switch (action)
     {
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-        navigateBack();
-        return;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, pressed, released);
+        break;
+    case EControllerActions_MenuCancel:
+        if (pressed && !repeat)
+        {
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+            navigateBack();
+        }
+        break;
+    default:
+        break;
     }
-    UIScene::handleInput(playerId, action, repeat, pressed, released, handled);
 }
 
 void UIScene_InGameInfoMenu::handleGainFocus(bool hadFocus)
@@ -229,18 +248,36 @@ void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    if (controlId != 1 || childId < 0 || childId >= GetPlayerCount())
+    if (controlId != 1)
         return;
-    PlayerInfo* info = GetPlayer(childId);
-    if (info != NULL && m_localPlayerIsModerator && hasSomethingToEdit(info->smallId))
+
+    unsigned char smallId = m_players[childId]->smallId;
+    INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[GetPad()];
+    if (!m_isHost && !localPlayer->isModerator())
+        return;
+    if (networkPlayer == NULL)
+        return;
+
+    if (hasSomethingToEdit(smallId))
     {
         InGamePlayerOptionsData* data = new InGamePlayerOptionsData;
         data->playerId = GetPad();
-        data->smallId = info->smallId;
-        data->privileges = g_pApp->GetPlayerPrivileges(info->smallId);
+        data->smallId = smallId;
+        data->privileges = g_pApp->GetPlayerPrivileges(smallId);
         gConsoleUIController.NavigateToScene(GetPad(), EUIScene_InGamePlayerOptionsMenu, data,
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
+        return;
     }
+    if (networkPlayer->IsLocal() || networkPlayer->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
+        return;
+
+    unsigned char* kickedSmallId = new unsigned char(smallId);
+    int parameters[2] = {static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL)};
+    gConsoleUIController.RequestAlertMessage(
+        IDS_UNLOCK_KICK_PLAYER_TITLE,
+        Minecraft::InMiniGame(eMiniGameId_Any, true) ? IDS_UNLOCK_KICK_PLAYER_MINIGAMES : IDS_UNLOCK_KICK_PLAYER,
+        parameters, 2, GetPad(), IUIScene_PlayerList::KickPlayerReturned, kickedSmallId, 0, true);
 }
 
 void UIScene_InGameInfoMenu::handleDestroy()

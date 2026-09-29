@@ -9,6 +9,7 @@
 #include "vendor/_SkinAdjustments.hpp"
 
 class EntityRenderer;
+class ModelPart;
 class PlayerModel;
 class UIScene_SkinSelectMenu;
 struct fuiRect;
@@ -56,9 +57,9 @@ private:
     int mInitialRotation;
     int mFacingRotation;
     float mUnknown110;
-    float mPreviousRotation;
-    float mCurrentRotation;
-    float mTargetRotation;
+    float mLimbSwingAmountOld;
+    float mLimbSwingAmount;
+    float mLimbSwing;
     bool mCapeVisible;
     bool mFacingLeft;
     signed char mCapeSwingTicks;
@@ -66,7 +67,7 @@ private:
     bool mAnimating;
     float mAnimationAngle;
     int mAnimation;
-    std::vector<PlayerModel*>* mAdditionalModelParts;
+    std::vector<ModelPart*>* mAdditionalModelParts;
     bool mRotating;
     bool mRotateBack;
     bool mRotateForward;

@@ -221,8 +221,8 @@ unsigned int FJ_CreditsMenu::SetNextLabel(std::wstring label, int type, bool req
     if (label.size() == 0)
         label = L" ";
 
-    FJ_LabelOutline** labels;
-    int count;
+    FJ_LabelOutline** labels = NULL;
+    int count = 0;
     if (type == 0)
     {
         labels = m_extraLargeLabels;

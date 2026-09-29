@@ -18,9 +18,6 @@
 #include "game/ui/fuiTimelineAction.hpp"
 #include "game/ui/fuiTTFFontSet.hpp"
 
-extern "C" void OSReport(const char*, ...);
-#define FUI_TRACE(step) OSReport("[boot][fui] %s\n", step)
-
 fui* gFui = new fui();
 
 fui::fui()
@@ -96,7 +93,6 @@ int fui::allocatePermanentFileIndex(int fileIndex)
 
 int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileIndex)
 {
-    FUI_TRACE("load: entered");
     fuiFile* file = new fuiFile();
     if (file->load(bytes, fileIndex) == 0)
     {
@@ -104,11 +100,9 @@ int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileInd
         return 0;
     }
 
-    FUI_TRACE("load: fuiFile->load OK");
     EnterCriticalSection(&m_mutex);
     file->setIndex(allocatePermanentFileIndex(static_cast<int>(m_files.size())));
 
-    FUI_TRACE("load: index allocated");
     unsigned int unresolvedReferences = file->header.importAssetCount != 0;
     unsigned int importIndex;
     for (importIndex = 0; importIndex < file->header.importAssetCount && unresolvedReferences != 0; ++importIndex)
@@ -121,7 +115,6 @@ int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileInd
         }
     }
 
-    FUI_TRACE("load: import loop done");
     std::vector<fuiFile*>::reverse_iterator it = m_files.rbegin();
     while (it != m_files.rend() && unresolvedReferences != 0)
     {
@@ -129,30 +122,21 @@ int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileInd
         ++it;
     }
 
-    FUI_TRACE("load: reverse resolve done");
     if (unresolvedReferences != 0)
         file->dumpUnresolvedReferences();
 
-    FUI_TRACE("load: unresolved handled");
     m_files.push_back(file);
 
-    FUI_TRACE("load: pushed to m_files");
     if (createRoot)
     {
-        FUI_TRACE("load: createRoot branch");
         file->stage = new fuiRenderNodeStage(file);
         file->stage->m_node = new FJ_FuiNodeStage(file->stage);
-        FUI_TRACE("load: stage built");
         file->rootNode = new fuiRenderNodeTimeline(file->stage, file->stage, file->timelineData, 0, 0, NULL, 0, false, file);
-        FUI_TRACE("load: rootNode timeline built");
         FJ_FuiNode rootNode(file->rootNode);
         file->rootNode->m_node = &rootNode;
         std::strncpy(file->rootNode->m_name, "root", 64);
-        FUI_TRACE("load: rootNode named");
         file->rootNode->gather(false);
-        FUI_TRACE("load: gather done");
         file->stage->addChild(file->rootNode);
-        FUI_TRACE("load: addChild done");
         file->rootNode->handleAddedToStage();
     }
 

@@ -1,7 +1,10 @@
 #include "game/ui/FJ_AbstractContainerDocument.hpp"
 
+#include "game/ui/FJ_Cursor.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_MouseMoveEvent.hpp"
 #include "game/ui/FJ_SlotList.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -14,20 +17,12 @@ FJ_AbstractContainerDocument::FJ_AbstractContainerDocument(fuiRenderNode* render
 
 void FJ_AbstractContainerDocument::handleMouseMove(FJ_Event* event)
 {
-    if (event == 0)
-    {
-        return;
-    }
-    FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"));
-    if (mainPanel == 0)
-    {
-        return;
-    }
-    FJ_FuiNode* cursor = mainPanel->getChildByName(std::string("fcursor"));
-    if (cursor != 0)
-    {
-        cursor->setVisible(true);
-    }
+    FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"))->asMovieClip();
+    FJ_Cursor* cursor = mainPanel->getChildByName(std::string("cursor"))->asFJ_Cursor();
+    FJ_MouseMoveEvent* mouseEvent = static_cast<FJ_MouseMoveEvent*>(event);
+    cursor->setX(mouseEvent->m_fX);
+    cursor->setY(mouseEvent->m_fY);
+    cursor->UpdatePanelAlignment();
 }
 
 void FJ_AbstractContainerDocument::_handleMouseMove(FJ_FuiNode* node, FJ_Event* event)
@@ -37,20 +32,10 @@ void FJ_AbstractContainerDocument::_handleMouseMove(FJ_FuiNode* node, FJ_Event* 
 
 void FJ_AbstractContainerDocument::init(FJ_Event* event)
 {
-    FJ_Document::init(event);
-    if (event != 0)
-    {
-        eventListen(event, false);
-    }
-    FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"));
-    if (mainPanel != 0)
-    {
-        FJ_FuiNode* cursor = mainPanel->getChildByName(std::string("cursor"));
-        if (cursor != 0)
-        {
-            cursor->setVisible(true);
-        }
-    }
+    getStage()->addEventListener(eFJEventType_MouseMove, this, _handleMouseMove, false);
+    FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"))->asMovieClip();
+    FJ_Cursor* cursor = mainPanel->getChildByName(std::string("cursor"))->asFJ_Cursor();
+    cursor->m_panelOffsetX = static_cast<int>(mainPanel->getX());
 }
 
 void FJ_AbstractContainerDocument::HideInventory()

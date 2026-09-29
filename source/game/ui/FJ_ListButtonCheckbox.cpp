@@ -77,7 +77,7 @@ void FJ_ListButtonCheckbox::SetSlotID(int slotId, bool visible)
         rect.yMax = rect.yMin + slotControl->getHeight();
 
         char name[64];
-        std::sprintf(name, "iggy_slot_%d_%d", slotId, visible ? 1 : 0);
+        std::sprintf(name, "iggy_slot_%d_%d", slotId, m_id);
         fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
             getStage()->m_pRenderNode, &rect, name);
         renderNode->setAlpha(0.25f);

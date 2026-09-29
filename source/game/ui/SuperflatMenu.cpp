@@ -27,6 +27,9 @@
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/BannerBlock.hpp"
 #include "game/world/block/HugeMushroomBlock.hpp"
+#include "game/core/DefaultPresets.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/FallingBlock.hpp"
 #include "game/item/Item.hpp"
 #include "game/ui/UIScene_CreativeMenu.hpp"
 #include "game/core/StringFormat.hpp"
@@ -593,16 +596,19 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
     int below = layer - 1;
     if (below < 0)
         return false;
-    if (layer + 1 > 0xff)
+    if (layer + 1 > 255)
         return false;
-    Block* current = Block::byId(ids[layer]);
+
+    int id = ids[layer];
+    Block* block = Block::byId(id);
     Block* above = Block::byId(ids[layer + 1]);
     Block* underneath = Block::byId(ids[below]);
-    if (current == Blocks::water)
+
+    if (block == Blocks::water)
     {
         if (underneath == Blocks::concrete_powder)
         {
-            ids[below] = 0xfb;
+            ids[below] = Block::getId(Blocks::concrete);
             return false;
         }
         if (underneath == Blocks::lava)
@@ -612,14 +618,24 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
             return false;
         }
     }
-    if ((current == Blocks::lava && underneath == Blocks::water) ||
-        (current == Blocks::water && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
+    if ((block == Blocks::lava && underneath == Blocks::water) ||
+        (block == Blocks::water && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
     {
         ids[below] = Block::getId(Blocks::stone);
         data[below] = 0;
         return false;
     }
-    if (current == Blocks::mycelium || current == Blocks::grass)
+
+    if (id != 0 && block->mMaterial->isLiquid() &&
+        (ids[below] == 0 || underneath == Blocks::carpet || underneath == Blocks::snow_layer))
+    {
+        ids[below] = ids[layer];
+        data[below] = data[layer];
+        sanitiseLayer(ids, data, below);
+        return true;
+    }
+
+    if (block == Blocks::mycelium || block == Blocks::grass)
     {
         if (above->isSolidBlockingCube(above->defaultBlockState()))
         {
@@ -628,42 +644,96 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
             return true;
         }
     }
-    if (current == Blocks::air || current == Blocks::lava)
-        return false;
-    if (static_cast<FireBlock*>(Blocks::fire)->getFlameOdds(current) < 1)
-        return false;
-    int scan = below;
-    int limit = layer - 3;
-    for (; scan >= 0 && scan >= limit; --scan)
+
+    if (block != NULL && dynamic_cast<FallingBlock*>(block) != NULL && !underneath->mMaterial->blocksMotion())
     {
-        Block* scanned = Block::byId(ids[scan]);
-        if (scanned != Blocks::air)
+        if (block == Blocks::sand)
         {
-            if (scanned != Blocks::lava)
-                return false;
-            ids[layer] = 1;
+            ids[layer] = Block::getId(Blocks::sandstone);
             data[layer] = 0;
             return true;
         }
+        if (block == Blocks::gravel)
+        {
+            ids[layer] = Block::getId(Blocks::stone);
+            data[layer] = 0;
+            return true;
+        }
+        if (block == Blocks::concrete_powder)
+        {
+            ids[layer] = Block::getId(Blocks::concrete);
+            return true;
+        }
+        ids[layer] = Block::getId(Blocks::cobblestone);
+        data[layer] = 0;
+        return true;
     }
-    if (Blocks::lava != NULL)
+
+    if (hasRestrictedPlacement(block))
+    {
+        if (underneath->isSolidRender(underneath->defaultBlockState()) && underneath->mMaterial->blocksMotion() &&
+            underneath != Blocks::packed_ice)
+            return false;
+        ids[layer] = 0;
+        data[layer] = 0;
+        return true;
+    }
+
+    if (block == Blocks::red_mushroom_block || block == Blocks::brown_mushroom_block)
+    {
+        static int stemData = getMushroomDataValue(HugeMushroomBlock::Variant::STEM);
+        static int allStemData = getMushroomDataValue(HugeMushroomBlock::Variant::ALL_STEM);
+        static int centerData = getMushroomDataValue(HugeMushroomBlock::Variant::CENTER);
+        static int allInsideData = getMushroomDataValue(HugeMushroomBlock::Variant::ALL_INSIDE);
+        if (data[layer] == stemData)
+            return false;
+        if (data[layer] == allStemData)
+            return false;
+        if (block != above)
+            data[layer] = centerData;
+        else
+            data[layer] = allInsideData;
+        return true;
+    }
+
+    if (block == Blocks::air)
         return false;
-    ids[layer] = 1;
+    if (block == Blocks::lava)
+        return false;
+    if (static_cast<FireBlock*>(Blocks::fire)->getFlameOdds(block) < 1)
+        return false;
+
+    Block* nearestBelow = NULL;
+    for (int y = below; y >= 0 && y >= layer - 3; --y)
+    {
+        Block* scanned = Block::byId(ids[y]);
+        if (scanned != Blocks::air)
+        {
+            nearestBelow = scanned;
+            break;
+        }
+    }
+    if (nearestBelow != Blocks::lava)
+        return false;
+    ids[layer] = Block::getId(Blocks::stone);
     data[layer] = 0;
     return true;
 }
+
 void SuperflatMenu::CustomSuperflatBlocks::sanitise(FlatGeneratorInfo& info)
 {
-    int ids[256] = { 0 };
-    int data[256] = { 0 };
+    int ids[256] = {0};
+    int data[256] = {0};
     info.getLayers(ids, data);
     for (int i = 0; i < 256; ++i)
         sanitiseLayer(ids, data, i);
+
     std::vector<FlatLayerInfo> layers;
     for (int i = 0; i < 256; ++i)
-        layers.push_back(FlatLayerInfo(1, 1, Block::byId(ids[i]), data[i]));
+        layers.push_back(FlatLayerInfo(1, ids[i], data[i]));
     info.setLayers(layers);
     info.reduceLayers();
+
     int biome = info.getBiome();
     if (biome == 0 || biome == 0x18)
     {
@@ -700,8 +770,16 @@ void SuperflatMenu::CustomSuperflatBlocks::sanitise(FlatGeneratorInfo& info)
             replacement = 0x2f;
         info.setBiome(replacement);
     }
+
+    unsigned int topSolidLayer = info.findTopSolidLayer();
+    if (topSolidLayer < 256)
+    {
+        if (Block::byId(ids[topSolidLayer])->defaultBlockState()->isTransparent() && info.hasWoodlandMansion())
+            info.setWoodlandMansion(false);
+    }
 }
-uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitData*, SuperflatConfig* config)
+
+uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitData* initData, SuperflatConfig* config)
 {
     SuperflatConfig localConfig(*config);
     FlatGeneratorInfo info(&localConfig, false);
@@ -709,19 +787,62 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
     std::vector<FlatLayerInfo> layers;
     info.getLayers(layers);
     const int biome = info.getBiome();
+
     if (info.hasVillage() && biome != 1 && biome != 2 && biome != 5 && biome != 0xc && biome != 0x1e && biome != 0x23)
         return 0xa8872c87;
-    for (std::vector<FlatLayerInfo>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+
+    if (info.hasLakes() || info.hasLavaLakes())
+    {
+        int top = info.getLayer(info.findTopNonAirLayer()).getEnd();
+        if (top < 1)
+            top = 1;
+        int bottom = info.getLayer(info.findTopSolidLayer()).getEnd() - 4;
+        if (bottom < 1)
+            bottom = 1;
+        for (int height = top; height >= bottom; --height)
+        {
+            int index = info.getLayerIndexAtHeight(height);
+            if (index < 0)
+                return 0x6e694430;
+            Block* block = Block::byId(info.getLayer(index).getId());
+            if (block == NULL)
+                return 0x6e694430;
+            if (height < 4)
+            {
+                if (!block->mMaterial->isSolid())
+                    return 0x6e694430;
+            }
+            else if (block->mMaterial->isLiquid())
+            {
+                return 0x6e694430;
+            }
+        }
+    }
+
+    for (std::vector<FlatLayerInfo>::const_iterator it = layers.begin() + 1; it != layers.end(); ++it)
     {
         Block* block = Block::byId(it->getId());
-        if (block == NULL)
-            return 0x6e694430;
-        if (it->getHeight() > 1 && hasRestrictedPlacement(block))
+        int aboveId = -1;
+        Block* above = NULL;
+        if (it + 1 != layers.end())
+        {
+            aboveId = (it + 1)->getId();
+            above = Block::byId(aboveId);
+        }
+        bool supportsLayers = block->defaultBlockState()->isSolidRender() && block->mMaterial->blocksMotion() &&
+                              block != Blocks::packed_ice;
+        if (!supportsLayers && ((it->getHeight() > 1 && hasRestrictedPlacement(block)) ||
+                                (aboveId != -1 && hasRestrictedPlacement(above))))
             return 0x16c16d5e;
+        if (!block->mMaterial->blocksMotion() && above != NULL && dynamic_cast<FallingBlock*>(above) != NULL)
+            return 0xf2c82a8d;
+        if (block->defaultBlockState()->isTransparent() && info.hasWoodlandMansion() && it + 1 == layers.end())
+            return 0x1b808acf;
     }
-    if (info.hasBiomeSpecific() && biome != 2 && biome != 0x15 && biome != 6 && biome != 0x1e &&
-        biome != 0xc && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c &&
-        biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
+
+    if (info.hasBiomeSpecific() && biome != 2 && biome != 0x15 && biome != 6 && biome != 0x1e && biome != 0xc &&
+        biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c && biome != 0x2d &&
+        biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
         return 0xd862b5d5;
     if (info.hasOceanMonument() && biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f &&
         biome != 0x2c && biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
@@ -732,21 +853,33 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
         return 0x37917102;
     if (info.hasWoodlandMansion() && biome != 0x1d)
         return 0xdae45b4d;
+
+    if (!initData->mStructures &&
+        (info.hasVillage() || info.hasMineshaft() || info.hasStronghold() || info.hasBiomeSpecific() ||
+         info.hasOceanMonument() || info.hasDungeons() || info.hasDecorations()))
+        return 0x258655f1;
     if ((info.hasCaves() && info.getHeight() <= 1) || (info.hasCanyons() && info.getHeight() <= 3))
         return 0x258655f1;
     return 0;
 }
 
+SuperflatConfig SuperflatMenu::PresetCache::sPresets[4];
+bool SuperflatMenu::PresetCache::sPresetStored[4] = {false, false, false, false};
+
 void SuperflatMenu::PresetCache::GetCachedPreset(int index, SuperflatConfig& config)
 {
-    static SuperflatConfig cache[8];
-    config = cache[index];
+    if (!sPresetStored[index])
+    {
+        sPresets[index].makePreset(DefaultPresets::CLASSIC);
+        sPresetStored[index] = true;
+    }
+    config = sPresets[index];
 }
 
 void SuperflatMenu::PresetCache::SetCachedPreset(int index, const SuperflatConfig& config)
 {
-    static SuperflatConfig cache[8];
-    cache[index] = config;
+    sPresetStored[index] = true;
+    sPresets[index] = config;
 }
 
 SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()

@@ -492,7 +492,7 @@ void UIScene_GameModeScoreboardMenu::handlePress(int controlId, int childId)
                       : static_cast<int>(IDS_UNLOCK_KICK_PLAYER);
     gConsoleUIController.RequestAlertMessage(
         IDS_UNLOCK_KICK_PLAYER_TITLE, message, parameters, 2, m_playerId,
-        (int (*)(void*, int, C4JStorage::EMessageResult))IUIScene_PlayerList::KickPlayerReturned,
+        IUIScene_PlayerList::KickPlayerReturned,
         smallId, 0, true);
 }
 

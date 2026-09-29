@@ -153,7 +153,7 @@ void UIScene_TeleportMenu::tick()
         }
         if (old->name != info->name)
         {
-            m_playerList.SetItemLabel(item, UIString(info->name), true);
+            m_playerList.setButtonLabel(item, info->name);
             old->name = info->name;
         }
         delete info;

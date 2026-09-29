@@ -14,6 +14,7 @@
 #include "game/world/biome/BiomeSource.hpp"
 
 class C4JThreadImpl;
+class LaunchMoreOptionsMenuInitData;
 
 class UIScene_BiomePreviewMenu : public UIScene
 {
@@ -56,14 +57,14 @@ public:
     virtual std::wstring getMoviePath();
     virtual void customDraw(const char* name, fuiRect* rect);
     void dmouse(float& x, float& y, float& width, float& height);
-    void componentExtents(UIControl& control, float& left, float& top, float& right, float& bottom);
+    void componentExtents(UIControl& control, float& left, float& right, float& top, float& bottom);
     bool isOverComponent(UIControl& control, float x, float y);
     void onMouseTick();
     void UpdatePreviewImage(const arrayWithLength<unsigned char>& pixels, bool wholeMap);
     virtual void tick();
     void updateMapNavigatorFromOverrideSettings();
     void handleScale(bool increase);
-    void handleZoom(bool zoomIn);
+    void handleZoom(bool zoomOut);
     void handleNavigate(ENavDir direction);
     virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
@@ -85,22 +86,21 @@ private:
     UIControl_Label mFullMapLabel;
     UIControl_HTMLLabel mHelpLabel;
     UIControl_Cursor mCursor;
+    LaunchMoreOptionsMenuInitData* mInitData;
     BiomeSource::LayerOverrideSettings mOverrideSettings;
     int mPreviewZoomLevel;
     int mTargetZoomLevel;
-    bool mShouldStopRegen;
-    bool mRegenerating;
-    bool mUpdatePending;
-    bool mZoomPending;
-    unsigned char mPad;
-    float mPointerX;
-    float mPointerY;
-    float mPointerWidth;
-    float mPointerHeight;
-    float mMapWidth;
-    float mMapHeight;
-    float mNavigatorWidth;
-    float mNavigatorHeight;
+    bool mImageReady;
+    bool mSectionsChanged;
+    bool mRegenerate;
+    float mPointerOffsetX;
+    float mPointerOffsetY;
+    float mMapLeft;
+    float mMapRight;
+    float mMapTop;
+    float mMapBottom;
+    _UIVec2D mPointer;
+    bool mStopRegen;
     OSFastMutex mCriticalSection;
 };
 

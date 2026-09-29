@@ -4,8 +4,11 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/client/render/BookModel.hpp"
+#include "game/client/render/EnchantTableRenderer.hpp"
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/Minecraft.hpp"
@@ -97,7 +100,7 @@ void UIControl_EnchantmentBook::render(fuiRect* rect)
     GlStateManager::pushMatrix();
     GlStateManager::scalef(widthScale, heightScale, 1.0F);
     GlStateManager::translatef(m_width * 0.5F, m_height * 0.5F, 50.0F);
-    GlStateManager::scalef(57.0F / widthScale, 360.0F / widthScale, 135.0F);
+    GlStateManager::scalef(-57.0F / widthScale, 57.0F / widthScale, 360.0F);
     GlStateManager::rotatef(135.0F, 0.0F, 1.0F, 0.0F);
     Lighting::turnOn();
     GlStateManager::rotatef(-135.0F, 0.0F, 1.0F, 0.0F);
@@ -137,10 +140,15 @@ void UIControl_EnchantmentBook::render(fuiRect* rect)
     GlStateManager::enableCull();
     if (mBookModel == NULL)
     {
-        mBookModel = new BookModel(ModelDefinition());
+        EnchantTableRenderer* tableRenderer = static_cast<EnchantTableRenderer*>(
+            BlockEntityRenderDispatcher::instance->getRenderer(BlockEntityType::ENCHANTMENT_TABLE_ENTITY));
+        if (tableRenderer != NULL)
+            mBookModel = tableRenderer->mBookModel;
+        else
+            mBookModel = new BookModel(ModelDefinition());
     }
     boost::shared_ptr<Entity> entity;
-    mBookModel->render(entity, 854.0F, spread, spread2, rotation, 854.0F, 0.0625F, true);
+    mBookModel->render(entity, 0.0F, spread, spread2, rotation, 0.0F, 0.0625F, true);
     GlStateManager::disableCull();
     GlStateManager::popMatrix();
     Lighting::turnOff();

@@ -16,8 +16,6 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "game/core/GameSettings.hpp"
 
-extern "C" void OSReport(const char*, ...);
-
 static const int s_achievementDisplayList[93] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
     10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
@@ -163,7 +161,6 @@ void UIScene_AchievementsMenu::registerTexture(int achievement)
     std::wstring pathStr(path);
     bool hasFile = g_pApp->hasArchiveFile(pathStr, false);
     if (!hasFile) {
-        OSReport("[ach-debug] MISSING in arc: %ls\n", pathStr.c_str());
         return;
     }
     arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(pathStr, false);

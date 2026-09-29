@@ -22,15 +22,16 @@ FJ_SlotList_Slot::FJ_SlotList_Slot(fuiRenderNode* pRenderNode)
 
 FJ_SlotList_Slot::~FJ_SlotList_Slot()
 {
-    if (m_pRedBox != NULL && m_pRedBox->getParent() != NULL)
+    if (m_pRedBox->getParent() != NULL)
         getParent()->removeChild(m_pRedBox, false);
+    delete m_pRedBox->m_pRenderNode;
 }
 
 void FJ_SlotList_Slot::SetParams(int iWidth, bool bVisible)
 {
     m_pSlotControl->setVisible(!bVisible);
     setWidth((float)iWidth);
-    m_pSlotControl->setWidth((float)iWidth);
+    setHeight((float)iWidth);
 }
 
 void FJ_SlotList_Slot::SetSlotID(int iSlotId)
@@ -48,7 +49,7 @@ void FJ_SlotList_Slot::SetSlotID(int iSlotId)
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
-    removeChild(oldControl, true);
+    m_pSlotControl->removeChild(oldControl, true);
     FJ_FuiNode* replacement = new FJ_FuiNode(renderNode);
     FJ_FuiNode* parent = getParent();
     int index = parent->getNumChildren();

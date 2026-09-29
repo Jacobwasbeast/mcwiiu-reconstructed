@@ -455,7 +455,7 @@ void UIScene_InGamePlayerOptionsMenu::handlePress(int, int childId)
         gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_KICK_PLAYER_TITLE,
             Minecraft::InMiniGame(eMiniGameId_Any, true) ? IDS_UNLOCK_KICK_PLAYER_MINIGAMES : IDS_UNLOCK_KICK_PLAYER,
             parameters, 2, m_playerId,
-            (int (*)(void*, int, C4JStorage::EMessageResult))IUIScene_PlayerList::KickPlayerReturned,
+            IUIScene_PlayerList::KickPlayerReturned,
             data, 0, true);
     }
     else if (childId == ePlayerOption_SetSpawn)

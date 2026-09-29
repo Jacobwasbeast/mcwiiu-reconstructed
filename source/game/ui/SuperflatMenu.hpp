@@ -14,9 +14,8 @@ class LaunchMoreOptionsMenuInitData;
 class SuperflatConfig;
 class UIControl_MultiList;
 
-class SuperflatMenu
+namespace SuperflatMenu
 {
-public:
     class SliderLabelBehaviour
     {
     public:
@@ -240,6 +239,10 @@ public:
     public:
         static void GetCachedPreset(int index, SuperflatConfig& config);
         static void SetCachedPreset(int index, const SuperflatConfig& config);
+
+    private:
+        static SuperflatConfig sPresets[4];
+        static bool sPresetStored[4];
     };
     class CustomSuperflatBlocks : public boost::unordered_map<int, not_null_ptr<ItemInstance> >
     {
@@ -259,11 +262,11 @@ public:
         int itemcount() const;
         int mMaxId;
     };
-    static BiomeInfo* getBiomeInfoA();
+    BiomeInfo* getBiomeInfoA();
 
-    static const int PARAM_COUNT = 26;
-    static Param params[PARAM_COUNT];
-    static std::wstring labelSeparator;
-};
+    const int PARAM_COUNT = 26;
+    extern Param params[PARAM_COUNT];
+    extern std::wstring labelSeparator;
+}
 
 #endif

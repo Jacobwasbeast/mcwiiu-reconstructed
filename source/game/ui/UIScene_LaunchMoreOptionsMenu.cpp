@@ -172,7 +172,7 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
         if (!m_initData->mFlatWorld)
             description = L10N::GetString(0xaa2e57af);
         else
-            description = std::wstring(L"\n\n") + FlatGeneratorInfo(&m_initData->mSuperflatConfig).generateDescription();
+            description += std::wstring(L"\n\n") + FlatGeneratorInfo(&m_initData->mSuperflatConfig).generateDescription();
     }
     else if (index == 0x20)
         description = MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->GetLootSetDescription(m_gameOptionsList.GetSliderValue(0x20));
@@ -193,190 +193,253 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
 }
 void UIScene_LaunchMoreOptionsMenu::_init()
 {
-    mapElementsAndNames();
-
     m_worldLabel.init(UIString(L10N::GetString(IDS_WORLD_OPTIONS)));
-    m_gameLabel.init(UIString(L10N::GetString(IDS_GAME_OPTIONS)));
+    m_worldBackground.setId(0x32);
     m_focusedControlId = -1;
-    m_focusedItemId = -1;
+    m_gameBackground.setId(0x33);
 
-    const EMiniGameId miniGameId = m_initData->mMiniGameId;
-    const bool custom = m_initData->mHostMiniGame;
-    const bool joining = m_initData->mJoinMiniGame;
+    const bool onlineGame = m_initData->mOnlineGame;
+    const bool allowFriendsOfFriends = m_initData->mAllowFriendsOfFriends;
     const std::wstring blank(L" ");
-    const std::wstring section(L10N::GetString(IDS_GAME_OPTIONS));
 
-    if (!custom && !joining)
+    if (!m_initData->mJoinMiniGame)
     {
-        m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_CREATE_NEW_WORLD_SEED)), 0x34);
-        m_worldOptionsList.AddNewTextInput(m_initData->mSeed, 0x16, 0x3c);
-        m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(0xae4164b2)), 0x34);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FIND_BALANCED)), 0x17,
-                                          m_initData->mFindBalancedSeed);
-        m_worldOptionsList.AddNewLabel(blank, 0x34);
-        m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_BIOME_SCALE)), 0x34);
-        const int biomeLabels[] = { static_cast<int>(IDS_SMALL), static_cast<int>(IDS_MEDIUM), static_cast<int>(IDS_LARGE) };
-        m_worldOptionsList.AddNewSlider(std::wstring(L10N::GetString(biomeLabels[m_initData->mBiomeScale])), 0x18, 0, 2,
-                                        m_initData->mBiomeScale, false, 7, 3);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_GENERATE_STRUCTURES)), 10,
-                                          m_initData->mTrustPlayers);
-        m_worldOptionsList.EnableItem(10, !m_initData->mFireSpreads, true);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_BONUS_CHEST)), 0xb,
-                                          m_initData->mBonusChest);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_SUPERFLAT_WORLD)), 0x14,
-                                          m_initData->mFlatWorld);
-        m_worldOptionsList.EnableItem(0x14, !m_initData->mWorldTypeLocked, true);
-        m_worldOptionsList.AddNewButton(std::wstring(L10N::GetString(0x9cfef661)), 0x15, true);
-        m_worldOptionsList.EnableItem(0x15, m_initData->mFlatWorld && !m_initData->mWorldTypeLocked, true);
-        m_worldOptionsList.AddNewLabel(blank, 0x34);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FIRE_SPREADS)), 5,
-                                          m_initData->mFireSpreads);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TNT_EXPLODES)), 6,
-                                          m_initData->mTNT);
-        m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TRUST_PLAYERS)), 4,
-                                          m_initData->mTrustPlayers);
-        if (m_initData->mNewWorld)
-            m_focusedItemId = 0x16;
-    }
+        if (m_initData->mHostMiniGame)
+        {
+            const EMiniGameId miniGameId = m_initData->mMiniGameId;
+            m_focusedItemId = 0;
+            m_gameOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_GAME_OPTIONS)), 0x34);
 
-    if (custom || joining)
-    {
-        m_gameOptionsList.AddNewLabel(section, 0x34);
-        MiniGameDef* game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(miniGameId), true);
-        if (game->HasGameVariants())
-        {
-            m_foodBalance = SliderLogic(0x1d, IDS_MG_OPTION_GAME_VARIANT, eCustomGameModeHostOption_ModeVariant,
-                                         static_cast<EMiniGameId>(miniGameId), !joining);
-            m_foodBalance.AddTo(m_gameOptionsList, m_initData->mMatchmakingFilters[1]);
-            int modeVariant = m_initData->mMatchmakingFilters[1] - 1;
-            if (modeVariant < 0)
-                modeVariant = 0;
-            m_initData->mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, modeVariant);
-        }
-        if (game->HasMultipleMaps() && miniGameId != eMiniGameId_Tumble)
-        {
-            m_gameOptionsList.AddNewButton(std::wstring(L10N::GetString(IDS_MG_SELECT_MAPS)), 0x1b, true);
-            m_gameOptionsList.EnableItem(0x1b, true, true);
-        }
-        if (game->HasRoundLengthOption())
-        {
-            m_lootSet = SliderLogic(0x1c, IDS_MG_OPTION_ROUND_LENGTH, eCustomGameModeHostOption_MapVariant,
-                                    static_cast<EMiniGameId>(miniGameId), !joining);
-            m_lootSet.AddTo(m_gameOptionsList, m_initData->mMatchmakingFilters[0]);
-        }
-        if (game->HasCentralSpawnOption())
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG_OPTION_CENTRE_SPAWN)), 0x1a,
-                                             m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_CentreSpawn) != 0);
-        if (miniGameId == eMiniGameId_Battle || miniGameId == eMiniGameId_Tumble)
-        {
-            m_gameOptionsList.AddNewLabel(blank, 0x34);
-            m_gameOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_MG_CUSTOM_OPTIONS)), 0x34);
-            const MiniGameDef* miniGame = game;
-            const int lives = static_cast<int>(m_initData->mPlayerSettings.mLivesPerRound);
-            const std::wstring livesLabel = lives == 0
-                ? makeTextLabel(IDS_MG_LIVES_PER_ROUND, IDS_MG_INFINITE)
-                : makeValueLabel(IDS_MG_LIVES_PER_ROUND, lives);
-            m_gameOptionsList.AddNewSlider(livesLabel, 0x22,
-                                           miniGame->HasFeatureSupportForInfiniteLives() ? 0 : 1,
-                                           10, lives, false, 7, 3);
-            m_worldType = SliderLogic(0x1e, IDS_MG_OPTION_SPECTATE_MODE,
-                                     eCustomGameModeHostOption_SpectateMode,
-                                     static_cast<EMiniGameId>(miniGameId), false);
-            m_worldType.AddTo(m_gameOptionsList,
-                               m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_SpectateMode));
-        }
-        if (miniGameId == eMiniGameId_Battle)
-        {
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xa329d6e9)), 0x1f,
-                                             m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0);
-            const int lootSet = static_cast<int>(m_initData->mPlayerSettings.mLootSetId);
-            m_gameOptionsList.AddNewSlider(
-                std::wstring(L10N::GetString(0x5ccdb447)) + L": " + game->GetLootSetText(lootSet),
-                0x20, 0, 5, lootSet, false, 7, 3);
-            const int foodBalance = m_initData->mPlayerSettings.mFoodBalance;
-            m_gameOptionsList.AddNewSlider(
-                std::wstring(L10N::GetString(0x1cbfab4a)) + L": " + game->GetFoodBalanceIndexText(foodBalance),
-                0x21, 0, 7, foodBalance, false, 7, 3);
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x7356945d)), 0x28,
-                                             m_initData->mPlayerSettings.mTakeEverythingEnabled);
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xaa27b127)), 0x29,
-                                             m_initData->mPlayerSettings.mChestRefillEnabled);
-        }
-        else if (miniGameId == eMiniGameId_Tumble)
-        {
-            const int lootSet = static_cast<int>(m_initData->mPlayerSettings.mLootSetId);
-            m_gameOptionsList.AddNewSlider(
-                std::wstring(L10N::GetString(0x5ccdb447)) + L": " + game->GetLootSetText(lootSet),
-                0x20, 0, 3, lootSet, false, 7, 3);
-            int arenaSize = 0;
-            if (m_initData->mPlayerSettings.mArenaSizeMultiplier.isSet())
+            if (MiniGameDef::GetCustomGameModeById(miniGameId, true)->HasGameVariants())
             {
-                const float value = m_initData->mPlayerSettings.mArenaSizeMultiplier.get();
-                if (value == 0.5f)
-                    arenaSize = 1;
-                else if (value == 0.625f)
-                    arenaSize = 2;
-                else if (value == 0.75f)
-                    arenaSize = 3;
-                else if (value == 0.875f)
-                    arenaSize = 4;
-                else if (value == 1.0f)
-                    arenaSize = 5;
+                const int variant = m_initData->mMatchmakingFilters[1];
+                m_foodBalance = SliderLogic(0x1d, IDS_MG_OPTION_GAME_VARIANT, eCustomGameModeHostOption_ModeVariant,
+                                            miniGameId, true);
+                m_foodBalance.AddTo(m_gameOptionsList, variant);
+                int modeVariant = variant - 1;
+                if (modeVariant < 0)
+                    modeVariant = 0;
+                m_initData->mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, modeVariant);
             }
-            const std::wstring arenaLabel = !m_initData->mPlayerSettings.mArenaSizeMultiplier.isSet()
-                ? makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)
-                : makeArenaSizeLabel(arenaSize);
-            m_gameOptionsList.AddNewSlider(arenaLabel, 0x2b, 0, 5, arenaSize, true, 7, 3);
+            if (MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->HasMultipleMaps() &&
+                m_initData->mMiniGameId != eMiniGameId_Tumble)
+            {
+                m_gameOptionsList.AddNewButton(std::wstring(L10N::GetString(IDS_MG_SELECT_MAPS)), 0x1b, true);
+                m_gameOptionsList.EnableItem(0x1b, true, true);
+            }
+            if (MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->HasRoundLengthOption())
+            {
+                m_lootSet = SliderLogic(0x1c, IDS_MG_OPTION_ROUND_LENGTH, eCustomGameModeHostOption_MapVariant,
+                                        m_initData->mMiniGameId, true);
+                m_lootSet.AddTo(m_gameOptionsList, m_initData->mMatchmakingFilters[0]);
+            }
+            if (MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->HasCentralSpawnOption())
+                m_gameOptionsList.AddNewCheckbox(
+                    std::wstring(L10N::GetString(IDS_MG_OPTION_CENTRE_SPAWN)), 0x1a,
+                    m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_CentreSpawn) != 0);
 
-            const int layerCount = m_initData->mPlayerSettings.mLayerCount.isSet()
-                ? static_cast<int>(m_initData->mPlayerSettings.mLayerCount.get()) : 0;
-            const std::wstring layerLabel = layerCount < 1
-                ? makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO)
-                : makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount);
-            m_gameOptionsList.AddNewSlider(layerLabel, 0x2c, 0, 8, layerCount, false, 7, 3);
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG02_SPECTATOR_PARTICIPATION)), 0x2a,
-                                             m_initData->mPlayerSettings.mSpectatorParticipation);
+            MiniGamePlayerSettings& settings = m_initData->mPlayerSettings;
+            if (m_initData->mMiniGameId == eMiniGameId_Battle || m_initData->mMiniGameId == eMiniGameId_Tumble)
+            {
+                m_gameOptionsList.AddNewLabel(blank, 0x34);
+                m_gameOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_MG_CUSTOM_OPTIONS)), 0x34);
+                const int lives = static_cast<int>(settings.mLivesPerRound);
+                const std::wstring livesLabel = lives == 0
+                    ? makeTextLabel(IDS_MG_LIVES_PER_ROUND, IDS_MG_INFINITE)
+                    : makeValueLabel(IDS_MG_LIVES_PER_ROUND, lives);
+                const bool infiniteLives =
+                    MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->HasFeatureSupportForInfiniteLives();
+                m_gameOptionsList.AddNewSlider(livesLabel, 0x22, infiniteLives ? 0 : 1, 10, lives, false, 7, 3);
+                m_worldType = SliderLogic(0x1e, IDS_MG_OPTION_SPECTATE_MODE, eCustomGameModeHostOption_SpectateMode,
+                                          m_initData->mMiniGameId, false);
+                m_worldType.AddTo(m_gameOptionsList, settings.mHostOptions.Get(eCustomGameModeHostOption_SpectateMode));
+            }
+
+            if (m_initData->mMiniGameId == eMiniGameId_Battle)
+            {
+                const MiniGameDef* game = MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true);
+                m_gameOptionsList.AddNewCheckbox(
+                    std::wstring(L10N::GetString(0xa329d6e9)), 0x1f,
+                    settings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0);
+                const int lootSet = static_cast<int>(settings.mLootSetId);
+                m_gameOptionsList.AddNewSlider(std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+                                                   game->GetLootSetText(lootSet),
+                                               0x20, 0, 5, lootSet, false, 7, 3);
+                const int foodBalance = settings.mFoodBalance;
+                m_gameOptionsList.AddNewSlider(std::wstring(L10N::GetString(0x1cbfab4a)) + L": " +
+                                                   game->GetFoodBalanceIndexText(foodBalance),
+                                               0x21, 0, 7, foodBalance, false, 7, 3);
+                m_gameOptionsList.AddNewSlider(makeValueLabel(0x9ad3440e, settings.mRoundCount), 0x23, 1, 10,
+                                               settings.mRoundCount, false, 7, 3);
+                const int mapSize = settings.mMapSizeOverride.isSet() ? settings.mMapSizeOverride.get() : 0;
+                m_gameOptionsList.AddNewSlider(std::wstring(L10N::GetString(0xf8df77ce)) + L": " +
+                                                   game->GetMapSizeOverrideText(mapSize),
+                                               0x24, 0, 2, mapSize, false, 7, 3);
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x1d7e9b6f)), 0x25,
+                                                 settings.mNaturalRegeneration);
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xddc824da)), 0x27,
+                                                 settings.mSmallInventoryEnabled);
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x7356945d)), 0x28,
+                                                 settings.mTakeEverythingEnabled);
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xaa27b127)), 0x29,
+                                                 settings.mChestRefillEnabled);
+            }
+            else if (m_initData->mMiniGameId == eMiniGameId_Tumble)
+            {
+                const MiniGameDef* game = MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true);
+                const int lootSet = static_cast<int>(settings.mLootSetId);
+                m_gameOptionsList.AddNewSlider(std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+                                                   game->GetLootSetText(lootSet),
+                                               0x20, 0, 3, lootSet, false, 7, 3);
+                if (!settings.mArenaSizeMultiplier.isSet())
+                {
+                    m_gameOptionsList.AddNewSlider(makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO), 0x2b, 0, 5, 0,
+                                                   true, 7, 3);
+                }
+                else
+                {
+                    const float value = settings.mArenaSizeMultiplier.get();
+                    int arenaSize = 0;
+                    if (value == 0.5f)
+                        arenaSize = 1;
+                    else if (value == 0.625f)
+                        arenaSize = 2;
+                    else if (value == 0.75f)
+                        arenaSize = 3;
+                    else if (value == 0.875f)
+                        arenaSize = 4;
+                    else if (value == 1.0f)
+                        arenaSize = 5;
+                    m_gameOptionsList.AddNewSlider(makeArenaSizeLabel(arenaSize), 0x2b, 0, 5, arenaSize, true, 7, 3);
+                }
+                const int layerCount = settings.mLayerCount.isSet() ? static_cast<int>(settings.mLayerCount.get()) : 0;
+                const std::wstring layerLabel = layerCount < 1
+                    ? makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO)
+                    : makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount);
+                m_gameOptionsList.AddNewSlider(layerLabel, 0x2c, 0, 8, layerCount, false, 7, 3);
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG02_SPECTATOR_PARTICIPATION)),
+                                                 0x2a, settings.mSpectatorParticipation);
+            }
+            EnableCustomOptions(MiniGameDef::IsCustomGame(m_initData->mMiniGameId, settings));
+        }
+        else
+        {
+            if (!m_initData->mNewWorld)
+            {
+                m_focusedItemId = 0;
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_RESET_NETHER)), 8,
+                                                  m_initData->mResetNether);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_RESET_THE_END)), 9,
+                                                  m_initData->mResetEnd);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TRUST_PLAYERS)), 4,
+                                                  m_initData->mTrustPlayers);
+            }
+            else
+            {
+                m_focusedItemId = 0x16;
+                m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_CREATE_NEW_WORLD_SEED)), 0x34);
+                m_worldOptionsList.AddNewTextInput(m_initData->mSeed, 0x16, 0x3c);
+                m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(0xae4164b2)), 0x34);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FIND_BALANCED)), 0x17,
+                                                  m_initData->mFindBalancedSeed);
+                m_worldOptionsList.AddNewLabel(blank, 0x34);
+                m_worldOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_BIOME_SCALE)), 0x34);
+                const int biomeLabels[] = {static_cast<int>(IDS_SMALL), static_cast<int>(IDS_MEDIUM),
+                                           static_cast<int>(IDS_LARGE)};
+                m_worldOptionsList.AddNewSlider(std::wstring(L10N::GetString(biomeLabels[m_initData->mBiomeScale])),
+                                                0x18, 0, 2, m_initData->mBiomeScale, false, 7, 3);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_GENERATE_STRUCTURES)), 10,
+                                                  m_initData->mStructures);
+                m_worldOptionsList.EnableItem(10, !m_initData->mFlatWorld, true);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_BONUS_CHEST)), 0xb,
+                                                  m_initData->mBonusChest);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_SUPERFLAT_WORLD)), 0x14,
+                                                  m_initData->mFlatWorld);
+                m_worldOptionsList.EnableItem(0x14, !m_initData->mWorldTypeLocked, true);
+                m_worldOptionsList.AddNewButton(std::wstring(L10N::GetString(0x9cfef661)), 0x15, true);
+                m_worldOptionsList.EnableItem(0x15, m_initData->mFlatWorld && !m_initData->mWorldTypeLocked, true);
+                m_worldOptionsList.AddNewLabel(blank, 0x34);
+                m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TRUST_PLAYERS)), 4,
+                                                  m_initData->mTrustPlayers);
+            }
+            m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FIRE_SPREADS)), 5,
+                                              m_initData->mFireSpreads);
+            m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TNT_EXPLODES)), 6, m_initData->mTNT);
+
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_ONLINE_GAME)), 0, onlineGame);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_ALLOWFRIENDSOFFRIENDS)), 2,
+                                             allowFriendsOfFriends);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_PLAYER_VS_PLAYER)), 3, m_initData->mPvP);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_HOST_PRIVILEGES)), 7,
+                                             m_initData->mHostPrivileges);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_DAYLIGHT_CYCLE)), 0x12,
+                                             m_initData->mDoDaylightCycle);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_WEATHER_CYCLE)), 0x13,
+                                             m_initData->mDoWeatherCycle);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_KEEP_INVENTORY)), 0xc,
+                                             m_initData->mKeepInventory);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_SPAWNING)), 0xd,
+                                             m_initData->mDoMobSpawning);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_GRIEFING)), 0xf,
+                                             m_initData->mMobGriefing);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_LOOT)), 0xe, m_initData->mDoMobLoot);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TILE_DROPS)), 0x10,
+                                             m_initData->mDoTileDrops);
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x6f7d8591)), 0x11,
+                                             m_initData->mNaturalRegeneration);
         }
     }
     else
     {
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_ONLINE_GAME)), 0, m_initData->mOnlineGame);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_ALLOWFRIENDSOFFRIENDS)), 2, m_initData->mAllowFriendsOfFriends);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_PLAYER_VS_PLAYER)), 3, m_initData->mPvP);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_HOST_PRIVILEGES)), 7, m_initData->mHostPrivileges);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_DAYLIGHT_CYCLE)), 0x12, m_initData->mDoDaylightCycle);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_WEATHER_CYCLE)), 0x13, m_initData->mDoWeatherCycle);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_KEEP_INVENTORY)), 0xc, m_initData->mKeepInventory);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_SPAWNING)), 0xd, m_initData->mDoMobSpawning);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_GRIEFING)), 0xf, m_initData->mMobGriefing);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_LOOT)), 0xe, m_initData->mDoMobLoot);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TILE_DROPS)), 0x10, m_initData->mDoTileDrops);
-        m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x6f7d8591)), 0x11, m_initData->mNaturalRegeneration);
+        m_focusedItemId = 0;
+        m_gameOptionsList.AddNewLabel(std::wstring(L10N::GetString(IDS_GAME_OPTIONS)), 0x34);
+        m_gameOptionsList.AddNewLabel(blank, 0x34);
+        m_gameOptionsList.AddNewLabel(blank, 0x34);
+        if (MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->HasGameVariants())
+        {
+            const int variant = m_initData->mMatchmakingFilters[1];
+            m_foodBalance = SliderLogic(0x1d, IDS_MG_OPTION_GAME_VARIANT, eCustomGameModeHostOption_ModeVariant,
+                                        m_initData->mMiniGameId, false);
+            m_foodBalance.AddTo(m_gameOptionsList, variant);
+            int modeVariant = variant - 1;
+            if (modeVariant < 0)
+                modeVariant = 0;
+            m_initData->mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, modeVariant);
+        }
+        if (MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)->HasRoundLengthOption())
+        {
+            m_lootSet = SliderLogic(0x1c, IDS_MG_OPTION_ROUND_LENGTH, eCustomGameModeHostOption_MapVariant,
+                                    m_initData->mMiniGameId, false);
+            m_lootSet.AddTo(m_gameOptionsList, m_initData->mMatchmakingFilters[0]);
+        }
     }
 
-    static_cast<FJ_LaunchMoreOptionsMenu*>(m_movie->getRootNode()->getFuiNode())->SetMenuType(!m_initData->mNewWorld);
-    if (m_initData->mHostMiniGame || m_initData->mJoinMiniGame)
-        static_cast<FJ_LaunchMoreOptionsMenu*>(m_movie->getRootNode()->getFuiNode())->HideWorldTab();
-    if (!m_initData->mHostMiniGame && !m_initData->mJoinMiniGame)
+    if (!m_initData->mJoinMiniGame && (!m_initData->mHostMiniGame || !m_initData->mMatchmaking))
     {
-        if (!m_online)
-        {
+        if (!gProfile->IsSignedInLive(m_initData->mPad))
             m_gameOptionsList.EnableItem(0, false, true);
-            m_gameOptionsList.EnableItem(2, false, true);
+        if (!m_initData->mOnlineSettingChangedBySystem || m_online)
+        {
+            if (!m_initData->mOnlineGame)
+                m_gameOptionsList.EnableItem(2, false, true);
         }
-        if (!m_initData->mOnlineGame)
+        else
         {
-            m_gameOptionsList.EnableItem(2, false, true);
             m_gameOptionsList.EnableItem(0, false, true);
+            m_gameOptionsList.EnableItem(2, false, true);
         }
     }
+
+    m_gameLabel.init(UIString(L10N::GetString(IDS_GAME_OPTIONS)));
+    FJ_LaunchMoreOptionsMenu* menu = static_cast<FJ_LaunchMoreOptionsMenu*>(m_movie->getRootNode()->getFuiNode());
+    menu->SetMenuType(!m_initData->mNewWorld);
+    if (m_initData->mHostMiniGame || m_initData->mJoinMiniGame)
+        static_cast<FJ_LaunchMoreOptionsMenu*>(m_movie->getRootNode()->getFuiNode())->HideWorldTab();
 
     UpdateCheats();
     UpdateDescriptionText();
     m_worldTab.init(0x34);
     m_gameTab.init(0x35);
-    updateTooltips();
-    updateComponents();
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -895,9 +958,11 @@ void UIScene_LaunchMoreOptionsMenu::handleCheckboxElementToggled(int, int second
             {
                 m_worldOptionsList.SetCheckboxValue(10, true, false);
                 m_initData->mSettingsChanged = true;
-                break;
+                return;
             }
             SuperflatMenu::PresetCache::GetCachedPreset(m_playerId, m_initData->mSuperflatConfig);
+            m_initData->mSettingsChanged = true;
+            return;
         }
         m_initData->mSettingsChanged = true;
         break;
@@ -914,6 +979,16 @@ void UIScene_LaunchMoreOptionsMenu::handleCheckboxElementToggled(int, int second
             m_initData->mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_NoSmallSkins, checked ? 0 : 1);
         m_initData->mSettingsChanged = true;
         break;
+    case 0x25:
+        if (MiniGameDef::IsCustomGame(m_initData->mMiniGameId, m_initData->mPlayerSettings))
+            m_initData->mPlayerSettings.mNaturalRegeneration = checked;
+        m_initData->mSettingsChanged = true;
+        break;
+    case 0x27:
+        if (MiniGameDef::IsCustomGame(m_initData->mMiniGameId, m_initData->mPlayerSettings))
+            m_initData->mPlayerSettings.mSmallInventoryEnabled = checked;
+        m_initData->mSettingsChanged = true;
+        break;
     case 0x28:
         if (MiniGameDef::IsCustomGame(m_initData->mMiniGameId, m_initData->mPlayerSettings))
             m_initData->mPlayerSettings.mTakeEverythingEnabled = checked;
@@ -924,11 +999,15 @@ void UIScene_LaunchMoreOptionsMenu::handleCheckboxElementToggled(int, int second
             m_initData->mPlayerSettings.mChestRefillEnabled = checked;
         m_initData->mSettingsChanged = true;
         break;
+    case 0x2a:
+        if (MiniGameDef::IsCustomGame(m_initData->mMiniGameId, m_initData->mPlayerSettings))
+            m_initData->mPlayerSettings.mSpectatorParticipation = checked;
+        m_initData->mSettingsChanged = true;
+        break;
     default:
         m_initData->mSettingsChanged = true;
         break;
     }
-    UpdateDescriptionText();
 }
 
 void UIScene_LaunchMoreOptionsMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool pressed,

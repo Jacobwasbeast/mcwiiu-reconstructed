@@ -12,6 +12,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/FJ_FullScreenProgress.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
@@ -20,6 +21,8 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "vendor/_LoadingInputParams.hpp"
 #include "game/core/GameSettings.hpp"
@@ -309,12 +312,13 @@ void UIScene_FullscreenProgress::tick()
                     if (closeMode == 5)
                     {
                         gConsoleUIController.SetIgnoreAutosaveMenuDisplayed(m_playerId, false);
+                        MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[gProfile->GetPrimaryPad()];
+                        if (gameMode != NULL && gameMode->getTutorial() != NULL)
+                            gameMode->getTutorial()->showTutorialPopup(true);
                     }
                     gConsoleUIController.UpdatePlayerBasePositions();
-                    if (m_layer != NULL)
-                    {
-                        m_layer->NavigateBack(m_playerId, progressState->backScene);
-                    }
+                    m_layer->m_group->NavigateBack(m_playerId, progressState->backScene,
+                                                   static_cast<EUILayer>(m_layer->m_layerId));
                     gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
                 }
             }
@@ -402,10 +406,7 @@ void UIScene_FullscreenProgress::handlePress(int controlId, int childId)
     else if (mode == 6)
     {
         gConsoleUIController.UpdatePlayerBasePositions();
-        if (m_layer != NULL)
-        {
-            m_layer->NavigateBack(m_playerId, state->backScene);
-        }
+        m_layer->m_group->NavigateBack(m_playerId, state->backScene, static_cast<EUILayer>(m_layer->m_layerId));
         gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
     }
 }

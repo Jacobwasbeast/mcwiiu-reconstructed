@@ -10,6 +10,7 @@
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/item/Enchantment.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -20,8 +21,10 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/ui/UILayer.hpp"
 
+extern std::wstring _toString(int value);
 extern CMinecraftApp* g_pApp;
 
 struct UIScene_EnchantingMenuData
@@ -341,23 +344,51 @@ void UIScene_EnchantingMenu::setSectionSelectedSlot(
 std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3 || getMenu() == 0) return 0;
+    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 ||
+        section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3)
+        return NULL;
+
     const int index = static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[getPad()];
+    const bool instabuild = player->mAbilities.mInstabuild;
+    const int lapisCount = getMenu()->getGoldCount();
     const int cost = getMenu()->mCosts[index];
     Enchantment* enchantment = Enchantment::byId(getMenu()->mEnchantmentIds[index]);
-    if (cost < 1 || enchantment == 0) return 0;
+    const int level = getMenu()->mEnchantmentLevels[index];
+    const int lapisCost = index + 1;
+    if (cost < 1 || level < 0 || enchantment == NULL)
+        return NULL;
+
     std::vector<HtmlString>* result = new std::vector<HtmlString>();
-    result->push_back(enchantment->getFullname(cost));
-    if (!IsActiveButton(section)) return result;
-    std::wstring text = L10N::GetString(index == 0 ? 0x8d500014 : 0xf5706ab);
-    std::wstring token = L"{*COST*}";
-    std::wstring value;
-    wchar_t number[16];
-    std::swprintf(number, 16, L"%d", index + 1);
-    value = number;
-    std::wstring::size_type at = text.find(token);
-    if (at != std::wstring::npos) text.replace(at, token.size(), value);
-    result->push_back(HtmlString(text, eMinecraftColour_Color_EnchantText, false, false, 0));
+    result->push_back(HtmlString(enchantment->getFullname(level).mText + L"...?", eMinecraftColour_HTMLColor_White, true,
+                                 false, 0));
+    if (instabuild)
+        return result;
+
+    result->push_back(HtmlString(L"", static_cast<eMinecraftColour>(0), false, false, 0));
+    if (player->mExperienceLevel < cost)
+    {
+        std::wstring requirement =
+            replaceAll(L10N::GetString(IDS_ENCHANT_LEVEL_REQUIREMENT), L"{*LEVEL*}", _toString(cost));
+        result->push_back(HtmlString(requirement, eMinecraftColour_HTMLColor_c, false, false, 0));
+        return result;
+    }
+
+    std::wstring lapisText;
+    if (lapisCost == 1)
+        lapisText = L10N::GetString(0x8d500014);
+    else
+        lapisText = replaceAll(L10N::GetString(0xf5706ab), L"{*COST*}", _toString(lapisCost));
+    result->push_back(HtmlString(lapisText,
+                                 lapisCount < lapisCost ? eMinecraftColour_HTMLColor_c : eMinecraftColour_HTMLColor_7,
+                                 false, false, 0));
+
+    std::wstring levelText;
+    if (lapisCost == 1)
+        levelText = L10N::GetString(0x3acd0b7d);
+    else
+        levelText = replaceAll(L10N::GetString(0x2d47653a), L"{*COST*}", _toString(lapisCost));
+    result->push_back(HtmlString(levelText, eMinecraftColour_HTMLColor_7, false, false, 0));
     return result;
 }
 

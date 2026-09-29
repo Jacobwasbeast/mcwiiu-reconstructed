@@ -40,7 +40,11 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int sceneType, void*, UIL
         if (m_playerId != gProfile->GetPrimaryPad())
             removeControl(&m_button6, false);
     }
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !g_pApp->DebugArtToolsOn())
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (!gProfile->IsFullVersion()
+        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && minecraft->mLocalPlayers[m_playerId] != NULL
+            && minecraft->mLocalPlayers[m_playerId]->GetGameType() != GameType::LOBBY
+            && !g_pApp->DebugArtToolsOn()))
         removeControl(&m_button1, false);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -98,8 +102,8 @@ void UIScene_HelpAndOptionsMenu::handleReload()
     }
     gProfile->IsFullVersion();
     bool keepButton1 = gProfile->IsFullVersion() &&
-        Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY;
+        (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
+         minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY);
     if (!keepButton1)
         removeControl(&m_button1, false);
     doHorizontalResizeCheck();

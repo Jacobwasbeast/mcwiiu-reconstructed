@@ -99,10 +99,10 @@ void UIComponent_Panorama::render(int width, int height, C4JRender::eViewportTyp
 
     if (viewport == C4JRender::eViewportType_RightHalf ||
         viewport == C4JRender::eViewportType_LeftHalf) {
-        gFui->render(m_movie, 854.0f, 854.0f, static_cast<float>(width - 176),
-                     static_cast<float>(screenHeight - 176));
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(screenHeight));
     } else {
-        gFui->render(m_movie, 854.0f, 854.0f, static_cast<float>(screenWidth),
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(screenWidth),
                      static_cast<float>(screenHeight), 0.5f, 0.5f);
     }
 }

@@ -6,10 +6,10 @@ BlockTooltipDataHolder::BlockTooltipDataHolder(boost::shared_ptr<MultiplayerLoca
                                                const BlockState* pBlockState,
                                                BlockPos blockPos,
                                                InteractionResult::EInteractionResult eInteractionResult,
-                                               bool bUseItem,
-                                               bool bCanPlace,
+                                               bool bUseBlock,
+                                               bool bUseItemOnBlock,
                                                bool bCanDestroy,
-                                               bool bIsInside)
+                                               bool bCanPlace)
 {
     m_pPlayer = pPlayer;
     m_pLevel = pLevel;
@@ -17,8 +17,8 @@ BlockTooltipDataHolder::BlockTooltipDataHolder(boost::shared_ptr<MultiplayerLoca
     m_pBlockState = pBlockState;
     m_blockPos = blockPos;
     m_eInteractionResult = eInteractionResult;
-    m_bUseItem = bUseItem;
-    m_bCanPlace = bCanPlace;
+    m_bUseBlock = bUseBlock;
+    m_bUseItemOnBlock = bUseItemOnBlock;
     m_bCanDestroy = bCanDestroy;
-    m_bIsInside = bIsInside;
+    m_bCanPlace = bCanPlace;
 }

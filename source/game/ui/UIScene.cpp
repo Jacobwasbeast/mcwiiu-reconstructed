@@ -25,9 +25,6 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-extern "C" void OSReport(const char*, ...);
-#define SCENE_TRACE(step) OSReport("[boot][scene] %s\n", step)
-
 template <typename T>
 std::wstring _toString(T value);
 
@@ -411,7 +408,6 @@ void UIScene::registerSubstitutionTexture(const std::wstring& name, unsigned cha
 void UIScene::loadMovie()
 {
     EnterCriticalSection(&g_uiCriticalSection);
-    SCENE_TRACE("loadMovie: section entered");
     std::wstring path = getMoviePath();
     if (gRenderer->IsWidescreen()) {
         path.append(L"720.fui");
@@ -421,15 +417,10 @@ void UIScene::loadMovie()
         m_movieResolution = 2;
     }
 
-    SCENE_TRACE("loadMovie: path built");
     arrayWithLength<unsigned char> movieData = gConsoleUIController.getMovieData(path.c_str());
-    SCENE_TRACE("loadMovie: movieData fetched");
     m_movie = (fuiFile*)gFui->load(movieData, true, gFui->getResolution());
-    SCENE_TRACE("loadMovie: fui LOADED");
     m_movie->getRootNode()->getFuiNode()->setCallbackScene(this);
-    SCENE_TRACE("loadMovie: callbackScene set");
     m_movie->setCustomDrawCallback(customDrawFui, this);
-    SCENE_TRACE("loadMovie: drawCallback set");
     m_stageWidth = static_cast<int>(m_movie->getStageWidth());
     m_stageHeight = static_cast<int>(m_movie->getStageHeight());
     m_originalStageWidth = m_stageWidth;
@@ -440,11 +431,8 @@ void UIScene::loadMovie()
 void UIScene::initialiseMovie()
 {
     loadMovie();
-    SCENE_TRACE("loadMovie DONE");
     mapElementsAndNames();
-    SCENE_TRACE("mapElementsAndNames done");
     updateSafeZone();
-    SCENE_TRACE("updateSafeZone done");
     m_opacityInitialised = true;
 }
 

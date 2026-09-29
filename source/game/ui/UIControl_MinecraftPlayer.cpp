@@ -8,10 +8,12 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Options.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/ui/ScreenSizeCalculator.hpp"
 #include "game/ui/UIScene_AbstractContainerMenu.hpp"
 #include "game/ui/fuiRect.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 UIControl_MinecraftPlayer::UIControl_MinecraftPlayer()
@@ -22,8 +24,8 @@ UIControl_MinecraftPlayer::UIControl_MinecraftPlayer()
     mScreenWidth = (float)minecraft->mWidth;
     mScreenHeight = (float)minecraft->mHeight;
     ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
-    mScaledWidth = (float)calculator.getWidth();
-    mScaledHeight = (float)calculator.getHeight();
+    mScaledWidth = (float)calculator.mWidthScale;
+    mScaledHeight = (float)calculator.mHeightScale;
 }
 
 UIControl_MinecraftPlayer::~UIControl_MinecraftPlayer()
@@ -32,60 +34,57 @@ UIControl_MinecraftPlayer::~UIControl_MinecraftPlayer()
 
 void UIControl_MinecraftPlayer::render(fuiRect* rect)
 {
-    float width = rect->xMax - rect->xMin;
-    float height = rect->yMax - rect->yMin;
-    float scale = width / (mScreenWidth / mScreenHeight);
-
+    Minecraft* minecraft = Minecraft::GetInstance();
     GlStateManager::enableRescaleNormal();
     GlStateManager::enableColorMaterial();
     GlStateManager::pushMatrix();
+    float width = rect->xMax - rect->xMin;
+    float height = rect->yMax - rect->yMin;
     GlStateManager::translatef(width * 0.5f, height - height / 9.0f, 50.0f);
+    float scale = width / (mScreenWidth / mScreenHeight);
     GlStateManager::scalef(-scale, scale, scale);
     GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
 
-    Minecraft* minecraft = Minecraft::GetInstance();
     UIScene_AbstractContainerMenu* scene = static_cast<UIScene_AbstractContainerMenu*>(m_scene);
-    boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(scene->getPad());
-    if (player)
-    {
-        float oldYRot = player->mYRot;
-        float oldYRotO = player->mYRotO;
-        float oldXRot = player->mXRot;
-        float oldYBodyRot = player->mYBodyRot;
-        float oldYHeadRot = player->mYHeadRot;
-        bool oldSharedFlag = player->getSharedFlag(Entity::FLAG_ONFIRE);
-        bool oldFallFlyingStateDisabled = player->mFallFlyingStateDisabled;
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[scene->getPad()];
+    float oldYRot = player->mYRot;
+    float oldYRotO = player->mYRotO;
+    float oldXRot = player->mXRot;
+    float oldYHeadRot = player->mYHeadRot;
+    bool oldOnFire = player->getSharedFlag(Entity::FLAG_ONFIRE);
 
-        float bodyRotation = player->mYBodyRot;
-        float xRotation = (m_y + m_height * 0.5f - 40.0f) / 40.0f;
-        float yRotation = (m_x + m_width * 0.5f - 40.0f) / 40.0f;
+    float lookX = (m_x + m_width * 0.5f - scene->m_pointerPos.x) / 40.0f;
+    float lookY = (m_y + m_height * 0.5f - 40.0f - scene->m_pointerPos.y) / 40.0f;
 
-        GlStateManager::rotatef(135.0f, 0.0f, 1.0f, 0.0f);
-        Lighting::turnOn();
-        GlStateManager::rotatef(-135.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::rotatef(-std::atan(xRotation) * 20.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::rotatef(-(std::atan(yRotation) * 20.0f - bodyRotation), 0.0f, 1.0f, 0.0f);
-        GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::rotatef(135.0f, 0.0f, 1.0f, 0.0f);
+    Lighting::turnOn();
+    GlStateManager::rotatef(-135.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-std::atan(lookY) * 20.0f, 1.0f, 0.0f, 0.0f);
+    float bodyRotation = player->mYBodyRot;
+    GlStateManager::rotatef(-(std::atan(lookX) * 20.0f - bodyRotation), 0.0f, 1.0f, 0.0f);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-        player->mYBodyRot = bodyRotation;
-        player->mYHeadRot = bodyRotation;
-        player->mYRot = bodyRotation;
-        player->mYRotO = bodyRotation;
-        player->mXRot = -std::atan(xRotation) * 20.0f;
-        player->disableFallFlyingState(true);
+    player->mYRot = bodyRotation;
+    player->mYRotO = player->mYRot;
+    player->mYHeadRot = player->mYRot;
+    player->mXRot = -std::atan(lookY) * 20.0f;
+    player->disableFallFlyingState(true);
 
-        EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
-        boost::shared_ptr<Entity> entity = player;
-        dispatcher->render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false, false, false, true);
+    Minecraft::GetInstance()->getEntityRenderDispatcher()->mCameraYRot = 180.0f;
+    bool oldHideGui = minecraft->mOptions->mHideGui;
+    minecraft->mOptions->mHideGui = true;
+    double x = player->isSleeping() ? player->mBedOffsetX : 0.0;
+    double z = player->isSleeping() ? player->mBedOffsetZ : 0.0;
+    boost::shared_ptr<Entity> entity = player;
+    Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, -x, 0.0, -z, 0.0f, 1.0f, false, false, false, true);
+    minecraft->mOptions->mHideGui = oldHideGui;
 
-        player->mYRot = oldYRot;
-        player->mYRotO = oldYRotO;
-        player->mXRot = oldXRot;
-        player->mYBodyRot = oldYBodyRot;
-        player->mYHeadRot = oldYHeadRot;
-        player->setSharedFlag(Entity::FLAG_ONFIRE, oldSharedFlag);
-        player->disableFallFlyingState(!oldFallFlyingStateDisabled);
-    }
+    player->mYRot = oldYRot;
+    player->mYRotO = oldYRotO;
+    player->mXRot = oldXRot;
+    player->mYHeadRot = oldYHeadRot;
+    player->setSharedFlag(Entity::FLAG_ONFIRE, oldOnFire);
+    player->disableFallFlyingState(false);
 
     GlStateManager::popMatrix();
     Lighting::turnOff();

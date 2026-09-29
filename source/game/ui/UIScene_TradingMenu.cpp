@@ -499,8 +499,7 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
         if (!player->mInventory->add(sellItemCopy))
             player->drop(sellItemCopy, false);
 
-        const int containerId = *reinterpret_cast<const int*>(
-            reinterpret_cast<const unsigned char*>(m_merchantMenuPtr) + 0x20);
+        const int containerId = m_merchantMenuPtr->m_containerId;
         ClientPacketListener* connection = minecraft->getConnection(m_playerId);
         connection->send(boost::shared_ptr<Packet>(
             new TradeItemPacket(containerId, originalIndex)));

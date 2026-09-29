@@ -149,6 +149,7 @@ private:
 
     friend class ConsoleUIController;
     friend class UIGroup;
+    friend class UIScene_FullscreenProgress;
     friend class UIControl_Touch;
 };
 

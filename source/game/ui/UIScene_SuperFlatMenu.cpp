@@ -2,12 +2,16 @@
 #include "game/core/StringIds.hpp"
 #include "game/ui/FJ_SuperFlatMenu.hpp"
 #include "game/ui/SuperflatMenu.hpp"
+#include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/L10N.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Item.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/generation/FlatLayerInfo.hpp"
 #include "game/core/GameSettings.hpp"
 
 #include <cstdio>
@@ -48,12 +52,12 @@ UIScene_SuperFlatMenu::UIScene_SuperFlatMenu(int sceneType, void* data, UILayer*
       m_presetsFlag(false),
       m_config(NULL),
       m_generatorInfo(NULL),
-      m_initData(data)
+      m_initData(static_cast<LaunchMoreOptionsMenuInitData*>(data))
 {
     initialiseMovie();
     _init();
     m_config = new SuperflatConfig();
-    LoadPreset(reinterpret_cast<SuperflatConfig*>(static_cast<char*>(data) + 0xe0));
+    LoadPreset(&m_initData->mSuperflatConfig);
 }
 
 UIScene_SuperFlatMenu::~UIScene_SuperFlatMenu()
@@ -246,7 +250,7 @@ void UIScene_SuperFlatMenu::LoadPreset(SuperflatConfig* config)
 {
     m_presetsFlag = false;
     *m_config = *config;
-    m_generatorInfo.setEqualTo(m_config);
+    m_generatorInfo = FlatGeneratorInfo(m_config);
     PopulateLayersList();
     UpdateBiomesList();
     UpdateParamsList();
@@ -484,7 +488,7 @@ int UIScene_SuperFlatMenu::CbGenerationWarning(void* context, int pad, C4JStorag
 void UIScene_SuperFlatMenu::ReturnResults(bool accepted)
 {
     unsigned int warning = SuperflatMenu::CustomSuperflatBlocks::verify(
-        static_cast<LaunchMoreOptionsMenuInitData*>(m_initData), m_config);
+        m_initData, m_config);
     if (accepted && warning != 0)
     {
         m_generating = true;
@@ -494,7 +498,7 @@ void UIScene_SuperFlatMenu::ReturnResults(bool accepted)
         return;
     }
     SuperflatMenu::CustomSuperflatBlocks::sanitise(m_generatorInfo);
-    *reinterpret_cast<SuperflatConfig*>(static_cast<char*>(m_initData) + 0xe0) = *m_config;
+    m_initData->mSuperflatConfig = *m_config;
     SuperflatMenu::PresetCache::SetCachedPreset(m_playerId, *m_config);
     navigateBack();
 }
@@ -755,17 +759,32 @@ void UIScene_SuperFlatMenu::handleGainFocus(bool hadFocus)
 void UIScene_SuperFlatMenu::customDraw(const char* name, fuiRect* rect)
 {
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-    int slot = -1;
+    int slot;
     if (m_activeTab == eTabLayers)
+    {
+        slot = -1;
         std::sscanf(name, "slot_0_%d", &slot);
+        if (slot != -1)
+        {
+            FlatLayerInfo layer = m_generatorInfo.getLayer(GetLayerIndex(slot));
+            if (layer.getBlock() != Blocks::air)
+            {
+                int itemId = layer.getId();
+                if (itemId >= 256 && itemId < 1024)
+                    itemId += 768;
+                item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(itemId), 1, layer.getData()));
+            }
+        }
+    }
     if (m_activeTab == eTabBiomes)
     {
+        slot = -1;
         std::sscanf(name, "slot_1_%d", &slot);
         if (slot != -1)
             item = SuperflatMenu::getBiomeInfoA()[slot].mItem;
     }
     if (!item->isEmpty())
-        customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, false, false);
+        customDrawSlotControlFui(rect, m_playerId, item, 1.0f, item->getItem()->isFoil(item), false, false);
 }
 
 void UIScene_SuperFlatMenu::SetSelectedLayer(int index)

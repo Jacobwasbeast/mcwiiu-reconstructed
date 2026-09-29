@@ -44,6 +44,13 @@ struct LoadMenuSceneData
     _SaveListDetails* saveDetails;
     EMiniGameId miniGameId;
 };
+
+const int sControlDescriptions[] = {
+    -1, -1, -1, -1, -1, static_cast<int>(0x1a93e279), -1, -1, static_cast<int>(0x4f8bedac),
+    static_cast<int>(0x4f8bedac), static_cast<int>(0xfb9d0b2b), static_cast<int>(0x7b994768),
+    static_cast<int>(0x0f7151d3), static_cast<int>(0x75cf2428), static_cast<int>(0x4c17ef92), -1,
+    static_cast<int>(IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT),
+    static_cast<int>(IDS_MG_JOIN_ANY_GAME_DESC), -1, -1, -1, static_cast<int>(0x29bfcbdb)};
 }
 
 UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
@@ -252,7 +259,7 @@ void UIScene_LoadMenu::UpdateDescriptionText()
     if (m_childFocus == -1.0 || (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame))
         return;
 
-    int descriptionId = -1;
+    int descriptionId = sControlDescriptions[childFocus];
     if (childFocus == 3 || childFocus == 16 || childFocus == 17 || childFocus == 18)
     {
         descriptionId = static_cast<int>(GetVariantDesc(
@@ -941,8 +948,26 @@ void UIScene_LoadMenu::handleFocusChange(int focus, int childFocus)
 
 void UIScene_LoadMenu::handleTimerComplete(int timerId)
 {
-    if ((m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame) && timerId == 0)
-        handleGainFocus(false);
+    if (m_launchData.mHostMiniGame && timerId == 0)
+    {
+        bool online = false;
+        if (gProfile->IsSignedInLive(m_playerId) && gProfile->AllowedToPlayMultiplayer(m_playerId))
+            online = true;
+        if (online != m_onlineEnabled)
+        {
+            m_launchData.mOnlineGame = online;
+            m_list.EnableItem(5, online, true);
+            m_list.SetCheckboxValue(5, m_launchData.mOnlineGame, true);
+            m_list.EnableItem(10, m_launchData.mOnlineGame && m_publicGamesAllowed, true);
+            m_list.SetCheckboxValue(10, m_launchData.mOnlineGame && m_launchData.mMatchmaking && m_publicGamesAllowed,
+                                    true);
+            m_list.EnableItem(11, m_launchData.mOnlineGame && !m_launchData.mMatchmaking, true);
+            m_list.SetCheckboxValue(11,
+                                    m_launchData.mOnlineGame && !m_launchData.mMatchmaking &&
+                                        m_launchData.mAllowFriendsOfFriends,
+                                    true);
+        }
+    }
     IUIScene_StartGame::handleTimerComplete(timerId);
 }
 

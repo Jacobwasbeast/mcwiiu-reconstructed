@@ -1,9 +1,13 @@
 #include "game/ui/UIScene_HorseInventoryMenu.hpp"
+
+#include <cstring>
 #include "game/core/EntityType.hpp"
+#include "game/core/StringIds.hpp"
 
 #include "game/entity/mob/AbstractChestedHorse.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -43,6 +47,24 @@ UIScene_HorseInventoryMenu::UIScene_HorseInventoryMenu(int type, void* data, UIL
     m_playerInventory = boost::dynamic_pointer_cast<Container>(args->inventory);
     m_container = args->container;
     m_horse = args->horse;
+    const std::wstring containerName = m_container->getName();
+    if (containerName.empty())
+    {
+        if (m_horse->GetType() == EntityType::LLAMA)
+            m_horseLabel.init(UIString(L10N::GetString(IDS_LLAMA)));
+        else if (m_horse->GetType() == EntityType::DONKEY)
+            m_horseLabel.init(UIString(L10N::GetString(IDS_DONKEY)));
+        else if (m_horse->GetType() == EntityType::MULE)
+            m_horseLabel.init(UIString(L10N::GetString(IDS_MULE)));
+        else if (m_horse->GetType() == EntityType::SKELETON_HORSE)
+            m_horseLabel.init(UIString(L10N::GetString(IDS_SKELETON_HORSE)));
+        else
+            m_horseLabel.init(UIString(L10N::GetString(0x2568bd7a)));
+    }
+    else
+    {
+        m_horseLabel.init(UIString(containerName));
+    }
     boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
     m_menu = new HorseInventoryMenu(
         m_playerInventory, m_container, m_horse, player);
@@ -247,13 +269,36 @@ int UIScene_HorseInventoryMenu::getSectionStartOffset(
 void UIScene_HorseInventoryMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    if (!wrap)
+    const int columns = getSectionColumns(section);
+    UIControl_SlotList* slotList = NULL;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+        slotList = &m_hotbarList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        slotList = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        if ((m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest())
+            slotList = &m_donkeyInventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+        if (!m_horse->wearsArmor())
+            return;
+        slotList = &m_armorSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        if (!m_horse->canBeSaddled())
+            return;
+        slotList = &m_saddleSlot;
+        break;
+    default:
         return;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar) m_hotbarList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory) m_inventoryList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest) m_donkeyInventoryList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor) m_armorSlot.setHighlightSlot(slot + direction);
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle) m_saddleSlot.setHighlightSlot(slot + direction);
+    }
+    if (slotList != NULL && wrap)
+        slotList->setHighlightSlot(direction * columns + slot);
 }
 
 void UIScene_HorseInventoryMenu::SetInventoryType(int type)
@@ -309,6 +354,7 @@ void UIScene_HorseInventoryMenu::setUp(bool enabled)
     {
         SetHasInventory(true);
         const int columns = boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns();
+        m_donkeyInventoryList.setWidth(m_donkeyInventoryList.getWidth() * (static_cast<float>(columns) / 5.0f));
         m_donkeyInventoryList.addSlots(2, columns * 3);
     }
     else
@@ -368,11 +414,15 @@ UIControl* UIScene_HorseInventoryMenu::getSection(
 
 void UIScene_HorseInventoryMenu::customDraw(const char* name, fuiRect* rect)
 {
-    if (Minecraft::GetInstance() && m_horseControl.getVisible() &&
-        std::string(name) == std::string("iggy_horse"))
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mLocalPlayers[m_playerId] == NULL || minecraft->mGameModes[m_playerId] == NULL)
+        return;
+    if (std::strcmp(name, "horse") == 0)
+    {
         m_horseControl.render(rect);
-    else
-        UIScene_AbstractContainerMenu::customDraw(name, rect);
+        return;
+    }
+    UIScene_AbstractContainerMenu::customDraw(name, rect);
 }
 
 int UIScene_HorseInventoryMenu::getSceneType()

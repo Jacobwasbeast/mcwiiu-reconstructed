@@ -418,6 +418,11 @@ void FJ_List2D::removeAllItems()
             FJ_FuiNode* node = m_items[row][column];
             if (getStage()->getFocus() == node)
                 hadFocus = true;
+            if (node->isFJ_Base())
+            {
+                for (unsigned int i = 0; i < node->asFJ_Base()->m_objects.size(); ++i)
+                    getParent()->removeChild(node->asFJ_Base()->m_objects[i], true);
+            }
             getParent()->removeChild(node, true);
         }
     }

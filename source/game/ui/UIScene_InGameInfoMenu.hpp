@@ -45,7 +45,7 @@ public:
     bool hasSomethingToEdit(unsigned char smallId);
 
 private:
-    bool m_localPlayerIsModerator;
+    bool m_isHost;
     std::vector<PlayerInfo*> m_players;
     UIControl_Button m_optionsButton;
     UIControl_PlayerButtonList m_playerList;

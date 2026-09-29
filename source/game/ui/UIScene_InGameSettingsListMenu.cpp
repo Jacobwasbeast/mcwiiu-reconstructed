@@ -12,6 +12,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/MasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -214,7 +215,7 @@ void UIScene_InGameSettingsListMenu::Init()
         }
         std::wstring arenaLabel = arenaSize == 0
             ? makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)
-            : std::wstring(L10N::GetString(IDS_MG02_LAYER_SCALE)) + L" x " +
+            : std::wstring(L10N::GetString(IDS_MG02_LAYER_SCALE)) + L": x" +
               _toString<float>(arenaSizeLabels[arenaSize]);
         m_multiList.AddNewSlider(arenaLabel, 16, 0, 5, arenaSize, true, 7, 3);
 
@@ -464,6 +465,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         return;
     case 6:
     {
+        gMinecraftServer->mMasterGameMode->mRandomLootSetChosen = false;
         m_playerSettings.mLootSetId = static_cast<unsigned int>(m_multiList.GetSliderValue(6));
         if (m_miniGameId == eMiniGameId_Battle)
             m_playerSettings.mRandomLootSet = m_playerSettings.mLootSetId == 5;
@@ -514,7 +516,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
             ? maybe<float>() : maybe<float>(arenaSizes[sizeIndex]);
         std::wstring label = sizeIndex == 0
             ? makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)
-            : std::wstring(L10N::GetString(IDS_MG02_LAYER_SCALE)) + L" x " +
+            : std::wstring(L10N::GetString(IDS_MG02_LAYER_SCALE)) + L": x" +
               _toString<float>(arenaSizeLabels[sizeIndex]);
         m_multiList.SetItemLabel(16, UIString(label), false);
         UpdateDescriptionText();

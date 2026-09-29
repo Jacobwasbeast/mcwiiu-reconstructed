@@ -18,6 +18,8 @@ class UILayer;
 class UIScene_HorseInventoryMenu : public UIScene_AbstractContainerMenu,
                                    public virtual IUIScene_AbstractContainerMenu
 {
+    friend class UIControl_MinecraftHorse;
+
 public:
     UIScene_HorseInventoryMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_HorseInventoryMenu();

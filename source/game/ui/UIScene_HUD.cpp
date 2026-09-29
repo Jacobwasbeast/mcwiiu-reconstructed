@@ -1168,9 +1168,8 @@ void UIScene_HUD::updateFrameTick()
         }
         else if (opacityTimer < 10)
         {
-            const float baseOpacity = static_cast<float>(hudOpacity) * 0.01f;
-            const float fade = (10.0f - static_cast<float>(opacityTimer)) / 10.0f;
-            SetOpacity(baseOpacity * (1.0f - fade * (1.0f - 0.8f)));
+            const float step = (80.0f - static_cast<float>(hudOpacity)) / 10.0f;
+            SetOpacity(0.01f * (80.0f - (10.0f - static_cast<float>(opacityTimer)) * step));
         }
         else
         {
@@ -1277,7 +1276,7 @@ void UIScene_HUD::updateFrameTick()
                 ShowScore(false);
             }
 
-            SetGlideHealth(static_cast<int>(std::ceil(glidePlayer->getHealth())));
+            SetGlideHealth(Mth::ceil(glidePlayer->getHealth()));
 
             unsigned int elapsedMs = 0;
             bool showTimer = true;

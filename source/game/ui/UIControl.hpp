@@ -65,6 +65,7 @@ public:
     fuiRenderNode* getFuiRenderNode();
     void setWidth(float width);
     void setOpacity(float opacity);
+    void setId(int id) { m_controlId = id; }
     UIControl& operator=(const UIControl& other);
 
 protected:

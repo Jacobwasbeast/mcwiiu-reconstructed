@@ -16,39 +16,43 @@
 #include "game/data/StringTag.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/WrittenBookItem.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ServerboundCustomPayloadPacket.hpp"
 #include "game/ui/FJ_BookAndQuillMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/StringUtils.hpp"
 #include "game/core/XLanguage.hpp"
 
 extern std::wstring _toString(int value);
 extern ConsoleUIController gConsoleUIController;
+extern CProfile* gProfile;
 
 UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_book(*static_cast<not_null_ptr<ItemInstance>*>(data)), m_pages(0), m_caretPosition(0),
-      m_currentPage(0), m_pageCount(0), m_pageText(), m_secondPageText(), m_titleText(),
-      m_bookHasFocus(false), m_signing(false), m_unusedWord(0), m_textLength(0),
-      m_canEdit(reinterpret_cast<const unsigned char*>(data)[12] != 0),
-      m_textChanged(false), m_titleChanged(false), m_controlState(0), m_bookIsSigned(false), m_unused(false),
-      m_unusedControlByte(0)
+    : UIScene(type, layer), m_book(*static_cast<not_null_ptr<ItemInstance>*>(data)), m_pages(0), m_caretPosition(0), m_currentPage(0), m_pageCount(0),
+      m_pageText(), m_titleText(), m_signText(), m_closeRequested(false), m_contentRestricted(false),
+      m_unusedWord(0), m_caretOffset(0), m_canEdit(false), m_textChanged(false), m_caretHidden(false),
+      m_controlState(0), m_keyboardOpen(false), m_signing(false), m_unusedControlByte(0)
 {
     initialiseMovie();
     m_playerId = static_cast<const int*>(data)[2];
+    m_canEdit = reinterpret_cast<const unsigned char*>(data)[12] != 0;
+    m_textChanged = false;
+    m_titleText = L"";
     std::memset(m_reserved + 1, 0, 0x80);
 
-    wchar_t signButtonLabels[2][256];
-    wchar_t doneButtonLabels[2][256];
-    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
-    swprintf(signButtonLabels[1], 256, L"%ls", L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE));
-    m_signButton.setAllPossibleLabels(0, 2, signButtonLabels);
-    swprintf(doneButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_DONE));
-    swprintf(doneButtonLabels[1], 256, L"%ls", L10N::GetString(IDS_CONFIRM_CANCEL));
-    m_doneButton.setAllPossibleLabels(0, 2, doneButtonLabels);
+    wchar_t buttonLabels[4][256];
+    swprintf(buttonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
+    swprintf(buttonLabels[1], 256, L"%ls", L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE));
+    m_signButton.setAllPossibleLabels(0, 2, buttonLabels);
+    swprintf(buttonLabels[2], 256, L"%ls", L10N::GetString(IDS_DONE));
+    swprintf(buttonLabels[3], 256, L"%ls", L10N::GetString(IDS_CONFIRM_CANCEL));
+    m_doneButton.setAllPossibleLabels(0, 2, buttonLabels);
     HandleFontSizeOverride();
 
     m_doneButton.init(UIString(L10N::GetString(IDS_DONE)), 1);
@@ -73,8 +77,7 @@ UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer
 
 UIScene_WritableBookMenu::~UIScene_WritableBookMenu()
 {
-    if (m_layer != 0)
-        m_layer->removeComponent(EUIScene_MenuBackground);
+    m_layer->removeComponent(EUIScene_MenuBackground);
 }
 
 std::wstring UIScene_WritableBookMenu::getMoviePath()
@@ -113,8 +116,7 @@ void UIScene_WritableBookMenu::HandleFontSizeOverride()
 void UIScene_WritableBookMenu::SetBookIsSigned()
 {
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    if (menu != 0)
-        menu->SetBookIsSigned();
+    menu->SetBookIsSigned();
     m_signButton.removeUINodeRef();
     m_doneButton.removeUINodeRef();
 }
@@ -127,55 +129,92 @@ void UIScene_WritableBookMenu::SetPageLabel(std::wstring& text)
 void UIScene_WritableBookMenu::ChangePage(int page, int pageCount)
 {
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    if (menu != 0)
-        menu->ChangePage(page, pageCount);
+    menu->ChangePage(page, pageCount);
 }
 
 void UIScene_WritableBookMenu::UpdatePageNumber()
 {
-    std::wstring label = L"Page %d of %d";
-    std::wstring first = _toString(m_currentPage + 1);
-    std::wstring second = _toString(m_pageCount);
-    std::wstring::size_type pos = label.find(L"%d");
-    if (pos != std::wstring::npos)
-        label.replace(pos, 2, first);
-    pos = label.find(L"%d");
-    if (pos != std::wstring::npos)
-        label.replace(pos, 2, second);
+    std::wstring label = L10N::GetString(0x5351d8b1);
+    label.replace(label.find(L"%d"), 2, _toString(m_currentPage + 1));
+    label.replace(label.find(L"%d"), 2, _toString(m_pageCount));
     SetPageLabel(label);
-    if (!m_bookIsSigned)
+    if (!m_canEdit)
         ChangePage(m_currentPage, m_pageCount - 1);
     else if (m_signing)
         ChangePage(0, 0);
     else
-        ChangePage(m_currentPage, 0x31);
+        ChangePage(m_currentPage, MAX_PAGES - 1);
 }
 
 void UIScene_WritableBookMenu::Init()
 {
-    m_canEdit = WrittenBookItem::HasBookTags(m_book);
-    if (m_book != 0 && m_canEdit)
+    if (WrittenBookItem::HasBookTags(m_book))
     {
         CompoundTag* tag = m_book->getTag();
-        if (tag != 0)
+
+        bool ownedByLocalPlayer = false;
+        if (tag->getString(L"ownerUUID").compare(L"") != 0)
         {
-            m_titleText = tag->getString(L"title");
-            if (!m_titleText.empty())
-                m_titleChanged = true;
-            if (!m_bookIsSigned)
+            for (int i = 0; i < 4; ++i)
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[i];
+                if (localPlayer != NULL && localPlayer->getUUID() == tag->getString(L"ownerUUID"))
+                {
+                    ownedByLocalPlayer = true;
+                    break;
+                }
+            }
+        }
+
+        bool chatCensored = g_pApp->IsConsoleChatCensored();
+        bool createdByRestrictedPlayer =
+            tag->contains(L"createdByRestrictedPlayer") && tag->getByte(L"createdByRestrictedPlayer") != 0;
+        bool createdByHost = true;
+        if (tag->contains(L"createdByHost") && tag->getByte(L"createdByHost") == 0)
+            createdByHost = false;
+
+        if ((!chatCensored && !createdByRestrictedPlayer) || ownedByLocalPlayer ||
+            (CGameNetworkManager::sInstance.IsHost() && createdByHost))
+        {
+            if (!m_contentRestricted)
             {
                 ListTag* pages = tag->getList(L"pages", Tag::TAG_STRING);
                 if (pages != 0 && pages->size() > 0)
                 {
-                    m_pages = pages;
-                    m_pageCount = pages->size();
+                    m_pages = pages->copy();
+                    int pageCount = m_pages->size();
+                    m_pageCount = pageCount < 1 ? 1 : pageCount;
                 }
+                if (m_pages == 0 && m_canEdit)
+                {
+                    m_pages = new ListTag();
+                    m_pages->add(new StringTag(L""));
+                    m_pageCount = 1;
+                }
+                UpdatePageNumber();
+                return;
             }
         }
+        else
+        {
+            m_contentRestricted = true;
+        }
+
+        std::wstring censoredText = L"";
+        unsigned int language = XGetLanguage();
+        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
+            language == XC_LANGUAGE_TCHINESE || language == XC_LANGUAGE_ZH_HANS)
+            censoredText = L"Censored";
+        else
+            censoredText = L10N::GetString(0x62950b66);
+        m_pages = new ListTag();
+        m_pages->add(new StringTag(censoredText));
+        m_pageCount = 1;
     }
+
     if (m_pages == 0 && m_canEdit)
     {
-        m_pages = new ListTag(8);
+        m_pages = new ListTag();
         m_pages->add(new StringTag(L""));
         m_pageCount = 1;
     }
@@ -184,81 +223,79 @@ void UIScene_WritableBookMenu::Init()
 
 void UIScene_WritableBookMenu::RetrieveBookText()
 {
-    GetPageText();
+    m_pageText = getCurrentPageText();
     m_caretPosition = static_cast<int>(m_pageText.size());
 }
 
 void UIScene_WritableBookMenu::SetCaretPosition(int position)
 {
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    if (menu != 0)
-        menu->SetCaretPosition(position + m_textLength, !m_bookIsSigned, false);
+    menu->SetCaretPosition(position + m_caretOffset, !m_caretHidden, false);
 }
 
 int UIScene_WritableBookMenu::FormatAndDisplayText(EFormatTextType type)
 {
-    if (!m_unused)
+    std::wstring text;
+    if (!m_signing)
     {
-        std::wstring text = m_pageText;
+        text = m_pageText;
         FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
         return menu->SetPageText(text, type) ? 1 : 0;
     }
 
-    m_titleText = L10N::GetString(IDS_BOOK_SIGN_TEXT);
-    size_t pos = m_titleText.find(L"\\r", 0);
-    m_textLength = static_cast<int>(pos) + 1;
+    std::wstring newline = L"\n";
+    m_signText = L10N::GetString(IDS_BOOK_SIGN_TEXT);
+    std::wstring::size_type pos = m_signText.find(L"\\r", 0);
+    m_caretOffset = static_cast<int>(pos) + 1;
     SetCaretPosition(m_caretPosition);
     while (pos != std::wstring::npos)
     {
-        m_titleText.replace(pos, 2, L"\n");
-        pos = m_titleText.find(L"\\r", 0);
+        m_signText.replace(pos, 2, newline);
+        pos = m_signText.find(L"\\r", 0);
     }
-    pos = m_titleText.find(L"%s", 0);
-    m_titleText.replace(pos, 2, m_secondPageText);
+    m_signText.replace(m_signText.find(L"%s", 0), 2, m_titleText);
+    pos = m_signText.find(L"%s", 0);
+    std::wstring author = gProfile->GetDisplayName(m_playerId);
+    m_signText.replace(pos, 2, author.c_str(), wcslen(author.c_str()));
+    text = m_signText;
 
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    return menu->SetPageText(m_titleText, type) ? 1 : 0;
+    return menu->SetPageText(text, type) ? 1 : 0;
 }
 
 void UIScene_WritableBookMenu::tick()
 {
     UIScene::tick();
-    if (m_bookIsSigned)
+    if (m_closeRequested)
         navigateBack();
 }
 
 void UIScene_WritableBookMenu::handlePreReload()
 {
-    wchar_t signButtonLabels[2][256];
-    wchar_t doneButtonLabels[2][256];
-
-    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
-    swprintf(signButtonLabels[1], 256, L"%ls", L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE));
-    m_signButton.setAllPossibleLabels(0, 2, signButtonLabels);
-
-    swprintf(doneButtonLabels[0], 256, L"%ls", L10N::GetString(IDS_DONE));
-    swprintf(doneButtonLabels[1], 256, L"%ls", L10N::GetString(IDS_CONFIRM_CANCEL));
-    m_doneButton.setAllPossibleLabels(0, 2, doneButtonLabels);
-
+    wchar_t buttonLabels[4][256];
+    swprintf(buttonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
+    swprintf(buttonLabels[1], 256, L"%ls", L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE));
+    m_signButton.setAllPossibleLabels(0, 2, buttonLabels);
+    swprintf(buttonLabels[2], 256, L"%ls", L10N::GetString(IDS_DONE));
+    swprintf(buttonLabels[3], 256, L"%ls", L10N::GetString(IDS_CONFIRM_CANCEL));
+    m_doneButton.setAllPossibleLabels(0, 2, buttonLabels);
     HandleFontSizeOverride();
 }
 
 void UIScene_WritableBookMenu::SetFocusToBook(bool focus)
 {
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    if (menu != 0)
-        menu->SetFocusToBook(focus);
-    m_bookHasFocus = focus;
+    menu->SetFocusToBook(focus);
 }
 
 void UIScene_WritableBookMenu::handleReload()
 {
     UpdatePageNumber();
-    if (!m_bookIsSigned)
+    if (!m_canEdit)
         SetBookIsSigned();
     doHorizontalResizeCheck();
     FormatAndDisplayText(EFormatTextType_Display);
-    if (m_bookIsSigned)
+    if (m_canEdit)
         SetCaretPosition(m_caretPosition);
     if (m_doneButton.hasFocus() || m_signButton.hasFocus())
         SetFocusToBook(false);
@@ -267,45 +304,43 @@ void UIScene_WritableBookMenu::handleReload()
 
 void UIScene_WritableBookMenu::updateTooltips()
 {
-    int slot0 = IDS_TOOLTIPS_SELECT;
-    int left = -1;
-    int right = -1;
-    if (!m_unused)
+    int select = IDS_TOOLTIPS_SELECT;
+    int previousPage = -1;
+    int nextPage = -1;
+    if (!m_signing)
     {
         if (m_currentPage > 0)
-            left = IDS_TOOLTIPS_PREVIOUS_PAGE;
+            previousPage = IDS_TOOLTIPS_PREVIOUS_PAGE;
         if (!m_canEdit)
         {
             if (m_currentPage < m_pageCount - 1)
-                right = IDS_TOOLTIPS_NEXT_PAGE;
-            slot0 = -1;
+                nextPage = IDS_TOOLTIPS_NEXT_PAGE;
+            select = -1;
         }
         else
         {
             if (m_currentPage < m_pageCount - 1)
             {
-                int tooltips[16] = {slot0, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, left, static_cast<int>(IDS_TOOLTIPS_NEXT_PAGE),
-                                    -1, -1, -1, -1, -1, -1, -1, -1};
-                gConsoleUIController.SetTooltips(m_playerId, tooltips, false, false);
+                gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
+                                                 previousPage, IDS_TOOLTIPS_NEXT_PAGE, -1, -1, -1, -1, -1, -1, -1, -1,
+                                                 false, false);
                 return;
             }
-            if (m_currentPage < 0x31)
+            if (m_currentPage < MAX_PAGES - 1)
             {
-                int tooltips[16] = {slot0, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, left, static_cast<int>(IDS_TOOLTIPS_ADD_PAGE),
-                                    -1, -1, -1, -1, -1, -1, -1, -1};
-                gConsoleUIController.SetTooltips(m_playerId, tooltips, false, false);
+                gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
+                                                 previousPage, IDS_TOOLTIPS_ADD_PAGE, -1, -1, -1, -1, -1, -1, -1, -1,
+                                                 false, false);
                 return;
             }
         }
     }
-    int tooltips[16] = {slot0, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, left, right,
-                        -1, -1, -1, -1, -1, -1, -1, -1};
-    gConsoleUIController.SetTooltips(m_playerId, tooltips, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, select, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, previousPage, nextPage,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_WritableBookMenu::OnStopSigning()
 {
-    m_signing = false;
     m_pageLabel.setVisible(true);
     m_signButton.setLabel(UIString(L10N::GetString(IDS_TITLE_BOOK_SIGN)), false, false);
     m_doneButton.setLabel(UIString(L10N::GetString(IDS_DONE)), false, false);
@@ -321,35 +356,34 @@ void UIScene_WritableBookMenu::OnStopSigning()
 
 int UIScene_WritableBookMenu::ExitBookDialogReturned(void* context, int, C4JStorage::EMessageResult result)
 {
-    if (context != 0 && result == 5)
-        static_cast<UIScene_WritableBookMenu*>(context)->m_bookIsSigned = true;
+    if (context != 0 && result == C4JStorage::EMessageResult_Decline)
+        static_cast<UIScene_WritableBookMenu*>(context)->m_closeRequested = true;
     return 0;
 }
 
-unsigned int UIScene_WritableBookMenu::HandleCancel()
+void UIScene_WritableBookMenu::HandleCancel()
 {
-    if (m_unused)
+    if (m_signing)
     {
-        m_unused = false;
+        m_signing = false;
         OnStopSigning();
-        return 0;
+        return;
     }
     if (m_textChanged)
     {
-        int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
+        int parameters[2] = {static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK)};
         gConsoleUIController.RequestAlertMessage(0xa95e7f9a, IDS_TEXT_BOOK_LOSE_TEXT, parameters, 2, m_playerId,
-            ExitBookDialogReturned, this, NULL, true);
-        return 0;
+                                                 ExitBookDialogReturned, this, NULL, true);
+        return;
     }
     navigateBack();
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-    return 0;
 }
 
 bool UIScene_WritableBookMenu::GetBookHasFocus()
 {
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    return menu != 0 && menu->GetBookHasFocus();
+    return menu->GetBookHasFocus();
 }
 
 int UIScene_WritableBookMenu::KeyboardCompleteCallback(void* context, bool success)
@@ -360,24 +394,24 @@ int UIScene_WritableBookMenu::KeyboardCompleteCallback(void* context, bool succe
     if (scene == 0)
         return 0;
 
-    scene->m_bookIsSigned = false;
+    scene->m_keyboardOpen = false;
     if (!success)
         return 0;
 
-    wchar_t text[260];
-    std::memset(text, 0, sizeof(wchar_t) * 257);
-    if (!scene->m_unused)
+    wchar_t text[MAX_PAGE_LENGTH + 4];
+    std::memset(text, 0, sizeof(wchar_t) * (MAX_PAGE_LENGTH + 1));
+    if (!scene->m_signing)
     {
-        g_pInput->GetText(text, 0x100);
+        g_pInput->GetText(text, MAX_PAGE_LENGTH);
         scene->m_pageText.assign(text, wcslen(text));
         scene->setCurrentPageText(scene->m_pageText);
         scene->m_caretPosition = static_cast<int>(scene->m_pageText.size());
     }
     else
     {
-        g_pInput->GetText(text, 0x10);
-        scene->m_secondPageText.assign(text, wcslen(text));
-        scene->m_caretPosition = static_cast<int>(scene->m_secondPageText.size());
+        g_pInput->GetText(text, MAX_TITLE_LENGTH);
+        scene->m_titleText.assign(text, wcslen(text));
+        scene->m_caretPosition = static_cast<int>(scene->m_titleText.size());
     }
     scene->addTimer(10, 50);
     return 0;
@@ -385,13 +419,11 @@ int UIScene_WritableBookMenu::KeyboardCompleteCallback(void* context, bool succe
 
 void UIScene_WritableBookMenu::StoreBookText()
 {
-    m_textChanged = true;
     setCurrentPageText(m_pageText);
 }
 
 void UIScene_WritableBookMenu::OnStartSigning()
 {
-    m_signing = true;
     m_pageLabel.setVisible(false);
     m_signButton.setLabel(UIString(L10N::GetString(IDS_BOOK_SIGN_AND_CLOSE)), false, false);
     m_doneButton.setLabel(UIString(L10N::GetString(IDS_CONFIRM_CANCEL)), false, false);
@@ -405,22 +437,51 @@ void UIScene_WritableBookMenu::OnStartSigning()
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-bool UIScene_WritableBookMenu::SaveChanges(bool signing)
+void UIScene_WritableBookMenu::SaveChanges(bool signing)
 {
     if (!m_canEdit)
-        return false;
-    if (!m_bookIsSigned || signing)
+        return;
+
+    if (!m_book->hasTag())
+        m_book->setTag(new CompoundTag());
+    boost::shared_ptr<MultiplayerLocalPlayer>& player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+    m_book->getTag()->putString(L"ownerUUID", player->getUUID());
+    m_book->getTag()->putByte(L"createdByRestrictedPlayer", g_pApp->IsConsoleChatCensored());
+    m_book->getTag()->putByte(L"createdByHost", CGameNetworkManager::sInstance.IsHost());
+
+    if (m_pages == 0)
+        return;
+
+    int pageCount = m_pages->size();
+    while (pageCount > 1)
     {
-        if (!m_book->hasTag())
-            m_book->setTag(new CompoundTag());
-        CompoundTag* tag = m_book->getTag();
-        tag->putString(L"author", m_titleText);
-        if (m_pages != 0)
-            tag->put(L"pages", m_pages);
-        tag->putByte(L"resolved", signing ? 1 : 0);
-        m_textChanged = false;
+        StringTag* lastPage = static_cast<StringTag*>(m_pages->get(m_pages->size() - 1));
+        if (!lastPage->mData.empty())
+            break;
+        m_pages->remove(m_pages->size() - 1);
+        pageCount = m_pages->size();
     }
-    return true;
+
+    if (!m_book->hasTag())
+        m_book->addTagElement(L"pages", m_pages);
+    else
+        m_book->getTag()->put(L"pages", m_pages);
+
+    std::wstring channel = L"MC|BEdit";
+    if (signing)
+    {
+        channel = L"MC|BSign";
+        m_book->addTagElement(L"author",
+                              new StringTag(Minecraft::GetInstance()->mLocalPlayers[m_playerId]->getName()));
+        m_book->addTagElement(L"title", new StringTag(m_titleText));
+    }
+
+    ByteArrayOutputStream bytes;
+    DataOutputStream output(&bytes);
+    output.writeItem(m_book);
+    boost::shared_ptr<Packet> packet(new ServerboundCustomPayloadPacket(channel, bytes.toByteArray()));
+    Minecraft::GetInstance()->getConnection(m_playerId)->send(packet);
+    m_textChanged = false;
 }
 
 void UIScene_WritableBookMenu::Sign()
@@ -430,28 +491,29 @@ void UIScene_WritableBookMenu::Sign()
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
 }
 
-bool UIScene_WritableBookMenu::OnSignButtonPress()
+void UIScene_WritableBookMenu::OnSignButtonPress()
 {
     if (!m_signing)
     {
         if (m_textChanged)
             StoreBookText();
+        m_signing = true;
         OnStartSigning();
-        return true;
+        return;
     }
     if (!trimString(m_titleText).empty())
         Sign();
-    return true;
 }
 
-bool UIScene_WritableBookMenu::OnDoneButtonPress()
+void UIScene_WritableBookMenu::OnDoneButtonPress()
 {
-    if (!m_bookIsSigned)
-        return false;
+    if (!m_canEdit)
+        return;
     if (m_signing)
     {
+        m_signing = false;
         OnStopSigning();
-        return true;
+        return;
     }
     if (m_textChanged)
     {
@@ -460,14 +522,14 @@ bool UIScene_WritableBookMenu::OnDoneButtonPress()
     }
     navigateBack();
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-    return true;
 }
 
 void UIScene_WritableBookMenu::ScrollPageLeft()
 {
     if (m_currentPage > 0 && !m_signing)
     {
-        if (m_textChanged) StoreBookText();
+        if (m_textChanged)
+            StoreBookText();
         --m_currentPage;
         RetrieveBookText();
         UpdatePageNumber();
@@ -477,23 +539,28 @@ void UIScene_WritableBookMenu::ScrollPageLeft()
     }
 }
 
-bool UIScene_WritableBookMenu::appendPageToBook()
+void UIScene_WritableBookMenu::appendPageToBook()
 {
-    if (m_pages != 0 && m_pages->size() < 50)
+    if (m_pages != 0 && m_pages->size() < MAX_PAGES)
     {
         m_pages->add(new StringTag(L""));
-        ++m_pageCount;
         m_textChanged = true;
-        return true;
+        ++m_pageCount;
     }
-    return false;
 }
 
 void UIScene_WritableBookMenu::ScrollPageRight()
 {
-    if (m_signing) return;
-    if (m_textChanged) StoreBookText();
-    if (m_currentPage >= m_pageCount - 1 && !appendPageToBook()) return;
+    if (m_signing)
+        return;
+    if (m_textChanged)
+        StoreBookText();
+    if (m_currentPage >= m_pageCount - 1)
+    {
+        if (m_pageCount >= MAX_PAGES || !m_canEdit)
+            return;
+        appendPageToBook();
+    }
     ++m_currentPage;
     RetrieveBookText();
     FormatAndDisplayText(EFormatTextType_Display);
@@ -512,22 +579,20 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
         {
             if (!pressed && !repeat)
                 return;
-            int caret = m_caretPosition;
-            if (!m_unused)
+            if (!m_signing)
             {
-                if (caret < static_cast<int>(m_pageText.size()))
-                    ++caret;
-                if (caret > 0x100)
-                    caret = 0x100;
+                if (static_cast<unsigned int>(m_caretPosition) < m_pageText.size())
+                    ++m_caretPosition;
+                if (m_caretPosition > MAX_PAGE_LENGTH)
+                    m_caretPosition = MAX_PAGE_LENGTH;
             }
             else
             {
-                if (caret < static_cast<int>(m_secondPageText.size()))
-                    ++caret;
-                if (caret > 0x10)
-                    caret = 0x10;
+                if (static_cast<unsigned int>(m_caretPosition) < m_titleText.size())
+                    ++m_caretPosition;
+                if (m_caretPosition > MAX_TITLE_LENGTH)
+                    m_caretPosition = MAX_TITLE_LENGTH;
             }
-            m_caretPosition = caret;
             SetCaretPosition(m_caretPosition);
             break;
         }
@@ -538,9 +603,8 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
         {
             if (!pressed && !repeat)
                 return;
-            int caret = m_caretPosition - 1;
-            if (caret > -1)
-                m_caretPosition = caret;
+            if (m_caretPosition - 1 > -1)
+                m_caretPosition = m_caretPosition - 1;
             else
                 m_caretPosition = 0;
             SetCaretPosition(m_caretPosition);
@@ -574,24 +638,20 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
         }
         else if (m_canEdit)
         {
-            m_bookIsSigned = true;
-            unsigned int maxLen = m_unused ? 0x10 : 0x100;
+            m_keyboardOpen = true;
+            unsigned int maxLength = m_signing ? MAX_TITLE_LENGTH : MAX_PAGE_LENGTH;
             if (m_unusedControlByte == 0)
             {
-                if (!m_unused)
-                {
-                    g_pInput->RequestKeyboard(L10N::GetString((int)0x671ea8b2u), m_pageText.c_str(),
-                                              m_playerId, maxLen, KeyboardCompleteCallback,
+                if (!m_signing)
+                    g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_KEYBOARD_BOOK_TEXT), m_pageText.c_str(),
+                                              m_playerId, maxLength, KeyboardCompleteCallback,
                                               reinterpret_cast<void*>(GetCallbackUniqueId()),
                                               static_cast<C_4JInput::EKeyboardMode>(3));
-                }
                 else
-                {
-                    g_pInput->RequestKeyboard(L10N::GetString((int)0xc5848e87u), m_secondPageText.c_str(),
-                                              m_playerId, maxLen, KeyboardCompleteCallback,
+                    g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_KEYBOARD_BOOK_TITLE), m_titleText.c_str(),
+                                              m_playerId, maxLength, KeyboardCompleteCallback,
                                               reinterpret_cast<void*>(GetCallbackUniqueId()),
                                               static_cast<C_4JInput::EKeyboardMode>(3));
-                }
             }
         }
         break;
@@ -608,7 +668,8 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
 
 void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool, bool, bool released)
 {
-    if (!released) return;
+    if (!released)
+        return;
     if (touchBox == 2)
     {
         if (m_canEdit)
@@ -616,7 +677,7 @@ void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int, int, int touc
             if (GetBookHasFocus())
             {
                 bool handled = false;
-                handleInput(m_playerId, 0x14, false, true, false, handled);
+                handleInput(m_playerId, EControllerActions_MenuOk, false, true, false, handled);
                 return;
             }
             SetFocusToBook(true);
@@ -625,27 +686,28 @@ void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int, int, int touc
         }
         return;
     }
-    if (touchBox == 3) ScrollPageLeft();
-    else if (touchBox == 4) ScrollPageRight();
+    if (touchBox == 3)
+        ScrollPageLeft();
+    else if (touchBox == 4)
+        ScrollPageRight();
 }
 
 void UIScene_WritableBookMenu::SetFocusToElement(int focus)
 {
-    if (focus < 2) SetFocusToBook(false);
+    if (static_cast<unsigned int>(focus) < 2)
+        SetFocusToBook(false);
     UIScene::SetFocusToElement(focus);
 }
 
 void UIScene_WritableBookMenu::handleDestroy()
 {
-    gConsoleUIController.TouchBoxesClear(this);
+    g_pInput->DestroyKeyboard();
 }
 
 void UIScene_WritableBookMenu::GetPageText()
 {
-    if (m_pages != 0 && m_currentPage >= 0 && m_currentPage < m_pages->size())
-        m_pageText = m_pages->getString(m_currentPage);
-    else
-        m_pageText.clear();
+    FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
+    m_pageText = menu->GetPageText(true);
 }
 
 void UIScene_WritableBookMenu::handleTimerComplete(int timerId)
@@ -656,6 +718,7 @@ void UIScene_WritableBookMenu::handleTimerComplete(int timerId)
         if (!FormatAndDisplayText(EFormatTextType_Keyboard))
         {
             GetPageText();
+            setCurrentPageText(m_pageText);
             m_caretPosition = static_cast<int>(m_pageText.size());
             FormatAndDisplayText(EFormatTextType_Display);
         }
@@ -667,19 +730,16 @@ void UIScene_WritableBookMenu::setCurrentPageText(std::wstring& text)
 {
     if (m_pages != 0 && m_currentPage >= 0 && m_currentPage < m_pages->size())
     {
-        if (m_pages->get(m_currentPage) != 0)
-        {
-            m_pages->set(m_currentPage, new StringTag(text));
-            m_textChanged = true;
-        }
+        static_cast<StringTag*>(m_pages->get(m_currentPage))->mData = text;
+        m_textChanged = true;
     }
 }
 
 std::wstring UIScene_WritableBookMenu::getCurrentPageText()
 {
     if (m_pages != 0 && m_currentPage >= 0 && m_currentPage < m_pages->size())
-        return m_pages->getString(m_currentPage);
-    return L"map/set<T> root";
+        return m_pages->get(m_currentPage)->toString();
+    return L"";
 }
 
 int UIScene_WritableBookMenu::getSceneType()

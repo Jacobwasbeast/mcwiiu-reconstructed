@@ -22,6 +22,8 @@
 class FlatLayerInfo;
 class SoundEvent;
 
+class LaunchMoreOptionsMenuInitData;
+
 class UIScene_SuperFlatMenu : public UIScene
 {
 public:
@@ -150,7 +152,7 @@ private:
     bool m_presetsFlag;
     SuperflatConfig* m_config;
     FlatGeneratorInfo m_generatorInfo;
-    void* m_initData;
+    LaunchMoreOptionsMenuInitData* m_initData;
 };
 
 template<class T>

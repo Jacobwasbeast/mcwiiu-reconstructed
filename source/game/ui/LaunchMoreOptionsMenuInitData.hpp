@@ -7,6 +7,7 @@
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 #include "game/core/SuperflatConfig.hpp"
+#include "game/ui/SuperflatMenu.hpp"
 #include "game/world/LevelRules.hpp"
 
 class LaunchMoreOptionsMenuInitData
@@ -23,6 +24,8 @@ public:
     friend class UIScene_BiomePreviewMenu;
     friend class UIScene_InGameSettingsListMenu;
     friend class UIScene_CreateWorldMenu;
+    friend class UIScene_SuperFlatMenu;
+    friend class SuperflatMenu::CustomSuperflatBlocks;
 
 private:
     bool mOnlineGame;
