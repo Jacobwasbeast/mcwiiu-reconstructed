@@ -3743,8 +3743,7 @@ boost::shared_ptr<Entity> Level::getEntity(int id)
 
 bool Level::isFullAABBBlock(const BlockPos& pos)
 {
-    const BlockState* state = getBlockState(pos);
-    const AABB* shape = state == NULL ? NULL : state->getBlock()->getShape(state, this, pos);
+    const AABB* shape = getBlockState(pos)->getClipAABB(this, pos);
     return shape != NULL && shape->getSize() >= 1.0;
 }
 
@@ -5351,7 +5350,7 @@ bool Level::mayPlace(Block* block, const BlockPos& pos, bool replaceable,
                      const Direction* direction, boost::shared_ptr<Entity> entity)
 {
     const BlockState* oldState = getBlockState(pos);
-    const AABB* shape = replaceable ? NULL : block->defaultBlockState()->getShape(this, pos);
+    const AABB* shape = replaceable ? NULL : block->defaultBlockState()->getClipAABB(this, pos);
     if (shape != NULL && !isUnobstructed(shape->move(pos), entity))
     {
         return false;
@@ -5678,7 +5677,7 @@ bool Level::isChunkPostPostProcessed(int x, int z)
     {
         return false;
     }
-    return chunk->isReady() || chunk->isTerrainPopulated();
+    return chunk->isEmpty() || chunk->isTerrainPopulated();
 }
 
 bool Level::isChunkFinalised(int x, int z)

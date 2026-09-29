@@ -6,7 +6,7 @@
 NormalDimension::NormalDimension()
     : Dimension()
 {
-    mXZSize = 63;
+    mSeaLevel = 63;
 }
 
 NormalDimension::~NormalDimension()
