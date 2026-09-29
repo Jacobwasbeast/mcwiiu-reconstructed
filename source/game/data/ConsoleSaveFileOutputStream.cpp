@@ -8,13 +8,13 @@ ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFi
     : m_saveFile(saveFile), m_fileEntry(NULL)
 {
     m_fileEntry = saveFile->createFile(path);
-    saveFile->writeFile(m_fileEntry, NULL, 0, NULL);
+    saveFile->setFilePointer(m_fileEntry, 0, NULL, 0);
 }
 
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
     : m_saveFile(saveFile), m_fileEntry(fileEntry)
 {
-    saveFile->writeFile(m_fileEntry, NULL, 0, NULL);
+    saveFile->setFilePointer(m_fileEntry, 0, NULL, 0);
 }
 
 ConsoleSaveFileOutputStream::~ConsoleSaveFileOutputStream()

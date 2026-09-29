@@ -1,10 +1,13 @@
 #include "game/data/StringTable.hpp"
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/util/Random.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 StringTable::StringTable() : m_isLanguageTable(false), m_localized(false), m_ownsData(false), m_strings(NULL), m_stringsById(NULL), m_data(NULL), m_dataLength(0)
@@ -278,46 +281,85 @@ unsigned long long StringTable::copyStringToTable(const std::wstring& key, Strin
 void StringTable::write(DataOutputStream* stream)
 {
     stream->writeInt(2);
-    stream->writeInt((int)m_languages.size());
+    stream->writeInt(static_cast<int>(m_languages.size()));
+    if ((m_strings == NULL || m_stringsById == NULL) && !m_languages.empty())
+    {
+        _LanguageData& first = m_languages.begin()->second;
+        m_strings = &first.strings;
+        m_stringsById = &first.stringsById;
+    }
 
     stream->writeBoolean(m_isLanguageTable);
     if (m_isLanguageTable)
     {
-        stream->writeInt((int)m_ids.size());
-        for (std::vector<int>::const_iterator id = m_ids.begin(); id != m_ids.end(); ++id)
-            stream->writeInt(*id);
+        stream->writeInt(static_cast<int>(m_stringsById->size()));
+        for (boost::unordered_map<int, std::wstring>::const_iterator item = m_stringsById->begin();
+             item != m_stringsById->end(); ++item)
+        {
+            stream->writeInt(item->first);
+        }
     }
     else
     {
-        stream->writeInt((int)m_keys.size());
-        for (std::vector<std::wstring>::const_iterator key = m_keys.begin(); key != m_keys.end(); ++key)
-            stream->writeUTF(*key);
+        stream->writeInt(static_cast<int>(m_strings->size()));
+        for (boost::unordered_map<std::wstring, std::wstring>::const_iterator item = m_strings->begin();
+             item != m_strings->end(); ++item)
+        {
+            stream->writeUTF(item->first);
+        }
     }
 
-    boost::unordered_map<std::wstring, _LanguageData>::iterator lang;
-    for (lang = m_languages.begin(); lang != m_languages.end(); ++lang)
+    boost::unordered_map<std::wstring, ByteArrayOutputStream*> languageStreams;
+    for (boost::unordered_map<std::wstring, _LanguageData>::iterator lang = m_languages.begin();
+         lang != m_languages.end(); ++lang)
     {
-        stream->writeUTF(lang->first);
+        ByteArrayOutputStream* bytes = new ByteArrayOutputStream();
+        DataOutputStream languageStream(bytes);
+        languageStream.writeInt(2);
+        languageStream.writeBoolean(m_isLanguageTable);
+        languageStream.writeUTF(lang->first);
         const _LanguageData& data = lang->second;
         if (m_isLanguageTable)
         {
-            stream->writeInt((int)data.stringsById.size());
+            languageStream.writeInt(static_cast<int>(data.stringsById.size()));
             for (boost::unordered_map<int, std::wstring>::const_iterator item = data.stringsById.begin();
                  item != data.stringsById.end(); ++item)
             {
-                stream->writeUTF(item->second);
+                languageStream.writeUTF(item->second);
             }
         }
         else
         {
-            stream->writeInt((int)data.strings.size());
+            languageStream.writeInt(static_cast<int>(data.strings.size()));
             for (boost::unordered_map<std::wstring, std::wstring>::const_iterator item = data.strings.begin();
                  item != data.strings.end(); ++item)
             {
-                stream->writeUTF(item->first);
-                stream->writeUTF(item->second);
+                languageStream.writeUTF(item->second);
             }
         }
+        languageStreams.insert(std::make_pair(lang->first, bytes));
+    }
+
+    std::vector<std::wstring> languageNames;
+    for (boost::unordered_map<std::wstring, _LanguageData>::iterator lang = m_languages.begin();
+         lang != m_languages.end(); ++lang)
+    {
+        languageNames.push_back(lang->first);
+    }
+    std::sort(languageNames.begin(), languageNames.end(), compareStrings);
+
+    for (std::vector<std::wstring>::iterator name = languageNames.begin(); name != languageNames.end(); ++name)
+    {
+        std::wstring language = *name;
+        stream->writeUTF(language);
+        stream->writeInt(languageStreams[language]->mCount);
+    }
+    for (std::vector<std::wstring>::iterator name = languageNames.begin(); name != languageNames.end(); ++name)
+    {
+        std::wstring language = *name;
+        ByteArrayOutputStream* bytes = languageStreams[language];
+        stream->write(arrayWithLength<unsigned char>(bytes->mBuffer.data, bytes->mCount));
+        delete bytes;
     }
 }
 

@@ -24,7 +24,6 @@ public:
     virtual bool isEmpty() const;
     virtual std::wstring getAsString();
 
-private:
     std::wstring mData;
 };
 

@@ -1,11 +1,13 @@
 #include "platform/wiiu/PlatformTiming.hpp"
 #include "platform/wiiu/CStorage.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/data/ConsoleSaveFileOriginal.hpp"
 
 #include <cstring>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Compression.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/core/FileHeader.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
@@ -151,7 +153,7 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
     finalizeWrite();
     unsigned int fileSize = mFileHeader.GetFileSize();
     unsigned int compressedSize = fileSize + 8;
-    unsigned char* compressedData = reinterpret_cast<unsigned char*>(
+    unsigned char* compressedData = static_cast<unsigned char*>(
         gStorage->AllocateSaveData(compressedSize));
     Compression* compression = Compression::getCompression();
 
@@ -167,7 +169,7 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
         QueryPerformanceCounter(&counter);
         PIXEndNamedEvent();
         compressedSize += 8;
-        compressedData = reinterpret_cast<unsigned char*>(
+        compressedData = static_cast<unsigned char*>(
             gStorage->AllocateSaveData(compressedSize));
     }
 
@@ -185,16 +187,17 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
         unsigned int zero = 0;
         std::memset(compressedData, 0, 8);
         std::memcpy(compressedData, &zero, sizeof(zero));
-        compressedData[4] = static_cast<unsigned char>(fileSize >> 24);
-        compressedData[5] = static_cast<unsigned char>(fileSize >> 16);
-        compressedData[6] = static_cast<unsigned char>(fileSize >> 8);
-        compressedData[7] = static_cast<unsigned char>(fileSize);
+        std::memcpy(compressedData + 4, &fileSize, sizeof(fileSize));
 
         unsigned char* image = NULL;
         unsigned int imageSize = 0;
         g_pApp->GetSaveThumbnail(&image, &imageSize);
         unsigned char thumbnail[0x200];
         unsigned int thumbnailSize = fjGetSaveThumbnailData(thumbnail, sizeof(thumbnail));
+        int saveUniqueNumber = 0;
+        gStorage->GetSaveUniqueNumber(&saveUniqueNumber);
+        telemetryManagerInstance->RecordLevelSaveOrCheckpoint(gProfile->GetPrimaryPad(), saveUniqueNumber,
+                                                              compressedSize + 8);
         gStorage->SetSaveImages(image, imageSize, NULL, 0, thumbnail, thumbnailSize);
         delete[] image;
         gStorage->SetSaveDataSize(compressedSize + 8);
