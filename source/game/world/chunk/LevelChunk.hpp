@@ -105,7 +105,6 @@ public:
     bool sectionContainsBlockId(int x, int y, int z, int blockId);
     int getExtraBlockId(int x, int y, int z);
     void getBlockAndExtraId(int x, int y, int z, int* blockId, int* extraBlockId);
-    unsigned int getData(int x, int y, int z);
     unsigned int getExtraBlockData(int x, int y, int z);
     unsigned short getElement(int x, int y, int z, bool* present);
     int getHighestSectionPosition();
@@ -184,6 +183,7 @@ public:
     void setElement(int x, int y, int z, unsigned short element);
     unsigned short getChunkBlockData(int x, int y, int z);
     virtual int getData(const BlockPos& pos);
+    unsigned int getData(int x, int y, int z);
     virtual bool setData(int x, int y, int z, int data, int dataMask, bool* maskedChange);
     virtual void setBlock(const BlockPos& pos, const BlockState* state);
     virtual void setExtraBlock(const BlockPos& pos, const BlockState* state);
@@ -294,10 +294,10 @@ private:
     BlockEntityMap mBlockEntityMap;
     std::vector<boost::shared_ptr<Entity> >** mEntitySections;
 protected:
-    unsigned short mChunkFlags;
+    short mChunkFlags;
 private:
     unsigned short mChunkFlagsPadding;
-    unsigned short* mServerChunkFlags;
+    short* mServerChunkFlags;
     bool mPostProcess;
     bool mLightPopulated;
     bool mUnsaved;

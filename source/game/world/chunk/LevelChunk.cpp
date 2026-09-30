@@ -2134,7 +2134,7 @@ void LevelChunk::postProcess()
 }
 void LevelChunk::flagPostProcessComplete(short value)
 {
-    mChunkFlags |= (unsigned short)value;
+    mChunkFlags |= value;
     if ((mChunkFlags & (TERRAIN_POPULATED_SELF | TERRAIN_POPULATED_WEST | TERRAIN_POPULATED_NORTH | TERRAIN_POPULATED_NORTH_WEST)) ==
         (TERRAIN_POPULATED_SELF | TERRAIN_POPULATED_WEST | TERRAIN_POPULATED_NORTH | TERRAIN_POPULATED_NORTH_WEST))
     {
