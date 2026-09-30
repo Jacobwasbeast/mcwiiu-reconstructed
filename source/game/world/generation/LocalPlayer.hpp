@@ -127,7 +127,7 @@ public:
     void sendOpenInventory();
     virtual void setPermissionLevel(int);
     virtual int openFireworks(int x, int y, int z);
-    unsigned int freeAtAndAbove(const BlockPos&);
+    bool freeAtAndAbove(const BlockPos&);
     unsigned int freeAt(const BlockPos&);
     bool checkInBlock(double, double, double);
     void setExperienceValues(float progress, int total, int level);

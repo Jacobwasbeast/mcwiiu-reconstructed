@@ -15,12 +15,9 @@ bool WaterlilyFeature::place(Level* level, Random& random, const BlockPos& origi
 {
     for (int attempt = 0; attempt < 10; ++attempt)
     {
-        const int xOffsetStart = random.nextInt(8);
-        const int x = origin.x + xOffsetStart - random.nextInt(8);
-        const int yOffsetStart = random.nextInt(4);
-        const int y = origin.y + yOffsetStart - random.nextInt(4);
-        const int zOffsetStart = random.nextInt(8);
-        const int z = origin.z + zOffsetStart - random.nextInt(8);
+        int x = origin.x + random.nextInt(8) - random.nextInt(8);
+        int y = origin.y + random.nextInt(4) - random.nextInt(4);
+        int z = origin.z + random.nextInt(8) - random.nextInt(8);
         if (level->isEmptyBlock(BlockPos(x, y, z))
             && Blocks::waterlily->mayPlace(level, BlockPos(x, y, z)))
         {

@@ -491,11 +491,15 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
 
 DoorBlock* VillagePieces::VillagePiece::biomeDoor()
 {
-    if (mType == 2)
+    switch (mType)
+    {
+    case 2:
         return static_cast<DoorBlock*>(Blocks::acacia_door);
-    if (mType == 3)
+    case 3:
         return static_cast<DoorBlock*>(Blocks::spruce_door);
-    return static_cast<DoorBlock*>(Blocks::wooden_door);
+    default:
+        return static_cast<DoorBlock*>(Blocks::wooden_door);
+    }
 }
 
 void VillagePieces::VillagePiece::createVillageDoor(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
@@ -530,20 +534,6 @@ void VillagePieces::VillagePiece::placeBlock(Level* level, Random& random, const
     StructurePiece::placeBlock(level, selector->getNext(), x, y, z, box);
 }
 
-VillagePieces::VillageRoadPiece::VillageRoadPiece()
-    : VillagePiece()
-{
-}
-
-VillagePieces::VillageRoadPiece::VillageRoadPiece(StartPiece* startPiece, int depth)
-    : VillagePiece(startPiece, depth)
-{
-}
-
-VillagePieces::VillageRoadPiece::~VillageRoadPiece()
-{
-}
-
 VillagePieces::Well::Well(StartPiece* startPiece, int depth, Random& random, int x, int z)
     : VillagePiece(startPiece, depth)
 {
@@ -553,10 +543,6 @@ VillagePieces::Well::Well(StartPiece* startPiece, int depth, Random& random, int
 
 VillagePieces::Well::Well()
     : VillagePiece()
-{
-}
-
-VillagePieces::Well::~Well()
 {
 }
 
@@ -692,10 +678,6 @@ VillagePieces::StraightRoad::StraightRoad(StartPiece* startPiece, int depth, Ran
     setOrientation(direction);
     mBoundingBox = box;
     mLength = Math::_max(box->getXSpan(), box->getZSpan());
-}
-
-VillagePieces::StraightRoad::~StraightRoad()
-{
 }
 
 bool VillagePieces::StraightRoad::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -869,10 +851,6 @@ VillagePieces::SimpleHouse::SimpleHouse(StartPiece* startPiece, int depth, Rando
     mBoundingBox = box;
 }
 
-VillagePieces::SimpleHouse::~SimpleHouse()
-{
-}
-
 StructurePiece* VillagePieces::SimpleHouse::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
                                                         Random& random, int x, int y, int z, const Direction* direction,
                                                         int depth)
@@ -1023,10 +1001,6 @@ VillagePieces::SmallTemple::SmallTemple(StartPiece* startPiece, int depth, Rando
     mBoundingBox = box;
 }
 
-VillagePieces::SmallTemple::~SmallTemple()
-{
-}
-
 StructurePiece* VillagePieces::SmallTemple::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
                                                         Random& random, int x, int y, int z, const Direction* direction,
                                                         int depth)
@@ -1164,10 +1138,6 @@ VillagePieces::BookHouse::BookHouse(StartPiece* startPiece, int depth, Random& r
 {
     setOrientation(direction);
     mBoundingBox = box;
-}
-
-VillagePieces::BookHouse::~BookHouse()
-{
 }
 
 StructurePiece* VillagePieces::BookHouse::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
@@ -1335,10 +1305,6 @@ VillagePieces::SmallHut::SmallHut(StartPiece* startPiece, int depth, Random& ran
     mTablePosition = random.nextInt(3);
 }
 
-VillagePieces::SmallHut::~SmallHut()
-{
-}
-
 StructurePiece* VillagePieces::SmallHut::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
                                                      Random& random, int x, int y, int z, const Direction* direction,
                                                      int depth)
@@ -1490,10 +1456,6 @@ VillagePieces::PigHouse::PigHouse(StartPiece* startPiece, int depth, Random& ran
     mBoundingBox = box;
 }
 
-VillagePieces::PigHouse::~PigHouse()
-{
-}
-
 StructurePiece* VillagePieces::PigHouse::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
                                                      Random& random, int x, int y, int z, const Direction* direction,
                                                      int depth)
@@ -1642,10 +1604,6 @@ VillagePieces::TwoRoomHouse::TwoRoomHouse(StartPiece* startPiece, int depth, Ran
 {
     setOrientation(direction);
     mBoundingBox = box;
-}
-
-VillagePieces::TwoRoomHouse::~TwoRoomHouse()
-{
 }
 
 StructurePiece* VillagePieces::TwoRoomHouse::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
@@ -1842,10 +1800,6 @@ VillagePieces::Smithy::Smithy(StartPiece* startPiece, int depth, Random& random,
     mBoundingBox = box;
 }
 
-VillagePieces::Smithy::~Smithy()
-{
-}
-
 StructurePiece* VillagePieces::Smithy::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
                                                    Random& random, int x, int y, int z, const Direction* direction,
                                                    int depth)
@@ -2004,10 +1958,6 @@ VillagePieces::Farmland::Farmland(StartPiece* startPiece, int depth, Random& ran
     mCropB = selectCrops(random);
 }
 
-VillagePieces::Farmland::~Farmland()
-{
-}
-
 Block* VillagePieces::Farmland::selectCrops(Random& random)
 {
     switch (random.nextInt(10))
@@ -2085,8 +2035,7 @@ bool VillagePieces::Farmland::postProcess(Level* level, Random& random, Bounding
     generateBox(level, box, 0, 1, 0, 6, 4, 8, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
                 false);
     const BlockState* farmland = Blocks::farmland->defaultBlockState();
-    BlockPos center(box->getCenter().x, box->getCenter().y, box->getCenter().z);
-    Biome* biome = level->getBiome(center);
+    Biome* biome = level->getBiome(BlockPos(box->getCenter().x, box->getCenter().y, box->getCenter().z));
     if (biome->isSnowCovered())
         farmland = Blocks::dirt->defaultBlockState();
     generateBox(level, box, 1, 0, 1, 2, 0, 7, farmland, farmland, false);
@@ -2136,9 +2085,9 @@ VillagePieces::DoubleFarmland::DoubleFarmland()
     : VillagePiece()
 {
     mCropA = NULL;
+    mCropB = NULL;
     mCropC = NULL;
     mCropD = NULL;
-    mCropB = NULL;
 }
 
 VillagePieces::DoubleFarmland::DoubleFarmland(StartPiece* startPiece, int depth, Random& random, BoundingBox* box,
@@ -2151,10 +2100,6 @@ VillagePieces::DoubleFarmland::DoubleFarmland(StartPiece* startPiece, int depth,
     mCropB = selectCrops(random);
     mCropC = selectCrops(random);
     mCropD = selectCrops(random);
-}
-
-VillagePieces::DoubleFarmland::~DoubleFarmland()
-{
 }
 
 Block* VillagePieces::DoubleFarmland::selectCrops(Random& random)
@@ -2247,8 +2192,7 @@ bool VillagePieces::DoubleFarmland::postProcess(Level* level, Random& random, Bo
     generateBox(level, box, 0, 1, 0, 12, 4, 8, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
                 false);
     const BlockState* farmland = Blocks::farmland->defaultBlockState();
-    BlockPos center(box->getCenter().x, box->getCenter().y, box->getCenter().z);
-    Biome* biome = level->getBiome(center);
+    Biome* biome = level->getBiome(BlockPos(box->getCenter().x, box->getCenter().y, box->getCenter().z));
     if (biome->isSnowCovered())
         farmland = Blocks::dirt->defaultBlockState();
     generateBox(level, box, 1, 0, 1, 2, 0, 7, farmland, farmland, false);
@@ -2318,10 +2262,6 @@ VillagePieces::LightPost::LightPost(StartPiece* startPiece, int depth, Random& r
     mBoundingBox = box;
 }
 
-VillagePieces::LightPost::~LightPost()
-{
-}
-
 BoundingBox* VillagePieces::LightPost::findPieceBox(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
                                                     Random& random, int x, int y, int z, const Direction* direction)
 {
@@ -2371,10 +2311,6 @@ VillagePieces::CobbleStoneSelector::CobbleStoneSelector(bool mossy, int type)
       mType(type)
 {
     mNext = Blocks::cobblestone->defaultBlockState();
-}
-
-VillagePieces::CobbleStoneSelector::~CobbleStoneSelector()
-{
 }
 
 void VillagePieces::CobbleStoneSelector::next(Random& random, int x, int y, int z, bool edge)

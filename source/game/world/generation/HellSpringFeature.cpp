@@ -24,10 +24,13 @@ bool HellSpringFeature::place(Level* level, Random& random, const BlockPos& orig
         return false;
     }
 
-    if (level->getBlockState(origin)->getBlock()->mMaterial != Material::AIR
-        && level->getBlockState(origin)->getBlock() != Blocks::netherrack)
+    if (level->getBlockState(origin)->getBlock()->mMaterial != Material::AIR)
     {
-        return false;
+        Block* block = level->getBlockState(origin)->getBlock();
+        if (block != Blocks::netherrack)
+        {
+            return false;
+        }
     }
 
     int rockSides = 0;

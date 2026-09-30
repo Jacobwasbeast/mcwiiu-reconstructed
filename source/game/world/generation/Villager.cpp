@@ -95,7 +95,7 @@ Villager::PriceRange::PriceRange(int min, int max)
 
 int Villager::PriceRange::getValue(Random* random)
 {
-    if (mMax <= mMin)
+    if (mMin >= mMax)
     {
         return mMin;
     }
@@ -962,7 +962,9 @@ bool Villager::hasExcessFood()
 
 bool Villager::wantsMoreFood()
 {
-    if (getProfession() == 0)
+    bool farmer = getProfession() == 0;
+
+    if (farmer)
     {
         return !countFood(5);
     }
@@ -1475,21 +1477,20 @@ void Villager::addParticlesAroundSelf(const ParticleType* particle)
 
 void Villager::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == EntityEvent::LOVE_HEARTS)
+    switch (event)
     {
+    case EntityEvent::LOVE_HEARTS:
         addParticlesAroundSelf(PARTICLE_HEART);
-    }
-    else if (event == EntityEvent::VILLAGER_ANGRY)
-    {
+        break;
+    case EntityEvent::VILLAGER_ANGRY:
         addParticlesAroundSelf(PARTICLE_ANGRY_VILLAGER);
-    }
-    else if (event == EntityEvent::VILLAGER_HAPPY)
-    {
+        break;
+    case EntityEvent::VILLAGER_HAPPY:
         addParticlesAroundSelf(PARTICLE_HAPPY_VILLAGER);
-    }
-    else
-    {
+        break;
+    default:
         Mob::handleEntityEvent(event, data);
+        break;
     }
 }
 

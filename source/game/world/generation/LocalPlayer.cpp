@@ -227,6 +227,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dim
 
 LocalPlayer::~LocalPlayer()
 {
+    delete mInput;
 }
 
 bool LocalPlayer::hasPermission(EGameCommand command)
@@ -236,7 +237,7 @@ bool LocalPlayer::hasPermission(EGameCommand command)
 
 BlockPos LocalPlayer::getCommandSenderBlockPosition()
 {
-    return BlockPos(this);
+    return BlockPos(mX + 0.5, mY + 0.5, mZ + 0.5);
 }
 
 bool LocalPlayer::hurt(const DamageSource* source, float damage)
@@ -331,7 +332,7 @@ void LocalPlayer::tick()
 
 Vec3* LocalPlayer::getViewVector(float partialTick)
 {
-    return Player::getViewVector(partialTick);
+    return calculateViewVector(mXRot, mYRot);
 }
 
 bool LocalPlayer::isInWall()
@@ -1062,16 +1063,16 @@ MobEffectInstance* LocalPlayer::removeEffectNoUpdate(MobEffect* effect)
 {
     if (effect == MobEffects::CONFUSION)
     {
-        mPortalEffectIntensity = 0.0f;
         mPortalEffectIntensityO = 0.0f;
+        mPortalEffectIntensity = 0.0f;
     }
     return LivingEntity::removeEffectNoUpdate(effect);
 }
 
 void LocalPlayer::move(MoverType type, double xa, double ya, double za, bool collide)
 {
-    double zOld = mZ;
     double xOld = mX;
+    double zOld = mZ;
     Entity::move(type, xa, ya, za, collide);
     updateAutoJump(static_cast<float>(mX - xOld), static_cast<float>(mZ - zOld));
 }
@@ -1288,10 +1289,12 @@ unsigned int LocalPlayer::GetThirdPersonView(bool firstPerson)
     if (IsSpectatingOtherPlayer() && !firstPerson) {
         return 1;
     }
-    if (mDRCTouching && isAlive()) {
-        return 2;
+    if (mDRCTouching) {
+        if (isAlive()) {
+            return 2;
+        }
     }
-    return static_cast<unsigned int>(mThirdPersonView);
+    return mThirdPersonView;
 }
 
 void LocalPlayer::SetThirdPersonView(int view)
@@ -1359,7 +1362,9 @@ void LocalPlayer::SpectatePlayerPrev()
 void LocalPlayer::StopSpectatingPlayer()
 {
     ClientMasterGameMode* masterGameMode = mMinecraft->GetClientMasterGameMode();
-    if (!IsSpectatingOtherPlayer() || masterGameMode->IsRoundEnding())
+    if (!IsSpectatingOtherPlayer())
+        return;
+    if (masterGameMode->IsRoundEnding())
         return;
 
     GetLocalGameMode()->Follow(false, false);
@@ -1370,7 +1375,7 @@ void LocalPlayer::StopSpectatingPlayer()
 
 const GameType* LocalPlayer::GetGameType()
 {
-    MultiPlayerGameMode* gameMode = GetLocalGameMode();
+    GameMode* gameMode = GetGameMode();
     return gameMode == 0 ? 0 : gameMode->GetGameType();
 }
 
@@ -1943,7 +1948,6 @@ void LocalPlayer::ResetPercentageTraversed()
 
 void LocalPlayer::heal(float amount)
 {
-    Player::heal(amount);
 }
 
 bool LocalPlayer::isInvisible()
@@ -2231,7 +2235,8 @@ void LocalPlayer::updateDamageIndicator(float x, float z, bool allDirections)
         mDamageIndicatorAllDirections = true;
         return;
     }
-    mDamageIndicatorSegments[getIndicatorSegment(x, z)] = true;
+    int segment = getIndicatorSegment(x, z);
+    mDamageIndicatorSegments[segment] = true;
 }
 
 double LocalPlayer::getJumpRidingScale()
@@ -2265,19 +2270,19 @@ void LocalPlayer::setPermissionLevel(int level)
     mPermissionLevel = level;
 }
 
-unsigned int LocalPlayer::freeAtAndAbove(const BlockPos& pos)
+bool LocalPlayer::freeAtAndAbove(const BlockPos& pos)
 {
     const BlockState* state = mLevel->getBlockState(pos);
     const BlockState* aboveState = mLevel->getBlockState(pos.above());
-    bool freeAtPos = !state->isSolidRender();
-    bool freeAbove = !aboveState->isSolidRender();
+    bool freeAtPos = !state->isSolidBlockingCubeAndNotSignalSource();
+    bool freeAbove = !aboveState->isSolidBlockingCubeAndNotSignalSource();
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        if (!freeAtPos)
-            freeAtPos = !g_pApp->ShouldCollideWith(state->getBlock());
-        if (!freeAbove)
-            freeAbove = !g_pApp->ShouldCollideWith(aboveState->getBlock());
+        if (!freeAtPos && !gApp.ShouldCollideWith(state->getBlock()))
+            freeAtPos = true;
+        if (!freeAbove && !gApp.ShouldCollideWith(aboveState->getBlock()))
+            freeAbove = true;
     }
 
     return freeAtPos && freeAbove;
@@ -2300,48 +2305,47 @@ bool LocalPlayer::checkInBlock(double x, double y, double z)
     if (!mNoPhysics)
     {
         BlockPos pos(x, y, z);
-        x -= pos.x;
-        z -= pos.z;
+        double dx = x - pos.x;
+        double dz = z - pos.z;
+        double height = std::fabs(mBoundingBox->mMinY - mBoundingBox->mMaxY);
         unsigned int free;
-        if (std::fabs(mBoundingBox->mMinY - mBoundingBox->mMaxY) <= 1.0)
-            free = freeAt(pos);
-        else
+        if (height > 1.0)
             free = freeAtAndAbove(pos);
+        else
+            free = freeAt(pos);
         if (!free)
         {
             int direction = -1;
             double best = 9999.0;
-            if (freeAtAndAbove(pos.west()) && x < best)
+            if (freeAtAndAbove(pos.west()) && dx < best)
             {
+                best = dx;
                 direction = 0;
-                best = x;
             }
-            if (freeAtAndAbove(pos.east()) && (1.0 - x) < best)
+            if (freeAtAndAbove(pos.east()) && 1.0 - dx < best)
             {
+                best = 1.0 - dx;
                 direction = 1;
-                best = 1.0 - x;
             }
-            if (freeAtAndAbove(pos.north()) && z < best)
+            if (freeAtAndAbove(pos.north()) && dz < best)
             {
+                best = dz;
                 direction = 4;
-                best = z;
             }
-            if (freeAtAndAbove(pos.south()) && best > 1.0 - z)
+            if (freeAtAndAbove(pos.south()) && 1.0 - dz < best)
             {
-                mZd = 0.1f;
+                best = 1.0 - dz;
+                direction = 5;
             }
-            else if (direction == 0)
-            {
-                mXd = -0.1f;
-            }
-            else if (direction == 1)
-            {
-                mXd = 0.1f;
-            }
-            else if (direction == 4)
-            {
-                mZd = -0.1f;
-            }
+            float speed = 0.1f;
+            if (direction == 0)
+                mXd = -speed;
+            if (direction == 1)
+                mXd = speed;
+            if (direction == 4)
+                mZd = -speed;
+            if (direction == 5)
+                mZd = speed;
         }
     }
     return false;
@@ -2585,7 +2589,7 @@ double LocalPlayer::getDamageTaken()
 
 bool LocalPlayer::isSolidBlock(int x, int y, int z)
 {
-    return mLevel->getBlockState(BlockPos(x, y, z))->isSolid();
+    return mLevel->getBlockState(BlockPos(x, y, z))->isSolidBlockingCube();
 }
 
 not_null_ptr<ItemInstance> LocalPlayer::getCarriedItem()
