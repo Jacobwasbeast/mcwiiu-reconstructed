@@ -28,10 +28,10 @@ void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x + 0.5F, (float)y + 0.75F, (float)z + 0.5F);
 
-    float time = (float)enchantmentTable->mTickCount + a;
+    float time = (float)enchantmentTable->mTime + a;
     GlStateManager::translatef(0.0F, sinf(time * 0.1F) * 0.01F + 0.1F, 0.0F);
 
-    float rotation = enchantmentTable->mBookSpread - enchantmentTable->mBookSpreadOld;
+    float rotation = enchantmentTable->mRot - enchantmentTable->mRotOld;
     while (rotation >= 3.1415927F)
     {
         rotation -= 6.2831855F;
@@ -41,12 +41,12 @@ void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
         rotation += 6.2831855F;
     }
 
-    GlStateManager::rotatef(-(enchantmentTable->mBookSpreadOld + rotation * a) * 57.295776F, 0.0F, 1.0F, 0.0F);
+    GlStateManager::rotatef(-(enchantmentTable->mRotOld + rotation * a) * 57.295776F, 0.0F, 1.0F, 0.0F);
     GlStateManager::rotatef(80.0F, 0.0F, 0.0F, 1.0F);
     bindTexture(&BOOK_TEXTURE);
 
-    float page1 = enchantmentTable->mBookRotationOld + (enchantmentTable->mBookRotation - enchantmentTable->mBookRotationOld) * a + 0.25F;
-    float page2 = enchantmentTable->mBookRotationOld + (enchantmentTable->mBookRotation - enchantmentTable->mBookRotationOld) * a + 0.75F;
+    float page1 = enchantmentTable->mFlipOld + (enchantmentTable->mFlip - enchantmentTable->mFlipOld) * a + 0.25F;
+    float page2 = enchantmentTable->mFlipOld + (enchantmentTable->mFlip - enchantmentTable->mFlipOld) * a + 0.75F;
     page1 = (page1 - (float)Mth::fastFloor((double)page1)) * 1.6F - 0.3F;
     page2 = (page2 - (float)Mth::fastFloor((double)page2)) * 1.6F - 0.3F;
     if (page1 < 0.0F)
@@ -66,7 +66,7 @@ void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
         page2 = 1.0F;
     }
 
-    float open = enchantmentTable->mBookOpenOld + (enchantmentTable->mBookOpen - enchantmentTable->mBookOpenOld) * a;
+    float open = enchantmentTable->mOpenOld + (enchantmentTable->mOpen - enchantmentTable->mOpenOld) * a;
     boost::shared_ptr<Entity> entity;
     GlStateManager::enableCull();
     mBookModel->render(entity, time, page1, page2, open, 0.0F, 0.0625F, true);
