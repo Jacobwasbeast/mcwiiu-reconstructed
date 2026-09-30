@@ -243,7 +243,7 @@ public:
     uint32_t GetGameHostOption(eGameHostOption option);
     uint32_t GetOptionsCallbackStatus(int32_t player);
     void UpdateTime();
-    uint8_t GetLocalPlayerCount();
+    int GetLocalPlayerCount();
     void loadMediaArchive();
     arrayWithLength<unsigned char> getArchiveFile(const std::wstring& path, bool ignoreTexturePack);
     bool hasArchiveFile(const std::wstring& path, bool ignoreTexturePack);
@@ -388,7 +388,7 @@ public:
     std::wstring GetVKReplacement(int32_t pad, uint32_t key, bool small);
     std::wstring GetIconReplacement(uint32_t icon);
     std::wstring FormatHTMLString(int player, const std::wstring& value, int flags);
-    double getAppTime();
+    float getAppTime();
     void AddTerrainFeaturePosition(_eTerrainFeatureType type, int x, int z);
     uint32_t GetTerrainFeaturePosition(_eTerrainFeatureType type, int* x, int* z);
     MOJJANG_DATA* GetMojangDataForXuid(PlayerUID uid);

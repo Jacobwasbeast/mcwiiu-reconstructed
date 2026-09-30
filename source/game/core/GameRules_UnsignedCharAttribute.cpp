@@ -4,6 +4,7 @@
 #include "game/util/StringUtils.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/core/StringFormat.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <string>
 
@@ -29,7 +30,7 @@ void GameRules_UnsignedCharAttribute::setValue(const std::wstring& value)
 
 void GameRules_UnsignedCharAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
 {
-    saveInterface->saveAttribute(attribute, toString(*mValue));
+    saveInterface->saveAttribute(attribute, _toString(*mValue));
 }
 
 void GameRules_UnsignedCharAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)

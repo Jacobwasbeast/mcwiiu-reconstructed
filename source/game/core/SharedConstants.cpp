@@ -15,14 +15,14 @@ void SharedConstants::staticCtor()
 
     IS_HALLOWEEN = Calendar::GetMonth() == 10 && Calendar::GetDayOfMonth() == 31;
 
-    IS_HALLOWEEN_SEASON = (Calendar::GetMonth() == 10 && Calendar::GetDayOfMonth() >= 20)
-        || (Calendar::GetMonth() == 11 && Calendar::GetDayOfMonth() <= 3);
+    IS_HALLOWEEN_SEASON = (Calendar::GetMonth() == 10 && Calendar::GetDayOfMonth() >= 20u)
+        || (Calendar::GetMonth() == 11 && Calendar::GetDayOfMonth() <= 3u);
 
-    IS_CHRISTMAS = (Calendar::GetMonth() == 12 && Calendar::GetDayOfMonth() >= 24)
-        || (Calendar::GetMonth() == 1 && Calendar::GetDayOfMonth() <= 1);
+    IS_CHRISTMAS = (Calendar::GetMonth() == 12 && Calendar::GetDayOfMonth() >= 24u)
+        || (Calendar::GetMonth() == 1 && Calendar::GetDayOfMonth() <= 1u);
 
-    IS_CHRISTMAS_SEASON = (Calendar::GetMonth() == 12 && Calendar::GetDayOfMonth() >= 17)
-        && (Calendar::GetMonth() == 12 && Calendar::GetDayOfMonth() <= 23);
+    IS_CHRISTMAS_SEASON = (Calendar::GetMonth() == 12 && Calendar::GetDayOfMonth() >= 17u)
+        && (Calendar::GetMonth() == 12 && Calendar::GetDayOfMonth() <= 23u);
 }
 
 bool SharedConstants::isAllowedChatCharacter(char character)

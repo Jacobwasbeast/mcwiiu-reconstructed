@@ -40,14 +40,13 @@ int ProcedureCompoundTask::getDescriptionId()
         TutorialTask* task = *it;
         if (!task->isCompleted())
         {
-            if (task->hasBeenActivated())
-            {
-                completed = true;
-                return -1;
-            }
-
             task->setAsCurrentTask(true);
             return task->getDescriptionId();
+        }
+        if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
+        {
+            completed = true;
+            break;
         }
     }
 
@@ -76,31 +75,26 @@ int ProcedureCompoundTask::getPromptId()
 bool ProcedureCompoundTask::isCompleted()
 {
     bool result = true;
-    bool currentTask = true;
 
     for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
     {
         TutorialTask* task = *it;
-        if (!currentTask)
+        if (!result)
         {
             task->setAsCurrentTask(false);
+            continue;
         }
-        else if (result)
+        if (!task->isCompleted())
         {
-            if (!task->isCompleted())
-            {
-                task->setAsCurrentTask(true);
-                result = false;
-                currentTask = false;
-            }
-            else if (task->hasBeenActivated())
-            {
-                currentTask = true;
-            }
+            task->setAsCurrentTask(true);
+            result = false;
+            continue;
         }
+        if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
+            break;
     }
 
-    if (!result)
+    if (result)
     {
         for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
         {

@@ -540,11 +540,11 @@ void CMinecraftApp::UpdateTime()
     mFrameTime = mPerformanceCounterScale * elapsed;
     mAppTime = mPerformanceCounterScale * mAccumulatedPerformanceCounter;
 }
-uint8_t CMinecraftApp::GetLocalPlayerCount()
+int CMinecraftApp::GetLocalPlayerCount()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft == 0) return 0;
-    uint8_t count = 0;
+    int count = 0;
     for (int index = 0; index < 4; ++index)
         if (minecraft->GetPlayerByPlayerIndex(index)) ++count;
     return count;
@@ -3089,7 +3089,7 @@ std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& val
         result = replaceAll(result, L"&nbsp;", L"");
     return result;
 }
-double CMinecraftApp::getAppTime()
+float CMinecraftApp::getAppTime()
 {
     return mAppTime;
 }

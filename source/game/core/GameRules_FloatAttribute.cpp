@@ -4,6 +4,7 @@
 #include "game/util/StringUtils.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/core/StringFormat.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <algorithm>
 #include <string>
@@ -13,12 +14,12 @@ template<typename T>
 T fromString(const std::wstring& text);
 
 GameRules_FloatAttribute::GameRules_FloatAttribute(float* value)
-    : mValue(value),
-      mMin(0.0f),
-      mMax(0.0f)
+    : mValue(value)
 {
     mHasMin = false;
     mHasMax = false;
+    mMin = 0.0f;
+    mMax = 0.0f;
 }
 
 GameRules_FloatAttribute::~GameRules_FloatAttribute()
@@ -44,7 +45,7 @@ void GameRules_FloatAttribute::setValue(const std::wstring& value)
 
 void GameRules_FloatAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
 {
-    saveInterface->saveAttribute(attribute, toString(*mValue));
+    saveInterface->saveAttribute(attribute, _toString(*mValue));
 }
 
 void GameRules_FloatAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)

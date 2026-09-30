@@ -13,7 +13,7 @@ public:
     FloatBuffer(unsigned int capacity, float* data);
     virtual ~FloatBuffer();
     virtual FloatBuffer* flip();
-    void put(float value);
+    FloatBuffer* put(float value);
     void put(int index, float value);
     FloatBuffer* put(arrayWithLength<float> values);
     void get(arrayWithLength<float>* values);

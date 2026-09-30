@@ -28,9 +28,10 @@ FloatBuffer* FloatBuffer::flip()
     return this;
 }
 
-void FloatBuffer::put(float value)
+FloatBuffer* FloatBuffer::put(float value)
 {
     mBuffer[mPosition++] = value;
+    return this;
 }
 
 void FloatBuffer::put(int index, float value)

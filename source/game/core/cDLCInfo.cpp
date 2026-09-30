@@ -101,8 +101,9 @@ void cDLCInfo::DLC_RetrieveImageData(char* pBannerName, void** ppImageData, unsi
     DLC_INFO* pDLCInfo = this->GetDLCInfoFromBanner(pBannerName);
     if (pDLCInfo != NULL && pDLCInfo->ImageSize != 0)
     {
+        void* pImageData = pDLCInfo->pImageData;
         *pImageSize = pDLCInfo->ImageSize;
-        *ppImageData = pDLCInfo->pImageData;
+        *ppImageData = pImageData;
         *pbFreeImageData = false;
     }
 }

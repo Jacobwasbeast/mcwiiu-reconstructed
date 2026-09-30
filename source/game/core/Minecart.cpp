@@ -752,15 +752,15 @@ void Minecart::applyNaturalSlowdown()
 {
     if (isVehicle())
     {
-        mXd *= 0.997;
+        mXd *= 0.997f;
         mYd *= 0.0;
-        mZd *= 0.997;
+        mZd *= 0.997f;
     }
     else
     {
-        mXd *= 0.96;
+        mXd *= 0.96f;
         mYd *= 0.0;
-        mZd *= 0.96;
+        mZd *= 0.96f;
     }
 }
 
