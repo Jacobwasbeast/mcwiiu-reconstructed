@@ -22,8 +22,8 @@ std::size_t Voteable::KeyHasher::operator()(const std::pair<int, int>& key) cons
     return first ^ (second + static_cast<std::size_t>(0x9e3779b9u) + (first << 6) + (first >> 2));
 }
 
-Voteable::Voteable(int voteableId, bool allowMultipleVotes, bool included)
-    : mVoteableId(voteableId), mAllowMultipleVotes(allowMultipleVotes), mIncluded(included), mVotes()
+Voteable::Voteable(int voteableId, bool isServer, bool oneVotePerPlayer)
+    : mVoteableId(voteableId), mIsServer(isServer), mOneVotePerPlayer(oneVotePerPlayer), mVotes()
 {
 }
 
@@ -106,7 +106,7 @@ void Voteable::setVote(int playerId, int voteableId, char vote)
         mVotes.erase(key);
         return;
     }
-    if (mIncluded) {
+    if (mOneVotePerPlayer) {
         int previousVoteable = 0;
         if (getOnlyVote(playerId, &previousVoteable) && previousVoteable != voteableId) mVotes.erase(getKey(playerId, previousVoteable));
     }
@@ -119,7 +119,7 @@ void Voteable::setVoteAndSync(int playerId, int voteableId, char vote)
     if (previousVote == static_cast<int>(vote)) return;
     setVote(playerId, voteableId, vote);
     boost::shared_ptr<VotePacket> packet = boost::make_shared<VotePacket>(mVoteableId, vote, playerId, voteableId);
-    if (mAllowMultipleVotes) {
+    if (mIsServer) {
         gMinecraftServer->getPlayers()->broadcastAll(packet);
     } else {
         Minecraft::GetInstance()->mPlayer->mPacketListener->send(packet);
@@ -146,7 +146,7 @@ void Voteable::setIncludedVotesAndSync(int playerId, int voteableId, char vote)
 
 void Voteable::syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player) const
 {
-    if (!mAllowMultipleVotes) return;
+    if (!mIsServer) return;
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
         player->mConnection->send(boost::make_shared<VotePacket>(mVoteableId, it->second, it->first.first, it->first.second));
     }

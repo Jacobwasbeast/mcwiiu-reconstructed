@@ -19,7 +19,7 @@ public:
         std::size_t operator()(const std::pair<int, int>& key) const;
     };
 
-    Voteable(int voteableId, bool allowMultipleVotes, bool included);
+    Voteable(int voteableId, bool isServer, bool oneVotePerPlayer);
     ~Voteable();
     std::map<int, int> getVotesFromPlayer(int playerId) const;
     std::map<int, int> getVotesToVoteable(int voteableId) const;
@@ -41,8 +41,8 @@ public:
 private:
     friend class Voteables;
     int mVoteableId;
-    bool mAllowMultipleVotes;
-    bool mIncluded;
+    bool mIsServer;
+    bool mOneVotePerPlayer;
     boost::unordered_map<std::pair<int, int>, char, KeyHasher> mVotes;
 };
 

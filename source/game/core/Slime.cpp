@@ -212,7 +212,9 @@ void Slime::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     {
         int size = getSize();
         float f = 0.51f * (float)size;
-        Entity::setSize(f, f);
+        setSize(f, f);
+        mYRot = mYHeadRot;
+        mYBodyRot = mYHeadRot;
         if (isInWater() && mRandom->nextInt(20) == 0)
             doWaterSplashEffect();
     }

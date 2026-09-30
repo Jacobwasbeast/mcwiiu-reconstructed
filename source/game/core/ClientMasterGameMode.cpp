@@ -1048,7 +1048,10 @@ void ClientMasterGameMode::queueTransition(GameModeTransitionParams* transition)
         {
             boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
             if (localPlayer != NULL)
+            {
                 localPlayer->clientSideCloseContainer();
+                localPlayer->mHasOpenedInventory = false;
+            }
         }
     }
 

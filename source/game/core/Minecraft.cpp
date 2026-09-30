@@ -1,5 +1,6 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/ui/DeathScreen.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 
@@ -2685,6 +2686,7 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
     if (!mLevel->mIsClientSide)
         prepareLevel((int)IDS_PROGRESS_RESPAWNING);
 
+    mPlayer->mHasOpenedInventory = true;
     if (gConsoleUIController.IsSceneInStack(playerIdx, EUIScene_ConnectingProgress) ||
         gApp.GetXuiAction(playerIdx) == eXuiAction_RespawnProgress)
     {
@@ -2699,9 +2701,10 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
         }
     }
 
-    newPlayer->SetWaitingForScoreboard(oldPlayer->IsWaitingForScoreboard());
+    mPlayer->mLastPoints = oldPlayer->mLastPoints;
+    mPlayer->SetWaitingForScoreboard(oldPlayer->IsWaitingForScoreboard());
 
-    if (mScreen != NULL)
+    if (dynamic_cast<DeathScreen*>(mScreen) != NULL)
         setScreen(NULL);
 
     mGameRenderer->EnableUpdateThread(6);

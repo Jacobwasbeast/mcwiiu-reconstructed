@@ -196,7 +196,7 @@ void Explosion::explode()
                 {
                     BlockPos rayBlockPos(rayPosX, rayPosY, rayPosZ);
 
-                    if (!mBreaksBlocksUnderwater && mLevel->getLiquidBlockState(rayBlockPos)->getMaterial() == Material::WATER)
+                    if (!mBreaksBlocksUnderwater && mLevel->getExtraBlockState(pos)->getMaterial() == Material::WATER)
                     {
                         power = 0.0f;
                     }
