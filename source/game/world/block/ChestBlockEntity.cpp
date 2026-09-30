@@ -463,6 +463,7 @@ bool ChestBlockEntity::triggerEvent(int id, int param)
     if (id == 1)
     {
         mOpenCount = param;
+        mRefilledAnimationTicks = -1;
         return true;
     }
     return BlockEntity::triggerEvent(id, param);

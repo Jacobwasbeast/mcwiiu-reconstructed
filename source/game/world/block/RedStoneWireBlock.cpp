@@ -690,6 +690,7 @@ void RedStoneWireBlock::registerIcons(IconRegister* iconRegister)
     mLineIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireLineSuffix);
     mCrossOverlayIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireCrossOverlaySuffix);
     mLineOverlayIcon = iconRegister->registerIcon(getIconName() + gRedStoneWireLineOverlaySuffix);
+    mIcon = mCrossIcon;
 }
 
 TextureAtlasSprite* RedStoneWireBlock::getTexture(const std::wstring& name)
