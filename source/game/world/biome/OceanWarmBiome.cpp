@@ -43,10 +43,6 @@ OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
     mDecorator->seagrassPerChunk = 12;
 }
 
-OceanWarmBiome::~OceanWarmBiome()
-{
-}
-
 float OceanWarmBiome::getCreatureProbability()
 {
     return 0.1F;

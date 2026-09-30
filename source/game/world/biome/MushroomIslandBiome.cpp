@@ -30,10 +30,6 @@ MushroomIslandBiome::MushroomIslandBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mMushroomCows.push_back(new MobSpawnerData(8, EntityType::MUSHROOM_COW, 4, 8));
 }
 
-MushroomIslandBiome::~MushroomIslandBiome()
-{
-}
-
 Biome::EBiomeBaseClass MushroomIslandBiome::getBaseClass()
 {
     return eBiomeBaseClass_MushroomIsland;

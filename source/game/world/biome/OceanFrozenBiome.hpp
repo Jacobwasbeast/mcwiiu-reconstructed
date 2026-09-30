@@ -10,7 +10,6 @@ class OceanFrozenBiome : public Biome
 {
 public:
     OceanFrozenBiome(EBiomeIDs id, bool deep, BiomeProperties* properties);
-    virtual ~OceanFrozenBiome();
 
     virtual float getCreatureProbability();
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);

@@ -41,10 +41,6 @@ JungleBiome::JungleBiome(EBiomeIDs biomeId, bool isEdge, BiomeProperties* proper
     mCreatures.push_back(new MobSpawnerData(10, EntityType::CHICKEN, 4, 4));
 }
 
-JungleBiome::~JungleBiome()
-{
-}
-
 void JungleBiome::staticCtor()
 {
     TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::JUNGLE);

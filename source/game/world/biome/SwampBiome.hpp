@@ -12,7 +12,6 @@ class SwampBiome : public Biome
 {
 public:
     SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~SwampBiome();
     virtual AbstractTreeFeature* getTreeFeature(Random& random);
     virtual FlowerBlock::Flower* getRandomFlower(Random& random, const BlockPos& pos);
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);

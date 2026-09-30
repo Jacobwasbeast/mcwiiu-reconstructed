@@ -7,7 +7,6 @@ class HellBiome : public Biome
 {
 public:
     HellBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~HellBiome();
 
     virtual Vec3* getFogColor(float celestialAngle, float partialTicks) const;
     virtual bool isFoggy();

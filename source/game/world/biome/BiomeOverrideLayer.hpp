@@ -8,7 +8,6 @@ class BiomeOverrideLayer : public Layer
 {
 public:
     BiomeOverrideLayer(int size);
-    virtual ~BiomeOverrideLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 

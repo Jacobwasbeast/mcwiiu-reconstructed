@@ -27,10 +27,6 @@ TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator = new TheEndBiomeDecorator();
 }
 
-TheEndBiome::~TheEndBiome()
-{
-}
-
 unsigned int TheEndBiome::getSkyColor(float temperature)
 {
     return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Sky_Sky);

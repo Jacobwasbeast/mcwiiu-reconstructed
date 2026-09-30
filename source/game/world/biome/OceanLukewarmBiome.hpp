@@ -7,7 +7,6 @@ class OceanLukewarmBiome : public Biome
 {
 public:
     OceanLukewarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties);
-    virtual ~OceanLukewarmBiome();
     virtual float getCreatureProbability();
     virtual EBiomeBaseClass getBaseClass();
     virtual TemperatureCategory getTemperatureCategory() const;

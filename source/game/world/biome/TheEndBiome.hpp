@@ -7,7 +7,6 @@ class TheEndBiome : public Biome
 {
 public:
     TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~TheEndBiome();
 
     virtual unsigned int getSkyColor(float temperature);
     virtual Vec3* getFogColor(float celestialAngle, float partialTicks) const;

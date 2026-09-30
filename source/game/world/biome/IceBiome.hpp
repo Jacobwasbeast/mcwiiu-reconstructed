@@ -10,7 +10,6 @@ class IceBiome : public Biome
 {
 public:
     IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* properties);
-    virtual ~IceBiome();
 
     virtual float getCreatureProbability();
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);

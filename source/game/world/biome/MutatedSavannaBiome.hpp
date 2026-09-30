@@ -7,7 +7,6 @@ class MutatedSavannaBiome : public SavannaBiome
 {
 public:
     MutatedSavannaBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~MutatedSavannaBiome();
 
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);
     virtual void buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise);

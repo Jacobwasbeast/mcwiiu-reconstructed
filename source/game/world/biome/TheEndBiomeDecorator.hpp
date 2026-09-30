@@ -14,7 +14,6 @@ class TheEndBiomeDecorator : public BiomeDecorator
 {
 public:
     TheEndBiomeDecorator();
-    virtual ~TheEndBiomeDecorator();
     virtual void decorate(Biome* biome, Level* level, Random* random);
     static arrayWithLength<SpikeFeature::EndSpike> getSpikesForLevel(Level* level);
 

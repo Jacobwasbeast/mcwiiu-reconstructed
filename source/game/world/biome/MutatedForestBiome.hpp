@@ -12,7 +12,6 @@ class MutatedForestBiome : public ForestBiome
 {
 public:
     MutatedForestBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~MutatedForestBiome();
 
     virtual AbstractTreeFeature* getTreeFeature(Random& random);
 };

@@ -15,7 +15,6 @@ class FixedBiomeSource : public BiomeSource
 public:
     FixedBiomeSource(Biome* biome, float rainfall);
 
-    virtual ~FixedBiomeSource();
 
     virtual Biome* getBiome(const BlockPos& pos);
     virtual void getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const;

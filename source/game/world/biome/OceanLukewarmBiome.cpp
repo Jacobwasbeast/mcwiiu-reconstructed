@@ -30,10 +30,6 @@ OceanLukewarmBiome::OceanLukewarmBiome(EBiomeIDs biomeId, bool deep, BiomeProper
     mOceanRuinConfig.enabled = true;
 }
 
-OceanLukewarmBiome::~OceanLukewarmBiome()
-{
-}
-
 float OceanLukewarmBiome::getCreatureProbability()
 {
     return 0.1F;

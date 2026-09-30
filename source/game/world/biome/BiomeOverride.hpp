@@ -9,7 +9,6 @@ class BiomeOverride : public GameRuleDefinition
 public:
     BiomeOverride();
 
-    virtual ~BiomeOverride();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

@@ -7,7 +7,6 @@ class JungleBiome : public Biome
 {
 public:
     JungleBiome(EBiomeIDs biomeId, bool isEdge, BiomeProperties* properties);
-    virtual ~JungleBiome();
 
     static void staticCtor();
     virtual AbstractTreeFeature* getTreeFeature(Random& random);

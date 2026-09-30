@@ -18,10 +18,6 @@ RiverBiome::RiverBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator->seagrassPerChunk = RIVER_SEAGRASS_PER_CHUNK;
 }
 
-RiverBiome::~RiverBiome()
-{
-}
-
 Biome::EBiomeBaseClass RiverBiome::getBaseClass()
 {
     return eBiomeBaseClass_River;

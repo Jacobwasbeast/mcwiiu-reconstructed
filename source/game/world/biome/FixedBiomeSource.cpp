@@ -13,10 +13,6 @@ FixedBiomeSource::FixedBiomeSource(Biome* biome, float rainfall)
 {
 }
 
-FixedBiomeSource::~FixedBiomeSource()
-{
-}
-
 Biome* FixedBiomeSource::getBiome(const BlockPos& pos)
 {
     return mBiome;

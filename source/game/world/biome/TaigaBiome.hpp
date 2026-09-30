@@ -14,7 +14,6 @@ public:
     };
 
     TaigaBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties);
-    virtual ~TaigaBiome();
 
     virtual AbstractTreeFeature* getTreeFeature(Random& random);
     virtual Feature* getGrassFeature(Random& random);

@@ -46,10 +46,6 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mMonsters.push_back(new MobSpawnerData(80, EntityType::HUSK, 4, 4));
 }
 
-DesertBiome::~DesertBiome()
-{
-}
-
 void DesertBiome::decorate(Level* level, Random& random, const BlockPos& origin)
 {
     Biome::decorate(level, random, origin);

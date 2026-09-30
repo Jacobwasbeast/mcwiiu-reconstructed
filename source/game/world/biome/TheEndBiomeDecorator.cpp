@@ -37,10 +37,6 @@ TheEndBiomeDecorator::TheEndBiomeDecorator()
 {
 }
 
-TheEndBiomeDecorator::~TheEndBiomeDecorator()
-{
-}
-
 void TheEndBiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
 {
     decorateOres(level, random);

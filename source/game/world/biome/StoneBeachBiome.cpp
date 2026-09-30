@@ -22,10 +22,6 @@ StoneBeachBiome::StoneBeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator->cactiPerChunk = 0;
 }
 
-StoneBeachBiome::~StoneBeachBiome()
-{
-}
-
 Biome::EBiomeBaseClass StoneBeachBiome::getBaseClass()
 {
     return eBiomeBaseClass_StoneBeach;

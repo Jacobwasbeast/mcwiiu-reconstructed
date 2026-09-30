@@ -31,10 +31,6 @@ BeachBiome::BeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator->cactiPerChunk = 0;
 }
 
-BeachBiome::~BeachBiome()
-{
-}
-
 Biome::EBiomeBaseClass BeachBiome::getBaseClass()
 {
     return eBiomeBaseClass_Beach;

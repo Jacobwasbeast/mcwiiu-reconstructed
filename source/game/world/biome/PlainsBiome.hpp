@@ -7,7 +7,6 @@ class PlainsBiome : public Biome
 {
 public:
     PlainsBiome(EBiomeIDs biomeId, bool sunflower, BiomeProperties* properties);
-    virtual ~PlainsBiome();
 
     virtual AbstractTreeFeature* getTreeFeature(Random& random);
     virtual FlowerBlock::Flower* getRandomFlower(Random& random, const BlockPos& pos);

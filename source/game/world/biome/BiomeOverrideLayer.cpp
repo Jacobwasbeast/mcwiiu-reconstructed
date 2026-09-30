@@ -10,10 +10,6 @@ BiomeOverrideLayer::BiomeOverrideLayer(int size)
 {
 }
 
-BiomeOverrideLayer::~BiomeOverrideLayer()
-{
-}
-
 arrayWithLength<int> BiomeOverrideLayer::getArea(int x, int z, int width, int height)
 {
     arrayWithLength<int> area = IntCache::allocate(width * height);

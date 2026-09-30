@@ -20,10 +20,6 @@ MutatedSavannaBiome::MutatedSavannaBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mDecorator->grassPerChunk = 5;
 }
 
-MutatedSavannaBiome::~MutatedSavannaBiome()
-{
-}
-
 void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer,
                                           int x, int z, double noise)
 {

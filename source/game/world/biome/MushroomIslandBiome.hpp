@@ -7,7 +7,6 @@ class MushroomIslandBiome : public Biome
 {
 public:
     MushroomIslandBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~MushroomIslandBiome();
 
     virtual EBiomeBaseClass getBaseClass();
 };

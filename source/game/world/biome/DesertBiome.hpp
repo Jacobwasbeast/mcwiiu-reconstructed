@@ -11,7 +11,6 @@ class DesertBiome : public Biome
 {
 public:
     DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~DesertBiome();
 
     virtual void decorate(Level* level, Random& random, const BlockPos& origin);
     virtual EBiomeBaseClass getBaseClass();

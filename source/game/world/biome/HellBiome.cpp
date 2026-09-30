@@ -26,10 +26,6 @@ HellBiome::HellBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mDecorator = new HellBiomeDecorator();
 }
 
-HellBiome::~HellBiome()
-{
-}
-
 Vec3* HellBiome::getFogColor(float celestialAngle, float partialTicks) const
 {
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(

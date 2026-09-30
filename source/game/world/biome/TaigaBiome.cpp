@@ -44,10 +44,6 @@ TaigaBiome::TaigaBiome(EBiomeIDs biomeId, EType type, BiomeProperties* propertie
     }
 }
 
-TaigaBiome::~TaigaBiome()
-{
-}
-
 AbstractTreeFeature* TaigaBiome::getTreeFeature(Random& random)
 {
     if ((mType == eType_MegaTaiga || mType == eType_Mutated) && random.nextInt(3) == 0)

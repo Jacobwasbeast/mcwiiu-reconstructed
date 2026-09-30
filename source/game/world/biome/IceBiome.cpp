@@ -45,10 +45,6 @@ IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* proper
     mMonsters.push_back(new MobSpawnerData(80, EntityType::STRAY, 4, 4));
 }
 
-IceBiome::~IceBiome()
-{
-}
-
 float IceBiome::getCreatureProbability()
 {
     return 0.07F;

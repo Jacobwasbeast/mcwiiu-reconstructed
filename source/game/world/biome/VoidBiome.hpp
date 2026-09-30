@@ -7,7 +7,6 @@ class VoidBiome : public Biome
 {
 public:
     VoidBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~VoidBiome();
 
     virtual EBiomeBaseClass getBaseClass();
     virtual bool isAlwaysValidSpawn();

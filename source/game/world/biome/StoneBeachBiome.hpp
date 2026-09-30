@@ -7,7 +7,6 @@ class StoneBeachBiome : public Biome
 {
 public:
     StoneBeachBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~StoneBeachBiome();
 
     virtual EBiomeBaseClass getBaseClass();
 };

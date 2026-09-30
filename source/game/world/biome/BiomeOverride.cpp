@@ -14,10 +14,6 @@ BiomeOverride::BiomeOverride()
     addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_topblockId, &mFillerBlock);
 }
 
-BiomeOverride::~BiomeOverride()
-{
-}
-
 ConsoleGameRules::EGameRuleType BiomeOverride::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_BiomeOverride;

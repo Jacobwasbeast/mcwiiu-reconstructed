@@ -7,7 +7,6 @@ class OceanBiome : public Biome
 {
 public:
     OceanBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties);
-    virtual ~OceanBiome();
 
     virtual float getCreatureProbability();
     virtual EBiomeBaseClass getBaseClass();

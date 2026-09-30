@@ -7,17 +7,13 @@ VoidBiome::VoidBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 {
     mMonsters.clear();
     mSlimes.clear();
+    mCreatures.clear();
     mChickens.clear();
     mWaterCreatures.clear();
-    mCreatures.clear();
     mAmbientCreatures.clear();
 
     delete mDecorator;
     mDecorator = new VoidBiomeDecorator();
-}
-
-VoidBiome::~VoidBiome()
-{
 }
 
 Biome::EBiomeBaseClass VoidBiome::getBaseClass()

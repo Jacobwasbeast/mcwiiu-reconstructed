@@ -23,10 +23,6 @@ PlainsBiome::PlainsBiome(EBiomeIDs biomeId, bool sunflower, BiomeProperties* pro
     mDecorator->grassPerChunk = 10;
 }
 
-PlainsBiome::~PlainsBiome()
-{
-}
-
 FlowerBlock::Flower* PlainsBiome::getRandomFlower(Random& random, const BlockPos& pos)
 {
     const double temperature = BIOME_INFO_NOISE->getValue(pos.x / 200.0, pos.z / 200.0);

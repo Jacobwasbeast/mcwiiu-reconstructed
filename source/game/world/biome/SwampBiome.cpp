@@ -38,10 +38,6 @@ SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mMonsters.push_back(new MobSpawnerData(5, EntityType::DROWNED, 2, 4));
 }
 
-SwampBiome::~SwampBiome()
-{
-}
-
 AbstractTreeFeature* SwampBiome::getTreeFeature(Random& random)
 {
     return new SwampTreeFeature();

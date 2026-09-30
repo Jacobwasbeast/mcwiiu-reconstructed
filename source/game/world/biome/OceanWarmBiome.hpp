@@ -7,7 +7,6 @@ class OceanWarmBiome : public Biome
 {
 public:
     OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties);
-    virtual ~OceanWarmBiome();
     virtual float getCreatureProbability();
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);
     virtual EBiomeBaseClass getBaseClass();

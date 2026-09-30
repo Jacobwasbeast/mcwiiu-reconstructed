@@ -9,10 +9,6 @@ MutatedForestBiome::MutatedForestBiome(EBiomeIDs biomeId, BiomeProperties* prope
 {
 }
 
-MutatedForestBiome::~MutatedForestBiome()
-{
-}
-
 AbstractTreeFeature* MutatedForestBiome::getTreeFeature(Random& random)
 {
     return new BirchFeature(false, random.nextBoolean());

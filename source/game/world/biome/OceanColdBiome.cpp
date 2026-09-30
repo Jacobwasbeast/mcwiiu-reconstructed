@@ -24,10 +24,6 @@ OceanColdBiome::OceanColdBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
     mDecorator->seagrassPerChunk = 12;
 }
 
-OceanColdBiome::~OceanColdBiome()
-{
-}
-
 float OceanColdBiome::getCreatureProbability()
 {
     return 0.1f;

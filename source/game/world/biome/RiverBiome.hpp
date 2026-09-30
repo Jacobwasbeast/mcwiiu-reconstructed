@@ -7,7 +7,6 @@ class RiverBiome : public Biome
 {
 public:
     RiverBiome(EBiomeIDs biomeId, BiomeProperties* properties);
-    virtual ~RiverBiome();
 
     virtual EBiomeBaseClass getBaseClass();
 };

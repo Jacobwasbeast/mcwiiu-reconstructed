@@ -10,7 +10,6 @@ class Random;
 class HellBiomeDecorator : public BiomeDecorator
 {
 public:
-    virtual ~HellBiomeDecorator();
     virtual void decorate(Level* level, Random* random, Biome* biome, const BlockPos& origin);
 };
 

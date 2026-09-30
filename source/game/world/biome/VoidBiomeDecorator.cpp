@@ -6,10 +6,6 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/Level.hpp"
 
-VoidBiomeDecorator::~VoidBiomeDecorator()
-{
-}
-
 void VoidBiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const BlockPos& origin)
 {
     BlockPos spawn = level->getSharedSpawnPos();
