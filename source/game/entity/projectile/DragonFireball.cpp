@@ -43,10 +43,6 @@ DragonFireball::DragonFireball(Level* level, double x, double y, double z,
     setSize(1.0f, 1.0f);
 }
 
-DragonFireball::~DragonFireball()
-{
-}
-
 void DragonFireball::addDataWalkers(DataFixerUpper* fixer)
 {
     Fireball::addDataWalkers(fixer, EntityType::DRAGON_FIREBALL);

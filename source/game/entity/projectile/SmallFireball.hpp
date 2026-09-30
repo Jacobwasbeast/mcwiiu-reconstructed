@@ -13,7 +13,6 @@ public:
                   double xd, double yd, double zd);
     SmallFireball(Level* level, double x, double y, double z,
                   double xd, double yd, double zd);
-    virtual ~SmallFireball();
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);

@@ -12,7 +12,7 @@ class Projectile
 {
 public:
     Projectile(Level* level, const boost::shared_ptr<LivingEntity>& owner);
-    virtual ~Projectile();
+    virtual ~Projectile() {}
 
     virtual void shoot(double x, double y, double z, float velocity, float inaccuracy) = 0;
     virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,

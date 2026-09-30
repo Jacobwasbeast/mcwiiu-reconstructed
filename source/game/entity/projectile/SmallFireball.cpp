@@ -33,10 +33,6 @@ SmallFireball::SmallFireball(Level* level, double x, double y, double z,
     setSize(0.3125f, 0.3125f);
 }
 
-SmallFireball::~SmallFireball()
-{
-}
-
 void SmallFireball::create(Level* level)
 {
     new SmallFireball(level);

@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~HitsFromProjectileMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

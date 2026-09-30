@@ -18,7 +18,6 @@ class FishingHook : public Entity
 public:
     FishingHook(Level* level, boost::shared_ptr<Player> owner);
     FishingHook(Level* level, boost::shared_ptr<Player> owner, double x, double y, double z);
-    virtual ~FishingHook();
 
     void bringInHookedEntity();
     int retrieve();

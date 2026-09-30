@@ -98,7 +98,7 @@ void AbstractRotatedItemProjectile::_init()
     mXTile = -1;
     mInGroundTime = 0;
     mFlightTime = 0;
-    setSize(0.5f, 1.0f);
+    setSize(0.5f, 0.5f);
     mClampedToLevel = false;
 }
 

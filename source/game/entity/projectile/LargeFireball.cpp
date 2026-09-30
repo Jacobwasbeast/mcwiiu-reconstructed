@@ -11,7 +11,6 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
 
-
 LargeFireball::LargeFireball(Level* level)
     : Fireball(level), mExplosionPower(1)
 {
@@ -28,10 +27,6 @@ LargeFireball::LargeFireball(Level* level, boost::shared_ptr<LivingEntity> owner
     : Fireball(level, owner, xd, yd, zd), mExplosionPower(1)
 {
     Entity::fjDerivedCtorCalls();
-}
-
-LargeFireball::~LargeFireball()
-{
 }
 
 void LargeFireball::create(Level* level)

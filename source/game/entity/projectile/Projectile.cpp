@@ -18,10 +18,6 @@ Projectile::Projectile(Level* level, const boost::shared_ptr<LivingEntity>& owne
 {
 }
 
-Projectile::~Projectile()
-{
-}
-
 bool Projectile::onHit(const HitResult* result)
 {
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureProjectilesBreakBlocks()

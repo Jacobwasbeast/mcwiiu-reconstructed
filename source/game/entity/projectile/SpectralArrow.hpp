@@ -17,7 +17,6 @@ public:
     SpectralArrow(Level* level);
     SpectralArrow(Level* level, boost::shared_ptr<LivingEntity> owner);
     SpectralArrow(Level* level, double x, double y, double z);
-    virtual ~SpectralArrow();
 
     static void create(Level* level);
     void init();

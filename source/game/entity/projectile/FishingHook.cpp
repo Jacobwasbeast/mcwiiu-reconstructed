@@ -61,10 +61,6 @@ FishingHook::FishingHook(Level* level, boost::shared_ptr<Player> owner, double x
     mZo = mZ;
 }
 
-FishingHook::~FishingHook()
-{
-}
-
 void FishingHook::bringInHookedEntity()
 {
     if (mOwner)
