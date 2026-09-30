@@ -30,10 +30,6 @@ ObserverBlock::ObserverBlock()
     registerDefaultState(state->setBoxedValue(POWERED, &powered));
 }
 
-ObserverBlock::~ObserverBlock()
-{
-}
-
 bool ObserverBlock::TestUse() { return false; }
 
 BlockStateDefinition* ObserverBlock::createBlockStateDefinition()
@@ -55,7 +51,7 @@ const BlockState* ObserverBlock::mirror(const BlockState* state, Mirror* mirror)
 
 void ObserverBlock::updateNeighborsInFront(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* facing = state->getValue(DirectionalBlock::FACING);
+    const Direction* facing = state->getValue(DirectionalBlock::FACING_PROPERTY);
     BlockPos front = pos.relative(facing->getOpposite());
     level->neighborChanged(front, this, pos);
     level->updateNeighborsAtExceptFromFacing(front, this, facing);
@@ -106,7 +102,7 @@ int ObserverBlock::getDirectSignal(const BlockState* state, LevelSource* levelSo
 
 int ObserverBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction)
 {
-    if (state->getValue(POWERED) && direction == state->getValue(DirectionalBlock::FACING)) return 15;
+    if (state->getValue(POWERED) && state->getValue(DirectionalBlock::FACING) == direction) return 15;
     return 0;
 }
 
@@ -137,7 +133,7 @@ const BlockState* ObserverBlock::getStateForPlacement(Level*, const BlockPos& po
 
 int ObserverBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(DirectionalBlock::FACING)->get3DDataValue();
+    int data = state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue();
     if (state->getValue(POWERED)) data |= 8;
     return data;
 }
@@ -146,7 +142,7 @@ const BlockState* ObserverBlock::getBlockState(int data)
 {
     const Direction* facing = Direction::from3DDataValue(data & 7);
     TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<bool> powered((data & 8) != 0);
+    TypedBoxed<bool> powered((data & 8) > 0);
     return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING, &boxedFacing)->setBoxedValue(POWERED, &powered);
 }
 
@@ -154,16 +150,19 @@ TextureAtlasSprite* ObserverBlock::getTexture(const Direction* direction, const 
 {
     const Direction* facing = state->getValue(DirectionalBlock::FACING);
     if (direction == facing) return mFrontIcon;
-    if (direction == facing->getOpposite()) return state->getValue(POWERED) ? mBackLitIcon : mBackIcon;
-    if (facing == Direction::UP || facing == Direction::DOWN)
+    if (direction != facing->getOpposite())
     {
-        if (direction == Direction::NORTH || direction == Direction::SOUTH) return mTopIcon;
+        if (facing == Direction::UP || facing == Direction::DOWN)
+        {
+            if (direction == Direction::NORTH || direction == Direction::SOUTH) return mTopIcon;
+        }
+        else if (direction == Direction::UP || direction == Direction::DOWN)
+        {
+            return mTopIcon;
+        }
+        return mSideIcon;
     }
-    else if (direction == Direction::UP || direction == Direction::DOWN)
-    {
-        return mTopIcon;
-    }
-    return mSideIcon;
+    return state->getValue(POWERED) ? mBackLitIcon : mBackIcon;
 }
 
 void ObserverBlock::registerIcons(IconRegister* iconRegister)

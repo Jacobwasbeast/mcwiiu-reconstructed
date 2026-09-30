@@ -114,7 +114,8 @@ void ServerChunkCache::invalidateChunksOutsideArea(int minX, int minZ, int maxX,
         }
     }
 
-    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
+    std::vector<LevelChunk*>::iterator itEnd = m_loadedChunkList.end();
+    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != itEnd; ++it)
     {
         LevelChunk* chunk = *it;
         if (chunk->x < minX || chunk->x > maxX || chunk->z < minZ || chunk->z > maxZ)
@@ -159,6 +160,10 @@ LevelChunk* ServerChunkCache::getChunkIfHasChunk(int x, int z)
 LevelChunk* ServerChunkCache::load(int x, int z, LevelChunk* chunk)
 {
     ChunkStorage* storage = m_storage;
+    if (storage == NULL)
+    {
+        return NULL;
+    }
     int idx = computeIdx(x, z);
     if (chunk == NULL)
     {
@@ -168,15 +173,14 @@ LevelChunk* ServerChunkCache::load(int x, int z, LevelChunk* chunk)
     if (chunk == NULL || chunk->mInvalid)
     {
         chunk = storage->load(m_level, x, z, chunk);
-        if (chunk == NULL)
-        {
-            return NULL;
-        }
     }
-    chunk->setLastSaveTime(m_level->getGameTime());
-    if (m_source != NULL)
+    if (chunk != NULL)
     {
-        m_source->postProcessLoadedChunk(chunk, x, z);
+        chunk->setLastSaveTime(m_level->getGameTime());
+        if (m_source != NULL)
+        {
+            m_source->recreateLogicStructuresForChunk(chunk, x, z);
+        }
     }
     return chunk;
 }
@@ -233,81 +237,82 @@ LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk
     int idx = computeIdx(x, z);
     if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
                                           reinterpret_cast<long>(chunk),
-                                          reinterpret_cast<long>(previous)) != reinterpret_cast<long>(previous))
+                                          reinterpret_cast<long>(previous)) == reinterpret_cast<long>(previous))
     {
-        chunk->unload(true, true);
-        delete chunk;
-        return m_cache[idx];
-    }
+        EnterCriticalSection(&m_csLoadCreate);
 
-    EnterCriticalSection(&m_csLoadCreate);
+        PIXBeginNamedEvent(0.0f, "Lighting chunk");
+        m_source->lightChunk(chunk);
+        PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(0.0f, "Lighting chunk");
-    m_source->lightChunk(chunk);
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Post-processing");
-    updatePostProcessFlags(x, z);
-    if (chunk != previous)
-    {
-        m_loadedChunkList.push_back(chunk);
-    }
-
-    if (!allowEmpty)
-    {
-        chunk->checkPostProcess(this, m_source);
-    }
-    else
-    {
-        if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 && hasChunk(x + 1, z + 1) &&
-            hasChunk(x, z + 1) && hasChunk(x + 1, z))
+        PIXBeginNamedEvent(0.0f, "Post-processing");
+        updatePostProcessFlags(x, z);
+        if (chunk != previous)
         {
-            gMinecraftServer->addPostProcessRequest(this, m_source, x, z);
+            m_loadedChunkList.push_back(chunk);
         }
-        if (hasChunk(x - 1, z) && (getChunk(x - 1, z)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
-            hasChunk(x - 1, z + 1) && hasChunk(x, z + 1) && hasChunk(x - 1, z))
-        {
-            gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z);
-        }
-        if (hasChunk(x, z - 1) && (getChunk(x, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
-            hasChunk(x + 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x + 1, z))
-        {
-            gMinecraftServer->addPostProcessRequest(this, m_source, x, z - 1);
-        }
-        if (hasChunk(x - 1, z - 1) &&
-            (getChunk(x - 1, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
-            hasChunk(x - 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x - 1, z))
-        {
-            gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z - 1);
-        }
-    }
-    PIXEndNamedEvent();
 
-    PIXBeginNamedEvent(0.0f, "Checking chests");
-    if (hasChunk(x - 1, z) && hasChunk(x - 2, z) && hasChunk(x - 1, z + 1) && hasChunk(x - 1, z - 1))
-    {
-        chunk->checkChests(this, x - 1, z);
-    }
-    if (hasChunk(x, z + 1) && hasChunk(x, z + 2) && hasChunk(x - 1, z + 1) && hasChunk(x + 1, z + 1))
-    {
-        chunk->checkChests(this, x, z + 1);
-    }
-    if (hasChunk(x + 1, z) && hasChunk(x + 2, z) && hasChunk(x + 1, z + 1) && hasChunk(x + 1, z - 1))
-    {
-        chunk->checkChests(this, x + 1, z);
-    }
-    if (hasChunk(x, z - 1) && hasChunk(x, z - 2) && hasChunk(x - 1, z - 1) && hasChunk(x + 1, z - 1))
-    {
-        chunk->checkChests(this, x, z - 1);
-    }
-    if (hasChunk(x - 1, z) && hasChunk(x + 1, z) && hasChunk(x, z - 1) && hasChunk(x, z + 1))
-    {
-        chunk->checkChests(this, x, z);
-    }
-    PIXEndNamedEvent();
+        if (allowEmpty)
+        {
+            if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 && hasChunk(x + 1, z + 1) &&
+                hasChunk(x, z + 1) && hasChunk(x + 1, z))
+            {
+                gMinecraftServer->addPostProcessRequest(this, m_source, x, z);
+            }
+            if (hasChunk(x - 1, z) && (getChunk(x - 1, z)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
+                hasChunk(x - 1, z + 1) && hasChunk(x, z + 1) && hasChunk(x - 1, z))
+            {
+                gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z);
+            }
+            if (hasChunk(x, z - 1) && (getChunk(x, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
+                hasChunk(x + 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x + 1, z))
+            {
+                gMinecraftServer->addPostProcessRequest(this, m_source, x, z - 1);
+            }
+            if (hasChunk(x - 1, z - 1) &&
+                (getChunk(x - 1, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
+                hasChunk(x - 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x - 1, z))
+            {
+                gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z - 1);
+            }
+        
+        }
+        else
+        {
+            chunk->checkPostProcess(this, m_source);
+        }
+        PIXEndNamedEvent();
 
-    LeaveCriticalSection(&m_csLoadCreate);
-    return chunk;
+        PIXBeginNamedEvent(0.0f, "Checking chests");
+        if (hasChunk(x - 1, z) && hasChunk(x - 2, z) && hasChunk(x - 1, z + 1) && hasChunk(x - 1, z - 1))
+        {
+            chunk->checkChests(this, x - 1, z);
+        }
+        if (hasChunk(x, z + 1) && hasChunk(x, z + 2) && hasChunk(x - 1, z + 1) && hasChunk(x + 1, z + 1))
+        {
+            chunk->checkChests(this, x, z + 1);
+        }
+        if (hasChunk(x + 1, z) && hasChunk(x + 2, z) && hasChunk(x + 1, z + 1) && hasChunk(x + 1, z - 1))
+        {
+            chunk->checkChests(this, x + 1, z);
+        }
+        if (hasChunk(x, z - 1) && hasChunk(x, z - 2) && hasChunk(x - 1, z - 1) && hasChunk(x + 1, z - 1))
+        {
+            chunk->checkChests(this, x, z - 1);
+        }
+        if (hasChunk(x - 1, z) && hasChunk(x + 1, z) && hasChunk(x, z - 1) && hasChunk(x, z + 1))
+        {
+            chunk->checkChests(this, x, z);
+        }
+        PIXEndNamedEvent();
+
+        LeaveCriticalSection(&m_csLoadCreate);
+        return chunk;
+    }
+
+    chunk->unload(true, true);
+    delete chunk;
+    return m_cache[idx];
 }
 
 LevelChunk* ServerChunkCache::getChunkIfGenerated(int x, int z, bool allowEmpty)
@@ -325,14 +330,17 @@ LevelChunk* ServerChunkCache::getChunkIfGenerated(int x, int z, bool allowEmpty)
         PIXBeginNamedEvent(0.0f, "Loading chunk");
         chunk = load(x, z, chunk);
         PIXEndNamedEvent();
-        if (chunk == NULL)
+        if (chunk != NULL)
+        {
+            chunk->load(false);
+            LeaveCriticalSection(&m_csLoadCreate);
+            chunk = updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
+        }
+        else
         {
             LeaveCriticalSection(&m_csLoadCreate);
-            return NULL;
+            chunk = NULL;
         }
-        chunk->load(false);
-        LeaveCriticalSection(&m_csLoadCreate);
-        return updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
     }
     return chunk;
 }
@@ -366,12 +374,16 @@ int ServerChunkCache::getLoadedChunksCount()
 
 bool ServerChunkCache::hasChunk(int x, int z)
 {
-    if (!inBounds(x, z))
+    if (inBounds(x, z))
     {
-        return true;
+        LevelChunk* chunk = m_cache[computeIdx(x, z)];
+        if (chunk != NULL && !chunk->mInvalid)
+        {
+            return true;
+        }
+        return false;
     }
-    LevelChunk* chunk = m_cache[computeIdx(x, z)];
-    return chunk != NULL && !chunk->mInvalid;
+    return true;
 }
 
 bool ServerChunkCache::isChunkGeneratedAt(int x, int z)
@@ -469,7 +481,10 @@ LevelChunk* ServerChunkCache::getChunkLoadedOrUnloaded(int x, int z)
 
 void ServerChunkCache::saveEntities(LevelChunk* chunk)
 {
-    m_storage->saveEntities(m_level, chunk);
+    if (m_storage != NULL)
+    {
+        m_storage->saveEntities(m_level, chunk);
+    }
 }
 
 void ServerChunkCache::save(LevelChunk* chunk)
@@ -686,15 +701,15 @@ unsigned int ServerChunkCache::runSaveThreadProc(void* data)
 {
     ServerChunkCacheSaveThreadData* threadData = static_cast<ServerChunkCacheSaveThreadData*>(data);
 
-    if (!threadData->useSharedThreadStorage)
-    {
-        Compression::CreateNewThreadStorage();
-        OldChunkStorage::CreateNewThreadStorage();
-    }
-    else
+    if (threadData->useSharedThreadStorage)
     {
         Compression::UseDefaultThreadStorage();
         OldChunkStorage::UseDefaultThreadStorage();
+    }
+    else
+    {
+        Compression::CreateNewThreadStorage();
+        OldChunkStorage::CreateNewThreadStorage();
     }
     threadData->wakeEvent->WaitForSignal(-1);
 

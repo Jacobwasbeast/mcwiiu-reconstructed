@@ -28,7 +28,7 @@ public:
     static AbstractProperty<bool>* POWERED;
 
     ObserverBlock();
-    virtual ~ObserverBlock();
+    virtual ~ObserverBlock() {}
 
     virtual bool TestUse();
     virtual BlockStateDefinition* createBlockStateDefinition();
