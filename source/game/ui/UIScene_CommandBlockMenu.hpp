@@ -16,10 +16,6 @@ public:
     virtual std::wstring getMoviePath();
     void Initialise(CommandBlockEntity* commandBlock);
     void ConfirmButtonClicked();
-
-private:
-    CommandBlockEntity* m_commandBlock;
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
 };
 
 #endif

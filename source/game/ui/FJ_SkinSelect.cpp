@@ -5,6 +5,7 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/UIScene.hpp"
 
@@ -16,14 +17,10 @@ FJ_SkinSelect::FJ_SkinSelect(fuiRenderNode* renderNode)
     SetCharacterFavourite(false);
 }
 
-FJ_SkinSelect::~FJ_SkinSelect()
-{
-}
-
 void FJ_SkinSelect::SetPlayerCharacterSelected(bool selected, bool visible)
 {
     FJ_FuiNode* node = getChildByName(std::string("Selected"));
-    node->setVisible(visible);
+    node->setVisible(selected);
 }
 
 void FJ_SkinSelect::SetCharacterLocked(bool locked)
@@ -78,8 +75,7 @@ void FJ_SkinSelect::init(FJ_Event* event)
 void FJ_SkinSelect::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    const float stageHeight = getStage()->getStageHeight();
-    if (stageHeight == 360.0 || stageHeight == 540.0)
+    if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
         setY(top);
 }
 
@@ -114,9 +110,9 @@ void FJ_SkinSelect::SetCharacterBlocked(bool blocked)
 
 void FJ_SkinSelect::keyDownHandler(FJ_Event* event)
 {
-    if (event->m_eType == eFJEventType_FocusChangeInit)
+    if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 5)
         CycleLeft();
-    else if (event->m_eType == eFJEventType_FocusChangeUser)
+    else if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 6)
         CycleRight();
     FJ_Document::keyDownHandler(event);
 }

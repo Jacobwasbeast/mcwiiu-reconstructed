@@ -11,13 +11,13 @@ class FJ_SkinSelect : public FJ_Document
 {
 public:
     FJ_SkinSelect(fuiRenderNode* renderNode);
-    virtual ~FJ_SkinSelect();
+    virtual ~FJ_SkinSelect() {}
     void SetPlayerCharacterSelected(bool selected, bool visible);
     void SetCharacterLocked(bool locked);
     void SetCharacterFavourite(bool favourite);
     static FJ_SkinSelect* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
-    virtual void handleAnimationEnd(FJ_Event* event);
+    void handleAnimationEnd(FJ_Event* event);
     static void _handleAnimationEnd(FJ_FuiNode* node, FJ_Event* event);
     virtual void init(FJ_Event* event);
     virtual void SetSafeZone(int top, int bottom, int left, int right);

@@ -131,15 +131,12 @@ public:
     virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
                                         int slot, int direction, bool wrap);
     virtual unsigned int overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                          not_null_ptr<ItemInstance> item, bool itemValid, bool canTake,
-                                          bool canPlace, int count,
-                                          EToolTipItem& first,
-                                          EToolTipItem& second,
-                                          EToolTipItem& third,
-                                          EToolTipItem& fourth,
-                                          EToolTipItem& fifth,
-                                          EToolTipItem& sixth,
-                                          EToolTipItem& seventh);
+                                          not_null_ptr<ItemInstance> slotItem, bool carriedIsItem,
+                                          bool slotIsItem, bool carriedSameAsSlot, int slotSpace,
+                                          EToolTipItem& toolTip0, EToolTipItem& toolTip2,
+                                          EToolTipItem& toolTip3, EToolTipItem& toolTip5,
+                                          EToolTipItem& toolTip10, EToolTipItem& toolTip6,
+                                          EToolTipItem& toolTip7);
     static void staticCtor();
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();

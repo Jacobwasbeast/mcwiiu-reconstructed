@@ -44,7 +44,7 @@ UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callba
     m_showTitleTimer = false;
     m_showExitScreenshot = false;
     m_iconHolder = EIcons_None;
-    m_titleLabel.init(UIString(L""));
+    m_descriptionLabel.init(UIString(L""));
 }
 
 UIComponent_TutorialPopup::~UIComponent_TutorialPopup()
@@ -308,11 +308,6 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     std::wstring coloredTitle(colorTag);
     coloredTitle += titleText;
 
-#if defined(RECON_NATIVE)
-    FJ_FuiNode* titleNode = m_movie->getRootNode()->getFuiNode()->getChildByName("Title");
-    if (titleNode != 0 && titleNode->isFJ_Label())
-        titleNode->asFJ_Label()->setUseHtmlText(true);
-#endif
     m_descriptionLabel.setLabel(UIString(coloredTitle), true, false);
     m_titleLabel.setLabel(UIString(description), true, false);
     m_titleLabel.setVisible(!description.empty());
@@ -364,8 +359,8 @@ unsigned int UIComponent_TutorialPopup::mapElementsAndNames()
     if (m_movie == 0 || m_movie->getRootNode() == 0)
         return 1;
     fuiRenderNode* root = m_movie->getRootNode();
-    m_titleLabel.setupControl(this, root, "Description");
-    m_descriptionLabel.setupControl(this, root, "Title");
+    m_titleLabel.setupControl(this, root, "Title");
+    m_descriptionLabel.setupControl(this, root, "Description");
     m_iconHolderControl.setupControl(this, root, "IconHolder");
     m_exitScreenshotControl.setupControl(this, root, "ExitScreenShot");
     m_controls.push_back(&m_titleLabel);

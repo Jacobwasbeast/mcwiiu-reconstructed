@@ -60,8 +60,12 @@ const UIScene_HowToPlay::sCustomItems SLOT_POTION(T item, P potion, int count, i
 }
 
 UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, int count, int auxValue)
-    : m_block(NULL), m_item(item), m_potion(NULL), m_count(count), m_auxValue(auxValue)
 {
+    m_item = item;
+    m_potion = NULL;
+    m_block = NULL;
+    m_count = count;
+    m_auxValue = auxValue;
 }
 
 UIScene_HowToPlay::sCustomItems::sCustomItems(Block* block, int count, int auxValue)
@@ -75,8 +79,12 @@ UIScene_HowToPlay::sCustomItems::sCustomItems(int blockId, int count, int auxVal
 }
 
 UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, Potion* potion, int count, int auxValue)
-    : m_block(NULL), m_item(item), m_potion(potion), m_count(count), m_auxValue(auxValue)
 {
+    m_item = item;
+    m_potion = potion;
+    m_count = count;
+    m_block = NULL;
+    m_auxValue = auxValue;
 }
 
 not_null_ptr<ItemInstance> UIScene_HowToPlay::sCustomItems::GetItemInstance() const
@@ -92,61 +100,50 @@ not_null_ptr<ItemInstance> UIScene_HowToPlay::sCustomItems::GetItemInstance() co
 }
 
 UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
-    : UIScene(playerId, layer), m_page(0), m_pageCount(0), m_container(), m_dynamicHtmlText(), m_labels(),
+    : UIScene(playerId, layer), m_container(), m_dynamicHtmlText(), m_labels(),
       m_enchantmentBook(), m_enchantmentBooks()
 {
     initialiseMovie();
 
     std::wstring repeated(L10N::GetString(IDS_INVENTORY));
 
-    m_labels[0].init(UIString(repeated));
-    m_labels[1].init(UIString(repeated));
-    m_labels[2].init(UIString(L10N::GetString(IDS_CHEST)));
-    m_labels[3].init(UIString(repeated));
-    m_labels[4].init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
     m_labels[5].init(UIString(L10N::GetString(IDS_FUEL)));
     m_labels[6].init(UIString(repeated));
     m_labels[7].init(UIString(L10N::GetString(IDS_INGREDIENT)));
     m_labels[8].init(UIString(L10N::GetString(IDS_FURNACE)));
-    m_labels[9].init(UIString(L10N::GetString(IDS_DISPENSER)));
-    m_labels[10].init(UIString(repeated));
+    m_labels[3].init(UIString(repeated));
     m_labels[11].init(UIString(L10N::GetString(0xfbc6e08)));
+    m_labels[4].init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
+    m_labels[1].init(UIString(repeated));
+    m_labels[2].init(UIString(L10N::GetString(IDS_CHEST)));
+    m_labels[0].init(UIString(repeated));
+    m_labels[10].init(UIString(repeated));
+    m_labels[9].init(UIString(L10N::GetString(IDS_DISPENSER)));
     m_labels[12].init(UIString(L10N::GetString(IDS_ENCHANT)));
     m_labels[13].init(UIString(repeated));
     m_labels[14].init(UIString(L10N::GetString(IDS_BREWING_STAND)));
     m_labels[15].init(UIString(repeated));
-    m_labels[16].init(UIString(repeated));
+    m_labels[16].init(UIString(repeated.c_str()));
 
-    {
-        std::wstring text(L10N::GetString(0xf3a668fd));
-        std::wstring::size_type pos = text.find(L"%d");
-        if (pos != std::wstring::npos)
-            text.replace(pos, 2, L"8");
-        m_labels[17].init(UIString(text));
-    }
+    std::wstring text(L10N::GetString(0xf3a668fd));
+    text.replace(text.find(L"%d"), 2, std::wstring(L"8"));
+    m_labels[17].init(UIString(text.c_str()));
 
     m_labels[18].init(UIString(L10N::GetString(IDS_REPAIR_AND_NAME)));
-    m_labels[19].init(UIString(repeated));
-    m_labels[20].init(UIString(L10N::GetString(IDS_ITEM_EMERALD)));
-    m_labels[21].init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
+    m_labels[19].init(UIString(repeated.c_str()));
+    m_labels[21].init(UIString(L10N::GetString(IDS_ITEM_EMERALD)));
+    m_labels[22].init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
+    m_labels[24].init(UIString(L10N::GetString(0xb3c82373)));
+    m_labels[25].init(UIString(L10N::GetString(0x7b8c1d5d)));
+    m_labels[26].init(UIString(L10N::GetString(IDS_TILE_HOPPER)));
+    m_labels[27].init(UIString(repeated.c_str()));
+    m_labels[28].init(UIString(L10N::GetString(IDS_TILE_DROPPER)));
+    m_labels[29].init(UIString(repeated.c_str()));
 
-    {
-        std::wstring text(L10N::GetString(IDS_VILLAGER_OFFERS_ITEM));
-        std::wstring result;
-        result = replaceAll(text, L"_VILLAGER_TYPE_", L10N::GetString(IDS_VILLAGER_CLERIC));
-        text = result;
-        std::wstring::size_type pos = text.find(L"%s");
-        if (pos != std::wstring::npos)
-            text.replace(pos, 2, L10N::GetString(0x5ae2b631));
-        m_labels[22].init(UIString(text));
-    }
-
-    m_labels[23].init(UIString(L10N::GetString(0xb3c82373)));
-    m_labels[24].init(UIString(L10N::GetString(0x7b8c1d5d)));
-    m_labels[25].init(UIString(L10N::GetString(IDS_TILE_HOPPER)));
-    m_labels[26].init(UIString(repeated));
-    m_labels[27].init(UIString(L10N::GetString(IDS_TILE_DROPPER)));
-    m_labels[28].init(UIString(repeated));
+    text = L10N::GetString(IDS_VILLAGER_OFFERS_ITEM);
+    text = replaceAll(text, L"_VILLAGER_TYPE_", L10N::GetString(IDS_VILLAGER_CLERIC));
+    text.replace(text.find(L"%s"), 2, L10N::GetString(0x5ae2b631));
+    m_labels[23].init(UIString(text.c_str()));
 
     m_pageCount = 0;
     StartPage(static_cast<EHowToPlayPage>((reinterpret_cast<unsigned int>(data) >> 0x10) & 0xfff));
@@ -304,7 +301,7 @@ void UIScene_HowToPlay::updateTooltips()
         gConsoleUIController.SetTooltips(m_playerId, IDS_HOW_TO_PLAY_NEXT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     else
     {
-        if (m_page != EHowToPlayPage_HostOptions)
+        if (m_page + 1 != EHowToPlayPage_Count)
             first = IDS_HOW_TO_PLAY_NEXT;
         gConsoleUIController.SetTooltips(m_playerId, first, IDS_TOOLTIPS_BACK, 0x403e4e5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     }
@@ -356,12 +353,14 @@ void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool pressed, 
 
 void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
 {
-    unsigned int colour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText);
-    unsigned int focusColour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus);
-    unsigned int disabledColour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextDisabled);
-    const double width = m_enchantmentBooks[0].getWidth();
-    const double height = m_enchantmentBooks[0].getHeight();
-    GlStateManager::scalef((rect->xMax - rect->xMin) / width, (rect->yMax - rect->yMin) / height, 1.0F);
+    unsigned int colour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) | 0xff000000;
+    unsigned int focusColour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) | 0xff000000;
+    unsigned int disabledColour = gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextDisabled) | 0xff000000;
+    float rectWidth = rect->xMax - rect->xMin;
+    float rectHeight = rect->yMax - rect->yMin;
+    float width = m_enchantmentBooks[0].getWidth();
+    float height = m_enchantmentBooks[0].getHeight();
+        GlStateManager::scalef(rectWidth / width, rectHeight / height, 1.0F);
     float scale;
     if (m_movieResolution == 0)
     {
@@ -383,7 +382,7 @@ void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
         colour = disabledColour;
     else if (variant == 1)
         colour = focusColour;
-    minecraft->mAlternateFont->drawWordWrap(names[variant], 0, 0, static_cast<int>(width / scale), colour | 0xff000000,
+    minecraft->mAlternateFont->drawWordWrap(names[variant], 0, 0, static_cast<int>(width / scale), colour,
                                    static_cast<int>(height / scale));
     GlStateManager::disableAlphaTest();
     GlStateManager::disableRescaleNormal();

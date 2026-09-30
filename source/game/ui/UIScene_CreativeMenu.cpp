@@ -34,6 +34,7 @@
 #include "game/item/FishFoodItem.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/L10N.hpp"
 #include "game/world/block/LeverBlock.hpp"
 #include "game/world/block/FlowerBlock.hpp"
 #include "game/world/block/SpongeBlock.hpp"
@@ -389,6 +390,7 @@ void UIScene_CreativeMenu::updateTabHighlightAndText(ECreativeInventoryTabs tab)
 {
     fuiRenderNode* root = m_movie->getRootNode();
     static_cast<FJ_CreativeMenu*>(root->getFuiNode()->asFJ_Document())->SetActiveTab(static_cast<int>(tab));
+    m_inventoryLabel.setLabel(UIString(L10N::GetString(s_tabSpecs[tab]->m_titleStringId)), false, false);
 }
 
 void UIScene_CreativeMenu::updateScrollCurrentPage(int page, int pageCount)
@@ -622,18 +624,31 @@ void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu
         list->setHighlightSlot(slotY * columns + slotX);
 }
 
-unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection,
-                                                     not_null_ptr<ItemInstance>, bool, bool, bool, int,
-                                                     EToolTipItem& first,
-                                                     EToolTipItem& second,
-                                                     EToolTipItem& third,
-                                                     EToolTipItem& fourth,
-                                                     EToolTipItem& fifth,
-                                                     EToolTipItem& sixth,
-                                                     EToolTipItem& seventh)
+unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                     not_null_ptr<ItemInstance> slotItem, bool, bool slotIsItem,
+                                                     bool, int,
+                                                     EToolTipItem& toolTip0,
+                                                     EToolTipItem& toolTip2,
+                                                     EToolTipItem& toolTip3,
+                                                     EToolTipItem&,
+                                                     EToolTipItem&,
+                                                     EToolTipItem&,
+                                                     EToolTipItem&)
 {
-    first = second = third = fourth = fifth = sixth = seventh = eToolTipNone;
-    return 0;
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
+    {
+        if (slotIsItem)
+        {
+            toolTip0 = eToolTipTake;
+            toolTip3 = slotItem->isStackable() ? eToolTipTakeAll : eToolTipNone;
+        }
+    }
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
+    {
+        toolTip3 = eToolTipNone;
+    }
+    toolTip2 = eToolTipClearQuickSelect;
+    return 1;
 }
 
 void UIScene_CreativeMenu::staticCtor()

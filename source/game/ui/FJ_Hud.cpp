@@ -347,16 +347,16 @@ void FJ_Hud::UpdateBossBarPositions()
         if (m_bossBars[i] == NULL)
             continue;
 
-        if (m_viewportWidth == -1 || m_viewportHeight == -1)
+        if (m_viewportWidth != -1 && m_viewportHeight != -1)
         {
-            m_bossBars[i]->setX(Math::round(getStage()->getStageWidth() * 0.5f - m_bossBars[i]->getWidth() * 0.5f));
-            m_bossBars[i]->setY(m_bossBars[i]->getHeight() * i + m_safeZoneTop);
+            m_bossBars[i]->setX(Math::round(m_viewportWidth / 2 - m_bossBars[i]->getWidth() * 0.5f));
+            m_bossBars[i]->setY((m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight)) +
+                                m_bossBars[i]->getHeight() * i);
         }
         else
         {
-            m_bossBars[i]->setX(Math::round(m_viewportWidth / 2 - m_bossBars[i]->getWidth() * 0.5f));
-            m_bossBars[i]->setY(m_bossBars[i]->getHeight() * i +
-                                (m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight)));
+            m_bossBars[i]->setX(Math::round(getStage()->getStageWidth() * 0.5f - m_bossBars[i]->getWidth() * 0.5f));
+            m_bossBars[i]->setY(m_safeZoneTop + m_bossBars[i]->getHeight() * i);
         }
     }
 }
@@ -899,12 +899,12 @@ void FJ_Hud::LoadHud(int hudSize)
 
 void FJ_Hud::init(FJ_Event* event)
 {
-    m_viewportHeight = -1;
-    m_viewportWidth = -1;
-    m_food = 20;
-    m_air = 10;
-    m_armour = 0;
     m_health = 20;
+    m_food = 20;
+    m_armour = 0;
+    m_air = 10;
+    m_viewportWidth = -1;
+    m_viewportHeight = -1;
     m_gamertag = L"";
     LoadHud(1);
 }
@@ -1695,18 +1695,18 @@ void FJ_Hud::SetGameModePlayerState(int player, int state, bool alive)
             m_racePlayers[player]->setAlpha(alive ? 1.0f : 0.5f);
         }
     }
-    else if (m_numGameModePlayers > m_maxAliveIcons)
+    else if (m_numGameModePlayers <= m_maxAliveIcons)
     {
-        if (player < m_maxSmallAliveIcons)
+        if (player < m_maxAliveIcons)
         {
-            m_smallAliveIcons[player]->gotoAndStop(state + 1);
-            m_smallAliveIcons[player]->setAlpha(alive ? 1.0f : 0.5f);
+            m_aliveIcons[player]->gotoAndStop(state + 1);
+            m_aliveIcons[player]->setAlpha(alive ? 1.0f : 0.5f);
         }
     }
-    else if (player < m_maxAliveIcons)
+    else if (player < m_maxSmallAliveIcons)
     {
-        m_aliveIcons[player]->gotoAndStop(state + 1);
-        m_aliveIcons[player]->setAlpha(alive ? 1.0f : 0.5f);
+        m_smallAliveIcons[player]->gotoAndStop(state + 1);
+        m_smallAliveIcons[player]->setAlpha(alive ? 1.0f : 0.5f);
     }
 }
 
@@ -1746,7 +1746,7 @@ void FJ_Hud::SetGlideHealth(int health)
     char name[64];
     for (int i = 0; i < 3; ++i)
     {
-        int state = health > i ? 2 : 0;
+        int state = health >= i + 1 ? 2 : 0;
         sprintf(name, "FJ_Health_0%d", i);
         m_glideHealthIcons[i] = m_glideHealthBar->getChildByName(name);
         m_glideHealthIcons[i]->gotoAndStop(s_healthFrames[state]);
