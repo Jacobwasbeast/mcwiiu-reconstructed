@@ -80,6 +80,9 @@ void AreaEffectCloud::_init()
     mDuration = 600;
     mWaitTime = 20;
     mFixedColor = 0;
+    mOwnerUUID = L"";
+    mFireImmune = true;
+    mNoPhysics = true;
     setRadius(3.0f);
 }
 
