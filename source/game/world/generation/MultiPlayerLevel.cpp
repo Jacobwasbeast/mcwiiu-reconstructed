@@ -224,7 +224,7 @@ void MultiPlayerLevel::playLocalSound(const BlockPos& pos, const SoundEvent* sou
                    sound, source, volume, pitch, distanceDelay, range);
 }
 
-void MultiPlayerLevel::MultiPlayerLevelInit(ClientPacketListener* connection, LevelSettings*,
+void MultiPlayerLevel::MultiPlayerLevelInit(ClientPacketListener* connection, LevelSettings* settings,
                                              const Difficulty* difficulty, int seaLevel)
 {
     mMinecraft = Minecraft::GetInstance();
@@ -234,9 +234,17 @@ void MultiPlayerLevel::MultiPlayerLevelInit(ClientPacketListener* connection, Le
     mChunkSource = createChunkSource();
     mChunkCache = mChunkSource->getCache();
     mChunkCacheSize = mChunkSource->mLevelSize;
+    if (!mLevelData->isInitialized())
+    {
+        initializeLevel(settings);
+        mLevelData->setInitialized(true);
+    }
+    delete settings;
     if (connection != NULL)
         mConnections.push_back(connection);
     getLevelData()->setDifficulty(difficulty);
+    delete mSavedDataStorage;
+    mSavedDataStorage = NULL;
     mAnimateTickReady = true;
     mAnimateTickX = 0;
     mAnimateTickY = 0;
@@ -710,27 +718,32 @@ void MultiPlayerLevel::dataReceivedForChunk(int x, int z)
 void MultiPlayerLevel::removeUnusedBlockEntitiesInRegion(int minX, int minY, int minZ,
                                                           int maxX, int maxY, int maxZ)
 {
-    std::vector<BlockPos> removed;
-    for (int chunkX = minX >> 4; chunkX <= (maxX - 1) >> 4; ++chunkX)
+    EnterCriticalSection(&mBlockEntityMutex);
+    unsigned int index = 0;
+    while (index < mBlockEntities.size())
     {
-        for (int chunkZ = minZ >> 4; chunkZ <= (maxZ - 1) >> 4; ++chunkZ)
+        boost::shared_ptr<BlockEntity> blockEntity = mBlockEntities[index];
+        BlockPos pos = blockEntity->getBlockPos();
+        if (pos.x >= minX && pos.y >= minY && pos.z >= minZ && pos.x < maxX && pos.y < maxY && pos.z < maxZ)
         {
-            LevelChunk* chunk = getChunk(chunkX, chunkZ);
-            if (chunk == NULL)
-                continue;
-            LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
-            for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin();
-                 it != blockEntities->end(); ++it)
+            LevelChunk* chunk = getChunk(blockEntity->getBlockPos().x >> 4, blockEntity->getBlockPos().z >> 4);
+            if (chunk != NULL)
             {
-                const BlockPos& pos = it->first;
-                if (pos.x >= minX && pos.x < maxX && pos.y >= minY && pos.y < maxY &&
-                    pos.z >= minZ && pos.z < maxZ && it->second->isRemoved())
-                    removed.push_back(pos);
+                Block* block = chunk->getBlock(blockEntity->getBlockPos());
+                if (block == NULL || !block->mBlockEntity)
+                {
+                    mBlockEntities[index] = mBlockEntities.back();
+                    mBlockEntities.pop_back();
+                    mScheduledUpdatesAreImmediate = true;
+                    chunk->removeBlockEntity(blockEntity->getBlockPos());
+                    mScheduledUpdatesAreImmediate = false;
+                    continue;
+                }
             }
         }
+        ++index;
     }
-    for (std::vector<BlockPos>::iterator it = removed.begin(); it != removed.end(); ++it)
-        removeBlockEntity(*it);
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 Scoreboard* MultiPlayerLevel::GetScoreboard()

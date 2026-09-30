@@ -472,7 +472,7 @@ double Player::getRidingHeight()
 void Player::stopRiding()
 {
     LivingEntity::stopRiding();
-    mVehicle.reset();
+    mBoardingCooldown = 0;
 }
 
 void Player::SetSmallSize()

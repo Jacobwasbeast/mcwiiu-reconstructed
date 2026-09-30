@@ -22,7 +22,7 @@ static const FunctionPatchesLayerTheme::BlockFunction sFunctions[] =
 
 FunctionPatchesLayerThemeRuleDefinition::FunctionPatchesLayerThemeRuleDefinition()
     : mFunction(-1)
-    , mNoiseScale(5.0)
+    , mNoiseScale(20.0)
 {
 }
 

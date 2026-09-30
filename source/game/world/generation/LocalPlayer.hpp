@@ -166,6 +166,7 @@ public:
 
 private:
     friend class Boat;
+    friend class ClientMasterGameMode;
     friend class GhostController;
     friend class Minecraft;
     friend class MultiPlayerGameMode;
