@@ -48,8 +48,7 @@ LevelType* LevelType::setSelectableByUser(bool selectableByUser)
 
 void LevelType::staticCtor()
 {
-    int i;
-    for (i = 0; i < 16; ++i)
+    for (int i = 0; i < 16; ++i)
     {
         levelTypes[i] = NULL;
     }
