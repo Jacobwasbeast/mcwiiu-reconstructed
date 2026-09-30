@@ -17,20 +17,25 @@ public:
         length = 0;
     }
 
+    static void zero(T* values, unsigned int count)
+    {
+        for (unsigned int i = 0; i < count; i++)
+        {
+            values[i] = T();
+        }
+    }
+
     arrayWithLength(unsigned int count, bool clear)
     {
         T* newData = new T[count];
 
         if (clear)
         {
-            for (unsigned int i = 0; i < count; i++)
-            {
-                newData[i] = T();
-            }
+            zero(newData, count);
         }
 
-        data = newData;
         length = count;
+        data = newData;
     }
 
     arrayWithLength(T* values, unsigned int count)
