@@ -20,7 +20,6 @@ private:
     bool m_touchPressed;
 public:
     UIComponent_WiiUDRC(int sceneType, void* param, UILayer* layer);
-    virtual ~UIComponent_WiiUDRC();
     int GetIconX();
     int GetIconWidth();
     int GetIconY();

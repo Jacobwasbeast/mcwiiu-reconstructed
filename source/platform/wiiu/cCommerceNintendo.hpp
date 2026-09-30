@@ -38,7 +38,6 @@ public:
     };
 
     cCommerceNintendo();
-    virtual ~cCommerceNintendo();
 
     void SetLoggedIn(bool loggedIn);
     void SetCommerceInitialised(bool initialised);

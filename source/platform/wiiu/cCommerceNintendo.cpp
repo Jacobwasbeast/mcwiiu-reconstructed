@@ -11,10 +11,6 @@ cCommerceNintendo::cCommerceNintendo()
     SetItemCount(0);
 }
 
-cCommerceNintendo::~cCommerceNintendo()
-{
-}
-
 void cCommerceNintendo::SetLoggedIn(bool loggedIn)
 {
     m_loggedIn = loggedIn;

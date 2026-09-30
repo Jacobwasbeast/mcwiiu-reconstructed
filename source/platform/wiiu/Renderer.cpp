@@ -971,8 +971,10 @@ void Renderer::EndOrderIndependentAlpha()
 {
     Context& context = getContext();
 
+    void* imagePtr = mAlphaColourBuffer.surface.imagePtr;
+    unsigned int imageSize = mAlphaColourBuffer.surface.imageSize;
     context.mOrderIndependentAlpha = false;
-    GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER, mAlphaColourBuffer.surface.imagePtr, mAlphaColourBuffer.surface.imageSize);
+    GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER, imagePtr, imageSize);
     GX2SetColorBuffer(&mColourBuffer, GX2_RENDER_TARGET_0);
     GX2SetVertexShader(mResolveVertexShader);
     GX2SetPixelShader(mAlphaResolvePixelShader);
@@ -1140,8 +1142,8 @@ void Renderer::MatrixPop()
 void Renderer::MatrixPush()
 {
     Context& context = getContext();
-    float (*top)[4] = context.mMatrixStack[context.mMatrixMode][context.mMatrixStackDepth[context.mMatrixMode]];
-    memcpy(top + 4, top, 0x40);
+    memcpy(context.mMatrixStack[context.mMatrixMode][context.mMatrixStackDepth[context.mMatrixMode] + 1],
+           context.mMatrixStack[context.mMatrixMode][context.mMatrixStackDepth[context.mMatrixMode]], 0x40);
     ++context.mMatrixStackDepth[context.mMatrixMode];
 }
 
@@ -1229,11 +1231,13 @@ void Renderer::MemoryInit()
 {
     MEMHeapHandle heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM1);
     unsigned int size = MEMGetAllocatableSizeForFrmHeapEx(heap, 4);
-    mMEM1Heap = MEMCreateExpHeapEx(MEMAllocFromFrmHeapEx(heap, size, 4), size, 0);
+    void* memory = MEMAllocFromFrmHeapEx(heap, size, 4);
+    mMEM1Heap = MEMCreateExpHeapEx(memory, size, 0);
 
     heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_FG);
     size = MEMGetAllocatableSizeForFrmHeapEx(heap, 4);
-    mBucketHeap = MEMCreateExpHeapEx(MEMAllocFromFrmHeapEx(heap, size, 4), size, 0);
+    memory = MEMAllocFromFrmHeapEx(heap, size, 4);
+    mBucketHeap = MEMCreateExpHeapEx(memory, size, 0);
 }
 
 void Renderer::MemoryRelease()
@@ -1248,17 +1252,20 @@ void Renderer::StateSetColour(float red, float green, float blue, float alpha)
 {
     Context& context = getContext();
 
-    if (context.mRecordingBuffer == NULL)
+    if (context.mRecordingBuffer != NULL)
     {
-        mColour[3] = alpha;
-        mPixelUniformsDirty = true;
-        mColour[0] = red;
-        mColour[2] = blue;
-        mColour[1] = green;
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetColor(red, green, blue, alpha);
+        }
     }
-    else if (context.mRecordingBuffer->mRecordState)
+    else
     {
-        context.mRecordingBuffer->SetColor(red, green, blue, alpha);
+        mPixelUniformsDirty = true;
+        mColour[2] = blue;
+        mColour[3] = alpha;
+        mColour[1] = green;
+        mColour[0] = red;
     }
 }
 
@@ -1309,16 +1316,18 @@ void Renderer::StateSetDepthMask(bool bDepthMask)
 void Renderer::StateSetBlendEnable(bool bBlend)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetBlendEnable(bBlend);
+        }
+    }
+    else
     {
         context.mBlendEnable = bBlend;
         GX2SetColorControl(GX2_LOGIC_OP_COPY, bBlend, GX2_FALSE, GX2_TRUE);
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetBlendEnable(bBlend);
     }
 }
 
@@ -1444,8 +1453,9 @@ void Renderer::StateSetAlphaTestEnable(bool bAlphaTest)
 void Renderer::StateSetDepthSlopeAndBias(float slope, float bias)
 {
     Context& context = getContext();
+    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (context.mRecordingBuffer == NULL)
+    if (buffer == NULL)
     {
         GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
         GX2SetPolygonOffset(bias, slope, bias, slope, 0.0f);
@@ -1484,22 +1494,21 @@ void Renderer::StateSetFogDensity(float density)
 
 void Renderer::StateSetFogColour(float red, float green, float blue)
 {
-    getContext();
+    Context& context = getContext();
+    mFogColour[0] = red;
     mFogColour[1] = green;
+    mFogColour[2] = blue;
     mFogColour[3] = 1.0f;
     mPixelUniformsDirty = true;
-    mFogColour[0] = red;
-    mFogColour[2] = blue;
 }
 
 void Renderer::StateSetLightingEnable(bool bLighting)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer != NULL && buffer->mRecordState)
+    if (context.mRecordingBuffer != NULL && context.mRecordingBuffer->mRecordState)
     {
-        buffer->SetLightingEnable(bLighting);
+        context.mRecordingBuffer->SetLightingEnable(bLighting);
         return;
     }
 
@@ -1580,17 +1589,20 @@ void Renderer::StateSetLightAmbientColour(float red, float green, float blue)
 {
     Context& context = getContext();
 
-    if (context.mRecordingBuffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetLightAmbientColour(red, green, blue);
+        }
+    }
+    else
     {
         context.mLightAmbientColour[0] = red;
         context.mLightAmbientColour[2] = blue;
-        context.mLightingDirty = true;
         context.mLightAmbientColour[3] = 1.0f;
+        context.mLightingDirty = true;
         context.mLightAmbientColour[1] = green;
-    }
-    else if (context.mRecordingBuffer->mRecordState)
-    {
-        context.mRecordingBuffer->SetLightAmbientColour(red, green, blue);
     }
 }
 
@@ -1766,11 +1778,13 @@ void Renderer::StateGetScissorRect(unsigned int& left, unsigned int& top, unsign
 void Renderer::StateSetScissorRect(unsigned int left, unsigned int top, unsigned int right, unsigned int bottom)
 {
     Context& context = getContext();
-    context.mScissorRect[2] = right;
+    unsigned int width = right - left;
+    unsigned int height = bottom - top;
     context.mScissorRect[0] = left;
     context.mScissorRect[1] = top;
+    context.mScissorRect[2] = right;
     context.mScissorRect[3] = bottom;
-    GX2SetScissor(left, top, right - left, bottom - top);
+    GX2SetScissor(left, top, width, height);
 }
 
 void Renderer::StateSetEnableViewportClipPlanes(bool bEnable)
@@ -1880,13 +1894,13 @@ void Renderer::SetLayeredColour(int layer, float red, float green, float blue)
     context.mLayeredColour[layer][3] = 1.0f;
 }
 
-void Renderer::SetLayeredParam(int layer, int slot, float offset, float scale)
+void Renderer::SetLayeredParam(int slot, int layer, float offset, float scale)
 {
     Context& context = getContext();
     mLayeredParams[slot][0] = context.mLayeredColour[layer][0];
     mLayeredParams[slot][1] = context.mLayeredColour[layer][1];
-    mLayeredParams[slot][3] = offset + scale;
     mLayeredParams[slot][2] = context.mLayeredColour[layer][2];
+    mLayeredParams[slot][3] = offset + scale;
     mLayeredParamsDirty = true;
 }
 
@@ -1901,22 +1915,24 @@ void Renderer::SetLayeredTextureSize(int width, int height)
 void Renderer::StateSetBoneMatrixData(int bone)
 {
     Context& context = getContext();
-    memcpy(context.mBoneMatrix[bone], MatrixGet(0), 0x40);
+    memcpy(&context.mBoneMatrix[bone], MatrixGet(0), 0x40);
 
-    if (context.mNumBoneMatrices < bone + 1)
+    int count = bone + 1;
+    if (count > context.mNumBoneMatrices)
     {
-        context.mNumBoneMatrices = bone + 1;
+        context.mNumBoneMatrices = count;
     }
 }
 
 void Renderer::StateSetBoneMatrixNull(int bone)
 {
     Context& context = getContext();
-    memset(context.mBoneMatrix[bone], 0, 0x40);
+    memset(&context.mBoneMatrix[bone], 0, 0x40);
 
-    if (context.mNumBoneMatrices < bone + 1)
+    int count = bone + 1;
+    if (count > context.mNumBoneMatrices)
     {
-        context.mNumBoneMatrices = bone + 1;
+        context.mNumBoneMatrices = count;
     }
 }
 
@@ -2399,7 +2415,7 @@ int Renderer::LoadTextureData(const char* fileName, D3DXIMAGE_INFO* info, int** 
     png_image_begin_read_from_memory(&image, fileData, fileSize);
     CloseHandle(file);
 
-    if ((image.warning_or_error & 3) >= 2)
+    if ((image.warning_or_error & 3) > 1)
     {
         return -1;
     }
@@ -2407,16 +2423,16 @@ int Renderer::LoadTextureData(const char* fileName, D3DXIMAGE_INFO* info, int** 
     image.format = 0x23;
     *data = (int*)new unsigned char[image.height * image.width * 4];
 
-    if (*data == NULL || !png_image_finish_read(&image, NULL, *data, 0, NULL))
+    if (*data != NULL && png_image_finish_read(&image, NULL, *data, 0, NULL))
     {
         free(fileData);
-        return -1;
+        info->Width = image.width;
+        info->Height = image.height;
+        return 0;
     }
 
     free(fileData);
-    info->Width = image.width;
-    info->Height = image.height;
-    return 0;
+    return -1;
 }
 
 int Renderer::LoadTextureData(unsigned char* fileData, unsigned int fileSize, D3DXIMAGE_INFO* info, int** data)
@@ -2449,10 +2465,10 @@ int Renderer::SaveTextureData(const char* fileName, D3DXIMAGE_INFO* info, int* d
 {
     png_image image;
     memset(&image, 0, sizeof(image));
-    image.height = info->Height;
-    image.width = info->Width;
-    image.format = 3;
     image.version = 1;
+    image.width = info->Width;
+    image.height = info->Height;
+    image.format = 3;
     png_image_write_to_file(&image, fileName, 0, data, 0, NULL);
     return 0;
 }
@@ -2463,9 +2479,9 @@ int Renderer::SaveTextureDataToMemory(void* destination, int destinationSize, in
     png_image image;
     memset(&image, 0, sizeof(image));
     image.version = 1;
-    image.format = 3;
     image.width = width;
     image.height = height;
+    image.format = 3;
     user_write_data_init(destination, destinationSize);
     png_image_write_to_stdio(&image, NULL, 0, data, 0, NULL,
                              reinterpret_cast<void*>(user_write_data), reinterpret_cast<void*>(user_flush_data));
@@ -3320,7 +3336,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
 
 bool Renderer::CommandBuffer::IsBusy()
 {
-    return gRenderer->mFrameCount - 3 <= mLastRenderedFrame;
+    return mLastRenderedFrame >= gRenderer->mFrameCount - 3;
 }
 
 void Renderer::CommandBuffer::AddMatrix(const float* matrix)
@@ -3411,8 +3427,8 @@ void Renderer::CommandBuffer::SetColor(float red, float green, float blue, float
     Command command;
     command.mColour[1] = green;
     command.mColour[2] = blue;
-    command.mColour[0] = red;
     command.mType = eCommandType_Colour;
+    command.mColour[0] = red;
     command.mColour[3] = alpha;
     mCommands.push_back(command);
 }
@@ -3467,11 +3483,10 @@ void Renderer::CommandBuffer::SetLightDirection(int light, float x, float y, flo
     Context& context = gRenderer->getContext();
 
     Vec direction;
-    direction.x = x;
+    float transposed[4][4];
     direction.y = y;
     direction.z = z;
-
-    float transposed[4][4];
+    direction.x = x;
     ASM_MTX44Transpose(context.mMatrixStack[3][context.mMatrixStackDepth[3]], transposed);
     ASM_MTX44MultVecSR(transposed, &direction, &direction);
     ASM_VECNormalize(&direction, &direction);

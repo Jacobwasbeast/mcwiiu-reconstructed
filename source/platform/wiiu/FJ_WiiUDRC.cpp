@@ -39,10 +39,6 @@ FJ_WiiUDRC::FJ_WiiUDRC(fuiRenderNode* pRenderNode)
     SetSafeZone(25, 25, 25, 25);
 }
 
-FJ_WiiUDRC::~FJ_WiiUDRC()
-{
-}
-
 void FJ_WiiUDRC::UpdateTileBackground(FJ_Event*)
 {
     if (m_tileCount != 0)

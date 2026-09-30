@@ -24,7 +24,6 @@ private:
 
 public:
     FJ_WiiUDRC(fuiRenderNode* pRenderNode);
-    virtual ~FJ_WiiUDRC();
 
     void UpdateTileBackground(FJ_Event* pEvent);
     static void _UpdateTileBackground(FJ_FuiNode* pNode, FJ_Event* pEvent);

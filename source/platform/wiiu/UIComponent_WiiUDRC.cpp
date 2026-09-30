@@ -31,10 +31,6 @@ UIComponent_WiiUDRC::UIComponent_WiiUDRC(int sceneType, void* param, UILayer* la
     GetIconY();
 }
 
-UIComponent_WiiUDRC::~UIComponent_WiiUDRC()
-{
-}
-
 int UIComponent_WiiUDRC::GetIconX()
 {
     if (m_iconX < 1)

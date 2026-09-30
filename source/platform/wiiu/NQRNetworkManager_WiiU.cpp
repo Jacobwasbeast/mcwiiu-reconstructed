@@ -395,8 +395,7 @@ void NQRNetworkManager_WiiU::UpdateInvitationChecks()
 void NQRNetworkManager_WiiU::Tick()
 {
     UpdateInvitationChecks();
-    if (m_tickEvent != NULL)
-        m_tickEvent->Set();
+    m_tickEvent->Set();
 }
 
 NQRNetworkPlayer* NQRNetworkManager_WiiU::GetPlayerFromStationIdAndLocalIdx(unsigned long long stationId, int localIndex)
@@ -1333,9 +1332,7 @@ void NQRNetworkManager_WiiU::RunTickThread()
 
 int NQRNetworkManager_WiiU::TickThreadProc(void* context)
 {
-    NQRNetworkManager_WiiU* manager = static_cast<NQRNetworkManager_WiiU*>(context);
-    if (manager != NULL)
-        manager->RunTickThread();
+    static_cast<NQRNetworkManager_WiiU*>(context)->RunTickThread();
     return 0;
 }
 
@@ -1363,9 +1360,7 @@ void NQRNetworkManager_WiiU::UpdateFriendFromPresence(unsigned int friendIndex)
 
 void NQRNetworkManager_WiiU::UpdateFriendFromPresence_callback(unsigned int friendIndex, void* context)
 {
-    NQRNetworkManager_WiiU* manager = static_cast<NQRNetworkManager_WiiU*>(context);
-    if (manager != NULL)
-        manager->UpdateFriendFromPresence(friendIndex);
+    static_cast<NQRNetworkManager_WiiU*>(context)->UpdateFriendFromPresence(friendIndex);
 }
 
 void NQRNetworkManager_WiiU::Initialise()
