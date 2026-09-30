@@ -30,17 +30,25 @@ EnumProperty<StoneBlock::Variant*>* StoneBlock::VARIANT = NULL;
 StoneBlock::Variant* StoneBlock::Variant::BY_DATA[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 StoneBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int nameId, int descriptionId, const std::wstring& serializedName, bool natural)
-    : mData(data), mName(name), mNameId(nameId), mDescriptionId(descriptionId), mMaterialColor(materialColor), mSerializedName(serializedName), mNatural(natural), mTexture(NULL)
+    : mData(data), mName(name), mNameId(nameId), mDescriptionId(descriptionId), mMaterialColor(materialColor), mNatural(natural), mSerializedName(serializedName), mTexture(NULL)
 {
 }
 
 const MaterialColor* StoneBlock::Variant::getMaterialColor() { return mMaterialColor; }
 int StoneBlock::Variant::getData() { return mData; }
-StoneBlock::Variant* StoneBlock::Variant::byData(int data) { return (data < 0 || data > 6) ? BY_DATA[0] : BY_DATA[data]; }
+StoneBlock::Variant* StoneBlock::Variant::byData(int data)
+{
+    if (data < 0 || data > 6)
+    {
+        data = 0;
+    }
+
+    return BY_DATA[data];
+}
 TextureAtlasSprite* StoneBlock::Variant::getTexture() { return mTexture; }
 void StoneBlock::Variant::registerIcons(IconRegister* iconRegister) { mTexture = iconRegister->registerIcon(mSerializedName); }
 std::wstring StoneBlock::Variant::toString() const { return mName; }
-std::wstring StoneBlock::Variant::getSerializedName() const { return mSerializedName; }
+std::wstring StoneBlock::Variant::getSerializedName() const { return mName; }
 int StoneBlock::Variant::getNameId() { return mNameId; }
 int StoneBlock::Variant::getDescriptionId() { return mDescriptionId; }
 bool StoneBlock::Variant::isNatural() const { return mNatural; }
@@ -73,11 +81,9 @@ void StoneBlock::blockStaticCtor()
 StoneBlock::StoneBlock() : Block(Material::STONE)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::STONE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
+    registerDefaultState(mStateDefinition->any()->setValue<Variant*>(VARIANT, Variant::STONE));
 }
 
-StoneBlock::~StoneBlock() {}
 std::wstring StoneBlock::getName() { return L10N::GetString(IDS_TILE_STONE); }
 
 const MaterialColor* StoneBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
@@ -91,8 +97,15 @@ Item* StoneBlock::getResource(const BlockState* state, Random*, int)
 }
 
 int StoneBlock::getSpawnResourcesAuxValue(const BlockState* state) { return state->getValue(VARIANT)->getData(); }
-const BlockState* StoneBlock::getBlockState(int data) { TypedBoxed<Variant*> value(Variant::byData(data)); return defaultBlockState()->setBoxedValue(VARIANT, &value); }
+const BlockState* StoneBlock::getBlockState(int data)
+{
+    return defaultBlockState()->setValue<Variant*>(VARIANT, Variant::byData(data));
+}
 int StoneBlock::convertBlockStateToLegacyData(const BlockState* state) { return state->getValue(VARIANT)->getData(); }
-BlockStateDefinition* StoneBlock::createBlockStateDefinition() { const Property* properties[1] = { VARIANT }; return new BlockStateDefinition(this, properties, 1); }
+BlockStateDefinition* StoneBlock::createBlockStateDefinition()
+{
+    static const Property* properties[] = { VARIANT };
+    return new BlockStateDefinition(this, properties, 1);
+}
 TextureAtlasSprite* StoneBlock::getTexture(const Direction*, const BlockState* state) { return state->getValue(VARIANT)->getTexture(); }
 void StoneBlock::registerIcons(IconRegister* iconRegister) { for (int i = 0; i < 7; ++i) Variant::BY_DATA[i]->registerIcons(iconRegister); }

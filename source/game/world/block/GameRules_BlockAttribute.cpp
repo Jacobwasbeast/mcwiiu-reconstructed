@@ -10,6 +10,9 @@
 
 
 template<typename T>
+std::wstring _toString(T value);
+
+template<typename T>
 T fromString(const std::wstring& text);
 
 GameRules_BlockAttribute::GameRules_BlockAttribute(Block** value)
@@ -30,10 +33,10 @@ void GameRules_BlockAttribute::setValue(const std::wstring& value)
 
 void GameRules_BlockAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
 {
-    saveInterface->saveAttribute(attribute, toString(*mValue));
+    saveInterface->saveAttribute(attribute, _toString<Block*>(*mValue));
 }
 
 void GameRules_BlockAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%ls\"", IGameRuleAttribute::attributeName(attribute), toString(*mValue).c_str()));
+    xml.append(formatstr(" %ls=\"%ls\"", IGameRuleAttribute::attributeName(attribute), _toString<Block*>(*mValue).c_str()));
 }

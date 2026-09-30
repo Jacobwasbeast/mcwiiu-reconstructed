@@ -12,6 +12,7 @@
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/BlockBehaviours.hpp"
 #include "game/world/block/BlockProperties.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 class Block;
 class Boxed;
@@ -20,9 +21,6 @@ class Property;
 
 template <typename T>
 class AbstractProperty;
-
-template <typename T>
-class TypedBoxed;
 
 class BlockState : public BlockProperties, public BlockBehaviours
 {
@@ -46,6 +44,13 @@ public:
         TypedBoxed<T>* boxed = static_cast<TypedBoxed<T>*>(getBoxedValue(property));
         TypedBoxed<T>* value = boxed->isA(typeid(T)) ? boxed : NULL;
         return value->getValue();
+    }
+
+    template <typename T>
+    const BlockState* setValue(const AbstractProperty<T>* property, T value) const
+    {
+        TypedBoxed<T> boxed(value);
+        return setBoxedValue(property, &boxed);
     }
 
     int mElementId;

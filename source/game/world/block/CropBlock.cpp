@@ -57,7 +57,7 @@ CropBlock::CropBlock(bool derivedInit)
 
 bool CropBlock::isMaxAge(const BlockState* state)
 {
-    return getAge(state) >= getMaxAge();
+    return state->getValue(getAgeProperty()) >= getMaxAge();
 }
 
 bool CropBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState* state, bool)
@@ -79,14 +79,15 @@ void CropBlock::DerivedInit()
 {
     Block::DerivedInit();
     const BlockState* state = mStateDefinition->any();
+    AbstractProperty<int>* property = getAgeProperty();
     TypedBoxed<int> age(0);
-    registerDefaultState(state->setBoxedValue(getAgeProperty(), &age));
+    registerDefaultState(state->setBoxedValue(property, &age));
     setTicking(true);
 }
 
 const AABB* CropBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return SHAPE_BY_AGE[getAge(state)];
+    return SHAPE_BY_AGE[state->getValue(getAgeProperty())];
 }
 
 bool CropBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
@@ -111,8 +112,8 @@ int CropBlock::getAge(const BlockState* state)
 
 const BlockState* CropBlock::getStateForAge(int age)
 {
-    TypedBoxed<int> value(age);
-    return defaultBlockState()->setBoxedValue(getAgeProperty(), &value);
+    const BlockState* state = defaultBlockState();
+    return state->setValue(getAgeProperty(), age);
 }
 
 float CropBlock::getGrowthSpeed(Block* block, Level* level, const BlockPos& pos)
@@ -161,7 +162,7 @@ float CropBlock::getGrowthSpeed(Block* block, Level* level, const BlockPos& pos)
 void CropBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     Bush::tick(level, pos, state, random);
-    if (level->getRawBrightness(pos.above()) > 8)
+    if (level->getRawBrightness(pos.above()) >= 9)
     {
         int age = getAge(state);
         if (age < getMaxAge() && random->nextInt(static_cast<int>(12.0f / getGrowthSpeed(this, level, pos))) == 0)
@@ -174,7 +175,8 @@ void CropBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
 void CropBlock::growCrops(Level* level, const BlockPos& pos, const BlockState* state)
 {
     int age = getAge(state) + getBonemealAgeIncrease(level);
-    if (age > getMaxAge()) age = getMaxAge();
+    int maxAge = getMaxAge();
+    if (age > maxAge) age = maxAge;
     level->setBlock(pos, getStateForAge(age), Block::UPDATE_CLIENTS, false);
 }
 
@@ -185,7 +187,7 @@ int CropBlock::getBonemealAgeIncrease(Level* level)
 
 bool CropBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return (level->getDaytimeRawBrightness(pos) > 7 || level->canSeeSky(pos)) &&
+    return (level->getDaytimeRawBrightness(pos) >= 8 || level->canSeeSky(pos)) &&
         mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
@@ -201,11 +203,13 @@ Item* CropBlock::getBasePlantId()
 
 void CropBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
 {
-    Block::spawnResources(level, pos, state, chance, lootBonus);
-    if (level->mIsClientSide || getAge(state) < getMaxAge()) return;
+    Block::spawnResources(level, pos, state, chance, 0);
+    if (level->mIsClientSide) return;
+    int age = getAge(state);
+    if (age < getMaxAge()) return;
     for (int i = 0; i < lootBonus + 3; ++i)
     {
-        if (level->mRandom->nextInt(getMaxAge() * 2) <= getAge(state))
+        if (level->mRandom->nextInt(getMaxAge() * 2) <= age)
         {
             Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(getBaseSeedId(), 1, 0)));
         }
@@ -252,7 +256,7 @@ bool CropBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* CropBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { AGE };
+    static const Property* properties[] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 

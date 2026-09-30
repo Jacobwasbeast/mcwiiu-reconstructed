@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 
 class BlockState;
@@ -20,7 +21,7 @@ template <class T> class EnumProperty;
 class StoneBlock : public Block
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int nameId, int descriptionId, const std::wstring& serializedName, bool natural);
@@ -51,13 +52,12 @@ public:
         int mNameId;
         int mDescriptionId;
         const MaterialColor* mMaterialColor;
-        std::wstring mSerializedName;
         bool mNatural;
+        std::wstring mSerializedName;
         TextureAtlasSprite* mTexture;
     };
 
     StoneBlock();
-    virtual ~StoneBlock();
     static void blockStaticCtor();
 
     static EnumProperty<Variant*>* VARIANT;

@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 
 class BlockPos;
@@ -25,7 +26,7 @@ template <class T> class EnumProperty;
 class PrismarineSlabBlock : public HalfSlabBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         static Variant* ROUGH;

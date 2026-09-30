@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 #include "game/world/block/FallingBlock.hpp"
 
@@ -21,7 +22,7 @@ template <class T> class AbstractProperty;
 class SandBlock : public FallingBlock, public BonemealableBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         static Variant* SAND;
@@ -43,9 +44,9 @@ public:
     private:
         int mData;
         std::wstring mName;
+        const MaterialColor* mMaterialColor;
         int mNameId;
         int mDescriptionId;
-        const MaterialColor* mMaterialColor;
         int mDustColor;
     };
 

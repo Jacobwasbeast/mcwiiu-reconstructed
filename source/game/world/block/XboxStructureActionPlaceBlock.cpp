@@ -7,11 +7,11 @@
 
 XboxStructureActionPlaceBlock::XboxStructureActionPlaceBlock()
 {
-    mEndX = 0;
-    mEndY = 0;
-    mEndZ = 0;
-    mBlock = NULL;
     mAuxValue = 0;
+    mEndZ = 0;
+    mEndY = 0;
+    mEndX = 0;
+    mBlock = NULL;
 
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_x, &mEndX);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_y, &mEndY);

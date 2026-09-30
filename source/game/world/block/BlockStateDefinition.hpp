@@ -96,9 +96,6 @@ public:
     explicit BlockStateDefinition(Block* block);
     BlockStateDefinition(Block* block, const Property** properties, unsigned int count)
     {
-        mStates.data = NULL;
-        mStates.length = 0;
-
         _init(block, properties, count);
     }
     BlockStateImpl* any();

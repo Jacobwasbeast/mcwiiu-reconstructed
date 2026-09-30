@@ -17,8 +17,6 @@
 BlockStateDefinition::BlockStateDefinition(Block* block)
 {
     mBlock = block;
-    mStates.data = NULL;
-    mStates.length = 0;
 
     mBitOffsets = new unsigned char[1];
     mBitMasks = new unsigned short[1];

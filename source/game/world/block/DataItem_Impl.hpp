@@ -20,7 +20,10 @@ public:
     virtual int getAccessorId();
     virtual void setValue(T value);
 
-    T getValue();
+    T getValue()
+    {
+        return mValue;
+    }
     const EntityDataAccessor<T>* getAccessor();
     bool shouldUpdate(T value);
 
@@ -63,12 +66,6 @@ template <class T>
 void DataItem_Impl<T>::setValue(T value)
 {
     mValue = value;
-}
-
-template <class T>
-T DataItem_Impl<T>::getValue()
-{
-    return mValue;
 }
 
 template <class T>

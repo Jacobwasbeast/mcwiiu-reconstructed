@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 
@@ -23,7 +24,7 @@ template <class T> class EnumProperty;
 class DirtBlock : public Block, public BonemealableBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         Variant(int data, const std::wstring& name, int nameId, int descriptionId,
@@ -56,8 +57,8 @@ public:
         std::wstring mTopTexture;
         std::wstring mSideTexture;
         TextureAtlasSprite* mIcon;
-        TextureAtlasSprite* mSideIcon;
         TextureAtlasSprite* mTopIcon;
+        TextureAtlasSprite* mSideIcon;
     };
 
     DirtBlock();
@@ -85,7 +86,6 @@ public:
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
-    virtual ~DirtBlock();
 };
 
 #endif

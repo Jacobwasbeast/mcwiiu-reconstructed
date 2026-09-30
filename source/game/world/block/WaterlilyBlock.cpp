@@ -20,10 +20,6 @@ WaterlilyBlock::WaterlilyBlock()
     DerivedInit();
 }
 
-WaterlilyBlock::~WaterlilyBlock()
-{
-}
-
 void WaterlilyBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos& pos,
                                        const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
                                        boost::shared_ptr<Entity> entity, bool)

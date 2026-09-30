@@ -1,6 +1,7 @@
 #include "game/world/block/SandBlock.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <string.h>
 #include <typeinfo>
 
 #include <boost/unordered_set.hpp>
@@ -24,7 +25,6 @@
 #include "game/item/ItemId.hpp"
 
 static SandBlock::Variant* gSandVariants[2] = { NULL, NULL };
-static AbstractProperty<SandBlock::Variant*>* gSandVariantProperty = NULL;
 
 SandBlock::Variant* SandBlock::Variant::SAND = NULL;
 SandBlock::Variant* SandBlock::Variant::RED_SAND = NULL;
@@ -32,8 +32,8 @@ AbstractProperty<SandBlock::Variant*>* SandBlock::TYPE = NULL;
 
 SandBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                             const MaterialColor* materialColor, int dustColor)
-    : mData(data), mName(name), mNameId(nameId), mDescriptionId(descriptionId),
-      mMaterialColor(materialColor), mDustColor(dustColor)
+    : mData(data), mName(name), mMaterialColor(materialColor), mNameId(nameId),
+      mDescriptionId(descriptionId), mDustColor(dustColor)
 {
 }
 
@@ -49,7 +49,7 @@ int SandBlock::Variant::getData()
 
 SandBlock::Variant* SandBlock::Variant::byData(int data)
 {
-    if (data > 1)
+    if (data < 0 || data >= 2)
     {
         data = 0;
     }
@@ -87,13 +87,12 @@ int SandBlock::Variant::getDescriptionId()
 }
 
 SandBlock::SandBlock()
-    : FallingBlock(Material::SAND)
+    : FallingBlock()
 {
     DerivedInit();
     TypedBoxed<Variant*> value(Variant::SAND);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(TYPE, &value));
-    mTextures[0] = NULL;
-    mTextures[1] = NULL;
+    memset(mTextures, 0, sizeof(mTextures));
 }
 
 bool SandBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
@@ -115,24 +114,19 @@ void SandBlock::performBonemeal(Level* level, Random* random, const BlockPos& po
 
 void SandBlock::blockStaticCtor()
 {
-    if (gSandVariants[0] != NULL)
-    {
-        return;
-    }
+    Variant::SAND = new Variant(0, L"sand", IDS_TILE_SAND, IDS_DESC_SAND, MaterialColor::SAND,
+                                -2370656);
+    Variant::RED_SAND = new Variant(1, L"red_sand", IDS_TILE_SAND_RED, IDS_DESC_SAND_RED,
+                                    MaterialColor::COLOR_ORANGE, -5679071);
+    gSandVariants[0] = Variant::SAND;
+    gSandVariants[1] = Variant::RED_SAND;
 
-    gSandVariants[0] = new Variant(0, L"sand", IDS_TILE_SAND, IDS_DESC_SAND, MaterialColor::SAND,
-                                   -2370656);
-    gSandVariants[1] = new Variant(1, L"red_sand", IDS_TILE_SAND_RED, IDS_DESC_SAND_RED,
-                                   MaterialColor::COLOR_ORANGE, -5679071);
-    Variant::SAND = gSandVariants[0];
-    Variant::RED_SAND = gSandVariants[1];
-
+    std::wstring name(L"variant");
     boost::unordered_set<Variant*> variants;
     variants.insert(gSandVariants[0]);
     variants.insert(gSandVariants[1]);
-    gSandVariantProperty = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant*), variants, Predicates<Variant*>::alwaysTrue);
-    TYPE = gSandVariantProperty;
+    TYPE = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
+                                          Predicates<Variant*>::alwaysTrue);
 }
 
 int SandBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -173,8 +167,7 @@ unsigned int SandBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 BlockStateDefinition* SandBlock::createBlockStateDefinition()
 {
-    const Property* properties[1];
-    properties[0] = TYPE;
+    static const Property* properties[] = { TYPE };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -190,8 +183,8 @@ TextureAtlasSprite* SandBlock::getTexture(const Direction*, const BlockState* st
 
 void SandBlock::registerIcons(IconRegister* iconRegister)
 {
-    mTextures[0] = iconRegister->registerIcon(Variant::SAND->getName());
-    mTextures[1] = iconRegister->registerIcon(Variant::RED_SAND->getName());
+    mTextures[0] = iconRegister->registerIcon(gSandVariants[0]->getName());
+    mTextures[1] = iconRegister->registerIcon(gSandVariants[1]->getName());
 }
 
 SandBlock::~SandBlock()

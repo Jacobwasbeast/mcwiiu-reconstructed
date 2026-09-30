@@ -3,12 +3,13 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 
 class HalfSlabBlock : public Block
 {
 public:
-    class Half
+    class Half : public StringRepresentable
     {
     public:
         enum { HALF_COUNT = 2 };

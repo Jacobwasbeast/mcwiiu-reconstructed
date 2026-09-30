@@ -20,7 +20,7 @@ template <class T>
 class TypedBoxed : public Boxed
 {
 public:
-    TypedBoxed(const T& value) : Boxed(&typeid(T)), mValue(value) {}
+    TypedBoxed(T value) : Boxed(&typeid(T)), mValue(value) {}
     virtual ~TypedBoxed() {}
 
     const T& getValue() const { return this->mValue; }

@@ -18,7 +18,7 @@ class WaterlilyBlock : public Bush
 {
 public:
     WaterlilyBlock();
-    virtual ~WaterlilyBlock();
+    virtual ~WaterlilyBlock() {}
 
     virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
                                    const AABB* entityBox, std::vector<AABB*>* collidingBoxes,

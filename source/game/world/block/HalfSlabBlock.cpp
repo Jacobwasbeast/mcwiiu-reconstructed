@@ -49,6 +49,7 @@ std::wstring HalfSlabBlock::Half::getSerializedName() const
 void HalfSlabBlock::blockStaticCtor()
 {
     std::wstring name = L"half";
+    Predicate<Half*>* filter = Predicates<Half*>::alwaysTrue;
 
     boost::unordered_set<Half*> values;
     for (int i = 0; i < Half::HALF_COUNT; ++i)
@@ -56,7 +57,8 @@ void HalfSlabBlock::blockStaticCtor()
         values.insert(HALVES[i]);
     }
 
-    TYPE = EnumProperty<Half*>::create(name, typeid(Half), values, Predicates<Half*>::alwaysTrue);
+    AbstractProperty<Half*>* type = EnumProperty<Half*>::create(name, typeid(Half), values, filter);
+    TYPE = type;
 }
 
 HalfSlabBlock::HalfSlabBlock(Material* material)
@@ -207,13 +209,13 @@ bool HalfSlabBlock::shouldRenderFace(const BlockState* state, LevelSource* level
         return !(isHalfSlab(state) && topSlab);
     }
 
-    if (direction != Direction::UP
-        && (direction != Direction::DOWN || !Block::shouldRenderFace(state, levelSource, pos, direction)))
+    if (direction == Direction::UP
+        || (direction == Direction::DOWN && Block::shouldRenderFace(state, levelSource, pos, direction)))
     {
-        return !(isHalfSlab(neighbourState) && !topSlab);
+        return true;
     }
 
-    return true;
+    return !(isHalfSlab(neighbourState) && !topSlab);
 }
 
 bool HalfSlabBlock::isPathfindable(LevelSource* levelSource, const BlockPos& pos)
