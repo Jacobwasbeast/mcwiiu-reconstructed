@@ -9,7 +9,6 @@ class FJ_EnchantingButton_Small : public FJ_EnchantingButton
 {
 public:
     FJ_EnchantingButton_Small(fuiRenderNode* pRenderNode);
-    virtual ~FJ_EnchantingButton_Small();
     static FJ_EnchantingButton* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

@@ -8,10 +8,6 @@ FJ_InGameTeleportMenu::FJ_InGameTeleportMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_InGameTeleportMenu::~FJ_InGameTeleportMenu()
-{
-}
-
 FJ_Document* FJ_InGameTeleportMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_InGameTeleportMenu(renderNode);

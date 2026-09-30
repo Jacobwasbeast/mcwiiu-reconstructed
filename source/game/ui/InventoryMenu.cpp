@@ -36,10 +36,6 @@ InventoryMenu::InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active
     _init(inventory, active);
 }
 
-InventoryMenu::~InventoryMenu()
-{
-}
-
 void InventoryMenu::staticCtor()
 {
     gInventoryMenuHead = EquipmentSlot::HEAD;

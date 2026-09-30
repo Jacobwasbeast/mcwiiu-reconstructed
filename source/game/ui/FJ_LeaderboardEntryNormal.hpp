@@ -11,7 +11,6 @@ class FJ_LeaderboardEntryNormal : public FJ_LeaderboardEntry
 {
 public:
     FJ_LeaderboardEntryNormal(fuiRenderNode* pRenderNode);
-    virtual ~FJ_LeaderboardEntryNormal();
 
     void HandleUpdateLabel(FJ_Event* pEvent);
     static void _HandleUpdateLabel(FJ_FuiNode* pNode, FJ_Event* pEvent);

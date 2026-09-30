@@ -11,7 +11,6 @@ class FJ_LeaderboardMenu : public FJ_Document
 {
 public:
     FJ_LeaderboardMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_LeaderboardMenu();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

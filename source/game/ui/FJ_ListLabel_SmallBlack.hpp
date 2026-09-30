@@ -9,7 +9,6 @@ class FJ_ListLabel_SmallBlack : public FJ_Label
 {
 public:
     explicit FJ_ListLabel_SmallBlack(fuiRenderNode* renderNode);
-    virtual ~FJ_ListLabel_SmallBlack();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

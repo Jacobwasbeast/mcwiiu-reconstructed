@@ -5,10 +5,6 @@ FJ_TextInput_Normal::FJ_TextInput_Normal(fuiRenderNode* renderNode)
 {
 }
 
-FJ_TextInput_Normal::~FJ_TextInput_Normal()
-{
-}
-
 FJ_TextInput* FJ_TextInput_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_TextInput_Normal(renderNode);

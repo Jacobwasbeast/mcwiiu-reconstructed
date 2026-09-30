@@ -5,10 +5,6 @@ FJ_DynamicHtmlText* FJ_DynamicHtmlText_WithPanel_Normal::Create(fuiRenderNode* p
     return new FJ_DynamicHtmlText_WithPanel_Normal(pRenderNode);
 }
 
-FJ_DynamicHtmlText_WithPanel_Normal::~FJ_DynamicHtmlText_WithPanel_Normal()
-{
-}
-
 unsigned int FJ_DynamicHtmlText_WithPanel_Normal::getType()
 {
     return 0x80ad;

@@ -14,7 +14,6 @@ public:
     HopperMenu(boost::shared_ptr<Container> playerContainer,
                boost::shared_ptr<Container> container,
                boost::shared_ptr<Player> player);
-    virtual ~HopperMenu();
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual void removed(boost::shared_ptr<Player> player);

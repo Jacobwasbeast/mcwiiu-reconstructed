@@ -9,7 +9,6 @@ class FJ_TutorialPopup : public FJ_FuiNode
 {
 public:
     FJ_TutorialPopup(fuiRenderNode* pRenderNode);
-    virtual ~FJ_TutorialPopup();
 
     static FJ_TutorialPopup* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

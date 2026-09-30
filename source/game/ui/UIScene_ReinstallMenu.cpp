@@ -15,10 +15,6 @@ UIScene_ReinstallMenu::UIScene_ReinstallMenu(int type, void*, UILayer* layer)
     initialiseMovie();
 }
 
-UIScene_ReinstallMenu::~UIScene_ReinstallMenu()
-{
-}
-
 unsigned int UIScene_ReinstallMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();

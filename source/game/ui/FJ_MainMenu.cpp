@@ -7,10 +7,6 @@ FJ_MainMenu::FJ_MainMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_MainMenu::~FJ_MainMenu()
-{
-}
-
 FJ_Document* FJ_MainMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_MainMenu(renderNode);

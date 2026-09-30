@@ -7,10 +7,6 @@ FJ_Label_SkinSelect_Small_Off::FJ_Label_SkinSelect_Small_Off(fuiRenderNode* rend
 {
 }
 
-FJ_Label_SkinSelect_Small_Off::~FJ_Label_SkinSelect_Small_Off()
-{
-}
-
 FJ_Label* FJ_Label_SkinSelect_Small_Off::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_SkinSelect_Small_Off(renderNode);

@@ -7,7 +7,6 @@ class FJ_TextInput_Vita : public FJ_TextInput
 {
 public:
     explicit FJ_TextInput_Vita(fuiRenderNode* renderNode);
-    virtual ~FJ_TextInput_Vita();
 
     static FJ_TextInput* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

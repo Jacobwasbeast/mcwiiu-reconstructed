@@ -26,10 +26,6 @@ FJ_LaunchMoreOptionsMenu::FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode)
     m_menuType = 0;
 }
 
-FJ_LaunchMoreOptionsMenu::~FJ_LaunchMoreOptionsMenu()
-{
-}
-
 void FJ_LaunchMoreOptionsMenu::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

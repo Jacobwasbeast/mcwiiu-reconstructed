@@ -14,10 +14,6 @@ UIScene_TrialExitUpsell::UIScene_TrialExitUpsell(int sceneType, void*, UILayer* 
     initialiseMovie();
 }
 
-UIScene_TrialExitUpsell::~UIScene_TrialExitUpsell()
-{
-}
-
 void UIScene_TrialExitUpsell::updateTooltips()
 {
     gConsoleUIController.SetTooltips(0, IDS_EXIT_GAME, 0x4f6bcf5, IDS_UNLOCK_TITLE,

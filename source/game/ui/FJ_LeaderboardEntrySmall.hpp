@@ -7,7 +7,6 @@ class FJ_LeaderboardEntrySmall : public FJ_LeaderboardEntry
 {
 public:
     FJ_LeaderboardEntrySmall(fuiRenderNode* pRenderNode);
-    virtual ~FJ_LeaderboardEntrySmall();
 
     void HandleUpdateLabel(FJ_Event* pEvent);
     static void _HandleUpdateLabel(FJ_FuiNode* pNode, FJ_Event* pEvent);

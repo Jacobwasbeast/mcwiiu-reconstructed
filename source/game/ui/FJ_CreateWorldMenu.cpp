@@ -15,10 +15,6 @@ FJ_CreateWorldMenu::FJ_CreateWorldMenu(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }
 
-FJ_CreateWorldMenu::~FJ_CreateWorldMenu()
-{
-}
-
 void FJ_CreateWorldMenu::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

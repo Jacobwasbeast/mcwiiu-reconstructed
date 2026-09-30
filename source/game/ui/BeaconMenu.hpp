@@ -30,7 +30,6 @@ public:
 
     BeaconMenu(boost::shared_ptr<Container> playerContainer,
                boost::shared_ptr<Container> beaconContainer);
-    virtual ~BeaconMenu();
 
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void setData(int id, int value);

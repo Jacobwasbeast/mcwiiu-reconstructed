@@ -8,10 +8,6 @@ FJ_FurnaceFlame::FJ_FurnaceFlame(fuiRenderNode* renderNode)
     FJ_ProgressBar::initFiller();
 }
 
-FJ_FurnaceFlame::~FJ_FurnaceFlame()
-{
-}
-
 void FJ_FurnaceFlame::InitBarType()
 {
     m_barType = false;

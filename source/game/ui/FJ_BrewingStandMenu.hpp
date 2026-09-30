@@ -9,7 +9,6 @@ class FJ_BrewingStandMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_BrewingStandMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_BrewingStandMenu();
     static FJ_BrewingStandMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetSafeZone(int top, int bottom, int left, int right);

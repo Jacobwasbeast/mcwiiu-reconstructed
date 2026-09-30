@@ -11,7 +11,6 @@ class UIScene_TrialExitUpsell : public UIScene
 {
 public:
     UIScene_TrialExitUpsell(int sceneType, void* data, UILayer* layer);
-    virtual ~UIScene_TrialExitUpsell();
     virtual void updateTooltips();
     virtual std::wstring getMoviePath();
     virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,

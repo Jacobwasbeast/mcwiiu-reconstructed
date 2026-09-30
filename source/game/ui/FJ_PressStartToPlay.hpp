@@ -18,7 +18,6 @@ private:
 
 public:
     FJ_PressStartToPlay(fuiRenderNode* renderNode);
-    virtual ~FJ_PressStartToPlay();
 
     static FJ_PressStartToPlay* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

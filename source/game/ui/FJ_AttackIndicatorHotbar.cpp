@@ -8,10 +8,6 @@ FJ_AttackIndicatorHotbar::FJ_AttackIndicatorHotbar(fuiRenderNode* renderNode)
     FJ_ProgressBar::initFiller();
 }
 
-FJ_AttackIndicatorHotbar::~FJ_AttackIndicatorHotbar()
-{
-}
-
 void FJ_AttackIndicatorHotbar::InitBarType()
 {
     m_barType = false;

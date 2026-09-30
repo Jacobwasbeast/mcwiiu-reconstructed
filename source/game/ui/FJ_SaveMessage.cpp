@@ -7,9 +7,6 @@ FJ_SaveMessage::FJ_SaveMessage(fuiRenderNode* renderNode)
     : FJ_Document(renderNode) {
 }
 
-FJ_SaveMessage::~FJ_SaveMessage() {
-}
-
 FJ_Document* FJ_SaveMessage::Create(fuiRenderNode* renderNode) {
     return new FJ_SaveMessage(renderNode);
 }

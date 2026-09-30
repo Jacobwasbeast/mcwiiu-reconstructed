@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~FJ_HtmlText_WhiteSmall();
     static FJ_HtmlText* Create(fuiRenderNode* pRenderNode);
     virtual void ASConstructor();
     virtual unsigned int getType();

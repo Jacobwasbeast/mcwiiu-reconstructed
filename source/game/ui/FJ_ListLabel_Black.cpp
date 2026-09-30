@@ -7,10 +7,6 @@ FJ_ListLabel_Black::FJ_ListLabel_Black(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ListLabel_Black::~FJ_ListLabel_Black()
-{
-}
-
 FJ_Label* FJ_ListLabel_Black::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListLabel_Black(renderNode);

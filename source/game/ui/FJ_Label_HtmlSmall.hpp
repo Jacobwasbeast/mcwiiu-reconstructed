@@ -15,7 +15,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_HtmlSmall();
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
 

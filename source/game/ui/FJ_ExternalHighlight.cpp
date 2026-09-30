@@ -10,10 +10,6 @@ FJ_ExternalHighlight* FJ_ExternalHighlight::Create(fuiRenderNode* pRenderNode)
     return new FJ_ExternalHighlight(pRenderNode);
 }
 
-FJ_ExternalHighlight::~FJ_ExternalHighlight()
-{
-}
-
 unsigned int FJ_ExternalHighlight::getType()
 {
     return 19;

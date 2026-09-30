@@ -58,10 +58,6 @@ UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* laye
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-UIScene_HowToPlayMenu::~UIScene_HowToPlayMenu()
-{
-}
-
 void UIScene_HowToPlayMenu::updateTooltips()
 {
     gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,

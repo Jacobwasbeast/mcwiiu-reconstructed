@@ -15,10 +15,6 @@ FJ_QuadrantSignin::FJ_QuadrantSignin(fuiRenderNode* renderNode)
 {
 }
 
-FJ_QuadrantSignin::~FJ_QuadrantSignin()
-{
-}
-
 FJ_Document* FJ_QuadrantSignin::Create(fuiRenderNode* renderNode)
 {
     return new FJ_QuadrantSignin(renderNode);

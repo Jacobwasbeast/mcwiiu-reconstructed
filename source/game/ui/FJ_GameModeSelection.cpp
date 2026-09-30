@@ -11,10 +11,6 @@ FJ_GameModeSelection::FJ_GameModeSelection(fuiRenderNode* renderNode)
 {
 }
 
-FJ_GameModeSelection::~FJ_GameModeSelection()
-{
-}
-
 FJ_Document* FJ_GameModeSelection::Create(fuiRenderNode* renderNode)
 {
     return new FJ_GameModeSelection(renderNode);

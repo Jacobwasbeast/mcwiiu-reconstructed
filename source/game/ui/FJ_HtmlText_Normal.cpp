@@ -24,6 +24,3 @@ unsigned int FJ_HtmlText_Normal::getType()
     return 0x80a2;
 }
 
-FJ_HtmlText_Normal::~FJ_HtmlText_Normal()
-{
-}

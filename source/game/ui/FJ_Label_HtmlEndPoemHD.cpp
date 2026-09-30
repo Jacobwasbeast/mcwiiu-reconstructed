@@ -1,9 +1,5 @@
 #include "game/ui/FJ_Label_HtmlEndPoemHD.hpp"
 
-FJ_Label_HtmlEndPoemHD::~FJ_Label_HtmlEndPoemHD()
-{
-}
-
 FJ_Label* FJ_Label_HtmlEndPoemHD::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_HtmlEndPoemHD(renderNode);

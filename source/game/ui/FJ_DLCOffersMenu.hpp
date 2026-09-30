@@ -10,7 +10,6 @@ class FJ_DLCOffersMenu : public FJ_Document
 {
 public:
     FJ_DLCOffersMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_DLCOffersMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void handlePress(FJ_Event* event);

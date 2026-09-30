@@ -11,7 +11,6 @@ public:
     UIComponent_Panorama(int sceneType, void* data, UILayer* layer);
 
     virtual std::wstring getMoviePath();
-    virtual ~UIComponent_Panorama();
     virtual int getSceneType();
     virtual void tick();
     virtual bool stealsFocus();

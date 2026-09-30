@@ -13,7 +13,6 @@ class FJ_ControlsMenu : public FJ_Document
 {
 public:
     FJ_ControlsMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_ControlsMenu();
 
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);

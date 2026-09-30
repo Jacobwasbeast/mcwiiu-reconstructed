@@ -9,7 +9,6 @@ class FJ_HopperMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_HopperMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_HopperMenu();
 
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

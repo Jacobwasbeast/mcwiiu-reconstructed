@@ -9,7 +9,6 @@ class FJ_FurnaceMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_FurnaceMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_FurnaceMenu();
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetSafeZone(int top, int bottom, int left, int right);

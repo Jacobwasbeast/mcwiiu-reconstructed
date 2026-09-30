@@ -9,7 +9,6 @@ class FJ_TextInput_Small : public FJ_TextInput
 {
 public:
     explicit FJ_TextInput_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_TextInput_Small();
     static FJ_TextInput* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

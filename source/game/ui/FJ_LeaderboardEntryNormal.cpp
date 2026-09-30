@@ -11,10 +11,6 @@ FJ_LeaderboardEntryNormal::FJ_LeaderboardEntryNormal(fuiRenderNode* pRenderNode)
     getChildByName("StyleContainer")->setVisible(false);
 }
 
-FJ_LeaderboardEntryNormal::~FJ_LeaderboardEntryNormal()
-{
-}
-
 void FJ_LeaderboardEntryNormal::HandleUpdateLabel(FJ_Event*)
 {
     getChildByName("StyleContainer")->setVisible(false);

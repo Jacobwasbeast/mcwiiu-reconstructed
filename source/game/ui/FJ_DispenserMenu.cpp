@@ -8,10 +8,6 @@ FJ_DispenserMenu::FJ_DispenserMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_DispenserMenu::~FJ_DispenserMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_DispenserMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DispenserMenu(renderNode);

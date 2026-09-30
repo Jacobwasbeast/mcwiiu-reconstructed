@@ -12,7 +12,6 @@ class TrapMenu : public AbstractContainerMenu
 {
 public:
     TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_ptr<Container> container);
-    virtual ~TrapMenu();
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual bool stillValid(boost::shared_ptr<Player> player);

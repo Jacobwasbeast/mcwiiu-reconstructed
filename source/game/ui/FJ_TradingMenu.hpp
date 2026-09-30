@@ -13,7 +13,6 @@ class FJ_TradingMenu : public FJ_Document
 {
 public:
     FJ_TradingMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_TradingMenu();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

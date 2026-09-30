@@ -19,10 +19,6 @@ FJ_InventoryMenu::FJ_InventoryMenu(fuiRenderNode* renderNode)
     m_inventoryHidden = false;
 }
 
-FJ_InventoryMenu::~FJ_InventoryMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_InventoryMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_InventoryMenu(renderNode);

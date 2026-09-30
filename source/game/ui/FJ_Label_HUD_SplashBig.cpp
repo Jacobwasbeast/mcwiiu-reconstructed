@@ -8,10 +8,6 @@ FJ_Label_HUD_SplashBig::FJ_Label_HUD_SplashBig(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_HUD_SplashBig::~FJ_Label_HUD_SplashBig()
-{
-}
-
 FJ_Label* FJ_Label_HUD_SplashBig::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_HUD_SplashBig(renderNode);

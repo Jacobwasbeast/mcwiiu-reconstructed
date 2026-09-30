@@ -10,10 +10,6 @@ FJ_MobEffect_Tile_Small* FJ_MobEffect_Tile_Small::Create(fuiRenderNode* pRenderN
     return new FJ_MobEffect_Tile_Small(pRenderNode);
 }
 
-FJ_MobEffect_Tile_Small::~FJ_MobEffect_Tile_Small()
-{
-}
-
 unsigned int FJ_MobEffect_Tile_Small::getType()
 {
     return 100;

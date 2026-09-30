@@ -30,10 +30,6 @@ FJ_CraftingMenu::FJ_CraftingMenu(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_SlideComplete, this, _handleSlideComplete, false);
 }
 
-FJ_CraftingMenu::~FJ_CraftingMenu()
-{
-}
-
 void FJ_CraftingMenu::handleSlideComplete(FJ_Event* event)
 {
     m_pCallbackScene->handleTouchBoxRebuild();

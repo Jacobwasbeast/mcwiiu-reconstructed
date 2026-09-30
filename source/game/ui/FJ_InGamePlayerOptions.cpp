@@ -90,6 +90,3 @@ void FJ_InGamePlayerOptions::SetPlayerIcon(int icon)
     movieClip->gotoAndStop(icon + 1);
 }
 
-FJ_InGamePlayerOptions::~FJ_InGamePlayerOptions()
-{
-}

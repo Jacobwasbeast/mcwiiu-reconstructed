@@ -7,10 +7,6 @@ FJ_FullScreenProgress::FJ_FullScreenProgress(fuiRenderNode* renderNode)
 {
 }
 
-FJ_FullScreenProgress::~FJ_FullScreenProgress()
-{
-}
-
 FJ_Document* FJ_FullScreenProgress::Create(fuiRenderNode* renderNode)
 {
     return new FJ_FullScreenProgress(renderNode);

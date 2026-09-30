@@ -9,7 +9,6 @@ class FJ_FurnaceArrow_Small : public FJ_ProgressBar
 {
 public:
     FJ_FurnaceArrow_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_FurnaceArrow_Small();
     static FJ_FurnaceArrow_Small* Create(fuiRenderNode* renderNode);
     virtual void InitBarType();
     virtual uint32_t getType();

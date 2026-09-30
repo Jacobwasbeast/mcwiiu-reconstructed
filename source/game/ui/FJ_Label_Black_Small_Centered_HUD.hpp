@@ -9,7 +9,6 @@ class FJ_Label_Black_Small_Centered_HUD : public FJ_Label
 {
 public:
     FJ_Label_Black_Small_Centered_HUD(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Label_Black_Small_Centered_HUD();
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

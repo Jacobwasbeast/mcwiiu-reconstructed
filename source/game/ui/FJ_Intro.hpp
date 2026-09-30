@@ -9,7 +9,6 @@ class FJ_Intro : public FJ_Document
 {
 public:
     FJ_Intro(fuiRenderNode* renderNode);
-    virtual ~FJ_Intro();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

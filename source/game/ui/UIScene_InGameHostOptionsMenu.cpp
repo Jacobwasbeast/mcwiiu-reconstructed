@@ -51,10 +51,6 @@ UIScene_InGameHostOptionsMenu::UIScene_InGameHostOptionsMenu(int sceneType, void
     Init();
 }
 
-UIScene_InGameHostOptionsMenu::~UIScene_InGameHostOptionsMenu()
-{
-}
-
 unsigned int UIScene_InGameHostOptionsMenu::getWeatherId(int weatherState)
 {
     if (weatherState == 1)

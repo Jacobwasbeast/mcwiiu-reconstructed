@@ -7,10 +7,6 @@ FJ_ProgressBar_Loading::FJ_ProgressBar_Loading(fuiRenderNode* renderNode)
     initFiller();
 }
 
-FJ_ProgressBar_Loading::~FJ_ProgressBar_Loading()
-{
-}
-
 FJ_ProgressBar* FJ_ProgressBar_Loading::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ProgressBar_Loading(renderNode);

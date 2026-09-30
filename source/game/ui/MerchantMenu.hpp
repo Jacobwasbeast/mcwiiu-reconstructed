@@ -14,7 +14,6 @@ class MerchantMenu : public AbstractContainerMenu
 {
 public:
     MerchantMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Merchant> merchant, Level* level);
-    virtual ~MerchantMenu();
 
     boost::shared_ptr<MerchantContainer> getTradeContainer();
     virtual void slotsChanged();

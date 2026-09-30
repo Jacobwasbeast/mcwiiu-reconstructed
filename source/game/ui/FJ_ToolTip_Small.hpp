@@ -9,7 +9,6 @@ class FJ_ToolTip_Small : public FJ_ToolTip
 {
 public:
     explicit FJ_ToolTip_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ToolTip_Small();
     static FJ_ToolTip* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

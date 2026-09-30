@@ -7,10 +7,6 @@ FJ_Label_SmallWhite::FJ_Label_SmallWhite(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_SmallWhite::~FJ_Label_SmallWhite()
-{
-}
-
 FJ_Label* FJ_Label_SmallWhite::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_SmallWhite(renderNode);

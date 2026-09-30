@@ -12,7 +12,6 @@ public:
         : FJ_DynamicHtmlText(pRenderNode)
     {
     }
-    virtual ~FJ_DynamicHtmlText_Small();
     static FJ_DynamicHtmlText* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

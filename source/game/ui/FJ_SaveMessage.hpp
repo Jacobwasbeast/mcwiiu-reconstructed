@@ -8,7 +8,6 @@ class fuiRenderNode;
 class FJ_SaveMessage : public FJ_Document {
 public:
     FJ_SaveMessage(fuiRenderNode* renderNode);
-    virtual ~FJ_SaveMessage();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     void AutoResize();

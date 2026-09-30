@@ -9,7 +9,6 @@ class FJ_ClassicCraftingMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_ClassicCraftingMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_ClassicCraftingMenu();
     static FJ_ClassicCraftingMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetSafeZone(int top, int bottom, int left, int right);

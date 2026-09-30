@@ -11,7 +11,6 @@ class FJ_DebugSetCamera : public FJ_Document
 {
 public:
     FJ_DebugSetCamera(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugSetCamera();
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);
     static FJ_Document* Create(fuiRenderNode* renderNode);

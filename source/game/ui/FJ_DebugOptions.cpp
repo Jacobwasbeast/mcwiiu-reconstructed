@@ -5,10 +5,6 @@ FJ_DebugOptions::FJ_DebugOptions(fuiRenderNode* renderNode)
 {
 }
 
-FJ_DebugOptions::~FJ_DebugOptions()
-{
-}
-
 FJ_Document* FJ_DebugOptions::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DebugOptions(renderNode);

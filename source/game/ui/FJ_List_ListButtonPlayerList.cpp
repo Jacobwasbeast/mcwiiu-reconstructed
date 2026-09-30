@@ -53,6 +53,3 @@ void FJ_List_ListButtonPlayerList::SetVOIPIcon(int item, int icon)
         button->SetVOIPIcon(icon);
 }
 
-FJ_List_ListButtonPlayerList::~FJ_List_ListButtonPlayerList()
-{
-}

@@ -10,7 +10,6 @@ class FJ_panel9Grid_16Fade : public FJ_FuiNode
 public:
     FJ_panel9Grid_16Fade(fuiRenderNode* renderNode);
     static FJ_FuiNode* Create(fuiRenderNode* renderNode);
-    virtual ~FJ_panel9Grid_16Fade();
     void ChangeState(int state);
     virtual unsigned int getType();
 };

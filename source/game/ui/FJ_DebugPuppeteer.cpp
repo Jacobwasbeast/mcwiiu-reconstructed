@@ -4,10 +4,6 @@ FJ_DebugPuppeteer::FJ_DebugPuppeteer(fuiRenderNode* renderNode) : FJ_Document(re
 {
 }
 
-FJ_DebugPuppeteer::~FJ_DebugPuppeteer()
-{
-}
-
 FJ_DebugPuppeteer* FJ_DebugPuppeteer::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DebugPuppeteer(renderNode);

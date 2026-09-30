@@ -14,7 +14,6 @@ public:
         : FJ_HtmlText(pRenderNode)
     {
     }
-    virtual ~FJ_HtmlText_Normal();
     static FJ_HtmlText* Create(fuiRenderNode* pRenderNode);
     virtual void ASConstructor();
     virtual unsigned int getType();

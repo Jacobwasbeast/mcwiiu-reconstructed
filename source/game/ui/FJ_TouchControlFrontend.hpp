@@ -12,7 +12,6 @@ public:
 
     static FJ_TouchControlFrontend* Create(fuiRenderNode* pRenderNode);
 
-    virtual ~FJ_TouchControlFrontend();
 
     void Init();
 

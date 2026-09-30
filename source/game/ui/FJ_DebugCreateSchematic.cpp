@@ -17,10 +17,6 @@ FJ_DebugCreateSchematic::FJ_DebugCreateSchematic(fuiRenderNode* renderNode)
     static_cast<FJ_TextInput*>(getChildByName(std::string("Name")))->m_bUseScale = true;
 }
 
-FJ_DebugCreateSchematic::~FJ_DebugCreateSchematic()
-{
-}
-
 void FJ_DebugCreateSchematic::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

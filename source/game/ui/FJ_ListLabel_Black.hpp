@@ -9,7 +9,6 @@ class FJ_ListLabel_Black : public FJ_Label
 {
 public:
     explicit FJ_ListLabel_Black(fuiRenderNode* renderNode);
-    virtual ~FJ_ListLabel_Black();
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
 

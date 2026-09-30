@@ -15,7 +15,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_WhiteHtml();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetLabel(const std::wstring& label);

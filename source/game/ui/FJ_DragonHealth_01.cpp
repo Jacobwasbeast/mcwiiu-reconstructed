@@ -15,6 +15,3 @@ uint32_t FJ_DragonHealth_01::getType()
     return 0x8042;
 }
 
-FJ_DragonHealth_01::~FJ_DragonHealth_01()
-{
-}

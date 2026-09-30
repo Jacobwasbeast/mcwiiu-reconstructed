@@ -9,7 +9,6 @@ class FJ_AttackIndicatorHotbar : public FJ_ProgressBar
 {
 public:
     explicit FJ_AttackIndicatorHotbar(fuiRenderNode* renderNode);
-    virtual ~FJ_AttackIndicatorHotbar();
     static FJ_AttackIndicatorHotbar* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void InitBarType();

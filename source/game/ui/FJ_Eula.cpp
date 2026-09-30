@@ -7,10 +7,6 @@ FJ_Eula::FJ_Eula(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Eula::~FJ_Eula()
-{
-}
-
 FJ_Document* FJ_Eula::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Eula(renderNode);

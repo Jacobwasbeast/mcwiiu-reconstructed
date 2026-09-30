@@ -8,7 +8,6 @@ class fuiRenderNode;
 class FJ_SuperFlatPresets : public FJ_Document {
 public:
     FJ_SuperFlatPresets(fuiRenderNode* renderNode);
-    virtual ~FJ_SuperFlatPresets();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

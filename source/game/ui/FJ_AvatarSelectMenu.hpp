@@ -17,7 +17,6 @@ private:
 
 public:
     FJ_AvatarSelectMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_AvatarSelectMenu();
     static FJ_AvatarSelectMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void handlePress(FJ_Event* event);

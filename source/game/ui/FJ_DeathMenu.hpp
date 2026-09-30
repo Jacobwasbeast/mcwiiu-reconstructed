@@ -9,7 +9,6 @@ class FJ_DeathMenu : public FJ_Document
 {
 public:
     explicit FJ_DeathMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_DeathMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

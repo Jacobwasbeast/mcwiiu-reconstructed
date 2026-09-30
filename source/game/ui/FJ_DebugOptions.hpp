@@ -9,7 +9,6 @@ class FJ_DebugOptions : public FJ_Document
 {
 public:
     FJ_DebugOptions(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugOptions();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

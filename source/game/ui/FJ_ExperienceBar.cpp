@@ -29,6 +29,3 @@ void FJ_ExperienceBar::Init(const std::wstring& label)
     (void)label;
 }
 
-FJ_ExperienceBar::~FJ_ExperienceBar()
-{
-}

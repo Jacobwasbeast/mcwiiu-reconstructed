@@ -9,7 +9,6 @@ class FJ_DebugMenu : public FJ_Document
 {
 public:
     FJ_DebugMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugMenu();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

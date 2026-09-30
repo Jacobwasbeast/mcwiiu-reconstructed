@@ -5,10 +5,6 @@ FJ_BeaconEffectButton_Small::FJ_BeaconEffectButton_Small(fuiRenderNode* pRenderN
 {
 }
 
-FJ_BeaconEffectButton_Small::~FJ_BeaconEffectButton_Small()
-{
-}
-
 FJ_BeaconEffectButton* FJ_BeaconEffectButton_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_BeaconEffectButton_Small(pRenderNode);

@@ -33,9 +33,6 @@ UIScene_JoinMenu::UIScene_JoinMenu(int sceneType, void* data, UILayer* layer)
         m_matchmaking = value->miniGames;
     }
 }
-UIScene_JoinMenu::~UIScene_JoinMenu()
-{
-}
 
 unsigned int UIScene_JoinMenu::GetCustomGameModeID()
 {

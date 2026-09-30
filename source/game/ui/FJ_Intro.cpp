@@ -72,10 +72,6 @@ FJ_Intro::FJ_Intro(fuiRenderNode* renderNode)
     }
 }
 
-FJ_Intro::~FJ_Intro()
-{
-}
-
 FJ_Document* FJ_Intro::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Intro(renderNode);

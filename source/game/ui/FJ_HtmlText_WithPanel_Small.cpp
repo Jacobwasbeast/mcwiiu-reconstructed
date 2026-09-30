@@ -5,10 +5,6 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-FJ_HtmlText_WithPanel_Small::~FJ_HtmlText_WithPanel_Small()
-{
-}
-
 FJ_HtmlText_WithPanel* FJ_HtmlText_WithPanel_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_HtmlText_WithPanel_Small(pRenderNode);

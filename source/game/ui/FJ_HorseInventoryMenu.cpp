@@ -7,10 +7,6 @@ FJ_HorseInventoryMenu::FJ_HorseInventoryMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_HorseInventoryMenu::~FJ_HorseInventoryMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_HorseInventoryMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_HorseInventoryMenu(renderNode);

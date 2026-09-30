@@ -11,7 +11,6 @@ class FJ_Gamertag : public FJ_Document
 {
 public:
     FJ_Gamertag(fuiRenderNode* renderNode);
-    virtual ~FJ_Gamertag();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     void SetGamertag(const std::wstring& gamertag);

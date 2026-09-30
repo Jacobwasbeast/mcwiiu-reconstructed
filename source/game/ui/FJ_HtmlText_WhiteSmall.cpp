@@ -6,10 +6,6 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-FJ_HtmlText_WhiteSmall::~FJ_HtmlText_WhiteSmall()
-{
-}
-
 FJ_HtmlText* FJ_HtmlText_WhiteSmall::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_HtmlText_WhiteSmall(pRenderNode);

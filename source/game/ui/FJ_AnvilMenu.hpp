@@ -9,7 +9,6 @@ class FJ_AnvilMenu : public FJ_AbstractContainerDocument
 {
 public:
     explicit FJ_AnvilMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_AnvilMenu();
     void SetCostLabel(const std::wstring& label, bool safe);
     void ShowRedCross(bool show);
     static FJ_AnvilMenu* Create(fuiRenderNode* renderNode);

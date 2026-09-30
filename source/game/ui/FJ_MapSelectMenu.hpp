@@ -9,7 +9,6 @@ class FJ_MapSelectMenu : public FJ_Document
 {
 public:
     explicit FJ_MapSelectMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_MapSelectMenu();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

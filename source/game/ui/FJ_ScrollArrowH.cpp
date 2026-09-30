@@ -39,6 +39,3 @@ void FJ_ScrollArrowH::ChangeState(int iState)
     m_iState = iState;
 }
 
-FJ_ScrollArrowH::~FJ_ScrollArrowH()
-{
-}

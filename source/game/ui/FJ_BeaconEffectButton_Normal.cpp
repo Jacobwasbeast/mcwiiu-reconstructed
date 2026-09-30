@@ -10,10 +10,6 @@ FJ_BeaconEffectButton* FJ_BeaconEffectButton_Normal::Create(fuiRenderNode* pRend
     return new FJ_BeaconEffectButton_Normal(pRenderNode);
 }
 
-FJ_BeaconEffectButton_Normal::~FJ_BeaconEffectButton_Normal()
-{
-}
-
 unsigned int FJ_BeaconEffectButton_Normal::getType()
 {
     return 83;

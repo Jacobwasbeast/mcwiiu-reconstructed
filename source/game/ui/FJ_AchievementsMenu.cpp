@@ -37,10 +37,6 @@ FJ_AchievementsMenu::FJ_AchievementsMenu(fuiRenderNode* renderNode)
     }
 }
 
-FJ_AchievementsMenu::~FJ_AchievementsMenu()
-{
-}
-
 void FJ_AchievementsMenu::PositionAchievementDescription()
 {
     FJ_FuiNode* listContainer = getChildByName(std::string("AchievementsListContainer"));

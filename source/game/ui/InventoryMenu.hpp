@@ -30,7 +30,6 @@ public:
     static const int USE_ROW_SLOT_START;
 
     InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player);
-    virtual ~InventoryMenu();
 
     static void staticCtor();
     void _init(boost::shared_ptr<Inventory> inventory, bool active);

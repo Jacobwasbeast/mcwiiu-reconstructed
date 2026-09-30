@@ -7,10 +7,6 @@ FJ_BeaconMenu::FJ_BeaconMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_BeaconMenu::~FJ_BeaconMenu()
-{
-}
-
 FJ_BeaconMenu* FJ_BeaconMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_BeaconMenu(renderNode);

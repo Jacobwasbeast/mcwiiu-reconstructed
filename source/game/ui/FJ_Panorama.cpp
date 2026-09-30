@@ -6,10 +6,6 @@ FJ_Panorama::FJ_Panorama(fuiRenderNode* renderNode) : FJ_Document(renderNode)
     ShowPanoramaDay(true);
 }
 
-FJ_Panorama::~FJ_Panorama()
-{
-}
-
 FJ_Panorama* FJ_Panorama::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Panorama(renderNode);

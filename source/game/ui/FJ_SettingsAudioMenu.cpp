@@ -4,10 +4,6 @@ FJ_SettingsAudioMenu::FJ_SettingsAudioMenu(fuiRenderNode* renderNode) : FJ_Docum
 {
 }
 
-FJ_SettingsAudioMenu::~FJ_SettingsAudioMenu()
-{
-}
-
 FJ_SettingsAudioMenu* FJ_SettingsAudioMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_SettingsAudioMenu(renderNode);

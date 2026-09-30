@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_SkinSelect_Off();
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

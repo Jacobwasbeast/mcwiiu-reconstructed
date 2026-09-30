@@ -9,7 +9,6 @@ class FJ_SettingsMenu : public FJ_Document
 {
 public:
     explicit FJ_SettingsMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_SettingsMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

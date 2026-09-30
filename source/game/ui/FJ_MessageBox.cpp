@@ -15,10 +15,6 @@ FJ_MessageBox::FJ_MessageBox(fuiRenderNode* renderNode)
     m_contentY = static_cast<int>(getChildByName(std::string("Content"))->getY());
 }
 
-FJ_MessageBox::~FJ_MessageBox()
-{
-}
-
 FJ_Document* FJ_MessageBox::Create(fuiRenderNode* renderNode)
 {
     return new FJ_MessageBox(renderNode);

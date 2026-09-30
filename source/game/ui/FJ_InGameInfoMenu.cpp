@@ -6,9 +6,6 @@ FJ_InGameInfoMenu::FJ_InGameInfoMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode) {
 }
 
-FJ_InGameInfoMenu::~FJ_InGameInfoMenu() {
-}
-
 FJ_Document* FJ_InGameInfoMenu::Create(fuiRenderNode* renderNode) {
     return new FJ_InGameInfoMenu(renderNode);
 }

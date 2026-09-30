@@ -33,10 +33,6 @@ TrapMenu::TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_p
     }
 }
 
-TrapMenu::~TrapMenu()
-{
-}
-
 bool TrapMenu::stillValid(boost::shared_ptr<Player> player)
 {
     return m_container->stillValid(player);

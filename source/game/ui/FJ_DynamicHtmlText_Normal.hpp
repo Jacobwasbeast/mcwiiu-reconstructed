@@ -9,7 +9,6 @@ class FJ_DynamicHtmlText_Normal : public FJ_DynamicHtmlText
 {
 public:
     FJ_DynamicHtmlText_Normal(fuiRenderNode* pRenderNode);
-    virtual ~FJ_DynamicHtmlText_Normal();
     static FJ_DynamicHtmlText* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

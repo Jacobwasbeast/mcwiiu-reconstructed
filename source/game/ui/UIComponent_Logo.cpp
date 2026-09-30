@@ -10,7 +10,6 @@ UIComponent_Logo::UIComponent_Logo(int sceneType, void* callback, UILayer* layer
     setLogoLanguage(0);
     m_visible = true;
 }
-UIComponent_Logo::~UIComponent_Logo() {}
 void UIComponent_Logo::setLogoLanguage(int language)
 {
     FJ_ComponentLogo* logo = static_cast<FJ_ComponentLogo*>(m_movie->getRootNode()->getFuiNode());

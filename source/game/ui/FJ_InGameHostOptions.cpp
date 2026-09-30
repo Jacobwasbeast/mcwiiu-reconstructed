@@ -59,6 +59,3 @@ void FJ_InGameHostOptions::SetSafeZone(int top, int bottom, int left, int right)
     setY(top);
 }
 
-FJ_InGameHostOptions::~FJ_InGameHostOptions()
-{
-}

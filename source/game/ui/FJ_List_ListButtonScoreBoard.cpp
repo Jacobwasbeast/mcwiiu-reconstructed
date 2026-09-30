@@ -96,6 +96,3 @@ int FJ_List_ListButtonScoreBoard::GetButtonHeight()
     return height;
 }
 
-FJ_List_ListButtonScoreBoard::~FJ_List_ListButtonScoreBoard()
-{
-}

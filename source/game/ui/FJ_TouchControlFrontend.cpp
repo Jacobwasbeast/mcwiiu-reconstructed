@@ -13,10 +13,6 @@ FJ_TouchControlFrontend* FJ_TouchControlFrontend::Create(fuiRenderNode* pRenderN
     return new FJ_TouchControlFrontend(pRenderNode);
 }
 
-FJ_TouchControlFrontend::~FJ_TouchControlFrontend()
-{
-}
-
 void FJ_TouchControlFrontend::Init()
 {
     std::string name("placeholder");

@@ -5,10 +5,6 @@ FJ_Cursor_Small::FJ_Cursor_Small(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_Cursor_Small::~FJ_Cursor_Small()
-{
-}
-
 FJ_Cursor* FJ_Cursor_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Cursor_Small(pRenderNode);

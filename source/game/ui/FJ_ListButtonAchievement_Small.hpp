@@ -9,7 +9,6 @@ class FJ_ListButtonAchievement_Small : public FJ_ListButtonAchievement
 {
 public:
     FJ_ListButtonAchievement_Small(fuiRenderNode* pRenderNode);
-    virtual ~FJ_ListButtonAchievement_Small();
     static FJ_ListButtonAchievement* Create(fuiRenderNode* pRenderNode);
     virtual uint32_t getType();
 };

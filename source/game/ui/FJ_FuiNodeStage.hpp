@@ -10,7 +10,6 @@ private:
 
 public:
     FJ_FuiNodeStage(fuiRenderNode* pRenderNode);
-    virtual ~FJ_FuiNodeStage();
 
     void removeFocus(FJ_FuiNode* pNode);
     void setFocus(FJ_FuiNode* pNode);

@@ -5,10 +5,6 @@ FJ_SaveMenu::FJ_SaveMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_SaveMenu::~FJ_SaveMenu()
-{
-}
-
 FJ_Document* FJ_SaveMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_SaveMenu(renderNode);

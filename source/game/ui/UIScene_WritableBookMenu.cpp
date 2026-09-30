@@ -7,6 +7,7 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/L10N.hpp"
@@ -33,15 +34,23 @@ extern std::wstring _toString(int value);
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 
+struct UIScene_WritableBookMenuData
+{
+    boost::shared_ptr<ItemInstance> item;
+    int player;
+    bool canEdit;
+};
+
 UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_book(*static_cast<not_null_ptr<ItemInstance>*>(data)), m_pages(0), m_caretPosition(0), m_currentPage(0), m_pageCount(0),
+    : UIScene(type, layer), m_book(static_cast<UIScene_WritableBookMenuData*>(data)->item), m_pages(0), m_caretPosition(0), m_currentPage(0), m_pageCount(0),
       m_pageText(), m_titleText(), m_signText(), m_closeRequested(false), m_contentRestricted(false),
       m_unusedWord(0), m_caretOffset(0), m_canEdit(false), m_textChanged(false), m_caretHidden(false),
       m_controlState(0), m_keyboardOpen(false), m_signing(false), m_unusedControlByte(0)
 {
+    UIScene_WritableBookMenuData* sceneData = static_cast<UIScene_WritableBookMenuData*>(data);
     initialiseMovie();
-    m_playerId = static_cast<const int*>(data)[2];
-    m_canEdit = reinterpret_cast<const unsigned char*>(data)[12] != 0;
+    m_playerId = sceneData->player;
+    m_canEdit = sceneData->canEdit;
     m_textChanged = false;
     m_titleText = L"";
     std::memset(m_reserved + 1, 0, 0x80);
@@ -82,7 +91,10 @@ UIScene_WritableBookMenu::~UIScene_WritableBookMenu()
 
 std::wstring UIScene_WritableBookMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? L"BookAndQuillMenu" : L"BookAndQuillMenuSplit";
+    int playerCount = gApp.GetLocalPlayerCount();
+    if (playerCount > 1)
+        return std::wstring(L"BookAndQuillMenuSplit");
+    return std::wstring(L"BookAndQuillMenu");
 }
 
 unsigned int UIScene_WritableBookMenu::mapElementsAndNames()
@@ -135,15 +147,20 @@ void UIScene_WritableBookMenu::ChangePage(int page, int pageCount)
 void UIScene_WritableBookMenu::UpdatePageNumber()
 {
     std::wstring label = L10N::GetString(0x5351d8b1);
-    label.replace(label.find(L"%d"), 2, _toString(m_currentPage + 1));
-    label.replace(label.find(L"%d"), 2, _toString(m_pageCount));
+    size_t pos = label.find(L"%d");
+    label.replace(pos, 2, _toString(m_currentPage + 1));
+    pos = label.find(L"%d");
+    label.replace(pos, 2, _toString(m_pageCount));
     SetPageLabel(label);
-    if (!m_canEdit)
-        ChangePage(m_currentPage, m_pageCount - 1);
-    else if (m_signing)
+    if (m_canEdit && m_signing)
+    {
         ChangePage(0, 0);
+    }
     else
-        ChangePage(m_currentPage, MAX_PAGES - 1);
+    {
+        int pages = m_canEdit ? MAX_PAGES - 1 : m_pageCount - 1;
+        ChangePage(m_currentPage, pages);
+    }
 }
 
 void UIScene_WritableBookMenu::Init()
@@ -229,8 +246,9 @@ void UIScene_WritableBookMenu::RetrieveBookText()
 
 void UIScene_WritableBookMenu::SetCaretPosition(int position)
 {
+    bool visible = !m_caretHidden;
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    menu->SetCaretPosition(position + m_caretOffset, !m_caretHidden, false);
+    menu->SetCaretPosition(position + m_caretOffset, visible, false);
 }
 
 int UIScene_WritableBookMenu::FormatAndDisplayText(EFormatTextType type)
@@ -400,18 +418,18 @@ int UIScene_WritableBookMenu::KeyboardCompleteCallback(void* context, bool succe
 
     wchar_t text[MAX_PAGE_LENGTH + 4];
     std::memset(text, 0, sizeof(wchar_t) * (MAX_PAGE_LENGTH + 1));
-    if (!scene->m_signing)
+    if (scene->m_signing)
+    {
+        g_pInput->GetText(text, MAX_TITLE_LENGTH);
+        scene->m_titleText.assign(text, wcslen(text));
+        scene->m_caretPosition = static_cast<int>(scene->m_titleText.size());
+    }
+    else
     {
         g_pInput->GetText(text, MAX_PAGE_LENGTH);
         scene->m_pageText.assign(text, wcslen(text));
         scene->setCurrentPageText(scene->m_pageText);
         scene->m_caretPosition = static_cast<int>(scene->m_pageText.size());
-    }
-    else
-    {
-        g_pInput->GetText(text, MAX_TITLE_LENGTH);
-        scene->m_titleText.assign(text, wcslen(text));
-        scene->m_caretPosition = static_cast<int>(scene->m_titleText.size());
     }
     scene->addTimer(10, 50);
     return 0;
@@ -574,23 +592,81 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
     gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        if (!pressed)
+            return;
+        HandleCancel();
+        break;
+    case EControllerActions_MenuOk:
+        if (!pressed)
+            return;
+        if (GetBookHasFocus())
+        {
+            if (m_canEdit)
+            {
+                m_keyboardOpen = true;
+                unsigned int maxLength = m_signing ? MAX_TITLE_LENGTH : MAX_PAGE_LENGTH;
+                if (m_unusedControlByte == 0)
+                {
+                    if (m_signing)
+                        g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_KEYBOARD_BOOK_TITLE), m_titleText.c_str(),
+                                                  m_playerId, maxLength, KeyboardCompleteCallback,
+                                                  reinterpret_cast<void*>(GetCallbackUniqueId()),
+                                                  static_cast<C_4JInput::EKeyboardMode>(3));
+                    else
+                        g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_KEYBOARD_BOOK_TEXT), m_pageText.c_str(),
+                                                  m_playerId, maxLength, KeyboardCompleteCallback,
+                                                  reinterpret_cast<void*>(GetCallbackUniqueId()),
+                                                  static_cast<C_4JInput::EKeyboardMode>(3));
+                }
+            }
+        }
+        else
+        {
+            if (m_signButton.hasFocus())
+                OnSignButtonPress();
+            else if (m_doneButton.hasFocus())
+                OnDoneButtonPress();
+        }
+        break;
+    case EControllerActions_MenuLeft:
+        if (GetBookHasFocus())
+        {
+            if (!pressed && !repeat)
+                return;
+            int position = m_caretPosition - 1;
+            if (position < 0)
+                position = 0;
+            m_caretPosition = position;
+            SetCaretPosition(position);
+            break;
+        }
+        UIScene::sendInputToMovie(action, repeat, pressed, released);
+        break;
     case EControllerActions_MenuRight:
         if (GetBookHasFocus())
         {
             if (!pressed && !repeat)
                 return;
+            int position = m_caretPosition;
             if (!m_signing)
             {
-                if (static_cast<unsigned int>(m_caretPosition) < m_pageText.size())
-                    ++m_caretPosition;
-                if (m_caretPosition > MAX_PAGE_LENGTH)
+                if (static_cast<unsigned int>(position) < m_pageText.size())
+                {
+                    ++position;
+                    m_caretPosition = position;
+                }
+                if (position > MAX_PAGE_LENGTH)
                     m_caretPosition = MAX_PAGE_LENGTH;
             }
             else
             {
-                if (static_cast<unsigned int>(m_caretPosition) < m_titleText.size())
-                    ++m_caretPosition;
-                if (m_caretPosition > MAX_TITLE_LENGTH)
+                if (static_cast<unsigned int>(position) < m_titleText.size())
+                {
+                    ++position;
+                    m_caretPosition = position;
+                }
+                if (position > MAX_TITLE_LENGTH)
                     m_caretPosition = MAX_TITLE_LENGTH;
             }
             SetCaretPosition(m_caretPosition);
@@ -598,67 +674,17 @@ void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, 
         }
         UIScene::sendInputToMovie(action, repeat, pressed, released);
         break;
-    case EControllerActions_MenuLeft:
-        if (GetBookHasFocus())
-        {
-            if (!pressed && !repeat)
-                return;
-            if (m_caretPosition - 1 > -1)
-                m_caretPosition = m_caretPosition - 1;
-            else
-                m_caretPosition = 0;
-            SetCaretPosition(m_caretPosition);
-            break;
-        }
-        UIScene::sendInputToMovie(action, repeat, pressed, released);
-        break;
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuPageUp:
-    case EControllerActions_MenuPageDown:
-        UIScene::sendInputToMovie(action, repeat, pressed, released);
+    case EControllerActions_MenuLeftScroll:
+        if (pressed)
+            ScrollPageLeft();
         break;
     case EControllerActions_MenuRightScroll:
         if (pressed)
             ScrollPageRight();
         break;
-    case EControllerActions_MenuLeftScroll:
-        if (pressed)
-            ScrollPageLeft();
-        break;
-    case EControllerActions_MenuOk:
-        if (!pressed)
-            return;
-        if (!GetBookHasFocus())
-        {
-            if (m_signButton.hasFocus())
-                OnSignButtonPress();
-            else if (m_doneButton.hasFocus())
-                OnDoneButtonPress();
-        }
-        else if (m_canEdit)
-        {
-            m_keyboardOpen = true;
-            unsigned int maxLength = m_signing ? MAX_TITLE_LENGTH : MAX_PAGE_LENGTH;
-            if (m_unusedControlByte == 0)
-            {
-                if (!m_signing)
-                    g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_KEYBOARD_BOOK_TEXT), m_pageText.c_str(),
-                                              m_playerId, maxLength, KeyboardCompleteCallback,
-                                              reinterpret_cast<void*>(GetCallbackUniqueId()),
-                                              static_cast<C_4JInput::EKeyboardMode>(3));
-                else
-                    g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_KEYBOARD_BOOK_TITLE), m_titleText.c_str(),
-                                              m_playerId, maxLength, KeyboardCompleteCallback,
-                                              reinterpret_cast<void*>(GetCallbackUniqueId()),
-                                              static_cast<C_4JInput::EKeyboardMode>(3));
-            }
-        }
-        break;
-    case EControllerActions_MenuCancel:
-        if (!pressed)
-            return;
-        HandleCancel();
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+        UIScene::sendInputToMovie(action, repeat, pressed, released);
         break;
     default:
         return;
@@ -694,7 +720,7 @@ void UIScene_WritableBookMenu::handleTouchInput(unsigned int, int, int, int touc
 
 void UIScene_WritableBookMenu::SetFocusToElement(int focus)
 {
-    if (static_cast<unsigned int>(focus) < 2)
+    if (static_cast<unsigned int>(focus) <= 1)
         SetFocusToBook(false);
     UIScene::SetFocusToElement(focus);
 }

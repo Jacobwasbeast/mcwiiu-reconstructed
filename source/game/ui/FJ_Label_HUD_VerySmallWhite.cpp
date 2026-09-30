@@ -16,6 +16,3 @@ void FJ_Label_HUD_VerySmallWhite::SetLabel(const std::wstring& label)
     FJ_Label::SetLabel(label);
 }
 
-FJ_Label_HUD_VerySmallWhite::~FJ_Label_HUD_VerySmallWhite()
-{
-}

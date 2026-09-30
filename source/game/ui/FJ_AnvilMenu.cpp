@@ -9,10 +9,6 @@ FJ_AnvilMenu::FJ_AnvilMenu(fuiRenderNode* renderNode)
     ShowRedCross(false);
 }
 
-FJ_AnvilMenu::~FJ_AnvilMenu()
-{
-}
-
 void FJ_AnvilMenu::SetCostLabel(const std::wstring& label, bool safe)
 {
     FJ_FuiNode* green = getChildByName("MainPanel.costLabelGreen");

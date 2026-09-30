@@ -28,10 +28,6 @@ HopperMenu::HopperMenu(boost::shared_ptr<Container> playerContainer,
     }
 }
 
-HopperMenu::~HopperMenu()
-{
-}
-
 bool HopperMenu::stillValid(boost::shared_ptr<Player> player)
 {
     return m_container->stillValid(player);

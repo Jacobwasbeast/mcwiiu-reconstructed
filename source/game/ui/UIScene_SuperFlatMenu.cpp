@@ -129,11 +129,8 @@ void UIScene_SuperFlatMenu::PopulateBiomesList()
 {
     SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
     int index = 0;
-    for (int i = 0; biomes[i].mBiome >= 0; ++i)
-    {
+    for (int i = 0; biomes[i].mBiome >= 0; ++i, ++index)
         m_biomesList.AddNewItem(biomes[i].getName(), index, false, L"");
-        ++index;
-    }
 }
 
 int UIScene_SuperFlatMenu::ParentParam(int index)
@@ -150,8 +147,9 @@ void UIScene_SuperFlatMenu::CreateParamMappings()
 {
     for (int i = 0; !SuperflatMenu::params[i].isTerminal(); ++i)
     {
-        if (SuperflatMenu::params[i].isParent())
-            m_paramMappings[i] = SuperflatMenu::params[i].getFunc()(i, &m_propertiesList);
+        SuperflatMenu::Param* param = &SuperflatMenu::params[i];
+        if (param->isParent())
+            m_paramMappings[i] = param->getFunc()(i, &m_propertiesList);
         else
             m_paramMappings[i] = m_paramMappings[ParentParam(i)];
     }
@@ -176,20 +174,26 @@ void UIScene_SuperFlatMenu::PopulateParamsList()
 
 void UIScene_SuperFlatMenu::_init()
 {
-    m_layersTab.init(UIString(IDS_LAYERS));
-    m_layersHelpTitle.init(UIString(L" "));
-    m_layersList.init(0);
-    m_layersList.UseIggyIcons();
-    m_biomesTab.init(UIString(IDS_BIOMES));
-    m_biomesHelpTitle.init(UIString(IDS_ACHIEVEMENTS));
-    m_biomesList.init(1);
-    m_biomesList.UseIggyIcons();
-    PopulateBiomesList();
-    m_propertiesTab.init(UIString(IDS_PROPERTIES));
-    m_propertiesHelpTitle.init(UIString(IDS_ACHIEVEMENTS));
-    m_propertiesList.init(2);
-    CreateParamMappings();
-    PopulateParamsList();
+    {
+        m_layersTab.init(UIString(IDS_LAYERS));
+        m_layersHelpTitle.init(UIString(L" "));
+        m_layersList.init(0);
+        m_layersList.UseIggyIcons();
+    }
+    {
+        m_biomesTab.init(UIString(IDS_BIOMES));
+        m_biomesHelpTitle.init(UIString(IDS_ACHIEVEMENTS));
+        m_biomesList.init(1);
+        m_biomesList.UseIggyIcons();
+        PopulateBiomesList();
+    }
+    {
+        m_propertiesTab.init(UIString(IDS_PROPERTIES));
+        m_propertiesHelpTitle.init(UIString(IDS_ACHIEVEMENTS));
+        m_propertiesList.init(2);
+        CreateParamMappings();
+        PopulateParamsList();
+    }
     m_layersTimer.setVisible(false);
     m_biomesTimer.setVisible(false);
     m_propertiesTimer.setVisible(false);
@@ -266,24 +270,38 @@ void UIScene_SuperFlatMenu::SetActiveTab(eTabs tab)
 
 void UIScene_SuperFlatMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool pressed, bool, bool)
 {
-    if (pressed && !m_editingLayer && (unsigned int)touchBox > 2 && (unsigned int)touchBox < 6)
+    if (pressed && !m_editingLayer)
     {
-        if (m_activeTab != touchBox - 3)
+        switch (touchBox)
         {
-            m_activeTab = static_cast<eTabs>(touchBox - 3);
-            updateTooltips();
-            SetActiveTab(static_cast<eTabs>(m_activeTab));
+        case 3:
+        case 4:
+        case 5:
+            {
+                int tab = touchBox - 3;
+                if (m_activeTab != tab)
+                {
+                    m_activeTab = tab;
+                    updateTooltips();
+                    SetActiveTab(static_cast<eTabs>(m_activeTab));
+                }
+            }
+            break;
         }
     }
 }
 
 UIControl* UIScene_SuperFlatMenu::GetMainPanel()
 {
-    if (m_activeTab == eTabBiomes)
+    switch (m_activeTab)
+    {
+    case eTabBiomes:
         return &m_biomesPanel;
-    if (m_activeTab != eTabProperties)
+    case eTabProperties:
+        return &m_propertiesPanel;
+    default:
         return &m_layersPanel;
-    return &m_propertiesPanel;
+    }
 }
 
 void UIScene_SuperFlatMenu::updateTooltips()
@@ -344,8 +362,9 @@ void UIScene_SuperFlatMenu::tick()
     UIScene::tick();
     for (std::vector<TickAction*>::iterator it = m_tickActions.begin(); it != m_tickActions.end(); ++it)
     {
-        (*it)->Execute(this);
-        delete *it;
+        TickAction* action = *it;
+        action->Execute(this);
+        delete action;
     }
     m_tickActions.clear();
 }
@@ -396,22 +415,22 @@ void UIScene_SuperFlatMenu::handleReload()
     PopulateLayersList();
     UpdateBiomesList();
     UpdateParamsList();
-    FJ_SuperFlatMenu::Create(m_movie->getRootNode())->SetActiveTab(m_activeTab);
+    static_cast<FJ_SuperFlatMenu*>(m_movie->getRootNode()->getFuiNode())->SetActiveTab(m_activeTab);
     m_pendingSelection = selection;
-    if (m_activeTab == eTabLayers)
+    switch (m_activeTab)
     {
-        m_layersList.setCurrentSelection(selection, false, true);
+    case eTabLayers:
+        m_layersList.setCurrentSelection(m_pendingSelection, false, true);
         UpdateLayersHelpText();
-    }
-    else if (m_activeTab == eTabBiomes)
-    {
-        m_biomesList.setCurrentSelection(selection, false, true);
+        break;
+    case eTabBiomes:
+        m_biomesList.setCurrentSelection(m_pendingSelection, false, true);
         UpdateBiomeHelpText();
-    }
-    else if (m_activeTab == eTabProperties)
-    {
-        m_propertiesList.setCurrentSelection(selection, false, true);
+        break;
+    case eTabProperties:
+        m_propertiesList.setCurrentSelection(m_pendingSelection, false, true);
         UpdateParamHelpText();
+        break;
     }
 }
 
@@ -454,32 +473,34 @@ void UIScene_SuperFlatMenu::MoveCurrentLayer(int amount)
 
 void UIScene_SuperFlatMenu::NavActiveTab(int direction)
 {
-    int tab = (int)m_activeTab + direction;
-    while (tab < 0)
-        tab += 3;
-    while (tab >= 3)
-        tab -= 3;
-    SetActiveTab((eTabs)tab);
+    while (true)
+    {
+        if (direction + m_activeTab < 0)
+            direction += 3;
+        else if (direction + m_activeTab >= 3)
+            direction -= 3;
+        else
+            break;
+    }
+    SetActiveTab((eTabs)(direction + m_activeTab));
 }
 
 int UIScene_SuperFlatMenu::CbGenerationWarning(void* context, int pad, C4JStorage::EMessageResult result)
 {
     UIScene_SuperFlatMenu* scene = static_cast<UIScene_SuperFlatMenu*>(context);
     int ret = 0;
-    if (result < C4JStorage::EMessageResult_Cancelled)
+    switch (result)
     {
+    case C4JStorage::EMessageResult_Cancelled:
+        break;
+    case C4JStorage::EMessageResult_Accept:
+        scene->ReturnResults(false);
+        break;
+    case C4JStorage::EMessageResult_Decline:
+        break;
+    default:
         ret = -1;
-    }
-    else if (result != C4JStorage::EMessageResult_Cancelled)
-    {
-        if (result < C4JStorage::EMessageResult_Decline)
-        {
-            scene->ReturnResults(false);
-            scene->m_generating = false;
-            return 0;
-        }
-        if (result != C4JStorage::EMessageResult_Decline)
-            ret = -1;
+        break;
     }
     scene->m_generating = false;
     return ret;
@@ -513,22 +534,24 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)
     {
-    case EControllerActions_MenuX:
-        if (m_layersList.getCurrentSelection() != m_layersList.getItemCount() - 1 && !m_editingLayer &&
-            m_layersList.hasFocus() && pressed)
-        {
-            m_editingLayer = true;
-            updateTooltips();
-            handled = true;
-            return;
-        }
-        break;
     case EControllerActions_MenuY:
         if (!m_editingLayer && pressed)
         {
             ExecuteOnTick(&UIScene_SuperFlatMenu::OpenPresetsDialog);
             handled = true;
             return;
+        }
+        break;
+    case EControllerActions_MenuX:
+        {
+            bool last = m_layersList.getCurrentSelection() == m_layersList.getItemCount() - 1;
+            if (!last && !m_editingLayer && m_layersList.hasFocus() && pressed)
+            {
+                m_editingLayer = true;
+                updateTooltips();
+                handled = true;
+                return;
+            }
         }
         break;
     case EControllerActions_MenuUp:
@@ -538,11 +561,27 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
         if (m_editingLayer && pressed)
         {
             if (action == EControllerActions_MenuDown)
+            {
                 MoveCurrentLayer(-1);
-            else if (action != EControllerActions_MenuPageUp)
-                MoveCurrentLayer(action == EControllerActions_MenuPageDown ? -10 : 1);
-            else
+                return;
+            }
+            if (action == EControllerActions_MenuPageUp)
+            {
                 MoveCurrentLayer(10);
+                return;
+            }
+            MoveCurrentLayer(action == EControllerActions_MenuPageDown ? -10 : 1);
+            return;
+        }
+        sendInputToMovie(action, repeat, pressed, released);
+        handled = true;
+        return;
+    case EControllerActions_MenuOk:
+        if (m_editingLayer && pressed)
+        {
+            m_editingLayer = false;
+            handled = true;
+            updateTooltips();
             return;
         }
         sendInputToMovie(action, repeat, pressed, released);
@@ -552,6 +591,7 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
     case EControllerActions_MenuRight:
     case EControllerActions_MenuLeft:
     case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
         if (!m_editingLayer)
         {
             sendInputToMovie(action, repeat, pressed, released);
@@ -568,24 +608,6 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
             return;
         }
         break;
-    case EControllerActions_MenuOtherStickDown:
-        if (!m_editingLayer)
-        {
-            sendInputToMovie(action, repeat, pressed, released);
-            handled = true;
-        }
-        break;
-    case EControllerActions_MenuOk:
-        if (m_editingLayer && pressed)
-        {
-            m_editingLayer = false;
-            handled = true;
-            updateTooltips();
-            return;
-        }
-        sendInputToMovie(action, repeat, pressed, released);
-        handled = true;
-        return;
     case EControllerActions_MenuCancel:
         if (pressed)
         {
@@ -640,8 +662,7 @@ int UIScene_SuperFlatMenu::CbLayerOperation(void* context, int pad, C4JStorage::
 
 void UIScene_SuperFlatMenu::ChangeBiome(int biome)
 {
-    SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
-    m_generatorInfo.setBiome(biomes[biome].mBiome);
+    m_generatorInfo.setBiome(SuperflatMenu::getBiomeInfoA()[biome].mBiome);
     ExecuteOnTick(&UIScene_SuperFlatMenu::UpdateBiomesList);
 }
 
@@ -653,37 +674,37 @@ void UIScene_SuperFlatMenu::HandleChangeParamList(int index)
 void UIScene_SuperFlatMenu::handlePress(int controlId, int childId)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (controlId == 0)
+    switch (controlId)
     {
+    case 0:
         if (!m_editingLayer)
         {
-            unsigned int selection = m_layersList.getCurrentSelection();
-            unsigned int count = m_layersList.getItemCount();
-            if (selection != count - 1)
+            bool last = m_layersList.getCurrentSelection() == m_layersList.getItemCount() - 1;
+            if (last)
             {
-                int params[3] = { static_cast<int>(IDS_SUPERFLAT_EDIT_LAYER), static_cast<int>(IDS_SUPERFLAT_ADD_LAYER),
-                                  static_cast<int>(IDS_SUPERFLAT_DELETE_LAYER) };
-                gConsoleUIController.RequestAlertMessage(static_cast<int>(IDS_SUPERFLAT_LAYER_OPTIONS_TITLE),
-                    static_cast<int>(0x78a7e3b3U), params, 3, m_playerId,
-                    &UIScene_SuperFlatMenu::CbLayerOperation, this, NULL, true);
-                m_generating = true;
+                if (m_generatorInfo.getHeight() < 0x80)
+                {
+                    ExecuteOnTick<bool>(&UIScene_SuperFlatMenu::OpenEditLayerDialog, true);
+                    return;
+                }
+                ExecuteOnTick(&UIScene_SuperFlatMenu::OpenMaxHeightDialog);
                 return;
             }
-            if (m_generatorInfo.getHeight() < 0x80)
-            {
-                ExecuteOnTick<bool>(&UIScene_SuperFlatMenu::OpenEditLayerDialog, true);
-                return;
-            }
-            ExecuteOnTick(&UIScene_SuperFlatMenu::OpenMaxHeightDialog);
+            int params[3] = { static_cast<int>(IDS_SUPERFLAT_EDIT_LAYER), static_cast<int>(IDS_SUPERFLAT_ADD_LAYER),
+                              static_cast<int>(IDS_SUPERFLAT_DELETE_LAYER) };
+            gConsoleUIController.RequestAlertMessage(static_cast<int>(IDS_SUPERFLAT_LAYER_OPTIONS_TITLE),
+                static_cast<int>(0x78a7e3b3U), params, 3, m_playerId,
+                &UIScene_SuperFlatMenu::CbLayerOperation, this, NULL, true);
+            m_generating = true;
+            return;
         }
-    }
-    else if (controlId == 1)
-    {
+        return;
+    case 1:
         ChangeBiome(childId);
-    }
-    else if (controlId == 2)
-    {
+        return;
+    case 2:
         HandleChangeParamList(childId);
+        return;
     }
 }
 
@@ -789,7 +810,7 @@ void UIScene_SuperFlatMenu::customDraw(const char* name, fuiRect* rect)
 
 void UIScene_SuperFlatMenu::SetSelectedLayer(int index)
 {
-    if (m_layersList.hasFocus() && index < (int)m_layersList.getItemCount())
+    if (m_layersList.hasFocus() && (int)m_layersList.getItemCount() > index)
         m_layersList.setCurrentSelection(index, false, true);
 }
 
@@ -824,9 +845,9 @@ void UIScene_SuperFlatMenu::OpenEditLayerDialog(bool insert)
 {
     struct EditLayerData { bool insert; int index; SuperflatConfig* config; };
     EditLayerData* data = new EditLayerData();
+    data->config = m_config;
     data->insert = insert;
     data->index = (m_generatorInfo.numLayers() - 1) - m_layersList.getCurrentSelection();
-    data->config = m_config;
     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SuperFlatEditLayer, data,
         EUILayer_Scene, EUIGroup_PlayerDefault);
 }

@@ -12,7 +12,6 @@ class FJ_CreativeMenu : public FJ_AbstractContainerDocument
 {
 public:
     explicit FJ_CreativeMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_CreativeMenu();
 
     void handleSlideComplete(FJ_Event* event);
     static void _handleSlideComplete(FJ_FuiNode* node, FJ_Event* event);

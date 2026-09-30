@@ -33,6 +33,3 @@ void FJ_LoadOrJoinMenu::handlePress(FJ_Event* event)
     }
 }
 
-FJ_LoadOrJoinMenu::~FJ_LoadOrJoinMenu()
-{
-}

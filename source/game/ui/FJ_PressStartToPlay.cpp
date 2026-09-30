@@ -42,10 +42,6 @@ FJ_PressStartToPlay::FJ_PressStartToPlay(fuiRenderNode* renderNode)
         FJ_FuiNode::asMovieClip(getChildByName("BETAWatermark"))->setVisible(false);
 }
 
-FJ_PressStartToPlay::~FJ_PressStartToPlay()
-{
-}
-
 FJ_PressStartToPlay* FJ_PressStartToPlay::Create(fuiRenderNode* renderNode)
 {
     return new FJ_PressStartToPlay(renderNode);

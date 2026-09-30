@@ -10,10 +10,6 @@ FJ_MobEffect_Tile_Normal* FJ_MobEffect_Tile_Normal::Create(fuiRenderNode* pRende
     return new FJ_MobEffect_Tile_Normal(pRenderNode);
 }
 
-FJ_MobEffect_Tile_Normal::~FJ_MobEffect_Tile_Normal()
-{
-}
-
 unsigned int FJ_MobEffect_Tile_Normal::getType()
 {
     return 99;

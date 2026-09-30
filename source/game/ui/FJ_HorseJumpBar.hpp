@@ -9,7 +9,6 @@ class FJ_HorseJumpBar : public FJ_ProgressBar
 {
 public:
     explicit FJ_HorseJumpBar(fuiRenderNode* renderNode);
-    virtual ~FJ_HorseJumpBar();
     virtual void GetBarFiller();
     static FJ_HorseJumpBar* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

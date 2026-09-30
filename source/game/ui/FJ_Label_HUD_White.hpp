@@ -9,16 +9,12 @@ class fuiRenderNode;
 
 class FJ_Label_HUD_White : public FJ_Label
 {
-private:
-    bool m_labelChanged;
-
 public:
     explicit FJ_Label_HUD_White(fuiRenderNode* renderNode)
         : FJ_Label(renderNode)
     {
     }
 
-    virtual ~FJ_Label_HUD_White();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetLabel(const std::wstring& label);

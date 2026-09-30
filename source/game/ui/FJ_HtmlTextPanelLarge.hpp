@@ -18,7 +18,6 @@ private:
 
 public:
     FJ_HtmlTextPanelLarge(fuiRenderNode* pRenderNode);
-    virtual ~FJ_HtmlTextPanelLarge();
 
     void SetLabel(const std::wstring& label);
     static FJ_HtmlTextPanelLarge* Create(fuiRenderNode* pRenderNode);

@@ -29,6 +29,3 @@ unsigned int FJ_PanelRecessFade::getType()
     return 0x80b2;
 }
 
-FJ_PanelRecessFade::~FJ_PanelRecessFade()
-{
-}

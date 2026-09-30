@@ -24,10 +24,6 @@ FJ_HtmlTextPanel::FJ_HtmlTextPanel(fuiRenderNode* pRenderNode)
     SetLabel(std::wstring(L""));
 }
 
-FJ_HtmlTextPanel::~FJ_HtmlTextPanel()
-{
-}
-
 void FJ_HtmlTextPanel::SetLabel(const std::wstring& label)
 {
     m_textField->setHTMLText(label);

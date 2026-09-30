@@ -10,7 +10,6 @@ class FJ_CheckpointMarker : public FJ_FuiNode
 public:
     FJ_CheckpointMarker(fuiRenderNode* pRenderNode);
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
-    virtual ~FJ_CheckpointMarker();
     virtual unsigned int getType();
 };
 

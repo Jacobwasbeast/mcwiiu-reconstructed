@@ -10,7 +10,6 @@ class FJ_DLCMainMenu : public FJ_Document
 {
 public:
     FJ_DLCMainMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_DLCMainMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void handlePress(FJ_Event* event);

@@ -8,7 +8,6 @@ class UIComponent_Logo : public UIScene
 {
 public:
     UIComponent_Logo(int sceneType, void* callback, UILayer* layer);
-    virtual ~UIComponent_Logo();
     void setLogoLanguage(int language);
     virtual std::wstring getMoviePath();
     virtual void handleReload();

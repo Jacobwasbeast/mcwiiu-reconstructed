@@ -23,6 +23,3 @@ uint32_t FJ_JoinMenu::getType()
     return 0x40;
 }
 
-FJ_JoinMenu::~FJ_JoinMenu()
-{
-}

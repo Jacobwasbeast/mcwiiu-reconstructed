@@ -9,7 +9,6 @@ class FJ_ComponentLogo : public FJ_Document
 {
 public:
     FJ_ComponentLogo(fuiRenderNode* renderNode);
-    virtual ~FJ_ComponentLogo();
     void SetLogoLanguage(int language);
     static FJ_ComponentLogo* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

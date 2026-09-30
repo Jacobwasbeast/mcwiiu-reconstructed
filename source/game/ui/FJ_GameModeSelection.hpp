@@ -10,7 +10,6 @@ class FJ_GameModeSelection : public FJ_Document
 {
 public:
     explicit FJ_GameModeSelection(fuiRenderNode* renderNode);
-    virtual ~FJ_GameModeSelection();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void handlePress(FJ_Event* event);

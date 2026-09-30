@@ -11,7 +11,6 @@ class FJ_MultilistMenu : public FJ_Document
 {
 public:
     explicit FJ_MultilistMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_MultilistMenu();
 
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);

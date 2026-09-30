@@ -12,7 +12,6 @@ public:
 
     FJ_ScrollArrow(fuiRenderNode* pRenderNode);
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
-    virtual ~FJ_ScrollArrow();
     void ChangeState(int iState);
     virtual unsigned int getType();
 };

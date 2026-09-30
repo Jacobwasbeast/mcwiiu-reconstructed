@@ -1,9 +1,5 @@
 #include "game/ui/FJ_Label_SmallGrey.hpp"
 
-FJ_Label_SmallGrey::~FJ_Label_SmallGrey()
-{
-}
-
 FJ_Label* FJ_Label_SmallGrey::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_SmallGrey(renderNode);

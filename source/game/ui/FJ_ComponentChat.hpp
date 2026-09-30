@@ -11,7 +11,6 @@ class FJ_ComponentChat : public FJ_FuiNode
 {
 public:
     FJ_ComponentChat(fuiRenderNode* pRenderNode);
-    virtual ~FJ_ComponentChat();
 
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

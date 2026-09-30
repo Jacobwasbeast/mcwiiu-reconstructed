@@ -20,7 +20,6 @@ public:
                    bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
                    bool showMinimumTime, bool allowFade, bool repeatMessage);
 
-    virtual ~UICraftingTask();
 
     virtual bool isCompleted();
 

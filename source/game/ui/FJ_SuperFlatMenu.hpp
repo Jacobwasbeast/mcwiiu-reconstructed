@@ -11,7 +11,6 @@ class FJ_SuperFlatMenu : public FJ_Document
 {
 public:
     FJ_SuperFlatMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_SuperFlatMenu();
 
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);

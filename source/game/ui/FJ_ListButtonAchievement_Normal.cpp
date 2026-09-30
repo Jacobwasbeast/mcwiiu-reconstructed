@@ -10,10 +10,6 @@ FJ_ListButtonAchievement* FJ_ListButtonAchievement_Normal::Create(fuiRenderNode*
     return new FJ_ListButtonAchievement_Normal(renderNode);
 }
 
-FJ_ListButtonAchievement_Normal::~FJ_ListButtonAchievement_Normal()
-{
-}
-
 uint32_t FJ_ListButtonAchievement_Normal::getType()
 {
     return 0x800e;

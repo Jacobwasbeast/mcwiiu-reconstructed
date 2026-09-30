@@ -32,7 +32,6 @@ public:
     static void OnPlayerChanged(void* context, INetworkPlayer* player, bool added);
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
-    virtual ~UIScene_InGamePlayerOptionsMenu();
     virtual int getSceneType();
     virtual void tick();
     virtual void handleTimerComplete(int timerId);

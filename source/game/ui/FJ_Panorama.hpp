@@ -9,7 +9,6 @@ class FJ_Panorama : public FJ_Document
 {
 public:
     FJ_Panorama(fuiRenderNode* renderNode);
-    virtual ~FJ_Panorama();
     static FJ_Panorama* Create(fuiRenderNode* renderNode);
     void ShowPanoramaDay(bool day);
     int GetCurrentFrame();

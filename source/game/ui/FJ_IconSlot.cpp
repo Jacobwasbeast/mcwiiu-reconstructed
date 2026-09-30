@@ -14,10 +14,6 @@ FJ_IconSlot::FJ_IconSlot(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_IconSlot::~FJ_IconSlot()
-{
-}
-
 FJ_Base* FJ_IconSlot::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_IconSlot(pRenderNode);

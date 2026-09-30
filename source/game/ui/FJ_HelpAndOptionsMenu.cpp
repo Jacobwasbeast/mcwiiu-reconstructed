@@ -5,10 +5,6 @@ FJ_HelpAndOptionsMenu::FJ_HelpAndOptionsMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_HelpAndOptionsMenu::~FJ_HelpAndOptionsMenu()
-{
-}
-
 FJ_HelpAndOptionsMenu* FJ_HelpAndOptionsMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_HelpAndOptionsMenu(renderNode);

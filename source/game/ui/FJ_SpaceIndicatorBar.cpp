@@ -28,10 +28,6 @@ FJ_SpaceIndicatorBar::FJ_SpaceIndicatorBar(fuiRenderNode* renderNode)
     setSaveGameOffset(0.0f);
 }
 
-FJ_SpaceIndicatorBar::~FJ_SpaceIndicatorBar()
-{
-}
-
 void FJ_SpaceIndicatorBar::GetBarFiller()
 {
     m_saveBar = getChildByName("SaveBarFiller")->asMovieClip();

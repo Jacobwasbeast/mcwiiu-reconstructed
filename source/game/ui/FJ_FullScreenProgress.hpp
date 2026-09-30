@@ -9,7 +9,6 @@ class FJ_FullScreenProgress : public FJ_Document
 {
 public:
     FJ_FullScreenProgress(fuiRenderNode* renderNode);
-    virtual ~FJ_FullScreenProgress();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

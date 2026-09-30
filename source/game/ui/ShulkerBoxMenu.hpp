@@ -14,7 +14,6 @@ public:
     ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
                    boost::shared_ptr<Container> container,
                    boost::shared_ptr<Player> player);
-    virtual ~ShulkerBoxMenu();
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual void removed(boost::shared_ptr<Player> player);

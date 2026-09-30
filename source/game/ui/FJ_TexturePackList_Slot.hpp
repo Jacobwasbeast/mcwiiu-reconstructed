@@ -15,7 +15,6 @@ private:
 
 public:
     FJ_TexturePackList_Slot(fuiRenderNode* pRenderNode);
-    virtual ~FJ_TexturePackList_Slot();
 
     void SetSelected(bool bSelected);
     void SetSlotID(int iSlotId);

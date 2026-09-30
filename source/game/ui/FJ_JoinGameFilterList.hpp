@@ -10,7 +10,6 @@ class FJ_JoinGameFilterList : public FJ_Document
 {
 public:
     FJ_JoinGameFilterList(fuiRenderNode* renderNode);
-    virtual ~FJ_JoinGameFilterList();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

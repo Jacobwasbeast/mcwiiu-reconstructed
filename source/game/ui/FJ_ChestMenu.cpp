@@ -8,10 +8,6 @@ FJ_ChestMenu::FJ_ChestMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ChestMenu::~FJ_ChestMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_ChestMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ChestMenu(renderNode);

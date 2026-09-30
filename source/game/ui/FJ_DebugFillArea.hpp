@@ -11,7 +11,6 @@ class FJ_DebugFillArea : public FJ_Document
 {
 public:
     FJ_DebugFillArea(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugFillArea();
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);
     static FJ_Document* Create(fuiRenderNode* renderNode);

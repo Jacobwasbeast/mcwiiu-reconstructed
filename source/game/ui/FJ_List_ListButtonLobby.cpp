@@ -34,6 +34,3 @@ void FJ_List_ListButtonLobby::addNewItem(const std::wstring& label, int id, bool
     item->SetVOIPIcon(voipIcon);
 }
 
-FJ_List_ListButtonLobby::~FJ_List_ListButtonLobby()
-{
-}

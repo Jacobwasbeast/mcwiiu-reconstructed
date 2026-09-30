@@ -18,7 +18,6 @@ private:
 
 public:
     explicit FJ_IconSlot(fuiRenderNode* pRenderNode);
-    virtual ~FJ_IconSlot();
 
     static FJ_Base* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

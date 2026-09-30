@@ -7,7 +7,6 @@ class FJ_LeaderboardHeaderSmall : public FJ_LeaderboardHeader
 {
 public:
     FJ_LeaderboardHeaderSmall(fuiRenderNode* pRenderNode);
-    virtual ~FJ_LeaderboardHeaderSmall();
     static FJ_LeaderboardHeader* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

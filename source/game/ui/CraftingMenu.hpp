@@ -17,7 +17,6 @@ class CraftingMenu : public AbstractContainerMenu
 {
 public:
     CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& pos);
-    virtual ~CraftingMenu();
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual bool canTakeItemForPickAll(not_null_ptr<ItemInstance> item, Slot* slot);

@@ -7,10 +7,6 @@ FJ_DeathMenu::FJ_DeathMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_DeathMenu::~FJ_DeathMenu()
-{
-}
-
 FJ_Document* FJ_DeathMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DeathMenu(renderNode);

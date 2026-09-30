@@ -26,10 +26,6 @@ UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item
     taskType = 1;
 }
 
-UICraftingTask::~UICraftingTask()
-{
-}
-
 bool UICraftingTask::isCompleted()
 {
     UIScene* scene = tutorial->currentScene;

@@ -34,10 +34,6 @@ MerchantMenu::MerchantMenu(boost::shared_ptr<Inventory> inventory, boost::shared
     }
 }
 
-MerchantMenu::~MerchantMenu()
-{
-}
-
 boost::shared_ptr<MerchantContainer> MerchantMenu::getTradeContainer()
 {
     return mTradeContainer;

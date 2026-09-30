@@ -9,7 +9,6 @@ class FJ_Label_Book_Normal : public FJ_Label
 {
 public:
     explicit FJ_Label_Book_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_Book_Normal();
     static FJ_Label_Book_Normal* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

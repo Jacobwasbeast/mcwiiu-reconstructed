@@ -5,10 +5,6 @@ FJ_TextInput_Small::FJ_TextInput_Small(fuiRenderNode* renderNode)
 {
 }
 
-FJ_TextInput_Small::~FJ_TextInput_Small()
-{
-}
-
 FJ_TextInput* FJ_TextInput_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_TextInput_Small(renderNode);

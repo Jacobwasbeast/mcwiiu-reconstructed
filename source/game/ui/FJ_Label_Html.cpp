@@ -1,9 +1,5 @@
 #include "game/ui/FJ_Label_Html.hpp"
 
-FJ_Label_Html::~FJ_Label_Html()
-{
-}
-
 FJ_Label* FJ_Label_Html::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_Html(renderNode);

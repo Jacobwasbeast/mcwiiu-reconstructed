@@ -11,7 +11,6 @@ class FJ_LaunchMoreOptionsMenu : public FJ_Document
 {
 public:
     FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_LaunchMoreOptionsMenu();
 
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);

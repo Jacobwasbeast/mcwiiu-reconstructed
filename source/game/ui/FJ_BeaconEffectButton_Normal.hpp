@@ -9,7 +9,6 @@ class FJ_BeaconEffectButton_Normal : public FJ_BeaconEffectButton
 {
 public:
     FJ_BeaconEffectButton_Normal(fuiRenderNode* pRenderNode);
-    virtual ~FJ_BeaconEffectButton_Normal();
     static FJ_BeaconEffectButton* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

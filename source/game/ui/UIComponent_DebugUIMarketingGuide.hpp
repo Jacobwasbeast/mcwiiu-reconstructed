@@ -8,7 +8,6 @@ class UIComponent_DebugUIMarketingGuide : public UIScene
 {
 public:
     UIComponent_DebugUIMarketingGuide(int type, void* data, UILayer* layer);
-    virtual ~UIComponent_DebugUIMarketingGuide();
     virtual std::wstring getMoviePath();
     virtual int getSceneType();
     virtual bool stealsFocus();

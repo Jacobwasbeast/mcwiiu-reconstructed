@@ -9,7 +9,6 @@ class FJ_DebugBuildTools : public FJ_Document
 {
 public:
     FJ_DebugBuildTools(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugBuildTools();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

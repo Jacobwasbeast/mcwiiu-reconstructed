@@ -7,10 +7,6 @@ FJ_Label_VerySmallGrey::FJ_Label_VerySmallGrey(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_VerySmallGrey::~FJ_Label_VerySmallGrey()
-{
-}
-
 FJ_Label* FJ_Label_VerySmallGrey::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_VerySmallGrey(pRenderNode);

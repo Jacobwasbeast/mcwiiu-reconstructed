@@ -10,7 +10,6 @@ class FJ_SuperFlatEditLayerMenu : public FJ_AbstractContainerDocument
 {
 public:
     explicit FJ_SuperFlatEditLayerMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_SuperFlatEditLayerMenu();
     void SetSlotID();
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

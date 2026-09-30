@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~FJ_DynamicHtmlText_WithPanel_Normal();
     static FJ_DynamicHtmlText* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

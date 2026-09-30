@@ -13,7 +13,6 @@ class FurnaceMenu : public AbstractContainerMenu
 {
 public:
     FurnaceMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
-    virtual ~FurnaceMenu();
 
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void broadcastChanges();

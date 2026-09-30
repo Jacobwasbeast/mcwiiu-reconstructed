@@ -10,7 +10,6 @@ class FJ_LoadOrJoinMenu : public FJ_Document
 {
 public:
     FJ_LoadOrJoinMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_LoadOrJoinMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void handlePress(FJ_Event* event);

@@ -20,7 +20,6 @@ public:
                        boost::shared_ptr<Container> playerInventory,
                        boost::shared_ptr<AbstractHorse> horse,
                        boost::shared_ptr<Player> player);
-    virtual ~HorseInventoryMenu();
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual void removed(boost::shared_ptr<Player> player);

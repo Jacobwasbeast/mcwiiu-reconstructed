@@ -9,7 +9,6 @@ class FJ_Label_Book_VerySmall : public FJ_Label
 {
 public:
     FJ_Label_Book_VerySmall(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Label_Book_VerySmall();
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

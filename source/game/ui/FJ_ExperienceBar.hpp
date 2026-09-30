@@ -9,7 +9,6 @@ class FJ_ExperienceBar : public FJ_ProgressBar
 {
 public:
     explicit FJ_ExperienceBar(fuiRenderNode* renderNode);
-    virtual ~FJ_ExperienceBar();
 
     virtual void GetBarFiller();
     static FJ_ExperienceBar* Create(fuiRenderNode* renderNode);

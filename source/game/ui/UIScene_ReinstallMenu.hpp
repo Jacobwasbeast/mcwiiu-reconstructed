@@ -12,7 +12,6 @@ class UIScene_ReinstallMenu : public UIScene
 {
 public:
     UIScene_ReinstallMenu(int type, void* data, UILayer* layer);
-    virtual ~UIScene_ReinstallMenu();
 
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();

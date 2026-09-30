@@ -10,10 +10,6 @@ FJ_DLCMainMenu::FJ_DLCMainMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_DLCMainMenu::~FJ_DLCMainMenu()
-{
-}
-
 FJ_Document* FJ_DLCMainMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DLCMainMenu(renderNode);

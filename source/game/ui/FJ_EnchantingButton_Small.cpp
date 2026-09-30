@@ -5,10 +5,6 @@ FJ_EnchantingButton_Small::FJ_EnchantingButton_Small(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_EnchantingButton_Small::~FJ_EnchantingButton_Small()
-{
-}
-
 FJ_EnchantingButton* FJ_EnchantingButton_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_EnchantingButton_Small(pRenderNode);

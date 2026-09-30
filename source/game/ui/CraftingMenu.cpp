@@ -42,10 +42,6 @@ CraftingMenu::CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level,
     slotsChanged();
 }
 
-CraftingMenu::~CraftingMenu()
-{
-}
-
 void CraftingMenu::slotsChanged()
 {
     not_null_ptr<ItemInstance> result =

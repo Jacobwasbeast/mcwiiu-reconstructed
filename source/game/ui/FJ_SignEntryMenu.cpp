@@ -7,10 +7,6 @@ FJ_SignEntryMenu::FJ_SignEntryMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_SignEntryMenu::~FJ_SignEntryMenu()
-{
-}
-
 FJ_Document* FJ_SignEntryMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_SignEntryMenu(renderNode);

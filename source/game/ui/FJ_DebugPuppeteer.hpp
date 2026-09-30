@@ -9,7 +9,6 @@ class FJ_DebugPuppeteer : public FJ_Document
 {
 public:
     FJ_DebugPuppeteer(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugPuppeteer();
     static FJ_DebugPuppeteer* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

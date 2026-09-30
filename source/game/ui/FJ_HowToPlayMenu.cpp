@@ -11,10 +11,6 @@ FJ_HowToPlayMenu::FJ_HowToPlayMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_HowToPlayMenu::~FJ_HowToPlayMenu()
-{
-}
-
 void FJ_HowToPlayMenu::handlePress(FJ_Event* event)
 {
     FJ_MenuButton* button = event->m_pTarget->asFJ_MenuButton();

@@ -12,7 +12,6 @@ class FJ_KillBarSmall : public FJ_ProgressBar
 {
 public:
     explicit FJ_KillBarSmall(fuiRenderNode* renderNode);
-    virtual ~FJ_KillBarSmall();
     static FJ_ProgressBar* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
     virtual void Init(const std::wstring& label);

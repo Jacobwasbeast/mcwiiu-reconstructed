@@ -20,10 +20,6 @@ FJ_DebugFillArea::FJ_DebugFillArea(fuiRenderNode* renderNode)
     static_cast<FJ_TextInput*>(getChildByName(std::string("FillData")))->m_bUseScale = true;
 }
 
-FJ_DebugFillArea::~FJ_DebugFillArea()
-{
-}
-
 void FJ_DebugFillArea::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

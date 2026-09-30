@@ -5,10 +5,6 @@ FJ_LeaderboardHeaderNormal::FJ_LeaderboardHeaderNormal(fuiRenderNode* pRenderNod
 {
 }
 
-FJ_LeaderboardHeaderNormal::~FJ_LeaderboardHeaderNormal()
-{
-}
-
 FJ_LeaderboardHeader* FJ_LeaderboardHeaderNormal::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_LeaderboardHeaderNormal(pRenderNode);

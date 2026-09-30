@@ -7,10 +7,6 @@ FJ_Label_DragonHealthSmall::FJ_Label_DragonHealthSmall(fuiRenderNode* renderNode
 {
 }
 
-FJ_Label_DragonHealthSmall::~FJ_Label_DragonHealthSmall()
-{
-}
-
 FJ_Label* FJ_Label_DragonHealthSmall::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_DragonHealthSmall(renderNode);

@@ -2,10 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_DragonHealth::~FJ_Label_DragonHealth()
-{
-}
-
 FJ_Label* FJ_Label_DragonHealth::Create(fuiRenderNode* renderNode)
 {
     FJ_Label* label = new FJ_Label_DragonHealth(renderNode);

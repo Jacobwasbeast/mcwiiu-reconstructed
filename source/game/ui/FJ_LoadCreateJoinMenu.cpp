@@ -55,10 +55,6 @@ FJ_LoadCreateJoinMenu::FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode)
     SetActiveTab(m_activeTab);
 }
 
-FJ_LoadCreateJoinMenu::~FJ_LoadCreateJoinMenu()
-{
-}
-
 FJ_LoadCreateJoinMenu* FJ_LoadCreateJoinMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_LoadCreateJoinMenu(renderNode);

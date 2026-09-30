@@ -13,7 +13,6 @@ class FJ_List_ListButtonIconLeft : public FJ_List
     friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_List_ListButtonIconLeft(fuiRenderNode* renderNode);
-    virtual ~FJ_List_ListButtonIconLeft();
 
     void UseIggyIcons();
     void addNewItem(const std::wstring& label, int id,

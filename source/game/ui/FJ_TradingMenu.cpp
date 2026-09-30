@@ -19,10 +19,6 @@ FJ_TradingMenu::FJ_TradingMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_TradingMenu::~FJ_TradingMenu()
-{
-}
-
 FJ_Document* FJ_TradingMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_TradingMenu(renderNode);

@@ -29,10 +29,6 @@ UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer)
     addTimer(0, 100);
 }
 
-UIComponent_Chat::~UIComponent_Chat()
-{
-}
-
 unsigned int UIComponent_Chat::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();

@@ -9,7 +9,6 @@ class FJ_SaveMenu : public FJ_Document
 {
 public:
     FJ_SaveMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_SaveMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

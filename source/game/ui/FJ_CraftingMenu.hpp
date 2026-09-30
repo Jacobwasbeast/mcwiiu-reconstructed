@@ -13,7 +13,6 @@ class FJ_CraftingMenu : public FJ_Document
 {
 public:
     FJ_CraftingMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_CraftingMenu();
 
     void handleSlideComplete(FJ_Event* event);
     static void _handleSlideComplete(FJ_FuiNode* node, FJ_Event* event);

@@ -7,10 +7,6 @@ FJ_EnchantingMenu::FJ_EnchantingMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_EnchantingMenu::~FJ_EnchantingMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_EnchantingMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_EnchantingMenu(renderNode);

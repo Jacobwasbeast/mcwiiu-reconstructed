@@ -12,7 +12,6 @@ public:
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
     void ChangeState(int iState);
     virtual unsigned int getType();
-    virtual ~FJ_PanelRecessFade();
 };
 
 #endif

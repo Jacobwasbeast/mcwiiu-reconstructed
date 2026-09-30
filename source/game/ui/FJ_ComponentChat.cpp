@@ -24,6 +24,3 @@ void FJ_ComponentChat::SetAlpha(const std::string& name, float alpha)
     pNode->setVisible(alpha > 0.0f);
 }
 
-FJ_ComponentChat::~FJ_ComponentChat()
-{
-}

@@ -51,10 +51,6 @@ HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> horseContain
         addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
 }
 
-HorseInventoryMenu::~HorseInventoryMenu()
-{
-}
-
 bool HorseInventoryMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (!m_container->stillValid(player))

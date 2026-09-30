@@ -13,7 +13,6 @@ class FJ_List_ListButton : public FJ_List
     friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_List_ListButton(fuiRenderNode* renderNode);
-    virtual ~FJ_List_ListButton();
 
     void addNewItem(const std::wstring& label, int id);
     static FJ_List* Create(fuiRenderNode* renderNode);

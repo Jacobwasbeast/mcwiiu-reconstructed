@@ -9,7 +9,6 @@ class FJ_HorseInventoryMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_HorseInventoryMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_HorseInventoryMenu();
 
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

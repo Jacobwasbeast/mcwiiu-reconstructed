@@ -9,7 +9,6 @@ class FJ_SettingsAudioMenu : public FJ_Document
 {
 public:
     FJ_SettingsAudioMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_SettingsAudioMenu();
     static FJ_SettingsAudioMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

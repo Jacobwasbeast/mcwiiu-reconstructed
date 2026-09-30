@@ -7,10 +7,6 @@ FJ_Label_Blink_Small::FJ_Label_Blink_Small(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_Blink_Small::~FJ_Label_Blink_Small()
-{
-}
-
 FJ_Label_Blink* FJ_Label_Blink_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_Blink_Small(renderNode);

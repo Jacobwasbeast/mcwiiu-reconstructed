@@ -15,7 +15,6 @@ class UIScene_JoinMenu : public UIScene, public IUIPartial_OnlineRestricted
 {
 public:
     UIScene_JoinMenu(int, void*, UILayer*);
-    virtual ~UIScene_JoinMenu();
     virtual unsigned int GetCustomGameModeID();
     virtual unsigned int mapElementsAndNames();
     static void friendSessionUpdated(bool, void*);

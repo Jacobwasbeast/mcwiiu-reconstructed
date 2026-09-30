@@ -9,7 +9,6 @@ class FJ_AttackIndicatorCrosshair : public FJ_ProgressBar
 {
 public:
     explicit FJ_AttackIndicatorCrosshair(fuiRenderNode* renderNode);
-    virtual ~FJ_AttackIndicatorCrosshair();
     virtual void InitBarType();
     static FJ_AttackIndicatorCrosshair* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

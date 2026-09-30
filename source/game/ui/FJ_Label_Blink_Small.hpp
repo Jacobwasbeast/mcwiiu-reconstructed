@@ -9,7 +9,6 @@ class FJ_Label_Blink_Small : public FJ_Label_Blink
 {
 public:
     explicit FJ_Label_Blink_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_Blink_Small();
     static FJ_Label_Blink* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

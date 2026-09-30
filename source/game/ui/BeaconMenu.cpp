@@ -32,10 +32,6 @@ BeaconMenu::BeaconMenu(boost::shared_ptr<Container> playerContainer,
         addSlot(new Slot(playerContainer, group, 36 + group * 18, 195));
 }
 
-BeaconMenu::~BeaconMenu()
-{
-}
-
 void BeaconMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
 {
     AbstractContainerMenu::addSlotListener(listener);

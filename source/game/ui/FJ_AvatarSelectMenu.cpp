@@ -26,10 +26,6 @@ FJ_AvatarSelectMenu::FJ_AvatarSelectMenu(fuiRenderNode* renderNode)
     SetActiveTab(m_activeTab);
 }
 
-FJ_AvatarSelectMenu::~FJ_AvatarSelectMenu()
-{
-}
-
 FJ_AvatarSelectMenu* FJ_AvatarSelectMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_AvatarSelectMenu(renderNode);

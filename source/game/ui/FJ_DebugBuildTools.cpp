@@ -7,10 +7,6 @@ FJ_DebugBuildTools::FJ_DebugBuildTools(fuiRenderNode* renderNode)
 {
 }
 
-FJ_DebugBuildTools::~FJ_DebugBuildTools()
-{
-}
-
 FJ_Document* FJ_DebugBuildTools::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DebugBuildTools(renderNode);

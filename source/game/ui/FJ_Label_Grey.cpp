@@ -7,10 +7,6 @@ FJ_Label_Grey::FJ_Label_Grey(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_Grey::~FJ_Label_Grey()
-{
-}
-
 FJ_Label* FJ_Label_Grey::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_Grey(pRenderNode);

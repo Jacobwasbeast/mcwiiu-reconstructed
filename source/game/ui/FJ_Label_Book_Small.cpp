@@ -6,10 +6,6 @@ FJ_Label_Book_Small::FJ_Label_Book_Small(fuiRenderNode* pRenderNode)
     m_labelTooWide = true;
 }
 
-FJ_Label_Book_Small::~FJ_Label_Book_Small()
-{
-}
-
 FJ_Label* FJ_Label_Book_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_Book_Small(pRenderNode);

@@ -1,9 +1,5 @@
 #include "game/ui/FJ_DynamicHtmlText_Small.hpp"
 
-FJ_DynamicHtmlText_Small::~FJ_DynamicHtmlText_Small()
-{
-}
-
 FJ_DynamicHtmlText* FJ_DynamicHtmlText_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_DynamicHtmlText_Small(pRenderNode);

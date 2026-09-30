@@ -5,10 +5,6 @@ FJ_ListButtonAchievement_Small::FJ_ListButtonAchievement_Small(fuiRenderNode* pR
 {
 }
 
-FJ_ListButtonAchievement_Small::~FJ_ListButtonAchievement_Small()
-{
-}
-
 FJ_ListButtonAchievement* FJ_ListButtonAchievement_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_ListButtonAchievement_Small(pRenderNode);

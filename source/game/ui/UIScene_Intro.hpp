@@ -19,7 +19,6 @@ public:
 
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
-    virtual ~UIScene_Intro();
     virtual int getSceneType();
     virtual bool hasFocus(int sceneType);
     virtual void handleGainFocus(bool hadFocus);

@@ -147,10 +147,6 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-UIScene_InGamePlayerOptionsMenu::~UIScene_InGamePlayerOptionsMenu()
-{
-}
-
 void UIScene_InGamePlayerOptionsMenu::resetCheatCheckboxes()
 {
     if (g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) == 0 || m_isHost)

@@ -43,10 +43,6 @@ ChestMenu::ChestMenu(boost::shared_ptr<Container> container,
     }
 }
 
-ChestMenu::~ChestMenu()
-{
-}
-
 bool ChestMenu::stillValid(boost::shared_ptr<Player> player)
 {
     return m_container->stillValid(player);

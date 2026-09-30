@@ -29,6 +29,3 @@ unsigned int FJ_Panel9GridFade::getType()
     return 0x80b1;
 }
 
-FJ_Panel9GridFade::~FJ_Panel9GridFade()
-{
-}

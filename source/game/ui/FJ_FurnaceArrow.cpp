@@ -8,10 +8,6 @@ FJ_FurnaceArrow::FJ_FurnaceArrow(fuiRenderNode* renderNode)
     FJ_ProgressBar::initFiller();
 }
 
-FJ_FurnaceArrow::~FJ_FurnaceArrow()
-{
-}
-
 void FJ_FurnaceArrow::InitBarType()
 {
     m_barType = true;

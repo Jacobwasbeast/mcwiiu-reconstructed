@@ -13,10 +13,6 @@ FJ_MultilistMenu::FJ_MultilistMenu(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }
 
-FJ_MultilistMenu::~FJ_MultilistMenu()
-{
-}
-
 void FJ_MultilistMenu::handleCheckboxToggled(FJ_Event* event)
 {
     if (event == NULL || event->m_pTarget == NULL)

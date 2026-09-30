@@ -15,6 +15,3 @@ unsigned int FJ_MobEffect_Small::getType()
     return 0x62;
 }
 
-FJ_MobEffect_Small::~FJ_MobEffect_Small()
-{
-}

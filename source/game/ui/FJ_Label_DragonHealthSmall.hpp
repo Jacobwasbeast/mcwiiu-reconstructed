@@ -9,7 +9,6 @@ class FJ_Label_DragonHealthSmall : public FJ_Label
 {
 public:
     explicit FJ_Label_DragonHealthSmall(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_DragonHealthSmall();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

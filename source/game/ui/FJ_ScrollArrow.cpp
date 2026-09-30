@@ -41,6 +41,3 @@ unsigned int FJ_ScrollArrow::getType()
     return 86;
 }
 
-FJ_ScrollArrow::~FJ_ScrollArrow()
-{
-}

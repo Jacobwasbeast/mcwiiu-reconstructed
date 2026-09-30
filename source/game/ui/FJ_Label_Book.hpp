@@ -7,7 +7,6 @@
 class FJ_Label_Book : public FJ_Label
 {
 public:
-    virtual ~FJ_Label_Book();
 
     virtual void Init(const std::wstring& label);
     virtual void SetLabel(const std::wstring& label);

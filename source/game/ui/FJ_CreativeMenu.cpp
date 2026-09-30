@@ -34,10 +34,6 @@ FJ_CreativeMenu::FJ_CreativeMenu(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_SlideComplete, this, _handleSlideComplete, false);
 }
 
-FJ_CreativeMenu::~FJ_CreativeMenu()
-{
-}
-
 FJ_CreativeMenu* FJ_CreativeMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_CreativeMenu(renderNode);

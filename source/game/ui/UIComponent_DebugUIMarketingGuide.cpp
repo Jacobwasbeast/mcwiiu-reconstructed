@@ -7,10 +7,6 @@ UIComponent_DebugUIMarketingGuide::UIComponent_DebugUIMarketingGuide(int type, v
     initialiseMovie();
 }
 
-UIComponent_DebugUIMarketingGuide::~UIComponent_DebugUIMarketingGuide()
-{
-}
-
 std::wstring UIComponent_DebugUIMarketingGuide::getMoviePath()
 {
     return std::wstring(L"DebugUIMarketingGuide");

@@ -10,7 +10,6 @@ class FJ_MobEffect_Tile_Normal : public FJ_MobEffect_Tile
 public:
     FJ_MobEffect_Tile_Normal(fuiRenderNode* pRenderNode);
 
-    virtual ~FJ_MobEffect_Tile_Normal();
 
     static FJ_MobEffect_Tile_Normal* Create(fuiRenderNode* pRenderNode);
 

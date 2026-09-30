@@ -9,7 +9,6 @@ class FJ_MobEffect_Small : public FJ_MobEffect
 {
 public:
     FJ_MobEffect_Small(fuiRenderNode* pRenderNode);
-    virtual ~FJ_MobEffect_Small();
     static FJ_MobEffect* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

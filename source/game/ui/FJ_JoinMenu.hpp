@@ -11,7 +11,6 @@ class FJ_JoinMenu : public FJ_Document
 {
 public:
     FJ_JoinMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_JoinMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

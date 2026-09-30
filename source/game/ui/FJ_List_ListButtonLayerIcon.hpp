@@ -12,7 +12,6 @@ class FJ_List_ListButtonLayerIcon : public FJ_List
 {
 public:
     explicit FJ_List_ListButtonLayerIcon(fuiRenderNode* renderNode);
-    virtual ~FJ_List_ListButtonLayerIcon();
 
     static FJ_List* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

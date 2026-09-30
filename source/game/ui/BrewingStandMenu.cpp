@@ -130,10 +130,6 @@ BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
     }
 }
 
-BrewingStandMenu::~BrewingStandMenu()
-{
-}
-
 void BrewingStandMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
 {
     AbstractContainerMenu::addSlotListener(listener);

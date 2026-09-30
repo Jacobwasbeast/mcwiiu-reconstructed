@@ -9,7 +9,6 @@ class FJ_SocialPost : public FJ_Document
 {
 public:
     FJ_SocialPost(fuiRenderNode* renderNode);
-    virtual ~FJ_SocialPost();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

@@ -8,7 +8,6 @@ class UIScene_HowToPlayMenu : public UIScene
 {
 public:
     UIScene_HowToPlayMenu(int sceneType, void* sceneData, UILayer* layer);
-    virtual ~UIScene_HowToPlayMenu();
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
     virtual int getSceneType();

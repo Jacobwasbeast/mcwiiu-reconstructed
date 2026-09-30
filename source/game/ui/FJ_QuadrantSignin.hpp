@@ -8,7 +8,6 @@ class FJ_QuadrantSignin : public FJ_Document
 {
 public:
     explicit FJ_QuadrantSignin(fuiRenderNode* renderNode);
-    virtual ~FJ_QuadrantSignin();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     static void _init(FJ_FuiNode* node, FJ_Event* event);

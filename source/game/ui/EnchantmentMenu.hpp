@@ -17,7 +17,6 @@ class EnchantmentMenu : public AbstractContainerMenu
 public:
     EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& pos);
     EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* level);
-    virtual ~EnchantmentMenu();
 
     void broadcastData(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);

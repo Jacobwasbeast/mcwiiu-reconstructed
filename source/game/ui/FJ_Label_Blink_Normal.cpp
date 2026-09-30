@@ -5,10 +5,6 @@ FJ_Label_Blink_Normal::FJ_Label_Blink_Normal(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_Blink_Normal::~FJ_Label_Blink_Normal()
-{
-}
-
 FJ_Label_Blink* FJ_Label_Blink_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_Blink_Normal(renderNode);

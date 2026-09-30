@@ -13,7 +13,6 @@ class FJ_Label_HUD_Splash : public FJ_Label
     friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_Label_HUD_Splash(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_HUD_Splash();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
     virtual void Init(const std::wstring& label);

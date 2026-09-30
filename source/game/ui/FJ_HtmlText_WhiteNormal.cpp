@@ -11,10 +11,6 @@ FJ_HtmlText_WhiteNormal::FJ_HtmlText_WhiteNormal(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_HtmlText_WhiteNormal::~FJ_HtmlText_WhiteNormal()
-{
-}
-
 void FJ_HtmlText_WhiteNormal::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));

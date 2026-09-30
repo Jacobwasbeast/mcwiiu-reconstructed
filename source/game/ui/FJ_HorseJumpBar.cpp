@@ -28,6 +28,3 @@ void FJ_HorseJumpBar::Init(const std::wstring& label)
 {
 }
 
-FJ_HorseJumpBar::~FJ_HorseJumpBar()
-{
-}

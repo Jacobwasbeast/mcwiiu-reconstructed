@@ -9,7 +9,6 @@ class FJ_InventoryMenu : public FJ_AbstractContainerDocument
 {
 public:
     explicit FJ_InventoryMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_InventoryMenu();
 
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

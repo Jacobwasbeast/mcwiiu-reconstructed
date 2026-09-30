@@ -1,9 +1,5 @@
 #include "game/ui/FJ_Label_Black_Centered.hpp"
 
-FJ_Label_Black_Centered::~FJ_Label_Black_Centered()
-{
-}
-
 FJ_Label* FJ_Label_Black_Centered::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_Black_Centered(pRenderNode);

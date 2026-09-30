@@ -13,10 +13,6 @@ FJ_LeaderboardMenu::FJ_LeaderboardMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_LeaderboardMenu::~FJ_LeaderboardMenu()
-{
-}
-
 FJ_Document* FJ_LeaderboardMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_LeaderboardMenu(renderNode);

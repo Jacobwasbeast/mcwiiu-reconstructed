@@ -12,10 +12,6 @@ FJ_TexturePackList_Slot::FJ_TexturePackList_Slot(fuiRenderNode* pRenderNode)
     m_pSlotOutline->setVisible(false);
 }
 
-FJ_TexturePackList_Slot::~FJ_TexturePackList_Slot()
-{
-}
-
 void FJ_TexturePackList_Slot::SetSelected(bool bSelected)
 {
     m_pSlotOutline->setVisible(bSelected);

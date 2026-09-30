@@ -8,10 +8,6 @@ FJ_Label_HUD_SplashVita::FJ_Label_HUD_SplashVita(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_HUD_SplashVita::~FJ_Label_HUD_SplashVita()
-{
-}
-
 FJ_Label* FJ_Label_HUD_SplashVita::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_HUD_SplashVita(renderNode);

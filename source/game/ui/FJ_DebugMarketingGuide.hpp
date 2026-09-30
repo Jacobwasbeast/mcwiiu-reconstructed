@@ -9,7 +9,6 @@ class FJ_DebugMarketingGuide : public FJ_Document
 {
 public:
     FJ_DebugMarketingGuide(fuiRenderNode* renderNode);
-    virtual ~FJ_DebugMarketingGuide();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

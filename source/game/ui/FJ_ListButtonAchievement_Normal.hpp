@@ -11,7 +11,6 @@ class FJ_ListButtonAchievement_Normal : public FJ_ListButtonAchievement
 {
 public:
     FJ_ListButtonAchievement_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonAchievement_Normal();
     static FJ_ListButtonAchievement* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

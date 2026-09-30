@@ -2,10 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_BigWhite::~FJ_Label_BigWhite()
-{
-}
-
 FJ_Label* FJ_Label_BigWhite::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_BigWhite(pRenderNode);

@@ -5,10 +5,6 @@ FJ_DebugMenu::FJ_DebugMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_DebugMenu::~FJ_DebugMenu()
-{
-}
-
 FJ_Document* FJ_DebugMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DebugMenu(renderNode);

@@ -10,10 +10,6 @@ FJ_DynamicHtmlText* FJ_DynamicHtmlText_WithPanel_Small::Create(fuiRenderNode* pR
     return new FJ_DynamicHtmlText_WithPanel_Small(pRenderNode);
 }
 
-FJ_DynamicHtmlText_WithPanel_Small::~FJ_DynamicHtmlText_WithPanel_Small()
-{
-}
-
 unsigned int FJ_DynamicHtmlText_WithPanel_Small::getType()
 {
     return 0x80ae;

@@ -86,10 +86,6 @@ EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* 
     mEnchantmentSeed = static_cast<long long>(static_cast<int>(inventory->m_player->getEnchantmentSeed()));
 }
 
-EnchantmentMenu::~EnchantmentMenu()
-{
-}
-
 void EnchantmentMenu::broadcastData(net_minecraft_world_inventory::ContainerListener* listener)
 {
     listener->setContainerData(this, 0, mCosts[0]);

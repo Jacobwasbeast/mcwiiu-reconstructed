@@ -13,7 +13,6 @@ public:
     ChestMenu(boost::shared_ptr<Container> container,
               boost::shared_ptr<Container> playerInventory,
               boost::shared_ptr<Player> player);
-    virtual ~ChestMenu();
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual not_null_ptr<ItemInstance> clicked(int slot, int button, ClickType::eClickType type,

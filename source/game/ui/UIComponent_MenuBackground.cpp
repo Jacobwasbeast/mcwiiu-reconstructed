@@ -11,10 +11,6 @@ UIComponent_MenuBackground::UIComponent_MenuBackground(int sceneType, void* data
     m_movieLoaded = true;
 }
 
-UIComponent_MenuBackground::~UIComponent_MenuBackground()
-{
-}
-
 std::wstring UIComponent_MenuBackground::getMoviePath()
 {
     unsigned int viewport = m_layer->getViewport();

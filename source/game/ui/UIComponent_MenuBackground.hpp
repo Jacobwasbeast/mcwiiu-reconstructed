@@ -10,7 +10,6 @@ class UIComponent_MenuBackground : public UIScene
 {
 public:
     UIComponent_MenuBackground(int sceneType, void* data, UILayer* layer);
-    virtual ~UIComponent_MenuBackground();
 
     virtual std::wstring getMoviePath();
     virtual void render(int width, int height, C4JRender::eViewportType viewport);

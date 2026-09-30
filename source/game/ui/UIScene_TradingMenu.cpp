@@ -629,10 +629,10 @@ void UIScene_TradingMenu::handleInventoryUpdated(void*)
     updateDisplay();
 }
 
-void UIScene_TradingMenu::HandleMessage(EUIMessage message, void*)
+void UIScene_TradingMenu::HandleMessage(EUIMessage message, void* data)
 {
     if (message == EUIMessage_Unknown)
-        updateDisplay();
+        handleInventoryUpdated(data);
 }
 
 boost::shared_ptr<MerchantMenu> UIScene_TradingMenu::getMerchant()

@@ -9,7 +9,6 @@ class FJ_HelpAndOptionsMenu : public FJ_Document
 {
 public:
     FJ_HelpAndOptionsMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_HelpAndOptionsMenu();
     static FJ_HelpAndOptionsMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

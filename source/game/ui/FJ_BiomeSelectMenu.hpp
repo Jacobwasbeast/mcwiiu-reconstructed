@@ -9,7 +9,6 @@ class FJ_BiomeSelectMenu : public FJ_AbstractContainerDocument
 {
 public:
     explicit FJ_BiomeSelectMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_BiomeSelectMenu();
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     void SetMapNavigator(float scale, int x, int z);

@@ -36,10 +36,6 @@ FJ_ComponentLogo::FJ_ComponentLogo(fuiRenderNode* renderNode)
     SetLogoLanguage(0);
 }
 
-FJ_ComponentLogo::~FJ_ComponentLogo()
-{
-}
-
 void FJ_ComponentLogo::SetLogoLanguage(int language)
 {
     if (m_logoLanguage != language)

@@ -43,10 +43,6 @@ FurnaceMenu::FurnaceMenu(boost::shared_ptr<Inventory> inventory,
     }
 }
 
-FurnaceMenu::~FurnaceMenu()
-{
-}
-
 void FurnaceMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
 {
     AbstractContainerMenu::addSlotListener(listener);

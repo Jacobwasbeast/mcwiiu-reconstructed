@@ -12,7 +12,6 @@ public:
         : FJ_HtmlText_WithPanel(pRenderNode)
     {
     }
-    virtual ~FJ_HtmlText_WithPanel_Small();
     static FJ_HtmlText_WithPanel* Create(fuiRenderNode* pRenderNode);
     virtual void ASConstructor();
     virtual unsigned int getType();

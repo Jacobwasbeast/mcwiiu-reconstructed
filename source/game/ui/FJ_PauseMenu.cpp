@@ -5,10 +5,6 @@ FJ_PauseMenu::FJ_PauseMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_PauseMenu::~FJ_PauseMenu()
-{
-}
-
 FJ_Document* FJ_PauseMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_PauseMenu(renderNode);

@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_BigGrey();
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
 

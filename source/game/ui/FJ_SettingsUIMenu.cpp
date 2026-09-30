@@ -5,10 +5,6 @@ FJ_SettingsUIMenu::FJ_SettingsUIMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_SettingsUIMenu::~FJ_SettingsUIMenu()
-{
-}
-
 FJ_Document* FJ_SettingsUIMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_SettingsUIMenu(renderNode);

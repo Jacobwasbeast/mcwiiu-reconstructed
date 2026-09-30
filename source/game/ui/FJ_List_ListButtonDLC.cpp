@@ -36,6 +36,3 @@ void FJ_List_ListButtonDLC::ShowTick(int index, bool showTick)
         item->ShowTick(showTick);
 }
 
-FJ_List_ListButtonDLC::~FJ_List_ListButtonDLC()
-{
-}

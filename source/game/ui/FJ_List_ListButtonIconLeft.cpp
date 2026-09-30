@@ -7,10 +7,6 @@ FJ_List_ListButtonIconLeft::FJ_List_ListButtonIconLeft(fuiRenderNode* renderNode
 {
 }
 
-FJ_List_ListButtonIconLeft::~FJ_List_ListButtonIconLeft()
-{
-}
-
 void FJ_List_ListButtonIconLeft::UseIggyIcons()
 {
     m_useIggyIcons = true;

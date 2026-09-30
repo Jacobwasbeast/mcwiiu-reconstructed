@@ -5,10 +5,6 @@ FJ_Label_SmallGreen::FJ_Label_SmallGreen(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_SmallGreen::~FJ_Label_SmallGreen()
-{
-}
-
 FJ_Label* FJ_Label_SmallGreen::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_SmallGreen(renderNode);

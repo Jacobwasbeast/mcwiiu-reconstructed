@@ -7,10 +7,6 @@ FJ_Label_SkinSelectCenter_Small::FJ_Label_SkinSelectCenter_Small(fuiRenderNode* 
 {
 }
 
-FJ_Label_SkinSelectCenter_Small::~FJ_Label_SkinSelectCenter_Small()
-{
-}
-
 FJ_Label* FJ_Label_SkinSelectCenter_Small::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_SkinSelectCenter_Small(pRenderNode);

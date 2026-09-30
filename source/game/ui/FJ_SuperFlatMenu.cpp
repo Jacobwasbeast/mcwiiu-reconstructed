@@ -23,10 +23,6 @@ FJ_SuperFlatMenu::FJ_SuperFlatMenu(fuiRenderNode* renderNode)
     SetActiveTab(m_activeTab);
 }
 
-FJ_SuperFlatMenu::~FJ_SuperFlatMenu()
-{
-}
-
 void FJ_SuperFlatMenu::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

@@ -1,9 +1,5 @@
 #include "game/ui/FJ_Label_Book.hpp"
 
-FJ_Label_Book::~FJ_Label_Book()
-{
-}
-
 void FJ_Label_Book::Init(const std::wstring& label)
 {
     FJ_Base::InitBase(label, -1);

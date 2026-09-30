@@ -9,7 +9,6 @@ class FJ_Label_VerySmallGrey : public FJ_Label
 {
 public:
     explicit FJ_Label_VerySmallGrey(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_VerySmallGrey();
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
 

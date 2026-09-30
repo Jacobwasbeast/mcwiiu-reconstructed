@@ -8,10 +8,6 @@ FJ_FurnaceMenu::FJ_FurnaceMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_FurnaceMenu::~FJ_FurnaceMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_FurnaceMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_FurnaceMenu(renderNode);

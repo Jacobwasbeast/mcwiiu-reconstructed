@@ -100,8 +100,7 @@ not_null_ptr<ItemInstance> UIScene_HowToPlay::sCustomItems::GetItemInstance() co
 }
 
 UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
-    : UIScene(playerId, layer), m_container(), m_dynamicHtmlText(), m_labels(),
-      m_enchantmentBook(), m_enchantmentBooks()
+    : UIScene(playerId, layer)
 {
     initialiseMovie();
 
@@ -360,7 +359,7 @@ void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
     float rectHeight = rect->yMax - rect->yMin;
     float width = m_enchantmentBooks[0].getWidth();
     float height = m_enchantmentBooks[0].getHeight();
-        GlStateManager::scalef(rectWidth / width, rectHeight / height, 1.0F);
+    GlStateManager::scalef(rectWidth / width, rectHeight / height, 1.0F);
     float scale;
     if (m_movieResolution == 0)
     {

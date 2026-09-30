@@ -15,7 +15,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_Html();
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

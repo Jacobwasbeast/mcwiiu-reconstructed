@@ -7,10 +7,6 @@ FJ_HopperMenu::FJ_HopperMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_HopperMenu::~FJ_HopperMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_HopperMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_HopperMenu(renderNode);

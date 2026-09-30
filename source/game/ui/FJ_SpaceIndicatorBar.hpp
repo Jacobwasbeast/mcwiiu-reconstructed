@@ -7,7 +7,6 @@ class FJ_SpaceIndicatorBar : public FJ_Base
 {
 public:
     explicit FJ_SpaceIndicatorBar(fuiRenderNode* renderNode);
-    virtual ~FJ_SpaceIndicatorBar();
     void GetBarFiller();
     void setSaveGameSize(float size);
     void setTotalSize(float size);

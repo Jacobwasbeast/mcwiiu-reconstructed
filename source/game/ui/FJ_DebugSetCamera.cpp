@@ -26,10 +26,6 @@ FJ_DebugSetCamera::FJ_DebugSetCamera(fuiRenderNode* renderNode)
     node->setVisible(true);
 }
 
-FJ_DebugSetCamera::~FJ_DebugSetCamera()
-{
-}
-
 void FJ_DebugSetCamera::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

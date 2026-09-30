@@ -9,7 +9,6 @@ class FJ_MobEffect_Normal : public FJ_MobEffect
 {
 public:
     FJ_MobEffect_Normal(fuiRenderNode* pRenderNode);
-    virtual ~FJ_MobEffect_Normal();
     static FJ_MobEffect* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

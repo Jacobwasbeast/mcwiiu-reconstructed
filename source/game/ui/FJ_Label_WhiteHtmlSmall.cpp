@@ -1,9 +1,5 @@
 #include "game/ui/FJ_Label_WhiteHtmlSmall.hpp"
 
-FJ_Label_WhiteHtmlSmall::~FJ_Label_WhiteHtmlSmall()
-{
-}
-
 FJ_Label* FJ_Label_WhiteHtmlSmall::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_WhiteHtmlSmall(renderNode);

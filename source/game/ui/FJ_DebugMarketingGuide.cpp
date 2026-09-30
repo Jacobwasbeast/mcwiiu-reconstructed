@@ -20,10 +20,6 @@ FJ_DebugMarketingGuide::FJ_DebugMarketingGuide(fuiRenderNode* renderNode)
     }
 }
 
-FJ_DebugMarketingGuide::~FJ_DebugMarketingGuide()
-{
-}
-
 FJ_Document* FJ_DebugMarketingGuide::Create(fuiRenderNode* renderNode)
 {
     return new FJ_DebugMarketingGuide(renderNode);

@@ -9,7 +9,6 @@ class FJ_Label_SkinSelect : public FJ_Label
 {
 public:
     explicit FJ_Label_SkinSelect(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_SkinSelect();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

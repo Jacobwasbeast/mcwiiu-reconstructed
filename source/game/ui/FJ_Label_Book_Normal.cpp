@@ -6,10 +6,6 @@ FJ_Label_Book_Normal::FJ_Label_Book_Normal(fuiRenderNode* renderNode)
     m_multilineWrap = true;
 }
 
-FJ_Label_Book_Normal::~FJ_Label_Book_Normal()
-{
-}
-
 FJ_Label_Book_Normal* FJ_Label_Book_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_Book_Normal(renderNode);

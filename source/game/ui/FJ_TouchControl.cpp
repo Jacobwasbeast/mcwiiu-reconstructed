@@ -21,6 +21,3 @@ unsigned int FJ_TouchControl::getType()
     return 0x65;
 }
 
-FJ_TouchControl::~FJ_TouchControl()
-{
-}

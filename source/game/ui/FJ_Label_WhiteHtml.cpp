@@ -2,10 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_WhiteHtml::~FJ_Label_WhiteHtml()
-{
-}
-
 FJ_Label* FJ_Label_WhiteHtml::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_WhiteHtml(renderNode);

@@ -9,7 +9,6 @@ class FJ_Eula : public FJ_Document
 {
 public:
     FJ_Eula(fuiRenderNode* renderNode);
-    virtual ~FJ_Eula();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

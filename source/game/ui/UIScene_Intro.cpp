@@ -23,10 +23,6 @@ UIScene_Intro::UIScene_Intro(int sceneType, void*, UILayer* layer)
     m_touchControl.init(0);
 }
 
-UIScene_Intro::~UIScene_Intro()
-{
-}
-
 void UIScene_Intro::setIntroPlatform()
 {
     fuiRenderNode* root = m_movie->getRootNode();

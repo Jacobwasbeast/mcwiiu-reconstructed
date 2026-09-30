@@ -5,10 +5,6 @@ FJ_Slider_Normal::FJ_Slider_Normal(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Slider_Normal::~FJ_Slider_Normal()
-{
-}
-
 FJ_Slider* FJ_Slider_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Slider_Normal(renderNode);

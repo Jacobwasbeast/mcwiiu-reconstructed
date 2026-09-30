@@ -1239,10 +1239,7 @@ unsigned int IUIScene_AbstractContainerMenu::handleValidKeyPress(int pad, int bu
 
 void IUIScene_AbstractContainerMenu::handleOutsideClicked(int pad, int buttonNum, int quickKeyHeld)
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[getPad()];
-    minecraft->mGameModes[getPad()]->handleInventoryMouseClick(
-        m_menu->m_containerId, -999, buttonNum, (ClickType::eClickType)(quickKeyHeld != 0), player);
+    slotClicked(-999, buttonNum, (ClickType::eClickType)(quickKeyHeld != 0));
 }
 
 void IUIScene_AbstractContainerMenu::handleOtherClicked(int pad, ESceneSection section, int buttonNum,

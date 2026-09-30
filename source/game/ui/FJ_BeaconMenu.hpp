@@ -9,7 +9,6 @@ class FJ_BeaconMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_BeaconMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_BeaconMenu();
     static FJ_BeaconMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetSafeZone(int top, int bottom, int left, int right);

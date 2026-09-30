@@ -19,10 +19,6 @@ FJ_LoadMenu::FJ_LoadMenu(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }
 
-FJ_LoadMenu::~FJ_LoadMenu()
-{
-}
-
 void FJ_LoadMenu::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();

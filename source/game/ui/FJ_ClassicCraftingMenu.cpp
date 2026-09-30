@@ -7,10 +7,6 @@ FJ_ClassicCraftingMenu::FJ_ClassicCraftingMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ClassicCraftingMenu::~FJ_ClassicCraftingMenu()
-{
-}
-
 FJ_ClassicCraftingMenu* FJ_ClassicCraftingMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ClassicCraftingMenu(renderNode);

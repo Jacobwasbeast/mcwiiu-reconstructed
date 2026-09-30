@@ -67,6 +67,3 @@ void FJ_List_ListButtonLayerIcon::SetTextureName(int index,
     }
 }
 
-FJ_List_ListButtonLayerIcon::~FJ_List_ListButtonLayerIcon()
-{
-}

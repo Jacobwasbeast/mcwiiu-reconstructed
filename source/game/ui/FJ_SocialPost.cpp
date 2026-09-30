@@ -7,10 +7,6 @@ FJ_SocialPost::FJ_SocialPost(fuiRenderNode* renderNode)
 {
 }
 
-FJ_SocialPost::~FJ_SocialPost()
-{
-}
-
 FJ_Document* FJ_SocialPost::Create(fuiRenderNode* renderNode)
 {
     return new FJ_SocialPost(renderNode);

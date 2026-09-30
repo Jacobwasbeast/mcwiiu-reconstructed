@@ -9,7 +9,6 @@ class FJ_Label_White_Small_Centered : public FJ_Label
 {
 public:
     FJ_Label_White_Small_Centered(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Label_White_Small_Centered();
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

@@ -9,7 +9,6 @@ class FJ_SignEntryMenu : public FJ_Document
 {
 public:
     explicit FJ_SignEntryMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_SignEntryMenu();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

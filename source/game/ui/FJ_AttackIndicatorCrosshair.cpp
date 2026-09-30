@@ -24,6 +24,3 @@ uint32_t FJ_AttackIndicatorCrosshair::getType()
     return 0x8056;
 }
 
-FJ_AttackIndicatorCrosshair::~FJ_AttackIndicatorCrosshair()
-{
-}

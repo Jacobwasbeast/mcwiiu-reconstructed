@@ -10,7 +10,6 @@ class FJ_LoadCreateJoinMenu : public FJ_Document
 {
 public:
     FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_LoadCreateJoinMenu();
     void SetActiveTab(int tab);
     static FJ_LoadCreateJoinMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

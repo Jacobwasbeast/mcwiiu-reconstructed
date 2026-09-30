@@ -25,10 +25,6 @@ UIComponent_Panorama::UIComponent_Panorama(int sceneType, void*, UILayer* layer)
         tick();
 }
 
-UIComponent_Panorama::~UIComponent_Panorama()
-{
-}
-
 void UIComponent_Panorama::setPanorama(bool day)
 {
     if (day != m_panoramaDay) {

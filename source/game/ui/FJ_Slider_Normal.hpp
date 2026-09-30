@@ -10,7 +10,6 @@ class FJ_Slider_Normal : public FJ_Slider
 {
 public:
     explicit FJ_Slider_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_Slider_Normal();
     static FJ_Slider* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

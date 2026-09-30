@@ -12,7 +12,6 @@ public:
 
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
 
-    virtual ~FJ_ExlamationMark();
     virtual unsigned int getType();
 };
 

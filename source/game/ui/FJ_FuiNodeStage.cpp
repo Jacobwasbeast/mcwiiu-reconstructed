@@ -9,10 +9,6 @@ FJ_FuiNodeStage::FJ_FuiNodeStage(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_FuiNodeStage::~FJ_FuiNodeStage()
-{
-}
-
 void FJ_FuiNodeStage::removeFocus(FJ_FuiNode* pNode)
 {
     if (m_pFocus != pNode)

@@ -16,7 +16,6 @@ private:
 
 public:
     FJ_AchievementsMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_AchievementsMenu();
 
     void PositionAchievementDescription();
     static void _PositionAchievementDescription(FJ_FuiNode* node);

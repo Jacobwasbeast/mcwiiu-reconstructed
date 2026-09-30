@@ -9,7 +9,6 @@ class FJ_DynamicHtmlText_WithPanel_Small : public FJ_DynamicHtmlText
 {
 public:
     FJ_DynamicHtmlText_WithPanel_Small(fuiRenderNode* pRenderNode);
-    virtual ~FJ_DynamicHtmlText_WithPanel_Small();
     static FJ_DynamicHtmlText* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

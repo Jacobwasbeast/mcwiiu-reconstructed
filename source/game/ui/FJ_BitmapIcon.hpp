@@ -14,7 +14,6 @@ private:
 
 public:
     FJ_BitmapIcon(fuiRenderNode* pRenderNode);
-    virtual ~FJ_BitmapIcon();
 
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

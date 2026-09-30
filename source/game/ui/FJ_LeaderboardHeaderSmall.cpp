@@ -5,10 +5,6 @@ FJ_LeaderboardHeaderSmall::FJ_LeaderboardHeaderSmall(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_LeaderboardHeaderSmall::~FJ_LeaderboardHeaderSmall()
-{
-}
-
 FJ_LeaderboardHeader* FJ_LeaderboardHeaderSmall::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_LeaderboardHeaderSmall(pRenderNode);

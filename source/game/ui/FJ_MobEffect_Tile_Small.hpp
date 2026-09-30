@@ -10,7 +10,6 @@ public:
 
     static FJ_MobEffect_Tile_Small* Create(fuiRenderNode* pRenderNode);
 
-    virtual ~FJ_MobEffect_Tile_Small();
 
     virtual unsigned int getType();
 };

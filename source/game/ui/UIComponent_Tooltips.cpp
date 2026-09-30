@@ -45,10 +45,6 @@ UIComponent_Tooltips::UIComponent_Tooltips(int sceneType, void* data, UILayer* l
         m_touchControls[i].init(i);
 }
 
-UIComponent_Tooltips::~UIComponent_Tooltips()
-{
-}
-
 void UIComponent_Tooltips::overrideSFX(int pad, int action, bool enabled)
 {
     m_overrideSFX[pad][action] = enabled;

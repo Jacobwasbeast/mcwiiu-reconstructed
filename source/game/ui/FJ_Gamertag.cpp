@@ -9,10 +9,6 @@ FJ_Gamertag::FJ_Gamertag(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Gamertag::~FJ_Gamertag()
-{
-}
-
 FJ_Document* FJ_Gamertag::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Gamertag(renderNode);

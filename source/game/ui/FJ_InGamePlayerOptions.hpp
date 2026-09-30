@@ -11,7 +11,6 @@ class FJ_InGamePlayerOptions : public FJ_Document
 {
 public:
     FJ_InGamePlayerOptions(fuiRenderNode* renderNode);
-    virtual ~FJ_InGamePlayerOptions();
 
     void handleCheckboxToggled(FJ_Event* event);
     static void _handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event);

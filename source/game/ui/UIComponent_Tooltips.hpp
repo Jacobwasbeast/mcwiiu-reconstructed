@@ -29,7 +29,7 @@ public:
     };
 
     UIComponent_Tooltips(int sceneType, void* data, UILayer* layer);
-    virtual ~UIComponent_Tooltips();
+    virtual ~UIComponent_Tooltips() {}
 
     void overrideSFX(int pad, int action, bool enabled);
     virtual unsigned int mapElementsAndNames();

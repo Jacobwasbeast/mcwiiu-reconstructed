@@ -8,7 +8,6 @@ class fuiRenderNode;
 class FJ_InGameInfoMenu : public FJ_Document {
 public:
     FJ_InGameInfoMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_InGameInfoMenu();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

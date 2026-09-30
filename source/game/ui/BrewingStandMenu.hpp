@@ -44,7 +44,6 @@ public:
     };
 
     BrewingStandMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
-    virtual ~BrewingStandMenu();
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void broadcastChanges();
     virtual void setData(int id, int value);

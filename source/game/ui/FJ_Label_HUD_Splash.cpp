@@ -8,10 +8,6 @@ FJ_Label_HUD_Splash::FJ_Label_HUD_Splash(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Label_HUD_Splash::~FJ_Label_HUD_Splash()
-{
-}
-
 FJ_Label* FJ_Label_HUD_Splash::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_HUD_Splash(renderNode);

@@ -9,7 +9,6 @@ class FJ_Cursor_Normal : public FJ_Cursor
 {
 public:
     FJ_Cursor_Normal(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Cursor_Normal();
     static FJ_Cursor* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

@@ -10,7 +10,6 @@ public:
     UIScene_InGameHostOptionsMenu(int sceneType, void* data, UILayer* layer);
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
-    virtual ~UIScene_InGameHostOptionsMenu();
     virtual int getSceneType();
     virtual void updateTooltips();
     virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,

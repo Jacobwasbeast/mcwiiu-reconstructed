@@ -20,10 +20,6 @@ FJ_BiomeSelectMenu::FJ_BiomeSelectMenu(fuiRenderNode* renderNode)
     }
 }
 
-FJ_BiomeSelectMenu::~FJ_BiomeSelectMenu()
-{
-}
-
 FJ_AbstractContainerDocument* FJ_BiomeSelectMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_BiomeSelectMenu(renderNode);

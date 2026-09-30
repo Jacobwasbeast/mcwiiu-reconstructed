@@ -14,7 +14,6 @@ private:
 
 public:
     FJ_MessageBox(fuiRenderNode* renderNode);
-    virtual ~FJ_MessageBox();
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     void Init(int buttonCount, int focusIndex);

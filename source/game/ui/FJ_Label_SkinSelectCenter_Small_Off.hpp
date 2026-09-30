@@ -9,7 +9,6 @@ class FJ_Label_SkinSelectCenter_Small_Off : public FJ_Label
 {
 public:
     FJ_Label_SkinSelectCenter_Small_Off(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_SkinSelectCenter_Small_Off();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

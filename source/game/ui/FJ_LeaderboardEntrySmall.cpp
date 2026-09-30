@@ -13,10 +13,6 @@ FJ_LeaderboardEntrySmall::FJ_LeaderboardEntrySmall(fuiRenderNode* pRenderNode)
     getChildByName("StyleContainer")->getChildAt(0)->asMovieClip()->setVisible(false);
 }
 
-FJ_LeaderboardEntrySmall::~FJ_LeaderboardEntrySmall()
-{
-}
-
 void FJ_LeaderboardEntrySmall::HandleUpdateLabel(FJ_Event*)
 {
     getChildByName("StyleContainer")->getChildAt(0)->asMovieClip()->setVisible(false);

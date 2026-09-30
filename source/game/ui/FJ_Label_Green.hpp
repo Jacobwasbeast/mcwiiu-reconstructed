@@ -9,7 +9,6 @@ class FJ_Label_Green : public FJ_Label
 {
 public:
     explicit FJ_Label_Green(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_Green();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

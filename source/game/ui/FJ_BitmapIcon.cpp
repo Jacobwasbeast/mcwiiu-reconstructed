@@ -9,10 +9,6 @@ FJ_BitmapIcon::FJ_BitmapIcon(fuiRenderNode* pRenderNode)
 {
 }
 
-FJ_BitmapIcon::~FJ_BitmapIcon()
-{
-}
-
 FJ_FuiNode* FJ_BitmapIcon::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_BitmapIcon(pRenderNode);

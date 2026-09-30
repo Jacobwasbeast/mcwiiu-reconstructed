@@ -9,7 +9,6 @@ class FJ_FurnaceFlame : public FJ_ProgressBar
 {
 public:
     explicit FJ_FurnaceFlame(fuiRenderNode* renderNode);
-    virtual ~FJ_FurnaceFlame();
     virtual void InitBarType();
     static FJ_FurnaceFlame* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

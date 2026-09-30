@@ -15,7 +15,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_HUD_VerySmallWhite();
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
 

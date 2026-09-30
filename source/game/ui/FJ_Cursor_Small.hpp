@@ -9,7 +9,6 @@ class FJ_Cursor_Small : public FJ_Cursor
 {
 public:
     FJ_Cursor_Small(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Cursor_Small();
     static FJ_Cursor* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

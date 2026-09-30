@@ -10,10 +10,6 @@ FJ_List_ListButtonCheckbox::FJ_List_ListButtonCheckbox(fuiRenderNode* renderNode
     m_useIggyIcons = false;
 }
 
-FJ_List_ListButtonCheckbox::~FJ_List_ListButtonCheckbox()
-{
-}
-
 FJ_List* FJ_List_ListButtonCheckbox::Create(fuiRenderNode* renderNode)
 {
     return new FJ_List_ListButtonCheckbox(renderNode);

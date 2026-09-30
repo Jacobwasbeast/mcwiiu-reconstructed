@@ -9,7 +9,6 @@ class FJ_Label_VerySmallBlack : public FJ_Label
 {
 public:
     explicit FJ_Label_VerySmallBlack(fuiRenderNode* renderNode);
-    virtual ~FJ_Label_VerySmallBlack();
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
 

@@ -9,7 +9,6 @@ class FJ_Label_VerySmallWhite : public FJ_Label
 {
 public:
     FJ_Label_VerySmallWhite(fuiRenderNode* pRenderNode);
-    virtual ~FJ_Label_VerySmallWhite();
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

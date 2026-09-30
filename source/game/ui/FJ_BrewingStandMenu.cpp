@@ -5,10 +5,6 @@ FJ_BrewingStandMenu::FJ_BrewingStandMenu(fuiRenderNode* renderNode) : FJ_Abstrac
 {
 }
 
-FJ_BrewingStandMenu::~FJ_BrewingStandMenu()
-{
-}
-
 FJ_BrewingStandMenu* FJ_BrewingStandMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_BrewingStandMenu(renderNode);

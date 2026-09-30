@@ -5,10 +5,6 @@ FJ_Slider_Small::FJ_Slider_Small(fuiRenderNode* renderNode)
 {
 }
 
-FJ_Slider_Small::~FJ_Slider_Small()
-{
-}
-
 FJ_Slider* FJ_Slider_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Slider_Small(renderNode);

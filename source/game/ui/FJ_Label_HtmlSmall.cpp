@@ -16,6 +16,3 @@ void FJ_Label_HtmlSmall::SetLabel(const std::wstring& label)
     FJ_Label::SetLabel(label);
 }
 
-FJ_Label_HtmlSmall::~FJ_Label_HtmlSmall()
-{
-}

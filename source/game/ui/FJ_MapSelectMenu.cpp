@@ -8,10 +8,6 @@ FJ_MapSelectMenu::FJ_MapSelectMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_MapSelectMenu::~FJ_MapSelectMenu()
-{
-}
-
 FJ_Document* FJ_MapSelectMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_MapSelectMenu(renderNode);

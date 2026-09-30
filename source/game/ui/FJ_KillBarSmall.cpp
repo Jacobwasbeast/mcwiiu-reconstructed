@@ -34,6 +34,3 @@ void FJ_KillBarSmall::SetLabel(const std::wstring& label)
     FJ_Base::SetLabel(label);
 }
 
-FJ_KillBarSmall::~FJ_KillBarSmall()
-{
-}

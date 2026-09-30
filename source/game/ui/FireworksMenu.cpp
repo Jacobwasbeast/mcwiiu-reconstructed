@@ -43,10 +43,6 @@ FireworksMenu::FireworksMenu(boost::shared_ptr<Inventory> inventory, Level* leve
     slotsChanged();
 }
 
-FireworksMenu::~FireworksMenu()
-{
-}
-
 void FireworksMenu::slotsChanged()
 {
     FireworksRecipe::updatePossibleRecipes(m_craftSlots,

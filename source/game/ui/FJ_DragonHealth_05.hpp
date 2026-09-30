@@ -9,7 +9,6 @@ class FJ_DragonHealth_05 : public FJ_DragonHealth
 {
 public:
     explicit FJ_DragonHealth_05(fuiRenderNode* renderNode);
-    virtual ~FJ_DragonHealth_05();
     static FJ_DragonHealth* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

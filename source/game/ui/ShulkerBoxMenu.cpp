@@ -40,10 +40,6 @@ ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
     container->startOpen(player);
 }
 
-ShulkerBoxMenu::~ShulkerBoxMenu()
-{
-}
-
 bool ShulkerBoxMenu::stillValid(boost::shared_ptr<Player> player)
 {
     return mContainer->stillValid(player);

@@ -8,10 +8,6 @@ FJ_FurnaceArrow_Small::FJ_FurnaceArrow_Small(fuiRenderNode* renderNode)
     initFiller();
 }
 
-FJ_FurnaceArrow_Small::~FJ_FurnaceArrow_Small()
-{
-}
-
 void FJ_FurnaceArrow_Small::InitBarType()
 {
     m_barType = true;

@@ -5,10 +5,6 @@ FJ_ToolTip_Small::FJ_ToolTip_Small(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ToolTip_Small::~FJ_ToolTip_Small()
-{
-}
-
 FJ_ToolTip* FJ_ToolTip_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ToolTip_Small(renderNode);

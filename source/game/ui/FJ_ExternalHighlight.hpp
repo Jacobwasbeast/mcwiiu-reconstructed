@@ -12,7 +12,6 @@ public:
 
     static FJ_ExternalHighlight* Create(fuiRenderNode* pRenderNode);
 
-    virtual ~FJ_ExternalHighlight();
 
     virtual unsigned int getType();
 };

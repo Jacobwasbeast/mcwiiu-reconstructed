@@ -9,7 +9,6 @@ class FJ_TouchControl : public FJ_FuiNode
 {
 public:
     FJ_TouchControl(fuiRenderNode* pRenderNode);
-    virtual ~FJ_TouchControl();
 
     void Init();
     static FJ_TouchControl* Create(fuiRenderNode* pRenderNode);

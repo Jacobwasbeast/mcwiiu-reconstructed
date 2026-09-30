@@ -12,7 +12,6 @@ class UIComponent_Chat : public UIScene
 {
 public:
     UIComponent_Chat(int type, void* data, UILayer* layer);
-    virtual ~UIComponent_Chat();
 
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();

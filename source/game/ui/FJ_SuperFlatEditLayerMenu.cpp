@@ -44,10 +44,6 @@ FJ_SuperFlatEditLayerMenu::FJ_SuperFlatEditLayerMenu(fuiRenderNode* renderNode)
     SetSlotID();
 }
 
-FJ_SuperFlatEditLayerMenu::~FJ_SuperFlatEditLayerMenu()
-{
-}
-
 void FJ_SuperFlatEditLayerMenu::SetSlotID()
 {
     FJ_FuiNode* panel = getChildByName(std::string("MainPanel"));

@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~FJ_Label_White_Centered();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

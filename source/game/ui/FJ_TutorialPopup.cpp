@@ -19,10 +19,6 @@ FJ_TutorialPopup::FJ_TutorialPopup(fuiRenderNode* pRenderNode)
     m_titleHeight = (int)getChildByName(std::string("Title"))->getHeight();
 }
 
-FJ_TutorialPopup::~FJ_TutorialPopup()
-{
-}
-
 FJ_TutorialPopup* FJ_TutorialPopup::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_TutorialPopup(pRenderNode);

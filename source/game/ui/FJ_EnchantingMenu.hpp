@@ -9,7 +9,6 @@ class FJ_EnchantingMenu : public FJ_AbstractContainerDocument
 {
 public:
     FJ_EnchantingMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_EnchantingMenu();
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetSafeZone(int top, int bottom, int left, int right);

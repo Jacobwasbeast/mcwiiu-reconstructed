@@ -9,7 +9,6 @@ class FJ_DispenserMenu : public FJ_AbstractContainerDocument
 {
 public:
     explicit FJ_DispenserMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_DispenserMenu();
     static FJ_AbstractContainerDocument* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void SetSafeZone(int top, int bottom, int left, int right);

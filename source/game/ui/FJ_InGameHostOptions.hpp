@@ -9,7 +9,6 @@ class FJ_InGameHostOptions : public FJ_Document
 {
 public:
     explicit FJ_InGameHostOptions(fuiRenderNode* renderNode);
-    virtual ~FJ_InGameHostOptions();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

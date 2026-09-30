@@ -9,7 +9,6 @@ class FJ_Slider_Small : public FJ_Slider
 {
 public:
     FJ_Slider_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_Slider_Small();
     static FJ_Slider* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

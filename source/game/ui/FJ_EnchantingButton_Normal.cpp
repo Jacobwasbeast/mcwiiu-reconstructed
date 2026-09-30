@@ -5,10 +5,6 @@ FJ_EnchantingButton_Normal::FJ_EnchantingButton_Normal(fuiRenderNode* pRenderNod
 {
 }
 
-FJ_EnchantingButton_Normal::~FJ_EnchantingButton_Normal()
-{
-}
-
 FJ_EnchantingButton* FJ_EnchantingButton_Normal::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_EnchantingButton_Normal(pRenderNode);

@@ -10,10 +10,6 @@ FJ_List_ListButton::FJ_List_ListButton(fuiRenderNode* renderNode)
 {
 }
 
-FJ_List_ListButton::~FJ_List_ListButton()
-{
-}
-
 void FJ_List_ListButton::addNewItem(const std::wstring& label, int id)
 {
     FJ_ListButton* button;
