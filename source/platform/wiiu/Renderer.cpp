@@ -91,6 +91,8 @@ static const GX2PrimitiveType sPrimitiveModes[7] = {
     GX2_PRIMITIVE_TRIANGLES, GX2_PRIMITIVE_TRIANGLE_STRIP, GX2_PRIMITIVE_TRIANGLE_FAN, GX2_PRIMITIVE_QUADS,
     GX2_PRIMITIVE_LINES,     GX2_PRIMITIVE_LINE_STRIP,     GX2PrimitiveType(0)};
 
+static const unsigned int SURFACE_FORMAT_FLAG_SRGB = 0x400;
+
 Renderer* gRenderer = NULL;
 static OSFastMutex sTotalAllocMutex;
 static int sTotalCommandBufferBytes = 0;
@@ -112,10 +114,13 @@ void user_write_data_init(void* buffer, int size)
 
 void user_write_data(png_struct_def*, unsigned char* data, unsigned int size)
 {
-    unsigned int available = (unsigned int)(sUserWriteDataEnd - sUserWriteDataCurrent);
-    unsigned int count = size < available ? size : available;
+    unsigned int count = (unsigned int)(sUserWriteDataEnd - sUserWriteDataCurrent);
+    if (size < count)
+    {
+        count = size;
+    }
     memcpy(sUserWriteDataCurrent, data, count);
-    sUserWriteDataCurrent += count;
+    sUserWriteDataCurrent = sUserWriteDataCurrent + count;
 }
 
 void user_flush_data(png_struct_def*)
@@ -639,7 +644,7 @@ void Renderer::RenderOnScreenKeyboard(bool bDRC)
     }
 
     GX2SurfaceFormat format = colourBuffer->surface.format;
-    colourBuffer->surface.format = GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB;
+    colourBuffer->surface.format = (GX2SurfaceFormat)(format | SURFACE_FORMAT_FLAG_SRGB);
     GX2InitColorBufferRegs(colourBuffer);
     GX2SetColorBuffer(colourBuffer, GX2_RENDER_TARGET_0);
 
@@ -769,8 +774,8 @@ void Renderer::Clear(int flags)
     GX2SetAlphaTest(GX2_TRUE, GX2_COMPARE_GEQUAL, context.mAlphaTestEnable ? context.mAlphaTestRef : 0.0f);
     GX2SetTargetChannelMasks(GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
     GX2SetStencilMask(0, 255, 0, 0, 255, 0);
-    mCurrentPixelShader = -1;
     mCurrentVertexShader = -1;
+    mCurrentPixelShader = -1;
 }
 
 void Renderer::SetClearColour(const float* colour)
@@ -952,8 +957,8 @@ void Renderer::BeginOrderIndependentAlpha()
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, GX2_FALSE, GX2_TRUE);
     GX2SetAlphaTest(GX2_FALSE, GX2_COMPARE_GEQUAL, 0.0f);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
-    mCurrentPixelShader = -1;
     mCurrentVertexShader = -1;
+    mCurrentPixelShader = -1;
     GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_ONE, GX2_BLEND_ONE, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetBlendControl(GX2_RENDER_TARGET_1, GX2_BLEND_ZERO, GX2_BLEND_ONE_MINUS_SRC_ALPHA, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 3, GX2_FALSE, GX2_TRUE);
@@ -1001,8 +1006,8 @@ void Renderer::ReleaseForeground()
     GX2Flush();
     GX2DrawDone();
     MemoryRelease();
-    mForegroundAcquired = false;
     mDisplayEnabled = false;
+    mForegroundAcquired = false;
     OSMemoryBarrier();
 }
 
@@ -1263,11 +1268,11 @@ void Renderer::StateSetColourAdd(float red, float green, float blue, float alpha
 
     if (context.mRecordingBuffer == NULL)
     {
+        mColourAdd[0] = red;
+        mColourAdd[1] = green;
+        mColourAdd[2] = blue;
         mColourAdd[3] = alpha;
         mPixelUniformsDirty = true;
-        mColourAdd[0] = red;
-        mColourAdd[2] = blue;
-        mColourAdd[1] = green;
     }
 }
 
@@ -1858,11 +1863,11 @@ void Renderer::StateSetLerpColour(float red, float green, float blue, float alph
 
     if (context.mRecordingBuffer == NULL)
     {
+        mLerpColour[0] = red;
+        mLerpColour[1] = green;
+        mLerpColour[2] = blue;
         mLerpColour[3] = alpha;
         mPixelUniformsDirty = true;
-        mLerpColour[0] = red;
-        mLerpColour[2] = blue;
-        mLerpColour[1] = green;
     }
 }
 
@@ -2102,8 +2107,8 @@ void Renderer::TextureBind(int stage, int texture)
     }
 
     context.mBoundTexture[stage] = texture;
-    context.mTextureIsVertex[stage] = false;
     context.mTextureIsMask[stage] = false;
+    context.mTextureIsVertex[stage] = false;
     UpdateTextureState(stage);
 }
 
@@ -2689,8 +2694,8 @@ void Renderer::FreeMiiIconTexture(int texture, void* memory)
 {
     free(memory);
     mTextures[texture].mTexture.surface.imagePtr = NULL;
-    mTextures[texture].mUsed = false;
     mTextures[texture].mTexture.surface.mipPtr = NULL;
+    mTextures[texture].mUsed = false;
 }
 
 void Renderer::CBuffLockStaticCreations()
@@ -3093,6 +3098,7 @@ void Renderer::CBuffDeferredModeEnd()
 
 Renderer::Context::Context(Renderer* renderer)
 {
+    mRenderer = renderer;
     ASM_MTXIdentity(mMatrixStack[0][0]);
     mMatrixStackDepth[0] = 0;
     ASM_MTXIdentity(mMatrixStack[1][0]);
@@ -3150,10 +3156,10 @@ Renderer::DeferredCBuff::DeferredCBuff(int id, CommandBuffer* buffer, int vertex
                                        C4JRender::ePixelShaderType pixelShaderType, int primitiveType,
                                        float (*matrix)[4])
 {
-    mPixelShaderType = pixelShaderType;
-    mVertexType = vertexType;
-    mBuffer = buffer;
     mId = id;
+    mBuffer = buffer;
+    mVertexType = vertexType;
+    mPixelShaderType = pixelShaderType;
     mPrimitiveType = primitiveType;
     memcpy(mMatrix, matrix, 0x40);
 }
@@ -3492,9 +3498,9 @@ void Renderer::CommandBuffer::SetLightAmbientColour(float red, float green, floa
 {
     Command command;
     command.mLight.mValue[0] = red;
-    command.mLight.mValue[2] = blue;
     command.mType = eCommandType_LightAmbientColour;
     command.mLight.mValue[1] = green;
+    command.mLight.mValue[2] = blue;
     mCommands.push_back(command);
 }
 

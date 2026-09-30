@@ -43,7 +43,7 @@ uint64_t System::processTime(ETimeGranularity granularity)
 
 uint64_t System::processTimeInSeconds()
 {
-    return processTime(eTimeGranularity_MilliSecs) / 1000;
+    return (long long)processTime(eTimeGranularity_MilliSecs) / 1000;
 }
 
 uint64_t System::processTimeInMilliSecs()
@@ -63,7 +63,7 @@ uint64_t System::currentRealTimeMillis()
 
 uint64_t System::currentUnixEpochTimeSeconds()
 {
-    return currentRealTimeMillis() / 1000;
+    return (long long)currentRealTimeMillis() / 1000;
 }
 
 void System::ReverseUSHORT(unsigned short* value)
