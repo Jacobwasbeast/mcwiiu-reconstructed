@@ -31,12 +31,12 @@ public:
 
         sIdsByEntityType[entityType] = id;
 
-        if (serializer == NULL)
+        if (serializer != NULL)
         {
-            return NULL;
+            return serializer->createAccessor(id);
         }
 
-        return serializer->createAccessor(id);
+        return NULL;
     }
 
     template <class T>

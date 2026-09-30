@@ -9,6 +9,7 @@
 #include "game/item/not_null_ptr.hpp"
 
 class Attribute;
+class AttributeModifier;
 class Block;
 class BlockPos;
 class CompoundTag;
@@ -40,6 +41,7 @@ public:
     };
 
     static Attribute* SPAWN_REINFORCEMENTS_CHANCE;
+    static AttributeModifier* SPEED_MODIFIER_BABY;
 
     Zombie(Level* level);
     Zombie(Level* level, bool initializeGoals);

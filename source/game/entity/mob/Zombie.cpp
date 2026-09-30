@@ -63,6 +63,9 @@ static const EntityDataAccessor<bool>* gZombieConvertingId = NULL;
 Attribute* Zombie::SPAWN_REINFORCEMENTS_CHANCE =
     new RangedAttribute(NULL, eATTRIBUTE_ID_ZombieSpawnReinforcements, 0.0, 0.0, 1.0);
 
+AttributeModifier* Zombie::SPEED_MODIFIER_BABY =
+    new AttributeModifier(eMODIFIER_ID_BabyZombieSpeedBoost, 0.5, 1);
+
 Zombie::ZombieGroupData::ZombieGroupData(bool isBaby, bool isJockey, bool isVillager)
     : mIsBaby(isBaby), mIsJockey(isJockey), mIsVillager(isVillager)
 {
@@ -106,9 +109,9 @@ void Zombie::staticCtor()
 
 void Zombie::_init()
 {
+    mCanBreakDoors = false;
     mBaseWidth = -1.0f;
     mBaseHeight = 0.0f;
-    mCanBreakDoors = false;
     mBreakDoorGoal = new BreakDoorGoal(this);
     setSize(0.6f, 1.95f);
     mIsJockey = false;
@@ -147,7 +150,7 @@ void Zombie::addBehaviourGoals()
 void Zombie::registerAttributes()
 {
     Monster::registerAttributes();
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23f);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(3.0);
     getAttribute(SharedMonsterAttributes::ARMOR)->setBaseValue(2.0);
     getAttributes()->registerAttribute(SPAWN_REINFORCEMENTS_CHANCE)->setBaseValue(mRandom->nextDouble() * 0.1f);
@@ -210,6 +213,13 @@ int Zombie::getExperienceReward(boost::shared_ptr<Player> player)
 void Zombie::setBaby(bool baby)
 {
     getEntityData()->set(gZombieBabyId, baby, true);
+    if (mLevel != NULL && !mLevel->mIsClientSide)
+    {
+        AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
+        speed->removeModifier(SPEED_MODIFIER_BABY);
+        if (baby)
+            speed->addModifier(new AttributeModifier(*SPEED_MODIFIER_BABY));
+    }
     internalSetSize(baby ? 0.5f : 1.0f);
 }
 
@@ -367,7 +377,7 @@ EMobType Zombie::getMobType()
 
 ResourceLocation* Zombie::getDefaultLootTable()
 {
-    return &BuiltInLootTables::ZOMBIE_EQUIPMENT;
+    return &BuiltInLootTables::ZOMBIE;
 }
 
 ResourceLocation* Zombie::getDefaultGearTable()
@@ -404,7 +414,7 @@ void Zombie::readAdditionalSaveData(CompoundTag* tag)
     setCanBreakDoors(tag->getBoolean(std::wstring(L"CanBreakDoors")));
     mIsJockey = tag->getBoolean(std::wstring(L"IsJockey"));
     mConversionTime = tag->getInt(std::wstring(L"DrownedConversionTime"));
-    getEntityData()->set(gZombieConvertingId, mConversionTime != 0, true);
+    getEntityData()->set(gZombieConvertingId, mConversionTime > 0, true);
     mWaterConversionTime = tag->getInt(std::wstring(L"InWaterTime"));
 }
 
@@ -550,7 +560,7 @@ void Zombie::waterCheck()
     if (isUnderLiquid(Material::WATER))
     {
         ++mWaterConversionTime;
-        if (!isConverting() && mWaterConversionTime > 599)
+        if (!isConverting() && mWaterConversionTime >= 600)
             startConverting(300);
     }
     else
@@ -589,7 +599,8 @@ void Zombie::internalSetSize(float scale)
 
 not_null_ptr<ItemInstance> Zombie::getSkull()
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 2));
+    ItemInstance* skull = new ItemInstance(Items::skull, 1, 2);
+    return not_null_ptr<ItemInstance>(skull);
 }
 
 double Zombie::getRidingHeight()
