@@ -170,9 +170,9 @@ void Rabbit::RabbitPanicGoal::tick()
 }
 
 Rabbit::RaidGardenGoal::RaidGardenGoal(Rabbit* rabbit)
-    : MoveToBlockGoal(rabbit, 0.7f, 16, 1, 1.0), mRabbit(rabbit),
-      mWantsToRaid(false), mCanRaid(false)
+    : MoveToBlockGoal(rabbit, 0.7f, 16, 1, 1.0), mRabbit(rabbit)
 {
+    mWantsToRaid = mCanRaid = false;
 }
 
 Rabbit::RaidGardenGoal::~RaidGardenGoal()

@@ -252,12 +252,12 @@ AABB* AABB::intersect(const AABB* other) const
 
 AABB* AABB::minmax(const AABB* other)
 {
-    double minX = mMinX < other->mMinX ? mMinX : other->mMinX;
-    double minY = mMinY < other->mMinY ? mMinY : other->mMinY;
-    double minZ = mMinZ < other->mMinZ ? mMinZ : other->mMinZ;
-    double maxX = mMaxX < other->mMaxX ? other->mMaxX : mMaxX;
-    double maxY = mMaxY < other->mMaxY ? other->mMaxY : mMaxY;
-    double maxZ = mMaxZ < other->mMaxZ ? other->mMaxZ : mMaxZ;
+    double minX = other->mMinX < mMinX ? other->mMinX : mMinX;
+    double minY = other->mMinY < mMinY ? other->mMinY : mMinY;
+    double minZ = other->mMinZ < mMinZ ? other->mMinZ : mMinZ;
+    double maxX = other->mMaxX > mMaxX ? other->mMaxX : mMaxX;
+    double maxY = other->mMaxY > mMaxY ? other->mMaxY : mMaxY;
+    double maxZ = other->mMaxZ > mMaxZ ? other->mMaxZ : mMaxZ;
 
     return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
 }

@@ -8,10 +8,6 @@
 
 int randomBetween(Random& random, int min, int max);
 
-RandomDissolveDegrade::~RandomDissolveDegrade()
-{
-}
-
 void RandomDissolveDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache, arrayWithLength<BlockPos>& blocks)
 {
     Random random;
