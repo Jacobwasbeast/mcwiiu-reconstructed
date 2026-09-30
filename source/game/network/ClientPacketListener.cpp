@@ -1,6 +1,7 @@
 #include "game/network/ClientPacketListener.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/network/Connection.hpp"
@@ -575,12 +576,12 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
 
         if (level == 0)
         {
-            LevelSettings settings(
+            LevelSettings* settings = new LevelSettings(
                 packet->mSeed, gameType, false, false,
                 packet->mIsFlat, packet->mLevelType, packet->mXZSize,
                 packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
                 packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance);
-            level = new MultiPlayerLevel(this, &settings, packet->mGameMode, difficulty, packet->mUnknownValue3);
+            level = new MultiPlayerLevel(this, settings, packet->mGameMode, difficulty, packet->mUnknownValue3);
             if (m_level != 0)
                 level->setSavedDataStorage(m_level->getSavedDataStorage());
             m_level = level;
@@ -616,7 +617,7 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
         MultiPlayerLevel* level = m_minecraft->getLevel(packet->mGameMode);
         if (level == 0)
         {
-            LevelSettings settings(
+            LevelSettings* settings = new LevelSettings(
                 packet->mSeed, gameType, false, false,
                 packet->mIsFlat, packet->mLevelType, packet->mXZSize,
                 packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
@@ -636,11 +637,11 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
                 File worldFolder(L"world");
                 boost::shared_ptr<McRegionLevelStorage> storage(new McRegionLevelStorage(
                     saveFile, worldFolder, packet->mLevelName, true, m_minecraft->getFixerUpper()));
-                level = new MultiPlayerLevel(storage, this, &settings, packet->mGameMode, difficulty,
+                level = new MultiPlayerLevel(storage, this, settings, packet->mGameMode, difficulty,
                                              packet->mUnknownValue3);
             }
             else
-                level = new MultiPlayerLevel(this, &settings, packet->mGameMode, difficulty,
+                level = new MultiPlayerLevel(this, settings, packet->mGameMode, difficulty,
                                              packet->mUnknownValue3);
             m_level = level;
             boost::shared_ptr<Player> emptyPlayer;
@@ -1592,8 +1593,9 @@ void ClientPacketListener::handleDisconnect(boost::shared_ptr<DisconnectPacket> 
 
 int ClientPacketListener::ExitGameAndSaveReturned(void* context, int result, C4JStorage::EMessageResult messageResult)
 {
-    if (messageResult == C4JStorage::EMessageResult_Decline)
-        gApp.SetAction(result, eXuiAction_SaveGame, NULL);
+    gMinecraftServer->saveOnExit = messageResult == C4JStorage::EMessageResult_Decline;
+    MinecraftServer::s_saveOnExitAnswered = true;
+    gApp.SetAction(result, eXuiAction_ExitWorld, NULL);
     return 0;
 }
 
@@ -1602,11 +1604,11 @@ int ClientPacketListener::HostDisconnectReturned(void* context, int result, C4JS
     TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
     if (selected != TexturePackRepository::defaultTexturePack)
     {
-        DLCPack* pack = selected->getDLCPack();
-        if (pack != NULL && !pack->hasPurchasedPack())
+        if (!selected->getDLCPack()->hasPurchasedPack())
         {
+            gMinecraftServer->saveOnExit = false;
+            MinecraftServer::s_saveOnExitAnswered = true;
             gApp.SetAction(result, eXuiAction_ExitWorld, NULL);
-            return 0;
         }
     }
 
@@ -1614,12 +1616,14 @@ int ClientPacketListener::HostDisconnectReturned(void* context, int result, C4JS
     gStorage->DoesSaveExist(&saveExists);
     if (!saveExists)
     {
+        gMinecraftServer->saveOnExit = true;
+        MinecraftServer::s_saveOnExitAnswered = true;
         gApp.SetAction(result, eXuiAction_ExitWorld, NULL);
     }
     else
     {
         int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
-        gConsoleUIController.RequestAlertMessage(
+        gConsoleUIController.RequestErrorMessage(
             IDS_TITLE_SAVE_GAME, static_cast<int>(IDS_CONFIRM_SAVE_GAME), parameters, 2, gProfile->GetPrimaryPad(),
             ExitGameAndSaveReturned, NULL, NULL, true);
     }
@@ -2941,12 +2945,12 @@ void ClientPacketListener::handleRespawn(boost::shared_ptr<ClientboundRespawnPac
         MultiPlayerLevel* level = m_minecraft->getLevel(packet->getDimension());
         if (level == NULL)
         {
-            LevelSettings settings(packet->m_mapSeed, packet->getPlayerGameType(), false,
-                                   m_minecraft->mLevel->getLevelData()->isHardcore(), packet->m_newSeaLevel,
-                                   packet->getLevelType(), packet->m_xzSize, packet->m_hellScale,
-                                   packet->m_cloudHeight, packet->m_modernEnd, packet->m_biomeScale,
-                                   packet->m_biomeCentreXChunk, packet->m_biomeCentreZChunk);
-            level = new MultiPlayerLevel(this, &settings, packet->getDimension(), packet->getDifficulty(),
+            LevelSettings* settings = new LevelSettings(packet->m_mapSeed, packet->getPlayerGameType(), false,
+                                                        m_minecraft->mLevel->getLevelData()->isHardcore(), packet->m_newSeaLevel,
+                                                        packet->getLevelType(), packet->m_xzSize, packet->m_hellScale,
+                                                        packet->m_cloudHeight, packet->m_modernEnd, packet->m_biomeScale,
+                                                        packet->m_biomeCentreXChunk, packet->m_biomeCentreZChunk);
+            level = new MultiPlayerLevel(this, settings, packet->getDimension(), packet->getDifficulty(),
                                          packet->m_seaLevel);
             level->setSavedDataStorage(m_level->getSavedDataStorage());
             level->mIsClientSide = true;
