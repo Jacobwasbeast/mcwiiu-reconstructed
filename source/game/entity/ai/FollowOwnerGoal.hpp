@@ -15,7 +15,6 @@ class FollowOwnerGoal : public Goal
 {
 public:
     FollowOwnerGoal(TamableAnimal* tamable, double speedModifier, float startDistance, float stopDistance);
-    virtual ~FollowOwnerGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

@@ -112,7 +112,3 @@ void PlayGoal::tick()
     }
 }
 
-std::wstring PlayGoal::getName()
-{
-    return L"Play";
-}

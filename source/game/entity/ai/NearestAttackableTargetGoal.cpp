@@ -143,11 +143,6 @@ void NearestAttackableTargetGoal::start()
     TargetGoal::start();
 }
 
-std::wstring NearestAttackableTargetGoal::getName()
-{
-    return L"NearestAttackableTarget";
-}
-
 AABB* NearestAttackableTargetGoal::getTargetSearchArea(double distance)
 {
     return mMob->mBoundingBox->grow(distance, 4.0, distance);

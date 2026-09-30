@@ -13,13 +13,12 @@ class SwellGoal : public Goal
 {
 public:
     SwellGoal(Creeper* creeper);
-    virtual ~SwellGoal();
 
     virtual bool canUse();
     virtual void start();
     virtual void stop();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Swell"; }
 
 private:
     Creeper* mCreeper;

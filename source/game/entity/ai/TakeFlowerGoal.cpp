@@ -19,10 +19,6 @@ TakeFlowerGoal::TakeFlowerGoal(Villager* villager)
     setRequiredControlFlags(3);
 }
 
-TakeFlowerGoal::~TakeFlowerGoal()
-{
-}
-
 bool TakeFlowerGoal::canUse()
 {
     if (mVillager->getAge() >= 0 || !mVillager->mLevel->isDay())

@@ -14,10 +14,6 @@ SwellGoal::SwellGoal(Creeper* creeper)
     setRequiredControlFlags(1);
 }
 
-SwellGoal::~SwellGoal()
-{
-}
-
 bool SwellGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mCreeper->getTarget();
@@ -49,7 +45,3 @@ void SwellGoal::tick()
     }
 }
 
-std::wstring SwellGoal::getName()
-{
-    return L"Swell";
-}

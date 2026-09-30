@@ -19,7 +19,6 @@ public:
                             bool mustSee,
                             const Predicate<boost::shared_ptr<Entity> >* selector,
                             bool includeRemoved);
-    virtual ~NonTameRandomTargetGoal();
 
     virtual bool canUse();
     virtual bool canContinueToUse();

@@ -14,10 +14,6 @@ NonTameRandomTargetGoal::NonTameRandomTargetGoal(
 {
 }
 
-NonTameRandomTargetGoal::~NonTameRandomTargetGoal()
-{
-}
-
 bool NonTameRandomTargetGoal::canUse()
 {
     return !mTamableAnimal->isTame() && NearestAttackableTargetGoal::canUse();

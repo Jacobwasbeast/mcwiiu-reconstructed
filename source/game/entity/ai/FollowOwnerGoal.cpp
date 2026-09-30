@@ -25,10 +25,6 @@ FollowOwnerGoal::FollowOwnerGoal(TamableAnimal* tamable, double speedModifier, f
     setRequiredControlFlags(3);
 }
 
-FollowOwnerGoal::~FollowOwnerGoal()
-{
-}
-
 bool FollowOwnerGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mTamable->getOwner());

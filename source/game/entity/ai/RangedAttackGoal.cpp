@@ -99,7 +99,3 @@ void RangedAttackGoal::tick()
     }
 }
 
-std::wstring RangedAttackGoal::getName()
-{
-    return L"RangedAttack";
-}

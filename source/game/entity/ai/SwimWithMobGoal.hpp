@@ -29,7 +29,7 @@ public:
     BlockPos GetTargetPosition(boost::shared_ptr<Entity> entity, Vec3* direction,
                                double distance, double offset);
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"SwimWithMob"; }
 
 private:
     boost::weak_ptr<Entity> mWantedMob;

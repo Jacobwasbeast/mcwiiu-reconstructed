@@ -16,10 +16,6 @@ TurtlePathNavigation::TurtlePathNavigation(Turtle* turtle, Level* level)
     mPathFinder = createPathFinder();
 }
 
-TurtlePathNavigation::~TurtlePathNavigation()
-{
-}
-
 PathFinder* TurtlePathNavigation::createPathFinder()
 {
     AmphibiousNodeEvaluator* evaluator = new AmphibiousNodeEvaluator(mMob);

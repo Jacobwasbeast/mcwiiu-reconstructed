@@ -16,7 +16,6 @@ class BegGoal : public Goal
 {
 public:
     BegGoal(Wolf* wolf, float distance);
-    virtual ~BegGoal();
 
     bool playerHoldingInteresting(boost::shared_ptr<Player> player);
     virtual bool canUse();

@@ -11,10 +11,6 @@ FollowOwnerFlyingGoal::FollowOwnerFlyingGoal(TamableAnimal* tamable, double spee
 {
 }
 
-FollowOwnerFlyingGoal::~FollowOwnerFlyingGoal()
-{
-}
-
 bool FollowOwnerFlyingGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx, int dz)
 {
     BlockPos blockPos(x + dx, y - 1, z + dz);

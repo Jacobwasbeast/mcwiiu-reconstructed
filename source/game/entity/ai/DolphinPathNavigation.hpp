@@ -11,7 +11,6 @@ class DolphinPathNavigation : public WaterBoundPathNavigation
 {
 public:
     DolphinPathNavigation(Dolphin* dolphin, Level* level);
-    virtual ~DolphinPathNavigation();
 
     virtual Path* createPath(const BlockPos& pos);
     virtual bool canUpdatePath();

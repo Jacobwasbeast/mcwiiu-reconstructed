@@ -13,7 +13,6 @@ class FollowParentGoal : public Goal
 {
 public:
     FollowParentGoal(Animal* animal, double speedModifier);
-    virtual ~FollowParentGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

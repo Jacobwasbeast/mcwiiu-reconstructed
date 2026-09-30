@@ -36,10 +36,6 @@ TargetGoal::TargetGoal(PathfinderMob* mob, bool mustSee, bool mustReach)
     _init(mob, mustSee, mustReach);
 }
 
-TargetGoal::~TargetGoal()
-{
-}
-
 void TargetGoal::_init(PathfinderMob* mob, bool mustSee, bool mustReach)
 {
     mMob = mob;

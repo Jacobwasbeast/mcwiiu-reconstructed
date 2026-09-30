@@ -16,7 +16,6 @@ class BreedGoal : public Goal
 public:
     BreedGoal(Animal* animal, double speedModifier);
     BreedGoal(Animal* animal, double speedModifier, const std::type_info& partnerType);
-    virtual ~BreedGoal();
 
     boost::shared_ptr<Animal> getFreePartner();
     virtual bool canUse();

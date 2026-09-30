@@ -34,7 +34,3 @@ void RestrictSunGoal::stop()
     static_cast<GroundPathNavigation*>(mMob->getNavigation())->setAvoidSun(false);
 }
 
-std::wstring RestrictSunGoal::getName()
-{
-    return L"RestrictSun";
-}

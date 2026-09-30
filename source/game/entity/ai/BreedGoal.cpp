@@ -35,10 +35,6 @@ BreedGoal::BreedGoal(Animal* animal, double speedModifier, const std::type_info&
     setRequiredControlFlags(3);
 }
 
-BreedGoal::~BreedGoal()
-{
-}
-
 boost::shared_ptr<Animal> BreedGoal::getFreePartner()
 {
     AABB* area = mAnimal->mBoundingBox->grow(8.0);

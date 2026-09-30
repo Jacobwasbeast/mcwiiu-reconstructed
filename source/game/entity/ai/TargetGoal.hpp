@@ -17,7 +17,6 @@ class TargetGoal : public Goal
 public:
     TargetGoal(PathfinderMob* mob, bool mustSee);
     TargetGoal(PathfinderMob* mob, bool mustSee, bool mustReach);
-    virtual ~TargetGoal();
 
     void _init(PathfinderMob* mob, bool mustSee, bool mustReach);
     virtual bool canContinueToUse();

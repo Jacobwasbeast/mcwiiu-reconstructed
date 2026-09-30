@@ -18,7 +18,6 @@ class FlyingPathNavigation : public PathNavigation
 {
 public:
     FlyingPathNavigation(Mob* mob, Level* level);
-    virtual ~FlyingPathNavigation();
 
     using PathNavigation::createPath;
 

@@ -130,7 +130,3 @@ void SwoopAttackGoal::tick()
     }
 }
 
-std::wstring SwoopAttackGoal::getName()
-{
-    return L"Swooping Attack!";
-}

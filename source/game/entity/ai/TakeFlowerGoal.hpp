@@ -15,7 +15,6 @@ class TakeFlowerGoal : public Goal
 {
 public:
     explicit TakeFlowerGoal(Villager* villager);
-    virtual ~TakeFlowerGoal();
 
     virtual bool canUse();
     virtual bool canContinueToUse();

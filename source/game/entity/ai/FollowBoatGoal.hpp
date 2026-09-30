@@ -14,7 +14,6 @@ class FollowBoatGoal : public Goal
 {
 public:
     FollowBoatGoal(Dolphin* dolphin);
-    virtual ~FollowBoatGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual bool canInterrupt();

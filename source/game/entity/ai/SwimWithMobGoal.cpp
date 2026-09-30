@@ -193,7 +193,3 @@ void SwimWithMobGoal::tick()
     }
 }
 
-std::wstring SwimWithMobGoal::getName()
-{
-    return L"SwimWithMob";
-}

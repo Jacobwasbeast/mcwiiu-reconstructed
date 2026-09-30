@@ -34,10 +34,6 @@ TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
     setRequiredControlFlags(3);
 }
 
-TemptGoal::~TemptGoal()
-{
-}
-
 bool TemptGoal::shouldFollowItem(not_null_ptr<ItemInstance> item)
 {
     for (unsigned int i = 0; i < mItems.length; ++i)

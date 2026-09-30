@@ -15,10 +15,6 @@ DolphinPathNavigation::DolphinPathNavigation(Dolphin* dolphin, Level* level)
 {
 }
 
-DolphinPathNavigation::~DolphinPathNavigation()
-{
-}
-
 bool DolphinPathNavigation::canUpdatePath()
 {
     return true;

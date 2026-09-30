@@ -17,10 +17,6 @@ BegGoal::BegGoal(Wolf* wolf, float distance)
     setRequiredControlFlags(2);
 }
 
-BegGoal::~BegGoal()
-{
-}
-
 bool BegGoal::playerHoldingInteresting(boost::shared_ptr<Player> player)
 {
     for (int hand = InteractionHand::eInteractionHand_MainHand;

@@ -18,10 +18,6 @@ RestrictOpenDoorGoal::RestrictOpenDoorGoal(PathfinderMob* mob)
 {
 }
 
-RestrictOpenDoorGoal::~RestrictOpenDoorGoal()
-{
-}
-
 bool RestrictOpenDoorGoal::canUse()
 {
     if (mMob->mLevel->isDay())

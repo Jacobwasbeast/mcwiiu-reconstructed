@@ -16,10 +16,6 @@ FlyingPathNavigation::FlyingPathNavigation(Mob* mob, Level* level)
     mPathFinder = createPathFinder();
 }
 
-FlyingPathNavigation::~FlyingPathNavigation()
-{
-}
-
 PathFinder* FlyingPathNavigation::createPathFinder()
 {
     mNodeEvaluator.setCanPassDoors(true);

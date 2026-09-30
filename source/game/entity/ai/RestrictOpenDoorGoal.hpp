@@ -13,7 +13,6 @@ class RestrictOpenDoorGoal : public Goal
 {
 public:
     RestrictOpenDoorGoal(PathfinderMob* mob);
-    virtual ~RestrictOpenDoorGoal();
 
     virtual bool canUse();
     virtual bool canContinueToUse();

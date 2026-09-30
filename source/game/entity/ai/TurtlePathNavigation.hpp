@@ -12,7 +12,6 @@ class TurtlePathNavigation : public WaterBoundPathNavigation
 {
 public:
     TurtlePathNavigation(Turtle* turtle, Level* level);
-    virtual ~TurtlePathNavigation();
 
     virtual PathFinder* createPathFinder();
     virtual bool canUpdatePath();

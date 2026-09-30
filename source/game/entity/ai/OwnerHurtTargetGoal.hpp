@@ -16,7 +16,7 @@ public:
     virtual ~OwnerHurtTargetGoal();
     virtual bool canUse();
     virtual void start();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"OwnerHurtTargetGoal"; }
 
 private:
     TamableAnimal* mTamable;

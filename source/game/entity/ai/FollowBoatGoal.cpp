@@ -21,10 +21,6 @@ FollowBoatGoal::FollowBoatGoal(Dolphin* dolphin)
 {
 }
 
-FollowBoatGoal::~FollowBoatGoal()
-{
-}
-
 bool FollowBoatGoal::canUse()
 {
     std::vector<boost::shared_ptr<Entity> >* boats =

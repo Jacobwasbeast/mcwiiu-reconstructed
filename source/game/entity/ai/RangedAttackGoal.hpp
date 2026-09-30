@@ -20,7 +20,7 @@ public:
     virtual bool canContinueToUse();
     virtual void stop();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"RangedAttack"; }
     void _init(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin, int attackIntervalMax, float attackRadius);
 
 private:

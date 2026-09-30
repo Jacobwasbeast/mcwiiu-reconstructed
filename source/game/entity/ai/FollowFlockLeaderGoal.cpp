@@ -28,10 +28,6 @@ FollowFlockLeaderGoal::FollowFlockLeaderGoal(Mob* mob, bool inWater)
     }
 }
 
-FollowFlockLeaderGoal::~FollowFlockLeaderGoal()
-{
-}
-
 bool FollowFlockLeaderGoal::canUse()
 {
     if (mMob->isLeader() || mMob->followsLeader() || mMob->isInWaterOrBubble() != mInWater)

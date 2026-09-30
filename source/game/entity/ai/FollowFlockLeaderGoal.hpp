@@ -13,7 +13,6 @@ class FollowFlockLeaderGoal : public Goal
 {
 public:
     FollowFlockLeaderGoal(Mob* mob, bool inWater);
-    virtual ~FollowFlockLeaderGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

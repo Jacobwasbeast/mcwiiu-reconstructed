@@ -15,7 +15,7 @@ public:
     virtual bool canUse();
     virtual void start();
     virtual void stop();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"RestrictSun"; }
 
 private:
     PathfinderMob* mMob;

@@ -51,7 +51,3 @@ void OwnerHurtTargetGoal::start()
     }
 }
 
-std::wstring OwnerHurtTargetGoal::getName()
-{
-    return L"OwnerHurtTargetGoal";
-}

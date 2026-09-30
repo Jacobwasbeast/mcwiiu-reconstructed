@@ -17,10 +17,6 @@ TurtleBreedGoal::TurtleBreedGoal(Turtle* turtle, double speedModifier)
 {
 }
 
-TurtleBreedGoal::~TurtleBreedGoal()
-{
-}
-
 bool TurtleBreedGoal::canUse()
 {
     return BreedGoal::canUse() && !mTurtle->hasEgg();

@@ -15,7 +15,7 @@ public:
     virtual void stop();
     virtual void tick();
     virtual bool canContinueToUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Swooping Attack!"; }
 
 private:
     Mob* mMob;

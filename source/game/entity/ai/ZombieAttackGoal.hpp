@@ -12,7 +12,6 @@ class ZombieAttackGoal : public MeleeAttackGoal
 public:
     ZombieAttackGoal(Zombie* zombie, double speedModifier, bool followingTargetEvenIfNotSeen);
 
-    virtual ~ZombieAttackGoal();
     virtual void start();
     virtual void stop();
     virtual void tick();

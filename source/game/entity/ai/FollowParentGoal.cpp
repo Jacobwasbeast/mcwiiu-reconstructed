@@ -15,10 +15,6 @@ FollowParentGoal::FollowParentGoal(Animal* animal, double speedModifier)
 {
 }
 
-FollowParentGoal::~FollowParentGoal()
-{
-}
-
 bool FollowParentGoal::canUse()
 {
     if (mAnimal->getAge() >= 0)

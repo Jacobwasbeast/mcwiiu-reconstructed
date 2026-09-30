@@ -2,10 +2,6 @@
 
 #include "game/entity/mob/Zombie.hpp"
 
-ZombieAttackGoal::~ZombieAttackGoal()
-{
-}
-
 void ZombieAttackGoal::start()
 {
     MeleeAttackGoal::start();
