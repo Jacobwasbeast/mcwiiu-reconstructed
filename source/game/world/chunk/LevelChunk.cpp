@@ -1175,11 +1175,12 @@ unsigned int LevelChunk::getElementFrameLastUpdated()
 {
     return mElements->getFrameLastUpdated();
 }
-unsigned short LevelChunk::setElement(int x, int y, int z, unsigned short element)
+void LevelChunk::setElement(int x, int y, int z, unsigned short element)
 {
-    unsigned short old = mElements->get(x, y, z, NULL);
     mElements->set(x, y, z, element);
-    return old;
+    const BlockState* state = Block::getStateByElementId(element);
+    if (state != NULL && state->getLightEmission() > 0 && mEmissiveMaxHeight < y + 1)
+        mEmissiveMaxHeight = static_cast<unsigned short>(y + 1);
 }
 unsigned short LevelChunk::getChunkBlockData(int x, int y, int z)
 {

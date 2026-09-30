@@ -181,7 +181,7 @@ public:
     void getElementReadLock();
     void releaseElementReadLock();
     unsigned int getElementFrameLastUpdated();
-    unsigned short setElement(int x, int y, int z, unsigned short element);
+    void setElement(int x, int y, int z, unsigned short element);
     unsigned short getChunkBlockData(int x, int y, int z);
     virtual int getData(const BlockPos& pos);
     virtual bool setData(int x, int y, int z, int data, int dataMask, bool* maskedChange);
