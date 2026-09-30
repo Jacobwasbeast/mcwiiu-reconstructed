@@ -1311,7 +1311,7 @@ void Tutorial::changeTutorialState(eTutorial_State state, UIScene* scene)
         return;
     }
 
-    if (!enabled && GameSettings::GetGameSettings(playerId, eGameSetting_Hints) == 0)
+    if (enabled && GameSettings::GetGameSettings(playerId, eGameSetting_Hints) == 0)
         return;
 
     if (state != eTutorial_State_Gameplay && stateTasks[state].empty() &&
