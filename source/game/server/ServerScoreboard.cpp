@@ -21,10 +21,6 @@ ServerScoreboard::ServerScoreboard(MinecraftServer* server)
     mPlayerStats = PlayerStatsMap();
 }
 
-ServerScoreboard::~ServerScoreboard()
-{
-}
-
 Scoreboard::PlayerStats* ServerScoreboard::GetPlayerStats(const StatsUID& suid, int round)
 {
     Scoreboard::PlayerStats* stats = new Scoreboard::PlayerStats();

@@ -10,7 +10,6 @@ class ServerItemCooldowns : public ItemCooldowns
 {
 public:
     ServerItemCooldowns(ServerPlayer* player);
-    virtual ~ServerItemCooldowns();
 
     virtual void onCooldownStarted(Item* item, int duration);
     virtual void onCooldownEnded(Item* item);

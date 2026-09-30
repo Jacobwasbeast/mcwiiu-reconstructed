@@ -674,7 +674,7 @@ bool ServerChunkCache::shouldSave()
 
 std::wstring ServerChunkCache::gatherStats()
 {
-    return L"ServerChunkCache";
+    return L"ServerChunkCache: ";
 }
 
 std::vector<Biome::MobSpawnerData*>* ServerChunkCache::getMobsAt(MobCategory* category, const BlockPos& pos)

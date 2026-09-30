@@ -19,7 +19,6 @@ class ServerScoreboard : public Scoreboard
 {
 public:
     explicit ServerScoreboard(MinecraftServer* server);
-    virtual ~ServerScoreboard();
 
     Scoreboard::PlayerStats* GetPlayerStats(const StatsUID& suid, int round);
     void OnPlayerStatsChanged(const StatsUID& suid, int life);

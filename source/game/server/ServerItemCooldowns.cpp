@@ -12,10 +12,6 @@ ServerItemCooldowns::ServerItemCooldowns(ServerPlayer* player)
 {
 }
 
-ServerItemCooldowns::~ServerItemCooldowns()
-{
-}
-
 void ServerItemCooldowns::onCooldownStarted(Item* item, int duration)
 {
     ItemCooldowns::onCooldownStarted(item, duration);
