@@ -37,11 +37,11 @@ std::wstring CompoundContainer::getName()
 {
     if (mFirst->hasCustomName())
     {
-        return mFirst->getCustomName();
+        return mFirst->getName();
     }
     if (mSecond->hasCustomName())
     {
-        return mSecond->getCustomName();
+        return mSecond->getName();
     }
     return std::wstring(L10N::GetString(mId));
 }
@@ -50,11 +50,11 @@ std::wstring CompoundContainer::getCustomName()
 {
     if (mFirst->hasCustomName())
     {
-        return mFirst->getCustomName();
+        return mFirst->getName();
     }
     if (mSecond->hasCustomName())
     {
-        return mSecond->getCustomName();
+        return mSecond->getName();
     }
     return std::wstring(L"container");
 }

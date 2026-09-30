@@ -48,7 +48,7 @@ bool ThornsEnchantment::shouldHit(int level, Random* random)
 {
     if (level > 0)
     {
-        return random->nextFloat() < (float)level * 0.15f;
+        return random->nextFloat() < 0.15f * (float)level;
     }
 
     return false;
