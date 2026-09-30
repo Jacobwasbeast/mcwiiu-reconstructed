@@ -39,20 +39,25 @@ void InitVertexShader(GX2VertexShader** shader, const void* shaderData)
     MII_ICON_ASSERT_POINTER(shaderData);
 
     u32 shaderCount = GFDGetVertexShaderCount(shaderData);
+
     MII_ICON_ASSERT_MESSAGE(shaderCount == 1, "The number of shaders must be 1, but %d", shaderCount);
 
     u32 headerSize = GFDGetVertexShaderHeaderSize(0, shaderData);
     u32 programSize = GFDGetVertexShaderProgramSize(0, shaderData);
+
     MII_ICON_ASSERT_MESSAGE(headerSize > 0, "headerSize must be more than zero.");
     MII_ICON_ASSERT_MESSAGE(programSize > 0, "programSize must be more than zero.");
 
     GX2VertexShader* header = static_cast<GX2VertexShader*>(gRenderer->MemoryAllocMEM2(headerSize, 1));
+
     MII_ICON_ASSERT_POINTER(header);
 
     void* program = gRenderer->MemoryAllocMEM2(programSize, GX2_SHADER_ALIGNMENT);
+
     MII_ICON_ASSERT_POINTER(program);
 
     GX2Boolean result = GFDGetVertexShader(header, program, 0, shaderData);
+
     MII_ICON_ASSERT_MESSAGE(result, "GFDGetVertexShader failed.");
 
     GX2Invalidate(GX2_INVALIDATE_CPU_SHADER, header->shaderPtr, header->shaderSize);
@@ -65,20 +70,25 @@ void InitPixelShader(GX2PixelShader** shader, const void* shaderData)
     MII_ICON_ASSERT_POINTER(shaderData);
 
     u32 shaderCount = GFDGetPixelShaderCount(shaderData);
+
     MII_ICON_ASSERT_MESSAGE(shaderCount == 1, "The number of shaders must be 1, but %d", shaderCount);
 
     u32 headerSize = GFDGetPixelShaderHeaderSize(0, shaderData);
     u32 programSize = GFDGetPixelShaderProgramSize(0, shaderData);
+
     MII_ICON_ASSERT_MESSAGE(headerSize > 0, "headerSize must be more than zero.");
     MII_ICON_ASSERT_MESSAGE(programSize > 0, "programSize must be more than zero.");
 
     GX2PixelShader* header = static_cast<GX2PixelShader*>(gRenderer->MemoryAllocMEM2(headerSize, 1));
+
     MII_ICON_ASSERT_POINTER(header);
 
     void* program = gRenderer->MemoryAllocMEM2(programSize, GX2_SHADER_ALIGNMENT);
+
     MII_ICON_ASSERT_POINTER(program);
 
     GX2Boolean result = GFDGetPixelShader(header, program, 0, shaderData);
+
     MII_ICON_ASSERT_MESSAGE(result, "GFDGetVertexShader failed.");
 
     GX2Invalidate(GX2_INVALIDATE_CPU_SHADER, header->shaderPtr, header->shaderSize);
@@ -92,12 +102,14 @@ void InitFetchShader(FetchShader* fetchShader, const GX2VertexShader* vertexShad
 
     s32 posLoc = GX2GetVertexAttribVarLocation(vertexShader, "a_position");
     s32 texLoc = GX2GetVertexAttribVarLocation(vertexShader, "a_texCoord");
+
     MII_ICON_ASSERT(posLoc >= 0 && texLoc >= 0);
 
     GX2InitAttribStream(&fetchShader->attribs[0], posLoc, 0, 0, GX2_ATTRIB_FORMAT_32_32_32_FLOAT);
     GX2InitAttribStream(&fetchShader->attribs[1], texLoc, 1, 0, GX2_ATTRIB_FORMAT_32_32_FLOAT);
 
     void* shaderPtr = gRenderer->MemoryAllocMEM2(GX2CalcFetchShaderSize(2), GX2_SHADER_ALIGNMENT);
+
     MII_ICON_ASSERT_POINTER(shaderPtr);
 
     GX2InitFetchShader(&fetchShader->fetchShader, shaderPtr, 2, fetchShader->attribs);
@@ -142,6 +154,9 @@ u8 ModulateModeToValue(FFLModulateMode mode)
 {
     switch (mode)
     {
+    default:
+        MII_ICON_INVALID_CONDITION(mode);
+        return 0;
     case FFL_MODULATE_MODE_0:
         return 0;
     case FFL_MODULATE_MODE_1:
@@ -154,9 +169,6 @@ u8 ModulateModeToValue(FFLModulateMode mode)
         return 4;
     case FFL_MODULATE_MODE_5:
         return 5;
-    default:
-        MII_ICON_INVALID_CONDITION(mode);
-        return 0;
     }
 }
 
@@ -225,8 +237,7 @@ void Draw(void* object, const FFLDrawParam* drawParam)
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     SetModulate(shader, &drawParam->modulateParam);
 
-    const FFLPrimitiveParam& primitiveParam = drawParam->primitiveParam;
-    if (primitiveParam.pIndexBuffer != NULL)
+    if (drawParam->primitiveParam.pIndexBuffer != NULL)
     {
         const FFLAttributeBuffer& position =
             drawParam->attributeBufferParam.attributeBuffers[FFL_ATTRIBUTE_BUFFER_TYPE_POSITION];
@@ -235,8 +246,8 @@ void Draw(void* object, const FFLDrawParam* drawParam)
 
         GX2SetAttribBuffer(0, position.size, position.stride, position.ptr);
         GX2SetAttribBuffer(1, texCoord.size, texCoord.stride, texCoord.ptr);
-        GX2DrawIndexedEx(primitiveParam.primitiveType, primitiveParam.indexCount, primitiveParam.indexFormat,
-                         primitiveParam.pIndexBuffer, 0, 1);
+        GX2DrawIndexedEx(drawParam->primitiveParam.primitiveType, drawParam->primitiveParam.indexCount,
+                         drawParam->primitiveParam.indexFormat, drawParam->primitiveParam.pIndexBuffer, 0, 1);
     }
 }
 
@@ -257,16 +268,17 @@ void InitPlainShader(PlainShader* shader, const void* shaderData)
     MII_ICON_ASSERT_POINTER(shader);
     MII_ICON_ASSERT_POINTER(shaderData);
 
+    shader->callback.pObj = shader;
+
     GX2ContextState* contextState = static_cast<GX2ContextState*>(
         gRenderer->MemoryAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT));
 
-    shader->callback.pObj = shader;
     shader->callback.pContextState = contextState;
     shader->callback.pDrawFunc = Draw;
     shader->callback.pSetMatrixFunc = SetMatrix;
 
     GX2SetupContextState(contextState);
-    GX2SetContextState(contextState);
+    GX2SetContextState(shader->callback.pContextState);
 
     InitShader(shader, shaderData);
 
@@ -292,9 +304,13 @@ void BindPlainShader(const PlainShader* shader)
     MII_ICON_ASSERT_POINTER(shader);
 
     FFLSetShaderCallback(&shader->callback);
+
+    GX2VertexShader* vertexShader = shader->vertexShader;
+    GX2PixelShader* pixelShader = shader->pixelShader;
+
     GX2SetFetchShader(&shader->fetchShader.fetchShader);
-    GX2SetVertexShader(shader->vertexShader);
-    GX2SetPixelShader(shader->pixelShader);
+    GX2SetVertexShader(vertexShader);
+    GX2SetPixelShader(pixelShader);
 }
 
 void SetMatrixPlainShader(const PlainShader* shader, const Mat44* matrix)
