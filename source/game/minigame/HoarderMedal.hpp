@@ -11,7 +11,6 @@ public:
     {
     }
 
-    virtual ~HoarderMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

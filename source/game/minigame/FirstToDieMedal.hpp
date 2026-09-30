@@ -7,7 +7,6 @@ class FirstToDieMedal : public GameMedal
 {
 public:
     FirstToDieMedal(int name, float target, unsigned int weight);
-    virtual ~FirstToDieMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

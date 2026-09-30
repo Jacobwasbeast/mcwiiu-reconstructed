@@ -17,7 +17,6 @@ public:
 
     GameVoteMedal(int name, float target, unsigned int weight, Range* ranges);
 
-    virtual ~GameVoteMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 
 private:

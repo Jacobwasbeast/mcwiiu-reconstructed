@@ -8,10 +8,6 @@ CollisionExceptionGameRuleDefinition::CollisionExceptionGameRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
 }
 
-CollisionExceptionGameRuleDefinition::~CollisionExceptionGameRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType CollisionExceptionGameRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_BlockCollisionException;

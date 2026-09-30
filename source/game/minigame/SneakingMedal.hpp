@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~SneakingMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

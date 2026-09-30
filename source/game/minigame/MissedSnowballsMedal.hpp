@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~MissedSnowballsMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

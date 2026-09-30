@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~TreasureHunterMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

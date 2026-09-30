@@ -7,10 +7,6 @@ ImprovementMedal::ImprovementMedal(int name, float target, unsigned int weight)
 {
 }
 
-ImprovementMedal::~ImprovementMedal()
-{
-}
-
 double ImprovementMedal::GetScore(PlayerStats* playerStats) const
 {
     bool hasOnePointRound = false;

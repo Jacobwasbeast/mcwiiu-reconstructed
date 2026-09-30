@@ -770,10 +770,6 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
     AddTutorialArea(eTutorial_State_Conduit);
 }
 
-FullTutorial::~FullTutorial()
-{
-}
-
 static std::wstring s_tutorialAreaNames[44] = {
     L"", L"", L"", L"",
     L"", L"", L"", L"",

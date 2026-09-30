@@ -11,7 +11,6 @@ public:
     {
     }
 
-    virtual ~LongWayDownMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 };
 

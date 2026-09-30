@@ -4,10 +4,6 @@
 #include "game/core/StatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-AmphibiousMedal::~AmphibiousMedal()
-{
-}
-
 double AmphibiousMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<double>(static_cast<float>(playerStats->mAmphibiousKills->getValue()));

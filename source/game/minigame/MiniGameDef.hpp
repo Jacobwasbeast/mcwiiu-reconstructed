@@ -186,7 +186,7 @@ public:
         SoundSpec();
         SoundSpec(const XmlObject& object);
         unsigned int ForLast() const;
-        double Volume() const;
+        float Volume() const;
     };
     struct TimerSpec
     {
@@ -479,11 +479,7 @@ public:
 
 private:
     template <class T>
-    static T atMaybe(const boost::unordered_map<int, T>& values, int key, T defaultValue)
-    {
-        typename boost::unordered_map<int, T>::const_iterator it = values.find(key);
-        return it == values.end() ? defaultValue : it->second;
-    }
+    static T atMaybe(const boost::unordered_map<int, T>& values, int key, T defaultValue);
 
     unsigned char mHostOptionVersion;
     boost::unordered_map<int, unsigned int> mOptionDefaults;

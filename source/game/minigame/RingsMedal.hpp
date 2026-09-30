@@ -18,7 +18,6 @@ public:
     };
 
     RingsMedal(int name, unsigned int weight, eRingMedalAmount* amounts, EOperator op);
-    virtual ~RingsMedal();
 
     virtual bool CanAward(const StatsUID& uid, GameStats* gameStats) const;
 

@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~JumpsMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

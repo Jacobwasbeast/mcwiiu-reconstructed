@@ -9,7 +9,6 @@ class FullTutorialActiveTask : public TutorialTask
 {
 public:
     FullTutorialActiveTask(Tutorial* tutorial, eTutorial_CompletionAction completionAction);
-    virtual ~FullTutorialActiveTask();
 
     virtual bool isCompleted();
     virtual eTutorial_CompletionAction getCompletionAction();

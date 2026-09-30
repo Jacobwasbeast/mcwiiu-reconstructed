@@ -7,10 +7,6 @@ LifeSpanMedal::LifeSpanMedal(int name, float target, unsigned int weight, GameMe
 {
 }
 
-LifeSpanMedal::~LifeSpanMedal()
-{
-}
-
 double LifeSpanMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<double>(static_cast<float>(playerStats->getTotalLifeSpan()));

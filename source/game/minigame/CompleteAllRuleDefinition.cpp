@@ -84,6 +84,3 @@ ConsoleGameRules::EGameRuleType CompleteAllRuleDefinition::getActionType()
     return ConsoleGameRules::eGameRuleType_CompleteAll;
 }
 
-CompleteAllRuleDefinition::~CompleteAllRuleDefinition()
-{
-}

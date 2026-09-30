@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~DistanceMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

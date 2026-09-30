@@ -337,7 +337,14 @@ MiniGameDef::SoundSpec::SoundSpec(const XmlObject& object) : mForLast(), mVolume
 }
 
 unsigned int MiniGameDef::SoundSpec::ForLast() const { return mForLast.isSet() ? (unsigned int)mForLast.get() : 0x7fffffffU; }
-double MiniGameDef::SoundSpec::Volume() const { return mVolume.isSet() ? mVolume.get() : 1.0f; }
+float MiniGameDef::SoundSpec::Volume() const { return mVolume.isSet() ? mVolume.get() : 1.0f; }
+
+template <class T>
+T MiniGameDef::atMaybe(const boost::unordered_map<int, T>& values, int key, T defaultValue)
+{
+    typename boost::unordered_map<int, T>::const_iterator it = values.find(key);
+    return it == values.end() ? defaultValue : it->second;
+}
 
 MiniGameDef::TimerSpec::TimerSpec()
     : mDuration(), mAnnounceEvery(), mChangeAnnounceAfter(), mChangeAnnounceWhenRemaining(), mChangedAnnounce()
@@ -1109,10 +1116,25 @@ void MiniGameDef::parseHostOptionSettings(const XmlObject& object)
 unsigned int MiniGameDef::GetOptionType(eCustomGameModeHostOption option)
 {
     static const unsigned char types[] = { 0, 1, 2, 1 };
-    if (option > eCustomGameModeHostOption_NoSmallSkins && option < eCustomGameModeHostOption_CentreSpawn)
-        return types[option];
-    if (option > eCustomGameModeHostOption_All && option < eCustomGameModeHostOption_TimeTrial)
-        return 1;
+    if (option != eCustomGameModeHostOption_NoSmallSkins)
+    {
+        if ((unsigned int)option > (unsigned int)eCustomGameModeHostOption_MaxPlayers)
+        {
+            switch (option)
+            {
+            case eCustomGameModeHostOption_MapVariant:
+            case eCustomGameModeHostOption_ModeVariant:
+            case eCustomGameModeHostOption_GameVariant:
+                return 1;
+            default:
+                break;
+            }
+        }
+        else
+        {
+            return types[option];
+        }
+    }
     return 0;
 }
 
@@ -1347,9 +1369,7 @@ int MiniGameDef::GetOptionsCount(eCustomGameModeHostOption option) const
 
 unsigned int MiniGameDef::GetGameVariantCount() const
 {
-    if (mMatchmakingFilters.size() != 0)
-        return mMatchmakingFilters[eCustomGameModeHostOption_ModeVariant - eCustomGameModeHostOption_MapVariant].size();
-    return 0;
+    return GetOptionsCount(eCustomGameModeHostOption_ModeVariant);
 }
 int MiniGameDef::GetLootSetCount() const { return mLootSets.size(); }
 int MiniGameDef::GetLootSetId() const { return GetSetting<unsigned int, &MiniGamePlayerSettings::mLootSetId>(); }
@@ -1845,19 +1865,31 @@ unsigned int MiniGameDef::GetHostOptionIndexFromValue(eCustomGameModeHostOption 
 
 unsigned int MiniGameDef::GetOptionMin(eCustomGameModeHostOption option, bool includeRandom) const
 {
-    if (includeRandom && option > eCustomGameModeHostOption_All &&
-        option < eCustomGameModeHostOption_GameVariant)
-        return 1;
+    if (includeRandom)
+    {
+        switch (option)
+        {
+        case eCustomGameModeHostOption_MapVariant:
+        case eCustomGameModeHostOption_ModeVariant:
+            return 1;
+        default:
+            break;
+        }
+    }
     return 0;
 }
 
 int MiniGameDef::GetOptionMax(eCustomGameModeHostOption option) const
 {
     int count = GetOptionsCount(option);
-    if (option > eCustomGameModeHostOption_All &&
-        option < eCustomGameModeHostOption_GameVariant)
+    switch (option)
+    {
+    case eCustomGameModeHostOption_MapVariant:
+    case eCustomGameModeHostOption_ModeVariant:
         return count;
-    return count - 1;
+    default:
+        return count - 1;
+    }
 }
 
 unsigned int MiniGameDef::AllowSmallSkins() const
@@ -2110,12 +2142,7 @@ unsigned int MiniGameDef::CalculateHostingMatchmakingData(LaunchMoreOptionsMenuI
 {
     if (!data->mMatchmaking || data->mTimeTrial)
         return 0;
-    if (data->mMiniGameId == eMiniGameId_Lobby || data->mMiniGameId > eMiniGameId_Build)
-        return 0;
-    *values = new unsigned int[3];
-    (*values)[0] = data->mMatchmakingFilters[0];
-    (*values)[1] = data->mMatchmakingFilters[1];
-    return 3;
+    return CalculateMatchmakingData(false, data, values, NULL);
 }
 
 bool MiniGameDef::AllowsUGC() const { return mAllowsUGC; }

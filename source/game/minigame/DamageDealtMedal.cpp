@@ -4,10 +4,6 @@
 #include "game/core/StatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-DamageDealtMedal::~DamageDealtMedal()
-{
-}
-
 double DamageDealtMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<double>(playerStats->mDamageDealt->getValue());

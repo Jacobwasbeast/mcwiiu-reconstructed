@@ -2,10 +2,6 @@
 
 #include <math.h>
 
-GameVoteMedal::~GameVoteMedal()
-{
-}
-
 double GameVoteMedal::GetScore(PlayerStats* playerStats) const
 {
     float roundCount = 0.0f;

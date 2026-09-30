@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~UnderwaterMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

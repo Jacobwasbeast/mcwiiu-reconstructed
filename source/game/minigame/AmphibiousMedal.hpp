@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~AmphibiousMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

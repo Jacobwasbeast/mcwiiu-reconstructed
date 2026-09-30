@@ -10,7 +10,6 @@ class ConsolationMedal : public GameMedal
 {
 public:
     ConsolationMedal(int name, float target, unsigned int weight, GameMedal::EOperator op);
-    virtual ~ConsolationMedal();
 
     virtual bool CanAward(const StatsUID& uid, GameStats* gameStats) const;
 };

@@ -10,7 +10,6 @@ class TankMedal : public GameMedal
 public:
     TankMedal(int name, float target, unsigned int weight);
 
-    virtual ~TankMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

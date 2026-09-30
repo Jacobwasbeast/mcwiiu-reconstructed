@@ -9,7 +9,6 @@ class FullTutorial : public Tutorial
 {
 public:
     FullTutorial(int playerId, GameModeConstraints* constraints, bool enabled);
-    virtual ~FullTutorial();
 
     void AddTutorialArea(eTutorial_State state);
     void PopulateChest(eTutorial_State state);

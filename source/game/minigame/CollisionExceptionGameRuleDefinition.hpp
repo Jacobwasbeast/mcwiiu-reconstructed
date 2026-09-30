@@ -10,7 +10,6 @@ class CollisionExceptionGameRuleDefinition : public GameRuleDefinition
 public:
     CollisionExceptionGameRuleDefinition();
 
-    virtual ~CollisionExceptionGameRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

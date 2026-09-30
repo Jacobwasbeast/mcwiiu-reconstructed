@@ -17,7 +17,6 @@ public:
     };
 
     MultiConditionMedal(int name, unsigned int weight, MultiCondition* condition);
-    virtual ~MultiConditionMedal();
 
     virtual bool CanAward(const StatsUID& uid, GameStats* gameStats) const;
     virtual double GetScore(PlayerStats* playerStats) const;

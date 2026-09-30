@@ -8,7 +8,6 @@ class LifeSpanMedal : public GameMedal
 public:
     LifeSpanMedal(int name, float target, unsigned int weight, GameMedal::EOperator op);
 
-    virtual ~LifeSpanMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

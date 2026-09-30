@@ -7,10 +7,6 @@ FullTutorialActiveTask::FullTutorialActiveTask(Tutorial* tutorialValue,
 {
 }
 
-FullTutorialActiveTask::~FullTutorialActiveTask()
-{
-}
-
 bool FullTutorialActiveTask::isCompleted()
 {
     return activated;

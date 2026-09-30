@@ -194,10 +194,6 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
     }
 }
 
-GameModeTutorial::~GameModeTutorial()
-{
-}
-
 unsigned char GameModeTutorial::isStateCompleted(eTutorial_State state)
 {
     return stateCompleted[(int)state];

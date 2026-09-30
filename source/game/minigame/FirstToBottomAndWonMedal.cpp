@@ -2,10 +2,6 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-FirstToBottomAndWonMedal::~FirstToBottomAndWonMedal()
-{
-}
-
 double FirstToBottomAndWonMedal::GetScore(PlayerStats* playerStats) const
 {
     int count = 0;

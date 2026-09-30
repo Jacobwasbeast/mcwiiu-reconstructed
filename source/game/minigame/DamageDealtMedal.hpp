@@ -14,7 +14,6 @@ public:
     {
     }
 
-    virtual ~DamageDealtMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
     virtual bool IncludeDamage(const DamageEvent* damageEvent) const;

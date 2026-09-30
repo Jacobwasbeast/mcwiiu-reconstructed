@@ -7,10 +7,6 @@ namespace
 const int TOP_LAYER = 0;
 }
 
-LongWayDownMedal::~LongWayDownMedal()
-{
-}
-
 double LongWayDownMedal::GetScore(PlayerStats* playerStats) const
 {
     int count = 0;

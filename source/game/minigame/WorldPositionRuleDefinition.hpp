@@ -9,8 +9,6 @@ class WorldPositionRuleDefinition : public GameRuleDefinition
 public:
     WorldPositionRuleDefinition();
 
-    virtual ~WorldPositionRuleDefinition();
-
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
 protected:

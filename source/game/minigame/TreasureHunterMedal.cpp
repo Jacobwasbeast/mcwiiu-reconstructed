@@ -2,10 +2,6 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-TreasureHunterMedal::~TreasureHunterMedal()
-{
-}
-
 double TreasureHunterMedal::GetScore(PlayerStats* playerStats) const
 {
     unsigned int totalContainers = 0;

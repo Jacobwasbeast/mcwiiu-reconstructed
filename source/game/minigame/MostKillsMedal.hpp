@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~MostKillsMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

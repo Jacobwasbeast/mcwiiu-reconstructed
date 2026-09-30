@@ -7,7 +7,6 @@ class GameModeTutorial : public Tutorial
 {
 public:
     GameModeTutorial(int playerId, GameModeConstraints* constraints, int gameMode);
-    virtual ~GameModeTutorial();
     virtual unsigned char isStateCompleted(eTutorial_State state);
     virtual void setStateCompleted(eTutorial_State state);
     virtual void changeTutorialState(eTutorial_State state, UIScene* scene);

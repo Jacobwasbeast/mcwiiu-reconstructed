@@ -8,10 +8,6 @@ MultiConditionMedal::MultiConditionMedal(int name, unsigned int weight, MultiCon
     mConditions.push_back(condition);
 }
 
-MultiConditionMedal::~MultiConditionMedal()
-{
-}
-
 bool MultiConditionMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
 {
     for (unsigned int i = 0; i < mConditions.size(); i++)

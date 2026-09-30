@@ -20,7 +20,6 @@ public:
     virtual bool onUseBlock(GameRule* rule, int blockId, int x, int y, int z);
     virtual bool onCollectItem(GameRule* rule, not_null_ptr<ItemInstance> item);
     virtual ConsoleGameRules::EGameRuleType getActionType();
-    virtual ~CompleteAllRuleDefinition();
 };
 
 #endif

@@ -5,10 +5,6 @@ ConsolationMedal::ConsolationMedal(int name, float target, unsigned int weight, 
 {
 }
 
-ConsolationMedal::~ConsolationMedal()
-{
-}
-
 bool ConsolationMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
 {
     (void)uid;

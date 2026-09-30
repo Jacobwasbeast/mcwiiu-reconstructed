@@ -8,10 +8,6 @@ FallKillMedal::FallKillMedal(int name, float target, unsigned int weight)
 {
 }
 
-FallKillMedal::~FallKillMedal()
-{
-}
-
 double FallKillMedal::GetScore(PlayerStats* playerStats) const
 {
     return (double)(float)playerStats->mFallKills->getValue();

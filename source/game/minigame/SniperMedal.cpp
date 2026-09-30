@@ -8,10 +8,6 @@ SniperMedal::SniperMedal(int name, float target, unsigned int weight)
 {
 }
 
-SniperMedal::~SniperMedal()
-{
-}
-
 double SniperMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<double>(static_cast<float>(playerStats->mSniper->getValue()));

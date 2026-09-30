@@ -8,7 +8,6 @@ class PlayerStats;
 class SprintingMedal : public GameMedal
 {
 public:
-    virtual ~SprintingMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };
