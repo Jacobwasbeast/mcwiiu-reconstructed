@@ -14,16 +14,16 @@ EnchantmentTableEntity::EnchantmentTableEntity()
     : BlockEntity(), InteractionObject(), mRandom(new Random()),
       mCustomName(new CensoredString())
 {
-    mTickCount = 0;
-    mBookRotation = 0.0F;
-    mBookRotationOld = 0.0F;
-    mBookRotationTarget = 0.0F;
-    mBookRotationTargetOld = 0.0F;
-    mBookOpen = 0.0F;
-    mBookOpenOld = 0.0F;
-    mBookSpread = 0.0F;
-    mBookSpreadOld = 0.0F;
-    mBookRotationAngle = 0.0F;
+    mTime = 0;
+    mFlip = 0.0F;
+    mFlipOld = 0.0F;
+    mFlipTarget = 0.0F;
+    mFlipSpeed = 0.0F;
+    mOpen = 0.0F;
+    mOpenOld = 0.0F;
+    mRot = 0.0F;
+    mRotOld = 0.0F;
+    mRotTarget = 0.0F;
 }
 
 EnchantmentTableEntity::~EnchantmentTableEntity()
@@ -99,72 +99,69 @@ void EnchantmentTableEntity::load(CompoundTag* tag)
 
 void EnchantmentTableEntity::tick()
 {
+    mOpenOld = mOpen;
+    mRotOld = mRot;
     boost::shared_ptr<Player> player = mLevel->getNearestPlayer(
-        (double)mPos.x + 0.5, (double)mPos.y + 0.5, (double)mPos.z + 0.5,
+        (double)((float)mPos.x + 0.5F), (double)((float)mPos.y + 0.5F), (double)((float)mPos.z + 0.5F),
         3.0, false, -1.0);
 
-    mBookOpenOld = mBookOpen;
-    mBookRotationOld = mBookRotation;
-    float rotation = mBookRotationAngle;
-    float spread = mBookSpread;
-    float open = mBookOpen;
-    if (player.get() == NULL)
+    if (player.get() != NULL)
     {
-        spread += 0.02F;
-        open -= 0.1F;
-        mBookSpread = spread;
-        mBookOpen = open;
+        Entity* entity = (Entity*)player.get();
+        mRotTarget = (float)std::atan2(entity->mZ - (double)((float)mPos.z + 0.5F),
+                                       entity->mX - (double)((float)mPos.x + 0.5F));
+        mOpen += 0.1F;
+        if (mOpen < 0.5F || mRandom->nextInt(40) == 0)
+        {
+            float previousTarget = mFlipTarget;
+            do
+            {
+                mFlipTarget += (float)(mRandom->nextInt(4) - mRandom->nextInt(4));
+            } while (previousTarget == mFlipTarget);
+        }
     }
     else
     {
-        Entity* entity = (Entity*)player.get();
-        double angle = std::atan2(entity->mZ - ((double)mPos.z + 0.5),
-                                  entity->mX - ((double)mPos.x + 0.5));
-        spread = (float)angle;
-        open += 0.1F;
-        mBookSpread = spread;
-        mBookOpen = open;
-        if (mBookOpen < rotation || mRandom->nextInt(40) == 0)
-            mBookRotationTarget += (float)(mRandom->nextInt(4) - mRandom->nextInt(4));
-        rotation = mBookRotationTarget;
+        mRotTarget += 0.02F;
+        mOpen -= 0.1F;
     }
 
-    while (rotation >= 3.1415927F)
-        rotation -= 6.2831855F;
-    while (rotation < -3.1415927F)
-        rotation += 6.2831855F;
-    while (spread < -3.1415927F)
-        spread += 6.2831855F;
-    while (spread >= 3.1415927F)
-        spread -= 6.2831855F;
-    mBookSpread = spread;
-    float delta = spread - rotation;
+    float rot = mRot;
+    while (rot >= 3.1415927F)
+        rot -= 6.2831855F;
+    while (rot < -3.1415927F)
+        rot += 6.2831855F;
+    while (mRotTarget >= 3.1415927F)
+        mRotTarget -= 6.2831855F;
+    while (mRotTarget < -3.1415927F)
+        mRotTarget += 6.2831855F;
+    float delta = mRotTarget - rot;
     while (delta >= 3.1415927F)
         delta -= 6.2831855F;
     while (delta < -3.1415927F)
         delta += 6.2831855F;
-    mBookRotationAngle = delta * 0.4F + rotation;
-    mBookOpen = Mth::clamp(mBookOpen, 0.0F, 1.0F);
-    ++mTickCount;
-    float targetDelta = Mth::clamp((mBookRotationTarget - mBookRotationOld) * 0.4F,
-                                   -0.2F, 0.2F);
-    mBookRotationTargetOld += (targetDelta - mBookRotationTargetOld) * 0.9F;
-    mBookRotation = mBookRotationOld + mBookRotationTargetOld;
+    mRot = delta * 0.4F + rot;
+    mOpen = Mth::clamp(mOpen, 0.0F, 1.0F);
+    ++mTime;
+    mFlipOld = mFlip;
+    float flipDelta = Mth::clamp((mFlipTarget - mFlip) * 0.4F, -0.2F, 0.2F);
+    mFlipSpeed += (flipDelta - mFlipSpeed) * 0.9F;
+    mFlip += mFlipSpeed;
 }
 
 boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
 {
     boost::shared_ptr<EnchantmentTableEntity> copy(new EnchantmentTableEntity());
-    copy->mTickCount = mTickCount;
-    copy->mBookRotation = mBookRotation;
-    copy->mBookRotationOld = mBookRotationOld;
-    copy->mBookRotationTarget = mBookRotationTarget;
-    copy->mBookRotationTargetOld = mBookRotationTargetOld;
-    copy->mBookOpen = mBookOpen;
-    copy->mBookOpenOld = mBookOpenOld;
-    copy->mBookSpread = mBookSpread;
-    copy->mBookSpreadOld = mBookSpreadOld;
-    copy->mBookRotationAngle = mBookRotationAngle;
+    copy->mTime = mTime;
+    copy->mFlip = mFlip;
+    copy->mFlipOld = mFlipOld;
+    copy->mFlipTarget = mFlipTarget;
+    copy->mFlipSpeed = mFlipSpeed;
+    copy->mOpen = mOpen;
+    copy->mOpenOld = mOpenOld;
+    copy->mRot = mRot;
+    copy->mRotOld = mRotOld;
+    copy->mRotTarget = mRotTarget;
     copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     BlockEntity::clone(copy);
     return copy;

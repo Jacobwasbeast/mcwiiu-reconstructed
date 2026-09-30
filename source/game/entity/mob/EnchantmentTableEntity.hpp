@@ -43,16 +43,16 @@ public:
 private:
     friend class EnchantTableRenderer;
 
-    int mTickCount;
-    float mBookRotation;
-    float mBookRotationOld;
-    float mBookRotationTarget;
-    float mBookRotationTargetOld;
-    float mBookOpen;
-    float mBookOpenOld;
-    float mBookSpread;
-    float mBookSpreadOld;
-    float mBookRotationAngle;
+    int mTime;
+    float mFlip;
+    float mFlipOld;
+    float mFlipTarget;
+    float mFlipSpeed;
+    float mOpen;
+    float mOpenOld;
+    float mRot;
+    float mRotOld;
+    float mRotTarget;
     Random* mRandom;
     boost::shared_ptr<CensoredString> mCustomName;
 };
