@@ -48,11 +48,10 @@ void FJ_Cursor::UpdatePanelAlignment()
     {
         float right = getX() + getWidth() + (float)m_panelOffsetX;
         float stageWidth = (float)getStage()->getStageWidth();
-        FJ_FuiNode* parent = getParent();
-        if (parent != 0)
+        FJ_FuiNode* document = getParent()->getParent();
+        int safeRight = static_cast<FJ_Document*>(document)->getISafeZoneRight();
+        if (document != 0)
         {
-            FJ_Document* document = parent->asFJ_Document();
-            int safeRight = document->getISafeZoneRight();
             TopAlignPanel();
             AlignPanel(right <= (int)(stageWidth - (float)safeRight));
         }
