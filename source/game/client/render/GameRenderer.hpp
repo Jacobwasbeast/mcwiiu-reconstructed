@@ -46,6 +46,12 @@ public:
         float z;
     };
 
+    struct ElementStorageWithTick
+    {
+        int tick;
+        ElementStorage* storage;
+    };
+
     GameRenderer(Minecraft* minecraft, ResourceManager* resourceManager);
     ~GameRenderer();
 

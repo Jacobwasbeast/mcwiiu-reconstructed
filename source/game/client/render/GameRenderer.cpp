@@ -122,12 +122,6 @@ extern bool gFestiveEvent;
 
 namespace
 {
-struct ElementStorageWithTick
-{
-    int tick;
-    ElementStorage* storage;
-};
-
 C4JEventArrayImpl* sRenderUpdateEvents = NULL;
 C4JThreadImpl* sRenderUpdateThread = NULL;
 OSFastMutex sDeleteMutex;
@@ -148,7 +142,7 @@ int sPendingCompressedDeleteList = 0;
 std::vector<SparseDataStorage*> sPendingDataDeletes[2];
 int sPendingDataDeleteList = 0;
 
-std::vector<ElementStorageWithTick> sPendingElementStorageDeletes;
+std::vector<GameRenderer::ElementStorageWithTick> sPendingElementStorageDeletes;
 
 int sAnaglyphEyeIndex = 0;
 
@@ -1158,9 +1152,8 @@ void GameRenderer::bobView(float partialTick)
 
 unsigned int GameRenderer::getCameraThirdPerson()
 {
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
-        boost::static_pointer_cast<MultiplayerLocalPlayer>(mMinecraft->mPlayer);
-    return localPlayer->GetThirdPersonView(false);
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(mMinecraft->mPlayer);
+    return player->GetThirdPersonView(false);
 }
 
 double GameRenderer::getCameraYRot(float amount)
@@ -2303,29 +2296,24 @@ void GameRenderer::setupClearColor(float partialTick)
 FloatBuffer* GameRenderer::getBuffer(float x, float y, float z, float w)
 {
     mFogBuffer->clear();
-    mFogBuffer->put(x);
-    mFogBuffer->put(y);
-    mFogBuffer->put(z);
-    mFogBuffer->put(w);
-    return mFogBuffer->flip();
+    mFogBuffer->put(x)->put(y)->put(z)->put(w);
+    mFogBuffer->flip();
+    return mFogBuffer;
 }
 
 void GameRenderer::resetFogColor(bool useBlack)
 {
-    static const float kAlpha = 1.0f;
-    static const float kZero = 0.0f;
-
-    if (!useBlack)
+    if (useBlack)
     {
-        const float red = mFogRed;
-        const float green = mFogGreen;
-        const float blue = mFogBlue;
-        FloatBuffer* buffer = getBuffer(red, green, blue, kAlpha);
+        FloatBuffer* buffer = getBuffer(0.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::glFog(5, buffer);
     }
     else
     {
-        FloatBuffer* buffer = getBuffer(kZero, kZero, kZero, kAlpha);
+        const float red = mFogRed;
+        const float green = mFogGreen;
+        const float blue = mFogBlue;
+        FloatBuffer* buffer = getBuffer(red, green, blue, 1.0f);
         GlStateManager::glFog(5, buffer);
     }
 }
@@ -3670,7 +3658,7 @@ void GameRenderer::EnableUpdateThread(int reason)
 {
     EnterCriticalSection(&mUpdateThreadMutex);
 
-    mUpdateThreadDisableMask &= ~(1u << (reason & 0x3f));
+    mUpdateThreadDisableMask &= ~(1 << reason);
 
     if (mUpdateThreadDisableMask == 0 && !sRenderUpdateThreadActive)
     {
@@ -3686,7 +3674,7 @@ void GameRenderer::DisableUpdateThread(int reason)
 {
     EnterCriticalSection(&mUpdateThreadMutex);
 
-    mUpdateThreadDisableMask |= (1u << (reason & 0x3f));
+    mUpdateThreadDisableMask |= (1 << reason);
 
     if (mUpdateThreadDisableMask != 0 && sRenderUpdateThreadActive)
     {

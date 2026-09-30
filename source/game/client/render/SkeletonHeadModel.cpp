@@ -13,10 +13,6 @@ SkeletonHeadModel::SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, i
     _init(xTexOffs, yTexOffs, texWidth, texHeight, modelDefinition);
 }
 
-SkeletonHeadModel::~SkeletonHeadModel()
-{
-}
-
 void SkeletonHeadModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())

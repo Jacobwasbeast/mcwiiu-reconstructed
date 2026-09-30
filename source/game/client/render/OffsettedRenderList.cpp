@@ -46,7 +46,7 @@ void OffsettedRenderList::render()
         bufferUploaded = true;
     }
 
-    if (glListBuffer->remaining() > 0)
+    if (glListBuffer->remaining() > 0u)
     {
         GlStateManager::pushMatrix();
         GlStateManager::translatef((float)x - cameraX, (float)y - cameraY, (float)z - cameraZ);

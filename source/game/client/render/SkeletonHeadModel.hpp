@@ -15,7 +15,7 @@ public:
     SkeletonHeadModel(const ModelDefinition& modelDefinition);
     SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition);
 
-    virtual ~SkeletonHeadModel();
+    virtual ~SkeletonHeadModel() {}
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);

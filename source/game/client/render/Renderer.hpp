@@ -156,6 +156,7 @@ public:
     public:
         Context(Renderer* renderer);
 
+        Renderer* mRenderer;
         float mMatrixStack[4][16][4][4];
         bool mMatrixDirty[4];
         int mMatrixStackDepth[4];
