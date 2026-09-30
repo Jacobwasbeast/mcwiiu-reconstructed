@@ -42,6 +42,7 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
              ++it)
         {
             (*it)->setGameMode(const_cast<GameType*>(gameType));
+            (*it)->mFallDistance = 0.0f;
 
             boost::shared_ptr<Packet> info(new PlayerInfoPacket(*it));
             gMinecraftServer->getPlayers()->broadcastAll(info);
