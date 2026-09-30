@@ -487,7 +487,11 @@ bool LevelData::useNewSeaLevel() { return mUseNewSeaLevel; }
 bool LevelData::getHasBeenInCreative() { return mHasBeenInCreative; }
 void LevelData::setHasBeenInCreative(bool value) { mHasBeenInCreative = value; }
 LevelType* LevelData::getGeneratorType() { return mGeneratorType; }
-void LevelData::setGeneratorType(LevelType* type) { mGeneratorType = type; }
+void LevelData::setGeneratorType(LevelType* type)
+{
+    mHasBeenInCreative = mHasBeenInCreative || type == LevelType::FLAT;
+    mGeneratorType = type;
+}
 SuperflatConfig* LevelData::getGeneratorOptions() { return mGeneratorOptions; }
 void LevelData::setGeneratorOptions(SuperflatConfig* options) { mGeneratorOptions = options; }
 bool LevelData::isHardcore() { return mHardcore; }
