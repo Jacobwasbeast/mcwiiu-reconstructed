@@ -2,6 +2,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/core/GameMode.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/ResultSlot.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/core/Stat.hpp"
@@ -107,7 +108,8 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/FenceBlock.hpp"
-#include "game/world/block/FireBlock.hpp"
+#include "game/world/block/FenceGateBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/WallBlock.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
@@ -208,16 +210,13 @@ void ServerPlayer::sendMessage(ClientboundChatPacket::EChatPacketMessage message
 
 bool ServerPlayer::hasPermission(EGameCommand)
 {
-    return gMinecraftServer->getPlayers()->isOp(
-        boost::dynamic_pointer_cast<ServerPlayer>(shared_from_this()));
+    PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+    return players->isOp(boost::dynamic_pointer_cast<ServerPlayer>(shared_from_this()));
 }
 
 BlockPos ServerPlayer::getCommandSenderBlockPosition()
 {
-    int x = static_cast<int>(std::floor(mX));
-    int y = static_cast<int>(std::floor(mY + 0.5));
-    int z = static_cast<int>(std::floor(mZ));
-    return BlockPos(x, y, z);
+    return BlockPos(Mth::floor(mX), Mth::floor(mY + 0.5), Mth::floor(mZ));
 }
 
 void ServerPlayer::refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items)
@@ -576,12 +575,11 @@ boost::shared_ptr<ServerPlayer> ServerPlayer::SpectatePlayerChange(bool previous
 
 void ServerPlayer::updateClientsCameras()
 {
-    boost::shared_ptr<Entity> camera = GetCamera();
     GameModePacket::SetCameraData data;
     data.camera = mPlayerIndex;
-    data.target = camera ? camera->getId() : -1;
-    gMinecraftServer->getPlayers()->broadcastAll(
-        GameModePacket::Create(GameModePacket::eMessage_SetCamera, data));
+    data.target = GetCamera() ? GetCamera()->getId() : -1;
+    PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+    players->broadcastAll(GameModePacket::Create(GameModePacket::eMessage_SetCamera, data));
 }
 
 void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* oldPlayer, boost::shared_ptr<ServerPlayer>* newPlayer)
@@ -637,9 +635,8 @@ void ServerPlayer::resetSentInfo()
 
 int32_t ServerPlayer::getFlagIndexForChunk(int32_t x, int32_t z, int32_t dimension)
 {
-    unsigned long long index = LevelRenderer::getGlobalIndexForChunk(
-        x * 16, 0, z * 16, dimension);
-    return static_cast<int32_t>(index / 16);
+    int index = LevelRenderer::getGlobalIndexForChunk(x * 16, 0, z * 16, dimension);
+    return index / 16;
 }
 
 void ServerPlayer::resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_t maxX, int32_t maxZ, int32_t dimension)
@@ -677,17 +674,19 @@ void ServerPlayer::readAdditionalSaveData(CompoundTag* tag)
 
     if (tag->contains(std::wstring(L"playerGameType"), 99))
     {
-        if (mServer->getForceGameType())
-            mGameMode->SetGameType(mServer->getDefaultGameType());
+        if (getServer()->getForceGameType())
+            mGameMode->SetGameType(getServer()->getDefaultGameType());
         else
             mGameMode->SetGameType(GameType::byId(tag->getInt(std::wstring(L"playerGameType"))));
     }
 
-    if (tag->contains(std::wstring(L"GameRules")) && mGameMode->mGameRules != NULL)
+    GameRule* gameRules = mGameMode->mGameRules;
+    if (tag->contains(std::wstring(L"GameRules")) && gameRules != NULL)
     {
-        ByteArrayInputStream bytes(tag->getByteArray(std::wstring(L"GameRules")));
+        arrayWithLength<unsigned char> data = tag->getByteArray(std::wstring(L"GameRules"));
+        ByteArrayInputStream bytes(data);
         DataInputStream input(&bytes);
-        mGameMode->mGameRules->read(&input);
+        gameRules->read(&input);
         input.close();
         bytes.close();
     }
@@ -766,15 +765,13 @@ void ServerPlayer::onEnchantmentPerformed(int32_t cost)
 void ServerPlayer::onEnterCombat()
 {
     LivingEntity::onEnterCombat();
-    if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::ENTER_COMBAT)));
+    mConnection->send(boost::shared_ptr<ClientboundPlayerCombatPacket>(new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::ENTER_COMBAT)));
 }
 
 void ServerPlayer::onLeaveCombat()
 {
     LivingEntity::onLeaveCombat();
-    if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::END_COMBAT)));
+    mConnection->send(boost::shared_ptr<ClientboundPlayerCombatPacket>(new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::END_COMBAT)));
 }
 
 void ServerPlayer::ResetSpawnInvulnerableTime()
@@ -1301,7 +1298,10 @@ void ServerPlayer::checkFallDamage(double, bool, Block*, const BlockPos&)
 
 void ServerPlayer::doCheckFallDamage(double yMovement, bool onGround)
 {
-    BlockPos pos(mX, mY - 0.2, mZ);
+    int x = Mth::floor(mX);
+    int y = Mth::floor(mY - 0.2f);
+    int z = Mth::floor(mZ);
+    BlockPos pos(x, y, z);
     if (!onGround)
     {
         if (mFallStartPosition == NULL)
@@ -1309,19 +1309,19 @@ void ServerPlayer::doCheckFallDamage(double yMovement, bool onGround)
     }
     else if (mFallStartPosition != NULL)
     {
-        GetGameMode()->RecordLanding(pos);
+        static_cast<ServerPlayerGameMode*>(GetGameMode())->RecordLanding(pos);
         delete mFallStartPosition;
         mFallStartPosition = NULL;
     }
     Block* block = mLevel->getBlock(pos);
-    if (block == Blocks::air)
+    if (block->mMaterial == Material::AIR)
     {
         BlockPos belowPos = pos.below();
         Block* belowBlock = mLevel->getBlock(belowPos);
         if (belowBlock != NULL &&
-            (dynamic_cast<FireBlock*>(belowBlock) != NULL ||
+            (dynamic_cast<FenceBlock*>(belowBlock) != NULL ||
              dynamic_cast<WallBlock*>(belowBlock) != NULL ||
-             dynamic_cast<FenceBlock*>(belowBlock) != NULL))
+             dynamic_cast<FenceGateBlock*>(belowBlock) != NULL))
         {
             pos = belowPos;
             block = belowBlock;
@@ -1830,34 +1830,29 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
 void ServerPlayer::onEffectAdded(MobEffectInstance* effect)
 {
     LivingEntity::onEffectAdded(effect);
-    if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
+    mConnection->send(boost::shared_ptr<ClientboundUpdateMobEffectPacket>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
 }
 
 void ServerPlayer::onEffectUpdated(MobEffectInstance* effect, bool attributesChanged)
 {
     LivingEntity::onEffectUpdated(effect, attributesChanged);
-    if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
+    mConnection->send(boost::shared_ptr<ClientboundUpdateMobEffectPacket>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
 }
 
 void ServerPlayer::onEffectRemoved(MobEffectInstance* effect)
 {
     LivingEntity::onEffectRemoved(effect);
-    if (mConnection != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveMobEffectPacket(getId(), effect->getEffect())));
+    mConnection->send(boost::shared_ptr<ClientboundRemoveMobEffectPacket>(new ClientboundRemoveMobEffectPacket(getId(), effect->getEffect())));
 }
 
 void ServerPlayer::teleportTo(double x, double y, double z)
 {
-    if (mConnection != NULL)
-        mConnection->teleport(x, y, z, mYRot, mXRot, true, false);
+    mConnection->teleport(x, y, z, mYRot, mXRot, true, false);
 }
 
 void ServerPlayer::teleportTo(double x, double y, double z, float yRot, float xRot)
 {
-    if (mConnection != NULL)
-        mConnection->teleport(x, y, z, xRot, yRot, true, true);
+    mConnection->teleport(x, y, z, xRot, yRot, true, true);
 }
 
 void ServerPlayer::crit(boost::shared_ptr<Entity> entity)
@@ -1903,13 +1898,14 @@ bool ServerPlayer::isSpectator()
 
 bool ServerPlayer::isCreative()
 {
-    const GameType* type = GetGameType();
-    return type != NULL && type->isCreative();
+    if (mGameMode != NULL)
+        return mGameMode->GetGameType() == GameType::CREATIVE;
+    return false;
 }
 
 void ServerPlayer::resetLastActionTime()
 {
-    mLastActionTime = System::processTimeInMilliSecs();
+    mLastActionTime = MinecraftServer::getCurrentTimeMillis();
 }
 
 void ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity>* entity)
@@ -2006,7 +2002,7 @@ const GameType* ServerPlayer::GetGameType()
     return ((GameMode*)mGameMode)->GetGameType();
 }
 
-ServerPlayerGameMode* ServerPlayer::GetGameMode()
+GameMode* ServerPlayer::GetGameMode()
 {
     return mGameMode;
 }

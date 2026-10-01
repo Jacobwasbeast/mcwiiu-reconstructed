@@ -51,6 +51,7 @@ ServerPlayerGameMode::ServerPlayerGameMode(Level* level, MasterGameMode* masterG
 
 ServerPlayerGameMode::~ServerPlayerGameMode()
 {
+    delete mGameRules;
 }
 
 void ServerPlayerGameMode::setLevel(ServerLevel* level) { mLevel = level; }
@@ -72,9 +73,6 @@ void ServerPlayerGameMode::RestoreFromOld(ServerPlayerGameMode* oldMode)
 }
 boost::shared_ptr<ServerPlayer> ServerPlayerGameMode::getServerPlayer() const
 {
-    if (mPlayer == NULL)
-        return boost::shared_ptr<ServerPlayer>();
-
     return boost::static_pointer_cast<ServerPlayer>(mPlayer->shared_from_this());
 }
 int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
@@ -560,9 +558,6 @@ void ServerPlayerGameMode::RecordContainer(int type, int slot, int count, int da
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordContainer(player->getSUID(), type, slot, count, data);
 }
 void ServerPlayerGameMode::RecordWalk(int distance, bool sprinting, bool sneaking)
@@ -572,9 +567,6 @@ void ServerPlayerGameMode::RecordWalk(int distance, bool sprinting, bool sneakin
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordWalk(player->getSUID(), distance, sprinting, sneaking);
 }
 void ServerPlayerGameMode::RecordSwim(int distance, bool sprinting)
@@ -584,9 +576,6 @@ void ServerPlayerGameMode::RecordSwim(int distance, bool sprinting)
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordSwim(player->getSUID(), distance, sprinting);
 }
 void ServerPlayerGameMode::RecordClimb(int distance)
@@ -596,9 +585,6 @@ void ServerPlayerGameMode::RecordClimb(int distance)
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordClimb(player->getSUID(), distance);
 }
 void ServerPlayerGameMode::RecordUseItem(not_null_ptr<ItemInstance> item)
@@ -620,9 +606,6 @@ void ServerPlayerGameMode::RecordJump()
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordJump(player->getSUID());
 }
 void ServerPlayerGameMode::RecordGainPoints(int points)
@@ -632,9 +615,6 @@ void ServerPlayerGameMode::RecordGainPoints(int points)
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordGainPoints(player->getSUID(), points);
 }
 void ServerPlayerGameMode::ResetTempPoints()
@@ -644,9 +624,6 @@ void ServerPlayerGameMode::ResetTempPoints()
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.ResetTempPoints(player->getSUID());
 }
 bool ServerPlayerGameMode::RecordSecondaryTargetReached(const std::wstring& name, int target,
@@ -696,12 +673,12 @@ bool ServerPlayerGameMode::RecordLastCheckpoint(int checkpoint, int lap, bool fi
 }
 bool ServerPlayerGameMode::RecordLapCompleted()
 {
-    if (gMinecraftServer == NULL || isSpectator())
+    MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
+    if (masterGameMode == NULL || isSpectator())
         return false;
+
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return false;
-    gMinecraftServer->mMasterGameMode->mGameStats.RecordLapCompleted(player->getSUID());
+    masterGameMode->mGameStats.RecordLapCompleted(player->getSUID());
     return true;
 }
 void ServerPlayerGameMode::RecordThermalEntered()
@@ -711,9 +688,6 @@ void ServerPlayerGameMode::RecordThermalEntered()
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordThermalEntered(player->getSUID());
 }
 bool ServerPlayerGameMode::RecordProgress(double first, double second, double third, double fourth)
@@ -734,9 +708,6 @@ void ServerPlayerGameMode::RecordSpawnedAtCheckpoint(int checkpoint)
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordSpawnedAtCheckpoint(player->getSUID(), checkpoint);
 }
 void ServerPlayerGameMode::RecordBlockPlaced(const BlockPos& pos, int blockId)
@@ -801,9 +772,6 @@ void ServerPlayerGameMode::RecordSnowballHit()
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordSnowballDirectHit(player->getSUID());
 }
 void ServerPlayerGameMode::RecordHitBySnowball()
@@ -813,9 +781,6 @@ void ServerPlayerGameMode::RecordHitBySnowball()
         return;
 
     boost::shared_ptr<ServerPlayer> player = getServerPlayer();
-    if (!player)
-        return;
-
     masterGameMode->mGameStats.RecordHitBySnowball(player->getSUID());
 }
 void ServerPlayerGameMode::RecordLanding(const BlockPos& pos)
@@ -835,9 +800,6 @@ void ServerPlayerGameMode::RecordLanding(const BlockPos& pos)
 const MiniGameDef* ServerPlayerGameMode::GetMiniGame() { return CommonMasterGameMode::GetMiniGame(); }
 boost::shared_ptr<Player> ServerPlayerGameMode::GetPlayer()
 {
-    if (mPlayer == NULL)
-        return boost::shared_ptr<Player>();
-
     return boost::static_pointer_cast<Player>(mPlayer->shared_from_this());
 }
 Level* ServerPlayerGameMode::GetLevel() { return mLevel; }

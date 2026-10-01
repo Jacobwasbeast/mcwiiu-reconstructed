@@ -202,7 +202,7 @@ public:
     void handleCollectItem(not_null_ptr<ItemInstance> item);
     void SetCamera(boost::shared_ptr<Entity> entity);
     const GameType* GetGameType();
-    ServerPlayerGameMode* GetGameMode();
+    GameMode* GetGameMode();
     void OnEquipArmor(not_null_ptr<ItemInstance> item);
     bool checkTotemDeathProtection(const DamageSource* source);
     uint64_t GetType();
