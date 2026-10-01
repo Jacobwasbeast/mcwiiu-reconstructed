@@ -11,6 +11,7 @@ class BiomeSource;
 class ChunkGenerator;
 class DimensionType;
 class Level;
+class LevelChunk;
 class LevelType;
 class OldChunkStorage;
 class ServerPlayer;
@@ -63,6 +64,7 @@ public:
     int getSeaLevel();
 
 protected:
+    friend class LevelChunk;
     Level* mLevel;
     LevelType* mLevelType;
     SuperflatConfig* mSuperflatConfig;

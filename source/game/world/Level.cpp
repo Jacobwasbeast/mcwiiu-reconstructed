@@ -1413,8 +1413,8 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
         oldBlocking = oldExtraBlocking;
     }
 
-    const BlockState* oldState = extraBlock ? chunk->getExtraBlockState(pos) : chunk->getBlockState(pos);
-    if (!chunk->internalSetBlock(extraBlock, pos, state))
+    const BlockState* oldState = extraBlock ? chunk->setExtraBlock(pos, state) : chunk->setBlock(pos, state);
+    if (oldState == NULL)
     {
         return false;
     }
@@ -1435,7 +1435,7 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
 
     if ((flags & Block::UPDATE_LIGHT_IF_CHANGED) == 0 || !sameLight)
     {
-        PIXBeginNamedEvent(0.0f, "Checking light: %d, %d, %d", pos.x, pos.y, pos.z);
+        PIXBeginNamedEvent(0.0f, "Checking light %d %d %d", pos.x, pos.y, pos.z);
         checkLight(pos, false, false);
         PIXEndNamedEvent();
     }
